@@ -1,0 +1,31 @@
+# Reference sources (not part of this project's source)
+core2026/
+legacy/
+docs/
+tmp/
+
+# OS
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Backend build
+backend/build/
+backend/.gradle/
+*.jar
+*.war
+
+# Frontend build
+frontend/.next/
+frontend/node_modules/
+frontend/out/

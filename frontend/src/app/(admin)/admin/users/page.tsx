@@ -1,0 +1,126 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { UserCog } from "lucide-react";
+import { PageHeader } from "@/components/game/page-header";
+import { LoadingState } from "@/components/game/loading-state";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { adminApi } from "@/lib/gameApi";
+import { toast } from "sonner";
+import type { AdminUser } from "@/types";
+
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    adminApi.listUsers().then((res) => {
+      setUsers(res.data);
+      setLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const doAction = async (id: number, type: string) => {
+    try {
+      await adminApi.userAction(id, type);
+      toast.success(`${type} 완료`);
+      load();
+    } catch {
+      toast.error("실패");
+    }
+  };
+
+  if (loading) return <LoadingState />;
+
+  return (
+    <div className="space-y-4">
+      <PageHeader icon={UserCog} title="유저 관리" />
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>로그인ID</TableHead>
+            <TableHead>닉네임</TableHead>
+            <TableHead>권한</TableHead>
+            <TableHead>가입일</TableHead>
+            <TableHead>최근 접속</TableHead>
+            <TableHead>액션</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell>{u.id}</TableCell>
+              <TableCell>{u.loginId}</TableCell>
+              <TableCell className="font-medium">{u.displayName}</TableCell>
+              <TableCell>
+                {u.role === "ADMIN" ? (
+                  <Badge variant="destructive">ADMIN</Badge>
+                ) : (
+                  <Badge variant="outline">USER</Badge>
+                )}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {new Date(u.createdAt).toLocaleDateString("ko-KR")}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {u.lastLoginAt
+                  ? new Date(u.lastLoginAt).toLocaleDateString("ko-KR")
+                  : "-"}
+              </TableCell>
+              <TableCell className="space-x-1">
+                {u.role === "ADMIN" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => doAction(u.id, "removeAdmin")}
+                  >
+                    관리자 해제
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => doAction(u.id, "setAdmin")}
+                  >
+                    관리자 지정
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => doAction(u.id, "delete")}
+                >
+                  삭제
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {users.length === 0 && (
+            <TableRow>
+              <TableCell
+                colSpan={7}
+                className="text-center text-muted-foreground"
+              >
+                유저가 없습니다.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}

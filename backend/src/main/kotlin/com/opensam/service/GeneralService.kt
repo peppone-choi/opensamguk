@@ -1,0 +1,90 @@
+package com.opensam.service
+
+import com.opensam.dto.CreateGeneralRequest
+import com.opensam.entity.General
+import com.opensam.repository.AppUserRepository
+import com.opensam.repository.GeneralRepository
+import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+
+@Service
+class GeneralService(
+    private val generalRepository: GeneralRepository,
+    private val appUserRepository: AppUserRepository,
+) {
+    fun listByWorld(worldId: Long): List<General> {
+        return generalRepository.findByWorldId(worldId)
+    }
+
+    fun getById(id: Long): General? {
+        return generalRepository.findById(id).orElse(null)
+    }
+
+    fun getMyGeneral(worldId: Long, loginId: String): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        return generalRepository.findByWorldIdAndUserId(worldId, userId)
+    }
+
+    fun listByNation(nationId: Long): List<General> {
+        return generalRepository.findByNationId(nationId)
+    }
+
+    fun listByCity(cityId: Long): List<General> {
+        return generalRepository.findByCityId(cityId)
+    }
+
+    fun createGeneral(worldId: Long, loginId: String, request: CreateGeneralRequest): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        val general = General(
+            worldId = worldId,
+            userId = userId,
+            name = request.name,
+            cityId = request.cityId,
+            nationId = request.nationId,
+            leadership = request.leadership,
+            strength = request.strength,
+            intel = request.intel,
+            politics = request.politics,
+            charm = request.charm,
+            crewType = request.crewType,
+            turnTime = OffsetDateTime.now(),
+        )
+        return generalRepository.save(general)
+    }
+
+    fun listAvailableNpcs(worldId: Long): List<General> {
+        return generalRepository.findByWorldId(worldId)
+            .filter { it.npcState.toInt() > 0 && it.userId == null }
+    }
+
+    fun possessNpc(worldId: Long, loginId: String, generalId: Long): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
+        if (existing != null) return null
+        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        if (general.worldId != worldId || general.npcState.toInt() == 0 || general.userId != null) return null
+        general.userId = userId
+        general.npcState = 0
+        return generalRepository.save(general)
+    }
+
+    fun listPool(worldId: Long): List<General> {
+        return generalRepository.findByWorldId(worldId)
+            .filter { it.npcState.toInt() == 5 && it.userId == null }
+    }
+
+    fun selectFromPool(worldId: Long, loginId: String, generalId: Long): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
+        if (existing != null) return null
+        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        if (general.worldId != worldId || general.npcState.toInt() != 5 || general.userId != null) return null
+        general.userId = userId
+        general.npcState = 0
+        return generalRepository.save(general)
+    }
+
+    fun getCurrentUserId(loginId: String): Long? {
+        return appUserRepository.findByLoginId(loginId)?.id
+    }
+}

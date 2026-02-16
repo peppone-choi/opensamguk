@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: opensam-postgres
+    environment:
+      POSTGRES_DB: opensam
+      POSTGRES_USER: opensam
+      POSTGRES_PASSWORD: opensam123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - opensam-net
+
+  redis:
+    image: redis:7
+    container_name: opensam-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - opensam-net
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  opensam-net:
+    driver: bridge

@@ -1,0 +1,12 @@
+[   77063ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ http://localhost:8080/api/worlds/1/generals/me:0
+[   77105ms] AxiosError: Request failed with status code 404
+    at settle (http://localhost:3000/_next/static/chunks/node_modules__pnpm_92d254f9._.js:3543:16)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_next/static/chunks/node_modules__pnpm_92d254f9._.js:4061:225)
+    at Axios.request (http://localhost:3000/_next/static/chunks/node_modules__pnpm_92d254f9._.js:4867:49)
+    at async fetchMyGeneral (http://localhost:3000/_next/static/chunks/src_d12ff3d8._.js:533:34)
+[ 3120354ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ http://localhost:8080/api/worlds/1/generals/me:0
+[ 3120470ms] AxiosError: Request failed with status code 404
+    at settle (http://localhost:3000/_next/static/chunks/node_modules__pnpm_62806e40._.js:4705:16)
+    at XMLHttpRequest.onloadend (http://localhost:3000/_next/static/chunks/node_modules__pnpm_62806e40._.js:5223:225)
+    at Axios.request (http://localhost:3000/_next/static/chunks/node_modules__pnpm_62806e40._.js:6029:49)
+    at async fetchMyGeneral (http://localhost:3000/_next/static/chunks/src_d12ff3d8._.js:533:34)

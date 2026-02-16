@@ -1,0 +1,653 @@
+kotlin version: 2.1.0
+error message: org.jetbrains.kotlin.codegen.CompilationException: Back-end (JVM) Internal error: Couldn't transform method node:
+buildNationPolicy (Ljava/util/Map;)Lcom/opensam/engine/ai/NpcNationPolicy;:
+    // parameter  nationMeta
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+    // annotable parameter count: 1 (visible)
+    // annotable parameter count: 1 (invisible)
+    @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
+   L0
+    ALOAD 1
+    LDC "nationMeta"
+    INVOKESTATIC kotlin/jvm/internal/Intrinsics.checkNotNullParameter (Ljava/lang/Object;Ljava/lang/String;)V
+    ALOAD 1
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 1
+   L1
+    LINENUMBER 96 L1
+    ALOAD 1
+    LDC "npcNationPolicy"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    ASTORE 4
+   L2
+    ALOAD 4
+    INSTANCEOF java/util/Map
+    IFEQ L3
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/util/Map
+    GOTO L4
+   L3
+    ACONST_NULL
+   L4
+    ASTORE 3
+   L5
+    ALOAD 3
+    IFNULL L6
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    GOTO L7
+   L8
+    NOP
+    NEW com/opensam/engine/ai/NpcNationPolicy
+    DUP
+    ACONST_NULL
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    ICONST_0
+    ICONST_0
+    DCONST_0
+    ICONST_0
+    ICONST_0
+    ICONST_0
+    ICONST_0
+    ICONST_0
+    LDC 8388607
+    ACONST_NULL
+    INVOKESPECIAL com/opensam/engine/ai/NpcNationPolicy.<init> (Ljava/util/List;ZZZZZZZZZZZZZZIIDIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+    ARETURN
+   L9
+    NOP
+    ACONST_NULL
+   L7
+    ASTORE 2
+   L10
+    LINENUMBER 97 L10
+   L11
+    LINENUMBER 98 L11
+    NOP
+   L12
+    ALOAD 2
+    LDC "priority"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L13
+   L13
+    LINENUMBER 98 L13
+    ASTORE 4
+   L14
+    ALOAD 4
+    INSTANCEOF java/util/List
+    IFEQ L15
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/util/List
+    GOTO L16
+   L15
+    ACONST_NULL
+   L16
+    ASTORE 3
+   L17
+    ALOAD 3
+    IFNULL L18
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    CHECKCAST java/lang/Iterable
+    ASTORE 5
+    NOP
+   L19
+    ICONST_0
+    ISTORE 6
+   L20
+    LINENUMBER 121 L20
+    ALOAD 5
+    ASTORE 7
+    NEW java/util/ArrayList
+    DUP
+    INVOKESPECIAL java/util/ArrayList.<init> ()V
+    CHECKCAST java/util/Collection
+    ASTORE 8
+   L21
+    ICONST_0
+    ISTORE 9
+   L22
+    LINENUMBER 130 L22
+    ALOAD 7
+    INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
+    ASTORE 10
+   L23
+    ALOAD 10
+    INVOKEINTERFACE java/util/Iterator.hasNext ()Z (itf)
+    IFEQ L24
+    ALOAD 10
+    INVOKEINTERFACE java/util/Iterator.next ()Ljava/lang/Object; (itf)
+    ASTORE 11
+   L25
+    ALOAD 11
+    INSTANCEOF java/lang/String
+    IFEQ L23
+    ALOAD 11
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 11
+    ALOAD 8
+    ALOAD 11
+    INVOKEINTERFACE java/util/Collection.add (Ljava/lang/Object;)Z (itf)
+    POP
+   L26
+    GOTO L23
+   L24
+    LINENUMBER 131 L24
+    ALOAD 8
+   L27
+    CHECKCAST java/util/List
+   L28
+    LINENUMBER 121 L28
+    NOP
+    GOTO L29
+   L29
+    ASTORE 14
+    ALOAD 14
+   L30
+    LINENUMBER 98 L30
+    ASTORE 4
+   L31
+    ALOAD 4
+    GOTO L32
+   L33
+    NOP
+   L34
+    LINENUMBER 99 L34
+    GETSTATIC com/opensam/engine/ai/NpcNationPolicy.Companion : Lcom/opensam/engine/ai/NpcNationPolicy$Companion;
+    INVOKEVIRTUAL com/opensam/engine/ai/NpcNationPolicy$Companion.getDEFAULT_NATION_PRIORITY ()Ljava/util/List;
+   L32
+    LINENUMBER 97 L32
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+    NOP
+    ICONST_0
+   L35
+    LINENUMBER 100 L35
+    NOP
+   L36
+    ALOAD 2
+    LDC "minNPCWarLeadership"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L37
+   L37
+    LINENUMBER 100 L37
+    ASTORE 4
+   L38
+    ALOAD 4
+    INSTANCEOF java/lang/Number
+    IFEQ L39
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/lang/Number
+    GOTO L40
+   L39
+    ACONST_NULL
+   L40
+    ASTORE 3
+   L41
+    ALOAD 3
+    IFNULL L42
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    INVOKEVIRTUAL java/lang/Number.intValue ()I
+    ISTORE 4
+   L43
+    ILOAD 4
+    POP
+    ILOAD 4
+    GOTO L44
+   L45
+    NOP
+    BIPUSH 40
+   L44
+    LINENUMBER 101 L44
+    NOP
+   L46
+    ALOAD 2
+    LDC "minNPCRecruitCityPopulation"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L47
+   L47
+    LINENUMBER 101 L47
+    ASTORE 4
+   L48
+    ALOAD 4
+    INSTANCEOF java/lang/Number
+    IFEQ L49
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/lang/Number
+    GOTO L50
+   L49
+    ACONST_NULL
+   L50
+    ASTORE 3
+   L51
+    ALOAD 3
+    IFNULL L52
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    INVOKEVIRTUAL java/lang/Number.intValue ()I
+    ISTORE 4
+   L53
+    ILOAD 4
+    POP
+    ILOAD 4
+    GOTO L54
+   L55
+    NOP
+    SIPUSH 5000
+   L54
+    LINENUMBER 102 L54
+    NOP
+   L56
+    ALOAD 2
+    LDC "safeRecruitCityPopulationRatio"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L57
+   L57
+    LINENUMBER 102 L57
+    ASTORE 4
+   L58
+    ALOAD 4
+    INSTANCEOF java/lang/Number
+    IFEQ L59
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/lang/Number
+    GOTO L60
+   L59
+    ACONST_NULL
+   L60
+    ASTORE 3
+   L61
+    ALOAD 3
+    IFNULL L62
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    INVOKEVIRTUAL java/lang/Number.doubleValue ()D
+    DSTORE 4
+   L63
+    DLOAD 4
+    POP2
+    DLOAD 4
+    GOTO L64
+   L65
+    NOP
+    LDC 0.4
+   L64
+    LINENUMBER 103 L64
+    NOP
+   L66
+    ALOAD 2
+    LDC "reqNationGold"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L67
+   L67
+    LINENUMBER 103 L67
+    ASTORE 4
+   L68
+    ALOAD 4
+    INSTANCEOF java/lang/Number
+    IFEQ L69
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/lang/Number
+    GOTO L70
+   L69
+    ACONST_NULL
+   L70
+    ASTORE 3
+   L71
+    ALOAD 3
+    IFNULL L72
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    INVOKEVIRTUAL java/lang/Number.intValue ()I
+    ISTORE 4
+   L73
+    ILOAD 4
+    POP
+    ILOAD 4
+    GOTO L74
+   L75
+    NOP
+    SIPUSH 2000
+   L74
+    LINENUMBER 104 L74
+    NOP
+   L76
+    ALOAD 2
+    LDC "reqNationRice"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L77
+   L77
+    LINENUMBER 104 L77
+    ASTORE 4
+   L78
+    ALOAD 4
+    INSTANCEOF java/lang/Number
+    IFEQ L79
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/lang/Number
+    GOTO L80
+   L79
+    ACONST_NULL
+   L80
+    ASTORE 3
+   L81
+    ALOAD 3
+    IFNULL L82
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    INVOKEVIRTUAL java/lang/Number.intValue ()I
+    ISTORE 4
+   L83
+    ILOAD 4
+    POP
+    ILOAD 4
+    GOTO L84
+   L85
+    NOP
+    SIPUSH 2000
+   L84
+    LINENUMBER 105 L84
+    NOP
+   L86
+    ALOAD 2
+    LDC "cureThreshold"
+    INVOKEINTERFACE java/util/Map.get (Ljava/lang/Object;)Ljava/lang/Object; (itf)
+    NOP
+    GOTO L87
+   L87
+    LINENUMBER 105 L87
+    ASTORE 4
+   L88
+    ALOAD 4
+    INSTANCEOF java/lang/Number
+    IFEQ L89
+    ALOAD 4
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 4
+    ALOAD 4
+    CHECKCAST java/lang/Number
+    GOTO L90
+   L89
+    ACONST_NULL
+   L90
+    ASTORE 3
+   L91
+    ALOAD 3
+    IFNULL L92
+    ALOAD 3
+    INVOKESTATIC kotlin/jvm/internal/$PseudoInsn.AS_NOT_NULL (Ljava/lang/Object;)Ljava/lang/Object;
+    ASTORE 3
+    ALOAD 3
+    INVOKEVIRTUAL java/lang/Number.intValue ()I
+    ISTORE 4
+   L93
+    ILOAD 4
+    POP
+    ILOAD 4
+    GOTO L94
+   L95
+    NOP
+    BIPUSH 20
+   L94
+    LINENUMBER 97 L94
+    ICONST_0
+    ICONST_0
+    LDC 6324222
+    ACONST_NULL
+    ASTORE 15
+    ISTORE 16
+    ISTORE 17
+    ISTORE 18
+    ISTORE 19
+    ISTORE 20
+    ISTORE 21
+    DSTORE 22
+    ISTORE 24
+    ISTORE 25
+    ISTORE 26
+    ISTORE 27
+    ISTORE 28
+    ISTORE 29
+    ISTORE 30
+    ISTORE 31
+    ISTORE 32
+    ISTORE 33
+    ISTORE 34
+    ISTORE 35
+    ISTORE 36
+    ISTORE 37
+    ISTORE 38
+    ISTORE 39
+    ASTORE 40
+    NEW com/opensam/engine/ai/NpcNationPolicy
+    DUP
+    ALOAD 40
+    ILOAD 39
+    ILOAD 38
+    ILOAD 37
+    ILOAD 36
+    ILOAD 35
+    ILOAD 34
+    ILOAD 33
+    ILOAD 32
+    ILOAD 31
+    ILOAD 30
+    ILOAD 29
+    ILOAD 28
+    ILOAD 27
+    ILOAD 26
+    ILOAD 25
+    ILOAD 24
+    DLOAD 22
+    ILOAD 21
+    ILOAD 20
+    ILOAD 19
+    ILOAD 18
+    ILOAD 17
+    ILOAD 16
+    ALOAD 15
+    INVOKESPECIAL com/opensam/engine/ai/NpcNationPolicy.<init> (Ljava/util/List;ZZZZZZZZZZZZZZIIDIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+    ARETURN
+   L96
+    NOP
+   L97
+   L6
+    ACONST_NULL
+    ASTORE 3
+    GOTO L8
+   L18
+    ACONST_NULL
+    ASTORE 3
+    GOTO L33
+   L42
+    ACONST_NULL
+    ASTORE 3
+    GOTO L45
+   L52
+    ACONST_NULL
+    ASTORE 3
+    GOTO L55
+   L62
+    ACONST_NULL
+    ASTORE 3
+    GOTO L65
+   L72
+    ACONST_NULL
+    ASTORE 3
+    GOTO L75
+   L82
+    ACONST_NULL
+    ASTORE 3
+    GOTO L85
+   L92
+    ACONST_NULL
+    ASTORE 3
+    GOTO L95
+    LOCALVARIABLE element$iv$iv Ljava/lang/Object; L25 L26 11
+    LOCALVARIABLE $i$f$filterIsInstanceTo I L22 L27 9
+    LOCALVARIABLE $this$filterIsInstanceTo$iv$iv Ljava/lang/Iterable; L21 L27 7
+    LOCALVARIABLE destination$iv$iv Ljava/util/Collection; L21 L27 8
+    LOCALVARIABLE $i$f$filterIsInstance I L20 L29 6
+    LOCALVARIABLE $this$filterIsInstance$iv Ljava/lang/Iterable; L19 L29 5
+    LOCALVARIABLE raw Ljava/util/Map; L10 L97 2
+    LOCALVARIABLE this Lcom/opensam/engine/ai/NpcPolicyBuilder; L0 L97 0
+    LOCALVARIABLE nationMeta Ljava/util/Map; L0 L97 1
+    MAXSTACK = 28
+    MAXLOCALS = 41
+
+File is unknown
+The root cause java.lang.OutOfMemoryError was thrown at: unknown
+	at org.jetbrains.kotlin.codegen.TransformationMethodVisitor.visitEnd(TransformationMethodVisitor.kt:89)
+	at org.jetbrains.org.objectweb.asm.MethodVisitor.visitEnd(MethodVisitor.java:783)
+	at org.jetbrains.org.objectweb.asm.tree.MethodNode.accept(MethodNode.java:772)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generateMethod(ClassCodegen.kt:454)
+	at org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen.generate(ClassCodegen.kt:169)
+	at org.jetbrains.kotlin.backend.jvm.FileCodegen.lower(JvmPhases.kt:39)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseFactoriesKt.createFilePhase$lambda$4(PhaseFactories.kt:71)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseBuildersKt$createSimpleNamedCompilerPhase$1.phaseBody(PhaseBuilders.kt:69)
+	at org.jetbrains.kotlin.backend.common.phaser.SimpleNamedCompilerPhase.phaseBody(CompilerPhase.kt:226)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invokeSequential(performByIrFile.kt:52)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:42)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(performByIrFile.kt:28)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:27)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:14)
+	at org.jetbrains.kotlin.backend.common.phaser.NamedCompilerPhase.phaseBody(CompilerPhase.kt:166)
+	at org.jetbrains.kotlin.backend.common.phaser.AbstractNamedCompilerPhase.invoke(CompilerPhase.kt:113)
+	at org.jetbrains.kotlin.backend.common.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:62)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeCodegen(JvmIrCodegenFactory.kt:371)
+	at org.jetbrains.kotlin.codegen.CodegenFactory.generateModule(CodegenFactory.kt:47)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.generateModuleInFrontendIRMode(JvmIrCodegenFactory.kt:433)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.generateCodeFromIr(jvmCompilerPipeline.kt:192)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineKt.runBackend(jvmCompilerPipeline.kt:80)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModule(jvmCompilerPipelineLightTree.kt:264)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileSingleModuleUsingFrontendIrAndLightTree(jvmCompilerPipelineLightTree.kt:231)
+	at org.jetbrains.kotlin.cli.jvm.compiler.pipeline.JvmCompilerPipelineLightTreeKt.compileModulesUsingFrontendIrAndLightTree(jvmCompilerPipelineLightTree.kt:86)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:146)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecute(K2JVMCompiler.kt:43)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:102)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:316)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:464)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.runCompiler(IncrementalJvmCompilerRunner.kt:73)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:506)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:423)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:301)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:129)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:674)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:91)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1659)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:360)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:200)
+	at java.rmi/sun.rmi.transport.Transport$1.run(Transport.java:197)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:712)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:196)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:587)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:828)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(TCPTransport.java:705)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:399)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:704)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+Caused by: java.lang.OutOfMemoryError: GC overhead limit exceeded
+
+

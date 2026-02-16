@@ -1,0 +1,55 @@
+{
+  "title": "【공백지】 충차전",
+  "startYear": 180,
+  "map": {
+    "mapName": "che",
+    "unitSet": "siegetank"
+  },
+  "stat": {
+    "chiefMin": 9
+  },
+  "history": [
+    "<C>●</>180년 1월:<L><b>【이벤트】</b></>병기로 싸운다! 최고의 충차 지휘관을 가린다"
+  ],
+  "const": {
+    "npcBanMessageProb": 1
+  },
+  "initialEvents": [
+    [
+      true,
+      [
+        "ChangeCity",
+        "free",
+        {
+          "pop": "70%",
+          "agri": "70%",
+          "comm": "70%",
+          "secu": "70%",
+          "trust": 80
+        }
+      ],
+      [
+        "ChangeCity",
+        "occupied",
+        {
+          "pop": "70%",
+          "agri": "70%",
+          "comm": "70%",
+          "secu": "70%",
+          "trust": 80,
+          "def": "70%",
+          "wall": "70%"
+        }
+      ]
+    ]
+  ],
+  "events": [
+    [
+      "destroy_nation",
+      1000,
+      ["and", ["Date", ">=", 183, 1], ["RemainNation", "==", 1]],
+      ["BlockScoutAction"],
+      ["DeleteEvent"]
+    ]
+  ]
+}
