@@ -35,6 +35,8 @@ const CONTROLS: CtrlItem[] = [
   { href: "/my-page", label: "내정보&설정" },
   { href: "/auction", label: "경매장" },
   { href: "/betting", label: "베팅장" },
+  { href: "/history", label: "연감" },
+  { href: "/dynasty", label: "왕조일람" },
 ];
 
 export function MainControlBar() {

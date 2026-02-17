@@ -28,13 +28,20 @@ class GeneralAI(
             "${world.id}", "GeneralAI", world.currentYear, world.currentMonth, general.id
         )
 
+        // Special case: NPC troop leaders (npcState=5) always rally
+        if (general.npcState.toInt() == 5) {
+            logger.debug("General {} ({}) is troop leader, always 집합", general.id, general.name)
+            return "집합"
+        }
+
+        // Special case: wanderers (nationId=0) have limited options
+        if (general.nationId == 0L) {
+            return decideWandererAction(general, world, rng)
+        }
+
         val worldId = world.id.toLong()
         val city = cityRepository.findById(general.cityId).orElse(null) ?: return "휴식"
-        val nation = if (general.nationId != 0L) {
-            nationRepository.findById(general.nationId).orElse(null)
-        } else {
-            null
-        }
+        val nation = nationRepository.findById(general.nationId).orElse(null)
 
         val allCities = cityRepository.findByWorldId(worldId)
         val allGenerals = generalRepository.findByWorldId(worldId)
@@ -52,7 +59,13 @@ class GeneralAI(
         val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
 
         val diplomacyState = calcDiplomacyState(nation, diplomacies)
-        val generalType = classifyGeneral(general)
+
+        val nationPolicy = if (nation != null) {
+            NpcPolicyBuilder.buildNationPolicy(nation.meta)
+        } else {
+            NpcNationPolicy()
+        }
+        val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
 
         val ctx = AIContext(
             world = world,
@@ -74,10 +87,18 @@ class GeneralAI(
         } else {
             NpcGeneralPolicy()
         }
-        val nationPolicy = if (nation != null) {
-            NpcPolicyBuilder.buildNationPolicy(nation.meta)
-        } else {
-            NpcNationPolicy()
+
+        // Check reserved command (stored in general.meta)
+        val reservedAction = checkReservedCommand(general)
+        if (reservedAction != null) {
+            logger.debug("General {} ({}) using reserved command: {}", general.id, general.name, reservedAction)
+            return reservedAction
+        }
+
+        // Immediate recovery if injury exceeds cure threshold
+        if (general.injury > nationPolicy.cureThreshold) {
+            logger.debug("General {} ({}) injury {} exceeds cureThreshold {}", general.id, general.name, general.injury, nationPolicy.cureThreshold)
+            return "요양"
         }
 
         val action = try {
@@ -101,6 +122,28 @@ class GeneralAI(
             generalType,
         )
         return action
+    }
+
+    /**
+     * Check if general has a reserved command stored in meta.
+     * Returns the command if valid (not 휴식), null otherwise. Clears after use.
+     */
+    private fun checkReservedCommand(general: General): String? {
+        val reserved = general.meta["reservedCommand"] as? String ?: return null
+        general.meta.remove("reservedCommand")
+        if (reserved == "휴식" || reserved.isBlank()) return null
+        return reserved
+    }
+
+    /**
+     * Wanderer (nationId=0) AI: limited options - move to a city, or just rest.
+     * Per legacy: wanderers can 이동 (travel), 견문, or wait to be recruited.
+     */
+    private fun decideWandererAction(general: General, world: WorldState, rng: Random): String {
+        if (general.injury > 0) return "요양"
+
+        val actions = listOf("견문", "이동", "물자조달", "휴식")
+        return actions[rng.nextInt(actions.size)]
     }
 
     private fun calcDiplomacyState(nation: Nation?, diplomacies: List<Diplomacy>): DiplomacyState {
@@ -138,15 +181,39 @@ class GeneralAI(
         return DiplomacyState.PEACE
     }
 
-    private fun classifyGeneral(general: General): Int {
+    /**
+     * Classify general type as bitmask.
+     * Per legacy: primary type from strongest stat, hybrid if weaker stat is within 80%,
+     * COMMANDER if leadership >= minNPCWarLeadership threshold.
+     */
+    internal fun classifyGeneral(
+        general: General,
+        rng: Random = Random(0),
+        minNPCWarLeadership: Int = 40,
+    ): Int {
         var flags = 0
         val l = general.leadership.toInt()
         val s = general.strength.toInt()
         val i = general.intel.toInt()
 
-        if (s >= l && s >= i) flags = flags or GeneralType.WARRIOR.flag
-        if (i >= l && i >= s) flags = flags or GeneralType.STRATEGIST.flag
-        if (l >= 70) flags = flags or GeneralType.COMMANDER.flag
+        // Primary type from dominant stat
+        if (s >= l && s >= i) {
+            flags = flags or GeneralType.WARRIOR.flag
+            // Hybrid: if intel is within 80% of strength, probabilistically add STRATEGIST
+            if (i > 0 && s > 0 && i.toDouble() / s >= 0.8 && rng.nextInt(100) < 50) {
+                flags = flags or GeneralType.STRATEGIST.flag
+            }
+        }
+        if (i >= l && i >= s) {
+            flags = flags or GeneralType.STRATEGIST.flag
+            // Hybrid: if strength is within 80% of intel, probabilistically add WARRIOR
+            if (s > 0 && i > 0 && s.toDouble() / i >= 0.8 && rng.nextInt(100) < 50) {
+                flags = flags or GeneralType.WARRIOR.flag
+            }
+        }
+
+        // COMMANDER: leadership meets minimum war leadership threshold
+        if (l >= minNPCWarLeadership) flags = flags or GeneralType.COMMANDER.flag
 
         return flags
     }
@@ -210,15 +277,16 @@ class GeneralAI(
     }
 
     private fun decideWarAction(ctx: AIContext, rng: Random, policy: NpcGeneralPolicy): String {
+        val general = ctx.general
+        val city = ctx.city
+
+        // Per legacy: injury check runs before policy iteration
+        if (general.injury > 0) return "요양"
+
         val policyAction = actionByGeneralPolicy(policy, ctx, rng, true)
         if (policyAction != null) {
             return policyAction
         }
-
-        val general = ctx.general
-        val city = ctx.city
-
-        if (general.injury > 0) return "요양"
 
         if (general.crew < 100 && city.nationId == general.nationId) {
             return if (general.gold > 100) "모병" else "징병"
@@ -234,15 +302,16 @@ class GeneralAI(
     }
 
     private fun decidePeaceAction(ctx: AIContext, rng: Random, policy: NpcGeneralPolicy): String {
+        val general = ctx.general
+        val city = ctx.city
+
+        // Per legacy: injury check runs before policy iteration
+        if (general.injury > 0) return "요양"
+
         val policyAction = actionByGeneralPolicy(policy, ctx, rng, false)
         if (policyAction != null) {
             return policyAction
         }
-
-        val general = ctx.general
-        val city = ctx.city
-
-        if (general.injury > 0) return "요양"
 
         if (city.nationId == general.nationId) {
             if (city.agri < city.agriMax / 2) return "농지개간"
@@ -288,7 +357,7 @@ class GeneralAI(
     ): String? {
         for (priority in policy.priority) {
             if (!policy.canDo(priority)) continue
-            val action = mapGeneralPriorityToAction(priority, ctx, rng, warMode) ?: continue
+            val action = mapGeneralPriorityToAction(priority, ctx, rng, warMode, policy) ?: continue
             return action
         }
         return null
@@ -299,11 +368,14 @@ class GeneralAI(
         ctx: AIContext,
         rng: Random,
         warMode: Boolean,
+        policy: NpcGeneralPolicy,
     ): String? {
         val general = ctx.general
         val city = ctx.city
         return when (priority) {
-            "징병" -> if (general.gold > 100) "모병" else "징병"
+            "징병" -> if (general.crew < policy.minWarCrew && city.nationId == general.nationId) {
+                if (general.gold > 100) "모병" else "징병"
+            } else null
             "전투준비" -> when {
                 general.train < 80 -> "훈련"
                 general.atmos < 80 -> "사기진작"
@@ -316,7 +388,7 @@ class GeneralAI(
                 city.agri < city.agriMax / 2 -> "농지개간"
                 city.comm < city.commMax / 2 -> "상업투자"
                 city.secu < city.secuMax / 2 -> "치안강화"
-                else -> listOf("농지개간", "상업투자", "치안강화")[rng.nextInt(3)]
+                else -> null // All development adequate, defer to type-based logic
             }
             "금쌀구매" -> "군량매매"
             "NPC헌납" -> "헌납"

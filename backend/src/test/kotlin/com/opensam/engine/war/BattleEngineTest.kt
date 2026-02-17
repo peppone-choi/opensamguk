@@ -30,6 +30,8 @@ class BattleEngineTest {
         rice: Int = 5000,
         experience: Int = 1000,
         dedication: Int = 1000,
+        specialCode: String = "None",
+        special2Code: String = "None",
     ): General {
         return General(
             id = id,
@@ -48,6 +50,8 @@ class BattleEngineTest {
             rice = rice,
             experience = experience,
             dedication = dedication,
+            specialCode = specialCode,
+            special2Code = special2Code,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -86,21 +90,23 @@ class BattleEngineTest {
     }
 
     @Test
-    fun `WarUnitGeneral base attack uses strength 70 percent and leadership 30 percent`() {
+    fun `WarUnitGeneral base attack uses legacy crew-type-specific stat ratio`() {
         val general = createGeneral(strength = 100, leadership = 50)
         val unit = WarUnitGeneral(general)
 
-        // (100 * 0.7 + 50 * 0.3) * (1 + 0/1000) * 1.0 = 85.0
-        assertEquals(85.0, unit.getBaseAttack(), 0.01)
+        // Legacy: FOOTMAN → ratio = strength*2-40 = 160, clamped: 50+160/2 = 130
+        // FOOTMAN.attack=100, techAbil=0 → (100+0)*130/100 = 130.0
+        assertEquals(130.0, unit.getBaseAttack(), 0.01)
     }
 
     @Test
-    fun `WarUnitGeneral base defence uses mixed stats`() {
-        val general = createGeneral(leadership = 60, strength = 40, intel = 80)
+    fun `WarUnitGeneral base defence uses legacy crew factor formula`() {
+        val general = createGeneral(leadership = 60, strength = 40, intel = 80, crew = 1000)
         val unit = WarUnitGeneral(general)
 
-        // (60 * 0.5 + 40 * 0.3 + 80 * 0.2) * 1.0 * 1.0 = 58.0
-        assertEquals(58.0, unit.getBaseDefence(), 0.01)
+        // Legacy: FOOTMAN.defence=150, techAbil=0, crewFactor=1000/233.33+70=74.286
+        // result = 150 * 74.286 / 100 = 111.429
+        assertEquals(111.43, unit.getBaseDefence(), 0.01)
     }
 
     @Test
@@ -108,8 +114,9 @@ class BattleEngineTest {
         val general = createGeneral(strength = 100, leadership = 50)
         val unit = WarUnitGeneral(general, nationTech = 100f)
 
-        // 85.0 * (1 + 100/1000) = 85.0 * 1.1 = 93.5
-        assertEquals(93.5, unit.getBaseAttack(), 0.01)
+        // techLevel=(100/100)=1, techAbil=25, ratio=130 (same as above)
+        // (100+25)*130/100 = 162.5
+        assertEquals(162.5, unit.getBaseAttack(), 0.01)
     }
 
     @Test
@@ -134,23 +141,25 @@ class BattleEngineTest {
     }
 
     @Test
-    fun `WarUnitGeneral consumeRice reduces rice`() {
+    fun `WarUnitGeneral consumeRice applies legacy multipliers`() {
         val general = createGeneral(rice = 1000)
         val unit = WarUnitGeneral(general)
 
         unit.consumeRice(500)
-        // consumption = max(1, 500/100) = 5
-        assertEquals(995, unit.rice)
+        // 500/100=5.0, isAttacker=true, vsCity=false
+        // FOOTMAN.riceCost=9 → 5.0*9=45.0, techCost=1.0 → 45
+        assertEquals(955, unit.rice)
     }
 
     @Test
-    fun `WarUnitGeneral consumeRice minimum 1`() {
-        val general = createGeneral(rice = 100)
+    fun `WarUnitGeneral consumeRice defender and vsCity multipliers`() {
+        val general = createGeneral(rice = 1000)
         val unit = WarUnitGeneral(general)
 
-        unit.consumeRice(50)
-        // consumption = max(1, 50/100=0) = 1
-        assertEquals(99, unit.rice)
+        unit.consumeRice(500, isAttacker = false, vsCity = true)
+        // 500/100=5.0, *0.8 (defender)=4.0, *0.8 (vsCity)=3.2
+        // FOOTMAN.riceCost=9 → 3.2*9=28.8, techCost=1.0 → 28
+        assertEquals(972, unit.rice)
     }
 
     @Test
@@ -367,5 +376,137 @@ class BattleEngineTest {
         // Just verify the battle executed without errors and damage was dealt
         assertTrue(result.attackerDamageDealt > 0)
         assertTrue(result.defenderDamageDealt > 0)
+    }
+
+    // ========== Trigger integration tests ==========
+
+    @Test
+    fun `collectTriggers returns triggers from specialCode`() {
+        val general = createGeneral(specialCode = "필살")
+        val unit = WarUnitGeneral(general)
+
+        val triggers = engine.collectTriggers(unit)
+
+        assertEquals(1, triggers.size)
+        assertEquals("필살", triggers[0].code)
+    }
+
+    @Test
+    fun `collectTriggers returns triggers from both specialCode and special2Code`() {
+        val general = createGeneral(specialCode = "필살", special2Code = "회피")
+        val unit = WarUnitGeneral(general)
+
+        val triggers = engine.collectTriggers(unit)
+
+        assertEquals(2, triggers.size)
+    }
+
+    @Test
+    fun `collectTriggers returns empty for None specials`() {
+        val general = createGeneral(specialCode = "None", special2Code = "None")
+        val unit = WarUnitGeneral(general)
+
+        val triggers = engine.collectTriggers(unit)
+
+        assertTrue(triggers.isEmpty())
+    }
+
+    @Test
+    fun `collectTriggers returns empty for city units`() {
+        val city = createCity()
+        val unit = WarUnitCity(city)
+
+        val triggers = engine.collectTriggers(unit)
+
+        assertTrue(triggers.isEmpty())
+    }
+
+    @Test
+    fun `견고 special prevents injury in resolveBattle`() {
+        // Run many battles with 견고 attacker - should never get injured
+        var injuryOccurred = false
+        for (seed in 1..50) {
+            val rng = Random(seed)
+            val attackerGeneral = createGeneral(
+                id = 1, nationId = 1, strength = 60, leadership = 60,
+                crew = 3000, rice = 50000, specialCode = "견고",
+            )
+            val defenderGeneral = createGeneral(
+                id = 2, nationId = 2, strength = 50, leadership = 50,
+                crew = 2000, rice = 20000,
+            )
+            val city = createCity(nationId = 2)
+
+            val attacker = WarUnitGeneral(attackerGeneral)
+            val defender = WarUnitGeneral(defenderGeneral)
+
+            engine.resolveBattle(attacker, listOf(defender), city, rng)
+
+            if (attackerGeneral.injury > 0) {
+                injuryOccurred = true
+                break
+            }
+        }
+        assertFalse(injuryOccurred, "견고 special should prevent all injuries")
+    }
+
+    @Test
+    fun `공성 special works in siege without errors`() {
+        val rng = Random(42)
+        val gen = createGeneral(
+            id = 1, nationId = 1, strength = 90, leadership = 90,
+            crew = 10000, rice = 100000, specialCode = "공성",
+        )
+        val city = createCity(nationId = 2, def = 50, wall = 50)
+        val attacker = WarUnitGeneral(gen)
+
+        val result = engine.resolveBattle(attacker, emptyList(), city, rng)
+
+        assertTrue(result.attackerDamageDealt > 0)
+        assertTrue(result.cityOccupied, "공성 attacker should occupy city")
+    }
+
+    @Test
+    fun `resolveBattle with specials does not crash`() {
+        // Smoke test: various special combinations should not cause errors
+        val specials = listOf("필살", "회피", "반계", "신산", "위압", "저격", "격노", "돌격",
+            "화공", "기습", "매복", "방어", "귀모", "공성", "철벽", "분투", "용병", "견고")
+
+        for (special in specials) {
+            val rng = Random(42)
+            val attackerGeneral = createGeneral(
+                id = 1, nationId = 1, strength = 70, leadership = 70,
+                crew = 3000, rice = 50000, specialCode = special,
+            )
+            val defenderGeneral = createGeneral(
+                id = 2, nationId = 2, strength = 50, leadership = 50,
+                crew = 2000, rice = 20000,
+            )
+            val city = createCity(nationId = 2)
+
+            val attacker = WarUnitGeneral(attackerGeneral)
+            val defender = WarUnitGeneral(defenderGeneral)
+
+            // Should not throw
+            val result = engine.resolveBattle(attacker, listOf(defender), city, rng)
+            assertTrue(result.attackerDamageDealt > 0, "Battle with $special should deal damage")
+        }
+    }
+
+    @Test
+    fun `resolveBattle deterministic with same seed`() {
+        val attackerGen1 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000)
+        val defenderGen1 = createGeneral(id = 2, nationId = 2, strength = 50, crew = 2000, rice = 20000)
+        val city1 = createCity(nationId = 2)
+        val result1 = engine.resolveBattle(WarUnitGeneral(attackerGen1), listOf(WarUnitGeneral(defenderGen1)), city1, Random(123))
+
+        val attackerGen2 = createGeneral(id = 1, nationId = 1, strength = 70, crew = 3000, rice = 50000)
+        val defenderGen2 = createGeneral(id = 2, nationId = 2, strength = 50, crew = 2000, rice = 20000)
+        val city2 = createCity(nationId = 2)
+        val result2 = engine.resolveBattle(WarUnitGeneral(attackerGen2), listOf(WarUnitGeneral(defenderGen2)), city2, Random(123))
+
+        assertEquals(result1.attackerDamageDealt, result2.attackerDamageDealt)
+        assertEquals(result1.defenderDamageDealt, result2.defenderDamageDealt)
+        assertEquals(result1.attackerWon, result2.attackerWon)
     }
 }

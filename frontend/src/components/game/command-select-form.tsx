@@ -4,9 +4,12 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { commandApi, realtimeApi } from "@/lib/gameApi";
+import {
+  CommandArgForm,
+  COMMAND_ARGS,
+} from "@/components/game/command-arg-form";
 import type { CommandTableEntry, CommandResult } from "@/types";
 
 interface CommandSelectFormProps {
@@ -25,37 +28,24 @@ export function CommandSelectForm({
   generalId,
 }: CommandSelectFormProps) {
   const [selectedCmd, setSelectedCmd] = useState("");
-  const [argText, setArgText] = useState("");
+  const [pendingArg, setPendingArg] = useState<
+    Record<string, unknown> | undefined
+  >();
   const [result, setResult] = useState<CommandResult | null>(null);
   const [executing, setExecuting] = useState(false);
 
   const categories = Object.keys(commandTable);
+  const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);
 
-  const handleReserve = () => {
+  const handleReserve = (arg?: Record<string, unknown>) => {
     if (!selectedCmd) return;
-    let arg: Record<string, unknown> | undefined;
-    if (argText.trim()) {
-      try {
-        arg = JSON.parse(argText);
-      } catch {
-        return;
-      }
-    }
     onSelect(selectedCmd, arg);
   };
 
-  const handleExecute = async () => {
+  const handleExecute = async (arg?: Record<string, unknown>) => {
     if (!selectedCmd) return;
     setExecuting(true);
     try {
-      let arg: Record<string, unknown> | undefined;
-      if (argText.trim()) {
-        try {
-          arg = JSON.parse(argText);
-        } catch {
-          return;
-        }
-      }
       const { data } = realtimeMode
         ? await realtimeApi.execute(generalId, selectedCmd, arg)
         : await commandApi.execute(generalId, selectedCmd, arg);
@@ -65,6 +55,16 @@ export function CommandSelectForm({
     } finally {
       setExecuting(false);
     }
+  };
+
+  const handleArgSubmit = (arg: Record<string, unknown>) => {
+    setPendingArg(arg);
+  };
+
+  const handleSelectCmd = (actionCode: string) => {
+    setSelectedCmd(actionCode);
+    setPendingArg(undefined);
+    setResult(null);
   };
 
   return (
@@ -91,10 +91,10 @@ export function CommandSelectForm({
                       !cmd.enabled ? "opacity-40 cursor-not-allowed" : ""
                     }`}
                     onClick={() => {
-                      if (cmd.enabled) setSelectedCmd(cmd.actionCode);
+                      if (cmd.enabled) handleSelectCmd(cmd.actionCode);
                     }}
                     title={cmd.reason ?? undefined}
-                    >
+                  >
                     {cmd.name}
                     {realtimeMode && (
                       <span className="ml-1 text-[10px] text-gray-300">
@@ -110,41 +110,43 @@ export function CommandSelectForm({
 
         {selectedCmd && (
           <>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">
-                추가 인자 (JSON, 선택)
-              </label>
-              <Input
-                type="text"
-                value={argText}
-                onChange={(e) => setArgText(e.target.value)}
-                placeholder='예: {"cityId": 1}'
-                className="text-xs"
+            {hasArgForm && (
+              <CommandArgForm
+                actionCode={selectedCmd}
+                onSubmit={handleArgSubmit}
               />
-            </div>
+            )}
+
             <div className="flex gap-2">
               {!realtimeMode && (
-                <Button size="sm" onClick={handleReserve}>
+                <Button
+                  size="sm"
+                  onClick={() => handleReserve(pendingArg)}
+                  disabled={hasArgForm && !pendingArg}
+                >
                   예약
                 </Button>
               )}
-              {realtimeMode && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleExecute}
-                  disabled={executing}
-                >
-                  {executing ? "요청중..." : "실시간 실행 요청"}
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => handleExecute(pendingArg)}
+                disabled={executing || (hasArgForm && !pendingArg)}
+              >
+                {executing
+                  ? "요청중..."
+                  : realtimeMode
+                    ? "실시간 실행 요청"
+                    : "즉시실행"}
+              </Button>
               <Button size="sm" variant="ghost" onClick={onCancel}>
                 취소
               </Button>
             </div>
             {realtimeMode && (
               <p className="text-[11px] text-gray-400">
-                실시간 모드에서는 예턴 예약이 비활성화되며, 커맨드 포인트를 소모해 실행 요청 후 지연시간이 지나면 자동 실행됩니다.
+                실시간 모드에서는 예턴 예약이 비활성화되며, 커맨드 포인트를
+                소모해 실행 요청 후 지연시간이 지나면 자동 실행됩니다.
               </p>
             )}
           </>

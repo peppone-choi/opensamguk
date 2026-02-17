@@ -33,6 +33,9 @@ class General(
     @Column(name = "npc_state", nullable = false)
     var npcState: Short = 0,
 
+    @Column(name = "npc_org")
+    var npcOrg: Long? = null,
+
     @Column(nullable = false)
     var affinity: Short = 0,
 
@@ -71,6 +74,21 @@ class General(
 
     @Column(nullable = false)
     var charm: Short = 50,
+
+    @Column(name = "dex_1", nullable = false)
+    var dex1: Int = 0,
+
+    @Column(name = "dex_2", nullable = false)
+    var dex2: Int = 0,
+
+    @Column(name = "dex_3", nullable = false)
+    var dex3: Int = 0,
+
+    @Column(name = "dex_4", nullable = false)
+    var dex4: Int = 0,
+
+    @Column(name = "dex_5", nullable = false)
+    var dex5: Int = 0,
 
     @Column(nullable = false)
     var injury: Short = 0,
@@ -119,6 +137,12 @@ class General(
 
     @Column(name = "item_code", nullable = false)
     var itemCode: String = "None",
+
+    @Column(name = "owner_name", nullable = false)
+    var ownerName: String = "",
+
+    @Column(nullable = false)
+    var newmsg: Short = 0,
 
     @Column(name = "turn_time", nullable = false)
     var turnTime: OffsetDateTime = OffsetDateTime.now(),

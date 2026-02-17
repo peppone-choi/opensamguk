@@ -73,7 +73,7 @@ class CommandTest {
         wallMax: Int = 1000,
         pop: Int = 10000,
         popMax: Int = 50000,
-        trust: Int = 80,
+        trust: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
     ): City {
@@ -270,7 +270,7 @@ class CommandTest {
     fun `농지개간 should apply front line debuff`() {
         val general = createTestGeneral(intel = 80)
         val env = createTestEnv()
-        val city = createTestCity(frontState = 1, trust = 100)
+        val city = createTestCity(frontState = 1, trust = 100f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 

@@ -10,10 +10,7 @@ interface PageHeaderProps {
   description?: string;
 }
 
-export function PageHeader({
-  title,
-  description,
-}: PageHeaderProps) {
+export function PageHeader({ title, description }: PageHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -54,7 +51,9 @@ export function PageHeader({
         >
           갱신
         </Button>
-        <h2 className="m-0 text-center text-base font-bold leading-8">{title}</h2>
+        <h2 className="m-0 text-center text-base font-bold leading-8">
+          {title}
+        </h2>
         <div className="border-l border-gray-600" />
         <div className="border-l border-gray-600" />
       </div>

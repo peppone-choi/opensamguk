@@ -61,10 +61,7 @@ export function formatGeneralTypeCall(
     strength + intel,
     intel + leadership,
   );
-  if (
-    maxStat >= chiefStatMin + statGradeLevel &&
-    sum2Stat >= maxStat * 1.7
-  )
+  if (maxStat >= chiefStatMin + statGradeLevel && sum2Stat >= maxStat * 1.7)
     return "만능";
   if (strength >= chiefStatMin - statGradeLevel && intel < strength * 0.8)
     return "용장";
@@ -230,7 +227,9 @@ export function formatOfficerLevelText(
       ? OfficerLevelMapDefault
       : (OfficerLevelMapByNationLevel[nationLevel] ?? OfficerLevelMapDefault);
 
-  return nationMap[officerLevel] ?? (OfficerLevelMapDefault[officerLevel] ?? "???");
+  return (
+    nationMap[officerLevel] ?? OfficerLevelMapDefault[officerLevel] ?? "???"
+  );
 }
 
 // --- Age color (legacy parity: 3-color based on retirementYear) ---
@@ -338,7 +337,10 @@ export function formatHonor(experience: number): string {
 export const TECH_LEVEL_STEP = 1000;
 
 export function convTechLevel(tech: number, maxTechLevel: number): number {
-  return Math.min(Math.max(Math.floor(tech / TECH_LEVEL_STEP), 0), maxTechLevel);
+  return Math.min(
+    Math.max(Math.floor(tech / TECH_LEVEL_STEP), 0),
+    maxTechLevel,
+  );
 }
 
 export function getMaxRelativeTechLevel(
@@ -350,7 +352,10 @@ export function getMaxRelativeTechLevel(
 ): number {
   const relYear = year - startYear;
   return Math.min(
-    Math.max(Math.floor(relYear / techLevelIncYear) + initialAllowedTechLevel, 1),
+    Math.max(
+      Math.floor(relYear / techLevelIncYear) + initialAllowedTechLevel,
+      1,
+    ),
     maxTechLevel,
   );
 }

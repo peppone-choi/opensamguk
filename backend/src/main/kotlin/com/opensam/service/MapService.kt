@@ -1,6 +1,7 @@
 package com.opensam.service
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.opensam.model.CityConst
@@ -52,6 +53,9 @@ class MapService {
     }
 
     fun getCities(mapName: String): List<CityConst> {
+        if (!maps.containsKey(mapName)) {
+            loadMap(mapName)
+        }
         return maps[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
     }
 
@@ -62,6 +66,13 @@ class MapService {
     fun getAdjacentCities(mapName: String, cityId: Int): List<Int> {
         val adj = adjacencyIndex[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
         return adj[cityId] ?: emptyList()
+    }
+
+    fun getMapJson(mapName: String): JsonNode? {
+        val resource = ClassPathResource("data/maps/$mapName.json")
+        if (!resource.exists()) return null
+        val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+        return mapper.readTree(resource.inputStream)
     }
 
     fun getDistance(mapName: String, fromCityId: Int, toCityId: Int): Int {

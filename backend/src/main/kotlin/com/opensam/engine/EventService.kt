@@ -14,6 +14,7 @@ class EventService(
     private val eventRepository: EventRepository,
     private val nationRepository: NationRepository,
     private val messageRepository: MessageRepository,
+    private val economyService: EconomyService,
 ) {
     private val log = LoggerFactory.getLogger(EventService::class.java)
 
@@ -26,7 +27,7 @@ class EventService(
         for (event in events) {
             if (evaluateCondition(event.condition, world)) {
                 log.info("Event #{} triggered (target={}, priority={})", event.id, targetCode, event.priority)
-                executeAction(event.action, world)
+                executeAction(event.action, world, event.id)
             }
         }
     }
@@ -79,7 +80,7 @@ class EventService(
         }
     }
 
-    private fun executeAction(action: Map<String, Any>, world: WorldState) {
+    private fun executeAction(action: Map<String, Any>, world: WorldState, currentEventId: Long = 0) {
         when (val type = action["type"] as? String) {
             "log" -> {
                 val message = action["message"] as? String ?: ""
@@ -104,6 +105,13 @@ class EventService(
                 log.info("[World {}] Deleted event #{}", world.id, eventId)
             }
 
+            "delete_self" -> {
+                if (currentEventId > 0) {
+                    eventRepository.deleteById(currentEventId)
+                    log.info("[World {}] Event #{} deleted itself", world.id, currentEventId)
+                }
+            }
+
             "notice" -> {
                 val message = action["message"] as? String ?: ""
                 messageRepository.save(
@@ -119,6 +127,54 @@ class EventService(
                     )
                 )
                 log.info("[World {}] Notice: {}", world.id, message)
+            }
+
+            // Economy-related actions delegating to EconomyService
+            "process_income" -> {
+                economyService.processIncomeEvent(world)
+                log.info("[World {}] Event action: process_income", world.id)
+            }
+
+            "process_semi_annual" -> {
+                economyService.processSemiAnnualEvent(world)
+                log.info("[World {}] Event action: process_semi_annual", world.id)
+            }
+
+            "update_city_supply" -> {
+                economyService.updateCitySupplyState(world)
+                log.info("[World {}] Event action: update_city_supply", world.id)
+            }
+
+            "update_nation_level" -> {
+                economyService.updateNationLevelEvent(world)
+                log.info("[World {}] Event action: update_nation_level", world.id)
+            }
+
+            "randomize_trade_rate" -> {
+                economyService.randomizeCityTradeRate(world)
+                log.info("[World {}] Event action: randomize_trade_rate", world.id)
+            }
+
+            // Compound action stubs - these will be fully implemented when their subsystems are ready
+            "raise_invader" -> {
+                log.info("[World {}] Event action stub: raise_invader (not yet implemented)", world.id)
+            }
+
+            "raise_npc_nation" -> {
+                log.info("[World {}] Event action stub: raise_npc_nation (not yet implemented)", world.id)
+            }
+
+            "provide_npc_troop_leader" -> {
+                log.info("[World {}] Event action stub: provide_npc_troop_leader (not yet implemented)", world.id)
+            }
+
+            // Compound action: execute multiple sub-actions sequentially
+            "compound" -> {
+                @Suppress("UNCHECKED_CAST")
+                val actions = action["actions"] as? List<Map<String, Any>> ?: return
+                for (subAction in actions) {
+                    executeAction(subAction, world, currentEventId)
+                }
             }
 
             else -> {

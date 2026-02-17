@@ -57,7 +57,7 @@ class ConstraintTest {
         wallMax: Int = 1000,
         pop: Int = 10000,
         popMax: Int = 50000,
-        trust: Int = 80,
+        trust: Float = 80f,
     ): City {
         return City(
             id = 1,
@@ -626,14 +626,14 @@ class ConstraintTest {
 
     @Test
     fun `RemainCityTrust passes when trust is below max`() {
-        val city = createCity(trust = 80)
+        val city = createCity(trust = 80f)
         val result = RemainCityTrust(100).test(ctx(city = city))
         assertTrue(result is ConstraintResult.Pass)
     }
 
     @Test
     fun `RemainCityTrust fails when trust is at max`() {
-        val city = createCity(trust = 100)
+        val city = createCity(trust = 100f)
         val result = RemainCityTrust(100).test(ctx(city = city))
         assertTrue(result is ConstraintResult.Fail)
         assertTrue((result as ConstraintResult.Fail).reason.contains("민심"))

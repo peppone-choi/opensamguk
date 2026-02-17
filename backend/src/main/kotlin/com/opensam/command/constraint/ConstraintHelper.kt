@@ -405,3 +405,28 @@ fun NeutralCity() = object : Constraint {
         else ConstraintResult.Fail("공백지가 아닙니다.")
     }
 }
+
+fun HasRoute() = object : Constraint {
+    override val name = "HasRoute"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
+        // TODO: implement map graph route check (BFS between current city and dest)
+        return ConstraintResult.Pass
+    }
+}
+
+fun AllowDiplomacy(minOfficerLevel: Int = 5) = object : Constraint {
+    override val name = "AllowDiplomacy"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        return if (ctx.general.officerLevel >= minOfficerLevel.toShort()) ConstraintResult.Pass
+        else ConstraintResult.Fail("외교 권한이 없습니다. (관직 레벨 ${minOfficerLevel} 이상 필요)")
+    }
+}
+
+fun NotInjured(maxInjury: Int = 0) = object : Constraint {
+    override val name = "NotInjured"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        return if (ctx.general.injury <= maxInjury.toShort()) ConstraintResult.Pass
+        else ConstraintResult.Fail("부상 상태입니다. (부상: ${ctx.general.injury}, 허용: $maxInjury)")
+    }
+}

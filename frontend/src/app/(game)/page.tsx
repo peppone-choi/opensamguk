@@ -86,17 +86,30 @@ export default function GameDashboard() {
             className="grid text-center text-xs border-t border-gray-600"
             style={{ gridTemplateColumns: "repeat(4, 1fr)" }}
           >
-            <div className="border-b border-l border-gray-600 py-1" style={{ color: "cyan" }}>
+            <div
+              className="border-b border-l border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
               {global.scenarioText}
             </div>
-            <div className="border-b border-l border-gray-600 py-1" style={{ color: "cyan" }}>
+            <div
+              className="border-b border-l border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
               NPC: {global.extendedGeneral ? "확장" : "표준"}{" "}
               {global.isFiction ? "가상" : "사실"}
             </div>
-            <div className="border-b border-l border-gray-600 py-1" style={{ color: "cyan" }}>
-              NPC선택: {["불가능", "가능", "선택 생성"][global.npcMode] ?? "불가능"}
+            <div
+              className="border-b border-l border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
+              NPC선택:{" "}
+              {["불가능", "가능", "선택 생성"][global.npcMode] ?? "불가능"}
             </div>
-            <div className="border-b border-l border-gray-600 py-1" style={{ color: "cyan" }}>
+            <div
+              className="border-b border-l border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
               접속자: {global.onlineUserCnt}명
             </div>
             <div className="border-b border-l border-gray-600 py-1">
@@ -170,10 +183,7 @@ export default function GameDashboard() {
       </div>
 
       {/* ===== Main game board (legacy ingameBoard grid) ===== */}
-      <div
-        className="ingameBoard"
-        style={{ display: "grid" }}
-      >
+      <div className="ingameBoard" style={{ display: "grid" }}>
         {/* Map */}
         <div className="mapView">
           <MapViewer worldId={currentWorld.id} mapCode={mapCode} compact />
@@ -204,7 +214,7 @@ export default function GameDashboard() {
               variant="outline"
               size="sm"
               className="flex-[4]"
-              onClick={() => window.location.href = "/lobby"}
+              onClick={() => (window.location.href = "/lobby")}
             >
               로비로
             </Button>
@@ -223,10 +233,7 @@ export default function GameDashboard() {
 
         {/* Nation info */}
         <div className="nationInfo">
-          <NationBasicCard
-            nation={frontInfo?.nation ?? null}
-            global={global}
-          />
+          <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
         </div>
 
         {/* General info */}
@@ -251,7 +258,10 @@ export default function GameDashboard() {
               <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
             ) : (
               frontInfo.recentRecord.global.map((r) => (
-                <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
+                <div
+                  key={r.id}
+                  className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
+                >
                   <span className="text-gray-400">[{r.date}]</span> {r.message}
                 </div>
               ))
@@ -265,7 +275,10 @@ export default function GameDashboard() {
               <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
             ) : (
               frontInfo.recentRecord.general.map((r) => (
-                <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
+                <div
+                  key={r.id}
+                  className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
+                >
                   <span className="text-gray-400">[{r.date}]</span> {r.message}
                 </div>
               ))
@@ -279,7 +292,10 @@ export default function GameDashboard() {
               <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
             ) : (
               frontInfo.recentRecord.history.map((r) => (
-                <div key={r.id} className="border-b border-gray-600/30 px-2 py-0.5 text-xs">
+                <div
+                  key={r.id}
+                  className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
+                >
                   <span className="text-gray-400">[{r.date}]</span> {r.message}
                 </div>
               ))

@@ -97,13 +97,9 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
 
       {/* 국고/병량 */}
       <Head>국고</Head>
-      <Body>
-        {noNation ? "해당 없음" : nation.gold.toLocaleString()}
-      </Body>
+      <Body>{noNation ? "해당 없음" : nation.gold.toLocaleString()}</Body>
       <Head>병량</Head>
-      <Body>
-        {noNation ? "해당 없음" : nation.rice.toLocaleString()}
-      </Body>
+      <Body>{noNation ? "해당 없음" : nation.rice.toLocaleString()}</Body>
 
       {/* 지급률/세율 */}
       <Head>지급률</Head>
@@ -114,22 +110,16 @@ export function NationBasicCard({ nation, global }: NationBasicCardProps) {
       {/* 속령/장수 */}
       <Head>속령</Head>
       <Body>
-        {noNation
-          ? "해당 없음"
-          : nation.population.cityCnt.toLocaleString()}
+        {noNation ? "해당 없음" : nation.population.cityCnt.toLocaleString()}
       </Body>
       <Head>장수</Head>
       <Body>
-        {noNation
-          ? "해당 없음"
-          : nation.crew.generalCnt.toLocaleString()}
+        {noNation ? "해당 없음" : nation.crew.generalCnt.toLocaleString()}
       </Body>
 
       {/* 국력/기술력 */}
       <Head>국력</Head>
-      <Body>
-        {noNation ? "해당 없음" : nation.power.toLocaleString()}
-      </Body>
+      <Body>{noNation ? "해당 없음" : nation.power.toLocaleString()}</Body>
       <Head>기술력</Head>
       <Body>
         {noNation ? (

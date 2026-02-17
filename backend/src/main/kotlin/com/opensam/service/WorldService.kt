@@ -15,4 +15,12 @@ class WorldService(
     fun getWorld(id: Short): WorldState? {
         return worldStateRepository.findById(id).orElse(null)
     }
+
+    fun save(world: WorldState): WorldState {
+        return worldStateRepository.save(world)
+    }
+
+    fun deleteWorld(id: Short) {
+        worldStateRepository.deleteById(id)
+    }
 }

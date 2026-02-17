@@ -215,7 +215,7 @@ class EconomyService(
         // 2. Neutral city handling: reset trust to 50, apply additional 0.99 decay (legacy double-decay)
         for (city in cities) {
             if (city.nationId == 0L) {
-                city.trust = 50
+                city.trust = 50F
                 city.agri = (city.agri * 0.99).toInt()
                 city.comm = (city.comm * 0.99).toInt()
                 city.secu = (city.secu * 0.99).toInt()
@@ -263,7 +263,7 @@ class EconomyService(
                 city.wall = (city.wall * (1 + genericRatio)).toInt().coerceAtMost(city.wallMax)
 
                 // Trust adjustment
-                city.trust = (city.trust + (20 - taxRate).toInt()).coerceIn(0, 100)
+                city.trust = (city.trust + (20 - taxRate).toFloat()).coerceIn(0F, 100F)
             }
         }
 
@@ -300,6 +300,59 @@ class EconomyService(
                 else -> nation.rice
             }
         }
+    }
+
+    /**
+     * Public entry point for per-turn supply state recalculation (traffic update).
+     * Called by TurnService each turn to keep supply routes current.
+     */
+    @Transactional
+    fun updateCitySupplyState(world: WorldState) {
+        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val generals = generalRepository.findByWorldId(world.id.toLong())
+        updateCitySupply(world, nations, cities, generals)
+        cityRepository.saveAll(cities)
+        generalRepository.saveAll(generals)
+    }
+
+    /**
+     * Public entry point for event-driven income processing.
+     */
+    @Transactional
+    fun processIncomeEvent(world: WorldState) {
+        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val generals = generalRepository.findByWorldId(world.id.toLong())
+        processIncome(world, nations, cities, generals)
+        cityRepository.saveAll(cities)
+        nationRepository.saveAll(nations)
+        generalRepository.saveAll(generals)
+    }
+
+    /**
+     * Public entry point for event-driven semi-annual processing.
+     */
+    @Transactional
+    fun processSemiAnnualEvent(world: WorldState) {
+        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val generals = generalRepository.findByWorldId(world.id.toLong())
+        processSemiAnnual(world, nations, cities, generals)
+        cityRepository.saveAll(cities)
+        nationRepository.saveAll(nations)
+        generalRepository.saveAll(generals)
+    }
+
+    /**
+     * Public entry point for event-driven nation level update.
+     */
+    @Transactional
+    fun updateNationLevelEvent(world: WorldState) {
+        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val nations = nationRepository.findByWorldId(world.id.toLong())
+        updateNationLevel(nations, cities)
+        nationRepository.saveAll(nations)
     }
 
     // ── Phase A2: updateCitySupply (+ trust < 30 neutral conversion) ──
@@ -354,7 +407,7 @@ class EconomyService(
                     city.supplyState = 0
                     // Unsupplied city: 10% stat decay
                     city.pop = (city.pop * 0.9).toInt()
-                    city.trust = (city.trust * 0.9).toInt()
+                    city.trust = city.trust * 0.9F
                     city.agri = (city.agri * 0.9).toInt()
                     city.comm = (city.comm * 0.9).toInt()
                     city.secu = (city.secu * 0.9).toInt()
@@ -491,7 +544,7 @@ class EconomyService(
 
                 city.state = stateCode
                 city.pop = (city.pop * affectRatio).toInt().coerceAtMost(city.popMax)
-                city.trust = (city.trust * affectRatio).toInt().coerceAtMost(100)
+                city.trust = (city.trust * affectRatio.toFloat()).coerceAtMost(100F)
                 city.agri = (city.agri * affectRatio).toInt().coerceAtMost(city.agriMax)
                 city.comm = (city.comm * affectRatio).toInt().coerceAtMost(city.commMax)
                 city.secu = (city.secu * affectRatio).toInt().coerceAtMost(city.secuMax)
@@ -507,7 +560,7 @@ class EconomyService(
 
                 city.state = stateCode
                 city.pop = (city.pop * affectRatio).toInt()
-                city.trust = (city.trust * affectRatio).toInt()
+                city.trust = city.trust * affectRatio.toFloat()
                 city.agri = (city.agri * affectRatio).toInt()
                 city.comm = (city.comm * affectRatio).toInt()
                 city.secu = (city.secu * affectRatio).toInt()

@@ -18,6 +18,7 @@ class EventServiceTest {
     private lateinit var eventRepository: EventRepository
     private lateinit var nationRepository: NationRepository
     private lateinit var messageRepository: MessageRepository
+    private lateinit var economyService: EconomyService
 
     /** Mockito `any()` returns null which breaks Kotlin non-null params. This helper casts it. */
     @Suppress("UNCHECKED_CAST")
@@ -28,11 +29,12 @@ class EventServiceTest {
         eventRepository = mock(EventRepository::class.java)
         nationRepository = mock(NationRepository::class.java)
         messageRepository = mock(MessageRepository::class.java)
+        economyService = mock(EconomyService::class.java)
 
         // Default: messageRepository.save returns the argument
         `when`(messageRepository.save(anyNonNull<Message>())).thenAnswer { it.arguments[0] }
 
-        service = EventService(eventRepository, nationRepository, messageRepository)
+        service = EventService(eventRepository, nationRepository, messageRepository, economyService)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
@@ -279,5 +281,192 @@ class EventServiceTest {
         service.dispatchEvents(world, "turn_start")
 
         verify(messageRepository).save(any())
+    }
+
+    // ========== New action types: economy delegations ==========
+
+    @Test
+    fun `dispatchEvents executes process_income action`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "process_income"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(economyService).processIncomeEvent(world)
+    }
+
+    @Test
+    fun `dispatchEvents executes process_semi_annual action`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "process_semi_annual"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(economyService).processSemiAnnualEvent(world)
+    }
+
+    @Test
+    fun `dispatchEvents executes update_city_supply action`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "update_city_supply"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(economyService).updateCitySupplyState(world)
+    }
+
+    @Test
+    fun `dispatchEvents executes update_nation_level action`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "update_nation_level"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(economyService).updateNationLevelEvent(world)
+    }
+
+    @Test
+    fun `dispatchEvents executes randomize_trade_rate action`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "randomize_trade_rate"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(economyService).randomizeCityTradeRate(world)
+    }
+
+    // ========== delete_self action ==========
+
+    @Test
+    fun `dispatchEvents executes delete_self action`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 42,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "delete_self"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(eventRepository).deleteById(42L)
+    }
+
+    // ========== compound action ==========
+
+    @Test
+    fun `dispatchEvents executes compound action with multiple sub-actions`() {
+        val world = createWorld()
+        val subActions: List<Map<String, Any>> = listOf(
+            mapOf("type" to "process_income"),
+            mapOf("type" to "update_nation_level"),
+        )
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "compound", "actions" to subActions),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        service.dispatchEvents(world, "MONTH")
+
+        verify(economyService).processIncomeEvent(world)
+        verify(economyService).updateNationLevelEvent(world)
+    }
+
+    // ========== stub actions don't throw ==========
+
+    @Test
+    fun `dispatchEvents handles raise_invader stub gracefully`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "raise_invader"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
+    }
+
+    @Test
+    fun `dispatchEvents handles raise_npc_nation stub gracefully`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "raise_npc_nation"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
+    }
+
+    @Test
+    fun `dispatchEvents handles provide_npc_troop_leader stub gracefully`() {
+        val world = createWorld()
+        val event = createEvent(
+            id = 1,
+            targetCode = "MONTH",
+            condition = mutableMapOf("type" to "always_true"),
+            action = mutableMapOf("type" to "provide_npc_troop_leader"),
+        )
+
+        `when`(eventRepository.findByWorldIdAndTargetCodeOrderByPriorityDescIdAsc(1L, "MONTH"))
+            .thenReturn(listOf(event))
+
+        assertDoesNotThrow { service.dispatchEvents(world, "MONTH") }
     }
 }

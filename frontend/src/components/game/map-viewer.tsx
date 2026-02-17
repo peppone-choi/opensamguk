@@ -199,11 +199,11 @@ export function MapViewer({
           );
         })}
       </svg>
-        {tooltip && (
-          <div
-            className="fixed z-50 border border-gray-600 bg-[#111] p-2 text-xs shadow-lg"
-            style={{ left: tooltip.x + 10, top: tooltip.y - 8 }}
-          >
+      {tooltip && (
+        <div
+          className="fixed z-50 border border-gray-600 bg-[#111] p-2 text-xs shadow-lg"
+          style={{ left: tooltip.x + 10, top: tooltip.y - 8 }}
+        >
           <div className="font-medium flex items-center gap-1.5">
             <span
               className="w-2.5 h-2.5 rounded-full"

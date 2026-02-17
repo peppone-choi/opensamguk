@@ -72,7 +72,7 @@ class IndividualCommandTest {
         wallMax: Int = 1000,
         pop: Int = 10000,
         popMax: Int = 50000,
-        trust: Int = 80,
+        trust: Float = 80f,
         supplyState: Short = 1,
         frontState: Short = 0,
     ): City {
@@ -641,7 +641,7 @@ class IndividualCommandTest {
     fun `농지개간 should use intel stat for calculation`() {
         val general = createTestGeneral(intel = 90, gold = 500, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000, trust = 100)
+        val city = createTestCity(agri = 500, agriMax = 1000, trust = 100f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 
@@ -657,7 +657,7 @@ class IndividualCommandTest {
     fun `농지개간 should apply front line debuff`() {
         val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000, frontState = 1, trust = 100)
+        val city = createTestCity(agri = 500, agriMax = 1000, frontState = 1, trust = 100f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 
@@ -706,7 +706,7 @@ class IndividualCommandTest {
     fun `상업투자 should use intel stat for calculation`() {
         val general = createTestGeneral(intel = 90, gold = 500, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(comm = 500, commMax = 1000, trust = 100)
+        val city = createTestCity(comm = 500, commMax = 1000, trust = 100f)
         val cmd = che_상업투자(general, env)
         cmd.city = city
 
@@ -740,7 +740,7 @@ class IndividualCommandTest {
     fun `치안강화 should use intel stat for calculation`() {
         val general = createTestGeneral(intel = 90, gold = 500, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(secu = 500, secuMax = 1000, trust = 100)
+        val city = createTestCity(secu = 500, secuMax = 1000, trust = 100f)
         val cmd = che_치안강화(general, env)
         cmd.city = city
 
@@ -757,7 +757,7 @@ class IndividualCommandTest {
     fun `농지개간 can have critical success or failure`() {
         val general = createTestGeneral(intel = 80, gold = 500, nationId = 1)
         val env = createTestEnv()
-        val city = createTestCity(agri = 500, agriMax = 1000, trust = 80)
+        val city = createTestCity(agri = 500, agriMax = 1000, trust = 80f)
         val cmd = che_농지개간(general, env)
         cmd.city = city
 

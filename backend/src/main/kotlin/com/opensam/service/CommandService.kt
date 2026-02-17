@@ -54,6 +54,7 @@ class CommandService(
         return turns.map { entry ->
             generalTurnRepository.save(
                 GeneralTurn(
+                    worldId = general.worldId,
                     generalId = generalId,
                     turnIdx = entry.turnIdx,
                     actionCode = entry.actionCode,
@@ -243,6 +244,7 @@ class CommandService(
         val newTurns = (1..count).map { i ->
             generalTurnRepository.save(
                 GeneralTurn(
+                    worldId = general.worldId,
                     generalId = generalId,
                     turnIdx = (maxIdx + i).toShort(),
                     actionCode = lastTurn.actionCode,
@@ -269,6 +271,7 @@ class CommandService(
             if (newIdx >= 0) {
                 generalTurnRepository.save(
                     GeneralTurn(
+                        worldId = general.worldId,
                         generalId = generalId,
                         turnIdx = newIdx.toShort(),
                         actionCode = turn.actionCode,
@@ -302,6 +305,7 @@ class CommandService(
         return turns.map { entry ->
             nationTurnRepository.save(
                 NationTurn(
+                    worldId = general.worldId,
                     nationId = nationId,
                     officerLevel = general.officerLevel,
                     turnIdx = entry.turnIdx,

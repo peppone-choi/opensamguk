@@ -5,6 +5,7 @@ interface User {
   id: number;
   loginId: string;
   displayName: string;
+  role: string;
 }
 
 interface AuthState {
@@ -29,7 +30,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (loginId, password) => {
     const { data } = await api.post("/auth/login", { loginId, password });
     localStorage.setItem("token", data.token);
-    set({ user: data.user, token: data.token, isAuthenticated: true });
+    const payload = JSON.parse(atob(data.token.split(".")[1]));
+    const user = { ...data.user, role: payload.role || "USER" };
+    set({ user, token: data.token, isAuthenticated: true });
   },
 
   register: async (loginId, displayName, password) => {
@@ -39,7 +42,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       password,
     });
     localStorage.setItem("token", data.token);
-    set({ user: data.user, token: data.token, isAuthenticated: true });
+    const payload = JSON.parse(atob(data.token.split(".")[1]));
+    const user = { ...data.user, role: payload.role || "USER" };
+    set({ user, token: data.token, isAuthenticated: true });
   },
 
   logout: () => {
@@ -59,6 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
               id: payload.userId,
               loginId: payload.sub,
               displayName: payload.displayName,
+              role: payload.role || "USER",
             },
           });
         } catch {

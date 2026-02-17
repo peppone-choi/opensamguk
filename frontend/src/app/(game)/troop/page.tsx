@@ -5,8 +5,8 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { troopApi } from "@/lib/gameApi";
-import type { Troop } from "@/types";
-import { Shield, Plus } from "lucide-react";
+import type { Troop, General } from "@/types";
+import { Shield, Plus, Swords } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,118 @@ import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
+import {
+  CREW_TYPE_NAMES,
+  formatOfficerLevelText,
+  isValidObjKey,
+} from "@/lib/game-utils";
+
+function TroopSummary({ members }: { members: General[] }) {
+  const totalCrew = members.reduce((s, g) => s + g.crew, 0);
+  const avgTrain =
+    members.length > 0
+      ? Math.round(members.reduce((s, g) => s + g.train, 0) / members.length)
+      : 0;
+  const avgAtmos =
+    members.length > 0
+      ? Math.round(members.reduce((s, g) => s + g.atmos, 0) / members.length)
+      : 0;
+
+  return (
+    <div className="flex items-center gap-4 text-xs text-muted-foreground border-t border-gray-800 pt-2 mt-2">
+      <span>
+        총 병력:{" "}
+        <span className="text-blue-400 tabular-nums">
+          {totalCrew.toLocaleString()}
+        </span>
+      </span>
+      <span>
+        평균 훈련: <span className="tabular-nums">{avgTrain}</span>
+      </span>
+      <span>
+        평균 사기: <span className="tabular-nums">{avgAtmos}</span>
+      </span>
+    </div>
+  );
+}
+
+function MemberRow({
+  g,
+  isLeader,
+  isTroopLeader,
+  troopId,
+  onKick,
+}: {
+  g: General;
+  isLeader: boolean;
+  isTroopLeader: boolean;
+  troopId: number;
+  onKick: (troopId: number, generalId: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded bg-muted/50 px-3 py-2 text-sm">
+      <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium truncate">{g.name}</span>
+          {isLeader && (
+            <Badge variant="default" className="text-[10px] px-1.5">
+              대장
+            </Badge>
+          )}
+          {g.npcState > 0 && (
+            <Badge variant="outline" className="text-[10px] px-1">
+              NPC
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+          <span>{formatOfficerLevelText(g.officerLevel)}</span>
+          <span>
+            {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}{" "}
+            {g.crew.toLocaleString()}
+          </span>
+          <span>훈{g.train}</span>
+          <span>사{g.atmos}</span>
+        </div>
+      </div>
+      {/* Equipment */}
+      <div className="hidden sm:flex items-center gap-2 text-[10px] text-muted-foreground">
+        {isValidObjKey(g.weaponCode) && (
+          <Badge variant="outline" className="text-[10px] px-1">
+            무기
+          </Badge>
+        )}
+        {isValidObjKey(g.bookCode) && (
+          <Badge variant="outline" className="text-[10px] px-1">
+            서적
+          </Badge>
+        )}
+        {isValidObjKey(g.horseCode) && (
+          <Badge variant="outline" className="text-[10px] px-1">
+            말
+          </Badge>
+        )}
+        {isValidObjKey(g.itemCode) && (
+          <Badge variant="outline" className="text-[10px] px-1">
+            도구
+          </Badge>
+        )}
+      </div>
+      {/* Kick button for troop leader */}
+      {isTroopLeader && !isLeader && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-red-400 h-6 px-2"
+          onClick={() => onKick(troopId, g.id)}
+        >
+          추방
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function TroopPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -55,7 +167,7 @@ export default function TroopPage() {
   );
 
   const troopMembers = useMemo(() => {
-    const map = new Map<number, typeof generals>();
+    const map = new Map<number, General[]>();
     for (const t of troops) {
       map.set(
         t.id,
@@ -127,18 +239,26 @@ export default function TroopPage() {
       <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>
     );
 
+  const myTroop = troops.find(
+    (t) =>
+      t.leaderGeneralId === myGeneral.id ||
+      (troopMembers.get(t.id) ?? []).some((m) => m.id === myGeneral.id),
+  );
+
   return (
-    <div className="p-4 space-y-6 max-w-3xl mx-auto">
+    <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <PageHeader icon={Shield} title="부대 관리" />
-        <Button
-          onClick={() => setShowCreate(!showCreate)}
-          variant={showCreate ? "outline" : "default"}
-          size="sm"
-        >
-          <Plus className="size-4" />
-          {showCreate ? "취소" : "부대 창설"}
-        </Button>
+        {!myTroop && (
+          <Button
+            onClick={() => setShowCreate(!showCreate)}
+            variant={showCreate ? "outline" : "default"}
+            size="sm"
+          >
+            <Plus className="size-4" />
+            {showCreate ? "취소" : "부대 창설"}
+          </Button>
+        )}
       </div>
 
       {/* Create form */}
@@ -159,6 +279,18 @@ export default function TroopPage() {
               {saving ? "생성 중..." : "창설"}
             </Button>
           </CardContent>
+        </Card>
+      )}
+
+      {/* My current troop highlight */}
+      {myTroop && (
+        <Card className="border-blue-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Swords className="size-4 text-blue-400" />
+              현재 소속 부대: {myTroop.name}
+            </CardTitle>
+          </CardHeader>
         </Card>
       )}
 
@@ -243,43 +375,32 @@ export default function TroopPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-1">
+                  {/* Leader first */}
                   {leader && (
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <GeneralPortrait
-                        picture={leader.picture}
-                        name={leader.name}
-                        size="sm"
-                      />
-                      <span>{leader.name}</span>
-                      <Badge variant="default">대장</Badge>
-                    </div>
+                    <MemberRow
+                      g={leader}
+                      isLeader={true}
+                      isTroopLeader={isLeader}
+                      troopId={t.id}
+                      onKick={handleKick}
+                    />
                   )}
+                  {/* Other members */}
                   {members
                     .filter((m) => m.id !== t.leaderGeneralId)
                     .map((m) => (
-                      <div
+                      <MemberRow
                         key={m.id}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <GeneralPortrait
-                          picture={m.picture}
-                          name={m.name}
-                          size="sm"
-                        />
-                        <span>{m.name}</span>
-                        {isLeader && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-400 h-6 px-2"
-                            onClick={() => handleKick(t.id, m.id)}
-                          >
-                            추방
-                          </Button>
-                        )}
-                      </div>
+                        g={m}
+                        isLeader={false}
+                        isTroopLeader={isLeader}
+                        troopId={t.id}
+                        onKick={handleKick}
+                      />
                     ))}
                 </div>
+                {/* Troop summary */}
+                <TroopSummary members={members} />
               </CardContent>
             </Card>
           );

@@ -167,6 +167,68 @@ export default function GeneralPage() {
         </CardContent>
       </Card>
 
+      {/* Dex (weapon proficiency) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>숙련도</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <StatBar label="보병" value={g.dex1} max={9999} color="bg-red-500" />
+          <StatBar
+            label="궁병"
+            value={g.dex2}
+            max={9999}
+            color="bg-orange-500"
+          />
+          <StatBar label="기병" value={g.dex3} max={9999} color="bg-blue-500" />
+          <StatBar
+            label="귀병"
+            value={g.dex4}
+            max={9999}
+            color="bg-purple-500"
+          />
+          <StatBar
+            label="차병"
+            value={g.dex5}
+            max={9999}
+            color="bg-green-500"
+          />
+        </CardContent>
+      </Card>
+
+      {/* War stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle>전투 기록</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+            <span className="text-muted-foreground">전투 횟수</span>
+            <span className="text-right tabular-nums">{g.warnum ?? 0}회</span>
+            <span className="text-muted-foreground">살상</span>
+            <span className="text-right tabular-nums">{g.killnum ?? 0}회</span>
+            <span className="text-muted-foreground">사망</span>
+            <span className="text-right tabular-nums">{g.deathnum ?? 0}회</span>
+            <span className="text-muted-foreground">살상 병력</span>
+            <span className="text-right tabular-nums">
+              {(g.killcrew ?? 0).toLocaleString()}명
+            </span>
+            <span className="text-muted-foreground">손실 병력</span>
+            <span className="text-right tabular-nums">
+              {(g.deathcrew ?? 0).toLocaleString()}명
+            </span>
+            <span className="text-muted-foreground">화공</span>
+            <span className="text-right tabular-nums">{g.firenum ?? 0}회</span>
+          </div>
+          {g.refreshScore != null && (
+            <div className="mt-3 pt-3 border-t border-gray-600/30 flex justify-between text-sm">
+              <span className="text-muted-foreground">갱신 점수</span>
+              <span className="tabular-nums">{g.refreshScore}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Special / Personality */}
       <Card>
         <CardHeader>

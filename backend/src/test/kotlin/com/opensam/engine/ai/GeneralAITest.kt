@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.*
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.random.Random
 
 class GeneralAITest {
 
@@ -51,6 +52,7 @@ class GeneralAITest {
         officerLevel: Short = 1,
         npcState: Short = 2,
         injury: Short = 0,
+        dedication: Int = 100,
     ): General {
         return General(
             id = id,
@@ -69,6 +71,7 @@ class GeneralAITest {
             officerLevel = officerLevel,
             npcState = npcState,
             injury = injury,
+            dedication = dedication,
             turnTime = OffsetDateTime.now(),
         )
     }
@@ -413,5 +416,120 @@ class GeneralAITest {
         // Peace + low agri => should develop
         val action = ai.decideAndExecute(general, world)
         assertEquals("농지개간", action)
+    }
+
+    // ========== NPC troop leader (npcState=5) ==========
+
+    @Test
+    fun `troop leader (npcState=5) always returns 집합`() {
+        val world = createWorld()
+        val general = createGeneral(npcState = 5)
+
+        val action = ai.decideAndExecute(general, world)
+        assertEquals("집합", action)
+    }
+
+    // ========== Wanderer (nationId=0) ==========
+
+    @Test
+    fun `wanderer returns 요양 when injured`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 0, injury = 10)
+
+        val action = ai.decideAndExecute(general, world)
+        assertEquals("요양", action)
+    }
+
+    @Test
+    fun `wanderer returns one of exploration actions`() {
+        val world = createWorld()
+        val general = createGeneral(nationId = 0, injury = 0)
+
+        val action = ai.decideAndExecute(general, world)
+        assertTrue(action in listOf("견문", "이동", "물자조달", "휴식"),
+            "Expected wanderer action but got: $action")
+    }
+
+    // ========== Reserved command ==========
+
+    @Test
+    fun `uses reserved command when set in meta`() {
+        val world = createWorld()
+        val general = createGeneral(crew = 0, intel = 80, strength = 30, leadership = 30)
+        general.meta["reservedCommand"] = "단련"
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        setupRepos(world, general, city, nation)
+
+        val action = ai.decideAndExecute(general, world)
+        assertEquals("단련", action)
+        // Reserved command should be cleared after use
+        assertNull(general.meta["reservedCommand"])
+    }
+
+    @Test
+    fun `ignores reserved command when it is 휴식`() {
+        val world = createWorld()
+        val general = createGeneral(crew = 0, intel = 80, strength = 30, leadership = 30)
+        general.meta["reservedCommand"] = "휴식"
+        val city = createCity(nationId = 1, agri = 100, agriMax = 1000)
+        val nation = createNation()
+
+        setupRepos(world, general, city, nation)
+
+        val action = ai.decideAndExecute(general, world)
+        // Should fall through to normal AI decision (농지개간 since agri is low)
+        assertEquals("농지개간", action)
+    }
+
+    // ========== Cure threshold ==========
+
+    @Test
+    fun `returns 요양 when injury exceeds cure threshold from policy`() {
+        val world = createWorld()
+        // Injury = 25, default cureThreshold = 20
+        val general = createGeneral(injury = 25)
+        val city = createCity(nationId = 1)
+        val nation = createNation()
+
+        setupRepos(world, general, city, nation)
+
+        val action = ai.decideAndExecute(general, world)
+        assertEquals("요양", action)
+    }
+
+    // ========== classifyGeneral: probabilistic hybrid ==========
+
+    @Test
+    fun `classifyGeneral sets WARRIOR for strength-dominant general`() {
+        val general = createGeneral(strength = 90, intel = 30, leadership = 30)
+        val flags = ai.classifyGeneral(general, Random(42))
+        assertTrue(flags and GeneralType.WARRIOR.flag != 0,
+            "Should have WARRIOR flag")
+    }
+
+    @Test
+    fun `classifyGeneral sets STRATEGIST for intel-dominant general`() {
+        val general = createGeneral(strength = 30, intel = 90, leadership = 30)
+        val flags = ai.classifyGeneral(general, Random(42))
+        assertTrue(flags and GeneralType.STRATEGIST.flag != 0,
+            "Should have STRATEGIST flag")
+    }
+
+    @Test
+    fun `classifyGeneral sets COMMANDER when leadership meets threshold`() {
+        val general = createGeneral(strength = 50, intel = 50, leadership = 70)
+        val flags = ai.classifyGeneral(general, Random(42), minNPCWarLeadership = 40)
+        assertTrue(flags and GeneralType.COMMANDER.flag != 0,
+            "Should have COMMANDER flag")
+    }
+
+    @Test
+    fun `classifyGeneral does not set COMMANDER when leadership below threshold`() {
+        val general = createGeneral(strength = 50, intel = 50, leadership = 30)
+        val flags = ai.classifyGeneral(general, Random(42), minNPCWarLeadership = 40)
+        assertTrue(flags and GeneralType.COMMANDER.flag == 0,
+            "Should not have COMMANDER flag")
     }
 }

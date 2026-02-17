@@ -47,7 +47,7 @@ abstract class DomesticCommand(
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val stat = getStat()
-        val trust = maxOf(50, city?.trust ?: 50)
+        val trust = maxOf(50F, city?.trust ?: 50F).toDouble()
 
         var score = (stat * (trust / 100.0) * (0.8 + rng.nextDouble() * 0.4)).toInt()
         score = maxOf(1, score)

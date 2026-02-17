@@ -108,8 +108,8 @@ export function GeneralBasicCard({
           general.officerLevel >= 2 &&
           general.officerLevel <= 4 && <>{general.officerCity} </>}
         {general.officerLevelText} | {typeCall} |{" "}
-        <span style={{ color: injuryInfo.color }}>{injuryInfo.text}</span>
-        】 {general.turntime.substring(11, 19)}
+        <span style={{ color: injuryInfo.color }}>{injuryInfo.text}</span>】{" "}
+        {general.turntime.substring(11, 19)}
       </div>
 
       {/* Row 2: 통솔 */}
@@ -242,9 +242,7 @@ export function GeneralBasicCard({
 
       {/* Row 9: 부대 + 벌점 */}
       <Cell head>부대</Cell>
-      <Cell wide={2}>
-        {general.troopInfo ? general.troopInfo.name : "-"}
-      </Cell>
+      <Cell wide={2}>{general.troopInfo ? general.troopInfo.name : "-"}</Cell>
       <Cell head>벌점</Cell>
       <Cell wide={3}>
         {formatRefreshScore(general.refreshScoreTotal ?? 0)}{" "}

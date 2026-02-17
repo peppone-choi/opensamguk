@@ -29,14 +29,24 @@ import type {
   AdminDashboard,
   AdminUser,
   RealtimeStatus,
+  TurnStatusResponse,
+  TurnRunResponse,
+  AuctionBidResponse,
+  AccountSettings,
 } from "@/types";
 
 // World API
 export const worldApi = {
   list: () => api.get<WorldState[]>("/worlds"),
   get: (id: number) => api.get<WorldState>(`/worlds/${id}`),
-  create: (scenarioCode: string) =>
-    api.post<WorldState>("/worlds", { scenarioCode }),
+  create: (scenarioCode: string, name?: string) =>
+    api.post<WorldState>("/worlds", { scenarioCode, name }),
+  delete: (id: number) => api.delete<void>(`/worlds/${id}`),
+  reset: (id: number, scenarioCode?: string) =>
+    api.post<WorldState>(
+      `/worlds/${id}/reset`,
+      scenarioCode ? { scenarioCode } : {},
+    ),
 };
 
 // Nation API
@@ -142,7 +152,12 @@ export const realtimeApi = {
     generalId: number,
     actionCode: string,
     arg?: Record<string, unknown>,
-  ) => api.post<CommandResult>("/realtime/execute", { generalId, actionCode, arg }),
+  ) =>
+    api.post<CommandResult>("/realtime/execute", {
+      generalId,
+      actionCode,
+      arg,
+    }),
   getStatus: (generalId: number) =>
     api.get<RealtimeStatus>(`/realtime/status/${generalId}`),
 };
@@ -229,10 +244,10 @@ export const historyApi = {
 };
 
 export const turnApi = {
-  getStatus: () => api.get<{ state: string }>("/turns/status"),
-  run: () => api.post<{ result: string }>("/turns/run"),
-  pause: () => api.post<{ state: string }>("/turns/pause"),
-  resume: () => api.post<{ state: string }>("/turns/resume"),
+  getStatus: () => api.get<TurnStatusResponse>("/turns/status"),
+  run: () => api.post<TurnRunResponse>("/turns/run"),
+  pause: () => api.post<TurnStatusResponse>("/turns/pause"),
+  resume: () => api.post<TurnStatusResponse>("/turns/resume"),
 };
 
 // Account API
@@ -240,10 +255,8 @@ export const accountApi = {
   changePassword: (currentPassword: string, newPassword: string) =>
     api.patch<void>("/account/password", { currentPassword, newPassword }),
   deleteAccount: () => api.delete<void>("/account"),
-  updateSettings: (settings: {
-    defenceTrain?: number;
-    tournamentState?: number;
-  }) => api.patch<void>("/account/settings", settings),
+  updateSettings: (settings: AccountSettings) =>
+    api.patch<void>("/account/settings", settings),
   toggleVacation: () => api.post<void>("/account/vacation"),
 };
 
@@ -378,7 +391,7 @@ export const auctionApi = {
     },
   ) => api.post<Message>(`/worlds/${worldId}/auctions`, data),
   bid: (auctionId: number, bidderId: number, amount: number) =>
-    api.post<Record<string, unknown>>(`/auctions/${auctionId}/bid`, {
+    api.post<AuctionBidResponse>(`/auctions/${auctionId}/bid`, {
       bidderId,
       amount,
     }),

@@ -207,9 +207,9 @@ data class CityResponse(
     val commMax: Int,
     val secu: Int,
     val secuMax: Int,
-    val trust: Int,
+    val trust: Float,
     val trade: Int,
-    val dead: Short,
+    val dead: Int,
     val def: Int,
     val defMax: Int,
     val wall: Int,
@@ -257,6 +257,7 @@ data class CityResponse(
 
 data class WorldStateResponse(
     val id: Short,
+    val name: String,
     val scenarioCode: String,
     val currentYear: Short,
     val currentMonth: Short,
@@ -270,6 +271,7 @@ data class WorldStateResponse(
     companion object {
         fun from(e: WorldState) = WorldStateResponse(
             id = e.id,
+            name = e.name,
             scenarioCode = e.scenarioCode,
             currentYear = e.currentYear,
             currentMonth = e.currentMonth,

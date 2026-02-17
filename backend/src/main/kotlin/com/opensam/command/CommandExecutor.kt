@@ -42,18 +42,13 @@ class CommandExecutor(
         val preReq = command.getPreReqTurn()
         if (preReq > 0) {
             val lastTurn = LastTurn.fromMap(general.lastTurn)
-            val sameCommand = isSameCommand(lastTurn, actionCode, arg)
-            val currentTerm = if (sameCommand) {
-                ((lastTurn.term ?: 0) + 1).coerceAtMost(preReq)
-            } else {
-                1
-            }
+            val stacked = lastTurn.addTermStack(actionCode, arg, preReq)
 
-            if (currentTerm < preReq) {
-                general.lastTurn = LastTurn(actionCode, arg, currentTerm).toMap()
+            if ((stacked.term ?: 0) < preReq) {
+                general.lastTurn = stacked.toMap()
                 return CommandResult(
                     success = true,
-                    logs = listOf("${command.actionName} 수행중... ($currentTerm/$preReq)"),
+                    logs = listOf("${command.actionName} 수행중... (${stacked.term}/$preReq)"),
                 )
             }
         }
@@ -96,22 +91,13 @@ class CommandExecutor(
         val preReq = command.getPreReqTurn()
         if (preReq > 0 && nation != null) {
             val lastTurn = getNationLastTurn(nation, general.officerLevel)
-            val sameCommand = isSameCommand(lastTurn, actionCode, arg)
-            val currentTerm = if (sameCommand) {
-                ((lastTurn.term ?: 0) + 1).coerceAtMost(preReq)
-            } else {
-                1
-            }
+            val stacked = lastTurn.addTermStack(actionCode, arg, preReq)
 
-            if (currentTerm < preReq) {
-                setNationLastTurn(
-                    nation,
-                    general.officerLevel,
-                    LastTurn(actionCode, arg, currentTerm),
-                )
+            if ((stacked.term ?: 0) < preReq) {
+                setNationLastTurn(nation, general.officerLevel, stacked)
                 return CommandResult(
                     success = true,
-                    logs = listOf("${command.actionName} 수행중... ($currentTerm/$preReq)"),
+                    logs = listOf("${command.actionName} 수행중... (${stacked.term}/$preReq)"),
                 )
             }
         }
@@ -127,12 +113,6 @@ class CommandExecutor(
 
         applyNationCooldown(actionCode, command.getPostReqTurn(), general, nation, env)
         return result
-    }
-
-    private fun isSameCommand(lastTurn: LastTurn, actionCode: String, arg: Map<String, Any>?): Boolean {
-        val lastArg = lastTurn.arg ?: emptyMap()
-        val nowArg = arg ?: emptyMap()
-        return lastTurn.command == actionCode && lastArg == nowArg
     }
 
     private fun toTurnIndex(env: CommandEnv): Int {

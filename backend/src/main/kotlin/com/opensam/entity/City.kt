@@ -53,14 +53,12 @@ class City(
     @Column(name = "secu_max", nullable = false)
     var secuMax: Int = 0,
 
-    @Column(nullable = false)
-    var trust: Int = 0,
+    trust: Number = 0,
 
     @Column(nullable = false)
     var trade: Int = 100,
 
-    @Column(nullable = false)
-    var dead: Short = 0,
+    dead: Number = 0,
 
     @Column(nullable = false)
     var def: Int = 0,
@@ -93,4 +91,10 @@ class City(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var meta: MutableMap<String, Any> = mutableMapOf(),
-)
+) {
+    @Column(nullable = false)
+    var trust: Float = trust.toFloat()
+
+    @Column(nullable = false)
+    var dead: Int = dead.toInt()
+}

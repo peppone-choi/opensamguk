@@ -52,6 +52,12 @@ class TurnService(
             executeGeneralCommands(world)
 
             try {
+                updateTraffic(world)
+            } catch (e: Exception) {
+                logger.warn("updateTraffic failed: ${e.message}")
+            }
+
+            try {
                 eventService.dispatchEvents(world, "PRE_MONTH")
             } catch (e: Exception) {
                 logger.warn("EventService.dispatchEvents(PRE_MONTH) failed: ${e.message}")
@@ -87,6 +93,12 @@ class TurnService(
                 diplomacyService.processDiplomacyTurn(world)
             } catch (e: Exception) {
                 logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
+            }
+
+            try {
+                resetStrategicCommandLimits(world)
+            } catch (e: Exception) {
+                logger.warn("resetStrategicCommandLimits failed: ${e.message}")
             }
 
             try {
@@ -302,6 +314,28 @@ class TurnService(
         } else {
             world.currentMonth = nextMonth.toShort()
         }
+    }
+
+    /**
+     * Recalculate city supply state (traffic/supply routes) per turn.
+     * Delegates to EconomyService which already has BFS-based supply logic.
+     */
+    private fun updateTraffic(world: WorldState) {
+        economyService.updateCitySupplyState(world)
+    }
+
+    /**
+     * Decrement strategic command limits for all nations each turn.
+     * Per legacy: strategicCmdLimit decreases by 1 each turn until 0.
+     */
+    private fun resetStrategicCommandLimits(world: WorldState) {
+        val nations = nationRepository.findByWorldId(world.id.toLong())
+        for (nation in nations) {
+            if (nation.strategicCmdLimit > 0) {
+                nation.strategicCmdLimit = (nation.strategicCmdLimit - 1).toShort()
+            }
+        }
+        nationRepository.saveAll(nations)
     }
 
     private fun firePreTurnTriggers(world: WorldState, general: com.opensam.entity.General) {

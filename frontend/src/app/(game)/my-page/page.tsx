@@ -1,39 +1,88 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
-import { accountApi, historyApi, cityApi, nationApi } from "@/lib/gameApi";
-import type { City, Nation, Message } from "@/types";
-import { User, Settings, ScrollText } from "lucide-react";
+import {
+  accountApi,
+  historyApi,
+  cityApi,
+  nationApi,
+  frontApi,
+} from "@/lib/gameApi";
+import type { City, Nation, Message, GeneralFrontInfo } from "@/types";
+import { User, Settings, ScrollText, Trash2, Swords } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
-import { StatBar } from "@/components/game/stat-bar";
-import { ResourceDisplay } from "@/components/game/resource-display";
 import { NationBadge } from "@/components/game/nation-badge";
+import { SammoBar } from "@/components/game/sammo-bar";
+import { toast } from "sonner";
+import {
+  formatInjury,
+  formatOfficerLevelText,
+  formatDefenceTrain,
+  formatDexLevel,
+  formatHonor,
+  formatGeneralTypeCall,
+  formatRefreshScore,
+  getNPCColor,
+  nextExpLevelRemain,
+  CREW_TYPE_NAMES,
+  numberWithCommas,
+  ageColor,
+  isValidObjKey,
+} from "@/lib/game-utils";
 
-const EQUIP_LABELS: Record<string, string> = {
-  weaponCode: "무기",
-  bookCode: "서적",
-  horseCode: "군마",
-  itemCode: "도구",
-};
+const EQUIP_MAP: { key: string; label: string }[] = [
+  { key: "weapon", label: "무기" },
+  { key: "book", label: "서적" },
+  { key: "horse", label: "군마" },
+  { key: "item", label: "도구" },
+];
+
+const DEX_NAMES = ["보병", "궁병", "기병", "귀병", "차병"];
+
+const DEFENCE_PRESETS = [
+  { value: 90, label: "90 (☆)" },
+  { value: 80, label: "80 (◎)" },
+  { value: 60, label: "60 (○)" },
+  { value: 40, label: "40 (△)" },
+  { value: 999, label: "수비안함 (훈련+1,사기-1)" },
+];
+
+const POTION_OPTIONS = [
+  { value: 20, label: "경상 이상 사용" },
+  { value: 40, label: "중상 이상 사용" },
+  { value: 60, label: "심각 이상 사용" },
+  { value: 80, label: "위독 시 사용" },
+  { value: 999, label: "사용 안함" },
+];
+
+const TOURNAMENT_OPTIONS = [
+  { value: 0, label: "수동 참여" },
+  { value: 1, label: "자동 참여" },
+];
 
 export default function MyPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, loading, fetchMyGeneral } = useGeneralStore();
+  const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
   const [city, setCity] = useState<City | null>(null);
   const [nation, setNation] = useState<Nation | null>(null);
   const [records, setRecords] = useState<Message[]>([]);
-  const [defenceTrain, setDefenceTrain] = useState(0);
+  const [battleRecords, setBattleRecords] = useState<Message[]>([]);
+  const [historyRecords, setHistoryRecords] = useState<Message[]>([]);
+
+  // Settings
+  const [defenceTrain, setDefenceTrain] = useState(80);
   const [tournamentState, setTournamentState] = useState(0);
+  const [potionThreshold, setPotionThreshold] = useState(999);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +94,17 @@ export default function MyPage() {
   }, [currentWorld, fetchMyGeneral]);
 
   useEffect(() => {
-    if (!myGeneral) return;
+    if (!myGeneral || !currentWorld) return;
+    // Initialize settings from general data
+    setDefenceTrain(myGeneral.defenceTrain ?? 80);
+    setTournamentState(myGeneral.tournamentState ?? 0);
+
+    // Fetch front info for dex/battle stats
+    frontApi
+      .getInfo(currentWorld.id)
+      .then(({ data }) => setFrontInfo(data.general))
+      .catch(() => {});
+
     if (myGeneral.cityId) {
       cityApi
         .get(myGeneral.cityId)
@@ -60,24 +119,50 @@ export default function MyPage() {
     }
     historyApi
       .getGeneralRecords(myGeneral.id)
-      .then(({ data }) => setRecords(data))
+      .then(({ data }) => {
+        setRecords(data);
+        // Split records by type if payload has type info
+        const battles = data.filter(
+          (r) =>
+            typeof r.payload?.content === "string" &&
+            /전투|공격|방어|사살|패배|승리/.test(r.payload.content as string),
+        );
+        setBattleRecords(battles);
+        const history = data.filter(
+          (r) =>
+            typeof r.payload?.content === "string" &&
+            /열전|사망|등용|탈퇴|건국|멸망/.test(r.payload.content as string),
+        );
+        setHistoryRecords(history);
+      })
       .catch(() => {});
-  }, [myGeneral]);
+  }, [myGeneral, currentWorld]);
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = useCallback(async () => {
     setSaving(true);
     try {
-      await accountApi.updateSettings({ defenceTrain, tournamentState });
+      await accountApi.updateSettings({
+        defenceTrain,
+        tournamentState,
+      });
+      toast.success("설정이 저장되었습니다.");
+    } catch {
+      toast.error("설정 저장에 실패했습니다.");
     } finally {
       setSaving(false);
     }
-  };
+  }, [defenceTrain, tournamentState]);
 
-  const handleVacation = async () => {
+  const handleVacation = useCallback(async () => {
     if (!confirm("휴가 상태를 전환하시겠습니까?")) return;
-    await accountApi.toggleVacation();
-    if (currentWorld) fetchMyGeneral(currentWorld.id);
-  };
+    try {
+      await accountApi.toggleVacation();
+      toast.success("휴가 상태가 전환되었습니다.");
+      if (currentWorld) fetchMyGeneral(currentWorld.id);
+    } catch {
+      toast.error("휴가 전환에 실패했습니다.");
+    }
+  }, [currentWorld, fetchMyGeneral]);
 
   if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
   if (loading) return <LoadingState />;
@@ -85,235 +170,715 @@ export default function MyPage() {
   if (!myGeneral) return <LoadingState message="장수 정보가 없습니다." />;
 
   const g = myGeneral;
-  const equipKeys = [
-    "weaponCode",
-    "bookCode",
-    "horseCode",
-    "itemCode",
-  ] as const;
+  const nationLevel = nation?.level ?? 0;
+  const injuryInfo = formatInjury(g.injury);
+  const officerText = formatOfficerLevelText(g.officerLevel, nationLevel);
+  const typeCall = formatGeneralTypeCall(g.leadership, g.strength, g.intel);
+  const honorText = formatHonor(g.experience);
+  const [expCur, expMax] = nextExpLevelRemain(g.experience, g.expLevel ?? 0);
+  const npcColor = getNPCColor(g.npcState);
+  const fi = frontInfo;
+  const dexValues = [
+    fi?.dex1 ?? 0,
+    fi?.dex2 ?? 0,
+    fi?.dex3 ?? 0,
+    fi?.dex4 ?? 0,
+    fi?.dex5 ?? 0,
+  ];
+
+  // Battle stats (from frontInfo DTO)
+  const warnum = fi?.warnum ?? 0;
+  const killnum = fi?.killnum ?? 0;
+  const deathnum = fi?.deathnum ?? 0;
+  const killcrew = fi?.killcrew ?? 0;
+  const deathcrew = fi?.deathcrew ?? 0;
+  const firenum = fi?.firenum ?? 0;
+  const refreshScore = fi?.refreshScore ?? 0;
+
+  const winRate = warnum > 0 ? ((killnum / warnum) * 100).toFixed(1) : "0.0";
+  const killRate =
+    deathcrew > 0
+      ? ((killcrew / Math.max(deathcrew, 1)) * 100).toFixed(1)
+      : "0.0";
 
   return (
-    <div className="p-4 space-y-6 max-w-2xl mx-auto">
+    <div className="p-4 space-y-4 max-w-4xl mx-auto">
       <PageHeader icon={User} title="마이페이지" />
 
       <Tabs defaultValue="info">
         <TabsList>
           <TabsTrigger value="info">장수 정보</TabsTrigger>
+          <TabsTrigger value="battle">전투 통계</TabsTrigger>
           <TabsTrigger value="settings">설정</TabsTrigger>
-          <TabsTrigger value="log">활동 기록</TabsTrigger>
+          <TabsTrigger value="log">기록</TabsTrigger>
         </TabsList>
 
+        {/* ===== TAB 1: 장수 정보 ===== */}
         <TabsContent value="info" className="space-y-4 mt-4">
-          {/* Profile */}
-          <Card>
-            <CardHeader>
-              <CardTitle>프로필</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4 items-start">
-                <GeneralPortrait picture={g.picture} name={g.name} size="lg" />
-                <div className="space-y-1">
-                  <p className="text-lg font-semibold">{g.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    나이 {g.age}세
-                  </p>
-                  {nation && (
-                    <NationBadge name={nation.name} color={nation.color} />
-                  )}
-                  {city && (
-                    <p className="text-sm text-muted-foreground">
-                      위치: {city.name}
+          <div className="grid gap-4 lg:grid-cols-2">
+            {/* Profile + Basic Info */}
+            <Card>
+              <CardContent className="pt-4 space-y-3">
+                <div className="flex gap-4 items-start">
+                  <GeneralPortrait
+                    picture={g.picture}
+                    name={g.name}
+                    size="lg"
+                  />
+                  <div className="space-y-1 flex-1">
+                    <p
+                      className="text-lg font-bold"
+                      style={{ color: npcColor }}
+                    >
+                      {g.name}
                     </p>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    관직: {g.officerLevel}
-                  </p>
-                  {g.injury > 0 && (
-                    <Badge variant="destructive">부상: {g.injury}</Badge>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 5-stat */}
-          <Card>
-            <CardHeader>
-              <CardTitle>능력치</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <StatBar label="통솔" value={g.leadership} color="bg-red-500" />
-              <StatBar label="무력" value={g.strength} color="bg-orange-500" />
-              <StatBar label="지력" value={g.intel} color="bg-blue-500" />
-              <StatBar label="정치" value={g.politics} color="bg-green-500" />
-              <StatBar label="매력" value={g.charm} color="bg-purple-500" />
-            </CardContent>
-          </Card>
-
-          {/* Resources */}
-          <Card>
-            <CardHeader>
-              <CardTitle>자원</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ResourceDisplay gold={g.gold} rice={g.rice} crew={g.crew} />
-              <div className="flex gap-4 text-sm text-muted-foreground">
-                <span>훈련: {g.train}</span>
-                <span>사기: {g.atmos}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Experience / Dedication */}
-          <Card>
-            <CardHeader>
-              <CardTitle>경험 / 공헌</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <StatBar
-                label="경험"
-                value={g.experience}
-                max={1000}
-                color="bg-yellow-500"
-              />
-              <StatBar
-                label="공헌"
-                value={g.dedication}
-                max={1000}
-                color="bg-teal-500"
-              />
-            </CardContent>
-          </Card>
-
-          {/* Equipment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>장비</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {equipKeys.map((key) => (
-                  <Badge
-                    key={key}
-                    variant={g[key] === "None" ? "outline" : "secondary"}
-                  >
-                    {EQUIP_LABELS[key]}: {g[key] === "None" ? "없음" : g[key]}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Special / Personality */}
-          <Card>
-            <CardHeader>
-              <CardTitle>특기 / 성격</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={g.specialCode === "None" ? "outline" : "secondary"}
-                >
-                  특기1: {g.specialCode === "None" ? "없음" : g.specialCode}
-                </Badge>
-                <Badge
-                  variant={g.special2Code === "None" ? "outline" : "secondary"}
-                >
-                  특기2: {g.special2Code === "None" ? "없음" : g.special2Code}
-                </Badge>
-                <Badge variant="secondary">성격: {g.personalCode}</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="size-4" />
-                장수 설정
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">
-                  수비 훈련도 (0-100)
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={defenceTrain}
-                  onChange={(e) => setDefenceTrain(Number(e.target.value))}
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-muted-foreground">
-                  토너먼트 참가
-                </label>
-                <input
-                  type="checkbox"
-                  checked={tournamentState === 1}
-                  onChange={(e) => setTournamentState(e.target.checked ? 1 : 0)}
-                  className="rounded border-input"
-                />
-              </div>
-              <Button onClick={handleSaveSettings} disabled={saving}>
-                {saving ? "저장 중..." : "설정 저장"}
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>액션</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" onClick={handleVacation}>
-                휴가 전환
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="log" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ScrollText className="size-4" />
-                활동 기록
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {records.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  기록이 없습니다.
-                </p>
-              ) : (
-                <ScrollArea className="max-h-96">
-                  <div className="space-y-2">
-                    {records.map((r) => (
-                      <div
-                        key={r.id}
-                        className="text-sm p-2 rounded bg-muted/50"
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">관직:</span>{" "}
+                      <span className="text-cyan-400">{officerText}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">유형:</span>{" "}
+                      <span className="text-yellow-400">{typeCall}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">나이:</span>{" "}
+                      <span
+                        style={{
+                          color: ageColor(g.age, g.deadYear - g.bornYear),
+                        }}
                       >
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(r.sentAt).toLocaleString("ko-KR")}
+                        {g.age}세
+                      </span>
+                    </p>
+                    {nation && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm text-muted-foreground">
+                          세력:
                         </span>
-                        <p>
-                          {(r.payload.content as string) ??
-                            JSON.stringify(r.payload)}
-                        </p>
+                        <NationBadge name={nation.name} color={nation.color} />
                       </div>
-                    ))}
+                    )}
+                    {city && (
+                      <p className="text-sm">
+                        <span className="text-muted-foreground">위치:</span>{" "}
+                        {city.name}
+                      </p>
+                    )}
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">상태:</span>{" "}
+                      <span style={{ color: injuryInfo.color }}>
+                        {injuryInfo.text}
+                      </span>
+                      {g.injury > 0 && (
+                        <span className="text-red-400 ml-1">({g.injury}%)</span>
+                      )}
+                    </p>
                   </div>
-                </ScrollArea>
-              )}
-            </CardContent>
-          </Card>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 5-Stat with Experience Bars */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">능력치</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5">
+                {[
+                  {
+                    label: "통솔",
+                    value: g.leadership,
+                    exp: g.leadershipExp,
+                    color: "red",
+                  },
+                  {
+                    label: "무력",
+                    value: g.strength,
+                    exp: g.strengthExp,
+                    color: "orange",
+                  },
+                  {
+                    label: "지력",
+                    value: g.intel,
+                    exp: g.intelExp,
+                    color: "dodgerblue",
+                  },
+                  {
+                    label: "정치",
+                    value: g.politics,
+                    exp: 0,
+                    color: "limegreen",
+                  },
+                  {
+                    label: "매력",
+                    value: g.charm,
+                    exp: 0,
+                    color: "mediumpurple",
+                  },
+                ].map((s) => (
+                  <div key={s.label} className="flex items-center gap-2">
+                    <span
+                      className="w-8 text-xs text-right"
+                      style={{ color: s.color }}
+                    >
+                      {s.label}
+                    </span>
+                    <span className="w-6 text-xs text-right font-mono">
+                      {s.value}
+                    </span>
+                    <div className="flex-1">
+                      <SammoBar
+                        height={7}
+                        percent={s.value}
+                        altText={`${s.value}/100`}
+                      />
+                    </div>
+                    {s.exp > 0 && (
+                      <span className="text-[10px] text-yellow-500 w-10 text-right">
+                        +{s.exp}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Resources & Military */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">자원 / 군사</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">자금:</span>{" "}
+                    <span className="text-yellow-400">
+                      {numberWithCommas(g.gold)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">군량:</span>{" "}
+                    <span className="text-green-400">
+                      {numberWithCommas(g.rice)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">병력:</span>{" "}
+                    <span className="text-white">
+                      {numberWithCommas(g.crew)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">병종:</span>{" "}
+                    <span className="text-cyan-300">
+                      {CREW_TYPE_NAMES[g.crewType] ?? "보병"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">훈련:</span>{" "}
+                    <span
+                      className={g.train >= 80 ? "text-cyan-400" : "text-white"}
+                    >
+                      {g.train}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">사기:</span>{" "}
+                    <span
+                      className={g.atmos >= 80 ? "text-cyan-400" : "text-white"}
+                    >
+                      {g.atmos}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">수비훈련:</span>{" "}
+                    <span>{formatDefenceTrain(g.defenceTrain)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">벌점:</span>{" "}
+                    <span
+                      className={
+                        Object.keys(g.penalty || {}).length > 0
+                          ? "text-red-400"
+                          : ""
+                      }
+                    >
+                      {Object.keys(g.penalty || {}).length > 0
+                        ? JSON.stringify(g.penalty)
+                        : "없음"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Experience / Dedication / Honor */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">명성 / 계급</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-12 text-xs text-muted-foreground">
+                    명성
+                  </span>
+                  <span className="w-12 text-xs text-yellow-400">
+                    {honorText}
+                  </span>
+                  <div className="flex-1">
+                    <SammoBar
+                      height={7}
+                      percent={expMax > 0 ? (expCur / expMax) * 100 : 0}
+                      altText={`${expCur}/${expMax}`}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground w-16 text-right">
+                    {g.experience}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-12 text-xs text-muted-foreground">
+                    계급
+                  </span>
+                  <span className="w-12 text-xs text-teal-400">
+                    Lv.{g.dedLevel ?? 0}
+                  </span>
+                  <div className="flex-1">
+                    <SammoBar
+                      height={7}
+                      percent={Math.min((g.dedication / 1000) * 100, 100)}
+                      altText={`${g.dedication}/1000`}
+                    />
+                  </div>
+                  <span className="text-[10px] text-muted-foreground w-16 text-right">
+                    {g.dedication}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">귀속:</span>{" "}
+                  <span>{g.belong}</span>
+                  <span className="text-muted-foreground ml-3">배신:</span>{" "}
+                  <span className={g.betray > 0 ? "text-red-400" : ""}>
+                    {g.betray}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Equipment */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">장비</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {EQUIP_MAP.map(({ key, label }) => {
+                    const val = g[`${key}Code` as keyof typeof g] as string;
+                    const hasItem = isValidObjKey(val);
+                    return (
+                      <div key={key} className="flex items-center gap-2">
+                        <span className="text-muted-foreground w-8">
+                          {label}:
+                        </span>
+                        <span
+                          className={
+                            hasItem ? "text-cyan-300" : "text-gray-500"
+                          }
+                        >
+                          {hasItem ? val : "-"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  <Badge
+                    variant={g.specialCode === "None" ? "outline" : "secondary"}
+                  >
+                    특기: {g.specialCode === "None" ? "없음" : g.specialCode}
+                  </Badge>
+                  <Badge
+                    variant={
+                      g.special2Code === "None" ? "outline" : "secondary"
+                    }
+                  >
+                    특기2: {g.special2Code === "None" ? "없음" : g.special2Code}
+                  </Badge>
+                  <Badge variant="secondary">성격: {g.personalCode}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Proficiency (숙련도) */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">숙련도</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5">
+                {DEX_NAMES.map((name, i) => {
+                  const dex = dexValues[i];
+                  const info = formatDexLevel(dex);
+                  return (
+                    <div key={name} className="flex items-center gap-2">
+                      <span className="w-8 text-xs text-muted-foreground">
+                        {name}
+                      </span>
+                      <span
+                        className="w-8 text-xs font-mono text-right"
+                        style={{ color: info.color }}
+                      >
+                        {info.name}
+                      </span>
+                      <div className="flex-1">
+                        <SammoBar
+                          height={7}
+                          percent={Math.min((info.level / 26) * 100, 100)}
+                          altText={`${info.name} (${numberWithCommas(dex)})`}
+                        />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground w-14 text-right">
+                        {numberWithCommas(dex)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* ===== TAB 2: 전투 통계 ===== */}
+        <TabsContent value="battle" className="space-y-4 mt-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Swords className="size-4" />
+                  전투 기록
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">전투 횟수:</span>{" "}
+                    <span className="text-white font-mono">{warnum}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">승리:</span>{" "}
+                    <span className="text-cyan-400 font-mono">{killnum}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">패배:</span>{" "}
+                    <span className="text-red-400 font-mono">{deathnum}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">승률:</span>{" "}
+                    <span
+                      className={
+                        Number(winRate) >= 50
+                          ? "text-cyan-400"
+                          : "text-orange-400"
+                      }
+                    >
+                      {winRate}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">적 사살:</span>{" "}
+                    <span className="text-yellow-400 font-mono">
+                      {numberWithCommas(killcrew)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">아군 피해:</span>{" "}
+                    <span className="text-red-300 font-mono">
+                      {numberWithCommas(deathcrew)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">살상률:</span>{" "}
+                    <span
+                      className={
+                        Number(killRate) >= 100
+                          ? "text-cyan-400"
+                          : "text-orange-400"
+                      }
+                    >
+                      {killRate}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">계략 성공:</span>{" "}
+                    <span className="text-green-400 font-mono">{firenum}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">접속 / 활동</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">접속도:</span>{" "}
+                    <span>{formatRefreshScore(refreshScore)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">킬턴:</span>{" "}
+                    <span>{g.killTurn ?? "-"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">차단:</span>{" "}
+                    <span className={g.blockState > 0 ? "text-red-400" : ""}>
+                      {g.blockState > 0 ? "차단됨" : "정상"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">최근전투:</span>{" "}
+                    <span className="text-xs">
+                      {g.recentWarTime
+                        ? new Date(g.recentWarTime).toLocaleDateString("ko-KR")
+                        : "-"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* ===== TAB 3: 설정 ===== */}
+        <TabsContent value="settings" className="space-y-4 mt-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Settings className="size-4" />
+                  장수 설정
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Defence Training */}
+                <div className="space-y-1">
+                  <label className="text-sm text-muted-foreground">
+                    수비 훈련도
+                  </label>
+                  <select
+                    value={defenceTrain}
+                    onChange={(e) => setDefenceTrain(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                  >
+                    {DEFENCE_PRESETS.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    999 선택 시 수비에 참가하지 않으며 훈련+1, 사기-1 보정
+                  </p>
+                </div>
+
+                {/* Tournament */}
+                <div className="space-y-1">
+                  <label className="text-sm text-muted-foreground">
+                    토너먼트 참가
+                  </label>
+                  <select
+                    value={tournamentState}
+                    onChange={(e) => setTournamentState(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                  >
+                    {TOURNAMENT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Potion Threshold */}
+                <div className="space-y-1">
+                  <label className="text-sm text-muted-foreground">
+                    약 사용 기준
+                  </label>
+                  <select
+                    value={potionThreshold}
+                    onChange={(e) => setPotionThreshold(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                  >
+                    {POTION_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    부상이 설정 수치 이상일 때 자동으로 약을 사용합니다
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleSaveSettings}
+                  disabled={saving}
+                  className="w-full"
+                >
+                  {saving ? "저장 중..." : "설정 저장"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+              {/* Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">액션</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleVacation}
+                    className="w-full"
+                  >
+                    휴가 전환
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Item Disposal */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Trash2 className="size-4" />
+                    아이템 파기
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    소지한 아이템을 파기합니다. 파기한 아이템은 복구할 수
+                    없습니다.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {EQUIP_MAP.map(({ key, label }) => {
+                      const val = g[`${key}Code` as keyof typeof g] as string;
+                      const hasItem = isValidObjKey(val);
+                      return (
+                        <Button
+                          key={key}
+                          variant="outline"
+                          size="sm"
+                          disabled={!hasItem}
+                          className="text-xs"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `${label} [${val}]을(를) 정말 파기하시겠습니까?`,
+                              )
+                            ) {
+                              toast.info("아이템 파기 기능은 준비 중입니다.");
+                            }
+                          }}
+                        >
+                          {label}: {hasItem ? val : "-"}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ===== TAB 4: 기록 ===== */}
+        <TabsContent value="log" className="mt-4">
+          <Tabs defaultValue="personal">
+            <TabsList>
+              <TabsTrigger value="personal">개인 기록</TabsTrigger>
+              <TabsTrigger value="battle">전투 기록</TabsTrigger>
+              <TabsTrigger value="history">장수 열전</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="personal" className="mt-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ScrollText className="size-4" />
+                    개인 기록 ({records.length}건)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecordList records={records} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="battle" className="mt-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    전투 기록 ({battleRecords.length}건)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecordList records={battleRecords} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="history" className="mt-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    장수 열전 ({historyRecords.length}건)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RecordList records={historyRecords} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function RecordList({ records }: { records: Message[] }) {
+  if (records.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground py-4">기록이 없습니다.</p>
+    );
+  }
+
+  return (
+    <ScrollArea className="max-h-[500px]">
+      <div className="space-y-1">
+        {records.map((r) => (
+          <div
+            key={r.id}
+            className="text-sm py-1.5 px-2 rounded hover:bg-muted/30"
+          >
+            <span className="text-xs text-muted-foreground mr-2">
+              {new Date(r.sentAt).toLocaleString("ko-KR", {
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+            <span
+              dangerouslySetInnerHTML={{
+                __html:
+                  (r.payload.content as string) ?? JSON.stringify(r.payload),
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
   );
 }

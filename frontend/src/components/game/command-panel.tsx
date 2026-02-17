@@ -24,7 +24,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   >({});
   const [showForm, setShowForm] = useState(false);
   const [serverTime, setServerTime] = useState<string>("");
-  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(
+    null,
+  );
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
@@ -198,13 +200,12 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-gray-300">{serverTime}</span>
             {yearMonth && (
-              <span className="text-[11px] text-gray-300">
-                {yearMonth}
-              </span>
+              <span className="text-[11px] text-gray-300">{yearMonth}</span>
             )}
             {realtimeMode && realtimeStatus && (
               <span className="text-[11px] text-cyan-300">
-                CP {realtimeStatus.commandPoints} / 대기 {realtimeStatus.remainingSeconds}s
+                CP {realtimeStatus.commandPoints} / 대기{" "}
+                {realtimeStatus.remainingSeconds}s
               </span>
             )}
           </div>
@@ -291,9 +292,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                   {actionCode}
                 </span>
                 {brief && (
-                  <span className="flex-1 truncate text-gray-300">
-                    {brief}
-                  </span>
+                  <span className="flex-1 truncate text-gray-300">{brief}</span>
                 )}
               </button>
             );

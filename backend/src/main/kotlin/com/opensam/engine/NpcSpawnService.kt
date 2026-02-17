@@ -131,7 +131,7 @@ class NpcSpawnService(
 
         // Assign city to nation
         city.nationId = nationId
-        city.trust = 100
+        city.trust = 100F
         // Set city stats to average
         city.pop = avgCity["pop"]?.coerceAtMost(city.popMax) ?: city.pop
         city.agri = avgCity["agri"]?.coerceAtMost(city.agriMax) ?: city.agri

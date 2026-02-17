@@ -11,6 +11,7 @@ import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -223,5 +224,42 @@ class NationAITest {
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
         assertEquals("Nation휴식", action)
+    }
+
+    // ========== Policy threshold integration ==========
+
+    @Test
+    fun `decideNationAction returns Nation휴식 when gold below reqNationGold threshold`() {
+        // Default reqNationGold = 2000, so gold = 1500 should trigger rest
+        val nation = createNation(gold = 1500, rice = 10000)
+        setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
+
+        val action = ai.decideNationAction(nation, createWorld(), Random(42))
+        assertEquals("Nation휴식", action)
+    }
+
+    @Test
+    fun `decideNationAction returns Nation휴식 when rice below reqNationRice threshold`() {
+        // Default reqNationRice = 2000, so rice = 1500 should trigger rest
+        val nation = createNation(gold = 10000, rice = 1500)
+        setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
+
+        val action = ai.decideNationAction(nation, createWorld(), Random(42))
+        assertEquals("Nation휴식", action)
+    }
+
+    // ========== Capital relocation ==========
+
+    @Test
+    fun `decideNationAction does not consider 천도 with only one city`() {
+        val nation = createNation(gold = 10000, rice = 10000)
+        nation.capitalCityId = 1
+        val city = createCity(id = 1, level = 5)
+        val generals = listOf(createGeneral(id = 1, officerLevel = 3, dedication = 120))
+        setupRepos(nation, listOf(city), generals)
+
+        // With a single city, 천도 should not appear as candidate
+        val action = ai.decideNationAction(nation, createWorld(), Random(42))
+        assertNotEquals("천도", action)
     }
 }

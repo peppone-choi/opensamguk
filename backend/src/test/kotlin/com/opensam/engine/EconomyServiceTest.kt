@@ -56,10 +56,10 @@ class EconomyServiceTest {
         defMax: Int = 1000,
         wall: Int = 500,
         wallMax: Int = 1000,
-        trust: Int = 80,
+        trust: Float = 80f,
         supplyState: Short = 1,
         level: Short = 5,
-        dead: Short = 0,
+        dead: Int = 0,
     ): City {
         return City(
             id = id,
@@ -147,7 +147,7 @@ class EconomyServiceTest {
     fun `processMonthly adds income to nation treasury`() {
         val world = createWorld(month = 3)
         val nation = createNation(gold = 0, rice = 0, rateTmp = 15, bill = 0)
-        val city = createCity(nationId = 1, pop = 10000, comm = 500, commMax = 1000, agri = 500, agriMax = 1000, trust = 80, supplyState = 1)
+        val city = createCity(nationId = 1, pop = 10000, comm = 500, commMax = 1000, agri = 500, agriMax = 1000, trust = 80f, supplyState = 1)
         val general = createGeneral(nationId = 1, dedication = 0)
 
         setupRepos(world, listOf(city), listOf(nation), listOf(general))
@@ -180,7 +180,7 @@ class EconomyServiceTest {
     fun `processMonthly distributes salary to generals based on dedication`() {
         val world = createWorld(month = 3)
         val nation = createNation(gold = 50000, rice = 50000, rateTmp = 15, bill = 100)
-        val city = createCity(nationId = 1, pop = 30000, comm = 800, commMax = 1000, trust = 100, supplyState = 1)
+        val city = createCity(nationId = 1, pop = 30000, comm = 800, commMax = 1000, trust = 100f, supplyState = 1)
         val general = createGeneral(nationId = 1, gold = 0, rice = 0, dedication = 10000)
 
         setupRepos(world, listOf(city), listOf(nation), listOf(general))
@@ -196,7 +196,7 @@ class EconomyServiceTest {
     fun `processMonthly npcState 5 generals excluded from salary`() {
         val world = createWorld(month = 3)
         val nation = createNation(gold = 50000, rice = 50000, rateTmp = 15, bill = 100)
-        val city = createCity(nationId = 1, pop = 30000, comm = 800, commMax = 1000, trust = 100, supplyState = 1)
+        val city = createCity(nationId = 1, pop = 30000, comm = 800, commMax = 1000, trust = 100f, supplyState = 1)
         val general = createGeneral(nationId = 1, gold = 0, rice = 0, dedication = 10000, npcState = 5)
 
         setupRepos(world, listOf(city), listOf(nation), listOf(general))
@@ -267,7 +267,7 @@ class EconomyServiceTest {
         val world = createWorld(month = 3)
         val nation = createNation(gold = 0, rice = 0, rateTmp = 15, bill = 0)
         // Neutral city should have trust reset to 50 only in semi-annual
-        val city = createCity(id = 2, nationId = 0, trust = 80, supplyState = 1, agri = 1000, agriMax = 1000)
+        val city = createCity(id = 2, nationId = 0, trust = 80f, supplyState = 1, agri = 1000, agriMax = 1000)
 
         setupRepos(world, listOf(city), listOf(nation), emptyList())
         `when`(mapService.getAdjacentCities(anyString(), anyInt())).thenReturn(emptyList())
@@ -275,7 +275,7 @@ class EconomyServiceTest {
         service.processMonthly(world)
 
         // Neutral city trust should NOT be reset to 50 in month 3
-        assertEquals(80, city.trust, "Neutral city trust should not change outside semi-annual")
+        assertEquals(80f, city.trust, "Neutral city trust should not change outside semi-annual")
     }
 
     // ========== Semi-annual: neutral city double decay ==========
@@ -284,14 +284,14 @@ class EconomyServiceTest {
     fun `semi-annual resets neutral city trust to 50 and double-decays`() {
         val world = createWorld(month = 1)
         val nation = createNation(gold = 0, rice = 0, rateTmp = 15, bill = 0)
-        val neutralCity = createCity(id = 2, nationId = 0, trust = 80, agri = 1000, agriMax = 1000, supplyState = 1)
+        val neutralCity = createCity(id = 2, nationId = 0, trust = 80f, agri = 1000, agriMax = 1000, supplyState = 1)
 
         setupRepos(world, listOf(neutralCity), listOf(nation), emptyList())
         `when`(mapService.getAdjacentCities(anyString(), anyInt())).thenReturn(emptyList())
 
         service.processMonthly(world)
 
-        assertEquals(50, neutralCity.trust, "Neutral city trust should be reset to 50")
+        assertEquals(50f, neutralCity.trust, "Neutral city trust should be reset to 50")
         // Double decay: 1000 * 0.99 * 0.99 = 980
         assertEquals(980, neutralCity.agri, "Neutral city should suffer double 1% decay")
     }
@@ -376,8 +376,8 @@ class EconomyServiceTest {
         // Test with two nations: one with capital matching city, one without
         val nation1 = createNation(id = 1, gold = 0, rice = 0, rateTmp = 15, bill = 0, capitalCityId = 1)
         val nation2 = createNation(id = 2, gold = 0, rice = 0, rateTmp = 15, bill = 0, capitalCityId = 99)
-        val city1 = createCity(id = 1, nationId = 1, pop = 10000, comm = 500, commMax = 1000, trust = 80, supplyState = 1)
-        val city2 = createCity(id = 2, nationId = 2, pop = 10000, comm = 500, commMax = 1000, trust = 80, supplyState = 1)
+        val city1 = createCity(id = 1, nationId = 1, pop = 10000, comm = 500, commMax = 1000, trust = 80f, supplyState = 1)
+        val city2 = createCity(id = 2, nationId = 2, pop = 10000, comm = 500, commMax = 1000, trust = 80f, supplyState = 1)
         val g1 = createGeneral(id = 1, nationId = 1, dedication = 0)
         val g2 = createGeneral(id = 2, nationId = 2, dedication = 0)
 

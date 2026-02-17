@@ -57,7 +57,12 @@ export default function LobbySelectNpcPage() {
 
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
-      <Button variant="ghost" size="sm" onClick={() => router.push("/lobby")} className="mb-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push("/lobby")}
+        className="mb-2"
+      >
         <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
       </Button>
 

@@ -24,13 +24,9 @@ class NationAI(
                 (it.srcNationId == nation.id || it.destNationId == nation.id)
         } || nation.warState > 0
 
-        // Low funds: focus on economy
-        if (nation.gold < 1000) {
-            return if (nationCities.any { it.comm < it.commMax / 2 }) {
-                "Nation휴식" // let generals handle commerce
-            } else {
-                "Nation휴식"
-            }
+        // Low funds: use policy thresholds
+        if (nation.gold < policy.reqNationGold || nation.rice < policy.reqNationRice) {
+            return "Nation휴식"
         }
 
         // At war: strategic commands
@@ -56,10 +52,20 @@ class NationAI(
         // Reward generals with low dedication
         if (nation.gold > 3000 && nationGenerals.any { it.dedication < 80 }) candidates.add("포상")
 
+        // Consider non-aggression pact (불가침제의)
+        if (shouldConsiderNAP(nation, diplomacies, rng)) {
+            candidates.add("불가침제의")
+        }
+
         // Consider war declaration
         val allNations = nationRepository.findByWorldId(worldId)
         if (shouldConsiderWar(nation, allNations, diplomacies, rng)) {
             candidates.add("선전포고")
+        }
+
+        // Consider capital relocation (천도)
+        if (shouldConsiderCapitalMove(nation, nationCities)) {
+            candidates.add("천도")
         }
 
         if (candidates.isEmpty()) {
@@ -92,6 +98,45 @@ class NationAI(
         if (nation.gold < 5000 || nation.rice < 5000) return false
 
         return true
+    }
+
+    /**
+     * Consider non-aggression pact when not at war and have neighbors without existing NAP.
+     */
+    private fun shouldConsiderNAP(
+        nation: Nation,
+        diplomacies: List<Diplomacy>,
+        rng: Random,
+    ): Boolean {
+        // Don't propose NAP if low on resources
+        if (nation.gold < 5000) return false
+
+        // Find nations that already have diplomacy with us
+        val existingDiploNationIds = diplomacies
+            .filter { it.srcNationId == nation.id || it.destNationId == nation.id }
+            .flatMap { listOf(it.srcNationId, it.destNationId) }
+            .toSet()
+
+        // We need neighboring nations without existing diplomacy
+        val neighborCities = cityRepository.findByNationId(nation.id).filter { it.frontState > 0 }
+        if (neighborCities.isEmpty()) return false
+
+        // Low probability of NAP proposal
+        return rng.nextInt(100) < 15
+    }
+
+    /**
+     * Consider capital relocation when current capital is not the best city.
+     * Per legacy: move capital based on population, development, and connectivity.
+     */
+    private fun shouldConsiderCapitalMove(nation: Nation, nationCities: List<City>): Boolean {
+        val capitalId = nation.capitalCityId ?: return false
+        if (nationCities.size < 2) return false
+        val capital = nationCities.find { it.id == capitalId } ?: return false
+
+        // Check if another city has significantly better population
+        val bestCity = nationCities.maxByOrNull { it.pop } ?: return false
+        return bestCity.id != capital.id && bestCity.pop > capital.pop * 1.5
     }
 
     private fun shouldConsiderWar(

@@ -74,7 +74,11 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
           {city.trust.toLocaleString(undefined, { maximumFractionDigits: 1 })}
         </CellText>
       </StatPanel>
-      <OfficerCell label="태수" npc={city.officerList[4]?.npc ?? 0} name={city.officerList[4]?.name} />
+      <OfficerCell
+        label="태수"
+        npc={city.officerList[4]?.npc ?? 0}
+        name={city.officerList[4]?.name}
+      />
 
       {/* Row 4: 농업 + 상업 + 군사 */}
       <StatPanel label="농업">
@@ -95,7 +99,11 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
           {city.secu[0].toLocaleString()} / {city.secu[1].toLocaleString()}
         </CellText>
       </StatPanel>
-      <OfficerCell label="군사" npc={city.officerList[3]?.npc ?? 0} name={city.officerList[3]?.name} />
+      <OfficerCell
+        label="군사"
+        npc={city.officerList[3]?.npc ?? 0}
+        name={city.officerList[3]?.name}
+      />
 
       {/* Row 5: 수비 + 성벽 + 시세 + 종사 */}
       <StatPanel label="수비">
@@ -114,7 +122,11 @@ export function CityBasicCard({ city, region }: CityBasicCardProps) {
         <SammoBar height={7} percent={tradeBarPercent} altText={tradeAltText} />
         <CellText>{tradeAltText}</CellText>
       </StatPanel>
-      <OfficerCell label="종사" npc={city.officerList[2]?.npc ?? 0} name={city.officerList[2]?.name} />
+      <OfficerCell
+        label="종사"
+        npc={city.officerList[2]?.npc ?? 0}
+        name={city.officerList[2]?.name}
+      />
     </div>
   );
 }
@@ -139,9 +151,7 @@ function StatPanel({
         ...(colSpan ? { gridColumn: colSpan } : {}),
       }}
     >
-      <div className="legacy-bg1 flex items-center justify-center">
-        {label}
-      </div>
+      <div className="legacy-bg1 flex items-center justify-center">{label}</div>
       <div>{children}</div>
     </div>
   );
@@ -161,9 +171,7 @@ function OfficerCell({
       className="border-t border-l border-gray-600"
       style={{ display: "grid", gridTemplateColumns: "1fr 2fr" }}
     >
-      <div className="legacy-bg1 flex items-center justify-center">
-        {label}
-      </div>
+      <div className="legacy-bg1 flex items-center justify-center">{label}</div>
       <div
         className="flex items-center justify-center"
         style={{ color: getNPCColor(npc) }}

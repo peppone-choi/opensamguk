@@ -23,7 +23,10 @@ export function connectWebSocket(
   if (stompClient?.active) return;
 
   stompClient = new Client({
-    webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+    webSocketFactory: () =>
+      new SockJS(
+        `${process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:8080"}/ws`,
+      ),
     onConnect: () => {
       if (callbacks.onTurnAdvance) {
         stompClient!.subscribe(`/topic/world/${worldId}/turn`, (msg) => {
@@ -49,6 +52,23 @@ export function connectWebSocket(
     reconnectDelay: 5000,
   });
   stompClient.activate();
+}
+
+export type { TurnData, EventData };
+
+/**
+ * Subscribe to a specific topic on the existing WebSocket connection.
+ * Returns an unsubscribe function; returns no-op if client is not connected.
+ */
+export function subscribeWebSocket(
+  topic: string,
+  callback: (data: unknown) => void,
+): () => void {
+  if (!stompClient?.active) return () => {};
+  const sub = stompClient.subscribe(topic, (msg) => {
+    callback(JSON.parse(msg.body));
+  });
+  return () => sub.unsubscribe();
 }
 
 export function disconnectWebSocket() {

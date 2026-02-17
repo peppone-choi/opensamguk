@@ -149,7 +149,12 @@ export default function LobbyJoinPage() {
 
   return (
     <div className="p-4 max-w-lg mx-auto space-y-6">
-      <Button variant="ghost" size="sm" onClick={() => router.push("/lobby")} className="mb-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push("/lobby")}
+        className="mb-2"
+      >
         <ArrowLeft className="size-4 mr-1" /> 로비로 돌아가기
       </Button>
 

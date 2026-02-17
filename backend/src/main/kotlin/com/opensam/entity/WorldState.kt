@@ -12,6 +12,9 @@ class WorldState(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Short = 0,
 
+    @Column(nullable = false)
+    var name: String = "",
+
     @Column(name = "scenario_code", nullable = false)
     var scenarioCode: String = "",
 

@@ -129,10 +129,7 @@ export function GameBottomBar({ onRefresh }: GameBottomBarProps) {
   const filteredNation = NATION_MENU.filter(isVisible);
 
   return (
-    <div
-      ref={barRef}
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden"
-    >
+    <div ref={barRef} className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
       {/* ── Dropup panels ── */}
       {openMenu === "global" && (
         <DropupPanel columns={3}>
@@ -288,7 +285,9 @@ function BottomBtn({
     <button
       type="button"
       className={`flex-1 border-l border-gray-600 py-2.5 text-center text-sm font-bold ${
-        active ? "bg-[#141c65] text-white" : "bg-[#111] text-white hover:bg-[#1c1c1c]"
+        active
+          ? "bg-[#141c65] text-white"
+          : "bg-[#111] text-white hover:bg-[#1c1c1c]"
       } ${className ?? ""}`}
       onClick={onClick}
     >

@@ -30,7 +30,6 @@ const navSections: NavSection[] = [
   {
     label: "핵심",
     items: [
-      { href: "/commands", label: "커맨드" },
       { href: "/map", label: "세계지도" },
       { href: "/general", label: "내 장수" },
       { href: "/city", label: "현재도시" },
@@ -41,6 +40,7 @@ const navSections: NavSection[] = [
     items: [
       { href: "/board", label: "회의실", require: "nation" },
       { href: "/troop", label: "부대편성", require: "nation" },
+      { href: "/superior", label: "상급자", require: "nation" },
       { href: "/personnel", label: "인사부", require: "nation" },
       { href: "/nation", label: "세력정보", require: "nation" },
       { href: "/nation-cities", label: "세력도시", require: "nation" },
@@ -61,6 +61,8 @@ const navSections: NavSection[] = [
       { href: "/best-generals", label: "명장일람" },
       { href: "/hall-of-fame", label: "명예의전당" },
       { href: "/emperor", label: "황제현황" },
+      { href: "/npc-list", label: "NPC일람" },
+      { href: "/battle-center", label: "전투기록" },
       { href: "/history", label: "연감" },
       { href: "/traffic", label: "접속현황" },
     ],
@@ -89,8 +91,11 @@ export default function GameLayout({
   const pathname = usePathname();
   const { isAuthenticated, initAuth, logout } = useAuthStore();
   const { currentWorld } = useWorldStore();
-  const { myGeneral, loading: generalLoading, fetchMyGeneral } =
-    useGeneralStore();
+  const {
+    myGeneral,
+    loading: generalLoading,
+    fetchMyGeneral,
+  } = useGeneralStore();
 
   useEffect(() => {
     initAuth();
@@ -179,7 +184,9 @@ export default function GameLayout({
                   name={myGeneral.name}
                   size="sm"
                 />
-                <span className="font-bold text-yellow-300">{myGeneral.name}</span>
+                <span className="font-bold text-yellow-300">
+                  {myGeneral.name}
+                </span>
                 <ResourceDisplay
                   gold={myGeneral.gold}
                   rice={myGeneral.rice}

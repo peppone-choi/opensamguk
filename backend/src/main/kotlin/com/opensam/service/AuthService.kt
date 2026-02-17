@@ -27,7 +27,7 @@ class AuthService(
         )
         val saved = userRepository.save(user)
 
-        val token = jwtUtil.generateToken(saved.id, saved.loginId, saved.displayName)
+        val token = jwtUtil.generateToken(saved.id, saved.loginId, saved.displayName, saved.role)
         return AuthResponse(token, UserInfo(saved.id, saved.loginId, saved.displayName))
     }
 
@@ -42,7 +42,7 @@ class AuthService(
         user.lastLoginAt = OffsetDateTime.now()
         userRepository.save(user)
 
-        val token = jwtUtil.generateToken(user.id, user.loginId, user.displayName)
+        val token = jwtUtil.generateToken(user.id, user.loginId, user.displayName, user.role)
         return AuthResponse(token, UserInfo(user.id, user.loginId, user.displayName))
     }
 }

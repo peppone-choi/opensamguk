@@ -15,6 +15,9 @@ class NationTurn(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Column(name = "world_id", nullable = false)
+    var worldId: Long = 0,
+
     @Column(name = "nation_id", nullable = false)
     var nationId: Long = 0,
 

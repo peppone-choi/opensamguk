@@ -258,7 +258,7 @@ class FrontInfoService(
             name = c.name,
             level = c.level.toInt(),
             nationInfo = nationInfo,
-            trust = c.trust,
+            trust = c.trust.toInt(),
             pop = listOf(c.pop, c.popMax),
             agri = listOf(c.agri, c.agriMax),
             comm = listOf(c.comm, c.commMax),

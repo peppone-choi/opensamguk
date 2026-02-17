@@ -26,17 +26,30 @@ class ScenarioServiceTest {
             cityRepository = mock(CityRepository::class.java),
             generalRepository = mock(GeneralRepository::class.java),
             diplomacyRepository = mock(DiplomacyRepository::class.java),
+            mapService = mock(MapService::class.java),
         )
 
+        // parseGeneral(row, worldId, nationIdxToDbId, nationCityIds, startYear, appeared)
         parseGeneral = ScenarioService::class.java.getDeclaredMethod(
             "parseGeneral",
-            List::class.java, Long::class.java, Map::class.java, Int::class.java
+            List::class.java,
+            Long::class.javaPrimitiveType,
+            Map::class.java,
+            Map::class.java,
+            Int::class.javaPrimitiveType,
+            Boolean::class.javaPrimitiveType,
         )
         parseGeneral.isAccessible = true
     }
 
-    private fun callParseGeneral(row: List<Any?>, nationNameToId: Map<String, Long> = emptyMap(), startYear: Int = 200): General {
-        return parseGeneral.invoke(service, row, 1L, nationNameToId, startYear) as General
+    private fun callParseGeneral(
+        row: List<Any?>,
+        nationIdxToDbId: Map<Int, Long> = emptyMap(),
+        nationCityIds: Map<Long, List<Long>> = emptyMap(),
+        startYear: Int = 200,
+        appeared: Boolean = true,
+    ): General {
+        return parseGeneral.invoke(service, row, 1L, nationIdxToDbId, nationCityIds, startYear, appeared) as General
     }
 
     @Test
@@ -76,12 +89,13 @@ class ScenarioServiceTest {
     }
 
     @Test
-    fun `parseGeneral resolves nation by name`() {
-        val nationMap = mapOf("후한" to 42L)
-        val row: List<Any?> = listOf(1, "헌제", "1002", "후한", null, 17, 13, 61, 53, 46, 0, 170, 250)
-        val general = callParseGeneral(row, nationNameToId = nationMap)
+    fun `parseGeneral resolves nation by index`() {
+        val nationIdxToDbId = mapOf(1 to 42L)
+        val nationCityIds = mapOf(42L to listOf(100L))
+        val row: List<Any?> = listOf(1, "헌제", "1002", 1, null, 17, 13, 61, 53, 46, 0, 170, 250)
+        val general = callParseGeneral(row, nationIdxToDbId = nationIdxToDbId, nationCityIds = nationCityIds)
         assertEquals(42L, general.nationId)
-        assertEquals(0.toShort(), general.npcState) // belongs to nation
+        assertEquals(2.toShort(), general.npcState) // NPC belonging to nation
     }
 
     @Test

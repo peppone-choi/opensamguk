@@ -15,7 +15,7 @@ class 선동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Int> {
         val dc = destCity!!
         val secuAmount = min(rng.nextInt(200, 401), dc.secu)
-        val trustAmount = min(rng.nextInt(200, 401) / 50, dc.trust)
+        val trustAmount = min(rng.nextInt(200, 401) / 50, dc.trust.toInt())
 
         pushLog("${dc.name}의 백성들이 동요하고 있습니다.")
         pushLog("${dc.name}에 ${actionName}이 성공했습니다. <1>${formatDate()}</>")

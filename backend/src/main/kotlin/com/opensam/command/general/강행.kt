@@ -47,10 +47,17 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val trainDelta = newTrain - general.train.toInt()
         val atmosDelta = newAtmos - general.atmos.toInt()
 
+        // Legacy parity: 방랑군(nation.level==0) 군주(officerLevel==12)가 강행하면
+        // 같은 세력의 모든 장수를 함께 이동시킨다.
+        val isWanderingLord = general.officerLevel.toInt() == 12 && nation?.level?.toInt() == 0
+        val wanderingJson = if (isWanderingLord) {
+            ""","wanderingNationMove":{"destCityId":"$destCityId","nationId":"${general.nationId}","destCityName":"$destCityName"}"""
+        } else ""
+
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"cityId":"$destCityId","gold":${-cost.gold},"train":$trainDelta,"atmos":$atmosDelta,"experience":$exp,"leadershipExp":1}}"""
+            message = """{"statChanges":{"cityId":"$destCityId","gold":${-cost.gold},"train":$trainDelta,"atmos":$atmosDelta,"experience":$exp,"leadershipExp":1}$wanderingJson}"""
         )
     }
 }

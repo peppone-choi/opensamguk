@@ -22,7 +22,11 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased legacy-ui">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+        >
           {children}
           <Toaster richColors position="top-right" />
         </ThemeProvider>

@@ -15,6 +15,9 @@ class GeneralTurn(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Column(name = "world_id", nullable = false)
+    var worldId: Long = 0,
+
     @Column(name = "general_id", nullable = false)
     var generalId: Long = 0,
 

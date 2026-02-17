@@ -35,6 +35,12 @@ class BattleEngine {
         // Sort defenders by battle order (highest first)
         val sortedDefenders = defenders.sortedByDescending { it.calcBattleOrder() }
 
+        // Collect attacker triggers once (used across engagements)
+        val attackerTriggers = collectTriggers(attacker)
+
+        // Track injury immunity from init triggers
+        var attackerInjuryImmune = false
+
         // Phase 1: Fight each defender general
         for (defender in sortedDefenders) {
             if (!attacker.continueWar()) {
@@ -43,12 +49,22 @@ class BattleEngine {
             }
             if (!defender.isAlive) continue
 
-            val phaseResult = executeCombatPhase(attacker, defender, rng)
-            totalAttackerDamage += phaseResult.first
-            totalDefenderDamage += phaseResult.second
+            val defenderTriggers = collectTriggers(defender)
+
+            // Fire battle-init triggers (once per engagement)
+            val initCtx = BattleTriggerContext(attacker = attacker, defender = defender, rng = rng)
+            for (trigger in attackerTriggers) trigger.onBattleInit(initCtx)
+            for (trigger in defenderTriggers) trigger.onBattleInit(initCtx)
+            if (initCtx.injuryImmune) attackerInjuryImmune = true
+            logs.addAll(initCtx.battleLogs)
+
+            val phaseResult = executeCombatPhase(attacker, defender, rng, phaseNumber = 0, isVsCity = false)
+            totalAttackerDamage += phaseResult.damage.first
+            totalDefenderDamage += phaseResult.damage.second
+            logs.addAll(phaseResult.logs)
 
             logs.add("<Y>${attacker.name}</> vs <Y>${defender.name}</> - " +
-                "공격 피해: ${phaseResult.first}, 방어 피해: ${phaseResult.second}")
+                "공격 피해: ${phaseResult.damage.first}, 방어 피해: ${phaseResult.damage.second}")
 
             // Attacker continuation check
             if (!attacker.continueWar()) {
@@ -69,12 +85,21 @@ class BattleEngine {
         }
         if (attackerWon && attacker.continueWar() && allDefendersDown) {
             val cityUnit = WarUnitCity(city)
+            var siegePhase = 0
+
+            // Fire battle-init triggers for siege engagement
+            val siegeInitCtx = BattleTriggerContext(attacker = attacker, defender = cityUnit, rng = rng, isVsCity = true)
+            for (trigger in attackerTriggers) trigger.onBattleInit(siegeInitCtx)
+            if (siegeInitCtx.injuryImmune) attackerInjuryImmune = true
+            logs.addAll(siegeInitCtx.battleLogs)
 
             // No round cap - legacy has no siege round limit
             while (attacker.continueWar() && cityUnit.isAlive) {
-                val phaseResult = executeCombatPhase(attacker, cityUnit, rng)
-                totalAttackerDamage += phaseResult.first
-                totalDefenderDamage += phaseResult.second
+                val phaseResult = executeCombatPhase(attacker, cityUnit, rng, phaseNumber = siegePhase, isVsCity = true)
+                totalAttackerDamage += phaseResult.damage.first
+                totalDefenderDamage += phaseResult.damage.second
+                logs.addAll(phaseResult.logs)
+                siegePhase++
 
                 if (!attacker.continueWar()) {
                     attackerWon = false
@@ -89,8 +114,13 @@ class BattleEngine {
             }
         }
 
-        // Apply injury chance (5%)
-        if (rng.nextDouble() < 0.05 && attacker.isAlive) {
+        // Injury check: fire onInjuryCheck triggers before wound roll
+        val injuryCtx = BattleTriggerContext(attacker = attacker, defender = attacker, rng = rng)
+        for (trigger in attackerTriggers) trigger.onInjuryCheck(injuryCtx)
+        val effectiveInjuryImmune = attackerInjuryImmune || injuryCtx.injuryImmune
+
+        // Apply injury chance (5%) unless immune
+        if (!effectiveInjuryImmune && rng.nextDouble() < 0.05 && attacker.isAlive) {
             attacker.injury = (attacker.injury + rng.nextInt(1, 4)).coerceAtMost(80)
             logs.add("<Y>${attacker.name}</>이(가) 부상을 입었습니다.")
         }
@@ -129,9 +159,18 @@ class BattleEngine {
             warPower = warPower + rng.nextDouble() * (100.0 - warPower)
         }
 
-        // Atmos/train modifiers (legacy: warPower *= atmos / opposeTrain)
-        warPower *= attacker.atmos / 100.0
-        warPower /= maxOf(1.0, defender.train / 100.0)
+        warPower *= attacker.atmos.toDouble()
+        warPower /= maxOf(1.0, defender.train.toDouble())
+
+        val attackerDex = 0
+        val defenderDex = 0
+        warPower *= getDexLog(attackerDex, defenderDex)
+
+        // TODO: Replace with CrewType coefficient tables from legacy parity data.
+        val attackTypeCoef = 1.0
+        val defenceTypeCoef = 1.0
+        warPower *= attackTypeCoef
+        warPower /= maxOf(0.01, defenceTypeCoef)
 
         // Experience level scaling (WarUnitGeneral only)
         if (attacker is WarUnitGeneral) {
@@ -149,7 +188,7 @@ class BattleEngine {
         return maxOf(1.0, round(warPower))
     }
 
-    private fun collectTriggers(unit: WarUnit): List<BattleTrigger> {
+    internal fun collectTriggers(unit: WarUnit): List<BattleTrigger> {
         if (unit !is WarUnitGeneral) return emptyList()
         return listOfNotNull(
             BattleTriggerRegistry.get(unit.general.specialCode),
@@ -157,47 +196,74 @@ class BattleEngine {
         ).sortedBy { it.priority }
     }
 
-    private fun executeCombatPhase(attacker: WarUnit, defender: WarUnit, rng: Random): Pair<Int, Int> {
+    data class PhaseResult(
+        val damage: Pair<Int, Int>,
+        val logs: List<String>,
+    )
+
+    private fun executeCombatPhase(
+        attacker: WarUnit,
+        defender: WarUnit,
+        rng: Random,
+        phaseNumber: Int = 0,
+        isVsCity: Boolean = false,
+    ): PhaseResult {
         attacker.beginPhase()
         defender.beginPhase()
 
         val attackerTriggers = collectTriggers(attacker)
         val defenderTriggers = collectTriggers(defender)
-        val ctx = BattleTriggerContext(attacker = attacker, defender = defender, rng = rng)
+        val ctx = BattleTriggerContext(
+            attacker = attacker,
+            defender = defender,
+            rng = rng,
+            phaseNumber = phaseNumber,
+            isVsCity = isVsCity,
+        )
 
         // Compute war power for each side (legacy: each side independently)
         var attackerDamage = computeWarPower(attacker, defender, rng).toInt().coerceAtLeast(1)
         var defenderDamage = computeWarPower(defender, attacker, rng).toInt().coerceAtLeast(1)
 
-        // PRE triggers: modify chances before rolls
+        // PRE triggers: modify chances before rolls (legacy: 시도)
         for (trigger in attackerTriggers) trigger.onPreCritical(ctx)
         for (trigger in defenderTriggers) trigger.onPreDodge(ctx)
         for (trigger in attackerTriggers) trigger.onPreMagic(ctx)
         for (trigger in defenderTriggers) trigger.onPreMagic(ctx)
 
-        // Critical hit roll
+        // Critical hit roll (legacy: 필살시도/발동)
         if (rng.nextDouble() < attacker.criticalChance + ctx.criticalChanceBonus) {
             attackerDamage = (attackerDamage * 1.5).toInt()
             ctx.criticalActivated = true
-            // POST critical
+            // POST critical (legacy: 필살발동)
             for (trigger in attackerTriggers) trigger.onPostCritical(ctx)
         }
 
-        // Dodge roll
+        // Dodge roll (legacy: 회피시도/발동)
         if (!ctx.dodgeDisabled && rng.nextDouble() < defender.dodgeChance + ctx.dodgeChanceBonus) {
             attackerDamage = (attackerDamage * 0.3).toInt()
             ctx.dodgeActivated = true
-            // POST dodge
+            // POST dodge (legacy: 회피발동)
             for (trigger in defenderTriggers) trigger.onPostDodge(ctx)
         }
 
-        // Magic/tactics roll
-        if (rng.nextDouble() < attacker.magicChance + ctx.magicChanceBonus) {
-            val magicDamage = (attacker.intel * 2 * attacker.magicDamageMultiplier).toInt()
-            attackerDamage += magicDamage
-            ctx.magicActivated = true
-            // POST magic
-            for (trigger in attackerTriggers) trigger.onPostMagic(ctx)
+        // Magic/stratagem roll (legacy: 계략시도/발동/실패)
+        val totalMagicChance = attacker.magicChance + ctx.magicChanceBonus
+        if (totalMagicChance > 0) {
+            if (rng.nextDouble() < totalMagicChance) {
+                // Stratagem success (legacy: 계략발동)
+                val magicDamage = (attacker.intel * 2 * attacker.magicDamageMultiplier * ctx.magicDamageMultiplier).toInt()
+                attackerDamage += magicDamage
+                ctx.magicActivated = true
+                for (trigger in attackerTriggers) trigger.onPostMagic(ctx)
+            } else {
+                // Stratagem failure (legacy: 계략실패)
+                ctx.magicFailed = true
+                for (trigger in attackerTriggers) trigger.onMagicFail(ctx)
+                if (ctx.magicFailDamage > 0) {
+                    defenderDamage += ctx.magicFailDamage.toInt()
+                }
+            }
         }
 
         // Defender 반계 check (after magic resolved)
@@ -213,6 +279,12 @@ class BattleEngine {
         for (trigger in attackerTriggers) trigger.onDamageCalc(ctx)
         attackerDamage = (attackerDamage * ctx.attackMultiplier).toInt()
 
+        // Defence multiplier from defender triggers
+        for (trigger in defenderTriggers) trigger.onDamageCalc(ctx)
+        if (ctx.defenceMultiplier != 1.0) {
+            attackerDamage = (attackerDamage / ctx.defenceMultiplier).toInt()
+        }
+
         ctx.attackerDamage = attackerDamage
         ctx.defenderDamage = defenderDamage
 
@@ -220,9 +292,41 @@ class BattleEngine {
         defender.takeDamage(attackerDamage)
         attacker.takeDamage(defenderDamage)
 
+        // Snipe wound application (legacy: 저격발동 applies wound)
+        if (ctx.snipeActivated && defender is WarUnitGeneral) {
+            defender.injury = (defender.injury + ctx.snipeWoundAmount).coerceAtMost(80)
+        }
+
+        // Post damage triggers (counter, morale)
+        for (trigger in attackerTriggers) trigger.onPostDamage(ctx)
+        for (trigger in defenderTriggers) trigger.onPostDamage(ctx)
+
+        // Apply counter damage (legacy: 반격)
+        if (ctx.counterDamageRatio > 0) {
+            val counterDamage = (attackerDamage * ctx.counterDamageRatio).toInt()
+            attacker.takeDamage(counterDamage)
+        }
+
+        // Apply morale boost (legacy: 사기진작)
+        if (ctx.moraleBoost > 0 && attacker is WarUnitGeneral) {
+            attacker.atmos = (attacker.atmos + ctx.moraleBoost).coerceAtMost(100)
+        }
+
         // Rice consumption (generals only)
-        if (attacker is WarUnitGeneral) attacker.consumeRice(attackerDamage)
-        if (defender is WarUnitGeneral) defender.consumeRice(defenderDamage)
+        if (attacker is WarUnitGeneral) {
+            attacker.consumeRice(
+                damageDealt = attackerDamage,
+                isAttacker = true,
+                vsCity = isVsCity,
+            )
+        }
+        if (defender is WarUnitGeneral) {
+            defender.consumeRice(
+                damageDealt = defenderDamage,
+                isAttacker = false,
+                vsCity = isVsCity,
+            )
+        }
 
         // Morale loss
         if (defender is WarUnitGeneral) {
@@ -232,6 +336,9 @@ class BattleEngine {
             attacker.atmos = (attacker.atmos - 1).coerceAtLeast(0)
         }
 
-        return Pair(attackerDamage, defenderDamage)
+        return PhaseResult(
+            damage = Pair(attackerDamage, defenderDamage),
+            logs = ctx.battleLogs.toList(),
+        )
     }
 }

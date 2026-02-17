@@ -229,6 +229,7 @@ class RealtimeService(
         generalTurnRepository.deleteByGeneralId(general.id)
         generalTurnRepository.save(
             GeneralTurn(
+                worldId = general.worldId,
                 generalId = general.id,
                 turnIdx = 0,
                 actionCode = actionCode,

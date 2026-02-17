@@ -5,6 +5,7 @@ import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
 import com.opensam.entity.General
+import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.*
 import com.opensam.service.InheritanceService
@@ -239,5 +240,97 @@ class TurnServiceTest {
         // updatedAt should be startTime + 300s
         val expected = startTime.plusSeconds(300)
         assertEquals(expected, world.updatedAt, "updatedAt should advance by tick duration")
+    }
+
+    // ========== updateTraffic (supply state recalc) ==========
+
+    @Test
+    fun `processWorld calls updateCitySupplyState each turn`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        verify(economyService).updateCitySupplyState(anyNonNull())
+    }
+
+    @Test
+    fun `processWorld calls updateCitySupplyState for each catch-up turn`() {
+        val now = OffsetDateTime.now()
+        // 2 ticks elapsed
+        val world = createWorld(year = 200, month = 3, tickSeconds = 300, updatedAt = now.minusSeconds(700))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        service.processWorld(world)
+
+        verify(economyService, times(2)).updateCitySupplyState(anyNonNull())
+    }
+
+    // ========== strategic command limit reset ==========
+
+    @Test
+    fun `processWorld decrements strategic command limits`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        val nation = Nation(
+            id = 1, worldId = 1, name = "위", color = "#FF0000",
+            strategicCmdLimit = 5,
+        )
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
+
+        service.processWorld(world)
+
+        assertEquals(4.toShort(), nation.strategicCmdLimit, "Strategic limit should decrement by 1")
+    }
+
+    @Test
+    fun `processWorld does not decrement strategic limit below zero`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        val nation = Nation(
+            id = 1, worldId = 1, name = "위", color = "#FF0000",
+            strategicCmdLimit = 0,
+        )
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
+
+        service.processWorld(world)
+
+        assertEquals(0.toShort(), nation.strategicCmdLimit, "Strategic limit should stay at 0")
+    }
+
+    @Test
+    fun `processWorld decrements strategic limit for each catch-up turn`() {
+        val now = OffsetDateTime.now()
+        // 2 ticks elapsed
+        val world = createWorld(year = 200, month = 3, tickSeconds = 300, updatedAt = now.minusSeconds(700))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+
+        val nation = Nation(
+            id = 1, worldId = 1, name = "위", color = "#FF0000",
+            strategicCmdLimit = 10,
+        )
+        `when`(nationRepository.findByWorldId(1L)).thenReturn(listOf(nation))
+
+        service.processWorld(world)
+
+        assertEquals(8.toShort(), nation.strategicCmdLimit, "Strategic limit should decrement by 2 for 2 turns")
+    }
+
+    // ========== catch-up resilience ==========
+
+    @Test
+    fun `processWorld continues when updateTraffic throws`() {
+        val now = OffsetDateTime.now()
+        val world = createWorld(year = 200, month = 6, tickSeconds = 300, updatedAt = now.minusSeconds(400))
+        `when`(generalRepository.findByWorldId(1L)).thenReturn(emptyList())
+        doThrow(RuntimeException("Traffic error")).`when`(economyService).updateCitySupplyState(anyNonNull())
+
+        assertDoesNotThrow { service.processWorld(world) }
+        assertEquals(7.toShort(), world.currentMonth, "Month should still advance")
     }
 }

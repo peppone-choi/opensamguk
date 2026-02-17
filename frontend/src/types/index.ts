@@ -13,6 +13,7 @@ export interface AuthResponse {
 // World
 export interface WorldState {
   id: number;
+  name: string;
   scenarioCode: string;
   currentYear: number;
   currentMonth: number;
@@ -94,6 +95,7 @@ export interface General {
   cityId: number;
   troopId: number;
   npcState: number;
+  npcOrg: number | null;
   affinity: number;
   bornYear: number;
   deadYear: number;
@@ -105,6 +107,11 @@ export interface General {
   intelExp: number;
   politics: number;
   charm: number;
+  dex1: number;
+  dex2: number;
+  dex3: number;
+  dex4: number;
+  dex5: number;
   injury: number;
   experience: number;
   dedication: number;
@@ -120,6 +127,8 @@ export interface General {
   bookCode: string;
   horseCode: string;
   itemCode: string;
+  ownerName: string;
+  newmsg: number;
   turnTime: string;
   recentWarTime: string | null;
   makeLimit: number;
@@ -148,6 +157,13 @@ export interface General {
   expLevel: number;
   createdAt: string;
   updatedAt: string;
+  warnum?: number;
+  killnum?: number;
+  deathnum?: number;
+  killcrew?: number;
+  deathcrew?: number;
+  firenum?: number;
+  refreshScore?: number;
 }
 
 // Troop
@@ -190,6 +206,7 @@ export interface Message {
 // Command types
 export interface GeneralTurn {
   id: number;
+  worldId: number;
   generalId: number;
   turnIdx: number;
   actionCode: string;
@@ -199,6 +216,7 @@ export interface GeneralTurn {
 
 export interface NationTurn {
   id: number;
+  worldId: number;
   nationId: number;
   officerLevel: number;
   turnIdx: number;
@@ -285,7 +303,7 @@ export interface GlobalInfo {
   generalCntLimit: number;
   serverCnt: number;
   lastVoteID: number;
-  lastVote: unknown;
+  lastVote: Record<string, unknown> | null;
 }
 
 export interface OnlineNationInfo {
@@ -329,7 +347,7 @@ export interface NationNoticeInfo {
 }
 
 export interface TroopInfoFront {
-  leader: { city: number; reservedCommand: unknown };
+  leader: { city: number; reservedCommand: Record<string, unknown> | null };
   name: string;
 }
 
@@ -392,7 +410,7 @@ export interface GeneralFrontInfo {
   refreshScoreTotal: number | null;
   refreshScore: number | null;
   autorunLimit: number;
-  reservedCommand: unknown;
+  reservedCommand: Record<string, unknown> | null;
   troopInfo: TroopInfoFront | null;
   dex1: number;
   dex2: number;
@@ -429,7 +447,7 @@ export interface NationFrontInfo {
   topChiefs: Record<number, TopChiefInfo | null>;
   diplomaticLimit: number;
   strategicCmdLimit: number;
-  impossibleStrategicCommand: unknown[];
+  impossibleStrategicCommand: string[];
   prohibitScout: number;
   prohibitWar: number;
 }
@@ -618,6 +636,25 @@ export interface NationStatistic {
   cityCount: number;
   totalCrew: number;
   totalPop: number;
+}
+
+export interface TurnStatusResponse {
+  state: string;
+}
+
+export interface TurnRunResponse {
+  result: string;
+}
+
+export interface AuctionBidResponse {
+  success: boolean;
+  currentPrice?: number;
+  message?: string;
+}
+
+export interface AccountSettings {
+  defenceTrain?: number;
+  tournamentState?: number;
 }
 
 // Admin
