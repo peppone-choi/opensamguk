@@ -34,6 +34,7 @@ class TurnServiceTest {
     private lateinit var generalMaintenanceService: GeneralMaintenanceService
     private lateinit var specialAssignmentService: SpecialAssignmentService
     private lateinit var npcSpawnService: NpcSpawnService
+    private lateinit var unificationService: UnificationService
     private lateinit var inheritanceService: InheritanceService
     private lateinit var generalAI: GeneralAI
     private lateinit var nationAI: NationAI
@@ -59,6 +60,7 @@ class TurnServiceTest {
         generalMaintenanceService = mock(GeneralMaintenanceService::class.java)
         specialAssignmentService = mock(SpecialAssignmentService::class.java)
         npcSpawnService = mock(NpcSpawnService::class.java)
+        unificationService = mock(UnificationService::class.java)
         inheritanceService = mock(InheritanceService::class.java)
         generalAI = mock(GeneralAI::class.java)
         nationAI = mock(NationAI::class.java)
@@ -79,6 +81,7 @@ class TurnServiceTest {
             generalMaintenanceService,
             specialAssignmentService,
             npcSpawnService,
+            unificationService,
             inheritanceService,
             generalAI,
             nationAI,
