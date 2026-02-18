@@ -1,6 +1,7 @@
 package com.opensam.engine.war
 
 import com.opensam.entity.City
+import com.opensam.model.CrewType
 import kotlin.math.round
 import kotlin.random.Random
 
@@ -166,9 +167,14 @@ class BattleEngine {
         val defenderDex = 0
         warPower *= getDexLog(attackerDex, defenderDex)
 
-        // TODO: Replace with CrewType coefficient tables from legacy parity data.
-        val attackTypeCoef = 1.0
-        val defenceTypeCoef = 1.0
+        val attackerCrewType = CrewType.fromCode(attacker.crewType)
+        val defenderCrewType = CrewType.fromCode(defender.crewType)
+        val attackTypeCoef = if (attackerCrewType != null && defenderCrewType != null) {
+            attackerCrewType.getAttackCoef(defenderCrewType)
+        } else 1.0
+        val defenceTypeCoef = if (defenderCrewType != null && attackerCrewType != null) {
+            defenderCrewType.getDefenceCoef(attackerCrewType)
+        } else 1.0
         warPower *= attackTypeCoef
         warPower /= maxOf(0.01, defenceTypeCoef)
 

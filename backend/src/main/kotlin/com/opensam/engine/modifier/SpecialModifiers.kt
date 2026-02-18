@@ -159,6 +159,208 @@ object SpecialModifiers {
             override fun onCalcDomestic(ctx: DomesticContext) = if (ctx.actionCode in listOf("모병", "징병"))
                 ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.3) else ctx
         },
+        "che_인덕" to object : ActionModifier {
+            override val code = "che_인덕"; override val name = "인덕"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("민심", "주민선정", "인구", "정착장려") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_발명" to object : ActionModifier {
+            override val code = "che_발명"; override val name = "발명"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("기술", "기술연구") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_경작" to object : ActionModifier {
+            override val code = "che_경작"; override val name = "경작"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("농업", "농지개간") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_상재" to object : ActionModifier {
+            override val code = "che_상재"; override val name = "상재"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("상업", "상업투자") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_축성" to object : ActionModifier {
+            override val code = "che_축성"; override val name = "축성"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("성벽", "성벽보수") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_수비" to object : ActionModifier {
+            override val code = "che_수비"; override val name = "수비"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("수비", "수비강화") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_통찰" to object : ActionModifier {
+            override val code = "che_통찰"; override val name = "통찰"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("치안", "치안강화") -> ctx.copy(
+                    scoreMultiplier = ctx.scoreMultiplier * 1.1,
+                    successMultiplier = ctx.successMultiplier + 0.1,
+                    costMultiplier = ctx.costMultiplier * 0.8
+                )
+                else -> ctx
+            }
+        },
+        "che_귀모" to object : ActionModifier {
+            override val code = "che_귀모"; override val name = "귀모"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                "계략" -> ctx.copy(successMultiplier = ctx.successMultiplier + 0.2)
+                else -> ctx
+            }
+        },
+        "che_귀병" to object : ActionModifier {
+            override val code = "che_귀병"; override val name = "귀병"
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                magicTrialProb = stat.magicTrialProb + 0.2,
+                dexMultiplier = stat.dexMultiplier * 1.1
+            )
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
+                else -> ctx
+            }
+        },
+        "che_신산" to object : ActionModifier {
+            override val code = "che_신산"; override val name = "신산"
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                magicTrialProb = stat.magicTrialProb + 0.1,
+                magicSuccessProb = stat.magicSuccessProb + 0.2
+            )
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                "계략" -> ctx.copy(successMultiplier = ctx.successMultiplier + 0.1)
+                else -> ctx
+            }
+        },
+        "che_환술" to object : ActionModifier {
+            override val code = "che_환술"; override val name = "환술"
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                magicSuccessProb = stat.magicSuccessProb + 0.1,
+                magicSuccessDamage = stat.magicSuccessDamage * 1.3
+            )
+        },
+        "che_집중" to object : ActionModifier {
+            override val code = "che_집중"; override val name = "집중"
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                magicSuccessDamage = stat.magicSuccessDamage * 1.5
+            )
+        },
+        "che_신중" to object : ActionModifier {
+            override val code = "che_신중"; override val name = "신중"
+            override fun onCalcStat(stat: StatContext) = stat.copy(magicSuccessProb = 1.0)
+        },
+        "che_반계" to object : ActionModifier {
+            override val code = "che_반계"; override val name = "반계"
+            override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
+                magicTrialProb = stat.magicTrialProb - 0.1
+            )
+        },
+        "che_보병" to object : ActionModifier {
+            override val code = "che_보병"; override val name = "보병"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
+                else -> ctx
+            }
+            // TODO: crew-type-specific damage reduction (-10%/-20%) needs battle context
+        },
+        "che_궁병" to object : ActionModifier {
+            override val code = "che_궁병"; override val name = "궁병"
+            override fun onCalcStat(stat: StatContext) = stat.copy(dodgeChance = stat.dodgeChance + 0.2)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
+                else -> ctx
+            }
+        },
+        "che_기병" to object : ActionModifier {
+            override val code = "che_기병"; override val name = "기병"
+            override fun onCalcStat(stat: StatContext) = stat.copy(warPower = stat.warPower * 1.15)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
+                else -> ctx
+            }
+        },
+        "che_공성" to object : ActionModifier {
+            override val code = "che_공성"; override val name = "공성"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
+                else -> ctx
+            }
+        },
+        "che_돌격" to object : ActionModifier {
+            override val code = "che_돌격"; override val name = "돌격"
+            override fun onCalcStat(stat: StatContext) = stat.copy(initWarPhase = stat.initWarPhase + 2.0)
+        },
+        "che_무쌍" to object : ActionModifier {
+            override val code = "che_무쌍"; override val name = "무쌍"
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                criticalChance = stat.criticalChance + 0.1,
+                warPower = stat.warPower * 1.05,
+                dodgeChance = stat.dodgeChance - 0.02
+            )
+        },
+        "che_견고" to object : ActionModifier {
+            override val code = "che_견고"; override val name = "견고"
+            override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
+                criticalChance = stat.criticalChance - 0.2,
+                magicTrialProb = stat.magicTrialProb - 0.1
+            )
+        },
+        "che_위압" to object : ActionModifier {
+            override val code = "che_위압"; override val name = "위압"
+        },
+        "che_저격" to object : ActionModifier {
+            override val code = "che_저격"; override val name = "저격"
+        },
+        "che_필살" to object : ActionModifier {
+            override val code = "che_필살"; override val name = "필살"
+            override fun onCalcStat(stat: StatContext) = stat.copy(criticalChance = stat.criticalChance + 0.3)
+        },
+        "che_징병" to object : ActionModifier {
+            override val code = "che_징병"; override val name = "징병"
+            override fun onCalcStat(stat: StatContext) = stat.copy(leadership = stat.leadership * 1.25)
+        },
+        "che_의술" to object : ActionModifier {
+            override val code = "che_의술"; override val name = "의술"
+        },
+        "che_격노" to object : ActionModifier {
+            override val code = "che_격노"; override val name = "격노"
+        },
+        "che_척사" to object : ActionModifier {
+            override val code = "che_척사"; override val name = "척사"
+        },
     )
 
     fun get(code: String): ActionModifier? = specials[code]

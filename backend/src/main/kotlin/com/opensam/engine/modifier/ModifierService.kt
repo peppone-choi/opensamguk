@@ -77,6 +77,14 @@ class ModifierService {
         return ctx
     }
 
+    fun applyOpposeStatModifiers(modifiers: List<ActionModifier>, baseStat: StatContext): StatContext {
+        var stat = baseStat
+        for (mod in modifiers) {
+            stat = mod.onCalcOpposeStat(stat)
+        }
+        return stat
+    }
+
     fun getTotalWarPowerMultiplier(modifiers: List<ActionModifier>): Double {
         return modifiers.fold(1.0) { acc, mod -> acc * mod.getWarPowerMultiplier() }
     }

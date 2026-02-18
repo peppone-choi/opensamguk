@@ -73,6 +73,148 @@ object NationTypeModifiers {
             override val code = "che_건국"; override val name = "건국"
             override fun onCalcDomestic(ctx: DomesticContext) = ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1)
         },
+        "che_도적" to object : ActionModifier {
+            override val code = "che_도적"; override val name = "도적"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("치안", "치안강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                "계략" -> ctx.copy(successMultiplier = ctx.successMultiplier + 0.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(goldMultiplier = ctx.goldMultiplier * 0.9)
+        },
+        "che_명가" to object : ActionModifier {
+            override val code = "che_명가"; override val name = "명가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(riceMultiplier = ctx.riceMultiplier * 0.9, popGrowthMultiplier = ctx.popGrowthMultiplier * 1.2)
+        },
+        "che_음양가" to object : ActionModifier {
+            override val code = "che_음양가"; override val name = "음양가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("농업", "농지개간") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("상업", "상업투자") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(popGrowthMultiplier = ctx.popGrowthMultiplier * 1.2)
+            override fun onCalcStrategic(ctx: StrategicContext) = ctx.copy(delayMultiplier = ctx.delayMultiplier * 1.33)
+        },
+        "che_종횡가" to object : ActionModifier {
+            override val code = "che_종횡가"; override val name = "종횡가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("농업", "농지개간") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("상업", "상업투자") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(goldMultiplier = ctx.goldMultiplier * 0.9)
+            override fun onCalcStrategic(ctx: StrategicContext) = ctx.copy(delayMultiplier = ctx.delayMultiplier * 0.75, globalDelayMultiplier = ctx.globalDelayMultiplier * 0.5)
+        },
+        "che_불가" to object : ActionModifier {
+            override val code = "che_불가"; override val name = "불가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(goldMultiplier = ctx.goldMultiplier * 0.9)
+        },
+        "che_오두미도" to object : ActionModifier {
+            override val code = "che_오두미도"; override val name = "오두미도"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("농업", "농지개간") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("상업", "상업투자") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(riceMultiplier = ctx.riceMultiplier * 1.1, popGrowthMultiplier = ctx.popGrowthMultiplier * 1.2)
+        },
+        "che_태평도" to object : ActionModifier {
+            override val code = "che_태평도"; override val name = "태평도"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(popGrowthMultiplier = ctx.popGrowthMultiplier * 1.2)
+        },
+        "che_도가" to object : ActionModifier {
+            override val code = "che_도가"; override val name = "도가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("치안", "치안강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(popGrowthMultiplier = ctx.popGrowthMultiplier * 1.2)
+        },
+        "che_묵가" to object : ActionModifier {
+            override val code = "che_묵가"; override val name = "묵가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+        },
+        "che_덕가" to object : ActionModifier {
+            override val code = "che_덕가"; override val name = "덕가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("치안", "치안강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(riceMultiplier = ctx.riceMultiplier * 0.9, popGrowthMultiplier = ctx.popGrowthMultiplier * 1.2)
+        },
+        "che_병가" to object : ActionModifier {
+            override val code = "che_병가"; override val name = "병가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("기술", "기술연구") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("수비", "수비강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("성벽", "성벽보수") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(popGrowthMultiplier = ctx.popGrowthMultiplier * 0.8)
+        },
+        "che_유가" to object : ActionModifier {
+            override val code = "che_유가"; override val name = "유가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("농업", "농지개간") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("상업", "상업투자") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(riceMultiplier = ctx.riceMultiplier * 0.9)
+        },
+        "che_법가" to object : ActionModifier {
+            override val code = "che_법가"; override val name = "법가"
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("치안", "치안강화") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 1.1, costMultiplier = ctx.costMultiplier * 0.8)
+                in listOf("민심", "주민선정") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                in listOf("인구", "정착장려") -> ctx.copy(scoreMultiplier = ctx.scoreMultiplier * 0.9, costMultiplier = ctx.costMultiplier * 1.1)
+                else -> ctx
+            }
+            override fun onCalcIncome(ctx: IncomeContext) = ctx.copy(goldMultiplier = ctx.goldMultiplier * 1.1, popGrowthMultiplier = ctx.popGrowthMultiplier * 0.8)
+        },
     )
 
     fun get(code: String): ActionModifier? = nationTypes[code]

@@ -36,6 +36,7 @@ class TurnService(
     private val generalMaintenanceService: GeneralMaintenanceService,
     private val specialAssignmentService: SpecialAssignmentService,
     private val npcSpawnService: NpcSpawnService,
+    private val unificationService: UnificationService,
     private val inheritanceService: InheritanceService,
     private val generalAI: GeneralAI,
     private val nationAI: NationAI,
@@ -119,6 +120,12 @@ class TurnService(
                 npcSpawnService.checkNpcSpawn(world)
             } catch (e: Exception) {
                 logger.warn("NpcSpawnService.checkNpcSpawn failed: ${e.message}")
+            }
+
+            try {
+                unificationService.checkAndSettleUnification(world)
+            } catch (e: Exception) {
+                logger.warn("UnificationService.checkAndSettleUnification failed: ${e.message}")
             }
 
             world.updatedAt = nextTurnAt
@@ -263,6 +270,11 @@ class TurnService(
 
                 if (executedTurn != null) {
                     generalTurnRepository.delete(executedTurn)
+                }
+
+                // Track active actions for inheritance (core2026 parity)
+                if (general.npcState.toInt() == 0 && actionCode != "휴식") {
+                    inheritanceService.accruePoints(general, "active_action", 1)
                 }
 
                 // KillTurn handling

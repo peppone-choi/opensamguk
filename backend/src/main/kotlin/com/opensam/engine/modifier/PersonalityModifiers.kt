@@ -58,6 +58,78 @@ object PersonalityModifiers {
         "일반" to object : ActionModifier {
             override val code = "일반"; override val name = "일반"
         },
+        "che_안전" to object : ActionModifier {
+            override val code = "che_안전"; override val name = "안전"
+            override fun onCalcStat(stat: StatContext) = stat.copy(bonusAtmos = stat.bonusAtmos - 5)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.8)
+                else -> ctx
+            }
+        },
+        "che_유지" to object : ActionModifier {
+            override val code = "che_유지"; override val name = "유지"
+            override fun onCalcStat(stat: StatContext) = stat.copy(bonusTrain = stat.bonusTrain - 5)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.8)
+                else -> ctx
+            }
+        },
+        "che_재간" to object : ActionModifier {
+            override val code = "che_재간"; override val name = "재간"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 0.9)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.8)
+                else -> ctx
+            }
+        },
+        "che_출세" to object : ActionModifier {
+            override val code = "che_출세"; override val name = "출세"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 1.1)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 1.2)
+                else -> ctx
+            }
+        },
+        "che_할거" to object : ActionModifier {
+            override val code = "che_할거"; override val name = "할거"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 0.9, bonusTrain = stat.bonusTrain + 5)
+        },
+        "che_정복" to object : ActionModifier {
+            override val code = "che_정복"; override val name = "정복"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 0.9, bonusAtmos = stat.bonusAtmos + 5)
+        },
+        "che_패권" to object : ActionModifier {
+            override val code = "che_패권"; override val name = "패권"
+            override fun onCalcStat(stat: StatContext) = stat.copy(bonusTrain = stat.bonusTrain + 5)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 1.2)
+                else -> ctx
+            }
+        },
+        "che_의협" to object : ActionModifier {
+            override val code = "che_의협"; override val name = "의협"
+            override fun onCalcStat(stat: StatContext) = stat.copy(bonusAtmos = stat.bonusAtmos + 5)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 1.2)
+                else -> ctx
+            }
+        },
+        "che_대의" to object : ActionModifier {
+            override val code = "che_대의"; override val name = "대의"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 1.1, bonusTrain = stat.bonusTrain - 5)
+        },
+        "che_왕좌" to object : ActionModifier {
+            override val code = "che_왕좌"; override val name = "왕좌"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 1.1, bonusAtmos = stat.bonusAtmos - 5)
+        },
+        "che_은둔" to object : ActionModifier {
+            override val code = "che_은둔"; override val name = "은둔"
+            override fun onCalcStat(stat: StatContext) = stat.copy(expMultiplier = stat.expMultiplier * 0.9, dedicationMultiplier = stat.dedicationMultiplier * 0.9, bonusAtmos = stat.bonusAtmos - 5, bonusTrain = stat.bonusTrain - 5)
+            override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
+                "단련" -> ctx.copy(successMultiplier = ctx.successMultiplier + 0.1)
+                else -> ctx
+            }
+        },
     )
 
     fun get(code: String): ActionModifier? = personalities[code]

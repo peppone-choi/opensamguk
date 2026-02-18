@@ -10,6 +10,9 @@ interface ActionModifier {
     // Stat modifiers for battle
     fun onCalcStat(stat: StatContext): StatContext = stat
 
+    // Opponent stat modifiers (e.g., 반계 reduces opponent magic, 견고 reduces opponent critical)
+    fun onCalcOpposeStat(stat: StatContext): StatContext = stat
+
     // War power multiplier
     fun getWarPowerMultiplier(): Double = 1.0
 
@@ -48,11 +51,13 @@ data class StatContext(
     var injuryProb: Double = 0.0,
     var initWarPhase: Double = 0.0,
     var sabotageDefence: Double = 0.0,
+    var dedicationMultiplier: Double = 1.0,
 )
 
 data class StrategicContext(
     var delayMultiplier: Double = 1.0,
     var costMultiplier: Double = 1.0,
+    var globalDelayMultiplier: Double = 1.0,
 )
 
 data class IncomeContext(
