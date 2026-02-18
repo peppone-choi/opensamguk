@@ -3,11 +3,15 @@ package com.opensam.engine.modifier
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.opensam.engine.war.BattleTrigger
+import com.opensam.engine.war.BattleTriggerRegistry
+import kotlin.math.floor
 
 object ItemModifiers {
 
     private val items: Map<String, ActionModifier>
     private val itemMeta: Map<String, ItemMeta>
+    private val itemTriggerTypes: Map<String, String>
 
     init {
         val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
@@ -19,6 +23,7 @@ object ItemModifiers {
 
         val resultItems = mutableMapOf<String, ActionModifier>()
         val resultMeta = mutableMapOf<String, ItemMeta>()
+        val resultTriggerTypes = mutableMapOf<String, String>()
 
         // Weapons: strength = grade
         for (item in data["weapons"] ?: emptyList()) {
@@ -65,6 +70,11 @@ object ItemModifiers {
             val buyable = item["buyable"] as? Boolean ?: false
             val rarity = (item["rarity"] as? Number)?.toInt() ?: 0
             val info = item["info"] as? String ?: ""
+            val triggerType = item["triggerType"] as? String
+
+            if (triggerType != null) {
+                resultTriggerTypes[code] = triggerType
+            }
 
             if (consumable) {
                 resultItems[code] = ConsumableItem(
@@ -79,7 +89,6 @@ object ItemModifiers {
                 val statMap = item["stat"] as? Map<String, Number> ?: emptyMap()
                 @Suppress("UNCHECKED_CAST")
                 val opposeStatMap = item["opposeStat"] as? Map<String, Number> ?: emptyMap()
-                val triggerType = item["triggerType"] as? String
 
                 resultItems[code] = MiscItem(
                     code = code,
@@ -95,6 +104,7 @@ object ItemModifiers {
 
         items = resultItems
         itemMeta = resultMeta
+        itemTriggerTypes = resultTriggerTypes
     }
 
     fun get(code: String): ActionModifier? = items[code]
@@ -103,6 +113,29 @@ object ItemModifiers {
     fun getAllMeta(): Map<String, ItemMeta> = itemMeta
     fun getByCategory(category: String): List<ItemMeta> =
         itemMeta.values.filter { it.category == category }
+
+    fun getBattleTriggers(code: String): List<BattleTrigger> {
+        val meta = itemMeta[code] ?: return emptyList()
+        val triggerType = itemTriggerTypes[code] ?: return emptyList()
+        if (meta.consumable) {
+            val consumable = items[code] as? ConsumableItem
+            if (consumable?.effect == "battleTrain") {
+                return listOf(BattleTriggerRegistry.get("che_훈련Init")!!)
+            }
+            return emptyList()
+        }
+        return when (triggerType) {
+            "snipe" -> listOf(BattleTriggerRegistry.get("che_저격")!!)
+            "rage" -> listOf(BattleTriggerRegistry.get("che_격노")!!)
+            "siege" -> listOf(BattleTriggerRegistry.get("che_공성")!!)
+            "intimidate" -> listOf(BattleTriggerRegistry.get("che_위압")!!)
+            "block" -> listOf(BattleTriggerRegistry.get("che_저지")!!)
+            "suppress" -> listOf(BattleTriggerRegistry.get("che_진압")!!)
+            "antiSnipe" -> listOf(BattleTriggerRegistry.get("che_부적")!!)
+            "plunder" -> listOf(BattleTriggerRegistry.get("che_약탈_try")!!, BattleTriggerRegistry.get("che_약탈_fire")!!)
+            else -> emptyList()
+        }
+    }
 }
 
 data class ItemMeta(
@@ -171,7 +204,39 @@ class MiscItem(
         statMods["injuryProb"]?.let { s = s.copy(injuryProb = s.injuryProb + it) }
         statMods["initWarPhase"]?.let { s = s.copy(initWarPhase = s.initWarPhase + it) }
         statMods["sabotageDefence"]?.let { s = s.copy(sabotageDefence = s.sabotageDefence + it) }
+
+        if (triggerType == "progressiveStat") {
+            val relYear = (s.year - s.startYear).coerceAtLeast(0)
+            val progressiveBonus = floor(relYear / 4.0).coerceAtMost(12.0)
+            if (progressiveBonus > 0) {
+                if (statMods.containsKey("leadership")) {
+                    s = s.copy(leadership = s.leadership + progressiveBonus)
+                }
+                if (statMods.containsKey("strength")) {
+                    s = s.copy(strength = s.strength + progressiveBonus)
+                }
+                if (statMods.containsKey("intel")) {
+                    s = s.copy(intel = s.intel + progressiveBonus)
+                }
+            }
+        }
+
+        if (triggerType == "typeAdvantage" || triggerType == "antiRegional") {
+            // TODO: typeAdvantage/antiRegional require opponent crew type, wire in BattleEngine.
+        }
+
+        if (triggerType == "treasure" || triggerType == "recruit") {
+            // TODO: treasure/recruit effects handled in ItemService.
+        }
+
         return s
+    }
+
+    override fun getWarPowerMultiplier(): Double {
+        if (triggerType == "perseverance") {
+            // TODO: perseverance requires runtime HP ratio, wire in BattleEngine.
+        }
+        return 1.0
     }
 
     override fun onCalcDomestic(ctx: DomesticContext): DomesticContext {
@@ -194,4 +259,5 @@ class MiscItem(
         statMods["strategicDelay"]?.let { c = c.copy(delayMultiplier = c.delayMultiplier * it) }
         return c
     }
+
 }

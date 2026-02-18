@@ -52,6 +52,8 @@ data class StatContext(
     var initWarPhase: Double = 0.0,
     var sabotageDefence: Double = 0.0,
     var dedicationMultiplier: Double = 1.0,
+    var year: Int = 0,
+    var startYear: Int = 0,
 )
 
 data class StrategicContext(
