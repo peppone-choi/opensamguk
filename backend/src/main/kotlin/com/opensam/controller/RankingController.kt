@@ -1,7 +1,7 @@
 package com.opensam.controller
 
+import com.opensam.dto.BestGeneralResponse
 import com.opensam.dto.MessageResponse
-import com.opensam.entity.General
 import com.opensam.service.RankingService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -16,7 +16,7 @@ class RankingController(
         @PathVariable worldId: Long,
         @RequestParam(defaultValue = "experience") sortBy: String,
         @RequestParam(defaultValue = "20") limit: Int,
-    ): ResponseEntity<List<General>> {
+    ): ResponseEntity<List<BestGeneralResponse>> {
         return ResponseEntity.ok(rankingService.bestGenerals(worldId, sortBy, limit))
     }
 

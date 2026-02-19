@@ -336,3 +336,99 @@ data class MessageResponse(
         )
     }
 }
+
+data class GeneralTurnResponse(
+    val id: Long,
+    val worldId: Long,
+    val generalId: Long,
+    val turnIdx: Short,
+    val actionCode: String,
+    val arg: Map<String, Any>,
+    val brief: String?,
+    val createdAt: OffsetDateTime,
+) {
+    companion object {
+        fun from(e: GeneralTurn) = GeneralTurnResponse(
+            id = e.id,
+            worldId = e.worldId,
+            generalId = e.generalId,
+            turnIdx = e.turnIdx,
+            actionCode = e.actionCode,
+            arg = e.arg,
+            brief = e.brief,
+            createdAt = e.createdAt,
+        )
+    }
+}
+
+data class NationTurnResponse(
+    val id: Long,
+    val worldId: Long,
+    val nationId: Long,
+    val officerLevel: Short,
+    val turnIdx: Short,
+    val actionCode: String,
+    val arg: Map<String, Any>,
+    val brief: String?,
+    val createdAt: OffsetDateTime,
+) {
+    companion object {
+        fun from(e: NationTurn) = NationTurnResponse(
+            id = e.id,
+            worldId = e.worldId,
+            nationId = e.nationId,
+            officerLevel = e.officerLevel,
+            turnIdx = e.turnIdx,
+            actionCode = e.actionCode,
+            arg = e.arg,
+            brief = e.brief,
+            createdAt = e.createdAt,
+        )
+    }
+}
+
+data class BestGeneralResponse(
+    val id: Long,
+    val worldId: Long,
+    val name: String,
+    val nationId: Long,
+    val npcState: Short,
+    val picture: String,
+    val leadership: Short,
+    val strength: Short,
+    val intel: Short,
+    val politics: Short,
+    val charm: Short,
+    val experience: Int,
+    val dedication: Int,
+    val dex1: Int,
+    val dex2: Int,
+    val dex3: Int,
+    val dex4: Int,
+    val dex5: Int,
+    val meta: Map<String, Any>,
+) {
+    companion object {
+        fun from(e: General) = BestGeneralResponse(
+            id = e.id,
+            worldId = e.worldId,
+            name = e.name,
+            nationId = e.nationId,
+            npcState = e.npcState,
+            picture = e.picture,
+            leadership = e.leadership,
+            strength = e.strength,
+            intel = e.intel,
+            politics = e.politics,
+            charm = e.charm,
+            experience = e.experience,
+            dedication = e.dedication,
+            dex1 = e.dex1,
+            dex2 = e.dex2,
+            dex3 = e.dex3,
+            dex4 = e.dex4,
+            dex5 = e.dex5,
+            meta = e.meta,
+        )
+    }
+}

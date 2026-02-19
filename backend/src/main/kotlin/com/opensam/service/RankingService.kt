@@ -1,6 +1,6 @@
 package com.opensam.service
 
-import com.opensam.entity.General
+import com.opensam.dto.BestGeneralResponse
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.MessageRepository
 import org.springframework.stereotype.Service
@@ -10,7 +10,7 @@ class RankingService(
     private val generalRepository: GeneralRepository,
     private val messageRepository: MessageRepository,
 ) {
-    fun bestGenerals(worldId: Long, sortBy: String, limit: Int): List<General> {
+    fun bestGenerals(worldId: Long, sortBy: String, limit: Int): List<BestGeneralResponse> {
         val generals = generalRepository.findByWorldId(worldId)
         val sorted = when (sortBy) {
             "leadership" -> generals.sortedByDescending { it.leadership }
@@ -22,7 +22,7 @@ class RankingService(
             "crew" -> generals.sortedByDescending { it.crew }
             else -> generals.sortedByDescending { it.experience }
         }
-        return sorted.take(limit)
+        return sorted.take(limit).map { BestGeneralResponse.from(it) }
     }
 
     fun hallOfFame(worldId: Long) =
