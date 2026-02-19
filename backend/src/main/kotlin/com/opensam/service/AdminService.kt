@@ -1,10 +1,10 @@
 package com.opensam.service
 
 import com.opensam.dto.AdminDashboard
+import com.opensam.dto.AdminGeneralSummary
+import com.opensam.dto.AdminUserSummary
 import com.opensam.dto.AdminWorldInfo
 import com.opensam.dto.NationStatistic
-import com.opensam.entity.AppUser
-import com.opensam.entity.General
 import com.opensam.repository.*
 import org.springframework.stereotype.Service
 
@@ -45,8 +45,18 @@ class AdminService(
         return true
     }
 
-    fun listAllGenerals(): List<General> {
-        return generalRepository.findAll()
+    fun listAllGenerals(): List<AdminGeneralSummary> {
+        return generalRepository.findAll().map {
+            AdminGeneralSummary(
+                id = it.id,
+                name = it.name,
+                nationId = it.nationId,
+                crew = it.crew,
+                experience = it.experience,
+                npcState = it.npcState.toInt(),
+                blockState = it.blockState.toInt(),
+            )
+        }
     }
 
     fun generalAction(id: Long, type: String): Boolean {
@@ -102,8 +112,17 @@ class AdminService(
         return true
     }
 
-    fun listUsers(): List<AppUser> {
-        return appUserRepository.findAll()
+    fun listUsers(): List<AdminUserSummary> {
+        return appUserRepository.findAll().map {
+            AdminUserSummary(
+                id = it.id,
+                loginId = it.loginId,
+                displayName = it.displayName,
+                role = it.role,
+                createdAt = it.createdAt,
+                lastLoginAt = it.lastLoginAt,
+            )
+        }
     }
 
     fun userAction(id: Long, type: String): Boolean {

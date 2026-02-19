@@ -1,5 +1,7 @@
 package com.opensam.dto
 
+import java.time.OffsetDateTime
+
 data class AdminGeneralAction(val type: String)
 
 data class AdminUserAction(val type: String)
@@ -24,4 +26,23 @@ data class AdminWorldInfo(
     val scenarioCode: String,
     val realtimeMode: Boolean,
     val config: MutableMap<String, Any>,
+)
+
+data class AdminGeneralSummary(
+    val id: Long,
+    val name: String,
+    val nationId: Long,
+    val crew: Int,
+    val experience: Int,
+    val npcState: Int,
+    val blockState: Int,
+)
+
+data class AdminUserSummary(
+    val id: Long,
+    val loginId: String,
+    val displayName: String,
+    val role: String,
+    val createdAt: OffsetDateTime,
+    val lastLoginAt: OffsetDateTime?,
 )

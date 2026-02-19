@@ -2,11 +2,11 @@ package com.opensam.controller
 
 import com.opensam.dto.AdminDashboard
 import com.opensam.dto.AdminGeneralAction
+import com.opensam.dto.AdminGeneralSummary
+import com.opensam.dto.AdminUserSummary
 import com.opensam.dto.AdminUserAction
 import com.opensam.dto.NationStatistic
 import com.opensam.dto.TimeControlRequest
-import com.opensam.entity.AppUser
-import com.opensam.entity.General
 import com.opensam.service.AdminService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -28,7 +28,7 @@ class AdminController(
     }
 
     @GetMapping("/generals")
-    fun listAllGenerals(): ResponseEntity<List<General>> {
+    fun listAllGenerals(): ResponseEntity<List<AdminGeneralSummary>> {
         return ResponseEntity.ok(adminService.listAllGenerals())
     }
 
@@ -65,7 +65,7 @@ class AdminController(
     }
 
     @GetMapping("/users")
-    fun listUsers(): ResponseEntity<List<AppUser>> {
+    fun listUsers(): ResponseEntity<List<AdminUserSummary>> {
         return ResponseEntity.ok(adminService.listUsers())
     }
 
