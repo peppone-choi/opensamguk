@@ -29,3 +29,14 @@ backend/.gradle/
 frontend/.next/
 frontend/node_modules/
 frontend/out/
+
+# Local automation artifacts
+.playwright-mcp/
+backend/.kotlin/
+
+# Local screenshots
+e2e-*.png
+frontend-home.png
+lobby-*.png
+login-page.png
+npc-select.png
