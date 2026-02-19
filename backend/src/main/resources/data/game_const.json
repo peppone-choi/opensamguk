@@ -79,5 +79,8 @@
   "inheritItemRandomPoint": 3000,
   "inheritSpecificSpecialPoint": 4000,
   "inheritCheckOwnerPoint": 1000,
+  "cityStaticDataSource": "data/maps/{mapCode}.json",
+  "cityRegionLevelSource": "regions+levelNames in map json",
+  "cityConnectionSource": "cities[].connections",
   "turnterm": 300
 }
