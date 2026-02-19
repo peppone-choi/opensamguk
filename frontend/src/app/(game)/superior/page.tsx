@@ -16,7 +16,7 @@ import { formatOfficerLevelText } from "@/lib/game-utils";
 export default function SuperiorPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
-  const { generals, nations, loading, loadAll } = useGameStore();
+  const { generals, nations, cities, loading, loadAll } = useGameStore();
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -29,92 +29,109 @@ export default function SuperiorPage() {
     [myGeneral, nations],
   );
 
-  const superiors = useMemo(() => {
-    if (!myGeneral || !myGeneral.nationId) return [];
+  const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c.name])), [cities]);
+
+  const commandChain = useMemo(() => {
+    if (!myGeneral || myGeneral.nationId <= 0) return [];
     return generals
-      .filter(
-        (g) =>
-          g.nationId === myGeneral.nationId &&
-          g.officerLevel > myGeneral.officerLevel,
-      )
-      .sort((a, b) => b.officerLevel - a.officerLevel);
+      .filter((general) => general.nationId === myGeneral.nationId && general.officerLevel > 0)
+      .sort(
+        (a, b) =>
+          b.officerLevel - a.officerLevel ||
+          a.cityId - b.cityId ||
+          a.name.localeCompare(b.name),
+      );
   }, [myGeneral, generals]);
+
+  const directSuperior = useMemo(() => {
+    if (!myGeneral || myGeneral.nationId <= 0) return null;
+    const candidates = commandChain
+      .filter((general) => general.officerLevel > myGeneral.officerLevel)
+      .sort((a, b) => a.officerLevel - b.officerLevel || a.name.localeCompare(b.name));
+    return candidates[0] ?? null;
+  }, [myGeneral, commandChain]);
 
   if (!currentWorld) {
     return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
   }
+
   if (loading) return <LoadingState />;
+
   if (!myGeneral) {
     return <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>;
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-2xl mx-auto">
-      <PageHeader icon={Shield} title="상급자 정보" />
+    <div className="p-4 space-y-4 max-w-3xl mx-auto">
+      <PageHeader icon={Shield} title="상관 정보" />
 
       <Card>
         <CardHeader>
-          <CardTitle>내 직위</CardTitle>
+          <CardTitle className="text-base">직속 상관</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
-            <GeneralPortrait
-              picture={myGeneral.picture}
-              name={myGeneral.name}
-              size="md"
-            />
-            <div>
-              <div className="font-bold">{myGeneral.name}</div>
-              <div className="flex items-center gap-2 mt-1">
-                <NationBadge name={nation?.name} color={nation?.color} />
-                <Badge variant="outline">
-                  {formatOfficerLevelText(myGeneral.officerLevel, nation?.level)}
-                </Badge>
+          {directSuperior ? (
+            <div className="flex items-start gap-3">
+              <GeneralPortrait
+                picture={directSuperior.picture}
+                name={directSuperior.name}
+                size="md"
+              />
+              <div className="space-y-1">
+                <div className="font-semibold">{directSuperior.name}</div>
+                <div className="flex items-center gap-2">
+                  <NationBadge name={nation?.name} color={nation?.color} />
+                  <Badge variant="outline">
+                    {formatOfficerLevelText(directSuperior.officerLevel, nation?.level)}
+                  </Badge>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {cityMap.get(directSuperior.cityId) ?? "도시 미상"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  통{directSuperior.leadership} 무{directSuperior.strength} 지
+                  {directSuperior.intel} / 병력 {directSuperior.crew.toLocaleString()}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              {myGeneral.officerLevel >= 12
+                ? "현재 군주입니다. 직속 상관이 없습니다."
+                : "직속 상관을 찾을 수 없습니다."}
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>상급자 목록</CardTitle>
+          <CardTitle className="text-base">지휘 체계</CardTitle>
         </CardHeader>
-        <CardContent>
-          {superiors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {myGeneral.nationId === 0
-                ? "소속 국가가 없습니다."
-                : "상급자가 없습니다. (최고위직)"}
-            </p>
+        <CardContent className="space-y-2">
+          {commandChain.length === 0 ? (
+            <div className="text-sm text-muted-foreground">지휘 체계 정보가 없습니다.</div>
           ) : (
-            <div className="space-y-2">
-              {superiors.map((g) => (
+            commandChain.map((general) => {
+              const isMe = general.id === myGeneral.id;
+              return (
                 <div
-                  key={g.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
+                  key={general.id}
+                  className={`rounded border p-2 ${isMe ? "border-amber-500/70 bg-amber-500/5" : ""}`}
                 >
-                  <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
-                  <div className="flex-1">
-                    <span className="font-medium">{g.name}</span>
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      {formatOfficerLevelText(g.officerLevel, nation?.level)}
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{general.name}</span>
+                    {isMe && <Badge className="bg-amber-500 text-black">나</Badge>}
+                    <Badge variant="outline">
+                      {formatOfficerLevelText(general.officerLevel, nation?.level)}
                     </Badge>
-                    {g.npcState > 0 && (
-                      <Badge variant="secondary" className="ml-1 text-xs">
-                        NPC
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground text-right">
-                    <div>
-                      통{g.leadership} 무{g.strength} 지{g.intel}
-                    </div>
-                    <div>병사 {g.crew.toLocaleString()}</div>
+                    <span className="text-xs text-muted-foreground">
+                      {cityMap.get(general.cityId) ?? "도시 미상"}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })
           )}
         </CardContent>
       </Card>
