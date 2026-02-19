@@ -768,3 +768,13 @@ export interface AdminUser {
   createdAt: string;
   lastLoginAt: string | null;
 }
+
+export interface AdminGeneral {
+  id: number;
+  name: string;
+  nationId: number;
+  crew: number;
+  experience: number;
+  npcState: number;
+  blockState: number;
+}

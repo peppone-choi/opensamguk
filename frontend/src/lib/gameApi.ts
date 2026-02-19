@@ -28,6 +28,7 @@ import type {
   NationStatistic,
   AdminDashboard,
   AdminUser,
+  AdminGeneral,
   RealtimeStatus,
   TurnStatusResponse,
   TurnRunResponse,
@@ -160,9 +161,9 @@ export const commandApi = {
       arg,
     }),
   getNationReserved: (nationId: number, officerLevel: number) =>
-    api.get<NationTurn[]>(
-      `/nations/${nationId}/turns?officerLevel=${officerLevel}`,
-    ),
+    api.get<NationTurn[]>(`/nations/${nationId}/turns`, {
+      params: { officerLevel },
+    }),
   reserveNation: (
     nationId: number,
     generalId: number,
@@ -554,7 +555,7 @@ export const adminApi = {
   getDashboard: () => api.get<AdminDashboard>("/admin/dashboard"),
   updateSettings: (settings: Record<string, unknown>) =>
     api.patch<void>("/admin/settings", settings),
-  listGenerals: () => api.get<General[]>("/admin/generals"),
+  listGenerals: () => api.get<AdminGeneral[]>("/admin/generals"),
   generalAction: (id: number, type: string) =>
     api.post<void>(`/admin/generals/${id}/action`, { type }),
   getStatistics: () => api.get<NationStatistic[]>("/admin/statistics"),

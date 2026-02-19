@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Users, Search } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -17,23 +17,23 @@ import {
 } from "@/components/ui/table";
 import { adminApi } from "@/lib/gameApi";
 import { toast } from "sonner";
-import type { General } from "@/types";
+import type { AdminGeneral } from "@/types";
 
 export default function AdminMembersPage() {
-  const [generals, setGenerals] = useState<General[]>([]);
+  const [generals, setGenerals] = useState<AdminGeneral[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  const load = () => {
+  const load = useCallback(() => {
     adminApi.listGenerals().then((res) => {
       setGenerals(res.data);
       setLoading(false);
     });
-  };
+  }, []);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const doAction = async (id: number, type: string) => {
     try {
