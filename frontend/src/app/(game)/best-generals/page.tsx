@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { rankingApi } from "@/lib/gameApi";
-import type { General } from "@/types";
+import type { BestGeneral } from "@/types";
 import { Medal, Trophy } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -31,10 +31,10 @@ interface Category {
   label: string;
   sortBy: string;
   valueType?: "percent";
-  getValue: (g: General) => number;
+  getValue: (g: BestGeneral) => number;
 }
 
-const m = (g: General, key: string): number => (g.meta?.[key] as number) ?? 0;
+const m = (g: BestGeneral, key: string): number => (g.meta?.[key] as number) ?? 0;
 
 const GROUPS: {
   key: CategoryGroup;
@@ -326,7 +326,7 @@ export default function BestGeneralsPage() {
     Record<CategoryGroup, string>
   >(DEFAULT_CATEGORY_BY_GROUP);
   const [npcMode, setNpcMode] = useState<"user" | "npc">("user");
-  const [allGenerals, setAllGenerals] = useState<General[]>([]);
+  const [allGenerals, setAllGenerals] = useState<BestGeneral[]>([]);
   const [loading, setLoading] = useState(true);
 
   const group = GROUPS.find((g) => g.key === groupKey)!;
@@ -383,6 +383,7 @@ export default function BestGeneralsPage() {
         <div className="flex border border-gray-600 rounded-md overflow-hidden">
           {(["user", "npc"] as const).map((mode) => (
             <button
+              type="button"
               key={mode}
               onClick={() => setNpcMode(mode)}
               className={`px-3 py-1.5 text-xs transition-colors ${

@@ -166,6 +166,28 @@ export interface General {
   refreshScore?: number;
 }
 
+export interface BestGeneral {
+  id: number;
+  worldId: number;
+  name: string;
+  nationId: number;
+  npcState: number;
+  picture: string;
+  leadership: number;
+  strength: number;
+  intel: number;
+  politics: number;
+  charm: number;
+  experience: number;
+  dedication: number;
+  dex1: number;
+  dex2: number;
+  dex3: number;
+  dex4: number;
+  dex5: number;
+  meta: Record<string, unknown>;
+}
+
 export interface NpcCard {
   id: number;
   name: string;

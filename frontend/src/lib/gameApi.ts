@@ -37,6 +37,7 @@ import type {
   MailboxType,
   NpcTokenResponse,
   SelectNpcResult,
+  BestGeneral,
   YearbookSummary,
   BoardComment,
   VoteComment,
@@ -433,7 +434,9 @@ export const rankingApi = {
     const params: Record<string, string | number> = {};
     if (sortBy) params.sortBy = sortBy;
     if (limit) params.limit = limit;
-    return api.get<General[]>(`/worlds/${worldId}/best-generals`, { params });
+    return api.get<BestGeneral[]>(`/worlds/${worldId}/best-generals`, {
+      params,
+    });
   },
   hallOfFame: (worldId: number) =>
     api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`),
