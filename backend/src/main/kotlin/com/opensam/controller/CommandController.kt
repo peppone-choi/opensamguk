@@ -2,8 +2,6 @@ package com.opensam.controller
 
 import com.opensam.command.CommandResult
 import com.opensam.dto.*
-import com.opensam.entity.GeneralTurn
-import com.opensam.entity.NationTurn
 import com.opensam.service.CommandService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,18 +14,20 @@ class CommandController(
     private val commandService: CommandService,
 ) {
     @GetMapping("/generals/{generalId}/turns")
-    fun listGeneralTurns(@PathVariable generalId: Long): ResponseEntity<List<GeneralTurn>> {
-        return ResponseEntity.ok(commandService.listGeneralTurns(generalId))
+    fun listGeneralTurns(@PathVariable generalId: Long): ResponseEntity<List<GeneralTurnResponse>> {
+        return ResponseEntity.ok(
+            commandService.listGeneralTurns(generalId).map { GeneralTurnResponse.from(it) }
+        )
     }
 
     @PostMapping("/generals/{generalId}/turns")
     fun reserveGeneralTurns(
         @PathVariable generalId: Long,
         @RequestBody request: ReserveTurnsRequest,
-    ): ResponseEntity<List<GeneralTurn>> {
+    ): ResponseEntity<List<GeneralTurnResponse>> {
         return try {
             val saved = commandService.reserveGeneralTurns(generalId, request.turns)
-            ResponseEntity.status(HttpStatus.CREATED).body(saved)
+            ResponseEntity.status(HttpStatus.CREATED).body(saved.map { GeneralTurnResponse.from(it) })
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
@@ -81,11 +81,11 @@ class CommandController(
     fun repeatTurns(
         @PathVariable generalId: Long,
         @RequestBody request: RepeatRequest,
-    ): ResponseEntity<List<GeneralTurn>> {
+    ): ResponseEntity<List<GeneralTurnResponse>> {
         return try {
             val saved = commandService.repeatTurns(generalId, request.count)
                 ?: return ResponseEntity.notFound().build()
-            ResponseEntity.ok(saved)
+            ResponseEntity.ok(saved.map { GeneralTurnResponse.from(it) })
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
@@ -95,11 +95,11 @@ class CommandController(
     fun pushTurns(
         @PathVariable generalId: Long,
         @RequestBody request: PushRequest,
-    ): ResponseEntity<List<GeneralTurn>> {
+    ): ResponseEntity<List<GeneralTurnResponse>> {
         return try {
             val saved = commandService.pushTurns(generalId, request.amount)
                 ?: return ResponseEntity.notFound().build()
-            ResponseEntity.ok(saved)
+            ResponseEntity.ok(saved.map { GeneralTurnResponse.from(it) })
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
@@ -109,8 +109,10 @@ class CommandController(
     fun listNationTurns(
         @PathVariable nationId: Long,
         @RequestParam(defaultValue = "12") officerLevel: Short,
-    ): ResponseEntity<List<NationTurn>> {
-        return ResponseEntity.ok(commandService.listNationTurns(nationId, officerLevel))
+    ): ResponseEntity<List<NationTurnResponse>> {
+        return ResponseEntity.ok(
+            commandService.listNationTurns(nationId, officerLevel).map { NationTurnResponse.from(it) }
+        )
     }
 
     @PostMapping("/nations/{nationId}/turns")
@@ -118,7 +120,7 @@ class CommandController(
         @PathVariable nationId: Long,
         @RequestParam generalId: Long,
         @RequestBody request: ReserveTurnsRequest,
-    ): ResponseEntity<List<NationTurn>> {
+    ): ResponseEntity<List<NationTurnResponse>> {
         val loginId = SecurityContextHolder.getContext().authentication?.name
             ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         if (!commandService.verifyOwnership(generalId, loginId)) {
@@ -128,7 +130,7 @@ class CommandController(
         return try {
             val saved = commandService.reserveNationTurns(generalId, nationId, request.turns)
                 ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-            ResponseEntity.status(HttpStatus.CREATED).body(saved)
+            ResponseEntity.status(HttpStatus.CREATED).body(saved.map { NationTurnResponse.from(it) })
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
