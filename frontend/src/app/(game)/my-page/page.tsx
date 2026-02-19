@@ -203,7 +203,7 @@ export default function MyPage() {
 
   return (
     <div className="p-4 space-y-4 max-w-4xl mx-auto">
-      <PageHeader icon={User} title="마이페이지" />
+      <PageHeader icon={User} title="내 정보" />
 
       <Tabs defaultValue="info">
         <TabsList>

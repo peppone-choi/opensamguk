@@ -1,16 +1,15 @@
 package com.opensam.engine
 
+import com.opensam.engine.turn.cqrs.TurnCoordinator
 import com.opensam.repository.WorldStateRepository
-import com.opensam.service.GameEventService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 @Component
 class TurnDaemon(
-    private val turnService: TurnService,
+    private val turnCoordinator: TurnCoordinator,
     private val realtimeService: RealtimeService,
-    private val gameEventService: GameEventService,
     private val worldStateRepository: WorldStateRepository,
 ) {
     enum class DaemonState { IDLE, RUNNING, FLUSHING, PAUSED, STOPPING }
@@ -32,15 +31,7 @@ class TurnDaemon(
                         realtimeService.processCompletedCommands(world)
                         realtimeService.regenerateCommandPoints(world)
                     } else {
-                        val prevMonth = world.currentMonth
-                        turnService.processWorld(world)
-                        if (world.currentMonth != prevMonth) {
-                            gameEventService.broadcastTurnAdvance(
-                                world.id.toLong(),
-                                world.currentYear.toInt(),
-                                world.currentMonth.toInt()
-                            )
-                        }
+                        turnCoordinator.processWorld(world)
                     }
                 } catch (e: Exception) {
                     logger.error("Error processing world ${world.id}: ${e.message}", e)

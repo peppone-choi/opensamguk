@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
+import { useGeneralStore } from "@/stores/generalStore";
 import { Users, Search, Columns3 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -47,6 +48,7 @@ type SortKey =
   | "crewType"
   | "train"
   | "atmos"
+  | "fame"
   | "npcState";
 
 type NpcFilter = "all" | "user" | "npc";
@@ -73,9 +75,28 @@ const EXT_COLUMNS: { key: SortKey; label: string }[] = [
   { key: "dedication", label: "계급" },
 ];
 
+const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "experience", label: "레벨" },
+  { key: "leadership", label: "통솔" },
+  { key: "strength", label: "무력" },
+  { key: "intel", label: "지력" },
+  { key: "politics", label: "정치" },
+  { key: "charm", label: "매력" },
+  { key: "crew", label: "병사수" },
+  { key: "train", label: "훈련" },
+  { key: "atmos", label: "사기" },
+  { key: "fame", label: "명성" },
+  { key: "officerLevel", label: "관직" },
+  { key: "nation", label: "소속" },
+  { key: "city", label: "도시" },
+  { key: "name", label: "이름" },
+  { key: "npcState", label: "NPC" },
+];
+
 export default function GeneralsPage() {
   const router = useRouter();
   const currentWorld = useWorldStore((s) => s.currentWorld);
+  const { myGeneral, fetchMyGeneral } = useGeneralStore();
   const { generals, nations, cities, loading, loadAll } = useGameStore();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -85,8 +106,10 @@ export default function GeneralsPage() {
   const [showExtended, setShowExtended] = useState(false);
 
   useEffect(() => {
-    if (currentWorld) loadAll(currentWorld.id);
-  }, [currentWorld, loadAll]);
+    if (!currentWorld) return;
+    fetchMyGeneral(currentWorld.id).catch(() => {});
+    loadAll(currentWorld.id);
+  }, [currentWorld, fetchMyGeneral, loadAll]);
 
   const nationMap = useMemo(
     () => new Map(nations.map((n) => [n.id, n])),
@@ -122,7 +145,10 @@ export default function GeneralsPage() {
         const cb = cityMap.get(b.cityId)?.name ?? "";
         cmp = ca.localeCompare(cb);
       } else {
-        cmp = (a[sortKey] as number) - (b[sortKey] as number);
+        cmp =
+          sortKey === "fame"
+            ? a.dedication - b.dedication
+            : (a[sortKey] as number) - (b[sortKey] as number);
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -164,9 +190,27 @@ export default function GeneralsPage() {
     ? [...BASE_COLUMNS, ...EXT_COLUMNS]
     : BASE_COLUMNS;
 
+  const canSpyAccess =
+    (myGeneral?.permission === "spy" || (myGeneral?.officerLevel ?? 0) >= 5) &&
+    (myGeneral?.nationId ?? 0) > 0;
+
+  const canViewTroopInfo = (targetNationId: number) => {
+    if (!myGeneral) return false;
+    if (myGeneral.nationId === targetNationId) return true;
+    return canSpyAccess;
+  };
+
+  const currentCommandLabel = (value: Record<string, unknown>): string => {
+    const actionCode = value.actionCode;
+    if (typeof actionCode === "string" && actionCode.length > 0) return actionCode;
+    const brief = value.brief;
+    if (typeof brief === "string" && brief.length > 0) return brief;
+    return "-";
+  };
+
   return (
     <div className="p-4 space-y-4">
-      <PageHeader icon={Users} title="장수 일람" />
+      <PageHeader icon={Users} title="장수일람" />
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
@@ -195,10 +239,30 @@ export default function GeneralsPage() {
           </SelectContent>
         </Select>
 
+        <Select
+          value={sortKey}
+          onValueChange={(value) => {
+            setSortKey(value as SortKey);
+            setSortDir("desc");
+          }}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="정렬 기준" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_DROPDOWN_OPTIONS.map((opt) => (
+              <SelectItem key={opt.key} value={opt.key}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <div className="flex border border-gray-600 rounded-md overflow-hidden">
           {(["all", "user", "npc"] as NpcFilter[]).map((f) => (
             <button
               key={f}
+              type="button"
               onClick={() => setNpcFilter(f)}
               className={`px-3 py-1.5 text-xs transition-colors ${
                 npcFilter === f
@@ -239,6 +303,8 @@ export default function GeneralsPage() {
                   {arrow(col.key)}
                 </TableHead>
               ))}
+              <TableHead>병력정보</TableHead>
+              <TableHead>현재 명령</TableHead>
               <TableHead>NPC</TableHead>
             </TableRow>
           </TableHeader>
@@ -291,6 +357,16 @@ export default function GeneralsPage() {
                       <TableCell>{g.dedication.toLocaleString()}</TableCell>
                     </>
                   )}
+                  <TableCell className="whitespace-nowrap text-xs">
+                    {canViewTroopInfo(g.nationId)
+                      ? `${CREW_TYPE_NAMES[g.crewType] ?? g.crewType} / ${g.crew.toLocaleString()} / T${g.train} M${g.atmos}`
+                      : "비공개"}
+                  </TableCell>
+                  <TableCell className="text-xs whitespace-nowrap">
+                    {canSpyAccess
+                      ? currentCommandLabel(g.lastTurn)
+                      : "첩보권한 필요"}
+                  </TableCell>
                   <TableCell className="text-center">
                     {g.npcState > 0 && <Badge variant="secondary">NPC</Badge>}
                   </TableCell>
@@ -300,7 +376,7 @@ export default function GeneralsPage() {
             {sorted.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + 1}
+                  colSpan={columns.length + 3}
                   className="text-center text-muted-foreground"
                 >
                   장수가 없습니다.

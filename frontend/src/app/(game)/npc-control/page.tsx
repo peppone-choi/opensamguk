@@ -249,7 +249,7 @@ export default function NpcPage() {
 
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
-      <PageHeader icon={Bot} title="NPC 관리" />
+      <PageHeader icon={Bot} title="임시 NPC 정책" />
 
       {msg && <p className="text-sm text-green-400">{msg}</p>}
 

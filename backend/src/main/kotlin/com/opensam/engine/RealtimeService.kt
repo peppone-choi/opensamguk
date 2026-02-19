@@ -199,6 +199,7 @@ class RealtimeService(
 
         command.city = city
         command.nation = nation
+        commandExecutor.hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val conditionResult = command.checkFullCondition()
         if (conditionResult is ConstraintResult.Fail) {

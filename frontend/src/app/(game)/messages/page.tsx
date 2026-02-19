@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { messageApi } from "@/lib/gameApi";
-import type { Message } from "@/types";
+import type { MailboxType, Message } from "@/types";
 import { Mail, PenLine, Send, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -13,18 +13,38 @@ import { EmptyState } from "@/components/game/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+
+type MailboxTab = "public" | "national" | "private" | "diplomacy";
+type ComposeRecipientType = "public" | "general" | "nation";
 
 export default function MessagesPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const myGeneral = useGeneralStore((s) => s.myGeneral);
   const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
-  const { generals, loadAll } = useGameStore();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { generals, nations, loadAll } = useGameStore();
+  const [tab, setTab] = useState<MailboxTab>("public");
+  const [messagesByTab, setMessagesByTab] = useState<
+    Record<MailboxTab, Message[]>
+  >({
+    public: [],
+    national: [],
+    private: [],
+    diplomacy: [],
+  });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
-  const [destId, setDestId] = useState("");
+  const [recipientType, setRecipientType] =
+    useState<ComposeRecipientType>("general");
+  const [mailboxType, setMailboxType] = useState<MailboxType>("PRIVATE");
+  const [destGeneralId, setDestGeneralId] = useState("");
+  const [destNationId, setDestNationId] = useState("");
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
+
+  const canUseDiplomacy = (myGeneral?.officerLevel ?? 0) >= 4;
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -32,55 +52,73 @@ export default function MessagesPage() {
     loadAll(currentWorld.id);
   }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
 
-  const fetchMessages = async () => {
-    if (!myGeneral) return;
+  const fetchMessages = useCallback(async () => {
+    if (!currentWorld || !myGeneral) return;
+    setRefreshing(true);
     try {
-      const { data } = await messageApi.getMine(myGeneral.id);
-      setMessages(data);
+      const [publicRes, nationalRes, privateRes, diplomacyRes] =
+        await Promise.all([
+          messageApi.getByType("public", { worldId: currentWorld.id }),
+          messageApi.getByType("national", { nationId: myGeneral.nationId }),
+          messageApi.getByType("private", { generalId: myGeneral.id }),
+          canUseDiplomacy
+            ? messageApi.getByType("diplomacy", {
+                nationId: myGeneral.nationId,
+                officerLevel: myGeneral.officerLevel,
+              })
+            : Promise.resolve({ data: [] as Message[] }),
+        ]);
+
+      setMessagesByTab({
+        public: publicRes.data,
+        national: nationalRes.data,
+        private: privateRes.data,
+        diplomacy: diplomacyRes.data,
+      });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [currentWorld, myGeneral, canUseDiplomacy]);
 
   useEffect(() => {
-    if (!myGeneral) return;
-    let active = true;
-    messageApi
-      .getMine(myGeneral.id)
-      .then(({ data }) => {
-        if (active) setMessages(data);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [myGeneral]);
+    if (!myGeneral || !currentWorld) return;
+    fetchMessages();
+  }, [myGeneral, currentWorld, fetchMessages]);
 
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
     [generals],
   );
 
-  const inbox = useMemo(
-    () =>
-      messages
-        .filter(
-          (m) =>
-            m.mailboxCode === "personal" ||
-            m.mailboxCode === "message" ||
-            (m.destId != null && m.destId === myGeneral?.id),
-        )
-        .sort(
-          (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
-        ),
-    [messages, myGeneral],
+  const nationMap = useMemo(
+    () => new Map(nations.map((n) => [n.id, n])),
+    [nations],
   );
+
+  const inbox = messagesByTab[tab];
+
+  const unreadCountByTab = useMemo(() => {
+    const countUnread = (msgs: Message[]) =>
+      msgs.filter((m) => typeof m.meta.readAt !== "string").length;
+    return {
+      public: countUnread(messagesByTab.public),
+      national: countUnread(messagesByTab.national),
+      private: countUnread(messagesByTab.private),
+      diplomacy: countUnread(messagesByTab.diplomacy),
+    };
+  }, [messagesByTab]);
 
   const handleMarkAsRead = async (id: number) => {
     try {
       await messageApi.markAsRead(id);
+      const now = new Date().toISOString();
+      setMessagesByTab((prev) => ({
+        ...prev,
+        [tab]: prev[tab].map((m) =>
+          m.id === id ? { ...m, meta: { ...m.meta, readAt: now } } : m,
+        ),
+      }));
     } catch {
       /* ignore */
     }
@@ -96,17 +134,47 @@ export default function MessagesPage() {
   };
 
   const handleSend = async () => {
-    if (!currentWorld || !content.trim() || !destId) return;
+    if (!currentWorld || !myGeneral || !content.trim()) return;
+
+    const trimmedContent = content.trim();
+    const isPublic = recipientType === "public";
+    const isGeneral = recipientType === "general";
+
+    if (isGeneral && !destGeneralId) return;
+    if (!isPublic && !isGeneral && !destNationId) return;
+
+    const mailboxCode =
+      mailboxType === "PUBLIC"
+        ? "board"
+        : mailboxType === "NATIONAL"
+          ? "national"
+          : mailboxType === "DIPLOMACY"
+            ? "diplomacy"
+            : "personal";
+
+    const srcId =
+      mailboxType === "NATIONAL" || mailboxType === "DIPLOMACY"
+        ? myGeneral.nationId
+        : myGeneral.id;
+
+    const targetId =
+      mailboxType === "NATIONAL" || mailboxType === "DIPLOMACY"
+        ? Number(destNationId)
+        : isPublic
+          ? null
+          : Number(destGeneralId);
+
     setSending(true);
     try {
-      await messageApi.send(
-        currentWorld.id,
-        myGeneral!.id,
-        Number(destId),
-        content.trim(),
-      );
+      await messageApi.send(currentWorld.id, srcId, targetId, trimmedContent, {
+        mailboxCode,
+        mailboxType,
+        messageType: mailboxCode,
+        officerLevel: myGeneral.officerLevel,
+      });
       setContent("");
-      setDestId("");
+      setDestGeneralId("");
+      setDestNationId("");
       setShowCompose(false);
       await fetchMessages();
     } finally {
@@ -136,32 +204,128 @@ export default function MessagesPage() {
 
       {/* Compose form */}
       {showCompose && (
-        <Card>
+        <Card className="border-amber-900/60 bg-zinc-950/70">
           <CardContent className="space-y-3">
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">
-                받는 장수
-              </label>
-              <select
-                value={destId}
-                onChange={(e) => setDestId(e.target.value)}
-                className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
-              >
-                <option value="">선택...</option>
-                {generals
-                  .filter((g) => g.id !== myGeneral?.id)
-                  .map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-              </select>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="recipient-type"
+                  className="block text-xs text-amber-200/80 mb-1"
+                >
+                  수신 대상
+                </label>
+                <select
+                  id="recipient-type"
+                  value={recipientType}
+                  onChange={(e) => {
+                    const nextType = e.target.value as ComposeRecipientType;
+                    setRecipientType(nextType);
+                    if (nextType === "public") setMailboxType("PUBLIC");
+                    if (nextType === "general") setMailboxType("PRIVATE");
+                    if (nextType === "nation") {
+                      setMailboxType(
+                        canUseDiplomacy ? "DIPLOMACY" : "NATIONAL",
+                      );
+                    }
+                  }}
+                  className="h-9 w-full min-w-0 rounded-md border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
+                >
+                  <option value="public">공개 (전체)</option>
+                  <option value="general">장수</option>
+                  <option value="nation">국가</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="mailbox-type"
+                  className="block text-xs text-muted-foreground mb-1"
+                >
+                  서신 종류
+                </label>
+                <select
+                  id="mailbox-type"
+                  value={mailboxType}
+                  onChange={(e) =>
+                    setMailboxType(e.target.value as MailboxType)
+                  }
+                  className="h-9 w-full min-w-0 rounded-md border border-amber-900/60 bg-zinc-950 px-3 py-1 text-sm text-amber-100 shadow-xs outline-none focus-visible:border-amber-500"
+                >
+                  {recipientType === "public" && (
+                    <option value="PUBLIC">공개 서신</option>
+                  )}
+                  {recipientType === "general" && (
+                    <option value="PRIVATE">사적 서신</option>
+                  )}
+                  {recipientType === "nation" && (
+                    <>
+                      <option value="NATIONAL">국가 서신</option>
+                      <option value="DIPLOMACY" disabled={!canUseDiplomacy}>
+                        외교 서신 {!canUseDiplomacy ? "(관직 4 이상)" : ""}
+                      </option>
+                    </>
+                  )}
+                </select>
+              </div>
             </div>
+            {recipientType === "general" && (
+              <div>
+                <label
+                  htmlFor="dest-general"
+                  className="block text-xs text-muted-foreground mb-1"
+                >
+                  받는 장수
+                </label>
+                <select
+                  id="dest-general"
+                  value={destGeneralId}
+                  onChange={(e) => setDestGeneralId(e.target.value)}
+                  className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                >
+                  <option value="">선택...</option>
+                  {generals
+                    .filter((g) => g.id !== myGeneral?.id)
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
+            {recipientType === "nation" && (
+              <div>
+                <label
+                  htmlFor="dest-nation"
+                  className="block text-xs text-muted-foreground mb-1"
+                >
+                  받는 국가
+                </label>
+                <select
+                  id="dest-nation"
+                  value={destNationId}
+                  onChange={(e) => setDestNationId(e.target.value)}
+                  className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+                >
+                  <option value="">선택...</option>
+                  {nations
+                    .filter((n) => n.id !== myGeneral?.nationId)
+                    .map((n) => (
+                      <option key={n.id} value={n.id}>
+                        {n.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">
+              <label
+                htmlFor="message-content"
+                className="block text-xs text-muted-foreground mb-1"
+              >
                 내용
               </label>
               <Textarea
+                id="message-content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="서신 내용을 입력하세요..."
@@ -171,7 +335,13 @@ export default function MessagesPage() {
             <div className="flex justify-end">
               <Button
                 onClick={handleSend}
-                disabled={sending || !content.trim() || !destId}
+                disabled={
+                  sending ||
+                  !content.trim() ||
+                  (recipientType === "general" && !destGeneralId) ||
+                  (recipientType === "nation" && !destNationId) ||
+                  (mailboxType === "DIPLOMACY" && !canUseDiplomacy)
+                }
                 size="sm"
               >
                 <Send />
@@ -182,23 +352,78 @@ export default function MessagesPage() {
         </Card>
       )}
 
+      <Tabs value={tab} onValueChange={(v) => setTab(v as MailboxTab)}>
+        <TabsList className="grid grid-cols-4">
+          <TabsTrigger value="public">
+            공개 서신
+            {unreadCountByTab.public > 0 && (
+              <Badge className="ml-1 bg-amber-600 text-black hover:bg-amber-500">
+                {unreadCountByTab.public}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="national">
+            국가 서신
+            {unreadCountByTab.national > 0 && (
+              <Badge className="ml-1 bg-amber-600 text-black hover:bg-amber-500">
+                {unreadCountByTab.national}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="private">
+            사적 서신
+            {unreadCountByTab.private > 0 && (
+              <Badge className="ml-1 bg-amber-600 text-black hover:bg-amber-500">
+                {unreadCountByTab.private}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="diplomacy" disabled={!canUseDiplomacy}>
+            외교 서신
+            {unreadCountByTab.diplomacy > 0 && (
+              <Badge className="ml-1 bg-amber-600 text-black hover:bg-amber-500">
+                {unreadCountByTab.diplomacy}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Inbox */}
       <div className="space-y-2">
+        {!canUseDiplomacy && tab === "diplomacy" && (
+          <div className="text-xs text-amber-300">
+            외교 서신은 관직 4 이상만 열람할 수 있습니다.
+          </div>
+        )}
+        {refreshing && (
+          <div className="text-xs text-muted-foreground">
+            서신을 갱신하고 있습니다...
+          </div>
+        )}
         {inbox.length === 0 ? (
-          <EmptyState icon={Mail} title="받은 서신이 없습니다." />
+          <EmptyState icon={Mail} title="서신이 없습니다." />
         ) : (
           inbox.map((m) => {
-            const sender = m.srcId ? generalMap.get(m.srcId) : null;
+            const senderGeneral = m.srcId ? generalMap.get(m.srcId) : null;
+            const senderNation = m.srcId ? nationMap.get(m.srcId) : null;
+            const senderName =
+              m.mailboxType === "NATIONAL" || m.mailboxType === "DIPLOMACY"
+                ? senderNation?.name
+                : senderGeneral?.name;
             return (
               <Card key={m.id} onClick={() => handleMarkAsRead(m.id)}>
                 <CardContent className="space-y-1">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
-                      {sender?.name ??
+                      {senderName ??
                         (m.payload.sender as string) ??
-                        `장수#${m.srcId ?? "시스템"}`}
+                        `${m.mailboxType === "NATIONAL" || m.mailboxType === "DIPLOMACY" ? "국가" : "장수"}#${m.srcId ?? "시스템"}`}
                     </span>
                     <span>{new Date(m.sentAt).toLocaleString("ko-KR")}</span>
+                    {typeof m.meta.readAt !== "string" && (
+                      <Badge className="bg-amber-500 text-black">NEW</Badge>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"

@@ -12,6 +12,7 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;
   login: (loginId: string, password: string) => Promise<void>;
   register: (
     loginId: string,
@@ -26,6 +27,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: null,
   isAuthenticated: false,
+  isInitialized: false,
 
   login: async (loginId, password) => {
     const { data } = await api.post("/auth/login", { loginId, password });
@@ -56,10 +58,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
       if (token) {
-        set({ token, isAuthenticated: true });
         try {
           const payload = JSON.parse(atob(token.split(".")[1]));
           set({
+            token,
+            isAuthenticated: true,
+            isInitialized: true,
             user: {
               id: payload.userId,
               loginId: payload.sub,
@@ -69,8 +73,10 @@ export const useAuthStore = create<AuthState>((set) => ({
           });
         } catch {
           localStorage.removeItem("token");
-          set({ token: null, isAuthenticated: false });
+          set({ token: null, isAuthenticated: false, isInitialized: true });
         }
+      } else {
+        set({ isInitialized: true });
       }
     }
   },

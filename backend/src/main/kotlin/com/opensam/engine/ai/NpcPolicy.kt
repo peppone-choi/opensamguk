@@ -103,7 +103,9 @@ object NpcPolicyBuilder {
 
     @Suppress("UNCHECKED_CAST")
     fun buildGeneralPolicy(nationMeta: Map<String, Any>): NpcGeneralPolicy {
-        val raw = nationMeta["npcGeneralPolicy"] as? Map<String, Any> ?: return NpcGeneralPolicy()
+        val raw = (nationMeta["npcGeneralPolicy"] as? Map<String, Any>)
+            ?: (nationMeta["npcPriority"] as? Map<String, Any>)
+            ?: return NpcGeneralPolicy()
         return NpcGeneralPolicy(
             priority = (raw["priority"] as? List<String>)
                 ?: NpcGeneralPolicy.DEFAULT_GENERAL_PRIORITY,
@@ -114,7 +116,9 @@ object NpcPolicyBuilder {
 
     @Suppress("UNCHECKED_CAST")
     fun buildNationPolicy(nationMeta: Map<String, Any>): NpcNationPolicy {
-        val raw = nationMeta["npcNationPolicy"] as? Map<String, Any> ?: return NpcNationPolicy()
+        val raw = (nationMeta["npcNationPolicy"] as? Map<String, Any>)
+            ?: (nationMeta["npcPolicy"] as? Map<String, Any>)
+            ?: return NpcNationPolicy()
         return NpcNationPolicy(
             priority = (raw["priority"] as? List<String>)
                 ?: NpcNationPolicy.DEFAULT_NATION_PRIORITY,

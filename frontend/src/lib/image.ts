@@ -3,6 +3,9 @@ const CDN_BASE =
 
 export function getPortraitUrl(picture?: string | null): string {
   if (!picture) return `${CDN_BASE}default.jpg`;
+  // picture is a numeric string (e.g. "1146") — append .jpg
+  if (/^\d+$/.test(picture)) return `${CDN_BASE}${picture}.jpg`;
+  // Already has extension or is a full path
   return `${CDN_BASE}${picture}`;
 }
 

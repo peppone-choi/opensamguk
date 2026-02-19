@@ -9,3 +9,18 @@ data class CreateAuctionRequest(
 )
 
 data class BidRequest(val bidderId: Long, val amount: Int)
+
+data class MarketTradeRequest(
+    val generalId: Long,
+    val amount: Int,
+)
+
+data class CreateItemAuctionRequest(
+    val generalId: Long,
+    val itemType: String,
+    val startPrice: Int,
+)
+
+data class CancelAuctionRequest(
+    val generalId: Long,
+)

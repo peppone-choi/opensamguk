@@ -248,7 +248,7 @@ export default function TroopPage() {
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
-        <PageHeader icon={Shield} title="부대 관리" />
+        <PageHeader icon={Shield} title="부대 편성" />
         {!myTroop && (
           <Button
             onClick={() => setShowCreate(!showCreate)}

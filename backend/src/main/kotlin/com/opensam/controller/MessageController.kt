@@ -15,8 +15,26 @@ class MessageController(
     private val messageService: MessageService,
 ) {
     @GetMapping
-    fun getMessages(@RequestParam generalId: Long): ResponseEntity<List<MessageResponse>> {
-        return ResponseEntity.ok(messageService.getMessages(generalId).map { MessageResponse.from(it) })
+    fun getMessages(
+        @RequestParam(required = false) type: String?,
+        @RequestParam(required = false) worldId: Long?,
+        @RequestParam(required = false) nationId: Long?,
+        @RequestParam(required = false) generalId: Long?,
+        @RequestParam(required = false, defaultValue = "0") officerLevel: Short,
+    ): ResponseEntity<List<MessageResponse>> {
+        val messages = when (type?.lowercase()) {
+            "public" -> messageService.getPublicMessages(requireParam(worldId, "worldId"))
+            "national" -> messageService.getNationalMessages(requireParam(nationId, "nationId"))
+            "private" -> messageService.getPrivateMessages(requireParam(generalId, "generalId"))
+            "diplomacy" -> messageService.getDiplomacyMessages(requireParam(nationId, "nationId"), officerLevel)
+            null -> {
+                val targetGeneralId = requireParam(generalId, "generalId")
+                messageService.getMessages(targetGeneralId)
+            }
+            else -> throw IllegalArgumentException("Unsupported mailbox type: $type")
+        }
+
+        return ResponseEntity.ok(messages.map { MessageResponse.from(it) })
     }
 
     @GetMapping("/board")
@@ -37,9 +55,11 @@ class MessageController(
         val message = messageService.sendMessage(
             worldId = request.worldId,
             mailboxCode = request.mailboxCode,
+            mailboxType = request.mailboxType,
             messageType = request.messageType,
             srcId = request.srcId,
             destId = request.destId,
+            officerLevel = request.officerLevel,
             payload = request.payload,
         )
         return ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(message))
@@ -69,6 +89,10 @@ class MessageController(
     ): ResponseEntity<Void> {
         messageService.respondDiplomacy(id, request.accept)
         return ResponseEntity.ok().build()
+    }
+
+    private fun <T> requireParam(value: T?, name: String): T {
+        return value ?: throw IllegalArgumentException("$name is required")
     }
 }
 

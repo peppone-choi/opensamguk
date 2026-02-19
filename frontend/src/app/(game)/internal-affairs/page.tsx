@@ -106,7 +106,7 @@ export default function InternalAffairsPage() {
 
   return (
     <div className="p-4 space-y-6 max-w-2xl mx-auto">
-      <PageHeader icon={Landmark} title="내정" />
+      <PageHeader icon={Landmark} title="내무부" />
 
       {msg && <p className="text-sm text-green-400">{msg}</p>}
 

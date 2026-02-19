@@ -166,6 +166,36 @@ export interface General {
   refreshScore?: number;
 }
 
+export interface NpcCard {
+  id: number;
+  name: string;
+  picture: string;
+  imageServer: number;
+  leadership: number;
+  strength: number;
+  intel: number;
+  politics: number;
+  charm: number;
+  nationId: number;
+  nationName: string;
+  nationColor: string;
+  personality: string;
+  special: string;
+}
+
+export interface NpcTokenResponse {
+  nonce: string;
+  npcs: NpcCard[];
+  validUntil: string;
+  pickMoreAfter: string;
+  keepCount: number;
+}
+
+export interface SelectNpcResult {
+  success: boolean;
+  general: General;
+}
+
 // Troop
 export interface Troop {
   id: number;
@@ -190,10 +220,13 @@ export interface Diplomacy {
 }
 
 // Message
+export type MailboxType = "PUBLIC" | "NATIONAL" | "PRIVATE" | "DIPLOMACY";
+
 export interface Message {
   id: number;
   worldId: number;
   mailboxCode: string;
+  mailboxType: MailboxType;
   messageType: string;
   srcId: number | null;
   destId: number | null;
@@ -201,6 +234,37 @@ export interface Message {
   validUntil: string | null;
   payload: Record<string, unknown>;
   meta: Record<string, unknown>;
+}
+
+export interface YearbookNationSummary {
+  id: number;
+  name: string;
+  color: string;
+  territoryCount: number;
+  generalCount: number | null;
+  cities: string[];
+}
+
+export interface YearbookSummary {
+  worldId: number;
+  year: number;
+  month: number;
+  nations: YearbookNationSummary[];
+  keyEvents: Message[];
+}
+
+export interface BoardComment {
+  id: number;
+  authorGeneralId: number;
+  content: string;
+  createdAt: string;
+}
+
+export interface VoteComment {
+  id: number;
+  authorGeneralId: number;
+  content: string;
+  createdAt: string;
 }
 
 // Command types
@@ -258,6 +322,30 @@ export interface CityConst {
 
 export interface MapData {
   cities: CityConst[];
+}
+
+export interface PublicCachedMapCity {
+  id: number;
+  name: string;
+  x: number;
+  y: number;
+  nationName: string;
+  nationColor: string;
+}
+
+export interface PublicCachedMapHistory {
+  id: number;
+  sentAt: string;
+  text: string;
+}
+
+export interface PublicCachedMapResponse {
+  available: boolean;
+  worldId: number | null;
+  worldName: string | null;
+  mapCode: string | null;
+  cities: PublicCachedMapCity[];
+  history: PublicCachedMapHistory[];
 }
 
 // FrontInfo (main dashboard API response) — legacy parity

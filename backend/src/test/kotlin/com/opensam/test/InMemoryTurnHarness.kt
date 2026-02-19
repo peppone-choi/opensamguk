@@ -8,6 +8,7 @@ import com.opensam.engine.ai.NationAI
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.InheritanceService
+import com.opensam.service.MapService
 import com.opensam.service.ScenarioService
 import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.mock
@@ -31,6 +32,8 @@ class InMemoryTurnHarness {
     val nationTurnRepository: NationTurnRepository = mock(NationTurnRepository::class.java)
     val cityRepository: CityRepository = mock(CityRepository::class.java)
     val nationRepository: NationRepository = mock(NationRepository::class.java)
+    val diplomacyRepository: DiplomacyRepository = mock(DiplomacyRepository::class.java)
+    private val mapService: MapService = MapService().apply { init() }
 
     private val scenarioService: ScenarioService = mock(ScenarioService::class.java)
     private val economyService: EconomyService = mock(EconomyService::class.java)
@@ -45,7 +48,14 @@ class InMemoryTurnHarness {
     private val nationAI: NationAI = mock(NationAI::class.java)
 
     val commandRegistry = CommandRegistry()
-    val commandExecutor = CommandExecutor(commandRegistry)
+    val commandExecutor = CommandExecutor(
+        commandRegistry,
+        generalRepository,
+        cityRepository,
+        nationRepository,
+        diplomacyRepository,
+        mapService,
+    )
 
     val turnService = TurnService(
         worldStateRepository,
@@ -146,6 +156,10 @@ class InMemoryTurnHarness {
             val worldId = it.arguments[0] as Long
             generals.values.filter { g -> g.worldId == worldId }
         }
+        `when`(generalRepository.findByNationId(org.mockito.Mockito.anyLong())).thenAnswer {
+            val nationId = it.arguments[0] as Long
+            generals.values.filter { g -> g.nationId == nationId }
+        }
         `when`(generalRepository.findById(org.mockito.Mockito.anyLong())).thenAnswer {
             Optional.ofNullable(generals[it.arguments[0] as Long])
         }
@@ -220,5 +234,7 @@ class InMemoryTurnHarness {
             list.forEach { n -> nations[n.id] = n }
             list
         }
+
+        `when`(diplomacyRepository.findByWorldIdAndIsDeadFalse(org.mockito.Mockito.anyLong())).thenReturn(emptyList())
     }
 }

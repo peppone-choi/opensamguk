@@ -23,7 +23,10 @@ class che_국호변경(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val newName = arg?.get("nationName") as? String ?: "알 수 없음"
+        val newName =
+            (arg?.get("nationName") as? String)
+                ?: (arg?.get("name") as? String)
+                ?: "알 수 없음"
         val oldName = nation?.name ?: "알 수 없음"
         pushLog("국호를 <D><b>$newName</b></>(으)로 변경합니다. <1>$date</>")
         return CommandResult(true, logs)

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { historyApi } from "@/lib/gameApi";
-import type { Message } from "@/types";
+import type { Message, YearbookSummary } from "@/types";
 import { ScrollText, Clock, Search } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -11,6 +11,14 @@ import { EmptyState } from "@/components/game/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type EventType = "war" | "diplomacy" | "nation" | "general" | "city" | "other";
 
@@ -98,11 +106,41 @@ export default function HistoryPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const [history, setHistory] = useState<Message[]>([]);
   const [records, setRecords] = useState<Message[]>([]);
+  const [yearbook, setYearbook] = useState<YearbookSummary | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [activeFilters, setActiveFilters] = useState<Set<EventType>>(
     new Set(["war", "diplomacy", "nation", "general", "city", "other"]),
   );
+
+  const startYear = useMemo(() => {
+    if (!currentWorld) return 0;
+    const fromConfig = currentWorld.config["startYear"];
+    if (typeof fromConfig === "number") return fromConfig;
+    const fromMeta = currentWorld.meta["scenarioMeta"] as
+      | Record<string, unknown>
+      | undefined;
+    if (fromMeta && typeof fromMeta.startYear === "number") {
+      return fromMeta.startYear;
+    }
+    return currentWorld.currentYear;
+  }, [currentWorld]);
+
+  const yearOptions = useMemo(() => {
+    if (!currentWorld || startYear > currentWorld.currentYear) return [];
+    const years: number[] = [];
+    for (let y = startYear; y <= currentWorld.currentYear; y += 1) {
+      years.push(y);
+    }
+    return years;
+  }, [currentWorld, startYear]);
+
+  const monthOptions = useMemo(() => {
+    return Array.from({ length: 12 }, (_, i) => i + 1);
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!currentWorld) return;
@@ -114,6 +152,7 @@ export default function HistoryPage() {
       ]);
       setHistory(histRes.data);
       setRecords(recRes.data);
+      setYearbook(null);
     } catch {
       /* ignore */
     } finally {
@@ -121,9 +160,39 @@ export default function HistoryPage() {
     }
   }, [currentWorld]);
 
+  const loadByYearMonth = useCallback(async () => {
+    if (!currentWorld || selectedYear == null || selectedMonth == null) return;
+    setFilterLoading(true);
+    try {
+      const [historyRes, yearbookRes] = await Promise.all([
+        historyApi.getWorldHistoryByYearMonth(
+          currentWorld.id,
+          selectedYear,
+          selectedMonth,
+        ),
+        historyApi.getYearbook(currentWorld.id, selectedYear),
+      ]);
+      setHistory(historyRes.data);
+      setRecords([]);
+      setYearbook(yearbookRes.data);
+    } catch {
+      setHistory([]);
+      setRecords([]);
+      setYearbook(null);
+    } finally {
+      setFilterLoading(false);
+    }
+  }, [currentWorld, selectedYear, selectedMonth]);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!currentWorld) return;
+    setSelectedYear(currentWorld.currentYear);
+    setSelectedMonth(currentWorld.currentMonth);
+  }, [currentWorld]);
 
   const toggleFilter = (type: EventType) => {
     setActiveFilters((prev) => {
@@ -142,7 +211,7 @@ export default function HistoryPage() {
       text: getEventText(msg),
       dateLabel: getDateLabel(msg),
     }));
-    combined.sort((a, b) => b.msg.id - a.msg.id);
+    combined.sort((a, b) => a.msg.id - b.msg.id);
     return combined;
   }, [history, records]);
 
@@ -176,6 +245,107 @@ export default function HistoryPage() {
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <PageHeader icon={ScrollText} title="연감" />
+
+      <Card>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">년</div>
+              <Select
+                value={selectedYear != null ? String(selectedYear) : ""}
+                onValueChange={(value) => setSelectedYear(Number(value))}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue placeholder="년" />
+                </SelectTrigger>
+                <SelectContent>
+                  {yearOptions.map((year) => (
+                    <SelectItem key={year} value={String(year)}>
+                      {year}년
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">월</div>
+              <Select
+                value={selectedMonth != null ? String(selectedMonth) : ""}
+                onValueChange={(value) => setSelectedMonth(Number(value))}
+              >
+                <SelectTrigger className="w-24">
+                  <SelectValue placeholder="월" />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map((month) => (
+                    <SelectItem key={month} value={String(month)}>
+                      {month}월
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              size="sm"
+              onClick={loadByYearMonth}
+              disabled={
+                filterLoading || selectedYear == null || selectedMonth == null
+              }
+            >
+              {filterLoading ? "조회 중..." : "기록 조회"}
+            </Button>
+          </div>
+          {yearbook && (
+            <div className="rounded-md border border-border p-3 space-y-2">
+              <div className="text-xs font-semibold">
+                연감 ({yearbook.year}년 {yearbook.month}월)
+              </div>
+              <div className="space-y-1">
+                {yearbook.nations.map((nation) => (
+                  <div
+                    key={nation.id}
+                    className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1"
+                  >
+                    <span
+                      className="font-medium"
+                      style={{ color: nation.color }}
+                    >
+                      {nation.name}
+                    </span>
+                    <span className="text-muted-foreground">
+                      영토 {nation.territoryCount}
+                    </span>
+                    <span className="text-muted-foreground">
+                      장수 {nation.generalCount ?? "-"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="pt-1 border-t border-border">
+                <div className="text-[11px] text-muted-foreground mb-1">
+                  주요 사건
+                </div>
+                {yearbook.keyEvents.length === 0 ? (
+                  <div className="text-[11px] text-muted-foreground">
+                    해당 연도의 주요 사건이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {yearbook.keyEvents.slice(0, 5).map((event) => (
+                      <div
+                        key={event.id}
+                        className="text-[11px] text-muted-foreground"
+                      >
+                        {getDateLabel(event)} - {getEventText(event)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Search + filters */}
       <Card>

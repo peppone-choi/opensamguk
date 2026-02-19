@@ -1,5 +1,7 @@
 package com.opensam.command.constraint
 
+import java.util.ArrayDeque
+
 fun NotBeNeutral() = object : Constraint {
     override val name = "NotBeNeutral"
     override fun test(ctx: ConstraintContext): ConstraintResult {
@@ -113,9 +115,14 @@ fun NotSameDestCity() = object : Constraint {
 fun NearCity(maxDistance: Int) = object : Constraint {
     override val name = "NearCity"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
-        // TODO: implement map graph distance check
-        return ConstraintResult.Pass
+        val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
+        val fromCityId = ctx.general.cityId
+        val distance = shortestDistance(ctx, fromCityId, destCity.id)
+        if (distance >= 0 && distance <= maxDistance) {
+            return ConstraintResult.Pass
+        }
+        return if (maxDistance == 1) ConstraintResult.Fail("인접도시가 아닙니다.")
+        else ConstraintResult.Fail("거리가 너무 멉니다.")
     }
 }
 
@@ -176,8 +183,13 @@ fun MustBeTroopLeader() = object : Constraint {
 fun ReqTroopMembers() = object : Constraint {
     override val name = "ReqTroopMembers"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        // TODO: check troop member count from DB
-        return ConstraintResult.Pass
+        val troopId = ctx.general.troopId
+        if (troopId <= 0L) {
+            return ConstraintResult.Fail("집합 가능한 부대원이 없습니다.")
+        }
+        val memberExists = readBooleanMap(ctx.env["troopMemberExistsByTroopId"])[troopId] == true
+        return if (memberExists) ConstraintResult.Pass
+        else ConstraintResult.Fail("집합 가능한 부대원이 없습니다.")
     }
 }
 
@@ -208,15 +220,39 @@ fun BeLord() = object : Constraint {
 fun AllowWar() = object : Constraint {
     override val name = "AllowWar"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        // TODO: check diplomacy/war state
-        return ConstraintResult.Pass
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        return if (nation.warState == 0.toShort()) ConstraintResult.Pass
+        else ConstraintResult.Fail("현재 전쟁 금지입니다.")
     }
 }
 
 fun HasRouteWithEnemy() = object : Constraint {
     override val name = "HasRouteWithEnemy"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        // TODO: check map adjacency with enemy
+        val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
+        val generalNationId = ctx.general.nationId
+        val destNationId = destCity.nationId
+        val atWarNationIds = readLongSet(ctx.env["atWarNationIds"])
+
+        val allowedNationIds = buildSet {
+            add(generalNationId)
+            add(0L)
+            addAll(atWarNationIds)
+        }
+
+        if (destNationId != 0L && destNationId != generalNationId && destNationId !in atWarNationIds) {
+            return ConstraintResult.Fail("교전중인 국가가 아닙니다.")
+        }
+
+        val pathDistance = shortestDistance(
+            ctx = ctx,
+            fromCityId = ctx.general.cityId,
+            toCityId = destCity.id,
+            allowedNationIds = allowedNationIds,
+        )
+        if (pathDistance < 0) {
+            return ConstraintResult.Fail("경로에 도달할 방법이 없습니다.")
+        }
         return ConstraintResult.Pass
     }
 }
@@ -240,8 +276,11 @@ fun BeOpeningPart(relYear: Int) = object : Constraint {
 fun AllowJoinAction() = object : Constraint {
     override val name = "AllowJoinAction"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        // TODO: check join action limit
-        return ConstraintResult.Pass
+        if (ctx.general.makeLimit <= 0) {
+            return ConstraintResult.Pass
+        }
+        val joinActionLimit = (ctx.env["joinActionLimit"] as? Number)?.toInt() ?: 12
+        return ConstraintResult.Fail("재야가 된지 ${joinActionLimit}턴이 지나야 합니다.")
     }
 }
 
@@ -332,8 +371,14 @@ fun AvailableStrategicCommand() = object : Constraint {
 fun BattleGroundCity() = object : Constraint {
     override val name = "BattleGroundCity"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        // TODO: check if city is a battle ground (adjacent to enemy)
-        return ConstraintResult.Pass
+        val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
+        val destNationId = destCity.nationId
+        if (destNationId == 0L) {
+            return ConstraintResult.Pass
+        }
+        val atWarNationIds = readLongSet(ctx.env["atWarNationIds"])
+        return if (destNationId in atWarNationIds) ConstraintResult.Pass
+        else ConstraintResult.Fail("교전중인 국가의 도시가 아닙니다.")
     }
 }
 
@@ -409,8 +454,17 @@ fun NeutralCity() = object : Constraint {
 fun HasRoute() = object : Constraint {
     override val name = "HasRoute"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
-        // TODO: implement map graph route check (BFS between current city and dest)
+        val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
+        val allowedNationIds = setOf(ctx.general.nationId)
+        val pathDistance = shortestDistance(
+            ctx = ctx,
+            fromCityId = ctx.general.cityId,
+            toCityId = destCity.id,
+            allowedNationIds = allowedNationIds,
+        )
+        if (pathDistance < 0) {
+            return ConstraintResult.Fail("경로에 도달할 방법이 없습니다.")
+        }
         return ConstraintResult.Pass
     }
 }
@@ -428,5 +482,91 @@ fun NotInjured(maxInjury: Int = 0) = object : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
         return if (ctx.general.injury <= maxInjury.toShort()) ConstraintResult.Pass
         else ConstraintResult.Fail("부상 상태입니다. (부상: ${ctx.general.injury}, 허용: $maxInjury)")
+    }
+}
+
+private fun shortestDistance(
+    ctx: ConstraintContext,
+    fromCityId: Long,
+    toCityId: Long,
+    allowedNationIds: Set<Long>? = null,
+): Int {
+    if (fromCityId == toCityId) return 0
+    val adjacency = readAdjacency(ctx.env["mapAdjacency"])
+    if (adjacency.isEmpty()) return -1
+
+    val cityNationById = readLongMap(ctx.env["cityNationById"])
+    val visited = mutableSetOf(fromCityId)
+    val queue = ArrayDeque<Pair<Long, Int>>()
+    queue.addLast(fromCityId to 0)
+
+    while (queue.isNotEmpty()) {
+        val (current, distance) = queue.removeFirst()
+        for (next in adjacency[current].orEmpty()) {
+            if (next in visited) continue
+            if (next == toCityId) return distance + 1
+
+            if (allowedNationIds != null) {
+                val nationId = cityNationById[next] ?: return -1
+                if (nationId !in allowedNationIds) continue
+            }
+
+            visited.add(next)
+            queue.addLast(next to (distance + 1))
+        }
+    }
+
+    return -1
+}
+
+private fun readAdjacency(raw: Any?): Map<Long, List<Long>> {
+    if (raw !is Map<*, *>) return emptyMap()
+    val result = mutableMapOf<Long, List<Long>>()
+    raw.forEach { (k, v) ->
+        val key = asLong(k) ?: return@forEach
+        val values = when (v) {
+            is Iterable<*> -> v.mapNotNull { asLong(it) }
+            else -> emptyList()
+        }
+        result[key] = values
+    }
+    return result
+}
+
+private fun readLongMap(raw: Any?): Map<Long, Long> {
+    if (raw !is Map<*, *>) return emptyMap()
+    val result = mutableMapOf<Long, Long>()
+    raw.forEach { (k, v) ->
+        val key = asLong(k) ?: return@forEach
+        val value = asLong(v) ?: return@forEach
+        result[key] = value
+    }
+    return result
+}
+
+private fun readLongSet(raw: Any?): Set<Long> {
+    return when (raw) {
+        is Set<*> -> raw.mapNotNull { asLong(it) }.toSet()
+        is Iterable<*> -> raw.mapNotNull { asLong(it) }.toSet()
+        else -> emptySet()
+    }
+}
+
+private fun readBooleanMap(raw: Any?): Map<Long, Boolean> {
+    if (raw !is Map<*, *>) return emptyMap()
+    val result = mutableMapOf<Long, Boolean>()
+    raw.forEach { (k, v) ->
+        val key = asLong(k) ?: return@forEach
+        val value = v as? Boolean ?: return@forEach
+        result[key] = value
+    }
+    return result
+}
+
+private fun asLong(raw: Any?): Long? {
+    return when (raw) {
+        is Number -> raw.toLong()
+        is String -> raw.toLongOrNull()
+        else -> null
     }
 }

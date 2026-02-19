@@ -2,6 +2,10 @@ package com.opensam.dto
 
 data class TournamentRegisterRequest(val generalId: Long)
 
+data class CreateTournamentRequest(val type: Int)
+
+data class AdvanceTournamentRequest(val tournamentId: Long)
+
 data class PlaceBetRequest(val generalId: Long, val targetId: Long, val amount: Int)
 
 data class TournamentBracketMatchResponse(

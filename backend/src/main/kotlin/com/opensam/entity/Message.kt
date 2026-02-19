@@ -18,6 +18,9 @@ class Message(
     @Column(name = "mailbox_code", nullable = false)
     var mailboxCode: String = "",
 
+    @Column(name = "mailbox_type", nullable = false)
+    var mailboxType: String = "",
+
     @Column(name = "message_type", nullable = false)
     var messageType: String = "",
 
@@ -40,4 +43,19 @@ class Message(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var meta: MutableMap<String, Any> = mutableMapOf(),
-)
+) {
+    @PrePersist
+    fun applyMailboxTypeDefault() {
+        if (mailboxType.isNotBlank()) {
+            mailboxType = mailboxType.uppercase()
+            return
+        }
+
+        mailboxType = when (mailboxCode) {
+            "secret", "national", "nation" -> "NATIONAL"
+            "personal", "message", "private" -> "PRIVATE"
+            "diplomacy", "diplomacy_letter" -> "DIPLOMACY"
+            else -> "PUBLIC"
+        }
+    }
+}

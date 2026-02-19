@@ -139,7 +139,7 @@ export default function VotePage() {
 
   return (
     <div className="space-y-0 max-w-4xl mx-auto">
-      <PageHeader icon={Vote} title="설문조사" />
+      <PageHeader icon={Vote} title="설문 조사" />
 
       <Tabs defaultValue="active" className="legacy-page-wrap">
         <TabsList className="w-full justify-start border-b border-gray-600">

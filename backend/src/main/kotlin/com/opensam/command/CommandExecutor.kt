@@ -4,12 +4,22 @@ import com.opensam.command.constraint.ConstraintResult
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.repository.CityRepository
+import com.opensam.repository.DiplomacyRepository
+import com.opensam.repository.GeneralRepository
+import com.opensam.repository.NationRepository
+import com.opensam.service.MapService
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
 @Service
 class CommandExecutor(
-    private val commandRegistry: CommandRegistry
+    private val commandRegistry: CommandRegistry,
+    private val generalRepository: GeneralRepository,
+    private val cityRepository: CityRepository,
+    private val nationRepository: NationRepository,
+    private val diplomacyRepository: DiplomacyRepository,
+    private val mapService: MapService,
 ) {
     suspend fun executeGeneralCommand(
         actionCode: String,
@@ -23,6 +33,7 @@ class CommandExecutor(
         val command = commandRegistry.createGeneralCommand(actionCode, general, env, arg)
         command.city = city
         command.nation = nation
+        hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val cooldown = checkGeneralCooldown(actionCode, general, env)
         if (cooldown != null) {
@@ -77,6 +88,7 @@ class CommandExecutor(
             ?: return CommandResult(success = false, logs = listOf("알 수 없는 국가 명령: $actionCode"))
         command.city = city
         command.nation = nation
+        hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
         if (cooldown != null) {
@@ -193,6 +205,129 @@ class CommandExecutor(
 
     private fun nationCooldownKey(officerLevel: Short): String {
         return "turn_next_$officerLevel"
+    }
+
+    private fun applyDestinationContext(command: BaseCommand, arg: Map<String, Any>?) {
+        if (arg == null) return
+
+        var destCity = extractLong(
+            arg,
+            "destCityId",
+            "destCityID",
+            "cityId",
+            "targetCityId",
+        )?.let { cityRepository.findById(it).orElse(null) }
+
+        var destNation = extractLong(
+            arg,
+            "destNationId",
+            "destNationID",
+            "targetNationId",
+            "nationId",
+        )?.let { nationRepository.findById(it).orElse(null) }
+
+        var destGeneral = extractLong(
+            arg,
+            "destGeneralID",
+            "destGeneralId",
+            "targetGeneralId",
+            "generalId",
+        )?.let { generalRepository.findById(it).orElse(null) }
+
+        if (destCity == null && destGeneral != null) {
+            destCity = cityRepository.findById(destGeneral.cityId).orElse(null)
+        }
+        if (destNation == null && destGeneral != null && destGeneral.nationId != 0L) {
+            destNation = nationRepository.findById(destGeneral.nationId).orElse(null)
+        }
+        if (destNation == null && destCity != null && destCity.nationId != 0L) {
+            destNation = nationRepository.findById(destCity.nationId).orElse(null)
+        }
+
+        if (destGeneral == null && destNation != null) {
+            if (destNation.chiefGeneralId > 0L) {
+                destGeneral = generalRepository.findById(destNation.chiefGeneralId).orElse(null)
+            }
+            if (destGeneral == null) {
+                destGeneral = generalRepository.findByNationId(destNation.id)
+                    .maxByOrNull { it.officerLevel }
+            }
+        }
+
+        command.destCity = destCity
+        command.destNation = destNation
+        command.destGeneral = destGeneral
+    }
+
+    fun hydrateCommandForConstraintCheck(
+        command: BaseCommand,
+        general: General,
+        env: CommandEnv,
+        arg: Map<String, Any>?,
+    ) {
+        applyDestinationContext(command, arg)
+        command.constraintEnv = buildConstraintEnv(general, env)
+    }
+
+    private fun buildConstraintEnv(general: General, env: CommandEnv): Map<String, Any> {
+        val worldId = env.worldId
+        val mapName = (env.gameStor["mapName"] as? String) ?: "che"
+
+        val allCities = cityRepository.findByWorldId(worldId)
+        val cityNationById = allCities.associate { it.id to it.nationId }
+
+        val mapAdjacency = try {
+            mapService.getCities(mapName).associate { cityConst ->
+                cityConst.id.toLong() to cityConst.connections.map { it.toLong() }
+            }
+        } catch (_: Exception) {
+            emptyMap()
+        }
+
+        val troopMemberExistsByTroopId = generalRepository.findByWorldId(worldId)
+            .asSequence()
+            .filter { it.troopId > 0L }
+            .groupBy { it.troopId }
+            .mapValues { (_, members) -> members.any { m -> m.id != m.troopId } }
+
+        val atWarNationIds = if (general.nationId == 0L) {
+            emptySet()
+        } else {
+            diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+                .asSequence()
+                .filter { it.stateCode == "선전포고" }
+                .mapNotNull {
+                    when (general.nationId) {
+                        it.srcNationId -> it.destNationId
+                        it.destNationId -> it.srcNationId
+                        else -> null
+                    }
+                }
+                .toSet()
+        }
+
+        return mapOf(
+            "worldId" to worldId,
+            "mapName" to mapName,
+            "mapAdjacency" to mapAdjacency,
+            "cityNationById" to cityNationById,
+            "troopMemberExistsByTroopId" to troopMemberExistsByTroopId,
+            "atWarNationIds" to atWarNationIds,
+            "joinActionLimit" to 12,
+        )
+    }
+
+    private fun extractLong(arg: Map<String, Any>, vararg keys: String): Long? {
+        for (key in keys) {
+            val raw = arg[key] ?: continue
+            val parsed = when (raw) {
+                is Number -> raw.toLong()
+                is String -> raw.toLongOrNull()
+                else -> null
+            }
+            if (parsed != null) return parsed
+        }
+        return null
     }
 
     @Suppress("UNCHECKED_CAST")

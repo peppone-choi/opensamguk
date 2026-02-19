@@ -45,7 +45,6 @@ export default function BattleCenterPage() {
 
   useEffect(() => {
     if (!currentWorld) return;
-    setLogsLoading(true);
     historyApi
       .getWorldRecords(currentWorld.id)
       .then(({ data }) => {
@@ -60,7 +59,7 @@ export default function BattleCenterPage() {
         );
         setBattleLogs(battleRecords.slice(0, 30));
       })
-      .catch(() => {})
+      .catch(() => setBattleLogs([]))
       .finally(() => setLogsLoading(false));
   }, [currentWorld]);
 
@@ -106,7 +105,7 @@ export default function BattleCenterPage() {
     <div className="space-y-4 max-w-4xl mx-auto">
       <PageHeader
         icon={Swords}
-        title="전투 기록"
+        title="감찰부"
         description="장수별 전투 통계 및 최근 전투 기록"
       />
 

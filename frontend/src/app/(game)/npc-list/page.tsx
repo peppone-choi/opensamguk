@@ -106,7 +106,7 @@ export default function NpcListPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <PageHeader icon={Bot} title="NPC 일람" />
+      <PageHeader icon={Bot} title="빙의일람" />
 
       <div className="flex gap-2 flex-wrap items-center">
         <div className="relative w-48">

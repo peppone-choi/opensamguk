@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
-import { cityApi, generalApi, nationApi } from "@/lib/gameApi";
+import { cityApi, generalApi, mapApi, nationApi } from "@/lib/gameApi";
 import type { City, General, Nation } from "@/types";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -108,8 +108,10 @@ export default function CityPage() {
   const fetchMyGeneral = useGeneralStore((s) => s.fetchMyGeneral);
 
   const [nation, setNation] = useState<Nation | null>(null);
+  const [nations, setNations] = useState<Nation[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [generals, setGenerals] = useState<General[]>([]);
+  const [adjacencyMap, setAdjacencyMap] = useState<Map<number, number[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("trade");
@@ -126,32 +128,70 @@ export default function CityPage() {
   }, [currentWorld, myGeneral, fetchMyGeneral]);
 
   useEffect(() => {
-    if (!myGeneral?.nationId) return;
-    if (myGeneral.nationId === 0) {
-      setError("재야입니다.");
-      setLoading(false);
-      return;
-    }
+    if (!currentWorld || !myGeneral) return;
+
+    const mapCode =
+      (currentWorld.config as Record<string, string>)?.mapCode ?? "che";
 
     Promise.all([
-      nationApi.get(myGeneral.nationId),
-      cityApi.listByNation(myGeneral.nationId),
-      generalApi.listByNation(myGeneral.nationId),
+      nationApi.listByWorld(currentWorld.id),
+      cityApi.listByWorld(currentWorld.id),
+      generalApi.listByWorld(currentWorld.id),
+      mapApi.get(mapCode),
+      myGeneral.nationId > 0 ? nationApi.get(myGeneral.nationId) : Promise.resolve({ data: null }),
     ])
-      .then(([nationRes, citiesRes, generalsRes]) => {
-        setNation(nationRes.data);
+      .then(([nationsRes, citiesRes, generalsRes, mapRes, myNationRes]) => {
+        setNations(nationsRes.data);
         setCities(citiesRes.data);
         setGenerals(generalsRes.data);
+        setNation(myNationRes.data);
+
+        const next = new Map<number, number[]>();
+        for (const cityConst of mapRes.data.cities) {
+          next.set(cityConst.id, cityConst.connections ?? []);
+        }
+        setAdjacencyMap(next);
       })
-      .catch(() => setError("세력도시 정보를 불러올 수 없습니다."))
+      .catch(() => setError("도시 정보를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
-  }, [myGeneral?.nationId]);
+  }, [currentWorld, myGeneral]);
+
+  const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
+
+  const spyVisibleCityIds = useMemo(() => {
+    const result = new Set<number>();
+    const raw = nation?.spy;
+    if (!raw || typeof raw !== "object") return result;
+    for (const [k, v] of Object.entries(raw)) {
+      const numericKey = Number(k.replace(/\D/g, ""));
+      if (!Number.isNaN(numericKey) && numericKey > 0 && v) {
+        result.add(numericKey);
+      }
+      if (typeof v === "number" && v > 0) result.add(v);
+      if (Array.isArray(v)) {
+        for (const item of v) {
+          if (typeof item === "number" && item > 0) result.add(item);
+        }
+      }
+    }
+    return result;
+  }, [nation?.spy]);
+
+  const canSeeMilitary = useCallback(
+    (city: City) => {
+      if (!myGeneral) return false;
+      if (city.nationId === 0 || city.nationId === myGeneral.nationId) return true;
+      if (myGeneral.permission === "spy") return true;
+      return spyVisibleCityIds.has(city.id);
+    },
+    [myGeneral, spyVisibleCityIds],
+  );
 
   // Officers grouped by officerCity (level 2-4: 종사, 군사, 태수)
   const officersByCity = useMemo(() => {
     const map: Record<number, Record<number, General>> = {};
     for (const gen of generals) {
-      if (gen.officerLevel >= 2 && gen.officerLevel <= 4) {
+        if (gen.officerLevel >= 2 && gen.officerLevel <= 4 && gen.officerCity > 0) {
         const cityId = gen.officerCity;
         if (!map[cityId]) map[cityId] = {};
         map[cityId][gen.officerLevel] = gen;
@@ -225,7 +265,10 @@ export default function CityPage() {
       {/* City list */}
       {sortedCities.map((city, idx) => {
         const isCapital = nation?.capitalCityId === city.id;
-        const nationColor = nation?.color ?? "#888";
+        const owner = nationMap.get(city.nationId);
+        const isMyNationCity = city.nationId === myGeneral?.nationId;
+        const isVisible = canSeeMilitary(city);
+        const nationColor = owner?.color ?? "#888";
         const textColor = isBrightColor(nationColor) ? "black" : "white";
         const regionText = REGION_NAMES[city.region] ?? "";
         const levelText = CITY_LEVEL_NAMES[city.level] ?? `Lv.${city.level}`;
@@ -235,7 +278,14 @@ export default function CityPage() {
 
         const officers = officersByCity[city.id] ?? {};
         const cityGens = generalsByCity[city.id] ?? [];
+        const defendingGeneral =
+          officers[4] ??
+          [...cityGens].sort((a, b) => b.leadership - a.leadership || b.crew - a.crew)[0];
         const isExpanded = expandedCityId === city.id;
+        const adjacentIds = adjacencyMap.get(city.id) ?? [];
+        const adjacentCities = adjacentIds
+          .map((id) => cities.find((c) => c.id === id))
+          .filter((c): c is City => Boolean(c));
 
         const prevRegion = idx > 0 ? sortedCities[idx - 1].region : -1;
         const prevLevel = idx > 0 ? sortedCities[idx - 1].level : -1;
@@ -256,7 +306,8 @@ export default function CityPage() {
                 }}
               >
                 {/* City name header (clickable to expand) */}
-                <div
+                <button
+                  type="button"
                   className="border-t border-l border-gray-600 font-bold text-center col-span-10 cursor-pointer select-none"
                   style={{
                     color: textColor,
@@ -277,10 +328,16 @@ export default function CityPage() {
                   ) : (
                     <span>{city.name}</span>
                   )}
+                  <span className="ml-2 text-xs opacity-90">
+                    {owner?.name ?? "공백지"}
+                  </span>
+                  {!isMyNationCity && !isVisible && (
+                    <span className="ml-1 text-xs text-yellow-300">[첩보 제한]</span>
+                  )}
                   <span className="ml-1 text-xs opacity-70">
                     {isExpanded ? "▲" : "▼"}
                   </span>
-                </div>
+                </button>
 
                 {/* Row 1: pop, popRate, trust, trade, supply */}
                 <LabelCell>주민</LabelCell>
@@ -309,7 +366,7 @@ export default function CityPage() {
                 <LabelCell>시세</LabelCell>
                 <ValueCell>{tradeText}</ValueCell>
                 <LabelCell>보급</LabelCell>
-                <SupplyCell state={city.supplyState} />
+                <SupplyCell state={city.supplyState} hidden={!isVisible} />
 
                 {/* Row 2: agri, comm, secu, def, wall */}
                 <LabelCell>농업</LabelCell>
@@ -319,21 +376,55 @@ export default function CityPage() {
                 <LabelCell>치안</LabelCell>
                 <StatValueCell val={city.secu} max={city.secuMax} />
                 <LabelCell>수비</LabelCell>
-                <StatValueCell val={city.def} max={city.defMax} />
+                <StatValueCell val={city.def} max={city.defMax} hidden={!isVisible} />
                 <LabelCell>성벽</LabelCell>
-                <StatValueCell val={city.wall} max={city.wallMax} />
+                <StatValueCell val={city.wall} max={city.wallMax} hidden={!isVisible} />
 
                 {/* Row 3: officers + front */}
                 <LabelCell>태수</LabelCell>
-                <OfficerValue gen={officers[4]} />
+                <OfficerValue gen={officers[4]} hidden={!isVisible} />
                 <LabelCell>군사</LabelCell>
-                <OfficerValue gen={officers[3]} />
+                <OfficerValue gen={officers[3]} hidden={!isVisible} />
                 <LabelCell>종사</LabelCell>
-                <OfficerValue gen={officers[2]} />
+                <OfficerValue gen={officers[2]} hidden={!isVisible} />
                 <LabelCell>전선</LabelCell>
-                <FrontCell state={city.frontState} />
+                <FrontCell state={city.frontState} hidden={!isVisible} />
                 <LabelCell>사망</LabelCell>
-                <ValueCell>{city.dead.toLocaleString()}</ValueCell>
+                <ValueCell>{isVisible ? city.dead.toLocaleString() : "?"}</ValueCell>
+
+                <LabelCell>수비장</LabelCell>
+                <ValueCell>
+                  {isVisible && defendingGeneral ? defendingGeneral.name : "?"}
+                </ValueCell>
+                <LabelCell>주둔병력</LabelCell>
+                <ValueCell>
+                  {isVisible
+                    ? cityGens.reduce((sum, g) => sum + g.crew, 0).toLocaleString()
+                    : "?"}
+                </ValueCell>
+                <LabelCell>성벽/수비</LabelCell>
+                <ValueCell>{isVisible ? `${city.wall}/${city.def}` : "?"}</ValueCell>
+                <LabelCell>인접 도시</LabelCell>
+                <div className="border-t border-l border-gray-600 px-1 py-0.5 col-span-4 text-xs">
+                  {adjacentCities.length === 0 ? (
+                    <span className="text-gray-500">-</span>
+                  ) : (
+                    adjacentCities.map((adj, index) => (
+                      <button
+                        key={adj.id}
+                        type="button"
+                        className="text-cyan-300 hover:text-cyan-200"
+                        onClick={() => {
+                          setFilterCityId(adj.id);
+                          setExpandedCityId(adj.id);
+                        }}
+                      >
+                        {index > 0 ? ", " : ""}
+                        {adj.name}
+                      </button>
+                    ))
+                  )}
+                </div>
 
                 {/* Row 4: generals summary */}
                 <LabelCell>장수({cityGens.length})</LabelCell>
@@ -341,7 +432,9 @@ export default function CityPage() {
                   className="border-t border-l border-gray-600 px-1 py-0.5 col-span-9"
                   style={{ lineHeight: "1.6em" }}
                 >
-                  {cityGens.length === 0 ? (
+                  {!isVisible ? (
+                    <span className="text-gray-500">첩보 부족</span>
+                  ) : cityGens.length === 0 ? (
                     <span className="text-gray-500">-</span>
                   ) : (
                     cityGens.map((gen, i) => {
@@ -358,7 +451,7 @@ export default function CityPage() {
               </div>
 
               {/* ===== Expanded garrison table ===== */}
-              {isExpanded && cityGens.length > 0 && (
+              {isExpanded && cityGens.length > 0 && isVisible && (
                 <GarrisonTable
                   generals={cityGens}
                   nationLevel={nation?.level}
@@ -509,7 +602,22 @@ function ValueCell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StatValueCell({ val, max }: { val: number; max: number }) {
+function StatValueCell({
+  val,
+  max,
+  hidden,
+}: {
+  val: number;
+  max: number;
+  hidden?: boolean;
+}) {
+  if (hidden) {
+    return (
+      <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 px-0.5">
+        ?
+      </div>
+    );
+  }
   return (
     <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 px-0.5">
       <SammoBar height={7} percent={max > 0 ? (val / max) * 100 : 0} />
@@ -520,7 +628,14 @@ function StatValueCell({ val, max }: { val: number; max: number }) {
   );
 }
 
-function OfficerValue({ gen }: { gen?: General }) {
+function OfficerValue({ gen, hidden }: { gen?: General; hidden?: boolean }) {
+  if (hidden) {
+    return (
+      <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 text-gray-500">
+        ?
+      </div>
+    );
+  }
   if (!gen) {
     return (
       <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 text-gray-500">
@@ -539,7 +654,14 @@ function OfficerValue({ gen }: { gen?: General }) {
   );
 }
 
-function SupplyCell({ state }: { state: number }) {
+function SupplyCell({ state, hidden }: { state: number; hidden?: boolean }) {
+  if (hidden) {
+    return (
+      <div className="border-t border-l border-gray-600 text-center text-xs py-0.5">
+        ?
+      </div>
+    );
+  }
   const color = state === 0 ? "limegreen" : state === 1 ? "yellow" : "red";
   const text = state === 0 ? "정상" : state === 1 ? "부족" : "고립";
   return (
@@ -549,7 +671,14 @@ function SupplyCell({ state }: { state: number }) {
   );
 }
 
-function FrontCell({ state }: { state: number }) {
+function FrontCell({ state, hidden }: { state: number; hidden?: boolean }) {
+  if (hidden) {
+    return (
+      <div className="border-t border-l border-gray-600 text-center text-xs py-0.5">
+        ?
+      </div>
+    );
+  }
   const color = state === 0 ? "limegreen" : state === 1 ? "yellow" : "red";
   const text = state === 0 ? "후방" : state === 1 ? "전선" : "최전선";
   return (

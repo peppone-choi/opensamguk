@@ -29,7 +29,6 @@ export default function SuperiorPage() {
     [myGeneral, nations],
   );
 
-  // Build officer hierarchy: generals with higher officerLevel in same nation
   const superiors = useMemo(() => {
     if (!myGeneral || !myGeneral.nationId) return [];
     return generals
@@ -41,21 +40,18 @@ export default function SuperiorPage() {
       .sort((a, b) => b.officerLevel - a.officerLevel);
   }, [myGeneral, generals]);
 
-  if (!currentWorld)
-    return (
-      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
-    );
+  if (!currentWorld) {
+    return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+  }
   if (loading) return <LoadingState />;
-  if (!myGeneral)
-    return (
-      <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>
-    );
+  if (!myGeneral) {
+    return <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>;
+  }
 
   return (
     <div className="p-4 space-y-6 max-w-2xl mx-auto">
       <PageHeader icon={Shield} title="상급자 정보" />
 
-      {/* My position */}
       <Card>
         <CardHeader>
           <CardTitle>내 직위</CardTitle>
@@ -72,10 +68,7 @@ export default function SuperiorPage() {
               <div className="flex items-center gap-2 mt-1">
                 <NationBadge name={nation?.name} color={nation?.color} />
                 <Badge variant="outline">
-                  {formatOfficerLevelText(
-                    myGeneral.officerLevel,
-                    nation?.level,
-                  )}
+                  {formatOfficerLevelText(myGeneral.officerLevel, nation?.level)}
                 </Badge>
               </div>
             </div>
@@ -83,7 +76,6 @@ export default function SuperiorPage() {
         </CardContent>
       </Card>
 
-      {/* Superior officers */}
       <Card>
         <CardHeader>
           <CardTitle>상급자 목록</CardTitle>
@@ -102,11 +94,7 @@ export default function SuperiorPage() {
                   key={g.id}
                   className="flex items-center gap-3 rounded-lg border p-3"
                 >
-                  <GeneralPortrait
-                    picture={g.picture}
-                    name={g.name}
-                    size="sm"
-                  />
+                  <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
                   <div className="flex-1">
                     <span className="font-medium">{g.name}</span>
                     <Badge variant="outline" className="ml-2 text-xs">

@@ -25,6 +25,7 @@ abstract class BaseCommand(
     var destGeneral: General? = null
     var destCity: City? = null
     var destNation: Nation? = null
+    var constraintEnv: Map<String, Any> = emptyMap()
 
     abstract fun getCost(): CommandCost
     open fun getCommandPointCost(): Int = 1
@@ -45,7 +46,8 @@ abstract class BaseCommand(
             destGeneral = destGeneral,
             destCity = destCity,
             destNation = destNation,
-            arg = arg
+            arg = arg,
+            env = buildConstraintContextEnv(),
         )
         for (constraint in fullConditionConstraints) {
             val result = constraint.test(ctx)
@@ -59,7 +61,8 @@ abstract class BaseCommand(
             general = general,
             city = city,
             nation = nation,
-            arg = arg
+            arg = arg,
+            env = buildConstraintContextEnv(),
         )
         for (constraint in minConditionConstraints) {
             val result = constraint.test(ctx)
@@ -75,5 +78,18 @@ abstract class BaseCommand(
     protected fun formatDate(): String {
         val monthStr = env.month.toString().padStart(2, '0')
         return "${env.year}년 ${monthStr}월"
+    }
+
+    private fun buildConstraintContextEnv(): Map<String, Any> {
+        val merged = mutableMapOf<String, Any>(
+            "worldId" to env.worldId,
+            "year" to env.year,
+            "month" to env.month,
+            "startYear" to env.startYear,
+            "realtimeMode" to env.realtimeMode,
+        )
+        merged.putAll(env.gameStor)
+        merged.putAll(constraintEnv)
+        return merged
     }
 }

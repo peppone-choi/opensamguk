@@ -244,7 +244,7 @@ export default function NationPage() {
       })
       .catch(() => setError("국가 정보를 불러올 수 없습니다."))
       .finally(() => setLoading(false));
-  }, [myGeneral?.nationId, currentWorld]);
+  }, [myGeneral?.nationId, myGeneral?.officerLevel, currentWorld]);
 
   const handleTabChange = (value: string) => {
     router.replace(value === "info" ? "/nation" : `/nation?tab=${value}`, {

@@ -1,12 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
+import { useRouter } from "next/navigation";
+import { Clock3, Copy, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { commandApi, realtimeApi } from "@/lib/gameApi";
 import { useWorldStore } from "@/stores/worldStore";
+import { COMMAND_ARGS } from "@/components/game/command-arg-form";
 import { CommandSelectForm } from "@/components/game/command-select-form";
-import type { GeneralTurn, CommandTableEntry, RealtimeStatus } from "@/types";
+import type { CommandTableEntry, GeneralTurn, RealtimeStatus } from "@/types";
 
 const TURN_COUNT = 12;
 
@@ -15,25 +26,96 @@ interface CommandPanelProps {
   realtimeMode: boolean;
 }
 
-export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
-  const [turns, setTurns] = useState<GeneralTurn[]>([]);
-  const [selectedSlots, setSelectedSlots] = useState<Set<number>>(new Set([0]));
-  const [lastClickedSlot, setLastClickedSlot] = useState(0);
-  const [commandTable, setCommandTable] = useState<
-    Record<string, CommandTableEntry[]>
-  >({});
-  const [showForm, setShowForm] = useState(false);
-  const [serverTime, setServerTime] = useState<string>("");
-  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(
-    null,
-  );
-  const currentWorld = useWorldStore((s) => s.currentWorld);
-  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
+interface ClipboardItem {
+  offset: number;
+  actionCode: string;
+  arg?: Record<string, unknown>;
+  brief?: string | null;
+}
 
-  // Server clock
+interface StoredAction {
+  name: string;
+  items: ClipboardItem[];
+}
+
+interface FilledTurn {
+  turnIdx: number;
+  actionCode: string;
+  arg: Record<string, unknown>;
+  brief: string | null;
+}
+
+function formatCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function turnTargetText(turn: FilledTurn): string {
+  if (turn.brief && turn.brief !== turn.actionCode) {
+    return turn.brief;
+  }
+
+  const arg = turn.arg ?? {};
+  const values = [
+    arg.destCityId,
+    arg.cityId,
+    arg.destGeneralID,
+    arg.destNationId,
+    arg.amount,
+  ].filter((value) => value !== undefined && value !== null);
+
+  return values.length > 0 ? values.map((value) => String(value)).join(" / ") : "-";
+}
+
+export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
+  const router = useRouter();
+  const currentWorld = useWorldStore((s) => s.currentWorld);
+
+  const [turns, setTurns] = useState<GeneralTurn[]>([]);
+  const [commandTable, setCommandTable] = useState<Record<string, CommandTableEntry[]>>({});
+  const [selectedTurns, setSelectedTurns] = useState<Set<number>>(new Set([0]));
+  const [lastClickedTurn, setLastClickedTurn] = useState(0);
+  const [showSelector, setShowSelector] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(null);
+  const [serverClock, setServerClock] = useState("");
+  const [remaining, setRemaining] = useState(0);
+  const [clipboard, setClipboard] = useState<ClipboardItem[] | null>(null);
+  const [storedActions, setStoredActions] = useState<StoredAction[]>([]);
+  const [selectedStoredAction, setSelectedStoredAction] = useState("");
+
+  const lastTurnRef = useRef(0);
+
+  const filledTurns = useMemo<FilledTurn[]>(() => {
+    const byIndex = new Map<number, GeneralTurn>();
+    for (const turn of turns) {
+      byIndex.set(turn.turnIdx, turn);
+    }
+
+    return Array.from({ length: TURN_COUNT }, (_, turnIdx) => {
+      const existing = byIndex.get(turnIdx);
+      return {
+        turnIdx,
+        actionCode: existing?.actionCode ?? "휴식",
+        arg: existing?.arg ?? {},
+        brief: existing?.brief ?? null,
+      };
+    });
+  }, [turns]);
+
+  const selectedTurnList = useMemo(
+    () => Array.from(selectedTurns).sort((a, b) => a - b),
+    [selectedTurns],
+  );
+
+  const selectedCount = selectedTurnList.length;
+
+  const localStorageKey = `opensam:stored-actions:${generalId}`;
+  const turnSignature = `${currentWorld?.currentYear ?? 0}-${currentWorld?.currentMonth ?? 0}`;
+
   useEffect(() => {
     const updateClock = () => {
-      setServerTime(
+      setServerClock(
         new Date().toLocaleTimeString("ko-KR", {
           hour: "2-digit",
           minute: "2-digit",
@@ -42,18 +124,72 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         }),
       );
     };
+
     updateClock();
-    timerRef.current = setInterval(updateClock, 1000);
-    return () => clearInterval(timerRef.current);
+    const intervalId = window.setInterval(updateClock, 1000);
+    return () => window.clearInterval(intervalId);
   }, []);
 
-  const loadTurns = useCallback(async () => {
-    try {
-      const { data } = await commandApi.getReserved(generalId);
-      setTurns(data);
-    } catch {
-      /* ignore */
+  useEffect(() => {
+    void turnSignature;
+    lastTurnRef.current = Date.now();
+  }, [turnSignature]);
+
+  useEffect(() => {
+    if (!currentWorld?.tickSeconds || currentWorld.tickSeconds <= 0) {
+      window.setTimeout(() => setRemaining(0), 0);
+      return;
     }
+
+    const tickMs = currentWorld.tickSeconds * 1000;
+    const update = () => {
+      const elapsed = Date.now() - lastTurnRef.current;
+      const remainMs = Math.max(0, tickMs - elapsed);
+      setRemaining(Math.ceil(remainMs / 1000));
+    };
+
+    update();
+    const intervalId = window.setInterval(update, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [currentWorld?.tickSeconds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = window.localStorage.getItem(localStorageKey);
+    if (!raw) {
+      window.setTimeout(() => setStoredActions([]), 0);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as StoredAction[];
+      window.setTimeout(
+        () => setStoredActions(Array.isArray(parsed) ? parsed : []),
+        0,
+      );
+    } catch {
+      window.setTimeout(() => setStoredActions([]), 0);
+    }
+  }, [localStorageKey]);
+
+  const persistStoredActions = useCallback(
+    (items: StoredAction[]) => {
+      setStoredActions(items);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(localStorageKey, JSON.stringify(items));
+      }
+    },
+    [localStorageKey],
+  );
+
+  const loadTurns = useCallback(async () => {
+    const { data } = await commandApi.getReservedCommands(generalId);
+    setTurns(data);
+  }, [generalId]);
+
+  const loadCommandTable = useCallback(async () => {
+    const { data } = await commandApi.getCommandTable(generalId);
+    setCommandTable(data);
   }, [generalId]);
 
   const loadRealtimeStatus = useCallback(async () => {
@@ -61,253 +197,416 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
       setRealtimeStatus(null);
       return;
     }
-
-    try {
-      const { data } = await realtimeApi.getStatus(generalId);
-      setRealtimeStatus(data);
-    } catch {
-      /* ignore */
-    }
+    const { data } = await realtimeApi.getStatus(generalId);
+    setRealtimeStatus(data);
   }, [generalId, realtimeMode]);
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const [turnsRes, tableRes] = await Promise.all([
-          commandApi.getReserved(generalId),
-          commandApi.getCommandTable(generalId),
-        ]);
-        if (active) {
-          setTurns(turnsRes.data);
-          setCommandTable(tableRes.data);
-        }
-        if (active && realtimeMode) {
-          const statusRes = await realtimeApi.getStatus(generalId);
-          setRealtimeStatus(statusRes.data);
-        }
-      } catch {
-        /* ignore */
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [generalId, realtimeMode]);
+    const timer = window.setTimeout(() => {
+      void Promise.all([loadTurns(), loadCommandTable(), loadRealtimeStatus()]);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [loadTurns, loadCommandTable, loadRealtimeStatus]);
 
   useEffect(() => {
     if (!realtimeMode) return;
-    const id = setInterval(() => {
+    const intervalId = window.setInterval(() => {
       void loadRealtimeStatus();
     }, 1000);
-    return () => clearInterval(id);
+    return () => window.clearInterval(intervalId);
   }, [realtimeMode, loadRealtimeStatus]);
 
-  const getTurn = (idx: number) => turns.find((t) => t.turnIdx === idx);
+  const applyToTurns = useCallback(
+    async (
+      turnList: number[],
+      actionCode: string,
+      arg?: Record<string, unknown>,
+    ) => {
+      await Promise.all(
+        turnList.map((turn) =>
+          commandApi.reserveCommand(generalId, {
+            turn,
+            command: actionCode,
+            arg,
+          }),
+        ),
+      );
+      await loadTurns();
+    },
+    [generalId, loadTurns],
+  );
 
-  const handleSlotClick = (idx: number, e: React.MouseEvent) => {
-    if (e.shiftKey && lastClickedSlot !== idx) {
-      // Shift+click: range select
-      const start = Math.min(lastClickedSlot, idx);
-      const end = Math.max(lastClickedSlot, idx);
-      const newSet = new Set<number>();
-      for (let i = start; i <= end; i++) newSet.add(i);
-      setSelectedSlots(newSet);
-    } else if (e.ctrlKey || e.metaKey) {
-      // Ctrl/Cmd+click: toggle individual
-      const newSet = new Set(selectedSlots);
-      if (newSet.has(idx)) {
-        newSet.delete(idx);
-        if (newSet.size === 0) newSet.add(idx);
-      } else {
-        newSet.add(idx);
+  const clearTurns = useCallback(
+    async (turnList: number[]) => {
+      await Promise.all(
+        turnList.map((turn) => commandApi.deleteReservedCommand(generalId, turn)),
+      );
+      await loadTurns();
+    },
+    [generalId, loadTurns],
+  );
+
+  const handleTurnClick = (
+    turnIdx: number,
+    event: ReactMouseEvent<HTMLButtonElement>,
+  ) => {
+    if (event.shiftKey) {
+      const min = Math.min(lastClickedTurn, turnIdx);
+      const max = Math.max(lastClickedTurn, turnIdx);
+      const next = new Set<number>();
+      for (let idx = min; idx <= max; idx += 1) {
+        next.add(idx);
       }
-      setSelectedSlots(newSet);
-    } else {
-      // Normal click: single select
-      setSelectedSlots(new Set([idx]));
-      setShowForm(true);
+      setSelectedTurns(next);
+      setLastClickedTurn(turnIdx);
+      return;
     }
-    setLastClickedSlot(idx);
+
+    if (event.ctrlKey || event.metaKey) {
+      const next = new Set(selectedTurns);
+      if (next.has(turnIdx)) {
+        next.delete(turnIdx);
+      } else {
+        next.add(turnIdx);
+      }
+
+      if (next.size === 0) {
+        next.add(turnIdx);
+      }
+
+      setSelectedTurns(next);
+      setLastClickedTurn(turnIdx);
+      return;
+    }
+
+    setSelectedTurns(new Set([turnIdx]));
+    setLastClickedTurn(turnIdx);
+
+    const clicked = filledTurns[turnIdx];
+    if (clicked.actionCode === "휴식" && !realtimeMode) {
+      setShowSelector(true);
+    }
   };
 
-  const handleSelectCommand = async (
+  const copySelected = useCallback(() => {
+    if (selectedTurnList.length === 0) return;
+    const min = selectedTurnList[0];
+    const items = selectedTurnList.map((turnIdx) => {
+      const turn = filledTurns[turnIdx];
+      return {
+        offset: turnIdx - min,
+        actionCode: turn.actionCode,
+        arg: turn.arg,
+        brief: turn.brief,
+      };
+    });
+    setClipboard(items);
+  }, [filledTurns, selectedTurnList]);
+
+  const pasteClipboard = useCallback(async () => {
+    if (!clipboard || selectedTurnList.length === 0 || realtimeMode) return;
+
+    const anchor = selectedTurnList[0];
+    const validItems = clipboard
+      .map((item) => ({ ...item, target: anchor + item.offset }))
+      .filter((item) => item.target >= 0 && item.target < TURN_COUNT);
+
+    if (validItems.length === 0) return;
+
+    await Promise.all(
+      validItems.map((item) =>
+        item.actionCode === "휴식"
+          ? commandApi.deleteReservedCommand(generalId, item.target)
+          : commandApi.reserveCommand(generalId, {
+              turn: item.target,
+              command: item.actionCode,
+              arg: item.arg,
+            }),
+      ),
+    );
+    await loadTurns();
+  }, [clipboard, generalId, loadTurns, realtimeMode, selectedTurnList]);
+
+  const saveStoredAction = () => {
+    if (selectedTurnList.length === 0) return;
+    const min = selectedTurnList[0];
+    const items = selectedTurnList.map((turnIdx) => {
+      const turn = filledTurns[turnIdx];
+      return {
+        offset: turnIdx - min,
+        actionCode: turn.actionCode,
+        arg: turn.arg,
+        brief: turn.brief,
+      };
+    });
+
+    const defaultName = items
+      .map((item) => (item.actionCode === "휴식" ? "휴" : item.actionCode.charAt(0)))
+      .join("");
+    const input = window.prompt("저장 액션 이름", defaultName);
+    if (!input) return;
+
+    const trimmedName = input.trim();
+    if (!trimmedName) return;
+
+    const deduped = storedActions.filter((action) => action.name !== trimmedName);
+    persistStoredActions([...deduped, { name: trimmedName, items }]);
+    setSelectedStoredAction(trimmedName);
+  };
+
+  const loadStoredAction = async () => {
+    if (!selectedStoredAction || selectedTurnList.length === 0 || realtimeMode) return;
+    const stored = storedActions.find((entry) => entry.name === selectedStoredAction);
+    if (!stored) return;
+
+    const anchor = selectedTurnList[0];
+    const validItems = stored.items
+      .map((item) => ({ ...item, target: anchor + item.offset }))
+      .filter((item) => item.target >= 0 && item.target < TURN_COUNT);
+
+    await Promise.all(
+      validItems.map((item) =>
+        item.actionCode === "휴식"
+          ? commandApi.deleteReservedCommand(generalId, item.target)
+          : commandApi.reserveCommand(generalId, {
+              turn: item.target,
+              command: item.actionCode,
+              arg: item.arg,
+            }),
+      ),
+    );
+    await loadTurns();
+  };
+
+  const deleteStoredAction = () => {
+    if (!selectedStoredAction) return;
+    const next = storedActions.filter((item) => item.name !== selectedStoredAction);
+    persistStoredActions(next);
+    setSelectedStoredAction("");
+  };
+
+  const handleCommandSelect = async (
     actionCode: string,
     arg?: Record<string, unknown>,
   ) => {
-    try {
-      // Apply command to all selected slots
-      const reservations = [...selectedSlots]
-        .sort((a, b) => a - b)
-        .map((slot) => ({ turnIdx: slot, actionCode, arg }));
-      await commandApi.reserve(generalId, reservations);
-      await loadTurns();
-      setShowForm(false);
-      // Auto-advance to next slot after last selected
-      const maxSlot = Math.max(...selectedSlots);
-      if (maxSlot < TURN_COUNT - 1) {
-        setSelectedSlots(new Set([maxSlot + 1]));
-        setLastClickedSlot(maxSlot + 1);
-      }
-    } catch {
-      /* ignore */
+    const targets = selectedTurnList.length > 0 ? selectedTurnList : [0];
+    if (COMMAND_ARGS[actionCode]) {
+      router.push(
+        `/processing?command=${encodeURIComponent(actionCode)}&turnList=${targets.join(",")}`,
+      );
+      setShowSelector(false);
+      return;
     }
-  };
 
-  const handleRepeat = async () => {
-    if (realtimeMode) return;
-    try {
-      await commandApi.repeatTurns(generalId, 1);
-      await loadTurns();
-    } catch {
-      /* ignore */
-    }
+    await applyToTurns(targets, actionCode, arg);
+    setShowSelector(false);
   };
-
-  const handlePush = async (amount: number) => {
-    if (realtimeMode) return;
-    try {
-      await commandApi.pushTurns(generalId, amount);
-      await loadTurns();
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const handleClearSelected = async () => {
-    if (realtimeMode) return;
-    // Clear selected slots (set to 휴식) then pull remaining forward
-    try {
-      const reservations = [...selectedSlots]
-        .sort((a, b) => a - b)
-        .map((slot) => ({ turnIdx: slot, actionCode: "휴식" }));
-      await commandApi.reserve(generalId, reservations);
-      await loadTurns();
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const yearMonth = currentWorld
-    ? `${currentWorld.currentYear}년 ${currentWorld.currentMonth}월`
-    : "";
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>명령 예약 ({TURN_COUNT}턴)</CardTitle>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-gray-300">{serverTime}</span>
-            {yearMonth && (
-              <span className="text-[11px] text-gray-300">{yearMonth}</span>
-            )}
-            {realtimeMode && realtimeStatus && (
-              <span className="text-[11px] text-cyan-300">
-                CP {realtimeStatus.commandPoints} / 대기{" "}
-                {realtimeStatus.remainingSeconds}s
-              </span>
-            )}
+    <Card className="border-gray-700">
+      <CardHeader className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="text-base">12턴 예약 편집</CardTitle>
+          <div className="flex items-center gap-2 text-xs text-gray-300">
+            <Clock3 className="size-3.5 text-amber-300" />
+            <span>{serverClock}</span>
+            {currentWorld?.tickSeconds ? (
+              <Badge variant="secondary" className="text-[11px]">
+                다음 턴 {formatCountdown(remaining)}
+              </Badge>
+            ) : null}
+            {realtimeMode && realtimeStatus ? (
+              <Badge variant="outline" className="text-[11px] text-cyan-300">
+                CP {realtimeStatus.commandPoints} / 대기 {realtimeStatus.remainingSeconds}s
+              </Badge>
+            ) : null}
           </div>
         </div>
-        {/* Action bar */}
-        <div className="mt-1 flex items-center gap-1">
-          {!realtimeMode && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRepeat}
-                title="반복"
-              >
-                반복
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePush(1)}
-                title="밀기"
-              >
-                밀기
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePush(-1)}
-                title="당기기"
-              >
-                당기기
-              </Button>
-              {selectedSlots.size > 1 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleClearSelected}
-                  title="선택 비우기"
-                  className="text-red-400"
-                >
-                  선택 비움
-                </Button>
-              )}
-            </>
-          )}
-          <span className="ml-auto text-[10px] text-gray-400">
-            {realtimeMode
-              ? "실시간 모드: 예턴 사용 불가"
-              : selectedSlots.size > 1
-                ? `${selectedSlots.size}개 선택`
-                : "Shift+클릭: 범위선택"}
-          </span>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={realtimeMode}
+            onClick={() => setShowSelector(true)}
+          >
+            선택 채우기
+          </Button>
+          <Button size="sm" variant="outline" onClick={copySelected}>
+            복사
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!clipboard || realtimeMode}
+            onClick={() => void pasteClipboard()}
+          >
+            붙여넣기
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-red-300"
+            disabled={realtimeMode}
+            onClick={() => void clearTurns(selectedTurnList)}
+          >
+            선택 비우기
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={realtimeMode}
+            onClick={saveStoredAction}
+          >
+            보관
+          </Button>
+
+          <select
+            value={selectedStoredAction}
+            onChange={(event) => setSelectedStoredAction(event.target.value)}
+            className="h-8 min-w-[140px] rounded-md border border-input bg-background px-2 text-xs"
+          >
+            <option value="">저장 액션 선택</option>
+            {storedActions.map((item) => (
+              <option key={item.name} value={item.name}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!selectedStoredAction || realtimeMode}
+            onClick={() => void loadStoredAction()}
+          >
+            불러오기
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-red-300"
+            disabled={!selectedStoredAction}
+            onClick={deleteStoredAction}
+          >
+            삭제
+          </Button>
+
+          <div className="ml-auto text-[11px] text-gray-400">
+            {selectedCount}개 선택 · Shift 범위 · Ctrl 다중
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {/* Turn slot vertical list */}
-        <div className="space-y-[1px] bg-gray-600">
-          {Array.from({ length: TURN_COUNT }, (_, i) => {
-            const turn = getTurn(i);
-            const isSelected = selectedSlots.has(i);
-            const actionCode = turn?.actionCode ?? "휴식";
-            const brief = turn?.brief;
-            const isRest = actionCode === "휴식";
+
+      <CardContent>
+        <div className="overflow-hidden rounded-md border border-gray-700">
+          <div className="grid grid-cols-[68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
+            <div>턴</div>
+            <div>명령</div>
+            <div>대상/상세</div>
+            <div className="text-right">작업</div>
+          </div>
+
+          {filledTurns.map((turn) => {
+            const isSelected = selectedTurns.has(turn.turnIdx);
+            const isEmpty = turn.actionCode === "휴식";
+
             return (
               <button
-                key={i}
-                onClick={(e) => handleSlotClick(i, e)}
-                className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors ${
-                  isSelected
-                    ? "bg-[#141c65] text-white"
-                    : "bg-[#111] hover:bg-[#191919]"
+                key={turn.turnIdx}
+                type="button"
+                onClick={(event) => handleTurnClick(turn.turnIdx, event)}
+                className={`grid cursor-pointer grid-cols-[68px_120px_1fr_136px] items-center border-t border-gray-800 px-2 py-2 text-xs transition-colors ${
+                  isSelected ? "bg-[#18224b]" : "bg-[#101010] hover:bg-[#171717]"
                 }`}
               >
-                <span className="w-6 shrink-0 tabular-nums text-gray-400">
-                  #{i + 1}
-                </span>
-                <span
-                  className={`shrink-0 border px-1 py-0 text-[10px] ${
-                    isRest
-                      ? "border-gray-600 text-gray-400"
-                      : "border-cyan-700 text-cyan-300"
-                  }`}
-                >
-                  {actionCode}
-                </span>
-                {brief && (
-                  <span className="flex-1 truncate text-gray-300">{brief}</span>
-                )}
+                <div className="font-mono text-gray-300">턴 {turn.turnIdx}</div>
+                <div>
+                  {isEmpty ? (
+                    <Badge variant="outline" className="border-gray-600 text-gray-400">
+                      빈 턴
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-cyan-200">
+                      {turn.actionCode}
+                    </Badge>
+                  )}
+                </div>
+                <div className="truncate text-gray-300">{isEmpty ? "명령 없음" : turnTargetText(turn)}</div>
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (realtimeMode) return;
+                      setSelectedTurns(new Set([turn.turnIdx]));
+                      setLastClickedTurn(turn.turnIdx);
+                      setShowSelector(true);
+                    }}
+                  >
+                    <Pencil className="size-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-red-300"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (realtimeMode) return;
+                      void clearTurns([turn.turnIdx]);
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setClipboard([
+                        {
+                          offset: 0,
+                          actionCode: turn.actionCode,
+                          arg: turn.arg,
+                          brief: turn.brief,
+                        },
+                      ]);
+                    }}
+                  >
+                    <Copy className="size-3.5" />
+                  </Button>
+                </div>
               </button>
             );
           })}
         </div>
 
-        {/* Command selection form */}
-        {showForm && (
-          <CommandSelectForm
-            commandTable={commandTable}
-            onSelect={handleSelectCommand}
-            onCancel={() => setShowForm(false)}
-            realtimeMode={realtimeMode}
-            generalId={generalId}
-          />
+        {showSelector && (
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4">
+            <div className="w-full max-w-2xl rounded-md border border-gray-700 bg-background shadow-xl">
+              <div className="flex items-center justify-between border-b border-gray-700 px-4 py-2">
+                <p className="text-sm font-semibold text-gray-100">
+                  명령 선택 ({selectedTurnList.join(", ")})
+                </p>
+                <Button size="sm" variant="ghost" onClick={() => setShowSelector(false)}>
+                  닫기
+                </Button>
+              </div>
+              <div className="p-3">
+                <CommandSelectForm
+                  commandTable={commandTable}
+                  onSelect={(actionCode, arg) => {
+                    void handleCommandSelect(actionCode, arg);
+                  }}
+                  onCancel={() => setShowSelector(false)}
+                  realtimeMode={realtimeMode}
+                  generalId={generalId}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

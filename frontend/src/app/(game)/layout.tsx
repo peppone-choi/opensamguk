@@ -89,7 +89,7 @@ export default function GameLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, initAuth, logout } = useAuthStore();
+  const { isAuthenticated, isInitialized, initAuth, logout } = useAuthStore();
   const { currentWorld } = useWorldStore();
   const {
     myGeneral,
@@ -102,10 +102,10 @@ export default function GameLayout({
   }, [initAuth]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isInitialized && !isAuthenticated) {
       router.replace("/login");
     }
-  }, [isAuthenticated, router]);
+  }, [isInitialized, isAuthenticated, router]);
 
   useEffect(() => {
     if (currentWorld) {

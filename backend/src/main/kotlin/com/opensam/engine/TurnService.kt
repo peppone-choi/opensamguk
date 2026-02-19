@@ -20,6 +20,7 @@ import java.time.Duration
 import java.time.OffsetDateTime
 
 @Service
+@Deprecated("Use TurnCoordinator (CQRS in-memory pipeline) instead")
 class TurnService(
     private val worldStateRepository: WorldStateRepository,
     private val generalRepository: GeneralRepository,

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
+import { historyApi } from "@/lib/gameApi";
 import { Crown } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -17,13 +18,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { Message } from "@/types";
 
 export default function EmperorPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { nations, loading, loadAll } = useGameStore();
+  const [dynastyLogs, setDynastyLogs] = useState<Message[]>([]);
 
   useEffect(() => {
-    if (currentWorld) loadAll(currentWorld.id);
+    if (!currentWorld) return;
+    loadAll(currentWorld.id);
+    historyApi
+      .getWorldHistory(currentWorld.id)
+      .then(({ data }) => setDynastyLogs(data.slice(0, 20)))
+      .catch(() => setDynastyLogs([]));
   }, [currentWorld, loadAll]);
 
   const emperorNation = useMemo(
@@ -137,6 +145,33 @@ export default function EmperorPage() {
           </Table>
         )}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>왕조 연표</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {dynastyLogs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">연표 데이터가 없습니다.</p>
+          ) : (
+            <div className="space-y-2">
+              {dynastyLogs.map((log) => {
+                const raw = log.payload?.content;
+                const text =
+                  typeof raw === "string"
+                    ? raw
+                    : JSON.stringify(log.payload ?? {});
+                return (
+                  <div key={log.id} className="rounded border p-2 text-xs">
+                    <p className="text-muted-foreground">{log.sentAt}</p>
+                    <p>{text}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

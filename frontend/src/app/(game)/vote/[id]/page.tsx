@@ -11,7 +11,8 @@ import { EmptyState } from "@/components/game/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Message } from "@/types";
+import { Input } from "@/components/ui/input";
+import type { Message, VoteComment } from "@/types";
 import { voteApi } from "@/lib/gameApi";
 
 interface VotePayload {
@@ -22,6 +23,20 @@ interface VotePayload {
   creatorId?: number;
   deadline?: string;
   reward?: string;
+}
+
+function pickLotteryWinner(voteId: number, ballots: Record<string, number>): number | null {
+  const voters = Object.keys(ballots)
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id) && id > 0)
+    .sort((a, b) => a - b);
+  if (voters.length === 0) return null;
+
+  const seed = String(voteId)
+    .split("")
+    .reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const idx = seed % voters.length;
+  return voters[idx];
 }
 
 function vp(msg: Message): VotePayload {
@@ -52,13 +67,19 @@ export default function VoteDetailPage() {
   const { myGeneral } = useGeneralStore();
   const [vote, setVote] = useState<Message | null>(null);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<VoteComment[]>([]);
+  const [commentInput, setCommentInput] = useState("");
 
   const load = useCallback(async () => {
     if (!currentWorld) return;
     try {
-      const { data } = await voteApi.list(currentWorld.id);
+      const [{ data }, { data: commentData }] = await Promise.all([
+        voteApi.list(currentWorld.id),
+        voteApi.listComments(voteId),
+      ]);
       const found = data.find((v) => v.id === voteId) ?? null;
       setVote(found);
+      setComments(commentData);
     } catch {
       /* ignore */
     } finally {
@@ -84,6 +105,31 @@ export default function VoteDetailPage() {
     try {
       await voteApi.close(voteId);
       await load();
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!myGeneral || !commentInput.trim()) return;
+    try {
+      const { data } = await voteApi.createComment(
+        voteId,
+        myGeneral.id,
+        commentInput.trim(),
+      );
+      setComments((prev) => [...prev, data]);
+      setCommentInput("");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleDeleteComment = async (id: number) => {
+    if (!myGeneral) return;
+    try {
+      await voteApi.deleteComment(voteId, id, myGeneral.id);
+      setComments((prev) => prev.filter((comment) => comment.id !== id));
     } catch {
       /* ignore */
     }
@@ -117,6 +163,7 @@ export default function VoteDetailPage() {
   const total = counts.reduce((a, b) => a + b, 0);
   const maxCount = Math.max(...counts, 1);
   const canClose = myGeneral && myGeneral.officerLevel >= 5;
+  const lotteryWinner = !open ? pickLotteryWinner(vote.id, ballots) : null;
 
   return (
     <div className="space-y-0 max-w-3xl mx-auto">
@@ -152,6 +199,12 @@ export default function VoteDetailPage() {
               <p className="text-xs text-amber-400">보상: {d.reward}</p>
             )}
 
+            {!open && d.reward && lotteryWinner && (
+              <div className="rounded border border-amber-400/30 bg-amber-400/10 p-2 text-xs text-amber-300">
+                추첨 당첨자: 장수 #{lotteryWinner}
+              </div>
+            )}
+
             {/* results */}
             <div className="space-y-3">
               {options.map((opt, i) => {
@@ -160,7 +213,7 @@ export default function VoteDetailPage() {
                 const isWinner =
                   !open && counts[i] === maxCount && maxCount > 0;
                 return (
-                  <div key={i} className="space-y-1">
+                  <div key={`${opt}-${counts[i]}`} className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span
                         className={
@@ -212,7 +265,7 @@ export default function VoteDetailPage() {
               <div className="flex flex-wrap gap-2 pt-2">
                 {options.map((opt, i) => (
                   <Button
-                    key={i}
+                    key={`${opt}-vote`}
                     variant="outline"
                     size="sm"
                     onClick={() => handleVote(i)}
@@ -234,6 +287,53 @@ export default function VoteDetailPage() {
                 >
                   투표 종료
                 </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">투표 댓글</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {myGeneral && (
+              <div className="flex gap-2">
+                <Input
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  placeholder="댓글을 입력하세요"
+                />
+                <Button size="sm" onClick={handleAddComment}>
+                  등록
+                </Button>
+              </div>
+            )}
+            {comments.length === 0 ? (
+              <p className="text-xs text-muted-foreground">댓글이 없습니다.</p>
+            ) : (
+              <div className="space-y-2">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="rounded border p-2 text-xs">
+                    <div className="mb-1 flex items-center justify-between text-muted-foreground">
+                      <span>장수 #{comment.authorGeneralId}</span>
+                      <span>{formatDeadline(comment.createdAt)}</span>
+                    </div>
+                    <p>{comment.content}</p>
+                    {myGeneral?.id === comment.authorGeneralId && (
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 px-2 text-[11px]"
+                          onClick={() => handleDeleteComment(comment.id)}
+                        >
+                          삭제
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>

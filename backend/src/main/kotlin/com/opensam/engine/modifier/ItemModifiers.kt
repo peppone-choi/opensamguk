@@ -192,6 +192,7 @@ class MiscItem(
         statMods["leadership"]?.let { s = s.copy(leadership = s.leadership + it) }
         statMods["strength"]?.let { s = s.copy(strength = s.strength + it) }
         statMods["intel"]?.let { s = s.copy(intel = s.intel + it) }
+        statMods["leadershipPercent"]?.let { s = s.copy(leadership = s.leadership * (1.0 + it)) }
         statMods["dodgeChance"]?.let { s = s.copy(dodgeChance = s.dodgeChance + it) }
         statMods["criticalChance"]?.let { s = s.copy(criticalChance = s.criticalChance + it) }
         statMods["bonusTrain"]?.let { s = s.copy(bonusTrain = s.bonusTrain + it) }

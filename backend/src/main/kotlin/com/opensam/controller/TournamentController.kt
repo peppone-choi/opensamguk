@@ -2,6 +2,7 @@ package com.opensam.controller
 
 import com.opensam.dto.PlaceBetRequest
 import com.opensam.dto.BettingInfoResponse
+import com.opensam.dto.CreateTournamentRequest
 import com.opensam.dto.TournamentInfoResponse
 import com.opensam.dto.TournamentRegisterRequest
 import com.opensam.service.TournamentService
@@ -13,6 +14,17 @@ import org.springframework.web.bind.annotation.*
 class TournamentController(
     private val tournamentService: TournamentService,
 ) {
+    @PostMapping("/worlds/{worldId}/tournament")
+    fun createTournament(
+        @PathVariable worldId: Long,
+        @RequestBody request: CreateTournamentRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.createTournament(worldId, request.type)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
     @GetMapping("/worlds/{worldId}/tournament")
     fun getTournament(@PathVariable worldId: Long): ResponseEntity<TournamentInfoResponse> {
         val result = tournamentService.getTournament(worldId)
@@ -25,7 +37,31 @@ class TournamentController(
         @PathVariable worldId: Long,
         @RequestBody request: TournamentRegisterRequest,
     ): ResponseEntity<Map<String, Any>> {
-        val result = tournamentService.register(worldId, request.generalId)
+        val result = tournamentService.registerParticipant(worldId, request.generalId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/tournament/start")
+    fun startTournament(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.startTournament(worldId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/tournament/advance")
+    fun advanceRound(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.advanceRound(worldId)
+            ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/tournament/finalize")
+    fun finalizeTournament(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        val result = tournamentService.finalizeTournament(worldId)
             ?: return ResponseEntity.notFound().build()
         if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
         return ResponseEntity.ok(result)

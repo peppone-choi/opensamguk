@@ -14,17 +14,18 @@ export default function LobbyLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { isAuthenticated, user, initAuth, logout } = useAuthStore();
+  const { isAuthenticated, isInitialized, user, initAuth, logout } =
+    useAuthStore();
   const isAdmin = user?.role === "ADMIN";
 
   useEffect(() => {
     initAuth();
   }, [initAuth]);
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/login");
-  }, [isAuthenticated, router]);
+    if (isInitialized && !isAuthenticated) router.replace("/login");
+  }, [isInitialized, isAuthenticated, router]);
 
-  if (!isAuthenticated) return null;
+  if (!isInitialized || !isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -165,6 +165,11 @@ export default function PersonnelPage() {
           <CardTitle>관직 임명</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {myGeneral.officerLevel < 12 && (
+            <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md">
+              군주만 관직을 임명할 수 있습니다.
+            </div>
+          )}
           <div>
             <label className="block text-xs text-muted-foreground mb-1">
               장수
@@ -172,7 +177,8 @@ export default function PersonnelPage() {
             <select
               value={selGeneralId}
               onChange={(e) => setSelGeneralId(e.target.value)}
-              className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+              disabled={myGeneral.officerLevel < 12}
+              className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">선택...</option>
               {nationGenerals.map((g) => (
@@ -184,15 +190,17 @@ export default function PersonnelPage() {
           </div>
           <div>
             <label className="block text-xs text-muted-foreground mb-1">
-              관직 레벨
+              관직 레벨 (1-{Math.max(1, myGeneral.officerLevel - 1)})
             </label>
             <Input
               type="number"
               min={1}
-              max={12}
+              max={Math.max(1, myGeneral.officerLevel - 1)}
               value={selOfficerLevel}
               onChange={(e) => setSelOfficerLevel(e.target.value)}
-              placeholder="1-12"
+              disabled={myGeneral.officerLevel < 12}
+              placeholder={`1-${Math.max(1, myGeneral.officerLevel - 1)}`}
+              className="disabled:opacity-50 disabled:cursor-not-allowed"
             />
           </div>
           <div>
@@ -202,7 +210,8 @@ export default function PersonnelPage() {
             <select
               value={selCity}
               onChange={(e) => setSelCity(e.target.value)}
-              className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
+              disabled={myGeneral.officerLevel < 12}
+              className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">선택...</option>
               {cities
@@ -216,7 +225,12 @@ export default function PersonnelPage() {
           </div>
           <Button
             onClick={handleAppoint}
-            disabled={saving || !selGeneralId || !selOfficerLevel}
+            disabled={
+              saving ||
+              !selGeneralId ||
+              !selOfficerLevel ||
+              myGeneral.officerLevel < 12
+            }
           >
             {saving ? "임명 중..." : "임명"}
           </Button>

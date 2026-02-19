@@ -279,6 +279,16 @@ const GROUPS: {
   },
 ];
 
+const DEFAULT_CATEGORY_BY_GROUP: Record<CategoryGroup, string> = {
+  stats: GROUPS.find((g) => g.key === "stats")?.categories[0]?.key ?? "total",
+  combat:
+    GROUPS.find((g) => g.key === "combat")?.categories[0]?.key ?? "experience",
+  dex: GROUPS.find((g) => g.key === "dex")?.categories[0]?.key ?? "dex1",
+  tournament:
+    GROUPS.find((g) => g.key === "tournament")?.categories[0]?.key ?? "ttw",
+  other: GROUPS.find((g) => g.key === "other")?.categories[0]?.key ?? "betgold",
+};
+
 /* ── Helpers ── */
 
 function formatValue(value: number, type?: "percent"): string {
@@ -312,20 +322,17 @@ export default function BestGeneralsPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { nations, loadAll } = useGameStore();
   const [groupKey, setGroupKey] = useState<CategoryGroup>("stats");
-  const [categoryKey, setCategoryKey] = useState("total");
+  const [categoryByGroup, setCategoryByGroup] = useState<
+    Record<CategoryGroup, string>
+  >(DEFAULT_CATEGORY_BY_GROUP);
   const [npcMode, setNpcMode] = useState<"user" | "npc">("user");
   const [allGenerals, setAllGenerals] = useState<General[]>([]);
   const [loading, setLoading] = useState(true);
 
   const group = GROUPS.find((g) => g.key === groupKey)!;
+  const categoryKey = categoryByGroup[groupKey] ?? group.categories[0].key;
   const category =
     group.categories.find((c) => c.key === categoryKey) ?? group.categories[0];
-
-  // When group changes, select first category in that group
-  useEffect(() => {
-    const g = GROUPS.find((g) => g.key === groupKey)!;
-    setCategoryKey(g.categories[0].key);
-  }, [groupKey]);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -335,7 +342,6 @@ export default function BestGeneralsPage() {
   // Fetch data when category or world changes
   useEffect(() => {
     if (!currentWorld) return;
-    setLoading(true);
     rankingApi
       .bestGenerals(currentWorld.id, category.sortBy, 300)
       .then(({ data }) => setAllGenerals(data))
@@ -348,15 +354,12 @@ export default function BestGeneralsPage() {
     [nations],
   );
 
-  // Filter by NPC mode, compute values, sort, take top 50
-  const ranked = useMemo(() => {
-    return allGenerals
-      .filter((g) => (npcMode === "npc" ? g.npcState >= 2 : g.npcState < 2))
-      .map((g) => ({ ...g, __value: category.getValue(g) }))
-      .sort((a, b) => b.__value - a.__value)
-      .filter((g) => g.__value > 0)
-      .slice(0, 50);
-  }, [allGenerals, npcMode, category]);
+  const ranked = allGenerals
+    .filter((g) => (npcMode === "npc" ? g.npcState >= 2 : g.npcState < 2))
+    .map((g) => ({ ...g, __value: category.getValue(g) }))
+    .sort((a, b) => b.__value - a.__value)
+    .filter((g) => g.__value > 0)
+    .slice(0, 50);
 
   if (!currentWorld)
     return (
@@ -373,7 +376,7 @@ export default function BestGeneralsPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <PageHeader icon={Medal} title="장수 랭킹" />
+      <PageHeader icon={Medal} title="명장일람" />
 
       {/* NPC toggle */}
       <div className="flex items-center gap-3">
@@ -409,7 +412,12 @@ export default function BestGeneralsPage() {
       </Tabs>
 
       {/* Sub-category tabs */}
-      <Tabs value={categoryKey} onValueChange={setCategoryKey}>
+      <Tabs
+        value={categoryKey}
+        onValueChange={(value) =>
+          setCategoryByGroup((prev) => ({ ...prev, [groupKey]: value }))
+        }
+      >
         <TabsList>
           {group.categories.map((c) => (
             <TabsTrigger key={c.key} value={c.key}>

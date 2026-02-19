@@ -33,6 +33,12 @@ import type {
   TurnRunResponse,
   AuctionBidResponse,
   AccountSettings,
+  MailboxType,
+  NpcTokenResponse,
+  SelectNpcResult,
+  YearbookSummary,
+  BoardComment,
+  VoteComment,
 } from "@/types";
 
 // World API
@@ -85,8 +91,46 @@ export const generalApi = {
     api.post<General>(`/worlds/${worldId}/select-pool`, { generalId }),
 };
 
+export const npcTokenApi = {
+  generate: (worldId: number) =>
+    api.post<NpcTokenResponse>(`/worlds/${worldId}/npc-token`),
+  refresh: (worldId: number, nonce: string, keepIds: number[]) =>
+    api.post<NpcTokenResponse>(`/worlds/${worldId}/npc-token/refresh`, {
+      nonce,
+      keepIds,
+    }),
+  select: (worldId: number, nonce: string, generalId: number) =>
+    api.post<SelectNpcResult>(`/worlds/${worldId}/npc-select`, {
+      nonce,
+      generalId,
+    }),
+};
+
 // Command API
 export const commandApi = {
+  getReservedCommands: (generalId: number) =>
+    api.get<GeneralTurn[]>(`/generals/${generalId}/turns`),
+  reserveCommand: (
+    generalId: number,
+    payload: { turn: number; command: string; arg?: Record<string, unknown> },
+  ) =>
+    api.post<void>(`/generals/${generalId}/turns`, {
+      turns: [
+        {
+          turnIdx: payload.turn,
+          actionCode: payload.command,
+          arg: payload.arg,
+        },
+      ],
+    }),
+  deleteReservedCommand: (generalId: number, turn: number) =>
+    api.post<void>(`/generals/${generalId}/turns`, {
+      turns: [{ turnIdx: turn, actionCode: "휴식" }],
+    }),
+  pushReservedCommand: (generalId: number, turn: number) =>
+    api.post<GeneralTurn[]>(`/generals/${generalId}/turns/push`, {
+      amount: -Math.max(0, turn),
+    }),
   getReserved: (generalId: number) =>
     api.get<GeneralTurn[]>(`/generals/${generalId}/turns`),
   reserve: (
@@ -172,15 +216,37 @@ export const diplomacyApi = {
 
 // Message API
 export const messageApi = {
+  getByType: (
+    type: "public" | "national" | "private" | "diplomacy",
+    params: {
+      worldId?: number;
+      nationId?: number;
+      generalId?: number;
+      officerLevel?: number;
+    },
+  ) => api.get<Message[]>("/messages", { params: { type, ...params } }),
   getMine: (generalId: number) =>
     api.get<Message[]>(`/messages`, { params: { generalId } }),
-  send: (worldId: number, srcId: number, destId: number, content: string) =>
+  send: (
+    worldId: number,
+    srcId: number,
+    destId: number | null,
+    content: string,
+    options?: {
+      mailboxCode?: string;
+      mailboxType?: MailboxType;
+      messageType?: string;
+      officerLevel?: number;
+    },
+  ) =>
     api.post<Message>("/messages", {
       worldId,
-      mailboxCode: "personal",
-      messageType: "personal",
+      mailboxCode: options?.mailboxCode ?? "personal",
+      mailboxType: options?.mailboxType ?? "PRIVATE",
+      messageType: options?.messageType ?? "personal",
       srcId,
       destId,
+      officerLevel: options?.officerLevel,
       payload: { content },
     }),
   getBoard: (worldId: number) =>
@@ -189,6 +255,7 @@ export const messageApi = {
     api.post<Message>("/messages", {
       worldId,
       mailboxCode: "board",
+      mailboxType: "PUBLIC",
       messageType: "board",
       srcId,
       payload: { content },
@@ -206,6 +273,7 @@ export const messageApi = {
     api.post<Message>("/messages", {
       worldId,
       mailboxCode: "secret",
+      mailboxType: "NATIONAL",
       messageType: "secret",
       srcId,
       destId: nationId,
@@ -237,10 +305,32 @@ export const frontApi = {
 export const historyApi = {
   getWorldHistory: (worldId: number) =>
     api.get<Message[]>(`/worlds/${worldId}/history`),
+  getWorldHistoryByYearMonth: (worldId: number, year: number, month: number) =>
+    api.get<Message[]>(`/worlds/${worldId}/history`, {
+      params: { year, month },
+    }),
+  getYearbook: (worldId: number, year: number) =>
+    api.get<YearbookSummary>(`/worlds/${worldId}/history/yearbook`, {
+      params: { year },
+    }),
   getWorldRecords: (worldId: number) =>
     api.get<Message[]>(`/worlds/${worldId}/records`),
   getGeneralRecords: (generalId: number) =>
     api.get<Message[]>(`/generals/${generalId}/records`),
+};
+
+export const boardApi = {
+  getComments: (postId: number) =>
+    api.get<BoardComment[]>(`/boards/${postId}/comments`),
+  createComment: (postId: number, authorGeneralId: number, content: string) =>
+    api.post<BoardComment>(`/boards/${postId}/comments`, {
+      authorGeneralId,
+      content,
+    }),
+  deleteComment: (postId: number, commentId: number, generalId: number) =>
+    api.delete<void>(`/boards/${postId}/comments/${commentId}`, {
+      params: { generalId },
+    }),
 };
 
 export const turnApi = {
@@ -432,6 +522,17 @@ export const voteApi = {
   cast: (voteId: number, voterId: number, optionIndex: number) =>
     api.post<void>(`/votes/${voteId}/cast`, { voterId, optionIndex }),
   close: (voteId: number) => api.post<void>(`/votes/${voteId}/close`),
+  listComments: (voteId: number) =>
+    api.get<VoteComment[]>(`/votes/${voteId}/comments`),
+  createComment: (voteId: number, authorGeneralId: number, content: string) =>
+    api.post<VoteComment>(`/votes/${voteId}/comments`, {
+      authorGeneralId,
+      content,
+    }),
+  deleteComment: (voteId: number, commentId: number, generalId: number) =>
+    api.delete<void>(`/votes/${voteId}/comments/${commentId}`, {
+      params: { generalId },
+    }),
 };
 
 // Battle Simulator API

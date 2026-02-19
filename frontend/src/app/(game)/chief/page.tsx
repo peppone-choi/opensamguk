@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type MouseEvent,
+} from "react";
 import { Crown, UserCog, Users, Ban } from "lucide-react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
@@ -41,8 +47,13 @@ import {
   CREW_TYPE_NAMES,
   REGION_NAMES,
 } from "@/lib/game-utils";
+import {
+  CommandArgForm,
+  COMMAND_ARGS,
+} from "@/components/game/command-arg-form";
 
 const CHIEF_STAT_MIN = 65;
+const NATION_TURN_COUNT = 12;
 
 function getMinNationChiefLevel(nationLevel: number): number {
   // Nation level determines the minimum officer level available
@@ -65,6 +76,14 @@ export default function ChiefPage() {
   const [selectedCmd, setSelectedCmd] = useState<CommandTableEntry | null>(
     null,
   );
+  const [selectedNationSlots, setSelectedNationSlots] = useState<Set<number>>(
+    new Set([0]),
+  );
+  const [lastNationClickedSlot, setLastNationClickedSlot] = useState(0);
+  const [showNationReserveForm, setShowNationReserveForm] = useState(false);
+  const [reservingNation, setReservingNation] = useState(false);
+  const [nationReserveResult, setNationReserveResult] =
+    useState<CommandResult | null>(null);
   const [nationCommandTable, setNationCommandTable] = useState<
     Record<string, CommandTableEntry[]>
   >({});
@@ -94,7 +113,7 @@ export default function ChiefPage() {
     fetchMyGeneral(currentWorld.id);
   }, [currentWorld, fetchMyGeneral]);
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     if (!myGeneral || myGeneral.officerLevel < 5) return;
     setLoading(true);
     try {
@@ -118,12 +137,79 @@ export default function ChiefPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [myGeneral]);
 
   useEffect(() => {
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myGeneral]);
+    void reload();
+  }, [reload]);
+
+  const getNationTurn = (idx: number) =>
+    nationTurns.find((turn) => turn.turnIdx === idx);
+
+  const handleNationSlotClick = (
+    idx: number,
+    e: MouseEvent<HTMLButtonElement>,
+  ) => {
+    if (e.shiftKey && lastNationClickedSlot !== idx) {
+      const start = Math.min(lastNationClickedSlot, idx);
+      const end = Math.max(lastNationClickedSlot, idx);
+      const next = new Set<number>();
+      for (let i = start; i <= end; i += 1) {
+        next.add(i);
+      }
+      setSelectedNationSlots(next);
+    } else if (e.ctrlKey || e.metaKey) {
+      const next = new Set(selectedNationSlots);
+      if (next.has(idx)) {
+        next.delete(idx);
+        if (next.size === 0) {
+          next.add(idx);
+        }
+      } else {
+        next.add(idx);
+      }
+      setSelectedNationSlots(next);
+    } else {
+      setSelectedNationSlots(new Set([idx]));
+      setShowNationReserveForm(true);
+    }
+    setLastNationClickedSlot(idx);
+  };
+
+  const handleNationReserve = async (
+    actionCode: string,
+    arg?: Record<string, unknown>,
+  ) => {
+    if (!myGeneral?.nationId) return;
+
+    setReservingNation(true);
+    setNationReserveResult(null);
+    try {
+      const turns = [...selectedNationSlots]
+        .sort((a, b) => a - b)
+        .map((turnIdx) => ({ turnIdx, actionCode, arg }));
+      await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+      await reload();
+      setNationReserveResult({
+        success: true,
+        logs: ["국가 명령 예약을 저장했습니다."],
+      });
+      setShowNationReserveForm(false);
+
+      const maxSlot = Math.max(...selectedNationSlots);
+      if (maxSlot < NATION_TURN_COUNT - 1) {
+        setSelectedNationSlots(new Set([maxSlot + 1]));
+        setLastNationClickedSlot(maxSlot + 1);
+      }
+    } catch {
+      setNationReserveResult({
+        success: false,
+        logs: ["국가 명령 예약 저장에 실패했습니다."],
+      });
+    } finally {
+      setReservingNation(false);
+    }
+  };
 
   const nationCommandCategories = Object.keys(nationCommandTable);
 
@@ -156,6 +242,18 @@ export default function ChiefPage() {
     () => new Map(nationCities.map((c) => [c.id, c])),
     [nationCities],
   );
+
+  const citiesByRegion = useMemo(() => {
+    const grouped: Record<number, City[]> = {};
+    for (const c of nationCities) {
+      if (!grouped[c.region]) grouped[c.region] = [];
+      grouped[c.region].push(c);
+    }
+    for (const region of Object.keys(grouped)) {
+      grouped[Number(region)].sort((a, b) => b.level - a.level);
+    }
+    return grouped;
+  }, [nationCities]);
 
   // Candidate lists matching legacy PHP logic
   const candidatesByStrength = useMemo(
@@ -320,23 +418,9 @@ export default function ChiefPage() {
   const totalCrew = nationGenerals.reduce((sum, g) => sum + g.crew, 0);
   const isChief = myGeneral.officerLevel === 12;
 
-  // Group cities by region for city officer display
-  const citiesByRegion = useMemo(() => {
-    const grouped: Record<number, City[]> = {};
-    for (const c of nationCities) {
-      if (!grouped[c.region]) grouped[c.region] = [];
-      grouped[c.region].push(c);
-    }
-    // Sort cities within each region by level desc
-    for (const region of Object.keys(grouped)) {
-      grouped[Number(region)].sort((a, b) => b.level - a.level);
-    }
-    return grouped;
-  }, [nationCities]);
-
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
-      <PageHeader icon={Crown} title="군주 센터" />
+      <PageHeader icon={Crown} title="사령부" />
 
       <Tabs defaultValue="chief">
         <TabsList>
@@ -363,130 +447,194 @@ export default function ChiefPage() {
             </Card>
           )}
 
-          {/* Nation Turn Queue */}
-          <Card>
-            <CardHeader>
-              <CardTitle>국가 턴 예약</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {nationTurns.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  예약된 턴이 없습니다.
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  {nationTurns.map((t) => (
-                    <div
-                      key={t.id}
-                      className="flex items-center gap-3 rounded px-3 py-2 text-sm bg-muted"
-                    >
-                      <span className="text-muted-foreground">
-                        #{t.turnIdx}
-                      </span>
-                      <span className="font-medium">{t.actionCode}</span>
-                      {t.brief && (
-                        <span className="text-muted-foreground text-xs">
-                          {t.brief}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <Tabs defaultValue="reservation" className="space-y-3">
+            <TabsList>
+              <TabsTrigger value="reservation">국가 명령 예약</TabsTrigger>
+              <TabsTrigger value="execute">즉시 실행</TabsTrigger>
+            </TabsList>
 
-          {/* Nation Commands */}
-          <Card>
-            <CardHeader>
-              <CardTitle>국가 명령</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                {nationCommandCategories.map((category) => (
-                  <div key={category} className="w-full">
-                    <div className="mb-1 text-xs text-gray-400">{category}</div>
-                    <div className="flex flex-wrap gap-2">
-                      {(nationCommandTable[category] ?? []).map((cmd) => (
-                        <Button
-                          key={cmd.actionCode}
-                          variant={
-                            selectedCmd?.actionCode === cmd.actionCode
-                              ? "default"
-                              : "outline"
-                          }
-                          size="sm"
-                          disabled={!cmd.enabled}
-                          title={cmd.reason}
-                          onClick={() => {
-                            if (!cmd.enabled) return;
-                            setSelectedCmd((prev) =>
-                              prev?.actionCode === cmd.actionCode ? null : cmd,
-                            );
-                          }}
+            <TabsContent value="reservation" className="space-y-3 mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>국가 명령 예약 (12턴)</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="space-y-[1px] bg-gray-600">
+                    {Array.from({ length: NATION_TURN_COUNT }, (_, n) => n).map(
+                      (slot) => {
+                      const turn = getNationTurn(slot);
+                      const isSelected = selectedNationSlots.has(slot);
+                      const actionCode = turn?.actionCode ?? "휴식";
+                      const brief = turn?.brief;
+                      const isRest = actionCode === "휴식";
+                      return (
+                        <button
+                          type="button"
+                          key={slot}
+                          onClick={(e) => handleNationSlotClick(slot, e)}
+                          className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors ${
+                            isSelected
+                              ? "bg-[#141c65] text-white"
+                              : "bg-[#111] hover:bg-[#191919]"
+                          }`}
                         >
-                          {cmd.name}
-                        </Button>
-                      ))}
-                    </div>
+                          <span className="w-6 shrink-0 tabular-nums text-gray-400">
+                            #{slot + 1}
+                          </span>
+                          <span
+                            className={`shrink-0 border px-1 py-0 text-[10px] ${
+                              isRest
+                                ? "border-gray-600 text-gray-400"
+                                : "border-cyan-700 text-cyan-300"
+                            }`}
+                          >
+                            {actionCode}
+                          </span>
+                          {brief && (
+                            <span className="flex-1 truncate text-gray-300">
+                              {brief}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-              {selectedCmd && (
-                <div className="rounded border p-4 text-sm space-y-3">
-                  <p className="text-muted-foreground">
-                    선택된 명령: <Badge>{selectedCmd.name}</Badge>
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    소모: {selectedCmd.commandPointCost}CP / 실행 지연:{" "}
-                    {selectedCmd.durationSeconds}초
-                  </p>
-                  <Button
-                    onClick={async () => {
-                      if (!myGeneral) return;
-                      setExecuting(true);
-                      setCmdResult(null);
-                      try {
-                        const { data } = await commandApi.executeNation(
-                          myGeneral.id,
-                          selectedCmd.actionCode,
-                        );
-                        setCmdResult(data);
-                      } catch {
-                        setCmdResult({
-                          success: false,
-                          logs: ["실행 중 오류가 발생했습니다."],
-                        });
-                      } finally {
-                        setExecuting(false);
-                      }
-                    }}
-                    disabled={executing}
-                    size="sm"
-                  >
-                    {executing ? "실행중..." : "명령 실행"}
-                  </Button>
-                  {cmdResult && (
+
+                  <div className="text-[11px] text-gray-400">
+                    {selectedNationSlots.size > 1
+                      ? `${selectedNationSlots.size}개 턴 선택됨`
+                      : "Shift+클릭: 범위선택, Ctrl/Cmd+클릭: 다중선택"}
+                  </div>
+
+                  {showNationReserveForm && (
+                    <NationCommandSelectForm
+                      commandTable={nationCommandTable}
+                      reserving={reservingNation}
+                      onReserve={handleNationReserve}
+                      onCancel={() => setShowNationReserveForm(false)}
+                    />
+                  )}
+
+                  {nationReserveResult && (
                     <div
-                      className={`p-3 rounded text-sm ${cmdResult.success ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300"}`}
+                      className={`p-3 rounded text-sm ${nationReserveResult.success ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300"}`}
                     >
                       <Badge
                         variant={
-                          cmdResult.success ? "secondary" : "destructive"
+                          nationReserveResult.success
+                            ? "secondary"
+                            : "destructive"
                         }
                         className="mb-2"
                       >
-                        {cmdResult.success ? "성공" : "실패"}
+                        {nationReserveResult.success ? "성공" : "실패"}
                       </Badge>
-                      {cmdResult.logs.map((log, i) => (
-                        <p key={i}>{log}</p>
+                      {nationReserveResult.logs.map((log) => (
+                        <p key={log}>{log}</p>
                       ))}
                     </div>
                   )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="execute" className="space-y-3 mt-0">
+              <Card>
+                <CardHeader>
+                  <CardTitle>국가 명령</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {nationCommandCategories.map((category) => (
+                      <div key={category} className="w-full">
+                        <div className="mb-1 text-xs text-gray-400">
+                          {category}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(nationCommandTable[category] ?? []).map((cmd) => (
+                            <Button
+                              key={cmd.actionCode}
+                              variant={
+                                selectedCmd?.actionCode === cmd.actionCode
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              disabled={!cmd.enabled}
+                              title={cmd.reason}
+                              onClick={() => {
+                                if (!cmd.enabled) return;
+                                setSelectedCmd((prev) =>
+                                  prev?.actionCode === cmd.actionCode
+                                    ? null
+                                    : cmd,
+                                );
+                              }}
+                            >
+                              {cmd.name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedCmd && (
+                    <div className="rounded border p-4 text-sm space-y-3">
+                      <p className="text-muted-foreground">
+                        선택된 명령: <Badge>{selectedCmd.name}</Badge>
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        소모: {selectedCmd.commandPointCost}CP / 실행 지연:{" "}
+                        {selectedCmd.durationSeconds}초
+                      </p>
+                      <Button
+                        onClick={async () => {
+                          if (!myGeneral) return;
+                          setExecuting(true);
+                          setCmdResult(null);
+                          try {
+                            const { data } = await commandApi.executeNation(
+                              myGeneral.id,
+                              selectedCmd.actionCode,
+                            );
+                            setCmdResult(data);
+                          } catch {
+                            setCmdResult({
+                              success: false,
+                              logs: ["실행 중 오류가 발생했습니다."],
+                            });
+                          } finally {
+                            setExecuting(false);
+                          }
+                        }}
+                        disabled={executing}
+                        size="sm"
+                      >
+                        {executing ? "실행중..." : "명령 실행"}
+                      </Button>
+                      {cmdResult && (
+                        <div
+                          className={`p-3 rounded text-sm ${cmdResult.success ? "bg-green-900/50 text-green-300" : "bg-red-900/50 text-red-300"}`}
+                        >
+                          <Badge
+                            variant={
+                              cmdResult.success ? "secondary" : "destructive"
+                            }
+                            className="mb-2"
+                          >
+                            {cmdResult.success ? "성공" : "실패"}
+                          </Badge>
+                          {cmdResult.logs.map((log) => (
+                            <p key={log}>{log}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         {/* ===== Tab 2: Personnel (인사부) ===== */}
@@ -1083,5 +1231,107 @@ export default function ChiefPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+interface NationCommandSelectFormProps {
+  commandTable: Record<string, CommandTableEntry[]>;
+  reserving: boolean;
+  onReserve: (actionCode: string, arg?: Record<string, unknown>) => void;
+  onCancel: () => void;
+}
+
+function NationCommandSelectForm({
+  commandTable,
+  reserving,
+  onReserve,
+  onCancel,
+}: NationCommandSelectFormProps) {
+  const [selectedCmd, setSelectedCmd] = useState("");
+  const [pendingArg, setPendingArg] = useState<
+    Record<string, unknown> | undefined
+  >();
+
+  const categories = Object.keys(commandTable);
+  const hasArgForm = !!(selectedCmd && COMMAND_ARGS[selectedCmd]);
+
+  const selectedEntry = useMemo(() => {
+    for (const list of Object.values(commandTable)) {
+      const found = list.find((cmd) => cmd.actionCode === selectedCmd);
+      if (found) return found;
+    }
+    return null;
+  }, [commandTable, selectedCmd]);
+
+  const handleReserve = () => {
+    if (!selectedCmd) return;
+    onReserve(selectedCmd, pendingArg);
+  };
+
+  return (
+    <Card className="border-amber-400/30">
+      <CardContent className="space-y-3 pt-3">
+        <Tabs defaultValue={categories[0] ?? ""}>
+          <TabsList className="flex-wrap h-auto">
+            {categories.map((cat) => (
+              <TabsTrigger key={cat} value={cat} className="text-xs">
+                {cat}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {categories.map((cat) => (
+            <TabsContent key={cat} value={cat}>
+              <div className="flex flex-wrap gap-1">
+                {commandTable[cat].map((cmd) => (
+                  <Badge
+                    key={cmd.actionCode}
+                    variant={
+                      selectedCmd === cmd.actionCode ? "default" : "secondary"
+                    }
+                    className={`cursor-pointer text-xs ${
+                      !cmd.enabled ? "opacity-40 cursor-not-allowed" : ""
+                    }`}
+                    title={cmd.reason ?? undefined}
+                    onClick={() => {
+                      if (!cmd.enabled) return;
+                      setSelectedCmd(cmd.actionCode);
+                      setPendingArg(undefined);
+                    }}
+                  >
+                    {cmd.name}
+                  </Badge>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        {selectedEntry && (
+          <div className="rounded border p-3 text-xs text-muted-foreground">
+            <p>
+              소모: {selectedEntry.commandPointCost}CP / 실행 지연: {" "}
+              {selectedEntry.durationSeconds}초
+            </p>
+          </div>
+        )}
+
+        {hasArgForm && (
+          <CommandArgForm actionCode={selectedCmd} onSubmit={setPendingArg} />
+        )}
+
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={handleReserve}
+            disabled={!selectedCmd || reserving || (hasArgForm && !pendingArg)}
+          >
+            {reserving ? "저장중..." : "예약"}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={onCancel}>
+            취소
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

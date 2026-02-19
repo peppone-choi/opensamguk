@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
-import { messageApi } from "@/lib/gameApi";
-import type { Message } from "@/types";
+import { boardApi, messageApi } from "@/lib/gameApi";
+import type { BoardComment, Message } from "@/types";
 import {
   MessageSquare,
   Lock,
@@ -23,16 +23,9 @@ import { NationBadge } from "@/components/game/nation-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatLog } from "@/lib/formatLog";
-
-interface BoardComment {
-  author?: string;
-  content?: string;
-  date?: string;
-}
 
 const PAGE_SIZE = 20;
 
@@ -52,6 +45,12 @@ export default function BoardPage() {
   const [sending, setSending] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [commentsByPost, setCommentsByPost] = useState<
+    Record<number, BoardComment[]>
+  >({});
+  const [commentLoadingByPost, setCommentLoadingByPost] = useState<
+    Record<number, boolean>
+  >({});
 
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
@@ -121,12 +120,6 @@ export default function BoardPage() {
     return () => clearInterval(interval);
   }, [loadPublic, loadSecret]);
 
-  // Reset pagination when switching tabs
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-    setExpandedId(null);
-  }, [tab]);
-
   const handlePost = async () => {
     if (!currentWorld || !myGeneral || !content.trim()) return;
     setSending(true);
@@ -165,6 +158,36 @@ export default function BoardPage() {
     }
   };
 
+  const loadComments = useCallback(async (postId: number) => {
+    setCommentLoadingByPost((prev) => ({ ...prev, [postId]: true }));
+    try {
+      const { data } = await boardApi.getComments(postId);
+      setCommentsByPost((prev) => ({ ...prev, [postId]: data }));
+    } catch {
+      setCommentsByPost((prev) => ({ ...prev, [postId]: [] }));
+    } finally {
+      setCommentLoadingByPost((prev) => ({ ...prev, [postId]: false }));
+    }
+  }, []);
+
+  const handleCreateComment = useCallback(
+    async (postId: number, comment: string) => {
+      if (!myGeneral || !comment.trim()) return;
+      await boardApi.createComment(postId, myGeneral.id, comment.trim());
+      await loadComments(postId);
+    },
+    [myGeneral, loadComments],
+  );
+
+  const handleDeleteComment = useCallback(
+    async (postId: number, commentId: number) => {
+      if (!myGeneral) return;
+      await boardApi.deleteComment(postId, commentId, myGeneral.id);
+      await loadComments(postId);
+    },
+    [myGeneral, loadComments],
+  );
+
   if (!currentWorld)
     return (
       <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
@@ -182,7 +205,14 @@ export default function BoardPage() {
         }
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs
+        value={tab}
+        onValueChange={(nextTab) => {
+          setTab(nextTab);
+          setVisibleCount(PAGE_SIZE);
+          setExpandedId(null);
+        }}
+      >
         <TabsList>
           <TabsTrigger value="public">회의실</TabsTrigger>
           <TabsTrigger value="secret" disabled={!canAccessSecret}>
@@ -282,9 +312,25 @@ export default function BoardPage() {
                       : null
                   }
                   onToggle={() =>
-                    setExpandedId((prev) => (prev === post.id ? null : post.id))
+                    setExpandedId((prev) => {
+                      const next = prev === post.id ? null : post.id;
+                      if (next === post.id) {
+                        loadComments(post.id);
+                      }
+                      return next;
+                    })
                   }
                   onDelete={() => handleDelete(post.id)}
+                  comments={commentsByPost[post.id] ?? []}
+                  commentsLoading={commentLoadingByPost[post.id] ?? false}
+                  myGeneralId={myGeneral?.id ?? null}
+                  getGeneralName={(id) => generalMap.get(id)?.name ?? `#${id}`}
+                  onCreateComment={(comment) =>
+                    handleCreateComment(post.id, comment)
+                  }
+                  onDeleteComment={(commentId) =>
+                    handleDeleteComment(post.id, commentId)
+                  }
                 />
               ))}
 
@@ -318,6 +364,12 @@ interface BoardRowProps {
   isMine: boolean;
   sender: { name: string; picture: string } | null;
   senderNation: { name: string; color: string } | null;
+  comments: BoardComment[];
+  commentsLoading: boolean;
+  myGeneralId: number | null;
+  getGeneralName: (generalId: number) => string;
+  onCreateComment: (content: string) => Promise<void>;
+  onDeleteComment: (commentId: number) => Promise<void>;
   onToggle: () => void;
   onDelete: () => void;
 }
@@ -330,11 +382,17 @@ function BoardRow({
   isMine,
   sender,
   senderNation,
+  comments,
+  commentsLoading,
+  myGeneralId,
+  getGeneralName,
+  onCreateComment,
+  onDeleteComment,
   onToggle,
   onDelete,
 }: BoardRowProps) {
   const [commentInput, setCommentInput] = useState("");
-  const comments = (post.payload?.comments as BoardComment[] | undefined) ?? [];
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const postContent = (post.payload.content as string) ?? "";
   const preview =
     postContent.length > 50 ? postContent.slice(0, 50) + "..." : postContent;
@@ -429,21 +487,31 @@ function BoardRow({
                 </span>
                 {comments.length > 0 ? (
                   <div className="space-y-1.5">
-                    {comments.map((c, ci) => (
+                    {comments.map((c) => (
                       <div
-                        key={ci}
+                        key={c.id}
                         className="flex gap-2 text-[11px] bg-white/5 rounded px-2 py-1.5"
                       >
                         <span className="font-medium shrink-0">
-                          {c.author ?? "?"}
+                          {getGeneralName(c.authorGeneralId)}
                         </span>
                         <span className="flex-1 text-muted-foreground">
-                          {c.content ?? ""}
+                          {c.content}
                         </span>
-                        {c.date && (
-                          <span className="text-[10px] text-muted-foreground shrink-0">
-                            {c.date}
-                          </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(c.createdAt).toLocaleString("ko-KR")}
+                        </span>
+                        {myGeneralId === c.authorGeneralId && (
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            className="h-5 w-5 text-muted-foreground hover:text-red-400"
+                            onClick={async () => {
+                              await onDeleteComment(c.id);
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
                         )}
                       </div>
                     ))}
@@ -453,27 +521,39 @@ function BoardRow({
                     댓글이 없습니다.
                   </p>
                 )}
-                <div className="flex gap-1.5 items-center pt-1">
-                  <Input
+                <div className="space-y-1.5 pt-1">
+                  <Textarea
                     placeholder="댓글 입력..."
-                    className="text-xs h-7 flex-1"
+                    className="text-xs h-16 resize-none"
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && commentInput.trim()) {
-                        setCommentInput("");
-                      }
-                    }}
                   />
-                  <Button
-                    size="icon-sm"
-                    variant="ghost"
-                    disabled={!commentInput.trim()}
-                    onClick={() => setCommentInput("")}
-                  >
-                    <Send className="size-3.5" />
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={!commentInput.trim() || commentSubmitting}
+                      onClick={async () => {
+                        if (!commentInput.trim()) return;
+                        setCommentSubmitting(true);
+                        try {
+                          await onCreateComment(commentInput);
+                          setCommentInput("");
+                        } finally {
+                          setCommentSubmitting(false);
+                        }
+                      }}
+                    >
+                      <Send className="size-3.5 mr-1" />
+                      {commentSubmitting ? "등록 중..." : "댓글 등록"}
+                    </Button>
+                  </div>
                 </div>
+                {commentsLoading && (
+                  <div className="text-[10px] text-muted-foreground">
+                    댓글 불러오는 중...
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

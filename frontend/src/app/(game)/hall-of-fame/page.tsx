@@ -114,7 +114,6 @@ export default function HallOfFamePage() {
 
   useEffect(() => {
     if (!currentWorld) return;
-    setLoading(true);
     rankingApi
       .hallOfFame(currentWorld.id)
       .then(({ data }) => setMessages(data))

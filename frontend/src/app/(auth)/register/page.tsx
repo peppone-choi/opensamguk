@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
-import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -49,19 +49,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
+    <Card className="w-full max-w-md p-8">
       <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-center text-2xl">
-          오픈삼국 회원가입
-        </CardTitle>
+        <CardTitle className="text-center text-2xl">오픈삼국 회원가입</CardTitle>
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">
+            <label
+              htmlFor="register-login-id"
+              className="mb-1 block text-sm text-muted-foreground"
+            >
               아이디
             </label>
-            <Input {...register("loginId")} placeholder="아이디를 입력하세요" />
+            <Input
+              id="register-login-id"
+              {...register("loginId")}
+              placeholder="아이디를 입력하세요"
+            />
             {errors.loginId && (
               <p className="mt-1 text-sm text-destructive">
                 {errors.loginId.message}
@@ -69,10 +74,14 @@ export default function RegisterPage() {
             )}
           </div>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">
+            <label
+              htmlFor="register-display-name"
+              className="mb-1 block text-sm text-muted-foreground"
+            >
               닉네임
             </label>
             <Input
+              id="register-display-name"
               {...register("displayName")}
               placeholder="닉네임을 입력하세요"
             />
@@ -83,10 +92,14 @@ export default function RegisterPage() {
             )}
           </div>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">
+            <label
+              htmlFor="register-password"
+              className="mb-1 block text-sm text-muted-foreground"
+            >
               비밀번호
             </label>
             <Input
+              id="register-password"
               type="password"
               {...register("password")}
               placeholder="비밀번호를 입력하세요"
@@ -98,10 +111,14 @@ export default function RegisterPage() {
             )}
           </div>
           <div>
-            <label className="mb-1 block text-sm text-muted-foreground">
+            <label
+              htmlFor="register-confirm-password"
+              className="mb-1 block text-sm text-muted-foreground"
+            >
               비밀번호 확인
             </label>
             <Input
+              id="register-confirm-password"
               type="password"
               {...register("confirmPassword")}
               placeholder="비밀번호를 다시 입력하세요"
@@ -123,6 +140,6 @@ export default function RegisterPage() {
           </Link>
         </p>
       </CardContent>
-    </>
+    </Card>
   );
 }

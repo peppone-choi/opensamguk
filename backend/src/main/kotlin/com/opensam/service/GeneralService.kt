@@ -54,7 +54,7 @@ class GeneralService(
 
     fun listAvailableNpcs(worldId: Long): List<General> {
         return generalRepository.findByWorldId(worldId)
-            .filter { it.npcState.toInt() > 0 && it.userId == null }
+            .filter { it.npcState.toInt() == 1 && it.userId == null }
     }
 
     fun possessNpc(worldId: Long, loginId: String, generalId: Long): General? {

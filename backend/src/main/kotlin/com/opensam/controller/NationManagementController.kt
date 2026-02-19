@@ -22,10 +22,14 @@ class NationManagementController(
         @PathVariable nationId: Long,
         @RequestBody request: AppointOfficerRequest,
     ): ResponseEntity<Void> {
-        if (!nationService.appointOfficer(nationId, request.generalId, request.officerLevel, request.officerCity)) {
+        try {
+            if (!nationService.appointOfficer(nationId, request.generalId, request.officerLevel, request.officerCity)) {
+                return ResponseEntity.badRequest().build()
+            }
+            return ResponseEntity.ok().build()
+        } catch (e: IllegalStateException) {
             return ResponseEntity.badRequest().build()
         }
-        return ResponseEntity.ok().build()
     }
 
     @PostMapping("/expel")

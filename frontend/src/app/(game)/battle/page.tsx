@@ -42,6 +42,14 @@ interface MilitaryRow {
   totalPower: number;
 }
 
+function SortIndicator({ active }: { active: boolean }) {
+  return (
+    <ArrowUpDown
+      className={`inline size-3 ml-0.5 ${active ? "text-white" : "text-gray-500"}`}
+    />
+  );
+}
+
 export default function BattlePage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { cities, nations, generals, diplomacy, loading, loadAll } =
@@ -173,12 +181,6 @@ export default function BattlePage() {
       setSortAsc(false);
     }
   };
-
-  const SortIcon = ({ col }: { col: SortKey }) => (
-    <ArrowUpDown
-      className={`inline size-3 ml-0.5 ${sortKey === col ? "text-white" : "text-gray-500"}`}
-    />
-  );
 
   if (!currentWorld)
     return (
@@ -350,35 +352,35 @@ export default function BattlePage() {
                         onClick={() => handleSort("totalCrew")}
                       >
                         총 병력
-                        <SortIcon col="totalCrew" />
+                        <SortIndicator active={sortKey === "totalCrew"} />
                       </TableHead>
                       <TableHead
                         className="cursor-pointer select-none text-right"
                         onClick={() => handleSort("generalCount")}
                       >
                         장수
-                        <SortIcon col="generalCount" />
+                        <SortIndicator active={sortKey === "generalCount"} />
                       </TableHead>
                       <TableHead
                         className="cursor-pointer select-none text-right"
                         onClick={() => handleSort("avgTrain")}
                       >
                         평균훈련
-                        <SortIcon col="avgTrain" />
+                        <SortIndicator active={sortKey === "avgTrain"} />
                       </TableHead>
                       <TableHead
                         className="cursor-pointer select-none text-right"
                         onClick={() => handleSort("avgAtmos")}
                       >
                         평균사기
-                        <SortIcon col="avgAtmos" />
+                        <SortIndicator active={sortKey === "avgAtmos"} />
                       </TableHead>
                       <TableHead
                         className="cursor-pointer select-none text-right"
                         onClick={() => handleSort("totalPower")}
                       >
                         전투력
-                        <SortIcon col="totalPower" />
+                        <SortIndicator active={sortKey === "totalPower"} />
                       </TableHead>
                     </TableRow>
                   </TableHeader>

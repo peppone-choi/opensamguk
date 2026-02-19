@@ -7,4 +7,5 @@ interface AuctionBidRepository : JpaRepository<AuctionBid, Long> {
     fun findByAuctionId(auctionId: Long): List<AuctionBid>
     fun findByBidderGeneralId(bidderGeneralId: Long): List<AuctionBid>
     fun findByAuctionIdOrderByAmountDesc(auctionId: Long): List<AuctionBid>
+    fun findTopByAuctionIdOrderByAmountDesc(auctionId: Long): AuctionBid?
 }
