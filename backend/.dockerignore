@@ -1,0 +1,7 @@
+build/
+.gradle/
+.kotlin/
+.idea/
+*.iml
+.DS_Store
+.playwright-mcp/
