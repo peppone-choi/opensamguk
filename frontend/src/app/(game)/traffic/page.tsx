@@ -48,7 +48,10 @@ export default function TrafficPage() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
+  const cityMap = useMemo(
+    () => new Map(cities.map((c) => [c.id, c])),
+    [cities],
+  );
   const nationMap = useMemo(
     () => new Map(nations.map((nation) => [nation.id, nation])),
     [nations],
@@ -59,7 +62,8 @@ export default function TrafficPage() {
       .flatMap((general) => {
         const command = extractCurrentCommand(general.lastTurn);
         const destinationId = extractDestinationCityId(general.lastTurn);
-        const isMoveCommand = command.includes("이동") || command.includes("접경귀환");
+        const isMoveCommand =
+          command.includes("이동") || command.includes("접경귀환");
         const hasDestination = destinationId != null;
         const etaTime = parseEta(general.commandEndTime);
         const hasRunningEta = etaTime != null && etaTime > now;
@@ -67,7 +71,8 @@ export default function TrafficPage() {
         if (!isMoveCommand && !hasDestination) return [];
         if (!hasRunningEta) return [];
 
-        const fromCity = cityMap.get(general.cityId)?.name ?? `도시 #${general.cityId}`;
+        const fromCity =
+          cityMap.get(general.cityId)?.name ?? `도시 #${general.cityId}`;
         const toCity = destinationId
           ? (cityMap.get(destinationId)?.name ?? `도시 #${destinationId}`)
           : "목표 도시 미확인";
@@ -97,7 +102,9 @@ export default function TrafficPage() {
   }, [generals, cityMap, nationMap, now]);
 
   if (!currentWorld) {
-    return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    return (
+      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
+    );
   }
 
   if (loading) {
@@ -135,14 +142,21 @@ export default function TrafficPage() {
               <TableBody>
                 {movingGenerals.map((row) => (
                   <TableRow key={row.generalId}>
-                    <TableCell className="font-medium">{row.generalName}</TableCell>
+                    <TableCell className="font-medium">
+                      {row.generalName}
+                    </TableCell>
                     <TableCell>
-                      <NationBadge name={row.nationName} color={row.nationColor} />
+                      <NationBadge
+                        name={row.nationName}
+                        color={row.nationColor}
+                      />
                     </TableCell>
                     <TableCell>{row.fromCity}</TableCell>
                     <TableCell>{row.toCity}</TableCell>
                     <TableCell>{row.commandName}</TableCell>
-                    <TableCell className="text-right text-xs">{row.eta}</TableCell>
+                    <TableCell className="text-right text-xs">
+                      {row.eta}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {row.remainText}
                     </TableCell>
@@ -169,7 +183,9 @@ function extractCurrentCommand(lastTurn: Record<string, unknown>): string {
   return "-";
 }
 
-function extractDestinationCityId(lastTurn: Record<string, unknown>): number | null {
+function extractDestinationCityId(
+  lastTurn: Record<string, unknown>,
+): number | null {
   const arg = lastTurn.arg;
   if (!arg || typeof arg !== "object" || Array.isArray(arg)) return null;
 

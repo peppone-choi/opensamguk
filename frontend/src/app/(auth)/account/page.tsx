@@ -109,7 +109,9 @@ export default function AccountPage() {
         </div>
 
         <div className="space-y-2 rounded-md border p-3">
-          <h2 className="text-sm font-semibold text-muted-foreground">휴가 모드</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            휴가 모드
+          </h2>
           <p className="text-xs text-muted-foreground">
             휴가 모드 토글은 즉시 적용됩니다.
           </p>

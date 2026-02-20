@@ -34,7 +34,8 @@ interface Category {
   getValue: (g: BestGeneral) => number;
 }
 
-const m = (g: BestGeneral, key: string): number => (g.meta?.[key] as number) ?? 0;
+const m = (g: BestGeneral, key: string): number =>
+  (g.meta?.[key] as number) ?? 0;
 
 const GROUPS: {
   key: CategoryGroup;

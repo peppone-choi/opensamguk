@@ -38,7 +38,9 @@ const GRADES = [0, 1, 2, 3, 4, 5, 6, 7] as const;
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [pendingGrades, setPendingGrades] = useState<Record<number, number>>({});
+  const [pendingGrades, setPendingGrades] = useState<Record<number, number>>(
+    {},
+  );
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 

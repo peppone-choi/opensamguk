@@ -51,7 +51,9 @@ export default function RegisterPage() {
   return (
     <Card className="w-full max-w-md p-8">
       <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-center text-2xl">오픈삼국 회원가입</CardTitle>
+        <CardTitle className="text-center text-2xl">
+          오픈삼국 회원가입
+        </CardTitle>
       </CardHeader>
       <CardContent className="px-0 pb-0">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

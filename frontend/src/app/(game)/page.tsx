@@ -26,7 +26,9 @@ export default function GameDashboard() {
   const [lastHistoryId, setLastHistoryId] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
 
-  const [mobileTab, setMobileTab] = useState<"map" | "commands" | "status" | "world" | "messages">("map");
+  const [mobileTab, setMobileTab] = useState<
+    "map" | "commands" | "status" | "world" | "messages"
+  >("map");
 
   const mobileTabs = [
     { key: "map", label: "지도" },
@@ -88,30 +90,47 @@ export default function GameDashboard() {
       {global && (
         <>
           <h3 className="text-center font-bold py-1 text-sm">
-            {((currentWorld.config as Record<string, string>)?.name as string) ?? global.scenarioText}{" "}
-            <span style={{ color: "cyan" }}>
-              {global.scenarioText}
-            </span>
+            {((currentWorld.config as Record<string, string>)
+              ?.name as string) ?? global.scenarioText}{" "}
+            <span style={{ color: "cyan" }}>{global.scenarioText}</span>
           </h3>
           <div className="grid grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
-            <div className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1" style={{ color: "cyan" }}>
+            <div
+              className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
               {global.scenarioText}
             </div>
-            <div className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1" style={{ color: "cyan" }}>
-              NPC 수, 상성: {global.extendedGeneral ? "확장" : "표준"} {global.isFiction ? "가상" : "사실"}
+            <div
+              className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
+              NPC 수, 상성: {global.extendedGeneral ? "확장" : "표준"}{" "}
+              {global.isFiction ? "가상" : "사실"}
             </div>
-            <div className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1" style={{ color: "cyan" }}>
-              NPC선택: {["불가능", "가능", "선택 생성"][global.npcMode] ?? "불가능"}
+            <div
+              className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
+              NPC선택:{" "}
+              {["불가능", "가능", "선택 생성"][global.npcMode] ?? "불가능"}
             </div>
-            <div className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1" style={{ color: "cyan" }}>
+            <div
+              className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
               토너먼트: 경기당 5분
             </div>
-            <div className="col-span-4 lg:col-span-2 border-b border-gray-600 py-1" style={{ color: "cyan" }}>
+            <div
+              className="col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
+              style={{ color: "cyan" }}
+            >
               기타 설정: 일반
             </div>
 
             <div className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
-              현재: {global.year}年 {global.month}月 ({global.turnTerm}분 턴 서버)
+              현재: {global.year}年 {global.month}月 ({global.turnTerm}분 턴
+              서버)
             </div>
             <div className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1">
               접속자: {(global.onlineUserCnt ?? 0).toLocaleString()}명
@@ -120,15 +139,20 @@ export default function GameDashboard() {
               턴당 갱신횟수: {global.apiLimit?.toLocaleString()}회
             </div>
             <div className="col-span-8 lg:col-span-4 border-b border-gray-600 py-1">
-              등록 장수: 유저 {genCounts.user.toLocaleString()} / {(global.generalCntLimit ?? Infinity).toLocaleString()} +{" "}
-              <span style={{ color: "cyan" }}>NPC {genCounts.npc.toLocaleString()} 명</span>
+              등록 장수: 유저 {genCounts.user.toLocaleString()} /{" "}
+              {(global.generalCntLimit ?? Infinity).toLocaleString()} +{" "}
+              <span style={{ color: "cyan" }}>
+                NPC {genCounts.npc.toLocaleString()} 명
+              </span>
             </div>
 
             <div className="col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
               {global.isTournamentActive ? (
                 <span style={{ color: "cyan" }}>↑토너먼트 진행중↑</span>
               ) : (
-                <span style={{ color: "magenta" }}>현재 토너먼트 경기 없음</span>
+                <span style={{ color: "magenta" }}>
+                  현재 토너먼트 경기 없음
+                </span>
               )}
             </div>
             <div
@@ -140,7 +164,9 @@ export default function GameDashboard() {
             <div className="col-span-6 lg:col-span-2 border-r border-gray-600 py-1">
               {global.auctionCount ? (
                 <span style={{ color: "cyan" }}>
-                  <a href="/auction" className="underline">{global.auctionCount}건 거래 진행중</a>
+                  <a href="/auction" className="underline">
+                    {global.auctionCount}건 거래 진행중
+                  </a>
                 </span>
               ) : (
                 <span style={{ color: "magenta" }}>진행중인 거래 없음</span>
@@ -149,7 +175,12 @@ export default function GameDashboard() {
             <div className="col-span-6 lg:col-span-4 py-1">
               {global.lastVote ? (
                 <span style={{ color: "cyan" }}>
-                  <a href="/vote" className="underline">설문 진행 중: <span>{(global.lastVote as Record<string, string>)?.title ?? ''}</span></a>
+                  <a href="/vote" className="underline">
+                    설문 진행 중:{" "}
+                    <span>
+                      {(global.lastVote as Record<string, string>)?.title ?? ""}
+                    </span>
+                  </a>
                 </span>
               ) : (
                 <span style={{ color: "magenta" }}>진행중인 설문 없음</span>
@@ -195,11 +226,14 @@ export default function GameDashboard() {
 
       {/* ===== Mobile Tabs ===== */}
       <div className="lg:hidden flex border-t border-b border-gray-600">
-        {mobileTabs.map(tab => (
+        {mobileTabs.map((tab) => (
           <button
             key={tab.key}
-            className={`flex-1 py-1.5 text-xs font-bold text-center border-r border-gray-600 last:border-r-0 ${mobileTab === tab.key ? "bg-[#00582c] text-white" : "bg-[#111] text-gray-400"
-              }`}
+            className={`flex-1 py-1.5 text-xs font-bold text-center border-r border-gray-600 last:border-r-0 ${
+              mobileTab === tab.key
+                ? "bg-[#00582c] text-white"
+                : "bg-[#111] text-gray-400"
+            }`}
             onClick={() => setMobileTab(tab.key)}
           >
             {tab.label}
@@ -210,12 +244,14 @@ export default function GameDashboard() {
       {/* ===== Main game board (legacy ingameBoard grid) ===== */}
       <div className="ingameBoard" style={{ display: "grid" }}>
         {/* Map */}
-        <div className={`mapView ${isTabActive('map') ? '' : 'max-lg:hidden'}`}>
+        <div className={`mapView ${isTabActive("map") ? "" : "max-lg:hidden"}`}>
           <MapViewer worldId={currentWorld.id} mapCode={mapCode} compact />
         </div>
 
         {/* Commands */}
-        <div className={`reservedCommandZone ${isTabActive('commands') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`reservedCommandZone ${isTabActive("commands") ? "" : "max-lg:hidden"}`}
+        >
           {myGeneral && (
             <CommandPanel
               generalId={myGeneral.id}
@@ -225,7 +261,9 @@ export default function GameDashboard() {
         </div>
 
         {/* Action buttons */}
-        <div className={`actionPlate p-2 ${isTabActive('commands') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`actionPlate p-2 ${isTabActive("commands") ? "" : "max-lg:hidden"}`}
+        >
           <div className="flex gap-1">
             <Button
               variant="outline"
@@ -247,22 +285,31 @@ export default function GameDashboard() {
         </div>
 
         {/* City info */}
-        <div className={`cityInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`cityInfo ${isTabActive("status") ? "" : "max-lg:hidden"}`}
+        >
           <CityBasicCard city={frontInfo?.city ?? null} />
         </div>
 
         {/* Controls toolbar */}
-        <div className={`generalCommandToolbar whitespace-nowrap ${isTabActive('commands') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`generalCommandToolbar whitespace-nowrap ${isTabActive("commands") ? "" : "max-lg:hidden"}`}
+        >
           <MainControlBar />
         </div>
 
         {/* Nation info */}
-        <div className={`nationInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`nationInfo ${isTabActive("status") ? "" : "max-lg:hidden"}`}
+        >
           <NationBasicCard nation={frontInfo?.nation ?? null} global={global} />
         </div>
 
         {/* General info */}
-        <div className={`generalInfo ${isTabActive('status') ? '' : 'max-lg:hidden'}`} style={{ width: "100%", maxWidth: 500 }}>
+        <div
+          className={`generalInfo ${isTabActive("status") ? "" : "max-lg:hidden"}`}
+          style={{ width: "100%", maxWidth: 500 }}
+        >
           <GeneralBasicCard
             general={frontInfo?.general ?? null}
             nation={frontInfo?.nation ?? null}
@@ -274,7 +321,9 @@ export default function GameDashboard() {
 
       {/* ===== Record zone (legacy parity: 동향 + 개인 side by side, 정세 full) ===== */}
       {frontInfo && (
-        <div className={`grid grid-cols-1 lg:grid-cols-2 ${isTabActive('world') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`grid grid-cols-1 lg:grid-cols-2 ${isTabActive("world") ? "" : "max-lg:hidden"}`}
+        >
           <div>
             <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
               장수 동향
@@ -331,7 +380,9 @@ export default function GameDashboard() {
 
       {/* ===== Message panel ===== */}
       {myGeneral && (
-        <div className={`mt-2 ${isTabActive('messages') ? '' : 'max-lg:hidden'}`}>
+        <div
+          className={`mt-2 ${isTabActive("messages") ? "" : "max-lg:hidden"}`}
+        >
           <MessagePanel
             worldId={currentWorld.id}
             myGeneralId={myGeneral.id}
@@ -420,4 +471,3 @@ export default function GameDashboard() {
     </div>
   );
 }
-

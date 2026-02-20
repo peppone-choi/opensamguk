@@ -25,7 +25,10 @@ interface VotePayload {
   reward?: string;
 }
 
-function pickLotteryWinner(voteId: number, ballots: Record<string, number>): number | null {
+function pickLotteryWinner(
+  voteId: number,
+  ballots: Record<string, number>,
+): number | null {
   const voters = Object.keys(ballots)
     .map((id) => Number(id))
     .filter((id) => Number.isFinite(id) && id > 0)

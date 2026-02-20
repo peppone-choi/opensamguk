@@ -231,8 +231,14 @@ export default function NationCitiesPage() {
     };
   });
 
-  const totalGoldIncome = budgetRows.reduce((sum, row) => sum + row.goldIncome, 0);
-  const totalRiceIncome = budgetRows.reduce((sum, row) => sum + row.riceIncome, 0);
+  const totalGoldIncome = budgetRows.reduce(
+    (sum, row) => sum + row.goldIncome,
+    0,
+  );
+  const totalRiceIncome = budgetRows.reduce(
+    (sum, row) => sum + row.riceIncome,
+    0,
+  );
   const totalExpense = budgetRows.reduce((sum, row) => sum + row.expense, 0);
 
   if (!currentWorld) return <LoadingState message="월드를 선택해주세요." />;
@@ -272,7 +278,10 @@ export default function NationCitiesPage() {
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label htmlFor="nation-policy-rate" className="text-xs text-muted-foreground">
+              <label
+                htmlFor="nation-policy-rate"
+                className="text-xs text-muted-foreground"
+              >
                 교역율 (5-30)
               </label>
               <Input
@@ -285,7 +294,10 @@ export default function NationCitiesPage() {
               />
             </div>
             <div className="space-y-1">
-              <label htmlFor="nation-policy-bill" className="text-xs text-muted-foreground">
+              <label
+                htmlFor="nation-policy-bill"
+                className="text-xs text-muted-foreground"
+              >
                 세율 (20-200)
               </label>
               <Input
@@ -302,7 +314,9 @@ export default function NationCitiesPage() {
             <Button onClick={handleSavePolicy} disabled={savingPolicy}>
               {savingPolicy ? "저장 중..." : "정책 저장"}
             </Button>
-            {saveMsg && <span className="text-xs text-muted-foreground">{saveMsg}</span>}
+            {saveMsg && (
+              <span className="text-xs text-muted-foreground">{saveMsg}</span>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -313,7 +327,9 @@ export default function NationCitiesPage() {
         </CardHeader>
         <CardContent>
           {diplomacyRows.length === 0 ? (
-            <p className="text-sm text-muted-foreground">외교 관계가 없습니다.</p>
+            <p className="text-sm text-muted-foreground">
+              외교 관계가 없습니다.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -327,7 +343,10 @@ export default function NationCitiesPage() {
                 {diplomacyRows.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>
-                      <NationBadge name={row.nation?.name} color={row.nation?.color} />
+                      <NationBadge
+                        name={row.nation?.name}
+                        color={row.nation?.color}
+                      />
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -350,7 +369,9 @@ export default function NationCitiesPage() {
                               : row.relation}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{row.term}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {row.term}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -368,7 +389,13 @@ export default function NationCitiesPage() {
             <div>금 총수입: +{totalGoldIncome.toLocaleString()}</div>
             <div>쌀 총수입: +{totalRiceIncome.toLocaleString()}</div>
             <div>총지출(녹봉): -{totalExpense.toLocaleString()}</div>
-            <div className={totalGoldIncome - totalExpense >= 0 ? "text-green-400" : "text-red-400"}>
+            <div
+              className={
+                totalGoldIncome - totalExpense >= 0
+                  ? "text-green-400"
+                  : "text-red-400"
+              }
+            >
               금 순수익: {(totalGoldIncome - totalExpense).toLocaleString()}
             </div>
           </div>

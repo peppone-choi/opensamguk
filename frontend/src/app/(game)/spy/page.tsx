@@ -36,8 +36,7 @@ export default function SpyPage() {
       const filtered = data
         .filter(isSpyReport)
         .sort(
-          (a, b) =>
-            new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
+          (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
         );
       setReports(filtered);
     } finally {
@@ -51,7 +50,10 @@ export default function SpyPage() {
     fetchReports();
   }, [myGeneral, fetchReports]);
 
-  const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
+  const cityMap = useMemo(
+    () => new Map(cities.map((c) => [c.id, c])),
+    [cities],
+  );
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
     [generals],
@@ -102,7 +104,9 @@ export default function SpyPage() {
       <Card>
         <CardContent className="pt-6 text-sm text-muted-foreground flex items-center gap-2">
           <Badge variant="outline">수신 첩보 {reports.length}건</Badge>
-          <Badge className="bg-amber-500 text-black">미확인 {unreadCount}건</Badge>
+          <Badge className="bg-amber-500 text-black">
+            미확인 {unreadCount}건
+          </Badge>
           {refreshing && <span>첩보를 갱신하고 있습니다...</span>}
         </CardContent>
       </Card>
@@ -116,10 +120,12 @@ export default function SpyPage() {
             <div className="space-y-4">
               <EmptyState icon={Eye} title="수신된 첩보 결과가 없습니다." />
               <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">첩보 기능 준비 중</p>
+                <p className="font-medium text-foreground mb-1">
+                  첩보 기능 준비 중
+                </p>
                 <p>
-                  전용 첩보 API가 준비되면 목표 도시/장수별 상세 보고서가 자동으로
-                  분류됩니다.
+                  전용 첩보 API가 준비되면 목표 도시/장수별 상세 보고서가
+                  자동으로 분류됩니다.
                 </p>
               </div>
             </div>
@@ -141,9 +147,13 @@ export default function SpyPage() {
                   extractNumber(nestedSpy, ["destCityId", "targetCityId"]) ??
                   extractNumber(nestedScout, ["destCityId", "targetCityId"]);
 
-                const city = cityMap.get(targetCityId ?? nestedTargetCity ?? -1);
+                const city = cityMap.get(
+                  targetCityId ?? nestedTargetCity ?? -1,
+                );
                 const targetGeneral = generalMap.get(targetGeneralId ?? -1);
-                const sender = report.srcId ? generalMap.get(report.srcId) : null;
+                const sender = report.srcId
+                  ? generalMap.get(report.srcId)
+                  : null;
                 const senderNation = report.srcId
                   ? nationMap.get(sender?.nationId ?? -1)
                   : null;
@@ -159,7 +169,9 @@ export default function SpyPage() {
                         <span className="font-medium text-foreground">
                           {sender?.name ?? senderNation?.name ?? "첩보 보고"}
                         </span>
-                        <span>{new Date(report.sentAt).toLocaleString("ko-KR")}</span>
+                        <span>
+                          {new Date(report.sentAt).toLocaleString("ko-KR")}
+                        </span>
                         {!getReadAt(report.meta) && (
                           <Badge className="bg-amber-500 text-black">NEW</Badge>
                         )}
@@ -178,9 +190,15 @@ export default function SpyPage() {
 
                       <div className="text-sm space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-muted-foreground">목표 도시</span>
-                          <Badge variant="outline">{city?.name ?? "미상"}</Badge>
-                          <span className="text-muted-foreground">목표 장수</span>
+                          <span className="text-muted-foreground">
+                            목표 도시
+                          </span>
+                          <Badge variant="outline">
+                            {city?.name ?? "미상"}
+                          </Badge>
+                          <span className="text-muted-foreground">
+                            목표 장수
+                          </span>
                           <Badge variant="outline">
                             {targetGeneral?.name ?? "정보 없음"}
                           </Badge>
@@ -246,7 +264,10 @@ function isSpyReport(message: Message): boolean {
   const spyResult = getRecord(payload, "spyResult");
   const scoutResult = getRecord(payload, "scoutResult");
 
-  if (Object.keys(spyResult).length > 0 || Object.keys(scoutResult).length > 0) {
+  if (
+    Object.keys(spyResult).length > 0 ||
+    Object.keys(scoutResult).length > 0
+  ) {
     return true;
   }
 

@@ -462,42 +462,43 @@ export default function ChiefPage() {
                   <div className="space-y-[1px] bg-gray-600">
                     {Array.from({ length: NATION_TURN_COUNT }, (_, n) => n).map(
                       (slot) => {
-                      const turn = getNationTurn(slot);
-                      const isSelected = selectedNationSlots.has(slot);
-                      const actionCode = turn?.actionCode ?? "휴식";
-                      const brief = turn?.brief;
-                      const isRest = actionCode === "휴식";
-                      return (
-                        <button
-                          type="button"
-                          key={slot}
-                          onClick={(e) => handleNationSlotClick(slot, e)}
-                          className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors ${
-                            isSelected
-                              ? "bg-[#141c65] text-white"
-                              : "bg-[#111] hover:bg-[#191919]"
-                          }`}
-                        >
-                          <span className="w-6 shrink-0 tabular-nums text-gray-400">
-                            #{slot + 1}
-                          </span>
-                          <span
-                            className={`shrink-0 border px-1 py-0 text-[10px] ${
-                              isRest
-                                ? "border-gray-600 text-gray-400"
-                                : "border-cyan-700 text-cyan-300"
+                        const turn = getNationTurn(slot);
+                        const isSelected = selectedNationSlots.has(slot);
+                        const actionCode = turn?.actionCode ?? "휴식";
+                        const brief = turn?.brief;
+                        const isRest = actionCode === "휴식";
+                        return (
+                          <button
+                            type="button"
+                            key={slot}
+                            onClick={(e) => handleNationSlotClick(slot, e)}
+                            className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors ${
+                              isSelected
+                                ? "bg-[#141c65] text-white"
+                                : "bg-[#111] hover:bg-[#191919]"
                             }`}
                           >
-                            {actionCode}
-                          </span>
-                          {brief && (
-                            <span className="flex-1 truncate text-gray-300">
-                              {brief}
+                            <span className="w-6 shrink-0 tabular-nums text-gray-400">
+                              #{slot + 1}
                             </span>
-                          )}
-                        </button>
-                      );
-                    })}
+                            <span
+                              className={`shrink-0 border px-1 py-0 text-[10px] ${
+                                isRest
+                                  ? "border-gray-600 text-gray-400"
+                                  : "border-cyan-700 text-cyan-300"
+                              }`}
+                            >
+                              {actionCode}
+                            </span>
+                            {brief && (
+                              <span className="flex-1 truncate text-gray-300">
+                                {brief}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      },
+                    )}
                   </div>
 
                   <div className="text-[11px] text-gray-400">
@@ -1309,7 +1310,7 @@ function NationCommandSelectForm({
         {selectedEntry && (
           <div className="rounded border p-3 text-xs text-muted-foreground">
             <p>
-              소모: {selectedEntry.commandPointCost}CP / 실행 지연: {" "}
+              소모: {selectedEntry.commandPointCost}CP / 실행 지연:{" "}
               {selectedEntry.durationSeconds}초
             </p>
           </div>

@@ -67,8 +67,16 @@ export function MapViewer({
   else if (month >= 7 && month <= 9) season = "fall";
   else if (month >= 10 || month <= 12) season = "winter";
 
-  const mapFolder = mapCode.includes("miniche") ? "che" : mapCode === "ludo_rathowm" ? "ludo_rathowm" : mapCode;
-  const mapRoadImage = mapCode.includes("miniche") ? "miniche_road.png" : mapCode === "ludo_rathowm" ? "road.png" : `${mapCode}_road.png`;
+  const mapFolder = mapCode.includes("miniche")
+    ? "che"
+    : mapCode === "ludo_rathowm"
+      ? "ludo_rathowm"
+      : mapCode;
+  const mapRoadImage = mapCode.includes("miniche")
+    ? "miniche_road.png"
+    : mapCode === "ludo_rathowm"
+      ? "road.png"
+      : `${mapCode}_road.png`;
 
   const mapLayerUrl = `${IMAGE_CDN}/map/${mapFolder}/bg_${season}.jpg`;
   const mapRoadUrl = `${IMAGE_CDN}/map/${mapFolder}/${mapRoadImage}`;
@@ -79,7 +87,14 @@ export function MapViewer({
   };
 
   return (
-    <div className="relative w-full overflow-hidden bg-black text-[14px] text-white" style={{ maxWidth: containerWidth, height: containerHeight, margin: "0 auto" }}>
+    <div
+      className="relative w-full overflow-hidden bg-black text-[14px] text-white"
+      style={{
+        maxWidth: containerWidth,
+        height: containerHeight,
+        margin: "0 auto",
+      }}
+    >
       {!compact && (
         <button
           type="button"
@@ -93,18 +108,26 @@ export function MapViewer({
       {/* Map Background Layers */}
       <div
         className="absolute inset-0 z-0 bg-no-repeat bg-center"
-        style={{ backgroundImage: `url('${mapLayerUrl}')`, backgroundSize: `${containerWidth}px ${containerHeight}px` }}
+        style={{
+          backgroundImage: `url('${mapLayerUrl}')`,
+          backgroundSize: `${containerWidth}px ${containerHeight}px`,
+        }}
       />
       <div
         className="absolute inset-0 z-[1] bg-no-repeat bg-center"
-        style={{ backgroundImage: `url('${mapRoadUrl}')`, backgroundSize: `${containerWidth}px ${containerHeight}px` }}
+        style={{
+          backgroundImage: `url('${mapRoadUrl}')`,
+          backgroundSize: `${containerWidth}px ${containerHeight}px`,
+        }}
       />
 
       {/* Map Cities */}
       <div className="absolute inset-0 z-[2]">
         {mapData.cities.map((cc) => {
           const rtCity = cityMap.get(cc.id);
-          const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
+          const nation = rtCity?.nationId
+            ? nationMap.get(rtCity.nationId)
+            : null;
           const myCity = false;
 
           const sizes = detailMapCitySizes[cc.level] || detailMapCitySizes[1];
@@ -152,7 +175,11 @@ export function MapViewer({
                     top: (30 - icnH) / 2,
                   }}
                 >
-                  <img src={`${IMAGE_CDN}/cast_${cc.level}.gif`} className="w-full h-full block" alt="" />
+                  <img
+                    src={`${IMAGE_CDN}/cast_${cc.level}.gif`}
+                    className="w-full h-full block"
+                    alt=""
+                  />
 
                   {/* My City Highlight */}
                   {myCity && (
@@ -211,7 +238,7 @@ export function MapViewer({
                 {/* City Name */}
                 {showNames && (
                   <span
-                    className={`absolute whitespace-nowrap text-white px-[2px] py-[1px] bg-black/50 ${compact ? 'text-[10px]' : 'text-[10px]'}`}
+                    className={`absolute whitespace-nowrap text-white px-[2px] py-[1px] bg-black/50 ${compact ? "text-[10px]" : "text-[10px]"}`}
                     style={{
                       left: "70%",
                       bottom: compact ? -12 : -10,

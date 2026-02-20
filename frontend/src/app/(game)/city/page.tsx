@@ -111,7 +111,9 @@ export default function CityPage() {
   const [nations, setNations] = useState<Nation[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [generals, setGenerals] = useState<General[]>([]);
-  const [adjacencyMap, setAdjacencyMap] = useState<Map<number, number[]>>(new Map());
+  const [adjacencyMap, setAdjacencyMap] = useState<Map<number, number[]>>(
+    new Map(),
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("trade");
@@ -138,7 +140,9 @@ export default function CityPage() {
       cityApi.listByWorld(currentWorld.id),
       generalApi.listByWorld(currentWorld.id),
       mapApi.get(mapCode),
-      myGeneral.nationId > 0 ? nationApi.get(myGeneral.nationId) : Promise.resolve({ data: null }),
+      myGeneral.nationId > 0
+        ? nationApi.get(myGeneral.nationId)
+        : Promise.resolve({ data: null }),
     ])
       .then(([nationsRes, citiesRes, generalsRes, mapRes, myNationRes]) => {
         setNations(nationsRes.data);
@@ -156,7 +160,10 @@ export default function CityPage() {
       .finally(() => setLoading(false));
   }, [currentWorld, myGeneral]);
 
-  const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
+  const nationMap = useMemo(
+    () => new Map(nations.map((n) => [n.id, n])),
+    [nations],
+  );
 
   const spyVisibleCityIds = useMemo(() => {
     const result = new Set<number>();
@@ -180,7 +187,8 @@ export default function CityPage() {
   const canSeeMilitary = useCallback(
     (city: City) => {
       if (!myGeneral) return false;
-      if (city.nationId === 0 || city.nationId === myGeneral.nationId) return true;
+      if (city.nationId === 0 || city.nationId === myGeneral.nationId)
+        return true;
       if (myGeneral.permission === "spy") return true;
       return spyVisibleCityIds.has(city.id);
     },
@@ -191,7 +199,11 @@ export default function CityPage() {
   const officersByCity = useMemo(() => {
     const map: Record<number, Record<number, General>> = {};
     for (const gen of generals) {
-        if (gen.officerLevel >= 2 && gen.officerLevel <= 4 && gen.officerCity > 0) {
+      if (
+        gen.officerLevel >= 2 &&
+        gen.officerLevel <= 4 &&
+        gen.officerCity > 0
+      ) {
         const cityId = gen.officerCity;
         if (!map[cityId]) map[cityId] = {};
         map[cityId][gen.officerLevel] = gen;
@@ -280,7 +292,9 @@ export default function CityPage() {
         const cityGens = generalsByCity[city.id] ?? [];
         const defendingGeneral =
           officers[4] ??
-          [...cityGens].sort((a, b) => b.leadership - a.leadership || b.crew - a.crew)[0];
+          [...cityGens].sort(
+            (a, b) => b.leadership - a.leadership || b.crew - a.crew,
+          )[0];
         const isExpanded = expandedCityId === city.id;
         const adjacentIds = adjacencyMap.get(city.id) ?? [];
         const adjacentCities = adjacentIds
@@ -332,7 +346,9 @@ export default function CityPage() {
                     {owner?.name ?? "공백지"}
                   </span>
                   {!isMyNationCity && !isVisible && (
-                    <span className="ml-1 text-xs text-yellow-300">[첩보 제한]</span>
+                    <span className="ml-1 text-xs text-yellow-300">
+                      [첩보 제한]
+                    </span>
                   )}
                   <span className="ml-1 text-xs opacity-70">
                     {isExpanded ? "▲" : "▼"}
@@ -376,9 +392,17 @@ export default function CityPage() {
                 <LabelCell>치안</LabelCell>
                 <StatValueCell val={city.secu} max={city.secuMax} />
                 <LabelCell>수비</LabelCell>
-                <StatValueCell val={city.def} max={city.defMax} hidden={!isVisible} />
+                <StatValueCell
+                  val={city.def}
+                  max={city.defMax}
+                  hidden={!isVisible}
+                />
                 <LabelCell>성벽</LabelCell>
-                <StatValueCell val={city.wall} max={city.wallMax} hidden={!isVisible} />
+                <StatValueCell
+                  val={city.wall}
+                  max={city.wallMax}
+                  hidden={!isVisible}
+                />
 
                 {/* Row 3: officers + front */}
                 <LabelCell>태수</LabelCell>
@@ -390,7 +414,9 @@ export default function CityPage() {
                 <LabelCell>전선</LabelCell>
                 <FrontCell state={city.frontState} hidden={!isVisible} />
                 <LabelCell>사망</LabelCell>
-                <ValueCell>{isVisible ? city.dead.toLocaleString() : "?"}</ValueCell>
+                <ValueCell>
+                  {isVisible ? city.dead.toLocaleString() : "?"}
+                </ValueCell>
 
                 <LabelCell>수비장</LabelCell>
                 <ValueCell>
@@ -399,11 +425,15 @@ export default function CityPage() {
                 <LabelCell>주둔병력</LabelCell>
                 <ValueCell>
                   {isVisible
-                    ? cityGens.reduce((sum, g) => sum + g.crew, 0).toLocaleString()
+                    ? cityGens
+                        .reduce((sum, g) => sum + g.crew, 0)
+                        .toLocaleString()
                     : "?"}
                 </ValueCell>
                 <LabelCell>성벽/수비</LabelCell>
-                <ValueCell>{isVisible ? `${city.wall}/${city.def}` : "?"}</ValueCell>
+                <ValueCell>
+                  {isVisible ? `${city.wall}/${city.def}` : "?"}
+                </ValueCell>
                 <LabelCell>인접 도시</LabelCell>
                 <div className="border-t border-l border-gray-600 px-1 py-0.5 col-span-4 text-xs">
                   {adjacentCities.length === 0 ? (

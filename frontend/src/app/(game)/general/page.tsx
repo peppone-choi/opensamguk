@@ -23,7 +23,11 @@ const EQUIPMENT_KEYS: Array<{ key: keyof GeneralFrontInfo; label: string }> = [
 
 export default function GeneralPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
-  const { myGeneral, loading: myGeneralLoading, fetchMyGeneral } = useGeneralStore();
+  const {
+    myGeneral,
+    loading: myGeneralLoading,
+    fetchMyGeneral,
+  } = useGeneralStore();
   const [frontInfo, setFrontInfo] = useState<GeneralFrontInfo | null>(null);
   const [nation, setNation] = useState<Nation | null>(null);
   const [city, setCity] = useState<City | null>(null);
@@ -95,7 +99,10 @@ export default function GeneralPage() {
   const commandName = getCurrentCommandName(myGeneral.lastTurn);
   const commandTarget = getCurrentCommandTarget(myGeneral.lastTurn, city?.name);
   const commandEta = formatEta(myGeneral.commandEndTime);
-  const officerText = formatOfficerLevelText(myGeneral.officerLevel, nation?.level);
+  const officerText = formatOfficerLevelText(
+    myGeneral.officerLevel,
+    nation?.level,
+  );
   const equipmentValues = [
     frontInfo?.weapon ?? myGeneral.weaponCode,
     frontInfo?.book ?? myGeneral.bookCode,
@@ -110,7 +117,11 @@ export default function GeneralPage() {
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex gap-4 items-start">
-            <GeneralPortrait picture={myGeneral.picture} name={myGeneral.name} size="lg" />
+            <GeneralPortrait
+              picture={myGeneral.picture}
+              name={myGeneral.name}
+              size="lg"
+            />
             <div className="space-y-2">
               <div className="text-lg font-bold">{myGeneral.name}</div>
               <div className="flex items-center gap-2">
@@ -137,7 +148,10 @@ export default function GeneralPage() {
               label="병종"
               value={CREW_TYPE_NAMES[myGeneral.crewType] ?? myGeneral.crewType}
             />
-            <StatBox label="훈련/사기" value={`${myGeneral.train}/${myGeneral.atmos}`} />
+            <StatBox
+              label="훈련/사기"
+              value={`${myGeneral.train}/${myGeneral.atmos}`}
+            />
             <StatBox label="레벨" value={myGeneral.expLevel} />
           </div>
         </CardContent>
@@ -150,7 +164,10 @@ export default function GeneralPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {EQUIPMENT_KEYS.map((entry, index) => (
-              <div key={entry.key} className="flex items-center justify-between">
+              <div
+                key={entry.key}
+                className="flex items-center justify-between"
+              >
                 <span className="text-muted-foreground">{entry.label}</span>
                 <span>{equipmentValues[index] || "-"}</span>
               </div>
@@ -185,7 +202,9 @@ export default function GeneralPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           {biographyRows.length === 0 ? (
-            <div className="text-sm text-muted-foreground">기록이 없습니다.</div>
+            <div className="text-sm text-muted-foreground">
+              기록이 없습니다.
+            </div>
           ) : (
             biographyRows.map((row) => (
               <div key={row.id} className="rounded border p-2 text-sm">

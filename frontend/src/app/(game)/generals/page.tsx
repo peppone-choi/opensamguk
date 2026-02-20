@@ -202,7 +202,8 @@ export default function GeneralsPage() {
 
   const currentCommandLabel = (value: Record<string, unknown>): string => {
     const actionCode = value.actionCode;
-    if (typeof actionCode === "string" && actionCode.length > 0) return actionCode;
+    if (typeof actionCode === "string" && actionCode.length > 0)
+      return actionCode;
     const brief = value.brief;
     if (typeof brief === "string" && brief.length > 0) return brief;
     return "-";

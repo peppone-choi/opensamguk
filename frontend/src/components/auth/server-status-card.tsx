@@ -133,7 +133,11 @@ export function ServerStatusCard() {
                   fill={point.color}
                   opacity={0.9}
                 >
-                  <title>{point.name ? `${point.name} (${point.nationName})` : "도시"}</title>
+                  <title>
+                    {point.name
+                      ? `${point.name} (${point.nationName})`
+                      : "도시"}
+                  </title>
                 </circle>
               ))}
             </svg>
@@ -143,11 +147,16 @@ export function ServerStatusCard() {
         <div>
           <h3 className="mb-2 text-sm font-semibold">최근 동향</h3>
           {!data?.available || data.history.length === 0 ? (
-            <p className="text-sm text-muted-foreground">표시할 기록이 없습니다</p>
+            <p className="text-sm text-muted-foreground">
+              표시할 기록이 없습니다
+            </p>
           ) : (
             <ul className="space-y-1">
               {data.history.map((item) => (
-                <li key={item.id} className="text-sm leading-relaxed text-zinc-200">
+                <li
+                  key={item.id}
+                  className="text-sm leading-relaxed text-zinc-200"
+                >
                   <span className="mr-2 text-xs text-muted-foreground">
                     {formatDateTime(item.sentAt)}
                   </span>

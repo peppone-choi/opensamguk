@@ -29,12 +29,18 @@ export default function SuperiorPage() {
     [myGeneral, nations],
   );
 
-  const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c.name])), [cities]);
+  const cityMap = useMemo(
+    () => new Map(cities.map((c) => [c.id, c.name])),
+    [cities],
+  );
 
   const commandChain = useMemo(() => {
     if (!myGeneral || myGeneral.nationId <= 0) return [];
     return generals
-      .filter((general) => general.nationId === myGeneral.nationId && general.officerLevel > 0)
+      .filter(
+        (general) =>
+          general.nationId === myGeneral.nationId && general.officerLevel > 0,
+      )
       .sort(
         (a, b) =>
           b.officerLevel - a.officerLevel ||
@@ -47,18 +53,25 @@ export default function SuperiorPage() {
     if (!myGeneral || myGeneral.nationId <= 0) return null;
     const candidates = commandChain
       .filter((general) => general.officerLevel > myGeneral.officerLevel)
-      .sort((a, b) => a.officerLevel - b.officerLevel || a.name.localeCompare(b.name));
+      .sort(
+        (a, b) =>
+          a.officerLevel - b.officerLevel || a.name.localeCompare(b.name),
+      );
     return candidates[0] ?? null;
   }, [myGeneral, commandChain]);
 
   if (!currentWorld) {
-    return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    return (
+      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
+    );
   }
 
   if (loading) return <LoadingState />;
 
   if (!myGeneral) {
-    return <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>;
+    return (
+      <div className="p-4 text-muted-foreground">장수 정보가 없습니다.</div>
+    );
   }
 
   return (
@@ -82,7 +95,10 @@ export default function SuperiorPage() {
                 <div className="flex items-center gap-2">
                   <NationBadge name={nation?.name} color={nation?.color} />
                   <Badge variant="outline">
-                    {formatOfficerLevelText(directSuperior.officerLevel, nation?.level)}
+                    {formatOfficerLevelText(
+                      directSuperior.officerLevel,
+                      nation?.level,
+                    )}
                   </Badge>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -90,7 +106,8 @@ export default function SuperiorPage() {
                 </div>
                 <div className="text-xs text-muted-foreground">
                   통{directSuperior.leadership} 무{directSuperior.strength} 지
-                  {directSuperior.intel} / 병력 {directSuperior.crew.toLocaleString()}
+                  {directSuperior.intel} / 병력{" "}
+                  {directSuperior.crew.toLocaleString()}
                 </div>
               </div>
             </div>
@@ -110,7 +127,9 @@ export default function SuperiorPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           {commandChain.length === 0 ? (
-            <div className="text-sm text-muted-foreground">지휘 체계 정보가 없습니다.</div>
+            <div className="text-sm text-muted-foreground">
+              지휘 체계 정보가 없습니다.
+            </div>
           ) : (
             commandChain.map((general) => {
               const isMe = general.id === myGeneral.id;
@@ -121,9 +140,14 @@ export default function SuperiorPage() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{general.name}</span>
-                    {isMe && <Badge className="bg-amber-500 text-black">나</Badge>}
+                    {isMe && (
+                      <Badge className="bg-amber-500 text-black">나</Badge>
+                    )}
                     <Badge variant="outline">
-                      {formatOfficerLevelText(general.officerLevel, nation?.level)}
+                      {formatOfficerLevelText(
+                        general.officerLevel,
+                        nation?.level,
+                      )}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {cityMap.get(general.cityId) ?? "도시 미상"}

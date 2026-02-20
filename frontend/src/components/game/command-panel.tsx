@@ -65,7 +65,9 @@ function turnTargetText(turn: FilledTurn): string {
     arg.amount,
   ].filter((value) => value !== undefined && value !== null);
 
-  return values.length > 0 ? values.map((value) => String(value)).join(" / ") : "-";
+  return values.length > 0
+    ? values.map((value) => String(value)).join(" / ")
+    : "-";
 }
 
 export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
@@ -73,11 +75,15 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const currentWorld = useWorldStore((s) => s.currentWorld);
 
   const [turns, setTurns] = useState<GeneralTurn[]>([]);
-  const [commandTable, setCommandTable] = useState<Record<string, CommandTableEntry[]>>({});
+  const [commandTable, setCommandTable] = useState<
+    Record<string, CommandTableEntry[]>
+  >({});
   const [selectedTurns, setSelectedTurns] = useState<Set<number>>(new Set([0]));
   const [lastClickedTurn, setLastClickedTurn] = useState(0);
   const [showSelector, setShowSelector] = useState(false);
-  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(null);
+  const [realtimeStatus, setRealtimeStatus] = useState<RealtimeStatus | null>(
+    null,
+  );
   const [serverClock, setServerClock] = useState("");
   const [remaining, setRemaining] = useState(0);
   const [clipboard, setClipboard] = useState<ClipboardItem[] | null>(null);
@@ -239,7 +245,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const clearTurns = useCallback(
     async (turnList: number[]) => {
       await Promise.all(
-        turnList.map((turn) => commandApi.deleteReservedCommand(generalId, turn)),
+        turnList.map((turn) =>
+          commandApi.deleteReservedCommand(generalId, turn),
+        ),
       );
       await loadTurns();
     },
@@ -341,7 +349,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     });
 
     const defaultName = items
-      .map((item) => (item.actionCode === "휴식" ? "휴" : item.actionCode.charAt(0)))
+      .map((item) =>
+        item.actionCode === "휴식" ? "휴" : item.actionCode.charAt(0),
+      )
       .join("");
     const input = window.prompt("저장 액션 이름", defaultName);
     if (!input) return;
@@ -349,14 +359,19 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     const trimmedName = input.trim();
     if (!trimmedName) return;
 
-    const deduped = storedActions.filter((action) => action.name !== trimmedName);
+    const deduped = storedActions.filter(
+      (action) => action.name !== trimmedName,
+    );
     persistStoredActions([...deduped, { name: trimmedName, items }]);
     setSelectedStoredAction(trimmedName);
   };
 
   const loadStoredAction = async () => {
-    if (!selectedStoredAction || selectedTurnList.length === 0 || realtimeMode) return;
-    const stored = storedActions.find((entry) => entry.name === selectedStoredAction);
+    if (!selectedStoredAction || selectedTurnList.length === 0 || realtimeMode)
+      return;
+    const stored = storedActions.find(
+      (entry) => entry.name === selectedStoredAction,
+    );
     if (!stored) return;
 
     const anchor = selectedTurnList[0];
@@ -380,7 +395,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
 
   const deleteStoredAction = () => {
     if (!selectedStoredAction) return;
-    const next = storedActions.filter((item) => item.name !== selectedStoredAction);
+    const next = storedActions.filter(
+      (item) => item.name !== selectedStoredAction,
+    );
     persistStoredActions(next);
     setSelectedStoredAction("");
   };
@@ -417,7 +434,8 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             ) : null}
             {realtimeMode && realtimeStatus ? (
               <Badge variant="outline" className="text-[11px] text-cyan-300">
-                CP {realtimeStatus.commandPoints} / 대기 {realtimeStatus.remainingSeconds}s
+                CP {realtimeStatus.commandPoints} / 대기{" "}
+                {realtimeStatus.remainingSeconds}s
               </Badge>
             ) : null}
           </div>
@@ -516,13 +534,18 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 type="button"
                 onClick={(event) => handleTurnClick(turn.turnIdx, event)}
                 className={`grid cursor-pointer grid-cols-[68px_120px_1fr_136px] items-center border-t border-gray-800 px-2 py-2 text-xs transition-colors ${
-                  isSelected ? "bg-[#18224b]" : "bg-[#101010] hover:bg-[#171717]"
+                  isSelected
+                    ? "bg-[#18224b]"
+                    : "bg-[#101010] hover:bg-[#171717]"
                 }`}
               >
                 <div className="font-mono text-gray-300">턴 {turn.turnIdx}</div>
                 <div>
                   {isEmpty ? (
-                    <Badge variant="outline" className="border-gray-600 text-gray-400">
+                    <Badge
+                      variant="outline"
+                      className="border-gray-600 text-gray-400"
+                    >
                       빈 턴
                     </Badge>
                   ) : (
@@ -531,7 +554,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     </Badge>
                   )}
                 </div>
-                <div className="truncate text-gray-300">{isEmpty ? "명령 없음" : turnTargetText(turn)}</div>
+                <div className="truncate text-gray-300">
+                  {isEmpty ? "명령 없음" : turnTargetText(turn)}
+                </div>
                 <div className="flex items-center justify-end gap-1">
                   <Button
                     size="sm"
@@ -590,7 +615,11 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                 <p className="text-sm font-semibold text-gray-100">
                   명령 선택 ({selectedTurnList.join(", ")})
                 </p>
-                <Button size="sm" variant="ghost" onClick={() => setShowSelector(false)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowSelector(false)}
+                >
                   닫기
                 </Button>
               </div>

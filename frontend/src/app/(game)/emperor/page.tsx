@@ -152,7 +152,9 @@ export default function EmperorPage() {
         </CardHeader>
         <CardContent>
           {dynastyLogs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">연표 데이터가 없습니다.</p>
+            <p className="text-sm text-muted-foreground">
+              연표 데이터가 없습니다.
+            </p>
           ) : (
             <div className="space-y-2">
               {dynastyLogs.map((log) => {
