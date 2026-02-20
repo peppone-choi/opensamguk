@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param
 interface MessageRepository : JpaRepository<Message, Long> {
     fun findByDestIdOrderBySentAtDesc(destId: Long): List<Message>
     fun findByWorldIdAndMailboxCodeOrderBySentAtDesc(worldId: Long, mailboxCode: String): List<Message>
+    fun findByWorldIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(worldId: Long, mailboxCode: String, srcId: Long): List<Message>
     fun findBySrcIdAndMailboxCodeOrderBySentAtDesc(srcId: Long, mailboxCode: String): List<Message>
     fun findByWorldIdAndMailboxCodeAndIdGreaterThanOrderBySentAtDesc(worldId: Long, mailboxCode: String, id: Long): List<Message>
     fun findByIdGreaterThanOrderBySentAtDesc(id: Long): List<Message>

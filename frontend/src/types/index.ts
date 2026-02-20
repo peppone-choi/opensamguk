@@ -787,6 +787,7 @@ export interface AdminUser {
   loginId: string;
   displayName: string;
   role: string;
+  grade: number;
   createdAt: string;
   lastLoginAt: string | null;
 }

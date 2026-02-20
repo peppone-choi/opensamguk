@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { adminApi } from "@/lib/gameApi";
+import { toast } from "sonner";
 
 interface NationStat {
   nationId: number;
@@ -38,10 +39,17 @@ export default function AdminStatisticsPage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
-    adminApi.getStatistics().then((res) => {
-      setStats(res.data);
-      setLoading(false);
-    });
+    adminApi
+      .getStatistics()
+      .then((res) => {
+        setStats(res.data);
+      })
+      .catch(() => {
+        toast.error("해당 월드 관리자 권한이 없습니다.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const sorted = useMemo(() => {

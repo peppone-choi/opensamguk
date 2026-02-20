@@ -19,16 +19,23 @@ export default function AdminDashboardPage() {
   const [locked, setLocked] = useState(false);
 
   useEffect(() => {
-    adminApi.getDashboard().then((res) => {
-      const d = res.data;
-      setData(d);
-      if (d.currentWorld) {
-        setNotice((d.currentWorld.config?.notice as string) ?? "");
-        setTurnTerm(String(d.currentWorld.config?.turnTerm ?? ""));
-        setLocked(Boolean(d.currentWorld.config?.locked));
-      }
-      setLoading(false);
-    });
+    adminApi
+      .getDashboard()
+      .then((res) => {
+        const d = res.data;
+        setData(d);
+        if (d.currentWorld) {
+          setNotice((d.currentWorld.config?.notice as string) ?? "");
+          setTurnTerm(String(d.currentWorld.config?.turnTerm ?? ""));
+          setLocked(Boolean(d.currentWorld.config?.locked));
+        }
+      })
+      .catch(() => {
+        toast.error("해당 월드 관리자 권한이 없습니다.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const handleSave = async () => {

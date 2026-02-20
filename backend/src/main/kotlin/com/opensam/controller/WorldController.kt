@@ -3,11 +3,14 @@ package com.opensam.controller
 import com.opensam.dto.CreateWorldRequest
 import com.opensam.dto.ResetWorldRequest
 import com.opensam.dto.WorldStateResponse
+import com.opensam.service.AdminAuthorizationService
 import com.opensam.service.ScenarioService
 import com.opensam.service.WorldService
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -15,7 +18,10 @@ import org.springframework.web.bind.annotation.*
 class WorldController(
     private val scenarioService: ScenarioService,
     private val worldService: WorldService,
+    private val adminAuthorizationService: AdminAuthorizationService,
 ) {
+    private fun currentLoginId(): String? = SecurityContextHolder.getContext().authentication?.name
+
     @GetMapping("/worlds")
     fun listWorlds(): ResponseEntity<List<WorldStateResponse>> {
         return ResponseEntity.ok(worldService.listWorlds().map { WorldStateResponse.from(it) })
@@ -30,6 +36,13 @@ class WorldController(
 
     @PostMapping("/worlds")
     fun createWorld(@Valid @RequestBody request: CreateWorldRequest): ResponseEntity<WorldStateResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        try {
+            adminAuthorizationService.requireGlobalAdmin(loginId)
+        } catch (_: AccessDeniedException) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
         val world = scenarioService.initializeWorld(request.scenarioCode, request.tickSeconds)
         if (!request.name.isNullOrBlank()) {
             world.name = request.name
@@ -40,6 +53,13 @@ class WorldController(
 
     @DeleteMapping("/worlds/{id}")
     fun deleteWorld(@PathVariable id: Short): ResponseEntity<Void> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        try {
+            adminAuthorizationService.requireGlobalAdmin(loginId)
+        } catch (_: AccessDeniedException) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
         worldService.deleteWorld(id)
         return ResponseEntity.noContent().build()
     }
@@ -49,6 +69,13 @@ class WorldController(
         @PathVariable id: Short,
         @RequestBody(required = false) body: ResetWorldRequest?,
     ): ResponseEntity<WorldStateResponse> {
+        val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        try {
+            adminAuthorizationService.requireGlobalAdmin(loginId)
+        } catch (_: AccessDeniedException) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+
         val world = worldService.getWorld(id)
             ?: return ResponseEntity.notFound().build()
         val scenarioCode = body?.scenarioCode ?: world.scenarioCode

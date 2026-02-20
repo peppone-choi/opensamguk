@@ -17,13 +17,20 @@ class JwtUtil(
         Keys.hmacShaKeyFor(secret.toByteArray())
     }
 
-    fun generateToken(userId: Long, loginId: String, displayName: String, role: String = "USER"): String {
+    fun generateToken(
+        userId: Long,
+        loginId: String,
+        displayName: String,
+        role: String = "USER",
+        grade: Int = 1,
+    ): String {
         val now = Date()
         return Jwts.builder()
             .subject(loginId)
             .claim("userId", userId)
             .claim("displayName", displayName)
             .claim("role", role)
+            .claim("grade", grade)
             .issuedAt(now)
             .expiration(Date(now.time + expirationMs))
             .signWith(key)

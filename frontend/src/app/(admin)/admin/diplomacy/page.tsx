@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { adminApi } from "@/lib/gameApi";
 import type { Diplomacy } from "@/types";
+import { toast } from "sonner";
 
 const stateLabel = (s: string) => {
   switch (s) {
@@ -45,10 +46,17 @@ export default function AdminDiplomacyPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminApi.getDiplomacy().then((res) => {
-      setDiplomacy(res.data);
-      setLoading(false);
-    });
+    adminApi
+      .getDiplomacy()
+      .then((res) => {
+        setDiplomacy(res.data);
+      })
+      .catch(() => {
+        toast.error("해당 월드 관리자 권한이 없습니다.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   if (loading) return <LoadingState />;

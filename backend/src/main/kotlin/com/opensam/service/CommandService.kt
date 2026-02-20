@@ -77,13 +77,7 @@ class CommandService(
             nationRepository.findById(general.nationId).orElse(null)
         } else null
 
-        val env = CommandEnv(
-            year = world.currentYear.toInt(),
-            month = world.currentMonth.toInt(),
-            startYear = world.currentYear.toInt(),
-            worldId = world.id.toLong(),
-            realtimeMode = world.realtimeMode,
-        )
+        val env = createCommandEnv(world)
 
         val result = runBlocking {
             commandExecutor.executeGeneralCommand(
@@ -115,13 +109,7 @@ class CommandService(
             nationRepository.findById(general.nationId).orElse(null)
         } else null
 
-        val env = CommandEnv(
-            year = world.currentYear.toInt(),
-            month = world.currentMonth.toInt(),
-            startYear = world.currentYear.toInt(),
-            worldId = world.id.toLong(),
-            realtimeMode = world.realtimeMode,
-        )
+        val env = createCommandEnv(world)
 
         val result = runBlocking {
             commandExecutor.executeNationCommand(
@@ -142,13 +130,7 @@ class CommandService(
         val world = worldStateRepository.findById(general.worldId.toShort()).orElse(null) ?: return null
         val city = cityRepository.findById(general.cityId).orElse(null)
         val nation = if (general.nationId != 0L) nationRepository.findById(general.nationId).orElse(null) else null
-        val env = CommandEnv(
-            year = world.currentYear.toInt(),
-            month = world.currentMonth.toInt(),
-            startYear = world.currentYear.toInt(),
-            worldId = world.id.toLong(),
-            realtimeMode = world.realtimeMode,
-        )
+        val env = createCommandEnv(world)
 
         val categories = linkedMapOf<String, MutableList<CommandTableEntry>>()
         val actionCodes = commandRegistry.getGeneralCommandNames().toList().sortedWith(
@@ -190,13 +172,7 @@ class CommandService(
 
         val city = cityRepository.findById(general.cityId).orElse(null)
         val nation = if (general.nationId != 0L) nationRepository.findById(general.nationId).orElse(null) else null
-        val env = CommandEnv(
-            year = world.currentYear.toInt(),
-            month = world.currentMonth.toInt(),
-            startYear = world.currentYear.toInt(),
-            worldId = world.id.toLong(),
-            realtimeMode = world.realtimeMode,
-        )
+        val env = createCommandEnv(world)
 
         val categories = linkedMapOf<String, MutableList<CommandTableEntry>>()
         val actionCodes = commandRegistry.getNationCommandNames().toList().sortedWith(
@@ -356,5 +332,21 @@ class CommandService(
         "전략" -> 4
         "연구" -> 5
         else -> 99
+    }
+
+    private fun createCommandEnv(world: com.opensam.entity.WorldState): CommandEnv {
+        val gameStor = mutableMapOf<String, Any>()
+        val mapName = (world.config["mapCode"] as? String)?.trim().orEmpty().ifBlank { "che" }
+        gameStor["mapName"] = mapName
+        gameStor["maxGeneral"] = (world.config["maxGeneral"] as? Number)?.toInt() ?: 500
+
+        return CommandEnv(
+            year = world.currentYear.toInt(),
+            month = world.currentMonth.toInt(),
+            startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt(),
+            worldId = world.id.toLong(),
+            realtimeMode = world.realtimeMode,
+            gameStor = gameStor,
+        )
     }
 }

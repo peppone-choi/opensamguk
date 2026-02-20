@@ -2,6 +2,7 @@ package com.opensam.service
 
 import com.opensam.dto.AdminDashboard
 import com.opensam.dto.AdminGeneralSummary
+import com.opensam.dto.AdminUserAction
 import com.opensam.dto.AdminUserSummary
 import com.opensam.dto.AdminWorldInfo
 import com.opensam.dto.NationStatistic
@@ -18,9 +19,13 @@ class AdminService(
     private val diplomacyRepository: DiplomacyRepository,
     private val messageRepository: MessageRepository,
 ) {
-    fun getDashboard(): AdminDashboard {
+    private companion object {
+        const val GRADE_SYSTEM_ADMIN = 6
+    }
+
+    fun getDashboard(worldId: Long): AdminDashboard {
         val worlds = worldStateRepository.findAll()
-        val world = worlds.firstOrNull()
+        val world = worlds.firstOrNull { it.id.toLong() == worldId }
         return AdminDashboard(
             worldCount = worlds.size,
             currentWorld = world?.let {
@@ -36,8 +41,8 @@ class AdminService(
         )
     }
 
-    fun updateSettings(settings: Map<String, Any>): Boolean {
-        val world = worldStateRepository.findAll().firstOrNull() ?: return false
+    fun updateSettings(worldId: Long, settings: Map<String, Any>): Boolean {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
         settings["notice"]?.let { world.config["notice"] = it }
         settings["turnTerm"]?.let { world.tickSeconds = (it as Number).toInt() }
         settings["locked"]?.let { world.config["locked"] = it }
@@ -45,8 +50,8 @@ class AdminService(
         return true
     }
 
-    fun listAllGenerals(): List<AdminGeneralSummary> {
-        return generalRepository.findAll().map {
+    fun listAllGenerals(worldId: Long): List<AdminGeneralSummary> {
+        return generalRepository.findByWorldId(worldId).map {
             AdminGeneralSummary(
                 id = it.id,
                 name = it.name,
@@ -59,8 +64,9 @@ class AdminService(
         }
     }
 
-    fun generalAction(id: Long, type: String): Boolean {
+    fun generalAction(worldId: Long, id: Long, type: String): Boolean {
         val general = generalRepository.findById(id).orElse(null) ?: return false
+        if (general.worldId != worldId) return false
         when (type) {
             "block" -> general.blockState = 1
             "unblock" -> general.blockState = 0
@@ -73,8 +79,8 @@ class AdminService(
         return true
     }
 
-    fun getStatistics(): List<NationStatistic> {
-        val nations = nationRepository.findAll()
+    fun getStatistics(worldId: Long): List<NationStatistic> {
+        val nations = nationRepository.findByWorldId(worldId)
         return nations.map { nation ->
             val generals = generalRepository.findByNationId(nation.id)
             val cities = cityRepository.findByNationId(nation.id)
@@ -95,16 +101,16 @@ class AdminService(
         }
     }
 
-    fun getGeneralLogs(id: Long): List<Any> {
-        return messageRepository.findBySrcIdAndMailboxCodeOrderBySentAtDesc(id, "general_record")
+    fun getGeneralLogs(worldId: Long, id: Long): List<Any> {
+        return messageRepository.findByWorldIdAndMailboxCodeAndSrcIdOrderBySentAtDesc(worldId, "general_record", id)
     }
 
-    fun getDiplomacyMatrix(): List<Any> {
-        return diplomacyRepository.findAll()
+    fun getDiplomacyMatrix(worldId: Long): List<Any> {
+        return diplomacyRepository.findByWorldId(worldId)
     }
 
-    fun timeControl(year: Int?, month: Int?, locked: Boolean?): Boolean {
-        val world = worldStateRepository.findAll().firstOrNull() ?: return false
+    fun timeControl(worldId: Long, year: Int?, month: Int?, locked: Boolean?): Boolean {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
         year?.let { world.currentYear = it.toShort() }
         month?.let { world.currentMonth = it.toShort() }
         locked?.let { world.config["locked"] = it }
@@ -119,20 +125,54 @@ class AdminService(
                 loginId = it.loginId,
                 displayName = it.displayName,
                 role = it.role,
+                grade = it.grade.toInt(),
                 createdAt = it.createdAt,
                 lastLoginAt = it.lastLoginAt,
             )
         }
     }
 
-    fun userAction(id: Long, type: String): Boolean {
+    fun userAction(actorLoginId: String, id: Long, action: AdminUserAction): Boolean {
+        val actor = appUserRepository.findByLoginId(actorLoginId) ?: return false
+        val actorGrade = actor.grade.toInt()
+        if (actorGrade < GRADE_SYSTEM_ADMIN) {
+            return false
+        }
+
         val user = appUserRepository.findById(id).orElse(null) ?: return false
-        when (type) {
-            "setAdmin" -> user.role = "ADMIN"
-            "removeAdmin" -> user.role = "USER"
-            "delete" -> { appUserRepository.delete(user); return true }
+        val targetGrade = user.grade.toInt()
+        if (targetGrade >= actorGrade) {
+            return false
+        }
+
+        when (action.type) {
+            "delete" -> {
+                appUserRepository.delete(user)
+                return true
+            }
+            "setAdmin", "removeAdmin", "setGrade" -> {
+                val nextGrade = resolveNextGrade(action) ?: return false
+                if (nextGrade !in 0..7) {
+                    return false
+                }
+                if (nextGrade >= actorGrade) {
+                    return false
+                }
+                user.grade = nextGrade.toShort()
+                user.role = if (nextGrade >= 5) "ADMIN" else "USER"
+            }
+            else -> return false
         }
         appUserRepository.save(user)
         return true
+    }
+
+    private fun resolveNextGrade(action: AdminUserAction): Int? {
+        return when (action.type) {
+            "setAdmin" -> 6
+            "removeAdmin" -> 1
+            "setGrade" -> action.grade
+            else -> null
+        }
     }
 }

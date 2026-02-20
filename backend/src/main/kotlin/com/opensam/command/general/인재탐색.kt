@@ -37,8 +37,16 @@ class 인재탐색(general: General, env: CommandEnv, arg: Map<String, Any>? = n
             else -> "intelExp"
         }
 
-        // TODO: actual NPC discovery probability based on world state
-        val foundNpc = rng.nextInt(100) < 30
+        val maxGeneral = (env.gameStor["maxGeneral"] as? Number)?.toDouble()?.takeIf { it > 0 } ?: 500.0
+        val totalGeneralCount = (env.gameStor["totalGeneralCount"] as? Number)?.toDouble() ?: 0.0
+        val totalNpcCount = (env.gameStor["totalNpcCount"] as? Number)?.toDouble() ?: 0.0
+        val current = totalGeneralCount + totalNpcCount / 2.0
+        val remainSlot = (maxGeneral - current).coerceAtLeast(0.0)
+        val main = (remainSlot / maxGeneral).pow(6)
+        val small = 1.0 / (totalNpcCount / 3.0 + 1.0)
+        val big = 1.0 / maxGeneral
+        val foundProp = if (totalNpcCount < 50.0) maxOf(main, small) else maxOf(main, big)
+        val foundNpc = rng.nextDouble() < foundProp
 
         if (!foundNpc) {
             pushLog("인재를 찾을 수 없었습니다. <1>$date</>")

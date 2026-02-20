@@ -30,6 +30,9 @@ class AppUser(
     @Column(nullable = false)
     var role: String = "USER",
 
+    @Column(nullable = false)
+    var grade: Short = 1,
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     var meta: MutableMap<String, Any> = mutableMapOf(),

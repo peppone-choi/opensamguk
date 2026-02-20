@@ -17,15 +17,22 @@ export default function AdminTimeControlPage() {
   const [locked, setLocked] = useState(false);
 
   useEffect(() => {
-    adminApi.getDashboard().then((res) => {
-      const w = res.data.currentWorld;
-      if (w) {
-        setYear(String(w.year));
-        setMonth(String(w.month));
-        setLocked(Boolean(w.config?.locked));
-      }
-      setLoading(false);
-    });
+    adminApi
+      .getDashboard()
+      .then((res) => {
+        const w = res.data.currentWorld;
+        if (w) {
+          setYear(String(w.year));
+          setMonth(String(w.month));
+          setLocked(Boolean(w.config?.locked));
+        }
+      })
+      .catch(() => {
+        toast.error("해당 월드 관리자 권한이 없습니다.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const handleSubmit = async () => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AxiosError } from "axios";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { npcTokenApi } from "@/lib/gameApi";
@@ -39,13 +40,13 @@ export default function LobbySelectNpcPage() {
   const validRemaining = token
     ? Math.max(
         0,
-        Math.floor((new Date(token.validUntil).getTime() - nowMs) / 1000),
+        Math.ceil((new Date(token.validUntil).getTime() - nowMs) / 1000),
       )
     : 0;
   const refreshRemaining = token
     ? Math.max(
         0,
-        Math.floor((new Date(token.pickMoreAfter).getTime() - nowMs) / 1000),
+        Math.ceil((new Date(token.pickMoreAfter).getTime() - nowMs) / 1000),
       )
     : 0;
   const tokenExpired = !!token && validRemaining === 0;
@@ -107,8 +108,12 @@ export default function LobbySelectNpcPage() {
           ? "새 NPC 카드를 생성했습니다."
           : "NPC 카드를 다시 뽑았습니다.",
       );
-    } catch {
-      toast.error("다시 뽑기에 실패했습니다.");
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.message as string | undefined)
+          : undefined;
+      toast.error(message ?? "다시 뽑기에 실패했습니다.");
     } finally {
       setRefreshing(false);
     }

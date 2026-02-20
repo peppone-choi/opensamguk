@@ -4,7 +4,10 @@ import java.time.OffsetDateTime
 
 data class AdminGeneralAction(val type: String)
 
-data class AdminUserAction(val type: String)
+data class AdminUserAction(
+    val type: String,
+    val grade: Int? = null,
+)
 
 data class TimeControlRequest(val year: Int? = null, val month: Int? = null, val locked: Boolean? = null)
 
@@ -43,6 +46,7 @@ data class AdminUserSummary(
     val loginId: String,
     val displayName: String,
     val role: String,
+    val grade: Int,
     val createdAt: OffsetDateTime,
     val lastLoginAt: OffsetDateTime?,
 )

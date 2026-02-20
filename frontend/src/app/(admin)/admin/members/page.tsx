@@ -25,10 +25,17 @@ export default function AdminMembersPage() {
   const [search, setSearch] = useState("");
 
   const load = useCallback(() => {
-    adminApi.listGenerals().then((res) => {
-      setGenerals(res.data);
-      setLoading(false);
-    });
+    adminApi
+      .listGenerals()
+      .then((res) => {
+        setGenerals(res.data);
+      })
+      .catch(() => {
+        toast.error("해당 월드 관리자 권한이 없습니다.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   useEffect(() => {

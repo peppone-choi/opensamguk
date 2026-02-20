@@ -1,19 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-import type { CityConst } from "@/types";
 
-const MAP_WIDTH = 800;
-const MAP_HEIGHT = 600;
-const CITY_RADIUS = 10;
+const IMAGE_CDN = "https://storage.hided.net/gitea/devsam/image";
 
 interface MapViewerProps {
   worldId: number;
   mapCode?: string;
   compact?: boolean;
 }
+
+// [bgW, bgH, icnW, icnH, flagR, flagT]
+const detailMapCitySizes: Record<number, number[]> = {
+  1: [48, 45, 16, 15, -8, -4],
+  2: [60, 42, 20, 14, -8, -4],
+  3: [42, 42, 14, 14, -8, -4],
+  4: [60, 45, 20, 15, -6, -3],
+  5: [72, 48, 24, 16, -6, -4],
+  6: [78, 54, 26, 18, -6, -4],
+  7: [84, 60, 28, 20, -6, -4],
+  8: [96, 72, 32, 24, -6, -3],
+};
 
 export function MapViewer({
   worldId,
@@ -22,14 +31,7 @@ export function MapViewer({
 }: MapViewerProps) {
   const router = useRouter();
   const { cities, nations, mapData, loadAll, loadMap } = useGameStore();
-  const [showNames, setShowNames] = useState(true);
-  const [tooltip, setTooltip] = useState<{
-    cityName: string;
-    nationName: string;
-    nationColor: string;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [showNames, setShowNames] = useState(!compact);
 
   useEffect(() => {
     loadAll(worldId);
@@ -46,91 +48,6 @@ export function MapViewer({
     [cities],
   );
 
-  const constMap = useMemo(
-    () => new Map(mapData?.cities.map((c) => [c.id, c]) ?? []),
-    [mapData],
-  );
-
-  const { scaleX, scaleY, offsetX, offsetY } = useMemo(() => {
-    if (!mapData || mapData.cities.length === 0)
-      return { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 };
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
-      maxY = -Infinity;
-    for (const c of mapData.cities) {
-      if (c.x < minX) minX = c.x;
-      if (c.x > maxX) maxX = c.x;
-      if (c.y < minY) minY = c.y;
-      if (c.y > maxY) maxY = c.y;
-    }
-    const pad = 40;
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-    return {
-      scaleX: (MAP_WIDTH - pad * 2) / rangeX,
-      scaleY: (MAP_HEIGHT - pad * 2) / rangeY,
-      offsetX: -minX,
-      offsetY: -minY,
-    };
-  }, [mapData]);
-
-  const toSvgX = useCallback(
-    (x: number) => (x + offsetX) * scaleX + 40,
-    [offsetX, scaleX],
-  );
-  const toSvgY = useCallback(
-    (y: number) => (y + offsetY) * scaleY + 40,
-    [offsetY, scaleY],
-  );
-
-  const getCityColor = (cityId: number): string => {
-    const city = cityMap.get(cityId);
-    if (!city || city.nationId === 0) return "#555";
-    return nationMap.get(city.nationId)?.color ?? "#555";
-  };
-
-  const connections = useMemo(() => {
-    if (!mapData?.cities) return [];
-    const seen = new Set<string>();
-    const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
-    for (const city of mapData.cities) {
-      for (const connId of city.connections) {
-        const key =
-          city.id < connId ? `${city.id}-${connId}` : `${connId}-${city.id}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const target = constMap.get(connId);
-        if (target) {
-          lines.push({
-            x1: toSvgX(city.x),
-            y1: toSvgY(city.y),
-            x2: toSvgX(target.x),
-            y2: toSvgY(target.y),
-          });
-        }
-      }
-    }
-    return lines;
-  }, [mapData, constMap, toSvgX, toSvgY]);
-
-  const handleCityClick = (cc: CityConst, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (compact) {
-      const city = cityMap.get(cc.id);
-      const nation = city?.nationId ? nationMap.get(city.nationId) : null;
-      setTooltip({
-        cityName: cc.name,
-        nationName: nation?.name ?? "공백지",
-        nationColor: nation?.color ?? "#555",
-        x: e.clientX,
-        y: e.clientY,
-      });
-    } else {
-      router.push(`/city?id=${cc.id}`);
-    }
-  };
-
   if (!mapData) {
     return (
       <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
@@ -139,81 +56,175 @@ export function MapViewer({
     );
   }
 
+  const smV = compact ? 500 / 700 : 1;
+  const containerWidth = compact ? 500 : 700;
+  const containerHeight = compact ? 357.14 : 500;
+
+  // Determine Map Season
+  const month = 1;
+  let season = "spring";
+  if (month >= 4 && month <= 6) season = "summer";
+  else if (month >= 7 && month <= 9) season = "fall";
+  else if (month >= 10 || month <= 12) season = "winter";
+
+  const mapFolder = mapCode.includes("miniche") ? "che" : mapCode === "ludo_rathowm" ? "ludo_rathowm" : mapCode;
+  const mapRoadImage = mapCode.includes("miniche") ? "miniche_road.png" : mapCode === "ludo_rathowm" ? "road.png" : `${mapCode}_road.png`;
+
+  const mapLayerUrl = `${IMAGE_CDN}/map/${mapFolder}/bg_${season}.jpg`;
+  const mapRoadUrl = `${IMAGE_CDN}/map/${mapFolder}/${mapRoadImage}`;
+
+  const handleCityClick = (cityId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/city?id=${cityId}`);
+  };
+
   return (
-    <div className="relative">
+    <div className="relative w-full overflow-hidden bg-black text-[14px] text-white" style={{ maxWidth: containerWidth, height: containerHeight, margin: "0 auto" }}>
       {!compact && (
         <button
+          type="button"
           onClick={() => setShowNames(!showNames)}
-          className="absolute right-1 top-1 z-10 border border-gray-600 bg-[#111] px-1.5 py-0.5 text-[10px] text-gray-300"
+          className="absolute right-1 bottom-1 z-10 border border-gray-600 bg-[#111] px-1.5 py-0.5 text-[10px] text-gray-300"
         >
           {showNames ? "이름 숨김" : "이름 표시"}
         </button>
       )}
-      <svg
-        viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-        className="h-auto w-full border border-gray-600 bg-black"
-        onClick={() => setTooltip(null)}
-      >
-        {connections.map((l, i) => (
-          <line
-            key={i}
-            x1={l.x1}
-            y1={l.y1}
-            x2={l.x2}
-            y2={l.y2}
-            stroke="#333"
-            strokeWidth={0.8}
-          />
-        ))}
+
+      {/* Map Background Layers */}
+      <div
+        className="absolute inset-0 z-0 bg-no-repeat bg-center"
+        style={{ backgroundImage: `url('${mapLayerUrl}')`, backgroundSize: `${containerWidth}px ${containerHeight}px` }}
+      />
+      <div
+        className="absolute inset-0 z-[1] bg-no-repeat bg-center"
+        style={{ backgroundImage: `url('${mapRoadUrl}')`, backgroundSize: `${containerWidth}px ${containerHeight}px` }}
+      />
+
+      {/* Map Cities */}
+      <div className="absolute inset-0 z-[2]">
         {mapData.cities.map((cc) => {
-          const cx = toSvgX(cc.x);
-          const cy = toSvgY(cc.y);
-          const color = getCityColor(cc.id);
+          const rtCity = cityMap.get(cc.id);
+          const nation = rtCity?.nationId ? nationMap.get(rtCity.nationId) : null;
+          const myCity = false;
+
+          const sizes = detailMapCitySizes[cc.level] || detailMapCitySizes[1];
+          const bgW = sizes[0] * smV;
+          const bgH = sizes[1] * smV;
+          const icnW = sizes[2] * smV;
+          const icnH = sizes[3] * smV;
+          const flagR = sizes[4];
+          const flagT = sizes[5];
+
+          const left = cc.x * smV - 20;
+          const top = cc.y * smV - (compact ? 18 : 15);
+
           return (
-            <g
+            <button
               key={cc.id}
-              className="cursor-pointer"
-              onClick={(e) => handleCityClick(cc, e)}
+              type="button"
+              className="absolute h-[30px] w-[40px] cursor-pointer appearance-none border-0 bg-transparent p-0 text-left"
+              style={{ left, top }}
+              onClick={(e) => handleCityClick(cc.id, e)}
             >
-              <circle
-                cx={cx}
-                cy={cy}
-                r={compact ? CITY_RADIUS * 0.8 : CITY_RADIUS}
-                fill={color}
-                stroke="#000"
-                strokeWidth={1}
-                opacity={0.85}
-              />
-              {showNames && (
-                <text
-                  x={cx}
-                  y={cy + CITY_RADIUS + 11}
-                  textAnchor="middle"
-                  fill="#ccc"
-                  fontSize={compact ? 8 : 10}
-                >
-                  {cc.name}
-                </text>
+              {/* Nation Color Blotch Base */}
+              {nation?.color && (
+                <div
+                  className="absolute z-[1] bg-center bg-no-repeat"
+                  style={{
+                    backgroundImage: `url('${IMAGE_CDN}/b${nation.color.substring(1).toUpperCase()}.png')`,
+                    backgroundSize: `${bgW}px ${bgH}px`,
+                    width: bgW,
+                    height: bgH,
+                    left: (40 - bgW) / 2,
+                    top: (30 - bgH) / 2,
+                  }}
+                />
               )}
-            </g>
+
+              <div className="absolute z-[2] w-full h-full">
+                {/* City Icon Container */}
+                <div
+                  className="absolute"
+                  style={{
+                    width: icnW,
+                    height: icnH,
+                    left: (40 - icnW) / 2,
+                    top: (30 - icnH) / 2,
+                  }}
+                >
+                  <img src={`${IMAGE_CDN}/cast_${cc.level}.gif`} className="w-full h-full block" alt="" />
+
+                  {/* My City Highlight */}
+                  {myCity && (
+                    <div className="absolute -inset-[2px] rounded-[33%] border-[4px] border-solid border-red-500 animate-pulse" />
+                  )}
+
+                  {/* Nation Flag and Capital Icon */}
+                  {nation && (
+                    <div
+                      className="absolute"
+                      style={{
+                        right: flagR,
+                        top: flagT,
+                        width: 12 * smV,
+                        height: 12 * smV,
+                      }}
+                    >
+                      <img
+                        src={`${IMAGE_CDN}/${(rtCity?.supplyState ?? 0) > 0 ? "f" : "d"}${nation.color.substring(1).toUpperCase()}.gif`}
+                        className="w-full h-full block"
+                        alt=""
+                      />
+                      {nation.capitalCityId === cc.id && (
+                        <div
+                          className="absolute bg-yellow-400"
+                          style={{
+                            right: -1,
+                            top: 0,
+                            width: 10 * smV,
+                            height: 10 * smV,
+                          }}
+                        >
+                          <img
+                            src={`${IMAGE_CDN}/event51.gif`}
+                            className="w-full h-full block"
+                            alt="capital"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* City State Icon */}
+                {rtCity && rtCity.state > 0 && (
+                  <div className="absolute left-0" style={{ top: 5 * smV }}>
+                    <img
+                      src={`${IMAGE_CDN}/event${rtCity.state}.gif`}
+                      className="object-contain"
+                      style={{ width: 10 * smV }}
+                      alt=""
+                    />
+                  </div>
+                )}
+
+                {/* City Name */}
+                {showNames && (
+                  <span
+                    className={`absolute whitespace-nowrap text-white px-[2px] py-[1px] bg-black/50 ${compact ? 'text-[10px]' : 'text-[10px]'}`}
+                    style={{
+                      left: "70%",
+                      bottom: compact ? -12 : -10,
+                    }}
+                  >
+                    {cc.name}
+                  </span>
+                )}
+              </div>
+            </button>
           );
         })}
-      </svg>
-      {tooltip && (
-        <div
-          className="fixed z-50 border border-gray-600 bg-[#111] p-2 text-xs shadow-lg"
-          style={{ left: tooltip.x + 10, top: tooltip.y - 8 }}
-        >
-          <div className="font-medium flex items-center gap-1.5">
-            <span
-              className="w-2.5 h-2.5 rounded-full"
-              style={{ backgroundColor: tooltip.nationColor }}
-            />
-            {tooltip.cityName}
-          </div>
-          <div className="text-muted-foreground">{tooltip.nationName}</div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

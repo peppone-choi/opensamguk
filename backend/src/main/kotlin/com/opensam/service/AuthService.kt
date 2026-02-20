@@ -27,7 +27,8 @@ class AuthService(
         )
         val saved = userRepository.save(user)
 
-        val token = jwtUtil.generateToken(saved.id, saved.loginId, saved.displayName, saved.role)
+        val role = effectiveRole(saved)
+        val token = jwtUtil.generateToken(saved.id, saved.loginId, saved.displayName, role, saved.grade.toInt())
         return AuthResponse(token, UserInfo(saved.id, saved.loginId, saved.displayName))
     }
 
@@ -39,10 +40,16 @@ class AuthService(
             throw IllegalArgumentException("Invalid credentials")
         }
 
+        val role = effectiveRole(user)
+        user.role = role
         user.lastLoginAt = OffsetDateTime.now()
         userRepository.save(user)
 
-        val token = jwtUtil.generateToken(user.id, user.loginId, user.displayName, user.role)
+        val token = jwtUtil.generateToken(user.id, user.loginId, user.displayName, role, user.grade.toInt())
         return AuthResponse(token, UserInfo(user.id, user.loginId, user.displayName))
+    }
+
+    private fun effectiveRole(user: AppUser): String {
+        return if (user.grade.toInt() >= 5) "ADMIN" else "USER"
     }
 }

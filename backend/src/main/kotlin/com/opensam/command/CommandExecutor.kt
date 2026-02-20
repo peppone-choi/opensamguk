@@ -275,6 +275,11 @@ class CommandExecutor(
 
         val allCities = cityRepository.findByWorldId(worldId)
         val cityNationById = allCities.associate { it.id to it.nationId }
+        val citySupplyStateById = allCities.associate { it.id to it.supplyState.toInt() }
+
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val totalNpcCount = allGenerals.count { it.npcState.toInt() > 0 }
+        val totalGeneralCount = allGenerals.size - totalNpcCount
 
         val mapAdjacency = try {
             mapService.getCities(mapName).associate { cityConst ->
@@ -311,6 +316,9 @@ class CommandExecutor(
             "mapName" to mapName,
             "mapAdjacency" to mapAdjacency,
             "cityNationById" to cityNationById,
+            "citySupplyStateById" to citySupplyStateById,
+            "totalGeneralCount" to totalGeneralCount,
+            "totalNpcCount" to totalNpcCount,
             "troopMemberExistsByTroopId" to troopMemberExistsByTroopId,
             "atWarNationIds" to atWarNationIds,
             "joinActionLimit" to 12,

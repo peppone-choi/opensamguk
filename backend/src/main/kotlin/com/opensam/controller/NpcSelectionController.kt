@@ -22,14 +22,14 @@ class NpcSelectionController(
     private val selectNpcTokenService: SelectNpcTokenService,
 ) {
     @PostMapping("/worlds/{worldId}/npc-token")
-    fun generateToken(@PathVariable worldId: Long): ResponseEntity<NpcTokenResponse> {
+    fun generateToken(@PathVariable worldId: Long): ResponseEntity<Any> {
         val userId = currentUserId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             ResponseEntity.ok(selectNpcTokenService.generateToken(worldId, userId))
-        } catch (_: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        } catch (_: IllegalStateException) {
-            ResponseEntity.badRequest().build()
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(errorResponse(e.message ?: "잘못된 요청입니다."))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.badRequest().body(errorResponse(e.message ?: "요청을 처리할 수 없습니다."))
         }
     }
 
@@ -37,14 +37,14 @@ class NpcSelectionController(
     fun refreshToken(
         @PathVariable worldId: Long,
         @RequestBody request: RefreshNpcTokenRequest,
-    ): ResponseEntity<NpcTokenResponse> {
+    ): ResponseEntity<Any> {
         val userId = currentUserId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             ResponseEntity.ok(selectNpcTokenService.refreshToken(worldId, userId, request.nonce, request.keepIds))
-        } catch (_: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        } catch (_: IllegalStateException) {
-            ResponseEntity.badRequest().build()
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(errorResponse(e.message ?: "잘못된 요청입니다."))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.badRequest().body(errorResponse(e.message ?: "요청을 처리할 수 없습니다."))
         }
     }
 
@@ -52,15 +52,19 @@ class NpcSelectionController(
     fun selectNpc(
         @PathVariable worldId: Long,
         @RequestBody request: SelectNpcWithTokenRequest,
-    ): ResponseEntity<SelectNpcResult> {
+    ): ResponseEntity<Any> {
         val userId = currentUserId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             ResponseEntity.ok(selectNpcTokenService.selectNpc(worldId, userId, request.nonce, request.generalId))
-        } catch (_: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
-        } catch (_: IllegalStateException) {
-            ResponseEntity.badRequest().build()
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(errorResponse(e.message ?: "잘못된 요청입니다."))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.badRequest().body(errorResponse(e.message ?: "요청을 처리할 수 없습니다."))
         }
+    }
+
+    private fun errorResponse(message: String): Map<String, String> {
+        return mapOf("message" to message)
     }
 
     private fun currentUserId(): Long? {

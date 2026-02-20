@@ -568,6 +568,11 @@ export const adminApi = {
   timeControl: (data: Record<string, unknown>) =>
     api.post<void>("/admin/time-control", data),
   listUsers: () => api.get<AdminUser[]>("/admin/users"),
-  userAction: (id: number, type: string) =>
-    api.post<void>(`/admin/users/${id}/action`, { type }),
+  userAction: (
+    id: number,
+    action: {
+      type: "setAdmin" | "removeAdmin" | "delete" | "setGrade";
+      grade?: number;
+    },
+  ) => api.post<void>(`/admin/users/${id}/action`, action),
 };
