@@ -1,0 +1,1129 @@
+{
+  "weapons": [
+    {
+      "code": "che_무기_01_단도",
+      "rawName": "단도",
+      "grade": 1,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_무기_02_단궁",
+      "rawName": "단궁",
+      "grade": 2,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_무기_03_단극",
+      "rawName": "단극",
+      "grade": 3,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_무기_04_목검",
+      "rawName": "목검",
+      "grade": 4,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_무기_05_죽창",
+      "rawName": "죽창",
+      "grade": 5,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_무기_06_소부",
+      "rawName": "소부",
+      "grade": 6,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_무기_07_동추",
+      "rawName": "동추",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_07_철편",
+      "rawName": "철편",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_07_철쇄",
+      "rawName": "철쇄",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_07_맥궁",
+      "rawName": "맥궁",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_08_유성추",
+      "rawName": "유성추",
+      "grade": 8,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_08_철질여골",
+      "rawName": "철질여골",
+      "grade": 8,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_09_쌍철극",
+      "rawName": "쌍철극",
+      "grade": 9,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_09_동호비궁",
+      "rawName": "동호비궁",
+      "grade": 9,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_10_삼첨도",
+      "rawName": "삼첨도",
+      "grade": 10,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_10_대부",
+      "rawName": "대부",
+      "grade": 10,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_11_고정도",
+      "rawName": "고정도",
+      "grade": 11,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_11_이광궁",
+      "rawName": "이광궁",
+      "grade": 11,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_12_철척사모",
+      "rawName": "철척사모",
+      "grade": 12,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_12_칠성검",
+      "rawName": "칠성검",
+      "grade": 12,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_13_사모",
+      "rawName": "사모",
+      "grade": 13,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_13_양유기궁",
+      "rawName": "양유기궁",
+      "grade": 13,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_14_언월도",
+      "rawName": "언월도",
+      "grade": 14,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_14_방천화극",
+      "rawName": "방천화극",
+      "grade": 14,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_15_청홍검",
+      "rawName": "청홍검",
+      "grade": 15,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_무기_15_의천검",
+      "rawName": "의천검",
+      "grade": 15,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    }
+  ],
+  "books": [
+    {
+      "code": "che_서적_01_효경전",
+      "rawName": "효경전",
+      "grade": 1,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_서적_02_회남자",
+      "rawName": "회남자",
+      "grade": 2,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_서적_03_변도론",
+      "rawName": "변도론",
+      "grade": 3,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_서적_04_건상역주",
+      "rawName": "건상역주",
+      "grade": 4,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_서적_05_여씨춘추",
+      "rawName": "여씨춘추",
+      "grade": 5,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_서적_06_사민월령",
+      "rawName": "사민월령",
+      "grade": 6,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_서적_07_위료자",
+      "rawName": "위료자",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_07_사마법",
+      "rawName": "사마법",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_07_한서",
+      "rawName": "한서",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_07_논어",
+      "rawName": "논어",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_08_전론",
+      "rawName": "전론",
+      "grade": 8,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_08_사기",
+      "rawName": "사기",
+      "grade": 8,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_09_장자",
+      "rawName": "장자",
+      "grade": 9,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_09_역경",
+      "rawName": "역경",
+      "grade": 9,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_10_시경",
+      "rawName": "시경",
+      "grade": 10,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_10_구국론",
+      "rawName": "구국론",
+      "grade": 10,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_11_상군서",
+      "rawName": "상군서",
+      "grade": 11,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_11_춘추전",
+      "rawName": "춘추전",
+      "grade": 11,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_12_산해경",
+      "rawName": "산해경",
+      "grade": 12,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_12_맹덕신서",
+      "rawName": "맹덕신서",
+      "grade": 12,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_13_관자",
+      "rawName": "관자",
+      "grade": 13,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_13_병법24편",
+      "rawName": "병법24편",
+      "grade": 13,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_14_한비자",
+      "rawName": "한비자",
+      "grade": 14,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_14_오자병법",
+      "rawName": "오자병법",
+      "grade": 14,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_15_노자",
+      "rawName": "노자",
+      "grade": 15,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_서적_15_손자병법",
+      "rawName": "손자병법",
+      "grade": 15,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    }
+  ],
+  "horses": [
+    {
+      "code": "che_명마_01_노기",
+      "rawName": "노기",
+      "grade": 1,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_명마_02_조랑",
+      "rawName": "조랑",
+      "grade": 2,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_명마_03_노새",
+      "rawName": "노새",
+      "grade": 3,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_명마_04_나귀",
+      "rawName": "나귀",
+      "grade": 4,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_명마_05_갈색마",
+      "rawName": "갈색마",
+      "grade": 5,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_명마_06_흑색마",
+      "rawName": "흑색마",
+      "grade": 6,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 0
+    },
+    {
+      "code": "che_명마_07_백마",
+      "rawName": "백마",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_07_기주마",
+      "rawName": "기주마",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_07_오환마",
+      "rawName": "오환마",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_07_백상",
+      "rawName": "백상",
+      "grade": 7,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_08_양주마",
+      "rawName": "양주마",
+      "grade": 8,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_08_흉노마",
+      "rawName": "흉노마",
+      "grade": 8,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_09_과하마",
+      "rawName": "과하마",
+      "grade": 9,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_09_의남백마",
+      "rawName": "의남백마",
+      "grade": 9,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_10_대완마",
+      "rawName": "대완마",
+      "grade": 10,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_10_옥추마",
+      "rawName": "옥추마",
+      "grade": 10,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_11_서량마",
+      "rawName": "서량마",
+      "grade": 11,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_11_화종마",
+      "rawName": "화종마",
+      "grade": 11,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_12_사륜거",
+      "rawName": "사륜거",
+      "grade": 12,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_12_옥란백용구",
+      "rawName": "옥란백용구",
+      "grade": 12,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_13_절영",
+      "rawName": "절영",
+      "grade": 13,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_13_적로",
+      "rawName": "적로",
+      "grade": 13,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_14_적란마",
+      "rawName": "적란마",
+      "grade": 14,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_14_조황비전",
+      "rawName": "조황비전",
+      "grade": 14,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_15_한혈마",
+      "rawName": "한혈마",
+      "grade": 15,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    },
+    {
+      "code": "che_명마_15_적토마",
+      "rawName": "적토마",
+      "grade": 15,
+      "cost": 1000,
+      "buyable": true,
+      "rarity": 2
+    }
+  ],
+  "misc": [
+    {
+      "code": "che_치료_환약",
+      "rawName": "환약",
+      "info": "턴 실행 전 부상 회복. 3회용",
+      "cost": 200,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 3,
+      "effect": "preTurnHeal",
+      "value": 0
+    },
+    {
+      "code": "che_저격_수극",
+      "rawName": "수극",
+      "info": "전투 개시 시 저격. 1회용",
+      "cost": 1000,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 1,
+      "effect": "battleSnipe",
+      "value": 0
+    },
+    {
+      "code": "che_사기_탁주",
+      "rawName": "탁주",
+      "info": "사기 +30(한도 내). 1회용",
+      "cost": 1000,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 1,
+      "effect": "battleAtmos",
+      "value": 30
+    },
+    {
+      "code": "che_훈련_청주",
+      "rawName": "청주",
+      "info": "훈련 +40(한도 내). 1회용",
+      "cost": 1000,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 1,
+      "effect": "battleTrain",
+      "value": 40
+    },
+    {
+      "code": "che_계략_이추",
+      "rawName": "이추",
+      "info": "계략 성공률 +20%p. 1회용",
+      "cost": 1000,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 1,
+      "effect": "sabotageSuccess",
+      "value": 0,
+      "stat": { "domesticSabotageSuccess": 0.2 }
+    },
+    {
+      "code": "che_계략_향낭",
+      "rawName": "향낭",
+      "info": "계략 성공률 +50%p. 1회용",
+      "cost": 3000,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 1,
+      "effect": "sabotageSuccess",
+      "value": 0,
+      "stat": { "domesticSabotageSuccess": 0.5 }
+    },
+
+    {
+      "code": "che_의술_정력견혈산",
+      "rawName": "정력견혈산",
+      "info": "매 턴 자신+도시장수 부상 회복, 전투 40% 치료 발동",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_의술_청낭서",
+      "rawName": "청낭서",
+      "info": "매 턴 자신+도시장수 부상 회복, 전투 40% 치료 발동",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_의술_태평청령",
+      "rawName": "태평청령",
+      "info": "매 턴 자신+도시장수 부상 회복, 전투 40% 치료 발동",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_의술_상한잡병론",
+      "rawName": "상한잡병론",
+      "info": "매 턴 자신+도시장수 부상 회복, 전투 40% 치료 발동",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+
+    {
+      "code": "che_보물_도기",
+      "rawName": "도기",
+      "info": "판매 시 장수+국고에 금/쌀 추가 (10000+5000×(경과년/2))",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "treasure"
+    },
+    {
+      "code": "che_조달_주판",
+      "rawName": "주판",
+      "info": "물자조달 성공 확률 +20%p, 획득량 +100%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "domesticSupplySuccess": 0.2, "domesticSupplyScore": 2.0 }
+    },
+    {
+      "code": "che_내정_납금박산로",
+      "rawName": "납금박산로",
+      "info": "내정 성공률 +15%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "domesticSuccess": 0.15 }
+    },
+    {
+      "code": "che_전략_평만지장도",
+      "rawName": "평만지장도",
+      "info": "국가전략 재사용 대기 기간 -20%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "strategicDelay": 0.8 }
+    },
+    {
+      "code": "che_숙련_동작",
+      "rawName": "동작",
+      "info": "숙련 +20%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "dexMultiplier": 1.2 }
+    },
+    {
+      "code": "che_명성_구석",
+      "rawName": "구석",
+      "info": "명성 +20%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "expMultiplier": 1.2 }
+    },
+
+    {
+      "code": "che_척사_오악진형도",
+      "rawName": "오악진형도",
+      "info": "지역·도시 병종 상대 대미지 +15%, 피해 -15%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "antiRegional"
+    },
+    {
+      "code": "che_격노_구정신단경",
+      "rawName": "구정신단경",
+      "info": "상대 필살 시 격노 발동, 격노마다 대미지 5% 추가 중첩",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "rage"
+    },
+    {
+      "code": "che_징병_낙주",
+      "rawName": "낙주",
+      "info": "징·모병비 -30%, 통솔 보정 +15%, 징병시 인구 변동 없음",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "leadershipPercent": 0.15 },
+      "triggerType": "recruit"
+    },
+    {
+      "code": "che_저격_매화수전",
+      "rawName": "매화수전",
+      "info": "새로운 상대 시 50% 확률로 저격 발동, 사기+20",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "snipe"
+    },
+    {
+      "code": "che_저격_비도",
+      "rawName": "비도",
+      "info": "새로운 상대 시 50% 확률로 저격 발동, 사기+20",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "snipe"
+    },
+    {
+      "code": "che_위압_조목삭",
+      "rawName": "조목삭",
+      "info": "첫 페이즈 위압 발동(적 공격·회피 불가, 사기 5 감소)",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "intimidate"
+    },
+    {
+      "code": "che_공성_묵자",
+      "rawName": "묵자",
+      "info": "성벽 공격 시 대미지 +50%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "siege"
+    },
+    {
+      "code": "che_집중_전국책",
+      "rawName": "전국책",
+      "info": "계략 성공 시 대미지 +30%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "magicSuccessDamage": 1.3 }
+    },
+    {
+      "code": "che_환술_논어집해",
+      "rawName": "논어집해",
+      "info": "계략 성공 확률 +10%p, 계략 성공 시 대미지 +20%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "magicSuccessProb": 0.1, "magicSuccessDamage": 1.2 }
+    },
+
+    {
+      "code": "che_진압_박혁론",
+      "rawName": "박혁론",
+      "info": "상대의 계략 되돌림, 격노 불가",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "suppress"
+    },
+    {
+      "code": "che_부적_태현청생부",
+      "rawName": "태현청생부",
+      "info": "저격 불가, 부상 없음",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "injuryProb": -1.0 },
+      "triggerType": "antiSnipe"
+    },
+    {
+      "code": "che_저지_삼황내문",
+      "rawName": "삼황내문",
+      "info": "수비 시 첫 페이즈 저지, 50% 확률로 2 페이즈 저지",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "block"
+    },
+    {
+      "code": "che_행동_서촉지형도",
+      "rawName": "서촉지형도",
+      "info": "공격 시 페이즈 +2",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "initWarPhase": 2.0 }
+    },
+    {
+      "code": "che_간파_노군입산부",
+      "rawName": "노군입산부",
+      "info": "상대 회피 확률 -25%p, 상대 필살 확률 -10%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "opposeStat": { "dodgeChance": -0.25, "criticalChance": -0.1 }
+    },
+    {
+      "code": "che_불굴_상편",
+      "rawName": "상편",
+      "info": "남은 병력이 적을수록 공격력 증가. 최대 +60%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "perseverance"
+    },
+    {
+      "code": "che_약탈_옥벽",
+      "rawName": "옥벽",
+      "info": "새로운 상대 시 20% 확률로 금·쌀 10% 약탈",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "plunder"
+    },
+
+    {
+      "code": "che_농성_주서음부",
+      "rawName": "주서음부",
+      "info": "주둔 도시 계략 방어 +30%p, 상대 계략 시도/성공 확률 -10%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "sabotageDefence": 0.3 },
+      "opposeStat": { "magicTrialProb": -0.1, "magicSuccessProb": -0.1 }
+    },
+    {
+      "code": "che_농성_위공자병법",
+      "rawName": "위공자병법",
+      "info": "주둔 도시 계략 방어 +30%p, 상대 계략 시도/성공 확률 -10%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "sabotageDefence": 0.3 },
+      "opposeStat": { "magicTrialProb": -0.1, "magicSuccessProb": -0.1 }
+    },
+    {
+      "code": "che_계략_육도",
+      "rawName": "육도",
+      "info": "계략 성공률 +20%p, 계략 시도/성공 확률 +10%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": {
+        "magicTrialProb": 0.1,
+        "magicSuccessProb": 0.1,
+        "domesticSabotageSuccess": 0.2
+      }
+    },
+    {
+      "code": "che_계략_삼략",
+      "rawName": "삼략",
+      "info": "계략 성공률 +20%p, 계략 시도/성공 확률 +10%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": {
+        "magicTrialProb": 0.1,
+        "magicSuccessProb": 0.1,
+        "domesticSabotageSuccess": 0.2
+      }
+    },
+
+    {
+      "code": "che_상성보정_과실주",
+      "rawName": "과실주",
+      "info": "대등/유리한 병종 전투시 공격력 +10%, 피해 -10%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "typeAdvantage"
+    },
+    {
+      "code": "che_능력치_지력_이강주",
+      "rawName": "이강주",
+      "info": "지력 +5 +(4년마다 +1)",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "intel": 5.0 },
+      "triggerType": "progressiveStat"
+    },
+    {
+      "code": "che_능력치_무력_두강주",
+      "rawName": "두강주",
+      "info": "무력 +5 +(4년마다 +1)",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "strength": 5.0 },
+      "triggerType": "progressiveStat"
+    },
+    {
+      "code": "che_능력치_통솔_보령압주",
+      "rawName": "보령압주",
+      "info": "통솔 +5 +(4년마다 +1)",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "leadership": 5.0 },
+      "triggerType": "progressiveStat"
+    },
+    {
+      "code": "che_훈련_철벽서",
+      "rawName": "철벽서",
+      "info": "훈련 보정 +15",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusTrain": 15.0 }
+    },
+    {
+      "code": "che_훈련_단결도",
+      "rawName": "단결도",
+      "info": "훈련 보정 +15",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusTrain": 15.0 }
+    },
+    {
+      "code": "che_사기_춘화첩",
+      "rawName": "춘화첩",
+      "info": "사기 보정 +15",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusAtmos": 15.0 }
+    },
+    {
+      "code": "che_사기_초선화",
+      "rawName": "초선화",
+      "info": "사기 보정 +15",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusAtmos": 15.0 }
+    },
+    {
+      "code": "che_회피_태평요술",
+      "rawName": "태평요술",
+      "info": "회피 확률 +20%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "dodgeChance": 0.2 }
+    },
+    {
+      "code": "che_필살_둔갑천서",
+      "rawName": "둔갑천서",
+      "info": "필살 확률 +20%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "criticalChance": 0.2 }
+    }
+  ]
+}

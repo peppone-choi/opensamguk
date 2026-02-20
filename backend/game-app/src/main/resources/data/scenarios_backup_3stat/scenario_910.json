@@ -1,0 +1,376 @@
+{
+  "title": "【공백지】 거울세계",
+  "startYear": 180,
+  "map": {
+    "mapName": "cr",
+    "unitSet": "cr"
+  },
+  "history": [
+    "<C>●</>180년 1월:<L><b>【이벤트】</b></>비슷하지만 조금 다른 곳입니다."
+  ],
+  "stat": {
+    "total": 200,
+    "min": 25,
+    "max": 95
+  },
+  "ignoreDefaultEvents": true,
+  "const": {
+    "joinRuinedNPCProp": 0,
+    "npcBanMessageProb": 1,
+    "availableGeneralCommand": {
+      "개인": [
+        "휴식",
+        "che_요양",
+        "che_단련",
+        "che_숙련전환",
+        "che_견문",
+        "che_은퇴",
+        "che_장비매매",
+        "che_군량매매",
+        "che_내정특기초기화",
+        "che_전투특기초기화"
+      ],
+      "내정": [
+        "che_농지개간",
+        "che_상업투자",
+        "che_기술연구",
+        "che_수비강화",
+        "che_성벽보수",
+        "che_치안강화",
+        "che_정착장려",
+        "che_주민선정",
+        "che_물자조달"
+      ],
+      "군사": [
+        "che_징병",
+        "che_모병",
+        "che_훈련",
+        "che_사기진작",
+        "cr_맹훈련",
+        "che_출병",
+        "che_집합",
+        "che_소집해제",
+        "che_첩보"
+      ],
+      "인사": [
+        "che_이동",
+        "che_강행",
+        "che_인재탐색",
+        "che_귀환",
+        "che_랜덤임관"
+      ],
+      "계략": ["che_선동", "che_탈취", "che_파괴", "che_화계"],
+      "국가": [
+        "che_증여",
+        "che_헌납",
+        "che_하야",
+        "che_거병",
+        "cr_건국",
+        "che_선양",
+        "che_해산"
+      ]
+    },
+    "availableChiefCommand": {
+      "휴식": ["휴식"],
+      "인사": ["che_발령", "che_포상", "che_몰수"],
+      "외교": [
+        "che_물자원조",
+        "che_불가침제의",
+        "che_선전포고",
+        "che_종전제의",
+        "che_불가침파기제의"
+      ],
+      "특수": ["che_초토화", "che_천도", "cr_인구이동"],
+      "전략": [
+        "che_필사즉생",
+        "che_백성동원",
+        "che_수몰",
+        "che_허보",
+        "che_의병모집",
+        "che_이호경식",
+        "che_급습"
+      ],
+      "기타": ["che_피장파장", "che_국기변경", "che_국호변경"]
+    },
+    "availableSpecialWar": [
+      "che_귀병",
+      "che_신산",
+      "che_환술",
+      "che_집중",
+      "che_신중",
+      "che_반계",
+      "che_보병",
+      "che_궁병",
+      "che_기병",
+      "che_공성",
+      "che_돌격",
+      "che_무쌍",
+      "che_견고",
+      "che_위압",
+      "che_저격",
+      "che_필살",
+      "che_징병",
+      "che_의술",
+      "che_격노"
+    ],
+    "allItems": {
+      "horse": {
+        "che_명마_01_노기": 0,
+        "che_명마_02_조랑": 0,
+        "che_명마_03_노새": 0,
+        "che_명마_04_나귀": 0,
+        "che_명마_05_갈색마": 0,
+        "che_명마_06_흑색마": 0,
+        "che_명마_07_백마": 2,
+        "che_명마_07_기주마": 2,
+        "che_명마_07_오환마": 2,
+        "che_명마_07_백상": 2,
+        "che_명마_08_양주마": 2,
+        "che_명마_08_흉노마": 2,
+        "che_명마_09_과하마": 2,
+        "che_명마_09_의남백마": 2,
+        "che_명마_10_대완마": 2,
+        "che_명마_10_옥추마": 2,
+        "che_명마_11_서량마": 2,
+        "che_명마_11_화종마": 2,
+        "che_명마_12_사륜거": 2,
+        "che_명마_12_옥란백용구": 2,
+        "che_명마_13_절영": 2,
+        "che_명마_13_적로": 2,
+        "che_명마_14_적란마": 2,
+        "che_명마_14_조황비전": 2,
+        "che_명마_15_한혈마": 2,
+        "che_명마_15_적토마": 2
+      },
+      "weapon": {
+        "che_무기_01_단도": 0,
+        "che_무기_02_단궁": 0,
+        "che_무기_03_단극": 0,
+        "che_무기_04_목검": 0,
+        "che_무기_05_죽창": 0,
+        "che_무기_06_소부": 0,
+        "che_무기_07_동추": 2,
+        "che_무기_07_철편": 2,
+        "che_무기_07_철쇄": 2,
+        "che_무기_07_맥궁": 2,
+        "che_무기_08_유성추": 2,
+        "che_무기_08_철질여골": 2,
+        "che_무기_09_쌍철극": 2,
+        "che_무기_09_동호비궁": 2,
+        "che_무기_10_삼첨도": 2,
+        "che_무기_10_대부": 2,
+        "che_무기_11_고정도": 2,
+        "che_무기_11_이광궁": 2,
+        "che_무기_12_철척사모": 2,
+        "che_무기_12_칠성검": 2,
+        "che_무기_13_사모": 2,
+        "che_무기_13_양유기궁": 2,
+        "che_무기_14_언월도": 2,
+        "che_무기_14_방천화극": 2,
+        "che_무기_15_청홍검": 2,
+        "che_무기_15_의천검": 2
+      },
+      "book": {
+        "che_서적_01_효경전": 0,
+        "che_서적_02_회남자": 0,
+        "che_서적_03_변도론": 0,
+        "che_서적_04_건상역주": 0,
+        "che_서적_05_여씨춘추": 0,
+        "che_서적_06_사민월령": 0,
+        "che_서적_07_위료자": 2,
+        "che_서적_07_사마법": 2,
+        "che_서적_07_한서": 2,
+        "che_서적_07_논어": 2,
+        "che_서적_08_전론": 2,
+        "che_서적_08_사기": 2,
+        "che_서적_09_장자": 2,
+        "che_서적_09_역경": 2,
+        "che_서적_10_시경": 2,
+        "che_서적_10_구국론": 2,
+        "che_서적_11_상군서": 2,
+        "che_서적_11_춘추전": 2,
+        "che_서적_12_산해경": 2,
+        "che_서적_12_맹덕신서": 2,
+        "che_서적_13_관자": 2,
+        "che_서적_13_병법24편": 2,
+        "che_서적_14_한비자": 2,
+        "che_서적_14_오자병법": 2,
+        "che_서적_15_노자": 2,
+        "che_서적_15_손자병법": 2
+      },
+      "item": {
+        "che_치료_환약": 0,
+        "che_저격_수극": 0,
+        "che_사기_탁주": 0,
+        "che_훈련_청주": 0,
+        "che_계략_이추": 0,
+        "che_계략_향낭": 0,
+        "event_전투특기_격노": 0,
+        "event_전투특기_견고": 0,
+        "event_전투특기_공성": 0,
+        "event_전투특기_궁병": 0,
+        "event_전투특기_귀병": 0,
+        "event_전투특기_기병": 0,
+        "event_전투특기_돌격": 0,
+        "event_전투특기_무쌍": 0,
+        "event_전투특기_반계": 0,
+        "event_전투특기_보병": 0,
+        "event_전투특기_신산": 0,
+        "event_전투특기_신중": 0,
+        "event_전투특기_위압": 0,
+        "event_전투특기_의술": 0,
+        "event_전투특기_저격": 0,
+        "event_전투특기_집중": 0,
+        "event_전투특기_징병": 0,
+        "event_전투특기_필살": 0,
+        "event_전투특기_환술": 0
+      }
+    }
+  },
+  "defaultInitialEvents": [
+    [true, ["NoticeToHistoryLog", "<S>2년간 거병 및 건국이 가능합니다.</>", 6]]
+  ],
+  "events": [
+    [
+      "month",
+      1000,
+      ["or", ["Date", "==", null, 12], ["Date", "==", null, 6]],
+      ["CreateManyNPC", 10, 10],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      1000,
+      ["Date", "==", 181, 1],
+      ["RaiseNPCNation"],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      999,
+      ["Date", "==", 181, 1],
+      ["OpenNationBetting", 4, 5000],
+      ["OpenNationBetting", 1, 2000],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      999,
+      ["and", ["Date", ">=", 183, 1], ["RemainNation", "<=", 8]],
+      ["OpenNationBetting", 1, 1000],
+      ["DeleteEvent"]
+    ],
+    [
+      "destroy_nation",
+      1000,
+      ["and", ["Date", ">=", 183, 1], ["RemainNation", "==", 1]],
+      ["BlockScoutAction"],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      1000,
+      true,
+      [
+        "ChangeCity",
+        "all",
+        {
+          "trade": 100
+        }
+      ]
+    ],
+    [
+      "destroy_nation",
+      1000,
+      ["and", ["Date", ">=", 183, 1], ["RemainNation", "==", 1]],
+      ["BlockScoutAction"],
+      ["DeleteEvent"]
+    ],
+    ["pre_month", 9000, true, ["ProcessWarIncome"]],
+    [
+      "month",
+      9000,
+      ["Date", "==", null, 1],
+      ["MergeInheritPointRank"],
+      ["ProcessSemiAnnual", "gold"],
+      ["ProcessIncome", "gold"],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"],
+      ["RandomizeCityTradeRate"],
+      ["NewYear"],
+      ["AssignGeneralSpeciality"]
+    ],
+    [
+      "month",
+      9000,
+      ["Date", "==", null, 4],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"]
+    ],
+    [
+      "month",
+      9000,
+      ["Date", "==", null, 7],
+      ["MergeInheritPointRank"],
+      ["ProcessSemiAnnual", "rice"],
+      ["ProcessIncome", "rice"],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"],
+      ["RandomizeCityTradeRate"]
+    ],
+    [
+      "month",
+      9000,
+      ["Date", "==", null, 10],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"]
+    ],
+    [
+      "month",
+      2000,
+      ["DateRelative", "==", 1, 1],
+      ["NoticeToHistoryLog", "<S>2년 뒤 출병 제한이 풀립니다.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      2000,
+      ["DateRelative", "==", 2, 1],
+      ["NoticeToHistoryLog", "<S>1년 뒤 출병 제한이 풀립니다.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      2000,
+      ["DateRelative", "==", 2, 7],
+      [
+        "NoticeToHistoryLog",
+        "<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>",
+        6
+      ],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      2000,
+      ["DateRelative", "==", 3, 1],
+      ["NoticeToHistoryLog", "<S>출병 제한이 풀렸습니다.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month",
+      2000,
+      ["DateRelative", "==", 4, 1],
+      [
+        "NoticeToHistoryLog",
+        "<S>이제부터 하야, 망명시 패널티가 적용됩니다.</>",
+        6
+      ],
+      ["AddGlobalBetray", 1, 0],
+      ["AddGlobalBetray", 1, 1],
+      ["DeleteEvent"]
+    ],
+    ["month", 1000, true, ["UpdateNationLevel"], ["ProvideNPCTroopLeader"]],
+    ["united", 5000, true, ["MergeInheritPointRank"]]
+  ]
+}

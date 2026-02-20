@@ -23,7 +23,9 @@ Base URL: https://storage.hided.net/gitea/devsam/image/raw/branch/main/
 ### Backend
 
 ```bash
-cd backend && ./gradlew bootRun
+cd backend && ./gradlew :gateway-app:bootRun
+# game instance
+cd backend && ./gradlew :game-app:bootRun
 ```
 
 ### Frontend
@@ -59,10 +61,11 @@ docker-compose up -d
 
 ## Architecture Decisions
 
-- **Single App**: Spring Boot handles both gateway (auth) and game logic
+- **Multi-Process**: Split into `gateway-app` + versioned `game-app` JVMs
 - **World = Profile**: `World` entity replaces core2026's Profile/Gateway model
-- **Logical Isolation**: All game entities use `world_id` FK (no schema-per-profile)
-- **Turn Engine**: `@Scheduled` in Spring, processes each active World sequentially
+- **Logical Isolation**: Game entities use `world_id` FK (no schema-per-profile)
+- **Version Pinning**: `world_state.commit_sha` + `world_state.game_version` pin each world to a game build
+- **Turn Engine**: Runs inside `game-app` per-version JVM and processes attached worlds
 - **Field Naming**: Follow core2026 conventions (`intel` not `intelligence`, `crew`/`crewType`/`train`/`atmos`)
 
 ## Reference
@@ -108,9 +111,9 @@ docker-compose up -d
 
 ## Game Data
 
-- `backend/src/main/resources/data/game_const.json` - 도시 레벨/지역 매핑, 초기값
-- `backend/src/main/resources/data/officer_ranks.json` - 관직 체계
-- `backend/src/main/resources/data/maps/` - 맵 데이터 (che, miniche, cr 등 8종)
+- `backend/game-app/src/main/resources/data/game_const.json` - 도시 레벨/지역 매핑, 초기값
+- `backend/game-app/src/main/resources/data/officer_ranks.json` - 관직 체계
+- `backend/game-app/src/main/resources/data/maps/` - 맵 데이터 (che, miniche, cr 등 8종)
 
 ## Skills
 

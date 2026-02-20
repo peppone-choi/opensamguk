@@ -21,7 +21,10 @@ tmp/
 
 # Backend build
 backend/build/
+backend/**/build/
 backend/.gradle/
+backend/**/.gradle/
+backend/**/.kotlin/
 *.jar
 *.war
 

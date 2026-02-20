@@ -1,0 +1,5 @@
+ALTER TABLE world_state
+    ADD COLUMN IF NOT EXISTS commit_sha TEXT NOT NULL DEFAULT 'local';
+
+ALTER TABLE world_state
+    ADD COLUMN IF NOT EXISTS game_version TEXT NOT NULL DEFAULT 'dev';
