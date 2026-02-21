@@ -15,6 +15,8 @@ export interface WorldState {
   id: number;
   name: string;
   scenarioCode: string;
+  commitSha: string;
+  gameVersion: string;
   currentYear: number;
   currentMonth: number;
   tickSeconds: number;

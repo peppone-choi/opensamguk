@@ -81,7 +81,10 @@ export default function LobbyPage() {
     if (!selectedScenario) return;
     setCreating(true);
     try {
-      const world = await createWorld(selectedScenario, worldName.trim());
+      const world = await createWorld({
+        scenarioCode: selectedScenario,
+        name: worldName.trim(),
+      });
       setCurrentWorld(world);
       clearMyGeneral();
       toast.success("월드가 생성되었습니다.");

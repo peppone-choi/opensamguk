@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type { CityConst } from "@/types";
 
 interface Tooltip {
@@ -32,6 +33,13 @@ export default function MapPage() {
       loadMap(mapCode);
     }
   }, [currentWorld, loadAll, loadMap]);
+
+  useEffect(() => {
+    if (!currentWorld) return;
+    return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+      loadAll(currentWorld.id);
+    });
+  }, [currentWorld, loadAll]);
 
   const nationMap = useMemo(
     () => new Map(nations.map((n) => [n.id, n])),

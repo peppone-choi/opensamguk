@@ -5,6 +5,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { messageApi } from "@/lib/gameApi";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type { MailboxType, Message } from "@/types";
 import { Mail, PenLine, Send, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
@@ -85,6 +86,28 @@ export default function MessagesPage() {
     if (!myGeneral || !currentWorld) return;
     fetchMessages();
   }, [myGeneral, currentWorld, fetchMessages]);
+
+  useEffect(() => {
+    if (!currentWorld || !myGeneral) return;
+
+    const unsubTurn = subscribeWebSocket(
+      `/topic/world/${currentWorld.id}/turn`,
+      () => {
+        fetchMessages();
+      },
+    );
+    const unsubMessage = subscribeWebSocket(
+      `/topic/world/${currentWorld.id}/message`,
+      () => {
+        fetchMessages();
+      },
+    );
+
+    return () => {
+      unsubTurn();
+      unsubMessage();
+    };
+  }, [currentWorld, myGeneral, fetchMessages]);
 
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { cityApi, frontApi, historyApi, nationApi } from "@/lib/gameApi";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type { City, GeneralFrontInfo, Message, Nation } from "@/types";
 import { User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +42,7 @@ export default function GeneralPage() {
     });
   }, [currentWorld, fetchMyGeneral]);
 
-  useEffect(() => {
+  const loadGeneralData = useCallback(async () => {
     if (!currentWorld || !myGeneral) return;
 
     const cityPromise =
@@ -53,22 +54,33 @@ export default function GeneralPage() {
         ? nationApi.get(myGeneral.nationId).then((res) => res.data)
         : Promise.resolve(null);
 
-    Promise.all([
-      frontApi.getInfo(currentWorld.id).then((res) => res.data.general),
-      historyApi.getGeneralRecords(myGeneral.id).then((res) => res.data),
-      cityPromise,
-      nationPromise,
-    ])
-      .then(([generalFront, history, cityData, nationData]) => {
-        setFrontInfo(generalFront);
-        setRecords(history);
-        setCity(cityData);
-        setNation(nationData);
-      })
-      .catch(() => {
-        setError("나의 장수 정보를 불러오지 못했습니다.");
-      });
+    try {
+      const [generalFront, history, cityData, nationData] = await Promise.all([
+        frontApi.getInfo(currentWorld.id).then((res) => res.data.general),
+        historyApi.getGeneralRecords(myGeneral.id).then((res) => res.data),
+        cityPromise,
+        nationPromise,
+      ]);
+      setFrontInfo(generalFront);
+      setRecords(history);
+      setCity(cityData);
+      setNation(nationData);
+    } catch {
+      setError("나의 장수 정보를 불러오지 못했습니다.");
+    }
   }, [currentWorld, myGeneral]);
+
+  useEffect(() => {
+    loadGeneralData();
+  }, [loadGeneralData]);
+
+  useEffect(() => {
+    if (!currentWorld || !myGeneral) return;
+    return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+      fetchMyGeneral(currentWorld.id).catch(() => {});
+      loadGeneralData();
+    });
+  }, [currentWorld, myGeneral, fetchMyGeneral, loadGeneralData]);
 
   const biographyRows = useMemo(
     () =>

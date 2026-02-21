@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { frontApi } from "@/lib/gameApi";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type { FrontInfoResponse } from "@/types";
 import { MapViewer } from "@/components/game/map-viewer";
 import { CommandPanel } from "@/components/game/command-panel";
@@ -25,6 +26,7 @@ export default function GameDashboard() {
   const [lastRecordId, setLastRecordId] = useState<number | undefined>();
   const [lastHistoryId, setLastHistoryId] = useState<number | undefined>();
   const [loading, setLoading] = useState(true);
+  const loadFrontInfoRef = useRef<() => Promise<void>>(async () => {});
 
   const [mobileTab, setMobileTab] = useState<
     "map" | "commands" | "status" | "world" | "messages"
@@ -62,8 +64,34 @@ export default function GameDashboard() {
   }, [currentWorld, lastRecordId, lastHistoryId]);
 
   useEffect(() => {
+    loadFrontInfoRef.current = loadFrontInfo;
+  }, [loadFrontInfo]);
+
+  useEffect(() => {
     loadFrontInfo();
-  }, [currentWorld]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadFrontInfo]);
+
+  useEffect(() => {
+    if (!currentWorld) return;
+
+    const unsubTurn = subscribeWebSocket(
+      `/topic/world/${currentWorld.id}/turn`,
+      () => {
+        loadFrontInfoRef.current().catch(() => {});
+      },
+    );
+    const unsubMessage = subscribeWebSocket(
+      `/topic/world/${currentWorld.id}/message`,
+      () => {
+        loadFrontInfoRef.current().catch(() => {});
+      },
+    );
+
+    return () => {
+      unsubTurn();
+      unsubMessage();
+    };
+  }, [currentWorld]);
 
   // Compute user / NPC gen counts from genCount array
   const genCounts = useMemo(() => {

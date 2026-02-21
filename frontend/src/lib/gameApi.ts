@@ -47,14 +47,30 @@ import type {
 export const worldApi = {
   list: () => api.get<WorldState[]>("/worlds"),
   get: (id: number) => api.get<WorldState>(`/worlds/${id}`),
-  create: (scenarioCode: string, name?: string) =>
-    api.post<WorldState>("/worlds", { scenarioCode, name }),
+  create: (payload: {
+    scenarioCode: string;
+    name?: string;
+    tickSeconds?: number;
+    commitSha?: string;
+    gameVersion?: string;
+  }) => api.post<WorldState>("/worlds", payload),
   delete: (id: number) => api.delete<void>(`/worlds/${id}`),
   reset: (id: number, scenarioCode?: string) =>
     api.post<WorldState>(
       `/worlds/${id}/reset`,
       scenarioCode ? { scenarioCode } : {},
     ),
+  activate: (
+    id: number,
+    payload?: {
+      commitSha?: string;
+      gameVersion?: string;
+      jarPath?: string;
+      port?: number;
+      javaCommand?: string;
+    },
+  ) => api.post<void>(`/worlds/${id}/activate`, payload ?? {}),
+  deactivate: (id: number) => api.post<void>(`/worlds/${id}/deactivate`),
 };
 
 // Nation API

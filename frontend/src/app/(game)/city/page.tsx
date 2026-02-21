@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { cityApi, generalApi, mapApi, nationApi } from "@/lib/gameApi";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type { City, General, Nation } from "@/types";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -129,36 +130,51 @@ export default function CityPage() {
     }
   }, [currentWorld, myGeneral, fetchMyGeneral]);
 
-  useEffect(() => {
+  const loadCityData = useCallback(async () => {
     if (!currentWorld || !myGeneral) return;
 
     const mapCode =
       (currentWorld.config as Record<string, string>)?.mapCode ?? "che";
 
-    Promise.all([
-      nationApi.listByWorld(currentWorld.id),
-      cityApi.listByWorld(currentWorld.id),
-      generalApi.listByWorld(currentWorld.id),
-      mapApi.get(mapCode),
-      myGeneral.nationId > 0
-        ? nationApi.get(myGeneral.nationId)
-        : Promise.resolve({ data: null }),
-    ])
-      .then(([nationsRes, citiesRes, generalsRes, mapRes, myNationRes]) => {
-        setNations(nationsRes.data);
-        setCities(citiesRes.data);
-        setGenerals(generalsRes.data);
-        setNation(myNationRes.data);
+    try {
+      const [nationsRes, citiesRes, generalsRes, mapRes, myNationRes] =
+        await Promise.all([
+          nationApi.listByWorld(currentWorld.id),
+          cityApi.listByWorld(currentWorld.id),
+          generalApi.listByWorld(currentWorld.id),
+          mapApi.get(mapCode),
+          myGeneral.nationId > 0
+            ? nationApi.get(myGeneral.nationId)
+            : Promise.resolve({ data: null }),
+        ]);
 
-        const next = new Map<number, number[]>();
-        for (const cityConst of mapRes.data.cities) {
-          next.set(cityConst.id, cityConst.connections ?? []);
-        }
-        setAdjacencyMap(next);
-      })
-      .catch(() => setError("도시 정보를 불러올 수 없습니다."))
-      .finally(() => setLoading(false));
+      setNations(nationsRes.data);
+      setCities(citiesRes.data);
+      setGenerals(generalsRes.data);
+      setNation(myNationRes.data);
+
+      const next = new Map<number, number[]>();
+      for (const cityConst of mapRes.data.cities) {
+        next.set(cityConst.id, cityConst.connections ?? []);
+      }
+      setAdjacencyMap(next);
+    } catch {
+      setError("도시 정보를 불러올 수 없습니다.");
+    } finally {
+      setLoading(false);
+    }
   }, [currentWorld, myGeneral]);
+
+  useEffect(() => {
+    loadCityData();
+  }, [loadCityData]);
+
+  useEffect(() => {
+    if (!currentWorld || !myGeneral) return;
+    return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+      loadCityData();
+    });
+  }, [currentWorld, myGeneral, loadCityData]);
 
   const nationMap = useMemo(
     () => new Map(nations.map((n) => [n.id, n])),

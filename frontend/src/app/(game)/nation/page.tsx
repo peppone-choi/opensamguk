@@ -11,6 +11,7 @@ import {
   nationPolicyApi,
   diplomacyApi,
 } from "@/lib/gameApi";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type {
   Nation,
   General,
@@ -207,7 +208,7 @@ export default function NationPage() {
     );
   }, [currentWorld, myGeneral, fetchMyGeneral]);
 
-  useEffect(() => {
+  const loadNationData = useCallback(async () => {
     if (!myGeneral?.nationId || !currentWorld) return;
     const nId = myGeneral.nationId;
     const wId = currentWorld.id;
@@ -226,25 +227,38 @@ export default function NationPage() {
         ]
       : [];
 
-    Promise.all([...base, ...extra])
-      .then((res) => {
-        setNation((res[0] as { data: Nation }).data);
-        setGenerals((res[1] as { data: General[] }).data);
-        setCities((res[2] as { data: City[] }).data);
-        if (off) {
-          const pol = (res[3] as { data: NationPolicyInfo }).data;
-          setPolicy(pol);
-          setEditNotice(pol.notice ?? "");
-          setEditRate(pol.rate ?? 20);
-          setEditBill(pol.bill ?? 100);
-          setEditSecretLimit(pol.secretLimit ?? 12);
-          setDiplomacyList((res[4] as { data: Diplomacy[] }).data);
-          setAllNations((res[5] as { data: Nation[] }).data);
-        }
-      })
-      .catch(() => setError("국가 정보를 불러올 수 없습니다."))
-      .finally(() => setLoading(false));
+    try {
+      const res = await Promise.all([...base, ...extra]);
+      setNation((res[0] as { data: Nation }).data);
+      setGenerals((res[1] as { data: General[] }).data);
+      setCities((res[2] as { data: City[] }).data);
+      if (off) {
+        const pol = (res[3] as { data: NationPolicyInfo }).data;
+        setPolicy(pol);
+        setEditNotice(pol.notice ?? "");
+        setEditRate(pol.rate ?? 20);
+        setEditBill(pol.bill ?? 100);
+        setEditSecretLimit(pol.secretLimit ?? 12);
+        setDiplomacyList((res[4] as { data: Diplomacy[] }).data);
+        setAllNations((res[5] as { data: Nation[] }).data);
+      }
+    } catch {
+      setError("국가 정보를 불러올 수 없습니다.");
+    } finally {
+      setLoading(false);
+    }
   }, [myGeneral?.nationId, myGeneral?.officerLevel, currentWorld]);
+
+  useEffect(() => {
+    loadNationData();
+  }, [loadNationData]);
+
+  useEffect(() => {
+    if (!currentWorld || !myGeneral?.nationId) return;
+    return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
+      loadNationData();
+    });
+  }, [currentWorld, myGeneral?.nationId, loadNationData]);
 
   const handleTabChange = (value: string) => {
     router.replace(value === "info" ? "/nation" : `/nation?tab=${value}`, {
