@@ -29,6 +29,7 @@ class SecurityConfig(
                 auth
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/public/**").permitAll()
+                    .requestMatchers("/internal/**").permitAll()
                     .requestMatchers("/ws/**").permitAll()
                     .requestMatchers("/api/admin/**").authenticated()
                     .anyRequest().authenticated()

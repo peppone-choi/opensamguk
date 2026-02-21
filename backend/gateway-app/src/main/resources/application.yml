@@ -31,4 +31,4 @@ app:
 gateway:
   orchestrator:
     restore-active-worlds: true
-    health-timeout-ms: 30000
+    health-timeout-ms: 120000

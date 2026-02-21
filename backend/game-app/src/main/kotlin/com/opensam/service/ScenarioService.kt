@@ -265,7 +265,7 @@ class ScenarioService(
     private fun loadAllScenarios() {
         if (scenarios.isNotEmpty()) return
         val resolver = PathMatchingResourcePatternResolver()
-        val resources = resolver.getResources("classpath:data/scenarios/scenario_*.json")
+        val resources = resolver.getResources("classpath*:data/scenarios/scenario_*.json")
         for (resource in resources) {
             val filename = resource.filename ?: continue
             val code = filename.removePrefix("scenario_").removeSuffix(".json")
@@ -276,7 +276,7 @@ class ScenarioService(
 
     private fun loadDefaults(): ScenarioData {
         val resource = PathMatchingResourcePatternResolver()
-            .getResource("classpath:data/scenarios/default.json")
+            .getResource("classpath*:data/scenarios/default.json")
         return try {
             objectMapper.readValue(resource.inputStream)
         } catch (_: Exception) {
