@@ -10,8 +10,10 @@ import com.opensam.engine.trigger.TriggerEnv
 import com.opensam.engine.trigger.buildPreTurnTriggers
 import com.opensam.entity.WorldState
 import com.opensam.repository.*
+import com.opensam.service.AuctionService
 import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
+import com.opensam.service.TournamentService
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -49,6 +51,9 @@ class TurnService(
     private val npcSpawnService: NpcSpawnService,
     private val unificationService: UnificationService,
     private val inheritanceService: InheritanceService,
+    private val yearbookService: YearbookService,
+    private val auctionService: AuctionService,
+    private val tournamentService: TournamentService,
     private val generalAI: GeneralAI,
     private val nationAI: NationAI,
 ) {
@@ -59,8 +64,13 @@ class TurnService(
         val now = OffsetDateTime.now()
         val tickDuration = Duration.ofSeconds(world.tickSeconds.toLong())
         var nextTurnAt = world.updatedAt.plus(tickDuration)
+        val worldId = world.id.toLong()
 
         while (!now.isBefore(nextTurnAt)) {
+            // 진행 전 이전 월 기록 (연감 스냅샷용)
+            val previousYear = world.currentYear.toInt()
+            val previousMonth = world.currentMonth.toInt()
+
             executeGeneralCommands(world)
 
             try {
@@ -76,6 +86,23 @@ class TurnService(
             }
 
             advanceMonth(world)
+
+            // 연감 스냅샷: 매월 변경 시 이전 월의 맵/국가 상태를 기록
+            // core2026 yearbookHandler.onMonthChanged 패러티
+            try {
+                yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
+            } catch (e: Exception) {
+                logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
+            }
+
+            // 1월: 연초 통계 (legacy checkStatistic 패러티)
+            if (world.currentMonth.toInt() == 1) {
+                try {
+                    economyService.processYearlyStatistics(world)
+                } catch (e: Exception) {
+                    logger.warn("EconomyService.processYearlyStatistics failed: ${e.message}")
+                }
+            }
 
             try {
                 economyService.processMonthly(world)
@@ -114,7 +141,7 @@ class TurnService(
             }
 
             try {
-                val generals = generalRepository.findByWorldId(world.id.toLong())
+                val generals = generalRepository.findByWorldId(worldId)
                 generalMaintenanceService.processGeneralMaintenance(world, generals)
                 specialAssignmentService.checkAndAssignSpecials(world, generals)
                 generalRepository.saveAll(generals)
@@ -141,6 +168,20 @@ class TurnService(
 
             world.updatedAt = nextTurnAt
             nextTurnAt = nextTurnAt.plus(tickDuration)
+        }
+
+        // 토너먼트 처리: 자동 진행 라운드 (legacy processTournament 패러티)
+        try {
+            tournamentService.processTournamentTurn(worldId)
+        } catch (e: Exception) {
+            logger.warn("TournamentService.processTournamentTurn failed: ${e.message}")
+        }
+
+        // 경매 처리: 만료된 경매 정리 (legacy processAuction 패러티)
+        try {
+            auctionService.processExpiredAuctions()
+        } catch (e: Exception) {
+            logger.warn("AuctionService.processExpiredAuctions failed: ${e.message}")
         }
 
         worldStateRepository.save(world)
@@ -241,16 +282,26 @@ class TurnService(
                 val actionCode: String
                 val arg: Map<String, Any>?
                 val executedTurn: com.opensam.entity.GeneralTurn?
+                var hasReservedTurn = false
 
-                if (general.npcState >= 2) {
-                    // NPC generals: let AI decide action
+                // autorun_limit: 플레이어 장수가 일정 기간 미접속 시 AI가 대신 행동
+                // legacy TurnExecutionHelper.php lines 289-296
+                val useAutorun = general.npcState < 2 && run {
+                    val currentYearMonth = world.currentYear.toInt() * 100 + world.currentMonth.toInt()
+                    val autorunLimit = (general.meta["autorun_limit"] as? Number)?.toInt()
+                        ?: ((world.currentYear.toInt() - 2) * 100 + world.currentMonth.toInt())
+                    currentYearMonth < autorunLimit
+                }
+
+                if (general.npcState >= 2 || useAutorun) {
+                    // NPC generals 또는 autorun 대상: AI가 행동 결정
                     actionCode = generalAI.decideAndExecute(general, world)
                     arg = null
                     executedTurn = null
-                    // Consume any queued turns for NPC generals
-                    val npcTurns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
-                    if (npcTurns.isNotEmpty()) {
-                        generalTurnRepository.deleteAll(npcTurns)
+                    // Consume any queued turns
+                    val queuedTurns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
+                    if (queuedTurns.isNotEmpty()) {
+                        generalTurnRepository.deleteAll(queuedTurns)
                     }
                 } else {
                     val generalTurns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
@@ -259,6 +310,7 @@ class TurnService(
                         actionCode = gt.actionCode
                         arg = gt.arg
                         executedTurn = gt
+                        if (actionCode != "휴식") hasReservedTurn = true
                     } else {
                         actionCode = "휴식"
                         arg = null
@@ -286,6 +338,17 @@ class TurnService(
                 // Track active actions for inheritance (core2026 parity)
                 if (general.npcState.toInt() == 0 && actionCode != "휴식") {
                     inheritanceService.accruePoints(general, "active_action", 1)
+                }
+
+                // autorun_limit 갱신: 플레이어 장수가 예약된 턴을 실행했을 때
+                // legacy TurnExecutionHelper.php lines 356-361
+                val autorunUser = world.config["autorun_user"] as? Map<*, *>
+                val limitMinutes = (autorunUser?.get("limit_minutes") as? Number)?.toInt()
+                if (limitMinutes != null && limitMinutes > 0 && general.npcState < 2 && hasReservedTurn) {
+                    val turnterm = world.tickSeconds / 60 // tick초 → 분 단위
+                    val pushForward = if (turnterm > 0) limitMinutes / turnterm else 0
+                    val currentYearMonth = world.currentYear.toInt() * 100 + world.currentMonth.toInt()
+                    general.meta["autorun_limit"] = currentYearMonth + pushForward
                 }
 
                 // KillTurn handling

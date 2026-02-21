@@ -472,6 +472,76 @@ class EconomyService(
         }
     }
 
+    /**
+     * 연초 통계: 국가 국력(power)·장수수(gennum) 갱신 및 연감 기록.
+     * legacy checkStatistic() + postUpdateMonthly() 패러티.
+     * TurnService에서 매년 1월에 호출.
+     *
+     * 국력 = (자원/100 + 기술 + 도시파워 + 장수능력 + 숙련/1000 + 경험공헌/100) / 10
+     */
+    @Transactional
+    fun processYearlyStatistics(world: WorldState) {
+        val nations = nationRepository.findByWorldId(world.id.toLong())
+        val cities = cityRepository.findByWorldId(world.id.toLong())
+        val generals = generalRepository.findByWorldId(world.id.toLong())
+
+        val citiesByNation = cities.groupBy { it.nationId }
+        val generalsByNation = generals.filter { it.npcState.toInt() != 5 }.groupBy { it.nationId }
+
+        for (nation in nations) {
+            if (nation.level.toInt() == 0) continue
+
+            val nationGenerals = generalsByNation[nation.id] ?: emptyList()
+            val nationCities = citiesByNation[nation.id] ?: emptyList()
+
+            // 자원: (국가금+쌀 + 장수금+쌀합) / 100
+            val generalGoldRice = nationGenerals.sumOf { (it.gold + it.rice).toLong() }
+            val resource = ((nation.gold + nation.rice).toLong() + generalGoldRice) / 100.0
+
+            // 기술
+            val tech = nation.tech.toDouble()
+
+            // 도시파워: sum(pop) * sum(pop+agri+comm+secu+wall+def) / sum(popMax+agriMax+commMax+secuMax+wallMax+defMax) / 100
+            val suppliedCities = nationCities.filter { it.supplyState.toInt() == 1 }
+            val cityPower = if (suppliedCities.isNotEmpty()) {
+                val popSum = suppliedCities.sumOf { it.pop.toLong() }
+                val valueSum = suppliedCities.sumOf { (it.pop + it.agri + it.comm + it.secu + it.wall + it.def).toLong() }
+                val maxSum = suppliedCities.sumOf { (it.popMax + it.agriMax + it.commMax + it.secuMax + it.wallMax + it.defMax).toLong() }
+                if (maxSum > 0) (popSum * valueSum).toDouble() / maxSum / 100.0 else 0.0
+            } else 0.0
+
+            // 장수능력: (npcMul * leaderCore * 2 + (sqrt(intel*str)*2 + lead/2)/2) 합
+            val statPower = nationGenerals.sumOf { g ->
+                val lead = g.leadership.toDouble()
+                val str = g.strength.toDouble()
+                val intel = g.intel.toDouble()
+                val npcMul = if (g.npcState < 2) 1.2 else 1.0
+                val leaderCore = if (lead >= 40) lead else 0.0
+                npcMul * leaderCore * 2 + (kotlin.math.sqrt(intel * str) * 2 + lead / 2) / 2
+            }
+
+            // 숙련: sum(dex1..dex5) / 1000
+            val dexSum = nationGenerals.sumOf { (it.dex1 + it.dex2 + it.dex3 + it.dex4 + it.dex5).toLong() }
+            val dexPower = dexSum / 1000.0
+
+            // 경험공헌: sum(experience+dedication) / 100
+            val expDed = nationGenerals.sumOf { (it.experience + it.dedication).toLong() } / 100.0
+
+            val power = ((resource + tech + cityPower + statPower + dexPower + expDed) / 10.0).toInt()
+
+            // 최대 국력 기록
+            val prevMaxPower = (nation.meta["maxPower"] as? Number)?.toInt() ?: 0
+            if (power > prevMaxPower) {
+                nation.meta["maxPower"] = power
+            }
+
+            nation.power = power
+        }
+
+        nationRepository.saveAll(nations)
+        log.info("[World {}] Yearly statistics updated for {} nations", world.id, nations.size)
+    }
+
     // ── Phase A3: processDisasterOrBoom ──
 
     fun processDisasterOrBoom(world: WorldState) {

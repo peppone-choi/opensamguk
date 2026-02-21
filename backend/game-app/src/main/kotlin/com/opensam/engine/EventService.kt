@@ -5,6 +5,7 @@ import com.opensam.entity.WorldState
 import com.opensam.repository.EventRepository
 import com.opensam.repository.MessageRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.ScenarioService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -16,6 +17,7 @@ class EventService(
     private val messageRepository: MessageRepository,
     private val economyService: EconomyService,
     private val npcSpawnService: NpcSpawnService,
+    private val scenarioService: ScenarioService,
 ) {
     private val log = LoggerFactory.getLogger(EventService::class.java)
 
@@ -48,6 +50,31 @@ class EventService(
                 val year = (condition["year"] as? Number)?.toShort() ?: return false
                 val month = (condition["month"] as? Number)?.toShort() ?: return false
                 world.currentYear > year || (world.currentYear == year && world.currentMonth >= month)
+            }
+
+            // 시나리오 시작년도 기준 상대 날짜 조건
+            "date_relative" -> {
+                val yearOffset = (condition["yearOffset"] as? Number)?.toInt() ?: return false
+                val month = (condition["month"] as? Number)?.toShort() ?: return false
+                val startYear = try {
+                    scenarioService.getScenario(world.scenarioCode).startYear
+                } catch (_: Exception) {
+                    return false
+                }
+                val targetYear = (startYear + yearOffset).toShort()
+                world.currentYear == targetYear && world.currentMonth == month
+            }
+
+            // 반복 조건: startYear/startMonth부터 매 N개월마다 트리거
+            "interval" -> {
+                val months = (condition["months"] as? Number)?.toInt() ?: return false
+                val startYear = (condition["startYear"] as? Number)?.toInt() ?: return false
+                val startMonth = (condition["startMonth"] as? Number)?.toInt() ?: 1
+                if (months <= 0) return false
+                val startTotal = startYear * 12 + (startMonth - 1)
+                val currentTotal = world.currentYear.toInt() * 12 + (world.currentMonth.toInt() - 1)
+                val elapsed = currentTotal - startTotal
+                elapsed >= 0 && elapsed % months == 0
             }
 
             "remain_nation" -> {

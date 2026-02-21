@@ -346,6 +346,36 @@ class TournamentService(
         )
     }
 
+    /**
+     * 턴 파이프라인에서 호출: 자동 진행 중인 토너먼트의 다음 라운드를 처리한다.
+     * legacy processTournament 패러티 — 수동 토너먼트(tnmt_auto=false)는 무시.
+     */
+    @Transactional
+    fun processTournamentTurn(worldId: Long) {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
+        val state = (world.meta["tournamentState"] as? Number)?.toInt() ?: 0
+        val isAuto = (world.meta["tournamentAuto"] as? Boolean) ?: true
+
+        // 수동일 때는 무시
+        if (!isAuto) return
+
+        when (state) {
+            STATE_REGISTER -> {
+                // 등록 마감 → 대진표 생성
+                startTournament(worldId)
+            }
+            STATE_BRACKET -> {
+                // 본선 진행: 한 라운드 자동 진행
+                advanceRound(worldId)
+            }
+            STATE_FINISHED -> {
+                // 결과 확정 → 보상 지급 및 토너먼트 종료
+                finalizeTournament(worldId)
+            }
+            // state == 0: 토너먼트 없음 → 무시
+        }
+    }
+
     private fun syncWorldTournamentMeta(worldId: Long) {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
         val entries = tournamentRepository.findByWorldIdOrderByRoundAscBracketPositionAsc(worldId)
