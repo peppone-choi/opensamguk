@@ -22,8 +22,12 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
-        val destNationName = destNation?.name ?: "알 수 없음"
-        pushLog("<D><b>$destNationName</b></>와 종전에 합의했습니다.")
+        val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
+        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
+        services!!.diplomacyService.acceptCeasefire(env.worldId, n.id, dn.id)
+        general.experience += 50
+        general.dedication += 50
+        pushLog("<D><b>${dn.name}</b></>와 종전에 합의했습니다.")
         return CommandResult(true, logs)
     }
 }

@@ -26,8 +26,20 @@ class che_초토화(general: General, env: CommandEnv, arg: Map<String, Any>? = 
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destCityName = destCity?.name ?: "알 수 없음"
-        pushLog("<G><b>$destCityName</b></>을 $actionName 했습니다. <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        // 자국 도시를 초토화하여 자원 회수
+        val returnGold = dc.pop / 10
+        val returnRice = dc.pop / 10
+        dc.pop = (dc.pop * 0.2).toInt()
+        dc.agri = (dc.agri * 0.2).toInt()
+        dc.comm = (dc.comm * 0.2).toInt()
+        dc.secu = (dc.secu * 0.2).toInt()
+        dc.def = (dc.def * 0.2).toInt()
+        dc.wall = (dc.wall * 0.2).toInt()
+        n.gold += returnGold
+        n.rice += returnRice
+        pushLog("<G><b>${dc.name}</b></>을 $actionName! 금${returnGold}/쌀${returnRice} 회수. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

@@ -15,6 +15,7 @@ class EventService(
     private val nationRepository: NationRepository,
     private val messageRepository: MessageRepository,
     private val economyService: EconomyService,
+    private val npcSpawnService: NpcSpawnService,
 ) {
     private val log = LoggerFactory.getLogger(EventService::class.java)
 
@@ -155,17 +156,19 @@ class EventService(
                 log.info("[World {}] Event action: randomize_trade_rate", world.id)
             }
 
-            // Compound action stubs - these will be fully implemented when their subsystems are ready
             "raise_invader" -> {
-                log.info("[World {}] Event action stub: raise_invader (not yet implemented)", world.id)
+                npcSpawnService.raiseInvader(world)
+                log.info("[World {}] Event action: raise_invader", world.id)
             }
 
             "raise_npc_nation" -> {
-                log.info("[World {}] Event action stub: raise_npc_nation (not yet implemented)", world.id)
+                npcSpawnService.checkNpcSpawn(world)
+                log.info("[World {}] Event action: raise_npc_nation", world.id)
             }
 
             "provide_npc_troop_leader" -> {
-                log.info("[World {}] Event action stub: provide_npc_troop_leader (not yet implemented)", world.id)
+                npcSpawnService.provideNpcTroopLeaders(world)
+                log.info("[World {}] Event action: provide_npc_troop_leader", world.id)
             }
 
             // Compound action: execute multiple sub-actions sequentially

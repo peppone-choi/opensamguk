@@ -25,6 +25,10 @@ class NpcSpawnService(
             "#CC6600", "#996633", "#669966", "#336699",
             "#993366", "#CC9900", "#339966", "#666699",
         )
+        // 국가 레벨별 부대장 NPC 최대 수 (레거시 ProvideNPCTroopLeader.php)
+        private val MAX_NPC_TROOP_LEADERS = mapOf(
+            1 to 0, 2 to 1, 3 to 3, 4 to 4, 5 to 6, 6 to 7, 7 to 9
+        )
     }
 
     @Transactional
@@ -278,6 +282,71 @@ class NpcSpawnService(
             }
         } catch (_: Exception) {}
         return 999
+    }
+
+    /**
+     * 부대장 NPC를 국가 레벨에 맞게 보충.
+     * Based on legacy ProvideNPCTroopLeader.php
+     * npcState=5 장수를 국가별 최대치까지 생성, troopId = 자기 자신 (부대장)
+     */
+    @Transactional
+    fun provideNpcTroopLeaders(world: WorldState) {
+        val worldId = world.id.toLong()
+        val nations = nationRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
+
+        // 국가별 npcState=5 장수 수 집계
+        val npc5CountByNation = allGenerals.filter { it.npcState.toInt() == 5 }
+            .groupBy { it.nationId }
+            .mapValues { it.value.size }
+
+        for (nation in nations) {
+            val level = nation.level.toInt()
+            if (level <= 0) continue
+            val maxCount = MAX_NPC_TROOP_LEADERS[level] ?: 0
+            var currentCount = npc5CountByNation[nation.id] ?: 0
+            if (currentCount >= maxCount) continue
+
+            val capitalCity = nation.capitalCityId ?: continue
+
+            val rng = DeterministicRng.create(
+                "${world.id}", "troopLeader",
+                world.currentYear, world.currentMonth,
+                nation.id.toInt()
+            )
+
+            while (currentCount < maxCount) {
+                val nameSeq = rng.nextInt(10000)
+                val npc = General(
+                    worldId = worldId,
+                    name = "부대장${String.format("%04d", nameSeq)}",
+                    nationId = nation.id,
+                    cityId = capitalCity,
+                    npcState = 5,
+                    affinity = 999,
+                    bornYear = (world.currentYear - 20).toShort(),
+                    deadYear = (world.currentYear + 30).toShort(),
+                    leadership = 10,
+                    strength = 10,
+                    intel = 10,
+                    politics = 10,
+                    charm = 10,
+                    gold = 0,
+                    rice = 0,
+                    crew = 0,
+                    crewType = 1,
+                    train = 0,
+                    atmos = 0,
+                    killTurn = 70,
+                    personalCode = "che_은둔",
+                )
+                generalRepository.save(npc)
+                // 부대장 = troopId가 자기 자신
+                npc.troopId = npc.id
+                generalRepository.save(npc)
+                currentCount++
+            }
+        }
     }
 
     /**

@@ -34,7 +34,11 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val dCity = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
-        val nationName = nation?.name ?: "알 수 없음"
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val cost = getCost()
+        n.gold -= cost.gold
+        n.rice -= cost.rice
+        n.capitalCityId = dCity.id
         pushLog("<G><b>${dCity.name}</b></>(으)로 천도했습니다. <1>$date</>")
         return CommandResult(true, logs)
     }

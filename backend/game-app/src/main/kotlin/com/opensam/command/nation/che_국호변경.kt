@@ -28,6 +28,11 @@ class che_국호변경(general: General, env: CommandEnv, arg: Map<String, Any>?
                 ?: (arg?.get("name") as? String)
                 ?: "알 수 없음"
         val oldName = nation?.name ?: "알 수 없음"
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        if (newName.length > 18 || newName.isBlank()) {
+            return CommandResult(false, logs, "유효하지 않은 국호입니다")
+        }
+        n.name = newName
         pushLog("국호를 <D><b>$newName</b></>(으)로 변경합니다. <1>$date</>")
         return CommandResult(true, logs)
     }

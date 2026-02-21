@@ -34,8 +34,21 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val c = city ?: return CommandResult(false, logs, "도시 정보를 찾을 수 없습니다")
         val date = formatDate()
-        pushLog("<G><b>수도</b></>을 증축했습니다. <1>$date</>")
+        val cost = getCost()
+        n.gold -= cost.gold
+        n.rice -= cost.rice
+        c.level = (c.level + 1).toShort()
+        val ratio = 1.25
+        c.popMax = (c.popMax * ratio).toInt()
+        c.agriMax = (c.agriMax * ratio).toInt()
+        c.commMax = (c.commMax * ratio).toInt()
+        c.secuMax = (c.secuMax * ratio).toInt()
+        c.defMax = (c.defMax * ratio).toInt()
+        c.wallMax = (c.wallMax * ratio).toInt()
+        pushLog("<G><b>${c.name}</b></>을 증축했습니다. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

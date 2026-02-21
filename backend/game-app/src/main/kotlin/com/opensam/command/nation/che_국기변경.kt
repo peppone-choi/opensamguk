@@ -24,6 +24,8 @@ class che_국기변경(general: General, env: CommandEnv, arg: Map<String, Any>?
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val colorType = arg?.get("colorType") as? String ?: "red"
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        n.color = colorType
         pushLog("국기를 변경하였습니다 <1>$date</>")
         return CommandResult(true, logs)
     }

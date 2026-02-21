@@ -31,7 +31,18 @@ class che_필사즉생(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        pushLog("$actionName 발동! <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        n.strategicCmdLimit = 9
+        // 국가 전체 장수의 훈련/사기 100으로
+        val nationGenerals = services!!.generalRepository.findByNationId(n.id)
+        var affected = 0
+        for (gen in nationGenerals) {
+            gen.train = 100
+            gen.atmos = 100
+            services!!.generalRepository.save(gen)
+            affected++
+        }
+        pushLog("$actionName 발동! 장수 ${affected}명 훈련/사기 최대. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

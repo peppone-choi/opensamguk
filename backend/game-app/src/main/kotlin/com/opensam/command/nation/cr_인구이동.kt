@@ -36,7 +36,19 @@ class cr_인구이동(general: General, env: CommandEnv, arg: Map<String, Any>? 
         val dCity = destCity
         val destCityName = dCity?.name ?: "알 수 없음"
         val amount = ((arg?.get("amount") as? Number)?.toInt() ?: 0).coerceIn(0, AMOUNT_LIMIT)
-        pushLog("<G><b>$destCityName</b></>로 인구 <C>$amount</>명을 옮겼습니다. <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val c = city ?: return CommandResult(false, logs, "도시 정보를 찾을 수 없습니다")
+        val dc = dCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        val cost = getCost()
+        n.gold -= cost.gold
+        n.rice -= cost.rice
+        val actualAmount = amount.coerceAtMost(c.pop - MIN_AVAILABLE_RECRUIT_POP).coerceAtLeast(0)
+        if (actualAmount <= 0) {
+            return CommandResult(false, logs, "이동할 인구가 부족합니다")
+        }
+        c.pop -= actualAmount
+        dc.pop = (dc.pop + actualAmount).coerceAtMost(dc.popMax)
+        pushLog("<G><b>$destCityName</b></>로 인구 <C>$actualAmount</>명을 옮겼습니다. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

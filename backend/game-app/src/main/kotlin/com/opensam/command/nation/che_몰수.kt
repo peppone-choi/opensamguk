@@ -28,6 +28,17 @@ class che_몰수(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
         val isGold = arg?.get("isGold") as? Boolean ?: true
         val amount = ((arg?.get("amount") as? Number)?.toInt() ?: 100).coerceIn(100, 100000)
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        if (isGold) {
+            val actual = amount.coerceAtMost(destGen.gold)
+            destGen.gold -= actual
+            n.gold += actual
+        } else {
+            val actual = amount.coerceAtMost(destGen.rice)
+            destGen.rice -= actual
+            n.rice += actual
+        }
+        destGen.betray = (destGen.betray + 1).toShort().coerceAtMost(5)
         val resName = if (isGold) "금" else "쌀"
         pushLog("<Y>${destGen.name}</>에게서 $resName <C>$amount</>을(를) 몰수했습니다. <1>$date</>")
         return CommandResult(true, logs)

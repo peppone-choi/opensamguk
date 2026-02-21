@@ -33,8 +33,19 @@ class che_급습(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destNationName = destNation?.name ?: "알 수 없음"
-        pushLog("$actionName 발동! <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val dn = destNation ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
+        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
+        // 대상 국가와의 외교 기한 3개월 단축
+        val relations = services!!.diplomacyService.getRelationsForNation(env.worldId, dn.id)
+        var shortened = 0
+        for (rel in relations) {
+            if (rel.term > 0) {
+                rel.term = max(0, rel.term - 3).toShort()
+                shortened++
+            }
+        }
+        pushLog("<D><b>${dn.name}</b></> 대상 $actionName 발동! 외교기한 ${shortened}건 단축. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

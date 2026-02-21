@@ -4,6 +4,7 @@ import com.opensam.command.constraint.ConstraintResult
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.engine.DiplomacyService
 import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralRepository
@@ -19,6 +20,7 @@ class CommandExecutor(
     private val cityRepository: CityRepository,
     private val nationRepository: NationRepository,
     private val diplomacyRepository: DiplomacyRepository,
+    private val diplomacyService: DiplomacyService,
     private val mapService: MapService,
 ) {
     suspend fun executeGeneralCommand(
@@ -33,6 +35,7 @@ class CommandExecutor(
         val command = commandRegistry.createGeneralCommand(actionCode, general, env, arg)
         command.city = city
         command.nation = nation
+        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService)
         hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val cooldown = checkGeneralCooldown(actionCode, general, env)
@@ -71,6 +74,17 @@ class CommandExecutor(
             term = if (preReq > 0) preReq else null,
         ).toMap()
 
+        // JSON 델타를 엔티티에 적용 (장수 커맨드는 run()에서 직접 수정하지 않음)
+        if (result.success) {
+            CommandResultApplicator.apply(
+                result, general, city, nation,
+                destGeneral = command.destGeneral,
+                destCity = command.destCity,
+                destNation = command.destNation,
+            )
+            saveModifiedEntities(general, city, nation, command)
+        }
+
         applyGeneralCooldown(actionCode, command.getPostReqTurn(), general, env)
         return result
     }
@@ -88,6 +102,7 @@ class CommandExecutor(
             ?: return CommandResult(success = false, logs = listOf("알 수 없는 국가 명령: $actionCode"))
         command.city = city
         command.nation = nation
+        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService)
         hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
@@ -114,6 +129,7 @@ class CommandExecutor(
             }
         }
 
+        // 국가 커맨드는 run()에서 직접 엔티티를 수정한다
         val result = command.run(rng)
         if (nation != null) {
             setNationLastTurn(
@@ -123,8 +139,26 @@ class CommandExecutor(
             )
         }
 
+        // 수정된 엔티티 저장
+        if (result.success) {
+            saveModifiedEntities(general, city, nation, command)
+        }
+
         applyNationCooldown(actionCode, command.getPostReqTurn(), general, nation, env)
         return result
+    }
+
+    /**
+     * 커맨드 실행 후 수정된 엔티티들을 저장한다.
+     * JPA dirty check가 불필요한 UPDATE를 방지한다.
+     */
+    private fun saveModifiedEntities(general: General, city: City?, nation: Nation?, command: BaseCommand) {
+        generalRepository.save(general)
+        if (city != null) cityRepository.save(city)
+        if (nation != null) nationRepository.save(nation)
+        if (command.destGeneral != null) generalRepository.save(command.destGeneral!!)
+        if (command.destCity != null) cityRepository.save(command.destCity!!)
+        if (command.destNation != null) nationRepository.save(command.destNation!!)
     }
 
     private fun toTurnIndex(env: CommandEnv): Int {

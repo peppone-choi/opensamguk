@@ -33,8 +33,29 @@ class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destCityName = destCity?.name ?: "알 수 없음"
-        pushLog("$actionName 발동! <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        n.strategicCmdLimit = 9
+        // 적 도시의 장수들을 무작위 도시로 이동
+        val enemyGenerals = services!!.generalRepository.findByCityId(dc.id)
+            .filter { it.nationId == dc.nationId }
+        val enemyCities = services!!.cityRepository.findByNationId(dc.nationId)
+            .filter { it.id != dc.id }
+        if (enemyCities.isEmpty()) {
+            pushLog("<G><b>${dc.name}</b></> 이동시킬 도시가 없습니다. <1>$date</>")
+            return CommandResult(false, logs, "이동시킬 도시가 없습니다")
+        }
+        var moved = 0
+        for (gen in enemyGenerals) {
+            val targetCity = enemyCities[rng.nextInt(enemyCities.size)]
+            gen.cityId = targetCity.id
+            if (gen.troopId != 0L && gen.troopId != gen.id) {
+                gen.troopId = 0
+            }
+            services!!.generalRepository.save(gen)
+            moved++
+        }
+        pushLog("<G><b>${dc.name}</b></> $actionName 발동! 장수 ${moved}명 분산. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

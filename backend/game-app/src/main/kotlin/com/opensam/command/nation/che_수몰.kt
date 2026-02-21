@@ -33,8 +33,16 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destCityName = destCity?.name ?: "알 수 없음"
-        pushLog("$actionName 발동! <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
+        n.strategicCmdLimit = 9
+        // 적 도시 방어/성벽 80% 파괴
+        dc.def = (dc.def * 0.2).toInt()
+        dc.wall = (dc.wall * 0.2).toInt()
+        // 인구 피해
+        dc.pop = (dc.pop * 0.5).toInt()
+        dc.dead += (dc.pop * 0.1).toInt()
+        pushLog("<G><b>${dc.name}</b></> $actionName 발동! 방어/성벽 80% 파괴. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

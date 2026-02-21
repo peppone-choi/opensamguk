@@ -32,7 +32,13 @@ class che_무작위수도이전(general: General, env: CommandEnv, arg: Map<Stri
             return CommandResult(false, logs, "이동할 수 있는 도시가 없습니다")
         }
         val destCityId = neutralCities[rng.nextInt(neutralCities.size)]
-        pushLog("<G><b>도시$destCityId</b></>(으)로 국가를 옮겼습니다. <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val targetCity = services!!.cityRepository.findById(destCityId.toLong()).orElse(null)
+            ?: return CommandResult(false, logs, "도시를 찾을 수 없습니다")
+        targetCity.nationId = n.id
+        services!!.cityRepository.save(targetCity)
+        n.capitalCityId = targetCity.id
+        pushLog("<G><b>${targetCity.name}</b></>(으)로 국가를 옮겼습니다. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

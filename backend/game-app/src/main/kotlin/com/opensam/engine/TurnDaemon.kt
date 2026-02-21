@@ -1,15 +1,19 @@
 package com.opensam.engine
 
-import com.opensam.engine.turn.cqrs.TurnCoordinator
 import com.opensam.repository.WorldStateRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
+/**
+ * 턴 데몬: 주기적으로 월드를 순회하며 턴을 처리한다.
+ * - 일반 모드: TurnService (전체 파이프라인 — 커맨드 실행, 경제, 외교, 이벤트, AI, 유지보수)
+ * - 실시간 모드: RealtimeService (커맨드 포인트 기반)
+ */
 @Component
 class TurnDaemon(
-    private val turnCoordinator: TurnCoordinator,
+    private val turnService: TurnService,
     private val realtimeService: RealtimeService,
     @Value("\${game.commit-sha:local}") private val processCommitSha: String,
     private val worldStateRepository: WorldStateRepository,
@@ -36,7 +40,7 @@ class TurnDaemon(
                         realtimeService.processCompletedCommands(world)
                         realtimeService.regenerateCommandPoints(world)
                     } else {
-                        turnCoordinator.processWorld(world)
+                        turnService.processWorld(world)
                     }
                 } catch (e: Exception) {
                     logger.error("Error processing world ${world.id}: ${e.message}", e)

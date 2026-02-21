@@ -34,6 +34,7 @@ class che_부대탈퇴지시(general: General, env: CommandEnv, arg: Map<String,
             return CommandResult(true, logs, "부대장입니다")
         }
 
+        destGen.troopId = 0
         pushLog("<Y>$destGeneralName</>에게 부대 탈퇴를 지시했습니다.")
         return CommandResult(true, logs)
     }

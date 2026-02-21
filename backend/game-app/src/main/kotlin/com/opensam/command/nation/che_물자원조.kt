@@ -45,6 +45,15 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
         } else {
             0
         }
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val dn = destNation ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
+        if (n.gold < goldAmount || n.rice < riceAmount) {
+            return CommandResult(false, logs, "자원이 부족합니다")
+        }
+        n.gold -= goldAmount
+        n.rice -= riceAmount
+        dn.gold += goldAmount
+        dn.rice += riceAmount
         pushLog("<D><b>$destNationName</b></>로 금<C>$goldAmount</> 쌀<C>$riceAmount</>을 지원했습니다. <1>$date</>")
         return CommandResult(true, logs)
     }

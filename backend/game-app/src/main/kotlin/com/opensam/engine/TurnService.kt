@@ -19,8 +19,18 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.OffsetDateTime
 
+/**
+ * 턴 서비스: 월드의 전체 턴 파이프라인을 실행한다.
+ * 1. 장수 커맨드 실행 (AI 포함)
+ * 2. 보급 상태 갱신
+ * 3. 이벤트 (PRE_MONTH, MONTH)
+ * 4. 월 진행
+ * 5. 경제 파이프라인 (수입, 반기, 재해, 교역)
+ * 6. 외교 턴 처리
+ * 7. 장수 유지보수 (나이, 경험, 헌신, 부상, 은퇴)
+ * 8. NPC 스폰, 통일 체크
+ */
 @Service
-@Deprecated("Use TurnCoordinator (CQRS in-memory pipeline) instead")
 class TurnService(
     private val worldStateRepository: WorldStateRepository,
     private val generalRepository: GeneralRepository,

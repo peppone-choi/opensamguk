@@ -23,6 +23,13 @@ class event_무희연구(general: General, env: CommandEnv, arg: Map<String, Any
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
+        val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
+        val cost = getCost()
+        n.gold -= cost.gold
+        n.rice -= cost.rice
+        n.meta["can_무희사용"] = 1
+        general.experience += 100
+        general.dedication += 100
         pushLog("<M>$actionName</> 완료")
         return CommandResult(true, logs)
     }

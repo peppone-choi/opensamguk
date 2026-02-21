@@ -22,8 +22,12 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
     override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
-        val destNationName = destNation?.name ?: "알 수 없음"
-        pushLog("<D><b>$destNationName</b></>와의 불가침을 파기했습니다.")
+        val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
+        val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
+        services!!.diplomacyService.acceptBreakNonAggression(env.worldId, n.id, dn.id)
+        general.experience += 50
+        general.dedication += 50
+        pushLog("<D><b>${dn.name}</b></>와의 불가침을 파기했습니다.")
         return CommandResult(true, logs)
     }
 }

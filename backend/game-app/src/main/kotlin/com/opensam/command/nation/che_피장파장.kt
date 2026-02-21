@@ -23,9 +23,12 @@ class che_피장파장(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destNationName = destNation?.name ?: "알 수 없음"
-        val targetCommandName = arg?.get("commandType") as? String ?: "전략"
-        pushLog("<G><b>$targetCommandName</b></> 전략의 $actionName 발동! <1>$date</>")
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        val dn = destNation ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
+        n.strategicCmdLimit = 9
+        // 적 국가의 전략 쿨다운을 최대화
+        dn.strategicCmdLimit = dn.strategicCmdLimit.coerceAtLeast(9).toShort()
+        pushLog("<D><b>${dn.name}</b></> 전략의 $actionName 발동! 적 전략 쿨다운 부과. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

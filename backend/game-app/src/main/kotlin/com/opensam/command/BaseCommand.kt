@@ -26,6 +26,7 @@ abstract class BaseCommand(
     var destCity: City? = null
     var destNation: Nation? = null
     var constraintEnv: Map<String, Any> = emptyMap()
+    var services: CommandServices? = null
 
     abstract fun getCost(): CommandCost
     open fun getCommandPointCost(): Int = 1

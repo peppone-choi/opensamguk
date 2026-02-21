@@ -27,6 +27,16 @@ class che_포상(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
         val isGold = arg?.get("isGold") as? Boolean ?: true
         val amount = ((arg?.get("amount") as? Number)?.toInt() ?: 100).coerceIn(100, 100000)
+        val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
+        if (isGold) {
+            if (n.gold < amount) return CommandResult(false, logs, "금이 부족합니다")
+            n.gold -= amount
+            destGen.gold += amount
+        } else {
+            if (n.rice < amount) return CommandResult(false, logs, "쌀이 부족합니다")
+            n.rice -= amount
+            destGen.rice += amount
+        }
         val resName = if (isGold) "금" else "쌀"
         pushLog("<Y>${destGen.name}</>에게 $resName <C>$amount</>을(를) 수여했습니다. <1>$date</>")
         return CommandResult(true, logs)

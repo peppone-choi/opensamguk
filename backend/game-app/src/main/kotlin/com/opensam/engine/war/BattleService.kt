@@ -3,9 +3,12 @@ package com.opensam.engine.war
 import com.opensam.engine.DeterministicRng
 import com.opensam.engine.DiplomacyService
 import com.opensam.engine.EventService
+import com.opensam.engine.modifier.ModifierService
+import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Message
+import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
@@ -24,6 +27,7 @@ class BattleService(
     private val messageRepository: MessageRepository,
     private val eventService: EventService,
     private val diplomacyService: DiplomacyService,
+    private val modifierService: ModifierService,
 ) {
     private val logger = LoggerFactory.getLogger(BattleService::class.java)
     private val battleEngine = BattleEngine()
@@ -54,13 +58,16 @@ class BattleService(
 
         val attackerNation = nationRepository.findById(attacker.nationId).orElse(null)
         val attackerUnit = WarUnitGeneral(attacker, attackerNation?.tech ?: 0f)
+        applyWarModifiers(attackerUnit, attacker, attackerNation)
 
         // Get defenders in the city
         val defenders = generalRepository.findByCityId(targetCity.id)
             .filter { it.nationId == targetCity.nationId && it.crew > 0 }
             .map { gen ->
                 val defNation = nationRepository.findById(gen.nationId).orElse(null)
-                WarUnitGeneral(gen, defNation?.tech ?: 0f)
+                val unit = WarUnitGeneral(gen, defNation?.tech ?: 0f)
+                applyWarModifiers(unit, gen, defNation)
+                unit
             }
 
         val result = battleEngine.resolveBattle(attackerUnit, defenders, targetCity, rng)
@@ -302,5 +309,47 @@ class BattleService(
                 ),
             )
         )
+    }
+
+    /**
+     * 전투 전 모디파이어 적용: 국가 타입, 성격, 특기, 아이템 보너스를 WarUnit에 반영.
+     * ModifierService에서 수집한 StatContext를 WarUnit 필드에 매핑.
+     */
+    private fun applyWarModifiers(unit: WarUnitGeneral, general: General, nation: Nation?) {
+        val modifiers = modifierService.getModifiers(general, nation)
+        if (modifiers.isEmpty()) return
+
+        val baseCtx = StatContext(
+            leadership = unit.leadership.toDouble(),
+            strength = unit.strength.toDouble(),
+            intel = unit.intel.toDouble(),
+            criticalChance = unit.criticalChance,
+            dodgeChance = unit.dodgeChance,
+            magicChance = unit.magicChance,
+        )
+        val modified = modifierService.applyStatModifiers(modifiers, baseCtx)
+
+        // 스탯 반영 (0-100 범위 클램핑)
+        unit.leadership = modified.leadership.toInt().coerceIn(0, 100)
+        unit.strength = modified.strength.toInt().coerceIn(0, 100)
+        unit.intel = modified.intel.toInt().coerceIn(0, 100)
+        unit.criticalChance = modified.criticalChance
+        unit.dodgeChance = modified.dodgeChance
+        unit.magicChance = modified.magicChance
+        unit.magicDamageMultiplier = modified.magicSuccessDamage
+
+        // 훈련/사기 보너스
+        if (modified.bonusTrain != 0.0) {
+            unit.train = (unit.train + modified.bonusTrain.toInt()).coerceIn(0, 100)
+        }
+        if (modified.bonusAtmos != 0.0) {
+            unit.atmos = (unit.atmos + modified.bonusAtmos.toInt()).coerceIn(0, 100)
+        }
+
+        // 전투력 배율 (warPower multiplier)
+        val warPowerMult = modifierService.getTotalWarPowerMultiplier(modifiers)
+        if (warPowerMult != 1.0) {
+            unit.attackMultiplier *= warPowerMult
+        }
     }
 }
