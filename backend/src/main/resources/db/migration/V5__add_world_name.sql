@@ -1,1 +1,0 @@
-ALTER TABLE world_state ADD COLUMN name TEXT NOT NULL DEFAULT '';
