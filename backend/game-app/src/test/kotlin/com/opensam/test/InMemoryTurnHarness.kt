@@ -85,6 +85,7 @@ class InMemoryTurnHarness {
         tournamentService,
         generalAI,
         nationAI,
+        mock(com.opensam.engine.modifier.ModifierService::class.java),
     )
 
     init {

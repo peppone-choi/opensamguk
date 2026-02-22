@@ -16,7 +16,9 @@ class GeneralMaintenanceServiceTest {
         val gameConstService = com.opensam.service.GameConstService()
         // Initialize GameConstService manually (it uses @PostConstruct)
         try { gameConstService.init() } catch (_: Exception) { /* resource may not be on classpath */ }
-        service = GeneralMaintenanceService(gameConstService)
+        val hallOfFameRepository = org.mockito.Mockito.mock(com.opensam.repository.HallOfFameRepository::class.java)
+        val nationRepository = org.mockito.Mockito.mock(com.opensam.repository.NationRepository::class.java)
+        service = GeneralMaintenanceService(gameConstService, hallOfFameRepository, nationRepository)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 1): WorldState {

@@ -92,6 +92,7 @@ class TurnServiceTest {
             tournamentService,
             generalAI,
             nationAI,
+            mock(com.opensam.engine.modifier.ModifierService::class.java),
         )
 
         // Default: worldStateRepository.save returns the argument
