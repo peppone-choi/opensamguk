@@ -3,12 +3,12 @@ package com.opensam.engine.war
 import com.opensam.engine.DeterministicRng
 import com.opensam.engine.DiplomacyService
 import com.opensam.engine.EventService
+import com.opensam.engine.modifier.ActionModifier
 import com.opensam.engine.modifier.ModifierService
 import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Message
-import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
@@ -58,17 +58,36 @@ class BattleService(
 
         val attackerNation = nationRepository.findById(attacker.nationId).orElse(null)
         val attackerUnit = WarUnitGeneral(attacker, attackerNation?.tech ?: 0f)
-        applyWarModifiers(attackerUnit, attacker, attackerNation)
+        val attackerModifiers = modifierService.getModifiers(attacker, attackerNation)
 
         // Get defenders in the city
-        val defenders = generalRepository.findByCityId(targetCity.id)
+        val defenderEntries = generalRepository.findByCityId(targetCity.id)
             .filter { it.nationId == targetCity.nationId && it.crew > 0 }
             .map { gen ->
                 val defNation = nationRepository.findById(gen.nationId).orElse(null)
                 val unit = WarUnitGeneral(gen, defNation?.tech ?: 0f)
-                applyWarModifiers(unit, gen, defNation)
-                unit
+                val modifiers = modifierService.getModifiers(gen, defNation)
+                Triple(unit, gen, modifiers)
             }
+
+        val primaryDefender = defenderEntries.firstOrNull()
+        applyWarModifiers(
+            unit = attackerUnit,
+            modifiers = attackerModifiers,
+            opponentCrewType = primaryDefender?.first?.crewType?.toString().orEmpty(),
+            opposeModifiers = primaryDefender?.third ?: emptyList(),
+        )
+
+        for ((unit, _, modifiers) in defenderEntries) {
+            applyWarModifiers(
+                unit = unit,
+                modifiers = modifiers,
+                opponentCrewType = attackerUnit.crewType.toString(),
+                opposeModifiers = attackerModifiers,
+            )
+        }
+
+        val defenders = defenderEntries.map { it.first }
 
         val result = battleEngine.resolveBattle(attackerUnit, defenders, targetCity, rng)
 
@@ -315,11 +334,19 @@ class BattleService(
      * 전투 전 모디파이어 적용: 국가 타입, 성격, 특기, 아이템 보너스를 WarUnit에 반영.
      * ModifierService에서 수집한 StatContext를 WarUnit 필드에 매핑.
      */
-    private fun applyWarModifiers(unit: WarUnitGeneral, general: General, nation: Nation?) {
-        val modifiers = modifierService.getModifiers(general, nation)
-        if (modifiers.isEmpty()) return
+    private fun applyWarModifiers(
+        unit: WarUnitGeneral,
+        modifiers: List<ActionModifier>,
+        opponentCrewType: String = "",
+        opposeModifiers: List<ActionModifier> = emptyList(),
+    ) {
+        if (modifiers.isEmpty() && opposeModifiers.isEmpty()) return
 
+        val hpRatio = if (unit.maxHp <= 0) 1.0 else unit.hp.toDouble() / unit.maxHp.toDouble()
         val baseCtx = StatContext(
+            crewType = unit.crewType.toString(),
+            opponentCrewType = opponentCrewType,
+            hpRatio = hpRatio,
             leadership = unit.leadership.toDouble(),
             strength = unit.strength.toDouble(),
             intel = unit.intel.toDouble(),
@@ -327,7 +354,14 @@ class BattleService(
             dodgeChance = unit.dodgeChance,
             magicChance = unit.magicChance,
         )
-        val modified = modifierService.applyStatModifiers(modifiers, baseCtx)
+        var modified = modifierService.applyStatModifiers(modifiers, baseCtx)
+        if (opposeModifiers.isNotEmpty()) {
+            val opposeCtx = modified.copy(
+                crewType = opponentCrewType,
+                opponentCrewType = unit.crewType.toString(),
+            )
+            modified = modifierService.applyOpposeStatModifiers(opposeModifiers, opposeCtx)
+        }
 
         // 스탯 반영 (0-100 범위 클램핑)
         unit.leadership = modified.leadership.toInt().coerceIn(0, 100)
@@ -344,6 +378,10 @@ class BattleService(
         }
         if (modified.bonusAtmos != 0.0) {
             unit.atmos = (unit.atmos + modified.bonusAtmos.toInt()).coerceIn(0, 100)
+        }
+
+        if (modified.warPower != 1.0) {
+            unit.attackMultiplier *= modified.warPower
         }
 
         // 전투력 배율 (warPower multiplier)

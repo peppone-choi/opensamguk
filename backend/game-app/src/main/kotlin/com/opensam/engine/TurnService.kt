@@ -5,9 +5,11 @@ import com.opensam.command.CommandExecutor
 import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
+import com.opensam.engine.modifier.ModifierService
 import com.opensam.engine.trigger.TriggerCaller
 import com.opensam.engine.trigger.TriggerEnv
 import com.opensam.engine.trigger.buildPreTurnTriggers
+import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
 import com.opensam.repository.*
 import com.opensam.service.AuctionService
@@ -56,6 +58,7 @@ class TurnService(
     private val tournamentService: TournamentService,
     private val generalAI: GeneralAI,
     private val nationAI: NationAI,
+    private val modifierService: ModifierService,
 ) {
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
 
@@ -199,7 +202,7 @@ class TurnService(
                     nationRepository.findById(general.nationId).orElse(null)
                 } else null
 
-                firePreTurnTriggers(world, general)
+                firePreTurnTriggers(world, general, nation)
 
                 if (general.blockState >= 2) {
                     if (general.killTurn != null) {
@@ -424,8 +427,9 @@ class TurnService(
         nationRepository.saveAll(nations)
     }
 
-    private fun firePreTurnTriggers(world: WorldState, general: com.opensam.entity.General) {
-        val triggers = buildPreTurnTriggers(general)
+    private fun firePreTurnTriggers(world: WorldState, general: com.opensam.entity.General, nation: Nation?) {
+        val modifiers = modifierService.getModifiers(general, nation)
+        val triggers = buildPreTurnTriggers(general, modifiers)
         if (triggers.isEmpty()) return
 
         val caller = TriggerCaller()

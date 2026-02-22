@@ -1,7 +1,10 @@
 package com.opensam.engine
 
 import com.opensam.entity.General
+import com.opensam.entity.HallOfFame
 import com.opensam.entity.WorldState
+import com.opensam.repository.HallOfFameRepository
+import com.opensam.repository.NationRepository
 import com.opensam.service.GameConstService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -13,6 +16,8 @@ import org.springframework.stereotype.Service
 @Service
 class GeneralMaintenanceService(
     private val gameConstService: GameConstService,
+    private val hallOfFameRepository: HallOfFameRepository,
+    private val nationRepository: NationRepository,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -54,7 +59,9 @@ class GeneralMaintenanceService(
             if (general.age >= retirementYear && general.npcState.toInt() == 0) {
                 if (isUnited == 0) {
                     // 통일 전에만 은퇴 처리
-                    // TODO: CheckHall(generalID) — 명예의 전당 기록
+                    if (general.userId != null && general.npcState < 2) {
+                        checkHall(general, world)
+                    }
                     rebirthGeneral(general, world)
                     log.info("장수 {} (id={}): 은퇴 (나이={}, 은퇴나이={})",
                         general.name, general.id, general.age, retirementYear)
@@ -115,5 +122,87 @@ class GeneralMaintenanceService(
         general.meta["rebirth_available"] = true
         general.meta["retired_year"] = world.currentYear.toInt()
         general.meta["retired_month"] = world.currentMonth.toInt()
+    }
+
+    private fun checkHall(general: General, world: WorldState) {
+        val nation = nationRepository.findById(general.nationId).orElse(null)
+        val serverId = readString(world.config, "serverId").ifBlank { world.name }
+        val scenario = readNumber(world.meta, "scenarioId")
+        val season = readNumber(world.meta, "season").takeIf { it > 0 } ?: 1
+        val rank = asMap(general.meta["rank"])
+        val warnum = readNumber(rank, "warnum")
+        val killnum = readNumber(rank, "killnum")
+        val firenum = readNumber(rank, "firenum")
+        val killcrew = readNumber(rank, "killcrew")
+        val deathcrew = readNumber(rank, "deathcrew")
+
+        val hallValues = linkedMapOf(
+            "experience" to general.experience.toDouble(),
+            "dedication" to general.dedication.toDouble(),
+            "warnum" to warnum.toDouble(),
+            "killnum" to killnum.toDouble(),
+            "firenum" to firenum.toDouble(),
+            "winrate" to rate(killnum, warnum),
+            "killrate" to rate(killcrew, deathcrew),
+        )
+
+        for ((type, value) in hallValues) {
+            if ((type == "winrate" || type == "killrate") && warnum < 10) {
+                continue
+            }
+            if (value <= 0.0) {
+                continue
+            }
+
+            val aux = mutableMapOf<String, Any>(
+                "name" to general.name,
+                "nationName" to (nation?.name ?: "재야"),
+                "bgColor" to (nation?.color ?: "#000000"),
+                "fgColor" to (nation?.color ?: "#000000"),
+                "picture" to general.picture,
+                "imgsvr" to general.imageServer,
+            )
+
+            val existing = hallOfFameRepository.findByServerIdAndTypeAndGeneralNo(serverId, type, general.id)
+            if (existing == null) {
+                hallOfFameRepository.save(
+                    HallOfFame(
+                        serverId = serverId,
+                        season = season,
+                        scenario = scenario,
+                        generalNo = general.id,
+                        type = type,
+                        value = value,
+                        owner = general.userId?.toString(),
+                        aux = aux,
+                    )
+                )
+            } else if (value > existing.value) {
+                existing.value = value
+                existing.owner = general.userId?.toString()
+                existing.aux = aux
+                hallOfFameRepository.save(existing)
+            }
+        }
+    }
+
+    private fun rate(numerator: Int, denominator: Int): Double {
+        if (denominator <= 0) {
+            return 0.0
+        }
+        return numerator.toDouble() / denominator.toDouble()
+    }
+
+    private fun readNumber(map: Map<String, Any>, key: String): Int {
+        return (map[key] as? Number)?.toInt() ?: 0
+    }
+
+    private fun readString(map: Map<String, Any>, key: String): String {
+        return map[key] as? String ?: ""
+    }
+
+    private fun asMap(value: Any?): Map<String, Any> {
+        @Suppress("UNCHECKED_CAST")
+        return value as? Map<String, Any> ?: emptyMap()
     }
 }

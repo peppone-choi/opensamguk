@@ -1,5 +1,8 @@
 package com.opensam.engine.modifier
 
+import com.opensam.model.ArmType
+import com.opensam.model.CrewType
+
 object SpecialModifiers {
 
     private val specials = mapOf<String, ActionModifier>(
@@ -294,7 +297,14 @@ object SpecialModifiers {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
             }
-            // TODO: crew-type-specific damage reduction (-10%/-20%) needs battle context
+            override fun onCalcOpposeStat(stat: StatContext): StatContext {
+                val opponentType = stat.opponentCrewType.toIntOrNull()?.let { CrewType.fromCode(it) } ?: return stat
+                return when (opponentType.armType) {
+                    ArmType.FOOTMAN -> stat.copy(warPower = stat.warPower * 0.9)
+                    ArmType.CAVALRY -> stat.copy(warPower = stat.warPower * 0.8)
+                    else -> stat
+                }
+            }
         },
         "che_궁병" to object : ActionModifier {
             override val code = "che_궁병"; override val name = "궁병"

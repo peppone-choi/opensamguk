@@ -507,6 +507,33 @@ export const auctionApi = {
     }),
 };
 
+// Item API
+export const itemApi = {
+  discard: (generalId: number, itemType: string) =>
+    api.post<CommandResult>(`/generals/${generalId}/items/discard`, {
+      itemType,
+    }),
+  equip: (generalId: number, itemCode: string, itemType: string) =>
+    api.post<CommandResult>(`/generals/${generalId}/items/equip`, {
+      itemCode,
+      itemType,
+    }),
+  unequip: (generalId: number, itemType: string) =>
+    api.post<CommandResult>(`/generals/${generalId}/items/unequip`, {
+      itemType,
+    }),
+  use: (generalId: number, itemType: string, itemCode: string) =>
+    api.post<CommandResult>(`/generals/${generalId}/items/use`, {
+      itemType,
+      itemCode,
+    }),
+  give: (generalId: number, targetGeneralId: number, itemType: string) =>
+    api.post<CommandResult>(`/generals/${generalId}/items/give`, {
+      targetGeneralId,
+      itemType,
+    }),
+};
+
 // Tournament API
 export const tournamentApi = {
   getInfo: (worldId: number) =>

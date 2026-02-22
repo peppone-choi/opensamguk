@@ -34,6 +34,9 @@ data class DomesticContext(
 )
 
 data class StatContext(
+    var crewType: String = "",
+    var opponentCrewType: String = "",
+    var hpRatio: Double = 1.0,
     var leadership: Double = 0.0,
     var strength: Double = 0.0,
     var intel: Double = 0.0,

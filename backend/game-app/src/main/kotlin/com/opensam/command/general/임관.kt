@@ -37,8 +37,9 @@ class 임관(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         pushLog("<D>${destNationName}</>에 임관했습니다. <1>$date</>")
 
-        // TODO: check gennum for exp bonus
-        val exp = 100
+        // Legacy parity: gennum < initialNationGenLimit → exp 700, else 100
+        val gennum = services?.generalRepository?.findByNationId(dn.id)?.size ?: 0
+        val exp = if (gennum < INITIAL_NATION_GEN_LIMIT) 700 else 100
 
         return CommandResult(
             success = true,

@@ -3,6 +3,8 @@ package com.opensam.engine.modifier
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.opensam.model.ArmType
+import com.opensam.model.CrewType
 import com.opensam.engine.war.BattleTrigger
 import com.opensam.engine.war.BattleTriggerRegistry
 import kotlin.math.floor
@@ -187,6 +189,19 @@ class MiscItem(
     private val opposeStatMods: Map<String, Double> = emptyMap(),
     val triggerType: String? = null,
 ) : ActionModifier {
+    private fun parseCrewType(raw: String): CrewType? {
+        val code = raw.toIntOrNull() ?: return null
+        return CrewType.fromCode(code)
+    }
+
+    private fun isRegionalOrCityCrewType(raw: String): Boolean {
+        val code = raw.toIntOrNull() ?: return false
+        if (code <= 0) return true
+        val crewType = CrewType.fromCode(code) ?: return false
+        if (crewType.armType == ArmType.CASTLE) return true
+        return crewType.code % 100 != 0
+    }
+
     override fun onCalcStat(stat: StatContext): StatContext {
         var s = stat
         statMods["leadership"]?.let { s = s.copy(leadership = s.leadership + it) }
@@ -223,7 +238,21 @@ class MiscItem(
         }
 
         if (triggerType == "typeAdvantage" || triggerType == "antiRegional") {
-            // TODO: typeAdvantage/antiRegional require opponent crew type, wire in BattleEngine.
+            val myCrewType = parseCrewType(s.crewType)
+            val opponentCrewType = parseCrewType(s.opponentCrewType)
+            if (triggerType == "typeAdvantage" && myCrewType != null && opponentCrewType != null) {
+                if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
+                    s = s.copy(warPower = s.warPower * 1.1)
+                }
+            }
+            if (triggerType == "antiRegional" && isRegionalOrCityCrewType(s.opponentCrewType)) {
+                s = s.copy(warPower = s.warPower * 1.15)
+            }
+        }
+
+        if (triggerType == "perseverance") {
+            val hpRatio = s.hpRatio.coerceIn(0.0, 1.0)
+            s = s.copy(warPower = s.warPower * (1.0 + 0.6 * (1.0 - hpRatio)))
         }
 
         if (triggerType == "treasure" || triggerType == "recruit") {
@@ -231,13 +260,6 @@ class MiscItem(
         }
 
         return s
-    }
-
-    override fun getWarPowerMultiplier(): Double {
-        if (triggerType == "perseverance") {
-            // TODO: perseverance requires runtime HP ratio, wire in BattleEngine.
-        }
-        return 1.0
     }
 
     override fun onCalcDomestic(ctx: DomesticContext): DomesticContext {

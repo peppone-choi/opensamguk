@@ -1,5 +1,8 @@
 package com.opensam.engine.trigger
 
+import com.opensam.engine.modifier.ActionModifier
+import com.opensam.engine.modifier.DomesticContext
+import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.General
 
 /**
@@ -91,18 +94,114 @@ class TroopConsumptionTrigger(private val general: General) : GeneralTrigger {
     }
 }
 
+class ModifierBridgeTrigger(
+    private val general: General,
+    private val modifiers: List<ActionModifier>,
+) : GeneralTrigger {
+    override val uniqueId = "modifier_bridge_${general.id}"
+    override val priority = TriggerPriority.POST
+
+    override fun action(env: TriggerEnv): Boolean = true
+
+    override fun onCalcDomestic(
+        general: General,
+        turnType: String,
+        varType: String,
+        value: Double,
+        aux: Map<String, Any>,
+    ): Double {
+        val baseCtx = when (varType) {
+            "cost" -> DomesticContext(costMultiplier = value, actionCode = turnType)
+            "success" -> DomesticContext(successMultiplier = value, actionCode = turnType)
+            "fail" -> DomesticContext(failMultiplier = value, actionCode = turnType)
+            "score" -> DomesticContext(scoreMultiplier = value, actionCode = turnType)
+            "train" -> DomesticContext(trainMultiplier = value, actionCode = turnType)
+            "atmos" -> DomesticContext(atmosMultiplier = value, actionCode = turnType)
+            else -> return value
+        }
+
+        val modified = modifiers.fold(baseCtx) { ctx, modifier -> modifier.onCalcDomestic(ctx) }
+        return when (varType) {
+            "cost" -> modified.costMultiplier
+            "success" -> modified.successMultiplier
+            "fail" -> modified.failMultiplier
+            "score" -> modified.scoreMultiplier
+            "train" -> modified.trainMultiplier
+            "atmos" -> modified.atmosMultiplier
+            else -> value
+        }
+    }
+
+    override fun onCalcStat(
+        general: General,
+        statName: String,
+        value: Double,
+        aux: Map<String, Any>,
+    ): Double {
+        val baseCtx = when (statName) {
+            "leadership" -> StatContext(leadership = value)
+            "strength" -> StatContext(strength = value)
+            "intel" -> StatContext(intel = value)
+            "criticalChance" -> StatContext(criticalChance = value)
+            "dodgeChance" -> StatContext(dodgeChance = value)
+            "magicChance" -> StatContext(magicChance = value)
+            "warPower" -> StatContext(warPower = value)
+            "bonusTrain" -> StatContext(bonusTrain = value)
+            "bonusAtmos" -> StatContext(bonusAtmos = value)
+            "magicTrialProb" -> StatContext(magicTrialProb = value)
+            "magicSuccessProb" -> StatContext(magicSuccessProb = value)
+            "magicSuccessDamage" -> StatContext(magicSuccessDamage = value)
+            "dexMultiplier" -> StatContext(dexMultiplier = value)
+            "expMultiplier" -> StatContext(expMultiplier = value)
+            "injuryProb" -> StatContext(injuryProb = value)
+            "initWarPhase" -> StatContext(initWarPhase = value)
+            "sabotageDefence" -> StatContext(sabotageDefence = value)
+            "dedicationMultiplier" -> StatContext(dedicationMultiplier = value)
+            else -> return value
+        }
+
+        val modified = modifiers.fold(baseCtx) { stat, modifier -> modifier.onCalcStat(stat) }
+        return when (statName) {
+            "leadership" -> modified.leadership
+            "strength" -> modified.strength
+            "intel" -> modified.intel
+            "criticalChance" -> modified.criticalChance
+            "dodgeChance" -> modified.dodgeChance
+            "magicChance" -> modified.magicChance
+            "warPower" -> modified.warPower
+            "bonusTrain" -> modified.bonusTrain
+            "bonusAtmos" -> modified.bonusAtmos
+            "magicTrialProb" -> modified.magicTrialProb
+            "magicSuccessProb" -> modified.magicSuccessProb
+            "magicSuccessDamage" -> modified.magicSuccessDamage
+            "dexMultiplier" -> modified.dexMultiplier
+            "expMultiplier" -> modified.expMultiplier
+            "injuryProb" -> modified.injuryProb
+            "initWarPhase" -> modified.initWarPhase
+            "sabotageDefence" -> modified.sabotageDefence
+            "dedicationMultiplier" -> modified.dedicationMultiplier
+            else -> value
+        }
+    }
+}
+
 /**
  * Build the pre-turn trigger list for a general.
  * Legacy: TurnExecutionHelper::preprocessCommand()
  */
-fun buildPreTurnTriggers(general: General): List<GeneralTrigger> {
+fun buildPreTurnTriggers(
+    general: General,
+    modifiers: List<ActionModifier> = emptyList(),
+): List<GeneralTrigger> {
     val triggers = mutableListOf<GeneralTrigger>()
 
     // Always-present triggers
     triggers.add(InjuryReductionTrigger(general))
     triggers.add(TroopConsumptionTrigger(general))
 
-    // TODO: Add special/personality/item-based triggers from general's action list
+    if (modifiers.isNotEmpty()) {
+        triggers.add(ModifierBridgeTrigger(general, modifiers))
+    }
 
     return triggers
 }

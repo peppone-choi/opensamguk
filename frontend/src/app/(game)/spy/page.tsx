@@ -117,18 +117,7 @@ export default function SpyPage() {
         </CardHeader>
         <CardContent>
           {reports.length === 0 ? (
-            <div className="space-y-4">
-              <EmptyState icon={Eye} title="수신된 첩보 결과가 없습니다." />
-              <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground mb-1">
-                  첩보 기능 준비 중
-                </p>
-                <p>
-                  전용 첩보 API가 준비되면 목표 도시/장수별 상세 보고서가
-                  자동으로 분류됩니다.
-                </p>
-              </div>
-            </div>
+            <EmptyState icon={Eye} title="수신된 첩보 결과가 없습니다." />
           ) : (
             <div className="space-y-2">
               {reports.map((report) => {
