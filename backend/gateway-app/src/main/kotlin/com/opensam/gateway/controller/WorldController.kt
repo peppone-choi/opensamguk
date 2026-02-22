@@ -3,7 +3,7 @@ package com.opensam.gateway.controller
 import com.opensam.gateway.dto.WorldStateResponse
 import com.opensam.gateway.dto.AttachWorldProcessRequest
 import com.opensam.gateway.dto.ActivateWorldRequest
-import com.opensam.gateway.orchestrator.GameProcessOrchestrator
+import com.opensam.gateway.orchestrator.GameOrchestrator
 import com.opensam.gateway.service.WorldService
 import com.opensam.shared.dto.CreateWorldRequest
 import com.opensam.shared.dto.ResetWorldRequest
@@ -27,7 +27,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @RequestMapping("/api/worlds")
 class WorldController(
     private val worldService: WorldService,
-    private val gameProcessOrchestrator: GameProcessOrchestrator,
+    private val gameOrchestrator: GameOrchestrator,
     private val webClientBuilder: WebClient.Builder,
 ) {
     @GetMapping
@@ -50,7 +50,7 @@ class WorldController(
         val gameVersion = request.gameVersion?.takeIf { it.isNotBlank() } ?: "dev"
 
         return try {
-            val instance = gameProcessOrchestrator.ensureVersion(
+            val instance = gameOrchestrator.ensureVersion(
                 AttachWorldProcessRequest(
                     commitSha = commitSha,
                     gameVersion = gameVersion,
@@ -58,12 +58,12 @@ class WorldController(
             )
 
             val created = createWorldViaGameInstance(
-                port = instance.port,
+                baseUrl = instance.baseUrl,
                 request = request.copy(commitSha = commitSha, gameVersion = gameVersion),
                 authorizationHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION),
             )
 
-            gameProcessOrchestrator.attachWorld(
+            gameOrchestrator.attachWorld(
                 worldId = created.id.toLong(),
                 request = AttachWorldProcessRequest(
                     commitSha = created.commitSha,
@@ -111,7 +111,7 @@ class WorldController(
         val gameVersion = request?.gameVersion?.takeIf { it.isNotBlank() } ?: world.gameVersion
 
         return try {
-            gameProcessOrchestrator.attachWorld(
+            gameOrchestrator.attachWorld(
                 worldId = id.toLong(),
                 request = AttachWorldProcessRequest(
                     commitSha = commitSha,
@@ -119,6 +119,7 @@ class WorldController(
                     jarPath = request?.jarPath,
                     port = request?.port,
                     javaCommand = request?.javaCommand ?: "java",
+                    imageTag = request?.imageTag,
                 ),
             )
             worldService.updateVersionAndActivation(world, commitSha, gameVersion, active = true)
@@ -133,7 +134,7 @@ class WorldController(
     @PostMapping("/{id}/deactivate")
     fun deactivateWorld(@PathVariable id: Short): ResponseEntity<Void> {
         val world = worldService.getWorld(id) ?: return ResponseEntity.notFound().build()
-        val detached = gameProcessOrchestrator.detachWorld(id.toLong())
+        val detached = gameOrchestrator.detachWorld(id.toLong())
         return if (detached) {
             worldService.markActivation(world, active = false)
             ResponseEntity.noContent().build()
@@ -151,7 +152,7 @@ class WorldController(
         val world = worldService.getWorld(id) ?: return ResponseEntity.notFound().build()
 
         return try {
-            val instance = gameProcessOrchestrator.ensureVersion(
+            val instance = gameOrchestrator.ensureVersion(
                 AttachWorldProcessRequest(
                     commitSha = world.commitSha,
                     gameVersion = world.gameVersion,
@@ -159,14 +160,14 @@ class WorldController(
             )
 
             val resetWorld = resetWorldViaGameInstance(
-                port = instance.port,
+                baseUrl = instance.baseUrl,
                 worldId = id,
                 body = body,
                 authorizationHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION),
             )
 
-            gameProcessOrchestrator.detachWorld(id.toLong())
-            gameProcessOrchestrator.attachWorld(
+            gameOrchestrator.detachWorld(id.toLong())
+            gameOrchestrator.attachWorld(
                 worldId = resetWorld.id.toLong(),
                 request = AttachWorldProcessRequest(
                     commitSha = resetWorld.commitSha,
@@ -210,7 +211,7 @@ class WorldController(
         val world = worldService.getWorld(id) ?: return ResponseEntity.notFound().build()
 
         return try {
-            val instance = gameProcessOrchestrator.ensureVersion(
+            val instance = gameOrchestrator.ensureVersion(
                 AttachWorldProcessRequest(
                     commitSha = world.commitSha,
                     gameVersion = world.gameVersion,
@@ -218,12 +219,12 @@ class WorldController(
             )
 
             deleteWorldViaGameInstance(
-                port = instance.port,
+                baseUrl = instance.baseUrl,
                 worldId = id,
                 authorizationHeader = httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION),
             )
 
-            gameProcessOrchestrator.detachWorld(id.toLong())
+            gameOrchestrator.detachWorld(id.toLong())
             ResponseEntity.noContent().build()
         } catch (_: IllegalArgumentException) {
             ResponseEntity.badRequest().build()
@@ -241,14 +242,14 @@ class WorldController(
     }
 
     private fun createWorldViaGameInstance(
-        port: Int,
+        baseUrl: String,
         request: CreateWorldRequest,
         authorizationHeader: String?,
     ): WorldStateResponse {
         return webClientBuilder
             .build()
             .post()
-            .uri("http://127.0.0.1:$port/api/worlds")
+            .uri("$baseUrl/api/worlds")
             .headers { headers ->
                 if (!authorizationHeader.isNullOrBlank()) {
                     headers[HttpHeaders.AUTHORIZATION] = listOf(authorizationHeader)
@@ -261,7 +262,7 @@ class WorldController(
     }
 
     private fun resetWorldViaGameInstance(
-        port: Int,
+        baseUrl: String,
         worldId: Short,
         body: ResetWorldRequest?,
         authorizationHeader: String?,
@@ -269,7 +270,7 @@ class WorldController(
         return webClientBuilder
             .build()
             .post()
-            .uri("http://127.0.0.1:$port/api/worlds/$worldId/reset")
+            .uri("$baseUrl/api/worlds/$worldId/reset")
             .contentType(MediaType.APPLICATION_JSON)
             .headers { headers ->
                 if (!authorizationHeader.isNullOrBlank()) {
@@ -283,14 +284,14 @@ class WorldController(
     }
 
     private fun deleteWorldViaGameInstance(
-        port: Int,
+        baseUrl: String,
         worldId: Short,
         authorizationHeader: String?,
     ) {
         webClientBuilder
             .build()
             .delete()
-            .uri("http://127.0.0.1:$port/api/worlds/$worldId")
+            .uri("$baseUrl/api/worlds/$worldId")
             .headers { headers ->
                 if (!authorizationHeader.isNullOrBlank()) {
                     headers[HttpHeaders.AUTHORIZATION] = listOf(authorizationHeader)

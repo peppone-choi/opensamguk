@@ -587,6 +587,32 @@ export const battleSimApi = {
     }),
 };
 
+// Game Version API (Admin)
+export const gameVersionApi = {
+  list: () =>
+    api.get<
+      {
+        commitSha: string;
+        gameVersion: string;
+        jarPath: string;
+        port: number;
+        worldIds: number[];
+        alive: boolean;
+        pid: number;
+        baseUrl: string;
+        containerId: string | null;
+        imageTag: string | null;
+      }[]
+    >("/admin/game-versions"),
+  deploy: (data: {
+    gameVersion: string;
+    imageTag?: string;
+    commitSha?: string;
+  }) => api.post<unknown>("/admin/game-versions", data),
+  stop: (version: string) =>
+    api.delete<void>(`/admin/game-versions/${encodeURIComponent(version)}`),
+};
+
 // Admin API
 export const adminApi = {
   getDashboard: () => api.get<AdminDashboard>("/admin/dashboard"),

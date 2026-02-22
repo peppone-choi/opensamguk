@@ -14,6 +14,7 @@ import {
   Handshake,
   Clock,
   UserCog,
+  Container,
   LogOut,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ const adminNav = [
   { href: "/admin/diplomacy", label: "외교", icon: Handshake },
   { href: "/admin/time-control", label: "시간 제어", icon: Clock },
   { href: "/admin/users", label: "유저 관리", icon: UserCog },
+  { href: "/admin/game-versions", label: "게임 버전", icon: Container },
 ];
 
 export default function AdminLayout({

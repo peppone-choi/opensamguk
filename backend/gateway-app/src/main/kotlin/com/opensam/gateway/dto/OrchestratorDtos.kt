@@ -6,6 +6,7 @@ data class AttachWorldProcessRequest(
     val jarPath: String? = null,
     val port: Int? = null,
     val javaCommand: String = "java",
+    val imageTag: String? = null,
 )
 
 data class ActivateWorldRequest(
@@ -14,6 +15,7 @@ data class ActivateWorldRequest(
     val jarPath: String? = null,
     val port: Int? = null,
     val javaCommand: String? = null,
+    val imageTag: String? = null,
 )
 
 data class GameInstanceStatus(
@@ -24,4 +26,13 @@ data class GameInstanceStatus(
     val worldIds: List<Long>,
     val alive: Boolean,
     val pid: Long,
+    val baseUrl: String = "",
+    val containerId: String? = null,
+    val imageTag: String? = null,
+)
+
+data class DeployGameVersionRequest(
+    val gameVersion: String,
+    val imageTag: String? = null,
+    val commitSha: String? = null,
 )

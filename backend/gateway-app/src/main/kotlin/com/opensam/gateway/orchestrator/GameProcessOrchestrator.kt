@@ -6,6 +6,7 @@ import com.opensam.gateway.service.WorldRouteRegistry
 import jakarta.annotation.PreDestroy
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import java.io.File
 import java.net.URI
@@ -22,11 +23,12 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 @Service
+@ConditionalOnProperty("gateway.docker.enabled", havingValue = "false", matchIfMissing = true)
 class GameProcessOrchestrator(
     private val worldRouteRegistry: WorldRouteRegistry,
     @Value("\${gateway.orchestrator.health-timeout-ms:30000}")
     private val healthTimeoutMs: Long,
-) {
+) : GameOrchestrator {
     private val log = LoggerFactory.getLogger(GameProcessOrchestrator::class.java)
     private val httpClient: HttpClient = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(2))
@@ -44,7 +46,7 @@ class GameProcessOrchestrator(
     private val lock = ReentrantLock()
     private val instances = ConcurrentHashMap<String, ManagedGameInstance>()
 
-    fun attachWorld(worldId: Long, request: AttachWorldProcessRequest): GameInstanceStatus {
+    override fun attachWorld(worldId: Long, request: AttachWorldProcessRequest): GameInstanceStatus {
         val commitSha = request.commitSha.trim()
         require(commitSha.isNotEmpty()) { "commitSha is required" }
 
@@ -67,7 +69,7 @@ class GameProcessOrchestrator(
         }
     }
 
-    fun ensureVersion(request: AttachWorldProcessRequest): GameInstanceStatus {
+    override fun ensureVersion(request: AttachWorldProcessRequest): GameInstanceStatus {
         val commitSha = request.commitSha.trim()
         require(commitSha.isNotEmpty()) { "commitSha is required" }
 
@@ -78,7 +80,7 @@ class GameProcessOrchestrator(
         }
     }
 
-    fun detachWorld(worldId: Long): Boolean {
+    override fun detachWorld(worldId: Long): Boolean {
         return lock.withLock {
             cleanupDeadInstances()
 
@@ -98,7 +100,18 @@ class GameProcessOrchestrator(
         }
     }
 
-    fun statuses(): List<GameInstanceStatus> {
+    override fun stopVersion(gameVersion: String): Boolean {
+        return lock.withLock {
+            val managed = instances.values.firstOrNull { it.gameVersion == gameVersion }
+                ?: return false
+            managed.worldIds.forEach { worldRouteRegistry.detach(it) }
+            stopInstance(managed)
+            instances.remove(managed.commitSha)
+            true
+        }
+    }
+
+    override fun statuses(): List<GameInstanceStatus> {
         return lock.withLock {
             cleanupDeadInstances()
 
@@ -109,7 +122,7 @@ class GameProcessOrchestrator(
     }
 
     @PreDestroy
-    fun shutdownAll() {
+    override fun shutdownAll() {
         lock.withLock {
             instances.values.forEach { stopInstance(it) }
             instances.clear()
@@ -219,6 +232,7 @@ class GameProcessOrchestrator(
             worldIds = instance.worldIds.toList().sorted(),
             alive = instance.process.isAlive,
             pid = instance.process.pid(),
+            baseUrl = baseUrl(instance.port),
         )
     }
 

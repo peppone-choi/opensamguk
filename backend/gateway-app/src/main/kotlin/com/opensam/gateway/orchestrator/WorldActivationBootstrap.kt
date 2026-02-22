@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 @Component
 class WorldActivationBootstrap(
     private val worldService: WorldService,
-    private val gameProcessOrchestrator: GameProcessOrchestrator,
+    private val gameOrchestrator: GameOrchestrator,
     @Value("\${gateway.orchestrator.restore-active-worlds:true}")
     private val restoreActiveWorlds: Boolean,
 ) : ApplicationRunner {
@@ -33,7 +33,7 @@ class WorldActivationBootstrap(
 
         activeWorlds.forEach { world ->
             try {
-                gameProcessOrchestrator.attachWorld(
+                gameOrchestrator.attachWorld(
                     worldId = world.id.toLong(),
                     request = AttachWorldProcessRequest(
                         commitSha = world.commitSha,
