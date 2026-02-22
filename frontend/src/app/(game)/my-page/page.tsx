@@ -770,36 +770,36 @@ export default function MyPage() {
                       return (
                         <Button
                           key={key}
-                           variant="outline"
-                           size="sm"
-                           disabled={!hasItem}
-                           className="text-xs"
-                           onClick={async () => {
-                             if (
-                               confirm(
-                                 `${label} [${val}]을(를) 정말 파기하시겠습니까?`,
-                               )
-                             ) {
-                               try {
-                                 const res = await itemApi.discard(g.id, key);
-                                 if (res.data.success) {
-                                   toast.success(
-                                     res.data.logs?.[0] ??
-                                       "아이템을 파기했습니다.",
-                                   );
-                                   router.refresh();
-                                 } else {
-                                   toast.error(
-                                     res.data.logs?.[0] ??
-                                       "파기에 실패했습니다.",
-                                   );
-                                 }
-                               } catch {
-                                 toast.error("파기에 실패했습니다.");
-                               }
-                             }
-                           }}
-                         >
+                          variant="outline"
+                          size="sm"
+                          disabled={!hasItem}
+                          className="text-xs"
+                          onClick={async () => {
+                            if (
+                              confirm(
+                                `${label} [${val}]을(를) 정말 파기하시겠습니까?`,
+                              )
+                            ) {
+                              try {
+                                const res = await itemApi.discard(g.id, key);
+                                if (res.data.success) {
+                                  toast.success(
+                                    res.data.logs?.[0] ??
+                                      "아이템을 파기했습니다.",
+                                  );
+                                  router.refresh();
+                                } else {
+                                  toast.error(
+                                    res.data.logs?.[0] ??
+                                      "파기에 실패했습니다.",
+                                  );
+                                }
+                              } catch {
+                                toast.error("파기에 실패했습니다.");
+                              }
+                            }
+                          }}
+                        >
                           {label}: {hasItem ? val : "-"}
                         </Button>
                       );
