@@ -65,10 +65,15 @@ export function subscribeWebSocket(
   callback: (data: unknown) => void,
 ): () => void {
   if (!stompClient?.active) return () => {};
-  const sub = stompClient.subscribe(topic, (msg) => {
-    callback(JSON.parse(msg.body));
-  });
-  return () => sub.unsubscribe();
+  try {
+    const sub = stompClient.subscribe(topic, (msg) => {
+      callback(JSON.parse(msg.body));
+    });
+    return () => sub.unsubscribe();
+  } catch {
+    // Connection may have dropped between the active check and subscribe call
+    return () => {};
+  }
 }
 
 export function disconnectWebSocket() {
