@@ -30,8 +30,6 @@ import type {
   AdminUser,
   AdminGeneral,
   RealtimeStatus,
-  TurnStatusResponse,
-  TurnRunResponse,
   AuctionBidResponse,
   AccountSettings,
   MailboxType,
@@ -349,13 +347,6 @@ export const boardApi = {
     api.delete<void>(`/boards/${postId}/comments/${commentId}`, {
       params: { generalId },
     }),
-};
-
-export const turnApi = {
-  getStatus: () => api.get<TurnStatusResponse>("/turns/status"),
-  run: () => api.post<TurnRunResponse>("/turns/run"),
-  pause: () => api.post<TurnStatusResponse>("/turns/pause"),
-  resume: () => api.post<TurnStatusResponse>("/turns/resume"),
 };
 
 // Account API

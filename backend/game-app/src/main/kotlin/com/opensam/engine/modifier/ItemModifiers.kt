@@ -255,10 +255,6 @@ class MiscItem(
             s = s.copy(warPower = s.warPower * (1.0 + 0.6 * (1.0 - hpRatio)))
         }
 
-        if (triggerType == "treasure" || triggerType == "recruit") {
-            // TODO: treasure/recruit effects handled in ItemService.
-        }
-
         return s
     }
 

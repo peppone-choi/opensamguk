@@ -750,14 +750,6 @@ export interface NationStatistic {
   totalPop: number;
 }
 
-export interface TurnStatusResponse {
-  state: string;
-}
-
-export interface TurnRunResponse {
-  result: string;
-}
-
 export interface AuctionBidResponse {
   success: boolean;
   currentPrice?: number;
