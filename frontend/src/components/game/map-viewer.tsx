@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-
-const IMAGE_CDN = "https://storage.hided.net/gitea/devsam/image";
+import { GAME_CDN_ROOT } from "@/lib/image";
 
 interface MapViewerProps {
   worldId: number;
@@ -78,8 +77,8 @@ export function MapViewer({
       ? "road.png"
       : `${mapCode}_road.png`;
 
-  const mapLayerUrl = `${IMAGE_CDN}/map/${mapFolder}/bg_${season}.jpg`;
-  const mapRoadUrl = `${IMAGE_CDN}/map/${mapFolder}/${mapRoadImage}`;
+  const mapLayerUrl = `${GAME_CDN_ROOT}/map/${mapFolder}/bg_${season}.jpg`;
+  const mapRoadUrl = `${GAME_CDN_ROOT}/map/${mapFolder}/${mapRoadImage}`;
 
   const handleCityClick = (cityId: number, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -154,7 +153,7 @@ export function MapViewer({
                 <div
                   className="absolute z-[1] bg-center bg-no-repeat"
                   style={{
-                    backgroundImage: `url('${IMAGE_CDN}/b${nation.color.substring(1).toUpperCase()}.png')`,
+                    backgroundImage: `url('${GAME_CDN_ROOT}/b${nation.color.substring(1).toUpperCase()}.png')`,
                     backgroundSize: `${bgW}px ${bgH}px`,
                     width: bgW,
                     height: bgH,
@@ -175,8 +174,8 @@ export function MapViewer({
                     top: (30 - icnH) / 2,
                   }}
                 >
-                  <img
-                    src={`${IMAGE_CDN}/cast_${cc.level}.gif`}
+                    <img
+                      src={`${GAME_CDN_ROOT}/cast_${cc.level}.gif`}
                     className="w-full h-full block"
                     alt=""
                   />
@@ -198,7 +197,7 @@ export function MapViewer({
                       }}
                     >
                       <img
-                        src={`${IMAGE_CDN}/${(rtCity?.supplyState ?? 0) > 0 ? "f" : "d"}${nation.color.substring(1).toUpperCase()}.gif`}
+                        src={`${GAME_CDN_ROOT}/${(rtCity?.supplyState ?? 0) > 0 ? "f" : "d"}${nation.color.substring(1).toUpperCase()}.gif`}
                         className="w-full h-full block"
                         alt=""
                       />
@@ -213,7 +212,7 @@ export function MapViewer({
                           }}
                         >
                           <img
-                            src={`${IMAGE_CDN}/event51.gif`}
+                            src={`${GAME_CDN_ROOT}/event51.gif`}
                             className="w-full h-full block"
                             alt="capital"
                           />
@@ -227,7 +226,7 @@ export function MapViewer({
                 {rtCity && rtCity.state > 0 && (
                   <div className="absolute left-0" style={{ top: 5 * smV }}>
                     <img
-                      src={`${IMAGE_CDN}/event${rtCity.state}.gif`}
+                      src={`${GAME_CDN_ROOT}/event${rtCity.state}.gif`}
                       className="object-contain"
                       style={{ width: 10 * smV }}
                       alt=""

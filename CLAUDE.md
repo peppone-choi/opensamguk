@@ -16,7 +16,8 @@ Web-based Three Kingdoms strategy game.
 
 ## Image CDN
 
-Base URL: https://storage.hided.net/gitea/devsam/image/raw/branch/main/
+Base URL (default): https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/
+Configurable via: `NEXT_PUBLIC_IMAGE_CDN_BASE`
 
 ## Commands
 
@@ -72,7 +73,7 @@ docker-compose up -d
 
 - **Legacy PHP source**: `legacy/` (parity target)
 - **Core2026 docs**: `docs/` (extracted from core2026)
-- Image CDN: `https://storage.hided.net/gitea/devsam/image/raw/branch/main/`
+- Image CDN: `https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-image@master/`
 
 ### Docs Index (MUST read before implementing any feature)
 
