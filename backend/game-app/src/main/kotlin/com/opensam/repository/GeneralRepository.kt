@@ -13,4 +13,21 @@ interface GeneralRepository : JpaRepository<General, Long> {
     fun findByWorldIdAndCommandEndTimeBefore(worldId: Long, time: OffsetDateTime): List<General>
     fun findByTroopId(troopId: Long): List<General>
     fun findByWorldIdAndNationId(worldId: Long, nationId: Long): List<General>
+
+    /**
+     * Get average stats for generals in a nation.
+     */
+    fun getAverageStats(worldId: Long, nationId: Long): GeneralAverageStats {
+        val generals = findByWorldIdAndNationId(worldId, nationId)
+        if (generals.isEmpty()) return GeneralAverageStats()
+        return GeneralAverageStats(
+            experience = (generals.sumOf { it.experience } / generals.size),
+            dedication = (generals.sumOf { it.dedication } / generals.size),
+        )
+    }
 }
+
+data class GeneralAverageStats(
+    val experience: Int = 0,
+    val dedication: Int = 0,
+)

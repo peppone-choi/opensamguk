@@ -21,7 +21,7 @@ class 선동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val secuAmount = min(rng.nextInt(SABOTAGE_DMG_MIN, SABOTAGE_DMG_MAX + 1), dc.secu)
         // Trust reduction: damage / 50, capped at current trust (legacy PHP parity)
         val trustRawDamage = rng.nextInt(SABOTAGE_DMG_MIN, SABOTAGE_DMG_MAX + 1).toDouble() / 50.0
-        val trustAmount = minOf(trustRawDamage, dc.trust)
+        val trustAmount = minOf(trustRawDamage, dc.trust.toDouble())
 
         val secuAmountText = "%,d".format(secuAmount)
         val trustAmountText = "%.1f".format(trustAmount)

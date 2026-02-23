@@ -65,7 +65,7 @@ class 랜덤임관(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"randomJoin":{"randomTalk":"$randomTalk","genLimit":$genLimit,"relYear":$relYear,"isNpc":${general.npcType >= 2}},"alternativeCommand":"che_인재탐색","statTemplate":{"officerLevel":1,"officerCity":0,"belong":1,"troop":0},"expGain":{"smallNation":700,"default":100},"logTemplates":{"action":"<D>{nationName}</>에 랜덤 임관했습니다. <1>$date</>","history":"<D><b>{nationName}</b></>에 랜덤 임관","global":"<Y>${generalName}</>${josaYi} {randomTalk} <D><b>{nationName}</b></>에 <S>임관</>했습니다."}}"""
+            message = """{"randomJoin":{"randomTalk":"$randomTalk","genLimit":$genLimit,"relYear":$relYear,"isNpc":${general.npcState >= 2}},"alternativeCommand":"che_인재탐색","statTemplate":{"officerLevel":1,"officerCity":0,"belong":1,"troop":0},"expGain":{"smallNation":700,"default":100},"logTemplates":{"action":"<D>{nationName}</>에 랜덤 임관했습니다. <1>$date</>","history":"<D><b>{nationName}</b></>에 랜덤 임관","global":"<Y>${generalName}</>${josaYi} {randomTalk} <D><b>{nationName}</b></>에 <S>임관</>했습니다."}}"""
         )
     }
 }

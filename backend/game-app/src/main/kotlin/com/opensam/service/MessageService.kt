@@ -176,6 +176,33 @@ class MessageService(
         return true
     }
 
+    /**
+     * Send a national message between nations (used by commands like 선전포고).
+     */
+    @Transactional
+    fun sendNationalMessage(
+        worldId: Long,
+        srcNationId: Long,
+        destNationId: Long,
+        srcGeneralId: Long,
+        text: String,
+    ) {
+        sendMessage(
+            worldId = worldId,
+            mailboxCode = "national",
+            mailboxType = MAILBOX_NATIONAL,
+            messageType = "national_message",
+            srcId = srcNationId,
+            destId = destNationId,
+            payload = mapOf(
+                "srcNationId" to srcNationId,
+                "destNationId" to destNationId,
+                "srcGeneralId" to srcGeneralId,
+                "text" to text,
+            ),
+        )
+    }
+
     @Transactional
     fun respondDiplomacy(messageId: Long, accept: Boolean) {
         val message = messageRepository.findById(messageId).orElseThrow()

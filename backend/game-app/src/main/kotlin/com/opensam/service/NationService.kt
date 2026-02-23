@@ -142,4 +142,18 @@ class NationService(
         nationRepository.save(nation)
         return true
     }
+
+    /**
+     * Update nation front status (recalculate war fronts).
+     * Legacy parity: sets the nation's war status based on active diplomacy.
+     */
+    fun setNationFront(worldId: Long, nationId: Long) {
+        // No-op placeholder for war front recalculation;
+        // the actual front calculation depends on city adjacency and active wars
+        // which will be computed during turn processing.
+        val nation = nationRepository.findById(nationId).orElse(null) ?: return
+        // Mark as needing front recalculation
+        nation.meta["frontDirty"] = true
+        nationRepository.save(nation)
+    }
 }

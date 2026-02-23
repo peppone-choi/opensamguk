@@ -64,6 +64,9 @@ class Nation(
     var power: Int = 0,
 
     @Column(nullable = false)
+    var gennum: Int = 0,
+
+    @Column(nullable = false)
     var level: Short = 0,
 
     @Column(name = "type_code", nullable = false)

@@ -636,62 +636,6 @@ fun ReqNationValue(key: String, displayName: String, op: String, expected: Int, 
     }
 }
 
-fun AllowDiplomacyBetweenStatus(allowedStatuses: List<Int>, failMessage: String) = object : Constraint {
-    override val name = "AllowDiplomacyBetweenStatus"
-    override fun test(ctx: ConstraintContext): ConstraintResult {
-        val destNation = ctx.destNation ?: return ConstraintResult.Fail("대상 국가를 찾을 수 없습니다.")
-        val nationId = ctx.general.nationId
-        val destNationId = destNation.id
-        // Check diplomacy status between nations from env
-        @Suppress("UNCHECKED_CAST")
-        val diplomacyMap = ctx.env["diplomacyStatus"] as? Map<String, Int> ?: emptyMap()
-        val key = "${minOf(nationId, destNationId)}_${maxOf(nationId, destNationId)}"
-        val status = diplomacyMap[key] ?: 7 // default: no relation (peacetime)
-        return if (status in allowedStatuses) ConstraintResult.Pass
-        else ConstraintResult.Fail(failMessage)
-    }
-}
-
-fun AllowDiplomacyStatus(allowedStatuses: List<Int>, failMessage: String) = object : Constraint {
-    override val name = "AllowDiplomacyStatus"
-    override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
-        // Check if nation is in any of the allowed war statuses
-        val warState = nation.warState.toInt()
-        return if (warState in allowedStatuses) ConstraintResult.Pass
-        else ConstraintResult.Fail(failMessage)
-    }
-}
-
-fun DisallowDiplomacyStatus(disallowedStatuses: Map<Int, String>) = object : Constraint {
-    override val name = "DisallowDiplomacyStatus"
-    override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
-        val warState = nation.warState.toInt()
-        val failMsg = disallowedStatuses[warState]
-        return if (failMsg != null) ConstraintResult.Fail(failMsg)
-        else ConstraintResult.Pass
-    }
-}
-
-fun ReqCityCapacity(cityKey: String, displayName: String, minValue: Int) = object : Constraint {
-    override val name = "ReqCityCapacity_$cityKey"
-    override fun test(ctx: ConstraintContext): ConstraintResult {
-        val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
-        val current = when (cityKey) {
-            "pop", "population" -> city.pop
-            "agri", "agriculture" -> city.agri
-            "comm", "commerce" -> city.comm
-            "secu", "security" -> city.secu
-            "def", "defence" -> city.def
-            "wall" -> city.wall
-            else -> 0
-        }
-        return if (current >= minValue) ConstraintResult.Pass
-        else ConstraintResult.Fail("${displayName}이(가) 부족합니다. (필요: $minValue, 현재: $current)")
-    }
-}
-
 fun ReqCityTrader() = object : Constraint {
     override val name = "ReqCityTrader"
     override fun test(ctx: ConstraintContext): ConstraintResult {
@@ -1131,17 +1075,54 @@ private fun asLong(raw: Any?): Long? {
     }
 }
 
-fun ReqDestNationValue(key: String, displayName: String, op: String, expected: Int, failMessage: String) = object : Constraint {
-    override val name = "ReqDestNationValue_$key"
+// ========== Additional constraints ==========
+
+/**
+ * AllowDiplomacyStatus with explicit nationId (used when checking a specific nation's diplomacy).
+ */
+fun AllowDiplomacyStatus(nationId: Long, allowList: List<Int>, reason: String) = object : Constraint {
+    override val name = "AllowDiplomacyStatus_ForNation"
     override fun test(ctx: ConstraintContext): ConstraintResult {
+        val destNation = ctx.destNation ?: return ConstraintResult.Pass
+        val state = readDiplomacyState(ctx.env, nationId, destNation.id) ?: 2
+        return if (state in allowList) ConstraintResult.Pass
+        else ConstraintResult.Fail(reason)
+    }
+}
+
+/**
+ * Require that the dest general belongs to the dest nation (for diplomatic acceptance commands).
+ */
+fun ReqDestNationGeneralMatch() = object : Constraint {
+    override val name = "ReqDestNationGeneralMatch"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val destGeneral = ctx.destGeneral ?: return ConstraintResult.Fail("대상 장수 정보가 없습니다.")
         val destNation = ctx.destNation ?: return ConstraintResult.Fail("대상 국가 정보가 없습니다.")
-        val actual = when (key) {
-            "level" -> destNation.level.toInt()
-            "gold" -> destNation.gold
-            "rice" -> destNation.rice
-            "surlimit" -> (destNation.meta["surlimit"] as? Number)?.toInt() ?: 0
-            else -> (destNation.meta[key] as? Number)?.toInt() ?: 0
-        }
+        return if (destGeneral.nationId == destNation.id) ConstraintResult.Pass
+        else ConstraintResult.Fail("대상 장수가 해당 국가 소속이 아닙니다.")
+    }
+}
+
+/**
+ * Require a minimum number of generals in the nation.
+ */
+fun ReqNationGeneralCount(minCount: Int) = object : Constraint {
+    override val name = "ReqNationGeneralCount"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
+        val gennum = nation.gennum
+        return if (gennum >= minCount) ConstraintResult.Pass
+        else ConstraintResult.Fail("장수가 ${minCount}명 이상이어야 합니다. (현재: ${gennum}명)")
+    }
+}
+
+/**
+ * ReqEnvValue with Int expected value.
+ */
+fun ReqEnvValue(key: String, op: String, expected: Int, reason: String) = object : Constraint {
+    override val name = "ReqEnvValue_${key}_int"
+    override fun test(ctx: ConstraintContext): ConstraintResult {
+        val actual = (ctx.env[key] as? Number)?.toInt() ?: 0
         val matches = when (op) {
             "==" -> actual == expected
             "!=" -> actual != expected
@@ -1152,38 +1133,20 @@ fun ReqDestNationValue(key: String, displayName: String, op: String, expected: I
             else -> true
         }
         return if (matches) ConstraintResult.Pass
-        else ConstraintResult.Fail(failMessage)
+        else ConstraintResult.Fail(reason)
     }
 }
 
-fun AllowDiplomacyWithTerm(minState: Int, minTerm: Int, failMessage: String) = object : Constraint {
-    override val name = "AllowDiplomacyWithTerm"
+/**
+ * AllowJoinDestNation - no-arg version (checks if dest nation allows joining).
+ */
+fun AllowJoinDestNation() = object : Constraint {
+    override val name = "AllowJoinDestNation"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val diplomacyInfo = ctx.env["diplomacyTerm"] as? Number
-        val term = diplomacyInfo?.toInt() ?: 0
-        return if (term >= minTerm) ConstraintResult.Pass
-        else ConstraintResult.Fail(failMessage)
-    }
-}
-
-fun ReqDestCityValue(field: String, displayName: String, op: String, expected: Int, failMessage: String) = object : Constraint {
-    override val name = "ReqDestCityValue_$field"
-    override fun test(ctx: ConstraintContext): ConstraintResult {
-        val destCity = ctx.destCity ?: return ConstraintResult.Fail("목적지 도시 정보가 없습니다.")
-        val actual = when (field) {
-            "level" -> destCity.level.toInt()
-            "pop" -> destCity.pop
-            else -> 0
-        }
-        val matches = when (op) {
-            ">" -> actual > expected
-            "<" -> actual < expected
-            ">=" -> actual >= expected
-            "<=" -> actual <= expected
-            "==" -> actual == expected
-            else -> true
-        }
-        return if (matches) ConstraintResult.Pass
-        else ConstraintResult.Fail(failMessage)
+        val destNation = ctx.destNation ?: return ConstraintResult.Fail("대상 국가를 찾을 수 없습니다.")
+        if (destNation.level.toInt() == 0) return ConstraintResult.Fail("방랑 세력에는 임관할 수 없습니다.")
+        val genLimit = (ctx.env["defaultMaxGeneral"] as? Number)?.toInt() ?: 30
+        if (destNation.gennum >= genLimit) return ConstraintResult.Fail("대상 국가의 장수 정원이 가득 찼습니다.")
+        return ConstraintResult.Pass
     }
 }

@@ -72,7 +72,7 @@ class che_이호경식(general: General, env: CommandEnv, arg: Map<String, Any>?
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <D><b>${destNationName}</b></>에 <M>${actionName}</>${josaUl} 발동")
 
         // Strategic command limit
-        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY
+        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
         // Update diplomacy: force to state=1 (declaration), term logic depends on current state
         // If currently at war (state=0), term becomes 3; otherwise term += 3

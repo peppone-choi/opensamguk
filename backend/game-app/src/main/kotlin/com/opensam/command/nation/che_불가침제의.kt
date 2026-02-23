@@ -14,7 +14,7 @@ class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, An
 
     override val actionName = "불가침 제의"
 
-    override val fullConditionConstraints: List<Any>
+    override val fullConditionConstraints: List<Constraint>
         get() {
             val year = arg?.get("year") as? Int
             val month = arg?.get("month") as? Int

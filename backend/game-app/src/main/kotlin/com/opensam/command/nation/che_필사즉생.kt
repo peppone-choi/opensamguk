@@ -36,7 +36,7 @@ class che_필사즉생(general: General, env: CommandEnv, arg: Map<String, Any>?
         general.dedication += expDed
 
         // Set strategic command limit
-        n.strategicCmdLimit = DEFAULT_GLOBAL_DELAY
+        n.strategicCmdLimit = DEFAULT_GLOBAL_DELAY.toShort()
 
         // Raise train/atmos to 100 for all nation generals (including self)
         val nationGenerals = services?.generalRepository?.findByNationId(n.id) ?: emptyList()

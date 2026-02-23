@@ -36,7 +36,7 @@ class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         general.dedication += expDed
 
         // Set strategic command limit
-        n.strategicCmdLimit = DEFAULT_GLOBAL_DELAY
+        n.strategicCmdLimit = DEFAULT_GLOBAL_DELAY.toShort()
 
         // Move enemy generals at destCity to random supply cities of their nation
         val enemyGenerals = services?.generalRepository?.findByCityId(dc.id)

@@ -10,6 +10,15 @@ data class CommandEnv(
     val scenario: Int = 0,
     val exchangeFee: Double = 0.03,
     val initialNationGenLimit: Int = 5,
+    val defaultMaxGeneral: Int = 30,
+    val startMonth: Int? = 1,
+    val sabotageDamageMin: Int = 200,
+    val sabotageDamageMax: Int = 400,
+    val sabotageProbCoefByStat: Int = 200,
+    val sabotageDefenceCoefByGeneralCnt: Double = 0.05,
+    val minAvailableRecruitPop: Int = 30000,
+    val maxTrainByCommand: Int = 80,
+    val maxAtmosByCommand: Int = 80,
     val gameStor: MutableMap<String, Any> = mutableMapOf()
 ) {
     /**

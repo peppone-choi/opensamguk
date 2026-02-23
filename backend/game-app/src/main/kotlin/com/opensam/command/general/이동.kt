@@ -56,7 +56,7 @@ class 이동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val atmosDelta = newAtmos - general.atmos.toInt()
 
         // Legacy PHP: if officer_level==12 and nation.level==0 (roaming), move all nation generals
-        val isRoamingLeader = general.officerLevel == 12 && (nation?.level ?: 1) == 0
+        val isRoamingLeader = general.officerLevel.toInt() == 12 && (nation?.level?.toInt() ?: 1) == 0
         val roamingMoveJson = if (isRoamingLeader) {
             ""","roamingMove":{"nationId":${nation?.id ?: 0},"destCityId":"$destCityId","destCityName":"$destCityName"}"""
         } else ""

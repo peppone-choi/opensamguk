@@ -49,7 +49,7 @@ class che_주민선정(general: General, env: CommandEnv, arg: Map<String, Any>?
         val leadership = general.leadership.toInt()
 
         // Base score with explevel bonus (legacy: getDomesticExpLevelBonus)
-        val expLevel = general.expLevel
+        val expLevel = general.expLevel.toInt()
         val expLevelBonus = getDomesticExpLevelBonus(expLevel)
         var baseScore = leadership * expLevelBonus * (0.8 + rng.nextDouble() * 0.4)
 

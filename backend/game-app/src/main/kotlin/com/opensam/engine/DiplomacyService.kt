@@ -347,8 +347,121 @@ class DiplomacyService(
         diplomacyRepository.saveAll(relations)
     }
 
+    // ========== Command-facing API ==========
+
     /**
-     * Send a diplomatic message to the destination nation's mailbox.
+     * State code mapping from legacy integer codes to string codes.
+     */
+    private fun stateIntToCode(state: Int): String = when (state) {
+        0 -> "선전포고"
+        1 -> "선전포고"
+        2 -> ""          // neutral / no relation
+        7 -> "불가침"
+        else -> ""
+    }
+
+    /**
+     * State code mapping from string code to legacy integer code.
+     */
+    private fun stateCodeToInt(stateCode: String): Int = when (stateCode) {
+        "선전포고" -> 0
+        "불가침" -> 7
+        "불가침제의" -> 3
+        "불가침파기제의" -> 4
+        "종전제의" -> 5
+        else -> 2
+    }
+
+    /**
+     * Set diplomacy state between two nations (command-facing API using legacy integer states).
+     * Creates or updates the diplomacy relation between the two nations.
+     *
+     * @param worldId World ID
+     * @param srcNationId Source nation ID
+     * @param destNationId Destination nation ID
+     * @param state Legacy integer state code (0=war, 1=declared, 2=neutral, 7=non-aggression)
+     * @param term Duration in turns
+     */
+    @Transactional
+    fun setDiplomacyState(worldId: Long, srcNationId: Long, destNationId: Long, state: Int, term: Int) {
+        val stateCode = stateIntToCode(state)
+        if (stateCode.isEmpty()) {
+            // neutral: kill all active relations between these nations
+            val relations = diplomacyRepository.findActiveRelationsBetween(worldId, srcNationId, destNationId)
+            for (rel in relations) {
+                rel.isDead = true
+            }
+            diplomacyRepository.saveAll(relations)
+            return
+        }
+
+        // Kill existing relations of the same type
+        val existing = diplomacyRepository.findActiveRelation(worldId, srcNationId, destNationId, stateCode)
+        if (existing != null) {
+            existing.term = term.toShort()
+            diplomacyRepository.save(existing)
+        } else {
+            createRelation(worldId, srcNationId, destNationId, stateCode, term.toShort())
+        }
+    }
+
+    /**
+     * Get current diplomacy state between two nations (command-facing API).
+     * Returns null if no active relation exists.
+     */
+    fun getDiplomacyState(worldId: Long, srcNationId: Long, destNationId: Long): DiplomacyStateInfo? {
+        val relations = diplomacyRepository.findActiveRelationsBetween(worldId, srcNationId, destNationId)
+        if (relations.isEmpty()) return null
+        // Return the most relevant active relation
+        val rel = relations.first()
+        return DiplomacyStateInfo(
+            state = stateCodeToInt(rel.stateCode),
+            term = rel.term.toInt(),
+            stateCode = rel.stateCode,
+        )
+    }
+
+    /**
+     * Send a diplomatic message from a command (command-facing API).
+     * This is the overload used by command classes.
+     */
+    @Transactional
+    fun sendDiplomaticMessage(
+        worldId: Long,
+        srcNationId: Long,
+        destNationId: Long,
+        srcGeneralId: Long,
+        action: String,
+        extra: Map<String, Any> = emptyMap(),
+    ) {
+        val messageType = when (action) {
+            "non_aggression" -> MSG_NON_AGGRESSION_PROPOSAL
+            "cancel_non_aggression" -> MSG_NON_AGGRESSION_BREAK
+            "stop_war" -> MSG_CEASEFIRE_PROPOSAL
+            else -> "diplomacy_$action"
+        }
+
+        val payload = mutableMapOf<String, Any>(
+            "srcNationId" to srcNationId,
+            "destNationId" to destNationId,
+            "srcGeneralId" to srcGeneralId,
+        )
+        payload.putAll(extra)
+
+        messageRepository.save(
+            Message(
+                worldId = worldId,
+                mailboxCode = "diplomacy",
+                messageType = messageType,
+                srcId = srcNationId,
+                destId = destNationId,
+                payload = payload,
+            )
+        )
+    }
+
+    /**
+     * Send a diplomatic message to the destination nation's mailbox (internal).
      */
     private fun sendDiplomaticMessage(
         worldId: Long,
@@ -386,3 +499,12 @@ class DiplomacyService(
         diplomacyRepository.saveAll(relations)
     }
 }
+
+/**
+ * Data class for returning diplomacy state information to commands.
+ */
+data class DiplomacyStateInfo(
+    val state: Int,
+    val term: Int,
+    val stateCode: String,
+)

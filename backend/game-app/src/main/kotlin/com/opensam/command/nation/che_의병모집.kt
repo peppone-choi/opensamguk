@@ -90,7 +90,7 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         // Update nation gennum and strategic limit
         n.gennum = (n.gennum ?: 0) + createGenCount
-        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY
+        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
         return CommandResult(true, logs)
     }

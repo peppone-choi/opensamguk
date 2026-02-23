@@ -4,6 +4,9 @@ import com.opensam.engine.DiplomacyService
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
+import com.opensam.service.GeneralPoolService
+import com.opensam.service.MessageService
+import com.opensam.service.NationService
 
 /**
  * 커맨드에서 접근 가능한 서비스/리포지토리 홀더.
@@ -14,6 +17,9 @@ data class CommandServices(
     val cityRepository: CityRepository,
     val nationRepository: NationRepository,
     val diplomacyService: DiplomacyService,
+    val messageService: MessageService? = null,
+    val nationService: NationService? = null,
+    val generalPoolService: GeneralPoolService? = null,
 ) {
     /**
      * Resolve city name by ID. Returns null if not found.

@@ -27,6 +27,13 @@ app:
   jwt:
     secret: opensam-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
     expiration-ms: 86400000
+  bootstrap:
+    admin:
+      enabled: ${ADMIN_BOOTSTRAP_ENABLED:false}
+      login-id: ${ADMIN_LOGIN_ID:}
+      password: ${ADMIN_PASSWORD:}
+      display-name: ${ADMIN_DISPLAY_NAME:관리자}
+      grade: ${ADMIN_GRADE:5}
 
 gateway:
   orchestrator:

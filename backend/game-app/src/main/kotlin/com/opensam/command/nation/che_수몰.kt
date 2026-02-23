@@ -79,7 +79,7 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <G><b>${dc.name}</b></>에 <M>수몰</>을 발동")
 
         // Strategic command limit
-        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY
+        n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
         return CommandResult(true, logs)
     }

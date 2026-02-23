@@ -109,7 +109,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         var prob = maxStat / env.sabotageProbCoefByStat.toDouble()
         prob += (ln((affectCount + 1).toDouble()) / ln(2.0) - 1.25) * env.sabotageDefenceCoefByGeneralCnt
         prob += if (dc.secuMax > 0) dc.secu.toDouble() / dc.secuMax / 5.0 else 0.0
-        prob += if (dc.supply > 0) 0.1 else 0.0
+        prob += if (dc.supplyState > 0) 0.1 else 0.0
 
         return prob
     }

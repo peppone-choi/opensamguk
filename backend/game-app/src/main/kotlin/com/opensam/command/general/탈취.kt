@@ -37,7 +37,7 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         var rice = (rng.nextInt(200, 401) * dc.level * yearCoef * (0.25 + agriRatio / 4.0)).roundToInt()
 
         // Supply check affects how resources are deducted
-        val isSupplied = dc.supply > 0
+        val isSupplied = dc.supplyState > 0
 
         pushLog("<G><b>${dc.name}</b></>에서 금과 쌀을 도둑맞았습니다.")
         pushLog("<G><b>${dc.name}</b></>에 ${actionName}이 성공했습니다. <1>${formatDate()}</>")
