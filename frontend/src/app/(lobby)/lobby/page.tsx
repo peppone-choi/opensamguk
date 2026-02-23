@@ -59,6 +59,7 @@ export default function LobbyPage() {
   } | null>(null);
   const [resetScenario, setResetScenario] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [notice, setNotice] = useState("");
   const scenarioMap = new Map(scenarios.map((s) => [s.code, s.title]));
 
   useEffect(() => {
@@ -138,6 +139,16 @@ export default function LobbyPage() {
 
   return (
     <div className="space-y-6">
+      {/* Notice - legacy parity: core2026 LobbyView notice */}
+      {notice && (
+        <div className="text-center">
+          <span
+            className="text-2xl font-bold text-orange-500"
+            dangerouslySetInnerHTML={{ __html: notice }}
+          />
+        </div>
+      )}
+
       {/* Server Status (public cached map) */}
       <ServerStatusCard />
 
@@ -430,6 +441,50 @@ export default function LobbyPage() {
           )}
         </div>
       </div>
+      {/* Multi-account warning - legacy parity from core2026 LobbyView */}
+      <Card>
+        <CardContent className="space-y-2 pt-4 text-xs text-muted-foreground">
+          <p className="font-bold text-red-500">
+            ★ 1명이 2개 이상의 계정을 사용하거나 타 유저의 턴을 대신 입력하는
+            것이 적발될 경우 차단 될 수 있습니다.
+          </p>
+          <p>
+            계정은 한번 등록으로 계속 사용합니다. 각 서버 리셋시 캐릭터만 새로
+            생성하면 됩니다.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Account Management - legacy parity from core2026 LobbyView */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center text-sm tracking-widest">
+            계 정 관 리
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/account")}
+          >
+            비밀번호 &amp; 전콘 &amp; 탈퇴
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              useAuthStore.getState().logout();
+              router.push("/login");
+            }}
+          >
+            로 그 아 웃
+          </Button>
+          {isAdmin && (
+            <Button variant="outline" onClick={() => router.push("/admin")}>
+              관리자 페이지
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

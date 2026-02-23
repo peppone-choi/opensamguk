@@ -22,6 +22,9 @@ export default function AccountPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [vacationLoading, setVacationLoading] = useState(false);
   const [vacationMsg, setVacationMsg] = useState("");
+  const [pictureUrl, setPictureUrl] = useState("");
+  const [pictureLoading, setPictureLoading] = useState(false);
+  const [pictureMsg, setPictureMsg] = useState("");
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -62,6 +65,20 @@ export default function AccountPage() {
     }
   };
 
+  const handleChangePicture = async () => {
+    if (!pictureUrl.trim()) return;
+    setPictureLoading(true);
+    setPictureMsg("");
+    try {
+      await accountApi.updateSettings({ picture: pictureUrl.trim() } as Record<string, unknown> & import("@/types").AccountSettings);
+      setPictureMsg("전콘이 변경되었습니다.");
+    } catch {
+      setPictureMsg("전콘 변경에 실패했습니다.");
+    } finally {
+      setPictureLoading(false);
+    }
+  };
+
   const handleToggleVacation = async () => {
     setVacationLoading(true);
     setVacationMsg("");
@@ -96,6 +113,52 @@ export default function AccountPage() {
               <span className="text-muted-foreground">표시 이름:</span>{" "}
               {user?.displayName ?? "-"}
             </p>
+          </div>
+        </div>
+
+        {/* Profile Picture (전콘) - legacy parity: 비밀번호 & 전콘 & 탈퇴 */}
+        <div className="space-y-2 rounded-md border p-3">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            전콘 (프로필 이미지)
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            장수 생성 시 사용되는 프로필 이미지를 변경할 수 있습니다.
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="size-16 rounded border border-input bg-muted flex items-center justify-center text-xs text-muted-foreground overflow-hidden">
+              {(user as unknown as { picture?: string } | null)?.picture ? (
+                <img
+                  src={(user as unknown as { picture: string }).picture}
+                  alt="전콘"
+                  className="size-full object-cover"
+                />
+              ) : (
+                "없음"
+              )}
+            </div>
+            <div className="space-y-1">
+              <Input
+                type="text"
+                placeholder="이미지 URL 입력"
+                value={pictureUrl}
+                onChange={(e) => setPictureUrl(e.target.value)}
+                className="w-64"
+              />
+              <Button
+                size="sm"
+                onClick={handleChangePicture}
+                disabled={pictureLoading || !pictureUrl.trim()}
+              >
+                {pictureLoading ? "변경 중..." : "전콘 변경"}
+              </Button>
+              {pictureMsg && (
+                <p
+                  className={`text-xs ${pictureMsg.includes("실패") ? "text-red-400" : "text-green-400"}`}
+                >
+                  {pictureMsg}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

@@ -7,7 +7,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { npcTokenApi } from "@/lib/gameApi";
 import type { NpcCard, NpcTokenResponse } from "@/types";
-import { Bot, ArrowLeft, RefreshCw, Timer } from "lucide-react";
+import { Bot, ArrowLeft, RefreshCw, Timer, List } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
+import { generalApi, nationApi } from "@/lib/gameApi";
+import type { General, Nation } from "@/types";
 
 export default function LobbySelectNpcPage() {
   const router = useRouter();
@@ -27,6 +29,13 @@ export default function LobbySelectNpcPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectingId, setSelectingId] = useState<number | null>(null);
+
+  // Full general list view - legacy parity from select_npc.php "장수 목록 보기"
+  const [showGeneralList, setShowGeneralList] = useState(false);
+  const [generalList, setGeneralList] = useState<General[]>([]);
+  const [generalListLoading, setGeneralListLoading] = useState(false);
+  const [nationMap, setNationMap] = useState<Record<number, Nation>>({});
+  const [generalListLimit, setGeneralListLimit] = useState(30);
 
   const formatSeconds = (seconds: number) => {
     const safe = Math.max(0, seconds);
@@ -60,6 +69,26 @@ export default function LobbySelectNpcPage() {
     const interval = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleLoadGeneralList = async () => {
+    if (!currentWorld) return;
+    setGeneralListLoading(true);
+    try {
+      const [genRes, natRes] = await Promise.all([
+        generalApi.listByWorld(currentWorld.id),
+        nationApi.listByWorld(currentWorld.id),
+      ]);
+      setGeneralList(genRes.data);
+      const nm: Record<number, Nation> = {};
+      for (const n of natRes.data) nm[n.id] = n;
+      setNationMap(nm);
+      setShowGeneralList(true);
+    } catch {
+      // ignore
+    } finally {
+      setGeneralListLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!currentWorld) {
@@ -298,6 +327,105 @@ export default function LobbySelectNpcPage() {
             </p>
           ) : null}
         </>
+      )}
+
+      {/* Full General List - legacy parity from select_npc.php "장수 목록 보기" */}
+      <div className="flex gap-2 mt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleLoadGeneralList}
+          disabled={generalListLoading}
+        >
+          <List className="size-4 mr-1" />
+          {generalListLoading ? "로딩 중..." : "장수 목록 보기"}
+        </Button>
+        {showGeneralList && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowGeneralList(false)}
+          >
+            목록 닫기
+          </Button>
+        )}
+      </div>
+
+      {showGeneralList && generalList.length > 0 && (
+        <div className="overflow-x-auto border rounded">
+          <table className="w-full text-xs">
+            <thead className="bg-muted">
+              <tr>
+                <th className="px-2 py-1.5 text-left">얼굴</th>
+                <th className="px-2 py-1.5 text-left">이름</th>
+                <th className="px-2 py-1.5 text-center">연령</th>
+                <th className="px-2 py-1.5 text-left">국가</th>
+                <th className="px-2 py-1.5 text-center">레벨</th>
+                <th className="px-2 py-1.5 text-center">통솔</th>
+                <th className="px-2 py-1.5 text-center">무력</th>
+                <th className="px-2 py-1.5 text-center">지력</th>
+                <th className="px-2 py-1.5 text-center">정치</th>
+                <th className="px-2 py-1.5 text-center">매력</th>
+                <th className="px-2 py-1.5 text-center">경험</th>
+                <th className="px-2 py-1.5 text-center">NPC</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {generalList.slice(0, generalListLimit).map((g) => {
+                const nat = nationMap[g.nationId];
+                return (
+                  <tr key={g.id} className="hover:bg-muted/50">
+                    <td className="px-2 py-1">
+                      <GeneralPortrait
+                        picture={g.picture}
+                        name={g.name}
+                        size="sm"
+                      />
+                    </td>
+                    <td className="px-2 py-1 font-medium">{g.name}</td>
+                    <td className="px-2 py-1 text-center">{g.age}</td>
+                    <td className="px-2 py-1">
+                      {nat ? (
+                        <span style={{ color: nat.color }}>{nat.name}</span>
+                      ) : (
+                        <span className="text-muted-foreground">재야</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-1 text-center">{g.expLevel}</td>
+                    <td className="px-2 py-1 text-center">{g.leadership}</td>
+                    <td className="px-2 py-1 text-center">{g.strength}</td>
+                    <td className="px-2 py-1 text-center">{g.intel}</td>
+                    <td className="px-2 py-1 text-center">{g.politics}</td>
+                    <td className="px-2 py-1 text-center">{g.charm}</td>
+                    <td className="px-2 py-1 text-center">{g.experience}</td>
+                    <td className="px-2 py-1 text-center">
+                      {g.npcState > 0 ? (
+                        <Badge variant="secondary" className="text-[10px]">
+                          NPC
+                        </Badge>
+                      ) : (
+                        "유저"
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {generalListLimit < generalList.length && (
+            <div className="p-2 text-center border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setGeneralListLimit((prev) => prev + 30)
+                }
+              >
+                장수 더 보기 ({generalList.length - generalListLimit}명 남음)
+              </Button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
