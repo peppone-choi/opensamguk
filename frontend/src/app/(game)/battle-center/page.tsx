@@ -6,7 +6,7 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { generalLogApi, type GeneralLogEntry } from "@/lib/gameApi";
 import type { General } from "@/types";
-import { Swords, ChevronLeft, ChevronRight } from "lucide-react";
+import { Swords, ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -18,10 +18,10 @@ import { formatLog } from "@/lib/formatLog";
 
 /** NPC color helper matching legacy getNPCColor */
 function getNPCColor(npcState: number): string | undefined {
-  if (npcState === 0) return undefined; // human player
-  if (npcState >= 5) return "#69f"; // high-level NPC (blueish)
-  if (npcState >= 2) return "#c93"; // mid-level NPC (orangeish)
-  return "#999"; // low-level NPC
+  if (npcState === 0) return undefined;
+  if (npcState >= 5) return "#69f";
+  if (npcState >= 2) return "#c93";
+  return "#999";
 }
 
 type SortKey = "recent_war" | "warnum" | "turntime" | "name" | "killcrew" | "killnum" | "deathnum";
@@ -43,6 +43,8 @@ interface GeneralLogs {
   generalAction: GeneralLogEntry[];
 }
 
+const LOG_TYPES = ["generalHistory", "battleDetail", "battleResult", "generalAction"] as const;
+
 export default function BattleCenterPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
@@ -52,6 +54,10 @@ export default function BattleCenterPage() {
   const [targetGeneralId, setTargetGeneralId] = useState<number | null>(null);
   const [logs, setLogs] = useState<GeneralLogs | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
+
+  // Comparison mode
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareGeneralId, setCompareGeneralId] = useState<number | null>(null);
 
   useEffect(() => {
     if (currentWorld) {
@@ -65,7 +71,6 @@ export default function BattleCenterPage() {
     [nations],
   );
 
-  // Build sorted general list (only those with nationId > 0)
   const orderedGenerals = useMemo(() => {
     const list = generals.filter((g) => g.nationId > 0);
     list.sort((a, b) => {
@@ -83,8 +88,7 @@ export default function BattleCenterPage() {
         case "turntime":
           return (b.turnTime ?? "").localeCompare(a.turnTime ?? "");
         case "name": {
-          const cmp = `${a.npcState} ${a.name}`.localeCompare(`${b.npcState} ${b.name}`);
-          return cmp;
+          return `${a.npcState} ${a.name}`.localeCompare(`${b.npcState} ${b.name}`);
         }
         default:
           return 0;
@@ -93,7 +97,6 @@ export default function BattleCenterPage() {
     return list;
   }, [generals, orderBy]);
 
-  // Auto-select first general when list changes
   useEffect(() => {
     if (orderedGenerals.length > 0 && targetGeneralId === null) {
       setTargetGeneralId(orderedGenerals[0].id);
@@ -103,6 +106,11 @@ export default function BattleCenterPage() {
   const targetGeneral = useMemo(
     () => orderedGenerals.find((g) => g.id === targetGeneralId) ?? null,
     [orderedGenerals, targetGeneralId],
+  );
+
+  const compareGeneral = useMemo(
+    () => (compareGeneralId ? orderedGenerals.find((g) => g.id === compareGeneralId) ?? null : null),
+    [orderedGenerals, compareGeneralId],
   );
 
   const currentIdx = useMemo(
@@ -121,9 +129,8 @@ export default function BattleCenterPage() {
         battleDetail: [],
         generalAction: [],
       };
-      const types = ["battleDetail", "battleResult", "generalAction"] as const;
       await Promise.all(
-        types.map(async (type) => {
+        LOG_TYPES.map(async (type) => {
           try {
             const { data } = await generalLogApi.getOldLogs(
               myGeneral.id,
@@ -134,13 +141,10 @@ export default function BattleCenterPage() {
               newLogs[type] = data.logs;
             }
           } catch {
-            // ignore
+            // ignore - generalHistory may not be supported by backend
           }
         }),
       );
-      // generalHistory: use world records filtered by general
-      // The backend doesn't have a separate "generalHistory" mailbox in the legacy parity API.
-      // We use generalAction as a proxy or leave empty.
       setLogs(newLogs);
       setLogsLoading(false);
     },
@@ -161,7 +165,6 @@ export default function BattleCenterPage() {
     setTargetGeneralId(orderedGenerals[newIdx].id);
   };
 
-  /** Format suffix shown in the selector dropdown */
   function getSortSuffix(g: General): string {
     switch (orderBy) {
       case "recent_war":
@@ -184,6 +187,7 @@ export default function BattleCenterPage() {
   if (loading) return <LoadingState />;
 
   const nation = targetGeneral ? nationMap.get(targetGeneral.nationId) : null;
+  const compareNation = compareGeneral ? nationMap.get(compareGeneral.nationId) : null;
 
   return (
     <div className="space-y-4 max-w-5xl mx-auto">
@@ -226,16 +230,57 @@ export default function BattleCenterPage() {
         </Button>
       </div>
 
-      {/* General Detail View */}
-      {targetGeneral && (
+      {/* Comparison mode toggle + selector */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant={compareMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => {
+            setCompareMode(!compareMode);
+            if (compareMode) setCompareGeneralId(null);
+          }}
+        >
+          <ArrowLeftRight className="size-4 mr-1" />
+          비교 모드
+        </Button>
+        {compareMode && (
+          <select
+            value={compareGeneralId ?? ""}
+            onChange={(e) => setCompareGeneralId(Number(e.target.value) || null)}
+            className="h-8 flex-1 border border-gray-600 bg-[#111] px-2 text-xs text-white rounded min-w-0"
+          >
+            <option value="">비교 대상 선택...</option>
+            {orderedGenerals
+              .filter((g) => g.id !== targetGeneralId)
+              .map((g) => {
+                const npcColor = getNPCColor(g.npcState);
+                const nameDisplay = g.officerLevel > 4 ? `*${g.name}*` : g.name;
+                return (
+                  <option key={g.id} value={g.id} style={npcColor ? { color: npcColor } : undefined}>
+                    {nameDisplay}({g.turnTime?.slice(-5) ?? ""})
+                  </option>
+                );
+              })}
+          </select>
+        )}
+      </div>
+
+      {/* Comparison View */}
+      {compareMode && targetGeneral && compareGeneral ? (
+        <ComparisonView
+          generalA={targetGeneral}
+          generalB={compareGeneral}
+          nationA={nation}
+          nationB={compareNation}
+        />
+      ) : targetGeneral ? (
+        /* Normal Detail View */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left column: General Info Card */}
           <div className="space-y-4">
             <GeneralBasicCard general={targetGeneral} nation={nation} />
             <GeneralSupplementCard general={targetGeneral} />
           </div>
 
-          {/* Right column: General History (열전) */}
           <div className="space-y-4">
             <LogSection
               title="장수 열전"
@@ -246,7 +291,6 @@ export default function BattleCenterPage() {
             />
           </div>
 
-          {/* Battle Detail */}
           <LogSection
             title="전투 기록"
             logs={logs?.battleDetail ?? []}
@@ -254,7 +298,6 @@ export default function BattleCenterPage() {
             emptyText="전투 기록이 없습니다."
           />
 
-          {/* Battle Result */}
           <LogSection
             title="전투 결과"
             logs={logs?.battleResult ?? []}
@@ -262,7 +305,6 @@ export default function BattleCenterPage() {
             emptyText="전투 결과가 없습니다."
           />
 
-          {/* General Action */}
           {(logs?.generalAction?.length ?? 0) > 0 && (
             <LogSection
               title="개인 기록"
@@ -272,12 +314,134 @@ export default function BattleCenterPage() {
             />
           )}
         </div>
-      )}
-
-      {!targetGeneral && orderedGenerals.length === 0 && (
+      ) : orderedGenerals.length === 0 ? (
         <EmptyState icon={Swords} title="조회 가능한 장수가 없습니다." />
-      )}
+      ) : null}
     </div>
+  );
+}
+
+/* ---- Comparison View ---- */
+
+function ComparisonView({
+  generalA,
+  generalB,
+  nationA,
+  nationB,
+}: {
+  generalA: General;
+  generalB: General;
+  nationA?: { name: string; color: string } | null;
+  nationB?: { name: string; color: string } | null;
+}) {
+  const stats: { label: string; a: number; b: number }[] = [
+    { label: "통솔", a: generalA.leadership, b: generalB.leadership },
+    { label: "무력", a: generalA.strength, b: generalB.strength },
+    { label: "지력", a: generalA.intel, b: generalB.intel },
+    { label: "정치", a: generalA.politics, b: generalB.politics },
+    { label: "매력", a: generalA.charm, b: generalB.charm },
+    { label: "병사", a: generalA.crew, b: generalB.crew },
+    { label: "훈련", a: generalA.train, b: generalB.train },
+    { label: "사기", a: generalA.atmos, b: generalB.atmos },
+    { label: "수비훈", a: generalA.defenceTrain, b: generalB.defenceTrain },
+    { label: "전투", a: generalA.warnum ?? 0, b: generalB.warnum ?? 0 },
+    { label: "승리", a: generalA.killnum ?? 0, b: generalB.killnum ?? 0 },
+    { label: "패배", a: generalA.deathnum ?? 0, b: generalB.deathnum ?? 0 },
+    { label: "살상", a: generalA.killcrew ?? 0, b: generalB.killcrew ?? 0 },
+    { label: "피해", a: generalA.deathcrew ?? 0, b: generalB.deathcrew ?? 0 },
+    { label: "경험", a: generalA.experience, b: generalB.experience },
+    { label: "공헌", a: generalA.dedication, b: generalB.dedication },
+  ];
+
+  const dexLabels = ["창", "궁", "기", "귀/차", "노"];
+  const dexStats = dexLabels.map((label, i) => ({
+    label,
+    a: [generalA.dex1, generalA.dex2, generalA.dex3, generalA.dex4, generalA.dex5][i],
+    b: [generalB.dex1, generalB.dex2, generalB.dex3, generalB.dex4, generalB.dex5][i],
+  }));
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <ArrowLeftRight className="size-4" />
+          장수 비교
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-xs space-y-4">
+        {/* Header row */}
+        <div className="grid grid-cols-3 gap-2 text-center font-bold border-b border-gray-700 pb-2">
+          <div className="text-left flex items-center gap-1">
+            <span style={{ color: getNPCColor(generalA.npcState) }}>{generalA.name}</span>
+            {nationA && <NationBadge name={nationA.name} color={nationA.color} />}
+          </div>
+          <div className="text-muted-foreground">항목</div>
+          <div className="text-right flex items-center justify-end gap-1">
+            {nationB && <NationBadge name={nationB.name} color={nationB.color} />}
+            <span style={{ color: getNPCColor(generalB.npcState) }}>{generalB.name}</span>
+          </div>
+        </div>
+
+        {/* Stat comparison rows */}
+        {stats.map((s) => (
+          <div key={s.label} className="grid grid-cols-3 gap-2 text-center items-center">
+            <div className={`text-left tabular-nums ${s.a > s.b ? "text-green-400 font-bold" : s.a < s.b ? "text-red-400" : ""}`}>
+              {s.a.toLocaleString()}
+            </div>
+            <div className="text-muted-foreground">{s.label}</div>
+            <div className={`text-right tabular-nums ${s.b > s.a ? "text-green-400 font-bold" : s.b < s.a ? "text-red-400" : ""}`}>
+              {s.b.toLocaleString()}
+            </div>
+          </div>
+        ))}
+
+        {/* Dex comparison */}
+        <div className="border-t border-gray-700 pt-2">
+          <div className="text-muted-foreground text-center mb-1">숙련도</div>
+          {dexStats.map((s) => (
+            <div key={s.label} className="grid grid-cols-3 gap-2 text-center items-center">
+              <div className={`text-left tabular-nums ${s.a > s.b ? "text-green-400 font-bold" : s.a < s.b ? "text-red-400" : ""}`}>
+                {s.a}
+              </div>
+              <div className="text-muted-foreground">{s.label}</div>
+              <div className={`text-right tabular-nums ${s.b > s.a ? "text-green-400 font-bold" : s.b < s.a ? "text-red-400" : ""}`}>
+                {s.b}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Equipment comparison */}
+        <div className="border-t border-gray-700 pt-2">
+          <div className="text-muted-foreground text-center mb-1">장비</div>
+          {(["weaponCode", "bookCode", "horseCode", "itemCode"] as const).map((key) => {
+            const labels: Record<string, string> = { weaponCode: "무기", bookCode: "서적", horseCode: "명마", itemCode: "아이템" };
+            return (
+              <div key={key} className="grid grid-cols-3 gap-2 text-center items-center">
+                <div className="text-left">{generalA[key] || "없음"}</div>
+                <div className="text-muted-foreground">{labels[key]}</div>
+                <div className="text-right">{generalB[key] || "없음"}</div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Special skills comparison */}
+        <div className="border-t border-gray-700 pt-2">
+          <div className="text-muted-foreground text-center mb-1">특기</div>
+          <div className="grid grid-cols-3 gap-2 text-center items-center">
+            <div className="text-left">{generalA.specialCode || "-"}</div>
+            <div className="text-muted-foreground">내정특기</div>
+            <div className="text-right">{generalB.specialCode || "-"}</div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center items-center">
+            <div className="text-left">{generalA.special2Code || "-"}</div>
+            <div className="text-muted-foreground">전투특기</div>
+            <div className="text-right">{generalB.special2Code || "-"}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -308,7 +472,6 @@ function GeneralBasicCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-xs">
-        {/* Name and nation */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-base font-bold" style={npcColor ? { color: npcColor } : undefined}>
             {nameDisplay}
@@ -319,7 +482,6 @@ function GeneralBasicCard({
           )}
         </div>
 
-        {/* Core stats grid */}
         <div className="grid grid-cols-3 gap-x-4 gap-y-1">
           <StatRow label="통솔" value={general.leadership} exp={general.leadershipExp} />
           <StatRow label="무력" value={general.strength} exp={general.strengthExp} />
@@ -334,7 +496,6 @@ function GeneralBasicCard({
           } />
         </div>
 
-        {/* Equipment */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-1">
           <EquipRow label="무기" value={general.weaponCode} />
           <EquipRow label="서적" value={general.bookCode} />
@@ -342,7 +503,6 @@ function GeneralBasicCard({
           <EquipRow label="아이템" value={general.itemCode} />
         </div>
 
-        {/* Military info */}
         <div className="grid grid-cols-3 gap-x-4 gap-y-1">
           <div><span className="text-muted-foreground">병종:</span> {CREW_TYPES[general.crewType] ?? general.crewType}</div>
           <div><span className="text-muted-foreground">병사:</span> {general.crew.toLocaleString()}</div>
@@ -351,7 +511,6 @@ function GeneralBasicCard({
           <div><span className="text-muted-foreground">수비훈:</span> {general.defenceTrain}</div>
         </div>
 
-        {/* Dex values */}
         <div className="flex flex-wrap gap-x-3 gap-y-1">
           {DEX_LABELS.map((label, i) => {
             const val = [general.dex1, general.dex2, general.dex3, general.dex4, general.dex5][i];
@@ -364,7 +523,6 @@ function GeneralBasicCard({
           })}
         </div>
 
-        {/* Battle stats */}
         <div className="grid grid-cols-3 gap-x-4 gap-y-1">
           <div><span className="text-muted-foreground">전투:</span> {general.warnum ?? 0}</div>
           <div><span className="text-green-400">승리:</span> {general.killnum ?? 0}</div>
