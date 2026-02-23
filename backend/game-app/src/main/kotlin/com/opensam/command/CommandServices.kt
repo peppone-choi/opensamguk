@@ -14,4 +14,15 @@ data class CommandServices(
     val cityRepository: CityRepository,
     val nationRepository: NationRepository,
     val diplomacyService: DiplomacyService,
-)
+) {
+    /**
+     * Resolve city name by ID. Returns null if not found.
+     */
+    suspend fun getCityName(cityId: Long): String? {
+        return try {
+            cityRepository.findById(cityId)?.name
+        } catch (_: Exception) {
+            null
+        }
+    }
+}
