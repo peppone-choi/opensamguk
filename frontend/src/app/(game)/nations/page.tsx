@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
-import { Globe } from "lucide-react";
+import { Globe, ChevronDown, ChevronRight } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { NationBadge } from "@/components/game/nation-badge";
+import { GeneralPortrait } from "@/components/game/general-portrait";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -47,6 +49,9 @@ export default function NationsPage() {
   const { nations, generals, cities, loading, loadAll } = useGameStore();
   const [sortKey, setSortKey] = useState<SortKey>("power");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [expandedNations, setExpandedNations] = useState<Set<number>>(
+    new Set(),
+  );
 
   useEffect(() => {
     if (currentWorld) loadAll(currentWorld.id);
@@ -73,7 +78,37 @@ export default function NationsPage() {
     return map;
   }, [cities]);
 
-  // Chief (officerLevel 12) and advisor (officerLevel 11) per nation
+  // Generals grouped by nation
+  const generalsByNation = useMemo(() => {
+    const map = new Map<number, typeof generals>();
+    for (const g of generals) {
+      const nid = g.nationId ?? 0;
+      if (!map.has(nid)) map.set(nid, []);
+      map.get(nid)!.push(g);
+    }
+    // Sort each group by officer level desc, then name
+    for (const [, list] of map) {
+      list.sort((a, b) => {
+        if (b.officerLevel !== a.officerLevel)
+          return b.officerLevel - a.officerLevel;
+        return a.name.localeCompare(b.name);
+      });
+    }
+    return map;
+  }, [generals]);
+
+  // Cities grouped by nation
+  const citiesByNation = useMemo(() => {
+    const map = new Map<number, typeof cities>();
+    for (const c of cities) {
+      const nid = c.nationId ?? 0;
+      if (!map.has(nid)) map.set(nid, []);
+      map.get(nid)!.push(c);
+    }
+    return map;
+  }, [cities]);
+
+  // Chief and advisor per nation
   const chiefMap = useMemo(() => {
     const map = new Map<
       number,
@@ -89,6 +124,24 @@ export default function NationsPage() {
     }
     return map;
   }, [generals]);
+
+  // 재야 generals
+  const roninGenerals = useMemo(
+    () =>
+      generals
+        .filter((g) => !g.nationId || g.nationId === 0)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [generals],
+  );
+
+  // 무소속 cities
+  const unownedCities = useMemo(
+    () =>
+      cities
+        .filter((c) => !c.nationId || c.nationId === 0)
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [cities],
+  );
 
   const maxPower = Math.max(1, ...nations.map((n) => n.power));
 
@@ -122,6 +175,15 @@ export default function NationsPage() {
       setSortKey(key);
       setSortDir("desc");
     }
+  };
+
+  const toggleExpand = (nationId: number) => {
+    setExpandedNations((prev) => {
+      const next = new Set(prev);
+      if (next.has(nationId)) next.delete(nationId);
+      else next.add(nationId);
+      return next;
+    });
   };
 
   const arrow = (key: SortKey) =>
@@ -159,6 +221,7 @@ export default function NationsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8" />
               {columns.map((col) => (
                 <TableHead
                   key={col.key}
@@ -178,82 +241,296 @@ export default function NationsPage() {
               const genCount = generalCountMap.get(n.id) ?? 0;
               const cityCnt = cityCountMap.get(n.id) ?? 0;
               const powerPct = (n.power / maxPower) * 100;
+              const isExpanded = expandedNations.has(n.id);
+              const nationGens = generalsByNation.get(n.id) ?? [];
+              const nationCities = citiesByNation.get(n.id) ?? [];
 
               return (
-                <TableRow
-                  key={n.id}
-                  style={
-                    n.color ? { borderLeft: `3px solid ${n.color}` } : undefined
-                  }
-                >
-                  {/* Nation name + chief */}
-                  <TableCell>
-                    <div>
-                      <NationBadge name={n.name} color={n.color} />
-                      {chiefs && (
-                        <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
-                          {chiefs.chief && (
-                            <span>
-                              {formatOfficerLevelText(12, n.level)}:{" "}
-                              {chiefs.chief.name}
-                            </span>
-                          )}
-                          {chiefs.chief && chiefs.advisor && " / "}
-                          {chiefs.advisor && (
-                            <span>
-                              {formatOfficerLevelText(11, n.level)}:{" "}
-                              {chiefs.advisor.name}
-                            </span>
-                          )}
-                        </div>
+                <>
+                  <TableRow
+                    key={n.id}
+                    className="cursor-pointer hover:bg-white/5"
+                    style={
+                      n.color
+                        ? { borderLeft: `3px solid ${n.color}` }
+                        : undefined
+                    }
+                    onClick={() => toggleExpand(n.id)}
+                  >
+                    {/* Expand toggle */}
+                    <TableCell className="w-8 px-1">
+                      {isExpanded ? (
+                        <ChevronDown className="size-4" />
+                      ) : (
+                        <ChevronRight className="size-4" />
                       )}
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  {/* Capital */}
-                  <TableCell>{capital?.name ?? "-"}</TableCell>
+                    {/* Nation name + chief */}
+                    <TableCell>
+                      <div>
+                        <NationBadge name={n.name} color={n.color} />
+                        {chiefs && (
+                          <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
+                            {chiefs.chief && (
+                              <span>
+                                {formatOfficerLevelText(12, n.level)}:{" "}
+                                {chiefs.chief.name}
+                              </span>
+                            )}
+                            {chiefs.chief && chiefs.advisor && " / "}
+                            {chiefs.advisor && (
+                              <span>
+                                {formatOfficerLevelText(11, n.level)}:{" "}
+                                {chiefs.advisor.name}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
 
-                  {/* Level */}
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {LEVEL_LABELS[n.level] ?? n.level}
-                    </Badge>
-                  </TableCell>
+                    <TableCell>{capital?.name ?? "-"}</TableCell>
 
-                  {/* Power with bar */}
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="tabular-nums text-sm min-w-[4rem] text-right">
-                        {n.power.toLocaleString()}
-                      </span>
-                      <Progress value={powerPct} className="h-2 w-20" />
-                    </div>
-                  </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {LEVEL_LABELS[n.level] ?? n.level}
+                      </Badge>
+                    </TableCell>
 
-                  {/* Generals */}
-                  <TableCell>{genCount}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="tabular-nums text-sm min-w-[4rem] text-right">
+                          {n.power.toLocaleString()}
+                        </span>
+                        <Progress value={powerPct} className="h-2 w-20" />
+                      </div>
+                    </TableCell>
 
-                  {/* Cities */}
-                  <TableCell>{cityCnt}</TableCell>
+                    <TableCell>{genCount}</TableCell>
+                    <TableCell>{cityCnt}</TableCell>
+                    <TableCell>{n.gold.toLocaleString()}</TableCell>
+                    <TableCell>{n.rice.toLocaleString()}</TableCell>
+                    <TableCell>{n.tech}</TableCell>
+                    <TableCell>{n.typeCode}</TableCell>
+                  </TableRow>
 
-                  {/* Gold */}
-                  <TableCell>{n.gold.toLocaleString()}</TableCell>
+                  {/* Expanded detail block */}
+                  {isExpanded && (
+                    <TableRow key={`${n.id}-detail`}>
+                      <TableCell
+                        colSpan={columns.length + 1}
+                        className="bg-muted/10 px-4 py-3"
+                      >
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {/* Generals list */}
+                          <div>
+                            <h4
+                              className="text-sm font-semibold mb-2"
+                              style={{ color: n.color }}
+                            >
+                              장수 ({nationGens.length}명)
+                            </h4>
+                            {nationGens.length === 0 ? (
+                              <p className="text-xs text-muted-foreground">
+                                소속 장수 없음
+                              </p>
+                            ) : (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-muted/50">
+                                      <th className="text-left py-1 px-1">
+                                        이름
+                                      </th>
+                                      <th className="text-left py-1 px-1">
+                                        관직
+                                      </th>
+                                      <th className="text-left py-1 px-1">
+                                        도시
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        통솔
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        무력
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        지력
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        병력
+                                      </th>
+                                      <th className="text-center py-1 px-1">
+                                        벌점
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {nationGens.map((g) => {
+                                      const hasPenalty =
+                                        Object.keys(g.penalty || {}).length > 0;
+                                      return (
+                                        <tr
+                                          key={g.id}
+                                          className="border-b border-muted/20 hover:bg-muted/20"
+                                        >
+                                          <td className="py-1 px-1">
+                                            <div className="flex items-center gap-1">
+                                              <GeneralPortrait
+                                                picture={g.picture}
+                                                name={g.name}
+                                                size="sm"
+                                              />
+                                              <span
+                                                className={
+                                                  g.npcState > 0
+                                                    ? "text-gray-400"
+                                                    : ""
+                                                }
+                                              >
+                                                {g.name}
+                                              </span>
+                                              {g.npcState > 0 && (
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[8px] px-1 py-0"
+                                                >
+                                                  NPC
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </td>
+                                          <td className="py-1 px-1 whitespace-nowrap">
+                                            {formatOfficerLevelText(
+                                              g.officerLevel,
+                                              n.level,
+                                            )}
+                                          </td>
+                                          <td className="py-1 px-1">
+                                            {cityMap.get(g.cityId)?.name ??
+                                              "-"}
+                                          </td>
+                                          <td className="py-1 px-1 text-right">
+                                            {g.leadership}
+                                          </td>
+                                          <td className="py-1 px-1 text-right">
+                                            {g.strength}
+                                          </td>
+                                          <td className="py-1 px-1 text-right">
+                                            {g.intel}
+                                          </td>
+                                          <td className="py-1 px-1 text-right">
+                                            {g.crew.toLocaleString()}
+                                          </td>
+                                          <td className="py-1 px-1 text-center">
+                                            {hasPenalty ? (
+                                              <span className="text-red-400">
+                                                ●
+                                              </span>
+                                            ) : (
+                                              "-"
+                                            )}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
 
-                  {/* Rice */}
-                  <TableCell>{n.rice.toLocaleString()}</TableCell>
-
-                  {/* Tech */}
-                  <TableCell>{n.tech}</TableCell>
-
-                  {/* Type */}
-                  <TableCell>{n.typeCode}</TableCell>
-                </TableRow>
+                          {/* Cities list */}
+                          <div>
+                            <h4
+                              className="text-sm font-semibold mb-2"
+                              style={{ color: n.color }}
+                            >
+                              속령 ({nationCities.length}개)
+                            </h4>
+                            {nationCities.length === 0 ? (
+                              <p className="text-xs text-muted-foreground">
+                                소속 도시 없음
+                              </p>
+                            ) : (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-muted/50">
+                                      <th className="text-left py-1 px-1">
+                                        도시
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        인구
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        농업
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        상업
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        치안
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        수비
+                                      </th>
+                                      <th className="text-right py-1 px-1">
+                                        성벽
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {nationCities.map((c) => (
+                                      <tr
+                                        key={c.id}
+                                        className="border-b border-muted/20 hover:bg-muted/20"
+                                      >
+                                        <td className="py-1 px-1 font-medium">
+                                          {c.name}
+                                          {n.capitalCityId === c.id && (
+                                            <span className="text-yellow-400 ml-1">
+                                              ★
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="py-1 px-1 text-right">
+                                          {c.pop.toLocaleString()}
+                                        </td>
+                                        <td className="py-1 px-1 text-right">
+                                          {c.agri}/{c.agriMax}
+                                        </td>
+                                        <td className="py-1 px-1 text-right">
+                                          {c.comm}/{c.commMax}
+                                        </td>
+                                        <td className="py-1 px-1 text-right">
+                                          {c.secu}/{c.secuMax}
+                                        </td>
+                                        <td className="py-1 px-1 text-right">
+                                          {c.def}/{c.defMax}
+                                        </td>
+                                        <td className="py-1 px-1 text-right">
+                                          {c.wall}/{c.wallMax}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
               );
             })}
             {sorted.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columns.length + 1}
                   className="text-center text-muted-foreground"
                 >
                   국가가 없습니다.
@@ -263,6 +540,119 @@ export default function NationsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* 재야 (Ronin) Section */}
+      {(roninGenerals.length > 0 || unownedCities.length > 0) && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">재야 / 무소속</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Ronin generals */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-muted-foreground">
+                  재야 장수 ({roninGenerals.length}명)
+                </h4>
+                {roninGenerals.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">없음</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-muted/50">
+                          <th className="text-left py-1 px-1">이름</th>
+                          <th className="text-left py-1 px-1">도시</th>
+                          <th className="text-right py-1 px-1">통솔</th>
+                          <th className="text-right py-1 px-1">무력</th>
+                          <th className="text-right py-1 px-1">지력</th>
+                          <th className="text-center py-1 px-1">NPC</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {roninGenerals.map((g) => (
+                          <tr
+                            key={g.id}
+                            className="border-b border-muted/20 hover:bg-muted/20"
+                          >
+                            <td className="py-1 px-1">
+                              <div className="flex items-center gap-1">
+                                <GeneralPortrait
+                                  picture={g.picture}
+                                  name={g.name}
+                                  size="sm"
+                                />
+                                {g.name}
+                              </div>
+                            </td>
+                            <td className="py-1 px-1">
+                              {cityMap.get(g.cityId)?.name ?? "-"}
+                            </td>
+                            <td className="py-1 px-1 text-right">
+                              {g.leadership}
+                            </td>
+                            <td className="py-1 px-1 text-right">
+                              {g.strength}
+                            </td>
+                            <td className="py-1 px-1 text-right">
+                              {g.intel}
+                            </td>
+                            <td className="py-1 px-1 text-center">
+                              {g.npcState > 0 ? "NPC" : "-"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Unowned cities */}
+              <div>
+                <h4 className="text-sm font-semibold mb-2 text-muted-foreground">
+                  무소속 도시 ({unownedCities.length}개)
+                </h4>
+                {unownedCities.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">없음</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-muted/50">
+                          <th className="text-left py-1 px-1">도시</th>
+                          <th className="text-right py-1 px-1">인구</th>
+                          <th className="text-right py-1 px-1">수비</th>
+                          <th className="text-right py-1 px-1">성벽</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {unownedCities.map((c) => (
+                          <tr
+                            key={c.id}
+                            className="border-b border-muted/20 hover:bg-muted/20"
+                          >
+                            <td className="py-1 px-1 font-medium">{c.name}</td>
+                            <td className="py-1 px-1 text-right">
+                              {c.pop.toLocaleString()}
+                            </td>
+                            <td className="py-1 px-1 text-right">
+                              {c.def}/{c.defMax}
+                            </td>
+                            <td className="py-1 px-1 text-right">
+                              {c.wall}/{c.wallMax}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

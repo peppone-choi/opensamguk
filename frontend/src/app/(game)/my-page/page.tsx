@@ -101,6 +101,7 @@ export default function MyPage() {
     // Initialize settings from general data
     setDefenceTrain(myGeneral.defenceTrain ?? 80);
     setTournamentState(myGeneral.tournamentState ?? 0);
+    setPotionThreshold((myGeneral.meta?.potionThreshold as number) ?? 100);
 
     // Fetch front info for dex/battle stats
     frontApi
@@ -147,6 +148,7 @@ export default function MyPage() {
       await accountApi.updateSettings({
         defenceTrain,
         tournamentState,
+        potionThreshold,
       });
       toast.success("설정이 저장되었습니다.");
     } catch {
@@ -154,7 +156,7 @@ export default function MyPage() {
     } finally {
       setSaving(false);
     }
-  }, [defenceTrain, tournamentState]);
+  }, [defenceTrain, tournamentState, potionThreshold]);
 
   const handleVacation = useCallback(async () => {
     if (!confirm("휴가 상태를 전환하시겠습니까?")) return;
