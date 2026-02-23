@@ -6,11 +6,17 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { troopApi } from "@/lib/gameApi";
 import type { Troop, General } from "@/types";
-import { Shield, Plus, Swords } from "lucide-react";
+import { Shield, Plus, Swords, Clock, FileText, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -55,83 +61,145 @@ function MemberRow({
   isLeader,
   isTroopLeader,
   troopId,
+  cityName,
+  leaderCityId,
   onKick,
 }: {
   g: General;
   isLeader: boolean;
   isTroopLeader: boolean;
   troopId: number;
+  cityName?: string;
+  leaderCityId?: number;
   onKick: (troopId: number, generalId: number) => void;
 }) {
+  const isDifferentCity = leaderCityId != null && g.cityId !== leaderCityId;
+
   return (
-    <div className="flex items-center gap-3 rounded bg-muted/50 px-3 py-2 text-sm">
-      <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium truncate">{g.name}</span>
-          {isLeader && (
-            <Badge variant="default" className="text-[10px] px-1.5">
-              대장
-            </Badge>
-          )}
-          {g.npcState > 0 && (
-            <Badge variant="outline" className="text-[10px] px-1">
-              NPC
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-          <span>{formatOfficerLevelText(g.officerLevel)}</span>
-          <span>
-            {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}{" "}
-            {g.crew.toLocaleString()}
-          </span>
-          <span>훈{g.train}</span>
-          <span>사{g.atmos}</span>
-        </div>
-      </div>
-      {/* Equipment */}
-      <div className="hidden sm:flex items-center gap-2 text-[10px] text-muted-foreground">
-        {isValidObjKey(g.weaponCode) && (
-          <Badge variant="outline" className="text-[10px] px-1">
-            무기
-          </Badge>
-        )}
-        {isValidObjKey(g.bookCode) && (
-          <Badge variant="outline" className="text-[10px] px-1">
-            서적
-          </Badge>
-        )}
-        {isValidObjKey(g.horseCode) && (
-          <Badge variant="outline" className="text-[10px] px-1">
-            말
-          </Badge>
-        )}
-        {isValidObjKey(g.itemCode) && (
-          <Badge variant="outline" className="text-[10px] px-1">
-            도구
-          </Badge>
-        )}
-      </div>
-      {/* Kick button for troop leader */}
-      {isTroopLeader && !isLeader && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-red-400 h-6 px-2"
-          onClick={() => onKick(troopId, g.id)}
-        >
-          추방
-        </Button>
-      )}
-    </div>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-3 rounded bg-muted/50 px-3 py-2 text-sm cursor-default hover:bg-muted/80 transition-colors">
+            <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium truncate">{g.name}</span>
+                {isLeader && (
+                  <Badge variant="default" className="text-[10px] px-1.5">
+                    대장
+                  </Badge>
+                )}
+                {g.npcState > 0 && (
+                  <Badge variant="outline" className="text-[10px] px-1">
+                    NPC
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                <span>{formatOfficerLevelText(g.officerLevel)}</span>
+                <span>
+                  {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}{" "}
+                  {g.crew.toLocaleString()}
+                </span>
+                <span>훈{g.train}</span>
+                <span>사{g.atmos}</span>
+                {cityName && (
+                  <span
+                    className={`flex items-center gap-0.5 ${isDifferentCity ? "text-orange-400" : ""}`}
+                  >
+                    <MapPin className="size-2.5" />
+                    {cityName}
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Equipment */}
+            <div className="hidden sm:flex items-center gap-2 text-[10px] text-muted-foreground">
+              {isValidObjKey(g.weaponCode) && (
+                <Badge variant="outline" className="text-[10px] px-1">
+                  무기
+                </Badge>
+              )}
+              {isValidObjKey(g.bookCode) && (
+                <Badge variant="outline" className="text-[10px] px-1">
+                  서적
+                </Badge>
+              )}
+              {isValidObjKey(g.horseCode) && (
+                <Badge variant="outline" className="text-[10px] px-1">
+                  말
+                </Badge>
+              )}
+              {isValidObjKey(g.itemCode) && (
+                <Badge variant="outline" className="text-[10px] px-1">
+                  도구
+                </Badge>
+              )}
+            </div>
+            {/* Kick button for troop leader */}
+            {isTroopLeader && !isLeader && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-red-400 h-6 px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onKick(troopId, g.id);
+                }}
+              >
+                추방
+              </Button>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <div className="space-y-1 text-xs">
+            <div className="font-semibold">{g.name}</div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+              <span className="text-muted-foreground">통솔</span>
+              <span className="tabular-nums">{g.leadership}</span>
+              <span className="text-muted-foreground">무력</span>
+              <span className="tabular-nums">{g.strength}</span>
+              <span className="text-muted-foreground">지력</span>
+              <span className="tabular-nums">{g.intel}</span>
+              <span className="text-muted-foreground">정치</span>
+              <span className="tabular-nums">{g.politics ?? "-"}</span>
+              <span className="text-muted-foreground">매력</span>
+              <span className="tabular-nums">{g.charm ?? "-"}</span>
+            </div>
+            <div className="border-t border-gray-700 pt-1 grid grid-cols-2 gap-x-4 gap-y-0.5">
+              <span className="text-muted-foreground">병종</span>
+              <span>{CREW_TYPE_NAMES[g.crewType] ?? g.crewType}</span>
+              <span className="text-muted-foreground">병력</span>
+              <span className="tabular-nums">{g.crew.toLocaleString()}</span>
+              <span className="text-muted-foreground">훈련</span>
+              <span className="tabular-nums">{g.train}</span>
+              <span className="text-muted-foreground">사기</span>
+              <span className="tabular-nums">{g.atmos}</span>
+              {cityName && (
+                <>
+                  <span className="text-muted-foreground">도시</span>
+                  <span>{cityName}</span>
+                </>
+              )}
+            </div>
+            {g.specialCode && (
+              <div className="border-t border-gray-700 pt-1">
+                <span className="text-muted-foreground">특기: </span>
+                <span className="text-cyan-400">{g.specialCode}</span>
+              </div>
+            )}
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
 export default function TroopPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
-  const { generals, loadAll } = useGameStore();
+  const { generals, cities, loadAll } = useGameStore();
   const [troops, setTroops] = useState<Troop[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -164,6 +232,11 @@ export default function TroopPage() {
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
     [generals],
+  );
+
+  const cityMap = useMemo(
+    () => new Map(cities.map((c) => [c.id, c])),
+    [cities],
   );
 
   const troopMembers = useMemo(() => {
@@ -303,12 +376,14 @@ export default function TroopPage() {
           const members = troopMembers.get(t.id) ?? [];
           const isLeader = myGeneral.id === t.leaderGeneralId;
           const isMember = members.some((m) => m.id === myGeneral.id);
+          const canRename =
+            isLeader && (myGeneral.officerLevel ?? 0) >= 4;
 
           return (
             <Card key={t.id}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {renamingId === t.id ? (
                       <div className="flex gap-2">
                         <Input
@@ -331,11 +406,18 @@ export default function TroopPage() {
                       <>
                         <span>{t.name}</span>
                         <Badge variant="secondary">{members.length}명</Badge>
+                        {/* Turn time display */}
+                        {t.turnTime && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="size-3" />
+                            {t.turnTime}
+                          </span>
+                        )}
                       </>
                     )}
                   </div>
                   <div className="flex gap-1">
-                    {isLeader && renamingId !== t.id && (
+                    {canRename && renamingId !== t.id && (
                       <>
                         <Button
                           size="sm"
@@ -347,14 +429,16 @@ export default function TroopPage() {
                         >
                           이름변경
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDisband(t.id)}
-                        >
-                          해산
-                        </Button>
                       </>
+                    )}
+                    {isLeader && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDisband(t.id)}
+                      >
+                        해산
+                      </Button>
                     )}
                     {!isMember && (
                       <Button size="sm" onClick={() => handleJoin(t.id)}>
@@ -374,6 +458,14 @@ export default function TroopPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Reserved command brief */}
+                {t.reservedCommandBrief && (
+                  <div className="flex items-center gap-1.5 text-xs text-cyan-400 mb-2 bg-cyan-950/30 rounded px-2 py-1">
+                    <FileText className="size-3 shrink-0" />
+                    <span>예약 명령: {t.reservedCommandBrief}</span>
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   {/* Leader first */}
                   {leader && (
@@ -382,6 +474,8 @@ export default function TroopPage() {
                       isLeader={true}
                       isTroopLeader={isLeader}
                       troopId={t.id}
+                      cityName={cityMap.get(leader.cityId)?.name}
+                      leaderCityId={leader.cityId}
                       onKick={handleKick}
                     />
                   )}
@@ -395,6 +489,8 @@ export default function TroopPage() {
                         isLeader={false}
                         isTroopLeader={isLeader}
                         troopId={t.id}
+                        cityName={cityMap.get(m.cityId)?.name}
+                        leaderCityId={leader?.cityId}
                         onKick={handleKick}
                       />
                     ))}

@@ -229,6 +229,8 @@ export interface Troop {
   name: string;
   meta: Record<string, unknown>;
   createdAt: string;
+  turnTime?: string;
+  reservedCommandBrief?: string;
 }
 
 // Diplomacy
@@ -701,7 +703,38 @@ export interface BattleSimUnit {
   weaponCode?: string;
   bookCode?: string;
   horseCode?: string;
+  itemCode?: string;
   specialCode?: string;
+  personalCode?: string;
+  injury?: number;
+  rice?: number;
+  dex1?: number;
+  dex2?: number;
+  dex3?: number;
+  dex4?: number;
+  dex5?: number;
+  defenceTrain?: number;
+  officerLevel?: number;
+  expLevel?: number;
+  inheritBuff?: {
+    warAvoidRatio?: number;
+    warCriticalRatio?: number;
+    warMagicTrialProb?: number;
+    warAvoidRatioOppose?: number;
+    warCriticalRatioOppose?: number;
+    warMagicTrialProbOppose?: number;
+  };
+}
+
+export interface BattleSimRepeatResult {
+  totalRuns: number;
+  attackerWins: number;
+  defenderWins: number;
+  draws: number;
+  attackerWinRate: number;
+  avgAttackerRemaining: number;
+  avgDefenderRemaining: number;
+  avgRounds: number;
 }
 
 export interface BattleSimCity {
@@ -774,6 +807,7 @@ export interface AuctionBidResponse {
 export interface AccountSettings {
   defenceTrain?: number;
   tournamentState?: number;
+  potionThreshold?: number;
 }
 
 // Admin
