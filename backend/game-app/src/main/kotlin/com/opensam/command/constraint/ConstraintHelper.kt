@@ -796,8 +796,8 @@ fun ReqGeneralCrewMargin(crewTypeId: Int) = object : Constraint {
     override val name = "ReqGeneralCrewMargin"
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val general = ctx.general
-        if (crewTypeId != general.crewTypeId) return ConstraintResult.Pass
-        val maxCrew = general.leadership * 100
+        if (crewTypeId != general.crewType.toInt()) return ConstraintResult.Pass
+        val maxCrew = general.leadership.toInt() * 100
         return if (maxCrew > general.crew) ConstraintResult.Pass
         else ConstraintResult.Fail("이미 많은 병력을 보유하고 있습니다.")
     }
@@ -871,7 +871,7 @@ fun ReqCityLevel(levels: List<Int>) = object : Constraint {
     override val name = "ReqCityLevel"
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val city = ctx.city ?: return ConstraintResult.Fail("도시 정보가 없습니다.")
-        return if (city.level in levels) ConstraintResult.Pass
+        return if (city.level.toInt() in levels) ConstraintResult.Pass
         else ConstraintResult.Fail("해당 도시 등급에서는 사용할 수 없습니다.")
     }
 }

@@ -30,8 +30,7 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 AllowJoinDestNation(relYear),
                 ReqDestNationValue("level", "국가규모", ">", 0, "방랑군에는 임관할 수 없습니다."),
                 DifferentDestNation(),
-                ReqGeneralValue({ it.officerLevel.toInt() }, "직위", 12, negate = true,
-                    failMessage = "군주는 등용장을 수락할 수 없습니다"),
+                ReqGeneralStatValue({ 12 - it.officerLevel.toInt() }, "직위(군주 불가)", 1),
             )
         }
 
@@ -93,8 +92,8 @@ class 등용수락(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         }
 
         // Reset killturn for non-NPC
-        if (general.npcType < 2) {
-            statChanges["killturn"] = env.killturn
+        if (general.npcState < 2) {
+            statChanges["killTurn"] = env.killturn
         }
 
         return CommandResult(

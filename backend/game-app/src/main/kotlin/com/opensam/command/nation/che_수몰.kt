@@ -43,7 +43,7 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
 
         val destNationId = dc.nationId
-        val destNationName = services!!.nationRepository.findById(destNationId)?.name ?: "알수없음"
+        val destNationName = services!!.nationRepository.findById(destNationId).orElse(null)?.name ?: "알수없음"
         val generalName = general.name
         val nationName = n.name
 

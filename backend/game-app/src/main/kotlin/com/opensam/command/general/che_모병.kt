@@ -41,7 +41,7 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
                 NotBeNeutral(),
                 OccupiedCity(),
                 ReqCityCapacity("pop", "주민", env.minAvailableRecruitPop + reqAmount),
-                ReqCityTrust(20),
+                ReqCityTrust(20.toFloat()),
                 ReqGeneralGold(cost.gold),
                 ReqGeneralRice(cost.rice),
                 ReqGeneralCrewMargin(reqCrewTypeId),
@@ -54,7 +54,7 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             NotBeNeutral(),
             OccupiedCity(),
             ReqCityCapacity("pop", "주민", env.minAvailableRecruitPop + 100),
-            ReqCityTrust(20),
+            ReqCityTrust(20.toFloat()),
         )
 
     override fun getCost(): CommandCost {

@@ -59,7 +59,7 @@ class che_선전포고(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         // National message to dest nation
         val text = "【외교】${env.year}년 ${env.month}월:${nationName}에서 ${destNationName}에 선전포고"
-        services!!.messageService.sendNationalMessage(
+        services!!.messageService?.sendNationalMessage(
             worldId = env.worldId,
             srcNationId = n.id,
             destNationId = dn.id,

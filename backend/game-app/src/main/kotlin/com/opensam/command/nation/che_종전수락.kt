@@ -42,8 +42,8 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
         services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 2, term = 0)
 
         // Update nation fronts
-        services!!.nationService.setNationFront(env.worldId, n.id)
-        services!!.nationService.setNationFront(env.worldId, dn.id)
+        services!!.nationService?.setNationFront(env.worldId, n.id)
+        services!!.nationService?.setNationFront(env.worldId, dn.id)
 
         // General action + history logs
         val josaWaDest = JosaUtil.pick(destNationName, "와")

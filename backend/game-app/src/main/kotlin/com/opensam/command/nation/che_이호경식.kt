@@ -81,8 +81,8 @@ class che_이호경식(general: General, env: CommandEnv, arg: Map<String, Any>?
         services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 1, term = newTerm)
 
         // Update nation fronts
-        services!!.nationService.setNationFront(env.worldId, n.id)
-        services!!.nationService.setNationFront(env.worldId, dn.id)
+        services!!.nationService?.setNationFront(env.worldId, n.id)
+        services!!.nationService?.setNationFront(env.worldId, dn.id)
 
         return CommandResult(true, logs)
     }

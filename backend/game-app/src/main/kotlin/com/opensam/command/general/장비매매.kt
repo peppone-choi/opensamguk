@@ -6,7 +6,7 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
-import com.opensam.service.ItemService
+import com.opensam.engine.modifier.ItemModifiers
 import kotlin.random.Random
 
 private val ITEM_TYPE_NAMES = mapOf(
@@ -37,9 +37,9 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
             )
             val code = itemCode
             if (code != null && code != "None") {
-                val item = ItemService.getItemInfo(code)
+                val item = ItemModifiers.getMeta(code)
                 if (item != null) {
-                    constraints.add(ReqCityCapacity("secu", "치안 수치", item.reqSecu))
+                    constraints.add(ReqCityCapacity("secu", "치안 수치", item.grade * 10))
                 }
                 constraints.add(ReqGeneralGold(cost.gold))
             }
@@ -49,7 +49,7 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override fun getCost(): CommandCost {
         val code = itemCode ?: return CommandCost()
         if (code == "None") return CommandCost()
-        val item = ItemService.getItemInfo(code) ?: return CommandCost()
+        val item = ItemModifiers.getMeta(code) ?: return CommandCost()
         return CommandCost(gold = item.cost)
     }
 
@@ -78,11 +78,11 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     }
 
     private fun buyItem(itemType: String, itemCode: String, date: String): CommandResult {
-        val item = ItemService.getItemInfo(itemCode)
+        val item = ItemModifiers.getMeta(itemCode)
             ?: return CommandResult(success = false, logs = listOf("아이템 정보가 없습니다."))
 
-        val itemName = item.name
-        val itemRawName = item.rawName ?: itemName
+        val itemName = "${item.rawName}(+${item.grade})"
+        val itemRawName = item.rawName
         val cost = item.cost
 
         pushLog("<C>${itemName}</> 구입했습니다. <1>$date</>")
@@ -97,16 +97,22 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     }
 
     private fun sellItem(itemType: String, date: String): CommandResult {
-        val currentItemCode = general.getItemCode(itemType)
+        val currentItemCode = when (itemType) {
+            "weapon" -> general.weaponCode
+            "book" -> general.bookCode
+            "horse" -> general.horseCode
+            "item" -> general.itemCode
+            else -> null
+        }
         if (currentItemCode == null || currentItemCode == "None") {
             return CommandResult(success = false, logs = listOf("판매할 아이템이 없습니다."))
         }
 
-        val item = ItemService.getItemInfo(currentItemCode)
+        val item = ItemModifiers.getMeta(currentItemCode)
             ?: return CommandResult(success = false, logs = listOf("아이템 정보가 없습니다."))
 
-        val itemName = item.name
-        val itemRawName = item.rawName ?: itemName
+        val itemName = "${item.rawName}(+${item.grade})"
+        val itemRawName = item.rawName
         val sellPrice = item.cost / 2
 
         pushLog("<C>${itemName}</> 판매했습니다. <1>$date</>")

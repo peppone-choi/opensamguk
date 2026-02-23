@@ -26,7 +26,7 @@ data class CommandServices(
      */
     suspend fun getCityName(cityId: Long): String? {
         return try {
-            cityRepository.findById(cityId)?.name
+            cityRepository.findById(cityId).orElse(null)?.name
         } catch (_: Exception) {
             null
         }

@@ -48,7 +48,7 @@ class che_정착장려(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         // Base score with explevel bonus (legacy: getDomesticExpLevelBonus)
         val expLevel = general.expLevel
-        val expLevelBonus = getDomesticExpLevelBonus(expLevel)
+        val expLevelBonus = getDomesticExpLevelBonus(expLevel.toInt())
         var baseScore = leadership * expLevelBonus * (0.8 + rng.nextDouble() * 0.4)
 
         // Critical ratio (legacy: CriticalRatioDomestic)

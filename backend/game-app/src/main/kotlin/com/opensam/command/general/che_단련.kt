@@ -56,7 +56,7 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val score = (baseScore * multiplier).roundToInt()
         val scoreText = "%,d".format(score)
 
-        val armTypeName = getArmTypeName()
+        val armTypeName = getCrewTypeName(general.crewType.toInt()) ?: "병사"
 
         val logMessage = when (pick) {
             "fail" -> "단련이 <span class='ev_failed'>지지부진</span>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"

@@ -66,12 +66,12 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
         val avgGenCount = services!!.nationRepository.getAverageGennum(env.worldId)
         val createGenCount = 3 + (avgGenCount / 8.0).roundToInt()
 
-        // Get nation average stats
+        // Get nation average stats for initial exp/ded
         val avgStats = services!!.generalRepository.getAverageStats(env.worldId, n.id)
 
         // Create NPCs from general pool
         for (i in 1..createGenCount) {
-            val npc = services!!.generalPoolService.pickAndCreateNpc(
+            val npc = services!!.generalPoolService?.pickAndCreateNpc(
                 worldId = env.worldId,
                 nationId = n.id,
                 cityId = c.id,
@@ -89,7 +89,7 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
         }
 
         // Update nation gennum and strategic limit
-        n.gennum = (n.gennum ?: 0) + createGenCount
+        n.gennum = n.gennum + createGenCount
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
         return CommandResult(true, logs)

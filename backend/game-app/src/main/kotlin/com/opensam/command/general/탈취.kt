@@ -50,7 +50,7 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val generalShareGold: Int
         val generalShareRice: Int
 
-        if (nationId != 0) {
+        if (nationId != 0L) {
             nationShareGold = (gold * 0.7).roundToInt()
             nationShareRice = (rice * 0.7).roundToInt()
             generalShareGold = gold - nationShareGold

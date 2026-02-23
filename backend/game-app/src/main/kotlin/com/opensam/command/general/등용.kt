@@ -24,7 +24,7 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 DifferentNationDestGeneral(),
                 ReqGeneralGold(getCost().gold),
             )
-            if (destGeneral?.officerLevel == 12) {
+            if (destGeneral?.officerLevel?.toInt() == 12) {
                 constraints.add(AlwaysFail("군주에게는 등용장을 보낼 수 없습니다."))
             }
             return constraints

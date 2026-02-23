@@ -19,6 +19,8 @@ data class CommandEnv(
     val minAvailableRecruitPop: Int = 30000,
     val maxTrainByCommand: Int = 80,
     val maxAtmosByCommand: Int = 80,
+    val trainDelta: Double = 0.05,
+    val killturn: Short = 0,
     val gameStor: MutableMap<String, Any> = mutableMapOf()
 ) {
     /**
