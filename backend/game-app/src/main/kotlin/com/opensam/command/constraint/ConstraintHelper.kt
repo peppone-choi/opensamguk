@@ -1131,25 +1131,6 @@ private fun asLong(raw: Any?): Long? {
     }
 }
 
-fun ReqNationAuxValue(key: String, default: Int, op: String, expected: Int, failMessage: String) = object : Constraint {
-    override val name = "ReqNationAuxValue_$key"
-    override fun test(ctx: ConstraintContext): ConstraintResult {
-        val nation = ctx.nation ?: return ConstraintResult.Fail("국가 정보가 없습니다.")
-        val actual = (nation.meta[key] as? Number)?.toInt() ?: default
-        val matches = when (op) {
-            "==" -> actual == expected
-            "!=" -> actual != expected
-            ">=" -> actual >= expected
-            "<=" -> actual <= expected
-            ">" -> actual > expected
-            "<" -> actual < expected
-            else -> true
-        }
-        return if (matches) ConstraintResult.Pass
-        else ConstraintResult.Fail(failMessage)
-    }
-}
-
 fun ReqDestNationValue(key: String, displayName: String, op: String, expected: Int, failMessage: String) = object : Constraint {
     override val name = "ReqDestNationValue_$key"
     override fun test(ctx: ConstraintContext): ConstraintResult {
