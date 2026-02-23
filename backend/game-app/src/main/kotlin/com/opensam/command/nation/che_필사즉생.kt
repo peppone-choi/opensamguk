@@ -7,10 +7,12 @@ import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
 import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
 import kotlin.random.Random
+
+private const val PRE_REQ_TURN = 2
+private const val DEFAULT_GLOBAL_DELAY: Short = 9
+private const val TRAIN_CAP: Short = 100
+private const val ATMOS_CAP: Short = 100
 
 class che_필사즉생(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -22,27 +24,42 @@ class che_필사즉생(general: General, env: CommandEnv, arg: Map<String, Any>?
     )
 
     override fun getCost() = CommandCost()
-    override fun getPreReqTurn() = 2
-
-    override fun getPostReqTurn(): Int {
-        val genCount = min(max(1, 1), 30)
-        return (sqrt(genCount * 8.0) * 10).roundToInt()
-    }
+    override fun getPreReqTurn() = PRE_REQ_TURN
+    override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
-        n.strategicCmdLimit = 9
-        // 국가 전체 장수의 훈련/사기 100으로
-        val nationGenerals = services!!.generalRepository.findByNationId(n.id)
-        var affected = 0
+
+        val expDed = 5 * (PRE_REQ_TURN + 1)
+        general.experience += expDed
+        general.dedication += expDed
+
+        // Set strategic command limit
+        n.strategicCmdLimit = DEFAULT_GLOBAL_DELAY
+
+        // Raise train/atmos to 100 for all nation generals (including self)
+        val nationGenerals = services?.generalRepository?.findByNationId(n.id) ?: emptyList()
         for (gen in nationGenerals) {
-            gen.train = 100
-            gen.atmos = 100
-            services!!.generalRepository.save(gen)
-            affected++
+            var changed = false
+            if (gen.train < TRAIN_CAP) {
+                gen.train = TRAIN_CAP
+                changed = true
+            }
+            if (gen.atmos < ATMOS_CAP) {
+                gen.atmos = ATMOS_CAP
+                changed = true
+            }
+            if (changed && gen.id != general.id) {
+                services?.generalRepository?.save(gen)
+            }
         }
-        pushLog("$actionName 발동! 장수 ${affected}명 훈련/사기 최대. <1>$date</>")
+
+        // Apply to self as well
+        if (general.train < TRAIN_CAP) general.train = TRAIN_CAP
+        if (general.atmos < ATMOS_CAP) general.atmos = ATMOS_CAP
+
+        pushLog("$actionName 발동! <1>$date</>")
         return CommandResult(true, logs)
     }
 }

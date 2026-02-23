@@ -6,9 +6,12 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import kotlin.math.max
 import kotlin.random.Random
 
 private const val POST_REQ_TURN = 12
+private const val BASE_GOLD = 10000
+private const val BASE_RICE = 10000
 
 class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -17,7 +20,8 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         ExistsDestNation(), OccupiedCity(), BeChief(),
-        SuppliedCity(), DifferentDestNation()
+        SuppliedCity(), DifferentDestNation(),
+        ReqNationValue("surlimit", "외교제한", "==", 0, "외교제한중입니다."),
     )
 
     override fun getCost() = CommandCost()
@@ -26,35 +30,43 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val destNationName = destNation?.name ?: "알 수 없음"
-        val explicitGold = (arg?.get("goldAmount") as? Number)?.toInt() ?: 0
-        val explicitRice = (arg?.get("riceAmount") as? Number)?.toInt() ?: 0
-        val legacyAmount = (arg?.get("amount") as? Number)?.toInt() ?: 0
-        val legacyIsGold = arg?.get("isGold") as? Boolean
-        val goldAmount = if (explicitGold != 0 || explicitRice != 0) {
-            explicitGold
-        } else if (legacyIsGold == true) {
-            legacyAmount
-        } else {
-            0
-        }
-        val riceAmount = if (explicitGold != 0 || explicitRice != 0) {
-            explicitRice
-        } else if (legacyIsGold == false) {
-            legacyAmount
-        } else {
-            0
-        }
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
         val dn = destNation ?: return CommandResult(false, logs, "대상 국가 정보를 찾을 수 없습니다")
-        if (n.gold < goldAmount || n.rice < riceAmount) {
-            return CommandResult(false, logs, "자원이 부족합니다")
+
+        // Parse amountList [goldAmount, riceAmount] matching PHP/TS
+        @Suppress("UNCHECKED_CAST")
+        val amountList = arg?.get("amountList") as? List<Number>
+        val goldAmount: Int
+        val riceAmount: Int
+        if (amountList != null && amountList.size == 2) {
+            goldAmount = amountList[0].toInt()
+            riceAmount = amountList[1].toInt()
+        } else {
+            goldAmount = (arg?.get("goldAmount") as? Number)?.toInt() ?: 0
+            riceAmount = (arg?.get("riceAmount") as? Number)?.toInt() ?: 0
         }
-        n.gold -= goldAmount
-        n.rice -= riceAmount
-        dn.gold += goldAmount
-        dn.rice += riceAmount
-        pushLog("<D><b>$destNationName</b></>로 금<C>$goldAmount</> 쌀<C>$riceAmount</>을 지원했습니다. <1>$date</>")
+
+        if (goldAmount <= 0 && riceAmount <= 0) {
+            return CommandResult(false, logs, "원조 금액이 없습니다")
+        }
+
+        // Fit to available resources (keep baseGold/baseRice reserved)
+        val actualGold = goldAmount.coerceIn(0, max(0, n.gold - BASE_GOLD))
+        val actualRice = riceAmount.coerceIn(0, max(0, n.rice - BASE_RICE))
+
+        n.gold -= actualGold
+        n.rice -= actualRice
+        dn.gold += actualGold
+        dn.rice += actualRice
+
+        // Set surlimit (diplomacy cooldown)
+        val currentSurlimit = (n.meta["surlimit"] as? Number)?.toInt() ?: 0
+        n.meta["surlimit"] = currentSurlimit + POST_REQ_TURN
+
+        general.experience += 5
+        general.dedication += 5
+
+        pushLog("<D><b>${dn.name}</b></>로 금<C>$actualGold</> 쌀<C>$actualRice</>을 지원했습니다. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

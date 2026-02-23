@@ -6,6 +6,7 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.util.JosaUtil
 import kotlin.random.Random
 
 class event_무희연구(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
@@ -15,8 +16,11 @@ class event_무희연구(general: General, env: CommandEnv, arg: Map<String, Any
 
     override val fullConditionConstraints = listOf(
         OccupiedCity(), BeChief(),
+        ReqNationAuxValue("can_무희사용", 0, "<", 1, "${actionName}가 이미 완료되었습니다."),
         ReqNationGold(1000 + 100000), ReqNationRice(1000 + 100000)
     )
+
+    override val minConditionConstraints get() = fullConditionConstraints
 
     override fun getCost() = CommandCost(gold = 100000, rice = 100000)
     override fun getPreReqTurn() = 23
@@ -28,9 +32,17 @@ class event_무희연구(general: General, env: CommandEnv, arg: Map<String, Any
         n.gold -= cost.gold
         n.rice -= cost.rice
         n.meta["can_무희사용"] = 1
-        general.experience += 100
-        general.dedication += 100
+
+        val expDed = 5 * (getPreReqTurn() + 1)
+        general.experience += expDed
+        general.dedication += expDed
+
+        val generalName = general.name
+        val josaYi = JosaUtil.pick(generalName, "이")
+
         pushLog("<M>$actionName</> 완료")
+        pushLog("_history:<M>$actionName</> 완료")
+        pushLog("_nation_history:<Y>${generalName}</>${josaYi} <M>$actionName</> 완료")
         return CommandResult(true, logs)
     }
 }

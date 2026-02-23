@@ -27,11 +27,18 @@ class che_발령(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val date = formatDate()
         val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
         val dCity = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
-        destGen.cityId = dCity.id
-        if (destGen.troopId != 0L && destGen.troopId != destGen.id) {
-            destGen.troopId = 0
+
+        if (destGen.id == general.id) {
+            return CommandResult(false, logs, "본인입니다")
         }
-        pushLog("<Y>${destGen.name}</>을(를) <G><b>${dCity.name}</b></>(으)로 발령했습니다. <1>$date</>")
+
+        destGen.cityId = dCity.id
+
+        // Set last발령 meta (yearMonth value)
+        val yearMonth = env.year * 12 + env.month - 1
+        destGen.meta["last발령"] = yearMonth
+
+        pushLog("<Y>${destGen.name}</>을 <G><b>${dCity.name}</b></>으로 발령했습니다. <1>$date</>")
         return CommandResult(true, logs)
     }
 }

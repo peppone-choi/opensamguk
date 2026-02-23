@@ -15,9 +15,9 @@ class Nation휴식(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override fun getCost() = CommandCost()
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
-    override fun getDuration() = 0
 
     override suspend fun run(rng: Random): CommandResult {
+        // Do nothing - just rest
         return CommandResult(success = true, logs = emptyList())
     }
 }

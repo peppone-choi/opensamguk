@@ -6,11 +6,10 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
 import kotlin.random.Random
+
+private const val PRE_REQ_TURN = 1
+private const val DEFAULT_GLOBAL_DELAY: Short = 9
 
 class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -24,38 +23,41 @@ class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     )
 
     override fun getCost() = CommandCost()
-    override fun getPreReqTurn() = 1
-
-    override fun getPostReqTurn(): Int {
-        val genCount = min(max(1, 1), 30)
-        return (sqrt(genCount * 4.0) * 10).roundToInt()
-    }
+    override fun getPreReqTurn() = PRE_REQ_TURN
+    override fun getPostReqTurn() = 0
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
         val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
-        n.strategicCmdLimit = 9
-        // 적 도시의 장수들을 무작위 도시로 이동
-        val enemyGenerals = services!!.generalRepository.findByCityId(dc.id)
-            .filter { it.nationId == dc.nationId }
-        val enemyCities = services!!.cityRepository.findByNationId(dc.nationId)
-            .filter { it.id != dc.id }
-        if (enemyCities.isEmpty()) {
-            pushLog("<G><b>${dc.name}</b></> 이동시킬 도시가 없습니다. <1>$date</>")
-            return CommandResult(false, logs, "이동시킬 도시가 없습니다")
-        }
+
+        val expDed = 5 * (PRE_REQ_TURN + 1)
+        general.experience += expDed
+        general.dedication += expDed
+
+        // Set strategic command limit
+        n.strategicCmdLimit = DEFAULT_GLOBAL_DELAY
+
+        // Move enemy generals at destCity to random supply cities of their nation
+        val enemyGenerals = services?.generalRepository?.findByCityId(dc.id)
+            ?.filter { it.nationId == dc.nationId } ?: emptyList()
+        val enemySupplyCities = services?.cityRepository?.findByNationId(dc.nationId)
+            ?.filter { it.supplyState > 0 } ?: emptyList()
+
         var moved = 0
         for (gen in enemyGenerals) {
-            val targetCity = enemyCities[rng.nextInt(enemyCities.size)]
-            gen.cityId = targetCity.id
-            if (gen.troopId != 0L && gen.troopId != gen.id) {
-                gen.troopId = 0
+            if (enemySupplyCities.isEmpty()) continue
+            var targetCity = enemySupplyCities[rng.nextInt(enemySupplyCities.size)]
+            // If same as dest city, try again once
+            if (targetCity.id == dc.id && enemySupplyCities.size > 1) {
+                targetCity = enemySupplyCities[rng.nextInt(enemySupplyCities.size)]
             }
-            services!!.generalRepository.save(gen)
+            gen.cityId = targetCity.id
+            services?.generalRepository?.save(gen)
             moved++
         }
-        pushLog("<G><b>${dc.name}</b></> $actionName 발동! 장수 ${moved}명 분산. <1>$date</>")
+
+        pushLog("$actionName 발동! <1>$date</>")
         return CommandResult(true, logs)
     }
 }

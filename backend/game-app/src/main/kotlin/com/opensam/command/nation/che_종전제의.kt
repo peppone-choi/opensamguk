@@ -6,6 +6,7 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.util.JosaUtil
 import kotlin.random.Random
 
 class che_종전제의(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
@@ -15,7 +16,8 @@ class che_종전제의(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(), SuppliedCity(),
-        ExistsDestNation()
+        ExistsDestNation(),
+        AllowDiplomacyBetweenStatus(listOf(0, 1), "선포, 전쟁중인 상대국에게만 가능합니다.")
     )
 
     override fun getCost() = CommandCost()
@@ -25,10 +27,19 @@ class che_종전제의(general: General, env: CommandEnv, arg: Map<String, Any>?
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
         val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
-        services!!.diplomacyService.proposeCeasefire(env.worldId, n.id, dn.id)
-        general.experience += 50
-        general.dedication += 50
-        pushLog("<D><b>${dn.name}</b></>로 종전 제의 서신을 보냈습니다.<1>${formatDate()}</>")
+
+        val josaRo = JosaUtil.pick(dn.name, "로")
+        pushLog("<D><b>${dn.name}</b></>${josaRo} 종전 제의 서신을 보냈습니다.<1>${formatDate()}</>")
+
+        services!!.diplomacyService.sendDiplomaticMessage(
+            worldId = env.worldId,
+            srcNationId = n.id,
+            destNationId = dn.id,
+            srcGeneralId = general.id,
+            action = "stop_war",
+            extra = mapOf("deletable" to false)
+        )
+
         return CommandResult(true, logs)
     }
 }

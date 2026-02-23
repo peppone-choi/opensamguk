@@ -23,6 +23,11 @@ class che_부대탈퇴지시(general: General, env: CommandEnv, arg: Map<String,
 
     override suspend fun run(rng: Random): CommandResult {
         val destGen = destGeneral ?: return CommandResult(false, logs, "대상 장수 정보를 찾을 수 없습니다")
+
+        if (destGen.id == general.id) {
+            return CommandResult(false, logs, "본인입니다")
+        }
+
         val destGeneralName = destGen.name
 
         if (destGen.troopId == 0L) {
