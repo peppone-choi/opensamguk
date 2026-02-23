@@ -62,10 +62,11 @@ function ProcessingContent() {
         }));
         if (isNationCommand && myGeneral.nationId) {
           await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+          router.push("/commands?mode=nation");
         } else {
           await commandApi.reserve(myGeneral.id, turns);
+          router.push("/commands");
         }
-        router.push("/commands");
       } catch (error) {
         console.error("Failed to reserve command:", error);
         setIsSubmitting(false);

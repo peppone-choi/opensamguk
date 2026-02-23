@@ -254,6 +254,70 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     [generalId, loadTurns],
   );
 
+  // Erase selected turns and pull subsequent turns forward
+  const eraseAndPull = useCallback(async () => {
+    if (selectedTurnList.length === 0 || realtimeMode) return;
+    const sortedSelected = [...selectedTurnList].sort((a, b) => a - b);
+    const minTurn = sortedSelected[0];
+    const selectedSet = new Set(sortedSelected);
+    // Collect non-selected turns after minTurn, in order
+    const remaining: FilledTurn[] = [];
+    for (let i = 0; i < TURN_COUNT; i++) {
+      if (i < minTurn || selectedSet.has(i)) continue;
+      remaining.push(filledTurns[i]);
+    }
+    // Place remaining turns starting at minTurn, fill rest with empty
+    const ops: Promise<unknown>[] = [];
+    for (let i = minTurn; i < TURN_COUNT; i++) {
+      const rIdx = i - minTurn;
+      if (rIdx < remaining.length && remaining[rIdx].actionCode !== "휴식") {
+        ops.push(commandApi.reserveCommand(generalId, {
+          turn: i,
+          command: remaining[rIdx].actionCode,
+          arg: remaining[rIdx].arg,
+        }));
+      } else {
+        ops.push(commandApi.deleteReservedCommand(generalId, i));
+      }
+    }
+    await Promise.all(ops);
+    await loadTurns();
+  }, [filledTurns, generalId, loadTurns, realtimeMode, selectedTurnList]);
+
+  // Push empty slots at selected positions, shifting existing commands back
+  const pushEmpty = useCallback(async () => {
+    if (selectedTurnList.length === 0 || realtimeMode) return;
+    const sortedSelected = [...selectedTurnList].sort((a, b) => a - b);
+    const minTurn = sortedSelected[0];
+    const insertCount = sortedSelected.length;
+    // Collect all turns from minTurn that are not empty
+    const existing: FilledTurn[] = [];
+    for (let i = minTurn; i < TURN_COUNT; i++) {
+      existing.push(filledTurns[i]);
+    }
+    // New layout: insertCount empty slots, then existing turns (truncated to fit)
+    const ops: Promise<unknown>[] = [];
+    for (let i = minTurn; i < TURN_COUNT; i++) {
+      const offset = i - minTurn;
+      if (offset < insertCount) {
+        ops.push(commandApi.deleteReservedCommand(generalId, i));
+      } else {
+        const srcIdx = offset - insertCount;
+        if (srcIdx < existing.length && existing[srcIdx].actionCode !== "휴식") {
+          ops.push(commandApi.reserveCommand(generalId, {
+            turn: i,
+            command: existing[srcIdx].actionCode,
+            arg: existing[srcIdx].arg,
+          }));
+        } else {
+          ops.push(commandApi.deleteReservedCommand(generalId, i));
+        }
+      }
+    }
+    await Promise.all(ops);
+    await loadTurns();
+  }, [filledTurns, generalId, loadTurns, realtimeMode, selectedTurnList]);
+
   const handleTurnClick = (
     turnIdx: number,
     event: ReactMouseEvent<HTMLButtonElement>,
@@ -473,6 +537,22 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
           <Button
             size="sm"
             variant="outline"
+            disabled={realtimeMode || selectedTurnList.length === 0}
+            onClick={() => void eraseAndPull()}
+          >
+            지우고 당기기
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={realtimeMode || selectedTurnList.length === 0}
+            onClick={() => void pushEmpty()}
+          >
+            뒤로 밀기
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
             disabled={realtimeMode}
             onClick={saveStoredAction}
           >
@@ -507,6 +587,45 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             onClick={deleteStoredAction}
           >
             삭제
+          </Button>
+
+          {/* Range selection helpers */}
+          <span className="text-[10px] text-muted-foreground">|</span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 text-[10px] px-1.5"
+            onClick={() => {
+              const s = new Set<number>();
+              for (let i = 0; i < TURN_COUNT; i += 2) s.add(i);
+              setSelectedTurns(s);
+            }}
+          >
+            홀수턴
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 text-[10px] px-1.5"
+            onClick={() => {
+              const s = new Set<number>();
+              for (let i = 1; i < TURN_COUNT; i += 2) s.add(i);
+              setSelectedTurns(s);
+            }}
+          >
+            짝수턴
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 text-[10px] px-1.5"
+            onClick={() => {
+              const s = new Set<number>();
+              for (let i = 0; i < TURN_COUNT; i++) s.add(i);
+              setSelectedTurns(s);
+            }}
+          >
+            전체
           </Button>
 
           <div className="ml-auto text-[11px] text-gray-400">

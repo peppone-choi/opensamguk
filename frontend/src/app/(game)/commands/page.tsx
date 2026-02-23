@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Swords, Crown, Clock } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { CommandPanel } from "@/components/game/command-panel";
@@ -223,10 +224,20 @@ function NationCommandPanel({
 }
 
 export default function CommandsPage() {
+  return (
+    <Suspense fallback={<LoadingState message="명령 정보를 불러오는 중..." />}>
+      <CommandsPageInner />
+    </Suspense>
+  );
+}
+
+function CommandsPageInner() {
+  const searchParams = useSearchParams();
+  const initialMode = searchParams.get("mode") === "nation" ? "nation" : "general";
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
   const { nations } = useGameStore();
-  const [mode, setMode] = useState<"general" | "nation">("general");
+  const [mode, setMode] = useState<"general" | "nation">(initialMode);
 
   useEffect(() => {
     if (!currentWorld) return;

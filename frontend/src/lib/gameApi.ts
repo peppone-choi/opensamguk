@@ -23,6 +23,7 @@ import type {
   BattleSimUnit,
   BattleSimCity,
   BattleSimResult,
+  BattleSimRepeatResult,
   NationPolicyInfo,
   OfficerInfo,
   TroopWithMembers,
@@ -353,7 +354,7 @@ export const generalLogApi = {
   getOldLogs: (
     generalId: number,
     targetId: number,
-    type: "generalAction" | "battleResult" | "battleDetail",
+    type: "generalHistory" | "generalAction" | "battleResult" | "battleDetail",
     to?: number,
   ) =>
     api.get<GeneralLogResult>(
@@ -690,12 +691,17 @@ export const battleSimApi = {
     attacker: BattleSimUnit,
     defender: BattleSimUnit,
     defenderCity: BattleSimCity,
+    options?: { year?: number; month?: number; seed?: string; repeatCount?: number },
   ) =>
-    api.post<BattleSimResult>("/battle/simulate", {
-      attacker,
-      defender,
-      defenderCity,
-    }),
+    api.post<BattleSimResult & { repeatSummary?: BattleSimRepeatResult }>(
+      "/battle/simulate",
+      {
+        attacker,
+        defender,
+        defenderCity,
+        ...options,
+      },
+    ),
 };
 
 // Game Version API (Admin)

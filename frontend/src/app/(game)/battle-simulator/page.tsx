@@ -5,7 +5,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { battleSimApi, simulatorExportApi } from "@/lib/gameApi";
-import type { BattleSimUnit, BattleSimCity, BattleSimResult, General } from "@/types";
+import type { BattleSimUnit, BattleSimCity, BattleSimResult, BattleSimRepeatResult, General } from "@/types";
 import { Swords, Play, RotateCcw, Download, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -400,7 +400,7 @@ export default function BattleSimulatorPage() {
   const [defender, setDefender] = useState<UnitFormState>(defaultUnit("방어측"));
   const [cityDef, setCityDef] = useState<CityDefenseState>({ ...defaultCityDefense });
 
-  const [result, setResult] = useState<BattleSimResult | null>(null);
+  const [result, setResult] = useState<(BattleSimResult & { repeatSummary?: BattleSimRepeatResult }) | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -450,7 +450,12 @@ export default function BattleSimulatorPage() {
         wall: cityDef.wall,
         level: cityDef.level,
       };
-      const { data } = await battleSimApi.simulate(attackerUnit, defenderUnit, defCity);
+      const { data } = await battleSimApi.simulate(attackerUnit, defenderUnit, defCity, {
+        year,
+        month,
+        seed: seed || undefined,
+        repeatCount,
+      });
       setResult(data);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "시뮬레이션 오류");
@@ -626,8 +631,71 @@ export default function BattleSimulatorPage() {
               </div>
             </div>
 
+            {/* 1000-Repeat Summary */}
+            {result.repeatSummary && (
+              <div className="space-y-2">
+                <div className="text-xs text-muted-foreground font-medium">1000회 반복 요약</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="border border-gray-700 rounded p-2 text-center">
+                    <div className="text-[10px] text-muted-foreground">공격측 승률</div>
+                    <div className="text-lg font-bold text-blue-400 tabular-nums">
+                      {(result.repeatSummary.attackerWinRate * 100).toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">{result.repeatSummary.attackerWins}승</div>
+                  </div>
+                  <div className="border border-gray-700 rounded p-2 text-center">
+                    <div className="text-[10px] text-muted-foreground">방어측 승률</div>
+                    <div className="text-lg font-bold text-red-400 tabular-nums">
+                      {((1 - result.repeatSummary.attackerWinRate - (result.repeatSummary.draws / result.repeatSummary.totalRuns)) * 100).toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">{result.repeatSummary.defenderWins}승</div>
+                  </div>
+                  <div className="border border-gray-700 rounded p-2 text-center">
+                    <div className="text-[10px] text-muted-foreground">무승부</div>
+                    <div className="text-lg font-bold text-gray-400 tabular-nums">{result.repeatSummary.draws}</div>
+                  </div>
+                  <div className="border border-gray-700 rounded p-2 text-center">
+                    <div className="text-[10px] text-muted-foreground">평균 라운드</div>
+                    <div className="text-lg font-bold tabular-nums">{result.repeatSummary.avgRounds.toFixed(1)}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="border border-gray-700 rounded p-2 text-center">
+                    <div className="text-[10px] text-muted-foreground">공격측 평균 잔여 병력</div>
+                    <div className="text-sm font-bold tabular-nums">{Math.round(result.repeatSummary.avgAttackerRemaining).toLocaleString()}</div>
+                  </div>
+                  <div className="border border-gray-700 rounded p-2 text-center">
+                    <div className="text-[10px] text-muted-foreground">방어측 평균 잔여 병력</div>
+                    <div className="text-sm font-bold tabular-nums">{Math.round(result.repeatSummary.avgDefenderRemaining).toLocaleString()}</div>
+                  </div>
+                </div>
+                {/* Win rate bar */}
+                <div className="h-4 rounded-full overflow-hidden flex bg-gray-800">
+                  <div
+                    className="bg-blue-500 h-full"
+                    style={{ width: `${result.repeatSummary.attackerWinRate * 100}%` }}
+                    title={`공격측 ${result.repeatSummary.attackerWins}승`}
+                  />
+                  <div
+                    className="bg-gray-600 h-full"
+                    style={{ width: `${(result.repeatSummary.draws / result.repeatSummary.totalRuns) * 100}%` }}
+                    title={`무승부 ${result.repeatSummary.draws}`}
+                  />
+                  <div
+                    className="bg-red-500 h-full flex-1"
+                    title={`방어측 ${result.repeatSummary.defenderWins}승`}
+                  />
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>공격측 {result.repeatSummary.attackerWins}승</span>
+                  <span>총 {result.repeatSummary.totalRuns}회</span>
+                  <span>방어측 {result.repeatSummary.defenderWins}승</span>
+                </div>
+              </div>
+            )}
+
             {/* Battle Log */}
-            {result.logs.length > 0 && (
+            {result.logs && result.logs.length > 0 && (
               <div className="space-y-1">
                 <div className="text-xs text-muted-foreground font-medium">전투 로그</div>
                 <div className="max-h-80 overflow-y-auto border border-gray-800 bg-[#0a0a0a] p-2 rounded text-xs space-y-0.5">
