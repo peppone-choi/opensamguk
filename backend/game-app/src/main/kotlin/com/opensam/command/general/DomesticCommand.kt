@@ -6,6 +6,8 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.random.Random
 
 abstract class DomesticCommand(
@@ -49,11 +51,18 @@ abstract class DomesticCommand(
         val stat = getStat()
         val trust = maxOf(50F, city?.trust ?: 50F).toDouble()
 
+        // Legacy: base score = stat * trust/100 * getDomesticExpLevelBonus * rng(0.8..1.2)
         var score = (stat * (trust / 100.0) * (0.8 + rng.nextDouble() * 0.4)).toInt()
-        score = maxOf(1, score)
+        score = max(1, score)
 
-        val successRatio = minOf(1.0, 0.1 * (trust / 80.0))
-        val failRatio = minOf(1.0 - successRatio, 0.1)
+        // Legacy: CriticalRatioDomestic
+        var successRatio = 0.1
+        var failRatio = 0.1
+        if (trust < 80) {
+            successRatio *= trust / 80.0
+        }
+        successRatio = minOf(1.0, successRatio)
+        failRatio = minOf(1.0 - successRatio, failRatio)
 
         val roll = rng.nextDouble()
         val pick = when {
@@ -62,23 +71,42 @@ abstract class DomesticCommand(
             else -> "normal"
         }
 
+        // Legacy: CriticalScoreEx
         when (pick) {
             "success" -> score = (score * 1.5).toInt()
             "fail" -> score = (score * 0.5).toInt()
         }
-        score = maxOf(1, score)
+        score = max(1, score)
+
+        // Legacy parity: updateMaxDomesticCritical on success, reset on non-success
+        val maxCriticalJson = if (pick == "success") {
+            ""","maxDomesticCritical":$score"""
+        } else {
+            ""","maxDomesticCritical":0"""
+        }
 
         val logMessage = when (pick) {
-            "fail" -> "${actionName}을(를) 실패하여 $score 상승했습니다. $date"
-            "success" -> "${actionName}을(를) 성공하여 $score 상승했습니다. $date"
-            else -> "${actionName}을(를) 하여 $score 상승했습니다. $date"
+            "fail" -> "${actionName}을 <span class='ev_failed'>실패</span>하여 <C>$score</> 상승했습니다. <1>$date</>"
+            "success" -> "${actionName}을 <S>성공</>하여 <C>$score</> 상승했습니다. <1>$date</>"
+            else -> "${actionName}을 하여 <C>$score</> 상승했습니다. <1>$date</>"
         }
         pushLog(logMessage)
 
-        // front line debuff
+        // Legacy parity: front line debuff with capital scaling
         val c = city
         if (c != null && (c.frontState.toInt() == 1 || c.frontState.toInt() == 3)) {
-            score = (score * debuffFront).toInt()
+            var actualDebuff = debuffFront
+
+            // Legacy: if capital and relYear < 25, scale debuff down
+            if (nation?.capitalCityId == c.id?.toLong()) {
+                val relYear = env.year - env.startYear
+                if (relYear < 25) {
+                    val debuffScale = (maxOf(0, relYear - 5).coerceAtMost(20)) * 0.05
+                    actualDebuff = (debuffScale * debuffFront) + (1 - debuffScale)
+                }
+            }
+
+            score = (score * actualDebuff).toInt()
         }
 
         val currentValue = when (cityKey) {
@@ -106,7 +134,7 @@ abstract class DomesticCommand(
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-getCost().gold},"experience":$exp,"dedication":$ded,"${statKey}Exp":1},"cityChanges":{"$cityKey":$actualDelta},"criticalResult":"$pick"}"""
+            message = """{"statChanges":{"gold":${-getCost().gold},"experience":$exp,"dedication":$ded,"${statKey}Exp":1},"cityChanges":{"$cityKey":$actualDelta},"criticalResult":"$pick"$maxCriticalJson}"""
         )
     }
 }
