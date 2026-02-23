@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface NationRepository : JpaRepository<Nation, Long> {
     fun findByWorldId(worldId: Long): List<Nation>
+    fun findByWorldIdAndName(worldId: Long, name: String): Nation?
 }

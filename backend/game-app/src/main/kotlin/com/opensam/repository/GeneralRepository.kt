@@ -12,4 +12,5 @@ interface GeneralRepository : JpaRepository<General, Long> {
     fun findByWorldIdAndUserId(worldId: Long, userId: Long): General?
     fun findByWorldIdAndCommandEndTimeBefore(worldId: Long, time: OffsetDateTime): List<General>
     fun findByTroopId(troopId: Long): List<General>
+    fun findByWorldIdAndNationId(worldId: Long, nationId: Long): List<General>
 }

@@ -83,6 +83,10 @@ class DiplomacyService(
         return diplomacyRepository.findByWorldId(worldId)
     }
 
+    fun getRelationsBetween(worldId: Long, nationA: Long, nationB: Long): List<Diplomacy> {
+        return diplomacyRepository.findActiveRelationsBetween(worldId, nationA, nationB)
+    }
+
     fun getRelationsForNation(worldId: Long, nationId: Long): List<Diplomacy> {
         return diplomacyRepository.findByWorldIdAndSrcNationIdOrDestNationId(worldId, nationId, nationId)
     }
