@@ -15,16 +15,26 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
 
     override val actionName = "장수를 따라 임관"
 
-    override val fullConditionConstraints = listOf(
-        BeNeutral(),
-        ExistsDestNation(),
-        AllowJoinAction(),
-    )
+    override val permissionConstraints: List<Constraint>
+        get() = listOf(
+            ReqEnvValue("join_mode", "!=", "onlyRandom", "랜덤 임관만 가능합니다"),
+        )
 
-    override val minConditionConstraints = listOf(
-        BeNeutral(),
-        AllowJoinAction(),
-    )
+    override val fullConditionConstraints: List<Constraint>
+        get() = listOf(
+            ReqEnvValue("join_mode", "!=", "onlyRandom", "랜덤 임관만 가능합니다"),
+            BeNeutral(),
+            ExistsDestNation(),
+            AllowJoinDestNation(),
+            AllowJoinAction(),
+        )
+
+    override val minConditionConstraints: List<Constraint>
+        get() = listOf(
+            ReqEnvValue("join_mode", "!=", "onlyRandom", "랜덤 임관만 가능합니다"),
+            BeNeutral(),
+            AllowJoinAction(),
+        )
 
     override fun getCost() = CommandCost()
     override fun getPreReqTurn() = 0
@@ -35,8 +45,11 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
         val dn = destNation!!
         val destNationName = dn.name
         val destCityId = destGeneral?.cityId ?: dn.capitalCityId ?: 0L
+        val generalName = general.name
 
         pushLog("<D>${destNationName}</>에 임관했습니다. <1>$date</>")
+        pushHistoryLog("<D><b>${destNationName}</b></>에 임관")
+        pushGlobalLog("<Y>${generalName}</> <D><b>${destNationName}</b></>에 <S>임관</>했습니다.")
 
         // Legacy parity: gennum < initialNationGenLimit → exp 700, else 100
         val gennum = services?.generalRepository?.findByNationId(dn.id)?.size ?: 0
@@ -45,7 +58,7 @@ class 장수대상임관(general: General, env: CommandEnv, arg: Map<String, Any
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"city":$destCityId,"experience":$exp},"nationChanges":{"gennum":1}}"""
+            message = """{"statChanges":{"nation":${dn.id},"officerLevel":1,"officerCity":0,"belong":1,"city":$destCityId,"experience":$exp},"nationChanges":{"nationId":${dn.id},"gennum":1}}"""
         )
     }
 }

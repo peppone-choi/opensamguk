@@ -47,17 +47,24 @@ class 이동(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val destCityName = destCity?.name ?: "알 수 없음"
         val destCityId = destCity?.id ?: 0L
 
-        pushLog("$destCityName(으)로 이동했습니다. <1>$date</>")
+        // Legacy PHP uses JosaUtil for 로/으로
+        pushLog("<G><b>${destCityName}</b></>(으)로 이동했습니다. <1>$date</>")
 
         val exp = 50
         val cost = getCost()
         val newAtmos = max(MIN_ATMOS, general.atmos.toInt() - ATMOS_DECREASE_ON_MOVE)
         val atmosDelta = newAtmos - general.atmos.toInt()
 
+        // Legacy PHP: if officer_level==12 and nation.level==0 (roaming), move all nation generals
+        val isRoamingLeader = general.officerLevel == 12 && (nation?.level ?: 1) == 0
+        val roamingMoveJson = if (isRoamingLeader) {
+            ""","roamingMove":{"nationId":${nation?.id ?: 0},"destCityId":"$destCityId","destCityName":"$destCityName"}"""
+        } else ""
+
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"cityId":"$destCityId","gold":${-cost.gold},"atmos":$atmosDelta,"experience":$exp,"leadershipExp":1}}"""
+            message = """{"statChanges":{"cityId":"$destCityId","gold":${-cost.gold},"atmos":$atmosDelta,"experience":$exp,"leadershipExp":1},"tryUniqueLottery":true$roamingMoveJson}"""
         )
     }
 }

@@ -7,6 +7,8 @@ class 내정특기초기화(general: General, env: CommandEnv, arg: Map<String, 
     : 전투특기초기화(general, env, arg) {
 
     override val actionName = "내정 특기 초기화"
-    override val specialField = "specialCode"
+    // Legacy: specialType = 'special', speicalAge = 'specage'
+    override val specialField = "special"
+    override val specialAgeField = "specage"
     override val specialText = "내정 특기"
 }

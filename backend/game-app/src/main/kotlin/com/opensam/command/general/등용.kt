@@ -13,16 +13,25 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val actionName = "등용"
 
-    override val fullConditionConstraints = listOf(
-        NotBeNeutral(),
-        OccupiedCity(),
-        SuppliedCity(),
-        ExistsDestGeneral(),
-        DifferentNationDestGeneral(),
-        ReqGeneralGold(getCost().gold),
-    )
+    override val fullConditionConstraints: List<Constraint>
+        get() {
+            val constraints = mutableListOf(
+                ReqEnvValue("join_mode", "!=", "onlyRandom", "랜덤 임관만 가능합니다"),
+                NotBeNeutral(),
+                OccupiedCity(),
+                SuppliedCity(),
+                ExistsDestGeneral(),
+                DifferentNationDestGeneral(),
+                ReqGeneralGold(getCost().gold),
+            )
+            if (destGeneral?.officerLevel == 12) {
+                constraints.add(AlwaysFail("군주에게는 등용장을 보낼 수 없습니다."))
+            }
+            return constraints
+        }
 
     override val minConditionConstraints = listOf(
+        ReqEnvValue("join_mode", "!=", "onlyRandom", "랜덤 임관만 가능합니다"),
         NotBeNeutral(),
         OccupiedCity(),
         SuppliedCity(),
@@ -32,7 +41,8 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val develCost = env.develCost
         val dg = destGeneral
         if (dg == null) return CommandCost(gold = develCost)
-        val reqGold = ((develCost + (dg.experience + dg.dedication) / 1000) / 10) * 10
+        // PHP: round(develcost + (exp + ded) / 1000) * 10
+        val reqGold = (kotlin.math.round(develCost + (dg.experience + dg.dedication) / 1000.0) * 10).toInt()
         return CommandCost(gold = reqGold)
     }
 

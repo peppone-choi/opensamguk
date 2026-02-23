@@ -15,6 +15,7 @@ open class 전투특기초기화(general: General, env: CommandEnv, arg: Map<Str
 
     protected open val specialField: String = "special2Code"
     protected open val specialText: String = "전투 특기"
+    protected open val specAgeField: String = "specAge2"
 
     override val fullConditionConstraints: List<Constraint> by lazy {
         listOf(
@@ -42,10 +43,18 @@ open class 전투특기초기화(general: General, env: CommandEnv, arg: Map<Str
 
         val currentAge = general.age.toInt()
 
+        // Track previous specials to avoid re-rolls (legacy: prev_types_special2)
+        val prevTypesKey = "prev_types_$specialField"
+        val currentSpecial = when (specialField) {
+            "specialCode" -> general.specialCode
+            "special2Code" -> general.special2Code
+            else -> "None"
+        }
+
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"$specialField":"None","specAge2":${currentAge + 1}},"specialReset":{"type":"$specialField"}}"""
+            message = """{"statChanges":{"$specialField":"None","$specAgeField":${currentAge + 1}},"specialReset":{"type":"$specialField","prevTypesKey":"$prevTypesKey","oldSpecial":"$currentSpecial"}}"""
         )
     }
 }

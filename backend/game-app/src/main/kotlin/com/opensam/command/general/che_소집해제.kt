@@ -23,13 +23,16 @@ class che_소집해제(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val crewToReturn = general.crew
+        val crewToReturn = general.crew.toInt()
 
-        pushLog("병사들을 소집해제하였습니다. $date")
+        // Legacy PHP: uses <R> tag for formatting
+        pushLog("병사들을 <R>소집해제</>하였습니다. <1>$date</>")
 
         val exp = 70
         val ded = 100
 
+        // Legacy PHP: crew converted to population via onCalcDomestic('징집인구', 'score', crew)
+        // For now, return raw crew count; the caller should apply any modifiers
         return CommandResult(
             success = true,
             logs = logs,

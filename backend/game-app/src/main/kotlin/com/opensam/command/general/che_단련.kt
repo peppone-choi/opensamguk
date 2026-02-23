@@ -9,8 +9,8 @@ import com.opensam.entity.General
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-private const val DEFAULT_TRAIN_LOW = 50
-private const val DEFAULT_ATMOS_LOW = 50
+private const val DEFAULT_TRAIN_LOW = 40
+private const val DEFAULT_ATMOS_LOW = 40
 private const val SCORE_DIVISOR = 200000.0
 
 class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
@@ -42,26 +42,30 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val train = general.train.toInt()
         val atmos = general.atmos.toInt()
 
+        // Weighted choice matching PHP: success=0.34, normal=0.33, fail=0.33
         val criticalRoll = rng.nextDouble()
         val pick: String
         val multiplier: Int
         when {
-            criticalRoll < 0.33 -> { pick = "fail"; multiplier = 1 }
-            criticalRoll > 0.66 -> { pick = "success"; multiplier = 3 }
-            else -> { pick = "normal"; multiplier = 2 }
+            criticalRoll < 0.34 -> { pick = "success"; multiplier = 3 }
+            criticalRoll < 0.67 -> { pick = "normal"; multiplier = 2 }
+            else -> { pick = "fail"; multiplier = 1 }
         }
 
         val baseScore = (crew.toDouble() * train * atmos) / SCORE_DIVISOR
         val score = (baseScore * multiplier).roundToInt()
+        val scoreText = "%,d".format(score)
+
+        val armTypeName = getArmTypeName()
 
         val logMessage = when (pick) {
-            "fail" -> "단련이 지지부진하여 숙련도가 $score 향상되었습니다. $date"
-            "success" -> "단련이 일취월장하여 숙련도가 $score 향상되었습니다. $date"
-            else -> "숙련도가 $score 향상되었습니다. $date"
+            "fail" -> "단련이 <span class='ev_failed'>지지부진</span>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
+            "success" -> "단련이 <S>일취월장</>하여 ${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
+            else -> "${armTypeName} 숙련도가 <C>${scoreText}</> 향상되었습니다. <1>$date</>"
         }
         pushLog(logMessage)
 
-        val exp = (crew / 400)
+        val exp = crew / 400
         val cost = getCost()
 
         // random stat exp weighted by stats

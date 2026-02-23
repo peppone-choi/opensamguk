@@ -6,6 +6,7 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.util.JosaUtil
 import kotlin.random.Random
 
 class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
@@ -16,7 +17,7 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override val fullConditionConstraints: List<Constraint> = listOf(
         NotBeNeutral(),
         NotWanderingNation(),
-        NotCapital(),
+        NotCapital(checkCurrentCity = true),
     )
 
     override val minConditionConstraints: List<Constraint> = listOf(
@@ -31,20 +32,22 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val officerLevel = general.officerLevel.toInt()
-        val isDistrictOfficer = officerLevel in 2..4
 
+        // Legacy parity: officer levels 2-4 return to their assigned city,
+        // others return to capital
         val destCityId: Long
         val destCityName: String
 
-        if (isDistrictOfficer) {
+        if (officerLevel in 2..4) {
             destCityId = general.officerCity.toLong()
-            destCityName = destCity?.name ?: "담당도시"
+            destCityName = services?.let { it.getCityName(destCityId) } ?: destCity?.name ?: "담당도시"
         } else {
             destCityId = nation?.capitalCityId ?: 0L
-            destCityName = "수도"
+            destCityName = services?.let { it.getCityName(destCityId) } ?: "수도"
         }
 
-        pushLog("${destCityName}로 귀환했습니다. <1>$date</>")
+        val josaRo = JosaUtil.pick(destCityName, "로")
+        pushLog("<G><b>${destCityName}</b></>${josaRo} 귀환했습니다. <1>$date</>")
 
         val exp = 70
         val ded = 100
@@ -52,7 +55,7 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":$exp,"dedication":$ded,"leadershipExp":1},"moveTo":"$destCityId"}"""
+            message = """{"statChanges":{"cityId":"$destCityId","experience":$exp,"dedication":$ded,"leadershipExp":1}}"""
         )
     }
 }

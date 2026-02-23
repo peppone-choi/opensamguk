@@ -52,7 +52,8 @@ class che_사기진작(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         val sideEffect = maxOf(0, (general.train * TRAIN_SIDE_EFFECT_RATE).toInt())
 
-        pushLog("사기치가 $score 상승했습니다. $date")
+        val scoreText = "%,d".format(score)
+        pushLog("사기치가 <C>${scoreText}</> 상승했습니다. <1>$date</>")
 
         val exp = 100
         val ded = 70

@@ -19,13 +19,23 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val actionName = "증여"
 
-    override val fullConditionConstraints = listOf(
-        NotBeNeutral(),
-        OccupiedCity(),
-        SuppliedCity(),
-        ExistsDestGeneral(),
-        FriendlyDestGeneral(),
-    )
+    override val fullConditionConstraints: List<Constraint>
+        get() {
+            val isGold = arg?.get("isGold") as? Boolean ?: true
+            val minConstraint = if (isGold) {
+                ReqGeneralGold(GENERAL_MINIMUM_GOLD)
+            } else {
+                ReqGeneralRice(GENERAL_MINIMUM_RICE)
+            }
+            return listOf(
+                NotBeNeutral(),
+                OccupiedCity(),
+                SuppliedCity(),
+                ExistsDestGeneral(),
+                FriendlyDestGeneral(),
+                minConstraint,
+            )
+        }
 
     override val minConditionConstraints = listOf(
         NotBeNeutral(),
@@ -62,12 +72,18 @@ class 증여(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         }
 
         val resKey = if (isGold) "gold" else "rice"
-        pushLog("<Y>${dg.name}</>에게 ${resName} <C>${amount}</>을 증여했습니다. <1>$date</>")
+        val amountText = String.format("%,d", amount)
+
+        // Log for the gift giver
+        pushLog("<Y>${dg.name}</>에게 ${resName} <C>${amountText}</>을 증여했습니다. <1>$date</>")
+
+        val exp = 70
+        val ded = 100
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"$resKey":${-amount},"experience":70,"dedication":100,"leadershipExp":1},"destGeneralChanges":{"generalId":"${dg.id}","$resKey":$amount}}"""
+            message = """{"statChanges":{"$resKey":${-amount},"experience":$exp,"dedication":$ded,"leadershipExp":1},"destGeneralChanges":{"generalId":"${dg.id}","$resKey":$amount},"destGeneralLogs":["<Y>${general.name}</>에게서 ${resName} <C>${amountText}</>을 증여 받았습니다."]}"""
         )
     }
 }

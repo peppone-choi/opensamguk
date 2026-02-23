@@ -6,6 +6,8 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import kotlin.math.max
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 private const val DEVELOP_COST_MULTIPLIER = 2
@@ -44,34 +46,48 @@ class che_정착장려(general: General, env: CommandEnv, arg: Map<String, Any>?
         val date = formatDate()
         val leadership = general.leadership.toInt()
 
-        val baseScore = leadership * (0.8 + rng.nextDouble() * 0.4)
-        val criticalRoll = rng.nextDouble()
+        // Base score with explevel bonus (legacy: getDomesticExpLevelBonus)
+        val expLevel = general.expLevel
+        val expLevelBonus = getDomesticExpLevelBonus(expLevel)
+        var baseScore = leadership * expLevelBonus * (0.8 + rng.nextDouble() * 0.4)
 
+        // Critical ratio (legacy: CriticalRatioDomestic)
+        val criticalRoll = rng.nextDouble()
         val pick: String
-        val multiplier: Double
+        val critMultiplier: Double
         when {
-            criticalRoll < 0.15 -> { pick = "fail"; multiplier = 0.5 }
-            criticalRoll > 0.85 -> { pick = "success"; multiplier = 1.5 }
-            else -> { pick = "normal"; multiplier = 1.0 }
+            criticalRoll < 0.15 -> { pick = "fail"; critMultiplier = 0.5 }
+            criticalRoll > 0.85 -> { pick = "success"; critMultiplier = 1.5 }
+            else -> { pick = "normal"; critMultiplier = 1.0 }
         }
 
-        val score = (baseScore * multiplier * SCORE_MULTIPLIER).toInt()
-        val exp = (baseScore * multiplier * EXP_RATE).toInt()
-        val ded = (baseScore * multiplier * DED_RATE).toInt()
+        val score = max(1.0, baseScore * critMultiplier)
+        val exp = (score * EXP_RATE).roundToInt()
+        val ded = (score * DED_RATE).roundToInt()
+        val popIncrease = (score * SCORE_MULTIPLIER).roundToInt()
+
+        val scoreText = String.format("%,d", popIncrease)
 
         val logMessage = when (pick) {
-            "fail" -> "정착 장려를 실패하여 주민이 ${score}명 증가했습니다. $date"
-            "success" -> "정착 장려를 성공하여 주민이 ${score}명 증가했습니다. $date"
-            else -> "정착 장려를 하여 주민이 ${score}명 증가했습니다. $date"
+            "fail" -> "정착장려를 <span class='ev_failed'>실패</span>하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
+            "success" -> "정착장려를 <S>성공</>하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
+            else -> "정착장려를 하여 주민이 <C>${scoreText}</>명 증가했습니다. <1>$date</>"
         }
         pushLog(logMessage)
 
         val cost = getCost()
 
+        // max_domestic_critical tracking (legacy parity)
+        val maxDomesticCritical = if (pick == "success") popIncrease else 0
+
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1},"cityChanges":{"pop":$score},"criticalResult":"$pick"}"""
+            message = """{"statChanges":{"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1,"max_domestic_critical":$maxDomesticCritical},"cityChanges":{"pop":$popIncrease,"popMax":true},"criticalResult":"$pick"}"""
         )
+    }
+
+    private fun getDomesticExpLevelBonus(expLevel: Int): Double {
+        return 1.0 + expLevel * 0.05
     }
 }

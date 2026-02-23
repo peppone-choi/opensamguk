@@ -27,6 +27,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val adjacency = readAdjacency(env.gameStor["mapAdjacency"])
         val cityNationById = readLongMap(env.gameStor["cityNationById"])
         val citySupplyStateById = readIntMap(env.gameStor["citySupplyStateById"])
+        val cityNameById = readStringMap(env.gameStor["cityNameById"])
         val nationId = general.nationId
 
         if (adjacency.isEmpty() || nationId == 0L) {
@@ -58,7 +59,9 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         }
 
         val destCityId = nearestCities[rng.nextInt(nearestCities.size)]
-        pushLog("접경귀환했습니다.")
+        val destCityName = cityNameById[destCityId] ?: "알 수 없음"
+
+        pushLog("<G><b>${destCityName}</b></>(으)로 접경귀환했습니다.")
 
         return CommandResult(
             success = true,
@@ -94,9 +97,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     }
 
     private fun readAdjacency(raw: Any?): Map<Long, List<Long>> {
-        if (raw !is Map<*, *>) {
-            return emptyMap()
-        }
+        if (raw !is Map<*, *>) return emptyMap()
         val result = mutableMapOf<Long, List<Long>>()
         raw.forEach { (k, v) ->
             val key = asLong(k) ?: return@forEach
@@ -110,9 +111,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     }
 
     private fun readLongMap(raw: Any?): Map<Long, Long> {
-        if (raw !is Map<*, *>) {
-            return emptyMap()
-        }
+        if (raw !is Map<*, *>) return emptyMap()
         val result = mutableMapOf<Long, Long>()
         raw.forEach { (k, v) ->
             val key = asLong(k) ?: return@forEach
@@ -123,9 +122,7 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     }
 
     private fun readIntMap(raw: Any?): Map<Long, Int> {
-        if (raw !is Map<*, *>) {
-            return emptyMap()
-        }
+        if (raw !is Map<*, *>) return emptyMap()
         val result = mutableMapOf<Long, Int>()
         raw.forEach { (k, v) ->
             val key = asLong(k) ?: return@forEach
@@ -134,6 +131,17 @@ class 접경귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 is String -> v.toIntOrNull()
                 else -> null
             } ?: return@forEach
+            result[key] = value
+        }
+        return result
+    }
+
+    private fun readStringMap(raw: Any?): Map<Long, String> {
+        if (raw !is Map<*, *>) return emptyMap()
+        val result = mutableMapOf<Long, String>()
+        raw.forEach { (k, v) ->
+            val key = asLong(k) ?: return@forEach
+            val value = v?.toString() ?: return@forEach
             result[key] = value
         }
         return result

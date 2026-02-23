@@ -54,17 +54,27 @@ class che_물자조달(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         val c = city
         if (c != null && (c.frontState.toInt() == 1 || c.frontState.toInt() == 3)) {
-            score *= DEBUFF_FRONT
+            var debuff = DEBUFF_FRONT
+            // Capital city front debuff scaling: reduced penalty in early years
+            if (nation?.capitalCityId == c.id) {
+                val relYear = env.year - env.startYear
+                if (relYear < 25) {
+                    val debuffScale = maxOf(0, minOf(relYear - 5, 20)) * 0.05
+                    debuff = (debuffScale * DEBUFF_FRONT) + (1 - debuffScale)
+                }
+            }
+            score *= debuff
         }
 
         val finalScore = score.roundToInt()
         val exp = (finalScore * EXP_RATE).roundToInt()
         val ded = (finalScore * DED_RATE).roundToInt()
 
+        val scoreText = "%,d".format(finalScore)
         val logMessage = when (pick) {
-            "fail" -> "조달을 실패하여 ${resName}을 $finalScore 조달했습니다. $date"
-            "success" -> "조달을 성공하여 ${resName}을 $finalScore 조달했습니다. $date"
-            else -> "${resName}을 $finalScore 조달했습니다. $date"
+            "fail" -> "조달을 <span class='ev_failed'>실패</span>하여 ${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
+            "success" -> "조달을 <S>성공</>하여 ${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
+            else -> "${resName}을 <C>${scoreText}</> 조달했습니다. <1>$date</>"
         }
         pushLog(logMessage)
 

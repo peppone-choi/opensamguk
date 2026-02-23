@@ -27,6 +27,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
                 OccupiedCity(),
                 ReqGeneralCrew(),
                 ReqGeneralGold(cost.gold),
+                ReqGeneralRice(cost.rice),
                 ReqGeneralTrainMargin(MAX_TRAIN_BY_COMMAND - 10),
                 ReqGeneralAtmosMargin(MAX_ATMOS_BY_COMMAND - 10),
             )
@@ -40,7 +41,9 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     )
 
     override fun getCost(): CommandCost {
-        val gold = (general.crew / 100.0 * 3).roundToInt()
+        val crew = general.crew
+        val techCost = getNationTechCost()
+        val gold = (crew / 100.0 * 3 * techCost).roundToInt()
         return CommandCost(gold = gold, rice = 0)
     }
 
@@ -51,18 +54,35 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
         val date = formatDate()
         val reqTurn = getPreReqTurn()
 
-        pushLog("전투태세 완료! ($reqTurn/$reqTurn) <1>$date</>")
+        // Multi-turn tracking: read previous term from lastTurn
+        val previousTerm = getLastTurnTerm()
+        val term = if (previousTerm >= reqTurn) 1 else previousTerm + 1
+
+        if (term < reqTurn) {
+            pushLog("병사들을 열심히 훈련중... ($term/$reqTurn) <1>$date</>")
+
+            val cost = getCost()
+            return CommandResult(
+                success = true,
+                logs = logs,
+                message = """{"statChanges":{"gold":${-cost.gold}},"battleStanceTerm":$term,"completed":false}"""
+            )
+        }
+
+        // Term == reqTurn: completion
+        pushLog("전투태세 완료! ($term/$reqTurn) <1>$date</>")
 
         val exp = 100 * reqTurn
         val ded = 70 * reqTurn
         val dexGain = (general.crew / 100.0 * reqTurn).roundToInt()
         val trainTarget = MAX_TRAIN_BY_COMMAND - 5
         val atmosTarget = MAX_ATMOS_BY_COMMAND - 5
+        val cost = getCost()
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"train":{"setMin":$trainTarget},"atmos":{"setMin":$atmosTarget},"experience":$exp,"dedication":$ded,"leadershipExp":$reqTurn},"dexChanges":{"crewType":${general.crewType},"amount":$dexGain},"completed":true}"""
+            message = """{"statChanges":{"gold":${-cost.gold},"train":{"setMin":$trainTarget},"atmos":{"setMin":$atmosTarget},"experience":$exp,"dedication":$ded,"leadershipExp":$reqTurn},"dexChanges":{"crewType":${general.crewType},"amount":$dexGain},"battleStanceTerm":$term,"completed":true}"""
         )
     }
 }

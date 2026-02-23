@@ -26,7 +26,7 @@ class NPC능동(general: General, env: CommandEnv, arg: Map<String, Any>? = null
             ?: return CommandResult(success = false, logs = listOf("인자가 없습니다."))
 
         if (optionText == "순간이동") {
-            val destCityId = arg?.get("destCityID")
+            val destCityId = (arg?.get("destCityId") ?: arg?.get("destCityID"))
                 ?: return CommandResult(success = false, logs = listOf("목적지가 없습니다."))
 
             pushLog("NPC 전용 명령을 이용해 도시#${destCityId}로 이동했습니다.")

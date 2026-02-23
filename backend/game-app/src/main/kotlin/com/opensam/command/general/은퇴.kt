@@ -32,10 +32,13 @@ class 은퇴(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         pushLog("은퇴하였습니다. <1>$date</>")
 
+        // Legacy PHP: checks isunited==0 before CheckHall
+        val isUnited = (env.gameStor["isunited"] as? Number)?.toInt() ?: 0
+
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"rebirth":true,"checkHall":true}"""
+            message = """{"rebirth":true,"checkHall":${isUnited == 0},"tryUniqueLottery":true}"""
         )
     }
 }

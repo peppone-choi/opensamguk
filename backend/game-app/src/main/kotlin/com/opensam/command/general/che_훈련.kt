@@ -9,8 +9,9 @@ import com.opensam.entity.General
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-private const val MAX_TRAIN_BY_COMMAND = 80
-private const val TRAIN_DELTA = 0.05
+// Default values; prefer env.maxTrainByCommand and env.trainDelta when available
+private const val DEFAULT_MAX_TRAIN_BY_COMMAND = 80
+private const val DEFAULT_TRAIN_DELTA = 0.05
 private const val ATMOS_SIDE_EFFECT_RATE = 0.9
 
 class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
@@ -18,13 +19,19 @@ class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override val actionName = "훈련"
 
+    private val maxTrain: Int
+        get() = if (env.maxTrainByCommand > 0) env.maxTrainByCommand else DEFAULT_MAX_TRAIN_BY_COMMAND
+
+    private val trainDelta: Double
+        get() = if (env.trainDelta > 0) env.trainDelta else DEFAULT_TRAIN_DELTA
+
     override val fullConditionConstraints: List<Constraint>
         get() = listOf(
             NotBeNeutral(),
             NotWanderingNation(),
             OccupiedCity(),
             ReqGeneralCrew(),
-            ReqGeneralTrainMargin(MAX_TRAIN_BY_COMMAND)
+            ReqGeneralTrainMargin(maxTrain)
         )
 
     override fun getCost() = CommandCost()
@@ -35,16 +42,19 @@ class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val leadership = general.leadership.toInt()
-        val crew = general.crew
+        val crew = if (general.crew > 0) general.crew else 1
         val currentTrain = general.train.toInt()
 
-        val rawScore = (leadership * 100.0 / crew) * TRAIN_DELTA
-        val maxPossible = maxOf(0, MAX_TRAIN_BY_COMMAND - currentTrain)
+        // Legacy: clamp(round(leadership * 100 / crew * trainDelta), 0, maxTrain - currentTrain)
+        val rawScore = (leadership * 100.0 / crew) * trainDelta
+        val maxPossible = maxOf(0, maxTrain - currentTrain)
         val score = minOf(maxOf(rawScore.roundToInt(), 0), maxPossible)
 
-        val sideEffect = maxOf(0, (general.atmos * ATMOS_SIDE_EFFECT_RATE).toInt())
+        // Legacy: atmos side effect = atmos * atmosSideEffectByTraining (default 0.9)
+        val atmosAfter = maxOf(0, (general.atmos * ATMOS_SIDE_EFFECT_RATE).toInt())
+        val atmosDelta = atmosAfter - general.atmos.toInt()
 
-        pushLog("훈련치가 $score 상승했습니다. $date")
+        pushLog("훈련치가 <C>${score}</> 상승했습니다. <1>$date</>")
 
         val exp = 100
         val ded = 70
@@ -52,7 +62,7 @@ class che_훈련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"train":$score,"atmos":${sideEffect - general.atmos},"experience":$exp,"dedication":$ded,"leadershipExp":1},"dexChanges":{"crewType":${general.crewType},"amount":$score}}"""
+            message = """{"statChanges":{"train":$score,"atmos":$atmosDelta,"experience":$exp,"dedication":$ded,"leadershipExp":1},"dexChanges":{"crewType":${general.crewType},"amount":$score}}"""
         )
     }
 }

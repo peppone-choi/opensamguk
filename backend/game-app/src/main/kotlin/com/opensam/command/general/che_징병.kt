@@ -6,12 +6,17 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 private const val DEFAULT_TRAIN_LOW = 50
 private const val DEFAULT_ATMOS_LOW = 50
 private const val MIN_RECRUIT_AMOUNT = 100
 private const val COST_OFFSET = 1
+private const val MIN_AVAILABLE_RECRUIT_POP = 30000
+private const val MIN_TRUST_FOR_RECRUIT = 20
 
 class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {
@@ -37,17 +42,31 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override val fullConditionConstraints: List<Constraint>
         get() {
             val cost = getCost()
+            val mc = maxCrew
             return listOf(
                 NotBeNeutral(),
                 OccupiedCity(),
+                ReqCityCapacity("pop", "주민", MIN_AVAILABLE_RECRUIT_POP + mc),
+                ReqCityTrust(MIN_TRUST_FOR_RECRUIT),
                 ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice)
+                ReqGeneralRice(cost.rice),
+                ReqGeneralCrewMargin(reqCrewTypeId),
+                AvailableRecruitCrewType(reqCrewTypeId),
             )
         }
 
+    override val minConditionConstraints: List<Constraint>
+        get() = listOf(
+            NotBeNeutral(),
+            OccupiedCity(),
+            ReqCityCapacity("pop", "주민", MIN_AVAILABLE_RECRUIT_POP + MIN_RECRUIT_AMOUNT),
+            ReqCityTrust(MIN_TRUST_FOR_RECRUIT),
+        )
+
     override fun getCost(): CommandCost {
         val mc = maxCrew
-        val baseCost = mc / 10
+        val techCost = getNationTechCost()
+        val baseCost = (mc / 100.0 * techCost).roundToInt()
         val reqGold = (baseCost * COST_OFFSET)
         val reqRice = mc / 100
         return CommandCost(gold = reqGold, rice = reqRice)
@@ -64,18 +83,22 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val currCrew = general.crew
         val currCrewTypeId = general.crewType.toInt()
 
+        // Resolve crew type name from env or fallback
+        val crewTypeName = getCrewTypeName(crewTypeId) ?: "병사"
+        val reqCrewText = String.format("%,d", reqCrew)
+
         val newCrew: Int
         val newTrain: Int
         val newAtmos: Int
         val logMessage: String
 
         if (crewTypeId == currCrewTypeId && currCrew > 0) {
-            logMessage = "병사 ${reqCrew}명을 추가징병했습니다. $date"
+            logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 추가징병했습니다. <1>$date</>"
             newTrain = (currCrew * general.train + reqCrew * DEFAULT_TRAIN_LOW) / (currCrew + reqCrew)
             newAtmos = (currCrew * general.atmos + reqCrew * DEFAULT_ATMOS_LOW) / (currCrew + reqCrew)
             newCrew = currCrew + reqCrew
         } else {
-            logMessage = "병사 ${reqCrew}명을 징병했습니다. $date"
+            logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 징병했습니다. <1>$date</>"
             newCrew = reqCrew
             newTrain = DEFAULT_TRAIN_LOW
             newAtmos = DEFAULT_ATMOS_LOW
@@ -85,12 +108,16 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val cost = getCost()
         val exp = reqCrew / 100
         val ded = reqCrew / 100
+
+        // Legacy: trust loss from recruitment
+        // trustLoss = (recruitPop / cityPop) / costOffset * 100
+        // popLoss = recruitPop (same as reqCrew after onCalcDomestic)
         val popLoss = -reqCrew
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"crew":${newCrew - currCrew},"crewType":$crewTypeId,"train":${newTrain - general.train},"atmos":${newAtmos - general.atmos},"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1},"cityChanges":{"pop":$popLoss}}"""
+            message = """{"statChanges":{"crew":${newCrew - currCrew},"crewType":$crewTypeId,"train":${newTrain - general.train},"atmos":${newAtmos - general.atmos},"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1},"cityChanges":{"pop":$popLoss,"trustLoss":true}}"""
         )
     }
 }

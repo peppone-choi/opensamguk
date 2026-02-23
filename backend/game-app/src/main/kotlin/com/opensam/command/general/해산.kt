@@ -32,9 +32,12 @@ class 해산(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
+        val generalName = general.name
+        val nationName = nation?.name ?: "소속세력"
 
-        val initYearMonth = env.startYear * 12 + 1
-        val currentYearMonth = env.year * 12 + env.month
+        // Legacy: compare joinYearMonth(init_year, init_month) vs joinYearMonth(year, month)
+        val initYearMonth = env.startYear * 12 + (env.startMonth ?: 1) - 1
+        val currentYearMonth = env.year * 12 + env.month - 1
         if (currentYearMonth <= initYearMonth) {
             pushLog("다음 턴부터 해산할 수 있습니다. <1>$date</>")
             return CommandResult(
@@ -44,12 +47,23 @@ class 해산(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             )
         }
 
+        // Legacy: cap all nation generals' gold/rice to defaultGold/Rice
+        // Legacy: refreshNationStaticInfo, deleteNation
         pushLog("세력을 해산했습니다. <1>$date</>")
+        pushLog("_global:<Y>${generalName}</>${josa(generalName, "이")} 세력을 해산했습니다.")
+        pushLog("_history:<D><b>${nationName}</b></>${josa(nationName, "을")} 해산")
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"disbandNation":true,"generalChanges":{"makeLimit":12,"gold":{"max":$DEFAULT_GOLD},"rice":{"max":$DEFAULT_RICE}}}"""
+            message = buildString {
+                append("""{"disbandNation":true""")
+                append(""","generalChanges":{"makeLimit":12,"gold":{"max":$DEFAULT_GOLD},"rice":{"max":$DEFAULT_RICE}}""")
+                append(""","allNationGenerals":{"gold":{"max":$DEFAULT_GOLD},"rice":{"max":$DEFAULT_RICE}}""")
+                append(""","releaseCities":true""")
+                append(""","triggerEvent":"OccupyCity"""")
+                append("}")
+            }
         )
     }
 }

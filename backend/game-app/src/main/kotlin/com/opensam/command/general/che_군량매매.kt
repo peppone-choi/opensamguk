@@ -10,7 +10,6 @@ import kotlin.math.roundToInt
 import kotlin.random.Random
 
 private const val MAX_RESOURCE_ACTION_AMOUNT = 10000
-private const val EXCHANGE_FEE = 0.03
 
 class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {
@@ -30,7 +29,8 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val fullConditionConstraints: List<Constraint>
         get() {
             val constraints = mutableListOf<Constraint>(
-                OccupiedCity(),
+                ReqCityTrader(),
+                OccupiedCity(allowNeutral = true),
                 SuppliedCity()
             )
             if (buyRice) {
@@ -40,6 +40,13 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
             }
             return constraints
         }
+
+    override val minConditionConstraints: List<Constraint>
+        get() = listOf(
+            ReqCityTrader(),
+            OccupiedCity(allowNeutral = true),
+            SuppliedCity()
+        )
 
     override fun getCost() = CommandCost()
     override fun getPreReqTurn() = 0
@@ -52,6 +59,7 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
         val argAmount = tradeAmount
 
         val tradeRate = (city?.trade ?: 100) / 100.0
+        val exchangeFee = env.exchangeFee
         val currentGold = general.gold
         val currentRice = general.rice
 
@@ -61,7 +69,7 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
 
         if (isBuyRice) {
             var sell = minOf(argAmount * tradeRate, currentGold.toDouble())
-            var t = sell * EXCHANGE_FEE
+            var t = sell * exchangeFee
             if (sell + t > currentGold) {
                 sell *= currentGold / (sell + t)
                 t = currentGold - sell
@@ -69,19 +77,19 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
             buyAmount = sell / tradeRate
             sellAmount = sell + t
             tax = t
-            pushLog("군량 ${buyAmount.roundToInt()}을 사서 자금 ${sellAmount.roundToInt()}을 썼습니다. $date")
+            pushLog("군량 <C>${buyAmount.roundToInt()}</>을 사서 자금 <C>${sellAmount.roundToInt()}</>을 썼습니다. <1>$date</>")
         } else {
             val sell = minOf(argAmount.toDouble(), currentRice.toDouble())
             var buy = sell * tradeRate
-            val t = buy * EXCHANGE_FEE
+            val t = buy * exchangeFee
             buy -= t
             buyAmount = buy
             sellAmount = sell
             tax = t
-            pushLog("군량 ${sellAmount.roundToInt()}을 팔아 자금 ${buyAmount.roundToInt()}을 얻었습니다. $date")
+            pushLog("군량 <C>${sellAmount.roundToInt()}</>을 팔아 자금 <C>${buyAmount.roundToInt()}</>을 얻었습니다. <1>$date</>")
         }
 
-        // random stat exp weighted by stats
+        // random stat exp weighted by base stats (legacy parity)
         val leadership = general.leadership.toInt()
         val strength = general.strength.toInt()
         val intel = general.intel.toInt()
@@ -91,7 +99,7 @@ class che_군량매매(general: General, env: CommandEnv, arg: Map<String, Any>?
             "intelExp" to intel
         )
         val totalWeight = statWeights.sumOf { it.second }
-        var roll = rng.nextInt(totalWeight).toDouble()
+        var roll = if (totalWeight > 0) rng.nextInt(totalWeight).toDouble() else 0.0
         var incStat = "leadershipExp"
         for ((key, weight) in statWeights) {
             roll -= weight

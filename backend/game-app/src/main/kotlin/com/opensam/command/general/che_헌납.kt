@@ -56,7 +56,7 @@ class che_헌납(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val currentRes = if (gold) general.gold else general.rice
         val amount = minOf(donateAmount, currentRes)
 
-        pushLog("$resName ${amount}을 헌납했습니다. $date")
+        pushLog("$resName <C>${amount}</>을 헌납했습니다. <1>$date</>")
 
         val exp = 70
         val ded = 100

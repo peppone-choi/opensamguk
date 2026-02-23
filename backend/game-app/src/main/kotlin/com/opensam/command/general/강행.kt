@@ -6,6 +6,7 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.util.JosaUtil
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -37,8 +38,9 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val date = formatDate()
         val destCityName = destCity?.name ?: "알 수 없음"
         val destCityId = destCity?.id ?: 0L
+        val josaRo = JosaUtil.pick(destCityName, "로")
 
-        pushLog("$destCityName(으)로 강행했습니다. <1>$date</>")
+        pushLog("<G><b>${destCityName}</b></>${josaRo} 강행했습니다. <1>$date</>")
 
         val exp = 100
         val cost = getCost()
@@ -51,7 +53,7 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         // 같은 세력의 모든 장수를 함께 이동시킨다.
         val isWanderingLord = general.officerLevel.toInt() == 12 && nation?.level?.toInt() == 0
         val wanderingJson = if (isWanderingLord) {
-            ""","wanderingNationMove":{"destCityId":"$destCityId","nationId":"${general.nationId}","destCityName":"$destCityName"}"""
+            ""","wanderingNationMove":{"destCityId":"$destCityId","nationId":"${general.nationId}","destCityName":"$destCityName","logMessage":"방랑군 세력이 <G><b>${destCityName}</b></>${josaRo} 강행했습니다."}"""
         } else ""
 
         return CommandResult(

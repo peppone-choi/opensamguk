@@ -40,10 +40,22 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             return listOf(
                 NotBeNeutral(),
                 OccupiedCity(),
+                ReqCityCapacity("pop", "주민", env.minAvailableRecruitPop + reqAmount),
+                ReqCityTrust(20),
                 ReqGeneralGold(cost.gold),
-                ReqGeneralRice(cost.rice)
+                ReqGeneralRice(cost.rice),
+                ReqGeneralCrewMargin(reqCrewTypeId),
+                AvailableRecruitCrewType(reqCrewTypeId),
             )
         }
+
+    override val minConditionConstraints: List<Constraint>
+        get() = listOf(
+            NotBeNeutral(),
+            OccupiedCity(),
+            ReqCityCapacity("pop", "주민", env.minAvailableRecruitPop + 100),
+            ReqCityTrust(20),
+        )
 
     override fun getCost(): CommandCost {
         val mc = maxCrew
@@ -86,11 +98,16 @@ class che_모병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val exp = reqCrew / 100
         val ded = reqCrew / 100
         val popLoss = -reqCrew
+        val dexGain = reqCrew / 100
+
+        // Trust reduction: (recruitPop / cityPop / costOffset) * 100
+        val cityPop = city?.pop ?: 10000
+        val trustLoss = if (cityPop > 0) (reqCrew.toDouble() / cityPop / COST_OFFSET * 100) else 0.0
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"crew":${newCrew - currCrew},"crewType":$crewTypeId,"train":${newTrain - general.train},"atmos":${newAtmos - general.atmos},"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1},"cityChanges":{"pop":$popLoss}}"""
+            message = """{"statChanges":{"crew":${newCrew - currCrew},"crewType":$crewTypeId,"train":${newTrain - general.train},"atmos":${newAtmos - general.atmos},"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1},"cityChanges":{"pop":$popLoss,"trustLoss":$trustLoss},"dexChanges":{"crewType":$crewTypeId,"amount":$dexGain}}"""
         )
     }
 }

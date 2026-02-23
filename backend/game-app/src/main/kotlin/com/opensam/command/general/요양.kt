@@ -12,6 +12,7 @@ class 요양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val actionName = "요양"
 
+    // Legacy PHP: no constraints (empty list)
     override fun getCost() = CommandCost()
     override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
@@ -23,6 +24,7 @@ class 요양(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
         val exp = 10
         val ded = 7
+        // Legacy PHP: sets injury = 0 (full heal)
         val injuryHeal = -general.injury.toInt()
 
         return CommandResult(

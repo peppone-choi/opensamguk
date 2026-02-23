@@ -6,6 +6,7 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.util.JosaUtil
 import kotlin.random.Random
 
 class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
@@ -13,21 +14,27 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override val actionName = "건국"
 
-    override val fullConditionConstraints: List<com.opensam.command.constraint.Constraint> by lazy {
+    override val fullConditionConstraints: List<Constraint> by lazy {
         val relYear = env.year - env.startYear
+        val nationName = arg?.get("nationName") as? String ?: ""
         listOf(
             BeLord(),
             WanderingNation(),
+            ReqNationGenCount(2),
             BeOpeningPart(relYear + 1),
+            CheckNationNameDuplicate(nationName),
             AllowJoinAction(),
+            ConstructableCity(),
+            NoPenalty("noFoundNation"),
         )
     }
 
-    override val minConditionConstraints: List<com.opensam.command.constraint.Constraint> by lazy {
+    override val minConditionConstraints: List<Constraint> by lazy {
         val relYear = env.year - env.startYear
         listOf(
-            WanderingNation(),
             BeOpeningPart(relYear + 1),
+            ReqNationValue("level", "국가규모", "==", 0, "정식 국가가 아니어야합니다."),
+            NoPenalty("noFoundNation"),
         )
     }
 
@@ -38,6 +45,7 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
 
+        // Legacy parity: check initYearMonth
         val initYearMonth = env.startYear * 12 + 1
         val yearMonth = env.year * 12 + env.month
         if (yearMonth <= initYearMonth) {
@@ -53,13 +61,21 @@ class 건국(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val nationType = arg?.get("nationType") as? String ?: "군벌"
         val colorType = arg?.get("colorType") ?: 0
         val cityName = city?.name ?: "알 수 없음"
+        val generalName = general.name
 
-        pushLog("<D><b>${nationName}</b></>을 건국하였습니다. <1>$date</>")
+        val josaUl = JosaUtil.pick(nationName, "을")
+        val josaYi = JosaUtil.pick(generalName, "이")
+        val josaNationYi = JosaUtil.pick(nationName, "이")
+
+        pushLog("<D><b>${nationName}</b></>${josaUl} 건국하였습니다. <1>$date</>")
+
+        val exp = 1000
+        val ded = 1000
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":1000,"dedication":1000},"nationChanges":{"foundNation":true,"nationName":"$nationName","nationType":"$nationType","colorType":$colorType,"level":1,"capital":${general.cityId}}}"""
+            message = """{"statChanges":{"experience":$exp,"dedication":$ded},"nationChanges":{"foundNation":true,"nationName":"$nationName","nationType":"$nationType","colorType":$colorType,"level":1,"capital":${general.cityId},"can_국기변경":1},"cityChanges":{"claimCity":true},"historyLog":{"global":"<Y><b>【건국】</b></>${nationType} <D><b>${nationName}</b></>${josaNationYi} 새로이 등장하였습니다.","globalAction":"<Y>${generalName}</>${josaYi} <G><b>${cityName}</b></>에 국가를 건설하였습니다.","general":"<D><b>${nationName}</b></>${josaUl} 건국","nation":"<Y>${generalName}</>${josaYi} <D><b>${nationName}</b></>${josaUl} 건국"},"inheritancePoint":{"active_action":1,"unifier":250}}"""
         )
     }
 }
