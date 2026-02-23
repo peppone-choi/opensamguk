@@ -269,14 +269,14 @@ export const messageApi = {
     }),
   getBoard: (worldId: number) =>
     api.get<Message[]>("/messages/board", { params: { worldId } }),
-  postBoard: (worldId: number, srcId: number, content: string) =>
+  postBoard: (worldId: number, srcId: number, content: string, title?: string) =>
     api.post<Message>("/messages", {
       worldId,
       mailboxCode: "board",
       mailboxType: "PUBLIC",
       messageType: "board",
       srcId,
-      payload: { content },
+      payload: { content, ...(title ? { title } : {}) },
     }),
   getSecretBoard: (worldId: number, nationId: number) =>
     api.get<Message[]>("/messages/secret-board", {
@@ -287,6 +287,7 @@ export const messageApi = {
     srcId: number,
     nationId: number,
     content: string,
+    title?: string,
   ) =>
     api.post<Message>("/messages", {
       worldId,
@@ -295,7 +296,7 @@ export const messageApi = {
       messageType: "secret",
       srcId,
       destId: nationId,
-      payload: { content },
+      payload: { content, ...(title ? { title } : {}) },
     }),
   getContacts: (worldId: number) =>
     api.get<ContactInfo[]>(`/worlds/${worldId}/contacts`),

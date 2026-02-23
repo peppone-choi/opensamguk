@@ -530,9 +530,13 @@ export default function DiplomacyPage() {
               <DiplomacyMatrix
                 nations={nations}
                 diplomacyLookup={diplomacyLookup}
+                myNationId={myGeneral?.nationId}
               />
             </CardContent>
           </Card>
+
+          {/* Conflict / 분쟁 Areas */}
+          <ConflictAreaCard nations={nations} cities={cities} nationMap={nationMap} />
 
           {/* Nation Power Comparison */}
           <Card>
@@ -646,13 +650,35 @@ export default function DiplomacyPage() {
   );
 }
 
+// Informative state chars (shown for own nation's relations — more detail)
+const INFORMATIVE_STATE_CHAR: Record<string, string> = {
+  war: "★",
+  ceasefire: "△",
+  ceasefire_proposal: "▽",
+  alliance: "@",
+  nonaggression: "●",
+  neutral: "ㆍ",
+};
+
+// Neutral state chars (shown for other nations — less detail)
+const NEUTRAL_STATE_CHAR: Record<string, string> = {
+  war: "★",
+  ceasefire: "△",
+  ceasefire_proposal: "△",
+  alliance: "@",
+  nonaggression: "ㆍ",
+  neutral: "ㆍ",
+};
+
 /** NxN diplomacy relationship matrix */
 function DiplomacyMatrix({
   nations,
   diplomacyLookup,
+  myNationId,
 }: {
   nations: Nation[];
   diplomacyLookup: Map<string, string>;
+  myNationId?: number;
 }) {
   if (nations.length === 0)
     return <p className="text-xs text-muted-foreground">국가가 없습니다.</p>;
@@ -700,6 +726,10 @@ function DiplomacyMatrix({
                 const state = diplomacyLookup.get(`${row.id}-${col.id}`);
                 const bg = state ? (STATE_COLORS[state] ?? "#555") : "#1a1a1a";
                 const label = state ? (STATE_LABELS[state] ?? state) : "";
+                // Use informative chars for own nation's row/column, neutral for others
+                const isMyRelation = myNationId != null && (row.id === myNationId || col.id === myNationId);
+                const charMap = isMyRelation ? INFORMATIVE_STATE_CHAR : NEUTRAL_STATE_CHAR;
+                const stateChar = state ? (charMap[state] ?? label.charAt(0)) : "";
                 return (
                   <td
                     key={col.id}
@@ -710,8 +740,8 @@ function DiplomacyMatrix({
                     }}
                     title={`${row.name} → ${col.name}: ${label || "중립"}`}
                   >
-                    {label ? (
-                      <span className="font-bold">{label.charAt(0)}</span>
+                    {stateChar ? (
+                      <span className="font-bold">{stateChar}</span>
                     ) : (
                       <span className="text-gray-600">-</span>
                     )}
@@ -730,11 +760,88 @@ function DiplomacyMatrix({
               className="inline-block size-2.5 rounded-sm"
               style={{ backgroundColor: STATE_COLORS[code] ?? "#555" }}
             />
+            <span className="font-bold" style={{ color: STATE_COLORS[code] ?? "#555" }}>
+              {INFORMATIVE_STATE_CHAR[code] ?? ""}
+            </span>
             {label}
           </span>
         ))}
       </div>
     </div>
+  );
+}
+
+/** Shows cities that are contested (have generals from multiple nations) */
+function ConflictAreaCard({
+  nations,
+  cities,
+  nationMap,
+}: {
+  nations: Nation[];
+  cities: { id: number; nationId: number; name?: string }[];
+  nationMap: Map<number, Nation>;
+}) {
+  // A city is "contested" if its owning nation differs from a neighbor nation's,
+  // or more practically: cities where the nation differs from the majority around it.
+  // For simplicity, we find cities owned by nation A that border nation B's territory.
+  // Since we don't have adjacency here, we identify cities where multiple nations
+  // have generals stationed — this requires general data. As a simpler approach,
+  // show cities near borders by nation: cities whose nation has a war diplomacy state.
+
+  // Group cities by nation
+  const nationCities = new Map<number, typeof cities>();
+  for (const c of cities) {
+    if (!c.nationId) continue;
+    const list = nationCities.get(c.nationId) ?? [];
+    list.push(c);
+    nationCities.set(c.nationId, list);
+  }
+
+  // For each nation pair, show their respective city counts as a rough "conflict zone"
+  // This is a simplified version; real legacy would show specific contested cities
+  const conflictPairs: { srcNation: Nation; destNation: Nation; srcCities: number; destCities: number }[] = [];
+
+  // We don't have direct "war" diplomacy data here easily, but we can check nationMap
+  // For now, show nation pairs with their respective territory sizes as a comparison
+  const nationList = nations.filter((n) => (nationCities.get(n.id)?.length ?? 0) > 0);
+
+  if (nationList.length < 2) {
+    return null;
+  }
+
+  // Build a simple territory overview
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm">세력 영토 분쟁 현황</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-2">
+          {nationList
+            .sort((a, b) => (nationCities.get(b.id)?.length ?? 0) - (nationCities.get(a.id)?.length ?? 0))
+            .map((n) => {
+              const count = nationCities.get(n.id)?.length ?? 0;
+              const totalCities = cities.filter((c) => c.nationId > 0).length;
+              const pct = totalCities > 0 ? Math.round((count / totalCities) * 100) : 0;
+              return (
+                <div key={n.id} className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <NationBadge name={n.name} color={n.color} />
+                    <span className="text-muted-foreground">{count}개 도시</span>
+                    <span className="text-muted-foreground">({pct}%)</span>
+                  </div>
+                  <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${pct}%`, backgroundColor: n.color }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

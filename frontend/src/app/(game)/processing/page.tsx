@@ -18,6 +18,7 @@ function ProcessingContent() {
   const searchParams = useSearchParams();
   const command = searchParams.get("command");
   const turnListStr = searchParams.get("turnList");
+  const isNationCommand = searchParams.get("nation") === "true";
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral } = useGeneralStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,7 +60,11 @@ function ProcessingContent() {
           actionCode: command,
           arg,
         }));
-        await commandApi.reserve(myGeneral.id, turns);
+        if (isNationCommand && myGeneral.nationId) {
+          await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+        } else {
+          await commandApi.reserve(myGeneral.id, turns);
+        }
         router.push("/commands");
       } catch (error) {
         console.error("Failed to reserve command:", error);

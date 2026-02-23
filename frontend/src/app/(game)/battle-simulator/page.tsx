@@ -416,34 +416,35 @@ export default function BattleSimulatorPage() {
     setError(null);
     setResult(null);
     try {
-      const attackerUnit: BattleSimUnit = {
-        name: attacker.name,
-        leadership: attacker.leadership,
-        strength: attacker.strength,
-        intel: attacker.intel,
-        crew: attacker.crew,
-        crewType: attacker.crewType,
-        train: attacker.train,
-        atmos: attacker.atmos,
-        weaponCode: attacker.weaponCode || undefined,
-        bookCode: attacker.bookCode || undefined,
-        horseCode: attacker.horseCode || undefined,
-        specialCode: attacker.specialCode || undefined,
-      };
-      const defenderUnit: BattleSimUnit = {
-        name: defender.name,
-        leadership: defender.leadership,
-        strength: defender.strength,
-        intel: defender.intel,
-        crew: defender.crew,
-        crewType: defender.crewType,
-        train: defender.train,
-        atmos: defender.atmos,
-        weaponCode: defender.weaponCode || undefined,
-        bookCode: defender.bookCode || undefined,
-        horseCode: defender.horseCode || undefined,
-        specialCode: defender.specialCode || undefined,
-      };
+      const toUnit = (u: UnitFormState): BattleSimUnit => ({
+        name: u.name,
+        leadership: u.leadership,
+        strength: u.strength,
+        intel: u.intel,
+        crew: u.crew,
+        crewType: u.crewType,
+        train: u.train,
+        atmos: u.atmos,
+        weaponCode: u.weaponCode || undefined,
+        bookCode: u.bookCode || undefined,
+        horseCode: u.horseCode || undefined,
+        itemCode: u.itemCode || undefined,
+        specialCode: u.specialCode || undefined,
+        personalCode: u.personalCode || undefined,
+        injury: u.injury,
+        rice: u.rice,
+        dex1: u.dex1,
+        dex2: u.dex2,
+        dex3: u.dex3,
+        dex4: u.dex4,
+        dex5: u.dex5,
+        defenceTrain: u.defenceTrain,
+        officerLevel: u.officerLevel,
+        expLevel: u.expLevel,
+        inheritBuff: u.inheritBuff,
+      });
+      const attackerUnit = toUnit(attacker);
+      const defenderUnit = toUnit(defender);
       const defCity: BattleSimCity = {
         def: cityDef.def,
         wall: cityDef.wall,

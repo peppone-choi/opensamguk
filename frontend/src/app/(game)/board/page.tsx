@@ -131,6 +131,7 @@ export default function BoardPage() {
           myGeneral.id,
           myGeneral.nationId,
           content.trim(),
+          title.trim() || undefined,
         );
         await loadSecret();
       } else {
@@ -138,9 +139,11 @@ export default function BoardPage() {
           currentWorld.id,
           myGeneral.id,
           content.trim(),
+          title.trim() || undefined,
         );
         await loadPublic();
       }
+      setTitle("");
       setContent("");
     } catch {
       /* ignore */
@@ -242,6 +245,13 @@ export default function BoardPage() {
                     </Badge>
                   )}
                 </div>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="제목을 입력하세요..."
+                  className="w-full h-8 px-2 text-xs border border-input bg-transparent rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                />
                 <Textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -394,9 +404,11 @@ function BoardRow({
 }: BoardRowProps) {
   const [commentInput, setCommentInput] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const postTitle = (post.payload.title as string) ?? "";
   const postContent = (post.payload.content as string) ?? "";
+  const displayPreview = postTitle || postContent;
   const preview =
-    postContent.length > 50 ? postContent.slice(0, 50) + "..." : postContent;
+    displayPreview.length > 50 ? displayPreview.slice(0, 50) + "..." : displayPreview;
   const sentDate = new Date(post.sentAt);
 
   return (
@@ -477,6 +489,9 @@ function BoardRow({
                   </Button>
                 )}
               </div>
+              {postTitle && (
+                <p className="text-sm font-bold">{postTitle}</p>
+              )}
               <p className="text-xs whitespace-pre-wrap leading-relaxed">
                 {formatLog(postContent)}
               </p>
