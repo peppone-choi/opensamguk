@@ -117,7 +117,7 @@ jobs:
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
-  test-backend:
+  build-backend:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -152,7 +152,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Run tests
+      - name: Build backend
         working-directory: backend
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/opensam_test
@@ -160,4 +160,4 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: opensam123
           SPRING_REDIS_HOST: localhost
           SPRING_REDIS_PORT: 6379
-        run: ./gradlew test --no-daemon
+        run: ./gradlew build --no-daemon
