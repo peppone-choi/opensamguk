@@ -13,6 +13,8 @@ import {
   Shield,
   Brain,
   Flame,
+  History,
+  ChevronLeft,
 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -40,7 +42,12 @@ import { GeneralPortrait } from "@/components/game/general-portrait";
 import { NationBadge } from "@/components/game/nation-badge";
 import { tournamentApi, bettingApi, frontApi } from "@/lib/gameApi";
 import { numberWithCommas } from "@/lib/game-utils";
-import type { TournamentInfo, BettingInfo, GlobalInfo } from "@/types";
+import type {
+  TournamentInfo,
+  BettingInfo,
+  GlobalInfo,
+  BettingEventSummary,
+} from "@/types";
 
 /* ── Constants ── */
 
@@ -85,6 +92,18 @@ export default function BettingPage() {
   const [loading, setLoading] = useState(true);
   const [betAmounts, setBetAmounts] = useState<Record<number, string>>({});
 
+  // Historical browsing state
+  const [bettingHistory, setBettingHistory] = useState<BettingEventSummary[]>(
+    [],
+  );
+  const [selectedHistoryEvent, setSelectedHistoryEvent] = useState<
+    string | null
+  >(null);
+  const [historyBetting, setHistoryBetting] = useState<BettingInfo | null>(
+    null,
+  );
+  const [historyLoading, setHistoryLoading] = useState(false);
+
   const load = useCallback(async () => {
     if (!currentWorld) return;
     try {
@@ -97,6 +116,18 @@ export default function BettingPage() {
       setTournament(tRes.data);
       setBetting(bRes.data);
       setGlobalInfo(fRes.data.global);
+
+      // Load history from betting response or separate endpoint
+      if (bRes.data.history) {
+        setBettingHistory(bRes.data.history);
+      } else {
+        try {
+          const hRes = await bettingApi.getHistory(currentWorld.id);
+          setBettingHistory(hRes.data);
+        } catch {
+          // History endpoint may not exist yet
+        }
+      }
     } catch {
       /* ignore */
     } finally {
@@ -107,6 +138,23 @@ export default function BettingPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const loadHistoryEvent = useCallback(
+    async (yearMonth: string) => {
+      if (!currentWorld) return;
+      setHistoryLoading(true);
+      setSelectedHistoryEvent(yearMonth);
+      try {
+        const res = await bettingApi.getEvent(currentWorld.id, yearMonth);
+        setHistoryBetting(res.data);
+      } catch {
+        setHistoryBetting(null);
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    [currentWorld],
+  );
 
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
@@ -147,27 +195,39 @@ export default function BettingPage() {
 
   const isBettingActive = globalInfo?.isBettingActive ?? false;
 
-  // Compute betting data per participant
-  const myBets = new Map<number, number>();
-  const globalBets = new Map<number, number>();
+  // Helper to compute betting data from a BettingInfo object
+  function computeBettingData(bettingData: BettingInfo) {
+    const myBetsMap = new Map<number, number>();
+    const globalBetsMap = new Map<number, number>();
 
-  if (betting) {
-    for (const bet of betting.bets) {
+    for (const bet of bettingData.bets) {
       if (myGeneral && bet.generalId === myGeneral.id) {
-        myBets.set(bet.targetId, (myBets.get(bet.targetId) ?? 0) + bet.amount);
+        myBetsMap.set(
+          bet.targetId,
+          (myBetsMap.get(bet.targetId) ?? 0) + bet.amount,
+        );
       }
-      globalBets.set(
+      globalBetsMap.set(
         bet.targetId,
-        (globalBets.get(bet.targetId) ?? 0) + bet.amount,
+        (globalBetsMap.get(bet.targetId) ?? 0) + bet.amount,
       );
     }
+
+    const myTotal = Array.from(myBetsMap.values()).reduce((s, v) => s + v, 0);
+    const globalTotal = Array.from(globalBetsMap.values()).reduce(
+      (s, v) => s + v,
+      0,
+    );
+
+    return { myBetsMap, globalBetsMap, myTotal, globalTotal };
   }
 
-  const myBetTotal = Array.from(myBets.values()).reduce((s, v) => s + v, 0);
-  const globalBetTotal = Array.from(globalBets.values()).reduce(
-    (s, v) => s + v,
-    0,
-  );
+  // Current betting data
+  const currentData = betting ? computeBettingData(betting) : null;
+  const myBets = currentData?.myBetsMap ?? new Map<number, number>();
+  const globalBets = currentData?.globalBetsMap ?? new Map<number, number>();
+  const myBetTotal = currentData?.myTotal ?? 0;
+  const globalBetTotal = currentData?.globalTotal ?? 0;
 
   // Build candidate list from tournament bracket participants
   const r16Participants = new Set<number>();
@@ -245,6 +305,11 @@ export default function BettingPage() {
 
   const TypeIcon = tournamentType.icon;
 
+  // Historical event detail view
+  const historyData = historyBetting
+    ? computeBettingData(historyBetting)
+    : null;
+
   return (
     <div className="space-y-0">
       <PageHeader icon={Coins} title="베팅장" />
@@ -283,6 +348,10 @@ export default function BettingPage() {
             <TabsTrigger value="betting">베팅</TabsTrigger>
             <TabsTrigger value="mybets">내 베팅</TabsTrigger>
             <TabsTrigger value="stats">통계</TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="size-3 mr-1" />
+              과거 기록
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Betting Tab ── */}
@@ -640,6 +709,230 @@ export default function BettingPage() {
                       ))}
                     </TableBody>
                   </Table>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* ── History Tab ── */}
+          <TabsContent value="history" className="space-y-2">
+            {selectedHistoryEvent ? (
+              // Detailed view of a historical event
+              <div className="space-y-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedHistoryEvent(null);
+                    setHistoryBetting(null);
+                  }}
+                >
+                  <ChevronLeft className="size-3 mr-1" />
+                  목록으로
+                </Button>
+
+                <Card>
+                  <CardHeader className="py-2 px-4">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <History className="size-4 text-amber-400" />
+                      {selectedHistoryEvent} 베팅 기록
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-3">
+                    {historyLoading ? (
+                      <LoadingState />
+                    ) : historyBetting ? (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="border border-gray-700 rounded p-2 text-center">
+                            <div className="text-[10px] text-muted-foreground">
+                              총 베팅 풀
+                            </div>
+                            <div className="text-sm font-bold text-amber-400 font-mono">
+                              금{" "}
+                              {numberWithCommas(historyData?.globalTotal ?? 0)}
+                            </div>
+                          </div>
+                          <div className="border border-gray-700 rounded p-2 text-center">
+                            <div className="text-[10px] text-muted-foreground">
+                              참여자
+                            </div>
+                            <div className="text-sm font-bold font-mono">
+                              {
+                                new Set(
+                                  historyBetting.bets.map((b) => b.generalId),
+                                ).size
+                              }
+                              명
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Per-target breakdown */}
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs">
+                                대상 장수
+                              </TableHead>
+                              <TableHead className="text-xs text-right">
+                                베팅 풀
+                              </TableHead>
+                              <TableHead className="text-xs text-right">
+                                비율
+                              </TableHead>
+                              <TableHead className="text-xs text-right">
+                                배당
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {Array.from(
+                              historyData?.globalBetsMap.entries() ?? [],
+                            )
+                              .sort(([, a], [, b]) => b - a)
+                              .map(([targetId, amount]) => {
+                                const gen = generalMap.get(targetId);
+                                const total = historyData?.globalTotal ?? 1;
+                                const pct = Math.round(
+                                  (amount / total) * 100,
+                                );
+                                const odds =
+                                  historyBetting.odds[String(targetId)] ??
+                                  (amount > 0
+                                    ? Math.round((total / amount) * 100) / 100
+                                    : 0);
+                                return (
+                                  <TableRow key={targetId}>
+                                    <TableCell>
+                                      <div className="flex items-center gap-1.5">
+                                        <GeneralPortrait
+                                          picture={gen?.picture}
+                                          name={gen?.name ?? `#${targetId}`}
+                                          size="sm"
+                                        />
+                                        <span className="text-xs">
+                                          {gen?.name ?? `#${targetId}`}
+                                        </span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs font-mono">
+                                      {numberWithCommas(amount)}
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs">
+                                      <div className="flex items-center justify-end gap-1">
+                                        <div className="w-12 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                          <div
+                                            className="h-full bg-sky-500 rounded-full"
+                                            style={{ width: `${pct}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-muted-foreground">
+                                          {pct}%
+                                        </span>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="text-right text-xs font-mono text-sky-400">
+                                      {odds > 0 ? `${odds}x` : "-"}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-4">
+                        데이터를 불러올 수 없습니다.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              // History list
+              <Card>
+                <CardHeader className="py-2 px-4">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <History className="size-4 text-amber-400" />
+                    과거 베팅 이벤트
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3">
+                  {bettingHistory.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs">시기</TableHead>
+                          <TableHead className="text-xs">토너먼트</TableHead>
+                          <TableHead className="text-xs">우승자</TableHead>
+                          <TableHead className="text-xs text-right">
+                            총 베팅 풀
+                          </TableHead>
+                          <TableHead className="text-xs text-right">
+                            참여자
+                          </TableHead>
+                          <TableHead className="text-xs" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {bettingHistory.map((ev) => {
+                          const tType =
+                            TOURNAMENT_TYPES.find(
+                              (t) => t.code === ev.tournamentType,
+                            ) ?? TOURNAMENT_TYPES[0];
+                          const EvIcon = tType.icon;
+                          return (
+                            <TableRow key={ev.yearMonth}>
+                              <TableCell className="text-xs">
+                                {ev.yearMonth}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <EvIcon className="size-3 text-cyan-400" />
+                                  <span className="text-xs">{tType.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs">
+                                {ev.championName ? (
+                                  <div className="flex items-center gap-1">
+                                    <Trophy className="size-3 text-amber-400" />
+                                    <span>{ev.championName}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    -
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right text-xs font-mono text-amber-400">
+                                {numberWithCommas(ev.totalPool)}
+                              </TableCell>
+                              <TableCell className="text-right text-xs font-mono">
+                                {ev.participantCount}명
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 text-[10px] px-2"
+                                  onClick={() =>
+                                    loadHistoryEvent(ev.yearMonth)
+                                  }
+                                >
+                                  상세
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-sm text-muted-foreground text-center py-8">
+                      과거 베팅 기록이 없습니다.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

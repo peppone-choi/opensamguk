@@ -19,6 +19,7 @@ import type {
   InheritanceActionResult,
   TournamentInfo,
   BettingInfo,
+  BettingEventSummary,
   BattleSimUnit,
   BattleSimCity,
   BattleSimResult,
@@ -39,6 +40,7 @@ import type {
   YearbookSummary,
   BoardComment,
   VoteComment,
+  PublicCachedMapResponse,
 } from "@/types";
 
 // World API
@@ -335,6 +337,50 @@ export const historyApi = {
     api.get<Message[]>(`/generals/${generalId}/records`),
 };
 
+// General Log API (legacy parity: battle center per-general logs)
+export interface GeneralLogEntry {
+  id: number;
+  message: string;
+  date: string;
+}
+export interface GeneralLogResult {
+  result: boolean;
+  reason?: string;
+  logs: GeneralLogEntry[];
+}
+export const generalLogApi = {
+  getOldLogs: (
+    generalId: number,
+    targetId: number,
+    type: "generalAction" | "battleResult" | "battleDetail",
+    to?: number,
+  ) =>
+    api.get<GeneralLogResult>(
+      `/generals/${generalId}/logs/old`,
+      { params: { targetId, type, ...(to ? { to } : {}) } },
+    ),
+};
+
+// Simulator Export API (legacy parity: load general from server)
+export interface SimulatorExportResult {
+  result: boolean;
+  reason?: string;
+  data?: Record<string, unknown>;
+}
+export const simulatorExportApi = {
+  exportGeneral: (generalId: number, targetId: number) =>
+    api.get<SimulatorExportResult>(
+      `/generals/${generalId}/simulator-export`,
+      { params: { targetId } },
+    ),
+};
+
+// Map Recent API (cached map with history)
+export const mapRecentApi = {
+  getMapRecent: (worldId: number) =>
+    api.get<PublicCachedMapResponse>(`/worlds/${worldId}/map-recent`),
+};
+
 export const boardApi = {
   getComments: (postId: number) =>
     api.get<BoardComment[]>(`/boards/${postId}/comments`),
@@ -445,8 +491,35 @@ export const rankingApi = {
       params,
     });
   },
-  hallOfFame: (worldId: number) =>
-    api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`),
+  hallOfFame: (worldId: number, params?: { season?: number; scenario?: string }) =>
+    api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`, { params }),
+  hallOfFameOptions: (worldId: number) =>
+    api.get<{ seasons: { id: number; label: string; scenarios: { code: string; label: string }[] }[] }>(`/worlds/${worldId}/hall-of-fame/options`),
+  uniqueItemOwners: (worldId: number) =>
+    api.get<{ slot: string; slotLabel: string; generalId: number; generalName: string; nationId: number; nationName: string; nationColor: string; itemName: string; itemGrade: string }[]>(`/worlds/${worldId}/unique-item-owners`),
+};
+
+// Traffic API
+export const trafficApi = {
+  getTraffic: (worldId: number) =>
+    api.get<{
+      recentTraffic: {
+        year: number;
+        month: number;
+        refresh: number;
+        online: number;
+        date: string;
+      }[];
+      maxRefresh: number;
+      maxOnline: number;
+      topRefreshers: {
+        name: string;
+        refresh: number;
+        refreshScoreTotal: number;
+      }[];
+      totalRefresh: number;
+      totalRefreshScoreTotal: number;
+    }>(`/worlds/${worldId}/traffic`),
 };
 
 // Scenario API
@@ -476,6 +549,39 @@ export const inheritanceApi = {
     api.post<InheritanceActionResult>(`/worlds/${worldId}/inheritance/city`, {
       cityId,
     }),
+  resetTurn: (worldId: number) =>
+    api.post<InheritanceActionResult>(
+      `/worlds/${worldId}/inheritance/reset-turn`,
+    ),
+  buyRandomUnique: (worldId: number) =>
+    api.post<InheritanceActionResult>(
+      `/worlds/${worldId}/inheritance/random-unique`,
+    ),
+  resetSpecialWar: (worldId: number) =>
+    api.post<InheritanceActionResult>(
+      `/worlds/${worldId}/inheritance/reset-special-war`,
+    ),
+  resetStats: (
+    worldId: number,
+    stats: { leadership: number; strength: number; intel: number },
+  ) =>
+    api.post<InheritanceActionResult>(
+      `/worlds/${worldId}/inheritance/reset-stats`,
+      stats,
+    ),
+  checkOwner: (worldId: number, generalName: string) =>
+    api.post<{ ownerName?: string; found: boolean }>(
+      `/worlds/${worldId}/inheritance/check-owner`,
+      { generalName },
+    ),
+  auctionUnique: (
+    worldId: number,
+    data: { uniqueCode: string; bidAmount: number },
+  ) =>
+    api.post<InheritanceActionResult>(
+      `/worlds/${worldId}/inheritance/auction-unique`,
+      data,
+    ),
 };
 
 // Auction API
@@ -537,6 +643,10 @@ export const tournamentApi = {
 export const bettingApi = {
   getInfo: (worldId: number) =>
     api.get<BettingInfo>(`/worlds/${worldId}/betting`),
+  getHistory: (worldId: number) =>
+    api.get<BettingEventSummary[]>(`/worlds/${worldId}/betting/history`),
+  getEvent: (worldId: number, yearMonth: string) =>
+    api.get<BettingInfo>(`/worlds/${worldId}/betting/${yearMonth}`),
   placeBet: (
     worldId: number,
     generalId: number,
@@ -635,4 +745,12 @@ export const adminApi = {
       grade?: number;
     },
   ) => api.post<void>(`/admin/users/${id}/action`, action),
+  createWorld: (data: { scenarioCode: string; turnTerm?: number; notice?: string }) =>
+    api.post<{ worldId: number }>("/admin/worlds", data),
+  deleteWorld: (worldId: number) =>
+    api.delete<void>(`/admin/worlds/${worldId}`),
+  listWorlds: () =>
+    api.get<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>("/admin/worlds"),
+  bulkGeneralAction: (ids: number[], type: string) =>
+    api.post<void>("/admin/generals/bulk-action", { ids, type }),
 };

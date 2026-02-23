@@ -111,15 +111,32 @@ export default function HallOfFamePage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryKey, setCategoryKey] = useState("all");
+  const [seasons, setSeasons] = useState<{ id: number; label: string; scenarios: { code: string; label: string }[] }[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<string>("all");
+  const [selectedScenario, setSelectedScenario] = useState<string>("all");
 
+  // Load season/scenario options
   useEffect(() => {
     if (!currentWorld) return;
     rankingApi
-      .hallOfFame(currentWorld.id)
+      .hallOfFameOptions(currentWorld.id)
+      .then(({ data }) => setSeasons(data.seasons ?? []))
+      .catch(() => setSeasons([]));
+  }, [currentWorld]);
+
+  // Load hall of fame data filtered by season/scenario
+  useEffect(() => {
+    if (!currentWorld) return;
+    setLoading(true);
+    const params: { season?: number; scenario?: string } = {};
+    if (selectedSeason !== "all") params.season = Number(selectedSeason);
+    if (selectedScenario !== "all") params.scenario = selectedScenario;
+    rankingApi
+      .hallOfFame(currentWorld.id, params)
       .then(({ data }) => setMessages(data))
       .catch(() => setMessages([]))
       .finally(() => setLoading(false));
-  }, [currentWorld]);
+  }, [currentWorld, selectedSeason, selectedScenario]);
 
   // Parse all entries
   const allEntries = useMemo(() => messages.map(parseEntry), [messages]);
@@ -165,6 +182,43 @@ export default function HallOfFamePage() {
   return (
     <div className="p-4 space-y-4">
       <PageHeader icon={Award} title="명예의 전당" />
+
+      {/* Season / Scenario selectors */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <Select value={selectedSeason} onValueChange={(v) => { setSelectedSeason(v); setSelectedScenario("all"); }}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="시즌 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 시즌</SelectItem>
+            {seasons.map((s) => (
+              <SelectItem key={s.id} value={String(s.id)}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {selectedSeason !== "all" && (() => {
+          const season = seasons.find((s) => String(s.id) === selectedSeason);
+          const scenarioList = season?.scenarios ?? [];
+          return scenarioList.length > 0 ? (
+            <Select value={selectedScenario} onValueChange={setSelectedScenario}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder="시나리오 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 시나리오</SelectItem>
+                {scenarioList.map((sc) => (
+                  <SelectItem key={sc.code} value={sc.code}>
+                    {sc.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null;
+        })()}
+      </div>
 
       {/* Scenario badges */}
       {scenarios.length > 0 && (

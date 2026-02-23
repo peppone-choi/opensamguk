@@ -5,12 +5,13 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { rankingApi } from "@/lib/gameApi";
 import type { BestGeneral } from "@/types";
-import { Medal, Trophy } from "lucide-react";
+import { Medal, Trophy, Gem } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
 import { NationBadge } from "@/components/game/nation-badge";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -329,6 +330,9 @@ export default function BestGeneralsPage() {
   const [npcMode, setNpcMode] = useState<"user" | "npc">("user");
   const [allGenerals, setAllGenerals] = useState<BestGeneral[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uniqueItems, setUniqueItems] = useState<
+    { slot: string; slotLabel: string; generalId: number; generalName: string; nationId: number; nationName: string; nationColor: string; itemName: string; itemGrade: string }[]
+  >([]);
 
   const group = GROUPS.find((g) => g.key === groupKey)!;
   const categoryKey = categoryByGroup[groupKey] ?? group.categories[0].key;
@@ -338,6 +342,10 @@ export default function BestGeneralsPage() {
   useEffect(() => {
     if (!currentWorld) return;
     loadAll(currentWorld.id);
+    rankingApi
+      .uniqueItemOwners(currentWorld.id)
+      .then(({ data }) => setUniqueItems(data ?? []))
+      .catch(() => setUniqueItems([]));
   }, [currentWorld, loadAll]);
 
   // Fetch data when category or world changes
@@ -428,6 +436,48 @@ export default function BestGeneralsPage() {
           ))}
         </TabsList>
       </Tabs>
+
+      {/* Unique Item Owners */}
+      {uniqueItems.length > 0 && (
+        <Card className="border-amber-800/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Gem className="size-5 text-purple-400" />
+              유니크 아이템 보유자
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>슬롯</TableHead>
+                  <TableHead>아이템</TableHead>
+                  <TableHead>등급</TableHead>
+                  <TableHead>보유자</TableHead>
+                  <TableHead>소속</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {uniqueItems.map((item) => (
+                  <TableRow key={item.slot}>
+                    <TableCell className="text-xs text-muted-foreground">{item.slotLabel}</TableCell>
+                    <TableCell className="font-medium text-purple-300">{item.itemName}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-amber-400 border-amber-400/40">
+                        {item.itemGrade}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.generalName}</TableCell>
+                    <TableCell>
+                      <NationBadge name={item.nationName} color={item.nationColor} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Rankings table */}
       <Table>

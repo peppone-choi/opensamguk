@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@radix-ui/react-switch": "^1.2.6",
     "@stomp/stompjs": "^7.3.0",
     "axios": "^1.13.5",
     "class-variance-authority": "^0.7.1",

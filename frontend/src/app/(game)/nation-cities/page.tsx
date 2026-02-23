@@ -8,10 +8,11 @@ import {
   diplomacyApi,
   generalApi,
   nationApi,
+  nationManagementApi,
   nationPolicyApi,
 } from "@/lib/gameApi";
 import type { City, Diplomacy, General, Nation } from "@/types";
-import { Building2 } from "lucide-react";
+import { Building2, Crown, Search } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -20,6 +21,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NationBadge } from "@/components/game/nation-badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -86,7 +94,28 @@ type SortKey =
   | "secu"
   | "def"
   | "wall"
+  | "trust"
+  | "trade"
+  | "region"
   | "supplyState";
+
+const OFFICER_TITLES: Record<number, string> = {
+  4: "태수",
+  3: "군사",
+  2: "종사",
+};
+
+const REGION_NAMES: Record<number, string> = {
+  0: "중원",
+  1: "하북",
+  2: "서북",
+  3: "서남",
+  4: "강남",
+  5: "형초",
+  6: "산동",
+  7: "요동",
+  8: "강동",
+};
 
 export default function NationCitiesPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -105,6 +134,12 @@ export default function NationCitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [cityFilter, setCityFilter] = useState("");
+  const [appointMode, setAppointMode] = useState(false);
+  const [appointCity, setAppointCity] = useState<number | null>(null);
+  const [appointLevel, setAppointLevel] = useState<number>(4);
+  const [appointGeneralId, setAppointGeneralId] = useState<string>("");
+  const [appointSaving, setAppointSaving] = useState(false);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -160,6 +195,38 @@ export default function NationCitiesPage() {
     }
   };
 
+  const handleAppoint = async () => {
+    if (!myGeneral?.nationId || !appointCity || !appointGeneralId) return;
+    setAppointSaving(true);
+    try {
+      await nationManagementApi.appointOfficer(myGeneral.nationId, {
+        generalId: Number(appointGeneralId),
+        officerLevel: appointLevel,
+        officerCity: appointCity,
+      });
+      setSaveMsg("관직 임명 완료");
+      setAppointCity(null);
+      setAppointGeneralId("");
+      // Reload generals
+      const res = await generalApi.listByNation(myGeneral.nationId);
+      setNationGenerals(res.data);
+    } catch {
+      setSaveMsg("관직 임명 실패");
+    } finally {
+      setAppointSaving(false);
+    }
+  };
+
+  const getCityOfficers = (cityId: number) => {
+    return nationGenerals
+      .filter((g) => g.cityId === cityId && g.officerLevel >= 2 && g.officerLevel <= 4)
+      .sort((a, b) => b.officerLevel - a.officerLevel);
+  };
+
+  const getUnassignedGenerals = () => {
+    return nationGenerals.filter((g) => g.officerLevel < 2);
+  };
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -172,7 +239,11 @@ export default function NationCitiesPage() {
   const arrow = (key: SortKey) =>
     sortKey === key ? (sortDir === "asc" ? " ▲" : " ▼") : "";
 
-  const sorted = [...(cities ?? [])].sort((a, b) => {
+  const filtered = (cities ?? []).filter((c) =>
+    cityFilter ? c.name.toLowerCase().includes(cityFilter.toLowerCase()) : true
+  );
+
+  const sorted = [...filtered].sort((a, b) => {
     let cmp = 0;
     if (sortKey === "name") {
       cmp = a.name.localeCompare(b.name);
@@ -257,8 +328,11 @@ export default function NationCitiesPage() {
 
   const columns: { key: SortKey; label: string }[] = [
     { key: "name", label: "이름" },
+    { key: "region", label: "지역" },
     { key: "level", label: "레벨" },
     { key: "pop", label: "인구" },
+    { key: "trust", label: "민심" },
+    { key: "trade", label: "시세" },
     { key: "agri", label: "농업" },
     { key: "comm", label: "상업" },
     { key: "secu", label: "치안" },
@@ -434,6 +508,26 @@ export default function NationCitiesPage() {
         </CardContent>
       </Card>
 
+      {/* City filter + appointment mode toggle */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-48">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="도시 검색..."
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <Button
+          variant={appointMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => setAppointMode(!appointMode)}
+        >
+          {appointMode ? "관직 임명 모드 ON" : "관직 임명 모드"}
+        </Button>
+      </div>
+
       {(cities ?? []).length === 0 ? (
         <EmptyState icon={Building2} title="보유 도시가 없습니다." />
       ) : (
@@ -450,40 +544,123 @@ export default function NationCitiesPage() {
                   {arrow(col.key)}
                 </TableHead>
               ))}
+              <TableHead>관직</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell className="font-medium">{c.name}</TableCell>
-                <TableCell>{c.level}</TableCell>
-                <TableCell>
-                  {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={c.supplyState === 1 ? "default" : "destructive"}
-                  >
-                    {c.supplyState === 1 ? "보급" : "단절"}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+            {sorted.map((c) => {
+              const officers = getCityOfficers(c.id);
+              const isCapital = myNation?.capitalCityId === c.id;
+              return (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">
+                    <span className="flex items-center gap-1">
+                      {isCapital && <Crown className="size-4 text-amber-400" />}
+                      {c.name}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-xs text-muted-foreground">
+                      {REGION_NAMES[c.region] ?? `지역${c.region}`}
+                    </span>
+                  </TableCell>
+                  <TableCell>{c.level}</TableCell>
+                  <TableCell>
+                    {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
+                  </TableCell>
+                  <TableCell>{c.trust}</TableCell>
+                  <TableCell>{c.trade}%</TableCell>
+                  <TableCell>
+                    {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={c.supplyState === 1 ? "default" : "destructive"}
+                    >
+                      {c.supplyState === 1 ? "보급" : "단절"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      {officers.length > 0 ? (
+                        officers.map((o) => (
+                          <div key={o.id} className="text-xs flex items-center gap-1">
+                            <Badge variant="outline" className="text-[10px] px-1">
+                              {OFFICER_TITLES[o.officerLevel] ?? `Lv${o.officerLevel}`}
+                            </Badge>
+                            <span>{o.name}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
+                      {appointMode && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-6 px-2"
+                          onClick={() => setAppointCity(appointCity === c.id ? null : c.id)}
+                        >
+                          {appointCity === c.id ? "취소" : "+ 임명"}
+                        </Button>
+                      )}
+                      {appointMode && appointCity === c.id && (
+                        <div className="mt-1 space-y-1 p-2 border rounded bg-background">
+                          <Select
+                            value={String(appointLevel)}
+                            onValueChange={(v) => setAppointLevel(Number(v))}
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="4">태수</SelectItem>
+                              <SelectItem value="3">군사</SelectItem>
+                              <SelectItem value="2">종사</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Select
+                            value={appointGeneralId}
+                            onValueChange={setAppointGeneralId}
+                          >
+                            <SelectTrigger className="h-7 text-xs">
+                              <SelectValue placeholder="장수 선택" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getUnassignedGenerals().map((g) => (
+                                <SelectItem key={g.id} value={String(g.id)}>
+                                  {g.name} (통{g.leadership}/무{g.strength}/지{g.intel})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            size="sm"
+                            className="h-6 text-xs"
+                            disabled={!appointGeneralId || appointSaving}
+                            onClick={handleAppoint}
+                          >
+                            {appointSaving ? "임명 중..." : "임명"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}

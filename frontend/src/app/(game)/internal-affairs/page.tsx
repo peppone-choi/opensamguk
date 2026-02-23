@@ -1,17 +1,97 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { nationPolicyApi } from "@/lib/gameApi";
-import { Landmark } from "lucide-react";
+import { Landmark, Bold, Italic, List, Heading2, Undo, Redo, Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
+
+/* ── Simple Rich Text Editor (contentEditable-based WYSIWYG) ── */
+
+function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const isInitRef = useRef(false);
+
+  useEffect(() => {
+    if (editorRef.current && !isInitRef.current) {
+      editorRef.current.innerHTML = value;
+      isInitRef.current = true;
+    }
+  }, [value]);
+
+  const exec = useCallback((cmd: string, val?: string) => {
+    document.execCommand(cmd, false, val);
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  }, [onChange]);
+
+  const handleInput = useCallback(() => {
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  }, [onChange]);
+
+  const handleInsertImage = useCallback(() => {
+    const url = prompt("이미지 URL을 입력하세요:");
+    if (url) {
+      exec("insertImage", url);
+    }
+  }, [exec]);
+
+  return (
+    <div className="border rounded-md overflow-hidden">
+      <div className="flex items-center gap-1 p-1 border-b bg-muted/30">
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("bold")} title="굵게">
+          <Bold className="size-3.5" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("italic")} title="기울임">
+          <Italic className="size-3.5" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("formatBlock", "h3")} title="제목">
+          <Heading2 className="size-3.5" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("insertUnorderedList")} title="목록">
+          <List className="size-3.5" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleInsertImage} title="이미지 삽입">
+          <ImageIcon className="size-3.5" />
+        </Button>
+        <div className="flex-1" />
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("undo")} title="실행 취소">
+          <Undo className="size-3.5" />
+        </Button>
+        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("redo")} title="다시 실행">
+          <Redo className="size-3.5" />
+        </Button>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        className="min-h-[160px] p-3 text-sm focus:outline-none prose prose-invert prose-sm max-w-none"
+        onInput={handleInput}
+        data-placeholder={placeholder}
+        suppressContentEditableWarning
+      />
+    </div>
+  );
+}
 
 export default function InternalAffairsPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -23,6 +103,8 @@ export default function InternalAffairsPage() {
   const [bill, setBill] = useState(100);
   const [secretLimit, setSecretLimit] = useState(0);
   const [strategicCmdLimit, setStrategicCmdLimit] = useState(0);
+  const [blockWar, setBlockWar] = useState(false);
+  const [blockScout, setBlockScout] = useState(false);
   const [notice, setNotice] = useState("");
   const [scoutMsg, setScoutMsg] = useState("");
   const [saving, setSaving] = useState(false);
@@ -42,6 +124,8 @@ export default function InternalAffairsPage() {
         setBill((data.bill as number) ?? 100);
         setSecretLimit((data.secretLimit as number) ?? 0);
         setStrategicCmdLimit((data.strategicCmdLimit as number) ?? 0);
+        setBlockWar(Boolean((data as unknown as Record<string, unknown>).blockWar));
+        setBlockScout(Boolean((data as unknown as Record<string, unknown>).blockScout));
         setNotice((data.notice as string) ?? "");
         setScoutMsg((data.scoutMsg as string) ?? "");
       })
@@ -59,6 +143,8 @@ export default function InternalAffairsPage() {
         bill,
         secretLimit,
         strategicCmdLimit,
+        blockWar,
+        blockScout,
       });
       setMsg("정책이 저장되었습니다.");
     } catch {
@@ -173,6 +259,22 @@ export default function InternalAffairsPage() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">전쟁 차단</label>
+                    <p className="text-xs text-muted-foreground">소속 장수의 전쟁 명령을 차단합니다</p>
+                  </div>
+                  <Switch checked={blockWar} onCheckedChange={setBlockWar} />
+                </div>
+                <div className="flex items-center justify-between rounded-md border p-3">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">정찰 차단</label>
+                    <p className="text-xs text-muted-foreground">소속 장수의 정찰 명령을 차단합니다</p>
+                  </div>
+                  <Switch checked={blockScout} onCheckedChange={setBlockScout} />
+                </div>
+              </div>
               <Button onClick={handleSavePolicy} disabled={saving}>
                 {saving ? "저장 중..." : "정책 저장"}
               </Button>
@@ -186,11 +288,10 @@ export default function InternalAffairsPage() {
               <CardTitle>국가 공지</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Textarea
+              <RichTextEditor
                 value={notice}
-                onChange={(e) => setNotice(e.target.value)}
+                onChange={setNotice}
                 placeholder="국가 공지를 입력하세요..."
-                className="resize-none h-32"
               />
               <Button onClick={handleSaveNotice} disabled={saving}>
                 {saving ? "저장 중..." : "공지 저장"}

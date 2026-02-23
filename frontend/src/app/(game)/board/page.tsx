@@ -41,6 +41,7 @@ export default function BoardPage() {
   const [publicPosts, setPublicPosts] = useState<Message[]>([]);
   const [secretPosts, setSecretPosts] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);

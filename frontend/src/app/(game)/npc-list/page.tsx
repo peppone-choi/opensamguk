@@ -23,12 +23,23 @@ import {
 type SortKey =
   | "name"
   | "nation"
+  | "totalStats"
   | "leadership"
   | "strength"
   | "intel"
-  | "politics"
-  | "charm"
-  | "crew";
+  | "experience"
+  | "dedication";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "name", label: "이름" },
+  { key: "nation", label: "국가" },
+  { key: "totalStats", label: "종능" },
+  { key: "leadership", label: "통솔" },
+  { key: "strength", label: "무력" },
+  { key: "intel", label: "지력" },
+  { key: "experience", label: "명성" },
+  { key: "dedication", label: "계급" },
+];
 
 export default function NpcListPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -47,12 +58,16 @@ export default function NpcListPage() {
     [nations],
   );
 
+  // NPC generals: npcState === 1 (possessed NPCs) plus pool generals (npcState === 0 from select_pool — included if available)
   const npcGenerals = useMemo(() => {
-    let npcs = generals.filter((g) => g.npcState > 0);
+    let npcs = generals.filter((g) => g.npcState >= 1);
 
     if (search) {
-      npcs = npcs.filter((g) =>
-        g.name.toLowerCase().includes(search.toLowerCase()),
+      const q = search.toLowerCase();
+      npcs = npcs.filter(
+        (g) =>
+          g.name.toLowerCase().includes(q) ||
+          (g.ownerName ?? "").toLowerCase().includes(q),
       );
     }
 
@@ -68,19 +83,35 @@ export default function NpcListPage() {
         const na = nationMap.get(a.nationId)?.name ?? "";
         const nb = nationMap.get(b.nationId)?.name ?? "";
         cmp = na.localeCompare(nb);
+      } else if (sortKey === "totalStats") {
+        const sa = a.leadership + a.strength + a.intel;
+        const sb = b.leadership + b.strength + b.intel;
+        cmp = sa - sb;
+      } else if (sortKey === "experience") {
+        cmp = a.experience - b.experience;
+      } else if (sortKey === "dedication") {
+        cmp = a.dedication - b.dedication;
       } else {
         cmp = (a[sortKey] as number) - (b[sortKey] as number);
+      }
+      // name and nation default ascending, numeric defaults descending
+      const isAscDefault = sortKey === "name" || sortKey === "nation";
+      if (isAscDefault) {
+        return sortDir === "asc" ? cmp : -cmp;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
   }, [generals, search, sortKey, sortDir, nationFilter, nationMap]);
 
-  const toggleSort = (key: SortKey) => {
+  const handleSortChange = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
-      setSortDir("desc");
+      // Numeric fields default to descending, text fields to ascending
+      setSortDir(
+        key === "name" || key === "nation" ? "asc" : "desc",
+      );
     }
   };
 
@@ -93,17 +124,6 @@ export default function NpcListPage() {
     );
   if (loading) return <LoadingState />;
 
-  const columns: { key: SortKey; label: string }[] = [
-    { key: "name", label: "이름" },
-    { key: "nation", label: "소속" },
-    { key: "leadership", label: "통솔" },
-    { key: "strength", label: "무력" },
-    { key: "intel", label: "지력" },
-    { key: "politics", label: "정치" },
-    { key: "charm", label: "매력" },
-    { key: "crew", label: "병사" },
-  ];
-
   return (
     <div className="p-4 space-y-4">
       <PageHeader icon={Bot} title="빙의일람" />
@@ -113,7 +133,7 @@ export default function NpcListPage() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="장수 검색..."
+            placeholder="장수/악령 검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8"
@@ -131,6 +151,24 @@ export default function NpcListPage() {
             </option>
           ))}
         </select>
+
+        {/* Sort dropdown matching legacy */}
+        <select
+          value={sortKey}
+          onChange={(e) => {
+            const key = e.target.value as SortKey;
+            setSortKey(key);
+            setSortDir(key === "name" || key === "nation" ? "asc" : "desc");
+          }}
+          className="h-9 min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+        >
+          {SORT_OPTIONS.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+
         <span className="text-xs text-muted-foreground">
           {npcGenerals.length}명
         </span>
@@ -139,60 +177,131 @@ export default function NpcListPage() {
       {npcGenerals.length === 0 ? (
         <EmptyState icon={Bot} title="NPC 장수가 없습니다." />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {columns.map((col) => (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
                 <TableHead
-                  key={col.key}
                   className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort(col.key)}
+                  onClick={() => handleSortChange("name")}
                 >
-                  {col.label}
-                  {arrow(col.key)}
+                  희생된 장수{arrow("name")}
                 </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {npcGenerals.map((g) => {
-              const nation = nationMap.get(g.nationId);
-              return (
-                <TableRow
-                  key={g.id}
-                  style={
-                    nation?.color
-                      ? { borderLeft: `3px solid ${nation.color}` }
-                      : undefined
-                  }
+                <TableHead>악령 이름</TableHead>
+                <TableHead>Lv</TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("nation")}
                 >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <GeneralPortrait
-                        picture={g.picture}
-                        name={g.name}
-                        size="sm"
-                      />
-                      {g.name}
-                      <Badge variant="secondary" className="text-xs">
-                        NPC
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <NationBadge name={nation?.name} color={nation?.color} />
-                  </TableCell>
-                  <TableCell>{g.leadership}</TableCell>
-                  <TableCell>{g.strength}</TableCell>
-                  <TableCell>{g.intel}</TableCell>
-                  <TableCell>{g.politics}</TableCell>
-                  <TableCell>{g.charm}</TableCell>
-                  <TableCell>{g.crew.toLocaleString()}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                  국가{arrow("nation")}
+                </TableHead>
+                <TableHead>성격</TableHead>
+                <TableHead>특기</TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("totalStats")}
+                >
+                  종능{arrow("totalStats")}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("leadership")}
+                >
+                  통솔{arrow("leadership")}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("strength")}
+                >
+                  무력{arrow("strength")}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("intel")}
+                >
+                  지력{arrow("intel")}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("experience")}
+                >
+                  명성{arrow("experience")}
+                </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("dedication")}
+                >
+                  계급{arrow("dedication")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {npcGenerals.map((g) => {
+                const nation = nationMap.get(g.nationId);
+                const totalStats = g.leadership + g.strength + g.intel;
+                const specialDisplay =
+                  g.specialCode && g.specialCode !== "None"
+                    ? g.specialCode
+                    : "-";
+                const special2Display =
+                  g.special2Code && g.special2Code !== "None"
+                    ? g.special2Code
+                    : "";
+                const specialFull = special2Display
+                  ? `${specialDisplay} / ${special2Display}`
+                  : specialDisplay;
+
+                return (
+                  <TableRow
+                    key={g.id}
+                    style={
+                      nation?.color
+                        ? { borderLeft: `3px solid ${nation.color}` }
+                        : undefined
+                    }
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <GeneralPortrait
+                          picture={g.picture}
+                          name={g.name}
+                          size="sm"
+                        />
+                        {g.name}
+                        {g.npcState === 0 && (
+                          <Badge variant="outline" className="text-[10px]">
+                            풀
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {g.ownerName || "-"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      Lv {g.expLevel}
+                    </TableCell>
+                    <TableCell>
+                      <NationBadge name={nation?.name} color={nation?.color} />
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {g.personalCode ?? "-"}
+                    </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {specialFull}
+                    </TableCell>
+                    <TableCell className="font-medium">{totalStats}</TableCell>
+                    <TableCell>{g.leadership}</TableCell>
+                    <TableCell>{g.strength}</TableCell>
+                    <TableCell>{g.intel}</TableCell>
+                    <TableCell>{g.experience.toLocaleString()}</TableCell>
+                    <TableCell>{g.dedication.toLocaleString()}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

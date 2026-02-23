@@ -59,11 +59,11 @@ const DEFENCE_PRESETS = [
 ];
 
 const POTION_OPTIONS = [
-  { value: 20, label: "경상 이상 사용" },
-  { value: 40, label: "중상 이상 사용" },
-  { value: 60, label: "심각 이상 사용" },
-  { value: 80, label: "위독 시 사용" },
-  { value: 999, label: "사용 안함" },
+  { value: 10, label: "경상 이상 사용 (10+)" },
+  { value: 21, label: "중상 이상 사용 (21+)" },
+  { value: 41, label: "심각 이상 사용 (41+)" },
+  { value: 61, label: "위독 이상 사용 (61+)" },
+  { value: 100, label: "사용 안함" },
 ];
 
 const TOURNAMENT_OPTIONS = [

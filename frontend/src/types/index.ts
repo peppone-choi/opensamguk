@@ -630,8 +630,13 @@ export interface ContactInfo {
 // Inheritance
 export interface InheritanceInfo {
   points: number;
+  previousPoints?: number;
+  newPoints?: number;
+  pointSources?: { label: string; amount: number }[];
   buffs: Record<string, number>;
   log: InheritanceLogEntry[];
+  turnResetCount?: number;
+  specialWarResetCount?: number;
 }
 
 export interface InheritanceLogEntry {
@@ -665,6 +670,16 @@ export interface TournamentBracketMatch {
 export interface BettingInfo {
   bets: BetEntry[];
   odds: Record<string, number>;
+  history?: BettingEventSummary[];
+}
+
+export interface BettingEventSummary {
+  yearMonth: string;
+  tournamentType: number;
+  championId?: number;
+  championName?: string;
+  totalPool: number;
+  participantCount: number;
 }
 
 export interface BetEntry {

@@ -1,12 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, Plus, Trash2, Globe } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { adminApi } from "@/lib/gameApi";
 import { toast } from "sonner";
 import type { AdminDashboard } from "@/types";
@@ -18,7 +27,21 @@ export default function AdminDashboardPage() {
   const [turnTerm, setTurnTerm] = useState("");
   const [locked, setLocked] = useState(false);
 
+  // World management
+  const [worlds, setWorlds] = useState<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>([]);
+  const [newScenario, setNewScenario] = useState("");
+  const [newTurnTerm, setNewTurnTerm] = useState("300");
+  const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const loadWorlds = () => {
+    adminApi.listWorlds()
+      .then((res) => setWorlds(res.data))
+      .catch(() => {});
+  };
+
   useEffect(() => {
+    loadWorlds();
     adminApi
       .getDashboard()
       .then((res) => {
@@ -37,6 +60,39 @@ export default function AdminDashboardPage() {
         setLoading(false);
       });
   }, []);
+
+  const handleCreateWorld = async () => {
+    if (!newScenario.trim()) {
+      toast.error("시나리오 코드를 입력하세요.");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await adminApi.createWorld({
+        scenarioCode: newScenario.trim(),
+        turnTerm: newTurnTerm ? Number(newTurnTerm) : undefined,
+      });
+      toast.success(`월드 생성 완료 (ID: ${res.data.worldId})`);
+      setNewScenario("");
+      setShowCreateForm(false);
+      loadWorlds();
+    } catch {
+      toast.error("월드 생성 실패");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteWorld = async (worldId: number) => {
+    if (!confirm(`월드 #${worldId}를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+    try {
+      await adminApi.deleteWorld(worldId);
+      toast.success(`월드 #${worldId} 삭제 완료`);
+      loadWorlds();
+    } catch {
+      toast.error("월드 삭제 실패");
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -132,6 +188,100 @@ export default function AdminDashboardPage() {
           >
             저장
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* World Management */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="size-5" />
+            월드 관리
+          </CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowCreateForm(!showCreateForm)}
+          >
+            <Plus className="size-4 mr-1" />
+            새 월드 생성
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {showCreateForm && (
+            <div className="p-4 border rounded-md space-y-3 bg-muted/20">
+              <h4 className="text-sm font-medium">새 월드 생성</h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">시나리오 코드</label>
+                  <Input
+                    value={newScenario}
+                    onChange={(e) => setNewScenario(e.target.value)}
+                    placeholder="예: 001_189"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">턴 간격 (초)</label>
+                  <Input
+                    type="number"
+                    value={newTurnTerm}
+                    onChange={(e) => setNewTurnTerm(e.target.value)}
+                    placeholder="300"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleCreateWorld} disabled={creating}>
+                  {creating ? "생성 중..." : "생성"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setShowCreateForm(false)}>
+                  취소
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {worlds.length === 0 ? (
+            <p className="text-sm text-muted-foreground">월드가 없습니다.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>시나리오</TableHead>
+                  <TableHead>시점</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>액션</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {worlds.map((w) => (
+                  <TableRow key={w.id}>
+                    <TableCell>{w.id}</TableCell>
+                    <TableCell className="font-medium">{w.scenarioCode}</TableCell>
+                    <TableCell>{w.year}년 {w.month}월</TableCell>
+                    <TableCell>
+                      {w.locked ? (
+                        <Badge variant="destructive">잠금</Badge>
+                      ) : (
+                        <Badge variant="outline">운영중</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteWorld(w.id)}
+                      >
+                        <Trash2 className="size-3.5 mr-1" />
+                        삭제
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

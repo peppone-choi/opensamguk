@@ -1,105 +1,103 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useWorldStore } from "@/stores/worldStore";
-import { useGameStore } from "@/stores/gameStore";
-import { Truck } from "lucide-react";
+import { Activity } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
-import { EmptyState } from "@/components/game/empty-state";
-import { NationBadge } from "@/components/game/nation-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { trafficApi } from "@/lib/gameApi";
 
-type MovingInfo = {
-  generalId: number;
-  generalName: string;
-  nationName?: string;
-  nationColor?: string;
-  fromCity: string;
-  toCity: string;
-  etaMs: number;
-  eta: string;
-  remainText: string;
-  commandName: string;
+type TrafficEntry = {
+  year: number;
+  month: number;
+  refresh: number;
+  online: number;
+  date: string;
 };
+
+type TopRefresher = {
+  name: string;
+  refresh: number;
+  refreshScoreTotal: number;
+};
+
+function getTrafficColor(percent: number): string {
+  const r = Math.round((percent * 255) / 100);
+  const b = Math.round(((100 - percent) * 255) / 100);
+  const toHex = (n: number) => n.toString(16).padStart(2, "0").toUpperCase();
+  return `#${toHex(r)}00${toHex(b)}`;
+}
+
+function TrafficBar({
+  value,
+  maxValue,
+  label,
+}: {
+  value: number;
+  maxValue: number;
+  label: string;
+}) {
+  const safeMax = Math.max(maxValue, 1);
+  const pct = Math.min(Math.round((value / safeMax) * 1000) / 10, 100);
+  const color = getTrafficColor(pct);
+
+  return (
+    <div className="flex items-center gap-2 h-8">
+      <span className="text-xs text-muted-foreground w-24 text-right shrink-0">
+        {label}
+      </span>
+      <div className="flex-1 relative h-7 bg-muted/30 rounded overflow-hidden">
+        {pct > 0 && (
+          <div
+            className="absolute inset-y-0 left-0 rounded transition-all"
+            style={{ width: `${pct}%`, backgroundColor: color }}
+          />
+        )}
+        <span
+          className={`relative z-10 text-xs font-mono leading-7 ${
+            pct >= 10 ? "float-right pr-2" : "ml-2"
+          }`}
+          style={{ color: pct >= 10 ? "#fff" : undefined }}
+        >
+          {value.toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function TrafficPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
-  const { nations, generals, cities, loading, loadAll } = useGameStore();
-  const [now, setNow] = useState(() => Date.now());
+  const [loading, setLoading] = useState(true);
+  const [recentTraffic, setRecentTraffic] = useState<TrafficEntry[]>([]);
+  const [maxRefresh, setMaxRefresh] = useState(1);
+  const [maxOnline, setMaxOnline] = useState(1);
+  const [topRefreshers, setTopRefreshers] = useState<TopRefresher[]>([]);
+  const [totalRefresh, setTotalRefresh] = useState(0);
+  const [totalRefreshScoreTotal, setTotalRefreshScoreTotal] = useState(0);
 
-  useEffect(() => {
+  const loadTraffic = useCallback(async () => {
     if (!currentWorld) return;
-    loadAll(currentWorld.id);
-  }, [currentWorld, loadAll]);
+    setLoading(true);
+    try {
+      const { data } = await trafficApi.getTraffic(currentWorld.id);
+      setRecentTraffic(data.recentTraffic ?? []);
+      setMaxRefresh(Math.max(data.maxRefresh, 1));
+      setMaxOnline(Math.max(data.maxOnline, 1));
+      setTopRefreshers(data.topRefreshers ?? []);
+      setTotalRefresh(data.totalRefresh ?? 0);
+      setTotalRefreshScoreTotal(data.totalRefreshScoreTotal ?? 0);
+    } catch {
+      // API may not exist yet — show empty state
+    } finally {
+      setLoading(false);
+    }
+  }, [currentWorld]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const cityMap = useMemo(
-    () => new Map(cities.map((c) => [c.id, c])),
-    [cities],
-  );
-  const nationMap = useMemo(
-    () => new Map(nations.map((nation) => [nation.id, nation])),
-    [nations],
-  );
-
-  const movingGenerals = useMemo<MovingInfo[]>(() => {
-    return generals
-      .flatMap((general) => {
-        const command = extractCurrentCommand(general.lastTurn);
-        const destinationId = extractDestinationCityId(general.lastTurn);
-        const isMoveCommand =
-          command.includes("이동") || command.includes("접경귀환");
-        const hasDestination = destinationId != null;
-        const etaTime = parseEta(general.commandEndTime);
-        const hasRunningEta = etaTime != null && etaTime > now;
-
-        if (!isMoveCommand && !hasDestination) return [];
-        if (!hasRunningEta) return [];
-
-        const fromCity =
-          cityMap.get(general.cityId)?.name ?? `도시 #${general.cityId}`;
-        const toCity = destinationId
-          ? (cityMap.get(destinationId)?.name ?? `도시 #${destinationId}`)
-          : "목표 도시 미확인";
-
-        const nation = nationMap.get(general.nationId);
-
-        return [
-          {
-            generalId: general.id,
-            generalName: general.name,
-            nationName: nation?.name,
-            nationColor: nation?.color,
-            fromCity,
-            toCity,
-            etaMs: etaTime,
-            eta: new Date(etaTime).toLocaleString("ko-KR"),
-            remainText: formatRemain(etaTime - now),
-            commandName: command,
-          },
-        ];
-      })
-      .sort((a, b) => {
-        const etaCompare = a.etaMs - b.etaMs;
-        if (etaCompare !== 0) return etaCompare;
-        return a.generalName.localeCompare(b.generalName);
-      });
-  }, [generals, cityMap, nationMap, now]);
+    loadTraffic();
+  }, [loadTraffic]);
 
   if (!currentWorld) {
     return (
@@ -107,121 +105,143 @@ export default function TrafficPage() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="p-4">
-        <LoadingState />
-      </div>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   return (
-    <div className="p-4 space-y-4 max-w-4xl mx-auto">
-      <PageHeader icon={Truck} title="이동 현황" />
+    <div className="p-4 space-y-4 max-w-5xl mx-auto">
+      <PageHeader icon={Activity} title="트래픽 정보" />
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* 접속량 (Refresh count) */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-center">접 속 량</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {recentTraffic.length === 0 ? (
+              <div className="text-sm text-muted-foreground text-center py-4">
+                트래픽 데이터가 없습니다.
+              </div>
+            ) : (
+              recentTraffic.map((entry, idx) => {
+                const timeStr = entry.date
+                  ? entry.date.substring(11, 16)
+                  : "-";
+                const label = `${entry.year}년 ${entry.month}월 ${timeStr}`;
+                return (
+                  <TrafficBar
+                    key={idx}
+                    value={entry.refresh}
+                    maxValue={maxRefresh}
+                    label={label}
+                  />
+                );
+              })
+            )}
+            <div className="text-center text-sm text-muted-foreground pt-2 border-t">
+              최고기록: {maxRefresh.toLocaleString()}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 접속자 (Online user count) */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg text-center">접 속 자</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            {recentTraffic.length === 0 ? (
+              <div className="text-sm text-muted-foreground text-center py-4">
+                트래픽 데이터가 없습니다.
+              </div>
+            ) : (
+              recentTraffic.map((entry, idx) => {
+                const timeStr = entry.date
+                  ? entry.date.substring(11, 16)
+                  : "-";
+                const label = `${entry.year}년 ${entry.month}월 ${timeStr}`;
+                return (
+                  <TrafficBar
+                    key={idx}
+                    value={entry.online}
+                    maxValue={maxOnline}
+                    label={label}
+                  />
+                );
+              })
+            )}
+            <div className="text-center text-sm text-muted-foreground pt-2 border-t">
+              최고기록: {maxOnline.toLocaleString()}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 주의대상자 (Top refreshers) */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">이동 중인 장수</CardTitle>
+          <CardTitle className="text-lg text-center">
+            주 의 대 상 자 (순간과도갱신)
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          {movingGenerals.length === 0 ? (
-            <EmptyState icon={Truck} title="현재 이동 중인 장수가 없습니다." />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>장수</TableHead>
-                  <TableHead>국가</TableHead>
-                  <TableHead>출발</TableHead>
-                  <TableHead>도착</TableHead>
-                  <TableHead>명령</TableHead>
-                  <TableHead className="text-right">ETA</TableHead>
-                  <TableHead className="text-right">남은 시간</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {movingGenerals.map((row) => (
-                  <TableRow key={row.generalId}>
-                    <TableCell className="font-medium">
-                      {row.generalName}
-                    </TableCell>
-                    <TableCell>
-                      <NationBadge
-                        name={row.nationName}
-                        color={row.nationColor}
-                      />
-                    </TableCell>
-                    <TableCell>{row.fromCity}</TableCell>
-                    <TableCell>{row.toCity}</TableCell>
-                    <TableCell>{row.commandName}</TableCell>
-                    <TableCell className="text-right text-xs">
-                      {row.eta}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {row.remainText}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        <CardContent className="space-y-1">
+          {/* Total row */}
+          <div className="flex items-center gap-2 h-5">
+            <span className="text-xs w-24 text-right shrink-0 font-semibold">
+              접속자 총합
+            </span>
+            <span className="text-xs w-28 text-center shrink-0">
+              {totalRefreshScoreTotal.toLocaleString()}(
+              {totalRefresh.toLocaleString()})
+            </span>
+            <div className="flex-1 relative h-4 bg-muted/30 rounded overflow-hidden">
+              <div
+                className="absolute inset-y-0 left-0 rounded"
+                style={{
+                  width: "100%",
+                  backgroundColor: getTrafficColor(100),
+                }}
+              />
+            </div>
+          </div>
+
+          {topRefreshers.map((user, idx) => {
+            const pct =
+              totalRefresh > 0
+                ? Math.round((user.refresh / totalRefresh) * 1000) / 10
+                : 0;
+            const color = getTrafficColor(pct);
+            return (
+              <div key={idx} className="flex items-center gap-2 h-5">
+                <span className="text-xs w-24 text-right shrink-0">
+                  {user.name}
+                </span>
+                <span className="text-xs w-28 text-center shrink-0">
+                  {user.refreshScoreTotal.toLocaleString()}(
+                  {user.refresh.toLocaleString()})
+                </span>
+                <div className="flex-1 relative h-4 bg-muted/30 rounded overflow-hidden">
+                  {pct > 0 && (
+                    <div
+                      className="absolute inset-y-0 left-0 rounded"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: color,
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {topRefreshers.length === 0 && (
+            <div className="text-sm text-muted-foreground text-center py-4">
+              데이터가 없습니다.
+            </div>
           )}
         </CardContent>
       </Card>
     </div>
   );
-}
-
-function extractCurrentCommand(lastTurn: Record<string, unknown>): string {
-  const actionCode = lastTurn.actionCode;
-  if (typeof actionCode === "string" && actionCode.length > 0) {
-    return actionCode;
-  }
-  const brief = lastTurn.brief;
-  if (typeof brief === "string" && brief.length > 0) {
-    return brief;
-  }
-  return "-";
-}
-
-function extractDestinationCityId(
-  lastTurn: Record<string, unknown>,
-): number | null {
-  const arg = lastTurn.arg;
-  if (!arg || typeof arg !== "object" || Array.isArray(arg)) return null;
-
-  const values = arg as Record<string, unknown>;
-  const candidates = [
-    values.destCityId,
-    values.destCityID,
-    values.toCityId,
-    values.cityId,
-  ];
-
-  for (const value of candidates) {
-    if (typeof value === "number" && Number.isFinite(value)) return value;
-    if (typeof value === "string") {
-      const parsed = Number(value);
-      if (Number.isFinite(parsed)) return parsed;
-    }
-  }
-
-  return null;
-}
-
-function parseEta(commandEndTime: string | null): number | null {
-  if (!commandEndTime) return null;
-  const eta = new Date(commandEndTime).getTime();
-  if (Number.isNaN(eta)) return null;
-  return eta;
-}
-
-function formatRemain(ms: number): string {
-  if (ms <= 0) return "도착";
-  const sec = Math.floor(ms / 1000);
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  if (h > 0) return `${h}시간 ${m}분`;
-  if (m > 0) return `${m}분 ${s}초`;
-  return `${s}초`;
 }

@@ -23,6 +23,8 @@ export default function AdminMembersPage() {
   const [generals, setGenerals] = useState<AdminGeneral[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkActing, setBulkActing] = useState(false);
 
   const load = useCallback(() => {
     adminApi
@@ -52,6 +54,39 @@ export default function AdminMembersPage() {
     }
   };
 
+  const toggleSelect = (id: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((g) => g.id)));
+    }
+  };
+
+  const doBulkAction = async (type: string) => {
+    if (selected.size === 0) return;
+    if (!confirm(`선택한 ${selected.size}명에 대해 "${type}" 작업을 실행하시겠습니까?`)) return;
+    setBulkActing(true);
+    try {
+      await adminApi.bulkGeneralAction(Array.from(selected), type);
+      toast.success(`${type} 일괄 처리 완료 (${selected.size}명)`);
+      setSelected(new Set());
+      load();
+    } catch {
+      toast.error("일괄 처리 실패");
+    } finally {
+      setBulkActing(false);
+    }
+  };
+
   const filtered = search
     ? generals.filter((g) =>
         g.name.toLowerCase().includes(search.toLowerCase()),
@@ -72,9 +107,36 @@ export default function AdminMembersPage() {
           className="pl-8"
         />
       </div>
+      {/* Bulk actions */}
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
+          <span className="text-sm font-medium">{selected.size}명 선택</span>
+          <Button size="sm" variant="outline" onClick={() => doBulkAction("block")} disabled={bulkActing}>
+            일괄 차단
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => doBulkAction("unblock")} disabled={bulkActing}>
+            일괄 해제
+          </Button>
+          <Button size="sm" variant="destructive" onClick={() => doBulkAction("kill")} disabled={bulkActing}>
+            일괄 처단
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            선택 해제
+          </Button>
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-8">
+              <input
+                type="checkbox"
+                checked={filtered.length > 0 && selected.size === filtered.length}
+                onChange={toggleSelectAll}
+                className="accent-red-400"
+              />
+            </TableHead>
             <TableHead>ID</TableHead>
             <TableHead>이름</TableHead>
             <TableHead>국가</TableHead>
@@ -88,6 +150,14 @@ export default function AdminMembersPage() {
         <TableBody>
           {filtered.map((g) => (
             <TableRow key={g.id}>
+              <TableCell>
+                <input
+                  type="checkbox"
+                  checked={selected.has(g.id)}
+                  onChange={() => toggleSelect(g.id)}
+                  className="accent-red-400"
+                />
+              </TableCell>
               <TableCell>{g.id}</TableCell>
               <TableCell className="font-medium">{g.name}</TableCell>
               <TableCell>{g.nationId || "-"}</TableCell>
@@ -134,7 +204,7 @@ export default function AdminMembersPage() {
           {filtered.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={8}
+                colSpan={9}
                 className="text-center text-muted-foreground"
               >
                 장수가 없습니다.

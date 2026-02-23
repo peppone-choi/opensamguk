@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
+import { mapRecentApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
-import type { CityConst } from "@/types";
+import { formatLog } from "@/lib/formatLog";
+import type { CityConst, PublicCachedMapHistory } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Tooltip {
   cityName: string;
@@ -12,6 +16,12 @@ interface Tooltip {
   nationColor: string;
   level: number;
   pop: number;
+  agri: string;
+  comm: string;
+  secu: string;
+  def: string;
+  wall: string;
+  trust: number;
   screenX: number;
   screenY: number;
 }
@@ -24,6 +34,7 @@ export default function MapPage() {
   const { currentWorld } = useWorldStore();
   const { cities, nations, mapData, loadAll, loadMap } = useGameStore();
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
 
   useEffect(() => {
     if (currentWorld) {
@@ -31,6 +42,14 @@ export default function MapPage() {
       const mapCode =
         (currentWorld.config as Record<string, string>)?.mapCode ?? "che";
       loadMap(mapCode);
+
+      // Load cached map with history
+      mapRecentApi
+        .getMapRecent(currentWorld.id)
+        .then(({ data }) => {
+          if (data.history) setHistory(data.history);
+        })
+        .catch(() => {});
     }
   }, [currentWorld, loadAll, loadMap]);
 
@@ -38,6 +57,12 @@ export default function MapPage() {
     if (!currentWorld) return;
     return subscribeWebSocket(`/topic/world/${currentWorld.id}/turn`, () => {
       loadAll(currentWorld.id);
+      mapRecentApi
+        .getMapRecent(currentWorld.id)
+        .then(({ data }) => {
+          if (data.history) setHistory(data.history);
+        })
+        .catch(() => {});
     });
   }, [currentWorld, loadAll]);
 
@@ -139,6 +164,12 @@ export default function MapPage() {
       nationColor: nation?.color ?? "#555",
       level: city?.level ?? cc.level,
       pop: city?.pop ?? 0,
+      agri: city ? `${city.agri}/${city.agriMax}` : "-",
+      comm: city ? `${city.comm}/${city.commMax}` : "-",
+      secu: city ? `${city.secu}/${city.secuMax}` : "-",
+      def: city ? `${city.def}/${city.defMax}` : "-",
+      wall: city ? `${city.wall}/${city.wallMax}` : "-",
+      trust: city?.trust ?? 0,
       screenX: e.clientX,
       screenY: e.clientY,
     });
@@ -152,9 +183,11 @@ export default function MapPage() {
     );
   }
 
+  const serverName = currentWorld?.name ?? "삼국지";
+
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold">세계지도</h1>
+      <h1 className="text-xl font-bold">{serverName} 현황</h1>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-xs text-gray-400">
@@ -229,7 +262,7 @@ export default function MapPage() {
           })}
         </svg>
 
-        {/* Tooltip popup */}
+        {/* Tooltip popup — enhanced with rich city info */}
         {tooltip && (
           <div
             className="fixed z-50 bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg text-sm space-y-1"
@@ -244,12 +277,47 @@ export default function MapPage() {
             </div>
             <div className="text-gray-400">소속: {tooltip.nationName}</div>
             <div className="text-gray-400">레벨: {tooltip.level}</div>
-            <div className="text-gray-400">
-              인구: {tooltip.pop.toLocaleString()}
-            </div>
+            <div className="text-gray-400">인구: {tooltip.pop.toLocaleString()}</div>
+            <div className="text-gray-400">농업: {tooltip.agri}</div>
+            <div className="text-gray-400">상업: {tooltip.comm}</div>
+            <div className="text-gray-400">치안: {tooltip.secu}</div>
+            <div className="text-gray-400">수비: {tooltip.def}</div>
+            <div className="text-gray-400">성벽: {tooltip.wall}</div>
+            <div className="text-gray-400">민심: {tooltip.trust}</div>
           </div>
         )}
       </div>
+
+      {/* History Log Panel */}
+      {history.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              최근 기록
+              <Badge variant="outline" className="text-[10px]">{history.length}건</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
+              {history.map((item) => (
+                <div key={item.id} className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0">
+                  <span className="text-muted-foreground whitespace-nowrap shrink-0 w-20">
+                    {item.sentAt
+                      ? new Date(item.sentAt).toLocaleDateString("ko-KR", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : ""}
+                  </span>
+                  <span className="text-gray-300">{formatLog(item.text)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

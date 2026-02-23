@@ -49,7 +49,11 @@ type SortKey =
   | "train"
   | "atmos"
   | "fame"
-  | "npcState";
+  | "npcState"
+  | "totalStats"
+  | "age"
+  | "special"
+  | "personal";
 
 type NpcFilter = "all" | "user" | "npc";
 
@@ -62,11 +66,15 @@ const BASE_COLUMNS: { key: SortKey; label: string }[] = [
   { key: "intel", label: "지력" },
   { key: "politics", label: "정치" },
   { key: "charm", label: "매력" },
+  { key: "totalStats", label: "종능" },
   { key: "crew", label: "병사" },
   { key: "experience", label: "레벨" },
 ];
 
 const EXT_COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "special", label: "특기" },
+  { key: "personal", label: "성격" },
+  { key: "age", label: "연령" },
   { key: "crewType", label: "병종" },
   { key: "train", label: "훈련" },
   { key: "atmos", label: "사기" },
@@ -77,6 +85,7 @@ const EXT_COLUMNS: { key: SortKey; label: string }[] = [
 
 const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "experience", label: "레벨" },
+  { key: "totalStats", label: "종능" },
   { key: "leadership", label: "통솔" },
   { key: "strength", label: "무력" },
   { key: "intel", label: "지력" },
@@ -86,6 +95,8 @@ const SORT_DROPDOWN_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "train", label: "훈련" },
   { key: "atmos", label: "사기" },
   { key: "fame", label: "명성" },
+  { key: "dedication", label: "계급" },
+  { key: "age", label: "연령" },
   { key: "officerLevel", label: "관직" },
   { key: "nation", label: "소속" },
   { key: "city", label: "도시" },
@@ -144,10 +155,20 @@ export default function GeneralsPage() {
         const ca = cityMap.get(a.cityId)?.name ?? "";
         const cb = cityMap.get(b.cityId)?.name ?? "";
         cmp = ca.localeCompare(cb);
+      } else if (sortKey === "totalStats") {
+        cmp =
+          a.leadership + a.strength + a.intel -
+          (b.leadership + b.strength + b.intel);
+      } else if (sortKey === "age") {
+        cmp = (a.age ?? 0) - (b.age ?? 0);
+      } else if (sortKey === "special") {
+        cmp = (a.specialCode ?? "").localeCompare(b.specialCode ?? "");
+      } else if (sortKey === "personal") {
+        cmp = (a.personalCode ?? "").localeCompare(b.personalCode ?? "");
       } else {
         cmp =
           sortKey === "fame"
-            ? a.dedication - b.dedication
+            ? a.experience - b.experience
             : (a[sortKey] as number) - (b[sortKey] as number);
       }
       return sortDir === "asc" ? cmp : -cmp;
@@ -191,7 +212,9 @@ export default function GeneralsPage() {
     : BASE_COLUMNS;
 
   const canSpyAccess =
-    (myGeneral?.permission === "spy" || (myGeneral?.officerLevel ?? 0) >= 5) &&
+    (myGeneral?.permission === "spy" ||
+      myGeneral?.permission === "auditor" ||
+      (myGeneral?.officerLevel ?? 0) >= 5) &&
     (myGeneral?.nationId ?? 0) > 0;
 
   const canViewTroopInfo = (targetNationId: number) => {
@@ -344,10 +367,21 @@ export default function GeneralsPage() {
                   <TableCell>{g.intel}</TableCell>
                   <TableCell>{g.politics}</TableCell>
                   <TableCell>{g.charm}</TableCell>
+                  <TableCell>{g.leadership + g.strength + g.intel}</TableCell>
                   <TableCell>{g.crew.toLocaleString()}</TableCell>
                   <TableCell>{g.expLevel}</TableCell>
                   {showExtended && (
                     <>
+                      <TableCell className="text-xs whitespace-nowrap">
+                        {g.specialCode === "None" ? "-" : g.specialCode ?? "-"}
+                        {g.special2Code && g.special2Code !== "None"
+                          ? ` / ${g.special2Code}`
+                          : ""}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {g.personalCode ?? "-"}
+                      </TableCell>
+                      <TableCell>{g.age ?? "-"}</TableCell>
                       <TableCell className="text-xs">
                         {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}
                       </TableCell>
