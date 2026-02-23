@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { generalApi, nationApi } from "@/lib/gameApi";
@@ -9,8 +10,10 @@ import { Users } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
+import { ErrorState } from "@/components/game/error-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
 import { Badge } from "@/components/ui/badge";
+import { formatOfficerLevelText, CREW_TYPE_NAMES } from "@/lib/game-utils";
 import {
   Table,
   TableBody,
@@ -26,9 +29,12 @@ export default function NationGeneralsPage() {
   const [generals, setGenerals] = useState<General[]>([]);
   const [nation, setNation] = useState<Nation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     if (!myGeneral?.nationId) return;
+    setLoading(true);
+    setError(false);
     Promise.all([
       generalApi.listByNation(myGeneral.nationId),
       nationApi.get(myGeneral.nationId),
@@ -37,15 +43,20 @@ export default function NationGeneralsPage() {
         setGenerals(gRes.data);
         setNation(nRes.data);
       })
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [myGeneral?.nationId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (!currentWorld || !myGeneral)
     return (
       <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
     );
   if (loading) return <LoadingState />;
+  if (error) return <ErrorState title="세력 장수 정보를 불러오지 못했습니다." onRetry={fetchData} />;
 
   return (
     <div className="p-4 space-y-4 max-w-4xl mx-auto">
@@ -67,11 +78,11 @@ export default function NationGeneralsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>이름</TableHead>
+              <TableHead>관직</TableHead>
               <TableHead>통솔</TableHead>
               <TableHead>무력</TableHead>
               <TableHead>지력</TableHead>
-              <TableHead>정치</TableHead>
-              <TableHead>매력</TableHead>
+              <TableHead>병종</TableHead>
               <TableHead>병력</TableHead>
               <TableHead>상태</TableHead>
             </TableRow>
@@ -80,20 +91,20 @@ export default function NationGeneralsPage() {
             {generals.map((g) => (
               <TableRow key={g.id}>
                 <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
+                  <Link href={`/generals/${g.id}`} className="flex items-center gap-2 hover:underline">
                     <GeneralPortrait
                       picture={g.picture}
                       name={g.name}
                       size="sm"
                     />
                     {g.name}
-                  </div>
+                  </Link>
                 </TableCell>
+                <TableCell className="text-xs text-muted-foreground">{formatOfficerLevelText(g.officerLevel, nation?.level)}</TableCell>
                 <TableCell>{g.leadership}</TableCell>
                 <TableCell>{g.strength}</TableCell>
                 <TableCell>{g.intel}</TableCell>
-                <TableCell>{g.politics}</TableCell>
-                <TableCell>{g.charm}</TableCell>
+                <TableCell className="text-xs">{CREW_TYPE_NAMES[g.crewType] ?? `${g.crewType}`}</TableCell>
                 <TableCell>{g.crew.toLocaleString()}</TableCell>
                 <TableCell>
                   {g.npcState > 0 ? (

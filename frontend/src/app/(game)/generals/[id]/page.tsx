@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { User } from "lucide-react";
 import { useWorldStore } from "@/stores/worldStore";
@@ -10,6 +10,7 @@ import type { General, Message } from "@/types";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
+import { ErrorState } from "@/components/game/error-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
 import { NationBadge } from "@/components/game/nation-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,9 +35,12 @@ export default function GeneralDetailPage() {
   const [general, setGeneral] = useState<General | null>(null);
   const [records, setRecords] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     if (!currentWorld) return;
+    setLoading(true);
+    setError(false);
     loadAll(currentWorld.id);
     Promise.all([
       generalApi.get(generalId),
@@ -46,9 +50,13 @@ export default function GeneralDetailPage() {
         setGeneral(genRes.data);
         setRecords(recRes.data);
       })
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [currentWorld, generalId, loadAll]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const nation = useMemo(
     () => (general ? nations.find((n) => n.id === general.nationId) : null),
@@ -65,6 +73,7 @@ export default function GeneralDetailPage() {
       <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
     );
   if (loading) return <LoadingState />;
+  if (error) return <ErrorState title="장수 정보를 불러오지 못했습니다." onRetry={fetchData} />;
   if (!general)
     return (
       <div className="p-4">

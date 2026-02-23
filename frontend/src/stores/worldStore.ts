@@ -28,6 +28,7 @@ interface WorldStore {
     },
   ) => Promise<void>;
   deactivateWorld: (id: number) => Promise<void>;
+  fetchWorld: (id: number) => Promise<void>;
 }
 
 export const useWorldStore = create<WorldStore>((set) => ({
@@ -83,6 +84,14 @@ export const useWorldStore = create<WorldStore>((set) => ({
 
   deactivateWorld: async (id) => {
     await worldApi.deactivate(id);
+    const { data } = await worldApi.get(id);
+    set((state) => ({
+      worlds: state.worlds.map((w) => (w.id === id ? data : w)),
+      currentWorld: state.currentWorld?.id === id ? data : state.currentWorld,
+    }));
+  },
+
+  fetchWorld: async (id) => {
     const { data } = await worldApi.get(id);
     set((state) => ({
       worlds: state.worlds.map((w) => (w.id === id ? data : w)),

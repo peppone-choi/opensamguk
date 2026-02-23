@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-import { GAME_CDN_ROOT } from "@/lib/image";
+import { GAME_CDN_ROOT, getNationBgUrl } from "@/lib/image";
 
 interface MapViewerProps {
   worldId: number;
@@ -153,7 +153,7 @@ export function MapViewer({
                 <div
                   className="absolute z-[1] bg-center bg-no-repeat"
                   style={{
-                    backgroundImage: `url('${GAME_CDN_ROOT}/b${nation.color.substring(1).toUpperCase()}.png')`,
+                    backgroundImage: `url('${getNationBgUrl(nation.color)}')`,
                     backgroundSize: `${bgW}px ${bgH}px`,
                     width: bgW,
                     height: bgH,

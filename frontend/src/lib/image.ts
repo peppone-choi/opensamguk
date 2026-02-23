@@ -50,3 +50,50 @@ export function getSammoBarBg(height: number): string {
 export function getSammoBarFill(height: number): string {
   return `${GAME_CDN_ROOT}/pb${height - 2}.gif`;
 }
+
+/** Nation territory background blotch — e.g. `bFF0000.png` */
+export function getNationBgUrl(color: string): string {
+  const hex = color.replace("#", "").toUpperCase();
+  return `${GAME_CDN_ROOT}/b${hex}.png`;
+}
+
+/** Map background layer for a season — `bg_spring.jpg`, `bg_summer.jpg`, etc. */
+export function getMapBgUrl(
+  mapFolder: string,
+  season: "spring" | "summer" | "fall" | "winter",
+): string {
+  return `${GAME_CDN_ROOT}/map/${mapFolder}/bg_${season}.jpg`;
+}
+
+/** Map road overlay — e.g. `che_road.png` */
+export function getMapRoadUrl(mapCode: string): string {
+  if (mapCode.includes("miniche")) return `${GAME_CDN_ROOT}/map/che/miniche_road.png`;
+  const folder = mapCode === "ludo_rathowm" ? "ludo_rathowm" : mapCode;
+  const file = mapCode === "ludo_rathowm" ? "road.png" : `${mapCode}_road.png`;
+  return `${GAME_CDN_ROOT}/map/${folder}/${file}`;
+}
+
+/** Special-event city icon (e.g. event51 = revolt) */
+export function getSpecialEventIcon(eventId: number): string {
+  return `${GAME_CDN_ROOT}/event${eventId}.gif`;
+}
+
+/** Item icon by item type/id */
+export function getItemIconUrl(itemId: number): string {
+  return `${GAME_CDN_ROOT}/item${itemId}.png`;
+}
+
+/** Skill icon by skill id */
+export function getSkillIconUrl(skillId: number): string {
+  return `${GAME_CDN_ROOT}/skill${skillId}.png`;
+}
+
+/** Building icon by building type */
+export function getBuildingIconUrl(buildingType: number): string {
+  return `${GAME_CDN_ROOT}/building${buildingType}.png`;
+}
+
+/** Flag type helper — supply flag vs depleted flag */
+export function getCityFlagUrl(color: string, supply: boolean): string {
+  return getNationFlagUrl(color, supply);
+}

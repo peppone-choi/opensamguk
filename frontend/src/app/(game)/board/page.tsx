@@ -6,6 +6,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { boardApi, messageApi } from "@/lib/gameApi";
+import { subscribeWebSocket } from "@/lib/websocket";
 import type { BoardComment, Message } from "@/types";
 import {
   MessageSquare,
@@ -120,6 +121,26 @@ export default function BoardPage() {
     }, 10000);
     return () => clearInterval(interval);
   }, [loadPublic, loadSecret]);
+
+  // Real-time updates via WebSocket
+  useEffect(() => {
+    if (!currentWorld) return;
+    const unsubMsg = subscribeWebSocket(
+      `/topic/world/${currentWorld.id}/message`,
+      () => {
+        loadPublic();
+        loadSecret();
+      },
+    );
+    const unsubTurn = subscribeWebSocket(
+      `/topic/world/${currentWorld.id}/turn`,
+      () => {
+        loadPublic();
+        loadSecret();
+      },
+    );
+    return () => { unsubMsg(); unsubTurn(); };
+  }, [currentWorld, loadPublic, loadSecret]);
 
   const handlePost = async () => {
     if (!currentWorld || !myGeneral || !content.trim()) return;

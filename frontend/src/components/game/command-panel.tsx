@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { Clock3, Copy, Pencil, Trash2 } from "lucide-react";
+import { useHotkeys } from "@/hooks/useHotkeys";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -482,6 +483,28 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     await applyToTurns(targets, actionCode, arg);
     setShowSelector(false);
   };
+
+  // Keyboard shortcuts: 1-9 to select turns, Escape to close, Delete to clear
+  useHotkeys([
+    ...Array.from({ length: 9 }, (_, i) => ({
+      key: String(i + 1),
+      handler: () => {
+        if (i < TURN_COUNT) {
+          setSelectedTurns(new Set([i]));
+          setLastClickedTurn(i);
+        }
+      },
+      description: `Select turn ${i + 1}`,
+    })),
+    { key: "0", handler: () => { setSelectedTurns(new Set([9])); setLastClickedTurn(9); }, description: "Select turn 10" },
+    { key: "-", handler: () => { setSelectedTurns(new Set([10])); setLastClickedTurn(10); }, description: "Select turn 11" },
+    { key: "=", handler: () => { setSelectedTurns(new Set([11])); setLastClickedTurn(11); }, description: "Select turn 12" },
+    { key: "Escape", handler: () => { if (showSelector) setShowSelector(false); }, description: "Close command selector" },
+    { key: "Enter", handler: () => { if (!showSelector && !realtimeMode) setShowSelector(true); }, description: "Open command selector" },
+    { key: "Delete", handler: () => { if (selectedTurnList.length > 0 && !realtimeMode) clearTurns(selectedTurnList); }, description: "Clear selected turns" },
+    { key: "c", ctrl: true, handler: copySelected, description: "Copy selected turns" },
+    { key: "v", ctrl: true, handler: () => { void pasteClipboard(); }, description: "Paste turns", preventDefault: true },
+  ]);
 
   return (
     <Card className="border-gray-700">

@@ -21,6 +21,7 @@ import {
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
+import { ErrorState } from "@/components/game/error-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
 
 export default function PersonnelPage() {
@@ -35,6 +36,7 @@ export default function PersonnelPage() {
   const [selOfficerLevel, setSelOfficerLevel] = useState("");
   const [selCity, setSelCity] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -44,10 +46,11 @@ export default function PersonnelPage() {
 
   useEffect(() => {
     if (!myGeneral?.nationId) return;
+    setError(false);
     nationManagementApi
       .getOfficers(myGeneral.nationId)
       .then(({ data }) => setOfficers(data))
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [myGeneral?.nationId]);
 
@@ -100,6 +103,7 @@ export default function PersonnelPage() {
       <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
     );
   if (loading) return <LoadingState />;
+  if (error) return <ErrorState title="인사 정보를 불러오지 못했습니다." />;
   if (!myGeneral?.nationId)
     return (
       <div className="p-4 text-muted-foreground">소속 국가가 없습니다.</div>

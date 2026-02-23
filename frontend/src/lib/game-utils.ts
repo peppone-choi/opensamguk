@@ -416,6 +416,26 @@ export const REGION_NAMES: Record<number, string> = {
   5: "형남",
 };
 
+// --- Stat color (ability value → color) ---
+
+export function statColor(value: number): string {
+  if (value >= 90) return "#eab308"; // gold
+  if (value >= 80) return "#f97316"; // orange
+  if (value >= 70) return "#22c55e"; // green
+  if (value >= 60) return "#06b6d4"; // cyan
+  if (value >= 50) return "#94a3b8"; // gray
+  return "#6b7280"; // dim
+}
+
+// --- Trust (민심) color ---
+
+export function trustColor(trust: number): string {
+  if (trust >= 80) return "#22c55e";
+  if (trust >= 60) return "#eab308";
+  if (trust >= 40) return "#f97316";
+  return "#ef4444";
+}
+
 // --- City level names ---
 
 export const CITY_LEVEL_NAMES: Record<number, string> = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Toaster } from "sonner";
@@ -8,6 +8,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useHotkeys } from "@/hooks/useHotkeys";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { TurnTimer } from "@/components/game/turn-timer";
 import { Button } from "@/components/ui/button";
 import { ResourceDisplay } from "@/components/game/resource-display";
@@ -123,6 +125,20 @@ export default function GameLayout({
   }, [isAuthenticated, currentWorld, myGeneral, generalLoading, router]);
 
   const { enabled: wsEnabled, toggleRealtime } = useWebSocket();
+  const { soundEnabled, toggleSound } = useSoundEffects();
+
+  // Global keyboard shortcuts for navigation
+  const goTo = useCallback((path: string) => router.push(path), [router]);
+  useHotkeys([
+    { key: "m", alt: true, handler: () => goTo("/map"), description: "Go to map" },
+    { key: "g", alt: true, handler: () => goTo("/general"), description: "My general" },
+    { key: "c", alt: true, handler: () => goTo("/city"), description: "Current city" },
+    { key: "k", alt: true, handler: () => goTo("/commands"), description: "Commands" },
+    { key: "b", alt: true, handler: () => goTo("/board"), description: "Board" },
+    { key: "s", alt: true, handler: () => goTo("/messages"), description: "Messages" },
+    { key: "n", alt: true, handler: () => goTo("/nation"), description: "Nation info" },
+    { key: "h", alt: true, handler: () => goTo("/"), description: "Home/Dashboard" },
+  ]);
 
   const officerLevel = myGeneral?.officerLevel ?? 0;
   const inNation = officerLevel >= 1;
@@ -175,6 +191,17 @@ export default function GameLayout({
               >
                 {wsEnabled ? "실시간 ON" : "실시간 OFF"}
               </button>
+              <button
+                type="button"
+                onClick={toggleSound}
+                className={`border px-1 py-0 text-[10px] ${
+                  soundEnabled
+                    ? "border-[#6a5a00] bg-[#332e00] text-[#ffe07c]"
+                    : "border-gray-600 bg-[#111] text-gray-300"
+                }`}
+              >
+                {soundEnabled ? "🔊 ON" : "🔇 OFF"}
+              </button>
             </div>
 
             {myGeneral && (
@@ -213,7 +240,7 @@ export default function GameLayout({
           </div>
         </div>
 
-        <div className="mb-[1px] grid grid-cols-4 gap-[1px] bg-gray-600 lg:grid-cols-10">
+        <div className="mb-[1px] grid grid-cols-3 gap-[1px] bg-gray-600 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (

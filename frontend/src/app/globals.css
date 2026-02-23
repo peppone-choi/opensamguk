@@ -303,4 +303,278 @@
   [data-slot="tabs-trigger"]:last-child {
     border-right: none;
   }
+
+  /* ── Nation Color System ── */
+  .nation-color-wei { --nation-color: #6495ed; }
+  .nation-color-shu { --nation-color: #ff6347; }
+  .nation-color-wu { --nation-color: #3cb371; }
+  .nation-color-yuan { --nation-color: #daa520; }
+  .nation-color-other { --nation-color: #c0c0c0; }
+
+  .nation-border { border-color: var(--nation-color, #666); }
+  .nation-bg { background-color: var(--nation-color, #333); }
+  .nation-text { color: var(--nation-color, #ccc); }
+  .nation-header {
+    background-color: var(--nation-color, #333);
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+    padding: 2px 6px;
+  }
+
+  /* ── Legacy Event Colors ── */
+  .ev_warning { color: orangered; }
+  .ev_notice { color: orangered; }
+  .ev_succes { color: lightgreen; }
+  .ev_sell { color: orange; }
+  .ev_failed { color: orangered; }
+  .ev_highlight { color: orangered; }
+
+  /* ── Legacy Text Colors ── */
+  .t_red { color: red; }
+  .t_blue { color: blue; }
+  .t_green { color: green; }
+  .t_magenta { color: magenta; }
+  .t_cyan { color: cyan; }
+  .t_limegreen { color: limegreen; }
+  .t_skyblue { color: skyblue; }
+  .t_orangered { color: orangered; }
+  .t_yellow { color: yellow; }
+  .t_white { color: white; }
+
+  /* ── Legacy Bullet Markers ── */
+  .o_bullet::before { color: cyan; content: "●"; }
+  .o_diamond::before { color: orangered; content: "◆"; }
+
+  /* ── Compact Game Table ── */
+  [data-slot="table"] {
+    font-size: 13px;
+    border-collapse: collapse;
+  }
+
+  [data-slot="table-head"] {
+    background: #1a1a2e;
+    color: #ccc;
+    font-size: 12px;
+    font-weight: 700;
+    height: auto;
+    padding: 3px 6px;
+    border-bottom: 1px solid #555;
+    text-align: center;
+  }
+
+  [data-slot="table-cell"] {
+    padding: 2px 6px;
+    border-bottom: 1px solid #333;
+    font-size: 13px;
+  }
+
+  [data-slot="table-row"]:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  [data-slot="table-row"]:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── War Log Plate ── */
+  .small_war_log { display: inline-block; }
+  .small_war_log .war_type_attack { color: cyan; }
+  .small_war_log .war_type_defense { color: magenta; }
+  .small_war_log .war_type_siege { color: white; }
+  .small_war_log .name_plate { font-size: 0.75em; }
+  .small_war_log .name_plate_cover { color: yellow; }
+  .small_war_log .crew_plate { color: orangered; font-size: 90%; }
+
+  /* ── Date Tag ── */
+  .t_date { font-size: 0.75em; }
+
+  /* ── Map City Tooltip ── */
+  .city-tooltip {
+    position: absolute;
+    z-index: 50;
+    min-width: 120px;
+    border: 1px solid #666;
+    background: rgba(0, 0, 0, 0.9);
+    white-space: nowrap;
+    font-size: 12px;
+    pointer-events: none;
+  }
+  .city-tooltip-name {
+    background-color: rgb(30, 164, 255);
+    padding: 1px 4px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .city-tooltip-nation {
+    background-color: rgb(30, 164, 255);
+    padding: 1px 4px;
+    border-top: 1px solid #555;
+    text-align: right;
+    font-size: 11px;
+  }
+  .city-tooltip-row {
+    padding: 1px 4px;
+    border-top: 1px solid #444;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  /* ── My City Blink (Map) ── */
+  @keyframes blink-my-city {
+    0%, 100% { box-shadow: 0 0 0 2px transparent; }
+    50% { box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8); }
+  }
+  .my-city-blink {
+    animation: blink-my-city 3.9s infinite;
+  }
+
+  /* ── Compensate Colors ── */
+  .compensate-positive { color: skyblue; }
+  .compensate-negative { color: orange; }
+  .command-impossible { background-color: red; color: white; }
+
+  /* ── Rank/Hall of Fame Grid ── */
+  .rank-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .rank-card {
+    width: 110px;
+    text-align: center;
+    border-right: 1px solid #555;
+    border-top: 1px solid #555;
+    box-sizing: border-box;
+  }
+  .rank-card-name {
+    font-size: 11px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .rank-card-nation {
+    font-size: 11px;
+    border-top: 1px solid #555;
+    border-bottom: 1px solid #555;
+  }
+  .rank-card-value {
+    font-size: 12px;
+    border-top: 1px solid #555;
+    padding: 3px 0;
+  }
+
+  /* ── Chief Center Turn Grid ── */
+  .chief-turn-box {
+    display: flex;
+    flex-flow: row;
+    max-height: 22px;
+    flex-grow: 1;
+  }
+  .chief-turn-time {
+    border-top: 1px solid #555;
+    border-right: 1px solid #555;
+    font-weight: 500;
+    background: black;
+    text-align: center;
+    width: 44px;
+    line-height: 21px;
+  }
+
+  /* ── Diplomacy Letter ── */
+  .letter-frame {
+    max-width: 1000px;
+    margin: 10px auto;
+  }
+  .letter-header {
+    position: relative;
+    font-size: 200%;
+  }
+  .letter-date {
+    position: absolute;
+    right: 1ch;
+    bottom: 0.2em;
+    font-size: 50%;
+  }
+  .letter-signer {
+    display: inline-block;
+    margin: 0 10px;
+    border: 1px solid #555;
+    width: 110px;
+    text-align: center;
+  }
+  .letter-signer-inner {
+    border-top: 1px solid #555;
+  }
+
+  /* ── Select General Card ── */
+  .general-select-card {
+    width: 125px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: top;
+    border: 1px solid #444;
+    padding: 4px;
+    margin: 2px;
+  }
+  .general-select-card h4 { margin: 0; font-size: 13px; }
+  .general-select-card p { margin: 0; font-size: 12px; }
+
+  /* ── SammoBar Legacy Overrides ── */
+  .bar_out {
+    position: relative;
+    border-top: 1px solid #888;
+    border-bottom: 1px solid #333;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+}
+
+/* ── Responsive Layout ── */
+@media (max-width: 768px) {
+  .legacy-page-wrap {
+    max-width: 100% !important;
+    padding: 0 2px;
+  }
+
+  [data-slot="table-container"] {
+    font-size: 12px;
+  }
+
+  [data-slot="table-head"],
+  [data-slot="table-cell"] {
+    padding: 2px 3px;
+    font-size: 11px;
+  }
+
+  .rank-card {
+    width: calc(33.333% - 1px);
+  }
+
+  .general-select-card {
+    width: calc(50% - 6px);
+  }
+}
+
+@media (max-width: 480px) {
+  .rank-card {
+    width: calc(50% - 1px);
+  }
+
+  .general-select-card {
+    width: calc(100% - 4px);
+  }
+
+  [data-slot="card-content"] {
+    padding: 4px;
+  }
+
+  [data-slot="card-header"] {
+    padding: 0 4px;
+  }
 }
