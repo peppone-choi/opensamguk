@@ -27,12 +27,32 @@ class AccountService(
         return true
     }
 
-    fun updateSettings(loginId: String, defenceTrain: Int?, tournamentState: Int?): Boolean {
+    fun updateSettings(
+        loginId: String,
+        defenceTrain: Int?,
+        tournamentState: Int?,
+        potionThreshold: Int?,
+        autoNationTurn: Boolean?,
+        preRiseDelete: Boolean?,
+        preOpenDelete: Boolean?,
+        borderReturn: Boolean?,
+        customCss: String?,
+    ): Boolean {
         val user = appUserRepository.findByLoginId(loginId) ?: return false
         val generals = generalRepository.findByUserId(user.id)
         generals.forEach { gen ->
             defenceTrain?.let { gen.defenceTrain = it.toShort() }
             tournamentState?.let { gen.tournamentState = it.toShort() }
+
+            val meta = gen.meta.toMutableMap()
+            potionThreshold?.let { meta["potionThreshold"] = it }
+            autoNationTurn?.let { meta["autoNationTurn"] = it }
+            preRiseDelete?.let { meta["preRiseDelete"] = it }
+            preOpenDelete?.let { meta["preOpenDelete"] = it }
+            borderReturn?.let { meta["borderReturn"] = it }
+            customCss?.let { meta["customCss"] = it }
+            gen.meta = meta
+
             generalRepository.save(gen)
         }
         return true

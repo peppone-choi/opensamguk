@@ -34,7 +34,17 @@ class AccountController(
     @PatchMapping("/settings")
     fun updateSettings(@RequestBody request: UpdateSettingsRequest): ResponseEntity<Void> {
         val loginId = getLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        if (!accountService.updateSettings(loginId, request.defenceTrain, request.tournamentState)) {
+        if (!accountService.updateSettings(
+                loginId = loginId,
+                defenceTrain = request.defenceTrain,
+                tournamentState = request.tournamentState,
+                potionThreshold = request.potionThreshold,
+                autoNationTurn = request.autoNationTurn,
+                preRiseDelete = request.preRiseDelete,
+                preOpenDelete = request.preOpenDelete,
+                borderReturn = request.borderReturn,
+                customCss = request.customCss,
+            )) {
             return ResponseEntity.notFound().build()
         }
         return ResponseEntity.ok().build()
