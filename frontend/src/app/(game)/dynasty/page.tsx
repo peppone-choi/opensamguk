@@ -5,7 +5,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { historyApi } from "@/lib/gameApi";
 import type { Message } from "@/types";
-import { Crown, Scroll, Swords, Flag, Landmark } from "lucide-react";
+import { Crown, Scroll, Swords, Flag, Landmark, Clock } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -98,7 +98,7 @@ const EVENT_ICONS: Record<DynastyEvent["type"], React.ReactNode> = {
   other: <Scroll className="size-4 text-muted-foreground" />,
 };
 
-const EVENT_LABELS: Record<DynastyEvent["type"], string> = {
+const DYNASTY_EVENT_LABELS: Record<DynastyEvent["type"], string> = {
   founded: "건국",
   destroyed: "멸망",
   united: "통일",
@@ -249,13 +249,13 @@ export default function DynastyPage() {
             <>
               {/* Summary counts */}
               <div className="flex flex-wrap gap-2">
-                {(Object.keys(EVENT_LABELS) as DynastyEvent["type"][]).map((type) => {
+                {(Object.keys(DYNASTY_EVENT_LABELS) as DynastyEvent["type"][]).map((type) => {
                   const count = dynastyEvents.filter((e) => e.type === type).length;
                   if (count === 0) return null;
                   return (
                     <Badge key={type} variant="secondary" className="gap-1.5">
                       {EVENT_ICONS[type]}
-                      {EVENT_LABELS[type]}: {count}
+                      {DYNASTY_EVENT_LABELS[type]}: {count}
                     </Badge>
                   );
                 })}
@@ -299,7 +299,7 @@ export default function DynastyPage() {
                                   </Badge>
                                 )}
                                 <Badge variant="secondary" className="text-xs">
-                                  {EVENT_LABELS[evt.type]}
+                                  {DYNASTY_EVENT_LABELS[evt.type]}
                                 </Badge>
                               </div>
                               <p className="text-sm mt-0.5">{evt.description}</p>

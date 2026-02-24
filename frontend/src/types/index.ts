@@ -214,6 +214,11 @@ export interface NpcCard {
   nationColor: string;
   personality: string;
   special: string;
+  special2?: string;
+  dex?: number[];
+  experience?: number;
+  dedication?: number;
+  expLevel?: number;
 }
 
 export interface NpcTokenResponse {

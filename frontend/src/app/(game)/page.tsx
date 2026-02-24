@@ -17,6 +17,29 @@ import { MessagePanel } from "@/components/game/message-panel";
 import { GameBottomBar } from "@/components/game/game-bottom-bar";
 import { LoadingState } from "@/components/game/loading-state";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+/** Format tournament type number to display text */
+function formatTournamentType(type?: number | null): string {
+  if (type === undefined || type === null) return "토너먼트";
+  const types: Record<number, string> = {
+    0: "통솔 토너먼트",
+    1: "일기토 토너먼트",
+    2: "설전 토너먼트",
+  };
+  return types[type] ?? "토너먼트";
+}
+
+/** Format autorun mode */
+function formatAutorunMode(mode?: number): string {
+  if (mode === undefined) return "일반";
+  const modes: Record<number, string> = {
+    0: "불가",
+    1: "가능",
+    2: "자동",
+  };
+  return modes[mode] ?? "일반";
+}
 
 export default function GameDashboard() {
   const { currentWorld } = useWorldStore();
@@ -120,6 +143,9 @@ export default function GameDashboard() {
           <h3 className="text-center font-bold py-1 text-sm">
             {((currentWorld.config as Record<string, string>)
               ?.name as string) ?? global.scenarioText}{" "}
+            {global.serverCnt > 0 && (
+              <span className="text-muted-foreground">{global.serverCnt}기</span>
+            )}{" "}
             <span style={{ color: "cyan" }}>{global.scenarioText}</span>
           </h3>
           <div className="grid grid-cols-12 text-center text-[11px] border-t border-b border-gray-600 bg-[#111]">
@@ -147,13 +173,13 @@ export default function GameDashboard() {
               className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
               style={{ color: "cyan" }}
             >
-              토너먼트: 경기당 5분
+              토너먼트: 경기당 {Math.max(1, Math.round(global.turnTerm * 5 / 20))}분
             </div>
             <div
               className="col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
               style={{ color: "cyan" }}
             >
-              기타 설정: 일반
+              기타 설정: {formatAutorunMode((global as Record<string, unknown>).autorunUser as number | undefined)}
             </div>
 
             <div className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
@@ -176,7 +202,7 @@ export default function GameDashboard() {
 
             <div className="col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
               {global.isTournamentActive ? (
-                <span style={{ color: "cyan" }}>↑토너먼트 진행중↑</span>
+                <span style={{ color: "cyan" }}>↑{formatTournamentType(global.tournamentType)} 진행중{global.tournamentTime ? ` ${global.tournamentTime.substring(5, 16)}` : ""}↑</span>
               ) : (
                 <span style={{ color: "magenta" }}>
                   현재 토너먼트 경기 없음

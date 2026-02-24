@@ -289,7 +289,25 @@ export default function LobbySelectNpcPage() {
                         <span className="text-muted-foreground">특기</span>{" "}
                         {npc.special}
                       </p>
+                      {npc.special2 && npc.special2 !== "None" && (
+                        <p>
+                          <span className="text-muted-foreground">특기2</span>{" "}
+                          {npc.special2}
+                        </p>
+                      )}
                     </div>
+
+                    {/* Dex (숙련도) summary if available */}
+                    {npc.dex && (
+                      <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                        {["보병", "궁병", "기병", "귀병", "차병"].map((name, i) => (
+                          <div key={name} className="flex justify-between">
+                            <span>{name}</span>
+                            <span className="text-foreground">{Math.floor(npc.dex![i] / 1000)}K</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
                       <input

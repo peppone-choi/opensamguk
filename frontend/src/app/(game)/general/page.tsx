@@ -603,7 +603,119 @@ export default function GeneralPage() {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
+  );
+}
+
+function NationGeneralsList({
+  generals,
+  cities,
+  nation,
+  loading,
+  onGeneralClick,
+}: {
+  generals: General[];
+  cities: City[];
+  nation: Nation | null;
+  loading: boolean;
+  onGeneralClick: (id: number) => void;
+}) {
+  const cityMap = useMemo(() => new Map(cities.map((c) => [c.id, c])), [cities]);
+
+  const sorted = useMemo(
+    () =>
+      [...generals].sort((a, b) => {
+        // Sort by officer level desc, then by name
+        if (b.officerLevel !== a.officerLevel) return b.officerLevel - a.officerLevel;
+        return a.name.localeCompare(b.name);
+      }),
+    [generals],
+  );
+
+  if (loading) return <LoadingState message="세력 장수 목록 로딩 중..." />;
+  if (generals.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          세력에 소속된 장수가 없습니다.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Users className="size-4" />
+          {nation?.name ?? "세력"} 장수 목록 ({generals.length}명)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10"></TableHead>
+                <TableHead>이름</TableHead>
+                <TableHead>관직</TableHead>
+                <TableHead>도시</TableHead>
+                <TableHead className="text-center">Lv</TableHead>
+                <TableHead className="text-center">통</TableHead>
+                <TableHead className="text-center">무</TableHead>
+                <TableHead className="text-center">지</TableHead>
+                <TableHead className="text-center">정</TableHead>
+                <TableHead className="text-center">매</TableHead>
+                <TableHead className="text-center">병사</TableHead>
+                <TableHead className="text-center">병종</TableHead>
+                <TableHead>특기</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sorted.map((g) => {
+                const npcColor = getNPCColor(g.npcState);
+                const cityName = cityMap.get(g.cityId)?.name ?? `#${g.cityId}`;
+                const officerText = formatOfficerLevelText(g.officerLevel, nation?.level);
+                return (
+                  <TableRow
+                    key={g.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => onGeneralClick(g.id)}
+                  >
+                    <TableCell className="p-1">
+                      <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                    </TableCell>
+                    <TableCell className="font-medium" style={{ color: npcColor }}>
+                      {g.name}
+                      {g.npcState > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-[10px] px-1">NPC</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs">{officerText}</TableCell>
+                    <TableCell className="text-xs">{cityName}</TableCell>
+                    <TableCell className="text-center">{g.expLevel}</TableCell>
+                    <TableCell className="text-center">{g.leadership}</TableCell>
+                    <TableCell className="text-center">{g.strength}</TableCell>
+                    <TableCell className="text-center">{g.intel}</TableCell>
+                    <TableCell className="text-center">{g.politics}</TableCell>
+                    <TableCell className="text-center">{g.charm}</TableCell>
+                    <TableCell className="text-center text-xs">{numberWithCommas(g.crew)}</TableCell>
+                    <TableCell className="text-center text-xs text-cyan-300">
+                      {CREW_TYPE_NAMES[g.crewType] ?? g.crewType}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {g.specialCode !== "None" ? g.specialCode : "-"}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
