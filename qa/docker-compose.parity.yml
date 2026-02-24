@@ -1,0 +1,201 @@
+###############################################################################
+# QA Parity Test — runs BOTH legacy (PHP+MariaDB) and new (Kotlin+PostgreSQL)
+# stacks side-by-side so a test runner can compare their behaviour.
+#
+#   docker compose -f qa/docker-compose.parity.yml up --build
+###############################################################################
+
+services:
+  # ─────────────────────── LEGACY STACK ───────────────────────
+  legacy-mariadb:
+    image: mariadb:10.11
+    container_name: parity-legacy-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: sammo
+      MYSQL_USER: sammo
+      MYSQL_PASSWORD: sammo123
+    ports:
+      - "3307:3306"
+    volumes:
+      - legacy-db-data:/var/lib/mysql
+    networks:
+      - parity-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  legacy-app:
+    build:
+      context: ..
+      dockerfile: qa/setup-legacy-docker/Dockerfile
+    container_name: parity-legacy-app
+    ports:
+      - "8180:80"
+    depends_on:
+      legacy-mariadb:
+        condition: service_healthy
+    environment:
+      DB_HOST: legacy-mariadb
+      DB_PORT: 3306
+      DB_NAME: sammo
+      DB_USER: sammo
+      DB_PASSWORD: sammo123
+      DB_ROOT_PASSWORD: rootpw
+    networks:
+      - parity-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/api.php?path=Global/GetConst || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # ─────────────────────── NEW STACK ──────────────────────────
+  new-postgres:
+    image: postgres:16-alpine
+    container_name: parity-new-postgres
+    environment:
+      POSTGRES_DB: opensam
+      POSTGRES_USER: opensam
+      POSTGRES_PASSWORD: opensam123
+    ports:
+      - "5433:5432"
+    volumes:
+      - new-db-data:/var/lib/postgresql/data
+    networks:
+      - parity-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opensam"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  new-redis:
+    image: redis:7-alpine
+    container_name: parity-new-redis
+    networks:
+      - parity-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  new-bootstrap:
+    image: ghcr.io/peppone-choi/opensam-game:${TAG:-latest}
+    container_name: parity-new-bootstrap
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: new-postgres
+      DB_PORT: 5432
+      DB_NAME: opensam
+      DB_USER: opensam
+      DB_PASSWORD: opensam123
+      REDIS_HOST: new-redis
+      REDIS_PORT: 6379
+    command:
+      - "--spring.main.web-application-type=none"
+      - "--spring.task.scheduling.enabled=false"
+      - "--app.bootstrap.exit-on-ready=true"
+    depends_on:
+      new-postgres:
+        condition: service_healthy
+      new-redis:
+        condition: service_healthy
+    networks:
+      - parity-net
+    restart: "no"
+
+  new-gateway:
+    image: ghcr.io/peppone-choi/opensam-gateway:${TAG:-latest}
+    container_name: parity-new-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: new-postgres
+      DB_PORT: 5432
+      DB_NAME: opensam
+      DB_USER: opensam
+      DB_PASSWORD: opensam123
+      REDIS_HOST: new-redis
+      REDIS_PORT: 6379
+      DOCKER_NETWORK: parity-net
+      DOCKER_IMAGE_PREFIX: ghcr.io/peppone-choi/opensam-game
+      ADMIN_BOOTSTRAP_ENABLED: "true"
+      ADMIN_LOGIN_ID: admin
+      ADMIN_PASSWORD: testadmin123
+      ADMIN_DISPLAY_NAME: 관리자
+      ADMIN_GRADE: "5"
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      new-bootstrap:
+        condition: service_completed_successfully
+      new-postgres:
+        condition: service_healthy
+      new-redis:
+        condition: service_healthy
+    networks:
+      - parity-net
+
+  new-frontend:
+    image: ghcr.io/peppone-choi/opensam-frontend:${TAG:-latest}
+    container_name: parity-new-frontend
+    networks:
+      - parity-net
+
+  new-nginx:
+    image: nginx:alpine
+    container_name: parity-new-nginx
+    ports:
+      - "8081:80"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - new-gateway
+      - new-frontend
+    networks:
+      - parity-net
+
+  # ─────────────────────── TEST RUNNER ────────────────────────
+  parity-runner:
+    build:
+      context: .
+      dockerfile: parity-test/Dockerfile
+    container_name: parity-runner
+    environment:
+      LEGACY_BASE_URL: http://legacy-app
+      NEW_BASE_URL: http://new-gateway:8080
+      LEGACY_DB_HOST: legacy-mariadb
+      LEGACY_DB_PORT: 3306
+      LEGACY_DB_NAME: sammo
+      LEGACY_DB_USER: root
+      LEGACY_DB_PASSWORD: rootpw
+      NEW_DB_HOST: new-postgres
+      NEW_DB_PORT: 5432
+      NEW_DB_NAME: opensam
+      NEW_DB_USER: opensam
+      NEW_DB_PASSWORD: opensam123
+    depends_on:
+      legacy-app:
+        condition: service_healthy
+      new-gateway:
+        condition: service_started
+    networks:
+      - parity-net
+    # By default runs tests; override with `command: sleep infinity` to debug
+    command: ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--json-report", "--json-report-file=/results/report.json"]
+    volumes:
+      - ./results:/results
+
+volumes:
+  legacy-db-data:
+  new-db-data:
+
+networks:
+  parity-net:
+    driver: bridge
