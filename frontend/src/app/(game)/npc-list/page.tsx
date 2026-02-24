@@ -267,16 +267,44 @@ export default function NpcListPage() {
                           name={g.name}
                           size="sm"
                         />
-                        {g.name}
+                        <span
+                          style={
+                            g.npcState >= 5
+                              ? { color: "#69f" }
+                              : g.npcState >= 2
+                                ? { color: "#c93" }
+                                : undefined
+                          }
+                        >
+                          {g.name}
+                        </span>
                         {g.npcState === 0 && (
                           <Badge variant="outline" className="text-[10px]">
                             풀
                           </Badge>
                         )}
+                        {g.npcState >= 5 && (
+                          <Badge className="text-[10px] bg-indigo-600/60 text-indigo-200">
+                            악령
+                          </Badge>
+                        )}
+                        {g.npcState >= 2 && g.npcState < 5 && (
+                          <Badge className="text-[10px] bg-amber-700/60 text-amber-200">
+                            희생
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {g.ownerName || "-"}
+                      <span
+                        style={
+                          g.npcState >= 5
+                            ? { color: "#69f", fontWeight: "bold" }
+                            : undefined
+                        }
+                      >
+                        {g.ownerName || "-"}
+                      </span>
                     </TableCell>
                     <TableCell className="text-sm">
                       Lv {g.expLevel}

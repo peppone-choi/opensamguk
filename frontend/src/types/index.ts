@@ -363,6 +363,10 @@ export interface PublicCachedMapHistory {
   id: number;
   sentAt: string;
   text: string;
+  year?: number;
+  month?: number;
+  cityOwnership?: { cityId: number; nationId: number }[];
+  events?: string[];
 }
 
 export interface PublicCachedMapResponse {

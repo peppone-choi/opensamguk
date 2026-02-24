@@ -7,9 +7,10 @@ import {
   useRef,
   useState,
   type MouseEvent as ReactMouseEvent,
+  type DragEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Clock3, Copy, Pencil, Trash2 } from "lucide-react";
+import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy } from "lucide-react";
 import { useHotkeys } from "@/hooks/useHotkeys";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -344,6 +345,76 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     await loadTurns();
   }, [filledTurns, generalId, loadTurns, realtimeMode, selectedTurnList]);
 
+  // --- Drag & Drop reorder ---
+  const [dragFrom, setDragFrom] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
+  const handleDragStart = useCallback((turnIdx: number, e: DragEvent<HTMLDivElement>) => {
+    if (realtimeMode) { e.preventDefault(); return; }
+    setDragFrom(turnIdx);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(turnIdx));
+  }, [realtimeMode]);
+
+  const handleDragOver = useCallback((turnIdx: number, e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOver(turnIdx);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDragOver(null);
+  }, []);
+
+  const handleDrop = useCallback(async (targetIdx: number, e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(null);
+    const fromIdx = dragFrom;
+    setDragFrom(null);
+    if (fromIdx === null || fromIdx === targetIdx) return;
+
+    // Reorder: remove fromIdx, insert at targetIdx
+    const ordered = [...filledTurns];
+    const [moved] = ordered.splice(fromIdx, 1);
+    ordered.splice(targetIdx, 0, moved);
+
+    // Save new order
+    const ops: Promise<unknown>[] = [];
+    const minIdx = Math.min(fromIdx, targetIdx);
+    const maxIdx = Math.max(fromIdx, targetIdx);
+    for (let i = minIdx; i <= maxIdx; i++) {
+      if (ordered[i].actionCode === "휴식") {
+        ops.push(commandApi.deleteReservedCommand(generalId, i));
+      } else {
+        ops.push(commandApi.reserveCommand(generalId, {
+          turn: i,
+          command: ordered[i].actionCode,
+          arg: ordered[i].arg,
+        }));
+      }
+    }
+    await Promise.all(ops);
+    await loadTurns();
+    setSelectedTurns(new Set([targetIdx]));
+    setLastClickedTurn(targetIdx);
+  }, [dragFrom, filledTurns, generalId, loadTurns]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragFrom(null);
+    setDragOver(null);
+  }, []);
+
+  // --- System clipboard text copy ---
+  const copySelectedAsText = useCallback(() => {
+    if (selectedTurnList.length === 0) return;
+    const lines = selectedTurnList.map((idx) => {
+      const turn = filledTurns[idx];
+      const brief = turn.brief?.replace(/<[^>]*>/g, "") ?? turn.actionCode;
+      return `${idx + 1}턴 ${brief}`;
+    });
+    void navigator.clipboard.writeText(lines.join("\n"));
+  }, [filledTurns, selectedTurnList]);
+
   const handleTurnClick = (
     turnIdx: number,
     event: ReactMouseEvent<HTMLButtonElement>,
@@ -610,6 +681,16 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
           <Button
             size="sm"
             variant="outline"
+            disabled={selectedTurnList.length === 0}
+            onClick={copySelectedAsText}
+            title="선택한 턴을 텍스트로 클립보드에 복사"
+          >
+            <ClipboardCopy className="size-3 mr-1" />
+            텍스트 복사
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
             disabled={realtimeMode}
             onClick={saveStoredAction}
           >
@@ -686,14 +767,15 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
           </Button>
 
           <div className="ml-auto text-[11px] text-gray-400">
-            {selectedCount}개 선택 · Shift 범위 · Ctrl 다중
+            {selectedCount}개 선택 · Shift 범위 · Ctrl 다중 · 드래그 순서변경
           </div>
         </div>
       </CardHeader>
 
       <CardContent>
         <div className="overflow-hidden rounded-md border border-gray-700">
-          <div className="grid grid-cols-[68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
+          <div className="grid grid-cols-[24px_68px_120px_1fr_136px] bg-[#1a1a1a] px-2 py-1.5 text-[11px] text-gray-400">
+            <div />
             <div>턴</div>
             <div>명령</div>
             <div>대상/상세</div>
@@ -703,19 +785,37 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
           {filledTurns.map((turn) => {
             const isSelected = selectedTurns.has(turn.turnIdx);
             const isEmpty = turn.actionCode === "휴식";
+            const isDragTarget = dragOver === turn.turnIdx && dragFrom !== null && dragFrom !== turn.turnIdx;
 
             return (
-              <button
+              <div
                 key={turn.turnIdx}
-                type="button"
-                onClick={(event) => handleTurnClick(turn.turnIdx, event)}
-                className={`grid cursor-pointer grid-cols-[68px_120px_1fr_136px] items-center border-t border-gray-800 px-2 py-2 text-xs transition-colors ${
-                  isSelected
-                    ? "bg-[#18224b]"
-                    : "bg-[#101010] hover:bg-[#171717]"
-                }`}
+                className={`grid grid-cols-[24px_68px_120px_1fr_136px] items-center border-t border-gray-800 text-xs transition-colors ${
+                  isDragTarget
+                    ? "bg-[#1a3a2a] border-t-2 border-t-emerald-500"
+                    : isSelected
+                      ? "bg-[#18224b]"
+                      : "bg-[#101010] hover:bg-[#171717]"
+                } ${dragFrom === turn.turnIdx ? "opacity-40" : ""}`}
+                onDragOver={(e) => handleDragOver(turn.turnIdx, e)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => void handleDrop(turn.turnIdx, e)}
               >
-                <div className="font-mono text-gray-300">턴 {turn.turnIdx}</div>
+                <div
+                  draggable={!realtimeMode}
+                  onDragStart={(e) => handleDragStart(turn.turnIdx, e)}
+                  onDragEnd={handleDragEnd}
+                  className="flex items-center justify-center cursor-grab active:cursor-grabbing h-full text-gray-500 hover:text-gray-300"
+                  title="드래그하여 순서 변경"
+                >
+                  <GripVertical className="size-3.5" />
+                </div>
+                <button
+                  type="button"
+                  onClick={(event) => handleTurnClick(turn.turnIdx, event)}
+                  className="contents cursor-pointer"
+                >
+                <div className="font-mono text-gray-300 px-2 py-2">턴 {turn.turnIdx}</div>
                 <div>
                   {isEmpty ? (
                     <Badge
@@ -779,7 +879,8 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                     <Copy className="size-3.5" />
                   </Button>
                 </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>

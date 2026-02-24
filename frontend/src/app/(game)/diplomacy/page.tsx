@@ -68,7 +68,9 @@ export default function DiplomacyPage() {
   const [destNationId, setDestNationId] = useState("");
   const [letterType, setLetterType] = useState("alliance");
   const [letterContent, setLetterContent] = useState("");
+  const [letterDiplomaticContent, setLetterDiplomaticContent] = useState("");
   const [sending, setSending] = useState(false);
+  const [showDualContent, setShowDualContent] = useState(false);
 
   // History state
   const [historyRecords, setHistoryRecords] = useState<Message[]>([]);
@@ -193,15 +195,30 @@ export default function DiplomacyPage() {
         destNationId: Number(destNationId),
         type: letterType,
         content: letterContent || undefined,
+        diplomaticContent: letterDiplomaticContent || undefined,
       });
       setShowSend(false);
       setDestNationId("");
       setLetterContent("");
+      setLetterDiplomaticContent("");
+      setShowDualContent(false);
       const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
       setLetters(data);
     } finally {
       setSending(false);
     }
+  };
+
+  // Execute a diplomacy agreement (after acceptance)
+  const handleExecute = async (letterId: number) => {
+    try {
+      await diplomacyLetterApi.execute(letterId);
+      if (myGeneral?.nationId) {
+        const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
+        setLetters(data);
+      }
+      if (currentWorld) loadAll(currentWorld.id);
+    } catch { /* handled by UI */ }
   };
 
   const handleRespond = async (letterId: number, accept: boolean) => {
@@ -381,16 +398,41 @@ export default function DiplomacyPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
-                    내용 (선택)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs text-muted-foreground">
+                      공개 내용 {showDualContent ? "(모든 국가에 공개)" : "(선택)"}
+                    </label>
+                    <button
+                      type="button"
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300"
+                      onClick={() => setShowDualContent(!showDualContent)}
+                    >
+                      {showDualContent ? "단일 모드" : "이중 콘텐츠 모드"}
+                    </button>
+                  </div>
                   <Textarea
                     value={letterContent}
                     onChange={(e) => setLetterContent(e.target.value)}
-                    placeholder="서신 내용..."
+                    placeholder={showDualContent ? "공개적으로 보이는 내용..." : "서신 내용..."}
                     className="resize-none h-20"
                   />
                 </div>
+                {showDualContent && (
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">
+                      외교 전용 내용 (당사국만 열람)
+                    </label>
+                    <Textarea
+                      value={letterDiplomaticContent}
+                      onChange={(e) => setLetterDiplomaticContent(e.target.value)}
+                      placeholder="외교 당사국만 볼 수 있는 비밀 내용..."
+                      className="resize-none h-20 border-amber-700/50"
+                    />
+                    <p className="text-[10px] text-amber-400 mt-1">
+                      ⚠ 이 내용은 발신국과 수신국만 열람할 수 있습니다.
+                    </p>
+                  </div>
+                )}
                 <Button
                   onClick={handleSendLetter}
                   disabled={sending || !destNationId}
@@ -418,95 +460,118 @@ export default function DiplomacyPage() {
                     const srcNation = nationMap.get(letter.srcId as number);
                     const destNation = nationMap.get(letter.destId as number);
                     const type = letter.messageType;
-                    const content = letter.payload.content as
-                      | string
-                      | undefined;
+                    const content = letter.payload.content as string | undefined;
+                    const diplomaticContent = letter.payload.diplomaticContent as string | undefined;
                     const state = letter.payload.state as string | undefined;
-                    const isOutgoing =
-                      myGeneral?.nationId === (letter.srcId as number);
+                    const isOutgoing = myGeneral?.nationId === (letter.srcId as number);
+                    const isInvolved = myGeneral?.nationId === (letter.srcId as number) || myGeneral?.nationId === (letter.destId as number);
+
+                    // Chain steps: 제안→수락→이행
+                    const chainSteps = [
+                      { key: "proposed", label: "제안", done: true },
+                      { key: "accepted", label: "수락", done: state === "accepted" || state === "executed" },
+                      { key: "executed", label: "이행", done: state === "executed" },
+                    ];
 
                     return (
                       <div
                         key={id}
                         className="rounded border border-gray-700 p-3 space-y-2"
                       >
+                        {/* Header */}
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="outline" className="text-xs">
                             {isOutgoing ? "발신" : "수신"}
                           </Badge>
-                          <NationBadge
-                            name={srcNation?.name}
-                            color={srcNation?.color}
-                          />
+                          <NationBadge name={srcNation?.name} color={srcNation?.color} />
                           <ArrowRight className="size-3 text-muted-foreground" />
-                          <NationBadge
-                            name={destNation?.name}
-                            color={destNation?.color}
-                          />
+                          <NationBadge name={destNation?.name} color={destNation?.color} />
                           <Badge variant="secondary">
                             {STATE_LABELS[type] ?? type}
                           </Badge>
                           {state && (
                             <Badge
                               variant={
-                                state === "pending"
-                                  ? "outline"
-                                  : state === "accepted"
-                                    ? "default"
-                                    : "destructive"
+                                state === "pending" ? "outline"
+                                  : state === "accepted" ? "default"
+                                  : state === "executed" ? "default"
+                                  : "destructive"
                               }
                             >
-                              {state === "pending"
-                                ? "대기"
-                                : state === "accepted"
-                                  ? "수락"
-                                  : state === "rejected"
-                                    ? "거절"
-                                    : state}
+                              {state === "pending" ? "대기"
+                                : state === "accepted" ? "수락"
+                                : state === "executed" ? "이행완료"
+                                : state === "rejected" ? "거절"
+                                : state}
                             </Badge>
                           )}
                         </div>
-                        {content && (
-                          <p className="text-sm text-muted-foreground">
-                            {content}
-                          </p>
+
+                        {/* Document chain progress: 제안→수락→이행 */}
+                        {state && state !== "rejected" && (
+                          <div className="flex items-center gap-1 text-[10px]">
+                            {chainSteps.map((step, i) => (
+                              <span key={step.key} className="flex items-center gap-1">
+                                {i > 0 && <span className="text-gray-600">→</span>}
+                                <span className={`px-1.5 py-0.5 rounded ${
+                                  step.done
+                                    ? "bg-emerald-900/50 text-emerald-300 border border-emerald-700"
+                                    : "bg-gray-800 text-gray-500 border border-gray-700"
+                                }`}>
+                                  {step.done ? "✓ " : ""}{step.label}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
                         )}
+
+                        {/* Public content */}
+                        {content && (
+                          <div className="text-sm text-muted-foreground">
+                            {diplomaticContent && <span className="text-[10px] text-gray-500 block mb-0.5">공개 내용:</span>}
+                            <p>{content}</p>
+                          </div>
+                        )}
+
+                        {/* Diplomatic-only content (only visible to involved parties) */}
+                        {diplomaticContent && isInvolved && (
+                          <div className="text-sm border-l-2 border-amber-700/50 pl-2 bg-amber-950/20 rounded-r py-1">
+                            <span className="text-[10px] text-amber-400 block mb-0.5">외교 전용 (당사국만 열람):</span>
+                            <p className="text-amber-200/80">{diplomaticContent}</p>
+                          </div>
+                        )}
+
+                        {/* Actions */}
                         <div className="flex gap-2">
-                          {state === "pending" &&
-                            myGeneral?.nationId ===
-                              (letter.destId as number) && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleRespond(id, true)}
-                                >
-                                  수락
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleRespond(id, false)}
-                                >
-                                  거절
-                                </Button>
-                              </>
-                            )}
-                          {state === "pending" &&
-                            myGeneral?.nationId ===
-                              (letter.srcId as number) && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRollback(id)}
-                              >
-                                철회
+                          {/* Pending: receiver can accept/reject */}
+                          {state === "pending" && myGeneral?.nationId === (letter.destId as number) && (
+                            <>
+                              <Button size="sm" onClick={() => handleRespond(id, true)}>
+                                수락
                               </Button>
-                            )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDestroy(id)}
-                          >
+                              <Button size="sm" variant="destructive" onClick={() => handleRespond(id, false)}>
+                                거절
+                              </Button>
+                            </>
+                          )}
+                          {/* Pending: sender can withdraw */}
+                          {state === "pending" && myGeneral?.nationId === (letter.srcId as number) && (
+                            <Button size="sm" variant="outline" onClick={() => handleRollback(id)}>
+                              철회
+                            </Button>
+                          )}
+                          {/* Accepted: either party can execute (이행) */}
+                          {state === "accepted" && isInvolved && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-emerald-700 hover:bg-emerald-600"
+                              onClick={() => void handleExecute(id)}
+                            >
+                              이행
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => handleDestroy(id)}>
                             삭제
                           </Button>
                         </div>

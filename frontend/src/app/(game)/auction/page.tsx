@@ -591,17 +591,25 @@ export default function AuctionPage() {
                   {activeItem.map((a) => {
                     const d = p(a);
                     const hb = d.highestBid;
+                    const isAnonymous = !!d.obfuscatedName;
                     return (
                       <div
                         key={a.id}
                         className="grid grid-cols-7 gap-1 text-center py-1 px-1 border-t border-gray-800 cursor-pointer hover:bg-white/5"
                         onClick={() => setSelectedAuctionId(a.id)}
                       >
-                        <div>{a.id}</div>
+                        <div className="flex items-center justify-center gap-1">
+                          {a.id}
+                          {isAnonymous && (
+                            <span className="text-[9px] text-purple-400" title="익명 입찰">🔒</span>
+                          )}
+                        </div>
                         <div className="col-span-2 text-amber-400 truncate">{d.title ?? d.itemName ?? d.item}</div>
                         <div className={d.isCallerHost ? "text-cyan-400 font-bold" : ""}>{d.hostName ?? d.sellerName ?? "-"}</div>
                         <div className="tabular-nums">{d.endTime ? cutDateTime(d.endTime) : "-"}</div>
-                        <div className={hb?.isCallerHighestBidder ? "text-cyan-400 font-bold" : ""}>{hb?.generalName ?? "-"}</div>
+                        <div className={hb?.isCallerHighestBidder ? "text-cyan-400 font-bold" : ""}>
+                          {isAnonymous ? (d.obfuscatedName ?? "익명") : (hb?.generalName ?? "-")}
+                        </div>
                         <div className="text-right pr-2 tabular-nums">{(hb?.amount ?? d.currentBid ?? 0).toLocaleString()}</div>
                       </div>
                     );
@@ -630,13 +638,34 @@ export default function AuctionPage() {
                   {doneItem.slice(0, 20).map((a) => {
                     const d = p(a);
                     const hb = d.highestBid;
+                    const statusLabel =
+                      d.status === "cancelled" || (!hb && d.finished)
+                        ? "유찰"
+                        : hb?.isCallerHighestBidder
+                          ? "낙찰"
+                          : hb
+                            ? "패찰"
+                            : "종료";
+                    const statusColor =
+                      statusLabel === "낙찰"
+                        ? "text-green-400"
+                        : statusLabel === "유찰"
+                          ? "text-gray-400"
+                          : statusLabel === "패찰"
+                            ? "text-red-400"
+                            : "text-muted-foreground";
                     return (
                       <div
                         key={a.id}
                         className="grid grid-cols-7 gap-1 text-center py-1 px-1 border-t border-gray-800 cursor-pointer hover:bg-white/5 opacity-70"
                         onClick={() => setSelectedAuctionId(a.id)}
                       >
-                        <div>{a.id}</div>
+                        <div className="flex items-center justify-center gap-1">
+                          {a.id}
+                          <span className={`text-[9px] font-bold ${statusColor}`}>
+                            {statusLabel}
+                          </span>
+                        </div>
                         <div className="col-span-2 truncate">{d.title ?? d.itemName ?? d.item}</div>
                         <div className={d.isCallerHost ? "text-cyan-400 font-bold" : ""}>{d.hostName ?? d.sellerName ?? "-"}</div>
                         <div className="tabular-nums">{d.endTime ? cutDateTime(d.endTime) : "-"}</div>

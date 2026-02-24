@@ -6,8 +6,9 @@ import {
   useMemo,
   useState,
   type MouseEvent,
+  type DragEvent,
 } from "react";
-import { Crown, UserCog, Users, Ban } from "lucide-react";
+import { Crown, UserCog, Users, Ban, GripVertical, ClipboardCopy, Copy, ClipboardPaste, Save, FolderOpen, Trash2 } from "lucide-react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import {
@@ -66,6 +67,11 @@ function getMinNationChiefLevel(nationLevel: number): number {
   return 9;
 }
 
+interface NationPreset {
+  name: string;
+  items: { offset: number; actionCode: string; arg?: Record<string, unknown>; brief?: string | null }[];
+}
+
 export default function ChiefPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
@@ -93,6 +99,19 @@ export default function ChiefPage() {
   const [error, setError] = useState<string | null>(null);
   const [appointMsg, setAppointMsg] = useState<string | null>(null);
   const [appointingLevel, setAppointingLevel] = useState<number | null>(null);
+
+  // Drag & Drop for nation turns
+  const [nationDragFrom, setNationDragFrom] = useState<number | null>(null);
+  const [nationDragOver, setNationDragOver] = useState<number | null>(null);
+
+  // Clipboard for nation turns
+  const [nationClipboard, setNationClipboard] = useState<
+    { offset: number; actionCode: string; arg?: Record<string, unknown>; brief?: string | null }[] | null
+  >(null);
+
+  // Preset save/load for nation commands
+  const [nationPresets, setNationPresets] = useState<NationPreset[]>([]);
+  const [selectedPreset, setSelectedPreset] = useState("");
 
   // Appointment selections: officerLevel -> generalId
   const [appointSelections, setAppointSelections] = useState<
@@ -145,6 +164,181 @@ export default function ChiefPage() {
 
   const getNationTurn = (idx: number) =>
     nationTurns.find((turn) => turn.turnIdx === idx);
+
+  // Preset localStorage key
+  const nationPresetKey = myGeneral?.nationId
+    ? `opensam:nation-presets:${myGeneral.nationId}`
+    : null;
+
+  // Load presets from localStorage
+  useEffect(() => {
+    if (!nationPresetKey || typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(nationPresetKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setNationPresets(parsed);
+      }
+    } catch { /* ignore */ }
+  }, [nationPresetKey]);
+
+  const persistNationPresets = useCallback(
+    (presets: NationPreset[]) => {
+      setNationPresets(presets);
+      if (nationPresetKey && typeof window !== "undefined") {
+        window.localStorage.setItem(nationPresetKey, JSON.stringify(presets));
+      }
+    },
+    [nationPresetKey],
+  );
+
+  // Filled nation turns helper
+  const filledNationTurns = useMemo(() => {
+    return Array.from({ length: NATION_TURN_COUNT }, (_, idx) => {
+      const turn = nationTurns.find((t) => t.turnIdx === idx);
+      return {
+        turnIdx: idx,
+        actionCode: turn?.actionCode ?? "휴식",
+        arg: turn?.arg ?? {},
+        brief: turn?.brief ?? null,
+      };
+    });
+  }, [nationTurns]);
+
+  // Nation turn clipboard operations
+  const nationCopySelected = useCallback(() => {
+    const slots = [...selectedNationSlots].sort((a, b) => a - b);
+    if (slots.length === 0) return;
+    const min = slots[0];
+    setNationClipboard(
+      slots.map((idx) => {
+        const t = filledNationTurns[idx];
+        return { offset: idx - min, actionCode: t.actionCode, arg: t.arg, brief: t.brief };
+      }),
+    );
+  }, [filledNationTurns, selectedNationSlots]);
+
+  const nationPasteClipboard = useCallback(async () => {
+    if (!nationClipboard || !myGeneral?.nationId) return;
+    const slots = [...selectedNationSlots].sort((a, b) => a - b);
+    if (slots.length === 0) return;
+    const anchor = slots[0];
+    const items = nationClipboard
+      .map((item) => ({ ...item, target: anchor + item.offset }))
+      .filter((item) => item.target >= 0 && item.target < NATION_TURN_COUNT);
+    if (items.length === 0) return;
+    const turns = items.map((item) => ({
+      turnIdx: item.target,
+      actionCode: item.actionCode,
+      arg: item.arg,
+    }));
+    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+    await reload();
+  }, [nationClipboard, myGeneral, selectedNationSlots, reload]);
+
+  const nationCopyAsText = useCallback(() => {
+    const slots = [...selectedNationSlots].sort((a, b) => a - b);
+    if (slots.length === 0) return;
+    const lines = slots.map((idx) => {
+      const t = filledNationTurns[idx];
+      const brief = t.brief?.replace(/<[^>]*>/g, "") ?? t.actionCode;
+      return `${idx + 1}턴 ${brief}`;
+    });
+    void navigator.clipboard.writeText(lines.join("\n"));
+  }, [filledNationTurns, selectedNationSlots]);
+
+  // Save preset
+  const saveNationPreset = useCallback(() => {
+    const slots = [...selectedNationSlots].sort((a, b) => a - b);
+    if (slots.length === 0) return;
+    const min = slots[0];
+    const items = slots.map((idx) => {
+      const t = filledNationTurns[idx];
+      return { offset: idx - min, actionCode: t.actionCode, arg: t.arg, brief: t.brief };
+    });
+    const defaultName = items.map((i) => i.actionCode === "휴식" ? "휴" : i.actionCode.charAt(0)).join("");
+    const name = window.prompt("프리셋 이름을 입력하세요", defaultName);
+    if (!name?.trim()) return;
+    const trimmed = name.trim();
+    const deduped = nationPresets.filter((p) => p.name !== trimmed);
+    persistNationPresets([...deduped, { name: trimmed, items }]);
+    setSelectedPreset(trimmed);
+  }, [filledNationTurns, nationPresets, persistNationPresets, selectedNationSlots]);
+
+  // Load preset
+  const loadNationPreset = useCallback(async () => {
+    if (!selectedPreset || !myGeneral?.nationId) return;
+    const preset = nationPresets.find((p) => p.name === selectedPreset);
+    if (!preset) return;
+    const slots = [...selectedNationSlots].sort((a, b) => a - b);
+    const anchor = slots.length > 0 ? slots[0] : 0;
+    const items = preset.items
+      .map((item) => ({ ...item, target: anchor + item.offset }))
+      .filter((item) => item.target >= 0 && item.target < NATION_TURN_COUNT);
+    if (items.length === 0) return;
+    const turns = items.map((item) => ({
+      turnIdx: item.target,
+      actionCode: item.actionCode,
+      arg: item.arg,
+    }));
+    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+    await reload();
+  }, [selectedPreset, myGeneral, nationPresets, selectedNationSlots, reload]);
+
+  const deleteNationPreset = useCallback(() => {
+    if (!selectedPreset) return;
+    persistNationPresets(nationPresets.filter((p) => p.name !== selectedPreset));
+    setSelectedPreset("");
+  }, [selectedPreset, nationPresets, persistNationPresets]);
+
+  // Nation drag & drop handlers
+  const handleNationDragStart = useCallback((idx: number, e: DragEvent<HTMLDivElement>) => {
+    setNationDragFrom(idx);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  }, []);
+
+  const handleNationDragOver = useCallback((idx: number, e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setNationDragOver(idx);
+  }, []);
+
+  const handleNationDragLeave = useCallback(() => {
+    setNationDragOver(null);
+  }, []);
+
+  const handleNationDrop = useCallback(async (targetIdx: number, e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setNationDragOver(null);
+    const fromIdx = nationDragFrom;
+    setNationDragFrom(null);
+    if (fromIdx === null || fromIdx === targetIdx || !myGeneral?.nationId) return;
+
+    const ordered = [...filledNationTurns];
+    const [moved] = ordered.splice(fromIdx, 1);
+    ordered.splice(targetIdx, 0, moved);
+
+    const minIdx = Math.min(fromIdx, targetIdx);
+    const maxIdx = Math.max(fromIdx, targetIdx);
+    const turns = [];
+    for (let i = minIdx; i <= maxIdx; i++) {
+      turns.push({
+        turnIdx: i,
+        actionCode: ordered[i].actionCode,
+        arg: ordered[i].arg,
+      });
+    }
+    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+    await reload();
+    setSelectedNationSlots(new Set([targetIdx]));
+    setLastNationClickedSlot(targetIdx);
+  }, [nationDragFrom, filledNationTurns, myGeneral, reload]);
+
+  const handleNationDragEnd = useCallback(() => {
+    setNationDragFrom(null);
+    setNationDragOver(null);
+  }, []);
 
   const handleNationSlotClick = (
     idx: number,
@@ -459,6 +653,52 @@ export default function ChiefPage() {
                   <CardTitle>국가 명령 예약 (12턴)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  {/* Toolbar */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Button size="sm" variant="outline" onClick={nationCopySelected} disabled={selectedNationSlots.size === 0}>
+                      <Copy className="size-3 mr-1" />복사
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => void nationPasteClipboard()} disabled={!nationClipboard}>
+                      <ClipboardPaste className="size-3 mr-1" />붙여넣기
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={nationCopyAsText} disabled={selectedNationSlots.size === 0}>
+                      <ClipboardCopy className="size-3 mr-1" />텍스트 복사
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground">|</span>
+                    <Button size="sm" variant="outline" onClick={saveNationPreset} disabled={selectedNationSlots.size === 0}>
+                      <Save className="size-3 mr-1" />보관
+                    </Button>
+                    <select
+                      value={selectedPreset}
+                      onChange={(e) => setSelectedPreset(e.target.value)}
+                      className="h-8 min-w-[120px] rounded-md border border-input bg-background px-2 text-xs"
+                    >
+                      <option value="">프리셋 선택</option>
+                      {nationPresets.map((p) => (
+                        <option key={p.name} value={p.name}>{p.name}</option>
+                      ))}
+                    </select>
+                    <Button size="sm" variant="outline" onClick={() => void loadNationPreset()} disabled={!selectedPreset}>
+                      <FolderOpen className="size-3 mr-1" />불러오기
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-red-300" onClick={deleteNationPreset} disabled={!selectedPreset}>
+                      <Trash2 className="size-3 mr-1" />삭제
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground">|</span>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5"
+                      onClick={() => { const s = new Set<number>(); for (let i = 0; i < NATION_TURN_COUNT; i += 2) s.add(i); setSelectedNationSlots(s); }}>
+                      홀수턴
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5"
+                      onClick={() => { const s = new Set<number>(); for (let i = 1; i < NATION_TURN_COUNT; i += 2) s.add(i); setSelectedNationSlots(s); }}>
+                      짝수턴
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5"
+                      onClick={() => { const s = new Set<number>(); for (let i = 0; i < NATION_TURN_COUNT; i++) s.add(i); setSelectedNationSlots(s); }}>
+                      전체
+                    </Button>
+                  </div>
+
                   <div className="space-y-[1px] bg-gray-600">
                     {Array.from({ length: NATION_TURN_COUNT }, (_, n) => n).map(
                       (slot) => {
@@ -467,35 +707,54 @@ export default function ChiefPage() {
                         const actionCode = turn?.actionCode ?? "휴식";
                         const brief = turn?.brief;
                         const isRest = actionCode === "휴식";
+                        const isDragTarget = nationDragOver === slot && nationDragFrom !== null && nationDragFrom !== slot;
                         return (
-                          <button
-                            type="button"
+                          <div
                             key={slot}
-                            onClick={(e) => handleNationSlotClick(slot, e)}
-                            className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs transition-colors ${
-                              isSelected
-                                ? "bg-[#141c65] text-white"
-                                : "bg-[#111] hover:bg-[#191919]"
-                            }`}
+                            className={`flex w-full items-center text-left text-xs transition-colors ${
+                              isDragTarget
+                                ? "bg-[#1a3a2a] border-t-2 border-t-emerald-500"
+                                : isSelected
+                                  ? "bg-[#141c65] text-white"
+                                  : "bg-[#111] hover:bg-[#191919]"
+                            } ${nationDragFrom === slot ? "opacity-40" : ""}`}
+                            onDragOver={(e) => handleNationDragOver(slot, e)}
+                            onDragLeave={handleNationDragLeave}
+                            onDrop={(e) => void handleNationDrop(slot, e)}
                           >
-                            <span className="w-6 shrink-0 tabular-nums text-gray-400">
-                              #{slot + 1}
-                            </span>
-                            <span
-                              className={`shrink-0 border px-1 py-0 text-[10px] ${
-                                isRest
-                                  ? "border-gray-600 text-gray-400"
-                                  : "border-cyan-700 text-cyan-300"
-                              }`}
+                            <div
+                              draggable
+                              onDragStart={(e) => handleNationDragStart(slot, e)}
+                              onDragEnd={handleNationDragEnd}
+                              className="flex items-center justify-center cursor-grab active:cursor-grabbing w-6 h-8 text-gray-500 hover:text-gray-300 shrink-0"
+                              title="드래그하여 순서 변경"
                             >
-                              {actionCode}
-                            </span>
-                            {brief && (
-                              <span className="flex-1 truncate text-gray-300">
-                                {brief}
+                              <GripVertical className="size-3" />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => handleNationSlotClick(slot, e)}
+                              className="flex flex-1 items-center gap-2 px-1 py-1.5"
+                            >
+                              <span className="w-6 shrink-0 tabular-nums text-gray-400">
+                                #{slot + 1}
                               </span>
-                            )}
-                          </button>
+                              <span
+                                className={`shrink-0 border px-1 py-0 text-[10px] ${
+                                  isRest
+                                    ? "border-gray-600 text-gray-400"
+                                    : "border-cyan-700 text-cyan-300"
+                                }`}
+                              >
+                                {actionCode}
+                              </span>
+                              {brief && (
+                                <span className="flex-1 truncate text-gray-300">
+                                  {brief}
+                                </span>
+                              )}
+                            </button>
+                          </div>
                         );
                       },
                     )}
@@ -504,7 +763,7 @@ export default function ChiefPage() {
                   <div className="text-[11px] text-gray-400">
                     {selectedNationSlots.size > 1
                       ? `${selectedNationSlots.size}개 턴 선택됨`
-                      : "Shift+클릭: 범위선택, Ctrl/Cmd+클릭: 다중선택"}
+                      : "Shift+클릭: 범위선택, Ctrl/Cmd+클릭: 다중선택, 드래그: 순서변경"}
                   </div>
 
                   {showNationReserveForm && (

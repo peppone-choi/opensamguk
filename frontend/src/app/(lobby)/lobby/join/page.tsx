@@ -8,6 +8,7 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { inheritanceApi } from "@/lib/gameApi";
 import api from "@/lib/api";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/game/page-header";
 import { StatBar } from "@/components/game/stat-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +63,51 @@ const PERSONALITIES: { key: string; name: string; info: string }[] = [
   { key: "Timid", name: "소심", info: "소극적으로 행동합니다." },
   { key: "Reckless", name: "저돌", info: "무모하게 돌진합니다." },
   { key: "Ambition", name: "야망", info: "큰 야망을 품고 있습니다." },
+];
+
+// Famous general presets for quick character creation (랜덤 장수 프리셋)
+const GENERAL_PRESETS: {
+  name: string;
+  stats: Record<StatKey, number>;
+  personality: string;
+  crewType: number;
+}[] = [
+  {
+    name: "관우형",
+    stats: { leadership: 90, strength: 97, intel: 75, politics: 50, charm: 38 },
+    personality: "Loyal",
+    crewType: 2,
+  },
+  {
+    name: "제갈량형",
+    stats: { leadership: 55, strength: 20, intel: 100, politics: 95, charm: 80 },
+    personality: "Calm",
+    crewType: 0,
+  },
+  {
+    name: "여포형",
+    stats: { leadership: 70, strength: 100, intel: 25, politics: 20, charm: 135 > 100 ? 30 : 30 },
+    personality: "Reckless",
+    crewType: 2,
+  },
+  {
+    name: "조조형",
+    stats: { leadership: 96, strength: 72, intel: 91, politics: 65, charm: 26 },
+    personality: "Ambition",
+    crewType: 2,
+  },
+  {
+    name: "유비형",
+    stats: { leadership: 75, strength: 65, intel: 62, politics: 78, charm: 70 },
+    personality: "Normal",
+    crewType: 0,
+  },
+  {
+    name: "손권형",
+    stats: { leadership: 80, strength: 55, intel: 76, politics: 72, charm: 67 },
+    personality: "Calm",
+    crewType: 3,
+  },
 ];
 
 type StatPreset = "balanced" | "random" | "leadership" | "strength" | "intel";
@@ -510,6 +556,49 @@ export default function LobbyJoinPage() {
                 >
                   균형형
                 </Button>
+              </div>
+
+              {/* 랜덤 장수 프리셋 (legacy parity: quick general templates) */}
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">
+                  유명 장수 프리셋
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {GENERAL_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.name}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      onClick={() => {
+                        setStats(preset.stats);
+                        setPersonality(preset.personality);
+                        setCrewType(preset.crewType);
+                      }}
+                    >
+                      {preset.name}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const pick =
+                        GENERAL_PRESETS[
+                          Math.floor(Math.random() * GENERAL_PRESETS.length)
+                        ];
+                      setStats(pick.stats);
+                      setPersonality(pick.personality);
+                      setCrewType(pick.crewType);
+                      toast.info(`${pick.name} 프리셋이 적용되었습니다.`);
+                    }}
+                  >
+                    🎲 랜덤 프리셋
+                  </Button>
+                </div>
               </div>
 
               {STAT_KEYS.map((key) => (

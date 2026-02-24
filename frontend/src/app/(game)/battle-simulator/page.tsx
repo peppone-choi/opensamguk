@@ -6,7 +6,7 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { battleSimApi, simulatorExportApi } from "@/lib/gameApi";
 import type { BattleSimUnit, BattleSimCity, BattleSimResult, BattleSimRepeatResult, General } from "@/types";
-import { Swords, Play, RotateCcw, Download, UserPlus } from "lucide-react";
+import { Swords, Play, RotateCcw, Download, Upload, UserPlus, Plus, Minus, CloudRain, Mountain, Building } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,9 +126,14 @@ interface CityDefenseState {
   def: number;
   wall: number;
   level: number;
+  terrain: number; // 0=평지, 1=산지, 2=습지, 3=수상
+  weather: number; // 0=맑음, 1=비, 2=눈, 3=안개
 }
 
-const defaultCityDefense: CityDefenseState = { def: 1000, wall: 1000, level: 5 };
+const TERRAIN_LABELS: Record<number, string> = { 0: "평지", 1: "산지", 2: "습지", 3: "수상" };
+const WEATHER_LABELS: Record<number, string> = { 0: "맑음", 1: "비", 2: "눈", 3: "안개" };
+
+const defaultCityDefense: CityDefenseState = { def: 1000, wall: 1000, level: 5, terrain: 0, weather: 0 };
 
 function NumberField({
   label,
@@ -389,7 +394,7 @@ function UnitBuilder({
 export default function BattleSimulatorPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
-  const { generals, loadAll } = useGameStore();
+  const { generals, nations, loadAll } = useGameStore();
 
   const [year, setYear] = useState(currentWorld?.currentYear ?? 200);
   const [month, setMonth] = useState(currentWorld?.currentMonth ?? 1);
@@ -397,8 +402,13 @@ export default function BattleSimulatorPage() {
   const [repeatCount, setRepeatCount] = useState<1 | 1000>(1);
 
   const [attacker, setAttacker] = useState<UnitFormState>(defaultUnit("공격측"));
-  const [defender, setDefender] = useState<UnitFormState>(defaultUnit("방어측"));
+  const [defenders, setDefenders] = useState<UnitFormState[]>([defaultUnit("방어측")]);
   const [cityDef, setCityDef] = useState<CityDefenseState>({ ...defaultCityDefense });
+  const [nationContext, setNationContext] = useState<number | null>(null);
+
+  // Backward compat alias
+  const defender = defenders[0];
+  const setDefender = (u: UnitFormState) => setDefenders((prev) => [u, ...prev.slice(1)]);
 
   const [result, setResult] = useState<(BattleSimResult & { repeatSummary?: BattleSimRepeatResult }) | null>(null);
   const [running, setRunning] = useState(false);
@@ -493,6 +503,52 @@ export default function BattleSimulatorPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportConfig = () => {
+    const config = { attacker, defenders, cityDef, year, month, seed, repeatCount, nationContext };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `sim_config_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportConfig = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const config = JSON.parse(text);
+        if (config.attacker) setAttacker(config.attacker);
+        if (config.defenders) setDefenders(config.defenders);
+        else if (config.defender) setDefenders([config.defender]);
+        if (config.cityDef) setCityDef(config.cityDef);
+        if (config.year) setYear(config.year);
+        if (config.month) setMonth(config.month);
+        if (config.seed) setSeed(config.seed);
+        if (config.repeatCount) setRepeatCount(config.repeatCount);
+        if (config.nationContext !== undefined) setNationContext(config.nationContext);
+      } catch {
+        setError("설정 파일을 읽을 수 없습니다.");
+      }
+    };
+    input.click();
+  };
+
+  const addDefender = () => {
+    setDefenders((prev) => [...prev, defaultUnit(`방어측 ${prev.length + 1}`)]);
+  };
+
+  const removeDefender = (idx: number) => {
+    if (defenders.length <= 1) return;
+    setDefenders((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   if (!currentWorld)
     return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
 
@@ -505,7 +561,7 @@ export default function BattleSimulatorPage() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">전역 설정</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">년</span>
@@ -531,10 +587,36 @@ export default function BattleSimulatorPage() {
               </select>
             </div>
           </div>
+          {/* Nation Context Selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">국가 컨텍스트:</span>
+            <select
+              value={nationContext ?? ""}
+              onChange={(e) => setNationContext(e.target.value ? Number(e.target.value) : null)}
+              className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white min-w-[120px]"
+            >
+              <option value="">없음</option>
+              {nations.filter((n) => n.id > 0).map((n) => (
+                <option key={n.id} value={n.id}>{n.name}</option>
+              ))}
+            </select>
+            <span className="text-[10px] text-muted-foreground">국가 기술 등 컨텍스트 반영</span>
+          </div>
+          {/* Import / Export */}
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleExportConfig}>
+              <Download className="size-3 mr-1" />
+              설정 내보내기
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleImportConfig}>
+              <Upload className="size-3 mr-1" />
+              설정 가져오기
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Attacker / Defender */}
+      {/* Attacker / Defenders */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <UnitBuilder
           title="공격측 장수"
@@ -544,20 +626,41 @@ export default function BattleSimulatorPage() {
           myGeneralId={myGeneral?.id ?? null}
         />
         <div className="space-y-4">
-          <UnitBuilder
-            title="방어측 장수"
-            unit={defender}
-            onChange={setDefender}
-            generals={generals}
-            myGeneralId={myGeneral?.id ?? null}
-          />
+          {defenders.map((def, idx) => (
+            <div key={idx} className="relative">
+              <UnitBuilder
+                title={defenders.length > 1 ? `방어측 장수 ${idx + 1}` : "방어측 장수"}
+                unit={def}
+                onChange={(u) => setDefenders((prev) => prev.map((d, i) => i === idx ? u : d))}
+                generals={generals}
+                myGeneralId={myGeneral?.id ?? null}
+              />
+              {defenders.length > 1 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 h-6 w-6 p-0 text-red-400"
+                  onClick={() => removeDefender(idx)}
+                >
+                  <Minus className="size-3" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button size="sm" variant="outline" className="w-full" onClick={addDefender}>
+            <Plus className="size-3 mr-1" />
+            방어측 추가 (다중 방어자)
+          </Button>
 
-          {/* City Defense */}
+          {/* City Defense with Terrain/Weather */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">방어측 도시</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Building className="size-4" />
+                방어측 도시
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <div className="flex flex-wrap gap-2">
                 <NumberField label="수비" value={cityDef.def} onChange={(v) => setCityDef({ ...cityDef, def: v })} min={0} step={10} />
                 <NumberField label="성벽" value={cityDef.wall} onChange={(v) => setCityDef({ ...cityDef, wall: v })} min={0} step={10} />
@@ -570,6 +673,34 @@ export default function BattleSimulatorPage() {
                   >
                     {[1, 2, 3, 4, 5, 6, 7].map((lv) => (
                       <option key={lv} value={lv}>Lv.{lv}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1">
+                  <Mountain className="size-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground w-10 text-right">지형</span>
+                  <select
+                    value={cityDef.terrain}
+                    onChange={(e) => setCityDef({ ...cityDef, terrain: Number(e.target.value) })}
+                    className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white"
+                  >
+                    {Object.entries(TERRAIN_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-1">
+                  <CloudRain className="size-3 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground w-10 text-right">날씨</span>
+                  <select
+                    value={cityDef.weather}
+                    onChange={(e) => setCityDef({ ...cityDef, weather: Number(e.target.value) })}
+                    className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white"
+                  >
+                    {Object.entries(WEATHER_LABELS).map(([k, v]) => (
+                      <option key={k} value={k}>{v}</option>
                     ))}
                   </select>
                 </div>

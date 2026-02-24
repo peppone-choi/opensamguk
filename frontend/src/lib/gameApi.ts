@@ -108,6 +108,15 @@ export const generalApi = {
   listPool: (worldId: number) => api.get<General[]>(`/worlds/${worldId}/pool`),
   selectFromPool: (worldId: number, generalId: number) =>
     api.post<General>(`/worlds/${worldId}/select-pool`, { generalId }),
+  buildPoolGeneral: (
+    worldId: number,
+    payload: { name: string; leadership: number; strength: number; intel: number; politics: number; charm: number },
+  ) => api.post<General>(`/worlds/${worldId}/pool`, payload),
+  updatePoolGeneral: (
+    worldId: number,
+    generalId: number,
+    stats: { leadership: number; strength: number; intel: number; politics: number; charm: number },
+  ) => api.put<General>(`/worlds/${worldId}/pool/${generalId}`, stats),
 };
 
 export const npcTokenApi = {
@@ -475,10 +484,13 @@ export const diplomacyLetterApi = {
       destNationId: number;
       type: string;
       content?: string;
+      diplomaticContent?: string;
     },
   ) => api.post<Message>(`/nations/${nationId}/diplomacy-letters`, data),
   respond: (letterId: number, accept: boolean) =>
     api.post<void>(`/diplomacy-letters/${letterId}/respond`, { accept }),
+  execute: (letterId: number) =>
+    api.post<void>(`/diplomacy-letters/${letterId}/execute`),
   rollback: (letterId: number) =>
     api.post<void>(`/diplomacy-letters/${letterId}/rollback`),
   destroy: (letterId: number) =>

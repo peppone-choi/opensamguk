@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { useWorldStore } from "@/stores/worldStore";
-import { historyApi } from "@/lib/gameApi";
-import type { Message, YearbookSummary } from "@/types";
-import { ScrollText, Clock, Search } from "lucide-react";
+import { useGameStore } from "@/stores/gameStore";
+import { historyApi, mapRecentApi } from "@/lib/gameApi";
+import type { Message, YearbookSummary, PublicCachedMapResponse, MapData } from "@/types";
+import { ScrollText, Clock, Search, Map } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -12,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -19,6 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const KonvaMapCanvas = lazy(
+  () => import("@/components/game/konva-map-canvas"),
+);
 
 type EventType = "war" | "diplomacy" | "nation" | "general" | "city" | "other";
 
@@ -115,6 +121,13 @@ export default function HistoryPage() {
   const [activeFilters, setActiveFilters] = useState<Set<EventType>>(
     new Set(["war", "diplomacy", "nation", "general", "city", "other"]),
   );
+  const [tab, setTab] = useState("timeline");
+
+  // Map snapshot state (맵 재현/스냅샷 브라우징)
+  const { nations, cities, mapData, loadAll } = useGameStore();
+  const [cachedMap, setCachedMap] = useState<PublicCachedMapResponse | null>(null);
+  const [mapLoading, setMapLoading] = useState(false);
+  const [mapSnapshotIdx, setMapSnapshotIdx] = useState(0);
 
   const startYear = useMemo(() => {
     if (!currentWorld) return 0;
@@ -184,9 +197,29 @@ export default function HistoryPage() {
     }
   }, [currentWorld, selectedYear, selectedMonth]);
 
+  const loadMapSnapshot = useCallback(async () => {
+    if (!currentWorld) return;
+    setMapLoading(true);
+    try {
+      const { data } = await mapRecentApi.getMapRecent(currentWorld.id);
+      setCachedMap(data);
+      if (data.history.length > 0) {
+        setMapSnapshotIdx(data.history.length - 1);
+      }
+    } catch {
+      setCachedMap(null);
+    } finally {
+      setMapLoading(false);
+    }
+  }, [currentWorld]);
+
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    if (currentWorld) {
+      loadAll(currentWorld.id);
+      loadMapSnapshot();
+    }
+  }, [loadData, currentWorld, loadAll, loadMapSnapshot]);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -242,9 +275,133 @@ export default function HistoryPage() {
     );
   if (loading) return <LoadingState />;
 
+  // Map snapshot data
+  const currentSnapshot = cachedMap?.history?.[mapSnapshotIdx] ?? null;
+  const snapshotCities = useMemo(() => {
+    if (!cachedMap?.cities) return cities;
+    // Overlay snapshot nation ownership onto current cities
+    if (!currentSnapshot) return cities;
+    const ownerMap = new Map(
+      (currentSnapshot.cityOwnership ?? []).map((co: { cityId: number; nationId: number }) => [co.cityId, co.nationId]),
+    );
+    return cities.map((c) => ({
+      ...c,
+      nationId: ownerMap.get(c.id) ?? c.nationId,
+    }));
+  }, [cities, cachedMap, currentSnapshot]);
+
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
       <PageHeader icon={ScrollText} title="연감" />
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="timeline">
+            <ScrollText className="size-3.5 mr-1" />
+            연대기
+          </TabsTrigger>
+          <TabsTrigger value="map">
+            <Map className="size-3.5 mr-1" />
+            맵 재현
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ═══ Map Snapshot Tab ═══ */}
+        <TabsContent value="map" className="mt-4 space-y-4">
+          {mapLoading ? (
+            <LoadingState message="맵 데이터 불러오는 중..." />
+          ) : !cachedMap || !cachedMap.available ? (
+            <EmptyState icon={Map} title="맵 스냅샷 데이터가 없습니다." />
+          ) : (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">역사 맵 스냅샷</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Navigation */}
+                {cachedMap.history.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={mapSnapshotIdx <= 0}
+                      onClick={() => setMapSnapshotIdx((i) => Math.max(0, i - 1))}
+                    >
+                      ◀ 이전
+                    </Button>
+                    <div className="flex-1 text-center text-sm">
+                      <span className="font-medium">
+                        {currentSnapshot?.year ?? "?"}년 {currentSnapshot?.month ?? "?"}월
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({mapSnapshotIdx + 1} / {cachedMap.history.length})
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={mapSnapshotIdx >= cachedMap.history.length - 1}
+                      onClick={() =>
+                        setMapSnapshotIdx((i) =>
+                          Math.min(cachedMap.history.length - 1, i + 1),
+                        )
+                      }
+                    >
+                      다음 ▶
+                    </Button>
+                  </div>
+                )}
+
+                {/* Slider for quick browsing */}
+                {cachedMap.history.length > 1 && (
+                  <input
+                    type="range"
+                    min={0}
+                    max={cachedMap.history.length - 1}
+                    value={mapSnapshotIdx}
+                    onChange={(e) => setMapSnapshotIdx(Number(e.target.value))}
+                    className="w-full accent-primary"
+                  />
+                )}
+
+                {/* Map canvas */}
+                {mapData && (
+                  <div className="border border-gray-700 rounded overflow-hidden">
+                    <Suspense fallback={<LoadingState message="맵 로딩..." />}>
+                      <KonvaMapCanvas
+                        mapData={mapData}
+                        cities={snapshotCities}
+                        nations={nations}
+                        width={Math.min(700, typeof window !== "undefined" ? window.innerWidth - 64 : 700)}
+                        height={500}
+                        showLabels
+                      />
+                    </Suspense>
+                  </div>
+                )}
+
+                {/* Snapshot info */}
+                {currentSnapshot && (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    {currentSnapshot.events && currentSnapshot.events.length > 0 && (
+                      <div>
+                        <span className="font-medium text-foreground">주요 사건:</span>
+                        <ul className="ml-3 list-disc">
+                          {currentSnapshot.events.slice(0, 5).map((evt: string, i: number) => (
+                            <li key={i}>{evt}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* ═══ Timeline Tab ═══ */}
+        <TabsContent value="timeline" className="mt-4 space-y-4">
 
       <Card>
         <CardContent className="space-y-3">
@@ -429,6 +586,9 @@ export default function HistoryPage() {
           ))}
         </div>
       )}
+
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

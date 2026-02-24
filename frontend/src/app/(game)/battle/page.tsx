@@ -5,7 +5,7 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { subscribeWebSocket } from "@/lib/websocket";
 import type { Nation, General } from "@/types";
-import { Swords, ArrowUpDown, Shield, Flame } from "lucide-react";
+import { Swords, ArrowUpDown, Shield, Flame, User, ScrollText } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -21,6 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useGeneralStore } from "@/stores/generalStore";
+import { generalLogApi } from "@/lib/gameApi";
+import { formatLog } from "@/lib/formatLog";
 
 function getNation(nations: Nation[], id: number) {
   return nations.find((n) => n.id === id);
@@ -55,12 +58,37 @@ export default function BattlePage() {
   const { cities, nations, generals, diplomacy, loading, loadAll } =
     useGameStore();
 
+  const { myGeneral, fetchMyGeneral } = useGeneralStore();
   const [sortKey, setSortKey] = useState<SortKey>("totalCrew");
   const [sortAsc, setSortAsc] = useState(false);
+  const [personalLogs, setPersonalLogs] = useState<{ id: number; message: string; date: string }[]>([]);
+  const [personalLogsLoaded, setPersonalLogsLoaded] = useState(false);
+  const [personalLoading, setPersonalLoading] = useState(false);
+  const [logStyle, setLogStyle] = useState<"modern" | "legacy">("modern");
 
   useEffect(() => {
-    if (currentWorld) loadAll(currentWorld.id);
-  }, [currentWorld, loadAll]);
+    if (currentWorld) {
+      loadAll(currentWorld.id);
+      if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
+    }
+  }, [currentWorld, loadAll, myGeneral, fetchMyGeneral]);
+
+  const loadPersonalLogs = async () => {
+    if (!myGeneral || !currentWorld) return;
+    setPersonalLoading(true);
+    try {
+      const { data } = await generalLogApi.getOldLogs(myGeneral.id, myGeneral.id, "battleResult");
+      if (Array.isArray(data)) {
+        setPersonalLogs(data as { id: number; message: string; date: string }[]);
+      } else if (data && typeof data === "object" && "logs" in data) {
+        setPersonalLogs((data as { logs: { id: number; message: string; date: string }[] }).logs ?? []);
+      }
+    } catch {
+      setPersonalLogs([]);
+    } finally {
+      setPersonalLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!currentWorld) return;

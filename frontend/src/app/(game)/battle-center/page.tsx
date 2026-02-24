@@ -572,6 +572,8 @@ function GeneralSupplementCard({ general }: { general: General }) {
 
 /* ---- Log Section ---- */
 
+const LOG_PAGE_SIZE = 30;
+
 function LogSection({
   title,
   titleColor,
@@ -585,10 +587,39 @@ function LogSection({
   loading: boolean;
   emptyText: string;
 }) {
+  const [page, setPage] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(logs.length / LOG_PAGE_SIZE));
+  const pageLogs = logs.slice(page * LOG_PAGE_SIZE, (page + 1) * LOG_PAGE_SIZE);
+
   return (
     <Card>
       <CardHeader className="pb-1">
-        <CardTitle className={`text-sm ${titleColor ?? ""}`}>{title}</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className={`text-sm ${titleColor ?? ""}`}>{title}</CardTitle>
+          {logs.length > LOG_PAGE_SIZE && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeft className="size-3.5" />
+              </Button>
+              <span className="text-[10px] text-muted-foreground tabular-nums">
+                {page + 1}/{totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              >
+                <ChevronRight className="size-3.5" />
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -598,13 +629,18 @@ function LogSection({
             <p className="text-xs text-muted-foreground">{emptyText}</p>
           ) : null
         ) : (
-          <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
-            {logs.map((log) => (
-              <div key={log.id} className="text-gray-300 leading-relaxed">
-                {formatLog(log.message)}
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
+              {pageLogs.map((log) => (
+                <div key={log.id} className="text-gray-300 leading-relaxed">
+                  {formatLog(log.message)}
+                </div>
+              ))}
+            </div>
+            <div className="mt-1 text-[10px] text-muted-foreground text-right">
+              총 {logs.length}건
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

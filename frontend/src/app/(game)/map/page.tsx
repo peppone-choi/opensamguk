@@ -9,6 +9,19 @@ import { formatLog } from "@/lib/formatLog";
 import type { CityConst, PublicCachedMapHistory } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+type MapTheme = "default" | "spring" | "summer" | "autumn" | "winter";
+const MAP_THEMES: { key: MapTheme; label: string; bg: string; line: string; text: string }[] = [
+  { key: "default", label: "기본", bg: "#111827", line: "#333", text: "#ccc" },
+  { key: "spring", label: "봄", bg: "#1a2e1a", line: "#4a7c4a", text: "#b0e0b0" },
+  { key: "summer", label: "여름", bg: "#1a2e2e", line: "#2a6e6e", text: "#a0e0e0" },
+  { key: "autumn", label: "가을", bg: "#2e1a0a", line: "#8e5e2e", text: "#e0c090" },
+  { key: "winter", label: "겨울", bg: "#1e2030", line: "#6070a0", text: "#c0c8e0" },
+];
+
+type MapLayer = "nations" | "troops" | "supply" | "terrain";
 
 interface CityTooltip {
   cityName: string;
@@ -41,6 +54,19 @@ export default function MapPage() {
   const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
   const [tooltip, setTooltip] = useState<CityTooltip | null>(null);
   const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
+  const [theme, setTheme] = useState<MapTheme>("default");
+  const [layers, setLayers] = useState<Set<MapLayer>>(new Set(["nations", "troops"]));
+  const [historyBrowseIdx, setHistoryBrowseIdx] = useState<number | null>(null);
+
+  const currentTheme = MAP_THEMES.find((t) => t.key === theme) ?? MAP_THEMES[0];
+  const toggleLayer = (layer: MapLayer) => {
+    setLayers((prev) => {
+      const next = new Set(prev);
+      if (next.has(layer)) next.delete(layer);
+      else next.add(layer);
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (currentWorld) {
@@ -231,6 +257,39 @@ export default function MapPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-bold">{serverName} 현황</h1>
 
+      {/* Theme & Layer Controls */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">테마:</span>
+        {MAP_THEMES.map((t) => (
+          <Button
+            key={t.key}
+            size="sm"
+            variant={theme === t.key ? "default" : "outline"}
+            className="h-6 px-2 text-xs"
+            onClick={() => setTheme(t.key)}
+          >
+            {t.label}
+          </Button>
+        ))}
+        <span className="text-xs text-muted-foreground ml-4">레이어:</span>
+        {([
+          { key: "nations" as MapLayer, label: "국가색" },
+          { key: "troops" as MapLayer, label: "병력" },
+          { key: "supply" as MapLayer, label: "보급" },
+          { key: "terrain" as MapLayer, label: "지형" },
+        ]).map((l) => (
+          <Button
+            key={l.key}
+            size="sm"
+            variant={layers.has(l.key) ? "default" : "outline"}
+            className="h-6 px-2 text-xs"
+            onClick={() => toggleLayer(l.key)}
+          >
+            {l.label}
+          </Button>
+        ))}
+      </div>
+
       {/* Legend */}
       <div className="flex flex-wrap gap-3 text-xs text-gray-400">
         {legendNations.map((n) => (
@@ -254,7 +313,8 @@ export default function MapPage() {
 
       {/* SVG Map */}
       <div
-        className="relative bg-gray-900 border border-gray-800 rounded-lg overflow-hidden"
+        className="relative border border-gray-800 rounded-lg overflow-hidden"
+        style={{ backgroundColor: currentTheme.bg }}
         onClick={() => setTooltip(null)}
       >
         <svg
@@ -269,7 +329,7 @@ export default function MapPage() {
               y1={l.y1}
               x2={l.x2}
               y2={l.y2}
-              stroke="#333"
+              stroke={currentTheme.line}
               strokeWidth={1}
             />
           ))}
@@ -278,9 +338,12 @@ export default function MapPage() {
           {mapData.cities.map((cc) => {
             const cx = toSvgX(cc.x);
             const cy = toSvgY(cc.y);
-            const color = getCityColor(cc.id);
-            const hasForeignTroops = foreignTroopCities.has(cc.id);
-            const genCount = cityGeneralData.get(cc.id)?.length ?? 0;
+            const color = layers.has("nations") ? getCityColor(cc.id) : "#555";
+            const city = cityMap.get(cc.id);
+            const hasForeignTroops = layers.has("troops") && foreignTroopCities.has(cc.id);
+            const genCount = layers.has("troops") ? (cityGeneralData.get(cc.id)?.length ?? 0) : 0;
+            const isSupplyBroken = layers.has("supply") && city && city.supplyState !== 1;
+            const terrainLevel = layers.has("terrain") && city ? city.level : 0;
 
             return (
               <g
@@ -302,6 +365,33 @@ export default function MapPage() {
                   >
                     <animate attributeName="stroke-dashoffset" from="0" to="12" dur="1.5s" repeatCount="indefinite" />
                   </circle>
+                )}
+
+                {/* Supply broken indicator */}
+                {isSupplyBroken && (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={CITY_RADIUS + 6}
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth={1.5}
+                    strokeDasharray="2 3"
+                    opacity={0.7}
+                  />
+                )}
+
+                {/* Terrain level ring */}
+                {terrainLevel > 0 && (
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={CITY_RADIUS + (terrainLevel >= 5 ? 2 : 0)}
+                    fill="none"
+                    stroke={terrainLevel >= 5 ? "#a855f7" : "transparent"}
+                    strokeWidth={1}
+                    opacity={0.5}
+                  />
                 )}
 
                 <circle
@@ -342,7 +432,7 @@ export default function MapPage() {
                   x={cx}
                   y={cy + CITY_RADIUS + 14}
                   textAnchor="middle"
-                  fill="#ccc"
+                  fill={currentTheme.text}
                   fontSize={11}
                 >
                   {cc.name}
@@ -394,18 +484,51 @@ export default function MapPage() {
         )}
       </div>
 
-      {/* History Log Panel */}
+      {/* History Log Panel with Browsing */}
       {history.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               최근 기록
               <Badge variant="outline" className="text-[10px]">{history.length}건</Badge>
+              <div className="ml-auto flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs"
+                  disabled={historyBrowseIdx === null || historyBrowseIdx <= 0}
+                  onClick={() => setHistoryBrowseIdx((prev) => Math.max(0, (prev ?? history.length) - 10))}
+                >
+                  ← 이전
+                </Button>
+                <span className="text-[10px] text-muted-foreground">
+                  {historyBrowseIdx !== null ? `${historyBrowseIdx + 1}~` : "최신"}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs"
+                  disabled={historyBrowseIdx === null || historyBrowseIdx + 10 >= history.length}
+                  onClick={() => setHistoryBrowseIdx((prev) => Math.min(history.length - 10, (prev ?? 0) + 10))}
+                >
+                  다음 →
+                </Button>
+                {historyBrowseIdx !== null && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => setHistoryBrowseIdx(null)}
+                  >
+                    최신으로
+                  </Button>
+                )}
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
-              {history.map((item) => (
+              {(historyBrowseIdx !== null ? history.slice(historyBrowseIdx, historyBrowseIdx + 10) : history).map((item) => (
                 <div key={item.id} className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0">
                   <span className="text-muted-foreground whitespace-nowrap shrink-0 w-20">
                     {item.sentAt
