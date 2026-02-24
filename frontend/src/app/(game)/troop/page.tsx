@@ -6,7 +6,7 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { troopApi } from "@/lib/gameApi";
 import type { Troop, General } from "@/types";
-import { Shield, Plus, Swords, Clock, FileText, MapPin } from "lucide-react";
+import { Shield, Plus, Swords, Clock, FileText, MapPin, Activity, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,101 @@ import {
   formatOfficerLevelText,
   isValidObjKey,
 } from "@/lib/game-utils";
+
+function TurnBrief({ members }: { members: General[] }) {
+  const totalCrew = members.reduce((s, g) => s + g.crew, 0);
+  const avgTrain =
+    members.length > 0
+      ? Math.round(members.reduce((s, g) => s + g.train, 0) / members.length)
+      : 0;
+  const avgAtmos =
+    members.length > 0
+      ? Math.round(members.reduce((s, g) => s + g.atmos, 0) / members.length)
+      : 0;
+  const injuredCount = members.filter((g) => g.injury > 0).length;
+  const lowCrewCount = members.filter((g) => g.crew < 3000).length;
+  const readyCount = members.filter((g) => !g.commandEndTime || new Date(g.commandEndTime) <= new Date()).length;
+
+  return (
+    <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-3 space-y-2">
+      <div className="flex items-center gap-2 text-xs font-medium text-blue-300">
+        <Activity className="size-3" />
+        턴 브리프
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs">
+        <div className="text-center">
+          <div className="text-muted-foreground">총 병력</div>
+          <div className="text-blue-400 font-bold tabular-nums">{totalCrew.toLocaleString()}</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">평균 훈련</div>
+          <div className="tabular-nums font-bold">{avgTrain}</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">평균 사기</div>
+          <div className="tabular-nums font-bold">{avgAtmos}</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">대기 가능</div>
+          <div className="text-green-400 tabular-nums font-bold">{readyCount}/{members.length}</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">부상</div>
+          <div className={`tabular-nums font-bold ${injuredCount > 0 ? "text-orange-400" : ""}`}>{injuredCount}명</div>
+        </div>
+        <div className="text-center">
+          <div className="text-muted-foreground">병력 부족</div>
+          <div className={`tabular-nums font-bold ${lowCrewCount > 0 ? "text-red-400" : ""}`}>{lowCrewCount}명</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CommandTimeline({ members }: { members: General[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const sorted = [...members].sort((a, b) => {
+    const ta = a.commandEndTime ? new Date(a.commandEndTime).getTime() : 0;
+    const tb = b.commandEndTime ? new Date(b.commandEndTime).getTime() : 0;
+    return ta - tb;
+  });
+
+  return (
+    <div className="space-y-1">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
+        <Clock className="size-3" />
+        명령 타임라인
+        {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+      </button>
+      {expanded && (
+        <div className="relative pl-4 border-l border-gray-700 space-y-1.5 ml-1">
+          {sorted.map((g) => {
+            const endTime = g.commandEndTime ? new Date(g.commandEndTime) : null;
+            const isActive = endTime && endTime > new Date();
+            const lastTurnAction = g.lastTurn?.actionCode as string | undefined;
+            return (
+              <div key={g.id} className="flex items-center gap-2 text-xs relative">
+                <div className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full border-2 ${isActive ? "bg-yellow-500 border-yellow-400" : "bg-gray-600 border-gray-500"}`} />
+                <span className="font-medium w-16 truncate">{g.name}</span>
+                <span className="text-muted-foreground">
+                  {lastTurnAction || "대기"}
+                </span>
+                {endTime && (
+                  <span className={`ml-auto tabular-nums ${isActive ? "text-yellow-400" : "text-gray-500"}`}>
+                    {endTime.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TroopSummary({ members }: { members: General[] }) {
   const totalCrew = members.reduce((s, g) => s + g.crew, 0);
@@ -495,6 +590,12 @@ export default function TroopPage() {
                       />
                     ))}
                 </div>
+                {/* Turn Brief */}
+                {members.length > 0 && <TurnBrief members={members} />}
+
+                {/* Command Timeline */}
+                {members.length > 0 && <CommandTimeline members={members} />}
+
                 {/* Troop summary */}
                 <TroopSummary members={members} />
               </CardContent>

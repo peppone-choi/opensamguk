@@ -333,6 +333,9 @@ export default function NpcPage() {
     policy?: { setter: string; date: string };
   }>({});
 
+  // Settings history log
+  const [settingsHistory, setSettingsHistory] = useState<{ setter: string; date: string; action: string; details: string }[]>([]);
+
   // Snapshots for rollback
   const [prevPolicy, setPrevPolicy] = useState<Record<string, number>>({});
   const [prevNationPriority, setPrevNationPriority] = useState<string[]>([]);
@@ -392,6 +395,9 @@ export default function NpcPage() {
               policy?: { setter: string; date: string };
             },
           );
+        }
+        if (Array.isArray(data.history)) {
+          setSettingsHistory(data.history as { setter: string; date: string; action: string; details: string }[]);
         }
       })
       .catch(() => {})
@@ -547,6 +553,7 @@ export default function NpcPage() {
           <TabsTrigger value="policy">NPC 정책</TabsTrigger>
           <TabsTrigger value="priority">우선순위</TabsTrigger>
           <TabsTrigger value="override">장수별 설정</TabsTrigger>
+          <TabsTrigger value="history">설정 이력</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: NPC generals list */}
@@ -825,6 +832,62 @@ export default function NpcPage() {
                     {saving ? "저장 중..." : "장수별 설정 저장"}
                   </Button>
                 </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Settings History Tab */}
+        <TabsContent value="history" className="space-y-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="size-4" />
+                설정자 이력
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {settingsHistory.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">일시</TableHead>
+                      <TableHead className="text-xs">설정자</TableHead>
+                      <TableHead className="text-xs">항목</TableHead>
+                      <TableHead className="text-xs">내용</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {settingsHistory.map((entry, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="text-xs text-muted-foreground">{entry.date}</TableCell>
+                        <TableCell className="text-xs font-medium">{entry.setter}</TableCell>
+                        <TableCell className="text-xs">{entry.action}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{entry.details}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground text-center py-4">설정 이력이 없습니다.</p>
+                  {/* Show lastSetters info as fallback */}
+                  {lastSetters.policy && (
+                    <div className="text-xs text-muted-foreground">
+                      정책: {lastSetters.policy.setter} ({lastSetters.policy.date})
+                    </div>
+                  )}
+                  {lastSetters.nation && (
+                    <div className="text-xs text-muted-foreground">
+                      국가 우선순위: {lastSetters.nation.setter} ({lastSetters.nation.date})
+                    </div>
+                  )}
+                  {lastSetters.general && (
+                    <div className="text-xs text-muted-foreground">
+                      장수 우선순위: {lastSetters.general.setter} ({lastSetters.general.date})
+                    </div>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

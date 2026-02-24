@@ -13,7 +13,12 @@ import {
   Brain,
   Flame,
   Users,
+  Settings,
+  MessageCircle,
+  BarChart,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -123,6 +128,9 @@ export default function TournamentPage() {
     }
   };
 
+  const [operatorMessage, setOperatorMessage] = useState("");
+  const [operatorMessages, setOperatorMessages] = useState<{ text: string; date: string }[]>([]);
+
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
     [generals],
@@ -131,6 +139,54 @@ export default function TournamentPage() {
     () => new Map(nations.map((n) => [n.id, n])),
     [nations],
   );
+
+  // Preliminary ranking table: compute from bracket results
+  const preliminaryRanking = useMemo(() => {
+    if (!info || info.bracket.length === 0) return [];
+    const stats = new Map<number, { wins: number; losses: number; draws: number; points: number }>();
+    for (const m of info.bracket) {
+      if (!m.p1 || !m.p2) continue;
+      if (!stats.has(m.p1)) stats.set(m.p1, { wins: 0, losses: 0, draws: 0, points: 0 });
+      if (!stats.has(m.p2)) stats.set(m.p2, { wins: 0, losses: 0, draws: 0, points: 0 });
+      if (m.winner === m.p1) {
+        stats.get(m.p1)!.wins++;
+        stats.get(m.p1)!.points += 3;
+        stats.get(m.p2)!.losses++;
+      } else if (m.winner === m.p2) {
+        stats.get(m.p2)!.wins++;
+        stats.get(m.p2)!.points += 3;
+        stats.get(m.p1)!.losses++;
+      } else if (m.winner) {
+        // draw (unlikely but handle)
+        stats.get(m.p1)!.draws++;
+        stats.get(m.p1)!.points += 1;
+        stats.get(m.p2)!.draws++;
+        stats.get(m.p2)!.points += 1;
+      }
+    }
+    return Array.from(stats.entries())
+      .map(([pid, s]) => ({ pid, gen: generalMap.get(pid), nat: generalMap.get(pid) ? nationMap.get(generalMap.get(pid)!.nationId) : null, ...s }))
+      .sort((a, b) => b.points - a.points || b.wins - a.wins);
+  }, [info, generalMap, nationMap]);
+
+  const isAdmin = myGeneral && (myGeneral.officerLevel ?? 0) >= 12;
+
+  const handleAdvancePhase = async () => {
+    if (!currentWorld || !isAdmin) return;
+    try {
+      await tournamentApi.advancePhase(currentWorld.id);
+      await load();
+    } catch { /* ignore */ }
+  };
+
+  const handleSendOperatorMessage = async () => {
+    if (!operatorMessage.trim() || !currentWorld || !isAdmin) return;
+    try {
+      await tournamentApi.sendMessage(currentWorld.id, operatorMessage.trim());
+      setOperatorMessages((prev) => [...prev, { text: operatorMessage.trim(), date: new Date().toISOString() }]);
+      setOperatorMessage("");
+    } catch { /* ignore */ }
+  };
 
   if (!currentWorld)
     return (
@@ -480,6 +536,124 @@ export default function TournamentPage() {
                     ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Preliminary → Finals Ranking Table ── */}
+        {preliminaryRanking.length > 0 && (
+          <Card>
+            <CardHeader className="py-2 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <BarChart className="size-4 text-cyan-400" />
+                예선 → 본선 랭킹
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 pb-3">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs w-8">#</TableHead>
+                    <TableHead className="text-xs">장수</TableHead>
+                    <TableHead className="text-xs">국가</TableHead>
+                    <TableHead className="text-xs text-right">승</TableHead>
+                    <TableHead className="text-xs text-right">무</TableHead>
+                    <TableHead className="text-xs text-right">패</TableHead>
+                    <TableHead className="text-xs text-right">승점</TableHead>
+                    <TableHead className="text-xs text-center">본선</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preliminaryRanking.map((row, idx) => (
+                    <TableRow key={row.pid} className={idx < 4 ? "bg-green-950/20" : ""}>
+                      <TableCell className="text-xs font-mono">{idx + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <GeneralPortrait picture={row.gen?.picture} name={row.gen?.name ?? `#${row.pid}`} size="sm" />
+                          <span className="text-xs">{row.gen?.name ?? `#${row.pid}`}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {row.nat ? <NationBadge name={row.nat.name} color={row.nat.color} /> : <span className="text-xs text-muted-foreground">재야</span>}
+                      </TableCell>
+                      <TableCell className="text-right text-xs font-mono text-green-400">{row.wins}</TableCell>
+                      <TableCell className="text-right text-xs font-mono text-gray-400">{row.draws}</TableCell>
+                      <TableCell className="text-right text-xs font-mono text-red-400">{row.losses}</TableCell>
+                      <TableCell className="text-right text-xs font-mono font-bold">{row.points}</TableCell>
+                      <TableCell className="text-center">
+                        {idx < 4 ? <Badge variant="default" className="text-[10px]">진출</Badge> : <span className="text-xs text-muted-foreground">-</span>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Operator Messages ── */}
+        {(operatorMessages.length > 0 || isAdmin) && (
+          <Card>
+            <CardHeader className="py-2 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <MessageCircle className="size-4 text-amber-400" />
+                운영 메시지
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 space-y-2">
+              {operatorMessages.length > 0 ? (
+                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                  {operatorMessages.map((msg, idx) => (
+                    <div key={idx} className="text-xs bg-amber-950/20 border border-amber-900/30 rounded px-2 py-1.5">
+                      <span className="text-muted-foreground mr-2">{new Date(msg.date).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      <span className="text-amber-300">{msg.text}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">운영 메시지가 없습니다.</p>
+              )}
+              {isAdmin && (
+                <div className="flex gap-2 pt-1">
+                  <Input
+                    value={operatorMessage}
+                    onChange={(e) => setOperatorMessage(e.target.value)}
+                    placeholder="운영 메시지 입력..."
+                    className="text-xs"
+                  />
+                  <Button size="sm" onClick={handleSendOperatorMessage} disabled={!operatorMessage.trim()}>
+                    전송
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── Phase Management (Admin) ── */}
+        {isAdmin && (
+          <Card>
+            <CardHeader className="py-2 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Settings className="size-4" />
+                위상 관리 (운영자)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 space-y-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="text-xs">
+                  <span className="text-muted-foreground">현재 상태: </span>
+                  <Badge variant={STATE_COLORS[info?.state ?? 0]}>
+                    {STATE_LABELS[info?.state ?? 0]}
+                  </Badge>
+                </div>
+                <Button size="sm" variant="outline" onClick={handleAdvancePhase}>
+                  다음 위상으로 진행
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                대기 → 모집중 → 진행중 → 종료 순서로 진행합니다.
+              </p>
             </CardContent>
           </Card>
         )}

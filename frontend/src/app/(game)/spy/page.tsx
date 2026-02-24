@@ -6,9 +6,12 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { messageApi } from "@/lib/gameApi";
 import type { Message } from "@/types";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, Send, Users, Inbox, Forward } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -21,6 +24,25 @@ export default function SpyPage() {
   const [reports, setReports] = useState<Message[]>([]);
   const [mailLoading, setMailLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Mailbox tabs
+  const [mailboxTab, setMailboxTab] = useState<"spy" | "send" | "groups">("spy");
+
+  // Send message
+  const [sendTargetIds, setSendTargetIds] = useState<number[]>([]);
+  const [sendMessage, setSendMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  // Recipient groups
+  const [groups, setGroups] = useState<{ name: string; memberIds: number[] }[]>([
+    { name: "참모진", memberIds: [] },
+    { name: "첩보대", memberIds: [] },
+  ]);
+  const [newGroupName, setNewGroupName] = useState("");
+
+  // Forward
+  const [forwardingId, setForwardingId] = useState<number | null>(null);
+  const [forwardTargetId, setForwardTargetId] = useState("");
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -73,6 +95,56 @@ export default function SpyPage() {
 
   const unreadCount = reports.filter((m) => !getReadAt(m.meta)).length;
 
+  const handleSendSpyMessage = async () => {
+    if (!myGeneral || sendTargetIds.length === 0 || !sendMessage.trim()) return;
+    setSending(true);
+    try {
+      for (const targetId of sendTargetIds) {
+        await messageApi.send(myGeneral.id, targetId, {
+          content: sendMessage.trim(),
+          messageType: "spy",
+        });
+      }
+      setSendMessage("");
+      setSendTargetIds([]);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleForward = async (reportId: number) => {
+    if (!myGeneral || !forwardTargetId) return;
+    const report = reports.find((r) => r.id === reportId);
+    if (!report) return;
+    try {
+      await messageApi.send(myGeneral.id, Number(forwardTargetId), {
+        content: `[전달된 정찰 보고] ${formatScoutResult(report.payload)}`,
+        messageType: "scout_forward",
+      });
+      setForwardingId(null);
+      setForwardTargetId("");
+    } catch { /* ignore */ }
+  };
+
+  const toggleGroupMember = (groupIdx: number, generalId: number) => {
+    setGroups((prev) => prev.map((g, i) => {
+      if (i !== groupIdx) return g;
+      const has = g.memberIds.includes(generalId);
+      return { ...g, memberIds: has ? g.memberIds.filter((id) => id !== generalId) : [...g.memberIds, generalId] };
+    }));
+  };
+
+  const addGroup = () => {
+    if (!newGroupName.trim()) return;
+    setGroups((prev) => [...prev, { name: newGroupName.trim(), memberIds: [] }]);
+    setNewGroupName("");
+  };
+
+  const nationGenerals = useMemo(() => {
+    if (!myGeneral?.nationId) return [];
+    return generals.filter((g) => g.nationId === myGeneral.nationId);
+  }, [generals, myGeneral?.nationId]);
+
   const handleMarkAsRead = async (id: number) => {
     try {
       await messageApi.markAsRead(id);
@@ -110,6 +182,105 @@ export default function SpyPage() {
           {refreshing && <span>첩보를 갱신하고 있습니다...</span>}
         </CardContent>
       </Card>
+
+      <Tabs value={mailboxTab} onValueChange={(v) => setMailboxTab(v as typeof mailboxTab)}>
+        <TabsList>
+          <TabsTrigger value="spy"><Inbox className="size-3 mr-1" />우편함</TabsTrigger>
+          <TabsTrigger value="send"><Send className="size-3 mr-1" />메시지 전송</TabsTrigger>
+          <TabsTrigger value="groups"><Users className="size-3 mr-1" />수신자 그룹</TabsTrigger>
+        </TabsList>
+
+        {/* Send Tab */}
+        <TabsContent value="send" className="space-y-3 mt-4">
+          <Card>
+            <CardHeader><CardTitle className="text-sm">비밀 메시지 전송</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">수신자 (클릭하여 선택)</label>
+                <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                  {nationGenerals.map((g) => (
+                    <Button
+                      key={g.id}
+                      size="sm"
+                      variant={sendTargetIds.includes(g.id) ? "default" : "outline"}
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => setSendTargetIds((prev) =>
+                        prev.includes(g.id) ? prev.filter((id) => id !== g.id) : [...prev, g.id]
+                      )}
+                    >
+                      {g.name}
+                    </Button>
+                  ))}
+                </div>
+                {/* Quick select from groups */}
+                <div className="flex gap-1 mt-1">
+                  {groups.filter((g) => g.memberIds.length > 0).map((g, idx) => (
+                    <Button
+                      key={idx}
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 px-1.5 text-[9px]"
+                      onClick={() => setSendTargetIds(g.memberIds)}
+                    >
+                      📋 {g.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <Textarea
+                value={sendMessage}
+                onChange={(e) => setSendMessage(e.target.value)}
+                placeholder="첩보 메시지를 입력하세요..."
+                className="h-24 text-sm"
+              />
+              <Button onClick={handleSendSpyMessage} disabled={sending || sendTargetIds.length === 0 || !sendMessage.trim()}>
+                {sending ? "전송 중..." : `${sendTargetIds.length}명에게 전송`}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Groups Tab */}
+        <TabsContent value="groups" className="space-y-3 mt-4">
+          <Card>
+            <CardHeader><CardTitle className="text-sm">비밀 수신자 그룹</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {groups.map((group, gIdx) => (
+                <div key={gIdx} className="border rounded p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{group.name}</span>
+                    <Badge variant="outline" className="text-[10px]">{group.memberIds.length}명</Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {nationGenerals.map((g) => (
+                      <Button
+                        key={g.id}
+                        size="sm"
+                        variant={group.memberIds.includes(g.id) ? "default" : "outline"}
+                        className="h-5 px-1.5 text-[9px]"
+                        onClick={() => toggleGroupMember(gIdx, g.id)}
+                      >
+                        {g.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Input
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="새 그룹 이름..."
+                  className="text-xs h-8"
+                />
+                <Button size="sm" onClick={addGroup}>추가</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Spy reports tab */}
+        <TabsContent value="spy" className="mt-4">
 
       <Card>
         <CardHeader>
@@ -167,6 +338,18 @@ export default function SpyPage() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setForwardingId(forwardingId === report.id ? null : report.id);
+                          }}
+                          title="전달"
+                        >
+                          <Forward className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="ml-auto h-6 w-6 p-0"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -176,6 +359,25 @@ export default function SpyPage() {
                           <Trash2 className="size-3.5" />
                         </Button>
                       </div>
+
+                      {/* Forward UI */}
+                      {forwardingId === report.id && (
+                        <div className="flex items-center gap-2 bg-muted/30 rounded p-2" onClick={(e) => e.stopPropagation()}>
+                          <select
+                            value={forwardTargetId}
+                            onChange={(e) => setForwardTargetId(e.target.value)}
+                            className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white rounded flex-1"
+                          >
+                            <option value="">전달 대상 선택...</option>
+                            {nationGenerals.map((g) => (
+                              <option key={g.id} value={g.id}>{g.name}</option>
+                            ))}
+                          </select>
+                          <Button size="sm" className="h-7 text-xs" onClick={() => handleForward(report.id)}>
+                            전달
+                          </Button>
+                        </div>
+                      )}
 
                       <div className="text-sm space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
@@ -204,6 +406,8 @@ export default function SpyPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

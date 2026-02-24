@@ -194,6 +194,37 @@ export default function BettingPage() {
     ) ?? TOURNAMENT_TYPES[0];
 
   const isBettingActive = globalInfo?.isBettingActive ?? false;
+  const [phaseGateOpen, setPhaseGateOpen] = useState(isBettingActive);
+
+  const handleTogglePhaseGate = async () => {
+    if (!currentWorld || !myGeneral || (myGeneral.officerLevel ?? 0) < 12) return;
+    try {
+      await bettingApi.toggleGate(currentWorld.id, !phaseGateOpen);
+      setPhaseGateOpen(!phaseGateOpen);
+      await load();
+    } catch {
+      /* gate toggle may not be available */
+    }
+  };
+
+  // Tournament progress phases
+  const tournamentPhases = useMemo(() => {
+    if (!tournament) return [];
+    const phases: { label: string; matchCount: number; completedCount: number }[] = [];
+    const bracket = tournament.bracket ?? [];
+    const roundSizes = [8, 4, 2, 1]; // 16강, 8강, 4강, 결승
+    const roundLabels = ["16강", "8강", "4강", "결승"];
+    let offset = 0;
+    for (let i = 0; i < roundSizes.length; i++) {
+      const size = roundSizes[i];
+      const matches = bracket.slice(offset, offset + size);
+      if (matches.length === 0) break;
+      const completed = matches.filter((m) => m.winner != null).length;
+      phases.push({ label: roundLabels[i], matchCount: matches.length, completedCount: completed });
+      offset += size;
+    }
+    return phases;
+  }, [tournament]);
 
   // Helper to compute betting data from a BettingInfo object
   function computeBettingData(bettingData: BettingInfo) {
@@ -342,6 +373,48 @@ export default function BettingPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Tournament Progress */}
+        {tournamentPhases.length > 0 && (
+          <Card>
+            <CardContent className="py-2 px-4">
+              <div className="flex items-center gap-1 text-xs mb-1 text-muted-foreground">토너먼트 진행 현황</div>
+              <div className="flex items-center gap-2">
+                {tournamentPhases.map((phase, idx) => {
+                  const pct = phase.matchCount > 0 ? Math.round((phase.completedCount / phase.matchCount) * 100) : 0;
+                  const isDone = pct === 100;
+                  return (
+                    <div key={phase.label} className="flex items-center gap-1">
+                      {idx > 0 && <span className="text-gray-600">→</span>}
+                      <div className={`px-2 py-0.5 rounded text-[10px] border ${isDone ? "bg-green-900/30 border-green-700 text-green-400" : pct > 0 ? "bg-yellow-900/30 border-yellow-700 text-yellow-400" : "border-gray-700 text-gray-500"}`}>
+                        {phase.label} {phase.completedCount}/{phase.matchCount}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Phase Gate Control (admin) */}
+        {myGeneral && (myGeneral.officerLevel ?? 0) >= 12 && (
+          <Card>
+            <CardContent className="py-2 px-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-muted-foreground">위상 게이트 컨트롤 (운영자)</div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={phaseGateOpen ? "default" : "destructive"}>
+                    {phaseGateOpen ? "베팅 개방" : "베팅 마감"}
+                  </Badge>
+                  <Button size="sm" variant="outline" className="h-6 text-xs" onClick={handleTogglePhaseGate}>
+                    {phaseGateOpen ? "베팅 마감하기" : "베팅 개방하기"}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="betting">
           <TabsList>

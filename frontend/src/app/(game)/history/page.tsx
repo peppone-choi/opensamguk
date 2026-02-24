@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from "react
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { historyApi, mapRecentApi } from "@/lib/gameApi";
-import type { Message, YearbookSummary, PublicCachedMapResponse, MapData } from "@/types";
-import { ScrollText, Clock, Search, Map } from "lucide-react";
+import type { Message, YearbookSummary, PublicCachedMapResponse } from "@/types";
+import { ScrollText, Clock, Search, Map as MapIcon } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -281,9 +281,8 @@ export default function HistoryPage() {
     if (!cachedMap?.cities) return cities;
     // Overlay snapshot nation ownership onto current cities
     if (!currentSnapshot) return cities;
-    const ownerMap = new Map(
-      (currentSnapshot.cityOwnership ?? []).map((co: { cityId: number; nationId: number }) => [co.cityId, co.nationId]),
-    );
+    const entries = (currentSnapshot.cityOwnership ?? []).map((co) => [co.cityId, co.nationId] as [number, number]);
+    const ownerMap = new Map(entries);
     return cities.map((c) => ({
       ...c,
       nationId: ownerMap.get(c.id) ?? c.nationId,
@@ -301,7 +300,7 @@ export default function HistoryPage() {
             연대기
           </TabsTrigger>
           <TabsTrigger value="map">
-            <Map className="size-3.5 mr-1" />
+            <MapIcon className="size-3.5 mr-1" />
             맵 재현
           </TabsTrigger>
         </TabsList>
@@ -311,7 +310,7 @@ export default function HistoryPage() {
           {mapLoading ? (
             <LoadingState message="맵 데이터 불러오는 중..." />
           ) : !cachedMap || !cachedMap.available ? (
-            <EmptyState icon={Map} title="맵 스냅샷 데이터가 없습니다." />
+            <EmptyState icon={MapIcon} title="맵 스냅샷 데이터가 없습니다." />
           ) : (
             <Card>
               <CardHeader className="pb-2">

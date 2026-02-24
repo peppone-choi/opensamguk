@@ -653,6 +653,10 @@ export const tournamentApi = {
     api.get<TournamentInfo>(`/worlds/${worldId}/tournament`),
   register: (worldId: number, generalId: number) =>
     api.post<void>(`/worlds/${worldId}/tournament/register`, { generalId }),
+  advancePhase: (worldId: number) =>
+    api.post<void>(`/worlds/${worldId}/tournament/advance`),
+  sendMessage: (worldId: number, message: string) =>
+    api.post<void>(`/worlds/${worldId}/tournament/message`, { message }),
 };
 
 // Betting API
@@ -674,6 +678,8 @@ export const bettingApi = {
       targetId,
       amount,
     }),
+  toggleGate: (worldId: number, open: boolean) =>
+    api.post<void>(`/worlds/${worldId}/betting/gate`, { open }),
 };
 
 // Vote API

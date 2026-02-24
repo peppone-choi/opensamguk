@@ -6,7 +6,15 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { nationManagementApi } from "@/lib/gameApi";
 import type { OfficerInfo } from "@/types";
-import { Crown } from "lucide-react";
+import { Crown, Filter, Handshake } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +46,15 @@ export default function PersonnelPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
 
+  // Candidate filters
+  const [filterStat, setFilterStat] = useState<"all" | "leadership" | "strength" | "intel" | "politics">("all");
+  const [filterMinStat, setFilterMinStat] = useState(0);
+  const [filterCity, setFilterCity] = useState<string>("");
+  const [filterSearch, setFilterSearch] = useState("");
+
+  // Diplomat appointment
+  const [diplomatGeneralId, setDiplomatGeneralId] = useState("");
+
   useEffect(() => {
     if (!currentWorld) return;
     if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
@@ -68,6 +85,50 @@ export default function PersonnelPage() {
     () => [...officers].sort((a, b) => b.officerLevel - a.officerLevel),
     [officers],
   );
+
+  const filteredCandidates = useMemo(() => {
+    let list = nationGenerals;
+    if (filterSearch) {
+      const q = filterSearch.toLowerCase();
+      list = list.filter((g) => g.name.toLowerCase().includes(q));
+    }
+    if (filterCity) {
+      list = list.filter((g) => g.cityId === Number(filterCity));
+    }
+    if (filterStat !== "all" && filterMinStat > 0) {
+      list = list.filter((g) => {
+        const val = filterStat === "leadership" ? g.leadership
+          : filterStat === "strength" ? g.strength
+          : filterStat === "intel" ? g.intel
+          : g.politics;
+        return val >= filterMinStat;
+      });
+    }
+    return list.sort((a, b) => {
+      if (filterStat === "leadership") return b.leadership - a.leadership;
+      if (filterStat === "strength") return b.strength - a.strength;
+      if (filterStat === "intel") return b.intel - a.intel;
+      if (filterStat === "politics") return b.politics - a.politics;
+      return (b.leadership + b.strength + b.intel) - (a.leadership + a.strength + a.intel);
+    });
+  }, [nationGenerals, filterSearch, filterCity, filterStat, filterMinStat]);
+
+  const handleAppointDiplomat = async () => {
+    if (!myGeneral?.nationId || !diplomatGeneralId) return;
+    setSaving(true);
+    try {
+      await nationManagementApi.appointOfficer(myGeneral.nationId, {
+        generalId: Number(diplomatGeneralId),
+        officerLevel: 7, // diplomat level
+        permission: "diplomacy",
+      });
+      const { data } = await nationManagementApi.getOfficers(myGeneral.nationId);
+      setOfficers(data);
+      setDiplomatGeneralId("");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleAppoint = async () => {
     if (!myGeneral?.nationId || !selGeneralId || !selOfficerLevel) return;
@@ -162,6 +223,128 @@ export default function PersonnelPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Candidate Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="size-4" />
+            후보 필터
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              placeholder="이름 검색..."
+              value={filterSearch}
+              onChange={(e) => setFilterSearch(e.target.value)}
+              className="w-40 h-8 text-xs"
+            />
+            <select
+              value={filterCity}
+              onChange={(e) => setFilterCity(e.target.value)}
+              className="h-8 border border-gray-600 bg-[#111] px-2 text-xs text-white rounded"
+            >
+              <option value="">전체 도시</option>
+              {cities.filter((c) => c.nationId === myGeneral.nationId).map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterStat}
+              onChange={(e) => setFilterStat(e.target.value as typeof filterStat)}
+              className="h-8 border border-gray-600 bg-[#111] px-2 text-xs text-white rounded"
+            >
+              <option value="all">전체 능력치</option>
+              <option value="leadership">통솔</option>
+              <option value="strength">무력</option>
+              <option value="intel">지력</option>
+              <option value="politics">정치</option>
+            </select>
+            {filterStat !== "all" && (
+              <Input
+                type="number"
+                placeholder="최소값"
+                value={filterMinStat || ""}
+                onChange={(e) => setFilterMinStat(Number(e.target.value))}
+                className="w-20 h-8 text-xs"
+                min={0}
+              />
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {filteredCandidates.length}명 표시
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">장수</TableHead>
+                  <TableHead className="text-xs">통솔</TableHead>
+                  <TableHead className="text-xs">무력</TableHead>
+                  <TableHead className="text-xs">지력</TableHead>
+                  <TableHead className="text-xs">정치</TableHead>
+                  <TableHead className="text-xs">도시</TableHead>
+                  <TableHead className="text-xs">관직</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCandidates.slice(0, 30).map((g) => (
+                  <TableRow
+                    key={g.id}
+                    className="cursor-pointer hover:bg-muted/30"
+                    onClick={() => setSelGeneralId(String(g.id))}
+                  >
+                    <TableCell className="text-xs">
+                      <div className="flex items-center gap-1">
+                        <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                        {g.name}
+                        {String(g.id) === selGeneralId && <Badge className="text-[8px] ml-1">선택됨</Badge>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs tabular-nums">{g.leadership}</TableCell>
+                    <TableCell className="text-xs tabular-nums">{g.strength}</TableCell>
+                    <TableCell className="text-xs tabular-nums">{g.intel}</TableCell>
+                    <TableCell className="text-xs tabular-nums">{g.politics}</TableCell>
+                    <TableCell className="text-xs">{cityMap.get(g.cityId)?.name ?? "-"}</TableCell>
+                    <TableCell className="text-xs">{g.officerLevel > 0 ? `Lv${g.officerLevel}` : "-"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Diplomat Special Appointment */}
+      {myGeneral.officerLevel >= 12 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Handshake className="size-4" />
+              외교권자 특수 임명
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">외교 권한을 가진 특수 관직을 임명합니다. 외교 업무(동맹, 휴전 등)를 수행할 수 있습니다.</p>
+            <div className="flex items-center gap-2">
+              <select
+                value={diplomatGeneralId}
+                onChange={(e) => setDiplomatGeneralId(e.target.value)}
+                className="h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+              >
+                <option value="">장수 선택...</option>
+                {nationGenerals.filter((g) => g.officerLevel < 7).map((g) => (
+                  <option key={g.id} value={g.id}>{g.name} (통{g.leadership}/무{g.strength}/지{g.intel})</option>
+                ))}
+              </select>
+              <Button onClick={handleAppointDiplomat} disabled={saving || !diplomatGeneralId} size="sm">
+                {saving ? "임명 중..." : "외교권자 임명"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Appointment Form */}
       <Card>
