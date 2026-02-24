@@ -35,6 +35,8 @@ abstract class BaseCommand(
     var destCityGenerals: List<General>? = null
     var constraintEnv: Map<String, Any> = emptyMap()
     var services: CommandServices? = null
+    /** Action modifiers from nation type, personality, specials, items. Injected by CommandExecutor. */
+    var modifiers: List<com.opensam.engine.modifier.ActionModifier> = emptyList()
 
     abstract fun getCost(): CommandCost
     open fun getCommandPointCost(): Int = 1
@@ -187,7 +189,8 @@ abstract class BaseCommand(
      */
     protected fun getNationTechCost(): Double {
         val tech = nation?.tech?.toDouble() ?: 0.0
-        return 1.0 + tech / 1000.0
+        val techLevel = Math.floor(tech / 1000.0).coerceIn(0.0, 12.0)
+        return 1.0 + techLevel * 0.15
     }
 
     /**

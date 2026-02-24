@@ -6,30 +6,40 @@ import com.opensam.command.CommandResult
 import com.opensam.command.GeneralCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
+import com.opensam.model.CrewType
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
-private const val DEFAULT_TRAIN_LOW = 50
-private const val DEFAULT_ATMOS_LOW = 50
-private const val MIN_RECRUIT_AMOUNT = 100
-private const val COST_OFFSET = 1
-private const val MIN_AVAILABLE_RECRUIT_POP = 30000
-private const val MIN_TRUST_FOR_RECRUIT = 20
-
-class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
+/**
+ * 징병 command — recruit soldiers.
+ *
+ * Legacy parity: che_징병.php
+ * - Gold cost = crewType.cost * getTechCost(tech) * maxCrew / 100 * costOffset
+ * - Rice cost = maxCrew / 100 (with onCalcDomestic modifier)
+ * - Trust loss = (reqCrewDown / cityPop) / costOffset * 100
+ * - Pop loss = reqCrewDown (= maxCrew, modified by onCalcDomestic '징집인구')
+ * - Default train/atmos: 40/40 (징병), 70/70 (모병)
+ */
+open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : GeneralCommand(general, env, arg) {
 
     override val actionName = "징병"
 
-    private val reqCrewTypeId: Int
+    protected open val costOffset: Int = 1
+    protected open val defaultTrain: Int = DEFAULT_TRAIN_LOW
+    protected open val defaultAtmos: Int = DEFAULT_ATMOS_LOW
+
+    protected val reqCrewTypeId: Int
         get() = (arg?.get("crewType") as? Number)?.toInt() ?: 0
+
+    protected val reqCrewType: CrewType?
+        get() = CrewType.fromCode(reqCrewTypeId)
 
     private val reqAmount: Int
         get() = maxOf(MIN_RECRUIT_AMOUNT, (arg?.get("amount") as? Number)?.toInt() ?: 0)
 
-    private val maxCrew: Int
+    protected val maxCrew: Int
         get() {
             val leadership = general.leadership.toInt()
             var max = leadership * 100
@@ -63,13 +73,29 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             ReqCityTrust(MIN_TRUST_FOR_RECRUIT.toFloat()),
         )
 
+    /**
+     * Legacy parity: costWithTech(tech, maxCrew) = crewType.cost * getTechCost(tech) * maxCrew / 100
+     * Then apply onCalcDomestic modifier for 'cost', multiply by costOffset.
+     * Rice = maxCrew / 100 with onCalcDomestic modifier for 'rice'.
+     */
     override fun getCost(): CommandCost {
         val mc = maxCrew
+        val crewType = reqCrewType ?: return CommandCost(gold = 0, rice = 0)
         val techCost = getNationTechCost()
-        val baseCost = (mc / 100.0 * techCost).roundToInt()
-        val reqGold = (baseCost * COST_OFFSET)
-        val reqRice = mc / 100
-        return CommandCost(gold = reqGold, rice = reqRice)
+
+        // Legacy: costWithTech(tech, maxCrew) = unit.cost * getTechCost(tech) * crew / 100
+        var reqGold = crewType.cost.toDouble() * techCost * mc / 100.0
+        // Legacy: onCalcDomestic('징병', 'cost', reqGold, ['armType' => armType])
+        // applied via modifier system — for now pass through as base
+        reqGold *= costOffset
+
+        var reqRice = mc / 100.0
+        // Legacy: onCalcDomestic('징병', 'rice', reqRice, ['armType' => armType])
+
+        return CommandCost(
+            gold = reqGold.roundToInt(),
+            rice = reqRice.roundToInt()
+        )
     }
 
     override fun getPreReqTurn() = 0
@@ -83,7 +109,6 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val currCrew = general.crew
         val currCrewTypeId = general.crewType.toInt()
 
-        // Resolve crew type name from env or fallback
         val crewTypeName = getCrewTypeName(crewTypeId) ?: "병사"
         val reqCrewText = String.format("%,d", reqCrew)
 
@@ -93,15 +118,15 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val logMessage: String
 
         if (crewTypeId == currCrewTypeId && currCrew > 0) {
-            logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 추가징병했습니다. <1>$date</>"
-            newTrain = (currCrew * general.train + reqCrew * DEFAULT_TRAIN_LOW) / (currCrew + reqCrew)
-            newAtmos = (currCrew * general.atmos + reqCrew * DEFAULT_ATMOS_LOW) / (currCrew + reqCrew)
+            logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 추가${actionName}했습니다. <1>$date</>"
+            newTrain = (currCrew * general.train + reqCrew * defaultTrain) / (currCrew + reqCrew)
+            newAtmos = (currCrew * general.atmos + reqCrew * defaultAtmos) / (currCrew + reqCrew)
             newCrew = currCrew + reqCrew
         } else {
-            logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 징병했습니다. <1>$date</>"
+            logMessage = "${crewTypeName} <C>${reqCrewText}</>명을 ${actionName}했습니다. <1>$date</>"
             newCrew = reqCrew
-            newTrain = DEFAULT_TRAIN_LOW
-            newAtmos = DEFAULT_ATMOS_LOW
+            newTrain = defaultTrain
+            newAtmos = defaultAtmos
         }
         pushLog(logMessage)
 
@@ -109,15 +134,50 @@ class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val exp = reqCrew / 100
         val ded = reqCrew / 100
 
-        // Legacy: trust loss from recruitment
-        // trustLoss = (recruitPop / cityPop) / costOffset * 100
-        // popLoss = recruitPop (same as reqCrew after onCalcDomestic)
-        val popLoss = -reqCrew
+        // Legacy: reqCrewDown = onCalcDomestic('징집인구', 'score', reqCrew)
+        // For now, reqCrewDown = reqCrew (no modifier applied yet)
+        val reqCrewDown = reqCrew
+
+        // Legacy: trust -= (reqCrewDown / cityPop) / costOffset * 100
+        val cityPop = city?.pop ?: 10000
+        val trustLoss = if (cityPop > 0) {
+            (reqCrewDown.toDouble() / cityPop) / costOffset * 100.0
+        } else {
+            0.0
+        }
+        // Clamp trust to >= 0
+        val currentTrust = city?.trust?.toDouble() ?: 50.0
+        val clampedTrustLoss = trustLoss.coerceAtMost(currentTrust)
+
+        // Resolve armType code for dex changes (legacy: armType maps to dex1-5)
+        val crewType = reqCrewType
+        val armTypeCode = crewType?.armType?.code ?: 0
+
+        val dexGain = reqCrew / 100
 
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"crew":${newCrew - currCrew},"crewType":$crewTypeId,"train":${newTrain - general.train},"atmos":${newAtmos - general.atmos},"gold":${-cost.gold},"rice":${-cost.rice},"experience":$exp,"dedication":$ded,"leadershipExp":1},"cityChanges":{"pop":$popLoss,"trustLoss":true}}"""
+            message = buildString {
+                append("""{"statChanges":{""")
+                append(""""crew":${newCrew - currCrew},"crewType":$crewTypeId""")
+                append(""","train":${newTrain - general.train},"atmos":${newAtmos - general.atmos}""")
+                append(""","gold":${-cost.gold},"rice":${-cost.rice}""")
+                append(""","experience":$exp,"dedication":$ded,"leadershipExp":1""")
+                append("""},"cityChanges":{"pop":${-reqCrewDown},"trust":${-clampedTrustLoss.roundToInt()}}""")
+                append(""","dexChanges":{"crewType":$armTypeCode,"amount":$dexGain}""")
+                append(""","tryUniqueLottery":true""")
+                append(""","auxVarChanges":{"armType":$armTypeCode}""")
+                append("""}""")
+            }
         )
+    }
+
+    companion object {
+        const val DEFAULT_TRAIN_LOW = 40
+        const val DEFAULT_ATMOS_LOW = 40
+        const val MIN_RECRUIT_AMOUNT = 100
+        const val MIN_AVAILABLE_RECRUIT_POP = 30000
+        const val MIN_TRUST_FOR_RECRUIT = 20
     }
 }
