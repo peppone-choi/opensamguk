@@ -1,6 +1,7 @@
 package com.opensam.command
 
 import com.opensam.engine.DiplomacyService
+import com.opensam.engine.modifier.ModifierService
 import com.opensam.repository.CityRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
@@ -20,6 +21,7 @@ data class CommandServices(
     val messageService: MessageService? = null,
     val nationService: NationService? = null,
     val generalPoolService: GeneralPoolService? = null,
+    val modifierService: ModifierService? = null,
 ) {
     /**
      * Resolve city name by ID. Returns null if not found.

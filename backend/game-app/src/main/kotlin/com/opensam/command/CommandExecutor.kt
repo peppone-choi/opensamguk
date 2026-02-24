@@ -5,10 +5,12 @@ import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.engine.DiplomacyService
+import com.opensam.engine.StatChangeService
 import com.opensam.repository.CityRepository
 import com.opensam.repository.DiplomacyRepository
 import com.opensam.repository.GeneralRepository
 import com.opensam.repository.NationRepository
+import com.opensam.engine.modifier.ModifierService
 import com.opensam.service.MapService
 import org.springframework.stereotype.Service
 import kotlin.random.Random
@@ -22,6 +24,8 @@ class CommandExecutor(
     private val diplomacyRepository: DiplomacyRepository,
     private val diplomacyService: DiplomacyService,
     private val mapService: MapService,
+    private val statChangeService: StatChangeService,
+    private val modifierService: ModifierService,
 ) {
     suspend fun executeGeneralCommand(
         actionCode: String,
@@ -35,7 +39,7 @@ class CommandExecutor(
         val command = commandRegistry.createGeneralCommand(actionCode, general, env, arg)
         command.city = city
         command.nation = nation
-        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService)
+        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val cooldown = checkGeneralCooldown(actionCode, general, env)
@@ -74,19 +78,28 @@ class CommandExecutor(
             term = if (preReq > 0) preReq else null,
         ).toMap()
 
-        // JSON 델타를 엔티티에 적용 (장수 커맨드는 run()에서 직접 수정하지 않음)
-        if (result.success) {
+        // JSON 델타를 엔티티에 적용.
+        // 성공/실패 모두 적용 — 계략 실패 등에서도 비용/경험치 변동이 있으므로.
+        var finalResult = result
+        if (result.message != null) {
             CommandResultApplicator.apply(
-                result, general, city, nation,
+                result.copy(success = true), general, city, nation,
                 destGeneral = command.destGeneral,
                 destCity = command.destCity,
                 destNation = command.destNation,
             )
-            saveModifiedEntities(general, city, nation, command)
         }
 
+        // Post-command hook: check stat level changes (legacy: checkStatChange)
+        val statChangeResult = statChangeService.checkStatChange(general)
+        if (statChangeResult.hasChanges) {
+            finalResult = result.copy(logs = result.logs + statChangeResult.logs)
+        }
+
+        saveModifiedEntities(general, city, nation, command)
+
         applyGeneralCooldown(actionCode, command.getPostReqTurn(), general, env)
-        return result
+        return finalResult
     }
 
     suspend fun executeNationCommand(
@@ -102,7 +115,7 @@ class CommandExecutor(
             ?: return CommandResult(success = false, logs = listOf("알 수 없는 국가 명령: $actionCode"))
         command.city = city
         command.nation = nation
-        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService)
+        command.services = CommandServices(generalRepository, cityRepository, nationRepository, diplomacyService, modifierService = modifierService)
         hydrateCommandForConstraintCheck(command, general, env, arg)
 
         val cooldown = checkNationCooldown(actionCode, general, nation, env)
@@ -301,6 +314,9 @@ class CommandExecutor(
     ) {
         applyDestinationContext(command, arg)
         command.constraintEnv = buildConstraintEnv(general, env)
+        // Inject action modifiers for onCalcDomestic/onCalcStat usage in commands
+        val nation = command.nation
+        command.modifiers = modifierService.getModifiers(general, nation)
     }
 
     private fun buildConstraintEnv(general: General, env: CommandEnv): Map<String, Any> {

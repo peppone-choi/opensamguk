@@ -2,6 +2,7 @@ package com.opensam.command
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.opensam.command.util.StatChangeUtil
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
@@ -73,6 +74,67 @@ object CommandResultApplicator {
 
         @Suppress("UNCHECKED_CAST")
         (json["dexChanges"] as? Map<String, Any>)?.let { applyDexChanges(general, it) }
+
+        // Consumable item: delete item on use (legacy: tryConsumeNow + deleteItem)
+        if (json["consumeItem"] == true) {
+            general.itemCode = "None"
+        }
+
+        // Own nation changes (e.g., 탈취 resource transfer)
+        @Suppress("UNCHECKED_CAST")
+        (json["ownNationChanges"] as? Map<String, Any>)?.let {
+            if (nation != null) applyNationChanges(nation, it)
+        }
+
+        // Handle cityId in statChanges → move general to new city (legacy: 이동/강행/귀환)
+        @Suppress("UNCHECKED_CAST")
+        (json["statChanges"] as? Map<String, Any>)?.let { changes ->
+            val cityIdRaw = changes["cityId"]
+            if (cityIdRaw != null) {
+                val id = when (cityIdRaw) {
+                    is Number -> cityIdRaw.toLong()
+                    is String -> cityIdRaw.toLongOrNull()
+                    else -> null
+                }
+                if (id != null && id > 0) {
+                    general.cityId = id
+                }
+            }
+        }
+
+        // Handle inheritancePoint: {"key": "active_action", "amount": 1}
+        @Suppress("UNCHECKED_CAST")
+        (json["inheritancePoint"] as? Map<String, Any>)?.let { ip ->
+            val key = ip["key"] as? String ?: return@let
+            val amount = (ip["amount"] as? Number)?.toInt() ?: 1
+            @Suppress("UNCHECKED_CAST")
+            val inheritMeta = general.meta.getOrPut("inheritancePoints") {
+                mutableMapOf<String, Any>()
+            } as? MutableMap<String, Any> ?: return@let
+            inheritMeta[key] = ((inheritMeta[key] as? Number)?.toInt() ?: 0) + amount
+        }
+
+        // Handle cityStateUpdate: {"cityId": X, "state": 43, "term": 3}
+        // Updates the dest city's state/term for battle preparation
+        @Suppress("UNCHECKED_CAST")
+        (json["cityStateUpdate"] as? Map<String, Any>)?.let { csu ->
+            val targetCityId = when (val raw = csu["cityId"]) {
+                is Number -> raw.toLong()
+                is String -> raw.toLongOrNull()
+                else -> null
+            }
+            val stateVal = (csu["state"] as? Number)?.toShort()
+            val termVal = (csu["term"] as? Number)?.toShort()
+            if (targetCityId != null && destCity != null && destCity.id == targetCityId) {
+                if (stateVal != null) destCity.state = stateVal
+                if (termVal != null) destCity.term = termVal
+            }
+        }
+
+        // Handle checkStatChange: check if stat exp crossed level threshold
+        if (json["checkStatChange"] == true) {
+            StatChangeUtil.checkStatChange(general)
+        }
     }
 
     private fun applyStatChanges(general: General, changes: Map<String, Any>) {
@@ -112,17 +174,27 @@ object CommandResultApplicator {
 
     private fun applyCityChanges(city: City, changes: Map<String, Any>) {
         for ((key, rawValue) in changes) {
-            val delta = (rawValue as? Number)?.toInt() ?: continue
+            val num = rawValue as? Number ?: continue
             when (key) {
-                "agri" -> city.agri = maxOf(0, minOf(city.agriMax, city.agri + delta))
-                "comm" -> city.comm = maxOf(0, minOf(city.commMax, city.comm + delta))
-                "secu" -> city.secu = maxOf(0, minOf(city.secuMax, city.secu + delta))
-                "def" -> city.def = maxOf(0, minOf(city.defMax, city.def + delta))
-                "wall" -> city.wall = maxOf(0, minOf(city.wallMax, city.wall + delta))
-                "pop" -> city.pop = maxOf(0, minOf(city.popMax, city.pop + delta))
-                "trust" -> city.trust = maxOf(0f, minOf(100f, city.trust + delta))
-                "dead" -> city.dead = maxOf(0, city.dead + delta)
-                "trade" -> city.trade = maxOf(0, city.trade + delta)
+                // trust uses float delta for decimal precision (legacy: 선동 민심 1 decimal)
+                "trust" -> {
+                    val delta = num.toFloat()
+                    city.trust = maxOf(0f, minOf(100f, city.trust + delta))
+                }
+                else -> {
+                    val delta = num.toInt()
+                    when (key) {
+                        "agri" -> city.agri = maxOf(0, minOf(city.agriMax, city.agri + delta))
+                        "comm" -> city.comm = maxOf(0, minOf(city.commMax, city.comm + delta))
+                        "secu" -> city.secu = maxOf(0, minOf(city.secuMax, city.secu + delta))
+                        "def" -> city.def = maxOf(0, minOf(city.defMax, city.def + delta))
+                        "wall" -> city.wall = maxOf(0, minOf(city.wallMax, city.wall + delta))
+                        "pop" -> city.pop = maxOf(0, minOf(city.popMax, city.pop + delta))
+                        "dead" -> city.dead = maxOf(0, city.dead + delta)
+                        "trade" -> city.trade = maxOf(0, city.trade + delta)
+                        "state" -> city.state = delta.toShort()
+                    }
+                }
             }
         }
     }

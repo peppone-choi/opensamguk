@@ -59,7 +59,7 @@ class 강행(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"cityId":"$destCityId","gold":${-cost.gold},"train":$trainDelta,"atmos":$atmosDelta,"experience":$exp,"leadershipExp":1}$wanderingJson}"""
+            message = """{"statChanges":{"cityId":"$destCityId","gold":${-cost.gold},"train":$trainDelta,"atmos":$atmosDelta,"experience":$exp,"leadershipExp":1},"tryUniqueLottery":true$wanderingJson}"""
         )
     }
 }
