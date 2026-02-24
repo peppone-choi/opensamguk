@@ -108,14 +108,30 @@ export default function AuctionPage() {
   // Selected auction for detail view (unique items)
   const [selectedAuctionId, setSelectedAuctionId] = useState<number | null>(null);
 
+  // Auction history (이전 경매)
+  const [auctionHistory, setAuctionHistory] = useState<
+    { id: number; sellerGeneralId: number; buyerGeneralId: number | null; itemCode: string; minPrice: number; currentPrice: number; status: string; createdAt: string; expiresAt: string }[]
+  >([]);
+
+  // Market price
+  const [marketPrice, setMarketPrice] = useState<{ goldPerRice: number; ricePerGold: number } | null>(null);
+  const [marketAmount, setMarketAmount] = useState("100");
+  const [marketBusy, setMarketBusy] = useState(false);
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* ── load ── */
   const load = useCallback(async () => {
     if (!currentWorld) return;
     try {
-      const { data } = await auctionApi.list(currentWorld.id);
-      setAuctions(data);
+      const [listRes, histRes, priceRes] = await Promise.all([
+        auctionApi.list(currentWorld.id),
+        auctionApi.getHistory(currentWorld.id).catch(() => ({ data: [] })),
+        auctionApi.getMarketPrice(currentWorld.id).catch(() => null),
+      ]);
+      setAuctions(listRes.data);
+      setAuctionHistory((histRes.data ?? []).slice(0, 20));
+      if (priceRes?.data) setMarketPrice(priceRes.data);
     } catch {
       /* ignore */
     } finally {
@@ -224,6 +240,49 @@ export default function AuctionPage() {
     }
   };
 
+  const handleCancel = async (auctionId: number) => {
+    if (!myGeneral) return;
+    if (!confirm("이 경매를 취소하시겠습니까?")) return;
+    try {
+      await auctionApi.cancel(auctionId, myGeneral.id);
+      await load();
+    } catch {
+      alert("경매 취소에 실패했습니다.");
+    }
+  };
+
+  const handleMarketBuy = async () => {
+    if (!currentWorld || !myGeneral) return;
+    const amount = Number(marketAmount);
+    if (!amount || amount <= 0) return;
+    setMarketBusy(true);
+    try {
+      const { data } = await auctionApi.buyRice(currentWorld.id, myGeneral.id, amount);
+      alert(`쌀 ${data.amount.toLocaleString()} 구매 완료 (금 ${data.costGold.toLocaleString()} 소비)`);
+      await load();
+    } catch {
+      alert("쌀 구매에 실패했습니다.");
+    } finally {
+      setMarketBusy(false);
+    }
+  };
+
+  const handleMarketSell = async () => {
+    if (!currentWorld || !myGeneral) return;
+    const amount = Number(marketAmount);
+    if (!amount || amount <= 0) return;
+    setMarketBusy(true);
+    try {
+      const { data } = await auctionApi.sellRice(currentWorld.id, myGeneral.id, amount);
+      alert(`쌀 ${data.amount.toLocaleString()} 판매 완료 (금 ${data.revenueGold.toLocaleString()} 획득)`);
+      await load();
+    } catch {
+      alert("쌀 판매에 실패했습니다.");
+    } finally {
+      setMarketBusy(false);
+    }
+  };
+
   /* ── early returns ── */
   if (!currentWorld)
     return (
@@ -308,6 +367,14 @@ export default function AuctionPage() {
                           <span className="ml-auto text-muted-foreground">
                             현재가: {(d.currentBid ?? d.minPrice ?? 0).toLocaleString()}
                           </span>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-5 text-[10px] px-2"
+                            onClick={(e) => { e.stopPropagation(); handleCancel(a.id); }}
+                          >
+                            취소
+                          </Button>
                         </div>
                       );
                     })}
@@ -512,16 +579,54 @@ export default function AuctionPage() {
             </Card>
           )}
 
-          {/* Recent auction logs (legacy parity) */}
-          {recentLogs.length > 0 && (
+          {/* Market buy/sell rice (legacy parity: AuctionBuyRice/AuctionSellRice) */}
+          {myGeneral && marketPrice && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">쌀 시세 거래</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  시세: 금 1 = 쌀 {marketPrice.ricePerGold.toFixed(3)} / 쌀 1 = 금 {marketPrice.goldPerRice.toFixed(3)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs shrink-0">수량:</span>
+                  <Input
+                    type="number"
+                    className="h-7 text-xs w-28"
+                    value={marketAmount}
+                    onChange={(e) => setMarketAmount(e.target.value)}
+                    min={1}
+                    max={10000}
+                  />
+                  <Button size="sm" className="h-7 text-xs" disabled={marketBusy} onClick={handleMarketBuy}>
+                    쌀 구매
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" disabled={marketBusy} onClick={handleMarketSell}>
+                    쌀 판매
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recent auction history (legacy parity) */}
+          {auctionHistory.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">이전 경매 (최근 20건)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="max-h-48 overflow-y-auto space-y-0.5 text-xs">
-                  {recentLogs.map((log, idx) => (
-                    <div key={idx} className="text-gray-300">{formatLog(log)}</div>
+                  {auctionHistory.map((h) => (
+                    <div key={h.id} className="flex gap-2 text-gray-300">
+                      <span className="tabular-nums shrink-0">{h.createdAt.substring(5, 16)}</span>
+                      <span>{h.itemCode}</span>
+                      <span>금 {h.currentPrice.toLocaleString()}</span>
+                      <Badge variant={h.status === "closed" ? "default" : "secondary"} className="text-[10px] h-4">
+                        {h.status === "closed" ? "낙찰" : h.status === "expired" ? "유찰" : h.status === "cancelled" ? "취소" : h.status}
+                      </Badge>
+                    </div>
                   ))}
                 </div>
               </CardContent>

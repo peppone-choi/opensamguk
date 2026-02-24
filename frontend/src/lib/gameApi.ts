@@ -672,6 +672,65 @@ export const auctionApi = {
       bidderId,
       amount,
     }),
+  cancel: (auctionId: number, generalId: number) =>
+    api.post<{ success: boolean; auctionId: number; status: string }>(
+      `/auctions/${auctionId}/cancel`,
+      { generalId },
+    ),
+  finalize: (auctionId: number) =>
+    api.post<{ success: boolean; auctionId: number; status: string }>(
+      `/auctions/${auctionId}/finalize`,
+    ),
+  getHistory: (worldId: number) =>
+    api.get<
+      {
+        id: number;
+        sellerGeneralId: number;
+        buyerGeneralId: number | null;
+        itemCode: string;
+        minPrice: number;
+        currentPrice: number;
+        status: string;
+        createdAt: string;
+        expiresAt: string;
+      }[]
+    >(`/worlds/${worldId}/auction-history`),
+  getMarketPrice: (worldId: number) =>
+    api.get<{
+      worldId: number;
+      goldPerRice: number;
+      ricePerGold: number;
+      supply: number;
+      demand: number;
+    }>(`/worlds/${worldId}/market-price`),
+  buyRice: (worldId: number, generalId: number, amount: number) =>
+    api.post<{
+      success: boolean;
+      amount: number;
+      costGold: number;
+      goldPerRice: number;
+      generalGold: number;
+      generalRice: number;
+    }>(`/worlds/${worldId}/market/buy-rice`, { generalId, amount }),
+  sellRice: (worldId: number, generalId: number, amount: number) =>
+    api.post<{
+      success: boolean;
+      amount: number;
+      revenueGold: number;
+      goldPerRice: number;
+      generalGold: number;
+      generalRice: number;
+    }>(`/worlds/${worldId}/market/sell-rice`, { generalId, amount }),
+  createItemAuction: (
+    worldId: number,
+    generalId: number,
+    itemType: string,
+    startPrice: number,
+  ) =>
+    api.post<{ id: number; status: string; expiresAt: string }>(
+      `/worlds/${worldId}/item-auctions`,
+      { generalId, itemType, startPrice },
+    ),
 };
 
 // Item API
