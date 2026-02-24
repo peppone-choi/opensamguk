@@ -434,6 +434,25 @@ export const accountApi = {
     api.get<import("@/types").OAuthProviderInfo[]>("/account/oauth"),
   linkOAuth: (provider: string) =>
     api.post<{ redirectUrl: string }>(`/account/oauth/${provider}/link`),
+  completeOAuthLink: async (
+    provider: string,
+    code: string,
+    redirectUri: string,
+  ) => {
+    // Primary API (added parity path)
+    try {
+      return await api.post<void>(`/account/oauth/${provider}/callback`, {
+        code,
+        redirectUri,
+      });
+    } catch {
+      // Backward-compatible fallback for alternate route shape
+      return api.post<void>(`/account/oauth/${provider}/link/callback`, {
+        code,
+        redirectUri,
+      });
+    }
+  },
   unlinkOAuth: (provider: string) =>
     api.delete<void>(`/account/oauth/${provider}`),
   uploadIcon: (formData: FormData) =>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { accountApi } from "@/lib/gameApi";
 import { useAuthStore } from "@/stores/authStore";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ const OAUTH_PROVIDERS = [
 
 export default function AccountPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
 
   // Password change
@@ -101,6 +102,20 @@ export default function AccountPage() {
       if (typeof data.thirdUse === "boolean") setThirdUseStatus(data.thirdUse);
     }).catch(() => {});
   }, [fetchOAuthProviders]);
+
+  useEffect(() => {
+    const oauthStatus = searchParams.get("oauth");
+    if (!oauthStatus) return;
+
+    if (oauthStatus === "linked") {
+      setOauthMsg("소셜 계정 연동이 완료되었습니다.");
+      void fetchOAuthProviders();
+    } else if (oauthStatus === "link_failed") {
+      setOauthMsg("소셜 계정 연동에 실패했습니다. 다시 시도해주세요.");
+    }
+
+    router.replace("/account");
+  }, [fetchOAuthProviders, router, searchParams]);
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -220,13 +235,24 @@ export default function AccountPage() {
     }
   };
 
+  const withOAuthLinkMode = (redirectUrl: string, provider: string) => {
+    try {
+      const parsed = new URL(redirectUrl, window.location.origin);
+      if (!parsed.searchParams.get("mode")) parsed.searchParams.set("mode", "link");
+      if (!parsed.searchParams.get("provider")) parsed.searchParams.set("provider", provider);
+      return parsed.toString();
+    } catch {
+      return redirectUrl;
+    }
+  };
+
   const handleLinkOAuth = async (provider: string) => {
     setOauthActionLoading(provider);
     setOauthMsg("");
     try {
       const { data } = await accountApi.linkOAuth(provider);
       if (data.redirectUrl) {
-        window.location.href = data.redirectUrl;
+        window.location.href = withOAuthLinkMode(data.redirectUrl, provider);
       } else {
         setOauthMsg("연동 요청이 처리되었습니다.");
         await fetchOAuthProviders();

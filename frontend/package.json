@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "e2e": "playwright test",
+    "e2e:oauth": "playwright test e2e/oauth-gate.spec.ts",
+    "verify:oauth-gate": "node scripts/verify-oauth-gate.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
