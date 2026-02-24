@@ -1,5 +1,6 @@
 package com.opensam.engine.war
 
+import com.opensam.model.ArmType
 import kotlin.math.pow
 
 abstract class WarUnit(
@@ -34,6 +35,12 @@ abstract class WarUnit(
 
     abstract fun getBaseAttack(): Double
     abstract fun getBaseDefence(): Double
+
+    /**
+     * Get dex (경험치) for the given arm type.
+     * Legacy: GeneralBase::getDex() returns dex{armType}, castle maps to siege.
+     */
+    open fun getDexForArmType(armType: ArmType): Int = 0
 
     fun calcBattleOrder(): Double {
         val totalStat = (leadership + strength + intel) / 3.0

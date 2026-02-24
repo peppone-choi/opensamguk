@@ -31,6 +31,22 @@ class WarUnitGeneral(
         dodgeChance = unitCrewType.avoid / 100.0 * (train / 100.0)
     }
 
+    /**
+     * Get dex for a given arm type from the general's dex fields.
+     * Legacy: GeneralBase::getDex() — castle arm type maps to siege.
+     */
+    override fun getDexForArmType(armType: ArmType): Int {
+        val effectiveType = if (armType == ArmType.CASTLE) ArmType.SIEGE else armType
+        return when (effectiveType) {
+            ArmType.FOOTMAN -> general.dex1
+            ArmType.ARCHER -> general.dex2
+            ArmType.CAVALRY -> general.dex3
+            ArmType.WIZARD -> general.dex4
+            ArmType.SIEGE -> general.dex5
+            else -> 0
+        }
+    }
+
     /** Computed attack: stat + tech component. Train/atmos applied separately in war power. */
     override fun getBaseAttack(): Double {
         val unitCrewType = getCrewType()

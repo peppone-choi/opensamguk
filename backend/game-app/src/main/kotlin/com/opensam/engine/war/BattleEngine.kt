@@ -163,17 +163,19 @@ class BattleEngine {
         warPower *= attacker.atmos.toDouble()
         warPower /= maxOf(1.0, defender.train.toDouble())
 
-        val attackerDex = 0
-        val defenderDex = 0
+        // Legacy: dex is looked up by attacker's crew type arm type for both sides
+        val attackerCrewTypeObj = CrewType.fromCode(attacker.crewType)
+        val armType = attackerCrewTypeObj?.armType ?: com.opensam.model.ArmType.FOOTMAN
+        val attackerDex = attacker.getDexForArmType(armType)
+        val defenderDex = defender.getDexForArmType(armType)
         warPower *= getDexLog(attackerDex, defenderDex)
 
-        val attackerCrewType = CrewType.fromCode(attacker.crewType)
         val defenderCrewType = CrewType.fromCode(defender.crewType)
-        val attackTypeCoef = if (attackerCrewType != null && defenderCrewType != null) {
-            attackerCrewType.getAttackCoef(defenderCrewType)
+        val attackTypeCoef = if (attackerCrewTypeObj != null && defenderCrewType != null) {
+            attackerCrewTypeObj.getAttackCoef(defenderCrewType)
         } else 1.0
-        val defenceTypeCoef = if (defenderCrewType != null && attackerCrewType != null) {
-            defenderCrewType.getDefenceCoef(attackerCrewType)
+        val defenceTypeCoef = if (defenderCrewType != null && attackerCrewTypeObj != null) {
+            defenderCrewType.getDefenceCoef(attackerCrewTypeObj)
         } else 1.0
         warPower *= attackTypeCoef
         warPower /= maxOf(0.01, defenceTypeCoef)
