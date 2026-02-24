@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Message, General } from "@/types";
 import { auctionApi } from "@/lib/gameApi";
-import { formatLog } from "@/lib/formatLog";
 
 /* ── payload shape (stored in Message.payload) ── */
 interface AuctionPayload {
@@ -311,7 +310,6 @@ export default function AuctionPage() {
   const doneItem = itemAuctions.filter((a) => !isActive(p(a)));
 
   // recent logs from any auction that has them
-  const recentLogs = auctions.flatMap((a) => p(a).recentLogs ?? []).slice(0, 20);
 
   const mySelling = auctions.filter(
     (a) => p(a).sellerId === myGeneral?.id && isActive(p(a)),
