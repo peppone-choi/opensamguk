@@ -412,17 +412,23 @@ class GeneralAI(
             "부대전방발령" -> doTroopFrontAssignment(ctx, rng, nationPolicy, frontCities, supplyCities)
             "부대후방발령" -> doTroopRearAssignment(ctx, rng, nationPolicy, backupCities, supplyCities)
             "부대구출발령" -> doTroopRescueAssignment(ctx, rng, nationPolicy, supplyCities)
+            "부대유저장후방발령" -> doTroopUserRearAssignment(ctx, rng, nationPolicy, backupCities, supplyCities)
 
             // ── NPC general assignment ──
             "NPC전방발령" -> doNpcFrontAssignment(ctx, rng, nationPolicy, frontCities, attackable)
             "NPC후방발령" -> doNpcRearAssignment(ctx, rng, nationPolicy, backupCities, supplyCities, frontCities)
             "NPC내정발령" -> doNpcDomesticAssignment(ctx, rng, nationPolicy, supplyCities)
+            "NPC구출발령" -> doNpcRescueAssignment(ctx, rng, nationPolicy, supplyCities)
 
             // ── User general assignment ──
             "유저장전방발령" -> doUserFrontAssignment(ctx, rng, nationPolicy, frontCities, attackable)
             "유저장후방발령" -> doUserRearAssignment(ctx, rng, nationPolicy, backupCities, supplyCities, frontCities)
+            "유저장구출발령" -> doUserRescueAssignment(ctx, rng, nationPolicy, supplyCities)
+            "유저장내정발령" -> doUserDomesticAssignment(ctx, rng, nationPolicy, supplyCities)
 
             // ── Rewards ──
+            "NPC긴급포상" -> doNpcUrgentReward(ctx, rng, nationPolicy)
+            "유저장긴급포상" -> doUserUrgentReward(ctx, rng, nationPolicy)
             "NPC포상" -> doNpcReward(ctx, rng, nationPolicy)
             "유저장포상" -> doUserReward(ctx, rng, nationPolicy)
 
@@ -1887,6 +1893,1005 @@ class GeneralAI(
         } else {
             general.meta["donateRice"] = general.rice
             "헌납"
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  부대유저장후방발령: Move user generals in troops to rear for recruitment
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do부대유저장후방발령: Find user war generals in troop at front cities
+     * with low population, move them to rear cities with enough population for recruitment.
+     */
+    private fun doTroopUserRearAssignment(
+        ctx: AIContext, rng: Random, policy: NpcNationPolicy,
+        backupCities: List<City>, supplyCities: List<City>,
+    ): String? {
+        val nation = ctx.nation ?: return null
+        if (ctx.frontCities.isEmpty()) return null
+        if (ctx.diplomacyState != DiplomacyState.AT_WAR) return null
+
+        val frontCityIds = ctx.frontCities.map { it.id }.toSet()
+        val nationCityMap = ctx.allCities.filter { it.nationId == nation.id }.associateBy { it.id }
+        val supplyCityIds = supplyCities.map { it.id }.toSet()
+
+        // Troop leaders in our nation
+        val troopLeaders = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }
+        val troopLeaderMap = troopLeaders.associateBy { it.id }
+
+        // User war generals: npcState < 2, not self
+        val userWarGenerals = ctx.nationGenerals.filter { gen ->
+            gen.npcState.toInt() < 2 && gen.id != ctx.general.id
+        }
+
+        val generalCandidates = userWarGenerals.filter { gen ->
+            if (!frontCityIds.contains(gen.cityId)) return@filter false
+            if (!nationCityMap.containsKey(gen.cityId)) return@filter false
+            val city = nationCityMap[gen.cityId] ?: return@filter false
+
+            val troopLeaderId = gen.troopId
+            if (troopLeaderId == 0L || !troopLeaderMap.containsKey(troopLeaderId)) return@filter false
+            if (troopLeaderId == gen.id) return@filter false
+
+            val troopLeader = troopLeaderMap[troopLeaderId] ?: return@filter false
+            if (troopLeader.cityId != gen.cityId) return@filter false
+            if (!supplyCityIds.contains(troopLeader.cityId)) return@filter false
+
+            // City population ratio check
+            if (city.popMax > 0 && city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio) return@filter false
+            // Crew check
+            if (gen.crew >= 500) return@filter false  // minWarCrew
+
+            true
+        }
+
+        if (generalCandidates.isEmpty()) return null
+        if (supplyCities.size <= 1) return null
+
+        // Find suitable rear cities
+        val cityCandidates = (backupCities.ifEmpty { supplyCities }).filter { city ->
+            city.popMax > 0 && city.pop.toDouble() / city.popMax >= policy.safeRecruitCityPopulationRatio
+        }
+        if (cityCandidates.isEmpty()) return null
+
+        val pickedGeneral = generalCandidates[rng.nextInt(generalCandidates.size)]
+        val destCity = cityCandidates[rng.nextInt(cityCandidates.size)]
+        pickedGeneral.meta["assignedCity"] = destCity.id
+        return "발령"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  NPC구출발령: Rescue lost NPC generals
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy doNPC구출발령: Find NPC generals (npcState>=2, !=5) that are
+     * in non-supply cities (lost/cut off) and assign them to supply cities.
+     */
+    private fun doNpcRescueAssignment(
+        ctx: AIContext, rng: Random, policy: NpcNationPolicy,
+        supplyCities: List<City>,
+    ): String? {
+        val nation = ctx.nation ?: return null
+        if (nation.capitalCityId == null) return null
+        if (supplyCities.isEmpty()) return null
+
+        val supplyCityIds = supplyCities.map { it.id }.toSet()
+
+        // Lost NPC generals: NPC (npcState>=2, !=5) in non-supply cities
+        val lostNpcGenerals = ctx.nationGenerals.filter { gen ->
+            gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
+                gen.id != ctx.general.id &&
+                !supplyCityIds.contains(gen.cityId)
+        }
+
+        if (lostNpcGenerals.isEmpty()) return null
+
+        val target = lostNpcGenerals[rng.nextInt(lostNpcGenerals.size)]
+        val destCity = supplyCities[rng.nextInt(supplyCities.size)]
+        target.meta["assignedCity"] = destCity.id
+        return "발령"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  유저장구출발령: Rescue lost user generals
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do유저장구출발령: Find user generals (npcState<2) that are in
+     * non-supply cities and don't have enough crew/train to defend, then assign them out.
+     */
+    private fun doUserRescueAssignment(
+        ctx: AIContext, rng: Random, policy: NpcNationPolicy,
+        supplyCities: List<City>,
+    ): String? {
+        val nation = ctx.nation ?: return null
+        if (nation.capitalCityId == null) return null
+        if (supplyCities.isEmpty()) return null
+
+        val supplyCityIds = supplyCities.map { it.id }.toSet()
+
+        // Lost user generals: npcState < 2, not in supply cities
+        val lostUserGenerals = ctx.nationGenerals.filter { gen ->
+            gen.npcState.toInt() < 2 && gen.id != ctx.general.id &&
+                !supplyCityIds.contains(gen.cityId)
+        }
+
+        // Filter out those who can defend (have crew + train + atmos)
+        val rescueCandidates = lostUserGenerals.filter { gen ->
+            !(gen.crew >= 500 && gen.train >= gen.defenceTrain && gen.atmos >= gen.defenceTrain)
+        }
+
+        // Filter out those already in a troop with a leader that can escape
+        val troopLeaderMap = ctx.nationGenerals.filter { it.npcState.toInt() == 5 }.associateBy { it.id }
+        val candidateArgs = rescueCandidates.mapNotNull { gen ->
+            val troopId = gen.troopId
+            if (troopId != 0L && troopLeaderMap.containsKey(troopId)) {
+                val troopLeader = troopLeaderMap[troopId]!!
+                if (supplyCityIds.contains(troopLeader.cityId)) {
+                    return@mapNotNull null // Already in escapable troop
+                }
+            }
+
+            // Choose destination
+            val destCity = if (ctx.diplomacyState in listOf(DiplomacyState.IMMINENT, DiplomacyState.AT_WAR) &&
+                ctx.frontCities.size > 2
+            ) {
+                ctx.frontCities[rng.nextInt(ctx.frontCities.size)]
+            } else {
+                supplyCities[rng.nextInt(supplyCities.size)]
+            }
+
+            gen to destCity
+        }
+
+        if (candidateArgs.isEmpty()) return null
+
+        val (target, destCity) = candidateArgs[rng.nextInt(candidateArgs.size)]
+        target.meta["assignedCity"] = destCity.id
+        return "발령"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  유저장내정발령: Move user generals to under-developed cities
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do유저장내정발령: Find user generals in well-developed supply cities
+     * and move them to under-developed supply cities.
+     */
+    private fun doUserDomesticAssignment(
+        ctx: AIContext, rng: Random, policy: NpcNationPolicy,
+        supplyCities: List<City>,
+    ): String? {
+        val nation = ctx.nation ?: return null
+        if (nation.capitalCityId == null) return null
+        if (supplyCities.size <= 1) return null
+
+        val avgDev = supplyCities.map { calcCityDevScore(it) }.average()
+        if (avgDev >= 0.99) return null
+
+        val supplyCityMap = supplyCities.associateBy { it.id }
+
+        // In peace, include both war and civil user generals; otherwise only civil
+        val userGenerals = ctx.nationGenerals.filter { gen ->
+            gen.npcState.toInt() < 2 && gen.id != ctx.general.id && gen.troopId == 0L
+        }
+        val civilUserGenerals = if (ctx.diplomacyState == DiplomacyState.PEACE ||
+            ctx.diplomacyState == DiplomacyState.DECLARED
+        ) {
+            userGenerals
+        } else {
+            userGenerals.filter { it.leadership < policy.minNPCWarLeadership }
+        }
+
+        // Find generals in well-developed supply cities (dev >= 0.95)
+        val candidates = civilUserGenerals.filter { gen ->
+            val city = supplyCityMap[gen.cityId] ?: return@filter false
+            calcCityDevScore(city) >= 0.95
+        }
+
+        if (candidates.isEmpty()) return null
+
+        // Weight under-developed cities by need
+        val cityWeights = supplyCities.map { city ->
+            val dev = min(calcCityDevScore(city), 0.999)
+            val score = (1.0 - dev).pow(2.0)
+            val generalCount = ctx.nationGenerals.count { it.cityId == city.id }
+            city to score / sqrt(generalCount.toDouble() + 1.0)
+        }.filter { it.second > 0.0 }
+
+        if (cityWeights.isEmpty()) return null
+
+        val destGeneral = candidates[rng.nextInt(candidates.size)]
+        val srcCity = supplyCityMap[destGeneral.cityId]
+        val destCity = choiceByWeightPair(rng, cityWeights) ?: return null
+
+        if (srcCity != null && calcCityDevScore(srcCity) <= calcCityDevScore(destCity)) return null
+
+        destGeneral.meta["assignedCity"] = destCity.id
+        return "발령"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  유저장긴급포상: Urgent reward for user war generals
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do유저장긴급포상: During war, reward user war generals who are low
+     * on gold/rice with urgent funding from the national treasury.
+     */
+    private fun doUserUrgentReward(ctx: AIContext, rng: Random, policy: NpcNationPolicy): String? {
+        val nation = ctx.nation ?: return null
+
+        // Only user war generals (npcState < 2 with combat readiness)
+        val userWarGenerals = ctx.nationGenerals.filter { gen ->
+            gen.npcState.toInt() < 2 && gen.id != ctx.general.id &&
+                (gen.killTurn?.toInt() ?: 100) > 5
+        }
+        if (userWarGenerals.isEmpty()) return null
+
+        data class RewardCandidate(val generalId: Long, val isGold: Boolean, val amount: Int, val weight: Double)
+
+        val candidates = mutableListOf<RewardCandidate>()
+        val reqGoldThreshold = policy.reqNationGold  // reqHumanWarUrgentGold analog
+        val reqRiceThreshold = policy.reqNationRice  // reqHumanWarUrgentRice analog
+
+        // Gold check
+        val sortedByGold = userWarGenerals.sortedBy { it.gold }
+        for ((idx, gen) in sortedByGold.withIndex()) {
+            if (gen.gold >= reqGoldThreshold) break
+
+            val reqMoney = gen.leadership.toInt() * 100 * 3.0 * 1.1
+            val enoughMoney = reqMoney * 1.1
+            if (gen.gold >= reqMoney) continue
+
+            val payAmount = sqrt((enoughMoney - gen.gold) * nation.gold.toDouble())
+            val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.gold)
+            if (clampedPay < policy.minimumResourceActionAmount) continue
+            if (nation.gold < clampedPay / 2) continue
+
+            val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
+            candidates.add(RewardCandidate(gen.id, true, finalPay, (sortedByGold.size - idx).toDouble()))
+        }
+
+        // Rice check
+        val sortedByRice = userWarGenerals.sortedBy { it.rice }
+        for ((idx, gen) in sortedByRice.withIndex()) {
+            if (gen.rice >= reqRiceThreshold) break
+
+            val reqMoney = gen.leadership.toInt() * 100 * 3.0 * 1.1
+            val enoughMoney = reqMoney * 1.1
+            if (gen.rice >= reqMoney) continue
+
+            val payAmount = sqrt((enoughMoney - gen.rice) * nation.rice.toDouble())
+            val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.rice)
+            if (clampedPay < policy.minimumResourceActionAmount) continue
+            if (nation.rice < clampedPay / 2) continue
+
+            val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
+            candidates.add(RewardCandidate(gen.id, false, finalPay, (sortedByRice.size - idx).toDouble()))
+        }
+
+        if (candidates.isEmpty()) return null
+
+        val picked = choiceByWeightPairRaw(rng, candidates.map { it to it.weight }) ?: return null
+        val targetGen = ctx.nationGenerals.find { it.id == picked.generalId } ?: return null
+        targetGen.meta["rewardGold"] = if (picked.isGold) picked.amount else 0
+        targetGen.meta["rewardRice"] = if (!picked.isGold) picked.amount else 0
+        return "포상"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  NPC긴급포상: Urgent reward for NPC war generals
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy doNPC긴급포상: During war, urgently reward NPC war generals
+     * who are low on gold/rice from the national treasury.
+     */
+    private fun doNpcUrgentReward(ctx: AIContext, rng: Random, policy: NpcNationPolicy): String? {
+        val nation = ctx.nation ?: return null
+
+        val npcWarGenerals = ctx.nationGenerals.filter { gen ->
+            gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
+                gen.id != ctx.general.id &&
+                gen.leadership >= policy.minNPCWarLeadership &&
+                (gen.killTurn?.toInt() ?: 100) > 5
+        }
+        if (npcWarGenerals.isEmpty()) return null
+
+        data class RewardCandidate(val generalId: Long, val isGold: Boolean, val amount: Int, val weight: Double)
+
+        val candidates = mutableListOf<RewardCandidate>()
+        val reqNPCMinWarGold = policy.reqNationGold / 2  // reqNPCWarGold/2 analog
+        val reqNPCMinWarRice = policy.reqNationRice / 2
+
+        // Gold
+        if (nation.gold >= policy.reqNationGold) {
+            val sortedByGold = npcWarGenerals.sortedBy { it.gold }
+            for ((idx, gen) in sortedByGold.withIndex()) {
+                if (gen.gold >= reqNPCMinWarGold) break
+
+                val reqMoney = gen.leadership.toInt() * 100 * 1.5
+                val enoughMoney = reqMoney * 1.2
+                if (gen.gold >= reqMoney) continue
+
+                val payAmount = sqrt((enoughMoney - gen.gold) * nation.gold.toDouble())
+                val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.gold)
+                if (clampedPay < policy.minimumResourceActionAmount) continue
+                if (nation.gold < clampedPay / 2) continue
+
+                val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
+                candidates.add(RewardCandidate(gen.id, true, finalPay, (sortedByGold.size - idx).toDouble()))
+            }
+        }
+
+        // Rice
+        if (nation.rice >= policy.reqNationRice) {
+            val sortedByRice = npcWarGenerals.sortedBy { it.rice }
+            for ((idx, gen) in sortedByRice.withIndex()) {
+                if (gen.rice >= reqNPCMinWarRice) break
+
+                val reqMoney = gen.leadership.toInt() * 100 * 1.5
+                val enoughMoney = reqMoney * 1.2
+                if (gen.rice >= reqMoney) continue
+
+                val payAmount = sqrt((enoughMoney - gen.rice) * nation.rice.toDouble())
+                val clampedPay = valueFitD(payAmount, 0.0, enoughMoney - gen.rice)
+                if (clampedPay < policy.minimumResourceActionAmount) continue
+                if (nation.rice < clampedPay / 2) continue
+
+                val finalPay = valueFit(clampedPay.toInt(), 100, policy.maximumResourceActionAmount)
+                candidates.add(RewardCandidate(gen.id, false, finalPay, (sortedByRice.size - idx).toDouble()))
+            }
+        }
+
+        if (candidates.isEmpty()) return null
+
+        val picked = choiceByWeightPairRaw(rng, candidates.map { it to it.weight }) ?: return null
+        val targetGen = ctx.nationGenerals.find { it.id == picked.generalId } ?: return null
+        targetGen.meta["rewardGold"] = if (picked.isGold) picked.amount else 0
+        targetGen.meta["rewardRice"] = if (!picked.isGold) picked.amount else 0
+        return "포상"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  do집합: Rally (troop leader always rallies)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do집합: Troop leaders (npcState==5) always rally.
+     * Also refresh killTurn for troop leaders.
+     */
+    private fun doRally(general: General, rng: Random): String {
+        if (general.npcState.toInt() == 5) {
+            // Per legacy: cycle killTurn for troop leaders
+            val newKillTurn = ((general.killTurn?.toInt() ?: 70) + rng.nextInt(3) + 2) % 5 + 70
+            general.killTurn = newKillTurn.toShort()
+        }
+        return "집합"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  do해산: Disband nation (NPC lord without capital)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do해산: Lord NPC without capital disbands nation.
+     * Clears movingTargetCityID aux var.
+     */
+    private fun doDisband(general: General): String? {
+        // Simplified condition check; engine validates
+        general.meta.remove("movingTargetCityID")
+        return "해산"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  do선양: Abdicate (transfer lordship)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do선양: Lord abdicates to a random general in the nation.
+     * Only when generalPolicy allows it (can선양).
+     */
+    private fun doAbdicate(ctx: AIContext, rng: Random): String? {
+        val general = ctx.general
+        if (general.officerLevel.toInt() != 12) return null
+
+        // Find a non-troop general in the same nation to abdicate to
+        val candidates = ctx.nationGenerals.filter { gen ->
+            gen.id != general.id && gen.npcState.toInt() != 5
+        }
+        if (candidates.isEmpty()) return null
+
+        val target = candidates[rng.nextInt(candidates.size)]
+        general.meta["abdicateTarget"] = target.id
+        return "선양"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  choosePromotion: Assign officer positions (lord-level)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy choosePromotion: Lord assigns officer positions to generals.
+     * Sets officer_level for generals based on stats and availability.
+     * Runs at months 3, 6, 9, 12 for NPC lords.
+     */
+    fun choosePromotion(ctx: AIContext, rng: Random) {
+        val nation = ctx.nation ?: return
+        val nationGenerals = ctx.nationGenerals
+        val general = ctx.general
+
+        val minChiefLevel = getNationChiefLevel(nation.level.toInt())
+
+        // Track which chief levels are filled
+        val chiefGenerals = mutableMapOf<Int, General>()
+        for (gen in nationGenerals) {
+            if (gen.officerLevel.toInt() in minChiefLevel..12 && gen.id != general.id) {
+                chiefGenerals[gen.officerLevel.toInt()] = gen
+            }
+        }
+
+        // Give ambassador permission to existing user chiefs
+        val minUserKillturn = 200  // Simplified from legacy calculation
+        val minNPCKillturn = 36
+        var userChiefCnt = 0
+
+        for (level in minChiefLevel until 12) {
+            val chief = chiefGenerals[level] ?: continue
+            if (chief.npcState.toInt() < 2 && (chief.killTurn?.toInt() ?: 100) >= minUserKillturn) {
+                userChiefCnt++
+                chief.permission = "ambassador"
+            }
+        }
+
+        // Sort all generals by composite stat for promotion
+        val sortedGenerals = nationGenerals.filter { it.id != general.id }
+            .sortedByDescending {
+                it.leadership.toInt() * 2 + it.strength.toInt() + it.intel.toInt()
+            }
+
+        val nextChiefs = mutableMapOf<Int, General>()
+
+        // First ensure level 11 is filled with a user if possible and no user chiefs exist
+        val userGenerals = nationGenerals.filter { it.npcState.toInt() < 2 && it.id != general.id }
+        if (userChiefCnt == 0 && userGenerals.isNotEmpty()) {
+            val usersSorted = userGenerals
+                .filter { it.officerLevel.toInt() <= 4 && (it.killTurn?.toInt() ?: 100) >= minUserKillturn }
+                .sortedByDescending { it.leadership.toInt() }
+
+            val pick = usersSorted.firstOrNull()
+            if (pick != null && !chiefGenerals.containsKey(11)) {
+                pick.officerLevel = 11
+                pick.officerCity = 0
+                pick.permission = "ambassador"
+                nextChiefs[11] = pick
+                chiefGenerals[11] = pick
+                userChiefCnt++
+            }
+        }
+
+        // Fill remaining positions from 11 down to minChiefLevel
+        for (chiefLevel in 11 downTo minChiefLevel) {
+            if (chiefGenerals.containsKey(chiefLevel) && nextChiefs[chiefLevel] == null) {
+                val existing = chiefGenerals[chiefLevel]!!
+                // Keep existing user chiefs
+                if (existing.npcState.toInt() < 2 && (existing.killTurn?.toInt() ?: 100) >= minUserKillturn) {
+                    continue
+                }
+            }
+
+            if (chiefGenerals.containsKey(chiefLevel) && nextChiefs[chiefLevel] == null) {
+                // Position filled, maybe replace with probability
+                if (!rng.nextBoolean() || rng.nextDouble() >= 0.1) continue
+            }
+
+            var newChief: General? = null
+            for (candidate in sortedGenerals) {
+                if (candidate.officerLevel.toInt() > 4) continue
+                if (candidate.npcState.toInt() < 2 && (candidate.killTurn?.toInt() ?: 100) < minUserKillturn) continue
+                if (candidate.npcState.toInt() >= 2 && (candidate.killTurn?.toInt() ?: 100) < minNPCKillturn) continue
+
+                // Stat requirement by level
+                if (chiefLevel == 11) {
+                    // No stat requirement for level 11
+                } else if (chiefLevel % 2 == 0) {
+                    if (candidate.strength < 60) continue  // chiefStatMin
+                } else {
+                    if (candidate.intel < 60) continue
+                }
+
+                // Limit user chiefs to 3
+                if (candidate.npcState.toInt() < 2 && userChiefCnt >= 3) continue
+
+                newChief = candidate
+                break
+            }
+
+            if (newChief == null) continue
+
+            if (newChief.npcState.toInt() < 2) {
+                userChiefCnt++
+                newChief.permission = "ambassador"
+            }
+
+            // Demote old chief if exists
+            val oldChief = chiefGenerals[chiefLevel]
+            if (oldChief != null && oldChief.id != newChief.id) {
+                oldChief.officerLevel = 1
+                oldChief.officerCity = 0
+            }
+
+            newChief.officerLevel = chiefLevel.toShort()
+            newChief.officerCity = 0
+            nextChiefs[chiefLevel] = newChief
+            chiefGenerals[chiefLevel] = newChief
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseNonLordPromotion: Non-lord officer promotion
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseNonLordPromotion: Fill empty officer positions with any available general.
+     * Less sophisticated than choosePromotion - just fills vacancies.
+     */
+    fun chooseNonLordPromotion(ctx: AIContext, rng: Random) {
+        val nation = ctx.nation ?: return
+        val nationGenerals = ctx.nationGenerals
+        val general = ctx.general
+        val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
+
+        val minChiefLevel = getNationChiefLevel(nation.level.toInt())
+
+        val chiefGenerals = mutableMapOf<Int, General>()
+        for (gen in nationGenerals) {
+            if (gen.officerLevel.toInt() in minChiefLevel..12 && gen.id != general.id) {
+                chiefGenerals[gen.officerLevel.toInt()] = gen
+            }
+        }
+
+        // Available generals for promotion
+        val npcWarGenerals = nationGenerals.filter { gen ->
+            gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
+                gen.leadership >= nationPolicy.minNPCWarLeadership && gen.officerLevel.toInt() == 1
+        }
+        val npcCivilGenerals = nationGenerals.filter { gen ->
+            gen.npcState.toInt() >= 2 && gen.npcState.toInt() != 5 &&
+                gen.leadership < nationPolicy.minNPCWarLeadership && gen.officerLevel.toInt() == 1
+        }
+        val userWarGenerals = nationGenerals.filter { gen ->
+            gen.npcState.toInt() < 2 && gen.officerLevel.toInt() == 1
+        }
+
+        for (chiefLevel in minChiefLevel until 12) {
+            if (chiefGenerals.containsKey(chiefLevel)) continue
+            if (general.officerLevel.toInt() == chiefLevel) continue
+
+            var picked: General? = null
+            for (attempt in 0 until 5) {
+                val pool = when {
+                    npcWarGenerals.isNotEmpty() -> npcWarGenerals
+                    npcCivilGenerals.isNotEmpty() -> npcCivilGenerals
+                    userWarGenerals.isNotEmpty() -> userWarGenerals
+                    else -> break
+                }
+                val randGeneral = pool[rng.nextInt(pool.size)]
+                if (randGeneral.officerLevel.toInt() != 1) continue
+
+                if (chiefLevel == 11) {
+                    picked = randGeneral
+                    break
+                }
+                if (chiefLevel % 2 == 0 && randGeneral.strength < 60) continue
+                if (chiefLevel % 2 == 1 && randGeneral.intel < 60) continue
+                picked = randGeneral
+                break
+            }
+
+            if (picked == null) continue
+
+            picked.officerLevel = chiefLevel.toShort()
+            picked.officerCity = 0
+            chiefGenerals[chiefLevel] = picked
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseTexRate: Set nation tax rate
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseTexRate: Set tax rate based on nation development level.
+     * Higher development = higher tax rate.
+     */
+    fun chooseTexRate(ctx: AIContext, supplyCities: List<City>): Int {
+        val nation = ctx.nation ?: return 15
+
+        var rate = 15
+        if (supplyCities.isNotEmpty()) {
+            val popRates = supplyCities.map { if (it.popMax > 0) it.pop.toDouble() / it.popMax else 0.0 }
+            val devRates = supplyCities.map { calcCityDevScore(it) }
+            val avg = (popRates.average() + devRates.average()) / 2.0
+
+            rate = when {
+                avg > 0.95 -> 25
+                avg > 0.70 -> 20
+                avg > 0.50 -> 15
+                else -> 10
+            }
+        }
+
+        nation.rate = rate.toShort()
+        nation.warState = 0
+        return rate
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseGoldBillRate: Set gold bill (salary) rate
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseGoldBillRate: Calculate gold bill rate based on income vs outcome.
+     * Bill = income / outcome * 90, clamped to [20, 200].
+     */
+    fun chooseGoldBillRate(ctx: AIContext, supplyCities: List<City>, policy: NpcNationPolicy): Int {
+        val nation = ctx.nation ?: return 20
+        if (supplyCities.isEmpty()) return 20
+
+        val nationGenerals = ctx.nationGenerals.filter { it.npcState.toInt() != 5 }
+        val generalCount = (nationGenerals.size + 1).coerceAtLeast(1)
+
+        // Simplified income estimation: sum of city commerce * tax rate
+        val goldIncome = supplyCities.sumOf { city ->
+            (city.comm.toDouble() * nation.rate / 100.0).toInt()
+        }.coerceAtLeast(1)
+
+        // Outcome estimation: general count * base salary
+        val outcome = (generalCount * 100).coerceAtLeast(1)
+
+        var bill = (goldIncome.toDouble() / outcome * 90).toInt()
+
+        // If treasury is abundant, increase bill
+        if (nation.gold + goldIncome - outcome > policy.reqNationGold * 2) {
+            val moreBill = ((nation.gold + goldIncome - policy.reqNationGold * 2).toDouble() / outcome * 80).toInt()
+            if (moreBill > bill) {
+                bill = (moreBill + bill) / 2
+            }
+        }
+
+        bill = bill.coerceIn(20, 200)
+        nation.bill = bill.toShort()
+        return bill
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseRiceBillRate: Set rice bill (salary) rate
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseRiceBillRate: Calculate rice bill rate based on income vs outcome.
+     * Bill = income / outcome * 90, clamped to [20, 200].
+     */
+    fun chooseRiceBillRate(ctx: AIContext, supplyCities: List<City>, policy: NpcNationPolicy): Int {
+        val nation = ctx.nation ?: return 20
+        if (supplyCities.isEmpty()) return 20
+
+        val nationGenerals = ctx.nationGenerals.filter { it.npcState.toInt() != 5 }
+        val generalCount = (nationGenerals.size + 1).coerceAtLeast(1)
+
+        // Simplified income estimation: sum of city agriculture * tax rate + wall income
+        val riceIncome = supplyCities.sumOf { city ->
+            (city.agri.toDouble() * nation.rate / 100.0).toInt() +
+                (city.wall.toDouble() * nation.rate / 200.0).toInt()
+        }.coerceAtLeast(1)
+
+        val outcome = (generalCount * 100).coerceAtLeast(1)
+
+        var bill = (riceIncome.toDouble() / outcome * 90).toInt()
+
+        if (nation.rice + riceIncome - outcome > policy.reqNationRice * 2) {
+            val moreBill = ((nation.rice + riceIncome - policy.reqNationRice * 2).toDouble() / outcome * 80).toInt()
+            if (moreBill > bill) {
+                bill = (moreBill + bill) / 2
+            }
+        }
+
+        bill = bill.coerceIn(20, 200)
+        nation.bill = bill.toShort()
+        return bill
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseNationTurn: High-level NPC nation turn orchestrator
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseNationTurn: Main entry point for NPC nation-level turn decisions.
+     * Handles periodic tasks (promotion, tax/bill rates) and iterates nation policy priorities.
+     */
+    fun chooseNationTurn(general: General, world: WorldState): String {
+        val rng = DeterministicRng.create(
+            "${world.id}", "NationTurn", world.currentYear, world.currentMonth, general.id
+        )
+
+        if (general.nationId == 0L) return "휴식"
+
+        val worldId = world.id.toLong()
+        val city = cityRepository.findById(general.cityId).orElse(null) ?: return "휴식"
+        val nation = nationRepository.findById(general.nationId).orElse(null) ?: return "휴식"
+
+        val allCities = cityRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val allNations = nationRepository.findByWorldId(worldId)
+        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+
+        val nationCities = allCities.filter { it.nationId == nation.id }
+        val frontCities = nationCities.filter { it.frontState > 0 }
+        val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
+        val supplyCities = nationCities.filter { it.supplyState > 0 }
+        val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
+        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+
+        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+
+        val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
+        val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
+
+        val ctx = AIContext(
+            world = world,
+            general = general,
+            city = city,
+            nation = nation,
+            diplomacyState = diplomacyState,
+            generalType = generalType,
+            allCities = allCities,
+            allGenerals = allGenerals,
+            allNations = allNations,
+            frontCities = frontCities,
+            rearCities = rearCities,
+            nationGenerals = nationGenerals,
+        )
+
+        val month = world.currentMonth.toInt()
+
+        // Periodic tasks for NPC lords
+        if (general.npcState.toInt() >= 2) {
+            if (general.officerLevel.toInt() == 12) {
+                if (month in listOf(3, 6, 9, 12)) {
+                    choosePromotion(ctx, rng)
+                }
+                if (month == 12) {
+                    chooseTexRate(ctx, supplyCities)
+                    chooseGoldBillRate(ctx, supplyCities, nationPolicy)
+                }
+                if (month == 6) {
+                    chooseTexRate(ctx, supplyCities)
+                    chooseRiceBillRate(ctx, supplyCities, nationPolicy)
+                }
+            } else if (month in listOf(3, 6, 9, 12)) {
+                chooseNonLordPromotion(ctx, rng)
+            }
+        }
+
+        // Check reserved command
+        val reservedAction = checkReservedCommand(general)
+        if (reservedAction != null) return reservedAction
+
+        val attackable = frontCities.any { it.supplyState > 0 }
+        val warTargetNations = calcWarTargetNations(nation, diplomacies)
+
+        // Iterate nation policy priorities
+        for (actionName in nationPolicy.priority) {
+            if (!nationPolicy.canDo(actionName)) continue
+            // For user generals, only allow instant-turn actions
+            if (general.npcState.toInt() < 2 && actionName !in NpcNationPolicy.AVAILABLE_INSTANT_TURN) continue
+
+            val result = doNationAction(
+                actionName, ctx, rng, nationPolicy, supplyCities, backupCities, attackable, warTargetNations
+            )
+            if (result != null) {
+                logger.debug("NationTurn: general {} chose {}", general.id, result)
+                return result
+            }
+        }
+
+        return "휴식"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseInstantNationTurn: Instant nation turn (subset of actions)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseInstantNationTurn: Only processes actions available for instant turns.
+     */
+    fun chooseInstantNationTurn(general: General, world: WorldState): String? {
+        val rng = DeterministicRng.create(
+            "${world.id}", "InstantNationTurn", world.currentYear, world.currentMonth, general.id
+        )
+
+        if (general.nationId == 0L) return null
+
+        val worldId = world.id.toLong()
+        val city = cityRepository.findById(general.cityId).orElse(null) ?: return null
+        val nation = nationRepository.findById(general.nationId).orElse(null) ?: return null
+
+        val allCities = cityRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val allNations = nationRepository.findByWorldId(worldId)
+        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+
+        val nationCities = allCities.filter { it.nationId == nation.id }
+        val frontCities = nationCities.filter { it.frontState > 0 }
+        val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
+        val supplyCities = nationCities.filter { it.supplyState > 0 }
+        val backupCities = nationCities.filter { it.frontState.toInt() == 0 && it.supplyState > 0 }
+        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+
+        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+        val nationPolicy = NpcPolicyBuilder.buildNationPolicy(nation.meta)
+        val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
+        val attackable = frontCities.any { it.supplyState > 0 }
+        val warTargetNations = calcWarTargetNations(nation, diplomacies)
+
+        val ctx = AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = diplomacyState, generalType = generalType,
+            allCities = allCities, allGenerals = allGenerals, allNations = allNations,
+            frontCities = frontCities, rearCities = rearCities, nationGenerals = nationGenerals,
+        )
+
+        for (actionName in nationPolicy.priority) {
+            if (actionName !in NpcNationPolicy.AVAILABLE_INSTANT_TURN) continue
+            if (!nationPolicy.canDo(actionName)) continue
+
+            val result = doNationAction(
+                actionName, ctx, rng, nationPolicy, supplyCities, backupCities, attackable, warTargetNations
+            )
+            if (result != null) return result
+        }
+
+        return "휴식"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  chooseGeneralTurn: High-level NPC general turn orchestrator
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy chooseGeneralTurn: Main entry point for NPC general-level turn decisions.
+     * Handles special cases (troop leaders, wandering lords, abdication) then iterates priorities.
+     */
+    fun chooseGeneralTurn(general: General, world: WorldState): String {
+        val rng = DeterministicRng.create(
+            "${world.id}", "GeneralTurn", world.currentYear, world.currentMonth, general.id
+        )
+
+        val npcType = general.npcState.toInt()
+
+        // Set defence_train for NPCs
+        if (npcType >= 2 && general.defenceTrain.toInt() != 80) {
+            general.defenceTrain = 80
+        }
+
+        // Lord abdication check
+        if (general.officerLevel.toInt() == 12) {
+            val nationGenerals = generalRepository.findByNationId(general.nationId)
+            val ctx = buildContextForGeneral(general, world, rng)
+            if (ctx != null) {
+                val result = doAbdicate(ctx, rng)
+                if (result != null) return result
+            }
+        }
+
+        // Troop leader: always rally
+        if (npcType == 5) {
+            if (general.nationId == 0L) {
+                general.killTurn = 1
+                return "휴식"
+            }
+            return doRally(general, rng)
+        }
+
+        // Reserved command check
+        val reservedAction = checkReservedCommand(general)
+        if (reservedAction != null) return reservedAction
+
+        // Injury check
+        if (general.injury > 0) return "요양"
+
+        // NPC rise check
+        if ((npcType == 2 || npcType == 3) && general.nationId == 0L) {
+            val riseResult = doRise(general, world, rng)
+            if (riseResult != null) return riseResult
+        }
+
+        // Wanderer without nation: join or wander
+        if (general.nationId == 0L) {
+            return decideWandererAction(general, world, rng)
+        }
+
+        // NPC lord without capital: found nation or wander
+        if (npcType >= 2 && general.officerLevel.toInt() == 12) {
+            val nation = nationRepository.findById(general.nationId).orElse(null)
+            if (nation != null && nation.capitalCityId == null) {
+                val yearsFromInit = world.currentYear - ((world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt())
+                if (yearsFromInit > 0) {
+                    // Try founding
+                    if (rng.nextDouble() < 0.01) return "건국"
+                }
+                // Move toward candidate city
+                if (rng.nextDouble() < 0.6) return "이동"
+                // Try disband
+                if (yearsFromInit > 0) {
+                    val disbandResult = doDisband(general)
+                    if (disbandResult != null) return disbandResult
+                }
+            }
+        }
+
+        // Death preparation
+        val killTurn = general.killTurn?.toInt()
+        if (killTurn != null && killTurn <= 5 && npcType >= 2) {
+            val nation = nationRepository.findById(general.nationId).orElse(null)
+            return doDeathPreparation(general, nation, rng)
+        }
+
+        // Standard decision via decideAndExecute
+        return decideAndExecute(general, world)
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  Helper: build context for a general
+    // ──────────────────────────────────────────────────────────
+
+    private fun buildContextForGeneral(general: General, world: WorldState, rng: Random): AIContext? {
+        val worldId = world.id.toLong()
+        val city = cityRepository.findById(general.cityId).orElse(null) ?: return null
+        val nation = nationRepository.findById(general.nationId).orElse(null)
+
+        val allCities = cityRepository.findByWorldId(worldId)
+        val allGenerals = generalRepository.findByWorldId(worldId)
+        val allNations = nationRepository.findByWorldId(worldId)
+        val diplomacies = diplomacyRepository.findByWorldIdAndIsDeadFalse(worldId)
+
+        val nationCities = if (nation != null) allCities.filter { it.nationId == nation.id } else emptyList()
+        val frontCities = nationCities.filter { it.frontState > 0 }
+        val rearCities = nationCities.filter { it.frontState.toInt() == 0 }
+        val nationGenerals = allGenerals.filter { it.nationId == general.nationId }
+
+        val diplomacyState = calcDiplomacyState(nation, diplomacies)
+        val nationPolicy = if (nation != null) NpcPolicyBuilder.buildNationPolicy(nation.meta) else NpcNationPolicy()
+        val generalType = classifyGeneral(general, rng, nationPolicy.minNPCWarLeadership)
+
+        return AIContext(
+            world = world, general = general, city = city, nation = nation,
+            diplomacyState = diplomacyState, generalType = generalType,
+            allCities = allCities, allGenerals = allGenerals, allNations = allNations,
+            frontCities = frontCities, rearCities = rearCities, nationGenerals = nationGenerals,
+        )
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  Helper: getNationChiefLevel
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy: minimum chief level depends on nation level.
+     * Higher nation level = more officer slots available.
+     */
+    private fun getNationChiefLevel(nationLevel: Int): Int {
+        return when {
+            nationLevel >= 7 -> 5
+            nationLevel >= 5 -> 6
+            nationLevel >= 3 -> 7
+            nationLevel >= 2 -> 8
+            else -> 9
         }
     }
 
