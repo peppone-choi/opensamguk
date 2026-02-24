@@ -145,9 +145,9 @@ class InheritanceService(
         val general = generalRepository.findByWorldIdAndUserId(worldId, user.id!!)
         val currentStat = general?.let {
             CurrentStat(
-                leadership = it.leadership,
-                strength = it.strength,
-                intel = it.intel,
+                leadership = it.leadership.toInt(),
+                strength = it.strength.toInt(),
+                intel = it.intel.toInt(),
                 statMax = 100,
                 statMin = 10,
             )
@@ -320,15 +320,15 @@ class InheritanceService(
             ?: return InheritanceActionResult(error = "장수를 찾을 수 없습니다")
 
         // Update general stats
-        general.leadership = request.leadership
-        general.strength = request.strength
-        general.intel = request.intel
+        general.leadership = request.leadership.toShort()
+        general.strength = request.strength.toShort()
+        general.intel = request.intel.toShort()
 
         // Apply bonus stat if present
         if (hasBonusStat && request.inheritBonusStat != null) {
-            general.leadership += request.inheritBonusStat[0]
-            general.strength += request.inheritBonusStat[1]
-            general.intel += request.inheritBonusStat[2]
+            general.leadership = (general.leadership + request.inheritBonusStat[0]).toShort()
+            general.strength = (general.strength + request.inheritBonusStat[1]).toShort()
+            general.intel = (general.intel + request.inheritBonusStat[2]).toShort()
         }
 
         generalRepository.save(general)
