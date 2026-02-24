@@ -3,7 +3,7 @@
 목표: API 504 / rate limit / timeout 발생 시 작업을 끊지 않고 다음 모델로 자동 승계한다.
 
 ## 기본 체인
-1. `sonnet` (primary)
+1. `opus` (primary)
 2. `gpt` (fallback-1)
 3. `gemini` (fallback-2)
 
