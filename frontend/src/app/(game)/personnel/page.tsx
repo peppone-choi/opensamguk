@@ -120,7 +120,6 @@ export default function PersonnelPage() {
       await nationManagementApi.appointOfficer(myGeneral.nationId, {
         generalId: Number(diplomatGeneralId),
         officerLevel: 7, // diplomat level
-        permission: "diplomacy",
       });
       const { data } = await nationManagementApi.getOfficers(myGeneral.nationId);
       setOfficers(data);

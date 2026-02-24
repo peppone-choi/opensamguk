@@ -100,8 +100,7 @@ export default function SpyPage() {
     setSending(true);
     try {
       for (const targetId of sendTargetIds) {
-        await messageApi.send(myGeneral.id, targetId, {
-          content: sendMessage.trim(),
+        await messageApi.send(currentWorld!.id, myGeneral.id, targetId, sendMessage.trim(), {
           messageType: "spy",
         });
       }
@@ -117,8 +116,7 @@ export default function SpyPage() {
     const report = reports.find((r) => r.id === reportId);
     if (!report) return;
     try {
-      await messageApi.send(myGeneral.id, Number(forwardTargetId), {
-        content: `[전달된 정찰 보고] ${formatScoutResult(report.payload)}`,
+      await messageApi.send(currentWorld!.id, myGeneral.id, Number(forwardTargetId), `[전달된 정찰 보고] ${formatScoutResult(report.payload)}`, {
         messageType: "scout_forward",
       });
       setForwardingId(null);
