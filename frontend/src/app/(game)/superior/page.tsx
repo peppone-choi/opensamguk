@@ -14,7 +14,115 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatOfficerLevelText } from "@/lib/game-utils";
 import { nationManagementApi } from "@/lib/gameApi";
-import type { General } from "@/types";
+import type { General, Nation } from "@/types";
+
+function PermissionSelector({
+  label,
+  permType,
+  maxSlots,
+  nationGenerals: nGens,
+  nation: nat,
+  myGeneral: myGen,
+  actionLoading: aLoading,
+  setActionLoading: setALoading,
+  setMessage: setMsg,
+  currentWorld: cw,
+  loadAll: la,
+}: {
+  label: string;
+  permType: "ambassador" | "auditor";
+  maxSlots: number;
+  nationGenerals: General[];
+  nation: Nation | null | undefined;
+  myGeneral: General;
+  actionLoading: boolean;
+  setActionLoading: (v: boolean) => void;
+  setMessage: (v: { text: string; type: "success" | "error" } | null) => void;
+  currentWorld: { id: number } | null;
+  loadAll: (worldId: number) => Promise<void>;
+}) {
+  const current = nGens.filter((g) => g.permission === permType);
+  const [selected, setSelected] = React.useState<number[]>([]);
+
+  React.useEffect(() => {
+    setSelected(current.map((g) => g.id));
+  }, [nGens]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const candidates = nGens.filter(
+    (g) => g.officerLevel !== 12 && g.id !== myGen.id,
+  );
+
+  const handleSave = async () => {
+    if (!nat) return;
+    setALoading(true);
+    setMsg(null);
+    try {
+      await nationManagementApi.setPermission(nat.id, {
+        requesterId: myGen.id,
+        isAmbassador: permType === "ambassador",
+        generalIds: selected,
+      });
+      setMsg({ text: `${label} 변경 완료`, type: "success" });
+      if (cw) await la(cw.id);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : `${label} 변경 실패`;
+      setMsg({ text: msg, type: "error" });
+    } finally {
+      setALoading(false);
+    }
+  };
+
+  const toggleGeneral = (gid: number) => {
+    setSelected((prev) => {
+      if (prev.includes(gid)) return prev.filter((id) => id !== gid);
+      if (prev.length >= maxSlots) return prev;
+      return [...prev, gid];
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium">{label} (최대 {maxSlots}명)</label>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={aLoading}
+          onClick={handleSave}
+        >
+          변경
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {candidates.map((g) => {
+          const isSelected = selected.includes(g.id);
+          return (
+            <Badge
+              key={g.id}
+              variant={isSelected ? "default" : "outline"}
+              className={`cursor-pointer transition-colors ${
+                isSelected
+                  ? "bg-purple-600 hover:bg-purple-700"
+                  : "hover:bg-muted/50"
+              }`}
+              onClick={() => toggleGeneral(g.id)}
+            >
+              {g.name}
+            </Badge>
+          );
+        })}
+        {candidates.length === 0 && (
+          <span className="text-xs text-muted-foreground">대상 장수 없음</span>
+        )}
+      </div>
+      {current.length > 0 && (
+        <div className="text-xs text-muted-foreground">
+          현재: {current.map((g) => g.name).join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type OfficerSlot = {
   level: number;
@@ -623,45 +731,35 @@ export default function SuperiorPage() {
               외교권자 / 조언자 임명
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">외교권자</label>
-                <div className="space-y-1">
-                  {nationGenerals
-                    .filter((g) => g.permission === "ambassador")
-                    .map((g) => (
-                      <Badge key={g.id} variant="secondary" className="mr-1">
-                        {g.name}
-                      </Badge>
-                    ))}
-                  {nationGenerals.filter((g) => g.permission === "ambassador")
-                    .length === 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      없음
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">조언자</label>
-                <div className="space-y-1">
-                  {nationGenerals
-                    .filter((g) => g.permission === "auditor")
-                    .map((g) => (
-                      <Badge key={g.id} variant="secondary" className="mr-1">
-                        {g.name}
-                      </Badge>
-                    ))}
-                  {nationGenerals.filter((g) => g.permission === "auditor")
-                    .length === 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      없음
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+          <CardContent className="space-y-4">
+            {/* 외교권자 */}
+            <PermissionSelector
+              label="외교권자"
+              permType="ambassador"
+              maxSlots={2}
+              nationGenerals={nationGenerals}
+              nation={nation}
+              myGeneral={myGeneral}
+              actionLoading={actionLoading}
+              setActionLoading={setActionLoading}
+              setMessage={setMessage}
+              currentWorld={currentWorld}
+              loadAll={loadAll}
+            />
+            {/* 조언자 */}
+            <PermissionSelector
+              label="조언자"
+              permType="auditor"
+              maxSlots={2}
+              nationGenerals={nationGenerals}
+              nation={nation}
+              myGeneral={myGeneral}
+              actionLoading={actionLoading}
+              setActionLoading={setActionLoading}
+              setMessage={setMessage}
+              currentWorld={currentWorld}
+              loadAll={loadAll}
+            />
           </CardContent>
         </Card>
       )}

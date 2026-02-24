@@ -11,6 +11,7 @@ import {
   nationApi,
   frontApi,
   itemApi,
+  generalLogApi,
 } from "@/lib/gameApi";
 import type { City, Nation, Message, GeneralFrontInfo } from "@/types";
 import { User, Settings, ScrollText, Trash2, Swords } from "lucide-react";
@@ -86,6 +87,11 @@ export default function MyPage() {
   const [defenceTrain, setDefenceTrain] = useState(80);
   const [tournamentState, setTournamentState] = useState(0);
   const [potionThreshold, setPotionThreshold] = useState(999);
+  const [preRiseDelete, setPreRiseDelete] = useState(false);
+  const [preOpenDelete, setPreOpenDelete] = useState(false);
+  const [borderReturn, setBorderReturn] = useState(false);
+  const [customCss, setCustomCss] = useState("");
+  const [cssPreview, setCssPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,6 +108,10 @@ export default function MyPage() {
     setDefenceTrain(myGeneral.defenceTrain ?? 80);
     setTournamentState(myGeneral.tournamentState ?? 0);
     setPotionThreshold((myGeneral.meta?.potionThreshold as number) ?? 100);
+    setPreRiseDelete((myGeneral.meta?.preRiseDelete as boolean) ?? false);
+    setPreOpenDelete((myGeneral.meta?.preOpenDelete as boolean) ?? false);
+    setBorderReturn((myGeneral.meta?.borderReturn as boolean) ?? false);
+    setCustomCss((myGeneral.meta?.customCss as string) ?? "");
 
     // Fetch front info for dex/battle stats
     frontApi
@@ -149,6 +159,10 @@ export default function MyPage() {
         defenceTrain,
         tournamentState,
         potionThreshold,
+        preRiseDelete,
+        preOpenDelete,
+        borderReturn,
+        customCss,
       });
       toast.success("설정이 저장되었습니다.");
     } catch {
@@ -156,7 +170,7 @@ export default function MyPage() {
     } finally {
       setSaving(false);
     }
-  }, [defenceTrain, tournamentState, potionThreshold]);
+  }, [defenceTrain, tournamentState, potionThreshold, preRiseDelete, preOpenDelete, borderReturn, customCss]);
 
   const handleVacation = useCallback(async () => {
     if (!confirm("휴가 상태를 전환하시겠습니까?")) return;
@@ -725,6 +739,82 @@ export default function MyPage() {
                   </p>
                 </div>
 
+                {/* Pre-rise / Pre-open / Border Return toggles */}
+                <div className="space-y-3 border-t border-gray-800 pt-3">
+                  <p className="text-xs text-muted-foreground font-medium">거병/오픈/귀환 옵션</p>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preRiseDelete}
+                      onChange={(e) => setPreRiseDelete(e.target.checked)}
+                      className="rounded border-gray-600"
+                    />
+                    <span className="text-sm">사전거병 시 삭제</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground ml-6">
+                    거병 전에 장수를 삭제하고 새로 시작합니다.
+                  </p>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={preOpenDelete}
+                      onChange={(e) => setPreOpenDelete(e.target.checked)}
+                      className="rounded border-gray-600"
+                    />
+                    <span className="text-sm">가오픈 삭제</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground ml-6">
+                    가오픈 시 장수를 삭제합니다.
+                  </p>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={borderReturn}
+                      onChange={(e) => setBorderReturn(e.target.checked)}
+                      className="rounded border-gray-600"
+                    />
+                    <span className="text-sm">접경 귀환</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground ml-6">
+                    접경 도시에 도달하면 자동으로 귀환합니다.
+                  </p>
+                </div>
+
+                {/* Custom CSS */}
+                <div className="space-y-2 border-t border-gray-800 pt-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm text-muted-foreground">커스텀 CSS</label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => setCssPreview(!cssPreview)}
+                    >
+                      {cssPreview ? "미리보기 끄기" : "미리보기"}
+                    </Button>
+                  </div>
+                  <textarea
+                    value={customCss}
+                    onChange={(e) => setCustomCss(e.target.value)}
+                    placeholder={`/* 예: */\n.card { border-color: gold; }\n.text-cyan-400 { color: #ff6600; }`}
+                    className="w-full h-32 px-3 py-2 bg-background border border-input rounded-md text-xs font-mono resize-y"
+                  />
+                  {cssPreview && customCss && (
+                    <div className="border border-dashed border-yellow-600 rounded p-3">
+                      <p className="text-[10px] text-yellow-500 mb-1">CSS 미리보기 (현재 페이지에 적용됨)</p>
+                      <style dangerouslySetInnerHTML={{ __html: customCss }} />
+                      <div className="text-xs text-muted-foreground">
+                        위에 입력한 CSS가 현재 페이지에 실시간 적용되어 있습니다.
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    게임 UI에 적용할 커스텀 CSS를 입력하세요. 저장 후 모든 페이지에 적용됩니다.
+                  </p>
+                </div>
+
                 <Button
                   onClick={handleSaveSettings}
                   disabled={saving}
@@ -815,91 +905,262 @@ export default function MyPage() {
 
         {/* ===== TAB 4: 기록 ===== */}
         <TabsContent value="log" className="mt-4">
-          <Tabs defaultValue="personal">
-            <TabsList>
-              <TabsTrigger value="personal">개인 기록</TabsTrigger>
-              <TabsTrigger value="battle">전투 기록</TabsTrigger>
-              <TabsTrigger value="history">장수 열전</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="personal" className="mt-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <ScrollText className="size-4" />
-                    개인 기록 ({records.length}건)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RecordList records={records} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="battle" className="mt-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">
-                    전투 기록 ({battleRecords.length}건)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RecordList records={battleRecords} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="history" className="mt-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">
-                    장수 열전 ({historyRecords.length}건)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RecordList records={historyRecords} />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+          <LogTabContent
+            generalId={g.id}
+            records={records}
+            battleRecords={battleRecords}
+            historyRecords={historyRecords}
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function RecordList({ records }: { records: Message[] }) {
+function LogTabContent({
+  generalId,
+  records,
+  battleRecords,
+  historyRecords,
+}: {
+  generalId: number;
+  records: Message[];
+  battleRecords: Message[];
+  historyRecords: Message[];
+}) {
+  const [oldLogs, setOldLogs] = useState<{ id: number; message: string; date: string }[]>([]);
+  const [oldLogType, setOldLogType] = useState<"generalHistory" | "generalAction" | "battleResult" | "battleDetail">("generalAction");
+  const [oldLogsLoading, setOldLogsLoading] = useState(false);
+  const [oldLogsEnd, setOldLogsEnd] = useState(false);
+
+  const loadOldLogs = async (reset = false) => {
+    setOldLogsLoading(true);
+    try {
+      const lastId = reset ? undefined : (oldLogs.length > 0 ? oldLogs[oldLogs.length - 1].id : undefined);
+      const { data } = await generalLogApi.getOldLogs(generalId, generalId, oldLogType, lastId);
+      if (data.result && data.logs) {
+        if (reset) {
+          setOldLogs(data.logs);
+        } else {
+          setOldLogs((prev) => [...prev, ...data.logs]);
+        }
+        if (data.logs.length === 0) setOldLogsEnd(true);
+        else setOldLogsEnd(false);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setOldLogsLoading(false);
+    }
+  };
+
+  return (
+    <Tabs defaultValue="personal">
+      <TabsList>
+        <TabsTrigger value="personal">개인 기록</TabsTrigger>
+        <TabsTrigger value="battle">전투 기록</TabsTrigger>
+        <TabsTrigger value="history">장수 열전</TabsTrigger>
+        <TabsTrigger value="old">이전 기록</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="personal" className="mt-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <ScrollText className="size-4" />
+              개인 기록 ({records.length}건)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecordList records={records} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="battle" className="mt-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">
+              전투 기록 ({battleRecords.length}건)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecordList records={battleRecords} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="history" className="mt-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">
+              장수 열전 ({historyRecords.length}건)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecordList records={historyRecords} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="old" className="mt-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <ScrollText className="size-4" />
+              이전 기록
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">유형:</span>
+              <select
+                value={oldLogType}
+                onChange={(e) => {
+                  setOldLogType(e.target.value as typeof oldLogType);
+                  setOldLogs([]);
+                  setOldLogsEnd(false);
+                }}
+                className="h-7 px-2 bg-background border border-input rounded text-xs"
+              >
+                <option value="generalAction">행동 기록</option>
+                <option value="generalHistory">장수 열전</option>
+                <option value="battleResult">전투 결과</option>
+                <option value="battleDetail">전투 상세</option>
+              </select>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                disabled={oldLogsLoading}
+                onClick={() => loadOldLogs(true)}
+              >
+                {oldLogsLoading ? "로딩..." : "불러오기"}
+              </Button>
+            </div>
+
+            {oldLogs.length > 0 && (
+              <ScrollArea className="max-h-[500px]">
+                <div className="space-y-1">
+                  {oldLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="text-sm py-1.5 px-2 rounded hover:bg-muted/30"
+                    >
+                      <span className="text-xs text-muted-foreground mr-2">
+                        {log.date}
+                      </span>
+                      <span dangerouslySetInnerHTML={{ __html: log.message }} />
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+
+            {oldLogs.length > 0 && !oldLogsEnd && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full text-xs"
+                disabled={oldLogsLoading}
+                onClick={() => loadOldLogs(false)}
+              >
+                {oldLogsLoading ? "로딩 중..." : "이전 기록 더 불러오기"}
+              </Button>
+            )}
+
+            {oldLogsEnd && oldLogs.length > 0 && (
+              <p className="text-xs text-muted-foreground text-center py-2">
+                모든 기록을 불러왔습니다.
+              </p>
+            )}
+
+            {oldLogs.length === 0 && !oldLogsLoading && (
+              <p className="text-xs text-muted-foreground py-4">
+                위에서 유형을 선택하고 &quot;불러오기&quot;를 클릭하세요.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function RecordList({ records, pageSize = 20 }: { records: Message[]; pageSize?: number }) {
+  const [page, setPage] = useState(0);
+
   if (records.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-4">기록이 없습니다.</p>
     );
   }
 
+  const totalPages = Math.ceil(records.length / pageSize);
+  const pagedRecords = records.slice(page * pageSize, (page + 1) * pageSize);
+
   return (
-    <ScrollArea className="max-h-[500px]">
-      <div className="space-y-1">
-        {records.map((r) => (
-          <div
-            key={r.id}
-            className="text-sm py-1.5 px-2 rounded hover:bg-muted/30"
+    <div className="space-y-2">
+      {totalPages > 1 && (
+        <div className="flex items-center gap-2 text-xs">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-xs"
+            disabled={page <= 0}
+            onClick={() => setPage((p) => p - 1)}
           >
-            <span className="text-xs text-muted-foreground mr-2">
-              {new Date(r.sentAt).toLocaleString("ko-KR", {
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </span>
-            <span
-              dangerouslySetInnerHTML={{
-                __html:
-                  (r.payload.content as string) ?? JSON.stringify(r.payload),
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+            ← 이전
+          </Button>
+          <span className="text-muted-foreground">
+            {page + 1} / {totalPages} 페이지
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 px-2 text-xs"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            다음 →
+          </Button>
+          {page > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 px-2 text-xs"
+              onClick={() => setPage(0)}
+            >
+              처음으로
+            </Button>
+          )}
+        </div>
+      )}
+      <ScrollArea className="max-h-[500px]">
+        <div className="space-y-1">
+          {pagedRecords.map((r) => (
+            <div
+              key={r.id}
+              className="text-sm py-1.5 px-2 rounded hover:bg-muted/30"
+            >
+              <span className="text-xs text-muted-foreground mr-2">
+                {new Date(r.sentAt).toLocaleString("ko-KR", {
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              <span
+                dangerouslySetInnerHTML={{
+                  __html:
+                    (r.payload.content as string) ?? JSON.stringify(r.payload),
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
   );
 }

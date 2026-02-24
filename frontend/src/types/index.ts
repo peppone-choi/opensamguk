@@ -3,6 +3,15 @@ export interface User {
   id: number;
   loginId: string;
   displayName: string;
+  role?: string;
+  picture?: string;
+  oauthProviders?: OAuthProviderInfo[];
+}
+
+export interface OAuthProviderInfo {
+  provider: string;
+  linkedAt: string;
+  externalId: string;
 }
 
 export interface AuthResponse {
@@ -812,6 +821,10 @@ export interface AccountSettings {
   defenceTrain?: number;
   tournamentState?: number;
   potionThreshold?: number;
+  preRiseDelete?: boolean;
+  preOpenDelete?: boolean;
+  borderReturn?: boolean;
+  customCss?: string;
 }
 
 // Admin

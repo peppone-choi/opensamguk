@@ -1,19 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
-import { cityApi, frontApi, historyApi, nationApi } from "@/lib/gameApi";
+import { cityApi, frontApi, generalApi, historyApi, nationApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
-import type { City, GeneralFrontInfo, Message, Nation } from "@/types";
-import { User, Swords } from "lucide-react";
+import type { City, General, GeneralFrontInfo, Message, Nation } from "@/types";
+import { User, Users, Swords } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
 import { NationBadge } from "@/components/game/nation-badge";
 import { SammoBar } from "@/components/game/sammo-bar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   formatOfficerLevelText,
   formatInjury,
@@ -35,7 +45,10 @@ const EQUIPMENT_KEYS: Array<{ key: keyof GeneralFrontInfo; label: string }> = [
   { key: "item", label: "도구" },
 ];
 
+type TabKey = "profile" | "nation-generals";
+
 export default function GeneralPage() {
+  const router = useRouter();
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const {
     myGeneral,
@@ -47,6 +60,10 @@ export default function GeneralPage() {
   const [city, setCity] = useState<City | null>(null);
   const [records, setRecords] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>("profile");
+  const [nationGenerals, setNationGenerals] = useState<General[]>([]);
+  const [nationGeneralsLoading, setNationGeneralsLoading] = useState(false);
+  const [nationCities, setNationCities] = useState<City[]>([]);
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -86,6 +103,29 @@ export default function GeneralPage() {
   useEffect(() => {
     loadGeneralData();
   }, [loadGeneralData]);
+
+  const loadNationGenerals = useCallback(async () => {
+    if (!myGeneral?.nationId || myGeneral.nationId <= 0) return;
+    setNationGeneralsLoading(true);
+    try {
+      const [genRes, cityRes] = await Promise.all([
+        generalApi.listByNation(myGeneral.nationId),
+        cityApi.listByNation(myGeneral.nationId),
+      ]);
+      setNationGenerals(genRes.data);
+      setNationCities(cityRes.data);
+    } catch {
+      // silent
+    } finally {
+      setNationGeneralsLoading(false);
+    }
+  }, [myGeneral?.nationId]);
+
+  useEffect(() => {
+    if (activeTab === "nation-generals") {
+      loadNationGenerals();
+    }
+  }, [activeTab, loadNationGenerals]);
 
   useEffect(() => {
     if (!currentWorld || !myGeneral) return;
@@ -164,6 +204,38 @@ export default function GeneralPage() {
     <div className="p-4 space-y-4 max-w-4xl mx-auto">
       <PageHeader icon={User} title="나의 장수" />
 
+      {/* Tab selector */}
+      <div className="flex gap-1 border-b pb-1">
+        <Button
+          variant={activeTab === "profile" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setActiveTab("profile")}
+        >
+          <User className="size-4 mr-1" />
+          개인 프로필
+        </Button>
+        {myGeneral.nationId > 0 && (
+          <Button
+            variant={activeTab === "nation-generals" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setActiveTab("nation-generals")}
+          >
+            <Users className="size-4 mr-1" />
+            소속 세력 장수 목록
+          </Button>
+        )}
+      </div>
+
+      {activeTab === "nation-generals" ? (
+        <NationGeneralsList
+          generals={nationGenerals}
+          cities={nationCities}
+          nation={nation}
+          loading={nationGeneralsLoading}
+          onGeneralClick={(id) => router.push(`/generals/${id}`)}
+        />
+      ) : (
+      <>
       {/* Profile + Basic Info */}
       <Card>
         <CardContent className="pt-6 space-y-4">

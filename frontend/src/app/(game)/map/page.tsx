@@ -57,6 +57,8 @@ export default function MapPage() {
   const [theme, setTheme] = useState<MapTheme>("default");
   const [layers, setLayers] = useState<Set<MapLayer>>(new Set(["nations", "troops"]));
   const [historyBrowseIdx, setHistoryBrowseIdx] = useState<number | null>(null);
+  const [historyFilterYear, setHistoryFilterYear] = useState<number | null>(null);
+  const [historyFilterMonth, setHistoryFilterMonth] = useState<number | null>(null);
 
   const currentTheme = MAP_THEMES.find((t) => t.key === theme) ?? MAP_THEMES[0];
   const toggleLayer = (layer: MapLayer) => {
@@ -484,32 +486,114 @@ export default function MapPage() {
         )}
       </div>
 
-      {/* History Log Panel with Browsing */}
-      {history.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              최근 기록
-              <Badge variant="outline" className="text-[10px]">{history.length}건</Badge>
-              <div className="ml-auto flex items-center gap-1">
+      {/* History Log Panel with Year/Month Navigation */}
+      {history.length > 0 && (() => {
+        // Extract unique year/month pairs from history
+        const yearMonthSet = new Map<string, { year: number; month: number }>();
+        for (const h of history) {
+          if (h.year != null && h.month != null) {
+            const key = `${h.year}-${h.month}`;
+            if (!yearMonthSet.has(key)) yearMonthSet.set(key, { year: h.year, month: h.month });
+          }
+        }
+        const yearMonthList = Array.from(yearMonthSet.values()).sort((a, b) => b.year - a.year || b.month - a.month);
+        const availableYears = [...new Set(yearMonthList.map((ym) => ym.year))].sort((a, b) => b - a);
+
+        // Filter logic
+        const filteredHistory = (historyFilterYear !== null)
+          ? history.filter((h) =>
+              h.year === historyFilterYear && (historyFilterMonth === null || h.month === historyFilterMonth)
+            )
+          : history;
+
+        const monthsForYear = historyFilterYear !== null
+          ? yearMonthList.filter((ym) => ym.year === historyFilterYear).map((ym) => ym.month).sort((a, b) => a - b)
+          : [];
+
+        const displayItems = historyBrowseIdx !== null
+          ? filteredHistory.slice(historyBrowseIdx, historyBrowseIdx + 10)
+          : filteredHistory.slice(0, 10);
+
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                최근 기록
+                <Badge variant="outline" className="text-[10px]">{filteredHistory.length}건</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {/* Year/Month filter */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-muted-foreground">년도:</span>
+                <Button
+                  size="sm"
+                  variant={historyFilterYear === null ? "default" : "outline"}
+                  className="h-6 px-2 text-xs"
+                  onClick={() => { setHistoryFilterYear(null); setHistoryFilterMonth(null); setHistoryBrowseIdx(null); }}
+                >
+                  전체
+                </Button>
+                {availableYears.map((y) => (
+                  <Button
+                    key={y}
+                    size="sm"
+                    variant={historyFilterYear === y ? "default" : "outline"}
+                    className="h-6 px-2 text-xs"
+                    onClick={() => { setHistoryFilterYear(y); setHistoryFilterMonth(null); setHistoryBrowseIdx(null); }}
+                  >
+                    {y}년
+                  </Button>
+                ))}
+                {historyFilterYear !== null && monthsForYear.length > 0 && (
+                  <>
+                    <span className="text-xs text-muted-foreground ml-2">월:</span>
+                    <Button
+                      size="sm"
+                      variant={historyFilterMonth === null ? "default" : "outline"}
+                      className="h-6 px-2 text-xs"
+                      onClick={() => { setHistoryFilterMonth(null); setHistoryBrowseIdx(null); }}
+                    >
+                      전체
+                    </Button>
+                    {monthsForYear.map((m) => (
+                      <Button
+                        key={m}
+                        size="sm"
+                        variant={historyFilterMonth === m ? "default" : "outline"}
+                        className="h-6 px-2 text-xs"
+                        onClick={() => { setHistoryFilterMonth(m); setHistoryBrowseIdx(null); }}
+                      >
+                        {m}월
+                      </Button>
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* Pagination controls */}
+              <div className="flex items-center gap-1">
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-6 px-2 text-xs"
                   disabled={historyBrowseIdx === null || historyBrowseIdx <= 0}
-                  onClick={() => setHistoryBrowseIdx((prev) => Math.max(0, (prev ?? history.length) - 10))}
+                  onClick={() => setHistoryBrowseIdx((prev) => Math.max(0, (prev ?? filteredHistory.length) - 10))}
                 >
                   ← 이전
                 </Button>
                 <span className="text-[10px] text-muted-foreground">
-                  {historyBrowseIdx !== null ? `${historyBrowseIdx + 1}~` : "최신"}
+                  {historyBrowseIdx !== null ? `${historyBrowseIdx + 1}~${Math.min(historyBrowseIdx + 10, filteredHistory.length)}` : `1~${Math.min(10, filteredHistory.length)}`} / {filteredHistory.length}
                 </span>
                 <Button
                   size="sm"
                   variant="ghost"
                   className="h-6 px-2 text-xs"
-                  disabled={historyBrowseIdx === null || historyBrowseIdx + 10 >= history.length}
-                  onClick={() => setHistoryBrowseIdx((prev) => Math.min(history.length - 10, (prev ?? 0) + 10))}
+                  disabled={
+                    (historyBrowseIdx === null && filteredHistory.length <= 10) ||
+                    (historyBrowseIdx !== null && historyBrowseIdx + 10 >= filteredHistory.length)
+                  }
+                  onClick={() => setHistoryBrowseIdx((prev) => Math.min(filteredHistory.length - 10, (prev ?? 0) + 10))}
                 >
                   다음 →
                 </Button>
@@ -524,29 +608,34 @@ export default function MapPage() {
                   </Button>
                 )}
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
-              {(historyBrowseIdx !== null ? history.slice(historyBrowseIdx, historyBrowseIdx + 10) : history).map((item) => (
-                <div key={item.id} className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0">
-                  <span className="text-muted-foreground whitespace-nowrap shrink-0 w-20">
-                    {item.sentAt
-                      ? new Date(item.sentAt).toLocaleDateString("ko-KR", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : ""}
-                  </span>
-                  <span className="text-gray-300">{formatLog(item.text)}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
+              {/* History items */}
+              <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
+                {displayItems.map((item) => (
+                  <div key={item.id} className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0">
+                    <span className="text-muted-foreground whitespace-nowrap shrink-0 w-24">
+                      {item.year != null && item.month != null
+                        ? `${item.year}년 ${item.month}월`
+                        : item.sentAt
+                          ? new Date(item.sentAt).toLocaleDateString("ko-KR", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
+                    </span>
+                    <span className="text-gray-300">{formatLog(item.text)}</span>
+                  </div>
+                ))}
+                {displayItems.length === 0 && (
+                  <div className="text-muted-foreground py-2">해당 기간의 기록이 없습니다.</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
     </div>
   );
 }

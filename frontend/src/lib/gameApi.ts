@@ -412,10 +412,17 @@ export const boardApi = {
 export const accountApi = {
   changePassword: (currentPassword: string, newPassword: string) =>
     api.patch<void>("/account/password", { currentPassword, newPassword }),
-  deleteAccount: () => api.delete<void>("/account"),
+  deleteAccount: (password?: string) =>
+    api.delete<void>("/account", { data: password ? { password } : undefined }),
   updateSettings: (settings: AccountSettings) =>
     api.patch<void>("/account/settings", settings),
   toggleVacation: () => api.post<void>("/account/vacation"),
+  getOAuthProviders: () =>
+    api.get<import("@/types").OAuthProviderInfo[]>("/account/oauth"),
+  linkOAuth: (provider: string) =>
+    api.post<{ redirectUrl: string }>(`/account/oauth/${provider}/link`),
+  unlinkOAuth: (provider: string) =>
+    api.delete<void>(`/account/oauth/${provider}`),
 };
 
 // Nation Management API
@@ -428,6 +435,10 @@ export const nationManagementApi = {
   ) => api.post<void>(`/nations/${nationId}/officers`, data),
   expel: (nationId: number, generalId: number) =>
     api.post<void>(`/nations/${nationId}/expel`, { generalId }),
+  setPermission: (
+    nationId: number,
+    data: { requesterId: number; isAmbassador: boolean; generalIds: number[] },
+  ) => api.post<void>(`/nations/${nationId}/permissions`, data),
 };
 
 // Nation Policy API
