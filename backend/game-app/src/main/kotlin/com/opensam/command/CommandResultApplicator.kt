@@ -75,12 +75,16 @@ object CommandResultApplicator {
         @Suppress("UNCHECKED_CAST")
         (json["dexChanges"] as? Map<String, Any>)?.let { applyDexChanges(general, it) }
 
+        // Extra stat changes (e.g., 탈취 general's share of stolen resources)
+        @Suppress("UNCHECKED_CAST")
+        (json["extraStatChanges"] as? Map<String, Any>)?.let { applyStatChanges(general, it) }
+
         // Consumable item: delete item on use (legacy: tryConsumeNow + deleteItem)
         if (json["consumeItem"] == true) {
             general.itemCode = "None"
         }
 
-        // Own nation changes (e.g., 탈취 resource transfer)
+        // Own nation changes (e.g., 탈취 resource transfer to own nation)
         @Suppress("UNCHECKED_CAST")
         (json["ownNationChanges"] as? Map<String, Any>)?.let {
             if (nation != null) applyNationChanges(nation, it)
