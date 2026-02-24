@@ -842,4 +842,13 @@ export const adminApi = {
     api.post<void>(`/worlds/${worldId}/reset`, scenarioCode ? { scenarioCode } : {}),
   writeLog: (message: string) =>
     api.post<void>("/admin/write-log", { message }),
+
+  // Gateway-local admin ops (entrance/system)
+  getSystemFlags: () => api.get<{ allowLogin: boolean; allowJoin: boolean }>("/admin/system-flags"),
+  patchSystemFlags: (payload: { allowLogin?: boolean; allowJoin?: boolean }) =>
+    api.patch<{ allowLogin: boolean; allowJoin: boolean }>("/admin/system-flags", payload),
+  scrub: (type: "scrub_old_user" | "scrub_blocked_user") =>
+    api.post<{ affected: number }>("/admin/scrub", { type }),
+  resetPassword: (userId: number) =>
+    api.post<{ tempPassword: string }>(`/admin/users/${userId}/reset-password`, {}),
 };

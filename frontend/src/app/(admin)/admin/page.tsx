@@ -28,6 +28,11 @@ export default function AdminDashboardPage() {
   const [locked, setLocked] = useState(false);
   const [logMessage, setLogMessage] = useState("");
 
+  // Global (gateway) system flags
+  const [allowLogin, setAllowLogin] = useState<boolean | null>(null);
+  const [allowJoin, setAllowJoin] = useState<boolean | null>(null);
+  const [savingSystemFlags, setSavingSystemFlags] = useState(false);
+
   // World management
   const [worlds, setWorlds] = useState<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>([]);
   const [newScenario, setNewScenario] = useState("");
@@ -43,6 +48,16 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     loadWorlds();
+
+    adminApi.getSystemFlags()
+      .then((res) => {
+        setAllowLogin(res.data.allowLogin);
+        setAllowJoin(res.data.allowJoin);
+      })
+      .catch(() => {
+        // ignore (non-global-admin or older gateway)
+      });
+
     adminApi
       .getDashboard()
       .then((res) => {
@@ -126,6 +141,19 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleSaveSystemFlags = async () => {
+    if (allowLogin === null || allowJoin === null) return;
+    setSavingSystemFlags(true);
+    try {
+      await adminApi.patchSystemFlags({ allowLogin, allowJoin });
+      toast.success("전역 스위치가 저장되었습니다.");
+    } catch {
+      toast.error("전역 스위치 저장 실패");
+    } finally {
+      setSavingSystemFlags(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
       await adminApi.updateSettings({
@@ -183,6 +211,43 @@ export default function AdminDashboardPage() {
           <CardTitle>게임 설정</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium">전역 스위치</p>
+                <p className="text-xs text-muted-foreground">(가입/로그인 허용)</p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={savingSystemFlags || allowLogin === null || allowJoin === null}
+                onClick={handleSaveSystemFlags}
+              >
+                저장
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                <span>로그인 허용</span>
+                <input
+                  type="checkbox"
+                  checked={Boolean(allowLogin)}
+                  disabled={allowLogin === null}
+                  onChange={(e) => setAllowLogin(e.target.checked)}
+                />
+              </label>
+              <label className="flex items-center justify-between rounded-md border border-border px-3 py-2 text-sm">
+                <span>가입 허용</span>
+                <input
+                  type="checkbox"
+                  checked={Boolean(allowJoin)}
+                  disabled={allowJoin === null}
+                  onChange={(e) => setAllowJoin(e.target.checked)}
+                />
+              </label>
+            </div>
+          </div>
+
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">공지사항</label>
             <Input

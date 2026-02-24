@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UserCog } from "lucide-react";
+import { UserCog, KeyRound, Ban, ShieldOff, Trash2, Broom } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +19,17 @@ import { toast } from "sonner";
 import type { AdminUser } from "@/types";
 
 type UserActionPayload = {
-  type: "setAdmin" | "removeAdmin" | "delete" | "setGrade";
+  type:
+    | "setAdmin"
+    | "removeAdmin"
+    | "delete"
+    | "setGrade"
+    | "block"
+    | "unblock"
+    | "extendOauth";
   grade?: number;
+  days?: number;
+  oauthDays?: number;
 };
 
 const GRADE_LABELS: Record<number, string> = {
@@ -76,7 +85,13 @@ export default function AdminUsersPage() {
             ? "관리자 해제"
             : action.type === "setGrade"
               ? `등급 ${action.grade ?? "-"} 적용`
-              : "유저 삭제";
+              : action.type === "block"
+                ? "차단"
+                : action.type === "unblock"
+                  ? "차단 해제"
+                  : action.type === "extendOauth"
+                    ? "OAuth 토큰 연장"
+                    : "유저 삭제";
       toast.success(`${actionText} 완료`);
       load();
     } catch {
@@ -91,6 +106,42 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-4">
       <PageHeader icon={UserCog} title="유저 관리" />
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            if (!confirm("6개월 이상 미접속(또는 미로그인) 유저를 삭제합니다. 계속할까요?")) return;
+            try {
+              const res = await adminApi.scrub("scrub_old_user");
+              toast.success(`정리 완료: ${res.data.affected}명 삭제`);
+              load();
+            } catch {
+              toast.error("정리 실패");
+            }
+          }}
+        >
+          <Broom className="mr-1 size-4" /> 오래된 계정 정리(6개월+)
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={async () => {
+            if (!confirm("차단 상태(grade=0)이며 12개월+ 미접속 유저를 삭제합니다. 계속할까요?")) return;
+            try {
+              const res = await adminApi.scrub("scrub_blocked_user");
+              toast.success(`정리 완료: ${res.data.affected}명 삭제`);
+              load();
+            } catch {
+              toast.error("정리 실패");
+            }
+          }}
+        >
+          <Broom className="mr-1 size-4" /> 차단 유저 정리(12개월+)
+        </Button>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -178,13 +229,58 @@ export default function AdminUsersPage() {
                 >
                   등급 적용
                 </Button>
+
+                {u.grade === 0 ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busyUserId === u.id}
+                    onClick={() => doAction(u.id, { type: "unblock" })}
+                  >
+                    <ShieldOff className="mr-1 size-4" /> 차단 해제
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busyUserId === u.id}
+                    onClick={() =>
+                      doAction(u.id, {
+                        type: "block",
+                        days: 3650,
+                      })
+                    }
+                  >
+                    <Ban className="mr-1 size-4" /> 차단(10년)
+                  </Button>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busyUserId === u.id}
+                  onClick={async () => {
+                    setBusyUserId(u.id);
+                    try {
+                      const res = await adminApi.resetPassword(u.id);
+                      toast.success(`임시 비밀번호: ${res.data.tempPassword}`);
+                    } catch {
+                      toast.error("비밀번호 초기화 실패");
+                    } finally {
+                      setBusyUserId(null);
+                    }
+                  }}
+                >
+                  <KeyRound className="mr-1 size-4" /> 임시비번
+                </Button>
+
                 <Button
                   size="sm"
                   variant="destructive"
                   disabled={busyUserId === u.id}
                   onClick={() => doAction(u.id, { type: "delete" })}
                 >
-                  삭제
+                  <Trash2 className="mr-1 size-4" /> 삭제
                 </Button>
               </TableCell>
             </TableRow>
