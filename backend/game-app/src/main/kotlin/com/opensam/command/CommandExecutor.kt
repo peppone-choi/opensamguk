@@ -172,6 +172,8 @@ class CommandExecutor(
         if (command.destGeneral != null) generalRepository.save(command.destGeneral!!)
         if (command.destCity != null) cityRepository.save(command.destCity!!)
         if (command.destNation != null) nationRepository.save(command.destNation!!)
+        // Save dest city generals (for sabotage injury effects)
+        command.destCityGenerals?.forEach { generalRepository.save(it) }
     }
 
     private fun toTurnIndex(env: CommandEnv): Int {
@@ -317,6 +319,13 @@ class CommandExecutor(
         // Inject action modifiers for onCalcDomestic/onCalcStat usage in commands
         val nation = command.nation
         command.modifiers = modifierService.getModifiers(general, nation)
+
+        // Load dest city generals for sabotage defence calculations and injury effects
+        val destCity = command.destCity
+        if (destCity != null) {
+            command.destCityGenerals = generalRepository.findByCityId(destCity.id)
+                .filter { it.id != general.id }
+        }
     }
 
     private fun buildConstraintEnv(general: General, env: CommandEnv): Map<String, Any> {

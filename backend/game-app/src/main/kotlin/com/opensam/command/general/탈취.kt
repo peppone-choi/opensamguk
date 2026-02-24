@@ -1,9 +1,7 @@
 package com.opensam.command.general
 
 import com.opensam.command.CommandEnv
-import com.opensam.command.CommandResult
 import com.opensam.entity.General
-import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -22,28 +20,42 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
      * 탈취 affectDestCity:
      * - yearCoef = sqrt(1 + (year - startYear) / 4) / 2
      * - gold/rice based on city level, comm/agri ratio, yearCoef
-     * - If city is supplied: steal from dest nation treasury (capped by minNational)
+     * - If city is supplied: steal from dest nation treasury (capped at minNationalGold/Rice)
      * - If city is NOT supplied: reduce city comm/agri by stolen/12
      * - 70% of stolen goes to own nation, 30% to general (if in nation)
      * - If neutral (nationId == 0), general keeps 100%
      */
-    override fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Int> {
+    override fun affectDestCity(rng: Random, injuryCount: Int): Map<String, Any> {
         val dc = destCity!!
         val yearCoef = sqrt(1.0 + (env.year - env.startYear) / 4.0) / 2.0
         val commRatio = if (dc.commMax > 0) dc.comm.toDouble() / dc.commMax else 0.0
         val agriRatio = if (dc.agriMax > 0) dc.agri.toDouble() / dc.agriMax else 0.0
 
-        var gold = (rng.nextInt(200, 401) * dc.level * yearCoef * (0.25 + commRatio / 4.0)).roundToInt()
-        var rice = (rng.nextInt(200, 401) * dc.level * yearCoef * (0.25 + agriRatio / 4.0)).roundToInt()
+        var gold = (rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1) * dc.level * yearCoef * (0.25 + commRatio / 4.0)).roundToInt()
+        var rice = (rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1) * dc.level * yearCoef * (0.25 + agriRatio / 4.0)).roundToInt()
 
-        // Supply check affects how resources are deducted
         val isSupplied = dc.supplyState > 0
 
-        pushLog("<G><b>${dc.name}</b></>에서 금과 쌀을 도둑맞았습니다.")
-        pushLog("<G><b>${dc.name}</b></>에 ${actionName}이 성공했습니다. <1>${formatDate()}</>")
-        pushLog("금<C>${gold}</> 쌀<C>${rice}</>을 획득했습니다.")
+        // If supplied: cap by dest nation's gold/rice at minNationalGold/Rice
+        // Legacy: if(destNationGold - gold < minNationalGold) { gold += destNationGold - minNationalGold; ... }
+        if (isSupplied) {
+            val dn = destNation
+            if (dn != null) {
+                val destNationGold = dn.gold
+                val destNationRice = dn.rice
+                if (destNationGold - gold < MIN_NATIONAL_GOLD) {
+                    gold = (destNationGold - MIN_NATIONAL_GOLD).coerceAtLeast(0)
+                }
+                if (destNationRice - rice < MIN_NATIONAL_RICE) {
+                    rice = (destNationRice - MIN_NATIONAL_RICE).coerceAtLeast(0)
+                }
+            }
+        }
 
-        // Build result: nation resource changes + general resource split
+        pushGlobalActionLog("<G><b>${dc.name}</b></>에서 금과 쌀을 도둑맞았습니다.")
+        pushLog("<G><b>${dc.name}</b></>에 ${actionName}${josa(actionName, "이")} 성공했습니다. <1>${formatDate()}</>")
+        pushLog("금<C>${"%,d".format(gold)}</> 쌀<C>${"%,d".format(rice)}</>을 획득했습니다.")
+
         val nationId = general.nationId
         val nationShareGold: Int
         val nationShareRice: Int
@@ -62,10 +74,8 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
             generalShareRice = rice
         }
 
-        // Return city damage map for non-supplied case
         return if (isSupplied) {
             // Supplied: steal from dest nation treasury, no city stat damage
-            // The engine layer handles dest nation gold/rice deduction
             mapOf(
                 "_supplied" to 1,
                 "_stolenGold" to gold,
@@ -73,7 +83,8 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 "_nationShareGold" to nationShareGold,
                 "_nationShareRice" to nationShareRice,
                 "_generalShareGold" to generalShareGold,
-                "_generalShareRice" to generalShareRice
+                "_generalShareRice" to generalShareRice,
+                "state" to 34
             )
         } else {
             // Not supplied: reduce city comm/agri
@@ -85,7 +96,8 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 "_nationShareGold" to nationShareGold,
                 "_nationShareRice" to nationShareRice,
                 "_generalShareGold" to generalShareGold,
-                "_generalShareRice" to generalShareRice
+                "_generalShareRice" to generalShareRice,
+                "state" to 34
             )
         }
     }

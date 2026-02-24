@@ -159,44 +159,37 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
     }
 
     /**
-     * Calculate injury to dest city generals (legacy: SabotageInjury).
+     * Calculate and apply injury to dest city generals (legacy: SabotageInjury).
      * Legacy: for each defender in same nation, roll injuryProb (default 0.3, modified by onCalcStat).
      * On hit: injury +1..16 (capped at 80), crew*0.98, atmos*0.98, train*0.98.
+     *
+     * Directly modifies the defender General entities (saved by CommandExecutor).
+     * Returns the number of injured generals.
      */
-    protected fun calculateInjuries(rng: Random): Pair<Int, List<Map<String, Any>>> {
-        if (!injuryGeneral) return Pair(0, emptyList())
+    protected fun calculateAndApplyInjuries(rng: Random): Int {
+        if (!injuryGeneral) return 0
 
-        val dc = destCity ?: return Pair(0, emptyList())
+        val dc = destCity ?: return 0
         val defenders = destCityGenerals ?: emptyList()
-        val injuries = mutableListOf<Map<String, Any>>()
+        var injuryCount = 0
 
         for (defender in defenders) {
             if (defender.nationId != dc.nationId) continue
 
             // Legacy: injuryProb = 0.3, then onCalcStat($general, 'injuryProb', $injuryProb)
-            var injuryProb = INJURY_PROB_DEFAULT
-            val baseStat = StatContext(injuryProb = injuryProb)
-            // Per-defender modifiers would need their own modifier list; for now use base prob
-            injuryProb = baseStat.injuryProb
-
+            val injuryProb = INJURY_PROB_DEFAULT
             if (rng.nextDouble() >= injuryProb) continue
 
             val injuryAmount = rng.nextInt(1, 17) // 1-16
-            val newInjury = min(defender.injury.toInt() + injuryAmount, INJURY_MAX)
-            val newCrew = (defender.crew * 0.98).toInt()
-            val newAtmos = (defender.atmos * 0.98).toInt()  // Legacy: atmos*0.98
-            val newTrain = (defender.train * 0.98).toInt()
+            defender.injury = min(defender.injury.toInt() + injuryAmount, INJURY_MAX).toShort()
+            defender.crew = (defender.crew * 0.98).toInt()
+            defender.atmos = (defender.atmos * 0.98).toInt().toShort()
+            defender.train = (defender.train * 0.98).toInt().toShort()
 
-            injuries.add(mapOf(
-                "generalId" to defender.id,
-                "injury" to newInjury,
-                "crew" to newCrew,
-                "atmos" to newAtmos,
-                "train" to newTrain
-            ))
+            injuryCount++
         }
 
-        return Pair(injuries.size, injuries)
+        return injuryCount
     }
 
     /**
@@ -247,8 +240,8 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
             )
         }
 
-        // Calculate injuries to defending generals
-        val (injuryCount, injuryEffects) = calculateInjuries(rng)
+        // Calculate and apply injuries to defending generals (modifies entities directly)
+        val injuryCount = calculateAndApplyInjuries(rng)
 
         val cityChanges = affectDestCity(rng, injuryCount)
 
@@ -263,12 +256,6 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
 
         // Build city changes JSON (non-underscore keys for destCityChanges)
         val publicCityChanges = cityChanges.filterKeys { !it.startsWith("_") }
-
-        val injuryJson = if (injuryEffects.isNotEmpty()) {
-            ",\"injuries\":[${injuryEffects.joinToString(",") { e ->
-                """{"generalId":${e["generalId"]},"injury":${e["injury"]},"crew":${e["crew"]},"atmos":${e["atmos"]},"train":${e["train"]}}"""
-            }}]"
-        } else ""
 
         // Extra metadata from affectDestCity (탈취 resource transfer etc.)
         val extraMap = cityChanges.filterKeys { it.startsWith("_") }
@@ -330,7 +317,6 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
                     append(",\"consumeItem\":true")
                 }
 
-                append(injuryJson)
                 append("}")
             }
         )
