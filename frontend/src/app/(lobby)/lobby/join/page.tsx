@@ -130,6 +130,8 @@ export default function LobbyJoinPage() {
     politics: 70,
     charm: 70,
   });
+  const [useOwnIcon, setUseOwnIcon] = useState(false);
+  const [blockCustomName, setBlockCustomName] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -148,6 +150,11 @@ export default function LobbyJoinPage() {
 
   useEffect(() => {
     if (currentWorld) {
+      // Check blockCustomGeneralName from world config/meta (legacy parity: PageJoin.vue)
+      const meta = currentWorld.meta ?? {};
+      const config = currentWorld.config ?? {};
+      setBlockCustomName(!!(meta.blockCustomGeneralName || config.blockCustomGeneralName));
+
       loadAll(currentWorld.id);
 
       // Load inheritance info
@@ -296,7 +303,7 @@ export default function LobbyJoinPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currentWorld) return;
-    if (!name.trim()) {
+    if (!blockCustomName && !name.trim()) {
       setError("이름을 입력해주세요.");
       return;
     }
@@ -319,12 +326,13 @@ export default function LobbyJoinPage() {
     setError(null);
     try {
       await api.post(`/worlds/${currentWorld.id}/generals`, {
-        name: name.trim(),
+        name: blockCustomName ? undefined : name.trim(),
         cityId,
         nationId: nationId || null,
         crewType,
         personality,
         ...stats,
+        useOwnIcon,
         inheritSpecial: inheritSpecial || undefined,
         inheritCity: inheritCity || undefined,
         inheritBonusStat:
@@ -403,13 +411,35 @@ export default function LobbyJoinPage() {
               <label className="block text-sm text-muted-foreground">
                 장수명
               </label>
-              <Input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={20}
-                placeholder="장수 이름 입력"
-              />
+              {blockCustomName ? (
+                <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
+                  이 서버에서는 커스텀 장수명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
+                </div>
+              ) : (
+                <Input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={20}
+                  placeholder="장수 이름 입력"
+                />
+              )}
+            </div>
+
+            {/* 전콘 사용 (legacy parity: PageJoin.vue) */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={useOwnIcon}
+                  onChange={(e) => setUseOwnIcon(e.target.checked)}
+                  className="rounded border-gray-600"
+                />
+                <span className="text-sm">전콘 사용</span>
+              </label>
+              <p className="text-xs text-muted-foreground ml-6">
+                계정에 등록된 프로필 이미지(전콘)를 장수 초상화로 사용합니다.
+              </p>
             </div>
 
             {/* Personality - legacy parity from core2026 JoinView */}

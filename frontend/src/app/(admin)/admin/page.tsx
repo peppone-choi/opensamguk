@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Plus, Trash2, Globe } from "lucide-react";
+import { LayoutDashboard, Plus, Trash2, Globe, Play, Pause, RotateCcw, MessageSquarePlus } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ export default function AdminDashboardPage() {
   const [notice, setNotice] = useState("");
   const [turnTerm, setTurnTerm] = useState("");
   const [locked, setLocked] = useState(false);
+  const [logMessage, setLogMessage] = useState("");
 
   // World management
   const [worlds, setWorlds] = useState<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>([]);
@@ -94,6 +95,37 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleWorldAction = async (worldId: number, action: "open" | "close" | "reset") => {
+    const labels = { open: "오픈", close: "폐쇄", reset: "리셋" };
+    if (action === "reset") {
+      if (!confirm(`월드 #${worldId}를 정말 리셋하시겠습니까? 모든 데이터가 초기화됩니다.`)) return;
+    }
+    try {
+      if (action === "open") {
+        await adminApi.activateWorld(worldId);
+      } else if (action === "close") {
+        await adminApi.deactivateWorld(worldId);
+      } else {
+        await adminApi.resetWorld(worldId);
+      }
+      toast.success(`월드 #${worldId} ${labels[action]} 완료`);
+      loadWorlds();
+    } catch {
+      toast.error(`${labels[action]} 실패`);
+    }
+  };
+
+  const handleWriteLog = async () => {
+    if (!logMessage.trim()) return;
+    try {
+      await adminApi.writeLog(logMessage.trim());
+      toast.success("중원정세 로그가 추가되었습니다.");
+      setLogMessage("");
+    } catch {
+      toast.error("로그 쓰기 실패");
+    }
+  };
+
   const handleSave = async () => {
     try {
       await adminApi.updateSettings({
@@ -158,6 +190,21 @@ export default function AdminDashboardPage() {
               onChange={(e) => setNotice(e.target.value)}
               placeholder="공지사항 입력"
             />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-muted-foreground">중원정세 추가</label>
+            <div className="flex gap-2">
+              <Input
+                value={logMessage}
+                onChange={(e) => setLogMessage(e.target.value)}
+                placeholder="중원정세 메시지 입력"
+                onKeyDown={(e) => e.key === "Enter" && handleWriteLog()}
+              />
+              <Button size="sm" variant="outline" onClick={handleWriteLog}>
+                <MessageSquarePlus className="size-4 mr-1" />
+                로그쓰기
+              </Button>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-sm text-muted-foreground">
@@ -268,14 +315,27 @@ export default function AdminDashboardPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteWorld(w.id)}
-                      >
-                        <Trash2 className="size-3.5 mr-1" />
-                        삭제
-                      </Button>
+                      <div className="flex flex-wrap gap-1">
+                        {w.locked ? (
+                          <Button size="sm" variant="outline" onClick={() => handleWorldAction(w.id, "open")}>
+                            <Play className="size-3.5 mr-1" />오픈
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline" onClick={() => handleWorldAction(w.id, "close")}>
+                            <Pause className="size-3.5 mr-1" />폐쇄
+                          </Button>
+                        )}
+                        <Button size="sm" variant="secondary" onClick={() => handleWorldAction(w.id, "reset")}>
+                          <RotateCcw className="size-3.5 mr-1" />리셋
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteWorld(w.id)}
+                        >
+                          <Trash2 className="size-3.5 mr-1" />삭제
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

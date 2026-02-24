@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,13 +11,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, FileText, Shield } from "lucide-react";
+import { X, FileText, Shield, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 
 const registerSchema = z
   .object({
     loginId: z.string().min(3, "아이디는 3자 이상이어야 합니다"),
     displayName: z.string().min(2, "닉네임은 2자 이상이어야 합니다"),
-    password: z.string().min(4, "비밀번호는 4자 이상이어야 합니다"),
+    password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -26,6 +27,32 @@ const registerSchema = z
   });
 
 type RegisterForm = z.infer<typeof registerSchema>;
+
+/** mb_strwidth equivalent: fullwidth chars count as 2, halfwidth as 1 */
+function mbStrWidth(str: string): number {
+  let width = 0;
+  for (const ch of str) {
+    const code = ch.codePointAt(0) ?? 0;
+    // CJK, fullwidth, hangul ranges count as 2
+    if (
+      (code >= 0x1100 && code <= 0x115f) || // Hangul Jamo
+      (code >= 0x2e80 && code <= 0xa4cf && code !== 0x303f) || // CJK
+      (code >= 0xac00 && code <= 0xd7a3) || // Hangul Syllables
+      (code >= 0xf900 && code <= 0xfaff) || // CJK Compat
+      (code >= 0xfe10 && code <= 0xfe19) ||
+      (code >= 0xfe30 && code <= 0xfe6f) ||
+      (code >= 0xff00 && code <= 0xff60) || // Fullwidth
+      (code >= 0xffe0 && code <= 0xffe6) ||
+      (code >= 0x20000 && code <= 0x2fffd) ||
+      (code >= 0x30000 && code <= 0x3fffd)
+    ) {
+      width += 2;
+    } else {
+      width += 1;
+    }
+  }
+  return width;
+}
 
 /* ── Terms content ── */
 const TERMS_CONTENT = `제1조 (목적)
@@ -146,8 +173,73 @@ export default function RegisterPage() {
   // Agreement state
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeThirdUse, setAgreeThirdUse] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+
+  // Registration complete state
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [activationMessage, setActivationMessage] = useState("");
+
+  // Async duplicate check state
+  const [loginIdStatus, setLoginIdStatus] = useState<"idle" | "checking" | "ok" | "taken">("idle");
+  const [loginIdMsg, setLoginIdMsg] = useState("");
+  const [nickStatus, setNickStatus] = useState<"idle" | "checking" | "ok" | "taken">("idle");
+  const [nickMsg, setNickMsg] = useState("");
+  const [nickWidthError, setNickWidthError] = useState("");
+
+  // Debounced duplicate checkers
+  const checkLoginIdDup = useCallback(async (value: string) => {
+    if (!value || value.length < 3) {
+      setLoginIdStatus("idle");
+      setLoginIdMsg("");
+      return;
+    }
+    setLoginIdStatus("checking");
+    try {
+      const { data } = await api.post<{ result: boolean; reason?: string }>("/auth/check-dup", { field: "username", value });
+      if (data.result) {
+        setLoginIdStatus("ok");
+        setLoginIdMsg("사용 가능한 아이디입니다.");
+      } else {
+        setLoginIdStatus("taken");
+        setLoginIdMsg(data.reason ?? "이미 사용중인 계정명입니다.");
+      }
+    } catch {
+      setLoginIdStatus("idle");
+      setLoginIdMsg("");
+    }
+  }, []);
+
+  const checkNickDup = useCallback(async (value: string) => {
+    if (!value || value.length < 1) {
+      setNickStatus("idle");
+      setNickMsg("");
+      return;
+    }
+    // mb_strwidth validation (legacy: max 18)
+    const width = mbStrWidth(value);
+    if (width > 18) {
+      setNickWidthError("닉네임이 너무 깁니다 (최대 너비 18).");
+      setNickStatus("idle");
+      return;
+    }
+    setNickWidthError("");
+    setNickStatus("checking");
+    try {
+      const { data } = await api.post<{ result: boolean; reason?: string }>("/auth/check-dup", { field: "nickname", value });
+      if (data.result) {
+        setNickStatus("ok");
+        setNickMsg("사용 가능한 닉네임입니다.");
+      } else {
+        setNickStatus("taken");
+        setNickMsg(data.reason ?? "이미 사용중인 닉네임입니다.");
+      }
+    } catch {
+      setNickStatus("idle");
+      setNickMsg("");
+    }
+  }, []);
 
   const {
     register,
@@ -163,6 +255,7 @@ export default function RegisterPage() {
     const next = !(agreeTerms && agreePrivacy);
     setAgreeTerms(next);
     setAgreePrivacy(next);
+    if (!next) setAgreeThirdUse(false);
   };
 
   const onSubmit = async (data: RegisterForm) => {
@@ -170,16 +263,35 @@ export default function RegisterPage() {
       toast.error("이용약관과 개인정보 처리방침에 동의해주세요.");
       return;
     }
+    // Validate nickname width
+    const nickWidth = mbStrWidth(data.displayName);
+    if (nickWidth > 18) {
+      toast.error("닉네임이 너무 깁니다 (최대 너비 18).");
+      return;
+    }
     try {
       await registerUser(data.loginId, data.displayName, data.password, {
         terms: agreeTerms,
         privacy: agreePrivacy,
+        thirdUse: agreeThirdUse,
       });
-      router.push("/lobby");
+      // Show activation code message if server requires email verification
+      setRegistrationComplete(true);
+      setActivationMessage(
+        "회원가입이 완료되었습니다. 이메일 인증이 필요한 경우 발송된 인증 코드를 확인해주세요."
+      );
+      toast.success("회원가입이 완료되었습니다.");
+      setTimeout(() => router.push("/lobby"), 2000);
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "회원가입에 실패했습니다";
+      const errData = (err as { response?: { data?: { message?: string; activationRequired?: boolean } } })?.response?.data;
+      if (errData?.activationRequired) {
+        setRegistrationComplete(true);
+        setActivationMessage(
+          "가입이 완료되었습니다. 이메일로 발송된 인증 코드를 입력하여 계정을 활성화해주세요."
+        );
+        return;
+      }
+      const message = errData?.message || "회원가입에 실패했습니다";
       toast.error(message);
     }
   };
@@ -206,6 +318,11 @@ export default function RegisterPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
+          {registrationComplete && activationMessage && (
+            <div className="mb-4 p-3 rounded-md border border-green-500/30 bg-green-500/5">
+              <p className="text-sm text-green-400">{activationMessage}</p>
+            </div>
+          )}
           {/* Agreement checkboxes */}
           <div className="mb-5 space-y-2 border border-input rounded-md p-3">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -256,6 +373,18 @@ export default function RegisterPage() {
                 보기
               </button>
             </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreeThirdUse}
+                onChange={() => setAgreeThirdUse(!agreeThirdUse)}
+                className="size-4 rounded accent-primary"
+              />
+              <span className="text-sm flex-1">
+                개인정보 제3자 제공 동의{" "}
+                <span className="text-muted-foreground text-xs">(선택)</span>
+              </span>
+            </label>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -268,12 +397,29 @@ export default function RegisterPage() {
               </label>
               <Input
                 id="register-login-id"
-                {...register("loginId")}
+                {...register("loginId", {
+                  onBlur: (e) => checkLoginIdDup(e.target.value),
+                })}
                 placeholder="아이디를 입력하세요"
               />
               {errors.loginId && (
                 <p className="mt-1 text-sm text-destructive">
                   {errors.loginId.message}
+                </p>
+              )}
+              {loginIdStatus === "checking" && (
+                <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="size-3 animate-spin" /> 중복 확인 중...
+                </p>
+              )}
+              {loginIdStatus === "ok" && (
+                <p className="mt-1 text-xs text-green-400 flex items-center gap-1">
+                  <CheckCircle className="size-3" /> {loginIdMsg}
+                </p>
+              )}
+              {loginIdStatus === "taken" && (
+                <p className="mt-1 text-xs text-destructive flex items-center gap-1">
+                  <XCircle className="size-3" /> {loginIdMsg}
                 </p>
               )}
             </div>
@@ -286,12 +432,36 @@ export default function RegisterPage() {
               </label>
               <Input
                 id="register-display-name"
-                {...register("displayName")}
+                {...register("displayName", {
+                  onBlur: (e) => checkNickDup(e.target.value),
+                  onChange: (e) => {
+                    const w = mbStrWidth(e.target.value);
+                    setNickWidthError(w > 18 ? "닉네임이 너무 깁니다 (최대 너비 18)." : "");
+                  },
+                })}
                 placeholder="닉네임을 입력하세요"
               />
               {errors.displayName && (
                 <p className="mt-1 text-sm text-destructive">
                   {errors.displayName.message}
+                </p>
+              )}
+              {nickWidthError && (
+                <p className="mt-1 text-xs text-destructive">{nickWidthError}</p>
+              )}
+              {nickStatus === "checking" && (
+                <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                  <Loader2 className="size-3 animate-spin" /> 중복 확인 중...
+                </p>
+              )}
+              {nickStatus === "ok" && !nickWidthError && (
+                <p className="mt-1 text-xs text-green-400 flex items-center gap-1">
+                  <CheckCircle className="size-3" /> {nickMsg}
+                </p>
+              )}
+              {nickStatus === "taken" && (
+                <p className="mt-1 text-xs text-destructive flex items-center gap-1">
+                  <XCircle className="size-3" /> {nickMsg}
                 </p>
               )}
             </div>

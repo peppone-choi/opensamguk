@@ -8,6 +8,7 @@ interface User {
   role: string;
   picture?: string;
   oauthProviders?: import("@/types").OAuthProviderInfo[];
+  thirdUse?: boolean;
 }
 
 interface LoginResult {
@@ -35,14 +36,14 @@ interface AuthState {
     loginId: string,
     displayName: string,
     password: string,
-    agreements?: { terms: boolean; privacy: boolean },
+    agreements?: { terms: boolean; privacy: boolean; thirdUse?: boolean },
   ) => Promise<void>;
   registerWithOAuth: (
     provider: string,
     code: string,
     redirectUri: string,
     displayName: string,
-    agreements?: { terms: boolean; privacy: boolean },
+    agreements?: { terms: boolean; privacy: boolean; thirdUse?: boolean },
   ) => Promise<void>;
   logout: () => void;
   initAuth: () => void;

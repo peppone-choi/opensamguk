@@ -109,6 +109,20 @@ class AdminService(
         return diplomacyRepository.findByWorldId(worldId)
     }
 
+    fun writeLog(worldId: Long, message: String): Boolean {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
+        val msg = com.opensam.entity.Message(
+            worldId = worldId,
+            mailboxCode = "world_history",
+            mailboxType = "PUBLIC",
+            messageType = "admin_log",
+            payload = mutableMapOf("text" to message as Any),
+            meta = mutableMapOf("year" to (world.currentYear.toInt() as Any), "month" to (world.currentMonth.toInt() as Any)),
+        )
+        messageRepository.save(msg)
+        return true
+    }
+
     fun timeControl(worldId: Long, year: Int?, month: Int?, locked: Boolean?): Boolean {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return false
         year?.let { world.currentYear = it.toShort() }

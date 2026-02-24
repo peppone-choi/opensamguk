@@ -6,6 +6,8 @@ data class CreateAuctionRequest(
     val item: String,
     val amount: Int,
     val minPrice: Int,
+    val finishBidAmount: Int? = null,
+    val closeTurnCnt: Int? = null,
 )
 
 data class BidRequest(val bidderId: Long, val amount: Int)

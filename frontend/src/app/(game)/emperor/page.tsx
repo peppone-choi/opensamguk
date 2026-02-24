@@ -243,37 +243,100 @@ export default function EmperorPage() {
               </div>
             )}
 
-            {/* Key officers */}
-            {nationGenerals.filter((g) => g.officerLevel >= 5).length > 0 && (
+            {/* Full officer hierarchy */}
+            {nationGenerals.filter((g) => g.officerLevel >= 2).length > 0 && (
               <div className="border-t border-muted/30 pt-3">
-                <h3 className="text-sm font-semibold mb-2">주요 관직</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {nationGenerals
-                    .filter((g) => g.officerLevel >= 5)
-                    .map((g) => (
-                      <div
-                        key={g.id}
-                        className="flex items-center gap-2 rounded border border-muted/30 p-2"
-                      >
-                        <GeneralPortrait
-                          picture={g.picture}
-                          name={g.name}
-                          size="sm"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium text-sm">{g.name}</span>
-                          <Badge variant="outline" className="ml-1 text-[10px]">
-                            {formatOfficerLevelText(
-                              g.officerLevel,
-                              emperorNation.level,
-                            )}
-                          </Badge>
-                        </div>
-                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">
-                          통{g.leadership} 무{g.strength} 지{g.intel}
-                        </div>
-                      </div>
-                    ))}
+                <h3 className="text-sm font-semibold mb-2">관직 편제</h3>
+                {/* Central officers (level >= 5) */}
+                {nationGenerals.filter((g) => g.officerLevel >= 5).length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="text-xs text-muted-foreground mb-1">수뇌부</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {nationGenerals
+                        .filter((g) => g.officerLevel >= 5)
+                        .map((g) => (
+                          <div
+                            key={g.id}
+                            className="flex items-center gap-2 rounded border border-muted/30 p-2"
+                          >
+                            <GeneralPortrait
+                              picture={g.picture}
+                              name={g.name}
+                              size="sm"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-medium text-sm">{g.name}</span>
+                              <Badge variant="outline" className="ml-1 text-[10px]">
+                                {formatOfficerLevelText(
+                                  g.officerLevel,
+                                  emperorNation.level,
+                                )}
+                              </Badge>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              통{g.leadership} 무{g.strength} 지{g.intel}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+                {/* City officers (level 2-4) */}
+                {nationGenerals.filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4).length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="text-xs text-muted-foreground mb-1">도시 관직</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {nationGenerals
+                        .filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4)
+                        .sort((a, b) => b.officerLevel - a.officerLevel)
+                        .map((g) => {
+                          const officerCityName = g.officerCity
+                            ? cities.find((c) => c.id === g.officerCity)?.name
+                            : undefined;
+                          return (
+                            <div
+                              key={g.id}
+                              className="flex items-center gap-2 rounded border border-muted/20 p-1.5"
+                            >
+                              <GeneralPortrait
+                                picture={g.picture}
+                                name={g.name}
+                                size="sm"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm">{g.name}</span>
+                                <Badge variant="outline" className="ml-1 text-[10px]">
+                                  {formatOfficerLevelText(g.officerLevel, emperorNation.level)}
+                                </Badge>
+                                {officerCityName && (
+                                  <span className="text-[10px] text-muted-foreground ml-1">
+                                    【{officerCityName}】
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                통{g.leadership} 무{g.strength} 지{g.intel}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+                {/* General soldiers (level 1) */}
+                <div>
+                  <h4 className="text-xs text-muted-foreground mb-1">
+                    일반 장수 ({nationGenerals.filter((g) => g.officerLevel <= 1).length}명)
+                  </h4>
+                  <div className="flex flex-wrap gap-1">
+                    {nationGenerals
+                      .filter((g) => g.officerLevel <= 1)
+                      .map((g) => (
+                        <Badge key={g.id} variant="outline" className="text-[10px]">
+                          {g.name}
+                        </Badge>
+                      ))}
+                  </div>
                 </div>
               </div>
             )}

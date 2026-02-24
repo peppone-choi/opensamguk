@@ -36,4 +36,8 @@ class Auction(
 
     @Column(name = "expires_at", nullable = false)
     var expiresAt: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(columnDefinition = "jsonb")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    var meta: MutableMap<String, Any> = mutableMapOf(),
 )

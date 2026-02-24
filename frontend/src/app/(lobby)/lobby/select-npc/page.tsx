@@ -281,18 +281,18 @@ export default function LobbySelectNpcPage() {
                     </div>
 
                     <div className="space-y-1 text-xs">
-                      <p>
+                      <p title={npc.personalityInfo ?? ""}>
                         <span className="text-muted-foreground">성격</span>{" "}
-                        {npc.personality}
+                        <span className="cursor-help underline decoration-dotted">{npc.personality}</span>
                       </p>
-                      <p>
+                      <p title={npc.specialInfo ?? ""}>
                         <span className="text-muted-foreground">특기</span>{" "}
-                        {npc.special}
+                        <span className="cursor-help underline decoration-dotted">{npc.special}</span>
                       </p>
                       {npc.special2 && npc.special2 !== "None" && (
-                        <p>
+                        <p title={npc.special2Info ?? ""}>
                           <span className="text-muted-foreground">특기2</span>{" "}
-                          {npc.special2}
+                          <span className="cursor-help underline decoration-dotted">{npc.special2}</span>
                         </p>
                       )}
                     </div>
@@ -321,6 +321,9 @@ export default function LobbySelectNpcPage() {
                         }
                       />
                       보존
+                      {npc.keepCount != null && npc.keepCount > 0 && (
+                        <span className="text-yellow-400">보관({npc.keepCount}회)</span>
+                      )}
                     </label>
 
                     <Button

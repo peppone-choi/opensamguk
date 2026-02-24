@@ -91,6 +91,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const [clipboard, setClipboard] = useState<ClipboardItem[] | null>(null);
   const [storedActions, setStoredActions] = useState<StoredAction[]>([]);
   const [selectedStoredAction, setSelectedStoredAction] = useState("");
+  const [recentActions, setRecentActions] = useState<{ actionCode: string; arg?: Record<string, unknown>; brief?: string }[]>([]);
 
   const lastTurnRef = useRef(0);
 
@@ -119,6 +120,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const selectedCount = selectedTurnList.length;
 
   const localStorageKey = `opensam:stored-actions:${generalId}`;
+  const recentActionsKey = `opensam:recent-actions:${generalId}`;
   const turnSignature = `${currentWorld?.currentYear ?? 0}-${currentWorld?.currentMonth ?? 0}`;
 
   useEffect(() => {
@@ -179,6 +181,33 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
       window.setTimeout(() => setStoredActions([]), 0);
     }
   }, [localStorageKey]);
+
+  // Load recent actions from localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(recentActionsKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setRecentActions(parsed);
+      }
+    } catch { /* ignore */ }
+  }, [recentActionsKey]);
+
+  const pushRecentAction = useCallback(
+    (actionCode: string, arg?: Record<string, unknown>, brief?: string) => {
+      setRecentActions((prev) => {
+        const key = JSON.stringify([actionCode, arg ?? {}]);
+        const filtered = prev.filter((a) => JSON.stringify([a.actionCode, a.arg ?? {}]) !== key);
+        const next = [{ actionCode, arg, brief }, ...filtered].slice(0, 10);
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(recentActionsKey, JSON.stringify(next));
+        }
+        return next;
+      });
+    },
+    [recentActionsKey],
+  );
 
   const persistStoredActions = useCallback(
     (items: StoredAction[]) => {
@@ -576,6 +605,7 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
       return;
     }
 
+    pushRecentAction(actionCode, arg);
     await applyToTurns(targets, actionCode, arg);
     setShowSelector(false);
   };
@@ -884,6 +914,38 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             );
           })}
         </div>
+
+        {/* Recent actions quick-apply bar */}
+        {recentActions.length > 0 && !realtimeMode && (
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground font-medium">최근 사용 명령</p>
+            <div className="flex flex-wrap gap-1">
+              {recentActions.map((ra, idx) => (
+                <Button
+                  key={idx}
+                  size="sm"
+                  variant="secondary"
+                  className="h-6 text-[10px] px-2"
+                  disabled={selectedTurnList.length === 0}
+                  onClick={() => {
+                    const targets = selectedTurnList.length > 0 ? selectedTurnList : [0];
+                    if (COMMAND_ARGS[ra.actionCode]) {
+                      router.push(
+                        `/processing?command=${encodeURIComponent(ra.actionCode)}&turnList=${targets.join(",")}`,
+                      );
+                    } else {
+                      void applyToTurns(targets, ra.actionCode, ra.arg);
+                    }
+                  }}
+                  title={ra.brief ?? ra.actionCode}
+                >
+                  {ra.actionCode}
+                  {ra.brief && ra.brief !== ra.actionCode ? ` (${ra.brief})` : ""}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showSelector && (
           <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4">

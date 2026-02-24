@@ -59,12 +59,15 @@ export function MapViewer({
   const containerWidth = compact ? 500 : 700;
   const containerHeight = compact ? 357.14 : 500;
 
-  // Determine Map Season
-  const month = 1;
+  // Determine Map Season from server config
+  const serverMonth = (typeof window !== "undefined" ? (() => {
+    try { const raw = localStorage.getItem("opensam:world:month"); return raw ? Number(raw) : null; } catch { return null; }
+  })() : null) ?? 1;
+  const month = serverMonth;
   let season = "spring";
   if (month >= 4 && month <= 6) season = "summer";
   else if (month >= 7 && month <= 9) season = "fall";
-  else if (month >= 10 || month <= 12) season = "winter";
+  else if (month >= 10 && month <= 12) season = "winter";
 
   const mapFolder = mapCode.includes("miniche")
     ? "che"

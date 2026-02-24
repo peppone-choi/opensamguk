@@ -531,6 +531,30 @@ function GeneralBasicCard({
           <div><span className="text-red-400">피해:</span> {(general.deathcrew ?? 0).toLocaleString()}</div>
           <div><span className="text-muted-foreground">화공:</span> {general.firenum ?? 0}</div>
         </div>
+
+        {/* Turn timing info */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-muted/30 pt-2">
+          <div>
+            <span className="text-muted-foreground">턴 시간:</span>{" "}
+            <span className="tabular-nums">{general.turnTime ? general.turnTime.slice(-8) : "-"}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">최근 전투:</span>{" "}
+            <span className="tabular-nums">{general.recentWarTime ? general.recentWarTime.slice(-8) : "-"}</span>
+          </div>
+          {general.commandEndTime && (
+            <div>
+              <span className="text-muted-foreground">명령 종료:</span>{" "}
+              <span className="tabular-nums">{general.commandEndTime.slice(-8)}</span>
+            </div>
+          )}
+          {general.belong !== undefined && (
+            <div>
+              <span className="text-muted-foreground">소속:</span>{" "}
+              <span>{general.belong}턴</span>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

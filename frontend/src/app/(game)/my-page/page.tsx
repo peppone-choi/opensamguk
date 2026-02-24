@@ -971,11 +971,18 @@ export default function MyPage() {
                           disabled={!hasItem}
                           className="text-xs"
                           onClick={async () => {
-                            if (
-                              confirm(
+                            // Check if item is unique (legacy parity: double-confirm for unique items)
+                            const isUnique = (g.meta as Record<string, unknown>)?.[`${key}Unique`] === true ||
+                              val?.includes("★") || val?.includes("유니크");
+                            if (isUnique) {
+                              if (!confirm(`[주의] ${label} [${val}]은(는) 유니크 아이템입니다! 파기하면 복구할 수 없습니다. 정말 파기하시겠습니까?`)) return;
+                              if (!confirm(`[최종 확인] 유니크 아이템 ${val}을(를) 정말로 파기합니다. 되돌릴 수 없습니다!`)) return;
+                            } else if (
+                              !confirm(
                                 `${label} [${val}]을(를) 정말 파기하시겠습니까?`,
                               )
-                            ) {
+                            ) return;
+                            {
                               try {
                                 const res = await itemApi.discard(g.id, key);
                                 if (res.data.success) {

@@ -158,6 +158,42 @@ class AdminController(
         return ResponseEntity.ok().build()
     }
 
+    @PostMapping("/write-log")
+    fun writeLog(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody body: Map<String, String>,
+    ): ResponseEntity<Void> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_OPEN_CLOSE)
+            val message = body["message"] ?: return ResponseEntity.badRequest().build()
+            if (!adminService.writeLog(resolvedWorldId, message)) return ResponseEntity.notFound().build()
+            ResponseEntity.ok().build()
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
+    @PostMapping("/generals/bulk-action")
+    fun bulkGeneralAction(
+        @RequestParam(required = false) worldId: Long?,
+        @RequestBody body: Map<String, Any>,
+    ): ResponseEntity<Void> {
+        return try {
+            val loginId = currentLoginId() ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            val resolvedWorldId = adminAuthorizationService.resolveWorldIdOrThrow(loginId, worldId, PERMISSION_BLOCK_GENERAL)
+            @Suppress("UNCHECKED_CAST")
+            val ids = (body["ids"] as? List<Number>)?.map { it.toLong() } ?: return ResponseEntity.badRequest().build()
+            val type = body["type"] as? String ?: return ResponseEntity.badRequest().build()
+            for (id in ids) {
+                adminService.generalAction(resolvedWorldId, id, type)
+            }
+            ResponseEntity.ok().build()
+        } catch (_: AccessDeniedException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+    }
+
     private fun currentLoginId(): String? {
         return SecurityContextHolder.getContext().authentication?.name
     }

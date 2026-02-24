@@ -52,6 +52,7 @@ export default function GameDashboard() {
   const [loading, setLoading] = useState(true);
   const loadFrontInfoRef = useRef<() => Promise<void>>(async () => {});
 
+  const [showVersionModal, setShowVersionModal] = useState(false);
   const [mobileTab, setMobileTab] = useState<
     "map" | "commands" | "status" | "world" | "messages"
   >("map");
@@ -75,6 +76,22 @@ export default function GameDashboard() {
         lastHistoryId,
       );
       setFrontInfo(data);
+
+      // Save world month to localStorage for cross-page use (e.g., map season)
+      if (data.global?.month) {
+        try { localStorage.setItem("opensam:world:month", String(data.global.month)); } catch { /* ignore */ }
+      }
+      // Track lastVoteState for vote notification
+      if (data.global?.lastVote) {
+        try {
+          const prevVoteState = localStorage.getItem("opensam:lastVoteState");
+          const curVoteId = String((data.global.lastVote as Record<string, unknown>)?.id ?? "");
+          if (prevVoteState !== curVoteId && curVoteId) {
+            toast.info("새로운 설문이 진행중입니다!", { duration: 5000 });
+          }
+          if (curVoteId) localStorage.setItem("opensam:lastVoteState", curVoteId);
+        } catch { /* ignore */ }
+      }
 
       const lastRecord = data.recentRecord.general[0]?.id;
       const lastHistory = data.recentRecord.history[0]?.id;
@@ -386,7 +403,7 @@ export default function GameDashboard() {
             {frontInfo.recentRecord.global.length === 0 ? (
               <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
             ) : (
-              frontInfo.recentRecord.global.map((r) => (
+              frontInfo.recentRecord.global.slice(0, 15).map((r) => (
                 <div
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
@@ -403,7 +420,7 @@ export default function GameDashboard() {
             {frontInfo.recentRecord.general.length === 0 ? (
               <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
             ) : (
-              frontInfo.recentRecord.general.map((r) => (
+              frontInfo.recentRecord.general.slice(0, 15).map((r) => (
                 <div
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
@@ -420,7 +437,7 @@ export default function GameDashboard() {
             {frontInfo.recentRecord.history.length === 0 ? (
               <div className="px-2 py-1 text-xs text-gray-400">기록 없음</div>
             ) : (
-              frontInfo.recentRecord.history.map((r) => (
+              frontInfo.recentRecord.history.slice(0, 15).map((r) => (
                 <div
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
@@ -540,6 +557,40 @@ export default function GameDashboard() {
             myGeneralId={myGeneral.id}
             generals={generals}
           />
+        </div>
+      )}
+
+      {/* ===== Version Info ===== */}
+      {global && (
+        <div className={`text-center py-1 ${isTabActive("world") ? "" : "max-lg:hidden"}`}>
+          <button
+            type="button"
+            className="text-[10px] text-gray-500 hover:text-gray-300"
+            onClick={() => setShowVersionModal(true)}
+          >
+            버전 정보
+          </button>
+        </div>
+      )}
+      {showVersionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowVersionModal(false)}>
+          <div className="bg-[#222] border border-gray-600 rounded-lg p-4 max-w-sm w-full mx-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-bold text-center">버전 정보</h3>
+            <div className="text-xs space-y-1">
+              <p><span className="text-muted-foreground">시나리오:</span> {global?.scenarioText}</p>
+              <p><span className="text-muted-foreground">서버:</span> {currentWorld?.name}</p>
+              <p><span className="text-muted-foreground">턴 주기:</span> {global?.turnTerm}분</p>
+              <p><span className="text-muted-foreground">게임 시간:</span> {global?.year}年 {global?.month}月</p>
+              <p><span className="text-muted-foreground">최종 실행:</span> {global?.lastExecuted ?? "-"}</p>
+              <p><span className="text-muted-foreground">확장 장수:</span> {global?.extendedGeneral ? "활성" : "비활성"}</p>
+              <p><span className="text-muted-foreground">가상/사실:</span> {global?.isFiction ? "가상" : "사실"}</p>
+              <p><span className="text-muted-foreground">NPC 모드:</span> {["불가", "가능", "선택생성"][global?.npcMode ?? 0]}</p>
+              <p><span className="text-muted-foreground">장수 제한:</span> {global?.generalCntLimit?.toLocaleString() ?? "무제한"}</p>
+            </div>
+            <div className="flex justify-center pt-2">
+              <Button size="sm" variant="outline" onClick={() => setShowVersionModal(false)}>닫기</Button>
+            </div>
+          </div>
         </div>
       )}
 

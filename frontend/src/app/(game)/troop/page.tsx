@@ -271,10 +271,28 @@ function MemberRow({
               <span className="tabular-nums">{g.train}</span>
               <span className="text-muted-foreground">사기</span>
               <span className="tabular-nums">{g.atmos}</span>
+              <span className="text-muted-foreground">수비훈</span>
+              <span className="tabular-nums">{g.defenceTrain ?? "-"}</span>
+              <span className="text-muted-foreground">금</span>
+              <span className="tabular-nums">{g.gold?.toLocaleString() ?? "-"}</span>
+              <span className="text-muted-foreground">쌀</span>
+              <span className="tabular-nums">{g.rice?.toLocaleString() ?? "-"}</span>
               {cityName && (
                 <>
                   <span className="text-muted-foreground">도시</span>
                   <span>{cityName}</span>
+                </>
+              )}
+              {g.turnTime && (
+                <>
+                  <span className="text-muted-foreground">턴</span>
+                  <span className="tabular-nums">{g.turnTime.slice(-8)}</span>
+                </>
+              )}
+              {g.commandEndTime && (
+                <>
+                  <span className="text-muted-foreground">명령 종료</span>
+                  <span className="tabular-nums">{g.commandEndTime.slice(-8)}</span>
                 </>
               )}
             </div>

@@ -447,3 +447,135 @@ export const CITY_LEVEL_NAMES: Record<number, string> = {
   6: "거점",
   7: "수도",
 };
+
+// --- City level badge (legacy getCityLevelList) ---
+
+export const CITY_LEVEL_BADGES: Record<number, string> = {
+  1: "수",
+  2: "진",
+  3: "관",
+  4: "이",
+  5: "소",
+  6: "중",
+  7: "대",
+  8: "특",
+};
+
+export function formatCityLevelBadge(level: number): string {
+  return CITY_LEVEL_BADGES[level] ?? "?";
+}
+
+// --- Officer set bit check (legacy isOfficerSet) ---
+
+export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boolean {
+  return (officerSet & (1 << reqOfficerLevel)) !== 0;
+}
+
+// --- Format city name (legacy formatCityName) ---
+
+export function formatCityName(
+  cityId: number,
+  cityMap: Map<number, { name: string }>,
+): string {
+  const city = cityMap.get(cityId);
+  if (!city) return `도시#${cityId}`;
+  return city.name;
+}
+
+// --- Vote color (legacy formatVoteColor) ---
+
+const VOTE_COLORS: string[] = [
+  "#ff0000", // red
+  "#ffa500", // orange
+  "#ffff00", // yellow
+  "#008000", // green
+  "#0000ff", // blue
+  "#000080", // navy
+  "#800080", // purple
+];
+
+export function formatVoteColor(type: number): string {
+  return VOTE_COLORS[type % VOTE_COLORS.length];
+}
+
+// --- Tournament term (legacy calcTournamentTerm) ---
+
+export function calcTournamentTerm(turnTerm: number): number {
+  return Math.min(Math.max(turnTerm, 5), 120);
+}
+
+// --- Tournament type & step formatting (legacy formatTournament) ---
+
+const TOURNAMENT_TYPE_MAP = ["전력전", "통솔전", "일기토", "설전"];
+
+export function formatTournamentType(type: number | null | undefined): string {
+  if (type === null || type === undefined) return "?";
+  return TOURNAMENT_TYPE_MAP[type] ?? "?";
+}
+
+export interface TournamentStepInfo {
+  availableJoin: boolean;
+  state: string;
+  nextText: string;
+}
+
+const TOURNAMENT_STEP_MAP: TournamentStepInfo[] = [
+  { availableJoin: false, state: "경기 없음", nextText: "" },
+  { availableJoin: true, state: "참가 모집중", nextText: "개막시간" },
+  { availableJoin: false, state: "예선 진행중", nextText: "다음경기" },
+  { availableJoin: false, state: "본선 추첨중", nextText: "다음추첨" },
+  { availableJoin: false, state: "본선 진행중", nextText: "다음경기" },
+  { availableJoin: false, state: "16강 배정중", nextText: "16강배정" },
+  { availableJoin: true, state: "베팅 진행중", nextText: "베팅마감" },
+  { availableJoin: false, state: "16강 진행중", nextText: "다음경기" },
+  { availableJoin: false, state: "8강 진행중", nextText: "다음경기" },
+  { availableJoin: false, state: "4강 진행중", nextText: "다음경기" },
+  { availableJoin: false, state: "결승 진행중", nextText: "다음경기" },
+];
+
+export function formatTournamentStep(step: number | null | undefined): TournamentStepInfo {
+  if (step === null || step === undefined || step < 0 || step >= TOURNAMENT_STEP_MAP.length) {
+    return TOURNAMENT_STEP_MAP[0];
+  }
+  return TOURNAMENT_STEP_MAP[step];
+}
+
+// --- Post-filter nation command for troop dispatch (legacy postFilterNationCommandGen) ---
+
+export interface TurnObj {
+  action: string;
+  brief: string;
+  tooltip?: string;
+  arg: Record<string, unknown>;
+}
+
+export function postFilterNationCommandGen<T extends TurnObj>(
+  troopList: Record<number, string>,
+  cityMap: Map<number, { name: string }>,
+): (turnObj: T) => T {
+  return function (turnObj: T): T {
+    if (turnObj.action !== "che_발령") {
+      return turnObj;
+    }
+    const destGeneralID = turnObj.arg.destGeneralID as number | undefined;
+    if (destGeneralID === undefined || !(destGeneralID in troopList)) {
+      return turnObj;
+    }
+
+    const troopName = troopList[destGeneralID];
+    const destCityID = turnObj.arg.destCityID as number;
+    const destCityName = formatCityName(destCityID, cityMap);
+    // Korean josa "로/으로"
+    const lastChar = destCityName.charCodeAt(destCityName.length - 1);
+    const hasFinalConsonant = (lastChar - 0xAC00) % 28 !== 0;
+    const josaRo = hasFinalConsonant ? "으로" : "로";
+    const brief = `《${troopName}》【${destCityName}】${josaRo} 발령`;
+    const tooltip = `《${troopName}》${turnObj.brief}`;
+
+    return {
+      ...turnObj,
+      brief,
+      tooltip,
+    };
+  };
+}

@@ -219,6 +219,10 @@ export interface NpcCard {
   experience?: number;
   dedication?: number;
   expLevel?: number;
+  personalityInfo?: string;
+  specialInfo?: string;
+  special2Info?: string;
+  keepCount?: number;
 }
 
 export interface NpcTokenResponse {
@@ -644,6 +648,7 @@ export interface ContactInfo {
   name: string;
   nationId: number;
   nationName: string;
+  nationColor?: string;
   picture: string;
 }
 

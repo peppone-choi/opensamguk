@@ -57,6 +57,7 @@ export default function MapPage() {
   const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
   const [tooltip, setTooltip] = useState<CityTooltip | null>(null);
   const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
+  const [touchTapId, setTouchTapId] = useState<number | null>(null);
   // Auto-detect season from world month (legacy: spring 1-3, summer 4-6, autumn 7-9, winter 10-12)
   const autoTheme = useMemo<MapTheme>(() => {
     const month = (currentWorld?.config as Record<string, number>)?.month;
@@ -226,6 +227,27 @@ export default function MapPage() {
     return nations.filter((n) => ids.has(n.id));
   }, [cities, nations]);
 
+  // Save city info to localStorage for cross-page reference
+  const saveCityInfo = useCallback((cityId: number) => {
+    const city = cityMap.get(cityId);
+    if (!city) return;
+    const nation = city.nationId ? nationMap.get(city.nationId) : null;
+    try {
+      localStorage.setItem(
+        `opensam:cityInfo:${cityId}`,
+        JSON.stringify({
+          id: cityId,
+          name: constMap.get(cityId)?.name ?? "",
+          nationName: nation?.name ?? "공백지",
+          nationColor: nation?.color ?? "#555",
+          pop: city.pop,
+          level: city.level,
+          ts: Date.now(),
+        }),
+      );
+    } catch { /* ignore quota */ }
+  }, [cityMap, nationMap, constMap]);
+
   const handleCityClick = (cc: CityConst, e: React.MouseEvent) => {
     e.stopPropagation();
     const city = cityMap.get(cc.id);
@@ -238,6 +260,8 @@ export default function MapPage() {
       crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
       isForeign: city ? g.nationId !== city.nationId : false,
     }));
+
+    saveCityInfo(cc.id);
 
     setTooltip({
       cityId: cc.id,
@@ -257,6 +281,50 @@ export default function MapPage() {
       screenY: e.clientY,
     });
   };
+
+  // Touch support: single-tap toggles tooltip, second tap navigates
+  const handleCityTouch = useCallback((cc: CityConst, e: React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (touchTapId === cc.id && tooltip?.cityId === cc.id) {
+      // Second tap on same city: navigate
+      saveCityInfo(cc.id);
+      router.push(`/city?id=${cc.id}`);
+      setTouchTapId(null);
+    } else {
+      // First tap: show tooltip
+      const touch = e.touches[0] ?? e.changedTouches[0];
+      const city = cityMap.get(cc.id);
+      const nation = city?.nationId ? nationMap.get(city.nationId) : null;
+      const cityGens = cityGeneralData.get(cc.id) ?? [];
+      const generalsInfo = cityGens.map((g) => ({
+        name: g.name,
+        nationColor: nationMap.get(g.nationId)?.color ?? "#555",
+        crew: g.crew,
+        crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
+        isForeign: city ? g.nationId !== city.nationId : false,
+      }));
+      saveCityInfo(cc.id);
+      setTooltip({
+        cityId: cc.id,
+        cityName: cc.name,
+        nationName: nation?.name ?? "공백지",
+        nationColor: nation?.color ?? "#555",
+        level: city?.level ?? cc.level,
+        pop: city?.pop ?? 0,
+        agri: city ? `${city.agri}/${city.agriMax}` : "-",
+        comm: city ? `${city.comm}/${city.commMax}` : "-",
+        secu: city ? `${city.secu}/${city.secuMax}` : "-",
+        def: city ? `${city.def}/${city.defMax}` : "-",
+        wall: city ? `${city.wall}/${city.wallMax}` : "-",
+        trust: city?.trust ?? 0,
+        generals: generalsInfo,
+        screenX: touch?.clientX ?? 0,
+        screenY: touch?.clientY ?? 0,
+      });
+      setTouchTapId(cc.id);
+    }
+  }, [touchTapId, tooltip, cityMap, nationMap, cityGeneralData, constMap, router, saveCityInfo]);
 
   if (!mapData) {
     return (
@@ -373,6 +441,7 @@ export default function MapPage() {
                 key={cc.id}
                 className="cursor-pointer"
                 onClick={(e) => handleCityClick(cc, e)}
+                onTouchEnd={(e) => handleCityTouch(cc, e)}
               >
                 {/* Foreign troop warning ring */}
                 {hasForeignTroops && (

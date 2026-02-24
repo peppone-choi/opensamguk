@@ -43,6 +43,9 @@ function getServerPhase(w: WorldState): {
     return { label: "종료", color: "text-gray-400", icon: Shield };
   if (meta.isLocked || meta.locked)
     return { label: "잠김", color: "text-yellow-400", icon: Shield };
+  // 가오픈/reserved distinction (legacy parity: entrance.ts)
+  if (meta.isReserved || meta.reserved)
+    return { label: "가오픈", color: "text-orange-400", icon: Clock };
   if (w.realtimeMode)
     return { label: "실시간", color: "text-green-400", icon: Signal };
   return { label: "턴제", color: "text-cyan-400", icon: Clock };
@@ -109,15 +112,24 @@ function getActionAvailability(
 
   const joinMode = (config.joinMode as string) ?? (meta.joinMode as string) ?? "normal";
 
+  // Legacy parity: block_general_create bitfield check
+  const blockBits = (meta.blockGeneralCreate as number) ?? (config.blockGeneralCreate as number) ?? 0;
+  const blockCreate = !!(blockBits & 1);
+  const blockNpc = !!(blockBits & 2);
+  const blockFound = !!(blockBits & 4);
+  const blockRise = !!(blockBits & 8);
+
   return {
-    canJoin: !isLocked && !isFull,
+    canJoin: !isLocked && !isFull && !blockCreate,
     canFound:
       !isLocked &&
       !isFull &&
+      !blockFound &&
       joinMode !== "noFound",
     canRise:
       !isLocked &&
       !isFull &&
+      !blockRise &&
       joinMode !== "noRise",
     joinReason: isLocked
       ? "서버 잠김"
@@ -174,13 +186,28 @@ export default function LobbyPage() {
   const [resetScenario, setResetScenario] = useState("");
   const [resetting, setResetting] = useState(false);
   const [notice, setNotice] = useState("");
+  const [serverNotices, setServerNotices] = useState<Record<number, string>>({});
   const scenarioMap = useMemo(
     () => new Map(scenarios.map((s) => [s.code, s.title])),
     [scenarios],
   );
 
   useEffect(() => {
-    fetchWorlds();
+    fetchWorlds().then(() => {
+      // Load server notices from world metadata
+      const worldStore = useWorldStore.getState();
+      const notices: Record<number, string> = {};
+      let globalNotice = "";
+      for (const w of worldStore.worlds) {
+        const n = (w.meta?.notice as string) ?? (w.meta?.serverNotice as string) ?? "";
+        if (n) notices[w.id] = n;
+        if (!globalNotice && (w.meta?.globalNotice as string)) {
+          globalNotice = w.meta?.globalNotice as string;
+        }
+      }
+      setServerNotices(notices);
+      if (globalNotice) setNotice(globalNotice);
+    });
     scenarioApi
       .list()
       .then(({ data }) => {
@@ -380,11 +407,37 @@ export default function LobbyPage() {
                         </span>
                       </div>
 
-                      {/* Scenario info */}
-                      <p className="text-[11px] text-muted-foreground">
-                        시나리오:{" "}
-                        {scenarioMap.get(w.scenarioCode) || w.scenarioCode}
-                      </p>
+                      {/* Extended server info (legacy parity: entrance.ts per-server detail) */}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+                        <span>
+                          시나리오: {scenarioMap.get(w.scenarioCode) || w.scenarioCode}
+                        </span>
+                        {(w.meta?.nationCount != null || w.meta?.nationCnt != null) && (
+                          <span>국가: {String(w.meta?.nationCount ?? w.meta?.nationCnt)}개</span>
+                        )}
+                        {w.meta?.fictionMode ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 text-purple-400 border-purple-400/30">
+                            가상
+                          </Badge>
+                        ) : null}
+                        {(w.meta?.isUnited || w.meta?.united) ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 text-yellow-400 border-yellow-400/30">
+                            통일
+                          </Badge>
+                        ) : null}
+                        {w.meta?.eventStatus ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 text-cyan-400 border-cyan-400/30">
+                            이벤트
+                          </Badge>
+                        ) : null}
+                        {w.meta?.openTime ? (
+                          <span>오픈: {new Date(String(w.meta.openTime)).toLocaleDateString("ko-KR")}</span>
+                        ) : null}
+                      </div>
+                      {/* Per-server notice */}
+                      {serverNotices[w.id] && (
+                        <p className="text-[11px] text-orange-400 mt-1" dangerouslySetInnerHTML={{ __html: serverNotices[w.id] }} />
+                      )}
                     </CardContent>
                   </Card>
                 );

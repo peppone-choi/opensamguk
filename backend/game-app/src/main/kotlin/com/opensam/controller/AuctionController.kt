@@ -26,7 +26,7 @@ class AuctionController(
         @PathVariable worldId: Long,
         @RequestBody request: CreateAuctionRequest,
     ): ResponseEntity<MessageResponse> {
-        val auction = auctionService.createAuction(worldId, request.type, request.sellerId, request.item, request.amount, request.minPrice)
+        val auction = auctionService.createAuction(worldId, request.type, request.sellerId, request.item, request.amount, request.minPrice, request.finishBidAmount, request.closeTurnCnt)
         return ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(auction))
     }
 

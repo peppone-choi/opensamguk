@@ -12,11 +12,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ServerStatusCard } from "@/components/auth/server-status-card";
-import { ShieldCheck, X } from "lucide-react";
+import { ShieldCheck, X, Map } from "lucide-react";
+import { sha512 } from "js-sha512";
+import api from "@/lib/api";
 
 const loginSchema = z.object({
   loginId: z.string().min(3, "아이디는 3자 이상이어야 합니다"),
-  password: z.string().min(4, "비밀번호는 4자 이상이어야 합니다"),
+  password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -47,11 +49,13 @@ function OtpModal({
   onClose,
   onSubmit,
   loading,
+  validUntil,
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (code: string) => void;
   loading: boolean;
+  validUntil?: string;
 }) {
   const [code, setCode] = useState("");
 
@@ -74,6 +78,11 @@ function OtpModal({
         <p className="text-sm text-muted-foreground mb-4">
           등록된 OTP 앱에서 생성된 6자리 인증 코드를 입력해주세요.
         </p>
+        {validUntil && (
+          <p className="text-xs text-cyan-400 mb-3">
+            {validUntil}까지 유효합니다
+          </p>
+        )}
         <div className="space-y-3">
           <Input
             type="text"
@@ -119,8 +128,13 @@ export default function LoginPage() {
   // OTP state
   const [otpOpen, setOtpOpen] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
+  const [otpValidUntil, setOtpValidUntil] = useState("");
   const [pendingLoginId, setPendingLoginId] = useState("");
   const [pendingPassword, setPendingPassword] = useState("");
+
+  // Server map
+  const [showServerMap, setShowServerMap] = useState(false);
+  const serverMapUrl = process.env.NEXT_PUBLIC_SERVER_MAP_URL ?? "";
 
   const {
     register,
@@ -138,19 +152,71 @@ export default function LoginPage() {
     }
   }, [isInitialized, isAuthenticated, router]);
 
-  // Auto-login from stored token (legacy parity: Session.php auto-login)
+  // Auto-login from stored token with nonce challenge (legacy parity: ReqNonce → sha512(token+nonce) → LoginByToken)
   const attemptAutoLogin = useCallback(async () => {
     if (!isInitialized || isAuthenticated) return;
-    const storedToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!storedToken || !loginWithToken) return;
+    const LOGIN_TOKEN_KEY = "sammo_login_token";
+    const raw = typeof window !== "undefined" ? localStorage.getItem(LOGIN_TOKEN_KEY) : null;
+    if (!raw) return;
+
+    let tokenId: number;
+    let token: string;
+    try {
+      const parsed = JSON.parse(raw);
+      // Format: [version, [tokenId, token], timestamp]
+      if (!Array.isArray(parsed) || parsed[0] !== 1) {
+        localStorage.removeItem(LOGIN_TOKEN_KEY);
+        return;
+      }
+      [tokenId, token] = parsed[1];
+    } catch {
+      localStorage.removeItem(LOGIN_TOKEN_KEY);
+      return;
+    }
 
     setAutoLogging(true);
     try {
-      await loginWithToken(storedToken);
+      // Step 1: Request nonce from server
+      const { data: nonceData } = await api.post<{ result: boolean; loginNonce?: string }>("/auth/nonce");
+      if (!nonceData.result || !nonceData.loginNonce) {
+        localStorage.removeItem(LOGIN_TOKEN_KEY);
+        return;
+      }
+
+      // Step 2: Hash token with nonce
+      const hashedToken = sha512(token + nonceData.loginNonce);
+
+      // Step 3: Login by token
+      const { data: loginData } = await api.post<{
+        result: boolean;
+        nextToken?: [number, string];
+        reason?: string;
+        silent?: boolean;
+      }>("/auth/login-by-token", {
+        hashedToken,
+        token_id: tokenId,
+      });
+
+      if (!loginData.result) {
+        if (!loginData.silent) {
+          console.error(loginData.reason);
+        }
+        localStorage.removeItem(LOGIN_TOKEN_KEY);
+        return;
+      }
+
+      // Store next token for future auto-login
+      if (loginData.nextToken) {
+        localStorage.setItem(LOGIN_TOKEN_KEY, JSON.stringify([1, loginData.nextToken, Date.now()]));
+      }
+
+      // Also try the store's loginWithToken for session setup
+      if (loginWithToken) {
+        await loginWithToken(token);
+      }
       router.push("/lobby");
     } catch {
-      // Token expired or invalid - silently fail, user can login manually
-      localStorage.removeItem("token");
+      localStorage.removeItem(LOGIN_TOKEN_KEY);
     } finally {
       setAutoLogging(false);
     }
@@ -191,14 +257,23 @@ export default function LoginPage() {
     }
     setOtpLoading(true);
     try {
-      await loginWithOtp(pendingLoginId, pendingPassword, otpCode);
+      const result = await loginWithOtp(pendingLoginId, pendingPassword, otpCode);
+      // Legacy parity: show validUntil from OTP response
+      const validUntil = (result as { validUntil?: string } | undefined)?.validUntil;
+      if (validUntil) {
+        toast.success(`로그인되었습니다. ${validUntil}까지 유효합니다.`);
+        setOtpValidUntil(validUntil);
+      }
       setOtpOpen(false);
       router.push("/lobby");
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "OTP 인증에 실패했습니다";
+      const errData = (err as { response?: { data?: { message?: string; reason?: string; reset?: boolean } } })?.response?.data;
+      const message = errData?.message || errData?.reason || "OTP 인증에 실패했습니다";
       toast.error(message);
+      // Legacy parity: if reset flag, close OTP modal
+      if (errData?.reset) {
+        setOtpOpen(false);
+      }
     } finally {
       setOtpLoading(false);
     }
@@ -211,8 +286,8 @@ export default function LoginPage() {
       toast.error("아이디는 3자 이상이어야 합니다");
       return;
     }
-    if (!values.password || values.password.length < 4) {
-      toast.error("비밀번호는 4자 이상이어야 합니다");
+    if (!values.password || values.password.length < 6) {
+      toast.error("비밀번호는 6자 이상이어야 합니다");
       return;
     }
     if (registerMode) {
@@ -366,12 +441,44 @@ export default function LoginPage() {
       </Card>
       <ServerStatusCard />
 
+      {/* Running Server Map (legacy parity: running_map iframe) */}
+      {serverMapUrl && (
+        <Card className="w-full max-w-md mt-4">
+          <CardContent className="p-3">
+            <button
+              type="button"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground w-full"
+              onClick={() => setShowServerMap(!showServerMap)}
+            >
+              <Map className="size-4" />
+              서버 근황 지도 {showServerMap ? "▲" : "▼"}
+            </button>
+            {showServerMap && (
+              <iframe
+                src={serverMapUrl}
+                className="w-full mt-2 border-0 rounded"
+                style={{ height: 500 }}
+                title="서버 근황 지도"
+                onLoad={(e) => {
+                  try {
+                    const iframe = e.target as HTMLIFrameElement;
+                    const scrollHeight = iframe.contentWindow?.document.body.scrollHeight;
+                    if (scrollHeight) iframe.style.height = `${scrollHeight}px`;
+                  } catch { /* cross-origin */ }
+                }}
+              />
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* OTP 2차 인증 모달 */}
       <OtpModal
         open={otpOpen}
         onClose={() => setOtpOpen(false)}
         onSubmit={handleOtpSubmit}
         loading={otpLoading}
+        validUntil={otpValidUntil}
       />
     </>
   );

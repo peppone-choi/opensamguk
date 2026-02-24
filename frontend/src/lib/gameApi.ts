@@ -265,8 +265,8 @@ export const messageApi = {
       limit?: number;
     },
   ) => api.get<Message[]>("/messages", { params: { type, ...params } }),
-  getMine: (generalId: number) =>
-    api.get<Message[]>(`/messages`, { params: { generalId } }),
+  getMine: (generalId: number, sinceId?: number | null) =>
+    api.get<Message[]>(`/messages`, { params: { generalId, ...(sinceId != null ? { sinceId } : {}) } }),
   send: (
     worldId: number,
     srcId: number,
@@ -436,6 +436,14 @@ export const accountApi = {
     api.post<{ redirectUrl: string }>(`/account/oauth/${provider}/link`),
   unlinkOAuth: (provider: string) =>
     api.delete<void>(`/account/oauth/${provider}`),
+  uploadIcon: (formData: FormData) =>
+    api.post<void>("/account/icon", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
+  deleteIcon: () => api.delete<void>("/account/icon"),
+  syncIcon: () => api.post<void>("/account/icon/sync"),
+  getDetailedInfo: () =>
+    api.get<Record<string, unknown>>("/account/detailed-info"),
 };
 
 // Nation Management API
@@ -826,4 +834,12 @@ export const adminApi = {
     api.get<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>("/admin/worlds"),
   bulkGeneralAction: (ids: number[], type: string) =>
     api.post<void>("/admin/generals/bulk-action", { ids, type }),
+  activateWorld: (worldId: number) =>
+    api.post<void>(`/worlds/${worldId}/activate`, {}),
+  deactivateWorld: (worldId: number) =>
+    api.post<void>(`/worlds/${worldId}/deactivate`, {}),
+  resetWorld: (worldId: number, scenarioCode?: string) =>
+    api.post<void>(`/worlds/${worldId}/reset`, scenarioCode ? { scenarioCode } : {}),
+  writeLog: (message: string) =>
+    api.post<void>("/admin/write-log", { message }),
 };

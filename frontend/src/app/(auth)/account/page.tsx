@@ -17,6 +17,10 @@ import {
   ShieldAlert,
   AlertTriangle,
   X,
+  Upload,
+  Trash2,
+  RefreshCw,
+  Info,
 } from "lucide-react";
 
 const OAUTH_PROVIDERS = [
@@ -53,6 +57,23 @@ export default function AccountPage() {
   );
   const [oauthMsg, setOauthMsg] = useState("");
 
+  // Icon file upload
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
+  const [iconUploading, setIconUploading] = useState(false);
+  const [iconMsg, setIconMsg] = useState("");
+
+  // Icon sync modal
+  const [showIconSync, setShowIconSync] = useState(false);
+  const [iconSyncLoading, setIconSyncLoading] = useState(false);
+
+  // Third-party consent withdrawal
+  const [thirdUseStatus, setThirdUseStatus] = useState<boolean>(user?.thirdUse ?? false);
+  const [thirdUseLoading, setThirdUseLoading] = useState(false);
+
+  // Detailed user info
+  const [detailedInfo, setDetailedInfo] = useState<Record<string, unknown> | null>(null);
+
   // Account deletion modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
@@ -74,6 +95,11 @@ export default function AccountPage() {
 
   useEffect(() => {
     fetchOAuthProviders();
+    // Fetch detailed user info (legacy parity: user_info.php)
+    accountApi.getDetailedInfo().then(({ data }) => {
+      setDetailedInfo(data);
+      if (typeof data.thirdUse === "boolean") setThirdUseStatus(data.thirdUse);
+    }).catch(() => {});
   }, [fetchOAuthProviders]);
 
   const handleChangePassword = async () => {
@@ -81,8 +107,8 @@ export default function AccountPage() {
       setPwMsg("새 비밀번호가 일치하지 않습니다.");
       return;
     }
-    if (newPassword.length < 4) {
-      setPwMsg("비밀번호는 4자 이상이어야 합니다.");
+    if (newPassword.length < 6) {
+      setPwMsg("비밀번호는 6자 이상이어야 합니다.");
       return;
     }
     setSaving(true);
@@ -97,6 +123,71 @@ export default function AccountPage() {
       setPwMsg("비밀번호 변경에 실패했습니다.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleIconFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIconFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setIconPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleIconUpload = async () => {
+    if (!iconFile) return;
+    setIconUploading(true);
+    setIconMsg("");
+    try {
+      const formData = new FormData();
+      formData.append("icon", iconFile);
+      await accountApi.uploadIcon(formData);
+      setIconMsg("전콘이 업로드되었습니다.");
+      setIconFile(null);
+    } catch {
+      setIconMsg("전콘 업로드에 실패했습니다.");
+    } finally {
+      setIconUploading(false);
+    }
+  };
+
+  const handleIconDelete = async () => {
+    if (!confirm("전콘을 삭제하시겠습니까?")) return;
+    try {
+      await accountApi.deleteIcon();
+      setIconMsg("전콘이 삭제되었습니다.");
+      setIconPreview(null);
+    } catch {
+      setIconMsg("전콘 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleIconSync = async () => {
+    setIconSyncLoading(true);
+    try {
+      await accountApi.syncIcon();
+      setShowIconSync(false);
+      setIconMsg("모든 서버에 전콘이 동기화되었습니다.");
+    } catch {
+      setIconMsg("전콘 동기화에 실패했습니다.");
+    } finally {
+      setIconSyncLoading(false);
+    }
+  };
+
+  const handleThirdUseWithdraw = async () => {
+    if (!confirm("제3자 제공 동의를 철회하시겠습니까?")) return;
+    setThirdUseLoading(true);
+    try {
+      await accountApi.updateSettings({
+        thirdUse: false,
+      } as Record<string, unknown> & import("@/types").AccountSettings);
+      setThirdUseStatus(false);
+    } catch {
+      // ignore
+    } finally {
+      setThirdUseLoading(false);
     }
   };
 
@@ -188,25 +279,80 @@ export default function AccountPage() {
         <CardContent className="space-y-6 p-0">
           <h1 className="text-xl font-bold">계정 관리</h1>
 
-          {/* Profile */}
+          {/* Detailed Profile (legacy parity: user_info.php) */}
           <div className="space-y-2 rounded-md border p-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-muted-foreground">
+              <h2 className="text-sm font-semibold text-muted-foreground flex items-center gap-1">
+                <Info className="size-4" />
                 프로필
               </h2>
               <Badge variant="outline">{user?.role ?? "USER"}</Badge>
             </div>
-            <div className="text-sm">
+            <div className="text-sm space-y-1">
               <p>
-                <span className="text-muted-foreground">계정:</span>{" "}
+                <span className="text-muted-foreground">계정 ID:</span>{" "}
                 {user?.loginId ?? "-"}
               </p>
               <p>
                 <span className="text-muted-foreground">표시 이름:</span>{" "}
                 {user?.displayName ?? "-"}
               </p>
+              {detailedInfo && (
+                <>
+                  <p>
+                    <span className="text-muted-foreground">등급:</span>{" "}
+                    {String(detailedInfo.grade ?? "-")}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">ACL:</span>{" "}
+                    {String(detailedInfo.acl ?? "-")}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">가입일:</span>{" "}
+                    {detailedInfo.joinDate ? new Date(String(detailedInfo.joinDate)).toLocaleDateString("ko-KR") : "-"}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">제3자 제공 동의:</span>{" "}
+                    <span className={thirdUseStatus ? "text-green-400" : "text-muted-foreground"}>
+                      {thirdUseStatus ? "동의" : "미동의"}
+                    </span>
+                  </p>
+                  {detailedInfo.oauthType && (
+                    <p>
+                      <span className="text-muted-foreground">OAuth 유형:</span>{" "}
+                      {String(detailedInfo.oauthType)}
+                    </p>
+                  )}
+                  {detailedInfo.tokenValidUntil && (
+                    <p>
+                      <span className="text-muted-foreground">토큰 유효기간:</span>{" "}
+                      {new Date(String(detailedInfo.tokenValidUntil)).toLocaleString("ko-KR")}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           </div>
+
+          {/* Third-party consent withdrawal */}
+          {thirdUseStatus && (
+            <div className="space-y-2 rounded-md border border-yellow-500/30 p-3">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                제3자 제공 동의 철회
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                개인정보 제3자 제공 동의를 철회합니다.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleThirdUseWithdraw}
+                disabled={thirdUseLoading}
+              >
+                {thirdUseLoading ? "처리 중..." : "동의 철회"}
+              </Button>
+            </div>
+          )}
 
           {/* Profile Picture (전콘) */}
           <div className="space-y-2 rounded-md border p-3">
@@ -218,36 +364,64 @@ export default function AccountPage() {
             </p>
             <div className="flex items-center gap-3">
               <div className="size-16 rounded border border-input bg-muted flex items-center justify-center text-xs text-muted-foreground overflow-hidden">
-                {user?.picture ? (
-                  <img
-                    src={user.picture}
-                    alt="전콘"
-                    className="size-full object-cover"
-                  />
+                {iconPreview ? (
+                  <img src={iconPreview} alt="전콘 미리보기" className="size-full object-cover" />
+                ) : user?.picture ? (
+                  <img src={user.picture} alt="전콘" className="size-full object-cover" />
                 ) : (
                   "없음"
                 )}
               </div>
-              <div className="space-y-1">
-                <Input
-                  type="text"
-                  placeholder="이미지 URL 입력"
-                  value={pictureUrl}
-                  onChange={(e) => setPictureUrl(e.target.value)}
-                  className="w-64"
-                />
-                <Button
-                  size="sm"
-                  onClick={handleChangePicture}
-                  disabled={pictureLoading || !pictureUrl.trim()}
-                >
-                  {pictureLoading ? "변경 중..." : "전콘 변경"}
-                </Button>
-                {pictureMsg && (
-                  <p
-                    className={`text-xs ${pictureMsg.includes("실패") ? "text-red-400" : "text-green-400"}`}
+              <div className="space-y-2 flex-1">
+                {/* File upload */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">파일 업로드</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleIconFileChange}
+                      className="text-xs file:mr-2 file:py-1 file:px-2 file:border file:border-input file:rounded file:text-xs file:bg-background"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleIconUpload}
+                      disabled={iconUploading || !iconFile}
+                    >
+                      <Upload className="size-3 mr-1" />
+                      {iconUploading ? "업로드 중..." : "업로드"}
+                    </Button>
+                  </div>
+                </div>
+                {/* URL input */}
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    placeholder="이미지 URL 입력"
+                    value={pictureUrl}
+                    onChange={(e) => setPictureUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleChangePicture}
+                    disabled={pictureLoading || !pictureUrl.trim()}
                   >
-                    {pictureMsg}
+                    {pictureLoading ? "변경 중..." : "URL 변경"}
+                  </Button>
+                </div>
+                {/* Delete + Sync buttons */}
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="destructive" onClick={handleIconDelete}>
+                    <Trash2 className="size-3 mr-1" /> 전콘 삭제
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowIconSync(true)}>
+                    <RefreshCw className="size-3 mr-1" /> 서버 동기화
+                  </Button>
+                </div>
+                {(pictureMsg || iconMsg) && (
+                  <p className={`text-xs ${(pictureMsg || iconMsg).includes("실패") ? "text-red-400" : "text-green-400"}`}>
+                    {iconMsg || pictureMsg}
                   </p>
                 )}
               </div>
@@ -435,6 +609,53 @@ export default function AccountPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 전콘 서버 동기화 모달 */}
+      {showIconSync && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="relative w-full max-w-sm mx-4 rounded-lg border bg-background p-6 shadow-xl">
+            <button
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowIconSync(false)}
+            >
+              <X className="size-4" />
+            </button>
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <RefreshCw className="size-5" />
+                전콘 서버 동기화
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                현재 설정된 전콘을 모든 서버의 장수에 동기화합니다.
+                각 서버에서 사용 중인 전콘이 모두 현재 전콘으로 변경됩니다.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  onClick={handleIconSync}
+                  disabled={iconSyncLoading}
+                >
+                  {iconSyncLoading ? (
+                    <>
+                      <Loader2 className="size-3 animate-spin mr-1" />
+                      동기화 중...
+                    </>
+                  ) : (
+                    "동기화 실행"
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowIconSync(false)}
+                >
+                  취소
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 탈퇴 확인 모달 */}
       {showDeleteModal && (

@@ -213,6 +213,75 @@ function UnitBuilder({
 
   const [showInherit, setShowInherit] = useState(false);
   const [loadingGeneral, setLoadingGeneral] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const importFromJson = useCallback((data: Record<string, unknown>) => {
+    if (data.objType === "general" && data.data) {
+      const d = data.data as Record<string, unknown>;
+      onChange({
+        ...unit,
+        name: (d.name as string) ?? unit.name,
+        leadership: (d.leadership as number) ?? unit.leadership,
+        strength: (d.strength as number) ?? unit.strength,
+        intel: (d.intel as number) ?? unit.intel,
+        crew: (d.crew as number) ?? unit.crew,
+        crewType: (d.crewtype as number) ?? (d.crewType as number) ?? unit.crewType,
+        train: (d.train as number) ?? unit.train,
+        atmos: (d.atmos as number) ?? unit.atmos,
+        weaponCode: (d.weapon as string) ?? (d.weaponCode as string) ?? "",
+        bookCode: (d.book as string) ?? (d.bookCode as string) ?? "",
+        horseCode: (d.horse as string) ?? (d.horseCode as string) ?? "",
+        itemCode: (d.item as string) ?? (d.itemCode as string) ?? "",
+        specialCode: (d.specialWar as string) ?? (d.special2 as string) ?? (d.specialCode as string) ?? "",
+        personalCode: (d.personal as string) ?? (d.personalCode as string) ?? "",
+        injury: (d.injury as number) ?? 0,
+        rice: (d.rice as number) ?? 10000,
+        defenceTrain: (d.defenceTrain as number) ?? (d.defence_train as number) ?? 80,
+        officerLevel: (d.officerLevel as number) ?? (d.officer_level as number) ?? 1,
+        dex1: (d.dex1 as number) ?? ((d.dex as Record<string, number>)?.["1"]) ?? 0,
+        dex2: (d.dex2 as number) ?? ((d.dex as Record<string, number>)?.["2"]) ?? 0,
+        dex3: (d.dex3 as number) ?? ((d.dex as Record<string, number>)?.["3"]) ?? 0,
+        dex4: (d.dex4 as number) ?? ((d.dex as Record<string, number>)?.["4"]) ?? 0,
+        dex5: (d.dex5 as number) ?? ((d.dex as Record<string, number>)?.["5"]) ?? 0,
+        expLevel: (d.explevel as number) ?? (d.expLevel as number) ?? 0,
+        warnum: 0,
+        killnum: 0,
+        killcrew: 0,
+        inheritBuff: defaultInheritBuff(),
+      });
+    }
+  }, [unit, onChange]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const files = e.dataTransfer.files;
+    if (!files || files.length < 1) return;
+    const file = files[0];
+    if (file.size > 1024 * 1024) { alert("파일이 너무 큽니다!"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        if (!data.objType) { alert("파일 형식을 확인할 수 없습니다"); return; }
+        if (data.objType !== "general") { alert("장수 데이터가 아닙니다"); return; }
+        importFromJson(data);
+      } catch { alert("올바르지 않은 파일 형식입니다"); }
+    };
+    reader.readAsText(file);
+  }, [importFromJson]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  }, []);
 
   const handleLoadGeneral = async (targetId: number) => {
     if (!myGeneralId) return;
@@ -261,10 +330,16 @@ function UnitBuilder({
   };
 
   return (
-    <Card>
+    <Card
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      className={dragOver ? "ring-2 ring-blue-400 ring-inset" : ""}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
           {title}
+          <span className="text-[9px] text-muted-foreground ml-1">(JSON 드래그&amp;드롭 가능)</span>
           {/* General picker */}
           {generals.length > 0 && myGeneralId && (
             <select

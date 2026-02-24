@@ -13,6 +13,7 @@ interface GeneralRepository : JpaRepository<General, Long> {
     fun findByWorldIdAndCommandEndTimeBefore(worldId: Long, time: OffsetDateTime): List<General>
     fun findByTroopId(troopId: Long): List<General>
     fun findByWorldIdAndNationId(worldId: Long, nationId: Long): List<General>
+    fun findByNameAndWorldId(name: String, worldId: Long): General?
 
     /**
      * Get average stats for generals in a nation.

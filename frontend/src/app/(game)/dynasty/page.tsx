@@ -50,6 +50,31 @@ interface DynastyEvent {
   detail?: string;
 }
 
+// Structured event type mapping from server payload
+const EVENT_TYPE_MAP: Record<string, DynastyEvent["type"]> = {
+  "nation_founded": "founded",
+  "nation_created": "founded",
+  "founded": "founded",
+  "nation_destroyed": "destroyed",
+  "destroyed": "destroyed",
+  "nation_united": "united",
+  "united": "united",
+  "nation_levelup": "levelUp",
+  "levelUp": "levelUp",
+  "level_up": "levelUp",
+  "war_declared": "war",
+  "war": "war",
+};
+
+// Text-based fallback patterns for backwards compat
+const TEXT_PATTERNS: [RegExp, DynastyEvent["type"]][] = [
+  [/건국|세력을 세웠/, "founded"],
+  [/멸망|멸했/, "destroyed"],
+  [/통일|천하통일/, "united"],
+  [/작위|칭제|등급/, "levelUp"],
+  [/선전포고|전쟁/, "war"],
+];
+
 function classifyEvent(msg: Message): DynastyEvent | null {
   const p = msg.payload;
   const text = (p.text as string) ?? (p.message as string) ?? (p.content as string) ?? "";
@@ -58,24 +83,26 @@ function classifyEvent(msg: Message): DynastyEvent | null {
   const year = (p.year as number) ?? 0;
   const month = (p.month as number) ?? 1;
 
-  // Detect event type from message content or type field
+  // Prefer structured type field from server
   const msgType = (p.type as string) ?? msg.messageType ?? "";
-  let type: DynastyEvent["type"] = "other";
+  let type: DynastyEvent["type"] | undefined = EVENT_TYPE_MAP[msgType];
 
-  if (msgType.includes("found") || text.includes("건국") || text.includes("세력을 세웠")) {
-    type = "founded";
-  } else if (msgType.includes("destroy") || text.includes("멸망") || text.includes("멸했")) {
-    type = "destroyed";
-  } else if (msgType.includes("unite") || text.includes("통일") || text.includes("천하통일")) {
-    type = "united";
-  } else if (msgType.includes("level") || text.includes("작위") || text.includes("칭제")) {
-    type = "levelUp";
-  } else if (msgType.includes("war") || text.includes("선전포고") || text.includes("전쟁")) {
-    type = "war";
-  } else if (nationName) {
-    type = "other";
-  } else {
-    return null; // skip non-nation events
+  // Fallback to text-matching heuristic only when structured type unavailable
+  if (!type) {
+    for (const [pattern, eventType] of TEXT_PATTERNS) {
+      if (pattern.test(text) || pattern.test(msgType)) {
+        type = eventType;
+        break;
+      }
+    }
+  }
+
+  if (!type) {
+    if (nationName) {
+      type = "other";
+    } else {
+      return null; // skip non-nation events
+    }
   }
 
   return {
@@ -183,6 +210,56 @@ export default function DynastyPage() {
 
         {/* ── Current dynasties tab ── */}
         <TabsContent value="current" className="space-y-3 mt-4">
+          {/* Territory overview — simple grid map */}
+          {sorted.length > 0 && (
+            <Card>
+              <CardHeader className="py-2 px-4">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Flag className="size-4" />
+                  영토 현황
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-2 px-4">
+                <div className="space-y-2">
+                  {sorted.map(({ nation, cityCount }) => {
+                    const totalCities = cities.length || 1;
+                    const pct = Math.round((cityCount / totalCities) * 100);
+                    return (
+                      <div key={nation.id} className="flex items-center gap-2 text-xs">
+                        <NationBadge name={nation.name} color={nation.color} />
+                        <div className="flex-1 h-4 bg-muted/20 rounded overflow-hidden">
+                          <div
+                            className="h-full rounded transition-all"
+                            style={{ width: `${pct}%`, backgroundColor: nation.color || "#666" }}
+                          />
+                        </div>
+                        <span className="text-muted-foreground w-16 text-right tabular-nums">
+                          {cityCount}개 ({pct}%)
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* City grid visualization */}
+                <div className="mt-3 flex flex-wrap gap-0.5">
+                  {cities
+                    .sort((a, b) => (a.region ?? 0) - (b.region ?? 0) || (b.level ?? 0) - (a.level ?? 0))
+                    .map((city) => {
+                      const nat = nations.find((n) => n.id === city.nationId);
+                      return (
+                        <div
+                          key={city.id}
+                          className="size-3 rounded-sm border border-muted/30"
+                          style={{ backgroundColor: nat?.color ?? "#333" }}
+                          title={`${city.name} (${nat?.name ?? "공백"})`}
+                        />
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Level progression reference */}
           <Card>
             <CardHeader className="py-2 px-4">

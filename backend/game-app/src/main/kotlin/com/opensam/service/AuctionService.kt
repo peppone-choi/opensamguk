@@ -40,11 +40,17 @@ class AuctionService(
     }
 
     @Transactional
-    fun createAuction(worldId: Long, type: String, sellerId: Long, item: String, amount: Int, minPrice: Int): Message {
+    fun createAuction(worldId: Long, type: String, sellerId: Long, item: String, amount: Int, minPrice: Int, finishBidAmount: Int? = null, closeTurnCnt: Int? = null): Message {
         val seller = generalRepository.findById(sellerId).orElse(null)
             ?: throw IllegalArgumentException("장수를 찾을 수 없습니다")
         if (seller.worldId != worldId) throw IllegalArgumentException("잘못된 월드 장수입니다")
         val auction = createAuction(sellerId, if (item.isBlank()) type else item, minPrice)
+        // Store additional resource auction fields in metadata
+        if (finishBidAmount != null) auction.meta["finishBidAmount"] = finishBidAmount
+        if (closeTurnCnt != null) auction.meta["closeTurnCnt"] = closeTurnCnt
+        if (amount > 0) auction.meta["amount"] = amount
+        auction.meta["subType"] = item
+        auctionRepository.save(auction)
         return toMessage(auction)
     }
 
