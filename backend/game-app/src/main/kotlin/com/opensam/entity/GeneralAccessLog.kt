@@ -21,4 +21,10 @@ class GeneralAccessLog(
 
     @Column(name = "ip_address")
     var ipAddress: String? = null,
+
+    @Column(nullable = false)
+    var refresh: Int = 0,
+
+    @Column(name = "refresh_score_total", nullable = false)
+    var refreshScoreTotal: Int = 0,
 )

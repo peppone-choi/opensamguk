@@ -16,6 +16,7 @@ import com.opensam.service.AuctionService
 import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
 import com.opensam.service.TournamentService
+import com.opensam.service.TrafficService
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -56,6 +57,7 @@ class TurnService(
     private val yearbookService: YearbookService,
     private val auctionService: AuctionService,
     private val tournamentService: TournamentService,
+    private val trafficSnapshotRepository: com.opensam.repository.TrafficSnapshotRepository,
     private val generalAI: GeneralAI,
     private val nationAI: NationAI,
     private val modifierService: ModifierService,
@@ -96,6 +98,23 @@ class TurnService(
                 yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
             } catch (e: Exception) {
                 logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
+            }
+
+            // 트래픽 스냅샷 기록 (legacy recentTraffic 패러티)
+            try {
+                val onlineCount = generalRepository.findByWorldId(worldId).count { it.userId != null }
+                val snapshot = com.opensam.entity.TrafficSnapshot(
+                    worldId = worldId,
+                    year = world.currentYear,
+                    month = world.currentMonth,
+                    refresh = (world.meta["refresh"] as? Number)?.toInt() ?: 0,
+                    online = onlineCount,
+                )
+                trafficSnapshotRepository.save(snapshot)
+                // Reset per-turn refresh counter
+                world.meta["refresh"] = 0
+            } catch (e: Exception) {
+                logger.warn("TrafficSnapshot recording failed: ${e.message}")
             }
 
             // 1월: 연초 통계 (legacy checkStatistic 패러티)

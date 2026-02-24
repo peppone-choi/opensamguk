@@ -122,6 +122,7 @@ export default function HistoryPage() {
     new Set(["war", "diplomacy", "nation", "general", "city", "other"]),
   );
   const [tab, setTab] = useState("timeline");
+  const [historyView, setHistoryView] = useState<"all" | "global" | "action">("all");
 
   // Map snapshot state (맵 재현/스냅샷 브라우징)
   const { nations, cities, mapData, loadAll } = useGameStore();
@@ -227,6 +228,14 @@ export default function HistoryPage() {
     setSelectedMonth(currentWorld.currentMonth);
   }, [currentWorld]);
 
+  // Auto-load when prev/next buttons change year/month
+  useEffect(() => {
+    if (selectedYear != null && selectedMonth != null && currentWorld) {
+      loadByYearMonth();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedYear, selectedMonth]);
+
   const toggleFilter = (type: EventType) => {
     setActiveFilters((prev) => {
       const next = new Set(prev);
@@ -248,15 +257,17 @@ export default function HistoryPage() {
     return combined;
   }, [history, records]);
 
-  // Filter + search
+  // Filter + search + history view (중원 정세 vs 장수 동향)
   const filteredEvents = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return allEvents.filter((e) => {
       if (!activeFilters.has(e.type)) return false;
       if (q && !e.text.toLowerCase().includes(q)) return false;
+      if (historyView === "global" && e.type === "general") return false;
+      if (historyView === "action" && e.type !== "general") return false;
       return true;
     });
-  }, [allEvents, activeFilters, searchQuery]);
+  }, [allEvents, activeFilters, searchQuery, historyView]);
 
   // Group by date label
   const grouped = useMemo(() => {
@@ -443,12 +454,40 @@ export default function HistoryPage() {
             </div>
             <Button
               size="sm"
+              variant="outline"
+              disabled={filterLoading || selectedYear == null || selectedMonth == null}
+              onClick={() => {
+                if (selectedYear == null || selectedMonth == null) return;
+                let y = selectedYear, m = selectedMonth - 1;
+                if (m < 1) { m = 12; y -= 1; }
+                if (y >= startYear) { setSelectedYear(y); setSelectedMonth(m); }
+              }}
+            >
+              ◀ 이전달
+            </Button>
+            <Button
+              size="sm"
               onClick={loadByYearMonth}
               disabled={
                 filterLoading || selectedYear == null || selectedMonth == null
               }
             >
               {filterLoading ? "조회 중..." : "기록 조회"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={filterLoading || selectedYear == null || selectedMonth == null}
+              onClick={() => {
+                if (selectedYear == null || selectedMonth == null || !currentWorld) return;
+                let y = selectedYear, m = selectedMonth + 1;
+                if (m > 12) { m = 1; y += 1; }
+                if (y < currentWorld.currentYear || (y === currentWorld.currentYear && m <= currentWorld.currentMonth)) {
+                  setSelectedYear(y); setSelectedMonth(m);
+                }
+              }}
+            >
+              다음달 ▶
             </Button>
           </div>
           {yearbook && (
@@ -502,6 +541,20 @@ export default function HistoryPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* History view toggle (legacy parity: 중원 정세 vs 장수 동향) */}
+      <div className="flex gap-1.5">
+        {(["all", "global", "action"] as const).map((view) => (
+          <Button
+            key={view}
+            size="sm"
+            variant={historyView === view ? "default" : "outline"}
+            onClick={() => setHistoryView(view)}
+          >
+            {view === "all" ? "전체" : view === "global" ? "중원 정세" : "장수 동향"}
+          </Button>
+        ))}
+      </div>
 
       {/* Search + filters */}
       <Card>
