@@ -1,7 +1,6 @@
 package com.opensam.gateway.controller
 
 import com.opensam.gateway.service.AuthService
-import com.opensam.shared.dto.AuthResponse
 import com.opensam.shared.dto.LoginRequest
 import com.opensam.shared.dto.RegisterRequest
 import jakarta.validation.Valid
@@ -11,6 +10,20 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+
+
+data class OAuthLoginRequest(
+    val provider: String,
+    val code: String,
+    val redirectUri: String,
+)
+
+data class OAuthRegisterRequest(
+    val provider: String,
+    val code: String,
+    val redirectUri: String,
+    val displayName: String? = null,
+)
 
 @RestController
 @RequestMapping("/api/auth")
@@ -32,6 +45,29 @@ class AuthController(
             ResponseEntity.ok(authService.login(request))
         } catch (e: IllegalStateException) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        }
+    }
+
+    @PostMapping("/oauth/login")
+    fun oauthLogin(@RequestBody request: OAuthLoginRequest): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.ok(authService.oauthLogin(request.provider, request.code, request.redirectUri))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "bad request")))
+        }
+    }
+
+    @PostMapping("/oauth/register")
+    fun oauthRegister(@RequestBody request: OAuthRegisterRequest): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.status(HttpStatus.CREATED)
+                .body(authService.oauthRegister(request.provider, request.code, request.redirectUri, request.displayName))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("error" to (e.message ?: "bad request")))
         }
     }
 }
