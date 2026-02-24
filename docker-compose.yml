@@ -33,6 +33,31 @@ services:
       timeout: 5s
       retries: 5
 
+  bootstrap:
+    image: ghcr.io/peppone-choi/opensam-game:${TAG:-latest}
+    container_name: opensam-bootstrap
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-opensam}
+      DB_USER: ${DB_USER:-opensam}
+      DB_PASSWORD: ${DB_PASSWORD:-opensam123}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    command:
+      - "--spring.main.web-application-type=none"
+      - "--spring.task.scheduling.enabled=false"
+      - "--app.bootstrap.exit-on-ready=true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - opensam-net
+    restart: "no"
+
   gateway:
     image: ghcr.io/peppone-choi/opensam-gateway:${TAG:-latest}
     container_name: opensam-gateway
@@ -47,11 +72,18 @@ services:
       REDIS_PORT: 6379
       DOCKER_NETWORK: opensam-net
       DOCKER_IMAGE_PREFIX: ghcr.io/peppone-choi/opensam-game
+      ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-true}
+      ADMIN_LOGIN_ID: ${ADMIN_LOGIN_ID:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-CHANGE_ME_ADMIN_PASSWORD}
+      ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME:-관리자}
+      ADMIN_GRADE: ${ADMIN_GRADE:-5}
     ports:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
+      bootstrap:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:

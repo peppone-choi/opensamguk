@@ -7,6 +7,7 @@ import { mapRecentApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
 import { formatLog } from "@/lib/formatLog";
 import type { CityConst, PublicCachedMapHistory } from "@/types";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const MAP_THEMES: { key: MapTheme; label: string; bg: string; line: string; text
 type MapLayer = "nations" | "troops" | "supply" | "terrain";
 
 interface CityTooltip {
+  cityId: number;
   cityName: string;
   nationName: string;
   nationColor: string;
@@ -50,10 +52,20 @@ const MAP_HEIGHT = 900;
 const CITY_RADIUS = 14;
 
 export default function MapPage() {
+  const router = useRouter();
   const { currentWorld } = useWorldStore();
   const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
   const [tooltip, setTooltip] = useState<CityTooltip | null>(null);
   const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
+  // Auto-detect season from world month (legacy: spring 1-3, summer 4-6, autumn 7-9, winter 10-12)
+  const autoTheme = useMemo<MapTheme>(() => {
+    const month = (currentWorld?.config as Record<string, number>)?.month;
+    if (!month) return "default";
+    if (month <= 3) return "spring";
+    if (month <= 6) return "summer";
+    if (month <= 9) return "autumn";
+    return "winter";
+  }, [currentWorld]);
   const [theme, setTheme] = useState<MapTheme>("default");
   const [layers, setLayers] = useState<Set<MapLayer>>(new Set(["nations", "troops"]));
   const [historyBrowseIdx, setHistoryBrowseIdx] = useState<number | null>(null);
@@ -228,6 +240,7 @@ export default function MapPage() {
     }));
 
     setTooltip({
+      cityId: cc.id,
       cityName: cc.name,
       nationName: nation?.name ?? "공백지",
       nationColor: nation?.color ?? "#555",
@@ -262,6 +275,14 @@ export default function MapPage() {
       {/* Theme & Layer Controls */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted-foreground">테마:</span>
+        <Button
+          size="sm"
+          variant={theme === "default" && autoTheme !== "default" ? "default" : "outline"}
+          className="h-6 px-2 text-xs"
+          onClick={() => setTheme(autoTheme)}
+        >
+          자동({MAP_THEMES.find(t => t.key === autoTheme)?.label ?? "기본"})
+        </Button>
         {MAP_THEMES.map((t) => (
           <Button
             key={t.key}
@@ -466,6 +487,18 @@ export default function MapPage() {
             <div className="text-gray-400">수비: {tooltip.def}</div>
             <div className="text-gray-400">성벽: {tooltip.wall}</div>
             <div className="text-gray-400">민심: {tooltip.trust}</div>
+
+            {/* Link to city detail */}
+            <button
+              type="button"
+              className="w-full text-center text-xs text-cyan-400 hover:text-cyan-300 border border-gray-600 rounded px-2 py-1 mt-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/city?id=${tooltip.cityId}`);
+              }}
+            >
+              도시 상세 보기
+            </button>
 
             {/* Generals in this city */}
             {tooltip.generals.length > 0 && (

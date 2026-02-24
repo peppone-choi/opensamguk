@@ -6,6 +6,8 @@ interface User {
   loginId: string;
   displayName: string;
   role: string;
+  picture?: string;
+  oauthProviders?: import("@/types").OAuthProviderInfo[];
 }
 
 interface LoginResult {

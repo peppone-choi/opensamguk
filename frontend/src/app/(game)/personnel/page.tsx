@@ -31,6 +31,7 @@ import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
 import { ErrorState } from "@/components/game/error-state";
 import { GeneralPortrait } from "@/components/game/general-portrait";
+import { formatOfficerLevelText } from "@/lib/game-utils";
 
 export default function PersonnelPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
@@ -204,7 +205,11 @@ export default function PersonnelPage() {
                         {g.name}
                       </div>
                     </TableCell>
-                    <TableCell>{g.officerLevel}</TableCell>
+                    <TableCell>
+                      <span title={`레벨 ${g.officerLevel}`}>
+                        {formatOfficerLevelText(g.officerLevel)}
+                      </span>
+                    </TableCell>
                     <TableCell>{cityMap.get(g.cityId)?.name ?? "-"}</TableCell>
                     <TableCell>
                       <Button
@@ -306,7 +311,7 @@ export default function PersonnelPage() {
                     <TableCell className="text-xs tabular-nums">{g.intel}</TableCell>
                     <TableCell className="text-xs tabular-nums">{g.politics}</TableCell>
                     <TableCell className="text-xs">{cityMap.get(g.cityId)?.name ?? "-"}</TableCell>
-                    <TableCell className="text-xs">{g.officerLevel > 0 ? `Lv${g.officerLevel}` : "-"}</TableCell>
+                    <TableCell className="text-xs">{g.officerLevel > 0 ? formatOfficerLevelText(g.officerLevel) : "-"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

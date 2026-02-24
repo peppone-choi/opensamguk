@@ -11,6 +11,7 @@ import { GeneralPortrait } from "@/components/game/general-portrait";
 import { NationBadge } from "@/components/game/nation-badge";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { CREW_TYPE_NAMES } from "@/lib/game-utils";
 import {
   Table,
   TableBody,
@@ -23,27 +24,31 @@ import {
 type SortKey =
   | "name"
   | "nation"
+  | "city"
   | "totalStats"
   | "leadership"
   | "strength"
   | "intel"
+  | "crew"
   | "experience"
   | "dedication";
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "name", label: "이름" },
   { key: "nation", label: "국가" },
+  { key: "city", label: "도시" },
   { key: "totalStats", label: "종능" },
   { key: "leadership", label: "통솔" },
   { key: "strength", label: "무력" },
   { key: "intel", label: "지력" },
+  { key: "crew", label: "병력" },
   { key: "experience", label: "명성" },
   { key: "dedication", label: "계급" },
 ];
 
 export default function NpcListPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
-  const { generals, nations, loading, loadAll } = useGameStore();
+  const { generals, nations, cities, loading, loadAll } = useGameStore();
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -56,6 +61,11 @@ export default function NpcListPage() {
   const nationMap = useMemo(
     () => new Map(nations.map((n) => [n.id, n])),
     [nations],
+  );
+
+  const cityMap = useMemo(
+    () => new Map(cities.map((c) => [c.id, c])),
+    [cities],
   );
 
   // NPC generals: npcState === 1 (possessed NPCs) plus pool generals (npcState === 0 from select_pool — included if available)
@@ -83,6 +93,12 @@ export default function NpcListPage() {
         const na = nationMap.get(a.nationId)?.name ?? "";
         const nb = nationMap.get(b.nationId)?.name ?? "";
         cmp = na.localeCompare(nb);
+      } else if (sortKey === "city") {
+        const ca = cityMap.get(a.cityId)?.name ?? "";
+        const cb = cityMap.get(b.cityId)?.name ?? "";
+        cmp = ca.localeCompare(cb);
+      } else if (sortKey === "crew") {
+        cmp = a.crew - b.crew;
       } else if (sortKey === "totalStats") {
         const sa = a.leadership + a.strength + a.intel;
         const sb = b.leadership + b.strength + b.intel;
@@ -95,7 +111,7 @@ export default function NpcListPage() {
         cmp = (a[sortKey] as number) - (b[sortKey] as number);
       }
       // name and nation default ascending, numeric defaults descending
-      const isAscDefault = sortKey === "name" || sortKey === "nation";
+      const isAscDefault = sortKey === "name" || sortKey === "nation" || sortKey === "city";
       if (isAscDefault) {
         return sortDir === "asc" ? cmp : -cmp;
       }
@@ -110,7 +126,7 @@ export default function NpcListPage() {
       setSortKey(key);
       // Numeric fields default to descending, text fields to ascending
       setSortDir(
-        key === "name" || key === "nation" ? "asc" : "desc",
+        key === "name" || key === "nation" || key === "city" ? "asc" : "desc",
       );
     }
   };
@@ -195,6 +211,12 @@ export default function NpcListPage() {
                 >
                   국가{arrow("nation")}
                 </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("city")}
+                >
+                  도시{arrow("city")}
+                </TableHead>
                 <TableHead>성격</TableHead>
                 <TableHead>특기</TableHead>
                 <TableHead
@@ -221,6 +243,13 @@ export default function NpcListPage() {
                 >
                   지력{arrow("intel")}
                 </TableHead>
+                <TableHead
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => handleSortChange("crew")}
+                >
+                  병력{arrow("crew")}
+                </TableHead>
+                <TableHead>병종</TableHead>
                 <TableHead
                   className="cursor-pointer hover:text-foreground"
                   onClick={() => handleSortChange("experience")}
@@ -313,15 +342,20 @@ export default function NpcListPage() {
                       <NationBadge name={nation?.name} color={nation?.color} />
                     </TableCell>
                     <TableCell className="text-xs">
+                      {cityMap.get(g.cityId)?.name ?? "-"}
+                    </TableCell>
+                    <TableCell className="text-xs">
                       {g.personalCode ?? "-"}
                     </TableCell>
                     <TableCell className="text-xs whitespace-nowrap">
                       {specialFull}
                     </TableCell>
-                    <TableCell className="font-medium">{totalStats}</TableCell>
+                    <TableCell className="font-medium tabular-nums">{totalStats}</TableCell>
                     <TableCell>{g.leadership}</TableCell>
                     <TableCell>{g.strength}</TableCell>
                     <TableCell>{g.intel}</TableCell>
+                    <TableCell className="tabular-nums">{g.crew.toLocaleString()}</TableCell>
+                    <TableCell className="text-xs">{CREW_TYPE_NAMES[g.crewType] ?? "-"}</TableCell>
                     <TableCell>{g.experience.toLocaleString()}</TableCell>
                     <TableCell>{g.dedication.toLocaleString()}</TableCell>
                   </TableRow>

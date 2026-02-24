@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
-import { messageApi } from "@/lib/gameApi";
+import { messageApi, diplomacyApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
 import type { MailboxType, Message } from "@/types";
 import { ChevronDown, Mail, PenLine, Reply, Send, Trash2 } from "lucide-react";
@@ -206,6 +206,16 @@ export default function MessagesPage() {
     }
   };
 
+  const handleDiplomacyResponse = async (messageId: number, action: string, accept: boolean) => {
+    if (!currentWorld) return;
+    try {
+      await diplomacyApi.respond(currentWorld.id, messageId, action, accept);
+      await fetchMessages();
+    } catch {
+      /* ignore */
+    }
+  };
+
   const handleSend = async () => {
     if (!currentWorld || !myGeneral || !content.trim()) return;
 
@@ -355,13 +365,25 @@ export default function MessagesPage() {
                   className="h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] md:text-sm"
                 >
                   <option value="">선택...</option>
-                  {generals
-                    .filter((g) => g.id !== myGeneral?.id)
-                    .map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
+                  {Array.from(
+                    generals
+                      .filter((g) => g.id !== myGeneral?.id)
+                      .reduce((map, g) => {
+                        const nation = nationMap.get(g.nationId);
+                        const key = nation?.name ?? "재야";
+                        if (!map.has(key)) map.set(key, []);
+                        map.get(key)!.push(g);
+                        return map;
+                      }, new Map<string, typeof generals>()),
+                  ).map(([nationName, gens]) => (
+                    <optgroup key={nationName} label={nationName}>
+                      {gens.map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
             )}
@@ -526,6 +548,27 @@ export default function MessagesPage() {
                   <p className="text-sm">
                     {(m.payload.content as string) ?? JSON.stringify(m.payload)}
                   </p>
+                  {/* Diplomacy action buttons (수락/거절) */}
+                  {m.mailboxType === "DIPLOMACY" && typeof m.payload.action === "string" && (
+                    <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="bg-green-700 hover:bg-green-600 text-xs h-7"
+                        onClick={() => handleDiplomacyResponse(m.id, m.payload.action as string, true)}
+                      >
+                        수락
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="text-xs h-7"
+                        onClick={() => handleDiplomacyResponse(m.id, m.payload.action as string, false)}
+                      >
+                        거절
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );

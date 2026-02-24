@@ -87,11 +87,15 @@ export default function MyPage() {
   const [defenceTrain, setDefenceTrain] = useState(80);
   const [tournamentState, setTournamentState] = useState(0);
   const [potionThreshold, setPotionThreshold] = useState(999);
+  const [autoNationTurn, setAutoNationTurn] = useState(false);
   const [preRiseDelete, setPreRiseDelete] = useState(false);
   const [preOpenDelete, setPreOpenDelete] = useState(false);
   const [borderReturn, setBorderReturn] = useState(false);
   const [customCss, setCustomCss] = useState("");
   const [cssPreview, setCssPreview] = useState(false);
+  const [screenMode, setScreenMode] = useState<"auto" | "pc" | "mobile">(
+    () => (typeof window !== "undefined" ? (localStorage.getItem("sam_screenMode") as "auto" | "pc" | "mobile") ?? "auto" : "auto")
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -108,6 +112,7 @@ export default function MyPage() {
     setDefenceTrain(myGeneral.defenceTrain ?? 80);
     setTournamentState(myGeneral.tournamentState ?? 0);
     setPotionThreshold((myGeneral.meta?.potionThreshold as number) ?? 100);
+    setAutoNationTurn((myGeneral.meta?.autoNationTurn as boolean) ?? false);
     setPreRiseDelete((myGeneral.meta?.preRiseDelete as boolean) ?? false);
     setPreOpenDelete((myGeneral.meta?.preOpenDelete as boolean) ?? false);
     setBorderReturn((myGeneral.meta?.borderReturn as boolean) ?? false);
@@ -159,6 +164,7 @@ export default function MyPage() {
         defenceTrain,
         tournamentState,
         potionThreshold,
+        autoNationTurn,
         preRiseDelete,
         preOpenDelete,
         borderReturn,
@@ -170,7 +176,7 @@ export default function MyPage() {
     } finally {
       setSaving(false);
     }
-  }, [defenceTrain, tournamentState, potionThreshold, preRiseDelete, preOpenDelete, borderReturn, customCss]);
+  }, [defenceTrain, tournamentState, potionThreshold, autoNationTurn, preRiseDelete, preOpenDelete, borderReturn, customCss]);
 
   const handleVacation = useCallback(async () => {
     if (!confirm("휴가 상태를 전환하시겠습니까?")) return;
@@ -718,6 +724,56 @@ export default function MyPage() {
                   </select>
                 </div>
 
+                {/* Auto Nation Turn */}
+                <div className="space-y-1">
+                  <label className="text-sm text-muted-foreground">
+                    자동 국가턴
+                  </label>
+                  <select
+                    value={autoNationTurn ? "1" : "0"}
+                    onChange={(e) => setAutoNationTurn(e.target.value === "1")}
+                    className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
+                  >
+                    <option value="0">사용 안함</option>
+                    <option value="1">자동 실행</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    국가 턴을 자동으로 실행합니다 (수뇌 전용)
+                  </p>
+                </div>
+
+                {/* Screen Mode */}
+                <div className="space-y-1">
+                  <label className="text-sm text-muted-foreground">
+                    화면 모드
+                  </label>
+                  <div className="flex gap-3">
+                    {([
+                      { value: "auto", label: "자동" },
+                      { value: "pc", label: "PC" },
+                      { value: "mobile", label: "모바일" },
+                    ] as const).map((opt) => (
+                      <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="screenMode"
+                          value={opt.value}
+                          checked={screenMode === opt.value}
+                          onChange={() => {
+                            setScreenMode(opt.value);
+                            localStorage.setItem("sam_screenMode", opt.value);
+                          }}
+                          className="accent-cyan-500"
+                        />
+                        <span className="text-sm">{opt.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    UI 레이아웃 모드를 선택합니다. 자동 시 기기에 따라 전환됩니다.
+                  </p>
+                </div>
+
                 {/* Potion Threshold */}
                 <div className="space-y-1">
                   <label className="text-sm text-muted-foreground">
@@ -838,6 +894,54 @@ export default function MyPage() {
                     className="w-full"
                   >
                     휴가 전환
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={async () => {
+                      if (!confirm("거병 이후 장수를 삭제할 수 없게됩니다. 거병하시겠습니까?")) return;
+                      try {
+                        await accountApi.buildNationCandidate();
+                        toast.success("거병하였습니다.");
+                        if (currentWorld) fetchMyGeneral(currentWorld.id);
+                      } catch {
+                        toast.error("거병에 실패했습니다.");
+                      }
+                    }}
+                  >
+                    거병 (건국 후보)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={async () => {
+                      if (!confirm("아군 접경으로 이동할까요?")) return;
+                      try {
+                        await accountApi.instantRetreat();
+                        toast.success("접경으로 귀환하였습니다.");
+                        if (currentWorld) fetchMyGeneral(currentWorld.id);
+                      } catch {
+                        toast.error("접경 귀환에 실패했습니다.");
+                      }
+                    }}
+                  >
+                    접경 귀환
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={async () => {
+                      if (!confirm("정말로 삭제하시겠습니까?")) return;
+                      try {
+                        await accountApi.dieOnPrestart();
+                        toast.success("장수가 삭제되었습니다.");
+                        router.push("/");
+                      } catch {
+                        toast.error("삭제에 실패했습니다.");
+                      }
+                    }}
+                  >
+                    사전거병 삭제
                   </Button>
                 </CardContent>
               </Card>

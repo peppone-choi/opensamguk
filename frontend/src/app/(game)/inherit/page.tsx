@@ -9,6 +9,8 @@ import {
   Swords,
   BarChart3,
   Crown,
+  ChevronDown,
+  Shield,
 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,14 +21,82 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useWorldStore } from "@/stores/worldStore";
 import { inheritanceApi, cityApi } from "@/lib/gameApi";
 import { toast } from "sonner";
-import type { InheritanceInfo, City } from "@/types";
+import type {
+  InheritanceInfo,
+  InheritanceLogEntry,
+  InheritBuffType,
+  InheritanceActionCost,
+  City,
+} from "@/types";
 
-/* ── Constants ── */
+/* ── Point breakdown category labels ── */
 
-const BUFF_LEVEL_COSTS = [100, 200, 400, 800, 1600];
-const MAX_BUFF_LEVEL = 5;
+const POINT_CATEGORY_LABELS: Record<string, string> = {
+  previous: "기존 포인트",
+  lived_month: "생존",
+  max_belong: "최대 임관년 수",
+  max_domestic_critical: "최대 연속 내정 성공",
+  active_action: "능동 행동 수",
+  combat: "전투 횟수",
+  sabotage: "계략 성공 횟수",
+  unifier: "천통 기여",
+  dex: "숙련도",
+  tournament: "토너먼트",
+  betting: "베팅 당첨",
+};
 
-const BUFF_LIST = [
+/* ── Combat buff definitions ── */
+
+const COMBAT_BUFF_LIST: {
+  code: InheritBuffType;
+  label: string;
+  info: string;
+}[] = [
+  {
+    code: "warAvoidRatio",
+    label: "회피 확률 증가",
+    info: "전투 시 회피 확률이 1%p ~ 5%p 증가합니다.",
+  },
+  {
+    code: "warCriticalRatio",
+    label: "필살 확률 증가",
+    info: "전투 시 필살 확률이 1%p ~ 5%p 증가합니다.",
+  },
+  {
+    code: "warMagicTrialProb",
+    label: "계략 시도 확률 증가",
+    info: "전투 시 계략을 시도할 확률이 1%p ~ 5%p 증가합니다.",
+  },
+  {
+    code: "warAvoidRatioOppose",
+    label: "상대 회피 확률 감소",
+    info: "전투 시 상대의 회피 확률이 1%p ~ 5%p 감소합니다.",
+  },
+  {
+    code: "warCriticalRatioOppose",
+    label: "상대 필살 확률 감소",
+    info: "전투 시 상대의 필살 확률이 1%p ~ 5%p 감소합니다.",
+  },
+  {
+    code: "warMagicTrialProbOppose",
+    label: "상대 계략 시도 확률 감소",
+    info: "전투 시 상대의 계략 시도 확률이 1%p ~ 5%p 감소합니다.",
+  },
+  {
+    code: "domesticSuccessProb",
+    label: "내정 성공 확률 증가",
+    info: "내정의 성공 확률이 1%p ~ 5%p 증가합니다.",
+  },
+  {
+    code: "domesticFailProb",
+    label: "내정 실패 확률 감소",
+    info: "내정의 실패 확률이 1%p ~ 5%p 감소합니다.",
+  },
+];
+
+/* ── Legacy resource buff list ── */
+
+const RESOURCE_BUFF_LIST = [
   { code: "leadership", label: "통솔 +1/레벨", type: "stat" },
   { code: "strength", label: "무력 +1/레벨", type: "stat" },
   { code: "intel", label: "지력 +1/레벨", type: "stat" },
@@ -38,33 +108,10 @@ const BUFF_LIST = [
   { code: "exp", label: "초기 경험 +100/레벨", type: "resource" },
 ];
 
-const WAR_SPECIALS = [
-  "기병", "보병", "궁병", "필살", "회피", "화공", "기습", "저격",
-  "매복", "방어", "돌격", "반계", "신산", "귀모", "수군", "연사",
-  "공성", "위압", "격노", "분투", "용병", "철벽",
-];
+/* ── Fallback constants (overridden by server) ── */
 
-const UNIQUE_ITEMS = [
-  { code: "unique_sword_1", name: "청룡언월도" },
-  { code: "unique_sword_2", name: "사모" },
-  { code: "unique_sword_3", name: "방천화극" },
-  { code: "unique_book_1", name: "맹덕신서" },
-  { code: "unique_book_2", name: "태평요술" },
-  { code: "unique_book_3", name: "둔갑천서" },
-  { code: "unique_horse_1", name: "적토마" },
-  { code: "unique_horse_2", name: "절영" },
-  { code: "unique_horse_3", name: "적로" },
-  { code: "unique_item_1", name: "옥새" },
-  { code: "unique_item_2", name: "의형제술" },
-  { code: "unique_item_3", name: "칠성검" },
-];
-
-const INHERIT_SPECIAL_COST = 500;
-const INHERIT_CITY_COST = 300;
-const RANDOM_UNIQUE_COST = 300;
-const STAT_RESET_COST = 500;
-const CHECK_OWNER_COST = 50;
-const UNIQUE_AUCTION_MIN_BID = 500;
+const FALLBACK_BUFF_LEVEL_COSTS = [0, 100, 200, 400, 800, 1600];
+const MAX_BUFF_LEVEL = 5;
 
 // Fibonacci cost for turn reset / special war reset
 function fibonacciCost(base: number, count: number): number {
@@ -79,9 +126,6 @@ function fibonacciCost(base: number, count: number): number {
   return b;
 }
 
-const TURN_RESET_BASE = 100;
-const SPECIAL_WAR_RESET_BASE = 200;
-
 export default function InheritPage() {
   const { currentWorld } = useWorldStore();
   const [info, setInfo] = useState<InheritanceInfo | null>(null);
@@ -90,18 +134,43 @@ export default function InheritPage() {
   const [cities, setCities] = useState<City[]>([]);
   const [selectedCity, setSelectedCity] = useState("");
 
+  // Combat buffs
+  const [combatBuffLevels, setCombatBuffLevels] = useState<
+    Record<string, number>
+  >({});
+
   // Stat reset
   const [statLeadership, setStatLeadership] = useState(0);
   const [statStrength, setStatStrength] = useState(0);
   const [statIntel, setStatIntel] = useState(0);
+  const [bonusStat, setBonusStat] = useState<[number, number, number]>([
+    0, 0, 0,
+  ]);
 
-  // Owner check
-  const [ownerQuery, setOwnerQuery] = useState("");
+  // Owner check (by ID dropdown)
+  const [targetOwnerId, setTargetOwnerId] = useState<string>("");
   const [ownerResult, setOwnerResult] = useState<string | null>(null);
 
   // Unique auction
   const [selectedUnique, setSelectedUnique] = useState("");
-  const [auctionBid, setAuctionBid] = useState(UNIQUE_AUCTION_MIN_BID);
+  const [auctionBid, setAuctionBid] = useState(500);
+
+  // Logs with pagination
+  const [allLogs, setAllLogs] = useState<InheritanceLogEntry[]>([]);
+  const [lastLogID, setLastLogID] = useState<number | null>(null);
+  const [loadingMoreLogs, setLoadingMoreLogs] = useState(false);
+
+  // Derived costs from server
+  const actionCost: InheritanceActionCost = info?.inheritActionCost ?? {
+    buff: FALLBACK_BUFF_LEVEL_COSTS,
+    resetTurnTime: fibonacciCost(100, info?.turnResetCount ?? 0),
+    resetSpecialWar: fibonacciCost(200, info?.specialWarResetCount ?? 0),
+    randomUnique: 300,
+    nextSpecial: 500,
+    minSpecificUnique: 500,
+    checkOwner: 50,
+    bornStatPoint: 500,
+  };
 
   const fetchInfo = useCallback(async () => {
     if (!currentWorld) return;
@@ -110,8 +179,30 @@ export default function InheritPage() {
         inheritanceApi.getInfo(currentWorld.id),
         cityApi.listByWorld(currentWorld.id),
       ]);
-      setInfo(infoRes.data);
+      const data = infoRes.data;
+      setInfo(data);
       setCities(cityRes.data);
+
+      // Initialize combat buff levels from server
+      if (data.inheritBuff) {
+        setCombatBuffLevels({ ...data.inheritBuff });
+      }
+
+      // Initialize stat reset from currentStat
+      if (data.currentStat) {
+        setStatLeadership(data.currentStat.leadership);
+        setStatStrength(data.currentStat.strength);
+        setStatIntel(data.currentStat.intel);
+      }
+
+      // Initialize logs
+      if (data.log && data.log.length > 0) {
+        setAllLogs(data.log);
+        const minId = Math.min(
+          ...data.log.map((l) => l.id ?? Infinity),
+        );
+        if (minId !== Infinity) setLastLogID(minId);
+      }
     } finally {
       setLoading(false);
     }
@@ -121,6 +212,7 @@ export default function InheritPage() {
     fetchInfo();
   }, [fetchInfo]);
 
+  /* ── Resource buff buy (old system) ── */
   const handleBuy = async (buffCode: string) => {
     if (!currentWorld || !info) return;
     const currentLevel = info.buffs[buffCode] ?? 0;
@@ -128,7 +220,8 @@ export default function InheritPage() {
       toast.error("최대 레벨에 도달했습니다");
       return;
     }
-    const cost = BUFF_LEVEL_COSTS[currentLevel];
+    const cost =
+      actionCost.buff[currentLevel + 1] - actionCost.buff[currentLevel];
     if (info.points < cost) {
       toast.error(`포인트 부족 (필요: ${cost})`);
       return;
@@ -142,15 +235,47 @@ export default function InheritPage() {
     }
   };
 
+  /* ── Combat buff buy ── */
+  const handleBuyCombatBuff = async (buffCode: InheritBuffType) => {
+    if (!currentWorld || !info) return;
+    const prevLevel = (info.inheritBuff?.[buffCode] ?? 0);
+    const targetLevel = combatBuffLevels[buffCode] ?? 0;
+    if (targetLevel <= prevLevel) return;
+
+    const cost =
+      actionCost.buff[targetLevel] - actionCost.buff[prevLevel];
+    if (info.points < cost) {
+      toast.error(`포인트 부족 (필요: ${cost})`);
+      return;
+    }
+    if (
+      !confirm(
+        `${COMBAT_BUFF_LIST.find((b) => b.code === buffCode)?.label}을(를) ${targetLevel}등급으로 올릴까요? ${cost} 포인트가 소모됩니다.`,
+      )
+    )
+      return;
+    try {
+      await inheritanceApi.buyInheritBuff(currentWorld.id, {
+        type: buffCode,
+        level: targetLevel,
+      });
+      toast.success("버프 구매 완료");
+      fetchInfo();
+    } catch {
+      toast.error("구매 실패");
+    }
+  };
+
+  /* ── War special ── */
   const handleSetSpecial = async () => {
     if (!currentWorld || !info || !selectedSpecial) return;
-    if (info.points < INHERIT_SPECIAL_COST) {
-      toast.error(`포인트 부족 (필요: ${INHERIT_SPECIAL_COST})`);
+    if (info.points < actionCost.nextSpecial) {
+      toast.error(`포인트 부족 (필요: ${actionCost.nextSpecial})`);
       return;
     }
     try {
       await inheritanceApi.setSpecial(currentWorld.id, selectedSpecial);
-      toast.success(`전투특기 지정: ${selectedSpecial}`);
+      toast.success(`전투특기 지정 완료`);
       setSelectedSpecial("");
       fetchInfo();
     } catch {
@@ -158,12 +283,9 @@ export default function InheritPage() {
     }
   };
 
+  /* ── City ── */
   const handleSetCity = async () => {
     if (!currentWorld || !info || !selectedCity) return;
-    if (info.points < INHERIT_CITY_COST) {
-      toast.error(`포인트 부족 (필요: ${INHERIT_CITY_COST})`);
-      return;
-    }
     try {
       await inheritanceApi.setCity(currentWorld.id, Number(selectedCity));
       const cityName = cities.find((c) => c.id === Number(selectedCity))?.name;
@@ -175,14 +297,8 @@ export default function InheritPage() {
     }
   };
 
-  const turnResetCost = fibonacciCost(
-    TURN_RESET_BASE,
-    info?.turnResetCount ?? 0,
-  );
-  const specialWarResetCost = fibonacciCost(
-    SPECIAL_WAR_RESET_BASE,
-    info?.specialWarResetCount ?? 0,
-  );
+  const turnResetCost = actionCost.resetTurnTime;
+  const specialWarResetCost = actionCost.resetSpecialWar;
 
   const handleResetTurn = async () => {
     if (!currentWorld || !info) return;
@@ -203,12 +319,14 @@ export default function InheritPage() {
 
   const handleBuyRandomUnique = async () => {
     if (!currentWorld || !info) return;
-    if (info.points < RANDOM_UNIQUE_COST) {
-      toast.error(`포인트 부족 (필요: ${RANDOM_UNIQUE_COST})`);
+    if (info.points < actionCost.randomUnique) {
+      toast.error(`포인트 부족 (필요: ${actionCost.randomUnique})`);
       return;
     }
     if (
-      !confirm(`랜덤 유니크 아이템을 획득하시겠습니까? (비용: ${RANDOM_UNIQUE_COST}P)`)
+      !confirm(
+        `랜덤 유니크 아이템을 획득하시겠습니까? (비용: ${actionCost.randomUnique}P)`,
+      )
     )
       return;
     try {
@@ -241,54 +359,69 @@ export default function InheritPage() {
     }
   };
 
+  /* ── Stat reset with inheritBonusStat ── */
+  const bonusStatTotal = bonusStat[0] + bonusStat[1] + bonusStat[2];
+  const requiredResetStatPoint =
+    bonusStatTotal > 0 ? actionCost.bornStatPoint : 0;
+
   const handleResetStats = async () => {
     if (!currentWorld || !info) return;
-    const total = statLeadership + statStrength + statIntel;
-    if (total <= 0) {
-      toast.error("능력치를 입력해주세요");
-      return;
-    }
-    if (info.points < STAT_RESET_COST) {
-      toast.error(`포인트 부족 (필요: ${STAT_RESET_COST})`);
+    if (requiredResetStatPoint > 0 && info.points < requiredResetStatPoint) {
+      toast.error(`포인트 부족 (필요: ${requiredResetStatPoint})`);
       return;
     }
     if (
       !confirm(
-        `능력치를 재분배하시겠습니까?\n통솔: ${statLeadership}, 무력: ${statStrength}, 지력: ${statIntel}\n(비용: ${STAT_RESET_COST}P)`,
+        `능력치를 초기화 하시겠습니까? 시즌마다 한번만 가능합니다. 필요 포인트: ${requiredResetStatPoint}`,
       )
     )
       return;
     try {
-      await inheritanceApi.resetStats(currentWorld.id, {
+      const payload: {
+        leadership: number;
+        strength: number;
+        intel: number;
+        inheritBonusStat?: [number, number, number];
+      } = {
         leadership: statLeadership,
         strength: statStrength,
         intel: statIntel,
-      });
-      toast.success("능력치 재분배 완료");
-      setStatLeadership(0);
-      setStatStrength(0);
-      setStatIntel(0);
+      };
+      if (bonusStatTotal > 0) {
+        payload.inheritBonusStat = bonusStat;
+      }
+      await inheritanceApi.resetStats(currentWorld.id, payload);
+      toast.success("능력치 초기화 완료");
       fetchInfo();
     } catch {
-      toast.error("능력치 재분배 실패");
+      toast.error("능력치 초기화 실패");
     }
   };
 
+  /* ── Owner check by ID ── */
   const handleCheckOwner = async () => {
-    if (!currentWorld || !ownerQuery.trim()) return;
-    if (!info || info.points < CHECK_OWNER_COST) {
-      toast.error(`포인트 부족 (필요: ${CHECK_OWNER_COST})`);
+    if (!currentWorld || !targetOwnerId) return;
+    if (!info || info.points < actionCost.checkOwner) {
+      toast.error(`포인트 부족 (필요: ${actionCost.checkOwner})`);
       return;
     }
+    const targetName =
+      info.availableTargetGeneral?.[Number(targetOwnerId)] ?? targetOwnerId;
+    if (
+      !confirm(
+        `${targetName}의 소유자를 찾겠습니까? 대상에게도 알림이 전송됩니다.`,
+      )
+    )
+      return;
     try {
       const { data } = await inheritanceApi.checkOwner(
         currentWorld.id,
-        ownerQuery.trim(),
+        Number(targetOwnerId),
       );
       if (data.found) {
-        setOwnerResult(`'${ownerQuery}' 장수의 소유주: ${data.ownerName}`);
+        setOwnerResult(`'${targetName}' 장수의 소유주: ${data.ownerName}`);
       } else {
-        setOwnerResult(`'${ownerQuery}' 장수를 찾을 수 없습니다.`);
+        setOwnerResult(`'${targetName}' 장수를 찾을 수 없습니다.`);
       }
       fetchInfo();
     } catch {
@@ -296,10 +429,14 @@ export default function InheritPage() {
     }
   };
 
+  /* ── Unique auction ── */
+  const availableUnique = info?.availableUnique ?? {};
+  const minBid = actionCost.minSpecificUnique;
+
   const handleAuctionUnique = async () => {
     if (!currentWorld || !info || !selectedUnique) return;
-    if (auctionBid < UNIQUE_AUCTION_MIN_BID) {
-      toast.error(`최소 입찰금: ${UNIQUE_AUCTION_MIN_BID}P`);
+    if (auctionBid < minBid) {
+      toast.error(`최소 입찰금: ${minBid}P`);
       return;
     }
     if (info.points < auctionBid) {
@@ -307,12 +444,9 @@ export default function InheritPage() {
       return;
     }
     const uniqueName =
-      UNIQUE_ITEMS.find((u) => u.code === selectedUnique)?.name ??
-      selectedUnique;
+      availableUnique[selectedUnique]?.title ?? selectedUnique;
     if (
-      !confirm(
-        `'${uniqueName}' 유니크를 ${auctionBid}P로 입찰하시겠습니까?`,
-      )
+      !confirm(`'${uniqueName}'을(를) ${auctionBid}P로 입찰하시겠습니까?`)
     )
       return;
     try {
@@ -322,12 +456,41 @@ export default function InheritPage() {
       });
       toast.success(`유니크 입찰 완료: ${uniqueName}`);
       setSelectedUnique("");
-      setAuctionBid(UNIQUE_AUCTION_MIN_BID);
+      setAuctionBid(minBid);
       fetchInfo();
     } catch {
       toast.error("유니크 입찰 실패");
     }
   };
+
+  /* ── Load more logs ── */
+  const handleLoadMoreLogs = async () => {
+    if (!currentWorld || lastLogID == null) return;
+    setLoadingMoreLogs(true);
+    try {
+      const { data } = await inheritanceApi.getMoreLog(
+        currentWorld.id,
+        lastLogID,
+      );
+      if (data.log && data.log.length > 0) {
+        setAllLogs((prev) => [...prev, ...data.log]);
+        const minId = Math.min(...data.log.map((l) => l.id ?? Infinity));
+        if (minId !== Infinity) setLastLogID(minId);
+      } else {
+        toast.info("더 이상 이력이 없습니다.");
+      }
+    } catch {
+      toast.error("이력 로드 실패");
+    } finally {
+      setLoadingMoreLogs(false);
+    }
+  };
+
+  // Dynamic lists from server
+  const availableSpecialWar = info?.availableSpecialWar ?? {};
+  const availableTargetGeneral = info?.availableTargetGeneral ?? {};
+  const maxBuff = info?.maxInheritBuff ?? MAX_BUFF_LEVEL;
+  const currentStat = info?.currentStat;
 
   if (loading)
     return <div className="p-4 text-muted-foreground">로딩 중...</div>;
@@ -336,20 +499,50 @@ export default function InheritPage() {
     <div className="p-4 space-y-6 max-w-2xl mx-auto">
       <PageHeader icon={Gift} title="유산 포인트" />
 
-      {/* Point Summary with Breakdown */}
+      {/* Point Summary with Detailed Breakdown */}
       <Card>
         <CardHeader>
           <CardTitle>현재 보유 포인트</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">포인트</span>
+            <span className="text-muted-foreground">총 포인트</span>
             <Badge variant="secondary" className="text-lg px-3 py-1">
               {info?.points ?? 0}
             </Badge>
           </div>
-          {/* Point breakdown */}
-          {info?.previousPoints != null && (
+
+          {/* Detailed point breakdown by category */}
+          {info?.pointBreakdown && (
+            <div className="text-xs text-muted-foreground space-y-1 border-t border-gray-800 pt-2">
+              {Object.entries(info.pointBreakdown).map(([key, value]) => {
+                if (value === 0 && key !== "previous") return null;
+                return (
+                  <div key={key} className="flex justify-between">
+                    <span>{POINT_CATEGORY_LABELS[key] ?? key}</span>
+                    <span
+                      className={
+                        key === "previous"
+                          ? ""
+                          : value > 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                      }
+                    >
+                      {key === "previous"
+                        ? `${Math.floor(value)}P`
+                        : value > 0
+                          ? `+${Math.floor(value)}P`
+                          : `${Math.floor(value)}P`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Fallback: old-style pointSources */}
+          {!info?.pointBreakdown && info?.previousPoints != null && (
             <div className="text-xs text-muted-foreground space-y-1 border-t border-gray-800 pt-2">
               <div className="flex justify-between">
                 <span>이전 잔여 포인트</span>
@@ -377,6 +570,7 @@ export default function InheritPage() {
               ))}
             </div>
           )}
+
           <p className="text-sm text-muted-foreground">
             이전 게임에서 획득한 포인트로 새 장수에게 보너스를 줄 수 있습니다.
           </p>
@@ -386,6 +580,7 @@ export default function InheritPage() {
       <Tabs defaultValue="buffs">
         <TabsList className="flex-wrap">
           <TabsTrigger value="buffs">버프 구매</TabsTrigger>
+          <TabsTrigger value="combat-buffs">전투 버프</TabsTrigger>
           <TabsTrigger value="specials">특기/도시</TabsTrigger>
           <TabsTrigger value="shop">상점</TabsTrigger>
           <TabsTrigger value="unique">유니크</TabsTrigger>
@@ -393,18 +588,19 @@ export default function InheritPage() {
           <TabsTrigger value="log">이력</TabsTrigger>
         </TabsList>
 
-        {/* ── Buff Purchase Tab ── */}
+        {/* ── Resource Buff Purchase Tab ── */}
         <TabsContent value="buffs">
           <Card>
             <CardHeader>
-              <CardTitle>버프 구매</CardTitle>
+              <CardTitle>기본 버프 구매</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {BUFF_LIST.map((buff) => {
+              {RESOURCE_BUFF_LIST.map((buff) => {
                 const currentLevel = info?.buffs[buff.code] ?? 0;
                 const nextCost =
                   currentLevel < MAX_BUFF_LEVEL
-                    ? BUFF_LEVEL_COSTS[currentLevel]
+                    ? actionCost.buff[currentLevel + 1] -
+                      actionCost.buff[currentLevel]
                     : null;
                 return (
                   <div
@@ -446,14 +642,112 @@ export default function InheritPage() {
           </Card>
         </TabsContent>
 
+        {/* ── Combat Buff Tab (8 buffs with granular level control) ── */}
+        <TabsContent value="combat-buffs">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="size-4" />
+                전투/내정 버프
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-muted-foreground">
+                전투 및 내정에 영향을 주는 숨겨진 버프입니다. 레벨을 선택한 후
+                구입하세요.
+              </p>
+              {COMBAT_BUFF_LIST.map((buff) => {
+                const prevLevel = info?.inheritBuff?.[buff.code] ?? 0;
+                const currentSelected = combatBuffLevels[buff.code] ?? prevLevel;
+                const cost =
+                  currentSelected > prevLevel
+                    ? actionCost.buff[currentSelected] -
+                      actionCost.buff[prevLevel]
+                    : 0;
+                return (
+                  <div
+                    key={buff.code}
+                    className="border border-gray-800 rounded-md p-3 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-medium">
+                          {buff.label}
+                        </span>
+                        {prevLevel > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs ml-2"
+                          >
+                            현재 Lv.{prevLevel}
+                          </Badge>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={
+                          !info ||
+                          currentSelected <= prevLevel ||
+                          info.points < cost
+                        }
+                        onClick={() => handleBuyCombatBuff(buff.code)}
+                      >
+                        구입 ({cost}P)
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {buff.info}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-16">
+                        목표 레벨:
+                      </span>
+                      <Input
+                        type="number"
+                        min={prevLevel}
+                        max={maxBuff}
+                        value={currentSelected}
+                        onChange={(e) => {
+                          const val = Math.max(
+                            prevLevel,
+                            Math.min(maxBuff, Number(e.target.value)),
+                          );
+                          setCombatBuffLevels((prev) => ({
+                            ...prev,
+                            [buff.code]: val,
+                          }));
+                        }}
+                        className="w-20"
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs"
+                        onClick={() =>
+                          setCombatBuffLevels((prev) => ({
+                            ...prev,
+                            [buff.code]: prevLevel,
+                          }))
+                        }
+                      >
+                        리셋
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* ── Specials / City Tab ── */}
         <TabsContent value="specials" className="space-y-4">
-          {/* War Special Designation */}
+          {/* War Special Designation (dynamic from server) */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Swords className="size-4" />
-                전투특기 지정 ({INHERIT_SPECIAL_COST}P)
+                전투특기 지정 ({actionCost.nextSpecial}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -467,9 +761,9 @@ export default function InheritPage() {
                   onChange={(e) => setSelectedSpecial(e.target.value)}
                 >
                   <option value="">선택...</option>
-                  {WAR_SPECIALS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
+                  {Object.entries(availableSpecialWar).map(([key, val]) => (
+                    <option key={key} value={key}>
+                      {val.title}
                     </option>
                   ))}
                 </select>
@@ -478,22 +772,28 @@ export default function InheritPage() {
                   disabled={
                     !selectedSpecial ||
                     !info ||
-                    info.points < INHERIT_SPECIAL_COST
+                    info.points < actionCost.nextSpecial
                   }
                   onClick={handleSetSpecial}
                 >
                   지정
                 </Button>
               </div>
+              {selectedSpecial && availableSpecialWar[selectedSpecial] && (
+                <p
+                  className="text-xs text-muted-foreground"
+                  dangerouslySetInnerHTML={{
+                    __html: availableSpecialWar[selectedSpecial].info,
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
 
           {/* Start City Designation */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">
-                시작 도시 지정 ({INHERIT_CITY_COST}P)
-              </CardTitle>
+              <CardTitle className="text-sm">시작 도시 지정</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
@@ -512,13 +812,7 @@ export default function InheritPage() {
                     </option>
                   ))}
                 </select>
-                <Button
-                  size="sm"
-                  disabled={
-                    !selectedCity || !info || info.points < INHERIT_CITY_COST
-                  }
-                  onClick={handleSetCity}
-                >
+                <Button size="sm" disabled={!selectedCity} onClick={handleSetCity}>
                   지정
                 </Button>
               </div>
@@ -526,25 +820,24 @@ export default function InheritPage() {
           </Card>
         </TabsContent>
 
-        {/* ── Shop Tab (turn reset, special war reset, stat reset) ── */}
+        {/* ── Shop Tab ── */}
         <TabsContent value="shop" className="space-y-4">
           {/* Turn Reset */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <RotateCcw className="size-4" />
-                턴 시간 초기화 ({turnResetCost}P)
+                랜덤 턴 초기화 ({turnResetCost}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                턴 시간을 초기화합니다. 구매 횟수가 늘어날수록 비용이
-                증가합니다. (피보나치 증가)
+                다다음턴부터 시간이 랜덤하게 바뀝니다. (필요 포인트가
+                피보나치식으로 증가합니다)
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  구매 횟수: {info?.turnResetCount ?? 0}회 / 다음 비용:{" "}
-                  {turnResetCost}P
+                  구매 횟수: {info?.turnResetCount ?? 0}회
                 </span>
                 <Button
                   size="sm"
@@ -562,18 +855,17 @@ export default function InheritPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Swords className="size-4" />
-                전투특기 재배정 ({specialWarResetCost}P)
+                즉시 전투특기 초기화 ({specialWarResetCost}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                현재 전투특기를 랜덤으로 재배정합니다. 구매 횟수가 늘어날수록
-                비용이 증가합니다.
+                즉시 전투 특기를 초기화합니다. (필요 포인트가 피보나치식으로
+                증가합니다)
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  구매 횟수: {info?.specialWarResetCount ?? 0}회 / 다음 비용:{" "}
-                  {specialWarResetCost}P
+                  구매 횟수: {info?.specialWarResetCount ?? 0}회
                 </span>
                 <Button
                   size="sm"
@@ -586,101 +878,140 @@ export default function InheritPage() {
             </CardContent>
           </Card>
 
-          {/* Stat Reset */}
+          {/* Stat Reset with inheritBonusStat */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <BarChart3 className="size-4" />
-                능력치 재분배 ({STAT_RESET_COST}P)
+                능력치 초기화 ({requiredResetStatPoint}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                통솔/무력/지력 능력치를 재분배합니다. 재분배할 수치를 입력하세요.
-                (보너스 스탯 범위 내에서 자유롭게 분배)
+                시즌 당 1회에 한해 능력치를 초기화합니다.
               </p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">통솔</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={statLeadership}
-                    onChange={(e) =>
-                      setStatLeadership(
-                        Math.max(0, Math.min(100, Number(e.target.value))),
-                      )
-                    }
-                  />
+              <div className="space-y-2">
+                <p className="text-xs font-medium">기본 능력치</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      통솔
+                    </label>
+                    <Input
+                      type="number"
+                      min={currentStat?.statMin ?? 0}
+                      max={currentStat?.statMax ?? 100}
+                      value={statLeadership}
+                      onChange={(e) =>
+                        setStatLeadership(Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      무력
+                    </label>
+                    <Input
+                      type="number"
+                      min={currentStat?.statMin ?? 0}
+                      max={currentStat?.statMax ?? 100}
+                      value={statStrength}
+                      onChange={(e) =>
+                        setStatStrength(Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      지력
+                    </label>
+                    <Input
+                      type="number"
+                      min={currentStat?.statMin ?? 0}
+                      max={currentStat?.statMax ?? 100}
+                      value={statIntel}
+                      onChange={(e) => setStatIntel(Number(e.target.value))}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">무력</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={statStrength}
-                    onChange={(e) =>
-                      setStatStrength(
-                        Math.max(0, Math.min(100, Number(e.target.value))),
-                      )
-                    }
-                  />
+                <p className="text-xs font-medium mt-2">추가 능력치 (보너스)</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      통솔
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={bonusStat[0]}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(5, Number(e.target.value)));
+                        setBonusStat((prev) => [v, prev[1], prev[2]]);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      무력
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={bonusStat[1]}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(5, Number(e.target.value)));
+                        setBonusStat((prev) => [prev[0], v, prev[2]]);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">
+                      지력
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={bonusStat[2]}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(5, Number(e.target.value)));
+                        setBonusStat((prev) => [prev[0], prev[1], v]);
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">지력</label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={statIntel}
-                    onChange={(e) =>
-                      setStatIntel(
-                        Math.max(0, Math.min(100, Number(e.target.value))),
-                      )
-                    }
-                  />
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-muted-foreground">
+                    필요 포인트: {requiredResetStatPoint}P
+                  </span>
+                  <Button size="sm" onClick={handleResetStats}>
+                    능력치 초기화
+                  </Button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">
-                  합계: {statLeadership + statStrength + statIntel}
-                </span>
-                <Button
-                  size="sm"
-                  disabled={
-                    !info ||
-                    info.points < STAT_RESET_COST ||
-                    statLeadership + statStrength + statIntel <= 0
-                  }
-                  onClick={handleResetStats}
-                >
-                  재분배
-                </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── Unique Tab (random unique, unique auction) ── */}
+        {/* ── Unique Tab ── */}
         <TabsContent value="unique" className="space-y-4">
           {/* Random Unique */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Dices className="size-4" />
-                랜덤 유니크 획득 ({RANDOM_UNIQUE_COST}P)
+                랜덤 유니크 획득 ({actionCost.randomUnique}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                랜덤으로 유니크 아이템 1개를 획득합니다. 어떤 아이템이 나올지
-                알 수 없습니다.
+                다음 턴에 랜덤 유니크를 얻습니다.
               </p>
               <Button
                 size="sm"
-                disabled={!info || info.points < RANDOM_UNIQUE_COST}
+                disabled={!info || info.points < actionCost.randomUnique}
                 onClick={handleBuyRandomUnique}
               >
                 랜덤 유니크 획득
@@ -688,18 +1019,18 @@ export default function InheritPage() {
             </CardContent>
           </Card>
 
-          {/* Unique Auction */}
+          {/* Unique Auction (dynamic from server) */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Crown className="size-4" />
-                특정 유니크 입찰 (최소 {UNIQUE_AUCTION_MIN_BID}P)
+                특정 유니크 입찰 (최소 {minBid}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                원하는 유니크 아이템에 포인트로 입찰합니다. 가장 높은 금액을
-                입찰한 유저가 획득합니다. 낙찰 실패 시 포인트는 환불됩니다.
+                얻고자 하는 유니크 아이템으로 경매를 시작합니다. 24턴 동안
+                진행됩니다.
               </p>
               <div className="space-y-2">
                 <select
@@ -708,27 +1039,30 @@ export default function InheritPage() {
                   onChange={(e) => setSelectedUnique(e.target.value)}
                 >
                   <option value="">유니크 선택...</option>
-                  {UNIQUE_ITEMS.map((u) => (
-                    <option key={u.code} value={u.code}>
-                      {u.name}
+                  {Object.entries(availableUnique).map(([key, val]) => (
+                    <option key={key} value={key}>
+                      {val.title}
                     </option>
                   ))}
                 </select>
+                {selectedUnique && availableUnique[selectedUnique] && (
+                  <p
+                    className="text-xs text-muted-foreground"
+                    dangerouslySetInnerHTML={{
+                      __html: availableUnique[selectedUnique].info,
+                    }}
+                  />
+                )}
                 <div className="flex gap-2 items-center">
                   <Input
                     type="number"
-                    min={UNIQUE_AUCTION_MIN_BID}
+                    min={minBid}
                     value={auctionBid}
                     onChange={(e) =>
-                      setAuctionBid(
-                        Math.max(
-                          UNIQUE_AUCTION_MIN_BID,
-                          Number(e.target.value),
-                        ),
-                      )
+                      setAuctionBid(Math.max(minBid, Number(e.target.value)))
                     }
                     className="flex-1"
-                    placeholder={`최소 ${UNIQUE_AUCTION_MIN_BID}P`}
+                    placeholder={`최소 ${minBid}P`}
                   />
                   <span className="text-sm text-muted-foreground">P</span>
                 </div>
@@ -738,86 +1072,112 @@ export default function InheritPage() {
                     !selectedUnique ||
                     !info ||
                     info.points < auctionBid ||
-                    auctionBid < UNIQUE_AUCTION_MIN_BID
+                    auctionBid < minBid
                   }
                   onClick={handleAuctionUnique}
                 >
-                  입찰
+                  경매 시작
                 </Button>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── Misc Tab (owner check) ── */}
+        {/* ── Misc Tab (owner check by ID) ── */}
         <TabsContent value="misc" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Search className="size-4" />
-                장수 소유주 확인 ({CHECK_OWNER_COST}P)
+                장수 소유주 확인 ({actionCost.checkOwner}P)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                특정 장수의 실제 소유주(유저)를 확인합니다.
+                특정 장수의 실제 소유주(유저)를 확인합니다. 대상에게도 알림이
+                전송됩니다.
               </p>
               <div className="flex gap-2">
-                <Input
-                  value={ownerQuery}
-                  onChange={(e) => setOwnerQuery(e.target.value)}
-                  placeholder="장수 이름 입력..."
-                  className="flex-1"
-                />
+                <select
+                  className="flex-1 rounded-md border bg-background px-3 py-2 text-sm"
+                  value={targetOwnerId}
+                  onChange={(e) => setTargetOwnerId(e.target.value)}
+                >
+                  <option value="">장수 선택...</option>
+                  {Object.entries(availableTargetGeneral).map(([id, name]) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
                 <Button
                   size="sm"
                   disabled={
-                    !ownerQuery.trim() ||
+                    !targetOwnerId ||
                     !info ||
-                    info.points < CHECK_OWNER_COST
+                    info.points < actionCost.checkOwner
                   }
                   onClick={handleCheckOwner}
                 >
-                  확인
+                  소유자 찾기
                 </Button>
               </div>
               {ownerResult && (
-                <div className="text-sm p-2 rounded bg-muted">{ownerResult}</div>
+                <div className="text-sm p-2 rounded bg-muted">
+                  {ownerResult}
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ── Log Tab ── */}
+        {/* ── Log Tab with pagination ── */}
         <TabsContent value="log">
-          {info?.log && info.log.length > 0 ? (
+          {allLogs.length > 0 ? (
             <Card>
               <CardHeader>
-                <CardTitle>포인트 이력</CardTitle>
+                <CardTitle>포인트 변경 내역</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <div className="space-y-1 text-sm max-h-96 overflow-y-auto">
-                  {info.log.map((entry, idx) => (
+                  {allLogs.map((entry, idx) => (
                     <div
-                      key={idx}
+                      key={entry.id ?? idx}
                       className="flex justify-between text-muted-foreground"
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground/60">
-                          {entry.date}
+                          [{entry.date}]
                         </span>
-                        <span>{entry.action}</span>
+                        <span>{entry.text ?? entry.action}</span>
                       </div>
-                      <span
-                        className={
-                          entry.amount > 0 ? "text-green-400" : "text-red-400"
-                        }
-                      >
-                        {entry.amount > 0 ? `+${entry.amount}` : entry.amount}P
-                      </span>
+                      {entry.amount !== undefined && (
+                        <span
+                          className={
+                            entry.amount > 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }
+                        >
+                          {entry.amount > 0
+                            ? `+${entry.amount}`
+                            : entry.amount}
+                          P
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  disabled={loadingMoreLogs}
+                  onClick={handleLoadMoreLogs}
+                >
+                  <ChevronDown className="size-3 mr-1" />
+                  {loadingMoreLogs ? "로딩 중..." : "더 가져오기"}
+                </Button>
               </CardContent>
             </Card>
           ) : (

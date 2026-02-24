@@ -165,6 +165,43 @@ export default function BettingPage() {
     [nations],
   );
 
+  // Multi-candidate selection state (for selectCnt > 1 nation betting)
+  const selectCnt = betting?.selectCnt ?? 1;
+  const isNationBetting = (betting?.candidates != null && Object.keys(betting.candidates).length > 0);
+  const reqInheritancePoint = betting?.reqInheritancePoint ?? false;
+  const [pickedCandidates, setPickedCandidates] = useState<Set<number>>(new Set());
+  const [nationBetAmount, setNationBetAmount] = useState(10);
+
+  const toggleCandidatePick = (idx: number) => {
+    setPickedCandidates((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else if (next.size < selectCnt) {
+        next.add(idx);
+      }
+      return next;
+    });
+  };
+
+  const handleNationBet = async () => {
+    if (!currentWorld || !myGeneral) return;
+    if (pickedCandidates.size !== selectCnt) return;
+    const bettingType = Array.from(pickedCandidates).sort((a, b) => a - b);
+    try {
+      await bettingApi.placeBet(
+        currentWorld.id,
+        myGeneral.id,
+        bettingType,
+        nationBetAmount,
+      );
+      setPickedCandidates(new Set());
+      await load();
+    } catch {
+      /* ignore */
+    }
+  };
+
   const handleBet = async (targetId: number) => {
     if (!currentWorld || !myGeneral) return;
     const amount = parseInt(betAmounts[targetId] ?? "10", 10);
@@ -1011,6 +1048,83 @@ export default function BettingPage() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* ── Nation Betting (multi-candidate / inheritance point mode) ── */}
+        {isNationBetting && betting?.candidates && (
+          <Card>
+            <CardHeader className="py-2 px-4">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Trophy className="size-4 text-amber-400" />
+                {betting.name ?? "국가 베팅"}
+                {betting.finished && <Badge variant="outline">종료</Badge>}
+                {reqInheritancePoint && <Badge variant="secondary">포인트 베팅</Badge>}
+                {selectCnt > 1 && <Badge variant="secondary">{selectCnt}개 선택</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-3 space-y-3">
+              {/* Candidate grid */}
+              <div className="grid grid-cols-3 lg:grid-cols-6 gap-1">
+                {Object.entries(betting.candidates).map(([idxStr, cand]) => {
+                  const idx = parseInt(idxStr);
+                  const isPicked = pickedCandidates.has(idx);
+                  const isWinner = betting.winner?.includes(idx) ?? false;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`rounded border p-2 text-xs text-left transition-colors ${
+                        isPicked
+                          ? "border-cyan-500 bg-cyan-900/30"
+                          : isWinner && betting.finished
+                            ? "border-green-500 bg-green-900/20"
+                            : "border-gray-700 bg-[#111] hover:bg-gray-900"
+                      }`}
+                      onClick={() => !betting.finished && toggleCandidatePick(idx)}
+                      disabled={betting.finished}
+                    >
+                      <div className="font-medium text-center">{cand.title}</div>
+                      {cand.info && (
+                        cand.isHtml
+                          ? <div className="text-[10px] text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: cand.info }} />
+                          : <div className="text-[10px] text-muted-foreground mt-1">{cand.info}</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Bet controls */}
+              {!betting.finished && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">
+                    잔여 {reqInheritancePoint ? "포인트" : "금"}: {(betting.remainPoint ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    선택: {pickedCandidates.size}/{selectCnt}
+                  </span>
+                  <input
+                    type="number"
+                    min={10}
+                    max={1000}
+                    step={10}
+                    value={nationBetAmount}
+                    onChange={(e) => setNationBetAmount(Number(e.target.value))}
+                    className="h-7 w-20 px-2 bg-background border border-input rounded text-xs"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    disabled={pickedCandidates.size !== selectCnt}
+                    onClick={handleNationBet}
+                  >
+                    베팅
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── Betting Rules ── */}
         <Card>

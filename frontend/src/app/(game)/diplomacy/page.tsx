@@ -221,8 +221,13 @@ export default function DiplomacyPage() {
     } catch { /* handled by UI */ }
   };
 
-  const handleRespond = async (letterId: number, accept: boolean) => {
-    await diplomacyLetterApi.respond(letterId, accept);
+  const [rejectingLetterId, setRejectingLetterId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+
+  const handleRespond = async (letterId: number, accept: boolean, reason?: string) => {
+    await diplomacyLetterApi.respond(letterId, accept, reason);
+    setRejectingLetterId(null);
+    setRejectReason("");
     if (myGeneral?.nationId) {
       const { data } = await diplomacyLetterApi.list(myGeneral.nationId);
       setLetters(data);
@@ -507,6 +512,14 @@ export default function DiplomacyPage() {
                           )}
                         </div>
 
+                        {/* Rejection reason */}
+                        {state === "rejected" && (letter.payload.reason as string) && (
+                          <div className="text-xs bg-red-950/30 border border-red-900/50 rounded px-2 py-1 text-red-300">
+                            <span className="text-red-400 font-medium">거절 사유:</span>{" "}
+                            {letter.payload.reason as string}
+                          </div>
+                        )}
+
                         {/* Document chain progress: 제안→수락→이행 */}
                         {state && state !== "rejected" && (
                           <div className="flex items-center gap-1 text-[10px]">
@@ -549,9 +562,30 @@ export default function DiplomacyPage() {
                               <Button size="sm" onClick={() => handleRespond(id, true)}>
                                 수락
                               </Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleRespond(id, false)}>
-                                거절
-                              </Button>
+                              {rejectingLetterId === id ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    className="h-7 px-2 text-xs rounded border border-gray-600 bg-gray-900 text-white"
+                                    placeholder="거절 사유 (선택)"
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") void handleRespond(id, false, rejectReason || undefined);
+                                    }}
+                                  />
+                                  <Button size="sm" variant="destructive" onClick={() => void handleRespond(id, false, rejectReason || undefined)}>
+                                    확인
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => { setRejectingLetterId(null); setRejectReason(""); }}>
+                                    취소
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button size="sm" variant="destructive" onClick={() => setRejectingLetterId(id)}>
+                                  거절
+                                </Button>
+                              )}
                             </>
                           )}
                           {/* Pending: sender can withdraw */}
@@ -601,7 +635,7 @@ export default function DiplomacyPage() {
           </Card>
 
           {/* Conflict / 분쟁 Areas */}
-          <ConflictAreaCard nations={nations} cities={cities} nationMap={nationMap} />
+          <ConflictAreaCard nations={nations} cities={cities} nationMap={nationMap} diplomacy={diplomacy} />
 
           {/* Nation Power Comparison */}
           <Card>
@@ -836,23 +870,18 @@ function DiplomacyMatrix({
   );
 }
 
-/** Shows cities that are contested (have generals from multiple nations) */
+/** Shows territory overview with war-state conflict indicators */
 function ConflictAreaCard({
   nations,
   cities,
   nationMap,
+  diplomacy,
 }: {
   nations: Nation[];
   cities: { id: number; nationId: number; name?: string }[];
   nationMap: Map<number, Nation>;
+  diplomacy: Diplomacy[];
 }) {
-  // A city is "contested" if its owning nation differs from a neighbor nation's,
-  // or more practically: cities where the nation differs from the majority around it.
-  // For simplicity, we find cities owned by nation A that border nation B's territory.
-  // Since we don't have adjacency here, we identify cities where multiple nations
-  // have generals stationed — this requires general data. As a simpler approach,
-  // show cities near borders by nation: cities whose nation has a war diplomacy state.
-
   // Group cities by nation
   const nationCities = new Map<number, typeof cities>();
   for (const c of cities) {
@@ -862,42 +891,77 @@ function ConflictAreaCard({
     nationCities.set(c.nationId, list);
   }
 
-  // For each nation pair, show their respective city counts as a rough "conflict zone"
-  // This is a simplified version; real legacy would show specific contested cities
-  const conflictPairs: { srcNation: Nation; destNation: Nation; srcCities: number; destCities: number }[] = [];
+  // Find war pairs from diplomacy data
+  const warPairs: { src: Nation; dest: Nation; srcCount: number; destCount: number }[] = [];
+  for (const d of diplomacy) {
+    if (d.stateCode === "war" && !d.isDead) {
+      const src = nationMap.get(d.srcNationId);
+      const dest = nationMap.get(d.destNationId);
+      if (src && dest) {
+        warPairs.push({
+          src,
+          dest,
+          srcCount: nationCities.get(src.id)?.length ?? 0,
+          destCount: nationCities.get(dest.id)?.length ?? 0,
+        });
+      }
+    }
+  }
 
-  // We don't have direct "war" diplomacy data here easily, but we can check nationMap
-  // For now, show nation pairs with their respective territory sizes as a comparison
   const nationList = nations.filter((n) => (nationCities.get(n.id)?.length ?? 0) > 0);
 
   if (nationList.length < 2) {
     return null;
   }
 
-  // Build a simple territory overview
+  const totalCities = cities.filter((c) => c.nationId > 0).length;
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm">세력 영토 분쟁 현황</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Active war conflict zones */}
+        {warPairs.length > 0 && (
+          <div className="mb-3 space-y-2">
+            <div className="text-xs font-medium text-red-400 flex items-center gap-1">
+              ⚔️ 교전 중인 세력
+            </div>
+            {warPairs.map((wp, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 rounded border border-red-900/50 bg-red-950/20 px-3 py-2 text-xs"
+              >
+                <NationBadge name={wp.src.name} color={wp.src.color} />
+                <span className="text-muted-foreground">({wp.srcCount}도시)</span>
+                <span className="text-red-400 font-bold">⚔</span>
+                <NationBadge name={wp.dest.name} color={wp.dest.color} />
+                <span className="text-muted-foreground">({wp.destCount}도시)</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Territory bar chart */}
         <div className="space-y-2">
           {nationList
             .sort((a, b) => (nationCities.get(b.id)?.length ?? 0) - (nationCities.get(a.id)?.length ?? 0))
             .map((n) => {
               const count = nationCities.get(n.id)?.length ?? 0;
-              const totalCities = cities.filter((c) => c.nationId > 0).length;
               const pct = totalCities > 0 ? Math.round((count / totalCities) * 100) : 0;
+              const atWar = warPairs.some((wp) => wp.src.id === n.id || wp.dest.id === n.id);
               return (
                 <div key={n.id} className="space-y-1">
                   <div className="flex items-center gap-2 text-xs">
                     <NationBadge name={n.name} color={n.color} />
                     <span className="text-muted-foreground">{count}개 도시</span>
                     <span className="text-muted-foreground">({pct}%)</span>
+                    {atWar && <span className="text-red-400 text-[10px]">⚔ 교전</span>}
                   </div>
                   <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full"
+                      className={`h-full rounded-full ${atWar ? "animate-pulse" : ""}`}
                       style={{ width: `${pct}%`, backgroundColor: n.color }}
                     />
                   </div>

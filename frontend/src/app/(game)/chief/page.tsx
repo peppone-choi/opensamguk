@@ -98,6 +98,8 @@ export default function ChiefPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appointMsg, setAppointMsg] = useState<string | null>(null);
+  const [allOfficerTurns, setAllOfficerTurns] = useState<NationTurn[]>([]);
+  const [allOfficerLoading, setAllOfficerLoading] = useState(false);
   const [appointingLevel, setAppointingLevel] = useState<number | null>(null);
 
   // Drag & Drop for nation turns
@@ -161,6 +163,19 @@ export default function ChiefPage() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  const loadAllOfficerTurns = useCallback(async () => {
+    if (!myGeneral?.nationId || !nation) return;
+    setAllOfficerLoading(true);
+    try {
+      const minLv = getMinNationChiefLevel(nation.level);
+      const levels: number[] = [];
+      for (let lv = minLv; lv <= 12; lv++) levels.push(lv);
+      const turns = await commandApi.getAllOfficerTurns(myGeneral.nationId, levels);
+      setAllOfficerTurns(turns);
+    } catch { /* ignore */ }
+    finally { setAllOfficerLoading(false); }
+  }, [myGeneral?.nationId, nation]);
 
   const getNationTurn = (idx: number) =>
     nationTurns.find((turn) => turn.turnIdx === idx);
@@ -619,6 +634,7 @@ export default function ChiefPage() {
       <Tabs defaultValue="chief">
         <TabsList>
           <TabsTrigger value="chief">사령부</TabsTrigger>
+          <TabsTrigger value="overview">전체 턴</TabsTrigger>
           <TabsTrigger value="personnel">인사부</TabsTrigger>
           <TabsTrigger value="generals">소속 장수</TabsTrigger>
         </TabsList>
@@ -895,6 +911,111 @@ export default function ChiefPage() {
               </Card>
             </TabsContent>
           </Tabs>
+        </TabsContent>
+
+        {/* ===== Tab: All Officer Turn Overview (전체 턴) ===== */}
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="size-4" />
+                  전체 수관 턴 현황
+                </CardTitle>
+                <Button size="sm" variant="outline" onClick={() => void loadAllOfficerTurns()} disabled={allOfficerLoading}>
+                  {allOfficerLoading ? "불러오는 중..." : "새로고침"}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {allOfficerTurns.length === 0 && !allOfficerLoading ? (
+                <div className="text-center text-sm text-muted-foreground py-4">
+                  <Button size="sm" onClick={() => void loadAllOfficerTurns()}>전체 턴 불러오기</Button>
+                </div>
+              ) : allOfficerLoading ? (
+                <LoadingState />
+              ) : (
+                <div className="space-y-3">
+                  {(() => {
+                    // Group turns by officerLevel, legacy order: 12,10,8,6,11,9,7,5
+                    const officerOrder = [12, 10, 8, 6, 11, 9, 7, 5].filter(
+                      (lv) => lv >= (nation ? getMinNationChiefLevel(nation.level) : 5)
+                    );
+                    const turnsByOfficer = new Map<number, NationTurn[]>();
+                    for (const t of allOfficerTurns) {
+                      const list = turnsByOfficer.get(t.officerLevel) ?? [];
+                      list.push(t);
+                      turnsByOfficer.set(t.officerLevel, list);
+                    }
+
+                    return (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-gray-700">
+                              <th className="text-left py-1 px-2 sticky left-0 bg-background min-w-[80px]">수관</th>
+                              {Array.from({ length: NATION_TURN_COUNT }, (_, i) => (
+                                <th key={i} className="text-center py-1 px-1 min-w-[60px]">#{i + 1}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {officerOrder.map((lv) => {
+                              const officer = nationGenerals.find((g) => g.officerLevel === lv);
+                              const turns = turnsByOfficer.get(lv) ?? [];
+                              const turnMap = new Map(turns.map((t) => [t.turnIdx, t]));
+                              const isMe = lv === myGeneral.officerLevel;
+                              return (
+                                <tr
+                                  key={lv}
+                                  className={`border-b border-gray-800 ${isMe ? "bg-blue-950/30" : "hover:bg-gray-900/50"}`}
+                                >
+                                  <td className="py-1.5 px-2 sticky left-0 bg-background">
+                                    <div className="flex items-center gap-1">
+                                      {officer && (
+                                        <GeneralPortrait picture={officer.picture} name={officer.name} size="sm" />
+                                      )}
+                                      <div className="leading-tight">
+                                        <div className={`font-medium ${isMe ? "text-yellow-300" : ""}`}>
+                                          {nation ? formatOfficerLevelText(lv, nation.level) : `Lv.${lv}`}
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground truncate max-w-[70px]">
+                                          {officer?.name ?? "-"}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  {Array.from({ length: NATION_TURN_COUNT }, (_, idx) => {
+                                    const turn = turnMap.get(idx);
+                                    const code = turn?.actionCode ?? "휴식";
+                                    const isRest = code === "휴식";
+                                    return (
+                                      <td key={idx} className="py-1 px-0.5 text-center">
+                                        <span
+                                          className={`inline-block px-1 py-0.5 rounded text-[10px] leading-tight ${
+                                            isRest
+                                              ? "text-gray-500"
+                                              : "bg-cyan-950/50 text-cyan-300 border border-cyan-800/50"
+                                          }`}
+                                          title={turn?.brief ?? code}
+                                        >
+                                          {code}
+                                        </span>
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ===== Tab 2: Personnel (인사부) ===== */}

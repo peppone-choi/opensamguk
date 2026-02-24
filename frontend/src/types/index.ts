@@ -648,21 +648,71 @@ export interface ContactInfo {
 }
 
 // Inheritance
+export type InheritBuffType =
+  | "warAvoidRatio"
+  | "warCriticalRatio"
+  | "warMagicTrialProb"
+  | "warAvoidRatioOppose"
+  | "warCriticalRatioOppose"
+  | "warMagicTrialProbOppose"
+  | "domesticSuccessProb"
+  | "domesticFailProb";
+
+export type InheritancePointCategory =
+  | "previous"
+  | "lived_month"
+  | "max_belong"
+  | "max_domestic_critical"
+  | "active_action"
+  | "combat"
+  | "sabotage"
+  | "unifier"
+  | "dex"
+  | "tournament"
+  | "betting";
+
+export interface InheritanceActionCost {
+  buff: number[];
+  resetTurnTime: number;
+  resetSpecialWar: number;
+  randomUnique: number;
+  nextSpecial: number;
+  minSpecificUnique: number;
+  checkOwner: number;
+  bornStatPoint: number;
+}
+
 export interface InheritanceInfo {
   points: number;
   previousPoints?: number;
   newPoints?: number;
   pointSources?: { label: string; amount: number }[];
+  pointBreakdown?: Record<InheritancePointCategory, number>;
   buffs: Record<string, number>;
+  inheritBuff?: Record<InheritBuffType, number>;
+  maxInheritBuff?: number;
   log: InheritanceLogEntry[];
   turnResetCount?: number;
   specialWarResetCount?: number;
+  inheritActionCost?: InheritanceActionCost;
+  availableSpecialWar?: Record<string, { title: string; info: string }>;
+  availableUnique?: Record<string, { title: string; rawName: string; info: string }>;
+  availableTargetGeneral?: Record<number, string>;
+  currentStat?: {
+    leadership: number;
+    strength: number;
+    intel: number;
+    statMax: number;
+    statMin: number;
+  };
 }
 
 export interface InheritanceLogEntry {
+  id?: number;
   action: string;
   amount: number;
   date: string;
+  text?: string;
 }
 
 export interface InheritanceActionResult {
@@ -691,6 +741,17 @@ export interface BettingInfo {
   bets: BetEntry[];
   odds: Record<string, number>;
   history?: BettingEventSummary[];
+  /** Nation betting fields (legacy parity) */
+  selectCnt?: number;
+  isExclusive?: boolean;
+  reqInheritancePoint?: boolean;
+  candidates?: Record<string, { title: string; info?: string; isHtml?: boolean }>;
+  finished?: boolean;
+  winner?: number[];
+  remainPoint?: number;
+  closeYearMonth?: number;
+  openYearMonth?: number;
+  name?: string;
 }
 
 export interface BettingEventSummary {
@@ -830,6 +891,7 @@ export interface AccountSettings {
   preOpenDelete?: boolean;
   borderReturn?: boolean;
   customCss?: string;
+  autoNationTurn?: boolean;
 }
 
 // Admin

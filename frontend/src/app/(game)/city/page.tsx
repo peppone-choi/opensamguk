@@ -402,22 +402,26 @@ export default function CityPage() {
 
                 {/* Row 2: agri, comm, secu, def, wall */}
                 <LabelCell>농업</LabelCell>
-                <StatValueCell val={city.agri} max={city.agriMax} />
+                <StatValueCell val={city.agri} max={city.agriMax} kind="agri" perTurn={100} />
                 <LabelCell>상업</LabelCell>
-                <StatValueCell val={city.comm} max={city.commMax} />
+                <StatValueCell val={city.comm} max={city.commMax} kind="comm" perTurn={100} />
                 <LabelCell>치안</LabelCell>
-                <StatValueCell val={city.secu} max={city.secuMax} />
+                <StatValueCell val={city.secu} max={city.secuMax} kind="secu" perTurn={100} />
                 <LabelCell>수비</LabelCell>
                 <StatValueCell
                   val={city.def}
                   max={city.defMax}
                   hidden={!isVisible}
+                  kind="def"
+                  perTurn={70}
                 />
                 <LabelCell>성벽</LabelCell>
                 <StatValueCell
                   val={city.wall}
                   max={city.wallMax}
                   hidden={!isVisible}
+                  kind="wall"
+                  perTurn={70}
                 />
 
                 {/* Row 3: officers + front */}
@@ -648,14 +652,39 @@ function ValueCell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Thresholds: high=green, mid=yellow, low=red. Agri/comm/secu use 80%/40%, def/wall use 60%/30% */
+function statColor(val: number, max: number, kind?: "def" | "wall"): string {
+  if (max <= 0) return "inherit";
+  const ratio = val / max;
+  if (kind === "def" || kind === "wall") {
+    if (ratio > 0.6) return "lightgreen";
+    if (ratio > 0.3) return "yellow";
+    return "orangered";
+  }
+  if (ratio > 0.8) return "lightgreen";
+  if (ratio > 0.4) return "yellow";
+  return "orangered";
+}
+
+/** Show remaining capacity warning when near max (legacy: yellow [remain] annotation) */
+function remainWarning(val: number, max: number, perTurn: number): string | null {
+  const remain = val - max;
+  if (remain > -10 * perTurn) return `[${remain > 0 ? "+" : ""}${remain}]`;
+  return null;
+}
+
 function StatValueCell({
   val,
   max,
   hidden,
+  kind,
+  perTurn,
 }: {
   val: number;
   max: number;
   hidden?: boolean;
+  kind?: "pop" | "agri" | "comm" | "secu" | "def" | "wall";
+  perTurn?: number;
 }) {
   if (hidden) {
     return (
@@ -664,12 +693,19 @@ function StatValueCell({
       </div>
     );
   }
+  const color = kind === "pop"
+    ? (max > 0 && val / max > 0.9 ? "lightgreen" : max > 0 && val / max > 0.7 ? "yellow" : "orangered")
+    : kind === "def" || kind === "wall"
+      ? statColor(val, max, kind)
+      : statColor(val, max);
+  const warn = perTurn != null ? remainWarning(val, max, perTurn) : null;
   return (
     <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 px-0.5">
       <SammoBar height={7} percent={max > 0 ? (val / max) * 100 : 0} />
-      <span>
+      <span style={{ color }}>
         {val.toLocaleString()}/{max.toLocaleString()}
       </span>
+      {warn && <span style={{ color: "yellow" }} className="ml-0.5">{warn}</span>}
     </div>
   );
 }

@@ -89,6 +89,9 @@ docker compose pull
 docker compose up -d
 ```
 
+배포 스택에는 `bootstrap` 컨테이너가 포함되며, DB 마이그레이션을 1회 수행한 뒤 종료합니다.
+또한 `gateway`는 환경변수(`ADMIN_LOGIN_ID`, `ADMIN_PASSWORD` 등)를 사용해 초기 어드민 계정을 생성/갱신합니다.
+
 ## 이미지 CDN 설정
 
 프론트엔드 에셋 CDN 기본값은 아래와 같습니다.

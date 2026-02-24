@@ -18,6 +18,7 @@ import { GameBottomBar } from "@/components/game/game-bottom-bar";
 import { LoadingState } from "@/components/game/loading-state";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatLog } from "@/lib/formatLog";
 
 /** Format tournament type number to display text */
 function formatTournamentType(type?: number | null): string {
@@ -390,7 +391,7 @@ export default function GameDashboard() {
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
                 >
-                  <span className="text-gray-400">[{r.date}]</span> {r.message}
+                  <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
                 </div>
               ))
             )}
@@ -407,7 +408,7 @@ export default function GameDashboard() {
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
                 >
-                  <span className="text-gray-400">[{r.date}]</span> {r.message}
+                  <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
                 </div>
               ))
             )}
@@ -424,7 +425,7 @@ export default function GameDashboard() {
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
                 >
-                  <span className="text-gray-400">[{r.date}]</span> {r.message}
+                  <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
                 </div>
               ))
             )}

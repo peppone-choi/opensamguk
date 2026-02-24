@@ -399,14 +399,15 @@ export default function NationsPage() {
                                         {byType[t].map((g, i) => (
                                           <span
                                             key={g.id}
-                                            className={g.npcState >= 2 ? "text-cyan-400" : ""}
+                                            className={`${g.npcState >= 2 ? "text-cyan-400" : ""} ${g.killTurn != null ? "line-through opacity-60" : ""}`}
                                             style={
                                               (g.penalty && Object.keys(g.penalty).length > 0)
                                                 ? { color: "#facc15" }
                                                 : undefined
                                             }
+                                            title={g.killTurn != null ? `사망 예정: ${g.killTurn}턴` : undefined}
                                           >
-                                            {g.name}{i < byType[t].length - 1 ? ", " : ""}
+                                            {g.name}{g.killTurn != null ? "†" : ""}{i < byType[t].length - 1 ? ", " : ""}
                                           </span>
                                         ))}
                                       </div>
@@ -467,14 +468,18 @@ export default function NationsPage() {
                                                 size="sm"
                                               />
                                               <span
-                                                className={
+                                                className={`${
                                                   g.npcState > 0
                                                     ? "text-gray-400"
                                                     : ""
-                                                }
+                                                } ${g.killTurn != null ? "line-through text-red-400/60" : ""}`}
+                                                title={g.killTurn != null ? `사망 예정: ${g.killTurn}턴` : undefined}
                                               >
                                                 {g.name}
                                               </span>
+                                              {g.killTurn != null && (
+                                                <span className="text-[9px] text-red-400" title={`사망 예정 턴: ${g.killTurn}`}>†</span>
+                                              )}
                                               {g.npcState > 0 && (
                                                 <Badge
                                                   variant="outline"
@@ -509,8 +514,16 @@ export default function NationsPage() {
                                           </td>
                                           <td className="py-1 px-1 text-center">
                                             {hasPenalty ? (
-                                              <span className="text-red-400">
-                                                ●
+                                              <span
+                                                className="text-red-400 cursor-help"
+                                                title={Object.entries(g.penalty || {})
+                                                  .map(([k, v]) => `${k}: ${v}`)
+                                                  .join(", ")}
+                                              >
+                                                ●{" "}
+                                                <span className="text-[9px]">
+                                                  {Object.keys(g.penalty || {}).length}
+                                                </span>
                                               </span>
                                             ) : (
                                               "-"

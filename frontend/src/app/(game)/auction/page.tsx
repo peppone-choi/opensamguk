@@ -143,6 +143,44 @@ export default function AuctionPage() {
     if (!myGeneral) return;
     const amount = Number(bidAmounts[auctionId]);
     if (!amount || amount <= 0) return;
+
+    // Client-side bid validation matching backend rules
+    const auction = auctions.find((a) => a.id === auctionId);
+    if (!auction) return;
+    const d = p(auction);
+    const auctionType = d.type ?? "resource";
+    const curBid = d.currentBid ?? 0;
+    const startBid = d.minPrice ?? 0;
+    const finishBid = d.finishBidAmount;
+
+    if (auctionType === "unique" || auctionType === "item") {
+      // Unique: must be >= max(startBid, highestBid*1.01, highestBid+10)
+      if (curBid > 0) {
+        const minBid = Math.max(Math.ceil(curBid * 1.01), curBid + 10);
+        if (amount < minBid) {
+          alert(`현재입찰가(${curBid.toLocaleString()})보다 1% 이상, 10P 이상 높게 입찰해야 합니다. (최소 ${minBid.toLocaleString()})`);
+          return;
+        }
+      } else if (startBid > 0 && amount < startBid) {
+        alert(`시작가(${startBid.toLocaleString()}) 이상 입찰해야 합니다.`);
+        return;
+      }
+    } else {
+      // Resource: must be > currentBid, <= finishBidAmount (if set)
+      if (curBid > 0 && amount <= curBid) {
+        alert(`현재입찰가(${curBid.toLocaleString()})보다 높게 입찰해야 합니다.`);
+        return;
+      }
+      if (startBid > 0 && !curBid && amount < startBid) {
+        alert(`시작가(${startBid.toLocaleString()}) 이상 입찰해야 합니다.`);
+        return;
+      }
+      if (finishBid && amount > finishBid) {
+        alert(`마감가(${finishBid.toLocaleString()})를 초과할 수 없습니다.`);
+        return;
+      }
+    }
+
     setBidding(auctionId);
     try {
       await auctionApi.bid(auctionId, myGeneral.id, amount);
@@ -172,7 +210,7 @@ export default function AuctionPage() {
         minPrice: startBid,
         finishBidAmount: finishBid,
         closeTurnCnt,
-      } as Parameters<typeof auctionApi.create>[1]);
+      });
       setShowCreate(false);
       setCreateAmount("1000");
       setCreateStartBid("500");
@@ -543,28 +581,37 @@ export default function AuctionPage() {
                   )}
 
                   {/* Bid input */}
-                  {isActive(d) && myGeneral && (
-                    <div className="flex items-center gap-2">
-                      {d.remainPoint != null && (
-                        <span className="text-muted-foreground">잔여: {d.remainPoint.toLocaleString()}포인트</span>
-                      )}
-                      <Input
-                        type="number"
-                        placeholder="입찰 포인트"
-                        value={bidAmounts[selectedAuction.id] ?? ""}
-                        onChange={(e) => setBidAmounts((x) => ({ ...x, [selectedAuction.id]: e.target.value }))}
-                        className="h-8 w-32 text-xs"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleBid(selectedAuction.id)}
-                        disabled={bidding === selectedAuction.id || !bidAmounts[selectedAuction.id]}
-                        className="h-8 text-xs"
-                      >
-                        {bidding === selectedAuction.id ? "입찰중..." : "입찰"}
-                      </Button>
-                    </div>
-                  )}
+                  {isActive(d) && myGeneral && (() => {
+                    const hbAmt = d.highestBid?.amount ?? d.currentBid ?? 0;
+                    const minUniqueBid = hbAmt > 0
+                      ? Math.max(Math.ceil(hbAmt * 1.01), hbAmt + 10)
+                      : (d.minPrice ?? 1);
+                    return (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {d.remainPoint != null && (
+                          <span className="text-muted-foreground text-xs">잔여: {d.remainPoint.toLocaleString()}P</span>
+                        )}
+                        <span className="text-xs text-muted-foreground">최소: {minUniqueBid.toLocaleString()}P</span>
+                        <Input
+                          type="number"
+                          placeholder={`${minUniqueBid.toLocaleString()} 이상`}
+                          value={bidAmounts[selectedAuction.id] ?? ""}
+                          onChange={(e) => setBidAmounts((x) => ({ ...x, [selectedAuction.id]: e.target.value }))}
+                          className="h-8 w-32 text-xs"
+                          min={minUniqueBid}
+                          step={10}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleBid(selectedAuction.id)}
+                          disabled={bidding === selectedAuction.id || !bidAmounts[selectedAuction.id] || Number(bidAmounts[selectedAuction.id]) < minUniqueBid}
+                          className="h-8 text-xs"
+                        >
+                          {bidding === selectedAuction.id ? "입찰중..." : "입찰"}
+                        </Button>
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
@@ -753,30 +800,37 @@ function ResourceAuctionTable({
             </div>
 
             {/* Bid row when selected */}
-            {selectedId === a.id && !isMine && myId != null && (
-              <div className="flex items-center gap-2 py-1.5 px-2 bg-gray-800/50">
-                <span className="text-xs text-muted-foreground">
-                  {a.id}번 {unitLabel} {amount.toLocaleString()} 경매에 {bidUnitLabel}
-                </span>
-                <Input
-                  type="number"
-                  placeholder={`${curBid + 1} 이상`}
-                  value={bidAmounts[a.id] ?? ""}
-                  onChange={(e) => setBidAmounts((x) => ({ ...x, [a.id]: e.target.value }))}
-                  className="h-7 w-28 text-xs"
-                  min={d.minPrice ?? 0}
-                  max={d.finishBidAmount}
-                />
-                <Button
-                  size="sm"
-                  onClick={() => onBid(a.id)}
-                  disabled={bidding === a.id || !bidAmounts[a.id] || Number(bidAmounts[a.id]) <= 0}
-                  className="h-7 text-xs"
-                >
-                  {bidding === a.id ? "..." : "입찰"}
-                </Button>
-              </div>
-            )}
+            {selectedId === a.id && !isMine && myId != null && (() => {
+              const minBidVal = d.currentBid ? d.currentBid + 1 : (d.minPrice ?? 1);
+              const maxBidVal = d.finishBidAmount ?? undefined;
+              const bidVal = Number(bidAmounts[a.id] ?? 0);
+              const isValid = bidVal >= minBidVal && (!maxBidVal || bidVal <= maxBidVal);
+              return (
+                <div className="flex items-center gap-2 py-1.5 px-2 bg-gray-800/50">
+                  <span className="text-xs text-muted-foreground">
+                    {a.id}번 {unitLabel} {amount.toLocaleString()} 경매에 {bidUnitLabel}
+                  </span>
+                  <Input
+                    type="number"
+                    placeholder={`${minBidVal.toLocaleString()}${maxBidVal ? ` ~ ${maxBidVal.toLocaleString()}` : " 이상"}`}
+                    value={bidAmounts[a.id] ?? ""}
+                    onChange={(e) => setBidAmounts((x) => ({ ...x, [a.id]: e.target.value }))}
+                    className="h-7 w-28 text-xs"
+                    min={minBidVal}
+                    max={maxBidVal}
+                    step={1}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => onBid(a.id)}
+                    disabled={bidding === a.id || !bidAmounts[a.id] || !isValid}
+                    className="h-7 text-xs"
+                  >
+                    {bidding === a.id ? "..." : "입찰"}
+                  </Button>
+                </div>
+              );
+            })()}
           </div>
         );
       })}
@@ -865,25 +919,34 @@ function AuctionRow({
         <span className="text-muted-foreground">입찰수: {d.bidCount ?? 0}</span>
       </div>
 
-      {!isMine && myId != null && (
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            placeholder={`${curPrice + 1} 이상`}
-            value={bidVal}
-            onChange={(e) => onBidVal(e.target.value)}
-            className="h-8 w-32 text-xs"
-          />
-          <Button
-            size="sm"
-            onClick={onBid}
-            disabled={isBidding || !bidVal || Number(bidVal) <= curPrice}
-            className="h-8 text-xs"
-          >
-            {isBidding ? "입찰중..." : "입찰"}
-          </Button>
-        </div>
-      )}
+      {!isMine && myId != null && (() => {
+        const minBid = curPrice > 0 ? curPrice + 1 : (d.minPrice ?? 1);
+        const maxBid = d.finishBidAmount ?? undefined;
+        const bidNum = Number(bidVal || 0);
+        const valid = bidNum >= minBid && (!maxBid || bidNum <= maxBid);
+        return (
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder={`${minBid.toLocaleString()}${maxBid ? ` ~ ${maxBid.toLocaleString()}` : " 이상"}`}
+              value={bidVal}
+              onChange={(e) => onBidVal(e.target.value)}
+              className="h-8 w-32 text-xs"
+              min={minBid}
+              max={maxBid}
+              step={1}
+            />
+            <Button
+              size="sm"
+              onClick={onBid}
+              disabled={isBidding || !bidVal || !valid}
+              className="h-8 text-xs"
+            >
+              {isBidding ? "입찰중..." : "입찰"}
+            </Button>
+          </div>
+        );
+      })()}
     </div>
   );
 }

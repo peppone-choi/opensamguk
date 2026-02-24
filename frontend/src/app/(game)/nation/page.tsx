@@ -836,19 +836,69 @@ export default function NationPage() {
         {isOfficer && (
           <TabsContent value="admin">
             <div className="space-y-3">
-              {/* Nation Notice */}
+              {/* Nation Notice with formatting */}
               <Card>
                 <CardHeader>
                   <CardTitle>국가 공지</CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {myGeneral.officerLevel >= 5 && (
+                    <div className="flex gap-1 mb-1">
+                      {[
+                        { tag: "**", label: "B", title: "굵게", cls: "font-bold" },
+                        { tag: "__", label: "I", title: "기울임", cls: "italic" },
+                        { tag: "~~", label: "S", title: "취소선", cls: "line-through" },
+                        { tag: "# ", label: "H", title: "제목", cls: "font-bold text-base" },
+                      ].map((fmt) => (
+                        <Button
+                          key={fmt.tag}
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className={`h-7 w-7 p-0 text-xs ${fmt.cls}`}
+                          title={fmt.title}
+                          onClick={() => {
+                            const ta = document.getElementById("notice-textarea") as HTMLTextAreaElement | null;
+                            if (!ta) return;
+                            const start = ta.selectionStart;
+                            const end = ta.selectionEnd;
+                            const sel = editNotice.slice(start, end);
+                            const isHeading = fmt.tag === "# ";
+                            const wrapped = isHeading
+                              ? `\n${fmt.tag}${sel || fmt.title}\n`
+                              : `${fmt.tag}${sel || fmt.title}${fmt.tag}`;
+                            const next = editNotice.slice(0, start) + wrapped + editNotice.slice(end);
+                            setEditNotice(next);
+                            setTimeout(() => {
+                              ta.focus();
+                              const cursor = start + wrapped.length;
+                              ta.setSelectionRange(cursor, cursor);
+                            }, 0);
+                          }}
+                        >
+                          {fmt.label}
+                        </Button>
+                      ))}
+                      <span className="text-[10px] text-muted-foreground self-center ml-1">
+                        **굵게** / __기울임__ / ~~취소선~~
+                      </span>
+                    </div>
+                  )}
                   <Textarea
+                    id="notice-textarea"
                     value={editNotice}
                     onChange={(e) => setEditNotice(e.target.value)}
-                    rows={3}
-                    placeholder="국가 공지사항을 입력하세요..."
+                    rows={5}
+                    placeholder="국가 공지사항을 입력하세요... (마크다운 지원)"
                     disabled={myGeneral.officerLevel < 5}
+                    className="font-mono text-sm"
                   />
+                  {editNotice && (
+                    <div className="mt-2 p-2 rounded bg-muted/30 border border-gray-700 text-sm">
+                      <span className="text-[10px] text-muted-foreground block mb-1">미리보기:</span>
+                      <NoticePreview text={editNotice} />
+                    </div>
+                  )}
                   {myGeneral.officerLevel >= 5 && (
                     <Button
                       size="sm"
@@ -1033,7 +1083,20 @@ export default function NationPage() {
                                     </span>
                                   </TableCell>
                                   <TableCell className="text-center tabular-nums">
-                                    {d.term > 0 ? `${d.term}개월` : "-"}
+                                    {d.term > 0 ? (
+                                      <div>
+                                        <span>{d.term}개월</span>
+                                        {currentWorld && (
+                                          <span className="block text-[10px] text-muted-foreground">
+                                            (~{(() => {
+                                              const endMonth = (currentWorld.currentMonth + d.term - 1) % 12 + 1;
+                                              const endYear = currentWorld.currentYear + Math.floor((currentWorld.currentMonth + d.term - 1) / 12);
+                                              return `${endYear}년 ${endMonth}월`;
+                                            })()})
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : "-"}
                                   </TableCell>
                                 </TableRow>
                               );
@@ -1083,6 +1146,41 @@ function IncomeRow({ label, value }: { label: string; value: number }) {
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>
       <span>+{value.toLocaleString()}</span>
+    </div>
+  );
+}
+
+function NoticePreview({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-0.5">
+      {lines.map((line, i) => {
+        let content = line;
+        const isHeading = content.startsWith("# ");
+        if (isHeading) content = content.slice(2);
+        // Apply inline formatting
+        const parts: React.ReactNode[] = [];
+        const regex = /(\*\*(.+?)\*\*|__(.+?)__|~~(.+?)~~)/g;
+        let lastIdx = 0;
+        let match: RegExpExecArray | null;
+        let key = 0;
+        while ((match = regex.exec(content)) !== null) {
+          if (match.index > lastIdx) {
+            parts.push(content.slice(lastIdx, match.index));
+          }
+          if (match[2]) parts.push(<strong key={key++}>{match[2]}</strong>);
+          else if (match[3]) parts.push(<em key={key++}>{match[3]}</em>);
+          else if (match[4]) parts.push(<s key={key++}>{match[4]}</s>);
+          lastIdx = match.index + match[0].length;
+        }
+        if (lastIdx < content.length) parts.push(content.slice(lastIdx));
+        if (parts.length === 0) parts.push("\u00A0");
+
+        if (isHeading) {
+          return <div key={i} className="font-bold text-base text-yellow-300">{parts}</div>;
+        }
+        return <div key={i}>{parts}</div>;
+      })}
     </div>
   );
 }

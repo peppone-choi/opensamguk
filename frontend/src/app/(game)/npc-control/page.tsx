@@ -16,6 +16,8 @@ import {
   Undo2,
   HelpCircle,
   Clock,
+  DollarSign,
+  Wheat,
 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -50,65 +52,188 @@ import {
 import { CREW_TYPE_NAMES } from "@/lib/game-utils";
 import { toast } from "sonner";
 
-/* ── Policy field definitions ── */
+/* ── Full NPC policy field definitions (legacy parity) ── */
+
+interface PolicyField {
+  key: string;
+  label: string;
+  hint?: string;
+  step?: number;
+  min?: number;
+  max?: number;
+  isPercent?: boolean;
+  zeroHintFn?: (zeroPolicy: Record<string, number>, computed: Record<string, number>) => string;
+}
 
 const POLICY_CATEGORIES: {
   label: string;
   icon: typeof Settings;
-  fields: { key: string; label: string; hint?: string }[];
+  fields: PolicyField[];
 }[] = [
   {
-    label: "전쟁",
+    label: "국가 자원 기준",
+    icon: DollarSign,
+    fields: [
+      {
+        key: "reqNationGold",
+        label: "국가 권장 금",
+        step: 100,
+        hint: "이보다 많으면 포상, 적으면 몰수/헌납합니다. (긴급포상 제외)",
+      },
+      {
+        key: "reqNationRice",
+        label: "국가 권장 쌀",
+        step: 100,
+        hint: "이보다 많으면 포상, 적으면 몰수/헌납합니다. (긴급포상 제외)",
+      },
+    ],
+  },
+  {
+    label: "유저장 자원",
+    icon: Users,
+    fields: [
+      {
+        key: "reqHumanWarUrgentGold",
+        label: "유저전투장 긴급포상 금",
+        step: 100,
+        zeroHintFn: (zp) =>
+          `0이면 보병 6회 징병 가능한 금 기준 (현재 ${zp.reqHumanWarUrgentGold?.toLocaleString() ?? "?"})`,
+      },
+      {
+        key: "reqHumanWarUrgentRice",
+        label: "유저전투장 긴급포상 쌀",
+        step: 100,
+        zeroHintFn: (zp) =>
+          `0이면 기본 병종 6회 사살 가능한 쌀 기준 (현재 ${zp.reqHumanWarUrgentRice?.toLocaleString() ?? "?"})`,
+      },
+      {
+        key: "reqHumanWarRecommandGold",
+        label: "유저전투장 권장 금",
+        step: 100,
+        zeroHintFn: (_zp, calc) =>
+          `0이면 유저전투장 긴급포상 금의 2배 (현재 ${((calc.reqHumanWarUrgentGold ?? 0) * 2).toLocaleString()})`,
+      },
+      {
+        key: "reqHumanWarRecommandRice",
+        label: "유저전투장 권장 쌀",
+        step: 100,
+        zeroHintFn: (_zp, calc) =>
+          `0이면 유저전투장 긴급포상 쌀의 2배 (현재 ${((calc.reqHumanWarUrgentRice ?? 0) * 2).toLocaleString()})`,
+      },
+      {
+        key: "reqHumanDevelGold",
+        label: "유저내정장 권장 금",
+        step: 100,
+        hint: "유저내정장에게 주는 금. 이보다 적으면 포상합니다.",
+      },
+      {
+        key: "reqHumanDevelRice",
+        label: "유저내정장 권장 쌀",
+        step: 100,
+        hint: "유저내정장에게 주는 쌀. 이보다 적으면 포상합니다.",
+      },
+    ],
+  },
+  {
+    label: "NPC장 자원",
+    icon: Bot,
+    fields: [
+      {
+        key: "reqNPCWarGold",
+        label: "NPC전투장 권장 금",
+        step: 100,
+        zeroHintFn: (zp) =>
+          `0이면 기본 병종 4회 징병비 기준 (현재 ${zp.reqNPCWarGold?.toLocaleString() ?? "?"})`,
+      },
+      {
+        key: "reqNPCWarRice",
+        label: "NPC전투장 권장 쌀",
+        step: 100,
+        zeroHintFn: (zp) =>
+          `0이면 기본 병종 4회 사살 가능한 쌀 기준 (현재 ${zp.reqNPCWarRice?.toLocaleString() ?? "?"})`,
+      },
+      {
+        key: "reqNPCDevelGold",
+        label: "NPC내정장 권장 금",
+        step: 100,
+        zeroHintFn: (zp) =>
+          `0이면 30턴 내정 가능한 금 기준 (현재 ${zp.reqNPCDevelGold?.toLocaleString() ?? "?"})`,
+      },
+      {
+        key: "reqNPCDevelRice",
+        label: "NPC내정장 권장 쌀",
+        step: 100,
+        hint: "NPC내정장에게 주는 쌀. 이보다 5배 더 많다면 헌납합니다.",
+      },
+    ],
+  },
+  {
+    label: "자원 단위",
+    icon: Settings,
+    fields: [
+      {
+        key: "minimumResourceActionAmount",
+        label: "포상/몰수/헌납 최소 단위",
+        step: 100,
+        min: 100,
+        hint: "연산결과가 이 단위보다 적다면 수행하지 않습니다.",
+      },
+      {
+        key: "maximumResourceActionAmount",
+        label: "포상/몰수/헌납 최대 단위",
+        step: 100,
+        min: 100,
+        hint: "연산결과가 이 단위보다 크다면 이 값에 맞춥니다.",
+      },
+    ],
+  },
+  {
+    label: "전쟁 기준",
     icon: Crosshair,
     fields: [
       {
-        key: "warPolicy",
-        label: "전쟁 정책",
-        hint: "0=비전쟁, 1=방어, 2=공격",
+        key: "minWarCrew",
+        label: "최소 전투 가능 병력 수",
+        step: 50,
+        hint: "이보다 적을 때에는 징병을 시도합니다.",
       },
-      { key: "minWarCrew", label: "최소 전쟁 병력" },
-      { key: "minDefenceCrew", label: "최소 수비 병력" },
-    ],
-  },
-  {
-    label: "군사",
-    icon: Users,
-    fields: [
-      { key: "recruitPolicy", label: "모병 정책", hint: "0=안함, 1=자동" },
-      { key: "trainPolicy", label: "훈련 정책", hint: "0=안함, 1=자동" },
-      { key: "maxRecruitCrew", label: "최대 모병 병력" },
-      { key: "trainTarget", label: "훈련 목표" },
-      { key: "atmosTarget", label: "사기 목표" },
-    ],
-  },
-  {
-    label: "내정",
-    icon: Settings,
-    fields: [
-      { key: "developPolicy", label: "개발 정책", hint: "0=안함, 1=자동" },
-      { key: "agriTarget", label: "농업 목표" },
-      { key: "commTarget", label: "상업 목표" },
-      { key: "secuTarget", label: "치안 목표" },
-      { key: "defTarget", label: "수비 목표" },
-      { key: "wallTarget", label: "성벽 목표" },
-    ],
-  },
-  {
-    label: "외교/정찰/기술",
-    icon: Settings,
-    fields: [
-      { key: "diplomacyPolicy", label: "외교 정책" },
-      { key: "scoutPolicy", label: "정찰 정책" },
-      { key: "defencePolicy", label: "수비 정책" },
-      { key: "techPolicy", label: "기술 정책" },
-    ],
-  },
-  {
-    label: "자원",
-    icon: Settings,
-    fields: [
-      { key: "goldReserve", label: "금 비축" },
-      { key: "riceReserve", label: "쌀 비축" },
+      {
+        key: "minNPCRecruitCityPopulation",
+        label: "NPC 최소 징병 가능 인구 수",
+        step: 100,
+        hint: "도시의 인구가 이보다 낮으면 NPC는 도시에서 징병하지 않고 후방 워프합니다.",
+      },
+      {
+        key: "safeRecruitCityPopulationRatio",
+        label: "제자리 징병 허용 인구율(%)",
+        isPercent: true,
+        step: 0.5,
+        min: 0,
+        max: 100,
+        hint: "전쟁 시 후방 발령/워프의 기준 인구. 이보다 많다면 '충분하다'고 판단합니다.",
+      },
+      {
+        key: "minNPCWarLeadership",
+        label: "NPC 전투 참여 통솔 기준",
+        step: 5,
+        hint: "이 수치보다 같거나 높으면 NPC전투장으로 분류됩니다.",
+      },
+      {
+        key: "properWarTrainAtmos",
+        label: "훈련/사기진작 목표치",
+        step: 5,
+        min: 20,
+        max: 100,
+        hint: "훈련/사기진작 기준치. 이보다 같거나 높으면 출병합니다.",
+      },
+      {
+        key: "cureThreshold",
+        label: "요양 기준",
+        step: 5,
+        min: 10,
+        max: 100,
+        hint: "요양 기준 %. 이보다 많이 부상을 입으면 요양합니다.",
+      },
     ],
   },
 ];
@@ -117,27 +242,46 @@ const ALL_POLICY_KEYS = POLICY_CATEGORIES.flatMap((c) =>
   c.fields.map((f) => f.key),
 );
 
-const NATION_PRIORITY_ITEMS = [
-  { key: "전쟁", help: "타국 도시 공격" },
-  { key: "수비배치", help: "수비 장수 배치" },
-  { key: "외교", help: "동맹/불가침 등 외교 활동" },
-  { key: "기술투자", help: "국가 기술 개발 투자" },
+/* ── Priority items (will be overridden by server if available) ── */
+
+const DEFAULT_NATION_PRIORITY_ITEMS = [
+  { key: "불가침제의", help: "불가침/동맹 외교 제의" },
+  { key: "선전포고", help: "타국에 선전포고" },
   { key: "천도", help: "수도 이전 검토" },
-  { key: "징병", help: "국가 차원 징병" },
-  { key: "국가세율", help: "세율 조정" },
+  { key: "유저장긴급포상", help: "유저 전투장에게 긴급 포상" },
+  { key: "부대전방발령", help: "부대 단위 전방 발령" },
+  { key: "유저장구출발령", help: "유저장 구출 발령" },
+  { key: "유저장후방발령", help: "유저장 후방 발령" },
+  { key: "부대유저장후방발령", help: "부대 단위 유저장 후방 발령" },
+  { key: "유저장전방발령", help: "유저장 전방 발령" },
+  { key: "유저장포상", help: "유저장 포상" },
+  { key: "부대구출발령", help: "부대 구출 발령" },
+  { key: "부대후방발령", help: "부대 후방 발령" },
+  { key: "NPC긴급포상", help: "NPC장 긴급 포상" },
+  { key: "NPC구출발령", help: "NPC장 구출 발령" },
+  { key: "NPC후방발령", help: "NPC장 후방 발령" },
+  { key: "NPC포상", help: "NPC장 포상" },
+  { key: "NPC전방발령", help: "NPC장 전방 발령" },
+  { key: "유저장내정발령", help: "유저장 내정 발령" },
+  { key: "NPC내정발령", help: "NPC장 내정 발령" },
+  { key: "NPC몰수", help: "NPC장 자원 몰수" },
 ];
 
-const GENERAL_PRIORITY_ITEMS = [
-  { key: "전쟁", help: "출전하여 전투 수행" },
-  { key: "모병", help: "병사 충원" },
-  { key: "훈련", help: "병사 훈련도 향상" },
-  { key: "농업", help: "도시 농업 수치 개발" },
-  { key: "상업", help: "도시 상업 수치 개발" },
-  { key: "치안", help: "도시 치안 유지" },
-  { key: "수비", help: "도시 수비 강화" },
-  { key: "성벽", help: "도시 성벽 보수" },
-  { key: "기술", help: "기술 연구" },
-  { key: "외교", help: "외교 임무 수행" },
+const DEFAULT_GENERAL_PRIORITY_ITEMS = [
+  { key: "NPC사망대비", help: "NPC 사망 대비 행동" },
+  { key: "귀환", help: "귀환" },
+  { key: "금쌀구매", help: "금/쌀 구매" },
+  { key: "출병", help: "출전하여 전투 수행" },
+  { key: "긴급내정", help: "긴급 내정 수행" },
+  { key: "전투준비", help: "전투 준비 (징병/훈련)" },
+  { key: "전방워프", help: "전방으로 이동" },
+  { key: "NPC헌납", help: "NPC 자원 헌납" },
+  { key: "징병", help: "병사 충원" },
+  { key: "후방워프", help: "후방으로 이동" },
+  { key: "전쟁내정", help: "전쟁 중 내정 수행" },
+  { key: "소집해제", help: "소집 해제" },
+  { key: "일반내정", help: "일반 내정 수행" },
+  { key: "내정워프", help: "내정 도시로 이동" },
 ];
 
 const NPC_MODE_LABELS: Record<number, string> = {
@@ -210,7 +354,9 @@ function DraggablePriorityList({
 
         {/* Active items */}
         <div className="space-y-1">
-          <span className="text-[10px] text-green-400">활성 (위 → 높은 우선순위)</span>
+          <span className="text-[10px] text-green-400">
+            활성 (위 → 높은 우선순위)
+          </span>
           {activeItems.map((item, idx) => (
             <div
               key={item.key}
@@ -316,17 +462,31 @@ export default function NpcPage() {
   const { generals, cities, loading, loadAll } = useGameStore();
 
   const [policy, setPolicy] = useState<Record<string, number>>({});
-  const [nationPriority, setNationPriority] = useState<string[]>(
-    NATION_PRIORITY_ITEMS.map((i) => i.key),
-  );
-  const [generalPriority, setGeneralPriority] = useState<string[]>(
-    GENERAL_PRIORITY_ITEMS.map((i) => i.key),
-  );
+  const [zeroPolicy, setZeroPolicy] = useState<Record<string, number>>({});
+  const [nationPriority, setNationPriority] = useState<string[]>([]);
+  const [generalPriority, setGeneralPriority] = useState<string[]>([]);
   const [npcMode, setNpcMode] = useState<string>("1");
   const [policyLoading, setPolicyLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Audit trail (last setter info)
+  // Server-provided priority items
+  const [serverNationPriorityItems, setServerNationPriorityItems] = useState<
+    DragItem[] | null
+  >(null);
+  const [serverGeneralPriorityItems, setServerGeneralPriorityItems] = useState<
+    DragItem[] | null
+  >(null);
+
+  // Force config (hidden JSON fields)
+  const [combatForce, setCombatForce] = useState<Record<number, number[]>>({});
+  const [supportForce, setSupportForce] = useState<number[]>([]);
+  const [developForce, setDevelopForce] = useState<number[]>([]);
+
+  // Derived stat values for zero-policy computation
+  const [defaultStatMax, setDefaultStatMax] = useState(70);
+  const [defaultStatNPCMax, setDefaultStatNPCMax] = useState(60);
+
+  // Audit trail
   const [lastSetters, setLastSetters] = useState<{
     nation?: { setter: string; date: string };
     general?: { setter: string; date: string };
@@ -334,18 +494,20 @@ export default function NpcPage() {
   }>({});
 
   // Settings history log
-  const [settingsHistory, setSettingsHistory] = useState<{ setter: string; date: string; action: string; details: string }[]>([]);
+  const [settingsHistory, setSettingsHistory] = useState<
+    { setter: string; date: string; action: string; details: string }[]
+  >([]);
 
   // Snapshots for rollback
   const [prevPolicy, setPrevPolicy] = useState<Record<string, number>>({});
   const [prevNationPriority, setPrevNationPriority] = useState<string[]>([]);
   const [prevGeneralPriority, setPrevGeneralPriority] = useState<string[]>([]);
-  const [defaultNationPriority] = useState<string[]>(
-    NATION_PRIORITY_ITEMS.map((i) => i.key),
+  const [defaultNationPriority, setDefaultNationPriority] = useState<string[]>(
+    [],
   );
-  const [defaultGeneralPriority] = useState<string[]>(
-    GENERAL_PRIORITY_ITEMS.map((i) => i.key),
-  );
+  const [defaultGeneralPriority, setDefaultGeneralPriority] = useState<
+    string[]
+  >([]);
 
   // General-level override state
   const [selectedNpcId, setSelectedNpcId] = useState<string>("");
@@ -367,23 +529,84 @@ export default function NpcPage() {
       .then(({ data }) => {
         const p: Record<string, number> = {};
         for (const key of ALL_POLICY_KEYS) {
-          p[key] = (data[key] as number) ?? 0;
+          if (key === "safeRecruitCityPopulationRatio") {
+            // Stored as ratio 0~1, display as percent
+            p[key] = ((data[key] as number) ?? 0) * 100;
+          } else {
+            p[key] = (data[key] as number) ?? 0;
+          }
         }
         setPolicy(p);
         setPrevPolicy({ ...p });
 
+        // Zero policy defaults
+        if (data.zeroPolicy) {
+          setZeroPolicy(data.zeroPolicy as Record<string, number>);
+        }
+
+        // Stat max values for zero-policy display
+        if (data.defaultStatMax != null) {
+          setDefaultStatMax(data.defaultStatMax as number);
+        }
+        if (data.defaultStatNPCMax != null) {
+          setDefaultStatNPCMax(data.defaultStatNPCMax as number);
+        }
+
+        // Nation priority
         if (Array.isArray(data.nationPriority)) {
           setNationPriority(data.nationPriority as string[]);
           setPrevNationPriority([...(data.nationPriority as string[])]);
-        } else if (Array.isArray(data.priority)) {
-          // Fallback: legacy single priority list — split into nation/general
-          setGeneralPriority(data.priority as string[]);
-          setPrevGeneralPriority([...(data.priority as string[])]);
+        } else if (Array.isArray(data.currentNationPriority)) {
+          setNationPriority(data.currentNationPriority as string[]);
+          setPrevNationPriority([...(data.currentNationPriority as string[])]);
         }
+
+        // General priority
         if (Array.isArray(data.generalPriority)) {
           setGeneralPriority(data.generalPriority as string[]);
           setPrevGeneralPriority([...(data.generalPriority as string[])]);
+        } else if (Array.isArray(data.currentGeneralActionPriority)) {
+          setGeneralPriority(data.currentGeneralActionPriority as string[]);
+          setPrevGeneralPriority([
+            ...(data.currentGeneralActionPriority as string[]),
+          ]);
+        } else if (Array.isArray(data.priority)) {
+          setGeneralPriority(data.priority as string[]);
+          setPrevGeneralPriority([...(data.priority as string[])]);
         }
+
+        // Server-provided available priority items
+        if (Array.isArray(data.availableNationPriorityItems)) {
+          setServerNationPriorityItems(
+            (data.availableNationPriorityItems as string[]).map((k) => ({
+              key: k,
+              help:
+                DEFAULT_NATION_PRIORITY_ITEMS.find((d) => d.key === k)?.help ??
+                k,
+            })),
+          );
+        }
+        if (Array.isArray(data.availableGeneralActionPriorityItems)) {
+          setServerGeneralPriorityItems(
+            (data.availableGeneralActionPriorityItems as string[]).map((k) => ({
+              key: k,
+              help:
+                DEFAULT_GENERAL_PRIORITY_ITEMS.find((d) => d.key === k)
+                  ?.help ?? k,
+            })),
+          );
+        }
+
+        // Default priorities (for reset)
+        if (Array.isArray(data.defaultNationPriority)) {
+          setDefaultNationPriority(data.defaultNationPriority as string[]);
+        }
+        if (Array.isArray(data.defaultGeneralActionPriority)) {
+          setDefaultGeneralPriority(
+            data.defaultGeneralActionPriority as string[],
+          );
+        }
+
         if (data.npcMode != null) {
           setNpcMode(String(data.npcMode));
         }
@@ -397,7 +620,25 @@ export default function NpcPage() {
           );
         }
         if (Array.isArray(data.history)) {
-          setSettingsHistory(data.history as { setter: string; date: string; action: string; details: string }[]);
+          setSettingsHistory(
+            data.history as {
+              setter: string;
+              date: string;
+              action: string;
+              details: string;
+            }[],
+          );
+        }
+
+        // Force config (hidden JSON)
+        if (data.CombatForce) {
+          setCombatForce(data.CombatForce as Record<number, number[]>);
+        }
+        if (Array.isArray(data.SupportForce)) {
+          setSupportForce(data.SupportForce as number[]);
+        }
+        if (Array.isArray(data.DevelopForce)) {
+          setDevelopForce(data.DevelopForce as number[]);
         }
       })
       .catch(() => {})
@@ -420,6 +661,33 @@ export default function NpcPage() {
     );
   }, [generals, myGeneral]);
 
+  // Compute calcPolicyValue for zero-policy display
+  const calcPolicyValue = useCallback(
+    (key: string): number => {
+      const val = policy[key] ?? 0;
+      if (val === 0 && zeroPolicy[key] != null) {
+        return zeroPolicy[key];
+      }
+      return val;
+    },
+    [policy, zeroPolicy],
+  );
+
+  // Computed values for zeroHintFn
+  const computedValues = useMemo(() => {
+    const computed: Record<string, number> = {};
+    for (const key of ALL_POLICY_KEYS) {
+      computed[key] = calcPolicyValue(key);
+    }
+    return computed;
+  }, [calcPolicyValue]);
+
+  // Use server-provided items or fallback
+  const nationPriorityItems =
+    serverNationPriorityItems ?? DEFAULT_NATION_PRIORITY_ITEMS;
+  const generalPriorityItems =
+    serverGeneralPriorityItems ?? DEFAULT_GENERAL_PRIORITY_ITEMS;
+
   const handlePolicyChange = (key: string, value: number) => {
     setPolicy((prev) => ({ ...prev, [key]: value }));
   };
@@ -428,9 +696,18 @@ export default function NpcPage() {
     if (!myGeneral?.nationId) return;
     setSaving(true);
     try {
+      // Convert percent back to ratio for safeRecruitCityPopulationRatio
+      const policyToSend = { ...policy };
+      if (policyToSend.safeRecruitCityPopulationRatio != null) {
+        policyToSend.safeRecruitCityPopulationRatio =
+          policyToSend.safeRecruitCityPopulationRatio / 100;
+      }
       await npcPolicyApi.updatePolicy(myGeneral.nationId, {
-        ...policy,
+        ...policyToSend,
         npcMode: Number(npcMode),
+        CombatForce: combatForce,
+        SupportForce: supportForce,
+        DevelopForce: developForce,
       });
       setPrevPolicy({ ...policy });
       toast.success("NPC 정책이 저장되었습니다.");
@@ -480,12 +757,24 @@ export default function NpcPage() {
 
   // Reset & Rollback handlers
   const handleResetNationPriority = () => {
-    setNationPriority([...defaultNationPriority]);
-    toast.info("국가턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.");
+    if (defaultNationPriority.length > 0) {
+      setNationPriority([...defaultNationPriority]);
+    } else {
+      setNationPriority(nationPriorityItems.map((i) => i.key));
+    }
+    toast.info(
+      "국가턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.",
+    );
   };
   const handleResetGeneralPriority = () => {
-    setGeneralPriority([...defaultGeneralPriority]);
-    toast.info("장수턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.");
+    if (defaultGeneralPriority.length > 0) {
+      setGeneralPriority([...defaultGeneralPriority]);
+    } else {
+      setGeneralPriority(generalPriorityItems.map((i) => i.key));
+    }
+    toast.info(
+      "장수턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.",
+    );
   };
   const handleRollbackNationPriority = () => {
     setNationPriority([...prevNationPriority]);
@@ -545,12 +834,12 @@ export default function NpcPage() {
 
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
-      <PageHeader icon={Bot} title="임시 NPC 정책" />
+      <PageHeader icon={Bot} title="NPC 정책" />
 
       <Tabs defaultValue="list">
         <TabsList>
           <TabsTrigger value="list">NPC 장수</TabsTrigger>
-          <TabsTrigger value="policy">NPC 정책</TabsTrigger>
+          <TabsTrigger value="policy">국가 정책</TabsTrigger>
           <TabsTrigger value="priority">우선순위</TabsTrigger>
           <TabsTrigger value="override">장수별 설정</TabsTrigger>
           <TabsTrigger value="history">설정 이력</TabsTrigger>
@@ -612,7 +901,7 @@ export default function NpcPage() {
           )}
         </TabsContent>
 
-        {/* Tab 2: NPC policy */}
+        {/* Tab 2: Full NPC policy with ~20 fields */}
         <TabsContent value="policy" className="mt-4 space-y-4">
           {policyLoading ? (
             <LoadingState />
@@ -642,7 +931,7 @@ export default function NpcPage() {
                 </CardContent>
               </Card>
 
-              {/* Policy categories */}
+              {/* Policy categories with all ~20 fields */}
               {POLICY_CATEGORIES.map((cat) => (
                 <Card key={cat.label}>
                   <CardHeader>
@@ -653,29 +942,118 @@ export default function NpcPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-3">
-                      {cat.fields.map((f) => (
-                        <div key={f.key} className="space-y-1">
-                          <label className="text-xs text-muted-foreground">
-                            {f.label}
-                          </label>
-                          <Input
-                            type="number"
-                            value={policy[f.key] ?? 0}
-                            onChange={(e) =>
-                              handlePolicyChange(f.key, Number(e.target.value))
-                            }
-                          />
-                          {f.hint && (
-                            <p className="text-[10px] text-muted-foreground/70">
-                              {f.hint}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                      {cat.fields.map((f) => {
+                        const displayValue = policy[f.key] ?? 0;
+                        const zeroHint = f.zeroHintFn
+                          ? f.zeroHintFn(zeroPolicy, computedValues)
+                          : null;
+                        return (
+                          <div key={f.key} className="space-y-1">
+                            <label className="text-xs text-muted-foreground">
+                              {f.label}
+                            </label>
+                            <Input
+                              type="number"
+                              step={f.step ?? 1}
+                              min={f.min}
+                              max={f.max}
+                              value={displayValue}
+                              onChange={(e) =>
+                                handlePolicyChange(
+                                  f.key,
+                                  Number(e.target.value),
+                                )
+                              }
+                            />
+                            {f.hint && (
+                              <p className="text-[10px] text-muted-foreground/70">
+                                {f.hint}
+                              </p>
+                            )}
+                            {zeroHint && displayValue === 0 && (
+                              <p className="text-[10px] text-yellow-500/80">
+                                {zeroHint}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
               ))}
+
+              {/* Force config (hidden JSON fields) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Settings className="size-4" />
+                    부대 배치 설정
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-[10px] text-muted-foreground">
+                    전투 부대, 후방 징병 부대, 내정 부대의 JSON 설정입니다.
+                    고급 설정이므로 주의하세요.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        전투 부대 (CombatForce)
+                      </label>
+                      <Input
+                        value={JSON.stringify(combatForce)}
+                        onChange={(e) => {
+                          try {
+                            setCombatForce(JSON.parse(e.target.value));
+                          } catch {
+                            /* ignore parse errors while typing */
+                          }
+                        }}
+                        className="font-mono text-xs"
+                        placeholder='{"부대번호":[시작도시,도착도시],...}'
+                      />
+                      <p className="text-[10px] text-muted-foreground/60">
+                        JSON: {"{"}부대번호:[시작도시번호(아국),도착도시번호(적군)],...{"}"}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        후방 징병 부대 (SupportForce)
+                      </label>
+                      <Input
+                        value={JSON.stringify(supportForce)}
+                        onChange={(e) => {
+                          try {
+                            setSupportForce(JSON.parse(e.target.value));
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                        className="font-mono text-xs"
+                        placeholder="[부대번호,...]"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        내정 부대 (DevelopForce)
+                      </label>
+                      <Input
+                        value={JSON.stringify(developForce)}
+                        onChange={(e) => {
+                          try {
+                            setDevelopForce(JSON.parse(e.target.value));
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                        className="font-mono text-xs"
+                        placeholder="[부대번호,...]"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="flex items-center gap-2">
                 <Button onClick={handleSavePolicy} disabled={saving}>
@@ -700,18 +1078,19 @@ export default function NpcPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <ListOrdered className="size-4" />
-                NPC 국가턴 우선순위
+                NPC 사령턴 우선순위
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <LastSetterInfo setter={lastSetters.nation} />
               <p className="text-xs text-muted-foreground">
-                NPC 국가가 턴을 수행할 때의 우선순위입니다. 드래그하거나
-                ▲▼ 버튼으로 순서를 변경하세요.
+                예턴이 없거나 지정되어 있더라도 실패하면 아래 순위에 따라
+                사령턴을 시도합니다. 드래그하거나 ▲▼ 버튼으로 순서를
+                변경하세요.
               </p>
               <DraggablePriorityList
                 title="국가턴"
-                items={NATION_PRIORITY_ITEMS}
+                items={nationPriorityItems}
                 activeKeys={nationPriority}
                 onReorder={setNationPriority}
                 onToggleActive={handleNationToggle}
@@ -741,17 +1120,18 @@ export default function NpcPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
                 <ListOrdered className="size-4" />
-                NPC 장수턴 우선순위
+                NPC 일반턴 우선순위
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <LastSetterInfo setter={lastSetters.general} />
               <p className="text-xs text-muted-foreground">
-                NPC 장수가 개인 턴을 수행할 때의 우선순위입니다.
+                순위가 높은 것부터 시도합니다. 아무것도 실행할 수 없으면
+                물자조달이나 인재탐색을 합니다.
               </p>
               <DraggablePriorityList
                 title="장수턴"
-                items={GENERAL_PRIORITY_ITEMS}
+                items={generalPriorityItems}
                 activeKeys={generalPriority}
                 onReorder={setGeneralPriority}
                 onToggleActive={handleGeneralToggle}
@@ -860,31 +1240,43 @@ export default function NpcPage() {
                   <TableBody>
                     {settingsHistory.map((entry, idx) => (
                       <TableRow key={idx}>
-                        <TableCell className="text-xs text-muted-foreground">{entry.date}</TableCell>
-                        <TableCell className="text-xs font-medium">{entry.setter}</TableCell>
-                        <TableCell className="text-xs">{entry.action}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{entry.details}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {entry.date}
+                        </TableCell>
+                        <TableCell className="text-xs font-medium">
+                          {entry.setter}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {entry.action}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
+                          {entry.details}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground text-center py-4">설정 이력이 없습니다.</p>
-                  {/* Show lastSetters info as fallback */}
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    설정 이력이 없습니다.
+                  </p>
                   {lastSetters.policy && (
                     <div className="text-xs text-muted-foreground">
-                      정책: {lastSetters.policy.setter} ({lastSetters.policy.date})
+                      정책: {lastSetters.policy.setter} (
+                      {lastSetters.policy.date})
                     </div>
                   )}
                   {lastSetters.nation && (
                     <div className="text-xs text-muted-foreground">
-                      국가 우선순위: {lastSetters.nation.setter} ({lastSetters.nation.date})
+                      국가 우선순위: {lastSetters.nation.setter} (
+                      {lastSetters.nation.date})
                     </div>
                   )}
                   {lastSetters.general && (
                     <div className="text-xs text-muted-foreground">
-                      장수 우선순위: {lastSetters.general.setter} ({lastSetters.general.date})
+                      장수 우선순위: {lastSetters.general.setter} (
+                      {lastSetters.general.date})
                     </div>
                   )}
                 </div>

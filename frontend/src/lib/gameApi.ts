@@ -191,6 +191,14 @@ export const commandApi = {
     api.get<NationTurn[]>(`/nations/${nationId}/turns`, {
       params: { officerLevel },
     }),
+  getAllOfficerTurns: async (nationId: number, officerLevels: number[]): Promise<NationTurn[]> => {
+    const results = await Promise.all(
+      officerLevels.map((lv) =>
+        api.get<NationTurn[]>(`/nations/${nationId}/turns`, { params: { officerLevel: lv } })
+      )
+    );
+    return results.flatMap((r) => r.data);
+  },
   reserveNation: (
     nationId: number,
     generalId: number,
@@ -240,6 +248,8 @@ export const diplomacyApi = {
     api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy`),
   listByNation: (worldId: number, nationId: number) =>
     api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy/nation/${nationId}`),
+  respond: (worldId: number, messageId: number, action: string, accept: boolean) =>
+    api.post(`/worlds/${worldId}/diplomacy/respond`, { messageId, action, accept }),
 };
 
 // Message API
@@ -417,6 +427,9 @@ export const accountApi = {
   updateSettings: (settings: AccountSettings) =>
     api.patch<void>("/account/settings", settings),
   toggleVacation: () => api.post<void>("/account/vacation"),
+  buildNationCandidate: () => api.post<void>("/account/buildNationCandidate"),
+  instantRetreat: () => api.post<void>("/account/instantRetreat"),
+  dieOnPrestart: () => api.post<void>("/account/dieOnPrestart"),
   getOAuthProviders: () =>
     api.get<import("@/types").OAuthProviderInfo[]>("/account/oauth"),
   linkOAuth: (provider: string) =>
@@ -498,8 +511,8 @@ export const diplomacyLetterApi = {
       diplomaticContent?: string;
     },
   ) => api.post<Message>(`/nations/${nationId}/diplomacy-letters`, data),
-  respond: (letterId: number, accept: boolean) =>
-    api.post<void>(`/diplomacy-letters/${letterId}/respond`, { accept }),
+  respond: (letterId: number, accept: boolean, reason?: string) =>
+    api.post<void>(`/diplomacy-letters/${letterId}/respond`, { accept, reason }),
   execute: (letterId: number) =>
     api.post<void>(`/diplomacy-letters/${letterId}/execute`),
   rollback: (letterId: number) =>
@@ -590,16 +603,36 @@ export const inheritanceApi = {
     ),
   resetStats: (
     worldId: number,
-    stats: { leadership: number; strength: number; intel: number },
+    stats: {
+      leadership: number;
+      strength: number;
+      intel: number;
+      inheritBonusStat?: [number, number, number];
+    },
   ) =>
     api.post<InheritanceActionResult>(
       `/worlds/${worldId}/inheritance/reset-stats`,
       stats,
     ),
-  checkOwner: (worldId: number, generalName: string) =>
+  checkOwner: (worldId: number, generalIdOrName: string | number) =>
     api.post<{ ownerName?: string; found: boolean }>(
       `/worlds/${worldId}/inheritance/check-owner`,
-      { generalName },
+      typeof generalIdOrName === "number"
+        ? { destGeneralID: generalIdOrName }
+        : { generalName: generalIdOrName },
+    ),
+  buyInheritBuff: (
+    worldId: number,
+    data: { type: string; level: number },
+  ) =>
+    api.post<InheritanceActionResult>(
+      `/worlds/${worldId}/inheritance/buy-buff`,
+      data,
+    ),
+  getMoreLog: (worldId: number, lastID: number) =>
+    api.get<{ log: import("@/types").InheritanceLogEntry[] }>(
+      `/worlds/${worldId}/inheritance/log`,
+      { params: { lastID } },
     ),
   auctionUnique: (
     worldId: number,
@@ -622,6 +655,8 @@ export const auctionApi = {
       item: string;
       amount: number;
       minPrice: number;
+      finishBidAmount?: number;
+      closeTurnCnt?: number;
     },
   ) => api.post<Message>(`/worlds/${worldId}/auctions`, data),
   bid: (auctionId: number, bidderId: number, amount: number) =>
@@ -681,12 +716,12 @@ export const bettingApi = {
   placeBet: (
     worldId: number,
     generalId: number,
-    targetId: number,
+    targetId: number | number[],
     amount: number,
   ) =>
     api.post<void>(`/worlds/${worldId}/betting`, {
       generalId,
-      targetId,
+      bettingType: Array.isArray(targetId) ? targetId : [targetId],
       amount,
     }),
   toggleGate: (worldId: number, open: boolean) =>
