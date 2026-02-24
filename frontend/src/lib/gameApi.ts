@@ -242,6 +242,8 @@ export const messageApi = {
       nationId?: number;
       generalId?: number;
       officerLevel?: number;
+      beforeId?: number;
+      limit?: number;
     },
   ) => api.get<Message[]>("/messages", { params: { type, ...params } }),
   getMine: (generalId: number) =>

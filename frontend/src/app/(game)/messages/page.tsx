@@ -7,7 +7,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { messageApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
 import type { MailboxType, Message } from "@/types";
-import { Mail, PenLine, Send, Trash2 } from "lucide-react";
+import { ChevronDown, Mail, PenLine, Reply, Send, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -44,6 +44,13 @@ export default function MessagesPage() {
   const [destNationId, setDestNationId] = useState("");
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [hasMoreByTab, setHasMoreByTab] = useState<Record<MailboxTab, boolean>>({
+    public: true,
+    national: true,
+    private: true,
+    diplomacy: true,
+  });
 
   const canUseDiplomacy = (myGeneral?.officerLevel ?? 0) >= 4;
 
@@ -86,6 +93,49 @@ export default function MessagesPage() {
     if (!myGeneral || !currentWorld) return;
     fetchMessages();
   }, [myGeneral, currentWorld, fetchMessages]);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (!currentWorld || !myGeneral) return;
+    const currentInbox = messagesByTab[tab];
+    if (currentInbox.length === 0) return;
+
+    const oldestId = Math.min(...currentInbox.map((m) => m.id));
+    setLoadingOlder(true);
+    try {
+      const typeParams = {
+        public: { worldId: currentWorld.id },
+        national: { nationId: myGeneral.nationId },
+        private: { generalId: myGeneral.id },
+        diplomacy: { nationId: myGeneral.nationId, officerLevel: myGeneral.officerLevel },
+      }[tab];
+      const res = await messageApi.getByType(tab, { ...typeParams, beforeId: oldestId, limit: 30 });
+      if (res.data.length === 0) {
+        setHasMoreByTab((prev) => ({ ...prev, [tab]: false }));
+      } else {
+        setMessagesByTab((prev) => ({
+          ...prev,
+          [tab]: [...prev[tab], ...res.data],
+        }));
+      }
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [currentWorld, myGeneral, tab, messagesByTab]);
+
+  /** Set compose form to reply to a specific message sender */
+  const handleReplyTo = useCallback((msg: Message) => {
+    const isNationMsg = msg.mailboxType === "NATIONAL" || msg.mailboxType === "DIPLOMACY";
+    if (isNationMsg && msg.srcId) {
+      setRecipientType("nation");
+      setMailboxType(msg.mailboxType === "DIPLOMACY" ? "DIPLOMACY" : "NATIONAL");
+      setDestNationId(String(msg.srcId));
+    } else if (msg.srcId) {
+      setRecipientType("general");
+      setMailboxType("PRIVATE");
+      setDestGeneralId(String(msg.srcId));
+    }
+    setShowCompose(true);
+  }, []);
 
   useEffect(() => {
     if (!currentWorld || !myGeneral) return;
@@ -427,7 +477,7 @@ export default function MessagesPage() {
         {inbox.length === 0 ? (
           <EmptyState icon={Mail} title="서신이 없습니다." />
         ) : (
-          inbox.map((m) => {
+          [...inbox].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()).map((m) => {
             const senderGeneral = m.srcId ? generalMap.get(m.srcId) : null;
             const senderNation = m.srcId ? nationMap.get(m.srcId) : null;
             const senderName =
@@ -447,10 +497,24 @@ export default function MessagesPage() {
                     {typeof m.meta.readAt !== "string" && (
                       <Badge className="bg-amber-500 text-black">NEW</Badge>
                     )}
+                    {m.srcId != null && m.mailboxType !== "PUBLIC" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto h-6 w-6 p-0"
+                        title="답장"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleReplyTo(m);
+                        }}
+                      >
+                        <Reply className="size-3.5" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="ml-auto h-6 w-6 p-0"
+                      className={`h-6 w-6 p-0 ${m.srcId != null && m.mailboxType !== "PUBLIC" ? "" : "ml-auto"}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(m.id);
@@ -466,6 +530,18 @@ export default function MessagesPage() {
               </Card>
             );
           })
+        )}
+        {inbox.length > 0 && hasMoreByTab[tab] && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            disabled={loadingOlder}
+            onClick={loadOlderMessages}
+          >
+            <ChevronDown className="size-3.5 mr-1" />
+            {loadingOlder ? "불러오는 중..." : "이전 메시지 불러오기"}
+          </Button>
         )}
       </div>
     </div>

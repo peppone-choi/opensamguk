@@ -285,6 +285,31 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     await loadTurns();
   }, [filledTurns, generalId, loadTurns, realtimeMode, selectedTurnList]);
 
+  // Repeat-fill: copy selected turn's command to all subsequent empty turns
+  const repeatFillDown = useCallback(async () => {
+    if (selectedTurnList.length !== 1 || realtimeMode) return;
+    const srcIdx = selectedTurnList[0];
+    const src = filledTurns[srcIdx];
+    if (src.actionCode === "휴식") return;
+
+    const ops: Promise<unknown>[] = [];
+    for (let i = srcIdx + 1; i < TURN_COUNT; i++) {
+      if (filledTurns[i].actionCode === "휴식") {
+        ops.push(
+          commandApi.reserveCommand(generalId, {
+            turn: i,
+            command: src.actionCode,
+            arg: src.arg,
+          }),
+        );
+      }
+    }
+    if (ops.length > 0) {
+      await Promise.all(ops);
+      await loadTurns();
+    }
+  }, [filledTurns, generalId, loadTurns, realtimeMode, selectedTurnList]);
+
   // Push empty slots at selected positions, shifting existing commands back
   const pushEmpty = useCallback(async () => {
     if (selectedTurnList.length === 0 || realtimeMode) return;
@@ -572,6 +597,15 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
             onClick={() => void pushEmpty()}
           >
             뒤로 밀기
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={realtimeMode || selectedTurnList.length !== 1}
+            title="선택한 턴의 명령을 이후 빈 턴에 반복 채우기"
+            onClick={() => void repeatFillDown()}
+          >
+            반복채우기
           </Button>
           <Button
             size="sm"
