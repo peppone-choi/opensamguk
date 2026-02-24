@@ -179,7 +179,7 @@ export default function GameDashboard() {
               className="col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
               style={{ color: "cyan" }}
             >
-              기타 설정: {formatAutorunMode((global as Record<string, unknown>).autorunUser as number | undefined)}
+              기타 설정: {formatAutorunMode((global as unknown as Record<string, unknown>).autorunUser as number | undefined)}
             </div>
 
             <div className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
@@ -428,6 +428,103 @@ export default function GameDashboard() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Nation Power Summary ===== */}
+      {global && global.onlineNations.length > 0 && (
+        <div className={`${isTabActive("world") ? "" : "max-lg:hidden"}`}>
+          <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+            세력 현황
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-600/30">
+            {global.onlineNations
+              .sort((a, b) => b.genCount - a.genCount)
+              .map((n) => (
+                <div
+                  key={n.id}
+                  className="bg-[#111] px-2 py-1.5 flex items-center gap-2"
+                >
+                  <span
+                    className="inline-block size-3 rounded-full shrink-0"
+                    style={{ backgroundColor: n.color }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium truncate">{n.name}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      장수 {n.genCount}명
+                    </p>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* ===== General Status Summary ===== */}
+      {frontInfo?.general && (
+        <div className={`${isTabActive("status") ? "" : "max-lg:hidden"}`}>
+          <div className="legacy-bg1 text-center border-t border-b border-gray-600 text-xs font-bold py-0.5">
+            내 장수 요약
+          </div>
+          <div className="grid grid-cols-3 lg:grid-cols-6 text-center text-[11px] border-b border-gray-600">
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">전투</span>{" "}
+              <span className="text-cyan-400">
+                {frontInfo.general.warnum}전 {frontInfo.general.killnum}승 {frontInfo.general.deathnum}패
+              </span>
+            </div>
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">살상</span>{" "}
+              <span className="text-orange-400">
+                {frontInfo.general.killcrew.toLocaleString()}
+              </span>
+            </div>
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">피살</span>{" "}
+              <span className="text-red-400">
+                {frontInfo.general.deathcrew.toLocaleString()}
+              </span>
+            </div>
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">계략</span>{" "}
+              <span className="text-purple-400">{frontInfo.general.firenum}</span>
+            </div>
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">부상</span>{" "}
+              <span className={frontInfo.general.injury > 0 ? "text-red-400" : "text-green-400"}>
+                {frontInfo.general.injury}%
+              </span>
+            </div>
+            <div className="py-1">
+              <span className="text-muted-foreground">명성</span>{" "}
+              <span className="text-yellow-400">{frontInfo.general.honorText}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-5 text-center text-[11px] border-b border-gray-600">
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">숙련</span>{" "}
+              <span className="text-cyan-300">
+                보{frontInfo.general.dex1} 궁{frontInfo.general.dex2} 기{frontInfo.general.dex3} 공{frontInfo.general.dex4} 수{frontInfo.general.dex5}
+              </span>
+            </div>
+            <div className="border-r border-gray-600/50 py-1 col-span-2">
+              <span className="text-muted-foreground">특기</span>{" "}
+              <span className="text-green-300">
+                {frontInfo.general.personal || "-"} / {frontInfo.general.specialDomestic || "-"} / {frontInfo.general.specialWar || "-"}
+              </span>
+            </div>
+            <div className="border-r border-gray-600/50 py-1">
+              <span className="text-muted-foreground">아이템</span>{" "}
+              <span className="text-yellow-300">
+                {[frontInfo.general.weapon, frontInfo.general.book, frontInfo.general.horse, frontInfo.general.item].filter(Boolean).join(", ") || "없음"}
+              </span>
+            </div>
+            <div className="py-1">
+              <span className="text-muted-foreground">경험/공헌</span>{" "}
+              <span>{frontInfo.general.explevel}/{frontInfo.general.dedlevel}</span>
+            </div>
           </div>
         </div>
       )}
