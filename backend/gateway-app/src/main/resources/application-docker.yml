@@ -10,8 +10,8 @@ spring:
 
 gateway:
   orchestrator:
-    restore-active-worlds: true
-    health-timeout-ms: 120000
+    restore-active-worlds: ${GATEWAY_RESTORE_ACTIVE_WORLDS:true}
+    health-timeout-ms: ${GATEWAY_HEALTH_TIMEOUT_MS:120000}
   docker:
     enabled: true
     network: ${DOCKER_NETWORK:opensam-net}
