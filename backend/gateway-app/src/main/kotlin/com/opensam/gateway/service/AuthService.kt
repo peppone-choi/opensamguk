@@ -16,8 +16,13 @@ class AuthService(
     private val appUserRepository: AppUserRepository,
     private val passwordEncoder: PasswordEncoder,
     private val jwtUtil: JwtUtil,
+    private val systemSettingsService: SystemSettingsService,
 ) {
     fun register(request: RegisterRequest): AuthResponse {
+        val flags = systemSettingsService.getAuthFlags()
+        if (!flags.allowJoin) {
+            throw IllegalStateException("Registration is disabled")
+        }
         if (appUserRepository.existsByLoginId(request.loginId)) {
             throw IllegalArgumentException("Login ID already exists")
         }
@@ -35,11 +40,24 @@ class AuthService(
     }
 
     fun login(request: LoginRequest): AuthResponse {
+        val flags = systemSettingsService.getAuthFlags()
+        if (!flags.allowLogin) {
+            throw IllegalStateException("Login is disabled")
+        }
         val user = appUserRepository.findByLoginId(request.loginId)
             ?: throw IllegalArgumentException("Invalid credentials")
 
         if (!passwordEncoder.matches(request.password, user.passwordHash)) {
             throw IllegalArgumentException("Invalid credentials")
+        }
+
+        val blockedUntil = (user.meta["blockedUntil"] as? String)?.let {
+            runCatching { OffsetDateTime.parse(it) }.getOrNull()
+        }
+        if (user.grade.toInt() == 0) {
+            if (blockedUntil == null || blockedUntil.isAfter(OffsetDateTime.now())) {
+                throw IllegalStateException("User is blocked")
+            }
         }
 
         val role = effectiveRole(user)

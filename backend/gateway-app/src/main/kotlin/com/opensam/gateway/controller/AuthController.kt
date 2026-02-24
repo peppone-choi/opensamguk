@@ -18,12 +18,20 @@ class AuthController(
     private val authService: AuthService,
 ) {
     @PostMapping("/register")
-    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request))
+    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        }
     }
 
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
-        return ResponseEntity.ok(authService.login(request))
+    fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<Any> {
+        return try {
+            ResponseEntity.ok(authService.login(request))
+        } catch (e: IllegalStateException) {
+            ResponseEntity.status(HttpStatus.FORBIDDEN).body(mapOf("error" to (e.message ?: "forbidden")))
+        }
     }
 }
