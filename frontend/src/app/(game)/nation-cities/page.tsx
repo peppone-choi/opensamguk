@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import {
@@ -89,6 +89,7 @@ type SortKey =
   | "name"
   | "level"
   | "pop"
+  | "popRatio"
   | "agri"
   | "comm"
   | "secu"
@@ -97,7 +98,26 @@ type SortKey =
   | "trust"
   | "trade"
   | "region"
-  | "supplyState";
+  | "supplyState"
+  | "generalCount";
+
+/** Color-code a stat value by percentage of max (green >= 80%, yellow >= 50%, red < 50%) */
+function statColor(val: number, max: number): string {
+  if (max <= 0) return "text-muted-foreground";
+  const ratio = val / max;
+  if (ratio >= 0.8) return "text-green-400";
+  if (ratio >= 0.5) return "text-yellow-400";
+  return "text-red-400";
+}
+
+/** Remaining capacity warning */
+function remainingWarning(val: number, max: number): string | null {
+  if (max <= 0) return null;
+  const remain = max - val;
+  const ratio = remain / max;
+  if (ratio <= 0.1) return `[잔여 ${remain.toLocaleString()}]`;
+  return null;
+}
 
 const OFFICER_TITLES: Record<number, string> = {
   4: "태수",
@@ -140,6 +160,7 @@ export default function NationCitiesPage() {
   const [appointLevel, setAppointLevel] = useState<number>(4);
   const [appointGeneralId, setAppointGeneralId] = useState<string>("");
   const [appointSaving, setAppointSaving] = useState(false);
+  const [expandedCities, setExpandedCities] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!currentWorld) return;
@@ -243,10 +264,19 @@ export default function NationCitiesPage() {
     cityFilter ? c.name.toLowerCase().includes(cityFilter.toLowerCase()) : true
   );
 
+  const getGeneralCount = (cityId: number) =>
+    nationGenerals.filter((g) => g.cityId === cityId).length;
+
   const sorted = [...filtered].sort((a, b) => {
     let cmp = 0;
     if (sortKey === "name") {
       cmp = a.name.localeCompare(b.name);
+    } else if (sortKey === "generalCount") {
+      cmp = getGeneralCount(a.id) - getGeneralCount(b.id);
+    } else if (sortKey === "popRatio") {
+      const ra = a.popMax > 0 ? a.pop / a.popMax : 0;
+      const rb = b.popMax > 0 ? b.pop / b.popMax : 0;
+      cmp = ra - rb;
     } else {
       cmp = (a[sortKey] as number) - (b[sortKey] as number);
     }
@@ -552,11 +582,27 @@ export default function NationCitiesPage() {
               const officers = getCityOfficers(c.id);
               const isCapital = myNation?.capitalCityId === c.id;
               return (
-                <TableRow key={c.id}>
+                <React.Fragment key={c.id}><TableRow>
                   <TableCell className="font-medium">
                     <span className="flex items-center gap-1">
                       {isCapital && <Crown className="size-4 text-amber-400" />}
-                      {c.name}
+                      <button
+                        type="button"
+                        className="hover:text-cyan-400 underline-offset-2 hover:underline text-left"
+                        onClick={() => {
+                          setExpandedCities(prev => {
+                            const next = new Set(prev);
+                            if (next.has(c.id)) next.delete(c.id);
+                            else next.add(c.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        {c.name}
+                      </button>
+                      <span className="text-[10px] text-muted-foreground">
+                        ({getGeneralCount(c.id)})
+                      </span>
                     </span>
                   </TableCell>
                   <TableCell>
@@ -570,20 +616,35 @@ export default function NationCitiesPage() {
                   </TableCell>
                   <TableCell>{c.trust}</TableCell>
                   <TableCell>{c.trade}%</TableCell>
-                  <TableCell>
+                  <TableCell className={statColor(c.agri, c.agriMax)}>
                     {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
+                    {remainingWarning(c.agri, c.agriMax) && (
+                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.agri, c.agriMax)}</span>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={statColor(c.comm, c.commMax)}>
                     {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
+                    {remainingWarning(c.comm, c.commMax) && (
+                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.comm, c.commMax)}</span>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={statColor(c.secu, c.secuMax)}>
                     {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
+                    {remainingWarning(c.secu, c.secuMax) && (
+                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.secu, c.secuMax)}</span>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={statColor(c.def, c.defMax)}>
                     {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
+                    {remainingWarning(c.def, c.defMax) && (
+                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.def, c.defMax)}</span>
+                    )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className={statColor(c.wall, c.wallMax)}>
                     {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
+                    {remainingWarning(c.wall, c.wallMax) && (
+                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.wall, c.wallMax)}</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -659,6 +720,62 @@ export default function NationCitiesPage() {
                     </div>
                   </TableCell>
                 </TableRow>
+                {/* Expanded: generals in this city */}
+                {expandedCities.has(c.id) && (
+                  <TableRow className="bg-gray-900/50">
+                    <TableCell colSpan={13} className="py-2">
+                      <div className="text-xs space-y-1 pl-4">
+                        <div className="font-medium text-muted-foreground mb-1">
+                          배치 장수 ({nationGenerals.filter(g => g.cityId === c.id).length}명)
+                        </div>
+                        {nationGenerals.filter(g => g.cityId === c.id).length === 0 ? (
+                          <span className="text-muted-foreground">배치된 장수가 없습니다.</span>
+                        ) : (
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="border-b border-gray-700">
+                                <th className="text-left py-0.5 px-1">장수</th>
+                                <th className="text-left py-0.5 px-1">관직</th>
+                                <th className="text-right py-0.5 px-1">통솔</th>
+                                <th className="text-right py-0.5 px-1">무력</th>
+                                <th className="text-right py-0.5 px-1">지력</th>
+                                <th className="text-right py-0.5 px-1">병종</th>
+                                <th className="text-right py-0.5 px-1">병력</th>
+                                <th className="text-right py-0.5 px-1">훈련</th>
+                                <th className="text-right py-0.5 px-1">사기</th>
+                                <th className="text-right py-0.5 px-1">금</th>
+                                <th className="text-right py-0.5 px-1">쌀</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {nationGenerals
+                                .filter(g => g.cityId === c.id)
+                                .sort((a, b) => b.officerLevel - a.officerLevel)
+                                .map(g => (
+                                  <tr key={g.id} className="border-b border-gray-800">
+                                    <td className="py-0.5 px-1">{g.name}</td>
+                                    <td className="py-0.5 px-1">
+                                      {OFFICER_TITLES[g.officerLevel] ?? (g.officerLevel > 0 ? `Lv${g.officerLevel}` : "-")}
+                                    </td>
+                                    <td className="text-right py-0.5 px-1">{g.leadership}</td>
+                                    <td className="text-right py-0.5 px-1">{g.strength}</td>
+                                    <td className="text-right py-0.5 px-1">{g.intel}</td>
+                                    <td className="text-right py-0.5 px-1">{g.crewType ?? "-"}</td>
+                                    <td className="text-right py-0.5 px-1">{(g.crew ?? 0).toLocaleString()}</td>
+                                    <td className="text-right py-0.5 px-1">{g.train ?? "-"}</td>
+                                    <td className="text-right py-0.5 px-1">{g.atmos ?? "-"}</td>
+                                    <td className="text-right py-0.5 px-1">{(g.gold ?? 0).toLocaleString()}</td>
+                                    <td className="text-right py-0.5 px-1">{(g.rice ?? 0).toLocaleString()}</td>
+                                  </tr>
+                                ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+                </React.Fragment>
               );
             })}
           </TableBody>

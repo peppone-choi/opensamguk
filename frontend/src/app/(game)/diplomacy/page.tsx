@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { diplomacyLetterApi, historyApi } from "@/lib/gameApi";
 import { subscribeWebSocket } from "@/lib/websocket";
 import type { Message, Nation, Diplomacy } from "@/types";
-import { Handshake, Send, Globe, History, ArrowRight } from "lucide-react";
+import { Handshake, Send, Globe, History, ArrowRight, Map as MapIcon } from "lucide-react";
+
+const KonvaMapCanvas = lazy(
+  () => import("@/components/game/konva-map-canvas"),
+);
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -605,6 +609,27 @@ export default function DiplomacyPage() {
                               이행
                             </Button>
                           )}
+                          {/* 갱신 (Renewal): auto-fill compose form with previous letter content */}
+                          {isInvolved && (state === "executed" || state === "accepted") && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowSend(true);
+                                setDestNationId(
+                                  String(isOutgoing ? letter.destId : letter.srcId)
+                                );
+                                setLetterType(type || "nonaggression");
+                                setLetterContent(content || "");
+                                if (diplomaticContent) {
+                                  setShowDualContent(true);
+                                  setLetterDiplomaticContent(diplomaticContent);
+                                }
+                              }}
+                            >
+                              갱신
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => handleDestroy(id)}>
                             삭제
                           </Button>
@@ -633,6 +658,29 @@ export default function DiplomacyPage() {
               />
             </CardContent>
           </Card>
+
+          {/* Territory Map */}
+          {cities.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-1">
+                  <MapIcon className="size-3.5" />
+                  세력 지도
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Suspense fallback={<div className="h-64 flex items-center justify-center text-xs text-muted-foreground">지도 로딩...</div>}>
+                  <KonvaMapCanvas
+                    cities={cities}
+                    nations={nations}
+                    width={600}
+                    height={400}
+                    onCityClick={() => {}}
+                  />
+                </Suspense>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Conflict / 분쟁 Areas */}
           <ConflictAreaCard nations={nations} cities={cities} nationMap={nationMap} diplomacy={diplomacy} />
