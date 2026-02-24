@@ -62,7 +62,7 @@ const LETTER_TYPES = [
 export default function DiplomacyPage() {
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
-  const { nations, diplomacy, generals, cities, loading, loadAll } =
+  const { nations, diplomacy, generals, cities, mapData, loading, loadAll } =
     useGameStore();
 
   // Letter state
@@ -660,7 +660,7 @@ export default function DiplomacyPage() {
           </Card>
 
           {/* Territory Map */}
-          {cities.length > 0 && (
+          {cities.length > 0 && mapData && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-1">
@@ -673,6 +673,7 @@ export default function DiplomacyPage() {
                   <KonvaMapCanvas
                     cities={cities}
                     nations={nations}
+                    mapData={mapData}
                     width={600}
                     height={400}
                     onCityClick={() => {}}
