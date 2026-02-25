@@ -87,7 +87,6 @@ abstract class DomesticCommand(
             else -> "normal"
         }
 
-        score = Math.round(score).toDouble()
         score = max(1.0, score)
 
         val scoreInt = score.toInt()

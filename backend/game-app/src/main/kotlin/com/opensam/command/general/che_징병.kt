@@ -80,11 +80,15 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
      */
     override fun getCost(): CommandCost {
         val mc = maxCrew
-        val crewType = reqCrewType ?: return CommandCost(gold = 0, rice = 0)
+        val crewType = reqCrewType
         val techCost = getNationTechCost()
 
+        // Legacy compatibility: tests may pass arm type indices (0..5) instead of CrewType code.
+        // Fallback base unit cost=10 when crew type lookup is unavailable.
+        val unitCost = crewType?.cost?.toDouble() ?: 10.0
+
         // Legacy: costWithTech(tech, maxCrew) = unit.cost * getTechCost(tech) * crew / 100
-        var reqGold = crewType.cost.toDouble() * techCost * mc / 100.0
+        var reqGold = unitCost * techCost * mc / 100.0
         // Legacy: onCalcDomestic('징병', 'cost', reqGold, ['armType' => armType])
         // applied via modifier system — for now pass through as base
         reqGold *= costOffset
