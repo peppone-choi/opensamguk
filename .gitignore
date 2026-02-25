@@ -43,3 +43,22 @@ frontend-home.png
 lobby-*.png
 login-page.png
 npc-select.png
+
+# OpenClaw/local agent artifacts
+.cache/
+.clawhub/
+.openclaw/
+.pnpm-store/
+.npm/
+frontend/.npm/
+.gradle/
+memory/
+skills/
+AGENTS.md
+BOOTSTRAP.md
+HEARTBEAT.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+USER.md
+*.xlsx
