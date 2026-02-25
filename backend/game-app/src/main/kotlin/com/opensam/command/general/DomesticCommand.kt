@@ -62,6 +62,7 @@ abstract class DomesticCommand(
         // Apply onCalcDomestic 'score' modifier
         score *= DomesticUtils.applyModifier(services, general, nation, actionKey, "score", 1.0)
         score = max(1.0, score)
+        var scoreIntWork = score.toInt()
 
         // Legacy parity (command tests): base success/fail 10%, success scales by trust
         var successRatio = minOf(1.0, 0.1 * (trust / 80.0))
@@ -77,20 +78,18 @@ abstract class DomesticCommand(
         val roll = rng.nextDouble()
         val pick = when {
             roll < failRatio -> {
-                score *= 0.5
+                scoreIntWork = (scoreIntWork * 0.5).toInt()
                 "fail"
             }
             roll < failRatio + successRatio -> {
-                score *= 1.5
+                scoreIntWork = (scoreIntWork * 1.5).toInt()
                 "success"
             }
             else -> "normal"
         }
 
-        score = max(1.0, score)
-
-        val scoreInt = score.toInt()
-        val exp = (score * 0.7).toInt()
+        val scoreInt = max(1, scoreIntWork)
+        val exp = (scoreInt * 0.7).toInt()
         val ded = scoreInt
 
         // Legacy parity: updateMaxDomesticCritical on success, reset on non-success
