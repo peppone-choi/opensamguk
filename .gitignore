@@ -62,3 +62,7 @@ SOUL.md
 TOOLS.md
 USER.md
 *.xlsx
+.local/
+.localnode/
+.pki/
+qa/results/parity-gate/
