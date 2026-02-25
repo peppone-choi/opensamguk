@@ -4,6 +4,8 @@ import com.opensam.command.CommandExecutor
 import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
+import com.opensam.repository.TrafficSnapshotRepository
+import com.opensam.service.WorldService
 import com.opensam.entity.General
 import com.opensam.entity.Nation
 import com.opensam.entity.WorldState
@@ -90,9 +92,11 @@ class TurnServiceTest {
             yearbookService,
             auctionService,
             tournamentService,
+            mock(TrafficSnapshotRepository::class.java),
             generalAI,
             nationAI,
             mock(com.opensam.engine.modifier.ModifierService::class.java),
+            mock(WorldService::class.java),
         )
 
         // Default: worldStateRepository.save returns the argument

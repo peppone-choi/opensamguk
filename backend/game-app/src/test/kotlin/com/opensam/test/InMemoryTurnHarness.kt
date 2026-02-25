@@ -5,6 +5,9 @@ import com.opensam.command.CommandRegistry
 import com.opensam.engine.*
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
+import com.opensam.engine.modifier.ModifierService
+import com.opensam.repository.TrafficSnapshotRepository
+import com.opensam.service.WorldService
 import com.opensam.entity.*
 import com.opensam.repository.*
 import com.opensam.service.InheritanceService
@@ -46,6 +49,8 @@ class InMemoryTurnHarness {
     private val inheritanceService: InheritanceService = mock(InheritanceService::class.java)
     private val generalAI: GeneralAI = mock(GeneralAI::class.java)
     private val nationAI: NationAI = mock(NationAI::class.java)
+    private val statChangeService: StatChangeService = mock(StatChangeService::class.java)
+    private val modifierService: ModifierService = mock(ModifierService::class.java)
 
     val commandRegistry = CommandRegistry()
     val commandExecutor = CommandExecutor(
@@ -56,11 +61,15 @@ class InMemoryTurnHarness {
         diplomacyRepository,
         diplomacyService,
         mapService,
+        statChangeService,
+        modifierService,
     )
 
     private val yearbookService: YearbookService = mock(YearbookService::class.java)
     private val auctionService: com.opensam.service.AuctionService = mock(com.opensam.service.AuctionService::class.java)
     private val tournamentService: com.opensam.service.TournamentService = mock(com.opensam.service.TournamentService::class.java)
+    private val trafficSnapshotRepository: TrafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java)
+    private val worldService: WorldService = mock(WorldService::class.java)
 
     val turnService = TurnService(
         worldStateRepository,
@@ -83,9 +92,11 @@ class InMemoryTurnHarness {
         yearbookService,
         auctionService,
         tournamentService,
+        trafficSnapshotRepository,
         generalAI,
         nationAI,
-        mock(com.opensam.engine.modifier.ModifierService::class.java),
+        modifierService,
+        worldService,
     )
 
     init {
