@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UserCog, KeyRound, Ban, ShieldOff, Trash2, Broom } from "lucide-react";
+import { UserCog, KeyRound, Ban, ShieldOff, Trash2, BrushCleaning } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -122,7 +122,7 @@ export default function AdminUsersPage() {
             }
           }}
         >
-          <Broom className="mr-1 size-4" /> 오래된 계정 정리(6개월+)
+          <BrushCleaning className="mr-1 size-4" /> 오래된 계정 정리(6개월+)
         </Button>
         <Button
           size="sm"
@@ -138,7 +138,7 @@ export default function AdminUsersPage() {
             }
           }}
         >
-          <Broom className="mr-1 size-4" /> 차단 유저 정리(12개월+)
+          <BrushCleaning className="mr-1 size-4" /> 차단 유저 정리(12개월+)
         </Button>
       </div>
 

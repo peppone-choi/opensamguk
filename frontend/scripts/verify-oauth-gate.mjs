@@ -1,10 +1,42 @@
 #!/usr/bin/env node
 
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 /**
  * OAuth gate preflight checker (frontend-focused).
  * - Verifies required env vars
  * - Optionally probes API endpoints with --probe
  */
+
+const envFiles = [".env.local", ".env"];
+
+for (const fileName of envFiles) {
+  const filePath = resolve(process.cwd(), fileName);
+  if (!existsSync(filePath)) {
+    continue;
+  }
+  const content = readFileSync(filePath, "utf8");
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) {
+      continue;
+    }
+    const eqIndex = trimmed.indexOf("=");
+    const key = trimmed.slice(0, eqIndex).trim();
+    if (!key || process.env[key]) {
+      continue;
+    }
+    let value = trimmed.slice(eqIndex + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
 
 const requiredEnv = [
   "NEXT_PUBLIC_API_URL",
@@ -32,6 +64,7 @@ for (const key of optionalEnv) {
 
 if (missing.length > 0) {
   console.error(`\nMissing required env var(s): ${missing.join(", ")}`);
+  console.error("Set them in frontend/.env.local or export them before running this command.");
   process.exit(1);
 }
 

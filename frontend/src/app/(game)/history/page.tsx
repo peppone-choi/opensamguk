@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
-import { historyApi, mapRecentApi } from "@/lib/gameApi";
-import type { Message, YearbookSummary, PublicCachedMapResponse } from "@/types";
+import { historyApi, mapRecentApi, worldApi } from "@/lib/gameApi";
+import type { Message, YearbookSummary, PublicCachedMapResponse, WorldSnapshot } from "@/types";
 import { ScrollText, Clock, Search, Map as MapIcon } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -127,6 +127,7 @@ export default function HistoryPage() {
   // Map snapshot state (맵 재현/스냅샷 브라우징)
   const { nations, cities, mapData, loadAll } = useGameStore();
   const [cachedMap, setCachedMap] = useState<PublicCachedMapResponse | null>(null);
+  const [worldSnapshots, setWorldSnapshots] = useState<WorldSnapshot[]>([]);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapSnapshotIdx, setMapSnapshotIdx] = useState(0);
 
@@ -202,12 +203,27 @@ export default function HistoryPage() {
     if (!currentWorld) return;
     setMapLoading(true);
     try {
-      const { data } = await mapRecentApi.getMapRecent(currentWorld.id);
-      setCachedMap(data);
-      if (data.history.length > 0) {
-        setMapSnapshotIdx(data.history.length - 1);
+      const [snapshotRes, recentRes] = await Promise.allSettled([
+        worldApi.getSnapshots(currentWorld.id),
+        mapRecentApi.getMapRecent(currentWorld.id),
+      ]);
+
+      if (snapshotRes.status === "fulfilled") {
+        setWorldSnapshots(snapshotRes.value.data);
+        if (snapshotRes.value.data.length > 0) {
+          setMapSnapshotIdx(snapshotRes.value.data.length - 1);
+        }
+      } else {
+        setWorldSnapshots([]);
+      }
+
+      if (recentRes.status === "fulfilled") {
+        setCachedMap(recentRes.value.data);
+      } else {
+        setCachedMap(null);
       }
     } catch {
+      setWorldSnapshots([]);
       setCachedMap(null);
     } finally {
       setMapLoading(false);
@@ -280,17 +296,9 @@ export default function HistoryPage() {
     return Object.entries(map);
   }, [filteredEvents]);
 
-  if (!currentWorld)
-    return (
-      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
-    );
-  if (loading) return <LoadingState />;
-
-  // Map snapshot data
-  const currentSnapshot = cachedMap?.history?.[mapSnapshotIdx] ?? null;
+  const mapHistory = worldSnapshots.length > 0 ? worldSnapshots : (cachedMap?.history ?? []);
+  const currentSnapshot = mapHistory[mapSnapshotIdx] ?? null;
   const snapshotCities = useMemo(() => {
-    if (!cachedMap?.cities) return cities;
-    // Overlay snapshot nation ownership onto current cities
     if (!currentSnapshot) return cities;
     const entries = (currentSnapshot.cityOwnership ?? []).map((co) => [co.cityId, co.nationId] as [number, number]);
     const ownerMap = new Map(entries);
@@ -298,7 +306,13 @@ export default function HistoryPage() {
       ...c,
       nationId: ownerMap.get(c.id) ?? c.nationId,
     }));
-  }, [cities, cachedMap, currentSnapshot]);
+  }, [cities, currentSnapshot]);
+
+  if (!currentWorld)
+    return (
+      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
+    );
+  if (loading) return <LoadingState />;
 
   return (
     <div className="p-4 space-y-4 max-w-3xl mx-auto">
@@ -320,7 +334,7 @@ export default function HistoryPage() {
         <TabsContent value="map" className="mt-4 space-y-4">
           {mapLoading ? (
             <LoadingState message="맵 데이터 불러오는 중..." />
-          ) : !cachedMap || !cachedMap.available ? (
+          ) : mapHistory.length === 0 ? (
             <EmptyState icon={MapIcon} title="맵 스냅샷 데이터가 없습니다." />
           ) : (
             <Card>
@@ -329,7 +343,7 @@ export default function HistoryPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Navigation */}
-                {cachedMap.history.length > 0 && (
+                {mapHistory.length > 0 && (
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -344,16 +358,16 @@ export default function HistoryPage() {
                         {currentSnapshot?.year ?? "?"}년 {currentSnapshot?.month ?? "?"}월
                       </span>
                       <span className="text-xs text-muted-foreground ml-2">
-                        ({mapSnapshotIdx + 1} / {cachedMap.history.length})
+                        ({mapSnapshotIdx + 1} / {mapHistory.length})
                       </span>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={mapSnapshotIdx >= cachedMap.history.length - 1}
+                      disabled={mapSnapshotIdx >= mapHistory.length - 1}
                       onClick={() =>
                         setMapSnapshotIdx((i) =>
-                          Math.min(cachedMap.history.length - 1, i + 1),
+                          Math.min(mapHistory.length - 1, i + 1),
                         )
                       }
                     >
@@ -363,11 +377,11 @@ export default function HistoryPage() {
                 )}
 
                 {/* Slider for quick browsing */}
-                {cachedMap.history.length > 1 && (
+                {mapHistory.length > 1 && (
                   <input
                     type="range"
                     min={0}
-                    max={cachedMap.history.length - 1}
+                    max={mapHistory.length - 1}
                     value={mapSnapshotIdx}
                     onChange={(e) => setMapSnapshotIdx(Number(e.target.value))}
                     className="w-full accent-primary"

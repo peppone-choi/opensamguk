@@ -36,6 +36,18 @@ export interface WorldState {
   updatedAt: string;
 }
 
+export interface WorldSnapshot {
+  id: number;
+  worldId: number;
+  year: number;
+  month: number;
+  createdAt: string;
+  phase?: string;
+  season?: string;
+  cityOwnership: { cityId: number; nationId: number }[];
+  events: string[];
+}
+
 // Nation
 export interface Nation {
   id: number;

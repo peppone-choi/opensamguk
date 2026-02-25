@@ -1,6 +1,7 @@
 import api from "./api";
 import type {
   WorldState,
+  WorldSnapshot,
   Nation,
   City,
   General,
@@ -61,6 +62,29 @@ export const worldApi = {
       `/worlds/${id}/reset`,
       scenarioCode ? { scenarioCode } : {},
     ),
+  getSummary: (id: number) =>
+    api.get<{
+      id: number;
+      name: string;
+      scenarioCode: string;
+      currentYear: number;
+      currentMonth: number;
+      season: string;
+      phase: string;
+      tickSeconds: number;
+      realtimeMode: boolean;
+      totalPopulation: number;
+      activeNations: number;
+      activeGenerals: number;
+      humanPlayers: number;
+      atWar: boolean;
+      allowedTechLevel: number;
+      mapCode: string;
+    }>(`/worlds/${id}/summary`),
+  getSnapshots: (id: number) =>
+    api.get<WorldSnapshot[]>(`/worlds/${id}/snapshots`),
+  captureSnapshot: (id: number) =>
+    api.post<WorldSnapshot>(`/worlds/${id}/snapshots/capture`),
   activate: (
     id: number,
     payload?: {
@@ -900,8 +924,17 @@ export const adminApi = {
   userAction: (
     id: number,
     action: {
-      type: "setAdmin" | "removeAdmin" | "delete" | "setGrade";
+      type:
+        | "setAdmin"
+        | "removeAdmin"
+        | "delete"
+        | "setGrade"
+        | "block"
+        | "unblock"
+        | "extendOauth";
       grade?: number;
+      days?: number;
+      oauthDays?: number;
     },
   ) => api.post<void>(`/admin/users/${id}/action`, action),
   createWorld: (data: { scenarioCode: string; turnTerm?: number; notice?: string }) =>

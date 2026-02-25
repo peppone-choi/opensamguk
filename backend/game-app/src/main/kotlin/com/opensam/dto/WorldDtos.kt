@@ -13,3 +13,20 @@ data class CreateWorldRequest(
 data class ResetWorldRequest(
     val scenarioCode: String? = null,
 )
+
+data class WorldCityOwnershipSnapshotResponse(
+    val cityId: Long,
+    val nationId: Long,
+)
+
+data class WorldSnapshotResponse(
+    val id: Long,
+    val worldId: Long,
+    val year: Int,
+    val month: Int,
+    val createdAt: String,
+    val phase: String? = null,
+    val season: String? = null,
+    val cityOwnership: List<WorldCityOwnershipSnapshotResponse>,
+    val events: List<String> = emptyList(),
+)

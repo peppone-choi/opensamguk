@@ -103,15 +103,10 @@ test.describe("OAuth gate: login -> lobby -> world entry", () => {
     await page.goto("/auth/kakao/callback?code=fake-code");
 
     await page.waitForURL("**/lobby", { timeout: 15_000 });
-    await expect(page.getByText("월드 목록")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "서버 목록" })).toBeVisible();
 
     // Select world then enter game
-    const worldCardMeta = page
-      .locator("p.text-xs.text-muted-foreground")
-      .filter({ hasText: /년\s*\d+월/ })
-      .first();
-    await worldCardMeta.waitFor();
-    await worldCardMeta.click();
+    await page.getByText("E2E 월드").first().click();
 
     await expect(page.getByRole("button", { name: "입장" })).toBeVisible();
     await page.getByRole("button", { name: "입장" }).click();
@@ -133,6 +128,6 @@ test.describe("OAuth gate: login -> lobby -> world entry", () => {
 
     await page.goto("/auth/kakao/callback?code=bad-code");
     await page.waitForURL("**/login", { timeout: 15_000 });
-    await expect(page.getByText("오픈삼국 로그인")).toBeVisible();
+    await expect(page.getByRole("button", { name: "카카오 로그인" })).toBeVisible();
   });
 });

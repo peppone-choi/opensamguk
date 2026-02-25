@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Handshake, Shield, Swords, Minus, RefreshCw } from "lucide-react";
+import { Handshake, Shield, Swords, Minus, RefreshCw, Timer } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,9 @@ import type { Diplomacy, NationStatistic } from "@/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+const STATES = ["all", "ally", "nowar", "war", "ceasefire", "neutral"] as const;
+type StateFilter = (typeof STATES)[number];
+
 const stateLabel = (s: string) => {
   switch (s) {
     case "ally":
@@ -38,6 +41,8 @@ const stateLabel = (s: string) => {
       return "중립";
     case "ceasefire":
       return "휴전";
+    case "all":
+      return "전체";
     default:
       return s;
   }
@@ -84,6 +89,7 @@ const stateIcon = (s: string) => {
 export default function AdminDiplomacyPage() {
   const [diplomacy, setDiplomacy] = useState<Diplomacy[]>([]);
   const [nationStats, setNationStats] = useState<NationStatistic[]>([]);
+  const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [loading, setLoading] = useState(true);
 
   const load = () => {
@@ -102,10 +108,19 @@ export default function AdminDiplomacyPage() {
   };
 
   useEffect(() => {
-    load();
+    Promise.all([adminApi.getDiplomacy(), adminApi.getStatistics()])
+      .then(([dipRes, statRes]) => {
+        setDiplomacy(dipRes.data);
+        setNationStats(statRes.data);
+      })
+      .catch(() => {
+        toast.error("해당 월드 관리자 권한이 없습니다.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  // Build NxN diplomacy matrix
   const nations = useMemo(() => {
     return [...nationStats].sort((a, b) => b.power - a.power);
   }, [nationStats]);
@@ -123,6 +138,30 @@ export default function AdminDiplomacyPage() {
     return diplomacyMap.get(`${a}-${b}`);
   };
 
+  const summary = useMemo(() => {
+    const acc: Record<string, number> = { all: diplomacy.length };
+    let expiringSoon = 0;
+    for (const d of diplomacy) {
+      acc[d.stateCode] = (acc[d.stateCode] ?? 0) + 1;
+      if (d.term > 0 && d.term <= 3) expiringSoon += 1;
+    }
+    return {
+      counts: acc,
+      expiringSoon,
+    };
+  }, [diplomacy]);
+
+  const filteredRelations = useMemo(() => {
+    const list =
+      stateFilter === "all"
+        ? diplomacy
+        : diplomacy.filter((d) => d.stateCode === stateFilter);
+    return [...list].sort((a, b) => {
+      if (a.term !== b.term) return a.term - b.term;
+      return a.stateCode.localeCompare(b.stateCode);
+    });
+  }, [diplomacy, stateFilter]);
+
   if (loading) return <LoadingState />;
 
   return (
@@ -135,7 +174,30 @@ export default function AdminDiplomacyPage() {
         </Button>
       </div>
 
-      {/* 국가 종합 지표 테이블 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+        {STATES.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setStateFilter(s)}
+            className={cn(
+              "rounded-md border px-3 py-2 text-left text-sm",
+              stateFilter === s && "border-primary bg-primary/5"
+            )}
+          >
+            <div className="text-muted-foreground text-xs">{stateLabel(s)}</div>
+            <div className="font-semibold">{summary.counts[s] ?? 0}</div>
+          </button>
+        ))}
+        <div className="rounded-md border px-3 py-2">
+          <div className="text-muted-foreground text-xs flex items-center gap-1">
+            <Timer className="size-3" />
+            3개월 이내 만료
+          </div>
+          <div className="font-semibold">{summary.expiringSoon}</div>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">국가 종합 지표</CardTitle>
@@ -169,29 +231,16 @@ export default function AdminDiplomacyPage() {
                     </TableCell>
                     <TableCell className="text-right">{n.genCount}</TableCell>
                     <TableCell className="text-right">{n.cityCount}</TableCell>
-                    <TableCell className="text-right">
-                      {n.totalCrew.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {n.gold.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {n.rice.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {n.tech.toFixed(1)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold">
-                      {n.power.toLocaleString()}
-                    </TableCell>
+                    <TableCell className="text-right">{n.totalCrew.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{n.gold.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{n.rice.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{n.tech.toFixed(1)}</TableCell>
+                    <TableCell className="text-right font-semibold">{n.power.toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
                 {nations.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="text-center text-muted-foreground"
-                    >
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       국가가 없습니다.
                     </TableCell>
                   </TableRow>
@@ -202,7 +251,6 @@ export default function AdminDiplomacyPage() {
         </CardContent>
       </Card>
 
-      {/* 외교 관계 매트릭스 */}
       {nations.length > 0 && (
         <Card>
           <CardHeader>
@@ -221,13 +269,8 @@ export default function AdminDiplomacyPage() {
                           className="p-2 border border-border bg-muted text-center min-w-[60px]"
                         >
                           <div className="flex flex-col items-center gap-1">
-                            <div
-                              className="size-2 rounded-full"
-                              style={{ backgroundColor: n.color }}
-                            />
-                            <span className="truncate max-w-[60px]">
-                              {n.name}
-                            </span>
+                            <div className="size-2 rounded-full" style={{ backgroundColor: n.color }} />
+                            <span className="truncate max-w-[60px]">{n.name}</span>
                           </div>
                         </th>
                       ))}
@@ -238,10 +281,7 @@ export default function AdminDiplomacyPage() {
                       <tr key={rowNation.nationId}>
                         <td className="p-2 border border-border bg-muted font-medium whitespace-nowrap">
                           <div className="flex items-center gap-1">
-                            <div
-                              className="size-2 rounded-full shrink-0"
-                              style={{ backgroundColor: rowNation.color }}
-                            />
+                            <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: rowNation.color }} />
                             {rowNation.name}
                           </div>
                         </td>
@@ -256,16 +296,10 @@ export default function AdminDiplomacyPage() {
                               </td>
                             );
                           }
-                          const rel = getRelation(
-                            rowNation.nationId,
-                            colNation.nationId
-                          );
+                          const rel = getRelation(rowNation.nationId, colNation.nationId);
                           const state = rel?.stateCode ?? "neutral";
                           return (
-                            <td
-                              key={colNation.nationId}
-                              className="p-1 border border-border text-center"
-                            >
+                            <td key={colNation.nationId} className="p-1 border border-border text-center">
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div
@@ -276,12 +310,12 @@ export default function AdminDiplomacyPage() {
                                   >
                                     {stateIcon(state)}
                                     {stateLabel(state)}
+                                    {rel && rel.term > 0 && <span className="opacity-90">{rel.term}</span>}
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>
-                                    {rowNation.name} ↔ {colNation.name}:{" "}
-                                    {stateLabel(state)}
+                                    {rowNation.name} ↔ {colNation.name}: {stateLabel(state)}
                                     {rel ? ` (${rel.term}개월)` : ""}
                                   </p>
                                 </TooltipContent>
@@ -299,7 +333,6 @@ export default function AdminDiplomacyPage() {
         </Card>
       )}
 
-      {/* 외교 관계 목록 (상세) */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">외교 관계 목록</CardTitle>
@@ -316,25 +349,16 @@ export default function AdminDiplomacyPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {diplomacy.map((d) => {
-                const srcNation = nations.find(
-                  (n) => n.nationId === d.srcNationId
-                );
-                const destNation = nations.find(
-                  (n) => n.nationId === d.destNationId
-                );
+              {filteredRelations.map((d) => {
+                const srcNation = nations.find((n) => n.nationId === d.srcNationId);
+                const destNation = nations.find((n) => n.nationId === d.destNationId);
                 return (
                   <TableRow key={d.id}>
-                    <TableCell className="text-muted-foreground">
-                      {d.id}
-                    </TableCell>
+                    <TableCell className="text-muted-foreground">{d.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {srcNation && (
-                          <div
-                            className="size-2 rounded-full"
-                            style={{ backgroundColor: srcNation.color }}
-                          />
+                          <div className="size-2 rounded-full" style={{ backgroundColor: srcNation.color }} />
                         )}
                         {srcNation?.name ?? `#${d.srcNationId}`}
                       </div>
@@ -342,29 +366,21 @@ export default function AdminDiplomacyPage() {
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {destNation && (
-                          <div
-                            className="size-2 rounded-full"
-                            style={{ backgroundColor: destNation.color }}
-                          />
+                          <div className="size-2 rounded-full" style={{ backgroundColor: destNation.color }} />
                         )}
                         {destNation?.name ?? `#${d.destNationId}`}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={stateVariant(d.stateCode)}>
-                        {stateLabel(d.stateCode)}
-                      </Badge>
+                      <Badge variant={stateVariant(d.stateCode)}>{stateLabel(d.stateCode)}</Badge>
                     </TableCell>
                     <TableCell>{d.term}개월</TableCell>
                   </TableRow>
                 );
               })}
-              {diplomacy.length === 0 && (
+              {filteredRelations.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center text-muted-foreground"
-                  >
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     외교 관계가 없습니다.
                   </TableCell>
                 </TableRow>

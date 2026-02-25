@@ -18,6 +18,7 @@
 
 ```bash
 cd frontend
+cp .env.example .env.local
 pnpm verify:oauth-gate
 # API 라우트까지 연결 확인하려면
 pnpm verify:oauth-gate --probe
@@ -49,6 +50,13 @@ pnpm verify:oauth-gate --probe
 ```bash
 cd frontend
 pnpm e2e:oauth
+```
+
+Linux/Docker에서 브라우저 시스템 라이브러리가 없으면 먼저:
+
+```bash
+cd frontend
+pnpm e2e:setup
 ```
 
 ### B. Playwright가 dev 서버를 띄우게 하는 경우

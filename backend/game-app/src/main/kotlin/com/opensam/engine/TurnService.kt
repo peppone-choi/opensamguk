@@ -17,6 +17,7 @@ import com.opensam.service.InheritanceService
 import com.opensam.service.ScenarioService
 import com.opensam.service.TournamentService
 import com.opensam.service.TrafficService
+import com.opensam.service.WorldService
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -61,6 +62,7 @@ class TurnService(
     private val generalAI: GeneralAI,
     private val nationAI: NationAI,
     private val modifierService: ModifierService,
+    private val worldService: WorldService,
 ) {
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
 
@@ -98,6 +100,13 @@ class TurnService(
                 yearbookService.saveMonthlySnapshot(worldId, previousYear, previousMonth)
             } catch (e: Exception) {
                 logger.warn("YearbookService.saveMonthlySnapshot failed: ${e.message}")
+            }
+
+            // 월드 스냅샷 기록: 히스토리 맵 재현에 사용 (world_history.event_type=snapshot)
+            try {
+                worldService.captureSnapshot(world)
+            } catch (e: Exception) {
+                logger.warn("WorldService.captureSnapshot failed: ${e.message}")
             }
 
             // 트래픽 스냅샷 기록 (legacy recentTraffic 패러티)
