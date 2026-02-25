@@ -2,6 +2,8 @@ package com.opensam.repository
 
 import com.opensam.entity.General
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.time.OffsetDateTime
 
 interface GeneralRepository : JpaRepository<General, Long> {
@@ -18,14 +20,20 @@ interface GeneralRepository : JpaRepository<General, Long> {
     /**
      * Get average stats for generals in a nation.
      */
-    fun getAverageStats(worldId: Long, nationId: Long): GeneralAverageStats {
-        val generals = findByWorldIdAndNationId(worldId, nationId)
-        if (generals.isEmpty()) return GeneralAverageStats()
-        return GeneralAverageStats(
-            experience = (generals.sumOf { it.experience } / generals.size),
-            dedication = (generals.sumOf { it.dedication } / generals.size),
+    @Query(
+        """
+        select new com.opensam.repository.GeneralAverageStats(
+            coalesce(cast(avg(g.experience) as integer), 0),
+            coalesce(cast(avg(g.dedication) as integer), 0)
         )
-    }
+        from General g
+        where g.worldId = :worldId and g.nationId = :nationId
+        """,
+    )
+    fun getAverageStats(
+        @Param("worldId") worldId: Long,
+        @Param("nationId") nationId: Long,
+    ): GeneralAverageStats
 }
 
 data class GeneralAverageStats(
