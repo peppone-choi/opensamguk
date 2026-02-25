@@ -23,6 +23,7 @@ mkdir -p "$LOG_DIR" "$HTTP_DIR"
 BASE_URL="${PARITY_BASE_URL:-http://localhost:3000}"
 API_URL="${PARITY_API_URL:-http://localhost:8080/api}"
 ADMIN_TOKEN="${PARITY_ADMIN_TOKEN:-}"
+KAKAO_CLIENT_ID="${PARITY_KAKAO_CLIENT_ID:-dummy}"
 ALLOW_MISSING_ADMIN=0
 SKIP_PLAYWRIGHT=0
 SKIP_ACCOUNT_WRITE=0
@@ -73,6 +74,10 @@ mark_pass() { PASS=$((PASS+1)); RESULT_LINES+=("PASS | $1"); note "PASS: $1"; }
 mark_fail() { FAIL=$((FAIL+1)); RESULT_LINES+=("FAIL | $1"); note "FAIL: $1"; }
 mark_skip() { SKIP=$((SKIP+1)); RESULT_LINES+=("SKIP | $1"); note "SKIP: $1"; }
 mark_incomplete() { INCOMPLETE=$((INCOMPLETE+1)); RESULT_LINES+=("INCOMPLETE | $1"); note "INCOMPLETE: $1"; }
+
+is_http_ok() {
+  [[ "$1" =~ ^[0-9]{3}$ ]] && [[ "$1" != "000" ]]
+}
 
 require_cmd() {
   if command -v "$1" >/dev/null 2>&1; then
@@ -145,7 +150,7 @@ fi
 
 if [[ $SKIP_OAUTH_PREFLIGHT -eq 0 ]]; then
   note "Running frontend OAuth preflight probe..."
-  if (cd "$FRONTEND_DIR" && NEXT_PUBLIC_API_URL="$API_URL" pnpm verify:oauth-gate --probe) >"$LOG_DIR/oauth-preflight.log" 2>&1; then
+  if (cd "$FRONTEND_DIR" && NEXT_PUBLIC_API_URL="$API_URL" NEXT_PUBLIC_KAKAO_CLIENT_ID="$KAKAO_CLIENT_ID" pnpm verify:oauth-gate --probe) >"$LOG_DIR/oauth-preflight.log" 2>&1; then
     mark_pass "frontend verify:oauth-gate --probe"
   else
     mark_fail "frontend verify:oauth-gate --probe"
@@ -195,7 +200,9 @@ fi
 
 note "Checking OAuth link route readiness..."
 s=$(request "oauth-link-unauth" POST "$API_URL/account/oauth/kakao/link" "{}")
-if [[ "$s" == "401" || "$s" == "403" ]]; then
+if ! is_http_ok "$s"; then
+  mark_fail "POST /account/oauth/kakao/link connection failed (status $s)"
+elif [[ "$s" == "401" || "$s" == "403" ]]; then
   mark_pass "POST /account/oauth/kakao/link protected (status $s)"
 elif [[ "$s" == "404" || "$s" == "405" ]]; then
   mark_fail "POST /account/oauth/kakao/link missing (status $s)"
