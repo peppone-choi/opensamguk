@@ -19,7 +19,7 @@ class 휴식(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        pushLog("아무것도 실행하지 않았습니다. <1>$date</>")
+        pushLog("휴식했습니다. 아무것도 실행하지 않았습니다. <1>$date</>")
         return CommandResult(success = true, logs = logs)
     }
 }

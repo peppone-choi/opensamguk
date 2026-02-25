@@ -135,7 +135,7 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
                 append("""{"statChanges":{"rice":${-cost.rice}}""")
                 append(""","dexChanges":{"crewType":${general.crewType},"amount":$dexGain}""")
                 append(""","battleTriggered":true""")
-                append(""","targetCityId":$targetCityId""")
+                append(""","targetCityId":"$targetCityId""")
                 append(""","cityStateUpdate":{"cityId":${targetCityId},"state":43,"term":3}""")
                 if (earnInheritance) {
                     append(""","inheritancePoint":{"key":"active_action","amount":1}""")

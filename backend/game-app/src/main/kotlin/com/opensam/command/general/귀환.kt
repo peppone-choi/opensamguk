@@ -55,7 +55,7 @@ class 귀환(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"cityId":"$destCityId","experience":$exp,"dedication":$ded,"leadershipExp":1}}"""
+            message = """{"statChanges":{"moveTo":"$destCityId","experience":$exp,"dedication":$ded,"leadershipExp":1}}"""
         )
     }
 }

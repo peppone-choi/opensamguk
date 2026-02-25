@@ -42,14 +42,14 @@ class che_단련(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val train = general.train.toInt()
         val atmos = general.atmos.toInt()
 
-        // Weighted choice matching PHP: success=0.34, normal=0.33, fail=0.33
+        // Legacy parity: fail < 0.33, success > 0.66, otherwise normal
         val criticalRoll = rng.nextDouble()
         val pick: String
         val multiplier: Int
         when {
-            criticalRoll < 0.34 -> { pick = "success"; multiplier = 3 }
-            criticalRoll < 0.67 -> { pick = "normal"; multiplier = 2 }
-            else -> { pick = "fail"; multiplier = 1 }
+            criticalRoll < 0.33 -> { pick = "fail"; multiplier = 1 }
+            criticalRoll > 0.66 -> { pick = "success"; multiplier = 3 }
+            else -> { pick = "normal"; multiplier = 2 }
         }
 
         val baseScore = (crew.toDouble() * train * atmos) / SCORE_DIVISOR

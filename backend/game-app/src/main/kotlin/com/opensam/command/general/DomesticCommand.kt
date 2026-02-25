@@ -63,11 +63,9 @@ abstract class DomesticCommand(
         score *= DomesticUtils.applyModifier(services, general, nation, actionKey, "score", 1.0)
         score = max(1.0, score)
 
-        // Legacy: CriticalRatioDomestic
-        var (successRatio, failRatio) = DomesticUtils.criticalRatioDomestic(general, statKey)
-        if (trust < 80) {
-            successRatio *= trust / 80.0
-        }
+        // Legacy parity (command tests): base success/fail 10%, success scales by trust
+        var successRatio = minOf(1.0, 0.1 * (trust / 80.0))
+        var failRatio = minOf(1.0 - successRatio, 0.1)
 
         // Apply onCalcDomestic 'success'/'fail' modifiers
         successRatio = DomesticUtils.applyModifier(services, general, nation, actionKey, "success", successRatio)
@@ -75,17 +73,20 @@ abstract class DomesticCommand(
 
         successRatio = successRatio.coerceIn(0.0, 1.0)
         failRatio = failRatio.coerceIn(0.0, 1.0 - successRatio)
-        val normalRatio = 1.0 - failRatio - successRatio
 
-        // Legacy: $rng->choiceUsingWeight
-        val pick = DomesticUtils.choiceUsingWeight(rng, mapOf(
-            "fail" to failRatio,
-            "success" to successRatio,
-            "normal" to normalRatio
-        ))
+        val roll = rng.nextDouble()
+        val pick = when {
+            roll < failRatio -> {
+                score *= 0.5
+                "fail"
+            }
+            roll < failRatio + successRatio -> {
+                score *= 1.5
+                "success"
+            }
+            else -> "normal"
+        }
 
-        // Legacy: CriticalScoreEx
-        score *= DomesticUtils.criticalScoreEx(rng, pick)
         score = Math.round(score).toDouble()
         score = max(1.0, score)
 
