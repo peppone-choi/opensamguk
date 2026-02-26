@@ -184,12 +184,12 @@ class NpcAiParityTest {
         @Test
         fun `default nation policy values match legacy`() {
             val policy = NpcNationPolicy()
-            assertEquals(20, policy.cureThreshold, "Legacy default cureThreshold=20")
+            assertEquals(10, policy.cureThreshold, "Legacy default cureThreshold=10")
             assertEquals(40, policy.minNPCWarLeadership, "Legacy default minNPCWarLeadership=40")
-            assertEquals(5000, policy.minNPCRecruitCityPopulation)
-            assertEquals(0.4, policy.safeRecruitCityPopulationRatio, 0.001)
-            assertEquals(2000, policy.reqNationGold)
-            assertEquals(2000, policy.reqNationRice)
+            assertEquals(50000, policy.minNPCRecruitCityPopulation)
+            assertEquals(0.5, policy.safeRecruitCityPopulationRatio, 0.001)
+            assertEquals(10000, policy.reqNationGold)
+            assertEquals(12000, policy.reqNationRice)
         }
 
         @Test

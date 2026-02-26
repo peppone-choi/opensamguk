@@ -25,8 +25,8 @@ class NpcPolicyTest {
         assertTrue(policy.canDo("NPC포상"))
         assertTrue(policy.canDo("선전포고"))
         assertEquals(40, policy.minNPCWarLeadership)
-        assertEquals(5000, policy.minNPCRecruitCityPopulation)
-        assertEquals(0.4, policy.safeRecruitCityPopulationRatio)
+        assertEquals(50000, policy.minNPCRecruitCityPopulation)
+        assertEquals(0.5, policy.safeRecruitCityPopulationRatio)
     }
 
     @Test
