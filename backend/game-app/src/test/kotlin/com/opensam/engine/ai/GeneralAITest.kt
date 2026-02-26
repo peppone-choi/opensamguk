@@ -99,8 +99,8 @@ class GeneralAITest {
             secu = secu,
             secuMax = secuMax,
             frontState = frontState,
-            pop = 10000,
-            popMax = 50000,
+            pop = 60000,
+            popMax = 100000,
         )
     }
 
@@ -208,7 +208,7 @@ class GeneralAITest {
         val world = createWorld()
         val general = createGeneral(crew = 50, gold = 500)
         val city = createCity(nationId = 1)
-        val nation = createNation()
+        val nation = createNation(gold = 20000, rice = 20000)
         val diplomacy = createDiplomacy(1, 2, "선전포고")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
@@ -223,7 +223,7 @@ class GeneralAITest {
         val world = createWorld()
         val general = createGeneral(crew = 50, gold = 10)
         val city = createCity(nationId = 1)
-        val nation = createNation()
+        val nation = createNation(gold = 20000, rice = 20000)
         val diplomacy = createDiplomacy(1, 2, "선전포고")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
@@ -236,9 +236,9 @@ class GeneralAITest {
     @Test
     fun `trains when at war with low train`() {
         val world = createWorld()
-        val general = createGeneral(crew = 1000, train = 50)
+        val general = createGeneral(crew = 2000, train = 50)
         val city = createCity(nationId = 1)
-        val nation = createNation()
+        val nation = createNation(gold = 20000, rice = 20000)
         val diplomacy = createDiplomacy(1, 2, "선전포고")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
@@ -251,9 +251,9 @@ class GeneralAITest {
     @Test
     fun `boosts morale when at war with low atmos`() {
         val world = createWorld()
-        val general = createGeneral(crew = 1000, train = 80, atmos = 50)
+        val general = createGeneral(crew = 2000, train = 80, atmos = 50)
         val city = createCity(nationId = 1)
-        val nation = createNation()
+        val nation = createNation(gold = 20000, rice = 20000)
         val diplomacy = createDiplomacy(1, 2, "선전포고")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),
@@ -266,13 +266,14 @@ class GeneralAITest {
     @Test
     fun `attacks from front city with enough troops`() {
         val world = createWorld()
-        val general = createGeneral(crew = 1000, train = 80, atmos = 80)
+        val general = createGeneral(crew = 2000, train = 80, atmos = 80)
         val city = createCity(nationId = 1, frontState = 1)
-        val nation = createNation()
+        val enemyCity = createCity(id = 2, nationId = 2, frontState = 0)
+        val nation = createNation(gold = 20000, rice = 20000)
         val diplomacy = createDiplomacy(1, 2, "선전포고")
 
         setupRepos(world, general, city, nation,
-            allCities = listOf(city),
+            allCities = listOf(city, enemyCity),
             diplomacies = listOf(diplomacy),
             allNations = listOf(nation, createNation(id = 2)))
 
@@ -356,7 +357,7 @@ class GeneralAITest {
     @Test
     fun `chief assigns unassigned generals during peace`() {
         val world = createWorld()
-        val chief = createGeneral(id = 1, officerLevel = 12, crew = 0)
+        val chief = createGeneral(id = 1, officerLevel = 12, crew = 2000)
         val unassigned = createGeneral(id = 2, officerLevel = 0, npcState = 2)
         val city = createCity(nationId = 1)
         val nation = createNation()
@@ -371,11 +372,11 @@ class GeneralAITest {
     @Test
     fun `chief expands city when wealthy`() {
         val world = createWorld()
-        val chief = createGeneral(id = 1, officerLevel = 12, crew = 0)
+        val chief = createGeneral(id = 1, officerLevel = 12, crew = 2000)
         val assigned = createGeneral(id = 2, officerLevel = 3, npcState = 2)
         val city = createCity(nationId = 1)
         city.level = 3
-        val nation = createNation(gold = 10000)
+        val nation = createNation(gold = 20000)
 
         setupRepos(world, chief, city, nation,
             allCities = listOf(city),
@@ -392,7 +393,7 @@ class GeneralAITest {
         val world = createWorld()
         val general = createGeneral(crew = 50, gold = 500)
         val city = createCity(nationId = 1)
-        val nation = createNation()
+        val nation = createNation(gold = 20000, rice = 20000)
         val diplomacy = createDiplomacy(1, 2, "선전포고")
 
         setupRepos(world, general, city, nation, diplomacies = listOf(diplomacy),

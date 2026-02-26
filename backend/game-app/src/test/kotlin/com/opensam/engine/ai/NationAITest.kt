@@ -128,7 +128,7 @@ class NationAITest {
 
     @Test
     fun `should declare war when stronger and sufficiently prepared`() {
-        val nation = createNation(gold = 10000, rice = 10000, power = 200)
+        val nation = createNation(gold = 20000, rice = 20000, power = 200)
         val target = createNation(id = 2, power = 50)
         `when`(cityRepository.findByNationId(1)).thenReturn(listOf(createCity(id = 1), createCity(id = 2)))
         `when`(cityRepository.findByNationId(2)).thenReturn(listOf(createCity(id = 3, nationId = 2)))
@@ -140,7 +140,7 @@ class NationAITest {
 
     @Test
     fun `should not declare war when weaker than target`() {
-        val nation = createNation(gold = 10000, rice = 10000, power = 50)
+        val nation = createNation(gold = 20000, rice = 20000, power = 50)
         val target = createNation(id = 2, power = 200)
         `when`(cityRepository.findByNationId(1)).thenReturn(listOf(createCity()))
         `when`(cityRepository.findByNationId(2)).thenReturn(listOf(createCity(id = 2, nationId = 2)))
@@ -161,7 +161,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns war strategic action when at war and strategic commands available`() {
-        val nation = createNation(gold = 10000, rice = 10000, warState = 1, strategicCmdLimit = 2)
+        val nation = createNation(gold = 20000, rice = 20000, warState = 1, strategicCmdLimit = 2)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -170,7 +170,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns Nation휴식 when at war but no strategic command available`() {
-        val nation = createNation(gold = 10000, rice = 10000, warState = 1, strategicCmdLimit = 0)
+        val nation = createNation(gold = 20000, rice = 20000, warState = 1, strategicCmdLimit = 0)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
         val action = ai.decideNationAction(nation, createWorld(), Random(42))
@@ -179,7 +179,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns 발령 when unassigned generals exist`() {
-        val nation = createNation(gold = 10000, rice = 10000)
+        val nation = createNation(gold = 20000, rice = 20000)
         val unassigned = createGeneral(id = 1, officerLevel = 0, npcState = 2)
         setupRepos(nation, listOf(createCity()), listOf(unassigned))
 
@@ -189,7 +189,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns 증축 when nation can expand low-level city`() {
-        val nation = createNation(gold = 6000, rice = 10000)
+        val nation = createNation(gold = 20000, rice = 20000)
         val cities = listOf(createCity(id = 1, level = 4), createCity(id = 2, level = 5))
         val generals = listOf(createGeneral(id = 1, officerLevel = 1, dedication = 120))
         setupRepos(nation, cities, generals)
@@ -200,7 +200,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns 포상 when generals have low dedication and nation has enough gold`() {
-        val nation = createNation(gold = 4000, rice = 10000)
+        val nation = createNation(gold = 15000, rice = 15000)
         val cities = listOf(createCity(level = 5))
         val lowDedGeneral = createGeneral(id = 1, officerLevel = 1, dedication = 50)
         setupRepos(nation, cities, listOf(lowDedGeneral))
@@ -230,7 +230,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns Nation휴식 when gold below reqNationGold threshold`() {
-        // Default reqNationGold = 2000, so gold = 1500 should trigger rest
+        // Default reqNationGold = 10000, so gold = 1500 should trigger rest
         val nation = createNation(gold = 1500, rice = 10000)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 
@@ -240,7 +240,7 @@ class NationAITest {
 
     @Test
     fun `decideNationAction returns Nation휴식 when rice below reqNationRice threshold`() {
-        // Default reqNationRice = 2000, so rice = 1500 should trigger rest
+        // Default reqNationRice = 12000, so rice = 1500 should trigger rest
         val nation = createNation(gold = 10000, rice = 1500)
         setupRepos(nation, listOf(createCity()), listOf(createGeneral()))
 

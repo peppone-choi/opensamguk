@@ -137,6 +137,8 @@ class GeneralAI(
 
         val action = try {
             when {
+                // Chiefs (officerLevel>=12) get nation-level action priority first,
+                // then fall through to general-level actions if nothing applies.
                 general.officerLevel >= 12 && nation != null -> decideChiefAction(
                     ctx, rng, nationPolicy, generalPolicy, attackable, warTargetNations, supplyCities, backupCities
                 )
@@ -155,7 +157,7 @@ class GeneralAI(
             "휴식"
         }
 
-        logger.debug(
+        logger.info(
             "General {} ({}) decided: {} [diplo={}, type={}]",
             general.id,
             general.name,
@@ -1554,7 +1556,12 @@ class GeneralAI(
         // Must be in a front city
         if (city.frontState.toInt() == 0) return null
 
-        // Has attackable enemy neighbors - engine will pick target
+        // Pick a target enemy city for the attack (AI provides destCityId)
+        val enemyCities = ctx.allCities.filter { it.nationId in warTargetNations.keys && it.nationId != 0L }
+        if (enemyCities.isEmpty()) return null
+        val targetCity = enemyCities[rng.nextInt(enemyCities.size)]
+        @Suppress("UNCHECKED_CAST")
+        general.meta["aiArg"] = mapOf("destCityId" to targetCity.id) as Any
         return "출병"
     }
 
