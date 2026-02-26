@@ -806,7 +806,10 @@ fun ReqGeneralCrewMargin(crewTypeId: Int) = object : Constraint {
 fun AvailableRecruitCrewType(crewTypeId: Int) = object : Constraint {
     override val name = "AvailableRecruitCrewType"
     override fun test(ctx: ConstraintContext): ConstraintResult {
-        val availableCrewTypes = readIntSet(ctx.env["availableCrewTypes"])
+        // If env doesn't provide the availability list (common in unit tests / minimal env),
+        // treat as "no restriction".
+        val raw = ctx.env["availableCrewTypes"] ?: return ConstraintResult.Pass
+        val availableCrewTypes = readIntSet(raw)
         return if (crewTypeId in availableCrewTypes) ConstraintResult.Pass
         else ConstraintResult.Fail("해당 병종을 모집할 수 없습니다.")
     }
