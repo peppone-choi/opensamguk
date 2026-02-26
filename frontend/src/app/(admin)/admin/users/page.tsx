@@ -1,7 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UserCog, KeyRound, Ban, ShieldOff, Trash2, BrushCleaning } from "lucide-react";
+import {
+  UserCog,
+  KeyRound,
+  Ban,
+  ShieldOff,
+  Trash2,
+  BrushCleaning,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -112,7 +119,12 @@ export default function AdminUsersPage() {
           size="sm"
           variant="outline"
           onClick={async () => {
-            if (!confirm("6개월 이상 미접속(또는 미로그인) 유저를 삭제합니다. 계속할까요?")) return;
+            if (
+              !confirm(
+                "6개월 이상 미접속(또는 미로그인) 유저를 삭제합니다. 계속할까요?",
+              )
+            )
+              return;
             try {
               const res = await adminApi.scrub("scrub_old_user");
               toast.success(`정리 완료: ${res.data.affected}명 삭제`);
@@ -128,7 +140,12 @@ export default function AdminUsersPage() {
           size="sm"
           variant="outline"
           onClick={async () => {
-            if (!confirm("차단 상태(grade=0)이며 12개월+ 미접속 유저를 삭제합니다. 계속할까요?")) return;
+            if (
+              !confirm(
+                "차단 상태(grade=0)이며 12개월+ 미접속 유저를 삭제합니다. 계속할까요?",
+              )
+            )
+              return;
             try {
               const res = await adminApi.scrub("scrub_blocked_user");
               toast.success(`정리 완료: ${res.data.affected}명 삭제`);

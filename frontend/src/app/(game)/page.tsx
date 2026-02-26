@@ -79,18 +79,30 @@ export default function GameDashboard() {
 
       // Save world month to localStorage for cross-page use (e.g., map season)
       if (data.global?.month) {
-        try { localStorage.setItem("opensam:world:month", String(data.global.month)); } catch { /* ignore */ }
+        try {
+          localStorage.setItem(
+            "opensam:world:month",
+            String(data.global.month),
+          );
+        } catch {
+          /* ignore */
+        }
       }
       // Track lastVoteState for vote notification
       if (data.global?.lastVote) {
         try {
           const prevVoteState = localStorage.getItem("opensam:lastVoteState");
-          const curVoteId = String((data.global.lastVote as Record<string, unknown>)?.id ?? "");
+          const curVoteId = String(
+            (data.global.lastVote as Record<string, unknown>)?.id ?? "",
+          );
           if (prevVoteState !== curVoteId && curVoteId) {
             toast.info("새로운 설문이 진행중입니다!", { duration: 5000 });
           }
-          if (curVoteId) localStorage.setItem("opensam:lastVoteState", curVoteId);
-        } catch { /* ignore */ }
+          if (curVoteId)
+            localStorage.setItem("opensam:lastVoteState", curVoteId);
+        } catch {
+          /* ignore */
+        }
       }
 
       const lastRecord = data.recentRecord.general[0]?.id;
@@ -162,7 +174,9 @@ export default function GameDashboard() {
             {((currentWorld.config as Record<string, string>)
               ?.name as string) ?? global.scenarioText}{" "}
             {global.serverCnt > 0 && (
-              <span className="text-muted-foreground">{global.serverCnt}기</span>
+              <span className="text-muted-foreground">
+                {global.serverCnt}기
+              </span>
             )}{" "}
             <span style={{ color: "cyan" }}>{global.scenarioText}</span>
           </h3>
@@ -191,13 +205,19 @@ export default function GameDashboard() {
               className="col-span-4 lg:col-span-2 border-r border-b border-gray-600 py-1"
               style={{ color: "cyan" }}
             >
-              토너먼트: 경기당 {Math.max(1, Math.round(global.turnTerm * 5 / 20))}분
+              토너먼트: 경기당{" "}
+              {Math.max(1, Math.round((global.turnTerm * 5) / 20))}분
             </div>
             <div
               className="col-span-4 lg:col-span-2 border-b border-gray-600 py-1"
               style={{ color: "cyan" }}
             >
-              기타 설정: {formatAutorunMode((global as unknown as Record<string, unknown>).autorunUser as number | undefined)}
+              기타 설정:{" "}
+              {formatAutorunMode(
+                (global as unknown as Record<string, unknown>).autorunUser as
+                  | number
+                  | undefined,
+              )}
             </div>
 
             <div className="col-span-8 lg:col-span-4 border-r border-b border-gray-600 py-1">
@@ -220,7 +240,13 @@ export default function GameDashboard() {
 
             <div className="col-span-6 lg:col-span-4 border-r border-gray-600 py-1">
               {global.isTournamentActive ? (
-                <span style={{ color: "cyan" }}>↑{formatTournamentType(global.tournamentType)} 진행중{global.tournamentTime ? ` ${global.tournamentTime.substring(5, 16)}` : ""}↑</span>
+                <span style={{ color: "cyan" }}>
+                  ↑{formatTournamentType(global.tournamentType)} 진행중
+                  {global.tournamentTime
+                    ? ` ${global.tournamentTime.substring(5, 16)}`
+                    : ""}
+                  ↑
+                </span>
               ) : (
                 <span style={{ color: "magenta" }}>
                   현재 토너먼트 경기 없음
@@ -408,7 +434,8 @@ export default function GameDashboard() {
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
                 >
-                  <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                  <span className="text-gray-400">[{r.date}]</span>{" "}
+                  {formatLog(r.message)}
                 </div>
               ))
             )}
@@ -425,7 +452,8 @@ export default function GameDashboard() {
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
                 >
-                  <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                  <span className="text-gray-400">[{r.date}]</span>{" "}
+                  {formatLog(r.message)}
                 </div>
               ))
             )}
@@ -442,7 +470,8 @@ export default function GameDashboard() {
                   key={r.id}
                   className="border-b border-gray-600/30 px-2 py-0.5 text-xs"
                 >
-                  <span className="text-gray-400">[{r.date}]</span> {formatLog(r.message)}
+                  <span className="text-gray-400">[{r.date}]</span>{" "}
+                  {formatLog(r.message)}
                 </div>
               ))
             )}
@@ -490,7 +519,8 @@ export default function GameDashboard() {
             <div className="border-r border-gray-600/50 py-1">
               <span className="text-muted-foreground">전투</span>{" "}
               <span className="text-cyan-400">
-                {frontInfo.general.warnum}전 {frontInfo.general.killnum}승 {frontInfo.general.deathnum}패
+                {frontInfo.general.warnum}전 {frontInfo.general.killnum}승{" "}
+                {frontInfo.general.deathnum}패
               </span>
             </div>
             <div className="border-r border-gray-600/50 py-1">
@@ -507,41 +537,64 @@ export default function GameDashboard() {
             </div>
             <div className="border-r border-gray-600/50 py-1">
               <span className="text-muted-foreground">계략</span>{" "}
-              <span className="text-purple-400">{frontInfo.general.firenum}</span>
+              <span className="text-purple-400">
+                {frontInfo.general.firenum}
+              </span>
             </div>
             <div className="border-r border-gray-600/50 py-1">
               <span className="text-muted-foreground">부상</span>{" "}
-              <span className={frontInfo.general.injury > 0 ? "text-red-400" : "text-green-400"}>
+              <span
+                className={
+                  frontInfo.general.injury > 0
+                    ? "text-red-400"
+                    : "text-green-400"
+                }
+              >
                 {frontInfo.general.injury}%
               </span>
             </div>
             <div className="py-1">
               <span className="text-muted-foreground">명성</span>{" "}
-              <span className="text-yellow-400">{frontInfo.general.honorText}</span>
+              <span className="text-yellow-400">
+                {frontInfo.general.honorText}
+              </span>
             </div>
           </div>
           <div className="grid grid-cols-5 text-center text-[11px] border-b border-gray-600">
             <div className="border-r border-gray-600/50 py-1">
               <span className="text-muted-foreground">숙련</span>{" "}
               <span className="text-cyan-300">
-                보{frontInfo.general.dex1} 궁{frontInfo.general.dex2} 기{frontInfo.general.dex3} 공{frontInfo.general.dex4} 수{frontInfo.general.dex5}
+                보{frontInfo.general.dex1} 궁{frontInfo.general.dex2} 기
+                {frontInfo.general.dex3} 공{frontInfo.general.dex4} 수
+                {frontInfo.general.dex5}
               </span>
             </div>
             <div className="border-r border-gray-600/50 py-1 col-span-2">
               <span className="text-muted-foreground">특기</span>{" "}
               <span className="text-green-300">
-                {frontInfo.general.personal || "-"} / {frontInfo.general.specialDomestic || "-"} / {frontInfo.general.specialWar || "-"}
+                {frontInfo.general.personal || "-"} /{" "}
+                {frontInfo.general.specialDomestic || "-"} /{" "}
+                {frontInfo.general.specialWar || "-"}
               </span>
             </div>
             <div className="border-r border-gray-600/50 py-1">
               <span className="text-muted-foreground">아이템</span>{" "}
               <span className="text-yellow-300">
-                {[frontInfo.general.weapon, frontInfo.general.book, frontInfo.general.horse, frontInfo.general.item].filter(Boolean).join(", ") || "없음"}
+                {[
+                  frontInfo.general.weapon,
+                  frontInfo.general.book,
+                  frontInfo.general.horse,
+                  frontInfo.general.item,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "없음"}
               </span>
             </div>
             <div className="py-1">
               <span className="text-muted-foreground">경험/공헌</span>{" "}
-              <span>{frontInfo.general.explevel}/{frontInfo.general.dedlevel}</span>
+              <span>
+                {frontInfo.general.explevel}/{frontInfo.general.dedlevel}
+              </span>
             </div>
           </div>
         </div>
@@ -562,7 +615,9 @@ export default function GameDashboard() {
 
       {/* ===== Version Info ===== */}
       {global && (
-        <div className={`text-center py-1 ${isTabActive("world") ? "" : "max-lg:hidden"}`}>
+        <div
+          className={`text-center py-1 ${isTabActive("world") ? "" : "max-lg:hidden"}`}
+        >
           <button
             type="button"
             className="text-[10px] text-gray-500 hover:text-gray-300"
@@ -573,22 +628,61 @@ export default function GameDashboard() {
         </div>
       )}
       {showVersionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowVersionModal(false)}>
-          <div className="bg-[#222] border border-gray-600 rounded-lg p-4 max-w-sm w-full mx-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowVersionModal(false)}
+        >
+          <div
+            className="bg-[#222] border border-gray-600 rounded-lg p-4 max-w-sm w-full mx-4 space-y-2"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-sm font-bold text-center">버전 정보</h3>
             <div className="text-xs space-y-1">
-              <p><span className="text-muted-foreground">시나리오:</span> {global?.scenarioText}</p>
-              <p><span className="text-muted-foreground">서버:</span> {currentWorld?.name}</p>
-              <p><span className="text-muted-foreground">턴 주기:</span> {global?.turnTerm}분</p>
-              <p><span className="text-muted-foreground">게임 시간:</span> {global?.year}年 {global?.month}月</p>
-              <p><span className="text-muted-foreground">최종 실행:</span> {global?.lastExecuted ?? "-"}</p>
-              <p><span className="text-muted-foreground">확장 장수:</span> {global?.extendedGeneral ? "활성" : "비활성"}</p>
-              <p><span className="text-muted-foreground">가상/사실:</span> {global?.isFiction ? "가상" : "사실"}</p>
-              <p><span className="text-muted-foreground">NPC 모드:</span> {["불가", "가능", "선택생성"][global?.npcMode ?? 0]}</p>
-              <p><span className="text-muted-foreground">장수 제한:</span> {global?.generalCntLimit?.toLocaleString() ?? "무제한"}</p>
+              <p>
+                <span className="text-muted-foreground">시나리오:</span>{" "}
+                {global?.scenarioText}
+              </p>
+              <p>
+                <span className="text-muted-foreground">서버:</span>{" "}
+                {currentWorld?.name}
+              </p>
+              <p>
+                <span className="text-muted-foreground">턴 주기:</span>{" "}
+                {global?.turnTerm}분
+              </p>
+              <p>
+                <span className="text-muted-foreground">게임 시간:</span>{" "}
+                {global?.year}年 {global?.month}月
+              </p>
+              <p>
+                <span className="text-muted-foreground">최종 실행:</span>{" "}
+                {global?.lastExecuted ?? "-"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">확장 장수:</span>{" "}
+                {global?.extendedGeneral ? "활성" : "비활성"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">가상/사실:</span>{" "}
+                {global?.isFiction ? "가상" : "사실"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">NPC 모드:</span>{" "}
+                {["불가", "가능", "선택생성"][global?.npcMode ?? 0]}
+              </p>
+              <p>
+                <span className="text-muted-foreground">장수 제한:</span>{" "}
+                {global?.generalCntLimit?.toLocaleString() ?? "무제한"}
+              </p>
             </div>
             <div className="flex justify-center pt-2">
-              <Button size="sm" variant="outline" onClick={() => setShowVersionModal(false)}>닫기</Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowVersionModal(false)}
+              >
+                닫기
+              </Button>
             </div>
           </div>
         </div>

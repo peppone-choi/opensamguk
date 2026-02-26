@@ -240,7 +240,10 @@ export default function NationCitiesPage() {
 
   const getCityOfficers = (cityId: number) => {
     return nationGenerals
-      .filter((g) => g.cityId === cityId && g.officerLevel >= 2 && g.officerLevel <= 4)
+      .filter(
+        (g) =>
+          g.cityId === cityId && g.officerLevel >= 2 && g.officerLevel <= 4,
+      )
       .sort((a, b) => b.officerLevel - a.officerLevel);
   };
 
@@ -261,7 +264,7 @@ export default function NationCitiesPage() {
     sortKey === key ? (sortDir === "asc" ? " ▲" : " ▼") : "";
 
   const filtered = (cities ?? []).filter((c) =>
-    cityFilter ? c.name.toLowerCase().includes(cityFilter.toLowerCase()) : true
+    cityFilter ? c.name.toLowerCase().includes(cityFilter.toLowerCase()) : true,
   );
 
   const getGeneralCount = (cityId: number) =>
@@ -582,199 +585,278 @@ export default function NationCitiesPage() {
               const officers = getCityOfficers(c.id);
               const isCapital = myNation?.capitalCityId === c.id;
               return (
-                <React.Fragment key={c.id}><TableRow>
-                  <TableCell className="font-medium">
-                    <span className="flex items-center gap-1">
-                      {isCapital && <Crown className="size-4 text-amber-400" />}
-                      <button
-                        type="button"
-                        className="hover:text-cyan-400 underline-offset-2 hover:underline text-left"
-                        onClick={() => {
-                          setExpandedCities(prev => {
-                            const next = new Set(prev);
-                            if (next.has(c.id)) next.delete(c.id);
-                            else next.add(c.id);
-                            return next;
-                          });
-                        }}
-                      >
-                        {c.name}
-                      </button>
-                      <span className="text-[10px] text-muted-foreground">
-                        ({getGeneralCount(c.id)})
-                      </span>
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs text-muted-foreground">
-                      {REGION_NAMES[c.region] ?? `지역${c.region}`}
-                    </span>
-                  </TableCell>
-                  <TableCell>{c.level}</TableCell>
-                  <TableCell>
-                    {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
-                  </TableCell>
-                  <TableCell>{c.trust}</TableCell>
-                  <TableCell>{c.trade}%</TableCell>
-                  <TableCell className={statColor(c.agri, c.agriMax)}>
-                    {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
-                    {remainingWarning(c.agri, c.agriMax) && (
-                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.agri, c.agriMax)}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className={statColor(c.comm, c.commMax)}>
-                    {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
-                    {remainingWarning(c.comm, c.commMax) && (
-                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.comm, c.commMax)}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className={statColor(c.secu, c.secuMax)}>
-                    {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
-                    {remainingWarning(c.secu, c.secuMax) && (
-                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.secu, c.secuMax)}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className={statColor(c.def, c.defMax)}>
-                    {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
-                    {remainingWarning(c.def, c.defMax) && (
-                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.def, c.defMax)}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className={statColor(c.wall, c.wallMax)}>
-                    {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
-                    {remainingWarning(c.wall, c.wallMax) && (
-                      <span className="text-[9px] text-yellow-500 block">{remainingWarning(c.wall, c.wallMax)}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={c.supplyState === 1 ? "default" : "destructive"}
-                    >
-                      {c.supplyState === 1 ? "보급" : "단절"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {officers.length > 0 ? (
-                        officers.map((o) => (
-                          <div key={o.id} className="text-xs flex items-center gap-1">
-                            <Badge variant="outline" className="text-[10px] px-1">
-                              {OFFICER_TITLES[o.officerLevel] ?? `Lv${o.officerLevel}`}
-                            </Badge>
-                            <span>{o.name}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-xs text-muted-foreground">-</span>
-                      )}
-                      {appointMode && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-6 px-2"
-                          onClick={() => setAppointCity(appointCity === c.id ? null : c.id)}
+                <React.Fragment key={c.id}>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-1">
+                        {isCapital && (
+                          <Crown className="size-4 text-amber-400" />
+                        )}
+                        <button
+                          type="button"
+                          className="hover:text-cyan-400 underline-offset-2 hover:underline text-left"
+                          onClick={() => {
+                            setExpandedCities((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(c.id)) next.delete(c.id);
+                              else next.add(c.id);
+                              return next;
+                            });
+                          }}
                         >
-                          {appointCity === c.id ? "취소" : "+ 임명"}
-                        </Button>
+                          {c.name}
+                        </button>
+                        <span className="text-[10px] text-muted-foreground">
+                          ({getGeneralCount(c.id)})
+                        </span>
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">
+                        {REGION_NAMES[c.region] ?? `지역${c.region}`}
+                      </span>
+                    </TableCell>
+                    <TableCell>{c.level}</TableCell>
+                    <TableCell>
+                      {c.pop.toLocaleString()}/{c.popMax.toLocaleString()}
+                    </TableCell>
+                    <TableCell>{c.trust}</TableCell>
+                    <TableCell>{c.trade}%</TableCell>
+                    <TableCell className={statColor(c.agri, c.agriMax)}>
+                      {c.agri.toLocaleString()}/{c.agriMax.toLocaleString()}
+                      {remainingWarning(c.agri, c.agriMax) && (
+                        <span className="text-[9px] text-yellow-500 block">
+                          {remainingWarning(c.agri, c.agriMax)}
+                        </span>
                       )}
-                      {appointMode && appointCity === c.id && (
-                        <div className="mt-1 space-y-1 p-2 border rounded bg-background">
-                          <Select
-                            value={String(appointLevel)}
-                            onValueChange={(v) => setAppointLevel(Number(v))}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="4">태수</SelectItem>
-                              <SelectItem value="3">군사</SelectItem>
-                              <SelectItem value="2">종사</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select
-                            value={appointGeneralId}
-                            onValueChange={setAppointGeneralId}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue placeholder="장수 선택" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getUnassignedGenerals().map((g) => (
-                                <SelectItem key={g.id} value={String(g.id)}>
-                                  {g.name} (통{g.leadership}/무{g.strength}/지{g.intel})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            size="sm"
-                            className="h-6 text-xs"
-                            disabled={!appointGeneralId || appointSaving}
-                            onClick={handleAppoint}
-                          >
-                            {appointSaving ? "임명 중..." : "임명"}
-                          </Button>
-                        </div>
+                    </TableCell>
+                    <TableCell className={statColor(c.comm, c.commMax)}>
+                      {c.comm.toLocaleString()}/{c.commMax.toLocaleString()}
+                      {remainingWarning(c.comm, c.commMax) && (
+                        <span className="text-[9px] text-yellow-500 block">
+                          {remainingWarning(c.comm, c.commMax)}
+                        </span>
                       )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-                {/* Expanded: generals in this city */}
-                {expandedCities.has(c.id) && (
-                  <TableRow className="bg-gray-900/50">
-                    <TableCell colSpan={13} className="py-2">
-                      <div className="text-xs space-y-1 pl-4">
-                        <div className="font-medium text-muted-foreground mb-1">
-                          배치 장수 ({nationGenerals.filter(g => g.cityId === c.id).length}명)
-                        </div>
-                        {nationGenerals.filter(g => g.cityId === c.id).length === 0 ? (
-                          <span className="text-muted-foreground">배치된 장수가 없습니다.</span>
+                    </TableCell>
+                    <TableCell className={statColor(c.secu, c.secuMax)}>
+                      {c.secu.toLocaleString()}/{c.secuMax.toLocaleString()}
+                      {remainingWarning(c.secu, c.secuMax) && (
+                        <span className="text-[9px] text-yellow-500 block">
+                          {remainingWarning(c.secu, c.secuMax)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className={statColor(c.def, c.defMax)}>
+                      {c.def.toLocaleString()}/{c.defMax.toLocaleString()}
+                      {remainingWarning(c.def, c.defMax) && (
+                        <span className="text-[9px] text-yellow-500 block">
+                          {remainingWarning(c.def, c.defMax)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className={statColor(c.wall, c.wallMax)}>
+                      {c.wall.toLocaleString()}/{c.wallMax.toLocaleString()}
+                      {remainingWarning(c.wall, c.wallMax) && (
+                        <span className="text-[9px] text-yellow-500 block">
+                          {remainingWarning(c.wall, c.wallMax)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          c.supplyState === 1 ? "default" : "destructive"
+                        }
+                      >
+                        {c.supplyState === 1 ? "보급" : "단절"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {officers.length > 0 ? (
+                          officers.map((o) => (
+                            <div
+                              key={o.id}
+                              className="text-xs flex items-center gap-1"
+                            >
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-1"
+                              >
+                                {OFFICER_TITLES[o.officerLevel] ??
+                                  `Lv${o.officerLevel}`}
+                              </Badge>
+                              <span>{o.name}</span>
+                            </div>
+                          ))
                         ) : (
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="border-b border-gray-700">
-                                <th className="text-left py-0.5 px-1">장수</th>
-                                <th className="text-left py-0.5 px-1">관직</th>
-                                <th className="text-right py-0.5 px-1">통솔</th>
-                                <th className="text-right py-0.5 px-1">무력</th>
-                                <th className="text-right py-0.5 px-1">지력</th>
-                                <th className="text-right py-0.5 px-1">병종</th>
-                                <th className="text-right py-0.5 px-1">병력</th>
-                                <th className="text-right py-0.5 px-1">훈련</th>
-                                <th className="text-right py-0.5 px-1">사기</th>
-                                <th className="text-right py-0.5 px-1">금</th>
-                                <th className="text-right py-0.5 px-1">쌀</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {nationGenerals
-                                .filter(g => g.cityId === c.id)
-                                .sort((a, b) => b.officerLevel - a.officerLevel)
-                                .map(g => (
-                                  <tr key={g.id} className="border-b border-gray-800">
-                                    <td className="py-0.5 px-1">{g.name}</td>
-                                    <td className="py-0.5 px-1">
-                                      {OFFICER_TITLES[g.officerLevel] ?? (g.officerLevel > 0 ? `Lv${g.officerLevel}` : "-")}
-                                    </td>
-                                    <td className="text-right py-0.5 px-1">{g.leadership}</td>
-                                    <td className="text-right py-0.5 px-1">{g.strength}</td>
-                                    <td className="text-right py-0.5 px-1">{g.intel}</td>
-                                    <td className="text-right py-0.5 px-1">{g.crewType ?? "-"}</td>
-                                    <td className="text-right py-0.5 px-1">{(g.crew ?? 0).toLocaleString()}</td>
-                                    <td className="text-right py-0.5 px-1">{g.train ?? "-"}</td>
-                                    <td className="text-right py-0.5 px-1">{g.atmos ?? "-"}</td>
-                                    <td className="text-right py-0.5 px-1">{(g.gold ?? 0).toLocaleString()}</td>
-                                    <td className="text-right py-0.5 px-1">{(g.rice ?? 0).toLocaleString()}</td>
-                                  </tr>
+                          <span className="text-xs text-muted-foreground">
+                            -
+                          </span>
+                        )}
+                        {appointMode && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-6 px-2"
+                            onClick={() =>
+                              setAppointCity(appointCity === c.id ? null : c.id)
+                            }
+                          >
+                            {appointCity === c.id ? "취소" : "+ 임명"}
+                          </Button>
+                        )}
+                        {appointMode && appointCity === c.id && (
+                          <div className="mt-1 space-y-1 p-2 border rounded bg-background">
+                            <Select
+                              value={String(appointLevel)}
+                              onValueChange={(v) => setAppointLevel(Number(v))}
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="4">태수</SelectItem>
+                                <SelectItem value="3">군사</SelectItem>
+                                <SelectItem value="2">종사</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              value={appointGeneralId}
+                              onValueChange={setAppointGeneralId}
+                            >
+                              <SelectTrigger className="h-7 text-xs">
+                                <SelectValue placeholder="장수 선택" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getUnassignedGenerals().map((g) => (
+                                  <SelectItem key={g.id} value={String(g.id)}>
+                                    {g.name} (통{g.leadership}/무{g.strength}/지
+                                    {g.intel})
+                                  </SelectItem>
                                 ))}
-                            </tbody>
-                          </table>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              className="h-6 text-xs"
+                              disabled={!appointGeneralId || appointSaving}
+                              onClick={handleAppoint}
+                            >
+                              {appointSaving ? "임명 중..." : "임명"}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </TableCell>
                   </TableRow>
-                )}
+                  {/* Expanded: generals in this city */}
+                  {expandedCities.has(c.id) && (
+                    <TableRow className="bg-gray-900/50">
+                      <TableCell colSpan={13} className="py-2">
+                        <div className="text-xs space-y-1 pl-4">
+                          <div className="font-medium text-muted-foreground mb-1">
+                            배치 장수 (
+                            {
+                              nationGenerals.filter((g) => g.cityId === c.id)
+                                .length
+                            }
+                            명)
+                          </div>
+                          {nationGenerals.filter((g) => g.cityId === c.id)
+                            .length === 0 ? (
+                            <span className="text-muted-foreground">
+                              배치된 장수가 없습니다.
+                            </span>
+                          ) : (
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="border-b border-gray-700">
+                                  <th className="text-left py-0.5 px-1">
+                                    장수
+                                  </th>
+                                  <th className="text-left py-0.5 px-1">
+                                    관직
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    통솔
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    무력
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    지력
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    병종
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    병력
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    훈련
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">
+                                    사기
+                                  </th>
+                                  <th className="text-right py-0.5 px-1">금</th>
+                                  <th className="text-right py-0.5 px-1">쌀</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {nationGenerals
+                                  .filter((g) => g.cityId === c.id)
+                                  .sort(
+                                    (a, b) => b.officerLevel - a.officerLevel,
+                                  )
+                                  .map((g) => (
+                                    <tr
+                                      key={g.id}
+                                      className="border-b border-gray-800"
+                                    >
+                                      <td className="py-0.5 px-1">{g.name}</td>
+                                      <td className="py-0.5 px-1">
+                                        {OFFICER_TITLES[g.officerLevel] ??
+                                          (g.officerLevel > 0
+                                            ? `Lv${g.officerLevel}`
+                                            : "-")}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {g.leadership}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {g.strength}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {g.intel}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {g.crewType ?? "-"}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {(g.crew ?? 0).toLocaleString()}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {g.train ?? "-"}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {g.atmos ?? "-"}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {(g.gold ?? 0).toLocaleString()}
+                                      </td>
+                                      <td className="text-right py-0.5 px-1">
+                                        {(g.rice ?? 0).toLocaleString()}
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </React.Fragment>
               );
             })}

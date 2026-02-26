@@ -4,9 +4,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type SoundType = "turnComplete" | "battleStart" | "newMessage" | "notification";
 
-const FREQUENCIES: Record<SoundType, { freq: number[]; duration: number[]; type: OscillatorType }> = {
-  turnComplete: { freq: [523, 659, 784], duration: [100, 100, 200], type: "sine" },
-  battleStart: { freq: [220, 330, 440, 330, 220], duration: [80, 80, 80, 80, 120], type: "square" },
+const FREQUENCIES: Record<
+  SoundType,
+  { freq: number[]; duration: number[]; type: OscillatorType }
+> = {
+  turnComplete: {
+    freq: [523, 659, 784],
+    duration: [100, 100, 200],
+    type: "sine",
+  },
+  battleStart: {
+    freq: [220, 330, 440, 330, 220],
+    duration: [80, 80, 80, 80, 120],
+    type: "square",
+  },
   newMessage: { freq: [880, 1047], duration: [80, 120], type: "sine" },
   notification: { freq: [660, 880], duration: [100, 150], type: "triangle" },
 };

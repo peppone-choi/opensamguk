@@ -17,11 +17,18 @@ interface MessagePanelProps {
 }
 
 /* ── Recipient group helpers ── */
-function groupContactsByNation(contacts: ContactInfo[], myGeneralId: number, lastContacts: Map<number, number>) {
+function groupContactsByNation(
+  contacts: ContactInfo[],
+  myGeneralId: number,
+  lastContacts: Map<number, number>,
+) {
   const filtered = contacts.filter((c) => c.generalId !== myGeneralId);
 
   // Build nation groups
-  const nationGroups = new Map<string, { color: string; contacts: ContactInfo[] }>();
+  const nationGroups = new Map<
+    string,
+    { color: string; contacts: ContactInfo[] }
+  >();
   for (const c of filtered) {
     const key = c.nationName || "재야";
     if (!nationGroups.has(key)) {
@@ -37,7 +44,11 @@ function groupContactsByNation(contacts: ContactInfo[], myGeneralId: number, las
       const last = lastContacts.get(c.generalId);
       return last && now - last < 24 * 60 * 60 * 1000;
     })
-    .sort((a, b) => (lastContacts.get(b.generalId) ?? 0) - (lastContacts.get(a.generalId) ?? 0));
+    .sort(
+      (a, b) =>
+        (lastContacts.get(b.generalId) ?? 0) -
+        (lastContacts.get(a.generalId) ?? 0),
+    );
 
   return { nationGroups, favorites };
 }
@@ -53,34 +64,55 @@ export function MessagePanel({
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState("all");
-  const [recipientMode, setRecipientMode] = useState<"all" | "nation" | "favorites">("all");
+  const [recipientMode, setRecipientMode] = useState<
+    "all" | "nation" | "favorites"
+  >("all");
   const lastSequenceRef = useRef<number | null>(null);
-  const [lastContacts, setLastContacts] = useState<Map<number, number>>(new Map());
+  const [lastContacts, setLastContacts] = useState<Map<number, number>>(
+    new Map(),
+  );
 
   // Load last_contact from localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem(`opensam:lastContacts:${myGeneralId}`);
-      if (raw) setLastContacts(new Map(Object.entries(JSON.parse(raw)).map(([k, v]) => [Number(k), Number(v)])));
-    } catch { /* ignore */ }
+      if (raw)
+        setLastContacts(
+          new Map(
+            Object.entries(JSON.parse(raw)).map(([k, v]) => [
+              Number(k),
+              Number(v),
+            ]),
+          ),
+        );
+    } catch {
+      /* ignore */
+    }
   }, [myGeneralId]);
 
-  const saveLastContact = useCallback((targetId: number) => {
-    setLastContacts((prev) => {
-      const next = new Map(prev);
-      next.set(targetId, Date.now());
-      // Keep only last 50 contacts
-      const entries = Array.from(next.entries()).sort((a, b) => b[1] - a[1]).slice(0, 50);
-      const trimmed = new Map(entries);
-      try {
-        localStorage.setItem(
-          `opensam:lastContacts:${myGeneralId}`,
-          JSON.stringify(Object.fromEntries(trimmed)),
-        );
-      } catch { /* ignore */ }
-      return trimmed;
-    });
-  }, [myGeneralId]);
+  const saveLastContact = useCallback(
+    (targetId: number) => {
+      setLastContacts((prev) => {
+        const next = new Map(prev);
+        next.set(targetId, Date.now());
+        // Keep only last 50 contacts
+        const entries = Array.from(next.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 50);
+        const trimmed = new Map(entries);
+        try {
+          localStorage.setItem(
+            `opensam:lastContacts:${myGeneralId}`,
+            JSON.stringify(Object.fromEntries(trimmed)),
+          );
+        } catch {
+          /* ignore */
+        }
+        return trimmed;
+      });
+    },
+    [myGeneralId],
+  );
 
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
@@ -92,30 +124,34 @@ export function MessagePanel({
     return gen?.nationId ?? 0;
   }, [generalMap, myGeneralId]);
 
-  const loadMessages = useCallback(async (incremental = false) => {
-    try {
-      const seq = incremental ? lastSequenceRef.current : null;
-      const { data } = seq != null
-        ? await messageApi.getMine(myGeneralId, seq)
-        : await messageApi.getMine(myGeneralId);
-      if (incremental && seq != null && data.length > 0) {
-        setMessages((prev) => {
-          const existing = new Set(prev.map((m) => m.id));
-          const newMsgs = data.filter((m: Message) => !existing.has(m.id));
-          return [...newMsgs, ...prev];
-        });
-      } else {
-        setMessages(data);
+  const loadMessages = useCallback(
+    async (incremental = false) => {
+      try {
+        const seq = incremental ? lastSequenceRef.current : null;
+        const { data } =
+          seq != null
+            ? await messageApi.getMine(myGeneralId, seq)
+            : await messageApi.getMine(myGeneralId);
+        if (incremental && seq != null && data.length > 0) {
+          setMessages((prev) => {
+            const existing = new Set(prev.map((m) => m.id));
+            const newMsgs = data.filter((m: Message) => !existing.has(m.id));
+            return [...newMsgs, ...prev];
+          });
+        } else {
+          setMessages(data);
+        }
+        // Update lastSequence from latest message
+        if (data.length > 0) {
+          const maxSeq = Math.max(...data.map((m: Message) => m.id));
+          lastSequenceRef.current = maxSeq;
+        }
+      } catch {
+        /* ignore */
       }
-      // Update lastSequence from latest message
-      if (data.length > 0) {
-        const maxSeq = Math.max(...data.map((m: Message) => m.id));
-        lastSequenceRef.current = maxSeq;
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [myGeneralId]);
+    },
+    [myGeneralId],
+  );
 
   const loadContacts = useCallback(async () => {
     try {
@@ -184,12 +220,15 @@ export function MessagePanel({
   };
 
   // 5-minute time window for message delete
-  const canDelete = useCallback((msg: Message) => {
-    if (msg.srcId !== myGeneralId) return true; // received messages can always be deleted
-    const sentAt = new Date(msg.sentAt).getTime();
-    const now = Date.now();
-    return now - sentAt < 5 * 60 * 1000; // 5 minutes
-  }, [myGeneralId]);
+  const canDelete = useCallback(
+    (msg: Message) => {
+      if (msg.srcId !== myGeneralId) return true; // received messages can always be deleted
+      const sentAt = new Date(msg.sentAt).getTime();
+      const now = Date.now();
+      return now - sentAt < 5 * 60 * 1000; // 5 minutes
+    },
+    [myGeneralId],
+  );
 
   const handleDelete = async (id: number) => {
     const msg = messages.find((m) => m.id === id);
@@ -251,7 +290,9 @@ export function MessagePanel({
       case "favorites":
         return favorites;
       case "nation":
-        return contacts.filter((c) => c.generalId !== myGeneralId && c.nationId === myNationId);
+        return contacts.filter(
+          (c) => c.generalId !== myGeneralId && c.nationId === myNationId,
+        );
       default:
         return contacts.filter((c) => c.generalId !== myGeneralId);
     }
@@ -294,24 +335,32 @@ export function MessagePanel({
             className="h-8 flex-1 min-w-0 border border-gray-600 bg-[#111] px-2 text-xs"
           >
             <option value="">받는 장수...</option>
-            {recipientMode === "all" ? (
-              // Nation-grouped optgroups with color coding
-              Array.from(nationGroups.entries()).map(([nationName, group]) => (
-                <optgroup key={nationName} label={`── ${nationName} ──`} style={{ color: group.color }}>
-                  {group.contacts.map((c) => (
-                    <option key={c.generalId} value={c.generalId} style={{ color: group.color }}>
-                      {c.name} ({c.nationName})
-                    </option>
-                  ))}
-                </optgroup>
-              ))
-            ) : (
-              filteredContacts.map((c) => (
-                <option key={c.generalId} value={c.generalId}>
-                  {c.name} ({c.nationName})
-                </option>
-              ))
-            )}
+            {recipientMode === "all"
+              ? // Nation-grouped optgroups with color coding
+                Array.from(nationGroups.entries()).map(
+                  ([nationName, group]) => (
+                    <optgroup
+                      key={nationName}
+                      label={`── ${nationName} ──`}
+                      style={{ color: group.color }}
+                    >
+                      {group.contacts.map((c) => (
+                        <option
+                          key={c.generalId}
+                          value={c.generalId}
+                          style={{ color: group.color }}
+                        >
+                          {c.name} ({c.nationName})
+                        </option>
+                      ))}
+                    </optgroup>
+                  ),
+                )
+              : filteredContacts.map((c) => (
+                  <option key={c.generalId} value={c.generalId}>
+                    {c.name} ({c.nationName})
+                  </option>
+                ))}
           </select>
         </div>
         <div className="flex gap-2">

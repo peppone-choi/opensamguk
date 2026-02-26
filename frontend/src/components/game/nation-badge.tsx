@@ -33,7 +33,9 @@ export function NationBadge({ name, color, size = "sm" }: NationBadgeProps) {
 }
 
 /** Utility: get a CSS variable-friendly class name for a nation color */
-export function getNationColorStyle(color?: string | null): React.CSSProperties {
+export function getNationColorStyle(
+  color?: string | null,
+): React.CSSProperties {
   if (!color) return {};
   return { "--nation-color": color } as React.CSSProperties;
 }

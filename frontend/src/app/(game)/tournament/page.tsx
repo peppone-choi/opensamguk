@@ -129,7 +129,9 @@ export default function TournamentPage() {
   };
 
   const [operatorMessage, setOperatorMessage] = useState("");
-  const [operatorMessages, setOperatorMessages] = useState<{ text: string; date: string }[]>([]);
+  const [operatorMessages, setOperatorMessages] = useState<
+    { text: string; date: string }[]
+  >([]);
 
   const generalMap = useMemo(
     () => new Map(generals.map((g) => [g.id, g])),
@@ -143,11 +145,16 @@ export default function TournamentPage() {
   // Preliminary ranking table: compute from bracket results
   const preliminaryRanking = useMemo(() => {
     if (!info || info.bracket.length === 0) return [];
-    const stats = new Map<number, { wins: number; losses: number; draws: number; points: number }>();
+    const stats = new Map<
+      number,
+      { wins: number; losses: number; draws: number; points: number }
+    >();
     for (const m of info.bracket) {
       if (!m.p1 || !m.p2) continue;
-      if (!stats.has(m.p1)) stats.set(m.p1, { wins: 0, losses: 0, draws: 0, points: 0 });
-      if (!stats.has(m.p2)) stats.set(m.p2, { wins: 0, losses: 0, draws: 0, points: 0 });
+      if (!stats.has(m.p1))
+        stats.set(m.p1, { wins: 0, losses: 0, draws: 0, points: 0 });
+      if (!stats.has(m.p2))
+        stats.set(m.p2, { wins: 0, losses: 0, draws: 0, points: 0 });
       if (m.winner === m.p1) {
         stats.get(m.p1)!.wins++;
         stats.get(m.p1)!.points += 3;
@@ -165,7 +172,14 @@ export default function TournamentPage() {
       }
     }
     return Array.from(stats.entries())
-      .map(([pid, s]) => ({ pid, gen: generalMap.get(pid), nat: generalMap.get(pid) ? nationMap.get(generalMap.get(pid)!.nationId) : null, ...s }))
+      .map(([pid, s]) => ({
+        pid,
+        gen: generalMap.get(pid),
+        nat: generalMap.get(pid)
+          ? nationMap.get(generalMap.get(pid)!.nationId)
+          : null,
+        ...s,
+      }))
       .sort((a, b) => b.points - a.points || b.wins - a.wins);
   }, [info, generalMap, nationMap]);
 
@@ -176,16 +190,23 @@ export default function TournamentPage() {
     try {
       await tournamentApi.advancePhase(currentWorld.id);
       await load();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSendOperatorMessage = async () => {
     if (!operatorMessage.trim() || !currentWorld || !isAdmin) return;
     try {
       await tournamentApi.sendMessage(currentWorld.id, operatorMessage.trim());
-      setOperatorMessages((prev) => [...prev, { text: operatorMessage.trim(), date: new Date().toISOString() }]);
+      setOperatorMessages((prev) => [
+        ...prev,
+        { text: operatorMessage.trim(), date: new Date().toISOString() },
+      ]);
       setOperatorMessage("");
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   if (!currentWorld)
@@ -565,23 +586,59 @@ export default function TournamentPage() {
                 </TableHeader>
                 <TableBody>
                   {preliminaryRanking.map((row, idx) => (
-                    <TableRow key={row.pid} className={idx < 4 ? "bg-green-950/20" : ""}>
-                      <TableCell className="text-xs font-mono">{idx + 1}</TableCell>
+                    <TableRow
+                      key={row.pid}
+                      className={idx < 4 ? "bg-green-950/20" : ""}
+                    >
+                      <TableCell className="text-xs font-mono">
+                        {idx + 1}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <GeneralPortrait picture={row.gen?.picture} name={row.gen?.name ?? `#${row.pid}`} size="sm" />
-                          <span className="text-xs">{row.gen?.name ?? `#${row.pid}`}</span>
+                          <GeneralPortrait
+                            picture={row.gen?.picture}
+                            name={row.gen?.name ?? `#${row.pid}`}
+                            size="sm"
+                          />
+                          <span className="text-xs">
+                            {row.gen?.name ?? `#${row.pid}`}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        {row.nat ? <NationBadge name={row.nat.name} color={row.nat.color} /> : <span className="text-xs text-muted-foreground">재야</span>}
+                        {row.nat ? (
+                          <NationBadge
+                            name={row.nat.name}
+                            color={row.nat.color}
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            재야
+                          </span>
+                        )}
                       </TableCell>
-                      <TableCell className="text-right text-xs font-mono text-green-400">{row.wins}</TableCell>
-                      <TableCell className="text-right text-xs font-mono text-gray-400">{row.draws}</TableCell>
-                      <TableCell className="text-right text-xs font-mono text-red-400">{row.losses}</TableCell>
-                      <TableCell className="text-right text-xs font-mono font-bold">{row.points}</TableCell>
+                      <TableCell className="text-right text-xs font-mono text-green-400">
+                        {row.wins}
+                      </TableCell>
+                      <TableCell className="text-right text-xs font-mono text-gray-400">
+                        {row.draws}
+                      </TableCell>
+                      <TableCell className="text-right text-xs font-mono text-red-400">
+                        {row.losses}
+                      </TableCell>
+                      <TableCell className="text-right text-xs font-mono font-bold">
+                        {row.points}
+                      </TableCell>
                       <TableCell className="text-center">
-                        {idx < 4 ? <Badge variant="default" className="text-[10px]">진출</Badge> : <span className="text-xs text-muted-foreground">-</span>}
+                        {idx < 4 ? (
+                          <Badge variant="default" className="text-[10px]">
+                            진출
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            -
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -604,14 +661,26 @@ export default function TournamentPage() {
               {operatorMessages.length > 0 ? (
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {operatorMessages.map((msg, idx) => (
-                    <div key={idx} className="text-xs bg-amber-950/20 border border-amber-900/30 rounded px-2 py-1.5">
-                      <span className="text-muted-foreground mr-2">{new Date(msg.date).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                    <div
+                      key={idx}
+                      className="text-xs bg-amber-950/20 border border-amber-900/30 rounded px-2 py-1.5"
+                    >
+                      <span className="text-muted-foreground mr-2">
+                        {new Date(msg.date).toLocaleString("ko-KR", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                       <span className="text-amber-300">{msg.text}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">운영 메시지가 없습니다.</p>
+                <p className="text-xs text-muted-foreground">
+                  운영 메시지가 없습니다.
+                </p>
               )}
               {isAdmin && (
                 <div className="flex gap-2 pt-1">
@@ -621,7 +690,11 @@ export default function TournamentPage() {
                     placeholder="운영 메시지 입력..."
                     className="text-xs"
                   />
-                  <Button size="sm" onClick={handleSendOperatorMessage} disabled={!operatorMessage.trim()}>
+                  <Button
+                    size="sm"
+                    onClick={handleSendOperatorMessage}
+                    disabled={!operatorMessage.trim()}
+                  >
                     전송
                   </Button>
                 </div>
@@ -647,7 +720,11 @@ export default function TournamentPage() {
                     {STATE_LABELS[info?.state ?? 0]}
                   </Badge>
                 </div>
-                <Button size="sm" variant="outline" onClick={handleAdvancePhase}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAdvancePhase}
+                >
                   다음 위상으로 진행
                 </Button>
               </div>

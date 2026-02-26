@@ -1,8 +1,25 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, Suspense, type DragEvent, type MouseEvent } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  Suspense,
+  type DragEvent,
+  type MouseEvent,
+} from "react";
 import { useSearchParams } from "next/navigation";
-import { Swords, Crown, Clock, Copy, ClipboardPaste, Save, FolderOpen, Trash2 } from "lucide-react";
+import {
+  Swords,
+  Crown,
+  Clock,
+  Copy,
+  ClipboardPaste,
+  Save,
+  FolderOpen,
+  Trash2,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { CommandPanel } from "@/components/game/command-panel";
 import { LoadingState } from "@/components/game/loading-state";
@@ -72,13 +89,17 @@ function NationCommandPanel({
   officerLevel: number;
 }) {
   const [turns, setTurns] = useState<NationTurn[]>([]);
-  const [commandTable, setCommandTable] = useState<Record<string, CommandTableEntry[]>>({});
+  const [commandTable, setCommandTable] = useState<
+    Record<string, CommandTableEntry[]>
+  >({});
   const [loading, setLoading] = useState(true);
   const [selectedTurn, setSelectedTurn] = useState<number>(0);
   const [showSelector, setShowSelector] = useState(false);
   const [selectedSlots, setSelectedSlots] = useState<Set<number>>(new Set([0]));
   const [lastClickedSlot, setLastClickedSlot] = useState<number | null>(0);
-  const [clipboard, setClipboard] = useState<NationPreset["items"] | null>(null);
+  const [clipboard, setClipboard] = useState<NationPreset["items"] | null>(
+    null,
+  );
   const [presets, setPresets] = useState<NationPreset[]>([]);
   const [selectedPreset, setSelectedPreset] = useState("");
   const [dragFrom, setDragFrom] = useState<number | null>(null);
@@ -119,12 +140,15 @@ function NationCommandPanel({
     }
   }, [presetKey]);
 
-  const persistPresets = useCallback((next: NationPreset[]) => {
-    setPresets(next);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(presetKey, JSON.stringify(next));
-    }
-  }, [presetKey]);
+  const persistPresets = useCallback(
+    (next: NationPreset[]) => {
+      setPresets(next);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(presetKey, JSON.stringify(next));
+      }
+    },
+    [presetKey],
+  );
 
   const filledTurns = useMemo<NationFilledTurn[]>(() => {
     const byIdx = new Map<number, NationTurn>();
@@ -142,7 +166,10 @@ function NationCommandPanel({
 
   const categories = useMemo(() => Object.keys(commandTable), [commandTable]);
 
-  const handleReserve = async (actionCode: string, arg?: Record<string, unknown>) => {
+  const handleReserve = async (
+    actionCode: string,
+    arg?: Record<string, unknown>,
+  ) => {
     try {
       await commandApi.reserveNation(nationId, generalId, [
         { turnIdx: selectedTurn, actionCode, arg },
@@ -197,7 +224,12 @@ function NationCommandPanel({
     setClipboard(
       slots.map((idx) => {
         const t = filledTurns[idx];
-        return { offset: idx - anchor, actionCode: t.actionCode, arg: t.arg, brief: t.brief };
+        return {
+          offset: idx - anchor,
+          actionCode: t.actionCode,
+          arg: t.arg,
+          brief: t.brief,
+        };
       }),
     );
   }, [filledTurns, selectedSlots]);
@@ -213,7 +245,11 @@ function NationCommandPanel({
     await commandApi.reserveNation(
       nationId,
       generalId,
-      items.map((item) => ({ turnIdx: item.target, actionCode: item.actionCode, arg: item.arg })),
+      items.map((item) => ({
+        turnIdx: item.target,
+        actionCode: item.actionCode,
+        arg: item.arg,
+      })),
     );
     await loadData();
   }, [clipboard, selectedSlots, nationId, generalId, loadData]);
@@ -226,7 +262,12 @@ function NationCommandPanel({
     if (!name) return;
     const items = slots.map((idx) => {
       const t = filledTurns[idx];
-      return { offset: idx - anchor, actionCode: t.actionCode, arg: t.arg, brief: t.brief };
+      return {
+        offset: idx - anchor,
+        actionCode: t.actionCode,
+        arg: t.arg,
+        brief: t.brief,
+      };
     });
     const deduped = presets.filter((p) => p.name !== name);
     persistPresets([...deduped, { name, items }]);
@@ -248,7 +289,11 @@ function NationCommandPanel({
     await commandApi.reserveNation(
       nationId,
       generalId,
-      items.map((item) => ({ turnIdx: item.target, actionCode: item.actionCode, arg: item.arg })),
+      items.map((item) => ({
+        turnIdx: item.target,
+        actionCode: item.actionCode,
+        arg: item.arg,
+      })),
     );
     await loadData();
   }, [selectedPreset, presets, selectedSlots, nationId, generalId, loadData]);
@@ -259,43 +304,49 @@ function NationCommandPanel({
     setSelectedPreset("");
   }, [selectedPreset, presets, persistPresets]);
 
-  const handleDragStart = useCallback((idx: number, e: DragEvent<HTMLButtonElement>) => {
-    setDragFrom(idx);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(idx));
-  }, []);
+  const handleDragStart = useCallback(
+    (idx: number, e: DragEvent<HTMLButtonElement>) => {
+      setDragFrom(idx);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(idx));
+    },
+    [],
+  );
 
-  const handleDrop = useCallback(async (targetIdx: number, e: DragEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setDragOver(null);
-    const fromIdx = dragFrom;
-    setDragFrom(null);
-    if (fromIdx === null || fromIdx === targetIdx) return;
+  const handleDrop = useCallback(
+    async (targetIdx: number, e: DragEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      setDragOver(null);
+      const fromIdx = dragFrom;
+      setDragFrom(null);
+      if (fromIdx === null || fromIdx === targetIdx) return;
 
-    const reordered = [...filledTurns];
-    const [moved] = reordered.splice(fromIdx, 1);
-    reordered.splice(targetIdx, 0, moved);
+      const reordered = [...filledTurns];
+      const [moved] = reordered.splice(fromIdx, 1);
+      reordered.splice(targetIdx, 0, moved);
 
-    const minIdx = Math.min(fromIdx, targetIdx);
-    const maxIdx = Math.max(fromIdx, targetIdx);
+      const minIdx = Math.min(fromIdx, targetIdx);
+      const maxIdx = Math.max(fromIdx, targetIdx);
 
-    await commandApi.reserveNation(
-      nationId,
-      generalId,
-      Array.from({ length: maxIdx - minIdx + 1 }, (_, i) => {
-        const idx = minIdx + i;
-        return {
-          turnIdx: idx,
-          actionCode: reordered[idx].actionCode,
-          arg: reordered[idx].arg,
-        };
-      }),
-    );
+      await commandApi.reserveNation(
+        nationId,
+        generalId,
+        Array.from({ length: maxIdx - minIdx + 1 }, (_, i) => {
+          const idx = minIdx + i;
+          return {
+            turnIdx: idx,
+            actionCode: reordered[idx].actionCode,
+            arg: reordered[idx].arg,
+          };
+        }),
+      );
 
-    await loadData();
-    setSelectedSlots(new Set([targetIdx]));
-    setLastClickedSlot(targetIdx);
-  }, [dragFrom, filledTurns, nationId, generalId, loadData]);
+      await loadData();
+      setSelectedSlots(new Set([targetIdx]));
+      setLastClickedSlot(targetIdx);
+    },
+    [dragFrom, filledTurns, nationId, generalId, loadData],
+  );
 
   if (loading) return <LoadingState message="국가 명령 불러오는 중..." />;
 
@@ -304,10 +355,21 @@ function NationCommandPanel({
       <Card>
         <CardContent className="pt-4 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={copySelected}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={copySelected}
+            >
               <Copy className="size-3.5 mr-1" /> 복사
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={pasteClipboard} disabled={!clipboard}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={pasteClipboard}
+              disabled={!clipboard}
+            >
               <ClipboardPaste className="size-3.5 mr-1" /> 붙여넣기
             </Button>
             <div className="h-6 w-px bg-border mx-1" />
@@ -317,7 +379,12 @@ function NationCommandPanel({
               onChange={(e) => setPresetName(e.target.value)}
               placeholder="프리셋 이름"
             />
-            <Button type="button" size="sm" variant="outline" onClick={savePreset}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={savePreset}
+            >
               <Save className="size-3.5 mr-1" /> 저장
             </Button>
             <select
@@ -327,13 +394,27 @@ function NationCommandPanel({
             >
               <option value="">프리셋 선택</option>
               {presets.map((preset) => (
-                <option key={preset.name} value={preset.name}>{preset.name}</option>
+                <option key={preset.name} value={preset.name}>
+                  {preset.name}
+                </option>
               ))}
             </select>
-            <Button type="button" size="sm" variant="outline" onClick={loadPreset} disabled={!selectedPreset}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={loadPreset}
+              disabled={!selectedPreset}
+            >
               <FolderOpen className="size-3.5 mr-1" /> 불러오기
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={deletePreset} disabled={!selectedPreset}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={deletePreset}
+              disabled={!selectedPreset}
+            >
               <Trash2 className="size-3.5 mr-1" /> 삭제
             </Button>
           </div>
@@ -399,7 +480,9 @@ function NationCommandPanel({
               )}
             </div>
             {t.brief && t.brief !== t.actionCode && (
-              <div className="truncate text-muted-foreground text-[10px]">{t.brief}</div>
+              <div className="truncate text-muted-foreground text-[10px]">
+                {t.brief}
+              </div>
             )}
           </button>
         ))}
@@ -416,7 +499,9 @@ function NationCommandPanel({
           <CardContent className="space-y-2">
             {categories.map((cat) => (
               <div key={cat}>
-                <p className="text-[10px] text-muted-foreground font-bold mb-1">{cat}</p>
+                <p className="text-[10px] text-muted-foreground font-bold mb-1">
+                  {cat}
+                </p>
                 <div className="flex flex-wrap gap-1">
                   {commandTable[cat].map((cmd) => (
                     <Button
@@ -457,7 +542,8 @@ export default function CommandsPage() {
 
 function CommandsPageInner() {
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "nation" ? "nation" : "general";
+  const initialMode =
+    searchParams.get("mode") === "nation" ? "nation" : "general";
   const currentWorld = useWorldStore((s) => s.currentWorld);
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
   const [mode, setMode] = useState<"general" | "nation">(initialMode);

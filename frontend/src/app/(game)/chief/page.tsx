@@ -8,7 +8,19 @@ import {
   type MouseEvent,
   type DragEvent,
 } from "react";
-import { Crown, UserCog, Users, Ban, GripVertical, ClipboardCopy, Copy, ClipboardPaste, Save, FolderOpen, Trash2 } from "lucide-react";
+import {
+  Crown,
+  UserCog,
+  Users,
+  Ban,
+  GripVertical,
+  ClipboardCopy,
+  Copy,
+  ClipboardPaste,
+  Save,
+  FolderOpen,
+  Trash2,
+} from "lucide-react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import {
@@ -69,7 +81,12 @@ function getMinNationChiefLevel(nationLevel: number): number {
 
 interface NationPreset {
   name: string;
-  items: { offset: number; actionCode: string; arg?: Record<string, unknown>; brief?: string | null }[];
+  items: {
+    offset: number;
+    actionCode: string;
+    arg?: Record<string, unknown>;
+    brief?: string | null;
+  }[];
 }
 
 export default function ChiefPage() {
@@ -108,7 +125,13 @@ export default function ChiefPage() {
 
   // Clipboard for nation turns
   const [nationClipboard, setNationClipboard] = useState<
-    { offset: number; actionCode: string; arg?: Record<string, unknown>; brief?: string | null }[] | null
+    | {
+        offset: number;
+        actionCode: string;
+        arg?: Record<string, unknown>;
+        brief?: string | null;
+      }[]
+    | null
   >(null);
 
   // Preset save/load for nation commands
@@ -171,10 +194,16 @@ export default function ChiefPage() {
       const minLv = getMinNationChiefLevel(nation.level);
       const levels: number[] = [];
       for (let lv = minLv; lv <= 12; lv++) levels.push(lv);
-      const turns = await commandApi.getAllOfficerTurns(myGeneral.nationId, levels);
+      const turns = await commandApi.getAllOfficerTurns(
+        myGeneral.nationId,
+        levels,
+      );
       setAllOfficerTurns(turns);
-    } catch { /* ignore */ }
-    finally { setAllOfficerLoading(false); }
+    } catch {
+      /* ignore */
+    } finally {
+      setAllOfficerLoading(false);
+    }
   }, [myGeneral?.nationId, nation]);
 
   const getNationTurn = (idx: number) =>
@@ -194,7 +223,9 @@ export default function ChiefPage() {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setNationPresets(parsed);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [nationPresetKey]);
 
   const persistNationPresets = useCallback(
@@ -228,7 +259,12 @@ export default function ChiefPage() {
     setNationClipboard(
       slots.map((idx) => {
         const t = filledNationTurns[idx];
-        return { offset: idx - min, actionCode: t.actionCode, arg: t.arg, brief: t.brief };
+        return {
+          offset: idx - min,
+          actionCode: t.actionCode,
+          arg: t.arg,
+          brief: t.brief,
+        };
       }),
     );
   }, [filledNationTurns, selectedNationSlots]);
@@ -269,16 +305,28 @@ export default function ChiefPage() {
     const min = slots[0];
     const items = slots.map((idx) => {
       const t = filledNationTurns[idx];
-      return { offset: idx - min, actionCode: t.actionCode, arg: t.arg, brief: t.brief };
+      return {
+        offset: idx - min,
+        actionCode: t.actionCode,
+        arg: t.arg,
+        brief: t.brief,
+      };
     });
-    const defaultName = items.map((i) => i.actionCode === "휴식" ? "휴" : i.actionCode.charAt(0)).join("");
+    const defaultName = items
+      .map((i) => (i.actionCode === "휴식" ? "휴" : i.actionCode.charAt(0)))
+      .join("");
     const name = window.prompt("프리셋 이름을 입력하세요", defaultName);
     if (!name?.trim()) return;
     const trimmed = name.trim();
     const deduped = nationPresets.filter((p) => p.name !== trimmed);
     persistNationPresets([...deduped, { name: trimmed, items }]);
     setSelectedPreset(trimmed);
-  }, [filledNationTurns, nationPresets, persistNationPresets, selectedNationSlots]);
+  }, [
+    filledNationTurns,
+    nationPresets,
+    persistNationPresets,
+    selectedNationSlots,
+  ]);
 
   // Load preset
   const loadNationPreset = useCallback(async () => {
@@ -302,53 +350,65 @@ export default function ChiefPage() {
 
   const deleteNationPreset = useCallback(() => {
     if (!selectedPreset) return;
-    persistNationPresets(nationPresets.filter((p) => p.name !== selectedPreset));
+    persistNationPresets(
+      nationPresets.filter((p) => p.name !== selectedPreset),
+    );
     setSelectedPreset("");
   }, [selectedPreset, nationPresets, persistNationPresets]);
 
   // Nation drag & drop handlers
-  const handleNationDragStart = useCallback((idx: number, e: DragEvent<HTMLDivElement>) => {
-    setNationDragFrom(idx);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(idx));
-  }, []);
+  const handleNationDragStart = useCallback(
+    (idx: number, e: DragEvent<HTMLDivElement>) => {
+      setNationDragFrom(idx);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(idx));
+    },
+    [],
+  );
 
-  const handleNationDragOver = useCallback((idx: number, e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setNationDragOver(idx);
-  }, []);
+  const handleNationDragOver = useCallback(
+    (idx: number, e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setNationDragOver(idx);
+    },
+    [],
+  );
 
   const handleNationDragLeave = useCallback(() => {
     setNationDragOver(null);
   }, []);
 
-  const handleNationDrop = useCallback(async (targetIdx: number, e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setNationDragOver(null);
-    const fromIdx = nationDragFrom;
-    setNationDragFrom(null);
-    if (fromIdx === null || fromIdx === targetIdx || !myGeneral?.nationId) return;
+  const handleNationDrop = useCallback(
+    async (targetIdx: number, e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setNationDragOver(null);
+      const fromIdx = nationDragFrom;
+      setNationDragFrom(null);
+      if (fromIdx === null || fromIdx === targetIdx || !myGeneral?.nationId)
+        return;
 
-    const ordered = [...filledNationTurns];
-    const [moved] = ordered.splice(fromIdx, 1);
-    ordered.splice(targetIdx, 0, moved);
+      const ordered = [...filledNationTurns];
+      const [moved] = ordered.splice(fromIdx, 1);
+      ordered.splice(targetIdx, 0, moved);
 
-    const minIdx = Math.min(fromIdx, targetIdx);
-    const maxIdx = Math.max(fromIdx, targetIdx);
-    const turns = [];
-    for (let i = minIdx; i <= maxIdx; i++) {
-      turns.push({
-        turnIdx: i,
-        actionCode: ordered[i].actionCode,
-        arg: ordered[i].arg,
-      });
-    }
-    await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
-    await reload();
-    setSelectedNationSlots(new Set([targetIdx]));
-    setLastNationClickedSlot(targetIdx);
-  }, [nationDragFrom, filledNationTurns, myGeneral, reload]);
+      const minIdx = Math.min(fromIdx, targetIdx);
+      const maxIdx = Math.max(fromIdx, targetIdx);
+      const turns = [];
+      for (let i = minIdx; i <= maxIdx; i++) {
+        turns.push({
+          turnIdx: i,
+          actionCode: ordered[i].actionCode,
+          arg: ordered[i].arg,
+        });
+      }
+      await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+      await reload();
+      setSelectedNationSlots(new Set([targetIdx]));
+      setLastNationClickedSlot(targetIdx);
+    },
+    [nationDragFrom, filledNationTurns, myGeneral, reload],
+  );
 
   const handleNationDragEnd = useCallback(() => {
     setNationDragFrom(null);
@@ -671,18 +731,42 @@ export default function ChiefPage() {
                 <CardContent className="space-y-2">
                   {/* Toolbar */}
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <Button size="sm" variant="outline" onClick={nationCopySelected} disabled={selectedNationSlots.size === 0}>
-                      <Copy className="size-3 mr-1" />복사
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={nationCopySelected}
+                      disabled={selectedNationSlots.size === 0}
+                    >
+                      <Copy className="size-3 mr-1" />
+                      복사
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => void nationPasteClipboard()} disabled={!nationClipboard}>
-                      <ClipboardPaste className="size-3 mr-1" />붙여넣기
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void nationPasteClipboard()}
+                      disabled={!nationClipboard}
+                    >
+                      <ClipboardPaste className="size-3 mr-1" />
+                      붙여넣기
                     </Button>
-                    <Button size="sm" variant="outline" onClick={nationCopyAsText} disabled={selectedNationSlots.size === 0}>
-                      <ClipboardCopy className="size-3 mr-1" />텍스트 복사
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={nationCopyAsText}
+                      disabled={selectedNationSlots.size === 0}
+                    >
+                      <ClipboardCopy className="size-3 mr-1" />
+                      텍스트 복사
                     </Button>
                     <span className="text-[10px] text-muted-foreground">|</span>
-                    <Button size="sm" variant="outline" onClick={saveNationPreset} disabled={selectedNationSlots.size === 0}>
-                      <Save className="size-3 mr-1" />보관
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={saveNationPreset}
+                      disabled={selectedNationSlots.size === 0}
+                    >
+                      <Save className="size-3 mr-1" />
+                      보관
                     </Button>
                     <select
                       value={selectedPreset}
@@ -691,26 +775,65 @@ export default function ChiefPage() {
                     >
                       <option value="">프리셋 선택</option>
                       {nationPresets.map((p) => (
-                        <option key={p.name} value={p.name}>{p.name}</option>
+                        <option key={p.name} value={p.name}>
+                          {p.name}
+                        </option>
                       ))}
                     </select>
-                    <Button size="sm" variant="outline" onClick={() => void loadNationPreset()} disabled={!selectedPreset}>
-                      <FolderOpen className="size-3 mr-1" />불러오기
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void loadNationPreset()}
+                      disabled={!selectedPreset}
+                    >
+                      <FolderOpen className="size-3 mr-1" />
+                      불러오기
                     </Button>
-                    <Button size="sm" variant="outline" className="text-red-300" onClick={deleteNationPreset} disabled={!selectedPreset}>
-                      <Trash2 className="size-3 mr-1" />삭제
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-300"
+                      onClick={deleteNationPreset}
+                      disabled={!selectedPreset}
+                    >
+                      <Trash2 className="size-3 mr-1" />
+                      삭제
                     </Button>
                     <span className="text-[10px] text-muted-foreground">|</span>
-                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5"
-                      onClick={() => { const s = new Set<number>(); for (let i = 0; i < NATION_TURN_COUNT; i += 2) s.add(i); setSelectedNationSlots(s); }}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-1.5"
+                      onClick={() => {
+                        const s = new Set<number>();
+                        for (let i = 0; i < NATION_TURN_COUNT; i += 2) s.add(i);
+                        setSelectedNationSlots(s);
+                      }}
+                    >
                       홀수턴
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5"
-                      onClick={() => { const s = new Set<number>(); for (let i = 1; i < NATION_TURN_COUNT; i += 2) s.add(i); setSelectedNationSlots(s); }}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-1.5"
+                      onClick={() => {
+                        const s = new Set<number>();
+                        for (let i = 1; i < NATION_TURN_COUNT; i += 2) s.add(i);
+                        setSelectedNationSlots(s);
+                      }}
+                    >
                       짝수턴
                     </Button>
-                    <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1.5"
-                      onClick={() => { const s = new Set<number>(); for (let i = 0; i < NATION_TURN_COUNT; i++) s.add(i); setSelectedNationSlots(s); }}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-1.5"
+                      onClick={() => {
+                        const s = new Set<number>();
+                        for (let i = 0; i < NATION_TURN_COUNT; i++) s.add(i);
+                        setSelectedNationSlots(s);
+                      }}
+                    >
                       전체
                     </Button>
                   </div>
@@ -723,7 +846,10 @@ export default function ChiefPage() {
                         const actionCode = turn?.actionCode ?? "휴식";
                         const brief = turn?.brief;
                         const isRest = actionCode === "휴식";
-                        const isDragTarget = nationDragOver === slot && nationDragFrom !== null && nationDragFrom !== slot;
+                        const isDragTarget =
+                          nationDragOver === slot &&
+                          nationDragFrom !== null &&
+                          nationDragFrom !== slot;
                         return (
                           <div
                             key={slot}
@@ -740,7 +866,9 @@ export default function ChiefPage() {
                           >
                             <div
                               draggable
-                              onDragStart={(e) => handleNationDragStart(slot, e)}
+                              onDragStart={(e) =>
+                                handleNationDragStart(slot, e)
+                              }
                               onDragEnd={handleNationDragEnd}
                               className="flex items-center justify-center cursor-grab active:cursor-grabbing w-6 h-8 text-gray-500 hover:text-gray-300 shrink-0"
                               title="드래그하여 순서 변경"
@@ -922,7 +1050,12 @@ export default function ChiefPage() {
                   <Users className="size-4" />
                   전체 수관 턴 현황
                 </CardTitle>
-                <Button size="sm" variant="outline" onClick={() => void loadAllOfficerTurns()} disabled={allOfficerLoading}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void loadAllOfficerTurns()}
+                  disabled={allOfficerLoading}
+                >
                   {allOfficerLoading ? "불러오는 중..." : "새로고침"}
                 </Button>
               </div>
@@ -930,7 +1063,9 @@ export default function ChiefPage() {
             <CardContent>
               {allOfficerTurns.length === 0 && !allOfficerLoading ? (
                 <div className="text-center text-sm text-muted-foreground py-4">
-                  <Button size="sm" onClick={() => void loadAllOfficerTurns()}>전체 턴 불러오기</Button>
+                  <Button size="sm" onClick={() => void loadAllOfficerTurns()}>
+                    전체 턴 불러오기
+                  </Button>
                 </div>
               ) : allOfficerLoading ? (
                 <LoadingState />
@@ -939,7 +1074,9 @@ export default function ChiefPage() {
                   {(() => {
                     // Group turns by officerLevel, legacy order: 12,10,8,6,11,9,7,5
                     const officerOrder = [12, 10, 8, 6, 11, 9, 7, 5].filter(
-                      (lv) => lv >= (nation ? getMinNationChiefLevel(nation.level) : 5)
+                      (lv) =>
+                        lv >=
+                        (nation ? getMinNationChiefLevel(nation.level) : 5),
                     );
                     const turnsByOfficer = new Map<number, NationTurn[]>();
                     for (const t of allOfficerTurns) {
@@ -953,17 +1090,31 @@ export default function ChiefPage() {
                         <table className="w-full text-xs border-collapse">
                           <thead>
                             <tr className="border-b border-gray-700">
-                              <th className="text-left py-1 px-2 sticky left-0 bg-background min-w-[80px]">수관</th>
-                              {Array.from({ length: NATION_TURN_COUNT }, (_, i) => (
-                                <th key={i} className="text-center py-1 px-1 min-w-[60px]">#{i + 1}</th>
-                              ))}
+                              <th className="text-left py-1 px-2 sticky left-0 bg-background min-w-[80px]">
+                                수관
+                              </th>
+                              {Array.from(
+                                { length: NATION_TURN_COUNT },
+                                (_, i) => (
+                                  <th
+                                    key={i}
+                                    className="text-center py-1 px-1 min-w-[60px]"
+                                  >
+                                    #{i + 1}
+                                  </th>
+                                ),
+                              )}
                             </tr>
                           </thead>
                           <tbody>
                             {officerOrder.map((lv) => {
-                              const officer = nationGenerals.find((g) => g.officerLevel === lv);
+                              const officer = nationGenerals.find(
+                                (g) => g.officerLevel === lv,
+                              );
                               const turns = turnsByOfficer.get(lv) ?? [];
-                              const turnMap = new Map(turns.map((t) => [t.turnIdx, t]));
+                              const turnMap = new Map(
+                                turns.map((t) => [t.turnIdx, t]),
+                              );
                               const isMe = lv === myGeneral.officerLevel;
                               return (
                                 <tr
@@ -973,11 +1124,22 @@ export default function ChiefPage() {
                                   <td className="py-1.5 px-2 sticky left-0 bg-background">
                                     <div className="flex items-center gap-1">
                                       {officer && (
-                                        <GeneralPortrait picture={officer.picture} name={officer.name} size="sm" />
+                                        <GeneralPortrait
+                                          picture={officer.picture}
+                                          name={officer.name}
+                                          size="sm"
+                                        />
                                       )}
                                       <div className="leading-tight">
-                                        <div className={`font-medium ${isMe ? "text-yellow-300" : ""}`}>
-                                          {nation ? formatOfficerLevelText(lv, nation.level) : `Lv.${lv}`}
+                                        <div
+                                          className={`font-medium ${isMe ? "text-yellow-300" : ""}`}
+                                        >
+                                          {nation
+                                            ? formatOfficerLevelText(
+                                                lv,
+                                                nation.level,
+                                              )
+                                            : `Lv.${lv}`}
                                         </div>
                                         <div className="text-[10px] text-muted-foreground truncate max-w-[70px]">
                                           {officer?.name ?? "-"}
@@ -985,25 +1147,31 @@ export default function ChiefPage() {
                                       </div>
                                     </div>
                                   </td>
-                                  {Array.from({ length: NATION_TURN_COUNT }, (_, idx) => {
-                                    const turn = turnMap.get(idx);
-                                    const code = turn?.actionCode ?? "휴식";
-                                    const isRest = code === "휴식";
-                                    return (
-                                      <td key={idx} className="py-1 px-0.5 text-center">
-                                        <span
-                                          className={`inline-block px-1 py-0.5 rounded text-[10px] leading-tight ${
-                                            isRest
-                                              ? "text-gray-500"
-                                              : "bg-cyan-950/50 text-cyan-300 border border-cyan-800/50"
-                                          }`}
-                                          title={turn?.brief ?? code}
+                                  {Array.from(
+                                    { length: NATION_TURN_COUNT },
+                                    (_, idx) => {
+                                      const turn = turnMap.get(idx);
+                                      const code = turn?.actionCode ?? "휴식";
+                                      const isRest = code === "휴식";
+                                      return (
+                                        <td
+                                          key={idx}
+                                          className="py-1 px-0.5 text-center"
                                         >
-                                          {code}
-                                        </span>
-                                      </td>
-                                    );
-                                  })}
+                                          <span
+                                            className={`inline-block px-1 py-0.5 rounded text-[10px] leading-tight ${
+                                              isRest
+                                                ? "text-gray-500"
+                                                : "bg-cyan-950/50 text-cyan-300 border border-cyan-800/50"
+                                            }`}
+                                            title={turn?.brief ?? code}
+                                          >
+                                            {code}
+                                          </span>
+                                        </td>
+                                      );
+                                    },
+                                  )}
                                 </tr>
                               );
                             })}

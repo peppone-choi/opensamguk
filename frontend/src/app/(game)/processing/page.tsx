@@ -61,7 +61,11 @@ function ProcessingContent() {
           arg,
         }));
         if (isNationCommand && myGeneral.nationId) {
-          await commandApi.reserveNation(myGeneral.nationId, myGeneral.id, turns);
+          await commandApi.reserveNation(
+            myGeneral.nationId,
+            myGeneral.id,
+            turns,
+          );
           router.push("/commands?mode=nation");
         } else {
           await commandApi.reserve(myGeneral.id, turns);

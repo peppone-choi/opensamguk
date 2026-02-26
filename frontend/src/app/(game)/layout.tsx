@@ -130,14 +130,54 @@ export default function GameLayout({
   // Global keyboard shortcuts for navigation
   const goTo = useCallback((path: string) => router.push(path), [router]);
   useHotkeys([
-    { key: "m", alt: true, handler: () => goTo("/map"), description: "Go to map" },
-    { key: "g", alt: true, handler: () => goTo("/general"), description: "My general" },
-    { key: "c", alt: true, handler: () => goTo("/city"), description: "Current city" },
-    { key: "k", alt: true, handler: () => goTo("/commands"), description: "Commands" },
-    { key: "b", alt: true, handler: () => goTo("/board"), description: "Board" },
-    { key: "s", alt: true, handler: () => goTo("/messages"), description: "Messages" },
-    { key: "n", alt: true, handler: () => goTo("/nation"), description: "Nation info" },
-    { key: "h", alt: true, handler: () => goTo("/"), description: "Home/Dashboard" },
+    {
+      key: "m",
+      alt: true,
+      handler: () => goTo("/map"),
+      description: "Go to map",
+    },
+    {
+      key: "g",
+      alt: true,
+      handler: () => goTo("/general"),
+      description: "My general",
+    },
+    {
+      key: "c",
+      alt: true,
+      handler: () => goTo("/city"),
+      description: "Current city",
+    },
+    {
+      key: "k",
+      alt: true,
+      handler: () => goTo("/commands"),
+      description: "Commands",
+    },
+    {
+      key: "b",
+      alt: true,
+      handler: () => goTo("/board"),
+      description: "Board",
+    },
+    {
+      key: "s",
+      alt: true,
+      handler: () => goTo("/messages"),
+      description: "Messages",
+    },
+    {
+      key: "n",
+      alt: true,
+      handler: () => goTo("/nation"),
+      description: "Nation info",
+    },
+    {
+      key: "h",
+      alt: true,
+      handler: () => goTo("/"),
+      description: "Home/Dashboard",
+    },
   ]);
 
   const officerLevel = myGeneral?.officerLevel ?? 0;

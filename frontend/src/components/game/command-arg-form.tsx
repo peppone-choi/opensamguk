@@ -325,10 +325,12 @@ const COMMAND_HELP: Record<string, string> = {
   파괴: "선택된 도시에 파괴를 실행합니다.",
   선동: "선택된 도시에 선동을 실행합니다.",
   수몰: "선택된 도시에 수몰을 발동합니다. 전쟁중인 상대국 도시만 가능합니다.",
-  백성동원: "선택된 도시에 백성을 동원해 성벽을 쌓습니다. 아국 도시만 가능합니다.",
+  백성동원:
+    "선택된 도시에 백성을 동원해 성벽을 쌓습니다. 아국 도시만 가능합니다.",
   천도: "선택된 도시로 천도합니다. 현재 수도에서 연결된 도시만 가능하며, 1+2×거리만큼의 턴이 필요합니다.",
   허보: "선택된 도시에 허보를 발동합니다. 선포, 전쟁중인 상대국 도시만 가능합니다.",
-  초토화: "선택된 도시를 초토화 시킵니다. 도시가 공백지가 되며, 국고가 확보됩니다. 수뇌들은 명성을 잃고, 모든 장수들은 배신 수치가 1 증가합니다.",
+  초토화:
+    "선택된 도시를 초토화 시킵니다. 도시가 공백지가 되며, 국고가 확보됩니다. 수뇌들은 명성을 잃고, 모든 장수들은 배신 수치가 1 증가합니다.",
   // General-targeting commands
   등용: "다른 세력 장수를 등용합니다.",
   장수대상임관: "특정 장수의 세력에 임관합니다.",
@@ -347,12 +349,14 @@ const COMMAND_HELP: Record<string, string> = {
   건국: "새 국가를 건국합니다.",
   CR건국: "새 국가를 건국합니다. (특수)",
   무작위건국: "무작위 위치에 건국합니다.",
-  선전포고: "타국에게 선전 포고합니다. 고립되지 않은 아국 도시에서 인접한 국가에 선포 가능합니다.",
+  선전포고:
+    "타국에게 선전 포고합니다. 고립되지 않은 아국 도시에서 인접한 국가에 선포 가능합니다.",
   종전제의: "전쟁중인 국가에 종전을 제의합니다.",
   불가침제의: "타국에 불가침 조약을 제의합니다.",
   불가침파기제의: "불가침중인 국가에 조약 파기를 제의합니다.",
   급습: "선택된 국가에 급습을 발동합니다. 선포, 전쟁중인 상대국에만 가능합니다.",
-  이호경식: "선택된 국가에 이호경식을 발동합니다. 선포, 전쟁중인 상대국에만 가능합니다.",
+  이호경식:
+    "선택된 국가에 이호경식을 발동합니다. 선포, 전쟁중인 상대국에만 가능합니다.",
   물자원조: "동맹국에 금과 쌀을 원조합니다.",
   국호변경: "국가명을 변경합니다.",
   국기변경: "국기 색상을 변경합니다.",
@@ -366,9 +370,22 @@ const COMMAND_HELP: Record<string, string> = {
 
 /** Commands that target cities (shown with distance sorting) */
 const CITY_TARGET_COMMANDS = new Set([
-  "출병", "이동", "강행", "첩보", "화계", "탈취", "파괴", "선동",
-  "수몰", "백성동원", "천도", "허보", "초토화", "NPC능동",
-  "발령", "인구이동",
+  "출병",
+  "이동",
+  "강행",
+  "첩보",
+  "화계",
+  "탈취",
+  "파괴",
+  "선동",
+  "수몰",
+  "백성동원",
+  "천도",
+  "허보",
+  "초토화",
+  "NPC능동",
+  "발령",
+  "인구이동",
 ]);
 
 interface CommandArgFormProps {
@@ -446,7 +463,10 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
     switch (field.type) {
       case "city": {
         const isCityTarget = CITY_TARGET_COMMANDS.has(actionCode);
-        const showAllCities = field.key === "destCityId" || field.key === "destCityID" || isCityTarget;
+        const showAllCities =
+          field.key === "destCityId" ||
+          field.key === "destCityID" ||
+          isCityTarget;
         const list: City[] = showAllCities ? sortedCities : myCities;
         return (
           <select
@@ -458,10 +478,18 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
             <option value="">{field.label}...</option>
             {list.map((c) => {
               const nation = nations.find((n) => n.id === c.nationId);
-              const nationTag = nation ? ` [${nation.name}]` : c.nationId === 0 ? " [공백]" : "";
+              const nationTag = nation
+                ? ` [${nation.name}]`
+                : c.nationId === 0
+                  ? " [공백]"
+                  : "";
               const isMyCity = myGeneral && c.nationId === myGeneral.nationId;
               return (
-                <option key={c.id} value={c.id} style={isMyCity ? { fontWeight: "bold" } : undefined}>
+                <option
+                  key={c.id}
+                  value={c.id}
+                  style={isMyCity ? { fontWeight: "bold" } : undefined}
+                >
                   {c.name} (Lv.{c.level}){nationTag}
                 </option>
               );
@@ -503,13 +531,19 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
             <option value="">{field.label}...</option>
             {list.map((g) => {
               const nation = nations.find((n) => n.id === g.nationId);
-              const nationTag = nation ? ` [${nation.name}]` : g.nationId === 0 ? " [재야]" : "";
+              const nationTag = nation
+                ? ` [${nation.name}]`
+                : g.nationId === 0
+                  ? " [재야]"
+                  : "";
               const city = cities.find((c) => c.id === g.cityId);
               const cityTag = city ? ` ${city.name}` : "";
               const stats = `${g.leadership ?? "?"}/${g.strength ?? "?"}/${g.intel ?? "?"}`;
               return (
                 <option key={g.id} value={g.id}>
-                  {g.name}{nationTag}{cityTag} ({stats})
+                  {g.name}
+                  {nationTag}
+                  {cityTag} ({stats})
                 </option>
               );
             })}
@@ -584,7 +618,9 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
       <p className="text-xs text-muted-foreground">명령 인자</p>
       {fields.map((field) => (
         <div key={field.key} className="space-y-0.5">
-          <label className="text-[10px] text-muted-foreground font-medium">{field.label}</label>
+          <label className="text-[10px] text-muted-foreground font-medium">
+            {field.label}
+          </label>
           {renderField(field)}
         </div>
       ))}

@@ -22,7 +22,13 @@ import { StatBar } from "@/components/game/stat-bar";
 const STAT_TOTAL = 350;
 const STAT_MIN = 10;
 const STAT_MAX = 100;
-const STAT_KEYS = ["leadership", "strength", "intel", "politics", "charm"] as const;
+const STAT_KEYS = [
+  "leadership",
+  "strength",
+  "intel",
+  "politics",
+  "charm",
+] as const;
 type StatKey = (typeof STAT_KEYS)[number];
 const STAT_LABELS: Record<StatKey, string> = {
   leadership: "통솔",
@@ -60,7 +66,9 @@ export default function LobbySelectPoolPage() {
   const [building, setBuilding] = useState(false);
 
   // Update existing mode state
-  const [selectedForUpdate, setSelectedForUpdate] = useState<General | null>(null);
+  const [selectedForUpdate, setSelectedForUpdate] = useState<General | null>(
+    null,
+  );
   const [updateStats, setUpdateStats] = useState<Record<StatKey, number>>({
     leadership: 70,
     strength: 70,
@@ -227,11 +235,31 @@ export default function LobbySelectPoolPage() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <StatBar label="통솔" value={g.leadership} color="bg-red-500" />
-                      <StatBar label="무력" value={g.strength} color="bg-orange-500" />
-                      <StatBar label="지력" value={g.intel} color="bg-blue-500" />
-                      <StatBar label="정치" value={g.politics} color="bg-green-500" />
-                      <StatBar label="매력" value={g.charm} color="bg-purple-500" />
+                      <StatBar
+                        label="통솔"
+                        value={g.leadership}
+                        color="bg-red-500"
+                      />
+                      <StatBar
+                        label="무력"
+                        value={g.strength}
+                        color="bg-orange-500"
+                      />
+                      <StatBar
+                        label="지력"
+                        value={g.intel}
+                        color="bg-blue-500"
+                      />
+                      <StatBar
+                        label="정치"
+                        value={g.politics}
+                        color="bg-green-500"
+                      />
+                      <StatBar
+                        label="매력"
+                        value={g.charm}
+                        color="bg-purple-500"
+                      />
                     </div>
                     <div className="flex gap-2 text-xs text-muted-foreground">
                       <span>병력: {g.crew.toLocaleString()}</span>
@@ -313,10 +341,17 @@ export default function LobbySelectPoolPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const vals = STAT_KEYS.map(() => STAT_MIN + Math.floor(Math.random() * (STAT_MAX - STAT_MIN)));
+                    const vals = STAT_KEYS.map(
+                      () =>
+                        STAT_MIN +
+                        Math.floor(Math.random() * (STAT_MAX - STAT_MIN)),
+                    );
                     const sum = vals.reduce((a, b) => a + b, 0);
                     const diff = STAT_TOTAL - sum;
-                    vals[0] = Math.max(STAT_MIN, Math.min(STAT_MAX, vals[0] + diff));
+                    vals[0] = Math.max(
+                      STAT_MIN,
+                      Math.min(STAT_MAX, vals[0] + diff),
+                    );
                     setCustomStats({
                       leadership: vals[0],
                       strength: vals[1],
@@ -396,7 +431,9 @@ export default function LobbySelectPoolPage() {
               <Button
                 className="w-full"
                 onClick={handleBuildCustom}
-                disabled={building || customRemaining !== 0 || !customName.trim()}
+                disabled={
+                  building || customRemaining !== 0 || !customName.trim()
+                }
               >
                 {building ? "생성 중..." : "커스텀 장수 등록"}
               </Button>
@@ -429,7 +466,8 @@ export default function LobbySelectPoolPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm">{g.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        통{g.leadership} 무{g.strength} 지{g.intel} 정{g.politics} 매{g.charm}
+                        통{g.leadership} 무{g.strength} 지{g.intel} 정
+                        {g.politics} 매{g.charm}
                       </p>
                     </div>
                     <Settings2 className="size-4 text-muted-foreground" />

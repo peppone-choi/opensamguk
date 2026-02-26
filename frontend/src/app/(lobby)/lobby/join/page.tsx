@@ -80,13 +80,25 @@ const GENERAL_PRESETS: {
   },
   {
     name: "제갈량형",
-    stats: { leadership: 55, strength: 20, intel: 100, politics: 95, charm: 80 },
+    stats: {
+      leadership: 55,
+      strength: 20,
+      intel: 100,
+      politics: 95,
+      charm: 80,
+    },
     personality: "Calm",
     crewType: 0,
   },
   {
     name: "여포형",
-    stats: { leadership: 70, strength: 100, intel: 25, politics: 20, charm: 135 > 100 ? 30 : 30 },
+    stats: {
+      leadership: 70,
+      strength: 100,
+      intel: 25,
+      politics: 20,
+      charm: 135 > 100 ? 30 : 30,
+    },
     personality: "Reckless",
     crewType: 2,
   },
@@ -144,16 +156,18 @@ export default function LobbyJoinPage() {
   >([0, 0, 0]);
 
   // Nation scout messages for recruitment display
-  const [scoutMessages, setScoutMessages] = useState<
-    Record<number, string>
-  >({});
+  const [scoutMessages, setScoutMessages] = useState<Record<number, string>>(
+    {},
+  );
 
   useEffect(() => {
     if (currentWorld) {
       // Check blockCustomGeneralName from world config/meta (legacy parity: PageJoin.vue)
       const meta = currentWorld.meta ?? {};
       const config = currentWorld.config ?? {};
-      setBlockCustomName(!!(meta.blockCustomGeneralName || config.blockCustomGeneralName));
+      setBlockCustomName(
+        !!(meta.blockCustomGeneralName || config.blockCustomGeneralName),
+      );
 
       loadAll(currentWorld.id);
 
@@ -207,83 +221,80 @@ export default function LobbyJoinPage() {
   };
 
   // Stat presets - legacy parity from core2026 JoinView
-  const applyPreset = useCallback(
-    (preset: StatPreset) => {
-      const base = Math.floor(TOTAL_STAT_POINTS / 5);
-      const r = (min: number, max: number) =>
-        Math.floor(Math.random() * (max - min + 1)) + min;
+  const applyPreset = useCallback((preset: StatPreset) => {
+    const base = Math.floor(TOTAL_STAT_POINTS / 5);
+    const r = (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
 
-      switch (preset) {
-        case "balanced": {
-          const remainder = TOTAL_STAT_POINTS - base * 5;
-          setStats({
-            leadership: base + (remainder > 0 ? 1 : 0),
-            strength: base + (remainder > 1 ? 1 : 0),
-            intel: base + (remainder > 2 ? 1 : 0),
-            politics: base + (remainder > 3 ? 1 : 0),
-            charm: base,
-          });
-          break;
-        }
-        case "random": {
-          for (let attempt = 0; attempt < 100; attempt++) {
-            const vals = STAT_KEYS.map(() => r(STAT_MIN, STAT_MAX));
-            const sum = vals.reduce((a, b) => a + b, 0);
-            if (sum === TOTAL_STAT_POINTS) {
-              setStats({
-                leadership: vals[0],
-                strength: vals[1],
-                intel: vals[2],
-                politics: vals[3],
-                charm: vals[4],
-              });
-              return;
-            }
-          }
-          // Fallback: distribute evenly with random variation
-          const vals = STAT_KEYS.map(() => base);
-          let remain = TOTAL_STAT_POINTS - vals.reduce((a, b) => a + b, 0);
-          while (remain > 0) {
-            const idx = r(0, 4);
-            if (vals[idx] < STAT_MAX) {
-              vals[idx]++;
-              remain--;
-            }
-          }
-          setStats({
-            leadership: vals[0],
-            strength: vals[1],
-            intel: vals[2],
-            politics: vals[3],
-            charm: vals[4],
-          });
-          break;
-        }
-        case "leadership":
-        case "strength":
-        case "intel": {
-          const focusValue = Math.min(
-            STAT_MAX,
-            STAT_MIN + Math.floor(TOTAL_STAT_POINTS * 0.3),
-          );
-          const remain = TOTAL_STAT_POINTS - focusValue;
-          const side = Math.floor(remain / 4);
-          const last = remain - side * 3;
-          const newStats: Record<StatKey, number> = {
-            leadership: side,
-            strength: side,
-            intel: side,
-            politics: side,
-            charm: last,
-          };
-          newStats[preset] = focusValue;
-          setStats(newStats);
-          break;
-        }
+    switch (preset) {
+      case "balanced": {
+        const remainder = TOTAL_STAT_POINTS - base * 5;
+        setStats({
+          leadership: base + (remainder > 0 ? 1 : 0),
+          strength: base + (remainder > 1 ? 1 : 0),
+          intel: base + (remainder > 2 ? 1 : 0),
+          politics: base + (remainder > 3 ? 1 : 0),
+          charm: base,
+        });
+        break;
       }
-    },
-    [],
-  );
+      case "random": {
+        for (let attempt = 0; attempt < 100; attempt++) {
+          const vals = STAT_KEYS.map(() => r(STAT_MIN, STAT_MAX));
+          const sum = vals.reduce((a, b) => a + b, 0);
+          if (sum === TOTAL_STAT_POINTS) {
+            setStats({
+              leadership: vals[0],
+              strength: vals[1],
+              intel: vals[2],
+              politics: vals[3],
+              charm: vals[4],
+            });
+            return;
+          }
+        }
+        // Fallback: distribute evenly with random variation
+        const vals = STAT_KEYS.map(() => base);
+        let remain = TOTAL_STAT_POINTS - vals.reduce((a, b) => a + b, 0);
+        while (remain > 0) {
+          const idx = r(0, 4);
+          if (vals[idx] < STAT_MAX) {
+            vals[idx]++;
+            remain--;
+          }
+        }
+        setStats({
+          leadership: vals[0],
+          strength: vals[1],
+          intel: vals[2],
+          politics: vals[3],
+          charm: vals[4],
+        });
+        break;
+      }
+      case "leadership":
+      case "strength":
+      case "intel": {
+        const focusValue = Math.min(
+          STAT_MAX,
+          STAT_MIN + Math.floor(TOTAL_STAT_POINTS * 0.3),
+        );
+        const remain = TOTAL_STAT_POINTS - focusValue;
+        const side = Math.floor(remain / 4);
+        const last = remain - side * 3;
+        const newStats: Record<StatKey, number> = {
+          leadership: side,
+          strength: side,
+          intel: side,
+          politics: side,
+          charm: last,
+        };
+        newStats[preset] = focusValue;
+        setStats(newStats);
+        break;
+      }
+    }
+  }, []);
 
   // Filter cities by selected nation
   const filteredCities = useMemo(() => {
@@ -294,9 +305,7 @@ export default function LobbyJoinPage() {
   // Nations with scout messages for recruitment display
   const nationsWithScout = useMemo(() => {
     return nations.filter(
-      (n) =>
-        scoutMessages[n.id] &&
-        scoutMessages[n.id].trim().length > 0,
+      (n) => scoutMessages[n.id] && scoutMessages[n.id].trim().length > 0,
     );
   }, [nations, scoutMessages]);
 
@@ -335,8 +344,7 @@ export default function LobbyJoinPage() {
         useOwnIcon,
         inheritSpecial: inheritSpecial || undefined,
         inheritCity: inheritCity || undefined,
-        inheritBonusStat:
-          inheritBonusSum > 0 ? inheritBonusStat : undefined,
+        inheritBonusStat: inheritBonusSum > 0 ? inheritBonusStat : undefined,
       });
       await fetchMyGeneral(currentWorld.id);
       router.push("/");
@@ -413,7 +421,8 @@ export default function LobbyJoinPage() {
               </label>
               {blockCustomName ? (
                 <div className="text-sm text-muted-foreground p-2 border border-input rounded-md bg-muted/50">
-                  이 서버에서는 커스텀 장수명을 사용할 수 없습니다. (서버 설정에 의해 자동 배정됩니다)
+                  이 서버에서는 커스텀 장수명을 사용할 수 없습니다. (서버 설정에
+                  의해 자동 배정됩니다)
                 </div>
               ) : (
                 <Input

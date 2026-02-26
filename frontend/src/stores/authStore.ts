@@ -122,7 +122,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       loginId,
       displayName,
       password,
-      ...(agreements ? { agreeTerms: agreements.terms, agreePrivacy: agreements.privacy } : {}),
+      ...(agreements
+        ? { agreeTerms: agreements.terms, agreePrivacy: agreements.privacy }
+        : {}),
     });
     localStorage.setItem("token", data.token);
     const user = { ...data.user, role: parseTokenUser(data.token).role };
@@ -141,7 +143,9 @@ export const useAuthStore = create<AuthState>((set) => ({
       code,
       redirectUri,
       displayName,
-      ...(agreements ? { agreeTerms: agreements.terms, agreePrivacy: agreements.privacy } : {}),
+      ...(agreements
+        ? { agreeTerms: agreements.terms, agreePrivacy: agreements.privacy }
+        : {}),
     });
     localStorage.setItem("token", data.token);
     const user = parseTokenUser(data.token);

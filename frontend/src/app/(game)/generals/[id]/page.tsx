@@ -79,7 +79,13 @@ export default function GeneralDetailPage() {
       <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
     );
   if (loading) return <LoadingState />;
-  if (error) return <ErrorState title="장수 정보를 불러오지 못했습니다." onRetry={fetchData} />;
+  if (error)
+    return (
+      <ErrorState
+        title="장수 정보를 불러오지 못했습니다."
+        onRetry={fetchData}
+      />
+    );
   if (!general)
     return (
       <div className="p-4">
@@ -97,7 +103,13 @@ export default function GeneralDetailPage() {
     general.officerLevel,
     nation?.level,
   );
-  const dexValues = [general.dex1, general.dex2, general.dex3, general.dex4, general.dex5];
+  const dexValues = [
+    general.dex1,
+    general.dex2,
+    general.dex3,
+    general.dex4,
+    general.dex5,
+  ];
   const honorText = formatHonor(general.experience);
   const npcColor = getNPCColor(general.npcState);
   const defenceTrainText = formatDefenceTrain(general.defenceTrain);
@@ -110,7 +122,10 @@ export default function GeneralDetailPage() {
   const deathcrew = general.deathcrew ?? 0;
   const firenum = general.firenum ?? 0;
   const winRate = warnum > 0 ? ((killnum / warnum) * 100).toFixed(1) : "0.0";
-  const killRate = deathcrew > 0 ? ((killcrew / Math.max(deathcrew, 1)) * 100).toFixed(1) : "0.0";
+  const killRate =
+    deathcrew > 0
+      ? ((killcrew / Math.max(deathcrew, 1)) * 100).toFixed(1)
+      : "0.0";
 
   const statRows = [
     {
@@ -147,7 +162,9 @@ export default function GeneralDetailPage() {
             />
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold" style={{ color: npcColor }}>{general.name}</h2>
+                <h2 className="text-lg font-bold" style={{ color: npcColor }}>
+                  {general.name}
+                </h2>
                 <NationBadge name={nation?.name} color={nation?.color} />
                 {general.npcState > 0 && <Badge variant="secondary">NPC</Badge>}
               </div>
@@ -158,7 +175,9 @@ export default function GeneralDetailPage() {
                     {injuryInfo.text}
                   </span>
                   {general.injury > 0 && (
-                    <span className="text-red-400 ml-1">({general.injury}%)</span>
+                    <span className="text-red-400 ml-1">
+                      ({general.injury}%)
+                    </span>
                   )}
                 </p>
                 <p>
@@ -188,14 +207,23 @@ export default function GeneralDetailPage() {
         <CardContent className="space-y-1.5">
           {statRows.map((s) => (
             <div key={s.label} className="flex items-center gap-2">
-              <span className="w-8 text-xs text-right text-muted-foreground">{s.label}</span>
-              <span className="w-6 text-xs text-right font-mono"
-                style={{ color: s.effective < s.base ? injuryInfo.color : undefined }}
+              <span className="w-8 text-xs text-right text-muted-foreground">
+                {s.label}
+              </span>
+              <span
+                className="w-6 text-xs text-right font-mono"
+                style={{
+                  color: s.effective < s.base ? injuryInfo.color : undefined,
+                }}
               >
                 {s.effective}
               </span>
               <div className="flex-1">
-                <SammoBar height={7} percent={s.base} altText={`${s.effective}/${s.base}`} />
+                <SammoBar
+                  height={7}
+                  percent={s.base}
+                  altText={`${s.effective}/${s.base}`}
+                />
               </div>
               {s.effective !== s.base && (
                 <span className="text-[10px] text-muted-foreground w-12 text-right">
@@ -214,11 +242,25 @@ export default function GeneralDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-1">
-            <Badge variant={isValidObjKey(general.specialCode) ? "secondary" : "outline"}>
-              특기: {isValidObjKey(general.specialCode) ? general.specialCode : "없음"}
+            <Badge
+              variant={
+                isValidObjKey(general.specialCode) ? "secondary" : "outline"
+              }
+            >
+              특기:{" "}
+              {isValidObjKey(general.specialCode)
+                ? general.specialCode
+                : "없음"}
             </Badge>
-            <Badge variant={isValidObjKey(general.special2Code) ? "secondary" : "outline"}>
-              특기2: {isValidObjKey(general.special2Code) ? general.special2Code : "없음"}
+            <Badge
+              variant={
+                isValidObjKey(general.special2Code) ? "secondary" : "outline"
+              }
+            >
+              특기2:{" "}
+              {isValidObjKey(general.special2Code)
+                ? general.special2Code
+                : "없음"}
             </Badge>
             <Badge variant="secondary">성격: {general.personalCode}</Badge>
           </div>
@@ -234,32 +276,89 @@ export default function GeneralDetailPage() {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <Row
               label="병종"
-              value={<span className="text-cyan-300">{CREW_TYPE_NAMES[general.crewType] ?? `${general.crewType}`}</span>}
+              value={
+                <span className="text-cyan-300">
+                  {CREW_TYPE_NAMES[general.crewType] ?? `${general.crewType}`}
+                </span>
+              }
             />
             <Row label="병사" value={general.crew.toLocaleString()} />
-            <Row label="훈련" value={<span className={general.train >= 80 ? "text-cyan-400" : ""}>{general.train}</span>} />
-            <Row label="사기" value={<span className={general.atmos >= 80 ? "text-cyan-400" : ""}>{general.atmos}</span>} />
+            <Row
+              label="훈련"
+              value={
+                <span className={general.train >= 80 ? "text-cyan-400" : ""}>
+                  {general.train}
+                </span>
+              }
+            />
+            <Row
+              label="사기"
+              value={
+                <span className={general.atmos >= 80 ? "text-cyan-400" : ""}>
+                  {general.atmos}
+                </span>
+              }
+            />
             <Row
               label="무기"
               value={
-                isValidObjKey(general.weaponCode) ? <span className="text-cyan-300">{general.weaponCode}</span> : "-"
+                isValidObjKey(general.weaponCode) ? (
+                  <span className="text-cyan-300">{general.weaponCode}</span>
+                ) : (
+                  "-"
+                )
               }
             />
             <Row
               label="서적"
-              value={isValidObjKey(general.bookCode) ? <span className="text-cyan-300">{general.bookCode}</span> : "-"}
+              value={
+                isValidObjKey(general.bookCode) ? (
+                  <span className="text-cyan-300">{general.bookCode}</span>
+                ) : (
+                  "-"
+                )
+              }
             />
             <Row
               label="명마"
-              value={isValidObjKey(general.horseCode) ? <span className="text-cyan-300">{general.horseCode}</span> : "-"}
+              value={
+                isValidObjKey(general.horseCode) ? (
+                  <span className="text-cyan-300">{general.horseCode}</span>
+                ) : (
+                  "-"
+                )
+              }
             />
             <Row
               label="도구"
-              value={isValidObjKey(general.itemCode) ? <span className="text-cyan-300">{general.itemCode}</span> : "-"}
+              value={
+                isValidObjKey(general.itemCode) ? (
+                  <span className="text-cyan-300">{general.itemCode}</span>
+                ) : (
+                  "-"
+                )
+              }
             />
-            <Row label="자금" value={<span className="text-yellow-400">{numberWithCommas(general.gold)}</span>} />
-            <Row label="군량" value={<span className="text-green-400">{numberWithCommas(general.rice)}</span>} />
-            <Row label="계급" value={`Lv.${general.dedLevel ?? 0} (${general.dedication})`} />
+            <Row
+              label="자금"
+              value={
+                <span className="text-yellow-400">
+                  {numberWithCommas(general.gold)}
+                </span>
+              }
+            />
+            <Row
+              label="군량"
+              value={
+                <span className="text-green-400">
+                  {numberWithCommas(general.rice)}
+                </span>
+              }
+            />
+            <Row
+              label="계급"
+              value={`Lv.${general.dedLevel ?? 0} (${general.dedication})`}
+            />
           </div>
         </CardContent>
       </Card>
@@ -275,8 +374,13 @@ export default function GeneralDetailPage() {
             const info = formatDexLevel(dex);
             return (
               <div key={name} className="flex items-center gap-2">
-                <span className="w-8 text-xs text-muted-foreground">{name}</span>
-                <span className="w-8 text-xs font-mono text-right" style={{ color: info.color }}>
+                <span className="w-8 text-xs text-muted-foreground">
+                  {name}
+                </span>
+                <span
+                  className="w-8 text-xs font-mono text-right"
+                  style={{ color: info.color }}
+                >
                   {info.name}
                 </span>
                 <div className="flex-1">
@@ -319,21 +423,33 @@ export default function GeneralDetailPage() {
             </div>
             <div>
               <span className="text-muted-foreground">승률:</span>{" "}
-              <span className={Number(winRate) >= 50 ? "text-cyan-400" : "text-orange-400"}>
+              <span
+                className={
+                  Number(winRate) >= 50 ? "text-cyan-400" : "text-orange-400"
+                }
+              >
                 {winRate}%
               </span>
             </div>
             <div>
               <span className="text-muted-foreground">적 사살:</span>{" "}
-              <span className="text-yellow-400 font-mono">{numberWithCommas(killcrew)}</span>
+              <span className="text-yellow-400 font-mono">
+                {numberWithCommas(killcrew)}
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground">아군 피해:</span>{" "}
-              <span className="text-red-300 font-mono">{numberWithCommas(deathcrew)}</span>
+              <span className="text-red-300 font-mono">
+                {numberWithCommas(deathcrew)}
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground">살상률:</span>{" "}
-              <span className={Number(killRate) >= 100 ? "text-cyan-400" : "text-orange-400"}>
+              <span
+                className={
+                  Number(killRate) >= 100 ? "text-cyan-400" : "text-orange-400"
+                }
+              >
                 {killRate}%
               </span>
             </div>

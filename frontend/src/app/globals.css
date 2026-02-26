@@ -305,15 +305,31 @@
   }
 
   /* ── Nation Color System ── */
-  .nation-color-wei { --nation-color: #6495ed; }
-  .nation-color-shu { --nation-color: #ff6347; }
-  .nation-color-wu { --nation-color: #3cb371; }
-  .nation-color-yuan { --nation-color: #daa520; }
-  .nation-color-other { --nation-color: #c0c0c0; }
+  .nation-color-wei {
+    --nation-color: #6495ed;
+  }
+  .nation-color-shu {
+    --nation-color: #ff6347;
+  }
+  .nation-color-wu {
+    --nation-color: #3cb371;
+  }
+  .nation-color-yuan {
+    --nation-color: #daa520;
+  }
+  .nation-color-other {
+    --nation-color: #c0c0c0;
+  }
 
-  .nation-border { border-color: var(--nation-color, #666); }
-  .nation-bg { background-color: var(--nation-color, #333); }
-  .nation-text { color: var(--nation-color, #ccc); }
+  .nation-border {
+    border-color: var(--nation-color, #666);
+  }
+  .nation-bg {
+    background-color: var(--nation-color, #333);
+  }
+  .nation-text {
+    color: var(--nation-color, #ccc);
+  }
   .nation-header {
     background-color: var(--nation-color, #333);
     color: #fff;
@@ -323,28 +339,66 @@
   }
 
   /* ── Legacy Event Colors ── */
-  .ev_warning { color: orangered; }
-  .ev_notice { color: orangered; }
-  .ev_succes { color: lightgreen; }
-  .ev_sell { color: orange; }
-  .ev_failed { color: orangered; }
-  .ev_highlight { color: orangered; }
+  .ev_warning {
+    color: orangered;
+  }
+  .ev_notice {
+    color: orangered;
+  }
+  .ev_succes {
+    color: lightgreen;
+  }
+  .ev_sell {
+    color: orange;
+  }
+  .ev_failed {
+    color: orangered;
+  }
+  .ev_highlight {
+    color: orangered;
+  }
 
   /* ── Legacy Text Colors ── */
-  .t_red { color: red; }
-  .t_blue { color: blue; }
-  .t_green { color: green; }
-  .t_magenta { color: magenta; }
-  .t_cyan { color: cyan; }
-  .t_limegreen { color: limegreen; }
-  .t_skyblue { color: skyblue; }
-  .t_orangered { color: orangered; }
-  .t_yellow { color: yellow; }
-  .t_white { color: white; }
+  .t_red {
+    color: red;
+  }
+  .t_blue {
+    color: blue;
+  }
+  .t_green {
+    color: green;
+  }
+  .t_magenta {
+    color: magenta;
+  }
+  .t_cyan {
+    color: cyan;
+  }
+  .t_limegreen {
+    color: limegreen;
+  }
+  .t_skyblue {
+    color: skyblue;
+  }
+  .t_orangered {
+    color: orangered;
+  }
+  .t_yellow {
+    color: yellow;
+  }
+  .t_white {
+    color: white;
+  }
 
   /* ── Legacy Bullet Markers ── */
-  .o_bullet::before { color: cyan; content: "●"; }
-  .o_diamond::before { color: orangered; content: "◆"; }
+  .o_bullet::before {
+    color: cyan;
+    content: "●";
+  }
+  .o_diamond::before {
+    color: orangered;
+    content: "◆";
+  }
 
   /* ── Compact Game Table ── */
   [data-slot="table"] {
@@ -378,16 +432,33 @@
   }
 
   /* ── War Log Plate ── */
-  .small_war_log { display: inline-block; }
-  .small_war_log .war_type_attack { color: cyan; }
-  .small_war_log .war_type_defense { color: magenta; }
-  .small_war_log .war_type_siege { color: white; }
-  .small_war_log .name_plate { font-size: 0.75em; }
-  .small_war_log .name_plate_cover { color: yellow; }
-  .small_war_log .crew_plate { color: orangered; font-size: 90%; }
+  .small_war_log {
+    display: inline-block;
+  }
+  .small_war_log .war_type_attack {
+    color: cyan;
+  }
+  .small_war_log .war_type_defense {
+    color: magenta;
+  }
+  .small_war_log .war_type_siege {
+    color: white;
+  }
+  .small_war_log .name_plate {
+    font-size: 0.75em;
+  }
+  .small_war_log .name_plate_cover {
+    color: yellow;
+  }
+  .small_war_log .crew_plate {
+    color: orangered;
+    font-size: 90%;
+  }
 
   /* ── Date Tag ── */
-  .t_date { font-size: 0.75em; }
+  .t_date {
+    font-size: 0.75em;
+  }
 
   /* ── Map City Tooltip ── */
   .city-tooltip {
@@ -424,17 +495,29 @@
 
   /* ── My City Blink (Map) ── */
   @keyframes blink-my-city {
-    0%, 100% { box-shadow: 0 0 0 2px transparent; }
-    50% { box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 2px transparent;
+    }
+    50% {
+      box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
+    }
   }
   .my-city-blink {
     animation: blink-my-city 3.9s infinite;
   }
 
   /* ── Compensate Colors ── */
-  .compensate-positive { color: skyblue; }
-  .compensate-negative { color: orange; }
-  .command-impossible { background-color: red; color: white; }
+  .compensate-positive {
+    color: skyblue;
+  }
+  .compensate-negative {
+    color: orange;
+  }
+  .command-impossible {
+    background-color: red;
+    color: white;
+  }
 
   /* ── Rank/Hall of Fame Grid ── */
   .rank-grid {
@@ -520,8 +603,14 @@
     padding: 4px;
     margin: 2px;
   }
-  .general-select-card h4 { margin: 0; font-size: 13px; }
-  .general-select-card p { margin: 0; font-size: 12px; }
+  .general-select-card h4 {
+    margin: 0;
+    font-size: 13px;
+  }
+  .general-select-card p {
+    margin: 0;
+    font-size: 12px;
+  }
 
   /* ── SammoBar Legacy Overrides ── */
   .bar_out {

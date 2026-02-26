@@ -26,6 +26,7 @@ import type {
   BattleSimResult,
   BattleSimRepeatResult,
   NationPolicyInfo,
+  NpcPolicyInfo,
   OfficerInfo,
   TroopWithMembers,
   NationStatistic,
@@ -134,12 +135,25 @@ export const generalApi = {
     api.post<General>(`/worlds/${worldId}/select-pool`, { generalId }),
   buildPoolGeneral: (
     worldId: number,
-    payload: { name: string; leadership: number; strength: number; intel: number; politics: number; charm: number },
+    payload: {
+      name: string;
+      leadership: number;
+      strength: number;
+      intel: number;
+      politics: number;
+      charm: number;
+    },
   ) => api.post<General>(`/worlds/${worldId}/pool`, payload),
   updatePoolGeneral: (
     worldId: number,
     generalId: number,
-    stats: { leadership: number; strength: number; intel: number; politics: number; charm: number },
+    stats: {
+      leadership: number;
+      strength: number;
+      intel: number;
+      politics: number;
+      charm: number;
+    },
   ) => api.put<General>(`/worlds/${worldId}/pool/${generalId}`, stats),
 };
 
@@ -215,11 +229,16 @@ export const commandApi = {
     api.get<NationTurn[]>(`/nations/${nationId}/turns`, {
       params: { officerLevel },
     }),
-  getAllOfficerTurns: async (nationId: number, officerLevels: number[]): Promise<NationTurn[]> => {
+  getAllOfficerTurns: async (
+    nationId: number,
+    officerLevels: number[],
+  ): Promise<NationTurn[]> => {
     const results = await Promise.all(
       officerLevels.map((lv) =>
-        api.get<NationTurn[]>(`/nations/${nationId}/turns`, { params: { officerLevel: lv } })
-      )
+        api.get<NationTurn[]>(`/nations/${nationId}/turns`, {
+          params: { officerLevel: lv },
+        }),
+      ),
     );
     return results.flatMap((r) => r.data);
   },
@@ -272,8 +291,17 @@ export const diplomacyApi = {
     api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy`),
   listByNation: (worldId: number, nationId: number) =>
     api.get<Diplomacy[]>(`/worlds/${worldId}/diplomacy/nation/${nationId}`),
-  respond: (worldId: number, messageId: number, action: string, accept: boolean) =>
-    api.post(`/worlds/${worldId}/diplomacy/respond`, { messageId, action, accept }),
+  respond: (
+    worldId: number,
+    messageId: number,
+    action: string,
+    accept: boolean,
+  ) =>
+    api.post(`/worlds/${worldId}/diplomacy/respond`, {
+      messageId,
+      action,
+      accept,
+    }),
 };
 
 // Message API
@@ -290,7 +318,9 @@ export const messageApi = {
     },
   ) => api.get<Message[]>("/messages", { params: { type, ...params } }),
   getMine: (generalId: number, sinceId?: number | null) =>
-    api.get<Message[]>(`/messages`, { params: { generalId, ...(sinceId != null ? { sinceId } : {}) } }),
+    api.get<Message[]>(`/messages`, {
+      params: { generalId, ...(sinceId != null ? { sinceId } : {}) },
+    }),
   send: (
     worldId: number,
     srcId: number,
@@ -315,7 +345,12 @@ export const messageApi = {
     }),
   getBoard: (worldId: number) =>
     api.get<Message[]>("/messages/board", { params: { worldId } }),
-  postBoard: (worldId: number, srcId: number, content: string, title?: string) =>
+  postBoard: (
+    worldId: number,
+    srcId: number,
+    content: string,
+    title?: string,
+  ) =>
     api.post<Message>("/messages", {
       worldId,
       mailboxCode: "board",
@@ -402,10 +437,9 @@ export const generalLogApi = {
     type: "generalHistory" | "generalAction" | "battleResult" | "battleDetail",
     to?: number,
   ) =>
-    api.get<GeneralLogResult>(
-      `/generals/${generalId}/logs/old`,
-      { params: { targetId, type, ...(to ? { to } : {}) } },
-    ),
+    api.get<GeneralLogResult>(`/generals/${generalId}/logs/old`, {
+      params: { targetId, type, ...(to ? { to } : {}) },
+    }),
 };
 
 // Simulator Export API (legacy parity: load general from server)
@@ -416,10 +450,9 @@ export interface SimulatorExportResult {
 }
 export const simulatorExportApi = {
   exportGeneral: (generalId: number, targetId: number) =>
-    api.get<SimulatorExportResult>(
-      `/generals/${generalId}/simulator-export`,
-      { params: { targetId } },
-    ),
+    api.get<SimulatorExportResult>(`/generals/${generalId}/simulator-export`, {
+      params: { targetId },
+    }),
 };
 
 // Map Recent API (cached map with history)
@@ -520,10 +553,10 @@ export const nationPolicyApi = {
 // NPC Policy API (dynamic policy maps - intentionally loose)
 export const npcPolicyApi = {
   getPolicy: (nationId: number) =>
-    api.get<Record<string, unknown>>(`/nations/${nationId}/npc-policy`),
-  updatePolicy: (nationId: number, policy: Record<string, unknown>) =>
+    api.get<NpcPolicyInfo>(`/nations/${nationId}/npc-policy`),
+  updatePolicy: (nationId: number, policy: Partial<NpcPolicyInfo> & Record<string, unknown>) =>
     api.put<void>(`/nations/${nationId}/npc-policy`, policy),
-  updatePriority: (nationId: number, priority: Record<string, unknown>) =>
+  updatePriority: (nationId: number, priority: Partial<NpcPolicyInfo> & Record<string, unknown>) =>
     api.put<void>(`/nations/${nationId}/npc-priority`, priority),
 };
 
@@ -563,7 +596,10 @@ export const diplomacyLetterApi = {
     },
   ) => api.post<Message>(`/nations/${nationId}/diplomacy-letters`, data),
   respond: (letterId: number, accept: boolean, reason?: string) =>
-    api.post<void>(`/diplomacy-letters/${letterId}/respond`, { accept, reason }),
+    api.post<void>(`/diplomacy-letters/${letterId}/respond`, {
+      accept,
+      reason,
+    }),
   execute: (letterId: number) =>
     api.post<void>(`/diplomacy-letters/${letterId}/execute`),
   rollback: (letterId: number) =>
@@ -582,12 +618,32 @@ export const rankingApi = {
       params,
     });
   },
-  hallOfFame: (worldId: number, params?: { season?: number; scenario?: string }) =>
-    api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`, { params }),
+  hallOfFame: (
+    worldId: number,
+    params?: { season?: number; scenario?: string },
+  ) => api.get<Message[]>(`/worlds/${worldId}/hall-of-fame`, { params }),
   hallOfFameOptions: (worldId: number) =>
-    api.get<{ seasons: { id: number; label: string; scenarios: { code: string; label: string }[] }[] }>(`/worlds/${worldId}/hall-of-fame/options`),
+    api.get<{
+      seasons: {
+        id: number;
+        label: string;
+        scenarios: { code: string; label: string }[];
+      }[];
+    }>(`/worlds/${worldId}/hall-of-fame/options`),
   uniqueItemOwners: (worldId: number) =>
-    api.get<{ slot: string; slotLabel: string; generalId: number; generalName: string; nationId: number; nationName: string; nationColor: string; itemName: string; itemGrade: string }[]>(`/worlds/${worldId}/unique-item-owners`),
+    api.get<
+      {
+        slot: string;
+        slotLabel: string;
+        generalId: number;
+        generalName: string;
+        nationId: number;
+        nationName: string;
+        nationColor: string;
+        itemName: string;
+        itemGrade: string;
+      }[]
+    >(`/worlds/${worldId}/unique-item-owners`),
 };
 
 // Traffic API
@@ -672,10 +728,7 @@ export const inheritanceApi = {
         ? { destGeneralID: generalIdOrName }
         : { generalName: generalIdOrName },
     ),
-  buyInheritBuff: (
-    worldId: number,
-    data: { type: string; level: number },
-  ) =>
+  buyInheritBuff: (worldId: number, data: { type: string; level: number }) =>
     api.post<InheritanceActionResult>(
       `/worlds/${worldId}/inheritance/buy-buff`,
       data,
@@ -867,7 +920,12 @@ export const battleSimApi = {
     attacker: BattleSimUnit,
     defender: BattleSimUnit,
     defenderCity: BattleSimCity,
-    options?: { year?: number; month?: number; seed?: string; repeatCount?: number },
+    options?: {
+      year?: number;
+      month?: number;
+      seed?: string;
+      repeatCount?: number;
+    },
   ) =>
     api.post<BattleSimResult & { repeatSummary?: BattleSimRepeatResult }>(
       "/battle/simulate",
@@ -937,12 +995,23 @@ export const adminApi = {
       oauthDays?: number;
     },
   ) => api.post<void>(`/admin/users/${id}/action`, action),
-  createWorld: (data: { scenarioCode: string; turnTerm?: number; notice?: string }) =>
-    api.post<{ worldId: number }>("/admin/worlds", data),
+  createWorld: (data: {
+    scenarioCode: string;
+    turnTerm?: number;
+    notice?: string;
+  }) => api.post<{ worldId: number }>("/admin/worlds", data),
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
   listWorlds: () =>
-    api.get<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>("/admin/worlds"),
+    api.get<
+      {
+        id: number;
+        scenarioCode: string;
+        year: number;
+        month: number;
+        locked: boolean;
+      }[]
+    >("/admin/worlds"),
   bulkGeneralAction: (ids: number[], type: string) =>
     api.post<void>("/admin/generals/bulk-action", { ids, type }),
   activateWorld: (worldId: number) =>
@@ -950,16 +1019,26 @@ export const adminApi = {
   deactivateWorld: (worldId: number) =>
     api.post<void>(`/worlds/${worldId}/deactivate`, {}),
   resetWorld: (worldId: number, scenarioCode?: string) =>
-    api.post<void>(`/worlds/${worldId}/reset`, scenarioCode ? { scenarioCode } : {}),
+    api.post<void>(
+      `/worlds/${worldId}/reset`,
+      scenarioCode ? { scenarioCode } : {},
+    ),
   writeLog: (message: string) =>
     api.post<void>("/admin/write-log", { message }),
 
   // Gateway-local admin ops (entrance/system)
-  getSystemFlags: () => api.get<{ allowLogin: boolean; allowJoin: boolean }>("/admin/system-flags"),
+  getSystemFlags: () =>
+    api.get<{ allowLogin: boolean; allowJoin: boolean }>("/admin/system-flags"),
   patchSystemFlags: (payload: { allowLogin?: boolean; allowJoin?: boolean }) =>
-    api.patch<{ allowLogin: boolean; allowJoin: boolean }>("/admin/system-flags", payload),
+    api.patch<{ allowLogin: boolean; allowJoin: boolean }>(
+      "/admin/system-flags",
+      payload,
+    ),
   scrub: (type: "scrub_old_user" | "scrub_blocked_user") =>
     api.post<{ affected: number }>("/admin/scrub", { type }),
   resetPassword: (userId: number) =>
-    api.post<{ tempPassword: string }>(`/admin/users/${userId}/reset-password`, {}),
+    api.post<{ tempPassword: string }>(
+      `/admin/users/${userId}/reset-password`,
+      {},
+    ),
 };

@@ -52,18 +52,18 @@ interface DynastyEvent {
 
 // Structured event type mapping from server payload
 const EVENT_TYPE_MAP: Record<string, DynastyEvent["type"]> = {
-  "nation_founded": "founded",
-  "nation_created": "founded",
-  "founded": "founded",
-  "nation_destroyed": "destroyed",
-  "destroyed": "destroyed",
-  "nation_united": "united",
-  "united": "united",
-  "nation_levelup": "levelUp",
-  "levelUp": "levelUp",
-  "level_up": "levelUp",
-  "war_declared": "war",
-  "war": "war",
+  nation_founded: "founded",
+  nation_created: "founded",
+  founded: "founded",
+  nation_destroyed: "destroyed",
+  destroyed: "destroyed",
+  nation_united: "united",
+  united: "united",
+  nation_levelup: "levelUp",
+  levelUp: "levelUp",
+  level_up: "levelUp",
+  war_declared: "war",
+  war: "war",
 };
 
 // Text-based fallback patterns for backwards compat
@@ -77,9 +77,11 @@ const TEXT_PATTERNS: [RegExp, DynastyEvent["type"]][] = [
 
 function classifyEvent(msg: Message): DynastyEvent | null {
   const p = msg.payload;
-  const text = (p.text as string) ?? (p.message as string) ?? (p.content as string) ?? "";
+  const text =
+    (p.text as string) ?? (p.message as string) ?? (p.content as string) ?? "";
   const nationName = (p.nationName as string) ?? (p.nation as string) ?? "";
-  const nationColor = (p.nationColor as string) ?? (p.color as string) ?? "#888";
+  const nationColor =
+    (p.nationColor as string) ?? (p.color as string) ?? "#888";
   const year = (p.year as number) ?? 0;
   const month = (p.month as number) ?? 1;
 
@@ -158,7 +160,13 @@ export default function DynastyPage() {
       const nationGenerals = generals.filter((g) => g.nationId === nation.id);
       const nationCities = cities.filter((c) => c.nationId === nation.id);
       const totalPop = nationCities.reduce((sum, c) => sum + c.pop, 0);
-      return { nation, ruler, generalCount: nationGenerals.length, cityCount: nationCities.length, totalPop };
+      return {
+        nation,
+        ruler,
+        generalCount: nationGenerals.length,
+        cityCount: nationCities.length,
+        totalPop,
+      };
     });
   }, [nations, generals, cities]);
 
@@ -190,11 +198,16 @@ export default function DynastyPage() {
       if (!phaseMap.has(key)) phaseMap.set(key, []);
       phaseMap.get(key)!.push(evt);
     }
-    return Array.from(phaseMap.entries()).map(([label, events]) => ({ label, events }));
+    return Array.from(phaseMap.entries()).map(([label, events]) => ({
+      label,
+      events,
+    }));
   }, [dynastyEvents]);
 
   if (!currentWorld)
-    return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    return (
+      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
+    );
   if (loading && recordsLoading) return <LoadingState />;
 
   return (
@@ -225,12 +238,18 @@ export default function DynastyPage() {
                     const totalCities = cities.length || 1;
                     const pct = Math.round((cityCount / totalCities) * 100);
                     return (
-                      <div key={nation.id} className="flex items-center gap-2 text-xs">
+                      <div
+                        key={nation.id}
+                        className="flex items-center gap-2 text-xs"
+                      >
                         <NationBadge name={nation.name} color={nation.color} />
                         <div className="flex-1 h-4 bg-muted/20 rounded overflow-hidden">
                           <div
                             className="h-full rounded transition-all"
-                            style={{ width: `${pct}%`, backgroundColor: nation.color || "#666" }}
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: nation.color || "#666",
+                            }}
                           />
                         </div>
                         <span className="text-muted-foreground w-16 text-right tabular-nums">
@@ -243,7 +262,11 @@ export default function DynastyPage() {
                 {/* City grid visualization */}
                 <div className="mt-3 flex flex-wrap gap-0.5">
                   {cities
-                    .sort((a, b) => (a.region ?? 0) - (b.region ?? 0) || (b.level ?? 0) - (a.level ?? 0))
+                    .sort(
+                      (a, b) =>
+                        (a.region ?? 0) - (b.region ?? 0) ||
+                        (b.level ?? 0) - (a.level ?? 0),
+                    )
                     .map((city) => {
                       const nat = nations.find((n) => n.id === city.nationId);
                       return (
@@ -285,33 +308,70 @@ export default function DynastyPage() {
             <EmptyState icon={Crown} title="세력이 없습니다." />
           ) : (
             <div className="space-y-3">
-              {sorted.map(({ nation, ruler, generalCount, cityCount, totalPop }) => (
-                <Card key={nation.id}>
-                  <CardContent className="flex items-start gap-3 py-3">
-                    <GeneralPortrait picture={ruler?.picture} name={ruler?.name ?? "?"} size="md" />
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <NationBadge name={nation.name} color={nation.color} />
-                        <Badge variant="secondary">{getLevelLabel(nation.level)}</Badge>
+              {sorted.map(
+                ({ nation, ruler, generalCount, cityCount, totalPop }) => (
+                  <Card key={nation.id}>
+                    <CardContent className="flex items-start gap-3 py-3">
+                      <GeneralPortrait
+                        picture={ruler?.picture}
+                        name={ruler?.name ?? "?"}
+                        size="md"
+                      />
+                      <div className="flex-1 min-w-0 space-y-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <NationBadge
+                            name={nation.name}
+                            color={nation.color}
+                          />
+                          <Badge variant="secondary">
+                            {getLevelLabel(nation.level)}
+                          </Badge>
+                        </div>
+                        <div className="text-xs">
+                          <span className="text-muted-foreground">군주:</span>{" "}
+                          <span className="font-medium">
+                            {ruler?.name ?? "없음"}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-0.5 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">장수:</span>{" "}
+                            {generalCount}명
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">도시:</span>{" "}
+                            {cityCount}개
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">국력:</span>{" "}
+                            {nation.power.toLocaleString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">기술:</span>{" "}
+                            {nation.tech.toLocaleString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">금:</span>{" "}
+                            {nation.gold.toLocaleString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">쌀:</span>{" "}
+                            {nation.rice.toLocaleString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">인구:</span>{" "}
+                            {totalPop.toLocaleString()}
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">건국:</span>{" "}
+                            {nation.createdAt?.substring(0, 10) ?? "-"}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">군주:</span>{" "}
-                        <span className="font-medium">{ruler?.name ?? "없음"}</span>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-0.5 text-xs">
-                        <div><span className="text-muted-foreground">장수:</span> {generalCount}명</div>
-                        <div><span className="text-muted-foreground">도시:</span> {cityCount}개</div>
-                        <div><span className="text-muted-foreground">국력:</span> {nation.power.toLocaleString()}</div>
-                        <div><span className="text-muted-foreground">기술:</span> {nation.tech.toLocaleString()}</div>
-                        <div><span className="text-muted-foreground">금:</span> {nation.gold.toLocaleString()}</div>
-                        <div><span className="text-muted-foreground">쌀:</span> {nation.rice.toLocaleString()}</div>
-                        <div><span className="text-muted-foreground">인구:</span> {totalPop.toLocaleString()}</div>
-                        <div><span className="text-muted-foreground">건국:</span> {nation.createdAt?.substring(0, 10) ?? "-"}</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ),
+              )}
             </div>
           )}
         </TabsContent>
@@ -326,8 +386,12 @@ export default function DynastyPage() {
             <>
               {/* Summary counts */}
               <div className="flex flex-wrap gap-2">
-                {(Object.keys(DYNASTY_EVENT_LABELS) as DynastyEvent["type"][]).map((type) => {
-                  const count = dynastyEvents.filter((e) => e.type === type).length;
+                {(
+                  Object.keys(DYNASTY_EVENT_LABELS) as DynastyEvent["type"][]
+                ).map((type) => {
+                  const count = dynastyEvents.filter(
+                    (e) => e.type === type,
+                  ).length;
                   if (count === 0) return null;
                   return (
                     <Badge key={type} variant="secondary" className="gap-1.5">
@@ -345,7 +409,9 @@ export default function DynastyPage() {
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Clock className="size-4" />
                       {phase.label}
-                      <Badge variant="outline" className="text-xs">{phase.events.length}건</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {phase.events.length}건
+                      </Badge>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="py-2 px-4">
@@ -368,7 +434,9 @@ export default function DynastyPage() {
                                   >
                                     <span
                                       className="inline-block size-2 rounded-full"
-                                      style={{ backgroundColor: evt.nationColor }}
+                                      style={{
+                                        backgroundColor: evt.nationColor,
+                                      }}
                                     />
                                     <span style={{ color: evt.nationColor }}>
                                       {evt.nationName}
@@ -379,9 +447,13 @@ export default function DynastyPage() {
                                   {DYNASTY_EVENT_LABELS[evt.type]}
                                 </Badge>
                               </div>
-                              <p className="text-sm mt-0.5">{evt.description}</p>
+                              <p className="text-sm mt-0.5">
+                                {evt.description}
+                              </p>
                               {evt.detail && (
-                                <p className="text-xs text-muted-foreground mt-0.5">{evt.detail}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {evt.detail}
+                                </p>
                               )}
                             </div>
                           </div>
@@ -420,13 +492,26 @@ export default function DynastyPage() {
                     {sorted.map(({ nation, generalCount, cityCount }) => (
                       <TableRow key={nation.id}>
                         <TableCell className="py-1.5">
-                          <NationBadge name={nation.name} color={nation.color} />
+                          <NationBadge
+                            name={nation.name}
+                            color={nation.color}
+                          />
                         </TableCell>
-                        <TableCell className="text-xs text-right">{getLevelLabel(nation.level)}</TableCell>
-                        <TableCell className="text-xs text-right">{nation.power.toLocaleString()}</TableCell>
-                        <TableCell className="text-xs text-right">{nation.tech.toLocaleString()}</TableCell>
-                        <TableCell className="text-xs text-right">{generalCount}</TableCell>
-                        <TableCell className="text-xs text-right">{cityCount}</TableCell>
+                        <TableCell className="text-xs text-right">
+                          {getLevelLabel(nation.level)}
+                        </TableCell>
+                        <TableCell className="text-xs text-right">
+                          {nation.power.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-xs text-right">
+                          {nation.tech.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-xs text-right">
+                          {generalCount}
+                        </TableCell>
+                        <TableCell className="text-xs text-right">
+                          {cityCount}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

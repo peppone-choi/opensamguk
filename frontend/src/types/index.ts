@@ -713,7 +713,10 @@ export interface InheritanceInfo {
   specialWarResetCount?: number;
   inheritActionCost?: InheritanceActionCost;
   availableSpecialWar?: Record<string, { title: string; info: string }>;
-  availableUnique?: Record<string, { title: string; rawName: string; info: string }>;
+  availableUnique?: Record<
+    string,
+    { title: string; rawName: string; info: string }
+  >;
   availableTargetGeneral?: Record<number, string>;
   currentStat?: {
     leadership: number;
@@ -762,7 +765,10 @@ export interface BettingInfo {
   selectCnt?: number;
   isExclusive?: boolean;
   reqInheritancePoint?: boolean;
-  candidates?: Record<string, { title: string; info?: string; isHtml?: boolean }>;
+  candidates?: Record<
+    string,
+    { title: string; info?: string; isHtml?: boolean }
+  >;
   finished?: boolean;
   winner?: number[];
   remainPoint?: number;
@@ -855,6 +861,48 @@ export interface NationPolicyInfo {
   strategicCmdLimit: number;
   notice: string;
   scoutMsg: string;
+}
+
+export interface NpcPolicyInfo {
+  [key: string]: unknown;
+  reqNationGold: number;
+  reqNationRice: number;
+  reqHumanWarUrgentGold: number;
+  reqHumanWarUrgentRice: number;
+  reqHumanWarRecommandGold: number;
+  reqHumanWarRecommandRice: number;
+  reqHumanDevelGold: number;
+  reqHumanDevelRice: number;
+  reqNPCWarGold: number;
+  reqNPCWarRice: number;
+  reqNPCDevelGold: number;
+  reqNPCDevelRice: number;
+  minimumResourceActionAmount: number;
+  maximumResourceActionAmount: number;
+  minNPCWarLeadership: number;
+  minWarCrew: number;
+  minNPCRecruitCityPopulation: number;
+  safeRecruitCityPopulationRatio: number;
+  properWarTrainAtmos: number;
+  cureThreshold: number;
+  combatForce: Record<number, [number, number]>;
+  supportForce: number[];
+  developForce: number[];
+  CombatForce: Record<number, number[]>;
+  SupportForce: number[];
+  DevelopForce: number[];
+  zeroPolicy: Partial<Record<keyof NpcPolicyInfo, number>>;
+  defaultStatMax: number;
+  defaultStatNPCMax: number;
+  priority: string[];
+  nationPriority: string[];
+  generalPriority: string[];
+  currentNationPriority: string[];
+  currentGeneralActionPriority: string[];
+  defaultNationPriority: string[];
+  defaultGeneralActionPriority: string[];
+  availableNationPriorityItems: string[];
+  availableGeneralActionPriorityItems: string[];
 }
 
 // Officer

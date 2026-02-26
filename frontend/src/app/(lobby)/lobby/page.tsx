@@ -110,10 +110,14 @@ function getActionAvailability(
     };
   }
 
-  const joinMode = (config.joinMode as string) ?? (meta.joinMode as string) ?? "normal";
+  const joinMode =
+    (config.joinMode as string) ?? (meta.joinMode as string) ?? "normal";
 
   // Legacy parity: block_general_create bitfield check
-  const blockBits = (meta.blockGeneralCreate as number) ?? (config.blockGeneralCreate as number) ?? 0;
+  const blockBits =
+    (meta.blockGeneralCreate as number) ??
+    (config.blockGeneralCreate as number) ??
+    0;
   const blockCreate = !!(blockBits & 1);
   const blockNpc = !!(blockBits & 2);
   const blockFound = !!(blockBits & 4);
@@ -121,21 +125,9 @@ function getActionAvailability(
 
   return {
     canJoin: !isLocked && !isFull && !blockCreate,
-    canFound:
-      !isLocked &&
-      !isFull &&
-      !blockFound &&
-      joinMode !== "noFound",
-    canRise:
-      !isLocked &&
-      !isFull &&
-      !blockRise &&
-      joinMode !== "noRise",
-    joinReason: isLocked
-      ? "서버 잠김"
-      : isFull
-        ? "정원 초과"
-        : undefined,
+    canFound: !isLocked && !isFull && !blockFound && joinMode !== "noFound",
+    canRise: !isLocked && !isFull && !blockRise && joinMode !== "noRise",
+    joinReason: isLocked ? "서버 잠김" : isFull ? "정원 초과" : undefined,
     foundReason: isLocked
       ? "서버 잠김"
       : isFull
@@ -186,7 +178,9 @@ export default function LobbyPage() {
   const [resetScenario, setResetScenario] = useState("");
   const [resetting, setResetting] = useState(false);
   const [notice, setNotice] = useState("");
-  const [serverNotices, setServerNotices] = useState<Record<number, string>>({});
+  const [serverNotices, setServerNotices] = useState<Record<number, string>>(
+    {},
+  );
   const scenarioMap = useMemo(
     () => new Map(scenarios.map((s) => [s.code, s.title])),
     [scenarios],
@@ -199,7 +193,8 @@ export default function LobbyPage() {
       const notices: Record<number, string> = {};
       let globalNotice = "";
       for (const w of worldStore.worlds) {
-        const n = (w.meta?.notice as string) ?? (w.meta?.serverNotice as string) ?? "";
+        const n =
+          (w.meta?.notice as string) ?? (w.meta?.serverNotice as string) ?? "";
         if (n) notices[w.id] = n;
         if (!globalNotice && (w.meta?.globalNotice as string)) {
           globalNotice = w.meta?.globalNotice as string;
@@ -325,9 +320,7 @@ export default function LobbyPage() {
                 const players = getPlayerInfo(w);
                 const PhaseIcon = phase.icon;
                 const worldDisplayName =
-                  w.name ||
-                  scenarioMap.get(w.scenarioCode) ||
-                  w.scenarioCode;
+                  w.name || scenarioMap.get(w.scenarioCode) || w.scenarioCode;
 
                 return (
                   <Card
@@ -350,10 +343,7 @@ export default function LobbyPage() {
                         </div>
                         <div className="flex items-center gap-1">
                           {w.realtimeMode && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px]"
-                            >
+                            <Badge variant="secondary" className="text-[10px]">
                               실시간
                             </Badge>
                           )}
@@ -410,33 +400,57 @@ export default function LobbyPage() {
                       {/* Extended server info (legacy parity: entrance.ts per-server detail) */}
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                         <span>
-                          시나리오: {scenarioMap.get(w.scenarioCode) || w.scenarioCode}
+                          시나리오:{" "}
+                          {scenarioMap.get(w.scenarioCode) || w.scenarioCode}
                         </span>
-                        {(w.meta?.nationCount != null || w.meta?.nationCnt != null) && (
-                          <span>국가: {String(w.meta?.nationCount ?? w.meta?.nationCnt)}개</span>
+                        {(w.meta?.nationCount != null ||
+                          w.meta?.nationCnt != null) && (
+                          <span>
+                            국가:{" "}
+                            {String(w.meta?.nationCount ?? w.meta?.nationCnt)}개
+                          </span>
                         )}
                         {w.meta?.fictionMode ? (
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 text-purple-400 border-purple-400/30">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] h-4 px-1 text-purple-400 border-purple-400/30"
+                          >
                             가상
                           </Badge>
                         ) : null}
-                        {(w.meta?.isUnited || w.meta?.united) ? (
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 text-yellow-400 border-yellow-400/30">
+                        {w.meta?.isUnited || w.meta?.united ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] h-4 px-1 text-yellow-400 border-yellow-400/30"
+                          >
                             통일
                           </Badge>
                         ) : null}
                         {w.meta?.eventStatus ? (
-                          <Badge variant="outline" className="text-[9px] h-4 px-1 text-cyan-400 border-cyan-400/30">
+                          <Badge
+                            variant="outline"
+                            className="text-[9px] h-4 px-1 text-cyan-400 border-cyan-400/30"
+                          >
                             이벤트
                           </Badge>
                         ) : null}
                         {w.meta?.openTime ? (
-                          <span>오픈: {new Date(String(w.meta.openTime)).toLocaleDateString("ko-KR")}</span>
+                          <span>
+                            오픈:{" "}
+                            {new Date(
+                              String(w.meta.openTime),
+                            ).toLocaleDateString("ko-KR")}
+                          </span>
                         ) : null}
                       </div>
                       {/* Per-server notice */}
                       {serverNotices[w.id] && (
-                        <p className="text-[11px] text-orange-400 mt-1" dangerouslySetInnerHTML={{ __html: serverNotices[w.id] }} />
+                        <p
+                          className="text-[11px] text-orange-400 mt-1"
+                          dangerouslySetInnerHTML={{
+                            __html: serverNotices[w.id],
+                          }}
+                        />
                       )}
                     </CardContent>
                   </Card>
@@ -554,8 +568,8 @@ export default function LobbyPage() {
                       <p className="text-xl font-bold">{myGeneral.name}</p>
                       <p className="text-sm text-muted-foreground">
                         {currentWorld.scenarioCode} &middot;{" "}
-                        {currentWorld.currentYear}년{" "}
-                        {currentWorld.currentMonth}월
+                        {currentWorld.currentYear}년 {currentWorld.currentMonth}
+                        월
                       </p>
                     </div>
                   </div>
@@ -603,9 +617,7 @@ export default function LobbyPage() {
                 <Card className="border-muted">
                   <CardContent className="py-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">
-                        서버 상태
-                      </span>
+                      <span className="text-muted-foreground">서버 상태</span>
                       <Badge
                         variant="outline"
                         className={getServerPhase(currentWorld).color}
@@ -619,8 +631,8 @@ export default function LobbyPage() {
                         {getPlayerInfo(currentWorld).max}
                       </span>
                       <span>
-                        {currentWorld.currentYear}년{" "}
-                        {currentWorld.currentMonth}월
+                        {currentWorld.currentYear}년 {currentWorld.currentMonth}
+                        월
                       </span>
                     </div>
                   </CardContent>
@@ -636,8 +648,7 @@ export default function LobbyPage() {
                       : "opacity-50 cursor-not-allowed"
                   }`}
                   onClick={() =>
-                    actionAvailability?.canJoin &&
-                    router.push("/lobby/join")
+                    actionAvailability?.canJoin && router.push("/lobby/join")
                   }
                 >
                   <CardContent className="flex items-center gap-4 py-4">

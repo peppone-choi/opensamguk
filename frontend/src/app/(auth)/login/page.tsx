@@ -90,7 +90,9 @@ function OtpModal({
             maxLength={6}
             placeholder="000000"
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) =>
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             className="text-center text-2xl tracking-[0.5em] font-mono"
             autoFocus
             onKeyDown={(e) => {
@@ -156,7 +158,10 @@ export default function LoginPage() {
   const attemptAutoLogin = useCallback(async () => {
     if (!isInitialized || isAuthenticated) return;
     const LOGIN_TOKEN_KEY = "sammo_login_token";
-    const raw = typeof window !== "undefined" ? localStorage.getItem(LOGIN_TOKEN_KEY) : null;
+    const raw =
+      typeof window !== "undefined"
+        ? localStorage.getItem(LOGIN_TOKEN_KEY)
+        : null;
     if (!raw) return;
 
     let tokenId: number;
@@ -177,7 +182,10 @@ export default function LoginPage() {
     setAutoLogging(true);
     try {
       // Step 1: Request nonce from server
-      const { data: nonceData } = await api.post<{ result: boolean; loginNonce?: string }>("/auth/nonce");
+      const { data: nonceData } = await api.post<{
+        result: boolean;
+        loginNonce?: string;
+      }>("/auth/nonce");
       if (!nonceData.result || !nonceData.loginNonce) {
         localStorage.removeItem(LOGIN_TOKEN_KEY);
         return;
@@ -207,7 +215,10 @@ export default function LoginPage() {
 
       // Store next token for future auto-login
       if (loginData.nextToken) {
-        localStorage.setItem(LOGIN_TOKEN_KEY, JSON.stringify([1, loginData.nextToken, Date.now()]));
+        localStorage.setItem(
+          LOGIN_TOKEN_KEY,
+          JSON.stringify([1, loginData.nextToken, Date.now()]),
+        );
       }
 
       // Also try the store's loginWithToken for session setup
@@ -230,7 +241,12 @@ export default function LoginPage() {
     try {
       const result = await login(data.loginId, data.password);
       // If server signals OTP is required
-      if (result && typeof result === "object" && "otpRequired" in result && result.otpRequired) {
+      if (
+        result &&
+        typeof result === "object" &&
+        "otpRequired" in result &&
+        result.otpRequired
+      ) {
         setPendingLoginId(data.loginId);
         setPendingPassword(data.password);
         setOtpOpen(true);
@@ -238,14 +254,17 @@ export default function LoginPage() {
       }
       router.push("/lobby");
     } catch (err: unknown) {
-      const errObj = err as { response?: { data?: { message?: string; otpRequired?: boolean } } };
+      const errObj = err as {
+        response?: { data?: { message?: string; otpRequired?: boolean } };
+      };
       if (errObj?.response?.data?.otpRequired) {
         setPendingLoginId(data.loginId);
         setPendingPassword(data.password);
         setOtpOpen(true);
         return;
       }
-      const message = errObj?.response?.data?.message || "로그인에 실패했습니다";
+      const message =
+        errObj?.response?.data?.message || "로그인에 실패했습니다";
       toast.error(message);
     }
   };
@@ -257,9 +276,14 @@ export default function LoginPage() {
     }
     setOtpLoading(true);
     try {
-      const result = await loginWithOtp(pendingLoginId, pendingPassword, otpCode);
+      const result = await loginWithOtp(
+        pendingLoginId,
+        pendingPassword,
+        otpCode,
+      );
       // Legacy parity: show validUntil from OTP response
-      const validUntil = (result as { validUntil?: string } | undefined)?.validUntil;
+      const validUntil = (result as { validUntil?: string } | undefined)
+        ?.validUntil;
       if (validUntil) {
         toast.success(`로그인되었습니다. ${validUntil}까지 유효합니다.`);
         setOtpValidUntil(validUntil);
@@ -267,8 +291,15 @@ export default function LoginPage() {
       setOtpOpen(false);
       router.push("/lobby");
     } catch (err: unknown) {
-      const errData = (err as { response?: { data?: { message?: string; reason?: string; reset?: boolean } } })?.response?.data;
-      const message = errData?.message || errData?.reason || "OTP 인증에 실패했습니다";
+      const errData = (
+        err as {
+          response?: {
+            data?: { message?: string; reason?: string; reset?: boolean };
+          };
+        }
+      )?.response?.data;
+      const message =
+        errData?.message || errData?.reason || "OTP 인증에 실패했습니다";
       toast.error(message);
       // Legacy parity: if reset flag, close OTP modal
       if (errData?.reset) {
@@ -462,9 +493,12 @@ export default function LoginPage() {
                 onLoad={(e) => {
                   try {
                     const iframe = e.target as HTMLIFrameElement;
-                    const scrollHeight = iframe.contentWindow?.document.body.scrollHeight;
+                    const scrollHeight =
+                      iframe.contentWindow?.document.body.scrollHeight;
                     if (scrollHeight) iframe.style.height = `${scrollHeight}px`;
-                  } catch { /* cross-origin */ }
+                  } catch {
+                    /* cross-origin */
+                  }
                 }}
               />
             )}

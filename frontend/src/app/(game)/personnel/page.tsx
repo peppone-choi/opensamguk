@@ -48,7 +48,9 @@ export default function PersonnelPage() {
   const [error, setError] = useState(false);
 
   // Candidate filters
-  const [filterStat, setFilterStat] = useState<"all" | "leadership" | "strength" | "intel" | "politics">("all");
+  const [filterStat, setFilterStat] = useState<
+    "all" | "leadership" | "strength" | "intel" | "politics"
+  >("all");
   const [filterMinStat, setFilterMinStat] = useState(0);
   const [filterCity, setFilterCity] = useState<string>("");
   const [filterSearch, setFilterSearch] = useState("");
@@ -98,10 +100,14 @@ export default function PersonnelPage() {
     }
     if (filterStat !== "all" && filterMinStat > 0) {
       list = list.filter((g) => {
-        const val = filterStat === "leadership" ? g.leadership
-          : filterStat === "strength" ? g.strength
-          : filterStat === "intel" ? g.intel
-          : g.politics;
+        const val =
+          filterStat === "leadership"
+            ? g.leadership
+            : filterStat === "strength"
+              ? g.strength
+              : filterStat === "intel"
+                ? g.intel
+                : g.politics;
         return val >= filterMinStat;
       });
     }
@@ -110,7 +116,12 @@ export default function PersonnelPage() {
       if (filterStat === "strength") return b.strength - a.strength;
       if (filterStat === "intel") return b.intel - a.intel;
       if (filterStat === "politics") return b.politics - a.politics;
-      return (b.leadership + b.strength + b.intel) - (a.leadership + a.strength + a.intel);
+      return (
+        b.leadership +
+        b.strength +
+        b.intel -
+        (a.leadership + a.strength + a.intel)
+      );
     });
   }, [nationGenerals, filterSearch, filterCity, filterStat, filterMinStat]);
 
@@ -122,7 +133,9 @@ export default function PersonnelPage() {
         generalId: Number(diplomatGeneralId),
         officerLevel: 7, // diplomat level
       });
-      const { data } = await nationManagementApi.getOfficers(myGeneral.nationId);
+      const { data } = await nationManagementApi.getOfficers(
+        myGeneral.nationId,
+      );
       setOfficers(data);
       setDiplomatGeneralId("");
     } finally {
@@ -250,13 +263,19 @@ export default function PersonnelPage() {
               className="h-8 border border-gray-600 bg-[#111] px-2 text-xs text-white rounded"
             >
               <option value="">전체 도시</option>
-              {cities.filter((c) => c.nationId === myGeneral.nationId).map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+              {cities
+                .filter((c) => c.nationId === myGeneral.nationId)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
             </select>
             <select
               value={filterStat}
-              onChange={(e) => setFilterStat(e.target.value as typeof filterStat)}
+              onChange={(e) =>
+                setFilterStat(e.target.value as typeof filterStat)
+              }
               className="h-8 border border-gray-600 bg-[#111] px-2 text-xs text-white rounded"
             >
               <option value="all">전체 능력치</option>
@@ -301,17 +320,37 @@ export default function PersonnelPage() {
                   >
                     <TableCell className="text-xs">
                       <div className="flex items-center gap-1">
-                        <GeneralPortrait picture={g.picture} name={g.name} size="sm" />
+                        <GeneralPortrait
+                          picture={g.picture}
+                          name={g.name}
+                          size="sm"
+                        />
                         {g.name}
-                        {String(g.id) === selGeneralId && <Badge className="text-[8px] ml-1">선택됨</Badge>}
+                        {String(g.id) === selGeneralId && (
+                          <Badge className="text-[8px] ml-1">선택됨</Badge>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs tabular-nums">{g.leadership}</TableCell>
-                    <TableCell className="text-xs tabular-nums">{g.strength}</TableCell>
-                    <TableCell className="text-xs tabular-nums">{g.intel}</TableCell>
-                    <TableCell className="text-xs tabular-nums">{g.politics}</TableCell>
-                    <TableCell className="text-xs">{cityMap.get(g.cityId)?.name ?? "-"}</TableCell>
-                    <TableCell className="text-xs">{g.officerLevel > 0 ? formatOfficerLevelText(g.officerLevel) : "-"}</TableCell>
+                    <TableCell className="text-xs tabular-nums">
+                      {g.leadership}
+                    </TableCell>
+                    <TableCell className="text-xs tabular-nums">
+                      {g.strength}
+                    </TableCell>
+                    <TableCell className="text-xs tabular-nums">
+                      {g.intel}
+                    </TableCell>
+                    <TableCell className="text-xs tabular-nums">
+                      {g.politics}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {cityMap.get(g.cityId)?.name ?? "-"}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {g.officerLevel > 0
+                        ? formatOfficerLevelText(g.officerLevel)
+                        : "-"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -330,7 +369,10 @@ export default function PersonnelPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground">외교 권한을 가진 특수 관직을 임명합니다. 외교 업무(동맹, 휴전 등)를 수행할 수 있습니다.</p>
+            <p className="text-xs text-muted-foreground">
+              외교 권한을 가진 특수 관직을 임명합니다. 외교 업무(동맹, 휴전
+              등)를 수행할 수 있습니다.
+            </p>
             <div className="flex items-center gap-2">
               <select
                 value={diplomatGeneralId}
@@ -338,11 +380,19 @@ export default function PersonnelPage() {
                 className="h-9 flex-1 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
               >
                 <option value="">장수 선택...</option>
-                {nationGenerals.filter((g) => g.officerLevel < 7).map((g) => (
-                  <option key={g.id} value={g.id}>{g.name} (통{g.leadership}/무{g.strength}/지{g.intel})</option>
-                ))}
+                {nationGenerals
+                  .filter((g) => g.officerLevel < 7)
+                  .map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name} (통{g.leadership}/무{g.strength}/지{g.intel})
+                    </option>
+                  ))}
               </select>
-              <Button onClick={handleAppointDiplomat} disabled={saving || !diplomatGeneralId} size="sm">
+              <Button
+                onClick={handleAppointDiplomat}
+                disabled={saving || !diplomatGeneralId}
+                size="sm"
+              >
                 {saving ? "임명 중..." : "외교권자 임명"}
               </Button>
             </div>

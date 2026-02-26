@@ -5,7 +5,14 @@ import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { subscribeWebSocket } from "@/lib/websocket";
 import type { Nation, General } from "@/types";
-import { Swords, ArrowUpDown, Shield, Flame, User, ScrollText } from "lucide-react";
+import {
+  Swords,
+  ArrowUpDown,
+  Shield,
+  Flame,
+  User,
+  ScrollText,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { EmptyState } from "@/components/game/empty-state";
@@ -62,7 +69,9 @@ export default function BattlePage() {
   const { myGeneral, fetchMyGeneral } = useGeneralStore();
   const [sortKey, setSortKey] = useState<SortKey>("totalCrew");
   const [sortAsc, setSortAsc] = useState(false);
-  const [personalLogs, setPersonalLogs] = useState<{ id: number; message: string; date: string }[]>([]);
+  const [personalLogs, setPersonalLogs] = useState<
+    { id: number; message: string; date: string }[]
+  >([]);
   const [personalLogsLoaded, setPersonalLogsLoaded] = useState(false);
   const [personalLoading, setPersonalLoading] = useState(false);
   const [logStyle, setLogStyle] = useState<"modern" | "legacy">("modern");
@@ -78,7 +87,11 @@ export default function BattlePage() {
     if (!myGeneral || !currentWorld) return;
     setPersonalLoading(true);
     try {
-      const { data } = await generalLogApi.getOldLogs(myGeneral.id, myGeneral.id, "battleResult");
+      const { data } = await generalLogApi.getOldLogs(
+        myGeneral.id,
+        myGeneral.id,
+        "battleResult",
+      );
       setPersonalLogs(data.logs ?? []);
       setPersonalLogsLoaded(true);
     } catch {
@@ -228,7 +241,12 @@ export default function BattlePage() {
           <TabsTrigger value="military">군사력</TabsTrigger>
           <TabsTrigger value="frontline">전선</TabsTrigger>
           {myGeneral && (
-            <TabsTrigger value="personal" onClick={() => { if (!personalLogsLoaded) loadPersonalLogs(); }}>
+            <TabsTrigger
+              value="personal"
+              onClick={() => {
+                if (!personalLogsLoaded) loadPersonalLogs();
+              }}
+            >
               내 전투기록
             </TabsTrigger>
           )}
@@ -574,10 +592,14 @@ export default function BattlePage() {
                   <User className="size-4" />
                   {myGeneral.name}의 전투 기록
                   <div className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">로그 스타일:</span>
+                    <span className="text-xs text-muted-foreground">
+                      로그 스타일:
+                    </span>
                     <select
                       value={logStyle}
-                      onChange={(e) => setLogStyle(e.target.value as "modern" | "legacy")}
+                      onChange={(e) =>
+                        setLogStyle(e.target.value as "modern" | "legacy")
+                      }
                       className="h-6 border border-gray-600 bg-[#111] px-1 text-[10px] text-white"
                     >
                       <option value="modern">현대</option>
@@ -588,11 +610,15 @@ export default function BattlePage() {
               </CardHeader>
               <CardContent>
                 {personalLoading ? (
-                  <div className="text-sm text-muted-foreground py-4 text-center">전투 기록 로딩 중...</div>
+                  <div className="text-sm text-muted-foreground py-4 text-center">
+                    전투 기록 로딩 중...
+                  </div>
                 ) : personalLogs.length === 0 ? (
                   <EmptyState icon={ScrollText} title="전투 기록이 없습니다." />
                 ) : (
-                  <div className={`max-h-96 overflow-y-auto space-y-1 ${logStyle === "legacy" ? "font-mono text-[11px] bg-black p-3 rounded border border-gray-800" : "text-sm"}`}>
+                  <div
+                    className={`max-h-96 overflow-y-auto space-y-1 ${logStyle === "legacy" ? "font-mono text-[11px] bg-black p-3 rounded border border-gray-800" : "text-sm"}`}
+                  >
                     {personalLogs.map((log) => (
                       <div
                         key={log.id}
@@ -601,13 +627,21 @@ export default function BattlePage() {
                         <span className="text-muted-foreground text-xs mr-2">
                           {logStyle === "legacy"
                             ? `[${log.date}]`
-                            : new Date(log.date).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-                          }
+                            : new Date(log.date).toLocaleDateString("ko-KR", {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                         </span>
                         {logStyle === "legacy" ? (
                           <span>{log.message.replace(/<[^>]*>/g, "")}</span>
                         ) : (
-                          <span dangerouslySetInnerHTML={{ __html: formatLog(log.message) }} />
+                          <span
+                            dangerouslySetInnerHTML={{
+                              __html: formatLog(log.message),
+                            }}
+                          />
                         )}
                       </div>
                     ))}

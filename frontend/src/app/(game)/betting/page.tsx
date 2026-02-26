@@ -167,9 +167,12 @@ export default function BettingPage() {
 
   // Multi-candidate selection state (for selectCnt > 1 nation betting)
   const selectCnt = betting?.selectCnt ?? 1;
-  const isNationBetting = (betting?.candidates != null && Object.keys(betting.candidates).length > 0);
+  const isNationBetting =
+    betting?.candidates != null && Object.keys(betting.candidates).length > 0;
   const reqInheritancePoint = betting?.reqInheritancePoint ?? false;
-  const [pickedCandidates, setPickedCandidates] = useState<Set<number>>(new Set());
+  const [pickedCandidates, setPickedCandidates] = useState<Set<number>>(
+    new Set(),
+  );
   const [nationBetAmount, setNationBetAmount] = useState(10);
 
   const toggleCandidatePick = (idx: number) => {
@@ -234,7 +237,8 @@ export default function BettingPage() {
   const [phaseGateOpen, setPhaseGateOpen] = useState(isBettingActive);
 
   const handleTogglePhaseGate = async () => {
-    if (!currentWorld || !myGeneral || (myGeneral.officerLevel ?? 0) < 12) return;
+    if (!currentWorld || !myGeneral || (myGeneral.officerLevel ?? 0) < 12)
+      return;
     try {
       await bettingApi.toggleGate(currentWorld.id, !phaseGateOpen);
       setPhaseGateOpen(!phaseGateOpen);
@@ -247,7 +251,11 @@ export default function BettingPage() {
   // Tournament progress phases
   const tournamentPhases = useMemo(() => {
     if (!tournament) return [];
-    const phases: { label: string; matchCount: number; completedCount: number }[] = [];
+    const phases: {
+      label: string;
+      matchCount: number;
+      completedCount: number;
+    }[] = [];
     const bracket = tournament.bracket ?? [];
     const roundSizes = [8, 4, 2, 1]; // 16강, 8강, 4강, 결승
     const roundLabels = ["16강", "8강", "4강", "결승"];
@@ -257,7 +265,11 @@ export default function BettingPage() {
       const matches = bracket.slice(offset, offset + size);
       if (matches.length === 0) break;
       const completed = matches.filter((m) => m.winner != null).length;
-      phases.push({ label: roundLabels[i], matchCount: matches.length, completedCount: completed });
+      phases.push({
+        label: roundLabels[i],
+        matchCount: matches.length,
+        completedCount: completed,
+      });
       offset += size;
     }
     return phases;
@@ -415,15 +427,24 @@ export default function BettingPage() {
         {tournamentPhases.length > 0 && (
           <Card>
             <CardContent className="py-2 px-4">
-              <div className="flex items-center gap-1 text-xs mb-1 text-muted-foreground">토너먼트 진행 현황</div>
+              <div className="flex items-center gap-1 text-xs mb-1 text-muted-foreground">
+                토너먼트 진행 현황
+              </div>
               <div className="flex items-center gap-2">
                 {tournamentPhases.map((phase, idx) => {
-                  const pct = phase.matchCount > 0 ? Math.round((phase.completedCount / phase.matchCount) * 100) : 0;
+                  const pct =
+                    phase.matchCount > 0
+                      ? Math.round(
+                          (phase.completedCount / phase.matchCount) * 100,
+                        )
+                      : 0;
                   const isDone = pct === 100;
                   return (
                     <div key={phase.label} className="flex items-center gap-1">
                       {idx > 0 && <span className="text-gray-600">→</span>}
-                      <div className={`px-2 py-0.5 rounded text-[10px] border ${isDone ? "bg-green-900/30 border-green-700 text-green-400" : pct > 0 ? "bg-yellow-900/30 border-yellow-700 text-yellow-400" : "border-gray-700 text-gray-500"}`}>
+                      <div
+                        className={`px-2 py-0.5 rounded text-[10px] border ${isDone ? "bg-green-900/30 border-green-700 text-green-400" : pct > 0 ? "bg-yellow-900/30 border-yellow-700 text-yellow-400" : "border-gray-700 text-gray-500"}`}
+                      >
                         {phase.label} {phase.completedCount}/{phase.matchCount}
                       </div>
                     </div>
@@ -439,12 +460,19 @@ export default function BettingPage() {
           <Card>
             <CardContent className="py-2 px-4">
               <div className="flex items-center justify-between">
-                <div className="text-xs text-muted-foreground">위상 게이트 컨트롤 (운영자)</div>
+                <div className="text-xs text-muted-foreground">
+                  위상 게이트 컨트롤 (운영자)
+                </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={phaseGateOpen ? "default" : "destructive"}>
                     {phaseGateOpen ? "베팅 개방" : "베팅 마감"}
                   </Badge>
-                  <Button size="sm" variant="outline" className="h-6 text-xs" onClick={handleTogglePhaseGate}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-xs"
+                    onClick={handleTogglePhaseGate}
+                  >
                     {phaseGateOpen ? "베팅 마감하기" : "베팅 개방하기"}
                   </Button>
                 </div>
@@ -904,9 +932,7 @@ export default function BettingPage() {
                               .map(([targetId, amount]) => {
                                 const gen = generalMap.get(targetId);
                                 const total = historyData?.globalTotal ?? 1;
-                                const pct = Math.round(
-                                  (amount / total) * 100,
-                                );
+                                const pct = Math.round((amount / total) * 100);
                                 const odds =
                                   historyBetting.odds[String(targetId)] ??
                                   (amount > 0
@@ -1026,9 +1052,7 @@ export default function BettingPage() {
                                   size="sm"
                                   variant="ghost"
                                   className="h-6 text-[10px] px-2"
-                                  onClick={() =>
-                                    loadHistoryEvent(ev.yearMonth)
-                                  }
+                                  onClick={() => loadHistoryEvent(ev.yearMonth)}
                                 >
                                   상세
                                 </Button>
@@ -1057,8 +1081,12 @@ export default function BettingPage() {
                 <Trophy className="size-4 text-amber-400" />
                 {betting.name ?? "국가 베팅"}
                 {betting.finished && <Badge variant="outline">종료</Badge>}
-                {reqInheritancePoint && <Badge variant="secondary">포인트 베팅</Badge>}
-                {selectCnt > 1 && <Badge variant="secondary">{selectCnt}개 선택</Badge>}
+                {reqInheritancePoint && (
+                  <Badge variant="secondary">포인트 베팅</Badge>
+                )}
+                {selectCnt > 1 && (
+                  <Badge variant="secondary">{selectCnt}개 선택</Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-3 space-y-3">
@@ -1079,15 +1107,25 @@ export default function BettingPage() {
                             ? "border-green-500 bg-green-900/20"
                             : "border-gray-700 bg-[#111] hover:bg-gray-900"
                       }`}
-                      onClick={() => !betting.finished && toggleCandidatePick(idx)}
+                      onClick={() =>
+                        !betting.finished && toggleCandidatePick(idx)
+                      }
                       disabled={betting.finished}
                     >
-                      <div className="font-medium text-center">{cand.title}</div>
-                      {cand.info && (
-                        cand.isHtml
-                          ? <div className="text-[10px] text-muted-foreground mt-1" dangerouslySetInnerHTML={{ __html: cand.info }} />
-                          : <div className="text-[10px] text-muted-foreground mt-1">{cand.info}</div>
-                      )}
+                      <div className="font-medium text-center">
+                        {cand.title}
+                      </div>
+                      {cand.info &&
+                        (cand.isHtml ? (
+                          <div
+                            className="text-[10px] text-muted-foreground mt-1"
+                            dangerouslySetInnerHTML={{ __html: cand.info }}
+                          />
+                        ) : (
+                          <div className="text-[10px] text-muted-foreground mt-1">
+                            {cand.info}
+                          </div>
+                        ))}
                     </button>
                   );
                 })}
@@ -1097,7 +1135,8 @@ export default function BettingPage() {
               {!betting.finished && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs text-muted-foreground">
-                    잔여 {reqInheritancePoint ? "포인트" : "금"}: {(betting.remainPoint ?? 0).toLocaleString()}
+                    잔여 {reqInheritancePoint ? "포인트" : "금"}:{" "}
+                    {(betting.remainPoint ?? 0).toLocaleString()}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     선택: {pickedCandidates.size}/{selectCnt}

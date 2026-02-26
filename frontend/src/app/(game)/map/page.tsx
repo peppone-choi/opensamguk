@@ -14,12 +14,42 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type MapTheme = "default" | "spring" | "summer" | "autumn" | "winter";
-const MAP_THEMES: { key: MapTheme; label: string; bg: string; line: string; text: string }[] = [
+const MAP_THEMES: {
+  key: MapTheme;
+  label: string;
+  bg: string;
+  line: string;
+  text: string;
+}[] = [
   { key: "default", label: "기본", bg: "#111827", line: "#333", text: "#ccc" },
-  { key: "spring", label: "봄", bg: "#1a2e1a", line: "#4a7c4a", text: "#b0e0b0" },
-  { key: "summer", label: "여름", bg: "#1a2e2e", line: "#2a6e6e", text: "#a0e0e0" },
-  { key: "autumn", label: "가을", bg: "#2e1a0a", line: "#8e5e2e", text: "#e0c090" },
-  { key: "winter", label: "겨울", bg: "#1e2030", line: "#6070a0", text: "#c0c8e0" },
+  {
+    key: "spring",
+    label: "봄",
+    bg: "#1a2e1a",
+    line: "#4a7c4a",
+    text: "#b0e0b0",
+  },
+  {
+    key: "summer",
+    label: "여름",
+    bg: "#1a2e2e",
+    line: "#2a6e6e",
+    text: "#a0e0e0",
+  },
+  {
+    key: "autumn",
+    label: "가을",
+    bg: "#2e1a0a",
+    line: "#8e5e2e",
+    text: "#e0c090",
+  },
+  {
+    key: "winter",
+    label: "겨울",
+    bg: "#1e2030",
+    line: "#6070a0",
+    text: "#c0c8e0",
+  },
 ];
 
 type MapLayer = "nations" | "troops" | "supply" | "terrain";
@@ -37,14 +67,30 @@ interface CityTooltip {
   def: string;
   wall: string;
   trust: number;
-  generals: { name: string; nationColor: string; crew: number; crewType: string; isForeign: boolean }[];
+  generals: {
+    name: string;
+    nationColor: string;
+    crew: number;
+    crewType: string;
+    isForeign: boolean;
+  }[];
   screenX: number;
   screenY: number;
 }
 
 const CREW_TYPES: Record<number, string> = {
-  0: "보병", 1: "궁병", 2: "기병", 3: "귀병", 4: "차병", 5: "노병",
-  6: "연노병", 7: "근위기병", 8: "무당병", 9: "서량기병", 10: "등갑병", 11: "수군",
+  0: "보병",
+  1: "궁병",
+  2: "기병",
+  3: "귀병",
+  4: "차병",
+  5: "노병",
+  6: "연노병",
+  7: "근위기병",
+  8: "무당병",
+  9: "서량기병",
+  10: "등갑병",
+  11: "수군",
 };
 
 const MAP_WIDTH = 1200;
@@ -54,7 +100,8 @@ const CITY_RADIUS = 14;
 export default function MapPage() {
   const router = useRouter();
   const { currentWorld } = useWorldStore();
-  const { cities, nations, generals, mapData, loadAll, loadMap } = useGameStore();
+  const { cities, nations, generals, mapData, loadAll, loadMap } =
+    useGameStore();
   const [tooltip, setTooltip] = useState<CityTooltip | null>(null);
   const [history, setHistory] = useState<PublicCachedMapHistory[]>([]);
   const [touchTapId, setTouchTapId] = useState<number | null>(null);
@@ -68,10 +115,16 @@ export default function MapPage() {
     return "winter";
   }, [currentWorld]);
   const [theme, setTheme] = useState<MapTheme>("default");
-  const [layers, setLayers] = useState<Set<MapLayer>>(new Set(["nations", "troops"]));
+  const [layers, setLayers] = useState<Set<MapLayer>>(
+    new Set(["nations", "troops"]),
+  );
   const [historyBrowseIdx, setHistoryBrowseIdx] = useState<number | null>(null);
-  const [historyFilterYear, setHistoryFilterYear] = useState<number | null>(null);
-  const [historyFilterMonth, setHistoryFilterMonth] = useState<number | null>(null);
+  const [historyFilterYear, setHistoryFilterYear] = useState<number | null>(
+    null,
+  );
+  const [historyFilterMonth, setHistoryFilterMonth] = useState<number | null>(
+    null,
+  );
 
   const currentTheme = MAP_THEMES.find((t) => t.key === theme) ?? MAP_THEMES[0];
   const toggleLayer = (layer: MapLayer) => {
@@ -129,11 +182,19 @@ export default function MapPage() {
 
   // Build per-city general counts by nation (for troop indicators)
   const cityGeneralData = useMemo(() => {
-    const map = new Map<number, { nationId: number; name: string; crew: number; crewType: number }[]>();
+    const map = new Map<
+      number,
+      { nationId: number; name: string; crew: number; crewType: number }[]
+    >();
     for (const g of generals) {
       if (g.nationId <= 0 || g.crew <= 0) continue;
       if (!map.has(g.cityId)) map.set(g.cityId, []);
-      map.get(g.cityId)!.push({ nationId: g.nationId, name: g.name, crew: g.crew, crewType: g.crewType });
+      map.get(g.cityId)!.push({
+        nationId: g.nationId,
+        name: g.name,
+        crew: g.crew,
+        crewType: g.crewType,
+      });
     }
     return map;
   }, [generals]);
@@ -228,25 +289,30 @@ export default function MapPage() {
   }, [cities, nations]);
 
   // Save city info to localStorage for cross-page reference
-  const saveCityInfo = useCallback((cityId: number) => {
-    const city = cityMap.get(cityId);
-    if (!city) return;
-    const nation = city.nationId ? nationMap.get(city.nationId) : null;
-    try {
-      localStorage.setItem(
-        `opensam:cityInfo:${cityId}`,
-        JSON.stringify({
-          id: cityId,
-          name: constMap.get(cityId)?.name ?? "",
-          nationName: nation?.name ?? "공백지",
-          nationColor: nation?.color ?? "#555",
-          pop: city.pop,
-          level: city.level,
-          ts: Date.now(),
-        }),
-      );
-    } catch { /* ignore quota */ }
-  }, [cityMap, nationMap, constMap]);
+  const saveCityInfo = useCallback(
+    (cityId: number) => {
+      const city = cityMap.get(cityId);
+      if (!city) return;
+      const nation = city.nationId ? nationMap.get(city.nationId) : null;
+      try {
+        localStorage.setItem(
+          `opensam:cityInfo:${cityId}`,
+          JSON.stringify({
+            id: cityId,
+            name: constMap.get(cityId)?.name ?? "",
+            nationName: nation?.name ?? "공백지",
+            nationColor: nation?.color ?? "#555",
+            pop: city.pop,
+            level: city.level,
+            ts: Date.now(),
+          }),
+        );
+      } catch {
+        /* ignore quota */
+      }
+    },
+    [cityMap, nationMap, constMap],
+  );
 
   const handleCityClick = (cc: CityConst, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -283,48 +349,60 @@ export default function MapPage() {
   };
 
   // Touch support: single-tap toggles tooltip, second tap navigates
-  const handleCityTouch = useCallback((cc: CityConst, e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (touchTapId === cc.id && tooltip?.cityId === cc.id) {
-      // Second tap on same city: navigate
-      saveCityInfo(cc.id);
-      router.push(`/city?id=${cc.id}`);
-      setTouchTapId(null);
-    } else {
-      // First tap: show tooltip
-      const touch = e.touches[0] ?? e.changedTouches[0];
-      const city = cityMap.get(cc.id);
-      const nation = city?.nationId ? nationMap.get(city.nationId) : null;
-      const cityGens = cityGeneralData.get(cc.id) ?? [];
-      const generalsInfo = cityGens.map((g) => ({
-        name: g.name,
-        nationColor: nationMap.get(g.nationId)?.color ?? "#555",
-        crew: g.crew,
-        crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
-        isForeign: city ? g.nationId !== city.nationId : false,
-      }));
-      saveCityInfo(cc.id);
-      setTooltip({
-        cityId: cc.id,
-        cityName: cc.name,
-        nationName: nation?.name ?? "공백지",
-        nationColor: nation?.color ?? "#555",
-        level: city?.level ?? cc.level,
-        pop: city?.pop ?? 0,
-        agri: city ? `${city.agri}/${city.agriMax}` : "-",
-        comm: city ? `${city.comm}/${city.commMax}` : "-",
-        secu: city ? `${city.secu}/${city.secuMax}` : "-",
-        def: city ? `${city.def}/${city.defMax}` : "-",
-        wall: city ? `${city.wall}/${city.wallMax}` : "-",
-        trust: city?.trust ?? 0,
-        generals: generalsInfo,
-        screenX: touch?.clientX ?? 0,
-        screenY: touch?.clientY ?? 0,
-      });
-      setTouchTapId(cc.id);
-    }
-  }, [touchTapId, tooltip, cityMap, nationMap, cityGeneralData, constMap, router, saveCityInfo]);
+  const handleCityTouch = useCallback(
+    (cc: CityConst, e: React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (touchTapId === cc.id && tooltip?.cityId === cc.id) {
+        // Second tap on same city: navigate
+        saveCityInfo(cc.id);
+        router.push(`/city?id=${cc.id}`);
+        setTouchTapId(null);
+      } else {
+        // First tap: show tooltip
+        const touch = e.touches[0] ?? e.changedTouches[0];
+        const city = cityMap.get(cc.id);
+        const nation = city?.nationId ? nationMap.get(city.nationId) : null;
+        const cityGens = cityGeneralData.get(cc.id) ?? [];
+        const generalsInfo = cityGens.map((g) => ({
+          name: g.name,
+          nationColor: nationMap.get(g.nationId)?.color ?? "#555",
+          crew: g.crew,
+          crewType: CREW_TYPES[g.crewType] ?? `${g.crewType}`,
+          isForeign: city ? g.nationId !== city.nationId : false,
+        }));
+        saveCityInfo(cc.id);
+        setTooltip({
+          cityId: cc.id,
+          cityName: cc.name,
+          nationName: nation?.name ?? "공백지",
+          nationColor: nation?.color ?? "#555",
+          level: city?.level ?? cc.level,
+          pop: city?.pop ?? 0,
+          agri: city ? `${city.agri}/${city.agriMax}` : "-",
+          comm: city ? `${city.comm}/${city.commMax}` : "-",
+          secu: city ? `${city.secu}/${city.secuMax}` : "-",
+          def: city ? `${city.def}/${city.defMax}` : "-",
+          wall: city ? `${city.wall}/${city.wallMax}` : "-",
+          trust: city?.trust ?? 0,
+          generals: generalsInfo,
+          screenX: touch?.clientX ?? 0,
+          screenY: touch?.clientY ?? 0,
+        });
+        setTouchTapId(cc.id);
+      }
+    },
+    [
+      touchTapId,
+      tooltip,
+      cityMap,
+      nationMap,
+      cityGeneralData,
+      constMap,
+      router,
+      saveCityInfo,
+    ],
+  );
 
   if (!mapData) {
     return (
@@ -345,11 +423,15 @@ export default function MapPage() {
         <span className="text-xs text-muted-foreground">테마:</span>
         <Button
           size="sm"
-          variant={theme === "default" && autoTheme !== "default" ? "default" : "outline"}
+          variant={
+            theme === "default" && autoTheme !== "default"
+              ? "default"
+              : "outline"
+          }
           className="h-6 px-2 text-xs"
           onClick={() => setTheme(autoTheme)}
         >
-          자동({MAP_THEMES.find(t => t.key === autoTheme)?.label ?? "기본"})
+          자동({MAP_THEMES.find((t) => t.key === autoTheme)?.label ?? "기본"})
         </Button>
         {MAP_THEMES.map((t) => (
           <Button
@@ -363,12 +445,12 @@ export default function MapPage() {
           </Button>
         ))}
         <span className="text-xs text-muted-foreground ml-4">레이어:</span>
-        {([
+        {[
           { key: "nations" as MapLayer, label: "국가색" },
           { key: "troops" as MapLayer, label: "병력" },
           { key: "supply" as MapLayer, label: "보급" },
           { key: "terrain" as MapLayer, label: "지형" },
-        ]).map((l) => (
+        ].map((l) => (
           <Button
             key={l.key}
             size="sm"
@@ -397,7 +479,10 @@ export default function MapPage() {
           <span>공백지</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded border border-red-500" style={{ background: "transparent" }} />
+          <span
+            className="w-3 h-3 rounded border border-red-500"
+            style={{ background: "transparent" }}
+          />
           <span className="text-red-400">외국 병력 주둔</span>
         </div>
       </div>
@@ -431,9 +516,13 @@ export default function MapPage() {
             const cy = toSvgY(cc.y);
             const color = layers.has("nations") ? getCityColor(cc.id) : "#555";
             const city = cityMap.get(cc.id);
-            const hasForeignTroops = layers.has("troops") && foreignTroopCities.has(cc.id);
-            const genCount = layers.has("troops") ? (cityGeneralData.get(cc.id)?.length ?? 0) : 0;
-            const isSupplyBroken = layers.has("supply") && city && city.supplyState !== 1;
+            const hasForeignTroops =
+              layers.has("troops") && foreignTroopCities.has(cc.id);
+            const genCount = layers.has("troops")
+              ? (cityGeneralData.get(cc.id)?.length ?? 0)
+              : 0;
+            const isSupplyBroken =
+              layers.has("supply") && city && city.supplyState !== 1;
             const terrainLevel = layers.has("terrain") && city ? city.level : 0;
 
             return (
@@ -455,7 +544,13 @@ export default function MapPage() {
                     strokeDasharray="4 2"
                     opacity={0.8}
                   >
-                    <animate attributeName="stroke-dashoffset" from="0" to="12" dur="1.5s" repeatCount="indefinite" />
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      from="0"
+                      to="12"
+                      dur="1.5s"
+                      repeatCount="indefinite"
+                    />
                   </circle>
                 )}
 
@@ -549,7 +644,9 @@ export default function MapPage() {
             </div>
             <div className="text-gray-400">소속: {tooltip.nationName}</div>
             <div className="text-gray-400">레벨: {tooltip.level}</div>
-            <div className="text-gray-400">인구: {tooltip.pop.toLocaleString()}</div>
+            <div className="text-gray-400">
+              인구: {tooltip.pop.toLocaleString()}
+            </div>
             <div className="text-gray-400">농업: {tooltip.agri}</div>
             <div className="text-gray-400">상업: {tooltip.comm}</div>
             <div className="text-gray-400">치안: {tooltip.secu}</div>
@@ -572,13 +669,28 @@ export default function MapPage() {
             {/* Generals in this city */}
             {tooltip.generals.length > 0 && (
               <div className="border-t border-gray-700 pt-1 mt-1">
-                <div className="text-gray-300 font-medium text-xs mb-0.5">주둔 장수 ({tooltip.generals.length}명)</div>
+                <div className="text-gray-300 font-medium text-xs mb-0.5">
+                  주둔 장수 ({tooltip.generals.length}명)
+                </div>
                 <div className="max-h-32 overflow-y-auto space-y-0.5">
                   {tooltip.generals.map((g, i) => (
                     <div key={i} className="flex items-center gap-1.5 text-xs">
-                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: g.nationColor }} />
-                      <span className={g.isForeign ? "text-red-400 font-bold" : "text-gray-300"}>{g.name}</span>
-                      <span className="text-muted-foreground ml-auto">{g.crewType} {g.crew.toLocaleString()}</span>
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: g.nationColor }}
+                      />
+                      <span
+                        className={
+                          g.isForeign
+                            ? "text-red-400 font-bold"
+                            : "text-gray-300"
+                        }
+                      >
+                        {g.name}
+                      </span>
+                      <span className="text-muted-foreground ml-auto">
+                        {g.crewType} {g.crew.toLocaleString()}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -589,155 +701,220 @@ export default function MapPage() {
       </div>
 
       {/* History Log Panel with Year/Month Navigation */}
-      {history.length > 0 && (() => {
-        // Extract unique year/month pairs from history
-        const yearMonthSet = new Map<string, { year: number; month: number }>();
-        for (const h of history) {
-          if (h.year != null && h.month != null) {
-            const key = `${h.year}-${h.month}`;
-            if (!yearMonthSet.has(key)) yearMonthSet.set(key, { year: h.year, month: h.month });
+      {history.length > 0 &&
+        (() => {
+          // Extract unique year/month pairs from history
+          const yearMonthSet = new Map<
+            string,
+            { year: number; month: number }
+          >();
+          for (const h of history) {
+            if (h.year != null && h.month != null) {
+              const key = `${h.year}-${h.month}`;
+              if (!yearMonthSet.has(key))
+                yearMonthSet.set(key, { year: h.year, month: h.month });
+            }
           }
-        }
-        const yearMonthList = Array.from(yearMonthSet.values()).sort((a, b) => b.year - a.year || b.month - a.month);
-        const availableYears = [...new Set(yearMonthList.map((ym) => ym.year))].sort((a, b) => b - a);
+          const yearMonthList = Array.from(yearMonthSet.values()).sort(
+            (a, b) => b.year - a.year || b.month - a.month,
+          );
+          const availableYears = [
+            ...new Set(yearMonthList.map((ym) => ym.year)),
+          ].sort((a, b) => b - a);
 
-        // Filter logic
-        const filteredHistory = (historyFilterYear !== null)
-          ? history.filter((h) =>
-              h.year === historyFilterYear && (historyFilterMonth === null || h.month === historyFilterMonth)
-            )
-          : history;
+          // Filter logic
+          const filteredHistory =
+            historyFilterYear !== null
+              ? history.filter(
+                  (h) =>
+                    h.year === historyFilterYear &&
+                    (historyFilterMonth === null ||
+                      h.month === historyFilterMonth),
+                )
+              : history;
 
-        const monthsForYear = historyFilterYear !== null
-          ? yearMonthList.filter((ym) => ym.year === historyFilterYear).map((ym) => ym.month).sort((a, b) => a - b)
-          : [];
+          const monthsForYear =
+            historyFilterYear !== null
+              ? yearMonthList
+                  .filter((ym) => ym.year === historyFilterYear)
+                  .map((ym) => ym.month)
+                  .sort((a, b) => a - b)
+              : [];
 
-        const displayItems = historyBrowseIdx !== null
-          ? filteredHistory.slice(historyBrowseIdx, historyBrowseIdx + 10)
-          : filteredHistory.slice(0, 10);
+          const displayItems =
+            historyBrowseIdx !== null
+              ? filteredHistory.slice(historyBrowseIdx, historyBrowseIdx + 10)
+              : filteredHistory.slice(0, 10);
 
-        return (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                최근 기록
-                <Badge variant="outline" className="text-[10px]">{filteredHistory.length}건</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {/* Year/Month filter */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-muted-foreground">년도:</span>
-                <Button
-                  size="sm"
-                  variant={historyFilterYear === null ? "default" : "outline"}
-                  className="h-6 px-2 text-xs"
-                  onClick={() => { setHistoryFilterYear(null); setHistoryFilterMonth(null); setHistoryBrowseIdx(null); }}
-                >
-                  전체
-                </Button>
-                {availableYears.map((y) => (
+          return (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  최근 기록
+                  <Badge variant="outline" className="text-[10px]">
+                    {filteredHistory.length}건
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {/* Year/Month filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">년도:</span>
                   <Button
-                    key={y}
                     size="sm"
-                    variant={historyFilterYear === y ? "default" : "outline"}
+                    variant={historyFilterYear === null ? "default" : "outline"}
                     className="h-6 px-2 text-xs"
-                    onClick={() => { setHistoryFilterYear(y); setHistoryFilterMonth(null); setHistoryBrowseIdx(null); }}
+                    onClick={() => {
+                      setHistoryFilterYear(null);
+                      setHistoryFilterMonth(null);
+                      setHistoryBrowseIdx(null);
+                    }}
                   >
-                    {y}년
+                    전체
                   </Button>
-                ))}
-                {historyFilterYear !== null && monthsForYear.length > 0 && (
-                  <>
-                    <span className="text-xs text-muted-foreground ml-2">월:</span>
+                  {availableYears.map((y) => (
                     <Button
+                      key={y}
                       size="sm"
-                      variant={historyFilterMonth === null ? "default" : "outline"}
+                      variant={historyFilterYear === y ? "default" : "outline"}
                       className="h-6 px-2 text-xs"
-                      onClick={() => { setHistoryFilterMonth(null); setHistoryBrowseIdx(null); }}
+                      onClick={() => {
+                        setHistoryFilterYear(y);
+                        setHistoryFilterMonth(null);
+                        setHistoryBrowseIdx(null);
+                      }}
                     >
-                      전체
+                      {y}년
                     </Button>
-                    {monthsForYear.map((m) => (
+                  ))}
+                  {historyFilterYear !== null && monthsForYear.length > 0 && (
+                    <>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        월:
+                      </span>
                       <Button
-                        key={m}
                         size="sm"
-                        variant={historyFilterMonth === m ? "default" : "outline"}
+                        variant={
+                          historyFilterMonth === null ? "default" : "outline"
+                        }
                         className="h-6 px-2 text-xs"
-                        onClick={() => { setHistoryFilterMonth(m); setHistoryBrowseIdx(null); }}
+                        onClick={() => {
+                          setHistoryFilterMonth(null);
+                          setHistoryBrowseIdx(null);
+                        }}
                       >
-                        {m}월
+                        전체
                       </Button>
-                    ))}
-                  </>
-                )}
-              </div>
+                      {monthsForYear.map((m) => (
+                        <Button
+                          key={m}
+                          size="sm"
+                          variant={
+                            historyFilterMonth === m ? "default" : "outline"
+                          }
+                          className="h-6 px-2 text-xs"
+                          onClick={() => {
+                            setHistoryFilterMonth(m);
+                            setHistoryBrowseIdx(null);
+                          }}
+                        >
+                          {m}월
+                        </Button>
+                      ))}
+                    </>
+                  )}
+                </div>
 
-              {/* Pagination controls */}
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 px-2 text-xs"
-                  disabled={historyBrowseIdx === null || historyBrowseIdx <= 0}
-                  onClick={() => setHistoryBrowseIdx((prev) => Math.max(0, (prev ?? filteredHistory.length) - 10))}
-                >
-                  ← 이전
-                </Button>
-                <span className="text-[10px] text-muted-foreground">
-                  {historyBrowseIdx !== null ? `${historyBrowseIdx + 1}~${Math.min(historyBrowseIdx + 10, filteredHistory.length)}` : `1~${Math.min(10, filteredHistory.length)}`} / {filteredHistory.length}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 px-2 text-xs"
-                  disabled={
-                    (historyBrowseIdx === null && filteredHistory.length <= 10) ||
-                    (historyBrowseIdx !== null && historyBrowseIdx + 10 >= filteredHistory.length)
-                  }
-                  onClick={() => setHistoryBrowseIdx((prev) => Math.min(filteredHistory.length - 10, (prev ?? 0) + 10))}
-                >
-                  다음 →
-                </Button>
-                {historyBrowseIdx !== null && (
+                {/* Pagination controls */}
+                <div className="flex items-center gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
                     className="h-6 px-2 text-xs"
-                    onClick={() => setHistoryBrowseIdx(null)}
+                    disabled={
+                      historyBrowseIdx === null || historyBrowseIdx <= 0
+                    }
+                    onClick={() =>
+                      setHistoryBrowseIdx((prev) =>
+                        Math.max(0, (prev ?? filteredHistory.length) - 10),
+                      )
+                    }
                   >
-                    최신으로
+                    ← 이전
                   </Button>
-                )}
-              </div>
+                  <span className="text-[10px] text-muted-foreground">
+                    {historyBrowseIdx !== null
+                      ? `${historyBrowseIdx + 1}~${Math.min(historyBrowseIdx + 10, filteredHistory.length)}`
+                      : `1~${Math.min(10, filteredHistory.length)}`}{" "}
+                    / {filteredHistory.length}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    disabled={
+                      (historyBrowseIdx === null &&
+                        filteredHistory.length <= 10) ||
+                      (historyBrowseIdx !== null &&
+                        historyBrowseIdx + 10 >= filteredHistory.length)
+                    }
+                    onClick={() =>
+                      setHistoryBrowseIdx((prev) =>
+                        Math.min(filteredHistory.length - 10, (prev ?? 0) + 10),
+                      )
+                    }
+                  >
+                    다음 →
+                  </Button>
+                  {historyBrowseIdx !== null && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => setHistoryBrowseIdx(null)}
+                    >
+                      최신으로
+                    </Button>
+                  )}
+                </div>
 
-              {/* History items */}
-              <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
-                {displayItems.map((item) => (
-                  <div key={item.id} className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0">
-                    <span className="text-muted-foreground whitespace-nowrap shrink-0 w-24">
-                      {item.year != null && item.month != null
-                        ? `${item.year}년 ${item.month}월`
-                        : item.sentAt
-                          ? new Date(item.sentAt).toLocaleDateString("ko-KR", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : ""}
-                    </span>
-                    <span className="text-gray-300">{formatLog(item.text)}</span>
-                  </div>
-                ))}
-                {displayItems.length === 0 && (
-                  <div className="text-muted-foreground py-2">해당 기간의 기록이 없습니다.</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
+                {/* History items */}
+                <div className="max-h-64 overflow-y-auto space-y-0.5 text-xs">
+                  {displayItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start gap-2 py-0.5 border-b border-gray-800 last:border-0"
+                    >
+                      <span className="text-muted-foreground whitespace-nowrap shrink-0 w-24">
+                        {item.year != null && item.month != null
+                          ? `${item.year}년 ${item.month}월`
+                          : item.sentAt
+                            ? new Date(item.sentAt).toLocaleDateString(
+                                "ko-KR",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )
+                            : ""}
+                      </span>
+                      <span className="text-gray-300">
+                        {formatLog(item.text)}
+                      </span>
+                    </div>
+                  ))}
+                  {displayItems.length === 0 && (
+                    <div className="text-muted-foreground py-2">
+                      해당 기간의 기록이 없습니다.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })()}
     </div>
   );
 }

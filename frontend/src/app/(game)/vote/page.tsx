@@ -108,9 +108,13 @@ export default function VotePage() {
         title: createTitle.trim(),
         options: opts,
         creatorId: myGeneral.id,
-        ...(createDeadline ? { deadline: new Date(createDeadline).toISOString() } : {}),
+        ...(createDeadline
+          ? { deadline: new Date(createDeadline).toISOString() }
+          : {}),
         ...(createReward.trim() ? { reward: createReward.trim() } : {}),
-        ...(createMaxSelections > 1 ? { maxSelections: createMaxSelections } : {}),
+        ...(createMaxSelections > 1
+          ? { maxSelections: createMaxSelections }
+          : {}),
       });
       setShowCreate(false);
       setCreateTitle("");
@@ -229,7 +233,9 @@ export default function VotePage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">마감 시간 (선택)</label>
+                  <label className="block text-xs text-muted-foreground mb-1">
+                    마감 시간 (선택)
+                  </label>
                   <Input
                     type="datetime-local"
                     value={createDeadline}
@@ -238,7 +244,9 @@ export default function VotePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">보상 (선택)</label>
+                  <label className="block text-xs text-muted-foreground mb-1">
+                    보상 (선택)
+                  </label>
                   <Input
                     value={createReward}
                     onChange={(e) => setCreateReward(e.target.value)}
@@ -247,11 +255,15 @@ export default function VotePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-muted-foreground mb-1">다중 선택 제약</label>
+                  <label className="block text-xs text-muted-foreground mb-1">
+                    다중 선택 제약
+                  </label>
                   <div className="flex items-center gap-2">
                     <select
                       value={createMaxSelections}
-                      onChange={(e) => setCreateMaxSelections(Number(e.target.value))}
+                      onChange={(e) =>
+                        setCreateMaxSelections(Number(e.target.value))
+                      }
                       className="h-8 border border-gray-600 bg-[#111] px-2 text-xs text-white rounded"
                     >
                       <option value={1}>단일 선택</option>
@@ -259,7 +271,9 @@ export default function VotePage() {
                       <option value={3}>최대 3개</option>
                     </select>
                     <span className="text-[10px] text-muted-foreground">
-                      {createMaxSelections > 1 ? `투표자는 최대 ${createMaxSelections}개 선택 가능` : "하나만 선택 가능"}
+                      {createMaxSelections > 1
+                        ? `투표자는 최대 ${createMaxSelections}개 선택 가능`
+                        : "하나만 선택 가능"}
                     </span>
                   </div>
                 </div>

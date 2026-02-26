@@ -26,7 +26,9 @@ export default function SpyPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Mailbox tabs
-  const [mailboxTab, setMailboxTab] = useState<"spy" | "send" | "groups">("spy");
+  const [mailboxTab, setMailboxTab] = useState<"spy" | "send" | "groups">(
+    "spy",
+  );
 
   // Send message
   const [sendTargetIds, setSendTargetIds] = useState<number[]>([]);
@@ -34,10 +36,12 @@ export default function SpyPage() {
   const [sending, setSending] = useState(false);
 
   // Recipient groups
-  const [groups, setGroups] = useState<{ name: string; memberIds: number[] }[]>([
-    { name: "참모진", memberIds: [] },
-    { name: "첩보대", memberIds: [] },
-  ]);
+  const [groups, setGroups] = useState<{ name: string; memberIds: number[] }[]>(
+    [
+      { name: "참모진", memberIds: [] },
+      { name: "첩보대", memberIds: [] },
+    ],
+  );
   const [newGroupName, setNewGroupName] = useState("");
 
   // Forward
@@ -100,9 +104,15 @@ export default function SpyPage() {
     setSending(true);
     try {
       for (const targetId of sendTargetIds) {
-        await messageApi.send(currentWorld!.id, myGeneral.id, targetId, sendMessage.trim(), {
-          messageType: "spy",
-        });
+        await messageApi.send(
+          currentWorld!.id,
+          myGeneral.id,
+          targetId,
+          sendMessage.trim(),
+          {
+            messageType: "spy",
+          },
+        );
       }
       setSendMessage("");
       setSendTargetIds([]);
@@ -116,25 +126,43 @@ export default function SpyPage() {
     const report = reports.find((r) => r.id === reportId);
     if (!report) return;
     try {
-      await messageApi.send(currentWorld!.id, myGeneral.id, Number(forwardTargetId), `[전달된 정찰 보고] ${formatScoutResult(report.payload)}`, {
-        messageType: "scout_forward",
-      });
+      await messageApi.send(
+        currentWorld!.id,
+        myGeneral.id,
+        Number(forwardTargetId),
+        `[전달된 정찰 보고] ${formatScoutResult(report.payload)}`,
+        {
+          messageType: "scout_forward",
+        },
+      );
       setForwardingId(null);
       setForwardTargetId("");
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   const toggleGroupMember = (groupIdx: number, generalId: number) => {
-    setGroups((prev) => prev.map((g, i) => {
-      if (i !== groupIdx) return g;
-      const has = g.memberIds.includes(generalId);
-      return { ...g, memberIds: has ? g.memberIds.filter((id) => id !== generalId) : [...g.memberIds, generalId] };
-    }));
+    setGroups((prev) =>
+      prev.map((g, i) => {
+        if (i !== groupIdx) return g;
+        const has = g.memberIds.includes(generalId);
+        return {
+          ...g,
+          memberIds: has
+            ? g.memberIds.filter((id) => id !== generalId)
+            : [...g.memberIds, generalId],
+        };
+      }),
+    );
   };
 
   const addGroup = () => {
     if (!newGroupName.trim()) return;
-    setGroups((prev) => [...prev, { name: newGroupName.trim(), memberIds: [] }]);
+    setGroups((prev) => [
+      ...prev,
+      { name: newGroupName.trim(), memberIds: [] },
+    ]);
     setNewGroupName("");
   };
 
@@ -181,30 +209,52 @@ export default function SpyPage() {
         </CardContent>
       </Card>
 
-      <Tabs value={mailboxTab} onValueChange={(v) => setMailboxTab(v as typeof mailboxTab)}>
+      <Tabs
+        value={mailboxTab}
+        onValueChange={(v) => setMailboxTab(v as typeof mailboxTab)}
+      >
         <TabsList>
-          <TabsTrigger value="spy"><Inbox className="size-3 mr-1" />우편함</TabsTrigger>
-          <TabsTrigger value="send"><Send className="size-3 mr-1" />메시지 전송</TabsTrigger>
-          <TabsTrigger value="groups"><Users className="size-3 mr-1" />수신자 그룹</TabsTrigger>
+          <TabsTrigger value="spy">
+            <Inbox className="size-3 mr-1" />
+            우편함
+          </TabsTrigger>
+          <TabsTrigger value="send">
+            <Send className="size-3 mr-1" />
+            메시지 전송
+          </TabsTrigger>
+          <TabsTrigger value="groups">
+            <Users className="size-3 mr-1" />
+            수신자 그룹
+          </TabsTrigger>
         </TabsList>
 
         {/* Send Tab */}
         <TabsContent value="send" className="space-y-3 mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">비밀 메시지 전송</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm">비밀 메시지 전송</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">수신자 (클릭하여 선택)</label>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  수신자 (클릭하여 선택)
+                </label>
                 <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
                   {nationGenerals.map((g) => (
                     <Button
                       key={g.id}
                       size="sm"
-                      variant={sendTargetIds.includes(g.id) ? "default" : "outline"}
+                      variant={
+                        sendTargetIds.includes(g.id) ? "default" : "outline"
+                      }
                       className="h-6 px-2 text-[10px]"
-                      onClick={() => setSendTargetIds((prev) =>
-                        prev.includes(g.id) ? prev.filter((id) => id !== g.id) : [...prev, g.id]
-                      )}
+                      onClick={() =>
+                        setSendTargetIds((prev) =>
+                          prev.includes(g.id)
+                            ? prev.filter((id) => id !== g.id)
+                            : [...prev, g.id],
+                        )
+                      }
                     >
                       {g.name}
                     </Button>
@@ -212,17 +262,19 @@ export default function SpyPage() {
                 </div>
                 {/* Quick select from groups */}
                 <div className="flex gap-1 mt-1">
-                  {groups.filter((g) => g.memberIds.length > 0).map((g, idx) => (
-                    <Button
-                      key={idx}
-                      size="sm"
-                      variant="ghost"
-                      className="h-5 px-1.5 text-[9px]"
-                      onClick={() => setSendTargetIds(g.memberIds)}
-                    >
-                      📋 {g.name}
-                    </Button>
-                  ))}
+                  {groups
+                    .filter((g) => g.memberIds.length > 0)
+                    .map((g, idx) => (
+                      <Button
+                        key={idx}
+                        size="sm"
+                        variant="ghost"
+                        className="h-5 px-1.5 text-[9px]"
+                        onClick={() => setSendTargetIds(g.memberIds)}
+                      >
+                        📋 {g.name}
+                      </Button>
+                    ))}
                 </div>
               </div>
               <Textarea
@@ -231,7 +283,12 @@ export default function SpyPage() {
                 placeholder="첩보 메시지를 입력하세요..."
                 className="h-24 text-sm"
               />
-              <Button onClick={handleSendSpyMessage} disabled={sending || sendTargetIds.length === 0 || !sendMessage.trim()}>
+              <Button
+                onClick={handleSendSpyMessage}
+                disabled={
+                  sending || sendTargetIds.length === 0 || !sendMessage.trim()
+                }
+              >
                 {sending ? "전송 중..." : `${sendTargetIds.length}명에게 전송`}
               </Button>
             </CardContent>
@@ -241,20 +298,26 @@ export default function SpyPage() {
         {/* Groups Tab */}
         <TabsContent value="groups" className="space-y-3 mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-sm">비밀 수신자 그룹</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm">비밀 수신자 그룹</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               {groups.map((group, gIdx) => (
                 <div key={gIdx} className="border rounded p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{group.name}</span>
-                    <Badge variant="outline" className="text-[10px]">{group.memberIds.length}명</Badge>
+                    <Badge variant="outline" className="text-[10px]">
+                      {group.memberIds.length}명
+                    </Badge>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {nationGenerals.map((g) => (
                       <Button
                         key={g.id}
                         size="sm"
-                        variant={group.memberIds.includes(g.id) ? "default" : "outline"}
+                        variant={
+                          group.memberIds.includes(g.id) ? "default" : "outline"
+                        }
                         className="h-5 px-1.5 text-[9px]"
                         onClick={() => toggleGroupMember(gIdx, g.id)}
                       >
@@ -271,7 +334,9 @@ export default function SpyPage() {
                   placeholder="새 그룹 이름..."
                   className="text-xs h-8"
                 />
-                <Button size="sm" onClick={addGroup}>추가</Button>
+                <Button size="sm" onClick={addGroup}>
+                  추가
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -279,131 +344,153 @@ export default function SpyPage() {
 
         {/* Spy reports tab */}
         <TabsContent value="spy" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>첩보 결과</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {reports.length === 0 ? (
+                <EmptyState icon={Eye} title="수신된 첩보 결과가 없습니다." />
+              ) : (
+                <div className="space-y-2">
+                  {reports.map((report) => {
+                    const payload = report.payload;
+                    const targetCityId = extractNumber(payload, [
+                      "destCityId",
+                      "targetCityId",
+                    ]);
+                    const targetGeneralId = extractNumber(payload, [
+                      "targetGeneralId",
+                      "destGeneralId",
+                    ]);
+                    const nestedSpy = getRecord(payload, "spyResult");
+                    const nestedScout = getRecord(payload, "scoutResult");
+                    const nestedTargetCity =
+                      extractNumber(nestedSpy, [
+                        "destCityId",
+                        "targetCityId",
+                      ]) ??
+                      extractNumber(nestedScout, [
+                        "destCityId",
+                        "targetCityId",
+                      ]);
 
-      <Card>
-        <CardHeader>
-          <CardTitle>첩보 결과</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {reports.length === 0 ? (
-            <EmptyState icon={Eye} title="수신된 첩보 결과가 없습니다." />
-          ) : (
-            <div className="space-y-2">
-              {reports.map((report) => {
-                const payload = report.payload;
-                const targetCityId = extractNumber(payload, [
-                  "destCityId",
-                  "targetCityId",
-                ]);
-                const targetGeneralId = extractNumber(payload, [
-                  "targetGeneralId",
-                  "destGeneralId",
-                ]);
-                const nestedSpy = getRecord(payload, "spyResult");
-                const nestedScout = getRecord(payload, "scoutResult");
-                const nestedTargetCity =
-                  extractNumber(nestedSpy, ["destCityId", "targetCityId"]) ??
-                  extractNumber(nestedScout, ["destCityId", "targetCityId"]);
+                    const city = cityMap.get(
+                      targetCityId ?? nestedTargetCity ?? -1,
+                    );
+                    const targetGeneral = generalMap.get(targetGeneralId ?? -1);
+                    const sender = report.srcId
+                      ? generalMap.get(report.srcId)
+                      : null;
+                    const senderNation = report.srcId
+                      ? nationMap.get(sender?.nationId ?? -1)
+                      : null;
 
-                const city = cityMap.get(
-                  targetCityId ?? nestedTargetCity ?? -1,
-                );
-                const targetGeneral = generalMap.get(targetGeneralId ?? -1);
-                const sender = report.srcId
-                  ? generalMap.get(report.srcId)
-                  : null;
-                const senderNation = report.srcId
-                  ? nationMap.get(sender?.nationId ?? -1)
-                  : null;
+                    return (
+                      <Card
+                        key={report.id}
+                        className="cursor-pointer"
+                        onClick={() => handleMarkAsRead(report.id)}
+                      >
+                        <CardContent className="pt-4 space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">
+                              {sender?.name ??
+                                senderNation?.name ??
+                                "첩보 보고"}
+                            </span>
+                            <span>
+                              {new Date(report.sentAt).toLocaleString("ko-KR")}
+                            </span>
+                            {!getReadAt(report.meta) && (
+                              <Badge className="bg-amber-500 text-black">
+                                NEW
+                              </Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setForwardingId(
+                                  forwardingId === report.id ? null : report.id,
+                                );
+                              }}
+                              title="전달"
+                            >
+                              <Forward className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="ml-auto h-6 w-6 p-0"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDelete(report.id);
+                              }}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
 
-                return (
-                  <Card
-                    key={report.id}
-                    className="cursor-pointer"
-                    onClick={() => handleMarkAsRead(report.id)}
-                  >
-                    <CardContent className="pt-4 space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">
-                          {sender?.name ?? senderNation?.name ?? "첩보 보고"}
-                        </span>
-                        <span>
-                          {new Date(report.sentAt).toLocaleString("ko-KR")}
-                        </span>
-                        {!getReadAt(report.meta) && (
-                          <Badge className="bg-amber-500 text-black">NEW</Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            setForwardingId(forwardingId === report.id ? null : report.id);
-                          }}
-                          title="전달"
-                        >
-                          <Forward className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-auto h-6 w-6 p-0"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            handleDelete(report.id);
-                          }}
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      </div>
+                          {/* Forward UI */}
+                          {forwardingId === report.id && (
+                            <div
+                              className="flex items-center gap-2 bg-muted/30 rounded p-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <select
+                                value={forwardTargetId}
+                                onChange={(e) =>
+                                  setForwardTargetId(e.target.value)
+                                }
+                                className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white rounded flex-1"
+                              >
+                                <option value="">전달 대상 선택...</option>
+                                {nationGenerals.map((g) => (
+                                  <option key={g.id} value={g.id}>
+                                    {g.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => handleForward(report.id)}
+                              >
+                                전달
+                              </Button>
+                            </div>
+                          )}
 
-                      {/* Forward UI */}
-                      {forwardingId === report.id && (
-                        <div className="flex items-center gap-2 bg-muted/30 rounded p-2" onClick={(e) => e.stopPropagation()}>
-                          <select
-                            value={forwardTargetId}
-                            onChange={(e) => setForwardTargetId(e.target.value)}
-                            className="h-7 border border-gray-600 bg-[#111] px-1 text-xs text-white rounded flex-1"
-                          >
-                            <option value="">전달 대상 선택...</option>
-                            {nationGenerals.map((g) => (
-                              <option key={g.id} value={g.id}>{g.name}</option>
-                            ))}
-                          </select>
-                          <Button size="sm" className="h-7 text-xs" onClick={() => handleForward(report.id)}>
-                            전달
-                          </Button>
-                        </div>
-                      )}
-
-                      <div className="text-sm space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-muted-foreground">
-                            목표 도시
-                          </span>
-                          <Badge variant="outline">
-                            {city?.name ?? "미상"}
-                          </Badge>
-                          <span className="text-muted-foreground">
-                            목표 장수
-                          </span>
-                          <Badge variant="outline">
-                            {targetGeneral?.name ?? "정보 없음"}
-                          </Badge>
-                        </div>
-                        <p className="text-foreground break-all">
-                          {formatScoutResult(report.payload)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          <div className="text-sm space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-muted-foreground">
+                                목표 도시
+                              </span>
+                              <Badge variant="outline">
+                                {city?.name ?? "미상"}
+                              </Badge>
+                              <span className="text-muted-foreground">
+                                목표 장수
+                              </span>
+                              <Badge variant="outline">
+                                {targetGeneral?.name ?? "정보 없음"}
+                              </Badge>
+                            </div>
+                            <p className="text-foreground break-all">
+                              {formatScoutResult(report.payload)}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

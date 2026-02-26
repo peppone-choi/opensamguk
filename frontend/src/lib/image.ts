@@ -67,7 +67,8 @@ export function getMapBgUrl(
 
 /** Map road overlay — e.g. `che_road.png` */
 export function getMapRoadUrl(mapCode: string): string {
-  if (mapCode.includes("miniche")) return `${GAME_CDN_ROOT}/map/che/miniche_road.png`;
+  if (mapCode.includes("miniche"))
+    return `${GAME_CDN_ROOT}/map/che/miniche_road.png`;
   const folder = mapCode === "ludo_rathowm" ? "ludo_rathowm" : mapCode;
   const file = mapCode === "ludo_rathowm" ? "road.png" : `${mapCode}_road.png`;
   return `${GAME_CDN_ROOT}/map/${folder}/${file}`;

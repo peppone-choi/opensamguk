@@ -20,7 +20,9 @@ function createTestJwt(payload: Record<string, unknown>): string {
 }
 
 test.describe("OAuth gate: login -> lobby -> world entry", () => {
-  test("OAuth callback success lands in lobby and allows world entry", async ({ page }) => {
+  test("OAuth callback success lands in lobby and allows world entry", async ({
+    page,
+  }) => {
     const token = createTestJwt({
       userId: 999,
       sub: "oauth_e2e",
@@ -103,7 +105,9 @@ test.describe("OAuth gate: login -> lobby -> world entry", () => {
     await page.goto("/auth/kakao/callback?code=fake-code");
 
     await page.waitForURL("**/lobby", { timeout: 15_000 });
-    await expect(page.getByRole("heading", { name: "서버 목록" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "서버 목록" }),
+    ).toBeVisible();
 
     // Select world then enter game
     await page.getByText("E2E 월드").first().click();
@@ -113,7 +117,9 @@ test.describe("OAuth gate: login -> lobby -> world entry", () => {
 
     await page.waitForURL("**/", { timeout: 15_000 });
 
-    const storedToken = await page.evaluate(() => localStorage.getItem("token"));
+    const storedToken = await page.evaluate(() =>
+      localStorage.getItem("token"),
+    );
     expect(storedToken).toBeTruthy();
   });
 
@@ -128,6 +134,8 @@ test.describe("OAuth gate: login -> lobby -> world entry", () => {
 
     await page.goto("/auth/kakao/callback?code=bad-code");
     await page.waitForURL("**/login", { timeout: 15_000 });
-    await expect(page.getByRole("button", { name: "카카오 로그인" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "카카오 로그인" }),
+    ).toBeVisible();
   });
 });

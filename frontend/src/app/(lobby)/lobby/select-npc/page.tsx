@@ -283,16 +283,22 @@ export default function LobbySelectNpcPage() {
                     <div className="space-y-1 text-xs">
                       <p title={npc.personalityInfo ?? ""}>
                         <span className="text-muted-foreground">성격</span>{" "}
-                        <span className="cursor-help underline decoration-dotted">{npc.personality}</span>
+                        <span className="cursor-help underline decoration-dotted">
+                          {npc.personality}
+                        </span>
                       </p>
                       <p title={npc.specialInfo ?? ""}>
                         <span className="text-muted-foreground">특기</span>{" "}
-                        <span className="cursor-help underline decoration-dotted">{npc.special}</span>
+                        <span className="cursor-help underline decoration-dotted">
+                          {npc.special}
+                        </span>
                       </p>
                       {npc.special2 && npc.special2 !== "None" && (
                         <p title={npc.special2Info ?? ""}>
                           <span className="text-muted-foreground">특기2</span>{" "}
-                          <span className="cursor-help underline decoration-dotted">{npc.special2}</span>
+                          <span className="cursor-help underline decoration-dotted">
+                            {npc.special2}
+                          </span>
                         </p>
                       )}
                     </div>
@@ -300,12 +306,16 @@ export default function LobbySelectNpcPage() {
                     {/* Dex (숙련도) summary if available */}
                     {npc.dex && (
                       <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                        {["보병", "궁병", "기병", "귀병", "차병"].map((name, i) => (
-                          <div key={name} className="flex justify-between">
-                            <span>{name}</span>
-                            <span className="text-foreground">{Math.floor(npc.dex![i] / 1000)}K</span>
-                          </div>
-                        ))}
+                        {["보병", "궁병", "기병", "귀병", "차병"].map(
+                          (name, i) => (
+                            <div key={name} className="flex justify-between">
+                              <span>{name}</span>
+                              <span className="text-foreground">
+                                {Math.floor(npc.dex![i] / 1000)}K
+                              </span>
+                            </div>
+                          ),
+                        )}
                       </div>
                     )}
 
@@ -322,7 +332,9 @@ export default function LobbySelectNpcPage() {
                       />
                       보존
                       {npc.keepCount != null && npc.keepCount > 0 && (
-                        <span className="text-yellow-400">보관({npc.keepCount}회)</span>
+                        <span className="text-yellow-400">
+                          보관({npc.keepCount}회)
+                        </span>
                       )}
                     </label>
 
@@ -438,9 +450,7 @@ export default function LobbySelectNpcPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() =>
-                  setGeneralListLimit((prev) => prev + 30)
-                }
+                onClick={() => setGeneralListLimit((prev) => prev + 30)}
               >
                 장수 더 보기 ({generalList.length - generalListLimit}명 남음)
               </Button>

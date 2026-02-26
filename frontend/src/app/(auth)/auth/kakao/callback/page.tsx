@@ -41,7 +41,9 @@ function KakaoCallbackPageContent() {
         if (mode === "link") {
           await accountApi.completeOAuthLink(provider, code, redirectUri);
           toast.success("카카오 계정 연동이 완료되었습니다.");
-          router.replace(`/account?oauth=linked&provider=${encodeURIComponent(provider)}`);
+          router.replace(
+            `/account?oauth=linked&provider=${encodeURIComponent(provider)}`,
+          );
           return;
         }
 
@@ -57,7 +59,9 @@ function KakaoCallbackPageContent() {
 
         if (mode === "link") {
           toast.error("카카오 계정 연동에 실패했습니다.");
-          router.replace(`/account?oauth=link_failed&provider=${encodeURIComponent(provider)}`);
+          router.replace(
+            `/account?oauth=link_failed&provider=${encodeURIComponent(provider)}`,
+          );
           return;
         }
 
@@ -74,7 +78,9 @@ function KakaoCallbackPageContent() {
 
 export default function KakaoCallbackPage() {
   return (
-    <Suspense fallback={<LoadingState message="카카오 인증 정보를 확인 중..." />}>
+    <Suspense
+      fallback={<LoadingState message="카카오 인증 정보를 확인 중..." />}
+    >
       <KakaoCallbackPageContent />
     </Suspense>
   );

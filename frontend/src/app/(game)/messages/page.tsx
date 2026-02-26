@@ -45,12 +45,14 @@ export default function MessagesPage() {
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
-  const [hasMoreByTab, setHasMoreByTab] = useState<Record<MailboxTab, boolean>>({
-    public: true,
-    national: true,
-    private: true,
-    diplomacy: true,
-  });
+  const [hasMoreByTab, setHasMoreByTab] = useState<Record<MailboxTab, boolean>>(
+    {
+      public: true,
+      national: true,
+      private: true,
+      diplomacy: true,
+    },
+  );
 
   const canUseDiplomacy = (myGeneral?.officerLevel ?? 0) >= 4;
 
@@ -106,9 +108,16 @@ export default function MessagesPage() {
         public: { worldId: currentWorld.id },
         national: { nationId: myGeneral.nationId },
         private: { generalId: myGeneral.id },
-        diplomacy: { nationId: myGeneral.nationId, officerLevel: myGeneral.officerLevel },
+        diplomacy: {
+          nationId: myGeneral.nationId,
+          officerLevel: myGeneral.officerLevel,
+        },
       }[tab];
-      const res = await messageApi.getByType(tab, { ...typeParams, beforeId: oldestId, limit: 30 });
+      const res = await messageApi.getByType(tab, {
+        ...typeParams,
+        beforeId: oldestId,
+        limit: 30,
+      });
       if (res.data.length === 0) {
         setHasMoreByTab((prev) => ({ ...prev, [tab]: false }));
       } else {
@@ -124,10 +133,13 @@ export default function MessagesPage() {
 
   /** Set compose form to reply to a specific message sender */
   const handleReplyTo = useCallback((msg: Message) => {
-    const isNationMsg = msg.mailboxType === "NATIONAL" || msg.mailboxType === "DIPLOMACY";
+    const isNationMsg =
+      msg.mailboxType === "NATIONAL" || msg.mailboxType === "DIPLOMACY";
     if (isNationMsg && msg.srcId) {
       setRecipientType("nation");
-      setMailboxType(msg.mailboxType === "DIPLOMACY" ? "DIPLOMACY" : "NATIONAL");
+      setMailboxType(
+        msg.mailboxType === "DIPLOMACY" ? "DIPLOMACY" : "NATIONAL",
+      );
       setDestNationId(String(msg.srcId));
     } else if (msg.srcId) {
       setRecipientType("general");
@@ -206,7 +218,11 @@ export default function MessagesPage() {
     }
   };
 
-  const handleDiplomacyResponse = async (messageId: number, action: string, accept: boolean) => {
+  const handleDiplomacyResponse = async (
+    messageId: number,
+    action: string,
+    accept: boolean,
+  ) => {
     if (!currentWorld) return;
     try {
       await diplomacyApi.respond(currentWorld.id, messageId, action, accept);
@@ -499,80 +515,102 @@ export default function MessagesPage() {
         {inbox.length === 0 ? (
           <EmptyState icon={Mail} title="서신이 없습니다." />
         ) : (
-          [...inbox].sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()).map((m) => {
-            const senderGeneral = m.srcId ? generalMap.get(m.srcId) : null;
-            const senderNation = m.srcId ? nationMap.get(m.srcId) : null;
-            const senderName =
-              m.mailboxType === "NATIONAL" || m.mailboxType === "DIPLOMACY"
-                ? senderNation?.name
-                : senderGeneral?.name;
-            return (
-              <Card key={m.id} onClick={() => handleMarkAsRead(m.id)}>
-                <CardContent className="space-y-1">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">
-                      {senderName ??
-                        (m.payload.sender as string) ??
-                        `${m.mailboxType === "NATIONAL" || m.mailboxType === "DIPLOMACY" ? "국가" : "장수"}#${m.srcId ?? "시스템"}`}
-                    </span>
-                    <span>{new Date(m.sentAt).toLocaleString("ko-KR")}</span>
-                    {typeof m.meta.readAt !== "string" && (
-                      <Badge className="bg-amber-500 text-black">NEW</Badge>
-                    )}
-                    {m.srcId != null && m.mailboxType !== "PUBLIC" && (
+          [...inbox]
+            .sort(
+              (a, b) =>
+                new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime(),
+            )
+            .map((m) => {
+              const senderGeneral = m.srcId ? generalMap.get(m.srcId) : null;
+              const senderNation = m.srcId ? nationMap.get(m.srcId) : null;
+              const senderName =
+                m.mailboxType === "NATIONAL" || m.mailboxType === "DIPLOMACY"
+                  ? senderNation?.name
+                  : senderGeneral?.name;
+              return (
+                <Card key={m.id} onClick={() => handleMarkAsRead(m.id)}>
+                  <CardContent className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        {senderName ??
+                          (m.payload.sender as string) ??
+                          `${m.mailboxType === "NATIONAL" || m.mailboxType === "DIPLOMACY" ? "국가" : "장수"}#${m.srcId ?? "시스템"}`}
+                      </span>
+                      <span>{new Date(m.sentAt).toLocaleString("ko-KR")}</span>
+                      {typeof m.meta.readAt !== "string" && (
+                        <Badge className="bg-amber-500 text-black">NEW</Badge>
+                      )}
+                      {m.srcId != null && m.mailboxType !== "PUBLIC" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto h-6 w-6 p-0"
+                          title="답장"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReplyTo(m);
+                          }}
+                        >
+                          <Reply className="size-3.5" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="ml-auto h-6 w-6 p-0"
-                        title="답장"
+                        className={`h-6 w-6 p-0 ${m.srcId != null && m.mailboxType !== "PUBLIC" ? "" : "ml-auto"}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleReplyTo(m);
+                          handleDelete(m.id);
                         }}
                       >
-                        <Reply className="size-3.5" />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`h-6 w-6 p-0 ${m.srcId != null && m.mailboxType !== "PUBLIC" ? "" : "ml-auto"}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(m.id);
-                      }}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                  <p className="text-sm">
-                    {(m.payload.content as string) ?? JSON.stringify(m.payload)}
-                  </p>
-                  {/* Diplomacy action buttons (수락/거절) */}
-                  {m.mailboxType === "DIPLOMACY" && typeof m.payload.action === "string" && (
-                    <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="bg-green-700 hover:bg-green-600 text-xs h-7"
-                        onClick={() => handleDiplomacyResponse(m.id, m.payload.action as string, true)}
-                      >
-                        수락
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="text-xs h-7"
-                        onClick={() => handleDiplomacyResponse(m.id, m.payload.action as string, false)}
-                      >
-                        거절
+                        <Trash2 className="size-3.5" />
                       </Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })
+                    <p className="text-sm">
+                      {(m.payload.content as string) ??
+                        JSON.stringify(m.payload)}
+                    </p>
+                    {/* Diplomacy action buttons (수락/거절) */}
+                    {m.mailboxType === "DIPLOMACY" &&
+                      typeof m.payload.action === "string" && (
+                        <div
+                          className="flex gap-2 mt-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="bg-green-700 hover:bg-green-600 text-xs h-7"
+                            onClick={() =>
+                              handleDiplomacyResponse(
+                                m.id,
+                                m.payload.action as string,
+                                true,
+                              )
+                            }
+                          >
+                            수락
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="text-xs h-7"
+                            onClick={() =>
+                              handleDiplomacyResponse(
+                                m.id,
+                                m.payload.action as string,
+                                false,
+                              )
+                            }
+                          >
+                            거절
+                          </Button>
+                        </div>
+                      )}
+                  </CardContent>
+                </Card>
+              );
+            })
         )}
         {inbox.length > 0 && hasMoreByTab[tab] && (
           <Button

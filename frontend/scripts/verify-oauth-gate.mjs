@@ -38,17 +38,13 @@ for (const fileName of envFiles) {
   }
 }
 
-const requiredEnv = [
-  "NEXT_PUBLIC_API_URL",
-  "NEXT_PUBLIC_KAKAO_CLIENT_ID",
-];
+const requiredEnv = ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_KAKAO_CLIENT_ID"];
 
-const optionalEnv = [
-  "NEXT_PUBLIC_WS_URL",
-  "NEXT_PUBLIC_SERVER_MAP_URL",
-];
+const optionalEnv = ["NEXT_PUBLIC_WS_URL", "NEXT_PUBLIC_SERVER_MAP_URL"];
 
-const missing = requiredEnv.filter((k) => !process.env[k] || !String(process.env[k]).trim());
+const missing = requiredEnv.filter(
+  (k) => !process.env[k] || !String(process.env[k]).trim(),
+);
 
 console.log("[oauth-gate] Required env checks");
 for (const key of requiredEnv) {
@@ -64,12 +60,16 @@ for (const key of optionalEnv) {
 
 if (missing.length > 0) {
   console.error(`\nMissing required env var(s): ${missing.join(", ")}`);
-  console.error("Set them in frontend/.env.local or export them before running this command.");
+  console.error(
+    "Set them in frontend/.env.local or export them before running this command.",
+  );
   process.exit(1);
 }
 
 if (!process.argv.includes("--probe")) {
-  console.log("\nEnv looks good. Skipping endpoint probe (pass --probe to enable).");
+  console.log(
+    "\nEnv looks good. Skipping endpoint probe (pass --probe to enable).",
+  );
   process.exit(0);
 }
 
@@ -81,7 +81,11 @@ const checks = [
     name: "oauth login endpoint (shape check)",
     url: `${apiBase}/auth/oauth/login`,
     method: "POST",
-    body: { provider: "kakao", code: "health-check", redirectUri: "http://localhost:3000/auth/kakao/callback" },
+    body: {
+      provider: "kakao",
+      code: "health-check",
+      redirectUri: "http://localhost:3000/auth/kakao/callback",
+    },
   },
 ];
 
@@ -95,15 +99,16 @@ for (const check of checks) {
     });
 
     // oauth/login often returns 4xx on fake code; that still proves route is reachable.
-    const ok =
-      check.name.includes("oauth login endpoint")
-        ? res.status !== 404 && res.status !== 405
-        : res.ok;
+    const ok = check.name.includes("oauth login endpoint")
+      ? res.status !== 404 && res.status !== 405
+      : res.ok;
 
     console.log(` - ${check.name}: ${ok ? "OK" : `FAIL (${res.status})`}`);
     if (!ok) failed = true;
   } catch (err) {
-    console.log(` - ${check.name}: FAIL (${err instanceof Error ? err.message : String(err)})`);
+    console.log(
+      ` - ${check.name}: FAIL (${err instanceof Error ? err.message : String(err)})`,
+    );
     failed = true;
   }
 }

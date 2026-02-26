@@ -6,7 +6,17 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { troopApi } from "@/lib/gameApi";
 import type { Troop, General } from "@/types";
-import { Shield, Plus, Swords, Clock, FileText, MapPin, Activity, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Shield,
+  Plus,
+  Swords,
+  Clock,
+  FileText,
+  MapPin,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,18 +49,21 @@ function TurnBrief({ members }: { members: General[] }) {
       : 0;
   const injuredCount = members.filter((g) => g.injury > 0).length;
   const lowCrewCount = members.filter((g) => g.crew < 3000).length;
-  const readyCount = members.filter((g) => !g.commandEndTime || new Date(g.commandEndTime) <= new Date()).length;
+  const readyCount = members.filter(
+    (g) => !g.commandEndTime || new Date(g.commandEndTime) <= new Date(),
+  ).length;
 
   return (
     <div className="bg-blue-950/30 border border-blue-900/50 rounded-lg p-3 space-y-2">
       <div className="flex items-center gap-2 text-xs font-medium text-blue-300">
-        <Activity className="size-3" />
-        턴 브리프
+        <Activity className="size-3" />턴 브리프
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs">
         <div className="text-center">
           <div className="text-muted-foreground">총 병력</div>
-          <div className="text-blue-400 font-bold tabular-nums">{totalCrew.toLocaleString()}</div>
+          <div className="text-blue-400 font-bold tabular-nums">
+            {totalCrew.toLocaleString()}
+          </div>
         </div>
         <div className="text-center">
           <div className="text-muted-foreground">평균 훈련</div>
@@ -62,15 +75,25 @@ function TurnBrief({ members }: { members: General[] }) {
         </div>
         <div className="text-center">
           <div className="text-muted-foreground">대기 가능</div>
-          <div className="text-green-400 tabular-nums font-bold">{readyCount}/{members.length}</div>
+          <div className="text-green-400 tabular-nums font-bold">
+            {readyCount}/{members.length}
+          </div>
         </div>
         <div className="text-center">
           <div className="text-muted-foreground">부상</div>
-          <div className={`tabular-nums font-bold ${injuredCount > 0 ? "text-orange-400" : ""}`}>{injuredCount}명</div>
+          <div
+            className={`tabular-nums font-bold ${injuredCount > 0 ? "text-orange-400" : ""}`}
+          >
+            {injuredCount}명
+          </div>
         </div>
         <div className="text-center">
           <div className="text-muted-foreground">병력 부족</div>
-          <div className={`tabular-nums font-bold ${lowCrewCount > 0 ? "text-red-400" : ""}`}>{lowCrewCount}명</div>
+          <div
+            className={`tabular-nums font-bold ${lowCrewCount > 0 ? "text-red-400" : ""}`}
+          >
+            {lowCrewCount}명
+          </div>
         </div>
       </div>
     </div>
@@ -93,24 +116,40 @@ function CommandTimeline({ members }: { members: General[] }) {
       >
         <Clock className="size-3" />
         명령 타임라인
-        {expanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+        {expanded ? (
+          <ChevronUp className="size-3" />
+        ) : (
+          <ChevronDown className="size-3" />
+        )}
       </button>
       {expanded && (
         <div className="relative pl-4 border-l border-gray-700 space-y-1.5 ml-1">
           {sorted.map((g) => {
-            const endTime = g.commandEndTime ? new Date(g.commandEndTime) : null;
+            const endTime = g.commandEndTime
+              ? new Date(g.commandEndTime)
+              : null;
             const isActive = endTime && endTime > new Date();
             const lastTurnAction = g.lastTurn?.actionCode as string | undefined;
             return (
-              <div key={g.id} className="flex items-center gap-2 text-xs relative">
-                <div className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full border-2 ${isActive ? "bg-yellow-500 border-yellow-400" : "bg-gray-600 border-gray-500"}`} />
+              <div
+                key={g.id}
+                className="flex items-center gap-2 text-xs relative"
+              >
+                <div
+                  className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full border-2 ${isActive ? "bg-yellow-500 border-yellow-400" : "bg-gray-600 border-gray-500"}`}
+                />
                 <span className="font-medium w-16 truncate">{g.name}</span>
                 <span className="text-muted-foreground">
                   {lastTurnAction || "대기"}
                 </span>
                 {endTime && (
-                  <span className={`ml-auto tabular-nums ${isActive ? "text-yellow-400" : "text-gray-500"}`}>
-                    {endTime.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                  <span
+                    className={`ml-auto tabular-nums ${isActive ? "text-yellow-400" : "text-gray-500"}`}
+                  >
+                    {endTime.toLocaleTimeString("ko-KR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </span>
                 )}
               </div>
@@ -274,9 +313,13 @@ function MemberRow({
               <span className="text-muted-foreground">수비훈</span>
               <span className="tabular-nums">{g.defenceTrain ?? "-"}</span>
               <span className="text-muted-foreground">금</span>
-              <span className="tabular-nums">{g.gold?.toLocaleString() ?? "-"}</span>
+              <span className="tabular-nums">
+                {g.gold?.toLocaleString() ?? "-"}
+              </span>
               <span className="text-muted-foreground">쌀</span>
-              <span className="tabular-nums">{g.rice?.toLocaleString() ?? "-"}</span>
+              <span className="tabular-nums">
+                {g.rice?.toLocaleString() ?? "-"}
+              </span>
               {cityName && (
                 <>
                   <span className="text-muted-foreground">도시</span>
@@ -292,7 +335,9 @@ function MemberRow({
               {g.commandEndTime && (
                 <>
                   <span className="text-muted-foreground">명령 종료</span>
-                  <span className="tabular-nums">{g.commandEndTime.slice(-8)}</span>
+                  <span className="tabular-nums">
+                    {g.commandEndTime.slice(-8)}
+                  </span>
                 </>
               )}
             </div>
@@ -489,8 +534,7 @@ export default function TroopPage() {
           const members = troopMembers.get(t.id) ?? [];
           const isLeader = myGeneral.id === t.leaderGeneralId;
           const isMember = members.some((m) => m.id === myGeneral.id);
-          const canRename =
-            isLeader && (myGeneral.officerLevel ?? 0) >= 4;
+          const canRename = isLeader && (myGeneral.officerLevel ?? 0) >= 4;
 
           return (
             <Card key={t.id}>

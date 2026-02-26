@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Plus, Trash2, Globe, Play, Pause, RotateCcw, MessageSquarePlus } from "lucide-react";
+import {
+  LayoutDashboard,
+  Plus,
+  Trash2,
+  Globe,
+  Play,
+  Pause,
+  RotateCcw,
+  MessageSquarePlus,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,14 +43,23 @@ export default function AdminDashboardPage() {
   const [savingSystemFlags, setSavingSystemFlags] = useState(false);
 
   // World management
-  const [worlds, setWorlds] = useState<{ id: number; scenarioCode: string; year: number; month: number; locked: boolean }[]>([]);
+  const [worlds, setWorlds] = useState<
+    {
+      id: number;
+      scenarioCode: string;
+      year: number;
+      month: number;
+      locked: boolean;
+    }[]
+  >([]);
   const [newScenario, setNewScenario] = useState("");
   const [newTurnTerm, setNewTurnTerm] = useState("300");
   const [creating, setCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const loadWorlds = () => {
-    adminApi.listWorlds()
+    adminApi
+      .listWorlds()
       .then((res) => setWorlds(res.data))
       .catch(() => {});
   };
@@ -49,7 +67,8 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadWorlds();
 
-    adminApi.getSystemFlags()
+    adminApi
+      .getSystemFlags()
       .then((res) => {
         setAllowLogin(res.data.allowLogin);
         setAllowJoin(res.data.allowJoin);
@@ -100,7 +119,12 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteWorld = async (worldId: number) => {
-    if (!confirm(`월드 #${worldId}를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+    if (
+      !confirm(
+        `월드 #${worldId}를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+      )
+    )
+      return;
     try {
       await adminApi.deleteWorld(worldId);
       toast.success(`월드 #${worldId} 삭제 완료`);
@@ -110,10 +134,18 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleWorldAction = async (worldId: number, action: "open" | "close" | "reset") => {
+  const handleWorldAction = async (
+    worldId: number,
+    action: "open" | "close" | "reset",
+  ) => {
     const labels = { open: "오픈", close: "폐쇄", reset: "리셋" };
     if (action === "reset") {
-      if (!confirm(`월드 #${worldId}를 정말 리셋하시겠습니까? 모든 데이터가 초기화됩니다.`)) return;
+      if (
+        !confirm(
+          `월드 #${worldId}를 정말 리셋하시겠습니까? 모든 데이터가 초기화됩니다.`,
+        )
+      )
+        return;
     }
     try {
       if (action === "open") {
@@ -215,12 +247,16 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-medium">전역 스위치</p>
-                <p className="text-xs text-muted-foreground">(가입/로그인 허용)</p>
+                <p className="text-xs text-muted-foreground">
+                  (가입/로그인 허용)
+                </p>
               </div>
               <Button
                 size="sm"
                 variant="outline"
-                disabled={savingSystemFlags || allowLogin === null || allowJoin === null}
+                disabled={
+                  savingSystemFlags || allowLogin === null || allowJoin === null
+                }
                 onClick={handleSaveSystemFlags}
               >
                 저장
@@ -257,7 +293,9 @@ export default function AdminDashboardPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">중원정세 추가</label>
+            <label className="text-sm text-muted-foreground">
+              중원정세 추가
+            </label>
             <div className="flex gap-2">
               <Input
                 value={logMessage}
@@ -315,8 +353,7 @@ export default function AdminDashboardPage() {
             variant="outline"
             onClick={() => setShowCreateForm(!showCreateForm)}
           >
-            <Plus className="size-4 mr-1" />
-            새 월드 생성
+            <Plus className="size-4 mr-1" />새 월드 생성
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -325,7 +362,9 @@ export default function AdminDashboardPage() {
               <h4 className="text-sm font-medium">새 월드 생성</h4>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">시나리오 코드</label>
+                  <label className="text-xs text-muted-foreground">
+                    시나리오 코드
+                  </label>
                   <Input
                     value={newScenario}
                     onChange={(e) => setNewScenario(e.target.value)}
@@ -333,7 +372,9 @@ export default function AdminDashboardPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">턴 간격 (초)</label>
+                  <label className="text-xs text-muted-foreground">
+                    턴 간격 (초)
+                  </label>
                   <Input
                     type="number"
                     value={newTurnTerm}
@@ -343,10 +384,18 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleCreateWorld} disabled={creating}>
+                <Button
+                  size="sm"
+                  onClick={handleCreateWorld}
+                  disabled={creating}
+                >
                   {creating ? "생성 중..." : "생성"}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => setShowCreateForm(false)}>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowCreateForm(false)}
+                >
                   취소
                 </Button>
               </div>
@@ -370,8 +419,12 @@ export default function AdminDashboardPage() {
                 {worlds.map((w) => (
                   <TableRow key={w.id}>
                     <TableCell>{w.id}</TableCell>
-                    <TableCell className="font-medium">{w.scenarioCode}</TableCell>
-                    <TableCell>{w.year}년 {w.month}월</TableCell>
+                    <TableCell className="font-medium">
+                      {w.scenarioCode}
+                    </TableCell>
+                    <TableCell>
+                      {w.year}년 {w.month}월
+                    </TableCell>
                     <TableCell>
                       {w.locked ? (
                         <Badge variant="destructive">잠금</Badge>
@@ -382,23 +435,39 @@ export default function AdminDashboardPage() {
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {w.locked ? (
-                          <Button size="sm" variant="outline" onClick={() => handleWorldAction(w.id, "open")}>
-                            <Play className="size-3.5 mr-1" />오픈
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleWorldAction(w.id, "open")}
+                          >
+                            <Play className="size-3.5 mr-1" />
+                            오픈
                           </Button>
                         ) : (
-                          <Button size="sm" variant="outline" onClick={() => handleWorldAction(w.id, "close")}>
-                            <Pause className="size-3.5 mr-1" />폐쇄
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleWorldAction(w.id, "close")}
+                          >
+                            <Pause className="size-3.5 mr-1" />
+                            폐쇄
                           </Button>
                         )}
-                        <Button size="sm" variant="secondary" onClick={() => handleWorldAction(w.id, "reset")}>
-                          <RotateCcw className="size-3.5 mr-1" />리셋
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleWorldAction(w.id, "reset")}
+                        >
+                          <RotateCcw className="size-3.5 mr-1" />
+                          리셋
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteWorld(w.id)}
                         >
-                          <Trash2 className="size-3.5 mr-1" />삭제
+                          <Trash2 className="size-3.5 mr-1" />
+                          삭제
                         </Button>
                       </div>
                     </TableCell>

@@ -139,7 +139,10 @@ export default function BoardPage() {
         loadSecret();
       },
     );
-    return () => { unsubMsg(); unsubTurn(); };
+    return () => {
+      unsubMsg();
+      unsubTurn();
+    };
   }, [currentWorld, loadPublic, loadSecret]);
 
   const handlePost = async () => {
@@ -429,7 +432,9 @@ function BoardRow({
   const postContent = (post.payload.content as string) ?? "";
   const displayPreview = postTitle || postContent;
   const preview =
-    displayPreview.length > 50 ? displayPreview.slice(0, 50) + "..." : displayPreview;
+    displayPreview.length > 50
+      ? displayPreview.slice(0, 50) + "..."
+      : displayPreview;
   const sentDate = new Date(post.sentAt);
 
   return (
@@ -510,9 +515,7 @@ function BoardRow({
                   </Button>
                 )}
               </div>
-              {postTitle && (
-                <p className="text-sm font-bold">{postTitle}</p>
-              )}
+              {postTitle && <p className="text-sm font-bold">{postTitle}</p>}
               <p className="text-xs whitespace-pre-wrap leading-relaxed">
                 {formatLog(postContent)}
               </p>

@@ -69,11 +69,16 @@ function AccountPageContent() {
   const [iconSyncLoading, setIconSyncLoading] = useState(false);
 
   // Third-party consent withdrawal
-  const [thirdUseStatus, setThirdUseStatus] = useState<boolean>(user?.thirdUse ?? false);
+  const [thirdUseStatus, setThirdUseStatus] = useState<boolean>(
+    user?.thirdUse ?? false,
+  );
   const [thirdUseLoading, setThirdUseLoading] = useState(false);
 
   // Detailed user info
-  const [detailedInfo, setDetailedInfo] = useState<Record<string, unknown> | null>(null);
+  const [detailedInfo, setDetailedInfo] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   // Account deletion modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -97,10 +102,14 @@ function AccountPageContent() {
   useEffect(() => {
     fetchOAuthProviders();
     // Fetch detailed user info (legacy parity: user_info.php)
-    accountApi.getDetailedInfo().then(({ data }) => {
-      setDetailedInfo(data);
-      if (typeof data.thirdUse === "boolean") setThirdUseStatus(data.thirdUse);
-    }).catch(() => {});
+    accountApi
+      .getDetailedInfo()
+      .then(({ data }) => {
+        setDetailedInfo(data);
+        if (typeof data.thirdUse === "boolean")
+          setThirdUseStatus(data.thirdUse);
+      })
+      .catch(() => {});
   }, [fetchOAuthProviders]);
 
   useEffect(() => {
@@ -238,8 +247,10 @@ function AccountPageContent() {
   const withOAuthLinkMode = (redirectUrl: string, provider: string) => {
     try {
       const parsed = new URL(redirectUrl, window.location.origin);
-      if (!parsed.searchParams.get("mode")) parsed.searchParams.set("mode", "link");
-      if (!parsed.searchParams.get("provider")) parsed.searchParams.set("provider", provider);
+      if (!parsed.searchParams.get("mode"))
+        parsed.searchParams.set("mode", "link");
+      if (!parsed.searchParams.get("provider"))
+        parsed.searchParams.set("provider", provider);
       return parsed.toString();
     } catch {
       return redirectUrl;
@@ -335,11 +346,23 @@ function AccountPageContent() {
                   </p>
                   <p>
                     <span className="text-muted-foreground">가입일:</span>{" "}
-                    {detailedInfo.joinDate ? new Date(String(detailedInfo.joinDate)).toLocaleDateString("ko-KR") : "-"}
+                    {detailedInfo.joinDate
+                      ? new Date(
+                          String(detailedInfo.joinDate),
+                        ).toLocaleDateString("ko-KR")
+                      : "-"}
                   </p>
                   <p>
-                    <span className="text-muted-foreground">제3자 제공 동의:</span>{" "}
-                    <span className={thirdUseStatus ? "text-green-400" : "text-muted-foreground"}>
+                    <span className="text-muted-foreground">
+                      제3자 제공 동의:
+                    </span>{" "}
+                    <span
+                      className={
+                        thirdUseStatus
+                          ? "text-green-400"
+                          : "text-muted-foreground"
+                      }
+                    >
                       {thirdUseStatus ? "동의" : "미동의"}
                     </span>
                   </p>
@@ -351,8 +374,12 @@ function AccountPageContent() {
                   )}
                   {detailedInfo.tokenValidUntil && (
                     <p>
-                      <span className="text-muted-foreground">토큰 유효기간:</span>{" "}
-                      {new Date(String(detailedInfo.tokenValidUntil)).toLocaleString("ko-KR")}
+                      <span className="text-muted-foreground">
+                        토큰 유효기간:
+                      </span>{" "}
+                      {new Date(
+                        String(detailedInfo.tokenValidUntil),
+                      ).toLocaleString("ko-KR")}
                     </p>
                   )}
                 </>
@@ -391,9 +418,17 @@ function AccountPageContent() {
             <div className="flex items-center gap-3">
               <div className="size-16 rounded border border-input bg-muted flex items-center justify-center text-xs text-muted-foreground overflow-hidden">
                 {iconPreview ? (
-                  <img src={iconPreview} alt="전콘 미리보기" className="size-full object-cover" />
+                  <img
+                    src={iconPreview}
+                    alt="전콘 미리보기"
+                    className="size-full object-cover"
+                  />
                 ) : user?.picture ? (
-                  <img src={user.picture} alt="전콘" className="size-full object-cover" />
+                  <img
+                    src={user.picture}
+                    alt="전콘"
+                    className="size-full object-cover"
+                  />
                 ) : (
                   "없음"
                 )}
@@ -401,7 +436,12 @@ function AccountPageContent() {
               <div className="space-y-2 flex-1">
                 {/* File upload */}
                 <div className="space-y-1">
-                  <label htmlFor="icon-upload-input" className="text-xs text-muted-foreground">파일 업로드</label>
+                  <label
+                    htmlFor="icon-upload-input"
+                    className="text-xs text-muted-foreground"
+                  >
+                    파일 업로드
+                  </label>
                   <div className="flex items-center gap-2">
                     <input
                       id="icon-upload-input"
@@ -439,15 +479,25 @@ function AccountPageContent() {
                 </div>
                 {/* Delete + Sync buttons */}
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="destructive" onClick={handleIconDelete}>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleIconDelete}
+                  >
                     <Trash2 className="size-3 mr-1" /> 전콘 삭제
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowIconSync(true)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowIconSync(true)}
+                  >
                     <RefreshCw className="size-3 mr-1" /> 서버 동기화
                   </Button>
                 </div>
                 {(pictureMsg || iconMsg) && (
-                  <p className={`text-xs ${(pictureMsg || iconMsg).includes("실패") ? "text-red-400" : "text-green-400"}`}>
+                  <p
+                    className={`text-xs ${(pictureMsg || iconMsg).includes("실패") ? "text-red-400" : "text-green-400"}`}
+                  >
                     {iconMsg || pictureMsg}
                   </p>
                 )}
@@ -477,8 +527,7 @@ function AccountPageContent() {
                   const linkedInfo = oauthProviders.find(
                     (p) => p.provider === provider.id,
                   );
-                  const isActionLoading =
-                    oauthActionLoading === provider.id;
+                  const isActionLoading = oauthActionLoading === provider.id;
 
                   return (
                     <div
@@ -654,8 +703,8 @@ function AccountPageContent() {
                 전콘 서버 동기화
               </h3>
               <p className="text-sm text-muted-foreground">
-                현재 설정된 전콘을 모든 서버의 장수에 동기화합니다.
-                각 서버에서 사용 중인 전콘이 모두 현재 전콘으로 변경됩니다.
+                현재 설정된 전콘을 모든 서버의 장수에 동기화합니다. 각 서버에서
+                사용 중인 전콘이 모두 현재 전콘으로 변경됩니다.
               </p>
               <div className="flex gap-2">
                 <Button
@@ -721,7 +770,10 @@ function AccountPageContent() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="delete-password-input" className="text-xs text-muted-foreground">
+                <label
+                  htmlFor="delete-password-input"
+                  className="text-xs text-muted-foreground"
+                >
                   비밀번호를 입력하세요
                 </label>
                 <Input
@@ -734,7 +786,10 @@ function AccountPageContent() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="delete-confirm-input" className="text-xs text-muted-foreground">
+                <label
+                  htmlFor="delete-confirm-input"
+                  className="text-xs text-muted-foreground"
+                >
                   확인을 위해{" "}
                   <span className="font-bold text-red-400">탈퇴합니다</span>를
                   입력하세요
@@ -796,7 +851,13 @@ function AccountPageContent() {
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<div className="w-full max-w-md p-8 text-sm text-muted-foreground">계정 정보를 불러오는 중...</div>}>
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md p-8 text-sm text-muted-foreground">
+          계정 정보를 불러오는 중...
+        </div>
+      }
+    >
       <AccountPageContent />
     </Suspense>
   );

@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Handshake, Shield, Swords, Minus, RefreshCw, Timer } from "lucide-react";
+import {
+  Handshake,
+  Shield,
+  Swords,
+  Minus,
+  RefreshCw,
+  Timer,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Badge } from "@/components/ui/badge";
@@ -182,7 +189,7 @@ export default function AdminDiplomacyPage() {
             onClick={() => setStateFilter(s)}
             className={cn(
               "rounded-md border px-3 py-2 text-left text-sm",
-              stateFilter === s && "border-primary bg-primary/5"
+              stateFilter === s && "border-primary bg-primary/5",
             )}
           >
             <div className="text-muted-foreground text-xs">{stateLabel(s)}</div>
@@ -231,16 +238,29 @@ export default function AdminDiplomacyPage() {
                     </TableCell>
                     <TableCell className="text-right">{n.genCount}</TableCell>
                     <TableCell className="text-right">{n.cityCount}</TableCell>
-                    <TableCell className="text-right">{n.totalCrew.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{n.gold.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{n.rice.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{n.tech.toFixed(1)}</TableCell>
-                    <TableCell className="text-right font-semibold">{n.power.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      {n.totalCrew.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {n.gold.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {n.rice.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {n.tech.toFixed(1)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {n.power.toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {nations.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={8}
+                      className="text-center text-muted-foreground"
+                    >
                       국가가 없습니다.
                     </TableCell>
                   </TableRow>
@@ -269,8 +289,13 @@ export default function AdminDiplomacyPage() {
                           className="p-2 border border-border bg-muted text-center min-w-[60px]"
                         >
                           <div className="flex flex-col items-center gap-1">
-                            <div className="size-2 rounded-full" style={{ backgroundColor: n.color }} />
-                            <span className="truncate max-w-[60px]">{n.name}</span>
+                            <div
+                              className="size-2 rounded-full"
+                              style={{ backgroundColor: n.color }}
+                            />
+                            <span className="truncate max-w-[60px]">
+                              {n.name}
+                            </span>
                           </div>
                         </th>
                       ))}
@@ -281,7 +306,10 @@ export default function AdminDiplomacyPage() {
                       <tr key={rowNation.nationId}>
                         <td className="p-2 border border-border bg-muted font-medium whitespace-nowrap">
                           <div className="flex items-center gap-1">
-                            <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: rowNation.color }} />
+                            <div
+                              className="size-2 rounded-full shrink-0"
+                              style={{ backgroundColor: rowNation.color }}
+                            />
                             {rowNation.name}
                           </div>
                         </td>
@@ -296,26 +324,37 @@ export default function AdminDiplomacyPage() {
                               </td>
                             );
                           }
-                          const rel = getRelation(rowNation.nationId, colNation.nationId);
+                          const rel = getRelation(
+                            rowNation.nationId,
+                            colNation.nationId,
+                          );
                           const state = rel?.stateCode ?? "neutral";
                           return (
-                            <td key={colNation.nationId} className="p-1 border border-border text-center">
+                            <td
+                              key={colNation.nationId}
+                              className="p-1 border border-border text-center"
+                            >
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <div
                                     className={cn(
                                       "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium cursor-default",
-                                      stateColor(state)
+                                      stateColor(state),
                                     )}
                                   >
                                     {stateIcon(state)}
                                     {stateLabel(state)}
-                                    {rel && rel.term > 0 && <span className="opacity-90">{rel.term}</span>}
+                                    {rel && rel.term > 0 && (
+                                      <span className="opacity-90">
+                                        {rel.term}
+                                      </span>
+                                    )}
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                   <p>
-                                    {rowNation.name} ↔ {colNation.name}: {stateLabel(state)}
+                                    {rowNation.name} ↔ {colNation.name}:{" "}
+                                    {stateLabel(state)}
                                     {rel ? ` (${rel.term}개월)` : ""}
                                   </p>
                                 </TooltipContent>
@@ -350,15 +389,24 @@ export default function AdminDiplomacyPage() {
             </TableHeader>
             <TableBody>
               {filteredRelations.map((d) => {
-                const srcNation = nations.find((n) => n.nationId === d.srcNationId);
-                const destNation = nations.find((n) => n.nationId === d.destNationId);
+                const srcNation = nations.find(
+                  (n) => n.nationId === d.srcNationId,
+                );
+                const destNation = nations.find(
+                  (n) => n.nationId === d.destNationId,
+                );
                 return (
                   <TableRow key={d.id}>
-                    <TableCell className="text-muted-foreground">{d.id}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {d.id}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {srcNation && (
-                          <div className="size-2 rounded-full" style={{ backgroundColor: srcNation.color }} />
+                          <div
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: srcNation.color }}
+                          />
                         )}
                         {srcNation?.name ?? `#${d.srcNationId}`}
                       </div>
@@ -366,13 +414,18 @@ export default function AdminDiplomacyPage() {
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         {destNation && (
-                          <div className="size-2 rounded-full" style={{ backgroundColor: destNation.color }} />
+                          <div
+                            className="size-2 rounded-full"
+                            style={{ backgroundColor: destNation.color }}
+                          />
                         )}
                         {destNation?.name ?? `#${d.destNationId}`}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={stateVariant(d.stateCode)}>{stateLabel(d.stateCode)}</Badge>
+                      <Badge variant={stateVariant(d.stateCode)}>
+                        {stateLabel(d.stateCode)}
+                      </Badge>
                     </TableCell>
                     <TableCell>{d.term}개월</TableCell>
                   </TableRow>
@@ -380,7 +433,10 @@ export default function AdminDiplomacyPage() {
               })}
               {filteredRelations.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground"
+                  >
                     외교 관계가 없습니다.
                   </TableCell>
                 </TableRow>

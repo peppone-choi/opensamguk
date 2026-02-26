@@ -111,7 +111,8 @@ export default function NpcListPage() {
         cmp = (a[sortKey] as number) - (b[sortKey] as number);
       }
       // name and nation default ascending, numeric defaults descending
-      const isAscDefault = sortKey === "name" || sortKey === "nation" || sortKey === "city";
+      const isAscDefault =
+        sortKey === "name" || sortKey === "nation" || sortKey === "city";
       if (isAscDefault) {
         return sortDir === "asc" ? cmp : -cmp;
       }
@@ -335,9 +336,7 @@ export default function NpcListPage() {
                         {g.ownerName || "-"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm">
-                      Lv {g.expLevel}
-                    </TableCell>
+                    <TableCell className="text-sm">Lv {g.expLevel}</TableCell>
                     <TableCell>
                       <NationBadge name={nation?.name} color={nation?.color} />
                     </TableCell>
@@ -350,12 +349,18 @@ export default function NpcListPage() {
                     <TableCell className="text-xs whitespace-nowrap">
                       {specialFull}
                     </TableCell>
-                    <TableCell className="font-medium tabular-nums">{totalStats}</TableCell>
+                    <TableCell className="font-medium tabular-nums">
+                      {totalStats}
+                    </TableCell>
                     <TableCell>{g.leadership}</TableCell>
                     <TableCell>{g.strength}</TableCell>
                     <TableCell>{g.intel}</TableCell>
-                    <TableCell className="tabular-nums">{g.crew.toLocaleString()}</TableCell>
-                    <TableCell className="text-xs">{CREW_TYPE_NAMES[g.crewType] ?? "-"}</TableCell>
+                    <TableCell className="tabular-nums">
+                      {g.crew.toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      {CREW_TYPE_NAMES[g.crewType] ?? "-"}
+                    </TableCell>
                     <TableCell>{g.experience.toLocaleString()}</TableCell>
                     <TableCell>{g.dedication.toLocaleString()}</TableCell>
                   </TableRow>

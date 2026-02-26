@@ -467,7 +467,10 @@ export function formatCityLevelBadge(level: number): string {
 
 // --- Officer set bit check (legacy isOfficerSet) ---
 
-export function isOfficerSet(officerSet: number, reqOfficerLevel: number): boolean {
+export function isOfficerSet(
+  officerSet: number,
+  reqOfficerLevel: number,
+): boolean {
   return (officerSet & (1 << reqOfficerLevel)) !== 0;
 }
 
@@ -533,8 +536,15 @@ const TOURNAMENT_STEP_MAP: TournamentStepInfo[] = [
   { availableJoin: false, state: "결승 진행중", nextText: "다음경기" },
 ];
 
-export function formatTournamentStep(step: number | null | undefined): TournamentStepInfo {
-  if (step === null || step === undefined || step < 0 || step >= TOURNAMENT_STEP_MAP.length) {
+export function formatTournamentStep(
+  step: number | null | undefined,
+): TournamentStepInfo {
+  if (
+    step === null ||
+    step === undefined ||
+    step < 0 ||
+    step >= TOURNAMENT_STEP_MAP.length
+  ) {
     return TOURNAMENT_STEP_MAP[0];
   }
   return TOURNAMENT_STEP_MAP[step];
@@ -567,7 +577,7 @@ export function postFilterNationCommandGen<T extends TurnObj>(
     const destCityName = formatCityName(destCityID, cityMap);
     // Korean josa "로/으로"
     const lastChar = destCityName.charCodeAt(destCityName.length - 1);
-    const hasFinalConsonant = (lastChar - 0xAC00) % 28 !== 0;
+    const hasFinalConsonant = (lastChar - 0xac00) % 28 !== 0;
     const josaRo = hasFinalConsonant ? "으로" : "로";
     const brief = `《${troopName}》【${destCityName}】${josaRo} 발령`;
     const tooltip = `《${troopName}》${turnObj.brief}`;

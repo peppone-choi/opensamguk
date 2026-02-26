@@ -94,23 +94,10 @@ const COMBAT_BUFF_LIST: {
   },
 ];
 
-/* ── Legacy resource buff list ── */
-
-const RESOURCE_BUFF_LIST = [
-  { code: "leadership", label: "통솔 +1/레벨", type: "stat" },
-  { code: "strength", label: "무력 +1/레벨", type: "stat" },
-  { code: "intel", label: "지력 +1/레벨", type: "stat" },
-  { code: "politics", label: "정치 +1/레벨", type: "stat" },
-  { code: "charm", label: "매력 +1/레벨", type: "stat" },
-  { code: "gold", label: "초기 금 +500/레벨", type: "resource" },
-  { code: "rice", label: "초기 쌀 +500/레벨", type: "resource" },
-  { code: "crew", label: "초기 병력 +200/레벨", type: "resource" },
-  { code: "exp", label: "초기 경험 +100/레벨", type: "resource" },
-];
 
 /* ── Fallback constants (overridden by server) ── */
 
-const FALLBACK_BUFF_LEVEL_COSTS = [0, 100, 200, 400, 800, 1600];
+const FALLBACK_BUFF_LEVEL_COSTS = [0, 200, 600, 1200, 2000, 3000];
 const MAX_BUFF_LEVEL = 5;
 
 // Fibonacci cost for turn reset / special war reset
@@ -198,9 +185,7 @@ export default function InheritPage() {
       // Initialize logs
       if (data.log && data.log.length > 0) {
         setAllLogs(data.log);
-        const minId = Math.min(
-          ...data.log.map((l) => l.id ?? Infinity),
-        );
+        const minId = Math.min(...data.log.map((l) => l.id ?? Infinity));
         if (minId !== Infinity) setLastLogID(minId);
       }
     } finally {
@@ -212,38 +197,15 @@ export default function InheritPage() {
     fetchInfo();
   }, [fetchInfo]);
 
-  /* ── Resource buff buy (old system) ── */
-  const handleBuy = async (buffCode: string) => {
-    if (!currentWorld || !info) return;
-    const currentLevel = info.buffs[buffCode] ?? 0;
-    if (currentLevel >= MAX_BUFF_LEVEL) {
-      toast.error("최대 레벨에 도달했습니다");
-      return;
-    }
-    const cost =
-      actionCost.buff[currentLevel + 1] - actionCost.buff[currentLevel];
-    if (info.points < cost) {
-      toast.error(`포인트 부족 (필요: ${cost})`);
-      return;
-    }
-    try {
-      await inheritanceApi.buy(currentWorld.id, buffCode);
-      toast.success("버프 구매 완료");
-      fetchInfo();
-    } catch {
-      toast.error("구매 실패");
-    }
-  };
 
   /* ── Combat buff buy ── */
   const handleBuyCombatBuff = async (buffCode: InheritBuffType) => {
     if (!currentWorld || !info) return;
-    const prevLevel = (info.inheritBuff?.[buffCode] ?? 0);
+    const prevLevel = info.inheritBuff?.[buffCode] ?? 0;
     const targetLevel = combatBuffLevels[buffCode] ?? 0;
     if (targetLevel <= prevLevel) return;
 
-    const cost =
-      actionCost.buff[targetLevel] - actionCost.buff[prevLevel];
+    const cost = actionCost.buff[targetLevel] - actionCost.buff[prevLevel];
     if (info.points < cost) {
       toast.error(`포인트 부족 (필요: ${cost})`);
       return;
@@ -345,9 +307,7 @@ export default function InheritPage() {
       return;
     }
     if (
-      !confirm(
-        `전투특기를 재배정하시겠습니까? (비용: ${specialWarResetCost}P)`,
-      )
+      !confirm(`전투특기를 재배정하시겠습니까? (비용: ${specialWarResetCost}P)`)
     )
       return;
     try {
@@ -443,11 +403,8 @@ export default function InheritPage() {
       toast.error(`포인트 부족 (필요: ${auctionBid})`);
       return;
     }
-    const uniqueName =
-      availableUnique[selectedUnique]?.title ?? selectedUnique;
-    if (
-      !confirm(`'${uniqueName}'을(를) ${auctionBid}P로 입찰하시겠습니까?`)
-    )
+    const uniqueName = availableUnique[selectedUnique]?.title ?? selectedUnique;
+    if (!confirm(`'${uniqueName}'을(를) ${auctionBid}P로 입찰하시겠습니까?`))
       return;
     try {
       await inheritanceApi.auctionUnique(currentWorld.id, {
@@ -577,9 +534,8 @@ export default function InheritPage() {
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="buffs">
+      <Tabs defaultValue="combat-buffs">
         <TabsList className="flex-wrap">
-          <TabsTrigger value="buffs">버프 구매</TabsTrigger>
           <TabsTrigger value="combat-buffs">전투 버프</TabsTrigger>
           <TabsTrigger value="specials">특기/도시</TabsTrigger>
           <TabsTrigger value="shop">상점</TabsTrigger>
@@ -588,59 +544,6 @@ export default function InheritPage() {
           <TabsTrigger value="log">이력</TabsTrigger>
         </TabsList>
 
-        {/* ── Resource Buff Purchase Tab ── */}
-        <TabsContent value="buffs">
-          <Card>
-            <CardHeader>
-              <CardTitle>기본 버프 구매</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {RESOURCE_BUFF_LIST.map((buff) => {
-                const currentLevel = info?.buffs[buff.code] ?? 0;
-                const nextCost =
-                  currentLevel < MAX_BUFF_LEVEL
-                    ? actionCost.buff[currentLevel + 1] -
-                      actionCost.buff[currentLevel]
-                    : null;
-                return (
-                  <div
-                    key={buff.code}
-                    className="flex items-center justify-between py-1"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm">{buff.label}</span>
-                      {currentLevel > 0 && (
-                        <Badge variant="outline" className="text-xs">
-                          Lv.{currentLevel}
-                        </Badge>
-                      )}
-                      {nextCost != null && (
-                        <span className="text-xs text-muted-foreground">
-                          ({nextCost}P)
-                        </span>
-                      )}
-                      {nextCost == null && (
-                        <span className="text-xs text-muted-foreground">
-                          (MAX)
-                        </span>
-                      )}
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        !info || nextCost == null || info.points < nextCost
-                      }
-                      onClick={() => handleBuy(buff.code)}
-                    >
-                      구매
-                    </Button>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* ── Combat Buff Tab (8 buffs with granular level control) ── */}
         <TabsContent value="combat-buffs">
@@ -658,7 +561,8 @@ export default function InheritPage() {
               </p>
               {COMBAT_BUFF_LIST.map((buff) => {
                 const prevLevel = info?.inheritBuff?.[buff.code] ?? 0;
-                const currentSelected = combatBuffLevels[buff.code] ?? prevLevel;
+                const currentSelected =
+                  combatBuffLevels[buff.code] ?? prevLevel;
                 const cost =
                   currentSelected > prevLevel
                     ? actionCost.buff[currentSelected] -
@@ -675,10 +579,7 @@ export default function InheritPage() {
                           {buff.label}
                         </span>
                         {prevLevel > 0 && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs ml-2"
-                          >
+                          <Badge variant="outline" className="text-xs ml-2">
                             현재 Lv.{prevLevel}
                           </Badge>
                         )}
@@ -695,9 +596,7 @@ export default function InheritPage() {
                         구입 ({cost}P)
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {buff.info}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{buff.info}</p>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground w-16">
                         목표 레벨:
@@ -812,7 +711,11 @@ export default function InheritPage() {
                     </option>
                   ))}
                 </select>
-                <Button size="sm" disabled={!selectedCity} onClick={handleSetCity}>
+                <Button
+                  size="sm"
+                  disabled={!selectedCity}
+                  onClick={handleSetCity}
+                >
                   지정
                 </Button>
               </div>
@@ -916,9 +819,7 @@ export default function InheritPage() {
                       min={currentStat?.statMin ?? 0}
                       max={currentStat?.statMax ?? 100}
                       value={statStrength}
-                      onChange={(e) =>
-                        setStatStrength(Number(e.target.value))
-                      }
+                      onChange={(e) => setStatStrength(Number(e.target.value))}
                     />
                   </div>
                   <div className="space-y-1">
@@ -946,7 +847,10 @@ export default function InheritPage() {
                       max={5}
                       value={bonusStat[0]}
                       onChange={(e) => {
-                        const v = Math.max(0, Math.min(5, Number(e.target.value)));
+                        const v = Math.max(
+                          0,
+                          Math.min(5, Number(e.target.value)),
+                        );
                         setBonusStat((prev) => [v, prev[1], prev[2]]);
                       }}
                     />
@@ -961,7 +865,10 @@ export default function InheritPage() {
                       max={5}
                       value={bonusStat[1]}
                       onChange={(e) => {
-                        const v = Math.max(0, Math.min(5, Number(e.target.value)));
+                        const v = Math.max(
+                          0,
+                          Math.min(5, Number(e.target.value)),
+                        );
                         setBonusStat((prev) => [prev[0], v, prev[2]]);
                       }}
                     />
@@ -976,7 +883,10 @@ export default function InheritPage() {
                       max={5}
                       value={bonusStat[2]}
                       onChange={(e) => {
-                        const v = Math.max(0, Math.min(5, Number(e.target.value)));
+                        const v = Math.max(
+                          0,
+                          Math.min(5, Number(e.target.value)),
+                        );
                         setBonusStat((prev) => [prev[0], prev[1], v]);
                       }}
                     />
@@ -1154,14 +1064,10 @@ export default function InheritPage() {
                       {entry.amount !== undefined && (
                         <span
                           className={
-                            entry.amount > 0
-                              ? "text-green-400"
-                              : "text-red-400"
+                            entry.amount > 0 ? "text-green-400" : "text-red-400"
                           }
                         >
-                          {entry.amount > 0
-                            ? `+${entry.amount}`
-                            : entry.amount}
+                          {entry.amount > 0 ? `+${entry.amount}` : entry.amount}
                           P
                         </span>
                       )}

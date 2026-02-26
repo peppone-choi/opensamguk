@@ -10,7 +10,14 @@ import {
   type DragEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Clock3, Copy, Pencil, Trash2, GripVertical, ClipboardCopy } from "lucide-react";
+import {
+  Clock3,
+  Copy,
+  Pencil,
+  Trash2,
+  GripVertical,
+  ClipboardCopy,
+} from "lucide-react";
 import { useHotkeys } from "@/hooks/useHotkeys";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,7 +98,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const [clipboard, setClipboard] = useState<ClipboardItem[] | null>(null);
   const [storedActions, setStoredActions] = useState<StoredAction[]>([]);
   const [selectedStoredAction, setSelectedStoredAction] = useState("");
-  const [recentActions, setRecentActions] = useState<{ actionCode: string; arg?: Record<string, unknown>; brief?: string }[]>([]);
+  const [recentActions, setRecentActions] = useState<
+    { actionCode: string; arg?: Record<string, unknown>; brief?: string }[]
+  >([]);
 
   const lastTurnRef = useRef(0);
 
@@ -191,14 +200,18 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) setRecentActions(parsed);
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [recentActionsKey]);
 
   const pushRecentAction = useCallback(
     (actionCode: string, arg?: Record<string, unknown>, brief?: string) => {
       setRecentActions((prev) => {
         const key = JSON.stringify([actionCode, arg ?? {}]);
-        const filtered = prev.filter((a) => JSON.stringify([a.actionCode, a.arg ?? {}]) !== key);
+        const filtered = prev.filter(
+          (a) => JSON.stringify([a.actionCode, a.arg ?? {}]) !== key,
+        );
         const next = [{ actionCode, arg, brief }, ...filtered].slice(0, 10);
         if (typeof window !== "undefined") {
           window.localStorage.setItem(recentActionsKey, JSON.stringify(next));
@@ -302,11 +315,13 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
     for (let i = minTurn; i < TURN_COUNT; i++) {
       const rIdx = i - minTurn;
       if (rIdx < remaining.length && remaining[rIdx].actionCode !== "휴식") {
-        ops.push(commandApi.reserveCommand(generalId, {
-          turn: i,
-          command: remaining[rIdx].actionCode,
-          arg: remaining[rIdx].arg,
-        }));
+        ops.push(
+          commandApi.reserveCommand(generalId, {
+            turn: i,
+            command: remaining[rIdx].actionCode,
+            arg: remaining[rIdx].arg,
+          }),
+        );
       } else {
         ops.push(commandApi.deleteReservedCommand(generalId, i));
       }
@@ -359,12 +374,17 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         ops.push(commandApi.deleteReservedCommand(generalId, i));
       } else {
         const srcIdx = offset - insertCount;
-        if (srcIdx < existing.length && existing[srcIdx].actionCode !== "휴식") {
-          ops.push(commandApi.reserveCommand(generalId, {
-            turn: i,
-            command: existing[srcIdx].actionCode,
-            arg: existing[srcIdx].arg,
-          }));
+        if (
+          srcIdx < existing.length &&
+          existing[srcIdx].actionCode !== "휴식"
+        ) {
+          ops.push(
+            commandApi.reserveCommand(generalId, {
+              turn: i,
+              command: existing[srcIdx].actionCode,
+              arg: existing[srcIdx].arg,
+            }),
+          );
         } else {
           ops.push(commandApi.deleteReservedCommand(generalId, i));
         }
@@ -378,55 +398,69 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
-  const handleDragStart = useCallback((turnIdx: number, e: DragEvent<HTMLDivElement>) => {
-    if (realtimeMode) { e.preventDefault(); return; }
-    setDragFrom(turnIdx);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(turnIdx));
-  }, [realtimeMode]);
+  const handleDragStart = useCallback(
+    (turnIdx: number, e: DragEvent<HTMLDivElement>) => {
+      if (realtimeMode) {
+        e.preventDefault();
+        return;
+      }
+      setDragFrom(turnIdx);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(turnIdx));
+    },
+    [realtimeMode],
+  );
 
-  const handleDragOver = useCallback((turnIdx: number, e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDragOver(turnIdx);
-  }, []);
+  const handleDragOver = useCallback(
+    (turnIdx: number, e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setDragOver(turnIdx);
+    },
+    [],
+  );
 
   const handleDragLeave = useCallback(() => {
     setDragOver(null);
   }, []);
 
-  const handleDrop = useCallback(async (targetIdx: number, e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragOver(null);
-    const fromIdx = dragFrom;
-    setDragFrom(null);
-    if (fromIdx === null || fromIdx === targetIdx) return;
+  const handleDrop = useCallback(
+    async (targetIdx: number, e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragOver(null);
+      const fromIdx = dragFrom;
+      setDragFrom(null);
+      if (fromIdx === null || fromIdx === targetIdx) return;
 
-    // Reorder: remove fromIdx, insert at targetIdx
-    const ordered = [...filledTurns];
-    const [moved] = ordered.splice(fromIdx, 1);
-    ordered.splice(targetIdx, 0, moved);
+      // Reorder: remove fromIdx, insert at targetIdx
+      const ordered = [...filledTurns];
+      const [moved] = ordered.splice(fromIdx, 1);
+      ordered.splice(targetIdx, 0, moved);
 
-    // Save new order
-    const ops: Promise<unknown>[] = [];
-    const minIdx = Math.min(fromIdx, targetIdx);
-    const maxIdx = Math.max(fromIdx, targetIdx);
-    for (let i = minIdx; i <= maxIdx; i++) {
-      if (ordered[i].actionCode === "휴식") {
-        ops.push(commandApi.deleteReservedCommand(generalId, i));
-      } else {
-        ops.push(commandApi.reserveCommand(generalId, {
-          turn: i,
-          command: ordered[i].actionCode,
-          arg: ordered[i].arg,
-        }));
+      // Save new order
+      const ops: Promise<unknown>[] = [];
+      const minIdx = Math.min(fromIdx, targetIdx);
+      const maxIdx = Math.max(fromIdx, targetIdx);
+      for (let i = minIdx; i <= maxIdx; i++) {
+        if (ordered[i].actionCode === "휴식") {
+          ops.push(commandApi.deleteReservedCommand(generalId, i));
+        } else {
+          ops.push(
+            commandApi.reserveCommand(generalId, {
+              turn: i,
+              command: ordered[i].actionCode,
+              arg: ordered[i].arg,
+            }),
+          );
+        }
       }
-    }
-    await Promise.all(ops);
-    await loadTurns();
-    setSelectedTurns(new Set([targetIdx]));
-    setLastClickedTurn(targetIdx);
-  }, [dragFrom, filledTurns, generalId, loadTurns]);
+      await Promise.all(ops);
+      await loadTurns();
+      setSelectedTurns(new Set([targetIdx]));
+      setLastClickedTurn(targetIdx);
+    },
+    [dragFrom, filledTurns, generalId, loadTurns],
+  );
 
   const handleDragEnd = useCallback(() => {
     setDragFrom(null);
@@ -622,14 +656,67 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
       },
       description: `Select turn ${i + 1}`,
     })),
-    { key: "0", handler: () => { setSelectedTurns(new Set([9])); setLastClickedTurn(9); }, description: "Select turn 10" },
-    { key: "-", handler: () => { setSelectedTurns(new Set([10])); setLastClickedTurn(10); }, description: "Select turn 11" },
-    { key: "=", handler: () => { setSelectedTurns(new Set([11])); setLastClickedTurn(11); }, description: "Select turn 12" },
-    { key: "Escape", handler: () => { if (showSelector) setShowSelector(false); }, description: "Close command selector" },
-    { key: "Enter", handler: () => { if (!showSelector && !realtimeMode) setShowSelector(true); }, description: "Open command selector" },
-    { key: "Delete", handler: () => { if (selectedTurnList.length > 0 && !realtimeMode) clearTurns(selectedTurnList); }, description: "Clear selected turns" },
-    { key: "c", ctrl: true, handler: copySelected, description: "Copy selected turns" },
-    { key: "v", ctrl: true, handler: () => { void pasteClipboard(); }, description: "Paste turns", preventDefault: true },
+    {
+      key: "0",
+      handler: () => {
+        setSelectedTurns(new Set([9]));
+        setLastClickedTurn(9);
+      },
+      description: "Select turn 10",
+    },
+    {
+      key: "-",
+      handler: () => {
+        setSelectedTurns(new Set([10]));
+        setLastClickedTurn(10);
+      },
+      description: "Select turn 11",
+    },
+    {
+      key: "=",
+      handler: () => {
+        setSelectedTurns(new Set([11]));
+        setLastClickedTurn(11);
+      },
+      description: "Select turn 12",
+    },
+    {
+      key: "Escape",
+      handler: () => {
+        if (showSelector) setShowSelector(false);
+      },
+      description: "Close command selector",
+    },
+    {
+      key: "Enter",
+      handler: () => {
+        if (!showSelector && !realtimeMode) setShowSelector(true);
+      },
+      description: "Open command selector",
+    },
+    {
+      key: "Delete",
+      handler: () => {
+        if (selectedTurnList.length > 0 && !realtimeMode)
+          clearTurns(selectedTurnList);
+      },
+      description: "Clear selected turns",
+    },
+    {
+      key: "c",
+      ctrl: true,
+      handler: copySelected,
+      description: "Copy selected turns",
+    },
+    {
+      key: "v",
+      ctrl: true,
+      handler: () => {
+        void pasteClipboard();
+      },
+      description: "Paste turns",
+      preventDefault: true,
+    },
   ]);
 
   return (
@@ -815,7 +902,10 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
           {filledTurns.map((turn) => {
             const isSelected = selectedTurns.has(turn.turnIdx);
             const isEmpty = turn.actionCode === "휴식";
-            const isDragTarget = dragOver === turn.turnIdx && dragFrom !== null && dragFrom !== turn.turnIdx;
+            const isDragTarget =
+              dragOver === turn.turnIdx &&
+              dragFrom !== null &&
+              dragFrom !== turn.turnIdx;
 
             return (
               <div
@@ -845,70 +935,72 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                   onClick={(event) => handleTurnClick(turn.turnIdx, event)}
                   className="contents cursor-pointer"
                 >
-                <div className="font-mono text-gray-300 px-2 py-2">턴 {turn.turnIdx}</div>
-                <div>
-                  {isEmpty ? (
-                    <Badge
-                      variant="outline"
-                      className="border-gray-600 text-gray-400"
+                  <div className="font-mono text-gray-300 px-2 py-2">
+                    턴 {turn.turnIdx}
+                  </div>
+                  <div>
+                    {isEmpty ? (
+                      <Badge
+                        variant="outline"
+                        className="border-gray-600 text-gray-400"
+                      >
+                        빈 턴
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-cyan-200">
+                        {turn.actionCode}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="truncate text-gray-300">
+                    {isEmpty ? "명령 없음" : turnTargetText(turn)}
+                  </div>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (realtimeMode) return;
+                        setSelectedTurns(new Set([turn.turnIdx]));
+                        setLastClickedTurn(turn.turnIdx);
+                        setShowSelector(true);
+                      }}
                     >
-                      빈 턴
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-cyan-200">
-                      {turn.actionCode}
-                    </Badge>
-                  )}
-                </div>
-                <div className="truncate text-gray-300">
-                  {isEmpty ? "명령 없음" : turnTargetText(turn)}
-                </div>
-                <div className="flex items-center justify-end gap-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (realtimeMode) return;
-                      setSelectedTurns(new Set([turn.turnIdx]));
-                      setLastClickedTurn(turn.turnIdx);
-                      setShowSelector(true);
-                    }}
-                  >
-                    <Pencil className="size-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 text-red-300"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (realtimeMode) return;
-                      void clearTurns([turn.turnIdx]);
-                    }}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setClipboard([
-                        {
-                          offset: 0,
-                          actionCode: turn.actionCode,
-                          arg: turn.arg,
-                          brief: turn.brief,
-                        },
-                      ]);
-                    }}
-                  >
-                    <Copy className="size-3.5" />
-                  </Button>
-                </div>
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 text-red-300"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (realtimeMode) return;
+                        void clearTurns([turn.turnIdx]);
+                      }}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setClipboard([
+                          {
+                            offset: 0,
+                            actionCode: turn.actionCode,
+                            arg: turn.arg,
+                            brief: turn.brief,
+                          },
+                        ]);
+                      }}
+                    >
+                      <Copy className="size-3.5" />
+                    </Button>
+                  </div>
                 </button>
               </div>
             );
@@ -918,7 +1010,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
         {/* Recent actions quick-apply bar */}
         {recentActions.length > 0 && !realtimeMode && (
           <div className="space-y-1">
-            <p className="text-[10px] text-muted-foreground font-medium">최근 사용 명령</p>
+            <p className="text-[10px] text-muted-foreground font-medium">
+              최근 사용 명령
+            </p>
             <div className="flex flex-wrap gap-1">
               {recentActions.map((ra, idx) => (
                 <Button
@@ -928,7 +1022,8 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                   className="h-6 text-[10px] px-2"
                   disabled={selectedTurnList.length === 0}
                   onClick={() => {
-                    const targets = selectedTurnList.length > 0 ? selectedTurnList : [0];
+                    const targets =
+                      selectedTurnList.length > 0 ? selectedTurnList : [0];
                     if (COMMAND_ARGS[ra.actionCode]) {
                       router.push(
                         `/processing?command=${encodeURIComponent(ra.actionCode)}&turnList=${targets.join(",")}`,
@@ -940,7 +1035,9 @@ export function CommandPanel({ generalId, realtimeMode }: CommandPanelProps) {
                   title={ra.brief ?? ra.actionCode}
                 >
                   {ra.actionCode}
-                  {ra.brief && ra.brief !== ra.actionCode ? ` (${ra.brief})` : ""}
+                  {ra.brief && ra.brief !== ra.actionCode
+                    ? ` (${ra.brief})`
+                    : ""}
                 </Button>
               ))}
             </div>

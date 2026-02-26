@@ -73,7 +73,12 @@ export default function AdminMembersPage() {
 
   const doBulkAction = async (type: string) => {
     if (selected.size === 0) return;
-    if (!confirm(`선택한 ${selected.size}명에 대해 "${type}" 작업을 실행하시겠습니까?`)) return;
+    if (
+      !confirm(
+        `선택한 ${selected.size}명에 대해 "${type}" 작업을 실행하시겠습니까?`,
+      )
+    )
+      return;
     setBulkActing(true);
     try {
       await adminApi.bulkGeneralAction(Array.from(selected), type);
@@ -111,16 +116,35 @@ export default function AdminMembersPage() {
       {selected.size > 0 && (
         <div className="flex items-center gap-2 p-2 border rounded-md bg-muted/30">
           <span className="text-sm font-medium">{selected.size}명 선택</span>
-          <Button size="sm" variant="outline" onClick={() => doBulkAction("block")} disabled={bulkActing}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => doBulkAction("block")}
+            disabled={bulkActing}
+          >
             일괄 차단
           </Button>
-          <Button size="sm" variant="outline" onClick={() => doBulkAction("unblock")} disabled={bulkActing}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => doBulkAction("unblock")}
+            disabled={bulkActing}
+          >
             일괄 해제
           </Button>
-          <Button size="sm" variant="destructive" onClick={() => doBulkAction("kill")} disabled={bulkActing}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => doBulkAction("kill")}
+            disabled={bulkActing}
+          >
             일괄 처단
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setSelected(new Set())}
+          >
             선택 해제
           </Button>
         </div>
@@ -132,7 +156,9 @@ export default function AdminMembersPage() {
             <TableHead className="w-8">
               <input
                 type="checkbox"
-                checked={filtered.length > 0 && selected.size === filtered.length}
+                checked={
+                  filtered.length > 0 && selected.size === filtered.length
+                }
                 onChange={toggleSelectAll}
                 className="accent-red-400"
               />

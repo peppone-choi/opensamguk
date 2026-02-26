@@ -12,7 +12,11 @@ import { NationBadge } from "@/components/game/nation-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatOfficerLevelText, isOfficerSet, formatCityLevelBadge } from "@/lib/game-utils";
+import {
+  formatOfficerLevelText,
+  isOfficerSet,
+  formatCityLevelBadge,
+} from "@/lib/game-utils";
 import { nationManagementApi } from "@/lib/gameApi";
 import type { General, Nation } from "@/types";
 
@@ -83,7 +87,9 @@ function PermissionSelector({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">{label} (최대 {maxSlots}명)</label>
+        <label className="text-sm font-medium">
+          {label} (최대 {maxSlots}명)
+        </label>
         <Button
           size="sm"
           variant="outline"
@@ -185,15 +191,20 @@ export default function SuperiorPage() {
 
   // chiefStatMin from server GameConst (passed via nation meta or world config); fallback 65
   const chiefStatMin = useMemo(() => {
-    const fromMeta = (nation?.meta as Record<string, unknown> | undefined)?.chiefStatMin;
+    const fromMeta = (nation?.meta as Record<string, unknown> | undefined)
+      ?.chiefStatMin;
     if (typeof fromMeta === "number") return fromMeta;
-    const fromWorld = (currentWorld as Record<string, unknown> | null)?.chiefStatMin;
+    const fromWorld = (currentWorld as Record<string, unknown> | null)
+      ?.chiefStatMin;
     if (typeof fromWorld === "number") return fromWorld;
     return 65; // legacy GameConst default
   }, [nation, currentWorld]);
 
   // chief_set lock — prevents changing already-set officer slots
-  const chiefSet = (nation as unknown as Record<string, unknown>)?.chiefSet as number | undefined ?? 0;
+  const chiefSet =
+    ((nation as unknown as Record<string, unknown>)?.chiefSet as
+      | number
+      | undefined) ?? 0;
 
   // Candidates for officer appointment
   const candidatesStrength = useMemo(
@@ -229,11 +240,7 @@ export default function SuperiorPage() {
 
     for (let level = 12; level >= minChiefLevel; level--) {
       const statReq: "strength" | "intel" | "any" =
-        level === 11
-          ? "any"
-          : level % 2 === 0
-            ? "strength"
-            : "intel";
+        level === 11 ? "any" : level % 2 === 0 ? "strength" : "intel";
       slots.push({
         level,
         label: formatOfficerLevelText(level, nationLevel),
@@ -325,8 +332,7 @@ export default function SuperiorPage() {
           await loadAll(currentWorld.id);
         }
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error ? err.message : "임명에 실패했습니다.";
+        const msg = err instanceof Error ? err.message : "임명에 실패했습니다.";
         setMessage({ text: msg, type: "error" });
       } finally {
         setActionLoading(false);
@@ -348,8 +354,7 @@ export default function SuperiorPage() {
           await loadAll(currentWorld.id);
         }
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error ? err.message : "추방에 실패했습니다.";
+        const msg = err instanceof Error ? err.message : "추방에 실패했습니다.";
         setMessage({ text: msg, type: "error" });
       } finally {
         setActionLoading(false);
@@ -385,9 +390,7 @@ export default function SuperiorPage() {
   }
 
   if (myGeneral.nationId <= 0) {
-    return (
-      <div className="p-4 text-muted-foreground">재야입니다.</div>
-    );
+    return <div className="p-4 text-muted-foreground">재야입니다.</div>;
   }
 
   return (
@@ -530,7 +533,8 @@ export default function SuperiorPage() {
                       variant="outline"
                       className={`w-20 justify-center shrink-0 text-xs ${locked ? "border-orange-500 text-orange-400" : ""}`}
                     >
-                      {slot.label}{locked ? " 🔒" : ""}
+                      {slot.label}
+                      {locked ? " 🔒" : ""}
                     </Badge>
                     <span className="text-[10px] text-muted-foreground">
                       ({getStatLabel(slot.level)})
@@ -558,8 +562,7 @@ export default function SuperiorPage() {
                                   : undefined,
                           }}
                         >
-                          {g.name} 【
-                          {cityMap.get(g.cityId)?.name ?? "?"}】
+                          {g.name} 【{cityMap.get(g.cityId)?.name ?? "?"}】
                           {g.officerLevel === slot.level
                             ? " (현재)"
                             : g.officerLevel > 1
@@ -584,11 +587,9 @@ export default function SuperiorPage() {
                 );
               })}
             <p className="text-xs text-muted-foreground">
-              ※{" "}
-              <span className="text-red-400">빨간색</span>은 현재 임명중인
-              장수,{" "}
-              <span className="text-orange-400">노란색</span>은 다른 관직에
-              임명된 장수, 흰색은 일반 장수를 뜻합니다.
+              ※ <span className="text-red-400">빨간색</span>은 현재 임명중인
+              장수, <span className="text-orange-400">노란색</span>은 다른
+              관직에 임명된 장수, 흰색은 일반 장수를 뜻합니다.
             </p>
           </CardContent>
         </Card>
@@ -633,8 +634,13 @@ export default function SuperiorPage() {
                     {nationCities.map((c) => {
                       const slotLocked = isOfficerSet(c.officerSet ?? 0, level);
                       return (
-                        <option key={c.id} value={c.id} style={slotLocked ? { color: "orange" } : undefined}>
-                          [{formatCityLevelBadge(c.level)}] {c.name}{slotLocked ? " 🔒" : ""}
+                        <option
+                          key={c.id}
+                          value={c.id}
+                          style={slotLocked ? { color: "orange" } : undefined}
+                        >
+                          [{formatCityLevelBadge(c.level)}] {c.name}
+                          {slotLocked ? " 🔒" : ""}
                         </option>
                       );
                     })}
@@ -712,7 +718,10 @@ export default function SuperiorPage() {
                       }}
                     >
                       <span className="inline-flex items-center gap-1">
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 shrink-0">
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] px-1 py-0 h-4 shrink-0"
+                        >
                           {formatCityLevelBadge(city.level)}
                         </Badge>
                         {city.name}
@@ -720,11 +729,16 @@ export default function SuperiorPage() {
                     </td>
                     {officers.map((officer, idx) => {
                       const officerLevel = [4, 3, 2][idx];
-                      const slotLocked = isOfficerSet(city.officerSet ?? 0, officerLevel);
+                      const slotLocked = isOfficerSet(
+                        city.officerSet ?? 0,
+                        officerLevel,
+                      );
                       return (
                         <td key={idx} className="py-1 px-2 text-xs">
                           {officer ? (
-                            <span style={{ color: slotLocked ? "orange" : "white" }}>
+                            <span
+                              style={{ color: slotLocked ? "orange" : "white" }}
+                            >
                               {officer.name}
                               <span className="text-muted-foreground ml-1">
                                 ({officer.belong ?? "-"}년) 【
@@ -732,7 +746,9 @@ export default function SuperiorPage() {
                               </span>
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">{slotLocked ? "🔒" : "-"}</span>
+                            <span className="text-muted-foreground">
+                              {slotLocked ? "🔒" : "-"}
+                            </span>
                           )}
                         </td>
                       );

@@ -402,11 +402,26 @@ export default function CityPage() {
 
                 {/* Row 2: agri, comm, secu, def, wall */}
                 <LabelCell>농업</LabelCell>
-                <StatValueCell val={city.agri} max={city.agriMax} kind="agri" perTurn={100} />
+                <StatValueCell
+                  val={city.agri}
+                  max={city.agriMax}
+                  kind="agri"
+                  perTurn={100}
+                />
                 <LabelCell>상업</LabelCell>
-                <StatValueCell val={city.comm} max={city.commMax} kind="comm" perTurn={100} />
+                <StatValueCell
+                  val={city.comm}
+                  max={city.commMax}
+                  kind="comm"
+                  perTurn={100}
+                />
                 <LabelCell>치안</LabelCell>
-                <StatValueCell val={city.secu} max={city.secuMax} kind="secu" perTurn={100} />
+                <StatValueCell
+                  val={city.secu}
+                  max={city.secuMax}
+                  kind="secu"
+                  perTurn={100}
+                />
                 <LabelCell>수비</LabelCell>
                 <StatValueCell
                   val={city.def}
@@ -667,7 +682,11 @@ function statColor(val: number, max: number, kind?: "def" | "wall"): string {
 }
 
 /** Show remaining capacity warning when near max (legacy: yellow [remain] annotation) */
-function remainWarning(val: number, max: number, perTurn: number): string | null {
+function remainWarning(
+  val: number,
+  max: number,
+  perTurn: number,
+): string | null {
   const remain = val - max;
   if (remain > -10 * perTurn) return `[${remain > 0 ? "+" : ""}${remain}]`;
   return null;
@@ -693,11 +712,16 @@ function StatValueCell({
       </div>
     );
   }
-  const color = kind === "pop"
-    ? (max > 0 && val / max > 0.9 ? "lightgreen" : max > 0 && val / max > 0.7 ? "yellow" : "orangered")
-    : kind === "def" || kind === "wall"
-      ? statColor(val, max, kind)
-      : statColor(val, max);
+  const color =
+    kind === "pop"
+      ? max > 0 && val / max > 0.9
+        ? "lightgreen"
+        : max > 0 && val / max > 0.7
+          ? "yellow"
+          : "orangered"
+      : kind === "def" || kind === "wall"
+        ? statColor(val, max, kind)
+        : statColor(val, max);
   const warn = perTurn != null ? remainWarning(val, max, perTurn) : null;
   return (
     <div className="border-t border-l border-gray-600 text-center text-xs py-0.5 px-0.5">
@@ -705,7 +729,11 @@ function StatValueCell({
       <span style={{ color }}>
         {val.toLocaleString()}/{max.toLocaleString()}
       </span>
-      {warn && <span style={{ color: "yellow" }} className="ml-0.5">{warn}</span>}
+      {warn && (
+        <span style={{ color: "yellow" }} className="ml-0.5">
+          {warn}
+        </span>
+      )}
     </div>
   );
 }

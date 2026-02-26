@@ -69,10 +69,8 @@ const categoryColor: Record<CategoryKey, string> = {
   battle: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
   domestic:
     "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  diplomacy:
-    "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  system:
-    "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
+  diplomacy: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  system: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
 };
 
 const categoryLabel: Record<CategoryKey, string> = {
@@ -88,7 +86,7 @@ function extractDisplayMessage(log: Message): string {
     (log.payload as Record<string, unknown>)?.message ??
       (log.payload as Record<string, unknown>)?.msg ??
       (log.payload as Record<string, unknown>)?.text ??
-      log.messageType
+      log.messageType,
   );
 }
 
@@ -112,11 +110,14 @@ function LogEntry({
       className={cn(
         "transition-colors",
         expanded && "ring-1 ring-primary/20",
-        selected && "border-primary"
+        selected && "border-primary",
       )}
     >
       <CardContent className="p-3">
-        <div className="flex items-start gap-2 cursor-pointer" onClick={() => onSelect(log)}>
+        <div
+          className="flex items-start gap-2 cursor-pointer"
+          onClick={() => onSelect(log)}
+        >
           <div className="mt-0.5" onClick={(e) => e.stopPropagation()}>
             {hasPayload ? (
               <button
@@ -138,19 +139,27 @@ function LogEntry({
             <div className="flex items-center gap-2 flex-wrap">
               <Badge
                 variant="outline"
-                className={cn("text-[10px] px-1.5 py-0", categoryColor[category])}
+                className={cn(
+                  "text-[10px] px-1.5 py-0",
+                  categoryColor[category],
+                )}
               >
                 {categoryLabel[category]}
               </Badge>
-              <span className="text-xs font-mono text-muted-foreground">#{log.id}</span>
-              <span className="text-xs text-muted-foreground">{log.messageType}</span>
+              <span className="text-xs font-mono text-muted-foreground">
+                #{log.id}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {log.messageType}
+              </span>
             </div>
             <p className="text-sm break-all">{extractDisplayMessage(log)}</p>
           </div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
             <Clock className="size-3" />
             <time dateTime={log.sentAt}>
-              {sentDate.toLocaleDateString("ko-KR")} {sentDate.toLocaleTimeString("ko-KR", {
+              {sentDate.toLocaleDateString("ko-KR")}{" "}
+              {sentDate.toLocaleTimeString("ko-KR", {
                 hour: "2-digit",
                 minute: "2-digit",
                 second: "2-digit",
@@ -224,14 +233,19 @@ export default function AdminLogsPage() {
 
     if (!messageTypeFilter.trim()) return byCategory;
     const needle = messageTypeFilter.toLowerCase();
-    return byCategory.filter((log) => log.messageType.toLowerCase().includes(needle));
+    return byCategory.filter((log) =>
+      log.messageType.toLowerCase().includes(needle),
+    );
   }, [activeCategory, allLogs, messageTypeFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredLogs.length / ITEMS_PER_PAGE),
+  );
   const safePage = Math.min(page, totalPages);
   const pagedLogs = filteredLogs.slice(
     (safePage - 1) * ITEMS_PER_PAGE,
-    safePage * ITEMS_PER_PAGE
+    safePage * ITEMS_PER_PAGE,
   );
 
   const categoryCounts = allLogs.reduce(
@@ -241,7 +255,7 @@ export default function AdminLogsPage() {
       acc.all = (acc.all || 0) + 1;
       return acc;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
 
   return (
@@ -265,7 +279,9 @@ export default function AdminLogsPage() {
           className="w-64"
           placeholder="장수명으로 ID 선택"
           onChange={(e) => {
-            const selected = generals.find((g) => `${g.name} (#${g.id})` === e.target.value);
+            const selected = generals.find(
+              (g) => `${g.name} (#${g.id})` === e.target.value,
+            );
             if (selected) setGeneralId(String(selected.id));
           }}
         />
@@ -282,7 +298,12 @@ export default function AdminLogsPage() {
           조회
         </Button>
         {searched && (
-          <Button variant="outline" size="sm" onClick={handleSearch} disabled={loading}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSearch}
+            disabled={loading}
+          >
             <RefreshCw className="size-4 mr-1" />
             새로고침
           </Button>
@@ -305,7 +326,9 @@ export default function AdminLogsPage() {
                 {LOG_CATEGORIES.map((cat) => (
                   <TabsTrigger key={cat.key} value={cat.key} className="gap-1">
                     {cat.label}
-                    <span className="text-[10px] text-muted-foreground">({categoryCounts[cat.key] ?? 0})</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      ({categoryCounts[cat.key] ?? 0})
+                    </span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -341,13 +364,23 @@ export default function AdminLogsPage() {
                     <div className="text-xs space-y-1 text-muted-foreground">
                       <p>#{selectedLog.id}</p>
                       <p>타입: {selectedLog.messageType}</p>
-                      <p>메일박스: {selectedLog.mailboxCode} ({selectedLog.mailboxType})</p>
-                      <p>src: {selectedLog.srcId ?? "-"}, dest: {selectedLog.destId ?? "-"}</p>
-                      <p>{new Date(selectedLog.sentAt).toLocaleString("ko-KR")}</p>
+                      <p>
+                        메일박스: {selectedLog.mailboxCode} (
+                        {selectedLog.mailboxType})
+                      </p>
+                      <p>
+                        src: {selectedLog.srcId ?? "-"}, dest:{" "}
+                        {selectedLog.destId ?? "-"}
+                      </p>
+                      <p>
+                        {new Date(selectedLog.sentAt).toLocaleString("ko-KR")}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs font-medium mb-1">본문</p>
-                      <p className="text-sm break-all">{extractDisplayMessage(selectedLog)}</p>
+                      <p className="text-sm break-all">
+                        {extractDisplayMessage(selectedLog)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs font-medium mb-1">payload</p>
@@ -363,7 +396,9 @@ export default function AdminLogsPage() {
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">로그를 선택하세요.</p>
+                  <p className="text-sm text-muted-foreground">
+                    로그를 선택하세요.
+                  </p>
                 )}
               </CardContent>
             </Card>

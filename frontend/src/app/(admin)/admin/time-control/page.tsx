@@ -1,10 +1,25 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Clock, Coins, Wheat, Timer, Gavel, AlertTriangle, Lock, Unlock } from "lucide-react";
+import {
+  Clock,
+  Coins,
+  Wheat,
+  Timer,
+  Gavel,
+  AlertTriangle,
+  Lock,
+  Unlock,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +41,9 @@ export default function AdminTimeControlPage() {
   // Gold/Rice distribution
   const [goldAmount, setGoldAmount] = useState("");
   const [riceAmount, setRiceAmount] = useState("");
-  const [distributeTarget, setDistributeTarget] = useState<"all" | "nations">("all");
+  const [distributeTarget, setDistributeTarget] = useState<"all" | "nations">(
+    "all",
+  );
 
   // Auction time
   const [auctionSyncEnabled, setAuctionSyncEnabled] = useState(false);
@@ -101,7 +118,9 @@ export default function AdminTimeControlPage() {
       await adminApi.timeControl({
         distribute: { gold, rice, target: distributeTarget },
       });
-      toast.success(`금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === "all" ? "전체 장수" : "국가별"})`);
+      toast.success(
+        `금 ${gold.toLocaleString()}, 쌀 ${rice.toLocaleString()} 지급 완료 (${distributeTarget === "all" ? "전체 장수" : "국가별"})`,
+      );
       setGoldAmount("");
       setRiceAmount("");
     } catch {
@@ -177,11 +196,18 @@ export default function AdminTimeControlPage() {
                   : "bg-green-500/20 text-green-400 border border-green-500/40"
               }`}
             >
-              {locked ? <Lock className="size-3.5" /> : <Unlock className="size-3.5" />}
+              {locked ? (
+                <Lock className="size-3.5" />
+              ) : (
+                <Unlock className="size-3.5" />
+              )}
               {locked ? "서버 잠금됨" : "서버 열림"}
             </button>
           </div>
-          <Button onClick={handleTimeSubmit} className="bg-red-400 hover:bg-red-500 text-white">
+          <Button
+            onClick={handleTimeSubmit}
+            className="bg-red-400 hover:bg-red-500 text-white"
+          >
             시간 설정 적용
           </Button>
         </CardContent>
@@ -191,8 +217,7 @@ export default function AdminTimeControlPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Timer className="size-4" />
-            턴 시간 조정
+            <Timer className="size-4" />턴 시간 조정
           </CardTitle>
           <CardDescription>
             현재 턴 시간: <Badge variant="secondary">{turnTerm}분</Badge>
@@ -238,7 +263,9 @@ export default function AdminTimeControlPage() {
             <Coins className="size-4 text-amber-400" />
             금쌀 지급
           </CardTitle>
-          <CardDescription>장수 또는 국가에 금/쌀을 일괄 지급합니다.</CardDescription>
+          <CardDescription>
+            장수 또는 국가에 금/쌀을 일괄 지급합니다.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -284,7 +311,11 @@ export default function AdminTimeControlPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={handleDistribute} variant="outline" className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10">
+            <Button
+              onClick={handleDistribute}
+              variant="outline"
+              className="border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+            >
               <Coins className="size-4 mr-1" /> 지급 실행
             </Button>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -301,7 +332,9 @@ export default function AdminTimeControlPage() {
             <Gavel className="size-4 text-purple-400" />
             경매 시간 동기
           </CardTitle>
-          <CardDescription>경매 마감 시간을 턴 시간과 동기화합니다.</CardDescription>
+          <CardDescription>
+            경매 마감 시간을 턴 시간과 동기화합니다.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
@@ -318,7 +351,9 @@ export default function AdminTimeControlPage() {
             </button>
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-muted-foreground">경매 마감 시간 (분)</label>
+            <label className="text-sm text-muted-foreground">
+              경매 마감 시간 (분)
+            </label>
             <Input
               type="number"
               value={auctionCloseMinutes}
@@ -327,9 +362,15 @@ export default function AdminTimeControlPage() {
               max={10080}
               className="w-40"
             />
-            <p className="text-xs text-muted-foreground">경매 등록 후 지정한 분 후에 마감됩니다.</p>
+            <p className="text-xs text-muted-foreground">
+              경매 등록 후 지정한 분 후에 마감됩니다.
+            </p>
           </div>
-          <Button onClick={handleAuctionSync} variant="outline" className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10">
+          <Button
+            onClick={handleAuctionSync}
+            variant="outline"
+            className="border-purple-500/40 text-purple-400 hover:bg-purple-500/10"
+          >
             <Gavel className="size-4 mr-1" /> 경매 설정 적용
           </Button>
         </CardContent>

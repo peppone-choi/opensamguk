@@ -845,10 +845,30 @@ export default function NationPage() {
                   {myGeneral.officerLevel >= 5 && (
                     <div className="flex gap-1 mb-1">
                       {[
-                        { tag: "**", label: "B", title: "굵게", cls: "font-bold" },
-                        { tag: "__", label: "I", title: "기울임", cls: "italic" },
-                        { tag: "~~", label: "S", title: "취소선", cls: "line-through" },
-                        { tag: "# ", label: "H", title: "제목", cls: "font-bold text-base" },
+                        {
+                          tag: "**",
+                          label: "B",
+                          title: "굵게",
+                          cls: "font-bold",
+                        },
+                        {
+                          tag: "__",
+                          label: "I",
+                          title: "기울임",
+                          cls: "italic",
+                        },
+                        {
+                          tag: "~~",
+                          label: "S",
+                          title: "취소선",
+                          cls: "line-through",
+                        },
+                        {
+                          tag: "# ",
+                          label: "H",
+                          title: "제목",
+                          cls: "font-bold text-base",
+                        },
                       ].map((fmt) => (
                         <Button
                           key={fmt.tag}
@@ -858,7 +878,9 @@ export default function NationPage() {
                           className={`h-7 w-7 p-0 text-xs ${fmt.cls}`}
                           title={fmt.title}
                           onClick={() => {
-                            const ta = document.getElementById("notice-textarea") as HTMLTextAreaElement | null;
+                            const ta = document.getElementById(
+                              "notice-textarea",
+                            ) as HTMLTextAreaElement | null;
                             if (!ta) return;
                             const start = ta.selectionStart;
                             const end = ta.selectionEnd;
@@ -867,7 +889,10 @@ export default function NationPage() {
                             const wrapped = isHeading
                               ? `\n${fmt.tag}${sel || fmt.title}\n`
                               : `${fmt.tag}${sel || fmt.title}${fmt.tag}`;
-                            const next = editNotice.slice(0, start) + wrapped + editNotice.slice(end);
+                            const next =
+                              editNotice.slice(0, start) +
+                              wrapped +
+                              editNotice.slice(end);
                             setEditNotice(next);
                             setTimeout(() => {
                               ta.focus();
@@ -895,7 +920,9 @@ export default function NationPage() {
                   />
                   {editNotice && (
                     <div className="mt-2 p-2 rounded bg-muted/30 border border-gray-700 text-sm">
-                      <span className="text-[10px] text-muted-foreground block mb-1">미리보기:</span>
+                      <span className="text-[10px] text-muted-foreground block mb-1">
+                        미리보기:
+                      </span>
                       <NoticePreview text={editNotice} />
                     </div>
                   )}
@@ -1088,15 +1115,31 @@ export default function NationPage() {
                                         <span>{d.term}개월</span>
                                         {currentWorld && (
                                           <span className="block text-[10px] text-muted-foreground">
-                                            (~{(() => {
-                                              const endMonth = (currentWorld.currentMonth + d.term - 1) % 12 + 1;
-                                              const endYear = currentWorld.currentYear + Math.floor((currentWorld.currentMonth + d.term - 1) / 12);
+                                            (~
+                                            {(() => {
+                                              const endMonth =
+                                                ((currentWorld.currentMonth +
+                                                  d.term -
+                                                  1) %
+                                                  12) +
+                                                1;
+                                              const endYear =
+                                                currentWorld.currentYear +
+                                                Math.floor(
+                                                  (currentWorld.currentMonth +
+                                                    d.term -
+                                                    1) /
+                                                    12,
+                                                );
                                               return `${endYear}년 ${endMonth}월`;
-                                            })()})
+                                            })()}
+                                            )
                                           </span>
                                         )}
                                       </div>
-                                    ) : "-"}
+                                    ) : (
+                                      "-"
+                                    )}
                                   </TableCell>
                                 </TableRow>
                               );
@@ -1177,7 +1220,11 @@ function NoticePreview({ text }: { text: string }) {
         if (parts.length === 0) parts.push("\u00A0");
 
         if (isHeading) {
-          return <div key={i} className="font-bold text-base text-yellow-300">{parts}</div>;
+          return (
+            <div key={i} className="font-bold text-base text-yellow-300">
+              {parts}
+            </div>
+          );
         }
         return <div key={i}>{parts}</div>;
       })}

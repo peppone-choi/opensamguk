@@ -124,9 +124,7 @@ export default function TrafficPage() {
               </div>
             ) : (
               recentTraffic.map((entry, idx) => {
-                const timeStr = entry.date
-                  ? entry.date.substring(11, 16)
-                  : "-";
+                const timeStr = entry.date ? entry.date.substring(11, 16) : "-";
                 const label = `${entry.year}년 ${entry.month}월 ${timeStr}`;
                 return (
                   <TrafficBar
@@ -156,9 +154,7 @@ export default function TrafficPage() {
               </div>
             ) : (
               recentTraffic.map((entry, idx) => {
-                const timeStr = entry.date
-                  ? entry.date.substring(11, 16)
-                  : "-";
+                const timeStr = entry.date ? entry.date.substring(11, 16) : "-";
                 const label = `${entry.year}년 ${entry.month}월 ${timeStr}`;
                 return (
                   <TrafficBar

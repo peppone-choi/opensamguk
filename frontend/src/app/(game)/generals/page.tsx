@@ -157,7 +157,9 @@ export default function GeneralsPage() {
         cmp = ca.localeCompare(cb);
       } else if (sortKey === "totalStats") {
         cmp =
-          a.leadership + a.strength + a.intel -
+          a.leadership +
+          a.strength +
+          a.intel -
           (b.leadership + b.strength + b.intel);
       } else if (sortKey === "age") {
         cmp = (a.age ?? 0) - (b.age ?? 0);
@@ -373,7 +375,9 @@ export default function GeneralsPage() {
                   {showExtended && (
                     <>
                       <TableCell className="text-xs whitespace-nowrap">
-                        {g.specialCode === "None" ? "-" : g.specialCode ?? "-"}
+                        {g.specialCode === "None"
+                          ? "-"
+                          : (g.specialCode ?? "-")}
                         {g.special2Code && g.special2Code !== "None"
                           ? ` / ${g.special2Code}`
                           : ""}

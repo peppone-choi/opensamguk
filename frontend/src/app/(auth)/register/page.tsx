@@ -11,7 +11,14 @@ import { useAuthStore } from "@/stores/authStore";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, FileText, Shield, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import {
+  X,
+  FileText,
+  Shield,
+  CheckCircle,
+  XCircle,
+  Loader2,
+} from "lucide-react";
 import api from "@/lib/api";
 
 const registerSchema = z
@@ -182,9 +189,13 @@ export default function RegisterPage() {
   const [activationMessage, setActivationMessage] = useState("");
 
   // Async duplicate check state
-  const [loginIdStatus, setLoginIdStatus] = useState<"idle" | "checking" | "ok" | "taken">("idle");
+  const [loginIdStatus, setLoginIdStatus] = useState<
+    "idle" | "checking" | "ok" | "taken"
+  >("idle");
   const [loginIdMsg, setLoginIdMsg] = useState("");
-  const [nickStatus, setNickStatus] = useState<"idle" | "checking" | "ok" | "taken">("idle");
+  const [nickStatus, setNickStatus] = useState<
+    "idle" | "checking" | "ok" | "taken"
+  >("idle");
   const [nickMsg, setNickMsg] = useState("");
   const [nickWidthError, setNickWidthError] = useState("");
 
@@ -197,7 +208,10 @@ export default function RegisterPage() {
     }
     setLoginIdStatus("checking");
     try {
-      const { data } = await api.post<{ result: boolean; reason?: string }>("/auth/check-dup", { field: "username", value });
+      const { data } = await api.post<{ result: boolean; reason?: string }>(
+        "/auth/check-dup",
+        { field: "username", value },
+      );
       if (data.result) {
         setLoginIdStatus("ok");
         setLoginIdMsg("사용 가능한 아이디입니다.");
@@ -227,7 +241,10 @@ export default function RegisterPage() {
     setNickWidthError("");
     setNickStatus("checking");
     try {
-      const { data } = await api.post<{ result: boolean; reason?: string }>("/auth/check-dup", { field: "nickname", value });
+      const { data } = await api.post<{ result: boolean; reason?: string }>(
+        "/auth/check-dup",
+        { field: "nickname", value },
+      );
       if (data.result) {
         setNickStatus("ok");
         setNickMsg("사용 가능한 닉네임입니다.");
@@ -278,16 +295,22 @@ export default function RegisterPage() {
       // Show activation code message if server requires email verification
       setRegistrationComplete(true);
       setActivationMessage(
-        "회원가입이 완료되었습니다. 이메일 인증이 필요한 경우 발송된 인증 코드를 확인해주세요."
+        "회원가입이 완료되었습니다. 이메일 인증이 필요한 경우 발송된 인증 코드를 확인해주세요.",
       );
       toast.success("회원가입이 완료되었습니다.");
       setTimeout(() => router.push("/lobby"), 2000);
     } catch (err: unknown) {
-      const errData = (err as { response?: { data?: { message?: string; activationRequired?: boolean } } })?.response?.data;
+      const errData = (
+        err as {
+          response?: {
+            data?: { message?: string; activationRequired?: boolean };
+          };
+        }
+      )?.response?.data;
       if (errData?.activationRequired) {
         setRegistrationComplete(true);
         setActivationMessage(
-          "가입이 완료되었습니다. 이메일로 발송된 인증 코드를 입력하여 계정을 활성화해주세요."
+          "가입이 완료되었습니다. 이메일로 발송된 인증 코드를 입력하여 계정을 활성화해주세요.",
         );
         return;
       }
@@ -436,7 +459,9 @@ export default function RegisterPage() {
                   onBlur: (e) => checkNickDup(e.target.value),
                   onChange: (e) => {
                     const w = mbStrWidth(e.target.value);
-                    setNickWidthError(w > 18 ? "닉네임이 너무 깁니다 (최대 너비 18)." : "");
+                    setNickWidthError(
+                      w > 18 ? "닉네임이 너무 깁니다 (최대 너비 18)." : "",
+                    );
                   },
                 })}
                 placeholder="닉네임을 입력하세요"
@@ -447,7 +472,9 @@ export default function RegisterPage() {
                 </p>
               )}
               {nickWidthError && (
-                <p className="mt-1 text-xs text-destructive">{nickWidthError}</p>
+                <p className="mt-1 text-xs text-destructive">
+                  {nickWidthError}
+                </p>
               )}
               {nickStatus === "checking" && (
                 <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">

@@ -25,7 +25,12 @@ export function ErrorState({
           <p className="text-xs text-muted-foreground/70 mt-1">{description}</p>
         )}
         {onRetry && (
-          <Button variant="outline" size="sm" className="mt-4" onClick={onRetry}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
+            onClick={onRetry}
+          >
             다시 시도
           </Button>
         )}

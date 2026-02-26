@@ -93,8 +93,11 @@ export default function MyPage() {
   const [borderReturn, setBorderReturn] = useState(false);
   const [customCss, setCustomCss] = useState("");
   const [cssPreview, setCssPreview] = useState(false);
-  const [screenMode, setScreenMode] = useState<"auto" | "pc" | "mobile">(
-    () => (typeof window !== "undefined" ? (localStorage.getItem("sam_screenMode") as "auto" | "pc" | "mobile") ?? "auto" : "auto")
+  const [screenMode, setScreenMode] = useState<"auto" | "pc" | "mobile">(() =>
+    typeof window !== "undefined"
+      ? ((localStorage.getItem("sam_screenMode") as "auto" | "pc" | "mobile") ??
+        "auto")
+      : "auto",
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,7 +179,16 @@ export default function MyPage() {
     } finally {
       setSaving(false);
     }
-  }, [defenceTrain, tournamentState, potionThreshold, autoNationTurn, preRiseDelete, preOpenDelete, borderReturn, customCss]);
+  }, [
+    defenceTrain,
+    tournamentState,
+    potionThreshold,
+    autoNationTurn,
+    preRiseDelete,
+    preOpenDelete,
+    borderReturn,
+    customCss,
+  ]);
 
   const handleVacation = useCallback(async () => {
     if (!confirm("휴가 상태를 전환하시겠습니까?")) return;
@@ -748,12 +760,17 @@ export default function MyPage() {
                     화면 모드
                   </label>
                   <div className="flex gap-3">
-                    {([
-                      { value: "auto", label: "자동" },
-                      { value: "pc", label: "PC" },
-                      { value: "mobile", label: "모바일" },
-                    ] as const).map((opt) => (
-                      <label key={opt.value} className="flex items-center gap-1.5 cursor-pointer">
+                    {(
+                      [
+                        { value: "auto", label: "자동" },
+                        { value: "pc", label: "PC" },
+                        { value: "mobile", label: "모바일" },
+                      ] as const
+                    ).map((opt) => (
+                      <label
+                        key={opt.value}
+                        className="flex items-center gap-1.5 cursor-pointer"
+                      >
                         <input
                           type="radio"
                           name="screenMode"
@@ -770,7 +787,8 @@ export default function MyPage() {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    UI 레이아웃 모드를 선택합니다. 자동 시 기기에 따라 전환됩니다.
+                    UI 레이아웃 모드를 선택합니다. 자동 시 기기에 따라
+                    전환됩니다.
                   </p>
                 </div>
 
@@ -797,7 +815,9 @@ export default function MyPage() {
 
                 {/* Pre-rise / Pre-open / Border Return toggles */}
                 <div className="space-y-3 border-t border-gray-800 pt-3">
-                  <p className="text-xs text-muted-foreground font-medium">거병/오픈/귀환 옵션</p>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    거병/오픈/귀환 옵션
+                  </p>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -841,7 +861,9 @@ export default function MyPage() {
                 {/* Custom CSS */}
                 <div className="space-y-2 border-t border-gray-800 pt-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm text-muted-foreground">커스텀 CSS</label>
+                    <label className="text-sm text-muted-foreground">
+                      커스텀 CSS
+                    </label>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -859,15 +881,19 @@ export default function MyPage() {
                   />
                   {cssPreview && customCss && (
                     <div className="border border-dashed border-yellow-600 rounded p-3">
-                      <p className="text-[10px] text-yellow-500 mb-1">CSS 미리보기 (현재 페이지에 적용됨)</p>
+                      <p className="text-[10px] text-yellow-500 mb-1">
+                        CSS 미리보기 (현재 페이지에 적용됨)
+                      </p>
                       <style dangerouslySetInnerHTML={{ __html: customCss }} />
                       <div className="text-xs text-muted-foreground">
-                        위에 입력한 CSS가 현재 페이지에 실시간 적용되어 있습니다.
+                        위에 입력한 CSS가 현재 페이지에 실시간 적용되어
+                        있습니다.
                       </div>
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground">
-                    게임 UI에 적용할 커스텀 CSS를 입력하세요. 저장 후 모든 페이지에 적용됩니다.
+                    게임 UI에 적용할 커스텀 CSS를 입력하세요. 저장 후 모든
+                    페이지에 적용됩니다.
                   </p>
                 </div>
 
@@ -899,7 +925,12 @@ export default function MyPage() {
                     variant="outline"
                     className="w-full"
                     onClick={async () => {
-                      if (!confirm("거병 이후 장수를 삭제할 수 없게됩니다. 거병하시겠습니까?")) return;
+                      if (
+                        !confirm(
+                          "거병 이후 장수를 삭제할 수 없게됩니다. 거병하시겠습니까?",
+                        )
+                      )
+                        return;
                       try {
                         await accountApi.buildNationCandidate();
                         toast.success("거병하였습니다.");
@@ -972,16 +1003,31 @@ export default function MyPage() {
                           className="text-xs"
                           onClick={async () => {
                             // Check if item is unique (legacy parity: double-confirm for unique items)
-                            const isUnique = (g.meta as Record<string, unknown>)?.[`${key}Unique`] === true ||
-                              val?.includes("★") || val?.includes("유니크");
+                            const isUnique =
+                              (g.meta as Record<string, unknown>)?.[
+                                `${key}Unique`
+                              ] === true ||
+                              val?.includes("★") ||
+                              val?.includes("유니크");
                             if (isUnique) {
-                              if (!confirm(`[주의] ${label} [${val}]은(는) 유니크 아이템입니다! 파기하면 복구할 수 없습니다. 정말 파기하시겠습니까?`)) return;
-                              if (!confirm(`[최종 확인] 유니크 아이템 ${val}을(를) 정말로 파기합니다. 되돌릴 수 없습니다!`)) return;
+                              if (
+                                !confirm(
+                                  `[주의] ${label} [${val}]은(는) 유니크 아이템입니다! 파기하면 복구할 수 없습니다. 정말 파기하시겠습니까?`,
+                                )
+                              )
+                                return;
+                              if (
+                                !confirm(
+                                  `[최종 확인] 유니크 아이템 ${val}을(를) 정말로 파기합니다. 되돌릴 수 없습니다!`,
+                                )
+                              )
+                                return;
                             } else if (
                               !confirm(
                                 `${label} [${val}]을(를) 정말 파기하시겠습니까?`,
                               )
-                            ) return;
+                            )
+                              return;
                             {
                               try {
                                 const res = await itemApi.discard(g.id, key);
@@ -1039,16 +1085,29 @@ function LogTabContent({
   battleRecords: Message[];
   historyRecords: Message[];
 }) {
-  const [oldLogs, setOldLogs] = useState<{ id: number; message: string; date: string }[]>([]);
-  const [oldLogType, setOldLogType] = useState<"generalHistory" | "generalAction" | "battleResult" | "battleDetail">("generalAction");
+  const [oldLogs, setOldLogs] = useState<
+    { id: number; message: string; date: string }[]
+  >([]);
+  const [oldLogType, setOldLogType] = useState<
+    "generalHistory" | "generalAction" | "battleResult" | "battleDetail"
+  >("generalAction");
   const [oldLogsLoading, setOldLogsLoading] = useState(false);
   const [oldLogsEnd, setOldLogsEnd] = useState(false);
 
   const loadOldLogs = async (reset = false) => {
     setOldLogsLoading(true);
     try {
-      const lastId = reset ? undefined : (oldLogs.length > 0 ? oldLogs[oldLogs.length - 1].id : undefined);
-      const { data } = await generalLogApi.getOldLogs(generalId, generalId, oldLogType, lastId);
+      const lastId = reset
+        ? undefined
+        : oldLogs.length > 0
+          ? oldLogs[oldLogs.length - 1].id
+          : undefined;
+      const { data } = await generalLogApi.getOldLogs(
+        generalId,
+        generalId,
+        oldLogType,
+        lastId,
+      );
       if (data.result && data.logs) {
         if (reset) {
           setOldLogs(data.logs);
@@ -1198,7 +1257,13 @@ function LogTabContent({
   );
 }
 
-function RecordList({ records, pageSize = 20 }: { records: Message[]; pageSize?: number }) {
+function RecordList({
+  records,
+  pageSize = 20,
+}: {
+  records: Message[];
+  pageSize?: number;
+}) {
   const [page, setPage] = useState(0);
 
   if (records.length === 0) {

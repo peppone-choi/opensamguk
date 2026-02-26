@@ -23,13 +23,21 @@ import { formatOfficerLevelText } from "@/lib/game-utils";
 
 type UserType = "통" | "무" | "지" | "만능" | "평범" | "무지" | "무능";
 
-function getUserType(leadership: number, strength: number, intel: number): UserType {
+function getUserType(
+  leadership: number,
+  strength: number,
+  intel: number,
+): UserType {
   if (leadership < 40) {
     if (strength + intel < 40) return "무능";
     return "무지";
   }
   const max = Math.max(leadership, strength, intel);
-  const min2sum = Math.min(leadership + strength, strength + intel, intel + leadership);
+  const min2sum = Math.min(
+    leadership + strength,
+    strength + intel,
+    intel + leadership,
+  );
   if (max >= 70 && min2sum >= max * 1.7) return "만능";
   if (strength >= 60 && intel < strength * 0.8) return "무";
   if (intel >= 60 && strength < intel * 0.8) return "지";
@@ -358,64 +366,110 @@ export default function NationsPage() {
                               장수 ({nationGens.length}명)
                             </h4>
                             {/* Type classification summary */}
-                            {nationGens.length > 0 && (() => {
-                              const byType: Record<UserType, typeof nationGens> = {
-                                만능: [], 통: [], 무: [], 지: [], 평범: [], 무지: [], 무능: [],
-                              };
-                              let combatUserCount = 0;
-                              let combatUserLeadership = 0;
-                              let combatNpcCount = 0;
-                              let combatNpcLeadership = 0;
-                              for (const g of nationGens) {
-                                const t = getUserType(g.leadership, g.strength, g.intel);
-                                byType[t].push(g);
-                                if (t !== "무능" && t !== "무지") {
-                                  if (g.npcState < 2) {
-                                    combatUserCount++;
-                                    combatUserLeadership += g.leadership;
-                                  } else {
-                                    combatNpcCount++;
-                                    combatNpcLeadership += g.leadership;
+                            {nationGens.length > 0 &&
+                              (() => {
+                                const byType: Record<
+                                  UserType,
+                                  typeof nationGens
+                                > = {
+                                  만능: [],
+                                  통: [],
+                                  무: [],
+                                  지: [],
+                                  평범: [],
+                                  무지: [],
+                                  무능: [],
+                                };
+                                let combatUserCount = 0;
+                                let combatUserLeadership = 0;
+                                let combatNpcCount = 0;
+                                let combatNpcLeadership = 0;
+                                for (const g of nationGens) {
+                                  const t = getUserType(
+                                    g.leadership,
+                                    g.strength,
+                                    g.intel,
+                                  );
+                                  byType[t].push(g);
+                                  if (t !== "무능" && t !== "무지") {
+                                    if (g.npcState < 2) {
+                                      combatUserCount++;
+                                      combatUserLeadership += g.leadership;
+                                    } else {
+                                      combatNpcCount++;
+                                      combatNpcLeadership += g.leadership;
+                                    }
                                   }
                                 }
-                              }
-                              return (
-                                <div className="mb-2 p-2 rounded border border-muted/30 text-xs space-y-1">
-                                  <div className="font-semibold text-yellow-400 text-center">
-                                    총({nationGens.length}), 전투장({combatUserCount}, 약{" "}
-                                    {(combatUserLeadership * 100).toLocaleString()}명), 전투N장({combatNpcCount}, 약{" "}
-                                    {(combatNpcLeadership * 100).toLocaleString()}명)
-                                  </div>
-                                  {(["만능", "통", "무", "지", "평범", "무지", "무능"] as UserType[]).map((t) => {
-                                    if (byType[t].length === 0) return null;
-                                    return (
-                                      <div key={t} className="flex flex-wrap gap-0.5">
-                                        <span
-                                          className="inline-block w-10 text-right mr-1 font-medium"
-                                          style={{ color: USER_TYPE_COLORS[t] }}
+                                return (
+                                  <div className="mb-2 p-2 rounded border border-muted/30 text-xs space-y-1">
+                                    <div className="font-semibold text-yellow-400 text-center">
+                                      총({nationGens.length}), 전투장(
+                                      {combatUserCount}, 약{" "}
+                                      {(
+                                        combatUserLeadership * 100
+                                      ).toLocaleString()}
+                                      명), 전투N장({combatNpcCount}, 약{" "}
+                                      {(
+                                        combatNpcLeadership * 100
+                                      ).toLocaleString()}
+                                      명)
+                                    </div>
+                                    {(
+                                      [
+                                        "만능",
+                                        "통",
+                                        "무",
+                                        "지",
+                                        "평범",
+                                        "무지",
+                                        "무능",
+                                      ] as UserType[]
+                                    ).map((t) => {
+                                      if (byType[t].length === 0) return null;
+                                      return (
+                                        <div
+                                          key={t}
+                                          className="flex flex-wrap gap-0.5"
                                         >
-                                          {t}장({byType[t].length})
-                                        </span>
-                                        {byType[t].map((g, i) => (
                                           <span
-                                            key={g.id}
-                                            className={`${g.npcState >= 2 ? "text-cyan-400" : ""} ${g.killTurn != null ? "line-through opacity-60" : ""}`}
-                                            style={
-                                              (g.penalty && Object.keys(g.penalty).length > 0)
-                                                ? { color: "#facc15" }
-                                                : undefined
-                                            }
-                                            title={g.killTurn != null ? `사망 예정: ${g.killTurn}턴` : undefined}
+                                            className="inline-block w-10 text-right mr-1 font-medium"
+                                            style={{
+                                              color: USER_TYPE_COLORS[t],
+                                            }}
                                           >
-                                            {g.name}{g.killTurn != null ? "†" : ""}{i < byType[t].length - 1 ? ", " : ""}
+                                            {t}장({byType[t].length})
                                           </span>
-                                        ))}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            })()}
+                                          {byType[t].map((g, i) => (
+                                            <span
+                                              key={g.id}
+                                              className={`${g.npcState >= 2 ? "text-cyan-400" : ""} ${g.killTurn != null ? "line-through opacity-60" : ""}`}
+                                              style={
+                                                g.penalty &&
+                                                Object.keys(g.penalty).length >
+                                                  0
+                                                  ? { color: "#facc15" }
+                                                  : undefined
+                                              }
+                                              title={
+                                                g.killTurn != null
+                                                  ? `사망 예정: ${g.killTurn}턴`
+                                                  : undefined
+                                              }
+                                            >
+                                              {g.name}
+                                              {g.killTurn != null ? "†" : ""}
+                                              {i < byType[t].length - 1
+                                                ? ", "
+                                                : ""}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })()}
                             {nationGens.length === 0 ? (
                               <p className="text-xs text-muted-foreground">
                                 소속 장수 없음
@@ -473,12 +527,21 @@ export default function NationsPage() {
                                                     ? "text-gray-400"
                                                     : ""
                                                 } ${g.killTurn != null ? "line-through text-red-400/60" : ""}`}
-                                                title={g.killTurn != null ? `사망 예정: ${g.killTurn}턴` : undefined}
+                                                title={
+                                                  g.killTurn != null
+                                                    ? `사망 예정: ${g.killTurn}턴`
+                                                    : undefined
+                                                }
                                               >
                                                 {g.name}
                                               </span>
                                               {g.killTurn != null && (
-                                                <span className="text-[9px] text-red-400" title={`사망 예정 턴: ${g.killTurn}`}>†</span>
+                                                <span
+                                                  className="text-[9px] text-red-400"
+                                                  title={`사망 예정 턴: ${g.killTurn}`}
+                                                >
+                                                  †
+                                                </span>
                                               )}
                                               {g.npcState > 0 && (
                                                 <Badge
@@ -497,8 +560,7 @@ export default function NationsPage() {
                                             )}
                                           </td>
                                           <td className="py-1 px-1">
-                                            {cityMap.get(g.cityId)?.name ??
-                                              "-"}
+                                            {cityMap.get(g.cityId)?.name ?? "-"}
                                           </td>
                                           <td className="py-1 px-1 text-right">
                                             {g.leadership}
@@ -516,13 +578,18 @@ export default function NationsPage() {
                                             {hasPenalty ? (
                                               <span
                                                 className="text-red-400 cursor-help"
-                                                title={Object.entries(g.penalty || {})
+                                                title={Object.entries(
+                                                  g.penalty || {},
+                                                )
                                                   .map(([k, v]) => `${k}: ${v}`)
                                                   .join(", ")}
                                               >
                                                 ●{" "}
                                                 <span className="text-[9px]">
-                                                  {Object.keys(g.penalty || {}).length}
+                                                  {
+                                                    Object.keys(g.penalty || {})
+                                                      .length
+                                                  }
                                                 </span>
                                               </span>
                                             ) : (
@@ -691,9 +758,7 @@ export default function NationsPage() {
                             <td className="py-1 px-1 text-right">
                               {g.strength}
                             </td>
-                            <td className="py-1 px-1 text-right">
-                              {g.intel}
-                            </td>
+                            <td className="py-1 px-1 text-right">{g.intel}</td>
                             <td className="py-1 px-1 text-center">
                               {g.npcState > 0 ? "NPC" : "-"}
                             </td>

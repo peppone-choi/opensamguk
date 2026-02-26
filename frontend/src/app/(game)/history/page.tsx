@@ -1,10 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, lazy, Suspense } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  lazy,
+  Suspense,
+} from "react";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGameStore } from "@/stores/gameStore";
 import { historyApi, mapRecentApi, worldApi } from "@/lib/gameApi";
-import type { Message, YearbookSummary, PublicCachedMapResponse, WorldSnapshot } from "@/types";
+import type {
+  Message,
+  YearbookSummary,
+  PublicCachedMapResponse,
+  WorldSnapshot,
+} from "@/types";
 import { ScrollText, Clock, Search, Map as MapIcon } from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
@@ -22,9 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const KonvaMapCanvas = lazy(
-  () => import("@/components/game/konva-map-canvas"),
-);
+const KonvaMapCanvas = lazy(() => import("@/components/game/konva-map-canvas"));
 
 type EventType = "war" | "diplomacy" | "nation" | "general" | "city" | "other";
 
@@ -122,11 +132,15 @@ export default function HistoryPage() {
     new Set(["war", "diplomacy", "nation", "general", "city", "other"]),
   );
   const [tab, setTab] = useState("timeline");
-  const [historyView, setHistoryView] = useState<"all" | "global" | "action">("all");
+  const [historyView, setHistoryView] = useState<"all" | "global" | "action">(
+    "all",
+  );
 
   // Map snapshot state (맵 재현/스냅샷 브라우징)
   const { nations, cities, mapData, loadAll } = useGameStore();
-  const [cachedMap, setCachedMap] = useState<PublicCachedMapResponse | null>(null);
+  const [cachedMap, setCachedMap] = useState<PublicCachedMapResponse | null>(
+    null,
+  );
   const [worldSnapshots, setWorldSnapshots] = useState<WorldSnapshot[]>([]);
   const [mapLoading, setMapLoading] = useState(false);
   const [mapSnapshotIdx, setMapSnapshotIdx] = useState(0);
@@ -296,11 +310,14 @@ export default function HistoryPage() {
     return Object.entries(map);
   }, [filteredEvents]);
 
-  const mapHistory = worldSnapshots.length > 0 ? worldSnapshots : (cachedMap?.history ?? []);
+  const mapHistory =
+    worldSnapshots.length > 0 ? worldSnapshots : (cachedMap?.history ?? []);
   const currentSnapshot = mapHistory[mapSnapshotIdx] ?? null;
   const snapshotCities = useMemo(() => {
     if (!currentSnapshot) return cities;
-    const entries = (currentSnapshot.cityOwnership ?? []).map((co) => [co.cityId, co.nationId] as [number, number]);
+    const entries = (currentSnapshot.cityOwnership ?? []).map(
+      (co) => [co.cityId, co.nationId] as [number, number],
+    );
     const ownerMap = new Map(entries);
     return cities.map((c) => ({
       ...c,
@@ -325,8 +342,7 @@ export default function HistoryPage() {
             연대기
           </TabsTrigger>
           <TabsTrigger value="map">
-            <MapIcon className="size-3.5 mr-1" />
-            맵 재현
+            <MapIcon className="size-3.5 mr-1" />맵 재현
           </TabsTrigger>
         </TabsList>
 
@@ -349,13 +365,16 @@ export default function HistoryPage() {
                       variant="outline"
                       size="sm"
                       disabled={mapSnapshotIdx <= 0}
-                      onClick={() => setMapSnapshotIdx((i) => Math.max(0, i - 1))}
+                      onClick={() =>
+                        setMapSnapshotIdx((i) => Math.max(0, i - 1))
+                      }
                     >
                       ◀ 이전
                     </Button>
                     <div className="flex-1 text-center text-sm">
                       <span className="font-medium">
-                        {currentSnapshot?.year ?? "?"}년 {currentSnapshot?.month ?? "?"}월
+                        {currentSnapshot?.year ?? "?"}년{" "}
+                        {currentSnapshot?.month ?? "?"}월
                       </span>
                       <span className="text-xs text-muted-foreground ml-2">
                         ({mapSnapshotIdx + 1} / {mapHistory.length})
@@ -396,7 +415,12 @@ export default function HistoryPage() {
                         mapData={mapData}
                         cities={snapshotCities}
                         nations={nations}
-                        width={Math.min(700, typeof window !== "undefined" ? window.innerWidth - 64 : 700)}
+                        width={Math.min(
+                          700,
+                          typeof window !== "undefined"
+                            ? window.innerWidth - 64
+                            : 700,
+                        )}
                         height={500}
                         showLabels
                       />
@@ -407,16 +431,21 @@ export default function HistoryPage() {
                 {/* Snapshot info */}
                 {currentSnapshot && (
                   <div className="text-xs text-muted-foreground space-y-1">
-                    {currentSnapshot.events && currentSnapshot.events.length > 0 && (
-                      <div>
-                        <span className="font-medium text-foreground">주요 사건:</span>
-                        <ul className="ml-3 list-disc">
-                          {currentSnapshot.events.slice(0, 5).map((evt: string, i: number) => (
-                            <li key={i}>{evt}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {currentSnapshot.events &&
+                      currentSnapshot.events.length > 0 && (
+                        <div>
+                          <span className="font-medium text-foreground">
+                            주요 사건:
+                          </span>
+                          <ul className="ml-3 list-disc">
+                            {currentSnapshot.events
+                              .slice(0, 5)
+                              .map((evt: string, i: number) => (
+                                <li key={i}>{evt}</li>
+                              ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 )}
               </CardContent>
@@ -426,233 +455,266 @@ export default function HistoryPage() {
 
         {/* ═══ Timeline Tab ═══ */}
         <TabsContent value="timeline" className="mt-4 space-y-4">
-
-      <Card>
-        <CardContent className="space-y-3">
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">년</div>
-              <Select
-                value={selectedYear != null ? String(selectedYear) : ""}
-                onValueChange={(value) => setSelectedYear(Number(value))}
-              >
-                <SelectTrigger className="w-28">
-                  <SelectValue placeholder="년" />
-                </SelectTrigger>
-                <SelectContent>
-                  {yearOptions.map((year) => (
-                    <SelectItem key={year} value={String(year)}>
-                      {year}년
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <div className="text-xs text-muted-foreground">월</div>
-              <Select
-                value={selectedMonth != null ? String(selectedMonth) : ""}
-                onValueChange={(value) => setSelectedMonth(Number(value))}
-              >
-                <SelectTrigger className="w-24">
-                  <SelectValue placeholder="월" />
-                </SelectTrigger>
-                <SelectContent>
-                  {monthOptions.map((month) => (
-                    <SelectItem key={month} value={String(month)}>
-                      {month}월
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={filterLoading || selectedYear == null || selectedMonth == null}
-              onClick={() => {
-                if (selectedYear == null || selectedMonth == null) return;
-                let y = selectedYear, m = selectedMonth - 1;
-                if (m < 1) { m = 12; y -= 1; }
-                if (y >= startYear) { setSelectedYear(y); setSelectedMonth(m); }
-              }}
-            >
-              ◀ 이전달
-            </Button>
-            <Button
-              size="sm"
-              onClick={loadByYearMonth}
-              disabled={
-                filterLoading || selectedYear == null || selectedMonth == null
-              }
-            >
-              {filterLoading ? "조회 중..." : "기록 조회"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={filterLoading || selectedYear == null || selectedMonth == null}
-              onClick={() => {
-                if (selectedYear == null || selectedMonth == null || !currentWorld) return;
-                let y = selectedYear, m = selectedMonth + 1;
-                if (m > 12) { m = 1; y += 1; }
-                if (y < currentWorld.currentYear || (y === currentWorld.currentYear && m <= currentWorld.currentMonth)) {
-                  setSelectedYear(y); setSelectedMonth(m);
-                }
-              }}
-            >
-              다음달 ▶
-            </Button>
-          </div>
-          {yearbook && (
-            <div className="rounded-md border border-border p-3 space-y-2">
-              <div className="text-xs font-semibold">
-                연감 ({yearbook.year}년 {yearbook.month}월)
-              </div>
-              <div className="space-y-1">
-                {yearbook.nations.map((nation) => (
-                  <div
-                    key={nation.id}
-                    className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1"
+          <Card>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-end gap-2">
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground">년</div>
+                  <Select
+                    value={selectedYear != null ? String(selectedYear) : ""}
+                    onValueChange={(value) => setSelectedYear(Number(value))}
                   >
-                    <span
-                      className="font-medium"
-                      style={{ color: nation.color }}
-                    >
-                      {nation.name}
-                    </span>
-                    <span className="text-muted-foreground">
-                      영토 {nation.territoryCount}
-                    </span>
-                    <span className="text-muted-foreground">
-                      장수 {nation.generalCount ?? "-"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-1 border-t border-border">
-                <div className="text-[11px] text-muted-foreground mb-1">
-                  주요 사건
+                    <SelectTrigger className="w-28">
+                      <SelectValue placeholder="년" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {yearOptions.map((year) => (
+                        <SelectItem key={year} value={String(year)}>
+                          {year}년
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                {yearbook.keyEvents.length === 0 ? (
-                  <div className="text-[11px] text-muted-foreground">
-                    해당 연도의 주요 사건이 없습니다.
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground">월</div>
+                  <Select
+                    value={selectedMonth != null ? String(selectedMonth) : ""}
+                    onValueChange={(value) => setSelectedMonth(Number(value))}
+                  >
+                    <SelectTrigger className="w-24">
+                      <SelectValue placeholder="월" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((month) => (
+                        <SelectItem key={month} value={String(month)}>
+                          {month}월
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={
+                    filterLoading ||
+                    selectedYear == null ||
+                    selectedMonth == null
+                  }
+                  onClick={() => {
+                    if (selectedYear == null || selectedMonth == null) return;
+                    let y = selectedYear,
+                      m = selectedMonth - 1;
+                    if (m < 1) {
+                      m = 12;
+                      y -= 1;
+                    }
+                    if (y >= startYear) {
+                      setSelectedYear(y);
+                      setSelectedMonth(m);
+                    }
+                  }}
+                >
+                  ◀ 이전달
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={loadByYearMonth}
+                  disabled={
+                    filterLoading ||
+                    selectedYear == null ||
+                    selectedMonth == null
+                  }
+                >
+                  {filterLoading ? "조회 중..." : "기록 조회"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={
+                    filterLoading ||
+                    selectedYear == null ||
+                    selectedMonth == null
+                  }
+                  onClick={() => {
+                    if (
+                      selectedYear == null ||
+                      selectedMonth == null ||
+                      !currentWorld
+                    )
+                      return;
+                    let y = selectedYear,
+                      m = selectedMonth + 1;
+                    if (m > 12) {
+                      m = 1;
+                      y += 1;
+                    }
+                    if (
+                      y < currentWorld.currentYear ||
+                      (y === currentWorld.currentYear &&
+                        m <= currentWorld.currentMonth)
+                    ) {
+                      setSelectedYear(y);
+                      setSelectedMonth(m);
+                    }
+                  }}
+                >
+                  다음달 ▶
+                </Button>
+              </div>
+              {yearbook && (
+                <div className="rounded-md border border-border p-3 space-y-2">
+                  <div className="text-xs font-semibold">
+                    연감 ({yearbook.year}년 {yearbook.month}월)
                   </div>
-                ) : (
                   <div className="space-y-1">
-                    {yearbook.keyEvents.slice(0, 5).map((event) => (
+                    {yearbook.nations.map((nation) => (
                       <div
-                        key={event.id}
-                        className="text-[11px] text-muted-foreground"
+                        key={nation.id}
+                        className="text-xs flex flex-wrap items-center gap-x-2 gap-y-1"
                       >
-                        {getDateLabel(event)} - {getEventText(event)}
+                        <span
+                          className="font-medium"
+                          style={{ color: nation.color }}
+                        >
+                          {nation.name}
+                        </span>
+                        <span className="text-muted-foreground">
+                          영토 {nation.territoryCount}
+                        </span>
+                        <span className="text-muted-foreground">
+                          장수 {nation.generalCount ?? "-"}
+                        </span>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <div className="pt-1 border-t border-border">
+                    <div className="text-[11px] text-muted-foreground mb-1">
+                      주요 사건
+                    </div>
+                    {yearbook.keyEvents.length === 0 ? (
+                      <div className="text-[11px] text-muted-foreground">
+                        해당 연도의 주요 사건이 없습니다.
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {yearbook.keyEvents.slice(0, 5).map((event) => (
+                          <div
+                            key={event.id}
+                            className="text-[11px] text-muted-foreground"
+                          >
+                            {getDateLabel(event)} - {getEventText(event)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      {/* History view toggle (legacy parity: 중원 정세 vs 장수 동향) */}
-      <div className="flex gap-1.5">
-        {(["all", "global", "action"] as const).map((view) => (
-          <Button
-            key={view}
-            size="sm"
-            variant={historyView === view ? "default" : "outline"}
-            onClick={() => setHistoryView(view)}
-          >
-            {view === "all" ? "전체" : view === "global" ? "중원 정세" : "장수 동향"}
-          </Button>
-        ))}
-      </div>
-
-      {/* Search + filters */}
-      <Card>
-        <CardContent className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="사건 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {(Object.keys(EVENT_LABELS) as EventType[]).map((type) => (
-              <Badge
-                key={type}
-                variant={
-                  activeFilters.has(type) ? EVENT_VARIANT[type] : "outline"
-                }
-                className={`cursor-pointer select-none ${!activeFilters.has(type) ? "opacity-40" : ""}`}
-                onClick={() => toggleFilter(type)}
+          {/* History view toggle (legacy parity: 중원 정세 vs 장수 동향) */}
+          <div className="flex gap-1.5">
+            {(["all", "global", "action"] as const).map((view) => (
+              <Button
+                key={view}
+                size="sm"
+                variant={historyView === view ? "default" : "outline"}
+                onClick={() => setHistoryView(view)}
               >
-                {EVENT_LABELS[type]}
-              </Badge>
+                {view === "all"
+                  ? "전체"
+                  : view === "global"
+                    ? "중원 정세"
+                    : "장수 동향"}
+              </Button>
             ))}
           </div>
-          <div className="text-xs text-muted-foreground">
-            총 {filteredEvents.length}건
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Timeline */}
-      {filteredEvents.length === 0 ? (
-        <EmptyState icon={Clock} title="기록된 역사가 없습니다." />
-      ) : (
-        <div className="space-y-4">
-          {grouped.map(([dateLabel, events]) => (
-            <Card key={dateLabel}>
-              <CardHeader className="py-2 px-4">
-                <CardTitle className="text-sm">{dateLabel}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="relative pl-6 border-l-2 border-muted ml-4">
-                  {events.map((event, idx) => (
-                    <div
-                      key={`${event.msg.id}-${idx}`}
-                      className="relative pb-3 last:pb-1"
-                    >
-                      {/* Dot */}
-                      <div
-                        className="absolute -left-[9px] top-1 size-4 rounded-full border-2 border-background"
-                        style={{
-                          backgroundColor:
-                            event.type === "war"
-                              ? "#e11d48"
-                              : event.type === "diplomacy"
-                                ? "#3b82f6"
-                                : event.type === "nation"
-                                  ? "#a855f7"
-                                  : "#6b7280",
-                        }}
-                      />
-                      <div className="flex items-start gap-2 pl-2">
-                        <Badge
-                          variant={EVENT_VARIANT[event.type]}
-                          className="shrink-0 text-[10px] px-1.5"
+          {/* Search + filters */}
+          <Card>
+            <CardContent className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="사건 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {(Object.keys(EVENT_LABELS) as EventType[]).map((type) => (
+                  <Badge
+                    key={type}
+                    variant={
+                      activeFilters.has(type) ? EVENT_VARIANT[type] : "outline"
+                    }
+                    className={`cursor-pointer select-none ${!activeFilters.has(type) ? "opacity-40" : ""}`}
+                    onClick={() => toggleFilter(type)}
+                  >
+                    {EVENT_LABELS[type]}
+                  </Badge>
+                ))}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                총 {filteredEvents.length}건
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline */}
+          {filteredEvents.length === 0 ? (
+            <EmptyState icon={Clock} title="기록된 역사가 없습니다." />
+          ) : (
+            <div className="space-y-4">
+              {grouped.map(([dateLabel, events]) => (
+                <Card key={dateLabel}>
+                  <CardHeader className="py-2 px-4">
+                    <CardTitle className="text-sm">{dateLabel}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="relative pl-6 border-l-2 border-muted ml-4">
+                      {events.map((event, idx) => (
+                        <div
+                          key={`${event.msg.id}-${idx}`}
+                          className="relative pb-3 last:pb-1"
                         >
-                          {EVENT_LABELS[event.type]}
-                        </Badge>
-                        <span className="text-xs leading-relaxed break-all">
-                          {event.text}
-                        </span>
-                      </div>
+                          {/* Dot */}
+                          <div
+                            className="absolute -left-[9px] top-1 size-4 rounded-full border-2 border-background"
+                            style={{
+                              backgroundColor:
+                                event.type === "war"
+                                  ? "#e11d48"
+                                  : event.type === "diplomacy"
+                                    ? "#3b82f6"
+                                    : event.type === "nation"
+                                      ? "#a855f7"
+                                      : "#6b7280",
+                            }}
+                          />
+                          <div className="flex items-start gap-2 pl-2">
+                            <Badge
+                              variant={EVENT_VARIANT[event.type]}
+                              className="shrink-0 text-[10px] px-1.5"
+                            >
+                              {EVENT_LABELS[event.type]}
+                            </Badge>
+                            <span className="text-xs leading-relaxed break-all">
+                              {event.text}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

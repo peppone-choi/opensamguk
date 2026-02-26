@@ -61,7 +61,10 @@ const HALL_CATEGORIES: { key: string; label: string }[] = [
 const CATEGORY_MAP = new Map(HALL_CATEGORIES.map((c) => [c.key, c]));
 // Add aliases
 for (const [alias, canonical] of [
-  ["ttw", "ttrate"], ["tlw", "tlrate"], ["tsw", "tsrate"], ["tiw", "tirate"],
+  ["ttw", "ttrate"],
+  ["tlw", "tlrate"],
+  ["tsw", "tsrate"],
+  ["tiw", "tirate"],
 ]) {
   const cat = CATEGORY_MAP.get(canonical);
   if (cat) CATEGORY_MAP.set(alias, cat);
@@ -88,15 +91,29 @@ function parseEntry(msg: Message): HallEntry {
   const value = (p.value as number) ?? 0;
   return {
     category: (p.category as string) ?? (p.type as string) ?? "unknown",
-    generalName: (p.generalName as string) ?? (p.winner as string) ?? (p.name as string) ?? "???",
+    generalName:
+      (p.generalName as string) ??
+      (p.winner as string) ??
+      (p.name as string) ??
+      "???",
     nationName: (p.nationName as string) ?? (p.nation as string) ?? "재야",
-    nationColor: (p.nationColor as string) ?? (p.color as string) ?? (p.bgColor as string) ?? "#888",
+    nationColor:
+      (p.nationColor as string) ??
+      (p.color as string) ??
+      (p.bgColor as string) ??
+      "#888",
     value,
     printValue: (p.printValue as string) ?? formatVal(value),
     ownerName: (p.ownerName as string) ?? null,
-    scenario: (p.scenario as string) ?? (p.phase as string) ?? (p.description as string) ?? (p.content as string) ?? "",
+    scenario:
+      (p.scenario as string) ??
+      (p.phase as string) ??
+      (p.description as string) ??
+      (p.content as string) ??
+      "",
     year: (p.year as number) ?? null,
-    picture: (p.picture as string) ?? (p.pictureFullPath as string) ?? undefined,
+    picture:
+      (p.picture as string) ?? (p.pictureFullPath as string) ?? undefined,
     serverName: (p.serverName as string) ?? undefined,
   };
 }
@@ -107,15 +124,24 @@ function formatVal(v: unknown): string {
 }
 
 function rankMedal(idx: number) {
-  if (idx === 0) return <Trophy className="size-5 text-amber-400 inline-block" />;
-  if (idx === 1) return <Trophy className="size-5 text-gray-300 inline-block" />;
-  if (idx === 2) return <Trophy className="size-5 text-amber-700 inline-block" />;
+  if (idx === 0)
+    return <Trophy className="size-5 text-amber-400 inline-block" />;
+  if (idx === 1)
+    return <Trophy className="size-5 text-gray-300 inline-block" />;
+  if (idx === 2)
+    return <Trophy className="size-5 text-amber-700 inline-block" />;
   return <Badge variant="outline">#{idx + 1}</Badge>;
 }
 
 /* ── Card frame for a category (legacy hallOfFrame parity) ── */
 
-function HallFrame({ categoryLabel, entries }: { categoryLabel: string; entries: HallEntry[] }) {
+function HallFrame({
+  categoryLabel,
+  entries,
+}: {
+  categoryLabel: string;
+  entries: HallEntry[];
+}) {
   if (entries.length === 0) return null;
 
   return (
@@ -133,17 +159,31 @@ function HallFrame({ categoryLabel, entries }: { categoryLabel: string; entries:
               key={`${entry.generalName}-${idx}`}
               className="flex-shrink-0 w-[100px] flex flex-col items-center text-center rounded-lg border p-2 space-y-1"
               style={{
-                borderColor: idx < 3 ? (idx === 0 ? "#f59e0b" : idx === 1 ? "#9ca3af" : "#b45309") : undefined,
+                borderColor:
+                  idx < 3
+                    ? idx === 0
+                      ? "#f59e0b"
+                      : idx === 1
+                        ? "#9ca3af"
+                        : "#b45309"
+                    : undefined,
               }}
             >
               {/* Rank */}
               <div className="text-xs">{rankMedal(idx)}</div>
               {/* Portrait */}
-              <GeneralPortrait picture={entry.picture} name={entry.generalName} size="md" />
+              <GeneralPortrait
+                picture={entry.picture}
+                name={entry.generalName}
+                size="md"
+              />
               {/* Nation badge */}
               <div
                 className="text-[10px] px-1.5 py-0.5 rounded truncate w-full font-medium"
-                style={{ backgroundColor: entry.nationColor, color: getContrastColor(entry.nationColor) }}
+                style={{
+                  backgroundColor: entry.nationColor,
+                  color: getContrastColor(entry.nationColor),
+                }}
               >
                 {entry.nationName}
               </div>
@@ -161,10 +201,14 @@ function HallFrame({ categoryLabel, entries }: { categoryLabel: string; entries:
                 </div>
               )}
               {/* Value */}
-              <div className="text-xs font-bold text-amber-400">{entry.printValue}</div>
+              <div className="text-xs font-bold text-amber-400">
+                {entry.printValue}
+              </div>
               {/* Server info */}
               {entry.serverName && (
-                <div className="text-[10px] text-muted-foreground">{entry.serverName}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {entry.serverName}
+                </div>
               )}
             </div>
           ))}
@@ -191,7 +235,13 @@ export default function HallOfFamePage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [categoryKey, setCategoryKey] = useState("all");
-  const [seasons, setSeasons] = useState<{ id: number; label: string; scenarios: { code: string; label: string }[] }[]>([]);
+  const [seasons, setSeasons] = useState<
+    {
+      id: number;
+      label: string;
+      scenarios: { code: string; label: string }[];
+    }[]
+  >([]);
   const [selectedSeason, setSelectedSeason] = useState<string>("all");
   const [selectedScenario, setSelectedScenario] = useState<string>("all");
 
@@ -252,14 +302,23 @@ export default function HallOfFamePage() {
 
   // Filter for table view
   const displayEntries = useMemo(() => {
-    const filtered = categoryKey === "all" ? allEntries : allEntries.filter((e) => e.category === categoryKey);
+    const filtered =
+      categoryKey === "all"
+        ? allEntries
+        : allEntries.filter((e) => e.category === categoryKey);
     return [...filtered].sort((a, b) => b.value - a.value);
   }, [allEntries, categoryKey]);
 
   if (!currentWorld)
-    return <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>;
+    return (
+      <div className="p-4 text-muted-foreground">월드를 선택해주세요.</div>
+    );
   if (loading)
-    return <div className="p-4"><LoadingState /></div>;
+    return (
+      <div className="p-4">
+        <LoadingState />
+      </div>
+    );
 
   const hasData = availableCategories.length > 0;
 
@@ -269,39 +328,56 @@ export default function HallOfFamePage() {
 
       {/* Season / Scenario selectors */}
       <div className="flex items-center gap-3 flex-wrap">
-        <Select value={selectedSeason} onValueChange={(v) => { setSelectedSeason(v); setSelectedScenario("all"); }}>
+        <Select
+          value={selectedSeason}
+          onValueChange={(v) => {
+            setSelectedSeason(v);
+            setSelectedScenario("all");
+          }}
+        >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="시즌 선택" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 시즌</SelectItem>
             {seasons.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.label}</SelectItem>
+              <SelectItem key={s.id} value={String(s.id)}>
+                {s.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        {selectedSeason !== "all" && (() => {
-          const season = seasons.find((s) => String(s.id) === selectedSeason);
-          const scenarioList = season?.scenarios ?? [];
-          return scenarioList.length > 0 ? (
-            <Select value={selectedScenario} onValueChange={setSelectedScenario}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="시나리오 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 시나리오</SelectItem>
-                {scenarioList.map((sc) => (
-                  <SelectItem key={sc.code} value={sc.code}>{sc.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null;
-        })()}
+        {selectedSeason !== "all" &&
+          (() => {
+            const season = seasons.find((s) => String(s.id) === selectedSeason);
+            const scenarioList = season?.scenarios ?? [];
+            return scenarioList.length > 0 ? (
+              <Select
+                value={selectedScenario}
+                onValueChange={setSelectedScenario}
+              >
+                <SelectTrigger className="w-44">
+                  <SelectValue placeholder="시나리오 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 시나리오</SelectItem>
+                  {scenarioList.map((sc) => (
+                    <SelectItem key={sc.code} value={sc.code}>
+                      {sc.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null;
+          })()}
       </div>
 
       {hasData ? (
-        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "card" | "table")}>
+        <Tabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as "card" | "table")}
+        >
           <TabsList>
             <TabsTrigger value="card">카드 보기</TabsTrigger>
             <TabsTrigger value="table">표 보기</TabsTrigger>
@@ -311,7 +387,13 @@ export default function HallOfFamePage() {
           <TabsContent value="card" className="space-y-4 mt-4">
             {availableCategories.map((cat) => {
               const entries = entriesByCategory.get(cat.key) ?? [];
-              return <HallFrame key={cat.key} categoryLabel={cat.label} entries={entries} />;
+              return (
+                <HallFrame
+                  key={cat.key}
+                  categoryLabel={cat.label}
+                  entries={entries}
+                />
+              );
             })}
           </TabsContent>
 
@@ -325,11 +407,15 @@ export default function HallOfFamePage() {
                 <SelectContent>
                   <SelectItem value="all">전체</SelectItem>
                   {availableCategories.map((c) => (
-                    <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                    <SelectItem key={c.key} value={c.key}>
+                      {c.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <span className="text-sm text-muted-foreground">{displayEntries.length}명</span>
+              <span className="text-sm text-muted-foreground">
+                {displayEntries.length}명
+              </span>
             </div>
 
             {displayEntries.length === 0 ? (
@@ -348,27 +434,43 @@ export default function HallOfFamePage() {
                 </TableHeader>
                 <TableBody>
                   {displayEntries.map((entry, idx) => (
-                    <TableRow key={`${entry.generalName}-${entry.category}-${idx}`}>
+                    <TableRow
+                      key={`${entry.generalName}-${entry.category}-${idx}`}
+                    >
                       <TableCell>{rankMedal(idx)}</TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <GeneralPortrait picture={entry.picture} name={entry.generalName} size="sm" />
+                          <GeneralPortrait
+                            picture={entry.picture}
+                            name={entry.generalName}
+                            size="sm"
+                          />
                           {entry.generalName}
                         </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="gap-1.5">
-                          <span className="inline-block size-2 rounded-full shrink-0" style={{ backgroundColor: entry.nationColor }} />
-                          <span style={{ color: entry.nationColor }}>{entry.nationName}</span>
+                          <span
+                            className="inline-block size-2 rounded-full shrink-0"
+                            style={{ backgroundColor: entry.nationColor }}
+                          />
+                          <span style={{ color: entry.nationColor }}>
+                            {entry.nationName}
+                          </span>
                         </Badge>
                       </TableCell>
                       {categoryKey === "all" && (
                         <TableCell className="text-xs text-muted-foreground">
-                          {CATEGORY_MAP.get(entry.category)?.label ?? entry.category}
+                          {CATEGORY_MAP.get(entry.category)?.label ??
+                            entry.category}
                         </TableCell>
                       )}
-                      <TableCell className="text-amber-400 font-medium">{entry.printValue}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{entry.ownerName || "-"}</TableCell>
+                      <TableCell className="text-amber-400 font-medium">
+                        {entry.printValue}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {entry.ownerName || "-"}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

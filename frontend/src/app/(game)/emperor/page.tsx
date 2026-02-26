@@ -200,7 +200,10 @@ export default function EmperorPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               <StatItem label="국가 레벨" value={String(emperorNation.level)} />
               <StatItem label="기술력" value={String(emperorNation.tech)} />
-              <StatItem label="국력" value={emperorNation.power.toLocaleString()} />
+              <StatItem
+                label="국력"
+                value={emperorNation.power.toLocaleString()}
+              />
               <StatItem label="수도" value={capitalCity?.name ?? "-"} />
               <StatItem
                 label="금"
@@ -248,9 +251,12 @@ export default function EmperorPage() {
               <div className="border-t border-muted/30 pt-3">
                 <h3 className="text-sm font-semibold mb-2">관직 편제</h3>
                 {/* Central officers (level >= 5) */}
-                {nationGenerals.filter((g) => g.officerLevel >= 5).length > 0 && (
+                {nationGenerals.filter((g) => g.officerLevel >= 5).length >
+                  0 && (
                   <div className="mb-3">
-                    <h4 className="text-xs text-muted-foreground mb-1">수뇌부</h4>
+                    <h4 className="text-xs text-muted-foreground mb-1">
+                      수뇌부
+                    </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {nationGenerals
                         .filter((g) => g.officerLevel >= 5)
@@ -265,8 +271,13 @@ export default function EmperorPage() {
                               size="sm"
                             />
                             <div className="flex-1 min-w-0">
-                              <span className="font-medium text-sm">{g.name}</span>
-                              <Badge variant="outline" className="ml-1 text-[10px]">
+                              <span className="font-medium text-sm">
+                                {g.name}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className="ml-1 text-[10px]"
+                              >
                                 {formatOfficerLevelText(
                                   g.officerLevel,
                                   emperorNation.level,
@@ -282,12 +293,18 @@ export default function EmperorPage() {
                   </div>
                 )}
                 {/* City officers (level 2-4) */}
-                {nationGenerals.filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4).length > 0 && (
+                {nationGenerals.filter(
+                  (g) => g.officerLevel >= 2 && g.officerLevel <= 4,
+                ).length > 0 && (
                   <div className="mb-3">
-                    <h4 className="text-xs text-muted-foreground mb-1">도시 관직</h4>
+                    <h4 className="text-xs text-muted-foreground mb-1">
+                      도시 관직
+                    </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {nationGenerals
-                        .filter((g) => g.officerLevel >= 2 && g.officerLevel <= 4)
+                        .filter(
+                          (g) => g.officerLevel >= 2 && g.officerLevel <= 4,
+                        )
                         .sort((a, b) => b.officerLevel - a.officerLevel)
                         .map((g) => {
                           const officerCityName = g.officerCity
@@ -305,8 +322,14 @@ export default function EmperorPage() {
                               />
                               <div className="flex-1 min-w-0">
                                 <span className="text-sm">{g.name}</span>
-                                <Badge variant="outline" className="ml-1 text-[10px]">
-                                  {formatOfficerLevelText(g.officerLevel, emperorNation.level)}
+                                <Badge
+                                  variant="outline"
+                                  className="ml-1 text-[10px]"
+                                >
+                                  {formatOfficerLevelText(
+                                    g.officerLevel,
+                                    emperorNation.level,
+                                  )}
                                 </Badge>
                                 {officerCityName && (
                                   <span className="text-[10px] text-muted-foreground ml-1">
@@ -326,13 +349,19 @@ export default function EmperorPage() {
                 {/* General soldiers (level 1) */}
                 <div>
                   <h4 className="text-xs text-muted-foreground mb-1">
-                    일반 장수 ({nationGenerals.filter((g) => g.officerLevel <= 1).length}명)
+                    일반 장수 (
+                    {nationGenerals.filter((g) => g.officerLevel <= 1).length}
+                    명)
                   </h4>
                   <div className="flex flex-wrap gap-1">
                     {nationGenerals
                       .filter((g) => g.officerLevel <= 1)
                       .map((g) => (
-                        <Badge key={g.id} variant="outline" className="text-[10px]">
+                        <Badge
+                          key={g.id}
+                          variant="outline"
+                          className="text-[10px]"
+                        >
                           {g.name}
                         </Badge>
                       ))}
@@ -417,10 +446,30 @@ export default function EmperorPage() {
         </CardHeader>
         {showStats && (
           <CardContent className="space-y-4">
-            <BarSection title="국력" stats={nationStats} field="power" max={maxPower} />
-            <BarSection title="금" stats={nationStats} field="gold" max={maxGold} />
-            <BarSection title="쌀" stats={nationStats} field="rice" max={maxRice} />
-            <BarSection title="기술" stats={nationStats} field="tech" max={maxTech} />
+            <BarSection
+              title="국력"
+              stats={nationStats}
+              field="power"
+              max={maxPower}
+            />
+            <BarSection
+              title="금"
+              stats={nationStats}
+              field="gold"
+              max={maxGold}
+            />
+            <BarSection
+              title="쌀"
+              stats={nationStats}
+              field="rice"
+              max={maxRice}
+            />
+            <BarSection
+              title="기술"
+              stats={nationStats}
+              field="tech"
+              max={maxTech}
+            />
           </CardContent>
         )}
       </Card>
@@ -455,7 +504,10 @@ export default function EmperorPage() {
                     className="flex gap-2 rounded border border-muted/20 p-2 text-xs"
                     style={
                       log.nationColor
-                        ? { borderLeftColor: log.nationColor, borderLeftWidth: 3 }
+                        ? {
+                            borderLeftColor: log.nationColor,
+                            borderLeftWidth: 3,
+                          }
                         : undefined
                     }
                   >
@@ -618,13 +670,7 @@ export default function EmperorPage() {
   );
 }
 
-function StatItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function StatItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex justify-between">
       <span className="text-muted-foreground">{label}</span>

@@ -331,7 +331,17 @@ export default function BestGeneralsPage() {
   const [allGenerals, setAllGenerals] = useState<BestGeneral[]>([]);
   const [loading, setLoading] = useState(true);
   const [uniqueItems, setUniqueItems] = useState<
-    { slot: string; slotLabel: string; generalId: number; generalName: string; nationId: number; nationName: string; nationColor: string; itemName: string; itemGrade: string }[]
+    {
+      slot: string;
+      slotLabel: string;
+      generalId: number;
+      generalName: string;
+      nationId: number;
+      nationName: string;
+      nationColor: string;
+      itemName: string;
+      itemGrade: string;
+    }[]
   >([]);
 
   const group = GROUPS.find((g) => g.key === groupKey)!;
@@ -460,16 +470,26 @@ export default function BestGeneralsPage() {
               <TableBody>
                 {uniqueItems.map((item) => (
                   <TableRow key={item.slot}>
-                    <TableCell className="text-xs text-muted-foreground">{item.slotLabel}</TableCell>
-                    <TableCell className="font-medium text-purple-300">{item.itemName}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {item.slotLabel}
+                    </TableCell>
+                    <TableCell className="font-medium text-purple-300">
+                      {item.itemName}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-amber-400 border-amber-400/40">
+                      <Badge
+                        variant="outline"
+                        className="text-amber-400 border-amber-400/40"
+                      >
                         {item.itemGrade}
                       </Badge>
                     </TableCell>
                     <TableCell>{item.generalName}</TableCell>
                     <TableCell>
-                      <NationBadge name={item.nationName} color={item.nationColor} />
+                      <NationBadge
+                        name={item.nationName}
+                        color={item.nationColor}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

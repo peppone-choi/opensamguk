@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BarChart3, RefreshCw, TrendingUp, Users, MapPin, Coins, AlertTriangle } from "lucide-react";
+import {
+  BarChart3,
+  RefreshCw,
+  TrendingUp,
+  Users,
+  MapPin,
+  Coins,
+  AlertTriangle,
+} from "lucide-react";
 import { PageHeader } from "@/components/game/page-header";
 import { LoadingState } from "@/components/game/loading-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,10 +148,19 @@ export default function AdminStatisticsPage() {
     };
   }, [stats]);
 
-  const maxPower = useMemo(() => Math.max(1, ...stats.map((s) => s.power)), [stats]);
-  const maxCrew = useMemo(() => Math.max(1, ...stats.map((s) => s.totalCrew)), [stats]);
+  const maxPower = useMemo(
+    () => Math.max(1, ...stats.map((s) => s.power)),
+    [stats],
+  );
+  const maxCrew = useMemo(
+    () => Math.max(1, ...stats.map((s) => s.totalCrew)),
+    [stats],
+  );
 
-  const nations = useMemo(() => [...stats].sort((a, b) => b.power - a.power), [stats]);
+  const nations = useMemo(
+    () => [...stats].sort((a, b) => b.power - a.power),
+    [stats],
+  );
 
   const diplomacyMap = useMemo(() => {
     const map = new Map<string, Diplomacy>();
@@ -155,14 +172,26 @@ export default function AdminStatisticsPage() {
   }, [diplomacy]);
 
   const inconsistencies = useMemo(() => {
-    const result: Array<{ a: number; b: number; ab: Diplomacy | undefined; ba: Diplomacy | undefined }> = [];
+    const result: Array<{
+      a: number;
+      b: number;
+      ab: Diplomacy | undefined;
+      ba: Diplomacy | undefined;
+    }> = [];
     for (let i = 0; i < nations.length; i += 1) {
       for (let j = i + 1; j < nations.length; j += 1) {
         const a = nations[i].nationId;
         const b = nations[j].nationId;
-        const ab = diplomacy.find((d) => d.srcNationId === a && d.destNationId === b);
-        const ba = diplomacy.find((d) => d.srcNationId === b && d.destNationId === a);
-        if ((ab?.stateCode ?? "") !== (ba?.stateCode ?? "") || (ab?.term ?? 0) !== (ba?.term ?? 0)) {
+        const ab = diplomacy.find(
+          (d) => d.srcNationId === a && d.destNationId === b,
+        );
+        const ba = diplomacy.find(
+          (d) => d.srcNationId === b && d.destNationId === a,
+        );
+        if (
+          (ab?.stateCode ?? "") !== (ba?.stateCode ?? "") ||
+          (ab?.term ?? 0) !== (ba?.term ?? 0)
+        ) {
           result.push({ a, b, ab, ba });
         }
       }
@@ -208,8 +237,7 @@ export default function AdminStatisticsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <Users className="size-3" />
-              총 장수
+              <Users className="size-3" />총 장수
             </div>
             <div className="text-2xl font-bold">{totals.generals}</div>
           </CardContent>
@@ -217,8 +245,7 @@ export default function AdminStatisticsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <MapPin className="size-3" />
-              총 도시
+              <MapPin className="size-3" />총 도시
             </div>
             <div className="text-2xl font-bold">{totals.cities}</div>
           </CardContent>
@@ -226,10 +253,11 @@ export default function AdminStatisticsPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
-              <Coins className="size-3" />
-              총 병력
+              <Coins className="size-3" />총 병력
             </div>
-            <div className="text-2xl font-bold">{totals.totalCrew.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {totals.totalCrew.toLocaleString()}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -262,10 +290,16 @@ export default function AdminStatisticsPage() {
                   </TableHeader>
                   <TableBody>
                     {sorted.map((s) => (
-                      <TableRow key={s.nationId} style={{ borderLeft: `3px solid ${s.color}` }}>
+                      <TableRow
+                        key={s.nationId}
+                        style={{ borderLeft: `3px solid ${s.color}` }}
+                      >
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-1.5">
-                            <div className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                            <div
+                              className="size-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: s.color }}
+                            />
                             {s.name}
                           </div>
                         </TableCell>
@@ -273,7 +307,9 @@ export default function AdminStatisticsPage() {
                         <TableCell>{s.gold.toLocaleString()}</TableCell>
                         <TableCell>{s.rice.toLocaleString()}</TableCell>
                         <TableCell>{s.tech.toFixed(1)}</TableCell>
-                        <TableCell className="font-semibold">{s.power.toLocaleString()}</TableCell>
+                        <TableCell className="font-semibold">
+                          {s.power.toLocaleString()}
+                        </TableCell>
                         <TableCell>{s.genCount}</TableCell>
                         <TableCell>{s.cityCount}</TableCell>
                         <TableCell>{s.totalCrew.toLocaleString()}</TableCell>
@@ -282,7 +318,10 @@ export default function AdminStatisticsPage() {
                     ))}
                     {sorted.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center text-muted-foreground">
+                        <TableCell
+                          colSpan={10}
+                          className="text-center text-muted-foreground"
+                        >
                           국가가 없습니다.
                         </TableCell>
                       </TableRow>
@@ -305,16 +344,27 @@ export default function AdminStatisticsPage() {
                   <div key={n.nationId} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground w-5 text-right">{idx + 1}</span>
-                        <div className="size-3 rounded-full" style={{ backgroundColor: n.color }} />
+                        <span className="text-muted-foreground w-5 text-right">
+                          {idx + 1}
+                        </span>
+                        <div
+                          className="size-3 rounded-full"
+                          style={{ backgroundColor: n.color }}
+                        />
                         <span className="font-medium">{n.name}</span>
                       </div>
-                      <span className="font-mono text-xs">{n.power.toLocaleString()}</span>
+                      <span className="font-mono text-xs">
+                        {n.power.toLocaleString()}
+                      </span>
                     </div>
                     <div className="h-4 bg-muted rounded-full overflow-hidden ml-7">
                       <div
                         className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${(n.power / maxPower) * 100}%`, backgroundColor: n.color, opacity: 0.8 }}
+                        style={{
+                          width: `${(n.power / maxPower) * 100}%`,
+                          backgroundColor: n.color,
+                          opacity: 0.8,
+                        }}
                       />
                     </div>
                   </div>
@@ -333,12 +383,21 @@ export default function AdminStatisticsPage() {
                     <div key={n.nationId} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground w-5 text-right">{idx + 1}</span>
-                          <div className="size-3 rounded-full" style={{ backgroundColor: n.color }} />
+                          <span className="text-muted-foreground w-5 text-right">
+                            {idx + 1}
+                          </span>
+                          <div
+                            className="size-3 rounded-full"
+                            style={{ backgroundColor: n.color }}
+                          />
                           <span className="font-medium">{n.name}</span>
-                          <span className="text-xs text-muted-foreground">(장수 {n.genCount}명)</span>
+                          <span className="text-xs text-muted-foreground">
+                            (장수 {n.genCount}명)
+                          </span>
                         </div>
-                        <span className="font-mono text-xs">{n.totalCrew.toLocaleString()}</span>
+                        <span className="font-mono text-xs">
+                          {n.totalCrew.toLocaleString()}
+                        </span>
                       </div>
                       <div className="h-4 bg-muted rounded-full overflow-hidden ml-7">
                         <div
@@ -368,14 +427,18 @@ export default function AdminStatisticsPage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 {inconsistencies.slice(0, 10).map((it, idx) => {
-                  const a = nations.find((n) => n.nationId === it.a)?.name ?? `#${it.a}`;
-                  const b = nations.find((n) => n.nationId === it.b)?.name ?? `#${it.b}`;
+                  const a =
+                    nations.find((n) => n.nationId === it.a)?.name ??
+                    `#${it.a}`;
+                  const b =
+                    nations.find((n) => n.nationId === it.b)?.name ??
+                    `#${it.b}`;
                   return (
                     <p key={`${it.a}-${it.b}-${idx}`}>
-                      {a}↔{b}: A→B {stateLabel(it.ab?.stateCode ?? "없음")}({it.ab?.term ?? 0}) / B→A {stateLabel(
-                        it.ba?.stateCode ?? "없음"
-                      )}
-                      ({it.ba?.term ?? 0})
+                      {a}↔{b}: A→B {stateLabel(it.ab?.stateCode ?? "없음")}(
+                      {it.ab?.term ?? 0}) / B→A{" "}
+                      {stateLabel(it.ba?.stateCode ?? "없음")}(
+                      {it.ba?.term ?? 0})
                     </p>
                   );
                 })}
@@ -385,11 +448,15 @@ export default function AdminStatisticsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">외교 관계 테이블 (기호형)</CardTitle>
+              <CardTitle className="text-base">
+                외교 관계 테이블 (기호형)
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {nations.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">국가가 없습니다.</p>
+                <p className="text-center text-muted-foreground py-4">
+                  국가가 없습니다.
+                </p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="border-collapse text-xs w-full">
@@ -401,7 +468,10 @@ export default function AdminStatisticsPage() {
                             key={n.nationId}
                             className="p-2 border border-border bg-muted text-center min-w-[56px]"
                           >
-                            <div className="size-2 rounded-full mx-auto mb-1" style={{ backgroundColor: n.color }} />
+                            <div
+                              className="size-2 rounded-full mx-auto mb-1"
+                              style={{ backgroundColor: n.color }}
+                            />
                             <span className="truncate">{n.name}</span>
                           </th>
                         ))}
@@ -412,7 +482,10 @@ export default function AdminStatisticsPage() {
                         <tr key={row.nationId}>
                           <td className="p-2 border border-border bg-muted font-medium whitespace-nowrap">
                             <div className="flex items-center gap-1">
-                              <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: row.color }} />
+                              <div
+                                className="size-2 rounded-full shrink-0"
+                                style={{ backgroundColor: row.color }}
+                              />
                               {row.name}
                             </div>
                           </td>
@@ -427,20 +500,24 @@ export default function AdminStatisticsPage() {
                                 </td>
                               );
                             }
-                            const rel = diplomacyMap.get(`${row.nationId}-${col.nationId}`);
+                            const rel = diplomacyMap.get(
+                              `${row.nationId}-${col.nationId}`,
+                            );
                             const state = rel?.stateCode ?? "neutral";
                             return (
                               <td
                                 key={col.nationId}
                                 className={cn(
                                   "p-1.5 border border-border text-center font-semibold",
-                                  stateColor(state)
+                                  stateColor(state),
                                 )}
                                 title={`${row.name}↔${col.name}: ${stateLabel(state)} ${rel?.term ?? 0}개월`}
                               >
                                 {relationSymbol(state)}
                                 {rel && rel.term > 0 && (
-                                  <div className="text-[9px] text-muted-foreground">{rel.term}월</div>
+                                  <div className="text-[9px] text-muted-foreground">
+                                    {rel.term}월
+                                  </div>
                                 )}
                               </td>
                             );

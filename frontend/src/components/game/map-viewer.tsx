@@ -60,9 +60,17 @@ export function MapViewer({
   const containerHeight = compact ? 357.14 : 500;
 
   // Determine Map Season from server config
-  const serverMonth = (typeof window !== "undefined" ? (() => {
-    try { const raw = localStorage.getItem("opensam:world:month"); return raw ? Number(raw) : null; } catch { return null; }
-  })() : null) ?? 1;
+  const serverMonth =
+    (typeof window !== "undefined"
+      ? (() => {
+          try {
+            const raw = localStorage.getItem("opensam:world:month");
+            return raw ? Number(raw) : null;
+          } catch {
+            return null;
+          }
+        })()
+      : null) ?? 1;
   const month = serverMonth;
   let season = "spring";
   if (month >= 4 && month <= 6) season = "summer";
@@ -177,8 +185,8 @@ export function MapViewer({
                     top: (30 - icnH) / 2,
                   }}
                 >
-                    <img
-                      src={`${GAME_CDN_ROOT}/cast_${cc.level}.gif`}
+                  <img
+                    src={`${GAME_CDN_ROOT}/cast_${cc.level}.gif`}
                     className="w-full h-full block"
                     alt=""
                   />

@@ -62,7 +62,10 @@ interface PolicyField {
   min?: number;
   max?: number;
   isPercent?: boolean;
-  zeroHintFn?: (zeroPolicy: Record<string, number>, computed: Record<string, number>) => string;
+  zeroHintFn?: (
+    zeroPolicy: Record<string, number>,
+    computed: Record<string, number>,
+  ) => string;
 }
 
 const POLICY_CATEGORIES: {
@@ -417,9 +420,7 @@ function DraggablePriorityList({
         {/* Inactive items */}
         {inactiveItems.length > 0 && (
           <div className="space-y-1">
-            <span className="text-[10px] text-muted-foreground/60">
-              비활성
-            </span>
+            <span className="text-[10px] text-muted-foreground/60">비활성</span>
             {inactiveItems.map((item) => (
               <div
                 key={item.key}
@@ -591,8 +592,8 @@ export default function NpcPage() {
             (data.availableGeneralActionPriorityItems as string[]).map((k) => ({
               key: k,
               help:
-                DEFAULT_GENERAL_PRIORITY_ITEMS.find((d) => d.key === k)
-                  ?.help ?? k,
+                DEFAULT_GENERAL_PRIORITY_ITEMS.find((d) => d.key === k)?.help ??
+                k,
             })),
           );
         }
@@ -762,9 +763,7 @@ export default function NpcPage() {
     } else {
       setNationPriority(nationPriorityItems.map((i) => i.key));
     }
-    toast.info(
-      "국가턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.",
-    );
+    toast.info("국가턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.");
   };
   const handleResetGeneralPriority = () => {
     if (defaultGeneralPriority.length > 0) {
@@ -772,9 +771,7 @@ export default function NpcPage() {
     } else {
       setGeneralPriority(generalPriorityItems.map((i) => i.key));
     }
-    toast.info(
-      "장수턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.",
-    );
+    toast.info("장수턴 우선순위를 초기값으로 되돌렸습니다. 저장을 눌러주세요.");
   };
   const handleRollbackNationPriority = () => {
     setNationPriority([...prevNationPriority]);
@@ -993,8 +990,8 @@ export default function NpcPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-[10px] text-muted-foreground">
-                    전투 부대, 후방 징병 부대, 내정 부대의 JSON 설정입니다.
-                    고급 설정이므로 주의하세요.
+                    전투 부대, 후방 징병 부대, 내정 부대의 JSON 설정입니다. 고급
+                    설정이므로 주의하세요.
                   </p>
                   <div className="space-y-2">
                     <div className="space-y-1">
@@ -1014,7 +1011,9 @@ export default function NpcPage() {
                         placeholder='{"부대번호":[시작도시,도착도시],...}'
                       />
                       <p className="text-[10px] text-muted-foreground/60">
-                        JSON: {"{"}부대번호:[시작도시번호(아국),도착도시번호(적군)],...{"}"}
+                        JSON: {"{"}
+                        부대번호:[시작도시번호(아국),도착도시번호(적군)],...
+                        {"}"}
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -1085,8 +1084,7 @@ export default function NpcPage() {
               <LastSetterInfo setter={lastSetters.nation} />
               <p className="text-xs text-muted-foreground">
                 예턴이 없거나 지정되어 있더라도 실패하면 아래 순위에 따라
-                사령턴을 시도합니다. 드래그하거나 ▲▼ 버튼으로 순서를
-                변경하세요.
+                사령턴을 시도합니다. 드래그하거나 ▲▼ 버튼으로 순서를 변경하세요.
               </p>
               <DraggablePriorityList
                 title="국가턴"

@@ -17,8 +17,7 @@ function toRemotePattern(url: string): RemotePattern {
   };
 }
 
-const imageCdnBase =
-  process.env.NEXT_PUBLIC_IMAGE_CDN_BASE ?? defaultImageCdn;
+const imageCdnBase = process.env.NEXT_PUBLIC_IMAGE_CDN_BASE ?? defaultImageCdn;
 
 const nextConfig: NextConfig = {
   output: "standalone",

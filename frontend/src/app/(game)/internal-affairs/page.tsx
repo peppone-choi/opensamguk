@@ -6,7 +6,18 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useGameStore } from "@/stores/gameStore";
 import { nationPolicyApi } from "@/lib/gameApi";
 import type { Diplomacy, City, Nation } from "@/types";
-import { Landmark, Bold, Italic, List, Heading2, Undo, Redo, Image as ImageIcon, Handshake, Calculator } from "lucide-react";
+import {
+  Landmark,
+  Bold,
+  Italic,
+  List,
+  Heading2,
+  Undo,
+  Redo,
+  Image as ImageIcon,
+  Handshake,
+  Calculator,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { NationBadge } from "@/components/game/nation-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,12 +50,15 @@ function RichTextEditor({
     }
   }, [value]);
 
-  const exec = useCallback((cmd: string, val?: string) => {
-    document.execCommand(cmd, false, val);
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
-  }, [onChange]);
+  const exec = useCallback(
+    (cmd: string, val?: string) => {
+      document.execCommand(cmd, false, val);
+      if (editorRef.current) {
+        onChange(editorRef.current.innerHTML);
+      }
+    },
+    [onChange],
+  );
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
@@ -62,26 +76,75 @@ function RichTextEditor({
   return (
     <div className="border rounded-md overflow-hidden">
       <div className="flex items-center gap-1 p-1 border-b bg-muted/30">
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("bold")} title="굵게">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => exec("bold")}
+          title="굵게"
+        >
           <Bold className="size-3.5" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("italic")} title="기울임">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => exec("italic")}
+          title="기울임"
+        >
           <Italic className="size-3.5" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("formatBlock", "h3")} title="제목">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => exec("formatBlock", "h3")}
+          title="제목"
+        >
           <Heading2 className="size-3.5" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("insertUnorderedList")} title="목록">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => exec("insertUnorderedList")}
+          title="목록"
+        >
           <List className="size-3.5" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleInsertImage} title="이미지 삽입">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={handleInsertImage}
+          title="이미지 삽입"
+        >
           <ImageIcon className="size-3.5" />
         </Button>
         <div className="flex-1" />
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("undo")} title="실행 취소">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => exec("undo")}
+          title="실행 취소"
+        >
           <Undo className="size-3.5" />
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => exec("redo")} title="다시 실행">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 w-7 p-0"
+          onClick={() => exec("redo")}
+          title="다시 실행"
+        >
           <Redo className="size-3.5" />
         </Button>
       </div>
@@ -98,12 +161,12 @@ function RichTextEditor({
 }
 
 const DIPLOMACY_STATES: Record<string, { label: string; color: string }> = {
-  "ally": { label: "동맹", color: "text-blue-400" },
-  "war": { label: "전쟁", color: "text-red-400" },
-  "ceasefire": { label: "휴전", color: "text-yellow-400" },
-  "trade": { label: "교역", color: "text-green-400" },
-  "nonaggression": { label: "불가침", color: "text-cyan-400" },
-  "neutral": { label: "중립", color: "text-gray-400" },
+  ally: { label: "동맹", color: "text-blue-400" },
+  war: { label: "전쟁", color: "text-red-400" },
+  ceasefire: { label: "휴전", color: "text-yellow-400" },
+  trade: { label: "교역", color: "text-green-400" },
+  nonaggression: { label: "불가침", color: "text-cyan-400" },
+  neutral: { label: "중립", color: "text-gray-400" },
 };
 
 export default function InternalAffairsPage() {
@@ -130,13 +193,19 @@ export default function InternalAffairsPage() {
     if (!myGeneral) fetchMyGeneral(currentWorld.id).catch(() => {});
   }, [currentWorld, myGeneral, fetchMyGeneral, loadAll]);
 
-  const nationMap = useMemo(() => new Map(nations.map((n) => [n.id, n])), [nations]);
+  const nationMap = useMemo(
+    () => new Map(nations.map((n) => [n.id, n])),
+    [nations],
+  );
 
   // Diplomacy for my nation
   const myDiplomacy = useMemo(() => {
     if (!myGeneral?.nationId) return [];
     return diplomacy.filter(
-      (d) => (d.srcNationId === myGeneral.nationId || d.destNationId === myGeneral.nationId) && !d.isDead
+      (d) =>
+        (d.srcNationId === myGeneral.nationId ||
+          d.destNationId === myGeneral.nationId) &&
+        !d.isDead,
     );
   }, [diplomacy, myGeneral?.nationId]);
 
@@ -146,7 +215,9 @@ export default function InternalAffairsPage() {
     return cities.filter((c) => c.nationId === myGeneral.nationId);
   }, [cities, myGeneral?.nationId]);
 
-  const myNation = myGeneral?.nationId ? nationMap.get(myGeneral.nationId) : null;
+  const myNation = myGeneral?.nationId
+    ? nationMap.get(myGeneral.nationId)
+    : null;
 
   const financeSummary = useMemo(() => {
     let totalGoldIncome = 0;
@@ -154,18 +225,29 @@ export default function InternalAffairsPage() {
     let totalExpense = 0;
     for (const city of myCities) {
       const trustRatio = city.trust / 200 + 0.5;
-      const goldIncome = city.commMax > 0
-        ? Math.round((city.pop * (city.comm / city.commMax) * trustRatio) / 30)
-        : 0;
-      const riceIncome = city.agriMax > 0
-        ? Math.round((city.pop * (city.agri / city.agriMax) * trustRatio) / 30)
-        : 0;
+      const goldIncome =
+        city.commMax > 0
+          ? Math.round(
+              (city.pop * (city.comm / city.commMax) * trustRatio) / 30,
+            )
+          : 0;
+      const riceIncome =
+        city.agriMax > 0
+          ? Math.round(
+              (city.pop * (city.agri / city.agriMax) * trustRatio) / 30,
+            )
+          : 0;
       const expense = Math.round(city.pop * ((myNation?.bill ?? 100) / 1000));
       totalGoldIncome += goldIncome;
       totalRiceIncome += riceIncome;
       totalExpense += expense;
     }
-    return { totalGoldIncome, totalRiceIncome, totalExpense, netGold: totalGoldIncome - totalExpense };
+    return {
+      totalGoldIncome,
+      totalRiceIncome,
+      totalExpense,
+      netGold: totalGoldIncome - totalExpense,
+    };
   }, [myCities, myNation?.bill]);
 
   useEffect(() => {
@@ -177,8 +259,12 @@ export default function InternalAffairsPage() {
         setBill((data.bill as number) ?? 100);
         setSecretLimit((data.secretLimit as number) ?? 0);
         setStrategicCmdLimit((data.strategicCmdLimit as number) ?? 0);
-        setBlockWar(Boolean((data as unknown as Record<string, unknown>).blockWar));
-        setBlockScout(Boolean((data as unknown as Record<string, unknown>).blockScout));
+        setBlockWar(
+          Boolean((data as unknown as Record<string, unknown>).blockWar),
+        );
+        setBlockScout(
+          Boolean((data as unknown as Record<string, unknown>).blockScout),
+        );
         setNotice((data.notice as string) ?? "");
         setScoutMsg((data.scoutMsg as string) ?? "");
       })
@@ -318,16 +404,23 @@ export default function InternalAffairsPage() {
                 <div className="flex items-center justify-between rounded-md border p-3">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">전쟁 차단</label>
-                    <p className="text-xs text-muted-foreground">소속 장수의 전쟁 명령을 차단합니다</p>
+                    <p className="text-xs text-muted-foreground">
+                      소속 장수의 전쟁 명령을 차단합니다
+                    </p>
                   </div>
                   <Switch checked={blockWar} onCheckedChange={setBlockWar} />
                 </div>
                 <div className="flex items-center justify-between rounded-md border p-3">
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">정찰 차단</label>
-                    <p className="text-xs text-muted-foreground">소속 장수의 정찰 명령을 차단합니다</p>
+                    <p className="text-xs text-muted-foreground">
+                      소속 장수의 정찰 명령을 차단합니다
+                    </p>
                   </div>
-                  <Switch checked={blockScout} onCheckedChange={setBlockScout} />
+                  <Switch
+                    checked={blockScout}
+                    onCheckedChange={setBlockScout}
+                  />
                 </div>
               </div>
               <Button onClick={handleSavePolicy} disabled={saving}>
@@ -348,22 +441,46 @@ export default function InternalAffairsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {myDiplomacy.length === 0 ? (
-                <p className="text-sm text-muted-foreground">외교 관계가 없습니다.</p>
+                <p className="text-sm text-muted-foreground">
+                  외교 관계가 없습니다.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {myDiplomacy.map((d) => {
-                    const otherId = d.srcNationId === myGeneral!.nationId ? d.destNationId : d.srcNationId;
+                    const otherId =
+                      d.srcNationId === myGeneral!.nationId
+                        ? d.destNationId
+                        : d.srcNationId;
                     const otherNation = nationMap.get(otherId);
-                    const stateInfo = DIPLOMACY_STATES[d.stateCode] ?? { label: d.stateCode, color: "text-gray-400" };
+                    const stateInfo = DIPLOMACY_STATES[d.stateCode] ?? {
+                      label: d.stateCode,
+                      color: "text-gray-400",
+                    };
                     return (
-                      <div key={d.id} className="flex items-center justify-between border rounded p-2">
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between border rounded p-2"
+                      >
                         <div className="flex items-center gap-2">
-                          {otherNation && <NationBadge name={otherNation.name} color={otherNation.color} />}
-                          <span className="text-sm">{otherNation?.name ?? `국가#${otherId}`}</span>
+                          {otherNation && (
+                            <NationBadge
+                              name={otherNation.name}
+                              color={otherNation.color}
+                            />
+                          )}
+                          <span className="text-sm">
+                            {otherNation?.name ?? `국가#${otherId}`}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-bold ${stateInfo.color}`}>{stateInfo.label}</span>
-                          <span className="text-[10px] text-muted-foreground">잔여 {d.term}턴</span>
+                          <span
+                            className={`text-xs font-bold ${stateInfo.color}`}
+                          >
+                            {stateInfo.label}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            잔여 {d.term}턴
+                          </span>
                         </div>
                       </div>
                     );
@@ -386,29 +503,47 @@ export default function InternalAffairsPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="border rounded p-3 text-center">
-                  <div className="text-[10px] text-muted-foreground">금 수입</div>
-                  <div className="text-sm font-bold text-amber-400 tabular-nums">{financeSummary.totalGoldIncome.toLocaleString()}</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    금 수입
+                  </div>
+                  <div className="text-sm font-bold text-amber-400 tabular-nums">
+                    {financeSummary.totalGoldIncome.toLocaleString()}
+                  </div>
                 </div>
                 <div className="border rounded p-3 text-center">
-                  <div className="text-[10px] text-muted-foreground">쌀 수입</div>
-                  <div className="text-sm font-bold text-green-400 tabular-nums">{financeSummary.totalRiceIncome.toLocaleString()}</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    쌀 수입
+                  </div>
+                  <div className="text-sm font-bold text-green-400 tabular-nums">
+                    {financeSummary.totalRiceIncome.toLocaleString()}
+                  </div>
                 </div>
                 <div className="border rounded p-3 text-center">
                   <div className="text-[10px] text-muted-foreground">지출</div>
-                  <div className="text-sm font-bold text-red-400 tabular-nums">{financeSummary.totalExpense.toLocaleString()}</div>
+                  <div className="text-sm font-bold text-red-400 tabular-nums">
+                    {financeSummary.totalExpense.toLocaleString()}
+                  </div>
                 </div>
                 <div className="border rounded p-3 text-center">
-                  <div className="text-[10px] text-muted-foreground">금 순수익</div>
-                  <div className={`text-sm font-bold tabular-nums ${financeSummary.netGold >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {financeSummary.netGold >= 0 ? "+" : ""}{financeSummary.netGold.toLocaleString()}
+                  <div className="text-[10px] text-muted-foreground">
+                    금 순수익
+                  </div>
+                  <div
+                    className={`text-sm font-bold tabular-nums ${financeSummary.netGold >= 0 ? "text-green-400" : "text-red-400"}`}
+                  >
+                    {financeSummary.netGold >= 0 ? "+" : ""}
+                    {financeSummary.netGold.toLocaleString()}
                   </div>
                 </div>
               </div>
               <div className="text-xs text-muted-foreground">
-                도시 수: {myCities.length}개 / 보유금: {myNation?.gold?.toLocaleString() ?? 0} / 보유쌀: {myNation?.rice?.toLocaleString() ?? 0}
+                도시 수: {myCities.length}개 / 보유금:{" "}
+                {myNation?.gold?.toLocaleString() ?? 0} / 보유쌀:{" "}
+                {myNation?.rice?.toLocaleString() ?? 0}
               </div>
               <div className="text-[10px] text-muted-foreground">
-                ※ 예상치이며 실제와 다를 수 있습니다. 관직자, 수도 보너스 등 미반영.
+                ※ 예상치이며 실제와 다를 수 있습니다. 관직자, 수도 보너스 등
+                미반영.
               </div>
             </CardContent>
           </Card>
