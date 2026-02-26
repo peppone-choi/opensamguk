@@ -42,17 +42,16 @@ class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val enemyGenerals = services?.generalRepository?.findByCityId(dc.id)
             ?.filter { it.nationId == dc.nationId } ?: emptyList()
         val enemySupplyCities = services?.cityRepository?.findByNationId(dc.nationId)
-            ?.filter { it.supplyState > 0 } ?: emptyList()
+            ?.filter { it.supplyState > 0 && it.id != dc.id } ?: emptyList()
 
         var moved = 0
         for (gen in enemyGenerals) {
             if (enemySupplyCities.isEmpty()) continue
-            var targetCity = enemySupplyCities[rng.nextInt(enemySupplyCities.size)]
-            // If same as dest city, try again once
-            if (targetCity.id == dc.id && enemySupplyCities.size > 1) {
-                targetCity = enemySupplyCities[rng.nextInt(enemySupplyCities.size)]
-            }
+            val targetCity = enemySupplyCities[rng.nextInt(enemySupplyCities.size)]
             gen.cityId = targetCity.id
+            if (gen.troopId != gen.id) {
+                gen.troopId = 0
+            }
             services?.generalRepository?.save(gen)
             moved++
         }

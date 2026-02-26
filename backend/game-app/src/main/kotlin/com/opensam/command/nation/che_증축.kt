@@ -41,9 +41,6 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
         val c = city ?: destCity ?: return CommandResult(false, logs, "수도 도시 정보를 찾을 수 없습니다")
 
-        if (c.level <= 3.toShort()) {
-            return CommandResult(false, logs, "수진, 진, 관문에서는 불가능합니다.")
-        }
         if (c.level >= 8.toShort()) {
             return CommandResult(false, logs, "더이상 증축할 수 없습니다.")
         }

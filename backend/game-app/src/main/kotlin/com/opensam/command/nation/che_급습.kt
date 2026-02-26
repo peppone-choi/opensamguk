@@ -19,7 +19,6 @@ class che_급습(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override val fullConditionConstraints = listOf(
         OccupiedCity(), BeChief(), ExistsDestNation(),
-        AllowDiplomacyWithTerm(1, 12, "선포 12개월 이상인 상대국에만 가능합니다."),
         AvailableStrategicCommand()
     )
 

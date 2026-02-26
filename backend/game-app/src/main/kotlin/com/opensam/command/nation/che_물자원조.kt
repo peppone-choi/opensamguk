@@ -6,12 +6,9 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
-import kotlin.math.max
 import kotlin.random.Random
 
 private const val POST_REQ_TURN = 12
-private const val BASE_GOLD = 10000
-private const val BASE_RICE = 10000
 
 class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -50,9 +47,8 @@ class che_물자원조(general: General, env: CommandEnv, arg: Map<String, Any>?
             return CommandResult(false, logs, "원조 금액이 없습니다")
         }
 
-        // Fit to available resources (keep baseGold/baseRice reserved)
-        val actualGold = goldAmount.coerceIn(0, max(0, n.gold - BASE_GOLD))
-        val actualRice = riceAmount.coerceIn(0, max(0, n.rice - BASE_RICE))
+        val actualGold = goldAmount.coerceIn(0, n.gold)
+        val actualRice = riceAmount.coerceIn(0, n.rice)
 
         n.gold -= actualGold
         n.rice -= actualRice

@@ -41,7 +41,7 @@ class che_감축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         }
         val date = formatDate()
 
-        if (capitalCity.level <= 4) {
+        if (capitalCity.level <= 1) {
             return CommandResult(false, logs, "더이상 감축할 수 없습니다.")
         }
 

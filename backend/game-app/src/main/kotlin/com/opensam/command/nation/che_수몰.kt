@@ -68,7 +68,7 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         dc.def = (dc.def * DAMAGE_RATE).toInt()
         dc.wall = (dc.wall * DAMAGE_RATE).toInt()
         dc.pop = (dc.pop * 0.5).toInt()
-        dc.dead += (beforePop - dc.pop)
+        dc.dead += ((beforePop - dc.pop) * 0.1).toInt()
 
         // General history + national history
         pushHistoryLog("<G><b>${dc.name}</b></>에 <M>수몰</>을 발동")

@@ -59,30 +59,53 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
         pushHistoryLog("<M>${actionName}</>${josaUl} 발동")
         pushNationalHistoryLog("<Y>${generalName}</>${josaYi} <M>${actionName}</>${josaUl} 발동")
 
+        c.pop = (c.pop * 0.5).toInt()
+
         // Calculate NPC count: 3 + round(avgGenCount / 8)
         val avgGenCount = services!!.nationRepository.getAverageGennum(env.worldId)
         val createGenCount = 3 + (avgGenCount / 8.0).roundToInt()
 
-        // Get nation average stats for initial exp/ded
-        val avgStats = services!!.generalRepository.getAverageStats(env.worldId, n.id)
+        val avgStats = runCatching { services!!.generalRepository.getAverageStats(env.worldId, n.id) }.getOrNull()
+        val avgExperience = avgStats?.experience ?: 0
+        val avgDedication = avgStats?.dedication ?: 0
 
-        // Create NPCs from general pool
-        for (i in 1..createGenCount) {
-            val npc = services!!.generalPoolService?.pickAndCreateNpc(
-                worldId = env.worldId,
-                nationId = n.id,
-                cityId = c.id,
-                npcType = NPC_TYPE,
-                birthYear = env.year - 20,
-                deathYear = env.year + 10,
-                killTurn = rng.nextInt(64, 71),
-                gold = 1000,
-                rice = 1000,
-                experience = avgStats.experience,
-                dedication = avgStats.dedication,
-                specAge = 19,
-                rng = rng
-            )
+        val generalPoolService = services!!.generalPoolService
+        if (generalPoolService != null) {
+            for (i in 1..createGenCount) {
+                generalPoolService.pickAndCreateNpc(
+                    worldId = env.worldId,
+                    nationId = n.id,
+                    cityId = c.id,
+                    npcType = NPC_TYPE,
+                    birthYear = env.year - 20,
+                    deathYear = env.year + 10,
+                    killTurn = rng.nextInt(64, 71),
+                    gold = 1000,
+                    rice = 1000,
+                    experience = avgExperience,
+                    dedication = avgDedication,
+                    specAge = 19,
+                    rng = rng
+                )
+            }
+        } else {
+            repeat(createGenCount) { idx ->
+                val npc = General(
+                    worldId = env.worldId,
+                    name = "의병${idx + 1}",
+                    nationId = n.id,
+                    cityId = c.id,
+                    npcState = NPC_TYPE.toShort(),
+                    bornYear = (env.year - 20).toShort(),
+                    deadYear = (env.year + 10).toShort(),
+                    officerLevel = 1,
+                    gold = 1000,
+                    rice = 1000,
+                    experience = avgExperience,
+                    dedication = avgDedication,
+                )
+                services!!.generalRepository.save(npc)
+            }
         }
 
         // Update nation gennum and strategic limit
