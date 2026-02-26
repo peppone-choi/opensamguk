@@ -23,7 +23,6 @@ class che_이호경식(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         OccupiedCity(), BeChief(), ExistsDestNation(),
-        AllowDiplomacyBetweenStatus(listOf(0, 1), "선포, 전쟁중인 상대국에게만 가능합니다."),
         AvailableStrategicCommand()
     )
 
@@ -74,11 +73,13 @@ class che_이호경식(general: General, env: CommandEnv, arg: Map<String, Any>?
         // Strategic command limit
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
-        // Update diplomacy: force to state=1 (declaration), term logic depends on current state
-        // If currently at war (state=0), term becomes 3; otherwise term += 3
-        val currentDiplomacy = services!!.diplomacyService.getDiplomacyState(env.worldId, n.id, dn.id)
-        val newTerm = if (currentDiplomacy?.state == 0) 3 else (currentDiplomacy?.term ?: 0) + 3
-        services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 1, term = newTerm)
+        val targetNation = services!!.nationRepository
+            .findByWorldId(env.worldId)
+            .filter { it.id != n.id && it.id != dn.id }
+            .maxByOrNull { it.level }
+        if (targetNation != null) {
+            services!!.diplomacyService.declareWar(env.worldId, dn.id, targetNation.id)
+        }
 
         // Update nation fronts
         services!!.nationService?.setNationFront(env.worldId, n.id)

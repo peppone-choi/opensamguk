@@ -16,8 +16,7 @@ class che_불가침파기제의(general: General, env: CommandEnv, arg: Map<Stri
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(), SuppliedCity(),
-        ExistsDestNation(),
-        AllowDiplomacyBetweenStatus(listOf(7), "불가침 중인 상대국에게만 가능합니다.")
+        ExistsDestNation()
     )
 
     override fun getCost() = CommandCost()
@@ -31,14 +30,9 @@ class che_불가침파기제의(general: General, env: CommandEnv, arg: Map<Stri
         val josaRo = JosaUtil.pick(dn.name, "로")
         pushLog("<D><b>${dn.name}</b></>${josaRo} 불가침 파기 제의 서신을 보냈습니다.<1>${formatDate()}</>")
 
-        services!!.diplomacyService.sendDiplomaticMessage(
-            worldId = env.worldId,
-            srcNationId = n.id,
-            destNationId = dn.id,
-            srcGeneralId = general.id,
-            action = "cancel_non_aggression",
-            extra = mapOf("deletable" to false)
-        )
+        services!!.diplomacyService.proposeBreakNonAggression(env.worldId, n.id, dn.id)
+        general.experience += 50
+        general.dedication += 50
 
         return CommandResult(true, logs)
     }

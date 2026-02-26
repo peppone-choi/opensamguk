@@ -18,8 +18,7 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), ExistsDestNation(), ExistsDestGeneral(),
-        ReqDestNationGeneralMatch(),
-        AllowDiplomacyBetweenStatus(listOf(0, 1), "상대국과 선포, 전쟁중이지 않습니다.")
+        ReqDestNationGeneralMatch()
     )
 
     override fun getCost() = CommandCost()
@@ -38,8 +37,7 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
         val josaYiGeneral = JosaUtil.pick(generalName, "이")
         val josaYiNation = JosaUtil.pick(nationName, "이")
 
-        // Update diplomacy: state=2 (neutral), term=0
-        services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 2, term = 0)
+        services!!.diplomacyService.acceptCeasefire(env.worldId, n.id, dn.id)
 
         // Update nation fronts
         services!!.nationService?.setNationFront(env.worldId, n.id)
@@ -62,6 +60,9 @@ class che_종전수락(general: General, env: CommandEnv, arg: Map<String, Any>?
         pushDestGeneralLog("<D><b>${nationName}</b></>${josaWaSrc} 종전에 성공했습니다.")
         pushDestGeneralHistoryLog("<D><b>${nationName}</b></>${josaWaSrc} 종전 성공")
         pushDestNationalHistoryLogFor(dn.id, "<D><b>${nationName}</b></>${josaWaSrc} 종전")
+
+        general.experience += 50
+        general.dedication += 50
 
         return CommandResult(true, logs)
     }

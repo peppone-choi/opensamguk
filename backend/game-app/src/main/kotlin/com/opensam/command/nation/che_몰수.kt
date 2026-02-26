@@ -52,7 +52,7 @@ class che_몰수(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             resName = "쌀"
         }
 
-        // No betray increment - not in PHP/TS reference
+        destGen.betray = (destGen.betray + 1).toShort()
         pushLog("<Y>${destGen.name}</>에게서 $resName <C>$actual</>을 몰수했습니다. <1>$date</>")
         return CommandResult(true, logs)
     }

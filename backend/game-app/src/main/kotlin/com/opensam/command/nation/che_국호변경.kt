@@ -14,8 +14,7 @@ class che_국호변경(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val actionName = "국호변경"
 
     override val fullConditionConstraints = listOf(
-        OccupiedCity(), BeChief(), SuppliedCity(),
-        ReqNationAuxValue("can_국호변경", 0, ">", 0, "더이상 변경이 불가능합니다.")
+        OccupiedCity(), BeChief(), SuppliedCity()
     )
 
     override fun getCost() = CommandCost()
@@ -33,7 +32,7 @@ class che_국호변경(general: General, env: CommandEnv, arg: Map<String, Any>?
         }
 
         // Check duplicate nation name
-        val existingNation = services!!.nationRepository.findByWorldIdAndName(env.worldId, newName)
+        val existingNation = services?.nationRepository?.findByWorldIdAndName(env.worldId, newName)
         if (existingNation != null) {
             pushLog("이미 같은 국호를 가진 곳이 있습니다. 국호변경 실패 <1>$date</>")
             return CommandResult(false, logs, "이미 같은 국호를 가진 곳이 있습니다")

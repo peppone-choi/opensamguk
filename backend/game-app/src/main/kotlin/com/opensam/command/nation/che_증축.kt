@@ -8,11 +8,8 @@ import com.opensam.command.constraint.*
 import com.opensam.entity.General
 import kotlin.random.Random
 
-private const val EXPAND_CITY_POP_INCREASE = 100000
-private const val EXPAND_CITY_DEVEL_INCREASE = 2000
-private const val EXPAND_CITY_WALL_INCREASE = 2000
-private const val EXPAND_CITY_COST_COEF = 500
-private const val EXPAND_CITY_DEFAULT_COST = 60000
+private const val EXPAND_CITY_POP_INCREASE = 10000
+private const val EXPAND_CITY_COST = 1500
 
 class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -21,7 +18,7 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override val fullConditionConstraints: List<Constraint>
         get() {
-            val cost = getCostAmount()
+            val cost = EXPAND_CITY_COST
             val baseGold = (env.gameStor["baseGold"] as? Number)?.toInt() ?: 1000
             val baseRice = (env.gameStor["baseRice"] as? Number)?.toInt() ?: 1000
             return listOf(
@@ -33,13 +30,8 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             )
         }
 
-    private fun getCostAmount(): Int {
-        return env.develCost * EXPAND_CITY_COST_COEF + EXPAND_CITY_DEFAULT_COST
-    }
-
     override fun getCost(): CommandCost {
-        val amount = getCostAmount()
-        return CommandCost(gold = amount, rice = amount)
+        return CommandCost(gold = EXPAND_CITY_COST, rice = EXPAND_CITY_COST)
     }
 
     override fun getPreReqTurn() = 5
@@ -47,10 +39,7 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override suspend fun run(rng: Random): CommandResult {
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
-        val capitalCityId = n.capitalCityId ?: return CommandResult(false, logs, "수도가 없습니다")
-
-        // Find capital city - use destCity (should be set to capital by command executor)
-        val c = destCity ?: return CommandResult(false, logs, "수도 도시 정보를 찾을 수 없습니다")
+        val c = city ?: destCity ?: return CommandResult(false, logs, "수도 도시 정보를 찾을 수 없습니다")
 
         if (c.level <= 3.toShort()) {
             return CommandResult(false, logs, "수진, 진, 관문에서는 불가능합니다.")
@@ -67,11 +56,6 @@ class che_증축(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         c.level = (c.level + 1).toShort()
         c.popMax += EXPAND_CITY_POP_INCREASE
-        c.agriMax += EXPAND_CITY_DEVEL_INCREASE
-        c.commMax += EXPAND_CITY_DEVEL_INCREASE
-        c.secuMax += EXPAND_CITY_DEVEL_INCREASE
-        c.defMax += EXPAND_CITY_WALL_INCREASE
-        c.wallMax += EXPAND_CITY_WALL_INCREASE
 
         val expDed = 5 * (getPreReqTurn() + 1)
         general.experience += expDed

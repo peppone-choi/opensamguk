@@ -24,7 +24,7 @@ class che_허보(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override fun getCost() = CommandCost()
     override fun getPreReqTurn() = PRE_REQ_TURN
-    override fun getPostReqTurn() = 0
+    override fun getPostReqTurn() = 20
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()

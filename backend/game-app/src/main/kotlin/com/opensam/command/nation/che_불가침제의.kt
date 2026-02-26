@@ -27,10 +27,6 @@ class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, An
             }
             return listOf(
                 BeChief(), NotBeNeutral(), ExistsDestNation(), DifferentDestNation(),
-                DisallowDiplomacyBetweenStatus(mapOf(
-                    0 to "아국과 이미 교전중입니다.",
-                    1 to "아국과 이미 선포중입니다."
-                ))
             )
         }
 
@@ -42,20 +38,12 @@ class che_불가침제의(general: General, env: CommandEnv, arg: Map<String, An
         val n = nation ?: return CommandResult(false, listOf("국가 정보를 찾을 수 없습니다"))
         val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
 
-        val year = arg?.get("year") as? Int ?: return CommandResult(false, listOf("연도 정보가 없습니다"))
-        val month = arg?.get("month") as? Int ?: return CommandResult(false, listOf("월 정보가 없습니다"))
-
         val josaRo = JosaUtil.pick(dn.name, "로")
         pushLog("<D><b>${dn.name}</b></>${josaRo} 불가침 제의 서신을 보냈습니다.<1>${formatDate()}</>")
 
-        services!!.diplomacyService.sendDiplomaticMessage(
-            worldId = env.worldId,
-            srcNationId = n.id,
-            destNationId = dn.id,
-            srcGeneralId = general.id,
-            action = "non_aggression",
-            extra = mapOf("year" to year, "month" to month)
-        )
+        services!!.diplomacyService.proposeNonAggression(env.worldId, n.id, dn.id)
+        general.experience += 50
+        general.dedication += 50
 
         return CommandResult(true, logs)
     }

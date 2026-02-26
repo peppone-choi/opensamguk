@@ -7,10 +7,6 @@ import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
 import com.opensam.util.JosaUtil
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sqrt
 import kotlin.random.Random
 
 private const val INITIAL_NATION_GEN_LIMIT = 10
@@ -33,8 +29,7 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
     override fun getPreReqTurn() = PRE_REQ_TURN
 
     override fun getPostReqTurn(): Int {
-        val genCount = max(nation?.gennum ?: 1, INITIAL_NATION_GEN_LIMIT)
-        return (sqrt(genCount * 4.0) * 10).roundToInt()
+        return 20
     }
 
     override suspend fun run(rng: Random): CommandResult {
@@ -43,7 +38,6 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         val dc = destCity ?: return CommandResult(false, logs, "대상 도시 정보를 찾을 수 없습니다")
 
         val destNationId = dc.nationId
-        val destNationName = services!!.nationRepository.findById(destNationId).orElse(null)?.name ?: "알수없음"
         val generalName = general.name
         val nationName = n.name
 
@@ -70,9 +64,11 @@ class che_수몰(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         pushDestNationalHistoryLogFor(destNationId,
             "<D><b>${nationName}</b></>의 <Y>${generalName}</>${josaYi} 아국의 <G><b>${dc.name}</b></>에 <M>수몰</>을 발동")
 
-        // Reduce def and wall to 20%
+        val beforePop = dc.pop
         dc.def = (dc.def * DAMAGE_RATE).toInt()
         dc.wall = (dc.wall * DAMAGE_RATE).toInt()
+        dc.pop = (dc.pop * 0.5).toInt()
+        dc.dead += (beforePop - dc.pop)
 
         // General history + national history
         pushHistoryLog("<G><b>${dc.name}</b></>에 <M>수몰</>을 발동")

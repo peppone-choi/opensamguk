@@ -33,7 +33,7 @@ class event_화시병연구(general: General, env: CommandEnv, arg: Map<String, 
         n.rice -= cost.rice
         n.meta["can_화시병사용"] = 1
 
-        val expDed = 5 * (getPreReqTurn() + 1)
+        val expDed = 100
         general.experience += expDed
         general.dedication += expDed
 

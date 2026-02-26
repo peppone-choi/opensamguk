@@ -24,8 +24,7 @@ class che_국기변경(general: General, env: CommandEnv, arg: Map<String, Any>?
     override val actionName = "국기변경"
 
     override val fullConditionConstraints = listOf(
-        OccupiedCity(), BeChief(), SuppliedCity(),
-        ReqNationAuxValue("can_국기변경", 0, ">", 0, "더이상 변경이 불가능합니다.")
+        OccupiedCity(), BeChief(), SuppliedCity()
     )
 
     override fun getCost() = CommandCost()
@@ -34,11 +33,18 @@ class che_국기변경(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
-        val colorType = (arg?.get("colorType") as? Number)?.toInt() ?: 0
-        if (colorType < 0 || colorType >= NATION_COLORS.size) {
-            return CommandResult(false, logs, "유효하지 않은 색상입니다")
+        val rawColorType = arg?.get("colorType")
+        val color = when (rawColorType) {
+            is Number -> {
+                val colorType = rawColorType.toInt()
+                if (colorType < 0 || colorType >= NATION_COLORS.size) {
+                    return CommandResult(false, logs, "유효하지 않은 색상입니다")
+                }
+                NATION_COLORS[colorType]
+            }
+            is String -> rawColorType
+            else -> NATION_COLORS[0]
         }
-        val color = NATION_COLORS[colorType]
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
 
         n.color = color

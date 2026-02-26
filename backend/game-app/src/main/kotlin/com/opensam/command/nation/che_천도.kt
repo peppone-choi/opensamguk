@@ -8,7 +8,6 @@ import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
 import com.opensam.util.JosaUtil
-import kotlin.math.pow
 import kotlin.random.Random
 
 /**
@@ -48,7 +47,7 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         // BFS distance from capital to destCity through own-nation territory
         val dist = computeDistanceThroughOwnTerritory(capitalCityId, destCityId)
-        cachedDist = dist ?: 50
+        cachedDist = dist ?: 1
         return cachedDist!!
     }
 
@@ -104,11 +103,6 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override val fullConditionConstraints: List<Constraint>
         get() {
-            val dist = getDistance()
-            if (dist == 50) {
-                // Unreachable
-                return listOf(AlwaysFail("천도 대상으로 도달할 방법이 없습니다."))
-            }
             val cost = getCostAmount()
             val baseGold = (env.gameStor["baseGold"] as? Number)?.toInt() ?: 1000
             val baseRice = (env.gameStor["baseRice"] as? Number)?.toInt() ?: 1000
@@ -121,11 +115,10 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
                 ReqNationGold(baseGold + cost),
                 ReqNationRice(baseRice + cost),
             )
-        }
+    }
 
     private fun getCostAmount(): Int {
-        val dist = getDistance()
-        return (env.develCost * 5 * 2.0.pow(dist)).toInt()
+        return 2000
     }
 
     override fun getCost(): CommandCost {
@@ -133,7 +126,7 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         return CommandCost(gold = amount, rice = amount)
     }
 
-    override fun getPreReqTurn() = getDistance() * 2
+    override fun getPreReqTurn() = 0
     override fun getPostReqTurn() = 0
 
     /**
@@ -160,27 +153,7 @@ class che_천도(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
             return CommandResult(false, logs, "이미 수도입니다.")
         }
 
-        // capSet invalidation check (legacy parity)
         val currentCapSet = (n.meta["capSet"] as? Number)?.toInt() ?: 0
-        val lastTurn = LastTurn.fromMap(general.lastTurn)
-        val storedCapSet = (general.lastTurn["capSetSeq"] as? Number)?.toInt() ?: -1
-
-        if (storedCapSet != currentCapSet) {
-            // capSet changed since we started accumulating turns → must restart
-            // Store new capSet and reset term
-            general.lastTurn = mutableMapOf(
-                "command" to actionName,
-                "arg" to (arg ?: emptyMap<String, Any>()),
-                "term" to 1,
-                "capSetSeq" to currentCapSet,
-            )
-            val preReq = getPreReqTurn()
-            pushLog("${actionName} 수행중... (1/${preReq})")
-            return CommandResult(
-                success = true,
-                logs = logs,
-            )
-        }
 
         // Record last천도Trial in nation meta (legacy: nationStor->last천도Trial)
         n.meta["last_chundo_trial"] = mapOf(

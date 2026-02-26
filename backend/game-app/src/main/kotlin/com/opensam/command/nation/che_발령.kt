@@ -33,6 +33,7 @@ class che_발령(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
         }
 
         destGen.cityId = dCity.id
+        destGen.troopId = 0
 
         // Set last발령 meta (yearMonth value)
         val yearMonth = env.year * 12 + env.month - 1

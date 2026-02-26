@@ -7,9 +7,7 @@ import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
 import com.opensam.util.JosaUtil
-import kotlin.math.max
 import kotlin.math.roundToInt
-import kotlin.math.sqrt
 import kotlin.random.Random
 
 private const val INITIAL_NATION_GEN_LIMIT = 10
@@ -32,8 +30,7 @@ class che_의병모집(general: General, env: CommandEnv, arg: Map<String, Any>?
     override fun getPreReqTurn() = PRE_REQ_TURN
 
     override fun getPostReqTurn(): Int {
-        val genCount = max(nation?.gennum ?: 1, INITIAL_NATION_GEN_LIMIT)
-        return (sqrt(genCount * 10.0) * 10).roundToInt()
+        return 100
     }
 
     override suspend fun run(rng: Random): CommandResult {

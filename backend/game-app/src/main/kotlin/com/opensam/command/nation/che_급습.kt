@@ -25,7 +25,7 @@ class che_급습(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
     override fun getCost() = CommandCost()
     override fun getPreReqTurn() = 0
-    override fun getPostReqTurn() = 0
+    override fun getPostReqTurn() = 40
 
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
@@ -34,19 +34,16 @@ class che_급습(general: General, env: CommandEnv, arg: Map<String, Any>? = nul
 
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
-        // Reduce diplomacy term between the two nations (bilateral)
         val diplomacyService = services!!.diplomacyService
-        val forwardRels = diplomacyService.getRelationsBetween(env.worldId, n.id, dn.id)
-        for (rel in forwardRels) {
-            rel.term = max(0, rel.term - TERM_REDUCE).toShort()
-        }
-        val reverseRels = diplomacyService.getRelationsBetween(env.worldId, dn.id, n.id)
-        for (rel in reverseRels) {
-            rel.term = max(0, rel.term - TERM_REDUCE).toShort()
+        val relations = diplomacyService.getRelationsForNation(env.worldId, dn.id)
+        for (rel in relations) {
+            if (rel.stateCode == "불가침") {
+                rel.term = max(0, rel.term - TERM_REDUCE).toShort()
+            }
         }
 
-        general.experience += 5
-        general.dedication += 5
+        general.experience += 50
+        general.dedication += 50
 
         pushLog("$actionName 발동! <1>$date</>")
         return CommandResult(true, logs)

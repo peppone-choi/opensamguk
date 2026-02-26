@@ -15,8 +15,7 @@ class che_무작위수도이전(general: General, env: CommandEnv, arg: Map<Stri
 
     override val fullConditionConstraints = listOf(
         OccupiedCity(), BeLord(), SuppliedCity(),
-        BeOpeningPart(env.year - env.startYear + 1),
-        ReqNationAuxValue("can_무작위수도이전", 0, ">", 0, "더이상 변경이 불가능합니다.")
+        BeOpeningPart(env.year - env.startYear + 1)
     )
 
     override fun getCost() = CommandCost()

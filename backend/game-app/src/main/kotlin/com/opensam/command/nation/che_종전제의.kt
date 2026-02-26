@@ -16,8 +16,7 @@ class che_종전제의(general: General, env: CommandEnv, arg: Map<String, Any>?
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), OccupiedCity(), SuppliedCity(),
-        ExistsDestNation(),
-        AllowDiplomacyBetweenStatus(listOf(0, 1), "선포, 전쟁중인 상대국에게만 가능합니다.")
+        ExistsDestNation()
     )
 
     override fun getCost() = CommandCost()
@@ -31,14 +30,9 @@ class che_종전제의(general: General, env: CommandEnv, arg: Map<String, Any>?
         val josaRo = JosaUtil.pick(dn.name, "로")
         pushLog("<D><b>${dn.name}</b></>${josaRo} 종전 제의 서신을 보냈습니다.<1>${formatDate()}</>")
 
-        services!!.diplomacyService.sendDiplomaticMessage(
-            worldId = env.worldId,
-            srcNationId = n.id,
-            destNationId = dn.id,
-            srcGeneralId = general.id,
-            action = "stop_war",
-            extra = mapOf("deletable" to false)
-        )
+        services!!.diplomacyService.proposeCeasefire(env.worldId, n.id, dn.id)
+        general.experience += 50
+        general.dedication += 50
 
         return CommandResult(true, logs)
     }

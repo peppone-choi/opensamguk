@@ -18,8 +18,7 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
 
     override val fullConditionConstraints = listOf(
         BeChief(), NotBeNeutral(), ExistsDestNation(), ExistsDestGeneral(),
-        ReqDestNationGeneralMatch(),
-        AllowDiplomacyBetweenStatus(listOf(7), "불가침 중인 상대국에게만 가능합니다.")
+        ReqDestNationGeneralMatch()
     )
 
     override fun getCost() = CommandCost()
@@ -31,7 +30,7 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
         val dn = destNation ?: return CommandResult(false, listOf("대상 국가 정보를 찾을 수 없습니다"))
         val dg = destGeneral ?: return CommandResult(false, listOf("대상 장수 정보를 찾을 수 없습니다"))
 
-        services!!.diplomacyService.setDiplomacyState(env.worldId, n.id, dn.id, state = 2, term = 0)
+        services!!.diplomacyService.acceptBreakNonAggression(env.worldId, n.id, dn.id)
 
         val generalName = general.name
         val josaYiGeneral = JosaUtil.pick(generalName, "이")
@@ -47,6 +46,9 @@ class che_불가침파기수락(general: General, env: CommandEnv, arg: Map<Stri
         val josaWaSrc = JosaUtil.pick(n.name, "와")
         pushDestGeneralLog("<D><b>${n.name}</b></>${josaWaSrc}의 불가침 파기에 성공했습니다.")
         pushDestGeneralHistoryLog("<D><b>${n.name}</b></>${josaWaSrc}의 불가침 파기 성공")
+
+        general.experience += 50
+        general.dedication += 50
 
         return CommandResult(true, logs)
     }

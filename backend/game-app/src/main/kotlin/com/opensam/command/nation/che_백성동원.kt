@@ -6,11 +6,9 @@ import com.opensam.command.CommandResult
 import com.opensam.command.NationCommand
 import com.opensam.command.constraint.*
 import com.opensam.entity.General
-import kotlin.math.max
 import kotlin.random.Random
 
 private const val STRATEGIC_GLOBAL_DELAY = 9
-private const val DEFENCE_RATE = 0.8
 
 class che_백성동원(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     : NationCommand(general, env, arg) {
@@ -33,12 +31,13 @@ class che_백성동원(general: General, env: CommandEnv, arg: Map<String, Any>?
         // Set strategic command cooldown
         n.strategicCmdLimit = STRATEGIC_GLOBAL_DELAY.toShort()
 
-        // Restore city defence and wall to 80% of max (if currently lower)
-        dCity.def = max(dCity.def, (dCity.defMax * DEFENCE_RATE).toInt())
-        dCity.wall = max(dCity.wall, (dCity.wallMax * DEFENCE_RATE).toInt())
+        dCity.pop = (dCity.pop * 0.2).toInt()
 
         general.experience += 5
         general.dedication += 5
+
+        services?.generalRepository?.save(general)
+        services?.generalRepository?.save(general)
 
         pushLog("백성동원 발동! <1>$date</>")
         return CommandResult(true, logs)
