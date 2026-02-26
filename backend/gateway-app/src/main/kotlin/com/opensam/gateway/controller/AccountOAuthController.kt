@@ -4,6 +4,7 @@ import com.opensam.gateway.service.AccountOAuthService
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import io.jsonwebtoken.Claims
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,7 +25,11 @@ data class OAuthCallbackRequest(
 class AccountOAuthController(
     private val accountOAuthService: AccountOAuthService,
 ) {
-    private fun currentUserId(): Long? = SecurityContextHolder.getContext().authentication?.name?.toLongOrNull()
+    private fun currentUserId(): Long? {
+        val auth = SecurityContextHolder.getContext().authentication ?: return null
+        val claims = auth.details as? Claims ?: return null
+        return (claims["userId"] as? Number)?.toLong()
+    }
 
     @GetMapping
     fun getOAuthProviders(): ResponseEntity<Any> {

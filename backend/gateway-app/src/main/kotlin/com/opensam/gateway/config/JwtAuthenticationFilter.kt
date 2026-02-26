@@ -29,7 +29,7 @@ class JwtAuthenticationFilter(
                     claims.subject,
                     null,
                     listOf(SimpleGrantedAuthority(authority)),
-                )
+                ).apply { details = claims }
                 SecurityContextHolder.getContext().authentication = auth
             }
         }
