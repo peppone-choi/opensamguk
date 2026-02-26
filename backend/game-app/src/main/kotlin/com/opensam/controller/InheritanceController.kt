@@ -1,7 +1,6 @@
 package com.opensam.controller
 
 import com.opensam.dto.AuctionUniqueRequest
-import com.opensam.dto.BuyBuffRequest
 import com.opensam.dto.BuyInheritBuffRequest
 import com.opensam.dto.CheckOwnerRequest
 import com.opensam.dto.CheckOwnerResponse
@@ -31,17 +30,6 @@ class InheritanceController(
         return ResponseEntity.ok(info)
     }
 
-    @PostMapping("/worlds/{worldId}/inheritance/buy")
-    fun buyBuff(
-        @PathVariable worldId: Long,
-        @RequestBody request: BuyBuffRequest,
-    ): ResponseEntity<InheritanceActionResult> {
-        val loginId = getLoginId() ?: return ResponseEntity.status(401).build()
-        val result = inheritanceService.buyBuff(worldId, loginId, request.buffCode)
-            ?: return ResponseEntity.notFound().build()
-        if (result.error != null) return ResponseEntity.badRequest().body(result)
-        return ResponseEntity.ok(result)
-    }
 
     @PostMapping("/worlds/{worldId}/inheritance/special")
     fun setInheritSpecial(

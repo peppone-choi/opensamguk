@@ -26,7 +26,7 @@ class InheritanceService(
 ) {
     companion object {
         // Cumulative buff level costs: index = level (0 = free, 1..5)
-        private val BUFF_LEVEL_COSTS = listOf(0, 100, 200, 400, 800, 1600)
+        private val BUFF_LEVEL_COSTS = listOf(0, 200, 600, 1200, 2000, 3000)
         private const val MAX_BUFF_LEVEL = 5
 
         // Action costs (defaults, can be overridden by game config)
@@ -44,18 +44,6 @@ class InheritanceService(
             "domesticSuccessProb", "domesticFailProb",
         )
 
-        // Buff options with their per-level bonuses
-        val BUFF_OPTIONS = mapOf(
-            "leadership" to mapOf("label" to "통솔 +1/레벨", "type" to "stat"),
-            "strength" to mapOf("label" to "무력 +1/레벨", "type" to "stat"),
-            "intel" to mapOf("label" to "지력 +1/레벨", "type" to "stat"),
-            "politics" to mapOf("label" to "정치 +1/레벨", "type" to "stat"),
-            "charm" to mapOf("label" to "매력 +1/레벨", "type" to "stat"),
-            "gold" to mapOf("label" to "초기 금 +500/레벨", "type" to "resource"),
-            "rice" to mapOf("label" to "초기 쌀 +500/레벨", "type" to "resource"),
-            "crew" to mapOf("label" to "초기 병력 +200/레벨", "type" to "resource"),
-            "exp" to mapOf("label" to "초기 경험 +100/레벨", "type" to "resource"),
-        )
 
         // Available special war options (should come from game config/static data in production)
         val AVAILABLE_SPECIAL_WAR = mapOf(
@@ -176,29 +164,6 @@ class InheritanceService(
         )
     }
 
-    fun buyBuff(worldId: Long, loginId: String, buffCode: String): InheritanceActionResult? {
-        val user = appUserRepository.findByLoginId(loginId) ?: return null
-        val points = (user.meta["inheritPoints"] as? Number)?.toInt() ?: 0
-
-        if (buffCode !in BUFF_OPTIONS) return InheritanceActionResult(error = "잘못된 버프 코드")
-
-        @Suppress("UNCHECKED_CAST")
-        val buffs = (user.meta["inheritBuffs"] as? MutableMap<String, Any>) ?: mutableMapOf()
-        val currentLevel = (buffs[buffCode] as? Number)?.toInt() ?: 0
-        if (currentLevel >= MAX_BUFF_LEVEL) return InheritanceActionResult(error = "최대 레벨 도달")
-
-        val actualCost = BUFF_LEVEL_COSTS[currentLevel + 1] - BUFF_LEVEL_COSTS[currentLevel]
-        if (points < actualCost) return InheritanceActionResult(error = "포인트 부족 (필요: $actualCost)")
-
-        user.meta["inheritPoints"] = points - actualCost
-        buffs[buffCode] = currentLevel + 1
-        user.meta["inheritBuffs"] = buffs
-
-        addInheritLog(user, "버프 구매: ${BUFF_OPTIONS[buffCode]?.get("label")} Lv.${currentLevel + 1}", -actualCost)
-
-        appUserRepository.save(user)
-        return InheritanceActionResult(remainingPoints = points - actualCost, newLevel = currentLevel + 1)
-    }
 
     fun buyInheritBuff(worldId: Long, loginId: String, request: BuyInheritBuffRequest): InheritanceActionResult? {
         val user = appUserRepository.findByLoginId(loginId) ?: return null

@@ -25,7 +25,7 @@ data class PointSource(
 )
 
 data class InheritanceActionCost(
-    val buff: List<Int> = listOf(0, 100, 200, 400, 800, 1600),
+    val buff: List<Int> = listOf(0, 200, 600, 1200, 2000, 3000),
     val resetTurnTime: Int = 100,
     val resetSpecialWar: Int = 200,
     val randomUnique: Int = 300,
@@ -62,7 +62,6 @@ data class InheritanceLogEntry(
     val text: String? = null,
 )
 
-data class BuyBuffRequest(val buffCode: String)
 
 data class BuyInheritBuffRequest(val type: String, val level: Int)
 
