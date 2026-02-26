@@ -1,0 +1,44 @@
+{
+  "name": "duel",
+  "regions": {
+    "1": "동",
+    "2": "서"
+  },
+  "levelNames": {
+    "1": "소",
+    "2": "중",
+    "3": "대"
+  },
+  "cities": [
+    {
+      "id": 1,
+      "name": "동성",
+      "level": 5,
+      "region": 1,
+      "population": 500000,
+      "agriculture": 5000,
+      "commerce": 5000,
+      "security": 5000,
+      "defence": 5000,
+      "wall": 5000,
+      "x": 300,
+      "y": 300,
+      "connections": [2]
+    },
+    {
+      "id": 2,
+      "name": "서성",
+      "level": 5,
+      "region": 2,
+      "population": 500000,
+      "agriculture": 5000,
+      "commerce": 5000,
+      "security": 5000,
+      "defence": 5000,
+      "wall": 5000,
+      "x": 500,
+      "y": 300,
+      "connections": [1]
+    }
+  ]
+}

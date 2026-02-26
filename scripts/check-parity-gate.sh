@@ -172,7 +172,7 @@ fi
 
 TOKEN=""
 if [[ $SKIP_ACCOUNT_WRITE -eq 0 ]]; then
-  uid="parity_$(date -u +%s)_$RANDOM"
+  uid="pt$(date -u +%s | cut -c7-)$RANDOM"
   register_payload="{\"loginId\":\"$uid\",\"displayName\":\"$uid\",\"password\":\"test1234!\"}"
   note "Checking auth register/login with disposable account: $uid"
   s=$(request "auth-register" POST "$API_URL/auth/register" "$register_payload")
