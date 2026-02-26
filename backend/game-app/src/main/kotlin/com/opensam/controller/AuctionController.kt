@@ -1,11 +1,13 @@
 package com.opensam.controller
 
 import com.opensam.dto.BidRequest
+import com.opensam.dto.BidResourceAuctionRequest
 import com.opensam.dto.CancelAuctionRequest
 import com.opensam.dto.CreateAuctionRequest
 import com.opensam.dto.CreateItemAuctionRequest
 import com.opensam.dto.MarketTradeRequest
 import com.opensam.dto.MessageResponse
+import com.opensam.dto.OpenResourceAuctionRequest
 import com.opensam.service.AuctionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -26,8 +28,60 @@ class AuctionController(
         @PathVariable worldId: Long,
         @RequestBody request: CreateAuctionRequest,
     ): ResponseEntity<MessageResponse> {
-        val auction = auctionService.createAuction(worldId, request.type, request.sellerId, request.item, request.amount, request.minPrice, request.finishBidAmount, request.closeTurnCnt)
-        return ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(auction))
+        return try {
+            val auction = auctionService.createAuction(
+                worldId,
+                request.type,
+                request.sellerId,
+                request.item,
+                request.amount,
+                request.minPrice,
+                request.finishBidAmount,
+                request.closeTurnCnt,
+            )
+            ResponseEntity.status(HttpStatus.CREATED).body(MessageResponse.from(auction))
+        } catch (e: IllegalArgumentException) {
+            throw org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, e.message ?: "잘못된 요청")
+        }
+    }
+
+    @GetMapping("/worlds/{worldId}/auctions/resource")
+    fun getActiveResourceAuctionList(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        return ResponseEntity.ok(auctionService.getActiveResourceAuctionList(worldId))
+    }
+
+    @PostMapping("/worlds/{worldId}/auctions/resource/buy-rice")
+    fun openBuyRiceAuction(
+        @PathVariable worldId: Long,
+        @RequestBody request: OpenResourceAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.openBuyRiceAuction(
+            worldId = worldId,
+            hostGeneralId = request.hostGeneralId,
+            amount = request.amount,
+            closeTurnCnt = request.closeTurnCnt,
+            startBidAmount = request.startBidAmount,
+            finishBidAmount = request.finishBidAmount,
+        )
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.status(HttpStatus.CREATED).body(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/auctions/resource/sell-rice")
+    fun openSellRiceAuction(
+        @PathVariable worldId: Long,
+        @RequestBody request: OpenResourceAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.openSellRiceAuction(
+            worldId = worldId,
+            hostGeneralId = request.hostGeneralId,
+            amount = request.amount,
+            closeTurnCnt = request.closeTurnCnt,
+            startBidAmount = request.startBidAmount,
+            finishBidAmount = request.finishBidAmount,
+        )
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.status(HttpStatus.CREATED).body(result)
     }
 
     @PostMapping("/auctions/{id}/bid")
@@ -37,6 +91,16 @@ class AuctionController(
     ): ResponseEntity<Map<String, Any>> {
         val result = auctionService.bid(id, request.bidderId, request.amount)
             ?: return ResponseEntity.notFound().build()
+        if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/auctions/{id}/bid-resource")
+    fun bidResourceAuction(
+        @PathVariable id: Long,
+        @RequestBody request: BidResourceAuctionRequest,
+    ): ResponseEntity<Map<String, Any>> {
+        val result = auctionService.bidResourceAuction(id, request.bidderId, request.amount)
         if (result.containsKey("error")) return ResponseEntity.badRequest().body(result)
         return ResponseEntity.ok(result)
     }

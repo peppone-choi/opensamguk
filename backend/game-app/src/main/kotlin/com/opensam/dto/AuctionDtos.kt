@@ -26,3 +26,16 @@ data class CreateItemAuctionRequest(
 data class CancelAuctionRequest(
     val generalId: Long,
 )
+
+data class OpenResourceAuctionRequest(
+    val hostGeneralId: Long,
+    val amount: Int,
+    val closeTurnCnt: Int,
+    val startBidAmount: Int,
+    val finishBidAmount: Int,
+)
+
+data class BidResourceAuctionRequest(
+    val bidderId: Long,
+    val amount: Int,
+)
