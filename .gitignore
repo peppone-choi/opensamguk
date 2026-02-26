@@ -23,6 +23,7 @@ tmp/
 backend/build/
 backend/**/build/
 backend/.gradle/
+backend/.gradle-home/
 backend/**/.gradle/
 backend/**/.kotlin/
 *.jar

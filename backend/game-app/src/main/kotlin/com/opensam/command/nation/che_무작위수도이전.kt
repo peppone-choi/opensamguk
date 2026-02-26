@@ -28,20 +28,35 @@ class che_무작위수도이전(general: General, env: CommandEnv, arg: Map<Stri
         val n = nation ?: return CommandResult(false, logs, "국가 정보를 찾을 수 없습니다")
         val oldCityId = n.capitalCityId
 
-        // Find neutral cities with level 5-6
-        val allCities = services!!.cityRepository.findByWorldId(env.worldId)
-        val neutralCities = allCities.filter { it.nationId == 0L && it.level in 5..6 }
+        // Prefer precomputed neutral city ids from game storage (useful for deterministic tests)
+        val neutralCityIds = (env.gameStor["neutralCities"] as? Iterable<*>)
+            ?.mapNotNull { (it as? Number)?.toLong() }
+            ?.toList()
+            ?: emptyList()
 
-        if (neutralCities.isEmpty()) {
+        val destCity = if (neutralCityIds.isNotEmpty()) {
+            val pickId = neutralCityIds[rng.nextInt(neutralCityIds.size)]
+            services!!.cityRepository.findById(pickId)?.orElse(null)
+        } else {
+            // Fallback: find neutral cities with level 5-6
+            val allCities = services!!.cityRepository.findByWorldId(env.worldId) ?: emptyList()
+            val neutralCities = allCities.filter { it.nationId == 0L && it.level in 5..6 }
+            if (neutralCities.isEmpty()) {
+                null
+            } else {
+                neutralCities[rng.nextInt(neutralCities.size)]
+            }
+        }
+
+        if (destCity == null) {
             pushLog("이동할 수 있는 도시가 없습니다. <1>$date</>")
             return CommandResult(false, logs, "이동할 수 있는 도시가 없습니다")
         }
 
-        val destCity = neutralCities[rng.nextInt(neutralCities.size)]
-
         // Set new capital city to nation ownership
         destCity.nationId = n.id
         n.capitalCityId = destCity.id
+        services!!.cityRepository.save(destCity)
 
         // Decrement aux counter
         val canCount = (n.meta["can_무작위수도이전"] as? Number)?.toInt() ?: 0
@@ -49,16 +64,17 @@ class che_무작위수도이전(general: General, env: CommandEnv, arg: Map<Stri
 
         // Release old capital to neutral
         if (oldCityId != null) {
-            val oldCity = services!!.cityRepository.findById(oldCityId).orElse(null)
+            val oldCity = services!!.cityRepository.findById(oldCityId)?.orElse(null)
             if (oldCity != null) {
                 oldCity.nationId = 0
                 oldCity.frontState = 0
                 oldCity.officerSet = 0
+                services!!.cityRepository.save(oldCity)
             }
         }
 
         // Move all nation generals to new capital
-        val nationGenerals = services!!.generalRepository.findByWorldIdAndNationId(env.worldId, n.id)
+        val nationGenerals = services!!.generalRepository.findByWorldIdAndNationId(env.worldId, n.id) ?: emptyList()
         for (g in nationGenerals) {
             g.cityId = destCity.id
         }
