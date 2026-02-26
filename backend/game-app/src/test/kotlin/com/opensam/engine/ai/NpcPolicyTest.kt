@@ -37,7 +37,7 @@ class NpcPolicyTest {
 
         val nationPolicy = NpcNationPolicy()
         assertEquals("부대전방발령", nationPolicy.priority.first())
-        assertEquals("천도", nationPolicy.priority.last())
+        assertEquals("전시전략", nationPolicy.priority.last())
     }
 
     @Test

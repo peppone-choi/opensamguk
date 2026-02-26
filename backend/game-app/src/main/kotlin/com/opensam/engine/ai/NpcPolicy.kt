@@ -74,7 +74,7 @@ class NpcNationPolicy(
             "NPC긴급포상", "유저장긴급포상",
             "NPC포상", "유저장포상", "NPC몰수",
             "불가침제의", "선전포고",
-            "전시전략", "천도"
+            "천도", "전시전략"
         )
         val DEFAULT_ENABLED_ACTIONS = setOf(
             "부대전방발령", "부대후방발령", "부대구출발령",
