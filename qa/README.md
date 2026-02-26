@@ -11,25 +11,25 @@ docker compose -f qa/docker-compose.parity.yml up --build
 
 This starts:
 
-| Service | Port | Description |
-|---------|------|-------------|
-| `legacy-app` | 8180 | Legacy PHP + Apache |
-| `legacy-mariadb` | 3307 | MariaDB 10.11 |
-| `new-gateway` | 8080 | New Kotlin/Spring Boot |
-| `new-nginx` | 8081 | New frontend (nginx proxy) |
-| `new-postgres` | 5433 | PostgreSQL 16 |
-| `parity-runner` | — | Pytest test runner |
+| Service          | Port | Description                |
+| ---------------- | ---- | -------------------------- |
+| `legacy-app`     | 8180 | Legacy PHP + Apache        |
+| `legacy-mariadb` | 3307 | MariaDB 10.11              |
+| `new-gateway`    | 8080 | New Kotlin/Spring Boot     |
+| `new-nginx`      | 8081 | New frontend (nginx proxy) |
+| `new-postgres`   | 5433 | PostgreSQL 16              |
+| `parity-runner`  | —    | Pytest test runner         |
 
 ## What Gets Tested
 
-| Test Suite | File | What it checks |
-|-----------|------|---------------|
-| Auth | `test_01_auth.py` | Register, login, duplicate rejection, bad password |
-| Game Init | `test_02_game_init.py` | Scenarios, nations, generals, cities, diplomacy |
-| Commands | `test_03_commands.py` | Command reservation (징병, 내정, etc.), command table |
-| NPC AI | `test_04_npc_ai.py` | NPC policy, NPC command categories |
-| Battle | `test_05_battle.py` | Battle simulation structure, rounds, invalid input |
-| Turns | `test_06_turn_processing.py` | Turn state, DB schema parity, history, map |
+| Test Suite | File                         | What it checks                                        |
+| ---------- | ---------------------------- | ----------------------------------------------------- |
+| Auth       | `test_01_auth.py`            | Register, login, duplicate rejection, bad password    |
+| Game Init  | `test_02_game_init.py`       | Scenarios, nations, generals, cities, diplomacy       |
+| Commands   | `test_03_commands.py`        | Command reservation (징병, 내정, etc.), command table |
+| NPC AI     | `test_04_npc_ai.py`          | NPC policy, NPC command categories                    |
+| Battle     | `test_05_battle.py`          | Battle simulation structure, rounds, invalid input    |
+| Turns      | `test_06_turn_processing.py` | Turn state, DB schema parity, history, map            |
 
 ## How Comparison Works
 
@@ -41,6 +41,7 @@ The test runner uses **structural comparison** rather than exact value matching 
 4. **Different auth mechanisms** — legacy uses PHP sessions, new uses JWT
 
 The `comparison.py` module handles:
+
 - Korean ↔ English field name mapping
 - PHP string→number type coercion
 - Structural shape comparison (compares types, not values)
@@ -49,6 +50,7 @@ The `comparison.py` module handles:
 ## Results
 
 After tests complete, find:
+
 - **Console output**: pass/fail for each test
 - **JSON report**: `qa/results/report.json`
 

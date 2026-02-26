@@ -1,17 +1,17 @@
 # 오픈삼국 (OpenSamguk)
 
-오픈삼국은 웹 기반 삼국지 전략 게임입니다. 
+오픈삼국은 웹 기반 삼국지 전략 게임입니다.
 백엔드는 Spring Boot(Kotlin), 프론트엔드는 Next.js로 구성되어 있습니다.
 
 ## 기술 스택
 
-| 계층 | 기술 |
-| --- | --- |
-| 백엔드 | Spring Boot 3, Kotlin |
-| 프론트엔드 | Next.js 16, React 19 |
-| 데이터베이스 | PostgreSQL 16 |
-| 캐시 | Redis 7 |
-| 배포 | Docker Compose, GitHub Actions, GHCR |
+| 계층         | 기술                                 |
+| ------------ | ------------------------------------ |
+| 백엔드       | Spring Boot 3, Kotlin                |
+| 프론트엔드   | Next.js 16, React 19                 |
+| 데이터베이스 | PostgreSQL 16                        |
+| 캐시         | Redis 7                              |
+| 배포         | Docker Compose, GitHub Actions, GHCR |
 
 ## 저장소 구성
 

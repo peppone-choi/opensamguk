@@ -47,7 +47,11 @@ services:
     networks:
       - parity-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost/api.php?path=Global/GetConst || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf http://localhost/api.php?path=Global/GetConst || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -188,7 +192,17 @@ services:
     networks:
       - parity-net
     # By default runs tests; override with `command: sleep infinity` to debug
-    command: ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--json-report", "--json-report-file=/results/report.json"]
+    command:
+      [
+        "python",
+        "-m",
+        "pytest",
+        "tests/",
+        "-v",
+        "--tb=short",
+        "--json-report",
+        "--json-report-file=/results/report.json",
+      ]
     volumes:
       - ./results:/results
 
