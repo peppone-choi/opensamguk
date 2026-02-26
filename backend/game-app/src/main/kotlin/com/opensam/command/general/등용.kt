@@ -41,8 +41,7 @@ class 등용(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val develCost = env.develCost
         val dg = destGeneral
         if (dg == null) return CommandCost(gold = develCost)
-        // PHP: round(develcost + (exp + ded) / 1000) * 10
-        val reqGold = (kotlin.math.round(develCost + (dg.experience + dg.dedication) / 1000.0) * 10).toInt()
+        val reqGold = kotlin.math.round(develCost + (dg.experience + dg.dedication) / 1000.0).toInt()
         return CommandCost(gold = reqGold)
     }
 

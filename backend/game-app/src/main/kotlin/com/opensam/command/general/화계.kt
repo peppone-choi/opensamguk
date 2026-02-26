@@ -56,7 +56,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         }
 
     override fun getCost(): CommandCost {
-        val cost = env.develCost * 5
+        val cost = (env.develCost * 0.25).toInt()
         return CommandCost(gold = cost, rice = cost)
     }
 
@@ -217,7 +217,7 @@ open class 화계(general: General, env: CommandEnv, arg: Map<String, Any>? = nu
         val destCityName = dc.name
 
         // Distance factor (legacy: searchDistance, default 99 if not found)
-        val dist = getDistanceTo(dc.id) ?: 99
+        val dist = getDistanceTo(dc.id) ?: 1
 
         val attackProb = calcAttackProb()
         val defenceProb = calcDefenceProb()

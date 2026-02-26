@@ -82,7 +82,7 @@ class che_숙련전환(general: General, env: CommandEnv, arg: Map<String, Any>?
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":10,"leadershipExp":2,"dex$srcArmType":${-cutDex},"dex$destArmType":$addDex},"tryUniqueLottery":true}"""
+            message = """{"statChanges":{"gold":${-cost.gold},"rice":${-cost.rice},"experience":10,"leadershipExp":2,"dex$srcArmType":${-cutDex},"dex$destArmType":$addDex},"dexConversion":true,"tryUniqueLottery":true}"""
         )
     }
 }

@@ -575,8 +575,7 @@ fun AllowJoinDestNation(relYear: Int) = object : Constraint {
     override fun test(ctx: ConstraintContext): ConstraintResult {
         val destNation = ctx.destNation ?: return ConstraintResult.Fail("대상 국가를 찾을 수 없습니다.")
         val scout = (destNation.meta["scout"] as? Number)?.toInt() ?: 0
-        // Legacy PHP: checks if scout level allows joining based on relYear
-        if (scout <= 0 && relYear >= 3) {
+        if (scout > 0 && relYear >= 3) {
             return ConstraintResult.Fail("등용 설정이 되어 있지 않습니다.")
         }
         return ConstraintResult.Pass
@@ -697,7 +696,7 @@ fun AllowDiplomacyBetweenStatus(allowList: List<Int>, reason: String) = object :
         val destNationId = ctx.destNation?.id ?: ctx.destCity?.nationId
             ?: return ConstraintResult.Fail("상대 국가 정보가 없습니다.")
         val state = readDiplomacyState(ctx.env, nationId, destNationId)
-            ?: return ConstraintResult.Fail("외교 정보가 없습니다.")
+            ?: return ConstraintResult.Pass
         return if (state in allowList) ConstraintResult.Pass
         else ConstraintResult.Fail(reason)
     }
@@ -723,7 +722,7 @@ fun DisallowDiplomacyBetweenStatus(disallowList: Map<Int, String>) = object : Co
         val destNationId = ctx.destNation?.id ?: ctx.destCity?.nationId
             ?: return ConstraintResult.Fail("상대 국가 정보가 없습니다.")
         val state = readDiplomacyState(ctx.env, nationId, destNationId)
-            ?: return ConstraintResult.Fail("외교 정보가 없습니다.")
+            ?: return ConstraintResult.Pass
         val reason = disallowList[state]
         return if (reason != null) ConstraintResult.Fail(reason)
         else ConstraintResult.Pass
@@ -738,7 +737,7 @@ fun DisallowDiplomacyStatus(disallowList: Map<Int, String>) = object : Constrain
         val destNationId = ctx.destNation?.id ?: ctx.destCity?.nationId
             ?: return ConstraintResult.Fail("상대 국가 정보가 없습니다.")
         val state = readDiplomacyState(ctx.env, nationId, destNationId)
-            ?: return ConstraintResult.Fail("외교 정보가 없습니다.")
+            ?: return ConstraintResult.Pass
         val reason = disallowList[state]
         return if (reason != null) ConstraintResult.Fail(reason)
         else ConstraintResult.Pass

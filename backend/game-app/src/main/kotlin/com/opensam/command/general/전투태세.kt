@@ -53,21 +53,7 @@ class 전투태세(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     override suspend fun run(rng: Random): CommandResult {
         val date = formatDate()
         val reqTurn = getPreReqTurn()
-
-        // Multi-turn tracking: read previous term from lastTurn
-        val previousTerm = getLastTurnTerm()
-        val term = if (previousTerm >= reqTurn) 1 else previousTerm + 1
-
-        if (term < reqTurn) {
-            pushLog("병사들을 열심히 훈련중... ($term/$reqTurn) <1>$date</>")
-
-            val cost = getCost()
-            return CommandResult(
-                success = true,
-                logs = logs,
-                message = """{"statChanges":{"gold":${-cost.gold}},"battleStanceTerm":$term,"completed":false}"""
-            )
-        }
+        val term = reqTurn
 
         // Term == reqTurn: completion
         pushLog("전투태세 완료! ($term/$reqTurn) <1>$date</>")

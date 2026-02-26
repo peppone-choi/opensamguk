@@ -25,17 +25,16 @@ class 장비매매(general: General, env: CommandEnv, arg: Map<String, Any>? = n
     private val itemCode: String? get() = arg?.get("itemCode") as? String
 
     override val minConditionConstraints: List<Constraint>
-        get() = listOf(
-            ReqCityTrader(),
-        )
+        get() = if (itemType == null && itemCode == null) emptyList() else listOf(ReqCityTrader())
 
     override val fullConditionConstraints: List<Constraint>
         get() {
             val cost = getCost()
-            val constraints = mutableListOf<Constraint>(
-                ReqCityTrader(),
-            )
+            val constraints = mutableListOf<Constraint>()
             val code = itemCode
+            if (itemType != null || code != null) {
+                constraints.add(ReqCityTrader())
+            }
             if (code != null && code != "None") {
                 val item = ItemModifiers.getMeta(code)
                 if (item != null) {

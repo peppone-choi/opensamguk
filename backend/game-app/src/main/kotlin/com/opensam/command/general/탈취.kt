@@ -34,7 +34,7 @@ class 탈취(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         var gold = (rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1) * dc.level * yearCoef * (0.25 + commRatio / 4.0)).roundToInt()
         var rice = (rng.nextInt(env.sabotageDamageMin, env.sabotageDamageMax + 1) * dc.level * yearCoef * (0.25 + agriRatio / 4.0)).roundToInt()
 
-        val isSupplied = dc.supplyState > 0
+        val isSupplied = dc.supplyState > 0 && destNation != null
 
         // If supplied: cap by dest nation's gold/rice at minNationalGold/Rice
         // Legacy: if(destNationGold - gold < minNationalGold) { gold += destNationGold - minNationalGold; ... }

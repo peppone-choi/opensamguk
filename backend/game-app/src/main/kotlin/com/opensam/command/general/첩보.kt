@@ -35,7 +35,7 @@ class 첩보(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         }
 
     override fun getCost(): CommandCost {
-        val cost = env.develCost * 3
+        val cost = (env.develCost * 0.15).toInt()
         return CommandCost(gold = cost, rice = cost)
     }
 
