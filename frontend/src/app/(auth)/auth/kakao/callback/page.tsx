@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/stores/authStore";
 import { accountApi } from "@/lib/gameApi";
 import { LoadingState } from "@/components/game/loading-state";
 
-export default function KakaoCallbackPage() {
+function KakaoCallbackPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const loginWithOAuth = useAuthStore((s) => s.loginWithOAuth);
@@ -70,4 +70,12 @@ export default function KakaoCallbackPage() {
   }, [loginWithOAuth, registerWithOAuth, router, searchParams]);
 
   return <LoadingState message="카카오 인증 처리 중..." />;
+}
+
+export default function KakaoCallbackPage() {
+  return (
+    <Suspense fallback={<LoadingState message="카카오 인증 정보를 확인 중..." />}>
+      <KakaoCallbackPageContent />
+    </Suspense>
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { accountApi } from "@/lib/gameApi";
 import { useAuthStore } from "@/stores/authStore";
@@ -29,7 +29,7 @@ const OAUTH_PROVIDERS = [
   { id: "naver", name: "네이버", color: "#03C75A", textColor: "#fff" },
 ] as const;
 
-export default function AccountPage() {
+function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
@@ -401,9 +401,10 @@ export default function AccountPage() {
               <div className="space-y-2 flex-1">
                 {/* File upload */}
                 <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">파일 업로드</label>
+                  <label htmlFor="icon-upload-input" className="text-xs text-muted-foreground">파일 업로드</label>
                   <div className="flex items-center gap-2">
                     <input
+                      id="icon-upload-input"
                       type="file"
                       accept="image/*"
                       onChange={handleIconFileChange}
@@ -641,6 +642,7 @@ export default function AccountPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="relative w-full max-w-sm mx-4 rounded-lg border bg-background p-6 shadow-xl">
             <button
+              type="button"
               className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
               onClick={() => setShowIconSync(false)}
             >
@@ -688,6 +690,7 @@ export default function AccountPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
           <div className="relative w-full max-w-sm mx-4 rounded-lg border border-red-500/30 bg-background p-6 shadow-xl">
             <button
+              type="button"
               className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
               onClick={() => {
                 setShowDeleteModal(false);
@@ -718,10 +721,11 @@ export default function AccountPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">
+                <label htmlFor="delete-password-input" className="text-xs text-muted-foreground">
                   비밀번호를 입력하세요
                 </label>
                 <Input
+                  id="delete-password-input"
                   type="password"
                   placeholder="비밀번호"
                   value={deletePassword}
@@ -730,12 +734,13 @@ export default function AccountPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-muted-foreground">
+                <label htmlFor="delete-confirm-input" className="text-xs text-muted-foreground">
                   확인을 위해{" "}
                   <span className="font-bold text-red-400">탈퇴합니다</span>를
                   입력하세요
                 </label>
                 <Input
+                  id="delete-confirm-input"
                   type="text"
                   placeholder="탈퇴합니다"
                   value={deleteConfirmText}
@@ -786,5 +791,13 @@ export default function AccountPage() {
         </div>
       )}
     </>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="w-full max-w-md p-8 text-sm text-muted-foreground">계정 정보를 불러오는 중...</div>}>
+      <AccountPageContent />
+    </Suspense>
   );
 }

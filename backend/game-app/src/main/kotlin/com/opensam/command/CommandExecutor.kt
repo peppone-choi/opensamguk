@@ -91,8 +91,8 @@ class CommandExecutor(
         }
 
         // Post-command hook: check stat level changes (legacy: checkStatChange)
-        val statChangeResult = statChangeService.checkStatChange(general)
-        if (statChangeResult.hasChanges) {
+        val statChangeResult = runCatching { statChangeService.checkStatChange(general) }.getOrNull()
+        if (statChangeResult?.hasChanges == true) {
             finalResult = result.copy(logs = result.logs + statChangeResult.logs)
         }
 

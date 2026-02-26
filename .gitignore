@@ -37,6 +37,8 @@ frontend/out/
 # Local automation artifacts
 .playwright-mcp/
 backend/.kotlin/
+backend/.proj-cache/
+backend/.tmp/
 
 # Local screenshots
 e2e-*.png
