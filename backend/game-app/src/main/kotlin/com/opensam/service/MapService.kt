@@ -64,6 +64,9 @@ class MapService {
     }
 
     fun getAdjacentCities(mapName: String, cityId: Int): List<Int> {
+        if (!adjacencyIndex.containsKey(mapName)) {
+            loadMap(mapName)
+        }
         val adj = adjacencyIndex[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
         return adj[cityId] ?: emptyList()
     }
@@ -78,6 +81,9 @@ class MapService {
     fun getDistance(mapName: String, fromCityId: Int, toCityId: Int): Int {
         if (fromCityId == toCityId) return 0
 
+        if (!adjacencyIndex.containsKey(mapName)) {
+            loadMap(mapName)
+        }
         val adj = adjacencyIndex[mapName] ?: throw IllegalArgumentException("Unknown map: $mapName")
 
         val visited = mutableSetOf(fromCityId)

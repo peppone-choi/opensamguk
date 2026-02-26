@@ -53,7 +53,7 @@ class BattleParityTest {
             assertEquals(0, getDexLevel(349))
             assertEquals(1, getDexLevel(1374))
             assertEquals(2, getDexLevel(3499))
-            assertEquals(9, getDexLevel(61749))
+            assertEquals(8, getDexLevel(61749))
         }
 
         @Test

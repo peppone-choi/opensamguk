@@ -97,8 +97,9 @@ class TurnServiceTest {
             nationAI,
             mock(com.opensam.engine.modifier.ModifierService::class.java),
             mock(WorldService::class.java),
+            mock(com.opensam.service.NationService::class.java),
+            mock(com.opensam.engine.war.BattleService::class.java),
         )
-
         // Default: worldStateRepository.save returns the argument
         `when`(worldStateRepository.save(anyNonNull<WorldState>())).thenAnswer { it.arguments[0] }
     }

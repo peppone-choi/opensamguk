@@ -5,6 +5,7 @@ import com.opensam.repository.*
 import com.opensam.service.MapService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.OffsetDateTime
 import kotlin.random.Random
@@ -74,7 +75,6 @@ class NpcSpawnService(
         emptyCities.shuffle(rng)
 
         val nations = nationRepository.findByWorldId(worldId)
-        var maxNationId = nations.maxOfOrNull { it.id } ?: 0L
 
         for (emptyCity in emptyCities) {
             // Check distance from occupied cities
@@ -90,8 +90,7 @@ class NpcSpawnService(
             if (tooCloseToNpc) continue
 
             // Create NPC nation
-            maxNationId++
-            buildNpcNation(world, rng, maxNationId, emptyCity, avgCity, avgGenCount, avgTech)
+            val newNation = buildNpcNation(world, rng, emptyCity, avgCity, avgGenCount, avgTech)
             npcCreatedCityIds.add(emptyCity.id)
         }
 
@@ -103,20 +102,18 @@ class NpcSpawnService(
     private fun buildNpcNation(
         world: WorldState,
         rng: Random,
-        nationId: Long,
         city: City,
         avgCity: Map<String, Int>,
         genCount: Int,
         avgTech: Float,
-    ) {
+    ): Nation {
         val worldId = world.id.toLong()
         val year = world.currentYear.toInt()
         val nationName = "ⓤ${city.name}"
         val color = NPC_NATION_COLORS[rng.nextInt(NPC_NATION_COLORS.size)]
 
         // Create nation
-        val nation = Nation(
-            id = nationId,
+        val nation = nationRepository.save(Nation(
             worldId = worldId,
             name = nationName,
             color = color,
@@ -130,11 +127,10 @@ class NpcSpawnService(
             tech = avgTech,
             level = 2,
             typeCode = "che_중립",
-        )
-        nationRepository.save(nation)
+        ))
 
         // Assign city to nation
-        city.nationId = nationId
+        city.nationId = nation.id
         city.trust = 100F
         // Set city stats to average
         city.pop = avgCity["pop"]?.coerceAtMost(city.popMax) ?: city.pop
@@ -150,7 +146,7 @@ class NpcSpawnService(
         val ruler = General(
             worldId = worldId,
             name = "${city.name}태수",
-            nationId = nationId,
+            nationId = nation.id,
             cityId = city.id,
             npcState = 6,
             bornYear = (year - 20).toShort(),
@@ -179,7 +175,7 @@ class NpcSpawnService(
             val npc = General(
                 worldId = worldId,
                 name = "${city.name}장수$i",
-                nationId = nationId,
+                nationId = nation.id,
                 cityId = city.id,
                 npcState = 6,
                 bornYear = (year - 20).toShort(),
@@ -199,6 +195,7 @@ class NpcSpawnService(
             )
             generalRepository.save(npc)
         }
+        return nation
     }
 
     private fun derivePoliticsFromStats(leadership: Int, strength: Int, intel: Int, rng: Random): Int {
@@ -366,7 +363,6 @@ class NpcSpawnService(
         )
 
         val existingNations = nationRepository.findByWorldId(worldId)
-        var maxNationId = existingNations.maxOfOrNull { it.id } ?: 0L
         val generals = generalRepository.findByWorldId(worldId)
         val avgStatTotal = if (generals.isNotEmpty()) {
             generals.filter { it.npcState < 4 }
@@ -399,14 +395,12 @@ class NpcSpawnService(
         val invaderNationIds = mutableListOf<Long>()
 
         for (city in lv4Cities) {
-            maxNationId++
             val invaderName = city.name
             val nationName = "ⓞ${invaderName}족"
             val npcEachCount = 10.coerceAtLeast((generals.count { it.npcState < 4 } / lv4Cities.size) * 2)
 
             // Create invader nation
-            val nation = Nation(
-                id = maxNationId,
+            val nation = nationRepository.save(Nation(
                 worldId = worldId,
                 name = nationName,
                 color = "#800080",
@@ -420,11 +414,10 @@ class NpcSpawnService(
                 tech = avgTech * 1.2f,
                 level = 2,
                 typeCode = "che_병가",
-            )
-            nationRepository.save(nation)
-            invaderNationIds.add(maxNationId)
+            ))
+            invaderNationIds.add(nation.id)
 
-            city.nationId = maxNationId
+            city.nationId = nation.id
             city.pop = city.popMax
             city.agri = city.agriMax
             city.comm = city.commMax
@@ -438,7 +431,7 @@ class NpcSpawnService(
             val ruler = General(
                 worldId = worldId,
                 name = "${invaderName}대왕",
-                nationId = maxNationId,
+                nationId = nation.id,
                 cityId = city.id,
                 npcState = 9,
                 affinity = 999,
@@ -477,7 +470,7 @@ class NpcSpawnService(
                 val gen = General(
                     worldId = worldId,
                     name = "${invaderName}장수$i",
-                    nationId = maxNationId,
+                    nationId = nation.id,
                     cityId = city.id,
                     npcState = 9,
                     affinity = 999,

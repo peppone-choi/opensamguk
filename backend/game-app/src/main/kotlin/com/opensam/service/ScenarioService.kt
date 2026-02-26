@@ -134,6 +134,20 @@ class ScenarioService(
             generalRepository.save(general)
         }
 
+        // 4.5. Assign chief generals (officerLevel >= 12 → ruler)
+        for ((nationIdx, nationDbId) in nationIdxToDbId) {
+            val ruler = generalRepository.findByWorldId(worldId)
+                .filter { it.nationId == nationDbId && it.officerLevel >= 12 }
+                .maxByOrNull { it.officerLevel }
+            if (ruler != null) {
+                val nation = nationRepository.findById(nationDbId).orElse(null)
+                if (nation != null) {
+                    nation.chiefGeneralId = ruler.id
+                    nationRepository.save(nation)
+                }
+            }
+        }
+
         // 5. Create diplomacy
         val nationDbIds = nationIdxToDbId.values.toList()
         for (diploRow in scenario.diplomacy) {
@@ -146,10 +160,10 @@ class ScenarioService(
                 val destId = nationIdxToDbId[destIdx + 1]
                 if (srcId != null && destId != null) {
                     val stateCode = when (stateType) {
-                        0 -> "war"
-                        1 -> "declaration"
-                        7 -> "nonaggression"
-                        else -> "normal"
+                        0 -> "선전포고"
+                        1 -> "선전포고"
+                        7 -> "불가침"
+                        else -> "통상"
                     }
                     diplomacyRepository.save(
                         Diplomacy(

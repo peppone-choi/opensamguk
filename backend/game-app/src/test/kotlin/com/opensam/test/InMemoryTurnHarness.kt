@@ -3,6 +3,7 @@ package com.opensam.test
 import com.opensam.command.CommandExecutor
 import com.opensam.command.CommandRegistry
 import com.opensam.engine.*
+import com.opensam.engine.war.BattleService
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
 import com.opensam.engine.modifier.ModifierService
@@ -70,6 +71,8 @@ class InMemoryTurnHarness {
     private val tournamentService: com.opensam.service.TournamentService = mock(com.opensam.service.TournamentService::class.java)
     private val trafficSnapshotRepository: TrafficSnapshotRepository = mock(TrafficSnapshotRepository::class.java)
     private val worldService: WorldService = mock(WorldService::class.java)
+    private val nationService: com.opensam.service.NationService = mock(com.opensam.service.NationService::class.java)
+    val battleService: BattleService = mock(BattleService::class.java)
 
     val turnService = TurnService(
         worldStateRepository,
@@ -97,6 +100,8 @@ class InMemoryTurnHarness {
         nationAI,
         modifierService,
         worldService,
+        nationService,
+        battleService,
     )
 
     init {

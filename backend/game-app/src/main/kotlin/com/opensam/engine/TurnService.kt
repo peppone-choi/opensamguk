@@ -6,6 +6,7 @@ import com.opensam.command.CommandRegistry
 import com.opensam.engine.ai.GeneralAI
 import com.opensam.engine.ai.NationAI
 import com.opensam.engine.modifier.ModifierService
+import com.opensam.engine.war.BattleService
 import com.opensam.engine.trigger.TriggerCaller
 import com.opensam.engine.trigger.TriggerEnv
 import com.opensam.engine.trigger.buildPreTurnTriggers
@@ -18,6 +19,7 @@ import com.opensam.service.ScenarioService
 import com.opensam.service.TournamentService
 import com.opensam.service.TrafficService
 import com.opensam.service.WorldService
+import com.opensam.service.NationService
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -63,8 +65,13 @@ class TurnService(
     private val nationAI: NationAI,
     private val modifierService: ModifierService,
     private val worldService: WorldService,
+    private val nationService: NationService,
+    private val battleService: BattleService,
 ) {
     private val logger = LoggerFactory.getLogger(TurnService::class.java)
+    private companion object {
+        const val MAX_TURNS_PER_TICK = 5
+    }
 
     @Transactional
     fun processWorld(world: WorldState) {
@@ -73,7 +80,9 @@ class TurnService(
         var nextTurnAt = world.updatedAt.plus(tickDuration)
         val worldId = world.id.toLong()
 
-        while (!now.isBefore(nextTurnAt)) {
+        var turnsProcessed = 0
+        while (!now.isBefore(nextTurnAt) && turnsProcessed < MAX_TURNS_PER_TICK) {
+            turnsProcessed++
             // 진행 전 이전 월 기록 (연감 스냅샷용)
             val previousYear = world.currentYear.toInt()
             val previousMonth = world.currentMonth.toInt()
@@ -165,6 +174,13 @@ class TurnService(
                 logger.warn("DiplomacyService.processDiplomacyTurn failed: ${e.message}")
             }
 
+            // Recalculate war front status for all nations (legacy SetNationFront parity)
+            try {
+                nationService.recalcAllFronts(worldId)
+            } catch (e: Exception) {
+                logger.warn("NationService.recalcAllFronts failed: ${e.message}")
+            }
+
             try {
                 resetStrategicCommandLimits(world)
             } catch (e: Exception) {
@@ -223,6 +239,8 @@ class TurnService(
         val generals = generalRepository.findByWorldId(worldId).sortedBy { it.turnTime }
         val env = buildCommandEnv(world)
 
+        logger.info("[Turn] executeGeneralCommands: {} generals for world {}", generals.size, worldId)
+
         for (general in generals) {
             try {
                 val city = cityRepository.findById(general.cityId).orElse(null)
@@ -262,7 +280,7 @@ class TurnService(
                         nationActionCode = nt.actionCode
                         nationArg = nt.arg
                         consumedNationTurn = nt
-                    } else if (general.npcState >= 2 && general.officerLevel >= 12) {
+                    } else if (general.npcState >= 2) {
                         val aiAction = nationAI.decideNationAction(
                             nation,
                             world,
@@ -327,7 +345,9 @@ class TurnService(
                 if (general.npcState >= 2 || useAutorun) {
                     // NPC generals 또는 autorun 대상: AI가 행동 결정
                     actionCode = generalAI.decideAndExecute(general, world)
-                    arg = null
+                    @Suppress("UNCHECKED_CAST")
+                    arg = (general.meta.remove("aiArg") as? Map<String, Any>)
+                    logger.info("[Turn] NPC {} ({}) AI decided: {}, arg={}", general.id, general.name, actionCode, arg)
                     executedTurn = null
                     // Consume any queued turns
                     val queuedTurns = generalTurnRepository.findByGeneralIdOrderByTurnIdx(general.id)
@@ -352,13 +372,53 @@ class TurnService(
                 val rng = DeterministicRng.create(
                     "${world.id}", "general", general.id, world.currentYear, world.currentMonth, actionCode
                 )
-                if (commandRegistry.hasNationCommand(actionCode) && general.officerLevel >= 5 && nation != null) {
+                val cmdResult = if (commandRegistry.hasNationCommand(actionCode) && general.officerLevel >= 5 && nation != null) {
                     runBlocking {
                         commandExecutor.executeNationCommand(actionCode, general, env, arg, city, nation, rng)
                     }
                 } else {
                     runBlocking {
                         commandExecutor.executeGeneralCommand(actionCode, general, env, arg, city, nation, rng)
+                    }
+                }
+
+                // Handle battleTriggered: invoke BattleService for war resolution
+                // Legacy: after 출병 run(), StaticEventHandler calls ConquerCity/warProcess
+                if (cmdResult.success && cmdResult.message != null) {
+                    try {
+                        @Suppress("UNCHECKED_CAST")
+                        val msgJson = com.fasterxml.jackson.module.kotlin.jacksonObjectMapper()
+                            .readValue(cmdResult.message!!, Map::class.java) as Map<String, Any>
+                        if (msgJson["battleTriggered"] == true) {
+                            val targetCityId = when (val raw = msgJson["targetCityId"]) {
+                                is Number -> raw.toLong()
+                                is String -> raw.toLongOrNull()
+                                else -> null
+                            }
+                            val targetCity = if (targetCityId != null) {
+                                cityRepository.findById(targetCityId).orElse(null)
+                            } else {
+                                null
+                            }
+                            if (targetCity != null && targetCity.nationId != general.nationId) {
+                                logger.info("[Turn] Battle triggered: {} ({}) attacks city {} (nation {})",
+                                    general.id, general.name, targetCity.name, targetCity.nationId)
+                                val battleResult = battleService.executeBattle(general, targetCity, world)
+                                if (battleResult.cityOccupied) {
+                                    general.cityId = targetCity.id
+                                    generalRepository.save(general)
+                                    logger.info("[Turn] City {} conquered by {} ({}) — general moved to conquered city",
+                                        targetCity.name, general.id, general.name)
+                                } else {
+                                    logger.info("[Turn] Battle at {} — not conquered, {} ({}) stays at city {}",
+                                        targetCity.name, general.id, general.name, general.cityId)
+                                }
+                            } else {
+                                logger.warn("[Turn] battleTriggered but targetCity={} is null or same nation", targetCityId)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        logger.warn("[Turn] Failed to process battle result: {}", e.message)
                     }
                 }
 
@@ -414,12 +474,16 @@ class TurnService(
             world.currentYear.toInt()
         }
 
+        val mapCode = (world.config["mapCode"] as? String) ?: "che"
+        val gameStor = mutableMapOf<String, Any>("mapName" to mapCode)
+
         return CommandEnv(
             year = world.currentYear.toInt(),
             month = world.currentMonth.toInt(),
             startYear = startYear,
             worldId = world.id.toLong(),
             realtimeMode = world.realtimeMode,
+            gameStor = gameStor,
         )
     }
 

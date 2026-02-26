@@ -63,11 +63,10 @@ class 출병(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
     override fun getPostReqTurn() = 0
 
     /**
-     * Legacy parity: when HasRouteWithEnemy fails (no enemy city on route),
-     * CommandExecutor calls this and re-dispatches as 이동.
-     * PHP: $this->alternative = new che_이동(...)
+     * 출병은 점령 실패 시 이동하지 않는다.
+     * HasRouteWithEnemy 실패 시 alternative 없이 커맨드 자체가 실패한다.
      */
-    override fun getAlternativeCommand(): String? = "이동"
+    override fun getAlternativeCommand(): String? = null
 
     /**
      * 출병 실행:
