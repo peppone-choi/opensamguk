@@ -314,6 +314,58 @@ export default function GeneralsPage() {
         <Badge variant="secondary">{sorted.length}명</Badge>
       </div>
 
+      {/* Summary Stats (legacy parity: b_genList.php) */}
+      {(() => {
+        const effective = sorted.filter((g) => g.npcState !== 5);
+        const effCount = effective.length || 1;
+        const totalGold = effective.reduce((s, g) => s + g.gold, 0);
+        const totalRice = effective.reduce((s, g) => s + g.rice, 0);
+        const crewTotal = effective.reduce((s, g) => s + g.crew, 0);
+        const withCrew = effective.filter((g) => g.crew > 0);
+        const t90 = withCrew.filter((g) => g.train >= 90 && g.atmos >= 90);
+        const t80 = withCrew.filter((g) => g.train >= 80 && g.atmos >= 80);
+        const t60 = withCrew.filter((g) => g.train >= 60 && g.atmos >= 60);
+        const crew90 = t90.reduce((s, g) => s + g.crew, 0);
+        const crew80 = t80.reduce((s, g) => s + g.crew, 0);
+        const crew60 = t60.reduce((s, g) => s + g.crew, 0);
+        return (
+          <div className="grid grid-cols-4 gap-px bg-gray-700 rounded overflow-hidden text-xs">
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">전체 금</span>
+              <div className="font-medium">{totalGold.toLocaleString()}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">전체 쌀</span>
+              <div className="font-medium">{totalRice.toLocaleString()}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">평균 금</span>
+              <div className="font-medium">{(totalGold / effCount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">평균 쌀</span>
+              <div className="font-medium">{(totalRice / effCount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">전체 병력/장수</span>
+              <div className="font-medium">{crewTotal.toLocaleString()}/{effCount}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">훈사90 병력/장수</span>
+              <div className="font-medium text-green-400">{crew90.toLocaleString()}/{t90.length}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">훈사80 병력/장수</span>
+              <div className="font-medium text-yellow-400">{crew80.toLocaleString()}/{t80.length}</div>
+            </div>
+            <div className="bg-muted/30 px-2 py-1 text-center">
+              <span className="text-muted-foreground">훈사60 병력/장수</span>
+              <div className="font-medium text-orange-400">{crew60.toLocaleString()}/{t60.length}</div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Table */}
       <div className="overflow-x-auto">
         <Table>
