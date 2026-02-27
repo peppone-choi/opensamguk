@@ -9,6 +9,8 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useWorldStore } from "@/stores/worldStore";
 import type { City, General, Nation } from "@/types";
 import { CrewTypeBrowser } from "./crew-type-browser";
+import { EquipmentBrowser } from "./equipment-browser";
+import { DeploymentSelector } from "./deployment-selector";
 
 /** Arg schema for each command that requires user input */
 type ArgField =
@@ -429,6 +431,29 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
         commandName={actionCode}
         onSubmit={(crewTypeCode, amount) => {
           onSubmit({ crewType: crewTypeCode, amount });
+        }}
+      />
+    );
+  }
+
+  // Use rich equipment browser for 장비매매
+  if (actionCode === "장비매매") {
+    return (
+      <EquipmentBrowser
+        commandName={actionCode}
+        onSubmit={(itemType, itemCode) => {
+          onSubmit({ itemType, itemCode });
+        }}
+      />
+    );
+  }
+
+  // Use rich deployment selector for 발령
+  if (actionCode === "발령") {
+    return (
+      <DeploymentSelector
+        onSubmit={(generalId, cityId) => {
+          onSubmit({ destGeneralID: generalId, destCityID: cityId });
         }}
       />
     );
