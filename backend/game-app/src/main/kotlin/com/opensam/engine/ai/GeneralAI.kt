@@ -1407,11 +1407,11 @@ class GeneralAI(
         // Commander: trust and pop (same as normal but lower thresholds)
         if (genType and GeneralType.COMMANDER.flag != 0) {
             val trustRate = develRate["trust"]!!.first
-            if (trustRate < 0.98) {
+            if (city.trust > 0 && trustRate < 0.98) {
                 cmdList.add(WA("주민선정", leadership / valueFitD(trustRate / 2.0 - 0.2, 0.001) * 2.0))
             }
             val popRate = develRate["pop"]!!.first
-            if (popRate < 0.8) {
+            if (popRate < 0.5) {
                 val divisor = if (isFront) 1.0 else 2.0
                 cmdList.add(WA("정착장려", leadership / valueFitD(popRate, 0.001) / divisor))
             }
