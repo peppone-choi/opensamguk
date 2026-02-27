@@ -142,19 +142,31 @@ export default function NationsPage() {
     return map;
   }, [cities]);
 
-  // Chief and advisor per nation
-  const chiefMap = useMemo(() => {
+  // Officers level 12→5 + ambassadors/auditors per nation
+  const officerMap = useMemo(() => {
     const map = new Map<
       number,
-      { chief?: { name: string }; advisor?: { name: string } }
+      {
+        byLevel: Record<number, { name: string; npcState: number }>;
+        ambassadors: string[];
+        auditors: string[];
+      }
     >();
     for (const g of generals) {
       if (!g.nationId) continue;
-      const entry = map.get(g.nationId) ?? {};
-      if (g.officerLevel === 12) entry.chief = { name: g.name };
-      else if (g.officerLevel === 11 && !entry.advisor)
-        entry.advisor = { name: g.name };
-      if (entry.chief || entry.advisor) map.set(g.nationId, entry);
+      const entry = map.get(g.nationId) ?? {
+        byLevel: {},
+        ambassadors: [],
+        auditors: [],
+      };
+      if (g.officerLevel >= 5) {
+        if (!entry.byLevel[g.officerLevel]) {
+          entry.byLevel[g.officerLevel] = { name: g.name, npcState: g.npcState };
+        }
+      }
+      if (g.permission === "spy") entry.ambassadors.push(g.name);
+      else if (g.permission === "auditor") entry.auditors.push(g.name);
+      map.set(g.nationId, entry);
     }
     return map;
   }, [generals]);
@@ -271,7 +283,7 @@ export default function NationsPage() {
           <TableBody>
             {sorted.map((n) => {
               const capital = cityMap.get(n.capitalCityId ?? 0);
-              const chiefs = chiefMap.get(n.id);
+              const officers = officerMap.get(n.id);
               const genCount = generalCountMap.get(n.id) ?? 0;
               const cityCnt = cityCountMap.get(n.id) ?? 0;
               const powerPct = (n.power / maxPower) * 100;
@@ -304,23 +316,30 @@ export default function NationsPage() {
                     <TableCell>
                       <div>
                         <NationBadge name={n.name} color={n.color} />
-                        {chiefs && (
-                          <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
-                            {chiefs.chief && (
-                              <span>
-                                {formatOfficerLevelText(12, n.level)}:{" "}
-                                {chiefs.chief.name}
-                              </span>
-                            )}
-                            {chiefs.chief && chiefs.advisor && " / "}
-                            {chiefs.advisor && (
-                              <span>
-                                {formatOfficerLevelText(11, n.level)}:{" "}
-                                {chiefs.advisor.name}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {officers && (() => {
+                          const levels = [12, 11, 10, 9, 8, 7, 6, 5];
+                          const filled = levels.filter((lv) => officers.byLevel[lv]);
+                          return filled.length > 0 ? (
+                            <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
+                              {filled.map((lv, i) => (
+                                <span key={lv}>
+                                  {i > 0 && " / "}
+                                  {formatOfficerLevelText(lv, n.level)}: {officers.byLevel[lv].name}
+                                </span>
+                              ))}
+                              {officers.ambassadors.length > 0 && (
+                                <span className="ml-1">
+                                  | 외교: {officers.ambassadors.join(", ")}
+                                </span>
+                              )}
+                              {officers.auditors.length > 0 && (
+                                <span className="ml-1">
+                                  | 조언: {officers.auditors.length}명
+                                </span>
+                              )}
+                            </div>
+                          ) : null;
+                        })()
                       </div>
                     </TableCell>
 
