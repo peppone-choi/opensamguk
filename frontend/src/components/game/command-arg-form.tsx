@@ -8,6 +8,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { useGeneralStore } from "@/stores/generalStore";
 import { useWorldStore } from "@/stores/worldStore";
 import type { City, General, Nation } from "@/types";
+import { CrewTypeBrowser } from "./crew-type-browser";
 
 /** Arg schema for each command that requires user input */
 type ArgField =
@@ -419,6 +420,18 @@ export function CommandArgForm({ actionCode, onSubmit }: CommandArgFormProps) {
   if (!fields) {
     // No args needed - auto-submit
     return null;
+  }
+
+  // Use rich crew type browser for recruitment commands
+  if (actionCode === "징병" || actionCode === "모병") {
+    return (
+      <CrewTypeBrowser
+        commandName={actionCode}
+        onSubmit={(crewTypeCode, amount) => {
+          onSubmit({ crewType: crewTypeCode, amount });
+        }}
+      />
+    );
   }
 
   const setValue = (key: string, val: string) => {
