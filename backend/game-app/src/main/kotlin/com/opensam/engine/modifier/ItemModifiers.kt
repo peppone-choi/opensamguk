@@ -243,16 +243,24 @@ class MiscItem(
             if (triggerType == "typeAdvantage" && myCrewType != null && opponentCrewType != null) {
                 if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
                     s = s.copy(warPower = s.warPower * 1.1)
+                } else {
+                    s = s.copy(warPower = s.warPower * 0.9)
                 }
             }
-            if (triggerType == "antiRegional" && isRegionalOrCityCrewType(s.opponentCrewType)) {
-                s = s.copy(warPower = s.warPower * 1.15)
+            if (triggerType == "antiRegional") {
+                if (isRegionalOrCityCrewType(s.opponentCrewType)) {
+                    s = s.copy(warPower = s.warPower * 1.15)
+                } else {
+                    s = s.copy(warPower = s.warPower * 0.85)
+                }
             }
         }
 
         if (triggerType == "perseverance") {
-            val hpRatio = s.hpRatio.coerceIn(0.0, 1.0)
-            s = s.copy(warPower = s.warPower * (1.0 + 0.6 * (1.0 - hpRatio)))
+            val leadership = s.leadership.coerceAtLeast(1.0)
+            val crew = (s.hpRatio.coerceIn(0.0, 1.0) * leadership * 100.0).coerceAtLeast(0.0)
+            val crewRatio = (crew / (leadership * 100.0)).coerceIn(0.0, 1.0)
+            s = s.copy(warPower = s.warPower * (1.0 + 0.6 * (1.0 - crewRatio)))
         }
 
         return s
