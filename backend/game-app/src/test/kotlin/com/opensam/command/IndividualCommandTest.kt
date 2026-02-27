@@ -505,9 +505,9 @@ class IndividualCommandTest {
         assertNotNull(result.message)
         // crew should increase by 500
         assertTrue(result.message!!.contains("\"crew\":500"))
-        // train should be 50 (default low), atmos should be 50
-        assertTrue(result.message!!.contains("\"train\":50"))
-        assertTrue(result.message!!.contains("\"atmos\":50"))
+        // train should be 40 (default low per PHP GameConstBase), atmos should be 40
+        assertTrue(result.message!!.contains("\"train\":40"))
+        assertTrue(result.message!!.contains("\"atmos\":40"))
     }
 
     @Test

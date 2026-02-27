@@ -229,7 +229,7 @@ class GeneralAI(
         if (nation.warState > 0) return DiplomacyState.AT_WAR
 
         if (relevant.any { it.stateCode == "종전제의" }) {
-            val nationTroops = generalRepository.findByNationId(nation.id).sumOf { it.crew.toLong() }
+            val nationTroops = generalRepository.findByNationId(nation.id.toLong()).sumOf { it.crew.toLong() }
             return if (nationTroops < 3000) DiplomacyState.RECRUITING else DiplomacyState.DECLARED
         }
 
@@ -245,7 +245,7 @@ class GeneralAI(
                 val enemyTroops = hostileNationIds.sumOf { nid ->
                     generalRepository.findByNationId(nid).sumOf { it.crew.toLong() }
                 }
-                val ownTroops = generalRepository.findByNationId(nation.id).sumOf { it.crew.toLong() }
+                val ownTroops = generalRepository.findByNationId(nation.id.toLong()).sumOf { it.crew.toLong() }
                 if (enemyTroops > ownTroops * 2) return DiplomacyState.IMMINENT
             }
         }
@@ -2989,7 +2989,7 @@ class GeneralAI(
     private fun doSelectNation(general: General, world: WorldState, rng: Random): String? {
         // Barbarians (npcType 9) join other barbarian nations directly
         if (general.npcState.toInt() == 9) {
-            val barbarianLords = generalRepository.findByWorldId(world.id)
+            val barbarianLords = generalRepository.findByWorldId(world.id.toLong())
                 .filter { it.officerLevel.toInt() == 12 && it.npcState.toInt() == 9 && it.nationId != 0L }
             if (barbarianLords.isNotEmpty()) {
                 val target = barbarianLords[rng.nextInt(barbarianLords.size)]
@@ -3008,9 +3008,9 @@ class GeneralAI(
 
             if (yearsElapsed < 3) {
                 // Early game: fewer nations → less chance to join
-                val nationCnt = nationRepository.findByWorldId(world.id).size
-                val notFullNationCnt = nationRepository.findByWorldId(world.id).count { nation ->
-                    val genCount = generalRepository.findByNationId(nation.id).size
+                val nationCnt = nationRepository.findByWorldId(world.id.toLong()).size
+                val notFullNationCnt = nationRepository.findByWorldId(world.id.toLong()).count { nation ->
+                    val genCount = generalRepository.findByNationId(nation.id.toLong()).size
                     genCount < 20 // initialNationGenLimit analog
                 }
                 if (nationCnt == 0 || notFullNationCnt == 0) return null
@@ -3028,7 +3028,7 @@ class GeneralAI(
 
         // 20% chance to move to adjacent city
         if (rng.nextDouble() < 0.2) {
-            val allCities = cityRepository.findByWorldId(world.id)
+            val allCities = cityRepository.findByWorldId(world.id.toLong())
             val currentCity = allCities.find { it.id == general.cityId } ?: return null
             val adjacentIds = getAdjacentCityIds(currentCity, allCities)
             if (adjacentIds.isEmpty()) return null
@@ -3050,8 +3050,8 @@ class GeneralAI(
      * - Prefers nearby unoccupied major cities; if adjacent one is available, prioritize it
      */
     private fun doWandererMove(general: General, world: WorldState, rng: Random): String? {
-        val allCities = cityRepository.findByWorldId(world.id)
-        val allGenerals = generalRepository.findByWorldId(world.id)
+        val allCities = cityRepository.findByWorldId(world.id.toLong())
+        val allGenerals = generalRepository.findByWorldId(world.id.toLong())
 
         val currentCity = allCities.find { it.id == general.cityId } ?: return null
 

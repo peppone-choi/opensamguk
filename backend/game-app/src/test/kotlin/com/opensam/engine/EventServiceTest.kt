@@ -37,7 +37,8 @@ class EventServiceTest {
         val npcSpawnService = mock(NpcSpawnService::class.java)
         val scenarioService = mock(com.opensam.service.ScenarioService::class.java)
 
-        service = EventService(eventRepository, nationRepository, messageRepository, economyService, npcSpawnService, scenarioService)
+        val eventActionService = mock(com.opensam.engine.EventActionService::class.java)
+        service = EventService(eventRepository, nationRepository, messageRepository, economyService, npcSpawnService, scenarioService, eventActionService)
     }
 
     private fun createWorld(year: Short = 200, month: Short = 3): WorldState {
