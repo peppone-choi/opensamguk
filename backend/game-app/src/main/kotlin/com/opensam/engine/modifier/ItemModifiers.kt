@@ -243,15 +243,11 @@ class MiscItem(
             if (triggerType == "typeAdvantage" && myCrewType != null && opponentCrewType != null) {
                 if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
                     s = s.copy(warPower = s.warPower * 1.1)
-                } else {
-                    s = s.copy(warPower = s.warPower * 0.9)
                 }
             }
             if (triggerType == "antiRegional") {
                 if (isRegionalOrCityCrewType(s.opponentCrewType)) {
                     s = s.copy(warPower = s.warPower * 1.15)
-                } else {
-                    s = s.copy(warPower = s.warPower * 0.85)
                 }
             }
         }
@@ -285,6 +281,35 @@ class MiscItem(
         var c = ctx
         statMods["strategicDelay"]?.let { c = c.copy(delayMultiplier = c.delayMultiplier * it) }
         return c
+    }
+
+    override fun onCalcOpposeStat(stat: StatContext): StatContext {
+        var s = stat
+        for ((key, value) in opposeStatMods) {
+            when (key) {
+                "warPower" -> s = s.copy(warPower = s.warPower * value)
+                "criticalChance" -> s = s.copy(criticalChance = s.criticalChance + value)
+                "magicSuccessProb" -> s = s.copy(magicSuccessProb = s.magicSuccessProb + value)
+                "dodgeChance" -> s = s.copy(dodgeChance = s.dodgeChance + value)
+            }
+        }
+        // typeAdvantage defence: advantage → opponent warPower * 0.9
+        if (triggerType == "typeAdvantage") {
+            val myCrewType = parseCrewType(s.crewType)
+            val opponentCrewType = parseCrewType(s.opponentCrewType)
+            if (myCrewType != null && opponentCrewType != null) {
+                if (myCrewType.getAttackCoef(opponentCrewType) >= 1.0) {
+                    s = s.copy(warPower = s.warPower * 0.9)
+                }
+            }
+        }
+        // antiRegional defence: regional opponent → their warPower * 0.85
+        if (triggerType == "antiRegional") {
+            if (isRegionalOrCityCrewType(s.opponentCrewType)) {
+                s = s.copy(warPower = s.warPower * 0.85)
+            }
+        }
+        return s
     }
 
 }

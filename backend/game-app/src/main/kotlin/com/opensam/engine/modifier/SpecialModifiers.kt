@@ -308,12 +308,8 @@ object SpecialModifiers {
                 else -> ctx
             }
             override fun onCalcOpposeStat(stat: StatContext): StatContext {
-                val opponentType = stat.opponentCrewType.toIntOrNull()?.let { CrewType.fromCode(it) } ?: return stat
-                return when (opponentType.armType) {
-                    ArmType.FOOTMAN -> stat.copy(warPower = stat.warPower * 0.9)
-                    ArmType.CAVALRY -> stat.copy(warPower = stat.warPower * 0.8)
-                    else -> stat
-                }
+                val defMul = if (stat.isAttacker) 0.9 else 0.8
+                return stat.copy(warPower = stat.warPower * defMul)
             }
         },
         "che_궁병" to object : ActionModifier {
@@ -329,10 +325,13 @@ object SpecialModifiers {
         },
         "che_기병" to object : ActionModifier {
             override val code = "che_기병"; override val name = "기병"
-            override fun onCalcStat(stat: StatContext) = stat.copy(
-                warPower = stat.warPower * 1.15,
-                dexMultiplier = stat.dexMultiplier * 1.1
-            )
+            override fun onCalcStat(stat: StatContext): StatContext {
+                val attackMul = if (stat.isAttacker) 1.2 else 1.1
+                return stat.copy(
+                    warPower = stat.warPower * attackMul,
+                    dexMultiplier = stat.dexMultiplier * 1.1
+                )
+            }
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
@@ -368,7 +367,8 @@ object SpecialModifiers {
             override val code = "che_견고"; override val name = "견고"
             override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
                 criticalChance = stat.criticalChance - 0.2,
-                magicSuccessProb = stat.magicSuccessProb - 0.1
+                magicSuccessProb = stat.magicSuccessProb - 0.1,
+                warPower = stat.warPower * 0.9
             )
         },
         "che_위압" to object : ActionModifier {
@@ -398,6 +398,12 @@ object SpecialModifiers {
                     return stat
                 }
                 return stat.copy(warPower = stat.warPower * 1.2)
+            }
+            override fun onCalcOpposeStat(stat: StatContext): StatContext {
+                if (!isRegionalOrCityCrewType(stat.opponentCrewType)) {
+                    return stat
+                }
+                return stat.copy(warPower = stat.warPower * 0.8)
             }
         },
     )
