@@ -525,7 +525,7 @@ function VoteCard({
               투표 종료
             </Button>
           </div>
-        }
+        )}
 
         {/* ── Comments Section ── */}
         <div className="border-t border-gray-700 mt-3 pt-2">
