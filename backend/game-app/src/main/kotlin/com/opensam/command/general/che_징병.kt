@@ -178,8 +178,8 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
     }
 
     companion object {
-        const val DEFAULT_TRAIN_LOW = 50
-        const val DEFAULT_ATMOS_LOW = 50
+        const val DEFAULT_TRAIN_LOW = 40
+        const val DEFAULT_ATMOS_LOW = 40
         const val MIN_RECRUIT_AMOUNT = 100
         const val MIN_AVAILABLE_RECRUIT_POP = 3000
         const val MIN_TRUST_FOR_RECRUIT = 20

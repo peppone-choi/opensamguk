@@ -120,10 +120,17 @@ class BattleEngine {
         for (trigger in attackerTriggers) trigger.onInjuryCheck(injuryCtx)
         val effectiveInjuryImmune = attackerInjuryImmune || injuryCtx.injuryImmune
 
-        // Apply injury chance (5%) unless immune
-        if (!effectiveInjuryImmune && rng.nextDouble() < 0.05 && attacker.isAlive) {
-            attacker.injury = (attacker.injury + rng.nextInt(1, 4)).coerceAtMost(80)
-            logs.add("<Y>${attacker.name}</>이(가) 부상을 입었습니다.")
+        // Legacy parity (PHP WarUnitGeneral::tryWound):
+        // Injury probability based on HP loss ratio, not flat 5%.
+        // wound chance = (1 - remainHP / maxHP) * 0.5, capped at 0.3
+        if (!effectiveInjuryImmune && attacker.isAlive && attacker.maxHp > 0) {
+            val hpLossRatio = 1.0 - attacker.hp.toDouble() / attacker.maxHp.toDouble()
+            val woundChance = (hpLossRatio * 0.5).coerceAtMost(0.3)
+            if (woundChance > 0 && rng.nextDouble() < woundChance) {
+                val woundAmount = rng.nextInt(1, 4)
+                attacker.injury = (attacker.injury + woundAmount).coerceAtMost(80)
+                logs.add("<Y>${attacker.name}</>이(가) 부상을 입었습니다.")
+            }
         }
 
         attacker.applyResults()
@@ -142,12 +149,25 @@ class BattleEngine {
     }
 
     /**
+     * War power result with bidirectional multipliers.
+     * Legacy parity: PHP returns both myWarPowerMultiply and opposeWarPowerMultiply
+     * from getWarPowerMultiplier(), applying them bidirectionally.
+     */
+    data class WarPowerResult(
+        val warPower: Double,
+        val opposeWarPowerMultiply: Double = 1.0,
+    )
+
+    /**
      * Compute war power for one side attacking another.
      * Legacy: WarUnit::computeWarPower() + WarUnitGeneral::computeWarPower()
      *
      * Formula: (armperphase + myAttack - opDefence) × atmos/train × expLevel × random
+     *
+     * Returns WarPowerResult with the computed power and any oppose multiplier
+     * from crew type coefficients (bidirectional application per PHP parity).
      */
-    private fun computeWarPower(attacker: WarUnit, defender: WarUnit, rng: Random): Double {
+    private fun computeWarPower(attacker: WarUnit, defender: WarUnit, rng: Random): WarPowerResult {
         val myAttack = attacker.getBaseAttack()
         val opDefence = defender.getBaseDefence()
 
@@ -170,6 +190,12 @@ class BattleEngine {
         val defenderDex = defender.getDexForArmType(armType)
         warPower *= getDexLog(attackerDex, defenderDex)
 
+        // Legacy parity (PHP WarUnitGeneral.php):
+        // [$specialMyWarPowerMultiply, $specialOpposeWarPowerMultiply] = $this->general->getWarPowerMultiplier($this);
+        // $warPower *= $specialMyWarPowerMultiply;
+        // $opposeWarPowerMultiply *= $specialOpposeWarPowerMultiply;
+        // Both attacker's attack coef AND defender's defence coef are applied to THIS side's power,
+        // AND the opponent's coefficients are returned to be applied to the OTHER side's power.
         val defenderCrewType = CrewType.fromCode(defender.crewType)
         val attackTypeCoef = if (attackerCrewTypeObj != null && defenderCrewType != null) {
             attackerCrewTypeObj.getAttackCoef(defenderCrewType)
@@ -177,8 +203,13 @@ class BattleEngine {
         val defenceTypeCoef = if (defenderCrewType != null && attackerCrewTypeObj != null) {
             defenderCrewType.getDefenceCoef(attackerCrewTypeObj)
         } else 1.0
+
+        // Apply own attack coefficient to own war power
         warPower *= attackTypeCoef
-        warPower /= maxOf(0.01, defenceTypeCoef)
+
+        // The defence coefficient of the defender against this attacker becomes
+        // the oppose multiplier — applied to the OTHER side's war power calculation
+        val opposeWarPowerMultiply = defenceTypeCoef
 
         // Experience level scaling (WarUnitGeneral only)
         if (attacker is WarUnitGeneral) {
@@ -193,7 +224,10 @@ class BattleEngine {
         // Random variance ±10%
         warPower *= 0.9 + rng.nextDouble() * 0.2
 
-        return maxOf(1.0, round(warPower))
+        return WarPowerResult(
+            warPower = maxOf(1.0, round(warPower)),
+            opposeWarPowerMultiply = opposeWarPowerMultiply,
+        )
     }
 
     internal fun collectTriggers(unit: WarUnit): List<BattleTrigger> {
@@ -230,8 +264,14 @@ class BattleEngine {
         )
 
         // Compute war power for each side (legacy: each side independently)
-        var attackerDamage = computeWarPower(attacker, defender, rng).toInt().coerceAtLeast(1)
-        var defenderDamage = computeWarPower(defender, attacker, rng).toInt().coerceAtLeast(1)
+        // PHP parity: bidirectional coefficient application
+        // Each side computes its own war power AND an oppose multiplier that affects the other side
+        val attackerResult = computeWarPower(attacker, defender, rng)
+        val defenderResult = computeWarPower(defender, attacker, rng)
+
+        // Apply oppose multipliers bidirectionally (PHP: $this->oppose->setWarPowerMultiply)
+        var attackerDamage = (attackerResult.warPower / maxOf(0.01, defenderResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
+        var defenderDamage = (defenderResult.warPower / maxOf(0.01, attackerResult.opposeWarPowerMultiply)).toInt().coerceAtLeast(1)
 
         // PRE triggers: modify chances before rolls (legacy: 시도)
         for (trigger in attackerTriggers) trigger.onPreCritical(ctx)

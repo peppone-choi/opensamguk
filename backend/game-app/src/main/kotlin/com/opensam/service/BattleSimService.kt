@@ -2,6 +2,7 @@ package com.opensam.service
 
 import com.opensam.dto.SimulateRequest
 import com.opensam.dto.SimulateResult
+import com.opensam.engine.LiteHashDRBG
 import com.opensam.engine.war.BattleEngine
 import com.opensam.engine.war.WarUnitGeneral
 import com.opensam.entity.City
@@ -63,8 +64,8 @@ class BattleSimService {
             it.defenceMultiplier *= (terrainAtk * weatherAtk)
         }
 
-        val randomSeed = (request.attacker.name + request.defender.name + terrainKey + weatherKey).hashCode().toLong()
-        val result = battleEngine.resolveBattle(attackerUnit, defenderUnits, city, Random(randomSeed))
+        val randomSeed = request.attacker.name + request.defender.name + terrainKey + weatherKey
+        val result = battleEngine.resolveBattle(attackerUnit, defenderUnits, city, LiteHashDRBG.build(randomSeed))
 
         val logs = mutableListOf<String>()
         logs.add("=== 전투 시뮬레이터(BattleEngine) ===")
