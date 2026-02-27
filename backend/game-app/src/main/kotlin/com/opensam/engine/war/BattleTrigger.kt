@@ -514,10 +514,9 @@ object Che견고Trigger : BattleTrigger {
         ctx.injuryImmune = true
         return ctx
     }
-    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
-        ctx.defenceMultiplier *= 1.1
-        return ctx
-    }
+    // NOTE: Defence multiplier [1, 0.9] is now handled in SpecialModifiers che_견고
+    // via onCalcOpposeStat(warPower * 0.9), matching core2026 exactly.
+    // No defenceMultiplier adjustment needed here.
 }
 
 object Che위압Trigger : BattleTrigger {
@@ -579,10 +578,9 @@ object Che저격Trigger : BattleTrigger {
 object Che필살Trigger : BattleTrigger {
     override val code = "che_필살"
     override val priority = 10
-    override fun onPreCritical(ctx: BattleTriggerContext): BattleTriggerContext {
-        ctx.criticalChanceBonus += 0.30
-        return ctx
-    }
+    // NOTE: No onPreCritical bonus here — the +0.3 criticalChance is already
+    // set as a stat by che_필살 in SpecialModifiers.onCalcStat.
+    // Core2026's che_필살시도 uses self.getComputedCriticalRatio() which already includes the +0.3.
     override fun onPostCritical(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.criticalActivated) {
             ctx.attackMultiplier *= ctx.rollCriticalDamageMultiplier()
@@ -632,7 +630,9 @@ object Che격노Trigger : BattleTrigger {
 
     override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.rageActivationCount > 0) {
-            ctx.attackMultiplier *= (1.0 + 0.2 * ctx.rageActivationCount)
+            // Core2026: self.multiplyWarPowerMultiply(self.criticalDamage())
+            // criticalDamage() = rng.nextRange(1.3, 2.0)
+            ctx.attackMultiplier *= ctx.rollCriticalDamageMultiplier()
         }
         return ctx
     }
