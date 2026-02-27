@@ -1,5 +1,6 @@
 package com.opensam.engine.war
 
+import com.opensam.engine.modifier.ItemModifiers
 import com.opensam.entity.General
 import com.opensam.model.ArmType
 import com.opensam.model.CrewType
@@ -29,6 +30,12 @@ class WarUnitGeneral(
         val unitCrewType = getCrewType()
         criticalChance = computeCriticalChance(unitCrewType)
         dodgeChance = unitCrewType.avoid / 100.0 * (train / 100.0)
+
+        // Apply item killRice modifier (e.g., 백우선/백상: 소모 군량 +10%)
+        val itemKillRice = ItemModifiers.getKillRice(general.itemCode)
+        if (itemKillRice != 1.0) {
+            killRiceMultiplier = itemKillRice
+        }
     }
 
     /**
@@ -86,6 +93,7 @@ class WarUnitGeneral(
         if (vsCity) consumption *= 0.8
         consumption *= unitCrewType.riceCost
         consumption *= getTechCost(tech)
+        consumption *= killRiceMultiplier
         rice = (rice - consumption.toInt()).coerceAtLeast(0)
     }
 

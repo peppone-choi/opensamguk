@@ -18,6 +18,7 @@ class EventService(
     private val economyService: EconomyService,
     private val npcSpawnService: NpcSpawnService,
     private val scenarioService: ScenarioService,
+    private val eventActionService: EventActionService,
 ) {
     private val log = LoggerFactory.getLogger(EventService::class.java)
 
@@ -205,6 +206,102 @@ class EventService(
                 for (subAction in actions) {
                     executeAction(subAction, world, currentEventId)
                 }
+            }
+
+            // ── 19 ported event actions from PHP legacy ──
+
+            "add_global_betray" -> {
+                val cnt = (action["cnt"] as? Number)?.toInt() ?: 1
+                val ifMax = (action["ifMax"] as? Number)?.toInt() ?: 0
+                eventActionService.addGlobalBetray(world, cnt, ifMax)
+            }
+
+            "assign_general_speciality" -> {
+                eventActionService.assignGeneralSpeciality(world)
+            }
+
+            "auto_delete_invader" -> {
+                val nationId = (action["nationId"] as? Number)?.toLong() ?: return
+                eventActionService.autoDeleteInvader(world, nationId, currentEventId)
+            }
+
+            "block_scout_action" -> {
+                val blockChangeScout = action["blockChangeScout"] as? Boolean
+                eventActionService.blockScoutAction(world, blockChangeScout)
+            }
+
+            "unblock_scout_action" -> {
+                val blockChangeScout = action["blockChangeScout"] as? Boolean
+                eventActionService.unblockScoutAction(world, blockChangeScout)
+            }
+
+            "change_city" -> {
+                val target = action["target"]
+                @Suppress("UNCHECKED_CAST")
+                val changes = action["changes"] as? Map<String, Any> ?: return
+                eventActionService.changeCity(world, target, changes)
+            }
+
+            "create_admin_npc" -> {
+                eventActionService.createAdminNPC(world)
+            }
+
+            "create_many_npc" -> {
+                val npcCount = (action["npcCount"] as? Number)?.toInt() ?: 10
+                val fillCnt = (action["fillCnt"] as? Number)?.toInt() ?: 0
+                eventActionService.createManyNPC(world, npcCount, fillCnt)
+            }
+
+            "finish_nation_betting" -> {
+                val bettingId = (action["bettingId"] as? Number)?.toLong() ?: return
+                eventActionService.finishNationBetting(world, bettingId)
+            }
+
+            "open_nation_betting" -> {
+                val nationCnt = (action["nationCnt"] as? Number)?.toInt() ?: 1
+                val bonusPoint = (action["bonusPoint"] as? Number)?.toInt() ?: 0
+                eventActionService.openNationBetting(world, nationCnt, bonusPoint)
+            }
+
+            "invader_ending" -> {
+                eventActionService.invaderEnding(world, currentEventId)
+            }
+
+            "lost_unique_item" -> {
+                val lostProb = (action["lostProb"] as? Number)?.toDouble() ?: 0.1
+                eventActionService.lostUniqueItem(world, lostProb)
+            }
+
+            "merge_inherit_point_rank" -> {
+                eventActionService.mergeInheritPointRank(world)
+            }
+
+            "new_year" -> {
+                eventActionService.newYear(world)
+            }
+
+            "process_war_income" -> {
+                eventActionService.processWarIncome(world)
+            }
+
+            "raise_disaster" -> {
+                economyService.processDisasterOrBoom(world)
+            }
+
+            "reg_npc" -> {
+                @Suppress("UNCHECKED_CAST")
+                val params = action.filterKeys { it != "type" }
+                eventActionService.regNPC(world, params)
+            }
+
+            "reg_neutral_npc" -> {
+                @Suppress("UNCHECKED_CAST")
+                val params = action.filterKeys { it != "type" }
+                eventActionService.regNeutralNPC(world, params)
+            }
+
+            "reset_officer_lock" -> {
+                eventActionService.resetOfficerLock(world)
             }
 
             else -> {

@@ -2,6 +2,7 @@ package com.opensam.engine.trigger
 
 import com.opensam.engine.modifier.ActionModifier
 import com.opensam.engine.modifier.DomesticContext
+import com.opensam.engine.modifier.ItemModifiers
 import com.opensam.engine.modifier.StatContext
 import com.opensam.entity.General
 
@@ -186,6 +187,31 @@ class ModifierBridgeTrigger(
 }
 
 /**
+ * 아이템치료: Medicine items auto-heal injury when injury >= threshold.
+ * Legacy: GeneralTrigger/che_아이템치료.php
+ *
+ * Fires before command execution. If general has a medicine-type item
+ * and injury >= injuryTarget, sets injury to 0.
+ * Consumable medicine items decrement their remaining uses.
+ */
+class MedicineHealTrigger(
+    private val general: General,
+    private val injuryTarget: Int = 10,
+) : GeneralTrigger {
+    override val uniqueId = "아이템치료_${general.id}"
+    override val priority = TriggerPriority.PRE  // Before injury reduction
+
+    override fun action(env: TriggerEnv): Boolean {
+        if (general.injury >= injuryTarget) {
+            general.injury = 0
+            env.vars["medicineHealed"] = true
+            env.vars["medicineItemCode"] = general.itemCode
+        }
+        return true
+    }
+}
+
+/**
  * Build the pre-turn trigger list for a general.
  * Legacy: TurnExecutionHelper::preprocessCommand()
  */
@@ -194,6 +220,17 @@ fun buildPreTurnTriggers(
     modifiers: List<ActionModifier> = emptyList(),
 ): List<GeneralTrigger> {
     val triggers = mutableListOf<GeneralTrigger>()
+
+    // Medicine item pre-turn heal (before injury reduction)
+    val itemCode = general.itemCode
+    if (itemCode != "None" && itemCode.isNotBlank()) {
+        val itemTriggerTypes = ItemModifiers.getTriggerType(itemCode)
+        if (itemTriggerTypes == "medicine") {
+            // Default threshold is 10; some items may override via auxVar
+            val threshold = (general.meta["use_treatment"] as? Number)?.toInt() ?: 10
+            triggers.add(MedicineHealTrigger(general, threshold))
+        }
+    }
 
     // Always-present triggers
     triggers.add(InjuryReductionTrigger(general))

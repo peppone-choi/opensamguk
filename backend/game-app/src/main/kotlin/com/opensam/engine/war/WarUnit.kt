@@ -29,6 +29,7 @@ abstract class WarUnit(
     var magicDamageMultiplier: Double = 1.0
 
     var rice: Int = 0
+    var killRiceMultiplier: Double = 1.0
 
     var activatedSkills: MutableList<String> = mutableListOf()
     var isAlive: Boolean = true

@@ -498,7 +498,8 @@
       "grade": 7,
       "cost": 1000,
       "buyable": true,
-      "rarity": 2
+      "rarity": 2,
+      "killRice": 1.1
     },
     {
       "code": "che_명마_08_양주마",
@@ -1124,6 +1125,156 @@
       "consumable": false,
       "rarity": 1,
       "stat": { "criticalChance": 0.2 }
+    },
+
+    {
+      "code": "che_치료_도소연명",
+      "rawName": "도소연명",
+      "info": "턴 실행 전 부상 회복",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_치료_무후행군",
+      "rawName": "무후행군",
+      "info": "턴 실행 전 부상 회복",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_치료_오석산",
+      "rawName": "오석산",
+      "info": "턴 실행 전 부상 회복",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_치료_정력견혈",
+      "rawName": "정력견혈",
+      "info": "턴 실행 전 부상 회복",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+    {
+      "code": "che_치료_칠엽청점",
+      "rawName": "칠엽청점",
+      "info": "턴 실행 전 부상 회복",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "triggerType": "medicine"
+    },
+
+    {
+      "code": "che_사기_두강주",
+      "rawName": "두강주",
+      "info": "사기 보정 +10",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusAtmos": 10.0 }
+    },
+    {
+      "code": "che_사기_보령압주",
+      "rawName": "보령압주",
+      "info": "사기 보정 +10",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusAtmos": 10.0 }
+    },
+    {
+      "code": "che_사기_의적주",
+      "rawName": "의적주",
+      "info": "사기 보정 +10",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusAtmos": 10.0 }
+    },
+
+    {
+      "code": "che_훈련_과실주",
+      "rawName": "과실주",
+      "info": "훈련 보정 +10",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusTrain": 10.0 }
+    },
+    {
+      "code": "che_훈련_이강주",
+      "rawName": "이강주",
+      "info": "훈련 보정 +10",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "bonusTrain": 10.0 }
+    },
+
+    {
+      "code": "che_반계_백우선",
+      "rawName": "백우선",
+      "info": "상대 계략 성공 확률 -10%p, 30% 확률로 반계 발동, 반목 대미지 추가, 소모 군량 +10%",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "opposeStat": { "magicSuccessProb": -0.1 },
+      "triggerType": "counterMagic",
+      "killRice": 1.1
+    },
+    {
+      "code": "che_회피_둔갑천서",
+      "rawName": "둔갑천서",
+      "info": "회피 확률 +20%p",
+      "cost": 200,
+      "buyable": false,
+      "consumable": false,
+      "rarity": 1,
+      "stat": { "dodgeChance": 0.2 }
+    },
+
+    {
+      "code": "event_빼빼로",
+      "rawName": "빼빼로",
+      "info": "1의 상징. 통솔 +1, 무력 +1, 지력 +1",
+      "cost": 1500,
+      "buyable": true,
+      "consumable": false,
+      "rarity": 0,
+      "stat": { "leadership": 1.0, "strength": 1.0, "intel": 1.0 }
+    },
+    {
+      "code": "event_충차",
+      "rawName": "충차",
+      "info": "성벽 공격 시 대미지 +50%, 2회용",
+      "cost": 2000,
+      "buyable": true,
+      "consumable": true,
+      "rarity": 0,
+      "maxUses": 2,
+      "effect": "battleSiege",
+      "value": 0,
+      "triggerType": "siegeConsumable"
     }
   ]
 }

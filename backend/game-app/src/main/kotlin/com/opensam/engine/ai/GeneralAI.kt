@@ -16,6 +16,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
+import java.util.ArrayDeque
 import kotlin.random.Random
 
 /**
@@ -190,32 +191,23 @@ class GeneralAI(
     private fun decideWandererAction(general: General, world: WorldState, rng: Random): String {
         if (general.injury > 0) return "요양"
 
-        // NPC lords (officerLevel==12) with no capital do 방랑군이동 / 건국
+        // NPC lords (officerLevel==12) with no nation do 방랑군이동 / 건국
         if (general.npcState.toInt() >= 2 && general.officerLevel.toInt() == 12) {
-            // Try 건국 first
+            // Try 건국 first (per legacy do건국)
             if (general.makeLimit.toInt() == 0) {
-                if (rng.nextDouble() < 0.01) return "건국"
+                val result = doFoundNation(general, rng)
+                if (result != null) return result
             }
-            // Move toward candidate city
-            if (rng.nextDouble() < 0.6) return "이동"
+            // Move toward candidate city (per legacy do방랑군이동)
+            val moveResult = doWandererMove(general, world, rng)
+            if (moveResult != null) return moveResult
             return "인재탐색"
         }
 
-        // 국가선택: try to join a nation
+        // 국가선택: non-lord wanderer tries to join a nation (per legacy do국가선택)
         if (general.npcState.toInt() >= 2) {
-            // Per legacy: 30% chance to try 랜덤임관
-            if (rng.nextDouble() < 0.3) {
-                // Additional gate from legacy: early game / late game probability
-                val yearsElapsed = world.currentYear - ((world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt())
-                if (yearsElapsed < 3) {
-                    // Early game: lower chance, depends on nation count
-                    if (rng.nextDouble() > 0.3) return "랜덤임관"
-                } else {
-                    if (rng.nextDouble() < 0.5) return "랜덤임관"
-                }
-            }
-            // 20% chance to move
-            if (rng.nextDouble() < 0.2) return "이동"
+            val selectResult = doSelectNation(general, world, rng)
+            if (selectResult != null) return selectResult
         }
 
         // Neutral fallback
@@ -1250,7 +1242,7 @@ class GeneralAI(
             "귀환" -> doReturn(ctx, rng)
             "일반내정" -> doNormalDomestic(ctx, rng, nationPolicy)
             "금쌀구매" -> doTradeResources(ctx, rng, nationPolicy)
-            "NPC헌납" -> doDonate(ctx, rng, nationPolicy)
+            "NPC헌납" -> doNpcDedicate(ctx, rng, nationPolicy)
             "소집해제" -> doDismiss(ctx, rng, attackable)
             "중립" -> doNeutral(ctx.general, ctx.nation, rng)
             else -> null
@@ -2957,5 +2949,330 @@ class GeneralAI(
 
     private fun valueFitD(value: Double, min: Double, max: Double = Double.MAX_VALUE): Double {
         return value.coerceIn(min, max)
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  do건국 (doFoundNation): AI decides to found a new nation
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do건국: Wandering lord NPC founds a nation.
+     * Picks random nation type and color, names nation after general.
+     * Clears movingTargetCityID.
+     */
+    private fun doFoundNation(general: General, rng: Random): String? {
+        // Per legacy: pick random nation type (1-3) and color (0-15)
+        val nationType = rng.nextInt(3) + 1
+        val nationColor = rng.nextInt(16)
+
+        // Store founding parameters in meta for the engine to process
+        val nationName = "㉿" + general.name.drop(1)
+        general.meta["foundNationName"] = nationName
+        general.meta["foundNationType"] = nationType
+        general.meta["foundNationColor"] = nationColor
+        general.meta.remove("movingTargetCityID")
+
+        return "건국"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  do국가선택 (doSelectNation): Wandering general picks a nation to join
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do국가선택: Wandering NPC general tries to join a nation.
+     * - NPC type 9 (barbarian): tries to join another barbarian lord's nation
+     * - Others: 30% chance to try random enlistment, with early/late game gates
+     * - 20% chance to just move to adjacent city
+     * - Otherwise returns null (do neutral action)
+     */
+    private fun doSelectNation(general: General, world: WorldState, rng: Random): String? {
+        // Barbarians (npcType 9) join other barbarian nations directly
+        if (general.npcState.toInt() == 9) {
+            val barbarianLords = generalRepository.findByWorldId(world.id)
+                .filter { it.officerLevel.toInt() == 12 && it.npcState.toInt() == 9 && it.nationId != 0L }
+            if (barbarianLords.isNotEmpty()) {
+                val target = barbarianLords[rng.nextInt(barbarianLords.size)]
+                general.meta["enlistNationId"] = target.nationId
+                return "임관"
+            }
+        }
+
+        // 30% chance to try random enlistment
+        if (rng.nextDouble() < 0.3) {
+            // Affinity 999 = never joins
+            if (general.affinity.toInt() == 999) return null
+
+            val startYear = (world.config["startyear"] as? Number)?.toInt() ?: world.currentYear.toInt()
+            val yearsElapsed = world.currentYear - startYear
+
+            if (yearsElapsed < 3) {
+                // Early game: fewer nations → less chance to join
+                val nationCnt = nationRepository.findByWorldId(world.id).size
+                val notFullNationCnt = nationRepository.findByWorldId(world.id).count { nation ->
+                    val genCount = generalRepository.findByNationId(nation.id).size
+                    genCount < 20 // initialNationGenLimit analog
+                }
+                if (nationCnt == 0 || notFullNationCnt == 0) return null
+
+                // Per legacy: prob = (1/(nationCnt+1) / notFullNationCnt^3)^0.25
+                val prob = (1.0 / (nationCnt + 1) / notFullNationCnt.toDouble().pow(3.0)).pow(0.25)
+                if (rng.nextDouble() < prob) return null
+            } else {
+                // Late game: fixed 50% gate → effective 0.3 * 0.5 = 0.15
+                if (rng.nextDouble() < 0.5) return null
+            }
+
+            return "랜덤임관"
+        }
+
+        // 20% chance to move to adjacent city
+        if (rng.nextDouble() < 0.2) {
+            val allCities = cityRepository.findByWorldId(world.id)
+            val currentCity = allCities.find { it.id == general.cityId } ?: return null
+            val adjacentIds = getAdjacentCityIds(currentCity, allCities)
+            if (adjacentIds.isEmpty()) return null
+            general.meta["moveCityId"] = adjacentIds[rng.nextInt(adjacentIds.size)]
+            return "이동"
+        }
+
+        return null
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  do방랑군이동 (doWandererMove): Wandering army movement AI
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy do방랑군이동: Wandering lord moves toward unoccupied major cities (level 5-6).
+     * - If already at a major unoccupied city alone, stay (return null → will try 건국)
+     * - Otherwise pick a target city and move toward it step by step
+     * - Prefers nearby unoccupied major cities; if adjacent one is available, prioritize it
+     */
+    private fun doWandererMove(general: General, world: WorldState, rng: Random): String? {
+        val allCities = cityRepository.findByWorldId(world.id)
+        val allGenerals = generalRepository.findByWorldId(world.id)
+
+        val currentCity = allCities.find { it.id == general.cityId } ?: return null
+
+        // Check if we're the only lord here at a major city
+        val lordsHere = allGenerals.count { it.officerLevel.toInt() == 12 && it.cityId == general.cityId }
+        if (lordsHere <= 1 && currentCity.level.toInt() in 5..6) {
+            return null // Stay here, can try founding
+        }
+
+        // Build set of occupied cities (by lords or nations)
+        val lordCityIds = allGenerals
+            .filter { it.officerLevel.toInt() == 12 }
+            .map { it.cityId }.toSet()
+        val nationCityIds = allCities
+            .filter { it.nationId != 0L }
+            .map { it.id }.toSet()
+        val occupiedCities = lordCityIds + nationCityIds
+
+        // Check current target
+        var targetCityId = (general.meta["movingTargetCityID"] as? Number)?.toLong()
+        if (targetCityId == general.cityId || (targetCityId != null && targetCityId in occupiedCities)) {
+            targetCityId = null
+        }
+
+        // Find new target if needed
+        if (targetCityId == null) {
+            // BFS from current city, find unoccupied major cities within range 4
+            val candidates = mutableListOf<Pair<Long, Double>>()
+            val visited = mutableSetOf(general.cityId)
+            val queue = ArrayDeque<Pair<Long, Int>>()
+            queue.add(general.cityId to 0)
+
+            while (queue.isNotEmpty()) {
+                val (cid, dist) = queue.removeFirst()
+                if (dist >= 4) continue
+                val city = allCities.find { it.id == cid } ?: continue
+                val adjIds = getAdjacentCityIds(city, allCities)
+                for (adjId in adjIds) {
+                    if (!visited.add(adjId)) continue
+                    val adjCity = allCities.find { it.id == adjId } ?: continue
+                    if (adjId !in occupiedCities && adjCity.level.toInt() in 5..6) {
+                        candidates.add(adjId to (1.0 / 2.0.pow(dist + 1)))
+                    }
+                    queue.add(adjId to dist + 1)
+                }
+            }
+
+            if (candidates.isEmpty()) return null
+            targetCityId = choiceByWeightPair(rng, candidates) ?: return null
+            general.meta["movingTargetCityID"] = targetCityId
+        }
+
+        if (targetCityId == general.cityId) {
+            return "인재탐색"
+        }
+
+        // BFS from target to find distances
+        val distFromTarget = bfsCityDistances(targetCityId, allCities)
+        val currentDist = distFromTarget[general.cityId] ?: return null
+
+        // Pick next step: prefer adjacent unoccupied major cities, or step closer to target
+        val adjacentIds = getAdjacentCityIds(currentCity, allCities)
+        val moveOptions = mutableListOf<Pair<Long, Double>>()
+
+        for (adjId in adjacentIds) {
+            val adjCity = allCities.find { it.id == adjId } ?: continue
+            // If adjacent is an unoccupied major city, high priority
+            if (adjCity.level.toInt() in 5..6 && adjId !in occupiedCities) {
+                moveOptions.add(adjId to 10.0)
+            }
+            // If it gets us closer to target
+            val adjDist = distFromTarget[adjId] ?: continue
+            if (adjDist + 1 == currentDist) {
+                moveOptions.add(adjId to 1.0)
+            }
+        }
+
+        if (moveOptions.isEmpty()) return null
+        val destId = choiceByWeightPair(rng, moveOptions) ?: return null
+        general.meta["moveCityId"] = destId
+        return "이동"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  doNPC헌납 (doNpcDedicate): NPC donates resources to nation lord
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Per legacy doNPC헌납: NPC general donates excess resources to nation treasury.
+     * Similar to doDonate but uses NPC-specific thresholds (reqNPCWarGold/Rice, reqNPCDevelGold/Rice).
+     * War generals use war thresholds, development generals use devel thresholds.
+     * Special cases: if devel general has enough for war threshold but war > devel+1000, donate excess.
+     * Also handles emergency rice donation when nation rice is critically low.
+     */
+    private fun doNpcDedicate(ctx: AIContext, rng: Random, nationPolicy: NpcNationPolicy): String? {
+        val general = ctx.general
+        val nation = ctx.nation ?: return null
+        val genType = ctx.generalType
+        val isWarGen = genType and GeneralType.COMMANDER.flag != 0
+
+        data class DonateCandidate(val isGold: Boolean, val amount: Int, val weight: Int)
+
+        val candidates = mutableListOf<DonateCandidate>()
+
+        // Process gold and rice
+        data class ResourceInfo(val isGold: Boolean, val genRes: Int, val nationRes: Int, val reqNation: Int, val reqWar: Int, val reqDevel: Int)
+        val resources = listOf(
+            ResourceInfo(true, general.gold, nation.gold, nationPolicy.reqNationGold,
+                nationPolicy.calcPolicyValue("reqNPCWarGold", nation),
+                nationPolicy.calcPolicyValue("reqNPCDevelGold", nation)),
+            ResourceInfo(false, general.rice, nation.rice, nationPolicy.reqNationRice,
+                nationPolicy.calcPolicyValue("reqNPCWarRice", nation),
+                nationPolicy.calcPolicyValue("reqNPCDevelRice", nation))
+        )
+
+        for (res in resources) {
+            val isGold = res.isGold
+            val gRes = res.genRes
+            val nRes = res.nationRes
+            val reqN = res.reqNation
+            val reqW = res.reqWar
+            val reqD = res.reqDevel
+
+            if (isWarGen) {
+                // War general: use war thresholds
+                if (nRes >= reqN) continue
+                if (gRes < (reqW * 1.5).toInt()) continue
+                if (reqW > 0 && rng.nextDouble() >= (gRes.toDouble() / reqW - 0.5)) continue
+                val amount = gRes - reqW
+                if (amount < nationPolicy.minimumResourceActionAmount) continue
+                candidates.add(DonateCandidate(isGold, amount, amount))
+            } else {
+                // Development general
+                val reqRes = reqD
+
+                // Special case: devel general has enough for war threshold and war >> devel
+                if (gRes >= reqW && reqW > reqD + 1000) {
+                    val amount = gRes - reqD
+                    candidates.add(DonateCandidate(isGold, amount, amount))
+                    continue
+                }
+
+                // Excess resources (5x threshold and >= 5000)
+                if (gRes >= reqD * 5 && gRes >= 5000) {
+                    val amount = gRes - reqD
+                    candidates.add(DonateCandidate(isGold, amount, amount))
+                    continue
+                }
+
+                // Nation needs resources
+                if (nRes >= reqN) continue
+
+                // Emergency rice: nation rice critically low
+                if (!isGold && nRes <= 500 && gRes >= 500) {
+                    val amount = if (gRes < 1000) gRes else gRes / 2
+                    candidates.add(DonateCandidate(isGold, amount, amount))
+                    continue
+                }
+
+                if (gRes < (reqRes * 1.5).toInt()) continue
+                if (reqRes > 0 && rng.nextDouble() >= (gRes.toDouble() / reqRes - 0.5)) continue
+                val amount = gRes - reqRes
+                if (amount < nationPolicy.minimumResourceActionAmount) continue
+                candidates.add(DonateCandidate(isGold, amount, amount))
+            }
+        }
+
+        if (candidates.isEmpty()) return null
+
+        // Pick one using weight
+        val picked = choiceByWeightPair(rng, candidates.map { Pair(it, it.weight.toDouble()) }) ?: return null
+
+        if (picked.isGold) {
+            general.meta["donateGold"] = valueFit(picked.amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
+        } else {
+            general.meta["donateRice"] = valueFit(picked.amount, nationPolicy.minimumResourceActionAmount, nationPolicy.maximumResourceActionAmount)
+        }
+
+        return "헌납"
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  City adjacency helpers (for wanderer movement)
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Get adjacent city IDs from city meta or by region proximity.
+     * Cities store adjacency in meta["connections"] as list of city IDs.
+     */
+    private fun getAdjacentCityIds(city: City, allCities: List<City>): List<Long> {
+        // Try meta connections first
+        @Suppress("UNCHECKED_CAST")
+        val connections = city.meta["connections"] as? List<*>
+        if (connections != null) {
+            return connections.mapNotNull { (it as? Number)?.toLong() }
+        }
+
+        // Fallback: cities in same or adjacent region (simplified)
+        return allCities
+            .filter { it.id != city.id && kotlin.math.abs(it.region - city.region) <= 1 }
+            .map { it.id }
+    }
+
+    /**
+     * BFS from a city to compute distances to all reachable cities.
+     */
+    private fun bfsCityDistances(startCityId: Long, allCities: List<City>): Map<Long, Int> {
+        val result = mutableMapOf(startCityId to 0)
+        val queue = ArrayDeque<Pair<Long, Int>>()
+        queue.add(startCityId to 0)
+
+        while (queue.isNotEmpty()) {
+            val (cid, dist) = queue.removeFirst()
+            val city = allCities.find { it.id == cid } ?: continue
+            for (adjId in getAdjacentCityIds(city, allCities)) {
+                if (adjId !in result) {
+                    result[adjId] = dist + 1
+                    queue.add(adjId to dist + 1)
+                }
+            }
+        }
+        return result
     }
 }

@@ -14,6 +14,7 @@ object ItemModifiers {
     private val items: Map<String, ActionModifier>
     private val itemMeta: Map<String, ItemMeta>
     private val itemTriggerTypes: Map<String, String>
+    private val itemKillRice: Map<String, Double>
 
     init {
         val mapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
@@ -26,6 +27,7 @@ object ItemModifiers {
         val resultItems = mutableMapOf<String, ActionModifier>()
         val resultMeta = mutableMapOf<String, ItemMeta>()
         val resultTriggerTypes = mutableMapOf<String, String>()
+        val resultKillRice = mutableMapOf<String, Double>()
 
         // Weapons: strength = grade
         for (item in data["weapons"] ?: emptyList()) {
@@ -61,6 +63,7 @@ object ItemModifiers {
             resultMeta[code] = ItemMeta(code, rawName, "horse", grade,
                 (item["cost"] as Number).toInt(), item["buyable"] as Boolean,
                 (item["rarity"] as Number).toInt())
+            (item["killRice"] as? Number)?.toDouble()?.let { resultKillRice[code] = it }
         }
 
         // Misc items
@@ -77,6 +80,7 @@ object ItemModifiers {
             if (triggerType != null) {
                 resultTriggerTypes[code] = triggerType
             }
+            (item["killRice"] as? Number)?.toDouble()?.let { resultKillRice[code] = it }
 
             if (consumable) {
                 resultItems[code] = ConsumableItem(
@@ -107,6 +111,7 @@ object ItemModifiers {
         items = resultItems
         itemMeta = resultMeta
         itemTriggerTypes = resultTriggerTypes
+        itemKillRice = resultKillRice
     }
 
     fun get(code: String): ActionModifier? = items[code]
@@ -116,6 +121,10 @@ object ItemModifiers {
     fun getByCategory(category: String): List<ItemMeta> =
         itemMeta.values.filter { it.category == category }
 
+    fun getTriggerType(code: String): String? = itemTriggerTypes[code]
+
+    fun getKillRice(code: String): Double = itemKillRice[code] ?: 1.0
+
     fun getBattleTriggers(code: String): List<BattleTrigger> {
         val meta = itemMeta[code] ?: return emptyList()
         val triggerType = itemTriggerTypes[code] ?: return emptyList()
@@ -123,6 +132,9 @@ object ItemModifiers {
             val consumable = items[code] as? ConsumableItem
             if (consumable?.effect == "battleTrain") {
                 return listOf(BattleTriggerRegistry.get("che_훈련Init")!!)
+            }
+            if (consumable?.effect == "battleSiege") {
+                return listOf(BattleTriggerRegistry.get("che_충차")!!)
             }
             return emptyList()
         }
@@ -135,6 +147,8 @@ object ItemModifiers {
             "suppress" -> listOf(BattleTriggerRegistry.get("che_진압")!!)
             "antiSnipe" -> listOf(BattleTriggerRegistry.get("che_부적")!!)
             "plunder" -> listOf(BattleTriggerRegistry.get("che_약탈_try")!!, BattleTriggerRegistry.get("che_약탈_fire")!!)
+            "counterMagic" -> listOf(BattleTriggerRegistry.get("che_백우선반계")!!)
+            "siegeConsumable" -> listOf(BattleTriggerRegistry.get("che_충차")!!)
             else -> emptyList()
         }
     }

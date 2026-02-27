@@ -466,6 +466,43 @@ object Che반계Trigger : BattleTrigger {
     }
 }
 
+/** 백우선(반계): 30% counter magic, +0.4 banmok damage bonus. */
+object Che백우선반계Trigger : BattleTrigger {
+    override val code = "che_백우선반계"
+    override val priority = 10
+    override fun onPreMagic(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.suppressActive) return ctx
+        val opponentTryingMagic = (ctx.attacker.magicChance + ctx.magicChanceBonus) > 0.0
+        if (!opponentTryingMagic) return ctx
+        if (ctx.rng.nextBool(0.3)) {
+            ctx.magicReflected = true
+            ctx.magicChanceBonus -= 1.0
+            ctx.banmokDamageBonus = (ctx.banmokDamageBonus + 0.4).coerceAtMost(1.5)
+            ctx.battleLogs.add("백우선 반계 발동! 계략을 되돌린다!")
+        }
+        return ctx
+    }
+    override fun onPostMagic(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.magicReflected) {
+            ctx.magicDamageMultiplier *= ctx.banmokDamageBonus
+        }
+        return ctx
+    }
+}
+
+/** 충차: +50% siege damage, consumable. */
+object Che충차Trigger : BattleTrigger {
+    override val code = "che_충차"
+    override val priority = 10
+    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.isVsCity) {
+            ctx.attackMultiplier *= 1.5
+            ctx.battleLogs.add("충차 발동! 성벽에 강한 피해!")
+        }
+        return ctx
+    }
+}
+
 object Che공성Trigger : BattleTrigger {
     override val code = "che_공성"
     override val priority = 10
@@ -835,6 +872,7 @@ object BattleTriggerRegistry {
         Che격노Trigger, Che척사Trigger,
         Che약탈TryTrigger, Che약탈FireTrigger, Che부적Trigger, Che저지Trigger,
         Che진압Trigger, Che훈련InitTrigger, Che사기Trigger, Che퇴각부상무효Trigger,
+        Che백우선반계Trigger, Che충차Trigger,
     ).associateBy { it.code }
 
     fun get(code: String): BattleTrigger? = triggers[code]
