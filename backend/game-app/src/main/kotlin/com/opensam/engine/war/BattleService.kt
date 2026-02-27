@@ -76,6 +76,7 @@ class BattleService(
             modifiers = attackerModifiers,
             opponentCrewType = primaryDefender?.first?.crewType?.toString().orEmpty(),
             opposeModifiers = primaryDefender?.third ?: emptyList(),
+            isAttacker = true,
         )
 
         for ((unit, _, modifiers) in defenderEntries) {
@@ -84,6 +85,7 @@ class BattleService(
                 modifiers = modifiers,
                 opponentCrewType = attackerUnit.crewType.toString(),
                 opposeModifiers = attackerModifiers,
+                isAttacker = false,
             )
         }
 
@@ -339,6 +341,7 @@ class BattleService(
         modifiers: List<ActionModifier>,
         opponentCrewType: String = "",
         opposeModifiers: List<ActionModifier> = emptyList(),
+        isAttacker: Boolean = false,
     ) {
         if (modifiers.isEmpty() && opposeModifiers.isEmpty()) return
 
@@ -353,6 +356,7 @@ class BattleService(
             criticalChance = unit.criticalChance,
             dodgeChance = unit.dodgeChance,
             magicChance = unit.magicChance,
+            isAttacker = isAttacker,
         )
         var modified = modifierService.applyStatModifiers(modifiers, baseCtx)
         if (opposeModifiers.isNotEmpty()) {

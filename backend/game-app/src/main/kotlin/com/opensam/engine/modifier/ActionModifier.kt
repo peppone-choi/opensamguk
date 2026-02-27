@@ -57,6 +57,7 @@ data class StatContext(
     var dedicationMultiplier: Double = 1.0,
     var year: Int = 0,
     var startYear: Int = 0,
+    var isAttacker: Boolean = false,
 )
 
 data class StrategicContext(
