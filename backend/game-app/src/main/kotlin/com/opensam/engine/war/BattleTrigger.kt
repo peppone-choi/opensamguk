@@ -1,5 +1,7 @@
 package com.opensam.engine.war
 
+import com.opensam.model.CrewType
+import kotlin.math.floor
 import kotlin.random.Random
 
 data class BattleTriggerContext(
@@ -59,7 +61,23 @@ data class BattleTriggerContext(
     var snipeImmune: Boolean = false,
     var blockPhasesRemaining: Int = 0,
     var suppressActive: Boolean = false,
+
+    var criticalDisabled: Boolean = false,
+    var magicDisabled: Boolean = false,
+    var intimidatePhasesRemaining: Int = 0,
+    var rageActivationCount: Int = 0,
+    var rageExtraPhases: Int = 0,
+    var banmokDamageBonus: Double = 0.9,
+    var plunderGold: Int = 0,
+    var plunderRice: Int = 0,
+    var retreatInjuryImmune: Boolean = false,
 )
+
+private fun Random.nextBool(probability: Double): Boolean =
+    probability > 0.0 && nextDouble() < probability.coerceAtMost(1.0)
+
+private fun BattleTriggerContext.rollCriticalDamageMultiplier(): Double =
+    rng.nextDouble(1.3, 2.0)
 
 /**
  * Battle trigger with PRE/POST split (legacy parity).
@@ -421,14 +439,28 @@ object 부상무효Trigger : BattleTrigger {
 object Che반계Trigger : BattleTrigger {
     override val code = "che_반계"
     override val priority = 10
-    override fun onPostMagic(ctx: BattleTriggerContext): BattleTriggerContext {
+    override fun onPreMagic(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.suppressActive) {
             return ctx
         }
-        if (ctx.magicActivated && ctx.rng.nextDouble() < 0.4) {
+
+        val opponentTryingMagic = (ctx.attacker.magicChance + ctx.magicChanceBonus) > 0.0
+        if (!opponentTryingMagic) {
+            return ctx
+        }
+
+        if (ctx.rng.nextBool(0.4)) {
             ctx.magicReflected = true
-            ctx.magicDamageMultiplier *= 1.9
+            ctx.magicChanceBonus -= 1.0
+            ctx.banmokDamageBonus = (ctx.banmokDamageBonus + 0.1).coerceAtMost(1.5)
             ctx.battleLogs.add("반계 발동! 계략을 되돌린다!")
+        }
+        return ctx
+    }
+
+    override fun onPostMagic(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.magicReflected) {
+            ctx.magicDamageMultiplier *= ctx.banmokDamageBonus
         }
         return ctx
     }
@@ -449,6 +481,21 @@ object Che공성Trigger : BattleTrigger {
 object Che돌격Trigger : BattleTrigger {
     override val code = "che_돌격"
     override val priority = 10
+    override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
+        ctx.phaseNumber += 2
+
+        val attackerType = CrewType.fromCode(ctx.attacker.crewType)
+        val defenderType = CrewType.fromCode(ctx.defender.crewType)
+        if (attackerType != null && defenderType != null) {
+            val attackCoef = attackerType.getAttackCoef(defenderType)
+            if (attackCoef >= 1.0) {
+                ctx.newOpponent = true
+            }
+        }
+
+        return ctx
+    }
+
     override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
         ctx.attackMultiplier *= 1.05
         return ctx
@@ -478,7 +525,36 @@ object Che위압Trigger : BattleTrigger {
     override val priority = 20
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
         ctx.intimidated = true
+        ctx.dodgeDisabled = true
+        ctx.criticalDisabled = true
+        ctx.magicDisabled = true
+        ctx.intimidatePhasesRemaining = 1
+        if (ctx.defender is WarUnitGeneral) {
+            ctx.defender.atmos = (ctx.defender.atmos - 5).coerceAtLeast(0)
+        }
         ctx.battleLogs.add("위압 발동! 적이 위축되었다!")
+        return ctx
+    }
+
+    override fun onPreCritical(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.criticalDisabled) {
+            ctx.criticalChanceBonus -= 1.0
+        }
+        return ctx
+    }
+
+    override fun onPreMagic(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.magicDisabled) {
+            ctx.magicChanceBonus -= 1.0
+        }
+        return ctx
+    }
+
+    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.intimidatePhasesRemaining > 0) {
+            ctx.attackMultiplier = 0.0
+            ctx.intimidatePhasesRemaining -= 1
+        }
         return ctx
     }
 }
@@ -490,9 +566,9 @@ object Che저격Trigger : BattleTrigger {
         if (ctx.snipeImmune) {
             return ctx
         }
-        if (ctx.newOpponent && ctx.rng.nextDouble() < 0.5) {
+        if (ctx.newOpponent && ctx.rng.nextBool(0.5)) {
             ctx.snipeActivated = true
-            ctx.snipeWoundAmount = ctx.rng.nextInt(2, 7)
+            ctx.snipeWoundAmount = ctx.rng.nextInt(20, 41)
             ctx.moraleBoost += 20
             ctx.battleLogs.add("저격 발동! 적장에게 부상을 입혔다!")
         }
@@ -509,8 +585,8 @@ object Che필살Trigger : BattleTrigger {
     }
     override fun onPostCritical(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.criticalActivated) {
-            ctx.dodgeDisabled = true
-            ctx.battleLogs.add("필살 발동! 회피 불가!")
+            ctx.attackMultiplier *= ctx.rollCriticalDamageMultiplier()
+            ctx.battleLogs.add("필살 발동! 치명타 피해가 증폭된다!")
         }
         return ctx
     }
@@ -520,9 +596,12 @@ object Che의술Trigger : BattleTrigger {
     override val code = "che_의술"
     override val priority = 10
     override fun onPostDamage(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.rng.nextDouble() < 0.4) {
-            ctx.healAmount += (ctx.attacker.maxHp * 0.05).toInt()
-            ctx.battleLogs.add("의술 발동! 부대를 치료했다!")
+        if (ctx.rng.nextBool(0.4)) {
+            ctx.defenderDamage = floor(ctx.defenderDamage * 0.7).toInt()
+            if (ctx.attacker is WarUnitGeneral) {
+                ctx.attacker.injury = 0
+            }
+            ctx.battleLogs.add("의술 발동! 피해를 줄이고 부상을 회복했다!")
         }
         return ctx
     }
@@ -531,21 +610,48 @@ object Che의술Trigger : BattleTrigger {
 object Che격노Trigger : BattleTrigger {
     override val code = "che_격노"
     override val priority = 10
+    override fun onPostCritical(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.suppressActive) {
+            return ctx
+        }
+        if (ctx.criticalActivated && ctx.rng.nextBool(0.5)) {
+            activateRage(ctx, reactedToCritical = true)
+        }
+        return ctx
+    }
+
     override fun onPostDodge(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.suppressActive) {
             return ctx
         }
-        if (ctx.dodgeActivated) {
-            ctx.rageDamageStack += 0.20
-            ctx.battleLogs.add("격노 발동! 분노가 쌓인다!")
+        if (ctx.dodgeActivated && ctx.rng.nextBool(0.25)) {
+            activateRage(ctx, reactedToCritical = false)
         }
         return ctx
     }
+
     override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.rageDamageStack > 0) {
-            ctx.attackMultiplier *= (1.0 + ctx.rageDamageStack)
+        if (ctx.rageActivationCount > 0) {
+            ctx.attackMultiplier *= (1.0 + 0.2 * ctx.rageActivationCount)
         }
         return ctx
+    }
+
+    private fun activateRage(ctx: BattleTriggerContext, reactedToCritical: Boolean) {
+        ctx.rageActivationCount += 1
+        ctx.rageDamageStack = 0.2 * ctx.rageActivationCount
+        if (ctx.rng.nextBool(0.5)) {
+            ctx.rageExtraPhases += 1
+            ctx.battleLogs.add(
+                if (reactedToCritical) "격노 발동! 상대 필살에 진노하여 추가 페이즈를 얻었다!"
+                else "격노 발동! 상대 회피 시도에 진노하여 추가 페이즈를 얻었다!"
+            )
+        } else {
+            ctx.battleLogs.add(
+                if (reactedToCritical) "격노 발동! 상대 필살에 분노가 쌓인다!"
+                else "격노 발동! 상대 회피 시도에 분노가 쌓인다!"
+            )
+        }
     }
 }
 
@@ -565,7 +671,7 @@ object Che약탈TryTrigger : BattleTrigger {
     override val code = "che_약탈_try"
     override val priority = 10
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.newOpponent && ctx.rng.nextDouble() < 0.2) {
+        if (ctx.newOpponent && ctx.rng.nextBool(0.2)) {
             ctx.plunderActivated = true
             ctx.plunderRatio = 0.1
         }
@@ -577,8 +683,55 @@ object Che약탈FireTrigger : BattleTrigger {
     override val code = "che_약탈_fire"
     override val priority = 10
     override fun onPostDamage(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.plunderActivated && ctx.plunderRatio > 0.0) {
-            ctx.battleLogs.add("약탈 발동! 적의 물자를 빼앗았다!")
+        if (!ctx.plunderActivated || ctx.plunderRatio <= 0.0) {
+            return ctx
+        }
+
+        val self = ctx.attacker as? WarUnitGeneral ?: return ctx
+        val oppose = ctx.defender as? WarUnitGeneral ?: return ctx
+
+        val theftGold = floor(oppose.general.gold * ctx.plunderRatio).toInt().coerceAtLeast(0)
+        val theftRice = floor(oppose.general.rice * ctx.plunderRatio).toInt().coerceAtLeast(0)
+
+        oppose.general.gold = (oppose.general.gold - theftGold).coerceAtLeast(0)
+        oppose.general.rice = (oppose.general.rice - theftRice).coerceAtLeast(0)
+        oppose.rice = oppose.general.rice
+
+        self.general.gold += theftGold
+        self.general.rice += theftRice
+        self.rice = self.general.rice
+
+        ctx.plunderGold += theftGold
+        ctx.plunderRice += theftRice
+        ctx.battleLogs.add("약탈 발동! 금 $theftGold, 쌀 $theftRice 를 빼앗았다!")
+        ctx.plunderActivated = false
+        ctx.plunderRatio = 0.0
+
+        return ctx
+    }
+}
+
+object Che사기Trigger : BattleTrigger {
+    override val code = "che_사기"
+    override val priority = 10
+    override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
+        ctx.attacker.atmos = (ctx.attacker.atmos + 30).coerceAtMost(100)
+        ctx.battleLogs.add("사기 발동! 아군 사기가 상승했다!")
+        return ctx
+    }
+}
+
+object Che퇴각부상무효Trigger : BattleTrigger {
+    override val code = "che_퇴각부상무효"
+    override val priority = 10
+    override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
+        ctx.retreatInjuryImmune = true
+        return ctx
+    }
+
+    override fun onInjuryCheck(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.retreatInjuryImmune) {
+            ctx.injuryImmune = true
         }
         return ctx
     }
@@ -589,6 +742,12 @@ object Che부적Trigger : BattleTrigger {
     override val priority = 10
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
         ctx.snipeImmune = true
+        ctx.injuryImmune = true
+        return ctx
+    }
+
+    override fun onInjuryCheck(ctx: BattleTriggerContext): BattleTriggerContext {
+        ctx.injuryImmune = true
         return ctx
     }
 }
@@ -600,7 +759,7 @@ object Che저지Trigger : BattleTrigger {
     override fun onBattleInit(ctx: BattleTriggerContext): BattleTriggerContext {
         if (ctx.blockPhasesRemaining == 0) {
             ctx.blockPhasesRemaining = 1
-            if (ctx.rng.nextDouble() < 0.5) {
+            if (ctx.phaseNumber == 0) {
                 ctx.blockPhasesRemaining += 1
             }
         }
@@ -608,20 +767,20 @@ object Che저지Trigger : BattleTrigger {
     }
 
     override fun onPreCritical(ctx: BattleTriggerContext): BattleTriggerContext {
-        return blockDamageIfNeeded(ctx)
+        return ctx
     }
 
     override fun onPreDodge(ctx: BattleTriggerContext): BattleTriggerContext {
-        return blockDamageIfNeeded(ctx)
+        return ctx
     }
 
-    private fun blockDamageIfNeeded(ctx: BattleTriggerContext): BattleTriggerContext {
-        if (ctx.blockPhasesRemaining <= 0) {
-            return ctx
+    override fun onDamageCalc(ctx: BattleTriggerContext): BattleTriggerContext {
+        if (ctx.blockPhasesRemaining > 0) {
+            ctx.attackMultiplier = 0.0
+            ctx.defenderDamage = 0
+            ctx.blockPhasesRemaining -= 1
+            ctx.battleLogs.add("저지 발동! 전투를 봉쇄했다!")
         }
-        ctx.attackMultiplier = 0.0
-        ctx.blockPhasesRemaining -= 1
-        ctx.battleLogs.add("저지 발동! 공격을 차단했다!")
         return ctx
     }
 }
@@ -675,7 +834,7 @@ object BattleTriggerRegistry {
         Che위압Trigger, Che저격Trigger, Che필살Trigger, Che의술Trigger,
         Che격노Trigger, Che척사Trigger,
         Che약탈TryTrigger, Che약탈FireTrigger, Che부적Trigger, Che저지Trigger,
-        Che진압Trigger, Che훈련InitTrigger,
+        Che진압Trigger, Che훈련InitTrigger, Che사기Trigger, Che퇴각부상무효Trigger,
     ).associateBy { it.code }
 
     fun get(code: String): BattleTrigger? = triggers[code]
