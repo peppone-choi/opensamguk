@@ -549,3 +549,63 @@
 | 리소스/데이터 | 1 | **4** | 0 | 5 |
 
 > **결론**: 프론트엔드는 100% 레거시 기준. 백엔드는 ~75% core2026 기준 (커맨드/엔진/전투/AI/트리거 전부 core2026이 우수).
+
+---
+
+## E. 프론트엔드 콘텐츠 패러티 Diff (레거시 PHP vs Next.js)
+
+> 분석 일자: 2026-02-27
+> 레거시 PHP 20+ 페이지 vs Next.js 38개 게임 페이지 전수 비교
+> 패러티 달성=14, 아키텍처 차이=4, 갭 발견=4건, Next.js 전용=13
+
+### E1. 패러티 달성 (14 페이지)
+
+| Next.js | 레거시 PHP | 비고 |
+|---|---|---|
+| general/ | b_myGenInfo.php | Next.js가 더 풍부 (프로필+전투기록+장비+숙련도) |
+| my-page/ | b_myGenInfo.php 확장 | 4탭 info/battle/settings/log |
+| nation/ | b_myKingdomInfo.php | 4탭 + 수입/지출/예산 계산 |
+| map/ | v_cachedMap.php | SVG + 테마/레이어/히스토리 |
+| commands/ | v_processing.php | 드래그앤드롭 + 프리셋 |
+| battle-center/ | v_battleCenter.php | 비교 모드 추가 |
+| board/ | v_board.php | 공개/기밀 탭, 댓글 동등 |
+| messages/ | MessagePanel.vue | 4 우편함 탭. WS auto-refresh |
+| troop/ | v_troop.php | 턴 브리프 + 커맨드 타임라인 추가 |
+| auction/ | v_auction.php | 리소스/유니크 탭 동등 |
+| best-generals/ | a_bestGeneral.php | 5그룹 탭 Top50 동등 |
+| hall-of-fame/ | a_hallOfFame.php | 카드/표 뷰 모드 추가 |
+| diplomacy/ | v_globalDiplomacy.php | 3탭 + 외교 서신 워크플로우 |
+| history/ | v_history.php | 연대기 + 맵 스냅샷 + 검색/필터 |
+
+### E2. 아키텍처 차이 (허용, 4 페이지)
+
+| Next.js | 레거시 | 차이 |
+|---|---|---|
+| chief/ + superior/ | v_chiefCenter.php | 사령부/인사부 2페이지 분리 |
+| emperor/ + dynasty/ | a_emperior.php | 황제/왕조 2페이지 분리 |
+| inherit/ | v_inheritPoint.php | 6탭 구조 재편 |
+| betting/ | (없음) | Next.js 전용 신규 기능 |
+
+### E3. 갭 발견 (수정 필요, 4건)
+
+P0: vote 페이지 - 댓글(comments) 섹션 누락
+- 레거시: 투표마다 댓글 테이블 + 입력 폼
+- Next.js: 결과 + 투표 버튼만. 댓글 없음
+
+P1: generals 페이지 - 요약 통계 행 누락
+- 레거시: 총 금/쌀, 병력 분포 (훈련 90+/80+/60+), 평균 자금/군량
+- Next.js: 필터/소트 + 테이블만
+
+P1: nations 페이지 - 관직 10-5 및 사신/감찰 미표시
+- 레거시: officers 12-5 전원 + ambassadors/auditors
+- Next.js: chief(12)/advisor(11)만 표시
+
+P2: city 페이지 - 병력 준비도 요약 누락
+- 레거시: 적/아/90+/60+/수비가능 카운트
+- Next.js: 장수 이름 목록 + 총 주둔병력만
+
+### E4. Next.js 전용 (13 페이지)
+
+battle-simulator, battle, internal-affairs, nation-cities,
+nation-generals, npc-control, npc-list, personnel, spy,
+tournament, traffic, betting, processing

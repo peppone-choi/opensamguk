@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Vote, Plus, History, BarChart3 } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Vote, Plus, History, BarChart3, MessageSquare, Trash2, Send } from "lucide-react";
 import Link from "next/link";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Message } from "@/types";
+import type { Message, VoteComment } from "@/types";
 import { voteApi } from "@/lib/gameApi";
+import { useGameStore } from "@/stores/gameStore";
+import { Textarea } from "@/components/ui/textarea";
 
 /* ── payload shape ── */
 interface VotePayload {
@@ -51,6 +53,7 @@ function formatDeadline(iso?: string): string {
 export default function VotePage() {
   const { currentWorld } = useWorldStore();
   const { myGeneral } = useGeneralStore();
+  const { generals, loadAll } = useGameStore();
   const [votes, setVotes] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -77,6 +80,7 @@ export default function VotePage() {
 
   useEffect(() => {
     load();
+    if (currentWorld) loadAll(currentWorld.id);
   }, [load]);
 
   const handleVote = async (voteId: number, optionIndex: number) => {
@@ -303,6 +307,7 @@ export default function VotePage() {
                   isChief={canCreate ?? false}
                   onVote={handleVote}
                   onClose={handleClose}
+                  generals={generals}
                 />
               ))}
             </div>
@@ -323,6 +328,7 @@ export default function VotePage() {
                   isChief={false}
                   onVote={handleVote}
                   onClose={handleClose}
+                  generals={generals}
                 />
               ))}
             </div>
@@ -340,12 +346,14 @@ function VoteCard({
   isChief,
   onVote,
   onClose,
+  generals,
 }: {
   vote: Message;
   myGeneralId?: number;
   isChief: boolean;
   onVote: (voteId: number, idx: number) => void;
   onClose: (voteId: number) => void;
+  generals: { id: number; name: string }[];
 }) {
   const d = vp(vote);
   const title = d.title ?? "(제목 없음)";
@@ -363,6 +371,48 @@ function VoteCard({
   });
   const total = counts.reduce((a, b) => a + b, 0);
   const maxCount = Math.max(...counts, 1);
+
+  // ── Comments ──
+  const [comments, setComments] = useState<VoteComment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
+  const generalMap = useMemo(
+    () => new Map(generals.map((g) => [g.id, g])),
+    [generals],
+  );
+
+  const loadComments = useCallback(async () => {
+    try {
+      const { data } = await voteApi.listComments(vote.id);
+      setComments(data);
+    } catch { /* ignore */ }
+  }, [vote.id]);
+
+  useEffect(() => {
+    if (showComments) loadComments();
+  }, [showComments, loadComments]);
+
+  const handleAddComment = async () => {
+    if (!commentText.trim() || myGeneralId == null) return;
+    setSendingComment(true);
+    try {
+      await voteApi.createComment(vote.id, myGeneralId, commentText.trim());
+      setCommentText("");
+      await loadComments();
+    } catch { /* ignore */ } finally {
+      setSendingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (myGeneralId == null) return;
+    try {
+      await voteApi.deleteComment(vote.id, commentId, myGeneralId);
+      await loadComments();
+    } catch { /* ignore */ }
+  };
 
   return (
     <Card>
@@ -475,7 +525,80 @@ function VoteCard({
               투표 종료
             </Button>
           </div>
-        )}
+        }
+
+        {/* ── Comments Section ── */}
+        <div className="border-t border-gray-700 mt-3 pt-2">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setShowComments(!showComments)}
+          >
+            <MessageSquare className="size-3.5" />
+            댓글 {comments.length > 0 ? `(${comments.length})` : ""}
+          </button>
+
+          {showComments && (
+            <div className="mt-2 space-y-2">
+              {comments.length === 0 ? (
+                <p className="text-xs text-muted-foreground">댓글이 없습니다.</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {comments.map((c) => {
+                    const author = generalMap.get(c.authorGeneralId);
+                    const authorName = author?.name ?? `장수#${c.authorGeneralId}`;
+                    const dateStr = formatDeadline(c.createdAt);
+                    return (
+                      <div key={c.id} className="flex items-start gap-2 text-xs">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-cyan-400">{authorName}</span>
+                          <span className="text-muted-foreground ml-2">{dateStr}</span>
+                          <p className="mt-0.5 text-foreground whitespace-pre-wrap break-words">{c.content}</p>
+                        </div>
+                        {myGeneralId != null && c.authorGeneralId === myGeneralId && (
+                          <button
+                            type="button"
+                            className="text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => handleDeleteComment(c.id)}
+                          >
+                            <Trash2 className="size-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Comment input */}
+              {myGeneralId != null && (
+                <div className="flex gap-2 mt-2">
+                  <Textarea
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="댓글 입력..."
+                    className="text-xs min-h-[2rem] h-8 resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        handleAddComment();
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={sendingComment || !commentText.trim()}
+                    onClick={handleAddComment}
+                    className="shrink-0 h-8"
+                  >
+                    <Send className="size-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
