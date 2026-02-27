@@ -2,8 +2,17 @@ package com.opensam.engine.modifier
 
 import com.opensam.model.ArmType
 import com.opensam.model.CrewType
+import kotlin.math.log2
 
 object SpecialModifiers {
+
+    private fun isRegionalOrCityCrewType(raw: String): Boolean {
+        val code = raw.toIntOrNull() ?: return false
+        if (code <= 0) return true
+        val crewType = CrewType.fromCode(code) ?: return false
+        if (crewType.armType == ArmType.CASTLE) return true
+        return crewType.code % 100 != 0
+    }
 
     private val specials = mapOf<String, ActionModifier>(
         // === War Specials (22) ===
@@ -249,7 +258,7 @@ object SpecialModifiers {
         "che_귀병" to object : ActionModifier {
             override val code = "che_귀병"; override val name = "귀병"
             override fun onCalcStat(stat: StatContext) = stat.copy(
-                magicTrialProb = stat.magicTrialProb + 0.2,
+                magicSuccessProb = stat.magicSuccessProb + 0.2,
                 dexMultiplier = stat.dexMultiplier * 1.1
             )
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
@@ -260,7 +269,7 @@ object SpecialModifiers {
         "che_신산" to object : ActionModifier {
             override val code = "che_신산"; override val name = "신산"
             override fun onCalcStat(stat: StatContext) = stat.copy(
-                magicTrialProb = stat.magicTrialProb + 0.1,
+                magicTrialProb = stat.magicTrialProb + 0.2,
                 magicSuccessProb = stat.magicSuccessProb + 0.2
             )
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
@@ -283,16 +292,17 @@ object SpecialModifiers {
         },
         "che_신중" to object : ActionModifier {
             override val code = "che_신중"; override val name = "신중"
-            override fun onCalcStat(stat: StatContext) = stat.copy(magicSuccessProb = 1.0)
+            override fun onCalcStat(stat: StatContext) = stat.copy(magicSuccessProb = stat.magicSuccessProb + 1.0)
         },
         "che_반계" to object : ActionModifier {
             override val code = "che_반계"; override val name = "반계"
             override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
-                magicTrialProb = stat.magicTrialProb - 0.1
+                magicSuccessProb = stat.magicSuccessProb - 0.1
             )
         },
         "che_보병" to object : ActionModifier {
             override val code = "che_보병"; override val name = "보병"
+            override fun onCalcStat(stat: StatContext) = stat.copy(dexMultiplier = stat.dexMultiplier * 1.1)
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
@@ -308,7 +318,10 @@ object SpecialModifiers {
         },
         "che_궁병" to object : ActionModifier {
             override val code = "che_궁병"; override val name = "궁병"
-            override fun onCalcStat(stat: StatContext) = stat.copy(dodgeChance = stat.dodgeChance + 0.2)
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                dodgeChance = stat.dodgeChance + 0.2,
+                dexMultiplier = stat.dexMultiplier * 1.1
+            )
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
@@ -316,7 +329,10 @@ object SpecialModifiers {
         },
         "che_기병" to object : ActionModifier {
             override val code = "che_기병"; override val name = "기병"
-            override fun onCalcStat(stat: StatContext) = stat.copy(warPower = stat.warPower * 1.15)
+            override fun onCalcStat(stat: StatContext) = stat.copy(
+                warPower = stat.warPower * 1.15,
+                dexMultiplier = stat.dexMultiplier * 1.1
+            )
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
@@ -324,6 +340,7 @@ object SpecialModifiers {
         },
         "che_공성" to object : ActionModifier {
             override val code = "che_공성"; override val name = "공성"
+            override fun onCalcStat(stat: StatContext) = stat.copy(dexMultiplier = stat.dexMultiplier * 1.1)
             override fun onCalcDomestic(ctx: DomesticContext) = when (ctx.actionCode) {
                 in listOf("징병", "모병") -> ctx.copy(costMultiplier = ctx.costMultiplier * 0.9)
                 else -> ctx
@@ -335,17 +352,23 @@ object SpecialModifiers {
         },
         "che_무쌍" to object : ActionModifier {
             override val code = "che_무쌍"; override val name = "무쌍"
-            override fun onCalcStat(stat: StatContext) = stat.copy(
-                criticalChance = stat.criticalChance + 0.1,
-                warPower = stat.warPower * 1.05,
-                dodgeChance = stat.dodgeChance - 0.02
-            )
+            override fun onCalcStat(stat: StatContext): StatContext {
+                val killnum = 0.0
+                val logVal = log2(maxOf(1.0, killnum / 5.0))
+                val attackMultiplier = 1.05 + logVal / 20.0
+                val defenceMultiplier = 0.98 - logVal / 50.0
+                return stat.copy(
+                    criticalChance = stat.criticalChance + 0.1,
+                    warPower = stat.warPower * attackMultiplier,
+                    dodgeChance = stat.dodgeChance - (1.0 - defenceMultiplier)
+                )
+            }
         },
         "che_견고" to object : ActionModifier {
             override val code = "che_견고"; override val name = "견고"
             override fun onCalcOpposeStat(stat: StatContext) = stat.copy(
                 criticalChance = stat.criticalChance - 0.2,
-                magicTrialProb = stat.magicTrialProb - 0.1
+                magicSuccessProb = stat.magicSuccessProb - 0.1
             )
         },
         "che_위압" to object : ActionModifier {
@@ -370,6 +393,12 @@ object SpecialModifiers {
         },
         "che_척사" to object : ActionModifier {
             override val code = "che_척사"; override val name = "척사"
+            override fun onCalcStat(stat: StatContext): StatContext {
+                if (!isRegionalOrCityCrewType(stat.opponentCrewType)) {
+                    return stat
+                }
+                return stat.copy(warPower = stat.warPower * 1.2)
+            }
         },
     )
 
