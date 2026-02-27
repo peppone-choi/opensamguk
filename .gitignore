@@ -69,3 +69,6 @@ USER.md
 .localnode/
 .pki/
 qa/results/parity-gate/
+backend/logs/
+ref_core/
+ref_core2026/
