@@ -118,9 +118,9 @@ class CommandParityTest {
             val result = runCmd(che_징병(gen, createEnv(), arg), "con_1")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            // newTrain = (1000*80 + 1000*50) / 2000 = 130000/2000 = 65
-            assertEquals(65 - 80, json["statChanges"]["train"].asInt())
-            assertEquals(65 - 80, json["statChanges"]["atmos"].asInt())
+            // newTrain = (1000*80 + 1000*40) / 2000 = 120000/2000 = 60  (PHP defaultTrainLow=40)
+            assertEquals(60 - 80, json["statChanges"]["train"].asInt())
+            assertEquals(60 - 80, json["statChanges"]["atmos"].asInt())
         }
 
         @Test
@@ -130,8 +130,8 @@ class CommandParityTest {
             val result = runCmd(che_징병(gen, createEnv(), arg), "con_2")
             assertTrue(result.success)
             val json = mapper.readTree(result.message)
-            assertEquals(50 - 80, json["statChanges"]["train"].asInt())
-            assertEquals(50 - 80, json["statChanges"]["atmos"].asInt())
+            assertEquals(40 - 80, json["statChanges"]["train"].asInt())
+            assertEquals(40 - 80, json["statChanges"]["atmos"].asInt())
         }
 
         @Test
