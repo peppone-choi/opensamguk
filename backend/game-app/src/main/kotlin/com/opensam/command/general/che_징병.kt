@@ -90,11 +90,12 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
         // Legacy: costWithTech(tech, maxCrew) = unit.cost * getTechCost(tech) * crew / 100
         var reqGold = unitCost * techCost * mc / 100.0
         // Legacy: onCalcDomestic('징병', 'cost', reqGold, ['armType' => armType])
-        // applied via modifier system — for now pass through as base
+        reqGold = DomesticUtils.applyModifier(services, general, nation, "징병", "cost", reqGold)
         reqGold *= costOffset
 
         var reqRice = mc / 100.0
         // Legacy: onCalcDomestic('징병', 'rice', reqRice, ['armType' => armType])
+        reqRice = DomesticUtils.applyModifier(services, general, nation, "징병", "rice", reqRice)
 
         return CommandCost(
             gold = reqGold.roundToInt(),
@@ -139,8 +140,7 @@ open class che_징병(general: General, env: CommandEnv, arg: Map<String, Any>? 
         val ded = reqCrew / 100
 
         // Legacy: reqCrewDown = onCalcDomestic('징집인구', 'score', reqCrew)
-        // For now, reqCrewDown = reqCrew (no modifier applied yet)
-        val reqCrewDown = reqCrew
+        val reqCrewDown = DomesticUtils.applyModifier(services, general, nation, "징집인구", "score", reqCrew.toDouble()).roundToInt()
 
         // Legacy: trust -= (reqCrewDown / cityPop) / costOffset * 100
         val cityPop = city?.pop ?: 10000
