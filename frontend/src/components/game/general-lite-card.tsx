@@ -38,8 +38,8 @@ export function GeneralLiteCard({
   nation,
   gameConst,
 }: GeneralLiteCardProps) {
-  const iconPath = getPortraitUrl(general.imgsvr, general.picture);
-  const [injuryText, injuryColor] = formatInjury(general.injury);
+  const iconPath = getPortraitUrl(general.picture);
+  const { text: injuryText, color: injuryColor } = formatInjury(general.injury);
   const typeCall = formatGeneralTypeCall(
     general.leadership,
     general.strength,
@@ -106,7 +106,7 @@ export function GeneralLiteCard({
       <div className="bg-muted/50 border-b border-border">통솔</div>
       <div className="border-b border-border">
         <span style={{ color: injuryColor }}>
-          {calcInjury("leadership", general)}
+          {calcInjury(general.leadership, general.injury)}
         </span>
         {general.lbonus > 0 && (
           <span className="text-cyan-400">+{general.lbonus}</span>
@@ -114,11 +114,11 @@ export function GeneralLiteCard({
       </div>
       <div className="bg-muted/50 border-b border-border">무력</div>
       <div className="border-b border-border" style={{ color: injuryColor }}>
-        {calcInjury("strength", general)}
+        {calcInjury(general.strength, general.injury)}
       </div>
       <div className="bg-muted/50 border-b border-border">지력</div>
       <div className="border-b border-border" style={{ color: injuryColor }}>
-        {calcInjury("intel", general)}
+        {calcInjury(general.intel, general.injury)}
       </div>
 
       {/* Row 3: resources */}

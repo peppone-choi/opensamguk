@@ -109,7 +109,9 @@ export function CrewTypeBrowser({ commandName, onSubmit }: CrewTypeBrowserProps)
     return cities.find((c) => c.id === myGeneral.cityId) ?? null;
   }, [cities, myGeneral]);
 
-  const techLevel = myCity?.tech ?? 0;
+  // NOTE: CityResponse currently has no dedicated `tech` field.
+  // If tech is ever exposed, it should come from `city.meta.tech` (or a dedicated API field).
+  const techLevel = typeof (myCity?.meta as any)?.tech === "number" ? ((myCity!.meta as any).tech as number) : 0;
   const leadership = myGeneral?.leadership ?? 100;
   const currentCrew = myGeneral?.crew ?? 0;
   const currentCrewType = myGeneral?.crewType ?? 0;

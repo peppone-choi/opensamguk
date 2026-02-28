@@ -133,7 +133,7 @@ export function GeneralSupplementCard({
         {reservedCommands.length > 0 && (
           <div className="w-1/3 bg-muted/30">
             <div className="bg-muted/50 font-medium py-0.5">예약턴</div>
-            {reservedCommands.map((turn: Record<string, unknown>, idx: number) => (
+            {(reservedCommands as Record<string, unknown>[]).map((turn, idx: number) => (
               <div
                 key={idx}
                 className="border-b border-border text-xs py-0.5 px-1"

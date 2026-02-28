@@ -339,7 +339,7 @@ export default function NationsPage() {
                               )}
                             </div>
                           ) : null;
-                        })()
+                        })()}
                       </div>
                     </TableCell>
 
