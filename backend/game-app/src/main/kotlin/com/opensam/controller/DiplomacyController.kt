@@ -3,10 +3,7 @@ package com.opensam.controller
 import com.opensam.dto.DiplomacyDto
 import com.opensam.engine.DiplomacyService
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/worlds/{worldId}/diplomacy")
@@ -24,5 +21,28 @@ class DiplomacyController(
         @PathVariable nationId: Long,
     ): ResponseEntity<List<DiplomacyDto>> {
         return ResponseEntity.ok(diplomacyService.getRelationsForNation(worldId, nationId).map(DiplomacyDto::from))
+    }
+
+    data class DiplomacyRespondRequest(
+        val messageId: Long,
+        val action: String,
+        val accept: Boolean,
+    )
+
+    @PostMapping("/respond")
+    fun respond(
+        @PathVariable worldId: Long,
+        @RequestBody request: DiplomacyRespondRequest,
+    ): ResponseEntity<Void> {
+        return try {
+            if (request.accept) {
+                diplomacyService.acceptDiplomaticMessage(worldId, request.messageId)
+            } else {
+                diplomacyService.rejectDiplomaticMessage(worldId, request.messageId)
+            }
+            ResponseEntity.ok().build()
+        } catch (_: Exception) {
+            ResponseEntity.badRequest().build()
+        }
     }
 }

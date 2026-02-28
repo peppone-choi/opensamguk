@@ -16,6 +16,23 @@ data class CreateGeneralRequest(
 
 data class SelectNpcRequest(val generalId: Long)
 
+data class BuildPoolGeneralRequest(
+    val name: String,
+    val leadership: Short = 70,
+    val strength: Short = 70,
+    val intel: Short = 70,
+    val politics: Short = 70,
+    val charm: Short = 70,
+)
+
+data class UpdatePoolGeneralRequest(
+    val leadership: Short,
+    val strength: Short,
+    val intel: Short,
+    val politics: Short,
+    val charm: Short,
+)
+
 data class RefreshNpcTokenRequest(
     val nonce: String,
     val keepIds: List<Long> = emptyList(),

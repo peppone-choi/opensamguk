@@ -68,4 +68,33 @@ class AccountService(
         }
         return true
     }
+
+    fun updateIconUrl(loginId: String, iconUrl: String): Boolean {
+        val user = appUserRepository.findByLoginId(loginId) ?: return false
+        if (iconUrl.isBlank()) {
+            user.meta.remove("picture")
+            user.meta.remove("imageServer")
+        } else {
+            user.meta["picture"] = iconUrl
+            user.meta["imageServer"] = 0
+        }
+        appUserRepository.save(user)
+        return true
+    }
+
+    fun getDetailedInfo(loginId: String): Map<String, Any?>? {
+        val user = appUserRepository.findByLoginId(loginId) ?: return null
+        return mapOf(
+            "loginId" to user.loginId,
+            "displayName" to user.displayName,
+            "grade" to user.grade.toInt(),
+            "role" to user.role,
+            "joinDate" to user.createdAt.toString(),
+            "lastLoginAt" to user.lastLoginAt?.toString(),
+            "thirdUse" to (user.meta["thirdUse"] as? Boolean ?: false),
+            "oauthType" to (user.meta["oauthProviders"] as? List<*>)?.firstOrNull()?.toString(),
+            "tokenValidUntil" to user.meta["oauthExpiresAt"],
+            "acl" to user.meta["acl"],
+        )
+    }
 }

@@ -84,6 +84,46 @@ class GeneralService(
         return generalRepository.save(general)
     }
 
+    fun buildPoolGeneral(worldId: Long, loginId: String, name: String, leadership: Short, strength: Short, intel: Short, politics: Short, charm: Short): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        // Check if the user already has a general in this world (pool or otherwise)
+        val existing = generalRepository.findByWorldIdAndUserId(worldId, userId)
+        if (existing != null) return null
+        val general = General(
+            worldId = worldId,
+            userId = userId,
+            name = name,
+            cityId = 0,
+            nationId = 0,
+            leadership = leadership,
+            strength = strength,
+            intel = intel,
+            politics = politics,
+            charm = charm,
+            npcState = 5, // pool state
+            turnTime = OffsetDateTime.now(),
+        )
+        return generalRepository.save(general)
+    }
+
+    fun updatePoolGeneral(worldId: Long, loginId: String, generalId: Long, leadership: Short, strength: Short, intel: Short, politics: Short, charm: Short): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        val general = generalRepository.findById(generalId).orElse(null) ?: return null
+        // Only owner can update their own pool general
+        if (general.worldId != worldId || general.userId != userId || general.npcState.toInt() != 5) return null
+        general.leadership = leadership
+        general.strength = strength
+        general.intel = intel
+        general.politics = politics
+        general.charm = charm
+        return generalRepository.save(general)
+    }
+
+    fun getMyActiveGeneral(loginId: String): General? {
+        val userId = getCurrentUserId(loginId) ?: return null
+        return generalRepository.findByUserId(userId).firstOrNull { it.npcState.toInt() == 0 }
+    }
+
     fun getCurrentUserId(loginId: String): Long? {
         return appUserRepository.findByLoginId(loginId)?.id
     }

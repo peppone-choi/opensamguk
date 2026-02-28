@@ -1,9 +1,11 @@
 package com.opensam.controller
 
+import com.opensam.dto.BuildPoolGeneralRequest
 import com.opensam.dto.CreateGeneralRequest
 import com.opensam.dto.FrontInfoResponse
 import com.opensam.dto.GeneralResponse
 import com.opensam.dto.SelectNpcRequest
+import com.opensam.dto.UpdatePoolGeneralRequest
 import com.opensam.service.FrontInfoService
 import com.opensam.service.GeneralService
 import org.springframework.http.HttpStatus
@@ -91,6 +93,35 @@ class GeneralController(
     @GetMapping("/worlds/{worldId}/pool")
     fun listPool(@PathVariable worldId: Long): ResponseEntity<List<GeneralResponse>> {
         return ResponseEntity.ok(generalService.listPool(worldId).map { GeneralResponse.from(it) })
+    }
+
+    @PostMapping("/worlds/{worldId}/pool")
+    fun buildPoolGeneral(
+        @PathVariable worldId: Long,
+        @RequestBody request: BuildPoolGeneralRequest,
+    ): ResponseEntity<GeneralResponse> {
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val general = generalService.buildPoolGeneral(
+            worldId, loginId, request.name,
+            request.leadership, request.strength, request.intel, request.politics, request.charm,
+        ) ?: return ResponseEntity.badRequest().build()
+        return ResponseEntity.status(HttpStatus.CREATED).body(GeneralResponse.from(general))
+    }
+
+    @PutMapping("/worlds/{worldId}/pool/{generalId}")
+    fun updatePoolGeneral(
+        @PathVariable worldId: Long,
+        @PathVariable generalId: Long,
+        @RequestBody request: UpdatePoolGeneralRequest,
+    ): ResponseEntity<GeneralResponse> {
+        val loginId = SecurityContextHolder.getContext().authentication?.name
+            ?: return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        val general = generalService.updatePoolGeneral(
+            worldId, loginId, generalId,
+            request.leadership, request.strength, request.intel, request.politics, request.charm,
+        ) ?: return ResponseEntity.badRequest().build()
+        return ResponseEntity.ok(GeneralResponse.from(general))
     }
 
     @PostMapping("/worlds/{worldId}/select-pool")
