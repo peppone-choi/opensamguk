@@ -2,13 +2,21 @@ package com.opensam.command
 
 import com.opensam.command.constraint.ConstraintResult
 import com.opensam.command.general.*
+import com.opensam.engine.DiplomacyService
 import com.opensam.entity.City
 import com.opensam.entity.General
 import com.opensam.entity.Nation
+import com.opensam.repository.CityRepository
+import com.opensam.repository.GeneralRepository
+import com.opensam.repository.NationRepository
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import java.time.OffsetDateTime
+import java.util.Optional
 import kotlin.random.Random
 
 class GeneralMilitaryCommandTest {
@@ -198,6 +206,40 @@ class GeneralMilitaryCommandTest {
         assertTrue(result.success)
         assertTrue(result.message!!.contains("\"troopAssembly\""))
         assertTrue(result.message!!.contains("\"troopLeaderId\":\"1\""))
+    }
+
+    @Test
+    fun `집합 members not at city get moved`() {
+        // Arrange: troop leader at city 1, member at city 2 (should be moved)
+        val leader = createTestGeneral(nationId = 1, cityId = 1, troopId = 1)
+        val member = createTestGeneral(nationId = 1, cityId = 2, troopId = 1).apply { id = 2L }
+
+        val env = createTestEnv()
+        env.gameStor["troopMemberExistsByTroopId"] = mapOf(1L to true)
+
+        val generalRepository = mock(GeneralRepository::class.java)
+        `when`(generalRepository.findByTroopId(1L)).thenReturn(listOf(leader, member))
+
+        val mockServices = CommandServices(
+            generalRepository = generalRepository,
+            cityRepository = mock(CityRepository::class.java),
+            nationRepository = mock(NationRepository::class.java),
+            diplomacyService = mock(DiplomacyService::class.java),
+        )
+
+        val cmd = 집합(leader, env)
+        cmd.city = createTestCity(nationId = 1)
+        cmd.services = mockServices
+
+        val result = runBlocking { cmd.run(fixedRng) }
+
+        assertTrue(result.success)
+        // Member should have been moved to city 1
+        assertEquals(1L, member.cityId, "Member not at city should be moved to leader city")
+        // movedCount in message should reflect 1 member moved
+        assertTrue(result.message!!.contains("\"movedCount\":1"))
+        // destCityGenerals should contain the moved member
+        assertTrue(cmd.destCityGenerals?.any { it.id == member.id } == true)
     }
 
     @Test

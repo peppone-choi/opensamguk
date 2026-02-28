@@ -30,19 +30,45 @@ class 집합(general: General, env: CommandEnv, arg: Map<String, Any>? = null)
         val cityName = city?.name ?: "알 수 없음"
         val cityId = city?.id ?: 0L
         val troopName = troop?.name ?: "부대"
+        val troopId = general.troopId
 
-        // Legacy: log with city name in color tags
         pushLog("<G><b>${cityName}</b></>에서 집합을 실시했습니다. <1>$date</>")
+
+        // Legacy: members not at the city get moved + notified
+        // PHP: SELECT no FROM general WHERE nation=%i AND city!=%i AND troop=%i AND no!=%i
+        //      -> UPDATE general SET city=$cityID WHERE no IN list
+        //      -> push notification log for each
+        val movedMembers = mutableListOf<General>()
+        val generalRepo = services?.generalRepository
+        if (generalRepo != null && troopId > 0L) {
+            val troopMembers = generalRepo.findByTroopId(troopId)
+            for (member in troopMembers) {
+                if (member.id != general.id && member.cityId != cityId) {
+                    member.cityId = cityId
+                    movedMembers.add(member)
+                }
+            }
+            // Save moved members via destCityGenerals hook (CommandExecutor saves this list)
+            if (movedMembers.isNotEmpty()) {
+                destCityGenerals = movedMembers
+            }
+        }
 
         val exp = 70
         val ded = 100
 
-        // Legacy: members not at the city get moved + notified
-        // The message includes troopLeaderId so the caller can move members
         return CommandResult(
             success = true,
             logs = logs,
-            message = """{"statChanges":{"experience":$exp,"dedication":$ded,"leadershipExp":1},"troopAssembly":{"troopLeaderId":"${general.id}","destinationCityId":"$cityId","cityName":"$cityName","troopName":"$troopName","memberNotification":"${troopName} 부대원들은 <G><b>${cityName}</b></>(으)로 집합되었습니다."}}"""
+            message = buildString {
+                append("""{"statChanges":{"experience":$exp,"dedication":$ded,"leadershipExp":1}""")
+                append(""","troopAssembly":{""")
+                append(""""troopLeaderId":"${general.id}","destinationCityId":"$cityId"""")
+                append(""","cityName":"$cityName","troopName":"$troopName"""")
+                append(""","movedCount":${movedMembers.size}""")
+                append(""","memberNotification":"${troopName} 부대원들은 <G><b>${cityName}</b></>(으)로 집합되었습니다."""")
+                append("""}}""")
+            }
         )
     }
 }
