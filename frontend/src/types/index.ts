@@ -614,12 +614,12 @@ export interface CityFrontInfo {
   level: number;
   nationInfo: CityNationInfo;
   trust: number;
-  pop: [number, number];
-  agri: [number, number];
-  comm: [number, number];
-  secu: [number, number];
-  def: [number, number];
-  wall: [number, number];
+  pop: number[];
+  agri: number[];
+  comm: number[];
+  secu: number[];
+  def: number[];
+  wall: number[];
   trade: number | null;
   officerList: Record<number, CityOfficerInfo | null>;
 }

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -519,12 +519,8 @@ export function CrewTypeBrowser({
     return cities.find((c) => c.id === myGeneral.cityId) ?? null;
   }, [cities, myGeneral]);
 
-  // NOTE: CityResponse currently has no dedicated `tech` field.
-  // If tech is ever exposed, it should come from `city.meta.tech` (or a dedicated API field).
   const techLevel =
-    typeof (myCity?.meta as any)?.tech === "number"
-      ? ((myCity!.meta as any).tech as number)
-      : 0;
+    typeof myCity?.meta?.tech === "number" ? (myCity.meta.tech as number) : 0;
   const leadership = myGeneral?.leadership ?? 100;
   const currentCrew = myGeneral?.crew ?? 0;
   const currentCrewType = myGeneral?.crewType ?? 0;

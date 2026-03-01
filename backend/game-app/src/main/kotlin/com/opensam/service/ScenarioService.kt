@@ -61,6 +61,7 @@ class ScenarioService(
                 config = mutableMapOf(
                     "mapCode" to mapName,
                     "startyear" to scenario.startYear,
+                    "hiddenSeed" to java.util.UUID.randomUUID().toString(),
                 ),
             )
         )

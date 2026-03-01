@@ -313,6 +313,8 @@ data class TroopResponse(
     val name: String,
     val meta: Map<String, Any>,
     val createdAt: OffsetDateTime,
+    val turnTime: OffsetDateTime? = null,
+    val reservedCommandBrief: String? = null,
 ) {
     companion object {
         fun from(e: Troop) = TroopResponse(

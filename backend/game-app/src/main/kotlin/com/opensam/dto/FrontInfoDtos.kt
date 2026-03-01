@@ -42,7 +42,7 @@ data class GlobalInfo(
     val generalCntLimit: Int,
     val serverCnt: Int,
     val lastVoteID: Int,
-    val lastVote: Any?,
+    val lastVote: Map<String, Any>?,
 )
 
 data class OnlineNationInfo(
@@ -137,7 +137,7 @@ data class GeneralFrontInfo(
     val refreshScoreTotal: Int?,
     val refreshScore: Int?,
     val autorunLimit: Int,
-    val reservedCommand: Any?,
+    val reservedCommand: Map<String, Any>?,
     val troopInfo: TroopInfo?,
     val dex1: Int,
     val dex2: Int,
@@ -159,7 +159,7 @@ data class TroopInfo(
 
 data class TroopLeaderInfo(
     val city: Long,
-    val reservedCommand: Any?,
+    val reservedCommand: Map<String, Any>?,
 )
 
 data class NationFrontInfo(
@@ -184,7 +184,7 @@ data class NationFrontInfo(
     val topChiefs: Map<Int, TopChiefInfo?>,
     val diplomaticLimit: Int,
     val strategicCmdLimit: Int,
-    val impossibleStrategicCommand: List<Any>,
+    val impossibleStrategicCommand: List<String>,
     val prohibitScout: Int,
     val prohibitWar: Int,
 )

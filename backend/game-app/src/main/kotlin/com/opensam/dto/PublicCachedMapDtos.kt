@@ -15,6 +15,9 @@ data class PublicCachedMapHistoryResponse(
     val id: Long,
     val sentAt: OffsetDateTime,
     val text: String,
+    val year: Int? = null,
+    val month: Int? = null,
+    val events: List<String>? = null,
 )
 
 data class PublicCachedMapResponse(
