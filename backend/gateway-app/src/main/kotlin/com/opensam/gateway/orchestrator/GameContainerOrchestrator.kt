@@ -28,6 +28,20 @@ class GameContainerOrchestrator(
     private val dockerNetwork: String,
     @Value("\${gateway.docker.image-prefix:opensam/game-app}")
     private val imagePrefix: String,
+    @Value("\${DB_HOST:postgres}")
+    private val dbHost: String,
+    @Value("\${DB_PORT:5432}")
+    private val dbPort: String,
+    @Value("\${DB_NAME:opensam}")
+    private val dbName: String,
+    @Value("\${DB_USER:opensam}")
+    private val dbUser: String,
+    @Value("\${DB_PASSWORD:opensam123}")
+    private val dbPassword: String,
+    @Value("\${REDIS_HOST:redis}")
+    private val redisHost: String,
+    @Value("\${REDIS_PORT:6379}")
+    private val redisPort: String,
 ) : GameOrchestrator {
 
     private val log = LoggerFactory.getLogger(GameContainerOrchestrator::class.java)
@@ -167,6 +181,13 @@ class GameContainerOrchestrator(
             "-e", "SPRING_PROFILES_ACTIVE=docker",
             "-e", "GAME_COMMIT_SHA=$commitSha",
             "-e", "GAME_VERSION=$gameVersion",
+            "-e", "DB_HOST=$dbHost",
+            "-e", "DB_PORT=$dbPort",
+            "-e", "DB_NAME=$dbName",
+            "-e", "DB_USER=$dbUser",
+            "-e", "DB_PASSWORD=$dbPassword",
+            "-e", "REDIS_HOST=$redisHost",
+            "-e", "REDIS_PORT=$redisPort",
             imageTag,
         )
 
