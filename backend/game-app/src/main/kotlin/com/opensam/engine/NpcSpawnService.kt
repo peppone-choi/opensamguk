@@ -61,8 +61,9 @@ class NpcSpawnService(
         val occupiedCityIds = cities.filter { it.nationId != 0L }.map { it.id }
         val npcCreatedCityIds = mutableListOf<Long>()
 
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "RaiseNPCNation",
+            hiddenSeed, "RaiseNPCNation",
             world.currentYear, world.currentMonth
         )
 
@@ -306,8 +307,9 @@ class NpcSpawnService(
 
             val capitalCity = nation.capitalCityId ?: continue
 
+            val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
             val rng = DeterministicRng.create(
-                "${world.id}", "troopLeader",
+                hiddenSeed, "troopLeader",
                 world.currentYear, world.currentMonth,
                 nation.id.toInt()
             )
@@ -357,8 +359,9 @@ class NpcSpawnService(
         val lv4Cities = cities.filter { it.level.toInt() == 4 }
         if (lv4Cities.isEmpty()) return
 
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "RaiseInvader",
+            hiddenSeed, "RaiseInvader",
             world.currentYear, world.currentMonth
         )
 

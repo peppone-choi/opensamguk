@@ -287,8 +287,9 @@ class EventActionService(
         }
 
         val totalCount = npcCount + moreGenCnt
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "CreateManyNPC",
+            hiddenSeed, "CreateManyNPC",
             world.currentYear, world.currentMonth
         )
 
@@ -491,8 +492,9 @@ class EventActionService(
 
         if (generals.isEmpty()) return
 
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "LostUniqueItem",
+            hiddenSeed, "LostUniqueItem",
             world.currentYear, world.currentMonth
         )
 

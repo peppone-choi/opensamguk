@@ -1,4 +1,5 @@
 # Frontend Parity Verification Report
+
 **Date:** 2026-02-27  
 **Status:** READY FOR LEGACY DELETION ✓
 
@@ -16,64 +17,64 @@
 
 ## Detailed Mapping
 
-### PUBLIC/STATISTICS PAGES (a_* prefix) - 8/8 ✓
+### PUBLIC/STATISTICS PAGES (a\_\* prefix) - 8/8 ✓
 
-| Legacy Page | Frontend Route | Status | Notes |
-|---|---|---|---|
-| `a_bestGeneral.php` | `/best-generals` | ✓ | 791 lines, fully implemented |
-| `a_emperior.php` | `/emperor` | ✓ | 920 lines, fully implemented |
-| `a_emperior_detail.php` | `/emperor/detail` | ✓ | Dynamic route, fully implemented |
-| `a_genList.php` | `/generals` | ✓ | 791 lines, shared with auth users |
-| `a_hallOfFame.php` | `/hall-of-fame` | ✓ | Fully implemented |
-| `a_kingdomList.php` | `/nations` | ✓ | 1283 lines, fully implemented |
-| `a_npcList.php` | `/npc-list` | ✓ | Fully implemented |
-| `a_traffic.php` | `/traffic` | ✓ | Fully implemented |
+| Legacy Page             | Frontend Route    | Status | Notes                             |
+| ----------------------- | ----------------- | ------ | --------------------------------- |
+| `a_bestGeneral.php`     | `/best-generals`  | ✓      | 791 lines, fully implemented      |
+| `a_emperior.php`        | `/emperor`        | ✓      | 920 lines, fully implemented      |
+| `a_emperior_detail.php` | `/emperor/detail` | ✓      | Dynamic route, fully implemented  |
+| `a_genList.php`         | `/generals`       | ✓      | 791 lines, shared with auth users |
+| `a_hallOfFame.php`      | `/hall-of-fame`   | ✓      | Fully implemented                 |
+| `a_kingdomList.php`     | `/nations`        | ✓      | 1283 lines, fully implemented     |
+| `a_npcList.php`         | `/npc-list`       | ✓      | Fully implemented                 |
+| `a_traffic.php`         | `/traffic`        | ✓      | Fully implemented                 |
 
-### AUTHENTICATED USER PAGES (b_* prefix) - 10/10 ✓
+### AUTHENTICATED USER PAGES (b\_\* prefix) - 10/10 ✓
 
-| Legacy Page | Frontend Route | Status | Notes |
-|---|---|---|---|
-| `b_betting.php` | `/betting` | ✓ | 1194 lines, fully implemented |
-| `b_currentCity.php` | `/city` | ✓ | 799 lines, fully implemented |
-| `b_genList.php` | `/generals` | ✓ | Shared with public (auth-gated) |
-| `b_myBossInfo.php` | `/superior` | ✓ | 850 lines, fully implemented |
-| `b_myCityInfo.php` | `/city` | ✓ | Same as b_currentCity |
-| `b_myGenInfo.php` | `/general` | ✓ | 791 lines, fully implemented |
-| `b_myKingdomInfo.php` | `/nation` | ✓ | 1283 lines, fully implemented |
-| `b_myPage.php` | `/my-page` | ✓ | 1342 lines, fully implemented |
-| `b_tournament.php` | `/tournament` | ✓ | 764 lines, fully implemented |
+| Legacy Page           | Frontend Route | Status | Notes                           |
+| --------------------- | -------------- | ------ | ------------------------------- |
+| `b_betting.php`       | `/betting`     | ✓      | 1194 lines, fully implemented   |
+| `b_currentCity.php`   | `/city`        | ✓      | 799 lines, fully implemented    |
+| `b_genList.php`       | `/generals`    | ✓      | Shared with public (auth-gated) |
+| `b_myBossInfo.php`    | `/superior`    | ✓      | 850 lines, fully implemented    |
+| `b_myCityInfo.php`    | `/city`        | ✓      | Same as b_currentCity           |
+| `b_myGenInfo.php`     | `/general`     | ✓      | 791 lines, fully implemented    |
+| `b_myKingdomInfo.php` | `/nation`      | ✓      | 1283 lines, fully implemented   |
+| `b_myPage.php`        | `/my-page`     | ✓      | 1342 lines, fully implemented   |
+| `b_tournament.php`    | `/tournament`  | ✓      | 764 lines, fully implemented    |
 
-### VIEW PAGES (v_* prefix) - 13/15 ✓
+### VIEW PAGES (v\_\* prefix) - 13/15 ✓
 
-| Legacy Page | Frontend Route | Status | Notes |
-|---|---|---|---|
-| `v_cachedMap.php` | `/map` | ✓ | 920 lines, fully implemented |
-| `v_join.php` | `/lobby/join` | ✓ | Fully implemented |
-| `v_processing.php` | `/processing` | ✓ | 138 lines, fully implemented |
-| `v_board.php` | `/board` | ✓ | 604 lines, fully implemented |
-| `v_history.php` | `/history` | ✓ | 722 lines, fully implemented |
-| `v_vote.php` | `/vote` | ✓ | 482 lines, fully implemented |
-| `v_auction.php` | `/auction` | ✓ | 1312 lines, fully implemented |
-| `v_battleCenter.php` | `/battle-center` | ✓ | 913 lines, fully implemented |
-| `v_chiefCenter.php` | `/chief` | ✓ | 1886 lines, fully implemented |
-| `v_globalDiplomacy.php` | `/diplomacy` | ✓ | 1196 lines, fully implemented |
-| `v_inheritPoint.php` | `/inherit` | ✓ | 1100 lines, fully implemented |
-| `v_NPCControl.php` | `/npc-control` | ✓ | 1288 lines, fully implemented |
-| `v_nationGeneral.php` | `/nation-generals` | ✓ | Fully implemented |
-| `v_troop.php` | `/troop` | ✓ | Fully implemented |
+| Legacy Page             | Frontend Route     | Status | Notes                         |
+| ----------------------- | ------------------ | ------ | ----------------------------- |
+| `v_cachedMap.php`       | `/map`             | ✓      | 920 lines, fully implemented  |
+| `v_join.php`            | `/lobby/join`      | ✓      | Fully implemented             |
+| `v_processing.php`      | `/processing`      | ✓      | 138 lines, fully implemented  |
+| `v_board.php`           | `/board`           | ✓      | 604 lines, fully implemented  |
+| `v_history.php`         | `/history`         | ✓      | 722 lines, fully implemented  |
+| `v_vote.php`            | `/vote`            | ✓      | 482 lines, fully implemented  |
+| `v_auction.php`         | `/auction`         | ✓      | 1312 lines, fully implemented |
+| `v_battleCenter.php`    | `/battle-center`   | ✓      | 913 lines, fully implemented  |
+| `v_chiefCenter.php`     | `/chief`           | ✓      | 1886 lines, fully implemented |
+| `v_globalDiplomacy.php` | `/diplomacy`       | ✓      | 1196 lines, fully implemented |
+| `v_inheritPoint.php`    | `/inherit`         | ✓      | 1100 lines, fully implemented |
+| `v_NPCControl.php`      | `/npc-control`     | ✓      | 1288 lines, fully implemented |
+| `v_nationGeneral.php`   | `/nation-generals` | ✓      | Fully implemented             |
+| `v_troop.php`           | `/troop`           | ✓      | Fully implemented             |
 
 ### CONSOLIDATED/MERGED PAGES - 2/2 ✓
 
-| Legacy Page | Frontend Route | Status | Notes |
-|---|---|---|---|
-| `v_nationBetting.php` | `/betting` | ✓ | Merged into main betting page |
-| `v_nationStratFinan.php` | `/nation` | ✓ | Merged into nation info page |
+| Legacy Page              | Frontend Route | Status | Notes                         |
+| ------------------------ | -------------- | ------ | ----------------------------- |
+| `v_nationBetting.php`    | `/betting`     | ✓      | Merged into main betting page |
+| `v_nationStratFinan.php` | `/nation`      | ✓      | Merged into nation info page  |
 
 ### MAIN ENTRY - 1/1 ✓
 
-| Legacy Page | Frontend Route | Status | Notes |
-|---|---|---|---|
-| `index.php` | `/lobby` or `/game` | ✓ | Routed to lobby/game based on auth state |
+| Legacy Page | Frontend Route      | Status | Notes                                    |
+| ----------- | ------------------- | ------ | ---------------------------------------- |
+| `index.php` | `/lobby` or `/game` | ✓      | Routed to lobby/game based on auth state |
 
 ---
 
@@ -82,18 +83,21 @@
 These are new pages added for SPA functionality:
 
 ### Authentication (4 pages)
+
 - `/login` — Login page
 - `/register` — Registration page
 - `/account` — Account management
 - `/auth/kakao/callback` — OAuth callback handler
 
 ### Lobby/World Selection (4 pages)
+
 - `/lobby` — World/game selection
 - `/lobby/join` — Create new general
 - `/lobby/select-npc` — NPC selection
 - `/lobby/select-pool` — General pool selection
 
 ### Admin Panel (8 pages)
+
 - `/admin` — Admin dashboard
 - `/admin/diplomacy` — Diplomacy management
 - `/admin/game-versions` — Game version control
@@ -104,10 +108,12 @@ These are new pages added for SPA functionality:
 - `/admin/users` — User management
 
 ### Detail/Dynamic Routes (2 pages)
+
 - `/generals/[id]` — General detail view
 - `/vote/[id]` — Vote detail view
 
 ### Command/Management Pages (6 pages)
+
 - `/commands` — Command management
 - `/personnel` — Personnel/officer management
 - `/internal-affairs` — Internal affairs
@@ -116,6 +122,7 @@ These are new pages added for SPA functionality:
 - `/dynasty` — Dynasty info
 
 ### Additional Game Pages (4 pages)
+
 - `/nation-cities` — Nation cities list
 - `/nation-generals` — Nation generals list
 - `/battle` — Battle execution
@@ -125,21 +132,22 @@ These are new pages added for SPA functionality:
 
 ## Code Quality Metrics
 
-| Metric | Value | Status |
-|---|---|---|
-| Total Frontend Pages | 56 | ✓ |
-| Total Lines of Code (game pages) | 30,438 | ✓ |
-| Avg Lines per Page | 544 | ✓ |
-| Smallest Page | 138 lines (processing) | ✓ |
-| Largest Page | 1886 lines (chief) | ✓ |
-| Stub/Placeholder Pages | 0 | ✓ |
-| Pages with TODO/STUB markers | 0 | ✓ |
+| Metric                           | Value                  | Status |
+| -------------------------------- | ---------------------- | ------ |
+| Total Frontend Pages             | 56                     | ✓      |
+| Total Lines of Code (game pages) | 30,438                 | ✓      |
+| Avg Lines per Page               | 544                    | ✓      |
+| Smallest Page                    | 138 lines (processing) | ✓      |
+| Largest Page                     | 1886 lines (chief)     | ✓      |
+| Stub/Placeholder Pages           | 0                      | ✓      |
+| Pages with TODO/STUB markers     | 0                      | ✓      |
 
 ---
 
 ## Implementation Status by Category
 
 ### Core Pages (100% Complete)
+
 - My General Info ✓
 - My City Info ✓
 - My Nation Info ✓
@@ -149,6 +157,7 @@ These are new pages added for SPA functionality:
 - My Page/Dashboard ✓
 
 ### Feature Pages (100% Complete)
+
 - Board/Forum ✓
 - History ✓
 - Vote/Poll ✓
@@ -164,6 +173,7 @@ These are new pages added for SPA functionality:
 - Troop Management ✓
 
 ### Public/Statistics Pages (100% Complete)
+
 - Best Generals ✓
 - Emperor Rankings ✓
 - Hall of Fame ✓
@@ -173,6 +183,7 @@ These are new pages added for SPA functionality:
 - Traffic/Activity ✓
 
 ### View Pages (100% Complete)
+
 - Cached Map ✓
 - Join/Create General ✓
 - Processing Queue ✓
@@ -185,6 +196,7 @@ These are new pages added for SPA functionality:
 All pages include required data fields from legacy:
 
 ### General Info Page
+
 - ✓ 5-stat (leadership, strength, intel, politics, charm)
 - ✓ Crew/train/atmosphere
 - ✓ Nation/city affiliation
@@ -193,6 +205,7 @@ All pages include required data fields from legacy:
 - ✓ Special skills
 
 ### City Info Page
+
 - ✓ Population
 - ✓ Agriculture/commerce/security/defense/walls
 - ✓ Resources (gold/rice)
@@ -200,6 +213,7 @@ All pages include required data fields from legacy:
 - ✓ City level
 
 ### Nation Info Page
+
 - ✓ Nation name
 - ✓ Capital city
 - ✓ Gold/rice
@@ -208,6 +222,7 @@ All pages include required data fields from legacy:
 - ✓ Diplomatic status
 
 ### World Map
+
 - ✓ City positions
 - ✓ Nation color coding
 - ✓ Connection lines
@@ -247,6 +262,7 @@ All pages properly implement auth state separation:
 ### ✓ SAFE TO DELETE
 
 **Legacy Directory:** `/Users/apple/Desktop/opensam/legacy/`
+
 - All PHP pages have Next.js equivalents
 - All data output is replicated
 - All UI components are implemented
@@ -254,6 +270,7 @@ All pages properly implement auth state separation:
 - All auth/permission logic is replicated
 
 **Core2026 Directory:** `/Users/apple/Desktop/opensam/core2026/`
+
 - If this contains legacy code, also safe to delete
 - Verify no active references in backend/frontend first
 
@@ -290,4 +307,3 @@ All pages properly implement auth state separation:
 The Next.js frontend is **feature-complete** relative to the legacy PHP codebase. All 35 legacy pages have functional equivalents, with additional improvements in organization and UX.
 
 **Recommendation:** Proceed with deletion of `legacy/` and `core2026/` directories after completing the pre-deletion checklist.
-

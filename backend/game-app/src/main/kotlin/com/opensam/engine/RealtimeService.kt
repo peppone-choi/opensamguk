@@ -105,8 +105,9 @@ class RealtimeService(
                     nationRepository.findById(general.nationId).orElse(null)
                 } else null
 
+                val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                 val rng = DeterministicRng.create(
-                    "${world.id}", "realtime_complete", general.id, world.currentYear, world.currentMonth, gt.actionCode
+                    hiddenSeed, "realtime_complete", general.id, world.currentYear, world.currentMonth, gt.actionCode
                 )
 
                 firePreTurnTriggers(world, general, nation)

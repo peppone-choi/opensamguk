@@ -332,6 +332,7 @@ export interface GeneralTurn {
   actionCode: string;
   arg: Record<string, unknown>;
   brief: string | null;
+  createdAt: string;
 }
 
 export interface NationTurn {
@@ -343,6 +344,7 @@ export interface NationTurn {
   actionCode: string;
   arg: Record<string, unknown>;
   brief: string | null;
+  createdAt: string;
 }
 
 export interface CommandResult {
@@ -851,6 +853,9 @@ export interface BattleSimResult {
   defenderRemaining: number;
   rounds: number;
   logs: string[];
+  terrain?: string;
+  weather?: string;
+  defendersRemaining?: number[];
 }
 
 // Nation Policy

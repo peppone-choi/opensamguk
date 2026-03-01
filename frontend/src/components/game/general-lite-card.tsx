@@ -56,10 +56,7 @@ export function GeneralLiteCard({
     return list[key];
   };
 
-  const personal = getActionInfo(
-    general.personal,
-    gameConst?.personalityList,
-  );
+  const personal = getActionInfo(general.personal, gameConst?.personalityList);
   const specialDomestic = getActionInfo(
     general.specialDomestic,
     gameConst?.specialDomesticList,
@@ -77,7 +74,8 @@ export function GeneralLiteCard({
   };
 
   return (
-    <div className="grid text-center text-sm border border-border bg-muted/30"
+    <div
+      className="grid text-center text-sm border border-border bg-muted/30"
       style={{
         gridTemplateColumns: "64px repeat(3, 2fr 5fr)",
         gridTemplateRows: "repeat(5, calc(64px / 3))",
@@ -94,10 +92,7 @@ export function GeneralLiteCard({
       />
 
       {/* Name row */}
-      <div
-        className="col-span-6 font-bold py-0.5"
-        style={nameStyle}
-      >
+      <div className="col-span-6 font-bold py-0.5" style={nameStyle}>
         {general.name} 【{general.officerLevelText} | {typeCall} |{" "}
         <span style={{ color: injuryColor }}>{injuryText}</span>】
       </div>
@@ -153,9 +148,7 @@ export function GeneralLiteCard({
       {/* Row 5: filler + killturn, penalty */}
       <div className="bg-muted/50 border-l border-b border-border" />
       <div className="bg-muted/50 border-b border-border">삭턴</div>
-      <div className="border-b border-border">
-        {general.killturn ?? "-"} 턴
-      </div>
+      <div className="border-b border-border">{general.killturn ?? "-"} 턴</div>
       <div className="bg-muted/50 border-b border-border">벌점</div>
       <div className="border-b border-border col-span-3">
         {refreshScoreText} {(general.refreshScoreTotal ?? 0).toLocaleString()}점
@@ -164,13 +157,7 @@ export function GeneralLiteCard({
   );
 }
 
-function MaybeTooltip({
-  text,
-  info,
-}: {
-  text: string;
-  info?: string;
-}) {
+function MaybeTooltip({ text, info }: { text: string; info?: string }) {
   if (!info) return <span>{text}</span>;
   return (
     <TooltipProvider>

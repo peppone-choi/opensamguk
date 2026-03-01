@@ -36,6 +36,12 @@ class DiplomacyLetterController(
         return ResponseEntity.ok().build()
     }
 
+    @PostMapping("/diplomacy-letters/{id}/execute")
+    fun executeLetter(@PathVariable id: Long): ResponseEntity<Void> {
+        if (!diplomacyLetterService.executeLetter(id)) return ResponseEntity.notFound().build()
+        return ResponseEntity.ok().build()
+    }
+
     @PostMapping("/diplomacy-letters/{id}/rollback")
     fun rollbackLetter(@PathVariable id: Long): ResponseEntity<Void> {
         if (!diplomacyLetterService.rollbackLetter(id)) return ResponseEntity.notFound().build()

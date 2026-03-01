@@ -24,4 +24,14 @@ class RankingController(
     fun hallOfFame(@PathVariable worldId: Long): ResponseEntity<List<MessageResponse>> {
         return ResponseEntity.ok(rankingService.hallOfFame(worldId).map { MessageResponse.from(it) })
     }
+
+    @GetMapping("/worlds/{worldId}/hall-of-fame/options")
+    fun hallOfFameOptions(@PathVariable worldId: Long): ResponseEntity<Map<String, Any>> {
+        return ResponseEntity.ok(rankingService.hallOfFameOptions(worldId))
+    }
+
+    @GetMapping("/worlds/{worldId}/unique-item-owners")
+    fun uniqueItemOwners(@PathVariable worldId: Long): ResponseEntity<List<Map<String, Any?>>> {
+        return ResponseEntity.ok(rankingService.uniqueItemOwners(worldId))
+    }
 }

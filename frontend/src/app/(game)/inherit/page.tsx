@@ -94,7 +94,6 @@ const COMBAT_BUFF_LIST: {
   },
 ];
 
-
 /* ── Fallback constants (overridden by server) ── */
 
 const FALLBACK_BUFF_LEVEL_COSTS = [0, 200, 600, 1200, 2000, 3000];
@@ -196,7 +195,6 @@ export default function InheritPage() {
   useEffect(() => {
     fetchInfo();
   }, [fetchInfo]);
-
 
   /* ── Combat buff buy ── */
   const handleBuyCombatBuff = async (buffCode: InheritBuffType) => {
@@ -543,7 +541,6 @@ export default function InheritPage() {
           <TabsTrigger value="misc">기타</TabsTrigger>
           <TabsTrigger value="log">이력</TabsTrigger>
         </TabsList>
-
 
         {/* ── Combat Buff Tab (8 buffs with granular level control) ── */}
         <TabsContent value="combat-buffs">

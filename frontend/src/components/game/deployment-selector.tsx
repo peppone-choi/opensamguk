@@ -12,11 +12,24 @@ import type { General, City, Nation } from "@/types";
 
 const CREW_TYPE_NAMES: Record<number, string> = {
   0: "없음",
-  1100: "보병", 1101: "청주병", 1102: "수병", 1103: "자객병", 1104: "근위병",
-  1200: "궁병", 1201: "궁기병", 1202: "연노병", 1203: "강궁병",
-  1300: "기병", 1301: "백마병", 1302: "중장기병", 1303: "돌격기병",
-  1400: "귀병", 1401: "신귀병", 1402: "백귀병",
-  1500: "정란", 1501: "충차",
+  1100: "보병",
+  1101: "청주병",
+  1102: "수병",
+  1103: "자객병",
+  1104: "근위병",
+  1200: "궁병",
+  1201: "궁기병",
+  1202: "연노병",
+  1203: "강궁병",
+  1300: "기병",
+  1301: "백마병",
+  1302: "중장기병",
+  1303: "돌격기병",
+  1400: "귀병",
+  1401: "신귀병",
+  1402: "백귀병",
+  1500: "정란",
+  1501: "충차",
 };
 
 // ── Distance grouping ──
@@ -41,7 +54,9 @@ interface DeploymentSelectorProps {
 export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
   const { cities, nations, generals } = useGameStore();
   const { myGeneral } = useGeneralStore();
-  const [selectedGeneralId, setSelectedGeneralId] = useState<number | null>(null);
+  const [selectedGeneralId, setSelectedGeneralId] = useState<number | null>(
+    null,
+  );
   const [selectedCityId, setSelectedCityId] = useState<number | null>(null);
 
   // Only own-nation generals
@@ -58,13 +73,15 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
 
   // Group cities by distance from selected general's current city
   const groupedCities = useMemo(() => {
-    const selectedGen = myNationGenerals.find((g) => g.id === selectedGeneralId);
+    const selectedGen = myNationGenerals.find(
+      (g) => g.id === selectedGeneralId,
+    );
     const baseCityId = selectedGen?.cityId ?? myGeneral?.cityId ?? 0;
 
     const groups: Record<DistanceGroup, (City & { dist: number })[]> = {
-      "근접": [],
-      "중거리": [],
-      "원거리": [],
+      근접: [],
+      중거리: [],
+      원거리: [],
     };
 
     for (const city of myCities) {
@@ -102,14 +119,19 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
 
       {/* General selector */}
       <div className="space-y-1">
-        <label className="text-[10px] text-muted-foreground font-medium">장수 선택</label>
+        <label className="text-[10px] text-muted-foreground font-medium">
+          장수 선택
+        </label>
         <div className="max-h-48 overflow-y-auto space-y-1">
           {myNationGenerals.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-3">소속 장수 없음</p>
+            <p className="text-xs text-muted-foreground text-center py-3">
+              소속 장수 없음
+            </p>
           ) : (
             myNationGenerals.map((gen) => {
               const isSelected = selectedGeneralId === gen.id;
-              const crewName = CREW_TYPE_NAMES[gen.crewType] ?? `${gen.crewType}`;
+              const crewName =
+                CREW_TYPE_NAMES[gen.crewType] ?? `${gen.crewType}`;
               return (
                 <button
                   key={gen.id}
@@ -118,7 +140,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                     "w-full text-left px-3 py-1.5 rounded-md border text-xs transition-colors",
                     isSelected
                       ? "border-amber-500 bg-amber-900/30 text-amber-100"
-                      : "border-border hover:border-amber-700/50 hover:bg-amber-900/10"
+                      : "border-border hover:border-amber-700/50 hover:bg-amber-900/10",
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -129,7 +151,9 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                      <span>{gen.leadership}/{gen.strength}/{gen.intel}</span>
+                      <span>
+                        {gen.leadership}/{gen.strength}/{gen.intel}
+                      </span>
                     </div>
                   </div>
                   <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground">
@@ -147,7 +171,9 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
 
       {/* City selector grouped by distance */}
       <div className="space-y-1">
-        <label className="text-[10px] text-muted-foreground font-medium">발령 도시</label>
+        <label className="text-[10px] text-muted-foreground font-medium">
+          발령 도시
+        </label>
         <div className="max-h-48 overflow-y-auto space-y-2">
           {(["근접", "중거리", "원거리"] as DistanceGroup[]).map((group) => {
             const citiesInGroup = groupedCities[group];
@@ -159,9 +185,11 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                     variant="outline"
                     className={cn(
                       "text-[9px] px-1.5 py-0",
-                      group === "근접" ? "border-green-600 text-green-400" :
-                      group === "중거리" ? "border-yellow-600 text-yellow-400" :
-                      "border-red-600 text-red-400"
+                      group === "근접"
+                        ? "border-green-600 text-green-400"
+                        : group === "중거리"
+                          ? "border-yellow-600 text-yellow-400"
+                          : "border-red-600 text-red-400",
                     )}
                   >
                     {group}
@@ -179,7 +207,7 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                           "w-full text-left px-3 py-1.5 rounded-md border text-xs transition-colors",
                           isSelected
                             ? "border-amber-500 bg-amber-900/30 text-amber-100"
-                            : "border-border hover:border-amber-700/50 hover:bg-amber-900/10"
+                            : "border-border hover:border-amber-700/50 hover:bg-amber-900/10",
                         )}
                       >
                         <div className="flex items-center justify-between">
@@ -189,7 +217,10 @@ export function DeploymentSelector({ onSubmit }: DeploymentSelectorProps) {
                               Lv.{city.level}
                             </span>
                             {nation && (
-                              <Badge variant="outline" className="text-[9px] px-1 py-0">
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] px-1 py-0"
+                              >
                                 {nation.name}
                               </Badge>
                             )}

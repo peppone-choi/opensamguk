@@ -114,8 +114,9 @@ class SpecialAssignmentService {
         // Skip first 3 years
         if (world.currentYear.toInt() < startYear + 3) return
 
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "assignSpeciality",
+            hiddenSeed, "assignSpeciality",
             world.currentYear, world.currentMonth
         )
 

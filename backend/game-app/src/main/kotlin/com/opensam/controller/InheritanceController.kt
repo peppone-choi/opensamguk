@@ -31,6 +31,19 @@ class InheritanceController(
     }
 
 
+    @PostMapping("/worlds/{worldId}/inheritance/buy")
+    fun buyInherit(
+        @PathVariable worldId: Long,
+        @RequestBody request: Map<String, String>,
+    ): ResponseEntity<InheritanceActionResult> {
+        val loginId = getLoginId() ?: return ResponseEntity.status(401).build()
+        val buffCode = request["buffCode"] ?: return ResponseEntity.badRequest().build()
+        val result = inheritanceService.buyInheritBuff(worldId, loginId, BuyInheritBuffRequest(type = buffCode, level = 1))
+            ?: return ResponseEntity.notFound().build()
+        if (result.error != null) return ResponseEntity.badRequest().body(result)
+        return ResponseEntity.ok(result)
+    }
+
     @PostMapping("/worlds/{worldId}/inheritance/special")
     fun setInheritSpecial(
         @PathVariable worldId: Long,

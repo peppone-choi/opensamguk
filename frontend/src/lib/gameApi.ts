@@ -554,10 +554,14 @@ export const nationPolicyApi = {
 export const npcPolicyApi = {
   getPolicy: (nationId: number) =>
     api.get<NpcPolicyInfo>(`/nations/${nationId}/npc-policy`),
-  updatePolicy: (nationId: number, policy: Partial<NpcPolicyInfo> & Record<string, unknown>) =>
-    api.put<void>(`/nations/${nationId}/npc-policy`, policy),
-  updatePriority: (nationId: number, priority: Partial<NpcPolicyInfo> & Record<string, unknown>) =>
-    api.put<void>(`/nations/${nationId}/npc-priority`, priority),
+  updatePolicy: (
+    nationId: number,
+    policy: Partial<NpcPolicyInfo> & Record<string, unknown>,
+  ) => api.put<void>(`/nations/${nationId}/npc-policy`, policy),
+  updatePriority: (
+    nationId: number,
+    priority: Partial<NpcPolicyInfo> & Record<string, unknown>,
+  ) => api.put<void>(`/nations/${nationId}/npc-priority`, priority),
 };
 
 // Troop API

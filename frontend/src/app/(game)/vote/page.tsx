@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Vote, Plus, History, BarChart3, MessageSquare, Trash2, Send } from "lucide-react";
+import {
+  Vote,
+  Plus,
+  History,
+  BarChart3,
+  MessageSquare,
+  Trash2,
+  Send,
+} from "lucide-react";
 import Link from "next/link";
 import { useWorldStore } from "@/stores/worldStore";
 import { useGeneralStore } from "@/stores/generalStore";
@@ -387,7 +395,9 @@ function VoteCard({
     try {
       const { data } = await voteApi.listComments(vote.id);
       setComments(data);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [vote.id]);
 
   useEffect(() => {
@@ -401,7 +411,9 @@ function VoteCard({
       await voteApi.createComment(vote.id, myGeneralId, commentText.trim());
       setCommentText("");
       await loadComments();
-    } catch { /* ignore */ } finally {
+    } catch {
+      /* ignore */
+    } finally {
       setSendingComment(false);
     }
   };
@@ -411,7 +423,9 @@ function VoteCard({
     try {
       await voteApi.deleteComment(vote.id, commentId, myGeneralId);
       await loadComments();
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   return (
@@ -541,29 +555,42 @@ function VoteCard({
           {showComments && (
             <div className="mt-2 space-y-2">
               {comments.length === 0 ? (
-                <p className="text-xs text-muted-foreground">댓글이 없습니다.</p>
+                <p className="text-xs text-muted-foreground">
+                  댓글이 없습니다.
+                </p>
               ) : (
                 <div className="space-y-1.5">
                   {comments.map((c) => {
                     const author = generalMap.get(c.authorGeneralId);
-                    const authorName = author?.name ?? `장수#${c.authorGeneralId}`;
+                    const authorName =
+                      author?.name ?? `장수#${c.authorGeneralId}`;
                     const dateStr = formatDeadline(c.createdAt);
                     return (
-                      <div key={c.id} className="flex items-start gap-2 text-xs">
+                      <div
+                        key={c.id}
+                        className="flex items-start gap-2 text-xs"
+                      >
                         <div className="flex-1 min-w-0">
-                          <span className="font-medium text-cyan-400">{authorName}</span>
-                          <span className="text-muted-foreground ml-2">{dateStr}</span>
-                          <p className="mt-0.5 text-foreground whitespace-pre-wrap break-words">{c.content}</p>
+                          <span className="font-medium text-cyan-400">
+                            {authorName}
+                          </span>
+                          <span className="text-muted-foreground ml-2">
+                            {dateStr}
+                          </span>
+                          <p className="mt-0.5 text-foreground whitespace-pre-wrap break-words">
+                            {c.content}
+                          </p>
                         </div>
-                        {myGeneralId != null && c.authorGeneralId === myGeneralId && (
-                          <button
-                            type="button"
-                            className="text-muted-foreground hover:text-destructive shrink-0"
-                            onClick={() => handleDeleteComment(c.id)}
-                          >
-                            <Trash2 className="size-3" />
-                          </button>
-                        )}
+                        {myGeneralId != null &&
+                          c.authorGeneralId === myGeneralId && (
+                            <button
+                              type="button"
+                              className="text-muted-foreground hover:text-destructive shrink-0"
+                              onClick={() => handleDeleteComment(c.id)}
+                            >
+                              <Trash2 className="size-3" />
+                            </button>
+                          )}
                       </div>
                     );
                   })}

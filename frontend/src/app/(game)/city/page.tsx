@@ -515,44 +515,72 @@ export default function CityPage() {
                 </div>
 
                 {/* Row 5: Troop readiness summary (legacy parity: b_currentCity.php) */}
-                {isVisible && isMyNationCity && (() => {
-                  const myNationId = myGeneral?.nationId ?? 0;
-                  const enemyGens = cityGens.filter((g) => g.nationId !== 0 && g.nationId !== myNationId);
-                  const enemyCrew = enemyGens.reduce((s, g) => s + g.crew, 0);
-                  const enemyArmed = enemyGens.filter((g) => g.crew > 0).length;
-                  const allyGens = cityGens.filter((g) => g.nationId === myNationId);
-                  const crewTotal = allyGens.reduce((s, g) => s + g.crew, 0);
-                  const armedTotal = allyGens.filter((g) => g.crew > 0).length;
-                  const withCrew = allyGens.filter((g) => g.crew > 0);
-                  const t90 = withCrew.filter((g) => Math.min(g.train, g.atmos) >= 90);
-                  const t60 = withCrew.filter((g) => Math.min(g.train, g.atmos) >= 60);
-                  const crew90 = t90.reduce((s, g) => s + g.crew, 0);
-                  const crew60 = t60.reduce((s, g) => s + g.crew, 0);
-                  const defReady = withCrew.filter((g) => Math.min(g.train, g.atmos) >= g.defenceTrain);
-                  const crewDef = defReady.reduce((s, g) => s + g.crew, 0);
-                  return (
-                    <>
-                      <LabelCell>적군</LabelCell>
-                      <ValueCell>
-                        <span className={enemyCrew > 0 ? "text-red-400" : ""}>{enemyCrew.toLocaleString()}/{enemyArmed}({enemyGens.length})</span>
-                      </ValueCell>
-                      <LabelCell>병장(총)</LabelCell>
-                      <ValueCell>{crewTotal.toLocaleString()}/{armedTotal}({allyGens.length})</ValueCell>
-                      <LabelCell>90병장</LabelCell>
-                      <ValueCell>
-                        <span className="text-green-400">{crew90.toLocaleString()}/{t90.length}</span>
-                      </ValueCell>
-                      <LabelCell>60병장</LabelCell>
-                      <ValueCell>
-                        <span className="text-yellow-400">{crew60.toLocaleString()}/{t60.length}</span>
-                      </ValueCell>
-                      <LabelCell>수비○</LabelCell>
-                      <ValueCell>
-                        <span className="text-cyan-400">{crewDef.toLocaleString()}/{defReady.length}</span>
-                      </ValueCell>
-                    </>
-                  );
-                })()}
+                {isVisible &&
+                  isMyNationCity &&
+                  (() => {
+                    const myNationId = myGeneral?.nationId ?? 0;
+                    const enemyGens = cityGens.filter(
+                      (g) => g.nationId !== 0 && g.nationId !== myNationId,
+                    );
+                    const enemyCrew = enemyGens.reduce((s, g) => s + g.crew, 0);
+                    const enemyArmed = enemyGens.filter(
+                      (g) => g.crew > 0,
+                    ).length;
+                    const allyGens = cityGens.filter(
+                      (g) => g.nationId === myNationId,
+                    );
+                    const crewTotal = allyGens.reduce((s, g) => s + g.crew, 0);
+                    const armedTotal = allyGens.filter(
+                      (g) => g.crew > 0,
+                    ).length;
+                    const withCrew = allyGens.filter((g) => g.crew > 0);
+                    const t90 = withCrew.filter(
+                      (g) => Math.min(g.train, g.atmos) >= 90,
+                    );
+                    const t60 = withCrew.filter(
+                      (g) => Math.min(g.train, g.atmos) >= 60,
+                    );
+                    const crew90 = t90.reduce((s, g) => s + g.crew, 0);
+                    const crew60 = t60.reduce((s, g) => s + g.crew, 0);
+                    const defReady = withCrew.filter(
+                      (g) => Math.min(g.train, g.atmos) >= g.defenceTrain,
+                    );
+                    const crewDef = defReady.reduce((s, g) => s + g.crew, 0);
+                    return (
+                      <>
+                        <LabelCell>적군</LabelCell>
+                        <ValueCell>
+                          <span className={enemyCrew > 0 ? "text-red-400" : ""}>
+                            {enemyCrew.toLocaleString()}/{enemyArmed}(
+                            {enemyGens.length})
+                          </span>
+                        </ValueCell>
+                        <LabelCell>병장(총)</LabelCell>
+                        <ValueCell>
+                          {crewTotal.toLocaleString()}/{armedTotal}(
+                          {allyGens.length})
+                        </ValueCell>
+                        <LabelCell>90병장</LabelCell>
+                        <ValueCell>
+                          <span className="text-green-400">
+                            {crew90.toLocaleString()}/{t90.length}
+                          </span>
+                        </ValueCell>
+                        <LabelCell>60병장</LabelCell>
+                        <ValueCell>
+                          <span className="text-yellow-400">
+                            {crew60.toLocaleString()}/{t60.length}
+                          </span>
+                        </ValueCell>
+                        <LabelCell>수비○</LabelCell>
+                        <ValueCell>
+                          <span className="text-cyan-400">
+                            {crewDef.toLocaleString()}/{defReady.length}
+                          </span>
+                        </ValueCell>
+                      </>
+                    );
+                  })()}
               </div>
 
               {/* ===== Expanded garrison table ===== */}

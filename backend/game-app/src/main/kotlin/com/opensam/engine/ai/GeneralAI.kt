@@ -39,8 +39,9 @@ class GeneralAI(
     // ──────────────────────────────────────────────────────────
 
     fun decideAndExecute(general: General, world: WorldState): String {
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "GeneralAI", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "GeneralAI", world.currentYear, world.currentMonth, general.id
         )
 
         // Troop leaders (npcState=5) always rally
@@ -2616,8 +2617,9 @@ class GeneralAI(
      * Handles periodic tasks (promotion, tax/bill rates) and iterates nation policy priorities.
      */
     fun chooseNationTurn(general: General, world: WorldState): String {
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "NationTurn", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "NationTurn", world.currentYear, world.currentMonth, general.id
         )
 
         if (general.nationId == 0L) return "휴식"
@@ -2712,8 +2714,9 @@ class GeneralAI(
      * Per legacy chooseInstantNationTurn: Only processes actions available for instant turns.
      */
     fun chooseInstantNationTurn(general: General, world: WorldState): String? {
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "InstantNationTurn", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "InstantNationTurn", world.currentYear, world.currentMonth, general.id
         )
 
         if (general.nationId == 0L) return null
@@ -2769,8 +2772,9 @@ class GeneralAI(
      * Handles special cases (troop leaders, wandering lords, abdication) then iterates priorities.
      */
     fun chooseGeneralTurn(general: General, world: WorldState): String {
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "GeneralTurn", world.currentYear, world.currentMonth, general.id
+            hiddenSeed, "GeneralTurn", world.currentYear, world.currentMonth, general.id
         )
 
         val npcType = general.npcState.toInt()

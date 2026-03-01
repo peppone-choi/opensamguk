@@ -21,6 +21,9 @@ data class NationFlagId(
 @Table(name = "nation_flag")
 @IdClass(NationFlagId::class)
 class NationFlag(
+    @Column(name = "world_id", nullable = false)
+    var worldId: Long = 0,
+
     @Id
     @Column(name = "nation_id", nullable = false)
     var nationId: Long = 0,

@@ -40,6 +40,15 @@ class DiplomacyLetterService(
         return true
     }
 
+    fun executeLetter(id: Long): Boolean {
+        val letter = messageRepository.findById(id).orElse(null) ?: return false
+        val state = letter.payload["state"] as? String ?: return false
+        if (state != "accepted") return false
+        letter.payload["state"] = "executed"
+        messageRepository.save(letter)
+        return true
+    }
+
     fun destroyLetter(id: Long): Boolean {
         if (!messageRepository.existsById(id)) return false
         messageRepository.deleteById(id)

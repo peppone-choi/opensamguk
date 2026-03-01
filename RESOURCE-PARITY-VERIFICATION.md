@@ -1,4 +1,5 @@
 # Resource Parity Verification Report
+
 **Generated:** 2026-02-27
 **Project:** OpenSam (Legacy PHP → Kotlin/Spring Boot Migration)
 **Scope:** Game resources in backend/shared/src/main/resources/data/
@@ -9,14 +10,14 @@
 
 ✅ **PARITY VERIFIED** — All game resources from legacy PHP have been successfully migrated to the new backend.
 
-| Resource Type | Legacy Count | Backend Count | Status | Notes |
-|---|---|---|---|---|
-| Scenarios | 80 | 81 | ✅ PASS | +1 new (scenario_duel.json) |
-| Maps | 8 | 9 | ✅ PASS | +1 new (duel.json) |
-| Game Constants | ✓ | ✓ | ✅ PASS | game_const.json exists |
-| Officer Ranks | ✓ | ✓ | ✅ PASS | officer_ranks.json exists |
-| Items | ✓ | 124 items | ✅ PASS | items.json with 124 item codes |
-| Unit Sets | ✓ | ✓ | ✅ PASS | unitset_che.json exists |
+| Resource Type  | Legacy Count | Backend Count | Status  | Notes                          |
+| -------------- | ------------ | ------------- | ------- | ------------------------------ |
+| Scenarios      | 80           | 81            | ✅ PASS | +1 new (scenario_duel.json)    |
+| Maps           | 8            | 9             | ✅ PASS | +1 new (duel.json)             |
+| Game Constants | ✓            | ✓             | ✅ PASS | game_const.json exists         |
+| Officer Ranks  | ✓            | ✓             | ✅ PASS | officer_ranks.json exists      |
+| Items          | ✓            | 124 items     | ✅ PASS | items.json with 124 item codes |
+| Unit Sets      | ✓            | ✓             | ✅ PASS | unitset_che.json exists        |
 
 ---
 
@@ -32,6 +33,7 @@
 - **Status:** ✅ PASS (all legacy scenarios present + 1 new)
 
 **Scenarios in Legacy (80 total):**
+
 - scenario_0.json, scenario_1.json, scenario_2.json
 - scenario_1010.json through scenario_1120.json (12 files)
 - scenario_2010.json through scenario_2030.json (3 files)
@@ -39,6 +41,7 @@
 - scenario_900.json through scenario_913.json (15 files)
 
 **New in Backend (not in legacy):**
+
 - scenario_duel.json (new game mode)
 
 **Verdict:** ✅ All legacy scenarios migrated. New scenario_duel.json is intentional addition.
@@ -55,6 +58,7 @@
 - **Status:** ✅ PASS (all legacy maps converted + 1 new)
 
 **Legacy Maps (8 total):**
+
 1. che.php → che.json ✅
 2. chess.php → chess.json ✅
 3. cr.php → cr.json ✅
@@ -65,6 +69,7 @@
 8. pokemon_v1.php → pokemon_v1.json ✅
 
 **New in Backend:**
+
 - duel.json (new game mode, 744 bytes)
 
 **Verdict:** ✅ All legacy maps converted to JSON. New duel.json is intentional addition.
@@ -79,6 +84,7 @@
 **Status:** ✅ PASS
 
 **Contents:**
+
 - Game mechanics constants (develrate, upgradeLimit, dexLimit, etc.)
 - Resource management (basegold, baserice, exchangeFee, etc.)
 - City expansion rules (expandCityDefaultCost, expandCityCostCoef, etc.)
@@ -101,6 +107,7 @@
 **Status:** ✅ PASS
 
 **Structure:**
+
 - `default`: Generic ranks (군주, 참모, 제1장군, etc.)
 - `byNationLevel`: Nation-level specific ranks
   - Level 7: 황제, 승상, 표기장군, 사공, 거기장군, 태위, 위장군, 사도
@@ -118,12 +125,13 @@
 **Status:** ✅ PASS
 
 **Contents:**
+
 - 124 item codes (weapons, armor, accessories, etc.)
 - Item structure: code, rawName, grade, cost, buyable, rarity
 - Example items:
-  - che_무기_01_단도 (Short Sword)
-  - che_무기_02_단궁 (Short Bow)
-  - che_무기_03_단극 (Short Spear)
+  - che*무기\_01*단도 (Short Sword)
+  - che*무기\_02*단궁 (Short Bow)
+  - che*무기\_03*단극 (Short Spear)
   - ... and 121 more items
 
 **Verdict:** ✅ Comprehensive item database present.
@@ -138,6 +146,7 @@
 **Status:** ✅ PASS
 
 **Contents:**
+
 - Unit/crew type definitions for "che" map
 - Unit codes and configurations
 - Supports game mechanics for unit deployment and combat
@@ -176,6 +185,7 @@ All game resources from legacy PHP have been successfully migrated:
 ### ℹ️ New Resources (Not in Legacy)
 
 These are intentional additions, not missing legacy resources:
+
 - scenario_duel.json (new game mode)
 - duel.json map (new game mode)
 
@@ -186,6 +196,7 @@ These are intentional additions, not missing legacy resources:
 **Location:** `/Users/apple/Desktop/opensam/legacy/hwe/sammo/`
 
 These files were used as source for migration:
+
 - `CityConstBase.php` — City definitions (100+ cities)
 - `GameConstBase.php` — Game mechanics constants
 - `GameUnitConstBase.php` — Unit/crew type definitions
@@ -207,6 +218,7 @@ These files were used as source for migration:
 2. **`/Users/apple/Desktop/opensam/core2026/`** — All functionality ported to backend
 
 **Conditions Met:**
+
 - ✅ All scenarios migrated (80 → 81 with new duel)
 - ✅ All maps converted to JSON (8 → 9 with new duel)
 - ✅ All game constants extracted (game_const.json)
@@ -216,6 +228,7 @@ These files were used as source for migration:
 - ✅ Backup scenarios preserved (scenarios_backup_3stat/)
 
 **Deletion Procedure:**
+
 ```bash
 # Backup first (optional but recommended)
 tar -czf legacy-backup-$(date +%Y%m%d).tar.gz legacy/ core2026/
@@ -254,6 +267,7 @@ git commit -m "Remove legacy PHP and core2026 directories - all resources migrat
 All game resources from the legacy PHP project have been successfully migrated to the new Kotlin/Spring Boot backend. The migration is complete and verified. The legacy/ and core2026/ directories can be safely deleted.
 
 **Next Steps:**
+
 1. Review this report with team
 2. Create backup of legacy/ and core2026/ (optional)
 3. Delete legacy/ and core2026/ directories

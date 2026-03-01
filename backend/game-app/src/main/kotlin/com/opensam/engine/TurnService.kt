@@ -275,6 +275,7 @@ class TurnService(
                     var nationArg: Map<String, Any>? = null
                     var consumedNationTurn: com.opensam.entity.NationTurn? = null
 
+                    val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                     if (nationTurns.isNotEmpty()) {
                         val nt = nationTurns.first()
                         nationActionCode = nt.actionCode
@@ -285,7 +286,7 @@ class TurnService(
                             nation,
                             world,
                             DeterministicRng.create(
-                                "${world.id}",
+                                hiddenSeed,
                                 "nation_ai",
                                 general.id,
                                 world.currentYear,
@@ -308,7 +309,7 @@ class TurnService(
                                     city,
                                     nation,
                                     DeterministicRng.create(
-                                        "${world.id}",
+                                        hiddenSeed,
                                         "nation",
                                         general.id,
                                         world.currentYear,
@@ -369,8 +370,9 @@ class TurnService(
                     }
                 }
 
+                val generalHiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
                 val rng = DeterministicRng.create(
-                    "${world.id}", "general", general.id, world.currentYear, world.currentMonth, actionCode
+                    generalHiddenSeed, "general", general.id, world.currentYear, world.currentMonth, actionCode
                 )
                 val cmdResult = if (commandRegistry.hasNationCommand(actionCode) && general.officerLevel >= 5 && nation != null) {
                     runBlocking {

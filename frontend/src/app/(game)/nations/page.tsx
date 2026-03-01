@@ -161,7 +161,10 @@ export default function NationsPage() {
       };
       if (g.officerLevel >= 5) {
         if (!entry.byLevel[g.officerLevel]) {
-          entry.byLevel[g.officerLevel] = { name: g.name, npcState: g.npcState };
+          entry.byLevel[g.officerLevel] = {
+            name: g.name,
+            npcState: g.npcState,
+          };
         }
       }
       if (g.permission === "spy") entry.ambassadors.push(g.name);
@@ -316,30 +319,34 @@ export default function NationsPage() {
                     <TableCell>
                       <div>
                         <NationBadge name={n.name} color={n.color} />
-                        {officers && (() => {
-                          const levels = [12, 11, 10, 9, 8, 7, 6, 5];
-                          const filled = levels.filter((lv) => officers.byLevel[lv]);
-                          return filled.length > 0 ? (
-                            <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
-                              {filled.map((lv, i) => (
-                                <span key={lv}>
-                                  {i > 0 && " / "}
-                                  {formatOfficerLevelText(lv, n.level)}: {officers.byLevel[lv].name}
-                                </span>
-                              ))}
-                              {officers.ambassadors.length > 0 && (
-                                <span className="ml-1">
-                                  | 외교: {officers.ambassadors.join(", ")}
-                                </span>
-                              )}
-                              {officers.auditors.length > 0 && (
-                                <span className="ml-1">
-                                  | 조언: {officers.auditors.length}명
-                                </span>
-                              )}
-                            </div>
-                          ) : null;
-                        })()}
+                        {officers &&
+                          (() => {
+                            const levels = [12, 11, 10, 9, 8, 7, 6, 5];
+                            const filled = levels.filter(
+                              (lv) => officers.byLevel[lv],
+                            );
+                            return filled.length > 0 ? (
+                              <div className="text-[10px] text-muted-foreground mt-0.5 pl-1">
+                                {filled.map((lv, i) => (
+                                  <span key={lv}>
+                                    {i > 0 && " / "}
+                                    {formatOfficerLevelText(lv, n.level)}:{" "}
+                                    {officers.byLevel[lv].name}
+                                  </span>
+                                ))}
+                                {officers.ambassadors.length > 0 && (
+                                  <span className="ml-1">
+                                    | 외교: {officers.ambassadors.join(", ")}
+                                  </span>
+                                )}
+                                {officers.auditors.length > 0 && (
+                                  <span className="ml-1">
+                                    | 조언: {officers.auditors.length}명
+                                  </span>
+                                )}
+                              </div>
+                            ) : null;
+                          })()}
                       </div>
                     </TableCell>
 

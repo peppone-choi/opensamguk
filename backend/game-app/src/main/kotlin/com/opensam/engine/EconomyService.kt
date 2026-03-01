@@ -570,8 +570,9 @@ class EconomyService(
             else -> 0.0
         }
 
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "disaster",
+            hiddenSeed, "disaster",
             world.currentYear, world.currentMonth
         )
         val isGood = boomRate > 0 && rng.nextDouble() < boomRate
@@ -646,8 +647,9 @@ class EconomyService(
 
     fun randomizeCityTradeRate(world: WorldState) {
         val cities = cityRepository.findByWorldId(world.id.toLong())
+        val hiddenSeed = (world.config["hiddenSeed"] as? String) ?: "${world.id}"
         val rng = DeterministicRng.create(
-            "${world.id}", "tradeRate",
+            hiddenSeed, "tradeRate",
             world.currentYear, world.currentMonth
         )
 

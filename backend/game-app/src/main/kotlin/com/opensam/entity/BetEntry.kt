@@ -10,6 +10,9 @@ class BetEntry(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Column(name = "world_id", nullable = false)
+    var worldId: Long = 0,
+
     @Column(name = "betting_id", nullable = false)
     var bettingId: Long = 0,
 

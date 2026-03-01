@@ -58,6 +58,15 @@ data class NpcCard(
     val nationColor: String,
     val personality: String,
     val special: String,
+    val special2: String? = null,
+    val dex: List<Int>? = null,
+    val experience: Int? = null,
+    val dedication: Int? = null,
+    val expLevel: Short? = null,
+    val personalityInfo: String? = null,
+    val specialInfo: String? = null,
+    val special2Info: String? = null,
+    val keepCount: Int? = null,
 )
 
 data class NpcTokenResponse(

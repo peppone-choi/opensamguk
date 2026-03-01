@@ -13,6 +13,9 @@ class VoteCast(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Column(name = "world_id", nullable = false)
+    var worldId: Long = 0,
+
     @Column(name = "vote_id", nullable = false)
     var voteId: Long = 0,
 

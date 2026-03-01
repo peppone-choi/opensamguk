@@ -67,6 +67,43 @@ class TournamentController(
         return ResponseEntity.ok(result)
     }
 
+    @PostMapping("/worlds/{worldId}/tournament/message")
+    fun sendTournamentMessage(
+        @PathVariable worldId: Long,
+        @RequestBody request: Map<String, String>,
+    ): ResponseEntity<Map<String, Any>> {
+        val message = request["message"] ?: return ResponseEntity.badRequest().body(mapOf("error" to "메시지가 필요합니다"))
+        val result = tournamentService.sendTournamentMessage(worldId, message)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
+    }
+
+    @GetMapping("/worlds/{worldId}/betting/history")
+    fun getBettingHistory(@PathVariable worldId: Long): ResponseEntity<List<Map<String, Any?>>> {
+        return ResponseEntity.ok(tournamentService.getBettingHistory(worldId))
+    }
+
+    @GetMapping("/worlds/{worldId}/betting/{yearMonth}")
+    fun getBettingEvent(
+        @PathVariable worldId: Long,
+        @PathVariable yearMonth: String,
+    ): ResponseEntity<BettingInfoResponse?> {
+        val result = tournamentService.getBettingEvent(worldId, yearMonth)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
+    }
+
+    @PostMapping("/worlds/{worldId}/betting/gate")
+    fun toggleBettingGate(
+        @PathVariable worldId: Long,
+        @RequestBody request: Map<String, Boolean>,
+    ): ResponseEntity<Map<String, Any>> {
+        val open = request["open"] ?: return ResponseEntity.badRequest().body(mapOf("error" to "open 필드 필요"))
+        val result = tournamentService.toggleBettingGate(worldId, open)
+            ?: return ResponseEntity.notFound().build()
+        return ResponseEntity.ok(result)
+    }
+
     @GetMapping("/worlds/{worldId}/betting")
     fun getBetting(@PathVariable worldId: Long): ResponseEntity<BettingInfoResponse> {
         val result = tournamentService.getBetting(worldId)

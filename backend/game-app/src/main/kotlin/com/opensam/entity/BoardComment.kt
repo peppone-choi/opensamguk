@@ -10,6 +10,9 @@ class BoardComment(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0,
 
+    @Column(name = "world_id", nullable = false)
+    var worldId: Long = 0,
+
     @Column(name = "board_id", nullable = false)
     var boardId: Long = 0,
 

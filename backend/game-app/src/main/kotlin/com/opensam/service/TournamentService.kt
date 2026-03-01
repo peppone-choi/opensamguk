@@ -376,6 +376,59 @@ class TournamentService(
         }
     }
 
+    fun sendTournamentMessage(worldId: Long, message: String): Map<String, Any>? {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        @Suppress("UNCHECKED_CAST")
+        val msgs = (world.meta["tournamentMessages"] as? MutableList<Any>)?.toMutableList() ?: mutableListOf()
+        msgs.add(mapOf("text" to message, "year" to world.currentYear.toInt(), "month" to world.currentMonth.toInt()))
+        world.meta["tournamentMessages"] = msgs
+        worldStateRepository.save(world)
+        return mapOf("success" to true)
+    }
+
+    fun getBettingHistory(worldId: Long): List<Map<String, Any?>> {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return emptyList()
+        val history = world.meta["bettingHistory"] as? List<*> ?: return emptyList()
+        return history.mapNotNull { raw ->
+            val row = raw as? Map<*, *> ?: return@mapNotNull null
+            mapOf(
+                "yearMonth" to (row["yearMonth"] ?: ""),
+                "tournamentType" to ((row["tournamentType"] as? Number)?.toInt() ?: 0),
+                "championId" to (row["championId"] as? Number)?.toLong(),
+                "championName" to row["championName"],
+                "totalPool" to ((row["totalPool"] as? Number)?.toInt() ?: 0),
+                "participantCount" to ((row["participantCount"] as? Number)?.toInt() ?: 0),
+            )
+        }
+    }
+
+    fun getBettingEvent(worldId: Long, yearMonth: String): BettingInfoResponse? {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        val history = world.meta["bettingHistory"] as? List<*> ?: return getBetting(worldId)
+        val event = history.firstOrNull { (it as? Map<*, *>)?.get("yearMonth") == yearMonth } as? Map<*, *>
+            ?: return getBetting(worldId)
+
+        val bets = (event["bets"] as? List<*>)
+            ?.mapNotNull { raw ->
+                val row = raw as? Map<*, *> ?: return@mapNotNull null
+                BetEntryResponse(
+                    generalId = (row["generalId"] as? Number)?.toLong() ?: return@mapNotNull null,
+                    targetId = (row["targetId"] as? Number)?.toLong() ?: return@mapNotNull null,
+                    amount = (row["amount"] as? Number)?.toInt() ?: return@mapNotNull null,
+                )
+            }
+            ?: emptyList()
+
+        return BettingInfoResponse(bets = bets, odds = emptyMap())
+    }
+
+    fun toggleBettingGate(worldId: Long, open: Boolean): Map<String, Any>? {
+        val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return null
+        world.meta["bettingActive"] = open
+        worldStateRepository.save(world)
+        return mapOf("success" to true, "open" to open)
+    }
+
     private fun syncWorldTournamentMeta(worldId: Long) {
         val world = worldStateRepository.findById(worldId.toShort()).orElse(null) ?: return
         val entries = tournamentRepository.findByWorldIdOrderByRoundAscBracketPositionAsc(worldId)

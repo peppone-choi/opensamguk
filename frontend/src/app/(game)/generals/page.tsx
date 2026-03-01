@@ -340,27 +340,43 @@ export default function GeneralsPage() {
             </div>
             <div className="bg-muted/30 px-2 py-1 text-center">
               <span className="text-muted-foreground">평균 금</span>
-              <div className="font-medium">{(totalGold / effCount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="font-medium">
+                {(totalGold / effCount).toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+              </div>
             </div>
             <div className="bg-muted/30 px-2 py-1 text-center">
               <span className="text-muted-foreground">평균 쌀</span>
-              <div className="font-medium">{(totalRice / effCount).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+              <div className="font-medium">
+                {(totalRice / effCount).toLocaleString(undefined, {
+                  maximumFractionDigits: 0,
+                })}
+              </div>
             </div>
             <div className="bg-muted/30 px-2 py-1 text-center">
               <span className="text-muted-foreground">전체 병력/장수</span>
-              <div className="font-medium">{crewTotal.toLocaleString()}/{effCount}</div>
+              <div className="font-medium">
+                {crewTotal.toLocaleString()}/{effCount}
+              </div>
             </div>
             <div className="bg-muted/30 px-2 py-1 text-center">
               <span className="text-muted-foreground">훈사90 병력/장수</span>
-              <div className="font-medium text-green-400">{crew90.toLocaleString()}/{t90.length}</div>
+              <div className="font-medium text-green-400">
+                {crew90.toLocaleString()}/{t90.length}
+              </div>
             </div>
             <div className="bg-muted/30 px-2 py-1 text-center">
               <span className="text-muted-foreground">훈사80 병력/장수</span>
-              <div className="font-medium text-yellow-400">{crew80.toLocaleString()}/{t80.length}</div>
+              <div className="font-medium text-yellow-400">
+                {crew80.toLocaleString()}/{t80.length}
+              </div>
             </div>
             <div className="bg-muted/30 px-2 py-1 text-center">
               <span className="text-muted-foreground">훈사60 병력/장수</span>
-              <div className="font-medium text-orange-400">{crew60.toLocaleString()}/{t60.length}</div>
+              <div className="font-medium text-orange-400">
+                {crew60.toLocaleString()}/{t60.length}
+              </div>
             </div>
           </div>
         );
