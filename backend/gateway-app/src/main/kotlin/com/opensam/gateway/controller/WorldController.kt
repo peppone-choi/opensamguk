@@ -47,7 +47,7 @@ class WorldController(
         httpServletRequest: HttpServletRequest,
     ): ResponseEntity<WorldStateResponse> {
         val commitSha = request.commitSha?.takeIf { it.isNotBlank() } ?: "local"
-        val gameVersion = request.gameVersion?.takeIf { it.isNotBlank() } ?: "dev"
+        val gameVersion = request.gameVersion?.takeIf { it.isNotBlank() } ?: "latest"
 
         return try {
             val instance = gameOrchestrator.ensureVersion(
