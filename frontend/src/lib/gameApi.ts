@@ -1005,7 +1005,7 @@ export const adminApi = {
     turnTerm?: number;
     notice?: string;
     gameVersion?: string;
-  }) => api.post<{ worldId: number }>("/admin/worlds", data),
+  }) => api.post<{ worldId: number }>("/worlds", data),
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
   listWorlds: () =>
