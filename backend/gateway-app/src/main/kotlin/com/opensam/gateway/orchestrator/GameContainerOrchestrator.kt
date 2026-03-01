@@ -260,7 +260,7 @@ class GameContainerOrchestrator(
     }
 
     private fun resolveGameVersion(request: AttachWorldProcessRequest): String {
-        return request.gameVersion.trim().ifEmpty { "dev" }
+        return request.gameVersion.trim().ifEmpty { "latest" }
     }
 
     private fun containerName(gameVersion: String): String {
