@@ -1003,6 +1003,7 @@ export const adminApi = {
     scenarioCode: string;
     turnTerm?: number;
     notice?: string;
+    gameVersion?: string;
   }) => api.post<{ worldId: number }>("/admin/worlds", data),
   deleteWorld: (worldId: number) =>
     api.delete<void>(`/admin/worlds/${worldId}`),
@@ -1018,15 +1019,15 @@ export const adminApi = {
     >("/admin/worlds"),
   bulkGeneralAction: (ids: number[], type: string) =>
     api.post<void>("/admin/generals/bulk-action", { ids, type }),
-  activateWorld: (worldId: number) =>
-    api.post<void>(`/worlds/${worldId}/activate`, {}),
+  activateWorld: (worldId: number, data?: { gameVersion?: string }) =>
+    api.post<void>(`/worlds/${worldId}/activate`, data ?? {}),
   deactivateWorld: (worldId: number) =>
     api.post<void>(`/worlds/${worldId}/deactivate`, {}),
-  resetWorld: (worldId: number, scenarioCode?: string) =>
-    api.post<void>(
-      `/worlds/${worldId}/reset`,
-      scenarioCode ? { scenarioCode } : {},
-    ),
+  resetWorld: (worldId: number, scenarioCode?: string, gameVersion?: string) =>
+    api.post<void>(`/worlds/${worldId}/reset`, {
+      ...(scenarioCode ? { scenarioCode } : {}),
+      ...(gameVersion ? { gameVersion } : {}),
+    }),
   writeLog: (message: string) =>
     api.post<void>("/admin/write-log", { message }),
 

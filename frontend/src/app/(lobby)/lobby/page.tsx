@@ -3,15 +3,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Plus,
   Globe,
   UserPlus,
   Users,
   Bot,
   LogIn,
   Loader2,
-  Trash2,
-  RotateCcw,
   Clock,
   Signal,
   Crown,
@@ -23,12 +20,10 @@ import { useGeneralStore } from "@/stores/generalStore";
 import { useAuthStore } from "@/stores/authStore";
 import { scenarioApi } from "@/lib/gameApi";
 import type { Scenario, WorldState } from "@/types";
-import { toast } from "sonner";
 import { ServerStatusCard } from "@/components/auth/server-status-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { GeneralPortrait } from "@/components/game/general-portrait";
 import { StatBar } from "@/components/game/stat-bar";
 
@@ -153,9 +148,6 @@ export default function LobbyPage() {
     loading: worldsLoading,
     fetchWorlds,
     setCurrentWorld,
-    createWorld,
-    deleteWorld,
-    resetWorld,
   } = useWorldStore();
   const {
     myGeneral,
@@ -167,20 +159,11 @@ export default function LobbyPage() {
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === "ADMIN";
 
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
-  const [selectedScenario, setSelectedScenario] = useState("");
-  const [worldName, setWorldName] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [resetTarget, setResetTarget] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const [resetScenario, setResetScenario] = useState("");
-  const [resetting, setResetting] = useState(false);
   const [notice, setNotice] = useState("");
   const [serverNotices, setServerNotices] = useState<Record<number, string>>(
     {},
   );
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const scenarioMap = useMemo(
     () => new Map(scenarios.map((s) => [s.code, s.title])),
     [scenarios],
@@ -207,7 +190,6 @@ export default function LobbyPage() {
       .list()
       .then(({ data }) => {
         setScenarios(data);
-        if (data.length > 0) setSelectedScenario(data[0].code);
       })
       .catch(() => {});
   }, [fetchWorlds]);
@@ -216,60 +198,6 @@ export default function LobbyPage() {
     clearMyGeneral();
     setCurrentWorld(world);
     fetchMyGeneral(world.id);
-  };
-
-  const handleCreateWorld = async () => {
-    if (!selectedScenario) return;
-    setCreating(true);
-    try {
-      const world = await createWorld({
-        scenarioCode: selectedScenario,
-        name: worldName.trim(),
-      });
-      setCurrentWorld(world);
-      clearMyGeneral();
-      toast.success("월드가 생성되었습니다.");
-    } catch {
-      toast.error("월드 생성에 실패했습니다.");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleDeleteWorld = async (e: React.MouseEvent, worldId: number) => {
-    e.stopPropagation();
-    if (!confirm("정말로 이 월드를 삭제하시겠습니까?")) return;
-    try {
-      await deleteWorld(worldId);
-      toast.success("월드가 삭제되었습니다.");
-    } catch {
-      toast.error("월드 삭제에 실패했습니다.");
-    }
-  };
-
-  const handleOpenReset = (
-    e: React.MouseEvent,
-    worldId: number,
-    worldName: string,
-  ) => {
-    e.stopPropagation();
-    const world = worlds.find((w) => w.id === worldId);
-    setResetTarget({ id: worldId, name: worldName });
-    setResetScenario(world?.scenarioCode || (scenarios[0]?.code ?? ""));
-  };
-
-  const handleConfirmReset = async () => {
-    if (!resetTarget || !resetScenario) return;
-    setResetting(true);
-    try {
-      await resetWorld(resetTarget.id, resetScenario);
-      toast.success("월드가 초기화되었습니다.");
-      setResetTarget(null);
-    } catch {
-      toast.error("월드 초기화에 실패했습니다.");
-    } finally {
-      setResetting(false);
-    }
   };
 
   const handleEnter = () => {
@@ -329,7 +257,7 @@ export default function LobbyPage() {
                     onClick={() => handleSelectWorld(w)}
                   >
                     <CardContent className="py-3 space-y-2">
-                      {/* Top row: name + admin buttons */}
+                      {/* Top row: name + badges */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{worldDisplayName}</p>
@@ -346,30 +274,6 @@ export default function LobbyPage() {
                             <Badge variant="secondary" className="text-[10px]">
                               실시간
                             </Badge>
-                          )}
-                          {isAdmin && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-7 text-muted-foreground hover:text-foreground"
-                                onClick={(e) =>
-                                  handleOpenReset(e, w.id, worldDisplayName)
-                                }
-                                title="초기화"
-                              >
-                                <RotateCcw className="size-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-7 text-muted-foreground hover:text-destructive"
-                                onClick={(e) => handleDeleteWorld(e, w.id)}
-                                title="삭제"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            </>
                           )}
                         </div>
                       </div>
@@ -458,91 +362,10 @@ export default function LobbyPage() {
               })}
             </div>
           )}
-
-          {/* Create World Form - Admin Only */}
-          {isAdmin && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">월드 생성 (관리자)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Input
-                  value={worldName}
-                  onChange={(e) => setWorldName(e.target.value)}
-                  placeholder="월드 이름을 입력하세요"
-                />
-                <select
-                  value={selectedScenario}
-                  onChange={(e) => setSelectedScenario(e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                >
-                  {scenarios.map((s) => (
-                    <option key={s.code} value={s.code}>
-                      {s.title} ({s.startYear}년)
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  className="w-full"
-                  onClick={handleCreateWorld}
-                  disabled={creating || !selectedScenario || !worldName.trim()}
-                >
-                  <Plus className="size-4 mr-1" />
-                  {creating ? "생성 중..." : "새 월드 생성"}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* RIGHT PANEL: World Detail / General */}
         <div className="space-y-4">
-          {/* Reset Panel */}
-          {resetTarget && (
-            <Card className="border-destructive/50">
-              <CardHeader>
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <RotateCcw className="size-4" />
-                  월드 초기화: {resetTarget.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  시나리오를 선택하면 해당 시나리오로 월드가 초기화됩니다. 모든
-                  진행 상황이 삭제됩니다.
-                </p>
-                <select
-                  value={resetScenario}
-                  onChange={(e) => setResetScenario(e.target.value)}
-                  className="w-full px-3 py-2 bg-background border border-input rounded-md text-sm"
-                >
-                  {scenarios.map((s) => (
-                    <option key={s.code} value={s.code}>
-                      {s.title} ({s.startYear}년)
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={handleConfirmReset}
-                    disabled={resetting || !resetScenario}
-                  >
-                    {resetting ? "초기화 중..." : "초기화 확인"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setResetTarget(null)}
-                  >
-                    취소
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {!currentWorld ? (
             <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
               <p>서버를 선택하세요</p>

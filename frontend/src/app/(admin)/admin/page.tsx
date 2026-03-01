@@ -56,6 +56,7 @@ export default function AdminDashboardPage() {
   const [newTurnTerm, setNewTurnTerm] = useState("300");
   const [creating, setCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newGameVersion, setNewGameVersion] = useState("latest");
 
   const loadWorlds = () => {
     adminApi
@@ -106,6 +107,7 @@ export default function AdminDashboardPage() {
       const res = await adminApi.createWorld({
         scenarioCode: newScenario.trim(),
         turnTerm: newTurnTerm ? Number(newTurnTerm) : undefined,
+        gameVersion: newGameVersion.trim() || undefined,
       });
       toast.success(`월드 생성 완료 (ID: ${res.data.worldId})`);
       setNewScenario("");
@@ -149,7 +151,9 @@ export default function AdminDashboardPage() {
     }
     try {
       if (action === "open") {
-        await adminApi.activateWorld(worldId);
+        await adminApi.activateWorld(worldId, {
+          gameVersion: newGameVersion.trim() || undefined,
+        });
       } else if (action === "close") {
         await adminApi.deactivateWorld(worldId);
       } else {
@@ -360,7 +364,7 @@ export default function AdminDashboardPage() {
           {showCreateForm && (
             <div className="p-4 border rounded-md space-y-3 bg-muted/20">
               <h4 className="text-sm font-medium">새 월드 생성</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">
                     시나리오 코드
@@ -382,6 +386,16 @@ export default function AdminDashboardPage() {
                     placeholder="300"
                   />
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">
+                  게임 버전
+                </label>
+                <Input
+                  value={newGameVersion}
+                  onChange={(e) => setNewGameVersion(e.target.value)}
+                  placeholder="latest"
+                />
               </div>
               <div className="flex gap-2">
                 <Button
