@@ -1001,6 +1001,7 @@ export const adminApi = {
   ) => api.post<void>(`/admin/users/${id}/action`, action),
   createWorld: (data: {
     scenarioCode: string;
+    name?: string;
     turnTerm?: number;
     notice?: string;
     gameVersion?: string;
