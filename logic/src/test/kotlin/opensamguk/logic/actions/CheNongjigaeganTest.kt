@@ -34,9 +34,11 @@ class CheNongjigaeganTest {
     // FIXTURE INPUT — replaced by the G2-captured golden hiddenSeed before lock.
     private val FIXTURE_HIDDEN_SEED = "00000000000000000000000000000000"
 
+    private val MONTH = 3   // RNG seed component 4 + the ActionLogger MONTH-format prefix month
+
     // serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, shortClassName = registry key)
     private fun freshRng() = RandUtil(
-        LiteHashDrbg(serializeSeed(FIXTURE_HIDDEN_SEED, "generalCommand", 190, 3, 42, "che_농지개간")))
+        LiteHashDrbg(serializeSeed(FIXTURE_HIDDEN_SEED, "generalCommand", 190, MONTH, 42, "che_농지개간")))
 
     private fun general() = General(
         id = 42,
@@ -86,7 +88,7 @@ class CheNongjigaeganTest {
     @Test
     fun `resolve mutates city agriculture (not commerce) and increments intel_exp`() {
         val draft = GeneralActionDraft(general(), city(), nation)
-        val ctx = GeneralActionResolveContext(draft, freshRng(), env, date)
+        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
         action().resolve(ctx)
 
         // mutates agriculture, NOT commerce
@@ -99,13 +101,13 @@ class CheNongjigaeganTest {
     @Test
     fun `log uses 농지 개간 with space and josa 을 — byte-exact prefix`() {
         val draft = GeneralActionDraft(general(), city(), nation)
-        val ctx = GeneralActionResolveContext(draft, freshRng(), env, date)
+        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
         action().resolve(ctx)
 
         assertEquals(1, ctx.logs().size, "exactly one log")
         val log = ctx.logs()[0]
-        // byte-exact prefix: name WITH space + josa "을" + " "
-        assertTrue(log.startsWith("농지 개간을 "), "log prefix; got: $log")
+        // byte-exact prefix: ActionLogger MONTH format + name WITH space + josa "을" + " "
+        assertTrue(log.startsWith("<C>●</>${MONTH}월:농지 개간을 "), "log prefix; got: $log")
         // carries the <C> scoreText + <1>date</> suffix (shared CommerceInvestment log shape)
         assertTrue(log.contains("<C>"), "scoreText <C> marker")
         assertTrue(log.endsWith("<1>$date</>"), "date suffix")
@@ -114,11 +116,11 @@ class CheNongjigaeganTest {
     @Test
     fun `two runs with the same seed are byte-identical (determinism)`() {
         val a = GeneralActionDraft(general(), city(), nation)
-        val ctxA = GeneralActionResolveContext(a, freshRng(), env, date)
+        val ctxA = GeneralActionResolveContext(a, freshRng(), env, MONTH, date)
         action().resolve(ctxA)
 
         val b = GeneralActionDraft(general(), city(), nation)
-        val ctxB = GeneralActionResolveContext(b, freshRng(), env, date)
+        val ctxB = GeneralActionResolveContext(b, freshRng(), env, MONTH, date)
         action().resolve(ctxB)
 
         assertEquals(a.city.agriculture, b.city.agriculture)

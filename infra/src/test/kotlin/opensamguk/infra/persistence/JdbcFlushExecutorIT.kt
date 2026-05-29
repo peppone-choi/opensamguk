@@ -107,7 +107,7 @@ class JdbcFlushExecutorIT {
         // che_농지개간 post-state (hand-built until the AREA G golden DB fragment lands):
         //  - city.agri += 100 -> 1100 (cultivation raised agriculture)
         //  - general.gold -= 100 -> 900 (paid the develop cost)
-        //  - general.experience/dedication accumulate as Double (truncate -> int at flush)
+        //  - general.experience/dedication accumulate as Double (ROUND half-away-from-zero -> int at flush)
         //  - general.meta gains intel_exp progress; insertion order preserved
         val postGeneral = General(
             id = 10, nationId = 2, cityId = 5,

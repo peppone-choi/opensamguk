@@ -55,7 +55,9 @@ class GeneralRowMapperTest {
     }
 
     @Test
-    fun `experience and dedication truncate toward zero at flush`() {
+    fun `experience and dedication round half-away-from-zero at flush (float -- integer column store)`() {
+        // PHP stores the raw float into the `integer` column; Postgres ROUNDS (not truncates).
+        // The G2 golden proves it: 3030 + 44*0.7 = 3060.8 → 3061, 3030 + 64*0.7 = 3074.8 → 3075.
         val g = General(
             id = 1, nationId = 0, cityId = 0,
             leadership = 50, strength = 50, intel = 50, injury = 0,
@@ -63,8 +65,22 @@ class GeneralRowMapperTest {
             officerLevel = 0, gold = 1000, rice = 1000,
         )
         val cols = GeneralRowMapper.toColumns(g)
-        assertEquals(1234, cols["experience"])
-        assertEquals(567, cols["dedication"])
+        assertEquals(1235, cols["experience"], "1234.99 rounds up to 1235 (not truncated to 1234)")
+        assertEquals(568, cols["dedication"], "567.5 rounds half-away-from-zero to 568")
+    }
+
+    @Test
+    fun `experience and dedication round the G2 golden fractional accumulators`() {
+        // The exact float→int cases the G1/G2 golden pins (commerce_normal / agri_normal).
+        val g = General(
+            id = 1, nationId = 0, cityId = 0,
+            leadership = 50, strength = 50, intel = 50, injury = 0,
+            experience = 3060.8, dedication = 3074.8,
+            officerLevel = 0, gold = 1000, rice = 1000,
+        )
+        val cols = GeneralRowMapper.toColumns(g)
+        assertEquals(3061, cols["experience"], "3060.8 → 3061 (golden commerce_normal experience)")
+        assertEquals(3075, cols["dedication"], "3074.8 → 3075 (golden agri_normal experience)")
     }
 
     @Test

@@ -13,6 +13,7 @@ import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.statview.WorldEnvBuilder
+import opensamguk.logic.util.phpRound
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 
@@ -128,7 +129,7 @@ class ReservedTurnHandler(
         val nation = world.getNationById(nationId)?.let { PerTurnOverlay.toLogicNation(it) }
 
         val draft = GeneralActionDraft(preGeneral, preCity, nation)
-        val resolveCtx = GeneralActionResolveContext(draft, rng, worldEnv, date)
+        val resolveCtx = GeneralActionResolveContext(draft, rng, worldEnv, month, date)
         definition.resolve(resolveCtx)
 
         // --- ChangeRecorder = the SINGLE dirty source ---
@@ -162,7 +163,10 @@ class ReservedTurnHandler(
         /**
          * Map the resolver's post-state logic [General] back onto the engine [TurnGeneral] (slice
          * columns + meta carried verbatim). Engine `experience`/`dedication` are Int accumulators;
-         * truncate-toward-zero (PHP int cast at flush — D1) the raw Double.
+         * the resolver's raw Double collapses to Int the SAME way the persist does — Postgres ROUNDS
+         * the float into the `integer` column (half-away-from-zero), it does NOT truncate. The G2
+         * golden proves it (3030+44*0.7=3060.8 → 3061; 3030+64*0.7=3074.8 → 3075). Round via phpRound
+         * here so the engine row matches the D1 mapper's rounded column.
          */
         private fun applyGeneralPatch(engine: TurnGeneral, post: LogicGeneral): TurnGeneral =
             engine.copy(
@@ -172,8 +176,8 @@ class ReservedTurnHandler(
                 officerLevel = post.officerLevel,
                 cityId = post.cityId,
                 nationId = post.nationId,
-                experience = post.experience.toInt(),
-                dedication = post.dedication.toInt(),
+                experience = phpRound(post.experience),
+                dedication = phpRound(post.dedication),
                 meta = post.meta,
             )
 

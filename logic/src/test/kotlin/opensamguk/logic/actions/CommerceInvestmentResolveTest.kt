@@ -38,9 +38,11 @@ class CommerceInvestmentResolveTest {
     // FIXTURE INPUT — replaced by the G2-captured golden hiddenSeed (UniqueConst::$hiddenSeed) before lock.
     private val FIXTURE_HIDDEN_SEED = "00000000000000000000000000000000"  // placeholder; G1 captures the real per-game seed
 
+    private val MONTH = 3   // RNG seed component 4 + the ActionLogger MONTH-format prefix month
+
     // serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, shortClassName = registry key)
     private fun freshRng() = RandUtil(
-        LiteHashDrbg(serializeSeed(FIXTURE_HIDDEN_SEED, "generalCommand", 190, 3, 42, "che_상업투자")))
+        LiteHashDrbg(serializeSeed(FIXTURE_HIDDEN_SEED, "generalCommand", 190, MONTH, 42, "che_상업투자")))
 
     private fun general() = General(
         id = 42,
@@ -110,11 +112,13 @@ class CommerceInvestmentResolveTest {
         val roundedScore = phpRound(score)
 
         val scoreText = numberFormat(roundedScore)
-        val log = when (pick) {
+        // ActionLogger MONTH-format prefix (<C>●</>{month}월:) is applied by the context's addLog (G2 oracle).
+        val body = when (pick) {
             "fail"    -> "상업 투자를 <span class='ev_failed'>실패</span>하여 <C>$scoreText</> 상승했습니다. <1>$date</>"
             "success" -> "상업 투자를 <S>성공</>하여 <C>$scoreText</> 상승했습니다. <1>$date</>"
             else      -> "상업 투자를 하여 <C>$scoreText</> 상승했습니다. <1>$date</>"
         }
+        val log = "<C>●</>${MONTH}월:$body"
         // frontState=0 -> no debuff; cityScore == roundedScore
         val nextCommerce = valueFit((c.commerce + roundedScore).toDouble(), 0.0, c.commerceMax.toDouble()).toInt()
         val nextGold = maxOf(0, g.gold - reqGold)
@@ -127,7 +131,7 @@ class CommerceInvestmentResolveTest {
         val expected = replay()
 
         val draft = GeneralActionDraft(general(), city(), nation)
-        val ctx = GeneralActionResolveContext(draft, freshRng(), env, date)
+        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
         action().resolve(ctx)
 
         // (b) resolved city.commerce delta
@@ -153,11 +157,11 @@ class CommerceInvestmentResolveTest {
     @Test
     fun `two runs with the same seed are byte-identical (determinism)`() {
         val a = GeneralActionDraft(general(), city(), nation)
-        val ctxA = GeneralActionResolveContext(a, freshRng(), env, date)
+        val ctxA = GeneralActionResolveContext(a, freshRng(), env, MONTH, date)
         action().resolve(ctxA)
 
         val b = GeneralActionDraft(general(), city(), nation)
-        val ctxB = GeneralActionResolveContext(b, freshRng(), env, date)
+        val ctxB = GeneralActionResolveContext(b, freshRng(), env, MONTH, date)
         action().resolve(ctxB)
 
         assertEquals(a.city.commerce, b.city.commerce)

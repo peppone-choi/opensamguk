@@ -1,6 +1,7 @@
 package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.General
+import opensamguk.logic.util.phpRound
 import java.sql.ResultSet
 
 /**
@@ -12,9 +13,13 @@ import java.sql.ResultSet
  * The `meta` jsonb is parsed into a `LinkedHashMap` (insertion order preserved) and
  * re-encoded with [MetaJson] (insertion-order, PHP-faithful — NOT a sorted writer).
  *
- * exp/ded truncation (the ONLY flush-time rounding): logic `experience`/`dedication`
- * are `Double` raw accumulators; this mapper truncates them TOWARD ZERO to the integer
- * columns at flush (`truncate(...).toInt()`). This is the single place float -> int happens.
+ * exp/ded float -> int (the ONLY flush-time rounding): logic `experience`/`dedication`
+ * are `Double` raw accumulators (PHP `increaseVar` adds the float delta raw, no per-add round).
+ * At persist, PHP binds the raw float into the `integer` column — Postgres ROUNDS the float to
+ * the integer (it does NOT truncate). The G1/G2 golden proves this: e.g. 3030 + 44*0.7 = 3060.8
+ * is stored as 3061, and 3030 + 64*0.7 = 3074.8 as 3075 (truncate would give 3060/3074 — wrong).
+ * So this mapper ROUNDS (half-away-from-zero, [phpRound]) to the integer columns at flush. This is
+ * the single place float -> int happens. (The action RNG/log byte oracle is G2.)
  */
 object GeneralRowMapper {
 
@@ -54,7 +59,8 @@ object GeneralRowMapper {
 
     /**
      * Map a logic [General] back to a column map ready for binding. `experience`/`dedication`
-     * are truncated toward zero to ints; `meta` is rendered to a PHP-faithful jsonb string.
+     * are ROUNDED (half-away-from-zero) to ints — the float -> integer-column store Postgres
+     * performs; `meta` is rendered to a PHP-faithful jsonb string.
      */
     fun toColumns(g: General): Map<String, Any?> = linkedMapOf(
         "id" to g.id,
@@ -64,16 +70,13 @@ object GeneralRowMapper {
         "strength" to g.strength,
         "intel" to g.intel,
         "injury" to g.injury,
-        "experience" to truncToInt(g.experience),
-        "dedication" to truncToInt(g.dedication),
+        "experience" to phpRound(g.experience),
+        "dedication" to phpRound(g.dedication),
         "officer_level" to g.officerLevel,
         "gold" to g.gold,
         "rice" to g.rice,
         "meta" to MetaJson.encode(g.meta),
     )
-
-    /** Truncate toward zero (PHP int-cast of a float var at storage). */
-    private fun truncToInt(d: Double): Int = kotlin.math.truncate(d).toInt()
 }
 
 internal fun intOf(v: Any?): Int = when (v) {
