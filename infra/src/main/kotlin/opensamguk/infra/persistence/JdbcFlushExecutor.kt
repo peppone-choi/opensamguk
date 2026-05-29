@@ -1,6 +1,7 @@
 package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.City
+import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
@@ -64,6 +65,7 @@ class JdbcFlushExecutor(
             //    owned by CMD-FOUNDING (the created-general source); F-FLUSH wires the slots the
             //    nation/nation_turn created-set actually fills (거병 creates a nation + 24 turns).
             if (payload.createdNations.isNotEmpty()) nationCreateMany(payload.createdNations)
+            if (payload.createdDiplomacy.isNotEmpty()) diplomacyCreateMany(payload.createdDiplomacy)
             if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.createdNationTurns)
 
             // 4. deleteMany troop. (no-op until troop creation lands)
@@ -299,6 +301,29 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("nation_turn", FlushVerb.CREATE_MANY, turns.size))
     }
 
+    /**
+     * Step-3 created-diplomacy createMany (`che_거병.php:114-138`): the founding command wires the new
+     * nation to every existing nation with a bidirectional `(me, you, state=2, term=0)` pair. Inserted
+     * after the nation createMany (the FK target exists) and before nation_turn, matching the frozen
+     * step-3 contract order (general → nation → troop → diplomacy). Maps via [DiplomacyRowMapper].
+     */
+    private fun diplomacyCreateMany(diplomacy: List<Diplomacy>) {
+        val batch: Array<SqlParameterSource> = diplomacy.map { d ->
+            val cols = DiplomacyRowMapper.toColumns(d)
+            val src = MapSqlParameterSource()
+            for ((k, v) in cols) src.addValue(k, v)
+            src
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO diplomacy (src_nation_id, dest_nation_id, state_code, term)
+            VALUES (:src_nation_id, :dest_nation_id, :state_code, :term)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("diplomacy", FlushVerb.CREATE_MANY, diplomacy.size))
+    }
+
     // --- step 5: deleteMany general, then rank_data ---------------------------------------------
 
     private fun generalDeleteMany(ids: List<Int>) {
@@ -468,6 +493,7 @@ data class FlushPayload(
     val updatedNations: List<Nation> = emptyList(),           // step-7 nation UPDATE (excl created)
     val createdNations: List<Nation> = emptyList(),           // step-3 createMany
     val createdNationTurns: List<NationTurn> = emptyList(),   // step-3 createMany
+    val createdDiplomacy: List<Diplomacy> = emptyList(),      // step-3 createMany (거병 bidirectional pairs)
     val deletedGenerals: List<Int> = emptyList(),             // step-5 deleteMany general + rank_data
     val deletedNations: List<Int> = emptyList(),              // step-6 nation cascade
     val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)

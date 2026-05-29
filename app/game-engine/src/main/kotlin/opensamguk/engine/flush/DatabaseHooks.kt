@@ -140,6 +140,7 @@ object DatabaseHooks {
             .filter { it.id !in createdNationIds }
             .map { PerTurnOverlay.toLogicNation(it) }
         val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
+        val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
         val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth) }
 
         // P2 satellite write-set: thread the rank/nationTurn dirty sets into the payload. The
@@ -171,6 +172,7 @@ object DatabaseHooks {
             updatedNations = updatedNations,
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
+            createdDiplomacy = createdDiplomacy,
             logEntries = logEntries,
             rankWrites = rankWrites,
         )
