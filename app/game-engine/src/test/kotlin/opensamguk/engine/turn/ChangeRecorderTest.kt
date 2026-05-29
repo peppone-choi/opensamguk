@@ -1,0 +1,210 @@
+package opensamguk.engine.turn
+
+import opensamguk.logic.domain.City as LogicCity
+import opensamguk.logic.domain.General as LogicGeneral
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * F2 — [ChangeRecorder] is the Immer-`produceWithPatches` replacement and the SINGLE dirty source.
+ * It diffs the resolver's pre/post logic [General]/[City] draft to derive (a) the dirty ids and
+ * (b) the column patch (only changed columns; for `meta`, only deep-changed keys, insertion order
+ * preserved). The resolver NEVER calls the world's updateGeneral/updateCity directly — these
+ * patches are the only thing that marks a row dirty (design Risk #4).
+ */
+class ChangeRecorderTest {
+
+    private fun general(
+        id: Int = 1,
+        gold: Int = 100,
+        experience: Double = 12.0,
+        dedication: Double = 34.0,
+        commerce: Int = 0, // unused placeholder for symmetry; ignore
+        meta: Map<String, Any?> = linkedMapOf("intel_exp" to 7, "explevel" to 2, "max_domestic_critical" to 0.0),
+    ) = LogicGeneral(
+        id = id,
+        nationId = 1,
+        cityId = 5,
+        leadership = 80,
+        strength = 70,
+        intel = 60,
+        injury = 0,
+        experience = experience,
+        dedication = dedication,
+        officerLevel = 0,
+        gold = gold,
+        rice = 50,
+        meta = meta,
+    )
+
+    private fun city(
+        id: Int = 5,
+        commerce: Int = 200,
+        agriculture: Int = 100,
+        trust: Double = 80.0,
+        meta: Map<String, Any?> = linkedMapOf("region" to 3),
+    ) = LogicCity(
+        id = id,
+        nationId = 1,
+        level = 5,
+        commerce = commerce,
+        commerceMax = 2000,
+        agriculture = agriculture,
+        agricultureMax = 1000,
+        supplyState = 1,
+        frontState = 0,
+        trust = trust,
+        meta = meta,
+    )
+
+    @Test
+    fun `no change yields empty patch and nothing dirty`() {
+        val pre = general()
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffGeneral(pre, pre.copy())
+
+        assertNull(patch, "identical pre/post → null patch (not dirty)")
+        assertFalse(recorder.isDirty)
+        assertTrue(recorder.dirtyGeneralIds().isEmpty())
+        assertTrue(recorder.dirtyCityIds().isEmpty())
+        assertTrue(recorder.generalPatches().isEmpty())
+    }
+
+    @Test
+    fun `no city change yields empty patch and nothing dirty`() {
+        val pre = city()
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffCity(pre, pre.copy())
+
+        assertNull(patch)
+        assertFalse(recorder.isDirty)
+        assertTrue(recorder.dirtyCityIds().isEmpty())
+    }
+
+    @Test
+    fun `changed gold experience dedication and meta intel_exp listed exactly`() {
+        val pre = general()
+        val post = pre.copy(
+            gold = 40,
+            experience = 26.6,
+            dedication = 53.0,
+            meta = linkedMapOf("intel_exp" to 8, "explevel" to 2, "max_domestic_critical" to 0.0),
+        )
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffGeneral(pre, post)!!
+
+        // exactly the changed scalar columns (unchanged columns absent)
+        assertEquals(setOf("gold", "experience", "dedication"), patch.columns.keys)
+        assertEquals(40, patch.columns["gold"])
+        assertEquals(26.6, patch.columns["experience"])
+        assertEquals(53.0, patch.columns["dedication"])
+
+        // only the deep-changed meta key is in the meta patch; unchanged keys absent
+        assertEquals(setOf("intel_exp"), patch.meta.keys, "explevel/max_domestic_critical unchanged → absent")
+        assertEquals(8, patch.meta["intel_exp"])
+
+        // recorder marks the general dirty (the SINGLE dirty source)
+        assertTrue(recorder.isDirty)
+        assertEquals(setOf(1), recorder.dirtyGeneralIds())
+        assertTrue(recorder.dirtyCityIds().isEmpty())
+        assertEquals(patch, recorder.generalPatches().single())
+        assertEquals(1, patch.id)
+    }
+
+    @Test
+    fun `changed commerce listed for city`() {
+        val pre = city()
+        val post = pre.copy(commerce = 250)
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffCity(pre, post)!!
+
+        assertEquals(setOf("commerce"), patch.columns.keys)
+        assertEquals(250, patch.columns["commerce"])
+        assertTrue(patch.meta.isEmpty(), "city meta unchanged → empty meta patch")
+        assertEquals(5, patch.id)
+        assertTrue(recorder.isDirty)
+        assertEquals(setOf(5), recorder.dirtyCityIds())
+    }
+
+    @Test
+    fun `changed agriculture listed for city`() {
+        val pre = city()
+        val post = pre.copy(agriculture = 175)
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffCity(pre, post)!!
+
+        assertEquals(setOf("agriculture"), patch.columns.keys)
+        assertEquals(175, patch.columns["agriculture"])
+    }
+
+    @Test
+    fun `unchanged meta keys are not in the patch`() {
+        // only max_domestic_critical changes; intel_exp + explevel stay
+        val pre = general()
+        val post = pre.copy(
+            meta = linkedMapOf("intel_exp" to 7, "explevel" to 2, "max_domestic_critical" to 1200.5),
+        )
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffGeneral(pre, post)!!
+
+        assertTrue(patch.columns.isEmpty(), "no scalar column changed")
+        assertEquals(setOf("max_domestic_critical"), patch.meta.keys)
+        assertEquals(1200.5, patch.meta["max_domestic_critical"])
+        // the recorder is still dirty because a meta key changed
+        assertTrue(recorder.isDirty)
+        assertEquals(setOf(1), recorder.dirtyGeneralIds())
+    }
+
+    @Test
+    fun `meta key insertion order preserved in the patch`() {
+        // change intel_exp (1st) and max_domestic_critical (3rd); skip explevel (2nd).
+        // The patch must list changed keys in the post-state's insertion order: intel_exp, max_domestic_critical.
+        val pre = general()
+        val post = pre.copy(
+            meta = linkedMapOf("intel_exp" to 8, "explevel" to 2, "max_domestic_critical" to 600.0),
+        )
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffGeneral(pre, post)!!
+
+        assertEquals(listOf("intel_exp", "max_domestic_critical"), patch.meta.keys.toList(),
+            "meta patch preserves post-state insertion order, skipping the unchanged key")
+    }
+
+    @Test
+    fun `newly added meta key is recorded as a change`() {
+        val pre = general(meta = linkedMapOf("intel_exp" to 7))
+        val post = general(meta = linkedMapOf("intel_exp" to 7, "killturn" to 3))
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffGeneral(pre, post)!!
+
+        assertEquals(setOf("killturn"), patch.meta.keys)
+        assertEquals(3, patch.meta["killturn"])
+    }
+
+    @Test
+    fun `record marks dirty across multiple generals and cities`() {
+        val g1 = general(id = 1)
+        val g2 = general(id = 2, gold = 500)
+        val c5 = city(id = 5)
+        val recorder = ChangeRecorder()
+
+        recorder.diffGeneral(g1, g1.copy(gold = 10))      // g1 changed
+        recorder.diffGeneral(g2, g2.copy())               // g2 unchanged
+        recorder.diffCity(c5, c5.copy(commerce = 999))    // c5 changed
+
+        assertEquals(setOf(1), recorder.dirtyGeneralIds(), "only changed generals are dirty")
+        assertEquals(setOf(5), recorder.dirtyCityIds())
+        assertEquals(2, recorder.generalPatches().size + recorder.cityPatches().size)
+    }
+}

@@ -117,6 +117,27 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         return next
     }
 
+    /**
+     * Replace a general's row WITHOUT marking it dirty (the **dirty-free apply path**, P1 Task F3).
+     *
+     * The reserved-turn handler applies the resolver's post-state through here so the world reads
+     * reflect the mutation while [ChangeRecorder] stays the SINGLE dirty source (design Risk #4: two
+     * dirty sources = silent flush divergence). The flush (F4) maps the recorder's patches → SQL; the
+     * world's own dirty set is never the daemon write path. Returns null if the row is absent.
+     */
+    fun applyGeneralDirtyFree(next: TurnGeneral): TurnGeneral? {
+        if (!generals.containsKey(next.id)) return null
+        generals[next.id] = next
+        return next
+    }
+
+    /** Replace a city's row WITHOUT marking it dirty — see [applyGeneralDirtyFree] (P1 Task F3). */
+    fun applyCityDirtyFree(next: City): City? {
+        if (!cities.containsKey(next.id)) return null
+        cities[next.id] = next
+        return next
+    }
+
     fun updateNation(next: Nation): Nation? {
         if (!nations.containsKey(next.id)) return null
         nations[next.id] = next

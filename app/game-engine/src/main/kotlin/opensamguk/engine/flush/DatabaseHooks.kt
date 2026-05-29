@@ -1,6 +1,13 @@
 package opensamguk.engine.flush
 
+import opensamguk.engine.turn.DirtyState
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.LogEntryDraft
+import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.turn.TurnWorldState
+import opensamguk.infra.persistence.FlushPayload
+import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.LogRow
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -89,4 +96,64 @@ object DatabaseHooks {
         // 10. reservedTurns.flush — represented as a recorded op tag.
         recorder.record("reserved_turns", FlushOp.Verb.UPDATE, 1)
     }
+
+    /**
+     * The REAL P1 write path: drain the world's dirty set, map it to an [FlushPayload], and hand it
+     * to the injected [JdbcFlushExecutor] which runs the EXACT ordered contract above as plain JDBC
+     * inside ONE transaction (design §0.1 #3 — no `EntityManager`). The recorder-based overload
+     * stays for the order tests; this overload is what `TurnRunService` (Task F5) calls.
+     *
+     * The op ORDER is preserved by the executor itself (it implements steps 1→10); this method only
+     * builds the payload. P1 exercises steps 1 (world_state), 7 (general+city UPDATE), 9 (log_entry),
+     * 10 (reserved_turns) — the other steps are no-ops on the empty created/deleted lists.
+     */
+    fun flushChanges(world: InMemoryTurnWorld, executor: JdbcFlushExecutor) {
+        val dirty = world.consumeDirtyState()
+        executor.flush(toFlushPayload(world.getState(), dirty))
+    }
+
+    /**
+     * Map the engine [DirtyState] → infra [FlushPayload]. Reuses the SAME engine→logic conversion as
+     * the read/resolve path ([PerTurnOverlay.toLogicGeneral]/[PerTurnOverlay.toLogicCity]) so the
+     * flushed rows are byte-identical to what the resolver produced. Created-this-tick ids are
+     * excluded from the UPDATE batch (step-7 contract); P1 never creates, so this is identity here.
+     */
+    internal fun toFlushPayload(state: TurnWorldState, dirty: DirtyState): FlushPayload {
+        val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
+        val updatedGenerals = dirty.generals
+            .filter { it.id !in createdGeneralIds }
+            .map { PerTurnOverlay.toLogicGeneral(it) }
+        val updatedCities = dirty.cities.map { PerTurnOverlay.toLogicCity(it) }
+        val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth) }
+
+        return FlushPayload(
+            worldStateUpdate = linkedMapOf(
+                "id" to state.id,
+                "current_year" to state.currentYear,
+                "current_month" to state.currentMonth,
+            ),
+            updatedGenerals = updatedGenerals,
+            updatedCities = updatedCities,
+            logEntries = logEntries,
+        )
+    }
+
+    /**
+     * Finalize an engine [LogEntryDraft] into an infra [LogRow]: stamp the year/month from world
+     * state (the draft does not carry them) and uppercase `scope`/`category` to the PG enum literals
+     * (`log_scope`/`log_category`) the INSERT casts to. `meta` defaults to an empty insertion-ordered
+     * map when the draft carries none.
+     */
+    private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int): LogRow = LogRow(
+        scope = draft.scope.uppercase(),
+        category = draft.category.uppercase(),
+        text = draft.text,
+        year = year,
+        month = month,
+        subType = draft.subType,
+        generalId = draft.generalId,
+        nationId = draft.nationId,
+        userId = draft.userId,
+        meta = draft.meta ?: linkedMapOf(),
+    )
 }

@@ -28,6 +28,12 @@ dependencies {
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")
+    // F5 round-trip IT applies the :infra Flyway baseline against a Postgres container and writes
+    // through the JDBC executor — Flyway + the JDBC driver are not transitive from :infra (both are
+    // `implementation` there), so the test classpath pulls them directly (mirrors JdbcFlushExecutorIT).
+    testImplementation("org.flywaydb:flyway-core")
+    testRuntimeOnly(libs.flyway.postgres)
+    testRuntimeOnly("org.postgresql:postgresql")
 }
 
 tasks.test {
