@@ -130,7 +130,7 @@ open class RecruitAlgorithm(
         val ded = phpRound(appliedCrew / 100.0)
 
         // addDex(crewType, appliedCrew/100, affectTrainAtmos=false) — General.php:420-446.
-        g = addDex(g, reqCrewType, appliedCrew / 100.0)
+        g = addDexForUnit(pipeline, g, reqCrewType, appliedCrew / 100.0)
 
         val cost = getCost(g, reqCrewType, appliedCrew, tech)
 
@@ -147,21 +147,6 @@ open class RecruitAlgorithm(
             lastTurn = LastTurn(name, arg = linkedMapOf<String, Any?>("crewType" to reqCrewTypeId, "amount" to amount)),
         )
         d.general = g
-    }
-
-    /**
-     * General.php:420-446 — addDex. armType CASTLE→SIEGE; <0 returns; WIZARD/SIEGE *0.9; affectTrainAtmos
-     * scaling omitted (false here); onCalcStat('addDex') fold (identity under no modules); increaseVar(dex{armType}).
-     */
-    private fun addDex(general: General, crewType: UnitSetTable.UnitDetail, exp0: Double): General {
-        var armType = crewType.armType
-        if (armType == UnitSetTable.T_CASTLE) armType = UnitSetTable.T_SIEGE
-        if (armType < 0) return general
-        var exp = exp0
-        if (armType == UnitSetTable.T_WIZARD || armType == UnitSetTable.T_SIEGE) exp *= 0.9
-        exp = pipeline.onCalcStat(general, "addDex", exp, mapOf("armType" to armType))
-        val dexKey = "dex$armType"
-        return general.copy(meta = withMeta(general.meta, dexKey to metaDouble(general.meta, dexKey) + exp))
     }
 
     @Suppress("UNCHECKED_CAST")
