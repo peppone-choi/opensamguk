@@ -56,7 +56,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
     fun getLogicNation(id: Int): LogicNation? = getNation(id)?.let { toLogicNation(it) }
 
     companion object {
-        /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim). */
+        /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim + P2 mil/equip). */
         fun toLogicGeneral(g: TurnGeneral): LogicGeneral = LogicGeneral(
             id = g.id,
             nationId = g.nationId,
@@ -70,10 +70,21 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             officerLevel = g.officerLevel,
             gold = g.gold,
             rice = g.rice,
+            // P2 military / equip surface (carried so the widened step-7 general UPDATE round-trips).
+            crew = g.crew,
+            train = g.train.toDouble(),
+            atmos = g.atmos.toDouble(),
+            crewTypeId = g.crewTypeId,
+            troop = g.troopId,
+            horse = g.role.items.horse ?: "None",
+            weapon = g.role.items.weapon ?: "None",
+            book = g.role.items.book ?: "None",
+            item = g.role.items.item ?: "None",
+            npcType = g.npcState,
             meta = g.meta,
         )
 
-        /** Engine [City] -> logic [City] (slice subset; `trust` from `meta["trust"]`). */
+        /** Engine [City] -> logic [City] (slice subset + P2 develop/defense; `trust` from `meta["trust"]`). */
         fun toLogicCity(c: City): LogicCity = LogicCity(
             id = c.id,
             nationId = c.nationId,
@@ -85,14 +96,32 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             supplyState = c.supplyState,
             frontState = c.frontState,
             trust = metaDouble(c.meta, "trust"),
+            // P2 develop/defense surface (carried so the widened step-7 city UPDATE round-trips;
+            // engine `defence` spelling maps to logic `defense`).
+            security = c.security,
+            securityMax = c.securityMax,
+            defense = c.defence,
+            defenseMax = c.defenceMax,
+            wall = c.wall,
+            wallMax = c.wallMax,
+            population = c.population,
+            populationMax = c.populationMax,
+            trade = c.trade,
+            region = c.region,
             meta = c.meta,
         )
 
-        /** Engine [Nation] -> logic [Nation] (slice subset). */
+        /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/type/name/color). */
         fun toLogicNation(n: Nation): LogicNation = LogicNation(
             id = n.id,
             level = n.level,
             capitalCityId = n.capitalCityId,
+            name = n.name,
+            color = n.color,
+            typeCode = n.typeCode,
+            gold = n.gold,
+            rice = n.rice,
+            meta = n.meta,
         )
     }
 }

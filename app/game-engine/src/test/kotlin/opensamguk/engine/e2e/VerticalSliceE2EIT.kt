@@ -483,6 +483,13 @@ class VerticalSliceE2EIT {
                         agriculture = b.agri, agricultureMax = b.agriMax,
                         commerce = b.comm, commerceMax = b.commMax,
                         supplyState = 1, frontState = 0,
+                        // carry the seeded develop/defense columns so the widened step-7 city UPDATE
+                        // (FF2) round-trips them faithfully instead of zeroing them.
+                        population = 434350, populationMax = 620500,
+                        security = 7000, securityMax = 10000,
+                        defence = 8190, defenceMax = 11700,
+                        wall = 8540, wallMax = 12200,
+                        trade = 100, region = 1,
                         meta = linkedMapOf("trust" to b.trust),
                     ),
                 ),

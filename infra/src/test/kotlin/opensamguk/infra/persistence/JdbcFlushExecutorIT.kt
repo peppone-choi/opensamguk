@@ -122,6 +122,13 @@ class JdbcFlushExecutorIT {
             agriculture = 1100, agricultureMax = 2000,
             supplyState = 1, frontState = 0,
             trust = 50.0,
+            // the widened step-7 city UPDATE (FF2) now writes the develop/defense columns too —
+            // preserve the seeded pre-state values (the agri-cultivation post-state changes only agri).
+            security = 500, securityMax = 1000,
+            defense = 1000, defenseMax = 2000,
+            wall = 1000, wallMax = 2000,
+            population = 50000, populationMax = 100000,
+            trade = 100, region = 1,
             meta = linkedMapOf(),
         )
         val logRow = LogRow(

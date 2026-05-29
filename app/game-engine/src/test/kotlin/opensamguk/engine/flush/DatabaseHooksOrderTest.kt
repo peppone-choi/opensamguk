@@ -52,7 +52,7 @@ class DatabaseHooksOrderTest {
             FlushOp("nation", FlushOp.Verb.DELETE_MANY, 1),
             FlushOp("general", FlushOp.Verb.UPDATE, 1),
             FlushOp("city", FlushOp.Verb.UPDATE, 1),
-            FlushOp("rank_data", FlushOp.Verb.UPSERT, 40),
+            FlushOp("rank_data", FlushOp.Verb.UPSERT, 37),
             FlushOp("log_entry", FlushOp.Verb.CREATE_MANY, 1),
             FlushOp("reserved_turns", FlushOp.Verb.UPDATE, 1),
         )
@@ -60,7 +60,7 @@ class DatabaseHooksOrderTest {
     }
 
     @Test
-    fun `rank_data upsert count is 40 per updated general`() {
+    fun `rank_data upsert count is 37 per updated general`() {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 1, 3600, t0),
@@ -75,7 +75,7 @@ class DatabaseHooksOrderTest {
 
         val rank = recorder.ops().single { it.table == "rank_data" && it.verb == FlushOp.Verb.UPSERT }
         assertEquals(2 * DatabaseHooks.RANK_ROWS_PER_GENERAL, rank.count)
-        assertEquals(80, rank.count)
+        assertEquals(74, rank.count)
     }
 
     @Test

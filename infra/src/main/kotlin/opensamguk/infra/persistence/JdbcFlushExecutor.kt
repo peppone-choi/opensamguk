@@ -2,6 +2,8 @@ package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.Nation
+import opensamguk.logic.domain.NationTurn
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -57,33 +59,56 @@ class JdbcFlushExecutor(
                 ngOldNationsUpsert(payload.deletedNationSnapshots)
             }
 
-            // 3. createMany general/nation/troop/diplomacy (each guarded > 0).
-            // P1 never creates rows; full contract present for later phases.
-            // (no-op while the created lists are empty)
+            // 3. createMany nation/nation_turn (each guarded > 0). General/troop createMany needs the
+            //    engine TurnGeneral shape (name/turn_time the logic General lacks) — that branch is
+            //    owned by CMD-FOUNDING (the created-general source); F-FLUSH wires the slots the
+            //    nation/nation_turn created-set actually fills (거병 creates a nation + 24 turns).
+            if (payload.createdNations.isNotEmpty()) nationCreateMany(payload.createdNations)
+            if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.createdNationTurns)
 
-            // 4. deleteMany troop. (no-op in P1)
+            // 4. deleteMany troop. (no-op until troop creation lands)
 
-            // 5. deleteMany general, then rank_data. (no-op in P1)
+            // 5. deleteMany general, then rank_data (both guarded on deletedGenerals > 0).
+            if (payload.deletedGenerals.isNotEmpty()) {
+                generalDeleteMany(payload.deletedGenerals)
+                rankDataDeleteMany(payload.deletedGenerals)
+            }
 
-            // 6. nation cascade: diplomacy, nation_turn, nation. (no-op in P1)
+            // 6. nation cascade: diplomacy, nation_turn, nation (guarded on deletedNations > 0).
+            if (payload.deletedNations.isNotEmpty()) {
+                nationCascadeDelete(payload.deletedNations)
+            }
 
-            // 7. updates: general (excl created), city, nation upsert (excl created), troop, diplomacy.
+            // 7. updates: general (excl created), city, nation UPDATE (excl created).
             if (payload.updatedGenerals.isNotEmpty()) {
                 generalUpdate(payload.updatedGenerals)
             }
             if (payload.updatedCities.isNotEmpty()) {
                 cityUpdate(payload.updatedCities)
             }
+            if (payload.updatedNations.isNotEmpty()) {
+                nationUpdate(payload.updatedNations)
+            }
 
-            // 8. rank_data upsert (RANK_ROWS_PER_GENERAL per target). (no-op in P1)
+            // 8. rank_data UPDATE (rankVarIncrease then rankVarSet — General.php:727-744) + nation_id
+            //    sync (when a general's nation changed, ALL its rank_data rows get the new nation_id).
+            if (payload.rankWrites.isNotEmpty()) {
+                rankDataUpdate(payload.rankWrites)
+            }
+            if (payload.rankNationSync.isNotEmpty()) {
+                rankDataNationSync(payload.rankNationSync)
+            }
 
             // 9. log_entry createMany.
             if (payload.logEntries.isNotEmpty()) {
                 logEntryCreateMany(payload.logEntries)
             }
 
-            // 10. reserved_turns flush. (ring-buffer write happens via ReservedTurnRepository in D3;
-            //     recorded here for contract-order completeness)
+            // 10. KV writes (nation_env delete-on-null) + reserved_turns flush (ring write via
+            //     ReservedTurnRepository, recorded here for contract-order completeness).
+            if (payload.kvWrites.isNotEmpty()) {
+                nationEnvKvWrite(payload.kvWrites)
+            }
             null
         }
     }
@@ -123,7 +148,7 @@ class JdbcFlushExecutor(
             val cols = GeneralRowMapper.toColumns(g)
             val src = MapSqlParameterSource()
             for ((k, v) in cols) {
-                if (k == "meta") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
+                if (k == "meta" || k == "last_turn") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
             }
             src
         }.toTypedArray()
@@ -141,6 +166,17 @@ class JdbcFlushExecutor(
                    officer_level = :officer_level,
                    gold = :gold,
                    rice = :rice,
+                   crew = :crew,
+                   train = :train,
+                   atmos = :atmos,
+                   crew_type_id = :crew_type_id,
+                   troop_id = :troop_id,
+                   weapon_code = :weapon_code,
+                   book_code = :book_code,
+                   horse_code = :horse_code,
+                   item_code = :item_code,
+                   npc_state = :npc_state,
+                   last_turn = :last_turn,
                    meta = :meta,
                    updated_at = now()
              WHERE id = :id
@@ -173,12 +209,205 @@ class JdbcFlushExecutor(
                    supply_state = :supply_state,
                    front_state = :front_state,
                    trust = :trust,
+                   secu = :secu,
+                   secu_max = :secu_max,
+                   def = :def,
+                   def_max = :def_max,
+                   wall = :wall,
+                   wall_max = :wall_max,
+                   pop = :pop,
+                   pop_max = :pop_max,
+                   trade = :trade,
+                   region = :region,
                    meta = :meta
              WHERE id = :id
             """.trimIndent(),
             batch,
         )
         lastOps.add(FlushExecOp("city", FlushVerb.UPDATE, cities.size))
+    }
+
+    // --- step 7: nation UPDATE ------------------------------------------------------------------
+
+    private fun nationUpdate(nations: List<Nation>) {
+        val batch: Array<SqlParameterSource> = nations.map { n ->
+            val cols = NationRowMapper.toColumns(n)
+            val src = MapSqlParameterSource()
+            for ((k, v) in cols) {
+                if (k == "meta") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
+            }
+            src
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            UPDATE nation
+               SET name = :name,
+                   color = :color,
+                   capital_city_id = :capital_city_id,
+                   gold = :gold,
+                   rice = :rice,
+                   tech = :tech,
+                   level = :level,
+                   type_code = :type_code,
+                   meta = :meta
+             WHERE id = :id
+            """.trimIndent(),
+            batch,
+        )
+        // databaseHooks models nation as an UPSERT (createMany excludes these); the UPDATE op-tag is
+        // recorded as UPSERT to match the contract / DatabaseHooksOrderTest expectation.
+        lastOps.add(FlushExecOp("nation", FlushVerb.UPSERT, nations.size))
+    }
+
+    // --- step 3: nation / nation_turn createMany ------------------------------------------------
+
+    private fun nationCreateMany(nations: List<Nation>) {
+        val batch: Array<SqlParameterSource> = nations.map { n ->
+            val cols = NationRowMapper.toColumns(n)
+            val src = MapSqlParameterSource()
+            for ((k, v) in cols) {
+                if (k == "meta") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
+            }
+            src
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (:id, :name, :color, :capital_city_id, :gold, :rice, :tech, :level, :type_code, :meta)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("nation", FlushVerb.CREATE_MANY, nations.size))
+    }
+
+    private fun nationTurnCreateMany(turns: List<NationTurn>) {
+        val batch: Array<SqlParameterSource> = turns.map { t ->
+            val cols = NationTurnRowMapper.toColumns(t)
+            val src = MapSqlParameterSource()
+            for ((k, v) in cols) {
+                if (k == "arg") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
+            }
+            src
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code, arg, brief)
+            VALUES (:nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("nation_turn", FlushVerb.CREATE_MANY, turns.size))
+    }
+
+    // --- step 5: deleteMany general, then rank_data ---------------------------------------------
+
+    private fun generalDeleteMany(ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM general WHERE id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("general", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun rankDataDeleteMany(generalIds: List<Int>) {
+        jdbc.update(
+            "DELETE FROM rank_data WHERE general_id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", generalIds),
+        )
+        lastOps.add(FlushExecOp("rank_data", FlushVerb.DELETE_MANY, generalIds.size))
+    }
+
+    // --- step 6: nation cascade (diplomacy, nation_turn, nation) --------------------------------
+
+    private fun nationCascadeDelete(nationIds: List<Int>) {
+        jdbc.update(
+            "DELETE FROM diplomacy WHERE src_nation_id IN (:ids) OR dest_nation_id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", nationIds),
+        )
+        lastOps.add(FlushExecOp("diplomacy", FlushVerb.DELETE_MANY, nationIds.size))
+        jdbc.update(
+            "DELETE FROM nation_turn WHERE nation_id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", nationIds),
+        )
+        lastOps.add(FlushExecOp("nation_turn", FlushVerb.DELETE_MANY, nationIds.size))
+        jdbc.update(
+            "DELETE FROM nation WHERE id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", nationIds),
+        )
+        lastOps.add(FlushExecOp("nation", FlushVerb.DELETE_MANY, nationIds.size))
+    }
+
+    // --- step 8: rank_data UPDATE (increment then set) + nation_id sync -------------------------
+
+    /**
+     * Faithful to `General.php:727-744`: flush the buffered rank maps as `UPDATE rank_data` —
+     * `rankVarIncrease` first (`value = value + n`), then `rankVarSet` (`value = n`). The 37 rows per
+     * general are pre-seeded at general creation, so this is an UPDATE (never an UPSERT). Caller
+     * orders [RankWrite]s increments-before-sets to match the PHP map iteration; the op-tag is one
+     * `rank_data UPDATE` covering all affected `(general, type)` rows.
+     */
+    private fun rankDataUpdate(writes: List<RankWrite>) {
+        for (w in writes) {
+            val (sql, value) = when (val op = w.op) {
+                is RankFlushOp.Increment -> "value = value + :value" to op.value
+                is RankFlushOp.Set -> "value = :value" to op.value
+            }
+            jdbc.update(
+                "UPDATE rank_data SET $sql WHERE general_id = :general_id AND type = :type",
+                MapSqlParameterSource()
+                    .addValue("value", value)
+                    .addValue("general_id", w.generalId)
+                    .addValue("type", w.type),
+            )
+        }
+        lastOps.add(FlushExecOp("rank_data", FlushVerb.UPDATE, writes.size))
+    }
+
+    /**
+     * The nation_id-sync denormalization (`General.php:718-723`): when a general's `nation` changed,
+     * ALL of that general's rank_data rows get `nation_id := new`. One UPDATE per affected general.
+     */
+    private fun rankDataNationSync(syncs: List<RankNationSync>) {
+        for (s in syncs) {
+            jdbc.update(
+                "UPDATE rank_data SET nation_id = :nation_id WHERE general_id = :general_id",
+                MapSqlParameterSource()
+                    .addValue("nation_id", s.nationId)
+                    .addValue("general_id", s.generalId),
+            )
+        }
+        lastOps.add(FlushExecOp("rank_data", FlushVerb.UPDATE, syncs.size))
+    }
+
+    // --- step 10: nation_env KV (delete-on-null) ------------------------------------------------
+
+    /**
+     * Flush the nation_env KV write-set (`KVStorage.php` delete-on-null): a `null` value DELETEs the
+     * `(namespace, key)` row; a non-null value UPSERTs the [MetaJson]-encoded jsonb (bare int for
+     * `next_execute_*`, `LastTurn.toRaw()` object for `turn_last_{officer_level}`).
+     */
+    private fun nationEnvKvWrite(writes: List<KvWrite>) {
+        for (w in writes) {
+            if (w.value == null) {
+                jdbc.update(
+                    "DELETE FROM nation_env WHERE namespace = :namespace AND key = :key",
+                    MapSqlParameterSource().addValue("namespace", w.namespace).addValue("key", w.key),
+                )
+            } else {
+                jdbc.update(
+                    """
+                    INSERT INTO nation_env (namespace, key, value)
+                    VALUES (:namespace, :key, :value)
+                    ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value
+                    """.trimIndent(),
+                    MapSqlParameterSource()
+                        .addValue("namespace", w.namespace)
+                        .addValue("key", w.key)
+                        .addValue("value", jsonb(MetaJson.encode(w.value))),
+                )
+            }
+        }
+        lastOps.add(FlushExecOp("nation_env", FlushVerb.UPSERT, writes.size))
     }
 
     // --- step 9: log_entry createMany -----------------------------------------------------------
@@ -235,7 +464,38 @@ data class FlushPayload(
     val updatedCities: List<City> = emptyList(),
     val logEntries: List<LogRow> = emptyList(),
     val deletedNationSnapshots: List<Map<String, Any?>> = emptyList(),
+    // --- P2 satellite write-set (Task FF2) ---
+    val updatedNations: List<Nation> = emptyList(),           // step-7 nation UPDATE (excl created)
+    val createdNations: List<Nation> = emptyList(),           // step-3 createMany
+    val createdNationTurns: List<NationTurn> = emptyList(),   // step-3 createMany
+    val deletedGenerals: List<Int> = emptyList(),             // step-5 deleteMany general + rank_data
+    val deletedNations: List<Int> = emptyList(),              // step-6 nation cascade
+    val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)
+    val rankNationSync: List<RankNationSync> = emptyList(),   // step-8 rank_data nation_id sync
+    val kvWrites: List<KvWrite> = emptyList(),                // step-10 nation_env KV (delete-on-null)
 )
+
+/**
+ * One rank_data write for a `(general, type)`: an [RankFlushOp.Increment] (`value = value + n`,
+ * rankVarIncrease) or [RankFlushOp.Set] (`value = n`, rankVarSet). Infra-local mirror of the engine
+ * `RankDelta` (no engine dep cycle). `type` is the rank_data column name (the PHP `RankColumn` value).
+ */
+data class RankWrite(val generalId: Int, val type: String, val op: RankFlushOp)
+
+sealed interface RankFlushOp {
+    data class Increment(val value: Int) : RankFlushOp
+    data class Set(val value: Int) : RankFlushOp
+}
+
+/** When a general's `nation` changed, ALL its rank_data rows get `nation_id := [nationId]`. */
+data class RankNationSync(val generalId: Int, val nationId: Int)
+
+/**
+ * One nation_env KV write: `value == null` DELETEs the row (delete-on-null, KVStorage.php), a
+ * non-null value UPSERTs the encoded jsonb. `namespace` is the nation id; values are encoded with
+ * [MetaJson] (bare int for `next_execute_*`; object for `turn_last_{officer_level}`).
+ */
+data class KvWrite(val namespace: Int, val key: String, val value: Any?)
 
 /**
  * A finalized `log_entry` row ready to INSERT. `scope`/`category` are the PG enum literals
