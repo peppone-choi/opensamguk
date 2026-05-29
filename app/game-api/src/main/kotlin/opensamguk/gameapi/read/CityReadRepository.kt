@@ -15,10 +15,10 @@ import org.springframework.data.jpa.repository.JpaRepository
  * (`secu, secu_max, def, def_max, wall, wall_max, pop, pop_max, trade, region`) + `meta`.
  * (There is NO `city.tech` — tech is a NATION stat.)
  *
- * `trust` is INTEGER in the V1 baseline but the logic `City.trust` is `Double` (the che math uses
- * `trust/100.0` & `trust/80.0`), so the read mapping WIDENS int -> Double on materialize. `trade` is
- * `integer NOT NULL DEFAULT 100` in the baseline (never null in a seeded row); the logic field is
- * nullable `Int?`, so the materialize passes the read int through as a (non-null) `Int?`.
+ * `trust` is `double precision` after the FC1 V4 migration (legacy schema is FLOAT) and the logic
+ * `City.trust` is `Double` (the che math uses `trust/100.0` & `trust/80.0`), so the read maps the
+ * column straight through as a `Double`. `trade` is NULLABLE after FC1 (RandomizeCityTradeRate writes
+ * NULL for disabled cities); the logic field is nullable `Int?`, so a NULL column materializes to null.
  */
 @Entity
 @Table(name = "city")
@@ -52,7 +52,7 @@ class CityReadEntity(
     var frontState: Int = 0,
 
     @Column(name = "trust")
-    var trust: Int = 0,
+    var trust: Double = 0.0,
 
     @Column(name = "secu")
     var security: Int = 0,
@@ -79,7 +79,7 @@ class CityReadEntity(
     var populationMax: Int = 0,
 
     @Column(name = "trade")
-    var trade: Int = 100,
+    var trade: Int? = null,
 
     @Column(name = "region")
     var region: Int = 0,
@@ -88,7 +88,7 @@ class CityReadEntity(
     @Column(name = "meta", columnDefinition = "jsonb")
     var meta: Map<String, Any?> = linkedMapOf(),
 ) {
-    /** Materialize into the shared `:logic` [City] (int `trust` -> Double widen). */
+    /** Materialize into the shared `:logic` [City] (double `trust`, nullable `trade`). */
     fun toLogic(): City = City(
         id = id,
         nationId = nationId,
@@ -99,7 +99,7 @@ class CityReadEntity(
         agricultureMax = agricultureMax,
         supplyState = supplyState,
         frontState = frontState,
-        trust = trust.toDouble(),
+        trust = trust,
         security = security,
         securityMax = securityMax,
         defense = defense,

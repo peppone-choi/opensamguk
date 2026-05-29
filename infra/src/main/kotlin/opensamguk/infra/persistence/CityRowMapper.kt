@@ -10,14 +10,16 @@ import java.sql.ResultSet
  * trust` + the P2 develop/defense surface (Task FD1): `secu, secu_max, def, def_max, wall, wall_max,
  * pop, pop_max, trade, region` + `meta` jsonb. (There is NO `city.tech` — tech is a NATION stat.)
  *
- * `trust` is a logic `Double` (che math uses `trust/100.0` & `trust/80.0`); the V1 baseline
- * `city.trust` column is INTEGER and the G1 golden pins an integer-valued trust so the column
- * is lossless. The mapper reads int -> Double and writes Double -> int (truncate toward zero).
+ * `trust` is a logic `Double` (che math uses `trust/100.0` & `trust/80.0`); after the FC1 V4 migration
+ * the `city.trust` column is `double precision` (legacy schema is FLOAT) so fractional trust
+ * accumulation + the trust<30 neutralize threshold survive flush↔reload. The mapper reads
+ * double -> Double and writes Double -> double (NO truncation — a truncate would re-introduce the
+ * silent multi-month divergence the migration fixes).
  *
- * `trade` is a NULLABLE logic `Int?` (95..105 or null = disabled). The V1 baseline `city.trade`
- * column is `integer NOT NULL DEFAULT 100`; a null logic value writes the DEFAULT-equivalent — but
- * the row mapper preserves null↔value faithfully (a null binds SQL NULL; the read widens an absent
- * column to null). The golden DB seeds an explicit integer, so the round trip is lossless there.
+ * `trade` is a NULLABLE logic `Int?` (95..105 or null = disabled). After FC1 the `city.trade` column
+ * is `integer` with NO NOT NULL / DEFAULT, so a null logic value binds SQL NULL byte-legally
+ * (RandomizeCityTradeRate writes NULL for prob-0 / failed-roll cities); the read widens an absent
+ * column to null. The round trip is lossless.
  *
  * `meta` jsonb: decoded into an insertion-order `LinkedHashMap`, re-encoded with [MetaJson].
  */
@@ -59,7 +61,7 @@ object CityRowMapper {
         agricultureMax = rs.getInt("agri_max"),
         supplyState = rs.getInt("supply_state"),
         frontState = rs.getInt("front_state"),
-        trust = rs.getInt("trust").toDouble(),
+        trust = rs.getDouble("trust"),
         security = rs.getInt("secu"),
         securityMax = rs.getInt("secu_max"),
         defense = rs.getInt("def"),
@@ -84,7 +86,7 @@ object CityRowMapper {
         "agri_max" to c.agricultureMax,
         "supply_state" to c.supplyState,
         "front_state" to c.frontState,
-        "trust" to kotlin.math.truncate(c.trust).toInt(),
+        "trust" to c.trust,
         "secu" to c.security,
         "secu_max" to c.securityMax,
         "def" to c.defense,

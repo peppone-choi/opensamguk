@@ -84,7 +84,7 @@ class PrecheckFullCrossCallSiteTest {
         val city = CityReadEntity(
             id = CITY_ID, nationId = f.cityNationId, level = 5,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
-            supplyState = f.supplyState, frontState = 0, trust = 82,
+            supplyState = f.supplyState, frontState = 0, trust = 82.0,
             wall = f.wall, wallMax = f.wallMax,
             meta = linkedMapOf(),
         )
