@@ -29,6 +29,21 @@ interface GeneralActionModule {
 
     /** onCalcOpposeStat(general, statName, value, aux) -> value. War-adjacency stub. PHP :840-851. */
     fun onCalcOpposeStat(general: General, statName: String, value: Double, aux: Map<String, Any?> = emptyMap()): Double = value
+
+    /**
+     * onCalcStatRange(general, statName, value, aux) -> value. Pair-typed sibling of [onCalcStat]
+     * (P4 decision #1): the ONLY pair key is `criticalDamageRange` ([min,max]), which PHP threads
+     * through `onCalcStat` as an array (`WarUnit.php:443`; `che_필살` rewrites it to
+     * `[(min+max)/2, max]`). The scalar [onCalcStat] signature is NOT widened — every P2/P3 module
+     * keeps compiling unchanged. Default identity. `criticalDamageRange` is onCalcStat-ONLY (no
+     * oppose cross), so there is no pair-typed onCalcOpposeStat.
+     */
+    fun onCalcStatRange(
+        general: General,
+        statName: String,
+        value: Pair<Double, Double>,
+        aux: Map<String, Any?> = emptyMap(),
+    ): Pair<Double, Double> = value
 }
 
 class GeneralActionPipeline(private val modules: List<GeneralActionModule> = emptyList()) {
@@ -43,6 +58,15 @@ class GeneralActionPipeline(private val modules: List<GeneralActionModule> = emp
 
     fun onCalcOpposeStat(general: General, statName: String, value: Double, aux: Map<String, Any?> = emptyMap()): Double =
         modules.fold(value) { acc, m -> m.onCalcOpposeStat(general, statName, acc, aux) }
+
+    /**
+     * Left-fold of the pair-typed [GeneralActionModule.onCalcStatRange] over the SAME module list
+     * as the scalar [onCalcStat] (P4 decision #1). Only `criticalDamageRange` uses this path; the
+     * fold order is the identical `getActionList` 12-source order so the pair rewrite (che_필살)
+     * accumulates draw-order-faithfully.
+     */
+    fun onCalcStatRange(general: General, statName: String, value: Pair<Double, Double>, aux: Map<String, Any?> = emptyMap()): Pair<Double, Double> =
+        modules.fold(value) { acc, m -> m.onCalcStatRange(general, statName, acc, aux) }
 
     /**
      * National income ASYMMETRY (research Unit 12): income is folded over the NATION-TYPE source ONLY.
