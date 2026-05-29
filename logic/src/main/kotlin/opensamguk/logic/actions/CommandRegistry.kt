@@ -6,6 +6,9 @@ import opensamguk.logic.actions.develop.cheJuminSeonjeong
 import opensamguk.logic.actions.develop.cheGunryangMaemae
 import opensamguk.logic.actions.develop.cheMuljaJodal
 import opensamguk.logic.actions.founding.CheGeobyeong
+import opensamguk.logic.actions.founding.CheGeonguk
+import opensamguk.logic.actions.founding.CheMujakwiGeonguk
+import opensamguk.logic.actions.founding.CrGeonguk
 import opensamguk.logic.actions.military.CheHullyeon
 import opensamguk.logic.actions.military.CheIdong
 import opensamguk.logic.actions.military.CheJiphap
@@ -78,6 +81,9 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_등용" -> CheDeungyong(pipeline)
         // --- CMD-FOUNDING (건국/거병) ---
         "che_거병" -> CheGeobyeong(pipeline)
+        "che_건국" -> CheGeonguk(pipeline)
+        "cr_건국" -> CrGeonguk(pipeline)
+        "che_무작위건국" -> CheMujakwiGeonguk(pipeline)
         // --- CMD-NATION-INTERNAL (국가 내정) ---
         "che_감축" -> cheGamchuk(pipeline)
         "che_증축" -> cheJeungchuk(pipeline)
