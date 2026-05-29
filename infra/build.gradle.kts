@@ -10,6 +10,7 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":logic"))
     implementation(kotlin("reflect"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
