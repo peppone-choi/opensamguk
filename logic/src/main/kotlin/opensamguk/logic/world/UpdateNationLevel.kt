@@ -1,9 +1,13 @@
 package opensamguk.logic.world
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.rng.RandUtil
+import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.log.HistoryTokens
+import opensamguk.logic.tick.MonthScopedRng
+import kotlin.math.pow
 
 /**
  * A3 — `UpdateNationLevel` (0-9 monotonic level engine). Faithful port of PHP grand truth
@@ -200,5 +204,159 @@ object UpdateNationLevel {
         val globalHistoryLog: String,
         val nationalHistoryLog: String,
         val nationTurnSeed: List<NationTurn>,
+    )
+
+    // ── NL3: two-stage unique-item lottery (byte-match RNG split) ───────────────────────────────
+
+    /**
+     * PHP `:160-167` — `maxTrialCountByYear` walks [GameConst.maxUniqueItemLimit] (`[[targetYear,
+     * targetTrialCnt], ...]`), `break`ing on the first `relYear < targetYear` and keeping the last
+     * `targetTrialCnt` that passed. Starts at 1 (the PHP `$maxTrialCountByYear = 1` default).
+     */
+    fun maxTrialCountByYear(relYear: Int): Int {
+        var maxTrial = 1
+        for (row in GameConst.maxUniqueItemLimit) {
+            val targetYear = row[0]
+            val targetTrialCnt = row[1]
+            if (relYear < targetYear) break
+            maxTrial = targetTrialCnt
+        }
+        return maxTrial
+    }
+
+    /**
+     * PHP `:175-184` — `score = belong + 10`; +60 if officer_level==12, +30 if ==11, +15 if >4;
+     * `score *= 2 ** trialCnt`. `belong` rides `meta['belong']`.
+     */
+    fun lotteryScore(general: General, trialCnt: Int): Int {
+        val belong = (general.meta["belong"] as? Number)?.toInt() ?: 0
+        var score = belong + 10
+        when {
+            general.officerLevel == 12 -> score += 60
+            general.officerLevel == 11 -> score += 30
+            general.officerLevel > 4 -> score += 15
+        }
+        score *= 2.0.pow(trialCnt).toInt()
+        return score
+    }
+
+    /**
+     * The count of a general's already-owned NON-buyable (unique/rare) items — PHP `:170-173`
+     * (`foreach getItems() as $item) if (!$item->isBuyable()) $trialCnt -= 1`).
+     *
+     * An item code is non-buyable iff its [GameConst.allItems] catalog cnt is `> 0` (the basic shop
+     * items carry cnt 0 = buyable; the rares carry cnt > 0). 'None' (empty slot) is buyable. Iterates
+     * the four equip slots (horse/weapon/book/item).
+     */
+    fun ownedNonBuyableCount(general: General): Int {
+        val codes = listOf(
+            "horse" to general.horse,
+            "weapon" to general.weapon,
+            "book" to general.book,
+            "item" to general.item,
+        )
+        var count = 0
+        for ((type, code) in codes) {
+            if (code == "None") continue
+            val cnt = GameConst.allItems[type]?.get(code) ?: continue
+            if (cnt > 0) count++   // cnt>0 ⟺ !isBuyable (rare/unique)
+        }
+        return count
+    }
+
+    /**
+     * The two-stage unique-item lottery (PHP `:134-222`). IO-free: the actual item grant is the
+     * injected [giveRandomUniqueItem] seam (`func.php:1487` `giveRandomUniqueItem`, whose DB-wide
+     * occupancy queries are a P6/infra concern). NL3 ports the byte-match-critical mechanics:
+     *   1. eligibility (`killturn >= killturnEnv - 24*60/turnterm` FLOAT division; `npcType < 2`).
+     *   2. per-general trialCnt = `min(maxTrialCountByYear(relYear), 4)` − owned non-buyables; skip ≤0.
+     *   3. weight = [lotteryScore]; chief = the officer_level 12 general.
+     *   4. stage-1 RNG = `MonthScopedRng.forNationLevelUp(hidden,y,m,nationID)`; loop `levelDiff`
+     *      times: `choiceUsingWeightPair(weights)` → winner, UNSET it, derive the stage-2 RNG
+     *      `MonthScopedRng.forGivenUnique(hidden,y,m,nationID,winnerID)`, call [giveRandomUniqueItem].
+     *   5. chief `increaseInheritancePoint(unifier, 250*levelDiff)` (recorded as a delta — the P6
+     *      inheritance-point persistence is a downstream seam).
+     *
+     * The eligible/weighted general ORDER is the input [generals] order (PHP query column order =
+     * `general` PK ascending — the caller supplies generals in that order); `choiceUsingWeightPair`
+     * over that ordered weight list is the byte-match draw.
+     */
+    fun runUniqueLottery(
+        nationId: Int,
+        year: Int,
+        month: Int,
+        startYear: Int,
+        hiddenSeed: String,
+        levelDiff: Int,
+        killturnEnv: Int,
+        turnterm: Int,
+        generals: List<General>,
+        giveRandomUniqueItem: (rng: RandUtil, winnerId: Int) -> Boolean,
+    ): LotteryResult {
+        // (1) eligibility — killturn cutoff (FLOAT division, NOT intdiv) + npc < 2.
+        val cutoff = killturnEnv - (24.0 * 60.0 / turnterm)
+        val eligible = generals.filter { g ->
+            val killturn = (g.meta["killturn"] as? Number)?.toDouble() ?: Double.NEGATIVE_INFINITY
+            killturn >= cutoff && g.npcType < 2
+        }
+        val eligibleIds = eligible.map { it.id }
+
+        // (2)+(3) per-general trialCnt + weighted score; chief = the officer_level 12 general.
+        val relYear = year - startYear
+        val maxByYear = maxTrialCountByYear(relYear)
+        var chiefId: Int? = null
+        val weightPairs = ArrayList<Pair<Int, Int>>() // (generalId, score) — insertion order == draw order
+        for (g in eligible) {
+            if (g.officerLevel == 12) chiefId = g.id
+            val trialCnt = minOf(maxByYear, GameConst.allItems.size) - ownedNonBuyableCount(g)
+            if (trialCnt <= 0) continue
+            weightPairs.add(g.id to lotteryScore(g, trialCnt))
+        }
+
+        // (4) two-stage RNG: stage-1 selection over the weight list, stage-2 per-winner item grant.
+        val nationLevelUpRng = MonthScopedRng.forNationLevelUp(hiddenSeed, year, month, nationId)
+        val remaining = ArrayList(weightPairs)
+        val winners = ArrayList<Int>()
+        val grants = ArrayList<Pair<Int, String>>() // (winnerId, givenUnique seed) — for the byte gate
+        repeat(levelDiff) {
+            if (remaining.isEmpty()) return@repeat
+            val weights = remaining.map { it.first to it.second.toDouble() }
+            val winnerId = nationLevelUpRng.choiceUsingWeightPair(weights)
+            remaining.removeAll { it.first == winnerId } // unset the winner
+            winners.add(winnerId)
+            val givenUniqueRng = MonthScopedRng.forGivenUnique(hiddenSeed, year, month, nationId, winnerId)
+            giveRandomUniqueItem(givenUniqueRng, winnerId)
+            grants.add(winnerId to MonthScopedRng.givenUniqueSeed(hiddenSeed, year, month, nationId, winnerId))
+        }
+
+        // (5) chief inheritance-point delta (250 * levelDiff) — recorded, persistence downstream.
+        val chiefDelta = if (chiefId != null) 250 * levelDiff else 0
+
+        return LotteryResult(
+            eligibleGeneralIds = eligibleIds,
+            weightedGeneralIds = weightPairs.map { it.first },
+            weightPairsInOrder = weightPairs,
+            winnerIdsInOrder = winners,
+            grants = grants,
+            chiefId = chiefId,
+            chiefInheritancePointDelta = chiefDelta,
+        )
+    }
+
+    /**
+     * The IO-free lottery outcome. [winnerIdsInOrder] are the per-iteration winners (each unset before
+     * the next pick); [grants] pairs each winner with the `givenUnique` seed used for its item grant
+     * (the stage-2 byte lineage). [chiefInheritancePointDelta] = `250 * levelDiff` (the P6 inheritance
+     * write is downstream). [weightPairsInOrder] is the ordered `(generalId → score)` weight list the
+     * stage-1 `choiceUsingWeightPair` drew over.
+     */
+    data class LotteryResult(
+        val eligibleGeneralIds: List<Int>,
+        val weightedGeneralIds: List<Int>,
+        val weightPairsInOrder: List<Pair<Int, Int>>,
+        val winnerIdsInOrder: List<Int>,
+        val grants: List<Pair<Int, String>>,
+        val chiefId: Int?,
+        val chiefInheritancePointDelta: Int,
     )
 }
