@@ -30,7 +30,7 @@ import opensamguk.infra.persistence.RankWrite
  *  2. ng_old_nations.upsert — one per deletedNationSnapshot
  *  3. createMany: general, nation, troop, diplomacy
  *  4. deleteMany troop (deletedTroops)
- *  5. deleteMany general, then deleteMany rank_data (deletedGenerals)
+ *  5. kill() delete: general, general_turn, then rank_data (deletedGenerals)
  *  6. nation cascade: deleteMany diplomacy, nation_turn, nation (deletedNations)
  *  7. updates: general (excl created), city, nation upsert (excl created),
  *     troop (excl created), diplomacy (excl created)
@@ -68,9 +68,11 @@ object DatabaseHooks {
         // 4. deleteMany troop.
         recorder.record("troop", FlushOp.Verb.DELETE_MANY, dirty.deletedTroops.size)
 
-        // 5. deleteMany general, then rank_data (both guarded on deletedGenerals > 0).
+        // 5. kill()'s ported delete: general, general_turn, then rank_data (`General.php:92-95`;
+        //    general_access_log is not ported to the V1 schema). All guarded on deletedGenerals > 0.
         if (dirty.deletedGenerals.isNotEmpty()) {
             recorder.record("general", FlushOp.Verb.DELETE_MANY, dirty.deletedGenerals.size)
+            recorder.record("general_turn", FlushOp.Verb.DELETE_MANY, dirty.deletedGenerals.size)
             recorder.record("rank_data", FlushOp.Verb.DELETE_MANY, dirty.deletedGenerals.size)
         }
 
@@ -161,6 +163,18 @@ object DatabaseHooks {
             }
         }
 
+        // F3 (FF2): wire the tombstone seam — DirtyState.deleted* → FlushPayload.deleted*. The infra
+        // delete-sets (step-5 general/general_turn/rank_data, step-6 nation cascade, step-2
+        // ng_old_nations) already exist; this is the emitter that makes the payload non-empty so they
+        // fire. The DeletedNationSnapshot → Map carries the nation id + its archived general ids
+        // (the ng_old_nations archive write).
+        val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
+            linkedMapOf<String, Any?>(
+                "nation" to snap.nation.id,
+                "general_ids" to snap.generalIds,
+            )
+        }
+
         return FlushPayload(
             worldStateUpdate = linkedMapOf(
                 "id" to state.id,
@@ -175,6 +189,9 @@ object DatabaseHooks {
             createdDiplomacy = createdDiplomacy,
             logEntries = logEntries,
             rankWrites = rankWrites,
+            deletedGenerals = dirty.deletedGenerals,
+            deletedNations = dirty.deletedNations,
+            deletedNationSnapshots = deletedNationSnapshots,
         )
     }
 

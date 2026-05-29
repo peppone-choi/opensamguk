@@ -27,7 +27,7 @@ import org.springframework.transaction.support.TransactionTemplate
  *  2. ng_old_nations UPSERT per deleted-nation snapshot
  *  3. createMany general/nation/troop/diplomacy (guarded > 0)
  *  4. deleteMany troop
- *  5. deleteMany general, then rank_data
+ *  5. kill() delete: general, general_turn, then rank_data
  *  6. nation cascade: diplomacy, nation_turn, nation
  *  7. updates: general (excl created), city, nation upsert (excl created), troop, diplomacy
  *  8. rank_data upsert (RANK_ROWS_PER_GENERAL per target)
@@ -332,6 +332,14 @@ class JdbcFlushExecutor(
             MapSqlParameterSource().addValue("ids", ids),
         )
         lastOps.add(FlushExecOp("general", FlushVerb.DELETE_MANY, ids.size))
+        // kill()'s 4-table delete (`General.php:92-95`): general / general_turn / rank_data /
+        // general_access_log. general_turn is deleted here (rank_data follows in step-5);
+        // general_access_log is NOT ported to the V1 baseline schema (no table), so it is a no-op.
+        jdbc.update(
+            "DELETE FROM general_turn WHERE general_id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("general_turn", FlushVerb.DELETE_MANY, ids.size))
     }
 
     private fun rankDataDeleteMany(generalIds: List<Int>) {
