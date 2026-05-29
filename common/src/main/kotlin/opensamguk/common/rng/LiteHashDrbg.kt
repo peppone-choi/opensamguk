@@ -77,4 +77,35 @@ open class LiteHashDrbg(seed: ByteArray, stateIdx: Long = 0, bufferIdx: Int = 0)
         result[bytes - 1] = (result[bytes - 1].toInt() and (0xff ushr (8 - headBits))).toByte()
         return result
     }
+
+    private fun _nextInt(bits: Int): Long {
+        require(bits <= MAX_RNG_SUPPORT_BIT + 1) { "bits $bits > 54: LE u64 read would overflow signed Long" }  // OQ2 guard: any future >54-bit caller fails loudly
+        return ByteBuffer.wrap(nextBits(bits, 8)).order(ByteOrder.LITTLE_ENDIAN).long
+    }
+
+    private fun bitMaskLen(max: Long): Int {
+        var n = max
+        n = n or (n ushr 1); n = n or (n ushr 2); n = n or (n ushr 4)
+        n = n or (n ushr 8); n = n or (n ushr 16); n = n or (n ushr 32)
+        return 64 - java.lang.Long.numberOfLeadingZeros(n)
+    }
+
+    fun nextInt(max: Long? = null): Long {
+        if (max == null || max == MAX_INT_L) return _nextInt(MAX_RNG_SUPPORT_BIT)
+        if (max > MAX_INT_L) throw IllegalArgumentException("Over max int")
+        if (max == 0L) return 0
+        if (max < 0) return -nextInt(-max)
+        val bits = bitMaskLen(max)
+        var n = _nextInt(bits)
+        while (n > max) n = _nextInt(bits)   // INCLUSIVE: n==max accepted
+        return n
+    }
+
+    fun nextFloat1(): Double {
+        while (true) {
+            val nInt = _nextInt(MAX_RNG_SUPPORT_BIT + 1)   // 54 bits
+            if (nInt < MAX_INT_MORE1_L) return nInt.toDouble() / TWO_POW_53_D
+            if (nInt == MAX_INT_MORE1_L) return 1.0
+        }
+    }
 }
