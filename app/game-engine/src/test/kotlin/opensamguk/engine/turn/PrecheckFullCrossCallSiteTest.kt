@@ -61,10 +61,14 @@ class PrecheckFullCrossCallSiteTest {
     /** One canonical logical fixture, tunable on the few fields the constraints read. */
     private inner class Fixture(
         val gold: Int = 4000,
+        val rice: Int = 3000,                // < generalMinimumRice(500) is never used; 헌납 funds clear
         val cityNationId: Int = NATION_ID,   // != actor nation -> OccupiedCity deny
         val supplyState: Int = 1,            // 0 -> SuppliedCity deny
         val agri: Int = 4000,
         val agriMax: Int = 8000,             // agri == agriMax -> RemainCityCapacity deny
+        val wall: Int = 2000,
+        val wallMax: Int = 8000,             // wall == wallMax -> RemainCityCapacity deny (성벽 보수)
+        val officerLevel: Int = 5,           // 12 -> NotLord deny (하야); != 12 -> BeChief deny (포상)
     )
 
     // --- game-api side: project the fixture into JPA read entities + stub the repos ---
@@ -73,14 +77,15 @@ class PrecheckFullCrossCallSiteTest {
         val general = GeneralReadEntity(
             id = GENERAL_ID, nationId = NATION_ID, cityId = CITY_ID,
             leadership = 70, strength = 30, intel = 95, injury = 0,
-            experience = 1200, dedication = 900, officerLevel = 5,
-            gold = f.gold, rice = 3000,
+            experience = 1200, dedication = 900, officerLevel = f.officerLevel,
+            gold = f.gold, rice = f.rice,
             meta = linkedMapOf("explevel" to 4, "intel_exp" to 12, "max_domestic_critical" to 3.5),
         )
         val city = CityReadEntity(
             id = CITY_ID, nationId = f.cityNationId, level = 5,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
             supplyState = f.supplyState, frontState = 0, trust = 82,
+            wall = f.wall, wallMax = f.wallMax,
             meta = linkedMapOf(),
         )
         val nation = NationReadEntity(id = NATION_ID, level = 7, capitalCityId = CITY_ID)
@@ -109,14 +114,15 @@ class PrecheckFullCrossCallSiteTest {
         val general = TurnGeneral(
             id = GENERAL_ID, name = "g$GENERAL_ID", nationId = NATION_ID, cityId = CITY_ID, troopId = 0,
             stats = GeneralStats(leadership = 70, strength = 30, intelligence = 95),
-            experience = 1200, dedication = 900, officerLevel = 5,
-            gold = f.gold, rice = 3000, injury = 0, turnTime = t0,
+            experience = 1200, dedication = 900, officerLevel = f.officerLevel,
+            gold = f.gold, rice = f.rice, injury = 0, turnTime = t0,
             meta = linkedMapOf("explevel" to 4, "intel_exp" to 12, "max_domestic_critical" to 3.5),
         )
         val city = City(
             id = CITY_ID, name = "c$CITY_ID", nationId = f.cityNationId, level = 5,
             commerce = 3000, commerceMax = 8000, agriculture = f.agri, agricultureMax = f.agriMax,
             supplyState = f.supplyState, frontState = 0,
+            wall = f.wall, wallMax = f.wallMax,
             meta = linkedMapOf("trust" to 82),   // engine City has no trust column; lives in meta
         )
         // The actor's own nation; a second nation 2 exists so the OccupiedCity-deny fixture (city
@@ -172,23 +178,108 @@ class PrecheckFullCrossCallSiteTest {
         assertDenyAgreement(Fixture(agri = 8000, agriMax = 8000), "농지 개간은 충분합니다.", "RemainCityCapacity")
     }
 
+    // =====================================================================================
+    // P2 SAMPLE — the SAME cross-call-site invariant for a representative command per family
+    // (develop / trade / personnel / nation). Each drives the REAL game-api precheck AND the
+    // REAL game-engine full-mode entry point against the SAME seeded world and asserts the
+    // IDENTICAL Allow/Deny + PHP reason. They share the SINGLE :logic constraint library; a
+    // drifted second implementation on either side could not pass these silently.
+    // =====================================================================================
+
+    // --- CMD-DEVELOP: che_성벽보수 (wall column, strength-stat develop — a DIFFERENT develop
+    // column + stat path than the canonical 농지개간 above). ---
+
+    @Test
+    fun `P2 develop che_성벽보수 AVAILABLE both real call sites agree go`() {
+        // owned, supplied, funded, wall(2000) < wallMax(8000) -> both ALLOW + resolve.
+        assertAvailableAgreement("che_성벽보수", Fixture())
+    }
+
+    @Test
+    fun `P2 develop che_성벽보수 RemainCityCapacity deny both real call sites agree`() {
+        // wall == wallMax -> RemainCityCapacity denies; josa of "성벽 보수" + "은" == "는".
+        assertDenyAgreement(
+            Fixture(wall = 8000, wallMax = 8000), "성벽 보수는 충분합니다.", "RemainCityCapacity",
+            action = "che_성벽보수",
+        )
+    }
+
+    // --- CMD-TRADE: che_헌납 (notBeNeutral/occupiedCity/suppliedCity + reqGeneralRice; empty args
+    // -> isGold=false -> the rice branch, identical on both sites). ---
+
+    @Test
+    fun `P2 trade che_헌납 AVAILABLE both real call sites agree go`() {
+        // owned, supplied, rice(3000) >= generalMinimumRice(500) -> both ALLOW + resolve (amount 0).
+        assertAvailableAgreement("che_헌납", Fixture())
+    }
+
+    @Test
+    fun `P2 trade che_헌납 SuppliedCity deny both real call sites agree`() {
+        assertDenyAgreement(Fixture(supplyState = 0), "고립된 도시입니다.", "SuppliedCity", action = "che_헌납")
+    }
+
+    // --- CMD-PERSONNEL: che_하야 (notBeNeutral/notLord). DENY-only via NotLord (a lord cannot
+    // 하야); the resolve path is a heavy cross-entity write covered by the personnel goldens. ---
+
+    @Test
+    fun `P2 personnel che_하야 NotLord deny both real call sites agree`() {
+        // officerLevel 12 (the lord) -> NotLord denies in BOTH modes.
+        assertDenyAgreement(Fixture(officerLevel = 12), "군주입니다.", "NotLord", action = "che_하야")
+    }
+
+    // --- CMD-NATION: che_포상 (NationCommand: notBeNeutral/occupiedCity/beChief/suppliedCity +
+    // existsDestGeneral/friendlyDestGeneral/reqNation). DENY via BeChief (a non-수뇌 cannot reward).
+    // BeChief is the 3rd constraint, ahead of the dest-general requirements — so it denies on BOTH
+    // sides with empty args (no dest general loaded), keeping this a clean pure-state cross-site deny.
+    // (A funded-chief ALLOW is NOT a valid cross-site case: 포상's FULL set genuinely requires a dest
+    // general, which the no-args precheck cannot supply — precheck would return Unknown there, the
+    // designed precheck/full divergence, not a parity failure. So 포상 is exercised DENY-only here.) ---
+
+    @Test
+    fun `P2 nation che_포상 BeChief deny both real call sites agree`() {
+        // officerLevel 4 (an ordinary general, not a 수뇌 > 4) -> BeChief denies in BOTH modes,
+        // ahead of the dest-general requirement.
+        assertDenyAgreement(Fixture(officerLevel = 4), "수뇌가 아닙니다.", "BeChief", action = "che_포상")
+    }
+
+    /**
+     * Drive BOTH real call sites with [action] over the SAME AVAILABLE [fixture] and assert they
+     * agree on "go": game-api precheck == [PrecheckResult.Available] AND game-engine full resolves
+     * the requested action (did NOT fall back to 휴식, carries no deny reason).
+     */
+    private fun assertAvailableAgreement(action: String, fixture: Fixture) {
+        val precheck = precheckService(fixture).precheck(GENERAL_ID, action)
+        assertEquals(PrecheckResult.Available, precheck, "game-api precheck: AVAILABLE ($action)")
+
+        val (handler, _) = engineHandler(fixture)
+        val outcome = handler.handle(GENERAL_ID, action, YEAR, MONTH, "12:34")
+        assertFalse(outcome.fellBack, "game-engine full: Allow — resolved, did NOT fall back ($action)")
+        assertEquals(action, outcome.definition.key, "the requested action resolved, not the fallback")
+        assertEquals(null, outcome.denyReason, "no deny reason on an allowed turn ($action)")
+    }
+
     /**
      * Drive BOTH real call sites with the SAME denying [fixture] and assert they produce the IDENTICAL
      * outcome class (Blocked / fell-back) AND the IDENTICAL PHP [reason] string (+ constraintName).
      */
-    private fun assertDenyAgreement(fixture: Fixture, reason: String, constraintName: String) {
+    private fun assertDenyAgreement(
+        fixture: Fixture,
+        reason: String,
+        constraintName: String,
+        action: String = ACTION,
+    ) {
         // game-api PRECHECK -> Blocked(reason, constraintName)
-        val precheck = precheckService(fixture).precheck(GENERAL_ID, ACTION)
-        val blocked = assertIs<PrecheckResult.Blocked>(precheck, "game-api precheck denies")
-        assertEquals(reason, blocked.reason, "game-api deny reason")
-        assertEquals(constraintName, blocked.constraintName, "game-api constraintName")
+        val precheck = precheckService(fixture).precheck(GENERAL_ID, action)
+        val blocked = assertIs<PrecheckResult.Blocked>(precheck, "game-api precheck denies ($action)")
+        assertEquals(reason, blocked.reason, "game-api deny reason ($action)")
+        assertEquals(constraintName, blocked.constraintName, "game-api constraintName ($action)")
 
         // game-engine FULL -> fell back to 휴식 carrying the SAME deny reason
         val (handler, _) = engineHandler(fixture)
-        val outcome = handler.handle(GENERAL_ID, ACTION, YEAR, MONTH, "12:34")
-        assertTrue(outcome.fellBack, "game-engine full denies (falls back to 휴식)")
-        assertEquals("휴식", outcome.definition.key, "denied turn resolves to the fallback")
-        assertEquals(reason, outcome.denyReason, "game-engine deny reason")
+        val outcome = handler.handle(GENERAL_ID, action, YEAR, MONTH, "12:34")
+        assertTrue(outcome.fellBack, "game-engine full denies — falls back to 휴식 ($action)")
+        assertEquals("휴식", outcome.definition.key, "denied turn resolves to the fallback ($action)")
+        assertEquals(reason, outcome.denyReason, "game-engine deny reason ($action)")
 
         // THE invariant: both REAL call sites returned the SAME class + the SAME byte-identical reason.
         assertEquals(blocked.reason, outcome.denyReason,
