@@ -93,8 +93,14 @@ open class CommerceInvestment(
         score *= criticalScoreEx(rng, pick)                                       // DRAW 3 (only success/fail)
         val roundedScore = phpRound(score)                                        // POST-crit, PRE-front-debuff
 
-        val exp = roundedScore * 0.7
-        val ded = roundedScore * 1.0
+        // exp/ded gains fold THROUGH the onCalcStat stack (PHP General::addExperience / addDedication,
+        // General.php:448-495 — affectTrigger default TRUE: $exp = $this->onCalcStat($this,'experience',$exp)
+        // BEFORE increaseVar). A module-free general folds identity (so the P1/develop module-free goldens
+        // are unaffected); a personality like che_왕좌 multiplies experience ×1.1. The level-change PLAIN
+        // logs (레벨업/승급) live in StatChange.addExperience/addDedication; the develop goldens are pinned
+        // no-level-cross so they are not emitted here — the GATE-TRAIT non-identity golden proves this fold.
+        val exp = pipeline.onCalcStat(d.general, "experience", roundedScore * 0.7)
+        val ded = pipeline.onCalcStat(d.general, "dedication", roundedScore * 1.0)
 
         // max_domestic_critical (success: aux += score/2; else reset to 0) — meta/aux ONLY (no inheritance write; OQ7/P6 seam)
         // PHP increaseVar(static::$statKey.'_exp', 1) — the exp key follows statKey (intel_exp / strength_exp).

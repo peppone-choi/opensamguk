@@ -28,6 +28,38 @@ trade: che_증여, che_헌납, che_장비매매, che_군량매매
 nation-internal: che_발령, che_포상, che_천도, che_국호변경, che_국기변경
 founding: che_거병
 
+## GT1 — the module-BEARING (non-identity) golden (GATE-TRAIT)
+
+The 28 above are all MODULE-FREE (the `assertModuleFree` HARD assertion forced special/special2/
+personal ∈ {None,'',null} + every equipment slot a None item, so the empty `GeneralActionPipeline`
+folds as the identity). That gate proves log/mutation fidelity but it can NEVER exercise the real
+9-source stat stack. Task GT1 (GATE-TRAIT) needs the INVERSE: an actor that NATURALLY carries
+specialty/personality/nation-type modules, byte-matching the multi-source onCalcDomestic/onCalcStat
+accumulation.
+
+`capture_command.php`/`capture_command_args.php` cannot produce that — both force `personal=>'None'`
+in their precondition and HARD-abort on a non-None module. So GT1 has a DEDICATED inverse-capture
+script, `capture_nonidentity.php`, which keeps every numeric/log/no-level-cross/exact-line-count/
+integer-trust assertion but asserts the modules ARE active (the inverse identity guard) and records a
+`moduleFold` observability proof (the module-free vs module-bearing after-state on the SAME seed).
+
+Capture of record (its OWN install/seed — NOT the cff8658592… module-free install):
+`hiddenSeed=8ebfeb6fa932a181ec9ef43b7473f4c9`, scenario_1010, year 181, develCost 20.
+- Actor: gid 14 공융 (nation 1 후한 level 7, city 42 홍농) carrying
+  `special=che_경작` (source #3) + `personal=che_왕좌` (source #5); nation type `che_유가` (source #1).
+- Command: `che_농지개간` (turnType 농업) folds THREE sources across BOTH pipelines —
+  cost  : 20 → 유가 ×0.8 = 16 → 경작 ×0.8 = 12.8 → round = 13 (reqGold);
+  score : ×1.1 (유가) × ×1.1 (경작) on agri;
+  exp   : ×1.1 (왕좌, via onCalcStat('experience')).
+- Fixture: `golden/p2/che_농지개간-nonidentity-fixtures.json` (4 cases, distinct months/outcomes).
+- Asserted by `logic/.../golden/NonIdentityFoldGoldenTest.kt`.
+
+GT1 surfaced + fixed a real parity bug: `CommerceInvestment.resolve` accumulated exp/ded WITHOUT the
+`onCalcStat` fold, so 왕좌's experience ×1.1 was dropped (invisible to the module-free goldens, where
+onCalcStat is identity). Re-ported from PHP `General::addExperience`/`addDedication` (General.php:448-495,
+affectTrigger default TRUE folds onCalcStat BEFORE increaseVar). All module-free develop/military/trade
+goldens stay byte-exact (the fold is identity for them).
+
 ## Backlogged (12)
 
 | Command | Group | Reason (from the RUNNING PHP) |
