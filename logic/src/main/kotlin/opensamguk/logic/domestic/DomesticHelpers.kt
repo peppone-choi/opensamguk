@@ -80,6 +80,9 @@ fun getDedLevelText(dedLevel: Int): String {
 /** func_converter.php:668-670 — getBillByLevel = dedLevel * 200 + 400. */
 fun getBillByLevel(dedLevel: Int): Int = dedLevel * 200 + 400
 
+/** func_converter.php:664-666 — getBill = getBillByLevel(getDedLevel(dedication)). Per-general upkeep. */
+fun getBill(dedication: Double): Int = getBillByLevel(getDedLevel(dedication))
+
 /** func_gamerule.php:942-952 — aux max_domestic_critical += score/2 (success) / =0 (non-success, per che run()).
  *  P1 emits ONLY the meta (aux) value for the General draft. The inheritance-point comparison/write
  *  (oldMaxDomesticCritical = getInheritancePoint; bump if greater) sits OUTSIDE the world/flush boundary
