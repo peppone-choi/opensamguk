@@ -48,6 +48,11 @@ class GeneralActionResolveContext(
     val env: WorldEnv,
     val month: Int,                        // game month — the ActionLogger MONTH-format prefix companion to env.year
     val date: String,                      // turn-time HH:MM for the log <1>date</>
+    /**
+     * The PARSED reserved arg map (PHP `$this->arg` after `argTest()`). reqArg commands read their
+     * normalized args here (징병: crewType/amount; 이동: destCityID). Default empty for no-arg commands.
+     */
+    val args: Map<String, Any?> = emptyMap(),
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val globalActionLogs: MutableList<String> = mutableListOf(),
