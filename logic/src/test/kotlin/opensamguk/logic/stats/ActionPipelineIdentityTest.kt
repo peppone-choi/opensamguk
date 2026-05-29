@@ -36,7 +36,7 @@ class ActionPipelineIdentityTest {
     @Test
     fun `one-module pipeline folds onCalcDomestic correctly`() {
         val plusFiveCost = object : GeneralActionModule {
-            override fun onCalcDomestic(general: General, actionKey: String, varType: String, value: Double): Double =
+            override fun onCalcDomestic(general: General, actionKey: String, varType: String, value: Double, aux: Map<String, Any?>): Double =
                 if (varType == "cost") value + 5.0 else value
         }
         val pipeline = GeneralActionPipeline(listOf(plusFiveCost))
