@@ -1,0 +1,362 @@
+package opensamguk.logic.world
+
+import opensamguk.common.constants.GameConst
+import opensamguk.common.rng.RandUtil
+import opensamguk.logic.domain.General
+import opensamguk.logic.domain.Nation
+import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.log.HistoryTokens
+import opensamguk.logic.tick.MonthScopedRng
+import kotlin.math.pow
+
+/**
+ * A3 — `UpdateNationLevel` (0-9 monotonic level engine). Faithful port of PHP grand truth
+ * `legacy/devsam-core/hwe/sammo/Event/Action/UpdateNationLevel.php:26-225`.
+ *
+ * The Action runs every month (the F2-owned `month/1000` `true` row names it before
+ * `ProvideNPCTroopLeader`). It (NL1) computes each nation's TARGET level from its `LEVEL>=4`
+ * city-count, (NL2) applies the per-level-up side-effect sequence (gold/rice grant + 작위 history
+ * + aux lv7 unlock + nation_turn 휴식 seed), and (NL3) runs the two-stage unique-item lottery.
+ *
+ * **0-9 = APPEND** (plan §"Nation-level 0-9 decision"): levels 0..7 byte-match the legacy 8-entry
+ * `nationLevelByCityCnt` (`UpdateNationLevel.php:41-50`); levels 8/9 are the two NEW tiers at the
+ * thresholds 28/36 frozen in [GameConst.nationLevelByCityCnt09] (F7). The threshold walk, the
+ * monotonic guard (`target>current`), and `levelDiff` math all extend by the existing arithmetic.
+ *
+ * NL1 is a pure target-computation core (no IO); NL2/NL3 extend this file with the side-effect
+ * sequence + lottery (still pure — they emit a structured result the daemon flushes).
+ */
+object UpdateNationLevel {
+
+    // ── NL1: 0-9 threshold walk ───────────────────────────────────────────────────────────────
+
+    /**
+     * PHP `:52-66` — the highest `cmpNationLevel` whose `cmpCityCnt <= cityCnt`.
+     *
+     * Iterates the [GameConst.nationLevelByCityCnt09] thresholds (column 2 of each `[name, chief,
+     * cityCnt]` row) and `break`s on the first `cityCnt < cmpCityCnt`, keeping the last index that
+     * passed. With the 0-based table starting at threshold 0 the loop always yields at least 0.
+     */
+    fun targetLevelByCityCnt(cityCnt: Int): Int {
+        var level = 0
+        for ((cmpLevel, row) in GameConst.nationLevelByCityCnt09.withIndex()) {
+            val cmpCityCnt = (row[2] as Number).toInt()
+            if (cityCnt < cmpCityCnt) break
+            level = cmpLevel
+        }
+        return level
+    }
+
+    /**
+     * PHP `SELECT nation, count(*) FROM city WHERE LEVEL>=4 GROUP BY nation` (`:34-37`).
+     *
+     * [cityOwnership] is the live `(cityId → nationId)` ownership; the LEVEL is the MAP/CityConst
+     * STATIC level resolved from the active [cityConst] (F6), NOT the nation level. Cities the
+     * active CityConst does not know (no `byId`) or whose map level is `<4` are excluded — exactly
+     * the rows the PHP `WHERE LEVEL>=4` filters out (an absent/low row is simply not counted).
+     *
+     * NL5 confirms the semantics: lv4 ('이' = 이민족) cities owned by a Han nation DO count toward
+     * its level (the legacy query is a literal `LEVEL>=4`, no 한족/이민족 filter).
+     */
+    fun cityCountsByNation(
+        cityOwnership: List<Pair<Int, Int>>,
+        cityConst: CityConstVariant,
+    ): Map<Int, Int> {
+        val counts = LinkedHashMap<Int, Int>()
+        for ((cityId, nationId) in cityOwnership) {
+            val level = cityConst.byId(cityId)?.level ?: continue
+            if (level < 4) continue
+            counts[nationId] = (counts[nationId] ?: 0) + 1
+        }
+        return counts
+    }
+
+    /**
+     * The monotonic level-up decision for ONE nation (PHP `:60-66`).
+     *
+     * Returns null when the target does not exceed the current level (the PHP `if ($nationlevel >
+     * $nation['level'])` guard — never demotes, never re-acts at the same level). Otherwise carries
+     * the old/new level + `levelDiff` (which drives the NL3 lottery iteration count + the NL2
+     * `level*1000` grant).
+     */
+    fun computeLevelUp(currentLevel: Int, cityCnt: Int): LevelUp? {
+        val target = targetLevelByCityCnt(cityCnt)
+        if (target <= currentLevel) return null
+        return LevelUp(oldLevel = currentLevel, newLevel = target, levelDiff = target - currentLevel)
+    }
+
+    /** A single nation's monotonic level-up (PHP `$levelDiff = $nationlevel - $nation['level']`). */
+    data class LevelUp(val oldLevel: Int, val newLevel: Int, val levelDiff: Int)
+
+    // ── NL2: per-level-up side-effect sequence (order load-bearing) ─────────────────────────────
+
+    /** The 0-9 작위 name for [level] (PHP `getNationLevel`; column 0 of the F7 0-9 table). */
+    fun levelText(level: Int): String = GameConst.nationLevelByCityCnt09[level][0] as String
+
+    /**
+     * Apply ONE nation's level-up side-effect sequence (PHP `:69-130`), returning a structured,
+     * IO-free [LevelUpEffects] the daemon flushes (the same single-dirty-source contract the rest
+     * of the monthly pipeline uses).
+     *
+     * The PHP ORDER is reproduced exactly (the G1 log-sequence gate target):
+     *   1. `level=new`; `gold += newLevel*1000`; `rice += newLevel*1000`.
+     *   2. resolve `lordName` (caller-supplied — PHP `SELECT name ... officer_level=12`),
+     *      `oldNationLevelText`/`nationLevelText`.
+     *   3. switch(newLevel): global + national 작위 history strings (HistoryTokens, F7); case 7/8/9
+     *      ALSO set aux `can_국기변경=1`/`can_국호변경=1` (`meta['aux']`, insertion order preserved);
+     *      levels 0/1 emit NO log (empty string).
+     *   4. nation update (carried on the returned [LevelUpEffects.nation]).
+     *   5. logger flush (the history strings are the flushable payload).
+     *   6. nation_turn 휴식 seed: `chiefLevel in getNationChiefLevel(NEW level)..11` (`Util::range(a,
+     *      12)` is HALF-OPEN) × `turnIdx 0..11` (`Util::range(maxChiefTurn=12)` → 0..11). insertIgnore.
+     *
+     * **8/9 (the APPEND):** HistoryTokens.nationLevelUp{Global,National} already routes 7/8/9 through
+     * the case-7 옹립 pattern with the new level names — so 8/9 emit the new 작위 templates by the
+     * existing arithmetic (no remap). The aux unlock also covers 8/9 (they inherit lv7's unlock).
+     */
+    fun applyLevelUp(
+        nation: Nation,
+        lordName: String,
+        year: Int,
+        month: Int,
+        levelUp: LevelUp,
+    ): LevelUpEffects {
+        val newLevel = levelUp.newLevel
+        val oldLevel = levelUp.oldLevel
+        val grant = newLevel * 1000
+
+        // (3) history strings + aux unlock. PHP switch: 7/8/9 → 옹립 + aux; 6 → 책봉; 5/4/3 → 임명;
+        // 2 → 독립; 0/1 → no log. The HistoryTokens helpers return "" for the no-case levels.
+        val oldText = levelText(oldLevel)
+        val newText = levelText(newLevel)
+        val globalLog = HistoryTokens.nationLevelUpGlobal(newLevel, nation.name, lordName, oldText, newText)
+        val nationalLog = HistoryTokens.nationLevelUpNational(newLevel, nation.name, lordName, oldText, newText)
+
+        // (1)+(3 aux): build the updated nation (level/gold/rice + aux unlock at 7/8/9).
+        val updatedMeta: Map<String, Any?> = if (newLevel >= 7) {
+            unlockChiefAux(nation.meta)
+        } else {
+            nation.meta
+        }
+        val updatedNation = nation.copy(
+            level = newLevel,
+            gold = nation.gold + grant,
+            rice = nation.rice + grant,
+            meta = updatedMeta,
+        )
+
+        // (6) nation_turn 휴식 seed for the REASSIGNED new level's chief range.
+        val chiefStart = GameConst.getNationChiefLevel(newLevel) // never null for 0..9
+        val turnSeed = ArrayList<NationTurn>()
+        for (chiefLevel in chiefStart until 12) {                // Util::range(chiefStart, 12) half-open
+            for (turnIdx in 0 until GameConst.maxChiefTurn) {    // Util::range(12) → 0..11
+                turnSeed.add(
+                    NationTurn(
+                        nationId = nation.id,
+                        officerLevel = chiefLevel,
+                        turnIdx = turnIdx,
+                        action = "휴식",
+                        arg = null,
+                        brief = "휴식",
+                    )
+                )
+            }
+        }
+
+        return LevelUpEffects(
+            nation = updatedNation,
+            goldDelta = grant,
+            riceDelta = grant,
+            globalHistoryLog = globalLog,
+            nationalHistoryLog = nationalLog,
+            nationTurnSeed = turnSeed,
+        )
+    }
+
+    /**
+     * PHP `:107-111` — `$auxVal = Json::decode($nation['aux']); $auxVal['can_국기변경']=1;
+     * $auxVal['can_국호변경']=1;`. In opensamguk `aux` rides `meta['aux']` (no dedicated column), so
+     * this is a read-modify-write of the nested aux map, preserving the EXISTING key insertion order
+     * (the byte-comparable jsonb source) and appending the two flags (or overwriting in place if
+     * already present — PHP assignment semantics).
+     */
+    private fun unlockChiefAux(meta: Map<String, Any?>): Map<String, Any?> {
+        @Suppress("UNCHECKED_CAST")
+        val oldAux = meta["aux"] as? Map<String, Any?> ?: emptyMap()
+        val newAux = LinkedHashMap(oldAux)
+        newAux["can_국기변경"] = 1
+        newAux["can_국호변경"] = 1
+        val newMeta = LinkedHashMap(meta)
+        newMeta["aux"] = newAux
+        return newMeta
+    }
+
+    /**
+     * The IO-free result of one nation's level-up. The daemon applies [nation] (the level/gold/rice/
+     * aux update), pushes [globalHistoryLog]/[nationalHistoryLog] (skipping empties), and
+     * insertIgnore-s [nationTurnSeed]. [goldDelta]/[riceDelta] echo the `level*1000` grant for the
+     * income/treasury bookkeeping.
+     */
+    data class LevelUpEffects(
+        val nation: Nation,
+        val goldDelta: Int,
+        val riceDelta: Int,
+        val globalHistoryLog: String,
+        val nationalHistoryLog: String,
+        val nationTurnSeed: List<NationTurn>,
+    )
+
+    // ── NL3: two-stage unique-item lottery (byte-match RNG split) ───────────────────────────────
+
+    /**
+     * PHP `:160-167` — `maxTrialCountByYear` walks [GameConst.maxUniqueItemLimit] (`[[targetYear,
+     * targetTrialCnt], ...]`), `break`ing on the first `relYear < targetYear` and keeping the last
+     * `targetTrialCnt` that passed. Starts at 1 (the PHP `$maxTrialCountByYear = 1` default).
+     */
+    fun maxTrialCountByYear(relYear: Int): Int {
+        var maxTrial = 1
+        for (row in GameConst.maxUniqueItemLimit) {
+            val targetYear = row[0]
+            val targetTrialCnt = row[1]
+            if (relYear < targetYear) break
+            maxTrial = targetTrialCnt
+        }
+        return maxTrial
+    }
+
+    /**
+     * PHP `:175-184` — `score = belong + 10`; +60 if officer_level==12, +30 if ==11, +15 if >4;
+     * `score *= 2 ** trialCnt`. `belong` rides `meta['belong']`.
+     */
+    fun lotteryScore(general: General, trialCnt: Int): Int {
+        val belong = (general.meta["belong"] as? Number)?.toInt() ?: 0
+        var score = belong + 10
+        when {
+            general.officerLevel == 12 -> score += 60
+            general.officerLevel == 11 -> score += 30
+            general.officerLevel > 4 -> score += 15
+        }
+        score *= 2.0.pow(trialCnt).toInt()
+        return score
+    }
+
+    /**
+     * The count of a general's already-owned NON-buyable (unique/rare) items — PHP `:170-173`
+     * (`foreach getItems() as $item) if (!$item->isBuyable()) $trialCnt -= 1`).
+     *
+     * An item code is non-buyable iff its [GameConst.allItems] catalog cnt is `> 0` (the basic shop
+     * items carry cnt 0 = buyable; the rares carry cnt > 0). 'None' (empty slot) is buyable. Iterates
+     * the four equip slots (horse/weapon/book/item).
+     */
+    fun ownedNonBuyableCount(general: General): Int {
+        val codes = listOf(
+            "horse" to general.horse,
+            "weapon" to general.weapon,
+            "book" to general.book,
+            "item" to general.item,
+        )
+        var count = 0
+        for ((type, code) in codes) {
+            if (code == "None") continue
+            val cnt = GameConst.allItems[type]?.get(code) ?: continue
+            if (cnt > 0) count++   // cnt>0 ⟺ !isBuyable (rare/unique)
+        }
+        return count
+    }
+
+    /**
+     * The two-stage unique-item lottery (PHP `:134-222`). IO-free: the actual item grant is the
+     * injected [giveRandomUniqueItem] seam (`func.php:1487` `giveRandomUniqueItem`, whose DB-wide
+     * occupancy queries are a P6/infra concern). NL3 ports the byte-match-critical mechanics:
+     *   1. eligibility (`killturn >= killturnEnv - 24*60/turnterm` FLOAT division; `npcType < 2`).
+     *   2. per-general trialCnt = `min(maxTrialCountByYear(relYear), 4)` − owned non-buyables; skip ≤0.
+     *   3. weight = [lotteryScore]; chief = the officer_level 12 general.
+     *   4. stage-1 RNG = `MonthScopedRng.forNationLevelUp(hidden,y,m,nationID)`; loop `levelDiff`
+     *      times: `choiceUsingWeightPair(weights)` → winner, UNSET it, derive the stage-2 RNG
+     *      `MonthScopedRng.forGivenUnique(hidden,y,m,nationID,winnerID)`, call [giveRandomUniqueItem].
+     *   5. chief `increaseInheritancePoint(unifier, 250*levelDiff)` (recorded as a delta — the P6
+     *      inheritance-point persistence is a downstream seam).
+     *
+     * The eligible/weighted general ORDER is the input [generals] order (PHP query column order =
+     * `general` PK ascending — the caller supplies generals in that order); `choiceUsingWeightPair`
+     * over that ordered weight list is the byte-match draw.
+     */
+    fun runUniqueLottery(
+        nationId: Int,
+        year: Int,
+        month: Int,
+        startYear: Int,
+        hiddenSeed: String,
+        levelDiff: Int,
+        killturnEnv: Int,
+        turnterm: Int,
+        generals: List<General>,
+        giveRandomUniqueItem: (rng: RandUtil, winnerId: Int) -> Boolean,
+    ): LotteryResult {
+        // (1) eligibility — killturn cutoff (FLOAT division, NOT intdiv) + npc < 2.
+        val cutoff = killturnEnv - (24.0 * 60.0 / turnterm)
+        val eligible = generals.filter { g ->
+            val killturn = (g.meta["killturn"] as? Number)?.toDouble() ?: Double.NEGATIVE_INFINITY
+            killturn >= cutoff && g.npcType < 2
+        }
+        val eligibleIds = eligible.map { it.id }
+
+        // (2)+(3) per-general trialCnt + weighted score; chief = the officer_level 12 general.
+        val relYear = year - startYear
+        val maxByYear = maxTrialCountByYear(relYear)
+        var chiefId: Int? = null
+        val weightPairs = ArrayList<Pair<Int, Int>>() // (generalId, score) — insertion order == draw order
+        for (g in eligible) {
+            if (g.officerLevel == 12) chiefId = g.id
+            val trialCnt = minOf(maxByYear, GameConst.allItems.size) - ownedNonBuyableCount(g)
+            if (trialCnt <= 0) continue
+            weightPairs.add(g.id to lotteryScore(g, trialCnt))
+        }
+
+        // (4) two-stage RNG: stage-1 selection over the weight list, stage-2 per-winner item grant.
+        val nationLevelUpRng = MonthScopedRng.forNationLevelUp(hiddenSeed, year, month, nationId)
+        val remaining = ArrayList(weightPairs)
+        val winners = ArrayList<Int>()
+        val grants = ArrayList<Pair<Int, String>>() // (winnerId, givenUnique seed) — for the byte gate
+        repeat(levelDiff) {
+            if (remaining.isEmpty()) return@repeat
+            val weights = remaining.map { it.first to it.second.toDouble() }
+            val winnerId = nationLevelUpRng.choiceUsingWeightPair(weights)
+            remaining.removeAll { it.first == winnerId } // unset the winner
+            winners.add(winnerId)
+            val givenUniqueRng = MonthScopedRng.forGivenUnique(hiddenSeed, year, month, nationId, winnerId)
+            giveRandomUniqueItem(givenUniqueRng, winnerId)
+            grants.add(winnerId to MonthScopedRng.givenUniqueSeed(hiddenSeed, year, month, nationId, winnerId))
+        }
+
+        // (5) chief inheritance-point delta (250 * levelDiff) — recorded, persistence downstream.
+        val chiefDelta = if (chiefId != null) 250 * levelDiff else 0
+
+        return LotteryResult(
+            eligibleGeneralIds = eligibleIds,
+            weightedGeneralIds = weightPairs.map { it.first },
+            weightPairsInOrder = weightPairs,
+            winnerIdsInOrder = winners,
+            grants = grants,
+            chiefId = chiefId,
+            chiefInheritancePointDelta = chiefDelta,
+        )
+    }
+
+    /**
+     * The IO-free lottery outcome. [winnerIdsInOrder] are the per-iteration winners (each unset before
+     * the next pick); [grants] pairs each winner with the `givenUnique` seed used for its item grant
+     * (the stage-2 byte lineage). [chiefInheritancePointDelta] = `250 * levelDiff` (the P6 inheritance
+     * write is downstream). [weightPairsInOrder] is the ordered `(generalId → score)` weight list the
+     * stage-1 `choiceUsingWeightPair` drew over.
+     */
+    data class LotteryResult(
+        val eligibleGeneralIds: List<Int>,
+        val weightedGeneralIds: List<Int>,
+        val weightPairsInOrder: List<Pair<Int, Int>>,
+        val winnerIdsInOrder: List<Int>,
+        val grants: List<Pair<Int, String>>,
+        val chiefId: Int?,
+        val chiefInheritancePointDelta: Int,
+    )
+}
