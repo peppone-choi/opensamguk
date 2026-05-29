@@ -3,6 +3,7 @@ package opensamguk.infra.persistence
 import opensamguk.logic.domain.City
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class CityRowMapperTest {
@@ -18,6 +19,16 @@ class CityRowMapperTest {
         "supply_state" to 1,
         "front_state" to 0,
         "trust" to 90,
+        "secu" to 600,
+        "secu_max" to 900,
+        "def" to 1000,
+        "def_max" to 2000,
+        "wall" to 800,
+        "wall_max" to 1500,
+        "pop" to 50000,
+        "pop_max" to 100000,
+        "trade" to 100,
+        "region" to 3,
         "meta" to meta,
     )
 
@@ -47,6 +58,42 @@ class CityRowMapperTest {
         assertEquals(0, cols["front_state"])
         assertEquals(90, cols["trust"]) // Double -> int (integer-valued trust is lossless)
         assertEquals("{}", cols["meta"])
+    }
+
+    @Test
+    fun `P2 develop and defense surface round trips through the mapper`() {
+        val c = CityRowMapper.fromRow(row("{}"))
+        assertEquals(600, c.security)
+        assertEquals(900, c.securityMax)
+        assertEquals(1000, c.defense)
+        assertEquals(2000, c.defenseMax)
+        assertEquals(800, c.wall)
+        assertEquals(1500, c.wallMax)
+        assertEquals(50000, c.population)
+        assertEquals(100000, c.populationMax)
+        assertEquals(100, c.trade)
+        assertEquals(3, c.region)
+
+        val cols = CityRowMapper.toColumns(c)
+        assertEquals(600, cols["secu"])
+        assertEquals(900, cols["secu_max"])
+        assertEquals(1000, cols["def"])
+        assertEquals(2000, cols["def_max"])
+        assertEquals(800, cols["wall"])
+        assertEquals(1500, cols["wall_max"])
+        assertEquals(50000, cols["pop"])
+        assertEquals(100000, cols["pop_max"])
+        assertEquals(100, cols["trade"])
+        assertEquals(3, cols["region"])
+    }
+
+    @Test
+    fun `trade is nullable -- a null column materializes to null and binds null`() {
+        val r = row("{}").toMutableMap()
+        r["trade"] = null
+        val c = CityRowMapper.fromRow(r)
+        assertNull(c.trade)
+        assertNull(CityRowMapper.toColumns(c)["trade"])
     }
 
     @Test
