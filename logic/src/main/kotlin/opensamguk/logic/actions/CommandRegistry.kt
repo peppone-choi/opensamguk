@@ -12,6 +12,14 @@ import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
 import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
+import opensamguk.logic.actions.nation.cheBallyeong
+import opensamguk.logic.actions.nation.cheCheondo
+import opensamguk.logic.actions.nation.cheGamchuk
+import opensamguk.logic.actions.nation.cheGukgiByeongyeong
+import opensamguk.logic.actions.nation.cheGukhoByeongyeong
+import opensamguk.logic.actions.nation.cheJeungchuk
+import opensamguk.logic.actions.nation.cheMujakwiSudoIjeon
+import opensamguk.logic.actions.nation.chePosang
 import opensamguk.logic.actions.personnel.CheBangrang
 import opensamguk.logic.actions.personnel.CheDeungyong
 import opensamguk.logic.actions.personnel.CheEuntwe
@@ -65,6 +73,15 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_랜덤임관" -> CheRandomImgwan(pipeline)
         "che_은퇴" -> CheEuntwe(pipeline)
         "che_등용" -> CheDeungyong(pipeline)
+        // --- CMD-NATION-INTERNAL (국가 내정) ---
+        "che_감축" -> cheGamchuk(pipeline)
+        "che_증축" -> cheJeungchuk(pipeline)
+        "che_발령" -> cheBallyeong(pipeline)
+        "che_포상" -> chePosang(pipeline)
+        "che_국호변경" -> cheGukhoByeongyeong(pipeline)
+        "che_국기변경" -> cheGukgiByeongyeong(pipeline)
+        "che_천도" -> cheCheondo(pipeline)
+        "che_무작위수도이전" -> cheMujakwiSudoIjeon(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction

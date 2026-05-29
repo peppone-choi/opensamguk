@@ -49,8 +49,9 @@ class GeneralActionResolveContext(
     val month: Int,                        // game month — the ActionLogger MONTH-format prefix companion to env.year
     val date: String,                      // turn-time HH:MM for the log <1>date</>
     /**
-     * The PARSED reserved arg map (PHP `$this->arg` after `argTest()`). reqArg commands read their
-     * normalized args here (징병: crewType/amount; 이동: destCityID). Default empty for no-arg commands.
+     * The PARSED reserved arg map (PHP `$this->arg` after `argTest()`/initWithArg). reqArg commands read
+     * their normalized args here (징병: crewType/amount; 이동: destCityID; 발령/포상/국호변경/국기변경/천도
+     * read their reqArgs). Default empty for no-arg commands.
      */
     val args: Map<String, Any?> = emptyMap(),
     /**
@@ -66,8 +67,30 @@ class GeneralActionResolveContext(
      * PLAIN log embeds it (`{troopName} 부대원들은 …`). Default empty.
      */
     val troopName: String = "",
+    // Names are not modeled on the logic entities (General/City carry no name); the daemon/precheck
+    // adapters supply them per-turn. Optional + defaulted so the P1 call sites stay source-compatible.
+    val generalName: String = "",          // actor general name — the <Y>{name}</> global/dest log token
+    val destGeneralName: String = "",       // dest general name (발령/포상) — the <Y>{name}</> dest log token
+    // PHP che_발령.php:162 `cutTurn(actor) != cutTurn(dest)` — the dest general's turn falls in a
+    // DIFFERENT turn bucket than the actor's, which bumps `last발령` by 1. The turn-bucket comparison
+    // is engine-level wall-clock math (turnTime is not on the logic General), so the decision is
+    // supplied by the adapter; defaults false.
+    val destDifferentTurnBucket: Boolean = false,
+    // PHP che_국호변경.php:128 `SELECT name FROM nation WHERE name=? LIMIT 1` — a RUNTIME dup-name
+    // re-check inside run() (AFTER the constraints pass), which the precheck constraint
+    // (CheckNationNameDuplicate) cannot stand in for because the world may change between reserve and
+    // run. The full-nation scan is engine/precheck-adapter work; the result is threaded here.
+    val runtimeNameDuplicate: Boolean = false,
+    // 천도 distance = CalcCityDistance(capital, dest, ownedCitySet) ?? 50 (che_천도.php:115). The
+    // owned-city allow-list is engine data (city ownership not on the logic draft), so the resolved
+    // distance is threaded; null → the PHP `?? 50` fallback.
+    val cityDistance: Int? = null,
+    // 무작위수도이전 candidate neutral level-5/6 city ids (che_무작위수도이전.php:98 SELECT). The world
+    // scan is engine data; rng->choice picks one of these in resolve.
+    val candidateCityIds: List<Int> = emptyList(),
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
+    private val destPlainLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val globalActionLogs: MutableList<String> = mutableListOf(),
     private val plainLogs: MutableList<String> = mutableListOf(),
 ) {
@@ -109,8 +132,19 @@ class GeneralActionResolveContext(
         if (text.isNotEmpty()) plainLogs.add("<C>●</>$text")
     }
 
+    /**
+     * Buffer a PLAIN-format line on a DEST general's own action-log scope. PHP che_포상.php:174
+     * `$destGeneral->getLogger()->pushGeneralActionLog($body, ActionLogger::PLAIN)` — PLAIN format
+     * `<C>●</>{body}` (no MONTH prefix), routed to the dest general's bucket.
+     */
+    fun addPlainLogTo(targetGeneralId: Int, text: String) {
+        if (text.isEmpty()) return
+        destPlainLogs.getOrPut(targetGeneralId) { mutableListOf() }.add("<C>●</>$text")
+    }
+
     fun logs(): List<String> = logs.toList()
     fun logsTo(targetGeneralId: Int): List<String> = destLogs[targetGeneralId]?.toList() ?: emptyList()
+    fun plainLogsTo(targetGeneralId: Int): List<String> = destPlainLogs[targetGeneralId]?.toList() ?: emptyList()
     fun globalActionLogs(): List<String> = globalActionLogs.toList()
     fun plainLogs(): List<String> = plainLogs.toList()
 }
