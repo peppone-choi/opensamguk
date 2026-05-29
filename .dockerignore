@@ -1,0 +1,9 @@
+legacy/
+.git
+.gradle
+**/build
+**/node_modules
+web/*/.next
+.kotlin
+*.log
+docs

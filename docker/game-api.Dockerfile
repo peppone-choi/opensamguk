@@ -1,0 +1,11 @@
+# syntax=docker/dockerfile:1
+FROM gradle:8.12-jdk21 AS build
+WORKDIR /src
+COPY . .
+RUN gradle :app:game-api:bootJar --no-daemon
+
+FROM eclipse-temurin:21-jre AS run
+WORKDIR /app
+COPY --from=build /src/app/game-api/build/libs/*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
