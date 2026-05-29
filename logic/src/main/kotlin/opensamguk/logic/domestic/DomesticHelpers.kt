@@ -5,7 +5,11 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
+import opensamguk.logic.util.valueFit
+import kotlin.math.ceil
 import kotlin.math.pow
+import kotlin.math.sqrt
+import kotlin.math.truncate
 
 data class CriticalRatio(val success: Double, val fail: Double)
 
@@ -31,6 +35,49 @@ fun criticalScoreEx(rng: RandUtil, pick: String): Double = when (pick) {
 
 /** func_converter.php:906 — 1 + expLevel/500. */
 fun getDomesticExpLevelBonus(expLevel: Int): Double = 1.0 + expLevel / 500.0
+
+// === level constants + conversion helpers (GameConstBase.php:18/80/95, func_converter.php:631-670) ===
+
+/** GameConst::$upgradeLimit = 30 — the per-stat _exp threshold checkStatChange trades for a stat point. */
+const val UPGRADE_LIMIT = 30
+/** GameConst::$maxDedLevel = 30 — dedication level ceiling (and the 품관 inversion base). */
+const val MAX_DED_LEVEL = 30
+/** GameConst::$maxLevel = 255 — leadership/strength/intel ceiling AND exp-level clamp. */
+const val MAX_LEVEL = 255
+
+/**
+ * func_converter.php:631-641 — exp→level.
+ *   experience < 1000 : intdiv(experience, 100)            (PHP intdiv coerces the float operand to int first)
+ *   else              : Util::toInt(sqrt(experience/10))   (truncate toward zero)
+ * then Util::clamp(level, 0, maxLevel).
+ */
+fun getExpLevel(experience: Double): Int {
+    val level = if (experience < 1000.0) {
+        truncate(experience).toLong() / 100L          // intdiv on the truncated operand
+    } else {
+        truncate(sqrt(experience / 10.0)).toLong()    // Util::toInt = intval = truncate toward zero
+    }
+    return clamp(level.toDouble(), 0.0, MAX_LEVEL.toDouble()).toInt()
+}
+
+/**
+ * func_converter.php:643-651 — dedication→level: Util::valueFit(ceil(sqrt(dedication)/10), 0, maxDedLevel).
+ */
+fun getDedLevel(dedication: Double): Int =
+    valueFit(ceil(sqrt(dedication) / 10.0), 0.0, MAX_DED_LEVEL.toDouble()).toInt()
+
+/**
+ * func_converter.php:602-609 — dedLevel→text. 0 = '무품관'; else "{maxDedLevel - dedLevel + 1}품관"
+ * (inverted: level 1 → 30품관, level 30 → 1품관).
+ */
+fun getDedLevelText(dedLevel: Int): String {
+    if (dedLevel == 0) return "무품관"
+    val dedInvLevel = MAX_DED_LEVEL - dedLevel + 1
+    return "${dedInvLevel}품관"
+}
+
+/** func_converter.php:668-670 — getBillByLevel = dedLevel * 200 + 400. */
+fun getBillByLevel(dedLevel: Int): Int = dedLevel * 200 + 400
 
 /** func_gamerule.php:942-952 — aux max_domestic_critical += score/2 (success) / =0 (non-success, per che run()).
  *  P1 emits ONLY the meta (aux) value for the General draft. The inheritance-point comparison/write
