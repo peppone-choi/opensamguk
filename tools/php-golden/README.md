@@ -220,3 +220,41 @@ captures the acting general's action lines + per-target dest-general lines (incl
 verbatim from P1 as a fixture INPUT. The proven P1 commerce/agri picks are kept in
 `$picks` as the end-to-end smoke (the F-GOLDEN-0 gate: ≥1 command produces a valid
 fixture before the resolver families consume the harness).
+
+### `capture_command_args.php` — the arg-aware / state-gated pass (GR1)
+
+`capture_command.php` + `probe_command.php` only drive the **zero-arg** develop family
+(commerce/agri/wall/def/security/tech/settle/select/procure) + 하야, because the generic
+probe builds every command with `arg=null`. The bulk of the P2 surface needs a constructed
+`$arg` (join/founding `destNation*`/nationName, recruit `crewType`/`amount`, move `destCityID`,
+trade `isGold`/`amount`/`destGeneralID`/`itemCode`, nation-internal `destGeneralID`/`destCityID`)
+and/or a state gate (officer≥5 for nation commands, a friendly target general, a trader city,
+a starting crew for the train family). `capture_command_args.php` is the faithful retargeting
+for those: a per-command PLAN registry selects a module-free actor matching the command's gate,
+builds the **live** arg from the running install's ids, applies any documented static-input
+precondition (e.g. `crew>0` for 훈련/사기진작/소집해제/cr_맹훈련 — analogous to P1's mid-band
+exp/ded; the score is still 100% real PHP), then drives the SAME real path
+(`buildGeneralCommandClass`/`buildNationCommandClass` → `$cmd->run($rng)`) and writes the SAME
+fixture shape (`golden/p2/<command>-fixtures.json`). It keeps **every** P1 HARD assertion
+verbatim. A command whose plan cannot meet `hasFullConditionMet()` on the install, or whose
+`run()` finds no reachable outcome, is **SKIPPED** (`PLAN-MISS`) — never faked — and recorded
+in `p2-capture-backlog.md` with the exact PHP deny reason.
+
+**Run order (one install, two passes):** after `install_scenario.php` + `probe_command.php`
+(paste develop picks into `capture_command.php`), run `capture_command_args.php` **FIRST**
+(it self-positions + restores per command, leaving the install clean), then `capture_command.php`
+(develop + 하야; LAST because 하야 resigns its actor). Both MUST run on the same install so
+every committed fixture shares one `hiddenSeed`.
+
+```sh
+docker exec $DB devsam-golden-php bash -lc \
+  'cd /work && php tools/php-golden/capture_command_args.php [--command=che_등용]'
+docker exec $DB devsam-golden-php bash -lc \
+  'cd /work && php tools/php-golden/capture_command.php'
+```
+
+Capture of record: **28 / 40** manifest commands captured (`hiddenSeed=cff8658592f2d3c55…`);
+the remaining 12 are documented in `p2-capture-backlog.md` (opening-year join/방랑/founding
+restrictions, no age≥60 general for 은퇴, no troop for 집합, max-level capitals for 증축, the
+structurally-un-satisfiable 감축, the exhausted random-capital-move flag, and the seed-fragile
+랜덤임관 lottery). The GS1 gate uses matched-count + that ignore-list.

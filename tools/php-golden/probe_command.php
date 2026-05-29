@@ -121,7 +121,7 @@ function runOnce(object $db, array $meta, int $gid, int $year, int $m, string $h
     return $res;
 }
 
-function runCmd(object $db, BaseCommand $cmd, General $g, int $gid, int $year, int $m, string $hs, string $scope, $eb, $dbf): array {
+function runCmd(object $db, \sammo\Command\BaseCommand $cmd, General $g, int $gid, int $year, int $m, string $hs, string $scope, $eb, $dbf): array {
     if (!$cmd->hasFullConditionMet()) return ['pick' => 'BLOCKED', 'cross' => true, 'lines' => 0];
     $seed = Util::simpleSerialize($hs, $scope, $year, $m, $gid, $cmd->getRawClassName());
     $cmd->run(new RandUtil(new LiteHashDRBG($seed)));

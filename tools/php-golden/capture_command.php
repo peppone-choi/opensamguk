@@ -240,7 +240,15 @@ function captureCase(
     hardAssert($cmd->getRawClassName() === $rawClassName,
         "factory returned {$cmd->getRawClassName()} for {$rawClassName}");
     hardAssert($cmd->hasFullConditionMet(), "{$caseName}: command precondition not met");
-    $reqGold = (new \ReflectionProperty($cmd, 'reqGold'))->getValue($cmd) ?? ($cmd->getCost()[0] ?? null);
+    // reqGold: the gold component of getCost() (every command implements getCost();
+    // only some commands declare a $reqGold property — guard it via reflection).
+    $reqGold = null;
+    if (property_exists($cmd, 'reqGold')) {
+        $rp = new \ReflectionProperty($cmd, 'reqGold');
+        if (PHP_VERSION_ID < 80100) { $rp->setAccessible(true); }
+        if ($rp->isInitialized($cmd)) { $reqGold = $rp->getValue($cmd); }
+    }
+    $reqGold = $reqGold ?? ($cmd->getCost()[0] ?? null);
 
     $before = snapshotGeneralCity($general, $city);
     $itemCountBefore = count($general->getItems() ?? []);
@@ -322,7 +330,7 @@ function captureCase(
  * The caller cleared every touched general's action rows at baseline restore, so a
  * non-actor general carrying an 'action' row was written by this turn.
  */
-function resolveDestGenerals(object $db, BaseCommand $cmd, int $actingId): array {
+function resolveDestGenerals(object $db, \sammo\Command\BaseCommand $cmd, int $actingId): array {
     $arg = $cmd->getArg() ?? [];
     $candidates = [];
     foreach (['destGeneralID', 'destGeneralId', 'targetGeneralID', 'general'] as $k) {
@@ -345,11 +353,30 @@ function resolveDestGenerals(object $db, BaseCommand $cmd, int $actingId): array
 //    fixture end-to-end — the F-GOLDEN-0 gate). Append the new P2 command picks.
 $picks = [
     // caseName            rawClassName     generalId  month
-    ['commerce_success',   'che_상업투자',  76, 1],
-    ['commerce_normal',    'che_상업투자',  76, 3],
-    ['commerce_fail',      'che_상업투자',  76, 2],
-    ['agri_normal',        'che_농지개간',  76, 2],
-    // ── new P2 picks (operator appends from probe_command.php PICKS lines) ──
+    // ── develop family (zero-arg domestic; probe_command.php PICKS, gid=8 city=19,
+    //    hiddenSeed=cff8658592f2d3c55d404232a019e016) ──
+    ['commerce_success',   'che_상업투자',  8, 1],
+    ['commerce_fail',      'che_상업투자',  8, 3],
+    ['agri_success',       'che_농지개간',  8, 2],
+    ['agri_fail',          'che_농지개간',  8, 1],
+    ['wall_success',       'che_성벽보수',  8, 6],
+    ['wall_normal',        'che_성벽보수',  8, 1],
+    ['def_success',        'che_수비강화',  8, 6],
+    ['def_normal',         'che_수비강화',  8, 2],
+    ['def_fail',           'che_수비강화',  8, 1],
+    ['security_success',   'che_치안강화',  8, 1],
+    ['security_normal',    'che_치안강화',  8, 2],
+    ['tech_success',       'che_기술연구',  8, 3],
+    ['tech_fail',          'che_기술연구',  8, 1],
+    ['settle_success',     'che_정착장려',  8, 2],
+    ['settle_fail',        'che_정착장려',  8, 1],
+    ['select_success',     'che_주민선정',  8, 1],
+    ['select_fail',        'che_주민선정',  8, 4],
+    ['procure_success',    'che_물자조달',  8, 2],
+    ['procure_normal',     'che_물자조달',  8, 1],
+    ['procure_fail',       'che_물자조달',  8, 5],
+    // ── personnel: 하야 (NotBeNeutral + NotLord; broadcast) ──
+    ['resign_normal',      'che_하야',      8, 1],
 ];
 
 // ── independence (HARD assertion 1): snapshot EVERY touched row at baseline, restore
