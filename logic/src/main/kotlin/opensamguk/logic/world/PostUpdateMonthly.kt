@@ -1,7 +1,9 @@
 package opensamguk.logic.world
 
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.log.HistoryTokens
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.util.valueFit
 import kotlin.math.sqrt
 
 /**
@@ -186,4 +188,140 @@ fun postUpdateMonthlyPower(
         )
     }
     return PostUpdateMonthlyPowerResult(nations = results, rngDrawOrder = drawOrder)
+}
+
+// ===========================================================================================
+// POST2 (Q5-Q10) — diplomacy settlement + war-term + 개전/종전 state machine.
+// PHP grand truth `func_gamerule.php:336-421`.
+// ===========================================================================================
+
+/** A `diplomacy` row (me/you ordered pair) feeding Q5-Q9. */
+data class DiplomacyRow(
+    val me: Int,
+    val you: Int,
+    val state: Int,
+    val term: Int,
+    val dead: Int,
+)
+
+/** Q5 per-(me,you) war-term update for state=0 rows (`func_gamerule.php:345-348`). */
+data class DiplomacyWarTermUpdate(val me: Int, val you: Int, val newTerm: Int, val newDead: Int)
+
+/** Q7 종전 state update — both directions set to state=2,term=0 (`func_gamerule.php:385-388`). */
+data class DiplomacyStateUpdate(val me: Int, val you: Int, val newState: Int, val newTerm: Int)
+
+/** Q9 bulk per-row final state/term/dead (`func_gamerule.php:393-406`). */
+data class DiplomacyFinalUpdate(val me: Int, val you: Int, val newState: Int, val newTerm: Int, val newDead: Int)
+
+/** POST2 (Q5-Q10) result. Each list is in the PHP evaluation order; the daemon folds them into the flush. */
+data class PostUpdateMonthlyDiplomacyResult(
+    val q5Updates: List<DiplomacyWarTermUpdate>,
+    val warStartLogs: List<String>,
+    val warStopLogs: List<String>,
+    val q7StateUpdates: List<DiplomacyStateUpdate>,
+    val globalLoggerFlushCount: Int,
+    val q9Updates: List<DiplomacyFinalUpdate>,
+    val availableWarSettingCnt: Map<Int, Int>,
+)
+
+/**
+ * POST2 — Q5-Q10 diplomacy settlement. Pure core: takes the `diplomacy` rows + the Q3 per-nation gennum
+ * (`genNum`) + nation names + the existing `available_war_setting_cnt` KV (`maxPower`) + the active nation
+ * IDs (`nations`), and produces the ordered settlement updates + logs.
+ *
+ *   Q5  state=0 rows: term=floor(dead/100/genCount[me]); dead-=term*100*genCount; term=valueFit(term+Δ,0,13).
+ *   Q6  개전 log for state=1 AND term<=1 AND me<you (input row order — DB query order).
+ *   Q7  종전: state=0 AND term<=1 ORDER BY me desc,you desc; first occurrence of the {min}_{max} key seen
+ *       → continue; second occurrence → push 종전 log + set BOTH directions state=2,term=0.
+ *   Q8  globalLogger.flush() (recorded once).
+ *   Q9  bulk on EVERY row: dead=if(state!=0,0,dead), term=greatest(0,term-1); THEN state 7→2 where post-term==0;
+ *       THEN state 1→0,term=6 where post-term==0.
+ *   Q10 available_war_setting_cnt: ensure each active nation has an entry (default 0); cnt<max → cnt=valueFit(cnt+inc,0,max).
+ *
+ * **Q6/Q7 read the LIVE state (NOT the Q5 term update — Q5 only mutates state=0 rows' term in the
+ * write-set; the PHP Q6/Q7 SELECTs re-read the table, but term on state=0 rows reflects Q5's UPDATE).**
+ * The Q7 종전 condition `term<=1` is evaluated against the post-Q5 term for state=0 rows.
+ */
+fun postUpdateMonthlyDiplomacy(
+    rows: List<DiplomacyRow>,
+    genNum: Map<Int, Int>,
+    nationNames: Map<Int, String>,
+    maxPower: Map<Int, Int>,
+    nations: List<Int>,
+): PostUpdateMonthlyDiplomacyResult {
+    val maxCnt = opensamguk.common.constants.GameConst.maxAvailableWarSettingCnt
+    val incCnt = opensamguk.common.constants.GameConst.incAvailableWarSettingCnt
+
+    // Q5 — war-term floor on state=0 rows. Produces an effective post-Q5 term per (me,you) for Q7.
+    val q5Updates = mutableListOf<DiplomacyWarTermUpdate>()
+    val postQ5Term = HashMap<Pair<Int, Int>, Int>()
+    for (d in rows) {
+        if (d.state != 0) continue
+        val genCount = genNum[d.me] ?: 1
+        // PHP: floor($dead / 100 / $genCount) — FLOAT division throughout, then floor (faithful to :341).
+        val deltaTerm = Math.floor(d.dead.toDouble() / 100.0 / genCount.toDouble()).toInt()
+        val newDead = d.dead - deltaTerm * 100 * genCount
+        val newTerm = valueFit((d.term + deltaTerm).toDouble(), 0.0, 13.0).toInt()
+        q5Updates += DiplomacyWarTermUpdate(d.me, d.you, newTerm, newDead)
+        postQ5Term[d.me to d.you] = newTerm
+    }
+
+    // Q6 — 개전 log: state=1 AND term<=1 AND me<you (input/query order).
+    val warStartLogs = rows
+        .filter { it.state == 1 && it.term <= 1 && it.me < it.you }
+        .map { HistoryTokens.warStartGlobal(nationNames[it.me] ?: "", nationNames[it.you] ?: "") }
+
+    // Q7 — 종전: state=0 AND (post-Q5) term<=1 ORDER BY me desc,you desc; both directions present → 종전.
+    val warStopLogs = mutableListOf<String>()
+    val q7StateUpdates = mutableListOf<DiplomacyStateUpdate>()
+    val seen = HashSet<String>()
+    val q7Candidates = rows
+        .filter { it.state == 0 && (postQ5Term[it.me to it.you] ?: it.term) <= 1 }
+        .sortedWith(compareByDescending<DiplomacyRow> { it.me }.thenByDescending { it.you })
+    for (d in q7Candidates) {
+        val key = if (d.me < d.you) "${d.me}_${d.you}" else "${d.you}_${d.me}"
+        if (seen.add(key)) continue   // first occurrence — mark seen, skip (PHP `continue`)
+        // second occurrence — both directions are present → 종전.
+        warStopLogs += HistoryTokens.warStopGlobal(nationNames[d.me] ?: "", nationNames[d.you] ?: "")
+        q7StateUpdates += DiplomacyStateUpdate(d.me, d.you, newState = 2, newTerm = 0)
+        q7StateUpdates += DiplomacyStateUpdate(d.you, d.me, newState = 2, newTerm = 0)
+    }
+
+    // Q8 — globalLogger.flush() (the 개전/종전 logs are emitted here; recorded once).
+    val globalLoggerFlushCount = 1
+
+    // Q9 — bulk dead-reset + term-1, THEN state 7→2 (term=0), THEN state 1→0,term=6.
+    val q9Updates = rows.map { d ->
+        val deadReset = if (d.state != 0) 0 else d.dead
+        val termDec = maxOf(0, d.term - 1)
+        var newState = d.state
+        var newTerm = termDec
+        if (newState == 7 && termDec == 0) {          // 불가침 → 통상
+            newState = 2
+        } else if (newState == 1 && termDec == 0) {   // 선포 → 교전
+            newState = 0
+            newTerm = 6
+        }
+        DiplomacyFinalUpdate(d.me, d.you, newState, newTerm, deadReset)
+    }
+
+    // Q10 — available_war_setting_cnt: ensure each active nation, then increment those below the max.
+    val cnt = LinkedHashMap<Int, Int>()
+    cnt.putAll(maxPower)
+    for (n in nations) cnt.putIfAbsent(n, 0)
+    val result = LinkedHashMap<Int, Int>()
+    for ((nationId, c) in cnt) {
+        result[nationId] = if (c >= maxCnt) c
+        else valueFit((c + incCnt).toDouble(), 0.0, maxCnt.toDouble()).toInt()
+    }
+
+    return PostUpdateMonthlyDiplomacyResult(
+        q5Updates = q5Updates,
+        warStartLogs = warStartLogs,
+        warStopLogs = warStopLogs,
+        q7StateUpdates = q7StateUpdates,
+        globalLoggerFlushCount = globalLoggerFlushCount,
+        q9Updates = q9Updates,
+        availableWarSettingCnt = result,
+    )
 }
