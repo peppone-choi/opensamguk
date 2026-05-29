@@ -65,6 +65,13 @@ class GeneralActionResolveContext(
     // (CheckNationNameDuplicate) cannot stand in for because the world may change between reserve and
     // run. The full-nation scan is engine/precheck-adapter work; the result is threaded here.
     val runtimeNameDuplicate: Boolean = false,
+    // 천도 distance = CalcCityDistance(capital, dest, ownedCitySet) ?? 50 (che_천도.php:115). The
+    // owned-city allow-list is engine data (city ownership not on the logic draft), so the resolved
+    // distance is threaded; null → the PHP `?? 50` fallback.
+    val cityDistance: Int? = null,
+    // 무작위수도이전 candidate neutral level-5/6 city ids (che_무작위수도이전.php:98 SELECT). The world
+    // scan is engine data; rng->choice picks one of these in resolve.
+    val candidateCityIds: List<Int> = emptyList(),
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val destPlainLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
