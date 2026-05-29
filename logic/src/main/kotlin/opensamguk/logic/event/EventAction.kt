@@ -216,6 +216,47 @@ class AddGlobalBetrayAction(val cnt: Int = 1, val ifMax: Int = 0) : EventAction 
     companion object { const val NAME = "AddGlobalBetray" }
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// B5 / Task LT2 — DeleteEvent (tombstone-once, the F3 seam).
+//
+// Port target = PHP `Event/Action/DeleteEvent.php:10-20` — `DELETE FROM event WHERE id = currentEventID`,
+// the "1회용 event" self-delete. PHP throws RuntimeException when currentEventID is falsy. The F2
+// dispatcher FREEZES the row set before running ([EventDispatcher]), so the deleted row still ran this
+// dispatch but is gone next — there is no double-apply within a dispatch. DeleteEvent binds to the
+// in-memory [EventStore] via the [DeleteEventContext] seam (the tick/dispatcher threads it under
+// `env[DeleteEventContext.ENV_KEY]`); B5-owned — the F2 dispatcher is NOT widened.
+// ──────────────────────────────────────────────────────────────────────────────
+
+/** The seam DeleteEvent uses to tombstone its own row in the [EventStore]. */
+object DeleteEventContext {
+    /** The env key the tick/dispatcher threads the live [EventStore] under (for the self-delete). */
+    const val ENV_KEY = "eventStore"
+}
+
+/**
+ * `DeleteEvent` (PHP `DeleteEvent.php:10-20`): tombstone the row whose id == `currentEventID` on the
+ * [EventStore] reached via `env[DeleteEventContext.ENV_KEY]`. PHP throws when currentEventID is unset
+ * (0/null falsy); we mirror that with `check(currentEventID != 0)`. [EventStore.delete] is idempotent
+ * (map remove), so a stray re-run does not corrupt the store. The founding-limit notices pair a
+ * NoticeToHistoryLog with this leaf so they self-delete on schedule (Scenario.php:560-597).
+ */
+class DeleteEventAction : EventAction {
+    override fun run(ctx: EventActionContext) {
+        val eventID = ctx.currentEventID
+        check(eventID != 0) { "currentEventID가 지정되지 않았습니다." }
+        val store = ctx.env[DeleteEventContext.ENV_KEY] as? EventStore ?: return
+        store.delete(eventID)
+    }
+
+    companion object {
+        const val NAME = "DeleteEvent"
+
+        /** Register the `DeleteEvent` leaf into the F2-owned factory by name (plan §append protocol). */
+        fun register(factory: EventActionFactory): EventActionFactory =
+            factory.register(NAME) { DeleteEventAction() }
+    }
+}
+
 /**
  * B5 / LT1 — by-name registration of the light Action leaves into the F2-owned [EventActionFactory]
  * (the lone per-family touch, plan §append protocol). F2 already NAMES them in [EventStore.withDefaults].
