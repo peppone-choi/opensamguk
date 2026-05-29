@@ -96,7 +96,7 @@ sealed interface EventCondition {
      * PHP `Condition\Date` (Date.php:21-77). Absolute calendar gate; 2-tuple `[year?, month?]`.
      * `env == null` short-circuits to false (Date.php:37-42) BEFORE the missing-key throw.
      */
-    class Date(val cmp: String, val year: Int?, val month: Int?) : EventCondition {
+    data class Date(val cmp: String, val year: Int?, val month: Int?) : EventCondition {
         init {
             requireCmp(cmp)
             require(!(year == null && month == null)) { "year과 month가 둘다 null일 수 없습니다." }
@@ -120,7 +120,7 @@ sealed interface EventCondition {
      * PHP `Condition\DateRelative` (DateRelative.php:20-82). Like [Date] but the year slot is
      * `env['year'] - env['startyear']` (founding-relative). `env == null` → false.
      */
-    class DateRelative(val cmp: String, val year: Int?, val month: Int?) : EventCondition {
+    data class DateRelative(val cmp: String, val year: Int?, val month: Int?) : EventCondition {
         init {
             requireCmp(cmp)
             require(!(year == null && month == null)) { "year과 month가 둘다 null일 수 없습니다." }
@@ -146,7 +146,7 @@ sealed interface EventCondition {
      * remaining-nation count (`count(getAllNationStaticInfo())`), NOT an env date field. The dispatcher
      * injects the live `world.nations` count under [REMAIN_NATION_COUNT_KEY].
      */
-    class RemainNation(val cmp: String, val cnt: Int) : EventCondition {
+    data class RemainNation(val cmp: String, val cnt: Int) : EventCondition {
         init {
             requireCmp(cmp)
         }
