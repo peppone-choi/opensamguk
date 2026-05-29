@@ -1,0 +1,55 @@
+# P3 Plan — Adversarial Review Report
+
+> Multi-agent review (44 findings → confirmed cluster, 3 OQ-triage passes), 2026-05-30, before execution.
+> Dimensions: feasibility · coherence · scope · correctness · parity-risk + OQ triage.
+
+## Verdict: **go-with-edits**
+
+Plan is fundamentally sound: it EXTENDS the proven P2 substrate (income/trade/FoundingCascade/flush delete-sets all verified reused, no re-port), pins the SEQUENTIAL interleave (PreMonth-OLD-date / Month-NEW-date, monthlyRng once→postUpdate) byte-faithfully, and honors the P2 foundation-first anti-merge-conflict lesson. go-with-edits because of two SOURCE-CONFIRMED schema BLOCKERS that brick every Testcontainers test on day one + one structural event-seed defect that defeats the gate's own log-sequence oracle. All edits are surgical hygiene fixes (paths, two migrations, one seed-model refactor), not a redesign. All applied; final plan = 728 lines (was 678).
+
+## P0 — before ANY execution (6)
+
+1. **V5 must NOT `CREATE TABLE event`** — `V1__baseline.sql:239` ALREADY has `event` (id serial PK, target_code text, priority integer DEFAULT 0, condition/action/meta jsonb, created_at). A second CREATE fails Flyway ("relation already exists"), bricking every Testcontainers migrate. **Applied:** V5 adds ONLY `CREATE INDEX ON event(target_code, priority, id)`; EventStore/EventCodec align to baseline columns `target_code`/`priority`/`condition`/`action`; the File-Structure CREATE + the "OR in-memory-only" hedge dropped.
+2. **city.trade NOT NULL blocker** — baseline `V1:51` is `trade integer NOT NULL DEFAULT 100` but A4 flushes literal NULL (GREEN body returns `Int?`). The "confirm nullable" OQ resolves FALSE. **Applied:** V4 migration `ALTER COLUMN trade DROP NOT NULL; DROP DEFAULT`; wired as a TR1 prereq + G1 assertion (a prob-0 city persists `trade IS NULL`); OQ#5/Self-Review reworded "confirm"→"migrate".
+3. **EventStore seed = F2-authored fixed rows, NOT per-family single-action-row append** — `GameConstBase.php:447-531` `$defaultEvents` is a handful of rows each carrying an ORDERED ACTION ARRAY (verified verbatim: `pre_month/9000=[UpdateCitySupply,ProcessWarIncome]`; `month==1/9000=[MergeInheritPointRank, ProcessSemiAnnual(gold), ProcessIncome(gold), ResetOfficerLock, RaiseDisaster, RandomizeCityTradeRate, NewYear, AssignGeneralSpeciality]`; month 4/7/10; the four `DateRelative/2000` rows; `month/1000=[UpdateNationLevel,ProvideNPCTroopLeader]`; `united/5000=[MergeInheritPointRank]`). The old per-family append-a-row + priority/id-tiebreak protocol cannot reconstruct the array-order sequence the gate byte-matches. **Applied:** F2 authors rows + intra-row order; families only register their leaf class into the F2 factory map by name; IN3/SU1 false "priority higher" claims fixed (both 9000; order = array index in the F2 pre_month row).
+4. **RaiseDisaster + AssignGeneralSpeciality had ZERO tasks** but appear in the gate-byte-matched `$defaultEvents` (each self-seeds RNG + side effects). **Applied:** new Tier-1 AREA A6 (tasks A6a/A6b) porting both at their exact slots — RaiseDisaster (`city.state<=10→0` UNCONDITIONAL reset + startYear+3-gated disaster table, self-seeded `'disater'` misspelled DRBG; month 1/4/7/10), AssignGeneralSpeciality (`year<startYear+3` early-return, self-seeded `'assignGeneralSpeciality'` DRBG; month==1 last), both leaf-registered into F2. Verified scenario_1010 startYear=181 → skip window is years 181-183 (fire 184); bounded + manifest-ignore note added for small N.
+5. **hiddenSeed provenance was factually wrong** — the plan cited "world_state.hidden_seed OR game_env KV RESOLVED" but legacy is a CONFIG-FILE static field `d_setting/UniqueConst.php::$hiddenSeed` (verified live `8ebfeb6fa932a181ec9ef43b7473f4c9`, `bin2hex(random_bytes(16))` per `ResetHelper.php:96`; zero DB/KV writes). **Applied:** documented config-file→DB-column divergence; F4 threads `world_state.hidden_seed`; G1b captures the exact live hex as a golden fixture input; tick replaces the 32-zero placeholder from the config source; FC1 asserts 32-char lowercase hex.
+6. **getNationChiefLevel(8/9) NPE + possession-release/rebirth omissions.** Verified `func_converter.php:41-52` = `[7=>5,6=>5,5=>7,4=>7,3=>9,2=>9,1=>11,0=>11]` (no 8/9 → null → NPE at `UpdateNationLevel.php:120`); **applied** `8=>5, 9=>5`. Possession-release (`TurnExecutionHelper.php:187-200`): **applied** LC2 += `defence_train=80`, `owner_name=null`, `killturn=(deadyear-year)*12` (the 유체이탈 log pushed before the setVars, DELETE general_access_log only). Rebirth (`General.php:622-623`): **applied** LC3 += `specage=0`, `specage2=0` + the three log pushes.
+
+## P1 — before the relevant wave (7)
+
+1. **LC2 full possession-release write set** (above) — verbatim `TurnExecutionHelper.php:187-200`.
+2. **LC3 rebirth full field set** — specage/specage2=0 + the three distinct logs (global 은퇴 / general PLAIN / general history).
+3. **MergeInheritPointRank is NOT light** — depends on the P6-deferred InheritancePointManager/InheritanceKey. **Applied:** removed from the LT1 light list; new Task LT3 pins the P3 inherit-point value (all-zero no-op if the 1010 golden shows none earned through month N, else recorded-delta); fires month 1/7/united.
+4. **POST1 Q3 power formula still unread** — sits on the single monthlyRng (Q4→Q11→Q15→Q16); wrong formula corrupts every nation.power byte-match. **Applied:** POST1 must transcribe the exact `func_gamerule.php:~290-330` SELECT (weights, rank_data ra/rb join, supply=1 filter, /10 & /100, Util::round vs toInt) into the task body + a hand-computed multi-general unit test. POST3 HARD-ASSERTS the draw COUNTS for checkWander/triggerTournament(nextBool(0.4)+participant-count shuffle)/registerAuction; checkEmperior confirmed RNG-free.
+5. **Pervasive file-path drift** — verified real P2 layout: IncomeTick/UniqueItemLottery in `logic/domestic/`; FoundingCascade in `logic/actions/founding/`; GameConst/CityConst in `common/constants/` (the `:common` MODULE); WorldEnvBuilder in `logic/statview/`; TurnRunService in `engine/run/`. **Applied** across the File-Structure tree, task Files lines, FQCN run lines, commit scopes; flagged `:common`-before-`:logic` build ordering (F6/F7 edits land in `:common`).
+6. **FC1 world_state shape** — baseline carries current_year/tick_seconds/config jsonb, NOT start_year/turn_term. **Applied:** FC1 must inspect the P0-B mapper + commit ONE shape (new columns + tick_seconds→turnTerm mapping note, OR read from config jsonb with only isunited new); resolve the "or game_env KV" hedge.
+7. **Decay rounding + city.trust column TYPE** — `city.trust` is `integer` in `V1:50` but legacy FLOAT; fractional trust + the trust<30 threshold truncate every flush → silent multi-month-only divergence. **Applied:** V4 `ALTER trust TYPE double precision` + CityRowMapper→Double; SU2 rounding MODE stays deferred to the G1 oracle but pinned early via a targeted G1a capture (INT round-half-away; trust no-round) + a unit test.
+
+## P2 (3)
+
+1. **G1c gate tiebreaker** — changed `ORDER BY turntime ASC, id ASC` → `turntime ASC, no ASC` to match `TurnExecutionHelper.php:237` (the gate is the oracle; wrong sort key would assert incorrectly).
+2. **B1 dep edge** — `B1 ← F1` → `B1 ← F1, F4` (PRE1 computes `develcost=(year-startyear+10)*2` from the calendar env; build order already satisfied, the declared edge was stale).
+3. **Four source-unambiguous hedges resolved in-spec** — FR1B SetNationFront overwrite order (reset 0 → 1 adj1 → 2 adj2[only if !adj3 && !adj1] → 3 adj3, last-write-wins + overlap test, verified `func_gamerule.php:45-102`); IN4 neutral cities decay ×0.99 TWICE = net ×0.9801, run() before popIncrease; IN3 `pop+=dead*0.2,dead=0` applies to ALL cities (PHP filter `true`, verified `ProcessWarIncome.php:31-34`); UNITED target reachable from checkEmperior (dispatcher must support it; non-unifying replay never fires it).
+
+## OQ resolutions (resolve-now / blocker → RESOLVED in plan)
+
+- **OQ#3** (blocker): APPEND + getNationChiefLevel 8/9 + capital-multiplier 8/9 decision + reachability sanity-check (28/36 may never trigger; NL1 spaces them reachable OR G1 seeds a synthetic fixture nation so gate (d) is not vacuous).
+- **OQ#5** (blocker): MIGRATE trade to nullable (not confirm).
+- **OQ#6** (blocker): config-file→DB-column divergence, G1b fixture.
+- **OQ#7** (resolve-now): STRUCTURAL ascending-id accessor in the FOUNDATION (loader `ORDER BY id` for cities + nations; A2/A4/B2 share one accessor), not a per-family re-sort.
+- **OQ#8** (p1-defer): mode deferred to oracle + trust TYPE fix migrated now.
+- **OQ#9** (already-answered): reuse the V1 baseline event table; scenario initialEvents run-once at build are NOT in the dispatched set.
+- **OQ#10** (resolve-now, read directly): scenario_1010 = no map block → 'che' base; ignoreDefaultEvents=false → `$defaultEvents` is the in-scope monthly oracle; only scenario event is a deferred destroy_nation/1000 row; startYear=181. Lock the F2 batch from `$defaultEvents` BEFORE F2 freezes its seed (G1a elevated).
+- **OQ#11/#12** (resolve-now): calcCityWarGoldIncome + GameConst literals + HistoryTokens catalog — mechanical transcription, routed to IN1/FG1/FG2.
+- **OQ#1/#2/#4** (already-answered): interleave/turnDate/preUpdate pinned; per-map che-base; processed-count clean-boundary divergence documented.
+
+## Deferred (out of P3 monthly-tick scope)
+
+OCCUPY_CITY/DESTROY_NATION targets (P4+; the 1010 destroy_nation row seeded but no-op stub) — UNITED is NOT deferred (in-scope via checkEmperior). StaticEventHandler concrete classes ($staticEventHandlers verified EMPTY for this scenario). increaseInheritancePoint/InheritanceKey persistence (P6 KV seam; LT3 folds all-zero/recorded-delta). triggerTournament/registerAuction LISTING internals (POST3 thin-ports + records exact draw counts — counts NOT deferred). GameUnitConst per-unitSet + scenarioEffect hook. checkStatistic full annual-snapshot body. SU2 rounding MODE (G1 decay-rounding-oracle).
+
+## Residual risks
+
+G1 is a one-shot MANUAL host capture (devsam quirks) — not re-runnable in CI, so seed/formula errors surface late; the P0/P1 resolve-before-exec edits front-load the highest-risk unknowns. Decay-rounding + trust-type compound month-over-month (the N-month gate is the only true detector; bound N small initially). Nation-level 8/9 reachability — even after the NPE fix, if thresholds aren't crossed in the actual 1010 distribution, gate (d) verifies the table internally but never exercises a live 8/9 transition (synthetic-fixture mitigation is advisory). MergeInheritPointRank/RaiseDisaster/AssignGeneralSpeciality bound hinges on inherit-points all-zero + the year<184 disaster skip holding for the chosen N — if N grows past 184 the stub rationale breaks (pin N + document the bound). The event-seed F2 contract must land BEFORE the Tier-1 fan-out (load-bearing sequencing). The `:common`-before-`:logic` build ordering must hold (F7's GameConst/CityConst are `:common`, previously mislabeled `:logic`).
+
+_Full output: `tasks/wcdhhpso1.output`._
