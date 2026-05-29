@@ -79,6 +79,29 @@ fun calcCityWallRiceIncome(
 }
 
 /**
+ * func_time_event.php:78-86 — per-city WAR-GOLD income (P3 IN1, the ONLY income fn not yet ported).
+ *
+ * ```
+ * if($rawCity['supply'] == 0){ return 0; }
+ * $warIncome = $rawCity['dead'] / 10;
+ * $warIncome = Util::round($nationType->onCalcNationalIncome('gold', $warIncome));
+ * return $warIncome;
+ * ```
+ * `supply==0 → 0` (short-circuit BEFORE the fold); else `phpRound` of the NATION-TYPE 'gold' fold over
+ * `dead/10.0` (a null nation type folds as identity). This is the per-city term `ProcessWarIncome` sums
+ * across a nation's cities (`getWarGoldIncome`, func_time_event.php:166-175).
+ */
+fun calcCityWarGoldIncome(
+    city: City,
+    nationType: GeneralActionModule?,
+    pipeline: GeneralActionPipeline,
+): Int {
+    if (city.supplyState == 0) return 0
+    val warIncome = city.dead / 10.0
+    return phpRound(pipeline.nationIncomeFold(nationType, "gold", warIncome))
+}
+
+/**
  * func_time_event.php:141-164 — national GOLD income: SUM the per-city rounded ints, THEN `*= taxRate/20`
  * (NO final round). Empty city list → 0. The capital city (`capitalId`) gets the capital factor.
  */
