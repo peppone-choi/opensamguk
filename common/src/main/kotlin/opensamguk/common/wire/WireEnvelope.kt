@@ -10,6 +10,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TurnDaemonCommandEnvelope(val requestId: String, val sentAt: String, val command: TurnDaemonCommand)
 
+@Serializable
+data class TurnDaemonEventEnvelope(val requestId: String? = null, val sentAt: String, val event: TurnDaemonEvent)
+
 const val WIRE_PAYLOAD_FIELD: String = "payload"
 
 fun encodeCommandPayload(env: TurnDaemonCommandEnvelope): String =
