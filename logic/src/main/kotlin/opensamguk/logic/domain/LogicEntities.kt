@@ -65,6 +65,7 @@ data class City(
     val defense: Int = 0, val defenseMax: Int = 0,          // V1 def / def_max
     val wall: Int = 0, val wallMax: Int = 0,                // V1 wall / wall_max
     val population: Int = 0, val populationMax: Int = 0,     // V1 pop / pop_max
+    val dead: Int = 0,              // PHP city.dead — accumulated battle dead (부상병); ProcessWarIncome reads dead/10 then resets to 0
     val trade: Int? = null,         // V1 city.trade — 95..105, or null (no-trade / disabled)
     val region: Int = 0,            // V1 city.region
     val meta: Map<String, Any?> = linkedMapOf(),
