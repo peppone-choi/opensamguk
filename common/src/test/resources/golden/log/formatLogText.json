@@ -1,0 +1,38 @@
+[
+  {
+    "format": 0,
+    "expected": "본문"
+  },
+  {
+    "format": 1,
+    "expected": "<C>●</>본문"
+  },
+  {
+    "format": 2,
+    "expected": "<C>●</>190년 3월:본문"
+  },
+  {
+    "format": 3,
+    "expected": "<C>●</>190년:본문"
+  },
+  {
+    "format": 4,
+    "expected": "<C>●</>3월:본문"
+  },
+  {
+    "format": 5,
+    "expected": "<S>◆</>본문"
+  },
+  {
+    "format": 6,
+    "expected": "<S>◆</>190년 3월:본문"
+  },
+  {
+    "format": 7,
+    "expected": "<R>★</>본문"
+  },
+  {
+    "format": 8,
+    "expected": "<R>★</>190년 3월:본문"
+  }
+]

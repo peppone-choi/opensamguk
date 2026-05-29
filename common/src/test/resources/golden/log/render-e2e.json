@@ -1,0 +1,17 @@
+[
+  {
+    "raw": "투자",
+    "format": 2,
+    "expected": "<font color=cyan>●</font>190년 3월:투자"
+  },
+  {
+    "raw": "한국은 성공",
+    "format": 2,
+    "expected": "<font color=cyan>●</font>190년 3월:한국은 성공"
+  },
+  {
+    "raw": "<C>점수</> 상승",
+    "format": 2,
+    "expected": "<font color=cyan>●</font>190년 3월:<font color=cyan>점수</font> 상승"
+  }
+]

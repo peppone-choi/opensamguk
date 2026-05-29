@@ -1,0 +1,103 @@
+[
+  {
+    "text": "한국",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "사과",
+    "josa": "은",
+    "expected": "는"
+  },
+  {
+    "text": "서울",
+    "josa": "으로",
+    "expected": "로"
+  },
+  {
+    "text": "한국",
+    "josa": "으로",
+    "expected": "으로"
+  },
+  {
+    "text": "ㄱ",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "ㄹ",
+    "josa": "으로",
+    "expected": "로"
+  },
+  {
+    "text": "100",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "12",
+    "josa": "은",
+    "expected": "는"
+  },
+  {
+    "text": "1",
+    "josa": "으로",
+    "expected": "로"
+  },
+  {
+    "text": "Kim",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "Lee",
+    "josa": "은",
+    "expected": "는"
+  },
+  {
+    "text": "一",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "廓",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "국廔",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "한국!! ",
+    "josa": "은",
+    "expected": "은"
+  },
+  {
+    "text": "",
+    "josa": "은",
+    "expected": "는"
+  },
+  {
+    "text": null,
+    "josa": "은",
+    "expected": "는"
+  },
+  {
+    "text": "한국",
+    "josa": "는",
+    "expected": "은"
+  },
+  {
+    "text": "한국",
+    "josa": "(은)는",
+    "expected": "은"
+  },
+  {
+    "text": "진",
+    "josa": "부터",
+    "throws": true,
+    "message": "올바르지 않은 조사 지정"
+  }
+]
