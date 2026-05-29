@@ -53,6 +53,19 @@ class GeneralActionResolveContext(
      * normalized args here (징병: crewType/amount; 이동: destCityID). Default empty for no-arg commands.
      */
     val args: Map<String, Any?> = emptyMap(),
+    /**
+     * Preloaded candidate generals for the multi-row general-UPDATE commands (이동 roaming-leader moves
+     * EVERY same-nation general; 집합 moves the troop's members). These mirror the PHP DB query result
+     * (`SELECT … FROM general WHERE nation=me AND …`) that the daemon/precheck adapters stage in; the
+     * resolver applies the PHP WHERE predicate in-memory, mutates the matches, and appends the moved
+     * copies to [GeneralActionDraft.cascadeGenerals]. Default empty for single-general commands.
+     */
+    val candidateGenerals: List<General> = emptyList(),
+    /**
+     * Preloaded troop name for 집합 (PHP `SELECT name FROM troop WHERE troop_leader = me`). The follower
+     * PLAIN log embeds it (`{troopName} 부대원들은 …`). Default empty.
+     */
+    val troopName: String = "",
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val globalActionLogs: MutableList<String> = mutableListOf(),

@@ -1,6 +1,8 @@
 package opensamguk.logic.actions
 
 import opensamguk.logic.actions.military.CheHullyeon
+import opensamguk.logic.actions.military.CheIdong
+import opensamguk.logic.actions.military.CheJiphap
 import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
 import opensamguk.logic.actions.military.CrMaenghullyeon
@@ -34,6 +36,8 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "cr_맹훈련" -> CrMaenghullyeon(pipeline, maxLevel)
         "che_사기진작" -> CheSagiJinjak(pipeline, maxLevel)
         "che_소집해제" -> CheSojipHaeje(pipeline)
+        "che_이동" -> CheIdong(pipeline)
+        "che_집합" -> CheJiphap(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
