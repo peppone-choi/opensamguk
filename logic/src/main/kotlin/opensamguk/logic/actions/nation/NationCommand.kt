@@ -1,6 +1,11 @@
 package opensamguk.logic.actions.nation
 
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.logic.constraints.Constraint
+import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.ConstraintResult
+import opensamguk.logic.constraints.RequirementKey
+import opensamguk.logic.constraints.StateView
 import opensamguk.logic.domain.LastTurn
 
 /**
@@ -76,4 +81,15 @@ abstract class NationCommand : GeneralActionDefinition {
         /** PHP `Util::joinYearMonth(year, month)` (Util.php:709-711) = `year*12 + month - 1`. */
         fun joinYearMonth(year: Int, month: Int): Int = year * 12 + month - 1
     }
+}
+
+/**
+ * `Constraint/AlwaysFail.php` — the unconditional-deny constraint (`test()` always returns false with
+ * `reason = $this->arg`). Used by 발령/포상 (self-target) and 감축/증축 (방랑상태). A trivial constraint
+ * local to the nation family (NOT a shared C-PURE preset).
+ */
+internal fun alwaysFail(reason: String): Constraint = object : Constraint {
+    override val name = "AlwaysFail"
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> = emptyList()
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult = ConstraintResult.Deny(reason)
 }

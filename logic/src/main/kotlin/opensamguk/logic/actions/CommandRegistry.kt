@@ -1,7 +1,9 @@
 package opensamguk.logic.actions
 
+import opensamguk.logic.actions.nation.cheBallyeong
 import opensamguk.logic.actions.nation.cheGamchuk
 import opensamguk.logic.actions.nation.cheJeungchuk
+import opensamguk.logic.actions.nation.chePosang
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
 
@@ -28,6 +30,8 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         // --- CMD-NATION-INTERNAL (국가 내정) ---
         "che_감축" -> cheGamchuk(pipeline)
         "che_증축" -> cheJeungchuk(pipeline)
+        "che_발령" -> cheBallyeong(pipeline)
+        "che_포상" -> chePosang(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
