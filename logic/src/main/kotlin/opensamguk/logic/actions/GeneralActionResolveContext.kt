@@ -60,6 +60,11 @@ class GeneralActionResolveContext(
     // is engine-level wall-clock math (turnTime is not on the logic General), so the decision is
     // supplied by the adapter; defaults false.
     val destDifferentTurnBucket: Boolean = false,
+    // PHP che_국호변경.php:128 `SELECT name FROM nation WHERE name=? LIMIT 1` — a RUNTIME dup-name
+    // re-check inside run() (AFTER the constraints pass), which the precheck constraint
+    // (CheckNationNameDuplicate) cannot stand in for because the world may change between reserve and
+    // run. The full-nation scan is engine/precheck-adapter work; the result is threaded here.
+    val runtimeNameDuplicate: Boolean = false,
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val destPlainLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
