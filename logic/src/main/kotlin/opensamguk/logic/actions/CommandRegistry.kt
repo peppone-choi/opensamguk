@@ -3,6 +3,7 @@ package opensamguk.logic.actions
 import opensamguk.logic.actions.develop.cheGisulYeongu
 import opensamguk.logic.actions.develop.cheJeongchakJangnyeo
 import opensamguk.logic.actions.develop.cheJuminSeonjeong
+import opensamguk.logic.actions.develop.cheMuljaJodal
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
 
@@ -32,6 +33,7 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_기술연구" -> cheGisulYeongu(pipeline, maxLevel)
         "che_정착장려" -> cheJeongchakJangnyeo(pipeline, maxLevel)
         "che_주민선정" -> cheJuminSeonjeong(pipeline, maxLevel)
+        "che_물자조달" -> cheMuljaJodal(pipeline, maxLevel)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
