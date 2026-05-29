@@ -62,4 +62,42 @@ interface WarUnit {
      * (the F2/engine impl routes this through the recorder). PHP `General.deleteItem()`.
      */
     fun deleteItem()
+
+    // --- magic (계략) phase delegates — the NON-draw stat computation the magic trigger needs ---------------
+    // The DRAWS (nextBool/choice/nextBool) live in the trigger (the F1 draw-order parity surface); the
+    // probability/damage COMPUTATION reaches into General/crewType/the onCalcStat pipeline (F2/F5/A1) so it is
+    // delegated here. F2/A1 fill these faithfully; G1 asserts the resulting draw stream byte-for-byte.
+
+    /** True for a WarUnitGeneral (필살/회피/계략 require a general self). PHP `$self instanceof WarUnitGeneral`. */
+    fun isGeneral(): Boolean
+
+    /** True for a WarUnitCity (magic table selection: city `{급습,위보,혼란}` vs general `{위보,…}`). */
+    fun isCity(): Boolean
+
+    /**
+     * The FULLY-computed magic trial probability (NO draw): `intel/100 * crewType.magicCoef`, the
+     * `warMagicTrialProb` owner-then-oppose cross-fold, AND the phase-0 `rawIntel*3>=allStat ⇒ ×3` boost.
+     * The `≤0 ⇒ no draw` short-circuit is applied in the trigger on this value.
+     * PHP `che_계략시도.php:37-55`.
+     */
+    fun getMagicTrialProb(oppose: WarUnit): Double
+
+    /**
+     * The magic success probability (NO draw): base `0.7` + the `warMagicSuccessProb` cross-fold.
+     * PHP `che_계략시도.php:60-62`.
+     */
+    fun getMagicSuccessProb(oppose: WarUnit): Double
+
+    /**
+     * The `warMagicSuccessDamage` owner-then-oppose cross-fold applied to a chosen magic's raw damage
+     * (NO draw; aux = magic name). PHP `che_계략시도.php:74-75`. The FAIL branch stores the RAW table value
+     * with NO fold — that asymmetry lives in the trigger.
+     */
+    fun foldMagicSuccessDamage(oppose: WarUnit, magic: String, raw: Double): Double
+
+    /**
+     * The `warMagicFailDamage` owner-then-oppose cross-fold applied to the stored magic damage at the
+     * 계략발동/계략실패 step (NO draw; aux = magic name). PHP `che_계략발동.php:30-31` / `che_계략실패.php:30-31`.
+     */
+    fun foldMagicFailDamage(oppose: WarUnit, magic: String, raw: Double): Double
 }

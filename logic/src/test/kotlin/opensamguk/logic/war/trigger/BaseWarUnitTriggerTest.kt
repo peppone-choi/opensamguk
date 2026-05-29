@@ -45,6 +45,12 @@ class BaseWarUnitTriggerTest {
         override fun getItemName(): String = heldItem
         override fun getItemRawName(): String = heldItem
         override fun deleteItem() { itemDeleted = true }
+        override fun isGeneral(): Boolean = true
+        override fun isCity(): Boolean = false
+        override fun getMagicTrialProb(oppose: WarUnit): Double = 0.0
+        override fun getMagicSuccessProb(oppose: WarUnit): Double = 0.7
+        override fun foldMagicSuccessDamage(oppose: WarUnit, magic: String, raw: Double): Double = raw
+        override fun foldMagicFailDamage(oppose: WarUnit, magic: String, raw: Double): Double = raw
     }
 
     // A concrete war trigger that records the (self, oppose, selfEnv) it saw.

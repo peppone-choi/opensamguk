@@ -1,23 +1,26 @@
 package opensamguk.common.rng
 
-class RandUtil(private val rng: LiteHashDrbg) {
-    fun nextFloat1(): Double = rng.nextFloat1()
-    fun nextRange(min: Double, max: Double): Double = nextFloat1() * (max - min) + min
-    fun nextRangeInt(minInclusive: Int, maxInclusive: Int): Int =
+// `open` so battle draw-order tests (P4 war triggers) can subclass with a recording/scripted RNG that
+// captures the semantic nextBool(prob)/choice(keys) sequence — the load-bearing draw-order parity surface.
+// Behavior is unchanged; this is a test-enabling visibility change only.
+open class RandUtil(private val rng: LiteHashDrbg) {
+    open fun nextFloat1(): Double = rng.nextFloat1()
+    open fun nextRange(min: Double, max: Double): Double = nextFloat1() * (max - min) + min
+    open fun nextRangeInt(minInclusive: Int, maxInclusive: Int): Int =
         rng.nextInt((maxInclusive - minInclusive).toLong()).toInt() + minInclusive
-    fun nextInt(minInclusive: Int, maxExclusive: Int): Int {
+    open fun nextInt(minInclusive: Int, maxExclusive: Int): Int {
         val span = maxExclusive - minInclusive
         if (span <= 1) return minInclusive
         return minInclusive + rng.nextInt((span - 1).toLong()).toInt()
     }
-    fun nextBit(): Boolean = rng.nextBits(1)[0].toInt() != 0
-    fun nextBool(prob: Double = 0.5): Boolean {
+    open fun nextBit(): Boolean = rng.nextBits(1)[0].toInt() != 0
+    open fun nextBool(prob: Double = 0.5): Boolean {
         if (prob >= 1) return true
         if (prob == 0.5) return nextBit()
         if (prob <= 0) return false
         return nextFloat1() < prob
     }
-    fun <T> shuffle(srcArray: List<T>): List<T> {
+    open fun <T> shuffle(srcArray: List<T>): List<T> {
         val cnt = srcArray.size
         if (cnt == 0) return emptyList()
         if (cnt.toLong() > rng.getMaxInt()) throw IllegalStateException("Invalid random int range")
@@ -29,7 +32,7 @@ class RandUtil(private val rng: LiteHashDrbg) {
         }
         return result
     }
-    fun <T> choice(items: List<T>): T {
+    open fun <T> choice(items: List<T>): T {
         if (items.isEmpty()) throw IllegalArgumentException("Empty items")
         return items[rng.nextInt((items.size - 1).toLong()).toInt()]
     }
