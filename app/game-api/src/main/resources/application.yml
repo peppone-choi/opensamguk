@@ -16,6 +16,8 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+opensamguk:
+  profile: ${OPENSAMGUK_PROFILE:che:scenario_2}
 server:
   port: ${GAME_API_PORT:8081}
 management:

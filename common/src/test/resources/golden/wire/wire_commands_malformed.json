@@ -1,0 +1,6 @@
+[
+  { "type": "totallyUnknownCommand", "generalId": 1 },
+  { "type": "troopJoin", "requestId": "bad-tj", "generalId": 11 },
+  { "type": "run", "reason": "whenever" },
+  { "type": "appoint", "requestId": "bad-app", "generalId": "eighteen", "destGeneralId": 23, "destCityId": 5, "officerLevel": 4 }
+]
