@@ -56,6 +56,72 @@ object GameConst {
 
     const val maxLevel = 255            // PHP grand truth (Nation 0-9 extension is separate)
 
+    /**
+     * Nation level 0-9 APPEND table (P3 / AREA F7 / Task FG1).
+     *
+     * Each row = `[name, chiefCnt, cityCnt]` matching the legacy `getNationLevelList()`
+     * (`func_gamerule.php:15-28`) shape. Levels 0..7 are BYTE-IDENTICAL to the legacy 8-entry
+     * array (so the legacy table remains the parity oracle for the 0..7 numerics: the level-up
+     * gate, income multiplier, `getNationChiefLevel`, and the `level*1000` gold/rice grant).
+     *
+     * Levels 8 and 9 are TWO NEW tiers APPENDED ABOVE 황제(7) — the intentional opensamguk
+     * divergence (design §14 / officer-ranks memory: NOT a parity violation). The DECISION is
+     * APPEND, not remap (plan §"Nation-level 0-9 decision"): the income multiplier
+     * `1+(1/3/level)`, `getNationChiefLevel`, and the `level*1000` grant all extend by the
+     * existing arithmetic. The city-count thresholds continue the legacy 16→21 progression
+     * (lv8=28, lv9=36); the names (lv8=대황제, lv9=천자) are DEFINED by this plan.
+     *
+     * **Reachability:** 28/36 may be unreachable within an N-month scenario_1010 replay; the
+     * 7→8→9 transition is exercised by a synthetic fixture nation in the G1 gate (NL1/G1 own
+     * the reachability check). F7 only freezes the const + names + thresholds.
+     */
+    val nationLevelByCityCnt09: List<List<Any>> = listOf(
+        listOf("방랑군", 2, 0),
+        listOf("호족", 2, 1),
+        listOf("군벌", 4, 2),
+        listOf("주자사", 4, 5),
+        listOf("주목", 6, 8),
+        listOf("공", 6, 11),
+        listOf("왕", 8, 16),
+        listOf("황제", 8, 21),
+        listOf("대황제", 8, 28),   // lv8 — NEW (APPEND); chiefCnt continues the 8-slot
+        listOf("천자", 8, 36),     // lv9 — NEW (APPEND)
+    )
+
+    /**
+     * `getNationChiefLevel` (`func_converter.php:41-52`) extended for the 0-9 levels.
+     *
+     * Legacy map `[7=>5,6=>5,5=>7,4=>7,3=>9,2=>9,1=>11,0=>11]` is byte-identical for 0..7.
+     * 8/9 ADD `8=>5, 9=>5` — mirroring the 7/6→5 slot (the highest tiers seat the chief at
+     * officer_level 5). Without this the `UpdateNationLevel.php:120` `Util::range(chiefLevel,12)`
+     * nation_turn seed loop would dereference a null chief level (NPE) at lv8/9.
+     *
+     * Throws for out-of-range levels (parity with a non-null dereference); use
+     * [getNationChiefLevelOrNull] for the PHP `[...][\$level]`-on-a-miss-yields-null semantics.
+     */
+    fun getNationChiefLevel(level: Int): Int =
+        getNationChiefLevelOrNull(level)
+            ?: throw IllegalArgumentException("nation level out of 0-9 range: $level")
+
+    /** Nullable variant mirroring PHP's `[...][\$level]` returning null on a missing key. */
+    fun getNationChiefLevelOrNull(level: Int): Int? = when (level) {
+        9, 8, 7, 6 -> 5
+        5, 4 -> 7
+        3, 2 -> 9
+        1, 0 -> 11
+        else -> null
+    }
+
+    /**
+     * Capital income multiplier `1 + (1/3/level)` (`func_time_event.php:99/119`).
+     *
+     * DECISION (plan §"Nation-level 0-9 decision", capital income multiplier at 8/9): KEEP the
+     * shrink as the intended divergence (the default) — at lv8 the bonus is `1+1/24`, at lv9
+     * `1+1/27` (below lv7's `1+1/21`). The `level` is NOT clamped to 7. Levels 0..7 stay
+     * byte-identical to legacy (level 0 is undefined per legacy — never called with a 방랑군).
+     */
+    fun nationCapitalIncomeMultiplier(level: Int): Double = 1.0 + (1.0 / 3.0 / level)
+
     const val techLevelIncYear = 5
     const val initialAllowedTechLevel = 1
 
