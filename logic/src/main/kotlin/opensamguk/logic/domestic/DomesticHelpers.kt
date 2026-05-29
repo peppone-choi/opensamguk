@@ -1,5 +1,6 @@
 package opensamguk.logic.domestic
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.General
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -84,3 +85,27 @@ fun getBillByLevel(dedLevel: Int): Int = dedLevel * 200 + 400
  *  (oldMaxDomesticCritical = getInheritancePoint; bump if greater) sits OUTSIDE the world/flush boundary
  *  and is a P6 seam — it is NOT computed or output here (OQ7; G4 asserts no inheritance table is written). */
 fun updateMaxDomesticCritical(currentAux: Double, score: Int): Double = currentAux + score / 2.0
+
+// === DV2 — tech-level helpers (func_converter.php:676-697). Disjoint keys (DV2 consumer only). ===
+
+/**
+ * func_converter.php:676-681 — getTechLevel = Util::valueFit(floor(tech/1000), 0, GameConst::$maxTechLevel).
+ */
+fun getTechLevel(tech: Double): Int =
+    valueFit(kotlin.math.floor(tech / 1000.0), 0.0, GameConst.maxTechLevel.toDouble()).toInt()
+
+/**
+ * func_converter.php:684-697 — TechLimit.
+ *   relYear = year - startYear
+ *   relMaxTech = Util::valueFit(floor(relYear/techLevelIncYear) + initialAllowedTechLevel, 1, maxTechLevel)
+ *   return getTechLevel(tech) >= relMaxTech
+ */
+fun techLimit(startYear: Int, year: Int, tech: Double): Boolean {
+    val relYear = year - startYear
+    val relMaxTech = valueFit(
+        kotlin.math.floor(relYear.toDouble() / GameConst.techLevelIncYear) + GameConst.initialAllowedTechLevel,
+        1.0,
+        GameConst.maxTechLevel.toDouble(),
+    ).toInt()
+    return getTechLevel(tech) >= relMaxTech
+}
