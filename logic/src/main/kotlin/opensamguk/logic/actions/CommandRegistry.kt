@@ -32,6 +32,7 @@ import opensamguk.logic.actions.personnel.CheImgwan
 import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
 import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.actions.trade.CheHeonnap
+import opensamguk.logic.actions.trade.CheJangbiMaemae
 import opensamguk.logic.actions.trade.CheJeungyeo
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -93,9 +94,10 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_국기변경" -> cheGukgiByeongyeong(pipeline)
         "che_천도" -> cheCheondo(pipeline)
         "che_무작위수도이전" -> cheMujakwiSudoIjeon(pipeline)
-        // --- CMD-TRADE (증여/헌납) ---
+        // --- CMD-TRADE (증여/헌납/장비매매) ---
         "che_증여" -> CheJeungyeo(pipeline)
         "che_헌납" -> CheHeonnap(pipeline)
+        "che_장비매매" -> CheJangbiMaemae(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
