@@ -12,6 +12,13 @@ import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
 import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
+import opensamguk.logic.actions.personnel.CheBangrang
+import opensamguk.logic.actions.personnel.CheDeungyong
+import opensamguk.logic.actions.personnel.CheEuntwe
+import opensamguk.logic.actions.personnel.CheHaya
+import opensamguk.logic.actions.personnel.CheImgwan
+import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
+import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
 
@@ -51,6 +58,13 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_소집해제" -> CheSojipHaeje(pipeline)
         "che_이동" -> CheIdong(pipeline)
         "che_집합" -> CheJiphap(pipeline)
+        "che_임관" -> CheImgwan(pipeline)
+        "che_장수대상임관" -> CheJangsuDaesangImgwan(pipeline)
+        "che_하야" -> CheHaya(pipeline)
+        "che_방랑" -> CheBangrang(pipeline)
+        "che_랜덤임관" -> CheRandomImgwan(pipeline)
+        "che_은퇴" -> CheEuntwe(pipeline)
+        "che_등용" -> CheDeungyong(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
