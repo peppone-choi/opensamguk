@@ -27,7 +27,25 @@ class RedisCommandStream(
     startId: String = "\$",
 ) {
     private val keys: TurnDaemonStreamKeys = TurnDaemonStreamKeys.of(profileName)
-    private var lastId: String = startId
+    private var lastId: String
+
+    init {
+        // `'$'` means "only messages newer than the consumer's start point". Spring Data Redis
+        // would forward a literal `$` to XREAD, which Redis resolves to the stream tail at *read*
+        // time — so any message enqueued between construction and the first read would be skipped.
+        // To match the TS `startId ?? '$'` intent (only-new relative to *construction*), resolve
+        // `$` to the current stream tail here. An explicit id (e.g. "0") is used verbatim.
+        lastId = if (startId == "\$") currentTail() else startId
+    }
+
+    private fun currentTail(): String {
+        val info = try {
+            template.opsForStream<Any, Any>().info(keys.commandStream)
+        } catch (_: Exception) {
+            null
+        }
+        return info?.lastGeneratedId() ?: "0"
+    }
 
     fun commandStreamKey(): String = keys.commandStream
 
