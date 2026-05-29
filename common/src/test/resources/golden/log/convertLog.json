@@ -1,0 +1,57 @@
+[
+  {
+    "value": "<C>x</>",
+    "type": 1,
+    "expected": "<font color=cyan>x</font>"
+  },
+  {
+    "value": "<1>x</>",
+    "type": 1,
+    "expected": "<font size=1>x</font>"
+  },
+  {
+    "value": "<Y1>x</>",
+    "type": 1,
+    "expected": "<font size=1 color=yellow>x</font>"
+  },
+  {
+    "value": "<Y>x</>",
+    "type": 1,
+    "expected": "<font color=yellow>x</font>"
+  },
+  {
+    "value": "<D>x</>",
+    "type": 1,
+    "expected": "<font color=orangered>x</font>"
+  },
+  {
+    "value": "<O>x</>",
+    "type": 1,
+    "expected": "<font color=orangered>x</font>"
+  },
+  {
+    "value": "<D><b>x</b></>",
+    "type": 1,
+    "expected": "<font color=orangered><b>x</b></font>"
+  },
+  {
+    "value": "a<b>b</b><br>c",
+    "type": 1,
+    "expected": "a<b>b</b><br>c"
+  },
+  {
+    "value": "<C>x</>",
+    "type": 1,
+    "expected": "<font color=cyan>x</font>"
+  },
+  {
+    "value": "<C>x</>",
+    "type": 0,
+    "expected": "x"
+  },
+  {
+    "value": "<C>x</>",
+    "type": -1,
+    "expected": "x"
+  }
+]
