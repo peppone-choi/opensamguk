@@ -29,6 +29,10 @@ object WorldEnvBuilder {
     /**
      * Build the `ConstraintContext.env` map from (year, startYear). Keys are insertion-ordered
      * (`year`, `startYear`, `develCost`) and read as `Number` by `CommerceInvestment.envOf`.
+     *
+     * This is the P2 precheck/command env — it carries NO `month`/`currentEventID` (the monthly tick
+     * uses the widened [envMap] overload below). Keeping it byte-identical guarantees precheck can
+     * never drift from the per-command full-mode env.
      */
     fun envMap(year: Int, startYear: Int): Map<String, Any?> {
         val e = worldEnv(year, startYear)
@@ -36,6 +40,27 @@ object WorldEnvBuilder {
             "year" to e.year,
             "startYear" to e.startYear,
             "develCost" to e.develCost,
+        )
+    }
+
+    /**
+     * FC2 — the widened monthly-tick env: the P2 keys (`year`, `startYear`, `develCost`) PLUS `month`
+     * (PHP event-env key `$env['month']`, read by Date/DateRelative conditions + the
+     * Income/RandomizeCityTradeRate/UpdateNationLevel/RaiseDisaster Actions) and `currentEventID` (PHP
+     * `$env['currentEventID']`, injected per event ROW by the dispatcher and read by
+     * DeleteEvent/AutoDeleteInvader). Keys stay insertion-ordered; `currentEventID` is always present
+     * (so it is "settable per dispatch") and defaults `null` outside a dispatch.
+     *
+     * This is the SAME builder, NOT a forked parallel env — the tick simply asks for more keys.
+     */
+    fun envMap(year: Int, startYear: Int, month: Int, currentEventID: Int? = null): Map<String, Any?> {
+        val e = worldEnv(year, startYear)
+        return linkedMapOf(
+            "year" to e.year,
+            "startYear" to e.startYear,
+            "develCost" to e.develCost,
+            "month" to month,
+            "currentEventID" to currentEventID,
         )
     }
 
