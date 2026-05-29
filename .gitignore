@@ -21,3 +21,5 @@ web/*/out/
 legacy/
 # Decompiled / generated artifacts
 **/generated/
+# Local workflow orchestration scripts (transient tooling)
+.workflow-*.mjs
