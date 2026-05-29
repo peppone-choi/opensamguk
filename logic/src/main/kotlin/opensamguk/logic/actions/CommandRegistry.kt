@@ -5,6 +5,7 @@ import opensamguk.logic.actions.develop.cheJeongchakJangnyeo
 import opensamguk.logic.actions.develop.cheJuminSeonjeong
 import opensamguk.logic.actions.develop.cheGunryangMaemae
 import opensamguk.logic.actions.develop.cheMuljaJodal
+import opensamguk.logic.actions.founding.CheGeobyeong
 import opensamguk.logic.actions.military.CheHullyeon
 import opensamguk.logic.actions.military.CheIdong
 import opensamguk.logic.actions.military.CheJiphap
@@ -75,6 +76,8 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_랜덤임관" -> CheRandomImgwan(pipeline)
         "che_은퇴" -> CheEuntwe(pipeline)
         "che_등용" -> CheDeungyong(pipeline)
+        // --- CMD-FOUNDING (건국/거병) ---
+        "che_거병" -> CheGeobyeong(pipeline)
         // --- CMD-NATION-INTERNAL (국가 내정) ---
         "che_감축" -> cheGamchuk(pipeline)
         "che_증축" -> cheJeungchuk(pipeline)
