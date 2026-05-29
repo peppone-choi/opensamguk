@@ -4,15 +4,18 @@ springBoot = "3.4.1"
 springDepMgmt = "1.1.7"
 testcontainers = "1.20.4"
 foojay = "0.9.0"
+kotlinxSerialization = "1.7.3"
 
 [libraries]
 flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql" }
 testcontainers-postgres = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "springBoot" }
 spring-depmgmt = { id = "io.spring.dependency-management", version.ref = "springDepMgmt" }
