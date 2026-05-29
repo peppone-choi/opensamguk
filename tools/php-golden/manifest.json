@@ -1,0 +1,76 @@
+{
+  "_doc": "P2 command manifest for golden capture (capture_command.php / probe_command.php). Oracle = legacy/devsam-core PHP. Each entry classifies one command for the generalized capture harness: how to build it (ctor), the SIX-component per-action RNG seed (6th token = rawClassName = ReflectionClass short name incl che_/cr_ prefix — Util::getClassNameFromObj, BaseCommand::getRawClassName(true)), the SEPARATE unique-item lottery seed token (lotteryActionName = static::$actionName = BaseCommand::getName(), DISTINCT from rawClassName), the expected ACTING-general action-log line count the harness asserts (logLines — the general_record log_type='action' rows for the acting general; dest-general / broadcast lines are captured separately and are NOT counted here), whether the command writes a cross-target general log (crossGeneral) and/or a pushGlobalActionLog broadcast line (broadcast), whether it can exercise the deferred checkStatChange level-change path (levelCross — the harness positions the acting general mid-band to keep it false), and a qualitative rngDraws note. Seed fmt = Util::simpleSerialize(hiddenSeed,'generalCommand'|'nationCommand',year,month,generalId,rawClassName); the 2nd token forks general vs nation. mb_strlen of a BMP-Hangul short class name counts UTF-16 code units (e.g. che_상업투자 = 8).",
+  "seed": {
+    "fmt": "Util::simpleSerialize(hiddenSeed, scope, year, month, generalId, rawClassName)",
+    "scope_general": "generalCommand",
+    "scope_nation": "nationCommand",
+    "sixthToken": "rawClassName (ReflectionClass short name incl che_/cr_ prefix)",
+    "lotterySeedToken": "lotteryActionName (static::\\$actionName, DISTINCT from rawClassName) — the unique-item lottery seam"
+  },
+  "divergent": {
+    "_doc": "rawClassName values whose short class name and/or actionName diverge from the naive 'che_<koreanVerb>' shape — pinned so the seed (6th token) and the lottery seed (actionName) stay byte-faithful.",
+    "che_랜덤임관": { "rawClassName": "che_랜덤임관", "lotteryActionName": "무작위 국가로 임관" },
+    "cr_맹훈련": { "rawClassName": "cr_맹훈련", "lotteryActionName": "맹훈련" },
+    "cr_건국": { "rawClassName": "cr_건국", "lotteryActionName": "건국" }
+  },
+  "commands": {
+    "develop": [
+      { "rawClassName": "che_상업투자", "lotteryActionName": "상업 투자", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true, "status": "done" },
+      { "rawClassName": "che_농지개간", "lotteryActionName": "농지 개간", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true, "status": "done" },
+      { "rawClassName": "che_성벽보수", "lotteryActionName": "성벽 보수", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false },
+      { "rawClassName": "che_수비강화", "lotteryActionName": "수비 강화", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false },
+      { "rawClassName": "che_치안강화", "lotteryActionName": "치안 강화", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false },
+      { "rawClassName": "che_기술연구", "lotteryActionName": "기술 연구", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_정착장려", "lotteryActionName": "정착 장려", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_주민선정", "lotteryActionName": "주민 선정", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_물자조달", "lotteryActionName": "물자조달", "ctor": "general", "rngDraws": "criticalRatioDomestic + score", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_군량매매", "lotteryActionName": "군량매매", "ctor": "general", "rngDraws": "price + amount", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true }
+    ],
+    "military": [
+      { "rawClassName": "che_징병", "lotteryActionName": "징병", "ctor": "general", "rngDraws": "recruit", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_모병", "lotteryActionName": "모병", "ctor": "general", "rngDraws": "recruit", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false },
+      { "rawClassName": "che_훈련", "lotteryActionName": "훈련", "ctor": "general", "rngDraws": "train", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "cr_맹훈련", "lotteryActionName": "맹훈련", "ctor": "general", "rngDraws": "train", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_사기진작", "lotteryActionName": "사기진작", "ctor": "general", "rngDraws": "morale", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_소집해제", "lotteryActionName": "소집해제", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_이동", "lotteryActionName": "이동", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_집합", "lotteryActionName": "집합", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true }
+    ],
+    "personnel": [
+      { "rawClassName": "che_임관", "lotteryActionName": "임관", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "che_장수대상임관", "lotteryActionName": "장수를 따라 임관", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "che_랜덤임관", "lotteryActionName": "무작위 국가로 임관", "ctor": "general", "rngDraws": "nation pick", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "che_하야", "lotteryActionName": "하야", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "che_방랑", "lotteryActionName": "방랑", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": false },
+      { "rawClassName": "che_은퇴", "lotteryActionName": "은퇴", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false },
+      { "rawClassName": "che_등용", "lotteryActionName": "등용", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true, "note": "SEND only — queues a scout letter; 등용수락 (accept) is DEFERRED to P6." }
+    ],
+    "founding": [
+      { "rawClassName": "che_거병", "lotteryActionName": "거병", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "che_건국", "lotteryActionName": "건국", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "cr_건국", "lotteryActionName": "건국", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },
+      { "rawClassName": "che_무작위건국", "lotteryActionName": "무작위 도시 건국", "ctor": "general", "rngDraws": "city pick", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true }
+    ],
+    "nation": [
+      { "rawClassName": "che_감축", "lotteryActionName": "감축", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": false },
+      { "rawClassName": "che_증축", "lotteryActionName": "증축", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": false },
+      { "rawClassName": "che_발령", "lotteryActionName": "발령", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": true, "broadcast": false, "levelCross": false, "note": "writes a destGeneral action log (the reassigned general)." },
+      { "rawClassName": "che_포상", "lotteryActionName": "포상", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": true, "broadcast": false, "levelCross": false, "note": "writes a destGeneral PLAIN log (the rewarded general)." },
+      { "rawClassName": "che_국호변경", "lotteryActionName": "국호변경", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": true, "broadcast": true, "levelCross": false },
+      { "rawClassName": "che_국기변경", "lotteryActionName": "국기변경", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": false },
+      { "rawClassName": "che_천도", "lotteryActionName": "천도", "ctor": "nation", "rngDraws": "calcCityDistance", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": false },
+      { "rawClassName": "che_무작위수도이전", "lotteryActionName": "무작위 수도 이전", "ctor": "nation", "rngDraws": "calcCityDistance + city pick", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": false, "note": "the random-capital-move flag variant of 천도." }
+    ],
+    "trade": [
+      { "rawClassName": "che_증여", "lotteryActionName": "증여", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": true, "broadcast": false, "levelCross": true, "note": "writes a destGeneral action log (the recipient)." },
+      { "rawClassName": "che_헌납", "lotteryActionName": "헌납", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_장비매매", "lotteryActionName": "장비매매", "ctor": "general", "rngDraws": "price", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true }
+    ]
+  },
+  "out": {
+    "_doc": "Commands explicitly excluded from the P2 capture surface.",
+    "물자원조": "OUT — diplomatic (Nation, requires a counterpart nation); deferred to the diplomacy phase.",
+    "등용수락": "OUT of P2 — the 등용 accept/RisingAppointment side; DEFERRED to P6.",
+    "ignoreBacklog": "The ~57-of-93 commands NOT in P2 (combat che_출병/che_화계/che_탈취/…, diplomacy che_선전포고/che_불가침*/…, the event_* unit-research, NPC-only che_NPC능동, etc.) are backlog: not captured in P2, tracked for later phases."
+  }
+}

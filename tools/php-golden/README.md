@@ -182,3 +182,41 @@ The level-change side effects — `explevel`/`dedlevel` recompute + the secondar
 to P2. Hard assertion (3) (plus the no-cross precondition) guarantees P1's golden never
 needs them. A front-city golden fixture (the PRE/POST-front-debuff scoreText asymmetry)
 is likewise deferred to P2; G1 picks a non-front city.
+
+## P2 — the generalized command harness (`capture_command.php` / `probe_command.php`)
+
+P2 EXTENDS this harness (P1's `capture_che.php`/`probe_picks.php` stay GREEN) to the
+~36-command P2 surface classified in `manifest.json` (FG1). Each manifest entry pins:
+the ctor scope (`general` → `buildGeneralCommandClass`/`'generalCommand'` seed, vs
+`nation` → 4-arg `buildNationCommandClass(General,env,LastTurn,arg)`/`'nationCommand'`
+seed), the SEPARATE unique-item lottery token (`lotteryActionName` = `static::$actionName`
+= `getName()`, DISTINCT from the seed's `rawClassName` = `getRawClassName(true)`), the
+expected ACTING-general action-line count (`logLines`), and the `crossGeneral`/`broadcast`
+flags. The three divergent rawClassNames are pinned: `che_랜덤임관`, `cr_맹훈련`, `cr_건국`.
+
+```sh
+# probe the picks for the running install/seed (per command: a module-free general
+# satisfying the gate + the months giving distinct reachable outcomes). Empty land
+# (scenario_0) has no module-free owned/officer general → the probe SYNTHESIZES one
+# (precondition + nation promotion) and flags it synthetic=1.
+docker exec $DB devsam-golden-php bash -lc \
+  'cd /work && php tools/php-golden/probe_command.php [--command=che_상업투자]'
+#   → PICKS command=… gid=… city=… m_success=… m_normal=… m_fail=… synthetic=… hiddenSeed=… year=…
+# Paste the gid/months into capture_command.php's $picks (+ SAMMO_BLOCKED_GID).
+
+# capture — emits ONE fixture file per command into golden/p2/<command>-fixtures.json.
+docker exec $DB devsam-golden-php bash -lc \
+  'cd /work && php tools/php-golden/capture_command.php [--command=che_상업투자] \
+     [--out-dir=logic/src/test/resources/golden/p2]'
+```
+
+`capture_command.php` keeps every P1 HARD assertion but REPLACES the fixed "exactly 1
+action line" with the manifest's per-command `logLines`, BROADENS `restoreBaseline` to
+restore ALL touched rows (acting + dest-general(s) + created/mutated nation + cascade
+cities in the picked nation set, so the N captures stay mutually independent), and
+captures the acting general's action lines + per-target dest-general lines (incl. PLAIN)
++ the broadcast `globalAction` lines (`general_record` `general_id=0`/`log_type='history'`
+— `pushGlobalActionLog`, `func_history.php:344`). The per-game `hiddenSeed` is captured
+verbatim from P1 as a fixture INPUT. The proven P1 commerce/agri picks are kept in
+`$picks` as the end-to-end smoke (the F-GOLDEN-0 gate: ≥1 command produces a valid
+fixture before the resolver families consume the harness).
