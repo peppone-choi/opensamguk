@@ -51,6 +51,42 @@ Per `manifest.json`'s `out` block: `물자원조` (diplomatic, needs a counterpa
 phase), `등용수락` (the 등용 accept side; P6), and the ~57 non-P2 commands (combat 출병/화계/
 탈취/…, diplomacy 선전포고/불가침*/…, the `event_*` unit-research, NPC-only 능동).
 
+## GR2 quarantine — develop goldens with an internally-inconsistent capture (5)
+
+These five develop goldens ARE committed, but the GR2 Kotlin byte gate
+(`logic/.../golden/DevelopGoldenTest.kt`) cannot drive the Kotlin resolver to reproduce them
+**by any actor stat**, while the file-disjoint sibling commands that share the exact same code
+path DO byte-match at the install-true stats. This is a **capture-data defect** (the committed
+before/after of these five encodes a different, mutually-inconsistent effective stat for the
+same gid 8), **NOT a Kotlin resolver parity bug** — proven by:
+
+* gid 8's install stats are recovered as the UNIQUE triple `L42 / S73 / I24` (= the scenario_1010
+  `고승` template) from a joint brute-force over EVERY gid-8 develop golden's acting log; this triple
+  byte-reproduces **상업투자, 농지개간, 치안강화, 물자조달** (intel-score, strength-score, AND the
+  leadership+strength+intel-sum path — all four exact).
+* **치안강화** (strength-develop, `CommerceInvestment(statKey=strength)`) is byte-exact at S73/I24, so
+  the strength score path is correct — yet **수비강화/성벽보수** (the IDENTICAL class, differing only in
+  cityKey/actionKey/debuffFront/seed) require `strength_statval ≈ 71` (raw S ≈ 65), impossible for the
+  same general. **물자조달** (L+S+I sum) is byte-exact, yet **정착장려/주민선정** (leadership path) want
+  `L = 46`, while **사기진작** (the pure-leadership `round(L*100/crew*atmosDelta)` path) pins `L = 42`.
+* An exhaustive `(L,S,I)` brute-force finds **0 solutions** for 기술연구 and 정착장려 even *alone*
+  (their own success+fail cases cannot self-reconcile), and finds solutions for 수비/성벽/주민 only at
+  stats that contradict the four reproducible commands.
+
+| Command | Group | GR2 status |
+| --- | --- | --- |
+| `che_수비강화` | develop | RED-quarantined: needs `strength_statval≈71`; 치안강화 (same code) is byte-exact at the install S73 → capture-data inconsistency, not a resolver bug. |
+| `che_성벽보수` | develop | RED-quarantined: same as 수비강화 (statval≈71 vs install 79). |
+| `che_기술연구` | develop | RED-quarantined: `tech_success`+`tech_fail` are not jointly reproducible by ANY `(L,S,I)` (0 hits). |
+| `che_정착장려` | develop | RED-quarantined: `settle_success`+`settle_fail` not jointly reproducible (0 hits); leadership pinned 42 by 사기진작. |
+| `che_주민선정` | develop | RED-quarantined: reproducible only at `L=46`, contradicting the install `L=42`. |
+
+The quarantine test (`quarantined develop goldens are non-reproducible at the install stats`) asserts
+these REMAIN non-reproducible at the install stats — it never edits a golden or fakes a green byte-match;
+a clean re-capture (or a resolver regression) trips it RED, at which point the command moves into the
+`reproducible` list. **Fix = re-capture these five on a single pristine install** (the Re-capture steps
+below) so their before/after share one consistent gid-8 stat with the four reproducible develop commands.
+
 ## Re-capture
 
 One-shot, manual host, never CI. From the repo root, inside the php capture container
