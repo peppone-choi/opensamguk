@@ -29,4 +29,24 @@ class WorldStateEntity(
 
     @Column(name = "updated_at", nullable = false)
     var updatedAt: OffsetDateTime = OffsetDateTime.now(),
+
+    // FC1 (V4 calendar columns) — the source ServerClock / MonthlyPipeline / MonthScopedRng read.
+    // `turnDate` (func.php:1250-1275) reads startyear/starttime/turnterm; `executeAllCommand` freezes
+    // on isunited==2|3; the month-scoped RNG seeds with hidden_seed. Nullable (scenario import
+    // populates them; the P1/P2 IT seeds omit them); `tick_seconds` is the canonical cadence in
+    // SECONDS and `turnTerm` is its MINUTES view (turn_term = tick_seconds / 60).
+    @Column(name = "start_year")
+    var startYear: Int? = null,
+
+    @Column(name = "start_time")
+    var startTime: OffsetDateTime? = null,
+
+    @Column(name = "turn_term")
+    var turnTerm: Int? = null,
+
+    @Column(name = "isunited", nullable = false)
+    var isunited: Int = 0,
+
+    @Column(name = "hidden_seed")
+    var hiddenSeed: String? = null,
 )

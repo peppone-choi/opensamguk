@@ -45,7 +45,7 @@ class CommandPrecheckServiceTest {
         CityReadEntity(
             id = 5, nationId = nationId, level = 5,
             commerce = 3000, commerceMax = 8000, agriculture = agri, agricultureMax = agriMax,
-            supplyState = supplyState, frontState = 0, trust = 82,
+            supplyState = supplyState, frontState = 0, trust = 82.0,
             meta = linkedMapOf(),
         )
 

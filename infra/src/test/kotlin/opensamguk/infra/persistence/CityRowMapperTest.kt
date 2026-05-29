@@ -56,8 +56,19 @@ class CityRowMapperTest {
         assertEquals(1200, cols["agri_max"])
         assertEquals(1, cols["supply_state"])
         assertEquals(0, cols["front_state"])
-        assertEquals(90, cols["trust"]) // Double -> int (integer-valued trust is lossless)
+        assertEquals(90.0, cols["trust"]) // FC1: Double -> double precision column (no truncation)
         assertEquals("{}", cols["meta"])
+    }
+
+    @Test
+    fun `FC1 -- fractional trust round trips losslessly (double precision column, no truncation)`() {
+        // After the V4 migration city.trust is double precision; the mapper must preserve the fraction
+        // so the trust<30 neutralize threshold + accumulation do not silently diverge after month 1.
+        val frac = row("{}").toMutableMap()
+        frac["trust"] = 42.5
+        val c = CityRowMapper.fromRow(frac)
+        assertEquals(42.5, c.trust)
+        assertEquals(42.5, CityRowMapper.toColumns(c)["trust"])
     }
 
     @Test
