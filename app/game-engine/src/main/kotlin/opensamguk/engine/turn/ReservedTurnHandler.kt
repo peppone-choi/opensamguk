@@ -1,6 +1,7 @@
 package opensamguk.engine.turn
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
@@ -51,6 +52,19 @@ class ReservedTurnHandler(
     private val hiddenSeed: String,
     /** The starting year of the scenario — `develCost = (year - startYear + 10) * 2`. */
     private val startYear: Int,
+    /**
+     * Succession hook for a dying ruler (`General.php:554-558` → `func.php:1807 nextRuler`). The full
+     * candidate-selection + 후계 promotion + possible `deleteNation` cascade is RNG-driven (the
+     * `NextNPCRuler` seed) and is wired by the G1 gate; here it is a pluggable hook so kill() can apply
+     * the ruler's own `officer_level=1` demotion and delegate succession. Default = no-op (no heir).
+     */
+    private val nextRuler: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
+    /**
+     * Dying-message provider (`General.php:573-580` → `TextDecoration\DyingMessage`). The RNG-selected
+     * variant is wired by the G1 gate; the default is the byte-exact PHP `$defaultMessage`
+     * (`<Y>;name;</>;이; <R>사망</>했습니다.`) with the JosaUtil `이` substitution.
+     */
+    private val dyingMessage: (TurnGeneral) -> String = ReservedTurnHandler::defaultDyingMessage,
 ) {
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
@@ -260,12 +274,77 @@ class ReservedTurnHandler(
     }
 
     /**
-     * killturn<=0 branch of [updateTurnTime] (`TurnExecutionHelper.php:185-206`). Implemented by LC2:
-     *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch),
-     *  - else → kill() (the F3 tombstone + 4-table delete).
+     * killturn<=0 branch of [updateTurnTime] (`TurnExecutionHelper.php:185-206`).
+     *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
+     *    log FIRST, then `killturn=(deadyear-year)*12, npc=npc_org, owner=0, defence_train=80,
+     *    owner_name=null`, then DELETE general_access_log ONLY (no-op in the V1 slice — no table).
+     *  - else → [kill] (the F3 tombstone + 4-table delete).
      */
-    internal fun killOrReleasePossession(general: TurnGeneral, env: LifecycleEnv): LifecycleOutcome =
-        TODO("LC2: kill() tombstone + possession release")
+    internal fun killOrReleasePossession(general: TurnGeneral, env: LifecycleEnv): LifecycleOutcome {
+        val deadyear = metaInt(general, "deadyear", 0)
+        if (general.npcState == 1 && deadyear > env.year) {
+            // ── 유체이탈 possession release (NON-delete) ──
+            // (1) the global log is pushed FIRST (before the field mutations, :192).
+            val ownerName = metaString(general, "owner_name")
+            val josaYi = JosaUtil.pick(ownerName, "이")
+            world.pushLog(globalLog(general, "$ownerName</>$josaYi <Y>${general.name}</>의 육체에서 <S>유체이탈</>합니다!"))
+            // (2) the field set (verbatim :194-198).
+            val npcOrg = metaInt(general, "npc_org", general.npcState)
+            val released = general.copy(
+                npcState = npcOrg, // npc = npc_org
+                meta = withMeta(
+                    general.meta,
+                    "killturn" to (deadyear - env.year) * 12,
+                    "owner" to 0,
+                    "defence_train" to 80,
+                    "owner_name" to null,
+                ),
+            )
+            world.applyGeneralDirtyFree(released)
+            // (3) DELETE general_access_log — NOT ported to the V1 baseline schema (no table): no-op.
+            return LifecycleOutcome.POSSESSION_RELEASED
+        }
+        kill(general, env)
+        return LifecycleOutcome.KILLED
+    }
+
+    /**
+     * kill() — the tombstone + 4-table delete (`General.php:515-600`). Ordering is load-bearing for
+     * the log byte-match: nextRuler/demote → troop cleanup → dying message → storeOldGeneral → the F3
+     * delete-set finalize → nation gennum-1. (Inherit-point refund / select_pool null / the user
+     * logger are out of the engine slice; the F3 [ChangeRecorder.markGeneralDeleted] performs
+     * storeOldGeneral + the 4-table delete + clears updatedVar so the killed row never re-enters the
+     * update-set, `General.php:595`.)
+     */
+    private fun kill(general: TurnGeneral, env: LifecycleEnv) {
+        val generalId = general.id
+
+        // 군주였으면 유지 이음 — officer_level==12 → nextRuler() then setVar('officer_level', 1) (:554-558).
+        if (general.officerLevel == 12) {
+            nextRuler(generalId, env)
+            world.getGeneralById(generalId)?.let { world.applyGeneralDirtyFree(it.copy(officerLevel = 1)) }
+        }
+
+        // 부대 처리 — troop leader (troop == own id) → free all members + delete the troop (:560-570).
+        if (general.troopId == generalId) {
+            for (member in world.listGenerals().filter { it.troopId == generalId }) {
+                world.applyGeneralDirtyFree(member.copy(troopId = 0))
+            }
+            world.removeTroop(generalId)
+        }
+
+        // dying message global log (:573-580) — default is the byte-exact $defaultMessage.
+        world.pushLog(globalLog(general, dyingMessage(general)))
+
+        // storeOldGeneral + the F3 4-table delete (tombstone; clears updatedVar — no double-apply).
+        recorder.markGeneralDeleted(world, generalId)
+
+        // nation gennum-1 (:597-599) — gennum rides the nation meta bag in the slice.
+        world.getNationById(general.nationId)?.let { n ->
+            val gennum = (n.meta["gennum"] as? Number)?.toInt() ?: 0
+            world.updateNation(n.copy(meta = withMeta(n.meta, "gennum" to gennum - 1)))
+        }
+    }
 
     /** age>=retirementYear branch of [updateTurnTime] (`General.php:602-639`). Implemented by LC3. */
     internal fun rebirth(general: TurnGeneral, env: LifecycleEnv): Unit =
@@ -347,6 +426,24 @@ class ReservedTurnHandler(
             generalId = general.id,
             nationId = general.nationId,
         )
+
+        /** Wrap a line as a `global` action [LogEntryDraft] (pushGlobalActionLog). */
+        private fun globalLog(general: TurnGeneral, text: String): LogEntryDraft = LogEntryDraft(
+            scope = "global",
+            category = "action",
+            text = text,
+            generalId = general.id,
+            nationId = general.nationId,
+        )
+
+        /**
+         * The byte-exact PHP `DyingMessage::$defaultMessage` (`<Y>;name;</>;이; <R>사망</>했습니다.`) with
+         * the JosaUtil `이` substitution. The RNG-selected variant pool is wired by the G1 gate.
+         */
+        internal fun defaultDyingMessage(general: TurnGeneral): String {
+            val josaYi = JosaUtil.pick(general.name, "이")
+            return "<Y>${general.name}</>$josaYi <R>사망</>했습니다."
+        }
 
         /** Wrap a deny-reason as a `general` action [LogEntryDraft] (the 휴식-fallback log). */
         private fun denyLog(
