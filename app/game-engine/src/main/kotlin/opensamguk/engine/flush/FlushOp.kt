@@ -1,10 +1,14 @@
 package opensamguk.engine.flush
 
 /**
- * A recorded flush operation. NO real SQL in P0-B — the recorder is the seam.
- * Design §0.1 #3 (the daemon write path never touches a JPA EntityManager) is
- * structurally trivial because the flush stub's only sink is a [FlushOpRecorder].
- * P1 swaps the recorder for a JDBC-batch executor, never JPA.
+ * A recorded flush op-tag — the **test seam** for the write ORDER, NOT the real SQL sink.
+ *
+ * In P1 the real daemon write path is [DatabaseHooks.flushChanges] (the
+ * [opensamguk.infra.persistence.JdbcFlushExecutor] overload): it maps the world's [DirtyState]
+ * → an [opensamguk.infra.persistence.FlushPayload] ([opensamguk.engine.turn.DirtyState]) and runs the EXACT ordered contract as plain
+ * JDBC inside ONE transaction — never a JPA `EntityManager` (design §0.1 #3, enforced by
+ * [DaemonNoEntityManagerTest] reading [DaemonWriteGuard]). The [FlushOpRecorder] is kept as the
+ * pure, DB-free oracle the order tests ([DatabaseHooksOrderTest]) assert against.
  */
 data class FlushOp(val table: String, val verb: Verb, val count: Int) {
     enum class Verb { UPDATE, UPSERT, CREATE_MANY, DELETE_MANY }
