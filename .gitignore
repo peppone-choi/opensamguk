@@ -1,0 +1,22 @@
+# Gradle / JVM
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+# IDE
+.idea/
+*.iml
+.vscode/
+# Node / Next.js
+node_modules/
+web/*/.next/
+web/*/out/
+.pnpm-store/
+# Env / OS
+.env
+.env.local
+.DS_Store
+# Legacy reference repos (kept locally, never committed)
+legacy/
+# Decompiled / generated artifacts
+**/generated/
