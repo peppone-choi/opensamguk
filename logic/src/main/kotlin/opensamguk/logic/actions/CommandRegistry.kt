@@ -23,6 +23,9 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
     fun resolve(actionCode: String): GeneralActionDefinition = when (actionCode) {
         "che_상업투자" -> cheSangeobTuja(pipeline, maxLevel)
         "che_농지개간" -> cheNongjigaegan(pipeline, maxLevel)
+        "che_성벽보수" -> cheSeongbyeokBosu(pipeline, maxLevel)
+        "che_수비강화" -> cheSubiGanghwa(pipeline, maxLevel)
+        "che_치안강화" -> cheChianGanghwa(pipeline, maxLevel)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
