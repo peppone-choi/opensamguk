@@ -10,12 +10,15 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":common"))
+    implementation(project(":logic"))
     implementation(kotlin("reflect"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly(libs.flyway.postgres)
-    runtimeOnly("org.postgresql:postgresql")
+    // PGobject is referenced in main code (JdbcFlushExecutor binds jsonb columns), so the
+    // postgres driver must be on the compile classpath, not runtimeOnly.
+    implementation("org.postgresql:postgresql")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
