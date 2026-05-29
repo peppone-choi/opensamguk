@@ -13,6 +13,22 @@
 
 ---
 
+## 0.1 딥리서치 반영 (2026-05-29) — 설계 조정 (AUTHORITATIVE OVERRIDES)
+
+소스(TS+PHP) 대조 적대적 딥리서치 결과 검증된 조정. 본문 해당 절을 **OVERRIDE**한다. 근거 리포트: `docs/superpowers/research/2026-05-29-p0b-p1-deep-research.md`.
+
+1. **CQRS 불변식 재정의 (§4)**: `precheck(api,DB)`와 `full(daemon,memory)`는 **동일 제약 라이브러리**를 쓰되 **freshness가 다른 스냅샷**을 평가한다 (precheck=제출시 마지막 flush DB, full=실행시 다중 뮤테이션 반영된 memory). 동일 로직·다른 데이터 → allow-후-deny는 **불가피하고 설계된 CQRS 동작**. 실행시 deny→휴식 fallback은 **에러가 아니라 의도된 결과**. 검증: 제출↔실행 사이 월드를 변형시켜 fallback이 깔끔히 발동하는 fixture 추가.
+2. **정복 conflict map 포팅 정책 OVERRIDE (§10·Risk#8)**: 전역 "TS 구조 직역" 규칙을 이 경로만 **뒤집는다**. conflict 순서 = **PHP `arsort`(UNSTABLE) + JSON 키 삽입순서**가 권위 (TS `war/aftermath.ts`는 stable sort라 동점에서 PHP와 이미 발산). Kotlin은 PHP arsort 시맨틱을 재현하는 comparator+ordered-map 구현, 골든은 **PHP에서** 동점 fixture 생성.
+3. **신규 Locked 결정 — 데몬 쓰기 EntityManager 미경유**: game-engine 데몬은 쓰기에 **JPA EntityManager를 절대 사용 안 함**. JPA = game-api read/precheck 전용. 데몬 쓰기는 오직 change-recorder → databaseHooks JDBC batch. (안 그러면 JPA dirty-checking과 change-recorder = 경쟁하는 dirty-truth 2개.) P0 아키텍처 테스트로 강제.
+4. **P5 게이트 재범위 (§11 P5)**: GeneralAI가 `che_불가침제의`/`che_선전포고` 등 **P6 외교 resolver**를 emit → P5 풀게임 replay turn-for-turn 패리티는 P5에서 **종결 불가**. 조정: P5 게이트 = P0–P5 명령 AI 선택만, **diplomacy 명령 결과 패리티는 P6로 명시 연기** (또는 외교 accept-path resolver를 P5로 당김).
+5. **P1 알고리즘 (§12)**: `che_상업투자`·`che_농지개간` **둘 다 full PHP 상업투자 알고리즘**(trust/getIntel injury·교차스탯·clamp/critical/front-debuff) 포팅. TS 레퍼런스는 농지개간을 단순 +100 cityDevelopment로, 상업투자에서 getIntel을 누락 → **TS 미러 금지**. §12에 공유 base 명시.
+6. **패리티 하네스 경계 (§10·§6)**: DB 덤프는 **턴/월 경계에서만** (mid-checkpoint 부분 flush 절대 관측 금지 — wall-clock budget 만료가 PHP에 없는 중간 DB 상태 생성). replay 부분진행은 **processed-count로 게이트**(wall-clock 아님), 또는 패리티-replay run은 budgetMs를 매우 크게. §6에 catch-up/데몬 밀도 한계 분석 추가 (catchUpCap=1, 단일스레드, t3.large당 다중 프로파일 headroom).
+7. **23 미싱 명령 재우선순위 (§11 P4/P8)**: `건국`/`방랑`/`수도이전`/`무작위건국`은 전부 **arsort/수도 tie-break** 사용 → P8 백로그 연기 말고 **P4 conflict 작업과 병행** 포팅 (최고위험 패리티 표면을 마지막이 아닌 P4에서 검증).
+
+P0-B/P1 plan 작성 전 PHP 확인 필요 항목은 §14에 통합.
+
+---
+
 ## 1. 목표 & 비목표
 
 ### 목표
