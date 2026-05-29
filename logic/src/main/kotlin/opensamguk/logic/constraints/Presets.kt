@@ -677,3 +677,267 @@ private inline fun resolveReqVal(reqVal: Any, max: () -> Number): Number = when 
     }
     else -> error("invalid reqVal type: $reqVal")
 }
+
+// ============================================================================
+// CD2 — dest-* / diplomacy / name-dup presets. Faithful port of PHP Constraint/[Name].php
+// (reason strings + test order). The dest rows resolve through the CD1 RequirementKey.Dest*
+// keys (the two adapters preload them — DB/pathfinding-backed constraints NEVER touch the DB or
+// searchDistance inside test(): NearCity takes a preloaded reachable-set predicate, diplomacy reads
+// the preloaded directional row, CheckNationNameDuplicate scans the preloaded NationList).
+// ============================================================================
+
+private fun destGeneral(ctx: ConstraintContext, view: StateView) =
+    ctx.destGeneralId?.let { view.get(RequirementKey.DestGeneral(it)) as? General }
+private fun destCity(ctx: ConstraintContext, view: StateView) =
+    ctx.destCityId?.let { view.get(RequirementKey.DestCity(it)) as? City }
+private fun destNation(ctx: ConstraintContext, view: StateView) =
+    ctx.destNationId?.let { view.get(RequirementKey.DestNation(it)) as? Nation }
+
+// --- Dest general ---
+
+/** FriendlyDestGeneral.php — pass when general.nation == destGeneral.nation; else `아국 장수가 아닙니다.`. */
+fun friendlyDestGeneral() = object : Constraint {
+    override val name = "FriendlyDestGeneral"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestGeneral(ctx.destGeneralId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val d = destGeneral(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (g.nationId == d.nationId) ConstraintResult.Allow else ConstraintResult.Deny("아국 장수가 아닙니다.")
+    }
+}
+
+/** ExistsDestGeneral.php — pass when destGeneral['no'] is truthy (id != 0); else `없는 장수입니다.`. */
+fun existsDestGeneral() = object : Constraint {
+    override val name = "ExistsDestGeneral"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestGeneral(ctx.destGeneralId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val d = destGeneral(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (d.id != 0) ConstraintResult.Allow else ConstraintResult.Deny("없는 장수입니다.")
+    }
+}
+
+/** DifferentNationDestGeneral.php — pass when destGeneral.nation != general.nation; else `같은 국가의 장수입니다.`. */
+fun differentNationDestGeneral() = object : Constraint {
+    override val name = "DifferentNationDestGeneral"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestGeneral(ctx.destGeneralId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val d = destGeneral(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (d.nationId != g.nationId) ConstraintResult.Allow else ConstraintResult.Deny("같은 국가의 장수입니다.")
+    }
+}
+
+// --- Dest nation ---
+
+/** DifferentDestNation.php — pass when destNation.nation != general.nation; else `이미 같은 국가입니다.`. */
+fun differentDestNation() = object : Constraint {
+    override val name = "DifferentDestNation"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestNation(ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val d = destNation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (d.id != g.nationId) ConstraintResult.Allow else ConstraintResult.Deny("이미 같은 국가입니다.")
+    }
+}
+
+// --- Dest city ---
+
+/** NotNeutralDestCity.php — pass when destCity.nation != 0; else `공백지입니다.`. */
+fun notNeutralDestCity() = object : Constraint {
+    override val name = "NotNeutralDestCity"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (c.nationId != 0) ConstraintResult.Allow else ConstraintResult.Deny("공백지입니다.")
+    }
+}
+
+/** NotSameDestCity.php — pass when destCity.city != general.city; else `같은 도시입니다.`. */
+fun notSameDestCity() = object : Constraint {
+    override val name = "NotSameDestCity"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (c.id != g.cityId) ConstraintResult.Allow else ConstraintResult.Deny("같은 도시입니다.")
+    }
+}
+
+/** NotOccupiedDestCity.php — pass when destCity.nation != general.nation; else `아국입니다.`. */
+fun notOccupiedDestCity() = object : Constraint {
+    override val name = "NotOccupiedDestCity"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (c.nationId != g.nationId) ConstraintResult.Allow else ConstraintResult.Deny("아국입니다.")
+    }
+}
+
+/** OccupiedDestCity.php — pass when destCity.nation == general.nation; else `대상 도시가 아국이 아닙니다.`. */
+fun occupiedDestCity() = object : Constraint {
+    override val name = "OccupiedDestCity"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (c.nationId == g.nationId) ConstraintResult.Allow else ConstraintResult.Deny("대상 도시가 아국이 아닙니다.")
+    }
+}
+
+/** SuppliedDestCity.php — pass when destCity.supply is truthy; else `고립된 도시입니다.`. */
+fun suppliedDestCity() = object : Constraint {
+    override val name = "SuppliedDestCity"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (c.supplyState != 0) ConstraintResult.Allow else ConstraintResult.Deny("고립된 도시입니다.")
+    }
+}
+
+/**
+ * NearCity.php — pass when destCity.city is in `searchDistance(general.city, arg, false)`. The
+ * pathfinding is the map module's (Q9); the reachable-city-id set within `arg` steps is preloaded as
+ * a predicate (NO searchDistance inside test()). Reason fork: arg==1 → `인접도시가 아닙니다.`; else
+ * `거리가 너무 멉니다.`.
+ */
+fun nearCity(arg: Int, reachableWithin: (ConstraintContext, StateView) -> Set<Int>) = object : Constraint {
+    override val name = "NearCity"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        if (c.id in reachableWithin(ctx, view)) return ConstraintResult.Allow
+        return ConstraintResult.Deny(if (arg == 1) "인접도시가 아닙니다." else "거리가 너무 멉니다.")
+    }
+}
+
+// --- Nation name duplicate ---
+
+/**
+ * CheckNationNameDuplicate.php — DENY when another nation (id != ctx.nationId) already carries the
+ * requested name (`args['name']`); else pass. PHP queries `nation WHERE name=? AND nation!=me`; the
+ * full nation collection is preloaded (RequirementKey.NationList). Reason `존재하는 국가명입니다.`.
+ */
+fun checkNationNameDuplicate(nameArg: String = "name") = object : Constraint {
+    override val name = "CheckNationNameDuplicate"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.Nation(ctx.nationId ?: 0), RequirementKey.NationList)
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val wantName = ctx.args[nameArg] as? String ?: return ConstraintResult.Unknown(requires(ctx))
+        @Suppress("UNCHECKED_CAST")
+        val nations = (view.get(RequirementKey.NationList) as? Collection<Nation>)
+            ?: return ConstraintResult.Unknown(requires(ctx))
+        val exists = nations.any { it.name == wantName && it.id != ctx.nationId }
+        return if (!exists) ConstraintResult.Allow else ConstraintResult.Deny("존재하는 국가명입니다.")
+    }
+}
+
+// --- Join dest nation (4-branch order) ---
+
+/**
+ * AllowJoinDestNation.php — 4-branch order (FIRST failing branch wins):
+ *  1. relYear < openingPartYear && destNation.gennum >= initialNationGenLimit → `임관이 제한되고 있습니다.`
+ *  2. destNation.scout == 1 → `임관이 금지되어 있습니다.`
+ *  3. general.npc < 2 (default 2) && destNation.name starts with `ⓤ` → `유저장은 태수국에 임관할 수 없습니다.`
+ *  4. general.npc != 9 && destNation.name starts with `ⓞ` → `이민족 국가에 임관할 수 없습니다.`
+ * `relYear` is supplied via `ctx.args['relYear']` (PHP `arg`); destNation.scout rides nation.meta['scout'].
+ * The actor npcType comes from a preloaded lambda (PHP `general['npc']??2`).
+ */
+fun allowJoinDestNation(npcType: (ConstraintContext, StateView) -> Int) = object : Constraint {
+    override val name = "AllowJoinDestNation"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestNation(ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val d = destNation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val relYear = (ctx.args["relYear"] as? Number)?.toInt() ?: return ConstraintResult.Unknown(requires(ctx))
+        val scout = metaInt(d.meta, "scout")
+        val npc = npcType(ctx, view)
+
+        if (relYear < GameConst.openingPartYear && d.gennum >= GameConst.initialNationGenLimit) {
+            return ConstraintResult.Deny("임관이 제한되고 있습니다.")
+        }
+        if (scout == 1) {
+            return ConstraintResult.Deny("임관이 금지되어 있습니다.")
+        }
+        if (npc < 2 && d.name.startsWith("ⓤ")) {
+            return ConstraintResult.Deny("유저장은 태수국에 임관할 수 없습니다.")
+        }
+        if (npc != 9 && d.name.startsWith("ⓞ")) {
+            return ConstraintResult.Deny("이민족 국가에 임관할 수 없습니다.")
+        }
+        return ConstraintResult.Allow
+    }
+}
+
+// --- Diplomacy ---
+
+/**
+ * AllowDiplomacyStatus.php — pass when a diplomacy row `me == nationID && state IN allowStatus`
+ * exists; else `errMsg`. PHP queries `diplomacy WHERE me=? AND state IN(?) LIMIT 1` — a per-`me`
+ * existence scan that the `Diplomacy(me,you)` per-pair key cannot answer alone (the `you` set is
+ * unknown). The matching-row existence is therefore preloaded as a predicate (the same idiom CP1
+ * `battleGroundCity` uses for its diplomacy at-war check); the daemon/precheck adapters wire it from
+ * the directional diplomacy rows they already load.
+ */
+fun allowDiplomacyStatus(
+    errMsg: String,
+    hasAllowedState: (ConstraintContext, StateView) -> Boolean,
+) = object : Constraint {
+    override val name = "AllowDiplomacyStatus"
+    override fun requires(ctx: ConstraintContext) = emptyList<RequirementKey>()
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult =
+        if (hasAllowedState(ctx, view)) ConstraintResult.Allow else ConstraintResult.Deny(errMsg)
+}
+
+// --- Dest comparator forms (key-backed) — resolve target from the preloaded Dest* row ---
+
+/**
+ * ReqDestCityValue.php — same comparator core as ReqCityValue; target is the DEST city's field
+ * (resolved via RequirementKey.DestCity). Percent reqVal compares destCity[key] vs destCity[key_max]
+ * * fraction. On fail, errMsg overrides; else `{keyNick}{josa-이} {derived}`.
+ */
+fun reqDestCityValue(key: String, keyNick: String, comp: String, reqVal: Any, errMsg: String? = null) = object : Constraint {
+    override val name = "ReqDestCityValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val c = destCity(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val target = cityIntField(c, key)
+        val src: Number = resolveReqVal(reqVal) { cityIntField(c, "${key}_max") }
+        val result = compareValues(target, src, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReasonDest(keyNick, errMsg, result as String))
+    }
+}
+
+/**
+ * ReqDestNationValue.php — same comparator core; target is the DEST nation's field (RequirementKey.
+ * DestNation). On fail, errMsg overrides; else `{keyNick}{josa-이} {derived}`.
+ */
+fun reqDestNationValue(key: String, keyNick: String, comp: String, reqVal: Any, errMsg: String? = null) = object : Constraint {
+    override val name = "ReqDestNationValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestNation(ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val n = destNation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val target = nationNumField(n, key)
+        val src: Number = resolveReqVal(reqVal) { nationNumField(n, "${key}_max") }
+        val result = compareValues(target, src, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReasonDest(keyNick, errMsg, result as String))
+    }
+}
+
+/** Assemble the final ReqDest*Value reason (errMsg override + josa-이) — mirrors [assembleReason]. */
+private fun assembleReasonDest(keyNick: String, errMsg: String?, fragment: String): String {
+    if (!errMsg.isNullOrEmpty()) return errMsg
+    val josaYi = JosaUtil.pick(keyNick, "이")
+    return "$keyNick$josaYi $fragment"
+}
