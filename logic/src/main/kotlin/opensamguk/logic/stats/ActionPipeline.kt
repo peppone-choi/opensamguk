@@ -1,6 +1,15 @@
 package opensamguk.logic.stats
 
 import opensamguk.logic.domain.General
+import opensamguk.logic.war.trigger.WarUnit
+import opensamguk.logic.war.trigger.WarUnitTriggerCaller
+import opensamguk.logic.war.trigger.triggers.CheFilsalBaldong
+import opensamguk.logic.war.trigger.triggers.CheFilsalSido
+import opensamguk.logic.war.trigger.triggers.CheGyeryakBaldong
+import opensamguk.logic.war.trigger.triggers.CheGyeryakSido
+import opensamguk.logic.war.trigger.triggers.CheGyeryakSilpae
+import opensamguk.logic.war.trigger.triggers.CheHoipiBaldong
+import opensamguk.logic.war.trigger.triggers.CheHoipiSido
 
 /**
  * One of the 9 action-stack sources (nation-type / officer / domestic-special / war-special /
@@ -44,6 +53,36 @@ interface GeneralActionModule {
         value: Pair<Double, Double>,
         aux: Map<String, Any?> = emptyMap(),
     ): Pair<Double, Double> = value
+
+    // --- P4 F5 war hooks (PHP iAction.php:17-19, DefaultAction.php identity) -------------------------------
+
+    /**
+     * onCalcStat-free per-source war-power multiplier `[attMul, defMul]` (MULTIPLICATIVE). PHP
+     * `iAction::getWarPowerMultiplier(WarUnit): array`; `DefaultAction.php:43-45` returns `[1, 1]`.
+     * Folded MULTIPLICATIVELY over the 12-source stack in
+     * [GeneralActionPipeline.getWarPowerMultiplier] — consumed by `WarUnitGeneral.computeWarPower` (F2).
+     * The `unit` is the [WarUnit] this multiplier applies to (PHP `//xxx:$unit` — unused by the base impl).
+     * Default identity `1.0 to 1.0`.
+     */
+    fun getWarPowerMultiplier(unit: WarUnit): Pair<Double, Double> = 1.0 to 1.0
+
+    /**
+     * Per-source battle-INIT trigger caller (the first-contact init band: 선제사격/궁병선제/위압시도/저지시도, …).
+     * PHP `iAction::getBattleInitSkillTriggerList(WarUnit): ?WarUnitTriggerCaller`;
+     * `DefaultAction.php:46-48` returns `null`. The pipeline SEEDS an EMPTY caller then `merge()`s each
+     * non-null per-source caller — see [GeneralActionPipeline.getBattleInitSkillTriggerList]. Default `null`.
+     */
+    fun getBattleInitSkillTriggerList(unit: WarUnit): WarUnitTriggerCaller? = null
+
+    /**
+     * Per-source battle-PHASE trigger caller (the in-loop band: 저격/필살강화/계략/반계/약탈/격노/전투치료/…).
+     * PHP `iAction::getBattlePhaseSkillTriggerList(WarUnit): ?WarUnitTriggerCaller`;
+     * `DefaultAction.php:49-51` returns `null`. The pipeline SEEDS the base-7 concrete classes (필살/회피/계략
+     * 시도·발동·실패, FT0) into the [WarUnitTriggerCaller] CONSTRUCTOR **then** `merge()`s each non-null
+     * per-source caller into that SAME caller — see [GeneralActionPipeline.getBattlePhaseSkillTriggerList]
+     * (`General.php:918-938`, seed+merge are ONE indivisible op). Default `null`.
+     */
+    fun getBattlePhaseSkillTriggerList(unit: WarUnit): WarUnitTriggerCaller? = null
 }
 
 class GeneralActionPipeline(private val modules: List<GeneralActionModule> = emptyList()) {
@@ -67,6 +106,61 @@ class GeneralActionPipeline(private val modules: List<GeneralActionModule> = emp
      */
     fun onCalcStatRange(general: General, statName: String, value: Pair<Double, Double>, aux: Map<String, Any?> = emptyMap()): Pair<Double, Double> =
         modules.fold(value) { acc, m -> m.onCalcStatRange(general, statName, acc, aux) }
+
+    // --- P4 F5 war hooks (PHP General.php:889-938) --------------------------------------------------------
+
+    /**
+     * MULTIPLICATIVE fold of [GeneralActionModule.getWarPowerMultiplier] over the 12-source [MODULE_ORDER]
+     * (the `getActionList()` stack). PHP `General::getWarPowerMultiplier` (`:889-905`): `[$att,$def]=[1,1]`
+     * then `$att *= $attV; $def *= $defV` per non-null source. NO RNG inside the fold. Consumed by
+     * `WarUnitGeneral.computeWarPower` (F2 — `$warPower *= $specialMy; $opposeWarPowerMultiply *= $specialOppose`).
+     */
+    fun getWarPowerMultiplier(unit: WarUnit): Pair<Double, Double> {
+        var att = 1.0
+        var def = 1.0
+        for (m in modules) {
+            val (attV, defV) = m.getWarPowerMultiplier(unit)
+            att *= attV
+            def *= defV
+        }
+        return att to def
+    }
+
+    /**
+     * PHP `General::getBattleInitSkillTriggerList` (`:906-918`): `new WarUnitTriggerCaller()` (EMPTY seed —
+     * no base triggers) then `$caller->merge($iObj->getBattleInitSkillTriggerList($unit))` per source. A null
+     * per-source caller is a [TriggerCaller.merge] no-op. Returns the (never-null) seeded+merged caller.
+     */
+    fun getBattleInitSkillTriggerList(unit: WarUnit): WarUnitTriggerCaller {
+        val caller = WarUnitTriggerCaller()
+        for (m in modules) {
+            caller.merge(m.getBattleInitSkillTriggerList(unit))
+        }
+        return caller
+    }
+
+    /**
+     * PHP `General::getBattlePhaseSkillTriggerList` (`:919-938`) — the SINGLE owner that SEEDS the base-7
+     * concrete classes (필살시도/필살발동/회피시도/회피발동/계략시도/계략발동/계략실패, in the
+     * `General.php:920-928` ARG order = FT0 classes) into the [WarUnitTriggerCaller] CONSTRUCTOR **then**
+     * `merge()`s each non-null per-source caller into that SAME caller. Seed+merge are ONE indivisible
+     * operation, never split. F3 (the phase machine) CONSUMES this result and never re-seeds.
+     */
+    fun getBattlePhaseSkillTriggerList(unit: WarUnit): WarUnitTriggerCaller {
+        val caller = WarUnitTriggerCaller(
+            CheFilsalSido(unit),
+            CheFilsalBaldong(unit),
+            CheHoipiSido(unit),
+            CheHoipiBaldong(unit),
+            CheGyeryakSido(unit),
+            CheGyeryakBaldong(unit),
+            CheGyeryakSilpae(unit),
+        )
+        for (m in modules) {
+            caller.merge(m.getBattlePhaseSkillTriggerList(unit))
+        }
+        return caller
+    }
 
     /**
      * National income ASYMMETRY (research Unit 12): income is folded over the NATION-TYPE source ONLY.
