@@ -144,12 +144,12 @@ AREA A  (logic: shared constraint library + statview + util)          ── gat
 AREA B  (logic: getStatValue + action pipeline + domestic helpers)    ── depends on A (util/round)
 AREA C  (logic: CommerceInvestment + 농지개간 + registry + log golden)  ── depends on A + B
 AREA D  (infra: row mappers + JdbcFlushExecutor + reserved-turn repo)  ── depends on A (entities) only; PARALLEL with B/C
-AREA E  (game-api: precheck + reserve + controller)                   ── depends on A + D
+AREA E  (game-api: precheck + reserve + controller)                   ── depends on A + C + D (precheck reuses C's CommandRegistry.resolve().buildConstraints() = the SAME shared lib that makes precheck==full; E is NOT parallel with C)
 AREA F  (game-engine: overlay + change-recorder + handler + run + flush wiring)  ── depends on A + C + D
 AREA G  (e2e gate + PHP golden generation + precheck==full + JDBC-guard)  ── depends on ALL; land LAST
 ```
 
-**Parallel worktree fan-out:** After AREA A lands (green), **AREA B and AREA D are independent** and can execute in parallel worktrees. AREA C depends on B. AREA E depends on D. AREA F depends on C+D. AREA G is the final integration gate (serial). Independent set for the executor: **{A} → then {B, D} in parallel → then {C, E} in parallel → then {F} → then {G}**.
+**Parallel worktree fan-out:** After AREA A lands (green), **AREA B and AREA D are independent** and can execute in parallel worktrees. AREA C depends on B. **AREA E depends on A + C + D** (its precheck service imports C's CommandRegistry — discovered during P1 execution: E cannot be scheduled parallel with C). AREA F depends on A + C + D. AREA G is the final integration gate (serial). Corrected wave schedule for the executor: **{A} → {B, D}∥ → {C} → {E, F}∥ → {G}** (E and F are independent of each other — game-api vs game-engine — and both depend on C, so they run in parallel AFTER C lands).
 
 ---
 
