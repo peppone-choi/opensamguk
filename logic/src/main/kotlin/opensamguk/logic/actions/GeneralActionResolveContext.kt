@@ -48,6 +48,10 @@ class GeneralActionResolveContext(
     val env: WorldEnv,
     val month: Int,                        // game month — the ActionLogger MONTH-format prefix companion to env.year
     val date: String,                      // turn-time HH:MM for the log <1>date</>
+    // Names are not modeled on the logic entities (General/City carry no name); the daemon/precheck
+    // adapters supply them per-turn. Optional + defaulted so the P1 call sites stay source-compatible.
+    val generalName: String = "",          // actor general name — the <Y>{name}</> global/dest log token
+    val destGeneralName: String = "",       // dest general name (발령/포상) — the <Y>{name}</> dest log token
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val globalActionLogs: MutableList<String> = mutableListOf(),
