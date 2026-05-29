@@ -484,3 +484,196 @@ internal fun cityIntField(c: City, key: String): Int = when (key) {
     "wall_max" -> c.wallMax
     else -> error("unknown city int field $key")
 }
+
+// ============================================================================
+// CP2 — Req*Value comparator family + parsePercent. compareValues / parsePercent live in Comparators.kt.
+// The final reason is `{keyNick}{josa-이} {fragment}` UNLESS a non-empty errMsg overrides it
+// (reqEnvValue / reqNationAuxValue ALWAYS use errMsg — boolean comparator, no derived text).
+// ============================================================================
+
+/** Numeric field resolver for the general Req*Value path. */
+internal fun generalNumField(g: General, key: String): Number = when (key) {
+    "leadership" -> g.leadership
+    "strength" -> g.strength
+    "intel" -> g.intel
+    "injury" -> g.injury
+    "crew" -> g.crew
+    "train" -> g.train
+    "atmos" -> g.atmos
+    "gold" -> g.gold
+    "rice" -> g.rice
+    "experience" -> g.experience
+    "dedication" -> g.dedication
+    "officer_level" -> g.officerLevel
+    else -> error("unknown general num field $key")
+}
+
+/** Numeric field resolver for the nation Req*Value path. */
+internal fun nationNumField(n: Nation, key: String): Number = when (key) {
+    "gold" -> n.gold
+    "rice" -> n.rice
+    "tech" -> n.tech
+    "gennum" -> n.gennum
+    "level" -> n.level
+    "capset" -> n.capset
+    else -> error("unknown nation num field $key")
+}
+
+/** Assemble the final Req*Value reason from a derived fragment, applying the errMsg override + josa-이. */
+private fun assembleReason(keyNick: String, errMsg: String?, fragment: String): String {
+    if (!errMsg.isNullOrEmpty()) return errMsg
+    val josaYi = JosaUtil.pick(keyNick, "이")
+    return "$keyNick$josaYi $fragment"
+}
+
+/**
+ * ReqGeneralValue.php — generic general-field comparator. `reqVal` is numeric (no percent path for
+ * generals). On fail, errMsg overrides; else `{keyNick}{josa} {derived}`.
+ */
+fun reqGeneralValue(key: String, keyNick: String, comp: String, reqVal: Number, errMsg: String? = null) = object : Constraint {
+    override val name = "ReqGeneralValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.General(ctx.actorId))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val result = compareValues(generalNumField(g, key), reqVal, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReason(keyNick, errMsg, result as String))
+    }
+}
+
+/**
+ * ReqCityValue.php — generic city-field comparator with percent support: a `NN%` reqVal compares
+ * city[key] against city[key_max] * fraction. On fail, errMsg overrides; else `{keyNick}{josa} {derived}`.
+ */
+fun reqCityValue(key: String, keyNick: String, comp: String, reqVal: Any, errMsg: String? = null) = object : Constraint {
+    override val name = "ReqCityValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.City(ctx.cityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val target = cityIntField(c, key)
+        val src: Number = resolveReqVal(reqVal) { cityIntField(c, "${key}_max") }
+        val result = compareValues(target, src, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReason(keyNick, errMsg, result as String))
+    }
+}
+
+/**
+ * ReqNationValue.php — generic nation-field comparator (percent compares nation[key] vs nation[key_max]
+ * * fraction; the nation fields used in P2 are non-percent, but the path is ported for parity).
+ */
+fun reqNationValue(key: String, keyNick: String, comp: String, reqVal: Any, errMsg: String? = null) = object : Constraint {
+    override val name = "ReqNationValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.Nation(ctx.nationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val n = nation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val target = nationNumField(n, key)
+        val src: Number = resolveReqVal(reqVal) { nationNumField(n, "${key}_max") }
+        val result = compareValues(target, src, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReason(keyNick, errMsg, result as String))
+    }
+}
+
+/**
+ * ReqDestCityValue.php — same comparator core, target is the DEST city's field. The DestCity
+ * RequirementKey is C-DEST's (CD1); until that lands, the target (and the percent `key_max`) are
+ * supplied by the caller as lambdas — the comparator/reason logic is identical to ReqCityValue.
+ */
+fun reqDestCityValue(
+    key: String,
+    keyNick: String,
+    comp: String,
+    reqVal: Any,
+    errMsg: String? = null,
+    max: ((ConstraintContext, StateView) -> Number)? = null,
+    target: (ConstraintContext, StateView) -> Number,
+) = object : Constraint {
+    override val name = "ReqDestCityValue"
+    override fun requires(ctx: ConstraintContext) = emptyList<RequirementKey>()
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val t = target(ctx, view)
+        val src: Number = resolveReqVal(reqVal) { (max ?: error("percent reqVal needs a max supplier"))(ctx, view) }
+        val result = compareValues(t, src, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReason(keyNick, errMsg, result as String))
+    }
+}
+
+/** ReqDestNationValue.php — dest-nation comparator (caller supplies target + optional percent max). */
+fun reqDestNationValue(
+    key: String,
+    keyNick: String,
+    comp: String,
+    reqVal: Any,
+    errMsg: String? = null,
+    max: ((ConstraintContext, StateView) -> Number)? = null,
+    target: (ConstraintContext, StateView) -> Number,
+) = object : Constraint {
+    override val name = "ReqDestNationValue"
+    override fun requires(ctx: ConstraintContext) = emptyList<RequirementKey>()
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val t = target(ctx, view)
+        val src: Number = resolveReqVal(reqVal) { (max ?: error("percent reqVal needs a max supplier"))(ctx, view) }
+        val result = compareValues(t, src, comp, keyNick)
+        if (result == COMPARE_PASS) return ConstraintResult.Allow
+        return ConstraintResult.Deny(assembleReason(keyNick, errMsg, result as String))
+    }
+}
+
+/**
+ * ReqNationAuxValue.php — reads nation aux[key] (rides nation.meta['aux']), defaulting to `defaultValue`
+ * when absent. STRIPPED comparator: boolean-only, the reason is ALWAYS the caller errMsg (no derived text).
+ */
+fun reqNationAuxValue(key: String, defaultValue: Any?, comp: String, reqVal: Any?, errMsg: String) = object : Constraint {
+    override val name = "ReqNationAuxValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.Nation(ctx.nationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val n = nation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        @Suppress("UNCHECKED_CAST")
+        val aux = (n.meta["aux"] as? Map<String, Any?>) ?: emptyMap()
+        val target = if (aux.containsKey(key)) aux[key] else defaultValue
+        return if (compareBool(target, reqVal, comp)) ConstraintResult.Allow else ConstraintResult.Deny(errMsg)
+    }
+}
+
+/**
+ * ReqEnvValue.php — reads env[key]; STRIPPED comparator (boolean-only), reason ALWAYS the caller errMsg.
+ */
+fun reqEnvValue(key: String, comp: String, reqVal: Any?, errMsg: String) = object : Constraint {
+    override val name = "ReqEnvValue"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.Env(key))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        if (!view.has(RequirementKey.Env(key))) return ConstraintResult.Unknown(requires(ctx))
+        val target = view.get(RequirementKey.Env(key))
+        return if (compareBool(target, reqVal, comp)) ConstraintResult.Allow else ConstraintResult.Deny(errMsg)
+    }
+}
+
+/**
+ * ReqCityCapacity.php percent path — `reqVal` is a `NN%` string; pass when city[key] >= city[key_max]
+ * * fraction. DENY josa `이`: `{keyNick}{이/가} 부족합니다.` (the numeric path is [reqCityCapacity]).
+ */
+fun reqCityCapacityPercent(cityKey: String, keyNick: String, percent: String) = object : Constraint {
+    override val name = "ReqCityCapacity"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.City(ctx.cityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        val fraction = parsePercent(percent) ?: error("invalid percent string $percent")
+        val cur = cityIntField(c, cityKey)
+        val threshold = cityIntField(c, "${cityKey}_max") * fraction
+        if (cur >= threshold) return ConstraintResult.Allow
+        val josaYi = JosaUtil.pick(keyNick, "이")
+        return ConstraintResult.Deny("$keyNick$josaYi 부족합니다.")
+    }
+}
+
+/** Resolve a Req*Value `reqVal`: numeric → itself; `NN%` string → fraction * max(). */
+private inline fun resolveReqVal(reqVal: Any, max: () -> Number): Number = when (reqVal) {
+    is Number -> reqVal
+    is String -> {
+        val fraction = parsePercent(reqVal) ?: error("invalid reqVal (percentStr|numeric): $reqVal")
+        max().toDouble() * fraction
+    }
+    else -> error("invalid reqVal type: $reqVal")
+}
