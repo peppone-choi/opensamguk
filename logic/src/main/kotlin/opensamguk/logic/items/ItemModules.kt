@@ -112,6 +112,12 @@ class ItemRegistry(
          */
         val extraHookBuilders: MutableMap<String, (ItemRegistry) -> GeneralActionModule> = linkedMapOf()
 
+        init {
+            // IT2 self-registers its extra-hook + override-stat items into the ONE shared table so the
+            // single ItemRegistry the S-MODULES factory consumes resolves the full P2-domestic item surface.
+            registerItemHooks()
+        }
+
         /**
          * Enumerate a general's equipped item modules in the canonical horse→weapon→book→item fold order,
          * skipping falsy (None/blank) slots AND DEDUPING by code — a faithful port of
