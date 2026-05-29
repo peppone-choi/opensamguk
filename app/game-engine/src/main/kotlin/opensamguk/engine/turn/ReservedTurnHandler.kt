@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
@@ -13,6 +14,7 @@ import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.statview.WorldEnvBuilder
+import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
@@ -153,12 +155,145 @@ class ReservedTurnHandler(
         )
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    // B4 — the post-command lifecycle tail (TurnExecutionHelper.php:47-230, General.php:515-639).
+    //
+    // The engine [TurnGeneral] is the P0-B/P1 slice: `npcState` is the `npc` column and `age` is a
+    // column; the remaining lifecycle scalars ride the `meta` bag (`killturn`/`block`/`deadyear`/
+    // `owner`/`owner_name`/`npc_org`/`lived_month`/`specage`/`specage2`/`dex1..5`) — the same
+    // convention `UpdateNationLevel` reads `meta["killturn"]`. These methods mutate the world's
+    // stored row in place; the per-general drain owns the flush seam.
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * killturn decrement / reset after a command runs (`processCommand`, `TurnExecutionHelper.php:153-165`).
+     *
+     * `increaseVarWithLimit('killturn', -1)` (no floor — killturn CAN cross below zero, the kill gate
+     * in [updateTurnTime] then reads it) when ANY of: NPCType>=2 OR killturn>baseline OR autorunMode
+     * OR commandClassName=='휴식'. ELSE `setVar('killturn', baseline)` (a human running a real command
+     * at-or-under baseline resets the clock).
+     */
+    fun applyKillturnDecrement(generalId: Int, commandClassName: String, env: LifecycleEnv) {
+        val general = world.getGeneralById(generalId)
+            ?: error("ReservedTurnHandler.applyKillturnDecrement: general $generalId not in world")
+        val killturn = metaInt(general, "killturn", 0)
+        val next = if (
+            general.npcState >= 2 ||
+            killturn > env.baselineKillturn ||
+            env.autorunMode ||
+            commandClassName == REST_COMMAND
+        ) {
+            killturn - 1 // increaseVarWithLimit('killturn', -1) — NO floor (LazyVarUpdater.php:80).
+        } else {
+            env.baselineKillturn // setVar('killturn', $killTurn).
+        }
+        world.applyGeneralDirtyFree(general.copy(meta = withMeta(general.meta, "killturn" to next)))
+    }
+
+    /**
+     * The block branch (`processBlocked`, `TurnExecutionHelper.php:47-70`). `block<2` is a no-op
+     * returning false. `block==2|3` → `increaseVarWithLimit('killturn', -1, 0)` (FLOORED at 0) + push
+     * the matching block action log, then return true so the caller SKIPS the command this turn.
+     */
+    fun processBlocked(generalId: Int, env: LifecycleEnv): Boolean {
+        val general = world.getGeneralById(generalId)
+            ?: error("ReservedTurnHandler.processBlocked: general $generalId not in world")
+        val blocked = metaInt(general, "block", 0)
+        if (blocked < 2) return false
+        val date = env.turnTimeHm
+        val message = when (blocked) {
+            2 -> "현재 멀티, 또는 비매너로 인한<R>블럭</> 대상자입니다. <1>$date</>"
+            3 -> "현재 악성유저로 분류되어 <R>블럭</> 대상자입니다. <1>$date</>"
+            else -> return false // Hmm? (PHP fall-through guard).
+        }
+        val killturn = metaInt(general, "killturn", 0)
+        val next = maxOf(0, killturn - 1) // increaseVarWithLimit('killturn', -1, 0) — floored at 0.
+        world.applyGeneralDirtyFree(general.copy(meta = withMeta(general.meta, "killturn" to next)))
+        world.pushLog(actionLog(general, message))
+        return true
+    }
+
+    /**
+     * `updateTurnTime` (`TurnExecutionHelper.php:170-230`): +1 lived_month inheritance, the killturn<=0
+     * kill/possession-release gate (LC2), the age>=retirementYear rebirth gate (LC3), then advance
+     * `turntime = addTurn(turntime, turnTerm)`. Returns the [LifecycleOutcome] the caller inspects.
+     *
+     * NOTE: a KILLED general is dropped from the world (the F3 tombstone) — its turntime is NOT
+     * advanced (PHP `return`s out of updateTurnTime right after kill, `:204`).
+     */
+    fun updateTurnTime(generalId: Int, env: LifecycleEnv): LifecycleOutcome {
+        val general = world.getGeneralById(generalId)
+            ?: error("ReservedTurnHandler.updateTurnTime: general $generalId not in world")
+
+        // +1 lived_month inheritance (`:278` increaseInheritancePoint(lived_month, 1) is in the drain;
+        // the inheritance accumulator rides meta in the slice).
+        val livedMonth = metaInt(general, "lived_month", 0) + 1
+        var current = general.copy(meta = withMeta(general.meta, "lived_month" to livedMonth))
+        world.applyGeneralDirtyFree(current)
+
+        // 삭턴장수 삭제처리 — killturn<=0 (LC2: kill() / possession-release).
+        val killturn = metaInt(current, "killturn", 0)
+        if (killturn <= 0) {
+            val outcome = killOrReleasePossession(current, env)
+            if (outcome == LifecycleOutcome.KILLED) return outcome // PHP returns out of updateTurnTime.
+            // possession-release falls through to advance turntime.
+            current = world.getGeneralById(generalId)!!
+        }
+
+        // 은퇴 — age>=retirementYear, human only (LC3: rebirth()).
+        var rebirthed = false
+        if (current.age >= GameConst.retirementYear && current.npcState == 0) {
+            if (env.isunited == 0) rebirth(current, env)
+            rebirthed = true
+            current = world.getGeneralById(generalId)!!
+        }
+
+        // advance turntime by addTurn (the nextTurnTimeBase aux variant is out of the slice scope).
+        world.applyGeneralDirtyFree(
+            current.copy(turnTime = ServerClock.addTurn(current.turnTime, env.turnTerm, 1)),
+        )
+        return when {
+            rebirthed -> LifecycleOutcome.REBIRTHED
+            killturn <= 0 -> LifecycleOutcome.POSSESSION_RELEASED
+            else -> LifecycleOutcome.SURVIVED
+        }
+    }
+
+    /**
+     * killturn<=0 branch of [updateTurnTime] (`TurnExecutionHelper.php:185-206`). Implemented by LC2:
+     *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch),
+     *  - else → kill() (the F3 tombstone + 4-table delete).
+     */
+    internal fun killOrReleasePossession(general: TurnGeneral, env: LifecycleEnv): LifecycleOutcome =
+        TODO("LC2: kill() tombstone + possession release")
+
+    /** age>=retirementYear branch of [updateTurnTime] (`General.php:602-639`). Implemented by LC3. */
+    internal fun rebirth(general: TurnGeneral, env: LifecycleEnv): Unit =
+        TODO("LC3: rebirth() in-place UPDATE")
+
     /** The recorder is the lone dirty source; exposed so the flush (F4)/tests can read its patches. */
     val recorder: ChangeRecorder = ChangeRecorder()
 
     companion object {
         /** Deny reason when the full-mode evaluator can't resolve a requirement (shouldn't occur in FULL). */
         const val UNKNOWN_DENY_REASON = "처리할 수 없습니다."
+
+        /** The 휴식 (rest) command name — the killturn-decrement branch in [applyKillturnDecrement]. */
+        const val REST_COMMAND = "휴식"
+
+        /** Read a lifecycle scalar that rides the `meta` bag (e.g. `killturn`/`block`/`deadyear`). */
+        internal fun metaInt(g: TurnGeneral, key: String, default: Int): Int =
+            (g.meta[key] as? Number)?.toInt() ?: default
+
+        /** Read a lifecycle scalar as a string (e.g. `owner_name`), or null. */
+        internal fun metaString(g: TurnGeneral, key: String): String? = g.meta[key] as? String
+
+        /** Insertion-order-preserving meta merge (the jsonb the flush writes keeps PHP key order). */
+        internal fun withMeta(meta: Map<String, Any?>, vararg pairs: Pair<String, Any?>): Map<String, Any?> {
+            val out = LinkedHashMap(meta)
+            for ((k, v) in pairs) out[k] = v
+            return out
+        }
 
         /**
          * Map the resolver's post-state logic [General] back onto the engine [TurnGeneral] (slice
@@ -227,4 +362,39 @@ class ReservedTurnHandler(
             nationId = general.nationId,
         )
     }
+}
+
+/**
+ * The `game_env` slice the lifecycle tail reads (PHP `$gameStor` fields used in
+ * `TurnExecutionHelper.php:153-230` + `General.php:515-639`): the killturn baseline, the current
+ * year/month, the turn term (for [ServerClock.addTurn]), the `isunited` gate (rebirth skips applyDB
+ * when not 0), the autorun flag, and the `HH:MM` turn-time suffix for block logs.
+ */
+data class LifecycleEnv(
+    /** `$gameStor->killturn` — the reset baseline for a human running a real command. */
+    val baselineKillturn: Int,
+    val year: Int,
+    val month: Int,
+    /** `$gameStor->turnterm` — the minutes-per-turn grid for [ServerClock.addTurn]. */
+    val turnTerm: Int,
+    /** `$gameStor->isunited` — rebirth applyDB/CheckHall only when 0 (`:210`). */
+    val isunited: Int = 0,
+    val autorunMode: Boolean = false,
+    /** `$general->getTurnTime(TURNTIME_HM)` — the `<1>HH:MM</>` suffix on the block log. */
+    val turnTimeHm: String = "",
+)
+
+/** The outcome of [ReservedTurnHandler.updateTurnTime] (the lifecycle branch the drain inspects). */
+enum class LifecycleOutcome {
+    /** killturn>0, age<retirement — turntime advanced, the row persists. */
+    SURVIVED,
+
+    /** NPCType==1 & deadyear>year — possession released (유체이탈), turntime advanced, NOT deleted. */
+    POSSESSION_RELEASED,
+
+    /** killturn<=0 (not possession) — kill() tombstoned the row (the F3 4-table delete). */
+    KILLED,
+
+    /** age>=retirementYear human — rebirth() in-place UPDATE, turntime advanced, NOT deleted. */
+    REBIRTHED,
 }
