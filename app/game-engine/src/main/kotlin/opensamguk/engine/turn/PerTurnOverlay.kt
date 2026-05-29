@@ -2,6 +2,7 @@ package opensamguk.engine.turn
 
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.City as LogicCity
+import opensamguk.logic.domain.Diplomacy as LogicDiplomacy
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
 
@@ -54,6 +55,20 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
     fun getLogicGeneral(id: Int): LogicGeneral? = getGeneral(id)?.let { toLogicGeneral(it) }
     fun getLogicCity(id: Int): LogicCity? = getCity(id)?.let { toLogicCity(it) }
     fun getLogicNation(id: Int): LogicNation? = getNation(id)?.let { toLogicNation(it) }
+
+    // --- CD1: full-collection + directional-diplomacy logic reads (dest-* constraint family) ---
+    // Staged-general writes take precedence over the world snapshot so NationList/GeneralList stay
+    // consistent with the per-id reads above (CheckNationNameDuplicate scans NationList).
+
+    fun listLogicNations(): List<LogicNation> = world.listNations().map { toLogicNation(it) }
+
+    fun listLogicGenerals(): List<LogicGeneral> =
+        world.listGenerals().map { toLogicGeneral(stagedGenerals[it.id] ?: it) }
+
+    /** Directional (me,you) diplomacy row converted engine -> logic, or null when absent. */
+    fun getLogicDiplomacy(me: Int, you: Int): LogicDiplomacy? =
+        world.listDiplomacy().firstOrNull { it.fromNationId == me && it.toNationId == you }
+            ?.let { toLogicDiplomacy(it) }
 
     companion object {
         /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim + P2 mil/equip). */
@@ -109,6 +124,14 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             trade = c.trade,
             region = c.region,
             meta = c.meta,
+        )
+
+        /** Engine [TurnDiplomacy] -> logic [Diplomacy] (directional me/you + state + term). */
+        fun toLogicDiplomacy(d: TurnDiplomacy): LogicDiplomacy = LogicDiplomacy(
+            me = d.fromNationId,
+            you = d.toNationId,
+            state = d.state,
+            term = d.term,
         )
 
         /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/type/name/color). */

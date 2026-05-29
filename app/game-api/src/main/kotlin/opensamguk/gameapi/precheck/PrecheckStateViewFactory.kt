@@ -64,11 +64,15 @@ class PrecheckStateViewFactory(
             diplomacies.findBySrcNationId(actor.nationId).map { it.toLogic() }
 
         val env = envMap()
+        // CD1 — preload the actor nation's directional diplomacy rows into the view so the dest-*
+        // constraint family (AllowDiplomacyStatus / battleground at-war existence) resolves
+        // RequirementKey.Diplomacy WITHOUT touching the DB inside test().
         val view = MemoryStateView(
             generals = linkedMapOf(actor.id to actor),
             cities = cityById,
             nations = nationById,
             env = env,
+            diplomacy = diplomacy,
         )
         return PrecheckState(actor = actor, view = view, env = env, diplomacy = diplomacy)
     }
