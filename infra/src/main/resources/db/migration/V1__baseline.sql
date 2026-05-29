@@ -38,18 +38,18 @@ CREATE TABLE city (
     nation_id       integer NOT NULL DEFAULT 0,
     supply_state    integer NOT NULL DEFAULT 1,
     front_state     integer NOT NULL DEFAULT 0,
-    population      integer NOT NULL,
-    population_max  integer NOT NULL,
-    agriculture     integer NOT NULL,
-    agriculture_max integer NOT NULL,
-    commerce        integer NOT NULL,
-    commerce_max    integer NOT NULL,
-    security        integer NOT NULL,
-    security_max    integer NOT NULL,
+    pop             integer NOT NULL,
+    pop_max         integer NOT NULL,
+    agri            integer NOT NULL,
+    agri_max        integer NOT NULL,
+    comm            integer NOT NULL,
+    comm_max        integer NOT NULL,
+    secu            integer NOT NULL,
+    secu_max        integer NOT NULL,
     trust           integer NOT NULL DEFAULT 0,
     trade           integer NOT NULL DEFAULT 100,
-    defence         integer NOT NULL,
-    defence_max     integer NOT NULL,
+    def             integer NOT NULL,
+    def_max         integer NOT NULL,
     wall            integer NOT NULL,
     wall_max        integer NOT NULL,
     region          integer NOT NULL,
@@ -102,9 +102,9 @@ CREATE TABLE general (
 );
 
 CREATE TABLE troop (
-    troop_leader_id integer PRIMARY KEY,
-    nation_id       integer NOT NULL,
-    name            text NOT NULL
+    troop_leader integer PRIMARY KEY,
+    nation       integer NOT NULL,
+    name         text NOT NULL
 );
 
 CREATE TABLE general_turn (
@@ -150,8 +150,8 @@ CREATE TABLE diplomacy_letter (
     text_brief     text NOT NULL,
     text_detail    text NOT NULL,
     date           timestamptz NOT NULL DEFAULT now(),
-    src_signer_id  integer NOT NULL,
-    dest_signer_id integer,
+    src_signer     integer NOT NULL,
+    dest_signer    integer,
     aux            jsonb NOT NULL DEFAULT '{}'::jsonb
 );
 CREATE INDEX diplomacy_letter_src_dest_idx ON diplomacy_letter (src_nation_id, dest_nation_id);
@@ -215,8 +215,8 @@ CREATE TABLE ng_old_generals (
     general_no      integer NOT NULL,
     owner           text,
     name            text NOT NULL,
-    last_year_month integer NOT NULL,
-    turn_time       timestamptz NOT NULL,
+    last_yearmonth  integer NOT NULL,
+    turntime        timestamptz NOT NULL,
     data            jsonb NOT NULL DEFAULT '{}'::jsonb,
     UNIQUE (server_id, general_no)
 );

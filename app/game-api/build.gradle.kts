@@ -8,6 +8,10 @@ plugins {
 
 kotlin { jvmToolchain(21) }
 
+// bootJar is the runnable artifact; disable the redundant plain jar so the
+// Docker COPY build/libs/*.jar glob stays unambiguous.
+tasks.named("jar") { enabled = false }
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":logic"))

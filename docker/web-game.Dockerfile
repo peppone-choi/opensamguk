@@ -2,9 +2,9 @@
 FROM node:20-alpine AS build
 WORKDIR /src
 RUN corepack enable
-COPY web/game/package.json web/game/
+COPY web/game/package.json web/game/pnpm-lock.yaml web/game/
 WORKDIR /src/web/game
-RUN corepack pnpm install --no-frozen-lockfile
+RUN corepack pnpm install --frozen-lockfile
 COPY web/game/ .
 RUN corepack pnpm build
 

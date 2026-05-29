@@ -2,9 +2,9 @@
 FROM node:20-alpine AS build
 WORKDIR /src
 RUN corepack enable
-COPY web/gateway/package.json web/gateway/
+COPY web/gateway/package.json web/gateway/pnpm-lock.yaml web/gateway/
 WORKDIR /src/web/gateway
-RUN corepack pnpm install --no-frozen-lockfile
+RUN corepack pnpm install --frozen-lockfile
 COPY web/gateway/ .
 RUN corepack pnpm build
 
