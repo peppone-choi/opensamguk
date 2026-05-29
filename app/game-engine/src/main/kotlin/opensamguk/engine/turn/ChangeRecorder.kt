@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import java.time.Instant
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
@@ -46,13 +47,40 @@ class ChangeRecorder {
      */
     private val rankPatches = LinkedHashMap<Int, LinkedHashMap<RankColumn, RankDelta>>()
 
+    /**
+     * Tombstoned general/nation ids (the kill/destroy DELETE seam, `General.php:515-600`). A row in
+     * here is permanently excluded from the update-set: [diffGeneral]/[diffNation] short-circuit for
+     * a tombstoned id (kill() clears updatedVar at `General.php:595` so a trailing applyDB never
+     * re-INSERTs the dead row). These mirror the world's deleted sets — they exist on the recorder so
+     * the recorder stays the SINGLE dirty source (no family calls `world.removeX` directly).
+     */
+    private val deletedGeneralIds = LinkedHashSet<Int>()
+    private val deletedNationIds = LinkedHashSet<Int>()
+
+    /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
+    private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
+
+    /** Pre-delete nation snapshots (the `ng_old_nations` archive write — `DatabaseHooks` step-2). */
+    private val nationSnapshots = mutableListOf<DeletedNationSnapshot>()
+
     val isDirty: Boolean
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
-            nationPatches.isNotEmpty() || rankPatches.isNotEmpty()
+            nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
+            deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
     fun dirtyNationIds(): Set<Int> = nationPatches.keys.toSet()
+
+    /** The tombstoned general/nation ids (the kill/destroy DELETE seam). */
+    fun deletedGeneralIds(): Set<Int> = deletedGeneralIds.toSet()
+    fun deletedNationIds(): Set<Int> = deletedNationIds.toSet()
+
+    /** The captured pre-delete general rows (storeOldGeneral content). */
+    fun oldGeneralSnapshots(): List<TurnGeneral> = oldGeneralSnapshots.toList()
+
+    /** The captured pre-delete nation snapshots (the `ng_old_nations` archive write). */
+    fun nationSnapshots(): List<DeletedNationSnapshot> = nationSnapshots.toList()
     fun generalPatches(): List<RowPatch> = generalPatches.values.toList()
     fun cityPatches(): List<RowPatch> = cityPatches.values.toList()
     fun nationPatches(): List<RowPatch> = nationPatches.values.toList()
@@ -71,6 +99,8 @@ class ChangeRecorder {
      */
     fun diffGeneral(pre: LogicGeneral, post: LogicGeneral): RowPatch? {
         require(pre.id == post.id) { "ChangeRecorder.diffGeneral: id changed (${pre.id} -> ${post.id})" }
+        // A tombstoned general never re-enters the update-set (kill() clears updatedVar, General.php:595).
+        if (post.id in deletedGeneralIds) return null
         val columns = LinkedHashMap<String, Any?>()
         // slice-relevant scalar columns the che resolver can touch (PHP increaseVar/setVar targets).
         diffCol(columns, "gold", pre.gold, post.gold)
@@ -151,6 +181,8 @@ class ChangeRecorder {
      */
     fun diffNation(pre: LogicNation, post: LogicNation): RowPatch? {
         require(pre.id == post.id) { "ChangeRecorder.diffNation: id changed (${pre.id} -> ${post.id})" }
+        // A tombstoned nation never re-enters the update-set (the cascade delete is the final word).
+        if (post.id in deletedNationIds) return null
         val columns = LinkedHashMap<String, Any?>()
         diffCol(columns, "name", pre.name, post.name)
         diffCol(columns, "color", pre.color, post.color)
@@ -193,6 +225,58 @@ class ChangeRecorder {
     fun recordRankSet(generalId: Int, column: RankColumn, value: Int) {
         val map = rankPatches.getOrPut(generalId) { LinkedHashMap() }
         map[column] = RankDelta.Set(value)
+    }
+
+    /**
+     * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE
+     * general/general_turn/rank_data). The recorder is the SOLE emitter:
+     *  1. capture the pre-delete row (the `ng_old_generals` storeOldGeneral content),
+     *  2. drop any pending UPDATE/rank patch (kill() clears updatedVar, `General.php:595` — no
+     *     double-apply: the row leaves the update-set and lands ONLY as a delete),
+     *  3. record the tombstone so a trailing [diffGeneral] for this id is a no-op, and
+     *  4. drop it from the world (which feeds `DirtyState.deletedGenerals`).
+     *
+     * A general created *and* killed within the same tick fully cancels in [InMemoryTurnWorld.removeGeneral]
+     * (no archive write for a row that never persisted) — so the snapshot is only kept when the world
+     * actually held the row.
+     */
+    fun markGeneralDeleted(world: InMemoryTurnWorld, generalId: Int): Boolean {
+        val existing = world.getGeneralById(generalId) ?: return false
+        oldGeneralSnapshots.add(existing)
+        generalPatches.remove(generalId)
+        rankPatches.remove(generalId)
+        deletedGeneralIds.add(generalId)
+        return world.removeGeneral(generalId)
+    }
+
+    /**
+     * Tombstone a nation (the nation cascade: DELETE diplomacy/nation_turn/nation + `ng_old_nations`
+     * archive). The recorder is the SOLE emitter:
+     *  1. capture the nation + its general ids (the `ng_old_nations` snapshot, `DatabaseHooks` step-2),
+     *  2. revert every captured city to neutral as a city patch (nation=0, front_state=0, conflict
+     *     removed — mirrors `FoundingCascade.neutralizeCity`),
+     *  3. drop any pending nation UPDATE patch + record the tombstone (no double-apply), and
+     *  4. drop the nation from the world (which feeds `DirtyState.deletedNations` and prunes diplomacy).
+     */
+    fun markNationDeleted(world: InMemoryTurnWorld, nationId: Int): Boolean {
+        val nation = world.getNationById(nationId) ?: return false
+        val ownedGeneralIds = world.listGenerals().filter { it.nationId == nationId }.map { it.id }
+        nationSnapshots.add(DeletedNationSnapshot(nation, ownedGeneralIds, Instant.now()))
+
+        // revert the nation's cities to neutral as recorded city patches (the cascade side effect).
+        for (city in world.listCities().filter { it.nationId == nationId }) {
+            val pre = opensamguk.engine.turn.PerTurnOverlay.toLogicCity(city)
+            val nextMeta = LinkedHashMap(pre.meta)
+            nextMeta.remove("conflict")
+            val neutral = pre.copy(nationId = 0, frontState = 0, meta = nextMeta)
+            diffCity(pre, neutral)
+            // keep the world's read-state consistent (dirty-free: the city patch owns dirtiness).
+            world.applyCityDirtyFree(city.copy(nationId = 0, frontState = 0, meta = nextMeta))
+        }
+
+        nationPatches.remove(nationId)
+        deletedNationIds.add(nationId)
+        return world.removeNation(nationId)
     }
 
     private fun diffCol(out: LinkedHashMap<String, Any?>, name: String, pre: Any?, post: Any?) {
