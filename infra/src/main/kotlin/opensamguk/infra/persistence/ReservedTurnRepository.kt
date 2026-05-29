@@ -99,6 +99,43 @@ class ReservedTurnRepository(
         return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG)
     }
 
+    /**
+     * Pull (rotate) the general_turn ring after a general's turn runs — faithful to
+     * `func_command.php:56-79 pullGeneralCommand` for the default `turnCnt = 1`:
+     *  1. the run slot (turn_idx 0) gets `turn_idx += MAX_GENERAL_TURNS`, action/arg/brief reset to
+     *     `휴식`/`{}`/`휴식` (the vacated slot rotates to the ring tail),
+     *  2. every row then shifts down one (`turn_idx -= 1`, ordered turn_idx ASC).
+     *
+     * Net effect: slot 0 vacates to `휴식` at the tail (turn_idx 29) and slots 1..N shift down to
+     * 0..N-1. No-op for `turnCnt == 0` / `turnCnt >= MAX_GENERAL_TURNS` (the PHP guards; the
+     * negative-turnCnt push path is the inverse op, out of the LC3 ring-shift scope).
+     */
+    fun pullGeneralTurn(generalId: Int, turnCnt: Int = 1) {
+        if (turnCnt == 0 || turnCnt >= MAX_GENERAL_TURNS) return
+        val base = MapSqlParameterSource().addValue("general_id", generalId)
+        // 1. reset the slots being pulled (turn_idx < turnCnt) to 휴식/{} and rotate them to the back.
+        jdbc.update(
+            """
+            UPDATE general_turn
+               SET turn_idx = turn_idx + :max_turn,
+                   action_code = '휴식',
+                   arg = '{}'::jsonb,
+                   brief = '휴식'
+             WHERE general_id = :general_id AND turn_idx < :turn_cnt
+            """.trimIndent(),
+            MapSqlParameterSource(base.values).addValue("max_turn", MAX_GENERAL_TURNS).addValue("turn_cnt", turnCnt),
+        )
+        // 2. shift every row down by turnCnt.
+        jdbc.update(
+            """
+            UPDATE general_turn
+               SET turn_idx = turn_idx - :turn_cnt
+             WHERE general_id = :general_id
+            """.trimIndent(),
+            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+        )
+    }
+
     // --- nation_turn ring (FF2) -----------------------------------------------------------------
 
     /**
