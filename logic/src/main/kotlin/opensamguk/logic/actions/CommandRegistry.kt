@@ -1,5 +1,7 @@
 package opensamguk.logic.actions
 
+import opensamguk.logic.actions.personnel.CheImgwan
+import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
 
@@ -23,6 +25,8 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
     fun resolve(actionCode: String): GeneralActionDefinition = when (actionCode) {
         "che_상업투자" -> cheSangeobTuja(pipeline, maxLevel)
         "che_농지개간" -> cheNongjigaegan(pipeline, maxLevel)
+        "che_임관" -> CheImgwan(pipeline)
+        "che_장수대상임관" -> CheJangsuDaesangImgwan(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
