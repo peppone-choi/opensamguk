@@ -325,3 +325,91 @@ fun postUpdateMonthlyDiplomacy(
         availableWarSettingCnt = result,
     )
 }
+
+// ===========================================================================================
+// POST3 (Q11-Q17) — the tail: checkWander / tournament / auction RNG order + SetNationFront last.
+// PHP grand truth `func_gamerule.php:423-442` (+ `:445-467` checkWander).
+// ===========================================================================================
+
+/**
+ * A monthlyRng consumer (the SAME `RandUtil` instance threaded Q4→Q11→Q15→Q16). Each Q-step that needs
+ * RNG receives the live instance and draws its OWN deterministic count; the pure core only enforces the
+ * ORDER + the gate conditions (the daemon supplies the faithful command/tournament/auction bodies).
+ */
+typealias RngConsumer = (RandUtil) -> Unit
+
+/**
+ * A B2-owned placeholder for the Q17 per-nation front result the [setNationFront] callback yields. The
+ * faithful front 0/1/2/3 computation lives in B3's `SetNationFront.kt` (a later wave); POST3 only threads
+ * the callback output through (Q17 runs LAST and consumes NO monthlyRng).
+ */
+data class PostFrontResult(val nationId: Int)
+
+/** POST3 (Q11-Q17) result: whether Q11 ran, the monthlyRng draw-order log, and the Q17 front results. */
+data class PostUpdateMonthlyTailResult(
+    val checkWanderRan: Boolean,
+    val rngDrawOrder: List<String>,
+    val frontResults: List<PostFrontResult>,
+)
+
+/**
+ * POST3 — Q11-Q17 tail. Enforces the EXACT monthlyRng consume order on a SINGLE instance and the gate
+ * conditions, delegating each RNG-consuming step to an injected consumer (so the faithful command /
+ * tournament / auction bodies — and their exact draw counts — live where they belong while the ORDER is
+ * pinned here). PINNED per-call draw counts (consolidated OQ #1-residual blocker, PR-7):
+ *
+ *   Q11 checkWander($rng)        — runs ONLY if `year >= startYear+2`; draws inside the che_해산 command run
+ *                                  per wanderer (routes through the P2 CommandRegistry + 9-source pipeline).
+ *   Q12 updateGeneralNumber()    — no rng (recompute nation.gennum; daemon side-effect).
+ *   Q13 refreshNationStaticInfo()— no rng (static-info cache refresh; daemon side-effect).
+ *   Q14 checkEmperior()          — NO rng (천통 detection → isunited / UNITED target; verified takes no rng).
+ *   Q15 triggerTournament($rng)  — at most ONE `nextBool(0.4)`; if it proceeds AND tnmt_pattern is empty, a
+ *                                  5-element `shuffle`. (Default golden: tnmt_trig off → ZERO draws; the
+ *                                  injected consumer reproduces the faithful count.)
+ *   Q16 registerAuction($rng)    — EXACTLY two `nextBool(1/(cnt+5))` gates (sell-rice + buy-rice), each
+ *                                  optionally followed by `nextRangeInt(1,5)` + `nextRangeInt(3,12)`.
+ *   Q17 SetNationFront(nation)   — per level>0 nation in static-info order, runs LAST, NO rng (B3 body).
+ *
+ * **The monthlyRng is consumed in EXACT order Q4 (POST1) → Q11 → Q15 → Q16, a single instance** (`:322,425,
+ * 432,434`). [isUnited] is the Q14 checkEmperior outcome the daemon supplies; it changes NO draw count.
+ */
+fun postUpdateMonthlyTail(
+    year: Int,
+    startYear: Int,
+    rng: RandUtil,
+    checkWander: RngConsumer,
+    triggerTournament: RngConsumer,
+    registerAuction: RngConsumer,
+    setNationFront: () -> List<PostFrontResult>,
+    @Suppress("UNUSED_PARAMETER") isUnited: Boolean = false,
+): PostUpdateMonthlyTailResult {
+    val drawOrder = mutableListOf<String>()
+
+    // Q11 — checkWander gated on `year >= startYear+2` (the SECOND monthlyRng consumer after Q4).
+    var checkWanderRan = false
+    if (year >= startYear + 2) {
+        checkWander(rng)
+        drawOrder += "Q11"
+        checkWanderRan = true
+    }
+
+    // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (no rng; daemon-side recompute).
+    // Q14 — checkEmperior (no rng; isUnited threaded for the UNITED target but never affects the stream).
+
+    // Q15 — triggerTournament (THIRD consumer).
+    triggerTournament(rng)
+    drawOrder += "Q15"
+
+    // Q16 — registerAuction (FOURTH consumer).
+    registerAuction(rng)
+    drawOrder += "Q16"
+
+    // Q17 — SetNationFront per active nation, runs LAST (no rng; B3 produces the front 0/1/2/3 results).
+    val frontResults = setNationFront()
+
+    return PostUpdateMonthlyTailResult(
+        checkWanderRan = checkWanderRan,
+        rngDrawOrder = drawOrder,
+        frontResults = frontResults,
+    )
+}
