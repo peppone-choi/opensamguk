@@ -37,3 +37,33 @@ tasks.test {
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
 }
+
+// G3 cross-call-site seam: expose this module's compiled `main` classes as a consumable JAR variant
+// so :app:game-engine's TEST source set can drive the REAL CommandPrecheckService. The default
+// runtimeElements/apiElements variants advertise the Spring Boot `bootJar` (classes nested under
+// BOOT-INF/classes/), which a downstream compiler can't read — and the plain `jar` is disabled to
+// keep the Docker `build/libs/*.jar` glob to the single bootJar. This packages the raw `main` output
+// into a plain library jar written OUTSIDE build/libs (build/test-consumable/), so the single-bootJar
+// invariant in build/libs is preserved.
+val mainJarForTest by tasks.registering(Jar::class) {
+    archiveClassifier.set("classes-for-test")
+    destinationDirectory.set(layout.buildDirectory.dir("test-consumable"))
+    from(sourceSets.main.get().output)
+}
+val mainClassesForTest: Configuration by configurations.creating {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
+            objects.named(LibraryElements::class.java, LibraryElements.JAR))
+        attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling::class.java, Bundling.EXTERNAL))
+    }
+    // re-export the module's own runtime deps (logic/infra/common + spring data-jpa) transitively,
+    // so the consumer resolves CommandPrecheckService's compile dependencies too.
+    extendsFrom(configurations.runtimeClasspath.get())
+}
+artifacts {
+    add(mainClassesForTest.name, mainJarForTest)
+}
