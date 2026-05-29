@@ -2,6 +2,7 @@ package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
@@ -63,12 +64,14 @@ class CommandPrecheckServiceTest {
         val generals = mock(GeneralReadRepository::class.java)
         val cities = mock(CityReadRepository::class.java)
         val nations = mock(NationReadRepository::class.java)
+        val diplomacies = mock(DiplomacyReadRepository::class.java)
         val worldStates = mock(WorldStateReadRepository::class.java)
         `when`(generals.findById(10)).thenReturn(Optional.of(generalEntity))
         `when`(cities.findById(5)).thenReturn(Optional.of(cityEntity))
         `when`(nations.findById(1)).thenReturn(Optional.of(nationEntity))
+        `when`(diplomacies.findBySrcNationId(1)).thenReturn(emptyList())
         `when`(worldStates.findAll()).thenReturn(listOf(worldState()))
-        val factory = PrecheckStateViewFactory(generals, cities, nations, worldStates)
+        val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
         return CommandPrecheckService(factory, registry)
     }
 

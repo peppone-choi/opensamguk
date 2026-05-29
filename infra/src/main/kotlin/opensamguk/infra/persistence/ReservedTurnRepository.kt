@@ -31,27 +31,43 @@ class ReservedTurnRepository(
     private val jdbc: NamedParameterJdbcTemplate,
 ) {
 
-    /** A reserved turn slot: the normalized action code + the raw `arg` jsonb string. */
-    data class ReservedTurn(val actionCode: String, val argJson: String)
+    /**
+     * A reserved turn slot: the normalized action code + the raw `arg` jsonb string + the `brief`
+     * (FD1: the V2 `general_turn.brief text` column — PHP seeds it `휴식` on every row,
+     * `GeneralBuilder.php:720`). `brief` defaults to [DEFAULT_TURN_ACTION] to match the PHP seed.
+     */
+    data class ReservedTurn(
+        val actionCode: String,
+        val argJson: String,
+        val brief: String = DEFAULT_TURN_ACTION,
+    )
 
     /**
      * Upsert the reserved action for `(generalId, turnIdx mod 30)`. Re-reserving the same slot
      * updates the existing row (no duplicate) via `ON CONFLICT (general_id, turn_idx)`.
      */
-    fun reserve(generalId: Int, turnIdx: Int, actionCode: String?, argJson: String? = null) {
+    fun reserve(
+        generalId: Int,
+        turnIdx: Int,
+        actionCode: String?,
+        argJson: String? = null,
+        brief: String = DEFAULT_TURN_ACTION,
+    ) {
         val slot = ringIndex(turnIdx)
         val params = MapSqlParameterSource()
             .addValue("general_id", generalId)
             .addValue("turn_idx", slot)
             .addValue("action_code", normalizeAction(actionCode))
             .addValue("arg", jsonb(normalizeArgs(argJson)))
+            .addValue("brief", brief)
         jdbc.update(
             """
-            INSERT INTO general_turn (general_id, turn_idx, action_code, arg)
-            VALUES (:general_id, :turn_idx, :action_code, :arg)
+            INSERT INTO general_turn (general_id, turn_idx, action_code, arg, brief)
+            VALUES (:general_id, :turn_idx, :action_code, :arg, :brief)
             ON CONFLICT (general_id, turn_idx)
             DO UPDATE SET action_code = EXCLUDED.action_code,
-                          arg = EXCLUDED.arg
+                          arg = EXCLUDED.arg,
+                          brief = EXCLUDED.brief
             """.trimIndent(),
             params,
         )
@@ -68,7 +84,7 @@ class ReservedTurnRepository(
             .addValue("turn_idx", slot)
         val rows = jdbc.query(
             """
-            SELECT action_code, arg::text AS arg
+            SELECT action_code, arg::text AS arg, brief
               FROM general_turn
              WHERE general_id = :general_id AND turn_idx = :turn_idx
             """.trimIndent(),
@@ -77,6 +93,7 @@ class ReservedTurnRepository(
             ReservedTurn(
                 actionCode = normalizeAction(rs.getString("action_code")),
                 argJson = normalizeArgs(rs.getString("arg")),
+                brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
             )
         }
         return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG)
