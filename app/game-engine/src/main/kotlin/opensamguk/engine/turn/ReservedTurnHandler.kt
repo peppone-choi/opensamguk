@@ -254,10 +254,13 @@ class ReservedTurnHandler(
             current = world.getGeneralById(generalId)!!
         }
 
-        // 은퇴 — age>=retirementYear, human only (LC3: rebirth()).
+        // 은퇴 — age>=retirementYear, human only (LC3: rebirth()). `General.php:209-216` gates the
+        // applyDB+CheckHall on isunited==0; here the rebirth itself is gated on isunited==0 (B4 test
+        // contract: rebirth must NOT fire on a unified server — and the daemon already freezes the
+        // whole tick at isunited 2|3 upstream, so this only diverges for the transient isunited==1).
         var rebirthed = false
-        if (current.age >= GameConst.retirementYear && current.npcState == 0) {
-            if (env.isunited == 0) rebirth(current, env)
+        if (current.age >= GameConst.retirementYear && current.npcState == 0 && env.isunited == 0) {
+            rebirth(current, env)
             rebirthed = true
             current = world.getGeneralById(generalId)!!
         }
@@ -346,9 +349,49 @@ class ReservedTurnHandler(
         }
     }
 
-    /** age>=retirementYear branch of [updateTurnTime] (`General.php:602-639`). Implemented by LC3. */
-    internal fun rebirth(general: TurnGeneral, env: LifecycleEnv): Unit =
-        TODO("LC3: rebirth() in-place UPDATE")
+    /**
+     * rebirth() — the in-place UPDATE (NO delete), the age>=retirementYear branch of [updateTurnTime]
+     * (`General.php:602-639`). DISTINCT from kill (the opposite op: the row stays). The FULL field set
+     * verbatim `:616-633`: leadership/strength/intel `multiplyVarWithLimit(0.85, min 10)`, `injury=0`,
+     * experience/dedication ×0.5, `age=20`, `specage=0`, `specage2=0`, dex1..5 ×0.5, ALL 37 RankColumn
+     * `setRankVar(0)`, THEN the THREE distinct log pushes (`:636-638`). The Int stat/exp/dedication
+     * columns take the PHP raw float rounded half-away-from-zero (the handler [applyGeneralPatch]
+     * convention); the ×0.85 stats are floored at 10.
+     */
+    private fun rebirth(general: TurnGeneral, env: LifecycleEnv) {
+        val nextStats = GeneralStats(
+            leadership = maxOf(10, phpRound(general.stats.leadership * 0.85)),
+            strength = maxOf(10, phpRound(general.stats.strength * 0.85)),
+            intelligence = maxOf(10, phpRound(general.stats.intelligence * 0.85)),
+        )
+        val nextMeta = LinkedHashMap(general.meta)
+        nextMeta["specage"] = 0
+        nextMeta["specage2"] = 0
+        for (i in 1..5) {
+            val key = "dex$i"
+            if (nextMeta.containsKey(key)) {
+                nextMeta[key] = phpRound(((nextMeta[key] as? Number)?.toDouble() ?: 0.0) * 0.5)
+            }
+        }
+        val reborn = general.copy(
+            stats = nextStats,
+            injury = 0,
+            experience = phpRound(general.experience * 0.5),
+            dedication = phpRound(general.dedication * 0.5),
+            age = 20,
+            meta = nextMeta,
+        )
+        world.applyGeneralDirtyFree(reborn)
+
+        // ALL 37 rank_data rows reset to 0 (setRankVar — a Set displaces any pending delta).
+        for (col in RankColumn.entries) recorder.recordRankSet(general.id, col, 0)
+
+        // the THREE distinct log pushes (:636-638) — order is load-bearing.
+        val josaYi = JosaUtil.pick(general.name, "이")
+        world.pushLog(globalLog(general, "<Y>${general.name}</>$josaYi <R>은퇴</>하고 그 자손이 유지를 이어받았습니다."))
+        world.pushLog(actionLog(general, "나이가 들어 <R>은퇴</>하고 자손에게 자리를 물려줍니다."))
+        world.pushLog(historyLog(general, "나이가 들어 은퇴하고, 자손에게 관직을 물려줌"))
+    }
 
     /** The recorder is the lone dirty source; exposed so the flush (F4)/tests can read its patches. */
     val recorder: ChangeRecorder = ChangeRecorder()
@@ -431,6 +474,15 @@ class ReservedTurnHandler(
         private fun globalLog(general: TurnGeneral, text: String): LogEntryDraft = LogEntryDraft(
             scope = "global",
             category = "action",
+            text = text,
+            generalId = general.id,
+            nationId = general.nationId,
+        )
+
+        /** Wrap a line as a `general` history [LogEntryDraft] (pushGeneralHistoryLog). */
+        private fun historyLog(general: TurnGeneral, text: String): LogEntryDraft = LogEntryDraft(
+            scope = "general",
+            category = "history",
             text = text,
             generalId = general.id,
             nationId = general.nationId,
