@@ -1,0 +1,1808 @@
+[
+  {
+    "id": 1,
+    "name": "업",
+    "level": 8,
+    "population": 620500,
+    "agriculture": 12500,
+    "commerce": 11300,
+    "security": 10000,
+    "defence": 11700,
+    "wall": 12200,
+    "region": 1,
+    "posX": 345,
+    "posY": 130,
+    "path": {
+      "9": "남피",
+      "18": "복양",
+      "70": "호관",
+      "78": "계교",
+      "80": "관도"
+    }
+  },
+  {
+    "id": 2,
+    "name": "허창",
+    "level": 8,
+    "population": 587600,
+    "agriculture": 12100,
+    "commerce": 12400,
+    "security": 10000,
+    "defence": 11700,
+    "wall": 12500,
+    "region": 2,
+    "posX": 330,
+    "posY": 215,
+    "path": {
+      "10": "완",
+      "19": "진류",
+      "38": "초",
+      "71": "호로",
+      "74": "사수",
+      "80": "관도"
+    }
+  },
+  {
+    "id": 3,
+    "name": "낙양",
+    "level": 8,
+    "population": 835700,
+    "agriculture": 11700,
+    "commerce": 12000,
+    "security": 10000,
+    "defence": 12100,
+    "wall": 12400,
+    "region": 2,
+    "posX": 275,
+    "posY": 180,
+    "path": {
+      "70": "호관",
+      "71": "호로",
+      "72": "사곡",
+      "74": "사수"
+    }
+  },
+  {
+    "id": 4,
+    "name": "장안",
+    "level": 8,
+    "population": 592300,
+    "agriculture": 11600,
+    "commerce": 12300,
+    "security": 10000,
+    "defence": 12000,
+    "wall": 11800,
+    "region": 3,
+    "posX": 145,
+    "posY": 165,
+    "path": {
+      "41": "안정",
+      "73": "함곡",
+      "86": "기산"
+    }
+  },
+  {
+    "id": 5,
+    "name": "성도",
+    "level": 8,
+    "population": 652500,
+    "agriculture": 12300,
+    "commerce": 12500,
+    "security": 10000,
+    "defence": 12500,
+    "wall": 12300,
+    "region": 4,
+    "posX": 25,
+    "posY": 290,
+    "path": {
+      "26": "덕양",
+      "27": "강주",
+      "87": "면죽"
+    }
+  },
+  {
+    "id": 6,
+    "name": "양양",
+    "level": 8,
+    "population": 583700,
+    "agriculture": 12000,
+    "commerce": 12600,
+    "security": 10000,
+    "defence": 11500,
+    "wall": 11700,
+    "region": 6,
+    "posX": 255,
+    "posY": 290,
+    "path": {
+      "51": "신야",
+      "89": "장판"
+    }
+  },
+  {
+    "id": 7,
+    "name": "건업",
+    "level": 8,
+    "population": 638600,
+    "agriculture": 11600,
+    "commerce": 12300,
+    "security": 10000,
+    "defence": 11500,
+    "wall": 11900,
+    "region": 7,
+    "posX": 505,
+    "posY": 305,
+    "path": {
+      "31": "오",
+      "82": "합비",
+      "83": "광릉"
+    }
+  },
+  {
+    "id": 8,
+    "name": "북평",
+    "level": 7,
+    "population": 486200,
+    "agriculture": 10200,
+    "commerce": 9500,
+    "security": 8000,
+    "defence": 10300,
+    "wall": 9900,
+    "region": 1,
+    "posX": 465,
+    "posY": 65,
+    "path": {
+      "77": "역경",
+      "90": "백랑"
+    }
+  },
+  {
+    "id": 9,
+    "name": "남피",
+    "level": 7,
+    "population": 503200,
+    "agriculture": 9900,
+    "commerce": 10100,
+    "security": 8000,
+    "defence": 10100,
+    "wall": 10500,
+    "region": 1,
+    "posX": 395,
+    "posY": 95,
+    "path": {
+      "1": "업",
+      "36": "평원",
+      "77": "역경"
+    }
+  },
+  {
+    "id": 10,
+    "name": "완",
+    "level": 7,
+    "population": 472400,
+    "agriculture": 10300,
+    "commerce": 10000,
+    "security": 8000,
+    "defence": 10100,
+    "wall": 9900,
+    "region": 2,
+    "posX": 270,
+    "posY": 235,
+    "path": {
+      "2": "허창",
+      "20": "여남",
+      "51": "신야",
+      "71": "호로"
+    }
+  },
+  {
+    "id": 11,
+    "name": "수춘",
+    "level": 7,
+    "population": 514300,
+    "agriculture": 9900,
+    "commerce": 9600,
+    "security": 8000,
+    "defence": 9900,
+    "wall": 9500,
+    "region": 2,
+    "posX": 395,
+    "posY": 270,
+    "path": {
+      "12": "서주",
+      "20": "여남",
+      "38": "초",
+      "82": "합비"
+    }
+  },
+  {
+    "id": 12,
+    "name": "서주",
+    "level": 7,
+    "population": 485300,
+    "agriculture": 10100,
+    "commerce": 9800,
+    "security": 8000,
+    "defence": 10200,
+    "wall": 9700,
+    "region": 2,
+    "posX": 440,
+    "posY": 250,
+    "path": {
+      "11": "수춘",
+      "21": "하비",
+      "38": "초",
+      "39": "패"
+    }
+  },
+  {
+    "id": 13,
+    "name": "강릉",
+    "level": 7,
+    "population": 485000,
+    "agriculture": 10500,
+    "commerce": 9600,
+    "security": 8000,
+    "defence": 9500,
+    "wall": 9600,
+    "region": 6,
+    "posX": 245,
+    "posY": 335,
+    "path": {
+      "14": "장사",
+      "53": "무릉",
+      "88": "이릉",
+      "89": "장판"
+    }
+  },
+  {
+    "id": 14,
+    "name": "장사",
+    "level": 7,
+    "population": 471000,
+    "agriculture": 9700,
+    "commerce": 9900,
+    "security": 8000,
+    "defence": 10000,
+    "wall": 10500,
+    "region": 6,
+    "posX": 255,
+    "posY": 375,
+    "path": {
+      "13": "강릉",
+      "15": "시상",
+      "30": "계양",
+      "53": "무릉",
+      "54": "영릉"
+    }
+  },
+  {
+    "id": 15,
+    "name": "시상",
+    "level": 7,
+    "population": 525200,
+    "agriculture": 9800,
+    "commerce": 10000,
+    "security": 10000,
+    "defence": 9900,
+    "wall": 9600,
+    "region": 7,
+    "posX": 360,
+    "posY": 360,
+    "path": {
+      "14": "장사",
+      "56": "여강",
+      "58": "고창",
+      "91": "적벽",
+      "92": "파양"
+    }
+  },
+  {
+    "id": 16,
+    "name": "위례",
+    "level": 7,
+    "population": 492600,
+    "agriculture": 10000,
+    "commerce": 9300,
+    "security": 8000,
+    "defence": 9800,
+    "wall": 10300,
+    "region": 8,
+    "posX": 620,
+    "posY": 145,
+    "path": {
+      "32": "평양",
+      "33": "사비",
+      "34": "계림",
+      "60": "안평",
+      "79": "동황"
+    }
+  },
+  {
+    "id": 17,
+    "name": "계",
+    "level": 6,
+    "population": 388500,
+    "agriculture": 7500,
+    "commerce": 8000,
+    "security": 6000,
+    "defence": 7800,
+    "wall": 8100,
+    "region": 1,
+    "posX": 365,
+    "posY": 35,
+    "path": {
+      "35": "진양",
+      "77": "역경"
+    }
+  },
+  {
+    "id": 18,
+    "name": "복양",
+    "level": 6,
+    "population": 418500,
+    "agriculture": 8000,
+    "commerce": 8300,
+    "security": 6000,
+    "defence": 8200,
+    "wall": 8000,
+    "region": 2,
+    "posX": 410,
+    "posY": 170,
+    "path": {
+      "1": "업",
+      "19": "진류",
+      "78": "계교",
+      "81": "정도"
+    }
+  },
+  {
+    "id": 19,
+    "name": "진류",
+    "level": 6,
+    "population": 395700,
+    "agriculture": 8200,
+    "commerce": 8000,
+    "security": 6000,
+    "defence": 8000,
+    "wall": 8300,
+    "region": 2,
+    "posX": 365,
+    "posY": 185,
+    "path": {
+      "2": "허창",
+      "18": "복양",
+      "74": "사수",
+      "80": "관도",
+      "81": "정도"
+    }
+  },
+  {
+    "id": 20,
+    "name": "여남",
+    "level": 6,
+    "population": 383100,
+    "agriculture": 7700,
+    "commerce": 8100,
+    "security": 6000,
+    "defence": 8400,
+    "wall": 7700,
+    "region": 2,
+    "posX": 330,
+    "posY": 260,
+    "path": {
+      "10": "완",
+      "11": "수춘",
+      "38": "초"
+    }
+  },
+  {
+    "id": 21,
+    "name": "하비",
+    "level": 6,
+    "population": 427800,
+    "agriculture": 8500,
+    "commerce": 8300,
+    "security": 6000,
+    "defence": 8200,
+    "wall": 7800,
+    "region": 2,
+    "posX": 480,
+    "posY": 235,
+    "path": {
+      "12": "서주",
+      "83": "광릉"
+    }
+  },
+  {
+    "id": 22,
+    "name": "서량",
+    "level": 6,
+    "population": 387400,
+    "agriculture": 7700,
+    "commerce": 7900,
+    "security": 6000,
+    "defence": 8300,
+    "wall": 8000,
+    "region": 3,
+    "posX": 25,
+    "posY": 50,
+    "path": {
+      "40": "천수",
+      "63": "강",
+      "64": "저"
+    }
+  },
+  {
+    "id": 23,
+    "name": "하내",
+    "level": 6,
+    "population": 373600,
+    "agriculture": 7700,
+    "commerce": 8100,
+    "security": 6000,
+    "defence": 8100,
+    "wall": 8000,
+    "region": 3,
+    "posX": 230,
+    "posY": 150,
+    "path": {
+      "35": "진양",
+      "42": "홍농",
+      "65": "흉노",
+      "70": "호관"
+    }
+  },
+  {
+    "id": 24,
+    "name": "한중",
+    "level": 6,
+    "population": 402700,
+    "agriculture": 7700,
+    "commerce": 8400,
+    "security": 6000,
+    "defence": 8000,
+    "wall": 8500,
+    "region": 4,
+    "posX": 135,
+    "posY": 205,
+    "path": {
+      "25": "상용",
+      "75": "양평",
+      "86": "기산"
+    }
+  },
+  {
+    "id": 25,
+    "name": "상용",
+    "level": 6,
+    "population": 368700,
+    "agriculture": 7800,
+    "commerce": 7600,
+    "security": 6000,
+    "defence": 7700,
+    "wall": 8100,
+    "region": 4,
+    "posX": 185,
+    "posY": 225,
+    "path": {
+      "24": "한중",
+      "51": "신야"
+    }
+  },
+  {
+    "id": 26,
+    "name": "덕양",
+    "level": 6,
+    "population": 380300,
+    "agriculture": 8100,
+    "commerce": 8400,
+    "security": 6000,
+    "defence": 7900,
+    "wall": 7700,
+    "region": 4,
+    "posX": 85,
+    "posY": 275,
+    "path": {
+      "5": "성도",
+      "27": "강주",
+      "44": "자동",
+      "45": "영안"
+    }
+  },
+  {
+    "id": 27,
+    "name": "강주",
+    "level": 6,
+    "population": 412600,
+    "agriculture": 7900,
+    "commerce": 8000,
+    "security": 6000,
+    "defence": 8400,
+    "wall": 8100,
+    "region": 4,
+    "posX": 70,
+    "posY": 310,
+    "path": {
+      "5": "성도",
+      "26": "덕양",
+      "45": "영안",
+      "46": "귀양",
+      "47": "주시"
+    }
+  },
+  {
+    "id": 28,
+    "name": "건녕",
+    "level": 6,
+    "population": 376500,
+    "agriculture": 8200,
+    "commerce": 8000,
+    "security": 6000,
+    "defence": 8600,
+    "wall": 8100,
+    "region": 5,
+    "posX": 80,
+    "posY": 400,
+    "path": {
+      "46": "귀양",
+      "48": "운남",
+      "49": "남영"
+    }
+  },
+  {
+    "id": 29,
+    "name": "남해",
+    "level": 6,
+    "population": 380300,
+    "agriculture": 8200,
+    "commerce": 7600,
+    "security": 6000,
+    "defence": 8000,
+    "wall": 8100,
+    "region": 5,
+    "posX": 245,
+    "posY": 480,
+    "path": {
+      "50": "교지",
+      "55": "상동",
+      "59": "대",
+      "67": "산월"
+    }
+  },
+  {
+    "id": 30,
+    "name": "계양",
+    "level": 6,
+    "population": 395500,
+    "agriculture": 8300,
+    "commerce": 8000,
+    "security": 6000,
+    "defence": 8100,
+    "wall": 7700,
+    "region": 6,
+    "posX": 230,
+    "posY": 400,
+    "path": {
+      "14": "장사",
+      "54": "영릉",
+      "55": "상동"
+    }
+  },
+  {
+    "id": 31,
+    "name": "오",
+    "level": 6,
+    "population": 435500,
+    "agriculture": 7700,
+    "commerce": 8100,
+    "security": 6000,
+    "defence": 7700,
+    "wall": 7600,
+    "region": 7,
+    "posX": 510,
+    "posY": 345,
+    "path": {
+      "7": "건업",
+      "57": "회계",
+      "92": "파양",
+      "93": "탐라"
+    }
+  },
+  {
+    "id": 32,
+    "name": "평양",
+    "level": 6,
+    "population": 398200,
+    "agriculture": 7800,
+    "commerce": 8000,
+    "security": 6000,
+    "defence": 8300,
+    "wall": 7800,
+    "region": 8,
+    "posX": 590,
+    "posY": 100,
+    "path": {
+      "16": "위례",
+      "61": "졸본"
+    }
+  },
+  {
+    "id": 33,
+    "name": "사비",
+    "level": 6,
+    "population": 415700,
+    "agriculture": 7700,
+    "commerce": 7900,
+    "security": 6000,
+    "defence": 7800,
+    "wall": 8000,
+    "region": 8,
+    "posX": 605,
+    "posY": 205,
+    "path": {
+      "16": "위례",
+      "34": "계림",
+      "93": "탐라"
+    }
+  },
+  {
+    "id": 34,
+    "name": "계림",
+    "level": 6,
+    "population": 391100,
+    "agriculture": 8000,
+    "commerce": 7400,
+    "security": 6000,
+    "defence": 8100,
+    "wall": 7800,
+    "region": 8,
+    "posX": 655,
+    "posY": 200,
+    "path": {
+      "16": "위례",
+      "33": "사비",
+      "62": "이도",
+      "93": "탐라"
+    }
+  },
+  {
+    "id": 35,
+    "name": "진양",
+    "level": 5,
+    "population": 307400,
+    "agriculture": 5600,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 6400,
+    "wall": 5900,
+    "region": 1,
+    "posX": 295,
+    "posY": 60,
+    "path": {
+      "17": "계",
+      "23": "하내",
+      "70": "호관"
+    }
+  },
+  {
+    "id": 36,
+    "name": "평원",
+    "level": 5,
+    "population": 307400,
+    "agriculture": 6200,
+    "commerce": 6500,
+    "security": 4000,
+    "defence": 6100,
+    "wall": 6300,
+    "region": 1,
+    "posX": 440,
+    "posY": 115,
+    "path": {
+      "9": "남피",
+      "37": "북해",
+      "78": "계교"
+    }
+  },
+  {
+    "id": 37,
+    "name": "북해",
+    "level": 5,
+    "population": 314600,
+    "agriculture": 5500,
+    "commerce": 6300,
+    "security": 4000,
+    "defence": 6300,
+    "wall": 5800,
+    "region": 1,
+    "posX": 470,
+    "posY": 155,
+    "path": {
+      "36": "평원",
+      "39": "패",
+      "79": "동황"
+    }
+  },
+  {
+    "id": 38,
+    "name": "초",
+    "level": 5,
+    "population": 328600,
+    "agriculture": 6000,
+    "commerce": 6200,
+    "security": 4000,
+    "defence": 6200,
+    "wall": 5700,
+    "region": 2,
+    "posX": 365,
+    "posY": 230,
+    "path": {
+      "2": "허창",
+      "11": "수춘",
+      "12": "서주",
+      "20": "여남",
+      "81": "정도"
+    }
+  },
+  {
+    "id": 39,
+    "name": "패",
+    "level": 5,
+    "population": 287700,
+    "agriculture": 6400,
+    "commerce": 5800,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 5900,
+    "region": 2,
+    "posX": 430,
+    "posY": 220,
+    "path": {
+      "12": "서주",
+      "37": "북해",
+      "81": "정도"
+    }
+  },
+  {
+    "id": 40,
+    "name": "천수",
+    "level": 5,
+    "population": 298500,
+    "agriculture": 5900,
+    "commerce": 6400,
+    "security": 4000,
+    "defence": 6000,
+    "wall": 5800,
+    "region": 3,
+    "posX": 70,
+    "posY": 105,
+    "path": {
+      "22": "서량",
+      "41": "안정",
+      "64": "저",
+      "84": "적도"
+    }
+  },
+  {
+    "id": 41,
+    "name": "안정",
+    "level": 5,
+    "population": 276400,
+    "agriculture": 5700,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 5700,
+    "wall": 6200,
+    "region": 3,
+    "posX": 95,
+    "posY": 145,
+    "path": {
+      "4": "장안",
+      "40": "천수",
+      "85": "가정"
+    }
+  },
+  {
+    "id": 42,
+    "name": "홍농",
+    "level": 5,
+    "population": 274800,
+    "agriculture": 5700,
+    "commerce": 6300,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 6300,
+    "region": 3,
+    "posX": 210,
+    "posY": 175,
+    "path": {
+      "23": "하내",
+      "72": "사곡",
+      "73": "함곡"
+    }
+  },
+  {
+    "id": 43,
+    "name": "하변",
+    "level": 5,
+    "population": 278500,
+    "agriculture": 5800,
+    "commerce": 6200,
+    "security": 4000,
+    "defence": 6000,
+    "wall": 5600,
+    "region": 4,
+    "posX": 45,
+    "posY": 190,
+    "path": {
+      "76": "가맹",
+      "85": "가정"
+    }
+  },
+  {
+    "id": 44,
+    "name": "자동",
+    "level": 5,
+    "population": 287000,
+    "agriculture": 5700,
+    "commerce": 5500,
+    "security": 4000,
+    "defence": 6000,
+    "wall": 5800,
+    "region": 4,
+    "posX": 75,
+    "posY": 245,
+    "path": {
+      "26": "덕양",
+      "75": "양평",
+      "76": "가맹",
+      "87": "면죽"
+    }
+  },
+  {
+    "id": 45,
+    "name": "영안",
+    "level": 5,
+    "population": 315300,
+    "agriculture": 6200,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 5900,
+    "region": 4,
+    "posX": 115,
+    "posY": 295,
+    "path": {
+      "26": "덕양",
+      "27": "강주",
+      "88": "이릉"
+    }
+  },
+  {
+    "id": 46,
+    "name": "귀양",
+    "level": 5,
+    "population": 274600,
+    "agriculture": 5800,
+    "commerce": 6100,
+    "security": 4000,
+    "defence": 6100,
+    "wall": 5800,
+    "region": 5,
+    "posX": 90,
+    "posY": 360,
+    "path": {
+      "27": "강주",
+      "28": "건녕",
+      "47": "주시"
+    }
+  },
+  {
+    "id": 47,
+    "name": "주시",
+    "level": 5,
+    "population": 282800,
+    "agriculture": 6000,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 6300,
+    "region": 5,
+    "posX": 30,
+    "posY": 345,
+    "path": {
+      "27": "강주",
+      "46": "귀양",
+      "48": "운남"
+    }
+  },
+  {
+    "id": 48,
+    "name": "운남",
+    "level": 5,
+    "population": 325800,
+    "agriculture": 6200,
+    "commerce": 6000,
+    "security": 4000,
+    "defence": 6400,
+    "wall": 6100,
+    "region": 5,
+    "posX": 30,
+    "posY": 415,
+    "path": {
+      "28": "건녕",
+      "47": "주시",
+      "66": "남만"
+    }
+  },
+  {
+    "id": 49,
+    "name": "남영",
+    "level": 5,
+    "population": 285300,
+    "agriculture": 5900,
+    "commerce": 6200,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 5700,
+    "region": 5,
+    "posX": 135,
+    "posY": 405,
+    "path": {
+      "28": "건녕",
+      "54": "영릉",
+      "66": "남만"
+    }
+  },
+  {
+    "id": 50,
+    "name": "교지",
+    "level": 5,
+    "population": 319500,
+    "agriculture": 5800,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 5900,
+    "region": 5,
+    "posX": 130,
+    "posY": 480,
+    "path": {
+      "29": "남해",
+      "66": "남만"
+    }
+  },
+  {
+    "id": 51,
+    "name": "신야",
+    "level": 5,
+    "population": 278600,
+    "agriculture": 6000,
+    "commerce": 6200,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 5500,
+    "region": 6,
+    "posX": 250,
+    "posY": 260,
+    "path": {
+      "6": "양양",
+      "10": "완",
+      "25": "상용"
+    }
+  },
+  {
+    "id": 52,
+    "name": "강하",
+    "level": 5,
+    "population": 307400,
+    "agriculture": 5500,
+    "commerce": 5600,
+    "security": 4000,
+    "defence": 5700,
+    "wall": 6000,
+    "region": 6,
+    "posX": 315,
+    "posY": 295,
+    "path": {
+      "89": "장판",
+      "91": "적벽"
+    }
+  },
+  {
+    "id": 53,
+    "name": "무릉",
+    "level": 5,
+    "population": 319600,
+    "agriculture": 5800,
+    "commerce": 6300,
+    "security": 4000,
+    "defence": 6300,
+    "wall": 5800,
+    "region": 6,
+    "posX": 195,
+    "posY": 355,
+    "path": {
+      "13": "강릉",
+      "14": "장사",
+      "54": "영릉"
+    }
+  },
+  {
+    "id": 54,
+    "name": "영릉",
+    "level": 5,
+    "population": 284900,
+    "agriculture": 6200,
+    "commerce": 5800,
+    "security": 4000,
+    "defence": 6200,
+    "wall": 6200,
+    "region": 6,
+    "posX": 190,
+    "posY": 395,
+    "path": {
+      "14": "장사",
+      "30": "계양",
+      "49": "남영",
+      "53": "무릉"
+    }
+  },
+  {
+    "id": 55,
+    "name": "상동",
+    "level": 5,
+    "population": 276700,
+    "agriculture": 5800,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 6200,
+    "wall": 5800,
+    "region": 6,
+    "posX": 210,
+    "posY": 435,
+    "path": {
+      "29": "남해",
+      "30": "계양",
+      "58": "고창"
+    }
+  },
+  {
+    "id": 56,
+    "name": "여강",
+    "level": 5,
+    "population": 290500,
+    "agriculture": 5600,
+    "commerce": 5800,
+    "security": 4000,
+    "defence": 6000,
+    "wall": 5500,
+    "region": 7,
+    "posX": 380,
+    "posY": 315,
+    "path": {
+      "15": "시상",
+      "82": "합비",
+      "91": "적벽",
+      "92": "파양"
+    }
+  },
+  {
+    "id": 57,
+    "name": "회계",
+    "level": 5,
+    "population": 300500,
+    "agriculture": 6400,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 6200,
+    "wall": 6400,
+    "region": 7,
+    "posX": 480,
+    "posY": 395,
+    "path": {
+      "31": "오",
+      "67": "산월"
+    }
+  },
+  {
+    "id": 58,
+    "name": "고창",
+    "level": 5,
+    "population": 280200,
+    "agriculture": 5700,
+    "commerce": 6200,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 6300,
+    "region": 7,
+    "posX": 350,
+    "posY": 405,
+    "path": {
+      "15": "시상",
+      "55": "상동",
+      "67": "산월"
+    }
+  },
+  {
+    "id": 59,
+    "name": "대",
+    "level": 5,
+    "population": 325600,
+    "agriculture": 6000,
+    "commerce": 6200,
+    "security": 4000,
+    "defence": 5700,
+    "wall": 6000,
+    "region": 7,
+    "posX": 450,
+    "posY": 480,
+    "path": {
+      "29": "남해",
+      "67": "산월",
+      "94": "유구"
+    }
+  },
+  {
+    "id": 60,
+    "name": "안평",
+    "level": 5,
+    "population": 293700,
+    "agriculture": 6300,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 5900,
+    "wall": 6300,
+    "region": 8,
+    "posX": 530,
+    "posY": 80,
+    "path": {
+      "16": "위례",
+      "61": "졸본",
+      "79": "동황",
+      "90": "백랑"
+    }
+  },
+  {
+    "id": 61,
+    "name": "졸본",
+    "level": 5,
+    "population": 293900,
+    "agriculture": 5500,
+    "commerce": 5900,
+    "security": 4000,
+    "defence": 6000,
+    "wall": 5800,
+    "region": 8,
+    "posX": 570,
+    "posY": 65,
+    "path": {
+      "32": "평양",
+      "60": "안평",
+      "68": "오환"
+    }
+  },
+  {
+    "id": 62,
+    "name": "이도",
+    "level": 5,
+    "population": 317400,
+    "agriculture": 5800,
+    "commerce": 6100,
+    "security": 4000,
+    "defence": 5800,
+    "wall": 5600,
+    "region": 8,
+    "posX": 680,
+    "posY": 260,
+    "path": {
+      "34": "계림",
+      "69": "왜",
+      "93": "탐라"
+    }
+  },
+  {
+    "id": 63,
+    "name": "강",
+    "level": 4,
+    "population": 209500,
+    "agriculture": 4000,
+    "commerce": 4200,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 4000,
+    "region": 3,
+    "posX": 95,
+    "posY": 35,
+    "path": {
+      "22": "서량",
+      "84": "적도"
+    }
+  },
+  {
+    "id": 64,
+    "name": "저",
+    "level": 4,
+    "population": 195700,
+    "agriculture": 4000,
+    "commerce": 4200,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 4200,
+    "region": 3,
+    "posX": 25,
+    "posY": 120,
+    "path": {
+      "22": "서량",
+      "40": "천수",
+      "85": "가정"
+    }
+  },
+  {
+    "id": 65,
+    "name": "흉노",
+    "level": 4,
+    "population": 206400,
+    "agriculture": 4000,
+    "commerce": 4100,
+    "security": 2000,
+    "defence": 4000,
+    "wall": 3800,
+    "region": 3,
+    "posX": 180,
+    "posY": 95,
+    "path": {
+      "23": "하내",
+      "84": "적도"
+    }
+  },
+  {
+    "id": 66,
+    "name": "남만",
+    "level": 4,
+    "population": 237800,
+    "agriculture": 4000,
+    "commerce": 4200,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 4500,
+    "region": 5,
+    "posX": 80,
+    "posY": 455,
+    "path": {
+      "48": "운남",
+      "49": "남영",
+      "50": "교지"
+    }
+  },
+  {
+    "id": 67,
+    "name": "산월",
+    "level": 4,
+    "population": 227500,
+    "agriculture": 4000,
+    "commerce": 3700,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 3800,
+    "region": 7,
+    "posX": 425,
+    "posY": 430,
+    "path": {
+      "29": "남해",
+      "57": "회계",
+      "58": "고창",
+      "59": "대"
+    }
+  },
+  {
+    "id": 68,
+    "name": "오환",
+    "level": 4,
+    "population": 215300,
+    "agriculture": 4200,
+    "commerce": 3700,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 4000,
+    "region": 8,
+    "posX": 610,
+    "posY": 20,
+    "path": {
+      "61": "졸본",
+      "90": "백랑"
+    }
+  },
+  {
+    "id": 69,
+    "name": "왜",
+    "level": 4,
+    "population": 206500,
+    "agriculture": 3900,
+    "commerce": 3700,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 4100,
+    "region": 8,
+    "posX": 680,
+    "posY": 320,
+    "path": {
+      "62": "이도",
+      "94": "유구"
+    }
+  },
+  {
+    "id": 70,
+    "name": "호관",
+    "level": 3,
+    "population": 88700,
+    "agriculture": 1900,
+    "commerce": 1800,
+    "security": 2000,
+    "defence": 9500,
+    "wall": 9600,
+    "region": 1,
+    "posX": 285,
+    "posY": 140,
+    "path": {
+      "1": "업",
+      "3": "낙양",
+      "23": "하내",
+      "35": "진양"
+    }
+  },
+  {
+    "id": 71,
+    "name": "호로",
+    "level": 3,
+    "population": 111200,
+    "agriculture": 2200,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 10300,
+    "wall": 9800,
+    "region": 2,
+    "posX": 285,
+    "posY": 205,
+    "path": {
+      "2": "허창",
+      "3": "낙양",
+      "10": "완"
+    }
+  },
+  {
+    "id": 72,
+    "name": "사곡",
+    "level": 3,
+    "population": 100800,
+    "agriculture": 2100,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 9900,
+    "wall": 10100,
+    "region": 3,
+    "posX": 240,
+    "posY": 175,
+    "path": {
+      "3": "낙양",
+      "42": "홍농"
+    }
+  },
+  {
+    "id": 73,
+    "name": "함곡",
+    "level": 3,
+    "population": 108100,
+    "agriculture": 2000,
+    "commerce": 2200,
+    "security": 2000,
+    "defence": 10100,
+    "wall": 10200,
+    "region": 3,
+    "posX": 180,
+    "posY": 175,
+    "path": {
+      "4": "장안",
+      "42": "홍농"
+    }
+  },
+  {
+    "id": 74,
+    "name": "사수",
+    "level": 3,
+    "population": 95800,
+    "agriculture": 1700,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 9500,
+    "wall": 9600,
+    "region": 2,
+    "posX": 310,
+    "posY": 185,
+    "path": {
+      "2": "허창",
+      "3": "낙양",
+      "19": "진류",
+      "80": "관도"
+    }
+  },
+  {
+    "id": 75,
+    "name": "양평",
+    "level": 3,
+    "population": 86800,
+    "agriculture": 1900,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 9700,
+    "wall": 9600,
+    "region": 4,
+    "posX": 90,
+    "posY": 220,
+    "path": {
+      "24": "한중",
+      "44": "자동",
+      "86": "기산"
+    }
+  },
+  {
+    "id": 76,
+    "name": "가맹",
+    "level": 3,
+    "population": 85500,
+    "agriculture": 1700,
+    "commerce": 1800,
+    "security": 2000,
+    "defence": 9600,
+    "wall": 9500,
+    "region": 4,
+    "posX": 45,
+    "posY": 225,
+    "path": {
+      "43": "하변",
+      "44": "자동"
+    }
+  },
+  {
+    "id": 77,
+    "name": "역경",
+    "level": 2,
+    "population": 98500,
+    "agriculture": 1800,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 3900,
+    "wall": 4100,
+    "region": 1,
+    "posX": 410,
+    "posY": 65,
+    "path": {
+      "8": "북평",
+      "9": "남피",
+      "17": "계"
+    }
+  },
+  {
+    "id": 78,
+    "name": "계교",
+    "level": 2,
+    "population": 101200,
+    "agriculture": 2100,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 4000,
+    "wall": 4200,
+    "region": 1,
+    "posX": 405,
+    "posY": 135,
+    "path": {
+      "1": "업",
+      "18": "복양",
+      "36": "평원"
+    }
+  },
+  {
+    "id": 79,
+    "name": "동황",
+    "level": 2,
+    "population": 99200,
+    "agriculture": 1900,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 3800,
+    "wall": 4000,
+    "region": 1,
+    "posX": 515,
+    "posY": 145,
+    "path": {
+      "16": "위례",
+      "37": "북해",
+      "60": "안평"
+    }
+  },
+  {
+    "id": 80,
+    "name": "관도",
+    "level": 2,
+    "population": 112300,
+    "agriculture": 2200,
+    "commerce": 2000,
+    "security": 2000,
+    "defence": 4200,
+    "wall": 4300,
+    "region": 2,
+    "posX": 340,
+    "posY": 165,
+    "path": {
+      "1": "업",
+      "2": "허창",
+      "19": "진류",
+      "74": "사수"
+    }
+  },
+  {
+    "id": 81,
+    "name": "정도",
+    "level": 2,
+    "population": 108500,
+    "agriculture": 2100,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 4100,
+    "wall": 3800,
+    "region": 2,
+    "posX": 400,
+    "posY": 210,
+    "path": {
+      "18": "복양",
+      "19": "진류",
+      "38": "초",
+      "39": "패"
+    }
+  },
+  {
+    "id": 82,
+    "name": "합비",
+    "level": 2,
+    "population": 99800,
+    "agriculture": 2000,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 3900,
+    "wall": 4100,
+    "region": 2,
+    "posX": 435,
+    "posY": 285,
+    "path": {
+      "7": "건업",
+      "11": "수춘",
+      "56": "여강"
+    }
+  },
+  {
+    "id": 83,
+    "name": "광릉",
+    "level": 2,
+    "population": 100100,
+    "agriculture": 2000,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 4100,
+    "wall": 4000,
+    "region": 2,
+    "posX": 490,
+    "posY": 275,
+    "path": {
+      "7": "건업",
+      "21": "하비"
+    }
+  },
+  {
+    "id": 84,
+    "name": "적도",
+    "level": 2,
+    "population": 95200,
+    "agriculture": 1800,
+    "commerce": 1700,
+    "security": 2000,
+    "defence": 3800,
+    "wall": 3700,
+    "region": 3,
+    "posX": 130,
+    "posY": 75,
+    "path": {
+      "40": "천수",
+      "63": "강",
+      "65": "흉노"
+    }
+  },
+  {
+    "id": 85,
+    "name": "가정",
+    "level": 2,
+    "population": 93100,
+    "agriculture": 1700,
+    "commerce": 1700,
+    "security": 2000,
+    "defence": 3600,
+    "wall": 3800,
+    "region": 3,
+    "posX": 40,
+    "posY": 160,
+    "path": {
+      "41": "안정",
+      "43": "하변",
+      "64": "저"
+    }
+  },
+  {
+    "id": 86,
+    "name": "기산",
+    "level": 2,
+    "population": 100500,
+    "agriculture": 1900,
+    "commerce": 1800,
+    "security": 2000,
+    "defence": 4100,
+    "wall": 4000,
+    "region": 4,
+    "posX": 110,
+    "posY": 180,
+    "path": {
+      "4": "장안",
+      "24": "한중",
+      "75": "양평"
+    }
+  },
+  {
+    "id": 87,
+    "name": "면죽",
+    "level": 3,
+    "population": 109300,
+    "agriculture": 2200,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 10800,
+    "wall": 9900,
+    "region": 4,
+    "posX": 35,
+    "posY": 255,
+    "path": {
+      "5": "성도",
+      "44": "자동"
+    }
+  },
+  {
+    "id": 88,
+    "name": "이릉",
+    "level": 2,
+    "population": 96800,
+    "agriculture": 1800,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 3900,
+    "wall": 4100,
+    "region": 6,
+    "posX": 215,
+    "posY": 295,
+    "path": {
+      "13": "강릉",
+      "45": "영안"
+    }
+  },
+  {
+    "id": 89,
+    "name": "장판",
+    "level": 2,
+    "population": 103200,
+    "agriculture": 2100,
+    "commerce": 2000,
+    "security": 2000,
+    "defence": 4000,
+    "wall": 3700,
+    "region": 6,
+    "posX": 280,
+    "posY": 315,
+    "path": {
+      "6": "양양",
+      "13": "강릉",
+      "52": "강하",
+      "91": "적벽"
+    }
+  },
+  {
+    "id": 90,
+    "name": "백랑",
+    "level": 2,
+    "population": 105200,
+    "agriculture": 2200,
+    "commerce": 1900,
+    "security": 2000,
+    "defence": 3800,
+    "wall": 4200,
+    "region": 8,
+    "posX": 530,
+    "posY": 30,
+    "path": {
+      "8": "북평",
+      "60": "안평",
+      "68": "오환"
+    }
+  },
+  {
+    "id": 91,
+    "name": "적벽",
+    "level": 1,
+    "population": 111700,
+    "agriculture": 2300,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 4200,
+    "wall": 4100,
+    "region": 7,
+    "posX": 330,
+    "posY": 325,
+    "path": {
+      "15": "시상",
+      "52": "강하",
+      "56": "여강",
+      "89": "장판"
+    }
+  },
+  {
+    "id": 92,
+    "name": "파양",
+    "level": 1,
+    "population": 103700,
+    "agriculture": 2000,
+    "commerce": 2200,
+    "security": 2000,
+    "defence": 3800,
+    "wall": 3800,
+    "region": 7,
+    "posX": 430,
+    "posY": 350,
+    "path": {
+      "15": "시상",
+      "31": "오",
+      "56": "여강"
+    }
+  },
+  {
+    "id": 93,
+    "name": "탐라",
+    "level": 1,
+    "population": 113000,
+    "agriculture": 2200,
+    "commerce": 2100,
+    "security": 2000,
+    "defence": 4300,
+    "wall": 4100,
+    "region": 8,
+    "posX": 605,
+    "posY": 260,
+    "path": {
+      "31": "오",
+      "33": "사비",
+      "34": "계림",
+      "62": "이도"
+    }
+  },
+  {
+    "id": 94,
+    "name": "유구",
+    "level": 1,
+    "population": 92100,
+    "agriculture": 1700,
+    "commerce": 1800,
+    "security": 2000,
+    "defence": 3700,
+    "wall": 3700,
+    "region": 8,
+    "posX": 625,
+    "posY": 435,
+    "path": {
+      "59": "대",
+      "69": "왜"
+    }
+  }
+]
