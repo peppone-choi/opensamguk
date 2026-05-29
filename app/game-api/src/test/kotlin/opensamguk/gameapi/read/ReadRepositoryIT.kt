@@ -35,6 +35,7 @@ class ReadRepositoryIT {
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var cities: CityReadRepository
     @Autowired lateinit var nations: NationReadRepository
+    @Autowired lateinit var diplomacies: DiplomacyReadRepository
     @Autowired lateinit var worldStates: WorldStateReadRepository
 
     @Test
@@ -46,11 +47,19 @@ class ReadRepositoryIT {
             VALUES ('scenario_2', 195, 3, 3600, '{"startYear":180}'::jsonb, '{}'::jsonb)
             """.trimIndent()
         )
-        // nation (level 7, with a capital)
+        // nation (level 7, with a capital); gennum/capset + tech ride the full P2 shape
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, level, type_code)
-            VALUES (1, '위', '#0000ff', 5, 7, 'che_명사')
+            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, '위', '#0000ff', 5, 12000, 9000, 1234.5, 7, 'che_명사',
+                    '{"gennum":24,"capset":3,"rate":15}'::jsonb)
+            """.trimIndent()
+        )
+        // a directional diplomacy row: nation 1 -> nation 2, state 2 (불가침), term 6 months
+        jdbc.update(
+            """
+            INSERT INTO diplomacy (src_nation_id, dest_nation_id, state_code, term)
+            VALUES (1, 2, 2, 6)
             """.trimIndent()
         )
         // city owned by nation 1; trust is the INTEGER baseline column (=82) -> widens to 82.0
@@ -67,15 +76,23 @@ class ReadRepositoryIT {
             )
             """.trimIndent()
         )
-        // general in city 5 / nation 1; intel_exp/explevel/max_domestic_critical live in meta only
+        // general in city 5 / nation 1; intel_exp/explevel/max_domestic_critical live in meta only.
+        // full P2 military/equip surface + a 4-field last_turn jsonb.
         jdbc.update(
             """
             INSERT INTO general (
                 id, name, nation_id, city_id, leadership, strength, intel, injury,
-                experience, dedication, officer_level, gold, rice, turn_time, meta
+                experience, dedication, officer_level, gold, rice,
+                crew, crew_type_id, train, atmos, troop_id,
+                weapon_code, book_code, horse_code, item_code, npc_state,
+                turn_time, last_turn, meta
             ) VALUES (
                 10, '순욱', 1, 5, 70, 30, 95, 0,
-                1200, 900, 5, 4000, 3000, now(),
+                1200, 900, 5, 4000, 3000,
+                500, 3, 80, 90, 7,
+                '방천화극', 'None', '여포의적토마', 'None', 2,
+                now(),
+                '{"command":"che_이동","arg":{"destCityID":12},"term":3,"seq":1}'::jsonb,
                 '{"explevel":4,"intel_exp":12,"max_domestic_critical":3.5}'::jsonb
             )
             """.trimIndent()
@@ -88,13 +105,29 @@ class ReadRepositoryIT {
         assertEquals(3, ws.currentMonth)
         assertEquals(180, (ws.config["startYear"] as Number).toInt())
 
-        // --- nation ---
+        // --- nation: full P2 shape; gennum/capset read back FROM meta (no dedicated columns) ---
         val nation = nations.findById(1).orElseThrow().toLogic()
         assertEquals(1, nation.id)
         assertEquals(7, nation.level)
         assertEquals(5, nation.capitalCityId)
+        assertEquals("위", nation.name)
+        assertEquals("#0000ff", nation.color)
+        assertEquals("che_명사", nation.typeCode)
+        assertEquals(12000, nation.gold)
+        assertEquals(9000, nation.rice)
+        assertEquals(1234.5, nation.tech)
+        assertEquals(24, nation.gennum)
+        assertEquals(3, nation.capset)
 
-        // --- city: int trust widens to Double; agri/comm align to baseline columns ---
+        // --- diplomacy: directional row materializes into the logic Diplomacy via the read repo ---
+        val diplo = diplomacies.findBySrcNationId(1).map { it.toLogic() }
+        assertEquals(1, diplo.size)
+        assertEquals(1, diplo[0].me)
+        assertEquals(2, diplo[0].you)
+        assertEquals(2, diplo[0].state)
+        assertEquals(6, diplo[0].term)
+
+        // --- city: int trust widens to Double; P2 develop/defense surface materializes ---
         val city = cities.findById(5).orElseThrow().toLogic()
         assertEquals(5, city.id)
         assertEquals(1, city.nationId)
@@ -103,6 +136,16 @@ class ReadRepositoryIT {
         assertEquals(3000, city.commerce)
         assertEquals(82.0, city.trust) // INTEGER baseline column widened to logic Double
         assertEquals(1, city.supplyState)
+        assertEquals(1000, city.security)
+        assertEquals(2000, city.securityMax)
+        assertEquals(500, city.defense)
+        assertEquals(1000, city.defenseMax)
+        assertEquals(800, city.wall)
+        assertEquals(1500, city.wallMax)
+        assertEquals(50000, city.population)
+        assertEquals(100000, city.populationMax)
+        assertEquals(100, city.trade)
+        assertEquals(3, city.region)
 
         // --- general: meta carries intel_exp/explevel/max_domestic_critical (NO entity column) ---
         val general = generals.findById(10).orElseThrow().toLogic()
@@ -113,6 +156,23 @@ class ReadRepositoryIT {
         assertEquals(4000, general.gold)
         assertEquals(1200.0, general.experience) // int column widened to Double accumulator
         assertEquals(900.0, general.dedication)
+        // P2 military/equip surface
+        assertEquals(500, general.crew)
+        assertEquals(3, general.crewTypeId)
+        assertEquals(80.0, general.train)        // int column widened to Double
+        assertEquals(90.0, general.atmos)
+        assertEquals(7, general.troop)
+        assertEquals("방천화극", general.weapon)
+        assertEquals("여포의적토마", general.horse)
+        assertEquals("None", general.book)
+        assertEquals("None", general.item)
+        assertEquals(2, general.npcType)
+        // last_turn jsonb materializes into the 4-field LastTurn
+        assertEquals("che_이동", general.lastTurn.command)
+        assertEquals(mapOf("destCityID" to 12), general.lastTurn.arg)
+        assertEquals(3, general.lastTurn.term)
+        assertEquals(1, general.lastTurn.seq)
+        // meta-resident exp/level fields
         assertEquals(4, (general.meta["explevel"] as Number).toInt())
         assertEquals(12, (general.meta["intel_exp"] as Number).toInt())
         assertEquals(3.5, (general.meta["max_domestic_critical"] as Number).toDouble())

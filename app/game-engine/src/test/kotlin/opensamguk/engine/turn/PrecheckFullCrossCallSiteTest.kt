@@ -5,6 +5,7 @@ import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
@@ -91,12 +92,14 @@ class PrecheckFullCrossCallSiteTest {
         val generals = mock(GeneralReadRepository::class.java)
         val cities = mock(CityReadRepository::class.java)
         val nations = mock(NationReadRepository::class.java)
+        val diplomacies = mock(DiplomacyReadRepository::class.java)
         val worldStates = mock(WorldStateReadRepository::class.java)
         `when`(generals.findById(GENERAL_ID)).thenReturn(Optional.of(general))
         `when`(cities.findById(CITY_ID)).thenReturn(Optional.of(city))
         `when`(nations.findById(NATION_ID)).thenReturn(Optional.of(nation))
+        `when`(diplomacies.findBySrcNationId(NATION_ID)).thenReturn(emptyList())
         `when`(worldStates.findAll()).thenReturn(listOf(worldState))
-        val factory = PrecheckStateViewFactory(generals, cities, nations, worldStates)
+        val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
         return CommandPrecheckService(factory, registry)
     }
 

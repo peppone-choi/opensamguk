@@ -90,13 +90,17 @@ class CommandReserveServiceIT {
             username = postgres.username
             password = postgres.password
         }
-        // Apply the `:infra` baseline schema (the migration SQL is on the test classpath through the
-        // `:infra` dependency). Flyway's runner is not compile-visible from game-api (it is an `:infra`
-        // `implementation` dep), so the baseline DDL is executed directly via JDBC here.
-        val baselineSql = requireNotNull(
-            javaClass.classLoader.getResource("db/migration/V1__baseline.sql"),
-        ) { "db/migration/V1__baseline.sql not on the test classpath" }.readText()
-        JdbcTemplate(dataSource).execute(baselineSql)
+        // Apply the `:infra` baseline schema + the V2 brief migration (both on the test classpath
+        // through the `:infra` dependency). Flyway's runner is not compile-visible from game-api (it
+        // is an `:infra` `implementation` dep), so the migration DDL is executed directly via JDBC
+        // here, in version order (V1 then V2 — the FD0a `general_turn.brief` column).
+        val jdbcTemplate = JdbcTemplate(dataSource)
+        for (migration in listOf("db/migration/V1__baseline.sql", "db/migration/V2__p2_brief.sql")) {
+            val sql = requireNotNull(javaClass.classLoader.getResource(migration)) {
+                "$migration not on the test classpath"
+            }.readText()
+            jdbcTemplate.execute(sql)
+        }
         jdbc = NamedParameterJdbcTemplate(dataSource)
 
         val config = RedisStandaloneConfiguration(redis.host, redis.getMappedPort(6379))

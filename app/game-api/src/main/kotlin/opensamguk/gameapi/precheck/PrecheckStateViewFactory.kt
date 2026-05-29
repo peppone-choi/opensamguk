@@ -1,10 +1,12 @@
 package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.domain.City
+import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.statview.MemoryStateView
@@ -31,17 +33,21 @@ class PrecheckStateViewFactory(
     private val generals: GeneralReadRepository,
     private val cities: CityReadRepository,
     private val nations: NationReadRepository,
+    private val diplomacies: DiplomacyReadRepository,
     private val worldStates: WorldStateReadRepository,
 ) {
 
     /**
      * The materialized precheck inputs for one actor: the actor's [General] (the service derives
-     * `cityId`/`nationId` from it), the assembled [MemoryStateView], and the shared env map.
+     * `cityId`/`nationId` from it), the assembled [MemoryStateView], the shared env map, and the
+     * actor nation's directional [Diplomacy] rows (consumed by the dest-* constraint family once
+     * C-DEST lands; loaded here so the precheck slice already has the full diplomacy view).
      */
     data class PrecheckState(
         val actor: General,
         val view: MemoryStateView,
         val env: Map<String, Any?>,
+        val diplomacy: List<Diplomacy>,
     )
 
     /** Load + assemble the precheck state for [generalId], or `null` when the general row is absent. */
@@ -54,6 +60,9 @@ class PrecheckStateViewFactory(
         val nationById = LinkedHashMap<Int, Nation>()
         nations.findById(actor.nationId).orElse(null)?.toLogic()?.let { nationById[it.id] = it }
 
+        val diplomacy: List<Diplomacy> =
+            diplomacies.findBySrcNationId(actor.nationId).map { it.toLogic() }
+
         val env = envMap()
         val view = MemoryStateView(
             generals = linkedMapOf(actor.id to actor),
@@ -61,7 +70,7 @@ class PrecheckStateViewFactory(
             nations = nationById,
             env = env,
         )
-        return PrecheckState(actor = actor, view = view, env = env)
+        return PrecheckState(actor = actor, view = view, env = env, diplomacy = diplomacy)
     }
 
     /** Build the `ConstraintContext.env` map from the singleton `world_state` via the shared builder. */
