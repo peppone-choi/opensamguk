@@ -50,3 +50,19 @@ internal object JosaDetect {
         return !(lower.length == 1 && lower[0] in VOWELS)
     }
 }
+
+object JosaUtil {
+    fun pick(text: String?, wJongsung: String, woJongsung: String = ""): String {
+        val normalizedText = text ?: ""
+        var withJongsung = wJongsung
+        var withoutJongsung = woJongsung
+        if (withoutJongsung.isEmpty()) {
+            val mapped = JosaTables.MAP_POSTPOSITION[wJongsung] ?: throw IllegalArgumentException("올바르지 않은 조사 지정")
+            withJongsung = mapped
+            withoutJongsung = JosaTables.DEFAULT_POSTPOSITION.getValue(mapped)
+        }
+        val isRo = withJongsung == "으로"
+        return if (JosaDetect.hasJongsung(normalizedText, isRo)) withJongsung else withoutJongsung
+    }
+    fun put(text: String, wJongsung: String, woJongsung: String = ""): String = text + pick(text, wJongsung, woJongsung)
+}
