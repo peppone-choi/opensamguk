@@ -4,6 +4,7 @@ import opensamguk.logic.actions.personnel.CheBangrang
 import opensamguk.logic.actions.personnel.CheHaya
 import opensamguk.logic.actions.personnel.CheImgwan
 import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
+import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
 
@@ -31,6 +32,7 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_장수대상임관" -> CheJangsuDaesangImgwan(pipeline)
         "che_하야" -> CheHaya(pipeline)
         "che_방랑" -> CheBangrang(pipeline)
+        "che_랜덤임관" -> CheRandomImgwan(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction
