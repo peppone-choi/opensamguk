@@ -1,6 +1,7 @@
 package opensamguk.logic.ai
 
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.domain.City
 
 /**
  * F-DISPATCH consumer seam — `GeneralAiContext`, the per-general AI INPUT bundle every world-driven
@@ -58,6 +59,47 @@ import opensamguk.common.rng.RandUtil
  *   the 포상 reqMoney ladder multiplies by `100 * <method-mult>`. Pipeline/nation-tech-derived (NOT a logic
  *   column); the engine adapter threads `nation['tech']` + the crew-type table, tests build it directly.
  *   Default 0.0 (the non-reward bodies never read it).
+ *
+ * ## L-GENDOM (GenDomesticFamily) per-general scalars (defaulted; only the domestic bodies read them)
+ * @property leadershipWithInjury the acting general's `$this->leadership` = `getLeadership()` WITH injury
+ *   (PHP `:161/2120/2226/2260` — the weight numerator in do일반내정/do전쟁내정/do긴급내정). DISTINCT from
+ *   [fullLeadership] (`getLeadership(false)`, no-injury). Default 0.0.
+ * @property strengthWithInjury the acting general's `$this->strength` = `getStrength()` WITH injury (PHP
+ *   `:162/2121/2261`) — the 무장 develop-command weight numerator in do일반내정/do전쟁내정. DISTINCT from [fullStrength].
+ * @property intelWithInjury the acting general's `$this->intel` = `getIntel()` WITH injury (PHP `:163/2122/2262`)
+ *   — the 지장 develop-command weight numerator in do일반내정/do전쟁내정. DISTINCT from [fullIntel].
+ * @property fullLeadership the acting general's `$this->fullLeadership` = `getLeadership(false)` (PHP `:165`) —
+ *   the `crew = fullLeadership * 100` recruit base (do징병 `:2611`) + the recruit-skip `remainPop` term (`:2505`).
+ * @property nationTech the nation's `$nation['tech']` (PHP `:2190/2327`) — the `nextTech = tech%1000 + 1` 기술연구
+ *   weight base. Default 0.
+ * @property selfCrew the acting general's `getVar('crew')` (PHP `:2500`) — the do징병 war-floor early-return
+ *   (`crew >= minWarCrew → null`, BEFORE any draw). Default 0 (the common recruit case).
+ * @property fullStrength the acting general's `$this->fullStrength` = `getStrength(false)` (PHP `:166`) — the
+ *   do징병 armType gate `fullStrength > fullIntel*0.9` (`:2545`).
+ * @property fullIntel the acting general's `$this->fullIntel` = `getIntel(false)` (PHP `:167`) — the do징병
+ *   armType gate `fullIntel > fullStrength*0.9` (`:2550`).
+ * @property selfCity the acting general's city as the AI reads it (PHP `$this->city`) — trust/pop/pop_max +
+ *   the dev-bearing row feeding [cityDevelRate]. Default null (재야/lost — the domestic bodies then null-guard).
+ * @property cityDevelRate the acting city's `Util::squeezeFromArray(calcCityDevelRate(city), 0)` (PHP
+ *   `:2131/2275/3965-3976`) — the 7 develop ratios keyed `trust/pop/agri/comm/secu/def/wall` (index-0 of the
+ *   `[ratio, typeFlag]` pairs; the typeFlag is discarded by `squeezeFromArray(...,0)`). The candidate-set
+ *   assembly reads these thresholds in PHP order; the adapter computes the ratios over the live city row.
+ * @property chiefStatMin `GameConst::$chiefStatMin` (scenario-tunable, default 65 — `d_setting/GameConst.php:11`)
+ *   — the do긴급내정 `nextBool(leadership/chiefStatMin)` prob denominator. Scenario-threaded, NOT a Kotlin GameConst.
+ * @property techLimited the `TechLimit(startyear, year, nation.tech)` boolean (PHP `:2187/2324`, H-HELPERS §4)
+ *   — gates the che_기술연구 append. Default true (no tech context → no 기술연구 candidate; null-safe).
+ * @property techLimitedNextGrade the `TechLimit(startyear, year, nation.tech + 1000)` boolean (PHP `:2191/2328`)
+ *   — when false, the general is ≥1 grade behind → the higher 기술연구 weight. Default true.
+ * @property recruitArmType the acting general's preset `getAuxVar('armType')` AFTER the genType filter (PHP
+ *   `:2526-2533`) — null when no usable preset (→ the do징병 `choiceUsingWeight($availableArmType)` draw fires).
+ * @property recruitArmTypeWeights the do징병 `$availableArmType` weight map (PHP `:2544-2552`) in
+ *   FOOTMAN/ARCHER/CAVALRY/WIZARD insertion order. Read ONLY when [recruitArmType] is null.
+ * @property recruitCrewScoresFor the do징병 `$types` pickScore map per chosen armType (PHP `:2571-2577`) in
+ *   `GameUnitConst::byType(armType)` iteration order — the `choiceUsingWeight($types)` candidate list.
+ * @property recruitFinalize the do징병 deterministic post-pick cost ladder (PHP `:2585-2650`): given the chosen
+ *   crew-type id, it returns the emitted `(che_징병|che_모병, RAW args)` or null (insufficient gold/rice). NO draws.
+ * @property tradeDecision the do금쌀구매 deterministic buy/sell ladder (PHP `:2367-2480`): returns the emitted
+ *   `(che_군량매매, RAW args)` or null. ZERO draws (decision #9). Default null → the body returns null.
  */
 data class GeneralAiContext(
     val rng: RandUtil,
@@ -78,4 +120,23 @@ data class GeneralAiContext(
     val leadershipNoInjuryOf: (AiGeneralView) -> Double = { it.fullLeadership },
     val reservedIsRecruitOf: (AiGeneralView) -> Boolean = { false },
     val unitCostWithTechOf: (AiGeneralView) -> Double = { 0.0 },
+    // --- L-GENDOM (GenDomesticFamily) per-general scalars ---
+    val leadershipWithInjury: Double = 0.0,
+    val strengthWithInjury: Double = 0.0,
+    val intelWithInjury: Double = 0.0,
+    val fullLeadership: Double = 0.0,
+    val fullStrength: Double = 0.0,
+    val fullIntel: Double = 0.0,
+    val nationTech: Int = 0,
+    val selfCrew: Int = 0,
+    val selfCity: City? = null,
+    val cityDevelRate: Map<String, Double> = emptyMap(),
+    val chiefStatMin: Int = 65,
+    val techLimited: Boolean = true,
+    val techLimitedNextGrade: Boolean = true,
+    val recruitArmType: Int? = null,
+    val recruitArmTypeWeights: List<Pair<Int, Double>> = emptyList(),
+    val recruitCrewScoresFor: (armType: Int) -> List<Pair<Int, Double>> = { emptyList() },
+    val recruitFinalize: (crewTypeId: Int) -> ChosenCommand? = { null },
+    val tradeDecision: () -> ChosenCommand? = { null },
 )

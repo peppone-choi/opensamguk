@@ -1,6 +1,11 @@
 package opensamguk.logic.ai.families
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.ai.AiInstanceState
+import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.GeneralAiContext
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.phpToInt
 import opensamguk.logic.util.valueFit
@@ -266,4 +271,307 @@ object GenDomesticFamily {
      */
     fun halfCrew(crewBeforeHalf: Int): Int =
         phpRound((crewBeforeHalf - 49).toDouble(), -2) // PHP :2635 Util::round($crew-49,-2) half-away at 100s.
+
+    // ====================================================================================================
+    // WORLD-DRIVEN do<한글> BODIES (PHP `GeneralAI.php:2117-2651`, read in full).
+    //
+    // Each body reads the [GeneralAiContext] (rng / instance / develRate / policy / stat caches), assembles the
+    // exact candidate set / weighted cmdList in PHP insertion order, calls the PURE draw primitive above, GATES
+    // the emit via `ctx.candidateAllowed(actionCode, args)` (PHP `$cmd->hasFullConditionMet()`), and returns the
+    // `ChosenCommand` (or null → the dispatcher falls through to the next priority action). READ-ONLY over GAME
+    // ENTITIES; NO meta-KV deltas (the domestic methods queue none in the AI). The candidate ORDER (the
+    // genType-gated develRate cmdList append order + the 4-entry armType insertion order) IS the draw-for-draw
+    // parity target. The 8 develop commands are 주민선정/정착장려/수비강화/성벽보수/치안강화/기술연구/농지개간/상업투자.
+    // ====================================================================================================
+
+    /** PHP develop command codes (`buildGeneralCommandClass('che_*', …)`), in the do일반내정 append order. */
+    private const val C_RESIDENT = "che_주민선정"   // 통솔장 trust
+    private const val C_SETTLE = "che_정착장려"     // 통솔장 pop
+    private const val C_DEFENSE = "che_수비강화"    // 무장 def
+    private const val C_WALL = "che_성벽보수"       // 무장 wall
+    private const val C_SECURITY = "che_치안강화"   // 무장 secu
+    private const val C_TECH = "che_기술연구"        // 지장 tech
+    private const val C_FARM = "che_농지개간"        // 지장 agri
+    private const val C_COMMERCE = "che_상업투자"    // 지장 comm
+
+    /**
+     * The 5 general-domestic `do<한글>` bodies keyed by ACTION-NAME (the bare `do<한글>` name, NOT `che_*`), in
+     * PHP/policy order. The [opensamguk.logic.ai.GeneralAiFactory] registers these into the general dispatch;
+     * the loop walks [AutorunGeneralPolicy.priority] first-non-null. A body returns null on every early-guard /
+     * empty-candidate / gate-deny.
+     */
+    fun bodies(ctx: GeneralAiContext): Map<String, (LastTurn?) -> ChosenCommand?> = linkedMapOf(
+        "일반내정" to { _ -> do일반내정(ctx) },
+        "전쟁내정" to { _ -> do전쟁내정(ctx) },
+        "긴급내정" to { _ -> do긴급내정(ctx) },
+        "금쌀구매" to { _ -> do금쌀구매(ctx) },
+        "징병" to { _ -> do징병(ctx) },
+    )
+
+    // --- shared read helpers (NO draws) ---
+
+    private fun genType(ctx: GeneralAiContext): Int = ctx.instance.genType
+    private fun has(genType: Int, flag: Int): Boolean = (genType and flag) != 0
+    private fun rate(ctx: GeneralAiContext, key: String): Double = ctx.cityDevelRate[key] ?: 1.0
+
+    /** `$cmd->hasFullConditionMet()` then append `[$cmd, weight]` (PHP `:2143-2145` shape). */
+    private fun appendIfAllowed(
+        ctx: GeneralAiContext,
+        cmdList: ArrayList<Pair<String, Double>>,
+        actionCode: String,
+        weight: Double,
+    ) {
+        if (ctx.candidateAllowed(actionCode, emptyMap())) {
+            cmdList.add(actionCode to weight) // PHP `:2144` `$cmdList[] = [$cmd, weight];`
+        }
+    }
+
+    // --- do일반내정 (PHP `:2117-2218`) ---
+
+    private fun do일반내정(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        val leadership = ctx.leadershipWithInjury // PHP `:2120` $this->leadership (WITH injury).
+        val strength = ctx.strengthWithInjury // PHP `:2121` $this->strength (WITH injury).
+        val intel = ctx.intelWithInjury // PHP `:2122` $this->intel (WITH injury).
+        val genType = genType(ctx)
+        val isSpringSummer = ctx.env.month <= 6 // PHP `:2132`.
+        val cmdList = ArrayList<Pair<String, Double>>() // PHP `:2134`.
+
+        // PHP `:2136` — low-rice 30% skip (`&&` suppresses the draw when rice>=baserice).
+        if (domesticLowRiceSkip(ctx.instance.nation.rice < GameConst.baserice, rng)) {
+            return null // PHP `:2137`.
+        }
+
+        if (has(genType, AiInstanceState.T_TONGSOLJANG)) { // PHP `:2140`.
+            val trust = rate(ctx, "trust")
+            if (trust < 0.98) { // PHP `:2141`.
+                appendIfAllowed(ctx, cmdList, C_RESIDENT, leadership / valueFit(trust / 2 - 0.2, 0.001) * 2) // :2144
+            }
+            val pop = rate(ctx, "pop")
+            if (pop < 0.8) { // PHP `:2147`.
+                appendIfAllowed(ctx, cmdList, C_SETTLE, leadership / valueFit(pop, 0.001)) // :2150
+            } else if (pop < 0.99) { // PHP `:2152`.
+                appendIfAllowed(ctx, cmdList, C_SETTLE, leadership / valueFit(pop / 4, 0.001)) // :2155
+            }
+        }
+
+        if (has(genType, AiInstanceState.T_MUJANG)) { // PHP `:2160`.
+            val def = rate(ctx, "def")
+            if (def < 1) { // PHP `:2161`.
+                appendIfAllowed(ctx, cmdList, C_DEFENSE, strength / valueFit(def, 0.001)) // :2164
+            }
+            val wall = rate(ctx, "wall")
+            if (wall < 1) { // PHP `:2167`.
+                appendIfAllowed(ctx, cmdList, C_WALL, strength / valueFit(wall, 0.001)) // :2170
+            }
+            val secu = rate(ctx, "secu")
+            if (secu < 0.9) { // PHP `:2173`.
+                appendIfAllowed(ctx, cmdList, C_SECURITY, strength / valueFit(secu / 0.8, 0.001, 1.0)) // :2176
+            } else if (secu < 1) { // PHP `:2178`.
+                appendIfAllowed(ctx, cmdList, C_SECURITY, strength / 2 / valueFit(secu, 0.001)) // :2181
+            }
+        }
+
+        if (has(genType, AiInstanceState.T_JIJANG)) { // PHP `:2186`.
+            if (!ctx.techLimited) { // PHP `:2187` !TechLimit(startyear, year, nation.tech).
+                val nextTech = (ctx.nationTech % 1000) + 1 // PHP `:2190`.
+                val weight = if (!ctx.techLimitedNextGrade) {
+                    intel / (nextTech / 2000.0) // PHP `:2193` ≥1 grade behind → work harder.
+                } else {
+                    intel // PHP `:2195`.
+                }
+                appendIfAllowed(ctx, cmdList, C_TECH, weight)
+            }
+            val agri = rate(ctx, "agri")
+            if (agri < 1) { // PHP `:2199`.
+                appendIfAllowed(
+                    ctx, cmdList, C_FARM,
+                    (if (isSpringSummer) 1.2 else 0.8) * intel / valueFit(agri, 0.001, 1.0), // :2202
+                )
+            }
+            val comm = rate(ctx, "comm")
+            if (comm < 1) { // PHP `:2205`.
+                appendIfAllowed(
+                    ctx, cmdList, C_COMMERCE,
+                    (if (isSpringSummer) 0.8 else 1.2) * intel / valueFit(comm, 0.001, 1.0), // :2208
+                )
+            }
+        }
+
+        // PHP `:2213-2217` — empty guard (no draw) then the ONE terminal choiceUsingWeightPair.
+        val picked = pickDomesticCommand(cmdList, rng) ?: return null
+        return ChosenCommand(picked, emptyMap())
+    }
+
+    // --- do전쟁내정 (PHP `:2253-2364`) — the TWO nextBool(0.3) trap ---
+
+    private fun do전쟁내정(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        if (ctx.instance.dipState == AiInstanceState.D_PEACE) return null // PHP `:2256`.
+
+        val leadership = ctx.leadershipWithInjury // PHP `:2260`.
+        val strength = ctx.strengthWithInjury // PHP `:2261`.
+        val intel = ctx.intelWithInjury // PHP `:2262`.
+        val genType = genType(ctx)
+
+        // PHP `:2271` — FIRST 0.3 (conditional, `&&` suppressed when rice>=baserice).
+        if (warDomesticLowRiceSkip(ctx.instance.nation.rice < GameConst.baserice, rng)) {
+            return null // PHP `:2272`.
+        }
+
+        val isSpringSummer = ctx.env.month <= 6 // PHP `:2276`.
+        val cmdList = ArrayList<Pair<String, Double>>() // PHP `:2277`.
+
+        // PHP `:2279` — SECOND 0.3 (ALWAYS drawn, no guard). NEVER collapse with `:2271` (decision #9).
+        if (warDomesticUnconditionalSkip(rng)) {
+            return null // PHP `:2280`.
+        }
+
+        val front = ctx.selfCity?.frontState ?: 0
+        val frontOneOrThree = front == 1 || front == 3 // PHP `in_array($city['front'], [1, 3])`.
+
+        if (has(genType, AiInstanceState.T_TONGSOLJANG)) { // PHP `:2283`.
+            val trust = rate(ctx, "trust")
+            if (trust < 0.98) { // PHP `:2284`.
+                appendIfAllowed(ctx, cmdList, C_RESIDENT, leadership / valueFit(trust / 2 - 0.2, 0.001) * 2) // :2287
+            }
+            val pop = rate(ctx, "pop")
+            if (pop < 0.8) { // PHP `:2290`.
+                val w =
+                    if (frontOneOrThree) leadership / valueFit(pop, 0.001) // :2294
+                    else leadership / valueFit(pop, 0.001) / 2 // :2296
+                appendIfAllowed(ctx, cmdList, C_SETTLE, w)
+            }
+        }
+
+        if (has(genType, AiInstanceState.T_MUJANG)) { // PHP `:2302`.
+            val def = rate(ctx, "def")
+            if (def < 0.5) { // PHP `:2303`.
+                appendIfAllowed(ctx, cmdList, C_DEFENSE, strength / valueFit(def, 0.001) / 2) // :2306
+            }
+            val wall = rate(ctx, "wall")
+            if (wall < 0.5) { // PHP `:2309`.
+                appendIfAllowed(ctx, cmdList, C_WALL, strength / valueFit(wall, 0.001) / 2) // :2312
+            }
+            val secu = rate(ctx, "secu")
+            if (secu < 0.5) { // PHP `:2315`.
+                appendIfAllowed(ctx, cmdList, C_SECURITY, strength / valueFit(secu / 0.8, 0.001, 1.0) / 4) // :2318
+            }
+        }
+
+        if (has(genType, AiInstanceState.T_JIJANG)) { // PHP `:2323`.
+            if (!ctx.techLimited) { // PHP `:2324`.
+                val nextTech = (ctx.nationTech % 1000) + 1 // PHP `:2327`.
+                val weight = if (!ctx.techLimitedNextGrade) {
+                    intel / (nextTech / 3000.0) // PHP `:2330` ≥1 grade behind, at war → 3000.
+                } else {
+                    intel // PHP `:2332`.
+                }
+                appendIfAllowed(ctx, cmdList, C_TECH, weight)
+            }
+            val agri = rate(ctx, "agri")
+            if (agri < 0.5) { // PHP `:2336`.
+                val seasonal = (if (isSpringSummer) 1.2 else 0.8) * intel
+                val w =
+                    if (frontOneOrThree) seasonal / 4 / valueFit(agri, 0.001, 1.0) // :2340
+                    else seasonal / 2 / valueFit(agri, 0.001, 1.0) // :2342
+                appendIfAllowed(ctx, cmdList, C_FARM, w)
+            }
+            val comm = rate(ctx, "comm")
+            if (comm < 0.5) { // PHP `:2346`.
+                val seasonal = (if (isSpringSummer) 0.8 else 1.2) * intel
+                val w =
+                    if (frontOneOrThree) seasonal / 4 / valueFit(comm, 0.001, 1.0) // :2350
+                    else seasonal / 2 / valueFit(comm, 0.001, 1.0) // :2352
+                appendIfAllowed(ctx, cmdList, C_COMMERCE, w)
+            }
+        }
+
+        // PHP `:2358-2362` — empty guard (no draw) then the ONE terminal choiceUsingWeightPair.
+        val picked = pickWarDomesticCommand(cmdList, rng) ?: return null
+        return ChosenCommand(picked, emptyMap())
+    }
+
+    // --- do긴급내정 (PHP `:2220-2251`) ---
+
+    private fun do긴급내정(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        if (ctx.instance.dipState == AiInstanceState.D_PEACE) return null // PHP `:2222`.
+
+        val leadership = ctx.leadershipWithInjury // PHP `:2226`.
+        val city = ctx.selfCity ?: return null // PHP reads $this->city; null (재야/lost) → no gate.
+        val chiefStatMin = ctx.chiefStatMin.toDouble()
+
+        // PHP `:2236` — trust<70 → nextBool(leadership/chiefStatMin) → che_주민선정 (`&&` suppressed when trust>=70).
+        if (emergencyTrustGate(city.trust < 70.0, leadership, chiefStatMin, rng)) {
+            if (ctx.candidateAllowed(C_RESIDENT, emptyMap())) { // PHP `:2238` hasFullConditionMet.
+                return ChosenCommand(C_RESIDENT, emptyMap()) // PHP `:2239`.
+            }
+        }
+
+        // PHP `:2243` — pop<min → nextBool(leadership/chiefStatMin/2) → che_정착장려 (`&&` suppressed when pop>=min).
+        if (emergencyPopGate(
+                city.population < ctx.nationPolicy.minNPCRecruitCityPopulation,
+                leadership, chiefStatMin, rng,
+            )
+        ) {
+            if (ctx.candidateAllowed(C_SETTLE, emptyMap())) { // PHP `:2245` hasFullConditionMet.
+                return ChosenCommand(C_SETTLE, emptyMap()) // PHP `:2246`.
+            }
+        }
+
+        return null // PHP `:2250`.
+    }
+
+    // --- do금쌀구매 (PHP `:2367-2481`) — ZERO RNG draws (deterministic ladder, delegated) ---
+
+    private fun do금쌀구매(ctx: GeneralAiContext): ChosenCommand? =
+        ctx.tradeDecision() // the deterministic buy/sell ladder (PHP `:2367-2480`); NO draws (decision #9).
+
+    // --- do징병 (PHP `:2483-2651`) ---
+
+    private fun do징병(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:2485` — d평화/d선포 → null.
+        if (ctx.instance.dipState == AiInstanceState.D_PEACE || ctx.instance.dipState == AiInstanceState.D_DECLARED) {
+            return null
+        }
+        // PHP `:2489` — must be 통솔장.
+        if (!has(genType(ctx), AiInstanceState.T_TONGSOLJANG)) return null
+
+        val city = ctx.selfCity ?: return null
+
+        // PHP `:2500` — crew already at the war floor → null (BEFORE any draw).
+        if (ctx.selfCrew >= ctx.nationPolicy.minWarCrew) return null
+
+        // PHP `:2504-2516` — recruit-skip block (only when !can한계징병).
+        if (!ctx.generalPolicy.can한계징병) {
+            val remainPop = city.population - ctx.nationPolicy.minNPCRecruitCityPopulation -
+                (ctx.fullLeadership * 100).toInt() // PHP `:2505`.
+            if (remainPop <= 0) return null // PHP `:2506-2508`.
+
+            val maxPop = city.populationMax - ctx.nationPolicy.minNPCRecruitCityPopulation // PHP `:2510`.
+            val popRatioBelowSafe =
+                city.population.toDouble() / city.populationMax < ctx.nationPolicy.safeRecruitCityPopulationRatio // :2511
+            // PHP `:2512` — `&&` suppresses the draw when the ratio is safe.
+            if (recruitSkipGate(popRatioBelowSafe, remainPop, maxPop, rng)) {
+                return null // PHP `:2514`.
+            }
+        }
+
+        // PHP `:2526-2555` — arm type: a usable preset short-circuits the draw; else choiceUsingWeight.
+        val armType = ctx.recruitArmType ?: run {
+            if (ctx.recruitArmTypeWeights.isEmpty()) return null // empty $availableArmType → choiceUsingWeight throws; guard.
+            pickArmType(linkedMapOf<Int, Double>().apply { ctx.recruitArmTypeWeights.forEach { put(it.first, it.second) } }, rng) // :2554
+        }
+
+        // PHP `:2571-2583` — crew-type pickScore types; empty → MustNotBeReachedException (the adapter guards).
+        val types = ctx.recruitCrewScoresFor(armType)
+        if (types.isEmpty()) return null
+        val crewType = pickCrewType(types, rng) // PHP `:2580`.
+
+        // PHP `:2585-2650` — the deterministic post-pick cost ladder (can고급병종 override / can모병 / half-crew /
+        // rice gate / hasFullConditionMet); NO draws. Delegated to the adapter, which threads the chosen crewType.
+        return ctx.recruitFinalize(crewType)
+    }
 }
