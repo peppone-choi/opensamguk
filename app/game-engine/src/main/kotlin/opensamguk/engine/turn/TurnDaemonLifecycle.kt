@@ -1,6 +1,8 @@
 package opensamguk.engine.turn
 
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.tick.ServerClock
 import java.time.Duration
 import java.time.Instant
@@ -22,10 +24,42 @@ class TurnDaemonLifecycle(
     private val world: InMemoryTurnWorld,
     private val handler: ReservedTurnHandler,
     /**
+     * P5 FM2 — the NATION-command resolve path (R-SEAM §4). When supplied, the officer_level>=5 nation
+     * pass runs BEFORE the general pass for a chief general (`hasNationTurn`, R-SEAM §2). Null = no nation
+     * pass (the P1–P4 general-only call sites stay unchanged).
+     */
+    private val nationProcessor: ProcessNationCommand? = null,
+    /**
+     * How the lifecycle obtains the reserved `(actionCode, argJson)` for a chief's nation ring slot
+     * (`nation_turn` keyed `(nationId, officerLevel, turn_idx=0)`, PHP `:263-267`). Returns 휴식 when no
+     * nation command is reserved. Only consulted when [nationProcessor] is set AND `hasNationTurn`.
+     */
+    private val reservedNationActionOf: (nationId: Int, officerLevel: Int) -> ReservedTurn = { _, _ -> ReservedTurn("휴식", "") },
+    /**
+     * P5 FM2 — the NATION-pass AI interpose (R-SEAM §2 `:305-308`). For an AI-controlled chief
+     * (`npc >= 2`) with `use_auto_nation_turn` truthy, this REPLACES the reserved nation command with the
+     * AI's `chooseNationTurn(...)` result BEFORE [ProcessNationCommand.process]. **Only `chooseNationTurn`
+     * is wired — `chooseInstantNationTurn` is NOT (decision #3 / B3 / R-SEAM §3).** Null = a human chief
+     * runs the reserved nation command verbatim (no AI).
+     */
+    private val chooseNationTurn: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
+    /**
+     * The killturn baseline / clock-freeze gate (`processBlocked`, PHP `:299`). Supplies the
+     * [LifecycleEnv] the SINGLE `processBlocked()` gate reads (the block log's `<1>HH:MM</>` date stamp +
+     * the killturn decrement). Default builds a minimal env from the world state + the tick's turn time.
+     */
+    private val lifecycleEnvOf: (state: TurnWorldState, date: String) -> LifecycleEnv = { state, date ->
+        LifecycleEnv(baselineKillturn = 0, year = state.currentYear, month = state.currentMonth, turnTerm = 1, turnTimeHm = date)
+    },
+    /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
      * jsonb (R-SEAM §1 / FM1) — the seed still keys on `definition.key`, so the widening only feeds the
      * resolver's arg map; targeted reserved commands (이동/발령/…) now reach the resolver with their arg.
+     *
+     * Declared LAST so the trailing-lambda call form `TurnDaemonLifecycle(world, handler) { reservedActionOf }`
+     * (the P1–P4 general-only call sites) binds the lambda to THIS param while the FM2 nation collaborators
+     * above stay defaulted.
      */
     private val reservedActionOf: (generalId: Int) -> ReservedTurn,
 ) {
@@ -54,8 +88,37 @@ class TurnDaemonLifecycle(
         val state = world.getState()
         val date = formatTurnTime(runTime)
         val due = dueGenerals(runTime)
+        val env = lifecycleEnvOf(state, date)
         val handled = ArrayList<ReservedTurnHandler.HandledTurn>(due.size)
         for (g in due) {
+            // The SINGLE processBlocked() gate (PHP `:299`): `block>=2` skips the WHOLE command block —
+            // BOTH the nation pass AND the general pass (R-SEAM §2). The handler's processBlocked pushes
+            // the block log + decrements killturn, then we skip both resolves for this general.
+            if (handler.processBlocked(g.id, env)) continue
+
+            // --- NATION PASS FIRST (R-SEAM §2 `:301-324`), under the same processBlocked() gate ---
+            // hasNationTurn ⇐ nation!=0 && officer_level>=5 (PHP `:260`). Only when a nation processor is
+            // wired. The AI hook (chooseNationTurn ONLY — chooseInstantNationTurn is NOT wired, decision #3)
+            // replaces the reserved nation command BEFORE the resolve; a human chief runs it verbatim.
+            if (nationProcessor != null && hasNationTurn(g)) {
+                val reservedNation = reservedNationActionOf(g.nationId, g.officerLevel)
+                var nationCmd = ChosenCommand(reservedNation.actionCode, ReservedTurnHandler.decodeArgs(reservedNation.argJson))
+                if (chooseNationTurn != null && ReservedTurnHandler.isAiControlled(g) && useAutoNationTurn(g)) {
+                    nationCmd = chooseNationTurn.invoke(g.id, reservedNation)
+                }
+                val lastTurn = lastNationTurnOf(g.nationId, g.officerLevel)
+                nationProcessor.process(
+                    generalId = g.id,
+                    officerLevel = g.officerLevel,
+                    nationCommand = nationCmd,
+                    lastTurn = lastTurn,
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    date = date,
+                )
+            }
+
+            // --- GENERAL PASS SECOND (R-SEAM §2 `:326-348`) — the existing handler interpose ---
             handled.add(
                 handler.handle(
                     generalId = g.id,
@@ -67,6 +130,20 @@ class TurnDaemonLifecycle(
             )
         }
         return handled
+    }
+
+    /** PHP `:260` — `hasNationTurn ⇐ $general->getVar('nation') != 0 && officer_level >= 5`. */
+    private fun hasNationTurn(g: TurnGeneral): Boolean = g.nationId != 0 && g.officerLevel >= 5
+
+    /** PHP `:305` — `$general->getAuxVar('use_auto_nation_turn') ?? 1` (the pre-turn snapshot; truthy default). */
+    private fun useAutoNationTurn(g: TurnGeneral): Boolean =
+        (g.meta["use_auto_nation_turn"] as? Number)?.toInt()?.let { it != 0 } ?: true
+
+    /** PHP `:271` — `LastTurn::fromRaw($nationStor->getValue("turn_last_{officer_level}"))` (the chief ring slot). */
+    private fun lastNationTurnOf(nationId: Int, officerLevel: Int): LastTurn {
+        val raw = world.getNationById(nationId)?.meta?.get("turn_last_$officerLevel")
+        @Suppress("UNCHECKED_CAST")
+        return LastTurn.fromRaw(raw as? Map<String, Any?>)
     }
 
     /** `HH:MM` of the run time in UTC (the `<1>date</>` log suffix; PHP logs the turn clock time). */
