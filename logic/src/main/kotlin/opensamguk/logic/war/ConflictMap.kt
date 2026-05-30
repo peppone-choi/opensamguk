@@ -157,12 +157,14 @@ class ConflictMap private constructor(
             if (inner.isBlank()) emptyList() else inner.split(',').map { it.trim() }.filter { it.isNotEmpty() }
 
         /**
-         * PHP `json_encode` float rendering (serialize_precision = -1, the PHP 7.1+ default): the shortest
-         * decimal string that round-trips, with an always-present fractional part for whole floats
-         * (`105.0` → "105.0"). Kotlin's `Double.toString` already yields the shortest round-trip form and
-         * keeps the `.0` on whole doubles, matching PHP for the values in the conflict path (`dead*1.05`,
-         * float-tainted sums).
+         * PHP `Json::encode` float rendering as the committed `conflict-01.json` golden proves it
+         * (`WarUnitCity.php` conflict path, `Json::encode`): a float whose value is a WHOLE number is rendered
+         * WITHOUT a fractional part — `3000*1.05 = 3150.0` encodes as `3150` (golden `{"1":3150}`), not
+         * `3150.0`. (devsam's `Json::encode` follows PHP `json_encode` with the project's precision config,
+         * which drops the trailing `.0` on integral floats.) A genuinely fractional float keeps its shortest
+         * round-trip decimal. So: integral → bare integer string; fractional → `Double.toString` (shortest).
          */
-        private fun phpFloat(v: Double): String = v.toString()
+        private fun phpFloat(v: Double): String =
+            if (v == Math.floor(v) && !v.isInfinite()) v.toLong().toString() else v.toString()
     }
 }
