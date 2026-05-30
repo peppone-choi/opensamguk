@@ -1,0 +1,108 @@
+{
+  "_doc": "P4 G1 — battle + conquest golden manifest (the byte/draw-for-draw oracle for the BattleReplayGateTest / ConquerCityReplayGateTest / ConflictWinnerGateTest). Generated against the REAL devsam-core processWar_NG (via j_simulate_battle's simulateBattle body) + processWar()→ConquerCity vs installed scenario_1010. EVERY fixture verified byte-IDENTICAL across repeated PHP runs (OQ #12) before commit. The matched-count gate rises monotonically as the Kotlin F1-F7/A1-A4/B1-B3 families land; ignore-entries quarantine genuinely-out-of-P4 mismatches with a documented PHP reason — NOT fake-green.",
+  "scenario": 1010,
+  "scenarioBase": "che",
+  "startYear": 181,
+  "turnterm": 120,
+  "capturePattern": "raw docker-compose/CLI (mirrors capture_monthtick): MariaDB 11.4 + php:8.3-cli + composer.phar; scenario_1010 (174 generals, 2 nations, 94 cities, 24 owned). NOT Testcontainers. See README run block.",
+  "drawPrimitives": {
+    "_doc": "the RandUtilDrawRecorder logs each draw {seq, method, args, result, consumed, stateIdxBefore, bufferIdxBefore}. consumed=false marks a nextBool short-circuit (prob>=1 / prob<=0) that makes NO draw — the cursor is unchanged (the load-bearing parity trap). The Kotlin LiteHashDrbg exposes the SAME stateIdx(Long)+bufferIdx(Int) byte fingerprint; the replay asserts value-for-value AND cursor-for-cursor at the FIRST divergent draw.",
+    "methods": ["nextFloat1", "nextRange(min,max)", "nextRangeInt(min,max)", "nextInt(max)", "nextBit", "nextBool(prob)", "choice(items->index+value)"],
+    "cursorFields": "LiteHashDRBG protected int stateIdx (SHA-512 block counter) + protected int bufferIdx (byte offset in the 64-byte block) — read via reflection, observe-only."
+  },
+  "rngLineages": {
+    "war": "che_출병.php:245-253 — pre=LiteHashDRBG(simpleSerialize(hidden,'war',year,month,attackerId,destCityId)); warSeed=bin2hex(pre.nextBytes(16)); processWar(): ONE RandUtil(LiteHashDRBG(warSeed)) built once at process_war.php:11, threaded by reference into EVERY WarUnit + getNextDefender + trigger fire.",
+    "conquerCity": "process_war.php:549 AND :589 — RandUtil(LiteHashDRBG(simpleSerialize(hidden,'ConquerCity',year,month,attNationId,attId,cityId))). Built TWICE, IDENTICAL → the stream RESETS to idx 0 after the OccupyCity event. Captured as the distinct double-seed STRING (both identical)."
+  },
+  "battleFixtures": [
+    {
+      "file": "battle-01.json",
+      "label": "jojo_vs_gwanu_normal_exchange",
+      "attacker": "조조 (no=132, che_반계, L100/S80/I95, 보병 1100, 5000 crew)",
+      "defenders": ["관우 (no=18, che_위압, 보병 1100, 5000 crew, in 홍농 city=42)"],
+      "warSeed": "2e344cb5904febf229cb069fb6e00168",
+      "warSeedDerivation": "bin2hex(LiteHashDRBG(simpleSerialize(hiddenSeed,'war',200,1,132,42)).nextBytes(16))",
+      "hiddenSeed": "fbfb1f7c7914c3e150d5e28e9c45a7e1",
+      "drawCount": 45,
+      "phases": 7,
+      "conquerCity": false,
+      "exercises": "the always-present base 필살시도/회피시도/계략시도 PRE draws + 반계시도 BODY + 위압시도 BEGIN; calcDamage attacker-then-defender nextRange(0.9,1.1) per phase; tryWound nextBool(0.05) tail.",
+      "byteStable": true
+    },
+    {
+      "file": "battle-02.json",
+      "label": "janggak_magic_heavy",
+      "attacker": "장각 (no=105, che_환술, L93/S25/I93, 귀병 1400 magicCoef 0.5, 6000 crew)",
+      "defenders": ["장량 (no=110, che_환술, 귀병 1400, 4000 crew, on 관도 city=80 황건적, siege)"],
+      "warSeed": "2b1b2436ecaaf3e913362a409d21d999",
+      "warSeedDerivation": "bin2hex(LiteHashDRBG(simpleSerialize(hiddenSeed,'war',200,1,105,80)).nextBytes(16))",
+      "hiddenSeed": "fbfb1f7c7914c3e150d5e28e9c45a7e1",
+      "drawCount": 69,
+      "phases": 7,
+      "conquerCity": false,
+      "exercises": "the 계략시도 magic sub-stream: nextBool(trial) → choice(magicTable: 위보/매복/반목/화계/혼란 for general, 급습/위보/혼란 for city) → nextBool(success). 6 choice draws (화계/혼란/반목/급습). BOTH 계략 success AND 계략실패 branches fire (pins the success-folds-:74-75 vs fail-stores-RAW-:85 asymmetry, gate-b). seq4 nextBool(1.485) short-circuit (consumed=false, cursor unchanged) pins the no-draw guaranteed-prob trap.",
+      "byteStable": true
+    }
+  ],
+  "conquerCityFixtures": [
+    {
+      "file": "conquercity-survive-01.json",
+      "label": "survive_noncapital_fall",
+      "branch": "non-capital city falls, defender nation SURVIVES (multi-city)",
+      "attacker": "조조 (no=132, nation 1 후한, home city 17 PINNED, 80000 crew) → 황건적 관도 (city=80, weakened def=30)",
+      "hiddenSeed": "8ebfeb6fa932a181ec9ef43b7473f4c9 (PINNED — the plan's fixed live config value)",
+      "warSeed": "deea6716d09123c7c462f5b9635fc8d3",
+      "conquerCitySeed": "str(32,8ebfeb6fa932a181ec9ef43b7473f4c9)|str(11,ConquerCity)|int(181)|int(1)|int(1)|int(132)|int(80)",
+      "asserts": "the db_delta (ChangeRecorder flush oracle): city 80 nation flip + agri/comm/secu×0.7 + def/wall reset (def_max/2 since level<=3) + dead split (0.4 attacker-home / 0.6 target); nation 2 tech bump; 1 officer demote (officer_level=1, officer_city=0); SetNationFront. conquest_records: 진격 + 점령(공략 성공) byte-exact.",
+      "byteStable": true
+    },
+    {
+      "file": "conquercity-capital-01.json",
+      "label": "capital_fall_emergency_move",
+      "branch": "defender CAPITAL falls, nation survives → 긴급천도 (findNextCapital BFS-ring max-pop)",
+      "attacker": "조조 (no=132, nation 1, home city 17 PINNED, 80000 crew) → 황건적 capital 업 (city=1, weakened def=30)",
+      "hiddenSeed": "8ebfeb6fa932a181ec9ef43b7473f4c9 (PINNED)",
+      "warSeed": "094317401656ecf03eac89ddeecea011",
+      "asserts": "findNextCapital picked 복양 (city=18) via the PHP BFS-ring + max-pop (NOT TS Euclidean); nation 2 capital 1→18, gold/rice ×0.5, tech bump; chiefs moved to new capital; ALL nation-2 generals atmos ×0.8; per-general 긴급천도 action log (33 records); 함락 history. db_delta is the ChangeRecorder oracle. Chiefs PINNED into the defender capital pre-conquest for byte-stability (install-RNG placement).",
+      "byteStable": true
+    }
+  ],
+  "conflictFixtures": [
+    {
+      "file": "conflict-01.json",
+      "label": "conflict_3nation_siege_arsort_winner",
+      "asserts": "WarUnitCity::addConflict over 3 sieges on 관도(city=80): N1 dead=3000 → ×1.05 선타 = 3150 (newConflict=false, first key); N3 dead=5000 → {3:5000, 1:3150} (newConflict=true, arsort DESC); N1 +1000 → 4150 → arsort re-sort {3:5000, 1:4150}. getConquerNation = array_key_first = N3 (the winner). deleteConflict(N3) → {1:4150} with NO re-sort (insertion order preserved). PINS the PHP arsort stable-DESC tie-break (decision #6) — NOT V8 integer-key re-sort.",
+      "rng": "NONE — addConflict is pure arithmetic + arsort (no draws).",
+      "byteStable": true
+    }
+  ],
+  "matchedCountGate": {
+    "_policy": "draw stream value-for-value AND cursor-for-cursor (stateIdx/bufferIdx) at the FIRST divergence; finishBattle RankColumn counters byte-comparable; per-phase battle log byte-equal; conquest db_delta reproduced as ChangeRecorder DELTAS (no inline DB write); conflict winner + JSON byte-equal. mismatches==0 after the ignore-list filter; rises monotonically as families land.",
+    "assertedFactsThisPhase": [
+      "battle draw stream + cursor fingerprint (45 / 69 draws) off the ONE shared war RandUtil",
+      "nextBool short-circuit no-draw cursor-stability (battle-02 seq4)",
+      "magic sub-stream choice() + success/fail branch (battle-02)",
+      "ConquerCity double-seed string (identical) + full DB delta + conquest logs (survive/capital)",
+      "ConflictMap arsort stable-DESC winner + ×1.05 선타/막타 + deleteConflict (conflict-01)"
+    ]
+  },
+  "perFixtureIgnoreList": {
+    "_reason": "Fields the golden dumps but the Kotlin replay does not (yet) assert — volatile-but-deterministic inputs pinned for byte-stability, or out-of-P4-scope columns. Documented in p4-capture-backlog.md.",
+    "battle": ["attacker_input.turntime (PINNED wall-clock — only echoed into the 진격 <1>date</> log + recent_war)"],
+    "conquercity": ["general.recent_war (PINNED turntime-derived)", "the install-random non-target general placements (irrelevant to the keyed delta)"]
+  },
+  "quarantine": [
+    {
+      "id": "COLLAPSE-1",
+      "what": "The COLLAPSE branch (defender nation cityCount==1 → DestroyNation) collapse per-general draw sub-stream (process_war.php:589-664: onArbitraryAction defender loop + nextRange(0.2,0.5) gold/rice loss + nextBool(0.5) scout + nextBool(joinRuinedNPCProp)+nextRangeInt(0,12) NPC-join).",
+      "reason": "Those draws come off a LOCAL `$rng` created INSIDE ConquerCity() (process_war.php:549,:589) — not the war RandUtil, and not reachable from outside the function. Wrapping it with RandUtilDrawRecorder would require editing process_war.php (grand truth — must NOT alter). The two NON-collapse branches captured here DO exercise the :599 onArbitraryAction defender loop + both ConquerCity seed STRINGS + the full side-effect order. The collapse sub-stream is captured by the B2 standalone-replay harness (the Kotlin ConquerCity port replays the documented draw order on the captured seed string). Seed strings ARE captured.",
+      "owner": "B2 (ConquerCity collapse sub-stream standalone replay)"
+    },
+    {
+      "id": "COLLAPSE-2",
+      "what": "A committed collapse-branch golden fixture (cityCount==1 forced).",
+      "reason": "Forcing collapse requires deleting 9 of nation-2's 10 cities (extensive DB surgery) AND the collapse loop's local-rng sub-stream (COLLAPSE-1) cannot be recorded faithfully without touching process_war.php. Deferred to a B2 follow-up that drives the recorder through a standalone ConquerCity collapse replay on the captured seed string + a synthetic 1-city defender nation. Documented in p4-capture-backlog.md item CC-1.",
+      "owner": "B2 follow-up (synthetic 1-city collapse + standalone recorder)"
+    }
+  ]
+}
