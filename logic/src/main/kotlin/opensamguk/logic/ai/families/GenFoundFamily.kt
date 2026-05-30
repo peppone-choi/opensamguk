@@ -77,4 +77,264 @@ object GenFoundFamily {
             .filter { it.officerLevel == 12 && it.npcType == 9 && it.nationId != 0 }
             .minByOrNull { it.id }
             ?.nationId
+
+    // ==================================================================================================
+    // Action constants + meta-KV delta keys (the emitted che_* + the movingTargetCityID delta key).
+    // ==================================================================================================
+
+    /** PHP `:3282` `buildGeneralCommandClass('che_거병', …)` — the do거병 emit. */
+    const val FOUND_REBELLION_ACTION: String = "che_거병"
+
+    /** PHP `:3292` `buildGeneralCommandClass('che_해산', …)` — the do해산 emit. */
+    const val DISBAND_ACTION: String = "che_해산"
+
+    /** PHP `:3306` `buildGeneralCommandClass('che_건국', …)` — the do건국 emit. */
+    const val FOUND_NATION_ACTION: String = "che_건국"
+
+    /** PHP `:3323` `buildGeneralCommandClass('che_선양', …)` — the do선양 emit. */
+    const val ABDICATE_ACTION: String = "che_선양"
+
+    /** PHP `:3349` `buildGeneralCommandClass('che_임관', …)` — the do국가선택 오랑캐-임관 emit. */
+    const val JOIN_NATION_ACTION: String = "che_임관"
+
+    /** PHP `:3382` `buildGeneralCommandClass('che_랜덤임관', …)` — the do국가선택 random-join emit. */
+    const val RANDOM_JOIN_ACTION: String = "che_랜덤임관"
+
+    /** PHP `:3393`/`:3458` `buildGeneralCommandClass('che_이동', …)` — the do국가선택 move-instead emit. */
+    const val MOVE_ACTION: String = "che_이동"
+
+    /** PHP `:3412`/`:3440`/`:3448` `buildGeneralCommandClass('che_인재탐색', …)` — the 사망대비/중립 search emit. */
+    const val TALENT_SEARCH_ACTION: String = "che_인재탐색"
+
+    /** PHP `:3414`/`:3442`/`:3462` `buildGeneralCommandClass('che_견문', …)` — the 사망대비/중립 tour emit. */
+    const val TOUR_ACTION: String = "che_견문"
+
+    /** PHP `:3420`/`:3448`/`:3460` `buildGeneralCommandClass('che_물자조달', …)` — the 사망대비/중립 supply emit. */
+    const val SUPPLY_ACTION: String = "che_물자조달"
+
+    /** PHP `:3424`/`:3429` `buildGeneralCommandClass('che_헌납', …)` — the doNPC사망대비 in-nation tribute emit. */
+    const val TRIBUTE_ACTION: String = "che_헌납"
+
+    /** The general meta-KV key do해산/do건국 clear (PHP `:3297`/`:3315` `setAuxVar('movingTargetCityID', null)`). */
+    const val MOVING_TARGET_KEY: String = "movingTargetCityID"
+
+    /** The value do해산/do건국 write to [MOVING_TARGET_KEY] (PHP `:3297`/`:3315` — null, a ChangeRecorder delta). */
+    val MOVING_TARGET_CLEARED_VALUE: Int? = null
+
+    // ==================================================================================================
+    // do거병 (:3217-3288) — up to 4 draws:
+    //   :3232 nextBool(0.5)=nextBit (&& cityLevel∉{5,6}) → :3258 nextBool()=nextBit PER dist-3 candidate (variable)
+    //   → :3268 nextFloat1()*(defaultStatNPCMax+chiefStatMin)/2 → :3278 nextBool(0.0075*more).
+    // ==================================================================================================
+
+    /**
+     * `do거병`'s non-foundable-city 50% skip (PHP `:3232`
+     * `if (($currentCityLevel < 5 || 6 < $currentCityLevel) && $this->rng->nextBool(0.5)) return null;`).
+     *
+     * The `&&` short-circuits: when [cityLevelNotFoundable] is false (the general sits on a level-5/6 city)
+     * the `nextBool(0.5)` right operand is NEVER reached (ZERO draws). The prob is exactly `0.5` → RandUtil's
+     * `nextBool` takes the **nextBit** path (one bit, NOT a nextFloat1) — a parity target.
+     *
+     * @param cityLevelNotFoundable the already-computed `$currentCityLevel < 5 || 6 < $currentCityLevel`.
+     * @return true to SKIP the rebellion (`return null`): only when on a non-foundable city AND the 0.5 bit is set.
+     */
+    fun nonFoundableCitySkip(cityLevelNotFoundable: Boolean, rng: RandUtil): Boolean =
+        cityLevelNotFoundable && rng.nextBool(0.5) // PHP :3232 — `&&` suppresses the (nextBit) draw on a level-5/6 city.
+
+    /**
+     * `do거병`'s per-dist-3-candidate 50% skip (PHP `:3258` `if ($dist == 3 && $this->rng->nextBool()) continue;`).
+     *
+     * **The variable-count BFS trap.** This is drawn PER dist-3 candidate inside the `foreach (searchDistance(...,3)
+     * as $targetCityID => $dist)` loop (`:3250`), in BFS visitation order, until the first KEPT candidate
+     * (`:3261-3262` sets `availableNearCity=true; break;`). A dist-1/dist-2 candidate is NOT subject to this draw
+     * (the `$dist == 3 &&` guard); only dist-3 candidates that survive the occupied/level filters reach it. The
+     * default prob `0.5` → the **nextBit** path. The caller drives the BFS loop (F-BFS name-order) and invokes this
+     * once per dist-3 candidate it must roll on; a `true` result `continue`s (skip this candidate), a `false` keeps it.
+     *
+     * @return the `nextBool()` result (true = skip this dist-3 candidate and keep scanning).
+     */
+    fun dist3CandidateSkip(rng: RandUtil): Boolean =
+        rng.nextBool() // PHP :3258 — per-dist-3-candidate 50% skip (default 0.5 → nextBit; variable BFS-order count).
+
+    /**
+     * `do거병`'s rebellion stat-threshold prop (PHP `:3268`
+     * `$prop = $this->rng->nextFloat1() * (GameConst::$defaultStatNPCMax + GameConst::$chiefStatMin) / 2;`).
+     *
+     * One top-level `nextFloat1` scaled by the stat midpoint [statMidpoint] = `(defaultStatNPCMax + chiefStatMin)
+     * / 2` (= `70` in 1010; the adapter supplies the effective per-server value — the family never hard-codes a
+     * threshold). Drawn ALWAYS, once `availableNearCity` is true. The caller compares `prop >= ratio` (PHP `:3272`,
+     * `ratio = (fullLeadership + fullStrength + fullIntel) / 3`) to decide the `return null` — that comparison is
+     * NON-RNG (it does not draw).
+     *
+     * @param statMidpoint `(defaultStatNPCMax + chiefStatMin) / 2` (the adapter's effective value, e.g. 70.0).
+     * @return `nextFloat1() * statMidpoint` (the rebellion threshold prop).
+     */
+    fun rebellionStatProp(statMidpoint: Double, rng: RandUtil): Double =
+        rng.nextFloat1() * statMidpoint // PHP :3268 — one nextFloat1, scaled by (defaultStatNPCMax+chiefStatMin)/2.
+
+    /**
+     * `do거병`'s final-gate roll (PHP `:3278` `if (!$this->rng->nextBool(0.0075 * $more)) return null;`).
+     *
+     * `$more = Util::valueFit(3 - year + init_year, 1, 3)` (PHP `:3277`) ∈ {1,2,3} → prob ∈ {0.0075, 0.015,
+     * 0.0225}: NEVER `0.5`, NEVER `>= 1`, NEVER `<= 0` → RandUtil's `nextBool` ALWAYS consumes one `nextFloat1`
+     * (no short-circuit, no nextBit path). Used as `!nextBool(...)` in PHP (a `false` → `return null`).
+     *
+     * @param more the valueFit-clamped founding-deadline factor ∈ {1,2,3} (the adapter computes it).
+     * @return the `nextBool(0.0075 * more)` result (PHP returns null = abort when this is false).
+     */
+    fun foundFinalGate(more: Int, rng: RandUtil): Boolean =
+        rng.nextBool(0.0075 * more) // PHP :3278 — final gate; 0.0075*more is always a non-boundary float draw.
+
+    // ==================================================================================================
+    // do건국 (:3302-3318) — 2 draws, type-THEN-color: :3304 choice(availableNationType 13→nextInt(12))
+    //   THEN :3305 choice(GetNationColors keys 33→nextInt(32)). ASSERT GetNationColors().size==33 (m6).
+    // ==================================================================================================
+
+    /** The founding selection: the chosen `nationType` action code + the chosen `colorType` palette INDEX. */
+    data class FoundingChoice(val nationType: String, val colorIndex: Int)
+
+    /**
+     * `do건국`'s type-THEN-color pick (PHP `:3304-3305`):
+     * ```php
+     * $nationType  = $this->rng->choice(GameConst::$availableNationType);          // :3304 — 13-elem → nextInt(12)
+     * $nationColor = $this->rng->choice(array_keys(GetNationColors()));            // :3305 — 33-elem LIST → nextInt(32)
+     * ```
+     * **m6 — the count IS the parity target.** `GetNationColors()` is a flat LIST of 33 hex strings (keys 0..32);
+     * `array_keys(...)` yields `[0,1,…,32]`, so `choice` draws `nextInt(32)` returning an INDEX. The caller MUST
+     * pass `GetNationColors().size` (= 33, asserted GREEN in `domain/GetNationColors.kt`); a wrong count shifts the
+     * `nextInt` range → desync. The draw ORDER is type THEN color — do NOT swap.
+     *
+     * `RandUtil.choice` consumes one underlying `nextInt` per pick (the byte cursor is the parity target); the
+     * color pick is expressed as a `choice` over the index LIST `0 until colorCount` (identical `nextInt(size-1)`
+     * walk to PHP `choice(array_keys(...))`), returning the chosen index.
+     *
+     * @param availableNationType `GameConst::$availableNationType` (13-elem insertion order, PHP :3304).
+     * @param colorCount `count(GetNationColors())` (MUST be 33 — the m6 parity target).
+     * @return the [FoundingChoice] (the picked type code + the picked color INDEX).
+     */
+    fun pickFounding(availableNationType: List<String>, colorCount: Int, rng: RandUtil): FoundingChoice {
+        val nationType = rng.choice(availableNationType) // PHP :3304 — type FIRST (13-elem → nextInt(12)).
+        val colorIndex = rng.choice((0 until colorCount).toList()) // PHP :3305 — color SECOND (33-elem → nextInt(32)).
+        return FoundingChoice(nationType = nationType, colorIndex = colorIndex)
+    }
+
+    // ==================================================================================================
+    // do국가선택 (:3334-3401) — :3358 nextBool(0.3) → {:3371 early pow(...) OR :3376 nextBit} → :3390 nextBool(0.2)
+    //   → :3393 choice($paths). The :3345 오랑캐 ORDER BY RAND substitute is 0-draw (F-QUAR — orankaeRulerNation).
+    // ==================================================================================================
+
+    /**
+     * `do국가선택`'s 임관-branch entry gate (PHP `:3358` `if ($this->rng->nextBool(0.3)) { …임관… }`). ALWAYS reached
+     * (after the 0-draw 오랑캐 `ORDER BY RAND()` branch). A `true` enters the 임관 sub-tree (the early/post abort
+     * draws + the che_랜덤임관 emit); a `false` falls through to the [nationChoiceMoveGate].
+     *
+     * @return the `nextBool(0.3)` result (true → enter 임관, false → try the move-instead branch).
+     */
+    fun nationChoiceJoinGate(rng: RandUtil): Boolean =
+        rng.nextBool(0.3) // PHP :3358 — the 임관-branch entry gate (always reached).
+
+    /**
+     * `do국가선택`'s early-임관-period abort (PHP `:3371`
+     * `if ($this->rng->nextBool(pow(1 / ($nationCnt + 1) / pow($notFullNationCnt, 3), 1 / 4))) return null;`).
+     *
+     * Reached ONLY inside the 임관 branch AND when `year < startyear + 3` (the early period) AND both counts are
+     * non-zero (PHP `:3367` returns null with NO draw when either is 0). The prob is a **float-exact** parity
+     * target: `pow(1 / (nationCnt + 1) / pow(notFullNationCnt, 3), 1 / 4)` — computed identically to PHP (`1/4`
+     * exponent is a true Double `0.25`; `Math.pow` matches PHP `pow`).
+     *
+     * @param nationCnt `SELECT count(nation) FROM nation` (PHP :3365).
+     * @param notFullNationCnt `count(nation WHERE gennum < initialNationGenLimit)` (PHP :3366).
+     * @return the `nextBool(pow(...))` result (true → abort the 임관, `return null`).
+     */
+    fun nationChoiceEarlyAbort(nationCnt: Int, notFullNationCnt: Int, rng: RandUtil): Boolean =
+        // PHP :3371 — pow(1 / (nationCnt+1) / pow(notFullNationCnt, 3), 1/4). Float-exact prob (Math.pow == PHP pow).
+        rng.nextBool(Math.pow(1.0 / (nationCnt + 1) / Math.pow(notFullNationCnt.toDouble(), 3.0), 1.0 / 4.0))
+
+    /**
+     * `do국가선택`'s post-임관-period abort (PHP `:3376` `if ($this->rng->nextBool()) return null;`). Reached inside
+     * the 임관 branch when NOT in the early period (`year >= startyear + 3`). The default prob `0.5` → the
+     * **nextBit** path (the PHP comment "0.3 * 0.5 = 0.15" documents the effective post-period 임관 rate).
+     *
+     * @return the `nextBool()` result (true → abort the 임관, `return null`).
+     */
+    fun nationChoicePostPeriodAbort(rng: RandUtil): Boolean =
+        rng.nextBool() // PHP :3376 — post-period abort (default 0.5 → nextBit; "0.3 * 0.5 = 0.15").
+
+    /**
+     * `do국가선택`'s move-instead sibling gate (PHP `:3390` `if ($this->rng->nextBool(0.2)) { …che_이동… }`). Reached
+     * ONLY when the `:3358` [nationChoiceJoinGate] was FALSE (the sibling-or branch). A `true` builds a che_이동 to
+     * a random path-neighbor ([pickNationChoiceMove]); a `false` falls through to `return null` (PHP `:3400`).
+     *
+     * @return the `nextBool(0.2)` result (true → emit che_이동, false → return null).
+     */
+    fun nationChoiceMoveGate(rng: RandUtil): Boolean =
+        rng.nextBool(0.2) // PHP :3390 — the move-instead sibling gate (only when the :3358 0.3 was false).
+
+    /**
+     * `do국가선택`'s move target pick (PHP `:3393` `'destCityID' => $this->rng->choice($paths)`). `$paths =
+     * array_keys(CityConst::byID($city['city'])->path)` (PHP `:3391`) — the capital's path-neighbor ids in
+     * `CityConst.path` NAME order (F-BFS — REUSE the GREEN adjacency, do NOT rebuild). One underlying `nextInt`.
+     *
+     * @param paths the current city's path-neighbor ids in `CityConst.path` name/insertion order.
+     * @return the picked destination city id.
+     */
+    fun pickNationChoiceMove(paths: List<Int>, rng: RandUtil): Int =
+        rng.choice(paths) // PHP :3393 — one choice over the path-neighbor ids (name-order; throws on empty).
+
+    // ==================================================================================================
+    // doNPC사망대비 (:3403-3434) — nationID==0 path draws :3413 nextBool()=nextBit via ||-short-circuit.
+    // ==================================================================================================
+
+    /**
+     * `doNPC사망대비`'s search-vs-tour switch (PHP `:3413`
+     * `if (!$cmd->hasFullConditionMet() || $this->rng->nextBool()) { $cmd = che_견문; }`). Reached ONLY on the
+     * `nationID == 0` (재야) path (PHP `:3411`).
+     *
+     * The `||` short-circuits LEFT-to-RIGHT: when the che_인재탐색 gate FAILS ([talentSearchAllowed] is false →
+     * `!hasFullConditionMet()` is true) the `nextBool()` right operand is NEVER reached (ZERO draws) and the result
+     * is true (switch to che_견문). Only when the gate PASSES ([talentSearchAllowed] is true) does the `nextBool()`
+     * draw (default `0.5` → the **nextBit** path) — a `true` then switches to che_견문, a `false` keeps che_인재탐색.
+     *
+     * @param talentSearchAllowed the che_인재탐색 `hasFullConditionMet()` result (the bridge gate).
+     * @return true to switch the emit to che_견문 (PHP overwrites `$cmd`); false to keep che_인재탐색.
+     */
+    fun deathPrepTourSwitch(talentSearchAllowed: Boolean, rng: RandUtil): Boolean =
+        !talentSearchAllowed || rng.nextBool() // PHP :3413 — `||` suppresses the (nextBit) draw when the gate fails.
+
+    // ==================================================================================================
+    // do중립 (:3436-3467) — nationID==0 path draws :3441 nextBool(0.8) via ||; else :3458 choice ALWAYS.
+    //   do중립 is the TERMINAL fallback (never null).
+    // ==================================================================================================
+
+    /**
+     * `do중립`'s search-vs-tour switch (PHP `:3441`
+     * `if (!$cmd->hasFullConditionMet() || $this->rng->nextBool(0.8)) { $cmd = che_견문; }`). Reached ONLY on the
+     * `nationID == 0` (재야) path (PHP `:3439`).
+     *
+     * The `||` short-circuits LEFT-to-RIGHT exactly like [deathPrepTourSwitch], but the prob here is `0.8` (NOT
+     * the default 0.5 — so a `nextFloat1`, not a nextBit, when the gate passes): the che_인재탐색 gate FAILS
+     * ([talentSearchAllowed] false) → ZERO draws, result true (che_견문); the gate PASSES → `nextBool(0.8)` draws.
+     *
+     * @param talentSearchAllowed the che_인재탐색 `hasFullConditionMet()` result (the bridge gate).
+     * @return true to switch the emit to che_견문; false to keep che_인재탐색.
+     */
+    fun neutralTourSwitch(talentSearchAllowed: Boolean, rng: RandUtil): Boolean =
+        !talentSearchAllowed || rng.nextBool(0.8) // PHP :3441 — `||` suppresses the 0.8 draw when the gate fails.
+
+    /**
+     * `do중립`'s in-nation candidate pick (PHP `:3458`
+     * `$cmd = buildGeneralCommandClass($this->rng->choice($candidate), $this->general, $this->env);`). Reached on
+     * the in-nation path (`nationID != 0`). `$candidate` is `['che_물자조달', 'che_인재탐색']` (PHP `:3448`), narrowed
+     * to `['che_물자조달']` when `nation.gold < reqNationGold` OR `nation.rice < reqNationRice` (PHP `:3450-3455`).
+     *
+     * **ALWAYS draws** — `choice` invokes one underlying `nextInt` even for a single-element `$candidate` (RandUtil
+     * mirrors PHP `nextInt(count-1)` = `nextInt(0)` → returns the sole index 0, still a draw). The caller builds the
+     * candidate list (narrowing by the resource thresholds); the family owns only the always-draw pick. The post-pick
+     * `hasFullConditionMet` fallback to che_물자조달/che_견문 (PHP `:3459-3464`) is NON-RNG (the family does not draw it).
+     *
+     * @param candidate the narrowed candidate action codes (PHP append order; 1 or 2 elements).
+     * @return the picked action code.
+     */
+    fun pickNeutralCandidate(candidate: List<String>, rng: RandUtil): String =
+        rng.choice(candidate) // PHP :3458 — ALWAYS one choice (even with a single element; throws on empty).
 }
