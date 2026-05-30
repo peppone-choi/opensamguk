@@ -29,3 +29,5 @@ docs/wiki/
 .claude/skills/wiki-query/
 .claude/skills/wiki-lint/
 .gstack/
+# Harness scratch/tmp dir
+.claude-tmp/
