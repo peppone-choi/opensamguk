@@ -1,7 +1,9 @@
 package opensamguk.logic.ai
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.rng.RandUtil
 import opensamguk.logic.actions.nation.NationCommand
+import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.util.clamp
 import opensamguk.logic.util.phpRound
 
@@ -94,6 +96,13 @@ class AiInstanceState(
      * Insertion-ordered (the diplomacy-row order is a candidate-order parity target for calcWarRoute).
      */
     var warTargetNation: Map<Int, Int>? = null
+        private set
+
+    /**
+     * PHP `$this->genType` (`:144`, computed by [calcGenType], the FIRST draw). The bitwise OR of
+     * [T_MUJANG]/[T_JIJANG]/[T_TONGSOLJANG]. `0` until [calcGenType] has run for the decision.
+     */
+    var genType: Int = 0
         private set
 
     /** Mark the instance dirty (PHP `$this->reqUpdateInstance = true` at the command dirty triggers). */
@@ -235,7 +244,67 @@ class AiInstanceState(
         }
     }
 
+    /**
+     * Faithful port of `calcGenType` (PHP `:175-204`) — the AI decision's FIRST draw site. ONE or ZERO
+     * `nextBool` draws off the SOLE per-general `"GeneralAI"` [rng] (threaded by reference, NEVER re-seeded):
+     * the conditional draw fires ONLY inside the near-balance band (the weaker stat ≥ the stronger × 0.8),
+     * and its presence/absence shifts EVERY later draw of the decision (the #1 desync trap).
+     *
+     * Stats are the `getX(false)` flavor (decision #7, G8): leadership via [AiSeed.genTypeLeadership]
+     * (NO floor); strength/intel via [AiSeed.genTypeStrength]/[AiSeed.genTypeIntel] = `Util::valueFit(v, 1)`
+     * = `clamp(v, 1.0)` (min 1, no max) → the denominators are ≥ 1 (no div-by-zero). `useFloor=true` already
+     * truncated — do NOT re-round.
+     *
+     * `*0.8` and `/2` are **Double float division** (NEVER integer division); the resulting prob ∈ [0.4, 0.5).
+     * The [statCalc] is the GREEN per-resolve stat calculator (PURE — no Spring/DB); the [rng] is the SOLE
+     * decision stream. Assigns + returns [genType].
+     */
+    fun calcGenType(rng: RandUtil, statCalc: StatCalc): Int {
+        // PHP `:177-179` — getLeadership(false)/getStrength(false)/getIntel(false), valueFit(strength/intel,1).
+        val leadership = AiSeed.genTypeLeadership(statCalc)
+        val strength = AiSeed.genTypeStrength(statCalc)
+        val intel = AiSeed.genTypeIntel(statCalc)
+
+        val computed: Int
+        // PHP `:182-188` — 무장 branch (strength >= intel, the `>=` tie goes 무장).
+        if (strength >= intel) {
+            var t = T_MUJANG
+            // PHP `:184` — near-balance band: intel >= strength * 0.8 (Double float). `:185` FIRST draw.
+            if (intel >= strength * 0.8) {
+                if (rng.nextBool(intel / strength / 2)) { // intel.toDouble()/strength/2, prob ∈ [0.4,0.5)
+                    t = t or T_JIJANG
+                }
+            }
+            computed = t
+        } else {
+            // PHP `:190-196` — 지장 branch.
+            var t = T_JIJANG
+            // PHP `:192` — near-balance band: strength >= intel * 0.8 (Double float). `:193` the draw.
+            if (strength >= intel * 0.8) {
+                if (rng.nextBool(strength / intel / 2)) { // strength.toDouble()/intel/2, prob ∈ [0.4,0.5)
+                    t = t or T_MUJANG
+                }
+            }
+            computed = t
+        }
+
+        // PHP `:199-202` — the 통솔장 flag (NO draw; a minNPCWarLeadership threshold), bitwise |=.
+        val withTongsol = if (leadership >= nationPolicy.minNPCWarLeadership) {
+            computed or T_TONGSOLJANG
+        } else {
+            computed
+        }
+
+        genType = withTongsol
+        return withTongsol
+    }
+
     companion object {
+        // The genType flags (PHP `GeneralAI.php:76-78`), combined with bitwise OR.
+        const val T_MUJANG = 1     // t무장
+        const val T_JIJANG = 2     // t지장
+        const val T_TONGSOLJANG = 4 // t통솔장
+
         // The dipState constants (PHP `GeneralAI.php:80-84`).
         const val D_PEACE = 0      // d평화
         const val D_DECLARED = 1   // d선포
