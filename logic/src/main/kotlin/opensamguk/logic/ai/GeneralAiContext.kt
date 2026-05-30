@@ -100,6 +100,32 @@ import opensamguk.logic.domain.City
  *   crew-type id, it returns the emitted `(che_징병|che_모병, RAW args)` or null (insufficient gold/rice). NO draws.
  * @property tradeDecision the do금쌀구매 deterministic buy/sell ladder (PHP `:2367-2480`): returns the emitted
  *   `(che_군량매매, RAW args)` or null. ZERO draws (decision #9). Default null → the body returns null.
+ *
+ * ## L-GENWAR (GenWarMoveFamily) per-general scalars + world lambdas (defaulted; only the war/move bodies read them)
+ * @property selfTrain the acting general's `getVar('train')` (PHP `:2661/2729`) — the do전투준비 che_훈련 candidate
+ *   gate (`< properWarTrainAtmos`) + its weight base + the do출병 `:2729` train early-return. Default 0.0.
+ * @property selfAtmos the acting general's `getVar('atmos')` (PHP `:2662/2732`) — the do전투준비 che_사기진작
+ *   candidate gate + weight + the do출병 `:2732` atmos early-return. Default 0.0.
+ * @property selfGold the acting general's `getVar('gold')` (PHP `:2797`) — the doNPC헌납 gold resource amount.
+ * @property selfRice the acting general's `getVar('rice')` (PHP `:2797`) — the doNPC헌납 rice resource amount.
+ * @property selfNpcType the acting general's `getNPCType()` (PHP `:2720/3115`) — do출병 `&&` npc>=2 + do집합 npc==5.
+ * @property selfKillturn the acting general's `getVar('killturn')` (PHP `:3116`) — the do집합 killturn reroll base.
+ * @property attackableCitiesOf the do출병 `SELECT city, nation FROM city WHERE nation IN %li AND city IN %li`
+ *   (PHP `:2759-2763`) — given the `array_keys(CityConst::byID(cityID)->path)` near-city ids AND the
+ *   attackable-nation list (both built in PHP order by the body), returns the PK-ascending DB-row city ids
+ *   (the `choice` candidate list, `:2769`). The adapter runs the query; the body owns the input ORDER.
+ * @property cityDevelRateOf the do내정워프 `calcCityDevelRate($city)` (PHP `:3033/3062`) — per cityId, the
+ *   `(develKey, develVal, develType)` triples in PHP iteration order (the `warpProp`/`realDevelRate` product
+ *   walks them filtered by genType). The adapter computes the ratios + the develType flags.
+ * @property cityGeneralCountOf the do내정워프 `count($candidate['generals'] ?? [])` (PHP `:3076`) — per cityId,
+ *   the attached-general count feeding the `1/(realDevelRate*sqrt(gens+1))` weight.
+ * @property wanderOccupiedCities the do방랑군이동 `$occupiedCities` key set (PHP `:3146-3152`) — lord/nation
+ *   cities; a target/neighbour in this set is skipped. The adapter runs the two SELECTs; insertion is not read.
+ * @property movingTargetCityId the do방랑군이동 `getAuxVar('movingTargetCityID')` (PHP `:3154`) — the cached
+ *   wander target; null when unset (→ the `:3180` target draw fires). Reconciled against [wanderOccupiedCities]/
+ *   the current city by the body (`:3157-3161`); a fresh pick is queued via [recordGeneralKv] (`:3181`).
+ * @property dupLordAtSelfCity the do방랑군이동 `SELECT COUNT(*) ... officer_level=12 AND city=cityID` (PHP `:3131`).
+ * @property selfCityLevel the do방랑군이동 `getRawCity()['level']` (PHP `:3137`) — the {5,6} 건국-possible gate.
  */
 data class GeneralAiContext(
     val rng: RandUtil,
@@ -139,4 +165,18 @@ data class GeneralAiContext(
     val recruitCrewScoresFor: (armType: Int) -> List<Pair<Int, Double>> = { emptyList() },
     val recruitFinalize: (crewTypeId: Int) -> ChosenCommand? = { null },
     val tradeDecision: () -> ChosenCommand? = { null },
+    // --- L-GENWAR (GenWarMoveFamily) per-general scalars + world lambdas ---
+    val selfTrain: Double = 0.0,
+    val selfAtmos: Double = 0.0,
+    val selfGold: Int = 0,
+    val selfRice: Int = 0,
+    val selfNpcType: Int = 0,
+    val selfKillturn: Int = 0,
+    val attackableCitiesOf: (nearCityIds: List<Int>, attackableNations: List<Int>) -> List<Int> = { _, _ -> emptyList() },
+    val cityDevelRateOf: (cityId: Int) -> List<Triple<String, Double, Int>> = { emptyList() },
+    val cityGeneralCountOf: (cityId: Int) -> Int = { 0 },
+    val wanderOccupiedCities: Set<Int> = emptySet(),
+    val movingTargetCityId: Int? = null,
+    val dupLordAtSelfCity: Int = 0,
+    val selfCityLevel: Int = 0,
 )

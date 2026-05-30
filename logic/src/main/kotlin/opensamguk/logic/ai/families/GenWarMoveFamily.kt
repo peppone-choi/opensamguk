@@ -1,6 +1,16 @@
 package opensamguk.logic.ai.families
 
+import opensamguk.common.constants.CityConst
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.ai.AiInstanceState
+import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.GeneralAiContext
+import opensamguk.logic.ai.bfs.AiDistance
+import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.util.valueFit
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 /**
  * L-GENWAR — the general war/movement `do<한글>` command family:
@@ -335,5 +345,438 @@ object GenWarMoveFamily {
             return null // PHP :3203 `if (!$candidateCities) return null;` — the empty guard, BEFORE any draw (m3).
         }
         return rng.choiceUsingWeightPair(candidateCities) // PHP :3208 — the ONE next-hop draw (one nextFloat1).
+    }
+
+    // ====================================================================================================
+    // WORLD-DRIVEN do<한글> BODIES (PHP `GeneralAI.php:2653-3215`, read in full).
+    //
+    // Each body reads the [GeneralAiContext] (rng / instance / world / policy / per-general scalars),
+    // assembles the exact candidate set / weighted list in PHP INSERTION ORDER, calls the PURE draw
+    // primitive above, GATES the emit via `ctx.candidateAllowed(actionCode, args)` (PHP
+    // `$cmd->hasFullConditionMet()`) — except the gate-exempt do집합/do방랑군이동-인재탐색 — routes meta-KV via
+    // `ctx.recordGeneralKv` (decision #12), and returns the `ChosenCommand` (or null → the dispatcher falls
+    // through to the next priority action). READ-ONLY over GAME ENTITIES. The candidate ORDER (the cmdList
+    // append order, the backup-then-supply recruitable order, the BFS visitation order) IS the parity target.
+    // ====================================================================================================
+
+    /**
+     * The 8 dispatch-loop war/move `do<한글>` bodies keyed by ACTION-NAME (the bare `do<한글>` name, NOT `che_*`),
+     * in PHP/policy order. The [opensamguk.logic.ai.GeneralAiFactory] registers these into the general dispatch;
+     * the loop walks [opensamguk.logic.ai.AutorunGeneralPolicy.priority] first-non-null. do집합/do방랑군이동 are
+     * the two PRE-LOOP branch builders ([do집합]/[do방랑군이동]) wired separately by the factory bundle.
+     */
+    fun bodies(ctx: GeneralAiContext): Map<String, (LastTurn?) -> ChosenCommand?> = linkedMapOf(
+        "전투준비" to { _ -> do전투준비(ctx) },
+        "소집해제" to { _ -> do소집해제(ctx) },
+        "출병" to { _ -> do출병(ctx) },
+        "NPC헌납" to { _ -> doNPC헌납(ctx) },
+        "후방워프" to { _ -> do후방워프(ctx) },
+        "전방워프" to { _ -> do전방워프(ctx) },
+        "내정워프" to { _ -> do내정워프(ctx) },
+        "귀환" to { _ -> do귀환(ctx) },
+    )
+
+    /** The do집합 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn step; npcType==5 reached at `:3759`). */
+    fun do집합(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do집합Body(ctx) }
+
+    /** The do방랑군이동 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn wandering branch, `:3814`). */
+    fun do방랑군이동(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do방랑군이동Body(ctx) }
+
+    private fun has(ctx: GeneralAiContext, flag: Int): Boolean = (ctx.instance.genType and flag) != 0
+
+    private fun isPeaceOrDeclared(dipState: Int): Boolean =
+        dipState == AiInstanceState.D_PEACE || dipState == AiInstanceState.D_DECLARED // d평화/d선포.
+
+    // --- do전투준비 (PHP `:2653-2682`) ---
+
+    private fun do전투준비(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:2655` — d평화/d선포 → null.
+        if (isPeaceOrDeclared(ctx.instance.dipState)) return null
+
+        val cmdList = ArrayList<Pair<String, Double>>() // PHP `:2658`.
+        val proper = ctx.nationPolicy.properWarTrainAtmos
+
+        // PHP `:2664-2669` — che_훈련 candidate, weight maxTrainByCommand / valueFit(train,1).
+        if (ctx.selfTrain < proper) {
+            if (ctx.candidateAllowed(TRAIN_ACTION, emptyMap())) {
+                cmdList.add(TRAIN_ACTION to GameConst.maxTrainByCommand / valueFit(ctx.selfTrain, 1.0)) // :2667
+            }
+        }
+        // PHP `:2671-2676` — che_사기진작 candidate, weight maxAtmosByCommand / valueFit(atmos,1).
+        if (ctx.selfAtmos < proper) {
+            if (ctx.candidateAllowed(MORALE_ACTION, emptyMap())) {
+                cmdList.add(MORALE_ACTION to GameConst.maxAtmosByCommand / valueFit(ctx.selfAtmos, 1.0)) // :2674
+            }
+        }
+
+        // PHP `:2678-2681` — empty guard (no draw) then the ONE terminal choiceUsingWeightPair.
+        val picked = pickBattlePrepCommand(cmdList, rng) ?: return null
+        return ChosenCommand(picked, emptyMap())
+    }
+
+    // --- do소집해제 (PHP `:2684-2703`) ---
+
+    private fun do소집해제(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:2686-2693` — the 3 non-RNG early-returns BEFORE the draw.
+        if (ctx.instance.attackable) return null // :2686
+        if (ctx.instance.dipState != AiInstanceState.D_PEACE) return null // :2689
+        if (ctx.selfCrew == 0) return null // :2692
+
+        // PHP `:2695` — nextBool(0.75) ALWAYS (no `&&` guard).
+        if (disbandSkip(rng)) return null
+
+        if (!ctx.candidateAllowed(DISBAND_ACTION, emptyMap())) return null // :2699 hasFullConditionMet.
+        return ChosenCommand(DISBAND_ACTION, emptyMap()) // :2702.
+    }
+
+    // --- do출병 (PHP `:2706-2775`) — the m1 statement-order trap ---
+
+    private fun do출병(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:2708-2714` — attackable / d전쟁 gates.
+        if (!ctx.instance.attackable) return null // :2708
+        if (ctx.instance.dipState != AiInstanceState.D_WAR) return null // :2712
+
+        val city = ctx.selfCity ?: return null // PHP reads $this->city; null (재야/lost) guarded.
+
+        // PHP `:2720` — the `&&` 0.7 draw BEFORE the four non-RNG early-returns (m1).
+        if (sortieSkip(
+                riceBelowBaserice = ctx.instance.nation.rice < GameConst.baserice,
+                npcAtLeast2 = ctx.selfNpcType >= 2,
+                rng = rng,
+            )
+        ) {
+            return null // :2721
+        }
+
+        // PHP `:2729-2741` — the four non-RNG early-returns (AFTER the :2720 draw).
+        val trainFloor = minOf(100.0, ctx.nationPolicy.properWarTrainAtmos.toDouble())
+        if (ctx.selfTrain < trainFloor) return null // :2729
+        val atmosFloor = minOf(100.0, ctx.nationPolicy.properWarTrainAtmos.toDouble())
+        if (ctx.selfAtmos < atmosFloor) return null // :2732
+        val crewFloor = minOf((ctx.fullLeadership - 2) * 100, ctx.nationPolicy.minWarCrew.toDouble())
+        if (ctx.selfCrew < crewFloor) return null // :2735
+        if (city.frontState == 0) return null // :2739
+        if (city.frontState == 1) return null // :2743
+
+        // PHP `:2747-2756` — the attackable-nation list (state==1 skipped; [0] sentinel when empty), PHP order.
+        val attackableNations = ArrayList<Int>()
+        for ((targetNationId, state) in (ctx.instance.warTargetNation ?: emptyMap())) {
+            if (state == 1) continue // :2749-2751
+            attackableNations.add(targetNationId) // :2752
+        }
+        if (attackableNations.isEmpty()) attackableNations.add(0) // :2754-2756
+
+        // PHP `:2757` — array_keys(CityConst::byID(cityID)->path) (name-order), then the DB query (:2759-2763).
+        val nearCities = CityConst.byId(city.id)?.path?.keys?.toList() ?: emptyList()
+        val attackableCities = ctx.attackableCitiesOf(nearCities, attackableNations)
+        // PHP `:2765` — count==0 throws ('출병 불가'); the adapter guards, so an empty list here = no candidate.
+        if (attackableCities.isEmpty()) return null
+
+        // PHP `:2769` — choice($attackableCities), one draw, then the gate.
+        val destCityId = pickSortieTarget(attackableCities, rng)
+        val args = linkedMapOf<String, Any?>("destCityID" to destCityId)
+        if (!ctx.candidateAllowed(SORTIE_ACTION, args)) return null // :2770
+        return ChosenCommand(SORTIE_ACTION, args) // :2774.
+    }
+
+    // --- doNPC헌납 (PHP `:2785-2863`) — per-resource rice-then-gold gate + terminal weighted pick ---
+
+    private fun doNPC헌납(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        val policy = ctx.nationPolicy
+        val isTongsol = has(ctx, AiInstanceState.T_TONGSOLJANG)
+
+        // PHP `:2789-2792` — resourceMap rice THEN gold (the iteration ORDER is the parity target):
+        //   ['rice', reqNationRice, reqNPCWarRice, reqNPCDevelRice], ['gold', reqNationGold, reqNPCWarGold, reqNPCDevelGold].
+        data class Res(
+            val isGold: Boolean,
+            val genRes: Int,
+            val nationRes: Int,
+            val reqNation: Int,
+            val reqNPCWar: Int,
+            val reqNPCDevel: Int,
+        )
+        val resourceMap = listOf(
+            Res(isGold = false, genRes = ctx.selfRice, nationRes = ctx.instance.nation.rice,
+                reqNation = policy.reqNationRice, reqNPCWar = policy.reqNPCWarRice, reqNPCDevel = policy.reqNPCDevelRice),
+            Res(isGold = true, genRes = ctx.selfGold, nationRes = ctx.instance.nation.gold,
+                reqNation = policy.reqNationGold, reqNPCWar = policy.reqNPCWarGold, reqNPCDevel = policy.reqNPCDevelGold),
+        )
+
+        val args = ArrayList<Pair<TributeArg, Double>>() // PHP `:2794`.
+
+        for (res in resourceMap) {
+            val genRes = res.genRes // PHP `:2797`.
+            // PHP `:2799-2820` — reqRes selection (통솔장 → reqNPCWar; else reqNPCDevel + two early-append paths).
+            val reqRes: Int
+            if (isTongsol) {
+                reqRes = res.reqNPCWar // :2800
+            } else {
+                reqRes = res.reqNPCDevel // :2802
+                if (genRes >= res.reqNPCWar && res.reqNPCWar > res.reqNPCDevel + 1000) { // :2803
+                    val amount = genRes - res.reqNPCDevel // :2804
+                    args.add(TributeArg(res.isGold, amount) to amount.toDouble()) // :2805-2808
+                    continue // :2809
+                }
+                if (genRes >= res.reqNPCDevel * 5 && genRes >= 5000) { // :2812
+                    val amount = genRes - res.reqNPCDevel // :2813
+                    args.add(TributeArg(res.isGold, amount) to amount.toDouble()) // :2814-2817
+                    continue // :2818
+                }
+            }
+
+            if (res.nationRes >= res.reqNation) continue // PHP `:2822-2824` — nation already has enough.
+            // PHP `:2825-2837` — the rice-only emergency reserve append (minNationalRice/2). minNationalRice=0 → inert.
+            if (!res.isGold && res.nationRes <= GameConst.minNationalRice / 2 && genRes >= GameConst.minNationalRice / 2) {
+                if (genRes < GameConst.minNationalRice) {
+                    args.add(TributeArg(false, genRes) to genRes.toDouble()) // :2827-2830
+                } else {
+                    args.add(TributeArg(false, genRes / 2) to (genRes / 2).toDouble()) // :2832-2835
+                }
+            }
+            if (genRes < reqRes * 1.5) continue // PHP `:2838`.
+            // PHP `:2841` — per-resource `&&` gate, used as `!nextBool(...)` (the continue when the roll fails).
+            if (!tributeResourceGate(reqRes > 0, genRes.toDouble(), reqRes.toDouble(), rng)) continue // :2841-2843
+            val amount = genRes - reqRes // :2844
+            if (amount < policy.minimumResourceActionAmount) continue // :2845-2847
+            args.add(TributeArg(res.isGold, amount) to amount.toDouble()) // :2848-2851
+        }
+
+        // PHP `:2854-2858` — empty guard (no draw) then the ONE terminal choiceUsingWeightPair.
+        val picked = pickTributeArg(args, rng) ?: return null
+        val emitArgs = linkedMapOf<String, Any?>("isGold" to picked.isGold, "amount" to picked.amount)
+        if (!ctx.candidateAllowed(TRIBUTE_ACTION, emitArgs)) return null // :2859.
+        return ChosenCommand(TRIBUTE_ACTION, emitArgs) // :2862.
+    }
+
+    // --- do후방워프 (PHP `:2866-2970`) — backup-then-supply recruitableCityList → choiceUsingWeight ---
+
+    private fun do후방워프(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        val policy = ctx.nationPolicy
+        val city = ctx.selfCity ?: return null
+
+        // PHP `:2868-2871` — minRecruitPop seed.
+        var minRecruitPop = ctx.fullLeadership * 100 + GameConst.minAvailableRecruitPop
+        if (!ctx.generalPolicy.can한계징병) {
+            minRecruitPop = maxOf(minRecruitPop, ctx.fullLeadership * 100 + policy.minNPCRecruitCityPopulation)
+        }
+        // PHP `:2872-2890` — the dipState/can징병/통솔장/crew gates (all non-RNG, LogText only).
+        if (isPeaceOrDeclared(ctx.instance.dipState)) return null // :2872
+        if (!ctx.generalPolicy.can징병) return null // :2877
+        if (!has(ctx, AiInstanceState.T_TONGSOLJANG)) return null // :2882
+        if (ctx.selfCrew >= policy.minWarCrew) return null // :2887
+
+        // PHP `:2893-2904` — the self-city pop-충분 gate.
+        if (ctx.generalPolicy.can한계징병) {
+            if (city.population >= minRecruitPop) return null // :2894
+        } else {
+            if (city.population.toDouble() / city.populationMax >= policy.safeRecruitCityPopulationRatio) { // :2898
+                if (city.population >= policy.minNPCRecruitCityPopulation && city.population >= minRecruitPop) {
+                    return null // :2899-2902
+                }
+            }
+        }
+
+        // PHP `:2906-2949` — recruitableCityList: backupCities FIRST, then (only if empty) supplyCities.
+        val recruitableCityList = LinkedHashMap<Int, Double>()
+        for (candidate in ctx.world.backupCities.values) { // :2910
+            val popRatio = candidate.city.population.toDouble() / candidate.city.populationMax
+            val cityID = candidate.cityId
+            if (cityID == city.id) continue // :2913
+            if (popRatio < policy.safeRecruitCityPopulationRatio) continue // :2916
+            if (candidate.city.population < policy.minNPCRecruitCityPopulation) continue // :2919
+            if (candidate.city.population < minRecruitPop) continue // :2922
+            recruitableCityList[cityID] = popRatio // :2925
+        }
+        if (recruitableCityList.isEmpty()) { // :2928
+            for (candidate in ctx.world.supplyCities.values) { // :2929
+                val popRatio = candidate.city.population.toDouble() / candidate.city.populationMax
+                val cityID = candidate.cityId
+                if (cityID == city.id) continue // :2932
+                if (candidate.city.population < policy.minNPCRecruitCityPopulation) continue // :2935
+                if (candidate.city.population <= minRecruitPop) continue // :2938
+                if (popRatio < policy.safeRecruitCityPopulationRatio) continue // :2941
+                if (ctx.world.frontCities.containsKey(cityID)) { // :2944
+                    recruitableCityList[cityID] = popRatio / 2 // :2945
+                } else {
+                    recruitableCityList[cityID] = popRatio // :2947
+                }
+            }
+        }
+        if (recruitableCityList.isEmpty()) return null // :2952
+
+        // PHP `:2958-2961` — emit (optionText THEN destCityID order), one choiceUsingWeight, then gate.
+        val destCityId = pickBackupWarpDest(recruitableCityList, rng) // :2960
+        val args = linkedMapOf<String, Any?>("optionText" to WARP_OPTION_TEXT, "destCityID" to destCityId)
+        if (!ctx.candidateAllowed(WARP_ACTION, args)) return null // :2964
+        return ChosenCommand(WARP_ACTION, args) // :2969.
+    }
+
+    // --- do전방워프 (PHP `:2972-3020`) — supplied frontCities candidate → choiceUsingWeight ---
+
+    private fun do전방워프(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        val city = ctx.selfCity ?: return null
+        // PHP `:2974-2991` — attackable / dipState / 통솔장 / crew / self-front gates.
+        if (!ctx.instance.attackable) return null // :2974
+        if (isPeaceOrDeclared(ctx.instance.dipState)) return null // :2977
+        if (!has(ctx, AiInstanceState.T_TONGSOLJANG)) return null // :2981
+        if (ctx.selfCrew < ctx.nationPolicy.minWarCrew) return null // :2985
+        if (city.frontState != 0) return null // :2989 (truthy front → null).
+
+        // PHP `:2996-3007` — candidateCities = supplied frontCities, keyed by city → important.
+        if (ctx.world.frontCities.isEmpty()) return null // :2998-3000 (MustNotBeReached; the adapter guards).
+        val candidateCities = LinkedHashMap<Int, Double>()
+        for (frontCity in ctx.world.frontCities.values) { // :3002
+            if (frontCity.city.supplyState == 0) continue // :3003
+            candidateCities[frontCity.cityId] = frontCity.important.toDouble() // :3006
+        }
+        if (candidateCities.isEmpty()) return null // empty candidate → choiceUsingWeight throws; guard.
+
+        // PHP `:3009-3012` — emit (optionText THEN destCityID), one choiceUsingWeight, then gate.
+        val destCityId = pickFrontWarpDest(candidateCities, rng) // :3011
+        val args = linkedMapOf<String, Any?>("optionText" to WARP_OPTION_TEXT, "destCityID" to destCityId)
+        if (!ctx.candidateAllowed(WARP_ACTION, args)) return null // :3015
+        return ChosenCommand(WARP_ACTION, args) // :3019.
+    }
+
+    // --- do내정워프 (PHP `:3022-3092`) — nextBool(0.6) ALWAYS → nextBool(warpProp) → choiceUsingWeight ---
+
+    private fun do내정워프(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:3024` — 통솔장 AND dipState∈{징병,직전,전쟁} → null.
+        if (has(ctx, AiInstanceState.T_TONGSOLJANG) &&
+            (ctx.instance.dipState == AiInstanceState.D_CONSCRIPT ||
+                ctx.instance.dipState == AiInstanceState.D_IMMINENT ||
+                ctx.instance.dipState == AiInstanceState.D_WAR)
+        ) {
+            return null
+        }
+
+        val city = ctx.selfCity ?: return null
+
+        // PHP `:3029` — nextBool(0.6) ALWAYS.
+        if (internalWarpSkip(rng)) return null
+
+        // PHP `:3033-3043` — warpProp = product of develVals over genType-matching develTypes; count them.
+        var availableTypeCnt = 0
+        var warpProp = 1.0
+        for ((_, develVal, develType) in ctx.cityDevelRateOf(city.id)) { // :3037
+            if ((ctx.instance.genType and develType) == 0) continue // :3038
+            warpProp *= develVal // :3041
+            availableTypeCnt += 1 // :3042
+        }
+        if (availableTypeCnt == 0) return null // PHP `:3045-3048` — 무능장 → null.
+
+        // PHP `:3050` — `!nextBool($warpProp)` proceed gate.
+        if (!internalWarpProceedGate(warpProp, rng)) return null
+
+        // PHP `:3054-3077` — candidateCities over supplyCities with realDevelRate < 0.95.
+        val candidateCities = LinkedHashMap<Int, Double>()
+        for (candidate in ctx.world.supplyCities.values) { // :3056
+            if (candidate.cityId == city.id) continue // :3057
+            var realDevelRate = 0.0001 // :3060
+            for ((_, develVal, develType) in ctx.cityDevelRateOf(candidate.cityId)) { // :3062
+                if ((ctx.instance.genType and develType) == 0) continue // :3063
+                realDevelRate += develVal // :3066
+            }
+            realDevelRate /= availableTypeCnt // :3070
+            if (realDevelRate >= 0.95) continue // :3072
+            val gens = ctx.cityGeneralCountOf(candidate.cityId)
+            candidateCities[candidate.cityId] = 1 / (realDevelRate * sqrt((gens + 1).toDouble())) // :3076
+        }
+        if (candidateCities.isEmpty()) return null // :3079
+
+        // PHP `:3083-3086` — emit (optionText THEN destCityID), one choiceUsingWeight, then gate.
+        val destCityId = pickInternalWarpDest(candidateCities, rng) // :3085
+        val args = linkedMapOf<String, Any?>("optionText" to WARP_OPTION_TEXT, "destCityID" to destCityId)
+        if (!ctx.candidateAllowed(WARP_ACTION, args)) return null // :3087
+        return ChosenCommand(WARP_ACTION, args) // :3091.
+    }
+
+    // --- do귀환 (PHP `:3095-3109`) — ZERO draws ---
+
+    private fun do귀환(ctx: GeneralAiContext): ChosenCommand? {
+        val city = ctx.selfCity ?: return null
+        // PHP `:3099` — in an own-nation supplied city → null (nothing to return to).
+        if (city.nationId == ctx.instance.nation.nation && city.supplyState != 0) return null
+        if (!ctx.candidateAllowed(RETURN_ACTION, emptyMap())) return null // :3104 hasFullConditionMet.
+        return ChosenCommand(RETURN_ACTION, emptyMap()) // :3108.
+    }
+
+    // --- do집합 (PHP `:3111-3125`) — GATE-EXEMPT; npc==5 draws nextRangeInt(2,4) + killturn delta ---
+
+    private fun do집합Body(ctx: GeneralAiContext): ChosenCommand {
+        // PHP `:3115-3119` — npc==5 killturn reroll + ChangeRecorder delta (decision #12; NOT inline).
+        if (ctx.selfNpcType == 5) {
+            val newKillTurn = assembleKillturnReroll(ctx.selfKillturn, ctx.rng) // :3116-3117.
+            ctx.recordGeneralKv(ctx.selfGeneralId, KILLTURN_KEY, newKillTurn) // :3118.
+        }
+        // PHP `:3121-3124` — GATE-EXEMPT: always returns che_집합 (no hasFullConditionMet).
+        return ChosenCommand(ASSEMBLE_ACTION, emptyMap())
+    }
+
+    // --- do방랑군이동 (PHP `:3127-3215`) — target pick → at-target 인재탐색 / next-hop 이동 ---
+
+    private fun do방랑군이동Body(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        val currCityID = ctx.selfCityId
+
+        // PHP `:3131-3140` — dupLord<=1 AND own city level∈{5,6} → null (already foundable here).
+        if (ctx.dupLordAtSelfCity <= 1) {
+            if (ctx.selfCityLevel in 5..6) return null // :3137.
+        }
+
+        val occupied = ctx.wanderOccupiedCities // PHP `:3146-3152` occupiedCities key set.
+
+        // PHP `:3154-3161` — movingTargetCityID reconciliation.
+        var movingTargetCityID = ctx.movingTargetCityId
+        if (movingTargetCityID == currCityID) {
+            movingTargetCityID = null // :3157-3158
+        } else if (movingTargetCityID != null && occupied.contains(movingTargetCityID)) {
+            movingTargetCityID = null // :3159-3161
+        }
+
+        // PHP `:3163-3182` — pick a fresh target ONLY when none cached (the :3180 target draw).
+        if (movingTargetCityID == null) {
+            val candidateCities = ArrayList<Pair<Int, Double>>() // :3165
+            val distMap = AiDistance.searchDistanceCities(currCityID, 4) // :3166 searchDistance(curr, 4).
+            for ((testCityID, dist) in distMap) { // dequeue (BFS visitation) order.
+                if (occupied.contains(testCityID)) continue // :3167
+                val cityLevel = CityConst.byId(testCityID)?.level ?: continue
+                if (cityLevel < 5 || 6 < cityLevel) continue // :3171
+                candidateCities.add(testCityID to 1 / 2.0.pow(dist)) // :3174 weight 1/2^dist.
+            }
+            val picked = pickWanderTarget(candidateCities, rng) ?: return null // :3177-3180.
+            movingTargetCityID = picked
+            ctx.recordGeneralKv(ctx.selfGeneralId, "movingTargetCityID", picked) // :3181 aux delta.
+        }
+
+        // PHP `:3184-3186` — at the target → che_인재탐색 (GATE-EXEMPT; emitted directly).
+        if (movingTargetCityID == currCityID) {
+            return ChosenCommand(WANDER_SEARCH_ACTION, emptyMap()) // :3185.
+        }
+
+        // PHP `:3188-3208` — next-hop pick toward the target.
+        val distMap = AiDistance.searchDistanceCities(movingTargetCityID, 99) // :3188.
+        val targetDistance = distMap[currCityID] ?: return null // :3190.
+        val candidateCities = ArrayList<Pair<Int, Double>>() // :3191.
+        for (nearCityID in (CityConst.byId(currCityID)?.path?.keys ?: emptyList())) { // :3193 name-order.
+            val cityLevel = CityConst.byId(nearCityID)?.level ?: continue
+            if (cityLevel in 5..6 && !occupied.contains(nearCityID)) {
+                candidateCities.add(nearCityID to 10.0) // :3197 foundable-adjacent → weight 10.
+            }
+            if ((distMap[nearCityID] ?: Int.MAX_VALUE) + 1 == targetDistance) {
+                candidateCities.add(nearCityID to 1.0) // :3200 toward-target → weight 1.
+            }
+        }
+        val destCityId = pickWanderNextHop(candidateCities, rng) ?: return null // :3203-3208.
+        val args = linkedMapOf<String, Any?>("destCityID" to destCityId)
+        if (!ctx.candidateAllowed(WANDER_MOVE_ACTION, args)) return null // :3210.
+        return ChosenCommand(WANDER_MOVE_ACTION, args) // :3214.
     }
 }
