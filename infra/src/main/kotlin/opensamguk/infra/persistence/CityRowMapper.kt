@@ -47,6 +47,9 @@ object CityRowMapper {
         populationMax = intOf(row["pop_max"]),
         trade = nullableIntOf(row["trade"]),
         region = intOf(row["region"]),
+        term = intOf(row["term"]),
+        officerSet = intOf(row["officer_set"]),
+        conflict = stringOf(row["conflict"]) ?: "{}",
         meta = MetaJson.decode(stringOf(row["meta"])),
     )
 
@@ -72,6 +75,9 @@ object CityRowMapper {
         populationMax = rs.getInt("pop_max"),
         trade = rs.getInt("trade").let { if (rs.wasNull()) null else it },
         region = rs.getInt("region"),
+        term = rs.getInt("term"),
+        officerSet = rs.getInt("officer_set"),
+        conflict = rs.getString("conflict") ?: "{}",
         meta = MetaJson.decode(rs.getString("meta")),
     )
 
@@ -97,6 +103,9 @@ object CityRowMapper {
         "pop_max" to c.populationMax,
         "trade" to c.trade,
         "region" to c.region,
+        "term" to c.term,
+        "officer_set" to c.officerSet,
+        "conflict" to c.conflict,
         "meta" to MetaJson.encode(c.meta),
     )
 }
