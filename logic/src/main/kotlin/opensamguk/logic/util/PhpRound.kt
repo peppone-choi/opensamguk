@@ -8,6 +8,17 @@ fun phpRound(value: Double): Int =
     BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).toInt()
 
 /**
+ * PHP `Util::round($v, $pos)` = `intval(round($v, $pos))` with `assert($pos <= 0)` (Util.php:14-17).
+ * `$pos < 0` rounds at the `10^|pos|` position (e.g. `-2` = nearest 100), still half-AWAY-from-zero.
+ * `BigDecimal.setScale` accepts a NEGATIVE scale = round at `10^|scale|` (M5: NEVER `phpRound(v/100)*100`
+ * — that double-rounds). Consumers: `AutorunNationPolicy` derived defaults (`-2`), `do징병` `round(crew-49,-2)`.
+ */
+fun phpRound(value: Double, pos: Int): Int {
+    require(pos <= 0) { "phpRound pos must be <= 0 (PHP assert(\$pos<=0), Util.php:15): $pos" }
+    return BigDecimal.valueOf(value).setScale(pos, RoundingMode.HALF_UP).toInt()
+}
+
+/**
  * PHP Util::toInt = intval($v) = TRUNCATE-TOWARD-ZERO (NOT floor). The war collapse gold/rice and
  * the ConquerCity city-reset `%d` int-casts use this; distinct from [phpRound] (half-away).
  */
