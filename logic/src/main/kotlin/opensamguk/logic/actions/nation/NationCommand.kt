@@ -80,6 +80,13 @@ abstract class NationCommand : GeneralActionDefinition {
     companion object {
         /** PHP `Util::joinYearMonth(year, month)` (Util.php:709-711) = `year*12 + month - 1`. */
         fun joinYearMonth(year: Int, month: Int): Int = year * 12 + month - 1
+
+        /**
+         * PHP `Util::parseYearMonth(yearMonth)` (Util.php:713-715) — the exact inverse of [joinYearMonth]:
+         * `[intdiv(yearMonth, 12), yearMonth % 12 + 1]` (1-based month). `intdiv` is truncate-toward-zero
+         * (H-HELPERS §1). Consumed by `do불가침제의` to derive the negotiated `(year, month)` (PHP `:1830`).
+         */
+        fun parseYearMonth(yearMonth: Int): Pair<Int, Int> = (yearMonth / 12) to (yearMonth % 12 + 1)
     }
 }
 
