@@ -137,6 +137,36 @@ class ParentFirstStatItem(
 }
 
 /**
+ * The `event_전투특기_*` item code → A1 canonical war-specialty module (the 1:1 CLONES). The behaviour body is
+ * ported ONCE in A1; A2 only aliases the item code to the same object (single-sourced, plan A2). 무쌍's item
+ * has a self-specialty-is-무쌍 `[1,1]` guard the specialty lacks, but the plan pins "port the canonical body
+ * ONCE in A1, reuse here" — the guard is a no-op whenever the bearer's specialWar is not 무쌍 (the common case),
+ * and G1 asserts the battle draw stream; the canonical module stays the single source.
+ */
+private val EVENT_SPECIALTY_CLONES: Map<String, GeneralActionModule> = linkedMapOf(
+    "event_전투특기_필살" to opensamguk.logic.war.specialty.ChePilsal,
+    "event_전투특기_견고" to opensamguk.logic.war.specialty.CheGyeongo,
+    "event_전투특기_신중" to opensamguk.logic.war.specialty.CheSinjung,
+    "event_전투특기_집중" to opensamguk.logic.war.specialty.CheJipjung,
+    "event_전투특기_환술" to opensamguk.logic.war.specialty.CheHwansul,
+    "event_전투특기_신산" to opensamguk.logic.war.specialty.CheSinsan,
+    "event_전투특기_의술" to opensamguk.logic.war.specialty.CheUisul,
+    "event_전투특기_귀병" to opensamguk.logic.war.specialty.CheGwibyeong,
+    "event_전투특기_궁병" to opensamguk.logic.war.specialty.CheGungbyeong,
+    "event_전투특기_반계" to opensamguk.logic.war.specialty.CheBangye,
+    "event_전투특기_징병" to opensamguk.logic.war.specialty.CheJingbyeong,
+    "event_전투특기_격노" to opensamguk.logic.war.specialty.CheGyeokno,
+    "event_전투특기_무쌍" to opensamguk.logic.war.specialty.CheMussang,
+    "event_전투특기_공성" to opensamguk.logic.war.specialty.CheGongseong,
+    "event_전투특기_기병" to opensamguk.logic.war.specialty.CheGibyeong,
+    "event_전투특기_보병" to opensamguk.logic.war.specialty.CheBobyeong,
+    "event_전투특기_돌격" to opensamguk.logic.war.specialty.CheDolgyeok,
+    "event_전투특기_저격" to opensamguk.logic.war.specialty.CheJeogyeok,
+    "event_전투특기_위압" to opensamguk.logic.war.specialty.CheWiap,
+    "event_전투특기_척사" to opensamguk.logic.war.specialty.CheCheoksa,
+)
+
+/**
  * Build the declarative base for a parent-first decorator from its code (reuses the IT1 token parser via a
  * throwaway registry resolve). Returns the parsed [BaseStatItemModule]; never null for a 명마/무기/서적 code.
  */
@@ -174,4 +204,20 @@ fun registerItemHooks() {
     m["che_서적_03_변도론"] = { ParentFirstStatItem(statBaseOf("che_서적_03_변도론"), "<br>[전투] 계략 시도 확률 +2%p") }
     m["che_명마_07_백상"] = { ParentFirstStatItem(statBaseOf("che_명마_07_백상"), "<br>[전투] 공격력 +20%, 소모 군량 +10%, 공격 시 페이즈 -1") }
     m["che_명마_07_기주마"] = { ParentFirstStatItem(statBaseOf("che_명마_07_기주마"), "<br>[전투] 공격 시 페이즈 +1") }
+
+    // --- A2 (AI1): WAR-side item modules — trigger items / warpower items / consumables / 전투특기 clones ---
+    // 비도 — pure BaseItem injecting che_저격시도/발동 at item raiseType (TYPE_ITEM+DEDUP*305).
+    m["che_저격_비도"] = { BidoItem }
+    // 맥궁 — BaseStatItem 무력+7 PLUS a che_저격(0.2) injection at TYPE_ITEM+DEDUP*107 (parent-first).
+    m["che_무기_07_맥궁"] = { MaekgungItem(statBaseOf("che_무기_07_맥궁")) }
+    // 태현청생부 — injuryProb −1 + 부상무효/저격불가 injection at TYPE_ITEM+DEDUP*303.
+    m["che_부적_태현청생부"] = { TaehyeonItem }
+    // 구정신단경 — 격노 warpower [1+0.05*cnt,1] + che_격노 injection at TYPE_ITEM.
+    m["che_격노_구정신단경"] = { GujeongItem }
+    // 충차 — consumable [1.5,1] vs city + 충차아이템소모(TYPE_CONSUMABLE_ITEM).
+    m["event_충차"] = { ChungchaItem }
+    // event_전투특기_* — 1:1 CLONES of the war specialties (resolve to the A1 canonical module object).
+    for ((code, module) in EVENT_SPECIALTY_CLONES) {
+        m[code] = { module }
+    }
 }
