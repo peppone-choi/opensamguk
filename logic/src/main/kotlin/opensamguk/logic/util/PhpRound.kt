@@ -7,6 +7,18 @@ import java.math.RoundingMode
 fun phpRound(value: Double): Int =
     BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).toInt()
 
+/**
+ * PHP Util::toInt = intval($v) = TRUNCATE-TOWARD-ZERO (NOT floor). The war collapse gold/rice and
+ * the ConquerCity city-reset `%d` int-casts use this; distinct from [phpRound] (half-away).
+ */
+fun phpToInt(value: Double): Int = kotlin.math.truncate(value).toInt()
+
+/**
+ * The processWar_NG damage-loop clamp `ceil()` (`process_war.php` damage rebalance) — true ceiling
+ * toward +inf, negative-safe; DISTINCT from the [phpRound] applied inside calcDamage.
+ */
+fun phpCeil(value: Double): Int = kotlin.math.ceil(value).toInt()
+
 /** PHP Util::clamp / valueFit: max<min → min; else lower-clamp then upper-clamp. min/max nullable. */
 fun clamp(value: Double, min: Double? = null, max: Double? = null): Double {
     if (max != null && min != null && max < min) return min

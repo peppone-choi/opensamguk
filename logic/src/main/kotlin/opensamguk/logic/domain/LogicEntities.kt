@@ -40,6 +40,8 @@ data class General(
     val item: String = "None",    // V1 general.item_code
     // --- P2 npc / last-turn ---
     val npcType: Int = 0,         // V1 general.npc_state (NPCType taxonomy 0/1/2/3/5/6/9 — see NpcType)
+    // --- P4 war/conquest surface (Task FU3) ---
+    val officerCity: Int = 0,     // V1 general.officer_city — the city a 태수/군사/종사 governs; ConquerCity resets to 0 + officer_level 1 (process_war.php:705-708)
     val lastTurn: LastTurn = LastTurn(),  // rides the general.last_turn jsonb (delete-on-default)
     val meta: Map<String, Any?> = linkedMapOf(),   // explevel, intel_exp, leadership_exp, strength_exp, dedlevel, aux, max_domestic_critical, killturn …
 )
@@ -68,6 +70,10 @@ data class City(
     val dead: Int = 0,              // PHP city.dead — accumulated battle dead (부상병); ProcessWarIncome reads dead/10 then resets to 0
     val trade: Int? = null,         // V1 city.trade — 95..105, or null (no-trade / disabled)
     val region: Int = 0,            // V1 city.region
+    // --- P4 war/conquest surface (Task FU3) ---
+    val term: Int = 0,              // V1 city.term — owner-tenure turn counter; ConquerCity resets to 0 (process_war.php:779)
+    val officerSet: Int = 0,        // V1 city.officer_set — officer-assignment seq; ConquerCity resets to 0 (process_war.php:785)
+    val conflict: String = "{}",    // V1 city.conflict jsonb — the nation→Double ConflictMap (A4 writes; insertion-ordered JSON string, byte-faithful); ConquerCity resets to '{}' (process_war.php:780)
     val meta: Map<String, Any?> = linkedMapOf(),
 )
 

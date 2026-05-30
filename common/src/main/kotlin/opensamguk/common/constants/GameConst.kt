@@ -210,6 +210,24 @@ object GameConst {
         listOf(20, 4),
     )
 
+    /**
+     * func.php:1625-1632 (= core2026 uniqueLottery.ts:197-205) — the post-battle unique-item
+     * lottery trial cap for a given relative year. NOT a standalone constant: base 1, raised to the
+     * `targetTrialCnt` of each [maxUniqueItemLimit] row whose `targetYear <= relYear` (walk stops at
+     * the first row with `relYear < targetYear`). The unique lottery is the P3 reward lineage,
+     * distinct from the war RNG stream.
+     */
+    fun maxTrialCountByYear(relYear: Int): Int {
+        var maxTrial = 1
+        for (row in maxUniqueItemLimit) {
+            val targetYear = row[0]
+            val targetTrialCnt = row[1]
+            if (relYear < targetYear) break
+            maxTrial = targetTrialCnt
+        }
+        return maxTrial
+    }
+
     const val minTurnDieOnPrestart = 2
 
     const val uniqueTrialCoef = 1

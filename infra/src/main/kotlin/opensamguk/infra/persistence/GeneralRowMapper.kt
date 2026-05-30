@@ -58,6 +58,7 @@ object GeneralRowMapper {
         book = codeOf(row["book_code"]),
         item = codeOf(row["item_code"]),
         npcType = intOf(row["npc_state"]),
+        officerCity = intOf(row["officer_city"]),
         lastTurn = LastTurn.fromRaw(MetaJson.decode(stringOf(row["last_turn"]))),
         meta = MetaJson.decode(stringOf(row["meta"])),
     )
@@ -86,6 +87,7 @@ object GeneralRowMapper {
         book = rs.getString("book_code") ?: "None",
         item = rs.getString("item_code") ?: "None",
         npcType = rs.getInt("npc_state"),
+        officerCity = rs.getInt("officer_city"),
         lastTurn = LastTurn.fromRaw(MetaJson.decode(rs.getString("last_turn"))),
         meta = MetaJson.decode(rs.getString("meta")),
     )
@@ -118,6 +120,7 @@ object GeneralRowMapper {
         "book_code" to g.book,
         "item_code" to g.item,
         "npc_state" to g.npcType,
+        "officer_city" to g.officerCity,
         "last_turn" to MetaJson.encode(g.lastTurn.toRaw()),
         "meta" to MetaJson.encode(g.meta),
     )
