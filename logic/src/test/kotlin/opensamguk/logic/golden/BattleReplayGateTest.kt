@@ -307,12 +307,12 @@ class BattleReplayGateTest {
      * times in the identical order on both sides (필살/회피/계략/위압/반계/환술 …) — the load-bearing battle-logic
      * parity beyond the raw draw stream.
      *
-     * The exact numeric killed/dead/hp residual is QUARANTINED (backlog G1b-WP, documented in
-     * tools/php-golden/p4-capture-backlog.md): after fixing the two port bugs G1b localized (위압발동 atmos −5,
-     * footman che_방어력증가5p), the per-phase damage matches the golden to within <1% on battle-01; the residual
-     * is a sub-unit warpower-arithmetic rounding I could not pin to a PHP file:line without a runtime trace.
-     * It does NOT touch the RNG draw stream (those gates are byte-exact) nor the trigger/skill firing (asserted
-     * here). The numeric is recorded against the golden so the gate fails LOUDLY if the residual ever grows.
+     * The exact numeric killed/dead/hp residual is still tracked as G1b-WP (documented in
+     * tools/php-golden/p4-capture-backlog.md), but after porting the officer-level warpower multiplier
+     * (`TriggerOfficerLevel.php:62-86`) both battle goldens are tight enough to gate at 1% of the relevant
+     * starting crew/HP scale. It does NOT touch the RNG draw stream (those gates are byte-exact) nor the
+     * trigger/skill firing (asserted here). The numeric is recorded against the golden so the gate fails LOUDLY
+     * if the residual ever grows.
      */
     private fun assertPostState(name: String, numericTolerancePct: Double?) {
         val g = load(name)
@@ -346,21 +346,28 @@ class BattleReplayGateTest {
             assertTriggerSurface("defender$i", gd, r.defenders[i].getPhase(), r.defenders[i].getActivatedSkillLog())
         }
 
-        // QUARANTINED numeric (backlog G1b-WP). When [numericTolerancePct] is non-null, assert post-state
-        // killed/dead/hp within that tolerance scaled to the unit's STARTING crew (the meaningful 0..crew
-        // scale). For battle-01 (footman, no magic) the residual is <2% → a TIGHT regression gate. For
-        // battle-02 the residual is AMPLIFIED non-linearly by the 계략 magic multipliers + the HP-ratio clamp
-        // (phase 6: a near-death clamp where the inflated warpower diverges 2.8×), so its numeric is NOT gated
-        // (numericTolerancePct = null) — the divergence is reported in the backlog rather than masked by a
-        // meaninglessly wide tolerance. The byte-exact DRAW STREAM + the magic trigger/skill log ARE gated.
+        // G1b-WP numeric residual. When [numericTolerancePct] is non-null, assert post-state killed/dead/hp
+        // within that tolerance scaled to the relevant STARTING crew/HP. `dead`/`hp` are own-unit state, while
+        // `killed` is damage dealt to the opposing side, so it uses the opponent scale. This keeps both the
+        // general exchange and the siege wall numeric surface gated while the sub-1% arithmetic rounding residual
+        // remains documented against the PHP golden.
         if (numericTolerancePct != null) {
-            fun assertNumericWithinTolerance(label: String, expected: JsonObject, startCrew: Int, killed: Int, dead: Int, hp: Int) {
-                val tol = maxOf(2, (startCrew * numericTolerancePct).toInt())
+            fun assertNumericWithinTolerance(
+                label: String,
+                expected: JsonObject,
+                ownStartHp: Int,
+                killedScaleHp: Int,
+                killed: Int,
+                dead: Int,
+                hp: Int,
+            ) {
                 for ((field, kv, gv) in listOf(
                     Triple("killed", killed, expected.i("killed")),
                     Triple("dead", dead, expected.i("dead")),
                     Triple("hp", hp, expected.i("hp")),
                 )) {
+                    val scale = if (field == "killed") killedScaleHp else ownStartHp
+                    val tol = maxOf(2, (scale * numericTolerancePct).toInt())
                     assertTrue(
                         kotlin.math.abs(kv - gv) <= tol,
                         "$name $label $field QUARANTINED-residual exceeded tolerance ($tol): " +
@@ -369,27 +376,27 @@ class BattleReplayGateTest {
                 }
             }
             val atkStartCrew = g["attacker_input"]!!.jsonObject.i("crew")
-            assertNumericWithinTolerance("attacker", ps["attacker"]!!.jsonObject, atkStartCrew, a.getKilled(), a.getDead(), a.getHP())
+            assertNumericWithinTolerance("attacker", ps["attacker"]!!.jsonObject, atkStartCrew, atkStartCrew, a.getKilled(), a.getDead(), a.getHP())
             for ((i, gd) in generalDefGolden.withIndex()) {
                 val defStartCrew = g["defender_inputs"]!!.jsonArray[i].jsonObject.i("crew")
-                assertNumericWithinTolerance("defender$i", gd, defStartCrew, r.defenders[i].getKilled(), r.defenders[i].getDead(), r.defenders[i].getHP())
+                assertNumericWithinTolerance("defender$i", gd, defStartCrew, atkStartCrew, r.defenders[i].getKilled(), r.defenders[i].getDead(), r.defenders[i].getHP())
             }
+            val cityStartHp = g["defender_city_input"]!!.jsonObject.i("def") * 10
+            assertNumericWithinTolerance("city", ps["city"]!!.jsonObject, cityStartHp, atkStartCrew, c.getKilled(), c.getDead(), c.getHP())
         }
     }
 
-    // battle-01 (footman exchange, no magic): the warpower-arithmetic residual is <2% of crew → tight gate.
+    // battle-01 (footman exchange, no magic): the warpower-arithmetic residual is <1% of relevant crew/HP → tight gate.
     @Test
     fun `battle-01 trigger surface matches golden + numeric within quarantine tolerance`() =
-        assertPostState("battle-01.json", numericTolerancePct = 0.02)
+        assertPostState("battle-01.json", numericTolerancePct = 0.01)
 
     // battle-02 (귀병 magic-heavy): the byte-exact DRAW STREAM (68/68, separate test) + the full magic
-    // trigger/skill log (계략시도/반목/매복/위보/화계/계략실패/계략) are asserted here. The post-state NUMERIC is
-    // QUARANTINED un-gated (backlog G1b-WP): the residual warpower-arithmetic gap is amplified non-linearly by
-    // the 계략 magic multipliers + the near-death HP-ratio clamp (장보's final phase diverges ~2.8×), an
-    // unresolved divergence I could not pin to a PHP file:line without a runtime trace — reported, not masked.
+    // trigger/skill log (계략시도/반목/매복/위보/화계/계략실패/계략) are asserted here. The post-state numeric
+    // residual is now <1% after porting TriggerOfficerLevel warpower multipliers, so battle-02 is gated too.
     @Test
-    fun `battle-02 trigger surface matches golden (numeric quarantined)`() =
-        assertPostState("battle-02.json", numericTolerancePct = null)
+    fun `battle-02 trigger surface matches golden + numeric within quarantine tolerance`() =
+        assertPostState("battle-02.json", numericTolerancePct = 0.01)
 
     /** Sanity: the warSeed in each golden is the faithful che_출병 6-tuple derivation off the fixed hiddenSeed. */
     @Test

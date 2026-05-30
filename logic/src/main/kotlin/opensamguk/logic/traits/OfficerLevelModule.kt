@@ -2,6 +2,7 @@ package opensamguk.logic.traits
 
 import opensamguk.logic.domain.General
 import opensamguk.logic.stats.GeneralActionModule
+import opensamguk.logic.war.trigger.WarUnit
 
 /**
  * Source #2 of the 9-source action stack — a faithful port of PHP `TriggerOfficerLevel`
@@ -21,8 +22,7 @@ import opensamguk.logic.stats.GeneralActionModule
  *   - onCalcStat (`:55-60`): leadership += lbonus ; all other stats identity.
  *   - onCalcDomestic (`:27-53`): a +5% (×1.05) `score` buff gated on the (demoted) officerLevel
  *     per a per-turnType allow-list. Non-`score` varTypes are identity.
- *
- * War hooks (getWarPowerMultiplier `:62-86`) are out of P2-domestic scope; not ported here.
+ *   - getWarPowerMultiplier (`:62-86`): rank-specific attacker / opponent warpower multipliers.
  */
 class OfficerLevelModule(
     officerLevel: Int,
@@ -64,4 +64,15 @@ class OfficerLevelModule(
         }
         return if (boosted) value * 1.05 else value
     }
+
+    /** TriggerOfficerLevel.php:62-86 — attacker / opponent warpower multipliers by effective officer level. */
+    override fun getWarPowerMultiplier(unit: WarUnit): Pair<Double, Double> =
+        when (officerLevel) {
+            12 -> 1.07 to 0.93
+            11 -> 1.05 to 0.95
+            10, 8, 6 -> 1.10 to 1.0
+            9, 7, 5 -> 1.0 to 0.90
+            4, 3, 2 -> 1.05 to 0.95
+            else -> 1.0 to 1.0
+        }
 }
