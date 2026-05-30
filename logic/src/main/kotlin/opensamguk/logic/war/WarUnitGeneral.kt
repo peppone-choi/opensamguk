@@ -7,6 +7,7 @@ import opensamguk.common.constants.getTechCost
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.explevel
+import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.war.trigger.WarUnit as WarUnitContract
@@ -61,6 +62,9 @@ class WarUnitGeneral(
 
     fun getGeneral(): General = state.general
 
+    /** The stable ascending PK (`general.no`) — the defender-list stable secondary tie-break key (PR-4). */
+    val no: Int get() = state.general.id
+
     override fun unitIdToken(): String = unitToken
 
     override fun getName(): String = "G${state.general.id}"
@@ -71,6 +75,48 @@ class WarUnitGeneral(
 
     override fun isGeneral(): Boolean = true
     override fun isCity(): Boolean = false
+
+    // --- extractBattleOrder input surface (PHP process_war.php:202-225 reads off the general) -----------
+
+    /** PHP `$general->getVar('crew')` — the live battle crew (== getHP). */
+    fun getCrew(): Int = state.crew
+
+    /** PHP `$general->getVar('rice')` — the live rice accumulator. */
+    fun getRice(): Double = state.rice
+
+    /** PHP `$general->getVar('train')`. */
+    fun getTrain(): Double = state.train
+
+    /** PHP `$general->getVar('atmos')`. */
+    fun getAtmos(): Double = state.atmos
+
+    /** PHP `$general->getVar('defence_train')` — the player-set defence-training threshold (general meta). */
+    fun getDefenceTrain(): Double = metaDouble(state.general.meta, "defence_train")
+
+    /** PHP `getLeadership()+getStrength()+getIntel()` (real = with-injury) — the extractBattleOrder realStat. */
+    fun getRealStatSum(): Double {
+        val sc = statCalc()
+        return sc.getStatValue("leadership", withInjury = true, withIActionObj = true, withStatAdjust = true, useFloor = true) +
+            sc.getStatValue("strength", withInjury = true, withIActionObj = true, withStatAdjust = true, useFloor = true) +
+            sc.getStatValue("intel", withInjury = true, withIActionObj = true, withStatAdjust = true, useFloor = true)
+    }
+
+    /** PHP `getLeadership(false)+getStrength(false)+getIntel(false)` (full = injury-free) — the extractBattleOrder fullStat. */
+    fun getFullStatSum(): Double {
+        val sc = statCalc()
+        return sc.getStatValue("leadership", withInjury = false, withIActionObj = true, withStatAdjust = true, useFloor = true) +
+            sc.getStatValue("strength", withInjury = false, withIActionObj = true, withStatAdjust = true, useFloor = true) +
+            sc.getStatValue("intel", withInjury = false, withIActionObj = true, withStatAdjust = true, useFloor = true)
+    }
+
+    /**
+     * PHP `extractBattleOrder` city branch (`process_war.php:199`):
+     * `$attackerGeneral->onCalcOpposeStat($city->getGeneral(), 'cityBattleOrder', -1)`. The city's
+     * DummyGeneral carries no module surface, so the fold runs over the ATTACKER's pipeline against the
+     * attacker's own general snapshot (the city general has no iAction objects). NO draws.
+     */
+    fun cityBattleOrder(): Double =
+        pipeline.onCalcOpposeStat(state.general, "cityBattleOrder", -1.0)
 
     // --- stat resolution (PHP General::getStatValue, the iAction-flagged folds) -------------------------
 
