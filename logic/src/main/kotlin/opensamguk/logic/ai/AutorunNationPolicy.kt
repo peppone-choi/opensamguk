@@ -46,32 +46,34 @@ class AutorunNationPolicy(
     serverPolicy: Map<String, Any?>? = null,
 ) {
     // --- can* action gates (AutorunNationPolicy.php:88-113); all default true ---
-    var can부대전방발령: Boolean = true; private set
-    var can부대후방발령: Boolean = true; private set
-    var can부대구출발령: Boolean = true; private set
+    // NOT `private set` — mirrors AutorunGeneralPolicy: the chief-gate (init) sets them, and a test
+    // / the consumer loop may flip one to model the live `can<name>` flag (guard-B).
+    var can부대전방발령: Boolean = true
+    var can부대후방발령: Boolean = true
+    var can부대구출발령: Boolean = true
 
-    var can부대유저장후방발령: Boolean = true; private set
-    var can유저장후방발령: Boolean = true; private set
-    var can유저장전방발령: Boolean = true; private set
-    var can유저장구출발령: Boolean = true; private set
-    var can유저장내정발령: Boolean = true; private set
+    var can부대유저장후방발령: Boolean = true
+    var can유저장후방발령: Boolean = true
+    var can유저장전방발령: Boolean = true
+    var can유저장구출발령: Boolean = true
+    var can유저장내정발령: Boolean = true
 
-    var canNPC후방발령: Boolean = true; private set
-    var canNPC전방발령: Boolean = true; private set
-    var canNPC구출발령: Boolean = true; private set
-    var canNPC내정발령: Boolean = true; private set
+    var canNPC후방발령: Boolean = true
+    var canNPC전방발령: Boolean = true
+    var canNPC구출발령: Boolean = true
+    var canNPC내정발령: Boolean = true
 
-    var can유저장긴급포상: Boolean = true; private set
-    var can유저장포상: Boolean = true; private set
+    var can유저장긴급포상: Boolean = true
+    var can유저장포상: Boolean = true
     // can유저장몰수 commented out (:105) — fully dead.
 
-    var canNPC긴급포상: Boolean = true; private set
-    var canNPC포상: Boolean = true; private set
-    var canNPC몰수: Boolean = true; private set
+    var canNPC긴급포상: Boolean = true
+    var canNPC포상: Boolean = true
+    var canNPC몰수: Boolean = true
 
-    var can불가침제의: Boolean = true; private set
-    var can선전포고: Boolean = true; private set
-    var can천도: Boolean = true; private set
+    var can불가침제의: Boolean = true
+    var can선전포고: Boolean = true
+    var can천도: Boolean = true
 
     // --- value-keys (AutorunNationPolicy.php:116-180); init from $defaultPolicy (:152-180) ---
     var reqNationGold: Int = 10000; private set
@@ -201,6 +203,40 @@ class AutorunNationPolicy(
      * dropped at the consumer loop. F-DISPATCH consumes this predicate. Mirrors the live can* prop set.
      */
     fun hasCanFlagFor(actionName: String): Boolean = "can$actionName" in CAN_FLAG_NAMES
+
+    /**
+     * The `chooseNationTurn` (`:3663-3669`) / `chooseInstantNationTurn` (`:3698`) consumer-loop two-step
+     * `can<name>` resolution, mirroring `AutorunGeneralPolicy.canFor`:
+     *  - `null`  ⇒ guard-A: NO `can<name>` property (`property_exists` false at :3663) → the loop drops the
+     *    name with `trigger_error(...)+continue`. A typo/unknown bare-action name lands here.
+     *  - `false` ⇒ guard-B: the live `can<name>` flag is false (`!$this->{'can'.$name}` at :3667) → continue.
+     *  - `true`  ⇒ the flag is on; the loop proceeds to guard-C / the `do{X}` dispatch.
+     *
+     * The 유저장몰수 name has NO `can` prop (commented out :105) → `null` (correctly dropped at guard-A).
+     */
+    fun canFor(actionName: String): Boolean? = when (actionName) {
+        "부대전방발령" -> can부대전방발령
+        "부대후방발령" -> can부대후방발령
+        "부대구출발령" -> can부대구출발령
+        "부대유저장후방발령" -> can부대유저장후방발령
+        "유저장후방발령" -> can유저장후방발령
+        "유저장전방발령" -> can유저장전방발령
+        "유저장구출발령" -> can유저장구출발령
+        "유저장내정발령" -> can유저장내정발령
+        "NPC후방발령" -> canNPC후방발령
+        "NPC전방발령" -> canNPC전방발령
+        "NPC구출발령" -> canNPC구출발령
+        "NPC내정발령" -> canNPC내정발령
+        "유저장긴급포상" -> can유저장긴급포상
+        "유저장포상" -> can유저장포상
+        "NPC긴급포상" -> canNPC긴급포상
+        "NPC포상" -> canNPC포상
+        "NPC몰수" -> canNPC몰수
+        "불가침제의" -> can불가침제의
+        "선전포고" -> can선전포고
+        "천도" -> can천도
+        else -> null // guard-A: no `can<name>` property → the consumer loop drops it with a notice
+    }
 
     /**
      * The `values` per-key merge (AutorunNationPolicy.php:189-195 / :204-210 — byte-identical blocks).
