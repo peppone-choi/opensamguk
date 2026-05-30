@@ -1,9 +1,11 @@
 package opensamguk.logic.ai.families
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.util.clamp
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.phpToInt
+import opensamguk.logic.util.valueFit
 
 /**
  * L-RATES — the rate / promotion `do<한글>`-helper family: chooseTexRate / chooseGoldBillRate /
@@ -297,4 +299,341 @@ object RatesPromoFamily {
         userCivilGenerals.isNotEmpty() -> rng.choice(userCivilGenerals) // PHP :3917-3919 — 4th: user civil.
         else -> null // PHP :3920-3922 — all pools empty ⇒ break, NO draw.
     }
+
+    // ====================================================================================================
+    // WORLD-DRIVEN nation-pass hooks (PHP `GeneralAI.php:3881-4292`, read in full).
+    //
+    // The 5 rate/promotion methods are `chooseNationTurn` npcType>=2 SIDE-EFFECT hooks (PHP `:3633-3646`),
+    // NOT priority-loop `do<한글>` command bodies — they return no ChosenCommand; they mutate the nation /
+    // chief generals directly. Since the AI is READ-ONLY over GAME ENTITIES (decision #12 / M4), every
+    // mutation routes through the [RatesPromoDeltaSink] ChangeRecorder delta seam (officer_level /
+    // officer_city / chief_set / war / rate / bill), NOT inline. The promotion hooks MAY draw (the
+    // choosePromotion `nextBool(0.1)` per OCCUPIED slot; the chooseNonLordPromotion up-to-5 `choice` per
+    // EMPTY slot); the three rate hooks make ZERO draws. The candidate ORDER — the chief-slot scan
+    // (Util::range(minChiefLevel,12) / range(11,minChiefLevel-1,-1)) + the pool priority + the develRate
+    // keys — IS the draw-for-draw parity target.
+    //
+    // The body reads the [RatesPromoContext] (rng / world buckets / per-general scalars / income+devRate
+    // inputs / delta sink), assembles the exact candidate set in PHP insertion order, calls the PURE draw
+    // primitive above, and queues the deltas. The Assemble step wires [bodies] into [NationPassHooks].
+    // ====================================================================================================
+
+    /**
+     * One promotion candidate as the chief-pick loops read it (PHP `$general`/`$randGeneral`/`$chief`):
+     * the id + the chief-gate scalars (`officer_level` / strength|intel raw stat-gate flavor `(F,F,F,F)` /
+     * `getNPCType()` / `killturn` / `belong` + the penalty flags). The strength/intel are the
+     * `getStrength(false,false,false,false)` / `getIntel(false,false,false,false)` promotion stat-gate
+     * flavor (PHP `:3934/3938/4123/4125`, decision #7 / G8 — already truncated by the adapter; NOT re-rounded).
+     *
+     * @param generalId PHP `$general->getID()` — the officer_level/officer_city delta target.
+     * @param officerLevel PHP `getVar('officer_level')` — the `!= 1` non-lord accept gate (`:3924`) + the
+     *   `> 4` chief-pool exclusion (`:4052/4109`).
+     * @param strength the promotion stat-gate strength (`:3934/4123`, chiefLevel even gate).
+     * @param intel the promotion stat-gate intel (`:3938/4125`, chiefLevel odd gate).
+     * @param npcType PHP `getNPCType()` — the user/npc killturn split (`:4112/4115`) + userChiefCnt (`:4129`).
+     * @param killturn PHP `getVar('killturn')` — the user/npc min-killturn gates (`:4112/4115`).
+     * @param belong PHP `getVar('belong')` — the `>= minBelong` newChief filter (`:4016`, unused by NonLord).
+     * @param hasNoChief PHP `hasPenalty(NoChief)` — excludes from the newChief pool (`:4019/4118`).
+     * @param hasNoAmbassador PHP `hasPenalty(NoAmbassador)` — the ambassador-permission delta gate (`:4143`).
+     */
+    data class PromotionCandidate(
+        val generalId: Int,
+        val officerLevel: Int,
+        val strength: Double,
+        val intel: Double,
+        val npcType: Int,
+        val killturn: Int,
+        val belong: Int,
+        val hasNoChief: Boolean = false,
+        val hasNoAmbassador: Boolean = false,
+        /** PHP `$general['dedication']` — the bill-estimate input (`getBill` H-HELPERS §3). Default 0. */
+        val dedication: Double = 0.0,
+    )
+
+    /**
+     * The ChangeRecorder delta seam (decision #12 / M4) the rate/promotion hooks route their mutations
+     * through — the AI is READ-ONLY over GAME ENTITIES, so officer_level/officer_city/chief_set/war/rate/bill
+     * writes queue as AI-side deltas, NOT inline and NOT a module-static Map. The engine adapter wires a real
+     * ChangeRecorder-backed implementation; the logic layer only sees this interface.
+     */
+    interface RatesPromoDeltaSink {
+        /** Queue a general row KV write (officer_level / officer_city). */
+        fun recordGeneralKv(generalId: Int, key: String, value: Any?)
+
+        /** Queue a nation row KV write (chief_set / war / rate / bill). */
+        fun recordNationKv(nationId: Int, key: String, value: Any?)
+    }
+
+    /**
+     * The per-nation-pass AI INPUT the 5 rate/promotion hooks read. Faithful Kotlin stand-in for the PHP
+     * `GeneralAI` per-instance nation/chief state (`GeneralAI.php`, GRAND TRUTH): the SOLE `"GeneralAI"`
+     * [rng] threaded by reference; the nation row scalars; the chief-slot scan inputs ([chiefSet] /
+     * [chiefGeneralLevels] / [selfOfficerLevel]); the 4 promotion candidate pools (categorizeNationGeneral
+     * buckets, PK-ascending) + the [chiefGeneralOf] / [userGenerals] / [nationGenerals] accessors; the
+     * develRate / income inputs for the rate hooks; and the [deltaSink]. Tests build it directly over a
+     * deterministic fixture; the engine adapter materialises it over the live world.
+     *
+     * @param nationId the nation row delta target.
+     * @param nationLevel PHP `$nation['level']` — `getNationChiefLevel(level)` = the minChiefLevel scan floor.
+     * @param chiefSet the set of occupied chief levels (PHP `$nation['chief_set']` bitfield, decoded via
+     *   `isOfficerSet`) — a level IN this set is skipped by both scans (`:3890/4082`).
+     * @param chiefGeneralLevels the chiefGenerals KEY set (PHP `$this->chiefGenerals`, keyed by officer_level)
+     *   — `key_exists($chiefLevel, $this->chiefGenerals)` (`:3893/4089/4096`). For choosePromotion an OCCUPIED
+     *   level draws the `nextBool(0.1)`; for chooseNonLordPromotion an in-chiefGenerals level is skipped.
+     * @param chiefGeneralOf the chiefGenerals VALUE accessor (PHP `$this->chiefGenerals[$chiefLevel]`) — the
+     *   old chief at a level (for the demote delta + the keep-old-chief gate `:4091`). null when empty.
+     * @param selfOfficerLevel PHP `$this->general->getVar('officer_level')` — the self-skip (`:3896/4085`).
+     * @param chiefStatMin `GameConst::$chiefStatMin` (the chief strength/intel gate `:3934/4123`). Threaded.
+     * @param killturnEnv PHP `$this->env['killturn']` — the `minUserKillturn = killturn - toInt(240/turnterm)`
+     *   base (choosePromotion `:3988`). [turnTerm] supplies the divisor.
+     * @param npcWarGenerals/npcCivilGenerals/userWarGenerals/userCivilGenerals the 4 chooseNonLordPromotion
+     *   pools (PHP insertion order = the categorizeNationGeneral bucket order, a parity target). NOT re-sorted.
+     * @param userGenerals PHP `$this->userGenerals` (the choosePromotion userChief availability pass `:4012`).
+     * @param nationGenerals PHP `$this->nationGenerals` (the choosePromotion newChief stat-desc `uasort` pool
+     *   `:4068`; the adapter supplies them PK-ascending — the deterministic `uasort` is NO draw).
+     * @param supplyCities the nation supply cities (PHP `$this->supplyCities`) — the rate-hook develRate base.
+     * @param nationGold/nationRice PHP `$nation['gold']`/`$nation['rice']` — the bill moreBill-surplus gate.
+     * @param goldIncome/warGoldIncome/riceIncome/wallRiceIncome the bill income inputs (the adapter computes
+     *   them via the H-HELPERS §3 income helpers; the hook sums them — gold = goldIncome+warGoldIncome,
+     *   rice = riceIncome+wallRiceIncome).
+     * @param reqNationGold/reqNationRice PHP `$this->nationPolicy->reqNationGold`/`reqNationRice` — the bill
+     *   moreBill `reqNationRes * 2` surplus threshold.
+     * @param deltaSink the meta-KV delta seam (decision #12).
+     */
+    data class RatesPromoContext(
+        val rng: RandUtil,
+        val nationId: Int,
+        val nationLevel: Int,
+        val chiefSet: Set<Int> = emptySet(),
+        val chiefGeneralLevels: Set<Int> = emptySet(),
+        val chiefGeneralOf: (chiefLevel: Int) -> PromotionCandidate? = { null },
+        val selfOfficerLevel: Int = 0,
+        val chiefStatMin: Double = 65.0,
+        val killturnEnv: Int = 0,
+        val turnTerm: Int = 1,
+        val npcWarGenerals: List<PromotionCandidate> = emptyList(),
+        val npcCivilGenerals: List<PromotionCandidate> = emptyList(),
+        val userWarGenerals: List<PromotionCandidate> = emptyList(),
+        val userCivilGenerals: List<PromotionCandidate> = emptyList(),
+        val userGenerals: List<PromotionCandidate> = emptyList(),
+        val nationGenerals: List<PromotionCandidate> = emptyList(),
+        val supplyCities: List<CityDevelInput> = emptyList(),
+        val nationGold: Int = 0,
+        val nationRice: Int = 0,
+        val goldIncome: Int = 0,
+        val warGoldIncome: Int = 0,
+        val riceIncome: Int = 0,
+        val wallRiceIncome: Int = 0,
+        val reqNationGold: Int = 10000,
+        val reqNationRice: Int = 12000,
+        val deltaSink: RatesPromoDeltaSink,
+    )
+
+    /**
+     * The 5 nation-pass side-effect hooks the [opensamguk.logic.ai.GeneralAiFactory] wires into
+     * [opensamguk.logic.ai.NationPassHooks] (the Assemble step). Each is a `() -> ...` closure over ONE
+     * [RatesPromoContext]; the promotion hooks return Unit (pure side-effect) and MAY draw, the three rate
+     * hooks return the chosen Int rate/bill (PHP `chooseTexRate(): int` etc.) and make ZERO draws.
+     */
+    class RatesPromoHooks(private val ctx: RatesPromoContext) {
+        fun chooseNonLordPromotion() = chooseNonLordPromotion(ctx)
+        fun choosePromotion() = choosePromotion(ctx)
+        fun chooseTexRate(): Int = chooseTexRate(ctx)
+        fun chooseGoldBillRate(): Int = chooseGoldBillRate(ctx)
+        fun chooseRiceBillRate(): Int = chooseRiceBillRate(ctx)
+    }
+
+    /** Build the 5 nation-pass hooks over the per-nation-pass [ctx]. */
+    fun bodies(ctx: RatesPromoContext): RatesPromoHooks = RatesPromoHooks(ctx)
+
+    // --- chooseNonLordPromotion (PHP `:3881-3963`) ---
+
+    private fun chooseNonLordPromotion(ctx: RatesPromoContext) {
+        val minChiefLevel = GameConst.getNationChiefLevel(ctx.nationLevel) // PHP :3887.
+
+        // PHP `:3889` — foreach (Util::range(minChiefLevel, 12) as $chiefLevel). Ascending scan over EMPTY slots.
+        for (chiefLevel in minChiefLevel..12) {
+            if (chiefLevel in ctx.chiefSet) continue // PHP :3890-3892 — isOfficerSet → occupied, skip.
+            if (chiefLevel in ctx.chiefGeneralLevels) continue // PHP :3893-3895 — already chosen this pass, skip.
+            if (ctx.selfOfficerLevel == chiefLevel) continue // PHP :3896-3898 — self holds this level, skip.
+
+            var picked: PromotionCandidate? = null
+            // PHP `:3905` — foreach (Util::range(5) as $idx) — up to 5 attempts, redraw-on-reject.
+            for (attempt in 0 until 5) {
+                val candId = pickPromotionCandidate(
+                    npcWarGenerals = ctx.npcWarGenerals.map { it.generalId },
+                    npcCivilGenerals = ctx.npcCivilGenerals.map { it.generalId },
+                    userWarGenerals = ctx.userWarGenerals.map { it.generalId },
+                    userCivilGenerals = ctx.userCivilGenerals.map { it.generalId },
+                    rng = ctx.rng,
+                ) ?: break // PHP :3920-3922 — all pools empty ⇒ break, NO draw.
+                val cand = candidateById(ctx, candId)!!
+
+                if (cand.officerLevel != 1) continue // PHP :3924-3926 — non-lord only.
+                if (chiefLevel == 11) { // PHP :3928-3931 — 군주 candidate bypasses the stat gate.
+                    picked = cand
+                    break
+                }
+                // PHP `:3933-3941` — even chiefLevel gates strength, odd gates intel, both vs chiefStatMin.
+                if (chiefLevel % 2 == 0) {
+                    if (cand.strength < ctx.chiefStatMin) continue // PHP :3934-3936.
+                } else {
+                    if (cand.intel < ctx.chiefStatMin) continue // PHP :3938-3940.
+                }
+                picked = cand // PHP :3942-3943.
+                break
+            }
+
+            val winner = picked ?: continue // PHP :3946-3948 — !picked → no delta for this slot.
+            // PHP `:3950-3955` — set the picked general's officer_level/officer_city; add the chief_set bit.
+            ctx.deltaSink.recordGeneralKv(winner.generalId, "officer_level", chiefLevel) // PHP :3950.
+            ctx.deltaSink.recordGeneralKv(winner.generalId, "officer_city", 0) // PHP :3951.
+            ctx.deltaSink.recordNationKv(ctx.nationId, "chief_set", chiefLevel) // PHP :3953/3958-3961 chief_set |= bit.
+        }
+    }
+
+    // --- choosePromotion (PHP `:3978-4170`) ---
+
+    private fun choosePromotion(ctx: RatesPromoContext) {
+        val minChiefLevel = GameConst.getNationChiefLevel(ctx.nationLevel) // PHP :3984.
+
+        // PHP `:4081` — foreach (Util::range(11, minChiefLevel - 1, -1) as $chiefLevel). DESC demote/promote scan.
+        var chiefLevel = 11
+        while (chiefLevel > minChiefLevel - 1) {
+            if (chiefLevel in ctx.chiefSet) { chiefLevel -= 1; continue } // PHP :4082-4084 — already set, skip.
+            if (ctx.selfOfficerLevel == chiefLevel) { chiefLevel -= 1; continue } // PHP :4085-4087 — self, skip.
+
+            // PHP `:4089-4094` — an occupied non-near-deletion user chief keeps the slot (no churn).
+            val oldChief = if (chiefLevel in ctx.chiefGeneralLevels) ctx.chiefGeneralOf(chiefLevel) else null
+            if (oldChief != null && oldChief.npcType < 2 && oldChief.killturn >= minChiefLevel) {
+                chiefLevel -= 1; continue
+            }
+
+            // PHP `:4096-4100` — EMPTY slot → newChiefProb=1 (NO draw); OCCUPIED → ONE nextBool(0.1).
+            val slotOccupied = chiefLevel in ctx.chiefGeneralLevels // (nextChiefs is fresh this pass → empty)
+            val newChiefProb = newChiefProb(slotOccupied, ctx.rng)
+
+            // PHP `:4102-4104` — the phantom gate (newChiefProb ∈ {0,1} → ZERO draw); `continue` only at 0.
+            if (newChiefProbGateSkips(newChiefProb, ctx.rng)) { chiefLevel -= 1; continue }
+
+            // PHP `:4107-4135` — scan the stat-desc nationGenerals for the first eligible newChief (NO draw).
+            val newChief = findNewChief(ctx, chiefLevel, minChiefLevel)
+            if (newChief == null) { chiefLevel -= 1; continue } // PHP :4137-4139.
+
+            // PHP `:4148-4152` — promote the newChief; queue the deltas (the demote of the old chief is :4155-4161).
+            if (oldChief != null) {
+                ctx.deltaSink.recordGeneralKv(oldChief.generalId, "officer_level", 1) // PHP :4158.
+                ctx.deltaSink.recordGeneralKv(oldChief.generalId, "officer_city", 0) // PHP :4159.
+            }
+            ctx.deltaSink.recordGeneralKv(newChief.generalId, "officer_level", chiefLevel) // PHP :4149.
+            ctx.deltaSink.recordGeneralKv(newChief.generalId, "officer_city", 0) // PHP :4150.
+            ctx.deltaSink.recordNationKv(ctx.nationId, "chief_set", chiefLevel) // PHP :4151 chief_set |= bit.
+            chiefLevel -= 1
+        }
+    }
+
+    /**
+     * `choosePromotion`'s newChief scan (PHP `:4107-4135`): the FIRST nationGenerals entry (already stat-desc
+     * `uasort`-ordered by the adapter, `:4068-4077`) passing the officer/killturn/penalty/stat gates. NO draw.
+     */
+    private fun findNewChief(ctx: RatesPromoContext, chiefLevel: Int, minChiefLevel: Int): PromotionCandidate? {
+        val minUserKillturn = ctx.killturnEnv - phpToInt(240.0 / ctx.turnTerm) // PHP :3988.
+        val minNpcKillturn = 36 // PHP :3989.
+        for (g in ctx.nationGenerals) {
+            if (g.officerLevel > 4) continue // PHP :4109-4111.
+            if (g.npcType < 2 && g.killturn < minUserKillturn) continue // PHP :4112-4114.
+            if (g.npcType >= 2 && g.killturn < minNpcKillturn) continue // PHP :4115-4117.
+            if (g.hasNoChief) continue // PHP :4118-4120.
+            // PHP `:4122-4127` — chiefLevel 11 bypasses; even gates strength, odd gates intel.
+            if (chiefLevel != 11) {
+                if (chiefLevel % 2 == 0 && g.strength < ctx.chiefStatMin) continue // PHP :4123.
+                if (chiefLevel % 2 == 1 && g.intel < ctx.chiefStatMin) continue // PHP :4125.
+            }
+            return g // PHP :4133-4134.
+        }
+        return null
+    }
+
+    /** Resolve a candidate id to its [PromotionCandidate] across the 4 chooseNonLordPromotion pools. */
+    private fun candidateById(ctx: RatesPromoContext, id: Int): PromotionCandidate? =
+        ctx.npcWarGenerals.firstOrNull { it.generalId == id }
+            ?: ctx.npcCivilGenerals.firstOrNull { it.generalId == id }
+            ?: ctx.userWarGenerals.firstOrNull { it.generalId == id }
+            ?: ctx.userCivilGenerals.firstOrNull { it.generalId == id }
+
+    // --- chooseTexRate (PHP `:4172-4199`) — ZERO draws ---
+
+    private fun chooseTexRate(ctx: RatesPromoContext): Int {
+        // PHP `:4180-4191` — default 15; if supply cities, the develRate avg ladder.
+        val rate = if (ctx.supplyCities.isEmpty()) {
+            15 // PHP :4180/:4182 — no supply cities → default.
+        } else {
+            val devRate = calcNationDevelopedRate(ctx.supplyCities, ctx.rng) // PHP :4183.
+            val avg = (devRate.getValue("pop") + devRate.getValue("all")) / 2 // PHP :4185.
+            texRateForAvg(avg, ctx.rng) // PHP :4187-4190.
+        }
+        // PHP `:4194-4197` — db update ['war'=>0, 'rate'=>$rate]; queued as deltas in array-literal order.
+        ctx.deltaSink.recordNationKv(ctx.nationId, "war", 0)
+        ctx.deltaSink.recordNationKv(ctx.nationId, "rate", rate)
+        return rate
+    }
+
+    // --- chooseGoldBillRate (PHP `:4201-4246`) / chooseRiceBillRate (PHP `:4248-4292`) — ZERO draws ---
+
+    private fun chooseGoldBillRate(ctx: RatesPromoContext): Int {
+        if (ctx.supplyCities.isEmpty()) return 20 // PHP :4211 — no supply cities, NO db update.
+        val income = ctx.goldIncome + ctx.warGoldIncome // PHP :4225-4227.
+        val outcome = billOutcome(ctx) // PHP :4229 valueFit(getOutcome(100, dedicationList), 1).
+        val bill = billRate( // PHP :4231-4239.
+            income = income, outcome = outcome,
+            currentRes = ctx.nationGold, reqNationRes = ctx.reqNationGold,
+            hasSupplyCities = true, rng = ctx.rng,
+        )
+        ctx.deltaSink.recordNationKv(ctx.nationId, "bill", bill) // PHP :4241.
+        return bill
+    }
+
+    private fun chooseRiceBillRate(ctx: RatesPromoContext): Int {
+        if (ctx.supplyCities.isEmpty()) return 20 // PHP :4258 — no supply cities, NO db update.
+        val income = ctx.riceIncome + ctx.wallRiceIncome // PHP :4271-4273.
+        val outcome = billOutcome(ctx) // PHP :4275 valueFit(getOutcome(100, dedicationList), 1).
+        val bill = billRate( // PHP :4277-4285.
+            income = income, outcome = outcome,
+            currentRes = ctx.nationRice, reqNationRes = ctx.reqNationRice,
+            hasSupplyCities = true, rng = ctx.rng,
+        )
+        ctx.deltaSink.recordNationKv(ctx.nationId, "bill", bill) // PHP :4287.
+        return bill
+    }
+
+    /**
+     * The bill `outcome = Util::valueFit(getOutcome(100, $dedicationList), 1)` (PHP `:4229`/`:4275`). The
+     * `dedicationList` is the npc!=5-filtered nationGenerals (the dead self-append + the npc==5 exclusion,
+     * H-HELPERS §3); the adapter supplies the already-filtered candidates, so the dedication sum is over
+     * [RatesPromoContext.nationGenerals] (the npc==5 filter is the adapter's bucket build — port verbatim).
+     */
+    private fun billOutcome(ctx: RatesPromoContext): Int {
+        var billSum = 0
+        for (g in ctx.nationGenerals) {
+            if (g.npcType == 5) continue // H-HELPERS §3 — dedicationList filters npc != 5.
+            billSum += getBill(g) // PHP getOutcome :242-244 — Σ getBill(dedication).
+        }
+        return outcomeFloorMin1(billSum, 100) // PHP :4229/:4275 — valueFit(getOutcome(100,...), 1).
+    }
+
+    /**
+     * `getBill(int $dedication)` (H-HELPERS §3, func_converter.php:664-670): `getBillByLevel(getDedLevel(ded))`
+     * = `getDedLevel(ded)*200 + 400`. Reads `general['dedication']` ([PromotionCandidate.dedication]).
+     */
+    private fun getBill(g: PromotionCandidate): Int = getBillByLevel(getDedLevel(g.dedication))
+
+    /**
+     * `getDedLevel = Util::valueFit(ceil(sqrt(ded)/10), 0, maxDedLevel)` (H-HELPERS §3, func_converter.php:643;
+     * `ceil` DISTINCT from round; clamp `[0, 30]`).
+     */
+    private fun getDedLevel(dedication: Double): Int =
+        valueFit(kotlin.math.ceil(kotlin.math.sqrt(dedication) / 10.0), 0.0, GameConst.maxDedLevel.toDouble()).toInt()
+
+    /** `getBillByLevel = dedLevel*200 + 400` (H-HELPERS §3, func_converter.php:668). */
+    private fun getBillByLevel(dedLevel: Int): Int = dedLevel * 200 + 400
 }
