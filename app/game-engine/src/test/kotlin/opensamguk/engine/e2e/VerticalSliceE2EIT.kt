@@ -244,7 +244,7 @@ class VerticalSliceE2EIT {
             // === STEP 3: the daemon drains the stream, resolves che_상업투자, flushes in ONE txn ====
             val registry = CommandRegistry(GeneralActionPipeline())
             val handler = ReservedTurnHandler(world, registry, golden.hiddenSeed, startYear)
-            val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(gid, 0).actionCode }
+            val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(gid, 0) }
             val runService = TurnRunService(
                 world = world,
                 commandStream = RedisCommandStream(template, profile),

@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.tick.ServerClock
 import java.time.Duration
 import java.time.Instant
@@ -20,8 +21,13 @@ import java.time.Instant
 class TurnDaemonLifecycle(
     private val world: InMemoryTurnWorld,
     private val handler: ReservedTurnHandler,
-    /** How the lifecycle obtains the reserved action code for a due general (the ring / enqueued command). */
-    private val reservedActionOf: (generalId: Int) -> String,
+    /**
+     * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
+     * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
+     * jsonb (R-SEAM §1 / FM1) — the seed still keys on `definition.key`, so the widening only feeds the
+     * resolver's arg map; targeted reserved commands (이동/발령/…) now reach the resolver with their arg.
+     */
+    private val reservedActionOf: (generalId: Int) -> ReservedTurn,
 ) {
 
     /** Resolve the next run time: the previous run time + the world's tick interval. */
@@ -53,7 +59,7 @@ class TurnDaemonLifecycle(
             handled.add(
                 handler.handle(
                     generalId = g.id,
-                    actionCode = reservedActionOf(g.id),
+                    reserved = reservedActionOf(g.id),
                     year = state.currentYear,
                     month = state.currentMonth,
                     date = date,
