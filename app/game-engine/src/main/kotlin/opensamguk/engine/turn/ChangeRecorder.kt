@@ -125,6 +125,9 @@ class ChangeRecorder {
         diffCol(columns, "book", pre.book, post.book)
         diffCol(columns, "item", pre.item, post.item)
         diffCol(columns, "npcType", pre.npcType, post.npcType)
+        // P4 conquest surface (Task FU3): ConquerCity demotes governors to 재야 (officer_city=0,
+        // officer_level=1) — process_war.php:705-708. Generals SURVIVE → no markGeneralDeleted.
+        diffCol(columns, "officerCity", pre.officerCity, post.officerCity)
         // last_turn (general-command setResultTurn target) — delete-on-default jsonb.
         diffCol(columns, "lastTurn", pre.lastTurn, post.lastTurn)
 
@@ -163,6 +166,11 @@ class ChangeRecorder {
         diffCol(columns, "populationMax", pre.populationMax, post.populationMax)
         diffCol(columns, "trade", pre.trade, post.trade)
         diffCol(columns, "region", pre.region, post.region)
+        // P4 war/conquest surface (Task FU3). `front` is already covered by frontState→front_state
+        // above (PHP city.front == opensamguk front_state); term/officer_set/conflict are NEW.
+        diffCol(columns, "term", pre.term, post.term)
+        diffCol(columns, "officerSet", pre.officerSet, post.officerSet)
+        diffCol(columns, "conflict", pre.conflict, post.conflict)
 
         val metaPatch = diffMeta(pre.meta, post.meta)
 
@@ -268,7 +276,9 @@ class ChangeRecorder {
             val pre = opensamguk.engine.turn.PerTurnOverlay.toLogicCity(city)
             val nextMeta = LinkedHashMap(pre.meta)
             nextMeta.remove("conflict")
-            val neutral = pre.copy(nationId = 0, frontState = 0, meta = nextMeta)
+            // conflict now rides the dedicated city.conflict column (Task FU3) — reset it to '{}'
+            // alongside the legacy meta-key cleanup so the neutralize is byte-faithful either way.
+            val neutral = pre.copy(nationId = 0, frontState = 0, conflict = "{}", meta = nextMeta)
             diffCity(pre, neutral)
             // keep the world's read-state consistent (dirty-free: the city patch owns dirtiness).
             world.applyCityDirtyFree(city.copy(nationId = 0, frontState = 0, meta = nextMeta))

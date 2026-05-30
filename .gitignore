@@ -23,5 +23,11 @@ legacy/
 **/generated/
 # Local workflow orchestration scripts (transient tooling)
 .workflow-*.mjs
+# LLM wiki (Karpathy pattern) — local knowledge base, never committed
+docs/wiki/
+.claude/skills/wiki-ingest/
+.claude/skills/wiki-query/
+.claude/skills/wiki-lint/
+.gstack/
 # Harness scratch/tmp dir
 .claude-tmp/

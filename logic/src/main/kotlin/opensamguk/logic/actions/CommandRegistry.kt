@@ -34,6 +34,7 @@ import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.actions.trade.CheHeonnap
 import opensamguk.logic.actions.trade.CheJangbiMaemae
 import opensamguk.logic.actions.trade.CheJeungyeo
+import opensamguk.logic.actions.war.CheChulbyeong
 import opensamguk.logic.constraints.*
 import opensamguk.logic.stats.GeneralActionPipeline
 
@@ -94,6 +95,8 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_국기변경" -> cheGukgiByeongyeong(pipeline)
         "che_천도" -> cheCheondo(pipeline)
         "che_무작위수도이전" -> cheMujakwiSudoIjeon(pipeline)
+        // --- CMD-WAR (출병) — the SOLE caller of the OUTER processWar() wrapper (BO3). 급습/선전포고 = P6. ---
+        "che_출병" -> CheChulbyeong(pipeline)
         // --- CMD-TRADE (증여/헌납/장비매매) ---
         "che_증여" -> CheJeungyeo(pipeline)
         "che_헌납" -> CheHeonnap(pipeline)

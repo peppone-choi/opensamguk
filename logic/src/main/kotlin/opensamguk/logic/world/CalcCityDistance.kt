@@ -111,6 +111,47 @@ object CalcCityDistance {
     }
 
     /**
+     * Port of PHP `searchDistance($from, $maxDist, $distForm=true)` — the RING form (`func.php:1929-1932`):
+     * `distanceList[$dist][] = $cityID` keyed by hop-distance, with `unset($distanceList[0])` dropping the
+     * origin ring. Within each ring the order is the BFS enqueue (SplQueue FIFO) order — the LAST-max-pop
+     * tie-break in `findNextCapital` (process_war.php:833-837) depends on this ring-iteration order.
+     *
+     * Returns a `dist → [cityIds]` map (ascending dist; the origin's `dist=0` ring removed), the exact shape
+     * `findNextCapital` walks outward.
+     */
+    fun searchDistanceRings(from: Int, maxDist: Int = 99): Map<Int, List<Int>> {
+        val cities = HashSet<Int>()
+        val rings = LinkedHashMap<Int, MutableList<Int>>()
+        val queue = ArrayDeque<IntArray>()
+        queue.addLast(intArrayOf(from, 0))
+
+        while (queue.isNotEmpty()) {
+            val (cityId, dist) = queue.removeFirst().let { it[0] to it[1] }
+            if (cityId in cities) {
+                continue
+            }
+            rings.getOrPut(dist) { mutableListOf() }.add(cityId)
+            cities.add(cityId)
+
+            if (dist >= maxDist) {
+                continue
+            }
+
+            val city = CityConst.byId(cityId) ?: continue
+            for (connCityId in city.path.keys) {
+                if (connCityId in cities) {
+                    continue
+                }
+                queue.addLast(intArrayOf(connCityId, dist + 1))
+            }
+        }
+
+        // PHP `unset($distanceList[0])` — drop the origin ring.
+        rings.remove(0)
+        return rings
+    }
+
+    /**
      * The preloaded-distance set the C-PURE/C-DEST `nearCity` constraint key consumes.
      *
      * Returns the set of city ids within [radius] hops of [from], EXCLUDING [from] itself.
