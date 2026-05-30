@@ -88,6 +88,9 @@ class GeneralActionResolveContext(
     // 무작위수도이전 candidate neutral level-5/6 city ids (che_무작위수도이전.php:98 SELECT). The world
     // scan is engine data; rng->choice picks one of these in resolve.
     val candidateCityIds: List<Int> = emptyList(),
+    // P4 BO3 — the battle-command carrier (BattleCommandContextBuilder output) the che_출병 resolver reads:
+    // the BFS distanceList + per-city defenders + raw rows + war-seed inputs. null for non-battle commands.
+    val battleContext: opensamguk.logic.war.BattleCommandContext? = null,
     private val logs: MutableList<String> = mutableListOf(),
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val destPlainLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
