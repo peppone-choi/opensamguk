@@ -61,8 +61,8 @@ abstract class WarUnit(
 
     // --- abstract computed-input surface (the General/City subclass fills) ------------------------------
 
-    /** PHP `getCrewType()` — the [GameUnitDetail] (speed/avoid/magicCoef/coef tables). */
-    abstract fun getCrewType(): GameUnitDetail
+    /** PHP `getCrewType()` — the [GameUnitDetail] (speed/avoid/magicCoef/coef tables). Contract method. */
+    abstract override fun getCrewType(): GameUnitDetail
 
     /** PHP `getComputedAttack()` — crewType.getComputedAttack(resolved-stats, tech). */
     abstract fun getComputedAttack(): Double
@@ -70,11 +70,11 @@ abstract class WarUnit(
     /** PHP `getComputedDefence()` — crewType.getComputedDefence(crew, tech). */
     abstract fun getComputedDefence(): Double
 
-    /** PHP `getComputedTrain()` — train + onCalcStat('bonusTrain') cross-fold + trainBonus (general); cta+trainBonus (city). */
-    abstract fun getComputedTrain(): Double
+    /** PHP `getComputedTrain()` — train + onCalcStat('bonusTrain') cross-fold + trainBonus (general); cta+trainBonus (city). Contract method. */
+    abstract override fun getComputedTrain(): Double
 
-    /** PHP `getComputedAtmos()` — atmos + onCalcStat('bonusAtmos') cross-fold + atmosBonus (general); cta+atmosBonus (city). */
-    abstract fun getComputedAtmos(): Double
+    /** PHP `getComputedAtmos()` — atmos + onCalcStat('bonusAtmos') cross-fold + atmosBonus (general); cta+atmosBonus (city). Contract method. */
+    abstract override fun getComputedAtmos(): Double
 
     /** PHP `getDex(GameUnitDetail $crewType)` — the dex accumulator (general onCalcStat cross-fold; city (cta-60)*7200). */
     abstract fun getDex(crewType: GameUnitDetail): Double
@@ -110,17 +110,19 @@ abstract class WarUnit(
     fun getOppose(): WarUnit? = opposeUnit
 
     fun setPrePhase(phase: Int) { prePhaseField = phase }
-    fun addPhase(phase: Int = 1) { currPhase += phase }
-    fun addBonusPhase(cnt: Int) { bonusPhase += cnt }
+    final override fun addPhase(phase: Int) { currPhase += phase }
+    fun addPhase() = addPhase(1)
+    final override fun addBonusPhase(cnt: Int) { bonusPhase += cnt }
 
-    open fun getMaxPhase(): Int = getCrewType().speed + bonusPhase
+    override fun getMaxPhase(): Int = getCrewType().speed + bonusPhase
 
     // --- war power (PHP :236-306) -----------------------------------------------------------------------
 
-    fun getWarPower(): Double = warPowerField * warPowerMultiplyField
+    final override fun getWarPower(): Double = warPowerField * warPowerMultiplyField
     fun getRawWarPower(): Double = warPowerField
     fun getWarPowerMultiply(): Double = warPowerMultiplyField
-    fun setWarPowerMultiply(multiply: Double = 1.0) { warPowerMultiplyField = multiply }
+    final override fun setWarPowerMultiply(multiply: Double) { warPowerMultiplyField = multiply }
+    fun setWarPowerMultiply() = setWarPowerMultiply(1.0)
     final override fun multiplyWarPowerMultiply(multiply: Double) { warPowerMultiplyField *= multiply }
 
     fun addTrainBonus(value: Int) { trainBonus += value }
@@ -228,20 +230,35 @@ abstract class WarUnit(
 
     final override fun hasActivatedSkill(skillName: String): Boolean = activatedSkill[skillName] ?: false
 
-    /** PHP `hasActivatedSkillOnLog($name)` = logCount + (currently-active ? 1 : 0). */
-    fun hasActivatedSkillOnLog(skillName: String): Int =
+    /** PHP `hasActivatedSkillOnLog($name)` = logCount + (currently-active ? 1 : 0). Contract method. */
+    final override fun hasActivatedSkillOnLog(skillName: String): Int =
         (logActivatedSkill[skillName] ?: 0) + (if (hasActivatedSkill(skillName)) 1 else 0)
 
     final override fun activateSkill(vararg skillNames: String) {
         for (skillName in skillNames) activatedSkill[skillName] = true
     }
 
-    fun deactivateSkill(vararg skillNames: String) {
+    final override fun deactivateSkill(vararg skillNames: String) {
         for (skillName in skillNames) activatedSkill[skillName] = false
     }
 
     open fun addWin() {}
     open fun addLose() {}
+
+    // --- A3 contract var/dex/exp side-effect delegates (subclass fills; base is a safe no-op default) ----
+
+    final override fun isGeneralUnit(): Boolean = isGeneral()
+
+    /** Default no-op (City has no general var surface for these); [WarUnitGeneral] overrides each. */
+    override fun applyVarChange(variable: String, operator: String, value: Double, limitMin: Double?, limitMax: Double?) {}
+    override fun increaseAtmos(delta: Int) {}
+    override fun increaseInjury(amount: Int) {}
+    override fun decreaseAtmos(delta: Int, min: Int) {}
+    override fun stealFrom(oppose: WarUnitContract, theftRatio: Double): Pair<Double, Double> = 0.0 to 0.0
+    override fun clearInjury() {}
+    override fun applyBlockReward(oppose: WarUnitContract) {}
+    override fun getSiegeRamRemain(): Int = 0
+    override fun setSiegeRamRemain(value: Int) {}
 }
 
 /** PHP `continueWar(&$noRice): bool` return pair — canContinue + the by-ref `$noRice` flag. */

@@ -1,5 +1,6 @@
 package opensamguk.logic.war.trigger
 
+import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.rng.RandUtil
 
 /**
@@ -35,6 +36,72 @@ interface WarUnit {
 
     /** PHP `multiplyWarPowerMultiply($multiply)`. */
     fun multiplyWarPowerMultiply(multiply: Double)
+
+    // --- A3 extension: the trigger-facing surface the 29 BEGIN/PRE/BODY/POST/FINAL triggers need ----------
+    // F1 owns this contract; A3 (the SOLE Tier-1 family touching war/trigger/) widens it for the catalog
+    // leaves. The concrete F2 WarUnitGeneral/WarUnitCity (war/WarUnit*.kt, untouched by A1/A4) implement
+    // these — they delegate the DRAW-free var/log/dex side-effects so the trigger bodies stay a faithful
+    // 1:1 transcription of the PHP grand truth while the draws (nextBool/choice/nextRangeInt) stay inline.
+
+    /** PHP `getComputedAtmos()` — 저지시도's `ratio = atmos + train`. CROSS-folded inside the impl. */
+    fun getComputedAtmos(): Double
+
+    /** PHP `getComputedTrain()` — 저지시도's `ratio = atmos + train`. */
+    fun getComputedTrain(): Double
+
+    /** PHP `hasActivatedSkillOnLog($name)` = logCount + (currently-active ? 1 : 0). 선제/충차 gate. */
+    fun hasActivatedSkillOnLog(skillName: String): Int
+
+    /** PHP `deactivateSkill(...$skillNames)`. 반계시도 (`계략` off), 격노시도 (`회피` off). */
+    fun deactivateSkill(vararg skillNames: String)
+
+    /** PHP `getPhase()`/`getMaxPhase()` phase shifters (선제발동/저지발동/돌격지속/충차). */
+    fun getMaxPhase(): Int
+
+    /** PHP `addPhase($n)` — 선제발동/저지발동 shift both sides −1. */
+    fun addPhase(phase: Int)
+
+    /** PHP `addBonusPhase($n)` — 격노발동(진노)/전멸시페이즈증가/돌격지속/저지발동. */
+    fun addBonusPhase(cnt: Int)
+
+    /** PHP `setWarPowerMultiply($v=1.0)` — 위압발동(0)/저지발동(0). */
+    fun setWarPowerMultiply(multiply: Double)
+
+    /** PHP `getWarPower()` = warPower × warPowerMultiply — 저지발동's `oppose.getWarPower()*0.9`. */
+    fun getWarPower(): Double
+
+    /** PHP `getCrewType()` — 선제(armType==T_ARCHER)/돌격(getAttackCoef)/기병/방어력 crew-type triggers. */
+    fun getCrewType(): GameUnitDetail
+
+    /** True ⇔ this unit is a [WarUnitGeneral] body delegate is safe (能力치/약탈/저격/치료/저지 reach getGeneral()). */
+    fun isGeneralUnit(): Boolean
+
+    // --- DRAW-free var/dex/exp side-effect delegates (the impl routes these to its mutable state holder) --
+
+    /** PHP 능력치변경 `setVar/increaseVarWithLimit/multiplyVarWithLimit` by operator. */
+    fun applyVarChange(variable: String, operator: String, value: Double, limitMin: Double?, limitMax: Double?)
+
+    /** PHP 저격발동 `increaseVarWithLimit('atmos', addAtmos, 0, maxAtmosByWar)`. */
+    fun increaseAtmos(delta: Int)
+
+    /** PHP 저격발동 `oppose.getGeneral().increaseVarWithLimit('injury', amount, null, 80)`. */
+    fun increaseInjury(amount: Int)
+
+    /** PHP 위압발동 `oppose.increaseVarWithLimit('atmos', -5, 40)` (general oppose only). */
+    fun decreaseAtmos(delta: Int, min: Int)
+
+    /** PHP 약탈발동 transfer: returns `getVar('gold'|'rice') * ratio` of the oppose, applied as deltas. */
+    fun stealFrom(oppose: WarUnit, theftRatio: Double): Pair<Double, Double>
+
+    /** PHP 전투치료발동 `self.getGeneral().setVar('injury', 0)`. */
+    fun clearInjury()
+
+    /** PHP 저지발동 `addDex(crewType, exp)` + `addLevelExp` + `calcRiceConsumption`-driven rice spend. */
+    fun applyBlockReward(oppose: WarUnit)
+
+    /** PHP 충차아이템소모 `getAuxVar(REMAIN_KEY) ?? 0` and `setAuxVar(REMAIN_KEY, remain-1)`. */
+    fun getSiegeRamRemain(): Int
+    fun setSiegeRamRemain(value: Int)
 
     /** PHP `criticalDamage()` = `nextRange(criticalDamageRange)`. The draw fires inside the F2 impl. */
     fun criticalDamage(): Double
