@@ -1,0 +1,263 @@
+package opensamguk.logic.war
+
+import opensamguk.common.constants.GameConst
+import opensamguk.common.rng.RandUtil
+import opensamguk.logic.domain.City
+import opensamguk.logic.domain.General
+import opensamguk.logic.domain.Nation
+import opensamguk.logic.util.phpToInt
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+/**
+ * BC2 — the COLLAPSE branch (cityCount==1, the per-general draw sub-stream) + the SURVIVE / capital-move
+ * branch. Port target = PHP `process_war.php:607-755`, `func.php:1713-1805` (deleteNation).
+ *
+ * ## COLLAPSE per-general draw sub-stream (process_war.php:628-664) — the parity-critical order
+ * For each oldNationGeneral, IN ORDER (other generals ascending PK + lord appended LAST):
+ *  1. `loseGold = Util::toInt(gold * rng.nextRange(0.2,0.5))`   — draw
+ *  2. `loseRice = Util::toInt(rice * rng.nextRange(0.2,0.5))`   — draw
+ *  3. `addExperience(-experience*0.1, false)` (suppress flag — NO onCalcStat, value = exp*0.9, NOT inline)
+ *  4. `addDedication(-dedication*0.5, false)`
+ *  5. IF join_mode != 'onlyRandom': `nextBool(0.5)` scout  [CONDITIONAL — short-circuit AND]
+ *  6. IF join_mode != 'onlyRandom' && 2<=npcType<=8 && npcType!=5: `nextBool(joinRuinedNPCProp)`; IF true
+ *     `nextRangeInt(0,12)` joinTurn  [CONDITIONAL]
+ *
+ * Winner reward (process_war.php:667-680): loseNationGold = valueFit(gold-basegold,0)+Σ loseGold; /2 intdiv;
+ * nation gold/rice += via delta. markNationDeleted cascade (generals → 재야; NO markGeneralDeleted).
+ *
+ * ## SURVIVE / capital-move (process_war.php:703-755) — NO rng. Demote officer_city governors to 재야
+ * (officer_level=1, officer_city=0); on a capital loss, capital-move to findNextCapital (BC3) + gold/rice ×0.5.
+ */
+class ConquerCityCollapseTest {
+
+    private val hidden = "cd".repeat(16)
+
+    private fun attacker(id: Int = 1, nationId: Int = 10): General = General(
+        id = id, nationId = nationId, cityId = 100,
+        leadership = 80, strength = 80, intel = 80, injury = 0,
+        experience = 0.0, dedication = 0.0, officerLevel = 5,
+        gold = 1000, rice = 10000,
+    )
+
+    private fun city(id: Int = 200, nationId: Int = 20, level: Int = 5): City = City(
+        id = id, nationId = nationId, level = level,
+        commerce = 1000, commerceMax = 9999,
+        agriculture = 1000, agricultureMax = 9999,
+        supplyState = 1, frontState = 0, trust = 100.0,
+        security = 1000, securityMax = 9999,
+        defense = 800, defenseMax = 2000,
+        wall = 800, wallMax = 2000,
+        population = 100000, populationMax = 999999,
+        conflict = "{}",
+    )
+
+    private fun gen(
+        id: Int, nationId: Int = 20, gold: Int = 1000, rice: Int = 2000,
+        experience: Double = 5000.0, dedication: Double = 4000.0,
+        officerLevel: Int = 1, npcType: Int = 0, officerCity: Int = 0,
+    ): General = General(
+        id = id, nationId = nationId, cityId = 200,
+        leadership = 50, strength = 50, intel = 50, injury = 0,
+        experience = experience, dedication = dedication, officerLevel = officerLevel,
+        gold = gold, rice = rice, npcType = npcType, officerCity = officerCity,
+    )
+
+    private fun collapseInput(
+        lordId: Int,
+        otherGenerals: List<General>,
+        joinMode: String = "normal",
+        defenderNation: Nation = Nation(id = 20, level = 5, capitalCityId = 200, gold = 5000, rice = 6000),
+        defenderConflict: String = """{"10":100.0}""",
+    ): ConquerCityInput {
+        val lord = gen(lordId, officerLevel = 12)
+        return ConquerCityInput(
+            admin = ConquerAdmin(hiddenSeed = hidden, year = 200, month = 6, joinMode = joinMode),
+            attacker = attacker(),
+            defenderCity = city(nationId = 20).copy(conflict = defenderConflict),
+            defenderNation = defenderNation,
+            defenderCityGenerals = emptyList(),
+            defenderNationCityCount = 1, // ⇒ COLLAPSE
+            defenderNationGenerals = otherGenerals + lord, // resolver re-orders: others asc PK + lord LAST
+            allCitiesForBfs = emptyList(),
+        )
+    }
+
+    /** A scripted rng: nextRange/nextBool/nextRangeInt return queued values so the draw order is exact. */
+    private class ScriptedRng(
+        private val ranges: ArrayDeque<Double>,
+        private val bools: ArrayDeque<Boolean>,
+        private val rangeInts: ArrayDeque<Int>,
+        val trace: MutableList<String> = mutableListOf(),
+    ) : RandUtil(opensamguk.common.rng.LiteHashDrbg("00")) {
+        override fun nextRange(min: Double, max: Double): Double {
+            trace.add("nextRange($min,$max)"); return ranges.removeFirst()
+        }
+        override fun nextBool(prob: Double): Boolean {
+            trace.add("nextBool($prob)"); return bools.removeFirst()
+        }
+        override fun nextRangeInt(minInclusive: Int, maxInclusive: Int): Int {
+            trace.add("nextRangeInt($minInclusive,$maxInclusive)"); return rangeInts.removeFirst()
+        }
+    }
+
+    @Test
+    fun `collapse per-general draw order is loseGold then loseRice then conditional scout then npc-join`() {
+        // One NPC general (npcType=3) so BOTH the scout AND the npc-join branches fire.
+        val npc = gen(id = 5, gold = 1000, rice = 2000, npcType = 3)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(npc))
+        // Per general: nextRange (gold), nextRange (rice), nextBool (scout), nextBool (npc), nextRangeInt (joinTurn).
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(listOf(0.3, 0.4, /*lord*/ 0.3, 0.4)),
+            bools = ArrayDeque(listOf(true, true, /*lord (npcType 1 → no npc branch)*/ true)),
+            rangeInts = ArrayDeque(listOf(7)),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+
+        // npc (id 5) FIRST: gold, rice, scout(true), npc(true), joinTurn. Lord (id 9) LAST: gold, rice, scout(true).
+        assertEquals(
+            listOf(
+                "nextRange(0.2,0.5)", "nextRange(0.2,0.5)", "nextBool(0.5)",
+                "nextBool(${GameConst.joinRuinedNPCProp})", "nextRangeInt(0,12)",
+                "nextRange(0.2,0.5)", "nextRange(0.2,0.5)", "nextBool(0.5)",
+            ),
+            rng.trace,
+        )
+    }
+
+    @Test
+    fun `an onlyRandom general skips both the scout and the npc-join draws`() {
+        val npc = gen(id = 5, npcType = 3)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(npc), joinMode = "onlyRandom")
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(listOf(0.3, 0.4, 0.3, 0.4)),
+            bools = ArrayDeque(emptyList()),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        ConquerCity.resolve(input, rngOverride = rng)
+        // onlyRandom: the `join_mode != 'onlyRandom'` short-circuit makes nextBool NEVER evaluate.
+        assertEquals(
+            listOf("nextRange(0.2,0.5)", "nextRange(0.2,0.5)", "nextRange(0.2,0.5)", "nextRange(0.2,0.5)"),
+            rng.trace,
+        )
+    }
+
+    @Test
+    fun `oldNationGenerals process other generals ascending PK with the lord LAST`() {
+        val g8 = gen(id = 8, npcType = 0)
+        val g3 = gen(id = 3, npcType = 0)
+        // input order deliberately shuffled; resolver must emit 3, 8, then lord 9 LAST.
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(g8, g3))
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(List(6) { 0.3 }),
+            bools = ArrayDeque(listOf(false, false, false)),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+        assertEquals(listOf(3, 8, 9), res.collapseGeneralOrder, "others asc PK + lord appended LAST")
+    }
+
+    @Test
+    fun `collapse applies experience times 0_9 and dedication times 0_5 with the suppress flag - no inline 0_9`() {
+        val g = gen(id = 5, experience = 5000.0, dedication = 4000.0, npcType = 0)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(g))
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(listOf(0.3, 0.4, 0.3, 0.4)),
+            bools = ArrayDeque(listOf(false, false)),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+        val post = res.generalDeltas.first { it.post.id == 5 }.post
+        // addExperience(-exp*0.1, false): newExp = 5000 - 5000*0.1 = 4500.0; addDedication(-ded*0.5): 4000 - 2000.
+        assertEquals(4500.0, post.experience)
+        assertEquals(2000.0, post.dedication)
+    }
+
+    @Test
+    fun `collapse gold-rice loss is Util toInt truncated and applied as a delta`() {
+        val g = gen(id = 5, gold = 1000, rice = 2000, npcType = 0)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(g))
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(listOf(0.37, 0.41, 0.3, 0.4)),
+            bools = ArrayDeque(listOf(false, false)),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+        val post = res.generalDeltas.first { it.post.id == 5 }.post
+        val loseGold = phpToInt(1000 * 0.37)   // 370
+        val loseRice = phpToInt(2000 * 0.41)   // 820
+        assertEquals(1000 - loseGold, post.gold)
+        assertEquals(2000 - loseRice, post.rice)
+    }
+
+    @Test
+    fun `winner reward halves the captured gold-rice via intdiv and adds to attacker nation`() {
+        val g = gen(id = 5, gold = 1000, rice = 2000, npcType = 0)
+        val attackerNation = Nation(id = 10, level = 5, capitalCityId = 100, gold = 9000, rice = 8000)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(g))
+            .copy(attackerNation = attackerNation)
+        // loseGold = toInt(1000*0.3)=300; lord loseGold = toInt(1000*0.3)=300 → Σ loseGold = 600.
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(listOf(0.3, 0.3, 0.3, 0.3)),
+            bools = ArrayDeque(listOf(false, false)),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+        // defenderNation gold=5000 rice=6000; basegold=0 baserice=2000.
+        // loseNationGold = valueFit(5000-0,0) + Σ loseGold(600) = 5600; /2 = 2800.
+        // loseNationRice = valueFit(6000-2000,0) + Σ loseRice(2*600=1200) = 5200; /2 = 2600.
+        val sumGold = phpToInt(1000 * 0.3) * 2
+        val sumRice = phpToInt(2000 * 0.3) * 2
+        val expectGold = (valueFitInt(5000 - GameConst.basegold) + sumGold) / 2
+        val expectRice = (valueFitInt(6000 - GameConst.baserice) + sumRice) / 2
+        val nationDelta = res.nationDeltas.first { it.post.id == 10 }
+        assertEquals(9000 + expectGold, nationDelta.post.gold)
+        assertEquals(8000 + expectRice, nationDelta.post.rice)
+    }
+
+    @Test
+    fun `collapse marks the defender nation deleted and survives generals as 재야 - no markGeneralDeleted`() {
+        val g = gen(id = 5, npcType = 0)
+        val input = collapseInput(lordId = 9, otherGenerals = listOf(g))
+        val rng = ScriptedRng(
+            ranges = ArrayDeque(List(4) { 0.3 }),
+            bools = ArrayDeque(listOf(false, false)),
+            rangeInts = ArrayDeque(emptyList()),
+        )
+        val res = ConquerCity.resolve(input, rngOverride = rng)
+        assertEquals(20, res.deletedNationId, "the defender nation is tombstoned (markNationDeleted)")
+        assertTrue(res.deletedGeneralIds.isEmpty(), "generals SURVIVE as 재야 — markGeneralDeleted is NOT used")
+    }
+
+    // --- SURVIVE / capital-move branch (cityCount > 1) --------------------------------------------------
+
+    @Test
+    fun `survive demotes officer_city governors to 재야 as deltas with no rng`() {
+        val gov = gen(id = 5, officerLevel = 4, officerCity = 200) // governs the lost city
+        val other = gen(id = 6, officerLevel = 2, officerCity = 0)
+        val input = ConquerCityInput(
+            admin = ConquerAdmin(hiddenSeed = hidden, year = 200, month = 6, joinMode = "normal"),
+            attacker = attacker(),
+            defenderCity = city(nationId = 20),
+            defenderNation = Nation(id = 20, level = 5, capitalCityId = 999), // NOT the lost city → no capital-move
+            defenderCityGenerals = emptyList(),
+            defenderNationCityCount = 3, // ⇒ SURVIVE
+            defenderNationGenerals = listOf(gov, other),
+            allCitiesForBfs = emptyList(),
+        )
+        val res = ConquerCity.resolve(input)
+        // gov (officer_city == lost city) demoted: officer_level=1, officer_city=0.
+        val govPost = res.generalDeltas.first { it.post.id == 5 }.post
+        assertEquals(1, govPost.officerLevel)
+        assertEquals(0, govPost.officerCity)
+        // a general whose officer_city != lost city is untouched (no delta).
+        assertFalse(res.generalDeltas.any { it.post.id == 6 })
+        assertNull(res.deletedNationId, "survive does NOT delete the nation")
+        assertEquals(0, res.collapseLoopDraws, "the survive branch makes NO rng draw")
+    }
+
+    private fun valueFitInt(v: Int): Int = maxOf(0, v)
+}
