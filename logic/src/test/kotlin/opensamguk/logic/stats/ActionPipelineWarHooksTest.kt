@@ -1,5 +1,7 @@
 package opensamguk.logic.stats
 
+import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.General
@@ -70,6 +72,27 @@ class ActionPipelineWarHooksTest {
         override fun getMagicSuccessProb(oppose: WarUnit): Double = 0.7
         override fun foldMagicSuccessDamage(oppose: WarUnit, magic: String, raw: Double): Double = raw
         override fun foldMagicFailDamage(oppose: WarUnit, magic: String, raw: Double): Double = raw
+        // A3-widened contract methods (unused by the F5 hook tests — inert defaults)
+        override fun getComputedAtmos(): Double = 70.0
+        override fun getComputedTrain(): Double = 70.0
+        override fun hasActivatedSkillOnLog(skillName: String): Int = if (hasActivatedSkill(skillName)) 1 else 0
+        override fun deactivateSkill(vararg skillNames: String) { activatedSkills.removeAll(skillNames.toSet()) }
+        override fun getMaxPhase(): Int = 5
+        override fun addPhase(phase: Int) {}
+        override fun addBonusPhase(cnt: Int) {}
+        override fun setWarPowerMultiply(multiply: Double) {}
+        override fun getWarPower(): Double = 0.0
+        override fun getCrewType(): GameUnitDetail = GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
+        override fun isGeneralUnit(): Boolean = true
+        override fun applyVarChange(variable: String, operator: String, value: Double, limitMin: Double?, limitMax: Double?) {}
+        override fun increaseAtmos(delta: Int) {}
+        override fun increaseInjury(amount: Int) {}
+        override fun decreaseAtmos(delta: Int, min: Int) {}
+        override fun stealFrom(oppose: WarUnit, theftRatio: Double): Pair<Double, Double> = 0.0 to 0.0
+        override fun clearInjury() {}
+        override fun applyBlockReward(oppose: WarUnit) {}
+        override fun getSiegeRamRemain(): Int = 0
+        override fun setSiegeRamRemain(value: Int) {}
     }
 
     private class ScriptedRng(

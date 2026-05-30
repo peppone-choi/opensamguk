@@ -24,6 +24,8 @@ class WarUnitGeneralState(initial: General) {
 
     var crew: Int = initial.crew
         private set
+    var gold: Double = initial.gold.toDouble()
+        private set
     var rice: Double = initial.rice.toDouble()
         private set
     var atmos: Double = initial.atmos
@@ -57,9 +59,21 @@ class WarUnitGeneralState(initial: General) {
 
     fun increaseCrew(delta: Int) { crew += delta }
 
+    fun increaseGold(delta: Double) { gold += delta }
+    /** PHP `increaseVarWithLimit('gold', delta, 0)` — lower-clamped (약탈발동 theft). */
+    fun increaseGoldWithLimit(delta: Double, min: Double) { gold = maxOf(min, gold + delta) }
+
+    fun increaseRice(delta: Double) { rice += delta }
+
     fun increaseRiceWithLimit(delta: Double, min: Double) {
         rice = maxOf(min, rice + delta)
     }
+
+    fun increaseAtmosWithLimit(delta: Double, min: Double, max: Double) {
+        atmos = maxOf(min, minOf(max, atmos + delta))
+    }
+
+    fun setInjury(value: Int) { injury = value }
 
     fun increaseInjuryWithLimit(delta: Int, max: Int) {
         injury = minOf(max, injury + delta)
@@ -117,6 +131,7 @@ class WarUnitGeneralState(initial: General) {
         for ((k, v) in rank) meta = withMetaLinked(meta, "rank_$k" to v)
         return general.copy(
             crew = crew,
+            gold = phpRound(gold),
             rice = phpRound(rice),
             atmos = atmos,
             train = train,

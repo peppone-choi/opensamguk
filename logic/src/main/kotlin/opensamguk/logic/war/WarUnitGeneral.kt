@@ -351,4 +351,65 @@ class WarUnitGeneral(
     override fun getItemName(): String = state.getItem()
     override fun getItemRawName(): String = state.getItem()
     override fun deleteItem() { state.deleteItem() }
+
+    // --- A3 contract var/dex/exp side-effect delegates (PHP General var ops the catalog triggers reach) --
+
+    /** PHP 능력치변경 (`능력치변경.php:37-51`): setVar / increaseVarWithLimit / multiplyVarWithLimit by operator. */
+    override fun applyVarChange(variable: String, operator: String, value: Double, limitMin: Double?, limitMax: Double?) {
+        when (variable) {
+            "atmos" -> when (operator) {
+                "=" -> { /* setVar */ state.increaseAtmosWithLimit(value - state.atmos, limitMin ?: Double.NEGATIVE_INFINITY, limitMax ?: Double.POSITIVE_INFINITY) }
+                "+" -> state.increaseAtmosWithLimit(value, limitMin ?: Double.NEGATIVE_INFINITY, limitMax ?: Double.POSITIVE_INFINITY)
+                "-" -> state.increaseAtmosWithLimit(-value, limitMin ?: Double.NEGATIVE_INFINITY, limitMax ?: Double.POSITIVE_INFINITY)
+            }
+            "train" -> { /* train delta — bonusTrain path handles war; direct setVar/inc not used by current items */ }
+            // other vars (injury/gold/rice) route through their dedicated delegates; current item set
+            // only mutates atmos/train via 능력치변경.
+        }
+    }
+
+    /** PHP 저격발동 (`che_저격발동.php:47`): `increaseVarWithLimit('atmos', addAtmos, 0, maxAtmosByWar)`. */
+    override fun increaseAtmos(delta: Int) {
+        state.increaseAtmosWithLimit(delta.toDouble(), 0.0, GameConst.maxAtmosByWar.toDouble())
+    }
+
+    /** PHP 저격발동 (`che_저격발동.php:50`): `increaseVarWithLimit('injury', amount, null, 80)`. */
+    override fun increaseInjury(amount: Int) {
+        state.increaseInjuryWithLimit(amount, max = 80)
+    }
+
+    /** PHP 위압발동 (`che_위압발동.php:24`): oppose general `increaseVarWithLimit('atmos', -5, 40)`. */
+    override fun decreaseAtmos(delta: Int, min: Int) {
+        state.increaseAtmosWithLimit(-delta.toDouble(), min.toDouble(), GameConst.maxAtmosByWar.toDouble())
+    }
+
+    /** PHP 약탈발동 (`che_약탈발동.php:38-45`): take ratio of oppose gold/rice; oppose −clamped, self +. */
+    override fun stealFrom(oppose: WarUnitContract, theftRatio: Double): Pair<Double, Double> {
+        if (oppose !is WarUnitGeneral) return 0.0 to 0.0
+        val theftGold = oppose.state.gold * theftRatio
+        val theftRice = oppose.state.rice * theftRatio
+        oppose.state.increaseGoldWithLimit(-theftGold, 0.0)
+        oppose.state.increaseRiceWithLimit(-theftRice, 0.0)
+        state.increaseGold(theftGold)
+        state.increaseRice(theftRice)
+        return theftGold to theftRice
+    }
+
+    /** PHP 전투치료발동 (`che_전투치료발동.php:29`): `setVar('injury', 0)`. */
+    override fun clearInjury() { state.setInjury(0) }
+
+    /**
+     * PHP 저지발동 (`che_저지발동.php:38-45`): dex both crewTypes + level-exp + a 0.25× rice spend.
+     * `$calcDamage = oppose.getWarPower()*0.9` is computed in the trigger and threaded in via [oppose].
+     */
+    override fun applyBlockReward(oppose: WarUnitContract) {
+        if (oppose !is WarUnit) return
+        val opposePower = oppose.getWarPower() * 0.9
+        state.addDex(oppose.getCrewType(), opposePower)
+        state.addDex(crewType, opposePower)
+        addLevelExp(opposePower / 50.0)
+        var rice = calcRiceConsumption(opposePower.toInt())
+        rice *= 0.25
+        state.increaseRiceWithLimit(-rice, 0.0)
+    }
 }
