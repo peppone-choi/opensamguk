@@ -90,6 +90,22 @@ class WarUnitGeneral(
     /** PHP `$general->getVar('atmos')`. */
     fun getAtmos(): Double = state.atmos
 
+    /**
+     * PHP `WarUnitGeneral::addTrain` (`:81-84`): `increaseVarWithLimit('train', $n, 0, maxTrainByWar)`.
+     * The processWarNG first-contact `addTrain(attacker,1)/addTrain(def,1)` (`:273,:298,:299`) raises train,
+     * which the OPPONENT's computeWarPower divides by (`oppose.getComputedTrain()`) — load-bearing for the
+     * per-phase damage. B1 routes the [WarBattleHooks.addTrain] hook here; previously there was no train
+     * mutator (the state field was write-locked), so the hook could not take effect. Faithful port completion.
+     */
+    fun addTrain(amount: Int) {
+        state.increaseTrainWithLimit(amount.toDouble(), 0.0, GameConst.maxTrainByWar.toDouble())
+    }
+
+    /** PHP `WarUnitGeneral::addAtmos` (`:86-89`): `increaseVarWithLimit('atmos', $n, 0, maxAtmosByWar)`. */
+    fun addAtmos(amount: Int) {
+        state.increaseAtmosWithLimit(amount.toDouble(), 0.0, GameConst.maxAtmosByWar.toDouble())
+    }
+
     /** PHP `$general->getVar('defence_train')` — the player-set defence-training threshold (general meta). */
     fun getDefenceTrain(): Double = metaDouble(state.general.meta, "defence_train")
 

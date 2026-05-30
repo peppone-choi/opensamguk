@@ -73,6 +73,11 @@ class WarUnitGeneralState(initial: General) {
         atmos = maxOf(min, minOf(max, atmos + delta))
     }
 
+    /** PHP `increaseVarWithLimit('train', delta, min, max)` — the WarUnitGeneral.addTrain mutator (`:81-84`). */
+    fun increaseTrainWithLimit(delta: Double, min: Double, max: Double) {
+        train = maxOf(min, minOf(max, train + delta))
+    }
+
     fun setInjury(value: Int) { injury = value }
 
     fun increaseInjuryWithLimit(delta: Int, max: Int) {

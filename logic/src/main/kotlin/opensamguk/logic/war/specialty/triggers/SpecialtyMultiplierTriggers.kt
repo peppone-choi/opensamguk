@@ -152,8 +152,14 @@ class CheWiapBaldong(unit: WarUnit, raiseType: Int = TYPE_NONE) : BaseWarUnitTri
 
         oppose.pushBattleDetailLog("상대에게 <R>위압</>받았다!</>")
         self.pushBattleDetailLog("상대에게 <C>위압</>을 줬다!</>")
-        (oppose as? ConcreteWarUnit)?.setWarPowerMultiply(0.0)
-        // oppose atmos −5 (min 40) — non-draw cosmetic; deferred to A3's canonical trigger.
+        oppose.setWarPowerMultiply(0.0)
+        // PHP `che_위압발동.php:24`: `if($oppose instanceof WarUnitGeneral) $oppose->increaseVarWithLimit('atmos', -5, 40)`.
+        // NOT cosmetic: the opponent's atmos 100→95 lowers their computeWarPower in every SUBSEQUENT phase
+        // (warPower *= getComputedAtmos()), shifting per-phase damage — a battle-determinism parity fact
+        // (G1b battle-01 post-state proves attacker atmos 95). Guard on a general unit (city has no atmos var).
+        if (oppose.isGeneralUnit()) {
+            oppose.decreaseAtmos(5, 40)
+        }
         return true
     }
 }
