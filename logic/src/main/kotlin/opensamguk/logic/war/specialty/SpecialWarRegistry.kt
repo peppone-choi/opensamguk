@@ -28,9 +28,20 @@ object SpecialWarRegistry : GeneralActionModuleSource {
      * GameConst.availableSpecialWar / [SpecialityHelper.WAR] order for parity/debug.
      */
     private val byCode: Map<String, GeneralActionModule> = linkedMapOf(
-        // AW1 seeds EMPTY. AW2 (stat-folds) + AW3 (multipliers/trigger-injection) register their leaves
-        // here by id — that by-id registration is the lone per-module touch. None(id 0) is inert
-        // (no battle-hook override) → omitted → resolve null.
+        // --- AW2: stat-delta specialties (onCalcStat / onCalcOpposeStat) ---
+        "che_필살" to ChePilsal,
+        "che_견고" to CheGyeongo,
+        "che_신중" to CheSinjung,
+        "che_집중" to CheJipjung,
+        "che_환술" to CheHwansul,
+        "che_신산" to CheSinsan,
+        "che_의술" to CheUisul,
+        "che_귀병" to CheGwibyeong,
+        "che_궁병" to CheGungbyeong,
+        "che_반계" to CheBangye,
+        "che_징병" to CheJingbyeong,
+        // AW3 (multipliers/trigger-injection) registers its leaves below by id.
+        // None(id 0) is inert (no battle-hook override) → omitted → resolve null.
     )
 
     /** The declared registrable key set = the 20 [SpecialityHelper.WAR] ids (the modules behind them
