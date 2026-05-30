@@ -28,16 +28,17 @@ inlines the EXACT `simulateBattle()` body of `j_simulate_battle.php:366-476` (re
 no live DB) with the ONE RNG line swapped to the recorder.
 
 - **`battle-01.json`** — 조조(che_반계) vs 관우(che_위압), 보병 1100, 5000 crew each.
-  **45 draws, 7 phases.** The base 필살시도/회피시도/계략시도 PRE band + 반계시도/위압시도 +
+  **46 draws, 7 phases.** The base 필살시도/회피시도/계략시도 PRE band + 반계시도/위압시도 +
   calcDamage (attacker-then-defender `nextRange(0.9,1.1)`) + tryWound `nextBool(0.05)` tail.
-  warSeed `2e344cb5904febf229cb069fb6e00168` (derived from the live install hiddenSeed
-  `fbfb1f7c7914c3e150d5e28e9c45a7e1`, the committed fixture INPUT).
-- **`battle-02.json`** — 장각(che_환술) on 귀병 1400 (magicCoef 0.5, INT 93). **69 draws, 7
+  warSeed `e40b0cdd01d00f70516e8f11d14c0c2b` (derived from the PINNED hiddenSeed
+  `8ebfeb6fa932a181ec9ef43b7473f4c9`, the committed fixture INPUT — reproducible across
+  fresh installs).
+- **`battle-02.json`** — 장각(che_환술) on 귀병 1400 (magicCoef 0.5, INT 93). **68 draws, 7
   phases.** Exercises the full 계략시도 magic sub-stream: `nextBool(trial)` →
-  `choice(magicTable)` → `nextBool(success)`. **6 choice draws (화계/혼란/반목/급습).** BOTH
+  `choice(magicTable)` → `nextBool(success)`. **6 choice draws (반목/매복/위보/화계).** BOTH
   계략 success AND 계략실패 branches fire (pins the success-folds-`:74-75` vs fail-stores-RAW
-  `:85` asymmetry, gate-b). seq4 `nextBool(1.485)` short-circuit (`consumed=false`, cursor
-  unchanged `(2,6)` → next draw starts at `(2,6)`) pins the no-draw guaranteed-prob trap.
+  `:85` asymmetry, gate-b). 1 `nextBool` short-circuit (`consumed=false`, cursor unchanged →
+  next draw starts at the SAME cursor) pins the no-draw guaranteed-prob trap.
 
 Each battle golden carries: `seed`, `hiddenSeed`, `warSeedDerivation`, all army/city/nation
 inputs, the FULL ordered `draw_stream`, the byte-exact `phase_log` (진격 / per-phase
@@ -102,6 +103,14 @@ grand truth). Owner: **B2 follow-up**.
   log's `<1>$date</>` (via `getTurnTime(TURNTIME_HM)`, `process_war.php:253`) and stored to
   `recent_war`. Pinning it keeps both deterministic without changing any computed value.
   Listed in `manifest_battle.json` `perFixtureIgnoreList`.
+- **`hiddenSeed` is PINNED** in both captures to `8ebfeb6fa932a181ec9ef43b7473f4c9` (the
+  plan's fixed live config value), so the warSeed (che_출병.php:245-253) + the ConquerCity
+  seed strings are REPRODUCIBLE across independent fresh installs — verified by capturing on
+  two separate fresh `scenario_1010` installs and byte-diffing IDENTICAL. The battle
+  general-input's install-random battle-IRRELEVANT fields (`city` placement, `killturn`
+  auto-kick countdown) are also pinned (the battle reads the city context from the explicit
+  attacker/defender city raw rows, never the general's own `city`; killturn is never read by
+  `processWar_NG`) — zero computed-value change.
 - **The armies in `capture_battle.php` are authored** (crew/train/atmos overlaid on REAL
   installed generals' stats). This is FAITHFUL: `j_simulate_battle` is the in-game battle
   SIMULATOR, which by design takes hand-authored armies — the engine (`processWar_NG`,

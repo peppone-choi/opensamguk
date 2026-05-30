@@ -68,6 +68,13 @@ function hardAssert(bool $cond, string $msg): void {
     if (!$cond) { fwrite(STDERR, "G1a HARD-ASSERT FAILED: {$msg}\n"); exit(2); }
 }
 
+// PIN the hiddenSeed to the plan's fixed live config value so the warSeed is REPRODUCIBLE
+// against ANY scenario_1010 install (buildScenario draws a fresh random hiddenSeed each
+// install). The hiddenSeed is a fixed per-game config value
+// (d_setting/UniqueConst.php::$hiddenSeed); pinning it is faithful, and the plan specifies
+// this exact hex as the golden fixture INPUT. The warSeed derivation (che_출병.php:245-253)
+// then yields a stable per-fixture seed regardless of install.
+UniqueConst::$hiddenSeed = '8ebfeb6fa932a181ec9ef43b7473f4c9';
 $hiddenSeed = UniqueConst::$hiddenSeed;
 hardAssert(preg_match('/^[0-9a-f]{32}$/', $hiddenSeed) === 1,
     "hiddenSeed is not a 32-char lowercase hex: {$hiddenSeed}");
@@ -202,10 +209,18 @@ function simulateBattleRecorded(
  * Pulls the general's identity/stats live from the DB; overlays the crew/train/atmos/rice
  * a player would enter in the simulator. personal='None' isolates the war-specialty draws.
  */
-function buildArmy(object $db, int $generalId, int $crew, int $crewtype, int $train, int $atmos, int $rice, string $turntime): array
+function buildArmy(object $db, int $generalId, int $crew, int $crewtype, int $train, int $atmos, int $rice, string $turntime, int $homeCityId): array
 {
     $g = $db->queryFirstRow('SELECT * FROM general WHERE no=%i', $generalId);
     hardAssert($g !== null, "general {$generalId} not found — install scenario_1010 first");
+
+    // PIN the install-random, battle-IRRELEVANT fields so the golden is reproducible across
+    // installs (buildScenario randomizes general placement + the killturn auto-kick countdown).
+    // The battle reads the city context from the explicit attackerCity/defenderCity raw rows
+    // (passed separately to simulateBattle), NOT the general's own `city` field; and killturn
+    // is never read by processWar_NG. Pinning these changes ZERO computed battle value.
+    $g['city']     = $homeCityId;
+    $g['killturn'] = 0;
 
     // Overlay simulator war parameters (the form inputs). Everything else is the real
     // installed general (name/leadership/strength/intel/special2/dex/etc).
@@ -319,13 +334,14 @@ function captureFixture(
     // golden is byte-stable (the only wall-clock input j_simulate would inject).
     $turntime = sprintf('%04d-%02d-01 00:00:00', $year, $month);
 
-    $rawAttacker     = buildArmy($db, $attackerId, $atkCrew, $atkCrewtype, $atkTrain, $atkAtmos, $atkRice, $turntime);
+    $rawAttacker     = buildArmy($db, $attackerId, $atkCrew, $atkCrewtype, $atkTrain, $atkAtmos, $atkRice, $turntime, $attackerCityId);
     $rawAttackerCity = pullCity($db, $attackerCityId);
     $rawAttackerNation = pullNation($db, $attackerNationId);
 
     $rawDefenderList = [];
     foreach ($defenders as $d) {
-        $rawDefenderList[] = buildArmy($db, $d[0], $d[1], $d[2], $d[3], $d[4], $d[5], $turntime);
+        // defender's home city = the defender city context (where they're besieged).
+        $rawDefenderList[] = buildArmy($db, $d[0], $d[1], $d[2], $d[3], $d[4], $d[5], $turntime, $defenderCityId);
     }
     $rawDefenderCity   = pullCity($db, $defenderCityId);
     $rawDefenderNation = pullNation($db, $defenderNationId);
