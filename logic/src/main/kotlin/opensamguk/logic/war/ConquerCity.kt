@@ -1,14 +1,21 @@
 package opensamguk.logic.war
 
+import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
+import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.log.BattleLogTokens
 import opensamguk.logic.util.phpToInt
 import opensamguk.logic.util.valueFit
+import opensamguk.logic.world.CalcCityDistance
+import opensamguk.logic.world.CityConstRegistry
+import opensamguk.logic.world.CityConstVariant
+import opensamguk.logic.world.FrontCity
+import opensamguk.logic.world.setNationFront
 
 /**
  * AREA B2 — the ConquerCity resolver. Port target = PHP `process_war.php:532-808` (ConquerCity),
@@ -88,6 +95,13 @@ object ConquerCity {
             resolveSurvive(input, logs, generalDeltas, nationDeltas, cityDeltas)
         }
 
+        // BC3 — winner + city reset + front recalc (process_war.php:757-807). UNCONDITIONAL after the
+        // collapse/survive if-else (runs for BOTH branches). NO rng.
+        val frontResults = mutableListOf<NationFrontDelta>()
+        val conquerNationId = resolveWinnerAndReset(
+            input, logs, generalDeltas, cityDeltas, frontResults,
+        )
+
         return ConquerCityResult(
             conquerLogs = logs,
             collapseLoopDraws = rng.draws,
@@ -96,6 +110,8 @@ object ConquerCity {
             nationDeltas = nationDeltas,
             cityDeltas = cityDeltas,
             deletedNationId = deletedNationId,
+            conquerNationId = conquerNationId,
+            frontResults = frontResults,
             deletedGeneralIds = emptyList(), // generals SURVIVE as 재야 — markGeneralDeleted is NEVER used.
             collapseGeneralOrder = collapseGeneralOrder,
         )
@@ -204,13 +220,142 @@ object ConquerCity {
         cityDeltas: MutableList<CityDelta>,
     ) {
         val cityId = input.defenderCity.id
+        val defNation = input.defenderNation!!
         // 태수/군사/종사 → 일반 (process_war.php:705-708): officer_level=1, officer_city=0 WHERE officer_city=cityID.
         for (g in input.defenderNationGenerals) {
             if (g.officerCity == cityId) {
                 generalDeltas.add(GeneralDelta(g, g.copy(officerLevel = 1, officerCity = 0)))
             }
         }
-        // The capital-move (process_war.php:711-748) is wired in BC3 (findNextCapital + chiefs move + atmos×0.8).
+
+        // capital-move (process_war.php:711-748) — only when the LOST city was the defender's capital.
+        if (defNation.capitalCityId != cityId) return
+
+        // findNextCapital over the defender's OTHER owned cities (BFS-ring max-pop, LAST-on-tie; BC3).
+        val ownedPop = input.allCitiesForBfs
+            .filter { it.nationId == defNation.id && it.id != cityId }
+            .associate { it.id to it.population }
+        val minCity = findNextCapital(cityId, ownedPop)
+
+        logs.add(BattleLogTokens.emergencyCapitalMoveHistory(input.defenderNationName, input.minCityNameOf(minCity)))
+
+        // 천도: nation capital=minCity, gold×0.5, rice×0.5 (process_war.php:734-738).
+        val movedNation = defNation.copy(
+            capitalCityId = minCity,
+            gold = (defNation.gold * 0.5).toInt(),
+            rice = (defNation.rice * 0.5).toInt(),
+        )
+        nationDeltas.add(NationDelta(defNation, movedNation))
+
+        // minCity → supply city (process_war.php:740-742); chiefs move to minCity (officer_level>=5,
+        // process_war.php:744-746); nation generals atmos ×0.8 (process_war.php:748-750).
+        for (c in input.allCitiesForBfs) {
+            if (c.id == minCity && c.supplyState == 0) {
+                cityDeltas.add(CityDelta(c, c.copy(supplyState = 1)))
+            }
+        }
+        for (g in input.defenderNationGenerals) {
+            var post = g
+            if (g.officerLevel >= 5) post = post.copy(cityId = minCity)
+            post = post.copy(atmos = post.atmos * 0.8)
+            if (post != g) mergeGeneralDelta(generalDeltas, g, post)
+        }
+    }
+
+    /**
+     * Winner (`process_war.php:757-775`) + city reset (`:777-795`) + front recalc (`:798-807`). UNCONDITIONAL
+     * after collapse/survive. Returns the conquerNation id (`getConquerNation = array_key_first(conflict)`).
+     */
+    private fun resolveWinnerAndReset(
+        input: ConquerCityInput,
+        logs: MutableList<String>,
+        generalDeltas: MutableList<GeneralDelta>,
+        cityDeltas: MutableList<CityDelta>,
+        frontResults: MutableList<NationFrontDelta>,
+    ): Int {
+        val city = input.defenderCity
+        val attacker = input.attacker
+
+        // getConquerNation (process_war.php:526-530) = array_key_first(Json::decode(city.conflict)).
+        val conflict = ConflictMap.decode(city.conflict)
+        val conquerNation = conflict.getConquerNation() ?: 0
+
+        // winner tie-break (process_war.php:757-775).
+        if (conquerNation == attacker.nationId) {
+            // attacker general moves to the city (process_war.php:760-762).
+            mergeGeneralDelta(generalDeltas, attacker, attacker.copy(cityId = city.id))
+        } else {
+            // 분쟁협상 / 양도 logs only (process_war.php:764-774) — no general move.
+            logs.add(BattleLogTokens.conflictNegotiationHistory(input.conquerNationNameOf(conquerNation), input.cityName))
+            logs.add("<G><b>${input.cityName}</b></>을 <D><b>${input.conquerNationNameOf(conquerNation)}</b></>에 <Y>양도</>")
+        }
+
+        // city reset (process_war.php:777-795). agri/comm/secu ×0.7 (int-cast); supply/term/conflict/
+        // officer_set reset; nation=conquerNation; def/wall per level.
+        var resetCity = city.copy(
+            supplyState = 1,
+            term = 0,
+            conflict = "{}",
+            agriculture = (city.agriculture * 0.7).toInt(),
+            commerce = (city.commerce * 0.7).toInt(),
+            security = (city.security * 0.7).toInt(),
+            nationId = conquerNation,
+            officerSet = 0,
+        )
+        resetCity = if (city.level > 3) {
+            resetCity.copy(defense = GameConst.defaultCityWall, wall = GameConst.defaultCityWall)
+        } else {
+            resetCity.copy(defense = city.defenseMax / 2, wall = city.wallMax / 2)
+        }
+        cityDeltas.add(CityDelta(city, resetCity))
+
+        // front recalc (process_war.php:798-807): nearNationsID = distinct nation of path-neighbors (nation!=0)
+        // ∪ {conquerNation}, array_unique → SetNationFront per nation.
+        val pathNeighborIds: Set<Int> =
+            (input.cityConstVariant.byId(city.id)?.path?.keys ?: emptySet()) + city.id
+        val frontCities = input.allCitiesForBfs.map { FrontCity(it.id, it.nationId, it.frontState) }
+        val nearNations = LinkedHashSet<Int>()
+        for (c in frontCities) {
+            if (c.nationId != 0 && c.id in pathNeighborIds) nearNations.add(c.nationId)
+        }
+        nearNations.add(conquerNation)
+        for (nationId in nearNations) {
+            if (nationId == 0) continue
+            val res = setNationFront(nationId, frontCities, input.diplomacyForFront, input.cityConstVariant)
+            frontResults.add(NationFrontDelta(res.nationId, res.fronts))
+        }
+        return conquerNation
+    }
+
+    /** Merge a new General delta into the list — folds onto an existing pre/post for the same general id. */
+    private fun mergeGeneralDelta(deltas: MutableList<GeneralDelta>, pre: General, post: General) {
+        val idx = deltas.indexOfFirst { it.post.id == post.id }
+        if (idx >= 0) deltas[idx] = GeneralDelta(deltas[idx].pre, post)
+        else deltas.add(GeneralDelta(pre, post))
+    }
+
+    /**
+     * findNextCapital (`process_war.php:810-845`): BFS distance-rings over [CalcCityDistance] outward; in the
+     * FIRST ring containing an owned city pick MAX pop, and on a pop TIE the LAST max-pop city in BFS
+     * ring-iteration order wins (the `if($cityPop < $maxCityPop) continue;` overwrite-on-equality; decision
+     * #7 — NOT Euclidean Math.hypot, NOT first-max).
+     *
+     * @param ownedCityPop the defender's OTHER owned cities (city!=capital) → pop.
+     */
+    fun findNextCapital(capitalId: Int, ownedCityPop: Map<Int, Int>): Int {
+        val rings = CalcCityDistance.searchDistanceRings(capitalId, 99)
+        for ((_, ringCities) in rings) {
+            var maxPop = 0
+            var minCity = 0
+            for (cityId in ringCities) {
+                val pop = ownedCityPop[cityId] ?: continue
+                if (pop < maxPop) continue            // `<` strict → equality OVERWRITES → LAST max wins.
+                minCity = cityId
+                maxPop = pop
+            }
+            if (minCity != 0) return minCity
+        }
+        throw IllegalStateException("도시가 남지 않았는데 긴천을 시도하고 있습니다")
     }
 }
 
@@ -265,12 +410,25 @@ data class ConquerCityInput(
     val defenderNationGenerals: List<General>,
     /** All cities (for the findNextCapital BFS + the front recalc neighbor scan, BC3). */
     val allCitiesForBfs: List<City>,
+    /** Settled (post-Q9) diplomacy rows the front recompute reads (`SetNationFront`, BC3). */
+    val diplomacyForFront: List<Diplomacy> = emptyList(),
+    /** The active per-map CityConst variant (path adjacency for the front recalc + findNextCapital). */
+    val cityConstVariant: CityConstVariant = CityConstRegistry.of("che"),
     /** Display name of the attacker's nation (`$attackerNationName`). */
     val attackerNationName: String = "",
+    /** Display name of the defender's nation (`$defenderNationName`) — the 긴급천도 / 멸망 logs. */
+    val defenderNationName: String = "",
     /** Display name of the conquered city (`$cityName`). */
     val cityName: String = "",
+    /** Resolved nation-id → display-name (for the 양도 / conquerNation logs). */
+    val nationNames: Map<Int, String> = emptyMap(),
 ) {
     val isNeutralCapture: Boolean get() = defenderNation == null || defenderCity.nationId == 0
+
+    fun conquerNationNameOf(nationId: Int): String = nationNames[nationId] ?: ""
+
+    fun minCityNameOf(cityId: Int): String =
+        cityConstVariant.byId(cityId)?.name ?: CityConst.byId(cityId)?.name ?: ""
 }
 
 /**
@@ -293,11 +451,18 @@ data class ConquerCityResult(
     val cityDeltas: List<CityDelta> = emptyList(),
     /** The tombstoned defender nation id (collapse only) — the engine calls `markNationDeleted`. Null = survive. */
     val deletedNationId: Int? = null,
+    /** The winner nation = `getConquerNation(city) = array_key_first(conflict)` (process_war.php:757). */
+    val conquerNationId: Int = 0,
+    /** Per-nation front recompute results (SetNationFront over path-neighbor nations ∪ conquerNation, BC3). */
+    val frontResults: List<NationFrontDelta> = emptyList(),
     /** ALWAYS empty — generals SURVIVE conquest as 재야 (markGeneralDeleted is NEVER used by ConquerCity). */
     val deletedGeneralIds: List<Int> = emptyList(),
     /** The collapse oldNationGenerals iteration order (others asc PK + lord LAST) — the draw-stream pin. */
     val collapseGeneralOrder: List<Int> = emptyList(),
 )
+
+/** A per-nation front recompute result (`SetNationFront`) — the engine folds each city front as a diffCity. */
+data class NationFrontDelta(val nationId: Int, val fronts: Map<Int, Int>)
 
 /** A pre/post [General] delta — the engine folds it via `ChangeRecorder.diffGeneral(pre, post)`. */
 data class GeneralDelta(val pre: General, val post: General)
