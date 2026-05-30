@@ -53,6 +53,11 @@ import opensamguk.common.rng.RandUtil
  * @property leadershipNoInjuryOf a general's `getLeadership(false,true,true,true)` (PHP `:697/997`) — the
  *   no-injury full-leadership flavor (G8) feeding the `minRecruitPop` formula. Defaults to the
  *   [AiGeneralView.fullLeadership] already on the bucket view.
+ * @property unitCostWithTechOf a general's `getCrewTypeObj()->costWithTech(nation['tech'],
+ *   Util::toInt(getLeadership(false)))` (PHP reward `:1260/1364/1460/1557`) — the per-general unit-cost base
+ *   the 포상 reqMoney ladder multiplies by `100 * <method-mult>`. Pipeline/nation-tech-derived (NOT a logic
+ *   column); the engine adapter threads `nation['tech']` + the crew-type table, tests build it directly.
+ *   Default 0.0 (the non-reward bodies never read it).
  */
 data class GeneralAiContext(
     val rng: RandUtil,
@@ -72,4 +77,5 @@ data class GeneralAiContext(
     val recruitPopScoreOf: (AiGeneralView) -> Double = { 0.0 },
     val leadershipNoInjuryOf: (AiGeneralView) -> Double = { it.fullLeadership },
     val reservedIsRecruitOf: (AiGeneralView) -> Boolean = { false },
+    val unitCostWithTechOf: (AiGeneralView) -> Double = { 0.0 },
 )
