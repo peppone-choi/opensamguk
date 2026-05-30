@@ -1,0 +1,62 @@
+{
+  "_doc": "G1a — scenario_1010 monthly-tick golden manifest (the byte oracle for the N-month replay gate). Generated/validated against the REAL devsam-core executeAllCommand inner month block. The matched-count gate rises monotonically as F2's $defaultEvents seed + the DB-world wiring land; ignore-entries below quarantine genuinely-out-of-P3-scope mismatches with a documented reason — they are NOT fake-green.",
+  "scenario": 1010,
+  "scenarioBase": "che",
+  "scenarioCityCount": 94,
+  "startYear": 181,
+  "turnterm": 120,
+  "months": 4,
+  "hiddenSeedProvenance": "config-file UniqueConst.php::$hiddenSeed (32-char lowercase hex, bin2hex(random_bytes(16))). Captured live per install; committed as the month-00-before.json fixture INPUT. Live capture seed for the committed golden = ee61d0c02de10291d9d26067f8d88956.",
+  "ticBodyPortTarget": "TurnExecutionHelper.php:461-486 (the inner per-month block of executeAllCommand): monthlyRng(L4) -> runEventHandler PreMonth(L5) -> preUpdateMonthly(L6) -> turnDate(L7) -> checkStatistic if month==1(L8) -> runEventHandler Month(L9) -> postUpdateMonthly(L10).",
+  "rngLineages": {
+    "monthly": "simpleSerialize(hiddenSeed,'monthly',year,month) — built ONCE per month, passed ONLY to postUpdateMonthly. Captured monthlyRngDraws per month = 1 for months 1-4 (in the year<184 window the Q-block draws minimally; checkWander/tournament/auction have no participants).",
+    "perGeneral": "preprocess/nationCommand/generalCommand forks — proven GREEN in the P2 gate; NOT re-exercised here (G1 is the month-boundary surface; the per-general drain is the P2 surface, and on a pristine install no general has a due reserved turn during these months)."
+  },
+  "dispatchOrderOracle": {
+    "rule": "event rows ORDER BY priority DESC, id ASC (runEventHandler / EventStore.rowsFor).",
+    "PRE_MONTH": { "count": 1, "ids": [1], "priorities": { "9000": 1 } },
+    "MONTH": { "count": 82, "priorityHistogram": { "9000": 4, "2000": 5, "1000": 73 } }
+  },
+  "perTableIgnoreList": {
+    "_reason": "Columns the golden dumps but the P3 replay does not yet assert (out-of-P3-scope or volatile-but-deterministic plumbing). Each quarantined entry is documented in tools/php-golden/p3-capture-backlog.md.",
+    "game_env": ["turntime"],
+    "general": ["killturn", "connect_time", "last_turn", "logout_time", "block", "tnmt"],
+    "city": [],
+    "nation": [],
+    "diplomacy": [],
+    "nation_env": []
+  },
+  "historyStringTargets": {
+    "_reason": "봄/가을/봉급/수입/고립/작위(0-9)/개전/종전 — for the captured year<184 window the monthly boundary produced ZERO general_record rows (records=0 every month): the income/봉급/수입 rows are emitted by the per-general drain (P2 surface) and the year-boundary 봄/가을 by checkStatistic at the Jan boundary, none of which the 181-2..181-5 window crosses. The history-string byte-match is therefore a no-op for the committed N; it activates when N crosses a January boundary (year 182 month 1) — extend N in a follow-up capture to exercise it (backlog item H-1).",
+    "targets": []
+  },
+  "matchedCountGate": {
+    "_policy": "mismatches == 0 AFTER the ignore-list filter, per month, for all N months; matched-count rises monotonically as families land.",
+    "assertedFactsThisPhase": [
+      "monthlySeedString byte-match (all N months) — the monthly RNG lineage oracle",
+      "date advance per month (ServerClock.turnDate reproduces oldDate -> newDate)",
+      "event dispatch ordering invariant (priority DESC, id ASC) on the seeded rows",
+      "in-memory city/nation iteration order = PK ascending"
+    ]
+  },
+  "quarantine": [
+    {
+      "id": "EV-1",
+      "what": "Full $defaultEvents dispatch-order COUNT match (golden MONTH=82 / PRE_MONTH=1).",
+      "reason": "Kotlin EventStore.withDefaults seeds only 11 rows; the full 82-row GameConstBase.php:447-531 transcription is F2's task, not G1. The 73 priority-1000 rows are no-ops in the year<184 window. The dispatch ORDERING invariant is asserted; the COUNT match is gated on F2 completing the seed.",
+      "owner": "F2 (EventStore.withDefaults seed completeness)"
+    },
+    {
+      "id": "NUM-1",
+      "what": "Full per-table numeric-flush byte-match of every nation/city/general/diplomacy/nation_env mutation over a wired DB world.",
+      "reason": "The Kotlin tick is built as per-step PURE functions (PreUpdateMonthly/PostUpdateMonthly/ProcessIncome/UpdateCitySupply...) with no single production driver that loads a Postgres world, runs a full month end-to-end, and flushes via JPA. That end-to-end wiring (WorldSnapshot JSON loader + MonthlyPipeline assembly + flush) does not exist yet. For the committed year<184 window the golden shows numeric state is near-static (income/supply gated off by Date conditions), so the numeric oracle is low-signal for these months regardless.",
+      "owner": "F1/F4 (MonthlyPipeline production wiring + WorldSnapshot loader)"
+    },
+    {
+      "id": "DISASTER-1",
+      "what": "RaiseDisaster (months 1/4/7/10) + AssignGeneralSpeciality (month==1) disaster-table / speciality-assignment bodies.",
+      "reason": "scenario_1010 startYear=181 => year<startYear+3 (year<184) skip window: these bodies are skipped for years 181-183; only the unconditional city.state reset + RNG-seed draws are live. The committed N (181-1..181-5) never reaches 184, so the disaster/speciality mutation bodies are vacuously matched. Documented bound per plan A6.",
+      "owner": "in-scope-but-vacuous for this N (extend N past year 184 to exercise — backlog D-1)"
+    }
+  ]
+}

@@ -68,6 +68,14 @@ class TurnRunService(
         commandStream.readCommands(commandBlockMs)
 
         // 2. drain ALL due generals in one pass through the handler (no mid-pass flush).
+        //    FT3: this single drain is the INNER pass of the two-level executeAllCommand loop. The
+        //    OUTER month-boundary loop is [TurnDaemonLifecycle.MonthBoundaryDriver]: it wraps this
+        //    drain (`drain` callback) and interleaves ONE MonthlyPipeline.runMonth (`runMonth`
+        //    callback) per crossed month boundary, then flushes ONCE per boundary (step 3 below) —
+        //    the monthly bulk writes ride the SAME ChangeRecorder dirty source as the per-general
+        //    deltas (single-dirty-source invariant, P2 Risk #4). The pipeline wiring (the concrete
+        //    MonthlyPipeline + dispatcher + monthlyRng) is assembled by the consuming P3 waves
+        //    (F2/F4/F5 + A1..B5); F1 lands the driver skeleton + the SEQUENTIAL contract here.
         val handled = lifecycle.runTick(runTime)
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).

@@ -36,16 +36,77 @@ object CityConst {
     private fun levelToInt(label: String): Int = levelMap.getValue(label) as Int
     private fun regionToInt(label: String): Int = regionMap.getValue(label) as Int
 
-    /** Raw $initCity row before _generate(): level/region are labels, path is name-list, stats raw. */
-    private data class RawCity(
+    /**
+     * Raw $initCity row before _generate(): level/region are labels, path is name-list, stats raw.
+     *
+     * Public so per-map CityConst variants (the 'miniche' 78-city override that inherits
+     * buildInit/levelMap/regionMap — `scenario/map/miniche.php`) can supply their own initCity rows
+     * and run them through the SAME GREEN [generateCities] algorithm rather than re-implementing it.
+     */
+    data class RawCity(
         val id: Int, val name: String, val level: String,
         val population: Int, val agriculture: Int, val commerce: Int,
         val security: Int, val defence: Int, val wall: Int,
         val region: String, val posX: Int, val posY: Int, val path: List<String>,
     )
 
-    /** PHP $initCity (lines 58-154): 94 rows, faithful transcription. */
-    private val initCity: List<RawCity> = listOf(
+    /** The three generated maps produced by [generateCities] (mirrors CityConstBase::_generate). */
+    class GeneratedCities(
+        val constID: Map<Int, CityInitialDetail>,
+        val constName: Map<String, CityInitialDetail>,
+        val constRegion: Map<Int, CityInitialDetail>,
+    )
+
+    /**
+     * Faithful port of CityConstBase::_generate() (lines 156-240), extracted as a reusable function
+     * so per-map variants reuse the EXACT byte-identical algorithm (stats ×100, label→int via the
+     * shared maps, name→id bidirectional path as an insertion-ordered LinkedHashMap, and the byRegion
+     * **last-wins quirk** `$constRegion[$region] = $city`). Behavior is unchanged from the original
+     * inlined lazy block — this only makes it callable with a different initCity row set.
+     */
+    fun generateCities(rawRows: List<RawCity>): GeneratedCities {
+        val nameMap = LinkedHashMap<String, Int>()
+        for (raw in rawRows) nameMap[raw.name] = raw.id
+
+        val constID = LinkedHashMap<Int, CityInitialDetail>()
+        val constName = LinkedHashMap<String, CityInitialDetail>()
+        val constRegion = LinkedHashMap<Int, CityInitialDetail>()
+
+        for (raw in rawRows) {
+            val level = levelToInt(raw.level)
+            val population = raw.population * 100
+            val agriculture = raw.agriculture * 100
+            val commerce = raw.commerce * 100
+            val security = raw.security * 100
+            val defence = raw.defence * 100
+            val wall = raw.wall * 100
+            val region = regionToInt(raw.region)
+            val newPath = LinkedHashMap<Int, String>()
+            for (pathName in raw.path) {
+                val pathId = nameMap.getValue(pathName)
+                newPath[pathId] = pathName
+            }
+
+            val city = CityInitialDetail(
+                raw.id, raw.name, level, population, agriculture, commerce,
+                security, defence, wall, region, raw.posX, raw.posY, newPath,
+            )
+
+            constID[raw.id] = city
+            constName[raw.name] = city
+            constRegion[region] = city // last-wins quirk (mirrors PHP)
+        }
+
+        return GeneratedCities(constID, constName, constRegion)
+    }
+
+    /**
+     * PHP $initCity (lines 58-154): 94 rows, faithful transcription — the canonical 'che' base.
+     *
+     * Public so the CityConstRegistry can confirm canonical che data lives HERE in the base (the
+     * resolved decision: 'che' is the base, NOT an empty variant file) and so variants can reuse it.
+     */
+    val cheInitCity: List<RawCity> = listOf(
         RawCity(1, "업", "특", 6205, 125, 113, 100, 117, 122, "하북", 345, 130, listOf("남피", "복양", "호관", "계교", "관도")),
         RawCity(2, "허창", "특", 5876, 121, 124, 100, 117, 125, "중원", 330, 215, listOf("완", "진류", "초", "호로", "사수", "관도")),
         RawCity(3, "낙양", "특", 8357, 117, 120, 100, 121, 124, "중원", 275, 180, listOf("호관", "호로", "사곡", "사수")),
@@ -142,52 +203,8 @@ object CityConst {
         RawCity(94, "유구", "수", 921, 17, 18, 20, 37, 37, "동이", 625, 435, listOf("대", "왜")),
     )
 
-    /**
-     * Port of _generate() (lines 156-240). NOTE the PHP byRegion **last-wins quirk**:
-     * `$constRegion[$region] = $city` overwrites with the LAST city encountered per region (the
-     * preceding `[]` init is immediately discarded). Replicated here intentionally.
-     */
-    private val generated: GeneratedCities by lazy {
-        val nameMap = LinkedHashMap<String, Int>()
-        for (raw in initCity) nameMap[raw.name] = raw.id
-
-        val constID = LinkedHashMap<Int, CityInitialDetail>()
-        val constName = LinkedHashMap<String, CityInitialDetail>()
-        val constRegion = LinkedHashMap<Int, CityInitialDetail>()
-
-        for (raw in initCity) {
-            val level = levelToInt(raw.level)
-            val population = raw.population * 100
-            val agriculture = raw.agriculture * 100
-            val commerce = raw.commerce * 100
-            val security = raw.security * 100
-            val defence = raw.defence * 100
-            val wall = raw.wall * 100
-            val region = regionToInt(raw.region)
-            val newPath = LinkedHashMap<Int, String>()
-            for (pathName in raw.path) {
-                val pathId = nameMap.getValue(pathName)
-                newPath[pathId] = pathName
-            }
-
-            val city = CityInitialDetail(
-                raw.id, raw.name, level, population, agriculture, commerce,
-                security, defence, wall, region, raw.posX, raw.posY, newPath,
-            )
-
-            constID[raw.id] = city
-            constName[raw.name] = city
-            constRegion[region] = city // last-wins quirk (mirrors PHP)
-        }
-
-        GeneratedCities(constID, constName, constRegion)
-    }
-
-    private class GeneratedCities(
-        val constID: Map<Int, CityInitialDetail>,
-        val constName: Map<String, CityInitialDetail>,
-        val constRegion: Map<Int, CityInitialDetail>,
-    )
+    /** Port of _generate() (lines 156-240) over the canonical che rows, via the shared [generateCities]. */
+    private val generated: GeneratedCities by lazy { generateCities(cheInitCity) }
 
     fun all(): Map<Int, CityInitialDetail> = generated.constID
     fun byId(id: Int): CityInitialDetail? = generated.constID[id]

@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.tick.ServerClock
 import java.time.Duration
 import java.time.Instant
 
@@ -68,5 +69,60 @@ class TurnDaemonLifecycle(
         val hh = secondsOfDay / 3_600L
         val mm = (secondsOfDay % 3_600L) / 60L
         return "%02d:%02d".format(hh, mm)
+    }
+
+    /**
+     * FT3 — the `executeAllCommand` two-level month-boundary loop driver (PHP
+     * `TurnExecutionHelper.php:393-517`).
+     *
+     * This is the OUTER orchestrator that wraps the P2 single-pass per-general drain
+     * ([TurnDaemonLifecycle.runTick] / [dueGenerals], `compareBy(turnTime,id)` ==
+     * `ORDER BY turntime ASC, no ASC`) and interleaves ONE [MonthlyPipeline][opensamguk.logic.tick.MonthlyPipeline]
+     * run per crossed month boundary. It is PURE/in-memory — the daemon supplies the two callbacks
+     * ([drain] = the per-general pass; [runMonth] = `MonthlyPipeline.runMonth`), and flushes ONCE per
+     * boundary (the P2 clean-boundary contract; the monthly bulk writes are recorded as
+     * `ChangeRecorder` deltas alongside the per-general deltas, preserving the single-dirty-source
+     * invariant — P2 Risk #4 — across the monthly batch).
+     *
+     * **Clean-boundary / processed-count model (consolidated OQ #4):** PHP's wall-clock budget can
+     * partial-checkpoint mid-pass; we do NOT port that. We drain ALL due generals so the golden
+     * compares at a clean monthly boundary (design §11 implies a clean boundary).
+     *
+     * The loop:
+     * - `now < turntime` → no-op (the next turn has not arrived).
+     * - `isUnitedState ∈ {2,3}` → freeze the whole tick (천통 — unification settled/locked).
+     * - `prevTurn = cutTurn(turntime)`, `nextTurn = addTurn(prevTurn)`; `while (nextTurn <= now)`:
+     *   **L1** [drain] all generals with `turnTime < nextTurn` (the P2 pass), **L2** [runMonth] at
+     *   `nextTurn` (`MonthlyPipeline.runMonth`), **L11** advance `prevTurn=nextTurn`,
+     *   `nextTurn=addTurn(prevTurn)`.
+     * - After the loop: a FINAL sub-month [drain] at `now` (the partial month since the last
+     *   boundary), then the daemon flushes.
+     *
+     * @return the number of month boundaries crossed (0 when no-op / frozen).
+     */
+    class MonthBoundaryDriver(
+        /** The per-general drain pass for all generals due strictly before the given instant. */
+        private val drain: (upto: Instant) -> Unit,
+        /** `MonthlyPipeline.runMonth` for the month whose boundary is the given `nextTurn`. */
+        private val runMonth: (nextTurn: Instant) -> Unit,
+    ) {
+        fun run(turntime: Instant, now: Instant, turnTerm: Int, isUnitedState: Int): Int {
+            if (now.isBefore(turntime)) return 0           // next turn not yet arrived
+            if (isUnitedState == 2 || isUnitedState == 3) return 0 // 천통 freeze
+
+            var prevTurn = ServerClock.cutTurn(turntime, turnTerm)
+            var nextTurn = ServerClock.addTurn(prevTurn, turnTerm)
+            var crossed = 0
+            while (!nextTurn.isAfter(now)) {
+                drain(nextTurn)        // L1 — drain all generals with turnTime < nextTurn
+                runMonth(nextTurn)     // L2 — the monthly 6-step pipeline
+                prevTurn = nextTurn    // L11 — advance the boundary
+                nextTurn = ServerClock.addTurn(prevTurn, turnTerm)
+                crossed++
+            }
+            // Final sub-month drain of the partial month since the last crossed boundary.
+            drain(now)
+            return crossed
+        }
     }
 }
