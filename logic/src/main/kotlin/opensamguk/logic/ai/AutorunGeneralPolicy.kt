@@ -68,6 +68,40 @@ class AutorunGeneralPolicy(
     var priority: List<String> = DEFAULT_PRIORITY
         private set
 
+    /**
+     * The priority-loop guard accessor (GeneralAI.php:3830-3835, consumed by [GeneralAI.chooseGeneralTurn]).
+     * `property_exists($this, 'can'.$actionName)` (guard-A, :3830) — an unknown action name has no `can<name>`
+     * property → PHP `trigger_error(E_USER_NOTICE)` + `continue` (here: returns null → the loop SKIPS it without
+     * a `do<name>` call). A known action returns its live `can<name>` boolean (guard-B, :3834).
+     *
+     * Returns null when no `can<name>` property exists (the guard-A skip-with-notice), else the flag value.
+     */
+    fun canFor(actionName: String): Boolean? = when (actionName) {
+        "NPC사망대비" -> canNPC사망대비
+        "일반내정" -> can일반내정
+        "긴급내정" -> can긴급내정
+        "전쟁내정" -> can전쟁내정
+        "금쌀구매" -> can금쌀구매
+        "상인무시" -> can상인무시
+        "징병" -> can징병
+        "모병" -> can모병
+        "한계징병" -> can한계징병
+        "고급병종" -> can고급병종
+        "전투준비" -> can전투준비
+        "소집해제" -> can소집해제
+        "출병" -> can출병
+        "NPC헌납" -> canNPC헌납
+        "후방워프" -> can후방워프
+        "전방워프" -> can전방워프
+        "내정워프" -> can내정워프
+        "귀환" -> can귀환
+        "국가선택" -> can국가선택
+        "집합" -> can집합
+        "건국" -> can건국
+        "선양" -> can선양
+        else -> null // guard-A: no `can<name>` property → skip with notice (the loop drops it)
+    }
+
     init {
         // Layer 1: default (AutorunGeneralPolicy.php:119)
         priority = DEFAULT_PRIORITY
