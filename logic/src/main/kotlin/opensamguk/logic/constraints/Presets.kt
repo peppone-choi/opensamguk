@@ -3,6 +3,7 @@ package opensamguk.logic.constraints
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.domain.City
+import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.metaInt
@@ -896,6 +897,130 @@ fun allowDiplomacyStatus(
     override fun requires(ctx: ConstraintContext) = emptyList<RequirementKey>()
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult =
         if (hasAllowedState(ctx, view)) ConstraintResult.Allow else ConstraintResult.Deny(errMsg)
+}
+
+// ============================================================================
+// FR1 — the 5 NEW diplomacy/pathfinding presets the AI-emitted FULL packs need
+// (existsDestNation / nearNation / hasRoute / hasRouteWithEnemy +
+//  disallowDiplomacyBetweenStatus / allowDiplomacyBetweenStatus / allowDiplomacyWithTerm).
+// Faithful port of PHP Constraint/{ExistsDestNation,NearNation,HasRoute,HasRouteWithEnemy,
+// DisallowDiplomacyBetweenStatus,AllowDiplomacyBetweenStatus,AllowDiplomacyWithTerm}.php.
+// Reason strings are PHP grand truth. DB/isNeighbor/searchDistance-backed predicates are PRELOADED
+// as lambdas (the CD2 idiom — NO DB / searchDistance / isNeighbor inside test()); the F-BFS-backed
+// reachability + the directional diplomacy state are wired in by the daemon/precheck adapters.
+// ============================================================================
+
+/**
+ * ExistsDestNation.php — pass when `destNation['nation']` is truthy (id != 0); else `멸망한 국가입니다.`.
+ * (PHP reads the dest-nation row's `nation` field; a destroyed/absent nation has id 0.)
+ */
+fun existsDestNation() = object : Constraint {
+    override val name = "ExistsDestNation"
+    override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.DestNation(ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val d = destNation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
+        return if (d.id != 0) ConstraintResult.Allow else ConstraintResult.Deny("멸망한 국가입니다.")
+    }
+}
+
+/**
+ * NearNation.php — pass when `isNeighbor(srcNation, destNation, false)`; else `인접 국가가 아닙니다.`.
+ * PHP calls `\sammo\isNeighbor` over the map adjacency; that predicate is preloaded (F-BFS-backed,
+ * NO adjacency walk inside test()).
+ */
+fun nearNation(isNeighbor: (ConstraintContext, StateView) -> Boolean) = object : Constraint {
+    override val name = "NearNation"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.Nation(ctx.nationId ?: 0), RequirementKey.DestNation(ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        return if (isNeighbor(ctx, view)) ConstraintResult.Allow else ConstraintResult.Deny("인접 국가가 아닙니다.")
+    }
+}
+
+/**
+ * HasRoute.php — pass when `searchDistanceListToDest(general.city, destCity.city, [general.nation])`
+ * is non-empty; else `경로에 도달할 방법이 없습니다.`. The BFS reachability is preloaded as a predicate
+ * (F-BFS-backed, NO searchDistance inside test()).
+ */
+fun hasRoute(routeExists: (ConstraintContext, StateView) -> Boolean) = object : Constraint {
+    override val name = "HasRoute"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        return if (routeExists(ctx, view)) ConstraintResult.Allow else ConstraintResult.Deny("경로에 도달할 방법이 없습니다.")
+    }
+}
+
+/**
+ * HasRouteWithEnemy.php — two-stage (FIRST failing branch wins, PHP test order):
+ *  1. the dest city must be neutral / mine / an at-war-allowed nation; else `교전중인 국가가 아닙니다.`;
+ *  2. `searchDistanceListToDest(general.city, destCity.city, allowedNationList∪enemies∪{0})` must be
+ *     non-empty; else `경로에 도달할 방법이 없습니다.`.
+ * Both the at-war-eligibility of the dest city and the enemy-inclusive BFS reachability are preloaded
+ * predicates (F-BFS / diplomacy-backed, NO DB / searchDistance inside test()).
+ */
+fun hasRouteWithEnemy(
+    isAtWarDestCity: (ConstraintContext, StateView) -> Boolean,
+    routeExists: (ConstraintContext, StateView) -> Boolean,
+) = object : Constraint {
+    override val name = "HasRouteWithEnemy"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.General(ctx.actorId), RequirementKey.DestCity(ctx.destCityId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        if (!isAtWarDestCity(ctx, view)) return ConstraintResult.Deny("교전중인 국가가 아닙니다.")
+        return if (routeExists(ctx, view)) ConstraintResult.Allow else ConstraintResult.Deny("경로에 도달할 방법이 없습니다.")
+    }
+}
+
+/**
+ * DisallowDiplomacyBetweenStatus.php — read the directional diplomacy row (me=nation, you=destNation);
+ * if its `state` is a key of `disallowStatus`, DENY with that key's errMsg; else (state not in the map,
+ * OR no row) pass. PHP queries `diplomacy WHERE me=? AND you=? AND state IN(map keys) LIMIT 1` and on a
+ * hit returns `disallowStatus[state]`. The directional row is preloaded via RequirementKey.Diplomacy.
+ */
+fun disallowDiplomacyBetweenStatus(disallowStatus: Map<Int, String>) = object : Constraint {
+    override val name = "DisallowDiplomacyBetweenStatus"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.Diplomacy(ctx.nationId ?: 0, ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val row = view.get(RequirementKey.Diplomacy(ctx.nationId ?: 0, ctx.destNationId ?: 0)) as? Diplomacy
+            ?: return ConstraintResult.Allow
+        val errMsg = disallowStatus[row.state] ?: return ConstraintResult.Allow
+        return ConstraintResult.Deny(errMsg)
+    }
+}
+
+/**
+ * AllowDiplomacyBetweenStatus.php — read the directional diplomacy row; pass when its `state` is in
+ * `allowDipCodeList`; else (state not allowed, OR no row) DENY with `errMsg`. PHP queries
+ * `diplomacy WHERE me=? AND you=? AND state IN(allowList) LIMIT 1` and passes on a hit.
+ */
+fun allowDiplomacyBetweenStatus(allowDipCodeList: List<Int>, errMsg: String) = object : Constraint {
+    override val name = "AllowDiplomacyBetweenStatus"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.Diplomacy(ctx.nationId ?: 0, ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val row = view.get(RequirementKey.Diplomacy(ctx.nationId ?: 0, ctx.destNationId ?: 0)) as? Diplomacy
+            ?: return ConstraintResult.Deny(errMsg)
+        return if (row.state in allowDipCodeList) ConstraintResult.Allow else ConstraintResult.Deny(errMsg)
+    }
+}
+
+/**
+ * AllowDiplomacyWithTerm.php — read the directional diplomacy row; pass when `state == allowDipCode &&
+ * term >= allowMinTerm`; else DENY with `errMsg`. PHP queries
+ * `diplomacy WHERE me=? AND you=? AND state=? AND term>=?` and passes on a hit.
+ */
+fun allowDiplomacyWithTerm(allowDipCode: Int, allowMinTerm: Int, errMsg: String) = object : Constraint {
+    override val name = "AllowDiplomacyWithTerm"
+    override fun requires(ctx: ConstraintContext) =
+        listOf(RequirementKey.Diplomacy(ctx.nationId ?: 0, ctx.destNationId ?: 0))
+    override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+        val row = view.get(RequirementKey.Diplomacy(ctx.nationId ?: 0, ctx.destNationId ?: 0)) as? Diplomacy
+            ?: return ConstraintResult.Deny(errMsg)
+        return if (row.state == allowDipCode && row.term >= allowMinTerm) ConstraintResult.Allow
+        else ConstraintResult.Deny(errMsg)
+    }
 }
 
 // --- Dest comparator forms (key-backed) — resolve target from the preloaded Dest* row ---
