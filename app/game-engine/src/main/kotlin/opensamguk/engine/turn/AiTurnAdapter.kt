@@ -13,7 +13,8 @@ import opensamguk.logic.ai.AiWorldView
 import opensamguk.logic.ai.AutorunGeneralPolicy
 import opensamguk.logic.ai.AutorunNationPolicy
 import opensamguk.logic.ai.ChosenCommand
-import opensamguk.logic.ai.GeneralAI
+import opensamguk.logic.ai.GeneralAiDoBodies
+import opensamguk.logic.ai.GeneralAiFactory
 import opensamguk.logic.ai.GeneralAiInput
 import opensamguk.logic.ai.KvDelta
 import opensamguk.logic.ai.candidateAllowed
@@ -161,13 +162,20 @@ class AiTurnAdapter(
             turnTerm = turnTerm,
         )
 
-        val ai = GeneralAI(
-            generalPolicy = generalPolicy,
-            dispatch = linkedMapOf(),
-            updateInstance = updateInstanceHook,
+        // Assemble the live GeneralAI through the SINGLE factory seam (the Wire step). The leaf families'
+        // do<한글> bodies plug into [bodies] (an empty bundle here is a null no-op per priority entry — the
+        // catalog-sanctioned behavior until the world-driven family bodies land); the bridge gate + the
+        // meta-KV delta sink + the calcGenType-FIRST-draw prologue are wired through it. READ-ONLY over GAME
+        // ENTITIES — the factory never mutates a row; the chosen command's resolve runs the EXISTING delta path.
+        val bodies = GeneralAiDoBodies(
             candidateAllowed = candidateAllowedHook,
             recordGeneralKv = recordGeneralKv,
+        )
+        val ai = GeneralAiFactory.build(
+            generalPolicy = generalPolicy,
+            bodies = bodies,
             nationPolicy = nationPolicy,
+            updateInstance = updateInstanceHook,
         )
 
         val input = buildGeneralAiInput(general, generalPolicy, year, month, rng)
