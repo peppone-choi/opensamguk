@@ -1,6 +1,12 @@
 package opensamguk.logic.ai
 
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.ai.families.GenDomesticFamily
+import opensamguk.logic.ai.families.GenFoundFamily
+import opensamguk.logic.ai.families.GenWarMoveFamily
+import opensamguk.logic.ai.families.NationDeployFamily
+import opensamguk.logic.ai.families.NationDiploFamily
+import opensamguk.logic.ai.families.NationRewardFamily
 import opensamguk.logic.domain.LastTurn
 
 /**
@@ -140,7 +146,72 @@ data class GeneralAiDoBodies(
     val hasFullConditionMet: (reserved: ChosenCommand) -> Boolean = { true },
     val getFailString: (reserved: ChosenCommand) -> String = { "" },
     val buildNeutralNationCommand: () -> ChosenCommand = { ChosenCommand("che_휴식", emptyMap()) },
-)
+) {
+    companion object {
+        /**
+         * ASSEMBLE — merge ALL 7 leaf families' world-driven `bodies(ctx)` builders into ONE
+         * [GeneralAiDoBodies] over the per-general [GeneralAiContext]. This is the single place that
+         * knows the family→bundle wiring (the shared-extension protocol — m12); a family stays PURE and
+         * NEVER edits this seam, [GeneralAI], the policies, the bridge, or the registry.
+         *
+         * The merge is the UNION of the families' dispatch maps (the action-name keys are DISJOINT across
+         * families — GenDomestic/GenWarMove/GenFound on the general side; NationDeploy/NationReward/
+         * NationDiplo on the nation side — so no family clobbers another), plus the 8 pre-loop / terminal
+         * branch bodies from GenFound (선양/거병/국가선택/건국/해산/중립) + GenWarMove (집합/방랑군이동). The
+         * `candidateAllowed` F-BRIDGE gate + the `recordGeneralKv` meta-KV delta sink are threaded straight
+         * from the [ctx] (the bodies already close over the SAME [ctx], so this only re-exposes them to the
+         * factory). READ-ONLY over GAME ENTITIES — every side-effect is a [GeneralAiContext.recordGeneralKv]
+         * delta (decision #12 / M4); this merger draws NO randomness and invokes NO body.
+         *
+         * The diplomacy family-local inputs ([NationDiploFamily.DiploInput]/[WarInput][NationDiploFamily.WarInput]/
+         * [RelocateInput][NationDiploFamily.RelocateInput]) are the world-specific reads that are NOT plain
+         * logic columns (recv_assist KV / income estimate / isNeighbor / the capital-connected Floyd maps).
+         * When the caller can materialise them they are passed through; an absent input makes that diplo body
+         * a null no-op (the catalog-sanctioned dispatch skip — SELECTION + boolean + draw stream is the only
+         * P5 scope for diplo anyway, decision #11 / m10).
+         *
+         * @param ctx the per-general AI context (rng / instance / world / policies / env / bridge / KV sink).
+         * @param diplo the `do불가침제의` input (null → that body is a null no-op).
+         * @param war the `do선전포고` input (null → that body is a null no-op).
+         * @param reloc the `do천도` input (null → that body is a null no-op).
+         */
+        fun fromFamilies(
+            ctx: GeneralAiContext,
+            diplo: NationDiploFamily.DiploInput? = null,
+            war: NationDiploFamily.WarInput? = null,
+            reloc: NationDiploFamily.RelocateInput? = null,
+        ): GeneralAiDoBodies {
+            // The general priority-loop dispatch — the union of the 3 general families (disjoint keys).
+            val generalDispatch = LinkedHashMap<String, (LastTurn?) -> ChosenCommand?>()
+            generalDispatch.putAll(GenDomesticFamily.bodies(ctx))
+            generalDispatch.putAll(GenWarMoveFamily.bodies(ctx))
+            generalDispatch.putAll(GenFoundFamily.bodies(ctx))
+
+            // The nation priority-loop dispatch — the union of the 3 nation families (disjoint keys).
+            val nationDispatch = LinkedHashMap<String, (LastTurn?) -> ChosenCommand?>()
+            nationDispatch.putAll(NationDeployFamily.bodies(ctx))
+            nationDispatch.putAll(NationRewardFamily.bodies(ctx))
+            nationDispatch.putAll(NationDiploFamily.bodies(ctx, diplo = diplo, war = war, reloc = reloc))
+
+            return GeneralAiDoBodies(
+                generalDispatch = generalDispatch,
+                nationDispatch = nationDispatch,
+                // the 8 pre-loop / terminal general branches (GenFound + GenWarMove).
+                do선양 = GenFoundFamily.do선양(ctx),
+                do집합 = GenWarMoveFamily.do집합(ctx),
+                do거병 = GenFoundFamily.do거병(ctx),
+                do국가선택 = GenFoundFamily.do국가선택(ctx),
+                do방랑군이동 = GenWarMoveFamily.do방랑군이동(ctx),
+                do건국 = GenFoundFamily.do건국(ctx),
+                do해산 = GenFoundFamily.do해산(ctx),
+                do중립 = GenFoundFamily.do중립(ctx),
+                // the F-BRIDGE gate + the meta-KV delta sink threaded from the ctx (decision #12 / M4).
+                candidateAllowed = ctx.candidateAllowed,
+                recordGeneralKv = ctx.recordGeneralKv,
+            )
+        }
+    }
+}
 
 /**
  * The nation-pass prologue/derive/promotion hooks the factory wires into [GeneralAI.chooseNationTurn]

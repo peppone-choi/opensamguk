@@ -13,13 +13,17 @@ import opensamguk.logic.ai.AiWorldView
 import opensamguk.logic.ai.AutorunGeneralPolicy
 import opensamguk.logic.ai.AutorunNationPolicy
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.GeneralAiDoBodies
 import opensamguk.logic.ai.GeneralAiFactory
 import opensamguk.logic.ai.GeneralAiInput
 import opensamguk.logic.ai.KvDelta
+import opensamguk.logic.ai.NationAiInput
+import opensamguk.logic.ai.NationPassHooks
 import opensamguk.logic.ai.candidateAllowed
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.statview.WorldEnvBuilder
@@ -143,34 +147,78 @@ class AiTurnAdapter(
             _kvDeltas.add(KvDelta(gid, key, value))
         }
 
-        // The updateInstance prologue hook — runs updateInstance() THEN calcGenType (the FIRST draw,
-        // F-INSTANCE) on the threaded-by-reference rng. This is the very first draw of the decision.
+        // Eagerly run updateInstance() (NO draws — calcDiplomacyState etc.) so instance.dipState is
+        // available to the world-view facade BELOW. The reqUpdateInstance guard makes the hook's second
+        // updateInstance() call a no-op, so calcGenType (the FIRST draw) still fires exactly once on the
+        // threaded rng inside the hook (the draw-order parity contract is preserved).
+        instance.updateInstance()
+
+        // The updateInstance prologue hook — re-asserts updateInstance() (now a guarded no-op) THEN runs
+        // calcGenType (the FIRST draw, F-INSTANCE) on the threaded-by-reference rng. This is the very first
+        // draw of the decision (GeneralAI.chooseGeneralTurn step 1).
         val statCalc = StatCalc(PerTurnOverlay.toLogicGeneral(general), pipeline)
         val updateInstanceHook: (opensamguk.common.rng.RandUtil) -> Unit = { r ->
             instance.updateInstance()
             instance.calcGenType(r, statCalc)
         }
 
-        @Suppress("UNUSED_VARIABLE") // F-FACADE facade is constructed for the do<한글> families (Wave-1).
+        // F-FACADE — the read-only categorize/derive facade over the live nation cities (PK-ascending),
+        // seeded with the derived dipState + the policy war thresholds. The do<한글> family bodies read it.
         val worldView = AiWorldView(
             ownNationId = nationId,
             // The facade reads logic-model city rows (engine → logic via the SAME overlay conversion).
             cityRows = world.listCities().filter { it.nationId == nationId }.map { PerTurnOverlay.toLogicCity(it) },
-            warTargetNation = null,
+            warTargetNation = instance.warTargetNation,
             ownGeneralId = generalId,
             generals = emptyList(),
+            dipState = instance.dipState,
+            minWarCrew = nationPolicy.minWarCrew,
+            minNpcWarLeadership = nationPolicy.minNPCWarLeadership,
             turnTerm = turnTerm,
         )
 
-        // Assemble the live GeneralAI through the SINGLE factory seam (the Wire step). The leaf families'
-        // do<한글> bodies plug into [bodies] (an empty bundle here is a null no-op per priority entry — the
-        // catalog-sanctioned behavior until the world-driven family bodies land); the bridge gate + the
-        // meta-KV delta sink + the calcGenType-FIRST-draw prologue are wired through it. READ-ONLY over GAME
-        // ENTITIES — the factory never mutates a row; the chosen command's resolve runs the EXISTING delta path.
-        val bodies = GeneralAiDoBodies(
+        // Build the per-general AI context the world-driven family bodies read (F-DISPATCH consumer seam).
+        // Only the faithfully-derivable scalars are populated; the expensive pipeline/BFS-derived inputs
+        // stay defaulted, which makes the bodies that need them null no-ops (the catalog-sanctioned dispatch
+        // skip) until the gate harness (G-GATE) materialises them. READ-ONLY over GAME ENTITIES.
+        val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
+        val ctx = GeneralAiContext(
+            rng = rng,
+            instance = instance,
+            world = worldView,
+            generalPolicy = generalPolicy,
+            nationPolicy = nationPolicy,
+            env = aiEnv,
+            turnTerm = turnTerm,
+            selfGeneralId = generalId,
+            selfCityId = general.cityId,
             candidateAllowed = candidateAllowedHook,
             recordGeneralKv = recordGeneralKv,
+            // with-injury flavor (PHP `$this->leadership = getLeadership()` — withInjury=true default).
+            leadershipWithInjury = statCalc.getStatValue("leadership"),
+            strengthWithInjury = statCalc.getStatValue("strength"),
+            intelWithInjury = statCalc.getStatValue("intel"),
+            // no-injury full flavor (G8) — REUSE the GREEN AiSeed genType table (do NOT re-round).
+            fullLeadership = opensamguk.logic.ai.AiSeed.genTypeLeadership(statCalc),
+            fullStrength = opensamguk.logic.ai.AiSeed.genTypeStrength(statCalc),
+            fullIntel = opensamguk.logic.ai.AiSeed.genTypeIntel(statCalc),
+            nationTech = 0,
+            selfCrew = general.crew,
+            selfCity = logicCity,
+            cityDevelRate = cityDevelRateOf(logicCity),
+            selfTrain = general.train.toDouble(),
+            selfAtmos = general.atmos.toDouble(),
+            selfGold = general.gold,
+            selfRice = general.rice,
+            selfNpcType = npcType,
+            selfKillturn = ReservedTurnHandler.metaInt(general, "killturn", 0),
         )
+
+        // Assemble the live GeneralAI through the SINGLE factory seam (the ASSEMBLE step). All 7 families'
+        // world-driven do<한글> bodies are merged via GeneralAiDoBodies.fromFamilies(ctx); the bridge gate +
+        // the meta-KV delta sink + the calcGenType-FIRST-draw prologue are wired through it. READ-ONLY over
+        // GAME ENTITIES — the factory never mutates a row; the chosen command's resolve runs the EXISTING path.
+        val bodies = GeneralAiDoBodies.fromFamilies(ctx)
         val ai = GeneralAiFactory.build(
             generalPolicy = generalPolicy,
             bodies = bodies,
@@ -180,6 +228,129 @@ class AiTurnAdapter(
 
         val input = buildGeneralAiInput(general, generalPolicy, year, month, rng)
         return ai.chooseGeneralTurn(reservedCommand = ChosenCommand(reserved.actionCode, ReservedTurnHandler.decodeArgs(reserved.argJson)), input = input)
+    }
+
+    /**
+     * Choose the AI NATION command for the chief [generalId] (officer_level>=5), replacing the [reserved]
+     * one (R-SEAM §2 `:305-308`). Builds the per-general `"GeneralAI"` rng + the read-only instance/world
+     * facade + the merged nation policy, assembles the FULLY-WIRED [GeneralAI] (all 7 families' bodies) via
+     * the factory, and runs [GeneralAI.chooseNationTurn]. The lifecycle's nation hook calls this; a human
+     * chief (npc<2) never reaches here. READ-ONLY over GAME ENTITIES — meta-KV writes route through [kvDeltas].
+     */
+    fun chooseNationTurn(generalId: Int, reserved: ReservedTurn, lastTurn: LastTurn): ChosenCommand {
+        val general = world.getGeneralById(generalId)
+            ?: error("AiTurnAdapter: general $generalId not in world")
+        val state = world.getState()
+        val year = state.currentYear
+        val month = state.currentMonth
+        val nationId = general.nationId
+        val npcType = general.npcState
+
+        val rng = opensamguk.logic.ai.AiSeed.rng(hiddenSeed, year, month, generalId)
+        val generalPolicy = AutorunGeneralPolicy(npcType = npcType, nationId = nationId)
+        val develCost = WorldEnvBuilder.envMap(year, startYear)["develCost"] as Int
+        val nationPolicy = AutorunNationPolicy(npcType = npcType, tech = 0, develcost = develCost)
+
+        val aiEnv = AiEnv(year = year, month = month, startYear = startYear, develCost = develCost)
+        val kvRecorder = object : AiKvRecorder {
+            override fun recordNationKv(nationId: Int, key: String, value: Any?) {
+                _kvDeltas.add(KvDelta(nationId, key, value))
+            }
+        }
+        val instance = AiInstanceState(
+            generalNationId = nationId,
+            env = aiEnv,
+            nationPolicy = nationPolicy,
+            nationRowLookup = { world.getNationById(nationId)?.let { toAiNationRow(it) } },
+            nationStor = nationEnvSnapshot(nationId),
+            diplomacyOf = { diplomacyRowsFor(nationId) },
+            frontMaxOf = { frontMaxFor(nationId) },
+            kvRecorder = kvRecorder,
+        )
+        instance.updateInstance()
+
+        val overlay = PerTurnOverlay(world)
+        val envMap = WorldEnvBuilder.envMap(year, startYear)
+        val view = WorldStateViewAdapter(overlay, env = envMap)
+        val candidateAllowedHook: (String, Map<String, Any?>) -> Boolean = { actionCode, rawArgs ->
+            val ctx = ConstraintContext(
+                actorId = generalId,
+                cityId = general.cityId,
+                nationId = nationId,
+                env = envMap,
+                mode = ConstraintMode.FULL,
+            )
+            candidateAllowed(actionCode, rawArgs, ctx, view) { code -> resolveDef(code) }
+        }
+        val recordGeneralKv: (Int, String, Any?) -> Unit = { gid, key, value ->
+            _kvDeltas.add(KvDelta(gid, key, value))
+        }
+
+        val worldView = AiWorldView(
+            ownNationId = nationId,
+            cityRows = world.listCities().filter { it.nationId == nationId }.map { PerTurnOverlay.toLogicCity(it) },
+            warTargetNation = instance.warTargetNation,
+            ownGeneralId = generalId,
+            generals = emptyList(),
+            dipState = instance.dipState,
+            minWarCrew = nationPolicy.minWarCrew,
+            minNpcWarLeadership = nationPolicy.minNPCWarLeadership,
+            turnTerm = turnTerm,
+        )
+        val ctx = GeneralAiContext(
+            rng = rng,
+            instance = instance,
+            world = worldView,
+            generalPolicy = generalPolicy,
+            nationPolicy = nationPolicy,
+            env = aiEnv,
+            turnTerm = turnTerm,
+            selfGeneralId = generalId,
+            selfCityId = general.cityId,
+            candidateAllowed = candidateAllowedHook,
+            recordGeneralKv = recordGeneralKv,
+        )
+        // The nation reserved-honor gate (decision #4) is the SAME bridge gate the resolve makes (FULL mode).
+        val bodies = GeneralAiDoBodies.fromFamilies(ctx).copy(
+            hasFullConditionMet = { cmd -> candidateAllowedHook(cmd.actionCode, cmd.args) },
+        )
+        val ai = GeneralAiFactory.build(
+            generalPolicy = generalPolicy,
+            bodies = bodies,
+            nationPolicy = nationPolicy,
+            nationHooks = NationPassHooks(
+                nationGeneralId = generalId,
+                useAutoNationTurn = (general.meta["use_auto_nation_turn"] as? Number)?.toInt()?.let { it != 0 } ?: true,
+            ),
+        )
+
+        val input = NationAiInput(npcType = npcType, officerLevel = general.officerLevel, month = month, rng = rng)
+        return ai.chooseNationTurn(
+            reservedCommand = ChosenCommand(reserved.actionCode, ReservedTurnHandler.decodeArgs(reserved.argJson)),
+            lastTurn = lastTurn,
+            input = input,
+        )
+    }
+
+    /** The acting city's per-develKey ratios (PHP `calcCityDevelRate`, RatesPromoFamily) — the do일반내정/긴급내정
+     *  candidate thresholds. Reuses the GREEN PURE primitive; empty when the city is unknown (재야/lost). */
+    private fun cityDevelRateOf(city: opensamguk.logic.domain.City?): Map<String, Double> {
+        if (city == null) return emptyMap()
+        val input = opensamguk.logic.ai.families.RatesPromoFamily.CityDevelInput(
+            trust = city.trust,
+            pop = city.population.toDouble(), popMax = maxOf(1.0, city.populationMax.toDouble()),
+            agri = city.agriculture.toDouble(), agriMax = maxOf(1.0, city.agricultureMax.toDouble()),
+            comm = city.commerce.toDouble(), commMax = maxOf(1.0, city.commerceMax.toDouble()),
+            secu = city.security.toDouble(), secuMax = maxOf(1.0, city.securityMax.toDouble()),
+            def = city.defense.toDouble(), defMax = maxOf(1.0, city.defenseMax.toDouble()),
+            wall = city.wall.toDouble(), wallMax = maxOf(1.0, city.wallMax.toDouble()),
+        )
+        // ZERO draws; the rng is only the 0-draw contract documenter (a throwaway stream, never the decision rng).
+        val rate = opensamguk.logic.ai.families.RatesPromoFamily.calcCityDevelRate(
+            input,
+            opensamguk.common.rng.RandUtil(opensamguk.common.rng.LiteHashDrbg("aiCityDevelRate")),
+        )
+        return rate.mapValues { it.value.score }
     }
 
     /** Build the read-only [GeneralAiInput] the spine branches on (PHP `$general->getVar(...)`). */
