@@ -2,6 +2,9 @@ package opensamguk.logic.ai
 
 import opensamguk.logic.ai.bfs.AiDistance
 import opensamguk.logic.domain.City
+import opensamguk.logic.domain.General
+import opensamguk.logic.domain.metaInt
+import opensamguk.logic.util.phpToInt
 
 /**
  * F-FACADE — `AiWorldView`, a faithful port of the per-AI-instance read-only categorize/derive facade
@@ -33,18 +36,74 @@ import opensamguk.logic.domain.City
  * @param cityRowsSupplier the full `city` table snapshot (lazily fetched ONCE; materialized PK-ascending).
  * @param warTargetNation the `{nationID → 2|1}` war-target partition ([AiInstanceState.warTargetNation]) —
  *  `calcWarRoute` keys it (`array_keys`) then appends [ownNationId]. NULL → `?? []` → only [ownNationId].
+ * @param ownGeneralId the acting general's id (PHP `$this->general->getID()`); `categorizeNationGeneral`
+ *  EXCLUDES self (`SELECT no ... AND no != %i`, `:3516`) — the [generalsSupplier] returns the already-self-
+ *  excluded snapshot, and this id is the assertion target for the no-self-leak guard.
+ * @param generalsSupplier the self-excluded nation general snapshot (lazily fetched ONCE; materialized
+ *  PK-ascending `.sortedBy { it.general.id }`). PHP `SELECT no FROM general WHERE nation=%i AND no!=%i`
+ *  (`:3516`, NO `ORDER BY` → PK-ascending) → [AiGeneralView] per general carrying the bucketing scalars.
+ * @param dipState the AI instance's diplomacy state ([AiInstanceState.dipState]) — the userWar/userCivil
+ *  split's `dipState !== d평화` branch (`:3589`). The default [AiInstanceState.D_PEACE] is the FC1 no-op path.
+ * @param minWarCrew the merged nation policy's `minWarCrew` (`:3590`) — the userWar crew threshold.
+ * @param minNpcWarLeadership the merged nation policy's `minNPCWarLeadership` (`:3597`) — the npcWar gate.
+ * @param turnTerm the env `turnterm` (`:3543/3585`) — `calcRecentWarTurn`'s `60*turnTerm` divisor.
  */
 class AiWorldView(
     private val ownNationId: Int,
     private val cityRowsSupplier: () -> List<City>,
     private val warTargetNation: Map<Int, Int>?,
+    private val ownGeneralId: Int = 0,
+    private val generalsSupplier: () -> List<AiGeneralView> = { emptyList() },
+    private val dipState: Int = AiInstanceState.D_PEACE,
+    private val minWarCrew: Int = 0,
+    private val minNpcWarLeadership: Int = 0,
+    private val turnTerm: Int = 1,
 ) {
     /** Convenience ctor for an already-materialized snapshot (tests + the engine adapter). */
     constructor(
         ownNationId: Int,
         cityRows: List<City>,
         warTargetNation: Map<Int, Int>?,
-    ) : this(ownNationId, { cityRows }, warTargetNation)
+        ownGeneralId: Int = 0,
+        generals: List<AiGeneralView> = emptyList(),
+        dipState: Int = AiInstanceState.D_PEACE,
+        minWarCrew: Int = 0,
+        minNpcWarLeadership: Int = 0,
+        turnTerm: Int = 1,
+    ) : this(
+        ownNationId = ownNationId,
+        cityRowsSupplier = { cityRows },
+        warTargetNation = warTargetNation,
+        ownGeneralId = ownGeneralId,
+        generalsSupplier = { generals },
+        dipState = dipState,
+        minWarCrew = minWarCrew,
+        minNpcWarLeadership = minNpcWarLeadership,
+        turnTerm = turnTerm,
+    )
+
+    /** Secondary ctor that takes a [generalsSupplier] lambda (the lazy-once test path + the engine adapter). */
+    constructor(
+        ownNationId: Int,
+        cityRows: List<City>,
+        warTargetNation: Map<Int, Int>?,
+        ownGeneralId: Int,
+        generalsSupplier: () -> List<AiGeneralView>,
+        dipState: Int,
+        minWarCrew: Int,
+        minNpcWarLeadership: Int,
+        turnTerm: Int,
+    ) : this(
+        ownNationId = ownNationId,
+        cityRowsSupplier = { cityRows },
+        warTargetNation = warTargetNation,
+        ownGeneralId = ownGeneralId,
+        generalsSupplier = generalsSupplier,
+        dipState = dipState,
+        minWarCrew = minWarCrew,
+        minNpcWarLeadership = minNpcWarLeadership,
+        turnTerm = turnTerm,
+    )
 
     // The PK-ascending `city` snapshot, materialized ONCE on first need (categorizeNationCities or
     // calcWarRoute). PHP fetches fresh per method; here a single lazy snapshot serves both and stays
@@ -175,6 +234,183 @@ class AiWorldView(
         target.add(ownNationId) // PHP `:289` `$target[] = $this->nation['nation'];`
         return target
     }
+
+    // ====================================================================================================
+    // categorizeNationGeneral (PHP `:3516-3613`) — the 9 buckets, the first-match-wins role ladder, NO draws.
+    // ====================================================================================================
+
+    // The PK-ascending self-excluded general snapshot, materialized ONCE on first need. PHP `:3516`
+    // `SELECT no FROM general WHERE nation=%i AND no!=%i` (NO ORDER BY → PK-ascending; sorted explicitly).
+    private val generalRows: List<AiGeneralView> by lazy {
+        generalsSupplier().sortedBy { it.general.id }
+    }
+
+    // --- categorizeNationGeneral outputs (the 9 buckets; lazy-once via the userGenerals null sentinel) ---
+
+    private var _nationGenerals: List<AiGeneralView>? = null
+    private var _userGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _userCivilGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _userWarGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _lostGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _npcCivilGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _npcWarGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _troopLeaders: LinkedHashMap<Int, AiGeneralView>? = null
+    private var _chiefGenerals: LinkedHashMap<Int, AiGeneralView>? = null
+
+    /** PHP `$this->nationGenerals` (`:3604`) — ALL nation generals (self-excluded), PK-ascending. */
+    val nationGenerals: List<AiGeneralView>
+        get() { categorizeNationGeneral(); return _nationGenerals!! }
+
+    /** PHP `$this->userGenerals` (`:3605`) — `npcType < 2` real-user / light-npc generals. */
+    val userGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _userGenerals!! }
+
+    /** PHP `$this->userCivilGenerals` (`:3606`) — user generals NOT meeting the userWar split (`:3595`). */
+    val userCivilGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _userCivilGenerals!! }
+
+    /** PHP `$this->userWarGenerals` (`:3607`) — user generals past the `lastWar+12` OR not-peace+crew gate. */
+    val userWarGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _userWarGenerals!! }
+
+    /** PHP `$this->lostGenerals` (`:3608`) — in an unsupplied own city OR in a non-nation city (`:3568/3571`). */
+    val lostGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _lostGenerals!! }
+
+    /** PHP `$this->npcCivilGenerals` (`:3609`) — `killturn<=5` OR low-leadership npc OR the default rung. */
+    val npcCivilGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _npcCivilGenerals!! }
+
+    /** PHP `$this->npcWarGenerals` (`:3610`) — npc (≥2) with `getLeadership(false) >= minNPCWarLeadership`. */
+    val npcWarGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _npcWarGenerals!! }
+
+    /** PHP `$this->troopLeaders` (`:3611`) — `npcType==5` OR the non-npc `che_집합` troop leader (`:3575/3577`). */
+    val troopLeaders: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _troopLeaders!! }
+
+    /** PHP `$this->chiefGenerals` (`:3612`) — keyed by `officer_level` (>4), later-no-ascending OVERWRITES a dup. */
+    val chiefGenerals: LinkedHashMap<Int, AiGeneralView>
+        get() { categorizeNationGeneral(); return _chiefGenerals!! }
+
+    /**
+     * Faithful port of `categorizeNationGeneral` (PHP `:3516-3613`). Lazy-once (the `userGenerals === null`
+     * sentinel `:3518`), NO draws. Mutates the FC1 [nationCities] `generals`/`important` BY REFERENCE — so
+     * [categorizeNationCities] MUST run first (it does: [nationCities] forces it).
+     *
+     * Two passes over the PK-ascending self-excluded [generalRows]:
+     *  - **Pass 1 (`:3541-3550`)** — `lastWar = min(calcRecentWarTurn)` over generals NOT skipped by the
+     *    pre-임관 gate `recentWar >= (belong-1)*12` (`:3544`). `lastWar` seeds [Long.MAX_VALUE]-equivalent
+     *    `PHP_INT_MAX` (`:3541`).
+     *  - **Pass 2 (`:3552-3602`)** — officer weighting (chiefGenerals by level / important += per officer 2-4),
+     *    then city-attach + lost detection, then the **first-match-wins role ladder** (`:3574-3601`).
+     */
+    fun categorizeNationGeneral() {
+        if (_userGenerals != null) {
+            return // PHP `:3518-3520` — the lazy-once null-guard (userGenerals as the sentinel).
+        }
+
+        // PHP `:3533-3534` — ensure cities exist first; the `&$this->nationCities` by-reference handle.
+        val cities = nationCities // forces categorizeNationCities()
+
+        val userGenerals = LinkedHashMap<Int, AiGeneralView>()
+        val userCivilGenerals = LinkedHashMap<Int, AiGeneralView>()
+        val userWarGenerals = LinkedHashMap<Int, AiGeneralView>()
+        val lostGenerals = LinkedHashMap<Int, AiGeneralView>()
+        val npcCivilGenerals = LinkedHashMap<Int, AiGeneralView>()
+        val npcWarGenerals = LinkedHashMap<Int, AiGeneralView>()
+        val troopLeaders = LinkedHashMap<Int, AiGeneralView>()
+        val chiefGenerals = LinkedHashMap<Int, AiGeneralView>()
+
+        val generals = generalRows // PK-ascending, self-excluded.
+
+        // --- PASS 1 — lastWar (PHP `:3541-3550`) ---
+        var lastWar = Long.MAX_VALUE // PHP `:3541` PHP_INT_MAX.
+        for (gv in generals) {
+            val recentWar = gv.calcRecentWarTurn(turnTerm) // :3543
+            // :3544 임관전 전투는 제외 — skip battles fought before joining (recentWar >= (belong-1)*12).
+            if (recentWar >= (gv.belong - 1) * 12) {
+                continue
+            }
+            lastWar = minOf(lastWar, recentWar.toLong()) // :3549
+        }
+
+        // --- PASS 2 — bucketing (PHP `:3552-3602`) ---
+        for (gv in generals) {
+            val g = gv.general
+            val generalID = g.id
+            val cityID = g.cityId
+            val npcType = g.npcType
+            val officerLevel = g.officerLevel
+            val officerCity = g.officerCity
+
+            // PHP `:3559-3563` — officer weighting (BEFORE the role ladder; independent of it).
+            if (officerLevel > 4) {
+                chiefGenerals[officerLevel] = gv // :3560 keyed by LEVEL; later no-ascending OVERWRITES a dup.
+            } else if (officerLevel >= 2) {
+                cities[officerCity]?.let { it.important += 1 } // :3562 important += 1 on the officer_city.
+            }
+
+            // PHP `:3565-3572` — city-attach (by-ref into the FC1 generals map) + lost detection.
+            val ownCity = cities[cityID]
+            if (ownCity != null) {
+                ownCity.generals[generalID] = gv // :3567 by-reference accumulation, insertion-ordered.
+                if (ownCity.city.supplyState == 0) {
+                    lostGenerals[generalID] = gv // :3568-3570 in own city but unsupplied → lost.
+                }
+            } else {
+                lostGenerals[generalID] = gv // :3571 city not ours → lost.
+            }
+
+            // PHP `:3574-3601` — the FIRST-MATCH-WINS role ladder (REORDERING changes bucketing → draws).
+            when {
+                npcType == 5 -> {
+                    troopLeaders[generalID] = gv // :3575 NPC 부대장.
+                }
+                g.troop == generalID && gv.reservedCommandName == "che_집합" -> {
+                    troopLeaders[generalID] = gv // :3577 비 NPC 부대장 (troop===self AND reserved che_집합).
+                }
+                gv.killturn <= 5 -> {
+                    npcCivilGenerals[generalID] = gv // :3579 near-deletion → 내정 NPC.
+                }
+                npcType < 2 -> {
+                    userGenerals[generalID] = gv // :3582 real user / light-npc.
+                    // :3585 recentWar <= lastWar+12. PHP promotes `PHP_INT_MAX + 12` to a FLOAT (no wraparound),
+                    // so an unseeded lastWar makes the cutoff effectively unbounded → compare in Double (both
+                    // operands ≤ ~12000 fit exactly; only the MAX_VALUE sentinel needs the float promotion).
+                    when {
+                        gv.calcRecentWarTurn(turnTerm).toDouble() <= lastWar.toDouble() + 12.0 -> {
+                            userWarGenerals[generalID] = gv
+                        }
+                        dipState != AiInstanceState.D_PEACE && g.crew >= minWarCrew -> {
+                            userWarGenerals[generalID] = gv // :3589-3590 not-peace AND crew >= minWarCrew.
+                            // TODO(php :3592-3593): 훈련/사기 NOT yet factored — port as-is, do not add.
+                        }
+                        else -> {
+                            userCivilGenerals[generalID] = gv // :3595.
+                        }
+                    }
+                }
+                gv.fullLeadership >= minNpcWarLeadership -> {
+                    npcWarGenerals[generalID] = gv // :3597 getLeadership(false) >= minNPCWarLeadership.
+                }
+                else -> {
+                    npcCivilGenerals[generalID] = gv // :3600 default rung.
+                }
+            }
+        }
+
+        // PHP `:3604-3612` — publish all buckets.
+        _nationGenerals = generals
+        _userGenerals = userGenerals
+        _userCivilGenerals = userCivilGenerals
+        _userWarGenerals = userWarGenerals
+        _lostGenerals = lostGenerals
+        _npcCivilGenerals = npcCivilGenerals
+        _npcWarGenerals = npcWarGenerals
+        _troopLeaders = troopLeaders
+        _chiefGenerals = chiefGenerals
+    }
 }
 
 /**
@@ -194,5 +430,49 @@ data class NationCity(
     val city: City,
     val dev: Double,
     var important: Int,
-    val generals: LinkedHashMap<Int, Any?> = LinkedHashMap(),
+    val generals: LinkedHashMap<Int, AiGeneralView> = LinkedHashMap(),
 )
+
+/**
+ * One nation general as the AI facade reads it in `categorizeNationGeneral` (PHP `:3552-3601`). Wraps the
+ * domain [General] plus the three derived scalars the bucketing reads that are NOT plain columns:
+ *  - [recentWarSeconds] — the engine-supplied `DateInterval` seconds between `recent_war` and `turntime`
+ *    (PHP `General.php:286`); `null` means a falsy `recent_war` (the "never fought" marker). [calcRecentWarTurn]
+ *    reproduces the 12000 sentinel + the `secDiff<=0 → 0` clamp + the `intdiv(toInt(secDiff), 60*turnTerm)`
+ *    trunc-div (H-HELPERS §2 / `General.php:273-296`). The string→seconds mangle is the engine's job (the
+ *    `:logic` layer stays PURE — same split as `war/WarUnitGeneral.kt`'s recent_war handling).
+ *  - [reservedCommandName] — `getReservedTurn(0)->getName()` (PHP `:3577`), the turn_idx 0 reserved command
+ *    name; `null` (= 휴식/none) when no reservation. Compared literally to `'che_집합'` for the non-NPC
+ *    troop-leader rung.
+ *  - [fullLeadership] — `getLeadership(false)` (PHP `:3597`), the no-injury full leadership (G8 flavor),
+ *    compared to `minNPCWarLeadership` for the npcWar gate (the SAME value site `calcGenType` uses).
+ *
+ * `belong`/`killturn` ride [General.meta]; `crew`/`troop`/`npcType`/`officerLevel`/`officerCity`/`cityId`/`id`
+ * are plain [General] fields. NO RNG draws.
+ */
+data class AiGeneralView(
+    val general: General,
+    val recentWarSeconds: Long?,
+    val reservedCommandName: String?,
+    val fullLeadership: Double,
+) {
+    /**
+     * Faithful port of `General::calcRecentWarTurn(turnTerm)` (PHP `General.php:273-296`, H-HELPERS §2).
+     * Falsy `recent_war` ([recentWarSeconds] null) → the **12000** sentinel (`12 * 1000`, `:280`); `secDiff<=0`
+     * → 0 (`:288`); else `intdiv(toInt(secDiff), 60 * turnTerm)` (`:293`, BOTH trunc-toward-zero). The PHP
+     * `calcCache` memo (per general per turnTerm) is unobservable from the bucketing — both call sites pass the
+     * same `turnTerm`, so a pure recompute is byte-identical.
+     */
+    fun calcRecentWarTurn(turnTerm: Int): Int {
+        val secDiff = recentWarSeconds ?: return 12 * 1000 // :279-282 falsy recent_war → 12000 sentinel.
+        if (secDiff <= 0L) return 0 // :288-291 clamp to 0.
+        // :293 intdiv(Util::toInt(secDiff), 60*turnTerm) — Util::toInt = trunc-toward-zero, intdiv = trunc.
+        return phpToInt(secDiff.toDouble()) / (60 * turnTerm)
+    }
+
+    /** PHP `$nationGeneral->getVar('belong')` (`:3544`) — years belonging, rides `meta['belong']`. */
+    val belong: Int get() = metaInt(general.meta, "belong")
+
+    /** PHP `$nationGeneral->getVar('killturn')` (`:3579`) — 삭턴 counter, rides `meta['killturn']`. */
+    val killturn: Int get() = metaInt(general.meta, "killturn")
+}
