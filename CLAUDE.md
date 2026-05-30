@@ -138,5 +138,5 @@ Persistent structural graph of this codebase. **Use BEFORE Grep/Glob/Read** when
 `P0→P1→P2→P3→P4→P5→P6→P7→P8` (branch: `P7 ← {P2,P6}`, parallelizable with P3/P4/P5).
 
 - ✅ **P0-A** scaffold · ✅ **P0-B** parity kernel · ✅ **P1** vertical slice · ✅ **P2** ~35 commands + constraints · ✅ **P3** monthly tick — all gate-closed, ~1235 tests.
-- 🔧 **P4** battle engine (`processWar_NG` + triggers + WarUnit + city-conflict + ConquerCity + battle items/specialties) — code complete (1527 tests); **G1 battle/conquest draw-for-draw gate in progress**.
+- ✅ **P4** battle engine (`processWar_NG` + triggers + WarUnit + city-conflict + ConquerCity + battle items/specialties) — gate-closed; **G1 battle/conquest draw-for-draw + quarantines logged**, ~1543 tests.
 - ⬜ **P5** NPC AI · **P6** diplomacy/auction/inheritance · **P7** read API + Next.js + SSE · **P8** parity harness + gateway orchestration + production deploy (AWS EC2 t3.large, LLM-free, no external API deps).

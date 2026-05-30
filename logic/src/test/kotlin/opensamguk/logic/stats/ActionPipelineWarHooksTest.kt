@@ -5,6 +5,7 @@ import opensamguk.common.constants.GameUnitDetail
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.General
+import opensamguk.logic.traits.OfficerLevelModule
 import opensamguk.logic.war.trigger.ObjectTrigger
 import opensamguk.logic.war.trigger.TriggerEnv
 import opensamguk.logic.war.trigger.WarUnit
@@ -134,6 +135,21 @@ class ActionPipelineWarHooksTest {
         assertEquals(1.0 to 1.0, noop.getWarPowerMultiplier(unit))
         val pipeline = GeneralActionPipeline(listOf(noop))
         assertEquals(1.0 to 1.0, pipeline.getWarPowerMultiplier(unit))
+    }
+
+    @Test
+    fun `officer level warpower multiplier matches TriggerOfficerLevel table`() {
+        val unit = FakeWarUnit("u", true)
+
+        assertEquals(1.07 to 0.93, OfficerLevelModule(12, 2, 5, 5).getWarPowerMultiplier(unit))
+        assertEquals(1.05 to 0.95, OfficerLevelModule(11, 2, 5, 5).getWarPowerMultiplier(unit))
+        assertEquals(1.10 to 1.0, OfficerLevelModule(10, 2, 5, 5).getWarPowerMultiplier(unit))
+        assertEquals(1.0 to 0.90, OfficerLevelModule(9, 2, 5, 5).getWarPowerMultiplier(unit))
+        assertEquals(1.05 to 0.95, OfficerLevelModule(4, 2, 5, 5).getWarPowerMultiplier(unit))
+        assertEquals(1.0 to 1.0, OfficerLevelModule(1, 2, 5, 5).getWarPowerMultiplier(unit))
+
+        val demoted = OfficerLevelModule(officerLevel = 4, nationLevel = 2, officerCity = 99, currentCity = 5)
+        assertEquals(1.0 to 1.0, demoted.getWarPowerMultiplier(unit))
     }
 
     @Test

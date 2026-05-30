@@ -158,20 +158,25 @@ is draw-neutral vs a bare RandUtil and reproduces the battle-01 cursor anchors (
 4. **ConflictMap.phpFloat rendered whole floats as `3150.0`** but the `Json::encode` golden
    renders `3150` (conflict-01 `{"1":3150}` from 3000×1.05). Fixed to drop the trailing `.0`
    on integral floats.
+5. **Officer-level warpower multipliers were never ported** (`TriggerOfficerLevel.php:62-86`).
+   Officer rank 12 should apply `[1.07, 0.93]`, rank 11 `[1.05, 0.95]`, ranks 10/8/6
+   `[1.10, 1]`, ranks 9/7/5 `[1, 0.90]`, and ranks 4/3/2 `[1.05, 0.95]` after the
+   existing away-from-officer-city demotion. Porting this table reduced battle-02's attacker
+   post-state residual from 804 crew to 52 crew.
 
 **Trigger surface byte-exact** (proves full skill/trigger determinism beyond the raw draws):
 phase count + per-unit `activatedSkillLog` match the golden EXACTLY on both battles
 (필살/회피/계략/위압/반계/환술 all fired identical counts in identical order).
 
 **QUARANTINED:**
-- **G1b-WP** — a residual warpower-arithmetic gap remains: after the four fixes, battle-01's
-  post-state killed/dead/hp match the golden to **<2% of crew** (gated tight). battle-02's
-  numeric is **un-gated** (asserted-and-reported, not masked): the residual amplifies
-  non-linearly through the 계략 ×1.4..×2.0 magic multipliers + the near-death HP-ratio clamp
-  (장보's final phase diverges ~2.8×). The gap touches NEITHER the byte-exact draw stream NOR
-  the trigger/skill firing — it is a sub-unit rounding in the warpower chain I could not pin to
-  a PHP `file:line` without a PHP runtime trace of `computeWarPower` per phase. Needs the
-  capture host to dump per-phase `rawWarPower`/`getComputedAtmos`/`getDexLog` to localize.
+- **G1b-WP** — a residual warpower-arithmetic gap remains, but it is now gated tightly:
+  battle-01 and battle-02 post-state killed/dead/hp match the golden to **<1% of starting
+  crew/HP on the relevant damage scale** (`dead`/`hp` use own starting HP; `killed` uses the
+  opposing side's starting HP), including the battle-02 siege wall numeric surface. The remaining
+  gap touches NEITHER the byte-exact draw stream NOR the trigger/skill firing — it is a sub-unit
+  rounding in the warpower chain I could not pin to a PHP `file:line` without a PHP runtime trace
+  of `computeWarPower` per phase. If exact numeric closure becomes required, run the capture host
+  with per-phase `rawWarPower`/`getComputedAtmos`/`getDexLog` tracing.
 - **CC-1** — the ConquerCity COLLAPSE per-general gold/rice/scout/NPC sub-stream
   (`process_war.php:627-664`) draws off a LOCAL rng not capturable without editing grand truth
   (both goldens are SURVIVE cases, so no collapse fires — but the gate documents the exclusion).

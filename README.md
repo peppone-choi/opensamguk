@@ -54,7 +54,7 @@ Each phase ships a real PHP golden captured via the Docker harness in [`tools/ph
 | P1 | vertical slice (one command, full CQRS loop) | ✅ gate-closed |
 | P2 | ~35 commands + constraint library + 9-source stat-stack | ✅ gate-closed |
 | P3 | monthly economy tick + city-supply BFS + event engine | ✅ gate-closed |
-| P4 | battle engine (`processWar_NG` + triggers + ConquerCity) | 🔧 code complete (1527 tests); G1 draw-for-draw gate in progress |
+| P4 | battle engine (`processWar_NG` + triggers + ConquerCity) | ✅ gate-closed (G1 battle/conquest draw-for-draw + quarantines logged; ~1543 tests) |
 | P5 / P6 | NPC AI · diplomacy/auction/inheritance | ⬜ |
 | P7 / P8 | read API + Next.js + SSE · parity harness + AWS deploy | ⬜ |
 
