@@ -38,6 +38,15 @@ open class LiteHashDrbg(seed: ByteArray, stateIdx: Long = 0, bufferIdx: Int = 0)
 
     fun getMaxInt(): Long = MAX_INT_L
 
+    // Behavior-NEUTRAL test seam (mirrors the existing `open class RandUtil` visibility seam): the P4 battle
+    // draw-recorder snapshots the LiteHashDRBG byte cursor (the SHA-512 block counter `stateIdx` + the
+    // intra-block byte offset `bufferIdx`) BEFORE each draw, exactly as the PHP `RandUtilDrawRecorder`
+    // reflects `LiteHashDRBG::$stateIdx`/`$bufferIdx`. Read-only getters — they change NO RNG math.
+    /** The SHA-512 block counter (PHP `LiteHashDRBG::$stateIdx`). Read-only cursor fingerprint. */
+    fun peekStateIdx(): Long = stateIdx
+    /** The intra-block byte offset (PHP `LiteHashDRBG::$bufferIdx`). Read-only cursor fingerprint. */
+    fun peekBufferIdx(): Int = bufferIdx
+
     fun nextBytes(bytes: Int, baseBytes: Int? = null): ByteArray {
         val n = bytes
         if (n <= 0) throw IllegalArgumentException("$n <= 0")
