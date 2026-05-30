@@ -40,7 +40,16 @@ object SpecialWarRegistry : GeneralActionModuleSource {
         "che_궁병" to CheGungbyeong,
         "che_반계" to CheBangye,
         "che_징병" to CheJingbyeong,
-        // AW3 (multipliers/trigger-injection) registers its leaves below by id.
+        // --- AW3: warpower-multiplier / trigger-injection specialties ---
+        "che_격노" to CheGyeokno,
+        "che_무쌍" to CheMussang,
+        "che_공성" to CheGongseong,
+        "che_기병" to CheGibyeong,
+        "che_보병" to CheBobyeong,
+        "che_돌격" to CheDolgyeok,
+        "che_저격" to CheJeogyeok,
+        "che_위압" to CheWiap,
+        "che_척사" to CheCheoksa,
         // None(id 0) is inert (no battle-hook override) → omitted → resolve null.
     )
 
