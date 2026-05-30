@@ -76,6 +76,8 @@ data class City(
     val defenceMax: Int = 0,
     val wall: Int = 0,
     val wallMax: Int = 0,
+    val trade: Int? = 100,   // V1 city.trade — NOT NULL DEFAULT 100 (95..105; null = disabled)
+    val region: Int = 0,     // V1 city.region
     val meta: Map<String, Any?> = emptyMap(),
 )
 
@@ -134,3 +136,67 @@ data class TurnWorldState(
 )
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"
+
+/**
+ * The 37 `rank_data.type` columns — a faithful transcription of `sammo\Enums\RankColumn`
+ * (`legacy/devsam-core/hwe/sammo/Enums/RankColumn.php`, `RankColumn::cases()` = 37). The enum
+ * case backing VALUE is the rank_data `type` column name ([column]); the last 6 PHP case NAMES
+ * differ from their backing values (e.g. `inherit_point_earned = 'inherit_earned'`) — the column
+ * always uses the backing VALUE. Order matches the PHP enum declaration order (the `entries`
+ * order the flush iterates and `RANK_ROWS_PER_GENERAL` counts).
+ */
+enum class RankColumn(val column: String) {
+    FIRENUM("firenum"),
+    WARNUM("warnum"),
+    KILLNUM("killnum"),
+    DEATHNUM("deathnum"),
+    KILLCREW("killcrew"),
+    DEATHCREW("deathcrew"),
+    TTW("ttw"),
+    TTD("ttd"),
+    TTL("ttl"),
+    TTG("ttg"),
+    TTP("ttp"),
+    TLW("tlw"),
+    TLD("tld"),
+    TLL("tll"),
+    TLG("tlg"),
+    TLP("tlp"),
+    TSW("tsw"),
+    TSD("tsd"),
+    TSL("tsl"),
+    TSG("tsg"),
+    TSP("tsp"),
+    TIW("tiw"),
+    TID("tid"),
+    TIL("til"),
+    TIG("tig"),
+    TIP("tip"),
+    BETWIN("betwin"),
+    BETGOLD("betgold"),
+    BETWINGOLD("betwingold"),
+    KILLCREW_PERSON("killcrew_person"),
+    DEATHCREW_PERSON("deathcrew_person"),
+    OCCUPIED("occupied"),
+    INHERIT_EARNED("inherit_earned"),
+    INHERIT_SPENT("inherit_spent"),
+    INHERIT_EARNED_DYN("inherit_earned_dyn"),
+    INHERIT_EARNED_ACT("inherit_earned_act"),
+    INHERIT_SPENT_DYN("inherit_spent_dyn"),
+    ;
+
+    companion object {
+        /** Resolve a rank_data `type` column name to its [RankColumn] case. */
+        fun byColumn(column: String): RankColumn? = entries.firstOrNull { it.column == column }
+    }
+}
+
+/**
+ * One rank_data write for a single `(general, type)`: either an `Increment` (`value = value + n`,
+ * `rankVarIncrease`) or a `Set` (`value = n`, `rankVarSet`). The 3-Map collapse in [ChangeRecorder]
+ * keeps at most ONE of these per `(general, type)` — faithful to `General.php:641-670`.
+ */
+sealed interface RankDelta {
+    data class Increment(val value: Int) : RankDelta
+    data class Set(val value: Int) : RankDelta
+}

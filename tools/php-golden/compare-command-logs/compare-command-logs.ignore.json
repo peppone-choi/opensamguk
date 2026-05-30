@@ -1,0 +1,43 @@
+{
+    "_doc": "GS1 ignore-list for the PHP↔Kotlin action-log compare gate (compare-command-logs.mjs). The matched set is the 28 committed PHP-captured P2 goldens (logic/src/test/resources/golden/p2/*.json). Two ignore mechanisms: (1) `IgnoreCommands` drops a WHOLE command key from the matched set — the 12 backlogged P2 commands (tools/php-golden/p2-capture-backlog.md, scenario_1010 state gaps, NOT failures) + the ~57-of-93 non-P2 commands; (2) `Global`/per-command `templates`+`regex` drop individual log lines that survive the scope filters but are not part of the action-log surface being gated (broadcast/dest/guard lines that leak through). Kept verbatim from legacy/devsam-core2026/tools/compare-command-logs.ignore.json where applicable.",
+
+    "IgnoreCommands": [
+        "che_임관",
+        "che_장수대상임관",
+        "che_랜덤임관",
+        "che_방랑",
+        "che_은퇴",
+        "che_집합",
+        "che_건국",
+        "cr_건국",
+        "che_무작위건국",
+        "che_감축",
+        "che_증축",
+        "che_무작위수도이전"
+    ],
+    "_ignoreCommandsDoc": "The 12 P2 commands backlogged in p2-capture-backlog.md: opening-restriction/age/troop/sub-max-capital state gaps in the pristine scenario_1010 install (no actor can satisfy their PHP preconditions without fabricating a computed input) OR a seed-fragile unique-item-lottery seam (che_랜덤임관). On the GS1 ignore-list, NOT failures. When a backlogged command becomes capturable (clock advanced, troop/aged general added, sub-max capital), it is removed from this list and joins the captured matched set.",
+
+    "Global": {
+        "templates": [
+            "${}에게서 몰수할 ${}이 없습니다.",
+            "이동할 인구가 부족합니다.",
+            "이미 같은 국호를 가진 곳이 있습니다. ${} 실패",
+            "<Y>${}</>에게 등용 권유 서신을 보내지 못했습니다. ${}",
+            "<Y>${}</>에게 부대 탈퇴를 지시 받았습니다.",
+            "<Y>${}</>에 의해 <G>${}</>${} 발령됐습니다.",
+            "경로에 도달할 방법이 없습니다.",
+            "${}${} <span class='ev_failed'>실패</span>하여 <C>${}</> 상승했습니다.",
+            "${}${} <S>성공</>하여 <C>${}</> 상승했습니다.",
+            "다음 턴부터 건국할 수 있습니다."
+        ],
+        "regex": []
+    },
+
+    "che_장비매매": {
+        "_doc": "The Kotlin che_장비매매 resolver inlines the 도기-item sell hook (`재산과 국고에 총 …을 보충합니다.`), whose PHP grand truth lives in ActionItem/che_보물_도기.php:61 (`onArbitraryAction`), NOT in Command/General/che_장비매매.php. The command-file PHP extractor structurally cannot reach the ActionItem tree, so this byte-faithful item-hook line shows as Kotlin-only — an extractor SCOPE artifact, not a parity bug (legacy ignore-list likewise carried a General/che_장비매매 entry). The buy/sell lines themselves byte-match.",
+        "templates": [
+            "재산과 국고에 총 ${} <C>${}</>을 보충합니다."
+        ],
+        "regex": []
+    }
+}

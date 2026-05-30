@@ -1,13 +1,15 @@
 package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GeneralRowMapperTest {
 
-    private fun row(meta: String): Map<String, Any?> = linkedMapOf(
+    private fun row(meta: String, lastTurn: String = "{}"): Map<String, Any?> = linkedMapOf(
         "id" to 10,
         "nation_id" to 2,
         "city_id" to 5,
@@ -20,6 +22,17 @@ class GeneralRowMapperTest {
         "officer_level" to 4,
         "gold" to 1500,
         "rice" to 1200,
+        "crew" to 500,
+        "train" to 80,
+        "atmos" to 90,
+        "crew_type_id" to 3,
+        "troop_id" to 7,
+        "horse_code" to "여포의적토마",
+        "weapon_code" to "방천화극",
+        "book_code" to "None",
+        "item_code" to "None",
+        "npc_state" to 2,
+        "last_turn" to lastTurn,
         "meta" to meta,
     )
 
@@ -52,6 +65,66 @@ class GeneralRowMapperTest {
         assertEquals(4, cols["officer_level"])
         assertEquals(1500, cols["gold"])
         assertEquals(1200, cols["rice"])
+    }
+
+    @Test
+    fun `P2 military and equip surface round trips through the mapper`() {
+        val g = GeneralRowMapper.fromRow(row("{}", lastTurn = """{"command":"휴식"}"""))
+        assertEquals(500, g.crew)
+        assertEquals(80.0, g.train)
+        assertEquals(90.0, g.atmos)
+        assertEquals(3, g.crewTypeId)
+        assertEquals(7, g.troop)
+        assertEquals("여포의적토마", g.horse)
+        assertEquals("방천화극", g.weapon)
+        assertEquals("None", g.book)
+        assertEquals("None", g.item)
+        assertEquals(2, g.npcType)
+        assertEquals(LastTurn("휴식"), g.lastTurn)
+
+        val cols = GeneralRowMapper.toColumns(g)
+        assertEquals(500, cols["crew"])
+        assertEquals(80, cols["train"])          // Double -> int (integer column)
+        assertEquals(90, cols["atmos"])
+        assertEquals(3, cols["crew_type_id"])
+        assertEquals(7, cols["troop_id"])
+        assertEquals("여포의적토마", cols["horse_code"])
+        assertEquals("방천화극", cols["weapon_code"])
+        assertEquals("None", cols["book_code"])
+        assertEquals("None", cols["item_code"])
+        assertEquals(2, cols["npc_state"])
+    }
+
+    @Test
+    fun `last_turn jsonb round trips delete-on-default and a full 4-field turn`() {
+        // default last_turn ({}) materializes to the default 휴식 turn; toRaw emits only command.
+        val def = GeneralRowMapper.fromRow(row("{}", lastTurn = "{}"))
+        assertEquals(LastTurn("휴식"), def.lastTurn)
+        assertEquals("""{"command":"휴식"}""", GeneralRowMapper.toColumns(def)["last_turn"])
+
+        // a 4-field last_turn round-trips with key order command, arg, term, seq.
+        val full = GeneralRowMapper.fromRow(
+            row("{}", lastTurn = """{"command":"che_이동","arg":{"destCityID":12},"term":3,"seq":1}"""),
+        )
+        assertEquals("che_이동", full.lastTurn.command)
+        assertEquals(mapOf("destCityID" to 12), full.lastTurn.arg)
+        assertEquals(3, full.lastTurn.term)
+        assertEquals(1, full.lastTurn.seq)
+        assertEquals(
+            """{"command":"che_이동","arg":{"destCityID":12},"term":3,"seq":1}""",
+            GeneralRowMapper.toColumns(full)["last_turn"],
+        )
+    }
+
+    @Test
+    fun `null equip codes materialize as the None sentinel`() {
+        val r = row("{}").toMutableMap()
+        r["horse_code"] = null
+        r["weapon_code"] = null
+        val g = GeneralRowMapper.fromRow(r)
+        assertEquals("None", g.horse)
+        assertEquals("None", g.weapon)
+        assertNull(g.meta["nonexistent"])
     }
 
     @Test

@@ -10,14 +10,22 @@ import opensamguk.logic.util.*
 
 open class CommerceInvestment(
     private val pipeline: GeneralActionPipeline,
-    private val cityKey: String,        // "comm" | "agri"
-    private val statKey: String,        // "intel"
-    private val actionKey: String,      // "상업" | "농업"
-    override val name: String,          // "상업 투자" | "농지 개간" (WITH space — PHP)
+    private val cityKey: String,        // "comm" | "agri" | "secu" | "def" | "wall"  (NO "tech" — tech is a NATION stat)
+    private val statKey: String,        // "intel" | "strength"
+    private val actionKey: String,      // "상업" | "농업" | "성벽" | "수비" | "치안"
+    override val name: String,          // "상업 투자" | "성벽 보수" … (WITH space — PHP)
     private val maxLevel: Int = 255,
     private val frontDebuff: Double = DEFAULT_FRONT_DEBUFF,
 ) : GeneralActionDefinition {
-    override val key: String get() = "che_${name.replace(" ", "")}"   // che_상업투자 / che_농지개간
+    override val key: String get() = "che_${name.replace(" ", "")}"   // che_상업투자 / che_성벽보수
+
+    /** statKey → the getStatValue stat name (PHP che_상업투자.php:108-119). */
+    private val statName: String = when (statKey) {
+        "intel" -> "intelligence"
+        "strength" -> "strength"
+        "leadership" -> "leadership"
+        else -> error("unknown statKey $statKey")
+    }
 
     fun getCost(general: General, env: WorldEnv): Int =
         phpRound(pipeline.onCalcDomestic(general, actionKey, "cost", env.develCost.toDouble()))
@@ -26,13 +34,39 @@ open class CommerceInvestment(
         notBeNeutral(), notWanderingNation(), occupiedCity(), suppliedCity(),
         reqGeneralGold { c, view -> getCost(view.get(RequirementKey.General(c.actorId)) as General, envOf(c)) },
         reqGeneralRice { _, _ -> 0 },
-        remainCityCapacity(cityKey, name),
+        // RemainCityCapacity (PHP RemainCityCapacity.php — generic over city[$key]/city[$key.'_max'];
+        // built inline here to span the secu/def/wall columns the P1 comm/agri preset switch omits).
+        remainCityCapacity(),
     )
+
+    /** Generic RemainCityCapacity over the 5 develop columns (comm/agri/secu/def/wall). */
+    private fun remainCityCapacity() = object : Constraint {
+        override val name = "RemainCityCapacity"
+        override fun requires(ctx: ConstraintContext) = listOf(RequirementKey.City(ctx.cityId ?: 0))
+        override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
+            val c = view.get(RequirementKey.City(ctx.cityId ?: (view.get(RequirementKey.General(ctx.actorId)) as? General)?.cityId ?: 0)) as? City
+                ?: return ConstraintResult.Unknown(requires(ctx))
+            if (cityCur(c) < cityMax(c)) return ConstraintResult.Allow
+            val josaUn = JosaUtil.pick(this@CommerceInvestment.name, "은")
+            return ConstraintResult.Deny("${this@CommerceInvestment.name}$josaUn 충분합니다.")
+        }
+    }
+
+    private fun cityCur(c: City): Int = when (cityKey) {
+        "comm" -> c.commerce; "agri" -> c.agriculture
+        "secu" -> c.security; "def" -> c.defense; "wall" -> c.wall
+        else -> error("unknown cityKey $cityKey")
+    }
+    private fun cityMax(c: City): Int = when (cityKey) {
+        "comm" -> c.commerceMax; "agri" -> c.agricultureMax
+        "secu" -> c.securityMax; "def" -> c.defenseMax; "wall" -> c.wallMax
+        else -> error("unknown cityKey $cityKey")
+    }
 
     private fun calcBaseScore(d: GeneralActionDraft, rng: opensamguk.common.rng.RandUtil): Double {
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())  // lower-bound only; trust is Double (PHP FLOAT)
-        var score = getStatValue(d.general, "intelligence", pipeline, maxLevel, withInjury = true, useFloor = false)
-        score *= trust / 100.0   // PHP che_상업투자.php:124 — fractional, trust is Double
+        var score = getStatValue(d.general, statName, pipeline, maxLevel, withInjury = true, useFloor = false)
+        score *= trust / 100.0   // PHP che_상업투자.php:121 — fractional, trust is Double
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))
         score *= rng.nextRange(0.8, 1.2)                                          // DRAW 1
         return pipeline.onCalcDomestic(d.general, actionKey, "score", score)
@@ -59,16 +93,24 @@ open class CommerceInvestment(
         score *= criticalScoreEx(rng, pick)                                       // DRAW 3 (only success/fail)
         val roundedScore = phpRound(score)                                        // POST-crit, PRE-front-debuff
 
-        val exp = roundedScore * 0.7
-        val ded = roundedScore * 1.0
+        // exp/ded gains fold THROUGH the onCalcStat stack (PHP General::addExperience / addDedication,
+        // General.php:448-495 — affectTrigger default TRUE: $exp = $this->onCalcStat($this,'experience',$exp)
+        // BEFORE increaseVar). A module-free general folds identity (so the P1/develop module-free goldens
+        // are unaffected); a personality like che_왕좌 multiplies experience ×1.1. The level-change PLAIN
+        // logs (레벨업/승급) live in StatChange.addExperience/addDedication; the develop goldens are pinned
+        // no-level-cross so they are not emitted here — the GATE-TRAIT non-identity golden proves this fold.
+        val exp = pipeline.onCalcStat(d.general, "experience", roundedScore * 0.7)
+        val ded = pipeline.onCalcStat(d.general, "dedication", roundedScore * 1.0)
 
         // max_domestic_critical (success: aux += score/2; else reset to 0) — meta/aux ONLY (no inheritance write; OQ7/P6 seam)
+        // PHP increaseVar(static::$statKey.'_exp', 1) — the exp key follows statKey (intel_exp / strength_exp).
+        val expKey = "${statKey}_exp"
         val nextMeta = if (pick == "success") {
             val nextAux = updateMaxDomesticCritical(metaDouble(d.general.meta, "max_domestic_critical"), roundedScore)
-            withMeta(d.general.meta, "intel_exp" to metaInt(d.general.meta, "intel_exp") + 1,
+            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
                      "max_domestic_critical" to nextAux)
         } else {
-            withMeta(d.general.meta, "intel_exp" to metaInt(d.general.meta, "intel_exp") + 1,
+            withMeta(d.general.meta, expKey to metaInt(d.general.meta, expKey) + 1,
                      "max_domestic_critical" to 0)
         }
 
@@ -93,11 +135,16 @@ open class CommerceInvestment(
             cityScore *= debuff
         }
 
-        // mutations (immutable draft replacement)
-        val curCity = if (cityKey == "comm") d.city.commerce else d.city.agriculture
-        val maxCity = if (cityKey == "comm") d.city.commerceMax else d.city.agricultureMax
-        val nextCityVal = valueFit(curCity + cityScore, 0.0, maxCity.toDouble()).toInt()
-        d.city = if (cityKey == "comm") d.city.copy(commerce = nextCityVal) else d.city.copy(agriculture = nextCityVal)
+        // mutations (immutable draft replacement) — generic over the 5 develop columns
+        val nextCityVal = valueFit(cityCur(d.city) + cityScore, 0.0, cityMax(d.city).toDouble()).toInt()
+        d.city = when (cityKey) {
+            "comm" -> d.city.copy(commerce = nextCityVal)
+            "agri" -> d.city.copy(agriculture = nextCityVal)
+            "secu" -> d.city.copy(security = nextCityVal)
+            "def"  -> d.city.copy(defense = nextCityVal)
+            "wall" -> d.city.copy(wall = nextCityVal)
+            else -> error("unknown cityKey $cityKey")
+        }
         d.general = d.general.copy(
             gold = maxOf(0, d.general.gold - reqGold),
             // PHP increaseVar (LazyVarUpdater.php:68) = raw + delta with NO per-add rounding.

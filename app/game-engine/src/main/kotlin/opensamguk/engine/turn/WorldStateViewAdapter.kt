@@ -33,6 +33,13 @@ class WorldStateViewAdapter(
         is RequirementKey.Nation -> overlay.getLogicNation(req.id) != null
         is RequirementKey.Env -> env.containsKey(req.key)
         is RequirementKey.Arg -> args.containsKey(req.key)
+        // CD1 — dest-* family resolves through the SAME overlay reads; collections/diplomacy from the world.
+        is RequirementKey.DestGeneral -> overlay.getLogicGeneral(req.id) != null
+        is RequirementKey.DestCity -> overlay.getLogicCity(req.id) != null
+        is RequirementKey.DestNation -> overlay.getLogicNation(req.id) != null
+        is RequirementKey.NationList -> true
+        is RequirementKey.GeneralList -> true
+        is RequirementKey.Diplomacy -> overlay.getLogicDiplomacy(req.me, req.you) != null
     }
 
     override fun get(req: RequirementKey): Any? = when (req) {
@@ -41,5 +48,11 @@ class WorldStateViewAdapter(
         is RequirementKey.Nation -> overlay.getLogicNation(req.id)
         is RequirementKey.Env -> env[req.key]
         is RequirementKey.Arg -> args[req.key]
+        is RequirementKey.DestGeneral -> overlay.getLogicGeneral(req.id)
+        is RequirementKey.DestCity -> overlay.getLogicCity(req.id)
+        is RequirementKey.DestNation -> overlay.getLogicNation(req.id)
+        is RequirementKey.NationList -> overlay.listLogicNations()
+        is RequirementKey.GeneralList -> overlay.listLogicGenerals()
+        is RequirementKey.Diplomacy -> overlay.getLogicDiplomacy(req.me, req.you)
     }
 }

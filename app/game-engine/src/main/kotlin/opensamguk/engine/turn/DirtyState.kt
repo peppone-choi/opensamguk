@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.domain.NationTurn
 import java.time.Instant
 
 /**
@@ -32,4 +33,14 @@ data class DirtyState(
     val createdNations: List<Nation>,
     val createdTroops: List<Troop>,
     val createdDiplomacy: List<TurnDiplomacy>,
+    /**
+     * P2 satellite write-set (Task FF1):
+     *  - [rankDirty]: per-general rank_data deltas — at most one [RankDelta] per [RankColumn]
+     *    (the 3-Map collapse). Flushed in step-8 (rankVarIncrease then rankVarSet).
+     *  - [nationTurnDirty]: reserved nation-command rows to (re)write (step-3 createMany / step-7).
+     *  - [kvDirty]: nation_env key → json | `null`-deletes (step-10; delete-on-null, KVStorage.php).
+     */
+    val rankDirty: Map<Int, Map<RankColumn, RankDelta>> = emptyMap(),
+    val nationTurnDirty: List<NationTurn> = emptyList(),
+    val kvDirty: Map<String, Any?> = emptyMap(),
 )

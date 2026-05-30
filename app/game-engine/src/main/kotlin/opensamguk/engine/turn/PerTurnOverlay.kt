@@ -2,6 +2,7 @@ package opensamguk.engine.turn
 
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.City as LogicCity
+import opensamguk.logic.domain.Diplomacy as LogicDiplomacy
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
 
@@ -55,8 +56,22 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
     fun getLogicCity(id: Int): LogicCity? = getCity(id)?.let { toLogicCity(it) }
     fun getLogicNation(id: Int): LogicNation? = getNation(id)?.let { toLogicNation(it) }
 
+    // --- CD1: full-collection + directional-diplomacy logic reads (dest-* constraint family) ---
+    // Staged-general writes take precedence over the world snapshot so NationList/GeneralList stay
+    // consistent with the per-id reads above (CheckNationNameDuplicate scans NationList).
+
+    fun listLogicNations(): List<LogicNation> = world.listNations().map { toLogicNation(it) }
+
+    fun listLogicGenerals(): List<LogicGeneral> =
+        world.listGenerals().map { toLogicGeneral(stagedGenerals[it.id] ?: it) }
+
+    /** Directional (me,you) diplomacy row converted engine -> logic, or null when absent. */
+    fun getLogicDiplomacy(me: Int, you: Int): LogicDiplomacy? =
+        world.listDiplomacy().firstOrNull { it.fromNationId == me && it.toNationId == you }
+            ?.let { toLogicDiplomacy(it) }
+
     companion object {
-        /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim). */
+        /** Engine [TurnGeneral] -> logic [General] (slice subset + meta verbatim + P2 mil/equip). */
         fun toLogicGeneral(g: TurnGeneral): LogicGeneral = LogicGeneral(
             id = g.id,
             nationId = g.nationId,
@@ -70,10 +85,21 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             officerLevel = g.officerLevel,
             gold = g.gold,
             rice = g.rice,
+            // P2 military / equip surface (carried so the widened step-7 general UPDATE round-trips).
+            crew = g.crew,
+            train = g.train.toDouble(),
+            atmos = g.atmos.toDouble(),
+            crewTypeId = g.crewTypeId,
+            troop = g.troopId,
+            horse = g.role.items.horse ?: "None",
+            weapon = g.role.items.weapon ?: "None",
+            book = g.role.items.book ?: "None",
+            item = g.role.items.item ?: "None",
+            npcType = g.npcState,
             meta = g.meta,
         )
 
-        /** Engine [City] -> logic [City] (slice subset; `trust` from `meta["trust"]`). */
+        /** Engine [City] -> logic [City] (slice subset + P2 develop/defense; `trust` from `meta["trust"]`). */
         fun toLogicCity(c: City): LogicCity = LogicCity(
             id = c.id,
             nationId = c.nationId,
@@ -85,14 +111,40 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             supplyState = c.supplyState,
             frontState = c.frontState,
             trust = metaDouble(c.meta, "trust"),
+            // P2 develop/defense surface (carried so the widened step-7 city UPDATE round-trips;
+            // engine `defence` spelling maps to logic `defense`).
+            security = c.security,
+            securityMax = c.securityMax,
+            defense = c.defence,
+            defenseMax = c.defenceMax,
+            wall = c.wall,
+            wallMax = c.wallMax,
+            population = c.population,
+            populationMax = c.populationMax,
+            trade = c.trade,
+            region = c.region,
             meta = c.meta,
         )
 
-        /** Engine [Nation] -> logic [Nation] (slice subset). */
+        /** Engine [TurnDiplomacy] -> logic [Diplomacy] (directional me/you + state + term). */
+        fun toLogicDiplomacy(d: TurnDiplomacy): LogicDiplomacy = LogicDiplomacy(
+            me = d.fromNationId,
+            you = d.toNationId,
+            state = d.state,
+            term = d.term,
+        )
+
+        /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/type/name/color). */
         fun toLogicNation(n: Nation): LogicNation = LogicNation(
             id = n.id,
             level = n.level,
             capitalCityId = n.capitalCityId,
+            name = n.name,
+            color = n.color,
+            typeCode = n.typeCode,
+            gold = n.gold,
+            rice = n.rice,
+            meta = n.meta,
         )
     }
 }

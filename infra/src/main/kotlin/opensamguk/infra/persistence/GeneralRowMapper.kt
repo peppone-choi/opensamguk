@@ -1,25 +1,36 @@
 package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.util.phpRound
 import java.sql.ResultSet
 
 /**
  * Logic `General` <-> DB `general` row mapper.
  *
- * Columns (Task D1): `id, nation_id, city_id, leadership, strength, intel, injury,
- * experience, dedication, officer_level, gold, rice, meta`.
+ * Scalar columns: `id, nation_id, city_id, leadership, strength, intel, injury, experience,
+ * dedication, officer_level, gold, rice` + the P2 military/equip surface (Task FD1):
+ * `crew, crew_type_id, train, atmos, troop_id, weapon_code, book_code, horse_code, item_code,
+ * npc_state` + the `last_turn` jsonb + `meta` jsonb.
  *
  * The `meta` jsonb is parsed into a `LinkedHashMap` (insertion order preserved) and
  * re-encoded with [MetaJson] (insertion-order, PHP-faithful — NOT a sorted writer).
+ * `leadership_exp`/`strength_exp`/`intel_exp`/`explevel`/`dedlevel`/`aux` ride `meta` (NO dedicated
+ * columns — verified against `V1__baseline.sql` AND the PHP grand-truth `hwe/sql/schema.sql:22/24/26`
+ * which keeps *_exp as INT *inside the general row* but the V1/core2026 baseline moves them onto the
+ * `meta` jsonb, consistent with P1 `intel_exp`/`explevel`). The row→entity path reads them back from
+ * `meta`; [GeneralMeta] accessors expose them to the logic layer.
  *
- * exp/ded float -> int (the ONLY flush-time rounding): logic `experience`/`dedication`
- * are `Double` raw accumulators (PHP `increaseVar` adds the float delta raw, no per-add round).
- * At persist, PHP binds the raw float into the `integer` column — Postgres ROUNDS the float to
- * the integer (it does NOT truncate). The G1/G2 golden proves this: e.g. 3030 + 44*0.7 = 3060.8
- * is stored as 3061, and 3030 + 64*0.7 = 3074.8 as 3075 (truncate would give 3060/3074 — wrong).
- * So this mapper ROUNDS (half-away-from-zero, [phpRound]) to the integer columns at flush. This is
- * the single place float -> int happens. (The action RNG/log byte oracle is G2.)
+ * `last_turn` (jsonb) ↔ [General.lastTurn] via [LastTurn.fromRaw]/[LastTurn.toRaw] — delete-on-default
+ * jsonb, byte-comparable through [MetaJson].
+ *
+ * Float → int at flush (Postgres ROUNDS, half-away-from-zero, [phpRound]):
+ *  - `experience`/`dedication` are `Double` raw accumulators (PHP `increaseVar` adds the float raw).
+ *    The G1/G2 golden proves the ROUND: 3030 + 44*0.7 = 3060.8 → 3061, 3074.8 → 3075.
+ *  - `train`/`atmos` are likewise `Double` in the logic entity but INTEGER columns in BOTH the V1
+ *    baseline AND the PHP grand truth (`schema.sql:42/43` `train INT(3)`/`atmos INT(3)`). The plan's
+ *    "train/atmos as float columns" diverges from the byte oracle; PHP wins — bound float → int column
+ *    rounds the same way exp/ded does. This is the single place float → int happens.
  */
 object GeneralRowMapper {
 
@@ -37,6 +48,17 @@ object GeneralRowMapper {
         officerLevel = intOf(row["officer_level"]),
         gold = intOf(row["gold"]),
         rice = intOf(row["rice"]),
+        crew = intOf(row["crew"]),
+        train = doubleOf(row["train"]),
+        atmos = doubleOf(row["atmos"]),
+        crewTypeId = intOf(row["crew_type_id"]),
+        troop = intOf(row["troop_id"]),
+        horse = codeOf(row["horse_code"]),
+        weapon = codeOf(row["weapon_code"]),
+        book = codeOf(row["book_code"]),
+        item = codeOf(row["item_code"]),
+        npcType = intOf(row["npc_state"]),
+        lastTurn = LastTurn.fromRaw(MetaJson.decode(stringOf(row["last_turn"]))),
         meta = MetaJson.decode(stringOf(row["meta"])),
     )
 
@@ -54,13 +76,24 @@ object GeneralRowMapper {
         officerLevel = rs.getInt("officer_level"),
         gold = rs.getInt("gold"),
         rice = rs.getInt("rice"),
+        crew = rs.getInt("crew"),
+        train = rs.getInt("train").toDouble(),
+        atmos = rs.getInt("atmos").toDouble(),
+        crewTypeId = rs.getInt("crew_type_id"),
+        troop = rs.getInt("troop_id"),
+        horse = rs.getString("horse_code") ?: "None",
+        weapon = rs.getString("weapon_code") ?: "None",
+        book = rs.getString("book_code") ?: "None",
+        item = rs.getString("item_code") ?: "None",
+        npcType = rs.getInt("npc_state"),
+        lastTurn = LastTurn.fromRaw(MetaJson.decode(rs.getString("last_turn"))),
         meta = MetaJson.decode(rs.getString("meta")),
     )
 
     /**
-     * Map a logic [General] back to a column map ready for binding. `experience`/`dedication`
-     * are ROUNDED (half-away-from-zero) to ints — the float -> integer-column store Postgres
-     * performs; `meta` is rendered to a PHP-faithful jsonb string.
+     * Map a logic [General] back to a column map ready for binding. `experience`/`dedication`/
+     * `train`/`atmos` are ROUNDED (half-away-from-zero) to ints — the float → integer-column store
+     * Postgres performs. `last_turn` and `meta` are rendered to PHP-faithful jsonb strings.
      */
     fun toColumns(g: General): Map<String, Any?> = linkedMapOf(
         "id" to g.id,
@@ -75,12 +108,39 @@ object GeneralRowMapper {
         "officer_level" to g.officerLevel,
         "gold" to g.gold,
         "rice" to g.rice,
+        "crew" to g.crew,
+        "train" to phpRound(g.train),
+        "atmos" to phpRound(g.atmos),
+        "crew_type_id" to g.crewTypeId,
+        "troop_id" to g.troop,
+        "horse_code" to g.horse,
+        "weapon_code" to g.weapon,
+        "book_code" to g.book,
+        "item_code" to g.item,
+        "npc_state" to g.npcType,
+        "last_turn" to MetaJson.encode(g.lastTurn.toRaw()),
         "meta" to MetaJson.encode(g.meta),
     )
 }
 
+/** Equip-slot code: a null DB value materializes as the `None` sentinel (V1 `*_code` default). */
+internal fun codeOf(v: Any?): String = when (v) {
+    null -> "None"
+    is String -> v
+    else -> v.toString()
+}
+
 internal fun intOf(v: Any?): Int = when (v) {
     null -> 0
+    is Int -> v
+    is Number -> v.toInt()
+    is String -> v.toInt()
+    else -> error("not an int: $v")
+}
+
+/** Like [intOf] but a null column value stays null (for nullable columns, e.g. `city.trade`). */
+internal fun nullableIntOf(v: Any?): Int? = when (v) {
+    null -> null
     is Int -> v
     is Number -> v.toInt()
     is String -> v.toInt()

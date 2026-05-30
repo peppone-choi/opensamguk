@@ -4,10 +4,14 @@ import opensamguk.engine.turn.DirtyState
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.turn.RankColumn
+import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.LogRow
+import opensamguk.infra.persistence.RankFlushOp
+import opensamguk.infra.persistence.RankWrite
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -35,7 +39,14 @@ import opensamguk.infra.persistence.LogRow
  * 10. reservedTurns.flush
  */
 object DatabaseHooks {
-    const val RANK_ROWS_PER_GENERAL: Int = 40
+    /**
+     * The number of rank_data rows pre-seeded per general — `RankColumn.entries.size` (= 37,
+     * VERIFIED against the PHP `sammo\Enums\RankColumn` enum, `RankColumn::cases()` = 37). FF2
+     * reconciles the stale `40` placeholder; the order-test stub still models step-8 as a full
+     * `rank_data` write of `RANK_ROWS_PER_GENERAL` rows per target (the real [JdbcFlushExecutor]
+     * UPDATEs only the affected rows).
+     */
+    val RANK_ROWS_PER_GENERAL: Int = RankColumn.entries.size
 
     fun flushChanges(world: InMemoryTurnWorld, recorder: FlushOpRecorder) {
         val dirty = world.consumeDirtyState()
@@ -120,11 +131,35 @@ object DatabaseHooks {
      */
     internal fun toFlushPayload(state: TurnWorldState, dirty: DirtyState): FlushPayload {
         val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
+        val createdNationIds = dirty.createdNations.map { it.id }.toSet()
         val updatedGenerals = dirty.generals
             .filter { it.id !in createdGeneralIds }
             .map { PerTurnOverlay.toLogicGeneral(it) }
         val updatedCities = dirty.cities.map { PerTurnOverlay.toLogicCity(it) }
+        val updatedNations = dirty.nations
+            .filter { it.id !in createdNationIds }
+            .map { PerTurnOverlay.toLogicNation(it) }
+        val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
+        val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
         val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth) }
+
+        // P2 satellite write-set: thread the rank/nationTurn dirty sets into the payload. The
+        // rank map is flattened increments-before-sets (matching the General.applyDB iteration:
+        // rankVarIncrease first, then rankVarSet) per general, in DirtyState insertion order.
+        val rankWrites = dirty.rankDirty.flatMap { (generalId, deltas) ->
+            val increments = deltas.entries.filter { it.value is RankDelta.Increment }
+            val sets = deltas.entries.filter { it.value is RankDelta.Set }
+            (increments + sets).map { (column, delta) ->
+                RankWrite(
+                    generalId = generalId,
+                    type = column.column,
+                    op = when (delta) {
+                        is RankDelta.Increment -> RankFlushOp.Increment(delta.value)
+                        is RankDelta.Set -> RankFlushOp.Set(delta.value)
+                    },
+                )
+            }
+        }
 
         return FlushPayload(
             worldStateUpdate = linkedMapOf(
@@ -134,7 +169,12 @@ object DatabaseHooks {
             ),
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
+            updatedNations = updatedNations,
+            createdNations = createdNations,
+            createdNationTurns = dirty.nationTurnDirty,
+            createdDiplomacy = createdDiplomacy,
             logEntries = logEntries,
+            rankWrites = rankWrites,
         )
     }
 

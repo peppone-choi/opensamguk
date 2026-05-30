@@ -86,6 +86,21 @@ class ReservedTurnRepositoryIT {
     }
 
     @Test
+    fun `reserve writes the V2 brief column and readReserved reads it back`() {
+        // FD1: PHP seeds general_turn.brief '휴식' on every row (GeneralBuilder.php:720).
+        // reserve without an explicit brief defaults to 휴식.
+        repo.reserve(generalId = 20, turnIdx = 0, actionCode = "che_농지개간", argJson = null)
+        assertEquals("휴식", repo.readReserved(generalId = 20, turnIdx = 0).brief)
+
+        // an explicit brief round-trips and an upsert overwrites it in place.
+        repo.reserve(generalId = 20, turnIdx = 0, actionCode = "che_상업투자", argJson = null, brief = "상업에 투자하였습니다.")
+        val reserved = repo.readReserved(generalId = 20, turnIdx = 0)
+        assertEquals("che_상업투자", reserved.actionCode)
+        assertEquals("상업에 투자하였습니다.", reserved.brief)
+        assertEquals(1, rowCount(generalId = 20, turnIdx = 0))
+    }
+
+    @Test
     fun `readReserved of a never-written idx returns the default 휴식 entry`() {
         val reserved = repo.readReserved(generalId = 99, turnIdx = 7)
         assertEquals(ReservedTurnRepository.DEFAULT_TURN_ACTION, reserved.actionCode)

@@ -27,6 +27,7 @@ import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -482,6 +483,13 @@ class VerticalSliceE2EIT {
                         agriculture = b.agri, agricultureMax = b.agriMax,
                         commerce = b.comm, commerceMax = b.commMax,
                         supplyState = 1, frontState = 0,
+                        // carry the seeded develop/defense columns so the widened step-7 city UPDATE
+                        // (FF2) round-trips them faithfully instead of zeroing them.
+                        population = 434350, populationMax = 620500,
+                        security = 7000, securityMax = 10000,
+                        defence = 8190, defenceMax = 11700,
+                        wall = 8540, wallMax = 12200,
+                        trade = 100, region = 1,
                         meta = linkedMapOf("trust" to b.trust),
                     ),
                 ),
@@ -499,8 +507,9 @@ class VerticalSliceE2EIT {
         val generals = factory.getRepository(GeneralReadRepository::class.java)
         val cities = factory.getRepository(CityReadRepository::class.java)
         val nations = factory.getRepository(NationReadRepository::class.java)
+        val diplomacies = factory.getRepository(DiplomacyReadRepository::class.java)
         val worldStates = factory.getRepository(WorldStateReadRepository::class.java)
-        val stateViewFactory = PrecheckStateViewFactory(generals, cities, nations, worldStates)
+        val stateViewFactory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
         val registry = CommandRegistry(GeneralActionPipeline())
         return CommandPrecheckService(stateViewFactory, registry)
     }

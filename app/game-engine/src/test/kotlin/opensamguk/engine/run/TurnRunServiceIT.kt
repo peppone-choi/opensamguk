@@ -289,7 +289,15 @@ class TurnRunServiceIT {
             City(
                 id = cityId, name = "c7", nationId = nationId, level = 5,
                 agriculture = 1000, agricultureMax = 20000, commerce = 1000, commerceMax = 20000,
-                supplyState = 1, frontState = 0, meta = linkedMapOf("trust" to 50),
+                supplyState = 1, frontState = 0,
+                // carry the seeded develop/defense columns so the widened step-7 city UPDATE (FF2)
+                // round-trips them faithfully instead of zeroing them.
+                population = 50000, populationMax = 100000,
+                security = 500, securityMax = 1000,
+                defence = 1000, defenceMax = 2000,
+                wall = 1000, wallMax = 2000,
+                trade = 100, region = 1,
+                meta = linkedMapOf("trust" to 50),
             ),
         ),
         nations = listOf(Nation(id = nationId, name = "n1", color = "#000", level = 2, capitalCityId = 99)),
