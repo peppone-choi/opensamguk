@@ -1,22 +1,28 @@
 package opensamguk.logic.actions
 
 import opensamguk.logic.actions.develop.cheGisulYeongu
+import opensamguk.logic.actions.develop.cheGyeonmun
 import opensamguk.logic.actions.develop.cheJeongchakJangnyeo
 import opensamguk.logic.actions.develop.cheJuminSeonjeong
 import opensamguk.logic.actions.develop.cheGunryangMaemae
 import opensamguk.logic.actions.develop.cheMuljaJodal
 import opensamguk.logic.actions.founding.CheGeobyeong
 import opensamguk.logic.actions.founding.CheGeonguk
+import opensamguk.logic.actions.founding.CheHaesan
 import opensamguk.logic.actions.founding.CheMujakwiGeonguk
+import opensamguk.logic.actions.founding.CheSeonyang
 import opensamguk.logic.actions.founding.CrGeonguk
+import opensamguk.logic.actions.military.CheGwihwan
 import opensamguk.logic.actions.military.CheHullyeon
 import opensamguk.logic.actions.military.CheIdong
 import opensamguk.logic.actions.military.CheJiphap
+import opensamguk.logic.actions.military.CheNpcNeungdong
 import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
 import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.actions.nation.cheBallyeong
+import opensamguk.logic.actions.nation.cheBulgachimJeui
 import opensamguk.logic.actions.nation.cheCheondo
 import opensamguk.logic.actions.nation.cheGamchuk
 import opensamguk.logic.actions.nation.cheGukgiByeongyeong
@@ -24,13 +30,16 @@ import opensamguk.logic.actions.nation.cheGukhoByeongyeong
 import opensamguk.logic.actions.nation.cheJeungchuk
 import opensamguk.logic.actions.nation.cheMujakwiSudoIjeon
 import opensamguk.logic.actions.nation.chePosang
+import opensamguk.logic.actions.nation.cheSeonjeonpogo
 import opensamguk.logic.actions.personnel.CheBangrang
 import opensamguk.logic.actions.personnel.CheDeungyong
 import opensamguk.logic.actions.personnel.CheEuntwe
 import opensamguk.logic.actions.personnel.CheHaya
 import opensamguk.logic.actions.personnel.CheImgwan
+import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
 import opensamguk.logic.actions.personnel.CheRandomImgwan
+import opensamguk.logic.actions.personnel.CheYoyang
 import opensamguk.logic.actions.trade.CheHeonnap
 import opensamguk.logic.actions.trade.CheJangbiMaemae
 import opensamguk.logic.actions.trade.CheJeungyeo
@@ -101,6 +110,18 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_증여" -> CheJeungyeo(pipeline)
         "che_헌납" -> CheHeonnap(pipeline)
         "che_장비매매" -> CheJangbiMaemae(pipeline)
+        // --- F-BRIDGE (FR2): the 9 AI-emitted defs MISSING from the registry (R-BRIDGE §2). The AI
+        // emits these; the bridge gate (FR3) evaluates each def's FULL pack + argTest. 불가침제의/선전포고
+        // resolve()-internals are P6 (m10); 인재탐색/견문/해산 carry downstream-subsystem resolve seams.
+        "che_불가침제의" -> cheBulgachimJeui(pipeline)
+        "che_선전포고" -> cheSeonjeonpogo(pipeline)
+        "che_NPC능동" -> CheNpcNeungdong(pipeline)
+        "che_귀환" -> CheGwihwan(pipeline)
+        "che_인재탐색" -> CheInjaeTamsaek(pipeline)
+        "che_견문" -> cheGyeonmun(pipeline)
+        "che_해산" -> CheHaesan(pipeline)
+        "che_요양" -> CheYoyang(pipeline)        // dispatcher-direct, gate-exempt (G14) — def for execution
+        "che_선양" -> CheSeonyang(pipeline)        // ORDER BY RAND quarantine (G4, decision #6)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction

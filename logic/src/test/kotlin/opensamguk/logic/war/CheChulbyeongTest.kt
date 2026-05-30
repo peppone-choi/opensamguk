@@ -192,12 +192,14 @@ class CheChulbyeongTest {
     }
 
     @Test
-    fun `CommandRegistry resolves che_출병 and does NOT register 급습 or 선전포고`() {
+    fun `CommandRegistry resolves che_출병 and does NOT register 급습`() {
         val registry = CommandRegistry(pipeline)
         assertTrue(registry.resolve("che_출병") is CheChulbyeong, "che_출병 must resolve to CheChulbyeong")
-        // 급습 / 선전포고 are P6 — NOT registered → fall back to RestAction.
+        // 급습 is P6 — NOT registered → falls back to RestAction.
         assertSame(RestAction, registry.resolve("che_급습"))
-        assertSame(RestAction, registry.resolve("che_선전포고"))
+        // 선전포고 IS registered by FR2 (the AI-emitted def: argTest + FULL pack; resolve()-internals
+        // are P6 / m10). It must NOT fall back to RestAction.
+        assertEquals("che_선전포고", registry.resolve("che_선전포고").key)
     }
 
     // --- helpers: throwaway WarUnits so the FakeInner result carries valid (unused) state ---
