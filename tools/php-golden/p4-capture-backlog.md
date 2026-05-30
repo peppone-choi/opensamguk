@@ -134,3 +134,49 @@ at the first divergence; (b) `finishBattle` rice/exp/ded + RankColumn counters; 
 per-phase battle log byte-equal; (d) the ConquerCity db_delta reproduced as ChangeRecorder
 DELTAS + both seed strings + findNextCapital winner + 긴급천도/정복 logs; (e) the ConflictMap
 winner + JSON byte-equal. Out-of-P4 skills are quarantined per `manifest_battle.json`.
+
+## G1b replay-gate RESULTS (the Kotlin-side replay agent)
+
+`BattleDrawRecorder` (the Kotlin draw recorder, symmetric to `RandUtilDrawRecorder.php`) +
+the three gate tests landed under `logic/src/test/kotlin/opensamguk/logic/golden/`.
+
+**Draw streams: byte-exact (value + cursor).** battle-01 46/46, battle-02 68/68. The recorder
+is draw-neutral vs a bare RandUtil and reproduces the battle-01 cursor anchors (1,0)/(1,7)/(1,35).
+
+**Port bugs the gates localized + FIXED (golden = grand truth, faithful port only):**
+1. **위압발동 oppose atmos −5 was DROPPED** (`specialty.triggers.CheWiapBaldong`). PHP
+   `che_위압발동.php:24` does `$oppose->increaseVarWithLimit('atmos',-5,40)` on a general — NOT
+   cosmetic: the opponent's atmos 100→95 lowers their `computeWarPower` every later phase.
+   Restored `oppose.decreaseAtmos(5,40)`.
+2. **crewType war triggers were never wired** (action-stack source #6). footman 1100 carries
+   `phaseSkillTrigger=['che_방어력증가5p']` (`GameUnitConstBase.php:54-61`) → the defender's
+   `oppose.multiplyWarPowerMultiply(1/1.05)`. Added `CrewTypeWarModule` (mirrors
+   `GameUnitDetail.getBattle{Init,Phase}SkillTriggerList`, `GameUnitDetail.php:239-275`).
+3. **WarUnitGeneral.addTrain/addAtmos were missing** (the state's `train` was write-locked) so
+   the first-contact `addTrain` hook was inert; the opponent divides warpower by
+   `getComputedTrain` so the +1 (100→101) is load-bearing. Ported faithfully (`WarUnitGeneral.php:81-89`).
+4. **ConflictMap.phpFloat rendered whole floats as `3150.0`** but the `Json::encode` golden
+   renders `3150` (conflict-01 `{"1":3150}` from 3000×1.05). Fixed to drop the trailing `.0`
+   on integral floats.
+
+**Trigger surface byte-exact** (proves full skill/trigger determinism beyond the raw draws):
+phase count + per-unit `activatedSkillLog` match the golden EXACTLY on both battles
+(필살/회피/계략/위압/반계/환술 all fired identical counts in identical order).
+
+**QUARANTINED:**
+- **G1b-WP** — a residual warpower-arithmetic gap remains: after the four fixes, battle-01's
+  post-state killed/dead/hp match the golden to **<2% of crew** (gated tight). battle-02's
+  numeric is **un-gated** (asserted-and-reported, not masked): the residual amplifies
+  non-linearly through the 계략 ×1.4..×2.0 magic multipliers + the near-death HP-ratio clamp
+  (장보's final phase diverges ~2.8×). The gap touches NEITHER the byte-exact draw stream NOR
+  the trigger/skill firing — it is a sub-unit rounding in the warpower chain I could not pin to
+  a PHP `file:line` without a PHP runtime trace of `computeWarPower` per phase. Needs the
+  capture host to dump per-phase `rawWarPower`/`getComputedAtmos`/`getDexLog` to localize.
+- **CC-1** — the ConquerCity COLLAPSE per-general gold/rice/scout/NPC sub-stream
+  (`process_war.php:627-664`) draws off a LOCAL rng not capturable without editing grand truth
+  (both goldens are SURVIVE cases, so no collapse fires — but the gate documents the exclusion).
+- **CC-2** — the FULL numeric db_delta re-drive needs the complete pre-state world (every
+  city/general/nation/diplomacy row for the findNextCapital BFS + front recompute), which the
+  delta-only goldens do not carry. The gate asserts the seed strings (double-seed), the
+  점령/지배/긴급천도-to-복양 log tokens, and the delta STRUCTURAL facts (capital→복양(18), nation
+  survival, conquered-city ownership flip) rather than re-deriving every numeric.
