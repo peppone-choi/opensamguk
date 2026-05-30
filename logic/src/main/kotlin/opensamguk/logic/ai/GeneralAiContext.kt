@@ -179,4 +179,61 @@ data class GeneralAiContext(
     val movingTargetCityId: Int? = null,
     val dupLordAtSelfCity: Int = 0,
     val selfCityLevel: Int = 0,
+    // --- L-GENFOUND (GenFoundFamily) per-general scalars + world inputs (defaulted; only the founding bodies read them) ---
+    /**
+     * The acting general's `getVar('makelimit')` (PHP do거병 `:3221`) — non-zero → the 거병 early-return BEFORE
+     * any draw. Default 0 (the foundable case).
+     */
+    val selfMakeLimit: Int = 0,
+    /**
+     * The acting general's `getName()` (PHP do건국 `:3307` `mb_substr(getName(),1)`) — the 건국 nationName base
+     * (`"㉿" + name.drop(1)`). Default "" (the non-founding bodies never read it).
+     */
+    val selfGeneralName: String = "",
+    /**
+     * The acting general's `getVar('affinity')` (PHP do국가선택 `:3359`) — `== 999` aborts the 임관 sub-tree
+     * with NO further draw (after the `:3358` 0.3 gate). Default 0.
+     */
+    val selfAffinity: Int = 0,
+    /**
+     * The do거병 `$occupiedCities` key set (PHP `:3238-3247`): lord cities (officer_level=12 AND city.nation=0)
+     * ∪ nation cities (nation!=0). The BFS dist-3 scan skips a candidate in this set (`:3251`). The body only
+     * does membership tests; the adapter runs the two SELECTs (identical to the do방랑군이동 occupied set).
+     */
+    val foundOccupiedCities: Set<Int> = emptySet(),
+    /**
+     * The do거병 stat-threshold midpoint `(GameConst::$defaultStatNPCMax + GameConst::$chiefStatMin) / 2` (PHP
+     * `:3268`, = 70.0 in 1010) — the adapter's effective per-server value; the family never hard-codes it.
+     */
+    val foundStatMidpoint: Double = 70.0,
+    /**
+     * The do거병 `$more = Util::valueFit(3 - year + init_year, 1, 3)` ∈ {1,2,3} (PHP `:3277`) — the final-gate
+     * `nextBool(0.0075 * more)` factor. The env `init_year` math is the adapter's job (F-INSTANCE owns AiEnv).
+     */
+    val foundDeadlineMore: Int = 1,
+    /**
+     * The do국가선택 early-임관-period `$nationCnt = SELECT count(nation) FROM nation` (PHP `:3365`). When 0 (with
+     * [notFullNationCount]) the 임관 aborts with NO draw (`:3367`). Default 0.
+     */
+    val nationCount: Int = 0,
+    /**
+     * The do국가선택 `$notFullNationCnt = SELECT count(nation) FROM nation WHERE gennum < initialNationGenLimit`
+     * (PHP `:3366`) — feeds the `:3371` early-abort prob `pow(1/(nationCnt+1)/pow(notFullNationCnt,3),1/4)`. 0
+     * (with [nationCount]) aborts with NO draw. Default 0.
+     */
+    val notFullNationCount: Int = 0,
+    /**
+     * The do선양 `ORDER BY RAND()` candidate pool (PHP `:3324` `SELECT no FROM general WHERE nation=%i AND npc!=5`)
+     * — the deterministic `min(no)` substitute ([GenFoundFamily.seonyangDestGeneralId]) runs over this set.
+     * The adapter supplies the nation's general rows; the substitute applies the WHERE filter. Default empty
+     * (→ a null destGeneralID, which the gate then rejects).
+     */
+    val seonyangCandidates: List<opensamguk.logic.domain.General> = emptyList(),
+    /**
+     * The do국가선택-오랑캐 `ORDER BY RAND()` candidate pool (PHP `:3345` `SELECT nation FROM general WHERE
+     * officer_level=12 AND npc=9 AND nation`) — the deterministic nation-of-`min(no)` substitute
+     * ([GenFoundFamily.orankaeRulerNation]) runs over this set. Reached only on the npc==9 오랑캐 branch
+     * (unreachable in 1010, F-QUAR). Default empty.
+     */
+    val orankaeRulerCandidates: List<opensamguk.logic.domain.General> = emptyList(),
 )

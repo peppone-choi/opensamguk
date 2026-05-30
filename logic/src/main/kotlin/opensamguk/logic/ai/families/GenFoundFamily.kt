@@ -1,7 +1,14 @@
 package opensamguk.logic.ai.families
 
+import opensamguk.common.constants.CityConst
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.GeneralAiContext
+import opensamguk.logic.ai.bfs.AiDistance
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.GetNationColors
+import opensamguk.logic.domain.LastTurn
 
 /**
  * L-GENFOUND — the founding / nation-selection `do<한글>` command family (거병/해산/건국/선양/국가선택/사망대비/중립).
@@ -337,4 +344,224 @@ object GenFoundFamily {
      */
     fun pickNeutralCandidate(candidate: List<String>, rng: RandUtil): String =
         rng.choice(candidate) // PHP :3458 — ALWAYS one choice (even with a single element; throws on empty).
+
+    // ==================================================================================================
+    // WORLD-DRIVEN do<한글> BODIES (the candidate-set assembly over the GeneralAiContext → the PURE primitive
+    // above → the candidateAllowed gate → the recordGeneralKv delta → ChosenCommand?).
+    //
+    // Each body reads the [GeneralAiContext] (rng / instance / world / policy / per-general scalars),
+    // assembles the exact candidate set in PHP INSERTION ORDER, pulls its draws off the SOLE per-general
+    // `"GeneralAI"` [RandUtil] threaded by reference, GATES the emit via `ctx.candidateAllowed(actionCode,
+    // args)` (PHP `$cmd->hasFullConditionMet()`) — except the gate-EXEMPT che_견문/che_물자조달/che_헌납 direct
+    // emits — routes meta-KV via `ctx.recordGeneralKv` (decision #12), and returns `ChosenCommand?` (null →
+    // the dispatcher falls through to the next priority action). READ-ONLY over GAME ENTITIES. The candidate
+    // ORDER (the BFS visitation order, the availableNationType-then-color order, the path-neighbor order) IS
+    // the parity target.
+    // ====================================================================================================
+
+    /**
+     * The dispatch-loop founding `do<한글>` body keyed by ACTION-NAME (the bare `do<한글>` name, NOT `che_*`).
+     * The [opensamguk.logic.ai.GeneralAiFactory] registers these into the general dispatch; the loop walks
+     * [opensamguk.logic.ai.AutorunGeneralPolicy.priority] first-non-null. doNPC사망대비 is the only loop member
+     * in this family; 거병/국가선택/건국/해산/선양/중립 are the PRE-LOOP branch builders wired separately below.
+     */
+    fun bodies(ctx: GeneralAiContext): Map<String, (LastTurn?) -> ChosenCommand?> = linkedMapOf(
+        "NPC사망대비" to { _ -> doNPC사망대비Body(ctx) },
+    )
+
+    /** The do거병 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn step 8, `:3778-3783`). */
+    fun do거병(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do거병Body(ctx) }
+
+    /** The do국가선택 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn step 9, `:3786-3791`). */
+    fun do국가선택(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do국가선택Body(ctx) }
+
+    /** The do건국 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn wandering branch, `:3807`). */
+    fun do건국(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do건국Body(ctx) }
+
+    /** The do해산 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn wandering branch, `:3821`). */
+    fun do해산(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do해산Body(ctx) }
+
+    /** The do선양 PRE-LOOP branch builder (GeneralAI.chooseGeneralTurn step 4, `:3745-3750`). */
+    fun do선양(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand? = { _ -> do선양Body(ctx) }
+
+    /** The do중립 TERMINAL fallback builder (GeneralAI.chooseGeneralTurn `:3792`/`:3845`; NEVER null). */
+    fun do중립(ctx: GeneralAiContext): (LastTurn?) -> ChosenCommand = { _ -> do중립Body(ctx) }
+
+    // --- do거병 (PHP `:3217-3288`) — makelimit/npc/can건국 gates → 0.5 skip → BFS dist-3 → threshold → final gate ---
+
+    private fun do거병Body(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:3221-3229` — the three non-RNG early-returns BEFORE any draw.
+        if (ctx.selfMakeLimit != 0) return null // :3221 makelimit
+        if (ctx.selfNpcType > 2) return null // :3224 npcType>2
+        if (!ctx.generalPolicy.can건국) return null // :3227 !can건국
+
+        // PHP `:3231-3234` — the `&&` 0.5 skip (nextBit) ONLY on a non-foundable city (level ∉ {5,6}).
+        val cityLevelNotFoundable = ctx.selfCityLevel < 5 || 6 < ctx.selfCityLevel
+        if (nonFoundableCitySkip(cityLevelNotFoundable, rng)) return null // :3232
+
+        // PHP `:3249-3266` — BFS dist-3 scan (dequeue/visitation order) over the foundOccupiedCities-filtered
+        // candidates; the FIRST kept foundable city sets availableNearCity; a dist-3 candidate rolls the 0.5 bit.
+        var availableNearCity = false
+        val distMap = AiDistance.searchDistanceCities(ctx.selfCityId, 3) // :3250 searchDistance(cityID, 3)
+        for ((targetCityID, dist) in distMap) {
+            if (ctx.foundOccupiedCities.contains(targetCityID)) continue // :3251
+            val cityLevel = CityConst.byId(targetCityID)?.level ?: continue
+            if (cityLevel < 5 || 6 < cityLevel) continue // :3255
+            if (dist == 3 && dist3CandidateSkip(rng)) continue // :3258 per-dist-3-candidate nextBit
+            availableNearCity = true // :3261
+            break
+        }
+        if (!availableNearCity) return null // :3264
+
+        // PHP `:3268-3274` — nextFloat1()*midpoint vs the stat ratio.
+        val prop = rebellionStatProp(ctx.foundStatMidpoint, rng) // :3268
+        val ratio = (ctx.fullLeadership + ctx.fullStrength + ctx.fullIntel) / 3.0 // :3269
+        if (prop >= ratio) return null // :3272
+
+        // PHP `:3277-3280` — the final 0.0075*more gate (more is the adapter's valueFit(3-year+init_year,1,3)).
+        if (!foundFinalGate(ctx.foundDeadlineMore, rng)) return null // :3278
+
+        if (!ctx.candidateAllowed(FOUND_REBELLION_ACTION, emptyMap())) return null // :3283 hasFullConditionMet
+        return ChosenCommand(FOUND_REBELLION_ACTION, emptyMap()) // :3287
+    }
+
+    // --- do해산 (PHP `:3290-3300`) — ZERO draws; gate then movingTargetCityID=null delta ---
+
+    private fun do해산Body(ctx: GeneralAiContext): ChosenCommand? {
+        if (!ctx.candidateAllowed(DISBAND_ACTION, emptyMap())) return null // :3293 hasFullConditionMet
+        // PHP `:3297` — setAuxVar('movingTargetCityID', null) AFTER the gate (decision #12; NOT inline).
+        ctx.recordGeneralKv(ctx.selfGeneralId, MOVING_TARGET_KEY, MOVING_TARGET_CLEARED_VALUE)
+        return ChosenCommand(DISBAND_ACTION, emptyMap()) // :3299
+    }
+
+    // --- do건국 (PHP `:3302-3318`) — type-THEN-color pick; che_건국 + clear delta ---
+
+    private fun do건국Body(ctx: GeneralAiContext): ChosenCommand? {
+        // PHP `:3304-3305` — the two picks (type FIRST, color SECOND), over the GREEN 13-elem/33-elem lists.
+        val picked = pickFounding(GameConst.availableNationType, GetNationColors().size, ctx.rng)
+        // PHP `:3307` — nationName = "㉿" + mb_substr(getName(), 1) (drop the surname's first char).
+        val nationName = "㉿" + ctx.selfGeneralName.drop(1)
+        val args = linkedMapOf<String, Any?>(
+            "nationName" to nationName,
+            "nationType" to picked.nationType,
+            "colorType" to picked.colorIndex,
+        )
+        if (!ctx.candidateAllowed(FOUND_NATION_ACTION, args)) return null // :3311 hasFullConditionMet
+        // PHP `:3315` — setAuxVar('movingTargetCityID', null) AFTER the gate.
+        ctx.recordGeneralKv(ctx.selfGeneralId, MOVING_TARGET_KEY, MOVING_TARGET_CLEARED_VALUE)
+        return ChosenCommand(FOUND_NATION_ACTION, args) // :3317
+    }
+
+    // --- do선양 (PHP `:3320-3332`) — ZERO draws; che_선양 {destGeneralID = min(no) F-QUAR substitute} ---
+
+    private fun do선양Body(ctx: GeneralAiContext): ChosenCommand? {
+        // PHP `:3324` — ORDER BY RAND() destGeneralID; the deterministic min(no) substitute (F-QUAR, 0 draws).
+        val destGeneralID = seonyangDestGeneralId(ctx.instance.nation.nation, ctx.seonyangCandidates, ctx.rng)
+        val args = linkedMapOf<String, Any?>("destGeneralID" to destGeneralID)
+        if (!ctx.candidateAllowed(ABDICATE_ACTION, args)) return null // :3327 hasFullConditionMet
+        return ChosenCommand(ABDICATE_ACTION, args) // :3331
+    }
+
+    // --- do국가선택 (PHP `:3334-3401`) — 오랑캐 substitute → 0.3 gate → 임관 / 0.2 move / null ---
+
+    private fun do국가선택Body(ctx: GeneralAiContext): ChosenCommand? {
+        val rng = ctx.rng
+        // PHP `:3343-3356` — npc==9 오랑캐 → ORDER BY RAND ruler substitute (0-draw) → che_임관.
+        if (ctx.selfNpcType == 9) {
+            val rulerNation = orankaeRulerNation(ctx.orankaeRulerCandidates, rng) // :3345 (0-draw F-QUAR)
+            if (rulerNation != null && rulerNation != 0) { // :3348 `if ($rulerNation)`
+                val args = linkedMapOf<String, Any?>("destNationID" to rulerNation)
+                if (!ctx.candidateAllowed(JOIN_NATION_ACTION, args)) return null // :3350
+                return ChosenCommand(JOIN_NATION_ACTION, args) // :3354
+            }
+        }
+
+        // PHP `:3358` — the 임관-branch entry gate (always reached after the 0-draw 오랑캐 branch).
+        if (nationChoiceJoinGate(rng)) { // :3358 nextBool(0.3)
+            // PHP `:3359-3361` — affinity==999 aborts the 임관 sub-tree with NO further draw.
+            if (ctx.selfAffinity == 999) return null // :3361
+
+            if (ctx.env.year < ctx.env.startYear + 3) {
+                // PHP `:3363-3373` — the early-임관 period: count-gated, then a float-exact abort draw.
+                if (ctx.nationCount == 0 || ctx.notFullNationCount == 0) return null // :3367 NO draw
+                if (nationChoiceEarlyAbort(ctx.nationCount, ctx.notFullNationCount, rng)) return null // :3371
+            } else {
+                // PHP `:3374-3379` — the post-임관 period: a fixed nextBool()=nextBit abort.
+                if (nationChoicePostPeriodAbort(rng)) return null // :3376
+            }
+
+            // PHP `:3382-3387` — che_랜덤임관 + gate.
+            if (!ctx.candidateAllowed(RANDOM_JOIN_ACTION, emptyMap())) return null // :3383
+            return ChosenCommand(RANDOM_JOIN_ACTION, emptyMap()) // :3387
+        }
+
+        // PHP `:3390-3399` — the sibling move-instead branch (only when the :3358 0.3 was false).
+        if (nationChoiceMoveGate(rng)) { // :3390 nextBool(0.2)
+            val paths = CityConst.byId(ctx.selfCityId)?.path?.keys?.toList() ?: emptyList() // :3391 name-order
+            val destCityID = pickNationChoiceMove(paths, rng) // :3393 choice($paths)
+            val args = linkedMapOf<String, Any?>("destCityID" to destCityID)
+            if (!ctx.candidateAllowed(MOVE_ACTION, args)) return null // :3394
+            return ChosenCommand(MOVE_ACTION, args) // :3398
+        }
+        return null // :3400
+    }
+
+    // --- doNPC사망대비 (PHP `:3403-3434`) — killturn>5 null; 재야 search/tour; in-nation 물자조달/헌납 ---
+
+    private fun doNPC사망대비Body(ctx: GeneralAiContext): ChosenCommand? {
+        // PHP `:3407-3409` — killturn>5 → null (no draw).
+        if (ctx.selfKillturn > 5) return null // :3407
+
+        // PHP `:3411-3417` — the 재야 (nationID==0) path.
+        if (ctx.instance.nation.nation == 0) {
+            // PHP `:3413` — che_인재탐색 gate THEN the `||`-short-circuit nextBool()=nextBit → che_견문.
+            val talentSearchAllowed = ctx.candidateAllowed(TALENT_SEARCH_ACTION, emptyMap()) // :3412 hasFullConditionMet
+            return if (deathPrepTourSwitch(talentSearchAllowed, ctx.rng)) {
+                ChosenCommand(TOUR_ACTION, emptyMap()) // :3414 che_견문 (gate-exempt emit)
+            } else {
+                ChosenCommand(TALENT_SEARCH_ACTION, emptyMap()) // :3416 che_인재탐색
+            }
+        }
+
+        // PHP `:3419-3421` — gold + rice == 0 → che_물자조달 (gate-exempt emit, no draw).
+        if (ctx.selfGold + ctx.selfRice == 0) {
+            return ChosenCommand(SUPPLY_ACTION, emptyMap()) // :3420
+        }
+
+        // PHP `:3423-3433` — che_헌납 {isGold, amount=maxResourceActionAmount} (the GameConst, NOT the instance value).
+        return if (ctx.selfGold >= ctx.selfRice) {
+            ChosenCommand(TRIBUTE_ACTION, linkedMapOf("isGold" to true, "amount" to GameConst.maxResourceActionAmount)) // :3424
+        } else {
+            ChosenCommand(TRIBUTE_ACTION, linkedMapOf("isGold" to false, "amount" to GameConst.maxResourceActionAmount)) // :3429
+        }
+    }
+
+    // --- do중립 (PHP `:3436-3467`) — TERMINAL fallback (never null) ---
+
+    private fun do중립Body(ctx: GeneralAiContext): ChosenCommand {
+        val rng = ctx.rng
+        // PHP `:3439-3445` — the 재야 (nationID==0) path.
+        if (ctx.instance.nation.nation == 0) {
+            // PHP `:3441` — che_인재탐색 gate THEN the `||`-short-circuit nextBool(0.8) → che_견문.
+            val talentSearchAllowed = ctx.candidateAllowed(TALENT_SEARCH_ACTION, emptyMap()) // :3440 hasFullConditionMet
+            return if (neutralTourSwitch(talentSearchAllowed, rng)) {
+                ChosenCommand(TOUR_ACTION, emptyMap()) // :3442 che_견문 (gate-exempt emit)
+            } else {
+                ChosenCommand(TALENT_SEARCH_ACTION, emptyMap()) // :3444 che_인재탐색
+            }
+        }
+
+        // PHP `:3448-3455` — the in-nation candidate list (append order), narrowed by the resource thresholds.
+        var candidate = listOf(SUPPLY_ACTION, TALENT_SEARCH_ACTION) // :3448
+        if (ctx.instance.nation.gold < ctx.nationPolicy.reqNationGold) candidate = listOf(SUPPLY_ACTION) // :3450-3452
+        if (ctx.instance.nation.rice < ctx.nationPolicy.reqNationRice) candidate = listOf(SUPPLY_ACTION) // :3453-3455
+
+        // PHP `:3458` — the ALWAYS-draw choice over the candidate list.
+        val picked = pickNeutralCandidate(candidate, rng)
+        // PHP `:3459-3464` — the post-pick hasFullConditionMet fallback to che_물자조달 then che_견문 (NON-RNG).
+        if (ctx.candidateAllowed(picked, emptyMap())) return ChosenCommand(picked, emptyMap()) // :3458/:3466
+        if (ctx.candidateAllowed(SUPPLY_ACTION, emptyMap())) return ChosenCommand(SUPPLY_ACTION, emptyMap()) // :3460
+        return ChosenCommand(TOUR_ACTION, emptyMap()) // :3462 che_견문
+    }
 }
