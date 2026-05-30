@@ -66,4 +66,40 @@ object WorldEnvBuilder {
 
     /** Convenience: derive the env map directly from a [WorldEnv] (same single source of `develCost`). */
     fun envMap(env: WorldEnv): Map<String, Any?> = envMap(env.year, env.startYear)
+
+    /**
+     * FS2 (F-SEED) — the AI env SUPERSET (research §9). `GeneralAI` reads `$env = $gameStor->getAll(true)`
+     * and pulls the PHP snake_case keys `develcost`/`year`/`month`/`startyear`/`turnterm`/`init_year`/
+     * `init_month`/`autorun_user`/`npc_nation_policy`/`npc_general_policy`. This is its OWN map, DISTINCT
+     * from the precheck/full-mode [envMap] (which uses camelCase `year`/`startYear`/`develCost`) — the two
+     * env shapes never collide, so the existing precheck/full-mode env CANNOT drift.
+     *
+     * `develcost` is the same single source as everywhere ([EffectiveGameConst.develcost], func_gamerule.php:219).
+     * `autorun_user`/`npc_nation_policy`/`npc_general_policy` are passed through unchanged (the AI ctor reads
+     * `$env['autorun_user']['options'] ?? null` and the per-policy KV at `GeneralAI.php:123-124`). Keys are
+     * insertion-ordered, matching the order the AI source first reads them.
+     */
+    fun aiEnvMap(
+        year: Int,
+        month: Int,
+        startYear: Int,
+        turnterm: Int,
+        initYear: Int,
+        initMonth: Int,
+        autorunUser: Any? = null,
+        npcNationPolicy: Any? = null,
+        npcGeneralPolicy: Any? = null,
+    ): Map<String, Any?> =
+        linkedMapOf(
+            "develcost" to EffectiveGameConst.develcost(year, startYear),
+            "year" to year,
+            "month" to month,
+            "startyear" to startYear,
+            "turnterm" to turnterm,
+            "init_year" to initYear,
+            "init_month" to initMonth,
+            "autorun_user" to autorunUser,
+            "npc_nation_policy" to npcNationPolicy,
+            "npc_general_policy" to npcGeneralPolicy,
+        )
 }
