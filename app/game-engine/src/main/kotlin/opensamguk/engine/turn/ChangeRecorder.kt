@@ -34,7 +34,15 @@ data class RowPatch(
  * paths. We model the JSON-Patch "path" coarsely as the column name (the flush maps column → SQL),
  * with `meta` deep-diffed at the key level (the jsonb sub-paths).
  */
-class ChangeRecorder {
+class ChangeRecorder(
+    /**
+     * Allocates the next in-memory `message.id` (T0.5). The daemon wires a DB-seeded monotonic
+     * allocator (max(id)+1 at rehydrate) so the in-memory id matches the flushed SERIAL (research §2:
+     * the body's `receiverMessageID`/`senderMessageID` back-references resolve against this id). The
+     * default 1-based counter is for tests / a fresh world.
+     */
+    private val messageIdAllocator: () -> Int = AtomicCounter()::next,
+) {
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
     private val cityPatches = LinkedHashMap<Int, RowPatch>()
@@ -76,6 +84,16 @@ class ChangeRecorder {
      */
     private val diplomacyUpdateDirty = LinkedHashMap<Pair<Int, Int>, DiplomacyRowPatch>()
 
+    /**
+     * Mailbox channel (T0.5) — the `message` INSERT intents, append-additive (receiver row BEFORE
+     * sender row; the caller emits them in that order). NEVER re-keyed/dedup'd: every `send` row is a
+     * distinct mailbox row.
+     */
+    private val createdMessages = mutableListOf<CreatedMessage>()
+
+    /** Mailbox channel (T0.5) — the `message` invalidate UPDATEs (deleteMsg / accept-flow sibling-sweep). */
+    private val messageInvalidates = mutableListOf<MessageInvalidate>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -86,7 +104,8 @@ class ChangeRecorder {
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
-            kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty()
+            kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
+            createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -304,6 +323,37 @@ class ChangeRecorder {
     fun diplomacyUpdateDirty(): List<DiplomacyRowPatch> = diplomacyUpdateDirty.values.toList()
 
     /**
+     * Record a `message` INSERT (T0.5, PHP `sendRaw`). Pre-allocates the in-memory id (so the body's
+     * `receiverMessageID`/`senderMessageID` back-references can be folded in by the caller before the
+     * `bodyJson` is built) and appends — receiver row BEFORE sender row is the CALLER's responsibility
+     * (it emits them in that order). Returns the allocated id. Append-additive: never deduped.
+     */
+    fun recordMessageInsert(
+        mailbox: Int,
+        type: String,
+        srcId: Int,
+        destId: Int,
+        time: String,
+        validUntil: String,
+        bodyJson: String,
+    ): Int {
+        val id = messageIdAllocator()
+        createdMessages.add(CreatedMessage(id, mailbox, type, srcId, destId, time, validUntil, bodyJson))
+        return id
+    }
+
+    /** Record a `message` invalidate UPDATE (T0.5, PHP `Message::invalidate`): rewrite body + valid_until. */
+    fun recordMessageInvalidate(id: Int, validUntil: String, bodyJson: String) {
+        messageInvalidates.add(MessageInvalidate(id, validUntil, bodyJson))
+    }
+
+    /** The recorded mailbox INSERT intents (the T0.5 flush source), in emit order (receiver-before-sender). */
+    fun createdMessages(): List<CreatedMessage> = createdMessages.toList()
+
+    /** The recorded mailbox invalidate UPDATEs (the T0.5 flush source). */
+    fun messageInvalidates(): List<MessageInvalidate> = messageInvalidates.toList()
+
+    /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE
      * general/general_turn/rank_data). The recorder is the SOLE emitter:
      *  1. capture the pre-delete row (the `ng_old_generals` storeOldGeneral content),
@@ -374,4 +424,13 @@ class ChangeRecorder {
         }
         return out
     }
+}
+
+/**
+ * Default 1-based monotonic id source for the mailbox channel (T0.5). The daemon replaces it with a
+ * DB-seeded allocator at rehydrate (max(message.id)+1) so the in-memory id matches the flushed SERIAL.
+ */
+private class AtomicCounter(start: Int = 1) {
+    private var n = start - 1
+    fun next(): Int = ++n
 }

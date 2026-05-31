@@ -27,6 +27,34 @@ data class DiplomacyRowPatch(
 )
 
 /**
+ * A `message`-row INSERT INTENT (T0.5). The mailbox channel produces these (receiver row BEFORE
+ * sender row — load-bearing); the flush INSERTs them append-additively. `id` is the in-memory
+ * monotonic id the recorder pre-assigns (research §2: it MUST match the flushed SERIAL so the
+ * `receiverMessageID`/`senderMessageID` back-references in the body resolve consistently). `bodyJson`
+ * is the byte-faithful `Json::encode({src,dest,text,option})` payload.
+ */
+data class CreatedMessage(
+    val id: Int,
+    val mailbox: Int,
+    val type: String,
+    val srcId: Int,
+    val destId: Int,
+    val time: String,
+    val validUntil: String,
+    val bodyJson: String,
+)
+
+/**
+ * A `message`-row invalidate UPDATE (T0.5, PHP `Message::invalidate`): rewrite the body jsonb +
+ * `valid_until` for an existing message id (deleteMsg / accept-flow sibling-sweep).
+ */
+data class MessageInvalidate(
+    val id: Int,
+    val validUntil: String,
+    val bodyJson: String,
+)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
@@ -74,4 +102,8 @@ data class DirtyState(
      * diplomacy update; the two must not collide (flush-order: commands during the pass, tick AFTER).
      */
     val diplomacyUpdateDirty: List<DiplomacyRowPatch> = emptyList(),
+    /** [createdMessages]: the mailbox-channel INSERT intents (receiver-before-sender, append-additive). */
+    val createdMessages: List<CreatedMessage> = emptyList(),
+    /** [messageInvalidates]: the mailbox-channel invalidate UPDATEs (deleteMsg / sibling-sweep). */
+    val messageInvalidates: List<MessageInvalidate> = emptyList(),
 )

@@ -10,10 +10,12 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.KvWrite
+import opensamguk.infra.persistence.MessageInvalidateRow
 import opensamguk.infra.persistence.LogRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
@@ -288,6 +290,12 @@ object DatabaseHooks {
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),
+            createdMessages = recorder.createdMessages().map {
+                CreatedMessageRow(it.id, it.mailbox, it.type, it.srcId, it.destId, it.time, it.validUntil, it.bodyJson)
+            },
+            messageInvalidates = recorder.messageInvalidates().map {
+                MessageInvalidateRow(it.id, it.validUntil, it.bodyJson)
+            },
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,

@@ -106,6 +106,15 @@ class JdbcFlushExecutor(
                 rankDataNationSync(payload.rankNationSync)
             }
 
+            // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
+            //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
+            if (payload.createdMessages.isNotEmpty()) {
+                messageCreateMany(payload.createdMessages)
+            }
+            if (payload.messageInvalidates.isNotEmpty()) {
+                messageInvalidateMany(payload.messageInvalidates)
+            }
+
             // 9. log_entry createMany.
             if (payload.logEntries.isNotEmpty()) {
                 logEntryCreateMany(payload.logEntries)
@@ -560,6 +569,54 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("log_entry", FlushVerb.CREATE_MANY, logs.size))
     }
 
+    // --- step 8c: mailbox channel (T0.5) -------------------------------------------------------
+
+    /**
+     * INSERT the `message` rows with their pre-assigned in-memory ids (so the SERIAL matches the
+     * `receiverMessageID`/`senderMessageID` body back-references — research §2). `type` binds through
+     * `CAST(... AS message_type)`; the body binds byte-faithfully (raw json String). Append-additive
+     * (receiver row before sender row — the engine ordered them); never deleted/deduped.
+     */
+    private fun messageCreateMany(messages: List<CreatedMessageRow>) {
+        val batch: Array<SqlParameterSource> = messages.map { m ->
+            MapSqlParameterSource()
+                .addValue("id", m.id)
+                .addValue("mailbox", m.mailbox)
+                .addValue("type", m.type)
+                .addValue("src", m.srcId)
+                .addValue("dest", m.destId)
+                .addValue("time", m.time)
+                .addValue("valid_until", m.validUntil)
+                .addValue("message", jsonb(m.bodyJson))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO message (id, mailbox, type, src, dest, time, valid_until, message)
+            VALUES (:id, :mailbox, CAST(:type AS message_type), :src, :dest,
+                    CAST(:time AS timestamptz), CAST(:valid_until AS timestamptz), :message)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("message", FlushVerb.CREATE_MANY, messages.size))
+    }
+
+    /** UPDATE the `message` body + valid_until for an invalidated message (PHP `Message::invalidate`). */
+    private fun messageInvalidateMany(invalidates: List<MessageInvalidateRow>) {
+        for (m in invalidates) {
+            jdbc.update(
+                """
+                UPDATE message SET message = :message, valid_until = CAST(:valid_until AS timestamptz)
+                 WHERE id = :id
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("message", jsonb(m.bodyJson))
+                    .addValue("valid_until", m.validUntil)
+                    .addValue("id", m.id),
+            )
+        }
+        lastOps.add(FlushExecOp("message", FlushVerb.UPDATE, invalidates.size))
+    }
+
     private fun jsonb(json: String?): PGobject {
         val obj = PGobject()
         obj.type = "jsonb"
@@ -596,7 +653,27 @@ data class FlushPayload(
     val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)
     val rankNationSync: List<RankNationSync> = emptyList(),   // step-8 rank_data nation_id sync
     val kvWrites: List<KvWrite> = emptyList(),                // step-10 nation_env KV (delete-on-null)
+    val createdMessages: List<CreatedMessageRow> = emptyList(),       // step-8c message INSERT (T0.5)
+    val messageInvalidates: List<MessageInvalidateRow> = emptyList(), // step-8c message invalidate UPDATE (T0.5)
 )
+
+/**
+ * One `message`-row INSERT (T0.5). `id` is the pre-assigned in-memory monotonic id; `bodyJson` is the
+ * byte-faithful `Json::encode({src,dest,text,option})`. Infra-local mirror of the engine `CreatedMessage`.
+ */
+data class CreatedMessageRow(
+    val id: Int,
+    val mailbox: Int,
+    val type: String,
+    val srcId: Int,
+    val destId: Int,
+    val time: String,
+    val validUntil: String,
+    val bodyJson: String,
+)
+
+/** One `message` invalidate UPDATE (T0.5). Infra-local mirror of the engine `MessageInvalidate`. */
+data class MessageInvalidateRow(val id: Int, val validUntil: String, val bodyJson: String)
 
 /**
  * One rank_data write for a `(general, type)`: an [RankFlushOp.Increment] (`value = value + n`,
