@@ -94,6 +94,35 @@ class FlushPayloadConvergenceTest {
     }
 
     @Test
+    fun `bidirectional diplomacy update reaches the payload (both directions)`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(),
+                nations = listOf(engineNation(1, gold = 1000), engineNation(2, gold = 1000)),
+                diplomacy = listOf(
+                    opensamguk.engine.turn.TurnDiplomacy(1, 2, state = 2, term = 0),
+                    opensamguk.engine.turn.TurnDiplomacy(2, 1, state = 2, term = 0),
+                ),
+            ),
+        )
+        val recorder = ChangeRecorder()
+
+        // 선전포고: state 2 -> 1, term -> 24 on BOTH rows (the resolver applies + the recorder diffs).
+        val a0 = world.getDiplomacy(1, 2)!!
+        world.updateDiplomacy(1, 2, state = 1, term = 24)
+        recorder.diffDiplomacy(a0, world.getDiplomacy(1, 2)!!)
+        val b0 = world.getDiplomacy(2, 1)!!
+        world.updateDiplomacy(2, 1, state = 1, term = 24)
+        recorder.diffDiplomacy(b0, world.getDiplomacy(2, 1)!!)
+
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+
+        assertEquals(2, payload.updatedDiplomacy.size, "both diplomacy directions reach the payload")
+        assertEquals(listOf(1 to 2, 2 to 1), payload.updatedDiplomacy.map { it.fromNationId to it.toNationId })
+        assertTrue(payload.updatedDiplomacy.all { it.state == 1 && it.term == 24 })
+    }
+
+    @Test
     fun `recordKv last-write-wins per key and delete-on-null are preserved`() {
         val recorder = ChangeRecorder()
         recorder.recordKv("game_env", "global", "k", 1)

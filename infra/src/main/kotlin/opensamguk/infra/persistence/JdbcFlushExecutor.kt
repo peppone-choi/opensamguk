@@ -91,6 +91,11 @@ class JdbcFlushExecutor(
             if (payload.updatedNations.isNotEmpty()) {
                 nationUpdate(payload.updatedNations)
             }
+            // 7d. per-command diplomacy UPDATE (T0.4) — distinct from the monthly TICK's bulk-SQL
+            //     update; runs here in the per-command flush, the tick runs in its own boundary flush.
+            if (payload.updatedDiplomacy.isNotEmpty()) {
+                diplomacyUpdate(payload.updatedDiplomacy)
+            }
 
             // 8. rank_data UPDATE (rankVarIncrease then rankVarSet — General.php:727-744) + nation_id
             //    sync (when a general's nation changed, ALL its rank_data rows get the new nation_id).
@@ -260,6 +265,43 @@ class JdbcFlushExecutor(
         // databaseHooks models nation as an UPSERT (createMany excludes these); the UPDATE op-tag is
         // recorded as UPSERT to match the contract / DatabaseHooksOrderTest expectation.
         lastOps.add(FlushExecOp("nation", FlushVerb.UPSERT, nations.size))
+    }
+
+    // --- step 7d: per-command diplomacy UPDATE (T0.4) -------------------------------------------
+
+    /**
+     * Faithful to the per-command `diplomacy` UPDATE (`che_선전포고`/`수락`/`파기`/`종전`): toggle
+     * `state_code` + `term` (and `is_dead` when the patch carries it) for a single `(src, dest)` row.
+     * Bidirectional transitions arrive as TWO patches (both directions). Batched. This is the DELTA
+     * path — the monthly TICK's diplomacy bulk-SQL update is a separate write (P3 PostUpdateMonthly).
+     */
+    private fun diplomacyUpdate(updates: List<DiplomacyUpdate>) {
+        for (u in updates) {
+            val src = MapSqlParameterSource()
+                .addValue("state_code", u.state)
+                .addValue("term", u.term)
+                .addValue("src_nation_id", u.fromNationId)
+                .addValue("dest_nation_id", u.toNationId)
+            if (u.dead == null) {
+                jdbc.update(
+                    """
+                    UPDATE diplomacy SET state_code = :state_code, term = :term
+                     WHERE src_nation_id = :src_nation_id AND dest_nation_id = :dest_nation_id
+                    """.trimIndent(),
+                    src,
+                )
+            } else {
+                src.addValue("is_dead", u.dead != 0)
+                jdbc.update(
+                    """
+                    UPDATE diplomacy SET state_code = :state_code, term = :term, is_dead = :is_dead
+                     WHERE src_nation_id = :src_nation_id AND dest_nation_id = :dest_nation_id
+                    """.trimIndent(),
+                    src,
+                )
+            }
+        }
+        lastOps.add(FlushExecOp("diplomacy", FlushVerb.UPDATE, updates.size))
     }
 
     // --- step 3: nation / nation_turn createMany ------------------------------------------------
@@ -548,6 +590,7 @@ data class FlushPayload(
     val createdNations: List<Nation> = emptyList(),           // step-3 createMany
     val createdNationTurns: List<NationTurn> = emptyList(),   // step-3 createMany
     val createdDiplomacy: List<Diplomacy> = emptyList(),      // step-3 createMany (거병 bidirectional pairs)
+    val updatedDiplomacy: List<DiplomacyUpdate> = emptyList(),// step-7d per-command diplomacy UPDATE (T0.4)
     val deletedGenerals: List<Int> = emptyList(),             // step-5 deleteMany general + rank_data
     val deletedNations: List<Int> = emptyList(),              // step-6 nation cascade
     val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)
@@ -569,6 +612,19 @@ sealed interface RankFlushOp {
 
 /** When a general's `nation` changed, ALL its rank_data rows get `nation_id := [nationId]`. */
 data class RankNationSync(val generalId: Int, val nationId: Int)
+
+/**
+ * One per-command diplomacy UPDATE (T0.4): toggle `state_code`+`term` (and `is_dead` when [dead] is
+ * non-null) for a single `(src, dest)` row. Bidirectional transitions are TWO of these. Infra-local
+ * mirror of the engine `DiplomacyRowPatch` (no engine dep cycle).
+ */
+data class DiplomacyUpdate(
+    val fromNationId: Int,
+    val toNationId: Int,
+    val state: Int,
+    val term: Int,
+    val dead: Int? = null,
+)
 
 /**
  * One KV write: `value == null` DELETEs the row (delete-on-null, KVStorage.php), a non-null value

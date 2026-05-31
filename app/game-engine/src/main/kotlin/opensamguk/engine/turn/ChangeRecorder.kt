@@ -67,6 +67,15 @@ class ChangeRecorder {
      */
     private val kvDirty = LinkedHashMap<KvKey, Any?>()
 
+    /**
+     * Diplomacy UPDATE delta channel (T0.4) — `(from, to)` → [DiplomacyRowPatch]. The recorder is the
+     * SOLE per-command emitter. Last-write-wins per `(from, to)` (a later transition in the same tick
+     * displaces the earlier patch); insertion order preserved. This is DISTINCT from the monthly TICK's
+     * bulk-SQL diplomacy update (P3 `PostUpdateMonthly`) — they run at different points in the pass and
+     * must not corrupt each other (commands during the general/nation pass, tick AFTER).
+     */
+    private val diplomacyUpdateDirty = LinkedHashMap<Pair<Int, Int>, DiplomacyRowPatch>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -77,7 +86,7 @@ class ChangeRecorder {
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
-            kvDirty.isNotEmpty()
+            kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -267,6 +276,32 @@ class ChangeRecorder {
 
     /** The recorded KV delta channel (the T0.3 step-10 source), insertion-ordered. */
     fun kvDirty(): Map<KvKey, Any?> = LinkedHashMap(kvDirty)
+
+    /**
+     * Diff a diplomacy row's pre/post (T0.4). Returns the [DiplomacyRowPatch] (and records it dirty)
+     * if `state`/`term`/`dead` changed for `(from, to)`, or `null` if nothing changed (no-op → not
+     * dirty). The `(from, to)` key is taken from `post`. A bidirectional transition (선전포고/수락/…)
+     * calls this TWICE — once per direction — so BOTH `(me,you)` + `(you,me)` rows land (PHP updates
+     * both via `(me=A AND you=B) OR (me=B AND you=A)`; missing one desyncs the matrix + the next tick).
+     */
+    fun diffDiplomacy(pre: TurnDiplomacy, post: TurnDiplomacy): DiplomacyRowPatch? {
+        require(pre.fromNationId == post.fromNationId && pre.toNationId == post.toNationId) {
+            "ChangeRecorder.diffDiplomacy: key changed (${pre.fromNationId},${pre.toNationId}) -> (${post.fromNationId},${post.toNationId})"
+        }
+        if (pre.state == post.state && pre.term == post.term && pre.dead == post.dead) return null
+        val patch = DiplomacyRowPatch(
+            fromNationId = post.fromNationId,
+            toNationId = post.toNationId,
+            state = post.state,
+            term = post.term,
+            dead = if (pre.dead != post.dead) post.dead else null,
+        )
+        diplomacyUpdateDirty[post.fromNationId to post.toNationId] = patch
+        return patch
+    }
+
+    /** The recorded per-command diplomacy UPDATE patches (the T0.4 step-7 source), insertion-ordered. */
+    fun diplomacyUpdateDirty(): List<DiplomacyRowPatch> = diplomacyUpdateDirty.values.toList()
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE

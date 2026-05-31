@@ -149,6 +149,24 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         return next
     }
 
+    /** Read a single diplomacy row by `(from, to)` (null if absent). */
+    fun getDiplomacy(fromNationId: Int, toNationId: Int): TurnDiplomacy? =
+        diplomacy[buildDiplomacyKey(fromNationId, toNationId)]
+
+    /**
+     * Apply a diplomacy `(from, to)` transition to the world's read-state (T0.4) WITHOUT marking the
+     * world dirty — the [ChangeRecorder.diffDiplomacy] owns dirtiness (the SINGLE dirty source). A
+     * bidirectional transition calls this TWICE (once per direction). `dead` defaults to the existing
+     * value when not supplied. Returns the new row, or null if the `(from, to)` row is absent.
+     */
+    fun updateDiplomacy(fromNationId: Int, toNationId: Int, state: Int, term: Int, dead: Int? = null): TurnDiplomacy? {
+        val key = buildDiplomacyKey(fromNationId, toNationId)
+        val current = diplomacy[key] ?: return null
+        val next = current.copy(state = state, term = term, dead = dead ?: current.dead)
+        diplomacy[key] = next
+        return next
+    }
+
     fun updateNation(next: Nation): Nation? {
         if (!nations.containsKey(next.id)) return null
         nations[next.id] = next

@@ -1,6 +1,7 @@
 package opensamguk.engine.flush
 
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.DiplomacyRowPatch
 import opensamguk.engine.turn.DirtyState
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.KvKey
@@ -9,6 +10,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.KvWrite
@@ -282,6 +284,7 @@ object DatabaseHooks {
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
+            updatedDiplomacy = toDiplomacyUpdates(recorder.diplomacyUpdateDirty()),
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),
@@ -290,6 +293,18 @@ object DatabaseHooks {
             deletedNationSnapshots = deletedNationSnapshots,
         )
     }
+
+    /** T0.4 — map the recorder's per-command diplomacy patches to the executor [DiplomacyUpdate] list. */
+    internal fun toDiplomacyUpdates(patches: List<DiplomacyRowPatch>): List<DiplomacyUpdate> =
+        patches.map {
+            DiplomacyUpdate(
+                fromNationId = it.fromNationId,
+                toNationId = it.toNationId,
+                state = it.state,
+                term = it.term,
+                dead = it.dead,
+            )
+        }
 
     /**
      * Finalize an engine [LogEntryDraft] into an infra [LogRow]: stamp the year/month from world

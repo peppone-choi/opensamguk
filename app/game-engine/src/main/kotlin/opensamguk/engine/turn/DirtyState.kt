@@ -13,6 +13,20 @@ import java.time.Instant
 data class KvKey(val table: String, val namespace: String, val key: String)
 
 /**
+ * A diplomacy-row UPDATE patch (T0.4) keyed `(from, to)`. PHP `diplomacy` UPDATE
+ * (`che_선전포고`/`수락`/`파기`/`종전`) toggles `state` + `term` (and may flip `dead`); this is the
+ * per-command DELTA channel, distinct from the monthly TICK's bulk-SQL diplomacy update (P3
+ * `PostUpdateMonthly`). Bidirectional transitions emit TWO patches (`(me,you)` + `(you,me)`).
+ */
+data class DiplomacyRowPatch(
+    val fromNationId: Int,
+    val toNationId: Int,
+    val state: Int,
+    val term: Int,
+    val dead: Int? = null,
+)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
@@ -54,4 +68,10 @@ data class DirtyState(
     val rankDirty: Map<Int, Map<RankColumn, RankDelta>> = emptyMap(),
     val nationTurnDirty: List<NationTurn> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
+    /**
+     * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).
+     * The DELTA channel for 선전포고/수락/파기/종전 — distinct from the monthly TICK's bulk-SQL
+     * diplomacy update; the two must not collide (flush-order: commands during the pass, tick AFTER).
+     */
+    val diplomacyUpdateDirty: List<DiplomacyRowPatch> = emptyList(),
 )
