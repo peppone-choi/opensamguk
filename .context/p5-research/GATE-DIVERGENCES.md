@@ -4,9 +4,53 @@
 (`tools/php-golden/capture_ai.php` over the live installed scenario-1010 DB). NEVER fabricate a golden value,
 NEVER weaken a test, NEVER edit a golden to make Kotlin pass.
 
-**Harness:** `logic/src/test/kotlin/opensamguk/logic/golden/AiReplayGateTest.kt` — GREEN (5/5 tests, 0 failures).
-**Golden:** `logic/src/test/resources/golden/p5/ai-turn-000.json .. ai-turn-173.json` + `npc-census-1010.json` (GT1).
+**Harness (kernel replay):** `logic/src/test/kotlin/opensamguk/logic/golden/AiReplayGateTest.kt` — GREEN (5/5 tests, 0 failures).
+**Harness (LIVE selection — GT3-engine):** `app/game-engine/src/test/kotlin/opensamguk/engine/golden/AiSelectionGateIT.kt` — **GREEN (174/174 turns, 667/667 live draws value+cursor)**.
+**Golden:** `logic/src/test/resources/golden/p5/ai-turn-000.json .. ai-turn-173.json` + `npc-census-1010.json` (GT1) + `world-1010.json` (GT1b pre-turn world snapshot).
 **Manifest:** `tools/php-golden/manifest_ai.json` (scenario 1010, year 181 month 1, hiddenSeed `71adaa4df4012a20c0883beba4810681`).
+
+---
+
+## ✅ GT3-ENGINE RESOLUTION — the GAP-WORLD blocker is CLOSED, the live-selection gate is GREEN
+
+The GAP-WORLD gap documented below (the live-selection dimension blocked on the un-banked world + the missing
+engine adapter in `:logic`) is **RESOLVED**. Both blockers are gone:
+1. **World fixture exists** — `world-1010.json` (GT1b) banks the exact scenario-1010 pre-turn rows (174 generals
+   PK-asc, 94 cities, 2 nations w/ tech/type/aux/chief_set/nation_env, diplomacy).
+2. **Engine adapter exercised** — `AiSelectionGateIT` (`:app:game-engine`) materialises that snapshot into ONE
+   `InMemoryTurnWorld` and drives the LIVE `AiTurnAdapter.chooseNationTurn`/`chooseGeneralTurn` over it.
+
+| metric | value |
+|---|---|
+| due-general turns run LIVE + matched (selection + draw stream) | **174 / 174** |
+| live draws PULLED by the Kotlin AI + matched value+cursor+consumed | **667 / 667** |
+| general-pass selection `(actionCode RAW, args, reason)` matched | 174 / 174 |
+| lord nation-pass `(che_포상, args, reason=doNPC긴급포상)` + `drawCountAtNationEnd` matched | 2 / 2 (gid 105 장각, 152 하진) |
+| draw-COUNT / cursor / consumed / value mismatches | 0 / 0 / 0 / 0 |
+| Kotlin fixes required | **0** (no divergences surfaced) |
+
+**There were ZERO divergences on the first real live-selection pass.** The live Kotlin AI PULLS the same draws
+in the same order AND PICKS the same `(actionCode, RAW args, reason)` as the PHP golden — including the
+`do국가선택`→`che_이동 {destCityID}` choice draws (×18), the `do일반내정` develop selections (×55), the `do중립`
+견문/인재탐색 fallbacks (×99), the `do거병`→`che_거병` raise-army gate (×2), and the lords' nation-pass reward.
+
+### The load-bearing seam this required (and the production parity fix it carries)
+`AiTurnAdapter` gained an injectable `rngFactory` (default `AiSeed.rng`, ZERO behavior change) + a per-general
+rng cache keyed `(generalId, year, month)`. This reproduces the PHP single-`GeneralAI`-per-general semantics:
+the nation pass (officer_level>=5) and the general pass for ONE general thread the SAME `"GeneralAI"` rng —
+the nation-pass draws are the stream PREFIX, the general pass CONTINUES it. (Before, the daemon built a fresh
+DRBG per `choose*` call; the lord turns gid 105/152 with `drawCountAtNationEnd=1` confirm the shared-stream +
+calcGenType-once-guard behavior is now byte-faithful.) The gate's recorder is draw-neutral (`AiDrawRecorder`,
+symmetric to `BattleDrawRecorder`); a sensitivity probe (seed-string corruption) drops the gate to `matched=2/174`,
+proving it is NON-vacuous and fails loudly on a real divergence.
+
+### Quarantines (unchanged, all HELD)
+- Q1 ORDER BY RAND (선양/오랑캐) UNREACHABLE (census 0/0) — never fires; nothing to exclude.
+- INSTANTNATIONTURN — no live call-site, not exercised.
+- Diplomacy downstream delta (m10) — month-1 window never reaches 불가침제의/선전포고/천도; the gate asserts
+  SELECTION + draw stream only (never inspects resolved downstream delta), so m10 is moot here.
+
+**The dated GAP-WORLD section below is retained for historical context — it is now CLOSED by GT3-engine.**
 
 ---
 

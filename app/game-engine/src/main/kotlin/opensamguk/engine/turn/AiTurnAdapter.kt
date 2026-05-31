@@ -95,6 +95,15 @@ class AiTurnAdapter(
     private val turnTerm: Int = 1,
     private val pipeline: GeneralActionPipeline = GeneralActionPipeline(),
     private val reservedCommandNameOf: (generalId: Int) -> String? = { null },
+    /**
+     * P5 GT3 — the per-general-per-decision `"GeneralAI"` [opensamguk.common.rng.RandUtil] factory (F-SEED).
+     * Default = [AiSeed.rng] (the PHP `GeneralAI` ctor lineage). Injectable ONLY so the engine-side
+     * live-selection gate ([AiSelectionGateIT]) can wrap the SAME-seeded DRBG in a draw RECORDER and observe
+     * the live-pulled stream value+cursor — it NEVER changes the seed or the draw algorithm (the recorder is
+     * draw-neutral, byte-identical to the bare [AiSeed.rng]).
+     */
+    private val rngFactory: (hidden: String, year: Int, month: Int, generalId: Int) -> opensamguk.common.rng.RandUtil =
+        { hidden, year, month, gid -> AiSeed.rng(hidden, year, month, gid) },
 ) {
 
     /**
@@ -103,6 +112,30 @@ class AiTurnAdapter(
      */
     val kvDeltas: List<KvDelta> get() = _kvDeltas.toList()
     private val _kvDeltas = ArrayList<KvDelta>()
+
+    /**
+     * P5 GT3 — the SOLE per-general rng cache (PHP single-`GeneralAI`-per-general semantics, `GeneralAI.php`
+     * ctor `:153-159`). The PHP daemon builds ONE `GeneralAI` per general and threads its ONE `RandUtil`
+     * through BOTH `chooseNationTurn` (officer_level>=5, the stream PREFIX) AND `chooseGeneralTurn` (which
+     * CONTINUES the same stream). So the nation-pass draws and the general-pass draws are ONE shared stream,
+     * never two fresh DRBGs. This cache keyed by `(generalId, year, month)` reproduces that: the first
+     * `chooseNationTurn`/`chooseGeneralTurn` for a `(general, turn)` builds the rng once (via [rngFactory]);
+     * the sibling pass for the SAME general reuses it so the general pass starts where the nation pass left
+     * off. [resetRngFor] / [beginGeneralTurn] let the turn loop / gate bound a general's decision window.
+     */
+    private val rngCache = LinkedHashMap<Triple<Int, Int, Int>, opensamguk.common.rng.RandUtil>()
+
+    private fun sharedRng(generalId: Int, year: Int, month: Int): opensamguk.common.rng.RandUtil =
+        rngCache.getOrPut(Triple(generalId, year, month)) { rngFactory(hiddenSeed, year, month, generalId) }
+
+    /**
+     * Drop the cached `"GeneralAI"` rng for [generalId] (call when a general's decision window ends, so a
+     * re-decision in a later turn rebuilds a fresh stream). Optional for callers that recreate the adapter
+     * per turn; the gate uses it to bound each due-general's nation+general window.
+     */
+    fun resetRngFor(generalId: Int) {
+        rngCache.keys.removeAll { it.first == generalId }
+    }
 
     /** Whether [generalId] is AI-controlled (`npc >= 2`, PHP `$general->isNPC()`) — the hook gate. */
     fun isAiControlled(generalId: Int): Boolean =
@@ -121,8 +154,9 @@ class AiTurnAdapter(
         val nationId = general.nationId
         val npcType = general.npcState
 
-        // (1) the SOLE per-general-per-decision rng (F-SEED) — built ONCE, threaded by reference.
-        val rng = AiSeed.rng(hiddenSeed, year, month, generalId)
+        // (1) the SOLE per-general-per-decision rng (F-SEED) — built ONCE, threaded by reference. Shared
+        // with this general's chooseNationTurn pass (the stream prefix) so the general pass CONTINUES it.
+        val rng = sharedRng(generalId, year, month)
 
         val nationTech = nationTechOf(nationId)
         val generalPolicy = AutorunGeneralPolicy(npcType = npcType, nationId = nationId)
@@ -214,7 +248,9 @@ class AiTurnAdapter(
         val nationId = general.nationId
         val npcType = general.npcState
 
-        val rng = AiSeed.rng(hiddenSeed, year, month, generalId)
+        // The SOLE per-general rng — built ONCE and shared with this general's chooseGeneralTurn pass (PHP
+        // single-GeneralAI semantics): the nation pass draws are the stream PREFIX, the general pass continues.
+        val rng = sharedRng(generalId, year, month)
         val nationTech = nationTechOf(nationId)
         val generalPolicy = AutorunGeneralPolicy(npcType = npcType, nationId = nationId)
         val develCost = WorldEnvBuilder.envMap(year, startYear)["develCost"] as Int
