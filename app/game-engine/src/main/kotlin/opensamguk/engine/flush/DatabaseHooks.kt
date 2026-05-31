@@ -1,7 +1,9 @@
 package opensamguk.engine.flush
 
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.DirtyState
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
@@ -9,6 +11,7 @@ import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.KvWrite
 import opensamguk.infra.persistence.LogRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
@@ -189,6 +192,99 @@ object DatabaseHooks {
             createdDiplomacy = createdDiplomacy,
             logEntries = logEntries,
             rankWrites = rankWrites,
+            kvWrites = toKvWrites(dirty.kvDirty),
+            deletedGenerals = dirty.deletedGenerals,
+            deletedNations = dirty.deletedNations,
+            deletedNationSnapshots = deletedNationSnapshots,
+        )
+    }
+
+    /**
+     * T0.3 — flatten a recorder's rank delta map into the executor [RankWrite] list: increments
+     * before sets per general (matching `General.applyDB`: rankVarIncrease first, then rankVarSet),
+     * in the map's insertion order.
+     */
+    internal fun toRankWrites(rankDirty: Map<Int, Map<RankColumn, RankDelta>>): List<RankWrite> =
+        rankDirty.flatMap { (generalId, deltas) ->
+            val increments = deltas.entries.filter { it.value is RankDelta.Increment }
+            val sets = deltas.entries.filter { it.value is RankDelta.Set }
+            (increments + sets).map { (column, delta) ->
+                RankWrite(
+                    generalId = generalId,
+                    type = column.column,
+                    op = when (delta) {
+                        is RankDelta.Increment -> RankFlushOp.Increment(delta.value)
+                        is RankDelta.Set -> RankFlushOp.Set(delta.value)
+                    },
+                )
+            }
+        }
+
+    /**
+     * T0.3 — map the recorder's `(table, namespace, key) → value` KV delta channel to the executor
+     * [KvWrite] list. The value is passed through verbatim (a null is a delete-on-null; a raw json
+     * String is bound as-is by the executor; an Int/Map/List is MetaJson-encoded at flush). Insertion
+     * order is preserved so the writes flush in the order the resolver produced them.
+     */
+    internal fun toKvWrites(kvDirty: Map<KvKey, Any?>): List<KvWrite> =
+        kvDirty.map { (k, v) -> KvWrite(table = k.table, namespace = k.namespace, key = k.key, value = v) }
+
+    /**
+     * T0.3 CONVERGENCE — the single superset payload builder for the daemon write path. The
+     * authoritative dirty source is the [ChangeRecorder] (design Risk #4: one dirty truth): dirty
+     * general/city/nation IDs + rank + KV deltas come from the recorder, resolved against the world's
+     * already-applied post-state rows. The world's [DirtyState] supplies created/deleted nation/general/
+     * troop/diplomacy + logs (the world-level lifecycle effects). This is what `TurnRunService` now
+     * routes through, so a nation/rank/kv/diplomacy delta no longer vanishes at flush.
+     */
+    internal fun toFlushPayload(
+        world: InMemoryTurnWorld,
+        recorder: ChangeRecorder,
+        dirty: DirtyState,
+    ): FlushPayload {
+        val state = world.getState()
+        val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
+        val createdNationIds = dirty.createdNations.map { it.id }.toSet()
+
+        // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
+        val updatedGenerals = recorder.dirtyGeneralIds()
+            .filter { it !in createdGeneralIds }
+            .mapNotNull { world.getGeneralById(it) }
+            .map { PerTurnOverlay.toLogicGeneral(it) }
+        val updatedCities = recorder.dirtyCityIds()
+            .mapNotNull { world.getCityById(it) }
+            .map { PerTurnOverlay.toLogicCity(it) }
+        val updatedNations = recorder.dirtyNationIds()
+            .filter { it !in createdNationIds }
+            .mapNotNull { world.getNationById(it) }
+            .map { PerTurnOverlay.toLogicNation(it) }
+
+        val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
+        val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
+        val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth) }
+
+        val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
+            linkedMapOf<String, Any?>(
+                "nation" to snap.nation.id,
+                "general_ids" to snap.generalIds,
+            )
+        }
+
+        return FlushPayload(
+            worldStateUpdate = linkedMapOf(
+                "id" to state.id,
+                "current_year" to state.currentYear,
+                "current_month" to state.currentMonth,
+            ),
+            updatedGenerals = updatedGenerals,
+            updatedCities = updatedCities,
+            updatedNations = updatedNations,
+            createdNations = createdNations,
+            createdNationTurns = dirty.nationTurnDirty,
+            createdDiplomacy = createdDiplomacy,
+            logEntries = logEntries,
+            rankWrites = toRankWrites(recorder.rankPatches()),
+            kvWrites = toKvWrites(recorder.kvDirty()),
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,

@@ -57,6 +57,16 @@ class ChangeRecorder {
     private val deletedGeneralIds = LinkedHashSet<Int>()
     private val deletedNationIds = LinkedHashSet<Int>()
 
+    /**
+     * KV delta channel (T0.3) — `(table, namespace, key)` → encoded value | `null`-delete. The recorder
+     * is the SOLE emitter (no family writes a KV table inline). Last-write-wins per [KvKey] (KVStorage.php
+     * delete-on-null + last-write-wins); insertion order preserved (LinkedHashMap, never re-keyed).
+     * Feeds [DirtyState.kvDirty] → `FlushPayload.kvWrites` → the executor's step-10 (nation_env int-ns
+     * AND game_kv string-ns). Without this channel every nation/kv delta ran in memory and vanished at
+     * flush.
+     */
+    private val kvDirty = LinkedHashMap<KvKey, Any?>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -66,7 +76,8 @@ class ChangeRecorder {
     val isDirty: Boolean
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
-            deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty()
+            deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
+            kvDirty.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -234,6 +245,28 @@ class ChangeRecorder {
         val map = rankPatches.getOrPut(generalId) { LinkedHashMap() }
         map[column] = RankDelta.Set(value)
     }
+
+    /**
+     * Record a KV write (T0.3, `KVStorage.php` setValue): `value == null` is a delete-on-null; any
+     * other value is the (already-encoded jsonb String, or to-be-encoded Int/Map/List) payload. Last
+     * write wins per `(table, namespace, key)` (a later set/delete displaces the earlier one), matching
+     * the PHP KV last-write-wins + delete semantics; insertion order is preserved so the flush emits
+     * the writes in the order the resolver produced them.
+     *
+     *  - `table == "nation_env"` → V3 int-namespace store (`namespace` = nation id as a decimal string).
+     *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`) → V7 `game_kv` string-namespace store.
+     */
+    fun recordKv(table: String, namespace: String, key: String, value: Any?) {
+        kvDirty[KvKey(table, namespace, key)] = value
+    }
+
+    /** Convenience for the V3 int-namespace `nation_env` writes (setNationMeta, term-stacks). */
+    fun recordNationEnvKv(nationId: Int, key: String, value: Any?) {
+        recordKv("nation_env", nationId.toString(), key, value)
+    }
+
+    /** The recorded KV delta channel (the T0.3 step-10 source), insertion-ordered. */
+    fun kvDirty(): Map<KvKey, Any?> = LinkedHashMap(kvDirty)
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE

@@ -138,6 +138,17 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         return next
     }
 
+    /**
+     * Replace a nation's row WITHOUT marking it dirty (T0.3 — the nation-command resolve path applies
+     * the resolver's post-state through here so the world reads reflect it while [ChangeRecorder]
+     * stays the SINGLE dirty source). Mirrors [applyGeneralDirtyFree]/[applyCityDirtyFree].
+     */
+    fun applyNationDirtyFree(next: Nation): Nation? {
+        if (!nations.containsKey(next.id)) return null
+        nations[next.id] = next
+        return next
+    }
+
     fun updateNation(next: Nation): Nation? {
         if (!nations.containsKey(next.id)) return null
         nations[next.id] = next

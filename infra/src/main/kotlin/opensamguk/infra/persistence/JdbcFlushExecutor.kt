@@ -106,10 +106,11 @@ class JdbcFlushExecutor(
                 logEntryCreateMany(payload.logEntries)
             }
 
-            // 10. KV writes (nation_env delete-on-null) + reserved_turns flush (ring write via
-            //     ReservedTurnRepository, recorded here for contract-order completeness).
+            // 10. KV writes (nation_env int-ns + game_kv string-ns, delete-on-null) + reserved_turns
+            //     flush (ring write via ReservedTurnRepository, recorded here for contract-order
+            //     completeness).
             if (payload.kvWrites.isNotEmpty()) {
-                nationEnvKvWrite(payload.kvWrites)
+                kvWriteFlush(payload.kvWrites)
             }
             null
         }
@@ -412,36 +413,81 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("rank_data", FlushVerb.UPDATE, syncs.size))
     }
 
-    // --- step 10: nation_env KV (delete-on-null) ------------------------------------------------
+    // --- step 10: KV write (delete-on-null) — int-ns nation_env AND string-ns game_kv -----------
 
     /**
-     * Flush the nation_env KV write-set (`KVStorage.php` delete-on-null): a `null` value DELETEs the
-     * `(namespace, key)` row; a non-null value UPSERTs the [MetaJson]-encoded jsonb (bare int for
-     * `next_execute_*`, `LastTurn.toRaw()` object for `turn_last_{officer_level}`).
+     * Flush the KV write-set (`KVStorage.php` delete-on-null). A [KvWrite] now carries its target
+     * `table`: `nation_env` (int namespace = nation id) routes to the V3 table; every string namespace
+     * (`game_env`, `betting`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
+     * `table` discriminator. A `null` value DELETEs the row; a non-null value UPSERTs the
+     * [MetaJson]-encoded jsonb (bare int for `next_execute_*`, object for `turn_last_{officer_level}`,
+     * etc.). The KvWrite values are pre-encoded where the caller already holds a jsonb String (the
+     * `value` is encoded only if it is not already a raw json String — see [encodeKvValue]).
      */
-    private fun nationEnvKvWrite(writes: List<KvWrite>) {
+    private fun kvWriteFlush(writes: List<KvWrite>) {
         for (w in writes) {
-            if (w.value == null) {
-                jdbc.update(
-                    "DELETE FROM nation_env WHERE namespace = :namespace AND key = :key",
-                    MapSqlParameterSource().addValue("namespace", w.namespace).addValue("key", w.key),
-                )
-            } else {
-                jdbc.update(
-                    """
-                    INSERT INTO nation_env (namespace, key, value)
-                    VALUES (:namespace, :key, :value)
-                    ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value
-                    """.trimIndent(),
-                    MapSqlParameterSource()
-                        .addValue("namespace", w.namespace)
-                        .addValue("key", w.key)
-                        .addValue("value", jsonb(MetaJson.encode(w.value))),
-                )
+            when (w.table) {
+                "nation_env" -> nationEnvKvWrite(w)
+                else -> gameKvWrite(w)
             }
         }
-        lastOps.add(FlushExecOp("nation_env", FlushVerb.UPSERT, writes.size))
+        lastOps.add(FlushExecOp("kv", FlushVerb.UPSERT, writes.size))
     }
+
+    /** int-namespace store (V3 `nation_env`): namespace is the nation id (parsed from the string). */
+    private fun nationEnvKvWrite(w: KvWrite) {
+        val ns = w.namespace.toInt()
+        if (w.value == null) {
+            jdbc.update(
+                "DELETE FROM nation_env WHERE namespace = :namespace AND key = :key",
+                MapSqlParameterSource().addValue("namespace", ns).addValue("key", w.key),
+            )
+        } else {
+            jdbc.update(
+                """
+                INSERT INTO nation_env (namespace, key, value)
+                VALUES (:namespace, :key, :value)
+                ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("namespace", ns)
+                    .addValue("key", w.key)
+                    .addValue("value", jsonb(encodeKvValue(w.value))),
+            )
+        }
+    }
+
+    /** string-namespace store (V7 `game_kv`): keyed by `(table, namespace, key)`. */
+    private fun gameKvWrite(w: KvWrite) {
+        if (w.value == null) {
+            jdbc.update(
+                """DELETE FROM game_kv WHERE "table" = :tbl AND namespace = :namespace AND key = :key""",
+                MapSqlParameterSource().addValue("tbl", w.table).addValue("namespace", w.namespace).addValue("key", w.key),
+            )
+        } else {
+            jdbc.update(
+                """
+                INSERT INTO game_kv ("table", namespace, key, value)
+                VALUES (:tbl, :namespace, :key, :value)
+                ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("tbl", w.table)
+                    .addValue("namespace", w.namespace)
+                    .addValue("key", w.key)
+                    .addValue("value", jsonb(encodeKvValue(w.value))),
+            )
+        }
+    }
+
+    /**
+     * A KV value already materialized as a raw jsonb String (e.g. a byte-faithful `Json::encode`
+     * payload the family produced) is bound as-is; any other value (Int/Map/List …) is encoded via
+     * [MetaJson]. This lets the obfuscatedNamePool / BettingInfo families hand the executor the exact
+     * PHP-`json_encode` bytes without a re-encode round-trip.
+     */
+    private fun encodeKvValue(value: Any?): String =
+        if (value is String) value else MetaJson.encode(value)
 
     // --- step 9: log_entry createMany -----------------------------------------------------------
 
@@ -525,11 +571,23 @@ sealed interface RankFlushOp {
 data class RankNationSync(val generalId: Int, val nationId: Int)
 
 /**
- * One nation_env KV write: `value == null` DELETEs the row (delete-on-null, KVStorage.php), a
- * non-null value UPSERTs the encoded jsonb. `namespace` is the nation id; values are encoded with
- * [MetaJson] (bare int for `next_execute_*`; object for `turn_last_{officer_level}`).
+ * One KV write: `value == null` DELETEs the row (delete-on-null, KVStorage.php), a non-null value
+ * UPSERTs the encoded jsonb.
+ *
+ *  - `table == "nation_env"` → the V3 int-namespace store (`namespace` is the nation id as a
+ *    decimal string; values: bare int for `next_execute_*`, object for `turn_last_{officer_level}`).
+ *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`/…) → the V7 string-namespace
+ *    `game_kv` store keyed by `(table, namespace, key)`.
+ *
+ * A `value` that is already a raw json String is bound verbatim; any other value is [MetaJson]-encoded.
  */
-data class KvWrite(val namespace: Int, val key: String, val value: Any?)
+data class KvWrite(val table: String, val namespace: String, val key: String, val value: Any?) {
+    companion object {
+        /** Convenience for the legacy nation_env int-namespace call sites (P2/P3). */
+        fun nationEnv(namespace: Int, key: String, value: Any?): KvWrite =
+            KvWrite("nation_env", namespace.toString(), key, value)
+    }
+}
 
 /**
  * A finalized `log_entry` row ready to INSERT. `scope`/`category` are the PG enum literals
