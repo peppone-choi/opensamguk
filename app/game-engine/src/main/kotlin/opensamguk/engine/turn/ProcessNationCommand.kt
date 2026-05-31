@@ -3,6 +3,9 @@ package opensamguk.engine.turn
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.logic.actions.nation.NationActionResolveContext
+import opensamguk.logic.actions.nation.NationActionResolver
+import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
@@ -95,11 +98,20 @@ class ProcessNationCommand(
             ),
         )
 
-        // --- the processNationCommand while-loop (PHP :76-106, the GREEN processCommand template) ---
-        // full-condition → addTermStack → run → getAlternativeCommand. The actual NationCommand `run`
-        // (the che_* state mutation) is the P6-deferred internals; the structural spine + the result
-        // LastTurn are delegated to the resolver hook (default no-op = pass-through getResultTurn).
-        val resultTurn = nationCommandResolver.resolve(rng, nationCommand, lastTurn)
+        // --- registry-backed dispatch (T0.6) ---
+        // The diplomacy / nation-internal / event_*연구 leaf families register a NationActionResolver
+        // by action code (Wave A1/B/D). When one exists, build the NationActionResolveContext from the
+        // world's draft state, run resolve(), and route the buffered side effects through the
+        // ChangeRecorder single-dirty-source (diplomacy deltas → diffDiplomacy, logs → ActionLogger
+        // scopes, messages → the mailbox channel, KV → recordKv, draft nation/dest → diffNation) — NEVER
+        // an inline write / EntityManager. When no resolver is registered (the family has not landed),
+        // fall back to the legacy pass-through hook (default no-op getResultTurn).
+        val registered: NationActionResolver? = NationActionResolverRegistry.resolve(nationCommand.actionCode)
+        val resultTurn = if (registered != null) {
+            dispatchRegistered(registered, rng, general, officerLevel, nationCommand, lastTurn, year, month, date)
+        } else {
+            nationCommandResolver.resolve(rng, nationCommand, lastTurn)
+        }
 
         // --- $nationStor->setValue("turn_last_{officer_level}", $resultNationTurn->toRaw()) (:322) ---
         // Recorded as the nation-meta KV delta through the ChangeRecorder single-dirty-source (NOT inline,
@@ -114,6 +126,167 @@ class ProcessNationCommand(
 
         return resultTurn
     }
+
+    /**
+     * Build the [NationActionResolveContext] from the world's draft state, run the registered resolver,
+     * and route every buffered side effect through the [ChangeRecorder] single-dirty-source (T0.6):
+     *  - diplomacy deltas → [InMemoryTurnWorld.updateDiplomacy] (dirty-free apply) + `diffDiplomacy`,
+     *  - the actor draft nation + dest nation → `diffNation`,
+     *  - the four ActionLogger scopes (action/general-history/national-history/global-history +
+     *    global-action + dest-national-history) → `world.pushLog` with the matching scope/category,
+     *  - the buffered Messages → the mailbox channel (receiver row BEFORE sender row),
+     *  - the buffered KV writes → `recorder.recordKv`.
+     * Returns the resolver's result [LastTurn].
+     */
+    private fun dispatchRegistered(
+        resolver: NationActionResolver,
+        rng: RandUtil,
+        general: TurnGeneral,
+        officerLevel: Int,
+        nationCommand: ChosenCommand,
+        lastTurn: LastTurn,
+        year: Int,
+        month: Int,
+        date: String,
+    ): LastTurn {
+        val nationId = general.nationId
+        val preNation = world.getNationById(nationId)?.let { toLogicNation(it) }
+            ?: error("ProcessNationCommand: nation $nationId not in world")
+        // dest nation (선전포고/수락/파기/종전 target) — derived from the parsed args' destNationID if present.
+        val destNationId = (nationCommand.args["destNationID"] as? Number)?.toInt()
+        val preDestNation = destNationId?.let { world.getNationById(it)?.let { n -> toLogicNation(n) } }
+
+        // snapshot the diplomacy matrix the resolver reads.
+        val matrix = LinkedHashMap<Pair<Int, Int>, opensamguk.logic.domain.Diplomacy>()
+        for (d in world.listDiplomacy()) {
+            matrix[d.fromNationId to d.toNationId] = PerTurnOverlay.toLogicDiplomacy(d)
+        }
+
+        val ctx = NationActionResolveContext(
+            nation = preNation,
+            rng = rng,
+            generalId = general.id,
+            officerLevel = officerLevel,
+            year = year,
+            month = month,
+            date = date,
+            args = nationCommand.args,
+            destNation = preDestNation,
+            diplomacyMatrix = matrix,
+            lastTurn = lastTurn,
+        )
+
+        resolver.resolve(ctx)
+
+        // --- route the actor + dest nation drafts → recorder diffs (single dirty source) ---
+        if (ctx.nation != preNation) {
+            recorder.diffNation(preNation, ctx.nation)
+            world.getNationById(nationId)?.let { world.applyNationDirtyFree(applyLogicToNation(it, ctx.nation)) }
+        }
+        val postDest = ctx.destNation
+        if (destNationId != null && preDestNation != null && postDest != null && postDest != preDestNation) {
+            recorder.diffNation(preDestNation, postDest)
+            world.getNationById(destNationId)?.let { world.applyNationDirtyFree(applyLogicToNation(it, postDest)) }
+        }
+
+        // --- diplomacy deltas → world.updateDiplomacy (dirty-free) + diffDiplomacy (T0.4) ---
+        for (delta in ctx.diplomacyDeltas()) {
+            val pre = world.getDiplomacy(delta.fromNationId, delta.toNationId) ?: continue
+            world.updateDiplomacy(delta.fromNationId, delta.toNationId, delta.state, delta.term, delta.dead)
+            val post = world.getDiplomacy(delta.fromNationId, delta.toNationId) ?: continue
+            recorder.diffDiplomacy(pre, post)
+        }
+
+        // --- the ActionLogger scopes → world.pushLog ---
+        for (line in ctx.actionLogs()) world.pushLog(nationLog(general, "action", "general", line))
+        for (line in ctx.generalHistoryLogs()) world.pushLog(nationLog(general, "history", "general", line))
+        for (line in ctx.nationalHistoryLogs()) world.pushLog(nationLog(general, "history", "nation", line))
+        for (line in ctx.destNationalHistoryLogs()) {
+            world.pushLog(LogEntryDraft(scope = "nation", category = "history", text = line, nationId = destNationId))
+        }
+        for (line in ctx.globalActionLogs()) world.pushLog(nationLog(general, "action", "global", line))
+        for (line in ctx.globalHistoryLogs()) world.pushLog(nationLog(general, "history", "global", line))
+
+        // --- buffered KV writes → recorder.recordKv ---
+        for (kv in ctx.kvWrites()) recorder.recordKv(kv.table, kv.namespace, kv.key, kv.value)
+
+        // --- buffered Messages → the mailbox channel (receiver row BEFORE sender row) ---
+        for (message in ctx.messages()) routeMessage(message, year, month)
+
+        return ctx.resultTurn
+    }
+
+    /** Map a LogEntryDraft for a nation-command log scope. */
+    private fun nationLog(general: TurnGeneral, category: String, scope: String, text: String): LogEntryDraft =
+        when (scope) {
+            "general" -> LogEntryDraft(scope = "general", category = category, text = text, generalId = general.id, nationId = general.nationId)
+            "nation" -> LogEntryDraft(scope = "nation", category = category, text = text, nationId = general.nationId)
+            else -> LogEntryDraft(scope = "global", category = category, text = text, generalId = general.id, nationId = general.nationId)
+        }
+
+    /**
+     * Route a logic [opensamguk.logic.message.Message] through the mailbox channel: produce its send
+     * rows (receiver BEFORE sender) and record each INSERT with the pre-assigned in-memory id folded
+     * into the body's receiver/sender back-references (research §2).
+     */
+    private fun routeMessage(message: opensamguk.logic.message.Message, year: Int, month: Int) {
+        val drafts = message.send()
+        // PHP folds the receiver id into the receiver body's receiverMessageID then the sender body's
+        // senderMessageID after the AUTO_INCREMENT returns; the in-memory channel assigns ids in emit
+        // order (receiver first) so the monotonic id matches the flushed SERIAL.
+        var receiverId: Int? = null
+        for (draft in drafts) {
+            val option = LinkedHashMap(draft.option ?: emptyMap())
+            // fold the back-references the way PHP `send` does (receiverMessageID on both rows; senderMessageID on the sender row).
+            if (draft.whichRow == opensamguk.logic.message.MessageRowDraft.Row.RECEIVER) {
+                val id = recorder.recordMessageInsert(
+                    mailbox = draft.mailbox, type = draft.type.value, srcId = draft.srcId, destId = draft.destId,
+                    time = message.date, validUntil = message.validUntil,
+                    bodyJson = encodeMessageBody(draft, option, receiverIdToFold = null),
+                )
+                receiverId = id
+            } else {
+                recorder.recordMessageInsert(
+                    mailbox = draft.mailbox, type = draft.type.value, srcId = draft.srcId, destId = draft.destId,
+                    time = message.date, validUntil = message.validUntil,
+                    bodyJson = encodeMessageBody(draft, option, receiverIdToFold = receiverId),
+                )
+            }
+        }
+    }
+
+    /** Byte-faithful `{src,dest,text,option}` jsonb for a message row. */
+    private fun encodeMessageBody(
+        draft: opensamguk.logic.message.MessageRowDraft,
+        option: Map<String, Any?>,
+        receiverIdToFold: Int?,
+    ): String {
+        val opt = LinkedHashMap<String, Any?>(option)
+        if (receiverIdToFold != null) opt["receiverMessageID"] = receiverIdToFold
+        val body = linkedMapOf<String, Any?>(
+            "src" to draft.src.toArray(),
+            "dest" to draft.dest.toArray(),
+            "text" to draft.text,
+            "option" to (if (draft.option == null) null else opt),
+        )
+        return opensamguk.infra.persistence.MetaJson.encode(body)
+    }
+
+    /**
+     * Apply a logic Nation's mutated scalar/meta fields back onto the engine Nation row. (The engine
+     * Nation row carries name/color/gold/rice/level/typeCode/meta; `tech` rides meta in the engine
+     * slice, so it is not a separate engine column here.)
+     */
+    private fun applyLogicToNation(engine: Nation, logic: opensamguk.logic.domain.Nation): Nation =
+        engine.copy(
+            name = logic.name,
+            color = logic.color,
+            gold = logic.gold,
+            rice = logic.rice,
+            level = logic.level,
+            typeCode = logic.typeCode,
+            meta = logic.meta,
+        )
 
     /**
      * Queue the `turn_last_{officer_level}` nation-meta KV delta via the [ChangeRecorder] single-dirty-source.
