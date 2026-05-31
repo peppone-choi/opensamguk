@@ -54,6 +54,70 @@ proving it is NON-vacuous and fails loudly on a real divergence.
 
 ---
 
+## ✅ GT2 RESOLUTION — the under-covered families are CRAFTED-CAPTURED (8/9), 1 BACKLOGGED with proof
+
+The documented UNDER-COVERED families (the month-1 1010 window never exercises do불가침제의/do선전포고/do천도
+diplo SELECTION, the war-state branch of do출병, the genfound 방랑군 families, do선양, NOR the month-3/6/9/12
+nation pass) are now captured by **`tools/php-golden/capture_ai_crafted.php`** via FAITHFUL DB MUTATION of the
+SAME GT1 install (NO re-install — the hiddenSeed `71adaa4df4012a20c0883beba4810681` is preserved). Each family
+snapshots+RESTORES its mutation; the DB returns to the year-181-month-1 GT1 baseline (asserted: clock 181/1,
+npc5==0, capital 3, diplomacy 2/2, recv_assist NULL — so manifest_ai.json + world-1010.json + AiSelectionGateIT
+stay valid). Every `world-crafted-*.json` + `ai-crafted-*.json` is **byte-identical across two ALL runs**.
+
+### The load-bearing constraint (why month-1 can't reach them)
+`GeneralAI::calcDiplomacyState` (GeneralAI.php:219) short-circuits to 평화/선포 with `attackable=false` AND leaves
+`warTargetNation` UNSET for `yearMonth <= joinYearMonth(startyear+2,5) = (183,5)`. So do불가침제의 (reads
+`warTargetNation`, crashes on null at month 1 — a REAL PHP code path, NOT a harness bug), do선전포고/do출병 (need
+the full dipState/attackable), and the diplomacy families are ALL unreachable at the pinned year-181-month-1
+instant. The crafted diplo+war families advance the clock to **184/1** (a real value the engine reaches in play)
+so calcDiplomacyState fully runs; the per-general `'GeneralAI'` seed RE-PINS from the mutated (year,month)
+(self-consistent — the seed is `simpleSerialize(hidden,'GeneralAI',year,month,gid)`). The nation-pass-month
+families advance only the month (181/{3,6,12}).
+
+### Captured (8 families, byte-identical twice)
+| family | clock | faithful mutation (the EXACT PHP state shape) | fires → selection + draws |
+|---|---|---|---|
+| **diplo-불가침제의** | 184/1 | nation_env `recv_assist={n2:[2,5000000]}` (che_물자원조 write shape) for lord 하진 (gid 152) | nationTurn `do불가침제의` → `che_불가침제의 {destNationID:2,year:272,month:4}`, **drawCountAtNationEnd=0** (0-draw arsort path). m10: downstream EXCLUDED |
+| **diplo-선전포고** | 184/1 | nation-1 city.front all zeroed + nation-1 generals gold/rice→1e6 (trialProp>=1) | nationTurn `do선전포고` → `che_선전포고 {destNationID:2}`; prefix `[nextBool(prob>=1, consumed=false → NO draw), nextFloat1, choiceUsingWeight]`. m10: EXCLUDED |
+| **diplo-천도** | 184/1 | nation-1 capital RELOCATED to low-pop edge city 77 (+ city.capital flag) + last천도Trial cleared | nationTurn `do천도` → `che_천도 {destCityID:17}`; prefix `[choice (the >1-hop pick, choiceIndex=0)]`. m10: EXCLUDED |
+| **nation-pass-m3** | 181/3 | month 1→3 (promotion month); both lords (105, 152) | lord nation pass runs **choosePromotion** before the priority loop → **ZERO draws** (every empty slot takes the newChiefProb=1 no-draw path line 4097, the `:4102` phantom NEVER draws — decision #9; every occupied slot is in chief_set → SKIPPED line 4082). Reason→doNPC긴급포상 |
+| **nation-pass-m6** | 181/6 | month 1→6; both lords | + **chooseTexRate + chooseRiceBillRate** (ZERO draws, getOutcome half-away). choosePromotion 0-draw |
+| **nation-pass-m12** | 181/12 | month 1→12; both lords | + **chooseTexRate + chooseGoldBillRate** (ZERO draws). choosePromotion 0-draw |
+| **war-출병** | 184/1 | diplomacy 1↔2 set 교전 (state 0, term 0) + nation-1 gen (gid 14 공융) at a front-2 supply city bordering enemy, war-ready (train/atmos 100, crew 5000) | dipState=d전쟁 + attackable → `do출병` → `che_출병 {destCityID:1}`; stream `[choice([1,36])→idx 0→city 1]` |
+| **genfound-선양** | 181/1 | lord 하진 (gid 152) npc=5 (RESTORED after; census stays 0/0) | genReason `do선양` → `che_선양`; **do선양 draws ZERO from the LiteHashDRBG** (the destGeneralID is `ORDER BY RAND()` — OUTSIDE the stream). Q1 byte-stability: the id is replaced by sentinel `__ORDER_BY_RAND_QUARANTINED__` + `_q1ValidTargets[]` + `_q1ProducedIdWasValid`; the gate asserts membership, NOT the literal id |
+
+The **nextBool(0.1) per-occupied-slot** path of choosePromotion (decision #9) is NOT exercised by the installed
+1010 chief_set: it fires only for a chiefGeneral at a level NOT marked in `chief_set` (a desync state the
+installer does not present). The m3/m6/m12 fixtures FAITHFULLY prove the 0-draw invariant (the phantom never
+draws, empty slots don't draw) — the occupied-slot draw is structurally rare and documented, not fabricated.
+
+### Backlogged (1 family — precise reason, NOT fabricated)
+- **genfound-방랑군** (`do건국` / `do해산` / `do방랑군이동`): these fire ONLY for a 방랑군 lord
+  (officer_level==12, nation!=0, **!capital** = a wandering-army nation with capital=0; chooseGeneralTurn:3802-3827).
+  Scenario 1010 installs NO wandering-army nation (nation 1 cap 3, nation 2 cap 1). The 방랑군 state is produced by
+  the **거병→건국 lifecycle** — `che_거병.php` INSERTs a new nation row + diplomacy rows for every nation +
+  nation_turn rows for all officer levels + flips city ownership + SEEDS the nation_env `npc_nation_policy`/
+  `npc_general_policy` KV the GeneralAI ctor `cacheValues` reads — NOT by the installer. Hand-fabricating the
+  wandering-army nation + its nation_env policy/aux KV would **fabricate the exact KV the AI branches on**
+  (a parity-law violation). The faithful path is to RUN `che_거병` (real processCommand) — the long-sim GT3
+  territory (the mutating step + its SEPARATE `'generalCommand'` rng), NOT the AI-selection surface this gate pins.
+  **BACKLOG:** capture via a single-general 거병→건국 mini-sim (run che_거병 processCommand, advance ≥1 turn, then
+  capture the now-방랑군 lord's chooseGeneralTurn) once the P2–P4 거병/건국 resolvers + a one-turn-advance harness
+  are wired. Owner: P5 long-sim backlog (GT3 mini-sim or a future GT2b).
+
+### Q1 still HELD (sharpened by GT2)
+The do선양 crafted fixture confirms Q1: do선양 draws ZERO LiteHashDRBG bits; the only non-determinism is the
+SQL `ORDER BY RAND()` target-id, which is byte-replaced by a sentinel + a valid-candidate set. The gate asserts
+`destGeneralID ∈ {valid nation members, npc!=5}`, never the literal byte. do국가선택's 오랑캐임관 branch (npc==9
+lord ORDER BY RAND) is likewise unreachable (census npc9off12==0) and shares the quarantine.
+
+### Reason distribution (crafted captures)
+do불가침제의 ×1 (nation pass), do선전포고 ×1 (nation pass), do천도 ×1 (nation pass), do출병 ×1, do선양 ×1,
++ 6 nation-pass-month general-pass captures (choosePromotion/Tex/Bill prefix + doNPC긴급포상). **8 families
+CAPTURED, 1 (genfound-방랑군) BACKLOGGED.**
+
+---
+
 ## Headline result — the RNG-stream dimension is byte-for-byte GREEN
 
 **`every due-general draw stream byte-matches value-for-value and cursor-for-cursor` — PASS.**
