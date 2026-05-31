@@ -38,7 +38,11 @@ open class RandUtil(private val rng: LiteHashDrbg) {
     }
     fun <T> choiceSet(items: Set<T>): T = choice(items.toList())
     fun <T> choiceMap(items: Map<String, T>): T = items.getValue(choice(jsKeyOrder(items.keys)))
-    fun choiceUsingWeight(items: Map<String, Double>): String {
+    // `open` (like the other draw helpers above) so the AiDrawRecorder can log the weighted pick as its OWN
+    // wrapper entry. The body is unchanged; the inner `nextFloat1()` still records through virtual dispatch, so
+    // the wrapper rides ON TOP of the inner float draw (same before-cursor). The engine-side gate COLLAPSES these
+    // zero-byte wrappers on both golden + live, so only the inner RNG draw is asserted.
+    open fun choiceUsingWeight(items: Map<String, Double>): String {
         if (items.isEmpty()) throw IllegalArgumentException("Empty items")
         val keys = jsKeyOrder(items.keys)
         var sum = 0.0; for (k in keys) { val v = items.getValue(k); if (v > 0) sum += v }
@@ -46,7 +50,7 @@ open class RandUtil(private val rng: LiteHashDrbg) {
         for (k in keys) { val v = items.getValue(k); if (v <= 0) { if (rd <= 0) return k; continue }; if (rd <= v) return k; rd -= v }
         throw IllegalStateException("Unreacheable")
     }
-    fun <T> choiceUsingWeightPair(items: List<Pair<T, Double>>): T {
+    open fun <T> choiceUsingWeightPair(items: List<Pair<T, Double>>): T {
         if (items.isEmpty()) throw IllegalArgumentException("Empty items")
         var sum = 0.0; for ((_, v) in items) if (v > 0) sum += v
         var rd = nextFloat1() * sum

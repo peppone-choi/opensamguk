@@ -54,7 +54,11 @@ class CheCheondo(private val pipeline: GeneralActionPipeline) : NationCommand() 
     )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
-        val distance = (ctx.args["__distance"] as? Number)?.toInt() ?: 50
+        // The capital→dest BFS distance is preloaded by the caller (PHP `CalcCityDistance(...) ?? 50`): the AI
+        // bridge stages it as the env `__distance`; precheck stages it likewise. `ctx.args` is the canonical
+        // schema-only map (the `__distance` would be dropped by parseArgs), so it rides ctx.env. Default 50.
+        val distance = (ctx.env["__distance"] as? Number)?.toInt()
+            ?: (ctx.args["__distance"] as? Number)?.toInt() ?: 50
         val cost = getCost((ctx.env["develCost"] as Number).toInt(), distance)
         return listOf(
             occupiedCity(), occupiedDestCity(), beChief(), suppliedCity(), suppliedDestCity(),

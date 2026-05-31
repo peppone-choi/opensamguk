@@ -95,13 +95,13 @@ class NationDiploFamilyTest {
         val rng = RecordingRng("diplo-seed")
         // amount*4 >= income picks the FIRST (highest, after arsort DESC) qualifying candidate.
         val candidateList = linkedMapOf(2 to 1000, 3 to 800, 4 to 100)
-        val picked = NationDiploFamily.pickNonAggressionTarget(candidateList, income = 3000, rng = rng)
+        val picked = NationDiploFamily.pickNonAggressionTarget(candidateList, income = 3000.0, rng = rng)
         assertEquals(0, rng.nextBoolCalls, "do불가침제의 draws NO nextBool (catalog §6 zero-draw)")
         assertEquals(0, rng.nextFloat1Calls, "do불가침제의 draws NO nextFloat1")
         assertEquals(0, rng.nextBitCalls, "do불가침제의 draws NO nextBit (arsort-only, PHP :1814)")
-        // dest=2 (amount 1000): 1000*4=4000 >= 3000 → picked; diplomatMonth = 24*1000/3000 = 8.0.
+        // dest=2 (amount 1000): 1000*4=4000 >= 3000 → picked; diplomatMonth = 24*1000/3000 = 8.0 (FLOAT, PHP :1819).
         assertEquals(2, picked?.destNationId)
-        assertEquals(8, picked?.diplomatMonth, "diplomatMonth = 24*amount/income (PHP :1819 intval-trunc)")
+        assertEquals(8.0, picked?.diplomatMonth, "diplomatMonth = 24*amount/income FLOAT (PHP :1819; trunc at parseYearMonth)")
     }
 
     @Test
@@ -118,7 +118,7 @@ class NationDiploFamilyTest {
         val rng = RecordingRng("diplo-seed")
         // income very high → amount*4 < income for ALL → break → null (PHP :1808-1810 `break`).
         val candidateList = linkedMapOf(2 to 100, 3 to 50)
-        val picked = NationDiploFamily.pickNonAggressionTarget(candidateList, income = 100_000, rng = rng)
+        val picked = NationDiploFamily.pickNonAggressionTarget(candidateList, income = 100_000.0, rng = rng)
         assertNull(picked, "no candidate with amount*4 >= income → null (PHP :1822 destNationID===null)")
         assertEquals(0, rng.nextBoolCalls + rng.nextFloat1Calls + rng.nextBitCalls, "still ZERO draws")
     }
@@ -126,7 +126,7 @@ class NationDiploFamilyTest {
     @Test
     fun `nonAggression empty candidate list returns null`() {
         val rng = RecordingRng("diplo-seed")
-        val picked = NationDiploFamily.pickNonAggressionTarget(linkedMapOf(), income = 3000, rng = rng)
+        val picked = NationDiploFamily.pickNonAggressionTarget(linkedMapOf(), income = 3000.0, rng = rng)
         assertNull(picked, "empty candidateList → null (PHP :1799-1801 `if (!\$candidateList) return null;`)")
     }
 

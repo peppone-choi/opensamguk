@@ -208,7 +208,7 @@ class AiTurnAdapter(
         // the hook's second updateInstance() a no-op so calcGenType still fires exactly once on the rng.
         instance.updateInstance()
 
-        val statCalc = StatCalc(PerTurnOverlay.toLogicGeneral(general), pipeline)
+        val statCalc = statCalcFor(general)
         val updateInstanceHook: (opensamguk.common.rng.RandUtil) -> Unit = { r ->
             instance.updateInstance()
             instance.calcGenType(r, statCalc)
@@ -295,7 +295,7 @@ class AiTurnAdapter(
             _kvDeltas.add(KvDelta(gid, key, value))
         }
 
-        val statCalc = StatCalc(PerTurnOverlay.toLogicGeneral(general), pipeline)
+        val statCalc = statCalcFor(general)
         val worldView = buildWorldView(nationId, generalId, instance, nationPolicy)
 
         val logicCity = world.getCityById(general.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
@@ -380,8 +380,15 @@ class AiTurnAdapter(
         envMap: Map<String, Any?>,
     ): (String, Map<String, Any?>) -> Boolean {
         val overlay = PerTurnOverlay(world)
-        val view = WorldStateViewAdapter(overlay, env = envMap)
         return { actionCode, rawArgs ->
+            // STAGE the FULL-gate inputs the AI bridge must supply over the live world (PHP `hasFullConditionMet`
+            // runs over the real DB). che_천도's ReqNationGold/Rice cost = develCost*5*2^distance needs the REAL
+            // capital→dest distance (default 50 → an impossible cost → wrong deny); che_선전포고's NearNation needs
+            // the REAL map adjacency (the def's placeholder lambda is `false`). These ride the ENV map (the
+            // canonical `parseArgs` drops non-schema arg keys, but `ctx.env`/the view env survive `ctx.copy`).
+            // The do<한글> body's selection draws already ran on the shared rng; this is the post-pick gate.
+            val stagedEnv = stageFullGateEnv(actionCode, rawArgs, nationId, envMap)
+            val view = WorldStateViewAdapter(overlay, env = stagedEnv)
             val ctx = ConstraintContext(
                 actorId = generalId,
                 cityId = cityId,
@@ -389,11 +396,52 @@ class AiTurnAdapter(
                 destGeneralId = (rawArgs["destGeneralID"] as? Number)?.toInt(),
                 destCityId = (rawArgs["destCityID"] as? Number)?.toInt(),
                 destNationId = (rawArgs["destNationID"] as? Number)?.toInt(),
-                env = envMap,
+                env = stagedEnv,
                 mode = ConstraintMode.FULL,
             )
             candidateAllowed(actionCode, rawArgs, ctx, view) { code -> resolveDef(code) }
         }
+    }
+
+    /**
+     * Stage the live-world inputs the FULL constraint gate needs but the AI emits implicitly (PHP computes them
+     * inside `hasFullConditionMet()` over the real DB), onto a per-call COPY of the env map:
+     *  - **che_천도** — `__distance` = the capital→dest BFS distance over the nation's capital-connected cities
+     *    (PHP `CalcCityDistance(capital, dest, ownedCities) ?? 50`). Without it the cost defaults to distance 50
+     *    → `develCost*5*2^50` → ReqNationGold always denies.
+     *  - **che_선전포고** — `__isNeighbor` = `AiDistance.isNeighbor(nation, destNation, cityRows)` so NearNation
+     *    can read the REAL adjacency (the def's hardcoded `false` placeholder always denies).
+     */
+    private fun stageFullGateEnv(
+        actionCode: String,
+        rawArgs: Map<String, Any?>,
+        nationId: Int,
+        envMap: Map<String, Any?>,
+    ): Map<String, Any?> {
+        return when (actionCode) {
+            "che_천도" -> {
+                val destCityId = (rawArgs["destCityID"] as? Number)?.toInt() ?: return envMap
+                val capital = world.getNationById(nationId)?.capitalCityId ?: 0
+                val dist = capitalToDestDistance(nationId, capital, destCityId) ?: 50
+                LinkedHashMap(envMap).apply { put("__distance", dist) }
+            }
+            "che_선전포고" -> {
+                val destNationId = (rawArgs["destNationID"] as? Number)?.toInt() ?: return envMap
+                val cityRows = world.listCities().sortedBy { it.id }.map { PerTurnOverlay.toLogicCity(it) }
+                val neighbor = AiDistance.isNeighbor(nationId, destNationId, cityRows)
+                LinkedHashMap(envMap).apply { put("__isNeighbor", neighbor) }
+            }
+            else -> envMap
+        }
+    }
+
+    /** PHP `CalcCityDistance(capital, dest, ownedCities)` — the BFS distance over the capital-connected own cities. */
+    private fun capitalToDestDistance(nationId: Int, capital: Int, destCityId: Int): Int? {
+        if (capital == 0) return null
+        val nationCityIds = capitalConnectedNationCities(nationId, capital)
+        if (destCityId !in nationCityIds) return null
+        val distanceList = AiDistance.searchAllDistanceByCityList(nationCityIds)
+        return distanceList[capital]?.get(destCityId)
     }
 
     /**
@@ -437,7 +485,7 @@ class AiTurnAdapter(
      */
     private fun toAiGeneralView(tg: TurnGeneral): AiGeneralView {
         val recentWarSeconds = tg.recentWarTime?.let { Duration.between(it, tg.turnTime).seconds }
-        val statCalc = StatCalc(PerTurnOverlay.toLogicGeneral(tg), pipeline)
+        val statCalc = statCalcFor(tg)
         return AiGeneralView(
             general = PerTurnOverlay.toLogicGeneral(tg),
             recentWarSeconds = recentWarSeconds,
@@ -449,6 +497,64 @@ class AiTurnAdapter(
     /** S4 — `$nation['tech']` rides `Nation.meta["tech"]` (no tech column); default 0. */
     private fun nationTechOf(nationId: Int): Int =
         (world.getNationById(nationId)?.meta?.get("tech") as? Number)?.toInt() ?: 0
+
+    /**
+     * S-MODULES (parity) — the per-general [GeneralActionModule] stack the PHP `General::getActionList()` folds
+     * into EVERY `getStatValue`/`onCalcDomestic`. The AI reads stats THROUGH this stack: e.g. `getLeadership(false)`
+     * for a lord (officer_level 12) gains `calcLeadershipBonus = nationLevel*2` via [OfficerLevelModule] (PHP
+     * `TriggerOfficerLevel`) — a +14 for a level-7 nation, which sets do징병's `crew = fullLeadership*100`. A naive
+     * identity pipeline read the RAW column (49 not 63) → wrong recruit crew. We build the SAME factory order
+     * (nationType #1, officer #2, specialDomestic #3, personality #5, items #9..) the resolve/battle path uses,
+     * keyed off the general's nation type + meta `special`/`personal` codes + equip slots.
+     */
+    private val moduleFactory by lazy {
+        opensamguk.logic.stats.GeneralActionModuleFactory(
+            nationTypeRegistry = opensamguk.logic.traits.NationTypeRegistry,
+            specialDomesticRegistry = opensamguk.logic.traits.SpecialDomesticRegistry,
+            personalityRegistry = opensamguk.logic.traits.PersonalityRegistry(),
+            itemRegistry = opensamguk.logic.items.ItemRegistry(relYearProvider = {
+                maxOf(0, world.getState().currentYear - startYear)
+            }),
+        )
+    }
+
+    /** A per-general module-backed [GeneralActionPipeline] (the full getActionList stat stack). */
+    private fun pipelineFor(tg: TurnGeneral): GeneralActionPipeline {
+        val logicGeneral = PerTurnOverlay.toLogicGeneral(tg)
+        val nationLevel = world.getNationById(tg.nationId)?.level ?: 0
+        val officerCity = (tg.meta["officer_city"] as? Number)?.toInt() ?: tg.cityId
+        val mods = moduleFactory.build(
+            general = logicGeneral,
+            nationTypeCode = world.getNationById(tg.nationId)?.typeCode,
+            specialDomesticCode = tg.meta["special"] as? String,
+            personalityCode = tg.meta["personal"] as? String,
+            nationLevel = nationLevel,
+            officerCity = officerCity,
+        )
+        return GeneralActionPipeline(mods)
+    }
+
+    /** A [StatCalc] over the per-general module-backed pipeline (PHP `getActionList()` stat stack). */
+    private fun statCalcFor(tg: TurnGeneral): StatCalc =
+        StatCalc(PerTurnOverlay.toLogicGeneral(tg), pipelineFor(tg))
+
+    /**
+     * The module-backed pipeline for a [opensamguk.logic.domain.General] (the promotion-candidate stat reads).
+     * Same factory order as [pipelineFor]; the nation type/level come from the general's nation row.
+     */
+    private fun pipelineForLogic(g: opensamguk.logic.domain.General): GeneralActionPipeline {
+        val nationLevel = world.getNationById(g.nationId)?.level ?: 0
+        val officerCity = (g.meta["officer_city"] as? Number)?.toInt() ?: g.cityId
+        val mods = moduleFactory.build(
+            general = g,
+            nationTypeCode = world.getNationById(g.nationId)?.typeCode,
+            specialDomesticCode = g.meta["special"] as? String,
+            personalityCode = g.meta["personal"] as? String,
+            nationLevel = nationLevel,
+            officerCity = officerCity,
+        )
+        return GeneralActionPipeline(mods)
+    }
 
     /**
      * Build the per-general [GeneralAiContext] with every derived scalar sourced from the live world
@@ -707,21 +813,42 @@ class AiTurnAdapter(
 
     /**
      * PHP `:1808-1811` — `getGoldIncome + getRiceIncome + getWallIncome` at taxRate 15 over the supplyCities,
-     * or null when there are NO supplyCities (PHP `:1804-1806` → null). Reuses the GREEN income helpers; the
-     * nation-type income fold is identity here (the nation-type module is not threaded — a faithful no-op for
-     * the neutral/default nation type). The capital gets the capital factor.
+     * or null when there are NO supplyCities (PHP `:1804-1806` → null). Threads the REAL nation-type income
+     * module (PHP `buildNationTypeClass($nation['type'])`, e.g. che_유가's 농상↑) + the officersCnt-per-city map
+     * (PHP `SELECT officer_city, count(*) … officer_level IN (2,3,4) AND city = officer_city GROUP BY officer_city`),
+     * exactly as the PHP income functions do. Returns the FLOAT sum (the body's `24*amount/income` is float
+     * division; a premature `.toInt()` here shifted the negotiated diplomatMonth → wrong target year — fixed).
      */
-    private fun diploIncome(nationId: Int, worldView: AiWorldView): Int? {
+    private fun diploIncome(nationId: Int, worldView: AiWorldView): Double? {
         val supplyCities = worldView.supplyCities.values.map { it.city }
         if (supplyCities.isEmpty()) return null
         val nationRow = world.getNationById(nationId)
         val capital = nationRow?.capitalCityId ?: 0
         val level = nationRow?.level ?: 1
         val taxRate = 15.0 // PHP `:1808-1810` literal taxRate 15.
-        val gold = getGoldIncome(supplyCities, capital, level, taxRate, null, pipeline)
-        val rice = getRiceIncome(supplyCities, capital, level, taxRate, null, pipeline)
-        val wall = getWallIncome(supplyCities, capital, level, taxRate, null, pipeline)
-        return (gold + rice + wall).toInt() // PHP sums the three (the body compares with int-ish ratios).
+        val nationType = opensamguk.logic.traits.NationTypeRegistry.resolve(nationRow?.typeCode)
+        val officerCntByCity = officerCntByCity(nationId)
+        val gold = getGoldIncome(supplyCities, capital, level, taxRate, nationType, pipeline, officerCntByCity)
+        val rice = getRiceIncome(supplyCities, capital, level, taxRate, nationType, pipeline, officerCntByCity)
+        val wall = getWallIncome(supplyCities, capital, level, taxRate, nationType, pipeline, officerCntByCity)
+        return gold + rice + wall // PHP keeps the float sum (the body compares amount*4 < income, then 24*a/income).
+    }
+
+    /**
+     * PHP income-fn `SELECT officer_city, count(*) FROM general WHERE nation = %i AND officer_level IN (2,3,4)
+     * AND city = officer_city GROUP BY officer_city` — the per-city count of officer_level∈{2,3,4} generals
+     * standing on their own officer_city. `officer_city` rides the general meta (no typed column).
+     */
+    private fun officerCntByCity(nationId: Int): Map<Int, Int> {
+        val out = LinkedHashMap<Int, Int>()
+        for (g in world.listGenerals()) {
+            if (g.nationId != nationId) continue
+            if (g.officerLevel !in 2..4) continue
+            val officerCity = (g.meta["officer_city"] as? Number)?.toInt() ?: continue
+            if (officerCity != g.cityId) continue
+            out[officerCity] = (out[officerCity] ?: 0) + 1
+        }
+        return out
     }
 
     /**
@@ -880,10 +1007,20 @@ class AiTurnAdapter(
         return diffSeconds < turnTerm.toLong() * 30 && lastLevel != general.officerLevel
     }
 
-    /** PHP `nation_env['recv_assist']` → `(candNationID, amount)` pairs in foreach insertion order. */
+    /**
+     * PHP `nation_env['recv_assist']` → `(candNationID, amount)` pairs in foreach insertion order. PHP iterates
+     * `foreach ($recvAssist as [$candNationID, $amount])` (GeneralAI.php:1783) — LIST-destructuring the VALUES;
+     * the container KEY (e.g. `"n2"`, the che_물자원조 write shape) is IGNORED, only the `[cand, amount]` value
+     * pair matters. So this accepts EITHER a JSON-array container `[[cand,amount],…]` OR a JSON-object container
+     * `{"n2":[cand,amount],…}`, iterating the VALUES of either in insertion order exactly as the PHP foreach does.
+     */
     private fun decodeAssistPairs(raw: Any?): List<Pair<Int, Int>> {
-        val list = raw as? List<*> ?: return emptyList()
-        return list.mapNotNull { row ->
+        val values: Collection<*> = when (raw) {
+            is List<*> -> raw
+            is Map<*, *> -> raw.values // PHP foreach over an assoc array walks the VALUES in insertion order.
+            else -> return emptyList()
+        }
+        return values.mapNotNull { row ->
             val pair = row as? List<*> ?: return@mapNotNull null
             val cand = (pair.getOrNull(0) as? Number)?.toInt() ?: return@mapNotNull null
             val amount = (pair.getOrNull(1) as? Number)?.toInt() ?: return@mapNotNull null
@@ -904,7 +1041,7 @@ class AiTurnAdapter(
 
     /** PHP `$general` → the promotion candidate (the chief-gate scalars; stats are the `(F,F,F,F)` flavor). */
     private fun toPromotionCandidate(gv: AiGeneralView, nationTech: Int): RatesPromoFamily.PromotionCandidate {
-        val statCalc = StatCalc(gv.general, pipeline)
+        val statCalc = StatCalc(gv.general, pipelineForLogic(gv.general))
         return RatesPromoFamily.PromotionCandidate(
             generalId = gv.general.id,
             officerLevel = gv.general.officerLevel,
@@ -1350,8 +1487,12 @@ class AiTurnAdapter(
      * getLeadership(true)*100 [- crew when same crewType])`. Mirrors [RecruitAlgorithm]'s private appliedCrew.
      */
     private fun appliedCrewForCost(general: opensamguk.logic.domain.General, reqCrewTypeId: Int, amount: Int): Int {
+        // PHP che_징병 `:96` `$leadership = $general->getLeadership(true)` — WITH injury AND the full
+        // getActionList bonuses (the +officer/nation-type/item stack). The identity `pipeline` read the RAW
+        // column (e.g. 49 not the lord's 63) → too-small maxCrew → wrong appliedCrew → wrong cost → the
+        // do징병 half-crew gate took the wrong branch. Use the per-general module pipeline (PHP-faithful).
         val leadership = opensamguk.logic.stats.getStatValue(
-            general, "leadership", pipeline, 255, withInjury = true, useFloor = true,
+            general, "leadership", pipelineForLogic(general), 255, withInjury = true, useFloor = true,
         ).toInt()
         var maxCrew = leadership * 100
         if (reqCrewTypeId == general.crewTypeId) maxCrew -= general.crew

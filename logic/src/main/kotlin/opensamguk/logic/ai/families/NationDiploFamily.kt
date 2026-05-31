@@ -62,8 +62,14 @@ object NationDiploFamily {
     // do불가침제의 (:1765-1846) — ZERO RNG draws. arsort DESC + income-quarter walk + 8-month cooldown.
     // ==================================================================================================
 
-    /** The selected non-aggression target: the destination nation id + the negotiated `diplomatMonth`. */
-    data class NonAggressionTarget(val destNationId: Int, val diplomatMonth: Int)
+    /**
+     * The selected non-aggression target: the destination nation id + the negotiated `diplomatMonth`. PHP
+     * `:1819` `$diplomatMonth = 24 * $amount / $income;` is FLOAT division (NOT integer-truncating); the
+     * truncation happens ONLY at the `Util::parseYearMonth(int $yearMonth)` boundary (the `int` param coerces
+     * `$yearMonth + $diplomatMonth` toward zero). So this carries the un-truncated float — the caller truncates
+     * the SUM, not the term.
+     */
+    data class NonAggressionTarget(val destNationId: Int, val diplomatMonth: Double)
 
     /**
      * `do불가침제의`'s 8-month cooldown gate (PHP `:1791`):
@@ -95,17 +101,19 @@ object NationDiploFamily {
      * After `arsort` DESC, walk the candidates and pick the FIRST whose `amount * 4 >= income` (PHP `:1816`
      * `if ($amount * 4 < $income) break;` — the walk BREAKS, not continues, on the first failure: the list is
      * value-DESC, so once one fails all later ones fail). The negotiated `diplomatMonth = 24 * amount / income`
-     * (PHP `:1819`, integer-truncating `intval` — `Int` arithmetic). Returns null when no candidate qualifies
-     * (PHP `:1822` `if ($destNationID === null) return null;`) or the list is empty (PHP `:1799-1801`).
+     * (PHP `:1819`) is FLOAT division — the truncation happens later at `parseYearMonth(int)` on the SUM, NOT
+     * here (a premature `Int` division here truncated diplomatMonth and shifted the target year — fixed). Returns
+     * null when no candidate qualifies (PHP `:1822`) or the list is empty (PHP `:1799-1801`).
      *
      * @param candidateList the `recv_assist` candidate map (candNationID → amount), already cooldown-filtered.
-     * @param income the `goldIncome + riceIncome + wallIncome` total (PHP `:1810-1812`, the adapter computes it).
+     * @param income the `goldIncome + riceIncome + wallIncome` float total (PHP `:1810-1812`, the adapter computes
+     *   it WITH the nation-type module + officersCnt — NOT truncated to int before this).
      * @return the picked [NonAggressionTarget], or null.
      */
     @Suppress("UNUSED_PARAMETER")
     fun pickNonAggressionTarget(
         candidateList: Map<Int, Int>,
-        income: Int,
+        income: Double,
         rng: RandUtil,
     ): NonAggressionTarget? {
         if (candidateList.isEmpty()) {
@@ -116,8 +124,8 @@ object NationDiploFamily {
             if (amount * 4 < income) {
                 break // PHP :1816 — value-DESC walk BREAKS on the first sub-threshold candidate.
             }
-            // PHP :1818-1819 — first qualifying candidate wins (the loop body always `break`s after this).
-            val diplomatMonth = 24 * amount / income // intval-trunc (Int division), PHP :1819.
+            // PHP :1818-1819 — first qualifying candidate wins; diplomatMonth is FLOAT (truncated at parseYearMonth).
+            val diplomatMonth = 24.0 * amount / income
             return NonAggressionTarget(destNationId = candNationId, diplomatMonth = diplomatMonth)
         }
         return null // PHP :1822 `if ($destNationID === null) return null;`
@@ -290,7 +298,7 @@ object NationDiploFamily {
         val respAssist: Map<String, List<Int>>,
         val respAssistTry: Map<String, List<Int>>,
         val warTargetNationKeys: Set<Int>,
-        val income: Int?,
+        val income: Double?,
         val recordNationKv: AiKvRecorder,
     )
 
@@ -407,8 +415,11 @@ object NationDiploFamily {
         // :1814-1823 — arsort DESC + the income-quarter walk (ZERO draws); null when nothing qualifies.
         val target = pickNonAggressionTarget(candidateList, income, ctx.rng) ?: return null // :1798-1800/1825-1826
 
-        // :1830 — parseYearMonth(yearMonth + diplomatMonth) → [targetYear, targetMonth].
-        val (targetYear, targetMonth) = NationCommand.parseYearMonth(input.yearMonth + target.diplomatMonth)
+        // :1830 — parseYearMonth(yearMonth + diplomatMonth). PHP `Util::parseYearMonth(int $yearMonth)` coerces
+        // the float SUM to int by TRUNCATION toward zero (NOT rounding) — so truncate `yearMonth + diplomatMonth`
+        // here (diplomatMonth is the un-truncated float from pickNonAggressionTarget).
+        val sumYearMonth = (input.yearMonth + target.diplomatMonth).toInt() // PHP int-coerce = trunc-toward-zero.
+        val (targetYear, targetMonth) = NationCommand.parseYearMonth(sumYearMonth)
         val args = linkedMapOf<String, Any?>(
             "destNationID" to target.destNationId,
             "year" to targetYear,

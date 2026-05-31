@@ -1,0 +1,20 @@
+<?php
+namespace sammo;
+require __DIR__ . '/_boot.php';
+$db = DB::db();
+$gameStor = KVStorage::getStorage($db, 'game_env');
+$sy=$gameStor->getValue('year'); $sm=$gameStor->getValue('month');
+$gameStor->setValue('year',184); $gameStor->setValue('month',1);
+$env = $gameStor->getValues(['year','month','startyear','turnterm']);
+$general = General::createObjFromDB(152);
+$L = $general->getLeadership(false);
+$type = 1302;
+$crew = $L * 100;
+$gold = $general->getVar('gold') - $L*3;
+fwrite(STDOUT, "L=$L crew=$crew goldAfter=$gold\n");
+$cmd = buildGeneralCommandClass('che_징병', $general, $env, ['crewType'=>$type,'amount'=>$crew]);
+$cost = $cmd->getCost()[0];
+fwrite(STDOUT, "cost(che_징병,$crew,type$type)=$cost  gold<cost=".($gold<$cost?1:0)."  gold*2>=cost=".($gold*2>=$cost?1:0)."\n");
+$half = $crew*0.5; $halfRounded = round($half-49,-2);
+fwrite(STDOUT, "halfRounded=$halfRounded\n");
+$gameStor->setValue('year',$sy); $gameStor->setValue('month',$sm);
