@@ -229,6 +229,123 @@ class AiTurnAdapterMaterializeTest {
         )
     }
 
+    // ── (recruit) a 통솔장 at war with a low crew fires a real che_징병/모병 (recruit ladder materialised) ──
+
+    @Test fun `recruit - a war-nation 통솔장 with low crew fires a real che_징병`() {
+        // npc==2 통솔장 in the HIGH-TRUST non-front backup city (장안: trust 90 ≥ 70 → do긴급내정 trust gate skips;
+        // pop 190k near max → 정착장려 pop gate skips; not a front city → no 출병/전투준비), crew well below
+        // minWarCrew, plenty of gold/rice + city pop → do징병 reaches the armType/crewType/cost ladder and emits a
+        // real che_징병 (or che_모병). It sits AHEAD of 전쟁내정/일반내정 in the priority spine, so it fires there.
+        val g = general(
+            id = 55, cityId = BACKUP, leadership = 95, strength = 95, intel = 20, crew = 0, train = 50, atmos = 50,
+            gold = 500_000, rice = 500_000,
+        )
+        val world = warWorld(listOf(g, general(id = 12, officerLevel = 12)))
+        val chosen = adapter(world).chooseGeneralTurn(55, ReservedTurn("휴식", ""))
+
+        assertTrue(
+            chosen.actionCode == "che_징병" || chosen.actionCode == "che_모병",
+            "the do징병 recruit ladder materialised and fired (was ${chosen.actionCode} / ${chosen.reason})",
+        )
+        // the RAW recruit args the body emits — a crewType id (>=1000) + a positive crew amount.
+        assertTrue((chosen.args["crewType"] as? Number)?.toInt()?.let { it >= 1000 } == true, "a real crewType id emitted")
+        assertTrue((chosen.args["amount"] as? Number)?.toInt()?.let { it > 0 } == true, "a positive crew amount emitted")
+    }
+
+    // ── (trade) a general with a gold/rice imbalance at a trading city fires a real che_군량매매 ──
+
+    @Test fun `trade - a war-nation general with a resource imbalance fires a real che_군량매매`() {
+        // A 무장 (NOT 통솔장 → do징병 null-guards on genType) at the front capital with gold >> rice → do금쌀구매's
+        // sell/buy ladder qualifies and emits che_군량매매. 금쌀구매 sits at priority 3 (after 귀환), and with a
+        // pure-무장 there is no recruit/develop 통솔 path ahead of it that fires first.
+        val g = general(
+            id = 56, leadership = 20, strength = 95, intel = 20, crew = 0, train = 50, atmos = 50,
+            gold = 500_000, rice = 1_000,
+        )
+        val world = warWorld(listOf(g, general(id = 12, officerLevel = 12)))
+        val chosen = adapter(world).chooseGeneralTurn(56, ReservedTurn("휴식", ""))
+
+        assertEquals(
+            "che_군량매매", chosen.actionCode,
+            "the do금쌀구매 trade ladder materialised and fired (was ${chosen.actionCode} / ${chosen.reason})",
+        )
+        // the RAW trade args — a buyRice flag + a positive clamped amount.
+        assertTrue(chosen.args.containsKey("buyRice"), "a buyRice flag emitted")
+        assertTrue((chosen.args["amount"] as? Number)?.toInt()?.let { it >= 100 } == true, "a clamped trade amount emitted")
+    }
+
+    // ── (diplo) a peacetime ruler with a pending assist debt fires a real che_불가침제의 (SELECTION wired) ──
+
+    @Test fun `diplo - a peacetime ruler with a recv_assist debt fires a real che_불가침제의`() {
+        // do불가침제의 (ZERO draws): a ruler (officer_level 12) at PEACE (no war diplomacy → dipState d평화)
+        // whose nation_env recv_assist records a debt from a non-war neighbour → the deterministic income-quarter
+        // walk selects that nation and emits che_불가침제의. The SELECTION + boolean gate IS P5 scope (decision #11).
+        val DONOR = 2 // the assisting nation whose debt we owe; NOT a war target (peace world).
+        val recvAssist = listOf(listOf(DONOR, 1_000_000)) // recv_assist: [[candNationID, amount]]
+        val nationEnv = linkedMapOf<String, Any?>("recv_assist" to recvAssist)
+        val ruler = general(
+            id = 80, nationId = 1, cityId = CAP, officerLevel = 12, leadership = 90, strength = 90, intel = 90,
+        )
+        // a peace world: nation 1 (with the recv_assist debt) + a separate donor nation 2; NO war diplomacy row.
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                listOf(ruler),
+                listOf(
+                    frontCapital().copy(frontState = 0, supplyState = 1),
+                    backupCity(),
+                    enemyCity().copy(nationId = DONOR),
+                ),
+                listOf(
+                    nation(1).copy(meta = linkedMapOf("nation_env" to nationEnv)),
+                    nation(DONOR, capital = ENEMY_CITY),
+                ),
+                diplomacy = listOf(),
+            ),
+        )
+
+        val chosen = adapter(world).chooseNationTurn(80, ReservedTurn("휴식", ""), LastTurn())
+
+        assertEquals(
+            "che_불가침제의", chosen.actionCode,
+            "the do불가침제의 SELECTION materialised and fired (was ${chosen.actionCode} / ${chosen.reason})",
+        )
+        assertEquals(DONOR, (chosen.args["destNationID"] as? Number)?.toInt(), "the recv_assist donor was selected")
+    }
+
+    // ── (S2) the reservedCommandNameOf thread reaches the che_집합 troopLeader rung (decoupled from JDBC) ──
+
+    @Test fun `S2 - reservedCommandNameOf threads the che_집합 troop-leader rung into the nation pass`() {
+        // A chief + a non-NPC troop leader (troop == self) whose turn_idx 0 reserved command is che_집합. The S2
+        // (generalId)->String? lookup (NOT a JDBC read) must be CONSULTED for the nation's generals so the
+        // categorize buckets the general into troopLeaders (AiWorldView :3577). Proving the thread is LIVE =
+        // the adapter actually queries the lookup for the nation generals during the pass (decoupled from JDBC).
+        val chief = general(id = 1, officerLevel = 12, leadership = 90)
+        val troopLeader = general(id = 30, cityId = CAP, npcState = 0, leadership = 85, crew = 5000, troopId = 30)
+        val member = general(id = 31, cityId = CAP, npcState = 0, leadership = 80, crew = 0, troopId = 30)
+        val world = warWorld(listOf(chief, troopLeader, member))
+
+        // The reserved-turn map lives in the turn loop (decoupled from JDBC); thread it as a plain lambda and
+        // record which general ids are queried — the adapter must consult it for the nation generals (S1+S2).
+        val queried = LinkedHashSet<Int>()
+        val reservedNameOf: (Int) -> String? = { gid ->
+            queried.add(gid)
+            if (gid == 30) "che_집합" else null
+        }
+        val a = AiTurnAdapter(
+            world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1,
+            reservedCommandNameOf = reservedNameOf,
+        )
+        val chosen = a.chooseNationTurn(1, ReservedTurn("휴식", ""), LastTurn())
+
+        assertTrue(chosen.actionCode.isNotEmpty(), "the nation pass produced a command")
+        // The S2 thread is LIVE: the troop leader (id 30, the only che_집합 holder) was queried during categorize.
+        assertTrue(30 in queried, "reservedCommandNameOf was consulted for the troop leader (S2 thread is live)")
+        // READ-ONLY over GAME ENTITIES (the S2 lookup is a pure lambda, never a row write).
+        val dirty = world.consumeDirtyState()
+        assertTrue(dirty.generals.isEmpty() && dirty.cities.isEmpty(), "no inline general/city row written")
+    }
+
     // ── DaemonNoEntityManager invariant: the materialised adapter stays READ-ONLY over GAME ENTITIES ──
 
     @Test fun `the materialised adapter writes no general or city row inline`() {
