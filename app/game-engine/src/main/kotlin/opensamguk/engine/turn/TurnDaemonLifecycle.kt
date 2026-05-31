@@ -44,6 +44,19 @@ class TurnDaemonLifecycle(
      */
     private val chooseNationTurn: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
     /**
+     * P5 ONE-RNG — the per-general AI decision-window OPEN (PHP `:290/294` `$ai = new GeneralAI($general)`,
+     * ONE `GeneralAI` per general per turn). Invoked ONCE per due general — after `processBlocked` returns
+     * false, BEFORE the nation pass — so a due general's nation pass + general pass thread the SAME per-general
+     * `"GeneralAI"` decision rng (the [AiTurnAdapter] cache keyed `(generalId, year, month)`: `chooseNationTurn`
+     * builds it as the stream PREFIX, `chooseGeneralTurn` CONTINUES it). The daemon wires this to
+     * [AiTurnAdapter.beginGeneralTurn] so production matches the gated `AiSelectionGateIT` (which calls
+     * `resetRngFor(gid)` at the same boundary). Default = no-op (the P1–P4 general-only call sites + any
+     * caller that recreates the adapter per turn stay unchanged). The execution streams
+     * (`'nationCommand'`/`'generalCommand'`) are re-seeded at resolve and stay DISTINCT from this stream
+     * (R-SEAM §2).
+     */
+    private val beginGeneralTurn: (generalId: Int) -> Unit = { },
+    /**
      * The killturn baseline / clock-freeze gate (`processBlocked`, PHP `:299`). Supplies the
      * [LifecycleEnv] the SINGLE `processBlocked()` gate reads (the block log's `<1>HH:MM</>` date stamp +
      * the killturn decrement). Default builds a minimal env from the world state + the tick's turn time.
@@ -95,6 +108,13 @@ class TurnDaemonLifecycle(
             // BOTH the nation pass AND the general pass (R-SEAM §2). The handler's processBlocked pushes
             // the block log + decrements killturn, then we skip both resolves for this general.
             if (handler.processBlocked(g.id, env)) continue
+
+            // OPEN this due general's per-general "GeneralAI" decision window (PHP `:290/294` `new GeneralAI`).
+            // Invoked ONCE per general, BEFORE the nation pass, so the nation pass (`chooseNationTurn`, stream
+            // PREFIX) and the general pass (`chooseGeneralTurn`, continuation) share ONE per-general decision
+            // rng — matching the gated AiSelectionGateIT. No-op by default. The execution rngs are re-seeded
+            // downstream and stay DISTINCT (R-SEAM §2).
+            beginGeneralTurn(g.id)
 
             // --- NATION PASS FIRST (R-SEAM §2 `:301-324`), under the same processBlocked() gate ---
             // hasNationTurn ⇐ nation!=0 && officer_level>=5 (PHP `:260`). Only when a nation processor is

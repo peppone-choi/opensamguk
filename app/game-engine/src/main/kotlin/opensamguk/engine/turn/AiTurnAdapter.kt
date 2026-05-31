@@ -137,6 +137,21 @@ class AiTurnAdapter(
         rngCache.keys.removeAll { it.first == generalId }
     }
 
+    /**
+     * OPEN a fresh per-general `"GeneralAI"` decision window for [generalId] (PHP `:290/294`
+     * `$ai = new GeneralAI($general)` — ONE `GeneralAI` per general per turn). Drops any cached rng so the
+     * FIRST of this general's `chooseNationTurn`/`chooseGeneralTurn` calls builds a fresh stream (via
+     * [rngFactory]) and the SIBLING pass CONTINUES it — the single-`GeneralAI`-per-general semantics.
+     *
+     * The production [TurnDaemonLifecycle] calls this ONCE per due general (after `processBlocked`, before
+     * the nation pass) so the nation pass + general pass thread ONE shared decision rng — matching the gated
+     * [opensamguk.engine.golden.AiSelectionGateIT] (which calls [resetRngFor] at the same boundary). Synonym
+     * for [resetRngFor]; the distinct name documents the per-general window OPEN at the call site.
+     */
+    fun beginGeneralTurn(generalId: Int) {
+        resetRngFor(generalId)
+    }
+
     /** Whether [generalId] is AI-controlled (`npc >= 2`, PHP `$general->isNPC()`) — the hook gate. */
     fun isAiControlled(generalId: Int): Boolean =
         world.getGeneralById(generalId)?.let { ReservedTurnHandler.isAiControlled(it) } ?: false
