@@ -5,10 +5,12 @@ import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
@@ -17,6 +19,15 @@ import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.util.phpRound
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.long
+import kotlinx.serialization.json.longOrNull
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 
@@ -65,6 +76,22 @@ class ReservedTurnHandler(
      * (`<Y>;name;</>;이; <R>사망</>했습니다.`) with the JosaUtil `이` substitution.
      */
     private val dyingMessage: (TurnGeneral) -> String = ReservedTurnHandler::defaultDyingMessage,
+    /**
+     * P5 FM1 — the GENERAL-pass AI interpose (R-SEAM §2 `TurnExecutionHelper.php:332-336`).
+     *
+     * For an AI-controlled general ([isAiControlled]: `npc >= 2`, PHP `$general->isNPC()`), this hook
+     * REPLACES the reserved `(actionCode, argJson)` with the AI's `chooseGeneralTurn(...)` result
+     * BEFORE the constraint/resolve runs; when the chosen command differs from the reserved one,
+     * `autorunMode` is set true (the PHP `if ($cmd !== $newCmd) { $autorunMode = true; … }` branch).
+     *
+     * **The AI is READ-ONLY over GAME ENTITIES** — it returns `(actionCode, RAW args)`; the chosen
+     * command's mutation runs the EXISTING resolve→[ChangeRecorder] delta path, and the AI's meta-KV
+     * side-effects route through the [AiTurnAdapter]'s [opensamguk.logic.ai.AiKvRecorder] delta seam,
+     * NOT inline and NOT a module-static Map (decision #12 / M4). No new entity write path.
+     *
+     * Default `null` = no AI (the P1–P4 general/E2E call sites stay on the human reserved path).
+     */
+    private val aiHook: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
 ) {
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
@@ -80,21 +107,65 @@ class ReservedTurnHandler(
         val logs: List<String>,
         /** The full-mode `ConstraintContext.env` map used (env-parity oracle for the test). */
         val env: Map<String, Any?>,
+        /**
+         * The PARSED reserved-arg map that threaded into the resolver draft ctx (R-SEAM §1; FM1). The
+         * `general_turn.arg`/`nation_turn.arg` jsonb decoded once, fed to [GeneralActionResolveContext].
+         * Empty for a no-arg command. Surfaced for the parity oracle (the seed never uses the arg).
+         */
+        val args: Map<String, Any?> = emptyMap(),
+        /**
+         * PHP `$autorunMode` (`TurnExecutionHelper.php:333-336`) — true ONLY when the [aiHook] replaced
+         * the reserved command with a DIFFERENT one. Threads into [applyKillturnDecrement]'s autorun
+         * branch. False on a human turn and on an AI turn that honored the reserved command verbatim.
+         */
+        val autorunMode: Boolean = false,
     )
 
     /**
-     * Handle ONE reserved turn for [generalId].
+     * Handle ONE reserved turn for [generalId] (the FLAT-action-code overload — kept for the P1–P4
+     * call sites that do not carry an arg payload; delegates to the widened [ReservedTurn] overload).
+     */
+    fun handle(generalId: Int, actionCode: String, year: Int, month: Int, date: String): HandledTurn =
+        handle(generalId, ReservedTurn(actionCode = actionCode, argJson = ""), year, month, date)
+
+    /**
+     * Handle ONE reserved turn for [generalId] (R-SEAM §1 — the widened seam carrying `argJson`).
      *
-     * @param actionCode the reserved action code (from the `general_turn` ring / enqueued command).
+     * The flow (R-SEAM §2 `TurnExecutionHelper.php:326-348`): for an AI-controlled general the [aiHook]
+     * REPLACES the reserved command BEFORE constraints/resolve (`autorunMode` set on change); then the
+     * stored `arg` jsonb is decoded ONCE and threaded into the resolver draft ctx. **The seed's 6th
+     * component is `definition.key` — NEVER the arg — so this widening is behavior-additive on the
+     * resolver side only (RNG-seed parity unaffected, R-SEAM §1).**
+     *
+     * @param reserved the reserved `(actionCode, argJson)` from the `general_turn` ring / enqueued cmd.
      * @param year the game year (RNG seed component 3 + cost env).
      * @param month the game month (RNG seed component 4).
      * @param date the turn-time `HH:MM` for the action log `<1>date</>` suffix.
      */
-    fun handle(generalId: Int, actionCode: String, year: Int, month: Int, date: String): HandledTurn {
+    fun handle(generalId: Int, reserved: ReservedTurn, year: Int, month: Int, date: String): HandledTurn {
         val general = world.getGeneralById(generalId)
             ?: error("ReservedTurnHandler: general $generalId not in world")
         val cityId = general.cityId
         val nationId = general.nationId
+
+        // --- the GENERAL-pass AI interpose (R-SEAM §2 :332-336) ---
+        // For an AI-controlled general the hook replaces the reserved command BEFORE resolve; the AI is
+        // read-only over GAME ENTITIES (it returns (actionCode, RAW args)) — its meta-KV deltas route
+        // through the AiTurnAdapter's recorder seam, never inline here.
+        var actionCode = reserved.actionCode
+        var args: Map<String, Any?> = decodeArgs(reserved.argJson)
+        var autorunMode = false
+        if (aiHook != null && isAiControlled(general)) {
+            val chosen: ChosenCommand = aiHook.invoke(generalId, reserved)
+            if (chosen.actionCode != reserved.actionCode) {
+                // PHP `if ($cmd !== $newCmd) { $autorunMode = true; $cmd = $newCmd; }` (:333-336).
+                autorunMode = true
+                actionCode = chosen.actionCode
+                args = chosen.args // the AI emits RAW args (the chosen command's own arg payload).
+            }
+            // A chosen command equal to the reserved one is honored verbatim (autorunMode stays false),
+            // keeping the human-reserved arg map decoded above.
+        }
 
         // ONE env, built by THE shared env-builder (same call as E2 precheck — cannot drift).
         val env: Map<String, Any?> = WorldEnvBuilder.envMap(year, startYear)
@@ -129,6 +200,8 @@ class ReservedTurnHandler(
                 denyReason = reason,
                 logs = if (reason != null) listOf(reason) else emptyList(),
                 env = env,
+                args = args,
+                autorunMode = autorunMode,
             )
         }
 
@@ -145,7 +218,9 @@ class ReservedTurnHandler(
         val nation = world.getNationById(nationId)?.let { PerTurnOverlay.toLogicNation(it) }
 
         val draft = GeneralActionDraft(preGeneral, preCity, nation)
-        val resolveCtx = GeneralActionResolveContext(draft, rng, worldEnv, month, date)
+        // Thread the parsed reserved/AI-chosen args into the resolver draft ctx (R-SEAM §1; FM1). The
+        // seed above already keyed on definition.key — the arg never touches the RNG construction.
+        val resolveCtx = GeneralActionResolveContext(draft, rng, worldEnv, month, date, args = args)
         definition.resolve(resolveCtx)
 
         // --- ChangeRecorder = the SINGLE dirty source ---
@@ -166,6 +241,8 @@ class ReservedTurnHandler(
             denyReason = null,
             logs = resolveCtx.logs(),
             env = env,
+            args = args,
+            autorunMode = autorunMode,
         )
     }
 
@@ -402,6 +479,46 @@ class ReservedTurnHandler(
 
         /** The 휴식 (rest) command name — the killturn-decrement branch in [applyKillturnDecrement]. */
         const val REST_COMMAND = "휴식"
+
+        /** A lenient JSON reader for the stored `arg` jsonb (tolerant of trailing commas / lax keys). */
+        private val ARG_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
+
+        /**
+         * Whether [general] is AI-controlled — PHP `$general->isNPC()` (`npc >= 2`; the same threshold
+         * the killturn-decrement / npcType branches already use). Humans (npc 0/1) never hit the hook.
+         */
+        internal fun isAiControlled(general: TurnGeneral): Boolean = general.npcState >= 2
+
+        /**
+         * Decode the stored `arg` jsonb (PHP `Json::decode($rawTurn['arg'])`) into the parsed arg map
+         * the resolver reads (R-SEAM §1). A blank/`null`/non-object payload yields an empty map (a
+         * no-arg command). Insertion order is preserved (the jsonb key order is a parity surface).
+         */
+        internal fun decodeArgs(argJson: String): Map<String, Any?> {
+            if (argJson.isBlank()) return emptyMap()
+            val root = try {
+                ARG_JSON.parseToJsonElement(argJson)
+            } catch (_: Exception) {
+                return emptyMap()
+            }
+            if (root !is JsonObject) return emptyMap()
+            val out = LinkedHashMap<String, Any?>(root.size)
+            for ((key, element) in root) out[key] = jsonToAny(element)
+            return out
+        }
+
+        /** Convert a [kotlinx.serialization.json.JsonElement] leaf to the closest Kotlin scalar. */
+        private fun jsonToAny(element: kotlinx.serialization.json.JsonElement): Any? = when (element) {
+            is JsonNull -> null
+            is JsonPrimitive -> when {
+                element.isString -> element.content
+                element.booleanOrNull != null -> element.boolean
+                element.longOrNull != null -> element.long
+                else -> element.content.toDoubleOrNull() ?: element.content
+            }
+            is JsonObject -> element.mapValues { jsonToAny(it.value) }
+            is JsonArray -> element.map { jsonToAny(it) }
+        }
 
         /** Read a lifecycle scalar that rides the `meta` bag (e.g. `killturn`/`block`/`deadyear`). */
         internal fun metaInt(g: TurnGeneral, key: String, default: Int): Int =

@@ -144,7 +144,7 @@ class TurnRunServiceIT {
         val registry = CommandRegistry(GeneralActionPipeline())
         val handler = ReservedTurnHandler(world, registry, hiddenSeed, startYear)
         val lifecycle = TurnDaemonLifecycle(world, handler) { gid ->
-            reservedRepo.readReserved(gid, 0).actionCode
+            reservedRepo.readReserved(gid, 0)
         }
         val commandStream = RedisCommandStream(template, profile)
         val realtimePublisher = RealtimePublisher(template, profile)

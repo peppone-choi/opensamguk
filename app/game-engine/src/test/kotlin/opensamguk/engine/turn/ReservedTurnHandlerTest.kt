@@ -218,7 +218,9 @@ class ReservedTurnHandlerTest {
             cities = listOf(city(id = 7)),
         )
         val handler = handlerFor(world)
-        val lifecycle = TurnDaemonLifecycle(world, handler) { "che_농지개간" }
+        val lifecycle = TurnDaemonLifecycle(world, handler) {
+            opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn("che_농지개간", "")
+        }
 
         val runTime = world.getState().lastTurnTime  // both generals' turnTime == lastTurnTime → due
         val handled = lifecycle.runTick(runTime)

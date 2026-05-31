@@ -19,6 +19,8 @@ import opensamguk.logic.war.ProcessWarResult
 import opensamguk.logic.war.WarSeed
 import opensamguk.logic.war.candidateCities
 import opensamguk.logic.war.processWar
+import opensamguk.logic.war.searchDistanceListToDest
+import opensamguk.logic.util.phpRound
 import opensamguk.common.rng.LiteHashDrbg
 
 /**
@@ -71,9 +73,84 @@ class CheChulbyeong(
     var lastLotteryFired: Boolean = false
         private set
 
+    /** che_출병.php:101 getCost — reqRice = `Util::round(crew / 100)` (half-away). reqGold = 0. */
+    private fun reqRice(g: General): Int = phpRound(g.crew / 100.0)
+
+    /**
+     * FR1 — FULL constraint pack repair (PARITY-FATAL, R-BRIDGE §2). Port target = PHP
+     * `che_출병.php:79-88` `fullConditionConstraints`, in PHP ORDER (first-deny-wins):
+     *   [NotOpeningPart(relYear), NotSameDestCity, NotBeNeutral, OccupiedCity, ReqGeneralCrew,
+     *    ReqGeneralRice(reqRice), AllowWar, HasRouteWithEnemy].
+     *
+     * P4 shipped only the trimmed BO3 set `[notBeNeutral, occupiedCity, reqGeneralCrew]` for the
+     * battle-resolve gate (which never calls buildConstraints); the P5 AI bridge needs the FULL PHP
+     * pack so the AI gate boolean flips identically. The route/diplomacy predicates compute over the
+     * GREEN [CityConst] name-order adjacency + per-pair diplomacy resolved from the staged [StateView]
+     * (NO DB) — and return Unknown (deferring, never silently passing) when the needed rows are absent.
+     */
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        notBeNeutral(), occupiedCity(), reqGeneralCrew(),
+        notOpeningPart { c, _ -> relYear(c) },
+        notSameDestCity(),
+        notBeNeutral(),
+        occupiedCity(),
+        reqGeneralCrew(),
+        reqGeneralRice { c, view ->
+            (view.get(RequirementKey.General(c.actorId)) as? General)?.let { reqRice(it) } ?: Int.MAX_VALUE
+        },
+        allowWar(),
+        hasRouteWithEnemy(
+            isAtWarDestCity = { c, view -> isAtWarDestCity(c, view) },
+            routeExists = { c, view -> routeWithEnemyExists(c, view) },
+        ),
     )
+
+    private fun relYear(c: ConstraintContext): Int {
+        val year = (c.env["year"] as? Number)?.toInt() ?: return 0
+        val startYear = (c.env["startYear"] as? Number)?.toInt() ?: return 0
+        return year - startYear
+    }
+
+    /** Resolve the dest city's owning nation from the staged view; null when the city is not staged. */
+    private fun destCityNation(c: ConstraintContext, view: StateView): Int? {
+        val cityId = c.destCityId ?: return null
+        return (view.get(RequirementKey.City(cityId)) as? opensamguk.logic.domain.City)?.nationId
+    }
+
+    /** True when my nation and [you] are at war (per-pair diplomacy state == 0). */
+    private fun atWarWith(myNation: Int, you: Int, view: StateView): Boolean =
+        (view.get(RequirementKey.Diplomacy(myNation, you)) as? opensamguk.logic.domain.Diplomacy)?.state == 0
+
+    /**
+     * PHP HasRouteWithEnemy stage 1 (`HasRouteWithEnemy.php:35-38`): the dest city must be neutral (0),
+     * mine, or an at-war (state==0) nation; else `교전중인 국가가 아닙니다.`.
+     */
+    private fun isAtWarDestCity(c: ConstraintContext, view: StateView): Boolean {
+        val g = view.get(RequirementKey.General(c.actorId)) as? General ?: return true // defer to no-route check
+        val destNation = destCityNation(c, view) ?: return true
+        if (destNation == 0) return true
+        if (destNation == g.nationId) return true
+        return atWarWith(g.nationId, destNation, view)
+    }
+
+    /**
+     * PHP HasRouteWithEnemy stage 2 (`HasRouteWithEnemy.php:40-45`): a path exists via
+     * `searchDistanceListToDest(general.city, destCity.city, allowedNationList)` where allowedNationList =
+     * my-state-0 enemies ∪ {me} ∪ {0}. Built over the GREEN [CityConst] adjacency from the staged view's
+     * cities (per-pair diplomacy gives the at-war membership, no per-me scan needed).
+     */
+    private fun routeWithEnemyExists(c: ConstraintContext, view: StateView): Boolean {
+        val g = view.get(RequirementKey.General(c.actorId)) as? General ?: return true
+        val destCityId = c.destCityId ?: return true
+        val allowedCityList = LinkedHashMap<Int, Int>()
+        for (cityId in CityConst.all().keys) {
+            val nationId = (view.get(RequirementKey.City(cityId)) as? opensamguk.logic.domain.City)?.nationId
+                ?: continue
+            if (nationId == 0 || nationId == g.nationId || atWarWith(g.nationId, nationId, view)) {
+                allowedCityList[cityId] = nationId
+            }
+        }
+        return searchDistanceListToDest(g.cityId, destCityId, allowedCityList).isNotEmpty()
+    }
 
     override fun resolve(context: GeneralActionResolveContext) {
         lastAlternative = null
