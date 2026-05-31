@@ -1,142 +1,81 @@
 # CLAUDE.md — opensamguk
 
-Guidance for Claude Code (and humans) working in this repo. These rules are **load-bearing**: they encode hard-won parity discipline. Violating them silently breaks the golden gates.
-
----
+Load-bearing rules. They encode the parity discipline; violating them silently breaks the golden gates.
 
 ## What this repo is
 
-**opensamguk** is a faithful migration of the PHP game **devsam/core** (삼국지 모의전투 HiDCHe / 삼모) to **Kotlin/Spring + Next.js + PostgreSQL + Redis + nginx**, built on a **memory-centric CQRS** architecture.
+**opensamguk** — faithful migration of the PHP game **devsam/core** (삼국지 모의전투 HiDCHe / 삼모) to **Kotlin/Spring + Next.js + PostgreSQL + Redis + nginx**, on a **memory-centric CQRS** architecture.
 
-- **`legacy/devsam-core` (PHP) is GRAND TRUTH.** Every behavior — RNG draws, rounding, log strings, side-effect order — must match it byte-for-byte. It is the oracle, never "improved."
-- **`legacy/devsam-core2026` (TypeScript)** is a *second* structural oracle only. **PHP wins every divergence** (collapse experience, findNextCapital BFS-vs-Euclidean, arsort-vs-V8 sort, append-additive ordering, `Math.round`-vs-half-away).
-- `legacy/` is **git-ignored** and never committed.
-- Program design + roadmap: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`.
-
-The repo **MUST stay PRIVATE** until a Koei-IP review clears it. Do not commit Koei-owned assets/IP, secrets, or credentials.
-
----
+- **`legacy/devsam-core` (PHP) = GRAND TRUTH.** Every behavior (RNG draws, rounding, log strings, side-effect order) matches byte-for-byte. The oracle, never "improved."
+- **`legacy/devsam-core2026` (TypeScript)** = a *second*, structural oracle only. **PHP wins every divergence** (collapse experience, findNextCapital BFS-vs-Euclidean, arsort-vs-V8 sort, append-additive order, `Math.round`-vs-half-away).
+- `legacy/` is **git-ignored**, never committed. Design + roadmap: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`.
+- Repo stays **PRIVATE** until a Koei-IP review clears it. No Koei-owned assets/IP, secrets, or credentials in commits.
 
 ## Architecture (memory-centric CQRS)
 
 ```
-api  ──Redis(XADD)──▶  game-engine daemon  ──JDBC batch flush──▶  PostgreSQL
- ▲                      (InMemoryTurnWorld = source of truth)            │
- └──────────────── turnCompleted SSE ◀── ChangeRecorder dirty/created/deleted
+api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──▶ PostgreSQL
+ ▲                   (InMemoryTurnWorld = source of truth)         │
+ └──────────── turnCompleted SSE ◀── ChangeRecorder dirty/created/deleted
 ```
 
 Modules (`settings.gradle`):
-- **`common`** — RNG/log kernel: `rng/LiteHashDrbg` (byte-exact SHA-512 DRBG) + `rng/RandUtil` + `rng/SeedSerializer`, `util/PhpRound`, `log/*` (Josa/ConvertLog/tokens), `constants/GameConst`+`GameUnitDetail`.
-- **`logic`** — pure game logic: `stats/ActionPipeline` (multi-source stat fold + `getStatValue` + calc-cache), `actions/*` commands + `CommandRegistry`, `war/*` battle engine, `event/*` DSL, `tick/*`, domain entities. No Spring, no DB.
-- **`infra`** — `JdbcFlushExecutor` (**JDBC-only** flush + delete/tombstone delta + row mappers), Flyway migrations `db/migration/V*.sql`, Redis.
-- **`app/gateway-api`** (`:8080`) auth/profile · **`app/game-api`** (`:8081`) read+precheck+intake+SSE · **`app/game-engine`** (`:8082`) turn daemon (`InMemoryTurnWorld`+`ChangeRecorder`+`MonthlyPipeline`+`TurnRunService`).
-- **`web/gateway`** (`:3000`) · **`web/game`** (`:3001`) — Next.js.
+- **`common`** — RNG/log kernel: `rng/LiteHashDrbg` (byte-exact SHA-512 DRBG) + `rng/RandUtil` + `rng/SeedSerializer`, `util/PhpRound`, `log/*` (Josa/ConvertLog/tokens), `constants/GameConst`.
+- **`logic`** — pure game logic (no Spring/DB): `stats/ActionPipeline` (multi-source stat fold + `getStatValue` + calc-cache), `actions/*` + `CommandRegistry`, `war/*` battle engine, `ai/*` GeneralAI, `event/*` DSL, `tick/*`, domain.
+- **`infra`** — `JdbcFlushExecutor` (**JDBC-only** flush + delete/tombstone delta + row mappers), Flyway `db/migration/V*.sql`, Redis.
+- **`app/gateway-api`** (:8080) auth/profile · **`app/game-api`** (:8081) read+precheck+intake+SSE · **`app/game-engine`** (:8082) turn daemon (`InMemoryTurnWorld`+`ChangeRecorder`+`MonthlyPipeline`+`TurnRunService`).
+- **`web/gateway`** (:3000) · **`web/game`** (:3001) — Next.js.
 
-### The ONE daemon-write rule (architecture test-enforced)
-**The game-engine daemon NEVER uses a JPA `EntityManager` for writes.** JPA is read/precheck only (game-api). Daemon writes go **only** through `ChangeRecorder` → `JdbcFlushExecutor` JDBC batch. (Two competing dirty-truths — JPA dirty-checking + change-recorder — would silently diverge.)
-
----
+**The ONE daemon-write rule (architecture-test-enforced):** the game-engine daemon NEVER uses a JPA `EntityManager` for writes. JPA = read/precheck only (game-api). Daemon writes go **only** through `ChangeRecorder` → `JdbcFlushExecutor` JDBC batch. (Two competing dirty-truths — JPA dirty-checking + change-recorder — would silently diverge.)
 
 ## Parity discipline (NON-NEGOTIABLE)
 
-1. **RNG draw-for-draw.** All randomness is `RandUtil(LiteHashDrbg(seed))`. The draw **order, count, and method args** are parity targets, not just the result. In battle, the WHOLE fight runs on **ONE** `RandUtil(warSeed)` built once in `processWar()` and threaded by reference — never re-seeded mid-stream. A single extra/missing/reordered draw desyncs everything downstream.
-2. **Rounding.** `Util::round` / `Util::setRound` = **half-AWAY-from-zero** → use `PhpRound`. NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even). `Util::toInt`/`intdiv` = truncate-toward-zero. Damage-loop clamp = `ceil()` (distinct from round).
+1. **RNG draw-for-draw.** All randomness is `RandUtil(LiteHashDrbg(seed))`. The draw **order, count, and method args** are parity targets, not just the result. In battle, the WHOLE fight runs on **ONE** `RandUtil(warSeed)` built once in `processWar()` and threaded by reference — never re-seeded mid-stream. One extra/missing/reordered draw desyncs everything downstream.
+2. **Rounding.** `Util::round`/`setRound` = **half-AWAY-from-zero** → use `PhpRound` (negative-scale `phpRound(v,-2)`, NEVER `phpRound(v/100)*100`). NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even). `Util::toInt`/`intdiv` = truncate-toward-zero. Damage-loop clamp = `ceil()` (distinct from round).
 3. **Korean log byte-parity.** Log strings (`Josa` 조사, color/tag markup, prefixes, `<Y1>【name】</> <C>HP (-dead)</>`, 진격·퇴각·패퇴·전멸·분쟁·정복 …) must match exactly. **Log order = execution order** → execution drift breaks the log gate.
-4. **Flush delta, not inline writes.** Mutations are recorded as `created`/`dirty`/`deleted` (tombstone) on `ChangeRecorder` and flushed in bulk. Resolvers (e.g. ConquerCity) write **only** delta — no inline DB write.
-5. **Faithful port, never fabricate.** Golden numbers/logs/seeds come **only** from a real PHP capture (`tools/php-golden`, Docker). If a value can't be captured faithfully, **quarantine it with proof** (sibling-code-path byte-match) and document in the phase backlog — do **not** invent it, and do **not** weaken a test or edit a golden to make it pass. On a mismatch: fix the Kotlin impl, not the golden.
-6. **Insertion order matters.** jsonb / conflict-map / trigger-caller keys preserve insertion order (`LinkedHashMap`), never re-keyed by id. PHP 8.0+ sorts are stable — do not add a non-stable secondary comparator.
-
----
+4. **Flush delta, not inline writes.** Mutations are recorded as `created`/`dirty`/`deleted` (tombstone) on `ChangeRecorder` and flushed in bulk. Resolvers write **only** delta — no inline DB write.
+5. **Faithful port, never fabricate.** Golden numbers/logs/seeds come **only** from a real PHP capture (`tools/php-golden`, Docker). If a value can't be captured faithfully, **quarantine it with proof** (sibling-code-path byte-match) + log to the phase backlog — do **not** invent it, do **not** weaken a test or edit a golden. On a mismatch: fix the Kotlin impl, not the golden.
+6. **Insertion order matters.** jsonb / conflict-map / trigger-caller keys preserve insertion order (`LinkedHashMap`), never re-keyed by id. PHP 8.0+ sorts are stable — never add a non-stable secondary comparator.
 
 ## Build & test
 
-- **Java 21 LTS is required.** Gradle 8.12 fails to parse Java 25. Always:
+- **Java 21 LTS required** (Gradle 8.12 fails to parse Java 25). Always run from the **repo root**:
   ```bash
   JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
   ```
-  Run `./gradlew` from the **repo root** (multi-module).
-- **Verify builds by OUTPUT TAIL, not exit code.** A `task-notification` exit 0 is unreliable here (the host routes gradle through a context-mode wrapper). Pipe `... 2>&1 | tail -40` and grep for `BUILD SUCCESSFUL` + the test counts (or read `**/build/test-results/test/*.xml`).
-- **Testcontainers on macOS** needs `api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk disabled (already wired in `tasks.test`). Docker-unavailable ⇒ IT **skipped**, not failed.
-- Full check: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test`.
-- Smoke the Docker stack: `./tools/smoke.sh`. Frontend: `cd web/gateway && corepack pnpm dev`.
+- **Verify by OUTPUT TAIL + test XML, not exit code** (the host routes gradle through a context-mode wrapper; `task-notification` exit 0 is unreliable). Pipe `... 2>&1 | tail -40`, grep `BUILD SUCCESSFUL` + counts, or read `**/build/test-results/test/*.xml`. Use `--rerun-tasks` (UP-TO-DATE false-greens).
+- **Testcontainers on macOS** needs `api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk disabled (wired in `tasks.test`). Docker-unavailable ⇒ IT **skipped**, not failed.
+- Full check: `./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test`. Docker smoke: `./tools/smoke.sh`. Frontend: `cd web/gateway && corepack pnpm dev`.
 
----
+## How phases are built
 
-## How phases are built (the workflow)
-
-Each phase runs one cycle: **spec → plan → adversarial review → execute → gate**.
-- Plans live in `docs/superpowers/plans/`, research in `docs/superpowers/research/`.
-- **Foundation-first decomposition.** Every *shared extension point* (a registry, a base class, a stat-key enum, a pipeline hook, a phase-machine skeleton) is built in a **Tier-0 foundation wave** that later families only **consume**. Parallel worktree families must be **disjoint** — never let two co-widen the same file.
-  - **Lesson (P2/P3/P4):** if a *leaf* area needs to widen a base class's interface, that interface belongs in a foundation, not the leaf. Co-widening a shared file across parallel worktrees ⇒ merge conflict. Cross-area shared artifacts ⇒ build sequentially (creator-then-consumer), never in parallel.
-- The phase **gate** is a real PHP golden replayed draw-for-draw. A phase is not "done" until its gate is green (or its gaps are quarantined with proof + logged to the phase backlog).
+Each phase = one cycle **spec → plan → adversarial review → execute → gate**. Plans in `docs/superpowers/plans/`, research in `docs/superpowers/research/`.
+- **Foundation-first.** Every *shared extension point* (registry, base class, stat-key enum, pipeline hook) is built in a **Tier-0 foundation wave** that later families only **consume**. Parallel worktree families must be **disjoint** — never co-widen the same file (⇒ merge conflict; cross-area shared artifacts build sequentially, creator-then-consumer).
+- The phase **gate** is a real PHP golden replayed draw-for-draw. Not "done" until green (or gaps quarantined with proof + logged to the backlog).
 - One logical commit per task. **Every commit message ends with:**
   ```
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
   ```
 
-### Golden capture harness — `tools/php-golden/`
-The PROVEN Docker capture (MariaDB 11.4 + `php:8.3-cli`, scenario `1010` = 174 generals, **not** empty scenario_0). Clone the existing `capture_*.php` + `_boot.php` + `manifest*.json`. Quirks (save ~30 min): `_boot.php` binds via `DB::db()` (not `setSelfConnInfo`); `j_install.php` is called twice; install is **not** idempotent (fresh DB per run); golden dumps must be byte-identical across two runs.
-
----
+**Golden capture harness — `tools/php-golden/`:** the PROVEN Docker capture (MariaDB 11.4 + `php:8.3-cli`, scenario `1010` = 174 generals, NOT empty scenario_0). Quirks: `_boot.php` binds via `DB::db()`; `j_install.php` is called twice; install is **not** idempotent (fresh DB per run); dumps must be byte-identical across two runs.
 
 ## Repo conventions
 
-- **Branch stack**, one per phase: `p0a-foundation-scaffold → p0b-parity-kernel → p1-vertical-slice → p2-commands-constraints → p3-monthly-tick → p4-battle-engine → …`. Each branches off the previous; PRs are stacked (base = parent branch) for clean incremental diffs.
-- Git-ignored: `legacy/`, `build/`, `node_modules/`, `.env*`, `.workflow-*.mjs`, `.claude-tmp/`.
-- Use the **code-review-graph** MCP tools (`detect_changes`, `query_graph`, `get_impact_radius`, `semantic_search_nodes`) BEFORE Grep/Glob when exploring — faster + structural context.
+- **Branch stack**, one per phase: `p0a-foundation-scaffold → p0b-parity-kernel → p1-vertical-slice → p2-commands-constraints → p3-monthly-tick → p4-battle-engine → p5 (NPC AI) → …`. Each branches off the previous; PRs stacked (base = parent) for clean diffs.
+- Git-ignored: `legacy/`, `build/`, `node_modules/`, `.env*`, `.workflow-*.mjs`, `.claude-tmp/`, `.agents/`, `.bkit/`, `.codex/`. `tools/php-golden/probe_*.php` = throwaway, never committed.
 
----
+## Skills (`Skill` tool or `/<name>`; use the **process** skill first, then implementation)
 
-## Skills & commands
-
-Invoke a skill with the `Skill` tool (or type `/<name>`). Use the **process** skill first (it decides *how* to approach), then implementation skills.
-
-### gstack
-**All web browsing goes through `/browse`** — never `mcp__claude-in-chrome__*` tools.
-
-| Group | Commands |
-| --- | --- |
-| Plan / review | `/autoplan` `/plan-ceo-review` `/plan-eng-review` `/plan-design-review` `/plan-devex-review` `/design-consultation` `/design-shotgun` `/design-html` `/design-review` `/devex-review` `/review` `/cso` `/office-hours` |
-| Ship / deploy | `/ship` `/land-and-deploy` `/canary` `/setup-deploy` `/document-release` |
-| QA / debug | `/qa` `/qa-only` `/investigate` `/benchmark` |
-| Browser | `/browse` `/connect-chrome` `/setup-browser-cookies` |
-| Repo safety | `/careful` `/freeze` `/unfreeze` `/guard` |
-| Meta | `/retro` `/learn` `/setup-gbrain` `/gstack-upgrade` `/codex` |
-
-### Compound engineering
-Loop: **brainstorm → plan → work → review → compound** (record learnings so each unit makes the next easier; ~80% plan/review, 20% execute).
-
-| Command | Purpose |
-| --- | --- |
-| `/ce-strategy` | Define product goal/approach/target → `STRATEGY.md` |
-| `/ce-ideate` | (optional) vet a big idea |
-| `/ce-brainstorm` | Define feature requirements interactively |
-| `/ce-plan` | Brainstorm → implementation plan |
-| `/ce-work` | Execute the plan + track work |
-| `/ce-code-review` | Multi-agent pre-merge review |
-| `/ce-debug` | Reproduce → root cause → fix |
-| `/ce-compound` | Record learnings to improve future work |
-
-Plus the `ce-*` review subagents (spawn via the `Agent` tool): always-on `ce-correctness-reviewer` / `ce-maintainability-reviewer` / `ce-testing-reviewer` / `ce-project-standards-reviewer`; conditional `ce-security-reviewer` / `ce-performance-reviewer` / `ce-reliability-reviewer` / `ce-api-contract-reviewer` / `ce-data-migrations-reviewer` / language-specific `ce-kieran-{rails,typescript,python}-reviewer` / `ce-dhh-rails-reviewer`; researchers `ce-best-practices-researcher` / `ce-framework-docs-researcher` / `ce-web-researcher`; plan-doc reviewers `ce-feasibility-reviewer` / `ce-coherence-reviewer` / `ce-scope-guardian-reviewer` / `ce-security-lens-reviewer` / `ce-design-lens-reviewer` / `ce-product-lens-reviewer`.
-
-### Harness
-Meta tool: decompose a domain description into a specialized agent team + skills under `.claude/agents/` and `.claude/skills/` (6 patterns: pipeline / fan-out-fan-in / expert-pool / generate-verify / supervisor / hierarchical). Trigger: "하네스 구성해줘".
-
-### superpowers
-The skill system itself. Key execution sub-skill: **`superpowers:subagent-driven-development`** — TDD red→green, one commit per task. Invoke via the `Skill` tool; follow it exactly (rigid skill).
-
-### graphify
-Any input → knowledge graph. Trigger: `/graphify`.
-
-### code-review-graph (MCP)
-Persistent structural graph of this codebase. **Use BEFORE Grep/Glob/Read** when exploring: `detect_changes` (risk-scored review), `query_graph` (callers/callees/imports/tests), `get_impact_radius`, `get_affected_flows`, `semantic_search_nodes`, `get_review_context`, `get_architecture_overview`. Falls back to file scanning only when the graph doesn't cover the need.
-
----
+- **gstack** — all web browsing via **`/browse`** (never `mcp__claude-in-chrome__*`). Plan/review/ship/QA/deploy commands — full list in `~/.claude/CLAUDE.md`.
+- **compound engineering** — loop brainstorm→plan→work→review→compound (~80% plan/review). `/ce-*` commands + `ce-*` review subagents (spawn via `Agent`: always-on correctness/maintainability/testing/project-standards; conditional security/performance/reliability/data-migrations + language reviewers).
+- **superpowers** — `superpowers:subagent-driven-development` (TDD red→green, one commit/task) is the rigid execution skill; follow exactly.
+- **code-review-graph (MCP)** — live structural graph of this repo (565 files / 6936 nodes / 67k edges). Use `detect_changes` / `query_graph` (callers/callees/imports/tests) / `get_impact_radius` / `get_affected_flows` / `semantic_search_nodes` / `get_review_context` **BEFORE** Grep/Glob; rebuild via `build_or_update_graph_tool`.
+- **harness** ("하네스 구성해줘") · **graphify** (`/graphify`).
 
 ## Roadmap status
 
-`P0→P1→P2→P3→P4→P5→P6→P7→P8` (branch: `P7 ← {P2,P6}`, parallelizable with P3/P4/P5).
+`P0→P1→P2→P3→P4→P5→P6→P7→P8` · `P7 ← {P2,P6}` (parallel w/ P3/P4/P5) · `P6 ← {P4,P5}`.
 
-- ✅ **P0-A** scaffold · ✅ **P0-B** parity kernel · ✅ **P1** vertical slice · ✅ **P2** ~35 commands + constraints · ✅ **P3** monthly tick — all gate-closed, ~1235 tests.
-- ✅ **P4** battle engine (`processWar_NG` + triggers + WarUnit + city-conflict + ConquerCity + battle items/specialties) — gate-closed; **G1 battle/conquest draw-for-draw + quarantines logged**, ~1543 tests.
-- ⬜ **P5** NPC AI · **P6** diplomacy/auction/inheritance · **P7** read API + Next.js + SSE · **P8** parity harness + gateway orchestration + production deploy (AWS EC2 t3.large, LLM-free, no external API deps).
+- ✅ **P0–P4** gate-closed: scaffold · parity kernel · vertical slice · ~35 commands+constraints · monthly tick · battle engine (`processWar_NG` + triggers + WarUnit + city-conflict + ConquerCity + battle items/specialties; G1 battle/conquest draw-for-draw).
+- ✅ **P5** NPC AI — `ai/*` GeneralAI port + 4-layer autorun policy + F-BRIDGE candidate gate (`candidateAllowed` = the exact execution gate) + per-general module stat stack + engine seam (`AiTurnAdapter`, nation-pass-before-general). Gate-closed: live-selection **174/174** turns (667/667 draws) + **8 crafted families 11/11**. ~1968 tests (common 169 / logic 1661 / engine 138). **Backlog (documented, not fabricated):** long-sim multi-turn (gate dim c), G12 nation reserved-fail deny-log. **Quarantines (proven):** genfound-방랑군 (needs 거병→건국 mini-sim), `chooseInstantNationTurn` (zero PHP callers), Q1 ORDER BY RAND (do선양/오랑캐임관 — unreachable in 1010, deterministic substitute).
+- ⬜ **P6** diplomacy/messaging/auction·betting/inheritance + residual mutations · **P7** read API + Next.js + SSE · **P8** parity harness (PHP 93-command compare, 23 missing ported/backlogged) + gateway orchestration + AWS EC2 t3.large deploy (LLM-free, 0 external API deps).
