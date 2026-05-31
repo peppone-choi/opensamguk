@@ -1,0 +1,92 @@
+{
+  "_doc": "P5 GT1 — GeneralAI selection draw-for-draw golden manifest (the byte/draw-for-draw oracle for the AiReplayGateTest). Generated against the REAL devsam-core GeneralAI::chooseNationTurn + chooseGeneralTurn driven over the live installed scenario_1010 due-general autorun (TurnExecutionHelper::executeGeneralCommandUntil:233-348). EVERY fixture verified byte-IDENTICAL across two capture_ai.php runs on the SAME install before commit (capture-twice). The matched-count gate rises monotonically as the Kotlin F-SEAM + leaf families land; quarantine-entries pin genuinely-unreachable-in-1010 surfaces with a documented PHP reason — NOT fake-green.",
+  "scenario": 1010,
+  "scenarioBase": "che",
+  "startYear": 181,
+  "year": 181,
+  "month": 1,
+  "turnterm": 120,
+  "capturePattern": "raw docker-compose/CLI (mirrors capture_battle): MariaDB 11.4 + php:8.3-cli + composer vendor/; scenario_1010 (174 generals all npc=2, 2 nations, 94 cities, 24 owned). NOT Testcontainers. See README run block + tools/php-golden/capture_ai.php header.",
+  "hiddenSeed": "71adaa4df4012a20c0883beba4810681",
+  "hiddenSeedDoc": "LIVE-PINNED (R-GATE §2): read from UniqueConst::$hiddenSeed AFTER this exact install and emitted as the fixture INPUT. It is fresh-random per install (ResetHelper buildScenario, ResetHelper.php:96 bin2hex(random_bytes(16))); a byte-0 desync desyncs EVERY per-general DRBG. Format asserted ^[0-9a-f]{32}$. The Kotlin replay seeds world_state.hidden_seed with this EXACT hex. RE-PIN after every re-install + re-capture (a new install regenerates UniqueConst.php AND every general's stats/placement).",
+  "rngLineage": {
+    "generalAI": "GeneralAI.php:153-159 — ONE RandUtil(LiteHashDRBG(Util::simpleSerialize(hiddenSeed,'GeneralAI',year,month,generalId))) built once per general in the GeneralAI ctor, threaded by reference into BOTH chooseNationTurn (officer_level>=5) AND chooseGeneralTurn. The two choose* consume the SAME stream in order: chooseNationTurn first (its draws are the stream prefix, count pinned by nationTurn.drawCountAtNationEnd), then chooseGeneralTurn. seedString = the EXACT Util::simpleSerialize output 'str(32,<hex>)|str(9,GeneralAI)|int(<year>)|int(<month>)|int(<gid>)' (committed per-fixture, byte-for-byte the load-bearing DRBG key)."
+  },
+  "drawPrimitives": {
+    "_doc": "the RandUtilDrawRecorder logs each draw {seq, method, args, result, consumed, stateIdxBefore, bufferIdxBefore}. consumed=false marks a nextBool short-circuit (prob>=1 / prob<=0) that makes NO draw — cursor unchanged. The Kotlin LiteHashDrbg exposes the SAME stateIdx(Long)+bufferIdx(Int) byte fingerprint; the replay asserts value-for-value AND cursor-for-cursor at the FIRST divergent draw.",
+    "methods": ["nextFloat1", "nextRange(min,max)", "nextRangeInt(min,max)", "nextInt(max)", "nextBit", "nextBool(prob)", "choice(items->index+value)"],
+    "cursorFields": "LiteHashDRBG protected int stateIdx (SHA-512 block counter, eagerly 1 after construction) + protected int bufferIdx (byte offset in the 64-byte block) — read via reflection, observe-only."
+  },
+  "deviationFromLiveEngine": "ONLY the GeneralAI's protected RandUtil $rng is replaced (write-once reflection) with a DRAW-NEUTRAL RandUtilDrawRecorder over a FRESH LiteHashDRBG seeded with the EXACT same 'GeneralAI' seed string. processCommand is NOT run (the AI is READ-ONLY over game entities — general/nation/city/diplomacy rows + a nation_env KV cache — so iterating every due general against ONE pristine install snapshot is faithful: no selection mutates an entity another selection reads). processCommand mutation + its SEPARATE 'generalCommand'/'nationCommand' rng are the long-sim GT3 surface, not the AI-selection surface this gate pins.",
+  "dueGeneralOrder": "the EXACT executeGeneralCommandUntil query: SELECT no FROM general WHERE turntime < $date ORDER BY turntime ASC, `no` ASC, with $date = MAX(general.turntime)+1s so the WHOLE first-turn cohort (all 174 due generals) is captured in the live execution order. Fixtures ai-turn-000.json .. ai-turn-173.json are emitted in that order (the file index is the due-order index, NOT the generalId).",
+  "fixtures": {
+    "count": 174,
+    "files": "ai-turn-000.json .. ai-turn-173.json",
+    "perFixture": "{generalId, name, npc, nation, officerLevel, year, month, hiddenSeed, seedString, seedHex, reservedAction, chosenActionCode (RAW getRawClassName(true)), chosenRawArgs (getArg()), reason (do<한글>), drawStream[], drawCount, nationTurn{reservedAction,chosenActionCode,chosenRawArgs,reason,drawCountAtNationEnd}|null}"
+  },
+  "matchTargets": {
+    "_policy": "for each captured due-general turn the Kotlin replay rebuilds the per-general 'GeneralAI' RandUtil(LiteHashDrbg(seedString)) and runs the LIVE AI; asserts (a) the chosen (do<한글> reason, chosenActionCode RAW, chosenRawArgs) for chooseGeneralTurn AND (for lords) chooseNationTurn, (b) the ordered drawStream value-for-value AND stateIdx/bufferIdx cursor-for-cursor at the FIRST divergence, (c) drawCount (and the nation/general split via drawCountAtNationEnd). The draw-COUNT assertion is gate-EXEMPT for documented 0-draw methods (assert ZERO draws, not a stream).",
+    "selection": "chosenActionCode + chosenRawArgs + reason byte-equal",
+    "drawStream": "value + cursor (stateIdxBefore/bufferIdxBefore) at first divergence",
+    "nationGeneralSplit": "nationTurn.drawCountAtNationEnd marks the stream prefix consumed by chooseNationTurn"
+  },
+  "npcCensusProof": {
+    "file": "npc-census-1010.json",
+    "_doc": "R-GATE §1 quarantine PROOF artifact, emitted FIRST against the INSTALLED fixture; capture_ai.php ABORTS if the invariant fails.",
+    "generalCount": 174,
+    "census": [{"npc": 2, "count": 174}],
+    "npc5": 0,
+    "npc9off12": 0,
+    "lords": [
+      {"no": 105, "name": "ⓝ장각", "nation": 2, "npc": 2, "officer_level": 12},
+      {"no": 152, "name": "ⓝ하진", "nation": 1, "npc": 2, "officer_level": 12}
+    ],
+    "invariantHeld": true,
+    "invariant": "npc5==0 && npc9off12==0 — do선양 (npc==5) + 오랑캐임관 (npc==9 lord) are UNREACHABLE in 1010; the G4 ORDER BY RAND quarantine holds as long as this stays 0/0."
+  },
+  "coverage": {
+    "_doc": "R-GATE §3 family coverage ENUMERATION — what the live month-1 1010 short window ACTUALLY exercises.",
+    "reasonDistribution": {
+      "do일반내정": 55,
+      "do중립": 99,
+      "do국가선택": 18,
+      "do거병": 2,
+      "NATION:doNPC긴급포상": 2
+    },
+    "chosenActionCodes": {
+      "che_견문": 86,
+      "che_주민선정": 25,
+      "che_이동": 18,
+      "che_인재탐색": 13,
+      "che_정착장려": 9,
+      "che_성벽보수": 6,
+      "che_농지개간": 5,
+      "che_상업투자": 4,
+      "che_수비강화": 4,
+      "che_치안강화": 2,
+      "che_거병": 2
+    },
+    "totalGeneralStreamDraws": 667,
+    "maxDrawsPerTurn": 8,
+    "exercised": "general-domestic (do일반내정: 상업투자/농지개간/성벽보수/수비강화/주민선정/치안강화/정착장려 + 견문 + 이동 + 인재탐색), do중립 (the neutral/견문 fallback), do국가선택 (재야 nation selection), do거병 (재야 raise-army at a level-5/6 city), and the lord chooseNationTurn (doNPC긴급포상 = NPC emergency reward). MONTH==1 so the lord chooseNationTurn promotion/tax/bill sub-draws (months 3/6/9/12 only — GeneralAI.php:3633-3647) are NOT exercised by this window (faithful: month 1).",
+    "underCovered": "NEED crafted fixtures (GT2): L-DIPLO (do불가침제의/do선전포고/do천도) + L-GENFOUND (do건국/do해산/do방랑군이동/do선양) entirely; the war-state branches of do출병 + front-warps; the month-3/6/9/12 nation promotion/tax/bill. The do선양/오랑캐임관 surface is structurally UNREACHABLE here (census 0/0) and is the G4 quarantine."
+  },
+  "perFixtureIgnoreList": {
+    "_reason": "fields the golden dumps but the Kotlin replay does not assert.",
+    "all": ["seedHex (the bin2hex of seedString — a convenience echo; the load-bearing input is seedString itself)", "name (display only)"]
+  },
+  "quarantine": [
+    {
+      "id": "AI-QUAR-ORDERBYRAND",
+      "what": "do선양 (npc==5 ruler abdication) + 오랑캐임관 (npc==9 lord barbarian appointment) — their ORDER BY RAND target-id selection.",
+      "reason": "UNREACHABLE in scenario_1010 (npc census 0/0 — see npcCensusProof). No PHP golden can be captured for these from the live 1010 autorun. The crafted-fixture path (GT2) byte-matches only the NON-id bytes; the ORDER BY RAND id is asserted 'valid member only'. The quarantine holds as long as the GT1 census stays npc5==0 && npc9off12==0 (capture_ai.php hard-aborts otherwise).",
+      "owner": "GT2 crafted-fixture (non-id bytes) + GT3 census assertion"
+    },
+    {
+      "id": "AI-QUAR-INSTANTNATIONTURN",
+      "what": "GeneralAI::chooseInstantNationTurn (GeneralAI.php:3685-3707).",
+      "reason": "no PHP call-site reachable from executeGeneralCommandUntil → no live golden → OFF the gate. Structurally proven by sibling chooseNationTurn byte-match (decision #3, B3). NOT wired into F-SEAM.",
+      "owner": "design backlog (structural stub, @ParityQuarantine)"
+    }
+  ]
+}
