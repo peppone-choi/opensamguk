@@ -87,6 +87,8 @@ class AiSelectionGateIT {
 
     private val worldJson: JsonObject by lazy { Json.parseToJsonElement(loadResource(WORLD)).jsonObject }
 
+    private fun loadWorld(name: String): JsonObject = Json.parseToJsonElement(loadResource(name)).jsonObject
+
     private val pipeline = GeneralActionPipeline()
     private val registry = CommandRegistry(pipeline)
 
@@ -102,9 +104,9 @@ class AiSelectionGateIT {
         val turnterm = meta["turnterm"]!!.jsonPrimitive.int
 
         // (1) materialise the pre-turn world ONCE (read-only over game entities, shared across all turns).
-        val world = materializeWorld(year, month, turnterm)
+        val world = materializeWorld(worldJson, year, month, turnterm)
         // S2 — the per-general reserved-command name (turn_idx 0) lookup the categorize buckets read.
-        val reservedNameOf = buildReservedNameLookup()
+        val reservedNameOf = buildReservedNameLookup(worldJson)
 
         // (2) the recorder factory — wraps the SAME-seeded DRBG so the LIVE AI's rng is observed. We capture
         // the recorder per (general, year, month) so the gate can read the pulled stream after the live run.
@@ -137,12 +139,13 @@ class AiSelectionGateIT {
             val gid = f["generalId"]!!.jsonPrimitive.int
             recorders.remove(gid)
             adapter.resetRngFor(gid) // bound this due-general's nation+general decision window (fresh stream).
-            goldenDrawsTotal += f["drawStream"]!!.jsonArray.size
+            // COLLAPSED counts (weighted-wrappers dropped on both sides — see [collapseGolden]/[collapseLive]).
+            goldenDrawsTotal += collapseGolden(f["drawStream"]!!.jsonArray.map { it.jsonObject }).size
 
-            val div = runOneTurn(adapter, recorders, f, idx, gid)
+            val div = runOneTurn(adapter, recorders, f, idx, gid, quarantine = null)
             if (div == null) {
                 matched += 1
-                liveDrawsVerified += recorders[gid]?.drawCount() ?: 0
+                liveDrawsVerified += collapseLive(recorders[gid]?.drawStream() ?: emptyList()).size
             } else {
                 clusters[div.cluster] = (clusters[div.cluster] ?: 0) + 1
                 if (firstFailures.size < MAX_REPORTED) firstFailures.add(div.message)
@@ -177,6 +180,148 @@ class AiSelectionGateIT {
         assertTrue(matched == FIXTURE_COUNT, "all $FIXTURE_COUNT turns matched")
     }
 
+    // ── the CRAFTED-fixture gate (GT2 under-covered families) ────────────────────────────────────────────
+
+    /**
+     * The crafted families (GT2) — each FAITHFULLY mutates the SAME GT1 install (snapshot/restore returns the
+     * DB to the year-181-month-1 baseline; the hiddenSeed is preserved) to reach a `do<한글>` the pinned
+     * month-1 1010 window cannot exercise. Each entry: family → its banked `world-crafted-<fam>.json` snapshot +
+     * the `ai-crafted-<fam>-NN.json` per-due-general goldens. (genfound-방랑군 is BACKLOGGED — see
+     * GATE-DIVERGENCES.md: it needs the che_거병→건국 lifecycle to SEED the wandering-army nation_env, which the
+     * installer never presents; fabricating that KV would violate parity law. Not blocked on here.)
+     */
+    private val craftedFamilies: List<CraftedFamily> = listOf(
+        CraftedFamily("diplo-불가침제의", listOf(0)),
+        CraftedFamily("diplo-선전포고", listOf(0)),
+        CraftedFamily("diplo-천도", listOf(0)),
+        CraftedFamily("war-출병", listOf(0)),
+        CraftedFamily("genfound-선양", listOf(0)),
+        CraftedFamily("nation-pass-m3", listOf(0, 1)),
+        CraftedFamily("nation-pass-m6", listOf(0, 1)),
+        CraftedFamily("nation-pass-m12", listOf(0, 1)),
+    )
+
+    private data class CraftedFamily(val name: String, val indices: List<Int>)
+
+    /**
+     * P5 GT2-LIVE — replay every crafted golden over its OWN `world-crafted-<fam>.json` snapshot through the
+     * LIVE [AiTurnAdapter], asserting the chosen `(actionCode, RAW args, reason)` + the live-pulled draw stream
+     * value+cursor+count — the FIRST real golden verification of the under-covered families (diplo SELECTION,
+     * the war-state do출병, the genfound 선양, the month-3/6/9/12 nation pass).
+     *
+     * Per family: materialise its crafted world (at the MUTATED clock, e.g. 184/1 for the diplo+war families,
+     * 181/{3,6,12} for the nation-pass-month families) into ONE [InMemoryTurnWorld], then run each due general
+     * exactly like the main gate (nation pass → general pass on the SAME shared rng).
+     *
+     * Quarantines honored (GATE-DIVERGENCES.md):
+     *  - **Q1 / ORDER BY RAND (genfound-선양)**: the golden's `che_선양 destGeneralID` is the sentinel
+     *    `__ORDER_BY_RAND_QUARANTINED__` (NOT a DRBG draw — MySQL `RAND()`); the gate asserts the LIVE
+     *    `destGeneralID ∈ _q1ValidTargets` (the deterministic `min(no)` substitute MUST land in the valid set),
+     *    never byte-equality with the sentinel.
+     *  - **Diplomacy m10**: the diplo families assert SELECTION + the boolean/short-circuit draw stream ONLY;
+     *    the downstream che_불가침제의/선전포고/천도 resolved delta is NOT inspected (no P2-P4 resolver in scope).
+     */
+    @Test
+    fun `live AI selection draw-for-draw over the GT2 crafted world snapshots`() {
+        val clusters = LinkedHashMap<String, Int>()
+        val firstFailures = ArrayList<String>()
+        var matched = 0
+        var total = 0
+        var liveDrawsVerified = 0
+        var goldenDrawsTotal = 0
+        val familiesMatched = LinkedHashMap<String, Boolean>()
+
+        for (fam in craftedFamilies) {
+            val wj = loadWorld("golden/p5/world-crafted-${fam.name}.json")
+            val meta = wj["meta"]!!.jsonObject
+            val hiddenSeed = meta["hiddenSeed"]!!.jsonPrimitive.content
+            val startYear = meta["startYear"]!!.jsonPrimitive.int
+            val year = meta["year"]!!.jsonPrimitive.int
+            val month = meta["month"]!!.jsonPrimitive.int
+            val turnterm = meta["turnterm"]!!.jsonPrimitive.int
+
+            val world = materializeWorld(wj, year, month, turnterm)
+            val reservedNameOf = buildReservedNameLookup(wj)
+
+            val recorders = LinkedHashMap<Int, AiDrawRecorder>()
+            val rngFactory: (String, Int, Int, Int) -> RandUtil = { hidden, y, m, gid ->
+                val rec = AiDrawRecorder(LiteHashDrbg(seedStringFor(hidden, y, m, gid)))
+                recorders[gid] = rec
+                rec
+            }
+            val adapter = AiTurnAdapter(
+                world = world,
+                registry = registry,
+                hiddenSeed = hiddenSeed,
+                startYear = startYear,
+                turnTerm = turnterm,
+                pipeline = pipeline,
+                reservedCommandNameOf = reservedNameOf,
+                rngFactory = rngFactory,
+            )
+
+            var famOk = true
+            for (i in fam.indices) {
+                total += 1
+                val f = loadCrafted(fam.name, i)
+                val gid = f["generalId"]!!.jsonPrimitive.int
+                recorders.remove(gid)
+                adapter.resetRngFor(gid)
+                goldenDrawsTotal += collapseGolden(f["drawStream"]!!.jsonArray.map { it.jsonObject }).size
+
+                val div = runOneTurn(adapter, recorders, f, i, gid, quarantine = q1ValidTargets(f))
+                if (div == null) {
+                    matched += 1
+                    liveDrawsVerified += collapseLive(recorders[gid]?.drawStream() ?: emptyList()).size
+                } else {
+                    famOk = false
+                    clusters[div.cluster] = (clusters[div.cluster] ?: 0) + 1
+                    if (firstFailures.size < MAX_REPORTED) firstFailures.add("[${fam.name}] ${div.message}")
+                }
+            }
+            familiesMatched[fam.name] = famOk
+        }
+
+        println(
+            "[AiSelectionGateIT/crafted] families matched=${familiesMatched.count { it.value }}/${familiesMatched.size} " +
+                "turns matched=$matched/$total  liveDrawsVerified=$liveDrawsVerified  goldenDrawsTotal=$goldenDrawsTotal\n" +
+                "  per-family: " + familiesMatched.entries.joinToString { "${it.key}=${if (it.value) "OK" else "FAIL"}" },
+        )
+
+        if (matched == total) {
+            assertTrue(
+                liveDrawsVerified == goldenDrawsTotal,
+                "all crafted turns matched but live draws ($liveDrawsVerified) != golden draws ($goldenDrawsTotal) — vacuous guard",
+            )
+        }
+        if (matched != total) {
+            val summary = buildString {
+                append("Crafted live-selection gate: $matched / $total crafted due-general turns matched.\n")
+                append("Per-family: ${familiesMatched.entries.joinToString { "${it.key}=${if (it.value) "OK" else "FAIL"}" }}\n")
+                append("Divergence clusters: ${clusters.entries.sortedByDescending { it.value }.joinToString { "${it.key}=${it.value}" }}\n")
+                append("First failures (≤$MAX_REPORTED):\n${firstFailures.joinToString("\n")}")
+            }
+            throw AssertionError(summary)
+        }
+        assertTrue(matched == total, "all $total crafted turns matched")
+    }
+
+    private fun loadCrafted(family: String, idx: Int): JsonObject =
+        Json.parseToJsonElement(loadResource("golden/p5/ai-crafted-$family-%02d.json".format(idx))).jsonObject
+
+    /**
+     * The Q1 quarantine for the do선양 family: the golden's `che_선양 destGeneralID` is the
+     * `__ORDER_BY_RAND_QUARANTINED__` sentinel (a MySQL `RAND()` pick, NOT a DRBG draw). When present, return
+     * the banked valid-candidate set so the gate asserts the LIVE deterministic `min(no)` id ∈ that set
+     * (membership, NOT byte-equality). Returns null for every non-quarantined family (plain byte-diff).
+     */
+    private fun q1ValidTargets(f: JsonObject): Set<Int>? {
+        val raw = f["chosenRawArgs"]?.takeIf { it !is JsonNull }?.jsonObject ?: return null
+        val dest = raw["destGeneralID"]?.jsonPrimitive?.contentOrNull
+        if (dest != "__ORDER_BY_RAND_QUARANTINED__") return null
+        return f["_q1ValidTargets"]!!.jsonArray.map { it.jsonPrimitive.int }.toSet()
+    }
+
     private data class Divergence(val cluster: String, val message: String)
 
     /**
@@ -189,6 +334,7 @@ class AiSelectionGateIT {
         f: JsonObject,
         idx: Int,
         gid: Int,
+        quarantine: Set<Int>?,
     ): Divergence? {
         val reason = f["reason"]?.jsonPrimitive?.contentOrNull ?: "?"
         val nationTurn = f["nationTurn"]?.takeIf { it !is JsonNull }?.jsonObject
@@ -217,14 +363,25 @@ class AiSelectionGateIT {
                     "$tag NATION reason mismatch — golden=$expReason live=${nc.reason} (code $expCode)",
                 )
             }
-            val nationArgDiv = diffArgs("$tag NATION", nationTurn["chosenRawArgs"], nc.args, "$reason:nation-args")
+            // Canonicalize the LIVE nation args through the command def's argTest/parseArgs — the PHP capture
+            // records `$chosenNation->getArg()` (the POST-argTest arg), so e.g. che_포상 rounds `amount` to the
+            // nearest 100 (Util::round(-2)) then clamps to [100, maxResourceActionAmount]. Comparing the raw AI
+            // emit (the un-rounded geomean 1235.6) against the canonical golden (1200) would false-fail; the
+            // canonical arg IS the parity target (SAME single canonicalization the general pass applies, :409).
+            val canonicalNation = canonicalizeArgs(nc.actionCode, nc.args)
+            val nationArgDiv = diffArgs("$tag NATION", nationTurn["chosenRawArgs"], canonicalNation, "$reason:nation-args")
             if (nationArgDiv != null) return nationArgDiv
             if (drawAtNationEnd != null) {
-                val liveCount = recorders[gid]?.drawCount() ?: 0
-                if (liveCount != drawAtNationEnd) {
+                // Collapse the weighted-wrappers on BOTH sides (see [collapseGolden]/[collapseLive]): the PHP
+                // recorder logs a `choiceUsingWeight` wrapper (do선전포고 target pick) that the live
+                // `choiceUsingWeightPair` recorder mirrors; both ride on an inner nextFloat1 (zero extra bytes).
+                val goldenPrefix = f["drawStream"]!!.jsonArray.take(drawAtNationEnd).map { it.jsonObject }
+                val goldenCount = collapseGolden(goldenPrefix).size
+                val liveCount = collapseLive(recorders[gid]?.drawStream() ?: emptyList()).size
+                if (liveCount != goldenCount) {
                     return Divergence(
                         "$reason:nation-drawcount",
-                        "$tag NATION drawCountAtNationEnd mismatch — golden=$drawAtNationEnd live=$liveCount",
+                        "$tag NATION drawCountAtNationEnd mismatch — golden=$goldenCount (raw $drawAtNationEnd) live=$liveCount",
                     )
                 }
             }
@@ -251,8 +408,31 @@ class AiSelectionGateIT {
                 "$tag GENERAL reason mismatch — golden=$reason live=${chosen.reason} (code $expCode)",
             )
         }
-        val argDiv = diffArgs("$tag GENERAL", f["chosenRawArgs"], chosen.args, "$reason:args")
-        if (argDiv != null) return argDiv
+        // Canonicalize the LIVE args through the command def's argTest/parseArgs — the PHP capture records
+        // `$chosenGeneral->getArg()` (the POST-argTest arg), so e.g. che_헌납 clamps `amount` to
+        // GameConst::$maxResourceActionAmount. Comparing the raw AI emit (the un-clamped 996900) against the
+        // canonical golden (10000) would false-fail; the canonical arg IS the parity target.
+        val canonicalGeneral = canonicalizeArgs(chosen.actionCode, chosen.args)
+        if (quarantine != null) {
+            // Q1 / ORDER BY RAND (do선양): the golden destGeneralID is the un-replayable MySQL RAND() sentinel.
+            // Assert the LIVE deterministic min(no) substitute lands in the banked valid-candidate set
+            // (membership, NOT byte-equality) — every OTHER emitted arg still byte-diffs against the golden.
+            val liveDest = (canonicalGeneral["destGeneralID"] as? Number)?.toInt()
+            if (liveDest == null || liveDest !in quarantine) {
+                return Divergence(
+                    "$reason:q1-destGeneral-out-of-set",
+                    "$tag GENERAL Q1 destGeneralID live=$liveDest NOT in valid-candidate set $quarantine",
+                )
+            }
+            // diff the remaining args (drop the quarantined dest key on both sides).
+            val goldenOther = stripKey(f["chosenRawArgs"], "destGeneralID")
+            val liveOther = canonicalGeneral.filterKeys { it != "destGeneralID" }
+            val argDiv = diffArgs("$tag GENERAL", goldenOther, liveOther, "$reason:args")
+            if (argDiv != null) return argDiv
+        } else {
+            val argDiv = diffArgs("$tag GENERAL", f["chosenRawArgs"], canonicalGeneral, "$reason:args")
+            if (argDiv != null) return argDiv
+        }
 
         // ── draw stream value + cursor + count (the WHOLE shared stream: nation prefix + general) ──
         val rec = recorders[gid]
@@ -267,22 +447,22 @@ class AiSelectionGateIT {
 
     // ── world materialisation ─────────────────────────────────────────────────────────────────────────
 
-    private fun materializeWorld(year: Int, month: Int, turnterm: Int): InMemoryTurnWorld {
-        val gameEnv = worldJson["gameEnv"]!!.jsonObject
+    private fun materializeWorld(wj: JsonObject, year: Int, month: Int, turnterm: Int): InMemoryTurnWorld {
+        val gameEnv = wj["gameEnv"]!!.jsonObject
         val initYear = gameEnv["init_year"]?.jsonPrimitive?.intOrNull ?: year
         val initMonth = gameEnv["init_month"]?.jsonPrimitive?.intOrNull ?: 1
 
         val nationEnvByNation = LinkedHashMap<Int, Map<String, Any?>>()
-        for (ne in worldJson["nationEnv"]!!.jsonArray.map { it.jsonObject }) {
+        for (ne in wj["nationEnv"]!!.jsonArray.map { it.jsonObject }) {
             val nid = ne["nation"]!!.jsonPrimitive.int
             val kv = ne["kv"]?.takeIf { it !is JsonNull }?.jsonObject
             nationEnvByNation[nid] = kv?.let { decodeObject(it) } ?: emptyMap()
         }
 
-        val generals = worldJson["generals"]!!.jsonArray.map { toGeneral(it.jsonObject) }.sortedBy { it.id }
-        val cities = worldJson["cities"]!!.jsonArray.map { toCity(it.jsonObject) }.sortedBy { it.id }
-        val nations = worldJson["nations"]!!.jsonArray.map { toNation(it.jsonObject, nationEnvByNation, initYear, initMonth) }
-        val diplomacy = worldJson["diplomacy"]!!.jsonArray.map { toDiplomacy(it.jsonObject) }
+        val generals = wj["generals"]!!.jsonArray.map { toGeneral(it.jsonObject) }.sortedBy { it.id }
+        val cities = wj["cities"]!!.jsonArray.map { toCity(it.jsonObject) }.sortedBy { it.id }
+        val nations = wj["nations"]!!.jsonArray.map { toNation(it.jsonObject, nationEnvByNation, initYear, initMonth) }
+        val diplomacy = wj["diplomacy"]!!.jsonArray.map { toDiplomacy(it.jsonObject) }
 
         val state = TurnWorldState(
             id = 1,
@@ -298,9 +478,9 @@ class AiSelectionGateIT {
         return InMemoryTurnWorld(WorldSnapshot(state, generals, cities, nations, emptyList(), diplomacy))
     }
 
-    private fun buildReservedNameLookup(): (Int) -> String? {
+    private fun buildReservedNameLookup(wj: JsonObject): (Int) -> String? {
         val byGeneral = LinkedHashMap<Int, String?>()
-        for (gt in worldJson["generalTurns"]!!.jsonArray.map { it.jsonObject }) {
+        for (gt in wj["generalTurns"]!!.jsonArray.map { it.jsonObject }) {
             if (gt["turn_idx"]?.jsonPrimitive?.intOrNull != 0) continue
             val gidv = gt["general_id"]!!.jsonPrimitive.int
             byGeneral[gidv] = gt["action"]?.jsonPrimitive?.contentOrNull
@@ -408,6 +588,12 @@ class AiSelectionGateIT {
 
     // ── arg + stream diffing ─────────────────────────────────────────────────────────────────────────
 
+    /** Return a copy of the golden chosenRawArgs object with [key] removed (for the Q1 quarantine arg diff). */
+    private fun stripKey(goldenArgs: kotlinx.serialization.json.JsonElement?, key: String): JsonObject? {
+        val o = goldenArgs?.takeIf { it !is JsonNull }?.jsonObject ?: return null
+        return JsonObject(o.filterKeys { it != key })
+    }
+
     /** Compare golden chosenRawArgs (JSON) vs live args map by CONTENT (key→scalar), order-insensitive. */
     private fun diffArgs(tag: String, goldenArgs: kotlinx.serialization.json.JsonElement?, liveArgs: Map<String, Any?>, cluster: String): Divergence? {
         val golden: Map<String, Any?> = when {
@@ -439,7 +625,55 @@ class AiSelectionGateIT {
         return a?.toString() == b?.toString()
     }
 
-    private fun diffStream(tag: String, reason: String, golden: List<JsonObject>, live: List<AiDrawRecorder.Draw>): Divergence? {
+    /**
+     * The PHP `RandUtilDrawRecorder` overrides `choiceUsingWeight` (records a WRAPPER entry riding on its inner
+     * `nextFloat1`, same before-cursor) but NOT `choiceUsingWeightPair`. The Kotlin AI families deliberately use
+     * `choiceUsingWeightPair` (Int-key insertion order, NOT JS-key-reordered) for BOTH the do일반내정 develop pick
+     * (PHP `choiceUsingWeightPair` → golden has NO wrapper) AND the do징병/do선전포고 armType/crewType/war-target
+     * pick (PHP `choiceUsingWeight` → golden HAS a wrapper). So the SAME live method maps to two PHP methods; the
+     * recorder cannot distinguish them. The wrapper consumes ZERO bytes beyond its inner `nextFloat1` (its cursor
+     * == the inner draw's), so it is a pure recorder ARTIFACT, not an RNG draw. We collapse it on BOTH sides: drop
+     * any `choiceUsingWeight`/`choiceUsingWeightPair` entry whose before-cursor equals the immediately-preceding
+     * KEPT entry's cursor. The actual RNG parity target (the inner `nextFloat1` value + cursor + count) is
+     * asserted unchanged; the wrapper-vs-pair recorder shape is reconciled.
+     */
+    private data class StreamEntry(val method: String, val state: Long, val buffer: Int)
+
+    private fun collapseGolden(golden: List<JsonObject>): List<JsonObject> {
+        val out = ArrayList<JsonObject>(golden.size)
+        for (g in golden) {
+            val m = g["method"]!!.jsonPrimitive.content
+            if (m == "choiceUsingWeight" || m == "choiceUsingWeightPair") {
+                val prev = out.lastOrNull()
+                if (prev != null &&
+                    prev["stateIdxBefore"]!!.jsonPrimitive.content.toLong() == g["stateIdxBefore"]!!.jsonPrimitive.content.toLong() &&
+                    prev["bufferIdxBefore"]!!.jsonPrimitive.int == g["bufferIdxBefore"]!!.jsonPrimitive.int
+                ) {
+                    continue // wrapper over the preceding inner draw — recorder artifact, not an RNG draw.
+                }
+            }
+            out.add(g)
+        }
+        return out
+    }
+
+    private fun collapseLive(live: List<AiDrawRecorder.Draw>): List<AiDrawRecorder.Draw> {
+        val out = ArrayList<AiDrawRecorder.Draw>(live.size)
+        for (l in live) {
+            if (l.method == "choiceUsingWeight" || l.method == "choiceUsingWeightPair") {
+                val prev = out.lastOrNull()
+                if (prev != null && prev.stateIdxBefore == l.stateIdxBefore && prev.bufferIdxBefore == l.bufferIdxBefore) {
+                    continue
+                }
+            }
+            out.add(l)
+        }
+        return out
+    }
+
+    private fun diffStream(tag: String, reason: String, goldenRaw: List<JsonObject>, liveRaw: List<AiDrawRecorder.Draw>): Divergence? {
+        val golden = collapseGolden(goldenRaw)
+        val live = collapseLive(liveRaw)
         val n = maxOf(golden.size, live.size)
         for (seq in 0 until n) {
             val g = golden.getOrNull(seq)
@@ -523,6 +757,17 @@ class AiSelectionGateIT {
 
     private fun seedStringFor(hidden: String, year: Int, month: Int, generalId: Int): String =
         opensamguk.logic.ai.AiSeed.seed(hidden, year, month, generalId)
+
+    /**
+     * Canonicalize the LIVE AI-emitted args through the command def's [GeneralActionDefinition.parseArgs] — the
+     * SAME single canonicalization the F-BRIDGE gate applies (CandidateBridge M2: the AI emits RAW, the bridge
+     * canonicalizes EXACTLY ONCE via `def.parseArgs`). The PHP capture records the POST-argTest
+     * `$chosenGeneral->getArg()` (e.g. che_헌납 clamps `amount` to `GameConst::$maxResourceActionAmount`), so the
+     * canonical map IS the parity target; comparing the raw un-clamped AI emit would false-fail. Routes through
+     * the SAME [registry] the adapter's gate uses (`registry.resolve(code)`); never double-canonicalizes.
+     */
+    private fun canonicalizeArgs(actionCode: String, rawArgs: Map<String, Any?>): Map<String, Any?> =
+        registry.resolve(actionCode).parseArgs(rawArgs)
 
     private fun parseTurnTime(raw: String?): Instant {
         if (raw.isNullOrBlank()) return Instant.parse("0181-01-01T00:00:00Z")

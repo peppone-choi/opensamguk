@@ -184,7 +184,7 @@ class NationDiploBodiesTest {
             respAssist = emptyMap(),
             respAssistTry = emptyMap(),
             warTargetNationKeys = emptySet(),
-            income = 3000, // amount*4 >= 3000 → nation 2 (4000) qualifies, picked first after arsort DESC.
+            income = 3000.0, // amount*4 >= 3000 → nation 2 (4000) qualifies, picked first after arsort DESC.
             recordNationKv = kv,
         )
 
@@ -212,7 +212,7 @@ class NationDiploBodiesTest {
         val input = NationDiploFamily.DiploInput(
             nationId = 1, officerLevel = 11, yearMonth = 2400,
             recvAssist = listOf(2 to 1000), respAssist = emptyMap(), respAssistTry = emptyMap(),
-            warTargetNationKeys = emptySet(), income = 3000, recordNationKv = kv,
+            warTargetNationKeys = emptySet(), income = 3000.0, recordNationKv = kv,
         )
         assertNull(NationDiploFamily.bodies(ctx, input).getValue("불가침제의")(null), "officer_level<12 → null (PHP :1769)")
         assertTrue(kv.deltas.isEmpty() && rng.draws.isEmpty(), "no delta, no draw")
@@ -235,7 +235,7 @@ class NationDiploBodiesTest {
             respAssist = mapOf("n2" to listOf(2, 1000)),
             respAssistTry = mapOf("n4" to listOf(4, 2399)),
             warTargetNationKeys = setOf(3),
-            income = 3000, // 800*4 = 3200 >= 3000 → nation 5 qualifies.
+            income = 3000.0, // 800*4 = 3200 >= 3000 → nation 5 qualifies.
             recordNationKv = kv,
         )
 
@@ -256,7 +256,7 @@ class NationDiploBodiesTest {
         val input = NationDiploFamily.DiploInput(
             nationId = 1, officerLevel = 12, yearMonth = 2400,
             recvAssist = listOf(2 to 1000), respAssist = emptyMap(), respAssistTry = emptyMap(),
-            warTargetNationKeys = emptySet(), income = 3000, recordNationKv = kv,
+            warTargetNationKeys = emptySet(), income = 3000.0, recordNationKv = kv,
         )
         assertNull(NationDiploFamily.bodies(ctx, input).getValue("불가침제의")(null), "gate deny → null (PHP :1837-1839)")
         assertTrue(kv.deltas.isEmpty(), "resp_assist_try queued only BELOW a passing gate (PHP :1841)")
@@ -542,7 +542,7 @@ class NationDiploBodiesTest {
         val input = NationDiploFamily.DiploInput(
             nationId = 1, officerLevel = 12, yearMonth = 2400,
             recvAssist = listOf(2 to 1000), respAssist = emptyMap(), respAssistTry = emptyMap(),
-            warTargetNationKeys = emptySet(), income = 3000, recordNationKv = kv,
+            warTargetNationKeys = emptySet(), income = 3000.0, recordNationKv = kv,
         )
         val warInput = NationDiploFamily.WarInput(0.0, emptySet(), emptyList()) { false }
         val relocInput = NationDiploFamily.RelocateInput(

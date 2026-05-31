@@ -128,6 +128,39 @@ class AiDrawRecorder(private val inner: LiteHashDrbg) : RandUtil(inner) {
     }
 
     /**
+     * BYTE-SYMMETRIC to the PHP `RandUtilDrawRecorder`, which overrides EXACTLY `choice` / `choiceUsingWeight` /
+     * `shuffle` (+ the primitives) — and NOTHING else. So we record a `choiceUsingWeight` WRAPPER entry (its
+     * inner `nextFloat1` records FIRST via virtual dispatch, then this wrapper rides on top with the cursor
+     * snapshotted BEFORE the inner draw), reproducing the GT2 crafted goldens' `…, nextFloat1(c),
+     * choiceUsingWeight(c), …` interleaving exactly.
+     *
+     * We deliberately do NOT override `choiceUsingWeightPair` / `choiceMap` / `choiceSet` — the PHP recorder
+     * does not either, so those surface ONLY as their underlying `nextFloat1`/`choice` draw (the GT1 do일반내정
+     * path uses `choiceUsingWeightPair`; an extra wrapper there would inject a phantom draw the golden lacks).
+     */
+    override fun choiceUsingWeight(items: Map<String, Double>): String {
+        val s = inner.peekStateIdx(); val b = inner.peekBufferIdx()
+        val r = super.choiceUsingWeight(items) // records the inner nextFloat1 FIRST (virtual dispatch).
+        record("choiceUsingWeight", linkedMapOf("items" to items.keys.toList()), r, s, b, true)
+        return r
+    }
+
+    /**
+     * The Kotlin AI families use `choiceUsingWeightPair` (Int-key insertion order) where PHP uses EITHER
+     * `choiceUsingWeight` (do징병/do선전포고 armType/target — golden HAS a wrapper) OR `choiceUsingWeightPair`
+     * (do일반내정 — golden has NO wrapper). We record the wrapper here for symmetry/observability; the gate's
+     * `diffStream`/count comparisons COLLAPSE these zero-byte wrapper entries on BOTH golden and live (their
+     * before-cursor == the inner `nextFloat1` they ride on), so the wrapper-vs-pair shape never desyncs — only
+     * the inner RNG draw (value + cursor) is asserted.
+     */
+    override fun <T> choiceUsingWeightPair(items: List<Pair<T, Double>>): T {
+        val s = inner.peekStateIdx(); val b = inner.peekBufferIdx()
+        val r = super.choiceUsingWeightPair(items) // records the inner nextFloat1 FIRST (virtual dispatch).
+        record("choiceUsingWeightPair", linkedMapOf("items" to items.map { it.first.toString() }), r.toString(), s, b, true)
+        return r
+    }
+
+    /**
      * [RandUtil.shuffle] calls `rng.nextInt(...)` on the PRIVATE inner DRBG directly (NOT `this.nextInt`), so
      * we replicate its Fisher-Yates body against [inner] and record EACH per-position `nextInt` draw — keeping
      * the cursor logged (an un-logged shuffle would silently advance the stream). Not exercised by the month-1
