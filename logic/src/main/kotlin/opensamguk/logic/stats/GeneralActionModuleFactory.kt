@@ -45,11 +45,16 @@ class GeneralActionModuleFactory(
     private val specialDomesticRegistry: GeneralActionModuleSource,
     private val personalityRegistry: GeneralActionModuleSource,
     private val itemRegistry: GeneralActionModuleSource,
+    private val specialWarRegistry: GeneralActionModuleSource = GeneralActionModuleSource { null },
 ) {
     /**
      * @param general          supplies the four equip slots (horse/weapon/book/item) + officerLevel + cityId.
      * @param nationTypeCode   nation `type_code` (source #1) — null/None ⇒ skipped.
      * @param specialDomesticCode general `special` (source #3) — null/None ⇒ skipped.
+     * @param specialWarCode   general `special2` (source #4) — null/None ⇒ skipped. The war specialty's
+     *                         `onCalcStat` folds into EVERY stat read (e.g. `che_징병` = leadership +25%),
+     *                         so it MUST be present for the AI's `getLeadership(false)` reward/recruit math
+     *                         to match PHP `getActionList()` (`General.php:787-799`, position #4).
      * @param personalityCode  general `personal` (source #5) — null/None ⇒ skipped.
      * @param nationLevel      the general's nation level (feeds calcLeadershipBonus).
      * @param officerCity      the general's assigned officer city (drives the away-from-city demotion);
@@ -63,6 +68,7 @@ class GeneralActionModuleFactory(
         personalityCode: String?,
         nationLevel: Int,
         officerCity: Int = general.cityId,
+        specialWarCode: String? = null,
     ): List<GeneralActionModule> {
         val mods = ArrayList<GeneralActionModule>(12)
 
@@ -72,7 +78,8 @@ class GeneralActionModuleFactory(
         mods.add(OfficerLevelModule(general.officerLevel, nationLevel, officerCity, general.cityId))
         // #3 specialDomestic
         specialDomesticRegistry.resolve(specialDomesticCode)?.let { mods.add(it) }
-        // #4 specialWar — identity stub (P4)
+        // #4 specialWar — the war specialty's onCalcStat folds into EVERY stat read (PHP getActionList #4).
+        specialWarRegistry.resolve(specialWarCode)?.let { mods.add(it) }
         // #5 personality
         personalityRegistry.resolve(personalityCode)?.let { mods.add(it) }
         // #6 crew, #7 inherit, #8 scenario — identity stubs (P4/P6)

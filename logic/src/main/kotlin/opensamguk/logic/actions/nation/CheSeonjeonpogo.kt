@@ -70,7 +70,12 @@ class CheSeonjeonpogo(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
             suppliedCity(),
             reqEnvValue("year", ">=", startYear + 1, "초반제한 해제 2년전부터 가능합니다."),
             existsDestNation(),
-            nearNation { _, _ -> false },
+            // NearNation: the map-adjacency predicate is preloaded by the caller (the AI bridge stages it as the
+            // env `__isNeighbor` via AiDistance.isNeighbor over the live cities; precheck has no staging seam yet
+            // → falls through to false, P7 read-side TODO). It
+            // rides ctx.env (parseArgs drops non-schema arg keys). A missing/false stage denies (PHP
+            // `\sammo\isNeighbor`, F-BFS-backed — NO adjacency walk inside test()).
+            nearNation { ctx, _ -> (ctx.env["__isNeighbor"] as? Boolean) ?: (ctx.args["__isNeighbor"] as? Boolean) ?: false },
             disallowDiplomacyBetweenStatus(linkedMapOf(0 to "아국과 이미 교전중입니다.", 1 to "아국과 이미 선포중입니다.", 7 to "불가침국입니다.")),
         )
     }
