@@ -35,7 +35,10 @@ class AuctionBidHandler(
 ) : TurnDaemonCommandHandler<TurnDaemonCommand.AuctionBid> {
 
     override suspend fun handle(command: TurnDaemonCommand.AuctionBid): TurnDaemonCommandResult {
-        val (auctionId, generalId, amount) = command
+        val auctionId = command.auctionId
+        val generalId = command.generalId
+        val amount = command.amount
+        val tryExtendCloseDate = command.tryExtendCloseDate ?: true
 
         // ── 1. 경매 조회 및 상태 검증 ─────────────────────────────────────────
         // TODO: AuctionRepository를 통해 경매 조회
@@ -55,35 +58,36 @@ class AuctionBidHandler(
         // val myPrevBid = bidRepository.findMyBid(auctionId, generalId)
         val highestBidAmount: Int? = null // TODO: from repository
         val myPrevBidAmount: Int? = null // TODO: from repository
+        val highestBidGeneralId: Int? = null // TODO: from repository (for refund)
         val isReverse = false // TODO: from auction.detail.isReverse
         val startBidAmount: Int? = null // TODO: from auction.detail.startBidAmount
         val auctionType = AuctionType.BUY_RICE // TODO: from auction.type
 
         // ── 4. 입찰가 검증 ───────────────────────────────────────────────────
-        val validationResult = AuctionBidValidator.validateBid(
-            auctionType = auctionType,
-            bidAmount = amount,
-            highestBidAmount = highestBidAmount,
-            startBidAmount = startBidAmount,
-            isReverse = isReverse,
-            generalGold = general.gold,
-            generalRice = general.rice,
-        )
-        if (validationResult is BidValidationResult.Fail) {
-            return AuctionBidFail(auctionId = auctionId, reason = validationResult.reason)
-        }
-
-        // 유니크 아이템인 경우 추가 검증
-        if (auctionType == AuctionType.UNIQUE_ITEM) {
+        val validationResult = if (auctionType == AuctionType.UNIQUE_ITEM) {
+            // 유니크 아이템: validateUniqueBid로만 검증 (상승폭 + 유산 포인트)
             val inheritancePoint = general.meta["inheritancePoint"] as? Int ?: 0
-            val uniqueValidation = AuctionBidValidator.validateUniqueBid(
+            AuctionBidValidator.validateUniqueBid(
                 bidAmount = amount,
                 highestBidAmount = highestBidAmount,
                 generalInheritancePoint = inheritancePoint,
+                previousBidAmount = myPrevBidAmount,
             )
-            if (uniqueValidation is BidValidationResult.Fail) {
-                return AuctionBidFail(auctionId = auctionId, reason = uniqueValidation.reason)
-            }
+        } else {
+            // 자원 경매: validateBid로 검증 (가격 + 자원 보유량)
+            AuctionBidValidator.validateBid(
+                auctionType = auctionType,
+                bidAmount = amount,
+                currentWinningBidAmount = highestBidAmount,
+                startBidAmount = startBidAmount,
+                isReverse = isReverse,
+                generalGold = general.gold,
+                generalRice = general.rice,
+                previousBidAmount = myPrevBidAmount,
+            )
+        }
+        if (validationResult is BidValidationResult.Fail) {
+            return AuctionBidFail(auctionId = auctionId, reason = validationResult.reason)
         }
 
         // ── 5. 차액 계산 (morePoint) ─────────────────────────────────────────
@@ -132,6 +136,7 @@ class AuctionBidHandler(
         // TODO: AuctionBidRepository.insertBid(auctionId, generalId, amount, eventId, eventAt)
         // TODO: AuctionRepository.updateCloseAt(auctionId, nextCloseAt, latestEventId, latestEventAt)
         //       with optimistic locking (latest_event_at + latest_event_id)
+        //       tryExtendCloseDate가 false면 close_at 연장하지 않음 (UNIQUE_ITEM 선택적 연장)
 
         // ── 8. 로그 작성 ─────────────────────────────────────────────────────
         world.pushLog(

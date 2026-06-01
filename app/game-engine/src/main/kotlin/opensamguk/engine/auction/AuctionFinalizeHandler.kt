@@ -46,15 +46,16 @@ class AuctionFinalizeHandler(
         // }
 
         // 스텁 데이터 — TODO: repository에서 조회한 실제 데이터로 대체
-        val auctionType = AuctionType.BUY_RICE // TODO: from auction
+        val auctionType = AuctionType.BUY_RICE // TODO: from auction.type
         val hostGeneralId = 0 // TODO: from auction.hostGeneralId
         val detail = opensamguk.logic.auction.AuctionDetail() // TODO: from auction.detail
         val isReverse = false // TODO: from auction.detail.isReverse
         val uniqueItemKey: String? = null // TODO: from auction.targetCode
 
-        // ── 2. 최고 입찰자 조회 ──────────────────────────────────────────────
+        // ── 2. 최고 입찰자 조회 (isReverse에 따라 정렬 방향 결정) ─────────────
         // TODO: AuctionBidRepository.findHighestBid(auctionId, isReverse)
         // val highestBid = bidRepository.findHighestBid(auctionId, isReverse)
+        // SQL: ORDER BY amount ${isReverse ? "ASC" : "DESC"}, id ASC LIMIT 1
         val highestBidAmount: Int? = null // TODO: from repository
         val highestBidGeneralId: Int? = null // TODO: from repository
 
@@ -71,6 +72,7 @@ class AuctionFinalizeHandler(
             highestBidGeneralId = highestBidGeneralId,
             detail = detail,
             uniqueItemKey = uniqueItemKey,
+            hostGeneralId = hostGeneralId,
         )
     }
 
@@ -124,6 +126,7 @@ class AuctionFinalizeHandler(
         highestBidGeneralId: Int,
         detail: opensamguk.logic.auction.AuctionDetail,
         uniqueItemKey: String?,
+        hostGeneralId: Int,
     ): TurnDaemonCommandResult {
         // 유니크 아이템의 경우 보유 제한 확인
         if (auctionType == AuctionType.UNIQUE_ITEM) {
@@ -171,18 +174,17 @@ class AuctionFinalizeHandler(
         // 자원 교환 결과 계산
         val result = AuctionResultCalculator.calculateFinish(auctionType, highestBidAmount, detail)
 
-        // 주최자에게 입찰자의 자원 이전
-        if (result.hostReceiveResource != null && result.hostReceiveAmount > 0) {
-            // TODO: hostGeneralId from auction
-            // val host = world.getGeneralById(auction.hostGeneralId)
-            // if (host != null) {
-            //     val updated = when (result.hostReceiveResource) {
-            //         "gold" -> host.copy(gold = host.gold + result.hostReceiveAmount)
-            //         "rice" -> host.copy(rice = host.rice + result.hostReceiveAmount)
-            //         else -> host
-            //     }
-            //     world.updateGeneral(updated)
-            // }
+        // 주최자에게 입찰자의 자원 이전 (hostGeneralId > 0인 경우만)
+        if (hostGeneralId > 0 && result.hostReceiveResource != null && result.hostReceiveAmount > 0) {
+            val host = world.getGeneralById(hostGeneralId)
+            if (host != null) {
+                val updated = when (result.hostReceiveResource) {
+                    "gold" -> host.copy(gold = host.gold + result.hostReceiveAmount)
+                    "rice" -> host.copy(rice = host.rice + result.hostReceiveAmount)
+                    else -> host
+                }
+                world.updateGeneral(updated)
+            }
         }
 
         // 낙찰자에게 경매 물품 이전

@@ -109,9 +109,10 @@ class OpenNationBettingAction(
         /** BettingInfo KV 키 접두사 */
         val BettingInfo.KV_KEY_PREFIX: String get() = "betting:"
 
-        /** 베팅 ID 생성 — `{year}{month:02d}_{random}` 형식 */
+        /** 베팅 ID 생성 — `nb_{year}{month:02d}_{random4}` 형식. PHP parity: 중복 방지를 위해 랜덤 접미사 포함. */
         private fun generateBettingId(year: Int, month: Int): String {
-            return "nb_${year}${month.toString().padStart(2, '0')}"
+            val randomSuffix = (1000..9999).random()
+            return "nb_${year}${month.toString().padStart(2, '0')}_${randomSuffix}"
         }
 
         /** 초기 배당률 계산 — 모든 대상 국가에 동일 배당 */
