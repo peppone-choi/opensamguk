@@ -45,6 +45,14 @@ class TurnRunService(
     private val commandBlockMs: Long = 0,
 ) {
 
+    /**
+     * Routes drained intake commands (auction bid/finalize, and the P6/P7 commands that follow) to
+     * their engine handlers. Built per-run against the live [world] (mirrors the sibling per-run
+     * handlers — the world is per-run state, not a Spring bean). Results are currently DISCARDED: the
+     * events-stream `commandResult` publish is deferred per the P1 DECISION documented above.
+     */
+    private val commandDispatcher = TurnDaemonCommandDispatcher(world)
+
     /** Outcome of one [runTick]: the resolved turns + whether a `turnCompleted` was published. */
     data class TickResult(
         val handled: List<ReservedTurnHandler.HandledTurn>,
@@ -60,10 +68,14 @@ class TurnRunService(
      * daemon to run; in P1 they are consumed (the stream cursor advances) and the tick proceeds.
      */
     fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
-        // 1. drain the control-command stream (run/pause/troopJoin/...). P1 only advances the cursor;
-        //    the reserved general-turn ACTIONS live in the general_turn ring (ReservedTurnRepository),
-        //    not on this stream, and are read per-general inside the lifecycle's reservedActionOf.
-        commandStream.readCommands(commandBlockMs)
+        // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
+        //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
+        //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
+        //    intake commands (auction bid/finalize, …) route to their handler. Results are discarded —
+        //    the `commandResult` publish is deferred (P1 DECISION). The reserved general-turn ACTIONS
+        //    live in the general_turn ring (ReservedTurnRepository), NOT on this stream.
+        val commands = commandStream.readCommands(commandBlockMs)
+        commandDispatcher.dispatchAll(commands)
 
         // 2. drain ALL due generals in one pass through the handler (no mid-pass flush).
         //    FT3: this single drain is the INNER pass of the two-level executeAllCommand loop. The

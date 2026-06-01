@@ -35,7 +35,7 @@ class AuctionFinalizeHandler(
     private val world: InMemoryTurnWorld,
 ) : TurnDaemonCommandHandler<TurnDaemonCommand.AuctionFinalize> {
 
-    override suspend fun handle(command: TurnDaemonCommand.AuctionFinalize): TurnDaemonCommandResult {
+    override fun handle(command: TurnDaemonCommand.AuctionFinalize): TurnDaemonCommandResult {
         val auctionId = command.auctionId
 
         // ── 1. 경매 조회 (FINALIZING 상태 확인) ────────────────────────────────

@@ -19,5 +19,5 @@ interface TurnDaemonCommandHandler<T : TurnDaemonCommand> {
      * @param command 처리할 명령
      * @return 명령 처리 결과 (Ok 또는 Fail)
      */
-    suspend fun handle(command: T): TurnDaemonCommandResult
+    fun handle(command: T): TurnDaemonCommandResult
 }

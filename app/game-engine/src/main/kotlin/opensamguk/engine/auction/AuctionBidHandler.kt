@@ -36,7 +36,7 @@ class AuctionBidHandler(
     private val world: InMemoryTurnWorld,
 ) : TurnDaemonCommandHandler<TurnDaemonCommand.AuctionBid> {
 
-    override suspend fun handle(command: TurnDaemonCommand.AuctionBid): TurnDaemonCommandResult {
+    override fun handle(command: TurnDaemonCommand.AuctionBid): TurnDaemonCommandResult {
         val auctionId = command.auctionId
         val generalId = command.generalId
         val amount = command.amount
