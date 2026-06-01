@@ -212,6 +212,11 @@ class EventStore {
                 "united", 5000, cond("true"),
                 actions(a("MergeInheritPointRank")),
             ),
+            // month / 3000 (DateRelative == 1,1) → [OpenNationBetting, DeleteEvent]
+            SeedRow(
+                "month", 3000, cond("""["DateRelative","==",1,1]"""),
+                actions(a("OpenNationBetting"), a("DeleteEvent")),
+            ),
         )
     }
 }
