@@ -9,6 +9,8 @@ import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.read.AuctionBidRepository
+import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
@@ -55,6 +57,10 @@ class TurnRunService(
     private val eventDispatcher: EventDispatcher? = null,
     /** How long [RedisCommandStream.readCommands] blocks for a control command before the tick proceeds. */
     private val commandBlockMs: Long = 0,
+    /** JPA read repository for auction lookups (P6 T0.7). */
+    private val auctionRepository: AuctionRepository? = null,
+    /** JPA read repository for auction bid lookups (P6 T0.7). */
+    private val auctionBidRepository: AuctionBidRepository? = null,
 ) {
 
     /**
@@ -63,7 +69,11 @@ class TurnRunService(
      * handlers — the world is per-run state, not a Spring bean). Results are currently DISCARDED: the
      * events-stream `commandResult` publish is deferred per the P1 DECISION documented above.
      */
-    private val commandDispatcher = TurnDaemonCommandDispatcher(world)
+    private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null) {
+        TurnDaemonCommandDispatcher(world, handler.recorder, auctionRepository, auctionBidRepository)
+    } else {
+        null
+    }
 
     /** Outcome of one [runTick]: the resolved turns + whether a `turnCompleted` was published. */
     data class TickResult(
@@ -91,7 +101,7 @@ class TurnRunService(
         //    the `commandResult` publish is deferred (P1 DECISION). The reserved general-turn ACTIONS
         //    live in the general_turn ring (ReservedTurnRepository), NOT on this stream.
         val commands = commandStream.readCommands(commandBlockMs)
-        commandDispatcher.dispatchAll(commands)
+        commandDispatcher?.dispatchAll(commands) ?: emptyList()
 
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>

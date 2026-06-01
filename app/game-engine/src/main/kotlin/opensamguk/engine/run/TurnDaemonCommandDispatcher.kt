@@ -4,7 +4,10 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.infra.read.AuctionBidRepository
+import opensamguk.infra.read.AuctionRepository
 
 /**
  * Routes drained [TurnDaemonCommand]s to their engine handlers.
@@ -30,9 +33,14 @@ import opensamguk.engine.turn.InMemoryTurnWorld
  * Result publishing (the events-stream `commandResult` channel) remains deferred per the P1 DECISION
  * in [TurnRunService]; the caller currently discards the returned result.
  */
-class TurnDaemonCommandDispatcher(world: InMemoryTurnWorld) {
-    private val auctionBid = AuctionBidHandler(world)
-    private val auctionFinalize = AuctionFinalizeHandler(world)
+class TurnDaemonCommandDispatcher(
+    world: InMemoryTurnWorld,
+    recorder: ChangeRecorder,
+    auctionRepository: AuctionRepository,
+    auctionBidRepository: AuctionBidRepository,
+) {
+    private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
+    private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
 
     /**
      * Dispatch one command to its handler.
