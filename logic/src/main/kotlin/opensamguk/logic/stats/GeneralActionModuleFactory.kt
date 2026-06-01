@@ -1,6 +1,7 @@
 package opensamguk.logic.stats
 
 import opensamguk.logic.domain.General
+import opensamguk.logic.inheritance.InheritBuffModuleFactory
 import opensamguk.logic.traits.OfficerLevelModule
 
 /**
@@ -82,7 +83,15 @@ class GeneralActionModuleFactory(
         specialWarRegistry.resolve(specialWarCode)?.let { mods.add(it) }
         // #5 personality
         personalityRegistry.resolve(personalityCode)?.let { mods.add(it) }
-        // #6 crew, #7 inherit, #8 scenario — identity stubs (P4/P6)
+        // #6 crew — identity stub (P4 crew-type sub-fold)
+        // #7 inherit — the inherit-buff module pair (general then war), folded from aux.inheritBuff
+        //   (PHP General.php:125-128 builds inheritBuffObj; :787-799 merges it at slot #7). Resolves
+        //   from general.meta triggerState/inheritBuff; null (no buff) ⇒ skipped (identity).
+        InheritBuffModuleFactory.resolveAndCreate(general)?.let { (generalModule, warModule) ->
+            mods.add(generalModule)
+            mods.add(warModule)
+        }
+        // #8 scenario — identity stub (P6)
         // #9.. items: horse, weapon, book, item (in that exact order)
         itemRegistry.resolve(general.horse)?.let { mods.add(it) }
         itemRegistry.resolve(general.weapon)?.let { mods.add(it) }
