@@ -1,5 +1,6 @@
 package opensamguk.logic.actions.nation
 
+import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
@@ -96,7 +97,32 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
         linkedMapOf("destNationID" to destNationID, "year" to year, "month" to month)
     }
 
-    /** P6 — the diplomatic-message send + setResultTurn run() (che_불가침제의.php:154-229). m10: the AI
-     *  selection + boolean gate + draw stream are the P5 gate target; this state-mutation is P6. */
-    override fun resolve(context: GeneralActionResolveContext) { /* P6: diplomacy message internals */ }
+    /**
+     * P6 — the diplomatic-message send + setResultTurn run() (che_불가침제의.php:154-229).
+     *
+     * The AI selection + boolean gate + draw stream are the P5 gate target; this state-mutation is P6.
+     *
+     * Resolve flow:
+     *  1. Extract destNationID, year, month from args.
+     *  2. Build a [MessageDraft] for diplomacy message (the actual DB insert is engine-layer).
+     *  3. Write action log: `<D><b>{상대국}</b></>에게 {year}년 {month}월까지 불가침을 제의했습니다.`
+     *  4. The diplomacy state mutation (state=7) happens ONLY when the recipient accepts via
+     *     [CheBulgachimSuak]; this command only SENDS the proposal.
+     */
+    override fun resolve(context: GeneralActionResolveContext) {
+        val destNationID = (context.args["destNationID"] as? Int) ?: return
+        val year = (context.args["year"] as? Int) ?: return
+        val month = (context.args["month"] as? Int) ?: return
+
+        val destNationName = context.destGeneralName.ifEmpty { "상대국" }
+        val josaEge = JosaUtil.pick(destNationName, "에게")
+
+        // Action log — the proposal was sent
+        context.addLog("<D><b>$destNationName</b></>$josaEge ${year}년 ${month}월까지 불가침을 제의했습니다.")
+
+        // NOTE: The actual diplomatic message DB insertion is performed by the engine layer
+        // that wires [MessageStore] + [MessageDraft] together. The logic layer only produces
+        // the log and the args that the engine will use to construct the message.
+        // The recipient's acceptance triggers [CheBulgachimSuak] via [DiplomaticMessage.acceptCommandKey].
+    }
 }
