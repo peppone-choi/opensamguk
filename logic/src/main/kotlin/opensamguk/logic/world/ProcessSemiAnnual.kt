@@ -194,7 +194,7 @@ class ProcessSemiAnnualAction(val resource: String) : EventAction {
     override fun run(ctx: EventActionContext) {
         val psc = ctx as? ProcessSemiAnnualContext
             ?: error("ProcessSemiAnnualAction requires a ProcessSemiAnnualContext")
-        psc.applySemiAnnual(processSemiAnnual(resource, psc.nations(), psc.cities(), psc.pipeline, psc.generals()))
+        psc.applySemiAnnual(processSemiAnnual(resource, psc.semiAnnualNations(), psc.cities(), psc.pipeline, psc.semiAnnualGenerals()))
     }
 
     companion object {
@@ -212,8 +212,8 @@ class ProcessSemiAnnualAction(val resource: String) : EventAction {
 /** The richer dispatch context [ProcessSemiAnnualAction] consumes (supplied by the daemon, not F2). */
 interface ProcessSemiAnnualContext : EventActionContext {
     val pipeline: GeneralActionPipeline
-    fun nations(): List<SemiAnnualNation>
+    fun semiAnnualNations(): List<SemiAnnualNation>
     fun cities(): List<City>
-    fun generals(): List<SemiAnnualGeneral>
+    fun semiAnnualGenerals(): List<SemiAnnualGeneral>
     fun applySemiAnnual(result: ProcessSemiAnnualResult)
 }

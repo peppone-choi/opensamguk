@@ -167,7 +167,7 @@ class ProcessIncomeTest {
         val ctx = object : ProcessIncomeContext {
             override val env = mapOf<String, Any?>("year" to 200, "month" to 1, "currentEventID" to 7)
             override val pipeline = this@ProcessIncomeTest.pipeline
-            override fun nations() = listOf(nation(id = 1))
+            override fun incomeNations() = listOf(nation(id = 1))
             override fun applyIncome(result: ProcessIncomeResult) { applied = result }
         }
         action.run(ctx)

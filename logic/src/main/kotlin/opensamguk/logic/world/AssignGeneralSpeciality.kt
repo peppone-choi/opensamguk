@@ -180,8 +180,13 @@ class AssignGeneralSpecialityAction(@Suppress("UNUSED_PARAMETER") args: List<Jso
     }
 
     companion object {
+        const val NAME = "AssignGeneralSpeciality"
         const val ENV_WORLD = "specialityWorld"
         const val ENV_HIDDEN_SEED = "hiddenSeed"
+
+        /** Register the leaf into the F2-owned factory by name (plan §append protocol). */
+        fun register(factory: opensamguk.logic.event.EventActionFactory): opensamguk.logic.event.EventActionFactory =
+            factory.register(NAME) { args -> AssignGeneralSpecialityAction(args) }
     }
 }
 

@@ -3,6 +3,10 @@ package opensamguk.logic.world
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.logic.domain.General
+import opensamguk.logic.domain.Nation
+import opensamguk.logic.event.EventAction
+import opensamguk.logic.event.EventActionContext
 
 /**
  * A3 / Task NL4 — `ProvideNPCTroopLeader` (the Action paired with [UpdateNationLevel] under the
@@ -95,4 +99,46 @@ object ProvideNPCTroopLeader {
 
     /** A planned NPC troop-leader: its pre-assigned id + `부대장%4d` name (the GeneralBuilder input). */
     data class NewLeader(val npcId: Int, val name: String)
+}
+
+/** World-context seam for [ProvideNPCTroopLeaderAction]. Implemented by the daemon/G1 adapter. */
+interface ProvideNPCTroopLeaderContext : EventActionContext {
+    fun nations(): List<Nation>
+    fun generals(): List<General>
+    fun hiddenSeed(): String
+    fun year(): Int
+    fun month(): Int
+    fun lastNpcTroopLeaderId(): Int
+    fun setLastNpcTroopLeaderId(id: Int)
+    fun mintTroopLeader(nationId: Int, leader: ProvideNPCTroopLeader.NewLeader, seed: String)
+}
+
+/** The `ProvideNPCTroopLeader` leaf: binds the GREEN pure planner to the live world. */
+class ProvideNPCTroopLeaderAction : EventAction {
+    override fun run(ctx: EventActionContext) {
+        val context = ctx as ProvideNPCTroopLeaderContext
+        var lastId = context.lastNpcTroopLeaderId()
+        val nations = context.nations()
+        val generals = context.generals()
+        for (nation in nations) {
+            if (nation.level <= 0) {
+                continue
+            }
+            val count = generals.count { it.nationId == nation.id && it.npcType == 5 }
+            val plan = ProvideNPCTroopLeader.planNation(
+                context.hiddenSeed(),
+                context.year(),
+                context.month(),
+                nation.id,
+                nation.level,
+                count,
+                lastId,
+            )
+            lastId = plan.nextLastNpcId
+            for (leader in plan.newLeaders) {
+                context.mintTroopLeader(nation.id, leader, plan.seed)
+            }
+        }
+        context.setLastNpcTroopLeaderId(lastId)
+    }
 }

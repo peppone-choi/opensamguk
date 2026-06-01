@@ -91,6 +91,7 @@ data class Nation(
     val typeCode: String = "che_중립",   // V1 nation.type_code default
     val gold: Int = 0,
     val rice: Int = 0,
+    val power: Int = 0,
     val tech: Double = 0.0,
     val gennum: Int = 0,                  // rides meta
     val capset: Int = 0,                  // rides meta (term-stack seq)

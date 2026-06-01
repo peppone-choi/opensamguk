@@ -14,8 +14,20 @@ class RealtimePublisher(
     private val template: StringRedisTemplate,
     private val profileName: String,
 ) {
-    fun publishTurnCompleted(atIso: String, lastTurnTimeIso: String) {
-        val event = RealtimeEvent.TurnCompleted(at = atIso, lastTurnTime = lastTurnTimeIso)
+    fun publishTurnCompleted(
+        atIso: String,
+        lastTurnTimeIso: String,
+        year: Int,
+        month: Int,
+        turnNumber: Int,
+    ) {
+        val event = RealtimeEvent.TurnCompleted(
+            at = atIso,
+            lastTurnTime = lastTurnTimeIso,
+            year = year,
+            month = month,
+            turnNumber = turnNumber,
+        )
         template.convertAndSend(
             gameEventChannel(profileName),
             WireJson.encodeToString(RealtimeEvent.serializer(), event),

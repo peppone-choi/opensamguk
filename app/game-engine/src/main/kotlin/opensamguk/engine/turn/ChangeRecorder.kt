@@ -258,6 +258,7 @@ class ChangeRecorder(
         diffCol(columns, "capital_city_id", pre.capitalCityId, post.capitalCityId)
         diffCol(columns, "gold", pre.gold, post.gold)
         diffCol(columns, "rice", pre.rice, post.rice)
+        diffCol(columns, "power", pre.power, post.power)
         diffCol(columns, "tech", pre.tech, post.tech)
         diffCol(columns, "level", pre.level, post.level)
         diffCol(columns, "type_code", pre.typeCode, post.typeCode)

@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.common.rng.RandUtil
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -8,10 +9,13 @@ import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.logic.event.EventDispatcher
+import opensamguk.logic.tick.MonthlyPipeline
+import opensamguk.logic.tick.ServerClock
 import java.time.Instant
 
 /**
- * P1 Task F5 — the daemon-side run orchestrator (steps 3-7 daemon side, design §12).
+ * P1 Task F5 / P6 Task 6 — the daemon-side run orchestrator (steps 3-7 daemon side, design §12).
  *
  * One tick end-to-end:
  *
@@ -19,6 +23,10 @@ import java.time.Instant
  *   [TurnDaemonLifecycle] drains ALL due generals through the [ReservedTurnHandler] in one pass →
  *   [JdbcFlushExecutor.flush] writes the post-state in ONE transaction (JDBC-only, never an
  *   `EntityManager`) → [RealtimePublisher.publishTurnCompleted] signals the SSE relay.
+ *
+ * When the [MonthlyPipeline] is wired (P6), the [TurnDaemonLifecycle.MonthBoundaryDriver]
+ * interleaves ONE `runMonth` per crossed boundary between per-general drains; the flush still
+ * fires exactly ONCE at the clean boundary.
  *
  * **Processed-count gated, NOT wall-clock** (research §1e / N5): the lifecycle drains every due
  * general in one pass and the flush fires exactly ONCE at the clean turn boundary — never mid-pass —
@@ -41,6 +49,10 @@ class TurnRunService(
     private val handler: ReservedTurnHandler,
     private val flushExecutor: JdbcFlushExecutor,
     private val realtimePublisher: RealtimePublisher,
+    /** The monthly pipeline (null = fallback to general-only drain, P1-P4 behaviour). */
+    private val pipeline: MonthlyPipeline<RandUtil>? = null,
+    /** The dynamic-event dispatcher consumed by [MonthlyPipeline.runMonth]. */
+    private val eventDispatcher: EventDispatcher? = null,
     /** How long [RedisCommandStream.readCommands] blocks for a control command before the tick proceeds. */
     private val commandBlockMs: Long = 0,
 ) {
@@ -66,6 +78,10 @@ class TurnRunService(
     /**
      * Drive ONE tick. The control commands drained from [commandStream] gate when game-api asks the
      * daemon to run; in P1 they are consumed (the stream cursor advances) and the tick proceeds.
+     *
+     * When [pipeline] and [eventDispatcher] are wired (P6), the [MonthBoundaryDriver] interleaves
+     * the per-general drain with one `runMonth` per crossed boundary. The flush still fires exactly
+     * ONCE after all drains and monthlies.
      */
     fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
@@ -77,27 +93,64 @@ class TurnRunService(
         val commands = commandStream.readCommands(commandBlockMs)
         commandDispatcher.dispatchAll(commands)
 
-        // 2. drain ALL due generals in one pass through the handler (no mid-pass flush).
-        //    FT3: this single drain is the INNER pass of the two-level executeAllCommand loop. The
-        //    OUTER month-boundary loop is [TurnDaemonLifecycle.MonthBoundaryDriver]: it wraps this
-        //    drain (`drain` callback) and interleaves ONE MonthlyPipeline.runMonth (`runMonth`
-        //    callback) per crossed month boundary, then flushes ONCE per boundary (step 3 below) —
-        //    the monthly bulk writes ride the SAME ChangeRecorder dirty source as the per-general
-        //    deltas (single-dirty-source invariant, P2 Risk #4). The pipeline wiring (the concrete
-        //    MonthlyPipeline + dispatcher + monthlyRng) is assembled by the consuming P3 waves
-        //    (F2/F4/F5 + A1..B5); F1 lands the driver skeleton + the SEQUENTIAL contract here.
-        val handled = lifecycle.runTick(runTime)
+        // 2. month boundary interleave (if pipeline is wired)
+        val handled: List<ReservedTurnHandler.HandledTurn>
+        val crossed: Int
+        if (pipeline != null && eventDispatcher != null) {
+            val driver = TurnDaemonLifecycle.MonthBoundaryDriver(
+                drain = { upto -> lifecycle.runTick(upto) },
+                runMonth = { nextTurn ->
+                    val state = world.getState()
+                    val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
+                    val startTime = Instant.parse(
+                        state.meta["startTime"] as? String ?: Instant.now().toString()
+                    )
+                    pipeline.runMonth(
+                        nextTurn = nextTurn,
+                        startYear = startYear,
+                        startTime = startTime,
+                        turnTerm = state.tickSeconds / 60,
+                        oldYear = state.currentYear,
+                        oldMonth = state.currentMonth,
+                        dispatcher = { target, env ->
+                            eventDispatcher.run(target) {
+                                mutableMapOf<String, Any?>(
+                                    "year" to env.year,
+                                    "month" to env.month,
+                                    "currentEventID" to env.currentEventID,
+                                )
+                            }
+                        },
+                    )
+                },
+            )
+            val state = world.getState()
+            val isUnitedState = state.meta["isunited"] as? Int ?: 0
+            crossed = driver.run(state.lastTurnTime, runTime, state.tickSeconds / 60, isUnitedState)
+            handled = emptyList() // lifecycle.runTick inside driver already handles generals
+        } else {
+            // Fallback: original behaviour when pipeline is not wired
+            handled = lifecycle.runTick(runTime)
+            crossed = 0
+        }
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).
         val payload = buildFlushPayload()
         flushExecutor.flush(payload)
 
-        // 4. advance the world clock and publish the coarse turnCompleted realtime signal (only).
+        // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
         val previousTurnTime = world.getState().lastTurnTime
+        val state = world.getState()
+        val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
+        val startTime = Instant.parse(state.meta["startTime"] as? String ?: Instant.now().toString())
+        val turnTerm = state.tickSeconds / 60
+        val (newYear, newMonth) = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
+        world.setCurrentDate(newYear, newMonth)
         world.setLastTurnTime(runTime)
         val atIso = runTime.toString()
         val lastTurnTimeIso = previousTurnTime.toString()
-        realtimePublisher.publishTurnCompleted(atIso, lastTurnTimeIso)
+        val turnNumber = computeTurnNumber(previousTurnTime, startYear, startTime, turnTerm)
+        realtimePublisher.publishTurnCompleted(atIso, lastTurnTimeIso, newYear, newMonth, turnNumber)
 
         return TickResult(
             handled = handled,
@@ -121,5 +174,20 @@ class TurnRunService(
     private fun buildFlushPayload(): FlushPayload {
         val dirty = world.consumeDirtyState()
         return DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
+    }
+
+    /**
+     * Compute the absolute turn number (0-based) from the install epoch.
+     * Mirrors [ServerClock.turnDate] math: `num = intdiv(cutTurn - startTime, turnTerm*60)`.
+     */
+    private fun computeTurnNumber(
+        turnTime: Instant,
+        startYear: Int,
+        startTime: Instant,
+        turnTerm: Int,
+    ): Int {
+        val curturn = ServerClock.cutTurn(turnTime, turnTerm)
+        val num = Math.floorDiv(curturn.epochSecond - startTime.epochSecond, turnTerm.toLong() * 60L)
+        return num.toInt()
     }
 }

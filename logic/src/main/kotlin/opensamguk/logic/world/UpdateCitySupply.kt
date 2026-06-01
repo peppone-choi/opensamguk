@@ -2,6 +2,9 @@ package opensamguk.logic.world
 
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
+import opensamguk.logic.event.EventAction
+import opensamguk.logic.event.EventActionContext
+import opensamguk.logic.event.EventActionFactory
 import opensamguk.logic.log.HistoryTokens
 import opensamguk.logic.util.phpRound
 
@@ -227,4 +230,44 @@ private fun withMetaSet(meta: Map<String, Any?>, key: String, value: Any?): Map<
     val next = LinkedHashMap(meta)
     next[key] = value
     return next
+}
+
+/** The seam [UpdateCitySupplyAction] uses to reach the world snapshot + apply the result. */
+interface UpdateCitySupplyContext : EventActionContext {
+    fun cities(): List<City>
+    fun generals(): List<General>
+    fun capitals(): List<SupplyCapital>
+    fun cityConst(): CityConstVariant
+    fun year(): Int
+    fun month(): Int
+    /** Apply the mutated cities/generals to the world and push the isolated logs. */
+    fun applyCitySupply(result: CitySupplyResult)
+}
+
+/**
+ * `UpdateCitySupply` (PHP `Event/Action/UpdateCitySupply.php:11-133`): recompute city supply BFS,
+ * decay unsupplied cities (10%) and generals (5%), neutralize cities whose post-decay trust < 30.
+ */
+class UpdateCitySupplyAction : EventAction {
+    override fun run(ctx: EventActionContext) {
+        val uctx = ctx as? UpdateCitySupplyContext
+            ?: throw IllegalArgumentException("UpdateCitySupply requires UpdateCitySupplyContext")
+        val result = applyCitySupply(
+            uctx.cities(),
+            uctx.generals(),
+            uctx.capitals(),
+            uctx.cityConst(),
+            uctx.year(),
+            uctx.month(),
+        )
+        uctx.applyCitySupply(result)
+    }
+
+    companion object {
+        const val NAME = "UpdateCitySupply"
+
+        /** Register the `UpdateCitySupply` leaf into the F2-owned factory by name (plan §append protocol). */
+        fun register(factory: EventActionFactory): EventActionFactory =
+            factory.register(NAME) { UpdateCitySupplyAction() }
+    }
 }

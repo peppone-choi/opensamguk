@@ -1,7 +1,5 @@
 package opensamguk.logic.world
 
-import opensamguk.logic.event.EventAction
-import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventActionFactory
 
 /**
@@ -23,31 +21,8 @@ object A3EventActions {
 
     /** Register the `UpdateNationLevel` + `ProvideNPCTroopLeader` leaves into [factory] by name. */
     fun register(factory: EventActionFactory): EventActionFactory = factory
-        .register("UpdateNationLevel") { UpdateNationLevelAction }
-        .register("ProvideNPCTroopLeader") { ProvideNPCTroopLeaderAction }
+        .register("UpdateNationLevel") { UpdateNationLevelAction() }
+        .register("ProvideNPCTroopLeader") { ProvideNPCTroopLeaderAction() }
 }
 
-/**
- * The `UpdateNationLevel` leaf. Delegates to the GREEN pure core ([UpdateNationLevel]) once the
- * daemon/G1 world-context seam is wired (the nation/city iteration + per-nation level-up apply +
- * lottery). PK-ascending nation iteration + the SEQUENTIAL pipeline order are the daemon's contract.
- */
-object UpdateNationLevelAction : EventAction {
-    override fun run(ctx: EventActionContext) =
-        throw NotImplementedError(
-            "UpdateNationLevel world-context binding is the daemon/G1 seam; " +
-                "the byte-faithful cores are UpdateNationLevel.{computeLevelUp,applyLevelUp,runUniqueLottery}.",
-        )
-}
 
-/**
- * The `ProvideNPCTroopLeader` leaf. Delegates to the GREEN pure planner ([ProvideNPCTroopLeader]) once
- * the daemon/G1 world-context seam supplies the GeneralBuilder mint + troop-row insert + KV counter.
- */
-object ProvideNPCTroopLeaderAction : EventAction {
-    override fun run(ctx: EventActionContext) =
-        throw NotImplementedError(
-            "ProvideNPCTroopLeader world-context binding is the daemon/G1 seam; " +
-                "the byte-faithful planner is ProvideNPCTroopLeader.planNation.",
-        )
-}

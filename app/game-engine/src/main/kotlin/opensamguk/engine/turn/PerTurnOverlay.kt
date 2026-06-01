@@ -134,7 +134,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             term = d.term,
         )
 
-        /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/type/name/color). */
+        /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/power/type/name/color). */
         fun toLogicNation(n: Nation): LogicNation = LogicNation(
             id = n.id,
             level = n.level,
@@ -144,6 +144,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             typeCode = n.typeCode,
             gold = n.gold,
             rice = n.rice,
+            power = n.power,
             meta = n.meta,
         )
     }

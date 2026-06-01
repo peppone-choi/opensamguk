@@ -227,8 +227,13 @@ class RaiseDisasterAction(@Suppress("UNUSED_PARAMETER") args: List<JsonElement> 
     }
 
     companion object {
+        const val NAME = "RaiseDisaster"
         const val ENV_WORLD = "disasterWorld"
         const val ENV_HIDDEN_SEED = "hiddenSeed"
+
+        /** Register the leaf into the F2-owned factory by name (plan §append protocol). */
+        fun register(factory: opensamguk.logic.event.EventActionFactory): opensamguk.logic.event.EventActionFactory =
+            factory.register(NAME) { args -> RaiseDisasterAction(args) }
     }
 }
 

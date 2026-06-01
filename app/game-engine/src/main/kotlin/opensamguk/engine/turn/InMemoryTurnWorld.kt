@@ -222,6 +222,14 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         )
     }
 
+    fun setCurrentDate(year: Int, month: Int) {
+        state = state.copy(
+            currentYear = year,
+            currentMonth = month,
+            meta = state.meta + mapOf("currentYear" to year, "currentMonth" to month),
+        )
+    }
+
     /**
      * Single-shot drain: collects the dirty/created/deleted sets into a [DirtyState] and then
      * clears every source set so the next call returns empty collections.
