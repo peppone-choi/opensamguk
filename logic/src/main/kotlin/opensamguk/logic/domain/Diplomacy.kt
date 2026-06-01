@@ -10,7 +10,7 @@ package opensamguk.logic.domain
 data class Diplomacy(
     val me: Int,
     val you: Int,
-    val state: Int,
-    val term: Int = 0,
-    val dead: Int = 0,
+    var state: Int,
+    var term: Int = 0,
+    var dead: Int = 0,
 )
