@@ -73,8 +73,55 @@ object MergeInheritPointRank {
     /**
      * The P3 inherit-point source: ALL-ZERO (no command earns a point through the N-month replay; the
      * bound is pinned in G1a). Returns an empty map for every key → every general folds to 0.
+     *
+     * P6: Replace with [inheritedPointSource] backed by [InheritancePointManager].
      */
     val ZERO_POINT_SOURCE: (String) -> Map<Int, Int> = { _ -> emptyMap() }
+
+    /**
+     * P6: Creates a real point source backed by [InheritancePointManager].
+     *
+     * The [generals] list provides the generals to fold over (in PK order).
+     * The [userIdFn] maps a general ID to its owner user ID (how the manager stores points).
+     * The [manager] provides per-user inheritance point storage.
+     *
+     * Usage in the daemon's MergeInheritWorld implementation:
+     * ```kotlin
+     * override fun inheritancePoints(key: String): Map<Int, Int> {
+     *     val source = MergeInheritPointRank.inheritedPointSource(
+     *         manager, world.mergeGenerals(), { generalId -> ownerOf(generalId) }
+     *     )
+     *     return source(key)
+     * }
+     * ```
+     */
+    fun inheritedPointSource(
+        manager: opensamguk.logic.inheritance.InheritancePointManager,
+        generals: List<MergeGeneral>,
+        userIdFn: (Int) -> String,
+    ): (String) -> Map<Int, Int> {
+        return { key ->
+            val result = LinkedHashMap<Int, Int>()
+            for (g in generals) {
+                val userId = userIdFn(g.generalId)
+                // Resolve the InheritanceKey from the string key name
+                val ik = try {
+                    opensamguk.logic.inheritance.InheritanceKey.valueOf(key.uppercase())
+                } catch (_: IllegalArgumentException) {
+                    null
+                }
+                val point = if (ik != null) {
+                    manager.getKeyValue(userId, ik)
+                } else {
+                    0.0
+                }
+                if (point > 0) {
+                    result[g.generalId] = point.toInt()
+                }
+            }
+            result
+        }
+    }
 }
 
 /** One general the merge folds over (PHP `General` reduced to the merge inputs). */
