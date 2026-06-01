@@ -1,5 +1,7 @@
 package opensamguk.logic.inheritance
 
+import opensamguk.logic.inheritance.InheritanceKey.Companion.keyName
+
 class InheritancePointStore {
     private val data = mutableMapOf<Int, MutableMap<String, Pair<Double, Any?>>>()
 
@@ -12,7 +14,7 @@ class InheritancePointStore {
     }
 
     fun set(ownerID: Int, key: String, value: Double, aux: Any?) {
-        val type = InheritanceKeyRegistry[InheritanceKey.valueOf(key)]
+        val type = InheritanceKeyRegistry[InheritanceKey.valueOf(key.uppercase())]
         if (type.storeType != true) {
             throw IllegalArgumentException("$key 는 직접 저장형 유산 포인트가 아님")
         }
@@ -23,7 +25,7 @@ class InheritancePointStore {
     }
 
     fun increaseRaw(ownerID: Int, key: String, value: Double, aux: Any?): Double {
-        val type = InheritanceKeyRegistry[InheritanceKey.valueOf(key)]
+        val type = InheritanceKeyRegistry[InheritanceKey.valueOf(key.uppercase())]
         if (type.storeType != true) {
             throw IllegalArgumentException("$key 는 직접 저장형 유산 포인트가 아님")
         }
@@ -37,10 +39,10 @@ class InheritancePointStore {
 
     fun clear(ownerID: Int) {
         val map = data[ownerID] ?: return
-        val previous = map[InheritanceKey.previous.name]
+        val previous = map[InheritanceKey.PREVIOUS.keyName()]
         map.clear()
         if (previous != null) {
-            map[InheritanceKey.previous.name] = previous
+            map[InheritanceKey.PREVIOUS.keyName()] = previous
         }
     }
 

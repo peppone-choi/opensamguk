@@ -1,6 +1,7 @@
 package opensamguk.logic.inheritance
 
 import kotlinx.serialization.json.Json
+import opensamguk.logic.inheritance.InheritanceKey.Companion.keyName
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
@@ -40,7 +41,7 @@ fun mergeTotalInheritancePoint(
     for ((key, type) in InheritanceKeyRegistry.entries) {
         if (type.storeType == true) continue
         val point = InheritancePointMath.compute(general, key, isUnited, forceCalc = true) ?: continue
-        store.putRaw(general.owner, key.name, point, null)
+        store.putRaw(general.owner, key.keyName(), point, null)
     }
 
     val all = store.getAll(general.owner)
@@ -81,17 +82,17 @@ fun applyInheritanceUser(
 
     val allPoints = store.getAll(ownerID)
     if (allPoints.isEmpty()) return 0
-    if (allPoints.size == 1 && allPoints.containsKey(InheritanceKey.previous.name)) {
-        return (allPoints[InheritanceKey.previous.name]?.first ?: 0.0).toInt()
+    if (allPoints.size == 1 && allPoints.containsKey(InheritanceKey.PREVIOUS.keyName())) {
+        return (allPoints[InheritanceKey.PREVIOUS.keyName()]?.first ?: 0.0).toInt()
     }
 
-    val previousPoint = allPoints[InheritanceKey.previous.name]?.first ?: 0.0
+    val previousPoint = allPoints[InheritanceKey.PREVIOUS.keyName()]?.first ?: 0.0
     val keepValues = mutableMapOf<String, Pair<Double, Any?>>()
     var total = 0.0
 
     for ((rKey, pair) in allPoints) {
         val key = try {
-            InheritanceKey.valueOf(rKey)
+            InheritanceKey.valueOf(rKey.uppercase())
         } catch (e: IllegalArgumentException) {
             continue
         }
@@ -117,7 +118,7 @@ fun applyInheritanceUser(
     for ((k, v) in keepValues) {
         store.putRaw(ownerID, k, v.first, v.second)
     }
-    store.putRaw(ownerID, InheritanceKey.previous.name, totalPoint.toDouble(), null)
+    store.putRaw(ownerID, InheritanceKey.PREVIOUS.keyName(), totalPoint.toDouble(), null)
 
     return totalPoint
 }

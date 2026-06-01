@@ -106,9 +106,6 @@ class OpenNationBettingAction(
     companion object {
         const val NAME = "OpenNationBetting"
 
-        /** BettingInfo KV 키 접두사 */
-        val BettingInfo.KV_KEY_PREFIX: String get() = "betting:"
-
         /** 베팅 ID 생성 — `nb_{year}{month:02d}_{random4}` 형식. PHP parity: 중복 방지를 위해 랜덤 접미사 포함. */
         private fun generateBettingId(year: Int, month: Int): String {
             val randomSuffix = (1000..9999).random()

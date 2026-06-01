@@ -19,6 +19,18 @@ enum class AuctionType(val value: String) {
 }
 
 /** The resource a buyer pays (PHP `ResourceType`). */
+/** 경매 상태 — PHP `AuctionStatus` enum의 Kotlin 포팅. */
+enum class AuctionStatus {
+    /** 입찰 가능 */
+    OPEN,
+    /** 마감 대기 중 (worker에 의해 설정) */
+    FINALIZING,
+    /** 거래 완료 */
+    FINISHED,
+    /** 취소/유찰 */
+    CANCELED,
+}
+
 enum class ResourceType(val value: String) {
     GOLD("gold"), RICE("rice"), INHERITANCE_POINT("inheritPoint");
 

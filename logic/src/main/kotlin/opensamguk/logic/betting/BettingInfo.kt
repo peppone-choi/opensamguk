@@ -84,7 +84,12 @@ data class BettingInfo(
     val isExclusivePayout: Boolean = false,
     val totalPool: Int = 0,
     val status: BettingStatus = BettingStatus.OPEN,
-)
+) {
+    companion object {
+        /** KV 스토리지에서 사용하는 키 접두사 */
+        const val KV_KEY_PREFIX = "betting:"
+    }
+}
 
 /**
  * 연/월 데이터 클래스 — [BettingInfo]에서 사용.

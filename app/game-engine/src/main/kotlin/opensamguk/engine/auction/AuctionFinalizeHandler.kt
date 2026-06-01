@@ -11,7 +11,6 @@ import opensamguk.logic.auction.AuctionStatus
 import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.auction.FinishResult
 import opensamguk.logic.auction.RollbackResult
-import org.springframework.stereotype.Component
 
 /**
  * 경매 마감 핸들러 — [TurnDaemonCommand.AuctionFinalize] 명령 처리.
@@ -28,8 +27,10 @@ import org.springframework.stereotype.Component
  * 7. 결과 반환 ([AuctionFinalizeOk] / [AuctionFinalizeFail])
  *
  * @param world 인메모리 턴 월드 — 장수 자원 조작용
+ *
+ * [AuctionBidHandler]와 동일하게 per-run plain 클래스다([InMemoryTurnWorld]는 싱글톤 빈이 아닌
+ * 스냅샷 기반 per-run 상태). Spring `@Component` 미등록, 턴 파이프라인이 직접 인스턴스화한다.
  */
-@Component
 class AuctionFinalizeHandler(
     private val world: InMemoryTurnWorld,
 ) : TurnDaemonCommandHandler<TurnDaemonCommand.AuctionFinalize> {

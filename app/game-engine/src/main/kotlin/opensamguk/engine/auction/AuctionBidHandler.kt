@@ -12,7 +12,6 @@ import opensamguk.logic.auction.AuctionDetail
 import opensamguk.logic.auction.AuctionStatus
 import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.auction.BidValidationResult
-import org.springframework.stereotype.Component
 
 /**
  * 경매 입찰 핸들러 — [TurnDaemonCommand.AuctionBid] 명령 처리.
@@ -28,8 +27,11 @@ import org.springframework.stereotype.Component
  * 8. 결과 반환 ([AuctionBidOk] / [AuctionBidFail])
  *
  * @param world 인메모리 턴 월드 — 장수 자원 조작용
+ *
+ * 형제 turn 컴포넌트([ReservedTurnHandler] 등)와 동일하게 per-run plain 클래스다.
+ * [InMemoryTurnWorld]는 스냅샷 기반 per-run 상태(싱글톤 빈 아님)이므로 Spring `@Component`로
+ * 등록하지 않고 턴 파이프라인이 직접 인스턴스화한다.
  */
-@Component
 class AuctionBidHandler(
     private val world: InMemoryTurnWorld,
 ) : TurnDaemonCommandHandler<TurnDaemonCommand.AuctionBid> {

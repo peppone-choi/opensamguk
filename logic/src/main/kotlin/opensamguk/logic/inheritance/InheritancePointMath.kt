@@ -21,7 +21,7 @@ object InheritancePointMath {
             return null
         }
 
-        if (isUnited && key != InheritanceKey.previous) {
+        if (isUnited && key != InheritanceKey.PREVIOUS) {
             return 0.0
         }
 
@@ -36,9 +36,9 @@ object InheritancePointMath {
 
         if (storeType == false) {
             return when (key) {
-                InheritanceKey.dex -> computeDex(general, type.pointCoeff)
-                InheritanceKey.betting -> computeBetting(general, type.pointCoeff)
-                InheritanceKey.max_belong -> computeMaxBelong(general, type.pointCoeff)
+                InheritanceKey.DEX -> computeDex(general, type.pointCoeff)
+                InheritanceKey.BETTING -> computeBetting(general, type.pointCoeff)
+                InheritanceKey.MAX_BELONG -> computeMaxBelong(general, type.pointCoeff)
                 else -> throw IllegalArgumentException("$key 는 유산 추출기를 보유하고 있지 않음")
             }
         }
