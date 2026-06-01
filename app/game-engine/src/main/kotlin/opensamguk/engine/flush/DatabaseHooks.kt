@@ -10,6 +10,8 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.infra.persistence.AuctionBidInsertRow
+import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
@@ -296,6 +298,8 @@ object DatabaseHooks {
             messageInvalidates = recorder.messageInvalidates().map {
                 MessageInvalidateRow(it.id, it.validUntil, it.bodyJson)
             },
+            auctionUpserts = recorder.auctionUpserts().map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
+            auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,

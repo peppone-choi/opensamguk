@@ -42,6 +42,8 @@ class ChangeRecorder(
      * default 1-based counter is for tests / a fresh world.
      */
     private val messageIdAllocator: () -> Int = AtomicCounter()::next,
+    /** Allocates the next in-memory `ng_auction.id` (T0.7) — DB-seeded at rehydrate; default 1-based. */
+    private val auctionIdAllocator: () -> Int = AtomicCounter()::next,
 ) {
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
@@ -94,6 +96,12 @@ class ChangeRecorder(
     /** Mailbox channel (T0.5) — the `message` invalidate UPDATEs (deleteMsg / accept-flow sibling-sweep). */
     private val messageInvalidates = mutableListOf<MessageInvalidate>()
 
+    /** Auction channel (T0.7) — ng_auction UPSERTs (open INSERT / extend-finish UPDATE), in emit order. */
+    private val auctionUpserts = mutableListOf<AuctionUpsert>()
+
+    /** Auction channel (T0.7) — ng_auction_bid INSERTs (INSERT-only; outbid rows NEVER deleted). */
+    private val auctionBidInserts = mutableListOf<AuctionBidInsert>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -105,7 +113,8 @@ class ChangeRecorder(
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
-            createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty()
+            createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
+            auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -352,6 +361,33 @@ class ChangeRecorder(
 
     /** The recorded mailbox invalidate UPDATEs (the T0.5 flush source). */
     fun messageInvalidates(): List<MessageInvalidate> = messageInvalidates.toList()
+
+    /**
+     * Record an `ng_auction` UPSERT (T0.7). `id` null → an INSERT (auction open): pre-allocates the
+     * in-memory id and returns it (so bids placed in the same tick can reference it before flush). A
+     * non-null `id` → an UPDATE (extend/finish/shrink). `columns` is the byte-faithful
+     * `AuctionInfo.toArray()` map (the caller supplies the id column for an UPDATE).
+     */
+    fun recordAuctionUpsert(id: Int?, columns: Map<String, Any?>): Int {
+        if (id == null) {
+            val allocated = auctionIdAllocator()
+            auctionUpserts.add(AuctionUpsert(id = null, allocatedId = allocated, columns = columns))
+            return allocated
+        }
+        auctionUpserts.add(AuctionUpsert(id = id, allocatedId = null, columns = columns))
+        return id
+    }
+
+    /** Record an `ng_auction_bid` INSERT (T0.7). INSERT-only — outbid rows are NEVER deleted/deduped. */
+    fun recordAuctionBidInsert(columns: Map<String, Any?>) {
+        auctionBidInserts.add(AuctionBidInsert(columns))
+    }
+
+    /** The recorded ng_auction UPSERTs (the T0.7 flush source), in emit order. */
+    fun auctionUpserts(): List<AuctionUpsert> = auctionUpserts.toList()
+
+    /** The recorded ng_auction_bid INSERTs (the T0.7 flush source), in emit order. */
+    fun auctionBidInserts(): List<AuctionBidInsert> = auctionBidInserts.toList()
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE

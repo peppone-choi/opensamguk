@@ -106,6 +106,15 @@ class JdbcFlushExecutor(
                 rankDataNationSync(payload.rankNationSync)
             }
 
+            // 8b. auction channel (T0.7): ng_auction UPSERT (open INSERT / extend-finish UPDATE) then
+            //     ng_auction_bid INSERT (INSERT-only — outbid rows are NEVER deleted, research §3).
+            if (payload.auctionUpserts.isNotEmpty()) {
+                auctionUpsertMany(payload.auctionUpserts)
+            }
+            if (payload.auctionBidInserts.isNotEmpty()) {
+                auctionBidInsertMany(payload.auctionBidInserts)
+            }
+
             // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
             //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
             if (payload.createdMessages.isNotEmpty()) {
@@ -569,6 +578,75 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("log_entry", FlushVerb.CREATE_MANY, logs.size))
     }
 
+    // --- step 8b: auction channel (T0.7) -------------------------------------------------------
+
+    /**
+     * UPSERT the `ng_auction` rows. An INSERT (open) carries [AuctionUpsertRow.allocatedId] (the
+     * pre-assigned in-memory id, so bids reference it before flush); an UPDATE (extend/finish/shrink)
+     * carries [AuctionUpsertRow.id]. `type`/`req_resource` bind through `CAST(... AS ng_auction_*)`,
+     * `open_date`/`close_date` through `CAST(... AS timestamptz)`, `detail` is a raw json String.
+     */
+    private fun auctionUpsertMany(rows: List<AuctionUpsertRow>) {
+        for (r in rows) {
+            val c = r.columns
+            val src = MapSqlParameterSource()
+                .addValue("type", c["type"])
+                .addValue("finished", c["finished"])
+                .addValue("target", c["target"])
+                .addValue("host_general_id", c["host_general_id"])
+                .addValue("req_resource", c["req_resource"])
+                .addValue("open_date", c["open_date"]?.toString())
+                .addValue("close_date", c["close_date"]?.toString())
+                .addValue("detail", jsonb(c["detail"] as? String))
+            if (r.id == null) {
+                src.addValue("id", r.allocatedId)
+                jdbc.update(
+                    """
+                    INSERT INTO ng_auction (id, type, finished, target, host_general_id, req_resource, open_date, close_date, detail)
+                    VALUES (:id, CAST(:type AS ng_auction_type), :finished, :target, :host_general_id,
+                            CAST(:req_resource AS ng_auction_resource), CAST(:open_date AS timestamptz),
+                            CAST(:close_date AS timestamptz), :detail)
+                    """.trimIndent(),
+                    src,
+                )
+            } else {
+                src.addValue("id", r.id)
+                jdbc.update(
+                    """
+                    UPDATE ng_auction SET type = CAST(:type AS ng_auction_type), finished = :finished, target = :target,
+                        host_general_id = :host_general_id, req_resource = CAST(:req_resource AS ng_auction_resource),
+                        open_date = CAST(:open_date AS timestamptz), close_date = CAST(:close_date AS timestamptz), detail = :detail
+                     WHERE id = :id
+                    """.trimIndent(),
+                    src,
+                )
+            }
+        }
+        lastOps.add(FlushExecOp("ng_auction", FlushVerb.UPSERT, rows.size))
+    }
+
+    /** INSERT the `ng_auction_bid` rows (INSERT-only; outbid rows persist). `aux` is a raw json String. */
+    private fun auctionBidInsertMany(rows: List<AuctionBidInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("auction_id", c["auction_id"])
+                .addValue("owner", c["owner"])
+                .addValue("general_id", c["general_id"])
+                .addValue("amount", c["amount"])
+                .addValue("date", c["date"]?.toString())
+                .addValue("aux", jsonb(c["aux"] as? String))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO ng_auction_bid (auction_id, owner, general_id, amount, date, aux)
+            VALUES (:auction_id, :owner, :general_id, :amount, CAST(:date AS timestamptz), :aux)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("ng_auction_bid", FlushVerb.CREATE_MANY, rows.size))
+    }
+
     // --- step 8c: mailbox channel (T0.5) -------------------------------------------------------
 
     /**
@@ -655,7 +733,15 @@ data class FlushPayload(
     val kvWrites: List<KvWrite> = emptyList(),                // step-10 nation_env KV (delete-on-null)
     val createdMessages: List<CreatedMessageRow> = emptyList(),       // step-8c message INSERT (T0.5)
     val messageInvalidates: List<MessageInvalidateRow> = emptyList(), // step-8c message invalidate UPDATE (T0.5)
+    val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
+    val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
 )
+
+/** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
+data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
+
+/** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
+data class AuctionBidInsertRow(val columns: Map<String, Any?>)
 
 /**
  * One `message`-row INSERT (T0.5). `id` is the pre-assigned in-memory monotonic id; `bodyJson` is the

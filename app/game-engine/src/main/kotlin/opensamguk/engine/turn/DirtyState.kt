@@ -55,6 +55,19 @@ data class MessageInvalidate(
 )
 
 /**
+ * An `ng_auction` UPSERT intent (T0.7). `id` null → INSERT (open); non-null → UPDATE (extend/finish/
+ * shrink). `columns` is the byte-faithful `AuctionInfo.toArray()` map. `allocatedId` carries the
+ * pre-assigned in-memory id for an INSERT (so bids can reference it before flush).
+ */
+data class AuctionUpsert(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
+
+/**
+ * An `ng_auction_bid` INSERT intent (T0.7). Outbid rows are NEVER deleted (research §3 — the refund is
+ * a resource credit + Message, not a tombstone) — INSERT-only. `columns` is `AuctionBidItem.toArray()`.
+ */
+data class AuctionBidInsert(val columns: Map<String, Any?>)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
@@ -106,4 +119,8 @@ data class DirtyState(
     val createdMessages: List<CreatedMessage> = emptyList(),
     /** [messageInvalidates]: the mailbox-channel invalidate UPDATEs (deleteMsg / sibling-sweep). */
     val messageInvalidates: List<MessageInvalidate> = emptyList(),
+    /** [auctionUpserts]: the ng_auction INSERT/UPDATE intents (T0.7). */
+    val auctionUpserts: List<AuctionUpsert> = emptyList(),
+    /** [auctionBidInserts]: the ng_auction_bid INSERT intents (T0.7, INSERT-only — no outbid delete). */
+    val auctionBidInserts: List<AuctionBidInsert> = emptyList(),
 )
