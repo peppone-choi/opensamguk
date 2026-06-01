@@ -1,10 +1,26 @@
 spring:
   application:
     name: gateway-api
+  datasource:
+    url: ${GAME_DATABASE_URL:jdbc:postgresql://localhost:5432/sammo}
+    username: ${GAME_DB_USER:sammo}
+    password: ${GAME_DB_PASSWORD:sammo}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+jwt:
+  secret: ${JWT_SECRET:Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU=}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:900000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
 server:
   port: ${GATEWAY_API_PORT:8080}
 management:
