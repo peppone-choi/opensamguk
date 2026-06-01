@@ -4,13 +4,18 @@ import opensamguk.common.wire.AuctionFinalizeFail
 import opensamguk.common.wire.AuctionFinalizeOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
+import opensamguk.infra.read.AuctionBidRepository
+import opensamguk.infra.read.AuctionRepository
+import opensamguk.logic.auction.AuctionBidItemData
+import opensamguk.logic.auction.AuctionDetail
+import opensamguk.logic.auction.AuctionInfo
+import opensamguk.logic.auction.AuctionInfoDetail
 import opensamguk.logic.auction.AuctionResultCalculator
 import opensamguk.logic.auction.AuctionStatus
 import opensamguk.logic.auction.AuctionType
-import opensamguk.logic.auction.FinishResult
-import opensamguk.logic.auction.RollbackResult
 
 /**
  * 경매 마감 핸들러 — [TurnDaemonCommand.AuctionFinalize] 명령 처리.
@@ -27,38 +32,44 @@ import opensamguk.logic.auction.RollbackResult
  * 7. 결과 반환 ([AuctionFinalizeOk] / [AuctionFinalizeFail])
  *
  * @param world 인메모리 턴 월드 — 장수 자원 조작용
+ * @param recorder 변경 녹음기 — auction flush 채널의 단일 dirty source
+ * @param auctionRepository JPA read repository — 경매 조회
+ * @param bidRepository JPA read repository — 입찰 조회
  *
  * [AuctionBidHandler]와 동일하게 per-run plain 클래스다([InMemoryTurnWorld]는 싱글톤 빈이 아닌
  * 스냅샷 기반 per-run 상태). Spring `@Component` 미등록, 턴 파이프라인이 직접 인스턴스화한다.
  */
 class AuctionFinalizeHandler(
     private val world: InMemoryTurnWorld,
+    private val recorder: ChangeRecorder,
+    private val auctionRepository: AuctionRepository,
+    private val bidRepository: AuctionBidRepository,
 ) : TurnDaemonCommandHandler<TurnDaemonCommand.AuctionFinalize> {
 
     override fun handle(command: TurnDaemonCommand.AuctionFinalize): TurnDaemonCommandResult {
         val auctionId = command.auctionId
 
         // ── 1. 경매 조회 (FINALIZING 상태 확인) ────────────────────────────────
-        // TODO: AuctionRepository를 통해 경매 조회
-        // val auction = auctionRepository.findById(auctionId)
-        //   ?: return AuctionFinalizeFail(auctionId = auctionId, reason = "경매가 존재하지 않습니다.")
-        // if (auction.status != AuctionStatus.FINALIZING) {
-        //     return AuctionFinalizeFail(auctionId = auctionId, reason = "FINALIZING 상태가 아닙니다.")
-        // }
+        val auctionEntity = auctionRepository.findById(auctionId).orElse(null)
+            ?: return AuctionFinalizeFail(auctionId = auctionId, reason = "경매가 존재하지 않습니다.")
+        if (auctionEntity.finished) {
+            return AuctionFinalizeFail(auctionId = auctionId, reason = "이미 마감된 경매입니다.")
+        }
 
-        // 스텁 데이터 — TODO: repository에서 조회한 실제 데이터로 대체
-        val auctionType = AuctionType.BUY_RICE // TODO: from auction.type
-        val hostGeneralId = 0 // TODO: from auction.hostGeneralId
-        val detail = opensamguk.logic.auction.AuctionDetail() // TODO: from auction.detail
-        val isReverse = false // TODO: from auction.detail.isReverse
-        val uniqueItemKey: String? = null // TODO: from auction.targetCode
+        val auction = toAuctionInfo(auctionEntity)
+        val auctionType = auction.type
+        val hostGeneralId = auction.hostGeneralId
+        val detail = auction.detail
+        val isReverse = detail.isReverse ?: false
+        val uniqueItemKey = auction.target
 
         // ── 2. 최고 입찰자 조회 (isReverse에 따라 정렬 방향 결정) ─────────────
-        // TODO: AuctionBidRepository.findHighestBid(auctionId, isReverse)
-        // val highestBid = bidRepository.findHighestBid(auctionId, isReverse)
-        // SQL: ORDER BY amount ${isReverse ? "ASC" : "DESC"}, id ASC LIMIT 1
-        val highestBidAmount: Int? = null // TODO: from repository
-        val highestBidGeneralId: Int? = null // TODO: from repository
+        val allBids = bidRepository.findByAuctionIdOrderByAmountDesc(auctionId)
+            .map { toAuctionBidItem(it) }
+
+        val highestBid = selectHighestBid(allBids, isReverse)
+        val highestBidAmount = highestBid?.amount
+        val highestBidGeneralId = highestBid?.generalId
 
         // ── 3. 입찰 없음 → rollback ─────────────────────────────────────────
         if (highestBidAmount == null || highestBidGeneralId == null) {
@@ -83,10 +94,10 @@ class AuctionFinalizeHandler(
     private fun handleRollback(
         auctionId: Int,
         auctionType: AuctionType,
-        detail: opensamguk.logic.auction.AuctionDetail,
+        detail: AuctionInfoDetail,
         hostGeneralId: Int,
     ): TurnDaemonCommandResult {
-        val result = AuctionResultCalculator.calculateRollback(auctionType, detail, hostGeneralId)
+        val result = AuctionResultCalculator.calculateRollback(auctionType, toAuctionDetail(detail), hostGeneralId)
 
         // 주최자에게 자원 반환
         if (hostGeneralId > 0 && result.returnResourceType != null && result.returnAmount > 0) {
@@ -110,7 +121,8 @@ class AuctionFinalizeHandler(
             )
         )
 
-        // TODO: AuctionRepository.updateStatus(auctionId, result.finalStatus)
+        // 경매 상태 업데이트 (CANCELED)
+        recordAuctionStatusUpdate(auctionId, result.finalStatus)
 
         return AuctionFinalizeOk(
             auctionId = auctionId,
@@ -125,7 +137,7 @@ class AuctionFinalizeHandler(
         auctionType: AuctionType,
         highestBidAmount: Int,
         highestBidGeneralId: Int,
-        detail: opensamguk.logic.auction.AuctionDetail,
+        detail: AuctionInfoDetail,
         uniqueItemKey: String?,
         hostGeneralId: Int,
     ): TurnDaemonCommandResult {
@@ -144,13 +156,12 @@ class AuctionFinalizeHandler(
                 }
                 if (currentItem != null && currentItem != "None") {
                     // 보유 제한 → 경매 연장 (status를 OPEN으로 되돌림)
-                    // TODO: AuctionRepository.updateStatus(auctionId, AuctionStatus.OPEN)
-                    // TODO: extendCloseDateAndReopen(auction)
+                    recordAuctionStatusUpdate(auctionId, AuctionStatus.OPEN)
                     world.pushLog(
                         LogEntryDraft(
                             scope = "action",
                             category = "auction",
-                            text = "유니크 아이템 보유 제한으로 경매 #$auctionId 를 연장합니다.",
+                            text = "유니크 아이템 보유 제한으로 경매 #${auctionId} 를 연장합니다.",
                             generalId = highestBidGeneralId,
                         )
                     )
@@ -173,7 +184,7 @@ class AuctionFinalizeHandler(
         }
 
         // 자원 교환 결과 계산
-        val result = AuctionResultCalculator.calculateFinish(auctionType, highestBidAmount, detail)
+        val result = AuctionResultCalculator.calculateFinish(auctionType, highestBidAmount, toAuctionDetail(detail))
 
         // 주최자에게 입찰자의 자원 이전 (hostGeneralId > 0인 경우만)
         if (hostGeneralId > 0 && result.hostReceiveResource != null && result.hostReceiveAmount > 0) {
@@ -223,9 +234,34 @@ class AuctionFinalizeHandler(
             )
         )
 
-        // TODO: AuctionRepository.updateStatus(auctionId, result.finalStatus)
+        // 경매 상태 업데이트 (FINISHED)
+        recordAuctionStatusUpdate(auctionId, result.finalStatus)
 
         return AuctionFinalizeOk(auctionId = auctionId)
+    }
+
+    /**
+     * 경매 상태를 업데이트하고 ChangeRecorder에 기록한다.
+     */
+    private fun recordAuctionStatusUpdate(auctionId: Int, status: AuctionStatus) {
+        val entity = auctionRepository.findById(auctionId).orElse(null) ?: return
+        val auction = toAuctionInfo(entity)
+        val finished = status == AuctionStatus.FINISHED || status == AuctionStatus.CANCELED
+        val updatedAuction = auction.copy(
+            finished = finished,
+        )
+        recorder.recordAuctionUpsert(
+            id = auctionId,
+            columns = updatedAuction.toArray(withoutId = true),
+        )
+    }
+
+    /**
+     * isReverse에 따라 최고/최저 입찰을 선택한다.
+     */
+    private fun selectHighestBid(bids: List<opensamguk.logic.auction.AuctionBidItem>, isReverse: Boolean): opensamguk.logic.auction.AuctionBidItem? {
+        if (bids.isEmpty()) return null
+        return if (isReverse) bids.minByOrNull { it.amount } else bids.maxByOrNull { it.amount }
     }
 
     /**
@@ -239,4 +275,55 @@ class AuctionFinalizeHandler(
             else -> "item"
         }
     }
+
+    /**
+     * JPA [opensamguk.infra.entity.AuctionEntity] → logic [AuctionInfo].
+     */
+    private fun toAuctionInfo(entity: opensamguk.infra.entity.AuctionEntity): AuctionInfo {
+        val detail = AuctionInfoDetail.fromArray(
+            opensamguk.logic.util.jsonDecode(entity.detail)
+        )
+        return AuctionInfo(
+            id = entity.id,
+            type = entity.type,
+            finished = entity.finished,
+            target = entity.target,
+            hostGeneralId = entity.hostGeneralId,
+            reqResource = entity.reqResource,
+            openDate = entity.openDate.toString(),
+            closeDate = entity.closeDate.toString(),
+            detail = detail,
+        )
+    }
+
+    /**
+     * JPA [opensamguk.infra.entity.AuctionBidEntity] → logic [AuctionBidItem].
+     */
+    private fun toAuctionBidItem(entity: opensamguk.infra.entity.AuctionBidEntity): opensamguk.logic.auction.AuctionBidItem {
+        val aux = AuctionBidItemData.fromArray(
+            opensamguk.logic.util.jsonDecode(entity.aux)
+        )
+        return opensamguk.logic.auction.AuctionBidItem(
+            no = entity.no,
+            auctionId = entity.auctionId,
+            owner = entity.owner,
+            generalId = entity.generalId,
+            amount = entity.amount,
+            date = entity.date.toString(),
+            aux = aux,
+        )
+    }
+
+    /**
+     * [AuctionInfoDetail] → [AuctionDetail] (the shape [AuctionResultCalculator] expects).
+     */
+    private fun toAuctionDetail(d: AuctionInfoDetail): AuctionDetail = AuctionDetail(
+        title = d.title,
+        amount = d.amount,
+        isReverse = d.isReverse ?: false,
+        startBidAmount = d.startBidAmount,
+        finishBidAmount = d.finishBidAmount,
+        availableLatestBidCloseDate = d.availableLatestBidCloseDate,
+        remainCloseDateExtensionCnt = d.remainCloseDateExtensionCnt,
+    )
 }
