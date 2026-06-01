@@ -12,4 +12,5 @@ data class Diplomacy(
     val you: Int,
     val state: Int,
     val term: Int = 0,
+    val dead: Int = 0,
 )

@@ -1,5 +1,6 @@
 package opensamguk.logic.actions.nation
 
+import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
@@ -11,6 +12,9 @@ import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.reqEnvValue
 import opensamguk.logic.constraints.suppliedCity
+import opensamguk.logic.diplomacy.DiplomacyConst
+import opensamguk.logic.diplomacy.DiplomacyState
+import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -82,6 +86,53 @@ class CheSeonjeonpogo(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
 
     override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = argTest(raw) ?: emptyMap()
 
-    /** P6 — the diplomacy.state=1/term=24 UPDATE + national message run() (che_선전포고.php:121-197). */
-    override fun resolve(context: GeneralActionResolveContext) { /* P6: diplomacy state mutation */ }
+    /**
+     * P6 — the diplomacy.state=1/term=24 UPDATE + national message run() (che_선전포고.php:121-197).
+     *
+     * Resolve flow:
+     *  1. Extract destNationID from args.
+     *  2. Set both directional rows to DECLARATION (state=1) with term=24.
+     *  3. Write multi-scope logs (personal / national / global).
+     *  4. The national message broadcast is engine-layer (MessageStore).
+     */
+    override fun resolve(context: GeneralActionResolveContext) {
+        val draft = context.draft
+        val me = draft.nation?.id ?: return
+        val destNationID = (context.args["destNationID"] as? Int) ?: return
+
+        // Both directions → DECLARATION / term=24
+        val forward = Diplomacy(
+            me = me,
+            you = destNationID,
+            state = DiplomacyState.DECLARATION,
+            term = DiplomacyConst.DEFAULT_DECLARE_WAR_TERM,
+        )
+        val reverse = Diplomacy(
+            me = destNationID,
+            you = me,
+            state = DiplomacyState.DECLARATION,
+            term = DiplomacyConst.DEFAULT_DECLARE_WAR_TERM,
+        )
+
+        draft.cascadeDiplomacy.add(forward)
+        draft.cascadeDiplomacy.add(reverse)
+
+        // Multi-scope logging
+        val actorName = context.generalName.ifEmpty { "아국" }
+        val destName = context.destGeneralName.ifEmpty { "상대국" }
+        val josaI = JosaUtil.pick(actorName, "이", "가")
+        val josaEul = JosaUtil.pick(destName, "을", "를")
+
+        // Personal action log
+        context.addLog("<D><b>$destName</b></>$josaEul 선전포고했습니다.")
+
+        // National history log — broadcast to both nations
+        val nationalLog = "<D><b>$actorName</b></>$josaI <D><b>$destName</b></>에 선전포고했습니다."
+        context.addGlobalActionLog(nationalLog)
+
+        // Global history log with exact date
+        val year = context.env.year
+        val month = context.month
+        context.addPlainLog("<D><b>$actorName</b></>가 <D><b>$destName</b></>에게 ${year}년 ${month}월에 선전포고했습니다.")
+    }
 }
