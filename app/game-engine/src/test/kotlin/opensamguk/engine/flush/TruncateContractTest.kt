@@ -31,6 +31,8 @@ class TruncateContractTest {
         assertTrue(TruncateContract.isExcludedFromTruncate("ng_old_nations"))
         assertTrue(TruncateContract.isExcludedFromTruncate("ng_old_generals"))
         assertTrue(TruncateContract.isExcludedFromTruncate("inheritance_point"))
+        assertTrue(TruncateContract.isExcludedFromTruncate("inheritance_log"))
+        assertTrue(TruncateContract.isExcludedFromTruncate("inheritance_result"))
         assertTrue(TruncateContract.isExcludedFromTruncate("inheritance_user_state"))
     }
 

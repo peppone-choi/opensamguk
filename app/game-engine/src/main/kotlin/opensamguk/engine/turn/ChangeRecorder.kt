@@ -1,9 +1,11 @@
 package opensamguk.engine.turn
 
 import java.time.Instant
+import opensamguk.infra.persistence.KvWrite
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
+import opensamguk.logic.inheritance.InheritanceResultRow
 
 /**
  * Column patch for ONE dirty row — only the columns that actually changed. `meta` deep-changes are
@@ -102,6 +104,15 @@ class ChangeRecorder(
     /** Auction channel (T0.7) — ng_auction_bid INSERTs (INSERT-only; outbid rows NEVER deleted). */
     private val auctionBidInserts = mutableListOf<AuctionBidInsert>()
 
+    /** Inheritance channel (T0.8) — KV writes to `game_kv` namespace `inheritance_{ownerID}`. */
+    private val inheritanceKvWrites = mutableListOf<KvWrite>()
+
+    /** Inheritance channel (T0.8) — `inheritance_log` INSERT intents. */
+    private val inheritanceLogInserts = mutableListOf<InheritanceLogDraft>()
+
+    /** Inheritance channel (T0.8) — `inheritance_result` INSERT intents. */
+    private val inheritanceResultInserts = mutableListOf<InheritanceResultRow>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -114,7 +125,9 @@ class ChangeRecorder(
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
-            auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty()
+            auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
+            inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
+            inheritanceResultInserts.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -388,6 +401,39 @@ class ChangeRecorder(
 
     /** The recorded ng_auction_bid INSERTs (the T0.7 flush source), in emit order. */
     fun auctionBidInserts(): List<AuctionBidInsert> = auctionBidInserts.toList()
+
+    /** Record an inheritance KV write (T0.8) — targets `game_kv` with namespace `inheritance_{ownerID}`. */
+    fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {
+        inheritanceKvWrites.add(
+            KvWrite("game_kv", "inheritance_$ownerID", key, listOf(value, aux)),
+        )
+    }
+
+    /** Record an inheritance KV write (T0.8) — same flush shape as [recordInheritancePointSet]. */
+    fun recordInheritancePointIncrease(ownerID: Int, key: String, value: Double, aux: Any?) {
+        inheritanceKvWrites.add(
+            KvWrite("game_kv", "inheritance_$ownerID", key, listOf(value, aux)),
+        )
+    }
+
+    /** Record an `inheritance_log` INSERT intent (T0.8). */
+    fun recordInheritanceLog(ownerID: Int, text: String, tag: String) {
+        inheritanceLogInserts.add(InheritanceLogDraft(ownerID, text, tag))
+    }
+
+    /** Record an `inheritance_result` INSERT intent (T0.8). */
+    fun recordInheritanceResultSnapshot(row: InheritanceResultRow) {
+        inheritanceResultInserts.add(row)
+    }
+
+    /** The recorded inheritance KV writes (the T0.8 flush source), in emit order. */
+    fun inheritanceKvWrites(): List<KvWrite> = inheritanceKvWrites.toList()
+
+    /** The recorded inheritance log INSERTs (the T0.8 flush source), in emit order. */
+    fun inheritanceLogInserts(): List<InheritanceLogDraft> = inheritanceLogInserts.toList()
+
+    /** The recorded inheritance result INSERTs (the T0.8 flush source), in emit order. */
+    fun inheritanceResultInserts(): List<InheritanceResultRow> = inheritanceResultInserts.toList()
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE

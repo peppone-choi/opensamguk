@@ -15,10 +15,12 @@ import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
+import opensamguk.infra.persistence.InheritanceLogRow
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.KvWrite
 import opensamguk.infra.persistence.MessageInvalidateRow
 import opensamguk.infra.persistence.LogRow
+import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
 
@@ -202,6 +204,11 @@ object DatabaseHooks {
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,
+            inheritanceKvWrites = dirty.inheritanceKvWrites,
+            inheritanceLogInserts = dirty.inheritanceLogInserts.map {
+                InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
+            },
+            inheritanceResultInserts = dirty.inheritanceResultInserts,
         )
     }
 
@@ -303,6 +310,11 @@ object DatabaseHooks {
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,
+            inheritanceKvWrites = recorder.inheritanceKvWrites(),
+            inheritanceLogInserts = recorder.inheritanceLogInserts().map {
+                InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
+            },
+            inheritanceResultInserts = recorder.inheritanceResultInserts(),
         )
     }
 

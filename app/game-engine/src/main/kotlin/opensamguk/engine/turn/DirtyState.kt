@@ -1,6 +1,8 @@
 package opensamguk.engine.turn
 
+import opensamguk.infra.persistence.KvWrite
 import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.inheritance.InheritanceResultRow
 import java.time.Instant
 
 /**
@@ -123,4 +125,10 @@ data class DirtyState(
     val auctionUpserts: List<AuctionUpsert> = emptyList(),
     /** [auctionBidInserts]: the ng_auction_bid INSERT intents (T0.7, INSERT-only — no outbid delete). */
     val auctionBidInserts: List<AuctionBidInsert> = emptyList(),
+    /** [inheritanceKvWrites]: the inheritance-channel KV writes (T0.8). */
+    val inheritanceKvWrites: List<KvWrite> = emptyList(),
+    /** [inheritanceLogInserts]: the inheritance_log INSERT intents (T0.8). */
+    val inheritanceLogInserts: List<InheritanceLogDraft> = emptyList(),
+    /** [inheritanceResultInserts]: the inheritance_result INSERT intents (T0.8). */
+    val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(),
 )

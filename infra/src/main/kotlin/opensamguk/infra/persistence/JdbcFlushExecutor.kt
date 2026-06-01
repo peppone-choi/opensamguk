@@ -5,6 +5,7 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.inheritance.InheritanceResultRow
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -134,6 +135,17 @@ class JdbcFlushExecutor(
             //     completeness).
             if (payload.kvWrites.isNotEmpty()) {
                 kvWriteFlush(payload.kvWrites)
+            }
+
+            // 11. Inheritance channel (T0.8) — KV writes, log inserts, result inserts.
+            if (payload.inheritanceKvWrites.isNotEmpty()) {
+                kvWriteFlush(payload.inheritanceKvWrites)
+            }
+            if (payload.inheritanceLogInserts.isNotEmpty()) {
+                inheritanceLogInsertMany(payload.inheritanceLogInserts)
+            }
+            if (payload.inheritanceResultInserts.isNotEmpty()) {
+                inheritanceResultInsertMany(payload.inheritanceResultInserts)
             }
             null
         }
@@ -695,6 +707,48 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("message", FlushVerb.UPDATE, invalidates.size))
     }
 
+    // --- step 11: inheritance channel (T0.8) --------------------------------------------------
+
+    /** INSERT into `inheritance_log`. */
+    private fun inheritanceLogInsertMany(rows: List<InheritanceLogRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("user_id", r.ownerID.toString())
+                .addValue("year", r.year)
+                .addValue("month", r.month)
+                .addValue("text", r.text)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO inheritance_log (user_id, year, month, text)
+            VALUES (:user_id, :year, :month, :text)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("inheritance_log", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /** INSERT into `inheritance_result`. */
+    private fun inheritanceResultInsertMany(rows: List<InheritanceResultRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("server_id", r.serverID.toString())
+                .addValue("owner", r.ownerID.toString())
+                .addValue("general_id", r.generalID)
+                .addValue("year", r.year)
+                .addValue("month", r.month)
+                .addValue("value", jsonb(r.valueJson))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO inheritance_result (server_id, owner, general_id, year, month, value)
+            VALUES (:server_id, :owner, :general_id, :year, :month, :value)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("inheritance_result", FlushVerb.CREATE_MANY, rows.size))
+    }
+
     private fun jsonb(json: String?): PGobject {
         val obj = PGobject()
         obj.type = "jsonb"
@@ -735,6 +789,10 @@ data class FlushPayload(
     val messageInvalidates: List<MessageInvalidateRow> = emptyList(), // step-8c message invalidate UPDATE (T0.5)
     val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
     val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
+    // --- T0.8 inheritance channel ---
+    val inheritanceKvWrites: List<KvWrite> = emptyList(),             // step-11a inheritance KV writes
+    val inheritanceLogInserts: List<InheritanceLogRow> = emptyList(), // step-11b inheritance_log INSERT
+    val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(), // step-11c inheritance_result INSERT
 )
 
 /** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
@@ -742,6 +800,15 @@ data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Ma
 
 /** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
 data class AuctionBidInsertRow(val columns: Map<String, Any?>)
+
+/** One `inheritance_log` INSERT (T0.8). Year/month are stamped by [DatabaseHooks]. */
+data class InheritanceLogRow(
+    val ownerID: Int,
+    val year: Int,
+    val month: Int,
+    val text: String,
+    val tag: String,
+)
 
 /**
  * One `message`-row INSERT (T0.5). `id` is the pre-assigned in-memory monotonic id; `bodyJson` is the
