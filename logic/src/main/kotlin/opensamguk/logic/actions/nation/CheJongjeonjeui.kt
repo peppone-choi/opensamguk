@@ -10,13 +10,18 @@ import opensamguk.logic.constraints.existsDestNation
 import opensamguk.logic.constraints.notBeNeutral
 import opensamguk.logic.constraints.occupiedCity
 import opensamguk.logic.constraints.suppliedCity
+import opensamguk.logic.message.Message
+import opensamguk.logic.message.MessageTarget
+import opensamguk.logic.message.MessageType
 import opensamguk.logic.stats.GeneralActionPipeline
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * che_종전제의 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_종전제의.php`.
  *
  * The cease-fire PROPOSAL command (paired with the [CheJongjeonSuak] acceptance). It sends a
- * [DiplomaticMessage] (action=stopWar) to the dest nation; the diplomacy state mutation happens only
+ * diplomacy [Message] (action=stop_war) to the dest nation; the diplomacy state mutation happens only
  * when the recipient accepts. Mirrors the [CheBulgachimJeui] proposal pattern.
  *
  * argTest (che_종전제의.php:30-50): require `destNationID` (int, >= 1) → canonical `{destNationID}`.
@@ -57,15 +62,53 @@ class CheJongjeonjeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
     }
 
     /**
-     * che_종전제의.php:105-173 run(). Pushes the action log + sends a stopWar [DiplomaticMessage].
-     * The actual mailbox INSERT is the engine-layer message sink (wired in P6 step 3b); this resolve
-     * produces the byte-faithful action log now.
+     * che_종전제의.php:105-173 run(). Pushes the action log + sends a stopWar diplomacy [Message].
+     * The engine routes the buffered message to the mailbox channel (receiver-before-sender).
      */
     override fun resolve(context: GeneralActionResolveContext) {
         val destNationID = (context.args["destNationID"] as? Int) ?: return
         val destNationName = context.destGeneralName.ifEmpty { "상대국" }
         val josaRo = JosaUtil.pick(destNationName, "로")
         context.addLog("<D><b>$destNationName</b></>$josaRo 종전 제의 서신을 보냈습니다.<1>${context.date}</>")
-        // DiplomaticMessage(action=stopWar, deletable=false, validUntil=max(30, turnterm*3)분) send → step 3b.
+
+        val draft = context.draft
+        val general = draft.general
+        val nation = draft.nation ?: return
+
+        val now = LocalDateTime.now()
+        val dateStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val validMinutes = maxOf(30, 60 * 3) // default turnterm=60; quarantined wall-clock
+        val validUntilStr = now.plusMinutes(validMinutes.toLong()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+        val src = MessageTarget(
+            generalId = general.id,
+            generalName = context.generalName,
+            nationId = nation.id,
+            nationName = nation.name,
+            color = nation.color,
+            icon = "",
+        )
+        val dest = MessageTarget(
+            generalId = 0,
+            generalName = "",
+            nationId = destNationID,
+            nationName = destNationName,
+            color = "#000000",
+            icon = "",
+        )
+
+        val msg = Message(
+            msgType = MessageType.DIPLOMACY,
+            src = src,
+            dest = dest,
+            msg = "${nation.name}의 종전 제의 서신",
+            date = dateStr,
+            validUntil = validUntilStr,
+            msgOption = linkedMapOf(
+                "action" to "stop_war",
+                "deletable" to false,
+            ),
+        )
+        context.sendMessage(msg)
     }
 }

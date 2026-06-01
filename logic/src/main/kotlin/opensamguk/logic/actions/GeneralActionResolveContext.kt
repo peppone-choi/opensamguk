@@ -7,6 +7,7 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.message.Message
 
 /**
  * Mutable per-turn draft. The resolver mutates these in place (the Immer-draft replacement);
@@ -96,6 +97,7 @@ class GeneralActionResolveContext(
     private val destPlainLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val globalActionLogs: MutableList<String> = mutableListOf(),
     private val plainLogs: MutableList<String> = mutableListOf(),
+    private val messages: MutableList<Message> = mutableListOf(),
 ) {
     /**
      * Buffer an action-log line, applying PHP `ActionLogger::pushGeneralActionLog`'s DEFAULT
@@ -150,4 +152,9 @@ class GeneralActionResolveContext(
     fun plainLogsTo(targetGeneralId: Int): List<String> = destPlainLogs[targetGeneralId]?.toList() ?: emptyList()
     fun globalActionLogs(): List<String> = globalActionLogs.toList()
     fun plainLogs(): List<String> = plainLogs.toList()
+
+    /** Buffer a [Message] to send (the engine routes it to the mailbox channel, receiver-before-sender). */
+    fun sendMessage(message: Message) { messages.add(message) }
+
+    fun messages(): List<Message> = messages.toList()
 }
