@@ -1,89 +1,52 @@
 package opensamguk.logic.betting
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
 
 /**
- * 베팅 타입 — PHP `BettingType` enum의 Kotlin 포팅.
- */
-enum class BettingType {
-    /** 국가 강약 베팅 */
-    NATION_STRENGTH,
-    /** 토너먼트 베팅 */
-    TOURNAMENT,
-    /** 커스텀 베팅 */
-    CUSTOM,
-}
-
-/**
- * 베팅 상태 — PHP `BettingStatus` enum의 Kotlin 포팅.
- */
-enum class BettingStatus {
-    /** 베팅 개시 중 */
-    OPEN,
-    /** 베팅 마감 (보상 분배 전) */
-    CLOSED,
-    /** 보상 분배 완료 */
-    PAYOUT_DONE,
-}
-
-/**
- * 베팅 마감 조건 — PHP `Betting::$closeCondition`의 Kotlin 포팅.
- */
-@Serializable
-sealed class CloseCondition {
-    /**
-     * 남은 국가 수 기준 마감.
-     *
-     * @property count 목표 남은 국가 수 (1 = 1국만 남을 때 마감)
-     */
-    @Serializable
-    data class RemainNationCount(val count: Int) : CloseCondition()
-
-    /**
-     * 특정 연/월 기준 마감.
-     *
-     * @property year 목표 연도
-     * @property month 목표 월
-     */
-    @Serializable
-    data class SpecificDate(val year: Int, val month: Int) : CloseCondition()
-
-    /**
-     * 특정 국가 멸망 기준 마감.
-     *
-     * @property targetNationId 멸망을 기다릴 대상 국가 ID
-     */
-    @Serializable
-    data class TargetDestroyed(val targetNationId: Int) : CloseCondition()
-}
-
-/**
- * 베팅 정보 — KV 스토리지에 JSON으로 저장되는 베팅 마스터 데이터.
+ * 베팅 정보 — PHP `sammo\DTO\BettingInfo` 의 Kotlin 포팅.
  *
- * PHP `Betting` 클래스의 상태 부분 Kotlin 포팅.
- * Key: `betting:{bettingId}` (KV Storage)
+ * KV 스토리지에 JSON으로 저장되는 베팅 마스터 데이터.
+ * Key: `betting:{id}` (KV Storage)
  *
- * @property bettingId 베팅 고유 ID
- * @property type 베팅 타입
- * @property openYearMonth 베팅 개시 연월
- * @property targetNations 대상 국가 ID 목록
- * @property odds 국가별 배당률 (nationId → odds)
- * @property closeCondition 마감 조건
- * @property isExclusivePayout 독점 보상 여부 (true = 1명이 전부, false = N등분)
- * @property totalPool 총 베팅액 누적
- * @property status 베팅 상태
+ * @property id 베팅 고유 ID (Int — PHP `Betting::$bettingID`)
+ * @property type 베팅 타입 문자열 ("bettingNation" | "tournament" | …)
+ * @property name 베팅 이름 (로그 표시용)
+ * @property finished 보상 분배 완료 여부
+ * @property selectCnt 선택해야 할 후보 수 (1 = 단일, 2+ = 복합)
+ * @property isExclusive 독점 보상 여부 (true = 1명이 전부, false = match-point 기반 분배)
+ * @property reqInheritancePoint true = 유산포인트 베팅, false = 금 베팅
+ * @property openYearMonth 개시 연월 (PHP `Util::joinYearMonth` = year*12 + month)
+ * @property closeYearMonth 마감 연월 (베팅 종료 시점)
+ * @property candidates 후보 목록 (key = 후보 인덱스, value = SelectItem)
+ * @property winner 당첨 후보 인덱스 목록 (보상 분배 후 설정)
  */
 @Serializable
 data class BettingInfo(
-    val bettingId: String,
-    val type: BettingType,
-    val openYearMonth: YearMonth,
-    val targetNations: List<Int>,
-    val odds: Map<Int, Double>,
-    val closeCondition: CloseCondition,
-    val isExclusivePayout: Boolean = false,
-    val totalPool: Int = 0,
-    val status: BettingStatus = BettingStatus.OPEN,
+    val id: Int,
+    val type: String,
+    val name: String,
+    var finished: Boolean = false,
+    val selectCnt: Int = 1,
+    val isExclusive: Boolean? = null,
+    val reqInheritancePoint: Boolean = false,
+    val openYearMonth: Int = 0,
+    var closeYearMonth: Int = 0,
+    val candidates: Map<Int, SelectItem> = linkedMapOf(),
+    var winner: List<Int>? = null,
 ) {
     companion object {
         /** KV 스토리지에서 사용하는 키 접두사 */
@@ -92,18 +55,58 @@ data class BettingInfo(
 }
 
 /**
- * 연/월 데이터 클래스 — [BettingInfo]에서 사용.
+ * 후보 아이템 — PHP `sammo\DTO\SelectItem` 의 Kotlin 포팅.
  *
- * @property year 연도
- * @property month 월 (1-12)
+ * @property title 표시 이름
+ * @property info 부가 정보 (nullable)
+ * @property isHtml HTML 여부 (nullable)
+ * @property aux 부가 데이터 맵 (nullable — nation 베팅의 경우 nation ID 등)
  */
 @Serializable
-data class YearMonth(val year: Int, val month: Int) {
-    override fun toString(): String = "${year}년 ${month}월"
-}
+data class SelectItem(
+    val title: String,
+    val info: String? = null,
+    val isHtml: Boolean? = null,
+    val aux: Map<String, @Serializable(with = AnySerializer::class) Any?>? = null,
+)
 
 /**
- * 베팅 결과 — [FinishNationBettingAction]의 반환 타입.
+ * 베팅 참여 레코드 — PHP `sammo\DTO\BettingItem` + `ng_betting` 행의 Kotlin 포팅.
+ *
+ * @property rowId DB 행 ID (nullable — 신규 삽입 시 null)
+ * @property bettingId 베팅 마스터 ID
+ * @property generalId 장수 ID (NPC/시스템 베팅 시 0)
+ * @property userId 사용자 ID (NPC/시스템 베팅 시 null)
+ * @property bettingType 베팅 선택 키 (JSON 인코딩된 Int 배열, e.g. "[1,2]")
+ * @property amount 베팅 금액
+ */
+data class BettingItem(
+    val rowId: Int? = null,
+    val bettingId: Int,
+    val generalId: Int,
+    val userId: Int? = null,
+    val bettingType: String,
+    val amount: Int,
+)
+
+/**
+ * 보상 계산 결과 — [BettingEngine.calcReward] 의 출력.
+ *
+ * @property generalId 장수 ID
+ * @property userId 사용자 ID (nullable)
+ * @property amount 지급액 (Float — PHP `amount * multiplier` 그대로)
+ * @property matchPoint 맞춘 개수 (selectCnt = 전체 당첨, 그 미만 = 부분 당첨)
+ */
+data class RewardItem(
+    val generalId: Int,
+    val userId: Int?,
+    val amount: Double,
+    val matchPoint: Int,
+)
+
+/**
+ * 베팅 결과 — [FinishNationBettingAction] 의 반환 타입 (PHP parity: 로직 레이어는 Unit,
+ * 이 타입은 외부 호출자가 결과를 확인할 때 사용).
  */
 sealed class BettingResult {
     /** 아직 마감 조건 미달 */
@@ -112,4 +115,41 @@ sealed class BettingResult {
     data object NotFound : BettingResult()
     /** 보상 분배 완료 */
     data class PayoutDone(val winnerCount: Int, val totalPayout: Int) : BettingResult()
+    /** 베팅 취소 (승자 없음 — 전원 환불) */
+    data class Cancelled(val refundCount: Int) : BettingResult()
+}
+
+// ── kotlinx.serialization polymorphic Any helper ──
+
+/** A best-effort serializer for the `aux` Map values (string/int/float/bool/null). */
+object AnySerializer : KSerializer<Any?> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Any")
+
+    override fun serialize(encoder: Encoder, value: Any?) {
+        val jsonEncoder = encoder as? JsonEncoder
+            ?: throw SerializationException("AnySerializer requires JsonEncoder")
+        when (value) {
+            null -> jsonEncoder.encodeJsonElement(JsonNull)
+            is String -> jsonEncoder.encodeString(value)
+            is Int -> jsonEncoder.encodeInt(value)
+            is Long -> jsonEncoder.encodeLong(value)
+            is Double -> jsonEncoder.encodeDouble(value)
+            is Float -> jsonEncoder.encodeFloat(value)
+            is Boolean -> jsonEncoder.encodeBoolean(value)
+            else -> jsonEncoder.encodeString(value.toString())
+        }
+    }
+
+    override fun deserialize(decoder: Decoder): Any? {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw SerializationException("AnySerializer requires JsonDecoder")
+        val element = jsonDecoder.decodeJsonElement()
+        if (element is JsonNull) return null
+        val primitive = element.jsonPrimitive
+        return primitive.booleanOrNull
+            ?: primitive.intOrNull
+            ?: primitive.longOrNull
+            ?: primitive.doubleOrNull
+            ?: primitive.content
+    }
 }

@@ -25,7 +25,7 @@ class BettingActionsTest {
         val open = factory.create(RawAction("OpenNationBetting", emptyList()))
         assertTrue(open is OpenNationBettingAction, "OpenNationBetting builder yields OpenNationBettingAction")
         val finish = factory.create(
-            RawAction("FinishNationBetting", listOf(JsonPrimitive("nb_202506_1234"))),
+            RawAction("FinishNationBetting", listOf(JsonPrimitive(42))),
         )
         assertTrue(finish is FinishNationBettingAction, "FinishNationBetting builder yields FinishNationBettingAction")
     }

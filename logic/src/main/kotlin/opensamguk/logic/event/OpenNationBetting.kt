@@ -7,15 +7,12 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.logic.betting.BettingInfo
-import opensamguk.logic.betting.BettingStatus
-import opensamguk.logic.betting.BettingType
-import opensamguk.logic.betting.CloseCondition
-import opensamguk.logic.betting.YearMonth
+import opensamguk.logic.betting.SelectItem
 
 /**
  * 국가 강약 베팅 개시 이벤트 액션 — `OpenNationBetting`.
  *
- * PHP `Betting::openBetting()`의 Kotlin 포팅.
+ * PHP `Betting::openBetting()` 의 Kotlin 포팅.
  *
  * 동작:
  * 1. [BettingInfo]를 생성하여 KV 스토리지에 저장
@@ -43,80 +40,75 @@ class OpenNationBettingAction(
         // 1. env에서 연/월 추출
         val year = (ctx.env["year"] as? Number)?.toInt() ?: return
         val month = (ctx.env["month"] as? Number)?.toInt() ?: return
-        val openYearMonth = YearMonth(year, month)
+        val openYearMonth = year * 12 + month
 
         // 2. 대상 국가 목록 결정
         val targetNations = if (targetNationsArg is JsonArray) {
             targetNationsArg.jsonArray.map { it.jsonPrimitive.int }
         } else {
-            // env에서 모든 국가 ID 추출
             @Suppress("UNCHECKED_CAST")
             (ctx.env["nationIds"] as? List<Int>) ?: emptyList()
         }
 
         if (targetNations.isEmpty()) return
 
-        // 3. 마감 조건 생성
-        val closeCondition: CloseCondition = when (closeConditionType) {
-            "SpecificDate" -> CloseCondition.SpecificDate(year, month)
-            "TargetDestroyed" -> {
-                val targetId = if (targetNations.isNotEmpty()) targetNations.first() else return
-                CloseCondition.TargetDestroyed(targetId)
-            }
-            else -> CloseCondition.RemainNationCount(closeConditionValue)
+        // 3. candidates 구성 — nation_id → SelectItem
+        val candidates = linkedMapOf<Int, SelectItem>()
+        for ((idx, nationId) in targetNations.withIndex()) {
+            candidates[idx] = SelectItem(
+                title = "국가 $nationId",
+                aux = linkedMapOf("nation" to nationId),
+            )
         }
 
         // 4. BettingInfo 생성
         val bettingInfo = BettingInfo(
-            bettingId = generateBettingId(year, month),
-            type = BettingType.NATION_STRENGTH,
+            id = generateBettingId(ctx),
+            type = "bettingNation",
+            name = "${year}년 ${month}월 국가 강약 내기",
+            selectCnt = targetNations.size,
+            isExclusive = null,
+            reqInheritancePoint = false,
             openYearMonth = openYearMonth,
-            targetNations = targetNations,
-            odds = calculateInitialOdds(targetNations),
-            closeCondition = closeCondition,
+            closeYearMonth = openYearMonth + 120,
+            candidates = candidates,
         )
 
         // 5. KV 스토리지에 저장
-        @Suppress("UNCHECKED_CAST")
         val kvStorage = ctx.env["kvStorage"] as? MutableMap<String, Any>
         kvStorage?.let { storage ->
-            storage[BettingInfo.KV_KEY_PREFIX + bettingInfo.bettingId] = bettingInfo
+            storage[BettingInfo.KV_KEY_PREFIX + bettingInfo.id] = bettingInfo
         }
 
         // 6. DESTROY_NATION 이벤트 등록 (FinishNationBetting 트리거)
-        val eventStore = ctx.env[EventStoreRegistration.ENV_KEY] as? EventStore
-        eventStore?.let { store ->
-            // TODO: 이벤트 등록 — FinishNationBetting을 DESTROY_NATION 타겟으로
-            // store.insertRaw(
-            //     targetCode = "destroy_nation",
-            //     priority = 5000,
-            //     conditionJson = Json.parseToJsonElement("true"),
-            //     actionJson = Json.parseToJsonElement("""[["FinishNationBetting","${bettingInfo.bettingId}"]]""")
-            // )
-        }
+        // TODO(P3-coupled): EventStore에 FinishNationBetting 트리거 등록
+        // val eventStore = ctx.env[DeleteEventContext.ENV_KEY] as? EventStore
+        // eventStore?.insertRaw(
+        //     targetCode = "destroy_nation",
+        //     priority = 5000,
+        //     conditionJson = Json.parseToJsonElement("true"),
+        //     actionJson = Json.parseToJsonElement("""[["FinishNationBetting","${bettingInfo.id}"]]""")
+        // )
 
         // 7. 글로벌 로그
-        @Suppress("UNCHECKED_CAST")
-        val logger = ctx.env["actionLogger"] as? ActionLoggerSeam
-        logger?.pushGlobalActionLog(
-            "국가 강약 베팅이 개시되었습니다. (${bettingInfo.bettingId})"
+        val world = ctx.env[LightActionWorld.ENV_KEY] as? LightActionWorld
+        world?.pushGlobalActionLog(
+            "국가 강약 내기가 개시되었습니다. (${bettingInfo.name})"
         )
     }
 
     companion object {
         const val NAME = "OpenNationBetting"
 
-        /** 베팅 ID 생성 — `nb_{year}{month:02d}_{random4}` 형식. PHP parity: 중복 방지를 위해 랜덤 접미사 포함. */
-        private fun generateBettingId(year: Int, month: Int): String {
-            val randomSuffix = (1000..9999).random()
-            return "nb_${year}${month.toString().padStart(2, '0')}_${randomSuffix}"
-        }
-
-        /** 초기 배당률 계산 — 모든 대상 국가에 동일 배당 */
-        private fun calculateInitialOdds(targetNations: List<Int>): Map<Int, Double> {
-            if (targetNations.isEmpty()) return emptyMap()
-            val baseOdds = 100.0 / targetNations.size
-            return targetNations.associateWith { baseOdds }
+        /** 베팅 ID 생성 — PHP parity: `Betting::genNextBettingID()` 와 유사한 순차 ID. */
+        private fun generateBettingId(ctx: EventActionContext): Int {
+            @Suppress("UNCHECKED_CAST")
+            val kvStorage = ctx.env["kvStorage"] as? MutableMap<String, Any>
+            val lastKey = "last_betting_id"
+            val lastId = (kvStorage?.get(lastKey) as? Number)?.toInt() ?: 0
+            val nextId = lastId + 1
+            kvStorage?.put(lastKey, nextId)
+            return nextId
         }
 
         /**
@@ -136,19 +128,4 @@ class OpenNationBettingAction(
                 OpenNationBettingAction(targetNationsArg, closeConditionType, closeConditionValue)
             }
     }
-}
-
-/**
- * 이벤트 스토어 등록용 seam — OpenNationBetting이 이벤트 스토어에 접근하기 위한 키.
- */
-object EventStoreRegistration {
-    const val ENV_KEY = "eventStore"
-}
-
-/**
- * ActionLogger 접합부 — 이벤트 액션에서 글로벌 로그를 남기기 위한 최소 인터페이스.
- */
-interface ActionLoggerSeam {
-    fun pushGlobalActionLog(msg: String)
-    fun pushGlobalHistoryLog(msg: String, type: Int)
 }
