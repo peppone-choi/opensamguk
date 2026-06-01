@@ -536,6 +536,13 @@ object GameConst {
             true,
             listOf("MergeInheritPointRank"),
         ),
+        // 국가 강약 베팅 개시 (선택적 — 시나리오별 조건으로 대체 가능)
+        listOf(
+            "month", 3000,
+            listOf("DateRelative", "==", 1, 1),  // 게임 시작 1년 후
+            listOf("OpenNationBetting"),
+            listOf("DeleteEvent"),
+        ),
     )
 
     val staticEventHandlers: Map<String, List<String>> = linkedMapOf()

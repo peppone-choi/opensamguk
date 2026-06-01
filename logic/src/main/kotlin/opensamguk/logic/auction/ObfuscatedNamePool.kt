@@ -1,57 +1,99 @@
 package opensamguk.logic.auction
 
-import opensamguk.common.constants.GameConst
-import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
-import opensamguk.common.rng.serializeSeed
 
 /**
- * Faithful port of PHP `Auction::genObfuscatedName` — the lazy-shuffle obfuscated name pool.
+ * 난독화 이름 풀 — 유니크 아이템 경매에서 주최자(시스템)의 정체를 숨기기 위한 이름 관리.
  *
- * The pool is built row-major: `firstName × middleName × lastName` (duplicates kept), shuffled once
- * with a `RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "obfuscatedNamePool")))`, then cached.
- * On daemon restart the cached pool is read back and NEVER re-shuffled.
+ * PHP `Auction::genObfuscatedName()`의 Kotlin 포팅.
+ *
+ * 특성:
+ * - **1회 셔플**: [RandUtil.shuffle]로 한 번 섞고 재사용
+ * - **영속**: [kvStorage]에 저장되어 서버 재시작/flush 후에도 생존
+ * - **Pool 소진 시**: [initializePool]로 새 풀 생성 (새로운 시드로)
+ *
+ * 사용 예시:
+ * ```kotlin
+ * val pool = ObfuscatedNamePool(rng, kvStorage)
+ * val nextName = pool.consumeNext()  // 남은 풀에서 이름 소비 (자동 영속)
+ * if (nextName == null) {
+ *     pool.initializePool(candidateNames)  // 풀 재생성
+ *     pool.consumeNext()
+ * }
+ * ```
+ *
+ * @param rng 난수 생성기 — [RandUtil.shuffle]에 사용
+ * @param kvStorage 영속 저장소 — `game_env` KV 스토리지 (키: [KV_KEY])
  */
-object ObfuscatedNamePool {
+class ObfuscatedNamePool(
+    private val rng: RandUtil,
+    private val kvStorage: MutableMap<String, Any> = mutableMapOf(),
+) {
 
-    /** The cartesian product size: firstName.count × middleName.count × lastName.count. */
-    val poolSize: Int
-        get() = GameConst.randGenFirstName.size * GameConst.randGenMiddleName.size * GameConst.randGenLastName.size
-
-    /**
-     * Build the full pool, shuffle it with the scenario hidden seed, and return the shuffled list.
-     * The caller (engine rehydrate or auction resolver) is responsible for persisting to KV.
-     */
-    fun buildPool(hiddenSeed: String): List<String> {
-        val pool = ArrayList<String>(poolSize)
-        for (first in GameConst.randGenFirstName) {
-            for (middle in GameConst.randGenMiddleName) {
-                for (last in GameConst.randGenLastName) {
-                    pool.add("$first$middle$last")
-                }
-            }
-        }
-        val rng = RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "obfuscatedNamePool")))
-        return rng.shuffle(pool)
+    companion object {
+        /** KV 스토리지에서 사용하는 키 */
+        const val KV_KEY = "obfuscatedNamePool"
     }
 
+    /** 현재 메모리상의 풀 — [initializePool] 또는 [loadPool]로 채워진다. */
+    private var _pool: MutableList<String> = mutableListOf()
+
+    /** 현재 풀의 읽기 전용 뷰 */
+    val pool: List<String> get() = _pool.toList()
+
     /**
-     * Decode an obfuscated name from the pool.
+     * 이름 풀을 1회 셔플하여 생성하고 [kvStorage]에 영속한다.
      *
-     * PHP (`Auction.php:59-65`):
-     * ```php
-     * $dupIdx = intdiv($id, count($namePool));
-     * $subIdx = $id % count($namePool);
-     * if ($dupIdx == 0) {
-     *     return $namePool[$subIdx];
-     * }
-     * return "{$namePool[$subIdx]}{$dupIdx}";
-     * ```
+     * PHP parity: hiddenSeed 기반으로 한 번 섞고, `game_env`에 저장.
+     *
+     * @param names 난독화 후보 이름 목록 (예: "남성_001", "남성_002", ...)
+     * @return 셔플된 이름 목록
      */
-    fun decode(id: Int, pool: List<String>): String {
-        val dupIdx = id / pool.size
-        val subIdx = id % pool.size
-        val name = pool[subIdx]
-        return if (dupIdx == 0) name else "${name}${dupIdx}"
+    fun initializePool(names: List<String>): List<String> {
+        if (names.isEmpty()) {
+            _pool.clear()
+            kvStorage[KV_KEY] = emptyList<String>()
+            return emptyList()
+        }
+        val shuffled = rng.shuffle(names).toMutableList()
+        _pool = shuffled
+        kvStorage[KV_KEY] = shuffled.toList() // 영속
+        return shuffled.toList()
     }
+
+    /**
+     * [kvStorage]에서 풀을 로드한다. 서버 재시작/flush 후 호출.
+     *
+     * @return 로드된 풀, 없으면 emptyList
+     */
+    fun loadPool(): List<String> {
+        @Suppress("UNCHECKED_CAST")
+        val saved = kvStorage[KV_KEY] as? List<String>
+        if (saved != null) {
+            _pool = saved.toMutableList()
+        }
+        return _pool.toList()
+    }
+
+    /**
+     * 풀에서 다음 이름을 소비하고 [kvStorage]에 영속한다.
+     *
+     * @return 소비된 이름, 풀이 비었으면 null
+     */
+    fun consumeNext(): String? {
+        if (_pool.isEmpty()) return null
+        val consumed = _pool.removeFirst()
+        kvStorage[KV_KEY] = _pool.toList() // 영속
+        return consumed
+    }
+
+    /**
+     * 풀이 소진되었는지 확인한다.
+     */
+    fun isExhausted(): Boolean = _pool.isEmpty()
+
+    /**
+     * 풀에 남아있는 이름 개수.
+     */
+    fun remainingCount(): Int = _pool.size
 }
