@@ -30,9 +30,13 @@ object InheritBuffModuleFactory {
     /**
      * Convenience: resolve the buff from a general's meta (with triggerState priority),
      * then create the modules. Returns null if no buff is found.
+     *
+     * Resolution order (matches PHP `resolveBuffRecord`):
+     *   1. general.meta["triggerState"]["meta"]["inheritBuff"] (highest priority)
+     *   2. general.meta["inheritBuff"] (fallback)
      */
     fun resolveAndCreate(general: General): Pair<InheritBuffGeneralModule, InheritBuffWarModule>? {
-        // 1. Try triggerState.meta.inheritBuff (highest priority)
+        // 1. Try general.meta["triggerState"]["meta"]["inheritBuff"] (highest priority)
         @Suppress("UNCHECKED_CAST")
         val triggerBuff = general.meta["triggerState"]?.let { ts ->
             (ts as? Map<String, Any?>)?.get("meta")?.let { m ->
@@ -42,7 +46,7 @@ object InheritBuffModuleFactory {
 
         val buffMap = triggerBuff
             ?: run {
-                // 2. Fallback: general.meta.inheritBuff
+                // 2. Fallback: general.meta["inheritBuff"]
                 @Suppress("UNCHECKED_CAST")
                 general.meta["inheritBuff"] as? Map<String, Any?>
             }

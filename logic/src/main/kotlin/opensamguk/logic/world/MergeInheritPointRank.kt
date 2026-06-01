@@ -52,19 +52,22 @@ object MergeInheritPointRank {
     /**
      * The `InheritanceKey::cases()` folded — ALL cases EXCEPT `previous` (MergeInheritPointRank.php:30-32
      * skips `InheritanceKey::previous`). Order = the PHP enum declaration order (Enums/InheritanceKey.php).
+     *
+     * PHP enum order: previous, lived_month, max_domestic_critical, active_action, unifier,
+     *                 tournament, [snipe_combat], combat, sabotage, dex, betting, max_belong
      */
     private val FOLDED_KEYS = listOf(
         "lived_month",
-        "max_belong",
         "max_domestic_critical",
         "active_action",
+        "unifier",
+        "tournament",
         // snipe_combat is commented out in the PHP enum.
         "combat",
         "sabotage",
-        "unifier",
         "dex",
-        "tournament",
         "betting",
+        "max_belong",
     )
 
     /** The InheritanceKey value-strings folded (all except `previous`). */

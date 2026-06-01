@@ -8,9 +8,9 @@ import opensamguk.logic.util.clamp
  *
  * Faithful port of the TypeScript `InheritBuff` type (legacy_core2026 inheritBuff.ts).
  *
- * Buff resolution order (priority):
- *   1. context.general.triggerState.meta.inheritBuff (highest)
- *   2. context.general.meta.inheritBuff (fallback)
+ * Buff resolution order (priority — see [InheritBuffModuleFactory.resolveAndCreate]):
+ *   1. general.meta["triggerState"]["meta"]["inheritBuff"] (highest)
+ *   2. general.meta["inheritBuff"] (fallback)
  *
  * @property warAvoidRatio 전투 회피율 (+level * 0.01 to self)
  * @property warCriticalRatio 전투 필살율 (+level * 0.01 to self)
@@ -48,9 +48,9 @@ data class InheritBuff(
         fun readBuffLevel(buff: Map<String, Any?>?, key: String): Int {
             if (buff == null) return 0
             val raw = buff[key] as? Number ?: return 0
-            val v = raw.toInt()
-            if (v.isNaN() || v == Int.MAX_VALUE || v == Int.MIN_VALUE) return 0
-            return clamp(v.toDouble(), 0.0, 5.0).toInt()
+            val d = raw.toDouble()
+            if (d.isNaN() || d.isInfinite()) return 0
+            return clamp(d, 0.0, 5.0).toInt()
         }
 
         /** Build an [InheritBuff] from a raw map (e.g. aux.inheritBuff or meta.inheritBuff). */
@@ -68,19 +68,18 @@ data class InheritBuff(
             )
         }
 
-        /** Convert this buff to a plain Map for storage (aux / meta). */
-        fun InheritBuff.toMap(): Map<String, Int> = buildMap {
-            if (warAvoidRatio != 0) put("warAvoidRatio", warAvoidRatio)
-            if (warCriticalRatio != 0) put("warCriticalRatio", warCriticalRatio)
-            if (warMagicTrialProb != 0) put("warMagicTrialProb", warMagicTrialProb)
-            if (success != 0) put("success", success)
-            if (fail != 0) put("fail", fail)
-            if (warAvoidRatioOppose != 0) put("warAvoidRatioOppose", warAvoidRatioOppose)
-            if (warCriticalRatioOppose != 0) put("warCriticalRatioOppose", warCriticalRatioOppose)
-            if (warMagicTrialProbOppose != 0) put("warMagicTrialProbOppose", warMagicTrialProbOppose)
-        }
     }
 }
 
-/** Guard against NaN on Int (extension for the readBuffLevel check). */
-private fun Int.isNaN(): Boolean = false // Int cannot be NaN; this is for code symmetry with Double
+/** Convert this [InheritBuff] to a plain Map for storage (aux / meta).
+ *  Zero-level buffs are omitted to keep storage compact. */
+fun InheritBuff.toMap(): Map<String, Int> = buildMap {
+    if (warAvoidRatio != 0) put("warAvoidRatio", warAvoidRatio)
+    if (warCriticalRatio != 0) put("warCriticalRatio", warCriticalRatio)
+    if (warMagicTrialProb != 0) put("warMagicTrialProb", warMagicTrialProb)
+    if (success != 0) put("success", success)
+    if (fail != 0) put("fail", fail)
+    if (warAvoidRatioOppose != 0) put("warAvoidRatioOppose", warAvoidRatioOppose)
+    if (warCriticalRatioOppose != 0) put("warCriticalRatioOppose", warCriticalRatioOppose)
+    if (warMagicTrialProbOppose != 0) put("warMagicTrialProbOppose", warMagicTrialProbOppose)
+}

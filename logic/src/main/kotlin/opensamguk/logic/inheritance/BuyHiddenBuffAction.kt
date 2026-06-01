@@ -81,14 +81,19 @@ class BuyHiddenBuffAction(
     }
 
     private fun getLevelCost(level: Int): Double {
-        return when (level) {
-            1 -> GameConst.inheritBuffPoints.getOrElse(1) { 200 }.toDouble()
-            2 -> GameConst.inheritBuffPoints.getOrElse(2) { 600 }.toDouble()
-            3 -> GameConst.inheritBuffPoints.getOrElse(3) { 1200 }.toDouble()
-            4 -> GameConst.inheritBuffPoints.getOrElse(4) { 2000 }.toDouble()
-            5 -> GameConst.inheritBuffPoints.getOrElse(5) { 3000 }.toDouble()
-            else -> 0.0
-        }
+        if (level !in 1..5) return 0.0
+        // inheritBuffPoints is a 0-indexed list; level 1 → index 0, level 5 → index 4
+        return GameConst.inheritBuffPoints.getOrElse(level - 1) {
+            // Fallback defaults if the list is shorter than expected
+            when (level) {
+                1 -> 200
+                2 -> 600
+                3 -> 1200
+                4 -> 2000
+                5 -> 3000
+                else -> 0
+            }
+        }.toDouble()
     }
 
     companion object {
