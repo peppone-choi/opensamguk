@@ -47,8 +47,8 @@ export default function AuctionPage() {
     }, [fetchAuctions]);
 
     useEffect(() => {
-        const es = new EventSource(`${process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081'}/realtime/events`);
-        es.addEventListener('realtime', () => fetchAuctions());
+        const es = new EventSource('/api/game/sse/turn');
+        es.addEventListener('turnCompleted', () => fetchAuctions());
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchAuctions]);

@@ -2,7 +2,11 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 
-const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+// SSE through the same-origin proxy → game-api /sse/turn (emits `turnCompleted`).
+// EventSource is same-origin so the sam_access cookie rides along; the proxy attaches the Bearer
+// and streams text/event-stream un-buffered.
+const SSE_URL = '/api/game/sse/turn';
+const SSE_EVENT = 'turnCompleted';
 
 export function useSSE(onEvent: () => void) {
     const esRef = useRef<EventSource | null>(null);
@@ -12,10 +16,10 @@ export function useSSE(onEvent: () => void) {
     const connect = useCallback(() => {
         if (esRef.current?.readyState === EventSource.OPEN) return;
 
-        const es = new EventSource(`${API_BASE}/realtime/events`);
+        const es = new EventSource(SSE_URL);
         esRef.current = es;
 
-        es.addEventListener('realtime', () => {
+        es.addEventListener(SSE_EVENT, () => {
             delayRef.current = 1000;
             onEvent();
         });

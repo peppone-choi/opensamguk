@@ -73,9 +73,8 @@ export default function BettingPage() {
     }, [fetchData]);
 
     useEffect(() => {
-        const base = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
-        const es = new EventSource(`${base}/realtime/events`);
-        es.addEventListener('realtime', () => fetchData());
+        const es = new EventSource('/api/game/sse/turn');
+        es.addEventListener('turnCompleted', () => fetchData());
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchData]);

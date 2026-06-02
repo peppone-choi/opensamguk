@@ -60,9 +60,8 @@ export default function MailboxPage() {
     }, [fetchMessages]);
 
     useEffect(() => {
-        const base = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
-        const es = new EventSource(`${base}/realtime/events`);
-        es.addEventListener('realtime', () => fetchMessages());
+        const es = new EventSource('/api/game/sse/turn');
+        es.addEventListener('turnCompleted', () => fetchMessages());
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchMessages]);
