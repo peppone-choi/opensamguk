@@ -47,25 +47,37 @@ jobs:
         run: |
           docker build -f docker/gateway-api.Dockerfile \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:latest .
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:latest \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:gateway-api-${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:gateway-api-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:latest
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:gateway-api-${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:gateway-api-latest
 
       - name: Build + push game-api image
         run: |
           docker build -f docker/game-api.Dockerfile \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:latest .
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:latest \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-api-${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-api-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:latest
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-api-${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-api-latest
 
       - name: Build + push game-engine image
         run: |
           docker build -f docker/game-engine.Dockerfile \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:latest .
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:latest \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-engine-${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-engine-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:latest
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-engine-${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:game-engine-latest
 
   # ------------------------------------------------------------------
   # 2. Build web images
@@ -91,9 +103,13 @@ jobs:
         run: |
           docker build -f docker/web-${{ matrix.app }}.Dockerfile \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:${{ env.IMAGE_TAG }} \
-            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:latest .
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:latest \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:${{ matrix.app }}-frontend-${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:${{ matrix.app }}-frontend-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:${{ env.IMAGE_TAG }}
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:latest
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:${{ matrix.app }}-frontend-${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk-deploy:${{ matrix.app }}-frontend-latest
 
   # ------------------------------------------------------------------
   # 3. Deploy to EC2
