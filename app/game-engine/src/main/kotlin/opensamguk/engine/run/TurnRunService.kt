@@ -45,7 +45,7 @@ import java.time.Instant
  * publisher+consumer is deferred (P-later). The P1 gate uses ONLY the `turnCompleted` realtime
  * pub/sub → SSE relay round-trip.
  */
-class TurnRunService(
+open class TurnRunService(
     private val world: InMemoryTurnWorld,
     private val commandStream: RedisCommandStream,
     private val lifecycle: TurnDaemonLifecycle,
@@ -104,7 +104,10 @@ class TurnRunService(
      * the per-general drain with one `runMonth` per crossed boundary. The flush still fires exactly
      * ONCE after all drains and monthlies.
      */
-    fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
+    /** The next due run time (`lastTurnTime + tickSeconds`); the daemon loop waits until this arrives. */
+    open fun nextRunTime(): Instant = lifecycle.nextRunTime()
+
+    open fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
         //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
