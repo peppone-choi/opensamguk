@@ -155,4 +155,7 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
     /** F2 front-info counts. */
     fun countByNpcState(npcState: Int): Long
     fun countByNationId(nationId: Int): Long
+
+    /** F2 Wave 6: officers stationed in a city (city-detail panel — cheap count, no row load). */
+    fun countByCityId(cityId: Int): Long
 }

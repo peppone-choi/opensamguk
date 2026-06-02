@@ -1,10 +1,12 @@
 package opensamguk.gameapi.web
 
+import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.reserve.CommandReserveService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -26,12 +28,19 @@ import org.springframework.web.bind.annotation.RestController
  *
  * `turnIdx` defaults to `0` (the next reservable slot); the TS `setGeneralTurn` route accepts an
  * explicit `turnIndex` (0..MAX-1) chosen by the caller, so it is an optional query param here.
+ *
+ * **Task 4 — generalId ownership.** The `?generalId=` param was previously TRUSTED, letting any caller
+ * reserve a command on ANY general. When a verified JWT principal is present, the passed `generalId`
+ * MUST equal the principal's OWN general (via [GeneralResolver]); a mismatch → `403 Forbidden`. The
+ * `?generalId=` value is honored unchanged ONLY when there is no principal (the F2 unauthenticated
+ * transition) — once web/game always carries the Bearer, the param becomes purely confirmatory.
  */
 @RestController
 @RequestMapping("/api/command")
 class CommandController(
     private val precheck: CommandPrecheckService,
     private val reserve: CommandReserveService,
+    private val resolver: GeneralResolver,
 ) {
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)
@@ -41,12 +50,17 @@ class CommandController(
 
     @PostMapping("/{code}")
     fun command(
+        @AuthenticationPrincipal userId: Long?,
         @PathVariable code: String,
         @RequestParam generalId: Int,
         @RequestParam(required = false, defaultValue = "0") turnIdx: Int,
         @RequestBody(required = false) argJson: String? = null,
-    ): ResponseEntity<Any> =
-        when (val result = precheck.precheck(generalId = generalId, actionCode = code)) {
+    ): ResponseEntity<Any> {
+        // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
+        if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
+        }
+        return when (val result = precheck.precheck(generalId = generalId, actionCode = code)) {
             PrecheckResult.Available -> {
                 val reserved = reserve.reserve(
                     generalId = generalId,
@@ -67,4 +81,5 @@ class CommandController(
                 BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
             )
         }
+    }
 }
