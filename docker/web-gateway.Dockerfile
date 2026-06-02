@@ -2,8 +2,9 @@
 FROM node:22-alpine AS build
 WORKDIR /src
 RUN corepack enable
-COPY web/gateway/package.json web/gateway/pnpm-lock.yaml web/gateway/pnpm-workspace.yaml web/gateway/
+COPY web/gateway/package.json web/gateway/pnpm-lock.yaml web/gateway/
 WORKDIR /src/web/gateway
+RUN corepack pnpm approve-builds sharp unrs-resolver
 RUN corepack pnpm install
 COPY web/gateway/ .
 RUN corepack pnpm build

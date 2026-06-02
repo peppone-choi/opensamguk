@@ -1,4 +1,0 @@
-settings:
-  onlyBuiltDependencies:
-    - sharp
-    - unrs-resolver
