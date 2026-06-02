@@ -67,6 +67,43 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "troopExit"
     }
 
+    // F4 Wave C2 (slice B) — troop intake (NewTroop / KickFromTroop / SetTroopName).
+    @Serializable
+    @SerialName("troopNew")
+    data class TroopNew(
+        val requestId: String? = null,
+        val generalId: Int,
+        val troopName: String,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "troopNew"
+    }
+
+    @Serializable
+    @SerialName("troopKick")
+    data class TroopKick(
+        val requestId: String? = null,
+        // Acting (kicking) general — controller-resolved. NOTE: KickFromTroop.php::launch does NOT
+        // consult the session general; the guard runs purely on the target + troopId (see
+        // TroopActions.kickFromTroop). Carried for the command envelope/ownership only.
+        val generalId: Int,
+        val troopId: Int,
+        // PHP args['generalID'] — the general to remove from the troop.
+        val targetGeneralId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "troopKick"
+    }
+
+    @Serializable
+    @SerialName("troopSetName")
+    data class TroopSetName(
+        val requestId: String? = null,
+        val generalId: Int,
+        val troopId: Int,
+        val troopName: String,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "troopSetName"
+    }
+
     @Serializable
     @SerialName("dieOnPrestart")
     data class DieOnPrestart(

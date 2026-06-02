@@ -54,6 +54,12 @@ object CommandWireMapper {
         "inheritResetTurnTime",
         "inheritResetSpecialWar",
         "inheritSetNextSpecialWar",
+        // F4 Wave C2 slice B — troop intake.
+        "troopNew",
+        "troopJoin",
+        "troopExit",
+        "troopKick",
+        "troopSetName",
     )
 
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
@@ -118,6 +124,27 @@ object CommandWireMapper {
             )
             "inheritSetNextSpecialWar" -> TurnDaemonCommand.InheritSetNextSpecialWar(
                 requestId = requestId, generalId = generalId, specialWar = args.str("specialWar") ?: "",
+            )
+            // ── F4 Wave C2 slice B — troop intake. `generalId` is always the RESOLVED acting general;
+            //    troopKick carries the TARGET separately (`targetGeneralId`, legacy `generalID`). ──
+            "troopNew" -> TurnDaemonCommand.TroopNew(
+                requestId = requestId, generalId = generalId, troopName = args.str("troopName") ?: "",
+            )
+            "troopJoin" -> TurnDaemonCommand.TroopJoin(
+                requestId = requestId, generalId = generalId, troopId = args.int("troopId") ?: 0,
+            )
+            "troopExit" -> TurnDaemonCommand.TroopExit(
+                requestId = requestId, generalId = generalId,
+            )
+            "troopKick" -> TurnDaemonCommand.TroopKick(
+                requestId = requestId, generalId = generalId,
+                troopId = args.int("troopId") ?: 0,
+                targetGeneralId = args.int("targetGeneralId") ?: args.int("generalID") ?: 0,
+            )
+            "troopSetName" -> TurnDaemonCommand.TroopSetName(
+                requestId = requestId, generalId = generalId,
+                troopId = args.int("troopId") ?: 0,
+                troopName = args.str("troopName") ?: "",
             )
             else -> null
         }

@@ -181,6 +181,17 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         return troop
     }
 
+    /**
+     * Replace a troop's row (SetTroopName rename) — marks it dirty ONLY (not created), so the flush
+     * routes it through the troop UPDATE batch. Mirrors [updateNation]. Returns null if absent.
+     */
+    fun updateTroop(next: Troop): Troop? {
+        if (!troops.containsKey(next.id)) return null
+        troops[next.id] = next
+        dirtyTroopIds.add(next.id)
+        return next
+    }
+
     fun removeTroop(id: Int): Boolean {
         if (!troops.containsKey(id)) return false
         troops.remove(id)

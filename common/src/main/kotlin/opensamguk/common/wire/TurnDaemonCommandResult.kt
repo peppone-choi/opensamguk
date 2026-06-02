@@ -81,6 +81,22 @@ data class TroopExitFail(
 ) : TurnDaemonCommandResult()
 
 /**
+ * F4 Wave C2 (slice B) — collapsed result for the troop-intake ops that share one shape
+ * (`troopNew` / `troopKick` / `troopSetName`), mirroring the [NationSettingResult] collapse. `troopId`
+ * is the affected troop (the new troop id on a successful `troopNew`); `targetGeneralId` is set only
+ * by `troopKick`; `reason` is present only on failure.
+ */
+@Serializable
+data class TroopActionResult(
+    override val type: String,
+    override val ok: Boolean,
+    val generalId: Int,
+    val troopId: Int? = null,
+    val targetGeneralId: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+/**
  * Collapsed boolean-ok group: dieOnPrestart / buildNationCandidate / instantRetreat /
  * vacation / setMySetting / dropItem / changePermission / kick / appoint.
  * `{ type; ok: boolean; generalId; reason? }`.
@@ -394,6 +410,9 @@ private val BOOLEAN_OK_TYPES = setOf(
     "setMySetting", "dropItem", "changePermission", "kick", "appoint",
 )
 
+/** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */
+private val TROOP_ACTION_TYPES = setOf("troopNew", "troopKick", "troopSetName")
+
 /**
  * Custom `(type, ok)` selector. [JsonContentPolymorphicSerializer] cannot be used because
  * (a) it only models decode, and (b) the concrete classes carry `type`/`ok` as default-valued
@@ -413,6 +432,9 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
         }
         if (type in NATION_SETTING_TYPES) {
             return NationSettingResult.serializer()
+        }
+        if (type in TROOP_ACTION_TYPES) {
+            return TroopActionResult.serializer()
         }
         return when (type) {
             "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()

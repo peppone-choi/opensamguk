@@ -111,6 +111,32 @@ class CommandWireMapperTest {
     }
 
     @Test
+    fun `troop intake codes map their args and thread the resolved acting generalId`() {
+        val new = roundTrip(CommandWireMapper.toCommand("troopNew", 7, "r", """{"troopName":"제1군단"}""")!!) as TurnDaemonCommand.TroopNew
+        assertEquals("제1군단", new.troopName)
+        assertEquals(7, new.generalId)
+
+        val join = roundTrip(CommandWireMapper.toCommand("troopJoin", 9, "r", """{"troopId":7}""")!!) as TurnDaemonCommand.TroopJoin
+        assertEquals(7, join.troopId)
+        assertEquals(9, join.generalId)
+
+        val exit = roundTrip(CommandWireMapper.toCommand("troopExit", 9, "r", null)!!) as TurnDaemonCommand.TroopExit
+        assertEquals(9, exit.generalId)
+
+        // troopKick: generalId is the RESOLVED kicker; the target rides the body (targetGeneralId, legacy generalID).
+        val kick = roundTrip(CommandWireMapper.toCommand("troopKick", 7, "r", """{"troopId":7,"targetGeneralId":8}""")!!) as TurnDaemonCommand.TroopKick
+        assertEquals(7, kick.generalId)
+        assertEquals(7, kick.troopId)
+        assertEquals(8, kick.targetGeneralId)
+        val kickLegacy = CommandWireMapper.toCommand("troopKick", 7, "r", """{"troopId":7,"generalID":8}""") as TurnDaemonCommand.TroopKick
+        assertEquals(8, kickLegacy.targetGeneralId)
+
+        val setName = roundTrip(CommandWireMapper.toCommand("troopSetName", 7, "r", """{"troopId":7,"troopName":"새이름"}""")!!) as TurnDaemonCommand.TroopSetName
+        assertEquals(7, setName.troopId)
+        assertEquals("새이름", setName.troopName)
+    }
+
+    @Test
     fun `string-coerced numbers and malformed json degrade gracefully`() {
         // the UI may send numbers as strings; lenient parse coerces them.
         val rate = CommandWireMapper.toCommand("setRate", 10, "r", """{"amount":"15"}""") as TurnDaemonCommand.SetRate

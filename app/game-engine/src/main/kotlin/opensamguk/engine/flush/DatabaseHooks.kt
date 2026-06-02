@@ -9,6 +9,7 @@ import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
+import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.infra.persistence.AuctionBidInsertRow
 import opensamguk.infra.persistence.AuctionUpsertRow
@@ -24,6 +25,7 @@ import opensamguk.infra.persistence.LogRow
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
+import opensamguk.infra.persistence.TroopRow
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -146,6 +148,7 @@ object DatabaseHooks {
     internal fun toFlushPayload(state: TurnWorldState, dirty: DirtyState): FlushPayload {
         val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
         val createdNationIds = dirty.createdNations.map { it.id }.toSet()
+        val createdTroopIds = dirty.createdTroops.map { it.id }.toSet()
         val updatedGenerals = dirty.generals
             .filter { it.id !in createdGeneralIds }
             .map { PerTurnOverlay.toLogicGeneral(it) }
@@ -199,6 +202,9 @@ object DatabaseHooks {
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
+            createdTroops = dirty.createdTroops.map { toTroopRow(it) },
+            deletedTroops = dirty.deletedTroops,
+            updatedTroops = dirty.troops.filter { it.id !in createdTroopIds }.map { toTroopRow(it) },
             logEntries = logEntries,
             rankWrites = rankWrites,
             kvWrites = toKvWrites(dirty.kvDirty),
@@ -243,6 +249,9 @@ object DatabaseHooks {
     internal fun toKvWrites(kvDirty: Map<KvKey, Any?>): List<KvWrite> =
         kvDirty.map { (k, v) -> KvWrite(table = k.table, namespace = k.namespace, key = k.key, value = v) }
 
+    /** Engine [Troop] → infra [TroopRow]. The troop's id IS its `troop_leader` (PK). */
+    private fun toTroopRow(t: Troop): TroopRow = TroopRow(troopLeader = t.id, nation = t.nationId, name = t.name)
+
     /**
      * T0.3 CONVERGENCE — the single superset payload builder for the daemon write path. The
      * authoritative dirty source is the [ChangeRecorder] (design Risk #4: one dirty truth): dirty
@@ -259,6 +268,7 @@ object DatabaseHooks {
         val state = world.getState()
         val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
         val createdNationIds = dirty.createdNations.map { it.id }.toSet()
+        val createdTroopIds = dirty.createdTroops.map { it.id }.toSet()
 
         // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
         val updatedGenerals = recorder.dirtyGeneralIds()
@@ -297,6 +307,11 @@ object DatabaseHooks {
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
             updatedDiplomacy = toDiplomacyUpdates(recorder.diplomacyUpdateDirty()),
+            // Troop create/delete/rename are world-lifecycle effects (NOT a recorder channel) — the
+            // troop table has no general-row coupling, so the world DirtyState is the dirty source.
+            createdTroops = dirty.createdTroops.map { toTroopRow(it) },
+            deletedTroops = dirty.deletedTroops,
+            updatedTroops = dirty.troops.filter { it.id !in createdTroopIds }.map { toTroopRow(it) },
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),

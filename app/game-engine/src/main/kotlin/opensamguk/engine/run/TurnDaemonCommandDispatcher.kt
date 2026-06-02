@@ -8,6 +8,7 @@ import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.InheritResetHandler
 import opensamguk.engine.intake.NationFinanceSetterHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
+import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
@@ -52,6 +53,9 @@ class TurnDaemonCommandDispatcher(
     private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
     private val inheritReset = InheritResetHandler(world, recorder)
 
+    // ── F4 Wave C2 (slice B) — troop intake handler ──
+    private val troop = TroopHandler(world, recorder)
+
     /**
      * Dispatch one command to its handler.
      *
@@ -74,6 +78,12 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
+        // ── F4 Wave C2 (slice B) troop intake bindings ──
+        is TurnDaemonCommand.TroopNew -> troop.handleNew(command)
+        is TurnDaemonCommand.TroopJoin -> troop.handleJoin(command)
+        is TurnDaemonCommand.TroopExit -> troop.handleExit(command)
+        is TurnDaemonCommand.TroopKick -> troop.handleKick(command)
+        is TurnDaemonCommand.TroopSetName -> troop.handleSetName(command)
         else -> null
     }
 

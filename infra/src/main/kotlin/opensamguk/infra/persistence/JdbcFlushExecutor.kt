@@ -68,8 +68,10 @@ class JdbcFlushExecutor(
             if (payload.createdNations.isNotEmpty()) nationCreateMany(payload.createdNations)
             if (payload.createdDiplomacy.isNotEmpty()) diplomacyCreateMany(payload.createdDiplomacy)
             if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.createdNationTurns)
+            if (payload.createdTroops.isNotEmpty()) troopCreateMany(payload.createdTroops)
 
-            // 4. deleteMany troop. (no-op until troop creation lands)
+            // 4. deleteMany troop (by troop_leader; ExitTroop leader-disband + outright removal).
+            if (payload.deletedTroops.isNotEmpty()) troopDeleteMany(payload.deletedTroops)
 
             // 5. deleteMany general, then rank_data (both guarded on deletedGenerals > 0).
             if (payload.deletedGenerals.isNotEmpty()) {
@@ -91,6 +93,10 @@ class JdbcFlushExecutor(
             }
             if (payload.updatedNations.isNotEmpty()) {
                 nationUpdate(payload.updatedNations)
+            }
+            // 7c. troop UPDATE (rename via SetTroopName; created-this-tick troops are excluded upstream).
+            if (payload.updatedTroops.isNotEmpty()) {
+                troopUpdate(payload.updatedTroops)
             }
             // 7d. per-command diplomacy UPDATE (T0.4) — distinct from the monthly TICK's bulk-SQL
             //     update; runs here in the per-command flush, the tick runs in its own boundary flush.
@@ -298,6 +304,51 @@ class JdbcFlushExecutor(
         // databaseHooks models nation as an UPSERT (createMany excludes these); the UPDATE op-tag is
         // recorded as UPSERT to match the contract / DatabaseHooksOrderTest expectation.
         lastOps.add(FlushExecOp("nation", FlushVerb.UPSERT, nations.size))
+    }
+
+    // --- F4 Wave C2 slice B: troop persistence -------------------------------------------------
+
+    private fun troopCreateMany(rows: List<TroopRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("troop_leader", r.troopLeader)
+                .addValue("nation", r.nation)
+                .addValue("name", r.name)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO troop (troop_leader, nation, name)
+            VALUES (:troop_leader, :nation, :name)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("troop", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun troopDeleteMany(ids: List<Int>) {
+        jdbc.update(
+            "DELETE FROM troop WHERE troop_leader IN (:ids)",
+            MapSqlParameterSource().addValue("ids", ids),
+        )
+        lastOps.add(FlushExecOp("troop", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun troopUpdate(rows: List<TroopRow>) {
+        // SetTroopName updates only `name` (`nation` is immutable for a troop's lifetime).
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("troop_leader", r.troopLeader)
+                .addValue("name", r.name)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            UPDATE troop
+               SET name = :name
+             WHERE troop_leader = :troop_leader
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("troop", FlushVerb.UPDATE, rows.size))
     }
 
     // --- step 7d: per-command diplomacy UPDATE (T0.4) -------------------------------------------
@@ -804,6 +855,10 @@ data class FlushPayload(
     val createdNationTurns: List<NationTurn> = emptyList(),   // step-3 createMany
     val createdDiplomacy: List<Diplomacy> = emptyList(),      // step-3 createMany (거병 bidirectional pairs)
     val updatedDiplomacy: List<DiplomacyUpdate> = emptyList(),// step-7d per-command diplomacy UPDATE (T0.4)
+    // --- F4 Wave C2 slice B: troop persistence (NewTroop/ExitTroop-disband/SetTroopName) ---
+    val createdTroops: List<TroopRow> = emptyList(),          // step-3 createMany troop
+    val deletedTroops: List<Int> = emptyList(),               // step-4 deleteMany troop (by troop_leader)
+    val updatedTroops: List<TroopRow> = emptyList(),          // step-7 troop UPDATE (rename, excl created)
     val deletedGenerals: List<Int> = emptyList(),             // step-5 deleteMany general + rank_data
     val deletedNations: List<Int> = emptyList(),              // step-6 nation cascade
     val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)
@@ -828,6 +883,13 @@ data class AuctionBidInsertRow(val columns: Map<String, Any?>)
 
 /** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
 data class BettingInsertRow(val columns: Map<String, Any?>)
+
+/**
+ * One `troop` row (F4 Wave C2 slice B). Infra-local mirror of the engine `Troop` (no engine dep
+ * cycle). `troopLeader` is the PK (== the leader general's id); `nation` is immutable for the row's
+ * lifetime, so the rename UPDATE touches only `name`.
+ */
+data class TroopRow(val troopLeader: Int, val nation: Int, val name: String)
 
 /** One `inheritance_log` INSERT (T0.8). Year/month are stamped by [DatabaseHooks]. */
 data class InheritanceLogRow(
