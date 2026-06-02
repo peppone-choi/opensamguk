@@ -6,21 +6,7 @@ import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatNumber } from '../../../../lib/format';
-
-interface GeneralRank {
-  rank: number;
-  generalId: number;
-  name: string;
-  nation: string;
-  nationColor: string;
-  officerLevel: number;
-  leadership: number;
-  strength: number;
-  intel: number;
-  experience: number;
-  devotion: number;
-  crew: number;
-}
+import type { GeneralRank } from '../../../../types/game';
 
 type SortKey = 'rank' | 'leadership' | 'strength' | 'intel' | 'experience' | 'devotion' | 'crew';
 

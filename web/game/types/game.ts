@@ -148,3 +148,136 @@ export interface MyPageData {
   turn: TurnState;
   notifications: string[];
 }
+
+// ── F3 Rankings (game-api RankingController DTOs) ────────────────────────────
+// Each interface matches the camelCase JSON the matching /api/rankings/* endpoint
+// returns byte-for-byte. The page renders rows in array order and treats
+// rank/id as pre-assigned. 재야 = nationId 0 → nation "재야" / nationColor "#000000".
+
+// GET /api/rankings/best-generals → ordered total DESC, tie generalId ASC, incl NPC.
+export interface BestGeneral {
+  rank: number;
+  generalId: number;
+  name: string;
+  nation: string;
+  nationColor: string;
+  leadership: number;
+  strength: number;
+  intel: number;
+  total: number; // leadership + strength + intel
+}
+
+// GET /api/rankings/generals → default experience DESC; client re-sorts on L/S/I/exp/devotion/crew.
+export interface GeneralRank {
+  rank: number;
+  generalId: number;
+  name: string;
+  nation: string;
+  nationColor: string;
+  officerLevel: number;
+  leadership: number;
+  strength: number;
+  intel: number;
+  experience: number;
+  devotion: number; // = general.dedication
+  crew: number;
+}
+
+// GET /api/rankings/kingdoms → exclude nationId 0, power DESC. power = SUM(general.crew) proxy.
+export interface KingdomRank {
+  rank: number;
+  nationId: number;
+  name: string;
+  color: string;
+  level: number;
+  gold: number;
+  rice: number;
+  pop: number; // SUM(city.pop)
+  genNum: number; // count general by nation
+  power: number; // SUM(general.crew) by nation (OQ-3 proxy)
+  cityCount: number;
+  capitalName: string;
+}
+
+// GET /api/rankings/npcs → WHERE npc_state=1, total DESC, no rank field.
+export interface NpcGeneral {
+  generalId: number;
+  name: string;
+  nation: string;
+  nationColor: string;
+  officerLevel: number;
+  leadership: number;
+  strength: number;
+  intel: number;
+  experience: number;
+  devotion: number;
+  crew: number;
+  cityName: string;
+}
+
+// GET /api/rankings/hall-of-fame → F3 default [] (hall empty in 1010).
+export interface HallRecord {
+  id: number;
+  category: string;
+  name: string;
+  nation: string;
+  nationColor: string;
+  value: number;
+  valueLabel: string;
+  achievedAt: string;
+  turn: number;
+}
+
+// GET /api/rankings/traffic → F3 zero-fill summary, history [] (OQ-2, no online-tracking infra).
+export interface TrafficStat {
+  date: string;
+  uniqueVisitors: number;
+  pageViews: number;
+  avgSessionMin: number;
+  peakConcurrent: number;
+}
+
+export interface TrafficSummary {
+  todayUnique: number;
+  todayViews: number;
+  weekUnique: number;
+  weekViews: number;
+  monthUnique: number;
+  monthViews: number;
+  peakConcurrent: number;
+  currentOnline: number;
+  history: TrafficStat[];
+}
+
+// GET /api/rankings/emperor → F3 default [] (no unification-history table, OQ-1).
+export interface EmperorRecord {
+  id: number;
+  name: string;
+  nation: string;
+  nationColor: string;
+  unifiedAt: string;
+  turn: number;
+  year: number;
+  month: number;
+  generalCount: number;
+  cityCount: number;
+}
+
+// GET /api/rankings/emperor/{id} → 404 in F3 (no emperior table; page .catch handles).
+export interface EmperorDetail {
+  id: number;
+  name: string;
+  nation: string;
+  nationColor: string;
+  unifiedAt: string;
+  turn: number;
+  year: number;
+  month: number;
+  generalCount: number;
+  cityCount: number;
+  totalGold: number;
+  totalRice: number;
+  totalPop: number;
+  generals: { name: string; leadership: number; strength: number; intel: number }[];
+  cities: { name: string; level: number; pop: number }[];
+}

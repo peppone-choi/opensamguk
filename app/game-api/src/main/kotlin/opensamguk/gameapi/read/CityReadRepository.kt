@@ -7,6 +7,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import opensamguk.logic.domain.City
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /**
  * Read-only JPA mapping of the `city` row for the PRECHECK path (game-api ONLY — §7).
@@ -123,4 +125,11 @@ interface CityReadRepository : JpaRepository<CityReadEntity, Int> {
 
     /** F2 front-info / nation-detail city count. */
     fun countByNationId(nationId: Int): Long
+
+    /**
+     * F3 kingdoms ranking — `pop` = SUM(city.pop) over a nation's cities (there is NO `nation.pop`
+     * column). COALESCE so a nation with no cities materializes 0, not null.
+     */
+    @Query("select coalesce(sum(c.population), 0) from CityReadEntity c where c.nationId = :nationId")
+    fun sumPopulationByNationId(@Param("nationId") nationId: Int): Long
 }

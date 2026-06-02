@@ -8,6 +8,8 @@ import jakarta.persistence.Table
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /**
  * Read-only JPA mapping of the `general` row for the PRECHECK path (game-api ONLY — the
@@ -158,4 +160,12 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
 
     /** F2 Wave 6: officers stationed in a city (city-detail panel — cheap count, no row load). */
     fun countByCityId(cityId: Int): Long
+
+    /**
+     * F3 kingdoms ranking — `power` proxy (병력 column) = SUM(general.crew) over a nation's generals.
+     * The legacy `a_kingdomList.php` sorts by a stored `nation.power` that has no column in this schema;
+     * SUM(crew) is the documented faithful proxy (OQ-3). COALESCE so a general-less nation → 0.
+     */
+    @Query("select coalesce(sum(g.crew), 0) from GeneralReadEntity g where g.nationId = :nationId")
+    fun sumCrewByNationId(@Param("nationId") nationId: Int): Long
 }

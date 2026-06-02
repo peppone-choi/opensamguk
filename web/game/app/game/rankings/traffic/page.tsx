@@ -6,27 +6,8 @@ import GameCard from '../../../../components/GameCard';
 import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
-import { formatDate, formatNumber } from '../../../../lib/format';
-
-interface TrafficStat {
-  date: string;
-  uniqueVisitors: number;
-  pageViews: number;
-  avgSessionMin: number;
-  peakConcurrent: number;
-}
-
-interface TrafficSummary {
-  todayUnique: number;
-  todayViews: number;
-  weekUnique: number;
-  weekViews: number;
-  monthUnique: number;
-  monthViews: number;
-  peakConcurrent: number;
-  currentOnline: number;
-  history: TrafficStat[];
-}
+import { formatNumber } from '../../../../lib/format';
+import type { TrafficSummary } from '../../../../types/game';
 
 export default function TrafficPage() {
   const [data, setData] = useState<TrafficSummary | null>(null);
