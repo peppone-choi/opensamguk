@@ -51,11 +51,11 @@ export default function BestGeneralsPage() {
       ? <StatusBadge variant={g.rank === 1 ? 'gold' : g.rank === 2 ? 'jade' : 'muted'}>{g.rank}</StatusBadge>
       : g.rank,
     g.name,
-    <span style={{ color: g.nationColor }}>{g.nation}</span>,
+    <span key="nation" style={{ color: g.nationColor }}>{g.nation}</span>,
     formatNumber(g.leadership),
     formatNumber(g.strength),
     formatNumber(g.intel),
-    <strong>{formatNumber(g.total)}</strong>,
+    <strong key="total">{formatNumber(g.total)}</strong>,
   ]);
 
   return (

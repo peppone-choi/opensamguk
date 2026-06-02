@@ -51,10 +51,10 @@ export default function HallOfFamePage() {
 
   const headers = ['분류', '기록', '이름', '국가', '수치', '달성 시기', '턴'];
   const rows = filtered.map((r) => [
-    <StatusBadge variant="muted">{r.category}</StatusBadge>,
+    <StatusBadge key="category" variant="muted">{r.category}</StatusBadge>,
     r.valueLabel,
     r.name,
-    <span style={{ color: r.nationColor }}>{r.nation}</span>,
+    <span key="nation" style={{ color: r.nationColor }}>{r.nation}</span>,
     formatNumber(r.value),
     formatDate(r.achievedAt),
     r.turn,

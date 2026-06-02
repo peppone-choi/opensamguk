@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 FROM gradle:8.12-jdk21 AS build
 WORKDIR /src
 COPY . .

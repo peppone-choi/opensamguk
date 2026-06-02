@@ -76,7 +76,7 @@ export default function GeneralsPage() {
       ? <StatusBadge variant={g.rank === 1 ? 'gold' : g.rank === 2 ? 'jade' : 'muted'}>{g.rank}</StatusBadge>
       : g.rank,
     g.name,
-    <span style={{ color: g.nationColor }}>{g.nation}</span>,
+    <span key="nation" style={{ color: g.nationColor }}>{g.nation}</span>,
     g.officerLevel,
     formatNumber(g.leadership),
     formatNumber(g.strength),

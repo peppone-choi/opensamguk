@@ -52,8 +52,8 @@ export default function EmperorPage() {
     e.id <= 3
       ? <StatusBadge variant={e.id === 1 ? 'gold' : e.id === 2 ? 'jade' : 'muted'}>{e.id}</StatusBadge>
       : e.id,
-    <Link href={`/game/rankings/emperor/${e.id}`} style={{ color: 'var(--gold)' }}>{e.name}</Link>,
-    <span style={{ color: e.nationColor }}>{e.nation}</span>,
+    <Link key="emperor" href={`/game/rankings/emperor/${e.id}`} style={{ color: 'var(--gold)' }}>{e.name}</Link>,
+    <span key="nation" style={{ color: e.nationColor }}>{e.nation}</span>,
     formatDate(e.unifiedAt),
     `${e.year}년 ${e.month}월`,
     e.generalCount,

@@ -54,7 +54,7 @@ export default function KingdomsPage() {
     k.rank <= 3
       ? <StatusBadge variant={k.rank === 1 ? 'gold' : k.rank === 2 ? 'jade' : 'muted'}>{k.rank}</StatusBadge>
       : k.rank,
-    <span style={{ color: k.color, fontWeight: 600 }}>{k.name}</span>,
+    <span key="nation" style={{ color: k.color, fontWeight: 600 }}>{k.name}</span>,
     k.level,
     formatNumber(k.gold),
     formatNumber(k.rice),

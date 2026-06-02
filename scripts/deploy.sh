@@ -5,9 +5,9 @@
 set -euo pipefail
 
 EC2_HOST="${1:-${EC2_HOST:-}}"
-EC2_USER="${2:-${EC2_USER:-ec2-user}}"
-SSH_KEY="${SSH_KEY:-${HOME}/.ssh/opensamguk-ec2.pem}}"
-COMPOSE_FILE="docker-compose.prod.yml"
+EC2_USER="${2:-${EC2_USER:-ubuntu}}"
+SSH_KEY="${SSH_KEY:-${HOME}/.ssh/id_ed25519}"
+COMPOSE_FILE="docker-compose.production.yml"
 
 if [[ -z "$EC2_HOST" ]]; then
     echo "Usage: $0 <EC2_HOST> [EC2_USER]"
@@ -42,18 +42,18 @@ ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
     fi
 
     echo "=== Pulling images ==="
-    docker compose -f docker-compose.prod.yml pull
+    docker compose -f docker-compose.production.yml pull
 
     echo "=== Restarting services ==="
     # Restart non-engine services first
-    docker compose -f docker-compose.prod.yml up -d --no-deps \
+    docker compose -f docker-compose.production.yml up -d --no-deps \
         gateway-api game-api web-gateway web-game nginx
 
     # Brief pause for DB/redis readiness
     sleep 5
 
     # Restart engine last (it owns the in-memory turn state)
-    docker compose -f docker-compose.prod.yml up -d --no-deps game-engine
+    docker compose -f docker-compose.production.yml up -d --no-deps game-engine
 
     # Prune old images (keep 7 days)
     docker image prune -af --filter "until=168h" || true

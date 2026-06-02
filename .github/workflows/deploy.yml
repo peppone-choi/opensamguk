@@ -101,19 +101,30 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [build-jvm, build-web]
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GHCR_TOKEN,GHCR_USER
           script_stop: true
           script: |
             set -euo pipefail
             cd ~/opensamguk
+
+            # Authenticate to GHCR (images are private)
+            echo "=== GHCR login ==="
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
             # Pull latest images
             echo "=== Pulling images ==="

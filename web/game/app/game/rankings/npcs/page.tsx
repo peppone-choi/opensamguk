@@ -55,7 +55,7 @@ export default function NpcsPage() {
   const headers = ['장수', '국가', '직위', '통솔', '묠력', '지력', '경험', '충성', '병력', '도시'];
   const rows = filtered.map((g) => [
     g.name,
-    <span style={{ color: g.nationColor }}>{g.nation}</span>,
+    <span key="nation" style={{ color: g.nationColor }}>{g.nation}</span>,
     g.officerLevel,
     formatNumber(g.leadership),
     formatNumber(g.strength),
