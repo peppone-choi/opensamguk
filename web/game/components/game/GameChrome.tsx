@@ -17,6 +17,7 @@ import GlobalMenu from './GlobalMenu';
 import MainControlBar, { type ControlGating } from './MainControlBar';
 import MainControlDropdown from './MainControlDropdown';
 import CharacterClaim from './CharacterClaim';
+import MapViewer from './MapViewer';
 import type { MenuFlagSource } from '@/lib/menu-types';
 
 export default function GameChrome({ children }: { children?: React.ReactNode }) {
@@ -74,8 +75,14 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
             {/* GameInfo status header */}
             <GameInfo global={frontInfo.global} constData={constData} />
 
-            {/* ingameBoard placeholder slot — MapViewer + reserved-command + info cards land in W4/W5 */}
-            <div className="ingame-board-slot">{children}</div>
+            {/* ingameBoard center region (spec §1.1 .mapView) — interactive world map (W4).
+                currentCityId = the possessed general's city → highlight ring. Selecting a city opens the
+                detail panel inside MapViewer; command-from-map is the W5 seam (onSelectCity, unused here).
+                Reserved-command + info cards still land via `children`. */}
+            <div className="ingame-board-slot">
+                <MapViewer currentCityId={frontInfo.general.cityId} />
+                {children}
+            </div>
 
             {/* MainControlBar (국가 메뉴) */}
             {gating && <MainControlBar gating={gating} />}

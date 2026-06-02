@@ -113,6 +113,36 @@ export interface FrontInfoResponse {
     recentRecord: string[];
 }
 
+// ── map preview (game-api MapPreviewResponse / MapPreviewDto.kt) ─────────────
+// SAME shape the gateway lobby MapPreview consumes. `cities[].nationId === 0` is neutral and has NO
+// entry in `nations[]` (render with a default neutral color). A city absent from the scenario coord
+// JSON is OMITTED server-side (no x/y = nothing to draw). Field names are a stable client contract.
+export interface MapPreviewCity {
+    id: number;
+    name: string;
+    level: number;
+    nationId: number;
+    x: number;
+    y: number;
+}
+
+export interface MapPreviewNation {
+    id: number;
+    name: string;
+    color: string;
+}
+
+export interface MapPreviewResponse {
+    serverName: string;
+    year: number;
+    month: number;
+    mapCode: string;
+    width: number;
+    height: number;
+    cities: MapPreviewCity[];
+    nations: MapPreviewNation[];
+}
+
 // ── global-menu (game-api GlobalMenuResponse) ────────────────────────────────
 export interface MenuNode {
     type: 'item' | 'split' | 'multi' | 'line';

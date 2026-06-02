@@ -10,6 +10,7 @@ import type {
     GameConstResponse,
     ClaimableResponse,
     ClaimResponse,
+    MapPreviewResponse,
 } from './types';
 
 async function get<T>(path: string): Promise<T> {
@@ -36,6 +37,9 @@ export const api = {
     frontInfo: () => get<FrontInfoResponse>('/api/front-info'),
     globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),
     gameConst: () => get<GameConstResponse>('/api/const'),
+
+    // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
+    mapPreview: () => get<MapPreviewResponse>('/api/map/preview'),
 
     // Possession (장수 점유 / 빙의) — AUTH (identity resolved from Bearer)
     claimable: () => get<ClaimableResponse>('/api/generals/claimable'),
