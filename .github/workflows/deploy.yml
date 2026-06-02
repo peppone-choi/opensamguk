@@ -132,7 +132,7 @@ jobs:
 
             # Rolling restart (engine last to avoid turn-state loss)
             echo "=== Restarting services ==="
-            docker compose -f docker-compose.production.yml up -d --no-deps --build gateway-api game-api web-gateway web-game nginx
+            docker compose -f docker-compose.production.yml up -d --no-deps gateway-api game-api gateway-frontend game-frontend nginx
             sleep 5
             docker compose -f docker-compose.production.yml up -d --no-deps game-engine
 
