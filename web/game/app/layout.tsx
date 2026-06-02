@@ -1,9 +1,15 @@
-export const metadata = { title: 'opensamguk Game' };
+import type { Metadata } from 'next';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'opensamguk — 삼국지 모의전투',
+  description: 'Kotlin/Spring + Next.js 메모리 중심 CQRS 재작성',
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html lang="ko">
-            <body>{children}</body>
-        </html>
-    );
+  return (
+    <html lang="ko">
+      <body>{children}</body>
+    </html>
+  );
 }
