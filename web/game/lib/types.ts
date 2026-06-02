@@ -13,6 +13,10 @@ export interface User {
 }
 
 // ── front-info (game-api FrontInfoResponse) ──────────────────────────────────
+// Required fields are the W1 contract. Optional fields are the GameInfo header (spec §3) +
+// GlobalMenu highlight/show flags (spec §4) the legacy `globalInfo` block carries; game-api may not
+// emit all of them yet — GameInfo renders graceful fallbacks (no fabricated values) and the menu
+// flags default to falsy (the legacy filterMenu drops a condShow item whose flag is absent anyway).
 export interface FrontGlobalInfo {
     year: number;
     month: number;
@@ -23,6 +27,30 @@ export interface FrontGlobalInfo {
     nationCount: number;
     cityCount: number;
     npcCount: number;
+    // ── GameInfo header (spec §3) — optional until game-api emits them ──
+    title?: string;
+    serverName?: string;
+    serverCnt?: number;
+    extendedGeneral?: boolean;
+    isFiction?: boolean;
+    npcMode?: number; // 0 불가능 / 1 가능 / 2 선택 생성
+    onlineUserCnt?: number;
+    apiLimit?: number;
+    createdUserCnt?: number;
+    generalCntLimit?: number;
+    createdNPCCnt?: number;
+    auctionCount?: number;
+    lastVote?: { title: string } | null;
+    lastExecuted?: string | null;
+    serverLocked?: boolean;
+    isTournamentActive?: boolean;
+    tournamentType?: string;
+    tournamentState?: string;
+    // ── GlobalMenu flags (spec §4) — drive condHighlight/condShow + control-bar highlight ──
+    nationBetting?: boolean;
+    vote?: boolean;
+    isTournamentApplicationOpen?: boolean;
+    isBettingActive?: boolean;
 }
 
 export interface FrontGeneralInfo {
