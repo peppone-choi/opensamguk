@@ -104,6 +104,9 @@ class ChangeRecorder(
     /** Auction channel (T0.7) — ng_auction_bid INSERTs (INSERT-only; outbid rows NEVER deleted). */
     private val auctionBidInserts = mutableListOf<AuctionBidInsert>()
 
+    /** Betting channel (P6) — ng_betting INSERTs (INSERT-only). */
+    private val bettingInserts = mutableListOf<BettingInsert>()
+
     /** Inheritance channel (T0.8) — KV writes to `game_kv` namespace `inheritance_{ownerID}`. */
     private val inheritanceKvWrites = mutableListOf<KvWrite>()
 
@@ -126,6 +129,7 @@ class ChangeRecorder(
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
+            bettingInserts.isNotEmpty() ||
             inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
             inheritanceResultInserts.isNotEmpty()
 
@@ -397,11 +401,19 @@ class ChangeRecorder(
         auctionBidInserts.add(AuctionBidInsert(columns))
     }
 
+    /** Record an `ng_betting` INSERT (P6 betting intake). INSERT-only. */
+    fun recordBettingInsert(columns: Map<String, Any?>) {
+        bettingInserts.add(BettingInsert(columns))
+    }
+
     /** The recorded ng_auction UPSERTs (the T0.7 flush source), in emit order. */
     fun auctionUpserts(): List<AuctionUpsert> = auctionUpserts.toList()
 
     /** The recorded ng_auction_bid INSERTs (the T0.7 flush source), in emit order. */
     fun auctionBidInserts(): List<AuctionBidInsert> = auctionBidInserts.toList()
+
+    /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
+    fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
 
     /** Record an inheritance KV write (T0.8) — targets `game_kv` with namespace `inheritance_{ownerID}`. */
     fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {

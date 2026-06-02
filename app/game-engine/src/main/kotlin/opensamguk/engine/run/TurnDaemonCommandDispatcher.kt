@@ -4,6 +4,7 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
+import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
@@ -41,6 +42,7 @@ class TurnDaemonCommandDispatcher(
 ) {
     private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
+    private val placeBet = PlaceBetHandler(world, recorder)
 
     /**
      * Dispatch one command to its handler.
@@ -51,6 +53,7 @@ class TurnDaemonCommandDispatcher(
     fun dispatch(command: TurnDaemonCommand): TurnDaemonCommandResult? = when (command) {
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
+        is TurnDaemonCommand.PlaceBet -> placeBet.handle(command)
         else -> null
     }
 

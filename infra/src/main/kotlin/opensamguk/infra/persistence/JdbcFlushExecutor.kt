@@ -115,6 +115,9 @@ class JdbcFlushExecutor(
             if (payload.auctionBidInserts.isNotEmpty()) {
                 auctionBidInsertMany(payload.auctionBidInserts)
             }
+            if (payload.bettingInserts.isNotEmpty()) {
+                bettingInsertMany(payload.bettingInserts)
+            }
 
             // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
             //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
@@ -659,6 +662,27 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("ng_auction_bid", FlushVerb.CREATE_MANY, rows.size))
     }
 
+    /** INSERT the `ng_betting` rows (P6 betting intake, INSERT-only). */
+    private fun bettingInsertMany(rows: List<BettingInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("betting_id", c["betting_id"])
+                .addValue("general_id", c["general_id"])
+                .addValue("user_id", c["user_id"])
+                .addValue("betting_type", c["betting_type"])
+                .addValue("amount", c["amount"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO ng_betting (betting_id, general_id, user_id, betting_type, amount)
+            VALUES (:betting_id, :general_id, :user_id, :betting_type, :amount)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("ng_betting", FlushVerb.CREATE_MANY, rows.size))
+    }
+
     // --- step 8c: mailbox channel (T0.5) -------------------------------------------------------
 
     /**
@@ -789,6 +813,7 @@ data class FlushPayload(
     val messageInvalidates: List<MessageInvalidateRow> = emptyList(), // step-8c message invalidate UPDATE (T0.5)
     val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
     val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
+    val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
     // --- T0.8 inheritance channel ---
     val inheritanceKvWrites: List<KvWrite> = emptyList(),             // step-11a inheritance KV writes
     val inheritanceLogInserts: List<InheritanceLogRow> = emptyList(), // step-11b inheritance_log INSERT
@@ -800,6 +825,9 @@ data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Ma
 
 /** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
 data class AuctionBidInsertRow(val columns: Map<String, Any?>)
+
+/** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
+data class BettingInsertRow(val columns: Map<String, Any?>)
 
 /** One `inheritance_log` INSERT (T0.8). Year/month are stamped by [DatabaseHooks]. */
 data class InheritanceLogRow(

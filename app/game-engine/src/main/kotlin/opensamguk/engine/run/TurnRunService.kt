@@ -1,6 +1,7 @@
 package opensamguk.engine.run
 
 import opensamguk.common.rng.RandUtil
+import opensamguk.engine.auction.AuctionExpiryDaemon
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -75,6 +76,16 @@ class TurnRunService(
         null
     }
 
+    /**
+     * Scans and expires auctions whose closeDate has passed. Built per-run against the live [world].
+     * Runs after command dispatch and before the monthly boundary / flush.
+     */
+    private val auctionExpiryDaemon = if (auctionRepository != null && auctionBidRepository != null) {
+        AuctionExpiryDaemon(auctionRepository, auctionBidRepository)
+    } else {
+        null
+    }
+
     /** Outcome of one [runTick]: the resolved turns + whether a `turnCompleted` was published. */
     data class TickResult(
         val handled: List<ReservedTurnHandler.HandledTurn>,
@@ -102,6 +113,9 @@ class TurnRunService(
         //    live in the general_turn ring (ReservedTurnRepository), NOT on this stream.
         val commands = commandStream.readCommands(commandBlockMs)
         commandDispatcher?.dispatchAll(commands) ?: emptyList()
+
+        // 1b. auction expiry scan (P6) — expire auctions whose closeDate has passed.
+        auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)
 
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>

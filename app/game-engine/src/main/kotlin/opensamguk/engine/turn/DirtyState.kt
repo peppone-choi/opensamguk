@@ -70,6 +70,12 @@ data class AuctionUpsert(val id: Int?, val allocatedId: Int?, val columns: Map<S
 data class AuctionBidInsert(val columns: Map<String, Any?>)
 
 /**
+ * An `ng_betting` INSERT intent (P6 betting intake). INSERT-only — bet rows are never updated.
+ * `columns` mirrors `NgBettingEntity` fields: betting_id, general_id, user_id, betting_type, amount.
+ */
+data class BettingInsert(val columns: Map<String, Any?>)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
@@ -125,6 +131,8 @@ data class DirtyState(
     val auctionUpserts: List<AuctionUpsert> = emptyList(),
     /** [auctionBidInserts]: the ng_auction_bid INSERT intents (T0.7, INSERT-only — no outbid delete). */
     val auctionBidInserts: List<AuctionBidInsert> = emptyList(),
+    /** [bettingInserts]: the ng_betting INSERT intents (P6 betting intake, INSERT-only). */
+    val bettingInserts: List<BettingInsert> = emptyList(),
     /** [inheritanceKvWrites]: the inheritance-channel KV writes (T0.8). */
     val inheritanceKvWrites: List<KvWrite> = emptyList(),
     /** [inheritanceLogInserts]: the inheritance_log INSERT intents (T0.8). */
