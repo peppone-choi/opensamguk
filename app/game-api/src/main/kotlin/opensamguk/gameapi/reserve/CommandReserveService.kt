@@ -23,21 +23,33 @@ import java.util.UUID
  * Step 2 of the 8-step flow — reserve. Called by [opensamguk.gameapi.web.CommandController] ONLY when
  * the E2 precheck returned `AVAILABLE`.
  *
- * Two effects, matching the TS split of "DB carries the reserved action, Redis carries the control
- * signal" (devsam-core2026):
+ * **Two intake models, selected by the command code** ([CommandWireMapper]):
  *
- *  1. **Durable reservation** — the action-code + arg is written to the `general_turn` ring buffer via
- *     the shared `:infra` [ReservedTurnRepository] (plain JDBC; `setGeneralTurn` faithful upsert). This
- *     is the SOURCE OF TRUTH the daemon reads when it processes the turn — NOT the Redis message.
- *  2. **Wake the daemon** — publish the EXISTING P0-B control signal to the MUTATION (command) stream.
- *     The reused wire variant is [TurnDaemonCommand.Run] with [RunReason.POKE] (the existing
- *     "wake/poke the daemon" control command — devsam-core2026 `daemon.poke()`); NO new wire variant
- *     and NO `:common`/wire change is introduced (OQ6 LEAD RULING). The envelope is the EXISTING
- *     [TurnDaemonCommandEnvelope], encoded into the one `payload` field the engine-side
- *     `RedisCommandStream` consumer reads.
+ *  A. **Turn-reserved `che_*` commands** (the default). Two effects, matching the TS split of "DB
+ *     carries the reserved action, Redis carries the control signal" (devsam-core2026):
+ *      1. **Durable reservation** — the action-code + arg is written to the `general_turn` ring buffer
+ *         via the shared `:infra` [ReservedTurnRepository] (plain JDBC; `setGeneralTurn` faithful
+ *         upsert). This is the SOURCE OF TRUTH the daemon reads when it processes the turn — NOT the
+ *         Redis message.
+ *      2. **Wake the daemon** — publish the EXISTING P0-B control signal to the MUTATION (command)
+ *         stream. The reused wire variant is [TurnDaemonCommand.Run] with [RunReason.POKE] (the
+ *         existing "wake/poke the daemon" control command — devsam-core2026 `daemon.poke()`).
+ *     The reserve is ordered DB-first then publish: the durable reservation must exist before the
+ *     daemon is woken, so a poke can never race ahead of its reserved action.
  *
- * The reserve is ordered DB-first then publish: the durable reservation must exist before the daemon
- * is woken, so a poke can never race ahead of its reserved action.
+ *  B. **Immediate daemon-command intake** (betting/auction + F4 Wave C2 single-actor commands). These
+ *     are NOT turn-reserved: their engine handlers are driven by the
+ *     [opensamguk.engine.run.TurnDaemonCommandDispatcher] off a TYPED [TurnDaemonCommand] on the
+ *     command stream, NOT by the `general_turn` ring. For these we SKIP the ring write and publish the
+ *     typed command itself (mapped from `{code, argJson, generalId}` by [CommandWireMapper]), so the
+ *     daemon's `RedisCommandStream` → dispatcher → handler → `ChangeRecorder` → flush path executes
+ *     the mutation. A `Run(POKE)` here would reach the dispatcher and return `null` (no handler),
+ *     silently dropping the action.
+ *
+ * In BOTH models the envelope is the EXISTING [TurnDaemonCommandEnvelope], encoded into the one
+ * `payload` field the engine-side `RedisCommandStream` consumer reads. NO new wire variant and NO
+ * `:common`/wire change is introduced (OQ6 LEAD RULING) — game-api ONLY publishes; the daemon applies
+ * (one-daemon-write rule).
  */
 @Service
 class CommandReserveService(
@@ -53,21 +65,44 @@ class CommandReserveService(
     data class ReserveResult(val requestId: String, val turnIdx: Int)
 
     /**
-     * Persist the reserved [actionCode] (+ optional [argJson]) into the `general_turn` slot, then poke
-     * the daemon. Returns the generated [ReserveResult.requestId].
+     * Submit the AVAILABLE command. Selects the intake model from [actionCode] ([CommandWireMapper]):
+     *
+     *  - **immediate daemon-command** intake (betting/auction + C2): publish the TYPED command (mapped
+     *    from `{actionCode, argJson, generalId}`) — NO `general_turn` ring write (the daemon dispatches
+     *    the typed command directly to its handler).
+     *  - **turn-reserved `che_*`**: write the reserved action into the `general_turn` ring FIRST (DB is
+     *    the source of truth), then poke the daemon with `Run(POKE)`.
+     *
+     * Returns the generated [ReserveResult.requestId] (echoed to the UI as the 202 requestId) in both.
      */
     fun reserve(generalId: Int, actionCode: String, turnIdx: Int = 0, argJson: String? = null): ReserveResult {
+        val requestId = requestIds()
+
+        // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
+        val intake = CommandWireMapper.toCommand(actionCode, generalId, requestId, argJson)
+        if (intake != null) {
+            publish(
+                TurnDaemonCommandEnvelope(
+                    requestId = requestId,
+                    sentAt = Instant.now(clock).toString(),
+                    command = intake,
+                )
+            )
+            return ReserveResult(requestId = requestId, turnIdx = turnIdx)
+        }
+
+        // Model A — turn-reserved che_* command.
         // 1. durable reservation FIRST (DB is the source of truth for the reserved action).
         reservedTurns.reserve(generalId = generalId, turnIdx = turnIdx, actionCode = actionCode, argJson = argJson)
 
         // 2. wake the daemon via the EXISTING P0-B control signal (Run/POKE) on the command stream.
-        val requestId = requestIds()
-        val envelope = TurnDaemonCommandEnvelope(
-            requestId = requestId,
-            sentAt = Instant.now(clock).toString(),
-            command = TurnDaemonCommand.Run(reason = RunReason.POKE),
+        publish(
+            TurnDaemonCommandEnvelope(
+                requestId = requestId,
+                sentAt = Instant.now(clock).toString(),
+                command = TurnDaemonCommand.Run(reason = RunReason.POKE),
+            )
         )
-        publish(envelope)
         return ReserveResult(requestId = requestId, turnIdx = turnIdx)
     }
 
