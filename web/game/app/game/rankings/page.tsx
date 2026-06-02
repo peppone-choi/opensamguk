@@ -30,7 +30,6 @@ export default function RankingsLobbyPage() {
         {RANKING_PAGES.map((p) => (
           <Link key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
             <GameCard
-              className="ranking-lobby-card"
               style={{
                 display: 'flex',
                 alignItems: 'center',

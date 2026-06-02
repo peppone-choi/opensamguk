@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+import Shell from '../../../components/Shell';
+import GameCard from '../../../components/GameCard';
+import StatusBadge from '../../../components/StatusBadge';
+import { api } from '../../../lib/api';
 
 interface Nation {
     id: number;
@@ -52,17 +54,15 @@ export default function NationPage() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [nRes, cRes, gRes] = await Promise.all([
-                fetch(`${API_BASE}/api/nations/${nationId}`),
-                fetch(`${API_BASE}/api/cities?nationId=${nationId}`),
-                fetch(`${API_BASE}/api/generals/${generalId}`),
+            const [nData, cData, gData] = await Promise.all([
+                api.rankings.kingdoms<Nation[]>().then(ns => ns.find(n => n.id === nationId)),
+                api.myCities<City[]>(),
+                api.myGenerals<{ id: number; meta?: { inheritBuff?: Record<string, number> } }[]>().then(gs => gs.find(g => g.id === generalId)),
             ]);
-            if (nRes.ok) setNation(await nRes.json());
-            if (cRes.ok) setCities(await cRes.json());
-            if (gRes.ok) {
-                const g = await gRes.json();
-                const buffMap = (g.meta?.inheritBuff ?? {}) as Record<string, number>;
-                setMyBuffs(buffMap);
+            if (nData) setNation(nData);
+            if (cData) setCities(cData);
+            if (gData) {
+                setMyBuffs(gData.meta?.inheritBuff ?? {});
             }
             setError('');
         } catch {
@@ -77,7 +77,8 @@ export default function NationPage() {
     }, [fetchData]);
 
     useEffect(() => {
-        const es = new EventSource(`${API_BASE}/realtime/events`);
+        const base = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+        const es = new EventSource(`${base}/realtime/events`);
         es.addEventListener('realtime', () => fetchData());
         es.onerror = () => es.close();
         return () => es.close();
@@ -90,25 +91,23 @@ export default function NationPage() {
             setTimeout(() => setToast(''), 3000);
             return;
         }
-        const res = await fetch(`${API_BASE}/api/command/BuyHiddenBuff?generalId=${generalId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ buffKey, level, prevLevel }),
-        });
-        const data = await res.json();
-        setToast(data.status === 'AVAILABLE' ? '구매가 접수되었습니다.' : (data.reason ?? '구매할 수 없습니다.'));
+        try {
+            const data = await api.command<{ status: string; reason?: string }>('BuyHiddenBuff', { buffKey, level, prevLevel });
+            setToast(data.status === 'AVAILABLE' ? '구매가 접수되었습니다.' : (data.reason ?? '구매할 수 없습니다.'));
+        } catch {
+            setToast('구매 요청에 실패했습니다.');
+        }
         setTimeout(() => setToast(''), 3000);
         fetchData();
     }
 
     async function buyRandomUnique() {
-        const res = await fetch(`${API_BASE}/api/command/BuyRandomUnique?generalId=${generalId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: '{}',
-        });
-        const data = await res.json();
-        setToast(data.status === 'AVAILABLE' ? '구매가 접수되었습니다.' : (data.reason ?? '구매할 수 없습니다.'));
+        try {
+            const data = await api.command<{ status: string; reason?: string }>('BuyRandomUnique', {});
+            setToast(data.status === 'AVAILABLE' ? '구매가 접수되었습니다.' : (data.reason ?? '구매할 수 없습니다.'));
+        } catch {
+            setToast('구매 요청에 실패했습니다.');
+        }
         setTimeout(() => setToast(''), 3000);
         fetchData();
     }
@@ -116,110 +115,85 @@ export default function NationPage() {
     const nationCities = cities.filter(c => c.nationId === nationId);
 
     return (
-        <main className="min-h-screen bg-gray-900 text-gray-100 p-4">
-            <h1 className="text-2xl font-bold mb-4">국가 정보</h1>
+        <Shell>
+            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
 
-            <div className="flex gap-4 mb-4 flex-wrap items-center">
-                <label className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">국가 ID</span>
-                    <input
-                        type="number"
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm w-20"
-                        value={nationId}
-                        onChange={e => setNationId(Number(e.target.value))}
-                    />
+            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>국가 ID</span>
+                    <input type="number" style={{ width: '5rem' }} value={nationId} onChange={e => setNationId(Number(e.target.value))} />
                 </label>
-                <label className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">장수 ID</span>
-                    <input
-                        type="number"
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm w-20"
-                        value={generalId}
-                        onChange={e => setGeneralId(Number(e.target.value))}
-                    />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>장수 ID</span>
+                    <input type="number" style={{ width: '5rem' }} value={generalId} onChange={e => setGeneralId(Number(e.target.value))} />
                 </label>
-                <button
-                    onClick={fetchData}
-                    className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-3 py-1 rounded"
-                >
-                    새로고침
-                </button>
+                <button onClick={fetchData}>새로고침</button>
             </div>
 
-            {loading && <p className="text-gray-400">로딩 중...</p>}
-            {error && <p className="text-red-400">{error}</p>}
+            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
+            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
 
             {toast && (
-                <div className="fixed top-4 right-4 bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded shadow-lg z-50">
+                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
                     {toast}
                 </div>
             )}
 
             {nation && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div className="border border-gray-600 rounded p-4 bg-gray-800">
-                        <h2 className="text-lg font-semibold mb-3" style={{ color: nation.color }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                    <GameCard>
+                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', color: nation.color }}>
                             {nation.name}
                         </h2>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div className="text-gray-400">레벨</div>
-                            <div className="font-medium">{nation.level}</div>
-                            <div className="text-gray-400">국력</div>
-                            <div className="font-medium">{nation.power.toLocaleString()}</div>
-                            <div className="text-gray-400">금</div>
-                            <div className="font-medium">{nation.gold.toLocaleString()}</div>
-                            <div className="text-gray-400">쌀</div>
-                            <div className="font-medium">{nation.rice.toLocaleString()}</div>
-                            <div className="text-gray-400">기술</div>
-                            <div className="font-medium">{nation.tech.toFixed(2)}</div>
-                            <div className="text-gray-400">장수 수</div>
-                            <div className="font-medium">{nation.gennum}</div>
-                            <div className="text-gray-400">도시 수</div>
-                            <div className="font-medium">{nationCities.length}</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>레벨</span><strong>{nation.level}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>국력</span><strong>{nation.power.toLocaleString()}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>금</span><strong>{nation.gold.toLocaleString()}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>쌀</span><strong>{nation.rice.toLocaleString()}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>기술</span><strong>{nation.tech.toFixed(2)}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>장수 수</span><strong>{nation.gennum}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>도시 수</span><strong>{nationCities.length}</strong>
                         </div>
-                    </div>
+                    </GameCard>
 
-                    <div className="border border-gray-600 rounded p-4 bg-gray-800">
-                        <h2 className="text-lg font-semibold mb-3 text-gray-200">도시 목록</h2>
+                    <GameCard>
+                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>도시 목록</h2>
                         {nationCities.length === 0 ? (
-                            <p className="text-gray-500 text-sm">도시가 없습니다.</p>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>도시가 없습니다.</p>
                         ) : (
-                            <div className="max-h-48 overflow-y-auto space-y-1">
+                            <div style={{ maxHeight: '12rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
                                 {nationCities.map(c => (
-                                    <div key={c.id} className="flex justify-between text-sm px-2 py-1 bg-gray-700/50 rounded">
+                                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', padding: 'var(--space-xs) var(--space-sm)', background: 'var(--bg-hover)', borderRadius: 'var(--radius-sm)' }}>
                                         <span>{c.name}</span>
-                                        <span className="text-gray-400">
-                                            인구 {c.pop.toLocaleString()} · 무역 {c.trade}
-                                        </span>
+                                        <span style={{ color: 'var(--text-muted)' }}>인구 {c.pop.toLocaleString()} · 무역 {c.trade}</span>
                                     </div>
                                 ))}
                             </div>
                         )}
-                    </div>
+                    </GameCard>
                 </div>
             )}
 
-            <div className="border border-gray-600 rounded p-4 bg-gray-800 mb-6">
-                <h2 className="text-lg font-semibold mb-3 text-gray-200">유산 버프 구매</h2>
-                <p className="text-sm text-gray-400 mb-4">
+            <GameCard className="mb-md">
+                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>유산 버프 구매</h2>
+                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }}>
                     각 버프는 레벨 1~5까지 구매 가능합니다. 비용은 누적 차액입니다.
                 </p>
-                <div className="space-y-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                     {INHERIT_BUFFS.map(buff => {
                         const currentLevel = myBuffs[buff.key] ?? 0;
                         return (
-                            <div key={buff.key} className="border border-gray-700 rounded p-3">
-                                <div className="flex justify-between items-start mb-2">
+                            <div key={buff.key} style={{ border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: 'var(--space-sm)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-xs)' }}>
                                     <div>
-                                        <span className="font-medium">{buff.label}</span>
-                                        <span className="text-xs text-gray-400 ml-2">{buff.desc}</span>
+                                        <strong>{buff.label}</strong>
+                                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginLeft: 'var(--space-sm)' }}>{buff.desc}</span>
                                     </div>
-                                    <span className="text-sm">
-                                        현재 레벨:{' '}
-                                        <span className="font-bold text-yellow-400">{currentLevel}</span>/5
+                                    <span style={{ fontSize: 'var(--text-sm)' }}>
+                                        현재 레벨: <strong style={{ color: 'var(--gold)' }}>{currentLevel}</strong>/5
                                     </span>
                                 </div>
-                                <div className="flex gap-1 flex-wrap">
+                                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
                                     {[1, 2, 3, 4, 5].map(lvl => {
                                         const cost = INHERIT_COSTS[lvl] - INHERIT_COSTS[currentLevel];
                                         const disabled = currentLevel >= lvl;
@@ -228,11 +202,13 @@ export default function NationPage() {
                                                 key={lvl}
                                                 onClick={() => buyBuff(buff.key, lvl)}
                                                 disabled={disabled}
-                                                className={`text-xs px-2 py-1 rounded border ${
-                                                    disabled
-                                                        ? 'border-gray-600 bg-gray-700 text-gray-500 cursor-not-allowed'
-                                                        : 'border-yellow-600 bg-yellow-900/20 text-yellow-300 hover:bg-yellow-900/40'
-                                                }`}
+                                                style={{
+                                                    fontSize: 'var(--text-xs)',
+                                                    padding: 'var(--space-xs) var(--space-sm)',
+                                                    border: `1px solid ${disabled ? 'var(--border-subtle)' : 'var(--gold-dim)'}`,
+                                                    background: disabled ? 'var(--bg-hover)' : 'rgba(201,162,39,0.1)',
+                                                    color: disabled ? 'var(--text-muted)' : 'var(--gold)',
+                                                }}
                                             >
                                                 L{lvl} ({cost.toLocaleString()}P)
                                             </button>
@@ -243,19 +219,14 @@ export default function NationPage() {
                         );
                     })}
                 </div>
-            </div>
+            </GameCard>
 
-            <div className="border border-gray-600 rounded p-4 bg-gray-800">
-                <h2 className="text-lg font-semibold mb-3 text-gray-200">기타 유산 구매</h2>
-                <div className="flex gap-2">
-                    <button
-                        onClick={buyRandomUnique}
-                        className="bg-purple-600 hover:bg-purple-500 text-white text-sm px-4 py-2 rounded"
-                    >
-                        랜덤 유니크 아이템 구매
-                    </button>
+            <GameCard>
+                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>기타 유산 구매</h2>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                    <button onClick={buyRandomUnique}>랜덤 유니크 아이템 구매</button>
                 </div>
-            </div>
-        </main>
+            </GameCard>
+        </Shell>
     );
 }

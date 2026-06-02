@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-
-const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+import Shell from '../../../components/Shell';
+import GameCard from '../../../components/GameCard';
+import StatusBadge from '../../../components/StatusBadge';
+import { api } from '../../../lib/api';
 
 interface MailMessage {
     id: number;
@@ -25,6 +27,13 @@ const TYPE_LABEL: Record<string, string> = {
     diplomacy: '외교',
 };
 
+const TYPE_VARIANT: Record<string, 'gold' | 'jade' | 'muted' | 'crimson'> = {
+    private: 'muted',
+    public: 'jade',
+    national: 'gold',
+    diplomacy: 'crimson',
+};
+
 export default function MailboxPage() {
     const [messages, setMessages] = useState<MailMessage[]>([]);
     const [mailboxId, setMailboxId] = useState<number>(1);
@@ -36,13 +45,9 @@ export default function MailboxPage() {
     const fetchMessages = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/api/mailbox?mailboxId=${mailboxId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setMessages(data);
-            } else {
-                setError('메일함을 불러올 수 없습니다.');
-            }
+            const data = await api.mailbox<MailMessage[]>();
+            setMessages(data);
+            setError('');
         } catch {
             setError('메일함을 불러올 수 없습니다.');
         } finally {
@@ -55,7 +60,8 @@ export default function MailboxPage() {
     }, [fetchMessages]);
 
     useEffect(() => {
-        const es = new EventSource(`${API_BASE}/realtime/events`);
+        const base = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+        const es = new EventSource(`${base}/realtime/events`);
         es.addEventListener('realtime', () => fetchMessages());
         es.onerror = () => es.close();
         return () => es.close();
@@ -68,13 +74,12 @@ export default function MailboxPage() {
             setTimeout(() => setToast(''), 3000);
             return;
         }
-        const res = await fetch(`${API_BASE}/api/command/${action}_agree?generalId=${generalId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messageId: msg.id }),
-        });
-        const data = await res.json();
-        setToast(data.status === 'AVAILABLE' ? '수락이 접수되었습니다.' : (data.reason ?? '수락할 수 없습니다.'));
+        try {
+            const data = await api.command<{ status: string; reason?: string }>(`${action}_agree`, { messageId: msg.id });
+            setToast(data.status === 'AVAILABLE' ? '수락이 접수되었습니다.' : (data.reason ?? '수락할 수 없습니다.'));
+        } catch {
+            setToast('수락 요청에 실패했습니다.');
+        }
         setTimeout(() => setToast(''), 3000);
         fetchMessages();
     }
@@ -86,13 +91,12 @@ export default function MailboxPage() {
             setTimeout(() => setToast(''), 3000);
             return;
         }
-        const res = await fetch(`${API_BASE}/api/command/${action}_decline?generalId=${generalId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messageId: msg.id }),
-        });
-        const data = await res.json();
-        setToast(data.status === 'AVAILABLE' ? '거절이 접수되었습니다.' : (data.reason ?? '거절할 수 없습니다.'));
+        try {
+            const data = await api.command<{ status: string; reason?: string }>(`${action}_decline`, { messageId: msg.id });
+            setToast(data.status === 'AVAILABLE' ? '거절이 접수되었습니다.' : (data.reason ?? '거절할 수 없습니다.'));
+        } catch {
+            setToast('거절 요청에 실패했습니다.');
+        }
         setTimeout(() => setToast(''), 3000);
         fetchMessages();
     }
@@ -100,98 +104,65 @@ export default function MailboxPage() {
     const unreadCount = messages.filter(m => !m.read).length;
 
     return (
-        <main className="min-h-screen bg-gray-900 text-gray-100 p-4">
-            <h1 className="text-2xl font-bold mb-4">메일함</h1>
+        <Shell>
+            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>메일함</h1>
 
-            <div className="flex gap-4 mb-4 flex-wrap items-center">
-                <label className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">메일함 ID</span>
-                    <input
-                        type="number"
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm w-24"
-                        value={mailboxId}
-                        onChange={e => setMailboxId(Number(e.target.value))}
-                    />
+            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>메일함 ID</span>
+                    <input type="number" style={{ width: '6rem' }} value={mailboxId} onChange={e => setMailboxId(Number(e.target.value))} />
                 </label>
-                <label className="flex items-center gap-2">
-                    <span className="text-sm text-gray-400">장수 ID</span>
-                    <input
-                        type="number"
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm w-20"
-                        value={generalId}
-                        onChange={e => setGeneralId(Number(e.target.value))}
-                    />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>장수 ID</span>
+                    <input type="number" style={{ width: '5rem' }} value={generalId} onChange={e => setGeneralId(Number(e.target.value))} />
                 </label>
-                <button
-                    onClick={fetchMessages}
-                    className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-3 py-1 rounded"
-                >
-                    새로고침
-                </button>
+                <button onClick={fetchMessages}>새로고침</button>
                 {unreadCount > 0 && (
-                    <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
-                        미읽음 {unreadCount}
-                    </span>
+                    <StatusBadge variant="crimson">미읽음 {unreadCount}</StatusBadge>
                 )}
             </div>
 
-            {loading && <p className="text-gray-400">로딩 중...</p>}
-            {error && <p className="text-red-400">{error}</p>}
+            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
+            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
 
             {toast && (
-                <div className="fixed top-4 right-4 bg-gray-800 border border-gray-600 text-white px-4 py-2 rounded shadow-lg z-50">
+                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
                     {toast}
                 </div>
             )}
 
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                 {messages.length === 0 && !loading && (
-                    <p className="text-gray-500">메시지가 없습니다.</p>
+                    <p style={{ color: 'var(--text-muted)' }}>메시지가 없습니다.</p>
                 )}
                 {messages.map(msg => {
                     const isDiplomacy = msg.type === 'diplomacy';
                     const hasAction = !!msg.option?.action;
+                    const variant = TYPE_VARIANT[msg.type] ?? 'muted';
                     return (
-                        <div
-                            key={msg.id}
-                            className={`border rounded p-3 ${msg.read ? 'border-gray-700 bg-gray-800/50' : 'border-gray-600 bg-gray-800'}`}
-                        >
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <GameCard key={msg.id} className={msg.read ? 'muted' : ''}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap' }}>
                                 {!msg.read && (
-                                    <span className="w-2 h-2 bg-blue-400 rounded-full inline-block" />
+                                    <span style={{ width: 8, height: 8, background: 'var(--gold)', borderRadius: '50%', display: 'inline-block' }} />
                                 )}
-                                <span className="text-xs bg-gray-700 px-1.5 py-0.5 rounded">
-                                    {TYPE_LABEL[msg.type] ?? msg.type}
-                                </span>
-                                <span className="text-sm font-medium">{msg.srcName}</span>
-                                <span className="text-xs text-gray-500">{msg.date}</span>
+                                <StatusBadge variant={variant}>{TYPE_LABEL[msg.type] ?? msg.type}</StatusBadge>
+                                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{msg.srcName}</span>
+                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{msg.date}</span>
                                 {msg.validUntil && msg.validUntil !== '9999-12-31' && (
-                                    <span className="text-xs text-gray-500">
-                                        ~{msg.validUntil}
-                                    </span>
+                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>~{msg.validUntil}</span>
                                 )}
                             </div>
-                            <p className="text-sm text-gray-200 mb-2 whitespace-pre-wrap">{msg.text}</p>
+                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>{msg.text}</p>
                             {isDiplomacy && hasAction && (
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleAgree(msg)}
-                                        className="bg-green-600 hover:bg-green-500 text-white text-xs px-3 py-1 rounded"
-                                    >
-                                        수락
-                                    </button>
-                                    <button
-                                        onClick={() => handleDecline(msg)}
-                                        className="bg-red-600 hover:bg-red-500 text-white text-xs px-3 py-1 rounded"
-                                    >
-                                        거절
-                                    </button>
+                                <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                                    <button onClick={() => handleAgree(msg)}>수락</button>
+                                    <button onClick={() => handleDecline(msg)}>거절</button>
                                 </div>
                             )}
-                        </div>
+                        </GameCard>
                     );
                 })}
             </div>
-        </main>
+        </Shell>
     );
 }
