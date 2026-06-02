@@ -318,6 +318,77 @@ data class DeclineDiplomaticMessageFail(
     val reason: String,
 ) : TurnDaemonCommandResult()
 
+// ── F4 Wave C2 (slice A) — single-actor intake command results ──────────────────────────────────
+// The 7 nation-finance setters + tournament enroll collapse to a single [NationSettingResult]
+// ({type, ok, generalId, nationId?, reason?}); each inheritance reset has its own Ok/Fail pair
+// carrying the spent points (the UI shows the deduction).
+
+@Serializable
+data class NationSettingResult(
+    override val type: String,
+    override val ok: Boolean,
+    val generalId: Int,
+    val nationId: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class InheritResetTurnTimeOk(
+    override val type: String = "inheritResetTurnTime",
+    override val ok: Boolean = true,
+    val generalId: Int,
+    val spent: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class InheritResetTurnTimeFail(
+    override val type: String = "inheritResetTurnTime",
+    override val ok: Boolean = false,
+    val generalId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class InheritResetSpecialWarOk(
+    override val type: String = "inheritResetSpecialWar",
+    override val ok: Boolean = true,
+    val generalId: Int,
+    val spent: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class InheritResetSpecialWarFail(
+    override val type: String = "inheritResetSpecialWar",
+    override val ok: Boolean = false,
+    val generalId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class InheritSetNextSpecialWarOk(
+    override val type: String = "inheritSetNextSpecialWar",
+    override val ok: Boolean = true,
+    val generalId: Int,
+    val spent: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class InheritSetNextSpecialWarFail(
+    override val type: String = "inheritSetNextSpecialWar",
+    override val ok: Boolean = false,
+    val generalId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
+/**
+ * The nation-finance setters + tournament enroll all carry the same shape — collapse to
+ * [NationSettingResult] (mirrors the [GeneralBoolResult] collapse) keyed on `type` regardless of `ok`.
+ */
+private val NATION_SETTING_TYPES = setOf(
+    "setNotice", "setScoutMsg", "setRate", "setBill", "setSecretLimit",
+    "setBlockWar", "setBlockScout", "tournamentEnroll",
+)
+
 private val BOOLEAN_OK_TYPES = setOf(
     "dieOnPrestart", "buildNationCandidate", "instantRetreat", "vacation",
     "setMySetting", "dropItem", "changePermission", "kick", "appoint",
@@ -340,7 +411,13 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
         if (type in BOOLEAN_OK_TYPES) {
             return GeneralBoolResult.serializer()
         }
+        if (type in NATION_SETTING_TYPES) {
+            return NationSettingResult.serializer()
+        }
         return when (type) {
+            "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()
+            "inheritResetSpecialWar" -> if (ok) InheritResetSpecialWarOk.serializer() else InheritResetSpecialWarFail.serializer()
+            "inheritSetNextSpecialWar" -> if (ok) InheritSetNextSpecialWarOk.serializer() else InheritSetNextSpecialWarFail.serializer()
             "auctionFinalize" -> if (ok) AuctionFinalizeOk.serializer() else AuctionFinalizeFail.serializer()
             "troopJoin" -> if (ok) TroopJoinOk.serializer() else TroopJoinFail.serializer()
             "troopExit" -> if (ok) TroopExitOk.serializer() else TroopExitFail.serializer()

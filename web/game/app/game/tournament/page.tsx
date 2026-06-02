@@ -5,8 +5,10 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
+import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
+import type { FrontInfoResponse } from '../../../lib/types';
 import type {
     TournamentResponse,
     TournamentEntrant,
@@ -81,6 +83,11 @@ export default function TournamentPage() {
     const [data, setData] = useState<TournamentResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    // F4 C2 — own identity + enroll modal (participation toggle).
+    const [generalId, setGeneralId] = useState<number | null>(null);
+    const [nationId, setNationId] = useState<number | null>(null);
+    const [enrollOpen, setEnrollOpen] = useState<{ value: number } | null>(null);
+    const [toast, setToast] = useState<string | null>(null);
 
     const fetchData = () => {
         setLoading(true);
@@ -93,6 +100,15 @@ export default function TournamentPage() {
     };
 
     useEffect(fetchData, []);
+
+    useEffect(() => {
+        api.frontInfo()
+            .then((fi: FrontInfoResponse) => {
+                setGeneralId(fi.general.generalId);
+                setNationId(fi.general.nationId);
+            })
+            .catch(() => { /* identity optional — enroll button hides when absent */ });
+    }, []);
 
     // EMPTY-SAFE accessors — the controller may zero-fill, but never trust shape at runtime.
     const entrants: TournamentEntrant[] = Array.isArray(data?.entrants) ? data!.entrants : [];
@@ -215,10 +231,27 @@ export default function TournamentPage() {
                     <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>삼모전 토너먼트</h2>
                     <StatusBadge variant="jade">{tnmtType}</StatusBadge>
                     <StatusBadge variant={stateVariant(state)}>{stateText}</StatusBadge>
+                    {/* F4 C2 — 참가/불참 토글 (enroll). tnmt 1 = 참가, 0 = 불참. */}
+                    {generalId != null && (
+                        <>
+                            <button
+                                onClick={() => setEnrollOpen({ value: 1 })}
+                                style={{ marginLeft: 'auto', background: 'var(--bg-hover)', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', padding: 'var(--space-xs) var(--space-sm)' }}
+                            >
+                                참가
+                            </button>
+                            <button
+                                onClick={() => setEnrollOpen({ value: 0 })}
+                                style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', padding: 'var(--space-xs) var(--space-sm)' }}
+                            >
+                                불참
+                            </button>
+                        </>
+                    )}
                     <button
                         onClick={fetchData}
                         style={{
-                            marginLeft: 'auto',
+                            marginLeft: generalId != null ? undefined : 'auto',
                             background: 'var(--bg-hover)',
                             color: 'var(--text-primary)',
                             fontSize: 'var(--text-sm)',
@@ -397,6 +430,26 @@ export default function TournamentPage() {
                     ㆍ즐거운 삼토!
                 </div>
             </GameCard>
+
+            {/* F4 C2 — 토너먼트 참가 토글 CommandModal (pinnedCommand + extraArgs.value). */}
+            {enrollOpen && generalId != null && (
+                <CommandModal
+                    onClose={() => setEnrollOpen(null)}
+                    onToast={(msg) => setToast(msg)}
+                    generalId={generalId}
+                    nationId={nationId ?? undefined}
+                    pinnedCommand="tournamentEnroll"
+                    pinnedLabel={enrollOpen.value === 1 ? '토너먼트 참가' : '토너먼트 불참'}
+                    pinnedArgType={null}
+                    extraArgs={{ value: enrollOpen.value }}
+                    onReserved={() => fetchData()}
+                />
+            )}
+            {toast && (
+                <div role="status" style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface-raised)', padding: '8px 16px', borderRadius: 8 }} onClick={() => setToast(null)}>
+                    {toast}
+                </div>
+            )}
         </Shell>
     );
 }

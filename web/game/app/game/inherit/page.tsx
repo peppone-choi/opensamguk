@@ -113,10 +113,17 @@ const hr: React.CSSProperties = {
     margin: 'var(--space-md) 0',
 };
 
-// Buy* action descriptor — drives the CommandModal launch. P6-registered codes only
-// (BuyHiddenBuff / BuyRandomUnique); the other store actions stay read-only (later wave).
+// Buy*/reset action descriptor — drives the CommandModal launch. P6-registered codes
+// (BuyHiddenBuff / BuyRandomUnique) + F4 Wave C2 inheritance resets (inheritResetTurnTime /
+// inheritResetSpecialWar / inheritSetNextSpecialWar). nextSpecial carries the picked specialWar key
+// in extraArgs; the two resets are no-arg confirms.
 interface BuyModalSpec {
-    command: 'BuyHiddenBuff' | 'BuyRandomUnique';
+    command:
+        | 'BuyHiddenBuff'
+        | 'BuyRandomUnique'
+        | 'inheritResetTurnTime'
+        | 'inheritResetSpecialWar'
+        | 'inheritSetNextSpecialWar';
     label: string;
     extraArgs: Record<string, unknown>;
 }
@@ -130,6 +137,8 @@ export default function InheritPage() {
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
     const [buyModal, setBuyModal] = useState<BuyModalSpec | null>(null);
+    // F4 C2 — the 다음 전투 특기 select pick (drives the inheritSetNextSpecialWar extraArgs).
+    const [nextSpecialPick, setNextSpecialPick] = useState<string>('');
 
     function showToast(msg: string) {
         setToast(msg);
@@ -220,7 +229,13 @@ export default function InheritPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-lg)' }}>
                     <div>
                         <div style={labelStyle}>다음 전투 특기 선택</div>
-                        <select className="form-select" disabled style={{ width: '100%', marginTop: 'var(--space-xs)' }}>
+                        <select
+                            className="form-select"
+                            value={nextSpecialPick}
+                            onChange={(e) => setNextSpecialPick(e.target.value)}
+                            style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                        >
+                            <option value="">특기 선택</option>
                             {Object.entries(availableSpecialWar).map(([key, info]) => (
                                 <option key={key} value={key}>{info.title}</option>
                             ))}
@@ -229,6 +244,14 @@ export default function InheritPage() {
                             다음에 얻을 전투 특기를 정합니다.<br />
                             <span style={costStyle}>필요 포인트: {(cost?.nextSpecial ?? 0).toLocaleString()}</span>
                         </div>
+                        <button
+                            type="button"
+                            disabled={!nextSpecialPick}
+                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            onClick={() => openBuy({ command: 'inheritSetNextSpecialWar', label: '다음 전투 특기 지정', extraArgs: { specialWar: nextSpecialPick } })}
+                        >
+                            예약
+                        </button>
                     </div>
                     <div>
                         <div style={labelStyle}>유니크 경매</div>
@@ -249,6 +272,13 @@ export default function InheritPage() {
                             다다음턴부터 시간이 랜덤하게 바뀝니다. (필요 포인트가 피보나치식으로 증가합니다)<br />
                             <span style={costStyle}>필요 포인트: {(cost?.resetTurnTime ?? 0).toLocaleString()}</span>
                         </div>
+                        <button
+                            type="button"
+                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            onClick={() => openBuy({ command: 'inheritResetTurnTime', label: '랜덤 턴 초기화', extraArgs: {} })}
+                        >
+                            초기화
+                        </button>
                     </div>
                     <div>
                         <div style={labelStyle}>랜덤 유니크 획득</div>
@@ -270,6 +300,13 @@ export default function InheritPage() {
                             즉시 전투 특기를 초기화합니다. (필요 포인트가 피보나치식으로 증가합니다)<br />
                             <span style={costStyle}>필요 포인트: {(cost?.resetSpecialWar ?? 0).toLocaleString()}</span>
                         </div>
+                        <button
+                            type="button"
+                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            onClick={() => openBuy({ command: 'inheritResetSpecialWar', label: '즉시 전투 특기 초기화', extraArgs: {} })}
+                        >
+                            초기화
+                        </button>
                     </div>
                 </div>
             </GameCard>

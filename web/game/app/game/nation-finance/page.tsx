@@ -5,10 +5,26 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
+import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { NationFinanceResponse } from '../../../types/game';
+import type { CommandArgType } from '../../../types/game';
+
+// ── F4 Wave C2 (slice A) — 내무부 finance-setter launch descriptor ────────────────
+// Each "설정" button pins the CommandModal to one intake command code (matches the C1
+// betting/inherit pattern). The amount setters (세율/지급률/기밀) use the `amount` sub-form
+// (min/max from the PHP Validator range); the boolean toggles (전쟁/임관 금지) + the
+// notice/scout-msg edits pass their value via extraArgs (no-arg confirm).
+interface FinanceModalSpec {
+    command: string;
+    label: string;
+    argType: CommandArgType | null;
+    amountMin?: number;
+    amountMax?: number;
+    extraArgs?: Record<string, unknown>;
+}
 
 // 내무부 (Nation strategy / finance) — READ-ONLY this wave.
 // Mirrors legacy hwe/ts/PageNationStratFinan.vue:
@@ -29,6 +45,14 @@ export default function NationFinancePage() {
     const [noNation, setNoNation] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    // identity for the CommandModal (own general/nation), + the open finance modal spec.
+    const [generalId, setGeneralId] = useState<number | null>(null);
+    const [nationId, setNationId] = useState<number | null>(null);
+    const [financeModal, setFinanceModal] = useState<FinanceModalSpec | null>(null);
+    const [toast, setToast] = useState<string | null>(null);
+    // draft text for the notice / scout-message edits (passed via extraArgs.msg).
+    const [noticeDraft, setNoticeDraft] = useState('');
+    const [scoutDraft, setScoutDraft] = useState('');
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -36,15 +60,19 @@ export default function NationFinancePage() {
         setNoNation(false);
         try {
             const fi: FrontInfoResponse = await api.frontInfo();
-            const nationId = fi.general.nationId;
+            const nid = fi.general.nationId;
+            setGeneralId(fi.general.generalId);
+            setNationId(nid);
             // 재야(무소속): nationId 0 → 내무부 없음.
-            if (!nationId) {
+            if (!nid) {
                 setNoNation(true);
                 setData(null);
                 return;
             }
-            const res = await api.nationFinance(nationId);
+            const res = await api.nationFinance(nid);
             setData(res);
+            setNoticeDraft(res.nationMsg ?? '');
+            setScoutDraft(res.scoutMsg ?? '');
         } catch {
             setError('내무부 정보를 불러올 수 없습니다.');
         } finally {
@@ -155,9 +183,14 @@ export default function NationFinancePage() {
                     <div className="card-header">
                         <h2>국가 방침</h2>
                     </div>
-                    <p style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', margin: 0 }}>
-                        {data.nationMsg ? data.nationMsg : <span className="text-muted">등록된 국가 방침이 없습니다.</span>}
-                    </p>
+                    <textarea
+                        value={noticeDraft}
+                        onChange={(e) => setNoticeDraft(e.target.value)}
+                        maxLength={16384}
+                        placeholder="등록된 국가 방침이 없습니다."
+                        style={{ width: '100%', minHeight: 80, whiteSpace: 'pre-wrap' }}
+                    />
+                    <button onClick={() => setFinanceModal({ command: 'setNotice', label: '국가 방침 설정', argType: null, extraArgs: { msg: noticeDraft } })}>방침 설정</button>
                 </GameCard>
 
                 <GameCard>
@@ -165,9 +198,14 @@ export default function NationFinancePage() {
                         <h2>임관 권유</h2>
                     </div>
                     <p className="text-muted" style={{ marginTop: 0 }}>870px x 200px를 넘어서는 내용은 표시되지 않습니다.</p>
-                    <p style={{ whiteSpace: 'pre-wrap', color: 'var(--text-secondary)', margin: 0 }}>
-                        {data.scoutMsg ? data.scoutMsg : <span className="text-muted">등록된 임관 권유문이 없습니다.</span>}
-                    </p>
+                    <textarea
+                        value={scoutDraft}
+                        onChange={(e) => setScoutDraft(e.target.value)}
+                        maxLength={1000}
+                        placeholder="등록된 임관 권유문이 없습니다."
+                        style={{ width: '100%', minHeight: 80, whiteSpace: 'pre-wrap' }}
+                    />
+                    <button onClick={() => setFinanceModal({ command: 'setScoutMsg', label: '임관 권유문 설정', argType: null, extraArgs: { msg: scoutDraft } })}>권유문 설정</button>
                 </GameCard>
 
                 {/* 예산&정책 */}
@@ -195,21 +233,30 @@ export default function NationFinancePage() {
                     </GameCard>
                 </div>
 
-                {/* 정책 (read-only) */}
+                {/* 정책 (F4 C2: 설정 버튼 → CommandModal). The setter buttons launch the intake commands. */}
                 <h2>정책</h2>
                 <GameCard>
                     <div className="stat-grid">
                         <div className="stat-item">
                             <span className="stat-label">세율 (5 ~ 30%)</span>
-                            <span className="stat-value">{policy.rate}%</span>
+                            <span className="stat-value">
+                                {policy.rate}%{' '}
+                                <button onClick={() => setFinanceModal({ command: 'setRate', label: '세율 설정', argType: 'amount', amountMin: 5, amountMax: 30 })}>설정</button>
+                            </span>
                         </div>
                         <div className="stat-item">
                             <span className="stat-label">지급률 (20 ~ 200%)</span>
-                            <span className="stat-value">{policy.bill}%</span>
+                            <span className="stat-value">
+                                {policy.bill}%{' '}
+                                <button onClick={() => setFinanceModal({ command: 'setBill', label: '지급률 설정', argType: 'amount', amountMin: 20, amountMax: 200 })}>설정</button>
+                            </span>
                         </div>
                         <div className="stat-item">
                             <span className="stat-label">기밀 권한 (1 ~ 99년)</span>
-                            <span className="stat-value">{policy.secretLimit}년</span>
+                            <span className="stat-value">
+                                {policy.secretLimit}년{' '}
+                                <button onClick={() => setFinanceModal({ command: 'setSecretLimit', label: '기밀 제한 설정', argType: 'amount', amountMin: 1, amountMax: 99 })}>설정</button>
+                            </span>
                         </div>
                         <div className="stat-item">
                             <span className="stat-label">전쟁 금지 설정</span>
@@ -222,7 +269,10 @@ export default function NationFinancePage() {
                             <span className="stat-value">
                                 <StatusBadge variant={policy.blockWar ? 'crimson' : 'muted'}>
                                     {policy.blockWar ? '설정' : '해제'}
-                                </StatusBadge>
+                                </StatusBadge>{' '}
+                                <button onClick={() => setFinanceModal({ command: 'setBlockWar', label: policy.blockWar ? '전쟁 금지 해제' : '전쟁 금지 설정', argType: null, extraArgs: { value: !policy.blockWar } })}>
+                                    {policy.blockWar ? '해제' : '설정'}
+                                </button>
                             </span>
                         </div>
                         <div className="stat-item">
@@ -230,12 +280,39 @@ export default function NationFinancePage() {
                             <span className="stat-value">
                                 <StatusBadge variant={policy.blockScout ? 'crimson' : 'muted'}>
                                     {policy.blockScout ? '설정' : '해제'}
-                                </StatusBadge>
+                                </StatusBadge>{' '}
+                                <button onClick={() => setFinanceModal({ command: 'setBlockScout', label: policy.blockScout ? '임관 금지 해제' : '임관 금지 설정', argType: null, extraArgs: { value: !policy.blockScout } })}>
+                                    {policy.blockScout ? '해제' : '설정'}
+                                </button>
                             </span>
                         </div>
                     </div>
                 </GameCard>
             </div>
+
+            {/* F4 C2 — finance-setter CommandModal (pinnedCommand + extraArgs, C1 pattern).
+                The notice/scout edits (string `msg`) carry their textarea draft via extraArgs.msg and
+                open as a no-arg confirm; the amount setters use the modal's amount sub-form. */}
+            {financeModal && generalId != null && (
+                <CommandModal
+                    onClose={() => setFinanceModal(null)}
+                    onToast={(msg) => setToast(msg)}
+                    generalId={generalId}
+                    nationId={nationId ?? undefined}
+                    pinnedCommand={financeModal.command}
+                    pinnedLabel={financeModal.label}
+                    pinnedArgType={financeModal.argType}
+                    amountMin={financeModal.amountMin}
+                    amountMax={financeModal.amountMax}
+                    extraArgs={financeModal.extraArgs}
+                    onReserved={() => fetchData()}
+                />
+            )}
+            {toast && (
+                <div role="status" style={{ position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface-raised)', padding: '8px 16px', borderRadius: 8 }} onClick={() => setToast(null)}>
+                    {toast}
+                </div>
+            )}
         </Shell>
     );
 }
