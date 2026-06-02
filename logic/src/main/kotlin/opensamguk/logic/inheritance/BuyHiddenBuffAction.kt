@@ -6,9 +6,10 @@ import opensamguk.logic.util.clamp
 /**
  * BuyHiddenBuff — 히든 버프 레벨 구매 (1~5).
  *
- * Costs [GameConst.inheritBuffPoints][level] points.
- * The purchased buff level is stored in aux.inheritBuff.
- * Level is clamped to 1..5.
+ * Costs the CUMULATIVE DIFFERENCE `inheritBuffPoints[level] - inheritBuffPoints[prevLevel]` (PHP
+ * `BuyHiddenBuff.php:68`) — upgrading L1→L2 costs 600-200 = 400, not the absolute 600.
+ * [GameConst.inheritBuffPoints] = `[0, 200, 600, 1200, 2000, 3000]` is indexed DIRECTLY by level.
+ * The purchased buff level is stored in aux.inheritBuff. Level is clamped to 1..[MAX_STEP].
  *
  * @param pointManager The inheritance point manager for balance checks/consumption
  * @param onPurchase Callback invoked on successful purchase: (userId, buffKey, level) -> Unit
@@ -34,7 +35,9 @@ class BuyHiddenBuffAction(
      * Execute the buff purchase.
      * @param args Must contain:
      *   - "buffKey": String — one of the 8 InheritBuff field names
-     *   - "level": Int — desired level 1..5
+     *   - "level": Int — desired level 1..[MAX_STEP]
+     *   - "prevLevel": Int (optional, default 0) — the currently-owned level for this buffKey
+     *     (PHP reads `aux.inheritBuff[type]`); the cost is charged as the difference.
      * @return Success with consumed points, or failure with reason
      */
     override fun execute(userId: String, args: Map<String, Any>): InheritActionResult {
@@ -48,11 +51,16 @@ class BuyHiddenBuffAction(
             return InheritActionResult.failure("Invalid buffKey: $buffKey")
         }
 
-        // Clamp level to 1..5
-        val level = clamp(requestedLevel.toDouble(), 1.0, 5.0).toInt()
+        // Clamp level to 1..MAX_STEP (PHP validator: 1 <= level <= MAX_STEP).
+        val level = clamp(requestedLevel.toDouble(), 1.0, MAX_STEP.toDouble()).toInt()
+        val prevLevel = (args["prevLevel"] as? Number)?.toInt()?.coerceIn(0, MAX_STEP) ?: 0
 
-        // Get cost from GameConst
-        val levelCost = getLevelCost(level)
+        // PHP BuyHiddenBuff.php:61-66 — already-purchased / higher-grade guards.
+        if (prevLevel == level) return InheritActionResult.failure("이미 구입했습니다.")
+        if (prevLevel > level) return InheritActionResult.failure("이미 더 높은 등급을 구입했습니다.")
+
+        // Cumulative DIFFERENCE cost (PHP BuyHiddenBuff.php:68).
+        val levelCost = computeCost(level, prevLevel)
         if (levelCost <= 0) {
             return InheritActionResult.failure("Invalid buff level: $level")
         }
@@ -80,24 +88,24 @@ class BuyHiddenBuffAction(
         )
     }
 
-    private fun getLevelCost(level: Int): Double {
-        if (level !in 1..5) return 0.0
-        // inheritBuffPoints is a 0-indexed list; level 1 → index 0, level 5 → index 4
-        return GameConst.inheritBuffPoints.getOrElse(level - 1) {
-            // Fallback defaults if the list is shorter than expected
-            when (level) {
-                1 -> 200
-                2 -> 600
-                3 -> 1200
-                4 -> 2000
-                5 -> 3000
-                else -> 0
-            }
-        }.toDouble()
+    /**
+     * Cumulative-difference cost (PHP `BuyHiddenBuff.php:68`):
+     * `inheritBuffPoints[level] - inheritBuffPoints[prevLevel]`. [GameConst.inheritBuffPoints] is
+     * indexed DIRECTLY by level (`[0, 200, 600, 1200, 2000, 3000]`), so buying L2 after L1 costs
+     * `600 - 200 = 400`, and a fresh L1 costs `200 - 0 = 200`.
+     */
+    private fun computeCost(level: Int, prevLevel: Int): Double {
+        val points = GameConst.inheritBuffPoints
+        val target = points.getOrElse(level) { 0 }
+        val prev = points.getOrElse(prevLevel) { 0 }
+        return (target - prev).toDouble()
     }
 
     companion object {
         const val NAME = "BuyHiddenBuff"
+
+        /** PHP `TriggerInheritBuff::MAX_STEP` — the maximum purchasable buff level. */
+        const val MAX_STEP = 5
 
         /** The 8 valid buff field names matching [InheritBuff] properties. */
         val VALID_BUFF_KEYS: Set<String> = setOf(

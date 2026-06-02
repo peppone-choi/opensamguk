@@ -5,6 +5,8 @@ import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.event.EventAction
+import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.log.HistoryTokens
 import opensamguk.logic.tick.MonthScopedRng
 import kotlin.math.pow
@@ -359,4 +361,79 @@ object UpdateNationLevel {
         val chiefId: Int?,
         val chiefInheritancePointDelta: Int,
     )
+}
+
+/**
+ * The world-context seam the daemon/G1 supplies for [UpdateNationLevelAction].
+ */
+interface UpdateNationLevelContext : EventActionContext {
+    /** Active nations in ascending id order (PHP `SELECT * FROM nation WHERE level > 0 ORDER BY id`). */
+    fun nations(): List<Nation>
+
+    /** (cityId, nationId) for all cities. */
+    fun cityOwnership(): List<Pair<Int, Int>>
+
+    /** The active CityConst variant (F6 runtime selection). */
+    fun cityConst(): CityConstVariant
+
+    /** All generals in PK ascending order. */
+    fun generals(): List<General>
+
+    /** The hidden seed for month-scoped RNG derivation. */
+    fun hiddenSeed(): String
+
+    fun year(): Int
+    fun month(): Int
+    fun startYear(): Int
+
+    /** The killturn baseline from game env. */
+    fun killturnEnv(): Int
+
+    fun turnterm(): Int
+
+    /** The name of the officer_level==12 general of [nationId], or null if absent. */
+    fun lordName(nationId: Int): String?
+
+    /**
+     * Applies the nation update, pushes global/national history logs (skip empty strings),
+     * insertIgnore [nationTurnSeed].
+     */
+    fun applyNationLevelUp(effects: UpdateNationLevel.LevelUpEffects)
+
+    /** The item grant seam; returns true if an item was granted. */
+    fun giveRandomUniqueItem(rng: RandUtil, winnerId: Int): Boolean
+
+    /** Applies the lottery results (inheritance point recording). */
+    fun applyLotteryResult(nationId: Int, result: UpdateNationLevel.LotteryResult)
+}
+
+/**
+ * The `UpdateNationLevel` leaf. Binds the GREEN pure core ([UpdateNationLevel]) to the live world
+ * via [UpdateNationLevelContext].
+ */
+class UpdateNationLevelAction : EventAction {
+    override fun run(ctx: EventActionContext) {
+        val world = ctx as UpdateNationLevelContext
+        val cityCounts = UpdateNationLevel.cityCountsByNation(world.cityOwnership(), world.cityConst())
+        for (nation in world.nations()) {
+            val cityCnt = cityCounts[nation.id] ?: 0
+            val levelUp = UpdateNationLevel.computeLevelUp(nation.level, cityCnt) ?: continue
+            val lord = world.lordName(nation.id) ?: ""
+            val effects = UpdateNationLevel.applyLevelUp(nation, lord, world.year(), world.month(), levelUp)
+            world.applyNationLevelUp(effects)
+            val lottery = UpdateNationLevel.runUniqueLottery(
+                nationId = nation.id,
+                year = world.year(),
+                month = world.month(),
+                startYear = world.startYear(),
+                hiddenSeed = world.hiddenSeed(),
+                levelDiff = levelUp.levelDiff,
+                killturnEnv = world.killturnEnv(),
+                turnterm = world.turnterm(),
+                generals = world.generals(),
+                giveRandomUniqueItem = { rng: RandUtil, winnerId: Int -> world.giveRandomUniqueItem(rng, winnerId) },
+            )
+            world.applyLotteryResult(nation.id, lottery)
+        }
+    }
 }

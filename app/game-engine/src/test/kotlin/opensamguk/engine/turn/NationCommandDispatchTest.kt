@@ -1,0 +1,102 @@
+package opensamguk.engine.turn
+
+import opensamguk.logic.actions.nation.NationActionResolverRegistry
+import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.message.Mailbox
+import opensamguk.logic.message.Message
+import opensamguk.logic.message.MessageTarget
+import opensamguk.logic.message.MessageType
+import java.time.Instant
+import kotlin.test.AfterTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+/**
+ * T0.6 — the registry-backed nation-command dispatch in [ProcessNationCommand]. A registered resolver
+ * mutates the draft + buffers side effects; the engine routes them through the recorder
+ * single-dirty-source (diplomacy delta, logs, message, KV) — never an inline write.
+ */
+class NationCommandDispatchTest {
+
+    private val t0 = Instant.parse("0200-01-01T00:00:00Z")
+
+    @AfterTest fun reset() = NationActionResolverRegistry.clear()
+
+    private fun world(): InMemoryTurnWorld = InMemoryTurnWorld(
+        WorldSnapshot(
+            state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+            generals = listOf(
+                TurnGeneral(id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
+                    stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0, officerLevel = 12, gold = 100, turnTime = t0),
+            ),
+            nations = listOf(Nation(id = 1, name = "촉", color = "#0f0"), Nation(id = 2, name = "위", color = "#00f")),
+            diplomacy = listOf(TurnDiplomacy(1, 2, state = 2, term = 0), TurnDiplomacy(2, 1, state = 2, term = 0)),
+        ),
+    )
+
+    @Test
+    fun `a registered diplomacy resolver routes the bidirectional delta + logs + message + kv through the recorder`() {
+        // a fake 선전포고-like resolver: state 2->1/term 24 both dirs, an action log, a national message, a KV write.
+        NationActionResolverRegistry.register("che_선전포고") { ctx ->
+            ctx.setDiplomacyBidirectional(1, 2, state = 1, term = 24)
+            ctx.addActionLog("선전포고 완료")
+            ctx.addGlobalHistoryLog("【선포】 촉이 위에 선전포고")
+            ctx.recordKv("nation_env", "1", "lastWar", 200)
+            val src = MessageTarget(10, "유비", 1, "촉", "#0f0")
+            val dest = MessageTarget(0, "", 2, "위", "#00f")
+            ctx.sendMessage(Message(MessageType.NATIONAL, src, dest, "선전포고", "2026-05-31 00:00:00", "9999-12-31 23:59:59", linkedMapOf("k" to 1)))
+        }
+
+        val world = world()
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("che_선전포고", linkedMapOf("destNationID" to 2)),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        // diplomacy delta reached the recorder (both directions).
+        val dip = recorder.diplomacyUpdateDirty()
+        assertEquals(2, dip.size)
+        assertEquals(listOf(1 to 2, 2 to 1), dip.map { it.fromNationId to it.toNationId })
+        assertTrue(dip.all { it.state == 1 && it.term == 24 })
+        // world rows updated (dirty-free apply).
+        assertEquals(1, world.getDiplomacy(1, 2)!!.state)
+        assertEquals(24, world.getDiplomacy(2, 1)!!.term)
+
+        // KV delta reached the recorder.
+        assertEquals(1, recorder.kvDirty().filterKeys { it.key == "lastWar" }.size)
+
+        // message reached the mailbox channel (national: receiver + sender row = 2 rows).
+        val msgs = recorder.createdMessages()
+        assertEquals(2, msgs.size)
+        assertEquals(2 + Mailbox.NATIONAL_BASE, msgs[0].mailbox) // receiver = dest nation mailbox
+        assertEquals(1 + Mailbox.NATIONAL_BASE, msgs[1].mailbox) // sender = src nation mailbox
+
+        // logs reached the world.
+        val dirty = world.consumeDirtyState()
+        assertTrue(dirty.logs.any { it.text == "선전포고 완료" })
+        assertTrue(dirty.logs.any { it.text.contains("【선포】") })
+    }
+
+    @Test
+    fun `an unregistered code falls back to the no-op pass-through (returns lastTurn)`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+        val lt = LastTurn(command = "휴식")
+        val result = proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("che_없는명령", emptyMap()),
+            lastTurn = lt, year = 200, month = 3, date = "12:00",
+        )
+        assertEquals(lt, result)
+        // only the turn_last KV nation-meta diff is recorded (the legacy seam), no diplomacy/message.
+        assertTrue(recorder.diplomacyUpdateDirty().isEmpty())
+        assertTrue(recorder.createdMessages().isEmpty())
+    }
+}

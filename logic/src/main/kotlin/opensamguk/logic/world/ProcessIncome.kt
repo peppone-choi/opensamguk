@@ -191,7 +191,7 @@ class ProcessIncomeAction(val resource: String) : EventAction {
             ?: error("ProcessIncomeAction requires a ProcessIncomeContext")
         val year = (ctx.env["year"] as? Number)?.toInt() ?: 0
         val month = (ctx.env["month"] as? Number)?.toInt() ?: 0
-        val result = processIncome(resource, pic.nations(), pic.pipeline, year, month)
+        val result = processIncome(resource, pic.incomeNations(), pic.pipeline, year, month)
         pic.applyIncome(result)
     }
 
@@ -214,6 +214,6 @@ class ProcessIncomeAction(val resource: String) : EventAction {
 /** The richer dispatch context an [ProcessIncomeAction] consumes (supplied by the daemon, not F2). */
 interface ProcessIncomeContext : EventActionContext {
     val pipeline: GeneralActionPipeline
-    fun nations(): List<IncomeNation>
+    fun incomeNations(): List<IncomeNation>
     fun applyIncome(result: ProcessIncomeResult)
 }

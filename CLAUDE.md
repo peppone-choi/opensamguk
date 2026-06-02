@@ -78,4 +78,27 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 
 - ✅ **P0–P4** gate-closed: scaffold · parity kernel · vertical slice · ~35 commands+constraints · monthly tick · battle engine (`processWar_NG` + triggers + WarUnit + city-conflict + ConquerCity + battle items/specialties; G1 battle/conquest draw-for-draw).
 - ✅ **P5** NPC AI — `ai/*` GeneralAI port + 4-layer autorun policy + F-BRIDGE candidate gate (`candidateAllowed` = the exact execution gate) + per-general module stat stack + engine seam (`AiTurnAdapter`, nation-pass-before-general). Gate-closed: live-selection **174/174** turns (667/667 draws) + **8 crafted families 11/11**. ~1968 tests (common 169 / logic 1661 / engine 138). **Backlog (documented, not fabricated):** long-sim multi-turn (gate dim c), G12 nation reserved-fail deny-log. **Quarantines (proven):** genfound-방랑군 (needs 거병→건국 mini-sim), `chooseInstantNationTurn` (zero PHP callers), Q1 ORDER BY RAND (do선양/오랑캐임관 — unreachable in 1010, deterministic substitute).
-- ⬜ **P6** diplomacy/messaging/auction·betting/inheritance + residual mutations · **P7** read API + Next.js + SSE · **P8** parity harness (PHP 93-command compare, 23 missing ported/backlogged) + gateway orchestration + AWS EC2 t3.large deploy (LLM-free, 0 external API deps).
+- ✅ **P3** monthly pipeline — `MonthlyPipeline.runMonth()` + `PostUpdateMonthly` Q1-Q17 settlement + `TurnDaemonLifecycle` + `EventActionFactory` + `EventDispatcher` + all 9 world event leaves (`UpdateNationLevel`, `AssignGeneralSpeciality`, `ProcessIncome`, `ProcessWarIncome`, `RaiseDisaster`, `RandomizeCityTradeRate`, `UpdateCitySupply`, `ProcessSemiAnnual`, `MergeInheritPointRank`). Zero stubs.
+- ✅ **P6 pure-logic** gate-closed (~2195 tests): inheritance enum keyName parity + buff fold slot #7 + `TurnDaemonCommandDispatcher` + `BettingActions` registrar + missing diplomacy proposals (`종전제의`, `불가침파기제의`) + `BuyHiddenBuff` cumulative-diff cost + `AuctionBidHandler`/`AuctionFinalizeHandler` + messaging sink unified (`GeneralActionResolveContext` + `NationActionResolveContext`) + `BettingEngine` calcReward/giveReward + `BettingInfo` structural realignment.
+- ✅ **P6 P7-coupled** 완료 — `PlaceBetHandler` (gold deduction + ng_betting INSERT), `AuctionExpiryDaemon` (turn lifecycle wired), `DiplomaticMessageController` (accept/decline API), `ChangeRecorder` betting channel + `JdbcFlushExecutor` flush step.
+- ⬜ **P6 P8-coupled remainder** — P6-specific PHP golden capture scripts (diplomacy, message, auction, betting, inheritance, worldcmd), parity harness integration, restart-rehydrate lossless gate.
+- 🔄 **P7** read API ✅ + frontend ⬜ — dedicated REST controllers for auction/betting/message/mailbox/diplomacy 완료, `GetDiplomacy.php` neutral-map masking 완료, frontend pages (`web/game/app/game/`) 진행 예정.
+- ⬜ **P8** parity harness (PHP 93-command compare, 23 missing ported/backlogged) + gateway orchestration + AWS EC2 t3.large deploy (LLM-free, 0 external API deps). Infra scaffold present: `.github/workflows/deploy.yml`, `docker-compose.prod.yml`, `infra/nginx/`, `scripts/deploy.sh`, `HealthCheckController`.
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
+
+Key routing rules:
+- Product ideas/brainstorming → invoke /office-hours
+- Strategy/scope → invoke /plan-ceo-review
+- Architecture → invoke /plan-eng-review
+- Design system/plan review → invoke /design-consultation or /plan-design-review
+- Full review pipeline → invoke /autoplan
+- Bugs/errors → invoke /investigate
+- QA/testing site behavior → invoke /qa or /qa-only
+- Code review/diff check → invoke /review
+- Visual polish → invoke /design-review
+- Ship/deploy/PR → invoke /ship or /land-and-deploy
+- Save progress → invoke /context-save
+- Resume context → invoke /context-restore

@@ -168,8 +168,8 @@ class JdbcFlushExecutorSatelliteIT {
             ),
             rankNationSync = listOf(RankNationSync(generalId = 10, nationId = 3)),
             kvWrites = listOf(
-                KvWrite(namespace = 3, key = "next_execute_300", value = 200),
-                KvWrite(namespace = 3, key = "stale_key", value = null),  // delete-on-null
+                KvWrite.nationEnv(namespace = 3, key = "next_execute_300", value = 200),
+                KvWrite.nationEnv(namespace = 3, key = "stale_key", value = null),  // delete-on-null
             ),
         )
 
@@ -184,7 +184,7 @@ class JdbcFlushExecutorSatelliteIT {
                 FlushExecOp("nation", FlushVerb.UPSERT, 1),
                 FlushExecOp("rank_data", FlushVerb.UPDATE, 2),    // 1 increment + 1 set
                 FlushExecOp("rank_data", FlushVerb.UPDATE, 1),    // nation_id sync (1 general)
-                FlushExecOp("nation_env", FlushVerb.UPSERT, 2),   // 1 set + 1 delete
+                FlushExecOp("kv", FlushVerb.UPSERT, 2),           // 1 set + 1 delete (nation_env int-ns)
             ),
             executor.lastOps(),
         )

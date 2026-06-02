@@ -23,6 +23,9 @@ sealed class RealtimeEvent {
     data class TurnCompleted(
         val at: String,
         val lastTurnTime: String,
+        val year: Int,
+        val month: Int,
+        val turnNumber: Int,
     ) : RealtimeEvent() {
         override val type: String get() = "turnCompleted"
     }

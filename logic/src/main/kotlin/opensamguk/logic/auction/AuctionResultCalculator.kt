@@ -77,7 +77,7 @@ object AuctionResultCalculator {
                         returnResourceType = "rice",
                         returnAmount = amount,
                         finalStatus = AuctionStatus.CANCELED,
-                        logMessage = "경매가 유찰되어 쌀 $amount을 회수했습니다.",
+                        logMessage = "경매가 유찰되어 쌀 ${amount}을 회수했습니다.",
                     )
                 } else {
                     RollbackResult(
@@ -96,7 +96,7 @@ object AuctionResultCalculator {
                         returnResourceType = "gold",
                         returnAmount = amount,
                         finalStatus = AuctionStatus.CANCELED,
-                        logMessage = "경매가 유찰되어 금 $amount을 회수했습니다.",
+                        logMessage = "경매가 유찰되어 금 ${amount}을 회수했습니다.",
                     )
                 } else {
                     RollbackResult(

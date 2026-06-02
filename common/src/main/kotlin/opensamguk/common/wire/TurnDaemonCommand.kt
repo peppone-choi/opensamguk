@@ -277,6 +277,38 @@ sealed class TurnDaemonCommand {
     ) : TurnDaemonCommand() {
         override val type: String get() = "auctionBid"
     }
+
+    @Serializable
+    @SerialName("placeBet")
+    data class PlaceBet(
+        val requestId: String? = null,
+        val bettingId: Int,
+        val generalId: Int,
+        val bettingType: List<Int>,
+        val amount: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "placeBet"
+    }
+
+    @Serializable
+    @SerialName("acceptDiplomaticMessage")
+    data class AcceptDiplomaticMessage(
+        val requestId: String? = null,
+        val messageId: Int,
+        val generalId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "acceptDiplomaticMessage"
+    }
+
+    @Serializable
+    @SerialName("declineDiplomaticMessage")
+    data class DeclineDiplomaticMessage(
+        val requestId: String? = null,
+        val messageId: Int,
+        val generalId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "declineDiplomaticMessage"
+    }
 }
 
 @Serializable

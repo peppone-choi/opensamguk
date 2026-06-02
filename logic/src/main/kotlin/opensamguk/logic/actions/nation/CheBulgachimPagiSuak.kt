@@ -62,7 +62,7 @@ class CheBulgachimPagiSuak(@Suppress("UNUSED_PARAMETER") pipeline: GeneralAction
      * PHP run() (che_불가침파기수락.php):
      *  1. Upsert Diplomacy(me, you): state=2, term=0
      *  2. Upsert Diplomacy(you, me): state=2, term=0
-     *  3. Log: `<D><b>{상대국}</b></>의 불가침을 파기했습니다.`
+     *  3. Log: `<D><b>{상대국}</b></>{와/과}의 불가침을 파기했습니다.` (che_불가침파기수락.php:165-166 — josa '와' then literal '의')
      */
     override fun resolve(context: GeneralActionResolveContext) {
         val draft = context.draft
@@ -78,7 +78,7 @@ class CheBulgachimPagiSuak(@Suppress("UNUSED_PARAMETER") pipeline: GeneralAction
 
         // Log
         val destNationName = context.destGeneralName.ifEmpty { "상대국" }
-        val josaUi = JosaUtil.pick(destNationName, "의")
-        context.addLog("<D><b>$destNationName</b></>$josaUi 불가침을 파기했습니다.")
+        val josaWa = JosaUtil.pick(destNationName, "와")
+        context.addLog("<D><b>$destNationName</b></>${josaWa}의 불가침을 파기했습니다.")
     }
 }

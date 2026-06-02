@@ -9,7 +9,12 @@ import opensamguk.logic.constraints.differentDestNation
 import opensamguk.logic.constraints.disallowDiplomacyBetweenStatus
 import opensamguk.logic.constraints.existsDestNation
 import opensamguk.logic.constraints.notBeNeutral
+import opensamguk.logic.message.Message
+import opensamguk.logic.message.MessageTarget
+import opensamguk.logic.message.MessageType
 import opensamguk.logic.stats.GeneralActionPipeline
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * che_불가침제의 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침제의.php`.
@@ -100,11 +105,9 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
     /**
      * P6 — the diplomatic-message send + setResultTurn run() (che_불가침제의.php:154-229).
      *
-     * The AI selection + boolean gate + draw stream are the P5 gate target; this state-mutation is P6.
-     *
      * Resolve flow:
      *  1. Extract destNationID, year, month from args.
-     *  2. Build a [MessageDraft] for diplomacy message (the actual DB insert is engine-layer).
+     *  2. Build and buffer a diplomacy [Message] (the engine routes it to the mailbox channel).
      *  3. Write action log: `<D><b>{상대국}</b></>에게 {year}년 {month}월까지 불가침을 제의했습니다.`
      *  4. The diplomacy state mutation (state=7) happens ONLY when the recipient accepts via
      *     [CheBulgachimSuak]; this command only SENDS the proposal.
@@ -114,15 +117,53 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
         val year = (context.args["year"] as? Int) ?: return
         val month = (context.args["month"] as? Int) ?: return
 
+        val draft = context.draft
+        val general = draft.general
+        val nation = draft.nation ?: return
+
         val destNationName = context.destGeneralName.ifEmpty { "상대국" }
         val josaEge = JosaUtil.pick(destNationName, "에게")
+        val josaWa = JosaUtil.pick(nation.name, "과", "와")
 
         // Action log — the proposal was sent
         context.addLog("<D><b>$destNationName</b></>$josaEge ${year}년 ${month}월까지 불가침을 제의했습니다.")
 
-        // NOTE: The actual diplomatic message DB insertion is performed by the engine layer
-        // that wires [MessageStore] + [MessageDraft] together. The logic layer only produces
-        // the log and the args that the engine will use to construct the message.
-        // The recipient's acceptance triggers [CheBulgachimSuak] via [DiplomaticMessage.acceptCommandKey].
+        // Build and send the diplomatic message (engine routes to mailbox channel).
+        val now = LocalDateTime.now()
+        val dateStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val validMinutes = maxOf(30, 60 * 3) // default turnterm=60; quarantined wall-clock
+        val validUntilStr = now.plusMinutes(validMinutes.toLong()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+
+        val src = MessageTarget(
+            generalId = general.id,
+            generalName = context.generalName,
+            nationId = nation.id,
+            nationName = nation.name,
+            color = nation.color,
+            icon = "",
+        )
+        val dest = MessageTarget(
+            generalId = 0,
+            generalName = "",
+            nationId = destNationID,
+            nationName = destNationName,
+            color = "#000000",
+            icon = "",
+        )
+
+        val msg = Message(
+            msgType = MessageType.DIPLOMACY,
+            src = src,
+            dest = dest,
+            msg = "${nation.name}$josaWa ${year}년 ${month}월까지 불가침 제의 서신",
+            date = dateStr,
+            validUntil = validUntilStr,
+            msgOption = linkedMapOf(
+                "action" to "no_aggression",
+                "year" to year,
+                "month" to month,
+            ),
+        )
+        context.sendMessage(msg)
     }
 }

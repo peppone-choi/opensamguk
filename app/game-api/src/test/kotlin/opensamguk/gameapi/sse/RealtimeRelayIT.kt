@@ -61,6 +61,9 @@ class RealtimeRelayIT {
             val event = RealtimeEvent.TurnCompleted(
                 at = "0200-01-01T00:00:00.000Z",
                 lastTurnTime = "0199-12-01T00:00:00.000Z",
+                year = 200,
+                month = 1,
+                turnNumber = 1,
             )
             val payload = WireJson.encodeToString(RealtimeEvent.serializer(), event)
 

@@ -138,6 +138,35 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         return next
     }
 
+    /**
+     * Replace a nation's row WITHOUT marking it dirty (T0.3 — the nation-command resolve path applies
+     * the resolver's post-state through here so the world reads reflect it while [ChangeRecorder]
+     * stays the SINGLE dirty source). Mirrors [applyGeneralDirtyFree]/[applyCityDirtyFree].
+     */
+    fun applyNationDirtyFree(next: Nation): Nation? {
+        if (!nations.containsKey(next.id)) return null
+        nations[next.id] = next
+        return next
+    }
+
+    /** Read a single diplomacy row by `(from, to)` (null if absent). */
+    fun getDiplomacy(fromNationId: Int, toNationId: Int): TurnDiplomacy? =
+        diplomacy[buildDiplomacyKey(fromNationId, toNationId)]
+
+    /**
+     * Apply a diplomacy `(from, to)` transition to the world's read-state (T0.4) WITHOUT marking the
+     * world dirty — the [ChangeRecorder.diffDiplomacy] owns dirtiness (the SINGLE dirty source). A
+     * bidirectional transition calls this TWICE (once per direction). `dead` defaults to the existing
+     * value when not supplied. Returns the new row, or null if the `(from, to)` row is absent.
+     */
+    fun updateDiplomacy(fromNationId: Int, toNationId: Int, state: Int, term: Int, dead: Int? = null): TurnDiplomacy? {
+        val key = buildDiplomacyKey(fromNationId, toNationId)
+        val current = diplomacy[key] ?: return null
+        val next = current.copy(state = state, term = term, dead = dead ?: current.dead)
+        diplomacy[key] = next
+        return next
+    }
+
     fun updateNation(next: Nation): Nation? {
         if (!nations.containsKey(next.id)) return null
         nations[next.id] = next
@@ -190,6 +219,14 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         state = state.copy(
             lastTurnTime = turnTime,
             meta = state.meta + mapOf("lastTurnTime" to turnTime.toString()),
+        )
+    }
+
+    fun setCurrentDate(year: Int, month: Int) {
+        state = state.copy(
+            currentYear = year,
+            currentMonth = month,
+            meta = state.meta + mapOf("currentYear" to year, "currentMonth" to month),
         )
     }
 

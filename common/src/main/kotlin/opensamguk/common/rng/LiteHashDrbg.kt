@@ -47,7 +47,12 @@ open class LiteHashDrbg(seed: ByteArray, stateIdx: Long = 0, bufferIdx: Int = 0)
     /** The intra-block byte offset (PHP `LiteHashDRBG::$bufferIdx`). Read-only cursor fingerprint. */
     fun peekBufferIdx(): Int = bufferIdx
 
-    fun nextBytes(bytes: Int, baseBytes: Int? = null): ByteArray {
+    // `open` draw entry points — a behavior-NEUTRAL visibility seam (mirrors the existing
+    // `open class RandUtil`/`open fun genNextBlock` precedent). The bodies below are UNCHANGED; the
+    // seam exists so `NoRng` (a throw-on-draw RNG, faithful to PHP `NoRNG`) can subclass and override
+    // these four to throw, exactly as PHP feeds `new NoRNG()` to a `RandUtil`. Normal callers see
+    // identical RNG math.
+    open fun nextBytes(bytes: Int, baseBytes: Int? = null): ByteArray {
         val n = bytes
         if (n <= 0) throw IllegalArgumentException("$n <= 0")
         if (bufferIdx + n <= BUFFER_BYTE_SIZE) {
@@ -77,7 +82,7 @@ open class LiteHashDrbg(seed: ByteArray, stateIdx: Long = 0, bufferIdx: Int = 0)
         return result
     }
 
-    fun nextBits(bits: Int, baseBytes: Int? = null): ByteArray {
+    open fun nextBits(bits: Int, baseBytes: Int? = null): ByteArray {
         if (bits <= 0) throw IllegalArgumentException("$bits <= 0")
         val bytes = (bits + 7) shr 3
         val headBits = bits and 0x7
@@ -99,7 +104,7 @@ open class LiteHashDrbg(seed: ByteArray, stateIdx: Long = 0, bufferIdx: Int = 0)
         return 64 - java.lang.Long.numberOfLeadingZeros(n)
     }
 
-    fun nextInt(max: Long? = null): Long {
+    open fun nextInt(max: Long? = null): Long {
         if (max == null || max == MAX_INT_L) return _nextInt(MAX_RNG_SUPPORT_BIT)
         if (max > MAX_INT_L) throw IllegalArgumentException("Over max int")
         if (max == 0L) return 0
@@ -110,7 +115,7 @@ open class LiteHashDrbg(seed: ByteArray, stateIdx: Long = 0, bufferIdx: Int = 0)
         return n
     }
 
-    fun nextFloat1(): Double {
+    open fun nextFloat1(): Double {
         while (true) {
             val nInt = _nextInt(MAX_RNG_SUPPORT_BIT + 1)   // 54 bits
             if (nInt < MAX_INT_MORE1_L) return nInt.toDouble() / TWO_POW_53_D

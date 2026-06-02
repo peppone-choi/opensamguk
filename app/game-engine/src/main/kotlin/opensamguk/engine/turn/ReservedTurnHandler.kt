@@ -234,6 +234,9 @@ class ReservedTurnHandler(
         // --- logs ---
         for (line in resolveCtx.logs()) world.pushLog(actionLog(general, line))
 
+        // --- buffered Messages → mailbox channel (receiver row BEFORE sender row) ---
+        for (message in resolveCtx.messages()) routeMessage(message, year, month)
+
         return HandledTurn(
             generalId = generalId,
             definition = definition,
@@ -472,6 +475,50 @@ class ReservedTurnHandler(
 
     /** The recorder is the lone dirty source; exposed so the flush (F4)/tests can read its patches. */
     val recorder: ChangeRecorder = ChangeRecorder()
+
+    /**
+     * Route a logic [opensamguk.logic.message.Message] through the mailbox channel: produce its send
+     * rows (receiver BEFORE sender) and record each INSERT with the pre-assigned in-memory id folded
+     * into the body's receiver/sender back-references (T0.5, same pattern as [ProcessNationCommand]).
+     */
+    private fun routeMessage(message: opensamguk.logic.message.Message, year: Int, month: Int) {
+        val drafts = message.send()
+        var receiverId: Int? = null
+        for (draft in drafts) {
+            val option = LinkedHashMap(draft.option ?: emptyMap())
+            if (draft.whichRow == opensamguk.logic.message.MessageRowDraft.Row.RECEIVER) {
+                val id = recorder.recordMessageInsert(
+                    mailbox = draft.mailbox, type = draft.type.value, srcId = draft.srcId, destId = draft.destId,
+                    time = message.date, validUntil = message.validUntil,
+                    bodyJson = encodeMessageBody(draft, option, receiverIdToFold = null),
+                )
+                receiverId = id
+            } else {
+                recorder.recordMessageInsert(
+                    mailbox = draft.mailbox, type = draft.type.value, srcId = draft.srcId, destId = draft.destId,
+                    time = message.date, validUntil = message.validUntil,
+                    bodyJson = encodeMessageBody(draft, option, receiverIdToFold = receiverId),
+                )
+            }
+        }
+    }
+
+    /** Byte-faithful `{src,dest,text,option}` jsonb for a message row. */
+    private fun encodeMessageBody(
+        draft: opensamguk.logic.message.MessageRowDraft,
+        option: Map<String, Any?>,
+        receiverIdToFold: Int?,
+    ): String {
+        val opt = LinkedHashMap<String, Any?>(option)
+        if (receiverIdToFold != null) opt["receiverMessageID"] = receiverIdToFold
+        val body = linkedMapOf<String, Any?>(
+            "src" to draft.src.toArray(),
+            "dest" to draft.dest.toArray(),
+            "text" to draft.text,
+            "option" to (if (draft.option == null) null else opt),
+        )
+        return opensamguk.infra.persistence.MetaJson.encode(body)
+    }
 
     companion object {
         /** Deny reason when the full-mode evaluator can't resolve a requirement (shouldn't occur in FULL). */

@@ -23,6 +23,7 @@ import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.actions.nation.cheBallyeong
 import opensamguk.logic.actions.nation.cheBulgachimJeui
+import opensamguk.logic.actions.nation.cheBulgachimPagijeui
 import opensamguk.logic.actions.nation.cheBulgachimPagiSuak
 import opensamguk.logic.actions.nation.cheBulgachimSuak
 import opensamguk.logic.actions.nation.cheCheondo
@@ -31,6 +32,7 @@ import opensamguk.logic.actions.nation.cheGukgiByeongyeong
 import opensamguk.logic.actions.nation.cheGukhoByeongyeong
 import opensamguk.logic.actions.nation.cheJeungchuk
 import opensamguk.logic.actions.nation.cheJongjeonSuak
+import opensamguk.logic.actions.nation.cheJongjeonjeui
 import opensamguk.logic.actions.nation.cheMujakwiSudoIjeon
 import opensamguk.logic.actions.nation.chePosang
 import opensamguk.logic.actions.nation.cheSeonjeonpogo
@@ -117,6 +119,8 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         // emits these; the bridge gate (FR3) evaluates each def's FULL pack + argTest. 불가침제의/선전포고
         // resolve()-internals are P6 (m10); 인재탐색/견문/해산 carry downstream-subsystem resolve seams.
         "che_불가침제의" -> cheBulgachimJeui(pipeline)
+        "che_종전제의" -> cheJongjeonjeui(pipeline)
+        "che_불가침파기제의" -> cheBulgachimPagijeui(pipeline)
         "che_선전포고" -> cheSeonjeonpogo(pipeline)
         // --- CMD-DIPLOMACY-ACCEPT (외교 수락) — triggered by DiplomaticMessage.accept() ---
         "che_불가침수락" -> cheBulgachimSuak(pipeline)

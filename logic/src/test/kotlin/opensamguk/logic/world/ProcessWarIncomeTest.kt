@@ -108,7 +108,7 @@ class ProcessWarIncomeTest {
         val ctx = object : ProcessWarIncomeContext {
             override val env = mapOf<String, Any?>("year" to 200, "month" to 1, "currentEventID" to 1)
             override val pipeline = this@ProcessWarIncomeTest.pipeline
-            override fun nations() = listOf(nation(1, level = 5, gold = 0))
+            override fun warIncomeNations() = listOf(nation(1, level = 5, gold = 0))
             override fun cities() = listOf(city(1, 1, dead = 1000))
             override fun applyWarIncome(result: ProcessWarIncomeResult) { applied = result }
         }

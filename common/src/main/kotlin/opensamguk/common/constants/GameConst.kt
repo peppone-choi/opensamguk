@@ -545,5 +545,5 @@ object GameConst {
         ),
     )
 
-    val staticEventHandlers: List<Any> = listOf()
+    val staticEventHandlers: Map<String, List<String>> = linkedMapOf()
 }

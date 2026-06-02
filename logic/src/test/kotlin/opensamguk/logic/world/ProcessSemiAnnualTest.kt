@@ -152,9 +152,9 @@ class ProcessSemiAnnualTest {
         val ctx = object : ProcessSemiAnnualContext {
             override val env = mapOf<String, Any?>("year" to 200, "month" to 1, "currentEventID" to 1)
             override val pipeline = this@ProcessSemiAnnualTest.pipeline
-            override fun nations() = listOf(nation(1))
+            override fun semiAnnualNations() = listOf(nation(1))
             override fun cities() = listOf(city(1, 1))
-            override fun generals() = emptyList<SemiAnnualGeneral>()
+            override fun semiAnnualGenerals() = emptyList<SemiAnnualGeneral>()
             override fun applySemiAnnual(result: ProcessSemiAnnualResult) { applied = result }
         }
         action.run(ctx)

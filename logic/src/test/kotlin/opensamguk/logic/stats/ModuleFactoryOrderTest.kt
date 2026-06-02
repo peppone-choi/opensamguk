@@ -95,6 +95,47 @@ class ModuleFactoryOrderTest {
     }
 
     @Test
+    fun `general with aux inheritBuff folds the inherit module pair at slot 7`() {
+        val g = General(
+            id = 1, nationId = 1, cityId = 5,
+            leadership = 70, strength = 60, intel = 80, injury = 0,
+            experience = 0.0, dedication = 0.0, officerLevel = 5,
+            gold = 1000, rice = 1000,
+            horse = "명마", weapon = "None", book = "None", item = "None",
+            meta = mapOf("inheritBuff" to mapOf("warAvoidRatio" to 3, "success" to 2)),
+        )
+        val mods = factory.build(
+            general = g,
+            nationTypeCode = "che_유가",
+            specialDomesticCode = null,
+            personalityCode = "che_명사",
+            nationLevel = 3,
+        )
+        // #1 nationType, #2 officer, #5 personality, #7 inherit(general, war), #9 horse — at slot #7.
+        assertEquals(
+            listOf(
+                "nationType:che_유가",
+                "officer",
+                "personality:che_명사",
+                "InheritBuffGeneralModule",
+                "InheritBuffWarModule",
+                "item:명마",
+            ),
+            tagsOf(mods),
+        )
+    }
+
+    @Test
+    fun `general without inheritBuff adds no inherit modules`() {
+        val mods = factory.build(
+            general = general(officerLevel = 5),
+            nationTypeCode = null, specialDomesticCode = null, personalityCode = null,
+            nationLevel = 3,
+        )
+        assertEquals(listOf("officer"), tagsOf(mods))
+    }
+
+    @Test
     fun `default general yields effectively identity stack (officer lbonus 0)`() {
         // officerLevel 1 (< 5) → lbonus 0 → leadership fold is identity; no other modules.
         val mods = factory.build(

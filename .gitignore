@@ -37,3 +37,7 @@ docs/wiki/
 .codex/
 # Throwaway PHP golden investigation scripts
 tools/php-golden/probe_*.php
+# Playwright MCP temp dir
+.playwright-mcp/
+# Temporary research dir
+.tmp_research/

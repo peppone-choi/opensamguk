@@ -94,7 +94,7 @@ class ProcessWarIncomeAction : EventAction {
     override fun run(ctx: EventActionContext) {
         val pwc = ctx as? ProcessWarIncomeContext
             ?: error("ProcessWarIncomeAction requires a ProcessWarIncomeContext")
-        pwc.applyWarIncome(processWarIncome(pwc.nations(), pwc.cities(), pwc.pipeline))
+        pwc.applyWarIncome(processWarIncome(pwc.warIncomeNations(), pwc.cities(), pwc.pipeline))
     }
 
     companion object {
@@ -109,7 +109,7 @@ class ProcessWarIncomeAction : EventAction {
 /** The richer dispatch context [ProcessWarIncomeAction] consumes (supplied by the daemon, not F2). */
 interface ProcessWarIncomeContext : EventActionContext {
     val pipeline: GeneralActionPipeline
-    fun nations(): List<WarIncomeNation>
+    fun warIncomeNations(): List<WarIncomeNation>
     fun cities(): List<City>
     fun applyWarIncome(result: ProcessWarIncomeResult)
 }

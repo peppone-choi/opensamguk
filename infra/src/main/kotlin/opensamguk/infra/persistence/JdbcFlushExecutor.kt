@@ -5,6 +5,7 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
+import opensamguk.logic.inheritance.InheritanceResultRow
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -91,6 +92,11 @@ class JdbcFlushExecutor(
             if (payload.updatedNations.isNotEmpty()) {
                 nationUpdate(payload.updatedNations)
             }
+            // 7d. per-command diplomacy UPDATE (T0.4) — distinct from the monthly TICK's bulk-SQL
+            //     update; runs here in the per-command flush, the tick runs in its own boundary flush.
+            if (payload.updatedDiplomacy.isNotEmpty()) {
+                diplomacyUpdate(payload.updatedDiplomacy)
+            }
 
             // 8. rank_data UPDATE (rankVarIncrease then rankVarSet — General.php:727-744) + nation_id
             //    sync (when a general's nation changed, ALL its rank_data rows get the new nation_id).
@@ -101,15 +107,48 @@ class JdbcFlushExecutor(
                 rankDataNationSync(payload.rankNationSync)
             }
 
+            // 8b. auction channel (T0.7): ng_auction UPSERT (open INSERT / extend-finish UPDATE) then
+            //     ng_auction_bid INSERT (INSERT-only — outbid rows are NEVER deleted, research §3).
+            if (payload.auctionUpserts.isNotEmpty()) {
+                auctionUpsertMany(payload.auctionUpserts)
+            }
+            if (payload.auctionBidInserts.isNotEmpty()) {
+                auctionBidInsertMany(payload.auctionBidInserts)
+            }
+            if (payload.bettingInserts.isNotEmpty()) {
+                bettingInsertMany(payload.bettingInserts)
+            }
+
+            // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
+            //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
+            if (payload.createdMessages.isNotEmpty()) {
+                messageCreateMany(payload.createdMessages)
+            }
+            if (payload.messageInvalidates.isNotEmpty()) {
+                messageInvalidateMany(payload.messageInvalidates)
+            }
+
             // 9. log_entry createMany.
             if (payload.logEntries.isNotEmpty()) {
                 logEntryCreateMany(payload.logEntries)
             }
 
-            // 10. KV writes (nation_env delete-on-null) + reserved_turns flush (ring write via
-            //     ReservedTurnRepository, recorded here for contract-order completeness).
+            // 10. KV writes (nation_env int-ns + game_kv string-ns, delete-on-null) + reserved_turns
+            //     flush (ring write via ReservedTurnRepository, recorded here for contract-order
+            //     completeness).
             if (payload.kvWrites.isNotEmpty()) {
-                nationEnvKvWrite(payload.kvWrites)
+                kvWriteFlush(payload.kvWrites)
+            }
+
+            // 11. Inheritance channel (T0.8) — KV writes, log inserts, result inserts.
+            if (payload.inheritanceKvWrites.isNotEmpty()) {
+                kvWriteFlush(payload.inheritanceKvWrites)
+            }
+            if (payload.inheritanceLogInserts.isNotEmpty()) {
+                inheritanceLogInsertMany(payload.inheritanceLogInserts)
+            }
+            if (payload.inheritanceResultInserts.isNotEmpty()) {
+                inheritanceResultInsertMany(payload.inheritanceResultInserts)
             }
             null
         }
@@ -259,6 +298,43 @@ class JdbcFlushExecutor(
         // databaseHooks models nation as an UPSERT (createMany excludes these); the UPDATE op-tag is
         // recorded as UPSERT to match the contract / DatabaseHooksOrderTest expectation.
         lastOps.add(FlushExecOp("nation", FlushVerb.UPSERT, nations.size))
+    }
+
+    // --- step 7d: per-command diplomacy UPDATE (T0.4) -------------------------------------------
+
+    /**
+     * Faithful to the per-command `diplomacy` UPDATE (`che_선전포고`/`수락`/`파기`/`종전`): toggle
+     * `state_code` + `term` (and `is_dead` when the patch carries it) for a single `(src, dest)` row.
+     * Bidirectional transitions arrive as TWO patches (both directions). Batched. This is the DELTA
+     * path — the monthly TICK's diplomacy bulk-SQL update is a separate write (P3 PostUpdateMonthly).
+     */
+    private fun diplomacyUpdate(updates: List<DiplomacyUpdate>) {
+        for (u in updates) {
+            val src = MapSqlParameterSource()
+                .addValue("state_code", u.state)
+                .addValue("term", u.term)
+                .addValue("src_nation_id", u.fromNationId)
+                .addValue("dest_nation_id", u.toNationId)
+            if (u.dead == null) {
+                jdbc.update(
+                    """
+                    UPDATE diplomacy SET state_code = :state_code, term = :term
+                     WHERE src_nation_id = :src_nation_id AND dest_nation_id = :dest_nation_id
+                    """.trimIndent(),
+                    src,
+                )
+            } else {
+                src.addValue("is_dead", u.dead != 0)
+                jdbc.update(
+                    """
+                    UPDATE diplomacy SET state_code = :state_code, term = :term, is_dead = :is_dead
+                     WHERE src_nation_id = :src_nation_id AND dest_nation_id = :dest_nation_id
+                    """.trimIndent(),
+                    src,
+                )
+            }
+        }
+        lastOps.add(FlushExecOp("diplomacy", FlushVerb.UPDATE, updates.size))
     }
 
     // --- step 3: nation / nation_turn createMany ------------------------------------------------
@@ -412,36 +488,81 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("rank_data", FlushVerb.UPDATE, syncs.size))
     }
 
-    // --- step 10: nation_env KV (delete-on-null) ------------------------------------------------
+    // --- step 10: KV write (delete-on-null) — int-ns nation_env AND string-ns game_kv -----------
 
     /**
-     * Flush the nation_env KV write-set (`KVStorage.php` delete-on-null): a `null` value DELETEs the
-     * `(namespace, key)` row; a non-null value UPSERTs the [MetaJson]-encoded jsonb (bare int for
-     * `next_execute_*`, `LastTurn.toRaw()` object for `turn_last_{officer_level}`).
+     * Flush the KV write-set (`KVStorage.php` delete-on-null). A [KvWrite] now carries its target
+     * `table`: `nation_env` (int namespace = nation id) routes to the V3 table; every string namespace
+     * (`game_env`, `betting`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
+     * `table` discriminator. A `null` value DELETEs the row; a non-null value UPSERTs the
+     * [MetaJson]-encoded jsonb (bare int for `next_execute_*`, object for `turn_last_{officer_level}`,
+     * etc.). The KvWrite values are pre-encoded where the caller already holds a jsonb String (the
+     * `value` is encoded only if it is not already a raw json String — see [encodeKvValue]).
      */
-    private fun nationEnvKvWrite(writes: List<KvWrite>) {
+    private fun kvWriteFlush(writes: List<KvWrite>) {
         for (w in writes) {
-            if (w.value == null) {
-                jdbc.update(
-                    "DELETE FROM nation_env WHERE namespace = :namespace AND key = :key",
-                    MapSqlParameterSource().addValue("namespace", w.namespace).addValue("key", w.key),
-                )
-            } else {
-                jdbc.update(
-                    """
-                    INSERT INTO nation_env (namespace, key, value)
-                    VALUES (:namespace, :key, :value)
-                    ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value
-                    """.trimIndent(),
-                    MapSqlParameterSource()
-                        .addValue("namespace", w.namespace)
-                        .addValue("key", w.key)
-                        .addValue("value", jsonb(MetaJson.encode(w.value))),
-                )
+            when (w.table) {
+                "nation_env" -> nationEnvKvWrite(w)
+                else -> gameKvWrite(w)
             }
         }
-        lastOps.add(FlushExecOp("nation_env", FlushVerb.UPSERT, writes.size))
+        lastOps.add(FlushExecOp("kv", FlushVerb.UPSERT, writes.size))
     }
+
+    /** int-namespace store (V3 `nation_env`): namespace is the nation id (parsed from the string). */
+    private fun nationEnvKvWrite(w: KvWrite) {
+        val ns = w.namespace.toInt()
+        if (w.value == null) {
+            jdbc.update(
+                "DELETE FROM nation_env WHERE namespace = :namespace AND key = :key",
+                MapSqlParameterSource().addValue("namespace", ns).addValue("key", w.key),
+            )
+        } else {
+            jdbc.update(
+                """
+                INSERT INTO nation_env (namespace, key, value)
+                VALUES (:namespace, :key, :value)
+                ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("namespace", ns)
+                    .addValue("key", w.key)
+                    .addValue("value", jsonb(encodeKvValue(w.value))),
+            )
+        }
+    }
+
+    /** string-namespace store (V7 `game_kv`): keyed by `(table, namespace, key)`. */
+    private fun gameKvWrite(w: KvWrite) {
+        if (w.value == null) {
+            jdbc.update(
+                """DELETE FROM game_kv WHERE "table" = :tbl AND namespace = :namespace AND key = :key""",
+                MapSqlParameterSource().addValue("tbl", w.table).addValue("namespace", w.namespace).addValue("key", w.key),
+            )
+        } else {
+            jdbc.update(
+                """
+                INSERT INTO game_kv ("table", namespace, key, value)
+                VALUES (:tbl, :namespace, :key, :value)
+                ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("tbl", w.table)
+                    .addValue("namespace", w.namespace)
+                    .addValue("key", w.key)
+                    .addValue("value", jsonb(encodeKvValue(w.value))),
+            )
+        }
+    }
+
+    /**
+     * A KV value already materialized as a raw jsonb String (e.g. a byte-faithful `Json::encode`
+     * payload the family produced) is bound as-is; any other value (Int/Map/List …) is encoded via
+     * [MetaJson]. This lets the obfuscatedNamePool / BettingInfo families hand the executor the exact
+     * PHP-`json_encode` bytes without a re-encode round-trip.
+     */
+    private fun encodeKvValue(value: Any?): String =
+        if (value is String) value else MetaJson.encode(value)
 
     // --- step 9: log_entry createMany -----------------------------------------------------------
 
@@ -470,6 +591,186 @@ class JdbcFlushExecutor(
             batch,
         )
         lastOps.add(FlushExecOp("log_entry", FlushVerb.CREATE_MANY, logs.size))
+    }
+
+    // --- step 8b: auction channel (T0.7) -------------------------------------------------------
+
+    /**
+     * UPSERT the `ng_auction` rows. An INSERT (open) carries [AuctionUpsertRow.allocatedId] (the
+     * pre-assigned in-memory id, so bids reference it before flush); an UPDATE (extend/finish/shrink)
+     * carries [AuctionUpsertRow.id]. `type`/`req_resource` bind through `CAST(... AS ng_auction_*)`,
+     * `open_date`/`close_date` through `CAST(... AS timestamptz)`, `detail` is a raw json String.
+     */
+    private fun auctionUpsertMany(rows: List<AuctionUpsertRow>) {
+        for (r in rows) {
+            val c = r.columns
+            val src = MapSqlParameterSource()
+                .addValue("type", c["type"])
+                .addValue("finished", c["finished"])
+                .addValue("target", c["target"])
+                .addValue("host_general_id", c["host_general_id"])
+                .addValue("req_resource", c["req_resource"])
+                .addValue("open_date", c["open_date"]?.toString())
+                .addValue("close_date", c["close_date"]?.toString())
+                .addValue("detail", jsonb(c["detail"] as? String))
+            if (r.id == null) {
+                src.addValue("id", r.allocatedId)
+                jdbc.update(
+                    """
+                    INSERT INTO ng_auction (id, type, finished, target, host_general_id, req_resource, open_date, close_date, detail)
+                    VALUES (:id, CAST(:type AS ng_auction_type), :finished, :target, :host_general_id,
+                            CAST(:req_resource AS ng_auction_resource), CAST(:open_date AS timestamptz),
+                            CAST(:close_date AS timestamptz), :detail)
+                    """.trimIndent(),
+                    src,
+                )
+            } else {
+                src.addValue("id", r.id)
+                jdbc.update(
+                    """
+                    UPDATE ng_auction SET type = CAST(:type AS ng_auction_type), finished = :finished, target = :target,
+                        host_general_id = :host_general_id, req_resource = CAST(:req_resource AS ng_auction_resource),
+                        open_date = CAST(:open_date AS timestamptz), close_date = CAST(:close_date AS timestamptz), detail = :detail
+                     WHERE id = :id
+                    """.trimIndent(),
+                    src,
+                )
+            }
+        }
+        lastOps.add(FlushExecOp("ng_auction", FlushVerb.UPSERT, rows.size))
+    }
+
+    /** INSERT the `ng_auction_bid` rows (INSERT-only; outbid rows persist). `aux` is a raw json String. */
+    private fun auctionBidInsertMany(rows: List<AuctionBidInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("auction_id", c["auction_id"])
+                .addValue("owner", c["owner"])
+                .addValue("general_id", c["general_id"])
+                .addValue("amount", c["amount"])
+                .addValue("date", c["date"]?.toString())
+                .addValue("aux", jsonb(c["aux"] as? String))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO ng_auction_bid (auction_id, owner, general_id, amount, date, aux)
+            VALUES (:auction_id, :owner, :general_id, :amount, CAST(:date AS timestamptz), :aux)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("ng_auction_bid", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /** INSERT the `ng_betting` rows (P6 betting intake, INSERT-only). */
+    private fun bettingInsertMany(rows: List<BettingInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("betting_id", c["betting_id"])
+                .addValue("general_id", c["general_id"])
+                .addValue("user_id", c["user_id"])
+                .addValue("betting_type", c["betting_type"])
+                .addValue("amount", c["amount"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO ng_betting (betting_id, general_id, user_id, betting_type, amount)
+            VALUES (:betting_id, :general_id, :user_id, :betting_type, :amount)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("ng_betting", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    // --- step 8c: mailbox channel (T0.5) -------------------------------------------------------
+
+    /**
+     * INSERT the `message` rows with their pre-assigned in-memory ids (so the SERIAL matches the
+     * `receiverMessageID`/`senderMessageID` body back-references — research §2). `type` binds through
+     * `CAST(... AS message_type)`; the body binds byte-faithfully (raw json String). Append-additive
+     * (receiver row before sender row — the engine ordered them); never deleted/deduped.
+     */
+    private fun messageCreateMany(messages: List<CreatedMessageRow>) {
+        val batch: Array<SqlParameterSource> = messages.map { m ->
+            MapSqlParameterSource()
+                .addValue("id", m.id)
+                .addValue("mailbox", m.mailbox)
+                .addValue("type", m.type)
+                .addValue("src", m.srcId)
+                .addValue("dest", m.destId)
+                .addValue("time", m.time)
+                .addValue("valid_until", m.validUntil)
+                .addValue("message", jsonb(m.bodyJson))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO message (id, mailbox, type, src, dest, time, valid_until, message)
+            VALUES (:id, :mailbox, CAST(:type AS message_type), :src, :dest,
+                    CAST(:time AS timestamptz), CAST(:valid_until AS timestamptz), :message)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("message", FlushVerb.CREATE_MANY, messages.size))
+    }
+
+    /** UPDATE the `message` body + valid_until for an invalidated message (PHP `Message::invalidate`). */
+    private fun messageInvalidateMany(invalidates: List<MessageInvalidateRow>) {
+        for (m in invalidates) {
+            jdbc.update(
+                """
+                UPDATE message SET message = :message, valid_until = CAST(:valid_until AS timestamptz)
+                 WHERE id = :id
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("message", jsonb(m.bodyJson))
+                    .addValue("valid_until", m.validUntil)
+                    .addValue("id", m.id),
+            )
+        }
+        lastOps.add(FlushExecOp("message", FlushVerb.UPDATE, invalidates.size))
+    }
+
+    // --- step 11: inheritance channel (T0.8) --------------------------------------------------
+
+    /** INSERT into `inheritance_log`. */
+    private fun inheritanceLogInsertMany(rows: List<InheritanceLogRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("user_id", r.ownerID.toString())
+                .addValue("year", r.year)
+                .addValue("month", r.month)
+                .addValue("text", r.text)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO inheritance_log (user_id, year, month, text)
+            VALUES (:user_id, :year, :month, :text)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("inheritance_log", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /** INSERT into `inheritance_result`. */
+    private fun inheritanceResultInsertMany(rows: List<InheritanceResultRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            MapSqlParameterSource()
+                .addValue("server_id", r.serverID.toString())
+                .addValue("owner", r.ownerID.toString())
+                .addValue("general_id", r.generalID)
+                .addValue("year", r.year)
+                .addValue("month", r.month)
+                .addValue("value", jsonb(r.valueJson))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO inheritance_result (server_id, owner, general_id, year, month, value)
+            VALUES (:server_id, :owner, :general_id, :year, :month, :value)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("inheritance_result", FlushVerb.CREATE_MANY, rows.size))
     }
 
     private fun jsonb(json: String?): PGobject {
@@ -502,12 +803,58 @@ data class FlushPayload(
     val createdNations: List<Nation> = emptyList(),           // step-3 createMany
     val createdNationTurns: List<NationTurn> = emptyList(),   // step-3 createMany
     val createdDiplomacy: List<Diplomacy> = emptyList(),      // step-3 createMany (거병 bidirectional pairs)
+    val updatedDiplomacy: List<DiplomacyUpdate> = emptyList(),// step-7d per-command diplomacy UPDATE (T0.4)
     val deletedGenerals: List<Int> = emptyList(),             // step-5 deleteMany general + rank_data
     val deletedNations: List<Int> = emptyList(),              // step-6 nation cascade
     val rankWrites: List<RankWrite> = emptyList(),            // step-8 rank_data UPDATE (incr then set)
     val rankNationSync: List<RankNationSync> = emptyList(),   // step-8 rank_data nation_id sync
     val kvWrites: List<KvWrite> = emptyList(),                // step-10 nation_env KV (delete-on-null)
+    val createdMessages: List<CreatedMessageRow> = emptyList(),       // step-8c message INSERT (T0.5)
+    val messageInvalidates: List<MessageInvalidateRow> = emptyList(), // step-8c message invalidate UPDATE (T0.5)
+    val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
+    val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
+    val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
+    // --- T0.8 inheritance channel ---
+    val inheritanceKvWrites: List<KvWrite> = emptyList(),             // step-11a inheritance KV writes
+    val inheritanceLogInserts: List<InheritanceLogRow> = emptyList(), // step-11b inheritance_log INSERT
+    val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(), // step-11c inheritance_result INSERT
 )
+
+/** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
+data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
+
+/** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
+data class AuctionBidInsertRow(val columns: Map<String, Any?>)
+
+/** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
+data class BettingInsertRow(val columns: Map<String, Any?>)
+
+/** One `inheritance_log` INSERT (T0.8). Year/month are stamped by [DatabaseHooks]. */
+data class InheritanceLogRow(
+    val ownerID: Int,
+    val year: Int,
+    val month: Int,
+    val text: String,
+    val tag: String,
+)
+
+/**
+ * One `message`-row INSERT (T0.5). `id` is the pre-assigned in-memory monotonic id; `bodyJson` is the
+ * byte-faithful `Json::encode({src,dest,text,option})`. Infra-local mirror of the engine `CreatedMessage`.
+ */
+data class CreatedMessageRow(
+    val id: Int,
+    val mailbox: Int,
+    val type: String,
+    val srcId: Int,
+    val destId: Int,
+    val time: String,
+    val validUntil: String,
+    val bodyJson: String,
+)
+
+/** One `message` invalidate UPDATE (T0.5). Infra-local mirror of the engine `MessageInvalidate`. */
+data class MessageInvalidateRow(val id: Int, val validUntil: String, val bodyJson: String)
 
 /**
  * One rank_data write for a `(general, type)`: an [RankFlushOp.Increment] (`value = value + n`,
@@ -525,11 +872,36 @@ sealed interface RankFlushOp {
 data class RankNationSync(val generalId: Int, val nationId: Int)
 
 /**
- * One nation_env KV write: `value == null` DELETEs the row (delete-on-null, KVStorage.php), a
- * non-null value UPSERTs the encoded jsonb. `namespace` is the nation id; values are encoded with
- * [MetaJson] (bare int for `next_execute_*`; object for `turn_last_{officer_level}`).
+ * One per-command diplomacy UPDATE (T0.4): toggle `state_code`+`term` (and `is_dead` when [dead] is
+ * non-null) for a single `(src, dest)` row. Bidirectional transitions are TWO of these. Infra-local
+ * mirror of the engine `DiplomacyRowPatch` (no engine dep cycle).
  */
-data class KvWrite(val namespace: Int, val key: String, val value: Any?)
+data class DiplomacyUpdate(
+    val fromNationId: Int,
+    val toNationId: Int,
+    val state: Int,
+    val term: Int,
+    val dead: Int? = null,
+)
+
+/**
+ * One KV write: `value == null` DELETEs the row (delete-on-null, KVStorage.php), a non-null value
+ * UPSERTs the encoded jsonb.
+ *
+ *  - `table == "nation_env"` → the V3 int-namespace store (`namespace` is the nation id as a
+ *    decimal string; values: bare int for `next_execute_*`, object for `turn_last_{officer_level}`).
+ *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`/…) → the V7 string-namespace
+ *    `game_kv` store keyed by `(table, namespace, key)`.
+ *
+ * A `value` that is already a raw json String is bound verbatim; any other value is [MetaJson]-encoded.
+ */
+data class KvWrite(val table: String, val namespace: String, val key: String, val value: Any?) {
+    companion object {
+        /** Convenience for the legacy nation_env int-namespace call sites (P2/P3). */
+        fun nationEnv(namespace: Int, key: String, value: Any?): KvWrite =
+            KvWrite("nation_env", namespace.toString(), key, value)
+    }
+}
 
 /**
  * A finalized `log_entry` row ready to INSERT. `scope`/`category` are the PG enum literals

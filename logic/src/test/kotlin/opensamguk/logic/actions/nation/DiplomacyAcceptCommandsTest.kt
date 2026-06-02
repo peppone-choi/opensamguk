@@ -5,6 +5,7 @@ import opensamguk.common.rng.RandUtil
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.Diplomacy
@@ -27,15 +28,23 @@ class DiplomacyAcceptCommandsTest {
 
     private fun makeContext(
         args: Map<String, Any?> = emptyMap(),
-        general: General = General(id = 1, nationId = 1, cityId = 1, officerLevel = 12),
-        city: City = City(id = 1, nationId = 1),
-        nation: Nation = Nation(id = 1, name = "테스트국"),
+        general: General = General(
+            id = 1, nationId = 1, cityId = 1,
+            leadership = 80, strength = 80, intel = 80, injury = 0,
+            experience = 0.0, dedication = 0.0, officerLevel = 12, gold = 1000, rice = 1000,
+        ),
+        city: City = City(
+            id = 1, nationId = 1, level = 5,
+            commerce = 0, commerceMax = 0, agriculture = 0, agricultureMax = 0,
+            supplyState = 1, frontState = 0, trust = 50.0,
+        ),
+        nation: Nation = Nation(id = 1, level = 5, capitalCityId = 1, name = "테스트국"),
         generalName: String = "테스트장수",
         destGeneralName: String = "상대장수",
     ): GeneralActionResolveContext {
         val draft = GeneralActionDraft(general = general, city = city, nation = nation)
         val rng = RandUtil(LiteHashDrbg(ByteArray(0)))
-        val env = WorldEnv(year = 2025, month = 6, startYear = 190)
+        val env = WorldEnv(year = 2025, startYear = 190, develCost = 100)
         return GeneralActionResolveContext(
             draft = draft,
             rng = rng,
@@ -48,7 +57,7 @@ class DiplomacyAcceptCommandsTest {
         )
     }
 
-    private fun makePipeline() = opensamguk.logic.stats.GeneralActionPipeline(emptyMap())
+    private fun makePipeline() = opensamguk.logic.stats.GeneralActionPipeline()
 
     // ========================================================================
     // CheBulgachimSuak (불가침 수락)
@@ -134,6 +143,7 @@ class DiplomacyAcceptCommandsTest {
             env = mapOf("year" to 2025, "month" to 6),
             args = mapOf("destNationID" to 5, "year" to 2026, "month" to 3),
             destNationId = 5,
+            mode = ConstraintMode.FULL,
         )
         val constraints = cmd.buildMinConstraints(ctx)
         assertEquals(2, constraints.size)
@@ -200,6 +210,7 @@ class DiplomacyAcceptCommandsTest {
             env = emptyMap(),
             args = mapOf("destNationID" to 5),
             destNationId = 5,
+            mode = ConstraintMode.FULL,
         )
         val constraints = cmd.buildConstraints(ctx)
         val diplomacyConstraint = constraints.find { it.name == "AllowDiplomacyBetweenStatus" }
@@ -261,6 +272,7 @@ class DiplomacyAcceptCommandsTest {
             env = emptyMap(),
             args = mapOf("destNationID" to 5),
             destNationId = 5,
+            mode = ConstraintMode.FULL,
         )
         val constraints = cmd.buildConstraints(ctx)
         val diplomacyConstraint = constraints.find { it.name == "AllowDiplomacyBetweenStatus" }

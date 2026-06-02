@@ -1,9 +1,11 @@
 package opensamguk.engine.turn
 
 import java.time.Instant
+import opensamguk.infra.persistence.KvWrite
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
+import opensamguk.logic.inheritance.InheritanceResultRow
 
 /**
  * Column patch for ONE dirty row — only the columns that actually changed. `meta` deep-changes are
@@ -34,7 +36,17 @@ data class RowPatch(
  * paths. We model the JSON-Patch "path" coarsely as the column name (the flush maps column → SQL),
  * with `meta` deep-diffed at the key level (the jsonb sub-paths).
  */
-class ChangeRecorder {
+class ChangeRecorder(
+    /**
+     * Allocates the next in-memory `message.id` (T0.5). The daemon wires a DB-seeded monotonic
+     * allocator (max(id)+1 at rehydrate) so the in-memory id matches the flushed SERIAL (research §2:
+     * the body's `receiverMessageID`/`senderMessageID` back-references resolve against this id). The
+     * default 1-based counter is for tests / a fresh world.
+     */
+    private val messageIdAllocator: () -> Int = AtomicCounter()::next,
+    /** Allocates the next in-memory `ng_auction.id` (T0.7) — DB-seeded at rehydrate; default 1-based. */
+    private val auctionIdAllocator: () -> Int = AtomicCounter()::next,
+) {
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
     private val cityPatches = LinkedHashMap<Int, RowPatch>()
@@ -57,6 +69,53 @@ class ChangeRecorder {
     private val deletedGeneralIds = LinkedHashSet<Int>()
     private val deletedNationIds = LinkedHashSet<Int>()
 
+    /**
+     * KV delta channel (T0.3) — `(table, namespace, key)` → encoded value | `null`-delete. The recorder
+     * is the SOLE emitter (no family writes a KV table inline). Last-write-wins per [KvKey] (KVStorage.php
+     * delete-on-null + last-write-wins); insertion order preserved (LinkedHashMap, never re-keyed).
+     * Feeds [DirtyState.kvDirty] → `FlushPayload.kvWrites` → the executor's step-10 (nation_env int-ns
+     * AND game_kv string-ns). Without this channel every nation/kv delta ran in memory and vanished at
+     * flush.
+     */
+    private val kvDirty = LinkedHashMap<KvKey, Any?>()
+
+    /**
+     * Diplomacy UPDATE delta channel (T0.4) — `(from, to)` → [DiplomacyRowPatch]. The recorder is the
+     * SOLE per-command emitter. Last-write-wins per `(from, to)` (a later transition in the same tick
+     * displaces the earlier patch); insertion order preserved. This is DISTINCT from the monthly TICK's
+     * bulk-SQL diplomacy update (P3 `PostUpdateMonthly`) — they run at different points in the pass and
+     * must not corrupt each other (commands during the general/nation pass, tick AFTER).
+     */
+    private val diplomacyUpdateDirty = LinkedHashMap<Pair<Int, Int>, DiplomacyRowPatch>()
+
+    /**
+     * Mailbox channel (T0.5) — the `message` INSERT intents, append-additive (receiver row BEFORE
+     * sender row; the caller emits them in that order). NEVER re-keyed/dedup'd: every `send` row is a
+     * distinct mailbox row.
+     */
+    private val createdMessages = mutableListOf<CreatedMessage>()
+
+    /** Mailbox channel (T0.5) — the `message` invalidate UPDATEs (deleteMsg / accept-flow sibling-sweep). */
+    private val messageInvalidates = mutableListOf<MessageInvalidate>()
+
+    /** Auction channel (T0.7) — ng_auction UPSERTs (open INSERT / extend-finish UPDATE), in emit order. */
+    private val auctionUpserts = mutableListOf<AuctionUpsert>()
+
+    /** Auction channel (T0.7) — ng_auction_bid INSERTs (INSERT-only; outbid rows NEVER deleted). */
+    private val auctionBidInserts = mutableListOf<AuctionBidInsert>()
+
+    /** Betting channel (P6) — ng_betting INSERTs (INSERT-only). */
+    private val bettingInserts = mutableListOf<BettingInsert>()
+
+    /** Inheritance channel (T0.8) — KV writes to `game_kv` namespace `inheritance_{ownerID}`. */
+    private val inheritanceKvWrites = mutableListOf<KvWrite>()
+
+    /** Inheritance channel (T0.8) — `inheritance_log` INSERT intents. */
+    private val inheritanceLogInserts = mutableListOf<InheritanceLogDraft>()
+
+    /** Inheritance channel (T0.8) — `inheritance_result` INSERT intents. */
+    private val inheritanceResultInserts = mutableListOf<InheritanceResultRow>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -66,7 +125,13 @@ class ChangeRecorder {
     val isDirty: Boolean
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
-            deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty()
+            deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
+            kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
+            createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
+            auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
+            bettingInserts.isNotEmpty() ||
+            inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
+            inheritanceResultInserts.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -197,6 +262,7 @@ class ChangeRecorder {
         diffCol(columns, "capital_city_id", pre.capitalCityId, post.capitalCityId)
         diffCol(columns, "gold", pre.gold, post.gold)
         diffCol(columns, "rice", pre.rice, post.rice)
+        diffCol(columns, "power", pre.power, post.power)
         diffCol(columns, "tech", pre.tech, post.tech)
         diffCol(columns, "level", pre.level, post.level)
         diffCol(columns, "type_code", pre.typeCode, post.typeCode)
@@ -234,6 +300,153 @@ class ChangeRecorder {
         val map = rankPatches.getOrPut(generalId) { LinkedHashMap() }
         map[column] = RankDelta.Set(value)
     }
+
+    /**
+     * Record a KV write (T0.3, `KVStorage.php` setValue): `value == null` is a delete-on-null; any
+     * other value is the (already-encoded jsonb String, or to-be-encoded Int/Map/List) payload. Last
+     * write wins per `(table, namespace, key)` (a later set/delete displaces the earlier one), matching
+     * the PHP KV last-write-wins + delete semantics; insertion order is preserved so the flush emits
+     * the writes in the order the resolver produced them.
+     *
+     *  - `table == "nation_env"` → V3 int-namespace store (`namespace` = nation id as a decimal string).
+     *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`) → V7 `game_kv` string-namespace store.
+     */
+    fun recordKv(table: String, namespace: String, key: String, value: Any?) {
+        kvDirty[KvKey(table, namespace, key)] = value
+    }
+
+    /** Convenience for the V3 int-namespace `nation_env` writes (setNationMeta, term-stacks). */
+    fun recordNationEnvKv(nationId: Int, key: String, value: Any?) {
+        recordKv("nation_env", nationId.toString(), key, value)
+    }
+
+    /** The recorded KV delta channel (the T0.3 step-10 source), insertion-ordered. */
+    fun kvDirty(): Map<KvKey, Any?> = LinkedHashMap(kvDirty)
+
+    /**
+     * Diff a diplomacy row's pre/post (T0.4). Returns the [DiplomacyRowPatch] (and records it dirty)
+     * if `state`/`term`/`dead` changed for `(from, to)`, or `null` if nothing changed (no-op → not
+     * dirty). The `(from, to)` key is taken from `post`. A bidirectional transition (선전포고/수락/…)
+     * calls this TWICE — once per direction — so BOTH `(me,you)` + `(you,me)` rows land (PHP updates
+     * both via `(me=A AND you=B) OR (me=B AND you=A)`; missing one desyncs the matrix + the next tick).
+     */
+    fun diffDiplomacy(pre: TurnDiplomacy, post: TurnDiplomacy): DiplomacyRowPatch? {
+        require(pre.fromNationId == post.fromNationId && pre.toNationId == post.toNationId) {
+            "ChangeRecorder.diffDiplomacy: key changed (${pre.fromNationId},${pre.toNationId}) -> (${post.fromNationId},${post.toNationId})"
+        }
+        if (pre.state == post.state && pre.term == post.term && pre.dead == post.dead) return null
+        val patch = DiplomacyRowPatch(
+            fromNationId = post.fromNationId,
+            toNationId = post.toNationId,
+            state = post.state,
+            term = post.term,
+            dead = if (pre.dead != post.dead) post.dead else null,
+        )
+        diplomacyUpdateDirty[post.fromNationId to post.toNationId] = patch
+        return patch
+    }
+
+    /** The recorded per-command diplomacy UPDATE patches (the T0.4 step-7 source), insertion-ordered. */
+    fun diplomacyUpdateDirty(): List<DiplomacyRowPatch> = diplomacyUpdateDirty.values.toList()
+
+    /**
+     * Record a `message` INSERT (T0.5, PHP `sendRaw`). Pre-allocates the in-memory id (so the body's
+     * `receiverMessageID`/`senderMessageID` back-references can be folded in by the caller before the
+     * `bodyJson` is built) and appends — receiver row BEFORE sender row is the CALLER's responsibility
+     * (it emits them in that order). Returns the allocated id. Append-additive: never deduped.
+     */
+    fun recordMessageInsert(
+        mailbox: Int,
+        type: String,
+        srcId: Int,
+        destId: Int,
+        time: String,
+        validUntil: String,
+        bodyJson: String,
+    ): Int {
+        val id = messageIdAllocator()
+        createdMessages.add(CreatedMessage(id, mailbox, type, srcId, destId, time, validUntil, bodyJson))
+        return id
+    }
+
+    /** Record a `message` invalidate UPDATE (T0.5, PHP `Message::invalidate`): rewrite body + valid_until. */
+    fun recordMessageInvalidate(id: Int, validUntil: String, bodyJson: String) {
+        messageInvalidates.add(MessageInvalidate(id, validUntil, bodyJson))
+    }
+
+    /** The recorded mailbox INSERT intents (the T0.5 flush source), in emit order (receiver-before-sender). */
+    fun createdMessages(): List<CreatedMessage> = createdMessages.toList()
+
+    /** The recorded mailbox invalidate UPDATEs (the T0.5 flush source). */
+    fun messageInvalidates(): List<MessageInvalidate> = messageInvalidates.toList()
+
+    /**
+     * Record an `ng_auction` UPSERT (T0.7). `id` null → an INSERT (auction open): pre-allocates the
+     * in-memory id and returns it (so bids placed in the same tick can reference it before flush). A
+     * non-null `id` → an UPDATE (extend/finish/shrink). `columns` is the byte-faithful
+     * `AuctionInfo.toArray()` map (the caller supplies the id column for an UPDATE).
+     */
+    fun recordAuctionUpsert(id: Int?, columns: Map<String, Any?>): Int {
+        if (id == null) {
+            val allocated = auctionIdAllocator()
+            auctionUpserts.add(AuctionUpsert(id = null, allocatedId = allocated, columns = columns))
+            return allocated
+        }
+        auctionUpserts.add(AuctionUpsert(id = id, allocatedId = null, columns = columns))
+        return id
+    }
+
+    /** Record an `ng_auction_bid` INSERT (T0.7). INSERT-only — outbid rows are NEVER deleted/deduped. */
+    fun recordAuctionBidInsert(columns: Map<String, Any?>) {
+        auctionBidInserts.add(AuctionBidInsert(columns))
+    }
+
+    /** Record an `ng_betting` INSERT (P6 betting intake). INSERT-only. */
+    fun recordBettingInsert(columns: Map<String, Any?>) {
+        bettingInserts.add(BettingInsert(columns))
+    }
+
+    /** The recorded ng_auction UPSERTs (the T0.7 flush source), in emit order. */
+    fun auctionUpserts(): List<AuctionUpsert> = auctionUpserts.toList()
+
+    /** The recorded ng_auction_bid INSERTs (the T0.7 flush source), in emit order. */
+    fun auctionBidInserts(): List<AuctionBidInsert> = auctionBidInserts.toList()
+
+    /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
+    fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
+
+    /** Record an inheritance KV write (T0.8) — targets `game_kv` with namespace `inheritance_{ownerID}`. */
+    fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {
+        inheritanceKvWrites.add(
+            KvWrite("game_kv", "inheritance_$ownerID", key, listOf(value, aux)),
+        )
+    }
+
+    /** Record an inheritance KV write (T0.8) — same flush shape as [recordInheritancePointSet]. */
+    fun recordInheritancePointIncrease(ownerID: Int, key: String, value: Double, aux: Any?) {
+        inheritanceKvWrites.add(
+            KvWrite("game_kv", "inheritance_$ownerID", key, listOf(value, aux)),
+        )
+    }
+
+    /** Record an `inheritance_log` INSERT intent (T0.8). */
+    fun recordInheritanceLog(ownerID: Int, text: String, tag: String) {
+        inheritanceLogInserts.add(InheritanceLogDraft(ownerID, text, tag))
+    }
+
+    /** Record an `inheritance_result` INSERT intent (T0.8). */
+    fun recordInheritanceResultSnapshot(row: InheritanceResultRow) {
+        inheritanceResultInserts.add(row)
+    }
+
+    /** The recorded inheritance KV writes (the T0.8 flush source), in emit order. */
+    fun inheritanceKvWrites(): List<KvWrite> = inheritanceKvWrites.toList()
+
+    /** The recorded inheritance log INSERTs (the T0.8 flush source), in emit order. */
+    fun inheritanceLogInserts(): List<InheritanceLogDraft> = inheritanceLogInserts.toList()
+
+    /** The recorded inheritance result INSERTs (the T0.8 flush source), in emit order. */
+    fun inheritanceResultInserts(): List<InheritanceResultRow> = inheritanceResultInserts.toList()
 
     /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE
@@ -306,4 +519,13 @@ class ChangeRecorder {
         }
         return out
     }
+}
+
+/**
+ * Default 1-based monotonic id source for the mailbox channel (T0.5). The daemon replaces it with a
+ * DB-seeded allocator at rehydrate (max(message.id)+1) so the in-memory id matches the flushed SERIAL.
+ */
+private class AtomicCounter(start: Int = 1) {
+    private var n = start - 1
+    fun next(): Int = ++n
 }

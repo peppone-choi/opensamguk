@@ -1,0 +1,166 @@
+name: Build + Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Build JVM artifacts
+  # ------------------------------------------------------------------
+  build-jvm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build + test JVM
+        run: ./gradlew build --no-daemon
+
+      - name: Surface test results
+        if: always()
+        run: |
+          echo "== test summary =="
+          find . -path '*/build/test-results/*/*.xml' -print | head -50
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push gateway-api image
+        run: |
+          docker build -f docker/gateway-api.Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:latest .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/gateway-api:latest
+
+      - name: Build + push game-api image
+        run: |
+          docker build -f docker/game-api.Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:latest .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-api:latest
+
+      - name: Build + push game-engine image
+        run: |
+          docker build -f docker/game-engine.Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:latest .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/game-engine:latest
+
+  # ------------------------------------------------------------------
+  # 2. Build web images
+  # ------------------------------------------------------------------
+  build-web:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: [gateway, game]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push web-${{ matrix.app }} image
+        run: |
+          docker build -f docker/web-${{ matrix.app }}.Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:${{ env.IMAGE_TAG }} \
+            -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:latest .
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/web-${{ matrix.app }}:latest
+
+  # ------------------------------------------------------------------
+  # 3. Deploy to EC2
+  # ------------------------------------------------------------------
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-jvm, build-web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd ~/opensamguk
+
+            # Pull latest images
+            echo "=== Pulling images ==="
+            docker compose -f docker-compose.prod.yml pull
+
+            # Rolling restart (engine last to avoid turn-state loss)
+            echo "=== Restarting services ==="
+            docker compose -f docker-compose.prod.yml up -d --no-deps --build gateway-api game-api web-gateway web-game nginx
+            sleep 5
+            docker compose -f docker-compose.prod.yml up -d --no-deps game-engine
+
+            # Cleanup old images
+            docker image prune -af --filter "until=168h"
+
+            echo "=== Deploy complete ==="
+
+      - name: Health check
+        run: |
+          set -euo pipefail
+          HOST="http://${{ secrets.EC2_HOST }}"
+          for i in $(seq 1 30); do
+            echo "Health check attempt $i..."
+            if curl -sf "${HOST}/health" >/dev/null 2>&1; then
+              echo "nginx health: OK"
+              break
+            fi
+            sleep 5
+          done
+
+          for i in $(seq 1 30); do
+            echo "API health check attempt $i..."
+            RESP=$(curl -sf "${HOST}/api/game/actuator/health" 2>/dev/null || echo '{"status":"DOWN"}')
+            if echo "$RESP" | grep -q '"status":"UP"'; then
+              echo "game-api actuator: OK"
+              break
+            fi
+            sleep 5
+          done
+
+          for i in $(seq 1 30); do
+            echo "Gateway health check attempt $i..."
+            RESP=$(curl -sf "${HOST}/api/gateway/actuator/health" 2>/dev/null || echo '{"status":"DOWN"}')
+            if echo "$RESP" | grep -q '"status":"UP"'; then
+              echo "gateway-api actuator: OK"
+              break
+            fi
+            sleep 5
+          done
+
+          echo "=== All health checks passed ==="
