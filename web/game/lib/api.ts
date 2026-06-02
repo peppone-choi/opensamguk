@@ -11,6 +11,19 @@ import type {
     ClaimableResponse,
     ClaimResponse,
     MapPreviewResponse,
+    GeneralListResponse,
+    TournamentResponse,
+    DiplomacyLettersResponse,
+    DiplomacyConflictResponse,
+    NationFinanceResponse,
+    ChiefReservedResponse,
+    NpcPolicyResponse,
+    InheritPointResponse,
+    BoardResponse,
+    VoteListResponse,
+    VoteDetailResponse,
+    TroopListResponse,
+    HistoryResponse,
 } from './types';
 
 async function get<T>(path: string): Promise<T> {
@@ -82,6 +95,43 @@ export const api = {
     messageDecline: <T>(id: number, generalId: number) =>
         post<T>(`/api/messages/${id}/decline?generalId=${generalId}`, null),
     diplomacy: <T>() => get<T>('/api/diplomacy'),
+
+    // ── F4 action-page READ endpoints (read-only; all via the /api/game proxy) ──
+    // game-api = read-only JPA on existing tables; one-daemon-write rule.
+    // Endpoints with no backing rows in the fresh scenario_1010 seed (board / vote /
+    // troop / history / tournament) return an EMPTY/zeroed shape GRACEFULLY (200),
+    // mirroring F3's emperor/traffic empty defaults — never a 500, never fabricated.
+    // These are PUBLIC reads (game-api permits all); identity-scoped endpoints
+    // (board secret-room, npc-policy, chief-reserved, inherit, nation finance)
+    // resolve the caller from the verified @AuthenticationPrincipal in-controller.
+
+    // 전체 장수 (page 14 / 세력 장수 P0) — public, permission=0 fields.
+    generalsList: () => get<GeneralListResponse>('/api/generals'),
+    // 토너먼트 (page 12/13/11-bracket) — state/bracket/standings/rankings/msg.
+    tournamentView: () => get<TournamentResponse>('/api/tournament'),
+    // 외교부 (page 1) — letter list (nations + letters map + myNationID).
+    diplomacyLetters: () => get<DiplomacyLettersResponse>('/api/diplomacy/letters'),
+    // 중원정보 (page 2) — global matrix + per-city 분쟁% conflict feed.
+    diplomacyConflict: () => get<DiplomacyConflictResponse>('/api/diplomacy/conflict'),
+    // 내무부 (page 3) — gold/rice/income/outcome/policy/warSettingCnt/msgs/editable.
+    nationFinance: (id: number) => get<NationFinanceResponse>(`/api/nation/${id}/finance`),
+    // 사령부 (page 7) — 8 chief posts (lv 12/11/10/9/8/7/6/5) + reserved turns.
+    chiefReserved: () => get<ChiefReservedResponse>('/api/nation/chief-reserved'),
+    // NPC 정책 (page 8) — default+current policy/priorities/lastSetters/env.
+    npcPolicy: () => get<NpcPolicyResponse>('/api/nation/npc-policy'),
+    // 유산 (page 15) — inherit items/buffs/costs/availability/logs/currentStat.
+    inheritPoint: () => get<InheritPointResponse>('/api/inherit-point'),
+    // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
+    board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
+    // 설문 조사 (page 5) — vote list.
+    votes: () => get<VoteListResponse>('/api/votes'),
+    // 설문 조사 (page 5) — vote detail + results + myVote + userCnt.
+    vote: (id: number) => get<VoteDetailResponse>(`/api/votes/${id}`),
+    // 부대 편성 (page 6) — troop list (leader/members/reservedCommandBrief/turnTime).
+    troops: () => get<TroopListResponse>('/api/troops'),
+    // 연감 (page 16) — ng_history range + per-month records; ?yearMonth selects month.
+    history: (yearMonth?: number) =>
+        get<HistoryResponse>(yearMonth == null ? '/api/history' : `/api/history?yearMonth=${yearMonth}`),
 
     // Commands.
     //  - game-api CommandController STILL requires ?generalId= (a `@RequestParam`, not yet a verified

@@ -276,3 +276,51 @@ export interface MyNationDetailResponse {
     cityCount: number;
     generalCount: number;
 }
+
+// ── F4 action-page READ contracts ────────────────────────────────────────────
+// Authored in ../types/game.ts (the domain-contract module the pages import from).
+// Re-exported here so lib/api.ts's `from './types'` import resolves them while the
+// F4 page agents keep importing the same names from '../../../types/game'.
+export type {
+    GeneralListItem,
+    GeneralListResponse,
+    TournamentTypeText,
+    TournamentEntrant,
+    TournamentBracketMatch,
+    TournamentRankRow,
+    TournamentResponse,
+    DiplomacyLetterParty,
+    DiplomacyLetter,
+    DiplomacyLetterNation,
+    DiplomacyLettersResponse,
+    ConflictNation,
+    ConflictCity,
+    DiplomacyConflictResponse,
+    NationFinancePolicy,
+    NationFinanceIncome,
+    NationFinanceWarSettingCnt,
+    NationFinanceResponse,
+    ChiefReservedTurn,
+    ChiefPost,
+    ChiefReservedResponse,
+    NpcPolicyLastSetter,
+    NpcPolicyResponse,
+    InheritSpecialWar,
+    InheritUnique,
+    InheritActionCost,
+    InheritPointLog,
+    InheritCurrentStat,
+    InheritPointResponse,
+    BoardComment,
+    BoardArticle,
+    BoardResponse,
+    VoteInfo,
+    VoteListResponse,
+    VoteComment,
+    VoteResultRow,
+    VoteDetailResponse,
+    TroopInfo,
+    TroopListResponse,
+    HistoryRecord,
+    HistoryResponse,
+} from '../types/game';

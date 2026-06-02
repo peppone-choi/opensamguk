@@ -90,6 +90,10 @@ class CityReadEntity(
     var region: Int = 0,
 
     @Convert(converter = MetaJsonConverter::class)
+    @Column(name = "conflict", columnDefinition = "jsonb")
+    var conflict: Map<String, Any?> = linkedMapOf(),
+
+    @Convert(converter = MetaJsonConverter::class)
     @Column(name = "meta", columnDefinition = "jsonb")
     var meta: Map<String, Any?> = linkedMapOf(),
 ) {

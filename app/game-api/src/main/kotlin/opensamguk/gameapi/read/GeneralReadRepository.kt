@@ -161,6 +161,9 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
     /** F2 Wave 6: officers stationed in a city (city-detail panel — cheap count, no row load). */
     fun countByCityId(cityId: Int): Long
 
+    /** F4: members of a troop (the 부대 편성 member list — generals whose troop_id == the leader id). */
+    fun findByTroopIdOrderByOfficerLevelDescIdAsc(troopId: Int): List<GeneralReadEntity>
+
     /**
      * F3 kingdoms ranking — `power` proxy (병력 column) = SUM(general.crew) over a nation's generals.
      * The legacy `a_kingdomList.php` sorts by a stored `nation.power` that has no column in this schema;
