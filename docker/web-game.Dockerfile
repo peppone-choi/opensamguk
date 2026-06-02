@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS build
 WORKDIR /src
-RUN corepack enable
+RUN npm install -g pnpm@10.8.0
 COPY web/game/package.json web/game/pnpm-lock.yaml web/game/
 WORKDIR /src/web/game
-RUN corepack pnpm install --ignore-scripts
+RUN pnpm install --ignore-scripts
 COPY web/game/ .
-RUN corepack pnpm build
+RUN pnpm build
 
 FROM node:22-alpine AS run
 WORKDIR /app
