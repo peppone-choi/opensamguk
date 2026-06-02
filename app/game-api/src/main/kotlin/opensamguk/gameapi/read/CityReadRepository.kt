@@ -27,6 +27,9 @@ class CityReadEntity(
     @Column(name = "id")
     var id: Int = 0,
 
+    @Column(name = "name")
+    var name: String = "",
+
     @Column(name = "nation_id")
     var nationId: Int = 0,
 
@@ -114,4 +117,10 @@ class CityReadEntity(
     )
 }
 
-interface CityReadRepository : JpaRepository<CityReadEntity, Int>
+interface CityReadRepository : JpaRepository<CityReadEntity, Int> {
+    /** F2: cities owned by a nation (세력 도시 / my-cities), ordered by id. */
+    fun findByNationIdOrderByIdAsc(nationId: Int): List<CityReadEntity>
+
+    /** F2 front-info / nation-detail city count. */
+    fun countByNationId(nationId: Int): Long
+}

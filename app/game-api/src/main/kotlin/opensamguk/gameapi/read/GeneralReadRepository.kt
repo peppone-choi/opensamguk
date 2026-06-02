@@ -33,6 +33,15 @@ class GeneralReadEntity(
     @Column(name = "id")
     var id: Int = 0,
 
+    @Column(name = "name")
+    var name: String = "",
+
+    @Column(name = "picture")
+    var picture: String? = null,
+
+    @Column(name = "image_server")
+    var imageServer: Int = 0,
+
     @Column(name = "nation_id")
     var nationId: Int = 0,
 
@@ -133,4 +142,17 @@ class GeneralReadEntity(
     )
 }
 
-interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int>
+interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
+    /** F2: generals in a nation (세력 장수 / my-generals), ordered by officer level desc then id. */
+    fun findByNationIdOrderByOfficerLevelDescIdAsc(nationId: Int): List<GeneralReadEntity>
+
+    /** F2: claimable NPC candidate pool (legacy `npc=2`), ordered by id for a stable list. */
+    fun findByNpcStateOrderByIdAsc(npcState: Int): List<GeneralReadEntity>
+
+    /** F2: the ruler/boss lookup — the highest officer in a nation (인사부 my-boss). */
+    fun findFirstByNationIdOrderByOfficerLevelDesc(nationId: Int): GeneralReadEntity?
+
+    /** F2 front-info counts. */
+    fun countByNpcState(npcState: Int): Long
+    fun countByNationId(nationId: Int): Long
+}
