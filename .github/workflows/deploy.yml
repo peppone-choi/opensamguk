@@ -133,13 +133,13 @@ jobs:
 
             # Pull latest images
             echo "=== Pulling images ==="
-            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.production.yml pull
 
             # Rolling restart (engine last to avoid turn-state loss)
             echo "=== Restarting services ==="
-            docker compose -f docker-compose.prod.yml up -d --no-deps --build gateway-api game-api web-gateway web-game nginx
+            docker compose -f docker-compose.production.yml up -d --no-deps --build gateway-api game-api web-gateway web-game nginx
             sleep 5
-            docker compose -f docker-compose.prod.yml up -d --no-deps game-engine
+            docker compose -f docker-compose.production.yml up -d --no-deps game-engine
 
             # Cleanup old images
             docker image prune -af --filter "until=168h"
