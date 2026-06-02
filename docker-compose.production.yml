@@ -57,6 +57,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
+      # Scenario seed (idempotent on empty world_state) — scenario_1010 = 174 generals.
+      SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
+      SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=40.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
       postgres:
@@ -83,6 +86,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
+      # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as gateway-api}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=50.0 -XX:InitialRAMPercentage=30.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
       postgres:
@@ -103,10 +108,22 @@ services:
     container_name: opensamguk-gateway-api
     restart: unless-stopped
     environment:
+      GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
+      GAME_DB_USER: ${POSTGRES_USER:-sammo}
+      GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # JWT — gateway-api ISSUES tokens with this secret (SAME value as game-api).
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as game-api}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+      # Admin seed (idempotent on empty users table).
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=40.0 -XX:InitialRAMPercentage=25.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
     expose:
@@ -125,6 +142,10 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      # Server-only proxy target (NEXT_PUBLIC_GAME_URL is baked into the image at build).
+      GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
+    depends_on:
+      - gateway-api
     expose:
       - "3000"
     networks:
@@ -141,6 +162,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
+      # Server-only proxy targets (NEXT_PUBLIC_GATEWAY_URL is baked into the image at build).
+      GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}
+      GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
+    depends_on:
+      - game-api
+      - gateway-api
+      - game-engine
     expose:
       - "3001"
     networks:
