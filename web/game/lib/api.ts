@@ -70,12 +70,36 @@ export const api = {
     // P6 pages
     auctions: <T>() => get<T>('/api/auctions'),
     betting: <T>() => get<T>('/api/bettings'),
-    mailbox: <T>() => get<T>('/api/mailbox'),
+    // Mailbox — parameterized by mailbox id (spec §7). game-api: GET /api/mailbox/{mailbox}.
+    // No-arg overload (legacy default) kept for callers that still hit the bare route.
+    mailbox: <T>(mailbox?: number) =>
+        get<T>(mailbox == null ? '/api/mailbox' : `/api/mailbox/${mailbox}`),
+    mailboxUnread: <T>(mailbox: number) => get<T>(`/api/mailbox/${mailbox}/unread`),
+    message: <T>(id: number) => get<T>(`/api/messages/${id}`),
+    // Message accept/decline (game-api takes ?generalId= — pass the caller's own id).
+    messageAccept: <T>(id: number, generalId: number) =>
+        post<T>(`/api/messages/${id}/accept?generalId=${generalId}`, null),
+    messageDecline: <T>(id: number, generalId: number) =>
+        post<T>(`/api/messages/${id}/decline?generalId=${generalId}`, null),
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
-    // Commands
-    command: <T>(code: string, args: unknown) => post<T>(`/api/command/${code}`, args),
-    availableCommands: <T>() => get<T>('/api/commands/available'),
+    // Commands.
+    //  - game-api CommandController STILL requires ?generalId= (a `@RequestParam`, not yet a verified
+    //    `@AuthenticationPrincipal`) and accepts an optional ?turnIdx= (reservable slot, default 0).
+    //  - We pass the caller's own generalId (from front-info.general.generalId) + turnIdx as query params
+    //    and the collected args as the JSON body. SECURITY FOLLOW-UP (backend, do NOT fix here):
+    //    CommandController should validate the passed generalId against the authenticated principal.
+    //    generalId is OPTIONAL here only so the pre-existing W1–W4 sub-pages (auction/betting/…) that
+    //    call api.command(code, args) keep compiling; the F2 main-screen modal ALWAYS passes it.
+    command: <T>(code: string, args: unknown, generalId?: number, turnIdx = 0) =>
+        post<T>(
+            generalId == null
+                ? `/api/command/${code}`
+                : `/api/command/${code}?generalId=${generalId}&turnIdx=${turnIdx}`,
+            args,
+        ),
+    availableCommands: <T>(generalId?: number) =>
+        get<T>(generalId == null ? '/api/commands/available' : `/api/commands/available?generalId=${generalId}`),
 
     // Simulator
     simulateBattle: <T>(body: unknown) => post<T>('/api/simulate-battle', body),
