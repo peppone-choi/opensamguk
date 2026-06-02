@@ -228,3 +228,39 @@ Frontend images are multi-stage: `node:20-alpine` build (pnpm + `next build`) â†
 - PHP golden capture harness: `tools/php-golden/`
 - Full stack smoke test: `tools/smoke.sh`
 - Gradle version catalog: `gradle/libs.versions.toml`
+
+---
+
+## Frontend Development (web/game)
+
+### Stack
+- **Next.js 15** (App Router, React Server Components where possible)
+- **TypeScript 5.7**
+- **Tailwind CSS** + **Pretendard** font
+- **SSE** (`EventSource`) for real-time turn events
+
+### Pages (under `app/game/`)
+
+| Page | Route | API | Status |
+|------|-------|-----|--------|
+| Auction | `/game/auction` | `GET /api/auctions`, `POST /api/command/auction_bid` | Scaffolded |
+| Betting | `/game/betting` | `GET /api/bettings`, `POST /api/command/place_bet` | Scaffolded |
+| Diplomacy | `/game/diplomacy` | `GET /api/diplomacy`, `POST /api/diplomatic-messages/{id}/accept` | Scaffolded |
+| Mailbox | `/game/mailbox` | `GET /api/mailbox`, `DELETE /api/mailbox/{id}` | Scaffolded |
+| Nation | `/game/nation` | `GET /api/nation/{id}` | Scaffolded |
+
+### API Base URL
+```ts
+const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+```
+
+### SSE Realtime
+```ts
+const es = new EventSource(`${API_BASE}/realtime/events`);
+es.addEventListener('realtime', () => refreshData());
+```
+
+### Dev Server
+```bash
+cd web/game && corepack pnpm dev   # :3001
+```
