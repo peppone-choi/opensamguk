@@ -22,7 +22,9 @@
 import { useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
+import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
+import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type { InheritPointResponse } from '../../../types/game';
 
 // ── inheritanceViewText (verbatim) — display order matches the Vue v-for ───────
@@ -111,12 +113,30 @@ const hr: React.CSSProperties = {
     margin: 'var(--space-md) 0',
 };
 
+// Buy* action descriptor — drives the CommandModal launch. P6-registered codes only
+// (BuyHiddenBuff / BuyRandomUnique); the other store actions stay read-only (later wave).
+interface BuyModalSpec {
+    command: 'BuyHiddenBuff' | 'BuyRandomUnique';
+    label: string;
+    extraArgs: Record<string, unknown>;
+}
+
 export default function InheritPage() {
+    const { frontInfo, refresh } = useFrontInfo();
+    const generalId = frontInfo?.general.generalId ?? null;
+    const nationId = frontInfo?.general.nationId;
     const [data, setData] = useState<InheritPointResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
+    const [toast, setToast] = useState<string>('');
+    const [buyModal, setBuyModal] = useState<BuyModalSpec | null>(null);
 
-    useEffect(() => {
+    function showToast(msg: string) {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3000);
+    }
+
+    function load() {
         let on = true;
         api.inheritPoint()
             .then((d) => {
@@ -134,7 +154,17 @@ export default function InheritPage() {
         return () => {
             on = false;
         };
-    }, []);
+    }
+
+    useEffect(() => load(), []);
+
+    function openBuy(spec: BuyModalSpec) {
+        if (generalId == null) {
+            showToast('장수가 없어 구매할 수 없습니다.');
+            return;
+        }
+        setBuyModal(spec);
+    }
 
     const items = data?.items ?? {};
     const cost = data?.inheritActionCost;
@@ -162,6 +192,12 @@ export default function InheritPage() {
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+
+            {toast && (
+                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                    {toast}
+                </div>
+            )}
 
             {/* ── 유산 포인트 항목 (inheritanceViewText) ─────────────────────────── */}
             <GameCard>
@@ -220,6 +256,13 @@ export default function InheritPage() {
                             다음 턴에 랜덤 유니크를 얻습니다.<br />
                             <span style={costStyle}>필요 포인트: {(cost?.randomUnique ?? 0).toLocaleString()}</span>
                         </div>
+                        <button
+                            type="button"
+                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            onClick={() => openBuy({ command: 'BuyRandomUnique', label: '랜덤 유니크 획득', extraArgs: {} })}
+                        >
+                            구매
+                        </button>
                     </div>
                     <div>
                         <div style={labelStyle}>즉시 전투 특기 초기화</div>
@@ -254,6 +297,19 @@ export default function InheritPage() {
                                         </>
                                     )}
                                 </div>
+                                {level < (data?.maxInheritBuff ?? 0) && (
+                                    <button
+                                        type="button"
+                                        style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                                        onClick={() => openBuy({
+                                            command: 'BuyHiddenBuff',
+                                            label: `${def.title} 구매`,
+                                            extraArgs: { buffKey: def.key, level: level + 1, prevLevel: level },
+                                        })}
+                                    >
+                                        구매
+                                    </button>
+                                )}
                             </div>
                         );
                     })}
@@ -314,6 +370,23 @@ export default function InheritPage() {
                     </div>
                 )}
             </GameCard>
+
+            {/* 유산 포인트 구매 — CommandModal pinned to BuyHiddenBuff / BuyRandomUnique (P6-registered,
+                no Select* arg). The buffKey/level/prevLevel (or empty for random-unique) are page-fixed
+                args; a 예약 confirm posts via api.command. Other store actions remain read-only. */}
+            {buyModal && generalId != null && (
+                <CommandModal
+                    onClose={() => setBuyModal(null)}
+                    onToast={(msg) => showToast(msg)}
+                    generalId={generalId}
+                    nationId={nationId}
+                    pinnedCommand={buyModal.command}
+                    pinnedLabel={buyModal.label}
+                    pinnedArgType={null}
+                    extraArgs={buyModal.extraArgs}
+                    onReserved={() => { refresh(); load(); }}
+                />
+            )}
         </Shell>
     );
 }

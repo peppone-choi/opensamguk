@@ -40,6 +40,24 @@ interface CommandModalProps {
     turnIdx?: number;
     /** Bump front-info after a successful reserve (soft refresh). */
     onReserved?: () => void;
+    // ── F4 C1 retrofit (action-page direct-launch) ──────────────────────────────
+    // When an action page (auction/betting/diplomacy/inherit) opens the modal for ONE
+    // already-known command, it pins the command code + a display label + (optionally)
+    // a forced arg sub-form, and merges page-fixed extra args (auctionId/bettingId/…) into
+    // every submit body. This bypasses the catalog/category grid (we already KNOW the cmd)
+    // but reuses the EXACT same submit contract (api.command + BLOCKED-as-info handling).
+    /** Pin the modal to a single command code, skipping the catalog grid. */
+    pinnedCommand?: string;
+    /** Display caption for the pinned command (verbatim Korean). */
+    pinnedLabel?: string;
+    /** Force the arg sub-form for the pinned command (overrides suffix inference). null = no-arg. */
+    pinnedArgType?: CommandArgType | null;
+    /** min/max/guide forwarded to the amount sub-form (legacy clamp/quick-adjust). */
+    amountMin?: number;
+    amountMax?: number;
+    amountGuide?: number[];
+    /** Page-fixed args merged into every submit body (e.g. {auctionId}, {bettingId}, {isUnique}). */
+    extraArgs?: Record<string, unknown>;
 }
 
 // Fallback catalog (only used when availableCommands() is absent/empty). Minimal — keeps the modal usable
@@ -73,16 +91,39 @@ export default function CommandModal({
     nationId,
     turnIdx = 0,
     onReserved,
+    pinnedCommand,
+    pinnedLabel,
+    pinnedArgType,
+    amountMin,
+    amountMax,
+    amountGuide,
+    extraArgs,
 }: CommandModalProps) {
+    // Pinned command (F4 C1): synthesize a one-item AvailableCommand and pre-select it so the modal
+    // opens straight on the arg sub-form. `reqArg` follows whether an argType was supplied.
+    const pinned: AvailableCommand | null = pinnedCommand
+        ? {
+              value: pinnedCommand,
+              simpleName: pinnedLabel ?? pinnedCommand,
+              title: pinnedLabel ?? pinnedCommand,
+              compensation: 0,
+              possible: true,
+              reqArg: pinnedArgType != null,
+              argType: pinnedArgType ?? undefined,
+          }
+        : null;
+
     const [catalog, setCatalog] = useState<AvailableCommandCategory[]>([]);
     const [usingFallback, setUsingFallback] = useState(false);
     const [cat, setCat] = useState<string>('');
-    const [selected, setSelected] = useState<AvailableCommand | null>(null);
+    const [selected, setSelected] = useState<AvailableCommand | null>(pinned);
     const [argValue, setArgValue] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [blockedReason, setBlockedReason] = useState<string | null>(null);
 
     useEffect(() => {
+        // Pinned mode skips the catalog fetch entirely — we already know the single command.
+        if (pinnedCommand) return;
         let on = true;
         api.availableCommands<AvailableCommandsResponse>(generalId)
             .then((res) => {
@@ -106,7 +147,7 @@ export default function CommandModal({
         return () => {
             on = false;
         };
-    }, [generalId]);
+    }, [generalId, pinnedCommand]);
 
     const categories = useMemo(() => catalog.map((c) => c.category), [catalog]);
     const filtered = useMemo(() => catalog.find((c) => c.category === cat)?.values ?? [], [catalog, cat]);
@@ -127,9 +168,12 @@ export default function CommandModal({
         setLoading(true);
         setBlockedReason(null);
         try {
+            // Page-fixed args (auctionId/bettingId/nationId/isUnique …) merge BENEATH the picked arg
+            // so an explicit user pick wins on a key collision.
+            const fullBody = { ...(extraArgs ?? {}), ...body };
             const res = await api.command<{ status: string; reason?: string }>(
                 cmd.value,
-                body,
+                fullBody,
                 generalId,
                 turnIdx,
             );
@@ -209,7 +253,15 @@ export default function CommandModal({
                     </>
                 ) : (
                     <>
-                        <button className="cmd-back" onClick={() => { setSelected(null); setBlockedReason(null); }}>
+                        <button
+                            className="cmd-back"
+                            onClick={() => {
+                                setBlockedReason(null);
+                                // Pinned mode has no catalog to return to → close the modal.
+                                if (pinnedCommand) onClose();
+                                else setSelected(null);
+                            }}
+                        >
                             ← 뒤로
                         </button>
                         <h3>{selected.simpleName}</h3>
@@ -224,9 +276,17 @@ export default function CommandModal({
                             {argType === 'nation' && (
                                 <SelectNationField value={argValue} onChange={setArgValue} ownNationId={nationId} />
                             )}
-                            {argType === 'amount' && <SelectAmountField value={argValue} onChange={setArgValue} />}
+                            {argType === 'amount' && (
+                                <SelectAmountField
+                                    value={argValue}
+                                    onChange={setArgValue}
+                                    min={amountMin}
+                                    max={amountMax}
+                                    guide={amountGuide}
+                                />
+                            )}
                             {/* reqArg but unknown argType → free numeric target input (never crash). */}
-                            {!argType && (
+                            {selected.reqArg && !argType && (
                                 <label>
                                     <span>대상</span>
                                     <input
@@ -236,7 +296,11 @@ export default function CommandModal({
                                     />
                                 </label>
                             )}
-                            <button className="cmd-submit" onClick={submitWithArg} disabled={loading}>
+                            <button
+                                className="cmd-submit"
+                                onClick={() => (selected.reqArg ? submitWithArg() : void submit(selected, {}))}
+                                disabled={loading}
+                            >
                                 {loading ? '처리 중...' : '예약'}
                             </button>
                         </div>

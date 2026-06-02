@@ -4,12 +4,24 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
+import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
+import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type {
     DiplomacyLettersResponse,
     DiplomacyLetter,
     DiplomacyLetterNation,
 } from '../../../lib/types';
+
+// 외교 빠른 명령 (quick-action) — verbatim Korean captions → P6-registered che_ command codes.
+// nation-target via the modal's SelectNationField (pinnedArgType 'nation'). All four confirmed in
+// CommandRegistry.kt: che_종전제의 / che_불가침제의 / che_불가침파기제의 / che_선전포고.
+const DIPLO_QUICK_ACTIONS: { code: string; label: string }[] = [
+    { code: 'che_종전제의', label: '종전 제의' },
+    { code: 'che_불가침제의', label: '불가침 제의' },
+    { code: 'che_불가침파기제의', label: '불가침 파기 제의' },
+    { code: 'che_선전포고', label: '선전 포고' },
+];
 
 // 외교부 (page 1) — letter-management view. Mirrors j_diplomacy_get_letter.php +
 // ts/diplomacy.ts drawLetter(). READ-ONLY this wave: letter cards render the
@@ -49,9 +61,20 @@ function isBrightColor(hex?: string): boolean {
 }
 
 export default function DiplomacyPage() {
+    const { frontInfo, refresh } = useFrontInfo();
+    const generalId = frontInfo?.general.generalId ?? null;
+    const ownNationId = frontInfo?.general.nationId;
     const [data, setData] = useState<DiplomacyLettersResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
+    const [toast, setToast] = useState<string>('');
+    // The quick-action whose CommandModal is open (null = closed). nation target picked in-modal.
+    const [quickAction, setQuickAction] = useState<{ code: string; label: string } | null>(null);
+
+    function showToast(msg: string) {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3000);
+    }
 
     const fetchData = useCallback(async () => {
         try {
@@ -89,8 +112,35 @@ export default function DiplomacyPage() {
                 <button onClick={fetchData}>새로고침</button>
             </div>
 
+            {/* 외교 빠른 명령 — route each through CommandModal (nation-target SelectNationField). */}
+            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+                <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>외교 명령</h2>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    {DIPLO_QUICK_ACTIONS.map(act => (
+                        <button
+                            key={act.code}
+                            onClick={() => {
+                                if (generalId == null) {
+                                    showToast('장수가 없어 외교 명령을 내릴 수 없습니다.');
+                                    return;
+                                }
+                                setQuickAction(act);
+                            }}
+                        >
+                            {act.label}
+                        </button>
+                    ))}
+                </div>
+            </GameCard>
+
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+
+            {toast && (
+                <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
+                    {toast}
+                </div>
+            )}
 
             {!loading && !error && (
                 <>
@@ -131,6 +181,21 @@ export default function DiplomacyPage() {
                         </div>
                     )}
                 </>
+            )}
+
+            {/* 외교 명령 — CommandModal pinned to a che_ diplomacy code (nation-target SelectNationField).
+                The destination nation is picked in-modal; own nation excluded via nationId prop. */}
+            {quickAction && generalId != null && (
+                <CommandModal
+                    onClose={() => setQuickAction(null)}
+                    onToast={(msg) => showToast(msg)}
+                    generalId={generalId}
+                    nationId={ownNationId}
+                    pinnedCommand={quickAction.code}
+                    pinnedLabel={quickAction.label}
+                    pinnedArgType="nation"
+                    onReserved={() => { refresh(); fetchData(); }}
+                />
             )}
         </Shell>
     );
