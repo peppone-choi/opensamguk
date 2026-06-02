@@ -4,8 +4,7 @@ WORKDIR /src
 RUN corepack enable
 COPY web/gateway/package.json web/gateway/pnpm-lock.yaml web/gateway/
 WORKDIR /src/web/gateway
-ENV CI=true
-RUN corepack pnpm install
+RUN echo "ignore-build-dependency-scripts=true" >> .npmrc && corepack pnpm install
 COPY web/gateway/ .
 RUN corepack pnpm build
 

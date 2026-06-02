@@ -4,8 +4,7 @@ WORKDIR /src
 RUN corepack enable
 COPY web/game/package.json web/game/pnpm-lock.yaml web/game/
 WORKDIR /src/web/game
-ENV CI=true
-RUN corepack pnpm install
+RUN echo "ignore-build-dependency-scripts=true" >> .npmrc && corepack pnpm install
 COPY web/game/ .
 RUN corepack pnpm build
 
