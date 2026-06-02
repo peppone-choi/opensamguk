@@ -309,13 +309,18 @@ textarea:focus {
 /* 맵 프리뷰 (서버별 10분 캐싱 — 데이터+클라 SVG. F0: placeholder/베이스맵) */
 .map-preview {
     width: 100%;
-    max-width: 720px;
-    aspect-ratio: 4 / 3;
+    max-width: 700px;
+    aspect-ratio: 7 / 5; /* che 베이스맵 700×500 */
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     overflow: hidden;
     position: relative;
+}
+.map-preview svg {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 .map-preview-ph {
     position: absolute;
@@ -327,6 +332,16 @@ textarea:focus {
     font-size: var(--text-sm);
     text-align: center;
     padding: var(--space-md);
+}
+.map-preview-cap {
+    position: absolute;
+    left: var(--space-sm);
+    bottom: var(--space-sm);
+    padding: 2px var(--space-sm);
+    background: rgba(10, 10, 10, 0.6);
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
 }
 
 /* 캐릭터 셀 액션 */

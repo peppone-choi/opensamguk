@@ -34,7 +34,7 @@ function LobbyView() {
             <Topbar />
             <main className="lobby-main fade-in">
                 {/* 서버 세계지도 프리뷰 (서버별 10분 캐싱). F0: placeholder. */}
-                {featured && <MapPreview gameApiUrl={featured.gameApiUrl} />}
+                {featured && <MapPreview serverId={featured.id} />}
 
                 <section>
                     <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
