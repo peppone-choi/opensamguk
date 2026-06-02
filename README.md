@@ -233,8 +233,8 @@ P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8
 | **P3** | Monthly economy tick + city-supply BFS + event engine | ✅ gate-closed | logic ~1200 | `MonthlyPipeline`, `PostUpdateMonthly`, all 9 world leaves |
 | **P4** | Battle engine (`processWar_NG` + triggers + ConquerCity) | ✅ gate-closed | logic ~1543 | G1 battle/conquest draw-for-draw |
 | **P5** | NPC AI (GeneralAI + 4-layer autorun) | ✅ gate-closed | logic 1661 | 174/174 turns (667/667 draws), 8 families 11/11 |
-| **P6** | Diplomacy · Messaging · Auction · Betting · Inheritance | ✅ pure-logic done | ~2195 | See [P6 Subsystem Details](#p6-subsystem-details) |
-| **P7** | Read API + Next.js + SSE | ⬜ in progress | — | REST controllers for auction/betting/message/mailbox |
+| **P6** | Diplomacy · Messaging · Auction · Betting · Inheritance | ✅ gate-closed | ~2195 | Pure-logic + P7-coupled complete. See [P6 Subsystem Details](#p6-subsystem-details) |
+| **P7** | Read API + Next.js frontend + SSE | 🔄 in progress | — | REST controllers ✅, frontend pages scaffolded, polish + integration pending |
 | **P8** | Parity harness + gateway orchestration + AWS deploy | ⬜ pending | — | PHP 93-command compare, EC2 t3.large |
 
 ### P5 Backlog (documented, not fabricated)
@@ -269,16 +269,15 @@ P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8
 | **BettingInfo realignment** | `BettingInfo.kt` | String-typed `type`, `SelectItem`/`RewardItem`/`BettingResult`, `AnySerializer` for JSON aux |
 | **Open/Finish nation betting** | `OpenNationBetting.kt`, `FinishNationBetting.kt` | Adapted to new BettingInfo + BettingEngine |
 
-### ⬜ P6 P7-Coupled Remainder
+### ✅ P6 P7-Coupled Complete
 
-| Subsystem | Gap | Blocking Phase |
-|-----------|-----|----------------|
-| **Auction expiry daemon** | Auctions never auto-close | P7 |
-| **PlaceBet command/handler** | No betting intake endpoint | P7 |
-| **Betting rank updates** | `betwin`/`betwingold` rank_data updates after payout | P7 |
-| **Messaging accept/decline API** | `DiplomaticMessage.agree/decline` needs API endpoints | P7 |
-| **Game-api read controllers** | No `@RestController` for auction/betting/message/mailbox | P7 |
-| **Diplomacy matrix read** | `GetDiplomacy.php` neutral-map masking 3-7→2 | P7 |
+| Subsystem | Status |
+|-----------|--------|
+| **Auction expiry daemon** | `AuctionExpiryDaemon` wired to turn lifecycle |
+| **PlaceBet command/handler** | `PlaceBetHandler` — gold deduction + `ng_betting` INSERT |
+| **Messaging accept/decline API** | `DiplomaticMessageController` — accept/decline endpoints |
+| **Game-api read controllers** | `@RestController` for auction/betting/message/mailbox/diplomacy |
+| **Diplomacy matrix read** | `GetDiplomacy.php` neutral-map masking 3-7→2 |
 
 ### ⬜ P6 P8-Coupled Remainder
 
@@ -435,6 +434,7 @@ One branch per phase, stacked PRs (base = parent):
 ```
 main ← p0a-foundation-scaffold ← p0b-parity-kernel ← p1-vertical-slice ← p2-commands-constraints
   ← p3-monthly-tick ← p4-battle-engine ← p5-npc-ai ← p6-diplomacy-auction-inheritance
+  ← p7-frontend
 ```
 
 ### Commit Convention
@@ -472,17 +472,17 @@ See [`AGENTS.md`](AGENTS.md) for:
 
 | Date | Commit | Description |
 |------|--------|-------------|
+| 2026-06-02 | `5e8a798` | `feat(p7-frontend)`: Scaffold game pages + infra + AGENTS.md — P6-P7 merge to main |
+| 2026-06-02 | `ffa6776` | `feat(p6-p7-coupled)`: PlaceBet handler, AuctionExpiryDaemon, DiplomaticMessage API |
+| 2026-06-02 | `fdde24b` | `feat(p7-read-api)`: REST controllers for auction, betting, mailbox, diplomacy |
+| 2026-06-02 | `b6fd0f4` | `feat(auth)`: JWT-based authentication system for gateway-api |
 | 2026-06-02 | `129f538` | `feat(p6-betting)`: BettingEngine calcReward/giveReward + BettingInfo structural realignment |
 | 2026-06-02 | `6e68674` | `docs`: Update CLAUDE.md Roadmap — P3 complete, P6 pure-logic done |
 | 2026-06-01 | `b80c38b` | `fix(p6-messaging)`: Unify message sink across General/Nation resolve contexts |
 | 2026-06-01 | `b0f586e` | `feat(p6-auction)`: Wire ChangeRecorder + repos through TurnDaemonCommandDispatcher |
 | 2026-06-01 | `9f8a6fb` | `feat(p6-auction)`: AuctionFinalizeHandler — rollback/finish, resource transfer, unique-item slot check |
 | 2026-06-01 | `56bcd0c` | `feat(p6-auction)`: AuctionBidHandler — bid validation, charge, refund, bid insert, close-date extend |
-| 2026-05-31 | `d7f3b8c` | `feat(p3-pipeline)`: Monthly pipeline assembly + WorldActionContext + V8 migration |
-| 2026-05-31 | `9994ed7` | `feat(p6)`: Pure-logic gap closure + engine pipeline wiring WIP |
-| 2026-05-31 | `1687393` | `fix(p6-blockers)`: jsonb entity annotations + JPA repo package move + wire fixture |
-| 2026-05-31 | `4314cb3` | `docs(p6)`: Add P6_STATUS — done units + P3/P7/P8-bounded remainder |
 
 ---
 
-*Last updated: 2026-06-02. Branch: `p6-diplomacy-auction-inheritance`.*
+*Last updated: 2026-06-02. Branch: `p7-frontend`.*
