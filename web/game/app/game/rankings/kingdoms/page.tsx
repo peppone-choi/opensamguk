@@ -7,21 +7,7 @@ import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatNumber } from '../../../../lib/format';
-
-interface KingdomRank {
-  rank: number;
-  nationId: number;
-  name: string;
-  color: string;
-  level: number;
-  gold: number;
-  rice: number;
-  pop: number;
-  genNum: number;
-  power: number;
-  cityCount: number;
-  capitalName: string;
-}
+import type { KingdomRank } from '../../../../types/game';
 
 export default function KingdomsPage() {
   const [data, setData] = useState<KingdomRank[]>([]);

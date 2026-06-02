@@ -9,24 +9,7 @@ import GameTable from '../../../../../components/GameTable';
 import StatusBadge from '../../../../../components/StatusBadge';
 import { api } from '../../../../../lib/api';
 import { formatDate, formatNumber } from '../../../../../lib/format';
-
-interface EmperorDetail {
-  id: number;
-  name: string;
-  nation: string;
-  nationColor: string;
-  unifiedAt: string;
-  turn: number;
-  year: number;
-  month: number;
-  generalCount: number;
-  cityCount: number;
-  totalGold: number;
-  totalRice: number;
-  totalPop: number;
-  generals: { name: string; leadership: number; strength: number; intel: number }[];
-  cities: { name: string; level: number; pop: number }[];
-}
+import type { EmperorDetail } from '../../../../../types/game';
 
 export default function EmperorDetailPage() {
   const params = useParams();

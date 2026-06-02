@@ -1,0 +1,15 @@
+// gateway-api 인증 계약 (AuthDto.kt 미러).
+
+export interface User {
+    id: number;
+    username: string;
+    email: string | null;
+    nickname: string | null;
+    role: string; // "USER" | "ADMIN"
+}
+
+export interface AuthResponse {
+    accessToken: string;
+    refreshToken: string;
+    user: User;
+}

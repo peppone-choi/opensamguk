@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
+import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
 import { formatRemaining } from '../../../lib/format';
+import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type { AuctionItem } from '../../../types/game';
 
 const TYPE_LABEL: Record<string, string> = {
@@ -21,13 +23,21 @@ const RES_LABEL: Record<string, string> = {
 };
 
 export default function AuctionPage() {
+    const { frontInfo, refresh } = useFrontInfo();
+    const generalId = frontInfo?.general.generalId ?? null;
+    const nationId = frontInfo?.general.nationId;
     const [auctions, setAuctions] = useState<AuctionItem[]>([]);
-    const [generalId, setGeneralId] = useState<number>(1);
-    const [bidAmount, setBidAmount] = useState<Record<number, string>>({});
+    // The auction id whose 입찰 modal is open (null = closed). amount sub-form lives in CommandModal.
+    const [bidAuction, setBidAuction] = useState<AuctionItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
     const [now, setNow] = useState<number>(Date.now());
+
+    function showToast(msg: string) {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3000);
+    }
 
     const fetchAuctions = useCallback(async () => {
         setLoading(true);
@@ -47,8 +57,8 @@ export default function AuctionPage() {
     }, [fetchAuctions]);
 
     useEffect(() => {
-        const es = new EventSource(`${process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081'}/realtime/events`);
-        es.addEventListener('realtime', () => fetchAuctions());
+        const es = new EventSource('/api/game/sse/turn');
+        es.addEventListener('turnCompleted', () => fetchAuctions());
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchAuctions]);
@@ -58,23 +68,6 @@ export default function AuctionPage() {
         return () => clearInterval(timer);
     }, []);
 
-    async function placeBid(auctionId: number) {
-        const amount = Number(bidAmount[auctionId]);
-        if (!amount || amount <= 0) {
-            setToast('입찰가를 입력하세요.');
-            setTimeout(() => setToast(''), 3000);
-            return;
-        }
-        try {
-            const data = await api.command<{ status: string; reason?: string }>('auction_bid', { auctionId, amount });
-            setToast(data.status === 'AVAILABLE' ? '입찰이 접수되었습니다.' : (data.reason ?? '입찰할 수 없습니다.'));
-        } catch {
-            setToast('입찰 요청에 실패했습니다.');
-        }
-        setTimeout(() => setToast(''), 3000);
-        fetchAuctions();
-    }
-
     const activeAuctions = auctions.filter(a => !a.finished);
     const finishedAuctions = auctions.filter(a => a.finished);
 
@@ -83,15 +76,6 @@ export default function AuctionPage() {
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>경매장</h1>
 
             <div className="control-bar" style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>장수 ID</span>
-                    <input
-                        type="number"
-                        style={{ width: '5rem' }}
-                        value={generalId}
-                        onChange={e => setGeneralId(Number(e.target.value))}
-                    />
-                </label>
                 <button onClick={fetchAuctions}>새로고침</button>
             </div>
 
@@ -125,14 +109,17 @@ export default function AuctionPage() {
                             <div><span style={{ color: 'var(--text-muted)' }}>남은 시간:</span> <strong style={{ color: 'var(--gold)' }}>{formatRemaining(a.closeDate, now)}</strong></div>
                         </div>
                         <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
-                            <input
-                                type="number"
-                                placeholder="입찰가"
-                                style={{ width: '8rem' }}
-                                value={bidAmount[a.id] ?? ''}
-                                onChange={e => setBidAmount(prev => ({ ...prev, [a.id]: e.target.value }))}
-                            />
-                            <button onClick={() => placeBid(a.id)}>입찰</button>
+                            <button
+                                onClick={() => {
+                                    if (generalId == null) {
+                                        showToast('장수가 없어 입찰할 수 없습니다.');
+                                        return;
+                                    }
+                                    setBidAuction(a);
+                                }}
+                            >
+                                입찰
+                            </button>
                         </div>
                     </GameCard>
                 ))}
@@ -159,6 +146,23 @@ export default function AuctionPage() {
                         ))}
                     </div>
                 </>
+            )}
+
+            {/* 입찰 — CommandModal pinned to auction_bid (amount sub-form). isUnique distinguishes a
+                유니크 아이템 auction from a 금/쌀(자원) auction; auctionId is the page-fixed arg. */}
+            {bidAuction && generalId != null && (
+                <CommandModal
+                    onClose={() => setBidAuction(null)}
+                    onToast={(msg) => showToast(msg)}
+                    generalId={generalId}
+                    nationId={nationId}
+                    pinnedCommand="auction_bid"
+                    pinnedLabel={`입찰 (${TYPE_LABEL[bidAuction.type] ?? bidAuction.type})`}
+                    pinnedArgType="amount"
+                    amountMin={1}
+                    extraArgs={{ auctionId: bidAuction.id, isUnique: bidAuction.type === 'uniqueItem' }}
+                    onReserved={() => { refresh(); fetchAuctions(); }}
+                />
             )}
         </Shell>
     );

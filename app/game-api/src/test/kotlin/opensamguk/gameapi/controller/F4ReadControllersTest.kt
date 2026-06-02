@@ -1,0 +1,406 @@
+package opensamguk.gameapi.controller
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.owner.GeneralOwnerEntity
+import opensamguk.gameapi.owner.GeneralOwnerRepository
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.BoardCommentReadRepository
+import opensamguk.gameapi.read.BoardPostReadRepository
+import opensamguk.gameapi.read.CityReadEntity
+import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.DiplomacyLetterReadEntity
+import opensamguk.gameapi.read.DiplomacyLetterReadRepository
+import opensamguk.gameapi.read.DiplomacyReadEntity
+import opensamguk.gameapi.read.DiplomacyReadRepository
+import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.HistoryReadRepository
+import opensamguk.gameapi.read.InheritanceLogReadRepository
+import opensamguk.gameapi.read.NationReadEntity
+import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.NationTurnReadEntity
+import opensamguk.gameapi.read.NationTurnReadRepository
+import opensamguk.gameapi.read.TroopReadRepository
+import opensamguk.gameapi.read.VoteCommentReadRepository
+import opensamguk.gameapi.read.VotePollReadRepository
+import opensamguk.gameapi.read.VoteReadRepository
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.anyString
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
+import org.springframework.data.domain.PageRequest
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.RequestPostProcessor
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.time.Instant
+import java.util.Optional
+
+/**
+ * F4 — MockMvc standalone slice tests for the 12 READ-only action-page controllers (spec
+ * 2026-06-03-F4-action-pages-spec.md). No Spring context, no Testcontainers — every repo is a mock.
+ *
+ * Coverage: the non-trivial real-data shapes (generals public projection, diplomacy letters state text,
+ * conflict matrix, nation finance editable gate, chief-reserved post grid, inherit cost+stat clamp,
+ * vote tally + myVote) AND the empty/graceful defaults for the seed-empty tables (tournament state-0,
+ * board, votes, troops, history) + the permission gates (board 기밀실, chief/npc/inherit identity).
+ */
+class F4ReadControllersTest {
+
+    private val generals = mock(GeneralReadRepository::class.java)
+    private val nations = mock(NationReadRepository::class.java)
+    private val cities = mock(CityReadRepository::class.java)
+    private val owners = mock(GeneralOwnerRepository::class.java)
+    private val resolver = GeneralResolver(owners, generals, nations)
+    private val letters = mock(DiplomacyLetterReadRepository::class.java)
+    private val diplomacy = mock(DiplomacyReadRepository::class.java)
+    private val nationTurns = mock(NationTurnReadRepository::class.java)
+    private val gameKv = mock(GameKvReadRepository::class.java)
+    private val inheritLogs = mock(InheritanceLogReadRepository::class.java)
+    private val boardPosts = mock(BoardPostReadRepository::class.java)
+    private val boardComments = mock(BoardCommentReadRepository::class.java)
+    private val polls = mock(VotePollReadRepository::class.java)
+    private val votes = mock(VoteReadRepository::class.java)
+    private val voteComments = mock(VoteCommentReadRepository::class.java)
+    private val troops = mock(TroopReadRepository::class.java)
+    private val history = mock(HistoryReadRepository::class.java)
+    private val objectMapper = ObjectMapper()
+
+    private fun mvc(vararg controllers: Any): MockMvc =
+        MockMvcBuilders.standaloneSetup(*controllers)
+            .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
+            .build()
+
+    private fun principal(userId: Long): RequestPostProcessor = RequestPostProcessor { req ->
+        SecurityContextHolder.getContext().authentication =
+            UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
+        req
+    }
+
+    private fun gen(
+        id: Int, name: String, nationId: Int = 0, cityId: Int = 0, officerLevel: Int = 0,
+        leadership: Int = 0, strength: Int = 0, intel: Int = 0, crew: Int = 0, troopId: Int = 0,
+        meta: Map<String, Any?> = linkedMapOf(),
+    ) = GeneralReadEntity(
+        id = id, name = name, nationId = nationId, cityId = cityId, officerLevel = officerLevel,
+        leadership = leadership, strength = strength, intel = intel, crew = crew, troopId = troopId, meta = meta,
+    )
+
+    private fun nation(id: Int, name: String, color: String = "#fff", level: Int = 0, gold: Int = 0, rice: Int = 0, meta: Map<String, Any?> = linkedMapOf()) =
+        NationReadEntity(id = id, name = name, color = color, level = level, gold = gold, rice = rice, meta = meta)
+
+    private fun city(id: Int, name: String, nationId: Int = 0, conflict: Map<String, Any?> = linkedMapOf()) =
+        CityReadEntity(id = id, name = name, nationId = nationId, conflict = conflict)
+
+    // ── GET /api/generals (public projection, 재야 join) ─────────────────────────────────────────────
+    @Test
+    fun `generals returns public fields with neutral join and city name`() {
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828")))
+        `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1)))
+        `when`(generals.findAll()).thenReturn(
+            listOf(
+                gen(id = 2, name = "방랑", nationId = 0, cityId = 0, officerLevel = 0, leadership = 70, strength = 80, intel = 90, crew = 0),
+                gen(id = 1, name = "조조", nationId = 1, cityId = 5, officerLevel = 12, leadership = 90, strength = 80, intel = 95, crew = 1000),
+            ),
+        )
+
+        mvc(GeneralsController(generals, nations, cities)).perform(get("/api/generals"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(2))
+            .andExpect(jsonPath("$[0].id").value(1)) // sorted by id asc
+            .andExpect(jsonPath("$[0].name").value("조조"))
+            .andExpect(jsonPath("$[0].nation").value("위"))
+            .andExpect(jsonPath("$[0].nationColor").value("#c62828"))
+            .andExpect(jsonPath("$[0].cityName").value("허창"))
+            .andExpect(jsonPath("$[0].crew").value(1000))
+            .andExpect(jsonPath("$[1].id").value(2))
+            .andExpect(jsonPath("$[1].nation").value("재야"))
+            .andExpect(jsonPath("$[1].nationColor").value("#000000"))
+            .andExpect(jsonPath("$[1].cityName").value(""))
+            // permission=0 surface only — no gold/rice/experience field
+            .andExpect(jsonPath("$[0].gold").doesNotExist())
+            .andExpect(jsonPath("$[0].experience").doesNotExist())
+    }
+
+    // ── GET /api/tournament (state-0 default, no table) ──────────────────────────────────────────────
+    @Test
+    fun `tournament returns state-0 default with 4 empty ranking boards`() {
+        `when`(gameKv.findByTableAndNamespaceAndKey(anyString(), anyString(), anyString())).thenReturn(null)
+
+        mvc(TournamentController(gameKv, objectMapper)).perform(get("/api/tournament"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.state").value(0))
+            .andExpect(jsonPath("$.tnmtType").value(0))
+            .andExpect(jsonPath("$.tnmtTypeText").value("전력전"))
+            .andExpect(jsonPath("$.tnmtMsg").value(""))
+            .andExpect(jsonPath("$.groups.length()").value(0))
+            .andExpect(jsonPath("$.bracket.length()").value(0))
+            .andExpect(jsonPath("$.rankings.length()").value(4))
+            .andExpect(jsonPath("$.rankings[0].type").value("전력전"))
+            .andExpect(jsonPath("$.rankings[1].type").value("통솔전"))
+            .andExpect(jsonPath("$.rankings[2].type").value("일기토"))
+            .andExpect(jsonPath("$.rankings[3].type").value("설전"))
+    }
+
+    private fun diplomacyController() =
+        DiplomacyController(diplomacy, letters, nations, cities, resolver)
+
+    // ── GET /api/diplomacy/letters (state text verbatim) ─────────────────────────────────────────────
+    @Test
+    fun `diplomacy letters maps state text verbatim and scopes to my nation`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
+            listOf(
+                DiplomacyLetterReadEntity(id = 1, srcNationId = 1, destNationId = 2, state = "PROPOSED", textBrief = "종전제의", textDetail = "종전합시다", srcSigner = 10),
+                DiplomacyLetterReadEntity(id = 2, srcNationId = 2, destNationId = 1, state = "ACTIVATED", textBrief = "승인", textDetail = "좋소", srcSigner = 20, destSigner = 10),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.myNationID").value(1))
+            .andExpect(jsonPath("$.nations.1.name").value("위"))
+            .andExpect(jsonPath("$.nations.2.color").value("#2e7d32"))
+            .andExpect(jsonPath("$.letters.length()").value(2))
+            .andExpect(jsonPath("$.letters[0].stateText").value("제안됨"))
+            .andExpect(jsonPath("$.letters[1].stateText").value("승인됨"))
+    }
+
+    @Test
+    fun `diplomacy letters returns empty for anonymous caller`() {
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828")))
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.myNationID").value(0))
+            .andExpect(jsonPath("$.letters.length()").value(0))
+            .andExpect(jsonPath("$.nations.1.name").value("위"))
+    }
+
+    // ── GET /api/diplomacy/conflict (per-city % + matrix masking) ────────────────────────────────────
+    @Test
+    fun `diplomacy conflict returns per-city conflict map and masked matrix`() {
+        `when`(cities.findAll()).thenReturn(
+            listOf(city(5, "허창", nationId = 1, conflict = linkedMapOf("2" to 40, "3" to 10))),
+        )
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위"), nation(2, "촉")))
+        `when`(diplomacy.findBySrcNationId(1)).thenReturn(
+            listOf(DiplomacyReadEntity(id = 1, srcNationId = 1, destNationId = 2, stateCode = 5, term = 3)),
+        )
+        `when`(diplomacy.findBySrcNationId(2)).thenReturn(emptyList())
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/conflict"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.cities.length()").value(1))
+            .andExpect(jsonPath("$.cities[0].cityName").value("허창"))
+            .andExpect(jsonPath("$.cities[0].conflict.2").value(40))
+            .andExpect(jsonPath("$.cities[0].conflict.3").value(10))
+            // stateCode 5 masked to 2 (neutral)
+            .andExpect(jsonPath("$.matrix.1.2").value(2))
+    }
+
+    // ── GET /api/nation/{id}/finance (editable gate) ─────────────────────────────────────────────────
+    @Test
+    fun `nation finance reports gold rice and editable only for 수뇌 in nation`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        val meta = linkedMapOf<String, Any?>("rate" to 20, "notice" to "전군 진격", "block_war" to true)
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", "#c62828", level = 7, gold = 5000, rice = 3000, meta = meta)))
+
+        mvc(NationFinanceController(nations, resolver)).perform(get("/api/nation/1/finance").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.gold").value(5000))
+            .andExpect(jsonPath("$.rice").value(3000))
+            .andExpect(jsonPath("$.rate").value(20))
+            .andExpect(jsonPath("$.nationMsg").value("전군 진격"))
+            .andExpect(jsonPath("$.blockWar").value(true))
+            .andExpect(jsonPath("$.editable").value(true))
+    }
+
+    @Test
+    fun `nation finance missing nation returns result-false zeroed shape`() {
+        `when`(nations.findById(99)).thenReturn(Optional.empty())
+
+        mvc(NationFinanceController(nations, resolver)).perform(get("/api/nation/99/finance"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.gold").value(0))
+            .andExpect(jsonPath("$.editable").value(false))
+    }
+
+    // ── GET /api/nation/chief-reserved (8 posts, reserved turns by level) ────────────────────────────
+    @Test
+    fun `chief reserved returns 8 posts with reserved turns grouped by officer level`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nationTurns.findByNationIdOrderByOfficerLevelDescTurnIdxAsc(1)).thenReturn(
+            listOf(NationTurnReadEntity(id = 1, nationId = 1, officerLevel = 12, turnIdx = 0, actionCode = "che_증축", brief = "증축")),
+        )
+
+        mvc(ChiefCenterController(resolver, nationTurns)).perform(get("/api/nation/chief-reserved").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.nationId").value(1))
+            .andExpect(jsonPath("$.posts.length()").value(8))
+            .andExpect(jsonPath("$.posts[0].officerLevel").value(12))
+            .andExpect(jsonPath("$.posts[0].title").value("군주"))
+            .andExpect(jsonPath("$.posts[0].reservedTurns.length()").value(1))
+            .andExpect(jsonPath("$.posts[0].reservedTurns[0].actionCode").value("che_증축"))
+            .andExpect(jsonPath("$.posts[7].officerLevel").value(5))
+            .andExpect(jsonPath("$.posts[7].reservedTurns.length()").value(0))
+    }
+
+    @Test
+    fun `chief reserved 401 for anonymous caller`() {
+        mvc(ChiefCenterController(resolver, nationTurns)).perform(get("/api/nation/chief-reserved"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    // ── GET /api/nation/npc-policy (default + current, permission gate) ──────────────────────────────
+    @Test
+    fun `npc policy returns defaults plus current for a 관직자`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7, meta = linkedMapOf("npc_policy" to linkedMapOf("minNPCWarLeadership" to 55)))))
+
+        mvc(NpcPolicyController(resolver, nations)).perform(get("/api/nation/npc-policy").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.defaultPolicy.minNPCWarLeadership").value(40))
+            .andExpect(jsonPath("$.currentPolicy.minNPCWarLeadership").value(55))
+    }
+
+    @Test
+    fun `npc policy 403 for a 재야 caller`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "방랑", nationId = 0, officerLevel = 0)))
+
+        mvc(NpcPolicyController(resolver, nations)).perform(get("/api/nation/npc-policy").with(principal(7L)))
+            .andExpect(status().isForbidden)
+    }
+
+    // ── GET /api/inherit-point (cost table + stat clamp + zeroed items) ──────────────────────────────
+    @Test
+    fun `inherit point returns zeroed items, clamped stat, and the GameConst cost table`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5, leadership = 95, strength = 5, intel = 80)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(gameKv.findByTableAndNamespaceAndKey(anyString(), anyString(), anyString())).thenReturn(null)
+        `when`(inheritLogs.findByUserIdOrderByIdDesc("7", PageRequest.of(0, 30))).thenReturn(emptyList())
+
+        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper)).perform(get("/api/inherit-point").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.items.previous").value(0))
+            .andExpect(jsonPath("$.maxInheritBuff").value(5))
+            .andExpect(jsonPath("$.resetTurnTimeLevel").value(0))
+            // calcResetAttrPoint(0) = base[0] = 1000
+            .andExpect(jsonPath("$.inheritActionCost.resetTurnTime").value(1000))
+            .andExpect(jsonPath("$.inheritActionCost.randomUnique").value(3000))
+            .andExpect(jsonPath("$.inheritActionCost.bornStatPoint").value(1000))
+            // stat clamp to [10,90]: leadership 95→90, strength 5→10, intel 80→80
+            .andExpect(jsonPath("$.currentStat.leadership").value(90))
+            .andExpect(jsonPath("$.currentStat.strength").value(10))
+            .andExpect(jsonPath("$.currentStat.intel").value(80))
+            .andExpect(jsonPath("$.currentStat.statMin").value(10))
+            .andExpect(jsonPath("$.currentStat.statMax").value(90))
+            .andExpect(jsonPath("$.lastInheritPointLogs.length()").value(0))
+    }
+
+    @Test
+    fun `inherit point 401 for anonymous`() {
+        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper)).perform(get("/api/inherit-point"))
+            .andExpect(status().isUnauthorized)
+    }
+
+    // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
+    @Test
+    fun `board public 회의실 returns empty articles with verbatim title`() {
+        `when`(boardPosts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(emptyList())
+
+        mvc(BoardController(boardPosts, boardComments, resolver)).perform(get("/api/board?secret=false"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.secret").value(false))
+            .andExpect(jsonPath("$.title").value("회의실"))
+            .andExpect(jsonPath("$.articles.length()").value(0))
+            .andExpect(jsonPath("$.blockedReason").doesNotExist())
+    }
+
+    @Test
+    fun `board 기밀실 blocked for anonymous with INFO reason`() {
+        mvc(BoardController(boardPosts, boardComments, resolver)).perform(get("/api/board?secret=true"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.secret").value(true))
+            .andExpect(jsonPath("$.title").value("기밀실"))
+            .andExpect(jsonPath("$.articles.length()").value(0))
+            .andExpect(jsonPath("$.blockedReason").value("권한이 부족합니다. 수뇌부가 아닙니다."))
+    }
+
+    @Test
+    fun `board 기밀실 allowed for 수뇌`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, true)).thenReturn(emptyList())
+
+        mvc(BoardController(boardPosts, boardComments, resolver)).perform(get("/api/board?secret=true").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.blockedReason").doesNotExist())
+            .andExpect(jsonPath("$.articles.length()").value(0))
+    }
+
+    // ── GET /api/votes (empty list) + detail tally ───────────────────────────────────────────────────
+    @Test
+    fun `votes list empty when no polls`() {
+        `when`(polls.findAllByOrderByIdDesc()).thenReturn(emptyList())
+
+        mvc(VoteController(polls, votes, voteComments, resolver)).perform(get("/api/votes"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.length()").value(0))
+    }
+
+    @Test
+    fun `vote detail 404 for missing poll`() {
+        `when`(polls.findById(99)).thenReturn(Optional.empty())
+
+        mvc(VoteController(polls, votes, voteComments, resolver)).perform(get("/api/votes/99"))
+            .andExpect(status().isNotFound)
+    }
+
+    // ── GET /api/troops (empty when no rows) ─────────────────────────────────────────────────────────
+    @Test
+    fun `troops returns empty list when troop table has no rows`() {
+        `when`(troops.findAll()).thenReturn(emptyList())
+
+        mvc(TroopController(troops, generals, cities, resolver)).perform(get("/api/troops"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.troops.length()").value(0))
+    }
+
+    // ── GET /api/history (empty when no yearbook rows) ───────────────────────────────────────────────
+    @Test
+    fun `history returns empty months when yearbook table has no rows`() {
+        `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
+
+        mvc(HistoryController(history)).perform(get("/api/history"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.months.length()").value(0))
+    }
+}

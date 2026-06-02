@@ -1,4 +1,5 @@
-export const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
+// Same-origin proxy base (see lib/api.ts). Kept for any direct fetch; all traffic flows through /api/game.
+export const API_BASE = '/api/game';
 
 export const TYPE_LABEL: Record<string, string> = {
     buyRice: '쌀 구매',

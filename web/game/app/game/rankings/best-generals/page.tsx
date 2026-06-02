@@ -6,18 +6,7 @@ import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatNumber } from '../../../../lib/format';
-
-interface BestGeneral {
-  rank: number;
-  generalId: number;
-  name: string;
-  nation: string;
-  nationColor: string;
-  leadership: number;
-  strength: number;
-  intel: number;
-  total: number;
-}
+import type { BestGeneral } from '../../../../types/game';
 
 export default function BestGeneralsPage() {
   const [data, setData] = useState<BestGeneral[]>([]);

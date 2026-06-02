@@ -1,0 +1,130 @@
+package opensamguk.engine.intake
+
+import opensamguk.common.wire.NationSettingResult
+import opensamguk.common.wire.PlaceBetOk
+import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.common.wire.TurnDaemonCommandEnvelope
+import opensamguk.common.wire.WireJson
+import opensamguk.engine.run.TurnDaemonCommandDispatcher
+import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.GeneralStats
+import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.Nation
+import opensamguk.engine.turn.TurnGeneral
+import opensamguk.engine.turn.TurnWorldState
+import opensamguk.engine.turn.WorldSnapshot
+import java.time.Instant
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+/**
+ * F-INTAKE consumer-side test (no container) — proves the engine half of the seam:
+ *
+ *   wire `payload` bytes (the EXACT shape game-api XADDs) → [WireJson] decode (the same codec
+ *   [opensamguk.engine.redis.RedisCommandStream.parseEnvelope] uses) → [TurnDaemonCommandDispatcher]
+ *   → handler → world mutate + [ChangeRecorder] delta.
+ *
+ * This closes the round-trip the publisher-side `CommandWireMapperTest` opens: that test proves the
+ * `{code, argJson}` → typed command + encode; this proves decode → dispatch → recorder delta. The
+ * Redis transport between them is the thin `XADD`/`XREAD` already covered by `CommandReserveServiceIT`
+ * + `RedisCommandStreamIT` (Docker-gated). With both unit halves green, the only Docker-gated piece is
+ * the literal Redis hop.
+ */
+class IntakeCommandConsumeDispatchTest {
+
+    private val t0 = Instant.parse("0200-01-01T00:00:00Z")
+
+    private fun world(): InMemoryTurnWorld = InMemoryTurnWorld(
+        WorldSnapshot(
+            state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+            generals = listOf(
+                TurnGeneral(
+                    id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
+                    stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0,
+                    officerLevel = 12, gold = 1000, turnTime = t0,
+                ),
+            ),
+            nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+        ),
+    )
+
+    /** Encode a command exactly as the publisher does, then decode it exactly as the consumer does. */
+    private fun decodeAsConsumer(command: TurnDaemonCommand): TurnDaemonCommand {
+        val payload = WireJson.encodeToString(
+            TurnDaemonCommandEnvelope.serializer(),
+            TurnDaemonCommandEnvelope(requestId = "req-1", sentAt = "0200-01-01T00:00:00Z", command = command),
+        )
+        return WireJson.decodeFromString(TurnDaemonCommandEnvelope.serializer(), payload).command
+    }
+
+    /** No-op repo proxy — the intake/betting handlers under test never call a repo method. */
+    private inline fun <reified T> noopRepo(): T = java.lang.reflect.Proxy.newProxyInstance(
+        T::class.java.classLoader,
+        arrayOf(T::class.java),
+    ) { _, method, _ ->
+        when (method.returnType) {
+            java.util.List::class.java -> emptyList<Any>()
+            java.lang.Boolean.TYPE -> false
+            else -> null
+        }
+    } as T
+
+    private fun dispatcher(world: InMemoryTurnWorld, recorder: ChangeRecorder) = TurnDaemonCommandDispatcher(
+        world, recorder,
+        noopRepo<opensamguk.infra.read.AuctionRepository>(),
+        noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
+    )
+
+    @Test
+    fun `placeBet payload decodes and dispatches to PlaceBetHandler producing the ng_betting delta`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+
+        // the wire command the publisher (CommandWireMapper) would build + XADD.
+        val decoded = decodeAsConsumer(
+            TurnDaemonCommand.PlaceBet(
+                requestId = "req-bet", bettingId = 7, generalId = 10, bettingType = listOf(1, 3), amount = 500,
+            ),
+        )
+
+        val result = dispatcher(world, recorder).dispatch(decoded)
+
+        // handler ran → ok result + gold deducted + ng_betting INSERT recorded.
+        val bet = result as PlaceBetOk
+        assertEquals(7, bet.bettingId)
+        assertEquals(10, bet.generalId)
+        assertEquals(500, world.getGeneralById(10)!!.gold) // 1000 - 500 deducted
+        val inserts = recorder.bettingInserts()
+        assertEquals(1, inserts.size)
+        assertEquals(7, inserts.single().columns["betting_id"])
+        assertEquals(500, inserts.single().columns["amount"])
+    }
+
+    @Test
+    fun `setRate payload decodes and dispatches to NationFinanceSetterHandler writing the dirty nation`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+
+        val decoded = decodeAsConsumer(TurnDaemonCommand.SetRate(requestId = "req-rate", generalId = 10, amount = 25))
+        val result = dispatcher(world, recorder).dispatch(decoded) as NationSettingResult
+
+        assertTrue(result.ok)
+        assertEquals("setRate", result.type)
+        assertEquals(25, world.getNationById(1)!!.meta["rate"])
+        assertEquals(setOf(1), recorder.dirtyNationIds())
+    }
+
+    @Test
+    fun `tournamentEnroll payload decodes and dispatches writing the general tnmt`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+
+        val decoded = decodeAsConsumer(TurnDaemonCommand.TournamentEnroll(requestId = "r", generalId = 10, value = 1))
+        val result = dispatcher(world, recorder).dispatch(decoded) as NationSettingResult
+
+        assertTrue(result.ok)
+        assertEquals(1, world.getGeneralById(10)!!.meta["tnmt"])
+        assertEquals(setOf(10), recorder.dirtyGeneralIds())
+    }
+}

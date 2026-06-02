@@ -13,7 +13,25 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertTrue
 
 @Testcontainers
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    // game-engine 자체엔 Spring Security가 없다. 다만 test classpath가 game-api(:mainClassesForTest)의
+    // transitive 런타임 deps를 끌어와 spring-boot-starter-security가 함께 올라오면서, 엔진 테스트 컨텍스트에
+    // Security 자동설정이 활성화돼 /admin/turn-daemon/status가 로그인 페이지를 반환했다. 엔진 런타임엔
+    // 보안이 없으므로 테스트 컨텍스트에서 보안 자동설정을 명시적으로 제외한다.
+    properties = [
+        // game-api(:mainClassesForTest)의 transitive security 스타터에 더해 actuator의 management-security
+        // 자동설정(ManagementWebSecurityAutoConfiguration)도 함께 올라온다. 후자는 managementSecurityFilterChain
+        // 빈을 만들며 HttpSecurity 프로토타입 빈(SecurityAutoConfiguration 제공)을 요구하는데, 그 빈을 제외하면
+        // NoSuchBeanDefinitionException으로 컨텍스트 로드가 실패한다. 엔진 런타임엔 보안이 없으므로 management
+        // 보안 자동설정도 함께 제외한다.
+        "spring.autoconfigure.exclude=" +
+            "org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration," +
+            "org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration," +
+            "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration",
+    ],
+)
 class GameEngineApplicationTests {
 
     @LocalServerPort
@@ -43,6 +61,10 @@ class GameEngineApplicationTests {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("management.health.redis.enabled") { "false" }
+            // The production turn loop (TurnDaemonRunner) must NOT auto-start during a context-load test:
+            // it would drain the world + need a live Redis command stream. The bean is still created; only
+            // its SmartLifecycle start is gated off.
+            registry.add("opensamguk.daemon.enabled") { "false" }
         }
     }
 }

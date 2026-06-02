@@ -2,487 +2,338 @@
 
 삼국지 모의전투 HiDCHe(삼모) — **Kotlin/Spring + Next.js, 메모리 중심 CQRS** 재작성.
 
-A faithful migration of the PHP game **devsam/core** to a memory-centric CQRS stack. The PHP source is **grand truth**: every RNG draw, rounding, log string, and side-effect order matches it byte-for-byte, gated by golden replays.
+PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식한 프로젝트입니다. PHP 소스가 **grand truth**이며, 모든 RNG 추출·반올림·로그 문자열·부수효과 순서를 byte-단위로 일치시키고 PHP 골든 리플레이로 게이팅합니다. 게임 동작은 절대 "개선"하지 않고 원작 그대로 재현합니다.
 
-- Migration design + roadmap: [`docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`](docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md)
-- Contributor / agent guide (parity discipline, conventions): [`CLAUDE.md`](CLAUDE.md)
-- Agent onboarding guide: [`AGENTS.md`](AGENTS.md)
+> 비공개(PRIVATE) 저장소 — 코에이 IP 검토 통과 전까지 외부 공개하지 않습니다. 저장소에 코에이 소유 자산/IP, 비밀키, 자격증명을 커밋하지 않습니다.
 
-> Private repository — pending Koei-IP review before any public exposure.
-
----
-
-## Table of Contents
-
-1. [Project Overview](#project-overview)
-2. [Architecture](#architecture)
-3. [Modules](#modules)
-4. [Phase Progress](#phase-progress)
-5. [P6 Subsystem Details](#p6-subsystem-details)
-6. [Build & Development](#build--development)
-7. [Testing Strategy](#testing-strategy)
-8. [Parity Discipline](#parity-discipline)
-9. [Deployment Infrastructure](#deployment-infrastructure)
-10. [Contributing](#contributing)
+- 마이그레이션 설계 + 로드맵: [`docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`](docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md)
+- 프론트엔드 패러티 + 시드 계획(F0–F5): [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md)
+- 기여자/에이전트 가이드(패러티 규율·관례): [`CLAUDE.md`](CLAUDE.md) · 모듈/빌드/테스트 온보딩: [`AGENTS.md`](AGENTS.md)
 
 ---
 
-## Project Overview
+## 목차
 
-**opensamguk** is a complete rewrite of the classic web-based strategy game *삼국지 모의전투 HiDCHe* (commonly known as "삼모"). The original game, `devsam/core`, was written in PHP and has served as a beloved online strategy game for years. This project ports every mechanic, every calculation, and every log message to a modern Kotlin/Spring Boot + Next.js stack while preserving **byte-exact behavioral parity** with the original PHP implementation.
-
-### Key Principles
-
-- **PHP is Grand Truth**: Every behavior — RNG draws, rounding modes, Korean log strings with correct 조사 (josa), side-effect order — matches the PHP source byte-for-byte. We never "improve" the original behavior.
-- **Memory-Centric CQRS**: The game engine daemon holds the entire world state in memory (`InMemoryTurnWorld`). All mutations are recorded as deltas (`created`/`dirty`/`deleted`) on `ChangeRecorder` and flushed in bulk via JDBC batch. JPA is used **only** for reads and prechecks — never for daemon writes.
-- **Golden Gating**: Every phase closes with a real PHP golden replay. We capture PHP execution via Docker (MariaDB 11.4 + `php:8.3-cli`, scenario `1010` = 174 generals) and replay it draw-for-draw against the Kotlin engine. No golden is ever fabricated.
-- **LLM-Free Runtime**: The production game server runs entirely on rule engines and templates. Zero LLM API calls at runtime. Zero external API dependencies.
-
-### Technology Stack
-
-| Layer | Technology |
-|-------|------------|
-| Backend Language | Kotlin 2.1+ on JVM 21 |
-| Backend Framework | Spring Boot 3.4 |
-| Game Engine | In-memory turn daemon with CQRS |
-| Persistence | PostgreSQL 16 (JDBC batch flush) |
-| Cache / Message Bus | Redis 7 (XADD command stream, SSE relay) |
-| Frontend | Next.js 15 (App Router, React Server Components) |
-| Frontend Styling | Tailwind CSS + Pretendard |
-| Build Tool | Gradle 8.12 (Kotlin DSL) |
-| Database Migration | Flyway |
-| Testing | JUnit 5 + Kotest + Testcontainers |
-| Deployment | AWS EC2 t3.large, Docker Compose, GitHub Actions |
+1. [프로젝트 소개](#프로젝트-소개)
+2. [아키텍처](#아키텍처)
+3. [빠른 시작](#빠른-시작)
+4. [서비스 / 포트](#서비스--포트)
+5. [시나리오 시드](#시나리오-시드)
+6. [개발](#개발)
+7. [테스트](#테스트)
+8. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
+9. [패러티 규율](#패러티-규율)
 
 ---
 
-## Architecture
+## 프로젝트 소개
+
+**opensamguk**는 PHP로 작성된 웹 전략 게임 *삼국지 모의전투 HiDCHe*("삼모")의 완전 재작성판입니다. 원작 `devsam/core`의 모든 메커니즘·계산·로그 메시지를 Kotlin/Spring Boot + Next.js 스택으로 이식하면서 원작 PHP와 **byte-단위 동작 패러티**를 유지합니다.
+
+### 핵심 원칙
+
+- **PHP = grand truth** — RNG 추출, 반올림 방식, 한글 로그 문자열(조사 포함), 부수효과 순서까지 PHP 소스와 byte 단위로 일치. 원작 동작을 절대 "개선"하지 않습니다.
+- **메모리 중심 CQRS** — 게임 엔진 데몬이 전체 월드 상태를 메모리(`InMemoryTurnWorld`)에 보유. 모든 변경은 `ChangeRecorder`에 `created`/`dirty`/`deleted` 델타로 기록되고 JDBC 배치로 일괄 flush. JPA는 **읽기/사전검증 전용**(game-api)이며 데몬 write에는 절대 쓰지 않습니다.
+- **골든 게이팅** — 각 페이즈는 실제 PHP 골든 리플레이로 마감. Docker(MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010` = 174장수)로 PHP 실행을 캡처해 Kotlin 엔진과 draw-for-draw로 대조. 골든은 절대 날조하지 않습니다.
+- **완전 LLM-free 런타임** — 프로덕션 게임 서버는 전부 룰 엔진 + 템플릿으로 동작. 런타임 LLM API 호출 0건, 외부 API 의존 0개.
+
+### 기술 스택
+
+| 레이어 | 기술 |
+|--------|------|
+| 백엔드 언어 | Kotlin 2.1 / JVM 21 LTS |
+| 백엔드 프레임워크 | Spring Boot 3.4 |
+| 게임 엔진 | 메모리 내 턴 데몬 (CQRS) |
+| 영속화 | PostgreSQL 16 (JDBC 배치 flush) |
+| 캐시 / 메시지 버스 | Redis 7 (XADD 명령 스트림, SSE 릴레이) |
+| 프론트엔드 | Next.js 15 (App Router) / React 19 / TypeScript 5.7 |
+| 스타일 | Tailwind CSS + Pretendard |
+| 빌드 | Gradle 8.12 (Kotlin DSL) |
+| 마이그레이션 | Flyway |
+| 테스트 | JUnit 5 + kotlin.test + Testcontainers |
+| 리버스 프록시 | nginx 1.27 |
+| 배포 | AWS EC2 t3.large · Docker Compose · GitHub Actions (GHCR) |
+
+---
+
+## 아키텍처
+
+메모리 중심 CQRS. 데몬이 메모리에 권위 월드를 들고, 변경 델타만 JDBC 배치로 flush, 턴 완료는 SSE로 브로드캐스트합니다.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT LAYER                                    │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                       │
-│  │  web/gateway │  │   web/game   │  │   Browser    │                       │
-│  │   (:3000)    │  │   (:3001)    │  │              │                       │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘                       │
-└─────────┼─────────────────┼─────────────────┼───────────────────────────────┘
-          │                 │                 │
-          ▼                 ▼                 ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              API LAYER                                       │
-│  ┌────────────────────────────────────┐  ┌────────────────────────────────┐  │
-│  │     app/gateway-api (:8080)        │  │      app/game-api (:8081)      │  │
-│  │  Auth · Profile · User Management  │  │  Read · Precheck · Intake · SSE │  │
-│  └────────────────────────────────────┘  └────────────────────────────────┘  │
-│                              │                              │                 │
-│                              ▼                              ▼                 │
-│                    ┌─────────────────────┐                                    │
-│                    │   Redis (XADD)      │  ◄── Command intake queue          │
-│                    │   SSE Pub/Sub       │  ──► turnCompleted events          │
-│                    └─────────────────────┘                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            GAME ENGINE DAEMON                                │
-│                     app/game-engine (:8082)                                  │
-│                                                                              │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                     InMemoryTurnWorld                                 │   │
-│  │              (Source of Truth — entire game state)                    │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-│                              │                                               │
-│                              ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                     ChangeRecorder                                    │   │
-│  │   created │ dirty │ deleted (tombstone)                               │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-│                              │                                               │
-│                              ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                  JdbcFlushExecutor (BATCH)                            │   │
-│  │   INSERT · UPDATE · DELETE — delta only, no inline writes             │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-│                              │                                               │
-│                              ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                     PostgreSQL                                        │   │
-│  │   general · general_turn · general_record · city · nation · storage   │   │
-│  │   auction · auction_bid · message · ng_betting · game_kv · diplomacy  │   │
-│  └──────────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────────┘
+                                  브라우저
+                                     │
+                                     ▼
+                         ┌──────────────────────┐
+                         │   nginx (:80 / :443)  │  리버스 프록시
+                         └──────────┬───────────┘
+            ┌───────────────────────┼───────────────────────┐
+            ▼                       ▼                         ▼
+   ┌────────────────┐     ┌────────────────┐
+   │  web/gateway   │     │   web/game     │       (정적 / SSR · Next.js)
+   │    (:3000)     │     │   (:3001)      │
+   │ 인증·로비·어드민 │     │  인게임 UI      │
+   └───────┬────────┘     └───────┬────────┘
+   httpOnly│쿠키 프록시    동일출처│ /api/game 프록시
+           ▼                      ▼
+   ┌────────────────┐     ┌────────────────────────┐
+   │ app/gateway-api│     │     app/game-api        │
+   │    (:8080)     │     │       (:8081)           │
+   │ 인증(JWT/BCrypt)│     │ read · precheck · intake │
+   │ 프로필·어드민    │     │ · SSE 릴레이             │
+   └────────────────┘     └───────────┬─────────────┘
+                                       │
+                          ┌────────────┴────────────┐
+                          │   Redis (XADD 명령 큐 +   │
+                          │   SSE turnCompleted)     │
+                          └────────────┬────────────┘
+                                       ▼
+                       ┌──────────────────────────────────┐
+                       │      app/game-engine (:8082)       │  턴 데몬
+                       │  ┌──────────────────────────────┐  │
+                       │  │  InMemoryTurnWorld (진실의 원천)│  │
+                       │  └───────────────┬──────────────┘  │
+                       │                  ▼                  │
+                       │  ┌──────────────────────────────┐  │
+                       │  │ ChangeRecorder               │  │
+                       │  │  created │ dirty │ deleted    │  │
+                       │  └───────────────┬──────────────┘  │
+                       │                  ▼                  │
+                       │  ┌──────────────────────────────┐  │
+                       │  │ JdbcFlushExecutor (BATCH)    │  │
+                       │  │  델타만 INSERT/UPDATE/DELETE   │  │
+                       │  └───────────────┬──────────────┘  │
+                       └──────────────────┼─────────────────┘
+                                          ▼
+                       ┌──────────────────────────────────┐
+                       │           PostgreSQL (:5432)        │
+                       │  world_state · nation · city ·      │
+                       │  general · general_turn · diplomacy │
+                       │  · auction · ng_betting · game_kv … │
+                       └──────────────────────────────────┘
 ```
 
-### The ONE Daemon-Write Rule
+### 책임 분리
 
-The game-engine daemon **NEVER** uses a JPA `EntityManager` for writes. JPA is read/precheck only (game-api). Daemon writes go **only** through `ChangeRecorder` → `JdbcFlushExecutor` JDBC batch. Two competing dirty-truths (JPA dirty-checking + change-recorder) would silently diverge. This rule is architecture-test-enforced.
+- **`app/gateway-api` (:8080)** — 인증/프로필. 자체 JWT/BCrypt 로컬 인증(원작 Kakao OAuth에서 의도적 divergence), 회원가입, 세션, 관리자 시드.
+- **`app/game-api` (:8081)** — 읽기(read) + 사전검증(precheck) + 명령 인입(intake) + SSE 릴레이. JPA는 read/precheck 전용. 명령은 Redis 스트림으로 XADD.
+- **`app/game-engine` (:8082)** — 턴 데몬. `InMemoryTurnWorld`(진실의 원천) + `ChangeRecorder`(델타) + `MonthlyPipeline` + `TurnRunService`.
 
-### Command Flow
+### The ONE 데몬-write 규칙
 
-1. Player submits command via game-api (`POST /api/command/{code}`)
-2. game-api validates preconditions (JPA read-only), XADDs command to Redis stream
-3. game-engine daemon drains command queue, executes against `InMemoryTurnWorld`
-4. Mutations recorded as delta on `ChangeRecorder`
-5. At turn end, `JdbcFlushExecutor` flushes all deltas in a single JDBC batch
-6. `turnCompleted` SSE broadcast to all connected clients
-7. Frontend refreshes state via game-api read endpoints
+게임 엔진 데몬은 **절대** JPA `EntityManager`로 write하지 않습니다. JPA는 read/precheck 전용(game-api). 데몬 write는 **오직** `ChangeRecorder` → `JdbcFlushExecutor` JDBC 배치 경로만 사용합니다. 두 dirty-truth(JPA dirty-checking + change-recorder)가 공존하면 조용히 발산하기 때문입니다. 이 규칙은 아키텍처 테스트로 강제됩니다.
 
-### Data Flow
+### 명령 흐름
 
-- **1 real hour = 1 game turn (1순)**
-- **36 turns = 1 game year**
-- Command queue + notification pattern for player turns
-- Order Ledger: immediate append + 5-minute snapshot + forced save on shutdown/boot
+1. 플레이어가 game-api로 명령 제출 (`POST /api/command/{code}`)
+2. game-api가 사전검증(JPA read-only) 후 Redis 스트림에 XADD
+3. game-engine 데몬이 큐를 비워 `InMemoryTurnWorld`에 실행
+4. 변경을 `ChangeRecorder`에 델타로 기록
+5. 턴 종료 시 `JdbcFlushExecutor`가 델타를 단일 JDBC 배치로 flush
+6. 연결된 클라이언트에 `turnCompleted` SSE 브로드캐스트
+7. 프론트가 game-api read 엔드포인트로 상태 갱신
 
----
+### 턴 박자 (turn cadence)
 
-## Modules
-
-### `common` — RNG / Log / Rounding Kernel
-
-The foundational parity layer. No Spring, no DB.
-
-- **`rng/LiteHashDrbg`** — Byte-exact SHA-512 DRBG. Mirrors PHP `mt_rand` draw sequence exactly when seeded identically.
-- **`rng/RandUtil`** — The draw interface: `nextInt(bound)`, `nextFloat1()`, `nextBits()`, `nextBytes()`. All battle RNG runs on a single `RandUtil(warSeed)` built once in `processWar()` and threaded by reference — never re-seeded mid-stream.
-- **`rng/SeedSerializer`** — Multi-component seed serialization for deterministic replay.
-- **`util/PhpRound`** — PHP `round()` parity: **half-AWAY-from-zero**, negative-scale support (`phpRound(v, -2)`). NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even).
-- **`log/*`** — Josa (조사) engine, color/tag markup tokens (`<Y1>`, `<C>`, `<S>`, `<B>`, `<L>`), `ConvertLog`, log token registry.
-- **`constants/GameConst`** — Golden numbers, level thresholds, cost tables, Fibonacci helper for inheritance.
-
-### `logic` — Pure Game Logic
-
-No Spring, no DB. The rule engine.
-
-- **`stats/ActionPipeline`** — Multi-source stat fold + `getStatValue` + calc-cache. General stat resolution pipeline.
-- **`actions/*`** — Command resolvers (~35 commands + constraints). `CommandRegistry` for dispatch.
-- **`actions/nation/*`** — Nation commands: diplomacy proposals (`선전포고`, `불가침제의`, `종전제의`, `불가침파기제의`, `천도`), nation internal commands.
-- **`war/*`** — Battle engine: `processWar_NG`, triggers, `WarUnit`, city-conflict, `ConquerCity`, battle items/specialties.
-- **`ai/*`** — NPC AI: `GeneralAI`, 4-layer autorun policy, F-BRIDGE candidate gate (`candidateAllowed`), per-general module stat stack.
-- **`event/*`** — Event DSL: `EventAction`, `EventActionFactory`, `EventDispatcher`, `EventStore`, `MonthlyPipeline`. World event leaves (UpdateNationLevel, ProcessIncome, RaiseDisaster, etc.).
-- **`betting/*`** — Betting engine: `BettingInfo`, `BettingEngine` (calcReward/giveReward), `SelectItem`, `RewardItem`.
-- **`auction/*`** — Auction system: `AuctionBase`, `AuctionBidHandler`, `AuctionFinalizeHandler`, `ObfuscatedNamePool` (6525-entry shuffle).
-- **`inheritance/*`** — Inheritance: `InheritanceKey`, `InheritancePointMath`, `InheritancePointStore`, `MergeAndApply`.
-- **`message/*`** — Messaging: `Message`, `MessageType`, `Mailbox`, `DiplomaticMessage`.
-- **`tick/*`** — Turn tick logic, monthly pipeline assembly.
-
-### `infra` — Persistence & Infrastructure
-
-- **`JdbcFlushExecutor`** — JDBC-only batch flush + delete/tombstone delta + row mappers. The ONLY daemon write path.
-- **`db/migration/V*.sql`** — Flyway migrations (V1-V7). `V7__p6_messaging_economy.sql`: message table, ng_betting, game_kv.
-- **`read/*`** — JPA read repositories: `AuctionRepository`, `AuctionBidRepository`, `BettingRepository`, `MessageRepository`, `CityReadRepository`, `DiplomacyReadRepository`, `GeneralReadRepository`, `NationReadRepository`, `WorldStateReadRepository`.
-- **`persistence/*`** — Row mappers: `MessageRowMapper`, `NgBettingRowMapper`, `AuctionRowMapper`, `AuctionBidRowMapper`, `GameKvRowMapper`.
-
-### `app/gateway-api` (:8080)
-
-Auth + profile orchestration. OAuth2/OIDC integration, user registration, session management.
-
-### `app/game-api` (:8081)
-
-Read + precheck + mutation intake + SSE.
-
-- **`web/CommandController`** — `POST /api/command/{code}`: precheck + reserve + XADD to Redis.
-- **`web/HealthCheckController`** — `GET /health`: DB + Redis connectivity check.
-- **`web/RealtimeRelayController`** — `GET /sse/turn`: SSE relay for turn completion events.
-
-### `app/game-engine` (:8082)
-
-The turn daemon. In-memory authoritative world + bulk flush.
-
-- **`turn/InMemoryTurnWorld`** — The world state (generals, cities, nations, storage, diplomacy, auction, betting, messages).
-- **`turn/ChangeRecorder`** — Delta recording: `created`, `dirty`, `deleted`, `kvDirty`, `createdMessages`, `recordAuctionUpsert`, `recordAuctionBidInsert`, `recordInheritancePointSet/Increase`.
-- **`turn/DirtyState`** — Mutable delta accumulator.
-- **`turn/ProcessNationCommand`** — Nation command dispatch with `NationActionResolveContext`.
-- **`turn/ReservedTurnHandler`** — General command dispatch with `GeneralActionResolveContext`.
-- **`turn/TurnDaemonCommandDispatcher`** — Routes drained intake commands (AuctionBid, AuctionFinalize, PlaceBet) to handlers.
-- **`run/TurnRunService`** — Turn execution orchestration.
-- **`run/TurnDaemonLifecycle`** — Daemon lifecycle: start, monthly tick, shutdown.
-- **`config/EngineEventConfig`** — Event store wiring.
-
-### `web/gateway` (:3000)
-
-Next.js gateway frontend. Auth pages, lobby, server list.
-
-### `web/game` (:3001)
-
-Next.js game frontend. In-game UI.
-
-- **`app/game/auction/page.tsx`** — Auction UI (경매).
-- **`app/game/betting/page.tsx`** — Betting UI (내기).
-- **`app/game/diplomacy/page.tsx`** — Diplomacy UI (외교).
-- **`app/game/mailbox/page.tsx`** — Mailbox UI (우편함).
-- **`app/game/nation/page.tsx`** — Nation UI (국가 정보).
+- **현실 1시간 = 게임 1턴(1순)** · **36턴 = 게임 1년**
+- 명령 큐 + 알림 패턴. 메모리=진실의 원천, DB=영속화.
 
 ---
 
-## Phase Progress
+## 빠른 시작
 
-```
-P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8
-                          ↑         ↑
-                          └─────────┘ (P6 depends on P4, P5)
-                                    ↑
-                                    └── P7 parallel with P3/P4/P5
-```
-
-| Phase | Scope | State | Tests | Notes |
-|-------|-------|-------|-------|-------|
-| **P0-A** | Scaffold (Gradle modules, CI, Docker) | ✅ gate-closed | — | Foundation structure |
-| **P0-B** | Parity kernel (RNG, round, log, CQRS skeleton) | ✅ gate-closed | common 169 | `LiteHashDrbg`, `PhpRound`, Josa engine |
-| **P1** | Vertical slice (one command, full CQRS loop) | ✅ gate-closed | — | End-to-end proof |
-| **P2** | ~35 commands + constraint library + 9-source stat-stack | ✅ gate-closed | logic ~800 | `ActionPipeline`, `CommandRegistry` |
-| **P3** | Monthly economy tick + city-supply BFS + event engine | ✅ gate-closed | logic ~1200 | `MonthlyPipeline`, `PostUpdateMonthly`, all 9 world leaves |
-| **P4** | Battle engine (`processWar_NG` + triggers + ConquerCity) | ✅ gate-closed | logic ~1543 | G1 battle/conquest draw-for-draw |
-| **P5** | NPC AI (GeneralAI + 4-layer autorun) | ✅ gate-closed | logic 1661 | 174/174 turns (667/667 draws), 8 families 11/11 |
-| **P6** | Diplomacy · Messaging · Auction · Betting · Inheritance | ✅ gate-closed | ~2195 | Pure-logic + P7-coupled complete. See [P6 Subsystem Details](#p6-subsystem-details) |
-| **P7** | Read API + Next.js frontend + SSE | 🔄 in progress | — | REST controllers ✅, frontend pages scaffolded, polish + integration pending |
-| **P8** | Parity harness + gateway orchestration + AWS deploy | ⬜ pending | — | PHP 93-command compare, EC2 t3.large |
-
-### P5 Backlog (documented, not fabricated)
-
-- Long-sim multi-turn gate (gate dim c)
-- G12 nation reserved-fail deny-log
-
-### P5 Quarantines (proven with sibling-code-path byte-match)
-
-- `genfound-방랑군`: needs 거병→건국 mini-sim
-- `chooseInstantNationTurn`: zero PHP callers
-- Q1 ORDER BY RAND (`do선양`/`오랑캐임관`): unreachable in scenario 1010, deterministic substitute
-
----
-
-## P6 Subsystem Details
-
-### ✅ P6 Pure-Logic Completed (gate-closed)
-
-| Subsystem | Files | Description |
-|-----------|-------|-------------|
-| **Inheritance enum parity** | `InheritanceKey.kt` | 11-entry enum with correct `keyName` mapping |
-| **Inheritance buff fold** | `GeneralActionModuleFactory` slot #7 | Buffs integrated into stat pipeline (was identity stub) |
-| **BuyHiddenBuff cost fix** | `BuyHiddenBuff.kt` | Cumulative-difference cost (`points[level] - points[prevLevel]`) + already-purchased/higher-grade guards |
-| **Turn daemon command dispatcher** | `TurnDaemonCommandDispatcher.kt` | Routes drained intake commands to auction/betting handlers |
-| **Betting event registrar** | `BettingActions.kt` | `OpenNationBetting` / `FinishNationBetting` resolvable by name |
-| **Missing diplomacy proposals** | `CheJongjeonjeui.kt`, `CheBulgachimPagijeui.kt` | `종전제의` (peace proposal) + `불가침파기제의` (NA cancellation proposal) |
-| **Auction bid handler** | `AuctionBidHandler.kt` | Bid validation, charge, refund, bid insert, close-date extend |
-| **Auction finalize handler** | `AuctionFinalizeHandler.kt` | Rollback/finish, resource transfer, unique-item slot check |
-| **Messaging sink unification** | `GeneralActionResolveContext.kt`, `NationActionResolveContext.kt` | Both contexts now have unified `sendMessage()` API |
-| **Betting engine** | `BettingEngine.kt` | `calcReward` (exclusive/compound), `giveReward` (gold/inheritance-point), betting key codec |
-| **BettingInfo realignment** | `BettingInfo.kt` | String-typed `type`, `SelectItem`/`RewardItem`/`BettingResult`, `AnySerializer` for JSON aux |
-| **Open/Finish nation betting** | `OpenNationBetting.kt`, `FinishNationBetting.kt` | Adapted to new BettingInfo + BettingEngine |
-
-### ✅ P6 P7-Coupled Complete
-
-| Subsystem | Status |
-|-----------|--------|
-| **Auction expiry daemon** | `AuctionExpiryDaemon` wired to turn lifecycle |
-| **PlaceBet command/handler** | `PlaceBetHandler` — gold deduction + `ng_betting` INSERT |
-| **Messaging accept/decline API** | `DiplomaticMessageController` — accept/decline endpoints |
-| **Game-api read controllers** | `@RestController` for auction/betting/message/mailbox/diplomacy |
-| **Diplomacy matrix read** | `GetDiplomacy.php` neutral-map masking 3-7→2 |
-
-### ⬜ P6 P8-Coupled Remainder
-
-| Subsystem | Gap | Blocking Phase |
-|-----------|-----|----------------|
-| **P6 golden capture scripts** | `capture_diplomacy.php`, `capture_message.php`, `capture_auction.php`, `capture_betting.php`, `capture_inheritance.php`, `capture_worldcmd.php` | P8 |
-| **Parity harness integration** | Wire P6 goldens into PHP 93-command compare | P8 |
-| **Restart-rehydrate lossless** | Daemon restart re-reads auction/betting/message pools + obfuscatedNamePool from KV | P8 |
-| **Tournament wall-clock scheduling** | Deterministic game-tick predicate under turn cadence | P8 |
-
----
-
-## Build & Development
-
-### Prerequisites
-
-- **JDK 21 LTS** (Gradle 8.12 fails on Java 25+)
-- Docker (for Testcontainers integration tests)
-- Node.js 20 + pnpm (for frontend)
-- Docker Compose (for local stack)
-
-### Quick Start
+전제: Docker + Docker Compose. (백엔드 직접 빌드/프론트 dev는 [개발](#개발) 참조.)
 
 ```bash
-# Clone (private repo)
+# 1) 클론 (비공개 저장소)
 git clone git@github.com:peppone-choi/opensamguk.git
 cd opensamguk
 
-# Build backend (always use Java 21)
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build
+# 2) 환경변수 — 예시를 복사해 .env 생성 (필요 시 비밀번호/프로필 수정)
+cp .env.example .env
 
-# Run tests
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test
+# 3) 전체 스택 기동 (postgres·redis·3 API·2 프론트·nginx)
+docker compose up -d --build
 
-# Full Docker smoke test
-./tools/smoke.sh
-
-# Run frontend
-cd web/gateway && corepack pnpm dev
-cd web/game && corepack pnpm dev
+# 4) 브라우저 접속
+#   http://localhost:3000        ← 게이트웨이(로그인/로비). nginx 경유 시 http://localhost/
+#   http://localhost:3001/game   ← 게임 프론트(로그인 후 진입)
 ```
 
-### Build Verification
+### 로그인 → 로비 → 게임
 
-> **CRITICAL**: Verify by **OUTPUT TAIL + test XML**, not exit code. The host routes gradle through a context-mode wrapper; `task-notification` exit 0 is unreliable.
+1. `http://localhost:3000/login` 접속.
+2. 관리자 계정으로 로그인 — 기본 admin **`peppone`**. (gateway-api `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 환경변수가 **둘 다** 설정돼 있을 때 부팅 시 1회 생성. 둘 중 하나라도 비면 시드를 건너뜁니다. 일반 계정은 `/join`에서 가입.)
+3. 로그인 성공 → `/lobby`로 이동(서버 목록 + 10분 캐싱 맵 프리뷰).
+4. 로비에서 **입장** → web/game `/game` 메인 화면.
+
+> 인증 토큰은 Next route handler가 gateway-api로 프록시한 뒤 **httpOnly 쿠키**(`sam_access`/`sam_refresh`)에만 저장합니다. 브라우저 JS는 토큰을 읽지 못하며(XSS 토큰 탈취 방지), gateway-api/game-api를 브라우저가 직접 호출하지 않습니다(동일출처 프록시 → CORS 불필요). access JWT는 15분 만료이고, 만료 시 `/api/auth/me`가 refresh 쿠키로 자동 재발급합니다.
+
+게임 데이터는 game-engine 부팅 시 `scenario_1010`이 **자동 시드**되므로(아래 [시나리오 시드](#시나리오-시드)) 첫 기동만으로 플레이 가능한 월드가 채워집니다.
+
+---
+
+## 서비스 / 포트
+
+`docker-compose.yml`(로컬 개발) 기준 8개 서비스:
+
+| 서비스 | 이미지/빌드 | 포트 | 역할 |
+|--------|-------------|------|------|
+| `postgres` | `postgres:16-alpine` | 5432 | 영속 저장소 (DB `sammo`) |
+| `redis` | `redis:7-alpine` | 6379 | 명령 스트림(XADD) + SSE pub/sub |
+| `gateway-api` | `docker/gateway-api.Dockerfile` | 8080 | 인증(JWT/BCrypt)·프로필·어드민 |
+| `game-api` | `docker/game-api.Dockerfile` | 8081 | read · precheck · intake · SSE |
+| `game-engine` | `docker/game-engine.Dockerfile` | 8082 | 턴 데몬 (`InMemoryTurnWorld`) |
+| `web-gateway` | `docker/web-gateway.Dockerfile` | 3000 | Next.js 게이트웨이(로그인/로비) |
+| `web-game` | `docker/web-game.Dockerfile` | 3001 | Next.js 게임 프론트 |
+| `nginx` | `nginx:1.27-alpine` | 80 | 리버스 프록시 (`./nginx/nginx.conf`) |
+
+nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/game/` → game-api · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
+
+### 환경변수 (`.env.example`)
+
+```env
+# Game DB
+GAME_DATABASE_URL=jdbc:postgresql://localhost:5432/sammo
+GAME_DB_USER=sammo
+GAME_DB_PASSWORD=sammo
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+# Ports
+GATEWAY_API_PORT=8080
+GAME_API_PORT=8081
+GAME_ENGINE_PORT=8082
+# Profile (server:scenario)
+TURN_PROFILE_NAME=che:scenario_2
+```
+
+프론트는 각자 `.env.example`을 둡니다(브라우저 비노출 변수는 `NEXT_PUBLIC_` 접두사 없음):
+
+- `web/gateway/.env.example` — `GATEWAY_API_URL`(서버 전용 프록시 대상), `NEXT_PUBLIC_GAME_URL`(로비 입장 링크).
+- `web/game/.env.example` — `GAME_API_URL`·`GATEWAY_API_URL`(서버 전용), `NEXT_PUBLIC_GATEWAY_URL`(미인증 시 로그인 리다이렉트 대상).
+
+관리자 시드용 `ADMIN_USERNAME`/`ADMIN_PASSWORD`는 gateway-api에 주입합니다(코드/리포에 평문 비밀번호 하드코딩 금지).
+
+### 프로덕션 (EC2 t3.large)
+
+`docker-compose.production.yml`은 GHCR 이미지(`ghcr.io/${GHCR_OWNER}/<svc>:${IMAGE_TAG}`)를 풀해서 메모리 제한·헬스체크·볼륨(`pgdata`/`redisdata`/`nginx-cache`)·`opensamguk` 브리지 네트워크로 기동합니다. `POSTGRES_PASSWORD`는 필수(미설정 시 기동 실패). 배포는 `.github/workflows/deploy.yml`(빌드 → GHCR push → SSH → 롤링 재시작) + `scripts/deploy.sh`(수동 EC2 배포 + 헬스 체크 루프)로 수행합니다.
 
 ```bash
-# Method 1: tail + grep
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test 2>&1 | tail -40
-# grep: BUILD SUCCESSFUL + test counts
-
-# Method 2: test result XML
-ls logic/build/test-results/test/*.xml
+docker compose -f docker-compose.production.yml up -d
 ```
-
-### Testcontainers on macOS
-
-Requires `api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk disabled. Already wired in `tasks.test`:
-
-```kotlin
-systemProperty("api.version", "1.44")
-```
-
-Docker-unavailable ⇒ IT **skipped**, not failed.
 
 ---
 
-## Testing Strategy
+## 시나리오 시드
 
-### Test Pyramid
+게임 엔진은 부팅 시 **DB만 읽습니다**(`WorldStateReadRepository`) — 시나리오 JSON을 런타임에 직접 로드하지 않습니다. fresh/빈 DB가 비어 있지 않도록, 부팅 시 한 번 시드합니다.
 
-| Layer | Count | Scope |
-|-------|-------|-------|
-| `common` | ~175 | RNG draw sequence, rounding, Josa, log tokens, seed serialization |
-| `logic` | ~1794 | Pure game logic: commands, battle engine, AI, events, betting, auction, inheritance |
-| `infra` | ~65 | JDBC flush, row mappers, Flyway migrations, repository reads |
-| `app:game-engine` | ~147 | Turn daemon, ChangeRecorder, InMemoryTurnWorld, command dispatch |
-| `app:game-api` | ~10 | Controllers, prechecks, SSE relay |
-| **Total** | **~2191** | |
+- **시드 주체**: `app/game-engine`의 `ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) — `ApplicationRunner`로 부팅 시 실행.
+- **멱등**: `world_state` 행이 이미 있으면(`count(*) > 0`) 로그 남기고 건너뜁니다. 두 번째 호출은 no-op이라 시드→로드 순서가 빈 라이프사이클에 무관하게 보장됩니다.
+- **임포터**: `infra`의 `ScenarioImporter`(+`ScenarioJson`)가 커밋된 리소스 `scenario/scenario_1010.json` + `scenario/cities_1010.json`(grand truth 값)을 opensamguk 스키마 행으로 매핑해 **JDBC INSERT**(`world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games`).
+- **부팅 배선**: `WorldSnapshotLoader`가 DB → `InMemoryTurnWorld` 스냅샷을 구성(시드 직전 방어적으로 `ensureSeeded` 재호출).
+- **JDBC-only — one-daemon-write 규칙 비위반**: `JdbcTemplate`만 사용(Flyway/AdminSeeder와 동일 범주). JPA `EntityManager`나 `ChangeRecorder`를 쓰지 않으며, 아키텍처 테스트 write-path scan(`opensamguk.engine.{flush,turn,run}`) 밖인 `opensamguk.engine.boot` 패키지에 위치합니다.
+- **env fence**: `SCENARIO_SEED_ENABLED`(기본 `true`, `false`면 시드 비활성) · `SCENARIO_CODE`(기본 `scenario_1010`).
 
-### Golden Testing
-
-The `tools/php-golden/` directory contains the Docker-based PHP capture harness:
-
-- **MariaDB 11.4** + `php:8.3-cli`
-- **Scenario `1010`** (174 generals, NOT empty scenario_0)
-- `j_install.php` called twice (PHP quirk)
-- Fresh DB per run (install is NOT idempotent)
-- Dumps must be byte-identical across two runs
-
-### Key Test Categories
-
-- **Draw-for-draw**: RNG sequence byte-match (method, args, result, cursor)
-- **Number parity**: `PhpRound` half-away, `Util::toInt` truncation, damage clamp `ceil()`
-- **Byte parity**: Korean log strings (josa, color/tags, prefixes) byte-identical
-- **Insertion order**: jsonb / conflict-map / trigger-caller keys preserve `LinkedHashMap` order
-- **Restart-rehydrate**: Flush→reload cycle reconstructs polymorphic Messages via `buildFromArray`
+> `scenario_1010` = 2국 · 24도시 · 678장수. 24도시는 시나리오 JSON에 없고 `cities_1010.json`로 채웁니다. 게이트: `general`/`city`/`nation` 행 > 0 + 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
 
 ---
 
-## Parity Discipline
+## 개발
 
-The six non-negotiable rules. Violating any silently breaks the golden gates.
+### 전제
 
-1. **RNG draw-for-draw**: All randomness is `RandUtil(LiteHashDrbg(seed))`. The draw **order, count, and method args** are parity targets, not just the result. Battle: ONE `RandUtil(warSeed)` per fight, threaded by reference.
-2. **Rounding**: `Util::round` = **half-AWAY-from-zero** → `PhpRound`. Negative-scale `phpRound(v, -2)`. NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even). `Util::toInt`/`intdiv` = truncate-toward-zero.
-3. **Korean log byte-parity**: Log strings (`Josa` 조사, color/tag markup, prefixes, `<Y1>【name】</> <C>HP (-dead)</>`, 진격·퇴각·패퇴·전멸·분쟁·정복 …) must match exactly. **Log order = execution order**.
-4. **Flush delta, not inline writes**: Mutations recorded as `created`/`dirty`/`deleted` on `ChangeRecorder`, flushed in bulk. Resolvers write **only** delta.
-5. **Faithful port, never fabricate**: Golden numbers/logs/seeds come **only** from real PHP capture. If un-capturable, quarantine with proof + log to backlog — do **not** invent it.
-6. **Insertion order matters**: jsonb / conflict-map keys preserve `LinkedHashMap` insertion order. PHP 8.0+ sorts are stable — never add non-stable secondary comparator.
+- **JDK 21 LTS 필수** (Gradle 8.12는 Java 25+ 파싱 실패)
+- Docker (Testcontainers 통합 테스트용)
+- Node 20 + pnpm (corepack)
+
+### 백엔드 빌드 (항상 Java 21, 항상 repo root)
+
+```bash
+# 전체 빌드 + 테스트
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build
+
+# 단일 모듈
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
+```
+
+> **빌드 검증은 exit code가 아니라 출력 tail + 테스트 XML로**: 호스트가 gradle을 context-mode 래퍼로 라우팅해 `task-notification` exit 0이 부정확합니다. `... 2>&1 | tail -40`으로 `BUILD SUCCESSFUL` + 카운트를 grep하거나 `**/build/test-results/test/*.xml`을 확인하세요. UP-TO-DATE false-green이 의심되면 `--rerun-tasks`.
+
+### 프론트 dev
+
+```bash
+cd web/gateway && corepack pnpm dev   # :3000 (로그인/로비)
+cd web/game    && corepack pnpm dev   # :3001 (인게임)
+```
+
+각 앱은 `.env.example`을 `.env.local`로 복사해 사용합니다.
+
+### Docker 스모크
+
+```bash
+./tools/smoke.sh   # 이미지 빌드 + 전체 스택 부팅 + health 단언
+```
 
 ---
 
-## Deployment Infrastructure
+## 테스트
 
-Production deployment target: **AWS EC2 t3.large** (~$80-85/month).
+### 전체 체크 (커밋 전 권장)
 
-### Present (P8 scaffold)
-
-| File | Purpose |
-|------|---------|
-| `.github/workflows/deploy.yml` | GitHub Actions: build Docker image → push GHCR → SSH to EC2 → rolling restart |
-| `docker-compose.prod.yml` | 8 services (gateway-api, game-api, game-engine, postgres, redis, nginx, prometheus, grafana) with memory limits and healthchecks |
-| `infra/nginx/nginx.conf` | Reverse proxy: upstreams, rate limiting, SSE `/realtime/` with `proxy_buffering off`, static asset caching |
-| `scripts/deploy.sh` | Manual EC2 deploy script with health check loops |
-| `app/game-api/.../HealthCheckController.kt` | Custom `/health` endpoint checks DB + Redis connectivity |
-
-### Deployment Architecture
-
-```
-Internet → nginx (:80/:443) → gateway-api (:8080) / game-api (:8081)
-                                     ↓
-                              game-engine (:8082)
-                                     ↓
-                    PostgreSQL (:5432) ←── JDBC batch flush
-                    Redis (:6379)    ←── XADD commands + SSE pub/sub
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
+  :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test
 ```
 
-### Design Decisions
+### 테스트 피라미드 (개략)
 
-- **LLM-free runtime**: All decisions = rule engine, all prose = templates. M0~V1.1: LLM 0 calls.
-- **Zero external API dependencies**: No payment gateways, no analytics, no third-party APIs.
-- **Memory-centric**: In-memory world = source of truth. DB = persistence only.
-- **Turn cadence**: 1 hour real time = 1 game turn (1순). 36 turns = 1 game year.
+| 레이어 | 범위 |
+|--------|------|
+| `common` | RNG 추출 시퀀스, 반올림, 조사, 로그 토큰, 시드 직렬화 |
+| `logic` | 순수 게임 로직: 명령, 전투 엔진, AI, 이벤트, 베팅, 경매, 유산 |
+| `infra` | JDBC flush, row mapper, Flyway 마이그레이션, 시나리오 임포터, repository read |
+| `app:game-engine` | 턴 데몬, ChangeRecorder, InMemoryTurnWorld, 명령 디스패치, 시나리오 부팅 IT |
+| `app:game-api` | 컨트롤러, precheck, SSE 릴레이 |
+
+### Testcontainers (macOS)
+
+`api.version=1.44` + `DOCKER_CONTEXT=default` + Ryuk 비활성이 `tasks.test`에 배선돼 있습니다. **Docker 미사용 시 통합 테스트는 fail이 아니라 skip**됩니다.
+
+### 골든 테스트
+
+`tools/php-golden/` Docker 캡처 하네스: MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010`(174장수, 빈 scenario_0 아님). quirk — `j_install.php` 두 번 호출, install 비멱등(매 실행 fresh DB), 덤프는 두 실행 간 byte-identical. 골든은 read-only 소비 대상이며 절대 날조/수정하지 않습니다.
 
 ---
 
-## Contributing
+## 프론트엔드 / 배포 (F0–F5)
 
-### Branch Stack
+P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서: [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md). 원칙: `hwe/ts/` Vue가 프론트 grand truth(`hwe/*.php`는 dist mount 셸), PHP가 이깁니다. 인증은 JWT 로컬(Kakao 제거)을 패러티 예외로 확정했습니다.
 
-One branch per phase, stacked PRs (base = parent):
+| 단계 | 내용 | 상태 |
+|------|------|------|
+| **F0 게이트웨이 인증** | `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. JWT를 Next route handler 프록시 + httpOnly 쿠키(`sam_access`/`sam_refresh`)로 연결. `AdminSeeder`로 peppone(role=ADMIN) 자동 생성. | ✅ |
+| **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → fresh DB에 `scenario_1010` 자동 시드. `WorldSnapshotLoader`로 엔진 부팅·턴 진행. | ✅ |
+| **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
+| **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api로 **read-only 렌더**. | ✅ |
+| **F4 액션 페이지 (read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator 등 read 렌더. **명령 제출(mutation) 경로는 미완** — 현재 read 우선. | ✅(read) |
+| **F5 turnkey + docs** | 정본 compose(로컬 + production) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드. | 🔄 |
 
-```
-main ← p0a-foundation-scaffold ← p0b-parity-kernel ← p1-vertical-slice ← p2-commands-constraints
-  ← p3-monthly-tick ← p4-battle-engine ← p5-npc-ai ← p6-diplomacy-auction-inheritance
-  ← p7-frontend
-```
-
-### Commit Convention
-
-One logical commit per task. Every commit message ends with:
-
-```
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-```
-
-### Phase Gate
-
-Each phase = **spec → plan → adversarial review → execute → gate**. The gate is a real PHP golden replayed draw-for-draw. Not "done" until green (or gaps quarantined with proof + logged to backlog).
-
-### Agent Onboarding
-
-See [`AGENTS.md`](AGENTS.md) for:
-- Project overview and stack
-- Architecture deep-dive
-- Parity rules summary
-- Build and test commands
-- Deployment guide
-- Common pitfalls
-
-### Documentation
-
-- **Specs**: `docs/superpowers/specs/`
-- **Plans**: `docs/superpowers/plans/`
-- **Research**: `docs/superpowers/research/`
-- **Status**: `docs/superpowers/P6_STATUS.md`
+> **상태 표기 주의**: F0–F4의 화면은 game-api **read 데이터를 렌더**하는 단계까지 구축돼 있습니다. 프론트에서의 명령 제출(mutation/턴 예약) 경로는 아직 완성되지 않았습니다. 백엔드 로직(P2~P6 명령·전투·경매·베팅·외교)은 게이트가 닫혀 있으나, 그 기능을 프론트에서 끝까지 조작하는 흐름은 후속 작업입니다.
 
 ---
 
-## Recent Changes
+## 패러티 규율
 
-| Date | Commit | Description |
-|------|--------|-------------|
-| 2026-06-02 | `5e8a798` | `feat(p7-frontend)`: Scaffold game pages + infra + AGENTS.md — P6-P7 merge to main |
-| 2026-06-02 | `ffa6776` | `feat(p6-p7-coupled)`: PlaceBet handler, AuctionExpiryDaemon, DiplomaticMessage API |
-| 2026-06-02 | `fdde24b` | `feat(p7-read-api)`: REST controllers for auction, betting, mailbox, diplomacy |
-| 2026-06-02 | `b6fd0f4` | `feat(auth)`: JWT-based authentication system for gateway-api |
-| 2026-06-02 | `129f538` | `feat(p6-betting)`: BettingEngine calcReward/giveReward + BettingInfo structural realignment |
-| 2026-06-02 | `6e68674` | `docs`: Update CLAUDE.md Roadmap — P3 complete, P6 pure-logic done |
-| 2026-06-01 | `b80c38b` | `fix(p6-messaging)`: Unify message sink across General/Nation resolve contexts |
-| 2026-06-01 | `b0f586e` | `feat(p6-auction)`: Wire ChangeRecorder + repos through TurnDaemonCommandDispatcher |
-| 2026-06-01 | `9f8a6fb` | `feat(p6-auction)`: AuctionFinalizeHandler — rollback/finish, resource transfer, unique-item slot check |
-| 2026-06-01 | `56bcd0c` | `feat(p6-auction)`: AuctionBidHandler — bid validation, charge, refund, bid insert, close-date extend |
+여섯 가지 비타협 규칙. 하나라도 어기면 골든 게이트가 조용히 깨집니다. 상세는 [`CLAUDE.md`](CLAUDE.md).
+
+1. **RNG draw-for-draw** — 모든 난수는 `RandUtil(LiteHashDrbg(seed))`. 추출 **순서·횟수·메서드 인자**가 패러티 타깃. 전투는 `processWar()`에서 한 번 만든 **단일** `RandUtil(warSeed)`를 참조로 전달, 중간 재시드 금지.
+2. **반올림** — `Util::round` = **half-AWAY-from-zero** → `PhpRound`(음수 스케일 `phpRound(v, -2)`, `phpRound(v/100)*100` 금지). `Math.round`(half-up)·`kotlin.math.round`(half-to-even) 금지. `Util::toInt`/`intdiv` = 0 방향 절삭. 데미지 클램프 = `ceil()`.
+3. **한글 로그 byte-패러티** — 조사·색/태그 마크업·접두어(`<Y1>【name】</> <C>HP (-dead)</>`, 진격·퇴각·패퇴·전멸·분쟁·정복 …) byte 일치. 로그 순서 = 실행 순서.
+4. **델타 flush, 인라인 write 금지** — 변경은 `ChangeRecorder`에 `created`/`dirty`/`deleted`로 기록 후 일괄 flush. 리졸버는 델타만 write.
+5. **충실 이식, 날조 금지** — 골든 수치/로그/시드는 실제 PHP 캡처에서만. 캡처 불가 시 증거(sibling-code-path byte-match)와 함께 격리 + 백로그 기록. 발명·테스트 약화·골든 수정 금지. 불일치 시 Kotlin 구현을 고칩니다.
+6. **삽입 순서 보존** — jsonb / conflict-map / trigger-caller 키는 `LinkedHashMap` 삽입 순서 유지. PHP 8.0+ 정렬은 stable — 비-stable 2차 비교자 추가 금지.
 
 ---
 
-*Last updated: 2026-06-02. Branch: `p7-frontend`.*
+*최종 갱신: 2026-06-03 · F5(docs) 기준.*

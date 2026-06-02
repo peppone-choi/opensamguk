@@ -4,11 +4,28 @@ import { useEffect, useState } from 'react';
 import Shell from '../../components/Shell';
 import GameCard from '../../components/GameCard';
 import StatusBadge from '../../components/StatusBadge';
+import GameChrome from '../../components/game/GameChrome';
 import { api } from '../../lib/api';
 import { formatNumber, formatTurn } from '../../lib/format';
 import type { MyPageData } from '../../types/game';
 
-export default function MyPage() {
+/**
+ * /game 메인 화면 (spec §1.1 PageFront). GameChrome가 chrome spine(GameInfo + GlobalMenu +
+ * MainControlBar)을 그리고, hasGeneral=false면 CharacterClaim으로 게이트한다. 빙의 완료(또는 이미
+ * 빙의됨) 후 placeholder 슬롯에 기존 내 정보 카드를 렌더한다 — 풀 메인 화면 조립(MapViewer/예약명령/
+ * info 카드)은 W4/W5의 책임. 기존 /game/* 서브페이지는 그대로 동작한다.
+ */
+export default function GameMainPage() {
+    return (
+        <Shell>
+            <GameChrome>
+                <MyPageContent />
+            </GameChrome>
+        </Shell>
+    );
+}
+
+function MyPageContent() {
     const [data, setData] = useState<MyPageData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -32,26 +49,22 @@ export default function MyPage() {
 
     if (loading) {
         return (
-            <Shell>
-                <div className="page-content">
-                    <h1>내 정보</h1>
-                    <p className="text-muted">로딩 중...</p>
-                </div>
-            </Shell>
+            <div className="page-content">
+                <h1>내 정보</h1>
+                <p className="text-muted">로딩 중...</p>
+            </div>
         );
     }
 
     if (error) {
         return (
-            <Shell>
-                <div className="page-content">
-                    <h1>내 정보</h1>
-                    <div className="error-state">
-                        <p>{error}</p>
-                        <button onClick={fetchData}>다시 시도</button>
-                    </div>
+            <div className="page-content">
+                <h1>내 정보</h1>
+                <div className="error-state">
+                    <p>{error}</p>
+                    <button onClick={fetchData}>다시 시도</button>
                 </div>
-            </Shell>
+            </div>
         );
     }
 
@@ -60,8 +73,7 @@ export default function MyPage() {
     const { general, nation, city, turn, notifications } = data;
 
     return (
-        <Shell>
-            <div className="page-content">
+        <div className="page-content">
                 <h1>내 정보</h1>
 
                 <div className="page-grid">
@@ -192,7 +204,6 @@ export default function MyPage() {
                         ))}
                     </div>
                 )}
-            </div>
-        </Shell>
+        </div>
     );
 }

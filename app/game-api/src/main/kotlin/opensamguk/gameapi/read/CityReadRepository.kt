@@ -7,6 +7,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import opensamguk.logic.domain.City
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /**
  * Read-only JPA mapping of the `city` row for the PRECHECK path (game-api ONLY — §7).
@@ -26,6 +28,9 @@ class CityReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "name")
+    var name: String = "",
 
     @Column(name = "nation_id")
     var nationId: Int = 0,
@@ -85,6 +90,10 @@ class CityReadEntity(
     var region: Int = 0,
 
     @Convert(converter = MetaJsonConverter::class)
+    @Column(name = "conflict", columnDefinition = "jsonb")
+    var conflict: Map<String, Any?> = linkedMapOf(),
+
+    @Convert(converter = MetaJsonConverter::class)
     @Column(name = "meta", columnDefinition = "jsonb")
     var meta: Map<String, Any?> = linkedMapOf(),
 ) {
@@ -114,4 +123,17 @@ class CityReadEntity(
     )
 }
 
-interface CityReadRepository : JpaRepository<CityReadEntity, Int>
+interface CityReadRepository : JpaRepository<CityReadEntity, Int> {
+    /** F2: cities owned by a nation (세력 도시 / my-cities), ordered by id. */
+    fun findByNationIdOrderByIdAsc(nationId: Int): List<CityReadEntity>
+
+    /** F2 front-info / nation-detail city count. */
+    fun countByNationId(nationId: Int): Long
+
+    /**
+     * F3 kingdoms ranking — `pop` = SUM(city.pop) over a nation's cities (there is NO `nation.pop`
+     * column). COALESCE so a nation with no cities materializes 0, not null.
+     */
+    @Query("select coalesce(sum(c.population), 0) from CityReadEntity c where c.nationId = :nationId")
+    fun sumPopulationByNationId(@Param("nationId") nationId: Int): Long
+}

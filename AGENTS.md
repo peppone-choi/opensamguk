@@ -1,40 +1,36 @@
 # AGENTS.md — opensamguk
 
-This file is the canonical onboarding guide for AI coding agents working on **opensamguk**.
-Read this before touching any code. The project has strict parity and architectural rules that are easy to violate silently.
+AI 코딩 에이전트 · 기여자용 온보딩 가이드. 코드를 건드리기 전에 이 문서를 읽으세요. **패러티/아키텍처 규칙은 조용히 어기기 쉽습니다.** 상세·정본 규칙은 [`CLAUDE.md`](CLAUDE.md)에 있으며 이 문서는 그 요약 + 빠른 참조입니다.
 
 ---
 
-## Project overview
+## 프로젝트 한 줄 요약
 
-**opensamguk** is a faithful migration of the PHP game **devsam/core** (삼국지 모의전투 HiDCHe / 삼모) to a **memory-centric CQRS** stack: **Kotlin/Spring Boot + Next.js + PostgreSQL + Redis + nginx**.
+PHP 게임 **devsam/core**(삼국지 모의전투 HiDCHe / 삼모)를 **메모리 중심 CQRS** 스택(**Kotlin/Spring Boot + Next.js + PostgreSQL + Redis + nginx**)으로 byte-단위 충실 이식.
 
-- **`legacy/devsam-core` (PHP) = GRAND TRUTH.** Every behavior (RNG draw order, rounding mode, Korean log strings, side-effect order) must match byte-for-byte. The PHP source is the oracle; never "improve" it.
-- **`legacy/devsam-core2026` (TypeScript)** = a secondary structural oracle only. PHP wins every divergence.
-- `legacy/` is **git-ignored**, never committed.
-- The repo is **PRIVATE** until a Koei-IP review clears it. No Koei-owned assets, secrets, or credentials in commits.
-
----
-
-## Technology stack
-
-| Layer | Tech | Version |
-|-------|------|---------|
-| Language | Kotlin | 2.1.0 |
-| Framework | Spring Boot | 3.4.1 |
-| JVM | Java | 21 LTS |
-| Build | Gradle (Kotlin DSL) | 8.12 |
-| Frontend | Next.js / React / TypeScript | 15.1.3 / 19 / 5.7.2 |
-| Package manager | pnpm (via corepack) | — |
-| Database | PostgreSQL | 16 |
-| Migrations | Flyway | — |
-| Cache/Stream | Redis | 7 |
-| Reverse proxy | nginx | 1.27 |
-| Testing | JUnit 5 + kotlin.test + Testcontainers | 1.20.4 |
+- **`legacy/devsam-core` (PHP) = GRAND TRUTH.** 모든 동작(RNG 추출 순서·반올림·한글 로그·부수효과 순서)을 byte 단위로 일치. 원작을 절대 "개선"하지 않음.
+- **`legacy/devsam-core2026` (TS)** = 구조 힌트용 2차 오라클. **PHP가 모든 divergence에서 이김.**
+- 프론트 grand truth = `hwe/ts/` Vue (`hwe/*.php`는 dist mount 셸).
+- `legacy/`는 **git-ignore**, 커밋 금지. 저장소는 코에이 IP 검토 전까지 **비공개** — 자산/IP·비밀키·자격증명 커밋 금지.
 
 ---
 
-## Architecture
+## 모듈 구조
+
+`settings.gradle.kts`에 선언:
+
+| 모듈 | 종류 | 포트 | 책임 |
+|------|------|------|------|
+| `common` | 라이브러리 | — | RNG 커널(`rng/LiteHashDrbg`+`RandUtil`+`SeedSerializer`), `util/PhpRound`, `log/*`(조사·ConvertLog·토큰), `constants/GameConst` |
+| `logic` | 라이브러리 | — | 순수 게임 로직(Spring/DB 없음): `stats/ActionPipeline`, `actions/*`+`CommandRegistry`, `war/*` 전투, `ai/*` GeneralAI, `event/*` DSL, `tick/*`, 베팅·경매·유산·메시지 |
+| `infra` | 라이브러리 | — | `JdbcFlushExecutor`(JDBC 전용 flush + 델타/툼스톤 + row mapper), Flyway `db/migration/V*.sql`, Redis, JPA read repository, `seed/ScenarioImporter` |
+| `app:gateway-api` | Boot 앱 | `:8080` | 인증(JWT/BCrypt) · 프로필 · 어드민(`AdminSeeder`) |
+| `app:game-api` | Boot 앱 | `:8081` | read + precheck + 명령 intake + SSE 릴레이 |
+| `app:game-engine` | Boot 앱 | `:8082` | 턴 데몬: `InMemoryTurnWorld`·`ChangeRecorder`·`MonthlyPipeline`·`TurnRunService`, `boot/ScenarioSeedRunner`+`WorldSnapshotLoader` |
+| `web/gateway` | Next.js | `:3000` | 게이트웨이 프론트(로그인/로비/어드민) |
+| `web/game` | Next.js | `:3001` | 게임 프론트(인게임 UI) |
+
+아키텍처:
 
 ```
 api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──▶ PostgreSQL
@@ -42,225 +38,138 @@ api ──Redis(XADD)──▶ game-engine daemon ──JDBC batch flush──�
  └──────────── turnCompleted SSE ◀── ChangeRecorder dirty/created/deleted
 ```
 
-The **game-engine daemon** holds the authoritative world in memory. Mutations are recorded as `created`/`dirty`/`deleted` (tombstone) on `ChangeRecorder` and flushed in bulk via `JdbcFlushExecutor`. **Writes never go through JPA.** JPA is read/precheck only (used in `game-api`). Having two competing dirty-truths (JPA dirty-checking + change-recorder) would silently diverge.
+---
 
-### Module map
+## The ONE 데몬-write 규칙 (아키텍처 테스트로 강제)
 
-Modules are declared in `settings.gradle.kts`:
+game-engine 데몬은 **절대** JPA `EntityManager`로 write하지 않습니다. JPA = read/precheck 전용(game-api). 데몬 write는 **오직** `ChangeRecorder` → `JdbcFlushExecutor` JDBC 배치만. 두 dirty-truth가 공존하면 조용히 발산합니다.
 
-| Module | Type | Port | Responsibility |
-|--------|------|------|----------------|
-| `common` | library | — | RNG kernel (`LiteHashDrbg`), `PhpRound`, `Josa`, log tokens, wire formats, constants |
-| `logic` | library | — | Pure game logic (no Spring/DB): actions, commands, battle engine, AI, event DSL, ticks, stat pipelines |
-| `infra` | library | — | JDBC flush + Flyway migrations + Redis + row mappers + world-state repository |
-| `app:gateway-api` | Boot app | `:8080` | Auth and profile orchestration |
-| `app:game-api` | Boot app | `:8081` | Read + precheck + mutation intake + SSE relay |
-| `app:game-engine` | Boot app | `:8082` | Turn daemon: `InMemoryTurnWorld`, `ChangeRecorder`, `MonthlyPipeline`, `TurnRunService` |
-| `web:gateway` | Next.js | `:3000` | Gateway frontend |
-| `web:game` | Next.js | `:3001` | Game frontend |
+- 강제 테스트: `DaemonNoEntityManagerTest` / `InfraNoEntityManagerTest`.
+- 예외(비위반): `boot/ScenarioSeedRunner`·`AdminSeeder`는 `JdbcTemplate`만 사용(Flyway 동급), write-path scan(`opensamguk.engine.{flush,turn,run}`) 밖인 `opensamguk.engine.boot`에 위치.
+- precheck 합의 테스트: `PrecheckFullCrossCallSiteTest` — game-api precheck와 game-engine reserved-turn 평가가 Allow/Deny + reason 문자열에서 일치함을 증명.
 
 ---
 
-## Build and test commands
+## 빌드 · 테스트 명령
 
-**Prerequisites:** JDK 21 (Gradle 8.12 fails on newer JDKs), Docker, Node 20 + pnpm.
-
-Always run Gradle from the **repo root** with `JAVA_HOME` pinned to 21:
+**전제**: JDK 21 LTS(Gradle 8.12는 Java 25+ 파싱 실패), Docker, Node 20 + pnpm(corepack). **항상 repo root에서, `JAVA_HOME`을 21로 고정.**
 
 ```bash
-# Compile + run all tests (unit + integration; Testcontainers skip cleanly if Docker is unavailable)
+# 전체 빌드 + 테스트
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build
 
-# Run a single module's tests
+# 단일 모듈
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
 
-# Full JVM check (recommended before commits)
-./gradlew :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test
+# 커밋 전 권장 풀 체크
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
+  :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test
 
-# Docker smoke test (builds images, boots full stack, asserts health)
+# Docker 스모크 (이미지 빌드 + 전체 스택 + health 단언)
 ./tools/smoke.sh
 
-# Frontend development
- cd web/gateway && corepack pnpm dev   # :3000
+# 프론트 dev
+cd web/gateway && corepack pnpm dev   # :3000
 cd web/game    && corepack pnpm dev   # :3001
 ```
 
-> **Important:** Verify builds by the **output tail** (`... 2>&1 | tail -40`, grep `BUILD SUCCESSFUL` + test counts), not the exit code. The host may route Gradle through a wrapper that returns 0 regardless. Use `--rerun-tasks` when you suspect UP-TO-DATE false-greens. Test results are also written to `**/build/test-results/test/*.xml`.
+### ⚠️ gradle context-mode 주의
 
-### Testcontainers on macOS
+호스트가 gradle을 **context-mode 래퍼**로 라우팅 → `task-notification` **exit 0이 부정확**합니다. 빌드 성공 여부는 반드시:
 
-The `infra`, `app:game-api`, and `app:game-engine` modules configure Testcontainers with these system properties / env vars in `tasks.test`:
-- `api.version=1.44`
-- `DOCKER_HOST=unix:///var/run/docker.sock`
-- `DOCKER_CONTEXT=default`
-- `TESTCONTAINERS_RYUK_DISABLED=true`
+- 출력 tail로 검증: `... 2>&1 | tail -40` 후 `BUILD SUCCESSFUL` + 테스트 카운트 grep
+- 또는 테스트 결과 XML: `**/build/test-results/test/*.xml`
+- UP-TO-DATE false-green 의심 시 `--rerun-tasks`
 
-Docker-unavailable ⇒ integration tests **skip**, not fail.
+### Testcontainers (macOS)
 
----
-
-## Code style guidelines
-
-- **Kotlin official code style** (`kotlin.code.style=official` in `gradle.properties`).
-- **Indent:** 4 spaces for `.kt`/`.kts`, 2 spaces for `.ts`/`.tsx`/`.json`/`.yml`.
-- **Encoding:** UTF-8, LF line endings, final newline required (see `.editorconfig`).
-- **Package naming:** all lowercase under `opensamguk.<module>`.
-- **File naming:** PascalCase for classes/objects, camelCase for functions/variables.
-- **Comments:** Written in English. Game-content strings are in Korean.
-- **Test naming:** Backtick-quoted descriptive names (e.g., `` `same seed yields identical draw streams` ``).
+`infra`·`app:game-api`·`app:game-engine`의 `tasks.test`에 배선: `api.version=1.44`, `DOCKER_CONTEXT=default`, `TESTCONTAINERS_RYUK_DISABLED=true`. **Docker 미사용 시 통합 테스트는 fail이 아니라 skip.**
 
 ---
 
-## Testing instructions
+## 패러티 규율 (NON-NEGOTIABLE)
 
-### Test structure
+상세는 [`CLAUDE.md`](CLAUDE.md). 요약 6조:
 
-- `common/src/test` — unit tests for RNG, rounding, Josa, log formatting, wire serialization.
-- `logic/src/test` — unit tests for commands, battle engine, AI, events, stats. Heavy use of seeded `RandUtil` + golden fixtures.
-- `infra/src/test` — integration tests for JDBC flush, row mappers, Flyway migrations (Testcontainers).
-- `app/game-api/src/test` — integration tests for controllers, precheck service, SSE relay, read repositories (Testcontainers).
-- `app/game-engine/src/test` — integration + E2E tests for the turn daemon, flush convergence, cross-call-site precheck agreement, AI selection gates (Testcontainers).
-- `app/gateway-api/src/test` — minimal Spring Boot context test.
-
-### Golden fixtures
-
-Golden numbers/logs/seeds come **only** from real PHP captures in `tools/php-golden/` (Docker harness: MariaDB 11.4 + `php:8.3-cli`, scenario `1010`). Golden files live under `logic/src/test/resources/golden/` and `common/src/test/resources/golden/`. They are read-only consumption targets; **never copy them** into another module's resources.
-
-If a value cannot be captured faithfully, **quarantine it with proof** (sibling-code-path byte-match) and log it to the phase backlog. Do **not** invent it, do **not** weaken a test, do **not** edit a golden.
-
-### Architecture tests
-
-- `DaemonNoEntityManagerTest` / `InfraNoEntityManagerTest` — enforce the ONE daemon-write rule (no JPA `EntityManager` writes in `game-engine`).
-- `PrecheckFullCrossCallSiteTest` — proves `game-api` precheck and `game-engine` reserved-turn evaluation agree on Allow/Deny + reason string.
+1. **RNG draw-for-draw** — `RandUtil(LiteHashDrbg(seed))`. 추출 **순서·횟수·인자**가 타깃. 전투는 단일 `RandUtil(warSeed)` 참조 전달, 중간 재시드 금지.
+2. **반올림** — `Util::round` = half-AWAY → `PhpRound`(음수 스케일 `phpRound(v,-2)`). `Math.round`/`kotlin.math.round` 금지. `toInt`/`intdiv` = 0 방향 절삭. 데미지 클램프 = `ceil()`.
+3. **한글 로그 byte-패러티** — 조사·색/태그·접두어 byte 일치. 로그 순서 = 실행 순서.
+4. **델타 flush, 인라인 write 금지** — `ChangeRecorder` `created`/`dirty`/`deleted` → 일괄 flush. 리졸버는 델타만.
+5. **충실 이식, 날조 금지** — 골든은 실제 PHP 캡처에서만. 불일치 시 Kotlin 구현 수정, 골든·테스트 약화 금지. 캡처 불가 시 증거와 함께 격리 + 백로그.
+6. **삽입 순서 보존** — `LinkedHashMap`. PHP 8.0+ 정렬 stable — 비-stable 2차 비교자 금지.
 
 ---
 
-## Security considerations
+## 코드 스타일
 
-- The repo is **private**; do not expose it or include credentials in commits.
-- `.env*` files are git-ignored. Use `.env.example` as a template.
-- No external API dependencies in the runtime; the stack is fully self-hosted (LLM-free).
-- Deployment target is AWS EC2 t3.large; no cloud-native secrets manager is assumed.
-
----
-
-## Development conventions
-
-### Phase-based workflow
-
-Development proceeds in phases: `P0 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8`.
-Each phase = **spec → plan → adversarial review → execute → gate**.
-
-- Plans live in `docs/superpowers/plans/`, research in `docs/superpowers/research/`.
-- **Foundation-first:** every shared extension point (registry, base class, stat-key enum, pipeline hook) is built in a **Tier-0 foundation wave** that later families only **consume**.
-- Parallel worktree families must be **disjoint** — never co-widen the same file.
-
-### Branch stack
-
-One branch per phase, branching off the previous:
-```
-p0a-foundation-scaffold → p0b-parity-kernel → p1-vertical-slice → p2-commands-constraints → p3-monthly-tick → p4-battle-engine → p5-npc-ai → …
-```
-PRs are stacked (base = parent phase) for clean diffs.
-
-### Commit convention
-
-One logical commit per task. Every commit message ends with:
-```
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-```
+- Kotlin official(`kotlin.code.style=official`). 들여쓰기: `.kt`/`.kts` 4칸, `.ts`/`.tsx`/`.json`/`.yml` 2칸.
+- UTF-8, LF, 끝 개행 필수(`.editorconfig`). 패키지 소문자 `opensamguk.<module>`. 클래스 PascalCase, 함수/변수 camelCase.
+- 주석은 영어, 게임 콘텐츠 문자열은 한글. 테스트명은 backtick 서술형.
 
 ---
 
-## Deployment process
+## 골든 픽스처
 
-### Local full stack
+골든 수치/로그/시드는 **오직** `tools/php-golden/` 실제 PHP 캡처(Docker: MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010`)에서. quirk: `j_install.php` 두 번 호출, install 비멱등(매 실행 fresh DB), 덤프 byte-identical. 골든은 `logic/.../resources/golden/`·`common/.../resources/golden/`에 read-only 소비 대상으로 둠 — 다른 모듈로 복사 금지.
+
+---
+
+## 페이즈 / 브랜치 / 커밋
+
+- 흐름: `P0 → … → P8`, 각 페이즈 = **spec → plan → adversarial review → execute → gate**. 플랜 `docs/superpowers/plans/`, 리서치 `docs/superpowers/research/`.
+- **Foundation-first**: 공유 확장점은 Tier-0 wave에서 먼저, 이후 family는 소비만. 병렬 worktree family는 **disjoint** — 같은 파일 co-widen 금지.
+- 브랜치 스택(페이즈당 1, 부모 분기): `p0a-foundation-scaffold → p0b-parity-kernel → p1-vertical-slice → p2-commands-constraints → p3-monthly-tick → p4-battle-engine → p5-npc-ai → …`. PR도 스택(base = 부모).
+- 프론트/시드/배포는 **F0–F5** 시리즈(아래) — 계획서 `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`.
+- **한 작업 = 한 논리 커밋. 모든 커밋 메시지 끝에:**
+  ```
+  Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+  ```
+
+---
+
+## 프론트엔드 / 배포 (F0–F5)
+
+| 단계 | 핵심 | 상태 |
+|------|------|------|
+| **F0 게이트웨이 인증** | gateway-api 자체 JWT/BCrypt(Kakao 제거 divergence). `web/gateway` 로그인/회원가입/로비/어드민. 토큰은 Next route handler 프록시 + **httpOnly 쿠키**(`sam_access`/`sam_refresh`), 브라우저 JS 미노출, 동일출처(CORS 불필요). `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 peppone(role=ADMIN) 멱등 시드. | ✅ |
+| **F1 시나리오 시드** | `infra/seed/ScenarioImporter` + `engine/boot/ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) → fresh DB에 `scenario_1010` 자동 시드(`world_state` 비어 있을 때만, 멱등). `WorldSnapshotLoader`로 DB→`InMemoryTurnWorld` 부팅. JDBC-only(one-daemon-write 비위반). env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`. | ✅ |
+| **F2 메인화면 + 메뉴 척추** | `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
+| **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지, **read-only 렌더**. | ✅ |
+| **F4 액션 페이지(read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator read 렌더. **명령 제출(mutation) 경로 미완.** | ✅(read) |
+| **F5 turnkey + docs** | 정본 `docker-compose.yml`(로컬) + `docker-compose.production.yml`(EC2/GHCR) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드. | 🔄 |
+
+> 프론트는 현재 game-api **read 데이터 렌더**까지 구축. 프론트에서의 명령 제출/턴 예약(mutation)은 후속 작업입니다. 백엔드 명령·전투·경매·베팅·외교 로직(P2~P6)은 게이트 닫힘이나, 그것을 프론트에서 끝까지 조작하는 흐름은 미완으로 표기합니다.
+
+---
+
+## 배포
 
 ```bash
+# 로컬 전체 스택 (8서비스: postgres·redis·gateway-api·game-api·game-engine·web-gateway·web-game·nginx)
 docker compose up -d --build
+
+# 프로덕션 (EC2 t3.large, GHCR 이미지 풀, POSTGRES_PASSWORD 필수)
+docker compose -f docker-compose.production.yml up -d
 ```
 
-Services (defined in `docker-compose.yml`):
-- `postgres:16-alpine` (:5432)
-- `redis:7-alpine` (:6379)
-- `gateway-api` (:8080)
-- `game-api` (:8081)
-- `game-engine` (:8082)
-- `web-gateway` (:3000)
-- `web-game` (:3001)
-- `nginx:1.27-alpine` (:80)
-
-nginx routes:
-- `/api/gateway/` → gateway-api
-- `/api/game/` → game-api
-- `/game/` → web-game
-- `/` → web-gateway
-- `/api/game/sse/` → game-api with buffering disabled for realtime frames
-
-### Docker images
-
-Backend images are multi-stage: `gradle:8.12-jdk21` build → `eclipse-temurin:21-jre` runtime.
-Frontend images are multi-stage: `node:20-alpine` build (pnpm + `next build`) → `node:20-alpine` runtime (`next start` with standalone output).
-
-### CI
-
-`.github/workflows/ci.yml`:
-- `jvm` job: checkout → setup-java 21 → `./gradlew build --no-daemon` → surface test XMLs.
-- `web` matrix job: checkout → setup-node 20 → corepack enable → `corepack pnpm install --no-frozen-lockfile` → `corepack pnpm build` for `web/gateway` and `web/game`.
+- 백엔드 이미지 멀티스테이지: `gradle:8.12-jdk21` 빌드 → `eclipse-temurin:21-jre` 런타임. 프론트: `node:22-alpine` 빌드(`next build`) → `node:22-alpine` standalone 런타임.
+- nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/game/`→game-api · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
+- CI/CD: `.github/workflows/deploy.yml`(빌드 → GHCR push → SSH → 롤링 재시작), 수동 `scripts/deploy.sh`(헬스 체크 루프). 런타임 외부 API 의존 0, LLM-free.
 
 ---
 
-## Parity discipline (NON-NEGOTIABLE)
+## 보안
 
-1. **RNG draw-for-draw.** All randomness is `RandUtil(LiteHashDrbg(seed))`. The draw **order, count, and method args** are parity targets. In battle, the WHOLE fight runs on **ONE** `RandUtil(warSeed)` built once in `processWar()` and threaded by reference — never re-seeded mid-stream.
-2. **Rounding.** `Util::round`/`setRound` = **half-AWAY-from-zero** → use `PhpRound` (negative-scale `phpRound(v,-2)`, NEVER `phpRound(v/100)*100`). NEVER `Math.round` (half-up) or `kotlin.math.round` (half-to-even). `Util::toInt`/`intdiv` = truncate-toward-zero.
-3. **Korean log byte-parity.** Log strings (`Josa` 조사, color/tag markup, prefixes, `<Y1>【name】</> <C>HP (-dead)</>`, 진격·퇴각·패퇴·전멸·분쟁·정복 …) must match exactly. Log order = execution order.
-4. **Flush delta, not inline writes.** Mutations are recorded on `ChangeRecorder` and flushed in bulk. Resolvers write **only** delta.
-5. **Faithful port, never fabricate.** Fix the Kotlin impl on mismatch, never the golden.
-6. **Insertion order matters.** Use `LinkedHashMap` for jsonb / conflict-map / trigger-caller keys. PHP 8.0+ sorts are stable — never add a non-stable secondary comparator.
+- 저장소 비공개 — 노출/자격증명 커밋 금지. `.env*`는 git-ignore, `.env.example`을 템플릿으로 사용.
+- 관리자 비밀번호는 env(`ADMIN_PASSWORD`)로만 — 코드/리포 하드코딩 금지.
+- 런타임 외부 API 의존 0, 완전 자체 호스팅(LLM-free). 배포 타깃 EC2 t3.large(클라우드 시크릿 매니저 비전제).
 
 ---
 
-## Useful references
+## 참고
 
-- Migration design + roadmap: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`
-- Detailed parity discipline + load-bearing rules: `CLAUDE.md`
-- PHP golden capture harness: `tools/php-golden/`
-- Full stack smoke test: `tools/smoke.sh`
-- Gradle version catalog: `gradle/libs.versions.toml`
-
----
-
-## Frontend Development (web/game)
-
-### Stack
-- **Next.js 15** (App Router, React Server Components where possible)
-- **TypeScript 5.7**
-- **Tailwind CSS** + **Pretendard** font
-- **SSE** (`EventSource`) for real-time turn events
-
-### Pages (under `app/game/`)
-
-| Page | Route | API | Status |
-|------|-------|-----|--------|
-| Auction | `/game/auction` | `GET /api/auctions`, `POST /api/command/auction_bid` | Scaffolded |
-| Betting | `/game/betting` | `GET /api/bettings`, `POST /api/command/place_bet` | Scaffolded |
-| Diplomacy | `/game/diplomacy` | `GET /api/diplomacy`, `POST /api/diplomatic-messages/{id}/accept` | Scaffolded |
-| Mailbox | `/game/mailbox` | `GET /api/mailbox`, `DELETE /api/mailbox/{id}` | Scaffolded |
-| Nation | `/game/nation` | `GET /api/nation/{id}` | Scaffolded |
-
-### API Base URL
-```ts
-const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
-```
-
-### SSE Realtime
-```ts
-const es = new EventSource(`${API_BASE}/realtime/events`);
-es.addEventListener('realtime', () => refreshData());
-```
-
-### Dev Server
-```bash
-cd web/game && corepack pnpm dev   # :3001
-```
+- 정본 규율·load-bearing 규칙: [`CLAUDE.md`](CLAUDE.md)
+- 사용자/빠른 시작/서비스 표/시드: [`README.md`](README.md)
+- 마이그레이션 설계 + 로드맵: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`
+- 프론트 패러티 + 시드 계획(F0–F5): `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`
+- PHP 골든 캡처 하네스: `tools/php-golden/` · 스모크: `tools/smoke.sh` · 버전 카탈로그: `gradle/libs.versions.toml`

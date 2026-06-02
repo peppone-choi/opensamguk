@@ -7,19 +7,7 @@ import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatDate } from '../../../../lib/format';
-
-interface EmperorRecord {
-  id: number;
-  name: string;
-  nation: string;
-  nationColor: string;
-  unifiedAt: string;
-  turn: number;
-  year: number;
-  month: number;
-  generalCount: number;
-  cityCount: number;
-}
+import type { EmperorRecord } from '../../../../types/game';
 
 export default function EmperorPage() {
   const [data, setData] = useState<EmperorRecord[]>([]);

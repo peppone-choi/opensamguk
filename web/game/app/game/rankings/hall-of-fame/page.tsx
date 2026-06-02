@@ -6,18 +6,7 @@ import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatDate, formatNumber } from '../../../../lib/format';
-
-interface HallRecord {
-  id: number;
-  category: string;
-  name: string;
-  nation: string;
-  nationColor: string;
-  value: number;
-  valueLabel: string;
-  achievedAt: string;
-  turn: number;
-}
+import type { HallRecord } from '../../../../types/game';
 
 export default function HallOfFamePage() {
   const [data, setData] = useState<HallRecord[]>([]);

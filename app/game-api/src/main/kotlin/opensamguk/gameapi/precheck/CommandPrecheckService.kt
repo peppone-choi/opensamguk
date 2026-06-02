@@ -1,6 +1,7 @@
 package opensamguk.gameapi.precheck
 
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
@@ -44,7 +45,27 @@ class CommandPrecheckService(
     fun precheck(generalId: Int, actionCode: String): PrecheckResult {
         val state = stateViewFactory.build(generalId)
             ?: return PrecheckResult.Unknown(listOf(RequirementKey.General(generalId)))
+        return evaluate(state, registry.resolve(actionCode))
+    }
 
+    /**
+     * Catalog-mode precheck — builds the actor state ONCE (one DB read pass) and evaluates EACH
+     * [GeneralActionDefinition] in [definitions] against it, returning the per-command
+     * [PrecheckResult]. Used by the available-commands catalog so the `possible`/`reason` flags are
+     * the REAL `:logic` constraint outcome (precheck == full), not a fabricated default.
+     *
+     * Returns `null` when the actor general row is absent (the whole catalog is then unavailable);
+     * the caller decides whether to surface a registry-only catalog with `possible=true`.
+     */
+    fun precheckAll(generalId: Int, definitions: List<GeneralActionDefinition>): Map<String, PrecheckResult>? {
+        val state = stateViewFactory.build(generalId) ?: return null
+        return definitions.associate { def -> def.key to evaluate(state, def) }
+    }
+
+    private fun evaluate(
+        state: PrecheckStateViewFactory.PrecheckState,
+        definition: GeneralActionDefinition,
+    ): PrecheckResult {
         val actor = state.actor
         val ctx = ConstraintContext(
             actorId = actor.id,
@@ -53,7 +74,7 @@ class CommandPrecheckService(
             env = state.env,
             mode = ConstraintMode.PRECHECK,
         )
-        val constraints = registry.resolve(actionCode).buildConstraints(ctx)
+        val constraints = definition.buildConstraints(ctx)
         return when (val r = evaluateConstraints(constraints, ctx, state.view)) {
             ConstraintResult.Allow -> PrecheckResult.Available
             is ConstraintResult.Deny -> PrecheckResult.Blocked(r.reason, r.constraintName)

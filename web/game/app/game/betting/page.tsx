@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
+import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
+import { useFrontInfo } from '../../../hooks/useFrontInfo';
 
 interface BettingItem {
     bettingId: string;
@@ -42,14 +44,22 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 export default function BettingPage() {
+    const { frontInfo, refresh } = useFrontInfo();
+    const generalId = frontInfo?.general.generalId ?? null;
+    const nationId = frontInfo?.general.nationId;
     const [bettings, setBettings] = useState<BettingItem[]>([]);
     const [nations, setNations] = useState<NationOption[]>([]);
-    const [generalId, setGeneralId] = useState<number>(1);
-    const [betAmount, setBetAmount] = useState<Record<string, string>>({});
     const [selectedNation, setSelectedNation] = useState<Record<string, number>>({});
+    // The betting whose 베팅 modal is open (null = closed). amount sub-form lives in CommandModal.
+    const [betTarget, setBetTarget] = useState<BettingItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
+
+    function showToast(msg: string) {
+        setToast(msg);
+        setTimeout(() => setToast(''), 3000);
+    }
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -73,34 +83,22 @@ export default function BettingPage() {
     }, [fetchData]);
 
     useEffect(() => {
-        const base = process.env.NEXT_PUBLIC_GAME_API_URL ?? 'http://localhost:8081';
-        const es = new EventSource(`${base}/realtime/events`);
-        es.addEventListener('realtime', () => fetchData());
+        const es = new EventSource('/api/game/sse/turn');
+        es.addEventListener('turnCompleted', () => fetchData());
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchData]);
 
-    async function placeBet(bettingId: string) {
-        const amount = Number(betAmount[bettingId]);
-        const nationId = selectedNation[bettingId];
-        if (!amount || amount <= 0) {
-            setToast('베팅 금액을 입력하세요.');
-            setTimeout(() => setToast(''), 3000);
+    function openBetModal(b: BettingItem) {
+        if (generalId == null) {
+            showToast('장수가 없어 베팅할 수 없습니다.');
             return;
         }
-        if (!nationId) {
-            setToast('베팅할 국가를 선택하세요.');
-            setTimeout(() => setToast(''), 3000);
+        if (!selectedNation[b.bettingId]) {
+            showToast('베팅할 국가를 선택하세요.');
             return;
         }
-        try {
-            const data = await api.command<{ status: string; reason?: string }>('bet', { bettingId, nationId, amount });
-            setToast(data.status === 'AVAILABLE' ? '베팅이 접수되었습니다.' : (data.reason ?? '베팅할 수 없습니다.'));
-        } catch {
-            setToast('베팅 요청에 실패했습니다.');
-        }
-        setTimeout(() => setToast(''), 3000);
-        fetchData();
+        setBetTarget(b);
     }
 
     const openBettings = bettings.filter(b => b.status === 'OPEN');
@@ -111,15 +109,6 @@ export default function BettingPage() {
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>베팅</h1>
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>장수 ID</span>
-                    <input
-                        type="number"
-                        style={{ width: '5rem' }}
-                        value={generalId}
-                        onChange={e => setGeneralId(Number(e.target.value))}
-                    />
-                </label>
                 <button onClick={fetchData}>새로고침</button>
             </div>
 
@@ -188,14 +177,10 @@ export default function BettingPage() {
                             </div>
 
                             <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
-                                <input
-                                    type="number"
-                                    placeholder="베팅 금액"
-                                    style={{ width: '8rem' }}
-                                    value={betAmount[b.bettingId] ?? ''}
-                                    onChange={e => setBetAmount(prev => ({ ...prev, [b.bettingId]: e.target.value }))}
-                                />
-                                <button onClick={() => placeBet(b.bettingId)}>베팅</button>
+                                <button onClick={() => openBetModal(b)}>베팅</button>
+                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                                    500원을 초과해 베팅할 수 있습니다.
+                                </span>
                             </div>
                         </GameCard>
                     );
@@ -225,6 +210,23 @@ export default function BettingPage() {
                         })}
                     </div>
                 </>
+            )}
+
+            {/* 베팅 — CommandModal pinned to bet (amount sub-form). bettingId + the radio-selected
+                nationId are page-fixed args; legacy requires a bet > 500원 (amountMin 501). */}
+            {betTarget && generalId != null && (
+                <CommandModal
+                    onClose={() => setBetTarget(null)}
+                    onToast={(msg) => showToast(msg)}
+                    generalId={generalId}
+                    nationId={nationId}
+                    pinnedCommand="bet"
+                    pinnedLabel="베팅"
+                    pinnedArgType="amount"
+                    amountMin={501}
+                    extraArgs={{ bettingId: betTarget.bettingId, nationId: selectedNation[betTarget.bettingId] }}
+                    onReserved={() => { refresh(); fetchData(); }}
+                />
             )}
         </Shell>
     );
