@@ -41,3 +41,4 @@ tools/php-golden/probe_*.php
 .playwright-mcp/
 # Temporary research dir
 .tmp_research/
+web/game/tsconfig.tsbuildinfo
