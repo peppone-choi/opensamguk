@@ -17,10 +17,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import { MAP_CDN } from '@/lib/constants';
 import type { MapPreviewCity, MapPreviewResponse } from '@/lib/types';
 import MapCityDetail from './MapCityDetail';
 
-const MAP_CDN = 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images/game/map';
 const NEUTRAL_COLOR = '#555555';
 const NEUTRAL_NAME = '공 백 지'; // legacy CityBasicCard nationNamePanel fallback
 
