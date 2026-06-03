@@ -72,7 +72,9 @@ fun interface MonthlyClock {
  * Generic over the RNG type `R` so F5 can supply its concrete `MonthScopedRng` without F1 depending
  * on F5 (the FT2 thin-interface contract).
  */
-class MonthlyPipeline<R>(
+// open: 엔진 DaemonLoopConfig가 이 빈을 @Lazy 주입 → Spring이 지연-해석 CGLIB 프록시를 만든다.
+// 순수 로직 클래스라 기본 final이지만, 프록시가 서브클래싱할 수 있게 open으로 둔다(동작 불변, Spring 의존 없음).
+open class MonthlyPipeline<R>(
     private val monthlyRngFactory: MonthlyRngFactory<R>,
     private val clock: MonthlyClock,
     private val preUpdateMonthly: PreUpdateMonthly,
