@@ -13,6 +13,7 @@ import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.event.EventDispatcher
@@ -103,6 +104,7 @@ class DaemonLoopConfig {
         eventDispatcher: EventDispatcher,
         auctionRepository: AuctionRepository,
         auctionBidRepository: AuctionBidRepository,
+        boardPostRepository: BoardPostRepository,
     ): TurnRunService {
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
@@ -171,6 +173,7 @@ class DaemonLoopConfig {
             eventDispatcher = eventDispatcher,
             auctionRepository = auctionRepository,
             auctionBidRepository = auctionBidRepository,
+            boardPostRepository = boardPostRepository,
         )
     }
 }

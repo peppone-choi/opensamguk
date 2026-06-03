@@ -6,6 +6,7 @@ import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.common.wire.encodeCommandPayload
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -134,6 +135,35 @@ class CommandWireMapperTest {
         val setName = roundTrip(CommandWireMapper.toCommand("troopSetName", 7, "r", """{"troopId":7,"troopName":"새이름"}""")!!) as TurnDaemonCommand.TroopSetName
         assertEquals(7, setName.troopId)
         assertEquals("새이름", setName.troopName)
+    }
+
+    @Test
+    fun `board intake codes map isSecret title text and the resolved acting generalId`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("boardArticle"))
+        assertTrue(CommandWireMapper.isIntakeCommand("boardComment"))
+
+        val secret = roundTrip(
+            CommandWireMapper.toCommand("boardArticle", 10, "r", """{"isSecret":true,"title":"기밀","text":"본문"}""")!!,
+        ) as TurnDaemonCommand.BoardArticle
+        assertEquals(10, secret.generalId)
+        assertTrue(secret.isSecret)
+        assertEquals("기밀", secret.title)
+        assertEquals("본문", secret.text)
+
+        // 회의실 기본값: isSecret 생략 → false. title/text는 nullable 유지(PHP null-부재 vs blank).
+        val open = roundTrip(
+            CommandWireMapper.toCommand("boardArticle", 10, "r", """{"text":"본문만"}""")!!,
+        ) as TurnDaemonCommand.BoardArticle
+        assertFalse(open.isSecret)
+        assertNull(open.title)
+        assertEquals("본문만", open.text)
+
+        val comment = roundTrip(
+            CommandWireMapper.toCommand("boardComment", 10, "r", """{"articleNo":5,"text":"의견"}""")!!,
+        ) as TurnDaemonCommand.BoardComment
+        assertEquals(10, comment.generalId)
+        assertEquals(5, comment.articleNo)
+        assertEquals("의견", comment.text)
     }
 
     @Test

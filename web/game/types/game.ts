@@ -609,34 +609,33 @@ export interface InheritPointResponse {
 // Mirrors j_board_get_articles.php. Labels 회의실/기밀실/등록/댓글 달기 verbatim.
 // Permission gates render as INFO (not error): '국가에 소속되어있지 않습니다.' /
 // '권한이 부족합니다. 수뇌부가 아닙니다.'. EMPTY articles[] when no rows.
+// 필드명은 game-api DTO를 그대로 미러링한다 (app/game-api .../dto/F4Dto.kt BoardResponse/
+// BoardArticle/BoardComment) — 프록시가 pass-through라 페이지가 이 이름을 그대로 소비한다.
 export interface BoardComment {
-  no: number;
-  documentNo: number;      // legacy `document_no`
-  nationNo: number;        // legacy `nation_no`
-  isSecret: boolean;       // legacy `is_secret`
-  generalNo: number;
-  generalName: string;
+  id: number;
+  authorGeneralId: number;
+  authorName: string;
   text: string;
-  date: string;
+  date: string;            // ISO instant
 }
 
 export interface BoardArticle {
-  no: number;
-  nationNo: number;
-  isSecret: boolean;
-  generalNo: number;
-  generalName: string;
-  text: string;
-  date: string;
-  comment: BoardComment[]; // legacy `comment` (chronological asc)
+  id: number;
+  nationId: number;
+  authorGeneralId: number;
+  authorName: string;
+  title: string;
+  contentHtml: string;
+  date: string;            // ISO instant
+  comments: BoardComment[]; // 시간순 오름차순
 }
 
 export interface BoardResponse {
   result: boolean;
-  isSecretBoard: boolean;
-  permission: number;      // checkSecretPermission tier
-  articles: BoardArticle[];          // newest-first; [] when none
-  reason: string;          // 'success' or the verbatim deny string
+  secret: boolean;                   // true → 기밀실, false → 회의실
+  title: string;                     // 그대로 회의실 / 기밀실
+  articles: BoardArticle[];          // 최신순; 없으면 []
+  blockedReason: string | null;      // 권한 게이트가 기밀 방을 차단했을 때 설정 (INFO)
 }
 
 // ── page 5 · 설문 조사 (GET /api/votes, GET /api/votes/{id}) ──────────────────

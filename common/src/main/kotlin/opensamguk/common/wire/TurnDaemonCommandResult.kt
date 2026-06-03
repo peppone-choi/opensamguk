@@ -97,6 +97,19 @@ data class TroopActionResult(
 ) : TurnDaemonCommandResult()
 
 /**
+ * F4 Wave C2 (slice C) — collapsed result for the board-intake ops (`boardArticle` / `boardComment`).
+ * The inserted row id is DB-serial (assigned at flush, unknown to the handler), so it is not echoed;
+ * `reason` is present only on failure.
+ */
+@Serializable
+data class BoardActionResult(
+    override val type: String,
+    override val ok: Boolean,
+    val generalId: Int,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+/**
  * Collapsed boolean-ok group: dieOnPrestart / buildNationCandidate / instantRetreat /
  * vacation / setMySetting / dropItem / changePermission / kick / appoint.
  * `{ type; ok: boolean; generalId; reason? }`.
@@ -413,6 +426,9 @@ private val BOOLEAN_OK_TYPES = setOf(
 /** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */
 private val TROOP_ACTION_TYPES = setOf("troopNew", "troopKick", "troopSetName")
 
+/** The board-intake ops sharing the collapsed [BoardActionResult] shape (slice C). */
+private val BOARD_ACTION_TYPES = setOf("boardArticle", "boardComment")
+
 /**
  * Custom `(type, ok)` selector. [JsonContentPolymorphicSerializer] cannot be used because
  * (a) it only models decode, and (b) the concrete classes carry `type`/`ok` as default-valued
@@ -435,6 +451,9 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
         }
         if (type in TROOP_ACTION_TYPES) {
             return TroopActionResult.serializer()
+        }
+        if (type in BOARD_ACTION_TYPES) {
+            return BoardActionResult.serializer()
         }
         return when (type) {
             "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()

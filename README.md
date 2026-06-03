@@ -4,11 +4,10 @@
 
 PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식한 프로젝트입니다. PHP 소스가 **grand truth**이며, 모든 RNG 추출·반올림·로그 문자열·부수효과 순서를 byte-단위로 일치시키고 PHP 골든 리플레이로 게이팅합니다. 게임 동작은 절대 "개선"하지 않고 원작 그대로 재현합니다.
 
-> 비공개(PRIVATE) 저장소 — 코에이 IP 검토 통과 전까지 외부 공개하지 않습니다. 저장소에 코에이 소유 자산/IP, 비밀키, 자격증명을 커밋하지 않습니다.
-
 - 마이그레이션 설계 + 로드맵: [`docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`](docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md)
 - 프론트엔드 패러티 + 시드 계획(F0–F5): [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md)
 - 기여자/에이전트 가이드(패러티 규율·관례): [`CLAUDE.md`](CLAUDE.md) · 모듈/빌드/테스트 온보딩: [`AGENTS.md`](AGENTS.md)
+- 원작(grand truth) · 라이선스: HideD님의 [**devsam**](https://storage.hided.net/gitea/devsam) (MIT) — 자세한 감사의 말은 [감사 / 라이선스](#감사--라이선스)
 
 ---
 
@@ -23,6 +22,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 7. [테스트](#테스트)
 8. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
 9. [패러티 규율](#패러티-규율)
+10. [감사 / 라이선스](#감사--라이선스)
 
 ---
 
@@ -333,6 +333,17 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 4. **델타 flush, 인라인 write 금지** — 변경은 `ChangeRecorder`에 `created`/`dirty`/`deleted`로 기록 후 일괄 flush. 리졸버는 델타만 write.
 5. **충실 이식, 날조 금지** — 골든 수치/로그/시드는 실제 PHP 캡처에서만. 캡처 불가 시 증거(sibling-code-path byte-match)와 함께 격리 + 백로그 기록. 발명·테스트 약화·골든 수정 금지. 불일치 시 Kotlin 구현을 고칩니다.
 6. **삽입 순서 보존** — jsonb / conflict-map / trigger-caller 키는 `LinkedHashMap` 삽입 순서 유지. PHP 8.0+ 정렬은 stable — 비-stable 2차 비교자 추가 금지.
+
+---
+
+## 감사 / 라이선스
+
+이 저장소는 **HideD**님이 만드신 PHP 원작 게임 **devsam** — 삼국지 모의전투 HiDCHe(삼모) — 없이는 존재할 수 없었습니다. 모든 게임 메커니즘·계산·로그 문자열·RNG 추출의 grand truth가 그분의 작업물이며, opensamguk은 그 동작을 byte-단위로 충실히 이식·재현한 파생물입니다.
+
+- 원작 소스 (grand truth): **devsam** — <https://storage.hided.net/gitea/devsam>
+- 원작 `devsam/core`는 **MIT 라이선스**로 공개되어 있습니다. opensamguk은 그 출처와 저작자 표시를 유지하며, 파생물로서 MIT 라이선스의 정신을 존중합니다.
+
+> HideD님의 노력 없이는 이 저장소도 없었습니다. 깊이 감사드립니다 — 이 프로젝트의 토대 전부가 그분의 헌신에서 비롯되었습니다.
 
 ---
 

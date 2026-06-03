@@ -125,6 +125,16 @@ class JdbcFlushExecutor(
                 bettingInsertMany(payload.bettingInserts)
             }
 
+            // 8d. 게시판 채널 (F4 C2 슬라이스 C): board_post INSERT 후 board_comment INSERT —
+            //     부모-먼저-자식 순서라 댓글의 post_id FK 대상이 먼저 존재한다 (board_comment →
+            //     board_post ON DELETE CASCADE). INSERT 전용 소셜 콘텐츠 (회의실/기밀실 글·댓글).
+            if (payload.boardPostInserts.isNotEmpty()) {
+                boardPostInsertMany(payload.boardPostInserts)
+            }
+            if (payload.boardCommentInserts.isNotEmpty()) {
+                boardCommentInsertMany(payload.boardCommentInserts)
+            }
+
             // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
             //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
             if (payload.createdMessages.isNotEmpty()) {
@@ -734,6 +744,52 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("ng_betting", FlushVerb.CREATE_MANY, rows.size))
     }
 
+    // --- step 8d: 게시판 채널 (F4 C2 슬라이스 C, 회의실/기밀실) ----------------------------------
+
+    /** `board_post` 행 INSERT (INSERT 전용; `id`는 SERIAL — 생략해 DB가 부여). */
+    private fun boardPostInsertMany(rows: List<BoardPostInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("nation_id", c["nation_id"])
+                .addValue("is_secret", c["is_secret"])
+                .addValue("author_general_id", c["author_general_id"])
+                .addValue("author_name", c["author_name"])
+                .addValue("title", c["title"])
+                .addValue("content_html", c["content_html"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO board_post (nation_id, is_secret, author_general_id, author_name, title, content_html)
+            VALUES (:nation_id, :is_secret, :author_general_id, :author_name, :title, :content_html)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("board_post", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /** `board_comment` 행 INSERT (INSERT 전용; `id`는 SERIAL — 생략해 DB가 부여). */
+    private fun boardCommentInsertMany(rows: List<BoardCommentInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("post_id", c["post_id"])
+                .addValue("nation_id", c["nation_id"])
+                .addValue("is_secret", c["is_secret"])
+                .addValue("author_general_id", c["author_general_id"])
+                .addValue("author_name", c["author_name"])
+                .addValue("content_text", c["content_text"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO board_comment (post_id, nation_id, is_secret, author_general_id, author_name, content_text)
+            VALUES (:post_id, :nation_id, :is_secret, :author_general_id, :author_name, :content_text)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("board_comment", FlushVerb.CREATE_MANY, rows.size))
+    }
+
     // --- step 8c: mailbox channel (T0.5) -------------------------------------------------------
 
     /**
@@ -869,6 +925,9 @@ data class FlushPayload(
     val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
     val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
     val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
+    // --- F4 Wave C2 슬라이스 C: 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT ---
+    val boardPostInserts: List<BoardPostInsertRow> = emptyList(),     // step-8d board_post INSERT
+    val boardCommentInserts: List<BoardCommentInsertRow> = emptyList(), // step-8d board_comment INSERT
     // --- T0.8 inheritance channel ---
     val inheritanceKvWrites: List<KvWrite> = emptyList(),             // step-11a inheritance KV writes
     val inheritanceLogInserts: List<InheritanceLogRow> = emptyList(), // step-11b inheritance_log INSERT
@@ -883,6 +942,12 @@ data class AuctionBidInsertRow(val columns: Map<String, Any?>)
 
 /** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
 data class BettingInsertRow(val columns: Map<String, Any?>)
+
+/** `board_post` INSERT 한 건 (F4 Wave C2 슬라이스 C, 회의실/기밀실 글, INSERT 전용). */
+data class BoardPostInsertRow(val columns: Map<String, Any?>)
+
+/** `board_comment` INSERT 한 건 (F4 Wave C2 슬라이스 C, 회의실/기밀실 댓글, INSERT 전용). */
+data class BoardCommentInsertRow(val columns: Map<String, Any?>)
 
 /**
  * One `troop` row (F4 Wave C2 slice B). Infra-local mirror of the engine `Troop` (no engine dep

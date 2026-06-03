@@ -76,6 +76,20 @@ data class AuctionBidInsert(val columns: Map<String, Any?>)
 data class BettingInsert(val columns: Map<String, Any?>)
 
 /**
+ * `board_post` INSERT 의도 (F4 Wave C2 슬라이스 C, 회의실/기밀실 글). INSERT 전용 — 글은 절대 갱신되지
+ * 않는다. `columns`는 board_post 컬럼을 미러링: nation_id, is_secret, author_general_id, author_name,
+ * title, content_html.
+ */
+data class BoardPostInsert(val columns: Map<String, Any?>)
+
+/**
+ * `board_comment` INSERT 의도 (F4 Wave C2 슬라이스 C, 회의실/기밀실 댓글). INSERT 전용. `columns`는
+ * board_comment 컬럼을 미러링: post_id, nation_id, is_secret, author_general_id, author_name,
+ * content_text.
+ */
+data class BoardCommentInsert(val columns: Map<String, Any?>)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
