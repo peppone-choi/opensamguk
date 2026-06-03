@@ -11,6 +11,16 @@ kotlin { jvmToolchain(21) }
 // Docker COPY build/libs/*.jar glob stays unambiguous.
 tasks.named("jar") { enabled = false }
 
+// 빌드 버전/시각을 META-INF/build-info.properties로 생성 → BuildProperties 빈 자동 등록.
+// 어드민 버전 표시(GET /admin/version)에서 읽는다. image.tag는 빌드 시 IMAGE_TAG env로 주입(없으면 dev).
+springBoot {
+    buildInfo {
+        properties {
+            additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
+        }
+    }
+}
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":infra"))
