@@ -307,6 +307,13 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                         {data.cities.map((c) => {
                             const sz = sizeOf(c.level);
                             const owned = c.nationId !== 0;
+                            // 미보급(supply=false): devsam은 보급/미보급에 d<color>.gif 별도 에셋을 swap하나
+                            // (legacy map.ts:409 `flagType = supply ? 'f' : 'd'`), opensamguk은 깃발을 cloth
+                            // PNG 런타임 틴트로 생성해 d-에셋이 없다. 두 번째 오라클 devsam-core2026의
+                            // `.supply-off{opacity:0.6}`(MapCityDetail.vue:218)을 그대로 city-base에 적용해
+                            // 오오라·성·깃발·이름을 함께 흐리게 한다. devsam은 소유국(nationID>0)만 f/d를 swap하므로
+                            // owned 조건도 함께 건다.
+                            const unsupplied = owned && c.supply === false;
                             const col = colorOf(c.nationId);
                             const isCurrent = currentCityId != null && c.id === currentCityId;
                             const isSelected = c.id === selectedId;
@@ -326,7 +333,7 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                             return (
                                 <div
                                     key={c.id}
-                                    className="city-base"
+                                    className={`city-base${unsupplied ? ' supply-off' : ''}`}
                                     style={{ left: baseLeft, top: baseTop, width: BASE_W, height: BASE_H }}
                                 >
                                     {/* 1) 오오라 — 레거시 b<color>.png(125×125 radial glow)을 CSS radial-gradient로 대체.
@@ -366,7 +373,7 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                                         />
 
                                         {/* 3) 깃발(소유국만) — flagTint nation색 4프레임, 12×12, 성 아이콘 우상단 기준.
-                                            TODO: 미보급(supply=false) 전용 d-깃발 에셋 없음 → 보급/미보급 동일 깃발 사용. */}
+                                            미보급(supply=false)은 d-에셋 대신 city-base의 supply-off 클래스로 흐리게 처리(상단 주석 참고). */}
                                         {owned && flagFrameUrl && (
                                             <span
                                                 className="city-flag"

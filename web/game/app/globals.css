@@ -902,6 +902,11 @@ input:focus, select:focus, textarea:focus {
 .city-base {
   position: absolute;
 }
+/* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6}(MapCityDetail.vue:218) 그대로.
+   오오라·성·깃발·이름을 함께 흐리게(opacity만, grayscale/desaturate 없음 — 오라클 일치). */
+.city-base.supply-off {
+  opacity: 0.6;
+}
 /* 1) 오오라(city_bg) — 레거시 b<color>.png radial glow를 CSS radial-gradient로(인라인 style). */
 .city-aura {
   position: absolute;
