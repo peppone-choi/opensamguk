@@ -12,6 +12,7 @@ import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
@@ -62,6 +63,8 @@ open class TurnRunService(
     private val auctionRepository: AuctionRepository? = null,
     /** JPA read repository for auction bid lookups (P6 T0.7). */
     private val auctionBidRepository: AuctionBidRepository? = null,
+    /** board_post 조회용 JPA read 리포지토리 (F4 C2 슬라이스 C — 댓글의 글 is_secret read). */
+    private val boardPostRepository: BoardPostRepository? = null,
 ) {
 
     /**
@@ -70,8 +73,8 @@ open class TurnRunService(
      * handlers — the world is per-run state, not a Spring bean). Results are currently DISCARDED: the
      * events-stream `commandResult` publish is deferred per the P1 DECISION documented above.
      */
-    private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null) {
-        TurnDaemonCommandDispatcher(world, handler.recorder, auctionRepository, auctionBidRepository)
+    private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null && boardPostRepository != null) {
+        TurnDaemonCommandDispatcher(world, handler.recorder, auctionRepository, auctionBidRepository, boardPostRepository)
     } else {
         null
     }
@@ -164,6 +167,10 @@ open class TurnRunService(
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).
         val payload = buildFlushPayload()
         flushExecutor.flush(payload)
+        // 수명이 긴 recorder를 리셋해 이번 tick의 델타가 다음 tick에 재방출되지 않게 한다 — 특히
+        // INSERT 전용 채널(board/betting/auction_bid/message)은 그러지 않으면 매 tick 행을 중복 INSERT한다.
+        // flush 성공 시에만: 위에서 throw되면 이 호출을 건너뛰어 다음 tick이 재시도한다.
+        handler.recorder.clear()
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
         val previousTurnTime = world.getState().lastTurnTime

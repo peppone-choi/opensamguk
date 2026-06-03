@@ -356,6 +356,7 @@ class IntakeWaveC2SliceATest {
             world, recorder,
             noopRepo<opensamguk.infra.read.AuctionRepository>(),
             noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
+            noopRepo<opensamguk.infra.read.BoardPostRepository>(),
         )
 
         val r = dispatcher.dispatch(TurnDaemonCommand.SetRate(generalId = 10, amount = 15))

@@ -5,6 +5,7 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.betting.PlaceBetHandler
+import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.InheritResetHandler
 import opensamguk.engine.intake.NationFinanceSetterHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
@@ -13,6 +14,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.BoardPostRepository
 
 /**
  * Routes drained [TurnDaemonCommand]s to their engine handlers.
@@ -43,6 +45,7 @@ class TurnDaemonCommandDispatcher(
     recorder: ChangeRecorder,
     auctionRepository: AuctionRepository,
     auctionBidRepository: AuctionBidRepository,
+    boardPostRepository: BoardPostRepository,
 ) {
     private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
@@ -55,6 +58,9 @@ class TurnDaemonCommandDispatcher(
 
     // ── F4 Wave C2 (slice B) — troop intake handler ──
     private val troop = TroopHandler(world, recorder)
+
+    // ── F4 Wave C2 (슬라이스 C) — 게시판(회의실/기밀실) 인테이크 핸들러 ──
+    private val board = BoardHandler(world, recorder, boardPostRepository)
 
     /**
      * Dispatch one command to its handler.
@@ -84,6 +90,9 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.TroopExit -> troop.handleExit(command)
         is TurnDaemonCommand.TroopKick -> troop.handleKick(command)
         is TurnDaemonCommand.TroopSetName -> troop.handleSetName(command)
+        // ── F4 Wave C2 (슬라이스 C) 게시판 인테이크 바인딩 ──
+        is TurnDaemonCommand.BoardArticle -> board.handleArticle(command)
+        is TurnDaemonCommand.BoardComment -> board.handleComment(command)
         else -> null
     }
 

@@ -222,6 +222,7 @@ class TroopIntakeSliceBTest {
             world, recorder,
             noopRepo<opensamguk.infra.read.AuctionRepository>(),
             noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
+            noopRepo<opensamguk.infra.read.BoardPostRepository>(),
         )
 
         val r = dispatcher.dispatch(TurnDaemonCommand.TroopNew(generalId = 7, troopName = "제1군단"))

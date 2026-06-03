@@ -14,6 +14,8 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.infra.persistence.AuctionBidInsertRow
 import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.BettingInsertRow
+import opensamguk.infra.persistence.BoardCommentInsertRow
+import opensamguk.infra.persistence.BoardPostInsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
@@ -324,6 +326,10 @@ object DatabaseHooks {
             auctionUpserts = recorder.auctionUpserts().map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
             auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },
             bettingInserts = recorder.bettingInserts().map { BettingInsertRow(it.columns) },
+            // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT (recorder 채널, betting과
+            // 동일; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
+            boardPostInserts = recorder.boardPostInserts().map { BoardPostInsertRow(it.columns) },
+            boardCommentInserts = recorder.boardCommentInserts().map { BoardCommentInsertRow(it.columns) },
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,

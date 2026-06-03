@@ -60,6 +60,9 @@ object CommandWireMapper {
         "troopExit",
         "troopKick",
         "troopSetName",
+        // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 인테이크.
+        "boardArticle",
+        "boardComment",
     )
 
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
@@ -145,6 +148,21 @@ object CommandWireMapper {
                 requestId = requestId, generalId = generalId,
                 troopId = args.int("troopId") ?: 0,
                 troopName = args.str("troopName") ?: "",
+            )
+            // ── F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실). title/text는 nullable 유지(`?: ""` 없음)로
+            //    PHP `Util::getPost`의 null(부재)-vs-blank를 보존; isSecret이 방을 고른다. ──
+            "boardArticle" -> TurnDaemonCommand.BoardArticle(
+                requestId = requestId, generalId = generalId,
+                isSecret = args.bool("isSecret") ?: false,
+                title = args.str("title"),
+                text = args.str("text"),
+            )
+            "boardComment" -> TurnDaemonCommand.BoardComment(
+                requestId = requestId, generalId = generalId,
+                // `?: 0` 없음 — 부재 시 articleNo를 null로 유지(PHP getPost null)해, 엔진이
+                // `$articleNo === null` 1차 게이트 '올바르지 않은 입력입니다.'를 발동하게 한다.
+                articleNo = args.int("articleNo"),
+                text = args.str("text"),
             )
             else -> null
         }

@@ -107,6 +107,12 @@ class ChangeRecorder(
     /** Betting channel (P6) — ng_betting INSERTs (INSERT-only). */
     private val bettingInserts = mutableListOf<BettingInsert>()
 
+    /** 게시판 채널 (F4 C2 슬라이스 C) — board_post INSERT (회의실/기밀실 글, INSERT 전용). */
+    private val boardPostInserts = mutableListOf<BoardPostInsert>()
+
+    /** 게시판 채널 (F4 C2 슬라이스 C) — board_comment INSERT (회의실/기밀실 댓글, INSERT 전용). */
+    private val boardCommentInserts = mutableListOf<BoardCommentInsert>()
+
     /** Inheritance channel (T0.8) — KV writes to `game_kv` namespace `inheritance_{ownerID}`. */
     private val inheritanceKvWrites = mutableListOf<KvWrite>()
 
@@ -130,6 +136,7 @@ class ChangeRecorder(
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
+            boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
             inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
             inheritanceResultInserts.isNotEmpty()
 
@@ -406,6 +413,16 @@ class ChangeRecorder(
         bettingInserts.add(BettingInsert(columns))
     }
 
+    /** `board_post` INSERT 기록 (F4 C2 슬라이스 C, 회의실/기밀실 글). INSERT 전용. */
+    fun recordBoardPostInsert(columns: Map<String, Any?>) {
+        boardPostInserts.add(BoardPostInsert(columns))
+    }
+
+    /** `board_comment` INSERT 기록 (F4 C2 슬라이스 C, 회의실/기밀실 댓글). INSERT 전용. */
+    fun recordBoardCommentInsert(columns: Map<String, Any?>) {
+        boardCommentInserts.add(BoardCommentInsert(columns))
+    }
+
     /** The recorded ng_auction UPSERTs (the T0.7 flush source), in emit order. */
     fun auctionUpserts(): List<AuctionUpsert> = auctionUpserts.toList()
 
@@ -414,6 +431,47 @@ class ChangeRecorder(
 
     /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
     fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
+
+    /** 기록된 board_post INSERT (F4 C2 슬라이스 C flush 소스), emit 순서대로. */
+    fun boardPostInserts(): List<BoardPostInsert> = boardPostInserts.toList()
+
+    /** 기록된 board_comment INSERT (F4 C2 슬라이스 C flush 소스), emit 순서대로. */
+    fun boardCommentInserts(): List<BoardCommentInsert> = boardCommentInserts.toList()
+
+    /**
+     * 기록된 모든 채널을 비운다 — PHP의 요청 단위 스코프에 대응하는 tick 단위 리셋.
+     *
+     * 데몬 recorder는 수명이 긴 단일 인스턴스([ReservedTurnHandler.recorder])다. tick 단위 리셋이
+     * 없으면 누적된 델타가 매 tick 재-flush된다. 멱등한 UPDATE/patch 채널은 그저 낭비 + 무한증가지만,
+     * INSERT 전용 채널(betting / auction_bid / message / board_post / board_comment)은 이후 매 tick마다
+     * 행을 중복 INSERT한다. PHP에는 이런 누수가 없다 — 각 AJAX 요청은 한 번 INSERT하고 요청 스코프가 폐기된다.
+     *
+     * [TurnRunService.runTick]가 flush 성공 직후 이를 호출한다(flush 실패 시 위에서 throw되어 이 호출을
+     * 건너뛰므로, 다음 tick이 누적 델타를 재시도한다 — retry-clean 계약). id 할당자는 의도적으로 리셋하지
+     * 않는다(데몬 수명 동안 단조 증가를 유지해야 한다).
+     */
+    fun clear() {
+        generalPatches.clear()
+        cityPatches.clear()
+        nationPatches.clear()
+        rankPatches.clear()
+        deletedGeneralIds.clear()
+        deletedNationIds.clear()
+        kvDirty.clear()
+        diplomacyUpdateDirty.clear()
+        createdMessages.clear()
+        messageInvalidates.clear()
+        auctionUpserts.clear()
+        auctionBidInserts.clear()
+        bettingInserts.clear()
+        boardPostInserts.clear()
+        boardCommentInserts.clear()
+        inheritanceKvWrites.clear()
+        inheritanceLogInserts.clear()
+        inheritanceResultInserts.clear()
+        oldGeneralSnapshots.clear()
+        nationSnapshots.clear()
+    }
 
     /** Record an inheritance KV write (T0.8) — targets `game_kv` with namespace `inheritance_{ownerID}`. */
     fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {

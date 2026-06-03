@@ -104,6 +104,33 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "troopSetName"
     }
 
+    // F4 Wave C2 (slice C) — board intake (회의실/기밀실 글/댓글). title/text are nullable to preserve
+    // the PHP null(absent)-vs-blank distinction (Util::getPost returns null when the field is absent).
+    @Serializable
+    @SerialName("boardArticle")
+    data class BoardArticle(
+        val requestId: String? = null,
+        val generalId: Int,
+        val isSecret: Boolean = false,
+        val title: String? = null,
+        val text: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "boardArticle"
+    }
+
+    @Serializable
+    @SerialName("boardComment")
+    data class BoardComment(
+        val requestId: String? = null,
+        val generalId: Int,
+        // PHP `Util::getPost('articleNo','int')`의 null(부재)-vs-존재를 보존하려 nullable — 댓글 추가의
+        // 1차 게이트가 `$articleNo === null || $text === null`이다 (j_board_comment_add.php).
+        val articleNo: Int? = null,
+        val text: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "boardComment"
+    }
+
     @Serializable
     @SerialName("dieOnPrestart")
     data class DieOnPrestart(
