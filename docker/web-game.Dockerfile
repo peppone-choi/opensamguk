@@ -1,8 +1,11 @@
 # web/game (:3001) — Next.js standalone (game client). NEXT_PUBLIC_* are inlined at BUILD time.
 FROM node:22-alpine AS build
 WORKDIR /src
-RUN npm install -g pnpm@9.15.0
-COPY web/game/package.json web/game/pnpm-lock.yaml web/game/
+RUN npm install -g pnpm@10.33.0
+# pnpm-workspace.yaml MUST be copied with the manifest+lock so the install honors
+# `onlyBuiltDependencies` (sharp/unrs-resolver) — pnpm 10 blocks dep build scripts by default and
+# would otherwise leave the natives unbuilt (next build then fails).
+COPY web/game/package.json web/game/pnpm-lock.yaml web/game/pnpm-workspace.yaml web/game/
 WORKDIR /src/web/game
 RUN pnpm install --frozen-lockfile
 COPY web/game/ .

@@ -15,12 +15,16 @@ const SESSION_MAX_AGE = 7 * 24 * 60 * 60;
 // 7일짜리 장기 토큰이 모든 동일출처 요청(/api/proxy, 정적 등)에 실려나가지 않게 한다.
 const REFRESH_PATH = '/api/auth';
 
-const isProd = process.env.NODE_ENV === 'production';
+// `Secure` 쿠키는 HTTPS 연결에서만 브라우저에 저장/전송된다. 로컬·사내 docker compose는 HTTP
+// (nginx :80 / localhost:3000)로 뜨므로, NODE_ENV=production(프로덕션 빌드)이라도 Secure를 켜면
+// 브라우저가 세션 쿠키를 폐기해 로그인 직후 /login으로 되돌아간다(= "로그인이 안 됨"). 따라서 Secure는
+// 명시적 opt-in: 기본 false(HTTP에서 동작), HTTPS 뒤에 배포할 때만 COOKIE_SECURE=true 로 켠다.
+const cookieSecure = process.env.COOKIE_SECURE === 'true';
 
 function opts(maxAge: number, path: string) {
     return {
         httpOnly: true,
-        secure: isProd,
+        secure: cookieSecure,
         sameSite: 'lax' as const,
         path,
         maxAge,

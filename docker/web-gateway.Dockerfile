@@ -1,8 +1,11 @@
 # web/gateway (:3000) — Next.js standalone (landing + auth). NEXT_PUBLIC_* are inlined at BUILD time.
 FROM node:22-alpine AS build
 WORKDIR /src
-RUN npm install -g pnpm@9.15.0
-COPY web/gateway/package.json web/gateway/pnpm-lock.yaml web/gateway/
+RUN npm install -g pnpm@10.33.0
+# pnpm-workspace.yaml MUST be copied with the manifest+lock so the install honors
+# `onlyBuiltDependencies` (sharp/unrs-resolver) — pnpm 10 blocks dep build scripts by default and
+# would otherwise leave the natives unbuilt (next build then fails).
+COPY web/gateway/package.json web/gateway/pnpm-lock.yaml web/gateway/pnpm-workspace.yaml web/gateway/
 WORKDIR /src/web/gateway
 RUN pnpm install --frozen-lockfile
 COPY web/gateway/ .
