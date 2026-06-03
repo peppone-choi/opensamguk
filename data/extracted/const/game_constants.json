@@ -1,0 +1,440 @@
+{
+  "_meta": {
+    "source": "legacy/devsam-core/hwe/sammo/GameConstBase.php (PHP = grand truth)",
+    "overrideSource": "legacy/devsam-core/hwe/d_setting/GameConst.php (런타임 GameConst extends GameConstBase — 오버라이드/추가 정적값이 실제 사용값)",
+    "statBlockSource": "legacy/devsam-core/hwe/scenario/default.json $.stat (Scenario::getGameConf() 가 stat 블록 기본값으로 사용; d_setting/GameConst.php 정적값과 동일)",
+    "compareTarget": "common/src/main/kotlin/opensamguk/common/constants/GameConst.kt",
+    "extractedBy": "data/extracted tooling (static PHP parse)",
+    "scope": "튜너블 데이터 상수만 (숫자/문자/문자배열/맵). 계산 로직·메서드 제외.",
+    "phpVsKotlin": "값 불일치는 PHP 채택. 발견된 불일치는 _divergences 참조. 나머지 스칼라/배열/맵은 GameConst.kt 와 샘플 대조 일치.",
+    "valueResolution": "GameConstBase 의 값 위에 d_setting/GameConst 오버라이드를 덮어쓴 '런타임 유효값(effective)' 을 채택. _overridden 키에 base→override 변경 내역 기록.",
+    "excludedLogic": [
+      "getNationChiefLevel / getNationChiefLevelOrNull (Kotlin 전용 0-9 확장 메서드 — 로직)",
+      "nationCapitalIncomeMultiplier 1+(1/3/level) (소득 배수 계산식 — 로직, func_time_event.php)",
+      "maxTrialCountByYear (maxUniqueItemLimit 워크-스루 누적 계산 — 로직, func.php:1625)",
+      "Scenario::getGameConf() array_merge(stat, map, const) 병합 절차 (런타임 시나리오 병합 로직)",
+      "$staticEventHandlers 는 빈 배열이라 데이터로 포함하나, 핸들러 클래스 와이어링 자체는 로직"
+    ],
+    "dataVsLogicBoundary": {
+      "data": "$title~$staticEventHandlers 의 정적 스칼라/문자열/문자배열/연관배열 리터럴. defaultEvents/defaultInitialEvents 의 튜플-배열(이벤트 DSL 데이터). allItems/availableXxxCommand 의 등록 카탈로그.",
+      "logic": "GameConstBase 에는 메서드가 없음(순수 데이터 클래스). Kotlin GameConst.kt 가 추가한 getNationChiefLevel/nationCapitalIncomeMultiplier/maxTrialCountByYear 등 함수, Scenario 의 getGameConf 병합은 로직 → 제외.",
+      "eventTupleNote": "defaultEvents/defaultInitialEvents 는 [trigger, priority, condition, ...actions] 튜플의 배열 = 선언적 데이터(제어흐름 아님). ActionLogger::EVENT_YEAR_MONTH 상수 참조는 정수 리터럴 6 으로 직렬화됨(LogFormat.EVENT_YEAR_MONTH)."
+    }
+  },
+
+  "title": "삼국지 모의전투 PHP HiDCHe",
+  "banner": "KOEI의 이미지를 사용, 응용하였습니다 / 제작 : HideD(hided62@gmail.com) / <a href='https://sam.hided.net/wiki/hidche/credit' target='_blank' style='color:white;text-decoration: underline;'>Credit</a>",
+  "mapName": "che",
+  "unitSet": "che",
+
+  "develrate": 50,
+  "upgradeLimit": 30,
+  "dexLimit": 1000000,
+  "defaultAtmosLow": 40,
+  "defaultTrainLow": 40,
+  "defaultAtmosHigh": 70,
+  "defaultTrainHigh": 70,
+  "maxAtmosByCommand": 100,
+  "maxTrainByCommand": 100,
+  "maxAtmosByWar": 150,
+  "maxTrainByWar": 110,
+  "trainDelta": 30,
+  "atmosDelta": 30,
+  "atmosSideEffectByTraining": 1,
+  "trainSideEffectByAtmosTurn": 1,
+
+  "sabotageDefaultProb": 0.35,
+  "sabotageProbCoefByStat": 300,
+  "sabotageDefenceCoefByGeneralCnt": 0.04,
+  "sabotageDamageMin": 100,
+  "sabotageDamageMax": 800,
+
+  "basecolor": "#000044",
+  "basecolor2": "#225500",
+  "basecolor3": "#660000",
+  "basecolor4": "#330000",
+
+  "armperphase": 500,
+  "basegold": 0,
+  "baserice": 2000,
+  "minNationalGold": 0,
+  "minNationalRice": 0,
+  "exchangeFee": 0.01,
+  "adultAge": 14,
+  "minPushHallAge": 40,
+  "maxDedLevel": 30,
+  "maxTechLevel": 12,
+  "maxBetrayCnt": 9,
+
+  "incDefSettingChange": 3,
+  "maxDefSettingChange": 9,
+
+  "refreshLimitCoef": 10,
+
+  "maxLevel": 255,
+
+  "techLevelIncYear": 5,
+  "initialAllowedTechLevel": 1,
+
+  "basePopIncreaseAmount": 5000,
+  "expandCityPopIncreaseAmount": 100000,
+  "expandCityDevelIncreaseAmount": 2000,
+  "expandCityWallIncreaseAmount": 2000,
+  "expandCityDefaultCost": 60000,
+  "expandCityCostCoef": 500,
+  "minAvailableRecruitPop": 30000,
+
+  "defaultCityWall": 1000,
+
+  "initialNationGenLimit": 10,
+
+  "defaultMaxGeneral": 600,
+  "defaultMaxNation": 55,
+  "defaultMaxGenius": 5,
+  "defaultStartYear": 180,
+
+  "joinRuinedNPCProp": 0.1,
+
+  "defaultGold": 1000,
+  "defaultRice": 1000,
+
+  "coefAidAmount": 10000,
+
+  "maxResourceActionAmount": 10000,
+  "resourceActionAmountGuide": [
+    100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
+    1200, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000
+  ],
+
+  "generalMinimumGold": 0,
+  "generalMinimumRice": 500,
+
+  "maxTurn": 30,
+  "maxChiefTurn": 12,
+
+  "statGradeLevel": 5,
+
+  "openingPartYear": 3,
+  "joinActionLimit": 12,
+
+  "bornMinStatBonus": 3,
+  "bornMaxStatBonus": 5,
+
+  "defaultStatTotal": 165,
+  "defaultStatMin": 15,
+  "defaultStatMax": 80,
+  "defaultStatNPCTotal": 150,
+  "defaultStatNPCMax": 75,
+  "defaultStatNPCMin": 10,
+  "chiefStatMin": 65,
+
+  "availableNationType": [
+    "che_도적", "che_명가", "che_음양가", "che_종횡가", "che_불가", "che_오두미도", "che_태평도", "che_도가",
+    "che_묵가", "che_덕가", "che_병가", "che_유가", "che_법가"
+  ],
+  "neutralNationType": "che_중립",
+
+  "defaultSpecialDomestic": "None",
+  "availableSpecialDomestic": [
+    "che_경작", "che_상재", "che_발명", "che_축성", "che_수비", "che_통찰", "che_인덕", "che_귀모"
+  ],
+  "optionalSpecialDomestic": ["None"],
+
+  "defaultSpecialWar": "None",
+  "availableSpecialWar": [
+    "che_귀병", "che_신산", "che_환술", "che_집중", "che_신중", "che_반계",
+    "che_보병", "che_궁병", "che_기병", "che_공성",
+    "che_돌격", "che_무쌍", "che_견고", "che_위압",
+    "che_저격", "che_필살", "che_징병", "che_의술", "che_격노", "che_척사"
+  ],
+  "optionalSpecialWar": ["None"],
+
+  "neutralPersonality": "None",
+  "availablePersonality": [
+    "che_안전", "che_유지", "che_재간", "che_출세", "che_할거", "che_정복",
+    "che_패권", "che_의협", "che_대의", "che_왕좌"
+  ],
+  "optionalPersonality": ["che_은둔", "None"],
+
+  "maxUniqueItemLimit": [
+    [-1, 1],
+    [3, 2],
+    [10, 3],
+    [20, 4]
+  ],
+
+  "minTurnDieOnPrestart": 2,
+
+  "uniqueTrialCoef": 1,
+  "maxUniqueTrialProb": 0.25,
+
+  "maxAvailableWarSettingCnt": 10,
+  "incAvailableWarSettingCnt": 2,
+
+  "minGoldRequiredWhenBetting": 500,
+
+  "minMonthToAllowInheritItem": 4,
+  "inheritBornSpecialPoint": 6000,
+  "inheritBornTurntimePoint": 2500,
+  "inheritBornCityPoint": 1000,
+  "inheritBornStatPoint": 1000,
+  "inheritItemUniqueMinPoint": 5000,
+  "inheritItemRandomPoint": 3000,
+  "inheritBuffPoints": [0, 200, 600, 1200, 2000, 3000],
+  "inheritSpecificSpecialPoint": 4000,
+  "inheritResetAttrPointBase": [1000, 1000, 2000, 3000],
+  "inheritCheckOwnerPoint": 1000,
+
+  "scenarioEffect": null,
+
+  "defaultInstantAction": {
+    "dieOnPrestart": true,
+    "buildNationCandidate": true
+  },
+  "availableInstantAction": {
+    "dieOnPrestart": true,
+    "buildNationCandidate": true
+  },
+
+  "allItems": {
+    "horse": {
+      "che_명마_01_노기": 0, "che_명마_02_조랑": 0, "che_명마_03_노새": 0,
+      "che_명마_04_나귀": 0, "che_명마_05_갈색마": 0, "che_명마_06_흑색마": 0,
+      "che_명마_07_백마": 2, "che_명마_07_기주마": 2, "che_명마_07_오환마": 2, "che_명마_07_백상": 2,
+      "che_명마_08_양주마": 2, "che_명마_08_흉노마": 2, "che_명마_09_과하마": 2, "che_명마_09_의남백마": 2,
+      "che_명마_10_대완마": 2, "che_명마_10_옥추마": 2, "che_명마_11_서량마": 2, "che_명마_11_화종마": 2,
+      "che_명마_12_사륜거": 2, "che_명마_12_옥란백용구": 2, "che_명마_13_절영": 2, "che_명마_13_적로": 2,
+      "che_명마_14_적란마": 2, "che_명마_14_조황비전": 2, "che_명마_15_한혈마": 2, "che_명마_15_적토마": 2
+    },
+    "weapon": {
+      "che_무기_01_단도": 0, "che_무기_02_단궁": 0, "che_무기_03_단극": 0,
+      "che_무기_04_목검": 0, "che_무기_05_죽창": 0, "che_무기_06_소부": 0,
+      "che_무기_07_동추": 2, "che_무기_07_철편": 2, "che_무기_07_철쇄": 2, "che_무기_07_맥궁": 2,
+      "che_무기_08_유성추": 2, "che_무기_08_철질여골": 2, "che_무기_09_쌍철극": 2, "che_무기_09_동호비궁": 2,
+      "che_무기_10_삼첨도": 2, "che_무기_10_대부": 2, "che_무기_11_고정도": 2, "che_무기_11_이광궁": 2,
+      "che_무기_12_철척사모": 2, "che_무기_12_칠성검": 2, "che_무기_13_사모": 2, "che_무기_13_양유기궁": 2,
+      "che_무기_14_언월도": 2, "che_무기_14_방천화극": 2, "che_무기_15_청홍검": 2, "che_무기_15_의천검": 2
+    },
+    "book": {
+      "che_서적_01_효경전": 0, "che_서적_02_회남자": 0, "che_서적_03_변도론": 0,
+      "che_서적_04_건상역주": 0, "che_서적_05_여씨춘추": 0, "che_서적_06_사민월령": 0,
+      "che_서적_07_위료자": 2, "che_서적_07_사마법": 2, "che_서적_07_한서": 2, "che_서적_07_논어": 2,
+      "che_서적_08_전론": 2, "che_서적_08_사기": 2, "che_서적_09_장자": 2, "che_서적_09_역경": 2,
+      "che_서적_10_시경": 2, "che_서적_10_구국론": 2, "che_서적_11_상군서": 2, "che_서적_11_춘추전": 2,
+      "che_서적_12_산해경": 2, "che_서적_12_맹덕신서": 2, "che_서적_13_관자": 2, "che_서적_13_병법24편": 2,
+      "che_서적_14_한비자": 2, "che_서적_14_오자병법": 2, "che_서적_15_노자": 2, "che_서적_15_손자병법": 2
+    },
+    "item": {
+      "che_치료_환약": 0, "che_저격_수극": 0, "che_사기_탁주": 0,
+      "che_훈련_청주": 0, "che_계략_이추": 0, "che_계략_향낭": 0,
+      "che_의술_정력견혈산": 1, "che_의술_청낭서": 1, "che_의술_태평청령": 1, "che_의술_상한잡병론": 1,
+      "che_보물_도기": 1, "che_조달_주판": 1,
+      "che_내정_납금박산로": 1, "che_전략_평만지장도": 1, "che_숙련_동작": 1, "che_명성_구석": 1,
+      "che_척사_오악진형도": 1, "che_격노_구정신단경": 1, "che_징병_낙주": 1,
+      "che_저격_매화수전": 1, "che_저격_비도": 1, "che_위압_조목삭": 1, "che_공성_묵자": 1,
+      "che_집중_전국책": 1, "che_환술_논어집해": 1,
+      "che_진압_박혁론": 1, "che_부적_태현청생부": 1, "che_저지_삼황내문": 1,
+      "che_행동_서촉지형도": 1, "che_간파_노군입산부": 1, "che_불굴_상편": 1,
+      "che_약탈_옥벽": 1,
+      "che_농성_주서음부": 1, "che_농성_위공자병법": 1,
+      "che_계략_육도": 1, "che_계략_삼략": 1,
+      "che_상성보정_과실주": 1,
+      "che_능력치_지력_이강주": 1, "che_능력치_무력_두강주": 1, "che_능력치_통솔_보령압주": 1,
+      "che_훈련_철벽서": 1, "che_훈련_단결도": 1, "che_사기_춘화첩": 1, "che_사기_초선화": 1,
+      "che_회피_태평요술": 1, "che_필살_둔갑천서": 1
+    }
+  },
+
+  "availableGeneralCommand": {
+    "개인": [
+      "휴식", "che_요양", "che_단련", "che_숙련전환", "che_견문", "che_은퇴",
+      "che_장비매매", "che_군량매매", "che_내정특기초기화", "che_전투특기초기화"
+    ],
+    "내정": [
+      "che_농지개간", "che_상업투자", "che_기술연구", "che_수비강화",
+      "che_성벽보수", "che_치안강화", "che_정착장려", "che_주민선정"
+    ],
+    "군사": [
+      "che_징병", "che_모병", "che_훈련", "che_사기진작",
+      "che_출병", "che_집합", "che_소집해제", "che_첩보"
+    ],
+    "인사": [
+      "che_이동", "che_강행", "che_인재탐색", "che_등용",
+      "che_귀환", "che_임관", "che_랜덤임관", "che_장수대상임관"
+    ],
+    "계략": ["che_선동", "che_탈취", "che_파괴", "che_화계"],
+    "국가": [
+      "che_증여", "che_헌납", "che_물자조달", "che_하야",
+      "che_거병", "che_건국", "che_선양", "che_해산"
+    ]
+  },
+
+  "availableChiefCommand": {
+    "휴식": ["휴식"],
+    "인사": ["che_발령", "che_포상", "che_몰수", "che_부대탈퇴지시"],
+    "외교": ["che_물자원조", "che_불가침제의", "che_선전포고", "che_종전제의", "che_불가침파기제의"],
+    "특수": ["che_초토화", "che_천도", "che_증축", "che_감축"],
+    "전략": [
+      "che_필사즉생", "che_백성동원", "che_수몰", "che_허보",
+      "che_의병모집", "che_이호경식", "che_급습", "che_피장파장"
+    ],
+    "기타": ["che_국기변경", "che_국호변경"]
+  },
+
+  "retirementYear": 80,
+
+  "targetGeneralPool": "RandomNameGeneral",
+  "generalPoolAllowOption": ["stat", "ego", "picture"],
+
+  "randGenFirstName": [
+    "가", "간", "감", "강", "고", "공", "공손", "곽", "관", "괴", "교", "금", "노", "뇌", "능", "도", "동", "두",
+    "등", "마", "맹", "문", "미", "반", "방", "부", "비", "사", "사마", "서", "설", "성", "소", "손", "송", "순",
+    "신", "심", "악", "안", "양", "엄", "여", "염", "오", "왕", "요", "우", "원", "위", "유", "육", "윤", "이",
+    "장", "저", "전", "정", "제갈", "조", "종", "주", "진", "채", "태사", "하", "하후", "학", "한", "향", "허",
+    "호", "화", "황", "공손", "손", "왕", "유", "장", "조"
+  ],
+  "randGenMiddleName": [""],
+  "randGenLastName": [
+    "가", "간", "강", "거", "건", "검", "견", "경", "공", "광", "권", "규", "녕", "단", "대", "도", "등", "람",
+    "량", "례", "로", "료", "모", "민", "박", "범", "보", "비", "사", "상", "색", "서", "소", "속", "송", "수",
+    "순", "습", "승", "양", "연", "영", "온", "옹", "완", "우", "웅", "월", "위", "유", "윤", "융", "이", "익",
+    "임", "정", "제", "조", "주", "준", "지", "찬", "책", "충", "탁", "택", "통", "패", "평", "포", "합", "해",
+    "혁", "현", "화", "환", "회", "횡", "후", "훈", "휴", "흠", "흥"
+  ],
+
+  "npcBanMessageProb": 0.01,
+  "npcSeizureMessageProb": 0.01,
+  "npcMessageFreqByDay": 4,
+
+  "defaultInitialEvents": [
+    [
+      true,
+      ["NoticeToHistoryLog", "<S>2년간 거병 및 건국이 가능합니다.</>", 6]
+    ]
+  ],
+  "defaultEvents": [
+    [
+      "pre_month", 9000,
+      true,
+      ["UpdateCitySupply"],
+      ["ProcessWarIncome"]
+    ],
+    [
+      "month", 9000,
+      ["Date", "==", null, 1],
+      ["MergeInheritPointRank"],
+      ["ProcessSemiAnnual", "gold"],
+      ["ProcessIncome", "gold"],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"],
+      ["RandomizeCityTradeRate"],
+      ["NewYear"],
+      ["AssignGeneralSpeciality"]
+    ],
+    [
+      "month", 9000,
+      ["Date", "==", null, 4],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"]
+    ],
+    [
+      "month", 9000,
+      ["Date", "==", null, 7],
+      ["MergeInheritPointRank"],
+      ["ProcessSemiAnnual", "rice"],
+      ["ProcessIncome", "rice"],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"],
+      ["RandomizeCityTradeRate"]
+    ],
+    [
+      "month", 9000,
+      ["Date", "==", null, 10],
+      ["ResetOfficerLock"],
+      ["RaiseDisaster"]
+    ],
+    [
+      "month", 2000,
+      ["DateRelative", "==", 1, 1],
+      ["NoticeToHistoryLog", "<S>2년 뒤 출병 제한이 풀립니다.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month", 2000,
+      ["DateRelative", "==", 2, 1],
+      ["NoticeToHistoryLog", "<S>1년 뒤 출병 제한이 풀립니다.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month", 2000,
+      ["DateRelative", "==", 2, 7],
+      ["NoticeToHistoryLog", "<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month", 2000,
+      ["DateRelative", "==", 3, 1],
+      ["NoticeToHistoryLog", "<S>출병 제한이 풀렸습니다.</>", 6],
+      ["DeleteEvent"]
+    ],
+    [
+      "month", 2000,
+      ["DateRelative", "==", 4, 1],
+      ["NoticeToHistoryLog", "<S>이제부터 하야, 망명시 패널티가 적용됩니다.</>", 6],
+      ["AddGlobalBetray", 1, 0],
+      ["AddGlobalBetray", 1, 1],
+      ["DeleteEvent"]
+    ],
+    [
+      "month", 1000,
+      true,
+      ["UpdateNationLevel"],
+      ["ProvideNPCTroopLeader"]
+    ],
+    [
+      "united", 5000,
+      true,
+      ["MergeInheritPointRank"]
+    ]
+  ],
+
+  "staticEventHandlers": {},
+
+  "_overridden": {
+    "_note": "d_setting/GameConst.php 가 GameConstBase 를 extends 하며 변경/추가한 값. 위 본문은 이미 오버라이드 적용된 effective 값. 아래는 base→override 추적.",
+    "defaultMaxGeneral": { "base": 500, "override": 600, "source": "d_setting/GameConst.php:12" },
+    "mapName": { "base": "che", "override": "che", "source": "d_setting/GameConst.php:13 (동일 재선언)" },
+    "unitSet": { "base": "che", "override": "che", "source": "d_setting/GameConst.php:14 (동일 재선언)" },
+    "availableInstantAction": { "base": "{dieOnPrestart:true, buildNationCandidate:true}", "override": "{dieOnPrestart:true, buildNationCandidate:true}", "source": "d_setting/GameConst.php:15 (동일 재선언)" }
+  },
+  "_addedByOverride": {
+    "_note": "GameConstBase 에 없고 d_setting/GameConst.php 가 신규 정의한 정적값 (= default.json $.stat 과 동일). 위 본문에 이미 포함.",
+    "defaultStatTotal": 165,
+    "defaultStatMin": 15,
+    "defaultStatMax": 80,
+    "defaultStatNPCTotal": 150,
+    "defaultStatNPCMax": 75,
+    "defaultStatNPCMin": 10,
+    "chiefStatMin": 65
+  },
+  "_divergences": {
+    "_note": "PHP(grand truth) vs Kotlin GameConst.kt 불일치. PHP 채택.",
+    "defaultMaxGeneral": {
+      "php_effective": 600,
+      "php_base": 500,
+      "kotlin_GameConst_kt": 500,
+      "resolution": "PHP 런타임 유효값=600 (d_setting 오버라이드). Kotlin GameConst.kt 는 base 500 유지하나, 시나리오(scenario_1010.json $.const.defaultMaxGeneral=600)가 EffectiveGameConst 병합으로 600 을 덮어씀 → 런타임 결과 일치. 본 추출은 effective 600 채택."
+    },
+    "statBlockLocation": {
+      "php": "d_setting/GameConst.php 정적값 + scenario default.json $.stat (defaultStatTotal=165 등)",
+      "kotlin_GameConst_kt": "미보관 (GameConst.kt 에 stat 블록 상수 없음)",
+      "kotlin_actual": "SpecialityHelper.chiefStatMin=65 / AutorunNationPolicy(defaultStatNPCMax/defaultStatMax) / RatesPromoFamily(chiefStatMin=65.0) 등에 분산 로컬 정의 (값 일치). EffectiveGameConst 가 stat 블록 병합 담당.",
+      "resolution": "값 자체는 PHP=Kotlin 로컬 정의 일치. GameConst.kt 미보관은 구조적 차이일 뿐 값 불일치 아님. PHP 채택."
+    },
+    "defaultEvents_OpenNationBetting": {
+      "php": "없음 (GameConstBase.defaultEvents 는 12개 행)",
+      "kotlin_GameConst_kt": "13번째 행 ['month',3000, ['DateRelative','==',1,1], ['OpenNationBetting'], ['DeleteEvent']] 추가",
+      "resolution": "PHP grand truth 에는 OpenNationBetting 이벤트 행 없음. 본 추출은 PHP 채택(12개 행). Kotlin 의 베팅 개시 행은 opensamguk 자체 추가(주석상 '선택적')."
+    }
+  }
+}
