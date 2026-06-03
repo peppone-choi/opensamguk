@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
+import ConfirmModal from '@/components/ConfirmModal';
 
-// F0 어드민 = 가드 + 셸뿐. 실 어드민 API(회원 차단/레벨, 서버 개폐, 게임 환경)는 후속 페이즈.
-// 섹션명은 verbatim 패러티 대상, 본문은 '준비 중' 플레이스홀더.
+// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포).
+// "회원 관리"·"게임 환경"은 후속 페이즈 — '준비 중' 플레이스홀더 유지.
+// 섹션명은 verbatim 패러티 대상, 본문은 탭별로 분기.
 const ADMIN_SECTIONS = [
     { id: 'members', label: '회원 관리' },
     { id: 'server', label: '서버 제어' },
@@ -13,6 +15,304 @@ const ADMIN_SECTIONS = [
 ] as const;
 
 const PLACEHOLDER = '준비 중';
+
+// ===== 백엔드 DTO 미러 (admin/version, admin/deploy) =====
+interface ServiceVersion {
+    reachable: boolean;
+    version: string | null;
+    imageTag: string | null;
+    buildTime: string | null;
+}
+interface ServerVersion {
+    id: string;
+    name: string;
+    gameApi: ServiceVersion;
+    gameEngine: ServiceVersion;
+    skew: boolean;
+}
+interface VersionResponse {
+    gateway: ServiceVersion;
+    servers: ServerVersion[];
+    skew: boolean;
+}
+interface DeployStatus {
+    configured: boolean;
+    serverId: string | null;
+    currentTag: string | null;
+    availableTags: string[];
+    message?: string | null;
+}
+interface DeployResult {
+    ok: boolean;
+    message: string;
+    detail?: string | null;
+}
+
+// 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
+const SKEW_WARNING =
+    '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
+
+/** 인증 프록시 GET — JSON 파싱. 비-2xx면 throw. */
+async function getJson<T>(path: string): Promise<T> {
+    const res = await fetch(`/api/proxy/${path}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`요청 실패 (${res.status})`);
+    return (await res.json()) as T;
+}
+
+/** 한 서비스 버전 셀 — reachable=false면 '응답 없음' 뱃지, 아니면 버전/태그/빌드시각. */
+function ServiceCell({ svc }: { svc: ServiceVersion }) {
+    if (!svc.reachable) {
+        return <span className="status-badge status-crimson">응답 없음</span>;
+    }
+    return (
+        <div className="svc-cell">
+            <span className="svc-version">{svc.version ?? '-'}</span>
+            <span className="svc-meta">태그 {svc.imageTag ?? '-'}</span>
+            {svc.buildTime && <span className="svc-meta">빌드 {svc.buildTime}</span>}
+        </div>
+    );
+}
+
+/** 서버별 배포 제어 — 현재 태그 + 배포 가능한 태그 선택 → 확인 모달 → POST. */
+function DeployControl({
+    server,
+    status,
+    onReload,
+}: {
+    server: ServerVersion;
+    status: DeployStatus | undefined;
+    onReload: (serverId: string) => void;
+}) {
+    const [selected, setSelected] = useState<string>('');
+    const [confirming, setConfirming] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState<DeployResult | null>(null);
+
+    // 상태 로드/변경 시 현재 태그를 기본 선택으로 동기화.
+    useEffect(() => {
+        if (status?.currentTag) setSelected(status.currentTag);
+    }, [status?.currentTag]);
+
+    if (!status) {
+        return <p className="svc-meta">상태 조회 중…</p>;
+    }
+
+    // deployer 미설정 — 컨트롤 숨기고 안내만.
+    if (!status.configured) {
+        return (
+            <p className="deploy-note">
+                {status.message ?? '배포 deployer가 설정되지 않았습니다 (로컬/미배포 환경).'}
+            </p>
+        );
+    }
+
+    const isCurrent = selected === status.currentTag;
+
+    async function runDeploy() {
+        setBusy(true);
+        setResult(null);
+        try {
+            const res = await fetch('/api/proxy/admin/deploy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serverId: server.id, tag: selected }),
+            });
+            const data = (await res.json()) as DeployResult;
+            setResult(data);
+            if (data.ok) onReload(server.id); // 성공 시 해당 서버 상태 재조회.
+        } catch {
+            setResult({ ok: false, message: '재배포 요청에 실패했습니다.' });
+        } finally {
+            setBusy(false);
+            setConfirming(false);
+        }
+    }
+
+    return (
+        <div className="deploy-control">
+            <div className="deploy-row">
+                <span className="svc-meta">
+                    현재 버전 <strong>{status.currentTag ?? '-'}</strong>
+                </span>
+                <select
+                    aria-label={`${server.name} 배포 태그 선택`}
+                    value={selected}
+                    onChange={(e) => setSelected(e.target.value)}
+                    disabled={busy}
+                >
+                    {status.availableTags.length === 0 && <option value="">(가능한 태그 없음)</option>}
+                    {status.availableTags.map((tag) => (
+                        <option key={tag} value={tag}>
+                            {tag}
+                            {tag === status.currentTag ? ' (현재)' : ''}
+                        </option>
+                    ))}
+                </select>
+                <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={busy || isCurrent || !selected}
+                    onClick={() => setConfirming(true)}
+                >
+                    {isCurrent ? '현재 버전' : '이 버전으로 배포'}
+                </button>
+            </div>
+
+            {result && (
+                <p className={`deploy-result ${result.ok ? 'ok' : 'fail'}`}>
+                    {result.message}
+                    {result.detail && <span className="svc-meta"> · {result.detail}</span>}
+                </p>
+            )}
+
+            <ConfirmModal
+                open={confirming}
+                title="버전 재배포 확인"
+                danger
+                busy={busy}
+                confirmLabel="배포 실행"
+                message={
+                    <>
+                        서버 &apos;{server.name}&apos;을(를) &apos;{selected}&apos; 버전으로 재배포합니다.
+                        <br />
+                        game-engine(진행 중 턴 상태)은 영향받지 않습니다. 계속할까요?
+                    </>
+                }
+                onConfirm={runDeploy}
+                onCancel={() => setConfirming(false)}
+            />
+        </div>
+    );
+}
+
+/** "서버 제어" 탭 — 전 서비스 버전 표 + 서버별 버전-선택 재배포. */
+function ServerControl() {
+    const [version, setVersion] = useState<VersionResponse | null>(null);
+    const [statuses, setStatuses] = useState<Record<string, DeployStatus>>({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // 단일 서버 deploy/status 재조회 (배포 성공 후 갱신).
+    const reloadStatus = useCallback(async (serverId: string) => {
+        try {
+            const st = await getJson<DeployStatus>(`admin/deploy/status?serverId=${encodeURIComponent(serverId)}`);
+            setStatuses((prev) => ({ ...prev, [serverId]: st }));
+        } catch {
+            // 개별 서버 상태 실패는 전체를 막지 않는다 — 해당 서버만 '조회 중' 유지.
+        }
+    }, []);
+
+    // 진입 시 버전 + 서버별 deploy/status 로드.
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const ver = await getJson<VersionResponse>('admin/version');
+                if (!alive) return;
+                setVersion(ver);
+                const entries = await Promise.all(
+                    ver.servers.map(async (s) => {
+                        try {
+                            const st = await getJson<DeployStatus>(
+                                `admin/deploy/status?serverId=${encodeURIComponent(s.id)}`,
+                            );
+                            return [s.id, st] as const;
+                        } catch {
+                            return null;
+                        }
+                    }),
+                );
+                if (!alive) return;
+                const map: Record<string, DeployStatus> = {};
+                for (const e of entries) if (e) map[e[0]] = e[1];
+                setStatuses(map);
+            } catch {
+                if (alive) setError('서버 버전 정보를 불러오지 못했습니다.');
+            } finally {
+                if (alive) setLoading(false);
+            }
+        })();
+        return () => {
+            alive = false;
+        };
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="center-inline">
+                <div className="spinner" />
+            </div>
+        );
+    }
+    if (error || !version) {
+        return <p className="deploy-result fail">{error ?? '데이터가 없습니다.'}</p>;
+    }
+
+    return (
+        <div className="server-control">
+            {version.skew && <div className="skew-banner">{SKEW_WARNING}</div>}
+
+            <div className="game-table-wrap">
+                <table className="game-table">
+                    <caption>실행 버전</caption>
+                    <thead>
+                        <tr>
+                            <th>서버</th>
+                            <th>서비스</th>
+                            <th>버전</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {/* gateway는 서버 무관 단일 행. */}
+                        <tr>
+                            <td>게이트웨이</td>
+                            <td>gateway</td>
+                            <td>
+                                <ServiceCell svc={version.gateway} />
+                            </td>
+                        </tr>
+                        {version.servers.map((server) =>
+                            (
+                                [
+                                    ['game-api', server.gameApi],
+                                    ['game-engine', server.gameEngine],
+                                ] as const
+                            ).map(([svcName, svc], i) => (
+                                <tr key={`${server.id}-${svcName}`}>
+                                    {/* 서버명은 첫 서비스 행에만(rowSpan). */}
+                                    {i === 0 && (
+                                        <td rowSpan={2}>
+                                            {server.name}
+                                            {server.skew && (
+                                                <span className="status-badge status-gold skew-tag">불일치</span>
+                                            )}
+                                        </td>
+                                    )}
+                                    <td>{svcName}</td>
+                                    <td>
+                                        <ServiceCell svc={svc} />
+                                    </td>
+                                </tr>
+                            )),
+                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="deploy-section">
+                <h3 className="lobby-section-title">버전 배포</h3>
+                {version.servers.map((server) => (
+                    <div key={server.id} className="deploy-server">
+                        <div className="deploy-server-head">{server.name}</div>
+                        <DeployControl server={server} status={statuses[server.id]} onReload={reloadStatus} />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
 
 function AdminView() {
     const [active, setActive] = useState<string>(ADMIN_SECTIONS[0].id);
@@ -36,7 +336,7 @@ function AdminView() {
                 </div>
                 <section className="admin-panel">
                     <h2 className="lobby-section-title">{section.label}</h2>
-                    <p>{PLACEHOLDER}</p>
+                    {active === 'server' ? <ServerControl /> : <p>{PLACEHOLDER}</p>}
                 </section>
             </main>
         </div>

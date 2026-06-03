@@ -25,6 +25,16 @@ sourceSets {
 // Docker COPY build/libs/*.jar glob stays unambiguous.
 tasks.named("jar") { enabled = false }
 
+// 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 서버별 fan-out 수집해 어드민에 표시.
+// 멀티서버에서 각 서버의 game-engine은 자기 버전을 보고한다. image.tag는 빌드 시 IMAGE_TAG env로 주입.
+springBoot {
+    buildInfo {
+        properties {
+            additional.put("image.tag", System.getenv("IMAGE_TAG") ?: "dev")
+        }
+    }
+}
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":logic"))
