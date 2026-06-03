@@ -8,6 +8,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 - 프론트엔드 패러티 + 시드 계획(F0–F5): [`docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`](docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md)
 - 기여자/에이전트 가이드(패러티 규율·관례): [`CLAUDE.md`](CLAUDE.md) · 모듈/빌드/테스트 온보딩: [`AGENTS.md`](AGENTS.md)
 - 원작(grand truth) · 라이선스: HideD님의 [**devsam**](https://storage.hided.net/gitea/devsam) (MIT) — 자세한 감사의 말은 [감사 / 라이선스](#감사--라이선스)
+- 관련 저장소: 배포(오케스트레이션) [**opensamguk-docker**](https://github.com/peppone-choi/opensamguk-docker) · 이미지 자산 [**opensamguk-images**](https://github.com/peppone-choi/opensamguk-images)(jsDelivr CDN)
 
 ---
 
