@@ -209,6 +209,43 @@ class ChangeRecorderTest {
     }
 
     @Test
+    fun `vote_poll UPDATE channel merges columns per poll last-write-wins and preserves order`() {
+        val recorder = ChangeRecorder()
+
+        // 1차: 설문 7 닫기 — end_at 기록.
+        recorder.recordVotePollUpdate(7, linkedMapOf("end_at" to "2026-06-03 12:00:00"))
+        // 2차: 같은 설문에 closed_at + updated_at 추가 — 컬럼 단위 병합(end_at 유지).
+        recorder.recordVotePollUpdate(
+            7,
+            linkedMapOf("closed_at" to "2026-06-03 12:00:01", "updated_at" to "2026-06-03 12:00:01"),
+        )
+        // 3차: end_at 재기록 — 같은 컬럼 last-write-wins(나중 값이 이긴다).
+        recorder.recordVotePollUpdate(7, linkedMapOf("end_at" to "2026-06-03 12:30:00"))
+        // 다른 설문 9 — 별개 행.
+        recorder.recordVotePollUpdate(9, linkedMapOf("end_at" to "2026-06-03 13:00:00"))
+
+        assertTrue(recorder.isDirty, "vote_poll UPDATE 기록됨 → dirty")
+        val updates = recorder.votePollUpdates()
+        assertEquals(listOf(7, 9), updates.keys.toList(), "행 키 삽입 순서 보존")
+
+        val poll7 = updates.getValue(7)
+        // 컬럼 단위 병합: end_at(재기록 값) + closed_at + updated_at 모두 존재, 삽입 순서 보존.
+        assertEquals(listOf("end_at", "closed_at", "updated_at"), poll7.keys.toList())
+        assertEquals("2026-06-03 12:30:00", poll7["end_at"], "같은 컬럼 last-write-wins")
+        assertEquals("2026-06-03 12:00:01", poll7["closed_at"])
+        assertEquals("2026-06-03 12:00:01", poll7["updated_at"])
+        assertEquals(mapOf("end_at" to "2026-06-03 13:00:00"), updates.getValue(9))
+
+        // 방어적 복사: 반환된 맵을 변경해도 내부 상태는 불변.
+        (poll7 as MutableMap)["end_at"] = "tampered"
+        assertEquals("2026-06-03 12:30:00", recorder.votePollUpdates().getValue(7)["end_at"])
+
+        recorder.clear()
+        assertFalse(recorder.isDirty, "clear() 후 dirty 아님")
+        assertTrue(recorder.votePollUpdates().isEmpty(), "vote_poll UPDATE는 다음 tick으로 넘어가면 안 된다")
+    }
+
+    @Test
     fun `clear empties every channel so the long-lived recorder does not re-emit deltas next tick`() {
         val recorder = ChangeRecorder()
         recorder.diffGeneral(general(id = 1), general(id = 1, gold = 10))   // UPDATE/patch 채널

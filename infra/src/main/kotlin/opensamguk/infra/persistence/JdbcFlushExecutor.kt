@@ -135,6 +135,25 @@ class JdbcFlushExecutor(
                 boardCommentInsertMany(payload.boardCommentInserts)
             }
 
+            // 8e. 투표 채널 (F4 Wave 투표): vote_poll INSERT 후 vote / vote_comment INSERT —
+            //     부모-먼저-자식 순서라 vote/vote_comment의 vote_id FK 대상(vote_poll)이 먼저 존재한다
+            //     (둘 다 vote_poll ON DELETE CASCADE). INSERT 전용 (vote는 PHP insertIgnore →
+            //     UNIQUE(vote_id,general_id) 중복은 DB가 무시).
+            if (payload.votePollInserts.isNotEmpty()) {
+                votePollInsertMany(payload.votePollInserts)
+            }
+            if (payload.voteInserts.isNotEmpty()) {
+                voteInsertMany(payload.voteInserts)
+            }
+            if (payload.voteCommentInserts.isNotEmpty()) {
+                voteCommentInsertMany(payload.voteCommentInserts)
+            }
+            // vote_poll UPDATE (closeOldVote 마감) — INSERT 뒤에 와야 같은 tick에 개설+마감된 설문이 먼저
+            // 존재한다(부모-먼저-갱신-나중). 빈 맵이면 no-op (diplomacy updatedDiplomacy 패턴과 동일).
+            if (payload.votePollUpdates.isNotEmpty()) {
+                votePollUpdateMany(payload.votePollUpdates)
+            }
+
             // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
             //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
             if (payload.createdMessages.isNotEmpty()) {
@@ -790,6 +809,106 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("board_comment", FlushVerb.CREATE_MANY, rows.size))
     }
 
+    // --- step 8e: 투표 채널 (F4 Wave 투표, 설문조사) ---------------------------------------------
+
+    /**
+     * `vote_poll` 행 INSERT (INSERT 전용; `id`는 SERIAL — 생략해 DB가 부여). `options`는 jsonb
+     * (이미 인코딩된 JSON 배열 문자열); `start_at`/`end_at`는 timestamptz (문자열 캐스트, end_at은 nullable).
+     */
+    private fun votePollInsertMany(rows: List<VotePollInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("title", c["title"])
+                .addValue("body", c["body"])
+                .addValue("options", jsonb(c["options"] as? String))
+                .addValue("multiple_options", c["multiple_options"])
+                .addValue("reveal_mode", c["reveal_mode"])
+                .addValue("opener_general_id", c["opener_general_id"])
+                .addValue("opener_name", c["opener_name"])
+                .addValue("start_at", c["start_at"]?.toString())
+                .addValue("end_at", c["end_at"]?.toString())
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO vote_poll (title, body, options, multiple_options, reveal_mode, opener_general_id, opener_name, start_at, end_at)
+            VALUES (:title, :body, :options, :multiple_options, :reveal_mode, :opener_general_id, :opener_name, CAST(:start_at AS timestamptz), CAST(:end_at AS timestamptz))
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("vote_poll", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /**
+     * `vote` 행 INSERT (PHP `insertIgnore` → `ON CONFLICT (vote_id, general_id) DO NOTHING` —
+     * UNIQUE 중복은 무시한다). `selection`은 jsonb (이미 인코딩된 정렬된 인덱스 배열 문자열).
+     */
+    private fun voteInsertMany(rows: List<VoteInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("vote_id", c["vote_id"])
+                .addValue("general_id", c["general_id"])
+                .addValue("nation_id", c["nation_id"])
+                .addValue("selection", jsonb(c["selection"] as? String))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO vote (vote_id, general_id, nation_id, selection)
+            VALUES (:vote_id, :general_id, :nation_id, :selection)
+            ON CONFLICT (vote_id, general_id) DO NOTHING
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("vote", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /** `vote_comment` 행 INSERT (INSERT 전용; `id`는 SERIAL — 생략해 DB가 부여). */
+    private fun voteCommentInsertMany(rows: List<VoteCommentInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("vote_id", c["vote_id"])
+                .addValue("general_id", c["general_id"])
+                .addValue("nation_id", c["nation_id"])
+                .addValue("general_name", c["general_name"])
+                .addValue("nation_name", c["nation_name"])
+                .addValue("text", c["text"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO vote_comment (vote_id, general_id, nation_id, general_name, nation_name, text)
+            VALUES (:vote_id, :general_id, :nation_id, :general_name, :nation_name, :text)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("vote_comment", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /**
+     * `vote_poll` UPDATE 한 묶음 (closeOldVote 명시 마감 — NewVote.php::closeOldVote). pollId → 컬럼
+     * (삽입순 last-write-wins LinkedHashMap)을 받아 `UPDATE vote_poll SET <cols> WHERE id=:id`를 행마다
+     * 방출한다. 컬럼은 삽입 순서대로 SET 절을 구성한다 (diplomacy/message 단건 UPDATE 패턴과 동일).
+     * 사용 컬럼: end_at, closed_at, updated_at — 모두 timestamptz라 `CAST(:col AS timestamptz)`로 바인딩
+     * (vote_poll INSERT의 start_at/end_at 캐스트 패턴과 동일). 값이 null인 컬럼은 NULL로 SET된다.
+     */
+    private fun votePollUpdateMany(updates: LinkedHashMap<Int, LinkedHashMap<String, Any?>>) {
+        for ((pollId, columns) in updates) {
+            if (columns.isEmpty()) continue // 갱신할 컬럼이 없으면 no-op.
+            val src = MapSqlParameterSource().addValue("id", pollId)
+            // 삽입 순서를 보존한 SET 절 — end_at/closed_at/updated_at은 timestamptz라 항상 캐스트한다.
+            val setClause = columns.entries.joinToString(", ") { (col, value) ->
+                src.addValue(col, value?.toString())
+                "$col = CAST(:$col AS timestamptz)"
+            }
+            jdbc.update(
+                "UPDATE vote_poll SET $setClause WHERE id = :id",
+                src,
+            )
+        }
+        lastOps.add(FlushExecOp("vote_poll", FlushVerb.UPDATE, updates.size))
+    }
+
     // --- step 8c: mailbox channel (T0.5) -------------------------------------------------------
 
     /**
@@ -928,6 +1047,12 @@ data class FlushPayload(
     // --- F4 Wave C2 슬라이스 C: 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT ---
     val boardPostInserts: List<BoardPostInsertRow> = emptyList(),     // step-8d board_post INSERT
     val boardCommentInserts: List<BoardCommentInsertRow> = emptyList(), // step-8d board_comment INSERT
+    // --- F4 Wave 투표: 설문조사(vote_poll/vote/vote_comment) INSERT + vote_poll UPDATE ---
+    val votePollInserts: List<VotePollInsertRow> = emptyList(),       // step-8e vote_poll INSERT
+    val voteInserts: List<VoteInsertRow> = emptyList(),               // step-8e vote INSERT
+    val voteCommentInserts: List<VoteCommentInsertRow> = emptyList(), // step-8e vote_comment INSERT
+    // step-8e vote_poll UPDATE (closeOldVote 마감 end_at/closed_at) — pollId → 컬럼(삽입순, last-write-wins).
+    val votePollUpdates: LinkedHashMap<Int, LinkedHashMap<String, Any?>> = LinkedHashMap(),
     // --- T0.8 inheritance channel ---
     val inheritanceKvWrites: List<KvWrite> = emptyList(),             // step-11a inheritance KV writes
     val inheritanceLogInserts: List<InheritanceLogRow> = emptyList(), // step-11b inheritance_log INSERT
@@ -948,6 +1073,15 @@ data class BoardPostInsertRow(val columns: Map<String, Any?>)
 
 /** `board_comment` INSERT 한 건 (F4 Wave C2 슬라이스 C, 회의실/기밀실 댓글, INSERT 전용). */
 data class BoardCommentInsertRow(val columns: Map<String, Any?>)
+
+/** `vote_poll` INSERT 한 건 (F4 Wave 투표, 설문조사 개설, INSERT 전용). */
+data class VotePollInsertRow(val columns: Map<String, Any?>)
+
+/** `vote` INSERT 한 건 (F4 Wave 투표, 투표 던지기, INSERT 전용 — PHP insertIgnore = ON CONFLICT DO NOTHING). */
+data class VoteInsertRow(val columns: Map<String, Any?>)
+
+/** `vote_comment` INSERT 한 건 (F4 Wave 투표, 설문조사 댓글, INSERT 전용). */
+data class VoteCommentInsertRow(val columns: Map<String, Any?>)
 
 /**
  * One `troop` row (F4 Wave C2 slice B). Infra-local mirror of the engine `Troop` (no engine dep
