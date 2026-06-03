@@ -573,6 +573,136 @@ textarea:focus {
     padding: var(--space-lg);
 }
 
+/* ===== Admin · 서버 제어 (버전 표 + 배포) ===== */
+.server-control {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+.center-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+}
+
+/* skew(버전 불일치) 배너 */
+.skew-banner {
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(224, 138, 30, 0.1);
+    border: 1px solid rgba(224, 138, 30, 0.4);
+    border-radius: var(--radius-sm);
+    color: #e08a1e;
+    font-weight: 600;
+    font-size: var(--text-sm);
+}
+.skew-tag {
+    margin-left: var(--space-sm);
+}
+
+/* 서비스 버전 셀 */
+.svc-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.svc-version {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+.svc-meta {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+/* 배포 섹션 */
+.deploy-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.deploy-server {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+.deploy-server-head {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.deploy-control {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+.deploy-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+.deploy-note {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+.deploy-result {
+    font-size: var(--text-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+}
+.deploy-result.ok {
+    background: rgba(46, 125, 50, 0.12);
+    border: 1px solid var(--jade-dim);
+    color: var(--jade);
+}
+.deploy-result.fail {
+    background: rgba(198, 40, 40, 0.12);
+    border: 1px solid var(--crimson-dim);
+    color: var(--crimson);
+}
+
+/* ===== Modal (ConfirmModal) ===== */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+}
+.modal-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.modal-title {
+    font-size: var(--text-lg);
+    color: var(--gold);
+}
+.modal-body {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+}
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+}
+
 /* ===== Misc ===== */
 .spinner {
     width: 24px;
