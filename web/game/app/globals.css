@@ -881,6 +881,8 @@ input:focus, select:focus, textarea:focus {
 .map-city-dot:focus { outline: none; }
 .map-city-dot:focus-visible { stroke: #ffffff; stroke-width: 2; }
 .map-current-ring { pointer-events: none; }
+/* 소유국 깃발 — 픽셀아트 선명 유지. 나부낌은 devsam 4프레임으로(JS 프레임 틱). */
+.map-flag { image-rendering: pixelated; }
 .map-city-label {
   fill: #f5f5f5;
   font-size: 11px;

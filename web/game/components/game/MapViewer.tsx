@@ -19,6 +19,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { MAP_CDN } from '@/lib/constants';
 import type { MapPreviewCity, MapPreviewResponse } from '@/lib/types';
+import { tintFlag, FLAG_FRAMES } from '@/lib/flagTint';
 import MapCityDetail from './MapCityDetail';
 
 const NEUTRAL_COLOR = '#555555';
@@ -70,6 +71,36 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
 
     const colorOf = (nid: number) => nationById.get(nid)?.color ?? NEUTRAL_COLOR;
     const nationNameOf = (nid: number) => nationById.get(nid)?.name ?? NEUTRAL_NAME;
+
+    // 소유국(공백지 제외) 색별 깃발 dataURL을 1회 틴트 후 캐시. 색마다 한 번만 계산.
+    const ownedColors = useMemo(() => {
+        const s = new Set<string>();
+        data?.cities.forEach((c) => {
+            if (c.nationId !== 0) s.add(colorOf(c.nationId));
+        });
+        return Array.from(s);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [data, nationById]);
+    // 색별 4프레임 dataURL 배열.
+    const [flagUrls, setFlagUrls] = useState<Record<string, string[]>>({});
+    useEffect(() => {
+        let on = true;
+        Promise.all(
+            ownedColors.map((col) => tintFlag(col).then((urls) => [col, urls] as const).catch(() => null)),
+        ).then((pairs) => {
+            if (!on) return;
+            const m: Record<string, string[]> = {};
+            pairs.forEach((p) => { if (p) m[p[0]] = p[1]; });
+            setFlagUrls(m);
+        });
+        return () => { on = false; };
+    }, [ownedColors.join(',')]);
+    // 깃발 4프레임 나부낌 — 맵 공용 프레임 카운터(setInterval) 하나로 전 깃발 동기 애니.
+    const [flagFrame, setFlagFrame] = useState(0);
+    useEffect(() => {
+        const t = setInterval(() => setFlagFrame((f) => (f + 1) % FLAG_FRAMES), 180);
+        return () => clearInterval(t);
+    }, []);
 
     const selectedCity = useMemo(
         () => data?.cities.find((c) => c.id === selectedId) ?? null,
@@ -173,6 +204,18 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                                 >
                                     <title>{`${c.name} 【${c.level}】 ${nationNameOf(c.nationId)}`}</title>
                                 </circle>
+                                {/* 소유국 깃발(공백지 제외) — devsam 깃발 4프레임을 nation 색으로 캔바스 틴트, 도트 위. */}
+                                {c.nationId !== 0 && flagUrls[colorOf(c.nationId)]?.[flagFrame] && (
+                                    <image
+                                        href={flagUrls[colorOf(c.nationId)][flagFrame]}
+                                        x={c.x - 6.5}
+                                        y={c.y - r - 14}
+                                        width={13}
+                                        height={13}
+                                        className="map-flag"
+                                        pointerEvents="none"
+                                    />
+                                )}
                                 {c.level >= 7 && (
                                     <text
                                         x={c.x}
