@@ -1,6 +1,14 @@
 // Same-origin proxy base (see lib/api.ts). Kept for any direct fetch; all traffic flows through /api/game.
 export const API_BASE = '/api/game';
 
+// 이미지 자산 CDN 베이스 — opensamguk-images(jsDelivr 미러, devsam/image의 미러). 모든 이미지 자산
+// (맵·포트레이트·3D 등) 참조의 단일 출처. 배포 시 NEXT_PUBLIC_IMAGE_CDN으로 덮어쓴다.
+export const IMAGE_CDN_BASE =
+    process.env.NEXT_PUBLIC_IMAGE_CDN ?? 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images';
+
+// 게임 맵 타일/베이스 자산 경로 (IMAGE_CDN_BASE 하위 game/map).
+export const MAP_CDN = `${IMAGE_CDN_BASE}/game/map`;
+
 export const TYPE_LABEL: Record<string, string> = {
     buyRice: '쌀 구매',
     sellRice: '쌀 판매',

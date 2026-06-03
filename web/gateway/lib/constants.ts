@@ -6,6 +6,13 @@ export const BRAND = '삼국지 모의전투 HiDCHe';
 // 게임 서버(web/game) 진입 URL. 배포 시 NEXT_PUBLIC_GAME_URL로 덮어쓴다.
 export const GAME_URL = process.env.NEXT_PUBLIC_GAME_URL ?? 'http://localhost:3001';
 
+// 이미지 자산 CDN 베이스 — opensamguk-images(jsDelivr 미러). 배포 시 NEXT_PUBLIC_IMAGE_CDN으로 덮어쓴다.
+export const IMAGE_CDN_BASE =
+    process.env.NEXT_PUBLIC_IMAGE_CDN ?? 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images';
+
+// 로비 맵 프리뷰의 추상 게임맵 베이스 자산 경로.
+export const MAP_CDN = `${IMAGE_CDN_BASE}/game/map`;
+
 export const AUTH_LABELS = {
     loginTitle: '로그인',
     joinTitle: '회원 가입',

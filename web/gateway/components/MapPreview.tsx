@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { MAP_CDN } from '../lib/constants';
 
 /**
  * 서버 세계지도 프리뷰 (서버마다 10분 캐싱).
  *
  * 흐름(결정 로그 §9): game-engine 10분 스냅샷 → game-api `GET /api/map/preview`(10분 캐시) →
  * 게이트웨이 route handler `/api/server-map/[id]`가 해당 서버 game-api로 서버사이드 프록시 →
- * 여기서 opensam(guk)-images CDN 추상 게임맵(che 700×500) 위에 클라이언트 SVG로 도시점 렌더
+ * 여기서 opensamguk-images CDN 추상 게임맵(che 700×500) 위에 클라이언트 SVG로 도시점 렌더
  * (국가색 dot, hover=도시명/레벨). 좌표 = 시나리오 scenario/map 게임 x/y(서버가 응답에 포함).
  */
 
-const MAP_CDN = 'https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images/game/map';
 const NEUTRAL_COLOR = '#555555';
 
 interface MapCity {
