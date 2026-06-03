@@ -99,6 +99,10 @@ class MapPreviewController(
         // coord/name merge: id → (name, x, y) from the committed scenario resource.
         val coords = loadCityCoords()
 
+        // 수도 city id 집합(nation.capital_city_id) — 수도 별 아이콘(event51) 판정용.
+        val allNations = nationReadRepository.findAll()
+        val capitalIds = allNations.mapNotNull { it.capitalCityId }.toSet()
+
         val cities = cityReadRepository.findAll()
             .mapNotNull { city ->
                 val coord = coords[city.id] ?: return@mapNotNull null // no coord → nothing to draw
@@ -109,11 +113,14 @@ class MapPreviewController(
                     nationId = city.nationId,
                     x = coord.x,
                     y = coord.y,
+                    state = city.frontState,
+                    supply = city.supplyState != 0,
+                    isCapital = city.id in capitalIds,
                 )
             }
             .sortedBy { it.id }
 
-        val nations = nationReadRepository.findAll()
+        val nations = allNations
             .filter { it.id != 0 } // neutral (nationId 0) has no entry
             .map { MapPreviewNation(id = it.id, name = it.name, color = it.color) }
             .sortedBy { it.id }

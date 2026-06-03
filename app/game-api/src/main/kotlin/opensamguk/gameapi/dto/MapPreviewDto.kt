@@ -1,5 +1,7 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * World-map snapshot for the gateway lobby `MapPreview` (P7 read API).
  *
@@ -30,6 +32,14 @@ data class MapPreviewCity(
     val nationId: Int,
     val x: Int,
     val y: Int,
+    /** 전선 상태(`front_state` 0~3) — 상태 아이콘 `event<state>.gif`. 0이면 표시 안 함. */
+    val state: Int,
+    /** 보급 상태 — 깃발 `f`(보급)/`d`(미보급) 구분. */
+    val supply: Boolean,
+    /** 소속국 수도 여부(nation.capital_city_id == id) — 수도 아이콘 `event51.gif`.
+     *  `@get:JsonProperty` 고정 — Kotlin boolean `isX`는 Jackson이 `x`로 직렬화하므로 명시. */
+    @get:JsonProperty("isCapital")
+    val isCapital: Boolean,
 )
 
 data class MapPreviewNation(

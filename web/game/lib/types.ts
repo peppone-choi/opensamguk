@@ -124,6 +124,12 @@ export interface MapPreviewCity {
     nationId: number;
     x: number;
     y: number;
+    /** 전선 상태(front_state 0~3) — 상태 아이콘 event<state>.gif (0=없음). */
+    state: number;
+    /** 보급 상태 — 깃발 f(보급)/d(미보급). */
+    supply: boolean;
+    /** 소속국 수도 — 수도 아이콘 event51.gif(별). */
+    isCapital: boolean;
 }
 
 export interface MapPreviewNation {
