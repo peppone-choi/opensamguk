@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the A-minimal seed counts (`world_state`=1, `nation`=2, `city`=24, `general`=678,
+ * Asserts the seed counts (`world_state`=1, `nation`=2, `city`=94[소유24+공백지70], `general`=678,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -82,7 +82,8 @@ class ScenarioImporterIT {
 
         assertEquals(1, counts.worldState)
         assertEquals(2, counts.nation)
-        assertEquals(24, counts.city)
+        // che 풀맵 94도시 = 소유 24(후한 14 + 황건적 10) + 공백지 70(nation_id=0).
+        assertEquals(94, counts.city)
         assertEquals(678, counts.general)
         assertEquals(678 * 30, counts.generalTurn)
         assertEquals(678 * 37, counts.rankData)
@@ -90,7 +91,18 @@ class ScenarioImporterIT {
 
         assertEquals(1, count("world_state"))
         assertEquals(2, count("nation"))
-        assertEquals(24, count("city"))
+        assertEquals(94, count("city"))
+        // 공백지 70(nation_id=0).
+        assertEquals(70, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음). 성도: pop 150000·wall 5000·trust 50.
+        val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE name = '성도'")
+        assertEquals(150000, (sd["pop"] as Number).toInt())
+        assertEquals(5000, (sd["wall"] as Number).toInt())
+        assertEquals(50.0, (sd["trust"] as Number).toDouble())
+        // 점령지는 70%max 불변(parity). 낙양: pop=ratio70(835700)=584990, trust 80.
+        val ly = jdbc.queryForMap("SELECT pop, trust FROM city WHERE name = '낙양'")
+        assertEquals(584990, (ly["pop"] as Number).toInt())
+        assertEquals(80.0, (ly["trust"] as Number).toDouble())
         assertEquals(678, count("general"))
         assertEquals(678 * 30, count("general_turn"))
         assertEquals(678 * 37, count("rank_data"))

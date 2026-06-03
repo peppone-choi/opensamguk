@@ -182,14 +182,18 @@ class ScenarioImporter(
     private fun insertCities(jdbc: JdbcTemplate): Int {
         var n = 0
         for (c in cities) {
-            // Occupied-city initial stats: PHP initialEvents ChangeCity ratio 70% of *_max (parity-OK:
-            // the ratio is in the scenario JSON's initialEvents). trust 80, trade 100.
-            val pop = ratio70(c.popMax)
-            val agri = ratio70(c.agriMax)
-            val comm = ratio70(c.commMax)
-            val secu = ratio70(c.secuMax)
-            val def = ratio70(c.defMax)
-            val wall = ratio70(c.wallMax)
+            // 초기 스탯 분기:
+            //  - 점령지(nation_id!=0): PHP initialEvents ChangeCity가 *_max의 70%로 부스트(parity). trust 80.
+            //  - 공백지(nation_id==0): 부스트 없음 → CityConstBase 베이스 initial(데이터의 *_init). trust 50.
+            //    (initialEvents는 점령지만 대상이라 공백지는 베이스 그대로 — 70도시 신규.)
+            val occupied = c.nationId != 0
+            val pop = if (occupied) ratio70(c.popMax) else (c.popInit ?: ratio70(c.popMax))
+            val agri = if (occupied) ratio70(c.agriMax) else (c.agriInit ?: ratio70(c.agriMax))
+            val comm = if (occupied) ratio70(c.commMax) else (c.commInit ?: ratio70(c.commMax))
+            val secu = if (occupied) ratio70(c.secuMax) else (c.secuInit ?: ratio70(c.secuMax))
+            val def = if (occupied) ratio70(c.defMax) else (c.defInit ?: ratio70(c.defMax))
+            val wall = if (occupied) ratio70(c.wallMax) else (c.wallInit ?: ratio70(c.wallMax))
+            val trust = if (occupied) 80.0 else 50.0
             jdbc.update(
                 """
                 INSERT INTO city
@@ -199,12 +203,12 @@ class ScenarioImporter(
                      term, officer_set, conflict, meta)
                 VALUES (?, ?, ?, ?, 1, 0,
                         ?, ?, ?, ?, ?, ?, ?, ?,
-                        80.0, 100, ?, ?, ?, ?, ?,
+                        ?, 100, ?, ?, ?, ?, ?,
                         0, 0, '{}'::jsonb, '{}'::jsonb)
                 """.trimIndent(),
                 c.id, c.name, c.level, c.nationId,
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
-                def, c.defMax, wall, c.wallMax, c.region,
+                trust, def, c.defMax, wall, c.wallMax, c.region,
             )
             n++
         }
