@@ -70,6 +70,22 @@ object CommandWireMapper {
         "voteClose",
     )
 
+    /**
+     * F4 C3 사령(chief) 커맨드 12종 — **턴-예약(turn-reserved) `che_*`이므로 의도적으로 [intakeCodes]에
+     * 넣지 않는다.** 급습/몰수/물자원조/백성동원/부대탈퇴지시/수몰/의병모집/이호경식/초토화/피장파장/
+     * 필사즉생/허보는 즉시-인테이크 핸들러가 없다. 이들은 장수 턴에 `general_turn` 링에서
+     * [opensamguk.gameapi.reserve.CommandReserveService.reserve]가 RAW `argJson`을 그대로 적재하고,
+     * 데몬이 턴 해소 시 `CommandRegistry.resolve(code).parseArgs(rawArgMap)`로 정규화한다(각 액션의
+     * `parseArgs`가 destGeneralID/destCityID/destNationID/amount/amountList/commandType 인자 시그니처를
+     * PHP argTest와 byte-동일하게 받는다). 따라서 [toCommand]는 이 12 코드에 대해 `null`을 반환해야
+     * 하며(아래 `else`), 그래야 reserve가 링 기록 경로로 떨어진다. intakeCodes에 추가하면 존재하지 않는
+     * 핸들러로 라우팅되어 ring write를 건너뛰고 액션이 조용히 유실된다(패리티 깨짐) — 추가 금지.
+     */
+    val turnReservedC3Codes: Set<String> = setOf(
+        "che_급습", "che_몰수", "che_물자원조", "che_백성동원", "che_부대탈퇴지시", "che_수몰",
+        "che_의병모집", "che_이호경식", "che_초토화", "che_피장파장", "che_필사즉생", "che_허보",
+    )
+
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
     fun isIntakeCommand(code: String): Boolean = code in intakeCodes
 

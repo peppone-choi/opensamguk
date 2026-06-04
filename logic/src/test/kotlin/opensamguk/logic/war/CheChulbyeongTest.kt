@@ -6,7 +6,6 @@ import opensamguk.common.rng.RandUtil
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
-import opensamguk.logic.actions.RestAction
 import opensamguk.logic.actions.war.CheChulbyeong
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
@@ -18,7 +17,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -192,11 +190,11 @@ class CheChulbyeongTest {
     }
 
     @Test
-    fun `CommandRegistry resolves che_출병 and does NOT register 급습`() {
+    fun `CommandRegistry resolves che_출병 to CheChulbyeong (급습 now ported by C3)`() {
         val registry = CommandRegistry(pipeline)
         assertTrue(registry.resolve("che_출병") is CheChulbyeong, "che_출병 must resolve to CheChulbyeong")
-        // 급습 is P6 — NOT registered → falls back to RestAction.
-        assertSame(RestAction, registry.resolve("che_급습"))
+        // 급습 is now registered by F4-C3 (cheGeupseup) — no longer a RestAction fallback.
+        assertEquals("che_급습", registry.resolve("che_급습").key)
         // 선전포고 IS registered by FR2 (the AI-emitted def: argTest + FULL pack; resolve()-internals
         // are P6 / m10). It must NOT fall back to RestAction.
         assertEquals("che_선전포고", registry.resolve("che_선전포고").key)
