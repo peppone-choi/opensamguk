@@ -42,3 +42,5 @@ tools/php-golden/probe_*.php
 # Temporary research dir
 .tmp_research/
 **/tsconfig.tsbuildinfo
+
+.claude/scheduled_tasks.lock
