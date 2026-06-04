@@ -175,6 +175,12 @@ class DaemonLoopConfig {
         return TurnRunService(
             world = world,
             commandStream = commandStream,
+            // commandBlockMs를 명시적 finite 값으로 전달 — 미전달 시 기본 0이며, Spring Data Redis에서
+            // block(Duration.ofMillis(0)) == XREAD BLOCK 0 == 무한 블록이 되어 빈 스트림에서 영원히
+            // 대기하다 Lettuce 기본 60s command-timeout 초과 → RedisCommandTimeoutException → runTick이
+            // 턴 진행 전에 abort → 턴 영구 동결(prod 회귀). 250ms = 드레인 후 즉시 반환(XADD poke 시 즉시
+            // 깨어남), idle 페이싱은 TurnDaemonRunner의 Thread.sleep(idlePollMs)가 담당. E2E 검증값.
+            commandBlockMs = 250L,
             lifecycle = lifecycle,
             handler = handler,
             flushExecutor = flushExecutor,
