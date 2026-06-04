@@ -174,11 +174,18 @@ class ReservedTurnHandler(
         val definition = registry.resolve(actionCode)
 
         // --- FULL-mode constraints over the live world (the SAME :logic constraint library) ---
+        // dest-* 제약(ExistsDestNation/ExistsDestGeneral/Allow·DisallowDiplomacyBetweenStatus 등)은
+        // ctx.destGeneralId/destCityId/destNationId를 읽으므로, 최종 args 맵(예약 디코드 또는 AI 교체 후)에서
+        // 동일 키 3종을 ctx로 흘려준다 — AiTurnAdapter:397-399와 EXACTLY 동일. 이걸 누락하면 인간-예약
+        // 외교 수락(불가침/종전/파기 수락)이 id 0에 대해 평가되어 무조건 Deny → 휴식 폴백으로 떨어진다.
         val overlay = PerTurnOverlay(world)
         val ctx = ConstraintContext(
             actorId = generalId,
             cityId = cityId,
             nationId = nationId,
+            destGeneralId = (args["destGeneralID"] as? Number)?.toInt(),
+            destCityId = (args["destCityID"] as? Number)?.toInt(),
+            destNationId = (args["destNationID"] as? Number)?.toInt(),
             env = env,
             mode = ConstraintMode.FULL,
         )
@@ -230,6 +237,18 @@ class ReservedTurnHandler(
         // --- dirty-free apply: write the post-state engine rows; ChangeRecorder owns dirtiness ---
         world.applyGeneralDirtyFree(applyGeneralPatch(general, draft.general))
         world.applyCityDirtyFree(applyCityPatch(world.getCityById(cityId)!!, draft.city))
+
+        // --- 외교 cascade 적용 (외교 수락/파기 등 nation-command가 일반 패스로 들어온 경우) ---
+        // 외교 수락(불가침/종전/파기 수락)은 NationCommand로서 양방향 diplomacy 행을 draft.cascadeDiplomacy에
+        // 누적한다. 일반 패스도 이 cascade를 ChangeRecorder 단일 dirty 소스를 통해 적용해야 행이 실제 전환된다
+        // (ProcessNationCommand.dispatchRegistered의 diplomacyDeltas 적용 패턴과 동일). state/term/dead만
+        // 전환되는 UPSERT이며, 사전 행이 없으면(현재 슬라이스 범위 밖) 건너뛴다.
+        for (delta in draft.cascadeDiplomacy) {
+            val pre = world.getDiplomacy(delta.me, delta.you) ?: continue
+            world.updateDiplomacy(delta.me, delta.you, delta.state, delta.term)
+            val post = world.getDiplomacy(delta.me, delta.you) ?: continue
+            recorder.diffDiplomacy(pre, post)
+        }
 
         // --- logs ---
         for (line in resolveCtx.logs()) world.pushLog(actionLog(general, line))
@@ -560,7 +579,12 @@ class ReservedTurnHandler(
             is JsonPrimitive -> when {
                 element.isString -> element.content
                 element.booleanOrNull != null -> element.boolean
-                element.longOrNull != null -> element.long
+                // Int 범위 안의 정수 jsonb 값은 Int로 좁힌다. resolve 본문(예: che_불가침수락/종전수락의
+                // `args["destNationID"] as? Int`)과 parseArgs가 Int 타입을 기대하므로, Long으로 두면
+                // `as? Int`가 null이 되어 외교 행 전환이 조용히 누락된다(`as? Number)?.toInt()`를 쓰는
+                // 본문은 Int/Long 모두 받으므로 영향 없음). 범위를 벗어난 값만 Long으로 유지.
+                element.longOrNull != null ->
+                    element.long.let { if (it in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) it.toInt() else it }
                 else -> element.content.toDoubleOrNull() ?: element.content
             }
             is JsonObject -> element.mapValues { jsonToAny(it.value) }

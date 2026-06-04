@@ -24,8 +24,10 @@ const DIPLO_QUICK_ACTIONS: { code: string; label: string }[] = [
 ];
 
 // 외교부 (page 1) — letter-management view. Mirrors j_diplomacy_get_letter.php +
-// ts/diplomacy.ts drawLetter(). READ-ONLY this wave: letter cards render the
-// state/parties/brief/detail verbatim; no mutation wiring (승인/거부/회수/파기 deferred).
+// ts/diplomacy.ts drawLetter(). letter cards render the state/parties/brief/detail verbatim.
+// 외교 제의(종전/불가침/불가침파기/선전포고)는 위의 CommandModal 빠른 명령으로 예약하며,
+// 제의에 대한 승인(수락)/거부(거절)는 메일함(mailbox)에서 api.messageAccept/messageDecline로 처리한다.
+// 이 페이지의 서신 카드 자체는 읽기 전용(상태 표시)이다.
 
 // Letter state text — verbatim from ts/diplomacy.ts stateText (LetterState).
 const STATE_TEXT: Record<string, string> = {

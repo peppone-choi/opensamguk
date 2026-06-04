@@ -41,6 +41,8 @@ export default function MailboxPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
+    // 수락/거절 요청 진행 중인 메시지 id — 중복 클릭(이중 수락) 방지용
+    const [pendingId, setPendingId] = useState<number | null>(null);
 
     const fetchMessages = useCallback(async () => {
         setLoading(true);
@@ -66,35 +68,37 @@ export default function MailboxPage() {
         return () => es.close();
     }, [fetchMessages]);
 
+    // 수락/거절은 game-api의 /api/messages/{id}/accept|decline로 직접 호출한다.
+    // NEW CONTRACT: 수락 시 서버가 수락 명령(예: che_불가침수락)을 턴 데몬에 직접 예약(reserve)하므로
+    // 클라이언트는 commandKey를 읽어 /api/command를 다시 호출하지 않는다(예전 디스패치 설계 폐기).
     async function handleAgree(msg: MailMessage) {
-        const action = msg.option?.action as string | undefined;
-        if (!action) {
-            setToast('수락할 수 없는 메시지입니다.');
-            setTimeout(() => setToast(''), 3000);
-            return;
-        }
+        // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 수락 차단
+        if (pendingId !== null) return;
+        setPendingId(msg.id);
         try {
-            const data = await api.command<{ status: string; reason?: string }>(`${action}_agree`, { messageId: msg.id });
-            setToast(data.status === 'AVAILABLE' ? '수락이 접수되었습니다.' : (data.reason ?? '수락할 수 없습니다.'));
+            await api.messageAccept(msg.id, generalId);
+            // 수락은 턴 명령으로 예약된다 — 즉시 적용을 함의하지 않는 표현.
+            setToast('수락했습니다.');
         } catch {
             setToast('수락 요청에 실패했습니다.');
+        } finally {
+            setPendingId(null);
         }
         setTimeout(() => setToast(''), 3000);
         fetchMessages();
     }
 
     async function handleDecline(msg: MailMessage) {
-        const action = msg.option?.action as string | undefined;
-        if (!action) {
-            setToast('거절할 수 없는 메시지입니다.');
-            setTimeout(() => setToast(''), 3000);
-            return;
-        }
+        // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 거절 차단
+        if (pendingId !== null) return;
+        setPendingId(msg.id);
         try {
-            const data = await api.command<{ status: string; reason?: string }>(`${action}_decline`, { messageId: msg.id });
-            setToast(data.status === 'AVAILABLE' ? '거절이 접수되었습니다.' : (data.reason ?? '거절할 수 없습니다.'));
+            await api.messageDecline(msg.id, generalId);
+            setToast('거절했습니다.');
         } catch {
             setToast('거절 요청에 실패했습니다.');
+        } finally {
+            setPendingId(null);
         }
         setTimeout(() => setToast(''), 3000);
         fetchMessages();
@@ -154,8 +158,9 @@ export default function MailboxPage() {
                             <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>{msg.text}</p>
                             {isDiplomacy && hasAction && (
                                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
-                                    <button onClick={() => handleAgree(msg)}>수락</button>
-                                    <button onClick={() => handleDecline(msg)}>거절</button>
+                                    {/* 요청 진행 중에는 수락/거절 모두 비활성화 — 이중 제출 방지 */}
+                                    <button onClick={() => handleAgree(msg)} disabled={pendingId !== null}>수락</button>
+                                    <button onClick={() => handleDecline(msg)} disabled={pendingId !== null}>거절</button>
                                 </div>
                             )}
                         </GameCard>
