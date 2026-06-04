@@ -1,0 +1,1541 @@
+{
+  "_meta": {
+    "code": "scenario_904",
+    "source": "legacy/devsam-core/hwe/scenario/scenario_904.json",
+    "grandTruth": "PHP (legacy/devsam-core)",
+    "core2026Compared": "legacy/devsam-core2026/resources/scenario/scenario_904.json",
+    "core2026Identical": true,
+    "divergencePolicy": "PHP wins; 0 divergence observed (canonical byte-identical for shared files)",
+    "fieldOrder": {
+      "nation": [
+        "name",
+        "color",
+        "gold",
+        "rice",
+        "infoText",
+        "tech",
+        "ideology(type)",
+        "nationLevel",
+        "cities"
+      ],
+      "general": [
+        "affinity",
+        "name",
+        "picturePath",
+        "nationName",
+        "locatedCity",
+        "leadership",
+        "strength",
+        "intel",
+        "officerLevel",
+        "birth",
+        "death",
+        "ego",
+        "speciality(char)",
+        "text"
+      ],
+      "diplomacy": [
+        "me",
+        "you",
+        "state",
+        "remain"
+      ]
+    },
+    "excludedLogic": "events/initialEvents/defaultInitialEvents/initialActions = DSL 표현식(로직). 데이터로 디코드하지 않고 원본 JSON 그대로 보존.",
+    "note": "nationName 필드는 문자열 국가명 또는 정수 국가ID 또는 null(재야). nationLevel 7 = 국호변경 가능."
+  },
+  "title": "【이벤트】 대리전",
+  "startYear": 180,
+  "life": null,
+  "fiction": null,
+  "mapName": "miniche_b",
+  "iconPath": ".",
+  "ignoreDefaultEvents": false,
+  "const": {
+    "joinRuinedNPCProp": 0,
+    "npcBanMessageProb": 1,
+    "availableGeneralCommand": {
+      "개인": [
+        "휴식",
+        "che_요양",
+        "che_단련",
+        "che_숙련전환",
+        "che_견문",
+        "che_은퇴",
+        "che_장비매매",
+        "che_군량매매",
+        "che_내정특기초기화",
+        "che_전투특기초기화"
+      ],
+      "내정": [
+        "che_농지개간",
+        "che_상업투자",
+        "che_기술연구",
+        "che_수비강화",
+        "che_성벽보수",
+        "che_치안강화",
+        "che_정착장려",
+        "che_주민선정",
+        "che_물자조달"
+      ],
+      "군사": [
+        "che_징병",
+        "che_모병",
+        "che_훈련",
+        "che_사기진작",
+        "che_출병",
+        "che_집합",
+        "che_소집해제",
+        "che_첩보"
+      ],
+      "인사": [
+        "che_이동",
+        "che_강행",
+        "che_인재탐색",
+        "che_귀환",
+        "che_랜덤임관"
+      ],
+      "계략": [
+        "che_선동",
+        "che_탈취",
+        "che_파괴",
+        "che_화계"
+      ],
+      "국가": [
+        "che_증여",
+        "che_헌납",
+        "che_하야"
+      ]
+    },
+    "availableChiefCommand": {
+      "휴식": [
+        "휴식"
+      ],
+      "인사": [
+        "che_발령",
+        "che_포상",
+        "che_몰수"
+      ],
+      "특수": [
+        "che_초토화",
+        "che_천도",
+        "che_증축",
+        "che_감축"
+      ],
+      "전략": [
+        "che_필사즉생",
+        "che_백성동원",
+        "che_수몰",
+        "che_허보",
+        "che_의병모집",
+        "che_이호경식",
+        "che_급습"
+      ],
+      "기타": [
+        "che_피장파장",
+        "che_국기변경",
+        "che_국호변경"
+      ]
+    }
+  },
+  "stat": {
+    "total": 165,
+    "min": 15,
+    "max": 80,
+    "npcTotal": 150,
+    "npcMax": 75,
+    "npcMin": 10,
+    "chiefMin": 65
+  },
+  "nations": [
+    {
+      "id": 1,
+      "name": "엄백호",
+      "color": "#800080",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "엄백호",
+      "tech": 500,
+      "ideology": "che_덕가",
+      "nationLevel": 1,
+      "cities": [
+        "건안"
+      ],
+      "raw": [
+        "엄백호",
+        "#800080",
+        10000,
+        10000,
+        "엄백호",
+        500,
+        "che_덕가",
+        1,
+        [
+          "건안"
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "name": "맹획",
+      "color": "#A0522D",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "맹획",
+      "tech": 500,
+      "ideology": "che_덕가",
+      "nationLevel": 1,
+      "cities": [
+        "월수"
+      ],
+      "raw": [
+        "맹획",
+        "#A0522D",
+        10000,
+        10000,
+        "맹획",
+        500,
+        "che_덕가",
+        1,
+        [
+          "월수"
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "name": "유표",
+      "color": "#E0FFFF",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "유표",
+      "tech": 500,
+      "ideology": "che_도가",
+      "nationLevel": 1,
+      "cities": [
+        "영릉"
+      ],
+      "raw": [
+        "유표",
+        "#E0FFFF",
+        10000,
+        10000,
+        "유표",
+        500,
+        "che_도가",
+        1,
+        [
+          "영릉"
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "name": "올돌골",
+      "color": "#800000",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "올돌골",
+      "tech": 500,
+      "ideology": "che_도적",
+      "nationLevel": 1,
+      "cities": [
+        "남해"
+      ],
+      "raw": [
+        "올돌골",
+        "#800000",
+        10000,
+        10000,
+        "올돌골",
+        500,
+        "che_도적",
+        1,
+        [
+          "남해"
+        ]
+      ]
+    },
+    {
+      "id": 5,
+      "name": "동탁",
+      "color": "#A9A9A9",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "동탁",
+      "tech": 500,
+      "ideology": "che_도적",
+      "nationLevel": 1,
+      "cities": [
+        "안정"
+      ],
+      "raw": [
+        "동탁",
+        "#A9A9A9",
+        10000,
+        10000,
+        "동탁",
+        500,
+        "che_도적",
+        1,
+        [
+          "안정"
+        ]
+      ]
+    },
+    {
+      "id": 6,
+      "name": "유비",
+      "color": "#008000",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "유비",
+      "tech": 500,
+      "ideology": "che_명가",
+      "nationLevel": 1,
+      "cities": [
+        "평원"
+      ],
+      "raw": [
+        "유비",
+        "#008000",
+        10000,
+        10000,
+        "유비",
+        500,
+        "che_명가",
+        1,
+        [
+          "평원"
+        ]
+      ]
+    },
+    {
+      "id": 7,
+      "name": "유기",
+      "color": "#008080",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "유기",
+      "tech": 500,
+      "ideology": "che_명가",
+      "nationLevel": 1,
+      "cities": [
+        "강하"
+      ],
+      "raw": [
+        "유기",
+        "#008080",
+        10000,
+        10000,
+        "유기",
+        500,
+        "che_명가",
+        1,
+        [
+          "강하"
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "name": "유장",
+      "color": "#483D8B",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "유장",
+      "tech": 500,
+      "ideology": "che_묵가",
+      "nationLevel": 1,
+      "cities": [
+        "덕양"
+      ],
+      "raw": [
+        "유장",
+        "#483D8B",
+        10000,
+        10000,
+        "유장",
+        500,
+        "che_묵가",
+        1,
+        [
+          "덕양"
+        ]
+      ]
+    },
+    {
+      "id": 9,
+      "name": "조조",
+      "color": "#000080",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "조조",
+      "tech": 500,
+      "ideology": "che_법가",
+      "nationLevel": 1,
+      "cities": [
+        "진류"
+      ],
+      "raw": [
+        "조조",
+        "#000080",
+        10000,
+        10000,
+        "조조",
+        500,
+        "che_법가",
+        1,
+        [
+          "진류"
+        ]
+      ]
+    },
+    {
+      "id": 10,
+      "name": "원소",
+      "color": "#FF00FF",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "원소",
+      "tech": 500,
+      "ideology": "che_병가",
+      "nationLevel": 1,
+      "cities": [
+        "거록"
+      ],
+      "raw": [
+        "원소",
+        "#FF00FF",
+        10000,
+        10000,
+        "원소",
+        500,
+        "che_병가",
+        1,
+        [
+          "거록"
+        ]
+      ]
+    },
+    {
+      "id": 11,
+      "name": "공손찬",
+      "color": "#87CEEB",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "공손찬",
+      "tech": 500,
+      "ideology": "che_병가",
+      "nationLevel": 1,
+      "cities": [
+        "계"
+      ],
+      "raw": [
+        "공손찬",
+        "#87CEEB",
+        10000,
+        10000,
+        "공손찬",
+        500,
+        "che_병가",
+        1,
+        [
+          "계"
+        ]
+      ]
+    },
+    {
+      "id": 12,
+      "name": "신라",
+      "color": "#FFA500",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "신라",
+      "tech": 500,
+      "ideology": "che_불가",
+      "nationLevel": 1,
+      "cities": [
+        "계림"
+      ],
+      "raw": [
+        "신라",
+        "#FFA500",
+        10000,
+        10000,
+        "신라",
+        500,
+        "che_불가",
+        1,
+        [
+          "계림"
+        ]
+      ]
+    },
+    {
+      "id": 13,
+      "name": "고구려",
+      "color": "#FF6347",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "고구려",
+      "tech": 500,
+      "ideology": "che_불가",
+      "nationLevel": 1,
+      "cities": [
+        "국내"
+      ],
+      "raw": [
+        "고구려",
+        "#FF6347",
+        10000,
+        10000,
+        "고구려",
+        500,
+        "che_불가",
+        1,
+        [
+          "국내"
+        ]
+      ]
+    },
+    {
+      "id": 14,
+      "name": "장로",
+      "color": "#20B2AA",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "장로",
+      "tech": 500,
+      "ideology": "che_오두미도",
+      "nationLevel": 1,
+      "cities": [
+        "상용"
+      ],
+      "raw": [
+        "장로",
+        "#20B2AA",
+        10000,
+        10000,
+        "장로",
+        500,
+        "che_오두미도",
+        1,
+        [
+          "상용"
+        ]
+      ]
+    },
+    {
+      "id": 15,
+      "name": "도겸",
+      "color": "#00FF00",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "도겸",
+      "tech": 500,
+      "ideology": "che_오두미도",
+      "nationLevel": 1,
+      "cities": [
+        "하비"
+      ],
+      "raw": [
+        "도겸",
+        "#00FF00",
+        10000,
+        10000,
+        "도겸",
+        500,
+        "che_오두미도",
+        1,
+        [
+          "하비"
+        ]
+      ]
+    },
+    {
+      "id": 16,
+      "name": "손권",
+      "color": "#FF0000",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "손권",
+      "tech": 500,
+      "ideology": "che_유가",
+      "nationLevel": 1,
+      "cities": [
+        "오"
+      ],
+      "raw": [
+        "손권",
+        "#FF0000",
+        10000,
+        10000,
+        "손권",
+        500,
+        "che_유가",
+        1,
+        [
+          "오"
+        ]
+      ]
+    },
+    {
+      "id": 17,
+      "name": "헌제",
+      "color": "#BA55D3",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "헌제",
+      "tech": 500,
+      "ideology": "che_유가",
+      "nationLevel": 1,
+      "cities": [
+        "홍농"
+      ],
+      "raw": [
+        "헌제",
+        "#BA55D3",
+        10000,
+        10000,
+        "헌제",
+        500,
+        "che_유가",
+        1,
+        [
+          "홍농"
+        ]
+      ]
+    },
+    {
+      "id": 18,
+      "name": "원술",
+      "color": "#FFC0CB",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "원술",
+      "tech": 500,
+      "ideology": "che_음양가",
+      "nationLevel": 1,
+      "cities": [
+        "여남"
+      ],
+      "raw": [
+        "원술",
+        "#FFC0CB",
+        10000,
+        10000,
+        "원술",
+        500,
+        "che_음양가",
+        1,
+        [
+          "여남"
+        ]
+      ]
+    },
+    {
+      "id": 19,
+      "name": "마등",
+      "color": "#808000",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "마등",
+      "tech": 500,
+      "ideology": "che_종횡가",
+      "nationLevel": 1,
+      "cities": [
+        "무도"
+      ],
+      "raw": [
+        "마등",
+        "#808000",
+        10000,
+        10000,
+        "마등",
+        500,
+        "che_종횡가",
+        1,
+        [
+          "무도"
+        ]
+      ]
+    },
+    {
+      "id": 20,
+      "name": "목록대왕",
+      "color": "#7CFC00",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "목록대왕",
+      "tech": 500,
+      "ideology": "che_종횡가",
+      "nationLevel": 1,
+      "cities": [
+        "건녕"
+      ],
+      "raw": [
+        "목록대왕",
+        "#7CFC00",
+        10000,
+        10000,
+        "목록대왕",
+        500,
+        "che_종횡가",
+        1,
+        [
+          "건녕"
+        ]
+      ]
+    },
+    {
+      "id": 21,
+      "name": "장량",
+      "color": "#FFD700",
+      "gold": 10000,
+      "rice": 10000,
+      "infoText": "장량",
+      "tech": 500,
+      "ideology": "che_태평도",
+      "nationLevel": 1,
+      "cities": [
+        "하내"
+      ],
+      "raw": [
+        "장량",
+        "#FFD700",
+        10000,
+        10000,
+        "장량",
+        500,
+        "che_태평도",
+        1,
+        [
+          "하내"
+        ]
+      ]
+    }
+  ],
+  "diplomacy": [],
+  "generals": [
+    {
+      "affinity": 999,
+      "name": "엄백호",
+      "picturePath": 1217,
+      "nationName": 1,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "엄백호",
+        1217,
+        1,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "맹획",
+      "picturePath": 1108,
+      "nationName": 2,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "맹획",
+        1108,
+        2,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "유표",
+      "picturePath": 1293,
+      "nationName": 3,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "유표",
+        1293,
+        3,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "올돌골",
+      "picturePath": 1241,
+      "nationName": 4,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "올돌골",
+        1241,
+        4,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "동탁",
+      "picturePath": 1083,
+      "nationName": 5,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "동탁",
+        1083,
+        5,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "유비",
+      "picturePath": 1281,
+      "nationName": 6,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "유비",
+        1281,
+        6,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "유기",
+      "picturePath": 1276,
+      "nationName": 7,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "유기",
+        1276,
+        7,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "유장",
+      "picturePath": 1290,
+      "nationName": 8,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "유장",
+        1290,
+        8,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "조조",
+      "picturePath": 1392,
+      "nationName": 9,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "조조",
+        1392,
+        9,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "원소",
+      "picturePath": 1268,
+      "nationName": 10,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "원소",
+        1268,
+        10,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "공손찬",
+      "picturePath": 1033,
+      "nationName": 11,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "공손찬",
+        1033,
+        11,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "석벌휴",
+      "picturePath": null,
+      "nationName": 12,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "석벌휴",
+        null,
+        12,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "고남무",
+      "picturePath": null,
+      "nationName": 13,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "고남무",
+        null,
+        13,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "장로",
+      "picturePath": 1319,
+      "nationName": 14,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "장로",
+        1319,
+        14,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "도겸",
+      "picturePath": 1074,
+      "nationName": 15,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "도겸",
+        1074,
+        15,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "손권",
+      "picturePath": 1169,
+      "nationName": 16,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "손권",
+        1169,
+        16,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "헌제",
+      "picturePath": 1002,
+      "nationName": 17,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "헌제",
+        1002,
+        17,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "원술",
+      "picturePath": 1269,
+      "nationName": 18,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "원술",
+        1269,
+        18,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "마등",
+      "picturePath": 1094,
+      "nationName": 19,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "마등",
+        1094,
+        19,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "목록대왕",
+      "picturePath": 1110,
+      "nationName": 20,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "목록대왕",
+        1110,
+        20,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    },
+    {
+      "affinity": 999,
+      "name": "장량",
+      "picturePath": 1318,
+      "nationName": 21,
+      "locatedCity": null,
+      "leadership": 85,
+      "strength": 85,
+      "intel": 85,
+      "officerLevel": 12,
+      "birth": 150,
+      "death": 250,
+      "ego": null,
+      "speciality": null,
+      "text": null,
+      "raw": [
+        999,
+        "장량",
+        1318,
+        21,
+        null,
+        85,
+        85,
+        85,
+        12,
+        150,
+        250,
+        null,
+        null
+      ]
+    }
+  ],
+  "generalsEx": [],
+  "generalsNeutral": [],
+  "cities": [],
+  "history": [
+    "<C>●</>180년 1월:<L><b>【이벤트】</b></>NPC 군주 뒤에 플레이해보는 이벤트 깃수"
+  ],
+  "initialActions": [],
+  "initialEvents": [],
+  "defaultInitialEvents": [],
+  "events": [
+    [
+      "month",
+      1000,
+      [
+        "or",
+        [
+          "Date",
+          "==",
+          null,
+          12
+        ],
+        [
+          "Date",
+          "==",
+          null,
+          6
+        ]
+      ],
+      [
+        "CreateManyNPC",
+        10,
+        10
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ],
+    [
+      "month",
+      1000,
+      [
+        "Date",
+        "==",
+        181,
+        1
+      ],
+      [
+        "OpenNationBetting",
+        4,
+        1000
+      ],
+      [
+        "OpenNationBetting",
+        1,
+        1000
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ],
+    [
+      "month",
+      1000,
+      [
+        "and",
+        [
+          "Date",
+          ">=",
+          183,
+          1
+        ],
+        [
+          "RemainNation",
+          "<=",
+          16
+        ]
+      ],
+      [
+        "OpenNationBetting",
+        4,
+        1000
+      ],
+      [
+        "OpenNationBetting",
+        1,
+        1000
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ],
+    [
+      "month",
+      1000,
+      [
+        "and",
+        [
+          "Date",
+          ">=",
+          183,
+          1
+        ],
+        [
+          "RemainNation",
+          "<=",
+          8
+        ]
+      ],
+      [
+        "OpenNationBetting",
+        1,
+        1000
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ],
+    [
+      "month",
+      1000,
+      [
+        "and",
+        [
+          "Date",
+          ">=",
+          183,
+          1
+        ],
+        [
+          "RemainNation",
+          "<=",
+          4
+        ]
+      ],
+      [
+        "OpenNationBetting",
+        1,
+        1000
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ],
+    [
+      "destroy_nation",
+      1000,
+      [
+        "and",
+        [
+          "Date",
+          ">=",
+          183,
+          1
+        ],
+        [
+          "RemainNation",
+          "==",
+          1
+        ]
+      ],
+      [
+        "BlockScoutAction"
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ]
+  ]
+}
