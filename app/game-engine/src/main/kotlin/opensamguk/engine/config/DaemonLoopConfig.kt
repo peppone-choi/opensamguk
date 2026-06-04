@@ -14,6 +14,7 @@ import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
+import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.event.EventDispatcher
@@ -68,6 +69,14 @@ class DaemonLoopConfig {
     fun reservedTurnRepository(jdbc: NamedParameterJdbcTemplate): ReservedTurnRepository =
         ReservedTurnRepository(jdbc)
 
+    /**
+     * vote_poll/vote 설문 상태 read seam (F4 Wave 투표). VoteCast/closeOldVote 설문 cast 가드의 read 경로.
+     * JDBC read 전용 — write 경로는 [JdbcFlushExecutor] step-8e 뿐(one-daemon-write 규칙).
+     */
+    @Bean
+    fun votePollRepository(jdbc: NamedParameterJdbcTemplate): VotePollRepository =
+        VotePollRepository(jdbc)
+
     @Bean
     fun redisCommandStream(
         template: StringRedisTemplate,
@@ -105,6 +114,7 @@ class DaemonLoopConfig {
         auctionRepository: AuctionRepository,
         auctionBidRepository: AuctionBidRepository,
         boardPostRepository: BoardPostRepository,
+        votePollRepository: VotePollRepository,
     ): TurnRunService {
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
@@ -174,6 +184,7 @@ class DaemonLoopConfig {
             auctionRepository = auctionRepository,
             auctionBidRepository = auctionBidRepository,
             boardPostRepository = boardPostRepository,
+            votePollRepository = votePollRepository,
         )
     }
 }

@@ -63,6 +63,11 @@ object CommandWireMapper {
         // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 인테이크.
         "boardArticle",
         "boardComment",
+        // F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크.
+        "newVote",
+        "voteCast",
+        "voteComment",
+        "voteClose",
     )
 
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
@@ -164,6 +169,31 @@ object CommandWireMapper {
                 articleNo = args.int("articleNo"),
                 text = args.str("text"),
             )
+            // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감). multipleOptions/endDate/keepOldVote는
+            //    nullable 유지(`?: …` 없음)로 PHP `?? 1`/`?? null`/`?? false` 기본값·부재를 엔진이
+            //    적용하게 한다. title/text는 빈 문자열 fallback(`?: ""`)으로 PHP 필수 검증을 태운다. ──
+            "newVote" -> TurnDaemonCommand.NewVote(
+                requestId = requestId, generalId = generalId,
+                title = args.str("title") ?: "",
+                options = args.strList("options"),
+                multipleOptions = args.int("multipleOptions"),
+                endDate = args.str("endDate"),
+                keepOldVote = args.bool("keepOldVote"),
+            )
+            "voteCast" -> TurnDaemonCommand.VoteCast(
+                requestId = requestId, generalId = generalId,
+                voteId = args.int("voteId") ?: args.int("voteID") ?: 0,
+                selection = args.intList("selection"),
+            )
+            "voteComment" -> TurnDaemonCommand.VoteComment(
+                requestId = requestId, generalId = generalId,
+                voteId = args.int("voteId") ?: args.int("voteID") ?: 0,
+                text = args.str("text") ?: "",
+            )
+            "voteClose" -> TurnDaemonCommand.VoteClose(
+                requestId = requestId, generalId = generalId,
+                voteId = args.int("voteId") ?: args.int("voteID") ?: 0,
+            )
             else -> null
         }
     }
@@ -193,6 +223,19 @@ object CommandWireMapper {
         } catch (_: Exception) {
             // single scalar → wrap (the UI may send a lone betting type)
             (el as? JsonPrimitive)?.let { it.intOrNull ?: it.content.toIntOrNull() }?.let { listOf(it) } ?: emptyList()
+        }
+    }
+
+    /**
+     * 문자열 배열 추출 (newVote options). 배열이 아니면 단일 스칼라를 래핑한다. 빈 항목 검증/순서는
+     * PHP가 grand truth — 여기서는 입력 순서를 그대로 보존(stringArray)만 한다.
+     */
+    private fun Map<String, JsonElement>.strList(key: String): List<String> {
+        val el = this[key] ?: return emptyList()
+        return try {
+            el.jsonArray.mapNotNull { (it as? JsonPrimitive)?.content }
+        } catch (_: Exception) {
+            (el as? JsonPrimitive)?.content?.let { listOf(it) } ?: emptyList()
         }
     }
 }

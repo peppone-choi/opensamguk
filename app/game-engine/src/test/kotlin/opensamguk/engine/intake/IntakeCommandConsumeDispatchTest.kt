@@ -1,5 +1,6 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.BoardActionResult
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.PlaceBetOk
 import opensamguk.common.wire.TurnDaemonCommand
@@ -127,5 +128,39 @@ class IntakeCommandConsumeDispatchTest {
         assertTrue(result.ok)
         assertEquals(1, world.getGeneralById(10)!!.meta["tnmt"])
         assertEquals(setOf(10), recorder.dirtyGeneralIds())
+    }
+
+    @Test
+    fun `newVote payload decodes and dispatches to VoteHandler producing the vote_poll delta`() {
+        // 새 설문조사를 개설할 수 있는 vote-admin(userGrade>=5) 장수.
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                generals = listOf(
+                    TurnGeneral(
+                        id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
+                        stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0,
+                        officerLevel = 12, gold = 1000, turnTime = t0, meta = mapOf("userGrade" to 5),
+                    ),
+                ),
+                nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+            ),
+        )
+        val recorder = ChangeRecorder()
+
+        val decoded = decodeAsConsumer(
+            TurnDaemonCommand.NewVote(
+                requestId = "req-vote", generalId = 10, title = "다음 천도지?",
+                options = listOf("성도", "한중"), multipleOptions = 1,
+            ),
+        )
+        val result = dispatcher(world, recorder).dispatch(decoded) as BoardActionResult
+
+        assertTrue(result.ok)
+        assertEquals("newVote", result.type)
+        val rows = recorder.votePollInserts()
+        assertEquals(1, rows.size)
+        assertEquals("다음 천도지?", rows.single().columns["title"])
+        assertEquals(1, world.getGeneralById(10)!!.meta["newvote"]) // 전 장수 newvote=1
     }
 }

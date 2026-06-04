@@ -13,6 +13,7 @@ import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
+import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
@@ -65,6 +66,8 @@ open class TurnRunService(
     private val auctionBidRepository: AuctionBidRepository? = null,
     /** board_post 조회용 JPA read 리포지토리 (F4 C2 슬라이스 C — 댓글의 글 is_secret read). */
     private val boardPostRepository: BoardPostRepository? = null,
+    /** vote_poll/vote 조회용 JDBC read seam (F4 Wave 투표 — VoteCast/closeOldVote 설문 cast 가드). */
+    private val votePollRepository: VotePollRepository? = null,
 ) {
 
     /**
@@ -74,7 +77,11 @@ open class TurnRunService(
      * events-stream `commandResult` publish is deferred per the P1 DECISION documented above.
      */
     private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null && boardPostRepository != null) {
-        TurnDaemonCommandDispatcher(world, handler.recorder, auctionRepository, auctionBidRepository, boardPostRepository)
+        TurnDaemonCommandDispatcher(
+            world, handler.recorder, auctionRepository, auctionBidRepository, boardPostRepository,
+            // votePollRepository는 옵셔널 — null이면 VoteHandler가 기본 stub("설문 없음")로 동작한다.
+            votePollRepository,
+        )
     } else {
         null
     }

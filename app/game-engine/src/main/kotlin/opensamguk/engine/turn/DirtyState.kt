@@ -90,6 +90,26 @@ data class BoardPostInsert(val columns: Map<String, Any?>)
 data class BoardCommentInsert(val columns: Map<String, Any?>)
 
 /**
+ * `vote_poll` INSERT 의도 (F4 Wave 투표, 설문조사 개설 NewVote.php). INSERT 전용. `columns`는 vote_poll
+ * 컬럼을 미러링: title, body, options(jsonb), multiple_options, reveal_mode, opener_general_id,
+ * opener_name, start_at, end_at.
+ */
+data class VotePollInsert(val columns: Map<String, Any?>)
+
+/**
+ * `vote` INSERT 의도 (F4 Wave 투표, 투표 던지기 Vote.php). INSERT 전용 (PHP `insertIgnore` →
+ * UNIQUE(vote_id,general_id) 중복은 DB가 무시). `columns`는 vote 컬럼을 미러링: vote_id, general_id,
+ * nation_id, selection(jsonb).
+ */
+data class VoteInsert(val columns: Map<String, Any?>)
+
+/**
+ * `vote_comment` INSERT 의도 (F4 Wave 투표, 댓글 AddComment.php). INSERT 전용. `columns`는 vote_comment
+ * 컬럼을 미러링: vote_id, general_id, nation_id, general_name, nation_name, text.
+ */
+data class VoteCommentInsert(val columns: Map<String, Any?>)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
@@ -141,6 +161,13 @@ data class DirtyState(
     val createdMessages: List<CreatedMessage> = emptyList(),
     /** [messageInvalidates]: the mailbox-channel invalidate UPDATEs (deleteMsg / sibling-sweep). */
     val messageInvalidates: List<MessageInvalidate> = emptyList(),
+    /**
+     * [votePollUpdates]: per-tick vote_poll UPDATE 채널 (F4 Wave 투표) — pollId → 변경 컬럼 맵. 새 설문조사
+     * 개설 시 이전 설문을 닫는 `NewVote.closeOldVote`(endDate=now) + 자연 만료(closed_at)에 대응하는 DELTA
+     * 채널. INSERT 전용 vote_poll INSERT 채널과 별개(같은 테이블이지만 다른 행: 신규 INSERT vs 기존 UPDATE).
+     * 키별 LinkedHashMap, 컬럼별 last-write-wins, 삽입 순서 보존(diplomacyUpdateDirty와 동일 형태).
+     */
+    val votePollUpdates: Map<Int, Map<String, Any?>> = emptyMap(),
     /** [auctionUpserts]: the ng_auction INSERT/UPDATE intents (T0.7). */
     val auctionUpserts: List<AuctionUpsert> = emptyList(),
     /** [auctionBidInserts]: the ng_auction_bid INSERT intents (T0.7, INSERT-only — no outbid delete). */
