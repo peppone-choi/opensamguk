@@ -6,6 +6,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 import java.time.Instant
 
 /**
@@ -108,6 +110,19 @@ class VoteCommentReadEntity(
 interface VotePollReadRepository : JpaRepository<VotePollReadEntity, Int> {
     /** All polls, newest first. */
     fun findAllByOrderByIdDesc(): List<VotePollReadEntity>
+
+    /**
+     * W3 FrontGlobalInfo `vote` 게이트 — 아직 열려있는(미종료, 미만료) 설문 폴 수.
+     * PHP는 game_env.lastVote가 가리키는 폴의 `endDate < now`를 검사한다(GetFrontInfo.php:182-189).
+     * opensamguk엔 game_env.lastVote가 채워지지 않으므로(§2) 대체로 `closed_at IS NULL` AND
+     * (`end_at IS NULL` OR `end_at > now`)인 폴 존재 여부로 진행중 설문을 판단한다. 폴이 0행인
+     * scenario_1010 시드에선 항상 0(false)이라 날조가 아니다. OR 우선순위 모호성을 피해 명시 JPQL 사용.
+     */
+    @Query(
+        "select count(p) from VotePollReadEntity p " +
+            "where p.closedAt is null and (p.endAt is null or p.endAt > :now)",
+    )
+    fun countOpenPolls(@Param("now") now: Instant): Long
 }
 
 interface VoteReadRepository : JpaRepository<VoteReadEntity, Int> {

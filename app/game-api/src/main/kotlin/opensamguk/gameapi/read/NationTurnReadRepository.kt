@@ -1,6 +1,7 @@
 package opensamguk.gameapi.read
 
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -31,6 +32,14 @@ class NationTurnReadEntity(
 
     @Column(name = "action_code")
     var actionCode: String = "",
+
+    // W3-ChiefCenter — 예약 국가 명령의 구조화 인자(`nation_turn.arg` jsonb, V1 baseline:126
+    // `jsonb NOT NULL DEFAULT '{}'`). PHP `GetReservedCommand.php:99`가 슬롯마다 `Json::decode($arg)`로
+    // 내려보내던 누락된 read 필드. 다른 read 엔티티(GeneralTurnReadEntity.arg)와 동일하게
+    // MetaJsonConverter로 디코드(삽입순서 보존 맵). 인자 없는 슬롯은 빈 맵.
+    @Convert(converter = MetaJsonConverter::class)
+    @Column(name = "arg", columnDefinition = "jsonb")
+    var arg: Map<String, Any?> = linkedMapOf(),
 
     @Column(name = "brief")
     var brief: String = "",

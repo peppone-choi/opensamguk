@@ -6,6 +6,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 /**
  * F2 Wave 6 — read-only JPA mapping of the `general_turn` ring-buffer row (game-api READ path ONLY).
@@ -44,4 +46,19 @@ class GeneralTurnReadEntity(
 interface GeneralTurnReadRepository : JpaRepository<GeneralTurnReadEntity, Int> {
     /** The general's reserved ring, ordered by slot (turn_idx ASC) for a stable 0..N-1 list. */
     fun findByGeneralIdOrderByTurnIdxAsc(generalId: Int): List<GeneralTurnReadEntity>
+
+    /**
+     * W3 GeneralList — 여러 장수의 첫 5 예약 슬롯을 1회 일괄 조회(N+1 방지). PHP `GeneralList.php:215-218`의
+     * `SELECT general_id, turn_idx, action, arg, brief FROM general_turn WHERE general_id IN %li AND
+     * turn_idx < 5 ORDER BY general_id asc, turn_idx asc`를 그대로 이식.
+     *
+     * 호출부는 결과를 `general_id`로 그룹핑하고 각 그룹 안의 turn_idx asc 순서로 reservedCommand 목록을
+     * 만든다(PHP의 일괄 → general별 누적 순서 동일).
+     */
+    @Query(
+        "select t from GeneralTurnReadEntity t " +
+            "where t.generalId in :generalIds and t.turnIdx < 5 " +
+            "order by t.generalId asc, t.turnIdx asc",
+    )
+    fun findReservedByGeneralIds(@Param("generalIds") generalIds: Collection<Int>): List<GeneralTurnReadEntity>
 }

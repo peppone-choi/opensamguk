@@ -50,6 +50,52 @@ data class FrontGlobalInfo(
     val nationCount: Int,
     val cityCount: Int,
     val npcCount: Int,
+
+    // ── W3 FrontGlobalInfo enrichment (PHP GetFrontInfo::generateGlobalInfo) ──────────────────────
+    // 모두 nullable/기본값 — FE 계약상 optional이라 미존재 시 누락해도 헤더가 깨지지 않는다.
+    //
+    // [§2 BLOCKED — world_state.config 미기재] 아래 game_env 키들은 PHP가 KVStorage('game_env')에서
+    // 읽지만, opensamguk 엔진은 현재 world_state.config에 `startyear/starttime/turnterm`만 기록한다
+    // (ScenarioImporter.insertWorldState, DatabaseHooks.toFlushPayload). 나머지 game_env 키는
+    // 데몬이 채우지 않으므로 source가 없다. 따라서 config에서 **방어적으로 읽되**(데몬이 향후 채우면
+    // 그대로 노출), 부재 시 null/기본값으로 둔다 — 값을 날조하지 않는다(W3_PLAN §5 faithful-port).
+    val title: String? = null,
+    val extendedGeneral: Boolean? = null,
+    val isFiction: Boolean? = null,
+    val npcMode: Int? = null,
+    val joinMode: Int? = null,
+    val autorunUser: Boolean? = null,
+    val lastExecuted: String? = null, // game_env.turntime(마지막 턴 실행 시각 문자열)
+    val develCost: Int? = null,
+    val noticeMsg: String? = null,
+    val onlineUserCnt: Int? = null,
+    val startyear: Int? = null,
+    val generalCntLimit: Int? = null, // game_env.maxgeneral
+    val apiLimit: Int? = null, // game_env.refreshLimit
+    val serverCnt: Int? = null,
+    val isunited: Boolean? = null,
+
+    // 토너먼트/베팅 상태(game_env.tournament/tnmt_type) — config 미기재 시 null.
+    val tournamentState: Int? = null,
+    val tournamentType: String? = null,
+    val isTournamentActive: Boolean? = null, // tournament > 0
+    val isTournamentApplicationOpen: Boolean? = null, // tournament == 1
+    val isBettingActive: Boolean? = null, // tournament == 6
+    val nationBetting: Boolean? = null, // 천통국 베팅 하이라이트(isBettingActive와 동치 — PHP 계산 게이트)
+
+    // 설문(투표) 진행 여부 — vote_poll에서 미만료 폴 존재 시 true(아래 컨트롤러에서 계산).
+    val vote: Boolean? = null,
+
+    // COUNT 집계(저렴한 인덱스 카운트) — npc_state로 user/NPC 분리.
+    val createdUserCnt: Int? = null, // npc_state == 0 (사용자 점유 가능 장수)
+    val createdNPCCnt: Int? = null, // npc_state > 0 (NPC 장수)
+
+    // ng_auction.finished = 0 진행중 경매 수(아래 AuctionCountReadRepository).
+    val auctionCount: Int? = null,
+
+    // [§2 BLOCKED — plock 테이블 부재] PHP `SELECT plock FROM plock WHERE type='GAME'`.
+    // 모든 마이그레이션(V1~V10)에 plock 테이블이 없다. interim으로 false 고정(W3_FrontGlobalInfo §2).
+    val serverLocked: Boolean? = null,
 )
 
 /** The caller's general gating surface (null when no character). */
@@ -69,6 +115,104 @@ data class FrontGeneralInfo(
     val rice: Int,
     val crew: Int,
     val cityId: Int,
+
+    // ── W3 FrontGeneralInfo enrichment (PHP GetFrontInfo::generateGeneralInfo) ───────────────────
+    // 모두 nullable/기본값 — FE 계약상 optional. 빈 general(미점유) 셸에서는 전부 기본값으로 둔다.
+
+    // 이미 GeneralReadEntity에 매핑된 V1 컬럼을 그대로 노출.
+    val picture: String? = null,
+    val imageServer: Int? = null,
+    val experience: Int? = null,
+    val dedication: Int? = null,
+    val train: Int? = null,
+    val atmos: Int? = null,
+    val crewTypeId: Int? = null,
+    val troop: Int? = null, // troop_id
+    val horse: String? = null, // horse_code
+    val weapon: String? = null, // weapon_code
+    val book: String? = null, // book_code
+    val item: String? = null, // item_code
+    val age: Int? = null, // V1 general.age (실 컬럼)
+
+    // W3-F1 4개 기존 컬럼 매핑(special_code/special2_code/personal_code/penalty).
+    val specialDomestic: String? = null, // special_code(내정 특기)
+    val specialWar: String? = null, // special2_code(전투 특기)
+    val personal: String? = null, // personal_code(성격)
+    val penalty: Map<String, Any?>? = null, // penalty jsonb
+
+    // meta-derived(general.meta가 explevel/dedlevel/killturn/belong/owner_name를 싣는다 — LogicEntities 주석).
+    // 데몬이 안 쓴 키는 null(부재 = 미기록). 값 날조 없음.
+    val explevel: Int? = null,
+    val dedlevel: Int? = null,
+    val killturn: Int? = null,
+    val belong: Int? = null,
+    val ownerName: String? = null,
+
+    // 파생 표시값(실 컬럼/레벨에서 계산 — F4StateText / DomesticHelpers / getHonor 패러티 포팅 재사용).
+    val officerLevelText: String? = null, // getOfficerLevelText(officer_level, nationLevel)
+    val honorText: String? = null, // getHonor(experience)
+    val dedLevelText: String? = null, // getDed(dedication)
+    val lbonus: Int? = null, // calcLeadershipBonus(officer_level, nationLevel)
+    val bill: Int? = null, // getBillByLevel(getDedLevel(dedication))
+
+    // 전투 통계 — F2 RankDataReadRepository(rank_data READ 경로)로 채운다. 미기록 type은 0.
+    val warnum: Int? = null,
+    val killnum: Int? = null,
+    val deathnum: Int? = null,
+    val killcrew: Int? = null,
+    val deathcrew: Int? = null,
+    val firenum: Int? = null,
+
+    // [§2 BLOCKED — opensamguk source 부재] 아래는 의도적으로 null/omit. 컨트롤러가 절대 채우지 않는다.
+    //  - dex1..dex5      : V1/V6 어디에도 컬럼 없음, meta 키도 없음(W3_FrontGeneralInfo §2). null.
+    //  - refreshScore / refreshScoreTotal : general_access_log 테이블 부재(W3_PLAN §2). null.
+    //  - defence_train   : 컬럼 없음(W3_PLAN §2). null.
+    //  - autorunLimit    : aux 컬럼 없음(W3_PLAN §2 defence_train/autorun_limit). null.
+    //  - reservedCommand : general_turn READ는 GeneralList 그룹/W4로 분리(이 그룹 OUT-OF-SCOPE). null.
+    //  - recentWar / troopInfo : recent_war_time은 컬럼이나 PHP `recent_war` 문자열 포맷/troop 합성은
+    //                            W4 후속(이 read 그룹 OUT-OF-SCOPE). null.
+    val dex1: Int? = null,
+    val dex2: Int? = null,
+    val dex3: Int? = null,
+    val dex4: Int? = null,
+    val dex5: Int? = null,
+    val refreshScore: Int? = null,
+    val refreshScoreTotal: Int? = null,
+    val defenceTrain: Int? = null,
+    val autorunLimit: Int? = null,
+    val reservedCommand: List<Map<String, Any?>>? = null,
+)
+
+/**
+ * W3 — `population.{cityCnt,now,max}` / `crew.{generalCnt,now,max}` grouped 집계(F4) 결과 묶음.
+ * 도시/장수가 0개인 국가는 {0,0,0}으로 보정해 노출한다(PHP `generateNationInfo` 동일).
+ */
+data class NationPopulationGroup(
+    val cityCnt: Int,
+    val now: Int,
+    val max: Int,
+)
+
+data class NationCrewGroup(
+    val generalCnt: Int,
+    val now: Int,
+    val max: Int,
+)
+
+/** 국가 타입 표시(PHP `type.{raw,name,pros,cons}`) — NationTypeRegistry/NationTypeModule에서 룩업. */
+data class NationTypeInfo(
+    val raw: String,
+    val name: String,
+    val pros: String,
+    val cons: String,
+)
+
+/** topChiefs 1개 항목(PHP officer_level>=11 장수: officer_level/no/name/npc). */
+data class NationTopChief(
+    val officerLevel: Int,
+    val no: Int,
+    val name: String,
+    val npc: Int,
 )
 
 data class FrontNationInfo(
@@ -80,6 +224,40 @@ data class FrontNationInfo(
     val rice: Int,
     val tech: Double,
     val capitalCityId: Int?,
+
+    // ── W3 FrontNationInfo enrichment (PHP GetFrontInfo::generateNationInfo) ─────────────────────
+    val capital: Int? = null, // PHP `capital`(=capital_city_id 별칭, FE 호환)
+    val typeCode: String? = null, // nation.type_code(raw)
+    val power: Int? = null, // V8 nation.power(실 컬럼)
+    val gennum: Int? = null, // meta.gennum
+
+    val population: NationPopulationGroup? = null, // F4 인구 집계
+    val crew: NationCrewGroup? = null, // F4 병력 집계
+    val type: NationTypeInfo? = null, // 국가타입 {raw,name,pros,cons}
+    val topChiefs: List<NationTopChief>? = null, // officer_level>=11 수뇌 목록
+
+    // [§2 BLOCKED — nation.meta UNVERIFIED] PHP는 nation 행의 dedicated 컬럼에서 읽지만 opensamguk엔
+    // 컬럼이 없고 meta에 싣는다(LogicEntities Nation 주석: rate/bill/surlimit/strategicCmdLimit). 그러나
+    // 시드(ScenarioImporter)는 nation.meta에 infoText만 기록하고 엔진의 이들 키 write는 UNVERIFIED
+    // (W3_FrontNationInfo §2). 따라서 meta에서 **방어적으로 읽되**(데몬이 채우면 노출), 부재 시 null.
+    // 값 날조 없음.
+    val bill: Int? = null,
+    val taxRate: Int? = null, // meta.rate
+    val diplomaticLimit: Int? = null, // meta.surlimit
+    val strategicCmdLimit: Int? = null, // meta.strategic_cmd_limit
+    val prohibitScout: Int? = null, // meta.scout
+    val prohibitWar: Int? = null, // meta.war
+
+    // [§2 BLOCKED — 계산 불가] impossibleStrategicCommand는 PHP가 명령 클래스의 getNextAvailableTurn()을
+    // LastTurn 상태로 평가해 산출한다(buildNationCommandClass + LastTurn). read-only game-api에는 그
+    // 명령 실행 엔진 시드/컨텍스트가 없어 패러티 재현이 불가 → 빈 리스트로 두고 W4(명령 precheck 결합)로
+    // 미룬다(값 날조 금지, W3_FrontNationInfo §2). FE는 빈 리스트를 "제한 없음"으로 렌더.
+    val impossibleStrategicCommand: List<List<Any?>> = emptyList(),
+
+    // [§2 BLOCKED] onlineGen(game_env.online_genenerals) / notice(nation_env.nationNotice)는 데몬 KV
+    // population이 UNVERIFIED(W3_FrontNationInfo §2). null로 둔다.
+    val onlineGen: Int? = null,
+    val notice: String? = null,
 )
 
 data class FrontCityInfo(
@@ -224,15 +402,4 @@ data class GlobalMenuResponse(
     val version: Int,
     val menu: List<MenuNode>,
 )
-
-// ── const (cached singleton) ─────────────────────────────────────────────────
-
-/** GET /api/const — server constants the client caches as a module singleton. */
-data class GameConstResponse(
-    val result: Boolean,
-    val mapName: String,
-    val mapWidth: Int,
-    val mapHeight: Int,
-    val maxTurn: Int,
-    val officerLevelText: Map<Int, String>,
-)
+// 구 GameConstResponse(/api/const)는 W3 GetConstController/GetConstResponse(superset)로 이관·삭제됨.

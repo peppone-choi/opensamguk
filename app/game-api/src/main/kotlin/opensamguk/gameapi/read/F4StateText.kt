@@ -63,6 +63,72 @@ object F4StateText {
     data class ChiefPostMeta(val officerLevel: Int, val title: String)
 
     /**
+     * PHP `getOfficerLevelText($officerLevel, $nlevel)` (func_converter.php:522-565)의 정본 포팅 —
+     * 국가 레벨(`nlevel`)별 직책 한글명. officer_level 0..4는 국가 레벨과 무관(`nlevel=0`으로 강제)하므로
+     * 항상 재야/일반/종사/군사/태수. 코드 = `nlevel*100 + officerLevel`. 미정의 코드는 '-'.
+     *
+     * ChiefCenter 칸의 `officerLevelText`(PHP `getOfficerLevelText(officer_level, nationLevel)`)에 쓴다.
+     * 라벨은 PHP 테이블에서 byte-for-byte 그대로(locked rule 3 — 한글 패러티).
+     */
+    fun officerLevelText(officerLevel: Int, nationLevel: Int = 8): String {
+        // PHP: officer_level 0..4 → nlevel 0 강제(국가 레벨 무관 공통 직책).
+        val nlevel = if (officerLevel in 0..4) 0 else nationLevel
+        val code = nlevel * 100 + officerLevel
+        return OFFICER_LEVEL_TEXT[code] ?: "-"
+    }
+
+    /**
+     * `getOfficerLevelText` 룩업 테이블 — func_converter.php:525-564 그대로(코드 → 직책명).
+     * 국가 레벨 8(제국)부터 1(영주국)까지의 12/11/…/5 직책 + 공통 0..4.
+     */
+    private val OFFICER_LEVEL_TEXT: Map<Int, String> = linkedMapOf(
+        812 to "군주", 811 to "참모", 810 to "제1장군", 809 to "제1모사",
+        808 to "제2장군", 807 to "제2모사", 806 to "제3장군", 805 to "제3모사",
+        712 to "황제", 612 to "왕",
+        711 to "승상", 611 to "광록훈",
+        710 to "표기장군", 610 to "좌장군",
+        709 to "사공", 609 to "상서령",
+        708 to "거기장군", 608 to "우장군",
+        707 to "태위", 607 to "중서령",
+        706 to "위장군", 606 to "전장군",
+        705 to "사도", 605 to "비서령",
+        512 to "공", 412 to "주목",
+        511 to "광록대부", 411 to "태사령",
+        510 to "안국장군", 410 to "아문장군",
+        509 to "집금오", 409 to "낭중",
+        508 to "파로장군", 408 to "호군",
+        507 to "소부", 407 to "종사중랑",
+        312 to "주자사", 212 to "군벌",
+        311 to "주부", 211 to "참모",
+        310 to "편장군", 210 to "비장군",
+        309 to "간의대부", 209 to "부참모",
+        112 to "영주", 12 to "두목",
+        111 to "참모", 11 to "부두목",
+        4 to "태수",
+        3 to "군사",
+        2 to "종사",
+        1 to "일반",
+        0 to "재야",
+    )
+
+    /**
+     * 사령부 명령 팔레트의 카테고리 → 명령 코드 목록. PHP `GameConst::$availableChiefCommand`
+     * (GameConstBase.php:378-415) byte-for-byte. ChiefCenter `commandList`(=`getChiefCommandTable`)의
+     * 정본 순서/카테고리 원천 — 컨트롤러가 각 코드를 CommandRegistry로 풀어 표시 메타를 만든다.
+     */
+    val CHIEF_COMMAND_TABLE: List<Pair<String, List<String>>> = listOf(
+        "휴식" to listOf("휴식"),
+        "인사" to listOf("che_발령", "che_포상", "che_몰수", "che_부대탈퇴지시"),
+        "외교" to listOf("che_물자원조", "che_불가침제의", "che_선전포고", "che_종전제의", "che_불가침파기제의"),
+        "특수" to listOf("che_초토화", "che_천도", "che_증축", "che_감축"),
+        "전략" to listOf(
+            "che_필사즉생", "che_백성동원", "che_수몰", "che_허보",
+            "che_의병모집", "che_이호경식", "che_급습", "che_피장파장",
+        ),
+        "기타" to listOf("che_국기변경", "che_국호변경"),
+    )
+
+    /**
      * 토너먼트 type → display text. Verbatim from `b_tournament.php` switch
      * (`전력전`/`통솔전`/`일기토`/`설전`); tnmt_type is the legacy `convertTournamentType` int.
      */
@@ -76,4 +142,26 @@ object F4StateText {
 
     /** The 4 ranking-type labels rendered on the tournament/betting bracket page (verbatim, fixed order). */
     val RANKING_TYPES: List<String> = listOf("전력전", "통솔전", "일기토", "설전")
+
+    /**
+     * PHP `getHonor($experience)` (func_converter.php:612-629)의 정본 포팅 — 경험치 구간별 명성 한글명.
+     * 경계값/라벨 모두 byte-for-byte 그대로(locked rule 3 — 한글 패러티). FrontGeneralInfo.honorText에 쓴다.
+     * `experience`는 실 컬럼이므로 파생값 계산은 날조가 아니다.
+     */
+    fun honorText(experience: Int): String = when {
+        experience < 640 -> "전무"
+        experience < 2560 -> "무명"
+        experience < 5760 -> "신동"
+        experience < 10240 -> "약간"
+        experience < 16000 -> "평범"
+        experience < 23040 -> "지역적"
+        experience < 31360 -> "전국적"
+        experience < 40960 -> "세계적"
+        experience < 45000 -> "유명"
+        experience < 51840 -> "명사"
+        experience < 55000 -> "호걸"
+        experience < 64000 -> "효웅"
+        experience < 77440 -> "영웅"
+        else -> "구세주"
+    }
 }

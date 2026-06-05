@@ -38,14 +38,6 @@ class GlobalMenuControllerTest {
             .andExpect(jsonPath("$.menu[6].subMenu[1].condShowVar").value("npcMode"))
     }
 
-    @Test
-    fun `const returns the cached singleton surface`() {
-        mockMvc().perform(get("/api/const"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.mapName").value("che"))
-            .andExpect(jsonPath("$.mapWidth").value(1000))
-            .andExpect(jsonPath("$.mapHeight").value(714))
-            .andExpect(jsonPath("$.officerLevelText.12").value("군주"))
-    }
+    // 구 `/api/const` 테스트는 삭제: 엔드포인트가 W3 GetConstController(superset)로 이관됨
+    // (GetConstControllerTest가 정본 검증). GlobalMenuController는 더는 /api/const를 매핑하지 않는다.
 }

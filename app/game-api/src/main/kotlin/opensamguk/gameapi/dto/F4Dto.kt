@@ -1,5 +1,6 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -130,23 +131,109 @@ data class NationFinanceResponse(
 )
 
 // ── GET /api/nation/chief-reserved — 8 chief posts + reserved turns (page 7) ───────────────────────
+/**
+ * 사령부(chief-center) 예약 국가 명령 1슬롯. PHP `GetReservedCommand.php:96-100`의
+ * `['action'=>..., 'brief'=>..., 'arg'=>Json::decode(arg)]`에 대응.
+ *
+ * W3-ChiefCenter: 기존 `actionCode/brief`에 더해 `arg`(예약 명령의 구조화된 타겟, `nation_turn.arg` jsonb)를
+ * 추가한다 — PHP가 슬롯마다 `Json::decode($arg)`로 내려보내는 누락된 read 필드. 빈 인자는 `{}`(삽입순서 맵).
+ */
 data class ChiefReservedTurn(
     val turnIdx: Int,
     val actionCode: String,
     val brief: String,
+    /** 예약 국가 명령의 구조화 인자(`nation_turn.arg`). 인자 없는 명령은 빈 맵 `{}`. */
+    val arg: Map<String, Any?> = emptyMap(),
 )
 
+/**
+ * 한 직책(officer_level)의 사령부 칸. PHP `nationChiefList[officer_level]`에 대응.
+ * 직책이 공석(해당 레벨의 장수 없음)이면 `name/turnTime/npcType`은 null이고 예약 턴 목록만 남는다.
+ */
 data class ChiefPost(
     val officerLevel: Int,
+    /** F4StateText.CHIEF_POSTS의 정본 직책명(군주/참모/…). 칸 고정 라벨. */
     val title: String,
+    // W3-ChiefCenter — 직책 보유 장수 정보(PHP `getName()/getTurnTime(TURNTIME_FULL)/getNPCType()`).
+    /** 직책 보유 장수 이름. 공석이면 null. 원천: general.name. */
+    val name: String? = null,
+    /** 직책 보유 장수의 TURNTIME_FULL("YYYY-MM-DD HH:MM:SS"). 공석이면 null. 원천: general.turn_time. */
+    val turnTime: String? = null,
+    /** 직책 보유 장수의 NPC 상태(0=PC, 1=NPC, 2+=잠금/후보). 공석이면 null. 원천: general.npc_state. */
+    val npcType: Int? = null,
+    /** PHP `getOfficerLevelText(officer_level, nationLevel)` — 국가 레벨별 직책 한글명. */
+    val officerLevelText: String,
     val reservedTurns: List<ChiefReservedTurn>,
+)
+
+/**
+ * 사령부 명령 팔레트의 1개 명령. PHP `getChiefCommandTable`의 `values[]` 한 항목
+ * (`{value, compensation, possible, title, simpleName, reqArg}`)에 대응.
+ *
+ * `compensation`/`possible`은 game-api에 아직 포팅되지 않은 PHP `getCompensationStyle()`/
+ * `hasMinConditionMet()`에 해당하므로 [AvailableCommandsController]와 동일하게 보수적 기본값
+ * (compensation=0, possible=true)을 쓴다. 이는 BLOCKED가 아니라 read-DTO 단계의 알려진 flag —
+ * 실제 precheck/보정 표시는 후속 wave에서 연결.
+ */
+data class ChiefCommand(
+    /** 예약 액션 코드(`Util::getClassNameFromObj`). 원천: CommandRegistry 정의 key. */
+    val value: String,
+    val simpleName: String,
+    val title: String,
+    /** 보정 스타일(▲/▼). PHP `getCompensationStyle()` 미포팅 → 0(중립) 고정 flag. */
+    val compensation: Int,
+    /** 최소조건 충족 여부. PHP `hasMinConditionMet()` 미포팅 → true 고정 flag. */
+    val possible: Boolean,
+    /** 인자 필요 명령 여부(`argsSchema` 비어있지 않음). */
+    val reqArg: Boolean,
+)
+
+/** 사령부 명령 팔레트의 1개 카테고리(휴식/인사/외교/특수/전략/기타). */
+data class ChiefCommandCategory(
+    val category: String,
+    val values: List<ChiefCommand>,
 )
 
 data class ChiefReservedResponse(
     val result: Boolean,
+    // W3-ChiefCenter — 호출자 식별(JWT principal에서 resolve).
+    /** 호출자(나)의 장수 id. */
+    val myGeneralId: Int,
+    /** 호출자(나)의 officer_level. */
+    val myOfficerLevel: Int,
     val nationId: Int,
+    // W3-ChiefCenter — 국가 컨텍스트.
+    /** 국가명(재야면 F4StateText.NEUTRAL_NATION_NAME). */
+    val nationName: String?,
+    /** 국가 레벨(재야면 0). */
+    val nationLevel: Int,
+    // W3-ChiefCenter — 게임 시각(world_state 클럭).
+    /** 현재 게임 연도. */
+    val year: Int,
+    /** 현재 게임 월. */
+    val month: Int,
+    /** 턴 텀(분). PHP `turnTerm`(legacy 이름 유지). */
+    val turnTerm: Int,
     val maxChiefTurn: Int,
     val posts: List<ChiefPost>,
+    // W3-ChiefCenter — 부대 목록(troop_leader → name) + 명령 팔레트 + 수뇌 여부.
+    /** 국가 부대 목록: troopLeader → 부대명(PHP `troopList`). 시드 무행이면 빈 맵. */
+    val troopList: Map<String, String>,
+    /** 사령부 명령 팔레트(PHP `getChiefCommandTable` / `commandList`). */
+    val commandList: List<ChiefCommandCategory>,
+    /**
+     * 수뇌 여부(officer_level > 4). PHP `isChief`.
+     * Jackson 기본 BeanIntrospector가 `isXxx` boolean 게터를 `is` 제거해 `chief`로 직렬화하므로
+     * 와이어 키를 `isChief`로 고정한다(FE `$.isChief` 소비).
+     */
+    @get:JsonProperty("isChief")
+    val isChief: Boolean,
+    /**
+     * BLOCKED (W3_PLAN §2: `defence_train / autorun_limit | no column`). PHP `autorun_limit`는
+     * `general.aux`(general_access_log/aux) 원천이 opensamguk 스키마에 없어 read 경로가 부재 →
+     * null로 둔다(날조 금지). 컬럼/메타 write 경로가 생기면 채운다.
+     */
+    val autorunLimit: Int? = null,
 )
 
 // ── GET /api/nation/npc-policy — page 8 ────────────────────────────────────────────────────────────

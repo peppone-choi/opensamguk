@@ -39,10 +39,13 @@ class FrontInfoControllerTest {
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
+    private val ranks = mock(opensamguk.gameapi.read.RankDataReadRepository::class.java)
+    private val auctions = mock(opensamguk.gameapi.read.AuctionCountReadRepository::class.java)
+    private val votePolls = mock(opensamguk.gameapi.read.VotePollReadRepository::class.java)
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(FrontInfoController(resolver, world, generals, nations, cities))
+        MockMvcBuilders.standaloneSetup(FrontInfoController(resolver, world, generals, nations, cities, ranks, auctions, votePolls))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 

@@ -30,8 +30,8 @@ class MapPreviewControllerTest {
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(MapPreviewController(cityRepo, nationRepo, worldRepo)).build()
 
-    private fun city(id: Int, level: Int, nationId: Int) =
-        CityReadEntity(id = id, nationId = nationId, level = level)
+    private fun city(id: Int, level: Int, nationId: Int, region: Int = 0) =
+        CityReadEntity(id = id, nationId = nationId, level = level, region = region)
 
     private fun nation(id: Int, name: String, color: String) =
         NationReadEntity(id = id, name = name, color = color)
@@ -45,8 +45,8 @@ class MapPreviewControllerTest {
         )
         `when`(cityRepo.findAll()).thenReturn(
             listOf(
-                city(id = 3, level = 8, nationId = 1),
-                city(id = 1, level = 8, nationId = 2),
+                city(id = 3, level = 8, nationId = 1, region = 2), // 중원
+                city(id = 1, level = 8, nationId = 2, region = 1), // 하북
                 city(id = 999, level = 5, nationId = 0), // no coord in JSON → dropped
             )
         )
@@ -68,6 +68,7 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.cities[0].name").value("업"))
             .andExpect(jsonPath("$.cities[0].x").value(345.0))
             .andExpect(jsonPath("$.cities[0].y").value(130.0))
+            .andExpect(jsonPath("$.cities[0].region").value(1)) // W3 — city.region(하북)
             // city id 3 → 낙양 with merged coords
             .andExpect(jsonPath("$.cities[1].id").value(3))
             .andExpect(jsonPath("$.cities[1].name").value("낙양"))

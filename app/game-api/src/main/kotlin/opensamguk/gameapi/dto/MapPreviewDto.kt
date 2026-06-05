@@ -37,6 +37,8 @@ data class MapPreviewCity(
     val state: Int,
     /** 보급 상태 — 깃발 `f`(보급)/`d`(미보급) 구분. */
     val supply: Boolean,
+    /** 지역(`city.region` V1 int) — 지역별 색/그룹 표시용. CityConst.regionMap의 int 키. */
+    val region: Int,
     /** 소속국 수도 여부(nation.capital_city_id == id) — 수도 아이콘 `event51.gif`.
      *  `@get:JsonProperty` 고정 — Kotlin boolean `isX`는 Jackson이 `x`로 직렬화하므로 명시. */
     @get:JsonProperty("isCapital")

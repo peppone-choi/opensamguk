@@ -1,6 +1,5 @@
 package opensamguk.gameapi.controller
 
-import opensamguk.gameapi.dto.GameConstResponse
 import opensamguk.gameapi.dto.GlobalMenuResponse
 import opensamguk.gameapi.dto.MenuNode
 import org.springframework.http.ResponseEntity
@@ -28,8 +27,7 @@ class GlobalMenuController {
     fun globalMenu(): ResponseEntity<GlobalMenuResponse> =
         ResponseEntity.ok(GlobalMenuResponse(result = true, version = MENU_VERSION, menu = DEFAULT_MENU))
 
-    @GetMapping("/const")
-    fun gameConst(): ResponseEntity<GameConstResponse> = ResponseEntity.ok(CONST)
+    // GET /api/const는 W3 GetConstController로 이관(superset). 중복 매핑 제거.
 
     companion object {
         private const val MENU_VERSION = 2
@@ -89,29 +87,6 @@ class GlobalMenuController {
                 ),
             ),
             item("설문조사", "v_vote.php", newTab = true, condHighlightVar = "vote"),
-        )
-
-        /** Legacy officer-level labels (devsam-core getNationLevelText-equivalent surface, F2 subset). */
-        private val OFFICER_LEVEL_TEXT: Map<Int, String> = linkedMapOf(
-            0 to "재야",
-            1 to "일반",
-            2 to "종사",
-            3 to "군사",
-            4 to "태수",
-            5 to "참모",
-            6 to "장군",
-            7 to "총사령관",
-            11 to "군주대리",
-            12 to "군주",
-        )
-
-        private val CONST = GameConstResponse(
-            result = true,
-            mapName = "che",
-            mapWidth = 1000,
-            mapHeight = 714,
-            maxTurn = 30, // general_turn ring buffer length (P3 finding)
-            officerLevelText = OFFICER_LEVEL_TEXT,
         )
     }
 }
