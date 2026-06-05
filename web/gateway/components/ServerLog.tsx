@@ -17,6 +17,12 @@ interface LogEntry {
     text: string;
 }
 
+// devsam 로그 색/태그 마크업(<Y>…</>, <b>, <C>, <D>, <W> 등)을 표시용 평문으로 제거.
+// 【작위】/【지급】 등 본문 대괄호는 유지. 색 렌더(span 변환)는 후속 polish.
+function stripTags(s: string): string {
+    return s.replace(/<[^>]*>/g, '');
+}
+
 export default function ServerLog({ serverId = 'main' }: { serverId?: string }) {
     const [entries, setEntries] = useState<LogEntry[] | null>(null);
     const [failed, setFailed] = useState(false);
@@ -64,7 +70,7 @@ export default function ServerLog({ serverId = 'main' }: { serverId?: string }) 
                 {entries.map((e) => (
                     <li key={e.id} className="server-log-item">
                         <span className="server-log-date">{`${e.year}年 ${e.month}月`}</span>
-                        <span className="server-log-text">{e.text}</span>
+                        <span className="server-log-text">{stripTags(e.text)}</span>
                     </li>
                 ))}
             </ul>
