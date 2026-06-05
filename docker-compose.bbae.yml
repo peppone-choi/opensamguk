@@ -101,8 +101,12 @@ services:
     networks:
       - opensamguk
 
-  # main 스택의 gateway-frontend에 빼섭 레지스트리만 머지(서버사이드 origin 해석). 나머지 정의는 base 유지.
+  # 로비(gateway-frontend) + 인게임(game-frontend) 둘 다 빼섭 레지스트리 머지(서버사이드 origin 해석).
+  # gateway: 로비 빼섭 탭 맵/전황. game: /api/game 프록시가 sam_server 쿠키로 bbae-api 선택(멀티서버 인게임).
   gateway-frontend:
+    environment:
+      SERVER_REGISTRY_JSON: '[{"id":"bbae","gameApiUrl":"http://bbae-api:18080"}]'
+  game-frontend:
     environment:
       SERVER_REGISTRY_JSON: '[{"id":"bbae","gameApiUrl":"http://bbae-api:18080"}]'
 
