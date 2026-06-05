@@ -74,6 +74,13 @@ class ScenarioImporterIT {
         return ScenarioImporter(scenario = scenario, cities = cities)
     }
 
+    // 빼섭(2번째 서버)용 scenario_1030 군웅할거. cities는 che 풀맵 공용(맵 바운드, 시나리오 무관).
+    private fun newImporter1030(): ScenarioImporter {
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
+        val cities = ScenarioJson.loadCities(readResource("scenario/cities_1010.json"))
+        return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
+    }
+
     @Test
     fun `importAll seeds the A-minimal world with the expected row counts`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
@@ -149,6 +156,35 @@ class ScenarioImporterIT {
         // world_state.meta carries the hiddenSeed/startYear/startTime EngineEventConfig reads.
         val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(meta.contains("hiddenSeed"), "meta has hiddenSeed: $meta")
+        assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
+    }
+
+    @Test
+    fun `importAll seeds scenario_1030 (군웅할거, 21 nations) without error`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        // 빼섭 시나리오 일반성 게이트 — importer가 1010(2세력) 외 다세력 시나리오도 무에러 시드하는지.
+        val counts = newImporter1030().importAll(jdbc)
+
+        assertEquals(1, counts.worldState)
+        assertEquals(21, counts.nation)            // 군웅할거 21세력
+        assertEquals(94, counts.city)              // che 풀맵 94도시(소유+공백지) — 맵 공용
+        assertTrue(counts.general > 400, "generals seeded: ${counts.general}")
+        assertEquals(counts.general * 30, counts.generalTurn)
+        assertEquals(counts.general * 37, counts.rankData)
+        assertEquals(1, counts.ngGames)
+
+        assertEquals(21, count("nation"))
+        assertEquals(94, count("city"))
+        assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
+        // 모든 장수 불변식 유지(37 rank_data / 30 general_turn) — 다세력에서도.
+        val every37 = jdbc.queryForObject(
+            "SELECT min(c) = 37 AND max(c) = 37 FROM (SELECT count(*) c FROM rank_data GROUP BY general_id) s",
+            Boolean::class.java,
+        )
+        assertTrue(every37 == true, "every general has exactly 37 rank_data rows")
+        // world_state.meta startYear 191(군웅할거).
+        val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
     }
 
