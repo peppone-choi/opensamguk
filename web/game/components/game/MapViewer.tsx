@@ -51,9 +51,18 @@ const DETAIL_SIZES: Record<number, CitySize> = {
     7: { areaW: 84, areaH: 60, iconW: 28, iconH: 20, flagRight: -6, flagTop: -4 },
     8: { areaW: 96, areaH: 72, iconW: 32, iconH: 24, flagRight: -6, flagTop: -3 },
 };
+// 사용자 요청 — 맵에서 성 아이콘이 다소 커서 약 28% 축소한다(레거시 $detailMapCitySizes는
+// 700×500 native 표시값이라 캔버스 균일확대 시 도시가 빽빽해 보인다). 아우라(areaW/areaH)·깃발 위치는
+// 레거시 비율 유지하고, cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다(한 노브로 조정).
+const ICON_SCALE = 0.72;
 // 표에 없는 레벨(예: 0)도 깨지지 않게 lv3 기준으로 폴백.
 function sizeOf(level: number): CitySize {
-    return DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
+    const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
+    return {
+        ...base,
+        iconW: Math.round(base.iconW * ICON_SCALE),
+        iconH: Math.round(base.iconH * ICON_SCALE),
+    };
 }
 
 // 줌 한계 + 휠 감도.
