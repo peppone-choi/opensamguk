@@ -1,65 +1,79 @@
-# SESSION HANDOFF — 2026-06-05 (입구 A·B·C 배포 완료·라이브 / nginx 영구화 결정 대기)
+# SESSION HANDOFF — 2026-06-06 (parity-final 배포 + 양섭 재시딩 + 빼섭 보급-동결 fix)
 
-다음 세션은 이 문서부터. 이전 핸드오프(입구 재설계 미커밋)는 모두 **머지+배포 완료**로 종료.
+다음 세션은 이 문서부터. 이전 핸드오프(입구 A·B·C·nginx 영구화)는 머지+배포 완료로 종료 — 핵심만 §6에 흡수.
 
-> **바로**: 입구(로그인/로비) devsam '제 전황' 재설계 + 맵 native 700×500(가로1000 비례확대) + 멀티서버 라우팅 기반 + 전황 read API를 **prod 라이브 배포 완료**(PR#34, main `b729e00`). 라이브 검증 끝. **유일 미결 = 박스 nginx 핫픽스의 버전관리 영구화 결정**(§3) — 인프라 토폴로지 3중 불일치 발견.
+> **바로**: `parity-final` 10+1커밋(W3 read-DTO·맵아이콘축소·reseed스크립트·빼섭 보급 fix) → main FF 배포. **본섭(1010)+빼섭(1030) 둘 다 외과적 재시딩 완료**(게임만 리셋, 로그인 보존). 빼섭 턴데몬 동결(`doNPC구출발령` 빈 supplyCities)은 **시드 소유 버그로 근본 fix**(`dd4e970`) — 배포 후 **빼섭 재시딩+엔진기동+턴전진 검증**이 마지막 잔여(아래 §1 끝).
 
 ---
 
-## 1. 이번 세션 한 일 (전부 main 머지 + prod 배포 + 라이브 검증)
+## 1. 이번 세션 한 일 (전부 main 배포, 라이브 검증)
 
-**입구 A·B·C** (브랜치 `entrance-multiserver-redesign` → PR#34 → main `b729e00`, CI green 골든 포함):
+브랜치 `parity-final` → main FF 머지 push(자동 deploy.yml). 커밋:
 
-| | 커밋 | 내용 |
-|---|---|---|
-| A | `cd81083` | 입구 devsam 제전황 재설계(ServerBoard/MapPreview/ServerLog/cityRegions/flagTint/아이콘) + **맵 native 700×500**(infra `che.json` ×10/7 1000×714 폐기 → php 정본 native, 프론트 transform이 컬럼폭 max-width 1000에 균일확대 → php비율 그대로 ~1000폭, 아이콘 미축소). lobby+in-game(MapViewer) 양쪽 native 정렬. MapPreviewController/Dto/Test native 단언. docker-compose GAME_API_ORIGIN. |
-| B | `697c2af` | `lib/serverRegistry.ts` per-server origin 해석(SERVER_REGISTRY_JSON→GAME_API_ORIGIN(기본서버)→servers.json). 단일 env가 모든 서버를 한 game-api로 강제하던 버그 제거. server-map route 교체. 클라=servers.json public만, 내부주소=서버사이드. |
-| C | `d05e43d` | game-api `WorldLogController` `GET /api/world-log`(log_entry SYSTEM history/summary, enum ::text 캐스트, 최신30) + gateway `/api/server-log/[id]` 프록시 + ServerLog devsam 태그 표시용 제거. |
+| 커밋 | 내용 |
+|------|------|
+| `f2096e3` | **W3 read-DTO 인리치** — chief-center/getconst/generallist/frontinfo. game-api 6실패 마감: JavaBeans decapitalize 함정 2건(`isChief`→`@get:JsonProperty("isChief")`, `iAction`→`@get:JsonProperty("iAction")`), 구 /api/const→GetConstController 이관, 데드 GameConstResponse 제거. `:app:game-api:test` 175 green. |
+| `4f2fc34` | **맵 도시 아이콘 ~28% 축소**(MapViewer `ICON_SCALE=0.72`, cast만, 아우라/깃발 비율 유지). 사용자 요청. MapViewer 15/15. |
+| `23f3bf9` | **`scripts/reseed-prod.sh`** — 외과적 재시딩(users+flyway 제외 게임테이블 TRUNCATE→redis FLUSH→엔진재시작→game-api재시작). |
+| `dd4e970` | **빼섭 보급-동결 근본 fix** — 도시 소유를 시나리오 `nation.cities`로 배정(아래 §2). ScenarioImporterIT 회귀게이트. **배포 후 빼섭 재시딩 필요.** |
 
-**라이브 검증** (sam.peppone.dev, 박스 3.37.232.176):
-- 맵 `/api/server-map/main` → 200 **width=700 native**, 로그인 페이지 맵 canvasW≈998(1000폭) 24도시 렌더.
-- 전황 `/api/world-log` → 200 + nginx location 추가 후 `/api/server-log/main` 404→**200**, 전황 패널 실데이터 표출(182年6月 등).
-- 턴 전진 정상(181/4→182/x), nginx 502 없음, game-api/gateway healthy, 에러로그 0.
+(이전 배포 배치 — 같은 parity-final: W9머지/reconciled audit/mojibake/BuyHiddenBuff intake/nextRuler+deleteNation/W6·W5 REST 뮤테이션.)
 
-## 2. 박스 nginx 핫픽스 (라이브 적용됨, 미영구화)
+**사용자 3요구 처리**: ① 아이콘 축소 ✅배포 ② 수도=국가당1 ✅(버그 아님 — "18국"은 방랑군 영지0 환상; 재시딩으로 청소) ③ prod 재시딩 ✅양섭.
 
-전황 패널이 라이브서 404였던 원인: 박스 nginx에 `/api/server-log/` location 부재(맵 `/api/server-map/`는 존재). **박스 `~/opensamguk/docker/nginx/default.conf`에 `/api/server-log/` location을 server-map과 1:1(proxy_pass `http://gateway-frontend:3000`, http·https 두 블록) 추가 → `nginx -t` ok → reload → 200 확인.** 백업: `~/opensamguk/docker/nginx/default.conf.bak.1780663639`. **이 변경은 어떤 git에도 미추적 → 박스 재클론/재셋업 시 유실.**
+**재시딩 결과(라이브)**: 본섭 319국→**2국·2수도**(업/낙양), year 182/3→181/1, 94도시·678장수, users 보존. 빼섭 21국·21수도(단 §2 동결 — fix 배포+재시딩 후 해소 예정).
 
-## 3. 🔴 미결: nginx 영구화 결정 (인프라 토폴로지 3중 불일치 — 사용자 택1)
+**🔴 마지막 잔여(이 세션 끝나기 전/다음 세션 즉시)**: 빼섭 보급 fix(dd4e970) 배포 완료되면 →
+```bash
+ssh -i ~/.ssh/id_ed25519 ubuntu@3.37.232.176
+# 빼섭만 재시딩(fixed importer가 21국 소유 복구) + 엔진 기동:
+docker stop opensamguk-bbae-game-engine 2>/dev/null
+docker exec -i opensamguk-bbae-db psql -U samguk -d samguk -v ON_ERROR_STOP=1 -c "DO \$\$ DECLARE r RECORD; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename NOT IN ('users','flyway_schema_history') LOOP EXECUTE 'TRUNCATE TABLE public.'||quote_ident(r.tablename)||' RESTART IDENTITY CASCADE'; END LOOP; END \$\$;"
+docker exec opensamguk-bbae-redis redis-cli FLUSHALL
+docker start opensamguk-bbae-game-engine
+# 검증: 모든 21국 도시 소유 + 월경계 크래시 없는지
+sleep 30; docker exec opensamguk-bbae-db psql -U samguk -d samguk -tAc "SELECT count(*) FROM nation n WHERE NOT EXISTS(SELECT 1 FROM city c WHERE c.nation_id=n.id)"  # 0 기대
+docker logs --tail 30 opensamguk-bbae-game-engine 2>&1 | grep -iE "Empty items|Exception|entering run loop"  # Empty items 없어야
+```
+**주의**: bbae-engine은 현재 stop 상태(완화 A). 배포(`$COMPOSE up -d bbae-engine`)가 부활시키나 재시딩 전엔 옛 깨진 소유라 재크래시 → 반드시 배포 후 재시딩.
 
-배포 중 발견(핸드오프의 repo 정보가 stale):
-- **라이브 prod 스택은 비-git 디렉터리 `~/opensamguk`에서 구동**(`docker-compose.production.yml` + `docker/nginx/default.conf`, 서비스 `gateway-frontend`/`game-frontend`/`db`, game-api 내부 18080). **어느 git에도 미추적.**
-- 박스 git 레포 `opensamguk-deploy` = **obsolete**(레이아웃 `nginx/nginx.conf`, upstream `frontend`/`gateway`, `opensam-nginx`, blue/green — 현 토폴로지와 무관, server-map 선례 없음). ← 메모리/이전핸드오프의 "opensamguk-docker"와 불일치.
-- 코드레포 `peppone-choi/opensamguk`의 `infra/nginx/nginx.conf` = **또 다른 토폴로지**(upstream 블록, `web-gateway:3000`, `/api/game/`, 8081) — 박스 미사용, server-map/server-log 없음.
-→ 라이브 박스 nginx를 대표하는 버전관리 파일 부재. stale 레포 푸시=divergent/fabricate 위반이라 deployer가 보류(백업 sibling만).
+## 2. 빼섭(1030) 보급-동결 — 근본 원인 + fix (dd4e970)
 
-**결정 옵션(택1):**
-1. **(권장·근본)** 코드레포 `infra/nginx/nginx.conf`를 박스 실 토폴로지(server-map/server-log 포함 default.conf)로 일치 + deploy 파이프라인이 박스에 sync. TaskList #2와 합류.
-2. 라이브 `~/opensamguk` 설정 디렉터리를 신규 전용 repo로 버전관리(`.env`/secrets/tar/db백업 제외).
-3. 박스 핫픽스+백업으로만 운영(재셋업 시 수동 재적용) — 비권장.
+**증상**: 빼섭 턴데몬이 첫 월경계서 `RandUtil.choice "Empty items"`(RandUtil.kt:36) 크래시-루프(1초마다 backing off) → 동결+CPU. 스택: `rescueDeploy:140` ← `doNPC구출발령:625` ← GeneralAI.chooseNationTurn ← MonthBoundaryDriver.
 
-## 4. ⚠️ 후속: 턴 되감김 (배포마다)
+**근본**: `scenario_1030`이 도시 리소스 `cities_1010.json` 재사용 → 도시 소유가 1010 baked nation_id(국가1·2만) → 1030 21국 중 **2국만 도시 소유, 19국 무소유**. 무소유국은 capital이 미소유 도시 가리킴 → UpdateCitySupply BFS가 capital seed 못함(`computeSuppliedCitiesOrdered:68-74` 미소유시 continue) → supplyCities 빔 → `doNPC구출발령`(capital!=0 가드만 통과)이 `choice(빈 보급)` throw. **PHP `RandUtil::choice`도 empty throw=패러티 정확 → PHP는 이 상태에 도달 안 함**(PHP 시나리오가 nation.cities로 소유 배정).
 
-엔진 컨테이너 recreate 시 in-memory 턴(~185)이 마지막 DB 스냅샷(~181, 5분 주기)에서 rehydrate → **배포마다 ~수년 손실**(이번 read-only PR 무관, 메모리=source-of-truth 아키텍처 trade-off). 동결 아님(catch-up). 후속: 부팅/종료 전 강제 스냅샷(메모리 project_in_memory_crud "종료/시작 강제"와 정합) 또는 graceful 엔진 교체.
+**fix**: ScenarioImporter가 도시 소유를 **시나리오 `nation[].cities`(도시명)** 에서 배정(baked nation_id 무시). 1010 무변(동일집합), 1030 21국 소유 복구. 회귀게이트 ScenarioImporterIT(1010 14/10 보존 + 1030 무소유국0·수도자국소유). 메모리 `project_bbae_supply_freeze_bug.md`.
 
-## 5. 남은 작업 (사용자 리스트 "차례대로" 잔여 + TaskList)
+## 3. 남은 패러티 작업 (reconciled §3 티어순 — 현 상태 반영)
 
-- **빼섭 2nd 서버 스택** — opensamguk-docker(미클론) + 2번째 db/api/engine + `SERVER_REGISTRY_JSON` + nginx + fresh 시드. **§3 영구화/토폴로지 정리 선결 권장.** 결정 필요: 서버명/시나리오/t3.large 2스택 리소스. (멀티서버 코드 기반 B 완료 — 추가 = servers.json public + SERVER_REGISTRY_JSON env + 박스 스택.)
-- TaskList #2 — CI 헬스체크 toothless(`/api/game/actuator/health` 박스에 없는 경로 30회 재시도) + nginx stale-DNS 영구수정(deploy.yml `--force-recreate nginx`) + **§3 nginx VCS 정합**(합류).
-- TaskList #4 — betting/auction flush enum 버그(scope=action/category 밖, 월틱 아님).
-- TaskList #5 — PHP 구조 문서화 + W9 분리 + 커버리지 갭(`docs/superpowers/gap/WAVE_COVERAGE_REVIEW.md` untracked, 무관 — 별도).
-- 입구 polish: 전황 색 렌더(현재 태그 제거 평문), 1000px 디스플레이 도시명 clip 등.
+**✅ 닫힘(이 배치)**: Tier0 전부 · Tier1 #5 nextRuler · Tier3 #9 메시지/#10 경매개설/#11 외교서신/#13 명령큐 · Tier5 #16 read-DTO(W3) · 빼섭 보급 fix.
 
-## 6. 작업 원칙/함정 (이번 세션 교훈)
+**⬜ 잔여**:
+| 우선 | 항목 | 무게 | 게이팅 |
+|------|------|------|--------|
+| Tier4 #15 | **24 미포팅 명령** — 8×`event_*연구`(극병/무희/상병/대검병/화시병/음귀병/산저병/화륜차/원융노병) · che_계략(화계/파괴/탈취/선동/첩보/반계) · misc(강행/접경귀환/숙련전환/전투태세/모반시도/특기초기화×2/단련/등용수락/cr_인구이동) | **최대** | 각 PHP 골든(Docker `tools/php-golden`), `/parity-wave` 팬아웃 |
+| Tier2 #7·#8 | W8 토너먼트 — `processTournament` state machine(pending→fill→qualify→prelim→bet→16/8/4/2/finals) + `TournamentStart/Advance/Reset` admin(현 tournament-admin FE silent no-op) | 중-대 | draw-for-draw 골든(`func_tournament.php` 1393줄) |
+| Tier3 #12·#14 | 입국·건국(거병→건국 candidate) · NPC 선택풀 pick/update | 소-중 | 골든(현 deny-stub) |
+| Tier5 #17 | W4 FE 렌더 — 게이지 now/max, 로그/기록 페이지(`/game/battle-records` 등), 설정패널, generals sort | 중-대 | 골든 불요(W3 read 위에) — 병렬 가능 |
+| Tier1 #4·#6 | checkStatistic 훅 + Q14 checkEmperior | 소 | **의도적 디퍼**(표시전용 연감, 최저 ROI) |
 
-- **main push = deploy.yml 자동 발화 → 엔진 recreate → 턴 되감김.** doc-only 변경은 main에 push 금지(또는 deploy 무발화 경로). 이 핸드오프도 로컬 커밋만(미push).
-- 맵 좌표 = php 정본 native 700×500이 정답(표시 전용, 골든 패러티 무관). 프론트 transform 1겹이 캔버스폭에 균일확대 — coords/icons/font 한 번에. che.json에 스케일 굽지 말 것(아이콘 비율 깨짐).
-- 비주얼 검증 = `/browse`(gstack). 로컬 dev :3000(`pnpm build`↔`pnpm dev` 같은 `.next` 교차 금지=청크손상, `rm -rf .next`).
-- ctx_execute는 host localhost 미공유 — 로컬/박스 fetch는 Bash(host) or /browse or docker exec.
+**대략**: 백엔드 파러티 배관(foundation/REST/read/데몬후계/시드) 거의 닫힘 ≈ **60% 완료**. 남은 ~40%는 #15 24명령이 절반(기계적·병렬) + W8 토너먼트 + W4 FE. 골든 캡처(Docker)가 Tier2·4·3잔여의 처리율 게이팅. W4 FE(#17)+checkStatistic은 골든 불요 병렬.
+
+## 4. 인프라/배포 실측 (이 세션 검증)
+
+- **EC2** `3.37.232.176`, `ssh -i ~/.ssh/id_ed25519 ubuntu@…`. (sam.peppone.dev=Cloudflare 프록시 → SSH 불가, HTTP만.)
+- **라이브 컨테이너명(compose와 다름)**: 본섭 DB=`opensamguk-db`(user/db=**samguk**, sammo 아님!), engine=`opensamguk-game-engine`, api=`opensamguk-game-api`, redis=`opensamguk-redis`, web=`opensamguk-{game,gateway}-frontend`. 빼섭=`opensamguk-bbae-{db,game-engine,game-api,redis}`(db samguk). **전 앱 단일 DB 공유 → 볼륨 wipe=유저소실 → 외과적 truncate(users 보존) 필수.**
+- **배포**: main push → `deploy.yml`(`gradlew build` 풀테스트 → GHCR 이미지 `:svc-latest`(본섭+빼섭 공용) → SSH 롤링 `up -d`(upstreams→engine→bbae→nginx force-recreate)). 단일 push가 양섭 동시. DB 영속 → 배포만으론 재시드 안됨(world_state 비어야).
+- **prod 맵 라우트** = `/api/map/preview`(NOT `/api/game/map/preview`=404). 자율 머지+배포 OK([[feedback_auto_merge_deploy]]) — CI green 선결.
+
+## 5. 작업 원칙/함정
+
+- **main push = deploy.yml 자동발화 → 엔진 recreate → DB스냅샷 rehydrate로 턴 ~수년 되감김**. doc-only는 main push 금지(이 핸드오프도 parity-final 로컬커밋만). 코드 배포는 큰 배치로.
+- 빌드: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew ...`, gradle은 `ctx_execute(language:"shell")` 경유. 검증=출력 tail+XML(exit0 불신, `--rerun-tasks`).
+- 로컬/박스 fetch는 Bash(host) — ctx_execute는 host localhost 미공유. 비주얼=`/browse`(gstack).
 - 주석 한글, 식별자/wire/패러티 로그 영문. 커밋 끝 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
+- 패러티: RNG draw-for-draw + PhpRound(half-away) + 한글 로그 byte + flush-delta + fabricate 금지. 골든은 real PHP 캡처만(Docker scenario_1010).
 
-## 7. 박스/repo 정보 (업데이트됨)
-
-- EC2 `3.37.232.176`, ssh `~/.ssh/id_ed25519` ubuntu. **라이브 스택 = 비-git `~/opensamguk`**(`docker-compose.production.yml`, 서비스 `gateway-frontend`/`game-frontend`/`db`/`nginx`, game-api 내부 18080, gateway-api 18081, gateway-frontend에 `GAME_API_ORIGIN: http://game-api:18080`). nginx config = `~/opensamguk/docker/nginx/default.conf`(미추적, §3).
-- repos: `peppone-choi/opensamguk`(코드·CI deploy.yml·GHCR 빌드) · `opensamguk-deploy`(박스 git, **obsolete**) · `opensamguk-images`(자산, 맵 CDN jsdelivr che/bg_*.jpg·che_road.png). 메모리의 "opensamguk-docker"는 라이브와 불일치 — §3 정리 대상.
-- 배포 흐름: opensamguk main push → `.github/workflows/deploy.yml`이 GHCR 이미지 빌드+푸시 → 박스 pull+recreate. CI 게이트 `ci.yml`(jvm 골든 + web×2).
+## 6. 이전 세션 흡수 (입구/nginx — 완료)
+입구 A·B·C(제전황 재설계·맵 native 700×500·멀티서버 라우팅·world-log) 배포 완료. nginx default.conf는 infra/nginx 정본화+scp 동기화로 영구화(#35 머지). 라이브=untracked `~/opensamguk`(이전 핸드오프 §3 토폴로지 불일치는 정리됨). 상세는 git log.
