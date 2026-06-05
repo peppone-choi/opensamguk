@@ -14,6 +14,7 @@ import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.VotePollRepository
+import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
@@ -58,6 +59,11 @@ open class TurnRunService(
     private val pipeline: MonthlyPipeline<RandUtil>? = null,
     /** The dynamic-event dispatcher consumed by [MonthlyPipeline.runMonth]. */
     private val eventDispatcher: EventDispatcher? = null,
+    /** 월간 world-event 디스패치 컨텍스트 팩토리(WorldActionContext + env 키 threading). null이면 bare
+     *  Context 폴백(P1-P4 / 테스트). prod는 `WorldEventContextFactory`가 주입한다 — 없으면 월경계 정산의
+     *  UpdateCitySupply 등 cast-ctx leaf가 `ctx as? XContext`에서 throw(턴 동결)하거나 env-read leaf가
+     *  무음 no-op한다. */
+    private val worldContextFactory: ((MutableMap<String, Any?>) -> EventActionContext)? = null,
     /** How long [RedisCommandStream.readCommands] blocks for a control command before the tick proceeds. */
     private val commandBlockMs: Long = 0,
     /** JPA read repository for auction lookups (P6 T0.7). */
@@ -150,12 +156,19 @@ open class TurnRunService(
                         oldYear = state.currentYear,
                         oldMonth = state.currentMonth,
                         dispatcher = { target, env ->
-                            eventDispatcher.run(target) {
+                            val supplier = {
                                 mutableMapOf<String, Any?>(
                                     "year" to env.year,
                                     "month" to env.month,
                                     "currentEventID" to env.currentEventID,
                                 )
+                            }
+                            // worldContextFactory가 있으면 WorldActionContext(+ env 키)를 공급 — 월간
+                            // world-event leaf(UpdateCitySupply 등)가 그 ctx를 캐스팅/읽는다. 없으면 bare.
+                            if (worldContextFactory != null) {
+                                eventDispatcher.run(target, contextFactory = worldContextFactory, envSupplier = supplier)
+                            } else {
+                                eventDispatcher.run(target, envSupplier = supplier)
                             }
                         },
                     )
