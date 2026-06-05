@@ -81,13 +81,13 @@ class ScenarioBootIT {
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
         assertEquals(678, count("general"))
-        assertEquals(24, count("city"))
+        assertEquals(94, count("city")) // che 풀맵: 점유 24 + 공백지 70 = 94 (cities_1010.json)
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
         assertEquals(678, snapshot.generals.size)
-        assertEquals(24, snapshot.cities.size)
+        assertEquals(94, snapshot.cities.size) // che 풀맵: 점유 24 + 공백지 70 = 94
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)
