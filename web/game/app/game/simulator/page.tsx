@@ -112,7 +112,7 @@ export default function SimulatorPage() {
                     {attacker && (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}>
                             <span style={{ color: 'var(--text-muted)' }}>통솔</span><strong>{attacker.leadership}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>묠력</span><strong>{attacker.strength}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>무력</span><strong>{attacker.strength}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>지력</span><strong>{attacker.intel}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>병력</span><strong>{attacker.crew.toLocaleString()}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>훈련</span><strong>{attacker.train}</strong>
@@ -141,7 +141,7 @@ export default function SimulatorPage() {
                     {defender && (
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}>
                             <span style={{ color: 'var(--text-muted)' }}>통솔</span><strong>{defender.leadership}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>묠력</span><strong>{defender.strength}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>무력</span><strong>{defender.strength}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>지력</span><strong>{defender.intel}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>병력</span><strong>{defender.crew.toLocaleString()}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>훈련</span><strong>{defender.train}</strong>

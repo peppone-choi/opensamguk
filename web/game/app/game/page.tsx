@@ -89,7 +89,7 @@ function MyPageContent() {
                                 <span className="stat-value">{general.leadership}</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-label">묠력</span>
+                                <span className="stat-label">무력</span>
                                 <span className="stat-value">{general.strength}</span>
                             </div>
                             <div className="stat-item">

@@ -55,7 +55,7 @@ export default function MyGeneralsPage() {
         );
     }
 
-    const headers = ['이름', '계급', '통솔', '묠력', '지력', '경험', '충성', '병사', '금', '쌀'];
+    const headers = ['이름', '계급', '통솔', '무력', '지력', '경험', '충성', '병사', '금', '쌀'];
     const rows = generals.map(g => [
         g.name,
         <StatusBadge key={`lvl-${g.id}`} variant="gold">{g.officerLevel}급</StatusBadge>,

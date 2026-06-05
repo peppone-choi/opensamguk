@@ -81,7 +81,7 @@ export default function MyBossPage() {
                             <span className="stat-value">{boss.leadership}</span>
                         </div>
                         <div className="stat-item">
-                            <span className="stat-label">묠력</span>
+                            <span className="stat-label">무력</span>
                             <span className="stat-value">{boss.strength}</span>
                         </div>
                         <div className="stat-item">

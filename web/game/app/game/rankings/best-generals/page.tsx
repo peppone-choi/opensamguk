@@ -34,7 +34,7 @@ export default function BestGeneralsPage() {
     </Shell>
   );
 
-  const headers = ['순위', '장수', '국가', '통솔', '묠력', '지력', '합계'];
+  const headers = ['순위', '장수', '국가', '통솔', '무력', '지력', '합계'];
   const rows = data.map((g) => [
     g.rank <= 3
       ? <StatusBadge variant={g.rank === 1 ? 'gold' : g.rank === 2 ? 'jade' : 'muted'}>{g.rank}</StatusBadge>

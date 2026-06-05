@@ -66,7 +66,7 @@ export default function MyNationPage() {
 
     const { nation, generals, cities } = data;
 
-    const genHeaders = ['이름', '계급', '통솔', '묠력', '지력', '병사'];
+    const genHeaders = ['이름', '계급', '통솔', '무력', '지력', '병사'];
     const genRows = generals.map(g => [
         g.name,
         <StatusBadge key={`gl-${g.id}`} variant="gold">{g.officerLevel}급</StatusBadge>,

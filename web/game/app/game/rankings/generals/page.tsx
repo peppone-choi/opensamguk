@@ -56,7 +56,7 @@ export default function GeneralsPage() {
     </Shell>
   );
 
-  const headers = ['순위', '장수', '국가', '직위', '통솔', '묠력', '지력', '경험', '충성', '병력'];
+  const headers = ['순위', '장수', '국가', '직위', '통솔', '무력', '지력', '경험', '충성', '병력'];
   const rows = sorted.map((g) => [
     g.rank <= 3
       ? <StatusBadge variant={g.rank === 1 ? 'gold' : g.rank === 2 ? 'jade' : 'muted'}>{g.rank}</StatusBadge>
@@ -87,7 +87,7 @@ export default function GeneralsPage() {
               padding: 'var(--space-xs) var(--space-sm)',
             }}
           >
-            {k === 'rank' ? '순위' : k === 'leadership' ? '통솔' : k === 'strength' ? '묠력' : k === 'intel' ? '지력' : k === 'experience' ? '경험' : k === 'devotion' ? '충성' : '병력'}
+            {k === 'rank' ? '순위' : k === 'leadership' ? '통솔' : k === 'strength' ? '무력' : k === 'intel' ? '지력' : k === 'experience' ? '경험' : k === 'devotion' ? '충성' : '병력'}
             {sortKey === k && (sortDesc ? ' ▼' : ' ▲')}
           </button>
         ))}

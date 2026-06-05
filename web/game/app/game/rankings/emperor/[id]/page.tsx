@@ -47,7 +47,7 @@ export default function EmperorDetailPage() {
     </Shell>
   );
 
-  const genHeaders = ['장수', '통솔', '묠력', '지력'];
+  const genHeaders = ['장수', '통솔', '무력', '지력'];
   const genRows = data.generals.map((g) => [
     g.name,
     formatNumber(g.leadership),

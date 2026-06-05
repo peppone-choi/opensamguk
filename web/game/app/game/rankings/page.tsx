@@ -5,7 +5,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 
 const RANKING_PAGES = [
-  { href: '/game/rankings/best-generals', label: '명장 순위', desc: '통솔·묠력·지력 종합 평가', icon: '⚔️' },
+  { href: '/game/rankings/best-generals', label: '명장 순위', desc: '통솔·무력·지력 종합 평가', icon: '⚔️' },
   { href: '/game/rankings/emperor', label: '황제 정보', desc: '천하 통일 황제 기록', icon: '👑' },
   { href: '/game/rankings/generals', label: '장수 일람', desc: '모든 장수 능력치 순위', icon: '📜' },
   { href: '/game/rankings/kingdoms', label: '세력 순위', desc: '국가별 병력·자원·영토', icon: '🏛️' },
