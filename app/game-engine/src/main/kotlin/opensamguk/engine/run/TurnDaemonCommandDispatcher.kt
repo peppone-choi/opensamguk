@@ -117,6 +117,8 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
+        is TurnDaemonCommand.BuyHiddenBuff -> inheritReset.handleBuyHiddenBuff(command)
+        is TurnDaemonCommand.BuyRandomUnique -> inheritReset.handleBuyRandomUnique(command)
         // ── F4 Wave C2 (slice B) troop intake bindings ──
         is TurnDaemonCommand.TroopNew -> troop.handleNew(command)
         is TurnDaemonCommand.TroopJoin -> troop.handleJoin(command)

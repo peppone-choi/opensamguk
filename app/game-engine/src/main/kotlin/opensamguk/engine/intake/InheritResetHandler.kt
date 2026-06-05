@@ -1,5 +1,9 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.wire.BuyHiddenBuffFail
+import opensamguk.common.wire.BuyHiddenBuffOk
+import opensamguk.common.wire.BuyRandomUniqueFail
+import opensamguk.common.wire.BuyRandomUniqueOk
 import opensamguk.common.wire.InheritResetSpecialWarFail
 import opensamguk.common.wire.InheritResetSpecialWarOk
 import opensamguk.common.wire.InheritResetTurnTimeFail
@@ -13,6 +17,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.logic.actions.intake.InheritBuys
 import opensamguk.logic.actions.intake.InheritResetOutcome
 import opensamguk.logic.actions.intake.InheritResets
 
@@ -44,6 +49,11 @@ class InheritResetHandler(
         ((world.getState().meta["inheritancePrevious"] as? Map<*, *>)?.get(ownerId) as? Number)?.toDouble() ?: 0.0
     },
     private val specialWarName: (type: String) -> String = { it },
+    /**
+     * BuyRandomUnique의 `aux.inheritRandomUnique` 마커 값 공급자(PHP `TimeUtil::now()`). 값은 다음 턴
+     * 가드(`!== null`)의 non-null 마커로만 쓰여 로그/차감/패리티와 무관 — 기본은 데몬 현재 시각.
+     */
+    private val nowMarkerProvider: () -> Any = { world.getState().lastTurnTime.toString() },
 ) {
 
     fun handleResetTurnTime(c: TurnDaemonCommand.InheritResetTurnTime): TurnDaemonCommandResult {
@@ -118,6 +128,54 @@ class InheritResetHandler(
         }
     }
 
+    /**
+     * BuyHiddenBuff.php. 히든 버프 레벨 구매 — prevLevel은 general `aux.inheritBuff[buffKey]`에서
+     * **서버측** 산출(클라 무시). 누적 차분 비용을 inheritance `previous`에서 차감하고
+     * `aux.inheritBuff[buffKey]=level` + rank + inheritance_log를 기록한다.
+     */
+    fun handleBuyHiddenBuff(c: TurnDaemonCommand.BuyHiddenBuff): TurnDaemonCommandResult {
+        val me = world.getGeneralById(c.generalId)
+            ?: return BuyHiddenBuffFail(generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        val ownerId = ownerId(me)
+        val out = InheritBuys.buyHiddenBuff(
+            type = c.buffKey,
+            level = c.level,
+            currentBuffMap = currentInheritBuff(me),
+            previousPoint = previousPointReader(ownerId),
+            isUnited = isUnited(),
+        )
+        return when (out) {
+            is InheritResetOutcome.Denied -> BuyHiddenBuffFail(generalId = c.generalId, reason = out.reason)
+            is InheritResetOutcome.Applied -> {
+                apply(me, ownerId, out)
+                BuyHiddenBuffOk(generalId = c.generalId, spent = out.spent)
+            }
+        }
+    }
+
+    /**
+     * BuyRandomUnique.php. 랜덤 유니크 확정 드롭 플래그 구매 — `aux.inheritRandomUnique`가 이미 non-null이면
+     * deny. inheritItemRandomPoint(3000) 차감 + 마커 적재 + rank + inheritance_log.
+     */
+    fun handleBuyRandomUnique(c: TurnDaemonCommand.BuyRandomUnique): TurnDaemonCommandResult {
+        val me = world.getGeneralById(c.generalId)
+            ?: return BuyRandomUniqueFail(generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        val ownerId = ownerId(me)
+        val out = InheritBuys.buyRandomUnique(
+            alreadyOrdered = aux(me)["inheritRandomUnique"] != null,
+            previousPoint = previousPointReader(ownerId),
+            isUnited = isUnited(),
+            nowMarker = nowMarkerProvider(),
+        )
+        return when (out) {
+            is InheritResetOutcome.Denied -> BuyRandomUniqueFail(generalId = c.generalId, reason = out.reason)
+            is InheritResetOutcome.Applied -> {
+                apply(me, ownerId, out)
+                BuyRandomUniqueOk(generalId = c.generalId, spent = out.spent)
+            }
+        }
+    }
+
     // ── shared apply ──────────────────────────────────────────────────────────────
 
     /**
@@ -158,6 +216,12 @@ class InheritResetHandler(
 
     @Suppress("UNCHECKED_CAST")
     private fun aux(me: TurnGeneral): Map<String, Any?> = (me.meta["aux"] as? Map<String, Any?>) ?: emptyMap()
+
+    /** `aux.inheritBuff`(PHP `?? []`)를 `Map<buffKey, level>`로. 값은 Number/Int 모두 허용해 Int로 정규화. */
+    private fun currentInheritBuff(me: TurnGeneral): Map<String, Int> =
+        (aux(me)["inheritBuff"] as? Map<*, *>)?.entries
+            ?.associate { it.key.toString() to ((it.value as? Number)?.toInt() ?: 0) }
+            ?: emptyMap()
 
     private fun isUnited(): Boolean = ((world.getState().meta["isunited"] as? Number)?.toInt() ?: 0) != 0
 

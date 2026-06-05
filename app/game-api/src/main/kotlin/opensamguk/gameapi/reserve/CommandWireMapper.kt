@@ -54,6 +54,9 @@ object CommandWireMapper {
         "inheritResetTurnTime",
         "inheritResetSpecialWar",
         "inheritSetNextSpecialWar",
+        // 유산 포인트 구매 — FE(inherit/nation page)가 PHP API 이름 그대로 BuyHiddenBuff/BuyRandomUnique 전송.
+        "BuyHiddenBuff",
+        "BuyRandomUnique",
         // F4 Wave C2 slice B — troop intake.
         "troopNew",
         "troopJoin",
@@ -148,6 +151,16 @@ object CommandWireMapper {
             )
             "inheritSetNextSpecialWar" -> TurnDaemonCommand.InheritSetNextSpecialWar(
                 requestId = requestId, generalId = generalId, specialWar = args.str("specialWar") ?: "",
+            )
+            // 유산 포인트 구매. FE는 `buffKey`(PHP arg `type`)+`level`을 전송. prevLevel은 클라가 보내도
+            // 무시 — 엔진 핸들러가 general aux.inheritBuff에서 서버측으로 산출(PHP launch와 동일).
+            "BuyHiddenBuff" -> TurnDaemonCommand.BuyHiddenBuff(
+                requestId = requestId, generalId = generalId,
+                buffKey = args.str("buffKey") ?: args.str("type") ?: "",
+                level = args.int("level") ?: 0,
+            )
+            "BuyRandomUnique" -> TurnDaemonCommand.BuyRandomUnique(
+                requestId = requestId, generalId = generalId,
             )
             // ── F4 Wave C2 slice B — troop intake. `generalId` is always the RESOLVED acting general;
             //    troopKick carries the TARGET separately (`targetGeneralId`, legacy `generalID`). ──

@@ -599,6 +599,36 @@ sealed class TurnDaemonCommand {
     ) : TurnDaemonCommand() {
         override val type: String get() = "inheritSetNextSpecialWar"
     }
+
+    /**
+     * 유산: 히든 버프 구매 (BuyHiddenBuff.php). 누적 차분 `inheritBuffPoints[level]-inheritBuffPoints[prevLevel]`
+     * 만큼 inheritance `previous` 잔액을 차감하고 `aux.inheritBuff[buffKey]=level`을 적재한다. 뽑지 않음.
+     * `prevLevel`은 **서버에서** `aux.inheritBuff[buffKey]`로 산출(클라 값 무시) — wire는 `buffKey`+`level`만.
+     * wire field `buffKey`(PHP arg `type`; `type`은 union 판별자라 이름 충돌 회피).
+     */
+    @Serializable
+    @SerialName("buyHiddenBuff")
+    data class BuyHiddenBuff(
+        val requestId: String? = null,
+        val generalId: Int,
+        val buffKey: String,
+        val level: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "buyHiddenBuff"
+    }
+
+    /**
+     * 유산: 랜덤 유니크 확정 드롭 플래그 구매 (BuyRandomUnique.php). `inheritItemRandomPoint`(3000)를
+     * 차감하고 `aux.inheritRandomUnique` 마커를 적재한다. 무인자. 뽑지 않음.
+     */
+    @Serializable
+    @SerialName("buyRandomUnique")
+    data class BuyRandomUnique(
+        val requestId: String? = null,
+        val generalId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "buyRandomUnique"
+    }
 }
 
 @Serializable

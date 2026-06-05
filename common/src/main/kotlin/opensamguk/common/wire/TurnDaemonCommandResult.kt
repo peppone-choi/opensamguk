@@ -409,6 +409,38 @@ data class InheritSetNextSpecialWarFail(
     val reason: String,
 ) : TurnDaemonCommandResult()
 
+@Serializable
+data class BuyHiddenBuffOk(
+    override val type: String = "buyHiddenBuff",
+    override val ok: Boolean = true,
+    val generalId: Int,
+    val spent: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class BuyHiddenBuffFail(
+    override val type: String = "buyHiddenBuff",
+    override val ok: Boolean = false,
+    val generalId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class BuyRandomUniqueOk(
+    override val type: String = "buyRandomUnique",
+    override val ok: Boolean = true,
+    val generalId: Int,
+    val spent: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class BuyRandomUniqueFail(
+    override val type: String = "buyRandomUnique",
+    override val ok: Boolean = false,
+    val generalId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
 /**
  * The nation-finance setters + tournament enroll all carry the same shape — collapse to
  * [NationSettingResult] (mirrors the [GeneralBoolResult] collapse) keyed on `type` regardless of `ok`.
@@ -459,6 +491,8 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()
             "inheritResetSpecialWar" -> if (ok) InheritResetSpecialWarOk.serializer() else InheritResetSpecialWarFail.serializer()
             "inheritSetNextSpecialWar" -> if (ok) InheritSetNextSpecialWarOk.serializer() else InheritSetNextSpecialWarFail.serializer()
+            "buyHiddenBuff" -> if (ok) BuyHiddenBuffOk.serializer() else BuyHiddenBuffFail.serializer()
+            "buyRandomUnique" -> if (ok) BuyRandomUniqueOk.serializer() else BuyRandomUniqueFail.serializer()
             "auctionFinalize" -> if (ok) AuctionFinalizeOk.serializer() else AuctionFinalizeFail.serializer()
             "troopJoin" -> if (ok) TroopJoinOk.serializer() else TroopJoinFail.serializer()
             "troopExit" -> if (ok) TroopExitOk.serializer() else TroopExitFail.serializer()

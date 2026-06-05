@@ -330,6 +330,105 @@ class IntakeWaveC2SliceATest {
         assertEquals("이미 천하가 통일되었습니다.", (res as InheritResetTurnTimeFail).reason)
     }
 
+    // ── inheritance buy: BuyHiddenBuff / BuyRandomUnique ──────────────────────────
+
+    @Test
+    fun `buyHiddenBuff deducts previous sets aux buff rank logs and flushes`() {
+        // owner 100 has 5000 previous; fresh warAvoidRatio L1 → req = inheritBuffPoints[1]-[0] = 200.
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100)),
+            stateMeta = linkedMapOf("isunited" to 0, "inheritancePrevious" to linkedMapOf(100 to 5000.0)),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder)
+
+        val res = handler.handleBuyHiddenBuff(
+            TurnDaemonCommand.BuyHiddenBuff(generalId = 10, buffKey = "warAvoidRatio", level = 1),
+        )
+
+        assertTrue(res is opensamguk.common.wire.BuyHiddenBuffOk)
+        assertEquals(200, (res as opensamguk.common.wire.BuyHiddenBuffOk).spent)
+
+        @Suppress("UNCHECKED_CAST")
+        val aux = world.getGeneralById(10)!!.meta["aux"] as Map<String, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val buff = aux["inheritBuff"] as Map<String, Any?>
+        assertEquals(1, buff["warAvoidRatio"])
+
+        val invKv = recorder.inheritanceKvWrites().single { it.namespace == "inheritance_100" && it.key == "previous" }
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(4800.0, (invKv.value as List<Any?>)[0])
+
+        assertEquals(opensamguk.engine.turn.RankDelta.Increment(200), recorder.rankPatches()[10]!![RankColumn.INHERIT_SPENT_DYN])
+
+        val log = recorder.inheritanceLogInserts().single()
+        assertEquals("inheritPoint", log.tag)
+        assertEquals("200 포인트로 회피 확률 증가 1 단계 구입", log.text)
+        assertEquals(100, log.ownerID)
+
+        val payload = flush(world, recorder)
+        assertTrue(payload.inheritanceKvWrites.any { it.key == "previous" })
+        assertTrue(payload.inheritanceLogInserts.isNotEmpty())
+        assertTrue(payload.updatedGenerals.any { it.id == 10 })
+    }
+
+    @Test
+    fun `buyHiddenBuff denied when insufficient previous and nothing records`() {
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100)),
+            stateMeta = linkedMapOf("isunited" to 0, "inheritancePrevious" to linkedMapOf(100 to 199.0)),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder)
+
+        val res = handler.handleBuyHiddenBuff(
+            TurnDaemonCommand.BuyHiddenBuff(generalId = 10, buffKey = "warAvoidRatio", level = 1),
+        )
+
+        assertEquals("충분한 유산 포인트를 가지고 있지 않습니다.", (res as opensamguk.common.wire.BuyHiddenBuffFail).reason)
+        assertTrue(recorder.inheritanceKvWrites().isEmpty())
+        assertTrue(recorder.dirtyGeneralIds().isEmpty())
+    }
+
+    @Test
+    fun `buyRandomUnique deducts previous sets marker rank logs`() {
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100)),
+            stateMeta = linkedMapOf("isunited" to 0, "inheritancePrevious" to linkedMapOf(100 to 5000.0)),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder, nowMarkerProvider = { "MARK" })
+
+        val res = handler.handleBuyRandomUnique(TurnDaemonCommand.BuyRandomUnique(generalId = 10))
+
+        assertTrue(res is opensamguk.common.wire.BuyRandomUniqueOk)
+        assertEquals(3000, (res as opensamguk.common.wire.BuyRandomUniqueOk).spent)
+
+        @Suppress("UNCHECKED_CAST")
+        val aux = world.getGeneralById(10)!!.meta["aux"] as Map<String, Any?>
+        assertEquals("MARK", aux["inheritRandomUnique"])
+
+        val invKv = recorder.inheritanceKvWrites().single { it.key == "previous" }
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(2000.0, (invKv.value as List<Any?>)[0])
+        assertEquals("3000 포인트로 랜덤 유니크 구입", recorder.inheritanceLogInserts().single().text)
+    }
+
+    @Test
+    fun `buyRandomUnique denied when already ordered`() {
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100, "aux" to linkedMapOf("inheritRandomUnique" to "prev"))),
+            stateMeta = linkedMapOf("isunited" to 0, "inheritancePrevious" to linkedMapOf(100 to 9999.0)),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder)
+
+        val res = handler.handleBuyRandomUnique(TurnDaemonCommand.BuyRandomUnique(generalId = 10))
+
+        assertEquals("이미 구입 명령을 내렸습니다. 다음 턴까지 기다려주세요.", (res as opensamguk.common.wire.BuyRandomUniqueFail).reason)
+        assertTrue(recorder.inheritanceKvWrites().isEmpty())
+    }
+
     // ── dispatcher binding ──────────────────────────────────────────────────────
 
     /**
@@ -366,6 +465,12 @@ class IntakeWaveC2SliceATest {
 
         val enroll = dispatcher.dispatch(TurnDaemonCommand.TournamentEnroll(generalId = 10, value = 1))
         assertEquals("tournamentEnroll", (enroll as NationSettingResult).type)
+
+        // 유산 구매 두 타입도 라우팅(handler가 result 반환 = silent no-op 아님).
+        val buff = dispatcher.dispatch(TurnDaemonCommand.BuyHiddenBuff(generalId = 10, buffKey = "warAvoidRatio", level = 1))
+        assertEquals("buyHiddenBuff", buff!!.type)
+        val rnd = dispatcher.dispatch(TurnDaemonCommand.BuyRandomUnique(generalId = 10))
+        assertEquals("buyRandomUnique", rnd!!.type)
 
         // an unbound type still returns null (control command).
         assertNull(dispatcher.dispatch(TurnDaemonCommand.Pause()))
