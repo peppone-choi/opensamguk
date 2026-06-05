@@ -62,6 +62,7 @@ export const LOBBY_LABELS = {
     possessGeneral: '장수빙의',
     selectGeneral: '장수선택',
     closed: '- 폐 쇄 중 -',
+    preparing: '- 준 비 중 -', // 백엔드/현황은 떴으나 입장(인게임 라우팅) 미완 — 입장 비활성
 } as const;
 
 // 각주 (legacy entrance.php, verbatim)

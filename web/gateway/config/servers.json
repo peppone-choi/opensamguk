@@ -8,6 +8,14 @@
             "turnterm": 60,
             "gameUrl": "http://localhost:3001",
             "gameApiUrl": "http://localhost:8081"
+        },
+        {
+            "id": "bbae",
+            "name": "빼섭",
+            "status": "preopen",
+            "turnterm": 60,
+            "gameUrl": "",
+            "gameApiUrl": "http://localhost:18080"
         }
     ]
 }
