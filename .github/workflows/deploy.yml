@@ -89,7 +89,11 @@ jobs:
 
       - name: Build + push web-${{ matrix.app }} image
         run: |
+          # game은 공유 도메인 에셋 충돌 방지로 assetPrefix=/game(빌드타임). gateway는 미사용(빈 값).
+          ASSET_PREFIX=""
+          [ "${{ matrix.app }}" = "game" ] && ASSET_PREFIX="/game"
           docker build -f docker/web-${{ matrix.app }}.Dockerfile \
+            --build-arg ASSET_PREFIX="$ASSET_PREFIX" \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-${{ env.IMAGE_TAG }} \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-${{ env.IMAGE_TAG }}

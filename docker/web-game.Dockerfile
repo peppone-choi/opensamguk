@@ -12,6 +12,10 @@ COPY web/game/ .
 # NEXT_PUBLIC_* must be present at build (Next inlines them into the client bundle).
 ARG NEXT_PUBLIC_GATEWAY_URL=http://localhost:3000
 ENV NEXT_PUBLIC_GATEWAY_URL=$NEXT_PUBLIC_GATEWAY_URL
+# 공유 도메인 에셋 충돌 방지 — prod는 ASSET_PREFIX=/game(next.config assetPrefix가 빌드타임에 읽음).
+# 미설정(로컬) 시 기본 /_next. assetPrefix는 에셋 URL만 바꿈(라우트/ api 경로 불변).
+ARG ASSET_PREFIX=
+ENV ASSET_PREFIX=$ASSET_PREFIX
 RUN pnpm build
 
 FROM node:22-alpine AS run
