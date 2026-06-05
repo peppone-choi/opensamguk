@@ -113,6 +113,38 @@ export interface FrontInfoResponse {
     recentRecord: string[];
 }
 
+// ── city detail (game-api CityDetailController.CityDetailResponse) ────────────
+// `GET /api/city/{id}` — the full city read shape the W4 MapCityDetail panel self-fetches by the clicked
+// cityId. Distinct from FrontCityInfo: it adds supplyState / frontState / officers and types trust as a
+// Double (the che math uses trust/100.0 & trust/80.0). 404 server-side when the id is absent (the panel
+// falls back to a header-only render). Field names are STABLE (Jackson default camelCase) — keep in sync
+// with CityDetailController.CityDetailResponse. (`trade` is NULLABLE — RandomizeCityTradeRate writes NULL
+// for 상인 없음 cities; render 시세 from this value, never fabricate.)
+export interface CityDetailResponse {
+    id: number;
+    name: string;
+    level: number;
+    region: number;
+    nationId: number;
+    population: number;
+    populationMax: number;
+    agriculture: number;
+    agricultureMax: number;
+    commerce: number;
+    commerceMax: number;
+    security: number;
+    securityMax: number;
+    defense: number;
+    defenseMax: number;
+    wall: number;
+    wallMax: number;
+    trust: number;
+    trade: number | null;
+    supplyState: number;
+    frontState: number;
+    officers: number;
+}
+
 // ── map preview (game-api MapPreviewResponse / MapPreviewDto.kt) ─────────────
 // SAME shape the gateway lobby MapPreview consumes. `cities[].nationId === 0` is neutral and has NO
 // entry in `nations[]` (render with a default neutral color). A city absent from the scenario coord
@@ -124,6 +156,12 @@ export interface MapPreviewCity {
     nationId: number;
     x: number;
     y: number;
+    /** 전선 상태(front_state 0~3) — 상태 아이콘 event<state>.gif (0=없음). */
+    state: number;
+    /** 보급 상태 — 깃발 f(보급)/d(미보급). */
+    supply: boolean;
+    /** 소속국 수도 — 수도 아이콘 event51.gif(별). */
+    isCapital: boolean;
 }
 
 export interface MapPreviewNation {

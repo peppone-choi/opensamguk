@@ -850,12 +850,36 @@ input:focus, select:focus, textarea:focus {
   position: relative;
   width: 100%;
   aspect-ratio: 700 / 500;
+  overflow: hidden;
+  background: #000;
+  cursor: grab;
+  touch-action: none; /* 핀치/팬 제스처를 브라우저 기본동작에서 가로채 줌/팬 핸들러로 */
 }
-.map-viewer-canvas svg {
-  display: block;
-  width: 100%;
-  height: 100%;
+.map-viewer-canvas.is-dragging { cursor: grabbing; }
+/* 맵 좌표계(700×500)를 캔버스 폭에 맞추는 외곽 스케일 레이어. transform-origin 좌상단. */
+.map-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
 }
+/* 줌/팬 transform 레이어 — bg/road + 모든 city_base가 이 안에서 함께 변형된다. */
+.map-zoomlayer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.map-bg,
+.map-road {
+  position: absolute;
+  left: 0;
+  top: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.map-road { opacity: 0.5; }
 .map-viewer-ph {
   display: flex;
   align-items: center;
@@ -873,23 +897,158 @@ input:focus, select:focus, textarea:focus {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* city dots */
-.map-city-dot {
-  cursor: pointer;
-  transition: r 0.08s ease;
+/* ── detail 레이아웃 마커 (레거시 scss/map.scss .map_detail 충실 재현) ──────────── */
+/* city_base — 40×30, 중심이 도시 좌표. 좌표/크기는 모두 700×500 맵 좌표계 px. */
+.city-base {
+  position: absolute;
 }
-.map-city-dot:focus { outline: none; }
-.map-city-dot:focus-visible { stroke: #ffffff; stroke-width: 2; }
-.map-current-ring { pointer-events: none; }
-.map-city-label {
-  fill: #f5f5f5;
-  font-size: 11px;
-  paint-order: stroke;
-  stroke: #0a0a0a;
-  stroke-width: 2px;
+/* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6}(MapCityDetail.vue:218) 그대로.
+   오오라·성·깃발·이름을 함께 흐리게(opacity만, grayscale/desaturate 없음 — 오라클 일치). */
+.city-base.supply-off {
+  opacity: 0.6;
+}
+/* 1) 오오라(city_bg) — 레거시 b<color>.png radial glow를 CSS radial-gradient로(인라인 style). */
+.city-aura {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 50%;
+}
+/* 클릭/포커스 박스(city_link) — base 전체를 덮어 hover/select 타깃. 기본 버튼 스타일 제거. */
+.city-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.city-link:focus { outline: none; }
+.city-link:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+/* 선택 표시(ring) — 레거시엔 없는 opensamguk UX(클릭→상세). 부드러운 흰 링. */
+.city-link.is-selected { outline: 2px solid rgba(255, 255, 255, 0.9); outline-offset: 0; border-radius: 4px; }
+
+/* 2) 성 아이콘 cast_<level>.gif — 픽셀아트 선명 유지, base 중앙정렬. */
+.city-cast {
+  position: absolute;
+  z-index: 2;
+  image-rendering: pixelated;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* 현재 도시(my_city) — 레거시 blink: 빨강 solid + 은색 double outline 두 겹 애니. */
+.city-cast.my-city {
+  border-radius: 33%;
+}
+.city-cast.my-city::before,
+.city-cast.my-city::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 33%;
+  pointer-events: none;
+  animation-duration: 3.9s;
+  animation-iteration-count: infinite;
+}
+.city-cast.my-city::before { animation-name: blink-my-city-d1; }
+.city-cast.my-city::after { animation-name: blink-my-city-d2; }
+
+/* 3) 깃발(city_flag) — 12×12, 성 아이콘 우상단 기준(인라인 left/top). flagTint 4프레임 나부낌. */
+.city-flag {
+  position: absolute;
+  z-index: 3;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+}
+.city-flag-img {
+  display: block;
+  width: 12px;
+  height: 12px;
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+}
+/* 4) 수도 별 event51.gif — 깃발 우상단(top:0,right:-1). */
+.city-capital {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+}
+/* 5) 상태 아이콘 event<state>.gif — base 좌상단(top:5,left:0). */
+.city-state {
+  position: absolute;
+  z-index: 3;
+  top: 5px;
+  left: 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+/* 6) 도시명(city_detail_name) — left:70%, bottom:-10px, 10px, 반투명 검정 bg. */
+.city-name {
+  position: absolute;
+  z-index: 5;
+  left: 70%;
+  bottom: -10px;
+  white-space: nowrap;
+  font-size: 10px;
+  line-height: 1.3;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 0 2px;
   pointer-events: none;
   user-select: none;
 }
+
+/* my_city blink keyframes (레거시 동일) */
+@keyframes blink-my-city-d1 {
+  0% { outline: solid 4px transparent; }
+  50% { outline: solid 4px rgba(255, 0, 0, 1); }
+  100% { outline: solid 4px transparent; }
+}
+@keyframes blink-my-city-d2 {
+  0% { outline: double 4px transparent; }
+  50% { outline: double 4px rgba(192, 192, 192, 1); }
+  100% { outline: double 4px transparent; }
+}
+
+/* 줌/리셋 컨트롤 — 캔버스 우하단 고정 오버레이. */
+.map-controls {
+  position: absolute;
+  right: var(--space-sm);
+  bottom: var(--space-sm);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.map-zoom-level {
+  font-size: var(--text-xs);
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+.map-reset-btn {
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.map-reset-btn:hover { background: var(--bg-card); }
 
 /* hover tooltip (legacy .city_tooltip) */
 .map-tooltip {

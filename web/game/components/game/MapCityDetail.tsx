@@ -8,15 +8,17 @@
 // / 수비 / 성벽 / 시세 — each cur/max with a bar.
 //
 // Data sourcing (no fabrication): the map snapshot (MapPreviewCity) only carries {id,name,level,
-// nationId}. Full metrics come from the game-api city read (api.city(id)). game-api has no /api/city/{id}
-// route yet, so that call may 404 — we catch it and render the header + "상세 정보 없음" gracefully
-// (NEVER crash, NEVER fabricate stats). If the parent already has the current city's full stats from
-// front-info, it can pass them via `cityDetail` to skip the fetch.
+// nationId}. Full metrics come from the game-api city read `GET /api/city/{id}` (api.city(id)) typed
+// against the backend contract CityDetailController.CityDetailResponse — see [CityDetailResponse]. The
+// panel SELF-FETCHES by the clicked cityId it already receives (MapViewer passes no stats). The route
+// 404s when the id is absent — we catch it and render the header + "상세 정보 없음" gracefully (NEVER
+// crash, NEVER fabricate stats). If a parent already has the clicked city's full stats, it can pass them
+// via `cityDetail` to skip the fetch.
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
-import type { FrontCityInfo, MapPreviewCity } from '@/lib/types';
+import type { CityDetailResponse, MapPreviewCity } from '@/lib/types';
 
 // Level → 치소 등급 label (legacy cityConstMap.level). lv 4 = 이민족 전용 "이"; 한족 군 치소는 lv 5 "소".
 const LEVEL_TEXT: Record<number, string> = {
@@ -50,6 +52,12 @@ interface Metric {
     label: string;
     cur: number;
     max?: number;
+    /**
+     * 텍스트를 cur/max 가 아니라 cur 만 단독으로 렌더(민심). 막대는 cur/max 로 채운다.
+     * 오라클 CityBasicCard.vue: `city.trust.toLocaleString(undefined, {maximumFractionDigits: 1})`
+     * — 접미사 '%' 없음, 소수점 최대 1자리.
+     */
+    barOnlyMax?: boolean;
 }
 
 function MetricRow({ m }: { m: Metric }) {
@@ -62,9 +70,11 @@ function MetricRow({ m }: { m: Metric }) {
                     <div className="mcd-bar-fill" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="mcd-metric-text">
-                    {m.max != null
-                        ? `${formatNumber(m.cur)} / ${formatNumber(m.max)}`
-                        : formatNumber(m.cur)}
+                    {m.barOnlyMax
+                        ? m.cur.toLocaleString(undefined, { maximumFractionDigits: 1 })
+                        : m.max != null
+                          ? `${formatNumber(m.cur)} / ${formatNumber(m.max)}`
+                          : formatNumber(m.cur)}
                 </div>
             </div>
         </div>
@@ -76,8 +86,8 @@ export interface MapCityDetailProps {
     nationName: string;
     nationColor: string;
     isCurrent: boolean;
-    /** Optional full stats (e.g. front-info city for the current city) — skips the api.city fetch. */
-    cityDetail?: FrontCityInfo | null;
+    /** Optional full stats (e.g. a parent that already holds the clicked city) — skips the api.city fetch. */
+    cityDetail?: CityDetailResponse | null;
     onClose?: () => void;
 }
 
@@ -89,13 +99,13 @@ export default function MapCityDetail({
     cityDetail,
     onClose,
 }: MapCityDetailProps) {
-    const [detail, setDetail] = useState<FrontCityInfo | null>(cityDetail ?? null);
+    const [detail, setDetail] = useState<CityDetailResponse | null>(cityDetail ?? null);
     const [loading, setLoading] = useState(false);
     // unavailable = the read endpoint returned nothing (graceful: header-only render, no fabrication).
     const [unavailable, setUnavailable] = useState(false);
 
     useEffect(() => {
-        // Provided directly → use it. Otherwise attempt the read; tolerate 404 (route may not exist yet).
+        // Provided directly → use it. Otherwise self-fetch by cityId; tolerate 404 (city id absent).
         if (cityDetail) {
             setDetail(cityDetail);
             setUnavailable(false);
@@ -106,7 +116,7 @@ export default function MapCityDetail({
         setUnavailable(false);
         setLoading(true);
         api
-            .city<FrontCityInfo>(city.id)
+            .city<CityDetailResponse>(city.id)
             .then((d) => {
                 if (on) setDetail(d);
             })
@@ -123,11 +133,12 @@ export default function MapCityDetail({
 
     const headerTextColor = isBrightColor(nationColor) ? 'black' : 'white';
 
-    // Build the metric list from whatever the read returned — OMIT any field that is absent (no fabrication).
+    // Build the metric list from the real /api/city/{id} read — REAL data, never fabricated.
     const metrics: Metric[] = [];
     if (detail) {
         metrics.push({ label: '주민', cur: detail.population, max: detail.populationMax });
-        metrics.push({ label: '민심', cur: detail.trust }); // % (decimal); no max
+        // 민심(trust) — 0~100. 막대는 cur/100, 텍스트는 오라클대로 단독 숫자(소수 최대 1자리, '%' 없음).
+        metrics.push({ label: '민심', cur: detail.trust, max: 100, barOnlyMax: true });
         metrics.push({ label: '농업', cur: detail.agriculture, max: detail.agricultureMax });
         metrics.push({ label: '상업', cur: detail.commerce, max: detail.commerceMax });
         metrics.push({ label: '치안', cur: detail.security, max: detail.securityMax });
@@ -170,10 +181,22 @@ export default function MapCityDetail({
                     {metrics.map((m) => (
                         <MetricRow key={m.label} m={m} />
                     ))}
-                    {/* 시세 (trade %) — `상인 없음` when null, never fabricated. */}
+                    {/* 시세 (trade %) — `상인 없음` when null, never fabricated. 막대는 오라클
+                        CityBasicCard.vue(tradeBarPercent)대로 `(trade - 95) * 10`(0..100 클램프).
+                        trade==null(상인 없음)이면 막대 없이 텍스트만 — 오라클 tradeBarPercent=0과 동치. */}
                     <div className="mcd-metric">
                         <div className="mcd-metric-head">시세</div>
                         <div className="mcd-metric-body">
+                            {detail.trade != null && (
+                                <div className="mcd-bar">
+                                    <div
+                                        className="mcd-bar-fill"
+                                        style={{
+                                            width: `${Math.min(100, Math.max(0, (detail.trade - 95) * 10))}%`,
+                                        }}
+                                    />
+                                </div>
+                            )}
                             <div className="mcd-metric-text">
                                 {detail.trade != null ? `${detail.trade}%` : '상인 없음'}
                             </div>
