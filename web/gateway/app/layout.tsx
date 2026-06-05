@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: 'opensamguk — 삼국지 모의전투',
+    title: 'opensamguk — 오픈삼국',
     description: '게이트웨이 — 로그인 / 로비',
 };
 
