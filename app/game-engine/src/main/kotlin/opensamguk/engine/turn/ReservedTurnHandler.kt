@@ -99,6 +99,13 @@ class ReservedTurnHandler(
      * Default `null` = no AI (the P1–P4 general/E2E call sites stay on the human reserved path).
      */
     private val aiHook: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
+    /**
+     * The lone dirty source — exposed so the flush (F4)/tests/nation-pass read its patches. A
+     * constructor param (default = fresh) so the live config can share ONE recorder with the ruler-
+     * succession handler wired into [nextRuler] (the succession + the reserved turns must diff into the
+     * SAME recorder — P2 Risk #4 single-dirty-source).
+     */
+    val recorder: ChangeRecorder = ChangeRecorder(),
 ) {
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
@@ -579,9 +586,6 @@ class ReservedTurnHandler(
         }
         else -> args
     }
-
-    /** The recorder is the lone dirty source; exposed so the flush (F4)/tests can read its patches. */
-    val recorder: ChangeRecorder = ChangeRecorder()
 
     /**
      * Route a logic [opensamguk.logic.message.Message] through the mailbox channel: produce its send

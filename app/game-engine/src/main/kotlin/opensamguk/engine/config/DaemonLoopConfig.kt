@@ -6,9 +6,11 @@ import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.run.MonthlyPostUpdateHook
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.AiTurnAdapter
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
+import opensamguk.engine.turn.RulerSuccessionHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository
@@ -152,6 +154,13 @@ class DaemonLoopConfig {
             ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
             ?: 0
 
+        // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
+        // Built here (not inside RTH) so the succession handler diffs into the SAME recorder the reserved
+        // turns + nation pass use — the nextRuler hook (군주 사망 후계/멸망) writes heir-promote / 재야-reset /
+        // markNationDeleted deltas that must flush alongside the rest of the tick.
+        val recorder = ChangeRecorder()
+        val rulerSuccession = RulerSuccessionHandler(world, recorder, hiddenSeed)
+
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
         val handler = ReservedTurnHandler(
@@ -160,6 +169,9 @@ class DaemonLoopConfig {
             hiddenSeed = hiddenSeed,
             startYear = startYear,
             scenario = scenario,
+            // 군주(officer_level==12) 사망 시 후계 선정/승계 또는 국가 멸망 (func.php:1807 nextRuler).
+            nextRuler = { generalId, env -> rulerSuccession.succeed(generalId, env) },
+            recorder = recorder,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
         )
 

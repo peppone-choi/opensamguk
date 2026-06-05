@@ -214,4 +214,96 @@ class KillTombstoneTest {
             "default dying-message global log byte-exact",
         )
     }
+
+    // ── 군주 사망 후계/멸망 (RulerSuccessionHandler 실배선, func.php:1807/1713) ────────────────────────
+
+    /** DaemonLoopConfig와 동일하게 후계 핸들러를 nextRuler 훅에 실배선(공유 recorder). */
+    private fun successionHandler(w: InMemoryTurnWorld): ReservedTurnHandler {
+        val recorder = ChangeRecorder()
+        val succession = RulerSuccessionHandler(w, recorder, "0".repeat(32))
+        return ReservedTurnHandler(
+            w,
+            registry = CommandRegistry(GeneralActionPipeline()),
+            hiddenSeed = "0".repeat(32),
+            startYear = 184,
+            nextRuler = { gid, e -> succession.succeed(gid, e) },
+            recorder = recorder,
+        )
+    }
+
+    @Test
+    fun `ruler death promotes the heir (fallback) and pushes the 유지 history log`() {
+        // ruler npc=0 → NPC 경로 미발동 → 폴백1(officer_level>=9, npc!=5) → heir id=2 승계.
+        val ruler = gen(id = 1, npc = 0, killturn = 0, officerLevel = 12)
+        val heir = gen(id = 2, npc = 0, killturn = 12, officerLevel = 9)
+        val w = world(listOf(ruler, heir))
+        val h = successionHandler(w)
+
+        h.updateTurnTime(1, env())
+
+        // 후계 officer_level=12, officer_city=0.
+        assertEquals(12, w.getGeneralById(2)!!.officerLevel)
+        assertEquals(0, (w.getGeneralById(2)!!.meta["officer_city"] as? Number)?.toInt())
+        val dirty = w.consumeDirtyState()
+        // 죽은 군주는 tombstone.
+        assertEquals(listOf(1), dirty.deletedGenerals)
+        // 【유지】 global-history byte-exact (josa pick(g2,'이') → '가': '2'=이, 받침 없음).
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "global" && it.category == "history" &&
+                    it.text == "<C><b>【유지】</b></><Y>g2</>가 <D><b>n1</b></>의 유지를 이어 받았습니다"
+            },
+            "【유지】 global-history log byte-exact",
+        )
+    }
+
+    @Test
+    fun `lone ruler death deletes the nation with 멸망 logs`() {
+        // 후계 후보 0 (군주 혼자) → deleteNation 멸망 cascade.
+        val ruler = gen(id = 1, npc = 0, killturn = 0, officerLevel = 12)
+        val w = world(listOf(ruler))
+        val h = successionHandler(w)
+
+        h.updateTurnTime(1, env())
+
+        val dirty = w.consumeDirtyState()
+        // 국가 삭제.
+        assertTrue(dirty.deletedNations.contains(1), "nation tombstoned")
+        // 군주도 삭제(kill tombstone).
+        assertEquals(listOf(1), dirty.deletedGenerals)
+        // 【멸망】 global-history (josa pick(n1,'은') → '은': '1'=일, ㄹ받침).
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "global" && it.category == "history" &&
+                    it.text == "<R><b>【멸망】</b></><D><b>n1</b></>은 <R>멸망</>했습니다."
+            },
+            "【멸망】 global-history log byte-exact",
+        )
+        // 장수별 멸망 action 로그(군주, josa pick(n1,'이') → '이').
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "general" && it.category == "action" &&
+                    it.text == "<D><b>n1</b></>이 <R>멸망</>했습니다."
+            },
+            "per-general 멸망 action log byte-exact",
+        )
+    }
+
+    @Test
+    fun `NPC ruler death draws an heir from the npc candidate pool deterministically`() {
+        // ruler npc=2(NPC) → NPC 경로 발동: npc 1..3, officer_level!=12 후보에서 시드 결정 추첨.
+        val ruler = gen(id = 1, npc = 2, killturn = 0, officerLevel = 12, extraMeta = mapOf("affinity" to 50))
+        val c2 = gen(id = 2, npc = 2, killturn = 12, officerLevel = 5, extraMeta = mapOf("affinity" to 50))
+        val c3 = gen(id = 3, npc = 2, killturn = 12, officerLevel = 5, extraMeta = mapOf("affinity" to 50))
+        val w = world(listOf(ruler, c2, c3))
+        val h = successionHandler(w)
+
+        h.updateTurnTime(1, env())
+
+        // 후보 둘 중 하나가 군주(12)로 승계 — 결정적(시드 고정).
+        val promoted = listOf(2, 3).filter { w.getGeneralById(it)?.officerLevel == 12 }
+        assertEquals(1, promoted.size, "exactly one npc heir promoted")
+        // 죽은 군주 tombstone.
+        assertEquals(listOf(1), w.consumeDirtyState().deletedGenerals)
+    }
 }
