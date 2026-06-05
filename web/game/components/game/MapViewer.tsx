@@ -73,9 +73,21 @@ export interface MapViewerProps {
     currentCityId?: number | null;
     /** Selection seam for W5 (command-from-map). Fires on every city click after select. */
     onSelectCity?: (city: MapPreviewCity) => void;
+    /**
+     * W9 fog overlay — 인게임 GET /api/map의 fog 데이터(없으면 fog 미표시).
+     *  - `shownByGeneralCityIds`: 아국 장수 소재 도시(테두리 강조).
+     *  - `spyCityRemain`: {cityNo: 정찰 잔여개월}(정찰 배지).
+     */
+    shownByGeneralCityIds?: ReadonlySet<number>;
+    spyCityRemain?: Record<number, number>;
 }
 
-export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProps) {
+export default function MapViewer({
+    currentCityId,
+    onSelectCity,
+    shownByGeneralCityIds,
+    spyCityRemain,
+}: MapViewerProps) {
     const [data, setData] = useState<MapPreviewResponse | null>(null);
     const [failed, setFailed] = useState(false);
     const [hoverId, setHoverId] = useState<number | null>(null);
@@ -317,6 +329,9 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                             const col = colorOf(c.nationId);
                             const isCurrent = currentCityId != null && c.id === currentCityId;
                             const isSelected = c.id === selectedId;
+                            // W9 fog: 아국 장수 소재 도시 강조 + 정찰 잔여개월 배지.
+                            const hasOwnGeneral = shownByGeneralCityIds?.has(c.id) ?? false;
+                            const spyRemain = spyCityRemain?.[c.id];
                             // city_base 좌상단 = (x-20, y-15) — 중심이 (x,y).
                             const baseLeft = c.x - BASE_W / 2;
                             const baseTop = c.y - BASE_H / 2;
@@ -333,7 +348,7 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                             return (
                                 <div
                                     key={c.id}
-                                    className={`city-base${unsupplied ? ' supply-off' : ''}`}
+                                    className={`city-base${unsupplied ? ' supply-off' : ''}${hasOwnGeneral ? ' has-own-general' : ''}`}
                                     style={{ left: baseLeft, top: baseTop, width: BASE_W, height: BASE_H }}
                                 >
                                     {/* 1) 오오라 — 레거시 b<color>.png(125×125 radial glow)을 CSS radial-gradient로 대체.
@@ -415,6 +430,13 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
                                                 alt=""
                                                 draggable={false}
                                             />
+                                        )}
+
+                                        {/* W9) 정찰 배지 — spyList의 잔여개월(예: "정3"). base 우하단. */}
+                                        {spyRemain != null && spyRemain > 0 && (
+                                            <span className="city-spy" title={`정찰 잔여 ${spyRemain}개월`}>
+                                                {`정${spyRemain}`}
+                                            </span>
                                         )}
 
                                         {/* 6) 도시명 — 레거시 .city_detail_name(left:70%, bottom:-10px, 10px, 반투명 검정 bg).

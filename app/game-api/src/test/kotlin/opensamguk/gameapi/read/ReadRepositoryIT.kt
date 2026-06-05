@@ -180,6 +180,44 @@ class ReadRepositoryIT {
         assertTrue(general.meta.keys.toList() == listOf("explevel", "intel_exp", "max_domestic_critical"))
     }
 
+    /**
+     * W9 (9a) T0 — `findDistinctCityIdByNationId`(`getWorldMap`의 shownByGeneralList 원천). 같은 도시의
+     * 여러 장수는 1번만, cityId-ascending 정렬. 다른 국가/같은 도시는 제외.
+     */
+    @Test
+    fun `distinct city ids of a nation are deduped and ascending`() {
+        fun insertGeneral(id: Int, nationId: Int, cityId: Int) {
+            jdbc.update(
+                """
+                INSERT INTO general (
+                    id, name, nation_id, city_id, leadership, strength, intel, injury,
+                    experience, dedication, officer_level, gold, rice,
+                    crew, crew_type_id, train, atmos, troop_id,
+                    weapon_code, book_code, horse_code, item_code, npc_state,
+                    turn_time, last_turn, meta
+                ) VALUES (
+                    $id, 'g$id', $nationId, $cityId, 50, 50, 50, 0,
+                    0, 0, 1, 0, 0,
+                    0, 0, 0, 0, 0,
+                    'None', 'None', 'None', 'None', 0,
+                    now(), '{}'::jsonb, '{}'::jsonb
+                )
+                """.trimIndent(),
+            )
+        }
+        // nation 1: city 5 (x2 → dedup), city 12, city 3 → distinct asc = [3, 5, 12]
+        insertGeneral(20, 1, 5)
+        insertGeneral(21, 1, 5)
+        insertGeneral(22, 1, 12)
+        insertGeneral(23, 1, 3)
+        // nation 2 in city 3 → must NOT leak into nation 1's set
+        insertGeneral(24, 2, 3)
+
+        val cityIds = generals.findDistinctCityIdByNationId(1)
+        assertEquals(listOf(3, 5, 12), cityIds)
+        assertEquals(listOf(3), generals.findDistinctCityIdByNationId(2))
+    }
+
     companion object {
         @Container
         @JvmStatic

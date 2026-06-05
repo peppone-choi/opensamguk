@@ -907,6 +907,35 @@ input:focus, select:focus, textarea:focus {
 .city-base.supply-off {
   opacity: 0.6;
 }
+/* W9 fog — 아국 장수 소재 도시(shownByGeneralList) 강조: 옅은 금색 글로우 링. */
+.city-base.has-own-general::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 213, 79, 0.85), 0 0 8px 2px rgba(255, 213, 79, 0.5);
+  pointer-events: none;
+  z-index: 2;
+}
+/* W9 fog — 정찰 배지(spyList 잔여개월). base 우하단. */
+.city-spy {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  z-index: 6;
+  padding: 0 3px;
+  font-size: 9px;
+  line-height: 12px;
+  color: #fff;
+  background: rgba(21, 101, 192, 0.92);
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+}
 /* 1) 오오라(city_bg) — 레거시 b<color>.png radial glow를 CSS radial-gradient로(인라인 style). */
 .city-aura {
   position: absolute;

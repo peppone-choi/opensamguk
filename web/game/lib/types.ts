@@ -181,6 +181,28 @@ export interface MapPreviewResponse {
     nations: MapPreviewNation[];
 }
 
+// ── in-game world map (game-api WorldMapResponse / WorldMapDto.kt — GET /api/map) ─
+// PHP getWorldMap(func_map.php) 충실 이식. fog(정찰 spyList / 아국 장수 소재 shownByGeneralList /
+// myCity / myNation)를 포함한다 — 로비 MapPreview와 달리 게임 클라용. 좌표(x/y)는 PHP가 클라에서
+// cityConst로 유도하므로 이 응답엔 없다(좌표는 MapPreview에서 id로 머지). compact tuple 형태:
+//  - cityList tuple = [city, level, state, nation, region, supply]
+//  - nationList tuple = [nation, name, color, capital]
+export interface WorldMapResponse {
+    result: boolean;
+    version: number;
+    startYear: number;
+    year: number;
+    month: number;
+    cityList: number[][];
+    nationList: (number | string)[][];
+    /** {cityNo: remainMonth} — 내 국가 정찰 잔여개월. myNation 없으면 빈 객체. */
+    spyList: Record<number, number>;
+    /** 아국 장수 소재 도시 id 목록. */
+    shownByGeneralList: number[];
+    myCity: number | null;
+    myNation: number | null;
+}
+
 // ── global-menu (game-api GlobalMenuResponse) ────────────────────────────────
 export interface MenuNode {
     type: 'item' | 'split' | 'multi' | 'line';

@@ -219,11 +219,11 @@ before consumers.
 - **8c** tournament-admin FE + register start/advance/reset (closes WAVE 2c).
 - **8d** simulator parity — per-side combat inputs (crew/crewtype/train/atmos/city/items/specialties) + export-object + draw-for-draw battle log (PageBattleCenter/battle_simulator.ts).
 
-### WAVE 9 — public read endpoints + remaining views + admin parity 🟢
-*Source: API_GAP.md / READ_DTO_GAP.md. Long-tail completeness.*
-- **9a** public city-list endpoint (the 1 MISSING read), full in-game `GetMap` with fog (vs gateway MapPreview).
-- **9b** remaining `v_*.php`→Next page coverage, gateway install page.
-- **9c** confirm admin/install endpoints stay design-replaced (Flyway+ScenarioImporter+daemon) — document, do not port.
+### WAVE 9 — public read endpoints + remaining views + admin parity ✅ (구현 완료)
+*Source: API_GAP.md / READ_DTO_GAP.md. Long-tail completeness. 스펙·실행: `gap/waves/WAVE_9.md`. 브랜치 `w9-public-read-endpoints`.*
+- **9a** ✅ public city-list endpoint(`GET /api/cities` = `CityListController`, j_get_city_list 패러티) + fog 포함 인게임 `GetMap`(`GET /api/map` = `WorldMapController`, `getWorldMap` 충실 이식: cityList/nationList compact tuple + spyList/shownByGeneralList/myCity/myNation fog 게이트). 게이트: `WorldMapControllerTest` 4/4 · `CityListControllerTest` 2/2 · `ReadRepositoryIT` distinct-city(Docker-gated). DTO: `WorldMapDto.kt`/`CityListDto.kt`, repo: `GeneralReadRepository.findDistinctCityIdByNationId`.
+- **9b** ✅ 인게임 map 페이지 `web/game/app/game/map/page.tsx`(`v_cachedMap`→Next) — `MapViewer`에 fog 오버레이(아국 장수 소재 금색 링 + 정찰 잔여개월 배지) prop 확장. typecheck 통과 + `MapViewer.interaction` 15/15 회귀-clean. gateway install page = 9c 참조(자동 시드라 마법사 불요).
+- **9c** ✅ admin/install 엔드포인트(`j_install*`/`j_install_db`/`j_autoreset`/`j_raise_event`/`Global/ExecuteEngine`/`Admin/BanEmailAddress`/`Misc/UploadImage`)는 **design-replaced 확정** — Flyway 마이그레이션 + `ScenarioImporter`/`ScenarioSeedRunner`(F1) + `AdminSeeder`(F0) + 자율 daemon(수동 ExecuteEngine 불요)로 대체. **포팅하지 않음**(의도적 divergence). 이미지 업로드/이메일밴은 운영 진입 후 별 트랙.
 
 ---
 
