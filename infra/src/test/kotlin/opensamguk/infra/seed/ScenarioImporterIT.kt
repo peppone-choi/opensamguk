@@ -101,6 +101,10 @@ class ScenarioImporterIT {
         assertEquals(94, count("city"))
         // 공백지 70(nation_id=0).
         assertEquals(70, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        // 소유 = 시나리오 nation.cities 기준(후한 14 + 황건적 10). 이 fix는 1010에 무변 —
+        // cities_1010.json의 baked nation_id와 nation.cities가 동일 집합이므로 소유 24가 그대로 유지.
+        assertEquals(14, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
+        assertEquals(10, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음). 성도: pop 150000·wall 5000·trust 50.
         val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE name = '성도'")
         assertEquals(150000, (sd["pop"] as Number).toInt())
@@ -177,6 +181,23 @@ class ScenarioImporterIT {
         assertEquals(21, count("nation"))
         assertEquals(94, count("city"))
         assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
+
+        // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──
+        // 소유를 시나리오 nation.cities로 배정한다(cities_1010.json baked nation_id가 아님). baked로는
+        // 국가 1·2만 소유 → 19국 무소유 → capital 보유인데 supplyCities 빔 → UpdateCitySupply 미시드 →
+        // doNPC구출발령의 RandUtil.choice(빈 보급도시) throw → 빼섭 턴데몬 크래시-루프 동결.
+        // (1) 모든 21국이 도시를 ≥1개 소유.
+        val landlessNations = jdbc.queryForObject(
+            "SELECT count(*) FROM nation n WHERE NOT EXISTS (SELECT 1 FROM city c WHERE c.nation_id = n.id)",
+            Int::class.java,
+        )
+        assertEquals(0, landlessNations, "모든 1030 국가가 도시를 소유해야 한다(무소유 국가 0)")
+        // (2) 각 국가의 capital_city_id는 자국 소유 도시(UpdateCitySupply BFS가 capital을 seed할 수 있는 조건).
+        val miscapital = jdbc.queryForObject(
+            "SELECT count(*) FROM nation n JOIN city c ON c.id = n.capital_city_id WHERE c.nation_id <> n.id",
+            Int::class.java,
+        )
+        assertEquals(0, miscapital, "각 국가의 수도는 자국 소유 도시여야 한다")
         // 모든 장수 불변식 유지(37 rank_data / 30 general_turn) — 다세력에서도.
         val every37 = jdbc.queryForObject(
             "SELECT min(c) = 37 AND max(c) = 37 FROM (SELECT count(*) c FROM rank_data GROUP BY general_id) s",

@@ -179,14 +179,31 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4c city
     // ─────────────────────────────────────────────────────────────────────────────────────────────
+    /**
+     * 도시 소유 = **시나리오 `nation.cities`(도시명) 기준**. 도시 리소스(`cities_1010.json`)에 baked된
+     * `nation_id`가 아니라, 각 시나리오가 정의한 `nation[].cities` 목록을 소유 정본으로 쓴다.
+     *
+     * WHY: 여러 시나리오가 `cities_1010.json`(che 풀맵 94도시) 리소스를 **재사용**한다(빼섭 `scenario_1030`
+     * 등). 그 리소스의 baked `nation_id`는 `scenario_1010`(2국) 전용 배정이라, 재사용하는 시나리오에선
+     * 자기 국가들이 도시를 하나도 소유하지 못한다(→ capital 보유인데 supplyCities 빔 → UpdateCitySupply
+     * 미시드 → `doNPC구출발령`의 `RandUtil.choice(빈 보급도시)`가 throw → 턴데몬 크래시-루프 동결).
+     * 소유를 시나리오 `nation.cities`에서 배정하면 모든 시나리오가 올바르게 도시를 소유한다. `scenario_1010`은
+     * baked `nation_id`와 동일 집합이라 **무변(no-op)**, `scenario_1030`은 21국 소유가 복구된다(PHP는
+     * 시나리오 `nation.cities`로 소유를 정한다 — 이쪽이 grand-truth 정합).
+     */
+    private val cityOwnerByName: Map<String, Int> =
+        scenario.nations.flatMap { n -> n.cities.map { cityName -> cityName to n.id } }.toMap()
+
     private fun insertCities(jdbc: JdbcTemplate): Int {
         var n = 0
         for (c in cities) {
+            // 소유: 시나리오 nation.cities 기준(baked c.nationId 무시). 미소유 도시 = 공백지(0).
+            val cityNationId = cityOwnerByName[c.name] ?: 0
             // 초기 스탯 분기:
             //  - 점령지(nation_id!=0): PHP initialEvents ChangeCity가 *_max의 70%로 부스트(parity). trust 80.
             //  - 공백지(nation_id==0): 부스트 없음 → CityConstBase 베이스 initial(데이터의 *_init). trust 50.
             //    (initialEvents는 점령지만 대상이라 공백지는 베이스 그대로 — 70도시 신규.)
-            val occupied = c.nationId != 0
+            val occupied = cityNationId != 0
             val pop = if (occupied) ratio70(c.popMax) else (c.popInit ?: ratio70(c.popMax))
             val agri = if (occupied) ratio70(c.agriMax) else (c.agriInit ?: ratio70(c.agriMax))
             val comm = if (occupied) ratio70(c.commMax) else (c.commInit ?: ratio70(c.commMax))
@@ -206,7 +223,7 @@ class ScenarioImporter(
                         ?, 100, ?, ?, ?, ?, ?,
                         0, 0, '{}'::jsonb, '{}'::jsonb)
                 """.trimIndent(),
-                c.id, c.name, c.level, c.nationId,
+                c.id, c.name, c.level, cityNationId,
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
                 trust, def, c.defMax, wall, c.wallMax, c.region,
             )
