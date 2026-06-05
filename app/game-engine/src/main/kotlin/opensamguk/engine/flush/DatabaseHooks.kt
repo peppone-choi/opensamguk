@@ -17,6 +17,7 @@ import opensamguk.infra.persistence.BettingInsertRow
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
 import opensamguk.infra.persistence.CreatedMessageRow
+import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.InheritanceLogRow
@@ -325,6 +326,15 @@ object DatabaseHooks {
             },
             messageInvalidates = recorder.messageInvalidates().map {
                 MessageInvalidateRow(it.id, it.validUntil, it.bodyJson)
+            },
+            // W5d 외교 서신 — diplomacy_letter INSERT(발송, id 선할당) + UPDATE(회수/파기/대체) (recorder 채널,
+            // world-state 효과 아님). INSERT-먼저-UPDATE 순서는 step-8f에서 보존된다(같은 tick의 prev→replaced
+            // UPDATE 대상이 먼저 존재). letterNo는 recorder가 선할당한 id(allocatedId)를 그대로 싣는다.
+            diplomacyLetterInserts = recorder.diplomacyLetterInserts().map {
+                DiplomacyLetterInsertRow(it.allocatedId, it.columns)
+            },
+            diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>().apply {
+                recorder.diplomacyLetterUpdates().forEach { (letterNo, columns) -> put(letterNo, LinkedHashMap(columns)) }
             },
             auctionUpserts = recorder.auctionUpserts().map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
             auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },

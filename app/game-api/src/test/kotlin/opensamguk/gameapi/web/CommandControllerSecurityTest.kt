@@ -3,6 +3,8 @@ package opensamguk.gameapi.web
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
+import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -35,9 +37,11 @@ class CommandControllerSecurityTest {
     private val precheck = mock(CommandPrecheckService::class.java)
     private val reserve = mock(CommandReserveService::class.java)
     private val resolver = mock(GeneralResolver::class.java)
+    private val queue = mock(CommandQueueService::class.java)
+    private val generals = mock(GeneralReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(CommandController(precheck, reserve, resolver))
+        MockMvcBuilders.standaloneSetup(CommandController(precheck, reserve, resolver, queue, generals))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 

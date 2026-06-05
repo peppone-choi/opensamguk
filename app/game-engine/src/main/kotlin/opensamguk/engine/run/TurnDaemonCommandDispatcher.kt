@@ -4,10 +4,15 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
+import opensamguk.engine.auction.AuctionOpenHandler
 import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
+import opensamguk.engine.intake.BuildNationCandidateHandler
+import opensamguk.engine.intake.DiplomacyLetterHandler
 import opensamguk.engine.intake.InheritResetHandler
+import opensamguk.engine.intake.MessageHandler
 import opensamguk.engine.intake.NationFinanceSetterHandler
+import opensamguk.engine.intake.SelectPoolHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
@@ -17,6 +22,9 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
+import opensamguk.infra.read.ContactReader
+import opensamguk.infra.read.DiplomacyLetterRepository
+import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.infra.read.VotePollRepository
 
 /**
@@ -55,6 +63,19 @@ class TurnDaemonCommandDispatcher(
      * VoteHandler는 기본 stub(항상 "설문 없음")로 동작한다(board/auction read-repo와 동일 주입 패턴).
      */
     private val votePollRepository: VotePollRepository? = null,
+    /**
+     * W5d 외교 서신(ng_diplomacy) read seam. null이면 [DiplomacyLetterHandler]가 stub-empty(서신 없음)로
+     * 동작한다(votePollRepository 주입 패턴 — IT가 DB 없이도 컴파일/실행되게).
+     */
+    diplomacyLetterRepository: DiplomacyLetterRepository? = null,
+    /**
+     * W6f 장수 선택 풀 read seam. null이면 [SelectPoolHandler]가 stub-empty(풀 항목 없음)로 동작한다.
+     */
+    selectPoolRepository: SelectPoolRepository? = null,
+    /**
+     * W6a 메시지 연락처/장수 read seam. null이면 [MessageHandler]가 stub-empty(연락처 없음)로 동작한다.
+     */
+    contactReader: ContactReader? = null,
 ) {
     private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
@@ -95,6 +116,48 @@ class TurnDaemonCommandDispatcher(
         } ?: { _, _ -> null },
     )
 
+    // ── W6a 메시지 인테이크 핸들러 (contact read seam은 nullable — null이면 stub-empty) ──
+    // contactReader가 있으면 삭제 게이트용 메시지 reader(getMessageByID)도 어댑트해 주입한다.
+    // infra `MessageReadRow` → 엔진 [opensamguk.engine.intake.MessageSnapshot] 매핑은 여기서 담당한다
+    // (DTO는 infra↔engine 모듈 사이클 회피를 위해 의도적으로 분리, VotePollReadRow→VotePollState 패턴).
+    private val message = MessageHandler(world, recorder, contactReader).apply {
+        if (contactReader != null) {
+            messageReader = { msgId ->
+                contactReader.findMessage(msgId)?.let { row ->
+                    opensamguk.engine.intake.MessageSnapshot(
+                        id = row.id,
+                        hasAction = row.hasAction,
+                        type = row.type,
+                        srcGeneralId = row.srcGeneralId,
+                        srcNationId = row.srcNationId,
+                        destGeneralId = row.destGeneralId,
+                        destNationId = row.destNationId,
+                        time = row.time,
+                        validUntil = row.validUntil,
+                        deletable = row.deletable,
+                        receiverMessageId = row.receiverMessageId,
+                        text = row.text,
+                        srcArray = row.srcArray,
+                        destArray = row.destArray,
+                        option = row.option,
+                    )
+                }
+            }
+        }
+    }
+
+    // ── W6c 경매 개설 핸들러 (AuctionBidHandler와 동일 read repo 주입) ──
+    private val auctionOpen = AuctionOpenHandler(world, recorder, auctionRepository, auctionBidRepository)
+
+    // ── W5d 외교 서신 핸들러 (ng_diplomacy read seam은 nullable) ──
+    private val diplomacyLetter = DiplomacyLetterHandler(world, recorder, diplomacyLetterRepository)
+
+    // ── W6f 장수 선택 풀 핸들러 (RNG-bearing — 골든 게이트는 /parity-wave; read seam은 nullable) ──
+    private val selectPool = SelectPoolHandler(world, recorder, selectPoolRepository)
+
+    // ── W6d 건국 후보(거병) 핸들러 (RNG-bearing — 골든 게이트는 /parity-wave) ──
+    private val buildNation = BuildNationCandidateHandler(world, recorder)
+
     /**
      * Dispatch one command to its handler.
      *
@@ -133,6 +196,22 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.VoteCast -> vote.handleVoteCast(command)
         is TurnDaemonCommand.VoteComment -> vote.handleVoteComment(command)
         is TurnDaemonCommand.VoteClose -> vote.handleVoteClose(command)
+        // ── W6a 메시지 인테이크 바인딩 ──
+        is TurnDaemonCommand.SendMessage -> message.handleSend(command)
+        is TurnDaemonCommand.DeleteMessage -> message.handleDelete(command)
+        // ── W6c 경매 개설 바인딩 ──
+        is TurnDaemonCommand.AuctionOpenBuyRice -> auctionOpen.handleBuyRice(command)
+        is TurnDaemonCommand.AuctionOpenSellRice -> auctionOpen.handleSellRice(command)
+        is TurnDaemonCommand.AuctionOpenUnique -> auctionOpen.handleUnique(command)
+        // ── W5d 외교 서신 바인딩 ──
+        is TurnDaemonCommand.DiploSendLetter -> diplomacyLetter.handleSend(command)
+        is TurnDaemonCommand.DiploRollbackLetter -> diplomacyLetter.handleRollback(command)
+        is TurnDaemonCommand.DiploDestroyLetter -> diplomacyLetter.handleDestroy(command)
+        // ── W6f 장수 선택 풀 바인딩 (RNG-bearing) ──
+        is TurnDaemonCommand.SelectPoolPick -> selectPool.handlePick(command)
+        is TurnDaemonCommand.SelectPoolUpdate -> selectPool.handleUpdate(command)
+        // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
+        is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         else -> null
     }
 

@@ -71,6 +71,23 @@ object CommandWireMapper {
         "voteCast",
         "voteComment",
         "voteClose",
+        // W6a 메시지 — 발송/삭제 인테이크.
+        "sendMessage",
+        "deleteMessage",
+        // W6c 경매 개설 — 쌀 매수/매도/유니크.
+        "auctionOpenBuyRice",
+        "auctionOpenSellRice",
+        "auctionOpenUnique",
+        // W5d 외교 서신 — 발송/회수/파기.
+        "diploSendLetter",
+        "diploRollbackLetter",
+        "diploDestroyLetter",
+        // W6f 장수 선택 풀 — 픽/갱신 (RNG-bearing — 골든은 /parity-wave).
+        "selectPoolPick",
+        "selectPoolUpdate",
+        // NB: join(REST-only, no daemon command), /bulk·/push·/repeat(W6e, CommandQueueService),
+        //     buildNationCandidate(NationController가 wire 명령을 직접 발행)는 의도적으로 intakeCodes
+        //     밖이다 — 추가 금지.
     )
 
     /**
@@ -222,6 +239,70 @@ object CommandWireMapper {
             "voteClose" -> TurnDaemonCommand.VoteClose(
                 requestId = requestId, generalId = generalId,
                 voteId = args.int("voteId") ?: args.int("voteID") ?: 0,
+            )
+            // ── W6a 메시지 — 발송/삭제. mailbox 라우팅(9999 공개/>=9000 국가/<9000 개인)은 엔진이 적용. ──
+            "sendMessage" -> TurnDaemonCommand.SendMessage(
+                requestId = requestId, generalId = generalId,
+                // PHP SendMessage::validateArgs: mailbox 부재 시 Message::MAILBOX_PUBLIC(9999). (required라 실제 부재
+                // 불가지만, faithful 기본값.) 9999=공개/>=9000=국가/<9000=개인 라우팅은 엔진 핸들러가 적용.
+                mailbox = args.int("mailbox") ?: 9999,
+                text = args.str("text") ?: "",
+            )
+            "deleteMessage" -> TurnDaemonCommand.DeleteMessage(
+                requestId = requestId, generalId = generalId,
+                msgID = args.int("msgID") ?: args.int("msgId") ?: 0,
+            )
+            // ── W6c 경매 개설 — 쌀 매수/매도/유니크. 검증 순서(3개월→턴수→거래량→입찰가)는 엔진이 적용. ──
+            "auctionOpenBuyRice" -> TurnDaemonCommand.AuctionOpenBuyRice(
+                requestId = requestId, generalId = generalId,
+                amount = args.int("amount") ?: 0,
+                closeTurnCnt = args.int("closeTurnCnt") ?: 0,
+                startBidAmount = args.int("startBidAmount") ?: 0,
+                finishBidAmount = args.int("finishBidAmount") ?: 0,
+            )
+            "auctionOpenSellRice" -> TurnDaemonCommand.AuctionOpenSellRice(
+                requestId = requestId, generalId = generalId,
+                amount = args.int("amount") ?: 0,
+                closeTurnCnt = args.int("closeTurnCnt") ?: 0,
+                startBidAmount = args.int("startBidAmount") ?: 0,
+                finishBidAmount = args.int("finishBidAmount") ?: 0,
+            )
+            "auctionOpenUnique" -> TurnDaemonCommand.AuctionOpenUnique(
+                requestId = requestId, generalId = generalId,
+                itemId = args.str("itemId") ?: args.str("itemKey") ?: "",
+                amount = args.int("amount") ?: 0,
+            )
+            // ── W5d 외교 서신 — 발송/회수/파기. prevLetterNo는 <1 → null(PHP)로 '이전 문서 없음' 게이트 유지. ──
+            "diploSendLetter" -> TurnDaemonCommand.DiploSendLetter(
+                requestId = requestId, generalId = generalId,
+                destNationId = args.int("destNation") ?: args.int("destNationId") ?: 0,
+                // <1 → null (PHP). nullable 유지로 엔진이 '이전 문서 없음' 게이트를 태운다.
+                prevLetterNo = args.int("prevNo")?.takeIf { it >= 1 } ?: args.int("prevLetterNo")?.takeIf { it >= 1 },
+                textBrief = args.str("brief") ?: args.str("textBrief") ?: "",
+                textDetail = args.str("detail") ?: args.str("textDetail") ?: "",
+            )
+            "diploRollbackLetter" -> TurnDaemonCommand.DiploRollbackLetter(
+                requestId = requestId, generalId = generalId,
+                letterNo = args.int("letterNo") ?: 0,
+            )
+            "diploDestroyLetter" -> TurnDaemonCommand.DiploDestroyLetter(
+                requestId = requestId, generalId = generalId,
+                letterNo = args.int("letterNo") ?: 0,
+            )
+            // ── W6f 장수 선택 풀 — 픽/갱신. 스탯/성격은 nullable 유지(풀 기본값/편집가능 분기는 엔진). ──
+            "selectPoolPick" -> TurnDaemonCommand.SelectPoolPick(
+                requestId = requestId, generalId = generalId,
+                uniqueName = args.str("uniqueName") ?: "",
+                leadership = args.int("leadership"), strength = args.int("strength"), intel = args.int("intel"),
+                personalityName = args.str("personalityName"),
+                useOwnPicture = args.bool("useOwnPicture") ?: false,
+            )
+            "selectPoolUpdate" -> TurnDaemonCommand.SelectPoolUpdate(
+                requestId = requestId, generalId = generalId,
+                uniqueName = args.str("uniqueName") ?: "",
+                leadership = args.int("leadership"), strength = args.int("strength"), intel = args.int("intel"),
+                personalityName = args.str("personalityName"),
+                useOwnPicture = args.bool("useOwnPicture") ?: false,
             )
             else -> null
         }

@@ -629,6 +629,134 @@ sealed class TurnDaemonCommand {
     ) : TurnDaemonCommand() {
         override val type: String get() = "buyRandomUnique"
     }
+
+    // ── W6a 메시지 인테이크 (SendMessage / DeleteMessage) — j_send_message.php / j_delete_message.php ──
+    /**
+     * 메시지 발송 (j_send_message.php). [mailbox]가 라우팅을 결정한다:
+     * 9999=공개, >=9000=국가(9000+nationId), <9000=개인(상대 generalId). PHP `getPost('mailbox','int')`.
+     */
+    @Serializable
+    @SerialName("sendMessage")
+    data class SendMessage(
+        val requestId: String? = null,
+        val generalId: Int,
+        // 9999=공개, >=9000=국가(9000+nationId), <9000=개인(상대 generalId). PHP getPost('mailbox','int').
+        val mailbox: Int,
+        val text: String,
+    ) : TurnDaemonCommand() { override val type: String get() = "sendMessage" }
+
+    /** 메시지 삭제 (j_delete_message.php). [msgID]는 삭제 대상 message 행 id. */
+    @Serializable
+    @SerialName("deleteMessage")
+    data class DeleteMessage(
+        val requestId: String? = null,
+        val generalId: Int,
+        val msgID: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "deleteMessage" }
+
+    // ── W6c 경매 개설 (BuyRice / SellRice / Unique) — OpenBuyRiceAuction.php 등 ──
+    /** 쌀 매수 경매 개설 (OpenBuyRiceAuction.php → AuctionBasicResource::openResourceAuction). */
+    @Serializable
+    @SerialName("auctionOpenBuyRice")
+    data class AuctionOpenBuyRice(
+        val requestId: String? = null,
+        val generalId: Int,
+        val amount: Int,
+        val closeTurnCnt: Int,
+        val startBidAmount: Int,
+        val finishBidAmount: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenBuyRice" }
+
+    /** 쌀 매도 경매 개설 (OpenSellRiceAuction.php → AuctionBasicResource::openResourceAuction). */
+    @Serializable
+    @SerialName("auctionOpenSellRice")
+    data class AuctionOpenSellRice(
+        val requestId: String? = null,
+        val generalId: Int,
+        val amount: Int,
+        val closeTurnCnt: Int,
+        val startBidAmount: Int,
+        val finishBidAmount: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenSellRice" }
+
+    /** 유니크 아이템 경매 개설 (AuctionUniqueItem). [itemId]는 유니크 아이템 키. */
+    @Serializable
+    @SerialName("auctionOpenUnique")
+    data class AuctionOpenUnique(
+        val requestId: String? = null,
+        val generalId: Int,
+        val itemId: String,
+        val amount: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenUnique" }
+
+    // ── W5d 외교 서신 (Send / Rollback / Destroy) — j_diplomacy_*_letter.php ──
+    /**
+     * 외교 서신 발송 (j_diplomacy_send_letter.php). [prevLetterNo]는 직전 문서 번호(체인) — PHP `?? null`,
+     * <1 → null. nullable 유지로 엔진이 '이전 문서 없음' 게이트를 태운다.
+     */
+    @Serializable
+    @SerialName("diploSendLetter")
+    data class DiploSendLetter(
+        val requestId: String? = null,
+        val generalId: Int,
+        val destNationId: Int,
+        // PHP `?? null`, <1 → null. 직전 문서 번호(체인). nullable 유지.
+        val prevLetterNo: Int? = null,
+        val textBrief: String,
+        val textDetail: String,
+    ) : TurnDaemonCommand() { override val type: String get() = "diploSendLetter" }
+
+    /** 외교 서신 회수 (j_diplomacy_rollback_letter.php). [letterNo]는 회수 대상 ng_diplomacy 행 번호. */
+    @Serializable
+    @SerialName("diploRollbackLetter")
+    data class DiploRollbackLetter(
+        val requestId: String? = null,
+        val generalId: Int,
+        val letterNo: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "diploRollbackLetter" }
+
+    /** 외교 서신 파기(요청) (j_diplomacy_destroy_letter.php). 양측 동의 시 cancelled. */
+    @Serializable
+    @SerialName("diploDestroyLetter")
+    data class DiploDestroyLetter(
+        val requestId: String? = null,
+        val generalId: Int,
+        val letterNo: Int,
+    ) : TurnDaemonCommand() { override val type: String get() = "diploDestroyLetter" }
+
+    // ── W6f 장수 선택 풀 pick/update — j_pick_general.php / j_update_picked_general.php (RNG-BEARING) ──
+    /**
+     * 장수 선택 풀에서 픽 (j_pick_general.php). 가중 추첨(`allStat^1.5`)을 포함하는 RNG-BEARING 액션 —
+     * 골든 게이트는 /parity-wave. 스탯/성격은 풀 항목이 편집 가능할 때만 유효(부재 시 null → 풀 기본값).
+     */
+    @Serializable
+    @SerialName("selectPoolPick")
+    data class SelectPoolPick(
+        val requestId: String? = null,
+        val generalId: Int,
+        val uniqueName: String,
+        // 선택 스탯(풀 항목이 stat-editable일 때만 유효). 부재 시 null → 엔진이 풀 기본값 사용.
+        val leadership: Int? = null,
+        val strength: Int? = null,
+        val intel: Int? = null,
+        // 'Random' 또는 유효 성격명. 부재 시 null.
+        val personalityName: String? = null,
+        val useOwnPicture: Boolean = false,
+    ) : TurnDaemonCommand() { override val type: String get() = "selectPoolPick" }
+
+    /** 선택 풀 장수 갱신 (j_update_picked_general.php). pick과 동일 인자 shape. */
+    @Serializable
+    @SerialName("selectPoolUpdate")
+    data class SelectPoolUpdate(
+        val requestId: String? = null,
+        val generalId: Int,
+        val uniqueName: String,
+        val leadership: Int? = null,
+        val strength: Int? = null,
+        val intel: Int? = null,
+        val personalityName: String? = null,
+        val useOwnPicture: Boolean = false,
+    ) : TurnDaemonCommand() { override val type: String get() = "selectPoolUpdate" }
 }
 
 @Serializable

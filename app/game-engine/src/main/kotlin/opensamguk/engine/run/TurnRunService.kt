@@ -13,6 +13,7 @@ import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
+import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventDispatcher
@@ -74,6 +75,10 @@ open class TurnRunService(
     private val boardPostRepository: BoardPostRepository? = null,
     /** vote_poll/vote 조회용 JDBC read seam (F4 Wave 투표 — VoteCast/closeOldVote 설문 cast 가드). */
     private val votePollRepository: VotePollRepository? = null,
+    /** diplomacy_letter 조회용 JDBC read seam (W5d 외교 서신 — send prev/rollback/destroy 가드). */
+    private val diplomacyLetterRepository: DiplomacyLetterRepository? = null,
+    /** 연락처/메시지 조회용 JDBC read seam (W6a 메시지 — DeleteMessage getMessageByID 게이트). */
+    private val contactReader: opensamguk.infra.read.ContactReader? = null,
 ) {
 
     /**
@@ -87,6 +92,10 @@ open class TurnRunService(
             world, handler.recorder, auctionRepository, auctionBidRepository, boardPostRepository,
             // votePollRepository는 옵셔널 — null이면 VoteHandler가 기본 stub("설문 없음")로 동작한다.
             votePollRepository,
+            // diplomacyLetterRepository는 옵셔널 — null이면 DiplomacyLetterHandler가 stub-empty("서신 없음")로 동작한다.
+            diplomacyLetterRepository = diplomacyLetterRepository,
+            // contactReader는 옵셔널 — null이면 MessageHandler가 stub('메시지가 없습니다')로 동작한다(삭제 게이트만 영향).
+            contactReader = contactReader,
         )
     } else {
         null

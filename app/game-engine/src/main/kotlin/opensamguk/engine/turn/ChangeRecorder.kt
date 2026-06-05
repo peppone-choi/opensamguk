@@ -46,6 +46,14 @@ class ChangeRecorder(
     private val messageIdAllocator: () -> Int = AtomicCounter()::next,
     /** Allocates the next in-memory `ng_auction.id` (T0.7) — DB-seeded at rehydrate; default 1-based. */
     private val auctionIdAllocator: () -> Int = AtomicCounter()::next,
+    /**
+     * Allocates the next in-memory `diplomacy_letter.id` (W5d 외교 서신) — DB-seeded at rehydrate
+     * (max(id)+1) so the in-memory id matches the flushed SERIAL. PHP `j_diplomacy_send_letter.php`는
+     * INSERT 직후 `$db->insertId()`로 새 서신 번호(letterNo)를 얻어 메시지 본문에 박는다 — 그래서
+     * recorder가 INSERT 시점에 id를 선할당해 반환한다(메시지/결과가 flush 전에 letterNo를 참조). 기본은
+     * 테스트/fresh world용 1-based 카운터.
+     */
+    private val diplomacyLetterIdAllocator: () -> Int = AtomicCounter()::next,
 ) {
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
@@ -107,6 +115,22 @@ class ChangeRecorder(
     /** Mailbox channel (T0.5) — the `message` invalidate UPDATEs (deleteMsg / accept-flow sibling-sweep). */
     private val messageInvalidates = mutableListOf<MessageInvalidate>()
 
+    /**
+     * 외교 서신 채널 (W5d) — `diplomacy_letter` INSERT 의도, append-additive (발송 1건/요청). `id`는
+     * recorder가 선할당(`diplomacyLetterIdAllocator`)해 PHP `insertId()`(=newLetterNo)에 대응한다.
+     * INSERT 전용 — 서신 행은 절대 dedup/재키잉되지 않는다.
+     */
+    private val diplomacyLetterInserts = mutableListOf<DiplomacyLetterInsert>()
+
+    /**
+     * 외교 서신 채널 (W5d) — `diplomacy_letter` UPDATE 델타, letterNo → 변경 컬럼 맵(`column → value`).
+     * recorder가 유일한 방출자다. send의 prev→`replaced`(aux 재작성), rollback→`cancelled`(aux),
+     * destroy의 state_opt 적재 / `cancelled` 전환에 대응한다. letterNo별 last-write-wins(같은 tick의
+     * 나중 set이 이전 컬럼 값을 덮어쓴다) + 삽입 순서 보존(LinkedHashMap, 재키잉 없음). 컬럼 단위 병합 —
+     * `state`만 갱신해도 같은 행의 `aux`가 유지된다(vote_poll/diplomacy UPDATE 채널과 동일 형태).
+     */
+    private val diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>()
+
     /** Auction channel (T0.7) — ng_auction UPSERTs (open INSERT / extend-finish UPDATE), in emit order. */
     private val auctionUpserts = mutableListOf<AuctionUpsert>()
 
@@ -153,6 +177,7 @@ class ChangeRecorder(
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
             votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
+            diplomacyLetterInserts.isNotEmpty() || diplomacyLetterUpdates.isNotEmpty() ||
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
@@ -424,6 +449,35 @@ class ChangeRecorder(
     fun messageInvalidates(): List<MessageInvalidate> = messageInvalidates.toList()
 
     /**
+     * Record a `diplomacy_letter` INSERT (W5d 외교 서신 발송). Pre-allocates the in-memory id (=PHP
+     * `insertId()` = newLetterNo) and appends, returning the allocated letterNo so the caller can fold
+     * it into the diplomacy message body + the [DiploLetterResult]. `columns`는 byte-faithful
+     * diplomacy_letter 컬럼 맵(src_nation_id/dest_nation_id/prev_id/state/text_brief/text_detail/date/
+     * src_signer/dest_signer/aux). INSERT 전용 — 절대 dedup되지 않는다.
+     */
+    fun recordDiplomacyLetterInsert(columns: Map<String, Any?>): Int {
+        val id = diplomacyLetterIdAllocator()
+        diplomacyLetterInserts.add(DiplomacyLetterInsert(allocatedId = id, columns = columns))
+        return id
+    }
+
+    /**
+     * Record a `diplomacy_letter` UPDATE (W5d 외교 서신 회수/파기/대체). `letterNo`의 행에 `columns`를
+     * 병합한다(컬럼 단위 last-write-wins, 삽입 순서 보존 — vote_poll UPDATE 채널과 동일). 사용 컬럼:
+     * `state`(diplomacy_letter_state enum), `aux`(json String).
+     */
+    fun recordDiplomacyLetterUpdate(letterNo: Int, columns: LinkedHashMap<String, Any?>) {
+        diplomacyLetterUpdates.getOrPut(letterNo) { LinkedHashMap() }.putAll(columns)
+    }
+
+    /** The recorded diplomacy_letter INSERT intents (the W5d flush source), in emit order. */
+    fun diplomacyLetterInserts(): List<DiplomacyLetterInsert> = diplomacyLetterInserts.toList()
+
+    /** The recorded diplomacy_letter UPDATE channel (the W5d flush source), letterNo/컬럼 삽입 순서 보존. */
+    fun diplomacyLetterUpdates(): Map<Int, Map<String, Any?>> =
+        diplomacyLetterUpdates.mapValues { (_, m) -> LinkedHashMap(m) }
+
+    /**
      * Record an `ng_auction` UPSERT (T0.7). `id` null → an INSERT (auction open): pre-allocates the
      * in-memory id and returns it (so bids placed in the same tick can reference it before flush). A
      * non-null `id` → an UPDATE (extend/finish/shrink). `columns` is the byte-faithful
@@ -523,6 +577,8 @@ class ChangeRecorder(
         votePollUpdates.clear()
         createdMessages.clear()
         messageInvalidates.clear()
+        diplomacyLetterInserts.clear()
+        diplomacyLetterUpdates.clear()
         auctionUpserts.clear()
         auctionBidInserts.clear()
         bettingInserts.clear()

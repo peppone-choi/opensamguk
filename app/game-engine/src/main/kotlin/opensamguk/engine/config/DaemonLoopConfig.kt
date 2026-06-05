@@ -17,6 +17,7 @@ import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
+import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.domain.LastTurn
@@ -88,6 +89,23 @@ class DaemonLoopConfig {
     fun votePollRepository(jdbc: NamedParameterJdbcTemplate): VotePollRepository =
         VotePollRepository(jdbc)
 
+    /**
+     * diplomacy_letter 조회용 JDBC read seam (W5d 외교 서신). send의 prev 체인 / rollback / destroy 가드의
+     * read 경로(findLetter / countNewerLetters). JDBC read 전용 — write 경로는 [JdbcFlushExecutor]
+     * step-8f 뿐(one-daemon-write 규칙).
+     */
+    @Bean
+    fun diplomacyLetterRepository(jdbc: NamedParameterJdbcTemplate): DiplomacyLetterRepository =
+        DiplomacyLetterRepository(jdbc)
+
+    /**
+     * 연락처/메시지 read seam (W6a 메시지). 데몬 [MessageHandler]의 삭제 게이트(getMessageByID)의 read 경로.
+     * JDBC read 전용 — write 경로(message INSERT/UPDATE, general.newmsg)는 [JdbcFlushExecutor]뿐(one-daemon-write).
+     */
+    @Bean
+    fun contactReader(jdbc: NamedParameterJdbcTemplate): opensamguk.infra.read.ContactReader =
+        opensamguk.infra.read.ContactReader(jdbc)
+
     @Bean
     fun redisCommandStream(
         template: StringRedisTemplate,
@@ -126,6 +144,8 @@ class DaemonLoopConfig {
         auctionBidRepository: AuctionBidRepository,
         boardPostRepository: BoardPostRepository,
         votePollRepository: VotePollRepository,
+        diplomacyLetterRepository: DiplomacyLetterRepository,
+        contactReader: opensamguk.infra.read.ContactReader,
     ): TurnRunService {
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
@@ -252,6 +272,8 @@ class DaemonLoopConfig {
             auctionBidRepository = auctionBidRepository,
             boardPostRepository = boardPostRepository,
             votePollRepository = votePollRepository,
+            diplomacyLetterRepository = diplomacyLetterRepository,
+            contactReader = contactReader,
         )
     }
 }

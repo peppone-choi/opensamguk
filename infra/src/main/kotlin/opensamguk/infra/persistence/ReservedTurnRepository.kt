@@ -27,7 +27,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
  * (design §0.1 #3; the F4 `InfraNoEntityManagerTest` guard enforces this for the persistence
  * write classes). `arg` is bound as a jsonb [PGobject].
  */
-class ReservedTurnRepository(
+open class ReservedTurnRepository(
     private val jdbc: NamedParameterJdbcTemplate,
 ) {
 
@@ -46,7 +46,7 @@ class ReservedTurnRepository(
      * Upsert the reserved action for `(generalId, turnIdx mod 30)`. Re-reserving the same slot
      * updates the existing row (no duplicate) via `ON CONFLICT (general_id, turn_idx)`.
      */
-    fun reserve(
+    open fun reserve(
         generalId: Int,
         turnIdx: Int,
         actionCode: String?,
@@ -110,7 +110,7 @@ class ReservedTurnRepository(
      * 0..N-1. No-op for `turnCnt == 0` / `turnCnt >= MAX_GENERAL_TURNS` (the PHP guards; the
      * negative-turnCnt push path is the inverse op, out of the LC3 ring-shift scope).
      */
-    fun pullGeneralTurn(generalId: Int, turnCnt: Int = 1) {
+    open fun pullGeneralTurn(generalId: Int, turnCnt: Int = 1) {
         if (turnCnt == 0 || turnCnt >= MAX_GENERAL_TURNS) return
         val base = MapSqlParameterSource().addValue("general_id", generalId)
         // 1. reset the slots being pulled (turn_idx < turnCnt) to 휴식/{} and rotate them to the back.
@@ -136,6 +136,93 @@ class ReservedTurnRepository(
         )
     }
 
+    /**
+     * Push(밀기) the general_turn ring — `func_command.php:31-54 pushGeneralCommand`를 그대로 옮긴 것.
+     * 양수 turnCnt만 처리(음수는 호출부에서 [pullGeneralTurn]으로 분기, 0은 무시).
+     *
+     * PHP 두 UPDATE 순서를 그대로 보존:
+     *  1. 모든 행을 turn_idx += turnCnt 만큼 아래로 민다(`ORDER BY turn_idx DESC` — UNIQUE 충돌 회피).
+     *  2. MAX_GENERAL_TURNS 이상으로 밀려난 행을 turn_idx -= MAX 로 앞으로 되감고 휴식/{}/휴식으로 리셋.
+     *
+     * 가드: turnCnt <= 0 또는 turnCnt >= MAX_GENERAL_TURNS 이면 no-op(PHP `$turnCnt >= GameConst::$maxTurn`).
+     * (turn_idx 정규화는 하지 않는다 — PHP는 절대 인덱스에 직접 산술한다.)
+     */
+    open fun pushGeneralTurn(generalId: Int, turnCnt: Int) {
+        if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
+        val base = MapSqlParameterSource().addValue("general_id", generalId)
+        // 1. 모든 행을 아래로 민다(turn_idx 증가). PHP의 `ORDER BY turn_idx DESC`는 UNIQUE 충돌을 피하기 위한 것.
+        jdbc.update(
+            """
+            UPDATE general_turn
+               SET turn_idx = turn_idx + :turn_cnt
+             WHERE general_id = :general_id
+            """.trimIndent(),
+            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+        )
+        // 2. MAX 이상으로 넘친 행을 앞으로 되감고 휴식/{}/휴식으로 리셋.
+        jdbc.update(
+            """
+            UPDATE general_turn
+               SET turn_idx = turn_idx - :max_turn,
+                   action_code = '휴식',
+                   arg = '{}'::jsonb,
+                   brief = '휴식'
+             WHERE general_id = :general_id AND turn_idx >= :max_turn
+            """.trimIndent(),
+            MapSqlParameterSource(base.values).addValue("max_turn", MAX_GENERAL_TURNS),
+        )
+    }
+
+    /**
+     * Repeat(반복 채우기) the general_turn ring — `func_command.php:81-107 repeatGeneralCommand`를 그대로 옮긴 것.
+     *
+     * turn_idx 0..(reqTurn-1)의 각 행을 turnCnt, 2*turnCnt, … 만큼 앞으로 복제해 링 끝까지 채운다.
+     * 원본 덮어쓰기 방지: turnCnt*2 > MAX 이면 reqTurn = MAX - turnCnt 로 클램프(PHP 동일).
+     *
+     * 가드: turnCnt <= 0 또는 turnCnt >= MAX_GENERAL_TURNS 이면 no-op.
+     * 대상 인덱스 생성: PHP `Util::range($turnIdx+$turnCnt, MAX, $turnCnt)` = [start, MAX) step turnCnt
+     * (range는 끝값 미포함 — turn_idx < MAX 인 슬롯만).
+     */
+    open fun repeatGeneralTurn(generalId: Int, turnCnt: Int) {
+        if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
+        val reqTurn = if (turnCnt * 2 > MAX_GENERAL_TURNS) MAX_GENERAL_TURNS - turnCnt else turnCnt
+        val sources = jdbc.query(
+            """
+            SELECT turn_idx, action_code, arg::text AS arg, brief
+              FROM general_turn
+             WHERE general_id = :general_id AND turn_idx < :req_turn
+             ORDER BY turn_idx ASC
+            """.trimIndent(),
+            MapSqlParameterSource().addValue("general_id", generalId).addValue("req_turn", reqTurn),
+        ) { rs, _ ->
+            SourceTurn(
+                turnIdx = rs.getInt("turn_idx"),
+                actionCode = rs.getString("action_code"),
+                argJson = rs.getString("arg"),
+                brief = rs.getString("brief"),
+            )
+        }
+        for (src in sources) {
+            val targets = rangeTargets(src.turnIdx + turnCnt, MAX_GENERAL_TURNS, turnCnt)
+            if (targets.isEmpty()) continue
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET action_code = :action_code,
+                       arg = :arg::jsonb,
+                       brief = :brief
+                 WHERE general_id = :general_id AND turn_idx IN (:targets)
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("general_id", generalId)
+                    .addValue("action_code", src.actionCode)
+                    .addValue("arg", src.argJson)
+                    .addValue("brief", src.brief)
+                    .addValue("targets", targets),
+            )
+        }
+    }
+
     // --- nation_turn ring (FF2) -----------------------------------------------------------------
 
     /**
@@ -144,7 +231,7 @@ class ReservedTurnRepository(
      * `(nation_id, officer_level, turn_idx)`). The `brief` rides the V2 `nation_turn.brief text`
      * column (PHP seeds `휴식` — `func_command.php`).
      */
-    fun reserveNationTurn(
+    open fun reserveNationTurn(
         nationId: Int,
         officerLevel: Int,
         turnIdx: Int,
@@ -210,7 +297,7 @@ class ReservedTurnRepository(
      * Net effect: slot 0 vacates to `휴식` at the tail (turn_idx 11) and slots 1..N shift down to
      * 0..N-1. No-op for `nationId == 0` / `officerLevel < 5` (the PHP guards).
      */
-    fun pullNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
+    open fun pullNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
         if (nationId == 0 || officerLevel < 5 || turnCnt == 0 || turnCnt >= MAX_CHIEF_TURNS) return
         val base = MapSqlParameterSource()
             .addValue("nation_id", nationId)
@@ -236,6 +323,114 @@ class ReservedTurnRepository(
             """.trimIndent(),
             MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
         )
+    }
+
+    /**
+     * Push(밀기) the nation_turn ring — `func_command.php:109-138 pushNationCommand`를 그대로 옮긴 것.
+     * 양수 turnCnt만 처리(음수는 호출부에서 [pullNationTurn]으로 분기, 0은 무시).
+     *
+     * 가드(PHP 순서 그대로): nationID==0 / officerLevel<5 / turnCnt==0 / turnCnt<0(분기) /
+     * turnCnt >= MAX_CHIEF_TURNS → no-op. 두 UPDATE는 `nation_id AND officer_level`로 키한다.
+     */
+    open fun pushNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) {
+        if (nationId == 0 || officerLevel < 5 || turnCnt <= 0 || turnCnt >= MAX_CHIEF_TURNS) return
+        val base = MapSqlParameterSource()
+            .addValue("nation_id", nationId)
+            .addValue("officer_level", officerLevel)
+        // 1. 모든 행을 아래로 민다(turn_idx 증가).
+        jdbc.update(
+            """
+            UPDATE nation_turn
+               SET turn_idx = turn_idx + :turn_cnt
+             WHERE nation_id = :nation_id AND officer_level = :officer_level
+            """.trimIndent(),
+            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+        )
+        // 2. MAX_CHIEF 이상으로 넘친 행을 앞으로 되감고 휴식/{}/휴식으로 리셋.
+        jdbc.update(
+            """
+            UPDATE nation_turn
+               SET turn_idx = turn_idx - :max_chief,
+                   action_code = '휴식',
+                   arg = '{}'::jsonb,
+                   brief = '휴식'
+             WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx >= :max_chief
+            """.trimIndent(),
+            MapSqlParameterSource(base.values).addValue("max_chief", MAX_CHIEF_TURNS),
+        )
+    }
+
+    /**
+     * Repeat(반복 채우기) the nation_turn ring — `func_command.php:171-200 repeatNationCommand`를 그대로 옮긴 것.
+     *
+     * 가드: turnCnt <= 0 또는 turnCnt >= MAX_CHIEF_TURNS 이면 no-op. (PHP는 nationID/officerLevel을
+     * repeat에서 가드하지 않는다 — 호출부 precheck가 책임. 충실 이식을 위해 동일하게 두지 않는다.)
+     * 원본 덮어쓰기 방지: turnCnt*2 > MAX_CHIEF 이면 reqTurn = MAX_CHIEF - turnCnt.
+     */
+    open fun repeatNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) {
+        if (turnCnt <= 0 || turnCnt >= MAX_CHIEF_TURNS) return
+        val reqTurn = if (turnCnt * 2 > MAX_CHIEF_TURNS) MAX_CHIEF_TURNS - turnCnt else turnCnt
+        val sources = jdbc.query(
+            """
+            SELECT turn_idx, action_code, arg::text AS arg, brief
+              FROM nation_turn
+             WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx < :req_turn
+             ORDER BY turn_idx ASC
+            """.trimIndent(),
+            MapSqlParameterSource()
+                .addValue("nation_id", nationId)
+                .addValue("officer_level", officerLevel)
+                .addValue("req_turn", reqTurn),
+        ) { rs, _ ->
+            SourceTurn(
+                turnIdx = rs.getInt("turn_idx"),
+                actionCode = rs.getString("action_code"),
+                argJson = rs.getString("arg"),
+                brief = rs.getString("brief"),
+            )
+        }
+        for (src in sources) {
+            val targets = rangeTargets(src.turnIdx + turnCnt, MAX_CHIEF_TURNS, turnCnt)
+            if (targets.isEmpty()) continue
+            jdbc.update(
+                """
+                UPDATE nation_turn
+                   SET action_code = :action_code,
+                       arg = :arg::jsonb,
+                       brief = :brief
+                 WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx IN (:targets)
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("nation_id", nationId)
+                    .addValue("officer_level", officerLevel)
+                    .addValue("action_code", src.actionCode)
+                    .addValue("arg", src.argJson)
+                    .addValue("brief", src.brief)
+                    .addValue("targets", targets),
+            )
+        }
+    }
+
+    /** repeat 복제용 1행 스냅샷(읽은 원본 슬롯). */
+    private data class SourceTurn(
+        val turnIdx: Int,
+        val actionCode: String,
+        val argJson: String,
+        val brief: String,
+    )
+
+    /**
+     * PHP `Util::range(start, end, step)`와 동등 — [start, end) 범위를 step 간격으로(끝값 미포함).
+     * step > 0, start..end 만 사용한다(repeat 전용). end 이상은 포함하지 않는다.
+     */
+    private fun rangeTargets(start: Int, end: Int, step: Int): List<Int> {
+        val out = ArrayList<Int>()
+        var t = start
+        while (t < end) {
+            out.add(t)
+            t += step
+        }
+        return out
     }
 
     /** Map an absolute turn counter into the 0..29 ring slot (TS `MAX_GENERAL_TURNS`). */

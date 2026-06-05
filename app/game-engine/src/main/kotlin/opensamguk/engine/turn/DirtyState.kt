@@ -57,6 +57,14 @@ data class MessageInvalidate(
 )
 
 /**
+ * A `diplomacy_letter` INSERT intent (W5d 외교 서신 발송). INSERT 전용. `allocatedId`는 recorder가
+ * 선할당한 in-memory id(=PHP `insertId()` = newLetterNo)로, 같은 tick의 메시지/결과가 flush 전에
+ * letterNo를 참조한다(in-memory 단조 id가 flushed SERIAL과 일치 — auction open INSERT 패턴). `columns`는
+ * byte-faithful diplomacy_letter 컬럼 맵.
+ */
+data class DiplomacyLetterInsert(val allocatedId: Int, val columns: Map<String, Any?>)
+
+/**
  * An `ng_auction` UPSERT intent (T0.7). `id` null → INSERT (open); non-null → UPDATE (extend/finish/
  * shrink). `columns` is the byte-faithful `AuctionInfo.toArray()` map. `allocatedId` carries the
  * pre-assigned in-memory id for an INSERT (so bids can reference it before flush).
@@ -161,6 +169,14 @@ data class DirtyState(
     val createdMessages: List<CreatedMessage> = emptyList(),
     /** [messageInvalidates]: the mailbox-channel invalidate UPDATEs (deleteMsg / sibling-sweep). */
     val messageInvalidates: List<MessageInvalidate> = emptyList(),
+    /** [diplomacyLetterInserts]: the W5d 외교 서신 INSERT intents (발송, append-additive, INSERT-only). */
+    val diplomacyLetterInserts: List<DiplomacyLetterInsert> = emptyList(),
+    /**
+     * [diplomacyLetterUpdates]: the W5d 외교 서신 UPDATE 채널 — letterNo → 변경 컬럼 맵. send의 prev→replaced,
+     * rollback→cancelled, destroy의 state_opt/cancelled 전환에 대응하는 DELTA(INSERT 채널과 별개 행 UPDATE).
+     * 키별 LinkedHashMap, 컬럼별 last-write-wins, 삽입 순서 보존(votePollUpdates/diplomacyUpdateDirty 형태).
+     */
+    val diplomacyLetterUpdates: Map<Int, Map<String, Any?>> = emptyMap(),
     /**
      * [votePollUpdates]: per-tick vote_poll UPDATE 채널 (F4 Wave 투표) — pollId → 변경 컬럼 맵. 새 설문조사
      * 개설 시 이전 설문을 닫는 `NewVote.closeOldVote`(endDate=now) + 자연 만료(closed_at)에 대응하는 DELTA

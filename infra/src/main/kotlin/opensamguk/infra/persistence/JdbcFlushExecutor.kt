@@ -163,6 +163,16 @@ class JdbcFlushExecutor(
                 messageInvalidateMany(payload.messageInvalidates)
             }
 
+            // 8f. 외교 서신 채널 (W5d): diplomacy_letter INSERT(발송) 후 UPDATE(회수/파기/대체) —
+            //     INSERT-먼저-UPDATE 순서라 같은 tick에 발송된 prev 서신을 'replaced'로 갱신하는 UPDATE 대상이
+            //     먼저 존재한다(부모-먼저-갱신-나중). 빈 목록/맵이면 no-op.
+            if (payload.diplomacyLetterInserts.isNotEmpty()) {
+                diplomacyLetterInsertMany(payload.diplomacyLetterInserts)
+            }
+            if (payload.diplomacyLetterUpdates.isNotEmpty()) {
+                diplomacyLetterUpdateMany(payload.diplomacyLetterUpdates)
+            }
+
             // 9. log_entry createMany.
             if (payload.logEntries.isNotEmpty()) {
                 logEntryCreateMany(payload.logEntries)
@@ -957,6 +967,63 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("message", FlushVerb.UPDATE, invalidates.size))
     }
 
+    // --- step 8f: 외교 서신 채널 (W5d, diplomacy_letter) -----------------------------------------
+
+    /**
+     * INSERT the `diplomacy_letter` rows with their pre-assigned in-memory ids (=newLetterNo, so the
+     * SERIAL matches the message body + result back-reference). `state` binds through
+     * `CAST(... AS diplomacy_letter_state)` (PHP 소문자 'proposed'를 enum 'PROPOSED'로 대문자화한 값을
+     * caller가 싣는다), `date` through `CAST(... AS timestamptz)`, `aux` byte-faithfully (raw json String).
+     * INSERT 전용 — 절대 삭제/dedup되지 않는다. `prev_id`/`dest_signer`는 nullable.
+     */
+    private fun diplomacyLetterInsertMany(rows: List<DiplomacyLetterInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("id", r.id)
+                .addValue("src_nation_id", c["src_nation_id"])
+                .addValue("dest_nation_id", c["dest_nation_id"])
+                .addValue("prev_id", c["prev_id"])
+                .addValue("state", c["state"])
+                .addValue("text_brief", c["text_brief"])
+                .addValue("text_detail", c["text_detail"])
+                .addValue("date", c["date"]?.toString())
+                .addValue("src_signer", c["src_signer"])
+                .addValue("dest_signer", c["dest_signer"])
+                .addValue("aux", jsonb(c["aux"] as? String))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO diplomacy_letter (id, src_nation_id, dest_nation_id, prev_id, state, text_brief,
+                                          text_detail, date, src_signer, dest_signer, aux)
+            VALUES (:id, :src_nation_id, :dest_nation_id, :prev_id, CAST(:state AS diplomacy_letter_state),
+                    :text_brief, :text_detail, CAST(:date AS timestamptz), :src_signer, :dest_signer, :aux)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("diplomacy_letter", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /**
+     * UPDATE the `diplomacy_letter` rows (회수/파기/대체). letterNo별 변경 컬럼만 SET한다 — `state`는
+     * `diplomacy_letter_state` enum 캐스트, `aux`는 jsonb. 삽입 순서를 보존한 SET 절(컬럼 단위 last-write-wins).
+     */
+    private fun diplomacyLetterUpdateMany(updates: LinkedHashMap<Int, LinkedHashMap<String, Any?>>) {
+        for ((letterNo, columns) in updates) {
+            if (columns.isEmpty()) continue // 갱신할 컬럼이 없으면 no-op.
+            val src = MapSqlParameterSource().addValue("id", letterNo)
+            val setClause = columns.entries.joinToString(", ") { (col, value) ->
+                when (col) {
+                    "state" -> { src.addValue(col, value?.toString()); "$col = CAST(:$col AS diplomacy_letter_state)" }
+                    "aux" -> { src.addValue(col, jsonb(value as? String)); "$col = :$col" }
+                    else -> { src.addValue(col, value); "$col = :$col" }
+                }
+            }
+            jdbc.update("UPDATE diplomacy_letter SET $setClause WHERE id = :id", src)
+        }
+        lastOps.add(FlushExecOp("diplomacy_letter", FlushVerb.UPDATE, updates.size))
+    }
+
     // --- step 11: inheritance channel (T0.8) --------------------------------------------------
 
     /** INSERT into `inheritance_log`. */
@@ -1041,6 +1108,9 @@ data class FlushPayload(
     val kvWrites: List<KvWrite> = emptyList(),                // step-10 nation_env KV (delete-on-null)
     val createdMessages: List<CreatedMessageRow> = emptyList(),       // step-8c message INSERT (T0.5)
     val messageInvalidates: List<MessageInvalidateRow> = emptyList(), // step-8c message invalidate UPDATE (T0.5)
+    // --- W5d 외교 서신: diplomacy_letter INSERT(발송) + UPDATE(회수/파기/대체) ---
+    val diplomacyLetterInserts: List<DiplomacyLetterInsertRow> = emptyList(), // step-8f diplomacy_letter INSERT
+    val diplomacyLetterUpdates: LinkedHashMap<Int, LinkedHashMap<String, Any?>> = LinkedHashMap(), // step-8f UPDATE
     val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
     val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
     val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
@@ -1067,6 +1137,13 @@ data class AuctionBidInsertRow(val columns: Map<String, Any?>)
 
 /** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
 data class BettingInsertRow(val columns: Map<String, Any?>)
+
+/**
+ * `diplomacy_letter` INSERT 한 건 (W5d 외교 서신 발송, INSERT 전용). `id`는 recorder가 선할당한
+ * letterNo(= PHP `insertId()`)를 명시적으로 싣는다(in-memory 단조 id가 flushed SERIAL과 일치 —
+ * message/auction open INSERT 패턴). `columns`는 byte-faithful diplomacy_letter 컬럼 맵.
+ */
+data class DiplomacyLetterInsertRow(val id: Int, val columns: Map<String, Any?>)
 
 /** `board_post` INSERT 한 건 (F4 Wave C2 슬라이스 C, 회의실/기밀실 글, INSERT 전용). */
 data class BoardPostInsertRow(val columns: Map<String, Any?>)

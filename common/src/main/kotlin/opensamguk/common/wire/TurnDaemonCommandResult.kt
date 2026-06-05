@@ -441,6 +441,60 @@ data class BuyRandomUniqueFail(
     val reason: String,
 ) : TurnDaemonCommandResult()
 
+// ── W6 REST mutation batch — collapsed intake result classes ────────────────────────────────────
+// 메시지(W6a)/경매개설(W6c)/외교서신(W5d)/선택풀(W6f) 인테이크 결과. shape이 동일한 코드들은
+// [NationSettingResult]/[BoardActionResult] 콜랩스 패턴을 따라 `type`만으로 selector가 키잉한다.
+// `ok`는 non-default 필드라 `if (ok)` 분기 없이 선택된다.
+
+// W6a — 메시지 (공개/국가/외교/개인 공통 shape). msgType + msgID echo, reason on fail.
+@Serializable
+data class SendMessageResult(
+    override val type: String = "sendMessage",
+    override val ok: Boolean,
+    val generalId: Int,
+    val msgType: String? = null,   // public|national|diplomacy|private
+    val msgID: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class DeleteMessageResult(
+    override val type: String = "deleteMessage",
+    override val ok: Boolean,
+    val generalId: Int,
+    val msgID: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+// W6c — 경매 개설 (3 코드 collapse, mirrors NationSettingResult). auctionId echo on success.
+@Serializable
+data class AuctionOpenResult(
+    override val type: String,     // auctionOpenBuyRice|auctionOpenSellRice|auctionOpenUnique
+    override val ok: Boolean,
+    val generalId: Int,
+    val auctionId: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+// W5d — 외교 서신 (3 코드 collapse). letterNo echo on success.
+@Serializable
+data class DiploLetterResult(
+    override val type: String,     // diploSendLetter|diploRollbackLetter|diploDestroyLetter
+    override val ok: Boolean,
+    val generalId: Int,
+    val letterNo: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+// W6f — 장수 선택 풀 (pick/update collapse). 성공 시 생성/갱신된 generalId echo.
+@Serializable
+data class SelectPoolActionResult(
+    override val type: String,     // selectPoolPick|selectPoolUpdate
+    override val ok: Boolean,
+    val generalId: Int,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
 /**
  * The nation-finance setters + tournament enroll all carry the same shape — collapse to
  * [NationSettingResult] (mirrors the [GeneralBoolResult] collapse) keyed on `type` regardless of `ok`.
@@ -460,6 +514,18 @@ private val TROOP_ACTION_TYPES = setOf("troopNew", "troopKick", "troopSetName")
 
 /** The board-intake ops sharing the collapsed [BoardActionResult] shape (slice C). */
 private val BOARD_ACTION_TYPES = setOf("boardArticle", "boardComment")
+
+// ── W6 REST mutation batch — collapsed intake type sets ──
+// sendMessage/deleteMessage 는 단일-타입 → 아래 `when`에서 직접 처리.
+// buildNationCandidate 는 Q-D1 RESOLVED: BOOLEAN_OK_TYPES 에 유지 → 여기서 다루지 않는다.
+/** 경매 개설 3코드(W6c) — collapsed [AuctionOpenResult] shape. */
+private val AUCTION_OPEN_TYPES = setOf("auctionOpenBuyRice", "auctionOpenSellRice", "auctionOpenUnique")
+
+/** 외교 서신 3코드(W5d) — collapsed [DiploLetterResult] shape. */
+private val DIPLO_LETTER_TYPES = setOf("diploSendLetter", "diploRollbackLetter", "diploDestroyLetter")
+
+/** 장수 선택 풀 2코드(W6f) — collapsed [SelectPoolActionResult] shape. */
+private val SELECT_POOL_TYPES = setOf("selectPoolPick", "selectPoolUpdate")
 
 /**
  * Custom `(type, ok)` selector. [JsonContentPolymorphicSerializer] cannot be used because
@@ -487,7 +553,20 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
         if (type in BOARD_ACTION_TYPES) {
             return BoardActionResult.serializer()
         }
+        // ── W6 REST mutation batch — collapsed intake selectors (keyed on `type` only) ──
+        if (type in AUCTION_OPEN_TYPES) {
+            return AuctionOpenResult.serializer()
+        }
+        if (type in DIPLO_LETTER_TYPES) {
+            return DiploLetterResult.serializer()
+        }
+        if (type in SELECT_POOL_TYPES) {
+            return SelectPoolActionResult.serializer()
+        }
         return when (type) {
+            // W6a 메시지 — 단일-타입 (콜랩스 셋이 아니라 직접 매핑).
+            "sendMessage" -> SendMessageResult.serializer()
+            "deleteMessage" -> DeleteMessageResult.serializer()
             "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()
             "inheritResetSpecialWar" -> if (ok) InheritResetSpecialWarOk.serializer() else InheritResetSpecialWarFail.serializer()
             "inheritSetNextSpecialWar" -> if (ok) InheritSetNextSpecialWarOk.serializer() else InheritSetNextSpecialWarFail.serializer()
