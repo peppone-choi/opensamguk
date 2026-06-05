@@ -171,4 +171,12 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
      */
     @Query("select coalesce(sum(g.crew), 0) from GeneralReadEntity g where g.nationId = :nationId")
     fun sumCrewByNationId(@Param("nationId") nationId: Int): Long
+
+    /**
+     * W9 (9a) `getWorldMap`의 `shownByGeneralList` 원천 — 아국 장수가 소재한 도시 id 집합.
+     * PHP `func_map.php:135-138`: `select distinct city from general where nation=%i`.
+     * PHP는 무순서지만 deterministic 출력을 위해 cityId-ascending 정렬(표시 전용, 패러티 무관).
+     */
+    @Query("select distinct g.cityId from GeneralReadEntity g where g.nationId = :nationId order by g.cityId asc")
+    fun findDistinctCityIdByNationId(@Param("nationId") nationId: Int): List<Int>
 }

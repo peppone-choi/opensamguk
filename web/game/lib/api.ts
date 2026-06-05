@@ -11,6 +11,7 @@ import type {
     ClaimableResponse,
     ClaimResponse,
     MapPreviewResponse,
+    WorldMapResponse,
     GeneralListResponse,
     TournamentResponse,
     DiplomacyLettersResponse,
@@ -53,6 +54,10 @@ export const api = {
 
     // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
     mapPreview: () => get<MapPreviewResponse>('/api/map/preview'),
+    // In-game world map (W9) — fog 포함(spyList/shownByGeneralList/myCity/myNation). 좌표는 없으므로
+    // MapPreview와 id로 머지해 렌더한다. neutralView/showMe 인자(기본 showMe=1로 내 도시 노출).
+    worldMap: (neutralView = 0, showMe = 1) =>
+        get<WorldMapResponse>(`/api/map?neutralView=${neutralView}&showMe=${showMe}`),
 
     // Possession (장수 점유 / 빙의) — AUTH (identity resolved from Bearer)
     claimable: () => get<ClaimableResponse>('/api/generals/claimable'),
