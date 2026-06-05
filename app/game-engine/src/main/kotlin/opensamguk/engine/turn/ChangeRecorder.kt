@@ -89,6 +89,15 @@ class ChangeRecorder(
     private val diplomacyUpdateDirty = LinkedHashMap<Pair<Int, Int>, DiplomacyRowPatch>()
 
     /**
+     * 투표 UPDATE 델타 채널 (F4 Wave 투표) — pollId → 변경 컬럼 맵(`column → value`). recorder가 유일한
+     * 방출자다. 설문조사 개설이 이전 설문을 닫는 `NewVote.closeOldVote`(endDate=now) + 자연 만료에 대응하는
+     * DELTA. INSERT 전용 [votePollInserts]와 별개(신규 행 INSERT vs 기존 행 UPDATE) — diplomacy UPDATE와 같은
+     * 형태로 키별 last-write-wins(같은 tick의 나중 set이 이전 컬럼 값을 덮어쓴다) + 삽입 순서 보존(LinkedHashMap,
+     * 재키잉 없음). 컬럼 병합은 행 단위가 아니라 컬럼 단위 — 한 컬럼만 갱신해도 다른 누적 컬럼은 유지된다.
+     */
+    private val votePollUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>()
+
+    /**
      * Mailbox channel (T0.5) — the `message` INSERT intents, append-additive (receiver row BEFORE
      * sender row; the caller emits them in that order). NEVER re-keyed/dedup'd: every `send` row is a
      * distinct mailbox row.
@@ -113,6 +122,15 @@ class ChangeRecorder(
     /** 게시판 채널 (F4 C2 슬라이스 C) — board_comment INSERT (회의실/기밀실 댓글, INSERT 전용). */
     private val boardCommentInserts = mutableListOf<BoardCommentInsert>()
 
+    /** 투표 채널 (F4 Wave 투표) — vote_poll INSERT (설문조사 개설, INSERT 전용). */
+    private val votePollInserts = mutableListOf<VotePollInsert>()
+
+    /** 투표 채널 (F4 Wave 투표) — vote INSERT (투표 던지기, INSERT 전용; UNIQUE는 DB가 무시). */
+    private val voteInserts = mutableListOf<VoteInsert>()
+
+    /** 투표 채널 (F4 Wave 투표) — vote_comment INSERT (설문조사 댓글, INSERT 전용). */
+    private val voteCommentInserts = mutableListOf<VoteCommentInsert>()
+
     /** Inheritance channel (T0.8) — KV writes to `game_kv` namespace `inheritance_{ownerID}`. */
     private val inheritanceKvWrites = mutableListOf<KvWrite>()
 
@@ -133,10 +151,13 @@ class ChangeRecorder(
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
+            votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
+            votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
+            voteCommentInserts.isNotEmpty() ||
             inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
             inheritanceResultInserts.isNotEmpty()
 
@@ -357,6 +378,21 @@ class ChangeRecorder(
     fun diplomacyUpdateDirty(): List<DiplomacyRowPatch> = diplomacyUpdateDirty.values.toList()
 
     /**
+     * vote_poll UPDATE 기록 (F4 Wave 투표) — `pollId`의 행에 `columns`를 병합한다. 컬럼 단위 last-write-wins:
+     * 같은 tick에 같은 컬럼을 두 번 set하면 나중 값이 이긴다. 행 단위가 아니라 컬럼 단위 병합이므로, 한 컬럼만
+     * 갱신하는 두 번째 호출이 첫 호출이 쌓아둔 다른 컬럼을 지우지 않는다(기존 LinkedHashMap에 putAll). 삽입 순서는
+     * 보존된다(행 키 순서 + 컬럼 키 순서 모두). 사용 컬럼: `end_at`/`closed_at`(timestamptz), `updated_at`.
+     * diplomacy UPDATE 채널과 동일한 DELTA 형태(메모리 post-state가 아니라 명시적으로 기록된 컬럼만 flush).
+     */
+    fun recordVotePollUpdate(pollId: Int, columns: LinkedHashMap<String, Any?>) {
+        votePollUpdates.getOrPut(pollId) { LinkedHashMap() }.putAll(columns)
+    }
+
+    /** The recorded vote_poll UPDATE channel (F4 Wave 투표 flush 소스), pollId/컬럼 삽입 순서 보존. */
+    fun votePollUpdates(): Map<Int, Map<String, Any?>> =
+        votePollUpdates.mapValues { (_, m) -> LinkedHashMap(m) }
+
+    /**
      * Record a `message` INSERT (T0.5, PHP `sendRaw`). Pre-allocates the in-memory id (so the body's
      * `receiverMessageID`/`senderMessageID` back-references can be folded in by the caller before the
      * `bodyJson` is built) and appends — receiver row BEFORE sender row is the CALLER's responsibility
@@ -423,6 +459,21 @@ class ChangeRecorder(
         boardCommentInserts.add(BoardCommentInsert(columns))
     }
 
+    /** `vote_poll` INSERT 기록 (F4 Wave 투표, 설문조사 개설). INSERT 전용. */
+    fun recordVotePollInsert(columns: Map<String, Any?>) {
+        votePollInserts.add(VotePollInsert(columns))
+    }
+
+    /** `vote` INSERT 기록 (F4 Wave 투표, 투표 던지기). INSERT 전용 (UNIQUE는 DB가 무시). */
+    fun recordVoteInsert(columns: Map<String, Any?>) {
+        voteInserts.add(VoteInsert(columns))
+    }
+
+    /** `vote_comment` INSERT 기록 (F4 Wave 투표, 설문조사 댓글). INSERT 전용. */
+    fun recordVoteCommentInsert(columns: Map<String, Any?>) {
+        voteCommentInserts.add(VoteCommentInsert(columns))
+    }
+
     /** The recorded ng_auction UPSERTs (the T0.7 flush source), in emit order. */
     fun auctionUpserts(): List<AuctionUpsert> = auctionUpserts.toList()
 
@@ -438,13 +489,23 @@ class ChangeRecorder(
     /** 기록된 board_comment INSERT (F4 C2 슬라이스 C flush 소스), emit 순서대로. */
     fun boardCommentInserts(): List<BoardCommentInsert> = boardCommentInserts.toList()
 
+    /** 기록된 vote_poll INSERT (F4 Wave 투표 flush 소스), emit 순서대로. */
+    fun votePollInserts(): List<VotePollInsert> = votePollInserts.toList()
+
+    /** 기록된 vote INSERT (F4 Wave 투표 flush 소스), emit 순서대로. */
+    fun voteInserts(): List<VoteInsert> = voteInserts.toList()
+
+    /** 기록된 vote_comment INSERT (F4 Wave 투표 flush 소스), emit 순서대로. */
+    fun voteCommentInserts(): List<VoteCommentInsert> = voteCommentInserts.toList()
+
     /**
      * 기록된 모든 채널을 비운다 — PHP의 요청 단위 스코프에 대응하는 tick 단위 리셋.
      *
      * 데몬 recorder는 수명이 긴 단일 인스턴스([ReservedTurnHandler.recorder])다. tick 단위 리셋이
      * 없으면 누적된 델타가 매 tick 재-flush된다. 멱등한 UPDATE/patch 채널은 그저 낭비 + 무한증가지만,
-     * INSERT 전용 채널(betting / auction_bid / message / board_post / board_comment)은 이후 매 tick마다
-     * 행을 중복 INSERT한다. PHP에는 이런 누수가 없다 — 각 AJAX 요청은 한 번 INSERT하고 요청 스코프가 폐기된다.
+     * INSERT 전용 채널(betting / auction_bid / message / board_post / board_comment / vote_poll / vote /
+     * vote_comment)은 이후 매 tick마다 행을 중복 INSERT한다. PHP에는 이런 누수가 없다 — 각 AJAX 요청은
+     * 한 번 INSERT하고 요청 스코프가 폐기된다.
      *
      * [TurnRunService.runTick]가 flush 성공 직후 이를 호출한다(flush 실패 시 위에서 throw되어 이 호출을
      * 건너뛰므로, 다음 tick이 누적 델타를 재시도한다 — retry-clean 계약). id 할당자는 의도적으로 리셋하지
@@ -459,6 +520,7 @@ class ChangeRecorder(
         deletedNationIds.clear()
         kvDirty.clear()
         diplomacyUpdateDirty.clear()
+        votePollUpdates.clear()
         createdMessages.clear()
         messageInvalidates.clear()
         auctionUpserts.clear()
@@ -466,6 +528,9 @@ class ChangeRecorder(
         bettingInserts.clear()
         boardPostInserts.clear()
         boardCommentInserts.clear()
+        votePollInserts.clear()
+        voteInserts.clear()
+        voteCommentInserts.clear()
         inheritanceKvWrites.clear()
         inheritanceLogInserts.clear()
         inheritanceResultInserts.clear()

@@ -1,6 +1,9 @@
 package opensamguk.logic.golden
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
@@ -21,6 +24,7 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.domestic.getDedLevel
 import kotlin.test.assertEquals
 
 /**
@@ -157,7 +161,14 @@ object P2GoldenSupport {
                 month = e["month"]!!.jsonPrimitive.int,
                 develCost = e["develCost"]!!.jsonPrimitive.int,
             ),
-            arg = o["arg"]?.takeIf { it !is kotlinx.serialization.json.JsonNull }?.jsonObject?.let { parseArg(it) },
+            arg = o["arg"]?.let { el ->
+                when (el) {
+                    is JsonObject -> parseArg(el)
+                    // PHP 빈 배열 []은 JSON object 아닌 array로 직렬화 → 인자 없음(emptyMap).
+                    is JsonArray -> emptyMap()
+                    else -> null // JsonNull
+                }
+            },
             seedString = o["seedString"]!!.jsonPrimitive.content,
             reqGold = o["reqGold"]?.jsonPrimitive?.intOrNull,
             before = parseStatePair(o["before"]!!.jsonObject),
@@ -175,12 +186,17 @@ object P2GoldenSupport {
         )
     }
 
-    private fun parseArg(o: JsonObject): Map<String, Any?> = o.mapValues { (_, v) ->
-        val p = v.jsonPrimitive
-        when {
-            p.booleanOrNull != null -> p.boolean
-            p.intOrNull != null -> p.int
-            else -> p.content
+    private fun parseArg(o: JsonObject): Map<String, Any?> = o.mapValues { (_, v) -> parseArgValue(v) }
+
+    /** arg 값 디코드 — 배열(amountList 등)/중첩 객체 허용. 원시값 우선순위는 기존과 동일(bool→int→content). */
+    private fun parseArgValue(v: JsonElement): Any? = when (v) {
+        is JsonArray -> v.map { parseArgValue(it) }
+        is JsonObject -> v.mapValues { (_, e) -> parseArgValue(e) }
+        is JsonNull -> null
+        is JsonPrimitive -> when {
+            v.booleanOrNull != null -> v.boolean
+            v.intOrNull != null -> v.int
+            else -> v.content
         }
     }
 
@@ -196,6 +212,11 @@ object P2GoldenSupport {
         val rs = RAW_STATS.getValue(gid)
         val meta = linkedMapOf<String, Any?>(
             "explevel" to gs.int("explevel"),
+            // dedlevel은 골든이 별도 캡처 안 함(officer_level만 캡처) — dedication서 재구성한다.
+            // PHP general 행은 addDedication이 dedlevel을 dedication과 동기화 유지하므로
+            // getDedLevel(before.dedication)이 충실한 before-state. (미시드 시 무품관(0)으로 출발해
+            // +ded이 허위 승급 트리거를 발생시킴 — che_초토화 게이트가 이를 검출.)
+            "dedlevel" to getDedLevel(gs.double("dedication")),
             "intel_exp" to gs.int("intel_exp"),
             "max_domestic_critical" to gs.double("max_domestic_critical"),
             "name" to nameOf(gid),

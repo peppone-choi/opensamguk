@@ -28,6 +28,9 @@ import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
 import opensamguk.infra.persistence.TroopRow
+import opensamguk.infra.persistence.VoteCommentInsertRow
+import opensamguk.infra.persistence.VoteInsertRow
+import opensamguk.infra.persistence.VotePollInsertRow
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -330,6 +333,17 @@ object DatabaseHooks {
             // 동일; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
             boardPostInserts = recorder.boardPostInserts().map { BoardPostInsertRow(it.columns) },
             boardCommentInserts = recorder.boardCommentInserts().map { BoardCommentInsertRow(it.columns) },
+            // F4 Wave 투표 — 설문조사(vote_poll/vote/vote_comment) INSERT (recorder 채널, board와 동일;
+            // world-state 효과 아님). vote_poll-먼저-vote/vote_comment 순서는 step-8e에서 보존된다.
+            votePollInserts = recorder.votePollInserts().map { VotePollInsertRow(it.columns) },
+            voteInserts = recorder.voteInserts().map { VoteInsertRow(it.columns) },
+            voteCommentInserts = recorder.voteCommentInserts().map { VoteCommentInsertRow(it.columns) },
+            // F4 Wave 투표 — vote_poll UPDATE 채널(설문 닫기 closeOldVote / 자연 만료). INSERT 채널과 별개
+            // 행(기존 행 UPDATE). recorder가 유일한 DELTA 방출자이고, 명시적으로 기록된 컬럼만 SET한다. infra
+            // FlushPayload는 pollId → 컬럼맵의 LinkedHashMap을 그대로 받는다(삽입 순서 보존, diplomacy 패턴).
+            votePollUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>().apply {
+                recorder.votePollUpdates().forEach { (pollId, columns) -> put(pollId, LinkedHashMap(columns)) }
+            },
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,

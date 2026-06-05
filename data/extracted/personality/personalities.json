@@ -1,0 +1,197 @@
+{
+  "_meta": {
+    "title": "성격/성향(personality, 일명 ego) 메타데이터 — 충실 추출",
+    "source": "legacy/devsam-core (PHP) = grand truth",
+    "sourcePaths": [
+      "hwe/sammo/ActionPersonality/*.php (성향 클래스: id/name/info + onCalcStat/onCalcDomestic 보정)",
+      "hwe/sammo/ActionPersonality/None.php (중립 성향, id=-1)",
+      "hwe/sammo/GameConstBase.php:204-214 (neutralPersonality / availablePersonality / optionalPersonality 레지스트리)",
+      "hwe/func_converter.php:193-226 (getPersonalityClass / buildPersonalityClass — 성향 키→클래스 해석 + 캐시)",
+      "hwe/sammo/General.php:45,116,163-165 (personalityObj 보관, raw['personal'] 기준 빌드, getPersonality())",
+      "hwe/sammo/Scenario/GeneralBuilder.php:171,383,489,696 (ego 필드 = personal 키, 랜덤 시 availablePersonality에서 choice)",
+      "hwe/sammo/API/General/Join.php:73,387-389 (가입 시 character 검증/랜덤 = availablePersonality)",
+      "hwe/sammo/API/Global/GetConst.php:209-211 (클라 노출: neutral/available/optional 3분류)"
+    ],
+    "grandTruthRule": "PHP가 grand truth. core2026(packages/logic/src/triggers/special/personality/*.ts)은 구조 참조만(값 아님). 값 불일치 시 PHP 채택.",
+    "extractedFields": [
+      "key (파일/클래스명 = personalID, raw['personal']에 저장되는 키. 예: che_대의, None)",
+      "id (클래스 protected $id. None=-1. DefaultAction 기본도 -1이나 각 성향이 명시 오버라이드)",
+      "name (클래스 protected $name, 한글 표시명. None은 '-')",
+      "info (클래스 protected $info, 효과 요약 표시 텍스트. None은 빈 문자열)",
+      "registryCategory (GameConstBase 레지스트리상 분류: available=availablePersonality 10종(가입/시나리오 선택·랜덤 가능) | optional=optionalPersonality(che_은둔) | neutral+optional=None(neutralPersonality이자 optionalPersonality에 동시 등재))",
+      "statModifiers (onCalcStat 메서드의 statName→배수/증감 보정. 추출 가능한 순수 산술 보정만)",
+      "domesticModifiers (onCalcDomestic 메서드의 turnType/varType→배수/증감 보정)"
+    ],
+    "registryNote": "GameConstBase: neutralPersonality='None'(공용 기본 성향). availablePersonality=가입/시나리오에서 선택·랜덤 가능한 10종(che_안전,che_유지,che_재간,che_출세,che_할거,che_정복,che_패권,che_의협,che_대의,che_왕좌). optionalPersonality=['che_은둔','None'](존재하나 가입 선택지·랜덤 풀엔 미포함). 따라서 게임 내 무장 성향은 available 10 + che_은둔 + None = 12종 = 본 추출 전체.",
+    "statModifierNote": "statModifiers/domesticModifiers는 onCalcStat/onCalcDomestic의 if-분기를 산술 효과로만 평탄화한 결과(메타데이터). PHP 적용 순서·메서드 시그니처·ActionPipeline 폴드 순서 등 실행 로직은 추출 대상이 아님(excludedLogic 참조). op='mul'은 value*factor, op='add'는 value+delta.",
+    "statNameGlossary": {
+      "experience": "명성(경험치) — info의 '명성 ±10%'",
+      "dedication": "계급(공헌도) — info의 '계급 -10%' (che_은둔 전용)",
+      "bonusAtmos": "사기 보정 — info의 '사기 ±5'",
+      "bonusTrain": "훈련 보정 — info의 '훈련 ±5'"
+    },
+    "domesticGlossary": {
+      "turnType '징병'/'모병' + varType 'cost'": "징·모병 비용 — info의 '징·모병 비용 ±20%'",
+      "turnType '단련' + varType 'success'": "단련 성공률 — info의 '단련 성공률 +10%' (che_은둔 전용, +0.1 가산)"
+    },
+    "divergences": [
+      "core2026엔 id 필드 없음 → PHP $id가 유일 grand truth(채택).",
+      "core2026엔 None 항목 없음(personality 디렉터리에 None.ts 부재) → PHP None(id=-1) 채택.",
+      "che_은둔 onCalcStat 분기 순서: PHP=bonusAtmos→bonusTrain→experience→dedication, core2026=experience→dedication→bonusAtmos→bonusTrain. 산술 결과 동일(독립 statName 분기)이나 순서 불일치 → PHP 순서 채택(메타 값엔 무영향). name/info/모든 배수는 양측 일치."
+    ],
+    "extractedCount": 12
+  },
+  "personalities": [
+    {
+      "key": "None",
+      "id": -1,
+      "name": "-",
+      "info": "",
+      "registryCategory": "neutral+optional",
+      "statModifiers": [],
+      "domesticModifiers": []
+    },
+    {
+      "key": "che_왕좌",
+      "id": 0,
+      "name": "왕좌",
+      "info": "명성 +10%, 사기 -5",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 1.1 },
+        { "statName": "bonusAtmos", "op": "add", "delta": -5 }
+      ],
+      "domesticModifiers": []
+    },
+    {
+      "key": "che_대의",
+      "id": 1,
+      "name": "대의",
+      "info": "명성 +10%, 훈련 -5",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 1.1 },
+        { "statName": "bonusTrain", "op": "add", "delta": -5 }
+      ],
+      "domesticModifiers": []
+    },
+    {
+      "key": "che_의협",
+      "id": 2,
+      "name": "의협",
+      "info": "사기 +5, 징·모병 비용 +20%",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "bonusAtmos", "op": "add", "delta": 5 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["징병", "모병"], "varType": "cost", "op": "mul", "factor": 1.2 }
+      ]
+    },
+    {
+      "key": "che_패권",
+      "id": 3,
+      "name": "패권",
+      "info": "훈련 +5, 징·모병 비용 +20%",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "bonusTrain", "op": "add", "delta": 5 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["징병", "모병"], "varType": "cost", "op": "mul", "factor": 1.2 }
+      ]
+    },
+    {
+      "key": "che_정복",
+      "id": 4,
+      "name": "정복",
+      "info": "명성 -10%, 사기 +5",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 0.9 },
+        { "statName": "bonusAtmos", "op": "add", "delta": 5 }
+      ],
+      "domesticModifiers": []
+    },
+    {
+      "key": "che_할거",
+      "id": 5,
+      "name": "할거",
+      "info": "명성 -10%, 훈련 +5",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 0.9 },
+        { "statName": "bonusTrain", "op": "add", "delta": 5 }
+      ],
+      "domesticModifiers": []
+    },
+    {
+      "key": "che_출세",
+      "id": 6,
+      "name": "출세",
+      "info": "명성 +10%, 징·모병 비용 +20%",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 1.1 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["징병", "모병"], "varType": "cost", "op": "mul", "factor": 1.2 }
+      ]
+    },
+    {
+      "key": "che_재간",
+      "id": 7,
+      "name": "재간",
+      "info": "명성 -10%, 징·모병 비용 -20%",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 0.9 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["징병", "모병"], "varType": "cost", "op": "mul", "factor": 0.8 }
+      ]
+    },
+    {
+      "key": "che_유지",
+      "id": 8,
+      "name": "유지",
+      "info": "훈련 -5, 징·모병 비용 -20%",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "bonusTrain", "op": "add", "delta": -5 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["징병", "모병"], "varType": "cost", "op": "mul", "factor": 0.8 }
+      ]
+    },
+    {
+      "key": "che_안전",
+      "id": 9,
+      "name": "안전",
+      "info": "사기 -5, 징·모병 비용 -20%",
+      "registryCategory": "available",
+      "statModifiers": [
+        { "statName": "bonusAtmos", "op": "add", "delta": -5 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["징병", "모병"], "varType": "cost", "op": "mul", "factor": 0.8 }
+      ]
+    },
+    {
+      "key": "che_은둔",
+      "id": 10,
+      "name": "은둔",
+      "info": "명성 -10%, 계급 -10%, 사기 -5, 훈련 -5, 단련 성공률 +10%",
+      "registryCategory": "optional",
+      "statModifiers": [
+        { "statName": "experience", "op": "mul", "factor": 0.9 },
+        { "statName": "dedication", "op": "mul", "factor": 0.9 },
+        { "statName": "bonusAtmos", "op": "add", "delta": -5 },
+        { "statName": "bonusTrain", "op": "add", "delta": -5 }
+      ],
+      "domesticModifiers": [
+        { "turnType": ["단련"], "varType": "success", "op": "add", "delta": 0.1 }
+      ]
+    }
+  ]
+}

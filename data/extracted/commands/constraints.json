@@ -1,0 +1,4099 @@
+{
+  "_meta": {
+    "title": "턴 명령 제약(command constraints) 메타데이터",
+    "grandTruth": "legacy/devsam-core (PHP) — Command/{General,Nation}/*.php",
+    "structuralRef": "legacy/devsam-core2026/resources/turn-commands/default.json (명령 목록만, 제약 값 없음)",
+    "source": {
+      "constraints": "각 명령 클래스 init()/initWithArg()에서 선언하는 3종 제약 블록 (ConstraintHelper::* 팩토리 호출)",
+      "constraintBlocks": {
+        "permissionConstraints": "권한 제약(인자 무관) — 이 명령을 누를 수 있는 자격 (예: MustBeNPC, BeChief). PHP: hasPermission() 단계에서 평가",
+        "minConditionConstraints": "최소조건(인자 평가 전 precheck). game-api precheck 단계에 대응",
+        "fullConditionConstraints": "전체조건(인자 평가 후, run 직전 hasFullConditionMet). 엔진 deny 게이트"
+      },
+      "helperSignatures": "legacy/devsam-core/hwe/sammo/Constraint/ConstraintHelper.php"
+    },
+    "excludedLogic": [
+      "run() 실행 본문(자원 차감/로그/DB 갱신/RNG draw 등) — 로직, 추출 대상 아님",
+      "argTest() 인자 검증 로직",
+      "getCost()/getPreReqTurn()/getPostReqTurn() 계산식 본문 (값은 인자 표현식이 동적이라 제약 args의 raw 표현식으로만 보존)",
+      "exportJSVars() 프론트 변수 노출",
+      "동적으로 계산되는 제약 인자값(예: ReqGeneralGold($reqGold))은 PHP 표현식 원문(argsRaw)으로만 보존 — 런타임 계산 불가"
+    ],
+    "notes": [
+      "constraint args의 값은 PHP 소스 표현식 원문 그대로(예: 'GameConst::$minAvailableRecruitPop + 100', '$reqGold'). 리터럴이 아닌 표현식은 로직이므로 평가하지 않음.",
+      "args 키는 ConstraintHelper 팩토리 시그니처의 파라미터 이름으로 라벨링. PHP 문자열 리터럴은 따옴표를 포함한 원문(예: \"'pop'\", \"'주민'\")으로 보존.",
+      "*_inheritedFrom: 자식 클래스가 해당 블록을 자체 정의하지 않아 부모(extends) 블록을 상속함을 표기. 부모는 동일 카테고리(general/nation) 내에서 조회.",
+      "휴식 명령은 General/Nation 양쪽에 동명 클래스로 존재하므로 항목 2개(category로 구분).",
+      "core2026 default.json은 명령 이름 목록만 제공하며 제약 값은 없음 — 구조 참조용. 값은 전부 PHP 채택. (분기 없음: core2026은 명령 집합도 PHP의 부분집합)"
+    ],
+    "phpVsCore2026": "core2026 default.json은 general 24개 + nation 14개 명령 이름만 나열(제약 메타 0). PHP는 general 55 + nation 38 = 93개 전체 + 3종 제약 블록 보유. 제약 값 불일치 가능성 자체가 없음(core2026에 값 부재) → 전량 PHP 채택."
+  },
+  "counts": {
+    "total": 93,
+    "general": 55,
+    "nation": 38,
+    "withPermissionConstraints": 9,
+    "withMinConditionConstraints": 57,
+    "withFullConditionConstraints": 79
+  },
+  "commands": [
+    {
+      "command": "che_NPC능동",
+      "actionName": "NPC능동",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [
+        {
+          "constraint": "MustBeNPC"
+        }
+      ],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_NPC능동.php"
+    },
+    {
+      "command": "che_강행",
+      "actionName": "강행",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotSameDestCity"
+        },
+        {
+          "constraint": "NearCity",
+          "args": {
+            "distance": "3"
+          }
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_강행.php"
+    },
+    {
+      "command": "che_거병",
+      "actionName": "거병",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear+1"
+          }
+        },
+        {
+          "constraint": "AllowJoinAction"
+        },
+        {
+          "constraint": "NoPenalty",
+          "args": {
+            "penaltyKey": "PenaltyKey::NoFoundNation"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_거병.php"
+    },
+    {
+      "command": "che_건국",
+      "actionName": "건국",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'국가규모'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'정식 국가가 아니어야합니다.'"
+          }
+        },
+        {
+          "constraint": "NoPenalty",
+          "args": {
+            "penaltyKey": "PenaltyKey::NoFoundNation"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "WanderingNation"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'gennum'",
+            "keyNick": "'수하 장수'",
+            "comp": "'>='",
+            "reqVal": "2"
+          }
+        },
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "CheckNationNameDuplicate",
+          "args": {
+            "nationName": "$nationName"
+          }
+        },
+        {
+          "constraint": "AllowJoinAction"
+        },
+        {
+          "constraint": "ConstructableCity"
+        },
+        {
+          "constraint": "NoPenalty",
+          "args": {
+            "penaltyKey": "PenaltyKey::NoFoundNation"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_건국.php"
+    },
+    {
+      "command": "che_견문",
+      "actionName": "견문",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_견문.php"
+    },
+    {
+      "command": "che_군량매매",
+      "actionName": "군량매매",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqCityTrader",
+          "args": {
+            "npcType": "$general->getNPCType()"
+          }
+        },
+        {
+          "constraint": "OccupiedCity",
+          "args": {
+            "allowNeutral": "true"
+          }
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqCityTrader",
+          "args": {
+            "npcType": "$general->getNPCType()"
+          }
+        },
+        {
+          "constraint": "OccupiedCity",
+          "args": {
+            "allowNeutral": "true"
+          }
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_군량매매.php"
+    },
+    {
+      "command": "che_귀환",
+      "actionName": "귀환",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "NotCapital",
+          "args": {
+            "ignoreOfficer": "true"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_귀환.php"
+    },
+    {
+      "command": "che_기술연구",
+      "actionName": "기술 연구",
+      "category": "general",
+      "extends": "che_상업투자",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_기술연구.php"
+    },
+    {
+      "command": "che_내정특기초기화",
+      "actionName": "내정 특기 초기화",
+      "category": "general",
+      "extends": "che_전투특기초기화",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "static::$specialType",
+            "keyNick": "static::$specialText",
+            "comp": "'!='",
+            "reqVal": "'None'",
+            "errMsg": "'특기가 없습니다.'"
+          }
+        }
+      ],
+      "minConditionConstraints_inheritedFrom": "che_전투특기초기화",
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "static::$specialType",
+            "keyNick": "static::$specialText",
+            "comp": "'!='",
+            "reqVal": "'None'",
+            "errMsg": "'특기가 없습니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_전투특기초기화",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_내정특기초기화.php"
+    },
+    {
+      "command": "che_농지개간",
+      "actionName": "농지 개간",
+      "category": "general",
+      "extends": "che_상업투자",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityCapacity",
+          "args": {
+            "key": "static::$cityKey",
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_상업투자",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_농지개간.php"
+    },
+    {
+      "command": "che_단련",
+      "actionName": "단련",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "'train'",
+            "keyNick": "'훈련'",
+            "comp": "'>='",
+            "reqVal": "GameConst::$defaultTrainLow"
+          }
+        },
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "'atmos'",
+            "keyNick": "'사기'",
+            "comp": "'>='",
+            "reqVal": "GameConst::$defaultAtmosLow"
+          }
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_단련.php"
+    },
+    {
+      "command": "che_등용",
+      "actionName": "등용",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        }
+      ],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "DifferentNationDestGeneral"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_등용.php"
+    },
+    {
+      "command": "che_등용수락",
+      "actionName": "등용 수락",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'예약 불가능 커맨드'"
+          }
+        }
+      ],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "AllowJoinDestNation",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "ReqDestNationValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'국가규모'",
+            "comp": "'>'",
+            "reqVal": "0",
+            "errMsg": "'방랑군에는 임관할 수 없습니다.'"
+          }
+        },
+        {
+          "constraint": "DifferentDestNation"
+        },
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "'officer_level'",
+            "keyNick": "'직위'",
+            "comp": "'!='",
+            "reqVal": "12",
+            "errMsg": "'군주는 등용장을 수락할 수 없습니다'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_등용수락.php"
+    },
+    {
+      "command": "che_랜덤임관",
+      "actionName": "무작위 국가로 임관",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "AllowJoinAction"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_랜덤임관.php"
+    },
+    {
+      "command": "che_모반시도",
+      "actionName": "모반시도",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "NotLord"
+        },
+        {
+          "constraint": "AllowRebellion"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_모반시도.php"
+    },
+    {
+      "command": "che_모병",
+      "actionName": "모병",
+      "category": "general",
+      "extends": "che_징병",
+      "costOffset": "2",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'pop'",
+            "keyNick": "'주민'",
+            "reqVal": "GameConst::$minAvailableRecruitPop + 100"
+          }
+        },
+        {
+          "constraint": "ReqCityTrust",
+          "args": {
+            "minTrust": "20"
+          }
+        }
+      ],
+      "minConditionConstraints_inheritedFrom": "che_징병",
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'pop'",
+            "keyNick": "'주민'",
+            "reqVal": "GameConst::$minAvailableRecruitPop + $reqCrew"
+          }
+        },
+        {
+          "constraint": "ReqCityTrust",
+          "args": {
+            "minTrust": "20"
+          }
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "ReqGeneralCrewMargin",
+          "args": {
+            "crewTypeID": "$reqCrewType->id"
+          }
+        },
+        {
+          "constraint": "AvailableRecruitCrewType",
+          "args": {
+            "crewTypeID": "$reqCrewType->id"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_징병",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_모병.php"
+    },
+    {
+      "command": "che_무작위건국",
+      "actionName": "무작위 도시 건국",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'국가규모'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'정식 국가가 아니어야합니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "WanderingNation"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'gennum'",
+            "keyNick": "'수하 장수'",
+            "comp": "'>='",
+            "reqVal": "2"
+          }
+        },
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "CheckNationNameDuplicate",
+          "args": {
+            "nationName": "$nationName"
+          }
+        },
+        {
+          "constraint": "AllowJoinAction"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_무작위건국.php"
+    },
+    {
+      "command": "che_물자조달",
+      "actionName": "물자조달",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_물자조달.php"
+    },
+    {
+      "command": "che_방랑",
+      "actionName": "방랑",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "NotOpeningPart",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "AllowDiplomacyStatus",
+          "args": {
+            "nationID": "$this->generalObj->getNationID()",
+            "allowList": "[\n                2, 7\n            ]",
+            "errMsg": "'방랑할 수 없는 외교상태입니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_방랑.php"
+    },
+    {
+      "command": "che_사기진작",
+      "actionName": "사기진작",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "ReqGeneralAtmosMargin",
+          "args": {
+            "maxAtmos": "GameConst::$maxAtmosByCommand"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_사기진작.php"
+    },
+    {
+      "command": "che_상업투자",
+      "actionName": "상업 투자",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityCapacity",
+          "args": {
+            "key": "static::$cityKey",
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_상업투자.php"
+    },
+    {
+      "command": "che_선동",
+      "actionName": "선동",
+      "category": "general",
+      "extends": "che_화계",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "minConditionConstraints_inheritedFrom": "che_화계",
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "NotNeutralDestCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[7 => '불가침국입니다.']"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_화계",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_선동.php"
+    },
+    {
+      "command": "che_선양",
+      "actionName": "선양",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "FriendlyDestGeneral"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_선양.php"
+    },
+    {
+      "command": "che_성벽보수",
+      "actionName": "성벽 보수",
+      "category": "general",
+      "extends": "che_상업투자",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityCapacity",
+          "args": {
+            "key": "static::$cityKey",
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_상업투자",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_성벽보수.php"
+    },
+    {
+      "command": "che_소집해제",
+      "actionName": "소집해제",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqGeneralCrew"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_소집해제.php"
+    },
+    {
+      "command": "che_수비강화",
+      "actionName": "수비 강화",
+      "category": "general",
+      "extends": "che_상업투자",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityCapacity",
+          "args": {
+            "key": "static::$cityKey",
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_상업투자",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_수비강화.php"
+    },
+    {
+      "command": "che_숙련전환",
+      "actionName": "숙련전환",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_숙련전환.php"
+    },
+    {
+      "command": "che_요양",
+      "actionName": "요양",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_요양.php"
+    },
+    {
+      "command": "che_은퇴",
+      "actionName": "은퇴",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "'age'",
+            "keyNick": "'나이'",
+            "comp": "'>='",
+            "reqVal": "$reqAge",
+            "errMsg": "\"나이가 {$reqAge}세 이상이어야 합니다.\""
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_은퇴.php"
+    },
+    {
+      "command": "che_이동",
+      "actionName": "이동",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotSameDestCity"
+        },
+        {
+          "constraint": "NearCity",
+          "args": {
+            "distance": "1"
+          }
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_이동.php"
+    },
+    {
+      "command": "che_인재탐색",
+      "actionName": "인재탐색",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_인재탐색.php"
+    },
+    {
+      "command": "che_임관",
+      "actionName": "임관",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        }
+      ],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "AllowJoinAction"
+        },
+        {
+          "constraint": "NoPenalty",
+          "args": {
+            "penaltyKey": "PenaltyKey::NoChosenAssignment"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowJoinDestNation",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "AllowJoinAction"
+        },
+        {
+          "constraint": "NoPenalty",
+          "args": {
+            "penaltyKey": "PenaltyKey::NoChosenAssignment"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_임관.php"
+    },
+    {
+      "command": "che_장비매매",
+      "actionName": "장비매매",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqCityTrader",
+          "args": {
+            "npcType": "$general->getNPCType()"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqCityTrader",
+          "args": {
+            "npcType": "$general->getNPCType()"
+          }
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'secu'",
+            "keyNick": "'치안 수치'",
+            "reqVal": "$itemClass->getReqSecu()"
+          }
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_장비매매.php"
+    },
+    {
+      "command": "che_장수대상임관",
+      "actionName": "장수를 따라 임관",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        }
+      ],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "AllowJoinAction"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'join_mode'",
+            "comp": "'!='",
+            "reqVal": "'onlyRandom'",
+            "failMessage": "'랜덤 임관만 가능합니다'"
+          }
+        },
+        {
+          "constraint": "BeNeutral"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowJoinDestNation",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "AllowJoinAction"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_장수대상임관.php"
+    },
+    {
+      "command": "che_전투태세",
+      "actionName": "전투태세",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "ReqGeneralTrainMargin",
+          "args": {
+            "maxTrain": "GameConst::$maxTrainByCommand - 10"
+          }
+        },
+        {
+          "constraint": "ReqGeneralAtmosMargin",
+          "args": {
+            "maxAtmos": "GameConst::$maxAtmosByCommand - 10"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_전투태세.php"
+    },
+    {
+      "command": "che_전투특기초기화",
+      "actionName": "전투 특기 초기화",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "static::$specialType",
+            "keyNick": "static::$specialText",
+            "comp": "'!='",
+            "reqVal": "'None'",
+            "errMsg": "'특기가 없습니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "ReqGeneralValue",
+          "args": {
+            "key": "static::$specialType",
+            "keyNick": "static::$specialText",
+            "comp": "'!='",
+            "reqVal": "'None'",
+            "errMsg": "'특기가 없습니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_전투특기초기화.php"
+    },
+    {
+      "command": "che_접경귀환",
+      "actionName": "접경귀환",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "NotOccupiedCity"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_접경귀환.php"
+    },
+    {
+      "command": "che_정착장려",
+      "actionName": "정착 장려",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityCapacity",
+          "args": {
+            "key": "static::$cityKey",
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_정착장려.php"
+    },
+    {
+      "command": "che_주민선정",
+      "actionName": "주민 선정",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityTrust",
+          "args": {
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_주민선정.php"
+    },
+    {
+      "command": "che_증여",
+      "actionName": "증여",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "FriendlyDestGeneral"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_증여.php"
+    },
+    {
+      "command": "che_집합",
+      "actionName": "집합",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "MustBeTroopLeader"
+        },
+        {
+          "constraint": "ReqTroopMembers"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_집합.php"
+    },
+    {
+      "command": "che_징병",
+      "actionName": "징병",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "costOffset": "1",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'pop'",
+            "keyNick": "'주민'",
+            "reqVal": "GameConst::$minAvailableRecruitPop + 100"
+          }
+        },
+        {
+          "constraint": "ReqCityTrust",
+          "args": {
+            "minTrust": "20"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'pop'",
+            "keyNick": "'주민'",
+            "reqVal": "GameConst::$minAvailableRecruitPop + $reqCrew"
+          }
+        },
+        {
+          "constraint": "ReqCityTrust",
+          "args": {
+            "minTrust": "20"
+          }
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "ReqGeneralCrewMargin",
+          "args": {
+            "crewTypeID": "$reqCrewType->id"
+          }
+        },
+        {
+          "constraint": "AvailableRecruitCrewType",
+          "args": {
+            "crewTypeID": "$reqCrewType->id"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_징병.php"
+    },
+    {
+      "command": "che_첩보",
+      "actionName": "첩보",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_첩보.php"
+    },
+    {
+      "command": "che_출병",
+      "actionName": "출병",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotOpeningPart",
+          "args": {
+            "relYear": "$relYear+2"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotOpeningPart",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "NotSameDestCity"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "AllowWar"
+        },
+        {
+          "constraint": "HasRouteWithEnemy"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_출병.php"
+    },
+    {
+      "command": "che_치안강화",
+      "actionName": "치안 강화",
+      "category": "general",
+      "extends": "che_상업투자",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "RemainCityCapacity",
+          "args": {
+            "key": "static::$cityKey",
+            "actionName": "static::$actionName"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_상업투자",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_치안강화.php"
+    },
+    {
+      "command": "che_탈취",
+      "actionName": "탈취",
+      "category": "general",
+      "extends": "che_화계",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "minConditionConstraints_inheritedFrom": "che_화계",
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "NotNeutralDestCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[7 => '불가침국입니다.']"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_화계",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_탈취.php"
+    },
+    {
+      "command": "che_파괴",
+      "actionName": "파괴",
+      "category": "general",
+      "extends": "che_화계",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "minConditionConstraints_inheritedFrom": "che_화계",
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "NotNeutralDestCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[7 => '불가침국입니다.']"
+          }
+        }
+      ],
+      "fullConditionConstraints_inheritedFrom": "che_화계",
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_파괴.php"
+    },
+    {
+      "command": "che_하야",
+      "actionName": "하야",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotLord"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_하야.php"
+    },
+    {
+      "command": "che_해산",
+      "actionName": "해산",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "WanderingNation"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_해산.php"
+    },
+    {
+      "command": "che_헌납",
+      "actionName": "헌납",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_헌납.php"
+    },
+    {
+      "command": "che_화계",
+      "actionName": "화계",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "NotNeutralDestCity"
+        },
+        {
+          "constraint": "ReqGeneralGold",
+          "args": {
+            "reqGold": "$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqGeneralRice",
+          "args": {
+            "reqRice": "$reqRice"
+          }
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[7 => '불가침국입니다.']"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_화계.php"
+    },
+    {
+      "command": "che_훈련",
+      "actionName": "훈련",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralTrainMargin",
+          "args": {
+            "maxTrain": "GameConst::$maxTrainByCommand"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/che_훈련.php"
+    },
+    {
+      "command": "cr_건국",
+      "actionName": "건국",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'국가규모'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'정식 국가가 아니어야합니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "WanderingNation"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'gennum'",
+            "keyNick": "'수하 장수'",
+            "comp": "'>='",
+            "reqVal": "2"
+          }
+        },
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "CheckNationNameDuplicate",
+          "args": {
+            "nationName": "$nationName"
+          }
+        },
+        {
+          "constraint": "AllowJoinAction"
+        },
+        {
+          "constraint": "NeutralCity"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/cr_건국.php"
+    },
+    {
+      "command": "cr_맹훈련",
+      "actionName": "맹훈련",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "NotWanderingNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqGeneralCrew"
+        },
+        {
+          "constraint": "ReqGeneralTrainMargin",
+          "args": {
+            "maxTrain": "GameConst::$maxTrainByCommand"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/cr_맹훈련.php"
+    },
+    {
+      "command": "휴식",
+      "actionName": "휴식",
+      "category": "general",
+      "extends": "GeneralCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/General/휴식.php"
+    },
+    {
+      "command": "che_감축",
+      "actionName": "감축",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'방랑상태에서는 불가능합니다.'"
+          }
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqDestCityValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'규모'",
+            "comp": "'>'",
+            "reqVal": "4",
+            "errMsg": "'더이상 감축할 수 없습니다.'"
+          }
+        },
+        {
+          "constraint": "ReqDestCityValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'규모'",
+            "comp": "'>'",
+            "reqVal": "$origCityLevel",
+            "errMsg": "'더이상 감축할 수 없습니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_감축.php"
+    },
+    {
+      "command": "che_국기변경",
+      "actionName": "국기변경",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "\"can_{$actionName}\"",
+            "defaultValue": "0",
+            "comp": "'>'",
+            "reqVal": "0",
+            "errMsg": "'더이상 변경이 불가능합니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "\"can_{$actionName}\"",
+            "defaultValue": "0",
+            "comp": "'>'",
+            "reqVal": "0",
+            "errMsg": "'더이상 변경이 불가능합니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_국기변경.php"
+    },
+    {
+      "command": "che_국호변경",
+      "actionName": "국호변경",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "\"can_{$actionName}\"",
+            "defaultValue": "0",
+            "comp": "'>'",
+            "reqVal": "0",
+            "errMsg": "'더이상 변경이 불가능합니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "\"can_{$actionName}\"",
+            "defaultValue": "0",
+            "comp": "'>'",
+            "reqVal": "0",
+            "errMsg": "'더이상 변경이 불가능합니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_국호변경.php"
+    },
+    {
+      "command": "che_급습",
+      "actionName": "급습",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowDiplomacyWithTerm",
+          "args": {
+            "allowDipCode": "1",
+            "allowMinTerm": "12",
+            "errMsg": "'선포 12개월 이상인 상대국에만 가능합니다.'"
+          }
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_급습.php"
+    },
+    {
+      "command": "che_몰수",
+      "actionName": "몰수",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotOpeningPart",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'본인입니다'"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotOpeningPart",
+          "args": {
+            "relYear": "$relYear"
+          }
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "FriendlyDestGeneral"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_몰수.php"
+    },
+    {
+      "command": "che_무작위수도이전",
+      "actionName": "무작위 수도 이전",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeLord"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "BeOpeningPart",
+          "args": {
+            "relYear": "$relYear + 1"
+          }
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "\"can_무작위수도이전\"",
+            "defaultValue": "0",
+            "comp": "'>'",
+            "reqVal": "0",
+            "errMsg": "'더이상 변경이 불가능합니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_무작위수도이전.php"
+    },
+    {
+      "command": "che_물자원조",
+      "actionName": "원조",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'surlimit'",
+            "keyNick": "'외교제한'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'외교제한중입니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'작위 제한량 이상은 보낼 수 없습니다.'"
+          }
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "DifferentDestNation"
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + (($goldAmount > 0) ? 1 : 0)"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + (($riceAmount > 0) ? 1 : 0)"
+          }
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'surlimit'",
+            "keyNick": "'외교제한'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'외교제한중입니다.'"
+          }
+        },
+        {
+          "constraint": "ReqDestNationValue",
+          "args": {
+            "key": "'surlimit'",
+            "keyNick": "'외교제한'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'상대국이 외교제한중입니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_물자원조.php"
+    },
+    {
+      "command": "che_발령",
+      "actionName": "발령",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'본인입니다'"
+          }
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "FriendlyDestGeneral"
+        },
+        {
+          "constraint": "OccupiedDestCity"
+        },
+        {
+          "constraint": "SuppliedDestCity"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_발령.php"
+    },
+    {
+      "command": "che_백성동원",
+      "actionName": "백성동원",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "OccupiedDestCity"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_백성동원.php"
+    },
+    {
+      "command": "che_부대탈퇴지시",
+      "actionName": "부대 탈퇴 지시",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "BeChief"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'본인입니다'"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "FriendlyDestGeneral"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_부대탈퇴지시.php"
+    },
+    {
+      "command": "che_불가침수락",
+      "actionName": "불가침 수락",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'예약 불가능 커맨드'"
+          }
+        }
+      ],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'이미 기한이 지났습니다.'"
+          }
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "ReqDestNationValue",
+          "args": {
+            "key": "'nation'",
+            "keyNick": "'소속'",
+            "comp": "'=='",
+            "reqVal": "$this->destGeneralObj->getNationID()",
+            "errMsg": "'제의 장수가 국가 소속이 아닙니다'"
+          }
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[\n                0 => '아국과 이미 교전중입니다.',\n                1 => '아국과 이미 선포중입니다.',\n            ]"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침수락.php"
+    },
+    {
+      "command": "che_불가침제의",
+      "actionName": "불가침 제의",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'기한은 6개월 이상이어야 합니다.'"
+          }
+        }
+      ],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'기한은 6개월 이상이어야 합니다.'"
+          }
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "DifferentDestNation"
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[\n                0 => '아국과 이미 교전중입니다.',\n                1 => '아국과 이미 선포중입니다.',\n            ]"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침제의.php"
+    },
+    {
+      "command": "che_불가침파기수락",
+      "actionName": "불가침 파기 수락",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'예약 불가능 커맨드'"
+          }
+        }
+      ],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "ReqDestNationValue",
+          "args": {
+            "key": "'nation'",
+            "keyNick": "'소속'",
+            "comp": "'=='",
+            "reqVal": "$this->destGeneralObj->getNationID()",
+            "errMsg": "'제의 장수가 국가 소속이 아닙니다'"
+          }
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[7]",
+            "errMsg": "'불가침 중인 상대국에게만 가능합니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침파기수락.php"
+    },
+    {
+      "command": "che_불가침파기제의",
+      "actionName": "불가침 파기 제의",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[7]",
+            "errMsg": "'불가침 중인 상대국에게만 가능합니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침파기제의.php"
+    },
+    {
+      "command": "che_선전포고",
+      "actionName": "선전포고",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'year'",
+            "comp": "'>='",
+            "reqVal": "$startYear + 1",
+            "failMessage": "'초반제한 해제 2년전부터 가능합니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqEnvValue",
+          "args": {
+            "key": "'year'",
+            "comp": "'>='",
+            "reqVal": "$startYear + 1",
+            "failMessage": "'초반제한 해제 2년전부터 가능합니다.'"
+          }
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "NearNation"
+        },
+        {
+          "constraint": "DisallowDiplomacyBetweenStatus",
+          "args": {
+            "disallowList": "[\n                0 => '아국과 이미 교전중입니다.',\n                1 => '아국과 이미 선포중입니다.',\n                7 => '불가침국입니다.'\n            ]"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_선전포고.php"
+    },
+    {
+      "command": "che_수몰",
+      "actionName": "수몰",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotNeutralDestCity"
+        },
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "BattleGroundCity"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_수몰.php"
+    },
+    {
+      "command": "che_의병모집",
+      "actionName": "의병모집",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        },
+        {
+          "constraint": "NotOpeningPart",
+          "args": {
+            "relYear": "$relYear"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_의병모집.php"
+    },
+    {
+      "command": "che_이호경식",
+      "actionName": "이호경식",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[0, 1]",
+            "errMsg": "'선포, 전쟁중인 상대국에게만 가능합니다.'"
+          }
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_이호경식.php"
+    },
+    {
+      "command": "che_종전수락",
+      "actionName": "종전 수락",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'예약 불가능 커맨드'"
+          }
+        }
+      ],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "ReqDestNationValue",
+          "args": {
+            "key": "'nation'",
+            "keyNick": "'소속'",
+            "comp": "'=='",
+            "reqVal": "$this->destGeneralObj->getNationID()",
+            "errMsg": "'제의 장수가 국가 소속이 아닙니다'"
+          }
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[0, 1]",
+            "errMsg": "'상대국과 선포, 전쟁중이지 않습니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_종전수락.php"
+    },
+    {
+      "command": "che_종전제의",
+      "actionName": "종전 제의",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[0, 1]",
+            "errMsg": "'선포, 전쟁중인 상대국에게만 가능합니다.'"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_종전제의.php"
+    },
+    {
+      "command": "che_증축",
+      "actionName": "증축",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'방랑상태에서는 불가능합니다.'"
+          }
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqDestCityValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'규모'",
+            "comp": "'>'",
+            "reqVal": "3",
+            "errMsg": "'수진, 진, 관문에서는 불가능합니다.'"
+          }
+        },
+        {
+          "constraint": "ReqDestCityValue",
+          "args": {
+            "key": "'level'",
+            "keyNick": "'규모'",
+            "comp": "'<'",
+            "reqVal": "8",
+            "errMsg": "'더이상 증축할 수 없습니다.'"
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold+$reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice+$reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_증축.php"
+    },
+    {
+      "command": "che_천도",
+      "actionName": "천도",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'천도 대상으로 도달할 방법이 없습니다.'"
+          }
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "OccupiedDestCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "SuppliedDestCity"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'capital'",
+            "keyNick": "'수도'",
+            "comp": "'!='",
+            "reqVal": "$this->destCity['city']",
+            "errMsg": "'이미 수도입니다.'"
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_천도.php"
+    },
+    {
+      "command": "che_초토화",
+      "actionName": "초토화",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'surlimit'",
+            "keyNick": "'제한 턴'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'외교제한 턴이 남아있습니다.'"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "OccupiedDestCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "SuppliedDestCity"
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'capital'",
+            "keyNick": "'수도'",
+            "comp": "'!='",
+            "reqVal": "$this->destCity['city']",
+            "errMsg": "'수도입니다.'"
+          }
+        },
+        {
+          "constraint": "ReqNationValue",
+          "args": {
+            "key": "'surlimit'",
+            "keyNick": "'제한 턴'",
+            "comp": "'=='",
+            "reqVal": "0",
+            "errMsg": "'외교제한 턴이 남아있습니다.'"
+          }
+        },
+        {
+          "constraint": "DisallowDiplomacyStatus",
+          "args": {
+            "nationID": "$this->generalObj->getNationID()",
+            "disallowList": "[\n                0 => '평시에만 가능합니다.',\n            ]"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_초토화.php"
+    },
+    {
+      "command": "che_포상",
+      "actionName": "포상",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'본인입니다'"
+          }
+        },
+        {
+          "constraint": "NotBeNeutral"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ExistsDestGeneral"
+        },
+        {
+          "constraint": "FriendlyDestGeneral"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_포상.php"
+    },
+    {
+      "command": "che_피장파장",
+      "actionName": "피장파장",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "AlwaysFail",
+          "args": {
+            "failMessage": "'해당 전략을 아직 사용할 수 없습니다'"
+          }
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ExistsDestNation"
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[0, 1]",
+            "errMsg": "'선포, 전쟁중인 상대국에게만 가능합니다.'"
+          }
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_피장파장.php"
+    },
+    {
+      "command": "che_필사즉생",
+      "actionName": "필사즉생",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "AllowDiplomacyStatus",
+          "args": {
+            "nationID": "$this->generalObj->getNationID()",
+            "allowList": "[\n                0\n            ]",
+            "errMsg": "'전쟁중이 아닙니다.'"
+          }
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_필사즉생.php"
+    },
+    {
+      "command": "che_허보",
+      "actionName": "허보",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "NotNeutralDestCity"
+        },
+        {
+          "constraint": "NotOccupiedDestCity"
+        },
+        {
+          "constraint": "AllowDiplomacyBetweenStatus",
+          "args": {
+            "allowDipCodeList": "[0, 1]",
+            "errMsg": "'선포, 전쟁중인 상대국에게만 가능합니다.'"
+          }
+        },
+        {
+          "constraint": "AvailableStrategicCommand"
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/che_허보.php"
+    },
+    {
+      "command": "cr_인구이동",
+      "actionName": "인구이동",
+      "category": "nation",
+      "extends": "NationCommand",
+      "reqArg": true,
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'pop'",
+            "keyNick": "'주민'",
+            "reqVal": "GameConst::$minAvailableRecruitPop + 100"
+          }
+        }
+      ],
+      "fullConditionConstraints": [
+        {
+          "constraint": "NotSameDestCity"
+        },
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "ReqCityCapacity",
+          "args": {
+            "key": "'pop'",
+            "keyNick": "'주민'",
+            "reqVal": "GameConst::$minAvailableRecruitPop + 100"
+          }
+        },
+        {
+          "constraint": "OccupiedDestCity"
+        },
+        {
+          "constraint": "NearCity",
+          "args": {
+            "distance": "1"
+          }
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "SuppliedCity"
+        },
+        {
+          "constraint": "SuppliedDestCity"
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/cr_인구이동.php"
+    },
+    {
+      "command": "event_극병연구",
+      "actionName": "극병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_극병연구.php"
+    },
+    {
+      "command": "event_대검병연구",
+      "actionName": "대검병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_대검병연구.php"
+    },
+    {
+      "command": "event_무희연구",
+      "actionName": "무희 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_무희연구.php"
+    },
+    {
+      "command": "event_산저병연구",
+      "actionName": "산저병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_산저병연구.php"
+    },
+    {
+      "command": "event_상병연구",
+      "actionName": "상병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_상병연구.php"
+    },
+    {
+      "command": "event_원융노병연구",
+      "actionName": "원융노병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_원융노병연구.php"
+    },
+    {
+      "command": "event_음귀병연구",
+      "actionName": "음귀병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_음귀병연구.php"
+    },
+    {
+      "command": "event_화륜차연구",
+      "actionName": "화륜차 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_화륜차연구.php"
+    },
+    {
+      "command": "event_화시병연구",
+      "actionName": "화시병 연구",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [
+        {
+          "constraint": "OccupiedCity"
+        },
+        {
+          "constraint": "BeChief"
+        },
+        {
+          "constraint": "ReqNationAuxValue",
+          "args": {
+            "key": "static::$auxType->value",
+            "defaultValue": "0",
+            "comp": "\"<\"",
+            "reqVal": "1",
+            "errMsg": "\"{$name}가 이미 완료되었습니다.\""
+          }
+        },
+        {
+          "constraint": "ReqNationGold",
+          "args": {
+            "reqGold": "GameConst::$basegold + $reqGold"
+          }
+        },
+        {
+          "constraint": "ReqNationRice",
+          "args": {
+            "reqRice": "GameConst::$baserice + $reqRice"
+          }
+        }
+      ],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/event_화시병연구.php"
+    },
+    {
+      "command": "휴식",
+      "actionName": "휴식",
+      "category": "nation",
+      "extends": "NationCommand",
+      "permissionConstraints": [],
+      "minConditionConstraints": [],
+      "fullConditionConstraints": [],
+      "_source": "legacy/devsam-core/hwe/sammo/Command/Nation/휴식.php"
+    }
+  ]
+}

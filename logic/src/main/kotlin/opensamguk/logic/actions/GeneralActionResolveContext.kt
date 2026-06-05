@@ -138,6 +138,15 @@ class GeneralActionResolveContext(
     }
 
     /**
+     * Buffer a PLAIN-format line into the ACTOR's OWN action-log stream ([logs]), no MONTH prefix.
+     * PHP `$logger->pushGeneralActionLog(body, ActionLogger::PLAIN)` on the actor's own logger
+     * (e.g. che_물자원조.php:226) — a PLAIN-rendered line that IS part of the actor's action log
+     * (golden `logLines`), unlike [addPlainLog] which routes to the separate plainLogs side-bucket
+     * (per-target 이동/집합 + 레벨 변동 lines). Same `<C>●</>{text}` render, different stream.
+     */
+    fun addActionPlainLog(text: String) { if (text.isNotEmpty()) logs.add("<C>●</>$text") }
+
+    /**
      * Buffer a PLAIN-format line on a DEST general's own action-log scope. PHP che_포상.php:174
      * `$destGeneral->getLogger()->pushGeneralActionLog($body, ActionLogger::PLAIN)` — PLAIN format
      * `<C>●</>{body}` (no MONTH prefix), routed to the dest general's bucket.

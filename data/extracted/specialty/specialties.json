@@ -1,0 +1,535 @@
+{
+  "_meta": {
+    "title": "특기(specialty) 메타데이터 — 충실 추출",
+    "source": "legacy/devsam-core (PHP) = grand truth",
+    "sourcePaths": [
+      "hwe/sammo/ActionSpecialDomestic/*.php (내정특기 + che_event_* 전투트리거 변형)",
+      "hwe/sammo/ActionSpecialWar/*.php (전투특기)",
+      "hwe/sammo/BaseSpecial.php (추상 베이스: id/name/info/selectWeightType/selectWeight/type)",
+      "hwe/sammo/SpecialityHelper.php (비트마스크 상수 + 선택 엔진)",
+      "hwe/sammo/GameConstBase.php:179-201 (default/available/optional 레지스트리)"
+    ],
+    "grandTruthRule": "PHP가 grand truth. core2026은 값 아닌 구조 참조만. 값 불일치 발견 시 PHP 채택.",
+    "extractedFields": [
+      "className (파일/클래스명 = specialID, 예: che_경작)",
+      "id (BaseSpecial::$id)",
+      "name (BaseSpecial::$name, 한글 표시명)",
+      "info (BaseSpecial::$info, HTML 포함 표시 설명문 — 효과 요약 텍스트)",
+      "selectWeightType (WEIGHT_NORM=1 | WEIGHT_PERCENT=2)",
+      "selectWeight (선택 가중치 수치)",
+      "type (선택조건 비트마스크 배열 — 각 원소는 OR된 플래그; 능력치/병종/숙련 적격 게이트)",
+      "selectable (GameConst available 목록 포함 여부)"
+    ],
+    "EXCLUDED_LOGIC": {
+      "reason": "효과 로직은 PHP 메서드 본문(코드)이라 데이터 추출 불가 — 메타데이터만 추출하고 로직은 명시적으로 제외함.",
+      "excludedMethods": [
+        "onCalcDomestic($turnType,$varType,$value,$aux) — 내정 보정 효과 계산 (예: score×1.1, cost×0.8, success+0.1)",
+        "onCalcStat / onCalcOpposeStat — 전투 능력치/숙련 가산 계산",
+        "getWarPowerMultiplier(WarUnit) — 공/수 대미지 배율 (예: 기병 공격 1.2)",
+        "getBattleInitSkillTriggerList / getBattlePhaseSkillTriggerList — 전투 트리거 주입 (격노/위압/저격/의술 등 발동 로직)",
+        "onCalcStrategic / onCalcNationalIncome / onArbitraryAction — 기타 효과 훅"
+      ],
+      "note": "info 필드의 '효과 요약 텍스트'는 표시용 메타데이터로 추출함(코드 아님). 실제 수치 계산식은 위 메서드 본문에 있으며 데이터로 추출하지 않음."
+    },
+    "notes": [
+      "특기 효과의 발동조건(type)은 '선택(부여) 적격 조건'이며 '전투 중 발동조건'이 아님. 전투 중 발동조건(확률/페이즈 등)은 메서드 로직이라 제외됨 — info 텍스트로만 서술.",
+      "che_event_* (20개)는 전투특기를 내정-트리거 형태로 노출한 변형 클래스. 어떤 GameConst available/optional 목록에도 없어 selectable=false. id는 동명 war 특기와 동일.",
+      "None(id 0): 무특기 플레이스홀더. che_거상(id 999): info '<비활성화>', type=[] 빈 배열 — 비활성 특기.",
+      "d_setting/GameConst.php(시나리오 오버라이드)에는 Special* 재정의 없음 → GameConstBase 레지스트리가 활성."
+    ],
+    "phpVerified": "PHP grand truth 값과 Kotlin 포팅(logic/.../SpecialityHelper.kt WAR/DOMESTIC 테이블, traits/ActionSpecialDomestic.kt, war/specialty/SpecialWarRegistry.kt) 대조 — 모든 id/name/weight/weightType/type 마스크 일치.",
+    "extractedAt": "2026-06-03",
+    "counts": {
+      "domesticSelectable": 8,
+      "domesticPureFiles": 9,
+      "domesticEventVariants": 20,
+      "domesticNone": 1,
+      "warSelectable": 20,
+      "warFiles": 20,
+      "warNone": 1,
+      "totalFilesScanned": 51
+    }
+  },
+
+  "flags": {
+    "_note": "SpecialityHelper.php:6-25 — type 배열 각 원소는 아래 플래그의 OR. 적격 판정: (cond == (cond & myCond)) 인 cond가 하나라도 있으면 valid.",
+    "DISABLED": "0x1",
+    "STAT_LEADERSHIP": "0x2",
+    "STAT_STRENGTH": "0x4",
+    "STAT_INTEL": "0x8",
+    "ARMY_FOOTMAN": "0x100",
+    "ARMY_ARCHER": "0x200",
+    "ARMY_CAVALRY": "0x400",
+    "ARMY_WIZARD": "0x800",
+    "ARMY_SIEGE": "0x1000",
+    "REQ_DEXTERITY": "0x4000",
+    "STAT_NOT_LEADERSHIP": "0x20000",
+    "STAT_NOT_STRENGTH": "0x40000",
+    "STAT_NOT_INTEL": "0x80000"
+  },
+
+  "weightTypes": {
+    "WEIGHT_NORM": 1,
+    "WEIGHT_PERCENT": 2
+  },
+
+  "registry": {
+    "_source": "GameConstBase.php:179-201",
+    "defaultSpecialDomestic": "None",
+    "availableSpecialDomestic": [
+      "che_경작", "che_상재", "che_발명", "che_축성", "che_수비", "che_통찰", "che_인덕", "che_귀모"
+    ],
+    "optionalSpecialDomestic": ["None"],
+    "defaultSpecialWar": "None",
+    "availableSpecialWar": [
+      "che_귀병", "che_신산", "che_환술", "che_집중", "che_신중", "che_반계",
+      "che_보병", "che_궁병", "che_기병", "che_공성",
+      "che_돌격", "che_무쌍", "che_견고", "che_위압",
+      "che_저격", "che_필살", "che_징병", "che_의술", "che_격노", "che_척사"
+    ],
+    "optionalSpecialWar": ["None"]
+  },
+
+  "domestic": {
+    "_note": "내정특기. 디렉터리 ActionSpecialDomestic/. 순수 내정특기(che_*) + None. 효과=onCalcDomestic(코드, 제외). type=선택 적격 능력치 게이트.",
+    "specialties": [
+      {
+        "className": "None", "id": 0, "name": "-", "info": "",
+        "selectWeightType": 1, "selectWeight": 0,
+        "type": [{"raw": "DISABLED", "flags": ["DISABLED"]}],
+        "selectable": false,
+        "registryNote": "기본 내정특기(defaultSpecialDomestic). optionalSpecialDomestic 포함."
+      },
+      {
+        "className": "che_경작", "id": 1, "name": "경작",
+        "info": "[내정] 농지 개간 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_상재", "id": 2, "name": "상재",
+        "info": "[내정] 상업 투자 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_발명", "id": 3, "name": "발명",
+        "info": "[내정] 기술 연구 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_축성", "id": 10, "name": "축성",
+        "info": "[내정] 성벽 보수 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_수비", "id": 11, "name": "수비",
+        "info": "[내정] 수비 강화 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_통찰", "id": 12, "name": "통찰",
+        "info": "[내정] 치안 강화 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true,
+        "note": "치안을 게이트하지만 type은 STAT_STRENGTH(분류상 무력형)."
+      },
+      {
+        "className": "che_인덕", "id": 20, "name": "인덕",
+        "info": "[내정] 주민 선정·정착 장려 : 기본 보정 +10%, 성공률 +10%p, 비용 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]}],
+        "selectable": true,
+        "note": "효과는 민심|인구 두 turnType 게이트(코드, 제외)."
+      },
+      {
+        "className": "che_귀모", "id": 31, "name": "귀모",
+        "info": "[계략] 화계·탈취·파괴·선동 : 성공률 +20%p",
+        "selectWeightType": 2, "selectWeight": 2.5,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": true,
+        "note": "WEIGHT_PERCENT 가중(절대확률 2.5%). 효과는 계략&success+0.2 (코드, 제외)."
+      },
+      {
+        "className": "che_거상", "id": 999, "name": "거상",
+        "info": "<비활성화>",
+        "selectWeightType": 1, "selectWeight": 0,
+        "type": [],
+        "selectable": false,
+        "note": "비활성 특기. type 빈 배열, 어떤 레지스트리에도 미포함."
+      }
+    ]
+  },
+
+  "domesticEventVariants": {
+    "_note": "ActionSpecialDomestic/che_event_*.php — 전투특기를 내정-트리거(WarUnitTriggerCaller) 형태로 노출한 변형 클래스 20개. GameConst 어떤 목록에도 없어 selectable=false. id는 동명 war 특기와 동일. 효과=전투 트리거/배율 로직(코드, 제외).",
+    "specialties": [
+      {
+        "className": "che_event_귀병", "id": 40, "name": "귀병",
+        "info": "[군사] 귀병 계통 징·모병비 -10%<br>[전투] 계략 성공 확률 +20%p,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 귀병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL | ARMY_WIZARD | REQ_DEXTERITY | STAT_NOT_STRENGTH", "flags": ["STAT_INTEL", "ARMY_WIZARD", "REQ_DEXTERITY", "STAT_NOT_STRENGTH"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_신산", "id": 41, "name": "신산",
+        "info": "[계략] 화계·탈취·파괴·선동 : 성공률 +10%p<br>[전투] 계략 시도 확률 +20%p, 계략 성공 확률 +20%p",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_환술", "id": 42, "name": "환술",
+        "info": "[전투] 계략 성공 확률 +10%p, 계략 성공 시 대미지 +30%",
+        "selectWeightType": 2, "selectWeight": 5,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_집중", "id": 43, "name": "집중",
+        "info": "[전투] 계략 성공 시 대미지 +50%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_신중", "id": 44, "name": "신중",
+        "info": "[전투] 계략 성공 확률 100%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_반계", "id": 45, "name": "반계",
+        "info": "[전투] 상대의 계략 성공 확률 -10%p, 상대의 계략을 40% 확률로 되돌림, 반목 성공시 대미지 추가(+60% → +150%)",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_보병", "id": 50, "name": "보병",
+        "info": "[군사] 보병 계통 징·모병비 -10%<br>[전투] 공격 시 아군 피해 -10%, 수비 시 아군 피해 -20%,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 보병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_FOOTMAN | STAT_NOT_INTEL", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_FOOTMAN", "STAT_NOT_INTEL"]},
+          {"raw": "STAT_STRENGTH | REQ_DEXTERITY | ARMY_FOOTMAN", "flags": ["STAT_STRENGTH", "REQ_DEXTERITY", "ARMY_FOOTMAN"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_궁병", "id": 51, "name": "궁병",
+        "info": "[군사] 궁병 계통 징·모병비 -10%<br>[전투] 회피 확률 +20%p,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 궁병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_ARCHER | STAT_NOT_INTEL", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_ARCHER", "STAT_NOT_INTEL"]},
+          {"raw": "STAT_STRENGTH | REQ_DEXTERITY | ARMY_ARCHER", "flags": ["STAT_STRENGTH", "REQ_DEXTERITY", "ARMY_ARCHER"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_기병", "id": 52, "name": "기병",
+        "info": "[군사] 기병 계통 징·모병비 -10%<br>[전투] 수비 시 대미지 +10%, 공격 시 대미지 +20%,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 기병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_CAVALRY | STAT_NOT_INTEL", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_CAVALRY", "STAT_NOT_INTEL"]},
+          {"raw": "STAT_STRENGTH | REQ_DEXTERITY | ARMY_CAVALRY", "flags": ["STAT_STRENGTH", "REQ_DEXTERITY", "ARMY_CAVALRY"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_공성", "id": 53, "name": "공성",
+        "info": "[군사] 차병 계통 징·모병비 -10%<br>[전투] 성벽 공격 시 대미지 +100%,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 차병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_SIEGE", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_SIEGE"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_돌격", "id": 60, "name": "돌격",
+        "info": "[전투] 공격 시 대등/유리한 병종에게는 퇴각 전까지 전투, 공격 시 페이즈 + 2, 공격 시 대미지 +5%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_무쌍", "id": 61, "name": "무쌍",
+        "info": "[전투] 대미지 +5%, 피해 -2%, 공격 시 필살 확률 +10%p, <br>승리 수의 로그 비례로 대미지 상승(10회 ⇒ +5%, 40회 ⇒ +15%)<br>승리 수의 로그 비례로 피해 감소(10회 ⇒ -2%, 40회 ⇒ -6%)",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_견고", "id": 62, "name": "견고",
+        "info": "[전투] 상대 필살 확률 -20%p, 상대 계략 시도시 성공 확률 -10%p, 부상 없음, 아군 피해 -10%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_위압", "id": 63, "name": "위압",
+        "info": "[전투] 첫 페이즈 위압 발동(적 공격, 회피 불가, 사기 5 감소)",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_저격", "id": 70, "name": "저격",
+        "info": "[전투] 새로운 상대와 전투 시 50% 확률로 저격 발동, 성공 시 사기+20",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_필살", "id": 71, "name": "필살",
+        "info": "[전투] 필살 확률 +30%p, 필살 발동시 대상 회피 불가, 필살 계수 향상",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_징병", "id": 72, "name": "징병",
+        "info": "[군사] 징병/모병 시 훈사 70/84 제공<br>[기타] 통솔 순수 능력치 보정 +25%, 징병/모병/소집해제 시 인구 변동 없음",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_의술", "id": 73, "name": "의술",
+        "info": "[군사] 매 턴마다 자신(100%)과 소속 도시 장수(적 포함 50%) 부상 회복<br>[전투] 페이즈마다 40% 확률로 치료 발동(아군 피해 30% 감소, 부상 회복)",
+        "selectWeightType": 2, "selectWeight": 2,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": false
+      },
+      {
+        "className": "che_event_격노", "id": 74, "name": "격노",
+        "info": "[전투] 상대방 필살 시 격노(필살) 발동, 회피 시도시 25% 확률로 격노 발동, 공격 시 일정 확률로 진노(1페이즈 추가), 격노마다 대미지 20% 추가 중첩",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": false
+      },
+      {
+        "className": "che_event_척사", "id": 75, "name": "척사",
+        "info": "[전투] 지역·도시 병종 상대로 대미지 +20%, 아군 피해 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": false
+      }
+    ]
+  },
+
+  "war": {
+    "_note": "전투특기. 디렉터리 ActionSpecialWar/. 20개 선택가능 + None. 효과=onCalcStat/getWarPowerMultiplier/getBattle*SkillTriggerList(코드, 제외). type=선택 적격 능력치/병종/숙련 게이트(REQ_DEXTERITY는 숙련 기반 특기).",
+    "specialties": [
+      {
+        "className": "None", "id": 0, "name": "-", "info": "",
+        "selectWeightType": 1, "selectWeight": 0,
+        "type": [{"raw": "DISABLED", "flags": ["DISABLED"]}],
+        "selectable": false,
+        "registryNote": "기본 전투특기(defaultSpecialWar). optionalSpecialWar 포함."
+      },
+      {
+        "className": "che_귀병", "id": 40, "name": "귀병",
+        "info": "[군사] 귀병 계통 징·모병비 -10%<br>[전투] 계략 성공 확률 +20%p,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 귀병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL | ARMY_WIZARD | REQ_DEXTERITY | STAT_NOT_STRENGTH", "flags": ["STAT_INTEL", "ARMY_WIZARD", "REQ_DEXTERITY", "STAT_NOT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_신산", "id": 41, "name": "신산",
+        "info": "[계략] 화계·탈취·파괴·선동 : 성공률 +10%p<br>[전투] 계략 시도 확률 +20%p, 계략 성공 확률 +20%p",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_환술", "id": 42, "name": "환술",
+        "info": "[전투] 계략 성공 확률 +10%p, 계략 성공 시 대미지 +30%",
+        "selectWeightType": 2, "selectWeight": 5,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true,
+        "note": "WEIGHT_PERCENT 가중(절대확률 5%)."
+      },
+      {
+        "className": "che_집중", "id": 43, "name": "집중",
+        "info": "[전투] 계략 성공 시 대미지 +50%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_신중", "id": 44, "name": "신중",
+        "info": "[전투] 계략 성공 확률 100%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_반계", "id": 45, "name": "반계",
+        "info": "[전투] 상대의 계략 성공 확률 -10%p, 상대의 계략을 40% 확률로 되돌림, 반목 성공시 대미지 추가(+60% → +150%)",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_보병", "id": 50, "name": "보병",
+        "info": "[군사] 보병 계통 징·모병비 -10%<br>[전투] 공격 시 아군 피해 -10%, 수비 시 아군 피해 -20%,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 보병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_FOOTMAN | STAT_NOT_INTEL", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_FOOTMAN", "STAT_NOT_INTEL"]},
+          {"raw": "STAT_STRENGTH | REQ_DEXTERITY | ARMY_FOOTMAN", "flags": ["STAT_STRENGTH", "REQ_DEXTERITY", "ARMY_FOOTMAN"]}
+        ],
+        "selectable": true
+      },
+      {
+        "className": "che_궁병", "id": 51, "name": "궁병",
+        "info": "[군사] 궁병 계통 징·모병비 -10%<br>[전투] 회피 확률 +20%p,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 궁병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_ARCHER | STAT_NOT_INTEL", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_ARCHER", "STAT_NOT_INTEL"]},
+          {"raw": "STAT_STRENGTH | REQ_DEXTERITY | ARMY_ARCHER", "flags": ["STAT_STRENGTH", "REQ_DEXTERITY", "ARMY_ARCHER"]}
+        ],
+        "selectable": true
+      },
+      {
+        "className": "che_기병", "id": 52, "name": "기병",
+        "info": "[군사] 기병 계통 징·모병비 -10%<br>[전투] 수비 시 대미지 +10%, 공격 시 대미지 +20%,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 기병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_CAVALRY | STAT_NOT_INTEL", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_CAVALRY", "STAT_NOT_INTEL"]},
+          {"raw": "STAT_STRENGTH | REQ_DEXTERITY | ARMY_CAVALRY", "flags": ["STAT_STRENGTH", "REQ_DEXTERITY", "ARMY_CAVALRY"]}
+        ],
+        "selectable": true
+      },
+      {
+        "className": "che_공성", "id": 53, "name": "공성",
+        "info": "[군사] 차병 계통 징·모병비 -10%<br>[전투] 성벽 공격 시 대미지 +100%,<br>공격시 상대 병종에/수비시 자신 병종 숙련에 차병 숙련을 가산",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_LEADERSHIP | REQ_DEXTERITY | ARMY_SIEGE", "flags": ["STAT_LEADERSHIP", "REQ_DEXTERITY", "ARMY_SIEGE"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_돌격", "id": 60, "name": "돌격",
+        "info": "[전투] 공격 시 대등/유리한 병종에게는 퇴각 전까지 전투, 공격 시 페이즈 + 2, 공격 시 대미지 +5%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_무쌍", "id": 61, "name": "무쌍",
+        "info": "[전투] 대미지 +5%, 피해 -2%, 공격 시 필살 확률 +10%p, <br>승리 수의 로그 비례로 대미지 상승(10회 ⇒ +5%, 40회 ⇒ +15%)<br>승리 수의 로그 비례로 피해 감소(10회 ⇒ -2%, 40회 ⇒ -6%)",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_견고", "id": 62, "name": "견고",
+        "info": "[전투] 상대 필살 확률 -20%p, 상대 계략 시도시 성공 확률 -10%p, 부상 없음, 아군 피해 -10%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_위압", "id": 63, "name": "위압",
+        "info": "[전투] 첫 페이즈 위압 발동(적 공격, 회피 불가, 사기 5 감소)",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_저격", "id": 70, "name": "저격",
+        "info": "[전투] 새로운 상대와 전투 시 50% 확률로 저격 발동, 성공 시 사기+20",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": true
+      },
+      {
+        "className": "che_필살", "id": 71, "name": "필살",
+        "info": "[전투] 필살 확률 +30%p, 필살 발동시 대상 회피 불가, 필살 계수 향상",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": true
+      },
+      {
+        "className": "che_징병", "id": 72, "name": "징병",
+        "info": "[군사] 징병/모병 시 훈사 70/84 제공<br>[기타] 통솔 순수 능력치 보정 +25%, 징병/모병/소집해제 시 인구 변동 없음",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": true
+      },
+      {
+        "className": "che_의술", "id": 73, "name": "의술",
+        "info": "[군사] 매 턴마다 자신(100%)과 소속 도시 장수(적 포함 50%) 부상 회복<br>[전투] 페이즈마다 40% 확률로 치료 발동(아군 피해 30% 감소, 부상 회복)",
+        "selectWeightType": 2, "selectWeight": 2,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": true,
+        "note": "WEIGHT_PERCENT 가중(절대확률 2%)."
+      },
+      {
+        "className": "che_격노", "id": 74, "name": "격노",
+        "info": "[전투] 상대방 필살 시 격노(필살) 발동, 회피 시도시 25% 확률로 격노 발동, 공격 시 일정 확률로 진노(1페이즈 추가), 격노마다 대미지 20% 추가 중첩",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [{"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]}],
+        "selectable": true
+      },
+      {
+        "className": "che_척사", "id": 75, "name": "척사",
+        "info": "[전투] 지역·도시 병종 상대로 대미지 +20%, 아군 피해 -20%",
+        "selectWeightType": 1, "selectWeight": 1,
+        "type": [
+          {"raw": "STAT_LEADERSHIP", "flags": ["STAT_LEADERSHIP"]},
+          {"raw": "STAT_STRENGTH", "flags": ["STAT_STRENGTH"]},
+          {"raw": "STAT_INTEL", "flags": ["STAT_INTEL"]}
+        ],
+        "selectable": true
+      }
+    ]
+  }
+}
