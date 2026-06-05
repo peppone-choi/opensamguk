@@ -85,6 +85,8 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 - 🔄 **P7** read API ✅ + frontend ⬜ — dedicated REST controllers for auction/betting/message/mailbox/diplomacy 완료, `GetDiplomacy.php` neutral-map masking 완료, frontend pages (`web/game/app/game/`) 진행 예정.
 - ⬜ **P8** parity harness (PHP 93-command compare, 23 missing ported/backlogged) + gateway orchestration + AWS EC2 t3.large deploy (LLM-free, 0 external API deps). Infra scaffold present: `.github/workflows/deploy.yml`, `docker-compose.prod.yml`, `infra/nginx/`, `scripts/deploy.sh`, `HealthCheckController`.
 
+**미래 마일스톤(로드맵 외, 조건 충족 시):** `docs/superpowers/MILESTONES.md` — **M-config**(post-parity 상수 외부화: 풀 패러티 close + 운영 안정 후 `GameConst` 등 패러티값을 JSON으로, 패러티 골든을 frozen-baseline 회귀 게이트로 교체).
+
 ## 프론트엔드/배포 (F0–F5)
 
 P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`. 원칙: `hwe/ts/` Vue가 프론트 grand truth(`hwe/*.php`는 dist mount 셸), PHP가 이긴다. 사용법·서비스 표·빠른 시작은 `README.md`(한글), 모듈/명령은 `AGENTS.md` 참조.
