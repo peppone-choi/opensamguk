@@ -110,7 +110,7 @@ object ScenarioJson {
         special = strOrNull(t.getOrNull(G_CHAR)),
     )
 
-    /** Decode `cities_1010.json` (the A-minimal 24-city subset). Stats are already x100-scaled. */
+    /** Decode `cities_1010.json` (che 풀맵 94도시). Stats are already x100-scaled. */
     fun loadCities(json: String): List<ScenarioCity> {
         val root = MetaJson.decode(json)
         return arr(root["cities"]).map {
@@ -129,6 +129,13 @@ object ScenarioJson {
                 wallMax = intOf(c["wall_max"], 0),
                 x = intOrNull(c["x"]),
                 y = intOrNull(c["y"]),
+                // 공백지 베이스 초기스탯(CityConstBase). 점령지는 JSON에 없어 null → importer가 ratio70(*_max).
+                popInit = intOrNull(c["pop_init"]),
+                agriInit = intOrNull(c["agri_init"]),
+                commInit = intOrNull(c["comm_init"]),
+                secuInit = intOrNull(c["secu_init"]),
+                defInit = intOrNull(c["def_init"]),
+                wallInit = intOrNull(c["wall_init"]),
             )
         }
     }
@@ -237,4 +244,11 @@ data class ScenarioCity(
     val wallMax: Int,
     val x: Int?,
     val y: Int?,
+    // 공백지(nation_id=0) 베이스 초기 스탯(CityConstBase). 점령지는 null → importer가 ratio70(*_max).
+    val popInit: Int? = null,
+    val agriInit: Int? = null,
+    val commInit: Int? = null,
+    val secuInit: Int? = null,
+    val defInit: Int? = null,
+    val wallInit: Int? = null,
 )
