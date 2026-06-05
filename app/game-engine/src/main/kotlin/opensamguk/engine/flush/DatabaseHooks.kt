@@ -374,7 +374,7 @@ object DatabaseHooks {
      * map when the draft carries none.
      */
     private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int): LogRow = LogRow(
-        scope = draft.scope.uppercase(),
+        scope = scopeLiteral(draft.scope),
         category = draft.category.uppercase(),
         text = draft.text,
         year = year,
@@ -385,4 +385,25 @@ object DatabaseHooks {
         userId = draft.userId,
         meta = draft.meta ?: linkedMapOf(),
     )
+
+    /**
+     * 엔진 [LogEntryDraft]의 문자열 scope 어휘 → PG enum `log_scope` 리터럴(SYSTEM/NATION/GENERAL/USER).
+     *
+     * 단순 `uppercase()`면 엔진이 쓰는 `"global"`이 `"GLOBAL"`이 되는데 enum에 GLOBAL이 없어
+     * 월경계 정산 로그(ProcessIncome 봉록 지급 등) flush가 `BatchUpdateException: invalid input value
+     * for enum log_scope: "GLOBAL"`로 터지고 → 틱 롤백 → prod 턴 동결이었다. PHP/common 로그 커널은
+     * global history를 SYSTEM scope로 본다(`ActionLogger.pushGlobalHistoryLog` → `LogScope.SYSTEM`)
+     * → 엔진의 `"global"`을 `SYSTEM`으로 번역한다.
+     *
+     * NOTE: betting/auction 핸들러는 scope `"action"`(+ category `"betting"`)를 쓰는데 이는 log_scope/
+     * log_category enum에 없다 — 별개의 P6 flush 버그(월틱 경로 아님, 베팅 발생 시 크래시). 여기선 보존하고
+     * 별도 추적한다.
+     */
+    private fun scopeLiteral(scope: String): String = when (scope.lowercase()) {
+        "global", "system" -> "SYSTEM"
+        "nation" -> "NATION"
+        "general" -> "GENERAL"
+        "user" -> "USER"
+        else -> scope.uppercase() // 이미 enum 리터럴이거나 미지(예: action) — 기존 동작 보존
+    }
 }

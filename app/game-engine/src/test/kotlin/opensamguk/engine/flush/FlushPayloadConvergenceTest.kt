@@ -5,6 +5,7 @@ import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.KvKey
+import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
@@ -120,6 +121,31 @@ class FlushPayloadConvergenceTest {
         assertEquals(2, payload.updatedDiplomacy.size, "both diplomacy directions reach the payload")
         assertEquals(listOf(1 to 2, 2 to 1), payload.updatedDiplomacy.map { it.fromNationId to it.toNationId })
         assertTrue(payload.updatedDiplomacy.all { it.state == 1 && it.term == 24 })
+    }
+
+    @Test
+    fun `global-scope history log flushes as SYSTEM enum literal (the prod month-tick crash regression)`() {
+        // prod 3차 턴-동결: 월간 정산(ProcessIncome '봄 봉록 지급' 등)이 push하는 global history 로그의
+        // scope 문자열 "global"을 toLogRow가 단순 uppercase→"GLOBAL"로 만들어, log_scope enum
+        // (SYSTEM/NATION/GENERAL/USER, V1__baseline.sql)에 없는 값 → JdbcFlushExecutor INSERT가
+        // `BatchUpdateException: invalid input value for enum log_scope: "GLOBAL"` → 틱 롤백 → 턴 0진행.
+        val world = world()
+        world.pushLog(LogEntryDraft(scope = "global", category = "history", text = "봄이 되어 봉록에 따라 자금이 지급됩니다."))
+        world.pushLog(LogEntryDraft(scope = "nation", category = "history", text = "n", nationId = 1))
+        world.pushLog(LogEntryDraft(scope = "general", category = "history", text = "g", generalId = 10, nationId = 1))
+
+        val payload = DatabaseHooks.toFlushPayload(world, ChangeRecorder(), world.consumeDirtyState())
+
+        // 모든 scope가 PG log_scope enum 리터럴이어야 한다(아니면 flush가 enum 에러로 터진다).
+        val validScopes = setOf("SYSTEM", "NATION", "GENERAL", "USER")
+        assertTrue(
+            payload.logEntries.all { it.scope in validScopes },
+            "log scope는 전부 log_scope enum 리터럴이어야 — got ${payload.logEntries.map { it.scope }}",
+        )
+        // global history = SYSTEM (PHP pushGlobalHistoryLog == LogScope.SYSTEM).
+        assertEquals("SYSTEM", payload.logEntries.first { it.text.startsWith("봄이") }.scope)
+        assertEquals("NATION", payload.logEntries.first { it.text == "n" }.scope)
+        assertEquals("GENERAL", payload.logEntries.first { it.text == "g" }.scope)
     }
 
     @Test

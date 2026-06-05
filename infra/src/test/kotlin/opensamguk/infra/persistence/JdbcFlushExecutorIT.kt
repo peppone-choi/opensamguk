@@ -213,4 +213,44 @@ class JdbcFlushExecutorIT {
         assertEquals(1, intOf(logRowBack["month"]))
         assertEquals(10, intOf(logRowBack["general_id"]))
     }
+
+    /**
+     * prod 월틱 동결 3차의 real-DB 회귀 가드. 엔진의 global history 로그(scope 문자열 "global")는
+     * `DatabaseHooks.toLogRow`에서 PG enum 리터럴 `SYSTEM`으로 번역돼야 한다 — 직전엔 단순 uppercase로
+     * `"GLOBAL"`이 돼 log_scope enum(SYSTEM/NATION/GENERAL/USER)에 없는 값 → 이 INSERT가
+     * `BatchUpdateException: invalid input value for enum log_scope: "GLOBAL"`로 터지고 틱이 롤백돼
+     * 턴이 0진행이었다. 여기서는 SYSTEM/HISTORY 리터럴이 실제 Postgres enum에 INSERT됨을 검증한다.
+     * (다른 테스트의 `log_entry count==1` 단언을 위해 끝에서 자기 행을 정리한다.)
+     */
+    @Test
+    fun `SYSTEM (global) scope history log flushes against real Postgres (the GLOBAL enum crash)`() {
+        val sysLog = LogRow(
+            scope = "SYSTEM", category = "HISTORY",
+            text = "봄이 되어 봉록에 따라 자금이 지급됩니다.",
+            year = 190, month = 1,
+            generalId = null, nationId = null,
+            meta = linkedMapOf(),
+        )
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
+                logEntries = listOf(sysLog),
+            ),
+        )
+
+        val back = jdbc.queryForMap(
+            "SELECT scope::text AS scope, category::text AS category, text FROM log_entry " +
+                "WHERE scope = CAST('SYSTEM' AS log_scope)",
+            MapSqlParameterSource(),
+        )
+        assertEquals("SYSTEM", back["scope"])
+        assertEquals("HISTORY", back["category"])
+        assertEquals("봄이 되어 봉록에 따라 자금이 지급됩니다.", back["text"])
+
+        // cleanup — 다른 테스트의 'log_entry 정확히 1개' 단언 보존.
+        jdbc.update(
+            "DELETE FROM log_entry WHERE scope = CAST('SYSTEM' AS log_scope)",
+            MapSqlParameterSource(),
+        )
+    }
 }
