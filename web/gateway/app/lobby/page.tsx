@@ -2,7 +2,7 @@
 
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
-import MapPreview from '@/components/MapPreview';
+import ServerBoard from '@/components/ServerBoard';
 import {
     GAME_URL,
     LOBBY_LABELS,
@@ -28,13 +28,12 @@ function statusBadge(status: string): { label: string; cls: string } {
 }
 
 function LobbyView() {
-    const featured = SERVERS[0];
     return (
         <div className="lobby-shell">
             <Topbar />
             <main className="lobby-main fade-in">
-                {/* 서버 세계지도 프리뷰 (서버별 10분 캐싱). F0: placeholder. */}
-                {featured && <MapPreview serverId={featured.id} />}
+                {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
+                <ServerBoard />
 
                 <section>
                     <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>

@@ -178,6 +178,9 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       # Server-only (route handlers proxy to gateway-api; never exposed to the browser).
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
+      # 맵 프리뷰/현황 프록시 대상(해당 서버 game-api 내부 주소). servers.json gameApiUrl은 dev 기본값
+      # localhost:8081이라 컨테이너 안에선 자기참조→502 → 컨테이너망 DNS로 오버라이드.
+      GAME_API_ORIGIN: ${GAME_API_ORIGIN:-http://game-api:8081}
     depends_on:
       gateway-api:
         condition: service_healthy

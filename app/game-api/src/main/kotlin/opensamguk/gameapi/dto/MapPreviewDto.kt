@@ -8,8 +8,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * The gateway renders city dots (colored by owning nation) over the `che` base-map image. Field names
  * are a CLIENT CONTRACT — the gateway TS client is built against this exact shape; do not rename.
  *
- *  - `mapCode`/`width`/`height` describe the base map (`che` = 1000×714 display px; the per-map
- *    `map/<code>.json` resource carries the native-×10/7 widened dims).
+ *  - `mapCode`/`width`/`height` describe the base map (`che` = 700×500 native php px; the per-map
+ *    `map/<code>.json` resource carries these native dims, uniformly scaled to the canvas on the client).
  *  - `cities[].nationId` is LIVE ownership (changes as the game runs); `nationId == 0` is neutral and has
  *    NO entry in `nations[]` (the client renders neutral with a default color).
  *  - `cities[].x`/`y` are display coords (Double) read from the committed `map/<code>.json` resource (NOT in

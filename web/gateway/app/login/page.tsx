@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { login } from '@/lib/client';
 import { AUTH_LABELS, BRAND, FOOTER_LINKS } from '@/lib/constants';
-import MapPreview from '@/components/MapPreview';
+import ServerBoard from '@/components/ServerBoard';
 
 // 레거시 index.php: 네비바(brand) + 로그인 카드 + 현황 맵 프리뷰 + 푸터 링크.
 function LoginForm() {
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 <Suspense fallback={<div className="spinner" />}>
                     <LoginForm />
                 </Suspense>
-                <MapPreview />
+                <ServerBoard />
             </main>
             <footer className="gw-footer">
                 {FOOTER_LINKS.map((label) => (

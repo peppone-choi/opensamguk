@@ -158,7 +158,7 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
 
     // 화면 px → 맵 좌표계 변환 계수(캔버스 실제폭 ÷ 맵 너비 data.width). 휠 커서기준 줌에 쓰인다.
     function mapScale(): number {
-        const wRef = data?.width || 1000;
+        const wRef = data?.width || 700;
         const cw = canvasRef.current?.clientWidth || canvasW;
         if (!cw) return 1;
         return cw / wRef;
@@ -264,8 +264,8 @@ export default function MapViewer({ currentCityId, onSelectCity }: MapViewerProp
     }
 
     const mapCode = data.mapCode || 'che';
-    const w = data.width || 1000;
-    const h = data.height || 714;
+    const w = data.width || 700;
+    const h = data.height || 500;
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
 
