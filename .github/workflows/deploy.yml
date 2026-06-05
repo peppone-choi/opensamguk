@@ -107,6 +107,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 라이브 nginx 설정 정본을 박스로 동기화 — 버전관리된 infra/nginx/default.conf 가 박스
+      # ~/opensamguk/docker/nginx/default.conf(compose 마운트 원본)를 덮어쓴다. 라우팅 변경은
+      # 레포에서만 하면 배포 시 박스에 반영되고, 박스 재클론에도 유실되지 않는다.
+      - name: Sync nginx config to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "infra/nginx/default.conf"
+          target: "~/opensamguk/docker/nginx/"
+          strip_components: 2
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -130,11 +143,16 @@ jobs:
             echo "=== Pulling images ==="
             docker compose -f docker-compose.production.yml pull
 
-            # Rolling restart (engine last to avoid turn-state loss)
+            # Rolling restart — 업스트림 먼저, engine 다음, nginx 마지막(Rule A: stale-DNS 502 방지).
+            # nginx는 업스트림 컨테이너명을 시작/리로드 시 1회만 해석 → 업스트림 recreate 후 옛 IP를
+            # 잡고 있으면 전 라우트 502. 반드시 모든 업스트림이 뜬 뒤 nginx를 force-recreate 한다.
             echo "=== Restarting services ==="
-            docker compose -f docker-compose.production.yml up -d --no-deps gateway-api game-api gateway-frontend game-frontend nginx
+            docker compose -f docker-compose.production.yml up -d --no-deps gateway-api game-api gateway-frontend game-frontend
             sleep 5
             docker compose -f docker-compose.production.yml up -d --no-deps game-engine
+            sleep 3
+            # nginx LAST + force-recreate: scp로 동기화된 default.conf 적용 + 업스트림 IP 재해석.
+            docker compose -f docker-compose.production.yml up -d --force-recreate --no-deps nginx
 
             # Cleanup old images
             docker image prune -af --filter "until=168h"
