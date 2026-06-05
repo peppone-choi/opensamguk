@@ -38,7 +38,8 @@ class MapPreviewControllerTest {
 
     @Test
     fun `returns the world-map snapshot with merged coords and contract shape`() {
-        // city id 3 = 낙양 (x275,y180 in cities_1010.json); id 1 = 업 (x345,y130); id 999 absent → omitted.
+        // 좌표 원천 = map/che.json(TS 레거시 ×10/7 비례 확대). native: id1 업(345,130) id3 낙양(275,180)
+        // → 표시: id1(492.86,185.71) id3(392.86,257.14). id 999 absent → omitted.
         `when`(worldRepo.findAll()).thenReturn(
             listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3))
         )
@@ -59,21 +60,21 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.year").value(200))
             .andExpect(jsonPath("$.month").value(3))
             .andExpect(jsonPath("$.mapCode").value("che"))
-            .andExpect(jsonPath("$.width").value(700))
-            .andExpect(jsonPath("$.height").value(500))
+            .andExpect(jsonPath("$.width").value(1000))
+            .andExpect(jsonPath("$.height").value(714))
             // id 999 (no coord) dropped → 2 cities, sorted by id (1 then 3)
             .andExpect(jsonPath("$.cities.length()").value(2))
             .andExpect(jsonPath("$.cities[0].id").value(1))
             .andExpect(jsonPath("$.cities[0].name").value("업"))
-            .andExpect(jsonPath("$.cities[0].x").value(345))
-            .andExpect(jsonPath("$.cities[0].y").value(130))
+            .andExpect(jsonPath("$.cities[0].x").value(492.86))
+            .andExpect(jsonPath("$.cities[0].y").value(185.71))
             // city id 3 → 낙양 with merged coords
             .andExpect(jsonPath("$.cities[1].id").value(3))
             .andExpect(jsonPath("$.cities[1].name").value("낙양"))
             .andExpect(jsonPath("$.cities[1].level").value(8))
             .andExpect(jsonPath("$.cities[1].nationId").value(1))
-            .andExpect(jsonPath("$.cities[1].x").value(275))
-            .andExpect(jsonPath("$.cities[1].y").value(180))
+            .andExpect(jsonPath("$.cities[1].x").value(392.86))
+            .andExpect(jsonPath("$.cities[1].y").value(257.14))
             // neutral nation 0 excluded; only nation 1 present
             .andExpect(jsonPath("$.nations.length()").value(1))
             .andExpect(jsonPath("$.nations[0].id").value(1))

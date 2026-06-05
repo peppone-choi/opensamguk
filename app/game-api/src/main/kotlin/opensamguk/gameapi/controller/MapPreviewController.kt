@@ -6,7 +6,7 @@ import opensamguk.gameapi.dto.MapPreviewResponse
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.infra.seed.ScenarioJson
+import opensamguk.infra.seed.MapJson
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -44,9 +44,8 @@ class MapPreviewController(
     private val worldStateReadRepository: WorldStateReadRepository,
 ) {
 
-    /** che base-map native pixel dimensions (the gateway scales the dot layer to these). */
-    private val cheWidth = 700
-    private val cheHeight = 500
+    /** 시나리오가 맵을 특정하지 못할 때의 기본 맵 코드. dims/coords는 `map/<code>.json`에서 읽는다
+     *  (하드코딩 X) — 좌표는 가로세로 ×10/7 비례 확대된 표시 전용 값(1000×714, 마커 겹침 완화). */
     private val defaultMapCode = "che"
 
     // ── manual 10-minute cache (volatile snapshot + epoch stamp) ──
@@ -77,14 +76,20 @@ class MapPreviewController(
     private fun build(): MapPreviewResponse {
         // world clock — the singleton row. Unseeded ⇒ empty snapshot (year/month 0), never 500.
         val world = worldStateReadRepository.findAll().firstOrNull()
+
+        // 맵 표시 데이터(dims + id→좌표)를 map/<code>.json에서 읽는다 — 백엔드가 dims/coords를 하드코딩하지
+        // 않는다. (시나리오→맵 매핑은 후속; 현재는 defaultMapCode=che. 8종 맵 리소스가 모두 준비돼 있다.)
+        val mapCode = defaultMapCode
+        val mapData = loadMapData(mapCode)
+
         if (world == null) {
             return MapPreviewResponse(
                 serverName = "",
                 year = 0,
                 month = 0,
-                mapCode = defaultMapCode,
-                width = cheWidth,
-                height = cheHeight,
+                mapCode = mapCode,
+                width = mapData.width,
+                height = mapData.height,
                 cities = emptyList(),
                 nations = emptyList(),
             )
@@ -96,8 +101,8 @@ class MapPreviewController(
             ?: world.scenarioCode.takeIf { it.isNotBlank() }
             ?: defaultMapCode
 
-        // coord/name merge: id → (name, x, y) from the committed scenario resource.
-        val coords = loadCityCoords()
+        // coord/name merge: id → (name, x, y) from the map/<code>.json resource.
+        val coords = mapData.cities.associateBy { it.id }
 
         // 수도 city id 집합(nation.capital_city_id) — 수도 별 아이콘(event51) 판정용.
         val allNations = nationReadRepository.findAll()
@@ -129,32 +134,24 @@ class MapPreviewController(
             serverName = serverName,
             year = world.currentYear,
             month = world.currentMonth,
-            mapCode = world.scenarioCode.substringBefore("_").takeIf { it.isNotBlank() } ?: defaultMapCode,
-            width = cheWidth,
-            height = cheHeight,
+            mapCode = mapCode,
+            width = mapData.width,
+            height = mapData.height,
             cities = cities,
             nations = nations,
         )
     }
 
-    /** Decode `scenario/cities_1010.json` (committed, on the classpath via `:infra`) into id → coord. */
-    private fun loadCityCoords(): Map<Int, CityCoord> {
-        val json = javaClass.classLoader.getResourceAsStream(CITIES_RESOURCE)
+    /** Decode `map/<code>.json` (committed, on the classpath via `:infra`) → 표시 dims + id→좌표.
+     *  리소스가 없으면 빈 맵(0×0, 도시 없음) → gateway가 placeholder를 그린다. */
+    private fun loadMapData(mapCode: String): MapJson.MapData {
+        val json = javaClass.classLoader.getResourceAsStream("map/$mapCode.json")
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-            ?: return emptyMap()
-        return ScenarioJson.loadCities(json)
-            .mapNotNull { c ->
-                val x = c.x ?: return@mapNotNull null
-                val y = c.y ?: return@mapNotNull null
-                c.id to CityCoord(name = c.name, x = x, y = y)
-            }
-            .toMap()
+            ?: return MapJson.MapData(width = 0, height = 0, cities = emptyList())
+        return MapJson.loadMap(json)
     }
-
-    private data class CityCoord(val name: String, val x: Int, val y: Int)
 
     companion object {
         private const val CACHE_TTL_MS = 600_000L // 10 minutes
-        private const val CITIES_RESOURCE = "scenario/cities_1010.json"
     }
 }

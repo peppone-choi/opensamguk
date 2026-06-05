@@ -8,11 +8,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * The gateway renders city dots (colored by owning nation) over the `che` base-map image. Field names
  * are a CLIENT CONTRACT — the gateway TS client is built against this exact shape; do not rename.
  *
- *  - `mapCode`/`width`/`height` describe the base image (`che` = 700×500 native px).
+ *  - `mapCode`/`width`/`height` describe the base map (`che` = 1000×714 display px; the per-map
+ *    `map/<code>.json` resource carries the native-×10/7 widened dims).
  *  - `cities[].nationId` is LIVE ownership (changes as the game runs); `nationId == 0` is neutral and has
  *    NO entry in `nations[]` (the client renders neutral with a default color).
- *  - `cities[].x`/`y` are display coords merged from the committed `scenario/cities_1010.json` (NOT in the
- *    `city` table); a city whose id is absent from the JSON is OMITTED from `cities` (no coord = nothing to draw).
+ *  - `cities[].x`/`y` are display coords (Double) read from the committed `map/<code>.json` resource (NOT in
+ *    the `city` table); a city whose id is absent from the map is OMITTED from `cities` (no coord = nothing to draw).
  */
 data class MapPreviewResponse(
     val serverName: String,
@@ -30,8 +31,8 @@ data class MapPreviewCity(
     val name: String,
     val level: Int,
     val nationId: Int,
-    val x: Int,
-    val y: Int,
+    val x: Double,
+    val y: Double,
     /** 전선 상태(`front_state` 0~3) — 상태 아이콘 `event<state>.gif`. 0이면 표시 안 함. */
     val state: Int,
     /** 보급 상태 — 깃발 `f`(보급)/`d`(미보급) 구분. */

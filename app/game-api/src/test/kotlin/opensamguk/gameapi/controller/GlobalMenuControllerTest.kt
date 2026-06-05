@@ -44,8 +44,8 @@ class GlobalMenuControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.mapName").value("che"))
-            .andExpect(jsonPath("$.mapWidth").value(700))
-            .andExpect(jsonPath("$.mapHeight").value(500))
+            .andExpect(jsonPath("$.mapWidth").value(1000))
+            .andExpect(jsonPath("$.mapHeight").value(714))
             .andExpect(jsonPath("$.officerLevelText.12").value("군주"))
     }
 }

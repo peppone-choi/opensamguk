@@ -849,14 +849,14 @@ input:focus, select:focus, textarea:focus {
 .map-viewer-canvas {
   position: relative;
   width: 100%;
-  aspect-ratio: 700 / 500;
+  aspect-ratio: 1000 / 714;
   overflow: hidden;
   background: #000;
   cursor: grab;
   touch-action: none; /* 핀치/팬 제스처를 브라우저 기본동작에서 가로채 줌/팬 핸들러로 */
 }
 .map-viewer-canvas.is-dragging { cursor: grabbing; }
-/* 맵 좌표계(700×500)를 캔버스 폭에 맞추는 외곽 스케일 레이어. transform-origin 좌상단. */
+/* 맵 좌표계(che=1000×714, map/<code>.json 기준)를 캔버스 폭에 맞추는 외곽 스케일 레이어. transform-origin 좌상단. */
 .map-world {
   position: absolute;
   left: 0;
@@ -884,7 +884,7 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 700 / 500;
+  aspect-ratio: 1000 / 714;
   width: 100%;
   color: var(--text-muted);
   font-size: var(--text-sm);
@@ -898,7 +898,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── detail 레이아웃 마커 (레거시 scss/map.scss .map_detail 충실 재현) ──────────── */
-/* city_base — 40×30, 중심이 도시 좌표. 좌표/크기는 모두 700×500 맵 좌표계 px. */
+/* city_base — 40×30, 중심이 도시 좌표. 좌표는 1000×714 맵 좌표계 px(map/<code>.json), 크기는 고정 px. */
 .city-base {
   position: absolute;
 }

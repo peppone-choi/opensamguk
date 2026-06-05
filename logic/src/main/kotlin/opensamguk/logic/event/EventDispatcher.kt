@@ -26,17 +26,32 @@ class EventDispatcher(
      * most ONCE per dispatch (only if there is at least one row). It must return a fresh MUTABLE map
      * (the dispatcher overwrites `currentEventID` in place per row, exactly as PHP mutates `$e_env`).
      */
-    fun run(target: EventTarget, envSupplier: () -> MutableMap<String, Any?>) {
+    /**
+     * [contextFactory] wraps the live mutable [env] into the [EventActionContext] each action receives.
+     * The DEFAULT ([Context]) is a bare env-only context — correct for the light/logic-test path. The
+     * engine MUST pass a richer factory (`WorldActionContext`) for the world-event leaves
+     * (UpdateCitySupply/ProcessIncome/… `ctx as? XContext`, plus the env-read leaves that need
+     * `env[specialityWorld]`/`env[disasterWorld]`/… threaded) — otherwise the monthly settlement
+     * crashes (cast leaves) or silently no-ops (env-read leaves). The ctx is built ONCE per dispatch and
+     * wraps the same mutable env the loop mutates (`currentEventID` in place), so per-row rebuild is moot.
+     */
+    fun run(
+        target: EventTarget,
+        // envSupplier보다 앞 — envSupplier가 마지막이라야 기존 `run(target) { env }` trailing-lambda 호출이
+        // (contextFactory가 아니라) envSupplier에 바인딩된다. 새 엔진 경로는 named arg로 둘 다 넘긴다.
+        contextFactory: (MutableMap<String, Any?>) -> EventActionContext = { Context(it) },
+        envSupplier: () -> MutableMap<String, Any?>,
+    ) {
         // FROZEN row set — materialized BEFORE any action can mutate the store.
         val frozen = store.rowsFor(target)
         if (frozen.isEmpty()) return
 
         val env = envSupplier()
+        val ctx = contextFactory(env)
 
         for (row in frozen) {
             env["currentEventID"] = row.id
             if (!row.condition.eval(env)) continue // falsy → skip ALL actions of this row
-            val ctx = Context(env)
             for (rawAction in row.actions) {
                 factory.create(rawAction).run(ctx) // result discarded
             }

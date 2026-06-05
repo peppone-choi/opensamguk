@@ -18,7 +18,9 @@ import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.domain.LastTurn
+import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.logic.event.EventDispatcher
+import opensamguk.logic.event.EventStore
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.CheckStatistic
 import opensamguk.logic.tick.MonthScopedRng
@@ -117,6 +119,7 @@ class DaemonLoopConfig {
         reservedTurnRepository: ReservedTurnRepository,
         generalActionPipeline: GeneralActionPipeline,
         eventDispatcher: EventDispatcher,
+        eventStore: EventStore,
         auctionRepository: AuctionRepository,
         auctionBidRepository: AuctionBidRepository,
         boardPostRepository: BoardPostRepository,
@@ -203,6 +206,20 @@ class DaemonLoopConfig {
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(generalId, 0) },
         )
 
+        // 월간 world-event 디스패치 컨텍스트 팩토리 — UpdateCitySupply 등 cast-ctx leaf에 WorldActionContext를
+        // 공급하고 RaiseDisaster/특기/유산 등 env-read leaf의 world-view/hiddenSeed/startYear/cityConst/
+        // eventStore 키를 심는다. 이게 없으면 월경계 정산이 크래시(cast)하거나 무음 no-op(env-read)한다.
+        val mapName = state.meta["map"] as? String ?: "che"
+        val worldContextFactory = WorldEventContextFactory.create(
+            world = world,
+            recorder = handler.recorder,
+            pipeline = generalActionPipeline,
+            hiddenSeed = hiddenSeed,
+            startYear = startYear,
+            mapName = mapName,
+            eventStore = eventStore,
+        )
+
         return TurnRunService(
             world = world,
             commandStream = commandStream,
@@ -218,6 +235,7 @@ class DaemonLoopConfig {
             realtimePublisher = realtimePublisher,
             pipeline = monthlyPipeline,
             eventDispatcher = eventDispatcher,
+            worldContextFactory = worldContextFactory,
             auctionRepository = auctionRepository,
             auctionBidRepository = auctionBidRepository,
             boardPostRepository = boardPostRepository,
