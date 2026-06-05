@@ -3,6 +3,7 @@ package opensamguk.engine.config
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
+import opensamguk.engine.run.MonthlyPostUpdateHook
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -19,8 +20,14 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.tick.CheckStatistic
+import opensamguk.logic.tick.MonthScopedRng
+import opensamguk.logic.tick.MonthlyClock
 import opensamguk.logic.tick.MonthlyPipeline
+import opensamguk.logic.tick.PreUpdateMonthly
+import opensamguk.logic.tick.ServerClock
 import org.springframework.beans.factory.annotation.Value
+import java.time.Instant
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
@@ -109,7 +116,6 @@ class DaemonLoopConfig {
         realtimePublisher: RealtimePublisher,
         reservedTurnRepository: ReservedTurnRepository,
         generalActionPipeline: GeneralActionPipeline,
-        @Lazy monthlyPipeline: MonthlyPipeline<RandUtil>,
         eventDispatcher: EventDispatcher,
         auctionRepository: AuctionRepository,
         auctionBidRepository: AuctionBidRepository,
@@ -157,6 +163,23 @@ class DaemonLoopConfig {
         // The nation pass writes through the SAME recorder the handler owns — the lone dirty source the
         // flush reads (P2 Risk #4). The handler exposes its internal ChangeRecorder via `.recorder`.
         val nationProcessor = ProcessNationCommand(world, handler.recorder, hiddenSeed)
+
+        // The monthly pipeline is PER-RUN state: its PostUpdate hook writes through `handler.recorder` —
+        // the SAME lone dirty source as the handler + nation processor (single-dirty-source, P2 Risk #4).
+        // It is therefore built HERE, NOT as a cross-config @Bean: the previous `@Lazy @Bean monthlyPipeline`
+        // (EngineEventConfig) could not see the per-run recorder, and the `@Lazy` exposure forced a Spring
+        // CGLIB class proxy whose Objenesis shell had a null `monthlyRngFactory` + an unsatisfiable
+        // `ChangeRecorder` bean dependency — both froze the turn-daemon clock on the first month boundary
+        // (the engine never reached a clean tick in prod before this). Building it inline (this whole bean
+        // is `@Lazy`, so the world is already seeded) mirrors `nationProcessor` and removes the proxy entirely.
+        val startTime = Instant.parse(state.meta["startTime"] as? String ?: state.lastTurnTime.toString())
+        val monthlyPipeline = MonthlyPipeline(
+            monthlyRngFactory = { year, month -> MonthScopedRng.forMonth(hiddenSeed, year, month) },
+            clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
+            preUpdateMonthly = PreUpdateMonthly { true },
+            checkStatistic = CheckStatistic { },
+            postUpdateMonthly = MonthlyPostUpdateHook(world, handler.recorder, generalActionPipeline),
+        )
 
         val lifecycle = TurnDaemonLifecycle(
             world = world,
