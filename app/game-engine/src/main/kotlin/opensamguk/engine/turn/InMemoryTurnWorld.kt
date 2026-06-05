@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.domain.NationTurn
 import java.time.Instant
 
 /**
@@ -44,6 +45,11 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     private val createdNationIds = LinkedHashSet<Int>()
     private val createdTroopIds = LinkedHashSet<Int>()
     private val createdDiplomacyKeys = LinkedHashSet<String>()
+
+    // nation_turn has NO in-memory map — it is an INSERT-only ledger (like the rank/kv channels), not a
+    // queryable world entity in the slice. The founding created-set (거병 INSERTs 24 rows) appends here;
+    // [consumeDirtyState] drains it into [DirtyState.nationTurnDirty].
+    private val createdNationTurns = mutableListOf<NationTurn>()
 
     private val deletedTroopIds = LinkedHashSet<Int>()
     private val deletedGeneralIds = LinkedHashSet<Int>()
@@ -182,6 +188,58 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     /**
+     * INSERT a brand-new nation (founding 거병). Mirrors [createTroop]: stages the row under its id, marks
+     * it dirty AND created — [consumeDirtyState] returns it in `createdNations`, and [DatabaseHooks] excludes
+     * it from the step-7 UPDATE batch (the `createdNationIds` filter) so it INSERTs rather than UPSERTs.
+     * The id is the placeholder from [allocateNationId] — `nation.id` is an `integer PRIMARY KEY` (NOT
+     * serial), so the placeholder id IS the authoritative id (no flush-time reconciliation).
+     */
+    fun createNation(nation: Nation): Nation {
+        nations[nation.id] = nation
+        dirtyNationIds.add(nation.id)
+        createdNationIds.add(nation.id)
+        return nation
+    }
+
+    /**
+     * INSERT a brand-new diplomacy row (founding 거병 — one pair per existing nation). Mirrors
+     * [createGeneral]: stages the row under its `(from, to)` key, marks it dirty AND created. The key
+     * helper is [buildDiplomacyKey] (same as the snapshot init / [updateDiplomacy] path).
+     */
+    fun createDiplomacy(entry: TurnDiplomacy): TurnDiplomacy {
+        val key = buildDiplomacyKey(entry.fromNationId, entry.toNationId)
+        diplomacy[key] = entry
+        dirtyDiplomacyKeys.add(key)
+        createdDiplomacyKeys.add(key)
+        return entry
+    }
+
+    /**
+     * Append a reserved nation-command row to the INSERT-only ledger (founding 거병 writes 24). There is no
+     * in-memory nation_turn map to query in the slice; [consumeDirtyState] drains the appended rows into
+     * [DirtyState.nationTurnDirty], which [DatabaseHooks] carries to the step-3 `nationTurnCreateMany`.
+     */
+    fun createNationTurn(turn: NationTurn) {
+        createdNationTurns.add(turn)
+    }
+
+    /**
+     * The next free nation id (`maxNationId + 1`) over the LIVE world. `nation.id` is `integer PRIMARY KEY`
+     * (NOT serial), so opensamguk assigns the id engine-side rather than via a DB autoincrement — the
+     * placeholder IS the final id (no flush-time reconciliation). Single-daemon + no concurrent INSERT ⇒ it
+     * cannot race; sequential same-tick founds increment naturally because [createNation] adds the prior
+     * nation to the live map before the next call reads it.
+     *
+     * KNOWN DIVERGENCE (WAVE 0b backlog — id reuse after deletion): unlike MySQL `AUTO_INCREMENT` (monotonic,
+     * never reuses a freed id), `max(live keys)+1` REUSES the id of a deleted tail nation. For the prod
+     * recovery + the founding golden (a fresh, never-deleted world) this is exact; in a long game a 거병
+     * after a 멸망/흡수 could reuse a freed id and inherit stale id-keyed rows (logs/records/nation_env KV).
+     * The faithful fix is a monotonic high-water-mark persisted in `world_state` meta (seeded at boot from the
+     * max id ever assigned), advanced past every created AND deleted id — deferred, not fabricated here.
+     */
+    fun allocateNationId(): Int = (nations.keys.maxOrNull() ?: 0) + 1
+
+    /**
      * Replace a troop's row (SetTroopName rename) — marks it dirty ONLY (not created), so the flush
      * routes it through the troop UPDATE batch. Mirrors [updateNation]. Returns null if absent.
      */
@@ -219,6 +277,9 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
             dirtyDiplomacyKeys.remove(key)
             createdDiplomacyKeys.remove(key)
         }
+        // create-then-delete in the same tick cancels for the nation_turn ledger too (matches the
+        // diplomacy prune above): drop the pending INSERTs so a never-persisted nation leaves no rows.
+        createdNationTurns.removeAll { it.nationId == id }
         return true
     }
 
@@ -255,6 +316,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         val diplomacyOut = dirtyDiplomacyKeys.mapNotNull { diplomacy[it] }
         val createdTroops = createdTroopIds.mapNotNull { troops[it] }
         val createdDiplomacy = createdDiplomacyKeys.mapNotNull { diplomacy[it] }
+        val createdNationTurnsOut = createdNationTurns.toList()
         val deletedTroops = deletedTroopIds.toList()
         val deletedGenerals = deletedGeneralIds.toList()
         val deletedNations = deletedNationIds.toList()
@@ -270,6 +332,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         createdNationIds.clear()
         createdTroopIds.clear()
         createdDiplomacyKeys.clear()
+        createdNationTurns.clear()
         deletedTroopIds.clear()
         deletedGeneralIds.clear()
         deletedNationIds.clear()
@@ -291,6 +354,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
             createdNations = createdNations,
             createdTroops = createdTroops,
             createdDiplomacy = createdDiplomacy,
+            nationTurnDirty = createdNationTurnsOut,
         )
     }
 }

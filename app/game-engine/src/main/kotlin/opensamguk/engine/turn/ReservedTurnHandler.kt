@@ -30,6 +30,7 @@ import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
+import opensamguk.logic.domain.Nation as LogicNation
 
 /**
  * P1 Task F3 — the daemon-side reserved-turn handler.
@@ -63,6 +64,12 @@ class ReservedTurnHandler(
     private val hiddenSeed: String,
     /** The starting year of the scenario — `develCost = (year - startYear + 10) * 2`. */
     private val startYear: Int,
+    /**
+     * The scenario number (`env['scenario']`, PHP `che_거병.php:93`) — selects the founding `secretlimit`
+     * (`>= 1000` ⇒ 1, the live-server branch; else 3). Threaded into the founding preload args. Default 0
+     * for the P1–P4 / test call sites that never found a nation. See [DaemonLoopConfig] for the live thread.
+     */
+    private val scenario: Int = 0,
     /**
      * Succession hook for a dying ruler (`General.php:554-558` → `func.php:1807 nextRuler`). The full
      * candidate-selection + 후계 promotion + possible `deleteNation` cascade is RNG-driven (the
@@ -227,7 +234,21 @@ class ReservedTurnHandler(
         val draft = GeneralActionDraft(preGeneral, preCity, nation)
         // Thread the parsed reserved/AI-chosen args into the resolver draft ctx (R-SEAM §1; FM1). The
         // seed above already keyed on definition.key — the arg never touches the RNG construction.
-        val resolveCtx = GeneralActionResolveContext(draft, rng, worldEnv, month, date, args = args)
+        //
+        // FOUNDING preload (거병/건국/cr_건국/무작위건국): augment `args` with the PHP-query substitutes the
+        // resolver expects (newNationId placeholder, existing-nation set, scenario). These are pure DB-query
+        // stand-ins — they consume NOTHING from the action rng (GeobyeongTest proves a fresh rng yields the
+        // same first draw post-resolve). Built ONLY after constraints Allow (we are past the early-return),
+        // so a denied 거병 never allocates an id. The actor name is threaded so the created nation's name is
+        // the actor's (the resolver else falls back to meta["name"]). HandledTurn.args keeps the ORIGINAL
+        // args (the parity oracle) — the founding preload never pollutes it.
+        val isFounding = actionCode in FOUNDING_COMMANDS
+        val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, args) else args
+        val resolveCtx = GeneralActionResolveContext(
+            draft, rng, worldEnv, month, date,
+            args = resolveArgs,
+            generalName = if (isFounding) general.name else "",
+        )
         definition.resolve(resolveCtx)
 
         // --- ChangeRecorder = the SINGLE dirty source ---
@@ -250,8 +271,48 @@ class ReservedTurnHandler(
             recorder.diffDiplomacy(pre, post)
         }
 
+        // --- founding / cascade write-set drain (거병 INSERTs + 건국/이동/집합 UPDATEs) ---
+        // Without this, the founding nation/diplomacy/nation_turn INSERTs and the roaming-leader/follower
+        // moves the resolver staged would silently vanish at flush (the live-daemon prod data-loss seam).
+        // The ChangeRecorder stays the SINGLE dirty source; applyNationPatch/applyGeneralPatch/applyCityPatch
+        // update the world read-state dirty-free (design Risk #4).
+
+        // nation UPDATE (건국/cr_건국/무작위건국 level 0→1 + name/color/type/capital). A non-founding command
+        // never reassigns draft.nation, so it stays the pre-state reference (referential no-op → skipped).
+        val postNation = draft.nation
+        if (nation != null && postNation != null && postNation !== nation) {
+            recorder.diffNation(nation, postNation)
+            world.getNationById(nationId)?.let { world.applyNationDirtyFree(applyNationPatch(it, postNation)) }
+        }
+        // cascade generals (무작위건국 follower moves; 이동 roaming-leader / 집합 troop members — these were
+        // previously DROPPED: the handler only drained cascadeDiplomacy). The actor itself is NOT here (it is
+        // draft.general, already diffed above) — the resolver appends only the OTHER moved generals.
+        for (movedGeneral in draft.cascadeGenerals) {
+            val pre = world.getGeneralById(movedGeneral.id) ?: continue
+            recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), movedGeneral)
+            world.applyGeneralDirtyFree(applyGeneralPatch(pre, movedGeneral))
+        }
+        // cascade cities (방랑 / 무작위 city reverts — defensive; empty for 거병).
+        for (movedCity in draft.cascadeCities) {
+            val pre = world.getCityById(movedCity.id) ?: continue
+            recorder.diffCity(PerTurnOverlay.toLogicCity(pre), movedCity)
+            world.applyCityDirtyFree(applyCityPatch(pre, movedCity))
+        }
+        // CREATED-set (거병 INSERTs). Ordering is LOAD-BEARING: nation FIRST (the FK target + the frozen
+        // step-3 contract general→nation→troop→diplomacy), then diplomacy, then nation_turn. The world's
+        // LinkedHashSet/list preserves the enqueue order through consumeDirtyState.
+        for (createdNation in draft.createdNations) world.createNation(PerTurnOverlay.toEngineNation(createdNation))
+        for (createdDip in draft.createdDiplomacy) world.createDiplomacy(PerTurnOverlay.toEngineDiplomacy(createdDip))
+        for (createdNationTurn in draft.createdNationTurns) world.createNationTurn(createdNationTurn)
+
         // --- logs ---
         for (line in resolveCtx.logs()) world.pushLog(actionLog(general, line))
+        // The broadcast (general_id=0) action log — 거병's "<Y>{name}</>{josa} <G><b>{city}</b></>에 거병하였습니다."
+        // headline (che_거병.php:161) routes here. Mirror ProcessNationCommand:207 so the founding broadcast
+        // survives the general-pass handler (was silently dropped — only resolveCtx.logs() was drained).
+        // (The per-target/PLAIN level-change side-bucket — resolveCtx.plainLogs()/dest logs — is a broader
+        // general-pass log-routing parity item deferred to the WAVE 4 log/output pass.)
+        for (line in resolveCtx.globalActionLogs()) world.pushLog(globalLog(general, line))
 
         // --- buffered Messages → mailbox channel (receiver row BEFORE sender row) ---
         for (message in resolveCtx.messages()) routeMessage(message, year, month)
@@ -492,6 +553,33 @@ class ReservedTurnHandler(
         world.pushLog(historyLog(general, "나이가 들어 은퇴하고, 자손에게 관직을 물려줌"))
     }
 
+    /**
+     * Build the FOUNDING preload args — the PHP-query substitutes the founding resolver expects but cannot
+     * run itself (the daemon supplies them; `che_거병.php:79-110` reads them off the adapter). These are pure
+     * DB-query stand-ins consuming NOTHING from the action rng.
+     *
+     *  - `che_거병` (the prod crash): `newNationId` (PHP `insertId()` placeholder = [InMemoryTurnWorld.allocateNationId]),
+     *    `existingNationIds` (getAllNationStaticInfo, world nations), `existingNationNames` (the dup-name scan),
+     *    `scenario` (→ secretlimit 1|3).
+     *  - `che_건국`/`cr_건국`/`che_무작위건국`: `nationName`/`nationType`/`colorType` already arrive on the
+     *    reserved arg jsonb; the runtime engine-scanned preload (`sameMonthOrBefore` 동월 가드, 무작위
+     *    `candidateCityIds`) is a faithful-port follow-up (WAVE 0b). Until then they pass `args` through
+     *    unchanged — the resolver early-returns (no crash, no found), exactly the pre-fix behavior — and the
+     *    drain block above is already laid so WAVE 0b only adds the preload.
+     */
+    private fun buildFoundingArgs(actionCode: String, args: Map<String, Any?>): Map<String, Any?> = when (actionCode) {
+        GEOBYEONG -> {
+            val existing = world.listNations()
+            LinkedHashMap(args).apply {
+                put("newNationId", world.allocateNationId())
+                put("existingNationIds", existing.map { it.id })
+                put("existingNationNames", existing.map { it.name }.toSet())
+                put("scenario", scenario)
+            }
+        }
+        else -> args
+    }
+
     /** The recorder is the lone dirty source; exposed so the flush (F4)/tests can read its patches. */
     val recorder: ChangeRecorder = ChangeRecorder()
 
@@ -545,6 +633,16 @@ class ReservedTurnHandler(
 
         /** The 휴식 (rest) command name — the killturn-decrement branch in [applyKillturnDecrement]. */
         const val REST_COMMAND = "휴식"
+
+        /** che_거병 — the no-arg INSERT-created-set founding command (the prod crash seam). */
+        const val GEOBYEONG = "che_거병"
+
+        /**
+         * Founding commands whose resolve seam is augmented with PHP-query preload args (and whose actor
+         * name is threaded as the created nation's name). 거병 INSERTs a nation; 건국/cr_건국/무작위건국 UPDATE
+         * a wandering nation (Bug B — WAVE 0b preload pending). Anything else passes through unchanged.
+         */
+        val FOUNDING_COMMANDS = setOf("che_거병", "che_건국", "cr_건국", "che_무작위건국")
 
         /** A lenient JSON reader for the stored `arg` jsonb (tolerant of trailing commas / lax keys). */
         private val ARG_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -624,6 +722,24 @@ class ReservedTurnHandler(
                 experience = phpRound(post.experience),
                 dedication = phpRound(post.dedication),
                 meta = post.meta,
+            )
+
+        /**
+         * Map a founding/건국 logic [Nation]'s mutated fields back onto the engine [Nation] row (the
+         * world read-apply for the nation-UPDATE drain). A verbatim clone of
+         * `ProcessNationCommand.applyLogicToNation`: the [ChangeRecorder.diffNation] is the authoritative
+         * persist path; this only keeps same-tick world reads consistent (`tech`/`gennum` ride `meta`,
+         * so they are carried by the `meta` copy — there is no separate engine column).
+         */
+        private fun applyNationPatch(engine: Nation, logic: LogicNation): Nation =
+            engine.copy(
+                name = logic.name,
+                color = logic.color,
+                gold = logic.gold,
+                rice = logic.rice,
+                level = logic.level,
+                typeCode = logic.typeCode,
+                meta = logic.meta,
             )
 
         /**
