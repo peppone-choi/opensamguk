@@ -72,8 +72,12 @@ fun interface MonthlyClock {
  * Generic over the RNG type `R` so F5 can supply its concrete `MonthScopedRng` without F1 depending
  * on F5 (the FT2 thin-interface contract).
  */
-// open: 엔진 DaemonLoopConfig가 이 빈을 @Lazy 주입 → Spring이 지연-해석 CGLIB 프록시를 만든다.
-// 순수 로직 클래스라 기본 final이지만, 프록시가 서브클래싱할 수 있게 open으로 둔다(동작 불변, Spring 의존 없음).
+// open: 엔진 EngineEventConfig가 이 빈을 @Bean @Lazy 노출 → Spring이 지연-해석 CGLIB 클래스 프록시를 만든다
+// (생성자 없이 Objenesis로 프록시 shell 생성 → shell의 필드는 전부 null). 순수 로직 클래스라 기본 final이지만,
+// 프록시가 서브클래싱할 수 있게 open으로 둔다(동작 불변, Spring 의존 없음).
+// ⚠️ 클래스뿐 아니라 프록시 너머로 호출되는 메서드(runMonth)도 반드시 open이어야 한다 — final 메서드는 CGLIB이
+//    인터셉트하지 못해 null-필드 프록시 shell에서 직접 실행되어 monthlyRngFactory NPE → 턴 데몬 clock 동결을
+//    일으킨다(2026-06-05 prod 회귀). MonthlyPipelineLazyProxyTest가 이 위임을 가드한다.
 open class MonthlyPipeline<R>(
     private val monthlyRngFactory: MonthlyRngFactory<R>,
     private val clock: MonthlyClock,
@@ -86,7 +90,8 @@ open class MonthlyPipeline<R>(
      * Run ONE month between per-general drains. `oldYear`/`oldMonth` are the calendar BEFORE this
      * month advances (what PreMonth observes); [clock] recomputes the NEW date from [nextTurn].
      */
-    fun runMonth(
+    // open: @Lazy CGLIB 프록시가 이 메서드를 인터셉트해 실제 빈으로 위임할 수 있어야 한다(클래스 주석 ⚠️ 참조).
+    open fun runMonth(
         nextTurn: Instant,
         startYear: Int,
         startTime: Instant,
