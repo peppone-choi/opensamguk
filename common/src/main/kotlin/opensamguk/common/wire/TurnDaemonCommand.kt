@@ -131,6 +131,82 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "boardComment"
     }
 
+    // F4 Wave 투표 인테이크 — 설문조사(vote) 개설/투표/댓글/마감. 게시판(boardArticle/boardComment)과
+    // 동일한 즉시-인테이크 경로: game-api 인테이크 → 명령 스트림 → TurnDaemonCommandDispatcher →
+    // VoteHandler → InMemoryTurnWorld 변이 → ChangeRecorder 델타 → JdbcFlushExecutor flush.
+    // VoteReward(추첨 보상)는 이미 ~line 269에 존재 — 재사용한다(여기서 중복 정의하지 않음).
+
+    /**
+     * 설문조사 개설 (NewVote.php::launch). 권한(vote ACL OR userGrade≥5) 보유 장수가 새 vote_poll을
+     * 연다. title은 필수(lengthMin 1); [multipleOptions]는 PHP `?? 1` → `<0이면 0` → `valueFit(0, count)`
+     * 클램프; [endDate]는 nullable(부재 시 무기한); [keepOldVote] false(기본)면 직전 vote를 closeOldVote로
+     * 마감한다. [options]는 stringArray — 비어 있으면 '항목이 없습니다.' deny.
+     */
+    @Serializable
+    @SerialName("newVote")
+    data class NewVote(
+        val requestId: String? = null,
+        val generalId: Int,
+        val title: String,
+        val options: List<String> = emptyList(),
+        // PHP `$multipleOptions = $this->args['multipleOptions'] ?? 1` — 부재 시 1. nullable로 유지해
+        // 엔진이 PHP 기본값/클램프(<0→0, valueFit 0..count)를 직접 적용하게 한다.
+        val multipleOptions: Int? = null,
+        // PHP `$endDate = $this->args['endDate'] ?? null` — 부재(무기한) vs 지정을 보존하려 nullable.
+        val endDate: String? = null,
+        // PHP `$this->args['keepOldVote'] ?? false` — true면 직전 vote를 자동 마감하지 않는다.
+        val keepOldVote: Boolean? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "newVote"
+    }
+
+    /**
+     * 설문조사 투표 (Vote.php::launch). [voteId]의 vote_poll에 [selection](항목 인덱스 배열)을 던진다.
+     * PHP: 빈 선택 deny, 종료일 경과 deny, multipleOptions 초과 deny, 범위 밖 인덱스 deny,
+     * `sort($selection, SORT_NUMERIC)` 후 `insertIgnore('vote', …)` (UNIQUE(vote_id,general_id) →
+     * affectedRows==0이면 '이미 완료' deny). 성공 시 보상 골드 + voteUnique 추첨(VoteReward가 처리).
+     */
+    @Serializable
+    @SerialName("voteCast")
+    data class VoteCast(
+        val requestId: String? = null,
+        val generalId: Int,
+        val voteId: Int,
+        val selection: List<Int> = emptyList(),
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "voteCast"
+    }
+
+    /**
+     * 설문조사 댓글 (AddComment.php::launch). [voteId]에 [text]를 단다 — PHP는 `mb_substr(text, 0, 200)`로
+     * 200자 절단 후 `vote_comment` INSERT(general/nation 이름 포함). text는 필수(lengthMin 1).
+     */
+    @Serializable
+    @SerialName("voteComment")
+    data class VoteComment(
+        val requestId: String? = null,
+        val generalId: Int,
+        val voteId: Int,
+        val text: String,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "voteComment"
+    }
+
+    /**
+     * 설문조사 마감 (NewVote.php::closeOldVote). [voteId]의 vote_poll endDate가 비어 있으면 now()로
+     * 채워 마감한다(이미 endDate가 있으면 no-op). 새 vote 개설 시 keepOldVote=false면 암묵 호출되지만,
+     * 명시적 마감 인테이크로도 노출한다.
+     */
+    @Serializable
+    @SerialName("voteClose")
+    data class VoteClose(
+        val requestId: String? = null,
+        val generalId: Int,
+        val voteId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "voteClose"
+    }
+
     @Serializable
     @SerialName("dieOnPrestart")
     data class DieOnPrestart(

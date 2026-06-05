@@ -1,0 +1,141 @@
+{
+  "_meta": {
+    "code": "scenario_903",
+    "source": "legacy/devsam-core/hwe/scenario/scenario_903.json",
+    "grandTruth": "PHP (legacy/devsam-core)",
+    "core2026Compared": "legacy/devsam-core2026/resources/scenario/scenario_903.json",
+    "core2026Identical": true,
+    "divergencePolicy": "PHP wins; 0 divergence observed (canonical byte-identical for shared files)",
+    "fieldOrder": {
+      "nation": [
+        "name",
+        "color",
+        "gold",
+        "rice",
+        "infoText",
+        "tech",
+        "ideology(type)",
+        "nationLevel",
+        "cities"
+      ],
+      "general": [
+        "affinity",
+        "name",
+        "picturePath",
+        "nationName",
+        "locatedCity",
+        "leadership",
+        "strength",
+        "intel",
+        "officerLevel",
+        "birth",
+        "death",
+        "ego",
+        "speciality(char)",
+        "text"
+      ],
+      "diplomacy": [
+        "me",
+        "you",
+        "state",
+        "remain"
+      ]
+    },
+    "excludedLogic": "events/initialEvents/defaultInitialEvents/initialActions = DSL 표현식(로직). 데이터로 디코드하지 않고 원본 JSON 그대로 보존.",
+    "note": "nationName 필드는 문자열 국가명 또는 정수 국가ID 또는 null(재야). nationLevel 7 = 국호변경 가능."
+  },
+  "title": "【공백지】 영웅전설",
+  "startYear": 180,
+  "life": null,
+  "fiction": null,
+  "mapName": "miniche",
+  "iconPath": ".",
+  "ignoreDefaultEvents": false,
+  "const": {
+    "npcBanMessageProb": 1
+  },
+  "stat": {
+    "total": 165,
+    "min": 15,
+    "max": 80,
+    "npcTotal": 150,
+    "npcMax": 75,
+    "npcMin": 10,
+    "chiefMin": 65
+  },
+  "nations": [],
+  "diplomacy": [],
+  "generals": [],
+  "generalsEx": [],
+  "generalsNeutral": [],
+  "cities": [],
+  "history": [
+    "<C>●</>180년 1월:<L><b>【이벤트】</b></>29기까지 내로라 하는 모든 장수들이 모였다!"
+  ],
+  "initialActions": [],
+  "initialEvents": [],
+  "defaultInitialEvents": [],
+  "events": [
+    [
+      "month",
+      1000,
+      [
+        "Date",
+        "==",
+        null,
+        12
+      ],
+      [
+        "CreateManyNPC",
+        100,
+        0
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ],
+    [
+      "month",
+      1000,
+      [
+        "Date",
+        "==",
+        181,
+        12
+      ],
+      [
+        "ChangeCity",
+        "occupied",
+        {
+          "pop": "+60000",
+          "agri": "+1200",
+          "comm": "+1200"
+        }
+      ]
+    ],
+    [
+      "destroy_nation",
+      1000,
+      [
+        "and",
+        [
+          "Date",
+          ">=",
+          183,
+          1
+        ],
+        [
+          "RemainNation",
+          "==",
+          1
+        ]
+      ],
+      [
+        "BlockScoutAction"
+      ],
+      [
+        "DeleteEvent"
+      ]
+    ]
+  ]
+}

@@ -10,11 +10,14 @@ import opensamguk.engine.intake.InheritResetHandler
 import opensamguk.engine.intake.NationFinanceSetterHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
+import opensamguk.engine.intake.VoteHandler
+import opensamguk.engine.intake.VotePollState
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
+import opensamguk.infra.read.VotePollRepository
 
 /**
  * Routes drained [TurnDaemonCommand]s to their engine handlers.
@@ -41,11 +44,17 @@ import opensamguk.infra.read.BoardPostRepository
  * in [TurnRunService]; the caller currently discards the returned result.
  */
 class TurnDaemonCommandDispatcher(
-    world: InMemoryTurnWorld,
+    private val world: InMemoryTurnWorld,
     recorder: ChangeRecorder,
     auctionRepository: AuctionRepository,
     auctionBidRepository: AuctionBidRepository,
     boardPostRepository: BoardPostRepository,
+    /**
+     * vote_poll/vote 설문 상태 read seam (F4 Wave 투표). VoteCast/closeOldVote 게이트가 PHP Vote.php의
+     * cast 가드(설문 존재/만료/선택수/이미 투표)를 충실히 재현하려면 설문 행을 read 해야 한다. null이면
+     * VoteHandler는 기본 stub(항상 "설문 없음")로 동작한다(board/auction read-repo와 동일 주입 패턴).
+     */
+    private val votePollRepository: VotePollRepository? = null,
 ) {
     private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
@@ -61,6 +70,30 @@ class TurnDaemonCommandDispatcher(
 
     // ── F4 Wave C2 (슬라이스 C) — 게시판(회의실/기밀실) 인테이크 핸들러 ──
     private val board = BoardHandler(world, recorder, boardPostRepository)
+
+    // ── F4 Wave 투표 — 설문조사(개설/투표/댓글/마감) 인테이크 핸들러 ──
+    // VotePollRepository(infra read seam)를 주입 가능하면 reader 어댑터로 소비한다(BoardHandler가 board
+    // read repo를 주입받는 패턴). infra `VotePollReadRow`→엔진 [VotePollState] 매핑은 여기서 담당한다
+    // (DTO는 infra↔engine 모듈 사이클 회피를 위해 의도적으로 분리). repo가 null이면 핸들러 기본 stub
+    // (항상 "설문 없음")로 동작한다. 매 투표의 voteUnique 추첨은 logic VoteLottery를 경유(골든 16/16 green).
+    private val vote = VoteHandler(
+        world, recorder,
+        votePollReader = votePollRepository?.let { repo ->
+            { voteId: Int, generalId: Int ->
+                // now = 데몬 현재 시각(world lastTurnTime) = PHP `new DateTimeImmutable()` 만료 비교 기준.
+                repo.findPollState(voteId, generalId, world.getState().lastTurnTime)?.let { row ->
+                    VotePollState(
+                        id = row.id,
+                        multipleOptions = row.multipleOptions,
+                        optionsCount = row.optionsCount,
+                        expired = row.expired,
+                        hasEndDate = row.hasEndDate,
+                        alreadyVoted = row.alreadyVoted,
+                    )
+                }
+            }
+        } ?: { _, _ -> null },
+    )
 
     /**
      * Dispatch one command to its handler.
@@ -93,6 +126,11 @@ class TurnDaemonCommandDispatcher(
         // ── F4 Wave C2 (슬라이스 C) 게시판 인테이크 바인딩 ──
         is TurnDaemonCommand.BoardArticle -> board.handleArticle(command)
         is TurnDaemonCommand.BoardComment -> board.handleComment(command)
+        // ── F4 Wave 투표 인테이크 바인딩 ──
+        is TurnDaemonCommand.NewVote -> vote.handleNewVote(command)
+        is TurnDaemonCommand.VoteCast -> vote.handleVoteCast(command)
+        is TurnDaemonCommand.VoteComment -> vote.handleVoteComment(command)
+        is TurnDaemonCommand.VoteClose -> vote.handleVoteClose(command)
         else -> null
     }
 

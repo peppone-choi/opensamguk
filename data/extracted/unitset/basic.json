@@ -1,0 +1,272 @@
+{
+  "_meta": {
+    "set": "basic",
+    "source": "hwe/scenario/unit/basic.php",
+    "grandTruth": "legacy/devsam-core (PHP)",
+    "note": "PHP getBuildData() 포지셔널 18원소 튜플을 충실 추출. 로직 메서드(getComputedAttack/Defence, getCriticalRatio, pickScore, isValid, iAction onCalc* 등)는 데이터 아님 → 제외. info는 PHP 소스 그대로(원시값); _generate()가 런타임에 각 requirement.getInfo()를 info[]에 append하지만 그 결합은 로직이므로 requirements[].info에 별도 기록. attackCoef/defenceCoef 키: armType 상수(0~5) 또는 crewType id(>=1000). 삽입 순서 보존."
+  },
+  "id": "basic",
+  "name": "basic",
+  "defaultCrewTypeId": 1100,
+  "armTypes": {
+    "1": "보병",
+    "2": "궁병",
+    "3": "기병",
+    "4": "귀병",
+    "5": "차병"
+  },
+  "crewTypes": [
+    {
+      "id": 1000,
+      "armType": 0,
+      "name": "성벽",
+      "attack": 100,
+      "defence": 100,
+      "speed": 7,
+      "avoid": 0,
+      "magicCoef": 0,
+      "cost": 99,
+      "rice": 9,
+      "requirements": [],
+      "attackCoef": {},
+      "defenceCoef": {
+        "1": 1.2
+      },
+      "info": [
+        "성벽입니다.",
+        "생성할 수 없습니다."
+      ],
+      "initSkillTrigger": null,
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    },
+    {
+      "id": 1100,
+      "armType": 1,
+      "name": "보병",
+      "attack": 100,
+      "defence": 150,
+      "speed": 7,
+      "avoid": 10,
+      "magicCoef": 0,
+      "cost": 9,
+      "rice": 9,
+      "requirements": [],
+      "attackCoef": {
+        "2": 1.2,
+        "3": 0.8,
+        "5": 1.2
+      },
+      "defenceCoef": {
+        "2": 0.8,
+        "3": 1.2,
+        "5": 0.8
+      },
+      "info": [
+        "표준적인 보병입니다.",
+        "보병은 방어특화이며,",
+        "상대가 회피하기 어렵습니다."
+      ],
+      "initSkillTrigger": null,
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    },
+    {
+      "id": 1200,
+      "armType": 2,
+      "name": "궁병",
+      "attack": 100,
+      "defence": 100,
+      "speed": 7,
+      "avoid": 20,
+      "magicCoef": 0,
+      "cost": 10,
+      "rice": 10,
+      "requirements": [],
+      "attackCoef": {
+        "3": 1.2,
+        "1": 0.8,
+        "5": 1.2
+      },
+      "defenceCoef": {
+        "3": 0.8,
+        "1": 1.2,
+        "5": 0.8
+      },
+      "info": [
+        "표준적인 궁병입니다.",
+        "궁병은 회피특화입니다."
+      ],
+      "initSkillTrigger": null,
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    },
+    {
+      "id": 1300,
+      "armType": 3,
+      "name": "기병",
+      "attack": 150,
+      "defence": 100,
+      "speed": 7,
+      "avoid": 5,
+      "magicCoef": 0,
+      "cost": 11,
+      "rice": 11,
+      "requirements": [],
+      "attackCoef": {
+        "1": 1.2,
+        "2": 0.8,
+        "5": 1.2
+      },
+      "defenceCoef": {
+        "1": 0.8,
+        "2": 1.2,
+        "5": 0.8
+      },
+      "info": [
+        "표준적인 기병입니다.",
+        "기병은 공격특화입니다."
+      ],
+      "initSkillTrigger": null,
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    },
+    {
+      "id": 1400,
+      "armType": 4,
+      "name": "귀병",
+      "attack": 80,
+      "defence": 80,
+      "speed": 7,
+      "avoid": 5,
+      "magicCoef": 0.5,
+      "cost": 9,
+      "rice": 9,
+      "requirements": [],
+      "attackCoef": {
+        "5": 1.2
+      },
+      "defenceCoef": {
+        "5": 0.8
+      },
+      "info": [
+        "계략을 사용하는 병종입니다."
+      ],
+      "initSkillTrigger": null,
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    },
+    {
+      "id": 1405,
+      "armType": 4,
+      "name": "남귀병",
+      "attack": 60,
+      "defence": 60,
+      "speed": 7,
+      "avoid": 10,
+      "magicCoef": 0.8,
+      "cost": 8,
+      "rice": 8,
+      "requirements": [],
+      "attackCoef": {
+        "5": 1.2
+      },
+      "defenceCoef": {
+        "5": 0.8
+      },
+      "info": [
+        "전투를 포기하고 계략에 몰두합니다."
+      ],
+      "initSkillTrigger": null,
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    },
+    {
+      "id": 1500,
+      "armType": 5,
+      "name": "정란",
+      "attack": 100,
+      "defence": 100,
+      "speed": 6,
+      "avoid": 0,
+      "magicCoef": 0,
+      "cost": 15,
+      "rice": 5,
+      "requirements": [
+        {
+          "type": "ReqMinRelYear",
+          "reqMinRelYear": 3,
+          "info": "3년 경과 후 사용 가능"
+        }
+      ],
+      "attackCoef": {
+        "1": 0.8,
+        "2": 0.8,
+        "3": 0.8,
+        "4": 0.8,
+        "0": 1.8
+      },
+      "defenceCoef": {
+        "1": 1.2,
+        "2": 1.2,
+        "3": 1.2,
+        "4": 1.2
+      },
+      "info": [
+        "높은 구조물 위에서 공격합니다."
+      ],
+      "initSkillTrigger": [
+        "che_성벽부상무효"
+      ],
+      "phaseSkillTrigger": null,
+      "iActionList": [
+        "che_성벽선제"
+      ]
+    },
+    {
+      "id": 1501,
+      "armType": 5,
+      "name": "충차",
+      "attack": 150,
+      "defence": 100,
+      "speed": 6,
+      "avoid": 0,
+      "magicCoef": 0,
+      "cost": 20,
+      "rice": 5,
+      "requirements": [
+        {
+          "type": "ReqTech",
+          "reqTech": 1000,
+          "info": "기술력 1000 이상 필요"
+        },
+        {
+          "type": "ReqMinRelYear",
+          "reqMinRelYear": 3,
+          "info": "3년 경과 후 사용 가능"
+        }
+      ],
+      "attackCoef": {
+        "1": 0.8,
+        "2": 0.8,
+        "3": 0.8,
+        "4": 0.8,
+        "0": 2.4
+      },
+      "defenceCoef": {
+        "1": 1.2,
+        "2": 1.2,
+        "3": 1.2,
+        "4": 1.2
+      },
+      "info": [
+        "엄청난 위력으로 성벽을 부수어버립니다."
+      ],
+      "initSkillTrigger": [
+        "che_성벽부상무효"
+      ],
+      "phaseSkillTrigger": null,
+      "iActionList": null
+    }
+  ]
+}

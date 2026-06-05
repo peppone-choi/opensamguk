@@ -209,6 +209,44 @@ class RandUtilDrawRecorder extends RandUtil
         return $r;
     }
 
+    /**
+     * choiceUsingWeightPair — 가중치-쌍 배열에서 항목 1개 선택.
+     * RandUtil::choiceUsingWeightPair는 정확히 ONE nextFloat1() draw를 소비한다
+     * (`$rd = nextFloat1()*$sum` 한 번; 이후 누적 비교는 RNG 비소비).
+     * giveRandomUniqueItem의 유니크 아이템 선택이 이 메서드를 통과하므로,
+     * vote 로또 골든의 두 번째(아이템 선택) draw를 정확히 기록하기 위해 오버라이드한다.
+     * args로 가중치 쌍 풀([itemType,itemCode]=>weight 순서)을 그대로 박제 —
+     * Kotlin replay가 동일 풀+동일 float로 동일 항목을 골라내는지 검증하는 오라클.
+     */
+    public function choiceUsingWeightPair(array $items)
+    {
+        $c = $this->cursor();
+        // RandUtil 본체와 byte-identical하게: bare RNG에서 nextFloat1을 직접 뽑아
+        // (오버라이드 nextFloat1을 호출하면 이중 기록되므로) 정확히 1개 stream 엔트리만 남긴다.
+        $sum = 0;
+        foreach ($items as [$item, $value]) {
+            if ($value <= 0) { continue; }
+            $sum += $value;
+        }
+        $rd = $this->rng->nextFloat1() * $sum;
+        $chosen = null;
+        foreach ($items as [$item, $value]) {
+            if ($value <= 0) { $value = 0; }
+            if ($rd <= $value) { $chosen = $item; break; }
+            $rd -= $value;
+        }
+        if ($chosen === null) {
+            // fallback. RandUtil 원본과 동일 — 정상 경로에서는 도달하지 않음.
+            end($items);
+            $chosen = $items[key($items)][0];
+        }
+        // args.pool = [[itemType,itemCode], weight] 순서대로 (insertion order 보존).
+        $pool = [];
+        foreach ($items as [$pair, $weight]) { $pool[] = ['pair' => $pair, 'weight' => $weight]; }
+        $this->record('choiceUsingWeightPair', ['pool' => $pool], $chosen, $c, true);
+        return $chosen;
+    }
+
     public function shuffle(array $srcArray): array
     {
         // Not used by the war path; delegate without per-swap logging (records 0 entries

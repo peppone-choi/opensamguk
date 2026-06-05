@@ -21,21 +21,33 @@ import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
 import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
+import opensamguk.logic.actions.nation.cheBaekseongDongwon
 import opensamguk.logic.actions.nation.cheBallyeong
+import opensamguk.logic.actions.nation.cheBudaeTaltoejisi
 import opensamguk.logic.actions.nation.cheBulgachimJeui
 import opensamguk.logic.actions.nation.cheBulgachimPagijeui
 import opensamguk.logic.actions.nation.cheBulgachimPagiSuak
 import opensamguk.logic.actions.nation.cheBulgachimSuak
 import opensamguk.logic.actions.nation.cheCheondo
+import opensamguk.logic.actions.nation.cheChotohwa
 import opensamguk.logic.actions.nation.cheGamchuk
+import opensamguk.logic.actions.nation.cheGeupseup
 import opensamguk.logic.actions.nation.cheGukgiByeongyeong
 import opensamguk.logic.actions.nation.cheGukhoByeongyeong
+import opensamguk.logic.actions.nation.cheHeobo
+import opensamguk.logic.actions.nation.cheIhoGyeongsik
 import opensamguk.logic.actions.nation.cheJeungchuk
 import opensamguk.logic.actions.nation.cheJongjeonSuak
 import opensamguk.logic.actions.nation.cheJongjeonjeui
+import opensamguk.logic.actions.nation.cheMolsu
 import opensamguk.logic.actions.nation.cheMujakwiSudoIjeon
+import opensamguk.logic.actions.nation.cheMuljaWonjo
+import opensamguk.logic.actions.nation.chePijangPajang
+import opensamguk.logic.actions.nation.chePilsaJeukSaeng
 import opensamguk.logic.actions.nation.chePosang
 import opensamguk.logic.actions.nation.cheSeonjeonpogo
+import opensamguk.logic.actions.nation.cheSumol
+import opensamguk.logic.actions.nation.cheUibyeongMojip
 import opensamguk.logic.actions.personnel.CheBangrang
 import opensamguk.logic.actions.personnel.CheDeungyong
 import opensamguk.logic.actions.personnel.CheEuntwe
@@ -109,6 +121,19 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_국기변경" -> cheGukgiByeongyeong(pipeline)
         "che_천도" -> cheCheondo(pipeline)
         "che_무작위수도이전" -> cheMujakwiSudoIjeon(pipeline)
+        // --- CMD-NATION-C3 (전략/인사/외교 사령 12종) — F4 C3 chief-command 포팅 ---
+        "che_급습" -> cheGeupseup(pipeline)
+        "che_몰수" -> cheMolsu(pipeline)
+        "che_물자원조" -> cheMuljaWonjo(pipeline)
+        "che_백성동원" -> cheBaekseongDongwon(pipeline)
+        "che_부대탈퇴지시" -> cheBudaeTaltoejisi(pipeline)
+        "che_수몰" -> cheSumol(pipeline)
+        "che_의병모집" -> cheUibyeongMojip(pipeline)
+        "che_이호경식" -> cheIhoGyeongsik(pipeline)
+        "che_초토화" -> cheChotohwa(pipeline)
+        "che_피장파장" -> chePijangPajang(pipeline)
+        "che_필사즉생" -> chePilsaJeukSaeng(pipeline)
+        "che_허보" -> cheHeobo(pipeline)
         // --- CMD-WAR (출병) — the SOLE caller of the OUTER processWar() wrapper (BO3). 급습/선전포고 = P6. ---
         "che_출병" -> CheChulbyeong(pipeline)
         // --- CMD-TRADE (증여/헌납/장비매매) ---
