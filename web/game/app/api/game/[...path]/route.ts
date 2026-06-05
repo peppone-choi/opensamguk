@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { GAME_API_URL } from '@/lib/server-api';
+import { resolveGameApiUrl } from '@/lib/serverRegistry';
 import { ACCESS_COOKIE } from '@/lib/cookies';
+
+// 멀티서버 선택 쿠키 — middleware가 입장 URL `?server=<id>`에서 심는다. 미설정/main → 기본 game-api.
+const SERVER_COOKIE = 'sam_server';
 
 /**
  * 동일출처 server-side 프록시 — web/game(:3001)의 모든 game-api 호출이 여기를 통과한다.
@@ -22,7 +25,9 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     const store = await cookies();
     const access = store.get(ACCESS_COOKIE)?.value;
 
-    const target = `${GAME_API_URL}/${path.join('/')}${req.nextUrl.search}`;
+    // 선택 서버(sam_server 쿠키) → 해당 game-api. 미선택/main → 기본. 멀티서버 인게임 라우팅.
+    const base = resolveGameApiUrl(store.get(SERVER_COOKIE)?.value);
+    const target = `${base}/${path.join('/')}${req.nextUrl.search}`;
 
     const headers: Record<string, string> = {};
     if (access) headers.Authorization = `Bearer ${access}`;

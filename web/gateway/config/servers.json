@@ -6,15 +6,15 @@
             "name": "통일 서버",
             "status": "running",
             "turnterm": 60,
-            "gameUrl": "http://localhost:3001",
+            "gameUrl": "/game?server=main",
             "gameApiUrl": "http://localhost:8081"
         },
         {
             "id": "bbae",
             "name": "빼섭",
-            "status": "preopen",
+            "status": "running",
             "turnterm": 60,
-            "gameUrl": "",
+            "gameUrl": "/game?server=bbae",
             "gameApiUrl": "http://localhost:18080"
         }
     ]
