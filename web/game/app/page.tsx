@@ -22,7 +22,7 @@ export default function Home() {
                     opensamguk
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)' }}>
-                    삼국지 모의전투 — 메모리 중심 CQRS 재작성
+                    오픈삼국 — 메모리 중심 CQRS 재작성
                 </p>
             </div>
 

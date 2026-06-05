@@ -13,11 +13,15 @@ const SERVERS = serversData.servers as ServerEntry[];
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
     const { id } = await ctx.params;
     const server = SERVERS.find((s) => s.id === id);
-    if (!server?.gameApiUrl) {
+    // game-api origin은 env(GAME_API_ORIGIN, compose가 컨테이너망 주소로 주입)를 먼저 본다 —
+    // servers.json의 gameApiUrl은 dev 기본값(localhost:8081)이라 prod 컨테이너 안에서는 자기자신을 가리켜
+    // connection refused→502→로비 맵 placeholder 고정이었다(로그인 500/server-api.ts와 동일 클래스 회귀).
+    const origin = process.env.GAME_API_ORIGIN ?? server?.gameApiUrl;
+    if (!origin) {
         return NextResponse.json({ error: '서버를 찾을 수 없습니다.' }, { status: 404 });
     }
     try {
-        const upstream = await fetch(`${server.gameApiUrl}/api/map/preview`, { cache: 'no-store' });
+        const upstream = await fetch(`${origin}/api/map/preview`, { cache: 'no-store' });
         const body = await upstream.text();
         return new NextResponse(body, {
             status: upstream.status,
