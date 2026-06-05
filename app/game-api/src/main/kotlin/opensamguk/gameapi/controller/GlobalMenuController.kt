@@ -108,8 +108,8 @@ class GlobalMenuController {
         private val CONST = GameConstResponse(
             result = true,
             mapName = "che",
-            mapWidth = 700,
-            mapHeight = 500,
+            mapWidth = 1000,
+            mapHeight = 714,
             maxTurn = 30, // general_turn ring buffer length (P3 finding)
             officerLevelText = OFFICER_LEVEL_TEXT,
         )

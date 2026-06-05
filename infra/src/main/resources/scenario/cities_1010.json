@@ -16,8 +16,6 @@
       "secu_max": 10000,
       "def_max": 11700,
       "wall_max": 12200,
-      "x": 345,
-      "y": 130,
       "connected": [
         "남피",
         "복양",
@@ -40,8 +38,6 @@
       "secu_max": 10000,
       "def_max": 11700,
       "wall_max": 12500,
-      "x": 330,
-      "y": 215,
       "connected": [
         "완",
         "진류",
@@ -65,8 +61,6 @@
       "secu_max": 10000,
       "def_max": 12100,
       "wall_max": 12400,
-      "x": 275,
-      "y": 180,
       "connected": [
         "호관",
         "호로",
@@ -88,8 +82,6 @@
       "secu_max": 10000,
       "def_max": 12000,
       "wall_max": 11800,
-      "x": 145,
-      "y": 165,
       "connected": [
         "안정",
         "함곡",
@@ -116,8 +108,6 @@
       "secu_init": 1000,
       "def_init": 5000,
       "wall_init": 5000,
-      "x": 25,
-      "y": 290,
       "connected": [
         "덕양",
         "강주",
@@ -144,8 +134,6 @@
       "secu_init": 1000,
       "def_init": 5000,
       "wall_init": 5000,
-      "x": 255,
-      "y": 290,
       "connected": [
         "신야",
         "장판"
@@ -171,8 +159,6 @@
       "secu_init": 1000,
       "def_init": 5000,
       "wall_init": 5000,
-      "x": 505,
-      "y": 305,
       "connected": [
         "오",
         "합비",
@@ -199,8 +185,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 465,
-      "y": 65,
       "connected": [
         "역경",
         "백랑"
@@ -220,8 +204,6 @@
       "secu_max": 8000,
       "def_max": 10100,
       "wall_max": 10500,
-      "x": 395,
-      "y": 95,
       "connected": [
         "업",
         "평원",
@@ -242,8 +224,6 @@
       "secu_max": 8000,
       "def_max": 10100,
       "wall_max": 9900,
-      "x": 270,
-      "y": 235,
       "connected": [
         "허창",
         "여남",
@@ -271,8 +251,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 395,
-      "y": 270,
       "connected": [
         "서주",
         "여남",
@@ -300,8 +278,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 440,
-      "y": 250,
       "connected": [
         "수춘",
         "하비",
@@ -329,8 +305,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 245,
-      "y": 335,
       "connected": [
         "장사",
         "무릉",
@@ -358,8 +332,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 255,
-      "y": 375,
       "connected": [
         "강릉",
         "시상",
@@ -388,8 +360,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 360,
-      "y": 360,
       "connected": [
         "장사",
         "여강",
@@ -418,8 +388,6 @@
       "secu_init": 1000,
       "def_init": 4000,
       "wall_init": 4000,
-      "x": 620,
-      "y": 145,
       "connected": [
         "평양",
         "사비",
@@ -442,8 +410,6 @@
       "secu_max": 6000,
       "def_max": 7800,
       "wall_max": 8100,
-      "x": 365,
-      "y": 35,
       "connected": [
         "진양",
         "역경"
@@ -463,8 +429,6 @@
       "secu_max": 6000,
       "def_max": 8200,
       "wall_max": 8000,
-      "x": 410,
-      "y": 170,
       "connected": [
         "업",
         "진류",
@@ -486,8 +450,6 @@
       "secu_max": 6000,
       "def_max": 8000,
       "wall_max": 8300,
-      "x": 365,
-      "y": 185,
       "connected": [
         "허창",
         "복양",
@@ -516,8 +478,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 330,
-      "y": 260,
       "connected": [
         "완",
         "수춘",
@@ -544,8 +504,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 480,
-      "y": 235,
       "connected": [
         "서주",
         "광릉"
@@ -571,8 +529,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 25,
-      "y": 50,
       "connected": [
         "천수",
         "강",
@@ -593,8 +549,6 @@
       "secu_max": 6000,
       "def_max": 8100,
       "wall_max": 8000,
-      "x": 230,
-      "y": 150,
       "connected": [
         "진양",
         "홍농",
@@ -622,8 +576,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 135,
-      "y": 205,
       "connected": [
         "상용",
         "양평",
@@ -650,8 +602,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 185,
-      "y": 225,
       "connected": [
         "한중",
         "신야"
@@ -677,8 +627,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 85,
-      "y": 275,
       "connected": [
         "성도",
         "강주",
@@ -706,8 +654,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 70,
-      "y": 310,
       "connected": [
         "성도",
         "덕양",
@@ -736,8 +682,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 80,
-      "y": 400,
       "connected": [
         "귀양",
         "운남",
@@ -764,8 +708,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 245,
-      "y": 480,
       "connected": [
         "교지",
         "상동",
@@ -793,8 +735,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 230,
-      "y": 400,
       "connected": [
         "장사",
         "영릉",
@@ -821,8 +761,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 510,
-      "y": 345,
       "connected": [
         "건업",
         "회계",
@@ -850,8 +788,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 590,
-      "y": 100,
       "connected": [
         "위례",
         "졸본"
@@ -877,8 +813,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 605,
-      "y": 205,
       "connected": [
         "위례",
         "계림",
@@ -905,8 +839,6 @@
       "secu_init": 1000,
       "def_init": 3000,
       "wall_init": 3000,
-      "x": 655,
-      "y": 200,
       "connected": [
         "위례",
         "사비",
@@ -928,8 +860,6 @@
       "secu_max": 4000,
       "def_max": 6400,
       "wall_max": 5900,
-      "x": 295,
-      "y": 60,
       "connected": [
         "계",
         "하내",
@@ -950,8 +880,6 @@
       "secu_max": 4000,
       "def_max": 6100,
       "wall_max": 6300,
-      "x": 440,
-      "y": 115,
       "connected": [
         "남피",
         "북해",
@@ -978,8 +906,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 470,
-      "y": 155,
       "connected": [
         "평원",
         "패",
@@ -1000,8 +926,6 @@
       "secu_max": 4000,
       "def_max": 6200,
       "wall_max": 5700,
-      "x": 365,
-      "y": 230,
       "connected": [
         "허창",
         "수춘",
@@ -1024,8 +948,6 @@
       "secu_max": 4000,
       "def_max": 5800,
       "wall_max": 5900,
-      "x": 430,
-      "y": 220,
       "connected": [
         "서주",
         "북해",
@@ -1052,8 +974,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 70,
-      "y": 105,
       "connected": [
         "서량",
         "안정",
@@ -1081,8 +1001,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 95,
-      "y": 145,
       "connected": [
         "장안",
         "천수",
@@ -1103,8 +1021,6 @@
       "secu_max": 4000,
       "def_max": 5800,
       "wall_max": 6300,
-      "x": 210,
-      "y": 175,
       "connected": [
         "하내",
         "사곡",
@@ -1131,8 +1047,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 45,
-      "y": 190,
       "connected": [
         "가맹",
         "가정"
@@ -1158,8 +1072,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 75,
-      "y": 245,
       "connected": [
         "덕양",
         "양평",
@@ -1187,8 +1099,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 115,
-      "y": 295,
       "connected": [
         "덕양",
         "강주",
@@ -1215,8 +1125,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 90,
-      "y": 360,
       "connected": [
         "강주",
         "건녕",
@@ -1243,8 +1151,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 30,
-      "y": 345,
       "connected": [
         "강주",
         "귀양",
@@ -1271,8 +1177,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 30,
-      "y": 415,
       "connected": [
         "건녕",
         "주시",
@@ -1299,8 +1203,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 135,
-      "y": 405,
       "connected": [
         "건녕",
         "영릉",
@@ -1327,8 +1229,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 130,
-      "y": 480,
       "connected": [
         "남해",
         "남만"
@@ -1354,8 +1254,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 250,
-      "y": 260,
       "connected": [
         "양양",
         "완",
@@ -1382,8 +1280,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 315,
-      "y": 295,
       "connected": [
         "장판",
         "적벽"
@@ -1409,8 +1305,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 195,
-      "y": 355,
       "connected": [
         "강릉",
         "장사",
@@ -1437,8 +1331,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 190,
-      "y": 395,
       "connected": [
         "계양",
         "남영",
@@ -1466,8 +1358,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 210,
-      "y": 435,
       "connected": [
         "남해",
         "계양",
@@ -1494,8 +1384,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 380,
-      "y": 315,
       "connected": [
         "시상",
         "합비",
@@ -1523,8 +1411,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 480,
-      "y": 395,
       "connected": [
         "오",
         "산월"
@@ -1550,8 +1436,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 350,
-      "y": 405,
       "connected": [
         "시상",
         "상동",
@@ -1578,8 +1462,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 450,
-      "y": 480,
       "connected": [
         "남해",
         "산월",
@@ -1606,8 +1488,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 530,
-      "y": 80,
       "connected": [
         "위례",
         "졸본",
@@ -1635,8 +1515,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 570,
-      "y": 65,
       "connected": [
         "평양",
         "안평",
@@ -1663,8 +1541,6 @@
       "secu_init": 1000,
       "def_init": 2000,
       "wall_init": 2000,
-      "x": 680,
-      "y": 260,
       "connected": [
         "계림",
         "왜",
@@ -1691,8 +1567,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 95,
-      "y": 35,
       "connected": [
         "서량",
         "적도"
@@ -1718,8 +1592,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 25,
-      "y": 120,
       "connected": [
         "서량",
         "천수",
@@ -1746,8 +1618,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 180,
-      "y": 95,
       "connected": [
         "하내",
         "적도"
@@ -1773,8 +1643,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 80,
-      "y": 455,
       "connected": [
         "운남",
         "남영",
@@ -1801,8 +1669,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 425,
-      "y": 430,
       "connected": [
         "남해",
         "회계",
@@ -1830,8 +1696,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 610,
-      "y": 20,
       "connected": [
         "졸본",
         "백랑"
@@ -1857,8 +1721,6 @@
       "secu_init": 1000,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 680,
-      "y": 320,
       "connected": [
         "이도",
         "유구"
@@ -1878,8 +1740,6 @@
       "secu_max": 2000,
       "def_max": 9500,
       "wall_max": 9600,
-      "x": 285,
-      "y": 140,
       "connected": [
         "업",
         "낙양",
@@ -1901,8 +1761,6 @@
       "secu_max": 2000,
       "def_max": 10300,
       "wall_max": 9800,
-      "x": 285,
-      "y": 205,
       "connected": [
         "허창",
         "낙양",
@@ -1923,8 +1781,6 @@
       "secu_max": 2000,
       "def_max": 9900,
       "wall_max": 10100,
-      "x": 240,
-      "y": 175,
       "connected": [
         "낙양",
         "홍농"
@@ -1944,8 +1800,6 @@
       "secu_max": 2000,
       "def_max": 10100,
       "wall_max": 10200,
-      "x": 180,
-      "y": 175,
       "connected": [
         "장안",
         "홍농"
@@ -1965,8 +1819,6 @@
       "secu_max": 2000,
       "def_max": 9500,
       "wall_max": 9600,
-      "x": 310,
-      "y": 185,
       "connected": [
         "허창",
         "낙양",
@@ -1994,8 +1846,6 @@
       "secu_init": 100,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 90,
-      "y": 220,
       "connected": [
         "한중",
         "자동",
@@ -2022,8 +1872,6 @@
       "secu_init": 100,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 45,
-      "y": 225,
       "connected": [
         "하변",
         "자동"
@@ -2043,8 +1891,6 @@
       "secu_max": 2000,
       "def_max": 3900,
       "wall_max": 4100,
-      "x": 410,
-      "y": 65,
       "connected": [
         "북평",
         "남피",
@@ -2065,8 +1911,6 @@
       "secu_max": 2000,
       "def_max": 4000,
       "wall_max": 4200,
-      "x": 405,
-      "y": 135,
       "connected": [
         "업",
         "복양",
@@ -2093,8 +1937,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 515,
-      "y": 145,
       "connected": [
         "위례",
         "북해",
@@ -2115,8 +1957,6 @@
       "secu_max": 2000,
       "def_max": 4200,
       "wall_max": 4300,
-      "x": 340,
-      "y": 165,
       "connected": [
         "업",
         "허창",
@@ -2138,8 +1978,6 @@
       "secu_max": 2000,
       "def_max": 4100,
       "wall_max": 3800,
-      "x": 400,
-      "y": 210,
       "connected": [
         "복양",
         "진류",
@@ -2167,8 +2005,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 435,
-      "y": 285,
       "connected": [
         "건업",
         "수춘",
@@ -2195,8 +2031,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 490,
-      "y": 275,
       "connected": [
         "건업",
         "하비"
@@ -2222,8 +2056,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 130,
-      "y": 75,
       "connected": [
         "천수",
         "강",
@@ -2250,8 +2082,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 40,
-      "y": 160,
       "connected": [
         "안정",
         "하변",
@@ -2278,8 +2108,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 110,
-      "y": 180,
       "connected": [
         "장안",
         "한중",
@@ -2306,8 +2134,6 @@
       "secu_init": 100,
       "def_init": 1000,
       "wall_init": 1000,
-      "x": 35,
-      "y": 255,
       "connected": [
         "성도",
         "자동"
@@ -2333,8 +2159,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 215,
-      "y": 295,
       "connected": [
         "강릉",
         "영안"
@@ -2360,8 +2184,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 280,
-      "y": 315,
       "connected": [
         "양양",
         "강릉",
@@ -2389,8 +2211,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 530,
-      "y": 30,
       "connected": [
         "북평",
         "안평",
@@ -2417,8 +2237,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 330,
-      "y": 325,
       "connected": [
         "시상",
         "강하",
@@ -2446,8 +2264,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 430,
-      "y": 350,
       "connected": [
         "시상",
         "오",
@@ -2474,8 +2290,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 605,
-      "y": 260,
       "connected": [
         "오",
         "사비",
@@ -2503,8 +2317,6 @@
       "secu_init": 100,
       "def_init": 500,
       "wall_init": 500,
-      "x": 625,
-      "y": 435,
       "connected": [
         "대",
         "왜"
