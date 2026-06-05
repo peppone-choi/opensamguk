@@ -136,6 +136,13 @@ class DaemonLoopConfig {
             reservedCommandNameOf = { gid -> reservedTurnRepository.readReserved(gid, 0).actionCode },
         )
 
+        // The scenario number selects the founding `secretlimit` (>= 1000 ⇒ 1, the live-server branch).
+        // Prefer the seeded world meta (ScenarioSeedRunner), fall back to the SCENARIO_CODE env fence
+        // (default scenario_1010 ⇒ 1010 ⇒ secretlimit 1), else 0.
+        val scenario = (state.meta["scenario"] as? Number)?.toInt()
+            ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
+            ?: 0
+
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
         val handler = ReservedTurnHandler(
@@ -143,6 +150,7 @@ class DaemonLoopConfig {
             registry = registry,
             hiddenSeed = hiddenSeed,
             startYear = startYear,
+            scenario = scenario,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
         )
 

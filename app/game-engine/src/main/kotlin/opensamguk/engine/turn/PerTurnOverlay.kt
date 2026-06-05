@@ -147,5 +147,33 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             power = n.power,
             meta = n.meta,
         )
+
+        /**
+         * Logic [Nation] -> engine [Nation] (the inverse of [toLogicNation]) for the founding created-set:
+         * the 거병 resolver produces a logic Nation that the handler writes into the world via
+         * [InMemoryTurnWorld.createNation]. Engine [Nation] has no `tech`/`gennum`/`capset` columns — those
+         * ride `meta` (the resolver already stamps `meta["gennum"]`), so they round-trip through `meta`. A
+         * logic `capitalCityId == 0` (거병 wandering) maps to the engine `Int?` field as 0.
+         */
+        fun toEngineNation(n: LogicNation): Nation = Nation(
+            id = n.id,
+            name = n.name,
+            color = n.color,
+            capitalCityId = n.capitalCityId,
+            gold = n.gold,
+            rice = n.rice,
+            power = n.power,
+            level = n.level,
+            typeCode = n.typeCode,
+            meta = n.meta,
+        )
+
+        /** Logic [Diplomacy] -> engine [TurnDiplomacy] (the inverse of [toLogicDiplomacy]; `dead` defaults 0). */
+        fun toEngineDiplomacy(d: LogicDiplomacy): TurnDiplomacy = TurnDiplomacy(
+            fromNationId = d.me,
+            toNationId = d.you,
+            state = d.state,
+            term = d.term,
+        )
     }
 }
