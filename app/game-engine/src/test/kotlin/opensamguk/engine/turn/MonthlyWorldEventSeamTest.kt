@@ -10,6 +10,7 @@ import opensamguk.logic.event.WorldActions
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -48,6 +49,14 @@ class MonthlyWorldEventSeamTest {
                 City(
                     id = 5, name = "성도", nationId = 1, level = 5, commerce = 100, commerceMax = 100,
                     agriculture = 100, agricultureMax = 100, supplyState = 1, frontState = 0,
+                    // 경제 max를 비-0으로 — ProcessSemiAnnual(반년 1·7월 발화)의
+                    // `secu/secuMax/10` 나눗셈이 max=0이면 NaN → phpRound(NaN)이 throw한다.
+                    // prod scenario_1010은 전 도시 max>0(min secu_max=2000)이라 실제로는 안 터지지만,
+                    // 이 seam 테스트가 MONTH 전 leaf를 end-to-end로 밟도록 현실값을 준다.
+                    security = 900, securityMax = 1000,
+                    defence = 900, defenceMax = 1000,
+                    wall = 900, wallMax = 1000,
+                    population = 50_000, populationMax = 100_000,
                     meta = linkedMapOf("trust" to 50),
                 ),
             ),
@@ -78,6 +87,31 @@ class MonthlyWorldEventSeamTest {
             contextFactory = factoryFor(w),
             envSupplier = { mutableMapOf<String, Any?>("year" to 190, "month" to 7) },
         )
+    }
+
+    @Test
+    fun `month dispatch does NOT throw — DateRelative reads lowercase startyear (the 2nd prod crash)`() {
+        // 2차 prod 크래시 회귀 가드: withDefaults()의 MONTH 이벤트는 전부 DateRelative 조건이고
+        // (EventStore.kt:165/173/181/189/197/215…), DateRelative.eval은 env["startyear"](소문자)를 요구한다.
+        // 팩토리가 camelCase "startYear"만 심던 시절 → `IllegalArgumentException: env에 startyear가 없습니다.`로
+        // 매 월경계(MonthlyPipeline:119 = dispatcher.run(EventTarget.MONTH, …)) 크래시-루프 → 턴 0진행.
+        // year/month만 주는 supplier로 MONTH를 디스패치해 EventCondition 평가가 throw 없이 완주해야 한다.
+        val w = world()
+        dispatcher().run(
+            EventTarget.MONTH,
+            contextFactory = factoryFor(w),
+            envSupplier = { mutableMapOf<String, Any?>("year" to 190, "month" to 7) },
+        )
+    }
+
+    @Test
+    fun `factory seeds BOTH startyear casings (lowercase canonical + camelCase compat)`() {
+        // 팩토리가 두 케이싱을 모두 심는지 직접 검증 — 소문자(EventCondition)와 camelCase(event-action leaf)
+        // 양쪽 리더를 동시에 만족시켜야 한다.
+        val env = mutableMapOf<String, Any?>("year" to 190, "month" to 7)
+        factoryFor(world())(env)
+        assertEquals(startYear, (env["startyear"] as Number).toInt(), "소문자 startyear (PHP 정본)")
+        assertEquals(startYear, (env["startYear"] as Number).toInt(), "camelCase startYear (관행)")
     }
 
     @Test
