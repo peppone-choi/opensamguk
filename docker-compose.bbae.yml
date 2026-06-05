@@ -1,0 +1,115 @@
+# 빼섭(bbae) 2번째 서버 스택 — 오버레이 compose.
+#
+# 사용법(박스): docker compose -f docker-compose.production.yml -f docker-compose.bbae.yml up -d \
+#                 bbae-db bbae-redis bbae-engine bbae-api gateway-frontend
+# main 스택(docker-compose.production.yml)은 무변경 — 이 오버레이는 bbae 서비스 추가 +
+# gateway-frontend에 SERVER_REGISTRY_JSON(빼섭 게임-api 내부주소) 1개 env만 머지한다.
+#
+# 토폴로지: main과 동일 이미지, 격리된 DB/redis + SCENARIO_CODE=scenario_1030(군웅할거).
+# 내부 전용(host 포트 미노출) — 로비가 gateway-frontend 경유 서버사이드로만 bbae-api에 도달.
+# 메모리: t3.large(8GB, swap 0) 2스택 → bbae JVM에 mem_limit 명시(MaxRAMPercentage가 호스트가
+# 아닌 cgroup 한도를 읽도록). engine 1g(heap ~0.55g), api 640m.
+
+name: opensamguk
+
+services:
+  bbae-db:
+    image: postgres:16
+    container_name: opensamguk-bbae-db
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${OPENSAMGUK_DB_NAME:-samguk}
+      POSTGRES_USER: ${OPENSAMGUK_DB_USER:-samguk}
+    volumes:
+      - bbae-pg-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OPENSAMGUK_DB_USER:-samguk} -d ${OPENSAMGUK_DB_NAME:-samguk}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    mem_limit: 384m
+    networks:
+      - opensamguk
+
+  bbae-redis:
+    image: redis:7-alpine
+    container_name: opensamguk-bbae-redis
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - bbae-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 192m
+    networks:
+      - opensamguk
+
+  bbae-engine:
+    image: ghcr.io/peppone-choi/opensamguk:game-engine-latest
+    container_name: opensamguk-bbae-game-engine
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      GAME_DATABASE_URL: jdbc:postgresql://bbae-db:5432/${OPENSAMGUK_DB_NAME:-samguk}
+      GAME_DB_USER: ${OPENSAMGUK_DB_USER:-samguk}
+      GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      REDIS_HOST: bbae-redis
+      REDIS_PORT: 6379
+      # 빼섭 = 군웅할거(scenario_1030). 빈 DB면 부팅 시 1회 시드(멱등).
+      SCENARIO_CODE: scenario_1030
+      SCENARIO_SEED_ENABLED: "true"
+      JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=55.0 -XX:InitialRAMPercentage=30.0 -Djava.security.egd=file:/dev/./urandom"
+    depends_on:
+      bbae-db:
+        condition: service_healthy
+      bbae-redis:
+        condition: service_healthy
+    expose:
+      - "8082"
+    mem_limit: 1024m
+    networks:
+      - opensamguk
+
+  bbae-api:
+    image: ghcr.io/peppone-choi/opensamguk:game-api-latest
+    container_name: opensamguk-bbae-game-api
+    environment:
+      GAME_API_PORT: 18080
+      GAME_DATABASE_URL: jdbc:postgresql://bbae-db:5432/${OPENSAMGUK_DB_NAME:-samguk}
+      GAME_DB_USER: ${OPENSAMGUK_DB_USER:-samguk}
+      GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      GAME_ASSETS_ORIGIN: ${PUBLIC_ASSETS_ORIGIN:-https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@v2026.05.21}
+      REDIS_HOST: bbae-redis
+      REDIS_PORT: 6379
+      JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=50.0 -Djava.security.egd=file:/dev/./urandom"
+    depends_on:
+      bbae-db:
+        condition: service_healthy
+      bbae-redis:
+        condition: service_healthy
+      bbae-engine:
+        condition: service_started
+    expose:
+      - "18080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:18080/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    mem_limit: 640m
+    networks:
+      - opensamguk
+
+  # main 스택의 gateway-frontend에 빼섭 레지스트리만 머지(서버사이드 origin 해석). 나머지 정의는 base 유지.
+  gateway-frontend:
+    environment:
+      SERVER_REGISTRY_JSON: '[{"id":"bbae","gameApiUrl":"http://bbae-api:18080"}]'
+
+volumes:
+  bbae-pg-db:
+  bbae-redisdata:
+
+networks:
+  opensamguk:
+    driver: bridge

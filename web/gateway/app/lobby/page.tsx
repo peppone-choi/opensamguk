@@ -52,6 +52,9 @@ function LobbyView() {
                                 {SERVERS.map((server) => {
                                     const badge = statusBadge(server.status);
                                     const closed = server.status === 'closed';
+                                    // 입장 가능 = 운영중(running) + 입장 URL 보유. 빼섭 등 preopen(백엔드/현황만,
+                                    // 인게임 라우팅 미완)은 '준비 중'으로 입장 비활성.
+                                    const enterable = server.status === 'running' && !!server.gameUrl;
                                     return (
                                         <tr key={server.id}>
                                             <td>{server.name}</td>
@@ -64,10 +67,12 @@ function LobbyView() {
                                             <td>
                                                 {closed ? (
                                                     LOBBY_LABELS.closed
-                                                ) : (
+                                                ) : enterable ? (
                                                     <a href={server.gameUrl || GAME_URL} target="_self">
                                                         {LOBBY_LABELS.enter}
                                                     </a>
+                                                ) : (
+                                                    LOBBY_LABELS.preparing
                                                 )}
                                             </td>
                                         </tr>

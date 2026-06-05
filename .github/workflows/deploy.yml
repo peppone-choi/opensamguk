@@ -120,6 +120,17 @@ jobs:
           target: "~/opensamguk/docker/nginx/"
           strip_components: 2
 
+      # 빼섭(bbae) 2번째 서버 오버레이 compose를 박스로 동기화 — main 무변경, bbae 서비스 추가 +
+      # gateway-frontend SERVER_REGISTRY_JSON 머지. 박스에서 -f production.yml -f bbae.yml로 적용.
+      - name: Sync bbae overlay compose to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.bbae.yml"
+          target: "~/opensamguk/"
+
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -139,20 +150,27 @@ jobs:
             echo "=== GHCR login ==="
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
+            # main + 빼섭 오버레이를 함께 적용(gateway-frontend가 오버레이의 SERVER_REGISTRY_JSON을 머지).
+            COMPOSE="docker compose -f docker-compose.production.yml -f docker-compose.bbae.yml"
+
             # Pull latest images
             echo "=== Pulling images ==="
-            docker compose -f docker-compose.production.yml pull
+            $COMPOSE pull
 
-            # Rolling restart — 업스트림 먼저, engine 다음, nginx 마지막(Rule A: stale-DNS 502 방지).
+            # Rolling restart — 업스트림 먼저, engine 다음, 빼섭 스택, nginx 마지막(Rule A: stale-DNS 502 방지).
             # nginx는 업스트림 컨테이너명을 시작/리로드 시 1회만 해석 → 업스트림 recreate 후 옛 IP를
             # 잡고 있으면 전 라우트 502. 반드시 모든 업스트림이 뜬 뒤 nginx를 force-recreate 한다.
-            echo "=== Restarting services ==="
-            docker compose -f docker-compose.production.yml up -d --no-deps gateway-api game-api gateway-frontend game-frontend
+            echo "=== Restarting main upstreams ==="
+            $COMPOSE up -d --no-deps gateway-api game-api gateway-frontend game-frontend
             sleep 5
-            docker compose -f docker-compose.production.yml up -d --no-deps game-engine
+            $COMPOSE up -d --no-deps game-engine
+
+            # 빼섭 2번째 스택(격리 db/redis/engine/api) — main 무중단 추가. 빈 DB면 engine이 scenario_1030 시드.
+            echo "=== Starting bbae stack ==="
+            $COMPOSE up -d --no-deps bbae-db bbae-redis bbae-engine bbae-api
             sleep 3
             # nginx LAST + force-recreate: scp로 동기화된 default.conf 적용 + 업스트림 IP 재해석.
-            docker compose -f docker-compose.production.yml up -d --force-recreate --no-deps nginx
+            $COMPOSE up -d --force-recreate --no-deps nginx
 
             # Cleanup old images
             docker image prune -af --filter "until=168h"
