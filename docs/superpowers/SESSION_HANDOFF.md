@@ -4,6 +4,39 @@
 
 ---
 
+## 🔴🔴 PROD 복구 진행 (2026-06-05 cont. — monthly 4-layer seam, layer 4 미해결)
+
+**현재 prod(`sam.peppone.dev`) game-engine clock 여전히 동결.** main=`79c0e69`. 엔진 컨테이너는 "Up"이나 turn-daemon-loop가 매 틱 실패→backoff. **거병 크래시(WAVE0)가 가리고 있던 monthly 틱 배선 결함이 layer-by-layer로 노출 중 — 엔진이 prod서 clean 월경계 틱을 한 번도 못 돌렸음.**
+
+### 노출·수정된 레이어 (전부 main 머지+배포 완료)
+1. **거병 created-set seam** (WAVE0) — PR #26. `ReservedTurnHandler` founding preload+드레인. (이 문서 §3 = 완료.)
+2. **monthlyRngFactory null** — PR #28. `MonthlyPipeline`이 `@Bean @Lazy`라 Spring CGLIB 프록시(Objenesis shell, 필드 null) + `runMonth` final → 인터셉트 불가 → null-필드 shell서 실행. Fix=`open fun runMonth` + `MonthlyPipelineLazyProxyTest`.
+3. **ChangeRecorder 빈 부재** — PR #29 (**Option B, 근본**). per-run 상태(handler.recorder)를 cross-config `@Bean`으로 노출한 게 2·3 공통 뿌리. Fix=`DaemonLoopConfig.turnRunService`서 `MonthlyPipeline`을 `handler.recorder`로 **인라인 생성**(nationProcessor 패턴), `EngineEventConfig`의 monthlyPipeline/monthlyPostUpdateHook `@Bean` 제거. → wiring 에러(NPE/UnsatisfiedDependency) 전부 소멸 확인됨.
+
+### ⛔ Layer 4 (미해결 — 현재 prod 동결 원인)
+```
+java.lang.IllegalArgumentException: UpdateCitySupply requires UpdateCitySupplyContext
+  at UpdateCitySupplyAction.run (logic/.../world/UpdateCitySupply.kt:254)
+```
+- `EventDispatcher.run(target, envSupplier)`가 generic `Context(env: Map)` 생성(EventDispatcher.kt:39,47) → 9개 world-event leaf가 요구하는 **타입드 컨텍스트**(`UpdateCitySupplyContext: EventActionContext` 등)를 미구현 → leaf의 `ctx as? XContext ?: throw`서 실패.
+- 즉 **데몬 MONTH-이벤트 실행 경로(TurnRunService.runTick의 dispatcher 람다 → EventDispatcher → world leaf)가 prod서 한 번도 end-to-end 안 됨.** TurnRunService:152-160이 `mutableMapOf("year","month","currentEventID")`만 공급. P3는 unit-test(`UpdateCitySupplyLossTest` 등 — 각자 타입드 ctx 직접 생성)로만 닫혀 풀-와이어드 데몬 틱 미커버.
+- UpdateCitySupply는 첫 leaf일 뿐 — ProcessIncome/UpdateNationLevel/RaiseDisaster 등 나머지도 같은 타입드-ctx 갭 가능성 高.
+
+### 다음 작업 계획 (Phase 4.5 — blind 배포-per-layer 중단)
+1. **데몬 boot+tick IT 신규** (이 전체 outage를 통과시킨 갭): `GameEngineApplicationTests`는 `opensamguk.daemon.enabled=false`라 `@Lazy turnRunService` 영원히 미해석 → 틱 미실행. Testcontainers PG + Redis mock(`@MockBean RedisCommandStream/RealtimePublisher`) + 시드 월드 + 월경계 `runTick` → **남은 monthly 체인 일괄 노출**.
+2. **world-event-leaf 타입드 컨텍스트 배선**: 통과하는 로직 테스트가 `UpdateCitySupplyContext`를 어떻게 만드는지(logic/test/world/*, `EventDispatcherTest`, `WorldActions`/`EventActionFactory`) 보고, 데몬 dispatcher(또는 MonthlyPostUpdateHook 경로)가 world-backed 타입드 ctx를 공급하도록 미러. 9 leaf 전부.
+3. 로컬 IT green → **한 번만** 배포(자동).
+
+### 표준 지시 (이 세션)
+- **머지+배포 자동, 동의 불요**(메모리 `feedback_auto_merge_deploy`). CI green 선결, gate red면 금지, 배포 후 검증(clock 전진+에러 소멸+nginx 502) 필수.
+- 컨텍스트 50% 초과 시 클리어하고 이 문서 기준으로 이어가기(클리어 무손실 위해 이 섹션 최신 유지).
+- prod 복구 후 다음: **맵 프리뷰 "준비중" 제거**(`MapViewer.tsx:252` placeholder — `/api/map/preview` empty/실패 시 렌더 → 시드 맵 실제 렌더 배선) → **레거시 갭 전수 닫기**(`GAP_AUDIT.md` WAVE 1-9).
+- 미래 마일스톤 기록됨: `MILESTONES.md` M-config(post-parity 상수 외부화), PR #27(머지 보류).
+
+---
+
+---
+
 ## 0. 🔴 가장 급한 것 — prod 다운
 
 **sam.peppone.dev (EC2 3.37.232.176) game-engine는 현재 STOP 상태(내가 정지시킴). 턴 0진행.**
