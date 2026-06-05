@@ -48,7 +48,15 @@ object WorldEventContextFactory {
         val cityConst = CityConstRegistry.find(mapName) ?: CityConstRegistry.of("che")
         return { env ->
             // 스칼라/스토어 env 키 (env-read leaf가 직접 읽음).
-            env["startYear"] = startYear
+            // 케이싱 분열 주의: PHP 정본 키는 소문자 `startyear`(GameConstBase getValues + DateRelative.php +
+            // AssignGeneralSpeciality/RaiseDisaster/UpdateNationLevel .php 전부). 그런데 Kotlin migration이
+            // 두 갈래로 갈렸다 — EventCondition(DateRelative)·CheSeonjeonpogo는 소문자 `startyear`를 읽고,
+            // event-action leaf(AssignGeneralSpeciality.kt:172 / RaiseDisaster.kt:222)와 command 경로는
+            // camelCase `startYear`를 읽는다(camelCase 미존재 시 `?: return` → 무음 no-op). MONTH 이벤트의
+            // DateRelative 조건이 소문자 키를 요구하므로 camelCase만 심으면 EventCondition이 throw해 매 월경계
+            // 크래시-루프(= prod 턴 동결)였다. seam이 두 패턴을 모두 먹이도록 **두 키 다** 심는다.
+            env["startyear"] = startYear // PHP 정본 키 (EventCondition DateRelative가 읽음)
+            env["startYear"] = startYear // camelCase 관행 (event-action leaf + command 경로 호환)
             env[AssignGeneralSpecialityAction.ENV_HIDDEN_SEED] = hiddenSeed // "hiddenSeed"
             env["cityConst"] = cityConst                              // WorldActionContext.cityConst() 가 읽음
             env[DeleteEventContext.ENV_KEY] = eventStore              // "eventStore"
