@@ -24,7 +24,9 @@ module-free, city 70 호관) — the only module-free officer≥5 chief on this 
 장각 carries a special module). Byte/draw-stability VERIFIED: two consecutive full runs on the
 same install produced byte-identical fixtures for all 12 (0 diffs).
 
-## Captured (12 / 12) — all GREEN, ZERO PLAN-MISS
+## Captured (13 / 13) — all GREEN, ZERO PLAN-MISS
+
+(12 chief commands + `event_극병연구`, the BeChief national-research command, added later.)
 
 Fixtures: `logic/src/test/resources/golden/p2/<command>-fixtures.json` (same shape as
 `capture_command_args.php`, PLUS a `draws` block = `{draw_count, draw_stream}`).
@@ -43,10 +45,23 @@ Fixtures: `logic/src/test/resources/golden/p2/<command>-fixtures.json` (same sha
 | `che_몰수` | personnel | 1 | 1 (recipient PLAIN, gold seized) | — | **1** | strategic_cmd_limit/surlimit=0; year+3 (NotOpeningPart); friendly dest gid 14 with gold≥1000. seizes금 500 → nation treasury. `rng->nextBool($npcSeizureMessageProb=0.01)` fires because dest NPCType≥2 (npc=2) → 1 draw (False; the npc-complaint message is a hit-only branch). |
 | `che_부대탈퇴지시` | personnel | 1 | 1 (member detached) | — | 0 | friendly dest. static-input troop: a real `troop` row (leader gid 18) with member gid 18 as the dest's troop leader and the detach target as a member (troop≠0, troop≠self) → the detach branch (not the "부대원이 아닙니다"/"부대장입니다" alt outcomes). |
 | `che_물자원조` | diplomacy | **2** | — | — | 0 | DifferentDestNation (dest = nation 2); surlimit=0 on BOTH nations; actor nation gold/rice≥50000; amount [1000,1000] within level×coefAidAmount. TWO acting lines (broadcast + PLAIN). |
+| `event_극병연구` | event | 1 | — | — | 0 | BeChief + OccupiedCity national-research command (zero-arg, DETERMINISTIC). Reachability precondition: nation 1 gold bumped to 1000000 (≥basegold 0 +100000) + rice to 1000000 (≥baserice 2000 +100000=102000) + aux[can_극병사용] UNSET (<1). Real PHP deltas: nation gold/rice **−100000** each, aux[can_극병사용]→**1** (joining the pre-existing can_국기변경/can_국호변경 flags), actor exp/ded **+120** each (5×(getPreReqTurn 23 +1)), acting log `<C>●</>1월:<M>극병 연구</> 완료`. Fixture adds `nationBefore/nationAfter` (gold/rice/aux) + `inheritanceBefore/inheritanceAfter` blocks. |
 
 `물자원조` is listed in `manifest.json`'s `out` block as "diplomatic, deferred" — but with two
 nations present in scenario_1010 it IS capturable (dest = the other nation), so it is captured
 here as part of the C3 surface.
+
+### event_극병연구 — inheritance active_action is a real PHP NO-OP for this actor (NOT +1)
+
+`event_극병연구.php:101` calls `increaseInheritancePoint(InheritanceKey::active_action, 1)`, but
+`InheritancePointManager::increaseInheritancePoint` (InheritancePointManager.php:258-271) has TWO
+early-return guards: `if (!$ownerID) return;` (owner==0) and `if ($general->getVar('npc') >= 2)
+return;`. The C3 install-of-record actor **gid 152 ⓝ하진 has npc=2, owner=0** — BOTH guards fire,
+so the inheritance point is **genuinely not incremented**. The captured `inheritanceBefore`/
+`inheritanceAfter` both read `{owner:0, active_action:null}` — this is the FAITHFUL oracle, not a
+miss. The Kotlin port MUST replicate `increaseInheritancePoint` no-op-ing for `npc>=2`/`owner==0`
+generals (the +1 only lands for a human-owned non-NPC general). The fixture's nation gold/rice/aux
+deltas + exp/ded + log byte-strings are the full parity surface for this NPC-actor capture.
 
 ## Backlogged (0)
 
@@ -82,14 +97,16 @@ docker exec $DB devsam-golden-php bash -lc \
 
 # 3. copy the fixtures back to THIS repo + sha256-verify.
 for cmd in che_백성동원 che_수몰 che_허보 che_의병모집 che_이호경식 che_급습 \
-           che_피장파장 che_필사즉생 che_초토화 che_몰수 che_부대탈퇴지시 che_물자원조; do
+           che_피장파장 che_필사즉생 che_초토화 che_몰수 che_부대탈퇴지시 che_물자원조 \
+           event_극병연구; do
   docker cp "devsam-golden-php:/tmp/c3out/${cmd}-fixtures.json" \
             "logic/src/test/resources/golden/p2/${cmd}-fixtures.json"
 done
 ```
 
-Regenerate ONLY when the C3 PHP source changes (`hwe/sammo/Command/Nation/che_{급습,몰수,물자원조,
-백성동원,부대탈퇴지시,수몰,의병모집,이호경식,초토화,피장파장,필사즉생,허보}.php`), the seed
+Regenerate ONLY when the C3 PHP source changes (`hwe/sammo/Command/Nation/{che_급습,che_몰수,
+che_물자원조,che_백성동원,che_부대탈퇴지시,che_수몰,che_의병모집,che_이호경식,che_초토화,
+che_피장파장,che_필사즉생,che_허보,event_극병연구}.php`), the seed
 derivation (`TurnExecutionHelper`/`Util::simpleSerialize`), `RandUtil`/`LiteHashDRBG`,
 `pickGeneralFromPool`, or the ConstraintHelper gate logic. On a Kotlin↔golden mismatch: fix the
 Kotlin port, not the golden.
