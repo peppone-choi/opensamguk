@@ -104,6 +104,9 @@ object CommandWireMapper {
     val turnReservedC3Codes: Set<String> = setOf(
         "che_급습", "che_몰수", "che_물자원조", "che_백성동원", "che_부대탈퇴지시", "che_수몰",
         "che_의병모집", "che_이호경식", "che_초토화", "che_피장파장", "che_필사즉생", "che_허보",
+        // event_*연구 9종 — 같은 chief-reserved 링 family(BeChief 국가 연구, run() deterministic, 무인자).
+        "event_극병연구", "event_무희연구", "event_상병연구", "event_화륜차연구", "event_원융노병연구",
+        "event_대검병연구", "event_화시병연구", "event_음귀병연구", "event_산저병연구",
     )
 
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */

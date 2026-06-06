@@ -30,6 +30,15 @@ import opensamguk.logic.actions.nation.cheBulgachimPagiSuak
 import opensamguk.logic.actions.nation.cheBulgachimSuak
 import opensamguk.logic.actions.nation.cheCheondo
 import opensamguk.logic.actions.nation.cheChotohwa
+import opensamguk.logic.actions.nation.eventDaegeombyeongYeongu
+import opensamguk.logic.actions.nation.eventEumgwibyeongYeongu
+import opensamguk.logic.actions.nation.eventGeukbyeongYeongu
+import opensamguk.logic.actions.nation.eventHwaryunchaYeongu
+import opensamguk.logic.actions.nation.eventHwasibyeongYeongu
+import opensamguk.logic.actions.nation.eventMuhuiYeongu
+import opensamguk.logic.actions.nation.eventSanjeobyeongYeongu
+import opensamguk.logic.actions.nation.eventSangbyeongYeongu
+import opensamguk.logic.actions.nation.eventWonyungnobyeongYeongu
 import opensamguk.logic.actions.nation.cheGamchuk
 import opensamguk.logic.actions.nation.cheGeupseup
 import opensamguk.logic.actions.nation.cheGukgiByeongyeong
@@ -134,6 +143,16 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_피장파장" -> chePijangPajang(pipeline)
         "che_필사즉생" -> chePilsaJeukSaeng(pipeline)
         "che_허보" -> cheHeobo(pipeline)
+        // --- CMD-NATION-EVENT-연구 (병종 연구 9종) — chief-reserved 국가 연구, run() deterministic(draw=0) ---
+        "event_극병연구" -> eventGeukbyeongYeongu(pipeline)
+        "event_무희연구" -> eventMuhuiYeongu(pipeline)
+        "event_상병연구" -> eventSangbyeongYeongu(pipeline)
+        "event_화륜차연구" -> eventHwaryunchaYeongu(pipeline)
+        "event_원융노병연구" -> eventWonyungnobyeongYeongu(pipeline)
+        "event_대검병연구" -> eventDaegeombyeongYeongu(pipeline)
+        "event_화시병연구" -> eventHwasibyeongYeongu(pipeline)
+        "event_음귀병연구" -> eventEumgwibyeongYeongu(pipeline)
+        "event_산저병연구" -> eventSanjeobyeongYeongu(pipeline)
         // --- CMD-WAR (출병) — the SOLE caller of the OUTER processWar() wrapper (BO3). 급습/선전포고 = P6. ---
         "che_출병" -> CheChulbyeong(pipeline)
         // --- CMD-TRADE (증여/헌납/장비매매) ---
