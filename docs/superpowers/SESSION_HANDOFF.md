@@ -1,79 +1,126 @@
-# SESSION HANDOFF — 2026-06-06 (parity-final 배포 + 양섭 재시딩 + 빼섭 보급-동결 fix)
+# SESSION HANDOFF — 2026-06-06 (세션3: game-api 검증 + 크래시 근본수정 + K1/K2 진입 정본화 커밋)
 
-다음 세션은 이 문서부터. 이전 핸드오프(입구 A·B·C·nginx 영구화)는 머지+배포 완료로 종료 — 핵심만 §6에 흡수.
+다음 세션은 이 문서부터. 세션2 산출물 전부 검증·커밋 완료(아래 §0.5). 핵심은 git log.
 
-> **바로**: `parity-final` 10+1커밋(W3 read-DTO·맵아이콘축소·reseed스크립트·빼섭 보급 fix) → main FF 배포. **본섭(1010)+빼섭(1030) 둘 다 외과적 재시딩 완료**(게임만 리셋, 로그인 보존). 빼섭 턴데몬 동결(`doNPC구출발령` 빈 supplyCities)은 **시드 소유 버그로 근본 fix**(`dd4e970`) — 배포 후 **빼섭 재시딩+엔진기동+턴전진 검증**이 마지막 잔여(아래 §1 끝).
+> **세션3 완료(커밋 6개, branch=`parity-final`, 미push)**:
+> - **게이트 ALL GREEN**: common 192 / logic 1864 / infra 78 / game-engine 297 / game-api **177**(+3 새 테스트) / web/game·web/gateway tsc CLEAN.
+> - `d18388c` A — 9 event_*연구 parity(게이트 9/9). `16861c5` E — **K1** `GET /api/server-basic-info`(BE+GameConst defaultStat*+gateway fan-out route). `c27ba51` F — **K2** 로비 라이브 진입 상태머신(§5.4 하드코딩 #1-5 제거). `62b573b` C — 진입 레이아웃/맵 폭. `3240c7d` B+D — W4 FE 5스트림 **+ 메인화면 크래시 근본수정**.
+> - **🔴 크래시(§2) 근본해소**: my-page 평면응답을 nested MyPageData로 오독 → `data.general` undefined → `.name` throw 였음(단순 null-가드 아닌 **shape mismatch**). front-info(GetFrontInfo nested 정본)로 교체, nation/city null-safe.
+>
+> **다음**: (a) **풀 배포**(parity-final→main push → deploy.yml, 턴 되감김 감수 승인됨) → prod 헬스+턴전진+크래시 재현 확인. (b) **B1-B3**(장수생성 Join/빙의/선택 — PHP 골든 동반, §5.2) + 진입 3버튼 분기(현재 미등록은 게임 진입 통합). (c) chief-center ChiefCommandReserve 제출 end-to-end 배선 검증(UI는 커밋됨, intake 왕복 미검증). (d) Tier4 #15 나머지 15(5 계략+9 misc+cr_인구이동).
 
 ---
 
-## 1. 이번 세션 한 일 (전부 main 배포, 라이브 검증)
+## 0.5 세션3 상세 (완료)
+- **검증**: 세션2 미검증분 `:app:game-api:test` → 174 green 확인. 이후 K1 추가로 177(ServerBasicInfoControllerTest 3).
+- **크래시 근본수정**: `web/game/app/game/page.tsx` MyPageContent를 `api.frontInfo()`(FrontInfoResponse nested) 소비로 재작성. `api.myPage`/`MyPageData`(평면↔nested 불일치)는 더 이상 메인이 안 씀. `lib/types` FrontGeneralInfo/FrontNationInfo를 실 JSON 필드로 widening.
+- **K1**: `ServerBasicInfoController`(permitAll+optional principal, FrontInfoController 패턴) + `ServerBasicInfoDto` + `GameConst.defaultStatTotal/Min/Max`(+NPC변형·chiefStatMin, d_setting verbatim) + GetConst 노출 + gateway `app/api/server-basic-info/[id]/route.ts`(sam_access Bearer 포워딩).
+- **K2**: `web/gateway/app/lobby/page.tsx` ServerRow가 서버별 fan-out으로 진입 상태머신(me→입장/full→등록마감/else→미등록+진입버튼) + 라이브 서버정보. servers.json=라우팅만.
+- **미해결로 남김**: ① 라이브 배포 미실행(아래 §6). ② 진입 3버튼(create/possess/select) 분기 — B1-B3 정본 페이지 부재로 미등록은 게임 진입 통합. ③ chief 제출 intake 왕복 미검증.
 
-브랜치 `parity-final` → main FF 머지 push(자동 deploy.yml). 커밋:
+## 0. 사용자 핵심 원칙 (이 세션 확립 — 반드시 준수)
 
-| 커밋 | 내용 |
-|------|------|
-| `f2096e3` | **W3 read-DTO 인리치** — chief-center/getconst/generallist/frontinfo. game-api 6실패 마감: JavaBeans decapitalize 함정 2건(`isChief`→`@get:JsonProperty("isChief")`, `iAction`→`@get:JsonProperty("iAction")`), 구 /api/const→GetConstController 이관, 데드 GameConstResponse 제거. `:app:game-api:test` 175 green. |
-| `4f2fc34` | **맵 도시 아이콘 ~28% 축소**(MapViewer `ICON_SCALE=0.72`, cast만, 아우라/깃발 비율 유지). 사용자 요청. MapViewer 15/15. |
-| `23f3bf9` | **`scripts/reseed-prod.sh`** — 외과적 재시딩(users+flyway 제외 게임테이블 TRUNCATE→redis FLUSH→엔진재시작→game-api재시작). |
-| `dd4e970` | **빼섭 보급-동결 근본 fix** — 도시 소유를 시나리오 `nation.cities`로 배정(아래 §2). ScenarioImporterIT 회귀게이트. **배포 후 빼섭 재시딩 필요.** |
+1. **하드코딩 금지.** 모든 표시값 = **실제 API + 기능의 결과**여야 한다. 정적 placeholder/박힌 상태값 = 위반. (PHP 정본 패러티값 상수는 fabrication 아님 — 그건 OK.)
+2. **PHP가 grand truth.** 진입 플로우도 devsam `hwe/ts/gateway/entrance.ts` + `v_join.php`/`select_npc.php`/`select_general_from_pool.php`를 **화면+기능까지 정독**해 충실 재현. 추측 금지.
+3. 자율 머지+배포 OK(CI green 선결). 주석 한글, 식별자/wire/패러티로그 영문. 커밋 끝 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 
-(이전 배포 배치 — 같은 parity-final: W9머지/reconciled audit/mojibake/BuyHiddenBuff intake/nextRuler+deleteNation/W6·W5 REST 뮤테이션.)
+## 1. 미커밋 인벤토리 (43파일, branch=`parity-final`)
 
-**사용자 3요구 처리**: ① 아이콘 축소 ✅배포 ② 수도=국가당1 ✅(버그 아님 — "18국"은 방랑군 영지0 환상; 재시딩으로 청소) ③ prod 재시딩 ✅양섭.
+### A. parity-wave batch1 — 9개 `event_*연구` (Tier4 #15 batch1) ✅ GREEN
+- **상태**: `:logic:test` **216 suites / 1864 tests / 0 fail / 0 error**. 9 GoldenTest 전부 PASS(게이트 직접 재실행 확인). 리뷰어 C6(fabrication) CLEAN — 9 fixture 전부 실 PHP 캡처, 약화 테스트 0. 9코드 `turnReservedC3Codes`에 있고 `intakeCodes`/`GENERAL_COMMAND_CODES`엔 없음(올바름).
+- **파일**: `logic/.../actions/nation/Event{Geukbyeong,Muhui,Sangbyeong,Hwaryuncha,Wonyungnobyeong,Daegeombyeong,Hwasibyeong,Eumgwibyeong,Sanjeobyeong}Yeongu.kt`(9 resolver) + `logic/.../golden/Event{극병,대검병,무희,산저병,상병,원융노병,음귀병,화륜차,화시병}연구GoldenTest.kt`(9) + `golden/p2/event_*연구-fixtures.json`(9 — disk엔 9개 다 있음, git엔 2개만 ?? 표시 → **커밋 전 `git add -A` 확인**) + `tools/php-golden/capture_event_wonyungnobyeong.php`.
+- **공유파일 widening**: `CommandRegistry.kt`(9 import+when), `CommandWireMapper.kt`(turnReservedC3Codes에 9코드).
+- **성격**: 9개 deterministic(rng 미draw, draw_count=0). 효과=gold/rice 차감 + nation aux[can_*사용]=1 + exp/ded +5*(preReqTurn+1) + 3로그 + inherit active_action+1. 2 cost tier: {23턴,100k}×5 / {11턴,50k}×4. 상태: PORT_MISSING→**FE_MISSING**(백엔드 게이트 closed; FE는 chief-center 제출=별도, §5 K2와 묶임).
 
-**재시딩 결과(라이브)**: 본섭 319국→**2국·2수도**(업/낙양), year 182/3→181/1, 94도시·678장수, users 보존. 빼섭 21국·21수도(단 §2 동결 — fix 배포+재시딩 후 해소 예정).
+### B. W4 FE 5스트림 + 리뷰픽스(B1/H1/H2) — web typecheck CLEAN, **game-api test 미검증**
+- **web/game**: `chief-center/page.tsx`(+신규 `ChiefCommandReserve.tsx` = 사령부 명령예약 제출 UI, 21 chief-reserved 커버) · `Gauge.tsx`(신규)+`page.tsx`/`GeneralBasicCard.tsx`/`NationBasicCard.tsx`(도시 now/max 게이지; nation/general은 max부재→now-only 비날조) · `nation-finance/page.tsx`(setRate/setBill/... 세터 제출) · `generals/page.tsx`(컬럼 정렬; 명성=explevel·계급=dedlevel 버킷, raw 아님) · `world-log/`(신규 페이지)+`lib/api.ts`(worldLog()) · `lib/types.ts`/`types/game.ts`.
+- **백엔드 곁수정(B1/H1 픽스)**: `ChiefCenterController.kt`(precheck 주입→chief 팔레트 possible/reason 실값, AvailableCommandsController 미러) · `F4Dto.kt`(ChiefCommand.reason 추가) · `GeneralsController.kt`+`F4Dto.kt`(PublicGeneral 버킷 enrich: explevel/honorText/dedlevel/dedLevelText/bill — 공개표면 원시 exp/ded/금/쌀 비노출=프라이버시) · `F4ReadControllersTest.kt`(계약 갱신).
+- **⚠️ 미검증**: B1/H1이 `F4ReadControllersTest.kt` + game-api DTO를 바꿈 → **`:app:game-api:test` 안 돌림**(사용자 인터럽트). **커밋/배포 전 필수**: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --rerun-tasks`(ctx_execute 경유, XML 검증).
 
-**🔴 마지막 잔여(이 세션 끝나기 전/다음 세션 즉시)**: 빼섭 보급 fix(dd4e970) 배포 완료되면 →
-```bash
-ssh -i ~/.ssh/id_ed25519 ubuntu@3.37.232.176
-# 빼섭만 재시딩(fixed importer가 21국 소유 복구) + 엔진 기동:
-docker stop opensamguk-bbae-game-engine 2>/dev/null
-docker exec -i opensamguk-bbae-db psql -U samguk -d samguk -v ON_ERROR_STOP=1 -c "DO \$\$ DECLARE r RECORD; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename NOT IN ('users','flyway_schema_history') LOOP EXECUTE 'TRUNCATE TABLE public.'||quote_ident(r.tablename)||' RESTART IDENTITY CASCADE'; END LOOP; END \$\$;"
-docker exec opensamguk-bbae-redis redis-cli FLUSHALL
-docker start opensamguk-bbae-game-engine
-# 검증: 모든 21국 도시 소유 + 월경계 크래시 없는지
-sleep 30; docker exec opensamguk-bbae-db psql -U samguk -d samguk -tAc "SELECT count(*) FROM nation n WHERE NOT EXISTS(SELECT 1 FROM city c WHERE c.nation_id=n.id)"  # 0 기대
-docker logs --tail 30 opensamguk-bbae-game-engine 2>&1 | grep -iE "Empty items|Exception|entering run loop"  # Empty items 없어야
+### C. 진입화면 레이아웃/맵 픽스 (사용자 prod 리뷰 피드백) — typecheck CLEAN
+- `web/game/components/Shell.tsx`: 좌측 `<Sidebar/>` 제거(너비부족 — 사용자요청). 네비=Header(상단)+BottomNav(하단)+GameChrome GlobalMenu.
+- `web/game/app/globals.css`: `.shell-main > * { max-width:1000px; margin:auto }`(로그인/로비와 동일 1000px 중앙).
+- `web/gateway/components/MapPreview.tsx`: `ICON_SCALE=0.72`(인게임 MapViewer와 맵 아이콘 모양 통일 — 로그인/로비/메인 3맵 동일형, 데이터만 상이).
+
+## 2. 🔴 미해결 크래시 (배포 전 고쳐야)
+`TypeError: undefined is not an object (evaluating 'm.name')` — **빙의 직후/메인 진입**(사용자 확인). minified prod라 정확 스택 미확보. **유력 근본**: factionless(재야) 장수 진입 시 nation null → 무가드 `.name`. `MyController.myPage`가 `nationName=orElse(null)`/`cityName=orElse(null)` 반환(L44-45). 후보: `web/game/app/game/page.tsx`(MyPageContent `nation.name`/`city.name`/`general.name` 무가드 L96/134/162 — **단 MyPageData 타입은 non-null이라 tsc 미포착**) OR myPage 응답 형태 불일치. **수정**: 진입경로 `.name` 전부 null-safe 가드(factionless nation/city null 정상 상태). 배포 후 재현 확인(소스맵 스택 받으면 정확 특정).
+
+## 3. 검증 명령 (host gradle는 ctx_execute(language:shell) 경유 — subagent는 gradle 불가)
 ```
-**주의**: bbae-engine은 현재 stop 상태(완화 A). 배포(`$COMPOSE up -d bbae-engine`)가 부활시키나 재시딩 전엔 옛 깨진 소유라 재크래시 → 반드시 배포 후 재시딩.
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test --rerun-tasks            # 1864 green (A 확인됨)
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --rerun-tasks     # B 미검증 — 필수
+cd web/game && pnpm exec tsc --noEmit    # CLEAN
+cd web/gateway && pnpm exec tsc --noEmit # CLEAN
+```
+XML 검증(exit code 불신): `logic/build/test-results/test/TEST-*.xml`(Korean 클래스명은 `#xxxx` 유니코드 이스케이프 → python ET 파싱). 파서 스니펫은 git log 이 세션 ctx_execute 참조.
 
-## 2. 빼섭(1030) 보급-동결 — 근본 원인 + fix (dd4e970)
+## 4. 워크플로 스크립트 (resume용)
+- parity-wave(event_연구): `~/.claude/projects/.../workflows/scripts/parity-wave-eventresearch.js` (run wf_72c25b9d-574, 완료).
+- W4 FE: `.../scripts/w4-fe.js` (run wf_6faa2149-ebe, 완료).
+- 제네릭 parity-wave 원본(intakeCodes 오가정 — 다음 batch엔 ring/deterministic 보정 필요): `.../scripts/parity-wave-wf_1f65b77d-105.js`. **교훈**: subagent 게이트러너는 host gradle 못 돌림(ctx_execute 미보유) → 게이트는 **메인 컨텍스트에서 ctx_execute로 직접** 재실행해 XML 확인.
 
-**증상**: 빼섭 턴데몬이 첫 월경계서 `RandUtil.choice "Empty items"`(RandUtil.kt:36) 크래시-루프(1초마다 backing off) → 동결+CPU. 스택: `rescueDeploy:140` ← `doNPC구출발령:625` ← GeneralAI.chooseNationTurn ← MonthBoundaryDriver.
+## 5. ⭐ 메인 산출물 — 진입(엔트런스) 플로우 정본화 (사용자 핵심요구, 빌드 착수)
 
-**근본**: `scenario_1030`이 도시 리소스 `cities_1010.json` 재사용 → 도시 소유가 1010 baked nation_id(국가1·2만) → 1030 21국 중 **2국만 도시 소유, 19국 무소유**. 무소유국은 capital이 미소유 도시 가리킴 → UpdateCitySupply BFS가 capital seed 못함(`computeSuppliedCitiesOrdered:68-74` 미소유시 continue) → supplyCities 빔 → `doNPC구출발령`(capital!=0 가드만 통과)이 `choice(빈 보급)` throw. **PHP `RandUtil::choice`도 empty throw=패러티 정확 → PHP는 이 상태에 도달 안 함**(PHP 시나리오가 nation.cities로 소유 배정).
+### 5.1 devsam 정본 state machine (`hwe/ts/gateway/entrance.ts`)
+서버 목록(`j_server_get_status.php` → `{color,korName,name,exists,enable}`) → 서버별 `j_server_basic_info.php` → `{reserved?, game, me}`. per-row 분기(순서):
 
-**fix**: ScenarioImporter가 도시 소유를 **시나리오 `nation[].cities`(도시명)** 에서 배정(baked nation_id 무시). 1010 무변(동일집합), 1030 21국 소유 복구. 회귀게이트 ScenarioImporterIT(1010 14/10 보존 + 1030 무소유국0·수도자국소유). 메모리 `project_bbae_supply_freeze_bug.md`.
+| 상태 | 조건 | 렌더 |
+|---|---|---|
+| reserved/가오픈 | `reserved` 존재 | 오픈일시·시나리오·turnterm·**npcMode**·defaultStatTotal. game=null |
+| **입장** | `me && me.name`(유저가 이 서버에 장수 보유) | picture(64px)+이름+`<a href="{serverPath}/">입장</a>` |
+| **등록마감** | no me && `userCnt>=maxUserCnt` | "- 장수 등록 마감 -" |
+| **미등록+액션** | no me && 여석 | "- 미등록 -" + 3버튼(독립 게이팅) |
 
-## 3. 남은 패러티 작업 (reconciled §3 티어순 — 현 상태 반영)
+미등록 3버튼: **장수생성**(`v_join.php`, `canCreate=!(block_general_create&1)`) · **장수빙의**(`select_npc.php`, `npcMode=='가능'`=1) · **장수선택**(`select_general_from_pool.php`, `npcMode=='선택 생성'`=2). 빙의(npc=1)·선택(npc=2)은 서버모드 상호배타, 생성은 직교. `.n_country`=isUnited(§천하통일§/§이벤트§/`<N국 경쟁중>`/-가오픈중-).
 
-**✅ 닫힘(이 배치)**: Tier0 전부 · Tier1 #5 nextRuler · Tier3 #9 메시지/#10 경매개설/#11 외교서신/#13 명령큐 · Tier5 #16 read-DTO(W3) · 빼섭 보급 fix.
+### 5.2 기능 정본 (3 진입수단)
+- **장수생성**(`API/General/Join.php`): RNG=`RandUtil(LiteHashDRBG(serialize(hiddenSeed,'MakeGeneral',userID,now)))`. draw: 천재 `nextBool(0.01)` → **city=`rng->choice(SELECT city WHERE level∈[5,6] AND nation=0)`(공백지, fallback 전 lv5-6)** → bonus stat `choiceUsingWeight([lead,str,int])`×`nextRangeInt(3,5)` → age=`20+bonus*2-nextRangeInt(0,1)` → affinity `nextRangeInt(1,150)` → turntime. INSERT general(owner,nation=0 **재야**,city=random공백,officer_level=0,gold/rice=default,killturn=6,personal/special...) + general_access_log + 30×general_turn(휴식) + rank_data. 폼(PageJoin.vue): 장수명/전콘/성격/통무지(합≤defaultStatTotal,각 Min~Max)/조절버튼/유산옵션.
+- **장수빙의**(`select_npc.php`+`j_get_select_npc_token.php`+`j_select_npc.php`): 토큰풀(general npc=2, weight `pow(allStat,1.5)`, 타유저 토큰 예약분 제외, 5장, validUntil). claim UPDATE 술어 **정확히** `owner<=0 AND npc=2 AND no=pick`(affected 0=충돌). 세팅: owner/owner_name, **npc 2→1**, killturn=6, defence_train=80, permission='normal', aux(+pickYearMonth). 기존 NPC 몸 그대로 빙의(스탯 미빌드).
+- **장수선택**(`select_general_from_pool.php`+`j_get_select_pool.php`+`j_select_picked_general.php`): npcmode=2. 14장 **템플릿** pool(`pickGeneralFromPool`, RNG `selectPool` 시드). `GeneralBuilder.build`로 신규 general 빌드(통무지/전콘/성격 옵션 caps 내 커스텀, killturn=5, NPCType=0, aux next_change, 재야 random공백). swap=`j_update_picked_general`.
 
-**⬜ 잔여**:
-| 우선 | 항목 | 무게 | 게이팅 |
-|------|------|------|--------|
-| Tier4 #15 | **24 미포팅 명령** — 8×`event_*연구`(극병/무희/상병/대검병/화시병/음귀병/산저병/화륜차/원융노병) · che_계략(화계/파괴/탈취/선동/첩보/반계) · misc(강행/접경귀환/숙련전환/전투태세/모반시도/특기초기화×2/단련/등용수락/cr_인구이동) | **최대** | 각 PHP 골든(Docker `tools/php-golden`), `/parity-wave` 팬아웃 |
-| Tier2 #7·#8 | W8 토너먼트 — `processTournament` state machine(pending→fill→qualify→prelim→bet→16/8/4/2/finals) + `TournamentStart/Advance/Reset` admin(현 tournament-admin FE silent no-op) | 중-대 | draw-for-draw 골든(`func_tournament.php` 1393줄) |
-| Tier3 #12·#14 | 입국·건국(거병→건국 candidate) · NPC 선택풀 pick/update | 소-중 | 골든(현 deny-stub) |
-| Tier5 #17 | W4 FE 렌더 — 게이지 now/max, 로그/기록 페이지(`/game/battle-records` 등), 설정패널, generals sort | 중-대 | 골든 불요(W3 read 위에) — 병렬 가능 |
-| Tier1 #4·#6 | checkStatistic 훅 + Q14 checkEmperior | 소 | **의도적 디퍼**(표시전용 연감, 최저 ROI) |
+### 5.3 `j_server_basic_info` 데이터계약(키스톤)
+`me`(`SELECT name,picture FROM general WHERE owner=userID` → 있으면 picture 해석, 없으면 null) + `game`{isUnited, npcMode(0/1/2→불가/가능/선택생성), year, month, scenario, maxUserCnt(=maxgeneral), turnTerm, opentime, starttime, join_mode, fictionMode, block_general_create, userCnt(`general npc<2`), npcCnt(`general npc>=2`), nationCnt(`nation level>0`), defaultStatTotal}.
 
-**대략**: 백엔드 파러티 배관(foundation/REST/read/데몬후계/시드) 거의 닫힘 ≈ **60% 완료**. 남은 ~40%는 #15 24명령이 절반(기계적·병렬) + W8 토너먼트 + W4 FE. 골든 캡처(Docker)가 Tier2·4·3잔여의 처리율 게이팅. W4 FE(#17)+checkStatistic은 골든 불요 병렬.
+### 5.3b K1 구현 노트 (이 세션 데이터소스 확인 — 빌드는 사용자 중단지시로 미착수)
+game-api 안에 `ServerBasicInfoController`(신규) — 보안: `GameApiSecurityConfig.kt:42-44` 패턴대로 `.requestMatchers("/api/server-basic-info").authenticated()`(devsam `Session::requireLogin`). 데이터:
+- **game{}**: `world.findAll().firstOrNull()` → `currentYear`/`currentMonth`/`tickSeconds`(÷60=turnTerm)/`scenarioCode`/`config`(jsonb). config 방어read(FrontInfoController.`intOrNull`/`boolOrNull` 패턴 복제, 날조금지): `npcmode`/`join_mode`/`fiction`/`maxgeneral`(=maxUserCnt)/`isunited`/`startyear`/`title`/`block_general_create`/`opentime`/`starttime`. **주의(§2 BLOCKED)**: 데몬이 config에 일부 키 미기재 → 부재 시 null/0(FrontInfoController도 동일 한계 — block_general_create/opentime는 현재 미기재일 수 있음, 시드 ScenarioImporter 확인要).
+- **userCnt(npc<2)** = `generals.count() - generals.countByNpcStateGreaterThan(1)` (또는 countByNpcState(0)+countByNpcState(1)). **npcCnt(npc≥2)** = `generals.countByNpcStateGreaterThan(1)`. **nationCnt(level>0)** = `nations.findAll().count{it.id!=0}`(FrontInfo 패턴) 또는 level>0 필터. (`GeneralReadRepository.countByNpcState/countByNpcStateGreaterThan` 존재.)
+- **me**: `GeneralOwnerRepository.findByUserId(userId)`→generalId→`GeneralReadRepository`로 name+picture(imgsvr 해석). 없으면 null. npcState 컨벤션: 0=PC,1=빙의됨,≥2=순수NPC.
+- **defaultStatTotal/Min/Max**: GameConst.kt에 **없음**(grep 0) → 추가 + GetConst 노출 필요(B1에서).
+- gateway: `web/gateway/lib/serverRegistry.ts` per-server fan-out + route-handler 프록시로 각 서버 game-api `/api/server-basic-info` 호출(`MapPreview`의 `/api/server-map/[id]` 패턴 동일).
 
-## 4. 인프라/배포 실측 (이 세션 검증)
+### 5.4 하드코딩 위반 감사 (이 세션 "철저히 규명")
+| # | 하드코딩 | 위치 | 정본 |
+|---|---|---|---|
+|1| `status:"running"`,`turnterm:60` 정적 | `web/gateway/config/servers.json` | basic-info game.isUnited/turnTerm |
+|2| 캐릭터칸 `"- 미 등 록 -"` 전서버 고정 | `lobby/page.tsx:66` | me 유무 결과 |
+|3| `enterable=running&&gameUrl`→항상 입장 | `lobby/page.tsx:57,71` | me 있을때만 입장, 없으면 생성/빙의/선택/마감 |
+|4| `(${turnterm}분 턴)` 정적 | `lobby/page.tsx:63` | 라이브 turnTerm |
+|5| year/month·userCnt/max·npcCnt·nationCnt·isUnited·npcMode 전부 없음 | lobby | basic-info game{} 실데이터 |
+|6| 계정관리 `disabled "준비중"` | `lobby/page.tsx:89` | 실 계정 API |
 
-- **EC2** `3.37.232.176`, `ssh -i ~/.ssh/id_ed25519 ubuntu@…`. (sam.peppone.dev=Cloudflare 프록시 → SSH 불가, HTTP만.)
-- **라이브 컨테이너명(compose와 다름)**: 본섭 DB=`opensamguk-db`(user/db=**samguk**, sammo 아님!), engine=`opensamguk-game-engine`, api=`opensamguk-game-api`, redis=`opensamguk-redis`, web=`opensamguk-{game,gateway}-frontend`. 빼섭=`opensamguk-bbae-{db,game-engine,game-api,redis}`(db samguk). **전 앱 단일 DB 공유 → 볼륨 wipe=유저소실 → 외과적 truncate(users 보존) 필수.**
-- **배포**: main push → `deploy.yml`(`gradlew build` 풀테스트 → GHCR 이미지 `:svc-latest`(본섭+빼섭 공용) → SSH 롤링 `up -d`(upstreams→engine→bbae→nginx force-recreate)). 단일 push가 양섭 동시. DB 영속 → 배포만으론 재시드 안됨(world_state 비어야).
-- **prod 맵 라우트** = `/api/map/preview`(NOT `/api/game/map/preview`=404). 자율 머지+배포 OK([[feedback_auto_merge_deploy]]) — CI green 선결.
+**합법 config(위반 아님)**: 서버목록 id/name/gameApiUrl/gameUrl(라우팅) = devsam ServConfig도 config. 위반은 **상태**를 정적으로 박은 것.
 
-## 5. 작업 원칙/함정
+### 5.5 빌드 플랜 (하드코딩0, 키스톤 우선) — **K1부터 착수**
+| wave | 산출물 | 게이팅 |
+|---|---|---|
+|**K1**| game-api `GET /api/server-basic-info`(game{}+me, 실쿼리) + gateway route per-server fan-out | read, 골든불요 |
+|**K2**| `lobby/page.tsx` state machine 재구성(entrance.ts 충실, 전값 basic-info 결과). servers.json=라우팅만. + chief-center 제출(W4 ChiefCommandReserve 연결, 21 chief커맨드 FE) | read |
+|**B1**| 장수생성 Join intake+daemon(MakeGeneral RNG draw-for-draw) + PageJoin 폼 + `defaultStatTotal/Min/Max` GameConst | **PHP 골든** |
+|**B2**| 빙의 deferred 절반 완성(npc 2→1+필드+로그 intake) + 토큰/가중pick(pow^1.5)/5장 | 골든 |
+|**B3**| 장수선택 pool+token+GeneralBuilder build/swap | 골든 |
 
-- **main push = deploy.yml 자동발화 → 엔진 recreate → DB스냅샷 rehydrate로 턴 ~수년 되감김**. doc-only는 main push 금지(이 핸드오프도 parity-final 로컬커밋만). 코드 배포는 큰 배치로.
-- 빌드: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew ...`, gradle은 `ctx_execute(language:"shell")` 경유. 검증=출력 tail+XML(exit0 불신, `--rerun-tasks`).
-- 로컬/박스 fetch는 Bash(host) — ctx_execute는 host localhost 미공유. 비주얼=`/browse`(gstack).
-- 주석 한글, 식별자/wire/패러티 로그 영문. 커밋 끝 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
-- 패러티: RNG draw-for-draw + PhpRound(half-away) + 한글 로그 byte + flush-delta + fabricate 금지. 골든은 real PHP 캡처만(Docker scenario_1010).
+**이미 있음(재사용)**: `GeneralOwnerRepository.findByUserId`(me 판정), `PossessionController`(claimable/claim 골격, deferred 절반), `serverRegistry.resolveGameApiOrigin`(멀티서버 fan-out), route-handler httpOnly 프록시, `GetConstController`(personality/specialWar — defaultStatTotal은 미노출, 추가요). 정본 파일목록: `legacy/devsam-core/hwe/{j_server_basic_info,v_join,select_npc,j_select_npc,j_get_select_npc_token,select_general_from_pool,j_get_select_pool,j_select_picked_general}.php` + `hwe/ts/{gateway/entrance.ts,PageJoin.vue,select_npc.ts,select_general_from_pool.ts}` + `hwe/sammo/API/General/Join.php` + `i_entrance/j_server_get_status.php`.
 
-## 6. 이전 세션 흡수 (입구/nginx — 완료)
-입구 A·B·C(제전황 재설계·맵 native 700×500·멀티서버 라우팅·world-log) 배포 완료. nginx default.conf는 infra/nginx 정본화+scp 동기화로 영구화(#35 머지). 라이브=untracked `~/opensamguk`(이전 핸드오프 §3 토폴로지 불일치는 정리됨). 상세는 git log.
+## 6. 배포 (사용자=풀 배포 지금 승인, 턴 되감김 감수)
+- 전부 FE/read → prod 반영=배포 필요. main push → `deploy.yml`(gradlew build 풀테스트 → GHCR :svc-latest → SSH 롤링 up -d). **엔진 force-recreate→DB스냅샷 rehydrate로 라이브 턴 되감김**(알려진 비용). 사용자 ON prod 인지함.
+- **배포 전 순서**: (1) `:app:game-api:test` 검증 (2) 크래시(§2) 가드 (3) 풀빌드 green (4) 논리단위 커밋 (5) push/배포 후 prod 헬스+턴전진+크래시 재현 확인.
+- EC2 `3.37.232.176` ssh `-i ~/.ssh/id_ed25519 ubuntu@`. 라이브 컨테이너=`opensamguk-{db(user/db=samguk),game-engine,game-api,redis,game-frontend,gateway-frontend}` + 빼섭 `opensamguk-bbae-*`. 맵라우트=`/api/map/preview`.
+
+## 7. 이전 세션 흡수 (완료)
+parity-final→main 배포(W3 read-DTO·맵아이콘축소·reseed). 본섭(1010)+빼섭(1030) 재시딩 완료. 빼섭 보급-동결 fix(`dd4e970` — 도시소유 nation.cities 기준). 입구/nginx 영구화(#35). 상세 git log. **빼섭 보급fix 배포후 1030 재시딩+엔진기동 검증 = 미완 잔여**(이전 핸드오프 §1).
+
+## 8. 잔여 패러티 로드맵 (PARITY_LEDGER.md)
+- Tier4 #15: 24 PORT_MISSING 중 **9 event_연구 done(이 세션)**, 15 남음 = 5 계략(che_화계/파괴/탈취/선동/첩보, RNG-bearing) + 9 misc General(강행/접경귀환/숙련전환/전투태세/모반시도/특기초기화×2/단련/등용수락) + cr_인구이동. parity-wave 추가 배치(ring/deterministic 보정한 스크립트로).
+- Tier2 #7·#8 W8 토너먼트 · Tier3 #12·#14 입국건국/NPC풀 · **Tier5 #17 W4 FE(이 세션 5스트림 done, chief 제출 연결은 K2)** · Tier1 #4·#6 checkStatistic(디퍼).
+- **진입 플로우(§5)는 로드맵 외 신규 — 사용자 prod 리뷰서 발생. 하드코딩 제거 = 운영품질 게이트.**
