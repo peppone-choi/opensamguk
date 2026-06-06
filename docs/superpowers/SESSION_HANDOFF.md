@@ -16,7 +16,9 @@
 - **크래시 근본수정**: `web/game/app/game/page.tsx` MyPageContent를 `api.frontInfo()`(FrontInfoResponse nested) 소비로 재작성. `api.myPage`/`MyPageData`(평면↔nested 불일치)는 더 이상 메인이 안 씀. `lib/types` FrontGeneralInfo/FrontNationInfo를 실 JSON 필드로 widening.
 - **K1**: `ServerBasicInfoController`(permitAll+optional principal, FrontInfoController 패턴) + `ServerBasicInfoDto` + `GameConst.defaultStatTotal/Min/Max`(+NPC변형·chiefStatMin, d_setting verbatim) + GetConst 노출 + gateway `app/api/server-basic-info/[id]/route.ts`(sam_access Bearer 포워딩).
 - **K2**: `web/gateway/app/lobby/page.tsx` ServerRow가 서버별 fan-out으로 진입 상태머신(me→입장/full→등록마감/else→미등록+진입버튼) + 라이브 서버정보. servers.json=라우팅만.
-- **미해결로 남김**: ① 라이브 배포 미실행(아래 §6). ② 진입 3버튼(create/possess/select) 분기 — B1-B3 정본 페이지 부재로 미등록은 게임 진입 통합. ③ chief 제출 intake 왕복 미검증.
+- **배포 완료 + prod 검증(2026-06-06)**: `dd4e970..5e2244d` main 머지 → deploy.yml **success**(build-jvm/web×2 green, GHCR→EC2 롤링). prod 검증: 컨테이너 전부 up(크래시루프 0), 엔진 rehydrate(generals=678) + **TurnDaemonRunner 루프 진입 + 턴 전진 181/3→181/6**, K1 `/api/server-basic-info/{main,bbae}` 라이브(main nationCnt=2·bbae=21·defaultStatTotal=165), front-info nested 라이브.
+- **🟠 nginx 회귀 캐치+핫픽스**: K2 로비 fetch `/api/server-basic-info/[id]`가 nginx `/api/` catch-all→game-api(Spring) 404로 빠져 **전 서버 '폐쇄 중' 회귀**였음. 라이브 박스 `/home/ubuntu/opensamguk/docker/nginx/default.conf`에 server-map 패턴 location 블록 2개(두 server stanza) 삽입+graceful reload로 즉시 해소. 레포 canonical `infra/nginx/default.conf`도 갱신(이 커밋, **parity-final에만** — main push=재배포·턴되감김이라 다음 배치와 함께). 박스 docker/nginx는 미추적(레포 docker/nginx 부재).
+- **미해결로 남김**: ① 진입 3버튼(create/possess/select) 분기 — B1-B3 정본 페이지 부재로 미등록은 게임 진입 통합. ② chief 제출 intake 왕복 미검증. ③ /game 메인 크래시·로비 비주얼은 로그인 세션 필요라 headless 미검(구조적 해소는 확인). ④ gateway-api `JwtTokenProviderTest.generate and validate access token()` CI flaky(시계성, 배포 비차단) — 백로그.
 
 ## 0. 사용자 핵심 원칙 (이 세션 확립 — 반드시 준수)
 
