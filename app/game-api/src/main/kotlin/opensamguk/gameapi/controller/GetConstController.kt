@@ -116,6 +116,11 @@ class GetConstController {
         "minGoldRequiredWhenBetting" to GameConst.minGoldRequiredWhenBetting,
         "maxResourceActionAmount" to GameConst.maxResourceActionAmount,
         "resourceActionAmountGuide" to GameConst.resourceActionAmountGuide,
+        // 장수 생성/빙의 스탯 캡(d_setting) — PageJoin 폼·진입(server-basic-info) defaultStatTotal 노출.
+        "defaultStatTotal" to GameConst.defaultStatTotal,
+        "defaultStatMin" to GameConst.defaultStatMin,
+        "defaultStatMax" to GameConst.defaultStatMax,
+        "chiefStatMin" to GameConst.chiefStatMin,
         // 국가 레벨 0-9 APPEND 테이블([name, chiefCnt, cityCnt]) — 프론트 레벨 라벨/게이팅.
         "nationLevelByCityCnt" to GameConst.nationLevelByCityCnt09,
         "availableNationType" to GameConst.availableNationType,
