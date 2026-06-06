@@ -1,6 +1,15 @@
-# SESSION HANDOFF — 2026-06-06 (세션3: game-api 검증 + 크래시 근본수정 + K1/K2 진입 정본화 커밋)
+# SESSION HANDOFF — 2026-06-07 (세션4: B1 장수생성 RNG 코어 골든 게이트 + RNG 커널 패러티 수정)
 
-다음 세션은 이 문서부터. 세션2 산출물 전부 검증·커밋 완료(아래 §0.5). 핵심은 git log.
+다음 세션은 이 문서부터. 핵심은 git log. (세션3 이하 §0.5~.)
+
+> **세션4 완료(커밋 1개, `6954552`, branch=`parity-final`, 미push)** — B1 장수생성(Join)의 **RNG 코어**를 PHP grand truth(`Join.php:225-392` 인라인 create-general)에서 draw-for-draw 충실 포팅 + 실 PHP 골든으로 게이트 마감. 사용자 핵심요구(진입 플로우)의 패러티-하드 코어 진척.
+> - **신규**: `logic/world/MakeGeneral.kt`(순수 로직 draw 산출) + `golden/entrance/장수생성-fixtures.json`(실 PHP 캡처 14픽스처/180드로우, 천재 3 자연발생, N∈{3,4,5}, sha256 `535ddb9c…`, 2회 byte-identical) + `tools/php-golden/capture_join.php` + `MakeGeneralGoldenTest`(seedString byte-equal + 드로우-포-드로우 method/result/choiceIndex + DRBG 커서 byte-exact + 전체 outcome) + `JoinDrawRecorder` + 연구문서 `research/2026-06-06-join-grand-truth.md`.
+> - **커널 패러티 버그 발견+수정(이 게이트가 노출)**: `common/rng/RandUtil.choiceUsingWeight` 가 `jsKeyOrder`(core2026 **TS** 오라클의 Object-key 순=정수키 오름차순 우선) 적용 → PHP `foreach` **삽입순**과 발산. `SpecialityHelper` 의 `pAbs["0"]` 센티넬(문자열키 뒤 정수형 키)에서만 발현(전투/내정 특기 선발 오류). **insertion order로 수정**. 문자열/오름차순-정수 키 콜러는 insertion==jsKeyOrder라 byte-불변 — 전수 grep + **:common 192 / :logic 1865 / :app:game-engine 297(AI 174/174) ALL GREEN** 으로 무회귀 증명. `choiceMap` 은 jsKeyOrder 유지(자체 PHP 골든 게이트 전까지, 발산 콜러 없음 — **잠재 동일버그, 백로그**). PHP 기록기 `RandUtilDrawRecorder.php` choiceUsingWeight 이중기록도 동반 픽스.
+> - 어드버서리얼 패러티 리뷰 **SAFE**(6차원 클린, 날조/약화 0).
+>
+> **다음(B1 잔여 = write-seam + 인테이크 + FE — 세션4 종료시 미착수, 정밀 스코프 ↓§0.6 A)**: 새 장수 INSERT 경로는 **net-new**(ChangeRecorder `createdGenerals` 채널 ❌ + JdbcFlushExecutor general-create ⏳ + `TurnDaemonCommand.MakeGeneral` ❌ + dispatcher 핸들러 ❌). one-daemon-write-rule 하 createGeneral 데몬 핸들러가 `MakeGeneral.draw()` 소비 → general/30×general_turn/rank_data INSERT. **flush 변경 = prod 턴-freeze 리스크 → 반드시 real-Postgres IT 로 닫고 push**. 거병/건국(CMD-FOUNDING) nation-create 가 가장 가까운 analog 템플릿. (write-seam 인베스티게이션은 세션4 말 타임아웃 — 다음 세션 신규 컨텍스트로.)
+
+---
 
 > **세션3 완료(커밋 6개, branch=`parity-final`, 미push)**:
 > - **게이트 ALL GREEN**: common 192 / logic 1864 / infra 78 / game-engine 297 / game-api **177**(+3 새 테스트) / web/game·web/gateway tsc CLEAN.
@@ -23,7 +32,12 @@
 ## 0.6 백로그 (다음 세션 — 통합)
 
 ### A. 진입(엔트런스) 잔여 — §5 (골든 동반, 사용자 핵심요구 연속)
-- **B1 장수생성**(`API/General/Join.php`): MakeGeneral RNG draw-for-draw intake+daemon(천재 nextBool→공백지 city choice→bonus stat→age→affinity) + INSERT general(재야,officer_level=0,killturn=6)+access_log+30 general_turn+rank_data + PageJoin 폼. **defaultStat\*는 이미 GameConst/GetConst 노출 완료(세션3)**. → PHP 골든.
+- **B1 장수생성**(`API/General/Join.php`):
+  - ✅ **RNG 코어 done(세션4, `6954552`)** — `logic/world/MakeGeneral.draw()` draw-for-draw + 실 PHP 골든 게이트(14/14). 천재 전투특기는 `SpecialityHelper.pickSpecialWar` 재사용. `defaultStat*`는 GameConst/GetConst 노출 완료(세션3).
+  - ⬜ **write-seam(net-new, Tier-0 — B2/B3/founding 도 소비)**: ① `ChangeRecorder.createdGenerals` 채널 신설(brand-new INSERT, generalPatches=UPDATE와 별개) ② `InMemoryTurnWorld.createGeneral`(id 할당=max+1, TurnGeneral 빌드, nation=0 재야) ③ `JdbcFlushExecutor` general-create flush step(general INSERT + 30×general_turn 휴식 + rank_data per RankColumn — 컬럼셋은 `infra/seed/ScenarioImporter.insertGenerals` 참조) + general_access_log ④ **real-Postgres flush IT**(insert→flush→행 검증; 거병/건국 nation-create IT 패턴 미러). **flush=prod 턴-freeze 리스크 → IT 선결 후 push.** 상수: gold/rice=1000, killturn=6, crewtype=1100, officer_level=0, betray(relYear≥4→2). ⑤ 누락 GameConst: `DEFAULT_CREWTYPE`(1100)/`killturn`(6)/`retirementYear`(80) 추가.
+  - ⬜ **intake**: `TurnDaemonCommand.MakeGeneral` wire variant + `CommandWireMapper` intakeCode + game-engine `TurnDaemonCommandDispatcher` 핸들러(즉시 실행, 턴-reserved 아님) + game-api 인테이크 컨트롤러(`CommandReserveService` Model-B 즉시 데몬커맨드 경로). seed = `serializeSeed(hiddenSeed,"MakeGeneral",userID,now-string)`.
+  - ⬜ **FE**: `PageJoin` 폼(장수명/전콘/성격/통무지 합≤defaultStatTotal·각[Min,Max]/조절버튼). gateway route handler 프록시 + (새 route handler면) nginx location 함정 주의.
+  - 정본: `Join.php` + 연구문서 `research/2026-06-06-join-grand-truth.md`(드로우 순서·INSERT 필드·로그 순서 정독).
 - **B2 장수빙의**(`select_npc.php`): PossessionController claimable/claim 골격 절반 존재 → npc 2→1 + killturn=6/defence_train=80/permission=normal/aux + 토큰풀(general npc=2, weight pow(allStat,1.5), 5장, validUntil) + claim 술어 정확히 `owner<=0 AND npc=2 AND no=pick`. → 골든.
 - **B3 장수선택**(`select_general_from_pool.php`): 14장 템플릿 pool(selectPool 시드)+token + GeneralBuilder.build(통무지/전콘/성격 caps 내 커스텀,killturn=5,재야 random공백)+swap. → 골든.
 - **진입 3버튼 분기**: 현재 미등록=게임 진입(CharacterClaim) 통합 → B1-B3 완료 시 `canCreate=!(block&1)`/`canSelectNPC=npcMode가능`/`canSelectPool=npcMode선택생성` 3버튼 분리(entrance.ts L270-279).
