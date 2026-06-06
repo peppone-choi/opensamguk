@@ -540,6 +540,32 @@ function planFor(object $db, string $raw, array $env): ?array {
             };
             return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
         }
+        case 'event_음귀병연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg, argTest()=true).
+            // hwe/sammo/Command/Nation/event_음귀병연구.php — run() byte-identical to event_대검병연구
+            // (auxType=can_음귀병사용, actionName='음귀병 연구', getPreReqTurn()=11, getCost()=[50000,50000]).
+            // Reachability:
+            //   ReqNationGold(basegold+50000)  → nation.gold >= 0+50000 = 50000,
+            //   ReqNationRice(baserice+50000)  → nation.rice >= 2000+50000 = 52000,
+            //   ReqNationAuxValue(can_음귀병사용,0,"<",1) → aux[can_음귀병사용] unset/<1.
+            // Actor = the nation-1 module-free chief (gid152 ⓝ하진, scenario npc=2/owner=0 default
+            // → increaseInheritancePoint(active_action,1) is a faithful NO-OP: captured as null,
+            // NOT a fabricated +1). preFn bumps the treasury past threshold + clears the aux flag
+            // (static-input gate positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas
+            // stay 100% real PHP). Large round seed gold/rice so the -50000 delta is unambiguous.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_음귀병사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+50000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+50000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
     }
     return null;
 }
@@ -740,7 +766,7 @@ $targets = [
     'che_급습', 'che_피장파장', 'che_필사즉생', 'che_초토화',
     'che_몰수', 'che_부대탈퇴지시', 'che_물자원조',
     'event_극병연구', 'event_대검병연구', 'event_화륜차연구', 'event_무희연구', 'event_상병연구',
-    'event_화시병연구',
+    'event_화시병연구', 'event_음귀병연구',
 ];
 if ($onlyCmd !== null) $targets = [$onlyCmd];
 
