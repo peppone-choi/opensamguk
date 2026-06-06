@@ -204,6 +204,18 @@
         "levelCross": false,
         "captureNation": true,
         "note": "BeChief + OccupiedCity national research command (hwe/sammo/Command/Nation/event_상병연구.php). run() is DETERMINISTIC — never touches $rng (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*(23+1)=120 each; nation gold -= getCost()[0]=100000, rice -= getCost()[1]=100000, aux[can_상병사용]=1; pushGeneralActionLog (general_record action) + pushGeneralHistoryLog (general_record history) '<M>상병 연구</> 완료'; pushNationalHistoryLog (world_history) '<Y>{name}</>{josaYi} <M>상병 연구</> 완료'; increaseInheritancePoint(active_action,1) -> storage inheritance_{owner} active_action += 1*pointCoeff iff owner!=0 && npc<2 -- for scenario_1010 chief gid152 ⓝ하진 (npc=2, owner=0) this is a FAITHFUL NO-OP (recorded as inheritanceBefore/After owner=0 active_action=null, NOT a fabricated +1); StaticEventHandler::handleEvent = no-op (empty handler table). Reachability precondition (static-input, positions gate only): nation gold >= basegold(0)+100000 and rice >= baserice(2000)+100000=102000 (scenario 후한 starts 10000/10000 -> preFn bumps to 1000000); aux[can_상병사용] unset (<1). The parity gate is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +120 + inheritance active_action delta (NOT RNG). generalHistoryLines + nationalHistoryLines + nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
+      },
+      {
+        "rawClassName": "event_화시병연구",
+        "lotteryActionName": "화시병 연구",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "captureNation": true,
+        "note": "BeChief + OccupiedCity national research command (hwe/sammo/Command/Nation/event_화시병연구.php — run() byte-identical to event_대검병연구, only actionName/auxType differ). run() is DETERMINISTIC — never touches $rng (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*(11+1)=60 each; nation gold -= getCost()[0]=50000, rice -= getCost()[1]=50000, aux[can_화시병사용]=1; pushGeneralActionLog (general_record action) + pushGeneralHistoryLog (general_record history) '<M>화시병 연구</> 완료'; pushNationalHistoryLog (world_history) '<Y>{name}</>{josaYi} <M>화시병 연구</> 완료'; increaseInheritancePoint(active_action,1) -> storage inheritance_{owner} active_action += 1*pointCoeff iff owner!=0 && npc<2 -- for scenario_1010 chief gid152 ⓝ하진 (npc=2, owner=0) this is a FAITHFUL NO-OP (recorded as inheritanceBefore/After owner=0 active_action=null, NOT a fabricated +1); StaticEventHandler::handleEvent = no-op (empty handler table). Reachability precondition (static-input, positions gate only): nation gold >= basegold(0)+50000=50000 and rice >= baserice(2000)+50000=52000 (scenario 후한 starts 10000/10000 -> preFn bumps to 1000000); aux[can_화시병사용] unset (<1). The parity gate is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +60 + inheritance active_action delta (NOT RNG). generalHistoryLines + nationalHistoryLines + nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
       }
     ]
   }
