@@ -18,7 +18,30 @@
 - **K2**: `web/gateway/app/lobby/page.tsx` ServerRow가 서버별 fan-out으로 진입 상태머신(me→입장/full→등록마감/else→미등록+진입버튼) + 라이브 서버정보. servers.json=라우팅만.
 - **배포 완료 + prod 검증(2026-06-06)**: `dd4e970..5e2244d` main 머지 → deploy.yml **success**(build-jvm/web×2 green, GHCR→EC2 롤링). prod 검증: 컨테이너 전부 up(크래시루프 0), 엔진 rehydrate(generals=678) + **TurnDaemonRunner 루프 진입 + 턴 전진 181/3→181/6**, K1 `/api/server-basic-info/{main,bbae}` 라이브(main nationCnt=2·bbae=21·defaultStatTotal=165), front-info nested 라이브.
 - **🟠 nginx 회귀 캐치+핫픽스**: K2 로비 fetch `/api/server-basic-info/[id]`가 nginx `/api/` catch-all→game-api(Spring) 404로 빠져 **전 서버 '폐쇄 중' 회귀**였음. 라이브 박스 `/home/ubuntu/opensamguk/docker/nginx/default.conf`에 server-map 패턴 location 블록 2개(두 server stanza) 삽입+graceful reload로 즉시 해소. 레포 canonical `infra/nginx/default.conf`도 갱신(이 커밋, **parity-final에만** — main push=재배포·턴되감김이라 다음 배치와 함께). 박스 docker/nginx는 미추적(레포 docker/nginx 부재).
-- **미해결로 남김**: ① 진입 3버튼(create/possess/select) 분기 — B1-B3 정본 페이지 부재로 미등록은 게임 진입 통합. ② chief 제출 intake 왕복 미검증. ③ /game 메인 크래시·로비 비주얼은 로그인 세션 필요라 headless 미검(구조적 해소는 확인). ④ gateway-api `JwtTokenProviderTest.generate and validate access token()` CI flaky(시계성, 배포 비차단) — 백로그.
+- **빼섭(bbae) 입장 ✅검증(E2E)**: `?server=bbae`→middleware `sam_server` 쿠키→`/api/game/[...]` route handler→`resolveGameApiUrl('bbae')`→`bbae-api:18080`. 증명: `Cookie: sam_server=bbae`로 `/api/game/api/front-info`가 **year 191/scenario_1030/nationCount 24**(bbae) 반환, 쿠키 없으면 181/1010(main). prod env `SERVER_REGISTRY_JSON=[{"id":"bbae","gameApiUrl":"http://bbae-api:18080"}]`. 크래시 수정도 bbae 동일 적용(front-info nested). (basic-info nationCnt=21=`level>0`=devsam 로비 정본 / front-info nationCount=24=`id!=0` — 메트릭 차이지 버그 아님.)
+
+## 0.6 백로그 (다음 세션 — 통합)
+
+### A. 진입(엔트런스) 잔여 — §5 (골든 동반, 사용자 핵심요구 연속)
+- **B1 장수생성**(`API/General/Join.php`): MakeGeneral RNG draw-for-draw intake+daemon(천재 nextBool→공백지 city choice→bonus stat→age→affinity) + INSERT general(재야,officer_level=0,killturn=6)+access_log+30 general_turn+rank_data + PageJoin 폼. **defaultStat\*는 이미 GameConst/GetConst 노출 완료(세션3)**. → PHP 골든.
+- **B2 장수빙의**(`select_npc.php`): PossessionController claimable/claim 골격 절반 존재 → npc 2→1 + killturn=6/defence_train=80/permission=normal/aux + 토큰풀(general npc=2, weight pow(allStat,1.5), 5장, validUntil) + claim 술어 정확히 `owner<=0 AND npc=2 AND no=pick`. → 골든.
+- **B3 장수선택**(`select_general_from_pool.php`): 14장 템플릿 pool(selectPool 시드)+token + GeneralBuilder.build(통무지/전콘/성격 caps 내 커스텀,killturn=5,재야 random공백)+swap. → 골든.
+- **진입 3버튼 분기**: 현재 미등록=게임 진입(CharacterClaim) 통합 → B1-B3 완료 시 `canCreate=!(block&1)`/`canSelectNPC=npcMode가능`/`canSelectPool=npcMode선택생성` 3버튼 분리(entrance.ts L270-279).
+- **nginx**: B1-B3가 새 gateway Next route handler 추가 시 `infra/nginx/default.conf` 두 stanza + 라이브 박스 `docker/nginx/default.conf` location 블록 또 필요(자동화 검토). 함정 = `/api/` catch-all→game-api 404.
+
+### B. 검증/배선 잔여
+- **chief-center ChiefCommandReserve 제출 intake 왕복 end-to-end 미검증**(UI는 배포됨; 9 event_연구 등 chief turn-reserved 제출이 실제 엔진까지 도달하는지 로그인 세션으로 확인).
+- **/game 메인 크래시·로비 비주얼**: 구조적 해소 확인(front-info nested 라이브), 로그인+빙의 세션 실측은 미완.
+- **nginx canonical** `infra/nginx/default.conf`(server-basic-info 블록)는 **parity-final에만**(`b8b58b6`) — main push=재배포·턴되감김이라 다음 배치와 함께 main 반영. 라이브 박스는 핫픽스 적용됨.
+
+### C. 패러티 로드맵 (PARITY_LEDGER §8)
+- **Tier4 #15**: 24 중 9 done(세션3), **15 남음** = 5 계략(che_화계/파괴/탈취/선동/첩보, RNG-bearing) + 9 misc General(강행/접경귀환/숙련전환/전투태세/모반시도/특기초기화×2/단련/등용수락) + cr_인구이동. (parity-wave ring/deterministic 보정 스크립트로.)
+- Tier2 #7·#8 W8 토너먼트 · Tier3 #12·#14 입국건국/NPC풀 · Tier1 #4·#6 checkStatistic(디퍼).
+- **gateway-api `JwtTokenProviderTest.generate and validate access token()` CI flaky**(시계성, deploy.yml 비차단 — dd4e970·세션3 둘 다 배포 성공). 토큰 만료/시각 단언 수정 필요.
+
+### D. 운영 백로그
+- **빼섭 보급-동결 버그** 미수정(`doNPC구출발령` 빈 supplyCities→RandUtil.choice throw, 상류 1030 보급 발산). 가드=band-aid. 현재 빼섭 엔진은 가동 중(year 191 전진).
+- 매 main 배포 = 엔진 recreate→DB스냅샷 rehydrate로 **턴 되감김**(세션3 본섭 181로). doc-only도 main push 금지(parity-final에 모아 배치 배포).
 
 ## 0. 사용자 핵심 원칙 (이 세션 확립 — 반드시 준수)
 
