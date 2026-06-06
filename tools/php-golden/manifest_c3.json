@@ -1,5 +1,5 @@
 {
-  "_doc": "C3 chief-command golden-capture manifest (capture_command_c3.php). Oracle = legacy/devsam-core PHP (grand truth). The 12 missing C3 chief commands under hwe/sammo/Command/Nation/: a mix of strategic/외교/인사 NationCommands not in the original P2 set. Each entry pins the SAME fields as manifest.json — ctor scope (all 'nation' → 4-arg buildNationCommandClass + 'nationCommand' seed), lotteryActionName (static::$actionName = getName(), DISTINCT from the 6th seed token rawClassName = getRawClassName(true)), the expected ACTING-general action-log line count (logLines — general_record general_id=<gid> log_type='action' rows; dest-general / dest-nation broadcast lines captured separately, NOT counted), crossGeneral (writes a cross-target general action/PLAIN log), broadcast (pushGlobalActionLog general_id=0 history line). The seed fmt is identical: Util::simpleSerialize(hiddenSeed,'nationCommand',year,month,generalId,rawClassName). NOTE: these are STRATEGIC commands — most carry a per-nation strategic_cmd_limit gate (AvailableStrategicCommand) + a diplomacy-state gate, satisfied as a documented static-input precondition (analogous to P1 mid-band exp/ded; the action's draws/log/deltas stay 100% real PHP).",
+  "_doc": "C3 chief-command golden-capture manifest (capture_command_c3.php). Oracle = legacy/devsam-core PHP (grand truth). The 12 missing C3 chief commands (+ event_극병연구, the BeChief national-research command) under hwe/sammo/Command/Nation/: a mix of strategic/외교/인사 NationCommands not in the original P2 set. Each entry pins the SAME fields as manifest.json — ctor scope (all 'nation' → 4-arg buildNationCommandClass + 'nationCommand' seed), lotteryActionName (static::$actionName = getName(), DISTINCT from the 6th seed token rawClassName = getRawClassName(true)), the expected ACTING-general action-log line count (logLines — general_record general_id=<gid> log_type='action' rows; dest-general / dest-nation broadcast lines captured separately, NOT counted), crossGeneral (writes a cross-target general action/PLAIN log), broadcast (pushGlobalActionLog general_id=0 history line). The seed fmt is identical: Util::simpleSerialize(hiddenSeed,'nationCommand',year,month,generalId,rawClassName). NOTE: these are STRATEGIC commands — most carry a per-nation strategic_cmd_limit gate (AvailableStrategicCommand) + a diplomacy-state gate, satisfied as a documented static-input precondition (analogous to P1 mid-band exp/ded; the action's draws/log/deltas stay 100% real PHP).",
   "seed": {
     "fmt": "Util::simpleSerialize(hiddenSeed, scope, year, month, generalId, rawClassName)",
     "scope_nation": "nationCommand",
@@ -8,24 +8,203 @@
   },
   "commands": {
     "strategic": [
-      { "rawClassName": "che_백성동원", "lotteryActionName": "백성동원", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "own occupied dest city (def/wall raised toward max); strategic gate." },
-      { "rawClassName": "che_필사즉생", "lotteryActionName": "필사즉생", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": true, "broadcast": false, "levelCross": false, "note": "AllowDiplomacyStatus([0]) = at active war (state 0); sets every nation general train/atmos to 100 (PLAIN dest line on each). zero-arg." },
-      { "rawClassName": "che_수몰", "lotteryActionName": "수몰", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "enemy BattleGroundCity (state 0); def/wall *0.2; dest-nation PLAIN + national-history lines." },
-      { "rawClassName": "che_허보", "lotteryActionName": "허보", "ctor": "nation", "rngDraws": "rng->choice per enemy general in dest city (+ re-roll if same city)", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "enemy dest city (state 0/1); moves each enemy general in that city to a random supplied enemy city." },
-      { "rawClassName": "che_의병모집", "lotteryActionName": "의병모집", "ctor": "nation", "rngDraws": "pickGeneralFromPool (3 name choices/loop) + nextRangeInt(64,70) + fillRemainSpecAsRandom per created NPC", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "NotOpeningPart(relYear>=3); creates 3+round(avgGennum/8) NPC generals into the actor's city; mutates game_env npccount + nation gennum." },
-      { "rawClassName": "che_이호경식", "lotteryActionName": "이호경식", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "AllowDiplomacyBetweenStatus([0,1]); diplomacy term +3 + state->1, SetNationFront both sides; dest-nation PLAIN + national-history." },
-      { "rawClassName": "che_급습", "lotteryActionName": "급습", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "AllowDiplomacyWithTerm(1,12) = declared (state 1) with term>=12; diplomacy term -3; dest-nation PLAIN + national-history." },
-      { "rawClassName": "che_피장파장", "lotteryActionName": "피장파장", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "AllowDiplomacyBetweenStatus([0,1]) + commandType arg (another 전략 cmd != self); writes nation_env / dest nation_env delay KV; dest-nation PLAIN + national-history." }
+      {
+        "rawClassName": "che_백성동원",
+        "lotteryActionName": "백성동원",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "own occupied dest city (def/wall raised toward max); strategic gate."
+      },
+      {
+        "rawClassName": "che_필사즉생",
+        "lotteryActionName": "필사즉생",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": true,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "AllowDiplomacyStatus([0]) = at active war (state 0); sets every nation general train/atmos to 100 (PLAIN dest line on each). zero-arg."
+      },
+      {
+        "rawClassName": "che_수몰",
+        "lotteryActionName": "수몰",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "enemy BattleGroundCity (state 0); def/wall *0.2; dest-nation PLAIN + national-history lines."
+      },
+      {
+        "rawClassName": "che_허보",
+        "lotteryActionName": "허보",
+        "ctor": "nation",
+        "rngDraws": "rng->choice per enemy general in dest city (+ re-roll if same city)",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "enemy dest city (state 0/1); moves each enemy general in that city to a random supplied enemy city."
+      },
+      {
+        "rawClassName": "che_의병모집",
+        "lotteryActionName": "의병모집",
+        "ctor": "nation",
+        "rngDraws": "pickGeneralFromPool (3 name choices/loop) + nextRangeInt(64,70) + fillRemainSpecAsRandom per created NPC",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "NotOpeningPart(relYear>=3); creates 3+round(avgGennum/8) NPC generals into the actor's city; mutates game_env npccount + nation gennum."
+      },
+      {
+        "rawClassName": "che_이호경식",
+        "lotteryActionName": "이호경식",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "AllowDiplomacyBetweenStatus([0,1]); diplomacy term +3 + state->1, SetNationFront both sides; dest-nation PLAIN + national-history."
+      },
+      {
+        "rawClassName": "che_급습",
+        "lotteryActionName": "급습",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "AllowDiplomacyWithTerm(1,12) = declared (state 1) with term>=12; diplomacy term -3; dest-nation PLAIN + national-history."
+      },
+      {
+        "rawClassName": "che_피장파장",
+        "lotteryActionName": "피장파장",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "AllowDiplomacyBetweenStatus([0,1]) + commandType arg (another 전략 cmd != self); writes nation_env / dest nation_env delay KV; dest-nation PLAIN + national-history."
+      }
     ],
     "special": [
-      { "rawClassName": "che_초토화", "lotteryActionName": "초토화", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true, "note": "own non-capital supplied dest city -> neutral (scorched); surlimit==0 + DisallowDiplomacyStatus([0]) (peacetime, state != 0). pushGlobalActionLog broadcast. addExperience(-exp*0.1) deliberately lowers actor exp (may level-cross -> levelCross=true; the harness positions the actor mid-band so the post-state stays in-band)." }
+      {
+        "rawClassName": "che_초토화",
+        "lotteryActionName": "초토화",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": true,
+        "levelCross": true,
+        "note": "own non-capital supplied dest city -> neutral (scorched); surlimit==0 + DisallowDiplomacyStatus([0]) (peacetime, state != 0). pushGlobalActionLog broadcast. addExperience(-exp*0.1) deliberately lowers actor exp (may level-cross -> levelCross=true; the harness positions the actor mid-band so the post-state stays in-band)."
+      }
     ],
     "personnel": [
-      { "rawClassName": "che_몰수", "lotteryActionName": "몰수", "ctor": "nation", "rngDraws": "rng->nextBool($npcSeizureMessageProb=0.01) iff dest NPCType>=2 (msg only; then rng->choice for the npc message text on a hit)", "logLines": 1, "crossGeneral": true, "broadcast": false, "levelCross": false, "note": "NotOpeningPart(relYear>=3) + FriendlyDestGeneral; seizes gold/rice from a friendly general into the nation treasury; dest PLAIN action line." },
-      { "rawClassName": "che_부대탈퇴지시", "lotteryActionName": "부대 탈퇴 지시", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": true, "broadcast": false, "levelCross": false, "note": "FriendlyDestGeneral; detaches a friendly troop MEMBER (troop != 0 and != self). dest action line. (troop==0 / troop==self are alternate single-line outcomes.)" }
+      {
+        "rawClassName": "che_몰수",
+        "lotteryActionName": "몰수",
+        "ctor": "nation",
+        "rngDraws": "rng->nextBool($npcSeizureMessageProb=0.01) iff dest NPCType>=2 (msg only; then rng->choice for the npc message text on a hit)",
+        "logLines": 1,
+        "crossGeneral": true,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "NotOpeningPart(relYear>=3) + FriendlyDestGeneral; seizes gold/rice from a friendly general into the nation treasury; dest PLAIN action line."
+      },
+      {
+        "rawClassName": "che_부대탈퇴지시",
+        "lotteryActionName": "부대 탈퇴 지시",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": true,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "FriendlyDestGeneral; detaches a friendly troop MEMBER (troop != 0 and != self). dest action line. (troop==0 / troop==self are alternate single-line outcomes.)"
+      }
     ],
     "diplomacy": [
-      { "rawClassName": "che_물자원조", "lotteryActionName": "원조", "ctor": "nation", "rngDraws": "none/deterministic", "logLines": 2, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "DifferentDestNation + surlimit==0 both nations; gold/rice transfer to another nation. TWO acting lines (broadcast + PLAIN). pushGlobalHistoryLog (history, not globalAction)." }
+      {
+        "rawClassName": "che_물자원조",
+        "lotteryActionName": "원조",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 2,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "DifferentDestNation + surlimit==0 both nations; gold/rice transfer to another nation. TWO acting lines (broadcast + PLAIN). pushGlobalHistoryLog (history, not globalAction)."
+      }
+    ],
+    "event": [
+      {
+        "rawClassName": "event_극병연구",
+        "lotteryActionName": "극병 연구",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "BeChief + OccupiedCity national research command. run() is DETERMINISTIC (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*24=120 each; nation gold -= getCost()[0]=100000, rice -= getCost()[1]=100000, aux[can_극병사용]=1; pushGeneralActionLog/pushGeneralHistoryLog '<M>극병 연구</> 완료'; pushNationalHistoryLog '<Y>{name}</>{josaYi} <M>극병 연구</> 완료'; increaseInheritancePoint(active_action,1) (+1 in storage inheritance_{owner}). Reachability precondition: nation gold >= basegold(0)+100000 and rice >= baserice(2000)+100000=102000; aux[can_극병사용] unset (<1). The parity surface is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +120 + inheritance active_action +1 (NOT RNG). nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
+      },
+      {
+        "rawClassName": "event_대검병연구",
+        "lotteryActionName": "대검병 연구",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "BeChief + OccupiedCity national research command (hwe/sammo/Command/Nation/event_대검병연구.php). run() is DETERMINISTIC (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*(11+1)=60 each; nation gold -= getCost()[0]=50000, rice -= getCost()[1]=50000, aux[can_대검병사용]=1; pushGeneralActionLog (general_record action) + pushGeneralHistoryLog (general_record history) '<M>대검병 연구</> 완료'; pushNationalHistoryLog (world_history) '<Y>{name}</>{josaYi} <M>대검병 연구</> 완료'; increaseInheritancePoint(active_action,1) → storage inheritance_{owner} active_action += 1*pointCoeff(=3) iff owner!=0 && npc<2; StaticEventHandler::handleEvent = no-op (empty handler table). Reachability precondition: nation gold >= basegold(0)+50000=50000 and rice >= baserice(2000)+50000=52000; aux[can_대검병사용] unset (<1). The parity surface is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +60 + inheritance active_action delta (NOT RNG). generalHistoryLines + nationalHistoryLines + nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
+      },
+      {
+        "rawClassName": "event_화륜차연구",
+        "lotteryActionName": "화륜차 연구",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "note": "BeChief + OccupiedCity national research command (hwe/sammo/Command/Nation/event_화륜차연구.php). run() is DETERMINISTIC (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*(23+1)=120 each; nation gold -= getCost()[0]=100000, rice -= getCost()[1]=100000, aux[can_화륜차사용]=1; pushGeneralActionLog (general_record action) + pushGeneralHistoryLog (general_record history) '<M>화륜차 연구</> 완료'; pushNationalHistoryLog (world_history) '<Y>{name}</>{josaYi} <M>화륜차 연구</> 완료'; increaseInheritancePoint(active_action,1) → storage inheritance_{owner} active_action += 1*pointCoeff(=3) iff owner!=0 && npc<2 (the install actor gid152 ⓝ하진 is npc/owner-default → faithful NO-OP, captured as null, NOT fabricated); StaticEventHandler::handleEvent = no-op (empty handler table). Reachability precondition: nation gold >= basegold(0)+100000=100000 and rice >= baserice(2000)+100000=102000; aux[can_화륜차사용] unset (<1). The parity surface is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +120 + inheritance active_action delta (NOT RNG). generalHistoryLines + nationalHistoryLines + nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
+      },
+      {
+        "rawClassName": "event_무희연구",
+        "lotteryActionName": "무희 연구",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "captureNation": true,
+        "note": "BeChief + OccupiedCity national research command (hwe/sammo/Command/Nation/event_무희연구.php). run() is DETERMINISTIC — never touches $rng (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*(23+1)=120 each; nation gold -= getCost()[0]=100000, rice -= getCost()[1]=100000, aux[can_무희사용]=1; pushGeneralActionLog (general_record action) + pushGeneralHistoryLog (general_record history) '<M>무희 연구</> 완료'; pushNationalHistoryLog (world_history) '<Y>{name}</>{josaYi} <M>무희 연구</> 완료'; increaseInheritancePoint(active_action,1) -> storage inheritance_{owner} active_action += 1*pointCoeff iff owner!=0 && npc<2 -- for scenario_1010 chief gid152 ⓝ하진 (npc=2, owner=0) this is a FAITHFUL NO-OP (recorded as inheritanceBefore/After owner=0 active_action=null, NOT a fabricated +1); StaticEventHandler::handleEvent = no-op (empty handler table). Reachability precondition (static-input, positions gate only): nation gold >= basegold(0)+100000 and rice >= baserice(2000)+100000=102000 (scenario 후한 starts 10000/10000 -> preFn bumps to 1000000); aux[can_무희사용] unset (<1). The parity gate is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +120 + inheritance active_action delta (NOT RNG). generalHistoryLines + nationalHistoryLines + nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
+      },
+      {
+        "rawClassName": "event_상병연구",
+        "lotteryActionName": "상병 연구",
+        "ctor": "nation",
+        "rngDraws": "none/deterministic",
+        "logLines": 1,
+        "crossGeneral": false,
+        "broadcast": false,
+        "levelCross": false,
+        "captureNation": true,
+        "note": "BeChief + OccupiedCity national research command (hwe/sammo/Command/Nation/event_상병연구.php). run() is DETERMINISTIC — never touches $rng (draw_count=0). Effects: actor addExperience/addDedication += 5*(getPreReqTurn()+1)=5*(23+1)=120 each; nation gold -= getCost()[0]=100000, rice -= getCost()[1]=100000, aux[can_상병사용]=1; pushGeneralActionLog (general_record action) + pushGeneralHistoryLog (general_record history) '<M>상병 연구</> 완료'; pushNationalHistoryLog (world_history) '<Y>{name}</>{josaYi} <M>상병 연구</> 완료'; increaseInheritancePoint(active_action,1) -> storage inheritance_{owner} active_action += 1*pointCoeff iff owner!=0 && npc<2 -- for scenario_1010 chief gid152 ⓝ하진 (npc=2, owner=0) this is a FAITHFUL NO-OP (recorded as inheritanceBefore/After owner=0 active_action=null, NOT a fabricated +1); StaticEventHandler::handleEvent = no-op (empty handler table). Reachability precondition (static-input, positions gate only): nation gold >= basegold(0)+100000 and rice >= baserice(2000)+100000=102000 (scenario 후한 starts 10000/10000 -> preFn bumps to 1000000); aux[can_상병사용] unset (<1). The parity gate is the Korean log byte-strings + nation gold/rice/aux deltas + actor exp/ded +120 + inheritance active_action delta (NOT RNG). generalHistoryLines + nationalHistoryLines + nationBefore/nationAfter + inheritanceBefore/inheritanceAfter captured in addition to the standard before/after general+city block."
+      }
     ]
   }
 }

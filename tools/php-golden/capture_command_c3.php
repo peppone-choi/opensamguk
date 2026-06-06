@@ -83,6 +83,24 @@ function logActionRows(object $db, int $gid): array {
     $rows = $db->query('SELECT text FROM general_record WHERE general_id=%i AND log_type=%s ORDER BY id', $gid, 'action');
     $out = []; foreach ($rows as $r) $out[] = $r['text']; return $out;
 }
+/** general-history rows (general_record log_type='history', YEAR_MONTH fmt) for one general
+ *  added AFTER $afterId — the event_* research command's pushGeneralHistoryLog surface. */
+function generalHistoryRowsSince(object $db, int $gid, int $afterId): array {
+    $rows = $db->query('SELECT text FROM general_record WHERE general_id=%i AND log_type=%s AND id>%i ORDER BY id', $gid, 'history', $afterId);
+    $out = []; foreach ($rows as $r) $out[] = $r['text']; return $out;
+}
+function maxGeneralHistoryId(object $db, int $gid): int {
+    return (int)($db->queryFirstField('SELECT COALESCE(MAX(id),0) FROM general_record WHERE general_id=%i AND log_type=%s', $gid, 'history'));
+}
+/** national-history rows (world_history, nation_id=nationID, YEAR_MONTH fmt) added AFTER
+ *  $afterId — the event_* research command's pushNationalHistoryLog surface. */
+function nationalHistoryRowsSince(object $db, int $nationID, int $afterId): array {
+    $rows = $db->query('SELECT text FROM world_history WHERE nation_id=%i AND id>%i ORDER BY id', $nationID, $afterId);
+    $out = []; foreach ($rows as $r) $out[] = $r['text']; return $out;
+}
+function maxWorldHistoryId(object $db): int {
+    return (int)($db->queryFirstField('SELECT COALESCE(MAX(id),0) FROM world_history'));
+}
 function globalActionRowsSince(object $db, int $afterId): array {
     $rows = $db->query('SELECT id, text FROM general_record WHERE general_id=0 AND log_type=%s AND id>%i ORDER BY id', 'history', $afterId);
     $out = []; foreach ($rows as $r) $out[] = $r['text']; return $out;
@@ -115,6 +133,35 @@ function applyPrecondition(object $db, int $gid): array {
     $dmid = (int)(dedBandLo($dl) + (dedBandHi($dl)-dedBandLo($dl))*0.4);
     $db->update('general', ['personal'=>'None','experience'=>$emid,'dedication'=>$dmid,'explevel'=>getExpLevel($emid),'dedlevel'=>getDedLevel($dmid)], 'no=%i', $gid);
     return $db->queryFirstRow('SELECT * FROM general WHERE no=%i', $gid);
+}
+
+/**
+ * Snapshot a nation's treasury + aux (event_극병연구's parity surface). gold/rice are
+ * integer columns; aux is a JSON column — decode it so the fixture carries the live
+ * key→value map (can_극병사용 unset before → ==1 after). 100% real PHP row values.
+ */
+function snapshotNationAux(object $db, int $nationID): array {
+    $row = $db->queryFirstRow('SELECT gold, rice, aux FROM nation WHERE nation=%i', $nationID);
+    $aux = $row['aux'];
+    if (is_string($aux)) { $aux = $aux === '' ? [] : Json::decode($aux); }
+    if (!is_array($aux)) { $aux = []; }
+    return ['nation' => $nationID, 'gold' => (int)$row['gold'], 'rice' => (int)$row['rice'], 'aux' => $aux];
+}
+
+/**
+ * Read the active_action inheritance point for a general's owner (the value the
+ * increaseInheritancePoint(active_action,1) bumps). Stored in the `storage` table,
+ * namespace `inheritance_{ownerID}`, key `active_action`, value=Json([value, aux]).
+ * Returns ['owner'=>ownerID, 'active_action'=>floatOrNull]. owner==0 / npc>=2 → no bump.
+ */
+function snapshotInheritanceActiveAction(object $db, General $g): array {
+    $owner = (int)$g->getVar('owner');
+    if (!$owner) return ['owner' => 0, 'active_action' => null];
+    $stor = KVStorage::getStorage($db, "inheritance_{$owner}");
+    $entry = $stor->getValue(\sammo\Enums\InheritanceKey::active_action->value);
+    $val = null;
+    if (is_array($entry)) { $val = $entry[0]; }   // [value, aux]
+    return ['owner' => $owner, 'active_action' => $val];
 }
 
 function snapshotGeneralCity(General $g, ?array $city): array {
@@ -151,6 +198,7 @@ function snapshotWorld(object $db): array {
         'npccount'   => (int)(KVStorage::getStorage($db, 'game_env')->npccount ?? 0),
         'maxGenNo'   => (int)$db->queryFirstField('SELECT COALESCE(MAX(no),0) FROM general'),
         'maxGlobalId'=> maxGlobalActionId($db),
+        'maxWorldHistoryId' => maxWorldHistoryId($db),
         'maxPoolId'  => (int)$db->queryFirstField('SELECT COALESCE(MAX(id),0) FROM select_pool'),
         // nation_env is its OWN table (namespace=int nationID, column `key`).
         'nationEnv'  => $db->query('SELECT namespace, `key`, value FROM nation_env'),
@@ -184,6 +232,10 @@ function restoreWorld(object $db, array $w): void {
     // wipe THIS-capture action rows + new global-action history rows.
     $db->delete('general_record', 'log_type=%s AND id>%i', 'history', $w['maxGlobalId']);
     $db->query('DELETE FROM general_record WHERE log_type=%s', 'action');
+    // wipe THIS-capture national-history rows (event_* research pushNationalHistoryLog).
+    if (isset($w['maxWorldHistoryId'])) {
+        $db->delete('world_history', 'id>%i', $w['maxWorldHistoryId']);
+    }
 }
 
 /** Refresh the static nation/city caches after a precondition mutation. */
@@ -342,6 +394,152 @@ function planFor(object $db, string $raw, array $env): ?array {
             };
             return [$chief, ['destNationID' => $enemy, 'amountList' => [1000, 1000]], $pre, null];
         }
+        case 'event_극병연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg). Reachability:
+            //   ReqNationGold(basegold+100000) → nation.gold >= 100000,
+            //   ReqNationRice(baserice+100000) → nation.rice >= 2000+100000 = 102000,
+            //   ReqNationAuxValue(can_극병사용,0,"<",1) → aux[can_극병사용] unset/<1.
+            // The actor is the nation-1 module-free chief (gid152 하진). preFn bumps the
+            // nation treasury past the threshold and clears the aux flag (static-input gate
+            // positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas stay 100% real
+            // PHP). The seed gold/rice values are large round numbers so the -100000 delta is
+            // unambiguous in the fixture.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_극병사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+100000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+100000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
+        case 'event_대검병연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg). Reachability:
+            //   ReqNationGold(basegold+50000)  → nation.gold >= 50000,
+            //   ReqNationRice(baserice+50000)  → nation.rice >= 2000+50000 = 52000,
+            //   ReqNationAuxValue(can_대검병사용,0,"<",1) → aux[can_대검병사용] unset/<1.
+            // The actor is the nation-1 module-free chief (gid152 ⓝ하진). preFn bumps the
+            // nation treasury past the threshold and clears the aux flag (static-input gate
+            // positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas stay 100% real
+            // PHP). The seed gold/rice values are large round numbers so the -50000 delta is
+            // unambiguous in the fixture.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_대검병사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+50000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+50000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
+        case 'event_화시병연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg, argTest()=true).
+            // hwe/sammo/Command/Nation/event_화시병연구.php — byte-identical run() to event_대검병연구
+            // (auxType=can_화시병사용, actionName='화시병 연구', getPreReqTurn()=11, getCost()=[50000,50000]).
+            // Reachability:
+            //   ReqNationGold(basegold+50000)  → nation.gold >= 0+50000 = 50000,
+            //   ReqNationRice(baserice+50000)  → nation.rice >= 2000+50000 = 52000,
+            //   ReqNationAuxValue(can_화시병사용,0,"<",1) → aux[can_화시병사용] unset/<1.
+            // Actor = the nation-1 module-free chief (gid152 ⓝ하진, scenario npc=2/owner=0 default
+            // → increaseInheritancePoint(active_action,1) is a faithful NO-OP: captured as null,
+            // NOT a fabricated +1). preFn bumps the treasury past threshold + clears the aux flag
+            // (static-input gate positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas
+            // stay 100% real PHP). Large round seed gold/rice so the -50000 delta is unambiguous.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_화시병사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+50000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+50000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
+        case 'event_무희연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg). Reachability:
+            //   ReqNationGold(basegold+100000) → nation.gold >= 100000,
+            //   ReqNationRice(baserice+100000) → nation.rice >= 2000+100000 = 102000,
+            //   ReqNationAuxValue(can_무희사용,0,"<",1) → aux[can_무희사용] unset/<1.
+            // The actor is the nation-1 module-free chief (gid152 ⓝ하진). preFn bumps the
+            // nation treasury past the threshold and clears the aux flag (static-input gate
+            // positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas stay 100% real
+            // PHP). The seed gold/rice values are large round numbers so the -100000 delta is
+            // unambiguous in the fixture. NOTE: 하진 is npc=2/owner=0 (scenario default), so
+            // increaseInheritancePoint(active_action,1) is a faithful NO-OP (the impl
+            // short-circuits on npc>=2 AND owner falsy) — captured as null, NOT fabricated +1.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_무희사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+100000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+100000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
+        case 'event_상병연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg, argTest()=true).
+            // hwe/sammo/Command/Nation/event_상병연구.php. Reachability:
+            //   ReqNationGold(basegold+getCost()[0]=0+100000) → nation.gold >= 100000,
+            //   ReqNationRice(baserice+getCost()[1]=2000+100000) → nation.rice >= 102000,
+            //   ReqNationAuxValue(can_상병사용,0,"<",1) → aux[can_상병사용] unset/<1.
+            // The actor is the nation-1 module-free chief (gid152 ⓝ하진, scenario npc=2/owner=0
+            // default → increaseInheritancePoint(active_action,1) is a faithful NO-OP: the impl
+            // short-circuits on npc>=2 AND owner falsy, captured as null, NOT a fabricated +1).
+            // preFn bumps the treasury past the threshold + clears the aux flag (static-input
+            // gate positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas stay 100%
+            // real PHP). Large round seed gold/rice so the -100000 delta is unambiguous.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_상병사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+100000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+100000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
+        case 'event_화륜차연구': {
+            // BeChief + OccupiedCity national-research command (zero-arg, argTest()=true).
+            // hwe/sammo/Command/Nation/event_화륜차연구.php. Reachability:
+            //   ReqNationGold(basegold+getCost()[0]=0+100000) → nation.gold >= 100000,
+            //   ReqNationRice(baserice+getCost()[1]=2000+100000) → nation.rice >= 102000,
+            //   ReqNationAuxValue(can_화륜차사용,0,"<",1) → aux[can_화륜차사용] unset/<1.
+            // Actor = the nation-1 module-free chief (gid152 ⓝ하진, scenario npc/owner default
+            // → increaseInheritancePoint(active_action,1) is a faithful NO-OP: captured as null,
+            // NOT fabricated +1). preFn bumps the treasury past threshold + clears the aux flag
+            // (static-input gate positioning ONLY; the action's gold/rice/aux/exp/ded/log deltas
+            // stay 100% real PHP). Large round seed gold/rice so the -100000 delta is unambiguous.
+            $pre = function(object $db) use ($nid) {
+                $auxRow = $db->queryFirstField('SELECT aux FROM nation WHERE nation=%i', $nid);
+                $aux = is_string($auxRow) ? ($auxRow === '' ? [] : Json::decode($auxRow)) : [];
+                if (!is_array($aux)) { $aux = []; }
+                unset($aux[\sammo\Enums\NationAuxKey::can_화륜차사용->value]);   // ensure the flag is UNSET (<1)
+                $db->update('nation', [
+                    'gold' => $db->sqleval('GREATEST(gold, %i)', 1000000),    // >= basegold+100000
+                    'rice' => $db->sqleval('GREATEST(rice, %i)', 1000000),    // >= baserice+100000
+                    'aux'  => Json::encode($aux),
+                ], 'nation=%i', $nid);
+            };
+            return [$chief, null, $pre, null];   // zero-arg ($this->arg = null)
+        }
     }
     return null;
 }
@@ -391,6 +589,21 @@ function captureCase(object $db, array $meta, string $raw, int $gid, ?array $arg
     $itemCountBefore = count($general->getItems() ?? []);
     $globalIdBefore = maxGlobalActionId($db);
 
+    // event_* research command (대검병/극병 연구) parity surface = nation gold/rice/aux +
+    // general/national history lines + inheritance active_action. (These commands write NO
+    // city/general-stat delta beyond exp/ded — the parity gate is the Korean log byte-strings
+    // + post-state deltas, with zero RNG.)
+    $capturesNation = str_starts_with($raw, 'event_');
+    $nationBefore = $inheritBefore = null;
+    $genHistIdBefore = $natHistIdBefore = 0;
+    if ($capturesNation) {
+        $nid = (int)$general->getVar('nation');
+        $nationBefore = snapshotNationAux($db, $nid);
+        $inheritBefore = snapshotInheritanceActiveAction($db, $general);
+        $genHistIdBefore = maxGeneralHistoryId($db, $gid);
+        $natHistIdBefore = maxWorldHistoryId($db);
+    }
+
     $seedString = Util::simpleSerialize($hiddenSeed, 'nationCommand', $year, $month, $gid, $cmd->getRawClassName());
     $rng = new RandUtilDrawRecorder(new LiteHashDRBG($seedString));
 
@@ -423,6 +636,61 @@ function captureCase(object $db, array $meta, string $raw, int $gid, ?array $arg
         'logLines'=>$actingLines, 'broadcastLines'=>$broadcastLines,
         'draws'=>['draw_count'=>$rng->getDrawCount(), 'draw_stream'=>$rng->getDrawStream()],
     ];
+
+    // event_극병연구: attach the nation gold/rice/aux + inheritance active_action deltas
+    // (the parity-load-bearing surface — this command writes NO city/general-stat deltas
+    // beyond exp/ded). HARD-assert the documented deltas so an unfaithful capture aborts.
+    if ($capturesNation) {
+        $nidA = (int)$generalAfter->getVar('nation');
+        $nationAfter = snapshotNationAux($db, $nidA);
+        $inheritAfter = snapshotInheritanceActiveAction($db, $generalAfter);
+        [$reqGoldC, $reqRiceC] = $cmd->getCost();
+        hardAssert($nationAfter['gold'] === $nationBefore['gold'] - (int)$reqGoldC,
+            "{$raw}: nation gold delta != -{$reqGoldC} ({$nationBefore['gold']}->{$nationAfter['gold']})");
+        hardAssert($nationAfter['rice'] === $nationBefore['rice'] - (int)$reqRiceC,
+            "{$raw}: nation rice delta != -{$reqRiceC} ({$nationBefore['rice']}->{$nationAfter['rice']})");
+        // aux key = the command's OWN static $auxType (NationAuxKey) — read reflectively so
+        // every event-research command (극병/대검병/무희/…) asserts its own flag, not a
+        // hardcoded one. run() writes aux[static::$auxType->value] = 1.
+        $rpAux = new \ReflectionProperty($cmd, 'auxType');
+        if (PHP_VERSION_ID < 80100) { $rpAux->setAccessible(true); }
+        $auxKey = $rpAux->getValue($cmd)->value;
+        hardAssert((int)($nationAfter['aux'][$auxKey] ?? 0) === 1,
+            "{$raw}: aux[{$auxKey}] != 1 after run");
+        hardAssert(!isset($nationBefore['aux'][$auxKey]) || (int)$nationBefore['aux'][$auxKey] < 1,
+            "{$raw}: aux[{$auxKey}] was already set before run (gate not reachable)");
+        // actor exp/ded each +5*(getPreReqTurn()+1).
+        $expGain = 5 * ($cmd->getPreReqTurn() + 1);
+        hardAssert((int)$after['general']['experience'] === (int)$before['general']['experience'] + $expGain,
+            "{$raw}: exp delta != +{$expGain}");
+        hardAssert((int)$after['general']['dedication'] === (int)$before['general']['dedication'] + $expGain,
+            "{$raw}: ded delta != +{$expGain}");
+        // general-history (general_record history) + national-history (world_history) — each
+        // ONE byte-string, the pushGeneralHistoryLog / pushNationalHistoryLog parity surface.
+        $generalHistoryLines  = generalHistoryRowsSince($db, $gid, $genHistIdBefore);
+        $nationalHistoryLines = nationalHistoryRowsSince($db, $nidA, $natHistIdBefore);
+        hardAssert(count($generalHistoryLines) === 1,
+            "{$raw}: expected 1 general-history line, got " . count($generalHistoryLines) . " :: " . implode(' | ', $generalHistoryLines));
+        hardAssert(count($nationalHistoryLines) === 1,
+            "{$raw}: expected 1 national-history line, got " . count($nationalHistoryLines) . " :: " . implode(' | ', $nationalHistoryLines));
+        // inheritance active_action += 1*pointCoeff (iff owner!=0 and npc<2; null/no-op otherwise —
+        // recorded AS-IS, never fabricated). active_action's pointCoeff is read from the live
+        // point-type registry (currently 3), so the stored delta is +pointCoeff, NOT +1.
+        $coeff = InheritancePointManager::getInstance()
+            ->getInheritancePointType(\sammo\Enums\InheritanceKey::active_action)->pointCoeff;
+        if ($inheritBefore['owner'] !== 0 && (int)$generalAfter->getVar('npc') < 2) {
+            $before0 = $inheritBefore['active_action'] ?? 0;
+            hardAssert(($inheritAfter['active_action'] ?? 0) == $before0 + $coeff,
+                "{$raw}: inheritance active_action delta != +{$coeff} ({$before0}->" . ($inheritAfter['active_action'] ?? 'null') . ")");
+        }
+        $case['nationBefore'] = $nationBefore;
+        $case['nationAfter']  = $nationAfter;
+        $case['generalHistoryLines']  = $generalHistoryLines;
+        $case['nationalHistoryLines'] = $nationalHistoryLines;
+        $case['inheritanceBefore'] = $inheritBefore;
+        $case['inheritanceAfter']  = $inheritAfter;
+        $case['inheritancePointCoeff'] = $coeff;
+    }
 
     // cross-target dest generals (몰수/부대탈퇴지시/필사즉생) — their action lines + post-state.
     if (!empty($destGids)) {
@@ -471,6 +739,8 @@ $targets = [
     'che_백성동원', 'che_수몰', 'che_허보', 'che_의병모집', 'che_이호경식',
     'che_급습', 'che_피장파장', 'che_필사즉생', 'che_초토화',
     'che_몰수', 'che_부대탈퇴지시', 'che_물자원조',
+    'event_극병연구', 'event_대검병연구', 'event_화륜차연구', 'event_무희연구', 'event_상병연구',
+    'event_화시병연구',
 ];
 if ($onlyCmd !== null) $targets = [$onlyCmd];
 
