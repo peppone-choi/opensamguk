@@ -69,6 +69,35 @@ export interface FrontGeneralInfo {
     rice: number;
     crew: number;
     cityId: number;
+    // ── W3 enrichment (IdentityDto.FrontGeneralInfo) — optional, the daemon may not record every meta key ──
+    picture?: string | null;
+    imageServer?: number | null;
+    experience?: number | null;
+    dedication?: number | null;
+    train?: number | null;
+    atmos?: number | null;
+    age?: number | null;
+    officerLevelText?: string | null; // getOfficerLevelText(officer_level, nationLevel)
+    honorText?: string | null;        // getHonor(experience)
+    dedLevelText?: string | null;     // getDed(dedication)
+}
+
+// nation 인구/병력 grouped 집계(IdentityDto.NationPopulationGroup / NationCrewGroup).
+export interface NationPopulationGroup {
+    cityCnt: number;
+    now: number;
+    max: number;
+}
+export interface NationCrewGroup {
+    generalCnt: number;
+    now: number;
+    max: number;
+}
+export interface NationTypeInfo {
+    raw: string;
+    name: string;
+    pros: string;
+    cons: string;
 }
 
 export interface FrontNationInfo {
@@ -80,6 +109,14 @@ export interface FrontNationInfo {
     rice: number;
     tech: number;
     capitalCityId: number | null;
+    // ── W3 enrichment (IdentityDto.FrontNationInfo) — optional ──
+    capital?: number | null;
+    typeCode?: string | null;
+    power?: number | null;
+    gennum?: number | null;
+    population?: NationPopulationGroup | null;
+    crew?: NationCrewGroup | null;
+    type?: NationTypeInfo | null;
 }
 
 export interface FrontCityInfo {
@@ -344,6 +381,7 @@ export interface MyNationDetailResponse {
 export type {
     GeneralListItem,
     GeneralListResponse,
+    PublicGeneral,
     TournamentTypeText,
     TournamentEntrant,
     TournamentBracketMatch,
@@ -362,6 +400,8 @@ export type {
     NationFinanceResponse,
     ChiefReservedTurn,
     ChiefPost,
+    ChiefCommand,
+    ChiefCommandCategory,
     ChiefReservedResponse,
     NpcPolicyLastSetter,
     NpcPolicyResponse,

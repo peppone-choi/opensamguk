@@ -6,6 +6,8 @@ import opensamguk.gameapi.dto.ChiefPost
 import opensamguk.gameapi.dto.ChiefReservedResponse
 import opensamguk.gameapi.dto.ChiefReservedTurn
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.precheck.CommandPrecheckService
+import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
@@ -15,6 +17,7 @@ import opensamguk.gameapi.read.TroopReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.GeneralActionDefinition
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -29,6 +32,10 @@ import org.springframework.web.bind.annotation.RestController
  * 국가 명령(`nation_turn` 링), (2) 호출자 식별, (3) 국가 컨텍스트, (4) 게임 시각, (5) 부대 목록,
  * (6) 사령부 명령 팔레트(`getChiefCommandTable`)를 함께 내려보낸다. W3에서 (2)~(6)을 보강하고
  * 예약 슬롯에 누락돼 있던 `arg`(구조화 인자)를 추가한다.
+ *
+ * 명령 팔레트(6)의 `possible`/`reason`은 이제 [AvailableCommandsController]와 동일하게 실제 precheck로
+ * 배선된다([CommandPrecheckService] — 데몬과 동일 제약 라이브러리). 남은 알려진 flag는
+ * `compensation`(getCompensationStyle ▲/▼ 미포팅)과 `canDisplay()` 필터 미포팅뿐이다.
  *
  * Identity-required(호출자의 국가는 검증된 principal에서 resolve — 국가별 권한 데이터). 캐릭터 없으면
  * 401. 재야(국가 없음)는 8개 칸을 빈 예약-턴 목록으로(200). 시드에 chief 행이 없으면 빈 목록(절대 500 X).
@@ -49,6 +56,7 @@ class ChiefCenterController(
     private val world: WorldStateReadRepository,
     private val troops: TroopReadRepository,
     private val registry: CommandRegistry,
+    private val precheck: CommandPrecheckService,
 ) {
 
     /** Legacy 예약-턴 cap(maxChiefTurn). 30-턴 링이 국가 명령 max(`GameConst::$maxChiefTurn`). */
@@ -143,7 +151,7 @@ class ChiefCenterController(
                 maxChiefTurn = maxChiefTurn,
                 posts = posts,
                 troopList = troopList,
-                commandList = buildChiefCommandTable(),
+                commandList = buildChiefCommandTable(resolved.general.id),
                 isChief = resolved.officerLevel > 4,
                 // BLOCKED(§2): autorun_limit 원천 부재 → null(날조 금지).
                 autorunLimit = null,
@@ -158,17 +166,41 @@ class ChiefCenterController(
      * 공유 [CommandRegistry]로 풀어 표시 메타(`value/simpleName/title/reqArg`)를 만든다 — 코드/이름/인자필요
      * 여부는 모두 레지스트리 정의에서 가져오며 날조하지 않는다.
      *
-     * [AvailableCommandsController]와 동일한 알려진 flag(BLOCKED 아님):
-     *  - `compensation` = 0 — PHP `getCompensationStyle()`(▲/▼)이 [opensamguk.logic.actions.GeneralActionDefinition]에 미포팅.
-     *  - `possible` = true — PHP `hasMinConditionMet()`(최소조건)이 read 경로에 미연결(precheck 연동은 후속 wave).
+     * `possible`/`reason`은 이제 [AvailableCommandsController]와 동일하게 **실제 precheck 결과**로 채운다
+     * ([CommandPrecheckService.precheckAll], precheck == full): 데몬이 돌리는 동일 제약 라이브러리를
+     * 마지막 flush된 DB 행 위에서 read-only로 평가한다 — 더 이상 고정 true 기본값이 아니다.
+     * 호출자(직책 보유 장수) 행이 없으면 레지스트리-only 카탈로그로 폴백한다(`possible=true`).
+     *
+     * 남은 알려진 flag(BLOCKED 아님, AvailableCommandsController와 동일):
+     *  - `compensation` = 0 — PHP `getCompensationStyle()`(▲/▼)이 [GeneralActionDefinition]에 미포팅.
      *  - PHP `canDisplay()` 필터(표시 가능 여부)도 미포팅 → 전 코드 표시(보수적). 후속 wave에서 좁힘.
      */
-    private fun buildChiefCommandTable(): List<ChiefCommandCategory> =
-        F4StateText.CHIEF_COMMAND_TABLE.map { (category, codes) ->
+    private fun buildChiefCommandTable(actingGeneralId: Int): List<ChiefCommandCategory> {
+        // 모든 사령부 코드를 공유 레지스트리로 1회만 해소(code → def). precheck/표시 메타 모두 이 맵을 재사용.
+        val defByCode: Map<String, GeneralActionDefinition> =
+            F4StateText.CHIEF_COMMAND_TABLE.flatMap { (_, codes) -> codes }
+                .associateWith { registry.resolve(it) }
+        // 호출자 행이 있으면 실제 precheck(possible/reason), 없으면 null → 레지스트리-only 폴백.
+        // precheckAll은 def.key(== code)로 키한다 → results[code]로 조회.
+        val results: Map<String, PrecheckResult>? =
+            precheck.precheckAll(actingGeneralId, defByCode.values.toList())
+
+        return F4StateText.CHIEF_COMMAND_TABLE.map { (category, codes) ->
             ChiefCommandCategory(
                 category = category,
                 values = codes.map { code ->
-                    val def = registry.resolve(code)
+                    val def = defByCode.getValue(code)
+                    val reqArg = def.argsSchema.isNotEmpty()
+                    // AvailableCommandsController.toRow와 동일한 (possible, reason) 산출 로직.
+                    val (possible, reason) = when (val result = results?.get(code)) {
+                        null -> true to null // 액터 없음(또는 카탈로그 폴백) → 레지스트리-only, deny reason 없음
+                        PrecheckResult.Available -> true to null
+                        is PrecheckResult.Blocked -> false to result.reason
+                        is PrecheckResult.Unknown ->
+                            // precheck가 부재 요건에 막힘: 인자 명령은 대상만 고르면 됨(possible),
+                            // 인자 없는 명령은 여기서 판정 불가 → UNKNOWN_REASON.
+                            if (reqArg) true to null else false to UNKNOWN_REASON
+                    }
                     ChiefCommand(
                         value = def.key,
                         simpleName = def.name,
@@ -176,10 +208,28 @@ class ChiefCenterController(
                         // (AvailableCommandsController와 동일 — PHP getCommandDetailTitle 미포팅 flag).
                         title = def.name,
                         compensation = 0,
-                        possible = true,
-                        reqArg = def.argsSchema.isNotEmpty(),
+                        possible = possible,
+                        reqArg = reqArg,
+                        // 인자 폼 타입을 argsSchema 키에서 파생 — AvailableCommandsController와 동일 규칙(날조 아님).
+                        argType = argTypeOf(def.argsSchema.keys),
+                        reason = reason,
                     )
                 },
             )
         }
+    }
+
+    /** 명령의 `argsSchema` 키에서 모달 필드 타입을 파생(AvailableCommandsController.argTypeOf 정본 미러). */
+    private fun argTypeOf(keys: Set<String>): String? = when {
+        "destCityID" in keys -> "city"
+        "destNationID" in keys -> "nation"
+        "destGeneralID" in keys -> "general"
+        "amount" in keys -> "amount"
+        else -> null
+    }
+
+    companion object {
+        // AvailableCommandsController.UNKNOWN_REASON과 동일 상수("정보 부족").
+        private const val UNKNOWN_REASON = "정보 부족"
+    }
 }

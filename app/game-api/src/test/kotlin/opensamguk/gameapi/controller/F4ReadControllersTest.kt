@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.read.BoardCommentReadRepository
 import opensamguk.gameapi.read.BoardPostReadRepository
 import opensamguk.gameapi.read.CityReadEntity
@@ -29,8 +30,11 @@ import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -79,11 +83,14 @@ class F4ReadControllersTest {
     private val world = mock(WorldStateReadRepository::class.java)
     // ChiefCenter 명령 팔레트는 REAL CommandRegistry로 구동(실제 :logic 정의 key/name/argsSchema 사용).
     private val commandRegistry = CommandRegistry(GeneralActionPipeline())
+    // precheck mock — 스텁 미설정 시 precheckAll이 null 반환(액터 상태 없음) → 레지스트리-only 폴백
+    // (possible=true). 명령 팔레트 카테고리/이름/reqArg 검증에는 이 폴백 동작으로 충분하다.
+    private val precheck = mock(CommandPrecheckService::class.java)
     private val objectMapper = ObjectMapper()
 
-    /** ChiefCenterController 7-인자 생성 헬퍼(W3 보강 후 시그니처). */
+    /** ChiefCenterController 8-인자 생성 헬퍼(B1 precheck 배선 후 시그니처). */
     private fun chiefCenterController() =
-        ChiefCenterController(resolver, nationTurns, generals, nations, world, troops, commandRegistry)
+        ChiefCenterController(resolver, nationTurns, generals, nations, world, troops, commandRegistry, precheck)
 
     private fun mvc(vararg controllers: Any): MockMvc =
         MockMvcBuilders.standaloneSetup(*controllers)
@@ -126,19 +133,27 @@ class F4ReadControllersTest {
         mvc(GeneralsController(generals, nations, cities)).perform(get("/api/generals"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[0].id").value(1)) // sorted by id asc
+            .andExpect(jsonPath("$[0].generalId").value(1)) // sorted by id asc
             .andExpect(jsonPath("$[0].name").value("조조"))
-            .andExpect(jsonPath("$[0].nation").value("위"))
+            .andExpect(jsonPath("$[0].nationName").value("위"))
             .andExpect(jsonPath("$[0].nationColor").value("#c62828"))
             .andExpect(jsonPath("$[0].cityName").value("허창"))
             .andExpect(jsonPath("$[0].crew").value(1000))
-            .andExpect(jsonPath("$[1].id").value(2))
-            .andExpect(jsonPath("$[1].nation").value("재야"))
+            // 명성/계급은 레벨 버킷(raw exp/ded 아님). exp/ded 미지정 → 버킷 0.
+            .andExpect(jsonPath("$[0].explevel").value(0))
+            .andExpect(jsonPath("$[0].honorText").value("전무"))       // getHonor(0)
+            .andExpect(jsonPath("$[0].dedlevel").value(0))
+            .andExpect(jsonPath("$[0].dedLevelText").value("무품관"))   // getDedLevelText(0)
+            .andExpect(jsonPath("$[0].bill").value(400))               // getBillByLevel(0)
+            .andExpect(jsonPath("$[1].generalId").value(2))
+            .andExpect(jsonPath("$[1].nationName").value("재야"))
             .andExpect(jsonPath("$[1].nationColor").value("#000000"))
             .andExpect(jsonPath("$[1].cityName").value(""))
-            // permission=0 surface only — no gold/rice/experience field
+            // permission=0 surface only — no raw gold/rice/experience/dedication field (OQ-5).
             .andExpect(jsonPath("$[0].gold").doesNotExist())
             .andExpect(jsonPath("$[0].experience").doesNotExist())
+            .andExpect(jsonPath("$[0].dedication").doesNotExist())
+            .andExpect(jsonPath("$[0].rice").doesNotExist())
     }
 
     // ── GET /api/tournament (state-0 default, no table) ──────────────────────────────────────────────
@@ -256,6 +271,8 @@ class F4ReadControllersTest {
     // ── GET /api/nation/chief-reserved (8 posts, reserved turns by level) ────────────────────────────
     @Test
     fun `chief reserved returns 8 posts with reserved turns grouped by officer level`() {
+        // 액터 상태 없음 → precheckAll null → 명령 팔레트는 레지스트리-only 폴백(possible=true).
+        `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenReturn(null)
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
@@ -314,6 +331,10 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.commandList[1].values[0].value").value("che_발령"))
             .andExpect(jsonPath("$.commandList[1].values[0].simpleName").value("발령"))
             .andExpect(jsonPath("$.commandList[1].values[0].reqArg").value(true)) // 발령 = destGeneralID/destCityID
+            // B1 — possible은 실제 precheck 결과. precheck mock이 null 반환(액터 상태 없음) → 레지스트리-only
+            // 폴백으로 possible=true, deny reason 없음.
+            .andExpect(jsonPath("$.commandList[1].values[0].possible").value(true))
+            .andExpect(jsonPath("$.commandList[1].values[0].reason").doesNotExist())
             // BLOCKED(§2): autorun_limit 원천 부재 → null(직렬화 생략).
             .andExpect(jsonPath("$.autorunLimit").doesNotExist())
     }

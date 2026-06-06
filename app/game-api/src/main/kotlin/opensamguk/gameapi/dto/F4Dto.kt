@@ -10,18 +10,43 @@ import java.time.Instant
 
 // ── GET /api/generals — PUBLIC, permission=0 fields only (page 14 / 9-P0) ──────────────────────────
 /**
- * Public all-general row. permission=0 surface ONLY: NO refresh_score, NO exp breakdown, NO gold/rice.
- * `nation` is the nation NAME (재야 for nationId 0); `nationColor` the hex (#000000 for 재야).
+ * Public all-general row. permission=0 surface ONLY: NO refresh_score, NO raw exp/ded breakdown,
+ * NO gold/rice (OQ-5 — 미인증 공개 surface라 자금/경험치 원값을 노출하지 않는다).
+ * `nationName`은 국가 NAME(재야 for nationId 0); `nationColor`는 hex(#000000 for 재야).
+ *
+ * 전체 장수(GeneralList.vue)는 명성/계급을 **레벨 버킷**으로 표시·정렬한다(raw exp/ded가 아님). 따라서
+ * 명성 = `explevel`(Lv) + `honorText`(칭호), 계급 = `dedlevel` + `dedLevelText`(품관) + `bill`(봉록)을
+ * 내려보낸다 — 모두 실 `general` 컬럼에서 파생되는 공개 버킷이며(getExpLevel/getDedLevel/getDedLevelText/
+ * getBillByLevel/getHonor, GeneralListController와 동일 공식) raw 원값을 누설하지 않으므로 OQ-5 위반 아님.
+ * `nationId/npc/officerLevelText`도 레거시가 공개 목록에서 쓰는 표시 필드라 보강한다.
  */
 data class PublicGeneral(
-    val id: Int,
+    /** 장수 id(legacy `no`). FE `GeneralListItem.generalId`. */
+    val generalId: Int,
     val name: String,
-    val nation: String,
+    /** 국가 id(0 = 재야). FE 세력 필터/그룹 키. */
+    val nationId: Int,
+    /** 국가명(재야면 F4StateText.NEUTRAL_NATION_NAME). */
+    val nationName: String,
     val nationColor: String,
+    /** NPC 상태(0 user / 1 possessed-NPC / 2+ pure NPC). FE 이름 색/정렬. */
+    val npc: Int,
     val officerLevel: Int,
+    /** getOfficerLevelText(officerLevel, nationLevel) — 직책 한글명. */
+    val officerLevelText: String,
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    /** 명성 레벨 버킷 = getExpLevel(experience). 명성 컬럼 표시("Lv {explevel}")·정렬 키. */
+    val explevel: Int,
+    /** 명성 칭호 = getHonor(experience). "Lv {explevel} ({honorText})". */
+    val honorText: String,
+    /** 계급 레벨 버킷 = getDedLevel(dedication). 계급 컬럼 정렬 키. */
+    val dedlevel: Int,
+    /** 계급 한글명 = getDedLevelText(dedlevel). 계급 컬럼 표시. */
+    val dedLevelText: String,
+    /** 봉록 = getBillByLevel(dedlevel). 계급 컬럼 부가 표시("({bill})"). */
+    val bill: Int,
     val crew: Int,
     val cityName: String,
 )
@@ -168,12 +193,11 @@ data class ChiefPost(
 
 /**
  * 사령부 명령 팔레트의 1개 명령. PHP `getChiefCommandTable`의 `values[]` 한 항목
- * (`{value, compensation, possible, title, simpleName, reqArg}`)에 대응.
+ * (`{value, compensation, possible, title, simpleName, reqArg, reason}`)에 대응.
  *
- * `compensation`/`possible`은 game-api에 아직 포팅되지 않은 PHP `getCompensationStyle()`/
- * `hasMinConditionMet()`에 해당하므로 [AvailableCommandsController]와 동일하게 보수적 기본값
- * (compensation=0, possible=true)을 쓴다. 이는 BLOCKED가 아니라 read-DTO 단계의 알려진 flag —
- * 실제 precheck/보정 표시는 후속 wave에서 연결.
+ * `possible`/`reason`은 [AvailableCommandsController]와 동일하게 실제 precheck 결과로 채운다
+ * (데몬과 동일 제약 라이브러리, precheck == full). `compensation`만 PHP `getCompensationStyle()`(▲/▼)
+ * 미포팅으로 0(중립) 고정 flag로 남는다 — BLOCKED 아닌 read-DTO 단계의 알려진 flag.
  */
 data class ChiefCommand(
     /** 예약 액션 코드(`Util::getClassNameFromObj`). 원천: CommandRegistry 정의 key. */
@@ -182,10 +206,21 @@ data class ChiefCommand(
     val title: String,
     /** 보정 스타일(▲/▼). PHP `getCompensationStyle()` 미포팅 → 0(중립) 고정 flag. */
     val compensation: Int,
-    /** 최소조건 충족 여부. PHP `hasMinConditionMet()` 미포팅 → true 고정 flag. */
+    /** 명령 가능 여부. 실제 precheck 결과(deny면 false). */
     val possible: Boolean,
     /** 인자 필요 명령 여부(`argsSchema` 비어있지 않음). */
     val reqArg: Boolean,
+    /**
+     * 모달 인자 폼 타입(city/nation/general/amount). `argsSchema` 키에서 파생하며
+     * [opensamguk.gameapi.web.AvailableCommandsController.argTypeOf]와 동일 규칙(날조 아님).
+     * 인식 가능한 인자 키가 없으면 null(인자 없는 명령 또는 페이지-고정 인자 명령).
+     */
+    val argType: String? = null,
+    /**
+     * deny 사유(possible=false일 때). PHP-충실 reason 문자열.
+     * AvailableCommandsController.AvailableCommand.reason 미러.
+     */
+    val reason: String? = null,
 )
 
 /** 사령부 명령 팔레트의 1개 카테고리(휴식/인사/외교/특수/전략/기타). */

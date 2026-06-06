@@ -132,6 +132,10 @@ export default function NationFinancePage() {
     if (!data) return null;
 
     const { income, outcome, policy, warSettingCnt } = data;
+    // 편집 권한 게이트 — 레거시 PageNationStratFinan.vue 의 `v-if="editable"` 와 동일.
+    // editable = (officerLevel>=5 || permission==4) (game-api DTO에서 서버측 산정).
+    // 권한이 없으면 설정 버튼 자체를 렌더하지 않는다(레거시와 동일하게 read-only 표시).
+    const editable = data.editable;
 
     // Computed budget figures — byte-for-byte the legacy Vue computed() chain
     // (incomeGoldCity = income.gold.city * rate / 100, etc).
@@ -188,9 +192,13 @@ export default function NationFinancePage() {
                         onChange={(e) => setNoticeDraft(e.target.value)}
                         maxLength={16384}
                         placeholder="등록된 국가 방침이 없습니다."
+                        readOnly={!editable}
                         style={{ width: '100%', minHeight: 80, whiteSpace: 'pre-wrap' }}
                     />
-                    <button onClick={() => setFinanceModal({ command: 'setNotice', label: '국가 방침 설정', argType: null, extraArgs: { msg: noticeDraft } })}>방침 설정</button>
+                    {/* 레거시 v-if="editable" — 권한자만 방침 수정 버튼 노출 */}
+                    {editable && (
+                        <button onClick={() => setFinanceModal({ command: 'setNotice', label: '국가 방침 설정', argType: null, extraArgs: { msg: noticeDraft } })}>방침 설정</button>
+                    )}
                 </GameCard>
 
                 <GameCard>
@@ -203,9 +211,13 @@ export default function NationFinancePage() {
                         onChange={(e) => setScoutDraft(e.target.value)}
                         maxLength={1000}
                         placeholder="등록된 임관 권유문이 없습니다."
+                        readOnly={!editable}
                         style={{ width: '100%', minHeight: 80, whiteSpace: 'pre-wrap' }}
                     />
-                    <button onClick={() => setFinanceModal({ command: 'setScoutMsg', label: '임관 권유문 설정', argType: null, extraArgs: { msg: scoutDraft } })}>권유문 설정</button>
+                    {/* 레거시 v-if="editable" — 권한자만 권유문 수정 버튼 노출 */}
+                    {editable && (
+                        <button onClick={() => setFinanceModal({ command: 'setScoutMsg', label: '임관 권유문 설정', argType: null, extraArgs: { msg: scoutDraft } })}>권유문 설정</button>
+                    )}
                 </GameCard>
 
                 {/* 예산&정책 */}
@@ -241,21 +253,27 @@ export default function NationFinancePage() {
                             <span className="stat-label">세율 (5 ~ 30%)</span>
                             <span className="stat-value">
                                 {policy.rate}%{' '}
-                                <button onClick={() => setFinanceModal({ command: 'setRate', label: '세율 설정', argType: 'amount', amountMin: 5, amountMax: 30 })}>설정</button>
+                                {editable && (
+                                    <button onClick={() => setFinanceModal({ command: 'setRate', label: '세율 설정', argType: 'amount', amountMin: 5, amountMax: 30 })}>설정</button>
+                                )}
                             </span>
                         </div>
                         <div className="stat-item">
                             <span className="stat-label">지급률 (20 ~ 200%)</span>
                             <span className="stat-value">
                                 {policy.bill}%{' '}
-                                <button onClick={() => setFinanceModal({ command: 'setBill', label: '지급률 설정', argType: 'amount', amountMin: 20, amountMax: 200 })}>설정</button>
+                                {editable && (
+                                    <button onClick={() => setFinanceModal({ command: 'setBill', label: '지급률 설정', argType: 'amount', amountMin: 20, amountMax: 200 })}>설정</button>
+                                )}
                             </span>
                         </div>
                         <div className="stat-item">
                             <span className="stat-label">기밀 권한 (1 ~ 99년)</span>
                             <span className="stat-value">
                                 {policy.secretLimit}년{' '}
-                                <button onClick={() => setFinanceModal({ command: 'setSecretLimit', label: '기밀 제한 설정', argType: 'amount', amountMin: 1, amountMax: 99 })}>설정</button>
+                                {editable && (
+                                    <button onClick={() => setFinanceModal({ command: 'setSecretLimit', label: '기밀 제한 설정', argType: 'amount', amountMin: 1, amountMax: 99 })}>설정</button>
+                                )}
                             </span>
                         </div>
                         <div className="stat-item">
@@ -270,9 +288,11 @@ export default function NationFinancePage() {
                                 <StatusBadge variant={policy.blockWar ? 'crimson' : 'muted'}>
                                     {policy.blockWar ? '설정' : '해제'}
                                 </StatusBadge>{' '}
-                                <button onClick={() => setFinanceModal({ command: 'setBlockWar', label: policy.blockWar ? '전쟁 금지 해제' : '전쟁 금지 설정', argType: null, extraArgs: { value: !policy.blockWar } })}>
-                                    {policy.blockWar ? '해제' : '설정'}
-                                </button>
+                                {editable && (
+                                    <button onClick={() => setFinanceModal({ command: 'setBlockWar', label: policy.blockWar ? '전쟁 금지 해제' : '전쟁 금지 설정', argType: null, extraArgs: { value: !policy.blockWar } })}>
+                                        {policy.blockWar ? '해제' : '설정'}
+                                    </button>
+                                )}
                             </span>
                         </div>
                         <div className="stat-item">
@@ -281,9 +301,11 @@ export default function NationFinancePage() {
                                 <StatusBadge variant={policy.blockScout ? 'crimson' : 'muted'}>
                                     {policy.blockScout ? '설정' : '해제'}
                                 </StatusBadge>{' '}
-                                <button onClick={() => setFinanceModal({ command: 'setBlockScout', label: policy.blockScout ? '임관 금지 해제' : '임관 금지 설정', argType: null, extraArgs: { value: !policy.blockScout } })}>
-                                    {policy.blockScout ? '해제' : '설정'}
-                                </button>
+                                {editable && (
+                                    <button onClick={() => setFinanceModal({ command: 'setBlockScout', label: policy.blockScout ? '임관 금지 해제' : '임관 금지 설정', argType: null, extraArgs: { value: !policy.blockScout } })}>
+                                        {policy.blockScout ? '해제' : '설정'}
+                                    </button>
+                                )}
                             </span>
                         </div>
                     </div>

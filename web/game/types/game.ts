@@ -331,6 +331,30 @@ export interface GeneralListResponse {
   generals: GeneralListItem[];
 }
 
+// GET /api/generals 의 실제 응답 행(백엔드 PublicGeneral). 미인증 공개 surface라 raw exp/ded·gold/rice는
+// 없고, 명성/계급은 레거시처럼 **레벨 버킷**으로 내려온다(explevel/honorText, dedlevel/dedLevelText/bill).
+// 응답은 이 행들의 **bare 배열**(래퍼 { generals } 아님).
+export interface PublicGeneral {
+  generalId: number;
+  name: string;
+  nationId: number;        // 0 = 재야
+  nationName: string;
+  nationColor: string;
+  npc: number;             // 0 user / 1 possessed-NPC / 2+ pure NPC
+  officerLevel: number;
+  officerLevelText: string;
+  leadership: number;
+  strength: number;
+  intel: number;
+  explevel: number;        // 명성 레벨 버킷(getExpLevel) — 명성 표시·정렬 키
+  honorText: string;       // 명성 칭호(getHonor)
+  dedlevel: number;        // 계급 레벨 버킷(getDedLevel) — 계급 정렬 키
+  dedLevelText: string;    // 계급 한글명(getDedLevelText)
+  bill: number;            // 봉록(getBillByLevel)
+  crew: number;
+  cityName: string;
+}
+
 // ── page 12/13/11-bracket · 토너먼트 (GET /api/tournament) ────────────────────
 // state 0-8 (phase), tnmt_type 전력전/통솔전/일기토/설전, 8 group standings, 16강
 // bracket, 4 ranking types. EMPTY/zeroed when no tournament is active in 1010.
@@ -485,36 +509,62 @@ export interface NationFinanceResponse {
 }
 
 // ── page 7 · 사령부 (GET /api/nation/chief-reserved) ──────────────────────────
-// Mirrors NationCommand ChiefResponse. 8 chief posts keyed by officer level
-// 12/11/10/9/8/7/6/5; each holds a reserved-command turn[] up to maxChiefTurn.
-// postFilterNationCommand applied server-side. officerLevel>=5 gate to edit.
+// Mirrors game-api ChiefReservedResponse (dto/F4Dto.kt). The 8 chief posts ride the
+// `posts[]` array (NOT a map), each holding a reserved-command `reservedTurns[]` up to
+// maxChiefTurn. `commandList` is the chief command palette (getChiefCommandTable).
+// officerLevel>=5(=myOfficerLevel) gate to edit. POST reserve rides nation_turn ring.
 export interface ChiefReservedTurn {
-  action: string;          // command class key
-  brief: string;           // rendered verbatim
+  turnIdx: number;         // 예약 슬롯 인덱스
+  actionCode: string;      // command class key
+  brief: string;           // rendered verbatim (color/tag markup 포함)
   arg: Record<string, unknown> | null;
 }
 
 export interface ChiefPost {
   officerLevel: number;    // 12/11/10/9/8/7/6/5
+  title: string;           // 정본 직책명(군주/참모/…)
   name: string | null;     // occupant general name (null = vacant)
   turnTime: string | null;
+  npcType: number | null;
   officerLevelText: string;
-  npcType: number;
-  turn: ChiefReservedTurn[];
+  reservedTurns: ChiefReservedTurn[];
+}
+
+// 사령부 명령 팔레트의 1개 명령(getChiefCommandTable values[]). argType는 game-api가
+// argsSchema 키에서 파생(city/nation/general/amount); 인자 없으면 null.
+export interface ChiefCommand {
+  value: string;           // 예약 액션 코드(e.g. "che_급습")
+  simpleName: string;
+  title: string;
+  compensation: number;
+  possible: boolean;       // 실제 precheck 결과(deny면 false) — AvailableCommand.possible와 동일
+  reqArg: boolean;
+  argType: CommandArgType | null;
+  reason?: string | null;  // deny 사유(possible=false일 때) — 임파서블 명령 툴팁에 노출
+}
+
+// 1개 카테고리(휴식/인사/외교/특수/전략/기타).
+export interface ChiefCommandCategory {
+  category: string;
+  values: ChiefCommand[];
 }
 
 export interface ChiefReservedResponse {
   result: boolean;
-  lastExecute: string;
+  myGeneralId: number;     // 호출자(나)의 장수 id
+  myOfficerLevel: number;  // 호출자(나)의 officer_level
+  nationId: number;
+  nationName: string | null;
+  nationLevel: number;
   year: number;
   month: number;
   turnTerm: number;
-  date: string;
   maxChiefTurn: number;
+  posts: ChiefPost[];
+  troopList: Record<string, string>;        // troopLeaderId → troopName
+  commandList: ChiefCommandCategory[];
   isChief: boolean;
-  officerLevel: number;    // caller's own officer level
-  chiefList: Record<number, ChiefPost>;   // keyed by officerLevel
-  troopList: Record<number, string>;       // troopLeaderId → troopName
+  autorunLimit: number | null;
 }
 
 // ── page 8 · NPC 정책 (GET /api/nation/npc-policy) ────────────────────────────

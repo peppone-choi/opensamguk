@@ -7,6 +7,11 @@
 //
 // Rendered from front-info (FrontGeneralInfo + FrontNationInfo) — no extra fetch. injury color mirrors
 // formatInjury (0 = healthy white).
+//
+// 게이지(now/max) 미적용 — 의도된 결정(분모 날조 금지). 레거시 GeneralBasicCard.vue 에서 통/무/지 옆 막대는
+// 능력치의 분모가 아니라 *_exp 경험치 막대(`general.leadership_exp / statUpThreshold`)이고, web/game 의
+// FrontGeneralInfo 에는 *_exp/upgradeLimit 분모가 없다. 자금/군량/병사도 레거시에서 막대 없는 평문이다.
+// 따라서 이 카드의 값들은 모두 now-only 평문으로 렌더한다(real max 가 생기면 그때 Gauge 로 교체).
 
 import { formatNumber } from '@/lib/format';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';

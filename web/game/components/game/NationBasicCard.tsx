@@ -6,6 +6,11 @@
 // capitalCityId). We render the VERBATIM labels for the fields we have and OMIT the rest (NO fabrication).
 // Header uses the nation color (auto text color by brightness) exactly like the .vue. When the player is
 // factionless (`nation == null`), the body shows `해당 없음` like the legacy `!nation.id` branch.
+//
+// 게이지(now/max) 미적용 — 의도된 결정(분모 날조 금지). 레거시 NationBasicCard.vue 에서 now/max 막대를
+// 가진 건 총 주민(population.now/max)·총 병사(crew.now/max) 인데 두 필드 모두 web/game 의 FrontNationInfo
+// 에 없다(id/name/color/level/gold/rice/tech/capitalCityId 만 보유). 국고(gold)·병량(rice) 은 레거시에서도
+// 막대 없는 평문이다. 따라서 이 카드는 모두 now-only 평문으로 렌더한다(real max 가 생기면 Gauge 로 교체).
 
 import { formatNumber } from '@/lib/format';
 import type { FrontNationInfo } from '@/lib/types';

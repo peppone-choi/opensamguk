@@ -12,7 +12,7 @@ import type {
     ClaimResponse,
     MapPreviewResponse,
     WorldMapResponse,
-    GeneralListResponse,
+    PublicGeneral,
     TournamentResponse,
     DiplomacyLettersResponse,
     DiplomacyConflictResponse,
@@ -26,6 +26,22 @@ import type {
     TroopListResponse,
     HistoryResponse,
 } from './types';
+
+// ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
+// game-api `GET /api/world-log` (WorldLogController) → {entries:[{id,year,month,text}]}.
+// 월드 전체 글로벌 이력(log_entry SYSTEM 스코프)을 최신순 30건 반환. `text`는 패러티 로그
+// 원문(devsam 색/태그 마크업 포함) 그대로 — 표시 렌더는 프론트(history와 동일 v-html 패턴).
+// (W4 read surface 전용이라 도메인 types 모듈을 건드리지 않고 여기 인라인 정의·export.)
+export interface WorldLogEntry {
+    id: number;
+    year: number;
+    month: number;
+    text: string;
+}
+
+export interface WorldLogResponse {
+    entries: WorldLogEntry[];
+}
 
 async function get<T>(path: string): Promise<T> {
     const res = await fetch(`${BASE}${path}`, { cache: 'no-store' });
@@ -111,7 +127,8 @@ export const api = {
     // resolve the caller from the verified @AuthenticationPrincipal in-controller.
 
     // 전체 장수 (page 14 / 세력 장수 P0) — public, permission=0 fields.
-    generalsList: () => get<GeneralListResponse>('/api/generals'),
+    // 백엔드 GeneralsController는 PublicGeneral의 **bare 배열**을 반환한다(래퍼 아님).
+    generalsList: () => get<PublicGeneral[]>('/api/generals'),
     // 토너먼트 (page 12/13/11-bracket) — state/bracket/standings/rankings/msg.
     tournamentView: () => get<TournamentResponse>('/api/tournament'),
     // 외교부 (page 1) — letter list (nations + letters map + myNationID).
@@ -137,6 +154,8 @@ export const api = {
     // 연감 (page 16) — ng_history range + per-month records; ?yearMonth selects month.
     history: (yearMonth?: number) =>
         get<HistoryResponse>(yearMonth == null ? '/api/history' : `/api/history?yearMonth=${yearMonth}`),
+    // 전황 (World-Log) — log_entry SYSTEM 스코프 글로벌 이력 최신순 30건. 신선 시드면 빈 목록.
+    worldLog: () => get<WorldLogResponse>('/api/world-log'),
 
     // Commands.
     //  - game-api CommandController STILL requires ?generalId= (a `@RequestParam`, not yet a verified
