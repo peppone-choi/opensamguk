@@ -204,9 +204,35 @@ class RandUtilDrawRecorder extends RandUtil
     public function choiceUsingWeight(array $items)
     {
         $c = $this->cursor();
-        $r = parent::choiceUsingWeight($items);
-        $this->record('choiceUsingWeight', ['items' => array_keys($items)], $r, $c, true);
-        return $r;
+        // RandUtil::choiceUsingWeight는 정확히 ONE nextFloat1() draw를 소비한다
+        // (`$rd = nextFloat1()*$sum` 한 번; 이후 누적-감산 비교는 RNG 비소비).
+        // parent::choiceUsingWeight를 호출하면 그 내부 `$this->nextFloat1()`이 이 클래스의
+        // 오버라이드를 타서 nextFloat1이 별도 stream 엔트리로 이중 기록된다(choiceUsingWeight
+        // 직전에 spurious nextFloat1). choiceUsingWeightPair/nextRange와 동일하게 bare RNG에서
+        // nextFloat1을 직접 뽑아 정확히 1개 choiceUsingWeight 엔트리만 남긴다 — RNG 출력은
+        // byte-identical(동일한 단일 float draw), 로그만 정확해진다.
+        if (!$items) {
+            throw new \InvalidArgumentException();
+        }
+        $sum = 0;
+        foreach ($items as $value) {
+            if ($value <= 0) { continue; }
+            $sum += $value;
+        }
+        $rd = $this->rng->nextFloat1() * $sum;
+        $chosen = null;
+        foreach ($items as $item => $value) {
+            if ($value <= 0) { $value = 0; }
+            if ($rd <= $value) { $chosen = $item; break; }
+            $rd -= $value;
+        }
+        if ($chosen === null) {
+            // fallback. RandUtil 원본과 동일 — 정상 경로에서는 도달하지 않음.
+            end($items);
+            $chosen = $items[key($items)][0];
+        }
+        $this->record('choiceUsingWeight', ['items' => array_keys($items)], $chosen, $c, true);
+        return $chosen;
     }
 
     /**
