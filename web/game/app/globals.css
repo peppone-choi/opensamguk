@@ -131,6 +131,8 @@ input:focus, select:focus, textarea:focus {
 .game-sidebar-label { font-size: var(--text-sm); }
 
 .shell-main { flex: 1; padding: var(--space-md); overflow-y: auto; }
+/* 메인 콘텐츠 폭을 로그인/로비와 동일하게 1000px 중앙 정렬(좌측 사이드바 제거 후 단일 컬럼). */
+.shell-main > * { max-width: 1000px; margin-left: auto; margin-right: auto; }
 
 .game-bottom-nav {
   display: none;
@@ -1172,6 +1174,22 @@ input:focus, select:focus, textarea:focus {
   padding: var(--space-md);
   font-size: var(--text-sm);
   color: var(--text-muted);
+}
+
+/* Gauge (재사용 now/max 막대, components/game/Gauge.tsx) — MapCityDetail의 mcd-metric/mcd-bar 스타일을
+   공유한다. 여기선 메인 도시 카드용 그리드 래퍼만 선언(레거시 CityBasicCard 처럼 dense 2열). */
+.gauge-metrics {
+  margin-top: var(--space-sm);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+@media (max-width: 500px) {
+  .gauge-metrics { grid-template-columns: 1fr; }
 }
 
 /* ── F2 Wave 5 — main-screen assembly ─────────────────────────────────────────── */

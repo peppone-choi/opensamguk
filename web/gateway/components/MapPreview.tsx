@@ -49,8 +49,16 @@ const DETAIL_SIZES: Record<number, CitySize> = {
     7: { areaW: 84, areaH: 60, iconW: 28, iconH: 20, flagRight: -6, flagTop: -4 },
     8: { areaW: 96, areaH: 72, iconW: 32, iconH: 24, flagRight: -6, flagTop: -3 },
 };
+// 인게임 MapViewer와 동일하게 cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다(아우라/깃발 비율 유지).
+// 로그인/로비/메인 3개 맵의 모양을 동일하게 맞추는 단일 노브 — 값은 MapViewer.ICON_SCALE와 일치시킬 것.
+const ICON_SCALE = 0.72;
 function sizeOf(level: number): CitySize {
-    return DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
+    const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
+    return {
+        ...base,
+        iconW: Math.round(base.iconW * ICON_SCALE),
+        iconH: Math.round(base.iconH * ICON_SCALE),
+    };
 }
 
 // 치소 등급 라벨 (레거시 defs/index.ts CityLevelText) — lv 4 = 이민족 전용 "이", 한족 군 치소 lv 5 "소".
