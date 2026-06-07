@@ -207,29 +207,34 @@ export interface FrontInfoResponse {
 // falls back to a header-only render). Field names are STABLE (Jackson default camelCase) — keep in sync
 // with CityDetailController.CityDetailResponse. (`trade` is NULLABLE — RandomizeCityTradeRate writes NULL
 // for 상인 없음 cities; render 시세 from this value, never fabricate.)
+// 첩보(fog) 마스킹: 비-아국/공백지에 첩보·주둔 없으면 내정/방어 수치 전부 null + visible=false(서버에서 마스킹,
+// payload 누출 없음). FE는 visible=false면 "첩보 없음 — 정보 비공개"로 렌더(수치 자리엔 '-').
 export interface CityDetailResponse {
     id: number;
     name: string;
     level: number;
+    levelName: string;  // 치소 등급 한글명 (수/진/관/이/소/중/대/특)
     region: number;
+    regionName: string; // 지역 한글명 (하북/중원/…/동이)
     nationId: number;
-    population: number;
-    populationMax: number;
-    agriculture: number;
-    agricultureMax: number;
-    commerce: number;
-    commerceMax: number;
-    security: number;
-    securityMax: number;
-    defense: number;
-    defenseMax: number;
-    wall: number;
-    wallMax: number;
-    trust: number;
+    visible: boolean;   // 내정 가시 여부(소유/첩보/주둔). false면 아래 수치 null.
+    population: number | null;
+    populationMax: number | null;
+    agriculture: number | null;
+    agricultureMax: number | null;
+    commerce: number | null;
+    commerceMax: number | null;
+    security: number | null;
+    securityMax: number | null;
+    defense: number | null;
+    defenseMax: number | null;
+    wall: number | null;
+    wallMax: number | null;
+    trust: number | null;
     trade: number | null;
     supplyState: number;
     frontState: number;
-    officers: number;
+    officers: number | null;
 }
 
 // ── map preview (game-api MapPreviewResponse / MapPreviewDto.kt) ─────────────
