@@ -628,6 +628,25 @@ class ChangeRecorder(
     fun inheritanceResultInserts(): List<InheritanceResultRow> = inheritanceResultInserts.toList()
 
     /**
+     * 신규 장수 INSERT 의도를 기록한다 (B1 장수생성 foundation — `General` 신규 생성, 장수생성/빙의/선택/건국이
+     * 소비할 진입점). `markGeneralDeleted`와 대칭 — recorder가 `world`를 받아 [InMemoryTurnWorld.createGeneral]에
+     * 위임한다.
+     *
+     * 설계 주의(왜 recorder 자체 채널이 아닌가): 장수/국가/부대/외교 행의 *생성*은 **world-lifecycle 효과**다
+     * (`createNation`/`createTroop`/`createDiplomacy`와 동형). created-set은 world의 `createdGeneralIds`이고
+     * [consumeDirtyState]가 이를 `DirtyState.createdGenerals`로 흘려보낸다 → `DatabaseHooks.toFlushPayload`가
+     * `FlushPayload.createdGenerals`로 매핑 → executor step-3 `generalCreateMany`(general 행 + 30 general_turn
+     * 휴식 + 37 rank_data value 0). recorder에 별도 created-general 채널을 또 두면 *두 개의 생성 진리*가 생겨
+     * (world created-set + recorder 채널) 조용히 발산한다(design Risk #4) — INSERT 전용 side-table 채널
+     * (message/auction/betting/board/vote)과 달리 core 엔티티 생성은 world가 유일 소스다. 그래서 이 메서드는
+     * 새 채널을 만들지 않고 world에 위임만 한다(생성된 장수의 UPDATE 패치는 step-7에서 createdGeneralIds로 제외됨).
+     *
+     * 반환: 생성되어 world에 staged된 [TurnGeneral].
+     */
+    fun recordGeneralCreate(world: InMemoryTurnWorld, general: TurnGeneral): TurnGeneral =
+        world.createGeneral(general)
+
+    /**
      * Tombstone a general (`General.php:515-600` kill: storeOldGeneral → DELETE
      * general/general_turn/rank_data). The recorder is the SOLE emitter:
      *  1. capture the pre-delete row (the `ng_old_generals` storeOldGeneral content),

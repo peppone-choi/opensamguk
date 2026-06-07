@@ -10,6 +10,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.Troop
+import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.infra.persistence.AuctionBidInsertRow
 import opensamguk.infra.persistence.AuctionUpsertRow
@@ -20,9 +21,11 @@ import opensamguk.infra.persistence.CreatedMessageRow
 import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
+import opensamguk.infra.persistence.GeneralCreateRow
 import opensamguk.infra.persistence.InheritanceLogRow
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.KvWrite
+import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.MessageInvalidateRow
 import opensamguk.infra.persistence.LogRow
 import opensamguk.logic.inheritance.InheritanceResultRow
@@ -205,6 +208,8 @@ object DatabaseHooks {
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
             updatedNations = updatedNations,
+            // B1 장수생성 foundation — world DirtyState.createdGenerals → general 행 + 30 turn + 37 rank.
+            createdGenerals = dirty.createdGenerals.map { toGeneralCreateRow(it) },
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
@@ -259,6 +264,74 @@ object DatabaseHooks {
     private fun toTroopRow(t: Troop): TroopRow = TroopRow(troopLeader = t.id, nation = t.nationId, name = t.name)
 
     /**
+     * 엔진 [TurnGeneral] → infra [GeneralCreateRow] (B1 장수생성 foundation). 신규 장수 INSERT의 컬럼맵을
+     * 만든다 — ScenarioImporter.insertGenerals의 V1+V6 컬럼 집합을 정확히 미러링한다. `general` 행에만
+     * 있고 [TurnGeneral] 스칼라 필드엔 없는 칼럼(affinity/born_year/dead_year/picture/image_server/
+     * start_age/officer_city/last_turn/penalty/special2_code/personal_code/special_code)은 `meta`에서
+     * 끌어온다(엔진 모델은 이들을 meta 봉투에 싣는다 — toLogicGeneral/toLogicNation의 meta-verbatim 규약).
+     * meta에 없으면 ScenarioImporter와 동일한 기본값으로 떨어진다(picture='default.jpg', image_server=0,
+     * affinity=null, *_code='None', officer_city=0, last_turn/penalty='{}').
+     *
+     * 주의: `last_turn`/`meta`/`penalty`는 jsonb 컬럼이라 [MetaJson]로 인코딩한 String을 싣는다(executor가
+     * [GeneralCreateRow] 컬럼맵에서 raw json String을 꺼내 PGobject로 바인딩). `meta` 자체는 general.meta
+     * jsonb로 통째로 다시 인코딩된다(envelope 키 born_year 등은 ScenarioImporter가 별도 컬럼으로 빼므로,
+     * meta jsonb에는 일반적으로 별도 컬럼으로 빠지지 않은 잔여 키만 남도록 caller가 정리할 수 있다 — foundation은
+     * 보수적으로 meta 전체를 그대로 직렬화한다).
+     */
+    internal fun toGeneralCreateRow(g: TurnGeneral): GeneralCreateRow {
+        val meta = g.meta
+        fun mInt(key: String, default: Int): Int = (meta[key] as? Number)?.toInt() ?: default
+        fun mIntOrNull(key: String): Int? = (meta[key] as? Number)?.toInt()
+        fun mStr(key: String, default: String): String = (meta[key] as? String) ?: default
+
+        return GeneralCreateRow(
+            columns = linkedMapOf(
+                "id" to g.id,
+                "name" to g.name,
+                "nation_id" to g.nationId,
+                "city_id" to g.cityId,
+                "troop_id" to g.troopId,
+                "npc_state" to g.npcState,
+                // affinity는 nullable 컬럼 — meta에 없으면 null(PHP는 B에서 RNG-pick; A/foundation은 null).
+                "affinity" to mIntOrNull("affinity"),
+                "born_year" to mInt("born_year", 180),
+                "dead_year" to mInt("dead_year", 300),
+                "picture" to mStr("picture", "default.jpg"),
+                "image_server" to mInt("image_server", 0),
+                "leadership" to g.stats.leadership,
+                "strength" to g.stats.strength,
+                "intel" to g.stats.intelligence,
+                "injury" to g.injury,
+                "experience" to g.experience,
+                "dedication" to g.dedication,
+                "officer_level" to g.officerLevel,
+                "gold" to g.gold,
+                "rice" to g.rice,
+                "crew" to g.crew,
+                "crew_type_id" to g.crewTypeId,
+                "train" to g.train,
+                "atmos" to g.atmos,
+                // 장비/특기 코드 — role에 우선, 없으면 'None'.
+                "weapon_code" to (g.role.items.weapon ?: "None"),
+                "book_code" to (g.role.items.book ?: "None"),
+                "horse_code" to (g.role.items.horse ?: "None"),
+                "item_code" to (g.role.items.item ?: "None"),
+                "turn_time" to g.turnTime.toString(),
+                "age" to g.age,
+                "start_age" to mInt("start_age", g.age),
+                "personal_code" to (g.role.personality ?: mStr("personal_code", "None")),
+                "special_code" to (g.role.specialDomestic ?: mStr("special_code", "None")),
+                "special2_code" to (g.role.specialWar ?: mStr("special2_code", "None")),
+                "officer_city" to mInt("officer_city", 0),
+                // jsonb 컬럼 — raw json String으로 싣는다(executor가 PGobject 바인딩). meta는 통째로 재직렬화.
+                "last_turn" to MetaJson.encode((meta["last_turn"] as? Map<*, *>) ?: emptyMap<String, Any?>()),
+                "meta" to MetaJson.encode(meta),
+                "penalty" to MetaJson.encode((meta["penalty"] as? Map<*, *>) ?: emptyMap<String, Any?>()),
+            ),
+        )
+    }
+
+    /**
      * T0.3 CONVERGENCE — the single superset payload builder for the daemon write path. The
      * authoritative dirty source is the [ChangeRecorder] (design Risk #4: one dirty truth): dirty
      * general/city/nation IDs + rank + KV deltas come from the recorder, resolved against the world's
@@ -309,6 +382,10 @@ object DatabaseHooks {
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
             updatedNations = updatedNations,
+            // B1 장수생성 foundation — world DirtyState.createdGenerals → general 행 + 30 turn + 37 rank.
+            // (생성은 world-lifecycle 효과 — recorder 채널이 아니라 world DirtyState가 dirty 소스다. 생성된
+            // 장수 id는 위 updatedGenerals 산출에서 createdGeneralIds로 이미 step-7 UPDATE에서 제외됐다.)
+            createdGenerals = dirty.createdGenerals.map { toGeneralCreateRow(it) },
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
