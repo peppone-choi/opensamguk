@@ -23,6 +23,20 @@
         "note": "intel-stat sabotage: damages the enemy dest city's agri/comm + injures generals there. Success: 1 globalAction broadcast ('<도시>이 불타고 있습니다.'), 2 acting lines (성공 + 농업/상업 감소 PLAIN), per-enemy-general PLAIN '<계략>로 인해 부상' line. Fail: 1 acting line (실패). actor gold/rice -= develcost*5 each; intel_exp += 1; firenum rank += 1 (success only)."
       },
       {
+        "rawClassName": "che_선동",
+        "lotteryActionName": "선동",
+        "ctor": "general",
+        "statType": "leadership",
+        "injuryGeneral": true,
+        "rngDraws": "nextBool(prob) [성공roll]; on success: SabotageInjury per enemy gen [nextBool(0.3)+nextRangeInt(1,16) on hit], affectDestCity nextRangeInt(damageMin,damageMax)[secu]+nextRange(damageMin,damageMax)/50[trust], nextRangeInt(201,300)[exp]+nextRangeInt(141,210)[ded]; on fail: nextBool(prob)+nextRangeInt(1,100)[exp]+nextRangeInt(1,70)[ded]",
+        "logLines": 2,
+        "logLinesFail": 1,
+        "crossGeneral": true,
+        "broadcast": true,
+        "levelCross": false,
+        "note": "leadership-stat sabotage (che_선동 extends che_화계, overrides affectDestCity + statType='leadership'): damages the enemy dest city's secu/trust + injures generals there. Success: 1 globalAction broadcast ('<도시>의 백성들이 동요하고 있습니다.'), 2 acting lines (성공 + 치안/민심 감소 PLAIN), per-enemy-general PLAIN '<계략>로 인해 부상' line. Fail: 1 acting line (실패). actor gold/rice -= develcost*5 each; leadership_exp += 1; firenum rank += 1 (success only). The prob calc uses the actor's leadership (calcSabotageAttackProb/calcSabotageDefenceProb switch on statType)."
+      },
+      {
         "rawClassName": "che_파괴",
         "lotteryActionName": "파괴",
         "ctor": "general",
@@ -35,6 +49,20 @@
         "broadcast": true,
         "levelCross": false,
         "note": "strength-stat sabotage (che_파괴 extends che_화계, overrides affectDestCity + statType='strength'): damages the enemy dest city's def/wall + injures generals there. Success: 1 globalAction broadcast ('누군가가 <도시>의 성벽을 허물었습니다.'), 2 acting lines (성공 + 수비/성벽 감소 PLAIN), per-enemy-general PLAIN '<계략>로 인해 부상' line. Fail: 1 acting line (실패). actor gold/rice -= develcost*5 each; strength_exp += 1; firenum rank += 1 (success only). The prob calc uses the actor's strength (calcSabotageAttackProb/calcSabotageDefenceProb switch on statType)."
+      },
+      {
+        "rawClassName": "che_탈취",
+        "lotteryActionName": "탈취",
+        "ctor": "general",
+        "statType": "strength",
+        "injuryGeneral": false,
+        "rngDraws": "nextBool(prob) [성공roll]; on success: affectDestCity nextRangeInt(damageMin,damageMax)x2 [gold,rice], nextRangeInt(201,300)[exp]+nextRangeInt(141,210)[ded]; on fail: nextBool(prob)+nextRangeInt(1,100)[exp]+nextRangeInt(1,70)[ded]",
+        "logLines": 2,
+        "logLinesFail": 1,
+        "crossGeneral": false,
+        "broadcast": true,
+        "levelCross": false,
+        "note": "strength-stat sabotage (che_탈취 extends che_화계, overrides affectDestCity + statType='strength', injuryGeneral=false): steals gold/rice from enemy dest city. No injury to enemy generals. Success: 1 globalAction broadcast ('<도시>에서 금과 쌀을 도둑맞았습니다.'), 2 acting lines (성공 + 금/쌀 획득 PLAIN). Fail: 1 acting line (실패). actor gold/rice += stolen amount; dest nation gold/rice -= stolen amount."
       }
     ]
   }
