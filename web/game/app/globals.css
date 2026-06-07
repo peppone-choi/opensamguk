@@ -851,27 +851,16 @@ input:focus, select:focus, textarea:focus {
 .map-viewer-canvas {
   position: relative;
   width: 100%;
-  aspect-ratio: 700 / 500;
+  aspect-ratio: 700 / 500; /* che 좌표계 700×500 native(php) — 캔버스 폭에 균일 확대(로비 MapPreview와 동일) */
   overflow: hidden;
   background: #000;
-  cursor: grab;
-  touch-action: none; /* 핀치/팬 제스처를 브라우저 기본동작에서 가로채 줌/팬 핸들러로 */
 }
-.map-viewer-canvas.is-dragging { cursor: grabbing; }
-/* 맵 좌표계(che=700×500 native, map/<code>.json 기준)를 캔버스 폭에 맞추는 외곽 스케일 레이어. transform-origin 좌상단. */
+/* 맵 좌표계(che=700×500 native)를 캔버스 폭에 맞추는 정적 스케일 레이어(줌/팬 없음). transform-origin 좌상단. */
 .map-world {
   position: absolute;
   left: 0;
   top: 0;
   transform-origin: 0 0;
-}
-/* 줌/팬 transform 레이어 — bg/road + 모든 city_base가 이 안에서 함께 변형된다. */
-.map-zoomlayer {
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform-origin: 0 0;
-  will-change: transform;
 }
 .map-bg,
 .map-road {
@@ -899,132 +888,43 @@ input:focus, select:focus, textarea:focus {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* ── detail 레이아웃 마커 (레거시 scss/map.scss .map_detail 충실 재현) ──────────── */
-/* city_base — 40×30, 중심이 도시 좌표. 좌표는 700×500 native 맵 좌표계 px(map/<code>.json), 크기는 고정 px. */
+/* ── 도시 마커 (gateway 로비 MapPreview와 구조·CSS 동일한 정적 마커) ──────────── */
+/* city_base — 40×30, 중심이 도시 좌표. 클릭 시 도시 정보 페이지로 이동하는 <button>(버튼 기본 스타일 제거). */
 .city-base {
   position: absolute;
-}
-/* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6}(MapCityDetail.vue:218) 그대로.
-   오오라·성·깃발·이름을 함께 흐리게(opacity만, grayscale/desaturate 없음 — 오라클 일치). */
-.city-base.supply-off {
-  opacity: 0.6;
-}
-/* W9 fog — 아국 장수 소재 도시(shownByGeneralList) 강조: 옅은 금색 글로우 링. */
-.city-base.has-own-general::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 34px;
-  height: 34px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 213, 79, 0.85), 0 0 8px 2px rgba(255, 213, 79, 0.5);
-  pointer-events: none;
-  z-index: 2;
-}
-/* W9 fog — 정찰 배지(spyList 잔여개월). base 우하단. */
-.city-spy {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  z-index: 6;
-  padding: 0 3px;
-  font-size: 9px;
-  line-height: 12px;
-  color: #fff;
-  background: rgba(21, 101, 192, 0.92);
-  border-radius: 3px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-/* 1) 오오라(city_bg) — 레거시 b<color>.png radial glow를 CSS radial-gradient로(인라인 style). */
-.city-aura {
-  position: absolute;
-  z-index: 1;
-  pointer-events: none;
-  border-radius: 50%;
-}
-/* 클릭/포커스 박스(city_link) — base 전체를 덮어 hover/select 타깃. 기본 버튼 스타일 제거. */
-.city-link {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 2;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
 }
-.city-link:focus { outline: none; }
-.city-link:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-/* 선택 표시(ring) — 레거시엔 없는 opensamguk UX(클릭→상세). 부드러운 흰 링. */
-.city-link.is-selected { outline: 2px solid rgba(255, 255, 255, 0.9); outline-offset: 0; border-radius: 4px; }
-
-/* 2) 성 아이콘 cast_<level>.gif — 픽셀아트 선명 유지, base 중앙정렬. */
+.city-base:focus { outline: none; }
+.city-base:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 4px; }
+/* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6} 그대로(opacity만). */
+.city-base.supply-off { opacity: 0.6; }
+/* 1) 오오라(city_bg) — 소유국만(레거시 b<color>.png radial glow를 CSS radial-gradient로). 인라인 style. */
+.city-aura { position: absolute; z-index: 1; pointer-events: none; border-radius: 50%; }
+/* 아이콘 컨테이너(city_img) — 깃발/상태/이름의 위치 기준(레거시 .city_img position:absolute). */
+.city-img { position: absolute; z-index: 2; }
+/* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */
 .city-cast {
   position: absolute;
-  z-index: 2;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   image-rendering: pixelated;
   user-select: none;
   -webkit-user-drag: none;
-}
-/* 현재 도시(my_city) — 레거시 blink: 빨강 solid + 은색 double outline 두 겹 애니. */
-.city-cast.my-city {
-  border-radius: 33%;
-}
-.city-cast.my-city::before,
-.city-cast.my-city::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 33%;
-  pointer-events: none;
-  animation-duration: 3.9s;
-  animation-iteration-count: infinite;
-}
-.city-cast.my-city::before { animation-name: blink-my-city-d1; }
-.city-cast.my-city::after { animation-name: blink-my-city-d2; }
-
-/* 3) 깃발(city_flag) — 12×12, 성 아이콘 우상단 기준(인라인 left/top). flagTint 4프레임 나부낌. */
-.city-flag {
-  position: absolute;
-  z-index: 3;
-  width: 12px;
-  height: 12px;
   pointer-events: none;
 }
-.city-flag-img {
-  display: block;
-  width: 12px;
-  height: 12px;
-  image-rendering: pixelated;
-  -webkit-user-drag: none;
-}
+/* 3) 깃발(city_flag) — 12×12, city_img 기준 상대 오프셋(인라인 right/top). flagTint 4프레임 나부낌. */
+.city-flag { position: absolute; z-index: 3; width: 12px; height: 12px; pointer-events: none; }
+.city-flag-img { display: block; width: 12px; height: 12px; image-rendering: pixelated; -webkit-user-drag: none; }
 /* 4) 수도 별 event51.gif — 깃발 우상단(top:0,right:-1). */
-.city-capital {
-  position: absolute;
-  z-index: 4;
-  top: 0;
-  right: -1px;
-  width: 10px;
-  height: 10px;
-  image-rendering: pixelated;
-  -webkit-user-drag: none;
-}
-/* 5) 상태 아이콘 event<state>.gif — base 좌상단(top:5,left:0). */
-.city-state {
-  position: absolute;
-  z-index: 3;
-  top: 5px;
-  left: 0;
-  image-rendering: pixelated;
-  pointer-events: none;
-  -webkit-user-drag: none;
-}
-/* 6) 도시명(city_detail_name) — left:70%, bottom:-10px, 10px, 반투명 검정 bg. */
+.city-capital { position: absolute; z-index: 4; top: 0; right: -1px; width: 10px; height: 10px; image-rendering: pixelated; -webkit-user-drag: none; }
+/* 5) 상태 아이콘 event<state>.gif — city_img 기준(top:5,left:0). */
+.city-state { position: absolute; z-index: 3; top: 5px; left: 0; image-rendering: pixelated; pointer-events: none; -webkit-user-drag: none; }
+/* 6) 도시명(city_detail_name) — left:70%, bottom:-10px, 10px, 반투명 검정 bg. 항상 표시. */
 .city-name {
   position: absolute;
   z-index: 5;
@@ -1040,48 +940,7 @@ input:focus, select:focus, textarea:focus {
   user-select: none;
 }
 
-/* my_city blink keyframes (레거시 동일) */
-@keyframes blink-my-city-d1 {
-  0% { outline: solid 4px transparent; }
-  50% { outline: solid 4px rgba(255, 0, 0, 1); }
-  100% { outline: solid 4px transparent; }
-}
-@keyframes blink-my-city-d2 {
-  0% { outline: double 4px transparent; }
-  50% { outline: double 4px rgba(192, 192, 192, 1); }
-  100% { outline: double 4px transparent; }
-}
-
-/* 줌/리셋 컨트롤 — 캔버스 우하단 고정 오버레이. */
-.map-controls {
-  position: absolute;
-  right: var(--space-sm);
-  bottom: var(--space-sm);
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-.map-zoom-level {
-  font-size: var(--text-xs);
-  color: #fff;
-  background: rgba(0, 0, 0, 0.55);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  pointer-events: none;
-}
-.map-reset-btn {
-  font-size: var(--text-xs);
-  color: var(--text-primary);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 2px 8px;
-  cursor: pointer;
-}
-.map-reset-btn:hover { background: var(--bg-card); }
-
-/* hover tooltip (legacy .city_tooltip) */
+/* hover tooltip (legacy .city_tooltip) — 캔버스 좌상단 고정(MapPreview 경량 hover 툴팁과 동급). */
 .map-tooltip {
   position: absolute;
   top: var(--space-sm);
@@ -1192,28 +1051,39 @@ input:focus, select:focus, textarea:focus {
   .gauge-metrics { grid-template-columns: 1fr; }
 }
 
-/* ── F2 Wave 5 — main-screen assembly ─────────────────────────────────────────── */
-
-/* #ingameBoard grid (spec §1.3 desktop: 500px 200px 300px). Order: map → reserved → nation → general →
-   content → controlbar. Mobile (§1.4) collapses to one column: reserved → controlbar → nation → general
-   → content (cityInfo lives inside MapViewer's MapCityDetail). */
+/* ── F2 Wave 5 — main-screen assembly (1000px 중앙 정렬, 로비/로그인과 동일 폭) ───────────────
+   #ingameBoard 는 단일 세로 스택이다(부모 .shell-main > * 가 max-width:1000px + auto margin 으로 중앙
+   정렬). 영역 순서: map(상단 풀폭) → reserved(예약명령) → info 카드(nation/general/city 2~3열 그리드) →
+   content(서브페이지 슬롯) → controlbar(풀폭, 마지막). 모바일은 .ib-cards 가 단일 열로 collapse 한다. */
 .ingame-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+/* 맵은 항상 풀폭(1000px) 상단 — 낡은 500/200/300 그리드 제거로 더 이상 ~500px 로 눌리지 않는다. */
+.ib-map { width: 100%; }
+.ib-reserved { width: 100%; }
+/* info 카드 묶음 — 1000px 내부에서 nation/general/city 2~3열(데스크톱), 모바일 단일 열. align:start 로
+   각 카드가 내용 높이만큼만 차지(레거시 dense 카드 비율 유지). */
+.ib-cards {
   display: grid;
   gap: var(--space-md);
   grid-template-columns: 1fr;
+  align-items: start;
+}
+@media (min-width: 760px) {
+  .ib-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* 도시 카드는 수치가 많아 데스크톱에선 2열 폭(아래 줄 전체)으로 펼친다. */
+  .ib-cards > .ib-city { grid-column: 1 / -1; }
 }
 @media (min-width: 1000px) {
-  .ingame-board {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 2fr) minmax(0, 3fr);
-    align-items: start;
-  }
-  .ib-map { grid-column: 1 / 3; }
-  .ib-reserved { grid-column: 3 / 4; grid-row: 1 / 3; }
-  .ib-nation { grid-column: 1 / 2; }
-  .ib-general { grid-column: 2 / 3; }
-  .ib-content { grid-column: 1 / 4; }
-  .ib-controlbar { grid-column: 1 / 4; }
+  .ib-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* 3열: general | nation | city 한 줄. 도시 카드 원복(2열 span 해제). */
+  .ib-cards > .ib-city { grid-column: auto; }
 }
+.ib-content { width: 100%; }
+.ib-content:empty { display: none; }
+.ib-controlbar { width: 100%; }
 
 /* Basic info cards (GeneralBasicCard / NationBasicCard) — verbatim labels, grid head/body rows. */
 .basic-card {
@@ -1249,6 +1119,19 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
   text-align: center;
 }
+/* 전폭 행(특기 내정/전투처럼 head 없이 본문만 펼치는 칸) — 레거시 type-body grid-column span 동치. */
+.basic-card-row.basic-card-row-full { display: block; }
+.basic-card-row-full .basic-card-body { text-align: center; }
+/* 성향 pros(cyan) / cons(magenta) — 레거시 NationBasicCard type 색상 그대로. */
+.bc-pros { color: cyan; }
+.bc-cons { color: magenta; }
+/* 가능/금지 등 상태 색(레거시 limegreen/red). */
+.bc-ok { color: limegreen; }
+.bc-no { color: red; }
+/* 통솔보너스(+lbonus) — 레거시 cyan. */
+.bc-bonus { color: cyan; }
+/* 도시 카드 머리(레거시 cityNamePanel/nationNamePanel) — 국가색 배경, 굵게. */
+.city-basic-card .basic-card-name + .basic-card-name { border-top: 1px solid var(--bg-card); }
 
 /* Reserved-command panel (PartialReservedCommand) — 5-col ring table. */
 .reserved-command-panel {

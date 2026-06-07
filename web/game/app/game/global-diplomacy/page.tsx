@@ -298,7 +298,7 @@ export default function GlobalDiplomacyPage() {
             </div>
             <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                 <div style={{ flex: '2 1 360px', minWidth: 0 }}>
-                    <MapViewer currentCityId={currentCityId} />
+                    <MapViewer />
                 </div>
                 <div style={{ flex: '1 1 260px', minWidth: 240 }}>
                     <GameCard>

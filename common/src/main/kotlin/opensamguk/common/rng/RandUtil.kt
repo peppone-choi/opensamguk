@@ -42,9 +42,19 @@ open class RandUtil(private val rng: LiteHashDrbg) {
     // wrapper entry. The body is unchanged; the inner `nextFloat1()` still records through virtual dispatch, so
     // the wrapper rides ON TOP of the inner float draw (same before-cursor). The engine-side gate COLLAPSES these
     // zero-byte wrappers on both golden + live, so only the inner RNG draw is asserted.
+    //
+    // KEY ORDER = INSERTION (PHP-faithful). PHP `RandUtil::choiceUsingWeight` (src/sammo/RandUtil.php:104-130)
+    // walks `foreach ($items as $item => $value)` — PHP arrays are insertion-ordered, so we iterate
+    // `items.keys` (LinkedHashMap insertion order, what `linkedMapOf`/`mapOf` produce) directly. We do NOT use
+    // `jsKeyOrder` here: that helper models the core2026 *TS* oracle's Object-key order (integer keys ascending
+    // FIRST, then string keys). jsKeyOrder == insertion order for all-string or ascending-int keys — so every
+    // existing caller is byte-unchanged — but it DIVERGES for an int-like key inserted AFTER string keys, e.g.
+    // SpecialityHelper's `pAbs["0"] = max(0,100-sum)` sentinel: PHP keeps the int key last, jsKeyOrder floats
+    // it first, which silently changed the war-/domestic-special pick. PHP is the byte oracle ⇒ insertion wins.
+    // (`choiceMap` still uses jsKeyOrder pending its own PHP-golden gate; no divergent caller exercises it today.)
     open fun choiceUsingWeight(items: Map<String, Double>): String {
         if (items.isEmpty()) throw IllegalArgumentException("Empty items")
-        val keys = jsKeyOrder(items.keys)
+        val keys = items.keys
         var sum = 0.0; for (k in keys) { val v = items.getValue(k); if (v > 0) sum += v }
         var rd = nextFloat1() * sum
         for (k in keys) { val v = items.getValue(k); if (v <= 0) { if (rd <= 0) return k; continue }; if (rd <= v) return k; rd -= v }

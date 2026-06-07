@@ -1,6 +1,15 @@
-# SESSION HANDOFF — 2026-06-06 (세션3: game-api 검증 + 크래시 근본수정 + K1/K2 진입 정본화 커밋)
+# SESSION HANDOFF — 2026-06-07 (세션4: B1 장수생성 RNG 코어 골든 게이트 + RNG 커널 패러티 수정)
 
-다음 세션은 이 문서부터. 세션2 산출물 전부 검증·커밋 완료(아래 §0.5). 핵심은 git log.
+다음 세션은 이 문서부터. 핵심은 git log. (세션3 이하 §0.5~.)
+
+> **세션4 완료(커밋 1개, `6954552`, branch=`parity-final`, 미push)** — B1 장수생성(Join)의 **RNG 코어**를 PHP grand truth(`Join.php:225-392` 인라인 create-general)에서 draw-for-draw 충실 포팅 + 실 PHP 골든으로 게이트 마감. 사용자 핵심요구(진입 플로우)의 패러티-하드 코어 진척.
+> - **신규**: `logic/world/MakeGeneral.kt`(순수 로직 draw 산출) + `golden/entrance/장수생성-fixtures.json`(실 PHP 캡처 14픽스처/180드로우, 천재 3 자연발생, N∈{3,4,5}, sha256 `535ddb9c…`, 2회 byte-identical) + `tools/php-golden/capture_join.php` + `MakeGeneralGoldenTest`(seedString byte-equal + 드로우-포-드로우 method/result/choiceIndex + DRBG 커서 byte-exact + 전체 outcome) + `JoinDrawRecorder` + 연구문서 `research/2026-06-06-join-grand-truth.md`.
+> - **커널 패러티 버그 발견+수정(이 게이트가 노출)**: `common/rng/RandUtil.choiceUsingWeight` 가 `jsKeyOrder`(core2026 **TS** 오라클의 Object-key 순=정수키 오름차순 우선) 적용 → PHP `foreach` **삽입순**과 발산. `SpecialityHelper` 의 `pAbs["0"]` 센티넬(문자열키 뒤 정수형 키)에서만 발현(전투/내정 특기 선발 오류). **insertion order로 수정**. 문자열/오름차순-정수 키 콜러는 insertion==jsKeyOrder라 byte-불변 — 전수 grep + **:common 192 / :logic 1865 / :app:game-engine 297(AI 174/174) ALL GREEN** 으로 무회귀 증명. `choiceMap` 은 jsKeyOrder 유지(자체 PHP 골든 게이트 전까지, 발산 콜러 없음 — **잠재 동일버그, 백로그**). PHP 기록기 `RandUtilDrawRecorder.php` choiceUsingWeight 이중기록도 동반 픽스.
+> - 어드버서리얼 패러티 리뷰 **SAFE**(6차원 클린, 날조/약화 0).
+>
+> **다음(B1 잔여 = write-seam + 인테이크 + FE — 세션4 종료시 미착수, 정밀 스코프 ↓§0.6 A)**: 새 장수 INSERT 경로는 **net-new**(ChangeRecorder `createdGenerals` 채널 ❌ + JdbcFlushExecutor general-create ⏳ + `TurnDaemonCommand.MakeGeneral` ❌ + dispatcher 핸들러 ❌). one-daemon-write-rule 하 createGeneral 데몬 핸들러가 `MakeGeneral.draw()` 소비 → general/30×general_turn/rank_data INSERT. **flush 변경 = prod 턴-freeze 리스크 → 반드시 real-Postgres IT 로 닫고 push**. 거병/건국(CMD-FOUNDING) nation-create 가 가장 가까운 analog 템플릿. (write-seam 인베스티게이션은 세션4 말 타임아웃 — 다음 세션 신규 컨텍스트로.)
+
+---
 
 > **세션3 완료(커밋 6개, branch=`parity-final`, 미push)**:
 > - **게이트 ALL GREEN**: common 192 / logic 1864 / infra 78 / game-engine 297 / game-api **177**(+3 새 테스트) / web/game·web/gateway tsc CLEAN.
@@ -16,7 +25,37 @@
 - **크래시 근본수정**: `web/game/app/game/page.tsx` MyPageContent를 `api.frontInfo()`(FrontInfoResponse nested) 소비로 재작성. `api.myPage`/`MyPageData`(평면↔nested 불일치)는 더 이상 메인이 안 씀. `lib/types` FrontGeneralInfo/FrontNationInfo를 실 JSON 필드로 widening.
 - **K1**: `ServerBasicInfoController`(permitAll+optional principal, FrontInfoController 패턴) + `ServerBasicInfoDto` + `GameConst.defaultStatTotal/Min/Max`(+NPC변형·chiefStatMin, d_setting verbatim) + GetConst 노출 + gateway `app/api/server-basic-info/[id]/route.ts`(sam_access Bearer 포워딩).
 - **K2**: `web/gateway/app/lobby/page.tsx` ServerRow가 서버별 fan-out으로 진입 상태머신(me→입장/full→등록마감/else→미등록+진입버튼) + 라이브 서버정보. servers.json=라우팅만.
-- **미해결로 남김**: ① 라이브 배포 미실행(아래 §6). ② 진입 3버튼(create/possess/select) 분기 — B1-B3 정본 페이지 부재로 미등록은 게임 진입 통합. ③ chief 제출 intake 왕복 미검증.
+- **배포 완료 + prod 검증(2026-06-06)**: `dd4e970..5e2244d` main 머지 → deploy.yml **success**(build-jvm/web×2 green, GHCR→EC2 롤링). prod 검증: 컨테이너 전부 up(크래시루프 0), 엔진 rehydrate(generals=678) + **TurnDaemonRunner 루프 진입 + 턴 전진 181/3→181/6**, K1 `/api/server-basic-info/{main,bbae}` 라이브(main nationCnt=2·bbae=21·defaultStatTotal=165), front-info nested 라이브.
+- **🟠 nginx 회귀 캐치+핫픽스**: K2 로비 fetch `/api/server-basic-info/[id]`가 nginx `/api/` catch-all→game-api(Spring) 404로 빠져 **전 서버 '폐쇄 중' 회귀**였음. 라이브 박스 `/home/ubuntu/opensamguk/docker/nginx/default.conf`에 server-map 패턴 location 블록 2개(두 server stanza) 삽입+graceful reload로 즉시 해소. 레포 canonical `infra/nginx/default.conf`도 갱신(이 커밋, **parity-final에만** — main push=재배포·턴되감김이라 다음 배치와 함께). 박스 docker/nginx는 미추적(레포 docker/nginx 부재).
+- **빼섭(bbae) 입장 ✅검증(E2E)**: `?server=bbae`→middleware `sam_server` 쿠키→`/api/game/[...]` route handler→`resolveGameApiUrl('bbae')`→`bbae-api:18080`. 증명: `Cookie: sam_server=bbae`로 `/api/game/api/front-info`가 **year 191/scenario_1030/nationCount 24**(bbae) 반환, 쿠키 없으면 181/1010(main). prod env `SERVER_REGISTRY_JSON=[{"id":"bbae","gameApiUrl":"http://bbae-api:18080"}]`. 크래시 수정도 bbae 동일 적용(front-info nested). (basic-info nationCnt=21=`level>0`=devsam 로비 정본 / front-info nationCount=24=`id!=0` — 메트릭 차이지 버그 아님.)
+
+## 0.6 백로그 (다음 세션 — 통합)
+
+### A. 진입(엔트런스) 잔여 — §5 (골든 동반, 사용자 핵심요구 연속)
+- **B1 장수생성**(`API/General/Join.php`):
+  - ✅ **RNG 코어 done(세션4, `6954552`)** — `logic/world/MakeGeneral.draw()` draw-for-draw + 실 PHP 골든 게이트(14/14). 천재 전투특기는 `SpecialityHelper.pickSpecialWar` 재사용. `defaultStat*`는 GameConst/GetConst 노출 완료(세션3).
+  - ⬜ **write-seam(net-new, Tier-0 — B2/B3/founding 도 소비)**: ① `ChangeRecorder.createdGenerals` 채널 신설(brand-new INSERT, generalPatches=UPDATE와 별개) ② `InMemoryTurnWorld.createGeneral`(id 할당=max+1, TurnGeneral 빌드, nation=0 재야) ③ `JdbcFlushExecutor` general-create flush step(general INSERT + 30×general_turn 휴식 + rank_data per RankColumn — 컬럼셋은 `infra/seed/ScenarioImporter.insertGenerals` 참조) + general_access_log ④ **real-Postgres flush IT**(insert→flush→행 검증; 거병/건국 nation-create IT 패턴 미러). **flush=prod 턴-freeze 리스크 → IT 선결 후 push.** 상수: gold/rice=1000, killturn=6, crewtype=1100, officer_level=0, betray(relYear≥4→2). ⑤ 누락 GameConst: `DEFAULT_CREWTYPE`(1100)/`killturn`(6)/`retirementYear`(80) 추가.
+  - ⬜ **intake**: `TurnDaemonCommand.MakeGeneral` wire variant + `CommandWireMapper` intakeCode + game-engine `TurnDaemonCommandDispatcher` 핸들러(즉시 실행, 턴-reserved 아님) + game-api 인테이크 컨트롤러(`CommandReserveService` Model-B 즉시 데몬커맨드 경로). seed = `serializeSeed(hiddenSeed,"MakeGeneral",userID,now-string)`.
+  - ⬜ **FE**: `PageJoin` 폼(장수명/전콘/성격/통무지 합≤defaultStatTotal·각[Min,Max]/조절버튼). gateway route handler 프록시 + (새 route handler면) nginx location 함정 주의.
+  - 정본: `Join.php` + 연구문서 `research/2026-06-06-join-grand-truth.md`(드로우 순서·INSERT 필드·로그 순서 정독).
+- **B2 장수빙의**(`select_npc.php`): PossessionController claimable/claim 골격 절반 존재 → npc 2→1 + killturn=6/defence_train=80/permission=normal/aux + 토큰풀(general npc=2, weight pow(allStat,1.5), 5장, validUntil) + claim 술어 정확히 `owner<=0 AND npc=2 AND no=pick`. → 골든.
+- **B3 장수선택**(`select_general_from_pool.php`): 14장 템플릿 pool(selectPool 시드)+token + GeneralBuilder.build(통무지/전콘/성격 caps 내 커스텀,killturn=5,재야 random공백)+swap. → 골든.
+- **진입 3버튼 분기**: 현재 미등록=게임 진입(CharacterClaim) 통합 → B1-B3 완료 시 `canCreate=!(block&1)`/`canSelectNPC=npcMode가능`/`canSelectPool=npcMode선택생성` 3버튼 분리(entrance.ts L270-279).
+- **nginx**: B1-B3가 새 gateway Next route handler 추가 시 `infra/nginx/default.conf` 두 stanza + 라이브 박스 `docker/nginx/default.conf` location 블록 또 필요(자동화 검토). 함정 = `/api/` catch-all→game-api 404.
+
+### B. 검증/배선 잔여
+- **chief-center ChiefCommandReserve 제출 intake 왕복 end-to-end 미검증**(UI는 배포됨; 9 event_연구 등 chief turn-reserved 제출이 실제 엔진까지 도달하는지 로그인 세션으로 확인).
+- **/game 메인 크래시·로비 비주얼**: 구조적 해소 확인(front-info nested 라이브), 로그인+빙의 세션 실측은 미완.
+- **nginx canonical** `infra/nginx/default.conf`(server-basic-info 블록)는 **parity-final에만**(`b8b58b6`) — main push=재배포·턴되감김이라 다음 배치와 함께 main 반영. 라이브 박스는 핫픽스 적용됨.
+
+### C. 패러티 로드맵 (PARITY_LEDGER §8)
+- **Tier4 #15**: 24 중 9 done(세션3), **15 남음** = 5 계략(che_화계/파괴/탈취/선동/첩보, RNG-bearing) + 9 misc General(강행/접경귀환/숙련전환/전투태세/모반시도/특기초기화×2/단련/등용수락) + cr_인구이동. (parity-wave ring/deterministic 보정 스크립트로.)
+- Tier2 #7·#8 W8 토너먼트 · Tier3 #12·#14 입국건국/NPC풀 · Tier1 #4·#6 checkStatistic(디퍼).
+- **gateway-api `JwtTokenProviderTest.generate and validate access token()` CI flaky**(시계성, deploy.yml 비차단 — dd4e970·세션3 둘 다 배포 성공). 토큰 만료/시각 단언 수정 필요.
+
+### D. 운영 백로그
+- **빼섭 보급-동결 버그** 미수정(`doNPC구출발령` 빈 supplyCities→RandUtil.choice throw, 상류 1030 보급 발산). 가드=band-aid. 현재 빼섭 엔진은 가동 중(year 191 전진).
+- 매 main 배포 = 엔진 recreate→DB스냅샷 rehydrate로 **턴 되감김**(세션3 본섭 181로). doc-only도 main push 금지(parity-final에 모아 배치 배포).
 
 ## 0. 사용자 핵심 원칙 (이 세션 확립 — 반드시 준수)
 
