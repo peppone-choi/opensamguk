@@ -237,6 +237,16 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
     ): List<GeneralReadEntity>
 
     /**
+     * W3 FrontCityInfo `officerList` — PHP `SELECT officer_level, name, npc FROM general
+     * WHERE officer_city = %i AND officer_level IN (4,3,2)`(GetFrontInfo.php:504). 도시 관직(태수4/군사3/종사2).
+     * 술어는 `officer_city`(관직 보유 도시)이지 `city_id`(소재 도시)가 아니다. 표시 전용 — id asc 정렬.
+     */
+    fun findByOfficerCityAndOfficerLevelInOrderByIdAsc(
+        officerCity: Int,
+        officerLevels: List<Int>,
+    ): List<GeneralReadEntity>
+
+    /**
      * F3 kingdoms ranking — `power` proxy (병력 column) = SUM(general.crew) over a nation's generals.
      * The legacy `a_kingdomList.php` sorts by a stored `nation.power` that has no column in this schema;
      * SUM(crew) is the documented faithful proxy (OQ-3). COALESCE so a general-less nation → 0.

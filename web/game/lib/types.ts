@@ -86,6 +86,15 @@ export interface FrontGeneralInfo {
     specialDomestic?: string | null;   // 내정 특기 코드(special_code)
     specialWar?: string | null;        // 전투 특기 코드(special2_code)
     personal?: string | null;          // 성격 코드(personal_code)
+    // ── F-fix: 코드 → 한글 이름 해석값(API가 PHP grand-truth getName으로 해석; None/0 → '-') ──
+    specialDomesticName?: string | null; // 내정 특기 이름
+    specialWarName?: string | null;      // 전투 특기 이름
+    crewTypeName?: string | null;        // 병종 이름
+    personalName?: string | null;        // 성격 이름
+    horseName?: string | null;           // 명마 이름
+    weaponName?: string | null;          // 무기 이름
+    bookName?: string | null;            // 서적 이름
+    itemName?: string | null;            // 도구 이름
     explevel?: number | null;          // Lv(meta.explevel)
     dedlevel?: number | null;          // meta.dedlevel
     killturn?: number | null;          // 삭턴(meta.killturn)
@@ -139,6 +148,9 @@ export interface FrontNationInfo {
     crew?: NationCrewGroup | null;
     type?: NationTypeInfo | null;
     topChiefs?: NationTopChief[] | null; // officer_level>=11 수뇌 목록
+    // 군주/군주대리 행 라벨(작위/직책 한글명, 서버 해석) — 날조 아님(F4StateText.officerLevelText 패러티 테이블).
+    rulerOfficerText?: string | null;   // 군주 행 라벨 = officerLevelText(12, level) (두목/영주/…/황제)
+    deputyOfficerText?: string | null;  // 군주대리 행 라벨 = officerLevelText(11, level)
     // [meta UNVERIFIED — 데몬 write 전까지 null. 날조 금지] 지급률/세율/외교·임관·전쟁 제한.
     bill?: number | null;             // meta.bill — 지급률(%)
     taxRate?: number | null;          // meta.rate — 세율(%)
@@ -148,12 +160,21 @@ export interface FrontNationInfo {
     prohibitWar?: number | null;      // meta.war — 전쟁 금지(1=금지)
 }
 
+export interface CityOfficer {
+    officerLevel: number; // 4=태수 / 3=군사 / 2=종사
+    name: string;
+    npc: number; // npc_state — getNPCColor 입력
+}
+
 export interface FrontCityInfo {
     id: number;
     name: string;
     level: number;
+    levelName?: string | null; // 치소 등급 한글명 getCityLevelList()[level] (수/진/관/이/소/중/대/특)
     nationId: number;
     region: number;
+    regionName?: string | null; // 지역 한글명 CityConst.regionMap[region] (하북/중원/서북/서촉/남중/초/오월/동이)
+    officers?: CityOfficer[]; // 도시 관직(태수4/군사3/종사2) — 빈 슬롯 미포함, FE가 officerLevel로 조회
     population: number;
     populationMax: number;
     agriculture: number;
@@ -186,29 +207,34 @@ export interface FrontInfoResponse {
 // falls back to a header-only render). Field names are STABLE (Jackson default camelCase) — keep in sync
 // with CityDetailController.CityDetailResponse. (`trade` is NULLABLE — RandomizeCityTradeRate writes NULL
 // for 상인 없음 cities; render 시세 from this value, never fabricate.)
+// 첩보(fog) 마스킹: 비-아국/공백지에 첩보·주둔 없으면 내정/방어 수치 전부 null + visible=false(서버에서 마스킹,
+// payload 누출 없음). FE는 visible=false면 "첩보 없음 — 정보 비공개"로 렌더(수치 자리엔 '-').
 export interface CityDetailResponse {
     id: number;
     name: string;
     level: number;
+    levelName: string;  // 치소 등급 한글명 (수/진/관/이/소/중/대/특)
     region: number;
+    regionName: string; // 지역 한글명 (하북/중원/…/동이)
     nationId: number;
-    population: number;
-    populationMax: number;
-    agriculture: number;
-    agricultureMax: number;
-    commerce: number;
-    commerceMax: number;
-    security: number;
-    securityMax: number;
-    defense: number;
-    defenseMax: number;
-    wall: number;
-    wallMax: number;
-    trust: number;
+    visible: boolean;   // 내정 가시 여부(소유/첩보/주둔). false면 아래 수치 null.
+    population: number | null;
+    populationMax: number | null;
+    agriculture: number | null;
+    agricultureMax: number | null;
+    commerce: number | null;
+    commerceMax: number | null;
+    security: number | null;
+    securityMax: number | null;
+    defense: number | null;
+    defenseMax: number | null;
+    wall: number | null;
+    wallMax: number | null;
+    trust: number | null;
     trade: number | null;
     supplyState: number;
     frontState: number;
-    officers: number;
+    officers: number | null;
 }
 
 // ── map preview (game-api MapPreviewResponse / MapPreviewDto.kt) ─────────────

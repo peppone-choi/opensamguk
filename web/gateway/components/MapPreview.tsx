@@ -52,6 +52,9 @@ const DETAIL_SIZES: Record<number, CitySize> = {
 // 인게임 MapViewer와 동일하게 cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다(아우라/깃발 비율 유지).
 // 로그인/로비/메인 3개 맵의 모양을 동일하게 맞추는 단일 노브 — 값은 MapViewer.ICON_SCALE와 일치시킬 것.
 const ICON_SCALE = 0.72;
+// 깃발/수도별 아이콘도 도시 아이콘과 같은 ICON_SCALE로 축소(인게임 MapViewer와 일치 — 사용자 요청).
+const FLAG_PX = Math.round(12 * ICON_SCALE); // 12 → 9
+const STAR_PX = Math.round(10 * ICON_SCALE); // 10 → 7
 function sizeOf(level: number): CitySize {
     const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
     return {
@@ -291,11 +294,11 @@ export default function MapPreview({ serverId = 'main', serverName }: { serverId
                                     {owned && flagFrameUrl && (
                                         <span className="city-flag" style={{ right: sz.flagRight, top: sz.flagTop }}>
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img className="city-flag-img" src={flagFrameUrl} alt="" width={12} height={12} draggable={false} />
+                                            <img className="city-flag-img" src={flagFrameUrl} alt="" width={FLAG_PX} height={FLAG_PX} draggable={false} />
                                             {/* 4) 수도 별 event51.gif — 깃발 우상단. */}
                                             {c.isCapital && (
                                                 // eslint-disable-next-line @next/next/no-img-element
-                                                <img className="city-capital" src="/icons/event51.gif" alt="" width={10} height={10} draggable={false} />
+                                                <img className="city-capital" src="/icons/event51.gif" alt="" width={STAR_PX} height={STAR_PX} draggable={false} />
                                             )}
                                         </span>
                                     )}

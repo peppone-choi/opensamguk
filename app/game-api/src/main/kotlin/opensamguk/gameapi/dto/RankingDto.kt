@@ -49,8 +49,10 @@ data class KingdomRank(
     val name: String,
     /** Nation hex color, verbatim from `nation.color`. */
     val color: String,
-    /** `nation.level` (page header 등급). */
+    /** `nation.level` (raw, 정렬/로직용). */
     val level: Int,
+    /** 등급 한글명 = getNationLevelList()[level][0] (방랑군..천자). page 등급 컬럼에 raw 숫자 대신 표시. */
+    val levelText: String,
     val gold: Int,
     val rice: Int,
     /** SUM(city.pop) over the nation's cities (no `nation.pop` column). */

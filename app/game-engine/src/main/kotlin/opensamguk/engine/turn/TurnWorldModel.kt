@@ -90,6 +90,11 @@ data class Nation(
     val gold: Int = 0,
     val rice: Int = 0,
     val power: Int = 0,
+    // tech(기술력)는 nation.tech 전용 컬럼이다. 엔진 인메모리 Nation에 필드를 두지 않으면
+    // 스냅샷 로더가 tech를 적재할 자리가 없어 toLogicNation이 tech=0.0을 만들고, 월틱 flush가
+    // UPDATE nation SET tech=0 으로 시드값(예: 후한 1500)을 영구히 0으로 덮어쓴다. power와 동일하게
+    // 전용 필드로 round-trip 시킨다.
+    val tech: Double = 0.0,
     val level: Int = 0,
     val typeCode: String = "None",
     val meta: Map<String, Any?> = emptyMap(),

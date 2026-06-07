@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.dto.CityOfficer
 import opensamguk.gameapi.dto.FrontCityInfo
 import opensamguk.gameapi.dto.FrontGeneralInfo
 import opensamguk.gameapi.dto.FrontGlobalInfo
@@ -22,11 +23,16 @@ import opensamguk.gameapi.read.RankDataReadRepository
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.common.constants.CityConst
+import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.getCityLevelList
 import opensamguk.logic.domestic.getBillByLevel
 import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
+import opensamguk.logic.world.SpecialityHelper
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -168,6 +174,17 @@ class FrontInfoController(
             personal = g.personalCode,
             penalty = g.penalty,
 
+            // F-fix: 코드 → 한글 이름 해석(PHP grand-truth getName 충실 포팅; None/0/미등록 → '-').
+            // SpecialityHelper.domesticName/warName은 미등록 시 id를 그대로 반환하므로 "None"을 '-'로 보정.
+            specialDomesticName = specialName(SpecialityHelper.domesticName(g.specialCode), g.specialCode),
+            specialWarName = specialName(SpecialityHelper.warName(g.special2Code), g.special2Code),
+            crewTypeName = crewTypeName(g.crewTypeId),
+            personalName = GameConst.personalityNameOf(g.personalCode),
+            horseName = GameConst.itemNameOf(g.horseCode),
+            weaponName = GameConst.itemNameOf(g.weaponCode),
+            bookName = GameConst.itemNameOf(g.bookCode),
+            itemName = GameConst.itemNameOf(g.itemCode),
+
             // meta-derived(부재 시 null — 날조 없음).
             explevel = intOrNull(meta["explevel"]),
             dedlevel = intOrNull(meta["dedlevel"]),
@@ -239,6 +256,10 @@ class FrontInfoController(
             name = n.name,
             color = n.color,
             level = n.level,
+            // 군주/군주대리 행 라벨 = 국가 레벨별 작위/직책명(레거시 NationBasicCard.vue formatOfficerLevelText(12/11, level)).
+            // raw 숫자/하드코딩 '군주' 대신 PHP getOfficerLevelText 패러티 테이블로 해석(F4StateText, byte-동일).
+            rulerOfficerText = F4StateText.officerLevelText(12, n.level),
+            deputyOfficerText = F4StateText.officerLevelText(11, n.level),
             gold = n.gold,
             rice = n.rice,
             tech = n.tech,
@@ -274,8 +295,16 @@ class FrontInfoController(
         id = c.id,
         name = c.name,
         level = c.level,
+        // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시(레거시
+        // CityBasicCard.vue cityConstMap.level[level]). 미정의 레벨 → '-'.
+        levelName = getCityLevelList()[c.level] ?: "-",
         nationId = c.nationId,
         region = c.region,
+        // 지역 한글명 = CityConst.regionMap[region] (하북/중원/…/동이). raw 숫자 대신 표시. 미정의 → '-'.
+        regionName = CityConst.regionMap[c.region] as? String ?: "-",
+        // 도시 관직(태수4/군사3/종사2) = officer_city == 이 도시 AND officer_level IN (4,3,2) (PHP officerList).
+        officers = generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))
+            .map { CityOfficer(officerLevel = it.officerLevel, name = it.name, npc = it.npcState) },
         population = c.population,
         populationMax = c.populationMax,
         agriculture = c.agriculture,
@@ -386,6 +415,20 @@ class FrontInfoController(
         is String -> v == "1" || v.equals("true", ignoreCase = true)
         else -> null
     }
+
+    /**
+     * 특기 표시 이름 보정. SpecialityHelper.domesticName/warName은 미등록 코드를 그대로 반환하므로,
+     * code가 "None"/공백이거나 resolved가 code와 동일(=미해석)하면 '-'로 보정한다(PHP None.php `$name`='-').
+     */
+    private fun specialName(resolved: String, code: String): String =
+        if (code.isBlank() || code == "None") "-" else resolved
+
+    /**
+     * 병종 표시 이름. GameUnitConst.byId(id)?.name (= GameUnitConst::all()[id]->name). 미장착(id<1000,
+     * 예: 0)이면 '-'(byId는 id<1000에서 require throw하므로 1000 미만은 조회 자체를 건너뛴다).
+     */
+    private fun crewTypeName(crewTypeId: Int): String =
+        if (crewTypeId < 1000) "-" else GameUnitConst.byId(crewTypeId)?.name ?: "-"
 
     private fun emptyGeneral() = FrontGeneralInfo(
         hasGeneral = false,

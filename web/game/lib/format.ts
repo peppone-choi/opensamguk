@@ -1,4 +1,6 @@
-export function formatNumber(n: number): string {
+export function formatNumber(n: number | null | undefined): string {
+    // 방어: undefined/null/NaN(shape mismatch·미배선 필드)에 toLocaleString 호출 시 런타임 크래시 방지 → '-'.
+    if (n == null || Number.isNaN(n)) return '-';
     return n.toLocaleString('ko-KR');
 }
 

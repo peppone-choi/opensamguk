@@ -50,6 +50,9 @@ const DETAIL_SIZES: Record<number, CitySize> = {
 // 로그인/로비/메인 3개 맵의 모양을 동일하게 맞추는 단일 노브 — 값은 gateway MapPreview.ICON_SCALE와 일치.
 // 아우라(areaW/areaH)·깃발 위치는 레거시 비율 유지, cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다.
 const ICON_SCALE = 0.72;
+// 깃발/수도별 아이콘 픽셀 — 도시 cast 아이콘과 같은 ICON_SCALE로 축소(레거시 기본 12/10 → 사용자 요청 축소).
+const FLAG_PX = Math.round(12 * ICON_SCALE); // 12 → 9
+const STAR_PX = Math.round(10 * ICON_SCALE); // 10 → 7
 // 표에 없는 레벨(예: 0)도 깨지지 않게 lv3 기준으로 폴백.
 function sizeOf(level: number): CitySize {
     const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
@@ -247,15 +250,16 @@ export default function MapViewer() {
                                         <img className="city-state" src={`/icons/event${c.state}.gif`} alt="" draggable={false} />
                                     )}
 
-                                    {/* 3) 깃발(소유국만) — 레거시 {right:flagRight;top:flagTop} 아이콘 기준. */}
+                                    {/* 3) 깃발(소유국만) — 레거시 {right:flagRight;top:flagTop} 아이콘 기준.
+                                        깃발/수도별 아이콘도 도시 아이콘과 같은 ICON_SCALE로 축소(사용자 요청 — 도시 줄인 비율만큼). */}
                                     {owned && flagFrameUrl && (
                                         <span className="city-flag" style={{ right: sz.flagRight, top: sz.flagTop }}>
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img className="city-flag-img" src={flagFrameUrl} alt="" width={12} height={12} draggable={false} />
+                                            <img className="city-flag-img" src={flagFrameUrl} alt="" width={FLAG_PX} height={FLAG_PX} draggable={false} />
                                             {/* 4) 수도 별 event51.gif — 깃발 우상단. */}
                                             {c.isCapital && (
                                                 // eslint-disable-next-line @next/next/no-img-element
-                                                <img className="city-capital" src="/icons/event51.gif" alt="" width={10} height={10} draggable={false} />
+                                                <img className="city-capital" src="/icons/event51.gif" alt="" width={STAR_PX} height={STAR_PX} draggable={false} />
                                             )}
                                         </span>
                                     )}

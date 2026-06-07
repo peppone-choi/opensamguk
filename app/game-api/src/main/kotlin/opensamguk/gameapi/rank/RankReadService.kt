@@ -1,5 +1,6 @@
 package opensamguk.gameapi.rank
 
+import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.BestGeneral
 import opensamguk.gameapi.dto.EmperorRecord
 import opensamguk.gameapi.dto.GeneralRank
@@ -126,6 +127,7 @@ class RankReadService(
                     name = d.nation.name,
                     color = d.nation.color,
                     level = d.nation.level,
+                    levelText = GameConst.nationLevelNameOf(d.nation.level),
                     gold = d.nation.gold,
                     rice = d.nation.rice,
                     pop = d.pop,

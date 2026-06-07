@@ -6,6 +6,7 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.infra.seed.ScenarioImporter
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -61,10 +62,11 @@ class JdbcFlushExecutor(
                 ngOldNationsUpsert(payload.deletedNationSnapshots)
             }
 
-            // 3. createMany nation/nation_turn (each guarded > 0). General/troop createMany needs the
-            //    engine TurnGeneral shape (name/turn_time the logic General lacks) — that branch is
-            //    owned by CMD-FOUNDING (the created-general source); F-FLUSH wires the slots the
-            //    nation/nation_turn created-set actually fills (거병 creates a nation + 24 turns).
+            // 3. createMany general → nation → nation_turn → diplomacy → troop (각 > 0 가드, 동결된
+            //    step-3 contract 순서 general-먼저). 신규 장수 INSERT(B1 장수생성 foundation)는 general 행 +
+            //    30 general_turn(휴식) + 37 rank_data(value 0)를 함께 쓴다 — ScenarioImporter.insertGenerals
+            //    의 컬럼/행 모양과 정확히 일치(엔진 TurnGeneral은 컬럼맵 GeneralCreateRow로 운반돼 infra 결합 없음).
+            if (payload.createdGenerals.isNotEmpty()) generalCreateMany(payload.createdGenerals)
             if (payload.createdNations.isNotEmpty()) nationCreateMany(payload.createdNations)
             if (payload.createdDiplomacy.isNotEmpty()) diplomacyCreateMany(payload.createdDiplomacy)
             if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.createdNationTurns)
@@ -425,6 +427,128 @@ class JdbcFlushExecutor(
             }
         }
         lastOps.add(FlushExecOp("diplomacy", FlushVerb.UPDATE, updates.size))
+    }
+
+    // --- step 3: general createMany (B1 장수생성 foundation) -------------------------------------
+
+    /**
+     * 신규 장수 INSERT (B1 장수생성 foundation). 장수 1명마다 3개 테이블 행을 쓴다 —
+     * `ScenarioImporter.insertGenerals`/`insertGeneralTurns`/`insertRankData`와 byte-faithful 일치:
+     *  1. `general` 행 — V1+V6 컬럼 38개. `id`는 명시(integer PK, NOT serial). jsonb 컬럼
+     *     (`last_turn`/`meta`/`penalty`)은 [PGobject]로 바인딩. `affinity`는 nullable.
+     *  2. `general_turn` 30행 — turn_idx 0..29, 모두 action_code/brief='휴식', arg='{}'
+     *     (ScenarioImporter.MAX_GENERAL_TURNS = 30 ring buffer 풀시드).
+     *  3. `rank_data` 37행 — RANK_COLUMNS 전체, value=0, nation_id=0 (장수 생성 시 미리 시드 →
+     *     이후 rankVarIncrease/Set UPDATE의 대상; ScenarioImporter.insertRankData와 동일).
+     *
+     * general_access_log는 V1 baseline 스키마에 없다(kill() delete 경로 주석과 동일 — 미포팅) → 생략.
+     * B1 핸들러가 나중에 추가할 수 있다.
+     */
+    private fun generalCreateMany(rows: List<GeneralCreateRow>) {
+        // 1. general 행 INSERT (ScenarioImporter.insertGenerals 컬럼/순서 verbatim).
+        val generalBatch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("id", c["id"])
+                .addValue("name", c["name"])
+                .addValue("nation_id", c["nation_id"])
+                .addValue("city_id", c["city_id"])
+                .addValue("troop_id", c["troop_id"])
+                .addValue("npc_state", c["npc_state"])
+                .addValue("affinity", c["affinity"])
+                .addValue("born_year", c["born_year"])
+                .addValue("dead_year", c["dead_year"])
+                .addValue("picture", c["picture"])
+                .addValue("image_server", c["image_server"])
+                .addValue("leadership", c["leadership"])
+                .addValue("strength", c["strength"])
+                .addValue("intel", c["intel"])
+                .addValue("injury", c["injury"])
+                .addValue("experience", c["experience"])
+                .addValue("dedication", c["dedication"])
+                .addValue("officer_level", c["officer_level"])
+                .addValue("gold", c["gold"])
+                .addValue("rice", c["rice"])
+                .addValue("crew", c["crew"])
+                .addValue("crew_type_id", c["crew_type_id"])
+                .addValue("train", c["train"])
+                .addValue("atmos", c["atmos"])
+                .addValue("weapon_code", c["weapon_code"])
+                .addValue("book_code", c["book_code"])
+                .addValue("horse_code", c["horse_code"])
+                .addValue("item_code", c["item_code"])
+                .addValue("turn_time", c["turn_time"]?.toString())
+                .addValue("age", c["age"])
+                .addValue("start_age", c["start_age"])
+                .addValue("personal_code", c["personal_code"])
+                .addValue("special_code", c["special_code"])
+                .addValue("special2_code", c["special2_code"])
+                .addValue("officer_city", c["officer_city"])
+                .addValue("last_turn", jsonb(c["last_turn"] as? String))
+                .addValue("meta", jsonb(c["meta"] as? String))
+                .addValue("penalty", jsonb(c["penalty"] as? String))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general
+                (id, name, nation_id, city_id, troop_id, npc_state, affinity,
+                 born_year, dead_year, picture, image_server,
+                 leadership, strength, intel, injury, experience, dedication, officer_level,
+                 gold, rice, crew, crew_type_id, train, atmos,
+                 weapon_code, book_code, horse_code, item_code,
+                 turn_time, age, start_age, personal_code, special_code, special2_code, officer_city,
+                 last_turn, meta, penalty)
+            VALUES
+                (:id, :name, :nation_id, :city_id, :troop_id, :npc_state, :affinity,
+                 :born_year, :dead_year, :picture, :image_server,
+                 :leadership, :strength, :intel, :injury, :experience, :dedication, :officer_level,
+                 :gold, :rice, :crew, :crew_type_id, :train, :atmos,
+                 :weapon_code, :book_code, :horse_code, :item_code,
+                 CAST(:turn_time AS timestamptz), :age, :start_age, :personal_code, :special_code,
+                 :special2_code, :officer_city,
+                 :last_turn, :meta, :penalty)
+            """.trimIndent(),
+            generalBatch,
+        )
+        lastOps.add(FlushExecOp("general", FlushVerb.CREATE_MANY, rows.size))
+
+        // 2. general_turn 30행/장수 — turn_idx 0..29, 모두 휴식 (ScenarioImporter.insertGeneralTurns verbatim).
+        //    링 용량/rank 컬럼 목록은 ScenarioImporter의 정본 상수를 재사용(같은 :infra 모듈, 패키지만 다름) —
+        //    세 번째 사본을 만들지 않아 시드 경로와 생성-flush 경로가 절대 드리프트하지 않는다.
+        val ring = ScenarioImporter.MAX_GENERAL_TURNS
+        val turnBatch = ArrayList<SqlParameterSource>(rows.size * ring)
+        for (r in rows) {
+            val id = r.columns["id"]
+            for (idx in 0 until ring) {
+                turnBatch.add(MapSqlParameterSource().addValue("general_id", id).addValue("turn_idx", idx))
+            }
+        }
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_turn (general_id, turn_idx, action_code, arg, brief)
+            VALUES (:general_id, :turn_idx, '휴식', '{}'::jsonb, '휴식')
+            """.trimIndent(),
+            turnBatch.toTypedArray(),
+        )
+        lastOps.add(FlushExecOp("general_turn", FlushVerb.CREATE_MANY, rows.size * ring))
+
+        // 3. rank_data 37행/장수 — RANK_COLUMNS 전체, value=0, nation_id=0 (insertRankData verbatim).
+        val rankColumns = ScenarioImporter.RANK_COLUMNS
+        val rankBatch = ArrayList<SqlParameterSource>(rows.size * rankColumns.size)
+        for (r in rows) {
+            val id = r.columns["id"]
+            for (type in rankColumns) {
+                rankBatch.add(MapSqlParameterSource().addValue("general_id", id).addValue("type", type))
+            }
+        }
+        jdbc.batchUpdate(
+            """
+            INSERT INTO rank_data (nation_id, general_id, type, value)
+            VALUES (0, :general_id, :type, 0)
+            """.trimIndent(),
+            rankBatch.toTypedArray(),
+        )
+        lastOps.add(FlushExecOp("rank_data", FlushVerb.CREATE_MANY, rows.size * rankColumns.size))
     }
 
     // --- step 3: nation / nation_turn createMany ------------------------------------------------
@@ -1091,6 +1215,11 @@ data class FlushPayload(
     val updatedCities: List<City> = emptyList(),
     val logEntries: List<LogRow> = emptyList(),
     val deletedNationSnapshots: List<Map<String, Any?>> = emptyList(),
+    // --- B1 장수생성 foundation: 신규 장수 INSERT (step-3 createMany) ---
+    // 새로 만든 장수 행 + 30개 general_turn(휴식) + 37개 rank_data(value 0). 컬럼맵 운반체
+    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board/auction
+    // INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
+    val createdGenerals: List<GeneralCreateRow> = emptyList(),
     // --- P2 satellite write-set (Task FF2) ---
     val updatedNations: List<Nation> = emptyList(),           // step-7 nation UPDATE (excl created)
     val createdNations: List<Nation> = emptyList(),           // step-3 createMany
@@ -1137,6 +1266,18 @@ data class AuctionBidInsertRow(val columns: Map<String, Any?>)
 
 /** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
 data class BettingInsertRow(val columns: Map<String, Any?>)
+
+/**
+ * 신규 장수 INSERT 한 건 (B1 장수생성 foundation). `id`는 `general.id integer PRIMARY KEY`(NOT serial)
+ * — 엔진이 id를 부여하므로 명시적으로 싣는다(nation 패턴과 동일, flush-time 재조정 없음). `columns`는
+ * byte-faithful `general` 컬럼 맵으로, ScenarioImporter.insertGenerals의 컬럼 집합(V1+V6)을 정확히
+ *미러링한다: id/name/nation_id/city_id/troop_id/npc_state/affinity/born_year/dead_year/picture/
+ * image_server/leadership/strength/intel/injury/experience/dedication/officer_level/gold/rice/crew/
+ * crew_type_id/train/atmos/weapon_code/book_code/horse_code/item_code/turn_time/age/start_age/
+ * personal_code/special_code/special2_code/officer_city/last_turn/meta/penalty. INSERT 전용. 각 장수마다
+ * 30개 general_turn(휴식) + 37개 rank_data(value 0)가 함께 INSERT된다(executor의 generalCreateMany).
+ */
+data class GeneralCreateRow(val columns: Map<String, Any?>)
 
 /**
  * `diplomacy_letter` INSERT 한 건 (W5d 외교 서신 발송, INSERT 전용). `id`는 recorder가 선할당한

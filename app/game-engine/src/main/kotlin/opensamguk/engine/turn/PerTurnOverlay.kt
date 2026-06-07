@@ -134,7 +134,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             term = d.term,
         )
 
-        /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/power/type/name/color). */
+        /** Engine [Nation] -> logic [Nation] (slice subset + gold/rice/tech/power/type/name/color). */
         fun toLogicNation(n: Nation): LogicNation = LogicNation(
             id = n.id,
             level = n.level,
@@ -145,15 +145,17 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             gold = n.gold,
             rice = n.rice,
             power = n.power,
+            // tech를 그대로 전달해야 flush가 시드값을 보존한다(미전달 시 LogicNation.tech 기본 0.0 → DB 0 덮어쓰기).
+            tech = n.tech,
             meta = n.meta,
         )
 
         /**
          * Logic [Nation] -> engine [Nation] (the inverse of [toLogicNation]) for the founding created-set:
          * the 거병 resolver produces a logic Nation that the handler writes into the world via
-         * [InMemoryTurnWorld.createNation]. Engine [Nation] has no `tech`/`gennum`/`capset` columns — those
-         * ride `meta` (the resolver already stamps `meta["gennum"]`), so they round-trip through `meta`. A
-         * logic `capitalCityId == 0` (거병 wandering) maps to the engine `Int?` field as 0.
+         * [InMemoryTurnWorld.createNation]. Engine [Nation]에는 `gennum`/`capset` 전용 컬럼이 없어 `meta`로
+         * round-trip 하지만(resolver가 `meta["gennum"]`를 찍음), `tech`는 power와 마찬가지로 전용 필드로
+         * 보존한다. A logic `capitalCityId == 0` (거병 wandering) maps to the engine `Int?` field as 0.
          */
         fun toEngineNation(n: LogicNation): Nation = Nation(
             id = n.id,
@@ -163,6 +165,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             gold = n.gold,
             rice = n.rice,
             power = n.power,
+            tech = n.tech,
             level = n.level,
             typeCode = n.typeCode,
             meta = n.meta,

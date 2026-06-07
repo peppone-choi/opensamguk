@@ -131,8 +131,22 @@ input:focus, select:focus, textarea:focus {
 .game-sidebar-label { font-size: var(--text-sm); }
 
 .shell-main { flex: 1; padding: var(--space-md); overflow-y: auto; }
-/* 메인 콘텐츠 폭을 로그인/로비와 동일하게 1000px 중앙 정렬(좌측 사이드바 제거 후 단일 컬럼). */
-.shell-main > * { max-width: 1000px; margin-left: auto; margin-right: auto; }
+/* 메인 콘텐츠 폭 — Wanted Montage 그리드 정본(montage.wanted.co.kr/docs/foundations/base-material/grid):
+   lg(데스크탑 1200~1600px) 최대 1100px / xl(대형 ≥1600px) 최대 1440px, 중앙 정렬(padding 포함).
+   8px 기반 spacing · 20px 거터 · 데스크탑 12컬럼 기준. 기존 1000px cap 확대. */
+.shell-main > * { max-width: 1100px; margin-left: auto; margin-right: auto; }
+@media (min-width: 1600px) { .shell-main > * { max-width: 1440px; } }
+
+/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 디자인은 Peppone-UI-KIT 모더나이즈 패스에서 다듬는다. */
+.back-bar { display: flex; gap: var(--space-sm); align-items: center; margin-bottom: var(--space-md); }
+.back-bar-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; font-size: var(--text-sm); font-weight: 600;
+  color: var(--text); background: var(--surface, #1c1f26); border: 1px solid var(--border, #333);
+  border-radius: 8px; cursor: pointer; transition: background 0.12s, border-color 0.12s;
+}
+.back-bar-btn:hover { background: var(--surface-hover, #262a33); border-color: var(--gold, #c9a23a); }
+.back-bar-reload { margin-left: auto; }
 
 .game-bottom-nav {
   display: none;
@@ -1060,9 +1074,25 @@ input:focus, select:focus, textarea:focus {
   flex-direction: column;
   gap: var(--space-md);
 }
-/* 맵은 항상 풀폭(1000px) 상단 — 낡은 500/200/300 그리드 제거로 더 이상 ~500px 로 눌리지 않는다. */
-.ib-map { width: 100%; }
+/* 맵 = 자체 1000px 기준. 공간 부족 시 비례축소(MapViewer aspect 700/500 유지). 스택 시 최대 1000px 중앙. */
+.ib-map { width: 100%; max-width: 1000px; margin-left: auto; margin-right: auto; }
 .ib-reserved { width: 100%; }
+/* 데스크톱+ (≥1200px, Montage lg/xl): 맵(자체 1000px 좌측, 공간 부족 시 비례축소) + 턴테이블(예약명령 우측 360px).
+   맵+테이블 묶음 중앙 정렬, 카드/콘텐츠/컨트롤바는 그 폭에 맞춰 span. md 미만(<1200)은 단일 컬럼 스택. */
+@media (min-width: 1200px) {
+  .ingame-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1000px) 360px;
+    gap: var(--space-md);
+    align-items: start;
+    justify-content: center;
+  }
+  .ib-map { width: auto; max-width: none; margin: 0; }
+  .ib-reserved { width: auto; }
+  .ib-cards,
+  .ib-content,
+  .ib-controlbar { grid-column: 1 / -1; }
+}
 /* info 카드 묶음 — 1000px 내부에서 nation/general/city 2~3열(데스크톱), 모바일 단일 열. align:start 로
    각 카드가 내용 높이만큼만 차지(레거시 dense 카드 비율 유지). */
 .ib-cards {
@@ -1071,12 +1101,13 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 1fr;
   align-items: start;
 }
-@media (min-width: 760px) {
+/* Montage 브레이크포인트 정합 — sm/md(768~1199) 2열, lg/xl(≥1200) 3열, 모바일(<768) 1열. */
+@media (min-width: 768px) {
   .ib-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* 도시 카드는 수치가 많아 데스크톱에선 2열 폭(아래 줄 전체)으로 펼친다. */
+  /* 도시 카드는 수치가 많아 2열 구간에선 아래 줄 전체로 펼친다. */
   .ib-cards > .ib-city { grid-column: 1 / -1; }
 }
-@media (min-width: 1000px) {
+@media (min-width: 1200px) {
   .ib-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* 3열: general | nation | city 한 줄. 도시 카드 원복(2열 span 해제). */
   .ib-cards > .ib-city { grid-column: auto; }

@@ -41,7 +41,7 @@ export default function KingdomsPage() {
       ? <StatusBadge variant={k.rank === 1 ? 'gold' : k.rank === 2 ? 'jade' : 'muted'}>{k.rank}</StatusBadge>
       : k.rank,
     <span key="nation" style={{ color: k.color, fontWeight: 600 }}>{k.name}</span>,
-    k.level,
+    k.levelText ?? k.level, // 등급 한글명(방랑군..천자), 부재 시 raw 폴백
     formatNumber(k.gold),
     formatNumber(k.rice),
     formatNumber(k.pop),

@@ -134,23 +134,25 @@ export default function MapCityDetail({
     const headerTextColor = isBrightColor(nationColor) ? 'black' : 'white';
 
     // Build the metric list from the real /api/city/{id} read — REAL data, never fabricated.
+    // 첩보(fog): detail.visible=false면 비-아국/공백지에 첩보·주둔이 없어 수치가 마스킹(null)된 것 → 게이지 생략.
     const metrics: Metric[] = [];
-    if (detail) {
-        metrics.push({ label: '주민', cur: detail.population, max: detail.populationMax });
+    if (detail && detail.visible) {
+        metrics.push({ label: '주민', cur: detail.population ?? 0, max: detail.populationMax ?? 0 });
         // 민심(trust) — 0~100. 막대는 cur/100, 텍스트는 오라클대로 단독 숫자(소수 최대 1자리, '%' 없음).
-        metrics.push({ label: '민심', cur: detail.trust, max: 100, barOnlyMax: true });
-        metrics.push({ label: '농업', cur: detail.agriculture, max: detail.agricultureMax });
-        metrics.push({ label: '상업', cur: detail.commerce, max: detail.commerceMax });
-        metrics.push({ label: '치안', cur: detail.security, max: detail.securityMax });
-        metrics.push({ label: '수비', cur: detail.defense, max: detail.defenseMax });
-        metrics.push({ label: '성벽', cur: detail.wall, max: detail.wallMax });
+        metrics.push({ label: '민심', cur: detail.trust ?? 0, max: 100, barOnlyMax: true });
+        metrics.push({ label: '농업', cur: detail.agriculture ?? 0, max: detail.agricultureMax ?? 0 });
+        metrics.push({ label: '상업', cur: detail.commerce ?? 0, max: detail.commerceMax ?? 0 });
+        metrics.push({ label: '치안', cur: detail.security ?? 0, max: detail.securityMax ?? 0 });
+        metrics.push({ label: '수비', cur: detail.defense ?? 0, max: detail.defenseMax ?? 0 });
+        metrics.push({ label: '성벽', cur: detail.wall ?? 0, max: detail.wallMax ?? 0 });
     }
 
     return (
         <div className="mcd" aria-label={`${city.name} 도시 정보`}>
             <div className="mcd-header" style={{ backgroundColor: nationColor, color: headerTextColor }}>
                 <div className="mcd-city-name">
-                    {`【${levelText(city.level)}】 ${city.name}`}
+                    {/* 레거시 【지역 | 등급】 도시명 — 상세 로드되면 서버 해석 한글명(regionName|levelName) 사용. */}
+                    {`【${detail ? `${detail.regionName} | ${detail.levelName}` : levelText(city.level)}】 ${city.name}`}
                     {isCurrent && <span className="mcd-current-tag"> · 현재 도시</span>}
                 </div>
                 {onClose && (
@@ -176,7 +178,14 @@ export default function MapCityDetail({
                 </div>
             )}
 
-            {!loading && detail && (
+            {/* 첩보(fog): 비-아국/공백지에 첩보·주둔 없으면 내정 비공개(서버가 수치 마스킹). */}
+            {!loading && detail && !detail.visible && (
+                <div className="mcd-empty">
+                    {city.nationId > 0 ? '다른 세력의 도시입니다.' : '공백지입니다.'} 첩보가 없어 내정 정보를 볼 수 없습니다.
+                </div>
+            )}
+
+            {!loading && detail && detail.visible && (
                 <div className="mcd-metrics">
                     {metrics.map((m) => (
                         <MetricRow key={m.label} m={m} />
