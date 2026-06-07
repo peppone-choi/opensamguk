@@ -77,8 +77,10 @@ export default function NationBasicCard({ nation }: NationBasicCardProps) {
     // 레거시 그리드 라벨/값 순서 그대로(전략 행만 BLOCKED 로 제외).
     const rows: { label: string; value: React.ReactNode }[] = [
         { label: '성향', value: typeCell },
-        { label: '군주', value: chiefOf(12) },
-        { label: '군주대리', value: chiefOf(11) },
+        // 군주/군주대리 행 라벨 = 국가 레벨별 작위/직책명(레거시 formatOfficerLevelText(12/11, level)).
+        // 서버가 officerLevelText(12/11, level)로 해석해 내려준다 — '군주'/'군주대리' 하드코딩 대체(부재 시 폴백).
+        { label: nation?.rulerOfficerText ?? '군주', value: chiefOf(12) },
+        { label: nation?.deputyOfficerText ?? '군주대리', value: chiefOf(11) },
         { label: '총 주민', value: has && nation!.population
             ? `${formatNumber(nation!.population.now)} / ${formatNumber(nation!.population.max)}` : NA },
         { label: '총 병사', value: has && nation!.crew

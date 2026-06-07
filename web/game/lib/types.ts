@@ -86,6 +86,15 @@ export interface FrontGeneralInfo {
     specialDomestic?: string | null;   // 내정 특기 코드(special_code)
     specialWar?: string | null;        // 전투 특기 코드(special2_code)
     personal?: string | null;          // 성격 코드(personal_code)
+    // ── F-fix: 코드 → 한글 이름 해석값(API가 PHP grand-truth getName으로 해석; None/0 → '-') ──
+    specialDomesticName?: string | null; // 내정 특기 이름
+    specialWarName?: string | null;      // 전투 특기 이름
+    crewTypeName?: string | null;        // 병종 이름
+    personalName?: string | null;        // 성격 이름
+    horseName?: string | null;           // 명마 이름
+    weaponName?: string | null;          // 무기 이름
+    bookName?: string | null;            // 서적 이름
+    itemName?: string | null;            // 도구 이름
     explevel?: number | null;          // Lv(meta.explevel)
     dedlevel?: number | null;          // meta.dedlevel
     killturn?: number | null;          // 삭턴(meta.killturn)
@@ -139,6 +148,9 @@ export interface FrontNationInfo {
     crew?: NationCrewGroup | null;
     type?: NationTypeInfo | null;
     topChiefs?: NationTopChief[] | null; // officer_level>=11 수뇌 목록
+    // 군주/군주대리 행 라벨(작위/직책 한글명, 서버 해석) — 날조 아님(F4StateText.officerLevelText 패러티 테이블).
+    rulerOfficerText?: string | null;   // 군주 행 라벨 = officerLevelText(12, level) (두목/영주/…/황제)
+    deputyOfficerText?: string | null;  // 군주대리 행 라벨 = officerLevelText(11, level)
     // [meta UNVERIFIED — 데몬 write 전까지 null. 날조 금지] 지급률/세율/외교·임관·전쟁 제한.
     bill?: number | null;             // meta.bill — 지급률(%)
     taxRate?: number | null;          // meta.rate — 세율(%)
@@ -152,6 +164,7 @@ export interface FrontCityInfo {
     id: number;
     name: string;
     level: number;
+    levelName?: string | null; // 치소 등급 한글명 getCityLevelList()[level] (수/진/관/이/소/중/대/특)
     nationId: number;
     region: number;
     population: number;

@@ -190,6 +190,7 @@ export interface KingdomRank {
   name: string;
   color: string;
   level: number;
+  levelText: string; // 등급 한글명 getNationLevelList()[level][0] (방랑군..천자) — 등급 컬럼에 raw 숫자 대신 표시
   gold: number;
   rice: number;
   pop: number; // SUM(city.pop)

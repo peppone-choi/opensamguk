@@ -14,6 +14,7 @@ interface Nation {
     rice: number;
     tech: number;
     level: number;
+    levelText?: string; // 등급 한글명(방랑군..천자) — kingdoms 랭킹 DTO 제공, raw 숫자 대신 표시
     typeCode: string;
     gennum: number;
     capset: number;
@@ -145,7 +146,7 @@ export default function NationPage() {
                             {nation.name}
                         </h2>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>레벨</span><strong>{nation.level}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>등급</span><strong>{nation.levelText ?? nation.level}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>국력</span><strong>{nation.power.toLocaleString()}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>금</span><strong>{nation.gold.toLocaleString()}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>쌀</span><strong>{nation.rice.toLocaleString()}</strong>

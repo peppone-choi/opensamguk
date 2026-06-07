@@ -140,6 +140,22 @@ data class FrontGeneralInfo(
     val personal: String? = null, // personal_code(성격)
     val penalty: Map<String, Any?>? = null, // penalty jsonb
 
+    // ── F-fix: 코드 → 한글 이름 해석값(raw 코드는 위에서 그대로 유지, 이름은 ADD) ──────────────────
+    // PHP는 GetFrontInfo에서 raw 코드만 내려보내고 이름 해석을 Vue(GameConstStore)에서 했다.
+    // web/game(Next)은 그 해석을 포팅하지 않으므로 API가 PHP grand-truth 이름으로 해석해 함께 내려준다.
+    //  - special*Name : SpecialityHelper.domesticName/warName (= buildGeneralSpecial*Class->getName()). None→'-'.
+    //  - crewTypeName : GameUnitConst.byId(id)?.name (= GameUnitConst::all()[id]->name). 0/none→'-'.
+    //  - personalName : GameConst.personalityNameOf (= buildPersonalityClass->getName()). None/미등록→'-'.
+    //  - horse/weapon/book/itemName : GameConst.itemNameOf (= buildItemClass->getName()). None→'-'.
+    val specialDomesticName: String? = null,
+    val specialWarName: String? = null,
+    val crewTypeName: String? = null,
+    val personalName: String? = null,
+    val horseName: String? = null,
+    val weaponName: String? = null,
+    val bookName: String? = null,
+    val itemName: String? = null,
+
     // meta-derived(general.meta가 explevel/dedlevel/killturn/belong/owner_name를 싣는다 — LogicEntities 주석).
     // 데몬이 안 쓴 키는 null(부재 = 미기록). 값 날조 없음.
     val explevel: Int? = null,
@@ -220,6 +236,10 @@ data class FrontNationInfo(
     val name: String,
     val color: String,
     val level: Int,
+    // 군주/군주대리 행 라벨(작위/직책 한글명) — F4StateText.officerLevelText(12/11, level), PHP getOfficerLevelText
+    // byte-동일. 레거시 NationBasicCard.vue formatOfficerLevelText(12/11, nation.level)와 동치. 날조 아님.
+    val rulerOfficerText: String? = null,
+    val deputyOfficerText: String? = null,
     val gold: Int,
     val rice: Int,
     val tech: Double,
@@ -264,6 +284,8 @@ data class FrontCityInfo(
     val id: Int,
     val name: String,
     val level: Int,
+    // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시. 미정의 → '-'.
+    val levelName: String? = null,
     val nationId: Int,
     val region: Int,
     val population: Int,

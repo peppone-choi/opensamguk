@@ -89,6 +89,14 @@ object GameConst {
     )
 
     /**
+     * 국가 등급명 — `getNationLevelList()[level][0]` (방랑군/호족/군벌/주자사/주목/공/왕/황제/대황제/천자).
+     * PHP가 국가 "등급"을 표시할 때 쓰는 한글명(raw level 숫자 대신). 범위 밖 → '-'(PHP `?? '-'` 동치).
+     * 날조 아님 — [nationLevelByCityCnt09] 패러티 테이블의 0번 원소다.
+     */
+    fun nationLevelNameOf(level: Int): String =
+        (nationLevelByCityCnt09.getOrNull(level)?.getOrNull(0) as? String) ?: "-"
+
+    /**
      * `getNationChiefLevel` (`func_converter.php:41-52`) extended for the 0-9 levels.
      *
      * Legacy map `[7=>5,6=>5,5=>7,4=>7,3=>9,2=>9,1=>11,0=>11]` is byte-identical for 0..7.
@@ -212,6 +220,61 @@ object GameConst {
     val optionalPersonality = listOf(
         "che_은둔", "None",
     )
+
+    /**
+     * 성격(personality) 코드 → 한글 이름 맵.
+     *
+     * PHP `buildPersonalityClass($id)->getName()`(= 각 ActionPersonality 클래스의 `$name`)의 충실 포팅.
+     * GameConstBase에는 코드 목록(availablePersonality/optionalPersonality)만 있고 이름 맵은 없다 —
+     * 이름은 클래스별 `$name`에서만 나온다. 여기 값은 legacy ActionPersonality 디렉터리의 각 클래스
+     * `protected $name`을 byte-faithful 전사한 것이다(None → '-'). 날조 없음.
+     */
+    val personalityName: Map<String, String> = linkedMapOf(
+        "None" to "-",
+        "che_안전" to "안전",
+        "che_유지" to "유지",
+        "che_재간" to "재간",
+        "che_출세" to "출세",
+        "che_할거" to "할거",
+        "che_정복" to "정복",
+        "che_패권" to "패권",
+        "che_의협" to "의협",
+        "che_대의" to "대의",
+        "che_왕좌" to "왕좌",
+        "che_은둔" to "은둔",
+    )
+
+    /** 성격 코드를 한글 이름으로 해석. 미등록/None → '-'(PHP None.php `$name`='-'와 동치). */
+    fun personalityNameOf(code: String?): String =
+        if (code == null) "-" else personalityName[code] ?: "-"
+
+    /**
+     * 아이템 코드 → 한글 이름 해석(PHP `buildItemClass($id)->getName()` 충실 포팅).
+     *
+     * - 명마/무기/서적(BaseStatItem): 이름 = `sprintf('%s(+%d)', rawName, statValue)`이며
+     *   rawName = 코드 마지막 토큰, statValue = 끝에서 두 번째 토큰
+     *   (예: `che_명마_15_적토마` → "적토마(+15)"). BaseStatItem 생성자(:Action) 그대로.
+     * - 도구(che_명마/무기/서적 접두 외 ActionItem): 클래스별 `$name` 오버라이드 값이라 코드만으로는
+     *   완전 재현 불가하므로, allItems에 존재하면 마지막 토큰(rawName)을 보수적으로 노출한다
+     *   (예: `che_치료_환약` → "환약"; PHP의 "환약(치료)" 같은 부가 표기는 클래스 `$name` 필요 — 미보유).
+     * - None / 미등록 → '-'(PHP BaseItem `$name` 기본 '-').
+     */
+    fun itemNameOf(code: String?): String {
+        if (code == null || code == "None") return "-"
+        // 명마/무기/서적 = 능력치 아이템: rawName(+statValue) 포맷.
+        if (code.startsWith("che_명마_") || code.startsWith("che_무기_") || code.startsWith("che_서적_")) {
+            val tokens = code.split("_")
+            if (tokens.size >= 3) {
+                val rawName = tokens.last()
+                val statValue = tokens[tokens.size - 2].toIntOrNull()
+                if (statValue != null) return "$rawName(+$statValue)"
+                return rawName
+            }
+        }
+        // 그 외 도구: 마지막 토큰(rawName) 보수 노출(완전한 $name은 클래스에만 존재).
+        val tokens = code.split("_")
+        return tokens.lastOrNull()?.takeIf { it.isNotBlank() } ?: "-"
+    }
 
     val maxUniqueItemLimit = listOf(
         listOf(-1, 1),

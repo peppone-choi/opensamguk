@@ -14,8 +14,11 @@
 // 공헌(dedLevelText) + 통솔보너스(lbonus) + 소속.
 //
 // 미렌더(API-BLOCKED, 날조 금지): 통/무/지 *_exp 경험치 막대, 수비(defence_train), 벌점(refreshScore),
-// turntime/실행 남은시간, troopInfo(부대). 장비/특기/성격/병종의 한글 표시명도 API가 코드만 주므로
-// (iAction getName 인스턴스화 BLOCKED — GetConstController 참조) 코드 표시값으로 렌더한다.
+// turntime/실행 남은시간, troopInfo(부대).
+//
+// F-fix: 장비/특기/성격/병종의 한글 표시명은 이제 API(front-info)가 PHP grand-truth getName으로 해석한
+// *Name 필드(specialDomesticName/specialWarName/crewTypeName/personalName/horse|weapon|book|itemName)를
+// 함께 내려준다. 우선 그 이름을 쓰고, (구버전 API 호환) 부재 시 raw 코드 표시값으로 폴백한다.
 
 import { formatNumber } from '@/lib/format';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';
@@ -37,6 +40,12 @@ function isBrightColor(hex?: string): boolean {
 function codeText(code?: string | null): string {
     if (!code || code === 'None') return '-';
     return code.startsWith('che_') ? code.slice(4) : code;
+}
+
+// API 해석 이름 우선, 부재('-'/null/빈값 포함) 시 raw 코드 표시값으로 폴백(구버전 API 호환).
+function nameOrCode(name: string | null | undefined, code?: string | null): string {
+    if (name && name !== '-' && name !== 'None') return name;
+    return codeText(code);
 }
 
 export interface GeneralBasicCardProps {
@@ -61,8 +70,8 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
         </>
     );
 
-    // 특기 — 레거시 "내정 / 전투" 단일 칸(specialDomestic / specialWar).
-    const specialCell = `${codeText(general.specialDomestic)} / ${codeText(general.specialWar)}`;
+    // 특기 — 레거시 "내정 / 전투" 단일 칸(specialDomesticName / specialWarName, 폴백=코드).
+    const specialCell = `${nameOrCode(general.specialDomesticName, general.specialDomestic)} / ${nameOrCode(general.specialWarName, general.specialWar)}`;
 
     // 두 칸짜리 일반 행. value 가 ReactNode.
     const rows: { label: string; value: React.ReactNode }[] = [
@@ -71,12 +80,12 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
         { label: '통솔', value: leadershipCell },
         { label: '무력', value: <span style={{ color: injuryColor }}>{general.strength}</span> },
         { label: '지력', value: <span style={{ color: injuryColor }}>{general.intel}</span> },
-        { label: '명마', value: codeText(general.horse) },
-        { label: '무기', value: codeText(general.weapon) },
-        { label: '서적', value: codeText(general.book) },
-        { label: '도구', value: codeText(general.item) },
-        { label: '병종', value: general.crewTypeId != null ? codeText(String(general.crewTypeId)) : '-' },
-        { label: '성격', value: codeText(general.personal) },
+        { label: '명마', value: nameOrCode(general.horseName, general.horse) },
+        { label: '무기', value: nameOrCode(general.weaponName, general.weapon) },
+        { label: '서적', value: nameOrCode(general.bookName, general.book) },
+        { label: '도구', value: nameOrCode(general.itemName, general.item) },
+        { label: '병종', value: nameOrCode(general.crewTypeName, general.crewTypeId != null ? String(general.crewTypeId) : null) },
+        { label: '성격', value: nameOrCode(general.personalName, general.personal) },
         { label: '자금', value: formatNumber(general.gold) },
         { label: '군량', value: formatNumber(general.rice) },
         { label: '병사', value: formatNumber(general.crew) },

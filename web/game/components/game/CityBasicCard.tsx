@@ -9,8 +9,9 @@
 // 렌더 필드(API 보유): name + level(등급) + 지배국(nationId↔player nation 매칭 시 국가명/색, 아니면
 // 공백지) + 주민/농업/상업/치안/수비/성벽(now/max Gauge) + 민심(trust, barOnly) + 시세(trade % 막대).
 //
+// 등급(level)은 서버가 getCityLevelList()[level] 한글명(수/진/관/이/소/중/대/특)으로 해석해 levelName 으로 내려준다.
 // 미렌더(API-BLOCKED/미보유, 날조 금지): 지역 한글 라벨(front-info 는 region 을 int 로만 주고 const
-// cityConstMap 은 label→int 단방향이라 int→label 역인용 불가) → 등급(level) 숫자만 노출. 도시 관직
+// cityConstMap 은 label→int 단방향이라 int→label 역인용 불가) → 지역 라벨 생략. 도시 관직
 // (태수/군사/종사 officerList)은 front-info.city 에 없음(GetCityDetail/관직 read 별도) → 미렌더.
 
 import Gauge from './Gauge';
@@ -53,9 +54,10 @@ export default function CityBasicCard({ city, nation }: CityBasicCardProps) {
 
     return (
         <section className="basic-card city-basic-card ib-city" aria-label="도시 정보">
-            {/* cityNamePanel — 레거시 【지역 | 등급】 도시명. 지역 라벨 BLOCKED → 등급(Lv)만. */}
+            {/* cityNamePanel — 레거시 【지역 | 등급】 도시명. 지역 라벨 BLOCKED(region int→label 역인용 불가).
+                등급은 서버 해석 한글명(getCityLevelList()[level] = 수/진/관/이/소/중/대/특), 부재 시 Lv.숫자 폴백. */}
             <div className="basic-card-name" style={{ backgroundColor: cityNationColor, color: cityHeaderText }}>
-                【 Lv.{city.level} 】 {city.name}
+                【 {city.levelName ?? `Lv.${city.level}`} 】 {city.name}
             </div>
             {/* nationNamePanel — 지배 국가/공백지. */}
             <div className="basic-card-name" style={{ backgroundColor: cityNationColor, color: cityHeaderText }}>
