@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.engine.status.DaemonPauseGate
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
@@ -37,6 +38,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Component
 class TurnDaemonRunner(
     private val turnRunServiceProvider: ObjectProvider<TurnRunService>,
+    /**
+     * B1b — 일시정지(동결) 게이트(`plock` 등가). [DaemonPauseGate.isPaused]가 true면 루프가 틱을 건너뛴다
+     * (드레인·flush 없음). 어드민 `POST /admin/turn-daemon/pause`(락걸기)/`/resume`(락풀기)가 이 플래그를 토글한다.
+     */
+    private val pauseGate: DaemonPauseGate,
     @Value("\${opensamguk.daemon.enabled:true}") private val daemonEnabled: Boolean,
     /** How long [opensamguk.engine.redis.RedisCommandStream] blocks per read (also caps the wake latency). */
     @Value("\${opensamguk.daemon.idle-poll-ms:1000}") private val idlePollMs: Long,
@@ -84,6 +90,13 @@ class TurnDaemonRunner(
         log.info("turn-daemon-loop entering run loop")
         while (running.get() && !Thread.currentThread().isInterrupted) {
             try {
+                // B1b — 동결(pause) 게이트(PHP plock>0). 동결 중이면 틱을 건너뛴다: 드레인도 flush도 없이
+                // 한 폴 간격만 대기 → InMemoryTurnWorld가 그대로 멈춘다(턴 미진행). 락풀기(resume) 시 다음
+                // 폴에서 즉시 due 판정으로 재개. nextRunTime은 진행하지 않으므로 동결 중 누적 지연은 없다.
+                if (pauseGate.isPaused()) {
+                    Thread.sleep(idlePollMs)
+                    continue
+                }
                 val nextRun = service.nextRunTime()
                 val now = Instant.now()
                 if (now.isBefore(nextRun)) {

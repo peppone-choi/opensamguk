@@ -2,6 +2,7 @@ package opensamguk.engine.run
 
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
+import opensamguk.engine.status.DaemonPauseGate
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
@@ -40,7 +41,7 @@ class TurnDaemonRunnerTest {
     @Test
     fun `disabled runner never starts the loop`() {
         val svc = StubService(ticks = AtomicInteger())
-        val runner = TurnDaemonRunner(provider(svc), daemonEnabled = false, idlePollMs = 10)
+        val runner = TurnDaemonRunner(provider(svc), DaemonPauseGate(), daemonEnabled = false, idlePollMs = 10)
         runner.start()
         assertTrue(!runner.isRunning, "disabled runner reports not running")
         Thread.sleep(80)
@@ -55,7 +56,7 @@ class TurnDaemonRunnerTest {
         // nextRunTime in the past ⇒ immediately due ⇒ the loop ticks. The stub stops itself after the
         // first tick by advancing its own next-run far into the future, so we count exactly one drive.
         val svc = StubService(ticks = ticks, latch = latch)
-        val runner = TurnDaemonRunner(provider(svc), daemonEnabled = true, idlePollMs = 10)
+        val runner = TurnDaemonRunner(provider(svc), DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
         runner.start()
         try {
             assertTrue(runner.isRunning, "enabled runner reports running")
@@ -65,6 +66,39 @@ class TurnDaemonRunnerTest {
             runner.stop()
             assertTrue(!runner.isRunning, "stop() flips running false (graceful join)")
         }
+    }
+
+    // ── B1b — pause(동결) 게이트: 동결 중 틱 미진행, 해제 후 재개 ──────────────────────────────────────
+    @Test
+    fun `paused runner skips ticks until resumed`() {
+        val ticks = AtomicInteger()
+        val gate = DaemonPauseGate()
+        // 시작 전에 동결: 루프가 due여도 게이트에 막혀 틱을 건너뛴다.
+        assertTrue(gate.lock(), "락걸기(첫 CAS) 성공")
+        val svc = StubService(ticks = ticks)
+        val runner = TurnDaemonRunner(provider(svc), gate, daemonEnabled = true, idlePollMs = 10)
+        runner.start()
+        try {
+            assertTrue(runner.isRunning, "루프 스레드는 가동 중")
+            Thread.sleep(120)
+            assertEquals(0, ticks.get(), "동결 중에는 runTick이 호출되지 않는다")
+
+            // 락풀기 → 다음 폴에서 즉시 재개(nextRunTime은 과거이므로 due).
+            assertTrue(gate.unlock(), "락풀기 — 직전 동결이었으므로 changed")
+            val resumed = waitUntil(2_000) { ticks.get() >= 1 }
+            assertTrue(resumed, "락풀기 후 틱 재개")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    private fun waitUntil(timeoutMs: Long, cond: () -> Boolean): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline) {
+            if (cond()) return true
+            Thread.sleep(10)
+        }
+        return cond()
     }
 
     // --- stubs ------------------------------------------------------------------------------------

@@ -53,6 +53,19 @@ class GameApiJwtVerifier(
             null
         }
 
+    /**
+     * `role` 클레임(gateway-api가 access token에 함께 실음: `generateAccessToken(userId, username, role)`).
+     * 토큰이 무효/role 부재면 null. 어드민 read 게이트(0.9.0 단일 ADMIN 롤)가 `"ADMIN"`인지 확인하는 데 쓴다.
+     * 가산 헬퍼 — 기존 getUserId/getUsername와 동형. (gateway 토큰은 role 클레임을 항상 싣지만 refresh
+     * 토큰엔 없으므로 안전하게 nullable.)
+     */
+    fun getRole(token: String): String? =
+        try {
+            parseClaims(token).get("role", String::class.java)
+        } catch (e: Exception) {
+            null
+        }
+
     private fun parseClaims(token: String): Claims =
         Jwts.parser()
             .verifyWith(key)
