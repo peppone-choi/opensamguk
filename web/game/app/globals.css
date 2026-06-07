@@ -137,6 +137,17 @@ input:focus, select:focus, textarea:focus {
 .shell-main > * { max-width: 1100px; margin-left: auto; margin-right: auto; }
 @media (min-width: 1600px) { .shell-main > * { max-width: 1440px; } }
 
+/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 디자인은 Peppone-UI-KIT 모더나이즈 패스에서 다듬는다. */
+.back-bar { display: flex; gap: var(--space-sm); align-items: center; margin-bottom: var(--space-md); }
+.back-bar-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; font-size: var(--text-sm); font-weight: 600;
+  color: var(--text); background: var(--surface, #1c1f26); border: 1px solid var(--border, #333);
+  border-radius: 8px; cursor: pointer; transition: background 0.12s, border-color 0.12s;
+}
+.back-bar-btn:hover { background: var(--surface-hover, #262a33); border-color: var(--gold, #c9a23a); }
+.back-bar-reload { margin-left: auto; }
+
 .game-bottom-nav {
   display: none;
   position: fixed;

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Header from './Header';
+import BackBar from './BackBar';
 import BottomNav from './BottomNav';
 import Toast from './Toast';
 import CommandModal from './CommandModal';
@@ -51,7 +52,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <Header onCommand={() => setCommandOpen(true)} />
             {/* 좌측 사이드바 제거(사용자 요청 — 1000px 폭에서 너비 부족). 네비는 Header(상단)+BottomNav(하단)+GameChrome GlobalMenu. */}
             <div className="shell-body">
-                <main className="shell-main">{children}</main>
+                <main className="shell-main">
+                    {/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 메인은 GameChrome이라 미적용. */}
+                    <BackBar />
+                    {children}
+                </main>
             </div>
             <BottomNav onCommand={() => setCommandOpen(true)} />
             <Toast toasts={toasts} onRemove={remove} />
