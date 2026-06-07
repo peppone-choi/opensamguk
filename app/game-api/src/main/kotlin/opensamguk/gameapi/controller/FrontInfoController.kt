@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.dto.CityOfficer
 import opensamguk.gameapi.dto.FrontCityInfo
 import opensamguk.gameapi.dto.FrontGeneralInfo
 import opensamguk.gameapi.dto.FrontGlobalInfo
@@ -22,6 +23,7 @@ import opensamguk.gameapi.read.RankDataReadRepository
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.getCityLevelList
@@ -298,6 +300,11 @@ class FrontInfoController(
         levelName = getCityLevelList()[c.level] ?: "-",
         nationId = c.nationId,
         region = c.region,
+        // 지역 한글명 = CityConst.regionMap[region] (하북/중원/…/동이). raw 숫자 대신 표시. 미정의 → '-'.
+        regionName = CityConst.regionMap[c.region] as? String ?: "-",
+        // 도시 관직(태수4/군사3/종사2) = officer_city == 이 도시 AND officer_level IN (4,3,2) (PHP officerList).
+        officers = generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))
+            .map { CityOfficer(officerLevel = it.officerLevel, name = it.name, npc = it.npcState) },
         population = c.population,
         populationMax = c.populationMax,
         agriculture = c.agriculture,

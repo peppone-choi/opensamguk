@@ -288,6 +288,10 @@ data class FrontCityInfo(
     val levelName: String? = null,
     val nationId: Int,
     val region: Int,
+    // 지역 한글명 = CityConst.regionMap[region] (하북/중원/서북/서촉/남중/초/오월/동이). raw 숫자 대신 표시. 미정의 → '-'.
+    val regionName: String? = null,
+    // 도시 관직 = officer_city == this.id AND officer_level∈{4태수,3군사,2종사} (PHP officerList). 빈 슬롯은 미포함.
+    val officers: List<CityOfficer> = emptyList(),
     val population: Int,
     val populationMax: Int,
     val agriculture: Int,
@@ -302,6 +306,16 @@ data class FrontCityInfo(
     val wallMax: Int,
     val trust: Double,
     val trade: Int?,
+)
+
+/**
+ * 도시 관직 1명 (PHP CityBasicCard officerList[4/3/2]). officerLevel 4=태수/3=군사/2=종사.
+ * npc = npc_state(이름 색상 getNPCColor 입력). 빈 슬롯은 리스트에 미포함(FE가 officerLevel로 조회).
+ */
+data class CityOfficer(
+    val officerLevel: Int,
+    val name: String,
+    val npc: Int,
 )
 
 /** GET /api/front-info body. `general.hasGeneral=false` (others null) when the caller has no character. */

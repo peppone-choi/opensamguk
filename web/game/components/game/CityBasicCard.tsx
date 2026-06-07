@@ -9,13 +9,22 @@
 // 렌더 필드(API 보유): name + level(등급) + 지배국(nationId↔player nation 매칭 시 국가명/색, 아니면
 // 공백지) + 주민/농업/상업/치안/수비/성벽(now/max Gauge) + 민심(trust, barOnly) + 시세(trade % 막대).
 //
-// 등급(level)은 서버가 getCityLevelList()[level] 한글명(수/진/관/이/소/중/대/특)으로 해석해 levelName 으로 내려준다.
-// 미렌더(API-BLOCKED/미보유, 날조 금지): 지역 한글 라벨(front-info 는 region 을 int 로만 주고 const
-// cityConstMap 은 label→int 단방향이라 int→label 역인용 불가) → 지역 라벨 생략. 도시 관직
-// (태수/군사/종사 officerList)은 front-info.city 에 없음(GetCityDetail/관직 read 별도) → 미렌더.
+// 등급(level)=getCityLevelList()[level] 한글명(수/진/관/이/소/중/대/특), 지역(region)=CityConst.regionMap[region]
+// 한글명(하북/중원/…/동이)을 서버가 levelName/regionName 으로 해석해 내려준다. 도시 관직(태수4/군사3/종사2)은
+// front-info.city.officers(officer_city==이 도시 AND officer_level∈{4,3,2}, PHP officerList GetFrontInfo:504).
 
 import Gauge from './Gauge';
 import type { FrontCityInfo, FrontNationInfo } from '@/lib/types';
+
+// NPC 이름 색상 — 레거시 hwe/ts/utilGame/getNPCColor.ts verbatim 포팅(npc_state → CSS color).
+function getNPCColor(npc: number): string | undefined {
+    if (npc === 6) return 'mediumaquamarine';
+    if (npc === 5) return 'darkcyan';
+    if (npc === 4) return 'deepskyblue';
+    if (npc >= 2) return 'cyan';
+    if (npc === 1) return 'skyblue';
+    return undefined;
+}
 
 function isBrightColor(hex?: string): boolean {
     if (!hex) return false;
@@ -54,10 +63,10 @@ export default function CityBasicCard({ city, nation }: CityBasicCardProps) {
 
     return (
         <section className="basic-card city-basic-card ib-city" aria-label="도시 정보">
-            {/* cityNamePanel — 레거시 【지역 | 등급】 도시명. 지역 라벨 BLOCKED(region int→label 역인용 불가).
-                등급은 서버 해석 한글명(getCityLevelList()[level] = 수/진/관/이/소/중/대/특), 부재 시 Lv.숫자 폴백. */}
+            {/* cityNamePanel — 레거시 【지역 | 등급】 도시명(CityBasicCard.vue:10). 지역/등급 모두 서버 해석
+                한글명(regionName=CityConst.regionMap[region], levelName=getCityLevelList()[level]). 부재 시 폴백. */}
             <div className="basic-card-name" style={{ backgroundColor: cityNationColor, color: cityHeaderText }}>
-                【 {city.levelName ?? `Lv.${city.level}`} 】 {city.name}
+                【{city.regionName ? `${city.regionName} | ` : ''}{city.levelName ?? `Lv.${city.level}`}】 {city.name}
             </div>
             {/* nationNamePanel — 지배 국가/공백지. */}
             <div className="basic-card-name" style={{ backgroundColor: cityNationColor, color: cityHeaderText }}>
@@ -88,6 +97,21 @@ export default function CityBasicCard({ city, nation }: CityBasicCardProps) {
                         <div className="mcd-metric-text">{city.trade != null ? `${city.trade}%` : '상인 없음'}</div>
                     </div>
                 </div>
+                {/* 도시 관직(태수4/군사3/종사2) — 레거시 CityBasicCard.vue officerList[4/3/2]. 이름색=getNPCColor(npc),
+                    빈 슬롯은 '-'(officerList[N]?.name ?? '-'). officers=officer_city==이 도시 AND officer_level∈{4,3,2}. */}
+                {([['태수', 4], ['군사', 3], ['종사', 2]] as const).map(([label, lvl]) => {
+                    const off = city.officers?.find((o) => o.officerLevel === lvl);
+                    return (
+                        <div key={label} className="mcd-metric gauge-metric">
+                            <div className="mcd-metric-head">{label}</div>
+                            <div className="mcd-metric-body">
+                                <div className="mcd-metric-text" style={{ color: off ? getNPCColor(off.npc) : undefined }}>
+                                    {off?.name ?? '-'}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </section>
     );
