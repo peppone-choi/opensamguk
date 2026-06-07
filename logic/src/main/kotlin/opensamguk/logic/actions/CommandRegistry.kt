@@ -64,6 +64,7 @@ import opensamguk.logic.actions.nation.cheSumol
 import opensamguk.logic.actions.nation.cheUibyeongMojip
 import opensamguk.logic.actions.personnel.CheBangrang
 import opensamguk.logic.actions.personnel.CheDeungyong
+import opensamguk.logic.actions.personnel.CheDeungyongSurak
 import opensamguk.logic.actions.personnel.CheEuntwe
 import opensamguk.logic.actions.personnel.CheHaya
 import opensamguk.logic.actions.personnel.CheImgwan
@@ -198,7 +199,7 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_모반시도" -> cheMobanSido(pipeline)
         "che_전투특기초기화" -> CheJeontuTeukgiChogihwa(pipeline)
         "che_내정특기초기화" -> CheNaejeongTeukgiChogihwa(pipeline)
-        "che_등용수락" -> TODO("che_등용수락 not yet implemented")
+        "che_등용수락" -> CheDeungyongSurak(pipeline)
         "cr_인구이동" -> crInguIdong(pipeline)
         else -> RestAction
     }
