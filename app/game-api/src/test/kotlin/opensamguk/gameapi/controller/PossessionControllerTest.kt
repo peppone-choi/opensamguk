@@ -52,8 +52,13 @@ class PossessionControllerTest {
         req
     }
 
-    private fun npc(id: Int, name: String, nationId: Int = 0, npcState: Int = 2) =
-        GeneralReadEntity(id = id, name = name, nationId = nationId, npcState = npcState)
+    private fun npc(
+        id: Int, name: String, nationId: Int = 0, npcState: Int = 2,
+        specialCode: String = "None", special2Code: String = "None", personalCode: String = "None",
+    ) = GeneralReadEntity(
+        id = id, name = name, nationId = nationId, npcState = npcState,
+        specialCode = specialCode, special2Code = special2Code, personalCode = personalCode,
+    )
 
     @Test
     fun `claimable lists unowned npc=2 candidates minus already-claimed, with nation names`() {
@@ -62,7 +67,10 @@ class PossessionControllerTest {
             listOf(GeneralOwnerEntity(generalId = 11L, userId = 99L, claimedAt = Instant.EPOCH)),
         )
         `when`(generals.findByNpcStateOrderByIdAsc(2)).thenReturn(
-            listOf(npc(10, "여포", nationId = 1), npc(11, "장료", nationId = 1)), // 11 already claimed → dropped
+            listOf(
+                npc(10, "여포", nationId = 1, specialCode = "che_경작", special2Code = "che_돌격", personalCode = "che_정복"),
+                npc(11, "장료", nationId = 1), // 11 already claimed → dropped
+            ),
         )
         `when`(nations.findAll()).thenReturn(listOf(NationReadEntity(id = 1, name = "동탁", color = "#000")))
 
@@ -74,6 +82,9 @@ class PossessionControllerTest {
             .andExpect(jsonPath("$.candidates[0].generalId").value(10))
             .andExpect(jsonPath("$.candidates[0].name").value("여포"))
             .andExpect(jsonPath("$.candidates[0].nationName").value("동탁"))
+            .andExpect(jsonPath("$.candidates[0].special").value("경작"))
+            .andExpect(jsonPath("$.candidates[0].special2").value("돌격"))
+            .andExpect(jsonPath("$.candidates[0].personal").value("정복"))
     }
 
     @Test

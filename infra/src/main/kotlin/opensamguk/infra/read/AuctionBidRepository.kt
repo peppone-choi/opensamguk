@@ -23,4 +23,20 @@ interface AuctionBidRepository : JpaRepository<AuctionBidEntity, Int> {
 
     /** The single highest bid for an auction. */
     fun findTopByAuctionIdOrderByAmountDesc(auctionId: Int): AuctionBidEntity?
+
+    /**
+     * Per-auction highest bids for a list of auction IDs (N+1 avoidance).
+     * PHP equivalent: `SELECT bid.* FROM ng_auction_bid bid INNER JOIN (...) max_bid`.
+     * On ties, multiple rows per auction may return; caller should pick one (PHP
+     * `convertArrayToDict` keeps the last — we do the same with `associateBy`).
+     */
+    @Query("""
+        SELECT b FROM AuctionBidEntity b
+        WHERE b.auctionId IN :auctionIds
+        AND b.amount = (
+            SELECT MAX(b2.amount) FROM AuctionBidEntity b2
+            WHERE b2.auctionId = b.auctionId
+        )
+    """)
+    fun findHighestBidsByAuctionIds(@Param("auctionIds") auctionIds: List<Int>): List<AuctionBidEntity>
 }

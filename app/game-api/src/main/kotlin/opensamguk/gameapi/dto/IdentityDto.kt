@@ -17,9 +17,11 @@ data class ClaimableGeneral(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
-    val officerLevel: Int,
     val picture: String?,
     val imageServer: Int,
+    val special: String?,       // 내정특기명
+    val special2: String?,      // 전투특기명
+    val personal: String?,      // 성격명
 )
 
 /** GET /api/generals/claimable body. */

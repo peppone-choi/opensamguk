@@ -73,15 +73,70 @@ class ContactController(
         return flags
     }
 
-    /** PHP checkSecretPermission: 외교관(ambassador)/감사관(auditor) = 4. opensamguk meta["permission"]. */
-    private fun secretPermission(g: GeneralReadEntity): Int = when (val p = g.meta["permission"]) {
-        is Number -> p.toInt()
-        "ambassador", "auditor" -> 4
-        else -> 0
+    /**
+     * D6 — PHP `checkSecretPermission` (func.php:390-434) 포팅.
+     *
+     * - nationId==0 || officerLevel==0  → -1
+     * - NoChief penalty                 → 0
+     * - secretMax = checkSecretMaxPermission(penalty)
+     *   (NoTopSecret||NoChief → 1, NoAmbassador → 2, else 4)
+     * - secretMin = (level12→4, ambassador→4, auditor→3, level>=5→2, level>1→1, else 0)
+     * - return min(secretMin, secretMax)
+     */
+    private fun secretPermission(g: GeneralReadEntity): Int {
+        if (g.nationId == 0) return -1
+        if (g.officerLevel == 0) return -1
+
+        // PHP `$penalty = Json::decode($me['penalty'])` (func.php:395) — penalty는 general의 전용
+        // jsonb 컬럼(GeneralReadEntity.penalty)이지 meta 안의 키가 아니다. meta["penalty"]를 읽으면
+        // 항상 빈 맵이 되어 모든 클램프 분기가 무음(no-op)이 된다.
+        val penalty = g.penalty
+        if (phpTruthy(penalty[PENALTY_NO_CHIEF])) return 0
+
+        val secretMax = secretMaxPermission(penalty)
+
+        // permission(ambassador/auditor 문자열)은 opensamguk 전용 컬럼이 없어 meta로 운반한다.
+        val permission = g.meta["permission"] as? String
+        val secretMin = when {
+            g.officerLevel == 12 -> 4
+            permission == AMBASSADOR -> 4
+            permission == AUDITOR -> 3
+            g.officerLevel >= 5 -> 2
+            g.officerLevel > 1 -> 1
+            else -> 0
+        }
+        return minOf(secretMin, secretMax)
+    }
+
+    /** PHP `checkSecretMaxPermission` (func.php:377-388). */
+    private fun secretMaxPermission(penalty: Map<String, Any?>): Int = when {
+        phpTruthy(penalty[PENALTY_NO_TOP_SECRET]) -> 1
+        phpTruthy(penalty[PENALTY_NO_CHIEF]) -> 1
+        phpTruthy(penalty[PENALTY_NO_AMBASSADOR]) -> 2
+        else -> 4
+    }
+
+    /**
+     * PHP `($penalty[key] ?? false)` 진리값 — PHP truthy: null/false/0/"0"/"" 만 falsy.
+     * 저장 시 플래그가 boolean true 가 아니라 1/문자열로 인코드돼도 패러티를 유지한다.
+     */
+    private fun phpTruthy(v: Any?): Boolean = when (v) {
+        null, false -> false
+        is Boolean -> v
+        is Number -> v.toDouble() != 0.0
+        is String -> v.isNotEmpty() && v != "0"
+        else -> true
     }
 
     companion object {
         /** Message::MAILBOX_NATIONAL. */
         const val MAILBOX_NATIONAL = 9000
+
+        const val AMBASSADOR = "ambassador"
+        const val AUDITOR = "auditor"
+        const val PENALTY_NO_TOP_SECRET = "noTopSecret"
+        const val PENALTY_NO_CHIEF = "noChief"
+        const val PENALTY_NO_AMBASSADOR = "noAmbassador"
     }
+
 }

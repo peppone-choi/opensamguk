@@ -215,6 +215,12 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
     fun countByNationId(nationId: Int): Long
 
     /**
+     * D5 — 참여 가능 사용자 수. PHP `GetBettingDetail.php`의
+     * `SELECT count(no) FROM general WHERE npc < 2`.
+     */
+    fun countByNpcStateLessThan(npcState: Int): Long
+
+    /**
      * W3 FrontGlobalInfo — NPC 장수 수(`npc_state > 0`). PHP `SELECT npc, count(no) FROM general GROUP BY npc`의
      * NPC 합과 동치(user는 `countByNpcState(0)`). createdUserCnt/createdNPCCnt 분리 카운트용.
      */

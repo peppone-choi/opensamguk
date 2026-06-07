@@ -95,16 +95,23 @@ data class DiplomacyNationInfo(
     val color: String,
 )
 
+data class DiplomacyLetterParty(
+    val nationId: Int,
+    val name: String,
+    val color: String,
+)
+
 data class DiplomacyLetter(
-    val id: Int,
-    val srcNationId: Int,
-    val destNationId: Int,
-    val prevId: Int?,
+    val no: Int,
+    val src: DiplomacyLetterParty,
+    val dest: DiplomacyLetterParty,
+    val prevNo: Int?,
     val state: String,
-    /** Verbatim 제안됨/승인됨/거부됨/대체됨. */
+    /** Verbatim 제안됨/승인됨/거부됨/대첵됨. */
     val stateText: String,
-    val textBrief: String,
-    val textDetail: String,
+    val stateOpt: String?,
+    val brief: String,
+    val detail: String,
     val date: Instant,
     val srcSigner: Int,
     val destSigner: Int?,
@@ -117,19 +124,49 @@ data class DiplomacyLettersResponse(
     val letters: List<DiplomacyLetter>,
 )
 
-// ── GET /api/diplomacy/conflict — per-city 분쟁% + matrix (page 2) ─────────────────────────────────
-data class CityConflict(
-    val cityId: Int,
-    val cityName: String,
-    /** nationId → 분쟁(conflict) percentage; ordered map preserving insertion order. */
-    val conflict: Map<String, Int>,
+// ── GET /api/diplomacy/conflict — GetDiplomacy.php envelope (page 2 / 중원정보) ─────────────────────
+/**
+ * PHP `getNationStaticInfo()` 한 행(SimpleNationObj) — `func.php:38-82`의
+ * `select nation, name, color, type, level, capital, gennum, power from nation` + `cities` 보강.
+ * 필드명/순서 모두 PHP 그대로.
+ */
+data class SimpleNationObj(
+    /** 국가 id (PHP `nation` 컬럼). */
+    val nation: Int,
+    val name: String,
+    val color: String,
+    /** 국가 성향 type_code (PHP `type` 컬럼). */
+    val type: String,
+    val level: Int,
+    /** 수도 도시 id (PHP `capital`). 없으면 0. */
+    val capital: Int,
+    /** 장수 수 (PHP `gennum`, meta jsonb). */
+    val gennum: Int,
+    /** 보유 도시명 목록 — city 행 nationId 그룹, 삽입(행) 순서. */
+    val cities: List<String>,
+    val power: Int,
 )
 
+/**
+ * D11 GetDiplomacy 봉투 — PHP `GetDiplomacy.php:98-104` 그대로:
+ * `{result, nations[], conflict[[cityId,{nationId:pct}]], diplomacyList{me:{you:state}}, myNationID}`.
+ */
 data class DiplomacyConflictResponse(
     val result: Boolean,
-    val cities: List<CityConflict>,
-    /** Global diplomacy matrix: srcNationId → (destNationId → masked stateCode). */
-    val matrix: Map<String, Map<String, Int>>,
+    /** level>0 국가, power DESC 정렬(PHP array_filter + uasort -power). */
+    val nations: List<SimpleNationObj>,
+    /**
+     * 분쟁 튜플 목록: `[[cityId, {nationId: pct}]]`. pct = round(100*killnum/sum, 1) — PhpRound
+     * half-away 소수1자리 Double. 빈 '{}' 또는 항목<2 도시는 제외(PHP GetDiplomacy.php:59-72).
+     */
+    val conflict: List<List<Any>>,
+    /**
+     * 외교 관계 맵: me → (you → state). viewer-conditional 마스킹 —
+     * me/you 둘 다 내 국가가 아니면 3..7→2, 한쪽이라도 내 국가면 원 state(PHP:91-95).
+     */
+    val diplomacyList: Map<String, Map<String, Int>>,
+    /** 내 국가 id(미인증/재야면 0). PHP `SELECT nation FROM general WHERE owner=userID`. */
+    val myNationID: Int,
 )
 
 // ── GET /api/nation/{id}/finance — page 3 ──────────────────────────────────────────────────────────
@@ -361,48 +398,6 @@ data class BoardResponse(
     val articles: List<BoardArticle>,
     /** Set when a permission gate blocked the secret board (renders as INFO, not error). */
     val blockedReason: String?,
-)
-
-// ── GET /api/votes + /api/votes/{id} — page 5 ──────────────────────────────────────────────────────
-data class VoteSummary(
-    val id: Int,
-    val title: String,
-    val openerName: String,
-    val multipleOptions: Int,
-    val startAt: Instant,
-    val endAt: Instant?,
-    val closed: Boolean,
-)
-
-data class VoteOptionResult(
-    val index: Int,
-    val text: String,
-    val count: Int,
-)
-
-data class VoteCommentRow(
-    val id: Int,
-    val generalName: String,
-    val nationName: String,
-    val text: String,
-    val date: Instant,
-)
-
-data class VoteDetailResponse(
-    val result: Boolean,
-    val id: Int,
-    val title: String,
-    val body: String,
-    val openerName: String,
-    val multipleOptions: Int,
-    val startAt: Instant,
-    val endAt: Instant?,
-    val closed: Boolean,
-    val options: List<VoteOptionResult>,
-    val userCnt: Int,
-    /** The calling general's selection (option indices); empty if not voted / no principal. */
-    val myVote: List<Int>,
-    val comments: List<VoteCommentRow>,
 )
 
 // ── GET /api/troops — page 6 ───────────────────────────────────────────────────────────────────────

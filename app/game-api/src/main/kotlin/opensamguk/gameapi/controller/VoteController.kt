@@ -1,9 +1,10 @@
 package opensamguk.gameapi.controller
 
-import opensamguk.gameapi.dto.VoteCommentRow
+import opensamguk.gameapi.dto.VoteCommentDto
 import opensamguk.gameapi.dto.VoteDetailResponse
-import opensamguk.gameapi.dto.VoteOptionResult
-import opensamguk.gameapi.dto.VoteSummary
+import opensamguk.gameapi.dto.VoteInfo
+import opensamguk.gameapi.dto.VoteListResponse
+import opensamguk.gameapi.dto.formatVoteDate
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.VoteCommentReadRepository
 import opensamguk.gameapi.read.VotePollReadRepository
@@ -16,14 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * F4 — `GET /api/votes` (list) + `GET /api/votes/{id}` (detail), 설문 조사 (spec page 5). READ-only.
+ * D9-D10 — `GET /api/votes` (list) + `GET /api/votes/{id}` (detail), 설문 조사. READ-only.
  *
- * `vote_poll`/`vote`/`vote_comment` EXIST but carry ZERO rows in the fresh seed → empty list / 404 on
- * detail of a missing poll, never 500, no fabrication. Detail tallies per-option `count` from the cast
- * `vote.selection` index lists, `userCnt` = distinct voters, `myVote` = the calling general's selection
- * (resolved from the verified principal; empty if anonymous / not voted), plus the comment thread.
+ * Shapes mirror PHP `GetVoteList` / `GetVoteDetail` verbatim:
+ *   - List: `{result:true, votes: Map<Int, VoteInfo>}` (voteID key, insertion-ordered)
+ *   - Detail: `{result, voteInfo, votes, comments, myVote, userCnt}`
  *
- * Public list/detail (the 설문 results are nation-visible); identity only supplements `myVote`.
+ * `vote_poll`/`vote`/`vote_comment` EXIST but carry ZERO rows in the fresh seed → empty map / 404 on
+ * detail of a missing poll, never 500, no fabrication.
  */
 @RestController
 @RequestMapping("/api/votes")
@@ -31,25 +32,32 @@ class VoteController(
     private val polls: VotePollReadRepository,
     private val votes: VoteReadRepository,
     private val comments: VoteCommentReadRepository,
+    private val generals: opensamguk.gameapi.read.GeneralReadRepository,
     private val resolver: GeneralResolver,
 ) {
 
+    /** D9 — GET /api/votes. Returns voteID-keyed LinkedHashMap (newest first). */
     @GetMapping
-    fun list(): ResponseEntity<List<VoteSummary>> {
-        val rows = polls.findAllByOrderByIdDesc().map { p ->
-            VoteSummary(
+    fun list(): ResponseEntity<VoteListResponse> {
+        val voteMap = linkedMapOf<Int, VoteInfo>()
+        for (p in polls.findAllByOrderByIdDesc()) {
+            // PHP VoteInfo.options = array_values(options) — 값(텍스트) 삽입순서.
+            // null 값은 옵션 키로 폴백한다(plan D9 (e): e.value?.toString() ?: e.key).
+            val optionTexts = p.options.entries.map { e -> e.value?.toString() ?: e.key }
+            voteMap[p.id] = VoteInfo(
                 id = p.id,
                 title = p.title,
-                openerName = p.openerName,
                 multipleOptions = p.multipleOptions,
-                startAt = p.startAt,
-                endAt = p.endAt,
-                closed = p.closedAt != null,
+                opener = p.openerName.takeIf { it.isNotEmpty() },
+                startDate = formatVoteDate(p.startAt) ?: "",
+                endDate = formatVoteDate(p.endAt),
+                options = optionTexts,
             )
         }
-        return ResponseEntity.ok(rows)
+        return ResponseEntity.ok(VoteListResponse(votes = voteMap))
     }
 
+    /** D10 — GET /api/votes/{id}. */
     @GetMapping("/{id}")
     fun detail(
         @PathVariable id: Int,
@@ -57,55 +65,66 @@ class VoteController(
     ): ResponseEntity<VoteDetailResponse> {
         val poll = polls.findById(id).orElse(null) ?: return ResponseEntity.notFound().build()
 
-        // Option labels: vote_poll.options is an insertion-ordered jsonb map (index -> text).
-        val optionTexts = poll.options.entries.toList()
+        // Option texts in insertion order (PHP VoteInfo.options = array_values of options map).
+        // null 값은 옵션 키로 폴백(plan D9/D10 (e): e.value?.toString() ?: e.key).
+        val optionTexts = poll.options.entries.map { e -> e.value?.toString() ?: e.key }
+
+        val voteInfo = VoteInfo(
+            id = poll.id,
+            title = poll.title,
+            multipleOptions = poll.multipleOptions,
+            opener = poll.openerName.takeIf { it.isNotEmpty() },
+            startDate = formatVoteDate(poll.startAt) ?: "",
+            endDate = formatVoteDate(poll.endAt),
+            options = optionTexts,
+        )
+
         val cast = votes.findByVoteId(id)
 
-        // Tally per option index from each cast selection (selection is a jsonb list of chosen indices).
-        val counts = IntArray(optionTexts.size)
-        for (v in cast) {
-            for ((_, sel) in v.selection) {
-                (sel as? Number)?.toInt()?.let { idx -> if (idx in counts.indices) counts[idx]++ }
-            }
-        }
-        val optionResults = optionTexts.mapIndexed { idx, e ->
-            VoteOptionResult(index = idx, text = e.value?.toString() ?: e.key, count = counts.getOrElse(idx) { 0 })
-        }
+        // votes = GROUP BY selection — each entry is [selectionList, count].
+        // PHP: array_map(fn ($arr) => [Json::decode($arr[0]), $arr[1]], ...)
+        val selectionGroups = cast
+            .groupBy { it.selection.values.mapNotNull { v -> (v as? Number)?.toInt() } }
+            .map { (selection, rows) -> listOf(selection, rows.size) }
 
-        // myVote — the calling general's selection indices (resolved from principal); empty otherwise.
+        // myVote — the calling general's selection indices; null if not voted / no principal.
         val myGeneralId = userId?.let { resolver.resolveGeneralId(it) }
-        val myVote: List<Int> = if (myGeneralId != null) {
+        val myVote: List<Int>? = if (myGeneralId != null) {
             cast.firstOrNull { it.generalId == myGeneralId }
-                ?.selection?.values?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()
+                ?.selection?.values?.mapNotNull { (it as? Number)?.toInt() }
         } else {
-            emptyList()
+            null
         }
 
-        val commentRows = comments.findByVoteIdOrderByCreatedAtAscIdAsc(id).map { c ->
-            VoteCommentRow(
-                id = c.id,
-                generalName = c.generalName,
-                nationName = c.nationName,
-                text = c.text,
-                date = c.createdAt,
-            )
-        }
+        // comments — mirrors PHP VoteComment DTO (id/voteID/generalID/nationID/nationName/generalName/text/date).
+        // PHP GetVoteDetail.php:52 = `ORDER BY id ASC` (id-only). 기존 repo 메서드는 created_at 우선이라
+        // 컨트롤러에서 id ASC로 재정렬해 byte-parity 행 순서를 맞춘다(repo 파일은 이 번들 소유 밖).
+        val commentRows = comments.findByVoteIdOrderByCreatedAtAscIdAsc(id)
+            .sortedBy { it.id }
+            .map { c ->
+                VoteCommentDto(
+                    id = c.id,
+                    voteID = c.voteId,
+                    generalID = c.generalId,
+                    nationID = c.nationId,
+                    nationName = c.nationName,
+                    generalName = c.generalName,
+                    text = c.text,
+                    date = formatVoteDate(c.createdAt) ?: "",
+                )
+            }
+
+        // userCnt = general WHERE npc_state < 2 (PHP `SELECT count(*) FROM general WHERE npc < 2`).
+        val userCnt = generals.countByNpcStateLessThan(2).toInt()
 
         return ResponseEntity.ok(
             VoteDetailResponse(
                 result = true,
-                id = poll.id,
-                title = poll.title,
-                body = poll.body,
-                openerName = poll.openerName,
-                multipleOptions = poll.multipleOptions,
-                startAt = poll.startAt,
-                endAt = poll.endAt,
-                closed = poll.closedAt != null,
-                options = optionResults,
-                userCnt = cast.map { it.generalId }.distinct().size,
-                myVote = myVote,
+                voteInfo = voteInfo,
+                votes = selectionGroups,
                 comments = commentRows,
+                myVote = myVote,
+                userCnt = userCnt,
             ),
         )
     }

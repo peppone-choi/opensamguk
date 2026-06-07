@@ -115,6 +115,15 @@ class F4ReadControllersTest {
     private fun nation(id: Int, name: String, color: String = "#fff", level: Int = 0, gold: Int = 0, rice: Int = 0, meta: Map<String, Any?> = linkedMapOf()) =
         NationReadEntity(id = id, name = name, color = color, level = level, gold = gold, rice = rice, meta = meta)
 
+    /** D11 — power/capital/type/gennum까지 채운 nation 헬퍼(GetDiplomacy SimpleNationObj 검증용). */
+    private fun nationP(
+        id: Int, name: String, color: String = "#fff", level: Int = 0, power: Int = 0,
+        capital: Int = 0, type: String = "che_중립", meta: Map<String, Any?> = linkedMapOf(),
+    ) = NationReadEntity(
+        id = id, name = name, color = color, level = level, power = power,
+        capitalCityId = capital, typeCode = type, meta = meta,
+    )
+
     private fun city(id: Int, name: String, nationId: Int = 0, conflict: Map<String, Any?> = linkedMapOf()) =
         CityReadEntity(id = id, name = name, nationId = nationId, conflict = conflict)
 
@@ -215,27 +224,88 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.nations.1.name").value("위"))
     }
 
-    // ── GET /api/diplomacy/conflict (per-city % + matrix masking) ────────────────────────────────────
+    // ── GET /api/diplomacy/conflict = GetDiplomacy.php envelope (nations/conflict/diplomacyList/myNationID) ──
     @Test
-    fun `diplomacy conflict returns per-city conflict map and masked matrix`() {
-        `when`(cities.findAll()).thenReturn(
-            listOf(city(5, "허창", nationId = 1, conflict = linkedMapOf("2" to 40, "3" to 10))),
+    fun `diplomacy conflict returns GetDiplomacy envelope with power-sorted nations, normalized conflict, masked diplomacyList`() {
+        // 위(power 30) < 촉(power 50) → power DESC면 촉이 먼저. 둘 다 level>0.
+        `when`(nations.findAll()).thenReturn(
+            listOf(
+                nationP(1, "위", "#c62828", level = 7, power = 30, capital = 5, type = "che_위나라", meta = linkedMapOf("gennum" to 12)),
+                nationP(2, "촉", "#2e7d32", level = 5, power = 50, capital = 8, type = "che_촉나라", meta = linkedMapOf("gennum" to 9)),
+            ),
         )
-        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위"), nation(2, "촉")))
-        `when`(diplomacy.findBySrcNationId(1)).thenReturn(
+        `when`(cities.findAll()).thenReturn(
+            listOf(
+                // 분쟁 2개 항목, sum=50 → 2:round(80.0,1)=80.0, 3:round(20.0,1)=20.0.
+                city(5, "허창", nationId = 1, conflict = linkedMapOf("2" to 40, "3" to 10)),
+                // 항목<2(단일 nationId) → 분쟁 목록에서 제외(도시명 보강만).
+                city(8, "성도", nationId = 2, conflict = linkedMapOf("1" to 5)),
+                // 빈 분쟁맵 → 제외(도시명 보강만).
+                city(9, "강주", nationId = 2, conflict = linkedMapOf()),
+            ),
+        )
+        // PHP는 diplomacy 전체 행을 1회 순회(findAll) — me→you→state.
+        `when`(diplomacy.findAll()).thenReturn(
             listOf(DiplomacyReadEntity(id = 1, srcNationId = 1, destNationId = 2, stateCode = 5, term = 3)),
         )
-        `when`(diplomacy.findBySrcNationId(2)).thenReturn(emptyList())
 
         mvc(diplomacyController()).perform(get("/api/diplomacy/conflict"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.cities.length()").value(1))
-            .andExpect(jsonPath("$.cities[0].cityName").value("허창"))
-            .andExpect(jsonPath("$.cities[0].conflict.2").value(40))
-            .andExpect(jsonPath("$.cities[0].conflict.3").value(10))
-            // stateCode 5 masked to 2 (neutral)
-            .andExpect(jsonPath("$.matrix.1.2").value(2))
+            .andExpect(jsonPath("$.myNationID").value(0)) // 익명 호출자
+            // nations: power DESC → 촉(50) 먼저, 위(30) 다음. SimpleNationObj 필드셋.
+            .andExpect(jsonPath("$.nations.length()").value(2))
+            .andExpect(jsonPath("$.nations[0].nation").value(2))
+            .andExpect(jsonPath("$.nations[0].name").value("촉"))
+            .andExpect(jsonPath("$.nations[0].type").value("che_촉나라"))
+            .andExpect(jsonPath("$.nations[0].level").value(5))
+            .andExpect(jsonPath("$.nations[0].capital").value(8))
+            .andExpect(jsonPath("$.nations[0].gennum").value(9))
+            .andExpect(jsonPath("$.nations[0].power").value(50))
+            // 촉 도시명(성도, 강주) 행 순서 보강.
+            .andExpect(jsonPath("$.nations[0].cities[0]").value("성도"))
+            .andExpect(jsonPath("$.nations[0].cities[1]").value("강주"))
+            .andExpect(jsonPath("$.nations[1].nation").value(1))
+            .andExpect(jsonPath("$.nations[1].cities[0]").value("허창"))
+            // conflict = [[cityId, {nationId: pct}]] 튜플, 정규화된 Double 소수1자리. 허창(5)만 남는다.
+            .andExpect(jsonPath("$.conflict.length()").value(1))
+            .andExpect(jsonPath("$.conflict[0][0]").value(5))
+            .andExpect(jsonPath("$.conflict[0][1].2").value(80.0))
+            .andExpect(jsonPath("$.conflict[0][1].3").value(20.0))
+            // diplomacyList: 익명(myNationID=0) → 둘 다 내 국가 아님 → state 5 마스킹 2.
+            .andExpect(jsonPath("$.diplomacyList.1.2").value(2))
+    }
+
+    @Test
+    fun `diplomacy conflict does NOT mask state when viewer is a party (viewer-conditional)`() {
+        // 호출자(userId 7) → 장수 10 → 국가 1(위). myNationID=1.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(
+            listOf(
+                nationP(1, "위", "#c62828", level = 7, power = 30),
+                nationP(2, "촉", "#2e7d32", level = 5, power = 50),
+                nationP(3, "오", "#1565c0", level = 4, power = 20),
+            ),
+        )
+        `when`(cities.findAll()).thenReturn(emptyList())
+        `when`(diplomacy.findAll()).thenReturn(
+            listOf(
+                // 1↔2: 내 국가(1)가 당사자 → 원 state 5 노출.
+                DiplomacyReadEntity(id = 1, srcNationId = 1, destNationId = 2, stateCode = 5, term = 3),
+                // 2↔3: 둘 다 내 국가 아님 → state 5 마스킹 2.
+                DiplomacyReadEntity(id = 2, srcNationId = 2, destNationId = 3, stateCode = 5, term = 3),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/conflict").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.myNationID").value(1))
+            // 내 국가 당사자 관계는 원 state 5 (마스킹 안 함).
+            .andExpect(jsonPath("$.diplomacyList.1.2").value(5))
+            // 제3자끼리 관계는 3..7→2 마스킹.
+            .andExpect(jsonPath("$.diplomacyList.2.3").value(2))
     }
 
     // ── GET /api/nation/{id}/finance (editable gate) ─────────────────────────────────────────────────
@@ -467,16 +537,18 @@ class F4ReadControllersTest {
     fun `votes list empty when no polls`() {
         `when`(polls.findAllByOrderByIdDesc()).thenReturn(emptyList())
 
-        mvc(VoteController(polls, votes, voteComments, resolver)).perform(get("/api/votes"))
+        mvc(VoteController(polls, votes, voteComments, generals, resolver)).perform(get("/api/votes"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(0))
+            // D9 envelope: {result:true, votes:Map} (PHP GetVoteList.php) — votes 맵이 비어 있어야 한다.
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.votes").isEmpty)
     }
 
     @Test
     fun `vote detail 404 for missing poll`() {
         `when`(polls.findById(99)).thenReturn(Optional.empty())
 
-        mvc(VoteController(polls, votes, voteComments, resolver)).perform(get("/api/votes/99"))
+        mvc(VoteController(polls, votes, voteComments, generals, resolver)).perform(get("/api/votes/99"))
             .andExpect(status().isNotFound)
     }
 

@@ -1,12 +1,13 @@
 package opensamguk.gameapi.controller
 
-import opensamguk.gameapi.dto.CityConflict
 import opensamguk.gameapi.dto.DiplomacyConflictResponse
 import opensamguk.gameapi.dto.DiplomacyLetter
+import opensamguk.gameapi.dto.DiplomacyLetterParty
 import opensamguk.gameapi.dto.DiplomacyLettersResponse
 import opensamguk.gameapi.dto.DiplomacyMatrixResponse
 import opensamguk.gameapi.dto.DiplomacyNationInfo
 import opensamguk.gameapi.dto.DiplomacyResponse
+import opensamguk.gameapi.dto.SimpleNationObj
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.DiplomacyLetterReadRepository
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 @RestController
 @RequestMapping("/api/diplomacy")
@@ -67,15 +70,26 @@ class DiplomacyController(
         val myNationID = userId?.let { resolver.resolve(it)?.nationId } ?: 0
         val letterRows = if (myNationID != 0) {
             letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(myNationID, myNationID).map { l ->
+                val srcNation = nationMap[l.srcNationId.toString()]
+                val destNation = nationMap[l.destNationId.toString()]
                 DiplomacyLetter(
-                    id = l.id,
-                    srcNationId = l.srcNationId,
-                    destNationId = l.destNationId,
-                    prevId = l.prevId,
-                    state = l.state,
+                    no = l.id,
+                    src = DiplomacyLetterParty(
+                        nationId = l.srcNationId,
+                        name = srcNation?.name ?: "",
+                        color = srcNation?.color ?: "#000000",
+                    ),
+                    dest = DiplomacyLetterParty(
+                        nationId = l.destNationId,
+                        name = destNation?.name ?: "",
+                        color = destNation?.color ?: "#000000",
+                    ),
+                    prevNo = l.prevId,
+                    state = l.state.lowercase(),
                     stateText = F4StateText.letterStateText(l.state),
-                    textBrief = l.textBrief,
-                    textDetail = l.textDetail,
+                    stateOpt = extractStateOpt(l.aux),
+                    brief = l.textBrief,
+                    detail = l.textDetail,
                     date = l.date,
                     srcSigner = l.srcSigner,
                     destSigner = l.destSigner,
@@ -94,37 +108,94 @@ class DiplomacyController(
         )
     }
 
+    private fun extractStateOpt(aux: Map<String, Any?>): String? =
+        aux["state_opt"] as? String
+
     /**
-     * F4 — 중원정보 conflict feed (분쟁), spec page 2. READ-only, PUBLIC.
+     * D11 — `GET /api/diplomacy/conflict` = PHP `GetDiplomacy.php:26-104`. READ-only, GAME_LOGIN.
      *
-     * Per-city 분쟁% from the `city.conflict` jsonb (an insertion-ordered nationId→percent map; the
-     * ConquerCity/city-conflict side-effect writes it). Cities with no conflict map yield an empty
-     * `conflict` object. Plus the global diplomacy matrix (srcNation → destNation → masked stateCode,
-     * same 3~7→2 neutral masking as `/{nationId}`). No conflict rows in the seed → empty maps, 200.
+     * 봉투 `{result, nations[], conflict[[cityId,{nationId:pct}]], diplomacyList{me:{you:state}}, myNationID}`:
+     *  - nations = getAllNationStaticInfo() level>0 필터 + power DESC(uasort -power) + 도시명(행 순서) 보강.
+     *  - conflict = city.conflict('{}'/항목<2 제외) → round(100*killnum/sum, 1) PhpRound half-away Double.
+     *  - diplomacyList = 모든 diplomacy 행 me→you→state, viewer-conditional 마스킹(me/you 둘 다 내 국가가
+     *    아닐 때만 3..7→2; 한쪽이 내 국가면 원 state).
+     *  - myNationID = 호출자 장수의 nation(미인증/재야면 0).
      */
     @GetMapping("/conflict")
-    fun conflict(): ResponseEntity<DiplomacyConflictResponse> {
-        val cityRows = cities.findAll()
-            .sortedBy { it.id }
-            .map { c ->
-                // city.conflict is the dedicated jsonb column — an insertion-ordered nationId→percent
-                // map (LinkedHashMap from the byte-faithful decoder). Empty {} when no conflict.
-                val conflictMap = linkedMapOf<String, Int>()
-                for ((nk, nv) in c.conflict) {
-                    (nv as? Number)?.let { conflictMap[nk] = it.toInt() }
-                }
-                CityConflict(cityId = c.id, cityName = c.name, conflict = conflictMap)
-            }
+    fun conflict(@AuthenticationPrincipal userId: Long?): ResponseEntity<DiplomacyConflictResponse> {
+        val myNationID = userId?.let { resolver.resolve(it)?.nationId } ?: 0
 
-        val matrix = linkedMapOf<String, Map<String, Int>>()
-        for (n in nations.findAll().sortedBy { it.id }) {
-            val rels = linkedMapOf<String, Int>()
-            for (r in diplomacyReadRepository.findBySrcNationId(n.id)) {
-                rels[r.destNationId.toString()] = if (r.stateCode in 3..7) 2 else r.stateCode
-            }
-            matrix[n.id.toString()] = rels
+        // nations — getAllNationStaticInfo()의 level>0만, power DESC 정렬(PHP array_filter + uasort -power).
+        // 도시명 보강을 위해 nationId → 가변 도시 리스트를 따로 둔다(삽입순서 = city 행 순서).
+        val nationCities = linkedMapOf<Int, MutableList<String>>()
+        val sortedNations = nations.findAll()
+            .filter { it.level > 0 }
+            .sortedByDescending { it.power }
+        for (n in sortedNations) {
+            nationCities[n.id] = mutableListOf()
         }
 
-        return ResponseEntity.ok(DiplomacyConflictResponse(result = true, cities = cityRows, matrix = matrix))
+        // city 행 1회 순회로 (a) 도시명 그룹 보강(nationId!=0) (b) 분쟁 % 산출.
+        // PHP: SELECT nation, city, name, conflict FROM city — 행 순서 보존.
+        val conflict = mutableListOf<List<Any>>()
+        for (c in cities.findAll()) {
+            if (c.nationId != 0) {
+                nationCities[c.nationId]?.add(c.name)
+            }
+            // city.conflict = nationId→killnum jsonb. '{}'(빈맵) 또는 항목<2면 제외(PHP:59-65).
+            if (c.conflict.size < 2) {
+                continue
+            }
+            val sum = c.conflict.values.sumOf { (it as? Number)?.toDouble() ?: 0.0 }
+            if (sum == 0.0) {
+                continue
+            }
+            // pct = round(100 * killnum / sum, 1) — PHP 네이티브 round half-away-from-zero, 소수1자리 Double.
+            val pctMap = linkedMapOf<String, Double>()
+            for ((nk, nv) in c.conflict) {
+                val killnum = (nv as? Number)?.toDouble() ?: 0.0
+                pctMap[nk] = BigDecimal.valueOf(100.0 * killnum / sum)
+                    .setScale(1, RoundingMode.HALF_UP)
+                    .toDouble()
+            }
+            conflict.add(listOf(c.id, pctMap))
+        }
+
+        val nationObjs = sortedNations.map { n ->
+            SimpleNationObj(
+                nation = n.id,
+                name = n.name,
+                color = n.color,
+                type = n.typeCode,
+                level = n.level,
+                capital = n.capitalCityId ?: 0,
+                gennum = (n.meta["gennum"] as? Number)?.toInt() ?: 0,
+                cities = nationCities[n.id] ?: emptyList(),
+                power = n.power,
+            )
+        }
+
+        // diplomacyList — 모든 diplomacy 행을 me→you→state로. viewer-conditional 마스킹(PHP:91-95).
+        val diplomacyList = linkedMapOf<String, MutableMap<String, Int>>()
+        for (r in diplomacyReadRepository.findAll()) {
+            val me = r.srcNationId
+            val you = r.destNationId
+            val state = if (me != myNationID && you != myNationID && r.stateCode in 3..7) {
+                2
+            } else {
+                r.stateCode
+            }
+            diplomacyList.getOrPut(me.toString()) { linkedMapOf() }[you.toString()] = state
+        }
+
+        return ResponseEntity.ok(
+            DiplomacyConflictResponse(
+                result = true,
+                nations = nationObjs,
+                conflict = conflict,
+                diplomacyList = diplomacyList,
+                myNationID = myNationID,
+            ),
+        )
     }
 }
