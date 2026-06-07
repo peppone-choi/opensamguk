@@ -813,6 +813,107 @@ textarea:focus {
     color: var(--crimson);
 }
 
+/* ===== Admin · 회원 관리 (B2f, legacy admin_member) ===== */
+.member-control {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+.member-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.member-allow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.member-allow-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+.member-radio-group {
+    display: inline-flex;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.member-radio {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-xs) var(--space-md);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    background: var(--bg-elevated);
+}
+.member-radio.active {
+    background: var(--gold);
+    color: var(--text-inverse);
+    font-weight: 600;
+}
+.member-radio input {
+    /* 라벨 자체가 토글이라 실제 라디오 인풋은 시각적으로 숨긴다. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+.member-scrub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-left: auto;
+}
+.member-notice {
+    font-size: var(--text-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    background: rgba(201, 162, 39, 0.1);
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+}
+.member-table th[scope='row'] {
+    background: transparent;
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 600;
+}
+.member-small {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+}
+.member-block-until {
+    margin: 0;
+    color: var(--text-muted);
+}
+.member-icon {
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+.member-general {
+    display: block;
+}
+.member-cmd-group {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: var(--space-xs);
+}
+.member-cmd-btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
+    line-height: 1.2;
+    text-align: center;
+}
+.member-cmd-warn {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+}
+
 /* ===== Modal (ConfirmModal) ===== */
 .modal-backdrop {
     position: fixed;

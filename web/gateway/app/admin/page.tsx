@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ConfirmModal from '@/components/ConfirmModal';
+import MemberControl from '@/components/admin/MemberControl';
 
-// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포).
-// "회원 관리"·"게임 환경"은 후속 페이즈 — '준비 중' 플레이스홀더 유지.
+// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
+// "게임 환경"은 후속 페이즈(B1e) — '준비 중' 플레이스홀더 유지.
 // 섹션명은 verbatim 패러티 대상, 본문은 탭별로 분기.
 const ADMIN_SECTIONS = [
     { id: 'members', label: '회원 관리' },
@@ -336,7 +337,13 @@ function AdminView() {
                 </div>
                 <section className="admin-panel">
                     <h2 className="lobby-section-title">{section.label}</h2>
-                    {active === 'server' ? <ServerControl /> : <p>{PLACEHOLDER}</p>}
+                    {active === 'server' ? (
+                        <ServerControl />
+                    ) : active === 'members' ? (
+                        <MemberControl />
+                    ) : (
+                        <p>{PLACEHOLDER}</p>
+                    )}
                 </section>
             </main>
         </div>

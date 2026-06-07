@@ -1,5 +1,6 @@
 package opensamguk.gateway.web
 
+import opensamguk.gateway.security.SelfPeerProtectionException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
@@ -35,6 +36,15 @@ class GlobalExceptionHandler {
     fun illegalArg(e: IllegalArgumentException): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(ApiError(e.message ?: "잘못된 요청입니다.", HttpStatus.BAD_REQUEST.value()))
+
+    /**
+     * 회원관리 self/peer 보호 위반(B2d) — 어드민이 자기 자신/다른 ADMIN을 변경하려 함.
+     * legacy `j_set_userlist:162,274`의 거부에 대응 → 403 + 한글 사유.
+     */
+    @ExceptionHandler(SelfPeerProtectionException::class)
+    fun selfPeer(e: SelfPeerProtectionException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ApiError(e.message ?: "변경할 수 없습니다.", HttpStatus.FORBIDDEN.value()))
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun validation(e: MethodArgumentNotValidException): ResponseEntity<ApiError> {
