@@ -22,6 +22,7 @@ import MapViewer from './MapViewer';
 import PartialReservedCommand from './PartialReservedCommand';
 import GeneralBasicCard from './GeneralBasicCard';
 import NationBasicCard from './NationBasicCard';
+import CityBasicCard from './CityBasicCard';
 import MessagePanel from './MessagePanel';
 import Toast from '../Toast';
 import type { MenuFlagSource } from '@/lib/menu-types';
@@ -73,6 +74,7 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
     const flagSource = frontInfo.global as unknown as MenuFlagSource;
     const general = frontInfo.general;
     const nation = frontInfo.nation;
+    const city = frontInfo.city;
     // The player's OWN general id (front-info) — threaded into the command modal + reserved panel + messages.
     const generalId = general.generalId;
 
@@ -86,12 +88,15 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
             {/* GameInfo status header */}
             <GameInfo global={frontInfo.global} constData={constData} />
 
-            {/* #ingameBoard — CSS grid (spec §1.3 desktop 500/200/300; §1.4 mobile single column).
-                Region order: mapView → reservedCommandZone → (info cards: nation/general) → cityInfo →
-                MainControlBar. The map's onSelectCity seam stays open (command-from-map = future). */}
+            {/* #ingameBoard — 1000px 중앙 정렬 세로 스택(부모 .shell-main > * 가 max-width:1000px+auto margin).
+                영역 순서: mapView(풀폭 상단) → reservedCommandZone → info 카드(general/nation/city, .ib-cards
+                2~3열 그리드 — 모바일 단일 열) → content(서브페이지 슬롯) → MainControlBar(풀폭, 마지막).
+                맵은 로비와 동일한 정적 마커 맵 — 도시 클릭 시 도시 정보 페이지로 이동.
+                NOTE(de-dup): general/nation/city 카드는 여기서만 렌더한다. 메인 라우트(/game page.tsx)는
+                children 을 비워(중복 '내 정보' 카드 제거) 이 카드들이 단 한 번만 보이게 한다. */}
             <div className="ingame-board">
                 <div className="ib-map">
-                    <MapViewer currentCityId={general.cityId} />
+                    <MapViewer />
                 </div>
 
                 <div className="ib-reserved">
@@ -106,15 +111,14 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
                     )}
                 </div>
 
-                <div className="ib-nation">
-                    <NationBasicCard nation={nation} />
-                </div>
-
-                <div className="ib-general">
+                {/* info 카드 묶음 — 1000px 내부 그리드. 각 카드가 .ib-general/.ib-nation/.ib-city 를 자체 보유. */}
+                <div className="ib-cards">
                     <GeneralBasicCard general={general} nation={nation} />
+                    <NationBasicCard nation={nation} />
+                    <CityBasicCard city={city} nation={nation} />
                 </div>
 
-                {/* generalInfo content slot (the existing my-info / sub-page content lands here). */}
+                {/* generalInfo content slot (서브페이지 content 가 여기 렌더; 메인 라우트는 비어 있음 → :empty 숨김). */}
                 <div className="ib-content">{children}</div>
 
                 {/* MainControlBar (국가 메뉴) — spans full width, last row. */}

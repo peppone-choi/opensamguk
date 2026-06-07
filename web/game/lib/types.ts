@@ -76,10 +76,24 @@ export interface FrontGeneralInfo {
     dedication?: number | null;
     train?: number | null;
     atmos?: number | null;
+    crewTypeId?: number | null;        // 병종 id
+    troop?: number | null;             // troop_id
+    horse?: string | null;             // 명마 코드(horse_code)
+    weapon?: string | null;            // 무기 코드(weapon_code)
+    book?: string | null;              // 서적 코드(book_code)
+    item?: string | null;              // 도구 코드(item_code)
     age?: number | null;
+    specialDomestic?: string | null;   // 내정 특기 코드(special_code)
+    specialWar?: string | null;        // 전투 특기 코드(special2_code)
+    personal?: string | null;          // 성격 코드(personal_code)
+    explevel?: number | null;          // Lv(meta.explevel)
+    dedlevel?: number | null;          // meta.dedlevel
+    killturn?: number | null;          // 삭턴(meta.killturn)
     officerLevelText?: string | null; // getOfficerLevelText(officer_level, nationLevel)
-    honorText?: string | null;        // getHonor(experience)
-    dedLevelText?: string | null;     // getDed(dedication)
+    honorText?: string | null;        // getHonor(experience) — 호칭
+    dedLevelText?: string | null;     // getDed(dedication) — 공헌
+    lbonus?: number | null;           // calcLeadershipBonus(officer_level, nationLevel) — 통솔보너스
+    bill?: number | null;             // getBillByLevel(getDedLevel(dedication))
 }
 
 // nation 인구/병력 grouped 집계(IdentityDto.NationPopulationGroup / NationCrewGroup).
@@ -99,6 +113,13 @@ export interface NationTypeInfo {
     pros: string;
     cons: string;
 }
+// topChiefs 1개 항목(IdentityDto.NationTopChief) — officer_level>=11 수뇌(군주/군주대리).
+export interface NationTopChief {
+    officerLevel: number;
+    no: number;
+    name: string;
+    npc: number;
+}
 
 export interface FrontNationInfo {
     id: number;
@@ -117,6 +138,14 @@ export interface FrontNationInfo {
     population?: NationPopulationGroup | null;
     crew?: NationCrewGroup | null;
     type?: NationTypeInfo | null;
+    topChiefs?: NationTopChief[] | null; // officer_level>=11 수뇌 목록
+    // [meta UNVERIFIED — 데몬 write 전까지 null. 날조 금지] 지급률/세율/외교·임관·전쟁 제한.
+    bill?: number | null;             // meta.bill — 지급률(%)
+    taxRate?: number | null;          // meta.rate — 세율(%)
+    diplomaticLimit?: number | null;  // meta.surlimit — 외교 제한 잔여턴
+    strategicCmdLimit?: number | null; // meta.strategic_cmd_limit — 전략 제한 잔여턴
+    prohibitScout?: number | null;    // meta.scout — 임관 금지(1=금지)
+    prohibitWar?: number | null;      // meta.war — 전쟁 금지(1=금지)
 }
 
 export interface FrontCityInfo {
