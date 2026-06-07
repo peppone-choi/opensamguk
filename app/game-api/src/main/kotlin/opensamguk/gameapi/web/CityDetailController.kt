@@ -81,8 +81,11 @@ class CityDetailController(
             ?: generalId?.let { generals.findById(it).orElse(null) }
         val myNation: Int? = general?.nationId?.takeIf { it != 0 }
 
-        // 가시성: 아국 소유 OR spy intel OR 아국 장수 주둔 (func_map.php fog 패러티).
+        // 가시성: 내 소재 도시(재야 포함) OR 아국 소유 OR spy intel OR 아국 장수 주둔 (func_map.php fog 패러티).
+        // func_map은 myCity(general.city)를 myNation과 독립적으로 노출한다 → 재야(nation 0) 장수도 자기 도시는 본다.
+        val myCity: Int? = general?.cityId?.takeIf { it != 0 }
         val visible: Boolean = when {
+            myCity == c.id -> true
             myNation == null -> false
             c.nationId == myNation -> true
             else -> {
