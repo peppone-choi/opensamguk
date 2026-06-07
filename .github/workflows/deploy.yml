@@ -100,10 +100,12 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:web-${{ matrix.app }}-latest
 
   # ------------------------------------------------------------------
-  # 3. Deploy to EC2
+  # 3. Deploy to EC2 — self-hosted runner ON the box (GH-hosted 러너 IP가 EC2 SG:22에 차단돼
+  #    appleboy ssh/scp가 i/o timeout → 셀프호스티드 러너로 전환. deploy 잡이 박스에서 로컬 실행되어
+  #    SSH/SCP 불필요. build-jvm/build-web은 GH-hosted 유지(GHCR 푸시만 필요).
   # ------------------------------------------------------------------
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ec2-prod]
     needs: [build-jvm, build-web]
     permissions:
       contents: read
@@ -111,107 +113,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 라이브 nginx 설정 정본을 박스로 동기화 — 버전관리된 infra/nginx/default.conf 가 박스
-      # ~/opensamguk/docker/nginx/default.conf(compose 마운트 원본)를 덮어쓴다. 라우팅 변경은
-      # 레포에서만 하면 배포 시 박스에 반영되고, 박스 재클론에도 유실되지 않는다.
-      - name: Sync nginx config to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "infra/nginx/default.conf"
-          target: "~/opensamguk/docker/nginx/"
-          strip_components: 2
-
-      # 빼섭(bbae) 2번째 서버 오버레이 compose를 박스로 동기화 — main 무변경, bbae 서비스 추가 +
-      # gateway-frontend SERVER_REGISTRY_JSON 머지. 박스에서 -f production.yml -f bbae.yml로 적용.
-      - name: Sync bbae overlay compose to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.bbae.yml"
-          target: "~/opensamguk/"
-
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Deploy on box
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GHCR_TOKEN,GHCR_USER
-          script_stop: true
-          script: |
-            set -euo pipefail
-            cd ~/opensamguk
-
-            # Authenticate to GHCR (images are private)
-            echo "=== GHCR login ==="
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-
-            # main + 빼섭 오버레이를 함께 적용(gateway-frontend가 오버레이의 SERVER_REGISTRY_JSON을 머지).
-            COMPOSE="docker compose -f docker-compose.production.yml -f docker-compose.bbae.yml"
-
-            # Pull latest images
-            echo "=== Pulling images ==="
-            $COMPOSE pull
-
-            # Rolling restart — 업스트림 먼저, engine 다음, 빼섭 스택, nginx 마지막(Rule A: stale-DNS 502 방지).
-            # nginx는 업스트림 컨테이너명을 시작/리로드 시 1회만 해석 → 업스트림 recreate 후 옛 IP를
-            # 잡고 있으면 전 라우트 502. 반드시 모든 업스트림이 뜬 뒤 nginx를 force-recreate 한다.
-            echo "=== Restarting main upstreams ==="
-            $COMPOSE up -d --no-deps gateway-api game-api gateway-frontend game-frontend
-            sleep 5
-            $COMPOSE up -d --no-deps game-engine
-
-            # 빼섭 2번째 스택(격리 db/redis/engine/api) — main 무중단 추가. 빈 DB면 engine이 scenario_1030 시드.
-            echo "=== Starting bbae stack ==="
-            $COMPOSE up -d --no-deps bbae-db bbae-redis bbae-engine bbae-api
-            sleep 3
-            # nginx LAST + force-recreate: scp로 동기화된 default.conf 적용 + 업스트림 IP 재해석.
-            $COMPOSE up -d --force-recreate --no-deps nginx
-
-            # Cleanup old images
-            docker image prune -af --filter "until=168h"
-
-            echo "=== Deploy complete ==="
-
-      - name: Health check
         run: |
           set -euo pipefail
-          HOST="http://${{ secrets.EC2_HOST }}"
+          STACK="$HOME/opensamguk"
+
+          # 버전관리된 nginx 정본 + bbae 오버레이를 라이브 스택으로 동기화(레포 워크스페이스→박스 cp; scp 불요).
+          cp "$GITHUB_WORKSPACE/infra/nginx/default.conf" "$STACK/docker/nginx/default.conf"
+          cp "$GITHUB_WORKSPACE/docker-compose.bbae.yml" "$STACK/docker-compose.bbae.yml"
+
+          cd "$STACK"
+          echo "=== GHCR login ==="   # 매 배포 재login → 박스 토큰 만료 무관.
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          COMPOSE="docker compose -f docker-compose.production.yml -f docker-compose.bbae.yml"
+          echo "=== Pulling images ==="
+          $COMPOSE pull
+
+          # Rolling restart — 업스트림 먼저, engine 다음, 빼섭, nginx 마지막(Rule A: stale-DNS 502 방지).
+          echo "=== Restarting main upstreams ==="
+          $COMPOSE up -d --no-deps gateway-api game-api gateway-frontend game-frontend
+          sleep 5
+          $COMPOSE up -d --no-deps game-engine   # engine LAST(인메모리 턴 상태 소유)
+
+          echo "=== Starting bbae stack ==="
+          $COMPOSE up -d --no-deps bbae-db bbae-redis bbae-engine bbae-api
+          sleep 3
+          $COMPOSE up -d --force-recreate --no-deps nginx   # nginx LAST + force-recreate(업스트림 IP 재해석)
+
+          docker image prune -af --filter "until=168h"
+          echo "=== Deploy complete ==="
+
+      - name: Verify (health + turn-advance)
+        run: |
+          set -uo pipefail
+          # Rule A — nginx/api health (localhost, 박스 내부).
           for i in $(seq 1 30); do
-            echo "Health check attempt $i..."
-            if curl -sf "${HOST}/health" >/dev/null 2>&1; then
-              echo "nginx health: OK"
-              break
-            fi
+            curl -sf "http://localhost/health" >/dev/null 2>&1 && { echo "nginx health: OK"; break; }
             sleep 5
           done
-
           for i in $(seq 1 30); do
-            echo "API health check attempt $i..."
-            RESP=$(curl -sf "${HOST}/api/game/actuator/health" 2>/dev/null || echo '{"status":"DOWN"}')
-            if echo "$RESP" | grep -q '"status":"UP"'; then
-              echo "game-api actuator: OK"
-              break
-            fi
+            RESP=$(curl -sf "http://localhost/api/game/actuator/health" 2>/dev/null || echo DOWN)
+            echo "$RESP" | grep -q '"status":"UP"' && { echo "game-api actuator: OK"; break; }
             sleep 5
           done
-
-          for i in $(seq 1 30); do
-            echo "Gateway health check attempt $i..."
-            RESP=$(curl -sf "${HOST}/api/gateway/actuator/health" 2>/dev/null || echo '{"status":"DOWN"}')
-            if echo "$RESP" | grep -q '"status":"UP"'; then
-              echo "gateway-api actuator: OK"
-              break
-            fi
-            sleep 5
-          done
-
-          echo "=== All health checks passed ==="
+          # Rule B — world_state clock 전진(엔진 동결 아님). 정보용(엔진 부팅 타이밍상 비차단 WARN).
+          C1=$(docker exec opensamguk-db psql -U samguk -d samguk -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
+          sleep 75
+          C2=$(docker exec opensamguk-db psql -U samguk -d samguk -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
+          echo "world clock: $C1 -> $C2"
+          if [ -n "$C1" ] && [ "$C1" != "$C2" ]; then echo "turn-advance: OK"; else echo "WARN: clock not advancing yet ($C1 -> $C2) — 엔진 부팅 catch-up 확인 필요"; fi
+          echo "=== Verify done ==="
