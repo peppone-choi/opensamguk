@@ -147,6 +147,7 @@ function snapshotGeneralCity(General $g, ?array $city): array {
         'gold' => $g->getVar('gold'), 'rice' => $g->getVar('rice'),
         'crew' => $g->getVar('crew'), 'train' => $g->getVar('train'), 'atmos' => $g->getVar('atmos'),
         'experience' => $g->getVar('experience'), 'dedication' => $g->getVar('dedication'),
+        'leadership_exp' => $g->getVar('leadership_exp'), 'strength_exp' => $g->getVar('strength_exp'),
         'intel_exp' => $g->getVar('intel_exp'), 'explevel' => $g->getVar('explevel'),
         'nation' => $g->getVar('nation'), 'officer_level' => $g->getVar('officer_level'),
         'city' => $g->getVar('city'), 'troop' => $g->getVar('troop'),
