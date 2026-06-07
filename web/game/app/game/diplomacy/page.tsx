@@ -10,6 +10,7 @@ import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type {
     DiplomacyLettersResponse,
     DiplomacyLetter,
+    DiplomacyLetterParty,
     DiplomacyLetterNation,
 } from '../../../lib/types';
 
@@ -22,12 +23,6 @@ const DIPLO_QUICK_ACTIONS: { code: string; label: string }[] = [
     { code: 'che_불가침파기제의', label: '불가침 파기 제의' },
     { code: 'che_선전포고', label: '선전 포고' },
 ];
-
-// 외교부 (page 1) — letter-management view. Mirrors j_diplomacy_get_letter.php +
-// ts/diplomacy.ts drawLetter(). letter cards render the state/parties/brief/detail verbatim.
-// 외교 제의(종전/불가침/불가침파기/선전포고)는 위의 CommandModal 빠른 명령으로 예약하며,
-// 제의에 대한 승인(수락)/거부(거절)는 메일함(mailbox)에서 api.messageAccept/messageDecline로 처리한다.
-// 이 페이지의 서신 카드 자체는 읽기 전용(상태 표시)이다.
 
 // Letter state text — verbatim from ts/diplomacy.ts stateText (LetterState).
 const STATE_TEXT: Record<string, string> = {
@@ -66,12 +61,19 @@ export default function DiplomacyPage() {
     const { frontInfo, refresh } = useFrontInfo();
     const generalId = frontInfo?.general.generalId ?? null;
     const ownNationId = frontInfo?.general.nationId;
+    const permission = frontInfo?.general.permission ?? 0;
     const [data, setData] = useState<DiplomacyLettersResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
     // The quick-action whose CommandModal is open (null = closed). nation target picked in-modal.
     const [quickAction, setQuickAction] = useState<{ code: string; label: string } | null>(null);
+
+    // 서신 작성 폼 상태
+    const [showWriteForm, setShowWriteForm] = useState(false);
+    const [destNationId, setDestNationId] = useState<number>(0);
+    const [briefDraft, setBriefDraft] = useState('');
+    const [detailDraft, setDetailDraft] = useState('');
 
     function showToast(msg: string) {
         setToast(msg);
@@ -101,10 +103,85 @@ export default function DiplomacyPage() {
         return () => es.close();
     }, [fetchData]);
 
-    const myNationId = data?.myNationId ?? 0;
-    const nations: DiplomacyLetterNation[] = data?.nations ?? [];
+    const myNationId = data?.myNationID ?? 0;
+    // legacy 응답은 nations를 Record<id, NationStaticItem> 맵으로 내려준다 → 값 순회.
+    const nations: DiplomacyLetterNation[] = data?.nations ? Object.values(data.nations) : [];
     // cancelled letters are not shown (legacy drawLetter skips state == 'cancelled').
     const letters: DiplomacyLetter[] = (data?.letters ?? []).filter(l => l.state !== 'cancelled');
+
+    // 수뇌부 권한 체크 (permission >= 4 또는 officer_level >= 5)
+    const canWrite = permission >= 4;
+
+    // 수신국 후보 (자국·재야 제외)
+    const candidateNations = nations.filter(n => n.id !== myNationId && n.id !== 0);
+
+    const handleSendLetter = async () => {
+        if (generalId == null) {
+            showToast('장수가 없어 외교 서신을 보낼 수 없습니다.');
+            return;
+        }
+        if (destNationId === 0) {
+            showToast('수신국을 선택하세요.');
+            return;
+        }
+        if (briefDraft.trim().length === 0) {
+            showToast('요약문이 비어있습니다.');
+            return;
+        }
+        try {
+            // legacy submitLetter는 brief/detail를 $.trim 후 전송, prevNo는 신규(=교체 대상 없음)면 null.
+            // 작성 폼에 이전 문서 교체 selector가 없으므로 항상 null(신규 문서).
+            await api.command('diploSendLetter', {
+                destNation: destNationId,
+                brief: briefDraft.trim(),
+                detail: detailDraft.trim(),
+                prevNo: null,
+            }, generalId);
+            // 성공 알림 verbatim — legacy ts/diplomacy.ts submitLetter alert('전송했습니다.')
+            showToast('전송했습니다.');
+            setBriefDraft('');
+            setDetailDraft('');
+            setDestNationId(0);
+            setShowWriteForm(false);
+            fetchData();
+        } catch (e: any) {
+            // 실패 알림 verbatim — legacy `외교 서신을 보내는데 실패했습니다: ${e}`
+            showToast('외교 서신을 보내는데 실패했습니다: ' + (e?.message || ''));
+        }
+    };
+
+    const handleRollback = async (letterNo: number) => {
+        if (!confirm('회수하시겠습니까?')) return;
+        if (generalId == null) return;
+        try {
+            await api.command('diploRollbackLetter', { letterNo }, generalId);
+            showToast('회수 했습니다.');
+            fetchData();
+        } catch (e: any) {
+            showToast('회수를 실패했습니다: ' + (e?.message || ''));
+        }
+    };
+
+    const handleDestroy = async (letterNo: number) => {
+        // confirm verbatim — legacy ts/diplomacy.ts destroyLetter 클릭 핸들러
+        if (!confirm('본 문서를 파기하겠습니까? (상호 동의 필요)')) return;
+        if (generalId == null) return;
+        try {
+            // legacy는 응답의 state로 1단계 요청/2단계 완료를 구분한다.
+            //   state == 'activated' → 내가 먼저 요청한 1단계   → '파기를 요청 했습니다.'
+            //   else(=cancelled)     → 상호 동의로 파기된 2단계 → '파기 되었습니다.'
+            const res = await api.command<{ state?: string }>('diploDestroyLetter', { letterNo }, generalId);
+            if (res?.state === 'activated') {
+                showToast('파기를 요청 했습니다.');
+            } else {
+                showToast('파기 되었습니다.');
+            }
+            fetchData();
+        } catch (e: any) {
+            // 실패 알림 verbatim — legacy destroyLetter catch는 (복붙 버그로) 회수 문구를 쓴다. PHP wins.
+            showToast('회수를 실패했습니다: ' + (e?.message || ''));
+        }
+    };
 
     return (
         <Shell>
@@ -135,6 +212,65 @@ export default function DiplomacyPage() {
                 </div>
             </GameCard>
 
+            {/* 서신 작성 폼 — 수뇌부 전용 */}
+            {canWrite && (
+                <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>외교 서신 작성</h2>
+                        <button onClick={() => setShowWriteForm(!showWriteForm)}>
+                            {showWriteForm ? '접기' : '펼치기'}
+                        </button>
+                    </div>
+                    {showWriteForm && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                            <div>
+                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>수신국</label>
+                                <select
+                                    value={destNationId}
+                                    onChange={(e) => setDestNationId(Number(e.target.value))}
+                                    style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                                >
+                                    <option value={0}>선택하세요</option>
+                                    {candidateNations.map(n => (
+                                        <option key={n.id} value={n.id}>
+                                            {n.name} (Lv.{n.level})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>요약</label>
+                                <input
+                                    type="text"
+                                    value={briefDraft}
+                                    onChange={(e) => setBriefDraft(e.target.value)}
+                                    placeholder="요약문을 입력하세요"
+                                    style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>본문</label>
+                                <textarea
+                                    value={detailDraft}
+                                    onChange={(e) => setDetailDraft(e.target.value)}
+                                    placeholder="본문을 입력하세요"
+                                    rows={4}
+                                    style={{ width: '100%', marginTop: 'var(--space-xs)', resize: 'vertical' }}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <button
+                                    disabled={briefDraft.trim().length === 0 || destNationId === 0}
+                                    onClick={handleSendLetter}
+                                >
+                                    발송
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </GameCard>
+            )}
+
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
 
@@ -157,7 +293,7 @@ export default function DiplomacyPage() {
                                     const textColor = isBrightColor(n.color) ? '#000000' : '#ffffff';
                                     return (
                                         <span
-                                            key={n.nationId}
+                                            key={n.id}
                                             className="status-badge"
                                             style={{ backgroundColor: n.color, color: textColor, border: 'none' }}
                                         >
@@ -178,7 +314,14 @@ export default function DiplomacyPage() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                             {letters.map(letter => (
-                                <LetterCard key={letter.no} letter={letter} myNationId={myNationId} />
+                                <LetterCard
+                                    key={letter.no}
+                                    letter={letter}
+                                    myNationId={myNationId}
+                                    canWrite={canWrite}
+                                    onRollback={handleRollback}
+                                    onDestroy={handleDestroy}
+                                />
                             ))}
                         </div>
                     )}
@@ -203,15 +346,38 @@ export default function DiplomacyPage() {
     );
 }
 
-function LetterCard({ letter, myNationId }: { letter: DiplomacyLetter; myNationId: number }) {
+function LetterCard({
+    letter,
+    myNationId,
+    canWrite,
+    onRollback,
+    onDestroy,
+}: {
+    letter: DiplomacyLetter;
+    myNationId: number;
+    canWrite: boolean;
+    onRollback: (letterNo: number) => void;
+    onDestroy: (letterNo: number) => void;
+}) {
     // Header shows the counter-party (the OTHER side relative to my nation) — legacy targetNation.
-    const counter = letter.src.nationId === myNationId ? letter.dest : letter.src;
-    const headerBg = counter.color || 'var(--bg-hover)';
-    const headerColor = isBrightColor(counter.color) ? '#000000' : '#ffffff';
+    const counter = letter.src.nationID === myNationId ? letter.dest : letter.src;
+    const headerBg = counter.nationColor || 'var(--bg-hover)';
+    const headerColor = isBrightColor(counter.nationColor) ? '#000000' : '#ffffff';
 
     const stateText = STATE_TEXT[letter.state] ?? letter.state;
     const variant = STATE_VARIANT[letter.state] ?? 'muted';
-    const stateOptText = letter.stateOpt ? STATE_OPT_TEXT[letter.stateOpt] ?? null : null;
+    const stateOptText = letter.state_opt ? STATE_OPT_TEXT[letter.state_opt] ?? null : null;
+
+    // 회수 가능: proposed 상태 && 내가 송신국 — legacy drawLetter (state=='proposed' && src.nationID==myNationID)
+    const canRollback = canWrite && letter.state === 'proposed' && letter.src.nationID === myNationId;
+    // 파기 버튼 노출: activated 상태 && 내가 양측 중 하나 — legacy drawLetter (state=='activated' 일 때 .btnDestroy show)
+    const showDestroy = canWrite && letter.state === 'activated' &&
+        (letter.src.nationID === myNationId || letter.dest.nationID === myNationId);
+    // 내가 이미 파기 요청한 측이면 버튼은 노출하되 비활성(disabled) — legacy:
+    //   (src==my && state_opt=='try_destroy_src') || (dest==my && state_opt=='try_destroy_dest')
+    const destroyDisabled =
+        (letter.src.nationID === myNationId && letter.state_opt === 'try_destroy_src') ||
+        (letter.dest.nationID === myNationId && letter.state_opt === 'try_destroy_dest');
 
     return (
         <GameCard style={{ padding: 0, overflow: 'hidden' }}>
@@ -227,7 +393,7 @@ function LetterCard({ letter, myNationId }: { letter: DiplomacyLetter; myNationI
                     flexWrap: 'wrap',
                 }}
             >
-                <span style={{ fontWeight: 600 }}>{counter.name}</span>
+                <span style={{ fontWeight: 600 }}>{counter.nationName}</span>
                 <span style={{ fontSize: 'var(--text-sm)', opacity: 0.85 }}>
                     #{letter.no} · {letter.date}
                 </span>
@@ -239,36 +405,96 @@ function LetterCard({ letter, myNationId }: { letter: DiplomacyLetter; myNationI
                     {stateOptText && (
                         <span style={{ fontSize: 'var(--text-sm)', color: 'var(--gold)' }}>({stateOptText})</span>
                     )}
+                    {/* 이전 문서 — legacy t_diplomacy.php th '이전 문서' / value '#N' 또는 '신규' */}
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
-                        {letter.prevNo != null ? `이전 서신 #${letter.prevNo}` : '신규'}
+                        이전 문서: {letter.prev_no != null ? `#${letter.prev_no}` : '신규'}
                     </span>
                 </div>
 
-                {/* 송신 → 수신 parties */}
+                {/* 송신 → 수신 서명인 — legacy t_diplomacy.php .letterSrc/.letterDest:
+                   signerImg(generalIcon) + signerNation(nationName) + signerName(generalName).
+                   미서명 수신측(generalName 부재)은 nation만 표시(legacy `'generalName' in dest` 분기). */}
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', flexWrap: 'wrap', marginBottom: 'var(--space-sm)', fontSize: 'var(--text-sm)' }}>
-                    <span style={{ color: letter.src.color || 'var(--text-secondary)', fontWeight: 500 }}>{letter.src.name}</span>
+                    <Signer party={letter.src} />
                     <span style={{ color: 'var(--text-muted)' }}>→</span>
-                    <span style={{ color: letter.dest.color || 'var(--text-secondary)', fontWeight: 500 }}>{letter.dest.name}</span>
+                    <Signer party={letter.dest} />
                 </div>
 
-                {/* brief (요약) — always present; plain text, newlines preserved. */}
-                <p style={{ whiteSpace: 'pre-wrap', marginBottom: letter.detail ? 'var(--space-sm)' : 0 }}>{letter.brief}</p>
+                {/* 내용(국가 내 공개) — legacy t_diplomacy.php th, 항상 표시(평문, 개행 보존) */}
+                <div style={{ marginBottom: letter.detail ? 'var(--space-sm)' : 0 }}>
+                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>내용(국가 내 공개)</span>
+                    <p style={{ whiteSpace: 'pre-wrap', margin: 'var(--space-xs) 0 0' }}>{letter.brief}</p>
+                </div>
 
-                {/* detail (본문) — may be masked to '(권한이 부족합니다)' when permission < 3. */}
+                {/* 내용(외교권자 전용) — legacy th. detail은 permission<3 시 BE에서 '(권한이 부족합니다)'로 마스킹됨 */}
                 {letter.detail && (
-                    <p
+                    <div
                         style={{
-                            whiteSpace: 'pre-wrap',
-                            color: 'var(--text-secondary)',
-                            fontSize: 'var(--text-sm)',
                             borderTop: '1px solid var(--border-subtle)',
                             paddingTop: 'var(--space-sm)',
                         }}
                     >
-                        {letter.detail}
-                    </p>
+                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>내용(외교권자 전용)</span>
+                        <p
+                            style={{
+                                whiteSpace: 'pre-wrap',
+                                color: 'var(--text-secondary)',
+                                fontSize: 'var(--text-sm)',
+                                margin: 'var(--space-xs) 0 0',
+                            }}
+                        >
+                            {letter.detail}
+                        </p>
+                    </div>
+                )}
+
+                {/* 동작 버튼 — legacy t_diplomacy.php .btnRollback '회수' / .btnDestroy '파기' (정적 라벨) */}
+                {(canRollback || showDestroy) && (
+                    <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)', justifyContent: 'flex-end' }}>
+                        {canRollback && (
+                            <button
+                                onClick={() => onRollback(letter.no)}
+                                style={{ fontSize: 'var(--text-sm)' }}
+                            >
+                                회수
+                            </button>
+                        )}
+                        {showDestroy && (
+                            <button
+                                onClick={() => onDestroy(letter.no)}
+                                disabled={destroyDisabled}
+                                style={{ fontSize: 'var(--text-sm)' }}
+                            >
+                                파기
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
         </GameCard>
+    );
+}
+
+// 서신 1 당사자 서명인 — legacy t_diplomacy.php .letterSrc/.letterDest 렌더 패러티.
+//   signerImg img.generalIcon(서명 장수 초상) + signerNation(nationName) + signerName(generalName).
+// generalName 부재(미서명 수신측)면 nation명만 표시한다(legacy `'generalName' in letterObj.dest` 분기).
+function Signer({ party }: { party: DiplomacyLetterParty }) {
+    const nationColor = party.nationColor || 'var(--text-secondary)';
+    return (
+        <span style={{ display: 'inline-flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
+            {party.generalIcon && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={party.generalIcon}
+                    alt=""
+                    className="generalIcon"
+                    style={{ width: 20, height: 20, borderRadius: 2, objectFit: 'cover' }}
+                />
+            )}
+            <span style={{ color: nationColor, fontWeight: 500 }}>{party.nationName}</span>
+            {party.generalName && (
+                <span style={{ color: nationColor }}>{party.generalName}</span>
+            )}
+        </span>
     );
 }

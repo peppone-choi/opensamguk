@@ -119,28 +119,68 @@ data class TournamentResponse(
 )
 
 // ── GET /api/diplomacy/letters — nations map + letters + myNationID (page 1) ───────────────────────
+/**
+ * `nations` 맵 1 항목 — legacy `NationStaticItem`(`ts/defs/index.ts:87`) 부분집합. PHP
+ * `j_diplomacy_get_letter.php`의 nations 맵은 `getNationStaticInfo()` 행을 그대로 내려보내므로
+ * `level`까지 포함한다(FE 수신국 select가 `Lv.{level}` 표시·정렬에 사용 — `ts/diplomacy.ts:345 nationList`).
+ * id/name/color/level은 모두 실 `nation` 컬럼이므로 날조 아님.
+ */
 data class DiplomacyNationInfo(
     val id: Int,
     val name: String,
     val color: String,
+    /** legacy `NationStaticItem.level` — 국가 레벨(수신국 select 표시용). 실 `nation.level` 컬럼. */
+    val level: Int,
 )
 
+/**
+ * 외교 서신 1 당사자(송/수신). PHP `j_diplomacy_get_letter.php`는 `aux['src']`/`aux['dest']`(서신 INSERT
+ * 시점 스냅샷, `j_diplomacy_send_letter.php:153-164`)를 그대로 내려보내고 `nationID`만 컬럼값으로 덮어쓴다.
+ * FE(`ts/diplomacy.ts` `LetterFullTarget`/`LetterNationTarget`)가 소비하는 키 셋과 1:1로 맞춘다:
+ *  - 송신측(`src`)은 항상 풀 타깃 = `{nationID, nationName, nationColor, generalName, generalIcon}`.
+ *  - 수신측(`dest`)은 제안 시점엔 서명자가 없어 nation만 = `{nationID, nationName, nationColor}`이며
+ *    승인/서명 후 `generalName`/`generalIcon`이 채워질 수 있다(legacy에선 INSERT 후 update가 없어
+ *    제안 단계 dest는 nation-only). 미기재 키는 null(부재=미기록, 날조 금지).
+ *
+ * 와이어 키는 legacy snake/camel 혼용을 그대로 따른다(`nationID`/`nationName`/`nationColor` —
+ * MessageTarget·aux 직렬화 키). Jackson 기본은 프로퍼티명 그대로 내보내므로 `@JsonProperty`로 고정한다.
+ */
 data class DiplomacyLetterParty(
+    @get:JsonProperty("nationID")
     val nationId: Int,
-    val name: String,
-    val color: String,
+    @get:JsonProperty("nationName")
+    val nationName: String,
+    @get:JsonProperty("nationColor")
+    val nationColor: String,
+    /** 서명 장수명(`aux[...]['generalName']`). nation-only 당사자(미서명 수신측)면 null. */
+    val generalName: String? = null,
+    /** 서명 장수 초상 URL(`aux[...]['generalIcon']` = GetImageURL(imgsvr, picture)). 미서명이면 null. */
+    val generalIcon: String? = null,
 )
 
 data class DiplomacyLetter(
     val no: Int,
     val src: DiplomacyLetterParty,
     val dest: DiplomacyLetterParty,
+    /** legacy `prev_no` — 이전(대체된) 문서 번호. 신규 문서면 null. */
+    @get:JsonProperty("prev_no")
     val prevNo: Int?,
+    /** legacy `state`(소문자) proposed/activated/cancelled/replaced — FE가 stateText 매핑·버튼 게이트 키로 소비. */
     val state: String,
-    /** Verbatim 제안됨/승인됨/거부됨/대첵됨. */
+    /**
+     * 상태 한글 라벨(opensamguk 편의 read 필드). Verbatim 제안됨/승인됨/거부됨/대체됨
+     * ([F4StateText.letterStateText]). legacy FE는 클라이언트에서 매핑하지만 read DTO에서도 동봉한다(부가 표시).
+     */
     val stateText: String,
+    /**
+     * legacy `state_opt`(`aux['state_opt']`) — 파기 2단계 진행상태. `try_destroy_src`/`try_destroy_dest`/null.
+     * FE 파기 버튼 노출/disable 및 '송신측/수신측의 파기 요청' 라벨 결정자.
+     */
+    @get:JsonProperty("state_opt")
     val stateOpt: String?,
+    /** legacy `text_brief` — 요약문. */
     val brief: String,
+    /** legacy `text_detail` — 본문. permission<3 호출자에겐 '(권한이 부족합니다)'로 마스킹된다. */
     val detail: String,
     val date: Instant,
     val srcSigner: Int,
@@ -417,6 +457,12 @@ data class BoardArticle(
     val contentHtml: String,
     val date: Instant,
     val comments: List<BoardComment>,
+    // [C1-α BLOCKED — author_icon 원천 부재] legacy `j_board_article_add.php`는 작성 시점 작성자
+    // 초상(imgsvr/picture → GetImageURL)을 INSERT하고 BoardArticle.vue가 64px로 렌더하지만,
+    // opensamguk `board_post` 스키마(V1__baseline.sql:352)에 author_icon/imgsvr/picture 컬럼이 없어
+    // (P8 미이식) read 원천이 없다 → 필드 자체를 노출하지 않는다(값 날조 금지, parityViolation MEDIUM 백로그).
+    // 복원 시 = 마이그레이션(author_icon 컬럼) + intake INSERT + DTO + FE 일괄. 댓글(BoardComment)은
+    // legacy에도 초상이 없으므로 author_icon 부재가 정상이다.
 )
 
 data class BoardResponse(

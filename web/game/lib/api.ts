@@ -176,6 +176,36 @@ export const api = {
     availableCommands: <T>(generalId?: number) =>
         get<T>(generalId == null ? '/api/commands/available' : `/api/commands/available?generalId=${generalId}`),
 
+    // ── C1-α write submit 래퍼 (wire 코드 기존; 백엔드 신규 로직/핸들러/wire 없음) ──────────────────────
+    // 모두 단일 mutation seam(POST /api/command/{code} → CommandController → CommandReserveService)을
+    // 경유한다. wire 코드는 CommandWireMapper에 이미 등록됨:
+    //   diploSendLetter:279 · diploRollbackLetter:287 · diploDestroyLetter:291 · boardArticle:208 · boardComment:214.
+    // 얇은 래퍼로 호출부(페이지)가 코드 문자열을 직접 알 필요 없게 한다(generalId는 명령 인테이크 필수).
+    // args 모양은 legacy ajax 폼 필드(=devsam-core hwe/j_*.php의 Util::getPost 키)와 동일하게 맞춘다.
+    commands: {
+        // 외교 서신 보내기 — legacy j_diplomacy_send_letter.php(brief/detail/destNation/prevNo).
+        diploSendLetter: <T>(
+            args: { destNation: number; brief: string; detail: string; prevNo: number | null },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/diploSendLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 외교 서신 회수(제안 단계 송신측) — legacy j_diplomacy_rollback_letter.php(letterNo).
+        diploRollbackLetter: <T>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
+            post<T>(`/api/command/diploRollbackLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 외교 서신 파기(승인 단계, 상호 동의 2단계) — legacy j_diplomacy_destroy_letter.php(letterNo).
+        diploDestroyLetter: <T>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
+            post<T>(`/api/command/diploDestroyLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 게시판 글쓰기(회의실/기밀실) — legacy j_board_article_add.php(isSecret/title/text).
+        boardArticle: <T>(
+            args: { isSecret: boolean; title: string; text: string },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/boardArticle?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 게시판 댓글 — legacy j_board_comment_add.php(articleNo/text, maxlength 250).
+        boardComment: <T>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
+            post<T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+    },
+
     // Simulator
     simulateBattle: <T>(body: unknown) => post<T>('/api/simulate-battle', body),
 };

@@ -230,7 +230,7 @@ class F4ReadControllersTest {
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
-        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828", level = 7), nation(2, "촉", "#2e7d32", level = 5)))
         `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
             listOf(
                 DiplomacyLetterReadEntity(id = 1, srcNationId = 1, destNationId = 2, state = "PROPOSED", textBrief = "종전제의", textDetail = "종전합시다", srcSigner = 10),
@@ -243,10 +243,92 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.myNationID").value(1))
             .andExpect(jsonPath("$.nations.1.name").value("위"))
+            // legacy NationStaticItem.level — 수신국 select 표시용(실 nation.level 컬럼).
+            .andExpect(jsonPath("$.nations.1.level").value(7))
             .andExpect(jsonPath("$.nations.2.color").value("#2e7d32"))
             .andExpect(jsonPath("$.letters.length()").value(2))
             .andExpect(jsonPath("$.letters[0].stateText").value("제안됨"))
             .andExpect(jsonPath("$.letters[1].stateText").value("승인됨"))
+            // C1-α — Party 와이어 키는 legacy aux/MessageTarget 키(nationID/nationName/nationColor).
+            // aux 결손이면 nation 조회 폴백(nationName/Color), generalName/Icon은 null.
+            .andExpect(jsonPath("$.letters[0].src.nationID").value(1))
+            .andExpect(jsonPath("$.letters[0].src.nationName").value("위"))
+            .andExpect(jsonPath("$.letters[0].src.nationColor").value("#c62828"))
+            .andExpect(jsonPath("$.letters[0].src.generalName").doesNotExist())
+            .andExpect(jsonPath("$.letters[0].dest.nationID").value(2))
+            .andExpect(jsonPath("$.letters[0].dest.nationName").value("촉"))
+            // state(소문자) + prev_no/state_opt 와이어 키.
+            .andExpect(jsonPath("$.letters[0].state").value("proposed"))
+            .andExpect(jsonPath("$.letters[0].prev_no").doesNotExist())
+            .andExpect(jsonPath("$.letters[0].state_opt").doesNotExist())
+    }
+
+    // ── C1-α — aux 스냅샷에서 서명자(generalName/generalIcon) + state_opt 구성, permission<3 detail 마스킹 ──
+    @Test
+    fun `diplomacy letters source party from aux, mask detail for non-군주, filter cancelled`() {
+        // 호출자 officer_level 5(수뇌) → secretPermission 2 (<3) → detail 마스킹.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
+            listOf(
+                // activated 서신: aux['src'] 풀 타깃(서명자) + aux['dest'] nation-only + state_opt.
+                DiplomacyLetterReadEntity(
+                    id = 1, srcNationId = 1, destNationId = 2, state = "ACTIVATED",
+                    textBrief = "불가침", textDetail = "5년 불가침을 제안합니다", srcSigner = 10, destSigner = 20,
+                    aux = linkedMapOf(
+                        "src" to linkedMapOf(
+                            "nationName" to "위", "nationColor" to "#c62828",
+                            "generalName" to "순욱", "generalIcon" to "//cdn/sunyuk.png",
+                        ),
+                        "dest" to linkedMapOf("nationName" to "촉", "nationColor" to "#2e7d32"),
+                        "state_opt" to "try_destroy_src",
+                    ),
+                ),
+                // cancelled 서신은 목록에서 제외돼야 한다(legacy WHERE state != 'cancelled').
+                DiplomacyLetterReadEntity(id = 2, srcNationId = 1, destNationId = 2, state = "CANCELLED", textBrief = "파기됨", textDetail = "x", srcSigner = 10),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
+            .andExpect(status().isOk)
+            // cancelled 1건 제외 → 1건만.
+            .andExpect(jsonPath("$.letters.length()").value(1))
+            .andExpect(jsonPath("$.letters[0].no").value(1))
+            // aux['src'] 서명자(generalName/generalIcon)가 그대로 내려온다(nationID는 컬럼값으로 덮음).
+            .andExpect(jsonPath("$.letters[0].src.nationID").value(1))
+            .andExpect(jsonPath("$.letters[0].src.generalName").value("순욱"))
+            .andExpect(jsonPath("$.letters[0].src.generalIcon").value("//cdn/sunyuk.png"))
+            // aux['dest']는 nation-only → generalName 없음.
+            .andExpect(jsonPath("$.letters[0].dest.nationID").value(2))
+            .andExpect(jsonPath("$.letters[0].dest.nationName").value("촉"))
+            .andExpect(jsonPath("$.letters[0].dest.generalName").doesNotExist())
+            // state_opt 와이어 키(파기 2단계).
+            .andExpect(jsonPath("$.letters[0].state_opt").value("try_destroy_src"))
+            // permission 2 (<3) → detail 마스킹 verbatim.
+            .andExpect(jsonPath("$.letters[0].detail").value("(권한이 부족합니다)"))
+            // brief는 마스킹하지 않는다.
+            .andExpect(jsonPath("$.letters[0].brief").value("불가침"))
+    }
+
+    // ── C1-α — 군주(officer_level 12 → secretPermission 4)는 detail 마스킹 해제 ──────────────────────────
+    @Test
+    fun `diplomacy letters do NOT mask detail for 군주 caller`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
+            listOf(
+                DiplomacyLetterReadEntity(id = 1, srcNationId = 1, destNationId = 2, state = "ACTIVATED", textBrief = "불가침", textDetail = "5년 불가침을 제안합니다", srcSigner = 10),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
+            .andExpect(status().isOk)
+            // 군주(secretPermission 4) → detail 원문 노출.
+            .andExpect(jsonPath("$.letters[0].detail").value("5년 불가침을 제안합니다"))
     }
 
     @Test

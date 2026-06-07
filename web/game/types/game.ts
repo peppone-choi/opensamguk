@@ -512,26 +512,36 @@ export interface TournamentResponse {
 // Mirrors j_diplomacy_get_letter.php. State text map rendered by page verbatim:
 // 제안됨/승인됨/거부됨/대체됨, 송신측의 파기 요청 …. text_detail masked to
 // '(권한이 부족합니다)' when permission<3 (game-api precheck).
+//
+// 와이어 키는 legacy `ts/diplomacy.ts`(LetterFullTarget/LetterNationTarget/LetterItem) +
+// game-api `DiplomacyController.letters`와 1:1로 맞춘다(C1-α read-DTO shape 정합). 당사자(src/dest)는
+// aux 스냅샷 그대로 = `{nationID, nationName, nationColor, generalName?, generalIcon?}`이며
+// nationID만 컬럼값으로 덮인다. 미서명 수신측은 generalName/generalIcon이 부재(null/undefined).
 export interface DiplomacyLetterParty {
-  nationId: number;        // legacy `nationID`
-  name: string;
-  color: string;
+  nationID: number;            // legacy `nationID` (대문자 D — aux/MessageTarget 키)
+  nationName: string;          // legacy `nationName`
+  nationColor: string;         // legacy `nationColor`
+  generalName?: string | null; // legacy `generalName` — 서명 장수명(미서명 수신측이면 부재)
+  generalIcon?: string | null; // legacy `generalIcon` — 서명 장수 초상 URL(미서명이면 부재)
 }
 
 export interface DiplomacyLetter {
   no: number;
   src: DiplomacyLetterParty;
   dest: DiplomacyLetterParty;
-  prevNo: number | null;   // legacy `prev_no`
-  state: string;           // proposed/accepted/declined/replaced/… (rendered verbatim)
-  stateOpt: string | null; // legacy `state_opt`
+  prev_no: number | null;  // legacy `prev_no` (와이어 키 — game-api @JsonProperty("prev_no"))
+  state: string;           // proposed/activated/cancelled/replaced (rendered verbatim)
+  stateText: string;       // game-api 동봉 한글 라벨(제안됨/승인됨/거부됨/대체됨)
+  state_opt: string | null; // legacy `state_opt` (와이어 키 — try_destroy_src/try_destroy_dest/null)
   brief: string;           // legacy `text_brief`
   detail: string;          // legacy `text_detail` (may be '(권한이 부족합니다)')
   date: string;
 }
 
+// `nations` 맵 1 값 — legacy NationStaticItem 부분집합(game-api DiplomacyNationInfo). 수신국 select
+// 표시(`Lv.{level}`)에 사용. legacy 응답은 `Record<number, NationStaticItem>`(맵, 배열 아님).
 export interface DiplomacyLetterNation {
-  nationId: number;
+  id: number;
   name: string;
   color: string;
   level: number;
@@ -539,9 +549,10 @@ export interface DiplomacyLetterNation {
 
 export interface DiplomacyLettersResponse {
   result: boolean;
-  nations: DiplomacyLetterNation[];   // candidate counter-nations (excludes self & 재야)
-  letters: DiplomacyLetter[];         // newest-first; [] when none
-  myNationId: number;                 // legacy `myNationID`
+  // legacy `Record<number, NationStaticItem>` — id→nation 맵(자국 포함). FE가 키 순회로 후보국 도출.
+  nations: Record<string, DiplomacyLetterNation>;
+  letters: DiplomacyLetter[];         // 오래된→최신(game-api date ASC); [] when none
+  myNationID: number;                 // legacy `myNationID`
 }
 
 // ── page 2 · 중원정보 (GET /api/diplomacy/conflict) ───────────────────────────
