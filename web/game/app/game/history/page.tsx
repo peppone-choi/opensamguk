@@ -1,35 +1,59 @@
 'use client';
 
 // ── page 16 · 연감 (History) — READ-ONLY per-month records viewer ──────────────
-// Consumes api.history(yearMonth?) → HistoryResponse (foundation phase). Mirrors
-// legacy hwe/v_history.php + ts/PageHistory.vue + API/Global/GetHistory.php.
-// Title "연감".
+// Consumes api.history(yearMonth?) → HistoryResponse. Mirrors legacy hwe/v_history.php +
+// ts/PageHistory.vue + API/Global/GetHistory.php. Title "연감".
 //
-// Single-server only in F4 (cross-server view dropped — spec OQ-8): the legacy
-// server dropdown / GetCurrentHistory live-tail is intentionally omitted; this page
-// browses one server's ng_history range [firstYearMonth, lastYearMonth].
+// 와이어 정합: BE HistoryController가 PageHistory.vue 기대 셰이프({firstYearMonth, lastYearMonth,
+// currentYearMonth, serverId, mapName, record})를 emit하고, record로 4섹션을 렌더한다:
+//   1) 지도 스냅샷(MapViewer) 2) 국가표(SimpleNationList) 3) 중원 정세(globalHistory) 4) 장수 동향(globalAction).
 //
-// yearMonth = Util::joinYearMonth (year*12 + (month-1)); parseYearMonth = [ym/12, ym%12+1]
-// — reproduced from legacy ts/util/parseYearMonth.ts byte-for-byte so the dropdown
-// labels ("{year}년 {month}월 (선택)") and the ◀ 이전달 / 다음달 ▶ steps match.
+// 색/태그 로그: globalHistory/globalAction 항목은 utilGame.formatLog()로 <R><B><1> 등 마크업을 HTML로
+// 변환해 렌더(레거시 v-html="formatLog(item)"와 동형). BLOCKED: yearbook_history에 global_history/
+// global_action 컬럼이 없어 두 배열은 항상 비어 있다(서버 BLOCKED, 날조 없음) → 빈 섹션 안내.
 //
-// Two record sections, verbatim titles (PageHistory.vue): 중원 정세 (global_history),
-// 장수 동향 (global_action). Both are server-formatted color/tag log strings rendered
-// as HTML, exactly as the legacy v-html="formatLog(item)".
+// 지도 스냅샷 주의: web/game MapViewer는 라이브 /api/map을 self-fetch하는 공유 컴포넌트라(두 맵뷰어 불변식)
+// record.map 월별 스냅샷을 props로 받지 못한다. 따라서 "지도" 섹션은 현재 라이브 지도를 보여준다(월별
+// 과거 스냅샷 렌더는 MapViewer 확장 필요 — 백로그). 데이터(record.map)는 BE가 전달하므로 향후 정합 가능.
 //
-// EMPTY-SAFE: record === null (empty range / no ng_history rows) → an empty-state
-// notice, the selector still renders the [first,last] range. Empty globalHistory /
-// globalAction arrays → empty section bodies. Never crashes.
+// Single-server only in F4 (cross-server view dropped — spec OQ-8).
+// yearMonth = Util::joinYearMonth (year*12 + (month-1)); parseYearMonth = [ym/12, ym%12+1].
+//
+// EMPTY-SAFE: record === null (empty range / no rows) → empty-state notice, selector still renders the
+// [first,last] range. Empty globalHistory/globalAction → empty section bodies. Never crashes.
 
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
+import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
-import type { HistoryResponse } from '../../../types/game';
+import { formatLog } from '../../../lib/utilGame';
+import type { HistoryResponse, SimpleNationObj } from '../../../types/game';
 
 // Verbatim from legacy ts/util/parseYearMonth.ts: [(yearMonth/12)|0, yearMonth%12 + 1].
 function parseYearMonth(yearMonth: number): [number, number] {
     return [(yearMonth / 12) | 0, (yearMonth % 12) + 1];
+}
+
+// CityBasicCard.tsx isBrightColor 충실 복제(공유 export 부재) — 명도≥128이면 어두운 글자.
+function isBrightColor(hex?: string): boolean {
+    if (!hex) return false;
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return false;
+    const v = parseInt(m[1], 16);
+    const r = (v >> 16) & 0xff;
+    const g = (v >> 8) & 0xff;
+    const b = v & 0xff;
+    return (r * 299 + g * 587 + b * 114) / 1000 >= 128;
+}
+
+// record.nations(jsonb 원형: 배열 또는 {key:obj} 맵) → SimpleNationObj 배열로 정규화(날조 없음, 통과만).
+function normalizeNations(
+    nations: SimpleNationObj[] | Record<string, SimpleNationObj> | null,
+): SimpleNationObj[] {
+    if (nations == null) return [];
+    if (Array.isArray(nations)) return nations;
+    return Object.values(nations);
 }
 
 const sectionBarStyle: React.CSSProperties = {
@@ -49,6 +73,36 @@ const logRowStyle: React.CSSProperties = {
     padding: 'var(--space-xs) 0',
     borderBottom: '1px solid var(--border-subtle)',
 };
+
+// ── SimpleNationList(legacy ts/components/SimpleNationList.vue) — 국가표(국명/국력/장수/속령) ────────
+function SimpleNationList({ nations }: { nations: SimpleNationObj[] }) {
+    return (
+        <table className="simple-nation-list" style={{ width: '100%', fontSize: 'var(--text-sm)' }}>
+            <thead>
+                <tr style={{ background: 'var(--bg-elevated)' }}>
+                    <th style={{ width: '44%', textAlign: 'left' }}>국명</th>
+                    <th style={{ width: '23%', textAlign: 'right' }}>국력</th>
+                    <th style={{ width: '15%', textAlign: 'right' }}>장수</th>
+                    <th style={{ width: '15%', textAlign: 'right' }}>속령</th>
+                </tr>
+            </thead>
+            <tbody>
+                {nations.map((n) => (
+                    <tr key={n.nation}>
+                        <td style={{ textAlign: 'left' }}>
+                            <span style={{ color: isBrightColor(n.color) ? '#000' : '#fff', backgroundColor: n.color, padding: '0 4px' }}>
+                                {n.name}
+                            </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>{(n.power ?? 0).toLocaleString()}</td>
+                        <td style={{ textAlign: 'right' }}>{(n.gennum ?? 0).toLocaleString()}</td>
+                        <td style={{ textAlign: 'right' }} title={(n.cities ?? []).join(', ')}>{(n.cities ?? []).length}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+}
 
 export default function HistoryPage() {
     const [data, setData] = useState<HistoryResponse | null>(null);
@@ -82,6 +136,7 @@ export default function HistoryPage() {
     const current = data?.currentYearMonth ?? 0;
     const selected = queryYearMonth ?? current;
     const record = data?.record ?? null;
+    const nations = normalizeNations(record?.nations ?? null);
 
     // Clamp + re-fetch when the user steps/selects a month (legacy watch(queryYearMonth)).
     const selectMonth = useCallback(
@@ -150,7 +205,23 @@ export default function HistoryPage() {
 
             {record !== null && (
                 <>
-                    {/* ── 중원 정세 (global_history) ──────────────────────────────── */}
+                    {/* ── 1) 지도 스냅샷(MapViewer) ─────────────────────────────────── */}
+                    <div style={sectionBarStyle}>세계 지도</div>
+                    <GameCard>
+                        <MapViewer />
+                    </GameCard>
+
+                    {/* ── 2) 국가표(SimpleNationList) ───────────────────────────────── */}
+                    <div style={sectionBarStyle}>세력 일람</div>
+                    <GameCard>
+                        {nations.length === 0 ? (
+                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>세력 정보가 없습니다.</p>
+                        ) : (
+                            <SimpleNationList nations={nations} />
+                        )}
+                    </GameCard>
+
+                    {/* ── 3) 중원 정세 (global_history) — formatLog 적용 ─────────────── */}
                     <div style={sectionBarStyle}>중원 정세</div>
                     <GameCard>
                         {record.globalHistory.length === 0 ? (
@@ -158,13 +229,13 @@ export default function HistoryPage() {
                         ) : (
                             <div>
                                 {record.globalHistory.map((item, idx) => (
-                                    <div key={idx} style={logRowStyle} dangerouslySetInnerHTML={{ __html: item }} />
+                                    <div key={idx} style={logRowStyle} dangerouslySetInnerHTML={{ __html: formatLog(item) }} />
                                 ))}
                             </div>
                         )}
                     </GameCard>
 
-                    {/* ── 장수 동향 (global_action) ───────────────────────────────── */}
+                    {/* ── 4) 장수 동향 (global_action) — formatLog 적용 ──────────────── */}
                     <div style={sectionBarStyle}>장수 동향</div>
                     <GameCard>
                         {record.globalAction.length === 0 ? (
@@ -172,7 +243,7 @@ export default function HistoryPage() {
                         ) : (
                             <div>
                                 {record.globalAction.map((item, idx) => (
-                                    <div key={idx} style={logRowStyle} dangerouslySetInnerHTML={{ __html: item }} />
+                                    <div key={idx} style={logRowStyle} dangerouslySetInnerHTML={{ __html: formatLog(item) }} />
                                 ))}
                             </div>
                         )}

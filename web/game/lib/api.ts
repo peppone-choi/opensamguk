@@ -103,8 +103,20 @@ export const api = {
     },
 
     // P6 pages
+    // 거래장(자원 경매) D1 — game-api `GET /api/auctions` → AuctionResourceListResponse
+    //   {result, buyRice[], sellRice[], recentLogs[], generalID}. 호출부는 envelope 통째로 받는다
+    //   (legacy SammoAPI.Auction.GetActiveResourceAuctionList와 동형).
     auctions: <T>() => get<T>('/api/auctions'),
+    // 유니크 경매 D2 — `GET /api/auctions/unique` → UniqueItemAuctionListResponse {result, list[], obfuscatedName}.
+    auctionsUnique: <T>() => get<T>('/api/auctions/unique'),
+    // 유니크 경매 상세 D3 — `GET /api/auctions/{id}/unique-detail`
+    //   → {result, auction, bidList[], obfuscatedName, remainPoint}. 부재 시 404 + 한글 메시지.
+    auctionUniqueDetail: <T>(id: number) => get<T>(`/api/auctions/${id}/unique-detail`),
+    // 베팅 목록 D4 — `GET /api/bettings` → BettingListResponse {result, bettingList(Map<id,item>), year, month}.
     betting: <T>() => get<T>('/api/bettings'),
+    // 베팅 상세 D5 — `GET /api/bettings/{id}/detail`(per-OWNER, 인증 필요)
+    //   → {result, bettingInfo(raw), bettingDetail[], myBetting[], remainPoint, year, month}.
+    bettingDetail: <T>(id: number) => get<T>(`/api/bettings/${id}/detail`),
     // Mailbox — parameterized by mailbox id (spec §7). game-api: GET /api/mailbox/{mailbox}.
     // No-arg overload (legacy default) kept for callers that still hit the bare route.
     mailbox: <T>(mailbox?: number) =>
@@ -204,6 +216,46 @@ export const api = {
         // 게시판 댓글 — legacy j_board_comment_add.php(articleNo/text, maxlength 250).
         boardComment: <T>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
             post<T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+
+        // ── 거래장/경매 (C1 AuctionResource/AuctionUniqueItem) ───────────────────────────────────
+        // CommandWireMapper.intakeCodes에 모두 기존 등록(auctionBid:135 / auctionOpenBuyRice:259 /
+        // auctionOpenSellRice:266 / auctionOpenUnique:273). args 키는 mapper가 파싱하는 키(=legacy ajax
+        // 폼 필드)와 byte-동일하게 맞춘다.
+        // 입찰 — legacy SammoAPI.Auction.Bid{BuyRice,SellRice,Unique}Auction({auctionID, amount}).
+        //   mapper는 `auctionId`/`amount`/(선택)`tryExtendCloseDate`를 읽는다(자원/유니크 동일 typed 명령).
+        auctionBid: <T>(
+            args: { auctionId: number; amount: number; tryExtendCloseDate?: boolean },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/auctionBid?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 쌀 매수 경매 등록 — legacy SammoAPI.Auction.OpenBuyRiceAuction.
+        //   {amount, startBidAmount, finishBidAmount, closeTurnCnt}.
+        auctionOpenBuyRice: <T>(
+            args: { amount: number; startBidAmount: number; finishBidAmount: number; closeTurnCnt: number },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/auctionOpenBuyRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 금(쌀 매도) 경매 등록 — legacy SammoAPI.Auction.OpenSellRiceAuction(동일 폼 필드).
+        auctionOpenSellRice: <T>(
+            args: { amount: number; startBidAmount: number; finishBidAmount: number; closeTurnCnt: number },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/auctionOpenSellRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        // 유니크 아이템 경매 등록 — legacy SammoAPI.Auction.OpenUniqueAuction. mapper는 `itemId`/`amount`.
+        auctionOpenUnique: <T>(
+            args: { itemId: string; amount: number },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/auctionOpenUnique?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+
+        // ── 베팅 (C1 BettingDetail) ────────────────────────────────────────────────────────────
+        // CommandWireMapper.intakeCodes `placeBet`:128. legacy SammoAPI.Betting.Bet({bettingID,
+        //   bettingType, amount}). mapper는 `bettingId`(camel)/`bettingType`(number[])/`amount`를 읽는다.
+        placeBet: <T>(
+            args: { bettingId: number; bettingType: number[]; amount: number },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<T>(`/api/command/placeBet?generalId=${generalId}&turnIdx=${turnIdx}`, args),
     },
 
     // Simulator

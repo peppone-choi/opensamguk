@@ -135,6 +135,39 @@ class BettingControllerTest {
     }
 
     @Test
+    fun `list item carries the full field set the betting page consumes`() {
+        // C1 BettingDetail/페이지가 소비하는 D4 항목 필드(name/closeYearMonth/reqInheritancePoint/
+        // isExclusive/winner/totalAmount)를 와이어에 고정 — FE 셸 회귀 가드(legacy BettingInfo - candidates).
+        mockWorld(2400, 6)
+        val masterJson = """
+            {"id":7,"type":"bettingNation","name":"패권 베팅","finished":true,
+             "selectCnt":2,"isExclusive":true,"reqInheritancePoint":true,
+             "openYearMonth":2400,"closeYearMonth":2436,"winner":[0,2],
+             "candidates":{"0":{"title":"A"},"1":{"title":"B"},"2":{"title":"C"}}}
+        """.trimIndent()
+        `when`(kv.findAll()).thenReturn(
+            listOf(
+                GameKvEntity(table = "betting", namespace = "betting", key = "id_7", value = masterJson, id = 1),
+            ),
+        )
+        `when`(betting.aggregateTotalAmountByBetting()).thenReturn(listOf(totalAgg(7, 12000L)))
+
+        mockMvc().perform(get("/api/bettings"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.bettingList.7.name").value("패권 베팅"))
+            .andExpect(jsonPath("$.bettingList.7.finished").value(true))
+            .andExpect(jsonPath("$.bettingList.7.selectCnt").value(2))
+            .andExpect(jsonPath("$.bettingList.7.isExclusive").value(true)) // 와이어 이름 고정(JsonProperty)
+            .andExpect(jsonPath("$.bettingList.7.reqInheritancePoint").value(true))
+            .andExpect(jsonPath("$.bettingList.7.closeYearMonth").value(2436))
+            .andExpect(jsonPath("$.bettingList.7.openYearMonth").value(2400))
+            .andExpect(jsonPath("$.bettingList.7.winner[0]").value(0))
+            .andExpect(jsonPath("$.bettingList.7.winner[1]").value(2))
+            .andExpect(jsonPath("$.bettingList.7.totalAmount").value(12000))
+            .andExpect(jsonPath("$.bettingList.7.candidates").doesNotExist())
+    }
+
+    @Test
     fun `list filters by req type parameter`() {
         mockWorld()
         val nationJson = """{"id":1,"type":"bettingNation","name":"NationBet","finished":false,"selectCnt":1,"reqInheritancePoint":false,"openYearMonth":0,"closeYearMonth":0}"""

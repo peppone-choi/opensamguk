@@ -157,6 +157,40 @@ class AuctionControllerTest {
     }
 
     @Test
+    fun `D1 item carries inline-bid bound fields the AuctionResource component binds`() {
+        // C1 AuctionResource 인라인 입찰은 min=startBidAmount/max=finishBidAmount/step=10에 바인딩하고,
+        // highestBid null이면 startBidAmount로 폴백한다(legacy watch). 또 단가=highestBid.amount/amount,
+        // 입찰자 generalName?? '-' 렌더 — 이 와이어 필드(startBidAmount/finishBidAmount/amount/
+        // highestBid.amount/highestBid.generalName)를 고정해 컴포넌트 회귀를 가드한다.
+        `when`(auctions.findByFinishedFalseAndType(AuctionType.BUY_RICE)).thenReturn(emptyList())
+        `when`(auctions.findByFinishedFalseAndType(AuctionType.SELL_RICE)).thenReturn(
+            listOf(
+                auction(
+                    id = 11, type = AuctionType.SELL_RICE, hostGeneralId = 3,
+                    detailJson = """{"hostName":"동탁","amount":1000,"startBidAmount":300,"finishBidAmount":2500}""",
+                ),
+            ),
+        )
+        // generalName 없는 aux(난독 미스냅샷) — FE는 ?? '-'로 렌더.
+        `when`(bids.findHighestBidsByAuctionIds(listOf(11))).thenReturn(
+            listOf(
+                AuctionBidEntity(
+                    auctionId = 11, owner = null, generalId = 77, amount = 1500,
+                    date = Instant.parse("2026-06-01T12:00:00Z"), aux = """{}""", no = 1,
+                ),
+            ),
+        )
+
+        mockMvc().perform(get("/api/auctions"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.sellRice[0].amount").value(1000))         // 단가 분모
+            .andExpect(jsonPath("$.sellRice[0].startBidAmount").value(300))  // 입찰 min + null 폴백
+            .andExpect(jsonPath("$.sellRice[0].finishBidAmount").value(2500)) // 입찰 max
+            .andExpect(jsonPath("$.sellRice[0].highestBid.amount").value(1500)) // 단가 분자
+            .andExpect(jsonPath("$.sellRice[0].highestBid.generalName").value(nullValue())) // ?? '-' 렌더
+    }
+
+    @Test
     fun `D1 listActive orders combined lists by close_date ASC`() {
         // buyRice 마감이 sellRice보다 늦음 — 합쳐 정렬 후 type별 분배(순서는 각 리스트 내부 정렬 검증)
         `when`(auctions.findByFinishedFalseAndType(AuctionType.BUY_RICE)).thenReturn(

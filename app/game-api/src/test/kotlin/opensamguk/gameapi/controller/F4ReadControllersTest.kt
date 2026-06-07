@@ -681,14 +681,17 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.troops.length()").value(0))
     }
 
-    // ── GET /api/history (empty when no yearbook rows) ───────────────────────────────────────────────
+    // ── GET /api/history (empty record + 0 range when no yearbook rows) ───────────────────────────────
     @Test
-    fun `history returns empty months when yearbook table has no rows`() {
+    fun `history returns null record and zero range when yearbook table has no rows`() {
         `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
 
-        mvc(HistoryController(history)).perform(get("/api/history"))
+        mvc(HistoryController(history, world)).perform(get("/api/history"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.months.length()").value(0))
+            .andExpect(jsonPath("$.firstYearMonth").value(0))
+            .andExpect(jsonPath("$.lastYearMonth").value(0))
+            .andExpect(jsonPath("$.currentYearMonth").value(0))
+            .andExpect(jsonPath("$.record").value(org.hamcrest.Matchers.nullValue()))
     }
 }

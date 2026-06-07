@@ -500,16 +500,37 @@ data class TroopsResponse(
     val troops: List<TroopRow>,
 )
 
-// ── GET /api/history?yearMonth — page 16 ───────────────────────────────────────────────────────────
-data class HistoryMonth(
+// ── GET /api/history?yearMonth — page 16 (연감) ─────────────────────────────────────────────────────
+// 와이어 정합: 레거시 `Global/GetHistory.php` + `PageHistory.vue`가 기대하는 셀렉터/레코드 셰이프.
+// PageHistory.vue는 staticValues{firstYearMonth,lastYearMonth,currentYearMonth,serverNick,mapName}와
+// history{map,nations,global_history,global_action}를 소비한다. opensamguk read는 단일 서버이므로
+// serverId/mapName은 정보용으로만 채운다(셀렉터는 [first,last] 범위만 사용).
+//
+// yearMonth = Util::joinYearMonth = year*12 + (month-1). parseYearMonth = [ym/12, ym%12+1].
+
+/**
+ * 선택된 월의 연감 레코드(PageHistory.vue `history`). map/nations는 yearbook_history jsonb 스냅샷(MapViewer +
+ * SimpleNationList 원천). globalHistory/globalAction(중원 정세/장수 동향)은 opensamguk yearbook_history에
+ * **컬럼이 없다**(V1__baseline.sql:227 — map/nations만 영속) → 빈 배열(§5 날조 금지, BLOCKED). 월별 글로벌
+ * 로그 컬럼이 배선되면 1줄로 채워진다. nations/map은 jsonb 원형(삽입순 보존) 그대로 전달.
+ */
+data class HistoryRecord(
+    val serverId: String,
     val year: Int,
     val month: Int,
-    val profileName: String,
-    val map: Map<String, Any?>,
-    val nations: Map<String, Any?>,
+    val globalHistory: List<String>, // 중원 정세 — yearbook_history 미보유 → [](BLOCKED)
+    val globalAction: List<String>,  // 장수 동향 — yearbook_history 미보유 → [](BLOCKED)
+    val nations: Any?,               // SimpleNationList 원천(jsonb 원형: 배열 또는 맵)
+    val map: Any?,                   // MapViewer 스냅샷(jsonb 원형)
+    val hash: String,
 )
 
 data class HistoryResponse(
     val result: Boolean,
-    val months: List<HistoryMonth>,
+    val firstYearMonth: Int,        // Util::joinYearMonth(first row)
+    val lastYearMonth: Int,         // Util::joinYearMonth(last row)
+    val currentYearMonth: Int,      // 진행중 서버: lastYearMonth+1(다음 달). 행 없으면 0.
+    val serverId: String,
+    val mapName: String,
+    val record: HistoryRecord?,     // 선택 월 레코드. 범위 밖/행 없음이면 null(빈 상태).
 )

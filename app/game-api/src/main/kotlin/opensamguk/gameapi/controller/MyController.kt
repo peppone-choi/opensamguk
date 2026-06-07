@@ -1,11 +1,12 @@
 package opensamguk.gameapi.controller
 
-import opensamguk.gameapi.dto.FrontNationInfo
 import opensamguk.gameapi.dto.MyBossResponse
 import opensamguk.gameapi.dto.MyCitiesResponse
+import opensamguk.gameapi.dto.MyCityGeneralName
 import opensamguk.gameapi.dto.MyCitySummary
 import opensamguk.gameapi.dto.MyGeneralSummary
 import opensamguk.gameapi.dto.MyGeneralsResponse
+import opensamguk.gameapi.dto.MyNationCityRef
 import opensamguk.gameapi.dto.MyNationDetailResponse
 import opensamguk.gameapi.dto.MyPageResponse
 import opensamguk.gameapi.owner.GeneralResolver
@@ -13,6 +14,7 @@ import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.domestic.getBill
 import opensamguk.logic.domestic.getDedLevel
@@ -135,16 +137,50 @@ class MyController(
         if (nationId == 0) {
             return ResponseEntity.ok(MyCitiesResponse(result = true, nationId = 0, cities = emptyList()))
         }
+        val capitalCityId = nations.findById(nationId).map { it.capitalCityId }.orElse(null)
+
+        // PHP `SELECT npc, name, city FROM general WHERE nation = %i` → cityID별 formatName CSV.
+        // 1회 로드 후 city_id로 그룹핑(N+1 방지). 순서는 PHP 쿼리(무순서)와 동형이 되도록 id ASC 고정.
+        val nationGenerals = generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
+        val generalsByCity: Map<Int, List<MyCityGeneralName>> = nationGenerals
+            .groupBy { it.cityId }
+            .mapValues { (_, gs) -> gs.sortedBy { it.id }.map { MyCityGeneralName(name = it.name, npc = it.npcState) } }
+
         val rows = cities.findByNationIdOrderByIdAsc(nationId).map { c ->
+            // PHP officerList: officer_city == cityID AND officer_level ∈ {4태수,3군사,2종사}. 빈 슬롯 = null.
+            val officers = generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))
+            val governor = officers.firstOrNull { it.officerLevel == 4 }
+            val strategist = officers.firstOrNull { it.officerLevel == 3 }
+            val secretary = officers.firstOrNull { it.officerLevel == 2 }
             MyCitySummary(
                 cityId = c.id,
                 name = c.name,
                 level = c.level,
+                levelText = (CityConst.levelMap[c.level] as? String) ?: "-",
                 region = c.region,
+                regionText = (CityConst.regionMap[c.region] as? String) ?: "-",
+                isCapital = capitalCityId != null && capitalCityId == c.id,
                 population = c.population,
                 populationMax = c.populationMax,
+                agriculture = c.agriculture,
+                agricultureMax = c.agricultureMax,
+                commerce = c.commerce,
+                commerceMax = c.commerceMax,
+                security = c.security,
+                securityMax = c.securityMax,
                 defense = c.defense,
+                defenseMax = c.defenseMax,
                 wall = c.wall,
+                wallMax = c.wallMax,
+                trust = c.trust,
+                trade = c.trade,
+                governorName = governor?.name,
+                governorNpc = governor?.npcState ?: 0,
+                strategistName = strategist?.name,
+                strategistNpc = strategist?.npcState ?: 0,
+                secretaryName = secretary?.name,
+                secretaryNpc = secretary?.npcState ?: 0,
+                generals = generalsByCity[c.id] ?: emptyList(),
             )
         }
         return ResponseEntity.ok(MyCitiesResponse(result = true, nationId = nationId, cities = rows))
@@ -176,29 +212,63 @@ class MyController(
     fun myNationDetail(@AuthenticationPrincipal userId: Long?): ResponseEntity<MyNationDetailResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         val resolved = resolver.resolve(userId)
-            ?: return ResponseEntity.ok(MyNationDetailResponse(result = false, hasNation = false, nation = null, cityCount = 0, generalCount = 0))
+            ?: return ResponseEntity.ok(MyNationDetailResponse(result = false, hasNation = false))
         val nationId = resolved.nationId
         if (nationId == 0) {
-            return ResponseEntity.ok(MyNationDetailResponse(result = true, hasNation = false, nation = null, cityCount = 0, generalCount = 0))
+            return ResponseEntity.ok(MyNationDetailResponse(result = true, hasNation = false))
         }
         val nation = nations.findById(nationId).orElse(null)
-            ?: return ResponseEntity.ok(MyNationDetailResponse(result = true, hasNation = false, nation = null, cityCount = 0, generalCount = 0))
+            ?: return ResponseEntity.ok(MyNationDetailResponse(result = true, hasNation = false))
+
+        // 속령일람 + 총주민 집계(PHP foreach $cityList: currPop += pop; maxPop += pop_max; 수도는 cyan).
+        val cityRows = cities.findByNationIdOrderByIdAsc(nationId)
+        var currPop = 0
+        var maxPop = 0
+        val cityRefs = cityRows.map { c ->
+            currPop += c.population
+            maxPop += c.populationMax
+            MyNationCityRef(
+                cityId = c.id,
+                name = c.name,
+                isCapital = nation.capitalCityId != null && nation.capitalCityId == c.id,
+            )
+        }
+
+        // 총병사(PHP `SELECT sum(crew), sum(leadership)*100 FROM general WHERE nation=%i AND npc != 5`).
+        // npc_state=5 제외 동일(aggregateCrewOfNation). 장수 0명이면 {0,0}.
+        val crewAgg = nations.aggregateCrewOfNation(nationId)
+        val currCrew = crewAgg?.now?.toInt() ?: 0
+        val maxCrew = crewAgg?.max?.toInt() ?: 0
+
+        // gennum(PHP `nation.gennum`)은 meta.gennum(전용 컬럼 부재 — NationReadEntity.toLogic 동식).
+        val gennum = (nation.meta["gennum"] as? Number)?.toInt() ?: 0
+        // [§2 BLOCKED — meta UNVERIFIED] 세율/지급률: 방어적 read, 부재 시 null(날조 금지).
+        val taxRate = (nation.meta["rate"] as? Number)?.toInt()
+        val bill = (nation.meta["bill"] as? Number)?.toInt()
+
         return ResponseEntity.ok(
             MyNationDetailResponse(
                 result = true,
                 hasNation = true,
-                nation = FrontNationInfo(
-                    id = nation.id,
-                    name = nation.name,
-                    color = nation.color,
-                    level = nation.level,
-                    gold = nation.gold,
-                    rice = nation.rice,
-                    tech = nation.tech,
-                    capitalCityId = nation.capitalCityId,
-                ),
-                cityCount = cities.countByNationId(nationId).toInt(),
-                generalCount = generals.countByNationId(nationId).toInt(),
+                nationId = nation.id,
+                name = nation.name,
+                color = nation.color,
+                population = currPop,
+                populationMax = maxPop,
+                crew = currCrew,
+                crewMax = maxCrew,
+                power = nation.power,
+                gold = nation.gold,
+                rice = nation.rice,
+                cityCount = cityRows.size,
+                generalCount = gennum,
+                // 기술력 = floor(tech) (PHP `number_format(floor($nation['tech']))`).
+                tech = kotlin.math.floor(nation.tech).toInt(),
+                levelText = GameConst.nationLevelNameOf(nation.level),
+                level = nation.level,
+                cities = cityRefs,
+                taxRate = taxRate,
+                bill = bill,
             ),
         )
     }
