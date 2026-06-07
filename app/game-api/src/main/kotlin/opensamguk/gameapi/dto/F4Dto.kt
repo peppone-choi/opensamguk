@@ -26,29 +26,59 @@ data class PublicGeneral(
     val name: String,
     /** 국가 id(0 = 재야). FE 세력 필터/그룹 키. */
     val nationId: Int,
-    /** 국가명(재야면 F4StateText.NEUTRAL_NATION_NAME). */
+    /** 국가명(재야면 F4StateText.NEUTRAL_NATION_NAME). PHP a_genList의 `$nationname[nation]`(국가 미존재→"-"는 재야로 표시). */
     val nationName: String,
     val nationColor: String,
-    /** NPC 상태(0 user / 1 possessed-NPC / 2+ pure NPC). FE 이름 색/정렬. */
+    /** NPC 상태(0 user / 1 possessed-NPC / 2+ pure NPC). PHP formatName/getNPCColor 입력(이름 색). */
     val npc: Int,
     val officerLevel: Int,
-    /** getOfficerLevelText(officerLevel, nationLevel) — 직책 한글명. */
+    /** getOfficerLevelText(officerLevel, nationLevel) — 직책(관직) 한글명. a_genList "관 직" 컬럼. */
     val officerLevelText: String,
     val leadership: Int,
     val strength: Int,
     val intel: Int,
-    /** 명성 레벨 버킷 = getExpLevel(experience). 명성 컬럼 표시("Lv {explevel}")·정렬 키. */
+    /** 명성 레벨 버킷 = getExpLevel(experience). a_genList "레 벨" 컬럼("Lv {explevel}")·정렬 키. */
     val explevel: Int,
-    /** 명성 칭호 = getHonor(experience). "Lv {explevel} ({honorText})". */
+    /** 명성 칭호 = getHonor(experience). a_genList "명 성" 컬럼. */
     val honorText: String,
-    /** 계급 레벨 버킷 = getDedLevel(dedication). 계급 컬럼 정렬 키. */
+    /** 계급 레벨 버킷 = getDedLevel(dedication). 계급 정렬 키. */
     val dedlevel: Int,
-    /** 계급 한글명 = getDedLevelText(dedlevel). 계급 컬럼 표시. */
+    /** 계급 한글명 = getDedLevelText(dedlevel). a_genList "계 급" 컬럼. */
     val dedLevelText: String,
     /** 봉록 = getBillByLevel(dedlevel). 계급 컬럼 부가 표시("({bill})"). */
     val bill: Int,
     val crew: Int,
     val cityName: String,
+
+    // ── a_genList(장수일람, fid 30) 15컬럼 보강(C3①) ────────────────────────────────────────────────
+    // PHP `hwe/a_genList.php`가 행마다 노출하는 표시 필드. raw 코드는 코드대로 두고 한글 해석값을 ADD
+    // (이미 이식된 헬퍼 SpecialityHelper/personalityNameOf/getOfficerLevelText/getHonor 재사용 — 날조 아님).
+    /** 장수 초상화 파일명(PHP `picture`). a_genList "얼 굴" 컬럼(이미지 src). */
+    val picture: String?,
+    /** 초상 이미지 서버 번호(PHP `imgsvr`→GetImageURL). FE가 CDN base 합성. */
+    val imageServer: Int,
+    /** 나이(PHP `age` → "{age}세"). a_genList "연령" 컬럼. */
+    val age: Int,
+    /** 성격 한글명 = personalityNameOf(personal_code) (PHP displayCharInfo의 getName()). a_genList "성격" 컬럼. */
+    val personalText: String,
+    /** 내정 특기명 = SpecialityHelper.domesticName(special_code) (PHP displaySpecialDomesticInfo). a_genList "특기"(앞). None→"-". */
+    val specialDomesticText: String,
+    /** 전투 특기명 = SpecialityHelper.warName(special2_code) (PHP displaySpecialWarInfo). a_genList "특기"(뒤). None→"-". */
+    val specialWarText: String,
+    /** 부상률(0~100, PHP `injury`). >0이면 통/무/지에 부상보너스(감산)·적색 표시(FE). a_genList 통무지 컬럼. */
+    val injury: Int,
+    /** 통솔 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
+    val lbonus: Int,
+    /**
+     * 삭턴(killturn) = 남은 활동 턴. PHP `general.killturn` 컬럼. opensamguk은 general 스칼라 컬럼이 아니라
+     * meta(`killturn`)에서 읽는다(GeneralListController와 동일 원천). meta 미기재 시 null(부재=미기록, 날조 금지).
+     */
+    val killturn: Int?,
+    // [§2 BLOCKED — general_access_log 부재] 벌점(refresh_score_total)은 PHP가
+    // `LEFT JOIN general_access_log`에서 읽는다(a_genList.php:114). 해당 테이블이 opensamguk 스키마
+    // 어디에도 없어(P8 미이식) read 원천이 없다 → 컬럼 자체를 노출하지 않는다(값 날조 금지).
+    // 또한 a_genList의 기본 정렬(type=9, refresh_score_total DESC)도 이 원천 부재로 재현 불가 —
+    // FE는 가용한 정렬 키만 제공하고 벌점 정렬/컬럼은 데이터가 생길 때(P8) 추가한다.
 )
 
 // ── GET /api/tournament — state/bracket/standings/rankings/msg (pages 12, 13, 11-bracket) ──────────

@@ -98,6 +98,40 @@ class MyControllerTest {
     }
 
     @Test
+    fun `my-generals emits b_myGenInfo columns - korean text, bill, gold, belong, lbonus`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
+            listOf(
+                GeneralReadEntity(
+                    id = 1, name = "조조", nationId = 1, officerLevel = 12,
+                    leadership = 90, strength = 80, intel = 95, gold = 5000, rice = 3000,
+                    dedication = 10000, experience = 50000, injury = 0,
+                    picture = "chocho.jpg", imageServer = 2,
+                    personalCode = "che_정복", specialCode = "None", special2Code = "None",
+                    meta = linkedMapOf("belong" to 12),
+                ),
+            ),
+        )
+
+        mockMvc().perform(get("/api/my-generals").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generals[0].name").value("조조"))
+            // 관직(officerLevel 12, nationLevel 7) → 황제. 통솔보너스 calcLeadershipBonus(12,7)=14.
+            .andExpect(jsonPath("$.generals[0].officerLevelText").value("황제"))
+            .andExpect(jsonPath("$.generals[0].lbonus").value(14))
+            // 자금/군량/사관(belong)/봉록(getBill(dedication)).
+            .andExpect(jsonPath("$.generals[0].gold").value(5000))
+            .andExpect(jsonPath("$.generals[0].rice").value(3000))
+            .andExpect(jsonPath("$.generals[0].belong").value(12))
+            .andExpect(jsonPath("$.generals[0].personalText").value("정복"))
+            .andExpect(jsonPath("$.generals[0].specialDomesticText").value("-"))
+            // 벌점(refresh_score_total)은 §2 BLOCKED — 필드 자체가 없어야 한다(날조 금지).
+            .andExpect(jsonPath("$.generals[0].refreshScoreTotal").doesNotExist())
+    }
+
+    @Test
     fun `my-generals returns result-false empty when no character`() {
         `when`(owners.findByUserId(7L)).thenReturn(null)
 

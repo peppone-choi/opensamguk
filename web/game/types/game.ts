@@ -200,20 +200,71 @@ export interface KingdomRank {
   capitalName: string;
 }
 
-// GET /api/rankings/npcs → WHERE npc_state=1, total DESC, no rank field.
+// GET /api/rankings/npcs → 빙의일람(a_npcList.php). WHERE npc_state=1, no rank field.
+// 12컬럼: 희생장수(name,npc색) | 악령이름(ownerName, BLOCKED→null) | Lv(explevel) | 국가 | 성격(personalText)
+//        | 특기(specialDomesticName/specialWarName) | 종능(total) | 통무지 | 명성(experience raw) | 계급(devotion raw)
 export interface NpcGeneral {
   generalId: number;
   name: string;
+  npc: number; // getNPCColor용(formatName 동치)
   nation: string;
   nationColor: string;
   officerLevel: number;
+  ownerName: string | null; // 악령 이름 — BLOCKED(owner_name 컬럼 부재) → null
+  explevel: number; // Lv
+  personalText: string; // 성격 한글명
+  specialDomesticName: string; // 내정 특기명
+  specialWarName: string; // 전투 특기명
   leadership: number;
   strength: number;
   intel: number;
-  experience: number;
-  devotion: number;
-  crew: number;
-  cityName: string;
+  total: number; // 종능 = 통+무+지
+  experience: number; // 명성 컬럼 raw 값
+  devotion: number; // 계급 컬럼 raw 값(= general.dedication)
+  crew: number; // non-PHP 잉여(미렌더)
+  cityName: string; // non-PHP 잉여(미렌더)
+}
+
+// GET /api/rankings/kingdom-roster → 세력일람(a_kingdomList.php) ROSTER. leaderboard와 별개.
+export interface KingdomRoster {
+  nations: KingdomRosterNation[]; // 국력 DESC
+  neutral: KingdomRosterNeutral;
+}
+export interface KingdomRosterNation {
+  nationId: number;
+  name: string;
+  color: string;
+  typeCode: string; // 성향 — BLOCKED(한글명 헬퍼 미이식) → raw code
+  level: number;
+  levelText: string; // 작위(방랑군..황제; lv8/9 divergence)
+  power: number; // 국력 = nation.power
+  genNum: number;
+  cityCount: number;
+  chiefs: KingdomRosterChief[]; // officer_level 12→5 고정 8칸
+  ambassadors: string[]; // 외교권자 — BLOCKED(permission 컬럼 부재) → []
+  auditorCount: number; // 조언자 수 — BLOCKED → 0
+  cities: KingdomRosterCity[]; // 속령 일람
+  capitalCityId: number | null; // 수도(cyan 강조)
+  generals: KingdomRosterGeneral[]; // 장수 일람(dedication DESC)
+}
+export interface KingdomRosterChief {
+  officerLevelText: string;
+  name: string; // 공석이면 "-"
+  npc: number;
+}
+export interface KingdomRosterCity {
+  cityId: number;
+  name: string;
+}
+export interface KingdomRosterGeneral {
+  name: string;
+  npc: number;
+}
+export interface KingdomRosterNeutral {
+  genNum: number;
+  cityCount: number;
+  cities: KingdomRosterCity[];
+  generals: KingdomRosterGeneral[];
 }
 
 // GET /api/rankings/hall-of-fame → F3 default [] (hall empty in 1010).
@@ -354,6 +405,54 @@ export interface PublicGeneral {
   bill: number;            // 봉록(getBillByLevel)
   crew: number;
   cityName: string;
+  // ── a_genList(장수일람) 15컬럼 보강(C3①) ─────────────────────────────────────
+  picture: string | null;       // 얼굴(초상 파일명) — FE가 CDN base 합성
+  imageServer: number;          // 초상 이미지 서버 번호
+  age: number;                  // 연령("{age}세")
+  personalText: string;         // 성격명(personalityNameOf)
+  specialDomesticText: string;  // 내정 특기명(None→"-")
+  specialWarText: string;       // 전투 특기명(None→"-")
+  injury: number;               // 부상률(0~100) — >0이면 통/무/지 감산·적색
+  lbonus: number;               // 통솔보너스(calcLeadershipBonus) — >0이면 통솔에 "+{lbonus}"(cyan)
+  killturn: number | null;      // 삭턴(meta.killturn) — 미기재 시 null
+  // 벌점(refresh_score_total)은 §2 BLOCKED(general_access_log 부재) — 필드 자체 미노출.
+}
+
+// GET /api/my-generals 의 실제 응답(백엔드 MyGeneralsResponse). b_myGenInfo(세력장수, fid 25) 쌍.
+// a_genList(전체)와 컬럼 set이 유사하되 자금·군량·봉록·사관(belong)이 추가다.
+export interface MyGeneralSummary {
+  generalId: number;
+  name: string;
+  cityId: number;
+  officerLevel: number;
+  leadership: number;
+  strength: number;
+  intel: number;
+  crew: number;
+  npcState: number;
+  mine: boolean;               // 호출자 본인 장수 여부
+  // ── b_myGenInfo 15컬럼 보강(C3①) ────────────────────────────────────────────
+  picture: string | null;       // 얼굴
+  imageServer: number;
+  officerLevelText: string;     // 관직 한글명
+  dedLevelText: string;         // 계급 한글명
+  honorText: string;            // 명성 칭호
+  bill: number;                 // 봉록(getBill)
+  gold: number;                 // 자금
+  rice: number;                 // 군량
+  personalText: string;         // 성격명
+  specialDomesticText: string;  // 내정 특기명(None→"-")
+  specialWarText: string;       // 전투 특기명(None→"-")
+  belong: number;               // 사관(belong)
+  injury: number;               // 부상률
+  lbonus: number;               // 통솔보너스
+  // 벌점(refresh_score_total)은 §2 BLOCKED(general_access_log 부재) — 필드 자체 미노출.
+}
+
+export interface MyGeneralsResponse {
+  result: boolean;
+  nationId: number;
+  generals: MyGeneralSummary[];
 }
 
 // ── page 12/13/11-bracket · 토너먼트 (GET /api/tournament) ────────────────────

@@ -90,7 +90,11 @@ export default function CharacterClaim({ onClaimed }: { onClaimed: () => void })
                                 <span>무 {c.strength}</span>
                                 <span>지 {c.intel}</span>
                             </div>
-                            <div className="claim-meta">관직 {c.officerLevel}급</div>
+                            {/* legacy select_npc.ts 카드: 성격명 → 내정특기 / 전투특기 (officerLevel은 카드에 없음). */}
+                            <div className="claim-meta">{c.personal ?? '-'}</div>
+                            <div className="claim-meta">
+                                {(c.special ?? '-')} / {(c.special2 ?? '-')}
+                            </div>
                             <button
                                 className="claim-btn"
                                 disabled={claiming !== null}

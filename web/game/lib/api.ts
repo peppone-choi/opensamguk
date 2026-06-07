@@ -96,6 +96,7 @@ export const api = {
         emperorDetail: <T>(id: number) => get<T>(`/api/rankings/emperor/${id}`),
         allGenerals: <T>() => get<T>('/api/rankings/generals'),
         kingdoms: <T>() => get<T>('/api/rankings/kingdoms'),
+        kingdomRoster: <T>() => get<T>('/api/rankings/kingdom-roster'),
         npcs: <T>() => get<T>('/api/rankings/npcs'),
         hallOfFame: <T>() => get<T>('/api/rankings/hall-of-fame'),
         traffic: <T>() => get<T>('/api/rankings/traffic'),

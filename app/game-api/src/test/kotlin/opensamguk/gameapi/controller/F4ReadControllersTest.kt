@@ -163,6 +163,42 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].experience").doesNotExist())
             .andExpect(jsonPath("$[0].dedication").doesNotExist())
             .andExpect(jsonPath("$[0].rice").doesNotExist())
+            // 벌점(refresh_score_total)은 §2 BLOCKED — 필드 자체가 없어야 한다(날조 금지).
+            .andExpect(jsonPath("$[0].refreshScoreTotal").doesNotExist())
+    }
+
+    // ── GET /api/generals — a_genList 15컬럼 보강(C3①) 한글 해석/부상보너스/삭턴 검증 ──────────────────
+    @Test
+    fun `generals emits a_genList columns - korean text, lbonus, killturn`() {
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828", level = 7)))
+        `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1)))
+        `when`(generals.findAll()).thenReturn(
+            listOf(
+                GeneralReadEntity(
+                    id = 1, name = "조조", nationId = 1, cityId = 5, officerLevel = 12,
+                    leadership = 90, strength = 80, intel = 95, crew = 1000,
+                    age = 41, injury = 0, picture = "chocho.jpg", imageServer = 2,
+                    personalCode = "che_정복", specialCode = "None", special2Code = "None",
+                    meta = linkedMapOf("killturn" to 38),
+                ),
+            ),
+        )
+
+        mvc(GeneralsController(generals, nations, cities)).perform(get("/api/generals"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].age").value(41))
+            .andExpect(jsonPath("$[0].picture").value("chocho.jpg"))
+            .andExpect(jsonPath("$[0].imageServer").value(2))
+            .andExpect(jsonPath("$[0].injury").value(0))
+            // 성격 한글명(personalityNameOf). None 특기는 "-"로 정규화(코드 미등록=PHP None.php $name='-').
+            .andExpect(jsonPath("$[0].personalText").value("정복"))
+            .andExpect(jsonPath("$[0].specialDomesticText").value("-"))
+            .andExpect(jsonPath("$[0].specialWarText").value("-"))
+            // 관직(officerLevel 12, nationLevel 7) → 황제. 통솔보너스 = calcLeadershipBonus(12,7)=14.
+            .andExpect(jsonPath("$[0].officerLevelText").value("황제"))
+            .andExpect(jsonPath("$[0].lbonus").value(14))
+            // 삭턴 = meta.killturn.
+            .andExpect(jsonPath("$[0].killturn").value(38))
     }
 
     // ── GET /api/tournament (state-0 default, no table) ──────────────────────────────────────────────

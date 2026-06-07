@@ -10,8 +10,15 @@ import opensamguk.gameapi.dto.MyNationDetailResponse
 import opensamguk.gameapi.dto.MyPageResponse
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.common.constants.GameConst
+import opensamguk.logic.domestic.getBill
+import opensamguk.logic.domestic.getDedLevel
+import opensamguk.logic.domestic.getDedLevelText
+import opensamguk.logic.domain.metaInt
+import opensamguk.logic.world.SpecialityHelper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -77,6 +84,9 @@ class MyController(
             ?: return ResponseEntity.ok(MyGeneralsResponse(result = false, nationId = 0, generals = emptyList()))
         val nationId = resolved.nationId
         val meId = resolved.general.id
+        // 국가 레벨(officerLevelText/lbonus 계산 입력). 재야/국가 부재 시 0(PHP getOfficerLevelText의 nlevel).
+        val nationLevel = if (nationId != 0) nations.findById(nationId).map { it.level }.orElse(0) else 0
+        // PHP b_myGenInfo 기본 정렬(type=1)=officer_level DESC. 기존 리포지토리 메서드가 동형.
         val rows = if (nationId != 0) {
             generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
         } else {
@@ -94,6 +104,23 @@ class MyController(
                 crew = g.crew,
                 npcState = g.npcState,
                 mine = g.id == meId,
+                // ── b_myGenInfo 15컬럼 보강(C3①). raw 코드 → 한글은 이식된 헬퍼만 재사용(날조 아님). ──
+                picture = g.picture,
+                imageServer = g.imageServer,
+                officerLevelText = F4StateText.officerLevelText(g.officerLevel, nationLevel),
+                // 계급/봉록 — PHP b_myGenInfo는 getDed($general['dedication'])/getBill($general['dedication'])로
+                // dedication에서 직접 산출한다(STORED dedlevel 컬럼을 거치지 않음). byte-parity 위해 동일하게 직접 산출.
+                dedLevelText = getDedLevelText(getDedLevel(g.dedication.toDouble())),
+                honorText = F4StateText.honorText(g.experience),
+                bill = getBill(g.dedication.toDouble()),
+                gold = g.gold,
+                rice = g.rice,
+                personalText = GameConst.personalityNameOf(g.personalCode),
+                specialDomesticText = if (g.specialCode == "None") "-" else SpecialityHelper.domesticName(g.specialCode),
+                specialWarText = if (g.special2Code == "None") "-" else SpecialityHelper.warName(g.special2Code),
+                belong = metaInt(g.meta, "belong"),
+                injury = g.injury,
+                lbonus = calcLeadershipBonus(g.officerLevel, nationLevel),
             )
         }
         return ResponseEntity.ok(MyGeneralsResponse(result = true, nationId = nationId, generals = summaries))
@@ -174,5 +201,16 @@ class MyController(
                 generalCount = generals.countByNationId(nationId).toInt(),
             ),
         )
+    }
+
+    /**
+     * PHP `calcLeadershipBonus($officerLevel, $nationLevel)` (func_process.php:52-61) 충실 이식.
+     * b_myGenInfo는 raw officer_level을 그대로 넘긴다(데모션 미적용). 통솔 컬럼에 "+{lbonus}"(cyan)로 부가.
+     * GeneralListController/GeneralsController의 동명 헬퍼와 동식.
+     */
+    private fun calcLeadershipBonus(officerLevel: Int, nationLevel: Int): Int = when {
+        officerLevel == 12 -> nationLevel * 2
+        officerLevel >= 5 -> nationLevel
+        else -> 0
     }
 }

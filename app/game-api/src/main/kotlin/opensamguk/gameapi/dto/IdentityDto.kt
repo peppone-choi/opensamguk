@@ -357,7 +357,12 @@ data class MyPageResponse(
     val imageServer: Int,
 )
 
-/** GET /api/my-generals — generals in the caller's nation (the caller is always included). */
+/**
+ * GET /api/my-generals — generals in the caller's nation (the caller is always included).
+ * PHP `hwe/b_myGenInfo.php`(세력장수, fid 25) 15컬럼 행: 얼굴/이름/관직/계급/명성/봉록/통솔/무력/지력/
+ * 자금/군량/성격/특기2/사관/벌점. a_genList(전체 장수)와 쌍이며 자금·군량·봉록·사관(belong)이 추가다.
+ * raw 코드는 그대로 두고, 한글 해석값(관직/계급/성격/특기명)은 이미 이식된 헬퍼만 재사용해 ADD(날조 아님).
+ */
 data class MyGeneralSummary(
     val generalId: Int,
     val name: String,
@@ -370,6 +375,39 @@ data class MyGeneralSummary(
     val npcState: Int,
     /** True iff this is the caller's own general. Named `mine` (not `isMe`) so Jackson keeps the field name. */
     val mine: Boolean,
+
+    // ── b_myGenInfo 15컬럼 보강(C3①) ──────────────────────────────────────────────────────────────
+    /** 장수 초상 파일명(PHP `picture`). "얼 굴" 컬럼 이미지 src. */
+    val picture: String? = null,
+    /** 초상 이미지 서버 번호(PHP `imgsvr`→GetImageURL). FE CDN base 합성. */
+    val imageServer: Int = 0,
+    /** 관직 한글명 = getOfficerLevelText(officer_level, nationLevel) (PHP). "관 직" 컬럼. */
+    val officerLevelText: String = "",
+    /** 계급 한글명 = getDedLevelText(getDedLevel(dedication)) (PHP getDed). "계 급" 컬럼. */
+    val dedLevelText: String = "",
+    /** 명성 칭호 = getHonor(experience) (PHP). "명 성" 컬럼. */
+    val honorText: String = "",
+    /** 봉록 = getBill(dedication) = getBillByLevel(getDedLevel(dedication)) (PHP). "봉 록" 컬럼. */
+    val bill: Int = 0,
+    /** 자금(PHP `gold`). "자 금" 컬럼. */
+    val gold: Int = 0,
+    /** 군량(PHP `rice`). "군 량" 컬럼. */
+    val rice: Int = 0,
+    /** 성격 한글명 = personalityNameOf(personal_code) (PHP displayCharInfo). "성 격" 컬럼. */
+    val personalText: String = "",
+    /** 내정 특기명 = SpecialityHelper.domesticName(special_code) (PHP displaySpecialDomesticInfo). "특 기"(앞). None→"-". */
+    val specialDomesticText: String = "",
+    /** 전투 특기명 = SpecialityHelper.warName(special2_code) (PHP displaySpecialWarInfo). "특 기"(뒤). None→"-". */
+    val specialWarText: String = "",
+    /** 사관(belong) = 입사 경과 턴 수(PHP `belong`). "사 관" 컬럼. */
+    val belong: Int = 0,
+    /** 부상률(0~100, PHP `injury`). >0이면 통/무/지 감산·적색 표시(FE). */
+    val injury: Int = 0,
+    /** 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
+    val lbonus: Int = 0,
+    // [§2 BLOCKED — general_access_log 부재] 벌점(refresh_score_total)은 PHP가 LEFT JOIN
+    // general_access_log에서 읽는다(b_myGenInfo.php:118). 테이블이 opensamguk 스키마에 없어(P8 미이식)
+    // read 원천이 없다 → 벌점 컬럼/정렬(type=10) 모두 노출하지 않는다(날조 금지).
 )
 
 data class MyGeneralsResponse(
