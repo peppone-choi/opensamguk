@@ -89,7 +89,10 @@ class WorldSnapshotLoader(
     }
 
     private fun loadNations(): List<Nation> = jdbc.query(
-        "SELECT id, name, color, capital_city_id, gold, rice, power, level, type_code, meta FROM nation ORDER BY id ASC",
+        // tech를 SELECT에 포함해야 한다. 누락 시 in-memory Nation.tech가 기본 0.0으로 떨어지고,
+        // 다음 월틱 flush가 UPDATE nation SET tech=0 으로 시드값(예: 후한 1500)을 영구히 덮어쓴다.
+        "SELECT id, name, color, capital_city_id, gold, rice, tech, power, level, type_code, meta " +
+            "FROM nation ORDER BY id ASC",
     ) { rs, _ ->
         Nation(
             id = rs.getInt("id"),
@@ -98,6 +101,7 @@ class WorldSnapshotLoader(
             capitalCityId = rs.getObject("capital_city_id") as? Int,
             gold = rs.getInt("gold"),
             rice = rs.getInt("rice"),
+            tech = rs.getDouble("tech"),
             power = rs.getInt("power"),
             level = rs.getInt("level"),
             typeCode = rs.getString("type_code"),
