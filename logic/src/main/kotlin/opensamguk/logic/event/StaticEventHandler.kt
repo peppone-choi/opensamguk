@@ -27,6 +27,13 @@ object StaticEventHandler {
     }
 
     /**
+     * 등록된 핸들러 맵을 비운다 — 테스트/레지스트리 리셋(단일 소유자 싱글톤이므로 테스트 격리에 필요).
+     * scenario 1010 게이트는 빈 맵이 정본이므로, [register]로 핸들러를 넣은 테스트는 이걸로 원복한다.
+     * ([opensamguk.logic.message.Message.clearBuilders]와 동일한 단일-소유자 리셋 패턴.)
+     */
+    fun clear() = handlers.clear()
+
+    /**
      * PHP `StaticEventHandler::handleEvent` — dispatch to all registered handlers for [eventType].
      * No-op when the map is empty (scenario 1010 gate).
      */

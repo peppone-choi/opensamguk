@@ -14,7 +14,6 @@ import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.message.MessageType
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * che_불가침제의 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침제의.php`.
@@ -103,12 +102,17 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
     }
 
     /**
-     * P6 — the diplomatic-message send + setResultTurn run() (che_불가침제의.php:154-229).
+     * che_불가침제의.php:154-229 run(). draw COUNT = 0 — no RNG.
      *
-     * Resolve flow:
+     * Resolve flow (PHP run 본체 그대로):
      *  1. Extract destNationID, year, month from args.
-     *  2. Build and buffer a diplomacy [Message] (the engine routes it to the mailbox channel).
-     *  3. Write action log: `<D><b>{상대국}</b></>에게 {year}년 {month}월까지 불가침을 제의했습니다.`
+     *  2. 장수 액션 로그 `<D><b>{상대국}</b></>{로} 불가침 제의 서신을 보냈습니다.<1>{date}</>`.
+     *     **byte-parity 주의**: PHP `$josaRo = JosaUtil::pick($nationName, '로')`(che_불가침제의.php:170)는
+     *     `로`/`으로` 형을 **행동 장수 자신의 국명**(`$nationName`)으로 고른 뒤, 표시는 `$destNationName`에
+     *     대해 한다(:182). 즉 josa는 actor 국명, 텍스트는 상대국명 — quirk이지만 충실히 재현한다.
+     *  3. DiplomaticMessage(action=no_aggression, year, month) buffer — title
+     *     `{국명}{와} {year}년 {month}월까지 불가침 제의 서신`(che_불가침제의.php:212,
+     *     josaWa = JosaUtil::pick($nationName, '와')), validUntil = date+max(30,turnterm*3)분([DiplomacySeam]).
      *  4. The diplomacy state mutation (state=7) happens ONLY when the recipient accepts via
      *     [CheBulgachimSuak]; this command only SENDS the proposal.
      */
@@ -122,17 +126,19 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
         val nation = draft.nation ?: return
 
         val destNationName = context.destGeneralName.ifEmpty { "상대국" }
-        val josaEge = JosaUtil.pick(destNationName, "에게")
+        // josaRo는 PHP대로 ACTOR 국명(nation.name)으로 고른다(che_불가침제의.php:170) — 표시는 상대국명(:182).
+        val josaRo = JosaUtil.pick(nation.name, "로")
         val josaWa = JosaUtil.pick(nation.name, "과", "와")
 
-        // Action log — the proposal was sent
-        context.addLog("<D><b>$destNationName</b></>$josaEge ${year}년 ${month}월까지 불가침을 제의했습니다.")
+        // Action log — `<D><b>{상대국}</b></>{로} 불가침 제의 서신을 보냈습니다.<1>{date}</>` (che_불가침제의.php:182)
+        context.addLog("<D><b>$destNationName</b></>$josaRo 불가침 제의 서신을 보냈습니다.<1>${context.date}</>")
 
         // Build and send the diplomatic message (engine routes to mailbox channel).
+        // validUntil = date + max(30, turnterm*3)분 — A2 공통 인프라([DiplomacySeam]) 단일 공식
+        // (PHP che_불가침제의.php:202-204). turnterm은 엔진(ReservedTurnHandler)이 per-game 주입(기본 60).
         val now = LocalDateTime.now()
-        val dateStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        val validMinutes = maxOf(30, 60 * 3) // default turnterm=60; quarantined wall-clock
-        val validUntilStr = now.plusMinutes(validMinutes.toLong()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val dateStr = now.format(DiplomacySeam.YMDHIS)
+        val validUntilStr = DiplomacySeam.validUntil(now, context.turnterm)
 
         val src = MessageTarget(
             generalId = general.id,
@@ -165,5 +171,16 @@ class CheBulgachimJeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
             ),
         )
         context.sendMessage(msg)
+
+        // StaticEventHandler 외교 훅 (A2 공통 인프라) — PHP `run()` 말미
+        // `StaticEventHandler::handleEvent($general, $destGeneral, $this::class, $env, $arg)`
+        // (che_불가침제의.php:222). scenario 1010에서 핸들러 맵이 비어 no-op(게이트 동일) — 호출 지점만 정본화.
+        DiplomacySeam.fireDiplomacyEvent(
+            general = general,
+            destGeneral = null, // 제의는 상대 장수 객체를 들고 있지 않음(국가 메일함으로 발송) — PHP destGeneralObj가 null일 수 있음
+            commandKey = key,
+            env = linkedMapOf("year" to context.env.year, "month" to context.month, "turnterm" to context.turnterm),
+            args = context.args,
+        )
     }
 }

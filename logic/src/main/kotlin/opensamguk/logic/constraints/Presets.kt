@@ -511,6 +511,9 @@ internal fun generalNumField(g: General, key: String): Number = when (key) {
 
 /** Numeric field resolver for the nation Req*Value path. */
 internal fun nationNumField(n: Nation, key: String): Number = when (key) {
+    // PHP nation 테이블의 PK 컬럼명은 'nation'(국가 번호) — ReqDestNationValue('nation',...)가
+    // 제의 장수 소속 검증에 쓴다(che_불가침수락/종전수락/불가침파기수락.php). 도메인에서는 Nation.id가 동일.
+    "nation" -> n.id
     "gold" -> n.gold
     "rice" -> n.rice
     "tech" -> n.tech

@@ -15,7 +15,6 @@ import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.message.MessageType
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * che_불가침파기제의 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_불가침파기제의.php`.
@@ -61,8 +60,17 @@ class CheBulgachimPagijeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralAction
     }
 
     /**
-     * che_불가침파기제의.php:107-175 run(). Pushes the action log + sends a cancelNA diplomacy [Message].
-     * The engine routes the buffered message to the mailbox channel (receiver-before-sender).
+     * che_불가침파기제의.php:107-175 run(). draw COUNT = 0 — no RNG. Pushes the action log + sends a
+     * cancelNA diplomacy [Message]. The engine routes the buffered message to the국가 메일함
+     * (9000+destNationID, receiver-before-sender) via [GeneralActionResolveContext.sendMessage].
+     *
+     * Resolve 순서(PHP run 본체 그대로):
+     *  1. 장수 액션 로그 `<D><b>{상대국}</b></>{로} 불가침 파기 제의 서신을 보냈습니다.<1>{date}</>`
+     *     (che_불가침파기제의.php:131, `josaRo = JosaUtil::pick($destNationName, '로')`).
+     *  2. DiplomaticMessage(action=cancel_na, deletable=false) buffer — title `{국명}의 불가침 파기 제의
+     *     서신`(che_불가침파기제의.php:159), validUntil = date + max(30, turnterm*3)분([DiplomacySeam]).
+     *  3. setResultTurn(LastTurn)은 엔진(ReservedTurnHandler)이 소유. 그 뒤 StaticEventHandler 외교
+     *     훅(che_불가침파기제의.php:170) — scenario 1010 핸들러 맵이 비어 no-op(게이트 동일).
      */
     override fun resolve(context: GeneralActionResolveContext) {
         val destNationID = (context.args["destNationID"] as? Int) ?: return
@@ -74,10 +82,11 @@ class CheBulgachimPagijeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralAction
         val general = draft.general
         val nation = draft.nation ?: return
 
+        // validUntil = date + max(30, turnterm*3)분 — A2 공통 인프라([DiplomacySeam]) 단일 공식
+        // (PHP che_불가침파기제의.php:151-153). turnterm은 엔진이 per-game 주입(기본 60).
         val now = LocalDateTime.now()
-        val dateStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-        val validMinutes = maxOf(30, 60 * 3) // default turnterm=60; quarantined wall-clock
-        val validUntilStr = now.plusMinutes(validMinutes.toLong()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val dateStr = now.format(DiplomacySeam.YMDHIS)
+        val validUntilStr = DiplomacySeam.validUntil(now, context.turnterm)
 
         val src = MessageTarget(
             generalId = general.id,
@@ -109,5 +118,17 @@ class CheBulgachimPagijeui(@Suppress("UNUSED_PARAMETER") pipeline: GeneralAction
             ),
         )
         context.sendMessage(msg)
+
+        // StaticEventHandler 외교 훅 (A2 공통 인프라) — PHP run() 말미
+        // `StaticEventHandler::handleEvent($general, $destGeneral, $this::class, $env, $arg)`
+        // (che_불가침파기제의.php:170). scenario 1010에서 핸들러 맵이 비어 no-op(게이트 동일). 제의는
+        // 상대 장수 객체를 들지 않으므로 destGeneral=null(PHP destGeneralObj가 null).
+        DiplomacySeam.fireDiplomacyEvent(
+            general = general,
+            destGeneral = null,
+            commandKey = key,
+            env = linkedMapOf("year" to context.env.year, "month" to context.month, "turnterm" to context.turnterm),
+            args = context.args,
+        )
     }
 }

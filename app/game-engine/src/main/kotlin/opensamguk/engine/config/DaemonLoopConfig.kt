@@ -189,6 +189,8 @@ class DaemonLoopConfig {
             hiddenSeed = hiddenSeed,
             startYear = startYear,
             scenario = scenario,
+            // 외교 제의 서신 validUntil(= date + max(30, turnterm*3)분) 공식이 읽는 per-game turnterm.
+            turnTerm = turnTerm,
             // 군주(officer_level==12) 사망 시 후계 선정/승계 또는 국가 멸망 (func.php:1807 nextRuler).
             nextRuler = { generalId, env -> rulerSuccession.succeed(generalId, env) },
             recorder = recorder,

@@ -71,6 +71,14 @@ class ReservedTurnHandler(
      */
     private val scenario: Int = 0,
     /**
+     * `$gameStor->turnterm` — 게임의 분/턴 간격(per-game 설정). 외교 제의 명령(불가침/종전/불가침파기)의
+     * 서신 validUntil = date + max(30, turnterm*3)분 공식([opensamguk.logic.actions.nation.DiplomacySeam])에
+     * 쓰이도록 [GeneralActionResolveContext.turnterm]로 흘려보낸다. startYear/scenario/hiddenSeed와 동일한
+     * per-game 생성자 주입 패턴(per-call이 아님) — handle()의 시그니처를 넓히지 않는다. 기본 60(prod 기본값)이라
+     * P1–P4/테스트 호출부는 source-compatible. [DaemonLoopConfig]가 라이브에서 실제 turnterm을 주입한다.
+     */
+    private val turnTerm: Int = 60,
+    /**
      * Succession hook for a dying ruler (`General.php:554-558` → `func.php:1807 nextRuler`). The full
      * candidate-selection + 후계 promotion + possible `deleteNation` cascade is RNG-driven (the
      * `NextNPCRuler` seed) and is wired by the G1 gate; here it is a pluggable hook so kill() can apply
@@ -255,6 +263,8 @@ class ReservedTurnHandler(
             draft, rng, worldEnv, month, date,
             args = resolveArgs,
             generalName = if (isFounding) general.name else "",
+            // 외교 제의 서신 validUntil(= date + max(30, turnterm*3)분) 공식이 읽는 per-game turnterm.
+            turnterm = turnTerm,
         )
         definition.resolve(resolveCtx)
 
