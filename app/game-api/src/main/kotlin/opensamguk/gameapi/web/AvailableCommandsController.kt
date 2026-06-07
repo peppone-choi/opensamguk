@@ -166,6 +166,8 @@ class AvailableCommandsController(
             "che_불가침제의", "che_종전제의", "che_불가침파기제의", "che_선전포고",
             // 요양 (dispatcher-direct, gate-exempt)
             "che_요양",
+            // 계략/정보 stubs (CMD-GROUP-A — widened ONCE, disjoint fill per command)
+            "che_화계", "che_파괴", "che_탈취", "che_선동", "che_첩보", "che_단련", "che_접경귀환",
         )
     }
 }
