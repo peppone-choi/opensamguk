@@ -151,8 +151,10 @@ class AvailableCommandsController(
             // 군사 military
             "che_징병", "che_모병", "che_훈련", "cr_맹훈련", "che_사기진작", "che_소집해제",
             "che_귀환", "che_견문",
-            // 인사 personnel / movement
-            "che_이동", "che_집합", "che_임관", "che_장수대상임관", "che_하야", "che_방랑",
+            // 개인 personal (PHP availableGeneralCommand['개인']) — 숙련전환/특기초기화 짝
+            "che_숙련전환", "che_내정특기초기화", "che_전투특기초기화",
+            // 인사 personnel / movement (che_강행 = che_이동 형제, PHP availableGeneralCommand['인사'])
+            "che_이동", "che_강행", "che_집합", "che_임관", "che_장수대상임관", "che_하야", "che_방랑",
             "che_랜덤임관", "che_은퇴", "che_등용", "che_인재탐색",
             // 건국/거병 founding
             "che_거병", "che_건국", "cr_건국", "che_무작위건국", "che_해산",
