@@ -1,3 +1,54 @@
+# SESSION HANDOFF — 2026-06-07 (세션5: B1 코어+FE 재디자인 배포대기 / 미커밋 더미 + 거대 FE 백로그)
+
+다음 세션은 이 문서부터. 핵심은 git log. (세션4 §아래, 세션3 §0.5~.)
+
+> ## 🔴 세션5 인수인계 — 사용자가 여기서 /clear (정리 후 대기 지시). 먼저 읽어라.
+>
+> **브랜치 `parity-final` = origin 동기화(434a196), main보다 5 ahead**(nginx/handoff/B1-core/handoff/FE-main). **미배포**(main push=재배포+턴되감김).
+>
+> ### A. ✅ 커밋+푸시 완료 (세션4~5)
+> - `6954552` B1 MakeGeneral 장수생성 draw-for-draw 골든 게이트 + **choiceUsingWeight insertion-order 커널 패러티 수정**(jsKeyOrder는 TS 오라클 Object-key순 — PHP foreach 삽입순과 발산, pAbs["0"] 센티넬만 발현. ⚠️ `choiceMap`도 동일 잠재버그 백로그). :common192/:logic1865/:engine297 green, 어드버서리얼 SAFE.
+> - `434a196` 게임 메인 재디자인 — 로비-정적 지도 + 클릭→도시 + PHP 풀카드(General/Nation/City) + 내정보 중복제거. tsc clean, vitest 18/18.
+>
+> ### B. 🟡 미커밋 working-tree 더미 (13파일 — /clear 후 잔존, 게이트+커밋 필요)
+> **반드시 `git status`로 확인. 게이트(전체 suite + GeneralCreateFlushIT) 후 논리단위 커밋:**
+> 1. **A: 데이터갭 코드→한글명 + tech=0 수정**(에이전트 게이트 green 주장 — :common192/:engine297/tsc, **재검증 권장**):
+>    - `common/.../GameConst.kt`(personalityName 맵 + personalityNameOf + itemNameOf 추가), `app/game-api/.../dto/IdentityDto.kt`(FrontGeneralInfo *Name 8필드), `app/game-api/.../controller/FrontInfoController.kt`(*Name 채움 + specialName/crewTypeName 헬퍼), `web/game/lib/types.ts`+`components/game/GeneralBasicCard.tsx`(*Name 렌더). 출처: SpecialityHelper.warName/domesticName, GameUnitConst.byId(id).name, GameConst personality/item — PHP getName 충실.
+>    - **tech=0 실버그 수정**: 엔진 Nation에 tech 필드 부재→매 월틱 tech=0 덮어씀이었음. `app/game-engine/.../turn/TurnWorldModel.kt`(Nation.tech 추가)+`PerTurnOverlay.kt`(toLogic/toEngine 스레딩)+`boot/WorldSnapshotLoader.kt`(SELECT tech+ctor). **주의: 라이브 DB tech가 이미 0으로 덮였으면 재시드 전까지 0 유지(추가 손실만 차단).**
+> 2. **B: 장수생성 write-seam foundation**(⚠️ **gradle 미검증** — 에이전트가 gradle 불가):
+>    - `app/game-engine/.../turn/ChangeRecorder.kt`(recordGeneralCreate=world.createGeneral 위임), `app/game-engine/.../flush/DatabaseHooks.kt`(toGeneralCreateRow + 양 toFlushPayload 배선), `infra/.../persistence/JdbcFlushExecutor.kt`(FlushPayload.createdGenerals + GeneralCreateRow + generalCreateMany: general+30 general_turn(휴식)+37 rank_data, ScenarioImporter 상수 재사용), **신규** `infra/src/test/.../persistence/GeneralCreateFlushIT.kt`(real-Postgres 게이트).
+>    - **게이트 필수**: `:infra:test`(GeneralCreateFlushIT, Docker Postgres) + `:app:game-engine:test`. dormant 코드(호출부=B1 핸들러 미구현이라 prod 무실행) — 컴파일+IT green이면 안전.
+>    - 설계노트: created-general은 recorder 채널 아닌 **world DirtyState 라이프사이클**(created-nations와 동일, two-dirty-truths 회피). InMemoryTurnWorld.createGeneral/createdGeneralIds/consumeDirtyState/DirtyState.createdGenerals 는 **이미 존재**.
+> 3. **#4: 재야→일반**(surgical, 미검증): `app/game-api/.../read/F4StateText.kt` officerLevelText에 `officerLevel==0 && nationLevel>0 → 일반` 분기. **⬜ 미완: `GeneralListText.officerLevelText`(같은 파일 옆 GeneralListText.kt) 동일 수정 필요**(장수목록도 in-nation 0=재야로 뜸). PHP 불변식=재야⟺무소속/일반⟺소속. 근본=임관 핸들러 officer_level 1 미설정(동작 갭, 백로그).
+>
+> ### C. ⬜ 거대 FE 백로그 (사용자 prod 리뷰 라이브 피드백 — 미착수, 메인페이지 = PHP #ingameBoard/v_main 정본화)
+> 1. **메인 레이아웃 = PHP #ingameBoard 정본**: 현재 1000px 단일컬럼인데 사용자가 **(a) 전체 페이지 너비 확대**(1000px cap 완화) **(b) 맵 우측에 턴 테이블 배치** **(c) 메인에 로그 패널**(현재 없음) 요구 → PHP v_main 다컬럼(map-left + reserved-command/턴테이블-right + log + cards). 즉 세션4의 "지도 풀폭 1000px"를 **PHP 멀티컬럼으로 재구성**.
+> 2. **지도**: 로그인/로비 맵과 시각 동일(MapViewer 세션4 완료) + 아이콘 클릭→도시정보 페이지(`/game/city?id=`, 완료). 너비/배치만 위 레이아웃에 맞춰 조정.
+> 3. **도시 카드 보강**: 현재(주민/민심/농업/상업/치안/수비/성벽/시세 게이지)보다 PHP CityBasicCard.vue가 더 많음(지역/officerList 태수·군사·종사 등). FrontCityInfo에 없는 필드는 API 보강 필요(officerList 등) — PHP 정독 후.
+> 4. **명령 조회 API ↔ 명령 예약 API 연결**: 턴테이블(PartialReservedCommand)이 `availableCommands`(조회)+예약 제출 왕복 e2e 동작하게. game-api: AvailableCommandsController/ChiefCenterController + CommandReserveService(intake). 핸드오프 §B "chief-center ChiefCommandReserve 제출 intake 왕복 미검증" 과 동일선상. **로그인 세션으로 실제 예약→엔진 도달 검증.**
+> 5. **푸시+PR 머지+배포+검증**: FE 안정화 후 parity-final→main(deploy.yml). prod 헬스+턴전진+크래시 재현 확인. **턴되감김 비용**(사용자 인지). [[feedback_auto_merge_deploy]] CI green 선결.
+>
+> ### D. ⬜ 감사 (사용자 명시 "기록" — 클리어 후 수정)
+> 1. **레거시(devsam PHP) vs 현재(Kotlin) 갭 — 의미적 + 동작적** 전수 감사 → `docs/superpowers/gap/`에 기록. (기존 PARITY_RECONCILED.md/GAP_AUDIT.md 갱신.)
+> 2. **어드민 갭** 감사(PHP admin vs gateway admin) → 기록.
+> 3. **하드코딩 전수 인벤토리**(web/* + app/* 정적값 중 API/동적이어야 할 것) → 기록. **클리어 후 일괄 수정.**
+>
+> ### E. ⬜ B1 장수생성 나머지 (write-seam foundation B 위에)
+> 핸들러(MakeGeneral.draw→world.createGeneral→recordGeneralCreate, 상수 gold/rice=1000/killturn=6/crewtype=1100/officer_level=0/nation=0) + game-api intake(즉시 데몬커맨드, TurnDaemonCommand 신규 불요=부수효과) + PageJoin FE 폼. 정본 = `research/2026-06-06-join-grand-truth.md`.
+>
+> ### F. dev 환경 상태 (세션5 — /clear 후에도 잔존)
+> - **pnpm dev :3002 백그라운드 가동 중**(web/game 핫리로드, 도커 백엔드 game-api:8081 프록시). 로그 /tmp/webgame-dev.log.
+> - **테스트 general_owner 행**: peppone(user1)→하진(1447, 후한 황제) 로컬 DB INSERT — **로컬 전용**(prod 무관). 리치 메인 검증용. 정리하려면 `DELETE FROM general_owner WHERE user_id=1`.
+> - browse 데몬: localhost:3002 인증됨(sam_access 쿠키, 토큰 15분 만료 — 재로그인 `curl :8080/auth/login {peppone,3c2s1q!@#$}`). `B="$HOME/.claude/skills/gstack/browse/dist/browse"`.
+> - 전체 docker 스택 가동(web-game:3001 빌드본/gateway:8080/game-api:8081/engine:8082/nginx:80/pg:5433).
+> - gradle = `mcp__plugin_context-mode_context-mode__ctx_execute(language:"shell")` 경유(JAVA_HOME=21), 출력tail+XML 검증.
+>
+> ### 권장 다음 순서: B 게이트+커밋 → #4 GeneralListText 완료+A/#4 게이트+커밋 → C 메인 레이아웃 재구성(map+턴테이블+로그, browse 검증) → 명령 조회↔예약 연결 → 머지+배포 → D 감사 기록.
+
+---
+
+(이하 세션4)
+
 # SESSION HANDOFF — 2026-06-07 (세션4: B1 장수생성 RNG 코어 골든 게이트 + RNG 커널 패러티 수정)
 
 다음 세션은 이 문서부터. 핵심은 git log. (세션3 이하 §0.5~.)
