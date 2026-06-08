@@ -31,6 +31,7 @@ import opensamguk.infra.persistence.LogRow
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
+import opensamguk.infra.persistence.StatisticInsertRow
 import opensamguk.infra.persistence.TroopRow
 import opensamguk.infra.persistence.VoteCommentInsertRow
 import opensamguk.infra.persistence.VoteInsertRow

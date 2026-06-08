@@ -43,7 +43,7 @@ export default function NationPage() {
         try {
             const [nationRes, inheritRes] = await Promise.all([
                 api.myNationDetail<MyNationDetailResponse>(),
-                api.inheritPoint(),
+                api.inheritPoint() as Promise<InheritPointResponse>,
             ]);
             setData(nationRes);
             if (inheritRes?.currentInheritBuff) {

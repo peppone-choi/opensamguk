@@ -147,7 +147,7 @@ export default function InheritPage() {
 
     function load() {
         let on = true;
-        api.inheritPoint()
+        (api.inheritPoint() as Promise<InheritPointResponse>)
             .then((d) => {
                 if (on) {
                     setData(d);

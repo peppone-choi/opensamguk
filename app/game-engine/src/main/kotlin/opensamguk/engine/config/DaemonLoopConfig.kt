@@ -1,5 +1,7 @@
 package opensamguk.engine.config
 
+import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -229,7 +231,7 @@ class DaemonLoopConfig {
                         if (g.recentWarTime != null) mapOf("recent_war" to g.recentWarTime.toString()) else emptyMap()
                     PerTurnOverlay.toLogicGeneral(g).copy(meta = statisticMeta)
                 }
-                val nations = world.listNations()
+                val nations = world.listNations().map { PerTurnOverlay.toLogicNation(it) }
                 val cities = world.listCities().map { PerTurnOverlay.toLogicCity(it) }
                 val row = CheckStatisticCalculator.compute(
                     year = state.currentYear,
