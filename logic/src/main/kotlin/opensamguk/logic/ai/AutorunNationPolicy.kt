@@ -296,6 +296,39 @@ class AutorunNationPolicy(
 
     companion object {
         /**
+         * PHP `AutorunNationPolicy::$defaultPolicy`
+         * (`legacy/devsam-core/hwe/sammo/AutorunNationPolicy.php:152-180`).
+         *
+         * This is the pre-derived "초깃값으로" source. Do not add global env keys here; keys absent from
+         * PHP (for example `autorun_user`) are not nation policy fields.
+         */
+        val DEFAULT_POLICY: Map<String, Any?> = linkedMapOf(
+            "reqNationGold" to 10000,
+            "reqNationRice" to 12000,
+            "CombatForce" to emptyList<Any>(),
+            "SupportForce" to emptyList<Any>(),
+            "DevelopForce" to emptyList<Any>(),
+            "reqHumanWarUrgentGold" to 0,
+            "reqHumanWarUrgentRice" to 0,
+            "reqHumanWarRecommandGold" to 0,
+            "reqHumanWarRecommandRice" to 0,
+            "reqHumanDevelGold" to 10000,
+            "reqHumanDevelRice" to 10000,
+            "reqNPCWarGold" to 0,
+            "reqNPCWarRice" to 0,
+            "reqNPCDevelGold" to 0,
+            "reqNPCDevelRice" to 500,
+            "minimumResourceActionAmount" to 1000,
+            "maximumResourceActionAmount" to 10000,
+            "minNPCWarLeadership" to 40,
+            "minWarCrew" to 1500,
+            "minNPCRecruitCityPopulation" to 50000,
+            "safeRecruitCityPopulationRatio" to 0.5,
+            "properWarTrainAtmos" to 90,
+            "cureThreshold" to 10,
+        )
+
+        /**
          * `$defaultPriority` (AutorunNationPolicy.php:38-68) — the EXACT ordered 20-list.
          * `//'유저장몰수'` (:53) is commented out → NOT in the array. THIS ORDER is the dispatch/log/draw spine.
          */

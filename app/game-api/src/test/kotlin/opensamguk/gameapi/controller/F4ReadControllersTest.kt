@@ -566,6 +566,11 @@ class F4ReadControllersTest {
         mvc(NpcPolicyController(resolver, nations)).perform(get("/api/nation/npc-policy").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.defaultPolicy.reqNationGold").value(10000))
+            .andExpect(jsonPath("$.defaultPolicy.reqNationRice").value(12000))
+            .andExpect(jsonPath("$.defaultPolicy.reqHumanWarUprising").doesNotExist())
+            .andExpect(jsonPath("$.defaultPolicy.autorun_user").doesNotExist())
+            .andExpect(jsonPath("$.defaultPolicy.CombatForce.length()").value(0))
             .andExpect(jsonPath("$.defaultPolicy.minNPCWarLeadership").value(40))
             .andExpect(jsonPath("$.currentPolicy.minNPCWarLeadership").value(55))
     }
