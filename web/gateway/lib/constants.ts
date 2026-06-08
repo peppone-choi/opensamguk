@@ -70,21 +70,3 @@ export const LOBBY_FOOTNOTES = [
     '★ 1명이 2개 이상의 계정을 사용하거나 타 유저의 턴을 대신 입력하는 것이 적발될 경우 차단 될 수 있습니다.',
     '계정은 한번 등록으로 계속 사용합니다. 각 서버 리셋시 캐릭터만 새로 생성하면 됩니다.',
 ] as const;
-
-// 서버 상태 → 뱃지 라벨/색 (legacy isUnited/상태)
-export const SERVER_STATUS: Record<string, { label: string; cls: string }> = {
-    running: { label: '§이벤트 진행중§', cls: 'status-jade' }, // isUnited=1
-    unified: { label: '§천하통일§', cls: 'status-gold' }, // =2
-    ended: { label: '§이벤트 종료§', cls: 'status-muted' }, // =3
-    preopen: { label: '-가오픈 중-', cls: 'status-gold' },
-    closed: { label: '- 폐 쇄 중 -', cls: 'status-muted' },
-};
-
-// 경쟁중 N국 (running, 미통일)
-export const competingLabel = (nationCount: number): string => `<${nationCount}국 경쟁중>`;
-
-// 타임라인 (legacy entrance.php, verbatim 템플릿)
-export const timelineYear = (year: number, month: number, scenario: string): string =>
-    `서기 ${year}년 ${month}월 (${scenario})`;
-export const timelineUsers = (userCnt: number, maxUserCnt: number, npcCnt: number, turnTerm: number): string =>
-    `유저 : ${userCnt} / ${maxUserCnt}명 NPC : ${npcCnt}명 (${turnTerm}분 턴 서버)`;
