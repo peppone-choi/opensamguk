@@ -2,16 +2,14 @@ import serversData from '@/config/servers.json';
 
 // 서버 레지스트리 — 멀티서버 라우팅의 단일 해석 지점(서버사이드 전용).
 //
-// 공개 목록(id/name/status/turnterm/gameUrl)은 config/servers.json에 빌드타임 baked → 클라이언트
+// 공개 목록(id/name/gameUrl)은 config/servers.json에 빌드타임 baked → 클라이언트
 // (로비/로그인 탭·표)가 그대로 import. 내부 game-api 주소(gameApiUrl)는 환경마다 달라(dev=localhost,
-// prod=컨테이너망 DNS, 서버마다 상이) 런타임 env로 오버라이드한다. 이 모듈은 route handler에서만
-// 호출되며 process.env를 읽으므로 클라이언트 번들에 내부 주소가 새지 않는다.
+// prod=컨테이너망 DNS, 서버마다 상이) 런타임 env로 오버라이드한다. 서버 상태/턴텀은 반드시 live
+// server-basic-info 응답에서만 읽는다.
 
 export interface ServerEntry {
     id: string;
     name: string;
-    status?: string;
-    turnterm?: number;
     /** 게임 프론트(web/game) 진입 URL — 클라이언트 노출 OK(공개). */
     gameUrl?: string;
     /** 해당 서버 game-api 내부 주소(맵/현황 read) — 서버사이드 해석 전용. */

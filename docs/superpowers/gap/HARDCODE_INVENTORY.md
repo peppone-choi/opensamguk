@@ -27,17 +27,17 @@
 | 영역 | 위반 수 | 참고(합법·기록용) |
 |------|---------|-------------------|
 | **web/game** | 9 | — |
-| **web/gateway** | 3 | 2 (`GW-HC-04`, `GW-HC-05`) |
+| **web/gateway** | 0 | 2 (`GW-HC-04`, `GW-HC-05`) |
 | **app** (game-api) | 8 | — |
-| **합계** | **20** | 2 |
+| **합계** | **17** | 2 |
 
 **위반 성격 분류:**
-- 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): `SimulatorController .random()`(D3-01 app), GameInfo "자동"(D3-02 web), servers.json status running(GW-HC-01), NpcPolicy 날조 키(D3-02 app)
+- 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): `SimulatorController .random()`(D3-01 app), GameInfo "자동"(D3-02 web), NpcPolicy 날조 키(D3-02 app)
 - 🟠 **본인 컨텍스트 미사용 + 디폴트 1 박음** (useFrontInfo 미배선): nation(D3-05), mailbox(D3-06), tournament-admin(D3-07) — web/game
 - 🟡 **값소스 부재 갭** (정본 영속 원천/엔진 미결합으로 0/null/false 고정 — 문서화된 BLOCKED): traffic/hall/emperor(D3-03 app), serverLocked(D3-04 app), iAction name/info(D3-07 app), compensation(D3-08 app)
 - 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): INHERIT_COSTS(D3-04 web), tournamentTerm clamp 누락(D3-03 web), mapWidth/Height(D3-05 app), OFFICER_LEVEL_TEXT(D3-06 app)
 - ⚪ **mutation 스텁** (read는 정상, write 경로만 미배선): MessagePanel(D3-08 web), npc-control setter(D3-09 web), tournament/mailbox/nation 페이지의 박힌 id로 mutation 전달(D3-06/07 web)
-- 🟣 **dead export 잔재** (렌더 경로 밖 미사용 박힌 상수): servers.json turnterm(GW-HC-02), constants.ts SERVER_STATUS 등(GW-HC-03)
+- 🟣 **dead export 잔재**: 현재 gateway 활성 위반 없음. `GW-HC-02`/`GW-HC-03`은 2026-06-09 제거됨.
 
 ---
 
@@ -54,9 +54,6 @@
 | D3-07(web) | `web/game/app/game/tournament-admin/page.tsx:61,150` | `generalId=useState(1)` + number-input | `useFrontInfo()` → 본인 generalId(권한 게이트=permission). number-input 제거 | web/game | 🟠 컨텍스트 미사용 |
 | D3-08(web) | `web/game/components/game/MessagePanel.tsx:89,97` | placeholder "서신 보내기 (서버 미지원)" disabled + "읽기 전용입니다" | game-api 메시지 전송/연락처 endpoint. 정본 `MessagePanel.vue`(SendMessage write + 연락처 selector) | web/game | ⚪ mutation stub |
 | D3-09(web) | `web/game/app/game/npc-control/page.tsx:271,92-106` | "(설정 변경은 추후 지원)" + ControlBar disabled | NPC 정책 setter intake(POST) 배선 후 활성화. (표시 수치는 이미 API 소비 — 위반 아님, mutation stub만) | web/game | ⚪ mutation stub |
-| GW-HC-01 | `web/gateway/config/servers.json:7,15`, `web/gateway/components/ServerBoard.tsx:43-44` | `"status": "running"` (빌드타임 고정) → 탭 뱃지 분기 | 라이브 `/api/server-basic-info` → `game.isUnited` (`lobby/page.tsx:50-61 nCountryLabel`). servers.json status 필드 제거 | web/gateway | 🔴 위조 |
-| GW-HC-02 | `web/gateway/config/servers.json:8,16`, `web/gateway/lib/serverRegistry.ts:14` | `"turnterm": 60` (렌더 미사용 stale) | 라이브 `server-basic-info game.turnTerm` (`lobby/page.tsx:113`). config.turnterm + ServerEntry.turnterm 제거 | web/gateway | 🟣 dead export |
-| GW-HC-03 | `web/gateway/lib/constants.ts:75-81,84,87-90` | `SERVER_STATUS`/`competingLabel`/`timelineYear`/`timelineUsers` (사용처 0건) | lobby의 `nCountryLabel`(page.tsx:50) + 인라인 라이브 템플릿(page.tsx:108-114)이 정본. dead export 4개 삭제 | web/gateway | 🟣 dead export |
 | D3-01(app) | `app/game-api/.../controller/SimulatorController.kt:14-22` | `winner = attackerId%2==1 ? attacker : defender`, `(100..500).random()`, `(50..300).random()`, `(3..10).random()`, log=고정 4줄 | `logic/war/processWar`(또는 BattleCommandContextBuilder) — `RandUtil(warSeed)` 정본. raw `.random()` 금지(RNG 규율 위반) | app | 🔴 위조 |
 | D3-02(app) | `app/game-api/.../controller/NpcPolicyController.kt:30-37` | `defaultPolicy{reqNationGold=0, reqNationRice=0, reqHumanWarUprising=12, autorun_user=0...}` | `logic/ai/AutorunNationPolicy.defaultPolicy`(정본: reqNationGold=10000/reqNationRice=12000) 직렬화. 정본 `AutorunNationPolicy.php:152-155`. reqHumanWarUprising/autorun_user = 날조 키(PHP 부재) | app | 🔴 위조/날조 키 |
 | D3-03(app) | `app/game-api/.../rank/RankReadService.kt:176,179-189,192` | `hallOfFame()=emptyList()`, `traffic()=0/empty`, `emperor()=emptyList()` | `general_access_log`·`hall`·`emperior`(통일사) 영속 원천(OQ-1/2/5) 도입 후 실 집계 | app | 🟡 값소스 부재 갭 |
@@ -90,14 +87,14 @@
 - `D3-08(web)` MessagePanel: 서신 전송/연락처 API 부재 → disabled. game-api send endpoint 정본화 후 활성화.
 - `D3-09(web)` npc-control: 설정 setter 미배선 disabled. (표시 수치는 이미 API 소비 — mutation stub만 위반)
 
-### 3.2 web/gateway (3건 위반 + 2건 참고)
+### 3.2 web/gateway (0건 위반 + 2건 참고)
 
 게이트웨이 로비/어드민(`web/gateway`).
 
-**위반 (3건)**
-- `GW-HC-01` servers.json `status:"running"` 빌드타임 박힘 → ServerBoard 탭 뱃지를 위조(서버가 천하통일/폐쇄여도 뱃지 미표시). 라이브 `server-basic-info game.isUnited`로 전환, servers.json status 필드 제거.
-- `GW-HC-02` servers.json `turnterm:60` + serverRegistry.ts `ServerEntry.turnterm` → 어디서도 렌더 안 되는 stale dead field(lobby는 라이브 `game.turnTerm` 렌더). 두 곳 모두 제거.
-- `GW-HC-03` constants.ts `SERVER_STATUS`/`competingLabel`/`timelineYear`/`timelineUsers` → 정의 줄 외 사용처 0건(dead export). lobby가 라이브 데이터로 전환되며 남은 잔재. 4개 삭제.
+**해소됨 (3건, 2026-06-09)**
+- `GW-HC-01` ServerBoard 탭 status 뱃지 제거. 서버 상태는 lobby row의 live `/api/server-basic-info` 응답(`game.isUnited`)만 사용한다.
+- `GW-HC-02` `ServerEntry.turnterm` 제거. 턴텀은 live `server-basic-info game.turnTerm`만 사용한다.
+- `GW-HC-03` `SERVER_STATUS`/`competingLabel`/`timelineYear`/`timelineUsers` dead export 제거.
 
 **참고용 (합법, 위반 아님)**
 - `GW-HC-04` lobby 계정관리 / admin 회원관리·게임환경 "PLACEHOLDER 준비 중" disabled → 백엔드 미구현 기능의 정직한 미완 표시. 게임 상태 위조 아님. 백엔드 구현 시 실 핸들러로 교체.
@@ -129,13 +126,13 @@
 
 의존성 선후 + ROI(고치는 비용 대비 위조 제거 효과) 기준. 앞쪽일수록 싸고 효과 큼.
 
-### 단계 1 — 순수 프론트 교정 (백엔드 변경 0, 즉시) — 5건
+### 단계 1 — 순수 프론트 교정 (백엔드 변경 0, 즉시) — 2건 남음
 백엔드 의존 없이 web 레이어만 수정. 정본 함수/필드가 이미 존재.
 1. `D3-03(web)` GameInfo tournamentTerm → `clamp(turnterm,5,120)` (한 줄)
 2. `D3-02(web)` GameInfo "자동" → `global.autorunUser` 동적 AutorunInfo (front-info 필드 이미 존재 가정; 없으면 단계 3로 이동)
-3. `GW-HC-02` servers.json turnterm + serverRegistry.ts ServerEntry.turnterm 삭제 (dead field)
-4. `GW-HC-03` constants.ts dead export 4개 삭제
-5. `GW-HC-01` ServerBoard 탭 뱃지 → 라이브 `game.isUnited` 사용 + servers.json status 필드 제거 (lobby가 이미 fetch하는 데이터 재사용)
+3. ✅ `GW-HC-02` servers.json turnterm + serverRegistry.ts ServerEntry.turnterm 삭제 (dead field)
+4. ✅ `GW-HC-03` constants.ts dead export 4개 삭제
+5. ✅ `GW-HC-01` ServerBoard 탭 뱃지 제거. 서버가 없으면 로그인/로비 맵·로그·서버탭 전체 미렌더.
 
 ### 단계 2 — useFrontInfo 본인 컨텍스트 배선 (web/game) — 3건
 `useFrontInfo()` 훅이 이미 존재. 세 페이지에서 디폴트 id 1 + number-input을 본인 컨텍스트로 교체. 묶어서 한 PR.

@@ -444,13 +444,6 @@ textarea:focus {
     border-color: var(--border-subtle);
     font-weight: 700;
 }
-.server-tab-badge {
-    font-size: 10px;
-    color: var(--text-muted);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    padding: 0 4px;
-}
 /* 전황 로그 (맵 아래 최근 이벤트) */
 .server-log {
     border: 1px solid var(--border-subtle);
