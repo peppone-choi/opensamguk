@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralPossessionService
@@ -11,8 +12,12 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.security.GameApiJwtVerifier
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -44,13 +49,15 @@ class PossessionControllerTest {
     private val nations = mock(NationReadRepository::class.java)
     private val npcTokens = mock(SelectNpcTokenRepository::class.java)
     private val worldStates = mock(WorldStateReadRepository::class.java)
+    private val reserve = mock(CommandReserveService::class.java)
+    private val jwtVerifier = mock(GameApiJwtVerifier::class.java)
     private val fixedClock = Clock.fixed(Instant.parse("2026-06-02T00:00:00Z"), ZoneOffset.UTC)
     private val possession = GeneralPossessionService(owners, generals, npcTokens, fixedClock)
     private val selectNpcTokens =
         SelectNpcTokenService(npcTokens, owners, generals, nations, worldStates, fixedClock)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens))
+        MockMvcBuilders.standaloneSetup(PossessionController(possession, selectNpcTokens, reserve, jwtVerifier))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -168,6 +175,13 @@ class PossessionControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.generalId").value(10))
+
+        val claim = mockingDetails(reserve).invocations
+            .single { it.method.name == "publishImmediate" }
+            .arguments[0] as TurnDaemonCommand.ClaimNpc
+        assertEquals(10, claim.generalId)
+        assertEquals(7L, claim.userId)
+        assertEquals("7", claim.userNick)
     }
 
     @Test
