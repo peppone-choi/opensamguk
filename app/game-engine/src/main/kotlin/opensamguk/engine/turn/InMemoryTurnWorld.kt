@@ -240,6 +240,16 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun allocateNationId(): Int = (nations.keys.maxOrNull() ?: 0) + 1
 
     /**
+     * Next free general id over the LIVE world. Mirrors [allocateNationId] — `general.id` is
+     * `serial PRIMARY KEY` in the schema, but opensamguk assigns the id engine-side via explicit
+     * INSERT (same pattern as [ScenarioImporter]'s icon-id assignment, starting at 1001). The
+     * placeholder IS the final id (no flush-time reconciliation). In a long-running world this
+     * reuses freed ids just like the nation id allocator; the faithful fix (monotonic high-water-
+     * mark in world_state) is deferred to the W0b backlog.
+     */
+    fun allocateGeneralId(): Int = (generals.keys.maxOrNull() ?: 0) + 1
+
+    /**
      * Replace a troop's row (SetTroopName rename) — marks it dirty ONLY (not created), so the flush
      * routes it through the troop UPDATE batch. Mirrors [updateNation]. Returns null if absent.
      */

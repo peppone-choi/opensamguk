@@ -251,6 +251,10 @@ export const api = {
         post<T>(`/api/messages/${id}/decline?generalId=${generalId}`, null),
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
+    // B1 Join — 장수생성(재야 등록). 202=성공, 200 BLOCKED=deny.
+    join: (body: { name: string; leadership: number; strength: number; intel: number; character: string; pic?: boolean }) =>
+        post<{ status: string; requestId?: string; reason?: string }>('/api/join', body),
+
     // ── F4 action-page READ endpoints (read-only; all via the /api/game proxy) ──
     // game-api = read-only JPA on existing tables; one-daemon-write rule.
     // Endpoints with no backing rows in the fresh scenario_1010 seed (board / vote /

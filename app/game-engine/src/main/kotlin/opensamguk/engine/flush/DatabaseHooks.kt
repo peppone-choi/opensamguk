@@ -287,6 +287,7 @@ object DatabaseHooks {
         return GeneralCreateRow(
             columns = linkedMapOf(
                 "id" to g.id,
+                "user_id" to g.userId,
                 "name" to g.name,
                 "nation_id" to g.nationId,
                 "city_id" to g.cityId,

@@ -35,6 +35,9 @@ class GeneralReadEntity(
     @Column(name = "id")
     var id: Int = 0,
 
+    @Column(name = "user_id")
+    var userId: String? = null,
+
     @Column(name = "name")
     var name: String = "",
 
@@ -281,4 +284,10 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
      */
     @Query("select distinct g.cityId from GeneralReadEntity g where g.nationId = :nationId order by g.cityId asc")
     fun findDistinctCityIdByNationId(@Param("nationId") nationId: Int): List<Int>
+
+    /** B1 Join — one general per user check. */
+    fun findByUserId(userId: String): GeneralReadEntity?
+
+    /** B1 Join — unique name check. */
+    fun existsByName(name: String): Boolean
 }

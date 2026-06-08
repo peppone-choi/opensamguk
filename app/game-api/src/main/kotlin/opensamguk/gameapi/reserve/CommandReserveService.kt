@@ -106,6 +106,22 @@ class CommandReserveService(
         return ReserveResult(requestId = requestId, turnIdx = turnIdx)
     }
 
+    /**
+     * Ring-less immediate publish — used by Join (B1) and other out-of-band daemon commands
+     * that carry their own typed command (no general_turn reservation).
+     */
+    fun publishImmediate(command: TurnDaemonCommand): ReserveResult {
+        val requestId = requestIds()
+        publish(
+            TurnDaemonCommandEnvelope(
+                requestId = requestId,
+                sentAt = Instant.now(clock).toString(),
+                command = command,
+            )
+        )
+        return ReserveResult(requestId = requestId, turnIdx = 0)
+    }
+
     private fun publish(envelope: TurnDaemonCommandEnvelope) {
         val record: ObjectRecord<String, Map<String, String>> = StreamRecords
             .newRecord()
