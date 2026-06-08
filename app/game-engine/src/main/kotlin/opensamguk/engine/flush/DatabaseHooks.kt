@@ -227,6 +227,9 @@ object DatabaseHooks {
                 InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
             },
             inheritanceResultInserts = dirty.inheritanceResultInserts,
+            statisticInserts = dirty.statisticInserts.map {
+                StatisticInsertRow(it.columns)
+            },
         )
     }
 

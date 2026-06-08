@@ -28,9 +28,12 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.CheckStatistic
 import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.MonthlyClock
+import opensamguk.logic.tick.CheckStatisticCalculator
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.PreUpdateMonthly
 import opensamguk.logic.tick.ServerClock
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import org.springframework.beans.factory.annotation.Value
 import java.time.Instant
 import org.springframework.context.annotation.Bean
@@ -214,7 +217,37 @@ class DaemonLoopConfig {
             monthlyRngFactory = { year, month -> MonthScopedRng.forMonth(hiddenSeed, year, month) },
             clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
             preUpdateMonthly = PreUpdateMonthly { true },
-            checkStatistic = CheckStatistic { },
+            checkStatistic = CheckStatistic {
+                val generals = world.listGenerals()
+                val nations = world.listNations()
+                val cities = world.listCities()
+                val row = CheckStatisticCalculator.compute(
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    generals = generals,
+                    nations = nations,
+                    cities = cities,
+                    nationTypeNameOf = { type -> type.removePrefix("che_") },
+                    personalityNameOf = { p -> GameConst.personalityNameOf(p.toString()) },
+                    specialDomesticNameOf = { s -> if (s == 0) "None" else "special_$s" },
+                    specialWarNameOf = { s -> if (s == 0) "None" else "special2_$s" },
+                    crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.shortName ?: "$c" },
+                )
+                handler.recorder.recordStatisticInsert(linkedMapOf(
+                    "year" to row.year,
+                    "month" to row.month,
+                    "nation_count" to row.nationCount,
+                    "nation_name" to row.nationName,
+                    "nation_hist" to row.nationHist,
+                    "gen_count" to row.genCount,
+                    "personal_hist" to row.personalHist,
+                    "special_hist" to row.specialHist,
+                    "power_hist" to row.powerHist,
+                    "crewtype" to row.crewtype,
+                    "etc" to row.etc,
+                    "aux" to Json.encodeToString(row.aux),
+                ))
+            },
             postUpdateMonthly = MonthlyPostUpdateHook(world, handler.recorder, generalActionPipeline),
         )
 

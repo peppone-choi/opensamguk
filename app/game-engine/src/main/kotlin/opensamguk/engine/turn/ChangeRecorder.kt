@@ -164,6 +164,9 @@ class ChangeRecorder(
     /** Inheritance channel (T0.8) — `inheritance_result` INSERT intents. */
     private val inheritanceResultInserts = mutableListOf<InheritanceResultRow>()
 
+    /** Statistic channel (W1) — `statistic` INSERT intents (year-boundary checkStatistic). */
+    private val statisticInserts = mutableListOf<StatisticInsert>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -554,6 +557,14 @@ class ChangeRecorder(
     /** 기록된 vote_comment INSERT (F4 Wave 투표 flush 소스), emit 순서대로. */
     fun voteCommentInserts(): List<VoteCommentInsert> = voteCommentInserts.toList()
 
+    /** `statistic` INSERT 기록 (W1 checkStatistic). INSERT 전용 — 연감 row 추가. */
+    fun recordStatisticInsert(columns: Map<String, Any?>) {
+        statisticInserts.add(StatisticInsert(columns))
+    }
+
+    /** 기록된 statistic INSERT (W1 flush 소스), emit 순서대로. */
+    fun statisticInserts(): List<StatisticInsert> = statisticInserts.toList()
+
     /**
      * 기록된 모든 채널을 비운다 — PHP의 요청 단위 스코프에 대응하는 tick 단위 리셋.
      *
@@ -592,6 +603,7 @@ class ChangeRecorder(
         inheritanceKvWrites.clear()
         inheritanceLogInserts.clear()
         inheritanceResultInserts.clear()
+        statisticInserts.clear()
         oldGeneralSnapshots.clear()
         nationSnapshots.clear()
     }

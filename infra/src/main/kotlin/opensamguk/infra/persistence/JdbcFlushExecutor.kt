@@ -197,6 +197,10 @@ class JdbcFlushExecutor(
             if (payload.inheritanceResultInserts.isNotEmpty()) {
                 inheritanceResultInsertMany(payload.inheritanceResultInserts)
             }
+            // 12. Statistic channel (W1) — year-boundary statistic INSERT.
+            if (payload.statisticInserts.isNotEmpty()) {
+                statisticInsertMany(payload.statisticInserts)
+            }
             null
         }
     }
@@ -1196,6 +1200,36 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("inheritance_result", FlushVerb.CREATE_MANY, rows.size))
     }
 
+    /** INSERT into `statistic` (W1 checkStatistic). */
+    private fun statisticInsertMany(rows: List<StatisticInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("year", c["year"])
+                .addValue("month", c["month"])
+                .addValue("nation_count", c["nation_count"])
+                .addValue("nation_name", c["nation_name"])
+                .addValue("nation_hist", c["nation_hist"])
+                .addValue("gen_count", c["gen_count"])
+                .addValue("personal_hist", c["personal_hist"])
+                .addValue("special_hist", c["special_hist"])
+                .addValue("power_hist", c["power_hist"])
+                .addValue("crewtype", c["crewtype"])
+                .addValue("etc", c["etc"])
+                .addValue("aux", jsonb(c["aux"] as? String))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO statistic (year, month, nation_count, nation_name, nation_hist, gen_count,
+                personal_hist, special_hist, power_hist, crewtype, etc, aux)
+            VALUES (:year, :month, :nation_count, :nation_name, :nation_hist, :gen_count,
+                :personal_hist, :special_hist, :power_hist, :crewtype, :etc, :aux)
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("statistic", FlushVerb.CREATE_MANY, rows.size))
+    }
+
     private fun jsonb(json: String?): PGobject {
         val obj = PGobject()
         obj.type = "jsonb"
@@ -1262,7 +1296,12 @@ data class FlushPayload(
     val inheritanceKvWrites: List<KvWrite> = emptyList(),             // step-11a inheritance KV writes
     val inheritanceLogInserts: List<InheritanceLogRow> = emptyList(), // step-11b inheritance_log INSERT
     val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(), // step-11c inheritance_result INSERT
+    // --- W1 checkStatistic channel ---
+    val statisticInserts: List<StatisticInsertRow> = emptyList(),     // step-12 statistic INSERT
 )
+
+/** One `statistic` INSERT (W1 checkStatistic, INSERT-only). `columns`는 byte-faithful statistic 컬럼 맵. */
+data class StatisticInsertRow(val columns: Map<String, Any?>)
 
 /** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
 data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
