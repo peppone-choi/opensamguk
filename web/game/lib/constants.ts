@@ -128,6 +128,3 @@ export const TOURNAMENT_STATUS_LABEL: Record<string, string> = {
     FINISHED: '종료',
     CANCELLED: '취소',
 };
-
-/** 토너먼트 관리 기본 장수 ID (관리자 페이지 placeholder). */
-export const DEFAULT_ADMIN_GENERAL_ID = 1;
