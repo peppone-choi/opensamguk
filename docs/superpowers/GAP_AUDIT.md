@@ -7,13 +7,26 @@
 > every divergence**. Per-dimension detail lives in `docs/superpowers/gap/*.md`.
 >
 > **Headline parity state:** the **engine is gate-closed at the logic level**
-> (P0–P7 golden-green, ~2195 tests) but **PRODUCTION IS DOWN** — `sam.peppone.dev`
-> crash-loops on the first `che_거병` because the founding created-set is never
-> drained from draft→world→recorder in the live daemon. Below the crash sit four
-> more *golden-green / prod-broken* daemon-seam divergences, a read surface at
-> ~30% field parity, a mutation surface that is mostly read-only or silently
-> no-op, and ~46 commands not yet player-reachable. The logic core is sound; the
-> **seams and the player surface are the work.**
+> (P0–P7 golden-green, ~2195 tests). The founding crash-loop (WAVE 0) is **FIXED**
+> and prod is stable (turn advancing). Entrance flows (B1–B3) are complete.
+> The read surface remains ~30% field parity; mutation surface is partially
+> wired. The logic core is sound; **the player surface and long-tail commands
+> are the remaining work.**
+
+---
+
+## 0. Current State (2026-06-08, parity-final branch)
+
+| Item | Count / Status |
+|---|---|
+| Branch | `parity-final` — **14 commits ahead of main** (unmerged) |
+| Backend tests | ~2195+ tests green (common 192 / logic 1865+ / engine 297 / game-api 177+) |
+| Prod status | **STABLE** — turn advancing, crash-loop resolved |
+| Entrance flows | **B1 Join** ✅ / **B2 NPC possession** ✅ / **B3 NPC selection** ✅ |
+| Command parity (93 total) | **52 DONE** / 19 PORT_MISSING / 20 FE_MISSING / 2 LOGIC_ONLY / 5 WIRING |
+| 계략 5종 (화계/파괴/탈취/선동/첩보) | **DONE** — golden-gated, parity-wave batch 1 (`6b5eff5`) |
+| WAVE 9 (public reads + admin) | **DONE** — `WorldMapController` + `CityListController` + map page + admin design-replaced |
+| Founding seam (WAVE 0) | **FIXED** — created-set drain, 거병 preload args, 건국 cascade |
 
 ---
 
@@ -27,8 +40,9 @@
 | FE output (read/info pages) | [FE_OUTPUT_READ_GAP.md](gap/FE_OUTPUT_READ_GAP.md) | 218 | 53 | 12 | 153 |
 | FE output (action pages) | [FE_OUTPUT_ACTION_GAP.md](gap/FE_OUTPUT_ACTION_GAP.md) | 12 | 4 | 8 | 0 |
 | Read-model DTO shapes | [READ_DTO_GAP.md](gap/READ_DTO_GAP.md) | 18 | 6 | 11 | 1 |
-| Founding daemon seam (prod) | [FOUNDING_SEAM_FIX.md](gap/FOUNDING_SEAM_FIX.md) | 4 | 0 | 1 | 4 |
-| **Per-command mutation path** | [PARITY_LEDGER.md](PARITY_LEDGER.md) | **93** | **47 DONE** | **20 FE_MISSING** | **24 PORT_MISSING** + 2 LOGIC_ONLY + 5 WIRING |
+| Founding daemon seam (prod) | [FOUNDING_SEAM_FIX.md](gap/FOUNDING_SEAM_FIX.md) | 4 | 4 | 0 | 0 |
+| **Per-command mutation path** | [PARITY_LEDGER.md](PARITY_LEDGER.md) | **93** | **52 DONE** | **20 FE_MISSING** | **19 PORT_MISSING** + 2 LOGIC_ONLY + 5 WIRING |
+| Entrance flows (B1–B3) | [SESSION_HANDOFF.md](SESSION_HANDOFF.md) §5 | 3 | 3 | 0 | 0 |
 
 > **Note on the read-page 153 "missing":** these are displayed *fields* (≈218
 > across 8 info pages), not routes — the routes exist (FE-structure) but their
@@ -36,11 +50,11 @@
 
 ### The dominant cross-cutting patterns
 
-1. **Golden-green / prod-broken daemon seams (5).** Logic passes its golden at the
-   *draft* level but the live daemon never invokes the path: founding created-set
-   (CRASH), ruler succession (no heir), DiplomacyMonthProcessor (treaties never
-   expire), checkStatistic (empty-lambda stub), and the 건국/cr_건국/무작위건국
-   cascade-drain (silent data loss). **The logic is ported; the seam is the gap.**
+1. **Founding seam FIXED (was: golden-green / prod-broken).** The founding
+   created-set drain, 거병 preload args, and 건국/cr_건국/무작위건국 cascade are
+   all resolved. Prod is stable and turns advance. **Remaining seams (3):**
+   ruler succession (no heir), DiplomacyMonthProcessor (treaties never expire),
+   checkStatistic (empty-lambda stub). These are tracked in WAVE 1 below.
 2. **Silent-no-op intake (3, plus tournament).** FE buttons return `202` but the
    mutation is dropped because the posted code mis-cases or is unregistered →
    resolves to `RestAction` (`CommandWireMapper.kt`/`CommandRegistry.kt:161`):
@@ -57,8 +71,11 @@
    nation-command reservation editor) is 100% read-only — the single biggest
    action gap.
 5. **Visible string-parity break.** `page.tsx:92` and `rankings/generals:59`
-   render 무력 as the mojibake 「묠력」 — a display-string parity violation on the
+   render 물력 as the mojibake 「묠력」 — a display-string parity violation on the
    most-viewed stat.
+6. **Entrance flows DONE.** B1 장수생성 (Join/MakeGeneral, draw-for-draw golden),
+   B2 장수빙의 (NPC possession claim + daemon persistence), B3 장수선택
+   (NPC selection token pool) are all complete with FE pages and intake paths.
 
 ---
 
@@ -74,7 +91,7 @@ domain-named path a faithful client can call) or MISSING.
 - Message `SendMessage`/`GetContactList`/`DeleteMessage` — no personal/national send.
 - Vote `Vote`/`NewVote`/`AddComment` — read-only, cannot cast or create.
 - Auction `Open*` (BuyRice/SellRice/Unique) MISSING; `Bid*` PARTIAL with casing no-op.
-- General `Join` + `BuildNationCandidate` — no in-game join / 건국 candidate REST entry.
+- General `Join` + `BuildNationCandidate` — ✅ B1 Join done (end-to-end intake+FE); 건국 candidate REST entry remains.
 - InheritAction `Buy*`/`Reset*`/`SetNextSpecialWar` — 7/8 spend actions unreachable.
 - Command/NationCommand `ReserveBulk`/`Push`/`Repeat` (6 handlers) — only single reserve.
 - Diplomacy letter send/rollback/destroy MISSING (read+respond only).
@@ -82,26 +99,26 @@ domain-named path a faithful client can call) or MISSING.
 
 ### 2.2 Non-command logic systems — [LOGIC_GAP.md](gap/LOGIC_GAP.md) · 16: 6 / 7P / 3M
 COMPLETE: battle engine, NPC AI, events DSL, auction (wired), messaging/mailbox,
-monthly leaves. The headline = **four golden-green/prod-broken seams**:
-- **Founding created-set** is a no-op in the live daemon (see §2.7 / WAVE 0).
+monthly leaves. The headline = **three remaining golden-green/prod-broken seams**
+(founding was fixed in WAVE 0):
 - **Ruler succession** — `nextRuler`/`deleteNation` unported; `DaemonLoopConfig.kt:141-147`
   constructs the handler with no-op defaults → ruler death promotes no heir, fires
   no nation-deletion cascade → zombie/rulerless nation.
 - **DiplomacyMonthProcessor** exists but has NO tick caller → 불가침/정전 never auto-expire.
 - **checkStatistic** is an empty-lambda stub (`EngineEventConfig.kt:75`) → year-boundary national statistics never computed.
 MISSING: the entire **tournament bracket engine** (`func_tournament.php` 1393 lines;
-only enroll ported; `processTournament` not in the tick tail), ruler succession,
-live founding nation-creation. PARTIAL: item special-effect hooks (only ~15 of 79
-non-stat specials registered), vote CRUD.
+only enroll ported; `processTournament` not in the tick tail), ruler succession.
+PARTIAL: item special-effect hooks (only ~15 of 79 non-stat specials registered),
+vote CRUD.
 
 ### 2.3 FE page+component structure — [FE_STRUCTURE_GAP.md](gap/FE_STRUCTURE_GAP.md) · 52: 18 / 27P / 7M
 20-button MainControlBar + GlobalMenu spine reproduced; all 7 ranking pages + most
 info pages present as read renders. Dominant gap is PARTIAL = **read-only where PHP
 is interactive**: chief-center 12-command edit grid, NPC-control drag-reorder +
 setters, inherit store, generals 발령, nation-finance TipTap. Reserved-command ring
-is a scaffold blocked on a missing read endpoint. 7 genuinely MISSING: 감찰부 battle
-center (routes to coming-soon stub), in-game 입국/장수풀선택/빙의선택 entry flows,
-cached-map page, gateway install, standalone user_info.
+is a scaffold blocked on a missing read endpoint. 7 genuinely MISSING → 4 remaining:
+gateway install (design-replaced), standalone user_info; ✅ cached-map page done
+(WAVE 9b), ✅ 입국/장수풀선택/빙의선택 entry flows done (B1–B3).
 
 ### 2.4 FE output — read/info pages — [FE_OUTPUT_READ_GAP.md](gap/FE_OUTPUT_READ_GAP.md) · 218: 53 / 12P / 153M (~30%)
 Four structural root causes: (1) `FrontInfoController` DTOs are skeletons (main page
@@ -131,18 +148,14 @@ Betting (no market/candidates DTO); Auction (bidder/highestBid/host/remainPoint/
 dropped); GetConst (unit/city/iAction const bundle missing). 1 MISSING: no public
 city-list endpoint (only nation-scoped my-cities).
 
-### 2.7 Founding daemon seam — [FOUNDING_SEAM_FIX.md](gap/FOUNDING_SEAM_FIX.md) · 4: 0 / 1P / 4M
-**THE PROD-DOWN BUG.** `:logic` resolvers are golden-green (`GeobyeongTest` 14/14);
-the bug is the engine→logic seam. `ReservedTurnHandler.handle` passes only the
-decoded `argJson` as args, so `che_거병` (no-arg) hits `error(...)` at
-`CheGeobyeong.kt:71` → crash-loop. Two bugs: (A) 거병 INSERT path — missing 4 preload
-args AND the handler never drains `draft.createdNations/createdDiplomacy/createdNationTurns`;
-(B) 건국/cr_건국/무작위건국 UPDATE path — no crash but silent data loss (handler never
-diffs `draft.nation`, never drains cascade). **Downstream is already ready**: world
-declares+drains the created sets (no populate method), `DirtyState.nationTurnDirty`
-exists, `DatabaseHooks.toFlushPayload` wires the created sets, `JdbcFlushExecutor`
-step-3 has the INSERT SQL. Fix = 4 files + 1 new gate test; `nation.id` is integer PK
-(not serial) so `allocateNationId()=maxNationId+1` IS the authoritative id (no SERIAL dance).
+### 2.7 Founding daemon seam — [FOUNDING_SEAM_FIX.md](gap/FOUNDING_SEAM_FIX.md) · 4: 4 / 0 / 0 ✅
+**FIXED.** The prod crash-loop (거병 missing preload args + created-set never drained)
+is resolved. `ReservedTurnHandler.handle` now injects `che_거병` preload args
+(`newNationId`/`existingNationIds`/`existingNationNames`/`scenario`) before building
+`resolveCtx`. The created-set drain (`createdNations` → `createdDiplomacy` →
+`createdNationTurns`) runs after `definition.resolve`. The 건국/cr_건국/무작위건국
+UPDATE cascade also diffs `draft.nation` and drains properly. Prod is stable and
+turns advance.
 
 ---
 
@@ -154,20 +167,20 @@ Waves earlier in the list are prerequisites for (or strictly higher-value than)
 later ones. Within a wave, foundation artifacts (DTOs, mutators, registries) build
 before consumers.
 
-### WAVE 0 — PROD RECOVERY: founding daemon seam (prod is DOWN) 🔴
-*Source: FOUNDING_SEAM_FIX.md §1–§3. Ship 0a–0c FIRST to stop the crash-loop; 0d is a correctness follow-up.*
-- **0a (F1) world API** — `InMemoryTurnWorld.kt`: add `createNation`/`createDiplomacy`/`createNationTurn` + `createdNationTurns` ledger + `allocateNationId()` (`maxNationId+1`); wire `nationTurnDirty` into `consumeDirtyState` and clear it; prune in `removeNation`.
-- **0b (F2) crash fix** — `ReservedTurnHandler.handle`: inject `che_거병` preload args (`newNationId`/`existingNationIds`/`existingNationNames`/`scenario`) BEFORE building `resolveCtx` (fixes the `CheGeobyeong.kt:71` crash).
-- **0c (F2) created-set drain** — AFTER `definition.resolve`, drain in FK order `createdNations → createdDiplomacy → createdNationTurns` into the world; add **F4** scenario injection in `DaemonLoopConfig.kt:141` (scenario 1010 → secretlimit=1).
-- **0d (F2) sibling cascade drain** — drain 건국/cr_건국/무작위건국: `diffNation`+`applyNationDirtyFree` on `draft.nation` (0→1) + cascade generals/cities + 무작위 `candidateCityIds` id-ascending. (Silent-data-loss fix.)
-- **0e (gate)** — `FoundingHandlerSeamTest.kt` (no-throw, created-set drained 1/24/2N, survives to FlushPayload, secretlimit honors scenario, 건국 UPDATE survives) + Docker-gated flush IT.
+### WAVE 0 — PROD RECOVERY: founding daemon seam ✅ DONE
+*Source: FOUNDING_SEAM_FIX.md §1–§3. All items resolved; prod is stable and turns advance.*
+- **0a–0e** ✅ DONE — `InMemoryTurnWorld` created-set API, 거병 preload args injection,
+  created-set drain (FK order), 건국/cr_건국/무작위건국 cascade drain, gate test.
 
-### WAVE 1 — daemon-seam correctness (the other 4 golden-green/prod-broken seams) 🔴
-*Source: LOGIC_GAP.md. These run but silently corrupt state — fix before exposing more mutation.*
+### WAVE 1 — daemon-seam correctness (3 remaining golden-green/prod-broken seams) 🔴
+*Source: LOGIC_GAP.md. The founding seam (was 4th) is FIXED. These 3 remain.*
 - **1a ruler succession** — port `nextRuler`/`deleteNation` into `:logic`; wire into `DaemonLoopConfig` ctor (remove no-op defaults) + dying-message RNG variant pool.
 - **1b DiplomacyMonthProcessor wiring** — add the tick caller in PreUpdate/PostUpdateMonthly so 불가침/정전 term countdown + auto-expiry runs.
 - **1c checkStatistic** — replace the empty-lambda stub with the real year-boundary national-statistics computation.
 - **1d item special-effect hooks** — register the remaining non-stat specials reachable in scenario_1010 (계략/공성/농성/의술/반계/사기/위압/저격/부적); audit the 79 against equip-reachability.
+- **1e 계략 5종 DONE** — `che_화계`/`파괴`/`탈취`/`선동`/`첩보` ported + golden-gated
+  (`6b5eff5`, parity-wave batch 1). These were originally slated for WAVE 7a;
+  completed early via `/parity-wave` sabotage batch.
 
 ### WAVE 2 — silent-no-op intake fixes (W0 of PARITY_LEDGER) 🔴
 *Source: FE_OUTPUT_ACTION_GAP.md / PARITY_LEDGER cross-cutting. Tiny, high-value — buttons that lie.*
@@ -201,13 +214,23 @@ before consumers.
 - **6a Message** — `SendMessage`/`GetContactList`/`DeleteMessage` (+ MsgTarget DTO from 3e).
 - **6b Vote write** — `Vote`/`NewVote`/`AddComment` REST (intake already DONE; add domain paths).
 - **6c Auction Open*** — OpenBuyRice/SellRice/Unique + bid/finish + tab split + bidList/logs FE.
-- **6d General Join + BuildNationCandidate** — in-game join + 건국 candidate REST + the MISSING 입국/장수풀선택/빙의선택 FE entry flows.
+- **6d General Join + BuildNationCandidate** — in-game join + 건국 candidate REST.
 - **6e Command queue mgmt** — ReserveBulk/Push/Repeat handlers (after the WAVE 5a editor exists).
 - **6f NPC select-pool flow** — token/pick/update-picked-general.
 
-### WAVE 7 — per-command port long tail (PARITY_LEDGER PORT_MISSING 24) 🟡
+### WAVE 6b — entrance flows (B1–B3) ✅ DONE
+*New-player entry flows completed outside the 93-command ledger.*
+- **B1 장수생성 (Join)** ✅ — `MakeGeneral.draw()` draw-for-draw golden (`c6622f5`/`33d4893`);
+  end-to-end variant+handler+dispatcher+intake+FE PageJoin (`d92a6db`/`5e4f045`).
+- **B2 장수빙의 (NPC possession)** ✅ — Token pool (`8532064`), daemon persistence
+  (`63f88c8`), claim publish (`8963773`), gateway empty-until-admin (`983e27b`).
+- **B3 장수선택 (NPC selection from pool)** ✅ — Legacy token requirement (`8532064`)
+  wired through the possession seam.
+
+### WAVE 7 — per-command port long tail (PARITY_LEDGER PORT_MISSING 19) 🟡
 *Source: PARITY_LEDGER.md. Run via `/parity-wave` foundation-first (registry + intakeCodes + wire variants widened once, then per-command golden→port→gate in parallel, disjoint files).*
-- **7a RNG-bearing 계략 family** — che_화계/파괴/탈취/선동 (golden mandatory; distinct from the battle-scheme system).
+- **7a RNG-bearing 계략 family** — ~~che_화계/파괴/탈취/선동~~ ✅ DONE (`6b5eff5`).
+  Remaining: che_첩보 (moved to 7b).
 - **7b military/personal** — che_첩보/단련/강행/접경귀환/숙련전환/전투태세/모반시도/전투특기초기화/내정특기초기화.
 - **7c nation research family** — the 8 uniform `event_*연구` (극병/무희/상병/대검병/화시병/음귀병/산저병/화륜차/원융노병) + cr_인구이동.
 - **7d trigger/accept** — che_등용수락 (P6-deferred accept-trigger).
@@ -230,7 +253,7 @@ before consumers.
 ## 4. Wave dependency summary
 
 ```
-WAVE 0 (prod crash) ─┐
+WAVE 0 (prod crash) ✅ DONE
 WAVE 1 (seams)       ├─ correctness first (engine must not corrupt state)
 WAVE 2 (no-op fix)  ─┘
         │
@@ -238,11 +261,14 @@ WAVE 3 (read DTO foundation) ──▶ WAVE 4 (read output) ──▶ WAVE 5 (mu
         │                                                       │
         └────────────────────────▶ WAVE 6 (domain REST + entry) ┘
                                           │
+WAVE 6b (B1–B3 entrance) ✅ DONE
 WAVE 7 (command port tail)  ◀─ independent, parallelizable via /parity-wave
+  └─ 7a 계략 5종 ✅ DONE (was 7a, now closed)
 WAVE 8 (tournament)         ◀─ unblocks WAVE 2c
-WAVE 9 (public reads + admin)◀─ long tail
+WAVE 9 (public reads + admin)◀─ long tail ✅ DONE
 ```
 
-**One-line state:** logic core gate-closed; **prod down on a 4-file founding seam**;
-read surface ~30% and mutation surface mostly read-only/silent-no-op — fix the
-seams, ship the read DTOs, then fill the player surface command-by-command.
+**One-line state:** logic core gate-closed; **prod stable** (founding seam fixed, turns
+advancing); entrance flows (B1–B3) complete; 계략 5종 golden-gated; read surface ~30%
+and mutation surface mostly read-only/silent-no-op — fix remaining 3 seams, ship
+the read DTOs, then fill the player surface command-by-command.
