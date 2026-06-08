@@ -49,6 +49,9 @@ P1 blockers:
 
 Verdict: fix-required
 
+- Resolved P0 #2 with PHP `Join.php:278-283` fallback parity: neutral level 5-6 birth cities are preferred, then all level 5-6 cities.
+- Resolved P0 #4 with PHP `Join.php:392/413` affinity persistence: the drawn affinity is carried in the created general meta so `DatabaseHooks.toGeneralCreateRow` flushes `general.affinity`.
+- Added `MakeGeneralHandlerTest` coverage for both Join fallback and affinity flush payload.
 - The agent-system false-green is being tightened in this PR by mapping evidence to each changed behavior area.
-- The Join/B2/GeneralBuilder findings are real parity blockers and must not be merged/deployed as “cleared” until fixed or quarantined with proof.
+- The remaining Join/B2/GeneralBuilder findings are real parity blockers and must not be merged/deployed as “cleared” until fixed or quarantined with proof.
 - This PR may continue as an open PR with CI green, but latest critique verdict remains `fix-required`; merge/deploy is blocked.
