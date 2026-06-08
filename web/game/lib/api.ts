@@ -280,7 +280,7 @@ export const api = {
     // NPC 정책 (page 8) — default+current policy/priorities/lastSetters/env.
     npcPolicy: () => get<NpcPolicyResponse>('/api/nation/npc-policy'),
     // 유산 (page 15) — inherit items/buffs/costs/availability/logs/currentStat.
-    inheritPoint: () => get<InheritPointResponse>('/api/inherit-point'),
+    inheritPoint: <T>() => get<T>('/api/inherit-point'),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
     // 설문 조사 (page 5) — vote list.

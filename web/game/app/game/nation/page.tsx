@@ -5,29 +5,8 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
-
-interface Nation {
-    id: number;
-    name: string;
-    color: string;
-    gold: number;
-    rice: number;
-    tech: number;
-    level: number;
-    levelText?: string; // 등급 한글명(방랑군..천자) — kingdoms 랭킹 DTO 제공, raw 숫자 대신 표시
-    typeCode: string;
-    gennum: number;
-    capset: number;
-    power: number;
-}
-
-interface City {
-    id: number;
-    name: string;
-    nationId: number;
-    pop: number;
-    trade: number;
-}
+import { formatNumber } from '../../../lib/format';
+import type { MyNationDetailResponse, MyNationCityRef, InheritPointResponse } from '../../../types/game';
 
 const INHERIT_BUFFS = [
     { key: 'warAvoidRatio', label: '전투 회피율', desc: '자신의 전투 회피율 +1% per level' },
@@ -42,12 +21,19 @@ const INHERIT_BUFFS = [
 
 const INHERIT_COSTS = [0, 200, 600, 1200, 2000, 3000];
 
+// legacy func_converter.php newColor() 충실 포팅.
+const DARK_COLORS = new Set([
+    '', '#330000', '#FF0000', '#800000', '#A0522D', '#FF6347', '#808000',
+    '#008000', '#2E8B57', '#008080', '#6495ED', '#0000FF', '#000080',
+    '#483D8B', '#7B68EE', '#800080', '#A9A9A9', '#000000',
+]);
+function newColor(color: string): string {
+    return DARK_COLORS.has(color === '' ? '' : color.toUpperCase()) ? '#FFFFFF' : '#000000';
+}
+
 export default function NationPage() {
-    const [nation, setNation] = useState<Nation | null>(null);
-    const [cities, setCities] = useState<City[]>([]);
+    const [data, setData] = useState<MyNationDetailResponse | null>(null);
     const [myBuffs, setMyBuffs] = useState<Record<string, number>>({});
-    const [nationId, setNationId] = useState<number>(1);
-    const [generalId, setGeneralId] = useState<number>(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -55,15 +41,13 @@ export default function NationPage() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [nData, cData, gData] = await Promise.all([
-                api.rankings.kingdoms<Nation[]>().then(ns => ns.find(n => n.id === nationId)),
-                api.myCities<City[]>(),
-                api.myGenerals<{ id: number; meta?: { inheritBuff?: Record<string, number> } }[]>().then(gs => gs.find(g => g.id === generalId)),
+            const [nationRes, inheritRes] = await Promise.all([
+                api.myNationDetail<MyNationDetailResponse>(),
+                api.inheritPoint(),
             ]);
-            if (nData) setNation(nData);
-            if (cData) setCities(cData);
-            if (gData) {
-                setMyBuffs(gData.meta?.inheritBuff ?? {});
+            setData(nationRes);
+            if (inheritRes?.currentInheritBuff) {
+                setMyBuffs(inheritRes.currentInheritBuff);
             }
             setError('');
         } catch {
@@ -71,17 +55,10 @@ export default function NationPage() {
         } finally {
             setLoading(false);
         }
-    }, [nationId, generalId]);
+    }, []);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
-
-    useEffect(() => {
-        const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
-        es.onerror = () => es.close();
-        return () => es.close();
     }, [fetchData]);
 
     async function buyBuff(buffKey: string, level: number) {
@@ -112,26 +89,37 @@ export default function NationPage() {
         fetchData();
     }
 
-    const nationCities = cities.filter(c => c.nationId === nationId);
+    if (loading) {
+        return (
+            <Shell>
+                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
+                <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+            </Shell>
+        );
+    }
+
+    if (error) {
+        return (
+            <Shell>
+                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
+                <p style={{ color: 'var(--crimson)' }}>{error}</p>
+                <button onClick={fetchData} style={{ marginTop: 'var(--space-md)' }}>다시 시도</button>
+            </Shell>
+        );
+    }
+
+    if (!data || !data.hasNation) {
+        return (
+            <Shell>
+                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
+                <p style={{ color: 'var(--text-muted)' }}>재야입니다.</p>
+            </Shell>
+        );
+    }
 
     return (
         <Shell>
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>국가 정보</h1>
-
-            <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>국가 ID</span>
-                    <input type="number" style={{ width: '5rem' }} value={nationId} onChange={e => setNationId(Number(e.target.value))} />
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>장수 ID</span>
-                    <input type="number" style={{ width: '5rem' }} value={generalId} onChange={e => setGeneralId(Number(e.target.value))} />
-                </label>
-                <button onClick={fetchData}>새로고침</button>
-            </div>
-
-            {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
 
             {toast && (
                 <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
@@ -139,42 +127,91 @@ export default function NationPage() {
                 </div>
             )}
 
-            {nation && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-                    <GameCard>
-                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', color: nation.color }}>
-                            {nation.name}
-                        </h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>등급</span><strong>{nation.levelText ?? nation.level}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>국력</span><strong>{nation.power.toLocaleString()}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>금</span><strong>{nation.gold.toLocaleString()}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>쌀</span><strong>{nation.rice.toLocaleString()}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>기술</span><strong>{nation.tech.toFixed(2)}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>장수 수</span><strong>{nation.gennum}</strong>
-                            <span style={{ color: 'var(--text-muted)' }}>도시 수</span><strong>{nationCities.length}</strong>
-                        </div>
-                    </GameCard>
-
-                    <GameCard>
-                        <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>도시 목록</h2>
-                        {nationCities.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>도시가 없습니다.</p>
-                        ) : (
-                            <div style={{ maxHeight: '12rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                                {nationCities.map(c => (
-                                    <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', padding: 'var(--space-xs) var(--space-sm)', background: 'var(--bg-hover)', borderRadius: 'var(--radius-sm)' }}>
-                                        <span>{c.name}</span>
-                                        <span style={{ color: 'var(--text-muted)' }}>인구 {c.pop.toLocaleString()} · 무역 {c.trade}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </GameCard>
+            {/* 국가 헤더 + 19필드 단일표(8열) — PHP b_myKingdomInfo.php 동치 */}
+            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+                <div
+                    style={{
+                        background: data.color,
+                        color: newColor(data.color),
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        padding: 'var(--space-xs) 0',
+                        marginBottom: 'var(--space-sm)',
+                    }}
+                >
+                    【{data.name}】
                 </div>
-            )}
 
-            <GameCard className="mb-md">
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'auto 1fr auto 1fr auto 1fr',
+                        gap: '2px var(--space-sm)',
+                        fontSize: 'var(--text-sm)',
+                        alignItems: 'center',
+                    }}
+                >
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>총주민</span>
+                    <span style={{ textAlign: 'center' }}>{formatNumber(data.population)}/{formatNumber(data.populationMax)}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>총병사</span>
+                    <span style={{ textAlign: 'center' }}>{formatNumber(data.crew)}/{formatNumber(data.crewMax)}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>국 력</span>
+                    <span style={{ textAlign: 'center' }}>{data.power}</span>
+
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>국 고</span>
+                    <span style={{ textAlign: 'center' }}>{formatNumber(data.gold)}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>병 량</span>
+                    <span style={{ textAlign: 'center' }}>{formatNumber(data.rice)}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>세 율</span>
+                    <span style={{ textAlign: 'center' }}>{data.taxRate == null ? '-' : `${data.taxRate} %`}</span>
+
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>세금/단기</span>
+                    <span style={{ textAlign: 'center' }}>-</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>세곡/둔전</span>
+                    <span style={{ textAlign: 'center' }}>-</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>지급률</span>
+                    <span style={{ textAlign: 'center' }}>{data.bill == null ? '-' : `${data.bill} %`}</span>
+
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>수입/지출</span>
+                    <span style={{ textAlign: 'center' }}>-</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>수입/지출</span>
+                    <span style={{ textAlign: 'center' }}>-</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>속 령</span>
+                    <span style={{ textAlign: 'center' }}>{data.cityCount}</span>
+
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>국고 예산</span>
+                    <span style={{ textAlign: 'center' }}>-</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>병량 예산</span>
+                    <span style={{ textAlign: 'center' }}>-</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>장 수</span>
+                    <span style={{ textAlign: 'center' }}>{data.generalCount}</span>
+
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>기술력</span>
+                    <span style={{ textAlign: 'center' }}>{formatNumber(data.tech)}</span>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600, textAlign: 'center' }}>작 위</span>
+                    <span style={{ textAlign: 'center', gridColumn: 'span 3' }}>{data.levelText}</span>
+                </div>
+
+                {/* 속령일람 */}
+                <div style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-sm)' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>속령일람 : </span>
+                    {data.cities.map((c: MyNationCityRef, i: number) => (
+                        <span key={c.cityId} style={{ color: c.isCapital ? 'cyan' : undefined }}>
+                            {c.isCapital ? `[${c.name}]` : c.name}
+                            {i < data.cities.length - 1 ? ', ' : ''}
+                        </span>
+                    ))}
+                </div>
+
+                {/* 국가열전 */}
+                <div style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-sm)' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>국가열전 : </span>
+                    <span style={{ color: 'var(--text-muted)' }}>-</span>
+                </div>
+            </GameCard>
+
+            {/* 유산 버프 구매 */}
+            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
                 <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>유산 버프 구매</h2>
                 <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginBottom: 'var(--space-md)' }}>
                     각 버프는 레벨 1~5까지 구매 가능합니다. 비용은 누적 차액입니다.
