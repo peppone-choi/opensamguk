@@ -21,9 +21,10 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 5. [시나리오 시드](#시나리오-시드)
 6. [개발](#개발)
 7. [테스트](#테스트)
-8. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
-9. [패러티 규율](#패러티-규율)
-10. [감사 / 라이선스](#감사--라이선스)
+8. [작업 운영 체계](#작업-운영-체계)
+9. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
+10. [패러티 규율](#패러티-규율)
+11. [감사 / 라이선스](#감사--라이선스)
 
 ---
 
@@ -283,8 +284,7 @@ cd web/game    && corepack pnpm dev   # :3001 (인게임)
 ### 전체 체크 (커밋 전 권장)
 
 ```bash
-JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
-  :common:test :logic:test :infra:test :app:game-engine:test :app:game-api:test
+tools/parity/gate.sh backend
 ```
 
 ### 테스트 피라미드 (개략)
@@ -304,6 +304,19 @@ JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew \
 ### 골든 테스트
 
 `tools/php-golden/` Docker 캡처 하네스: MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010`(174장수, 빈 scenario_0 아님). quirk — `j_install.php` 두 번 호출, install 비멱등(매 실행 fresh DB), 덤프는 두 실행 간 byte-identical. 골든은 read-only 소비 대상이며 절대 날조/수정하지 않습니다.
+
+---
+
+## 작업 운영 체계
+
+주먹구구식 구현을 막기 위한 정본 문서는 [`docs/superpowers/WORKING_SYSTEM.md`](docs/superpowers/WORKING_SYSTEM.md)입니다.
+
+- `skills-lock.json`은 skills.sh에서 설치한 프로젝트 스킬 목록을 고정합니다.
+- `.agents/skills/`는 로컬 실행 표면이며 git-ignore입니다. 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원합니다.
+- provider/model 공통 개발도구는 `tools/agent-system/check.py`입니다. 로컬은 `tools/agent-system/check.py`, PR/CI는 `tools/agent-system/check.py --strict --base origin/main`, 에이전트 통합은 `--format json`을 사용합니다.
+- 백엔드 표준 게이트는 `tools/parity/gate.sh backend`입니다. Java 21로 Gradle을 실행하고 `BUILD SUCCESSFUL` 및 테스트 XML의 `failures=0 errors=0`을 확인합니다.
+- PHP 레거시 분석은 항상 `legacy/devsam-core` 소스 경로와 line range를 먼저 잡고, 실제 캡처가 필요한 동작은 `tools/php-golden/`로 증거를 만든 뒤 Kotlin/Next 구현과 비교합니다.
+- 외부 스킬은 보조 지식입니다. PHP grand truth, `CLAUDE.md`, `AGENTS.md`, one-daemon-write 규칙과 충돌하면 repo 규칙이 이깁니다.
 
 ---
 
@@ -348,4 +361,4 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 
 ---
 
-*최종 갱신: 2026-06-03 · F5(docs) 기준.*
+*최종 갱신: 2026-06-08 · skills.sh + working-system 기준.*

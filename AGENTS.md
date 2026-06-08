@@ -58,6 +58,9 @@ game-engine 데몬은 **절대** JPA `EntityManager`로 write하지 않습니다
 # 전체 빌드 + 테스트
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build
 
+# 패러티 백엔드 표준 게이트(XML 검증 포함)
+tools/parity/gate.sh backend
+
 # 단일 모듈
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
 
@@ -111,6 +114,18 @@ cd web/game    && corepack pnpm dev   # :3001
 ## 골든 픽스처
 
 골든 수치/로그/시드는 **오직** `tools/php-golden/` 실제 PHP 캡처(Docker: MariaDB 11.4 + `php:8.3-cli`, 시나리오 `1010`)에서. quirk: `j_install.php` 두 번 호출, install 비멱등(매 실행 fresh DB), 덤프 byte-identical. 골든은 `logic/.../resources/golden/`·`common/.../resources/golden/`에 read-only 소비 대상으로 둠 — 다른 모듈로 복사 금지.
+
+---
+
+## 작업 운영 체계 / skills.sh
+
+- 정본 운영 문서: `docs/superpowers/WORKING_SYSTEM.md`.
+- skills.sh 설치 목록은 `skills-lock.json`에 고정. `.agents/skills/`는 로컬 실행 표면이며 git-ignore이므로 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원.
+- 설치된 외부 스킬: `next-best-practices`, `webapp-testing`, `redesign-existing-projects`, `java-spring-boot`, `java-testing`, `kotlin-spring-boot`, `supabase-postgres-best-practices`.
+- `java-testing`은 skills.sh Gen 감사상 High Risk로 표시됨. 참고로만 사용하고, 실제 합격 판정은 repo 테스트와 `tools/parity/gate.sh`가 담당.
+- PHP 레거시 분석은 항상 `legacy/devsam-core` source path + line range → parity dimensions → `tools/php-golden/` capture/compare → Kotlin/Next implementation 순서.
+- 프론트 현대화는 `hwe/ts/` Vue 디자인/흐름을 grand truth로 삼고, 하드코딩 placeholder 대신 실제 API 상태를 렌더.
+- provider/model 공통 개발도구는 `tools/agent-system/check.py`. 로컬은 `tools/agent-system/check.py`, CI/PR은 `tools/agent-system/check.py --strict --base origin/main`, 기계 판독은 `--format json`.
 
 ---
 
