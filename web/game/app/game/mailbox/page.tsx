@@ -5,6 +5,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
+import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
 
 interface MailMessage {
     id: number;
@@ -84,7 +85,7 @@ export default function MailboxPage() {
         } finally {
             setPendingId(null);
         }
-        setTimeout(() => setToast(''), 3000);
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
         fetchMessages();
     }
 
@@ -100,7 +101,7 @@ export default function MailboxPage() {
         } finally {
             setPendingId(null);
         }
-        setTimeout(() => setToast(''), 3000);
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
         fetchMessages();
     }
 
@@ -151,7 +152,7 @@ export default function MailboxPage() {
                                 <StatusBadge variant={variant}>{TYPE_LABEL[msg.type] ?? msg.type}</StatusBadge>
                                 <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{msg.srcName}</span>
                                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{msg.date}</span>
-                                {msg.validUntil && msg.validUntil !== '9999-12-31' && (
+                                {msg.validUntil && msg.validUntil !== INFINITE_DATE && (
                                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>~{msg.validUntil}</span>
                                 )}
                             </div>
