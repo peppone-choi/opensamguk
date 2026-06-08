@@ -38,7 +38,6 @@ class CheJeopgyeongGwihwan : GeneralActionDefinition {
         val d = context.draft
         val g0 = d.general
         val rng = context.rng
-        val date = context.date
 
         // nearest enemy/neutral city list — preloaded by engine adapter via candidateCityIds
         val nearestCityList = context.candidateCityIds
@@ -48,7 +47,8 @@ class CheJeopgyeongGwihwan : GeneralActionDefinition {
         val destCityName = CityConst.byId(destCityId)?.name ?: ""
         val josaRo = JosaUtil.pick(destCityName, "로")
 
-        context.addLog("<G><b>$destCityName</b></>$josaRo 접경귀환했습니다. <1>$date</>")
+        // PHP che_접경귀환.php:96 — 로그에 시각(<1>date</>) 미포함(다른 군사명령과 달리).
+        context.addLog("<G><b>$destCityName</b></>$josaRo 접경귀환했습니다.")
         d.general = g0.copy(
             cityId = destCityId,
             lastTurn = LastTurn(name),

@@ -152,6 +152,13 @@ class GeneralActionResolveContext(
     fun addActionPlainLog(text: String) { if (text.isNotEmpty()) logs.add("<C>●</>$text") }
 
     /**
+     * Buffer a RAWTEXT line into the ACTOR's action-log stream ([logs]) VERBATIM — no `<C>●</>` bullet,
+     * no MONTH prefix. PHP `$logger->pushGeneralActionLog(body, ActionLogger::RAWTEXT)` (che_첩보.php:166-192
+     * cityBrief/cityDevel/병종) renders the body raw as a continuation line of the preceding action log.
+     */
+    fun addRawLog(text: String) { if (text.isNotEmpty()) logs.add(text) }
+
+    /**
      * Buffer a PLAIN-format line on a DEST general's own action-log scope. PHP che_포상.php:174
      * `$destGeneral->getLogger()->pushGeneralActionLog($body, ActionLogger::PLAIN)` — PLAIN format
      * `<C>●</>{body}` (no MONTH prefix), routed to the dest general's bucket.
