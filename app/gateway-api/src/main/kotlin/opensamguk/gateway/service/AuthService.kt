@@ -7,6 +7,9 @@ import opensamguk.gateway.dto.UserResponse
 import opensamguk.gateway.security.CustomUserDetails
 import opensamguk.gateway.security.JwtTokenProvider
 import opensamguk.infra.entity.UserEntity
+import opensamguk.infra.read.BannedMemberRepository
+import opensamguk.infra.read.EmailHasher
+import opensamguk.infra.read.SystemFlagRepository
 import opensamguk.infra.read.UserRepository
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -20,10 +23,22 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val jwtTokenProvider: JwtTokenProvider,
     private val authenticationManager: AuthenticationManager,
+    private val systemFlagRepository: SystemFlagRepository,
+    private val bannedMemberRepository: BannedMemberRepository,
+    private val emailHasher: EmailHasher,
 ) {
 
     @Transactional
     fun register(request: RegisterRequest): AuthResponse {
+        // B2b: 전역 가입 허용 게이트 — legacy system.REG (allow_join). 행 부재 시 미허용 폴백.
+        val systemFlag = systemFlagRepository.findSingleton()
+        if (systemFlag == null || !systemFlag.allowJoin) {
+            throw IllegalArgumentException("현재는 가입이 금지되어있습니다!")
+        }
+        // B2e: 영구차단 이메일 검사 — legacy banned_member(sha512(salt|email|salt)).
+        if (request.email != null && bannedMemberRepository.existsByHashedEmail(emailHasher.hash(request.email))) {
+            throw IllegalArgumentException("가입할 수 없는 이메일입니다.")
+        }
         if (userRepository.existsByUsername(request.username)) {
             throw IllegalArgumentException("이미 사용 중인 아이디입니다: ${request.username}")
         }
@@ -50,6 +65,12 @@ class AuthService(
         val userDetails = auth.principal as CustomUserDetails
         val user = userRepository.findByUsername(userDetails.username)
             .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
+        // B2b: 전역 로그인 허용 게이트 — legacy `LOGIN != 'Y' && grade < 5` deny.
+        // 0.9.0 divergence: grade≥5(부운영자+) 우회 = role==ADMIN 우회. 행 부재 시 미허용 폴백.
+        val systemFlag = systemFlagRepository.findSingleton()
+        if ((systemFlag == null || !systemFlag.allowLogin) && user.role != "ADMIN") {
+            throw IllegalArgumentException("현재는 로그인이 금지되어있습니다!")
+        }
         val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.username, user.role)
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, refreshToken, user.toResponse())

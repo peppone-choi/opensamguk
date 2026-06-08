@@ -5,6 +5,7 @@ import opensamguk.gameapi.dto.EmperorRecord
 import opensamguk.gameapi.dto.GeneralRank
 import opensamguk.gameapi.dto.HallRecord
 import opensamguk.gameapi.dto.KingdomRank
+import opensamguk.gameapi.dto.KingdomRoster
 import opensamguk.gameapi.dto.NpcGeneral
 import opensamguk.gameapi.dto.TrafficSummary
 import opensamguk.gameapi.rank.RankReadService
@@ -46,6 +47,14 @@ class RankingController(
     @GetMapping("/kingdoms")
     fun kingdoms(): ResponseEntity<List<KingdomRank>> =
         ResponseEntity.ok(rankReadService.kingdoms())
+
+    /**
+     * 세력일람(a_kingdomList.php, fid 15) ROSTER — `/kingdoms`(leaderboard)와 별개 화면.
+     * 국가별 수뇌직책표 + 속령/장수 일람 + 재야 섹션을 반환한다(read-only).
+     */
+    @GetMapping("/kingdom-roster")
+    fun kingdomRoster(): ResponseEntity<KingdomRoster> =
+        ResponseEntity.ok(rankReadService.kingdomRoster())
 
     @GetMapping("/npcs")
     fun npcs(): ResponseEntity<List<NpcGeneral>> =

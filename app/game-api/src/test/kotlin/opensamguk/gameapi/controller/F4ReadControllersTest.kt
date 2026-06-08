@@ -115,6 +115,15 @@ class F4ReadControllersTest {
     private fun nation(id: Int, name: String, color: String = "#fff", level: Int = 0, gold: Int = 0, rice: Int = 0, meta: Map<String, Any?> = linkedMapOf()) =
         NationReadEntity(id = id, name = name, color = color, level = level, gold = gold, rice = rice, meta = meta)
 
+    /** D11 — power/capital/type/gennum까지 채운 nation 헬퍼(GetDiplomacy SimpleNationObj 검증용). */
+    private fun nationP(
+        id: Int, name: String, color: String = "#fff", level: Int = 0, power: Int = 0,
+        capital: Int = 0, type: String = "che_중립", meta: Map<String, Any?> = linkedMapOf(),
+    ) = NationReadEntity(
+        id = id, name = name, color = color, level = level, power = power,
+        capitalCityId = capital, typeCode = type, meta = meta,
+    )
+
     private fun city(id: Int, name: String, nationId: Int = 0, conflict: Map<String, Any?> = linkedMapOf()) =
         CityReadEntity(id = id, name = name, nationId = nationId, conflict = conflict)
 
@@ -154,6 +163,42 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].experience").doesNotExist())
             .andExpect(jsonPath("$[0].dedication").doesNotExist())
             .andExpect(jsonPath("$[0].rice").doesNotExist())
+            // 벌점(refresh_score_total)은 §2 BLOCKED — 필드 자체가 없어야 한다(날조 금지).
+            .andExpect(jsonPath("$[0].refreshScoreTotal").doesNotExist())
+    }
+
+    // ── GET /api/generals — a_genList 15컬럼 보강(C3①) 한글 해석/부상보너스/삭턴 검증 ──────────────────
+    @Test
+    fun `generals emits a_genList columns - korean text, lbonus, killturn`() {
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828", level = 7)))
+        `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1)))
+        `when`(generals.findAll()).thenReturn(
+            listOf(
+                GeneralReadEntity(
+                    id = 1, name = "조조", nationId = 1, cityId = 5, officerLevel = 12,
+                    leadership = 90, strength = 80, intel = 95, crew = 1000,
+                    age = 41, injury = 0, picture = "chocho.jpg", imageServer = 2,
+                    personalCode = "che_정복", specialCode = "None", special2Code = "None",
+                    meta = linkedMapOf("killturn" to 38),
+                ),
+            ),
+        )
+
+        mvc(GeneralsController(generals, nations, cities)).perform(get("/api/generals"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].age").value(41))
+            .andExpect(jsonPath("$[0].picture").value("chocho.jpg"))
+            .andExpect(jsonPath("$[0].imageServer").value(2))
+            .andExpect(jsonPath("$[0].injury").value(0))
+            // 성격 한글명(personalityNameOf). None 특기는 "-"로 정규화(코드 미등록=PHP None.php $name='-').
+            .andExpect(jsonPath("$[0].personalText").value("정복"))
+            .andExpect(jsonPath("$[0].specialDomesticText").value("-"))
+            .andExpect(jsonPath("$[0].specialWarText").value("-"))
+            // 관직(officerLevel 12, nationLevel 7) → 황제. 통솔보너스 = calcLeadershipBonus(12,7)=14.
+            .andExpect(jsonPath("$[0].officerLevelText").value("황제"))
+            .andExpect(jsonPath("$[0].lbonus").value(14))
+            // 삭턴 = meta.killturn.
+            .andExpect(jsonPath("$[0].killturn").value(38))
     }
 
     // ── GET /api/tournament (state-0 default, no table) ──────────────────────────────────────────────
@@ -185,7 +230,7 @@ class F4ReadControllersTest {
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
-        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828", level = 7), nation(2, "촉", "#2e7d32", level = 5)))
         `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
             listOf(
                 DiplomacyLetterReadEntity(id = 1, srcNationId = 1, destNationId = 2, state = "PROPOSED", textBrief = "종전제의", textDetail = "종전합시다", srcSigner = 10),
@@ -198,10 +243,92 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.myNationID").value(1))
             .andExpect(jsonPath("$.nations.1.name").value("위"))
+            // legacy NationStaticItem.level — 수신국 select 표시용(실 nation.level 컬럼).
+            .andExpect(jsonPath("$.nations.1.level").value(7))
             .andExpect(jsonPath("$.nations.2.color").value("#2e7d32"))
             .andExpect(jsonPath("$.letters.length()").value(2))
             .andExpect(jsonPath("$.letters[0].stateText").value("제안됨"))
             .andExpect(jsonPath("$.letters[1].stateText").value("승인됨"))
+            // C1-α — Party 와이어 키는 legacy aux/MessageTarget 키(nationID/nationName/nationColor).
+            // aux 결손이면 nation 조회 폴백(nationName/Color), generalName/Icon은 null.
+            .andExpect(jsonPath("$.letters[0].src.nationID").value(1))
+            .andExpect(jsonPath("$.letters[0].src.nationName").value("위"))
+            .andExpect(jsonPath("$.letters[0].src.nationColor").value("#c62828"))
+            .andExpect(jsonPath("$.letters[0].src.generalName").doesNotExist())
+            .andExpect(jsonPath("$.letters[0].dest.nationID").value(2))
+            .andExpect(jsonPath("$.letters[0].dest.nationName").value("촉"))
+            // state(소문자) + prev_no/state_opt 와이어 키.
+            .andExpect(jsonPath("$.letters[0].state").value("proposed"))
+            .andExpect(jsonPath("$.letters[0].prev_no").doesNotExist())
+            .andExpect(jsonPath("$.letters[0].state_opt").doesNotExist())
+    }
+
+    // ── C1-α — aux 스냅샷에서 서명자(generalName/generalIcon) + state_opt 구성, permission<3 detail 마스킹 ──
+    @Test
+    fun `diplomacy letters source party from aux, mask detail for non-군주, filter cancelled`() {
+        // 호출자 officer_level 5(수뇌) → secretPermission 2 (<3) → detail 마스킹.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
+            listOf(
+                // activated 서신: aux['src'] 풀 타깃(서명자) + aux['dest'] nation-only + state_opt.
+                DiplomacyLetterReadEntity(
+                    id = 1, srcNationId = 1, destNationId = 2, state = "ACTIVATED",
+                    textBrief = "불가침", textDetail = "5년 불가침을 제안합니다", srcSigner = 10, destSigner = 20,
+                    aux = linkedMapOf(
+                        "src" to linkedMapOf(
+                            "nationName" to "위", "nationColor" to "#c62828",
+                            "generalName" to "순욱", "generalIcon" to "//cdn/sunyuk.png",
+                        ),
+                        "dest" to linkedMapOf("nationName" to "촉", "nationColor" to "#2e7d32"),
+                        "state_opt" to "try_destroy_src",
+                    ),
+                ),
+                // cancelled 서신은 목록에서 제외돼야 한다(legacy WHERE state != 'cancelled').
+                DiplomacyLetterReadEntity(id = 2, srcNationId = 1, destNationId = 2, state = "CANCELLED", textBrief = "파기됨", textDetail = "x", srcSigner = 10),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
+            .andExpect(status().isOk)
+            // cancelled 1건 제외 → 1건만.
+            .andExpect(jsonPath("$.letters.length()").value(1))
+            .andExpect(jsonPath("$.letters[0].no").value(1))
+            // aux['src'] 서명자(generalName/generalIcon)가 그대로 내려온다(nationID는 컬럼값으로 덮음).
+            .andExpect(jsonPath("$.letters[0].src.nationID").value(1))
+            .andExpect(jsonPath("$.letters[0].src.generalName").value("순욱"))
+            .andExpect(jsonPath("$.letters[0].src.generalIcon").value("//cdn/sunyuk.png"))
+            // aux['dest']는 nation-only → generalName 없음.
+            .andExpect(jsonPath("$.letters[0].dest.nationID").value(2))
+            .andExpect(jsonPath("$.letters[0].dest.nationName").value("촉"))
+            .andExpect(jsonPath("$.letters[0].dest.generalName").doesNotExist())
+            // state_opt 와이어 키(파기 2단계).
+            .andExpect(jsonPath("$.letters[0].state_opt").value("try_destroy_src"))
+            // permission 2 (<3) → detail 마스킹 verbatim.
+            .andExpect(jsonPath("$.letters[0].detail").value("(권한이 부족합니다)"))
+            // brief는 마스킹하지 않는다.
+            .andExpect(jsonPath("$.letters[0].brief").value("불가침"))
+    }
+
+    // ── C1-α — 군주(officer_level 12 → secretPermission 4)는 detail 마스킹 해제 ──────────────────────────
+    @Test
+    fun `diplomacy letters do NOT mask detail for 군주 caller`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
+            listOf(
+                DiplomacyLetterReadEntity(id = 1, srcNationId = 1, destNationId = 2, state = "ACTIVATED", textBrief = "불가침", textDetail = "5년 불가침을 제안합니다", srcSigner = 10),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
+            .andExpect(status().isOk)
+            // 군주(secretPermission 4) → detail 원문 노출.
+            .andExpect(jsonPath("$.letters[0].detail").value("5년 불가침을 제안합니다"))
     }
 
     @Test
@@ -215,27 +342,88 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.nations.1.name").value("위"))
     }
 
-    // ── GET /api/diplomacy/conflict (per-city % + matrix masking) ────────────────────────────────────
+    // ── GET /api/diplomacy/conflict = GetDiplomacy.php envelope (nations/conflict/diplomacyList/myNationID) ──
     @Test
-    fun `diplomacy conflict returns per-city conflict map and masked matrix`() {
-        `when`(cities.findAll()).thenReturn(
-            listOf(city(5, "허창", nationId = 1, conflict = linkedMapOf("2" to 40, "3" to 10))),
+    fun `diplomacy conflict returns GetDiplomacy envelope with power-sorted nations, normalized conflict, masked diplomacyList`() {
+        // 위(power 30) < 촉(power 50) → power DESC면 촉이 먼저. 둘 다 level>0.
+        `when`(nations.findAll()).thenReturn(
+            listOf(
+                nationP(1, "위", "#c62828", level = 7, power = 30, capital = 5, type = "che_위나라", meta = linkedMapOf("gennum" to 12)),
+                nationP(2, "촉", "#2e7d32", level = 5, power = 50, capital = 8, type = "che_촉나라", meta = linkedMapOf("gennum" to 9)),
+            ),
         )
-        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위"), nation(2, "촉")))
-        `when`(diplomacy.findBySrcNationId(1)).thenReturn(
+        `when`(cities.findAll()).thenReturn(
+            listOf(
+                // 분쟁 2개 항목, sum=50 → 2:round(80.0,1)=80.0, 3:round(20.0,1)=20.0.
+                city(5, "허창", nationId = 1, conflict = linkedMapOf("2" to 40, "3" to 10)),
+                // 항목<2(단일 nationId) → 분쟁 목록에서 제외(도시명 보강만).
+                city(8, "성도", nationId = 2, conflict = linkedMapOf("1" to 5)),
+                // 빈 분쟁맵 → 제외(도시명 보강만).
+                city(9, "강주", nationId = 2, conflict = linkedMapOf()),
+            ),
+        )
+        // PHP는 diplomacy 전체 행을 1회 순회(findAll) — me→you→state.
+        `when`(diplomacy.findAll()).thenReturn(
             listOf(DiplomacyReadEntity(id = 1, srcNationId = 1, destNationId = 2, stateCode = 5, term = 3)),
         )
-        `when`(diplomacy.findBySrcNationId(2)).thenReturn(emptyList())
 
         mvc(diplomacyController()).perform(get("/api/diplomacy/conflict"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.cities.length()").value(1))
-            .andExpect(jsonPath("$.cities[0].cityName").value("허창"))
-            .andExpect(jsonPath("$.cities[0].conflict.2").value(40))
-            .andExpect(jsonPath("$.cities[0].conflict.3").value(10))
-            // stateCode 5 masked to 2 (neutral)
-            .andExpect(jsonPath("$.matrix.1.2").value(2))
+            .andExpect(jsonPath("$.myNationID").value(0)) // 익명 호출자
+            // nations: power DESC → 촉(50) 먼저, 위(30) 다음. SimpleNationObj 필드셋.
+            .andExpect(jsonPath("$.nations.length()").value(2))
+            .andExpect(jsonPath("$.nations[0].nation").value(2))
+            .andExpect(jsonPath("$.nations[0].name").value("촉"))
+            .andExpect(jsonPath("$.nations[0].type").value("che_촉나라"))
+            .andExpect(jsonPath("$.nations[0].level").value(5))
+            .andExpect(jsonPath("$.nations[0].capital").value(8))
+            .andExpect(jsonPath("$.nations[0].gennum").value(9))
+            .andExpect(jsonPath("$.nations[0].power").value(50))
+            // 촉 도시명(성도, 강주) 행 순서 보강.
+            .andExpect(jsonPath("$.nations[0].cities[0]").value("성도"))
+            .andExpect(jsonPath("$.nations[0].cities[1]").value("강주"))
+            .andExpect(jsonPath("$.nations[1].nation").value(1))
+            .andExpect(jsonPath("$.nations[1].cities[0]").value("허창"))
+            // conflict = [[cityId, {nationId: pct}]] 튜플, 정규화된 Double 소수1자리. 허창(5)만 남는다.
+            .andExpect(jsonPath("$.conflict.length()").value(1))
+            .andExpect(jsonPath("$.conflict[0][0]").value(5))
+            .andExpect(jsonPath("$.conflict[0][1].2").value(80.0))
+            .andExpect(jsonPath("$.conflict[0][1].3").value(20.0))
+            // diplomacyList: 익명(myNationID=0) → 둘 다 내 국가 아님 → state 5 마스킹 2.
+            .andExpect(jsonPath("$.diplomacyList.1.2").value(2))
+    }
+
+    @Test
+    fun `diplomacy conflict does NOT mask state when viewer is a party (viewer-conditional)`() {
+        // 호출자(userId 7) → 장수 10 → 국가 1(위). myNationID=1.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(
+            listOf(
+                nationP(1, "위", "#c62828", level = 7, power = 30),
+                nationP(2, "촉", "#2e7d32", level = 5, power = 50),
+                nationP(3, "오", "#1565c0", level = 4, power = 20),
+            ),
+        )
+        `when`(cities.findAll()).thenReturn(emptyList())
+        `when`(diplomacy.findAll()).thenReturn(
+            listOf(
+                // 1↔2: 내 국가(1)가 당사자 → 원 state 5 노출.
+                DiplomacyReadEntity(id = 1, srcNationId = 1, destNationId = 2, stateCode = 5, term = 3),
+                // 2↔3: 둘 다 내 국가 아님 → state 5 마스킹 2.
+                DiplomacyReadEntity(id = 2, srcNationId = 2, destNationId = 3, stateCode = 5, term = 3),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/conflict").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.myNationID").value(1))
+            // 내 국가 당사자 관계는 원 state 5 (마스킹 안 함).
+            .andExpect(jsonPath("$.diplomacyList.1.2").value(5))
+            // 제3자끼리 관계는 3..7→2 마스킹.
+            .andExpect(jsonPath("$.diplomacyList.2.3").value(2))
     }
 
     // ── GET /api/nation/{id}/finance (editable gate) ─────────────────────────────────────────────────
@@ -467,16 +655,18 @@ class F4ReadControllersTest {
     fun `votes list empty when no polls`() {
         `when`(polls.findAllByOrderByIdDesc()).thenReturn(emptyList())
 
-        mvc(VoteController(polls, votes, voteComments, resolver)).perform(get("/api/votes"))
+        mvc(VoteController(polls, votes, voteComments, generals, resolver)).perform(get("/api/votes"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(0))
+            // D9 envelope: {result:true, votes:Map} (PHP GetVoteList.php) — votes 맵이 비어 있어야 한다.
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.votes").isEmpty)
     }
 
     @Test
     fun `vote detail 404 for missing poll`() {
         `when`(polls.findById(99)).thenReturn(Optional.empty())
 
-        mvc(VoteController(polls, votes, voteComments, resolver)).perform(get("/api/votes/99"))
+        mvc(VoteController(polls, votes, voteComments, generals, resolver)).perform(get("/api/votes/99"))
             .andExpect(status().isNotFound)
     }
 
@@ -491,14 +681,17 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.troops.length()").value(0))
     }
 
-    // ── GET /api/history (empty when no yearbook rows) ───────────────────────────────────────────────
+    // ── GET /api/history (empty record + 0 range when no yearbook rows) ───────────────────────────────
     @Test
-    fun `history returns empty months when yearbook table has no rows`() {
+    fun `history returns null record and zero range when yearbook table has no rows`() {
         `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
 
-        mvc(HistoryController(history)).perform(get("/api/history"))
+        mvc(HistoryController(history, world)).perform(get("/api/history"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.months.length()").value(0))
+            .andExpect(jsonPath("$.firstYearMonth").value(0))
+            .andExpect(jsonPath("$.lastYearMonth").value(0))
+            .andExpect(jsonPath("$.currentYearMonth").value(0))
+            .andExpect(jsonPath("$.record").value(org.hamcrest.Matchers.nullValue()))
     }
 }

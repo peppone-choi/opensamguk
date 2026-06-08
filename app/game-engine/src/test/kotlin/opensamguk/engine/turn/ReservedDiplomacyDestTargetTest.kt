@@ -133,8 +133,11 @@ class ReservedDiplomacyDestTargetTest {
         assertFalse(outcome.fellBack, "수락국 군주의 외교 수락은 폴백(휴식)이 아니라 실제로 실행되어야 한다: denyReason=${outcome.denyReason}")
         assertEquals("che_불가침수락", outcome.definition.key)
 
-        // 합의 term = (agreedYear*12 + agreedMonth - 1) - (YEAR*12 + MONTH - 1) = 12개월.
-        val expectedTerm = (YEAR + 1) * 12 + MONTH - 1 - (YEAR * 12 + MONTH - 1)
+        // PHP che_불가침수락.php:203-204,210 byte-exact:
+        //   currentMonth = env.year*12 + env.month - 1, reqMonth = year*12 + month (−1 없음),
+        //   term = reqMonth - currentMonth. (이전 reqMonth의 −1은 PHP에 없는 off-by-one 날조였다.)
+        //   = (201*12 + 1) - (200*12 + 1 - 1) = 2413 - 2400 = 13개월.
+        val expectedTerm = (YEAR + 1) * 12 + MONTH - (YEAR * 12 + MONTH - 1)
 
         val forward = world.getDiplomacy(ACCEPT_NATION, PROPOSER_NATION)!!
         val reverse = world.getDiplomacy(PROPOSER_NATION, ACCEPT_NATION)!!

@@ -72,3 +72,65 @@ data class ContactNation(
     val color: String,
     val general: List<List<Any>>,
 )
+
+/**
+ * D7 GetRecentMessage 응답 봉투. PHP `GetRecentMessage.php` shape:
+ * `{result,private[],public[],national[],diplomacy[],sequence,nationID,generalName,latestRead}`.
+ */
+data class RecentMessageResponse(
+    val result: Boolean = true,
+    val private: List<MessageArrayItem>,
+    val public: List<MessageArrayItem>,
+    val national: List<MessageArrayItem>,
+    val diplomacy: List<MessageArrayItem>,
+    val sequence: Int,
+    val nationID: Int,
+    val generalName: String,
+    val latestRead: LatestRead,
+)
+
+/**
+ * D8 GetOldMessage 응답 봉투. PHP `GetOldMessage.php` shape:
+ * `{private[],public[],national[],diplomacy[],result,keepRecent,sequence,nationID,generalName}`.
+ */
+data class OldMessageResponse(
+    val private: List<MessageArrayItem>,
+    val public: List<MessageArrayItem>,
+    val national: List<MessageArrayItem>,
+    val diplomacy: List<MessageArrayItem>,
+    val result: Boolean = true,
+    val keepRecent: Boolean = true,
+    val sequence: Int,
+    val nationID: Int,
+    val generalName: String,
+)
+
+/**
+ * PHP `Message::toArray()` 형태 — `{id,msgType,src,dest,text,option,time}`.
+ * `time`은 `yyyy-MM-dd HH:mm:ss` 문자열(Instant 아님).
+ */
+data class MessageArrayItem(
+    val id: Int?,
+    val msgType: String,
+    val src: MsgTargetMap?,
+    val dest: MsgTargetMap?,
+    val text: String,
+    val option: Map<String, Any?>?,
+    val time: String,
+)
+
+/** PHP `MessageTarget::toArray()` — `{id,name,nation_id,nation,color,icon}` 그대로. */
+data class MsgTargetMap(
+    val id: Int,
+    val name: String,
+    val nation_id: Int,
+    val nation: String,
+    val color: String,
+    val icon: String?,
+)
+
+/** D7 `latestRead` 블록 — `{diplomacy,private}`. */
+data class LatestRead(
+    val diplomacy: Int = 0,
+    val private: Int = 0,
+)

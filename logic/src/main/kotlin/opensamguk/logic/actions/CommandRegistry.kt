@@ -1,5 +1,6 @@
 package opensamguk.logic.actions
 
+import opensamguk.logic.actions.develop.cheDanryeon
 import opensamguk.logic.actions.develop.cheGisulYeongu
 import opensamguk.logic.actions.develop.cheGyeonmun
 import opensamguk.logic.actions.develop.cheJeongchakJangnyeo
@@ -12,13 +13,22 @@ import opensamguk.logic.actions.founding.CheHaesan
 import opensamguk.logic.actions.founding.CheMujakwiGeonguk
 import opensamguk.logic.actions.founding.CheSeonyang
 import opensamguk.logic.actions.founding.CrGeonguk
+import opensamguk.logic.actions.military.CheGanghaeng
 import opensamguk.logic.actions.military.CheGwihwan
 import opensamguk.logic.actions.military.CheHullyeon
 import opensamguk.logic.actions.military.CheIdong
+import opensamguk.logic.actions.military.CheJeontuTaese
 import opensamguk.logic.actions.military.CheJiphap
 import opensamguk.logic.actions.military.CheNpcNeungdong
+import opensamguk.logic.actions.military.CheCheobo
+import opensamguk.logic.actions.military.CheJeopgyeongGwihwan
+import opensamguk.logic.actions.military.cheHwagye
+import opensamguk.logic.actions.military.chePagoe
+import opensamguk.logic.actions.military.cheSeondong
 import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
+import opensamguk.logic.actions.military.CheSukryeonJeonhwan
+import opensamguk.logic.actions.military.CheTalchwi
 import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.actions.nation.cheBaekseongDongwon
@@ -30,6 +40,8 @@ import opensamguk.logic.actions.nation.cheBulgachimPagiSuak
 import opensamguk.logic.actions.nation.cheBulgachimSuak
 import opensamguk.logic.actions.nation.cheCheondo
 import opensamguk.logic.actions.nation.cheChotohwa
+import opensamguk.logic.actions.nation.cheMobanSido
+import opensamguk.logic.actions.nation.crInguIdong
 import opensamguk.logic.actions.nation.eventDaegeombyeongYeongu
 import opensamguk.logic.actions.nation.eventEumgwibyeongYeongu
 import opensamguk.logic.actions.nation.eventGeukbyeongYeongu
@@ -59,11 +71,14 @@ import opensamguk.logic.actions.nation.cheSumol
 import opensamguk.logic.actions.nation.cheUibyeongMojip
 import opensamguk.logic.actions.personnel.CheBangrang
 import opensamguk.logic.actions.personnel.CheDeungyong
+import opensamguk.logic.actions.personnel.CheDeungyongSurak
 import opensamguk.logic.actions.personnel.CheEuntwe
 import opensamguk.logic.actions.personnel.CheHaya
 import opensamguk.logic.actions.personnel.CheImgwan
 import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
+import opensamguk.logic.actions.personnel.CheJeontuTeukgiChogihwa
+import opensamguk.logic.actions.personnel.CheNaejeongTeukgiChogihwa
 import opensamguk.logic.actions.personnel.CheRandomImgwan
 import opensamguk.logic.actions.personnel.CheYoyang
 import opensamguk.logic.actions.trade.CheHeonnap
@@ -177,6 +192,22 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_해산" -> CheHaesan(pipeline)
         "che_요양" -> CheYoyang(pipeline)        // dispatcher-direct, gate-exempt (G14) — def for execution
         "che_선양" -> CheSeonyang(pipeline)        // ORDER BY RAND quarantine (G4, decision #6)
+        // --- CMD-GROUP-A stubs (17 missing PHP commands — widened ONCE, disjoint fill per command) ---
+        "che_화계" -> cheHwagye(pipeline, maxLevel)
+        "che_파괴" -> chePagoe(pipeline, maxLevel)
+        "che_탈취" -> CheTalchwi(pipeline, maxLevel)
+        "che_선동" -> cheSeondong(pipeline, maxLevel)
+        "che_첩보" -> CheCheobo(pipeline)
+        "che_단련" -> cheDanryeon(pipeline, maxLevel)
+        "che_접경귀환" -> CheJeopgyeongGwihwan()
+        "che_강행" -> CheGanghaeng(pipeline)
+        "che_숙련전환" -> CheSukryeonJeonhwan(pipeline)
+        "che_전투태세" -> CheJeontuTaese(pipeline, maxLevel)
+        "che_모반시도" -> cheMobanSido(pipeline)
+        "che_전투특기초기화" -> CheJeontuTeukgiChogihwa(pipeline)
+        "che_내정특기초기화" -> CheNaejeongTeukgiChogihwa(pipeline)
+        "che_등용수락" -> CheDeungyongSurak(pipeline)
+        "cr_인구이동" -> crInguIdong(pipeline)
         else -> RestAction
     }
     val fallback: GeneralActionDefinition get() = RestAction

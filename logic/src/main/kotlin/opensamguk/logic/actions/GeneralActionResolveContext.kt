@@ -89,6 +89,11 @@ class GeneralActionResolveContext(
     // 무작위수도이전 candidate neutral level-5/6 city ids (che_무작위수도이전.php:98 SELECT). The world
     // scan is engine data; rng->choice picks one of these in resolve.
     val candidateCityIds: List<Int> = emptyList(),
+    // 게임 env `turnterm`(턴 간격 분, PHP `$env['turnterm']`). 외교 제의 명령(불가침/종전/불가침파기)이
+    // 서신 validUntil = date + max(30, turnterm*3)분 공식([opensamguk.logic.actions.nation.DiplomacySeam])에
+    // 쓴다. turnterm은 logic 엔티티에 없는 월드/엔진 데이터라 어댑터(ReservedTurnHandler)가 per-turn으로
+    // 주입한다 — defaulted=60(prod 기본값)이라 기존 호출부는 source-compatible. 외교 외 명령은 미사용.
+    val turnterm: Int = 60,
     // P4 BO3 — the battle-command carrier (BattleCommandContextBuilder output) the che_출병 resolver reads:
     // the BFS distanceList + per-city defenders + raw rows + war-seed inputs. null for non-battle commands.
     val battleContext: opensamguk.logic.war.BattleCommandContext? = null,

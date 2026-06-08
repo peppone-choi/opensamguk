@@ -215,6 +215,12 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
     fun countByNationId(nationId: Int): Long
 
     /**
+     * D5 — 참여 가능 사용자 수. PHP `GetBettingDetail.php`의
+     * `SELECT count(no) FROM general WHERE npc < 2`.
+     */
+    fun countByNpcStateLessThan(npcState: Int): Long
+
+    /**
      * W3 FrontGlobalInfo — NPC 장수 수(`npc_state > 0`). PHP `SELECT npc, count(no) FROM general GROUP BY npc`의
      * NPC 합과 동치(user는 `countByNpcState(0)`). createdUserCnt/createdNPCCnt 분리 카운트용.
      */
@@ -222,6 +228,20 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
 
     /** F2 Wave 6: officers stationed in a city (city-detail panel — cheap count, no row load). */
     fun countByCityId(cityId: Int): Long
+
+    /**
+     * b_currentCity(도시정보) 장수 상세 테이블 원천 — PHP `b_currentCity.php:217`의
+     * `SELECT ... from general where city=%i order by turntime`를 그대로 이식.
+     *
+     * 정렬은 `turn_time ASC`(턴 순). NULL은 `NULLS FIRST`(PHP MySQL ORDER BY ASC의 NULL-앞 동형;
+     * 1010 seed는 turn_time NOT NULL이라 무차이). 동률 안정성 위해 id ASC 2차 키
+     * (§6 결정적 tie-break — 패러티 순서 불변).
+     */
+    @Query(
+        "select g from GeneralReadEntity g where g.cityId = :cityId " +
+            "order by g.turnTime asc nulls first, g.id asc",
+    )
+    fun findByCityIdOrderByTurnTimeAsc(@Param("cityId") cityId: Int): List<GeneralReadEntity>
 
     /** F4: members of a troop (the 부대 편성 member list — generals whose troop_id == the leader id). */
     fun findByTroopIdOrderByOfficerLevelDescIdAsc(troopId: Int): List<GeneralReadEntity>

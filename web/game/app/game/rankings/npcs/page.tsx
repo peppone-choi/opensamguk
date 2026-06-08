@@ -1,75 +1,136 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
-import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatNumber } from '../../../../lib/format';
+import { getNPCColor } from '../../../../lib/utilGame';
 import type { NpcGeneral } from '../../../../types/game';
+
+// legacy a_npcList.php 정렬 8종. PHP $sortType: [key, isAsc].
+// 1 이름(asc) · 2 국가(asc) · 3 종능(desc) · 4 통솔(desc) · 5 무력(desc) · 6 지력(desc) · 7 명성(desc) · 8 계급(desc)
+type SortType = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+const SORT_OPTIONS: { value: SortType; label: string }[] = [
+  { value: 1, label: '이름' },
+  { value: 2, label: '국가' },
+  { value: 3, label: '종능' },
+  { value: 4, label: '통솔' },
+  { value: 5, label: '무력' },
+  { value: 6, label: '지력' },
+  { value: 7, label: '명성' },
+  { value: 8, label: '계급' },
+];
 
 export default function NpcsPage() {
   const [data, setData] = useState<NpcGeneral[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filterNation, setFilterNation] = useState<string>('all');
+  const [sortType, setSortType] = useState<SortType>(1);
 
   useEffect(() => {
-    api.rankings.npcs<NpcGeneral[]>()
+    api.rankings
+      .npcs<NpcGeneral[]>()
       .then(setData)
       .catch(() => setError('데이터를 불러올 수 없습니다.'))
       .finally(() => setLoading(false));
   }, []);
 
-  const nations = Array.from(new Set(data.map((n) => n.nation))).sort();
-  const filtered = filterNation === 'all' ? data : data.filter((n) => n.nation === filterNation);
+  // PHP usort: asc=1·2, 그 외 desc. (PHP `<=>` 동치)
+  const sorted = useMemo(() => {
+    const arr = [...data];
+    const cmp = (a: NpcGeneral, b: NpcGeneral): number => {
+      switch (sortType) {
+        case 1:
+          return a.name.localeCompare(b.name); // 이름 asc
+        case 2:
+          return a.nation.localeCompare(b.nation); // 국가 asc
+        case 3:
+          return b.total - a.total; // 종능 desc
+        case 4:
+          return b.leadership - a.leadership;
+        case 5:
+          return b.strength - a.strength;
+        case 6:
+          return b.intel - a.intel;
+        case 7:
+          return b.experience - a.experience; // 명성 desc
+        case 8:
+          return b.devotion - a.devotion; // 계급 desc
+        default:
+          return 0;
+      }
+    };
+    arr.sort(cmp);
+    return arr;
+  }, [data, sortType]);
 
-  if (loading) return (
-    <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>NPC 일람</h1>
-      <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
-    </Shell>
-  );
+  if (loading)
+    return (
+      <Shell>
+        <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>빙의 일람</h1>
+        <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>
+      </Shell>
+    );
 
-  if (error) return (
-    <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>NPC 일람</h1>
-      <p style={{ color: 'var(--crimson)' }}>{error}</p>
-    </Shell>
-  );
+  if (error)
+    return (
+      <Shell>
+        <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>빙의 일람</h1>
+        <p style={{ color: 'var(--crimson)' }}>{error}</p>
+      </Shell>
+    );
 
-  const headers = ['장수', '국가', '직위', '통솔', '무력', '지력', '경험', '충성', '병력', '도시'];
-  const rows = filtered.map((g) => [
-    g.name,
-    <span key="nation" style={{ color: g.nationColor }}>{g.nation}</span>,
-    g.officerLevel,
+  // legacy 12컬럼: 희생된 장수 | 악령 이름 | 레벨 | 국가 | 성격 | 특기 | 종능 | 통솔 | 무력 | 지력 | 명성 | 계급
+  const headers = [
+    '희생된 장수',
+    '악령 이름',
+    '레벨',
+    '국가',
+    '성격',
+    '특기',
+    '종능',
+    '통솔',
+    '무력',
+    '지력',
+    '명성',
+    '계급',
+  ];
+  const rows = sorted.map((g) => [
+    // formatName 동치: npc 타입색으로 이름 렌더.
+    <span key="name" style={{ color: getNPCColor(g.npc) ?? undefined }}>
+      {g.name}
+    </span>,
+    g.ownerName ?? '-', // BLOCKED(owner_name 부재) → "-"
+    `Lv ${g.explevel}`,
+    <span key="nation" style={{ color: g.nationColor }}>
+      {g.nation}
+    </span>,
+    g.personalText,
+    `${g.specialDomesticName} / ${g.specialWarName}`,
+    formatNumber(g.total),
     formatNumber(g.leadership),
     formatNumber(g.strength),
     formatNumber(g.intel),
-    formatNumber(g.experience),
-    formatNumber(g.devotion),
-    formatNumber(g.crew),
-    g.cityName,
+    formatNumber(g.experience), // 명성 = raw experience
+    formatNumber(g.devotion), // 계급 = raw dedication
   ]);
 
   return (
     <Shell>
-      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>NPC 일람</h1>
+      <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>빙의 일람</h1>
 
       <div style={{ marginBottom: 'var(--space-md)' }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontSize: 'var(--text-sm)' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>국가 필터:</span>
-          <select
-            value={filterNation}
-            onChange={(e) => setFilterNation(e.target.value)}
-            style={{ minWidth: 140 }}
-          >
-            <option value="all">전체</option>
-            {nations.map((n) => (
-              <option key={n} value={n}>{n}</option>
+          <span style={{ color: 'var(--text-secondary)' }}>정렬순서:</span>
+          <select value={sortType} onChange={(e) => setSortType(Number(e.target.value) as SortType)} style={{ minWidth: 120 }}>
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
-          <span style={{ color: 'var(--text-muted)' }}>{filtered.length}명</span>
+          <span style={{ color: 'var(--text-muted)' }}>{sorted.length}명</span>
         </label>
       </div>
 

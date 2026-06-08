@@ -1,5 +1,7 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * F2 Wave 1 DTOs — the read contracts web/game Wave 2 builds against. Field names are STABLE; serialized
  * with Jackson default (camelCase). All identity endpoints resolve the caller's general from the verified
@@ -17,9 +19,11 @@ data class ClaimableGeneral(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
-    val officerLevel: Int,
     val picture: String?,
     val imageServer: Int,
+    val special: String?,       // 내정특기명
+    val special2: String?,      // 전투특기명
+    val personal: String?,      // 성격명
 )
 
 /** GET /api/generals/claimable body. */
@@ -355,7 +359,12 @@ data class MyPageResponse(
     val imageServer: Int,
 )
 
-/** GET /api/my-generals — generals in the caller's nation (the caller is always included). */
+/**
+ * GET /api/my-generals — generals in the caller's nation (the caller is always included).
+ * PHP `hwe/b_myGenInfo.php`(세력장수, fid 25) 15컬럼 행: 얼굴/이름/관직/계급/명성/봉록/통솔/무력/지력/
+ * 자금/군량/성격/특기2/사관/벌점. a_genList(전체 장수)와 쌍이며 자금·군량·봉록·사관(belong)이 추가다.
+ * raw 코드는 그대로 두고, 한글 해석값(관직/계급/성격/특기명)은 이미 이식된 헬퍼만 재사용해 ADD(날조 아님).
+ */
 data class MyGeneralSummary(
     val generalId: Int,
     val name: String,
@@ -368,6 +377,39 @@ data class MyGeneralSummary(
     val npcState: Int,
     /** True iff this is the caller's own general. Named `mine` (not `isMe`) so Jackson keeps the field name. */
     val mine: Boolean,
+
+    // ── b_myGenInfo 15컬럼 보강(C3①) ──────────────────────────────────────────────────────────────
+    /** 장수 초상 파일명(PHP `picture`). "얼 굴" 컬럼 이미지 src. */
+    val picture: String? = null,
+    /** 초상 이미지 서버 번호(PHP `imgsvr`→GetImageURL). FE CDN base 합성. */
+    val imageServer: Int = 0,
+    /** 관직 한글명 = getOfficerLevelText(officer_level, nationLevel) (PHP). "관 직" 컬럼. */
+    val officerLevelText: String = "",
+    /** 계급 한글명 = getDedLevelText(getDedLevel(dedication)) (PHP getDed). "계 급" 컬럼. */
+    val dedLevelText: String = "",
+    /** 명성 칭호 = getHonor(experience) (PHP). "명 성" 컬럼. */
+    val honorText: String = "",
+    /** 봉록 = getBill(dedication) = getBillByLevel(getDedLevel(dedication)) (PHP). "봉 록" 컬럼. */
+    val bill: Int = 0,
+    /** 자금(PHP `gold`). "자 금" 컬럼. */
+    val gold: Int = 0,
+    /** 군량(PHP `rice`). "군 량" 컬럼. */
+    val rice: Int = 0,
+    /** 성격 한글명 = personalityNameOf(personal_code) (PHP displayCharInfo). "성 격" 컬럼. */
+    val personalText: String = "",
+    /** 내정 특기명 = SpecialityHelper.domesticName(special_code) (PHP displaySpecialDomesticInfo). "특 기"(앞). None→"-". */
+    val specialDomesticText: String = "",
+    /** 전투 특기명 = SpecialityHelper.warName(special2_code) (PHP displaySpecialWarInfo). "특 기"(뒤). None→"-". */
+    val specialWarText: String = "",
+    /** 사관(belong) = 입사 경과 턴 수(PHP `belong`). "사 관" 컬럼. */
+    val belong: Int = 0,
+    /** 부상률(0~100, PHP `injury`). >0이면 통/무/지 감산·적색 표시(FE). */
+    val injury: Int = 0,
+    /** 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
+    val lbonus: Int = 0,
+    // [§2 BLOCKED — general_access_log 부재] 벌점(refresh_score_total)은 PHP가 LEFT JOIN
+    // general_access_log에서 읽는다(b_myGenInfo.php:118). 테이블이 opensamguk 스키마에 없어(P8 미이식)
+    // read 원천이 없다 → 벌점 컬럼/정렬(type=10) 모두 노출하지 않는다(날조 금지).
 )
 
 data class MyGeneralsResponse(
@@ -376,16 +418,67 @@ data class MyGeneralsResponse(
     val generals: List<MyGeneralSummary>,
 )
 
-/** GET /api/my-cities — cities owned by the caller's nation. */
+/**
+ * GET /api/my-cities — cities owned by the caller's nation (PHP `hwe/b_myCityInfo.php` 세력도시, fid 22).
+ * 평면 9컬럼 표가 아니라 도시당 카드(5행)로 렌더된다. 각 행은 실제 city 컬럼에서 직접 읽고, 도시당
+ * 21 데이터포인트(주민/인구율/농상치수성 5종 cur·max/민심/시세/태수·군사·종사/장수CSV)를 모두 노출한다.
+ * 자금/군량/둔전 "수입" 3종은 §2 BLOCKED(아래 주석) — read-only game-api에 nation-type income 파이프라인이
+ * 조립돼 있지 않아(precheck는 identity-fold 빈 파이프라인) 비-중립 국가타입에서 PHP와 silently diverge하므로
+ * 날조하지 않고 누락한다. FE는 부재 필드를 "-"로 렌더한다.
+ */
 data class MyCitySummary(
     val cityId: Int,
     val name: String,
     val level: Int,
+    /** 치소 등급 한글명 = CityConst.levelMap[level] (수/진/관/이/소/중/대/특). 헤더 【지역 | 등급】. */
+    val levelText: String = "",
     val region: Int,
+    /** 지역 한글명 = CityConst.regionMap[region] (하북/중원/…/동이). 헤더 【지역 | 등급】. */
+    val regionText: String = "",
+    /** 수도 여부(nation.capital_city_id == this.id). true면 도시명 cyan 강조(PHP `<font color=cyan>[name]</font>`).
+     * Jackson Kotlin 모듈이 Boolean `is`-프로퍼티 접두사를 떼어 `capital`로 직렬화하므로(F4Dto §isChief 동일)
+     * FE/테스트 계약 키 `isCapital`을 @get:JsonProperty로 고정한다. */
+    @get:JsonProperty("isCapital")
+    val isCapital: Boolean = false,
     val population: Int,
     val populationMax: Int,
+    // ── 농업/상업/치안/수비/성벽 5종 cur/max(PHP `$city['agri']/$city['agri_max']` …) ──────────────
+    val agriculture: Int = 0,
+    val agricultureMax: Int = 0,
+    val commerce: Int = 0,
+    val commerceMax: Int = 0,
+    val security: Int = 0,
+    val securityMax: Int = 0,
     val defense: Int,
+    val defenseMax: Int = 0,
     val wall: Int,
+    val wallMax: Int = 0,
+    /** 민심(PHP `round($city['trust'], 1)` — 소수1자리). FE가 toFixed(1)로 렌더. */
+    val trust: Double = 0.0,
+    /** 시세(PHP `$city['trade']%`; null이면 FE가 "- " verbatim). nullable 유지 — 날조 금지. */
+    val trade: Int? = null,
+    // ── 관직자(PHP officerName[4/3/2] = formatName, 공석 "-"). npc 색상은 FE getNPCColor. ──────────
+    /** 태수(officer_level 4, officer_city == this.id). 공석이면 null → FE "-". */
+    val governorName: String? = null,
+    val governorNpc: Int = 0,
+    /** 군사(officer_level 3). 공석이면 null. */
+    val strategistName: String? = null,
+    val strategistNpc: Int = 0,
+    /** 종사(officer_level 2). 공석이면 null. */
+    val secretaryName: String? = null,
+    val secretaryNpc: Int = 0,
+    /** 도시 소재 장수 일람(PHP `cityGeneralList[cityID]` = formatName CSV, npc 색상). 없으면 빈 리스트 → FE "-". */
+    val generals: List<MyCityGeneralName> = emptyList(),
+    // [§2 BLOCKED — nation-type income 파이프라인 미조립] 자금/군량/둔전 수입 3종(PHP
+    // calcCityGoldIncome/calcCityRiceIncome/calcCityWallRiceIncome × rate/20)은 read game-api에서
+    // 산출하지 않는다. 비-중립 nationType의 onCalcNationalIncome fold가 PHP와 달라져(precheck는
+    // identity-fold 빈 파이프라인) byte-parity가 깨지므로 날조 금지로 누락한다(MyKingdomInfo income과 동일).
+)
+
+/** 도시 소재 장수 1명(PHP formatName: 이름 + npc 색상). */
+data class MyCityGeneralName(
+    val name: String,
+    val npc: Int,
 )
 
 data class MyCitiesResponse(
@@ -404,13 +497,76 @@ data class MyBossResponse(
     val bossOfficerLevel: Int?,
 )
 
-/** GET /api/my-nation-detail — the caller's nation, fuller surface (404 shape if no nation). */
+/**
+ * GET /api/my-nation-detail — the caller's nation (PHP `hwe/b_myKingdomInfo.php` 세력정보, fid 22).
+ *
+ * 계약 버그 수정: 기존 FE는 {nation, generals, cities}를 가정했으나 BE는 {result, hasNation, nation:
+ * FrontNationInfo, cityCount, generalCount}만 내려줬다 → 양쪽 표 공백 + pop/genNum/power undefined.
+ * legacy엔 장수표·도시표가 없다 — 19필드 단일표(8열) 한 장이다. 그 19필드를 정확히 이 DTO로 옮긴다.
+ *
+ * 실 컬럼/집계에서 직접 산출(정상): 총주민(currPop/maxPop), 총병사(currCrew/maxCrew), 국력(power), 국고(gold),
+ * 병량(rice), 속령수(cityCount), 장수수(gennum), 기술력(floor tech), 작위(nationLevelNameOf), 속령일람.
+ *
+ * [§2 BLOCKED — 날조 금지로 nullable] 세율(rate)/지급률(bill)은 nation.meta UNVERIFIED(IdentityDto
+ * FrontNationInfo §2 동일) — 방어적 read, 부재 시 null. income 6종(세금/단기·세곡/둔전·수입/지출·금예산·미예산·
+ * 금미차)은 PHP가 getGoldIncome/getRiceIncome/getWarGoldIncome/getWallIncome/getOutcome로 live 산출하나,
+ * read game-api에 nation-type income 파이프라인이 조립돼 있지 않아(precheck는 identity-fold 빈 파이프라인)
+ * 비-중립 nationType에서 PHP와 silently diverge → 산출하지 않고 누락(null/omit). 국가열전(getNationHistoryLogAll)은
+ * nation-history read 원천 부재(스키마에 nation 이력 read entity/repository 없음) → null. FE는 부재 필드를 "-"로 렌더.
+ */
 data class MyNationDetailResponse(
     val result: Boolean,
     val hasNation: Boolean,
-    val nation: FrontNationInfo?,
-    val cityCount: Int,
-    val generalCount: Int,
+    // ── 국가 헤더(PHP `【{name}】` color/bg) ──────────────────────────────────────────────────────
+    val nationId: Int = 0,
+    val name: String = "",
+    val color: String = "",
+    // ── 19필드(8열 단일표) ────────────────────────────────────────────────────────────────────────
+    /** 총주민 현재 = SUM(city.pop) over 보유 도시. */
+    val population: Int = 0,
+    /** 총주민 최대 = SUM(city.pop_max). */
+    val populationMax: Int = 0,
+    /** 총병사 현재 = SUM(general.crew) WHERE npc!=5. */
+    val crew: Int = 0,
+    /** 총병사 최대 = SUM(general.leadership)*100 WHERE npc!=5. */
+    val crewMax: Int = 0,
+    /** 국력(PHP `nation.power` raw). */
+    val power: Int = 0,
+    /** 국고(PHP `nation.gold`). */
+    val gold: Int = 0,
+    /** 병량(PHP `nation.rice`). */
+    val rice: Int = 0,
+    /** 속령수 = count(city). */
+    val cityCount: Int = 0,
+    /** 장수수(PHP `nation.gennum` = meta.gennum). */
+    val generalCount: Int = 0,
+    /** 기술력 = floor(nation.tech) (PHP `number_format(floor($nation['tech']))`). */
+    val tech: Int = 0,
+    /** 작위 한글명 = getNationLevel(level) = GameConst.nationLevelNameOf(level). */
+    val levelText: String = "",
+    /** raw level(작위 수치 — 표시는 levelText). */
+    val level: Int = 0,
+    /** 속령일람(보유 도시명, 수도는 isCapital=true → cyan). 삽입 순서(id ASC) 보존. */
+    val cities: List<MyNationCityRef> = emptyList(),
+
+    // [§2 BLOCKED — nation.meta UNVERIFIED] 세율/지급률(rate/bill): 방어적 read, 부재 시 null.
+    /** 세율 % (PHP `nation.rate`) — meta.rate, UNVERIFIED → null. */
+    val taxRate: Int? = null,
+    /** 지급률 % (PHP `nation.bill`) — meta.bill, UNVERIFIED → null. */
+    val bill: Int? = null,
+    // [§2 BLOCKED — income 파이프라인 미조립] 세금(goldIncome)/단기(warIncome)/세곡(riceIncome)/
+    //   둔전(wallIncome)/수입금(totalGoldIncome)/수입미(totalRiceIncome)/지출(outcome)/
+    //   국고예산(budgetgold)/병량예산(budgetrice)/금미차(budgetgolddiff/budgetricediff) — 전부 누락.
+    // [§2 BLOCKED — nation-history read 원천 부재] 국가열전(getNationHistoryLogAll) — 누락.
+)
+
+/** 속령일람 1개(도시명 + 수도 강조 플래그). */
+data class MyNationCityRef(
+    val cityId: Int,
+    val name: String,
+    // Jackson Kotlin 모듈의 Boolean `is`-접두사 제거 회피 — FE/테스트 계약 키 `isCapital` 고정.
+    @get:JsonProperty("isCapital")
+    val isCapital: Boolean,
 )
 
 // ── global-menu (§4 server-driven typed union) ───────────────────────────────

@@ -40,6 +40,11 @@ class YearbookHistoryReadEntity(
     @Convert(converter = MetaJsonConverter::class)
     @Column(name = "nations", columnDefinition = "jsonb")
     var nations: Map<String, Any?> = linkedMapOf(),
+
+    // hash — GetHistory.php의 캐시 etag 해시(V1__baseline.sql:234 `hash text NOT NULL DEFAULT ''`).
+    // 연감 레코드 식별/캐시용으로 그대로 전달(read-only enrichment 1줄 add, ddl-auto validate 유지).
+    @Column(name = "hash")
+    var hash: String = "",
 )
 
 interface HistoryReadRepository : JpaRepository<YearbookHistoryReadEntity, Int> {

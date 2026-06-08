@@ -25,4 +25,7 @@ interface AuctionRepository : JpaRepository<AuctionEntity, Int> {
 
     /** Active auctions by type. */
     fun findByFinishedFalseAndType(type: AuctionType): List<AuctionEntity>
+
+    /** All auctions by type, ordered by close_date ascending. */
+    fun findByTypeOrderByCloseDateAsc(type: AuctionType): List<AuctionEntity>
 }

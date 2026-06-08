@@ -44,3 +44,6 @@ tools/php-golden/probe_*.php
 **/tsconfig.tsbuildinfo
 
 .claude/scheduled_tasks.lock
+
+# 감사 raw 스크래치(대용량, working dir 보존)
+docs/superpowers/gap/_*.raw.json

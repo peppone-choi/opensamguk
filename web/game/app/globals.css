@@ -954,11 +954,9 @@ input:focus, select:focus, textarea:focus {
   user-select: none;
 }
 
-/* hover tooltip (legacy .city_tooltip) — 캔버스 좌상단 고정(MapPreview 경량 hover 툴팁과 동급). */
+/* hover tooltip (legacy .city_tooltip) — 커서 추종(gateway MapPreview .map-preview-tooltip과 동일, 위치 inline). */
 .map-tooltip {
   position: absolute;
-  top: var(--space-sm);
-  left: var(--space-sm);
   z-index: 10;
   padding: var(--space-xs) var(--space-sm);
   background: var(--bg-elevated);

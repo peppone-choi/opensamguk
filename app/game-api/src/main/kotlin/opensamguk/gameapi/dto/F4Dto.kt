@@ -26,29 +26,59 @@ data class PublicGeneral(
     val name: String,
     /** 국가 id(0 = 재야). FE 세력 필터/그룹 키. */
     val nationId: Int,
-    /** 국가명(재야면 F4StateText.NEUTRAL_NATION_NAME). */
+    /** 국가명(재야면 F4StateText.NEUTRAL_NATION_NAME). PHP a_genList의 `$nationname[nation]`(국가 미존재→"-"는 재야로 표시). */
     val nationName: String,
     val nationColor: String,
-    /** NPC 상태(0 user / 1 possessed-NPC / 2+ pure NPC). FE 이름 색/정렬. */
+    /** NPC 상태(0 user / 1 possessed-NPC / 2+ pure NPC). PHP formatName/getNPCColor 입력(이름 색). */
     val npc: Int,
     val officerLevel: Int,
-    /** getOfficerLevelText(officerLevel, nationLevel) — 직책 한글명. */
+    /** getOfficerLevelText(officerLevel, nationLevel) — 직책(관직) 한글명. a_genList "관 직" 컬럼. */
     val officerLevelText: String,
     val leadership: Int,
     val strength: Int,
     val intel: Int,
-    /** 명성 레벨 버킷 = getExpLevel(experience). 명성 컬럼 표시("Lv {explevel}")·정렬 키. */
+    /** 명성 레벨 버킷 = getExpLevel(experience). a_genList "레 벨" 컬럼("Lv {explevel}")·정렬 키. */
     val explevel: Int,
-    /** 명성 칭호 = getHonor(experience). "Lv {explevel} ({honorText})". */
+    /** 명성 칭호 = getHonor(experience). a_genList "명 성" 컬럼. */
     val honorText: String,
-    /** 계급 레벨 버킷 = getDedLevel(dedication). 계급 컬럼 정렬 키. */
+    /** 계급 레벨 버킷 = getDedLevel(dedication). 계급 정렬 키. */
     val dedlevel: Int,
-    /** 계급 한글명 = getDedLevelText(dedlevel). 계급 컬럼 표시. */
+    /** 계급 한글명 = getDedLevelText(dedlevel). a_genList "계 급" 컬럼. */
     val dedLevelText: String,
     /** 봉록 = getBillByLevel(dedlevel). 계급 컬럼 부가 표시("({bill})"). */
     val bill: Int,
     val crew: Int,
     val cityName: String,
+
+    // ── a_genList(장수일람, fid 30) 15컬럼 보강(C3①) ────────────────────────────────────────────────
+    // PHP `hwe/a_genList.php`가 행마다 노출하는 표시 필드. raw 코드는 코드대로 두고 한글 해석값을 ADD
+    // (이미 이식된 헬퍼 SpecialityHelper/personalityNameOf/getOfficerLevelText/getHonor 재사용 — 날조 아님).
+    /** 장수 초상화 파일명(PHP `picture`). a_genList "얼 굴" 컬럼(이미지 src). */
+    val picture: String?,
+    /** 초상 이미지 서버 번호(PHP `imgsvr`→GetImageURL). FE가 CDN base 합성. */
+    val imageServer: Int,
+    /** 나이(PHP `age` → "{age}세"). a_genList "연령" 컬럼. */
+    val age: Int,
+    /** 성격 한글명 = personalityNameOf(personal_code) (PHP displayCharInfo의 getName()). a_genList "성격" 컬럼. */
+    val personalText: String,
+    /** 내정 특기명 = SpecialityHelper.domesticName(special_code) (PHP displaySpecialDomesticInfo). a_genList "특기"(앞). None→"-". */
+    val specialDomesticText: String,
+    /** 전투 특기명 = SpecialityHelper.warName(special2_code) (PHP displaySpecialWarInfo). a_genList "특기"(뒤). None→"-". */
+    val specialWarText: String,
+    /** 부상률(0~100, PHP `injury`). >0이면 통/무/지에 부상보너스(감산)·적색 표시(FE). a_genList 통무지 컬럼. */
+    val injury: Int,
+    /** 통솔 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
+    val lbonus: Int,
+    /**
+     * 삭턴(killturn) = 남은 활동 턴. PHP `general.killturn` 컬럼. opensamguk은 general 스칼라 컬럼이 아니라
+     * meta(`killturn`)에서 읽는다(GeneralListController와 동일 원천). meta 미기재 시 null(부재=미기록, 날조 금지).
+     */
+    val killturn: Int?,
+    // [§2 BLOCKED — general_access_log 부재] 벌점(refresh_score_total)은 PHP가
+    // `LEFT JOIN general_access_log`에서 읽는다(a_genList.php:114). 해당 테이블이 opensamguk 스키마
+    // 어디에도 없어(P8 미이식) read 원천이 없다 → 컬럼 자체를 노출하지 않는다(값 날조 금지).
+    // 또한 a_genList의 기본 정렬(type=9, refresh_score_total DESC)도 이 원천 부재로 재현 불가 —
+    // FE는 가용한 정렬 키만 제공하고 벌점 정렬/컬럼은 데이터가 생길 때(P8) 추가한다.
 )
 
 // ── GET /api/tournament — state/bracket/standings/rankings/msg (pages 12, 13, 11-bracket) ──────────
@@ -89,22 +119,69 @@ data class TournamentResponse(
 )
 
 // ── GET /api/diplomacy/letters — nations map + letters + myNationID (page 1) ───────────────────────
+/**
+ * `nations` 맵 1 항목 — legacy `NationStaticItem`(`ts/defs/index.ts:87`) 부분집합. PHP
+ * `j_diplomacy_get_letter.php`의 nations 맵은 `getNationStaticInfo()` 행을 그대로 내려보내므로
+ * `level`까지 포함한다(FE 수신국 select가 `Lv.{level}` 표시·정렬에 사용 — `ts/diplomacy.ts:345 nationList`).
+ * id/name/color/level은 모두 실 `nation` 컬럼이므로 날조 아님.
+ */
 data class DiplomacyNationInfo(
     val id: Int,
     val name: String,
     val color: String,
+    /** legacy `NationStaticItem.level` — 국가 레벨(수신국 select 표시용). 실 `nation.level` 컬럼. */
+    val level: Int,
+)
+
+/**
+ * 외교 서신 1 당사자(송/수신). PHP `j_diplomacy_get_letter.php`는 `aux['src']`/`aux['dest']`(서신 INSERT
+ * 시점 스냅샷, `j_diplomacy_send_letter.php:153-164`)를 그대로 내려보내고 `nationID`만 컬럼값으로 덮어쓴다.
+ * FE(`ts/diplomacy.ts` `LetterFullTarget`/`LetterNationTarget`)가 소비하는 키 셋과 1:1로 맞춘다:
+ *  - 송신측(`src`)은 항상 풀 타깃 = `{nationID, nationName, nationColor, generalName, generalIcon}`.
+ *  - 수신측(`dest`)은 제안 시점엔 서명자가 없어 nation만 = `{nationID, nationName, nationColor}`이며
+ *    승인/서명 후 `generalName`/`generalIcon`이 채워질 수 있다(legacy에선 INSERT 후 update가 없어
+ *    제안 단계 dest는 nation-only). 미기재 키는 null(부재=미기록, 날조 금지).
+ *
+ * 와이어 키는 legacy snake/camel 혼용을 그대로 따른다(`nationID`/`nationName`/`nationColor` —
+ * MessageTarget·aux 직렬화 키). Jackson 기본은 프로퍼티명 그대로 내보내므로 `@JsonProperty`로 고정한다.
+ */
+data class DiplomacyLetterParty(
+    @get:JsonProperty("nationID")
+    val nationId: Int,
+    @get:JsonProperty("nationName")
+    val nationName: String,
+    @get:JsonProperty("nationColor")
+    val nationColor: String,
+    /** 서명 장수명(`aux[...]['generalName']`). nation-only 당사자(미서명 수신측)면 null. */
+    val generalName: String? = null,
+    /** 서명 장수 초상 URL(`aux[...]['generalIcon']` = GetImageURL(imgsvr, picture)). 미서명이면 null. */
+    val generalIcon: String? = null,
 )
 
 data class DiplomacyLetter(
-    val id: Int,
-    val srcNationId: Int,
-    val destNationId: Int,
-    val prevId: Int?,
+    val no: Int,
+    val src: DiplomacyLetterParty,
+    val dest: DiplomacyLetterParty,
+    /** legacy `prev_no` — 이전(대체된) 문서 번호. 신규 문서면 null. */
+    @get:JsonProperty("prev_no")
+    val prevNo: Int?,
+    /** legacy `state`(소문자) proposed/activated/cancelled/replaced — FE가 stateText 매핑·버튼 게이트 키로 소비. */
     val state: String,
-    /** Verbatim 제안됨/승인됨/거부됨/대체됨. */
+    /**
+     * 상태 한글 라벨(opensamguk 편의 read 필드). Verbatim 제안됨/승인됨/거부됨/대체됨
+     * ([F4StateText.letterStateText]). legacy FE는 클라이언트에서 매핑하지만 read DTO에서도 동봉한다(부가 표시).
+     */
     val stateText: String,
-    val textBrief: String,
-    val textDetail: String,
+    /**
+     * legacy `state_opt`(`aux['state_opt']`) — 파기 2단계 진행상태. `try_destroy_src`/`try_destroy_dest`/null.
+     * FE 파기 버튼 노출/disable 및 '송신측/수신측의 파기 요청' 라벨 결정자.
+     */
+    @get:JsonProperty("state_opt")
+    val stateOpt: String?,
+    /** legacy `text_brief` — 요약문. */
+    val brief: String,
+    /** legacy `text_detail` — 본문. permission<3 호출자에겐 '(권한이 부족합니다)'로 마스킹된다. */
+    val detail: String,
     val date: Instant,
     val srcSigner: Int,
     val destSigner: Int?,
@@ -117,19 +194,49 @@ data class DiplomacyLettersResponse(
     val letters: List<DiplomacyLetter>,
 )
 
-// ── GET /api/diplomacy/conflict — per-city 분쟁% + matrix (page 2) ─────────────────────────────────
-data class CityConflict(
-    val cityId: Int,
-    val cityName: String,
-    /** nationId → 분쟁(conflict) percentage; ordered map preserving insertion order. */
-    val conflict: Map<String, Int>,
+// ── GET /api/diplomacy/conflict — GetDiplomacy.php envelope (page 2 / 중원정보) ─────────────────────
+/**
+ * PHP `getNationStaticInfo()` 한 행(SimpleNationObj) — `func.php:38-82`의
+ * `select nation, name, color, type, level, capital, gennum, power from nation` + `cities` 보강.
+ * 필드명/순서 모두 PHP 그대로.
+ */
+data class SimpleNationObj(
+    /** 국가 id (PHP `nation` 컬럼). */
+    val nation: Int,
+    val name: String,
+    val color: String,
+    /** 국가 성향 type_code (PHP `type` 컬럼). */
+    val type: String,
+    val level: Int,
+    /** 수도 도시 id (PHP `capital`). 없으면 0. */
+    val capital: Int,
+    /** 장수 수 (PHP `gennum`, meta jsonb). */
+    val gennum: Int,
+    /** 보유 도시명 목록 — city 행 nationId 그룹, 삽입(행) 순서. */
+    val cities: List<String>,
+    val power: Int,
 )
 
+/**
+ * D11 GetDiplomacy 봉투 — PHP `GetDiplomacy.php:98-104` 그대로:
+ * `{result, nations[], conflict[[cityId,{nationId:pct}]], diplomacyList{me:{you:state}}, myNationID}`.
+ */
 data class DiplomacyConflictResponse(
     val result: Boolean,
-    val cities: List<CityConflict>,
-    /** Global diplomacy matrix: srcNationId → (destNationId → masked stateCode). */
-    val matrix: Map<String, Map<String, Int>>,
+    /** level>0 국가, power DESC 정렬(PHP array_filter + uasort -power). */
+    val nations: List<SimpleNationObj>,
+    /**
+     * 분쟁 튜플 목록: `[[cityId, {nationId: pct}]]`. pct = round(100*killnum/sum, 1) — PhpRound
+     * half-away 소수1자리 Double. 빈 '{}' 또는 항목<2 도시는 제외(PHP GetDiplomacy.php:59-72).
+     */
+    val conflict: List<List<Any>>,
+    /**
+     * 외교 관계 맵: me → (you → state). viewer-conditional 마스킹 —
+     * me/you 둘 다 내 국가가 아니면 3..7→2, 한쪽이라도 내 국가면 원 state(PHP:91-95).
+     */
+    val diplomacyList: Map<String, Map<String, Int>>,
+    /** 내 국가 id(미인증/재야면 0). PHP `SELECT nation FROM general WHERE owner=userID`. */
+    val myNationID: Int,
 )
 
 // ── GET /api/nation/{id}/finance — page 3 ──────────────────────────────────────────────────────────
@@ -350,6 +457,12 @@ data class BoardArticle(
     val contentHtml: String,
     val date: Instant,
     val comments: List<BoardComment>,
+    // [C1-α BLOCKED — author_icon 원천 부재] legacy `j_board_article_add.php`는 작성 시점 작성자
+    // 초상(imgsvr/picture → GetImageURL)을 INSERT하고 BoardArticle.vue가 64px로 렌더하지만,
+    // opensamguk `board_post` 스키마(V1__baseline.sql:352)에 author_icon/imgsvr/picture 컬럼이 없어
+    // (P8 미이식) read 원천이 없다 → 필드 자체를 노출하지 않는다(값 날조 금지, parityViolation MEDIUM 백로그).
+    // 복원 시 = 마이그레이션(author_icon 컬럼) + intake INSERT + DTO + FE 일괄. 댓글(BoardComment)은
+    // legacy에도 초상이 없으므로 author_icon 부재가 정상이다.
 )
 
 data class BoardResponse(
@@ -361,48 +474,6 @@ data class BoardResponse(
     val articles: List<BoardArticle>,
     /** Set when a permission gate blocked the secret board (renders as INFO, not error). */
     val blockedReason: String?,
-)
-
-// ── GET /api/votes + /api/votes/{id} — page 5 ──────────────────────────────────────────────────────
-data class VoteSummary(
-    val id: Int,
-    val title: String,
-    val openerName: String,
-    val multipleOptions: Int,
-    val startAt: Instant,
-    val endAt: Instant?,
-    val closed: Boolean,
-)
-
-data class VoteOptionResult(
-    val index: Int,
-    val text: String,
-    val count: Int,
-)
-
-data class VoteCommentRow(
-    val id: Int,
-    val generalName: String,
-    val nationName: String,
-    val text: String,
-    val date: Instant,
-)
-
-data class VoteDetailResponse(
-    val result: Boolean,
-    val id: Int,
-    val title: String,
-    val body: String,
-    val openerName: String,
-    val multipleOptions: Int,
-    val startAt: Instant,
-    val endAt: Instant?,
-    val closed: Boolean,
-    val options: List<VoteOptionResult>,
-    val userCnt: Int,
-    /** The calling general's selection (option indices); empty if not voted / no principal. */
-    val myVote: List<Int>,
-    val comments: List<VoteCommentRow>,
 )
 
 // ── GET /api/troops — page 6 ───────────────────────────────────────────────────────────────────────
@@ -429,16 +500,37 @@ data class TroopsResponse(
     val troops: List<TroopRow>,
 )
 
-// ── GET /api/history?yearMonth — page 16 ───────────────────────────────────────────────────────────
-data class HistoryMonth(
+// ── GET /api/history?yearMonth — page 16 (연감) ─────────────────────────────────────────────────────
+// 와이어 정합: 레거시 `Global/GetHistory.php` + `PageHistory.vue`가 기대하는 셀렉터/레코드 셰이프.
+// PageHistory.vue는 staticValues{firstYearMonth,lastYearMonth,currentYearMonth,serverNick,mapName}와
+// history{map,nations,global_history,global_action}를 소비한다. opensamguk read는 단일 서버이므로
+// serverId/mapName은 정보용으로만 채운다(셀렉터는 [first,last] 범위만 사용).
+//
+// yearMonth = Util::joinYearMonth = year*12 + (month-1). parseYearMonth = [ym/12, ym%12+1].
+
+/**
+ * 선택된 월의 연감 레코드(PageHistory.vue `history`). map/nations는 yearbook_history jsonb 스냅샷(MapViewer +
+ * SimpleNationList 원천). globalHistory/globalAction(중원 정세/장수 동향)은 opensamguk yearbook_history에
+ * **컬럼이 없다**(V1__baseline.sql:227 — map/nations만 영속) → 빈 배열(§5 날조 금지, BLOCKED). 월별 글로벌
+ * 로그 컬럼이 배선되면 1줄로 채워진다. nations/map은 jsonb 원형(삽입순 보존) 그대로 전달.
+ */
+data class HistoryRecord(
+    val serverId: String,
     val year: Int,
     val month: Int,
-    val profileName: String,
-    val map: Map<String, Any?>,
-    val nations: Map<String, Any?>,
+    val globalHistory: List<String>, // 중원 정세 — yearbook_history 미보유 → [](BLOCKED)
+    val globalAction: List<String>,  // 장수 동향 — yearbook_history 미보유 → [](BLOCKED)
+    val nations: Any?,               // SimpleNationList 원천(jsonb 원형: 배열 또는 맵)
+    val map: Any?,                   // MapViewer 스냅샷(jsonb 원형)
+    val hash: String,
 )
 
 data class HistoryResponse(
     val result: Boolean,
-    val months: List<HistoryMonth>,
+    val firstYearMonth: Int,        // Util::joinYearMonth(first row)
+    val lastYearMonth: Int,         // Util::joinYearMonth(last row)
+    val currentYearMonth: Int,      // 진행중 서버: lastYearMonth+1(다음 달). 행 없으면 0.
+    val serverId: String,
+    val mapName: String,
+    val record: HistoryRecord?,     // 선택 월 레코드. 범위 밖/행 없음이면 null(빈 상태).
 )

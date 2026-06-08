@@ -1,0 +1,69 @@
+{
+  "_doc": "계략(sabotage) GeneralCommand golden-capture manifest (capture_command_sabotage.php). Oracle = legacy/devsam-core PHP (grand truth). The General-scope 계략 family under hwe/sammo/Command/General/: che_화계 (base) + che_선동/che_파괴/che_탈취 (extend it, overriding affectDestCity + statType/injuryGeneral). All are GENERAL scope (3-arg buildGeneralCommandClass + 'generalCommand' seed). Each entry pins ctor scope, lotteryActionName (static::$actionName = getName(), DISTINCT from the 6th seed token rawClassName = getRawClassName(true)), the expected ACTING-general action-log line count on a SUCCESS (logLines) and on a FAIL (logLinesFail), crossGeneral (writes a cross-target general PLAIN injury log), broadcast (pushGlobalActionLog general_id=0 history line). Seed fmt: Util::simpleSerialize(hiddenSeed,'generalCommand',year,month,generalId,rawClassName). Gate: NotBeNeutral + OccupiedCity + SuppliedCity (actor city) + NotOccupiedDestCity + NotNeutralDestCity (dest = enemy city) + ReqGeneralGold/Rice (=develcost*5) + DisallowDiplomacyBetweenStatus([7]) (not 불가침 with dest nation). scenario_1010 default diplomacy = state 2 (평시), so the [7] gate passes without mutation. The success/fail BRANCH is whatever the install seed produces (NOT forced) — the fixture's `result` records it and the draw stream is real PHP for that branch.",
+  "seed": {
+    "fmt": "Util::simpleSerialize(hiddenSeed, scope, year, month, generalId, rawClassName)",
+    "scope_general": "generalCommand",
+    "sixthToken": "rawClassName (ReflectionClass short name incl che_ prefix)",
+    "lotterySeedToken": "lotteryActionName (static::$actionName, DISTINCT from rawClassName)"
+  },
+  "commands": {
+    "sabotage": [
+      {
+        "rawClassName": "che_화계",
+        "lotteryActionName": "화계",
+        "ctor": "general",
+        "statType": "intel",
+        "injuryGeneral": true,
+        "rngDraws": "nextBool(prob) [성공roll]; on success: SabotageInjury per enemy gen [nextBool(0.3)+nextRangeInt(1,16) on hit], affectDestCity nextRangeInt(damageMin,damageMax)x2 [agri,comm], nextRangeInt(201,300)[exp]+nextRangeInt(141,210)[ded]; on fail: nextBool(prob)+nextRangeInt(1,100)[exp]+nextRangeInt(1,70)[ded]",
+        "logLines": 2,
+        "logLinesFail": 1,
+        "crossGeneral": true,
+        "broadcast": true,
+        "levelCross": false,
+        "note": "intel-stat sabotage: damages the enemy dest city's agri/comm + injures generals there. Success: 1 globalAction broadcast ('<도시>이 불타고 있습니다.'), 2 acting lines (성공 + 농업/상업 감소 PLAIN), per-enemy-general PLAIN '<계략>로 인해 부상' line. Fail: 1 acting line (실패). actor gold/rice -= develcost*5 each; intel_exp += 1; firenum rank += 1 (success only)."
+      },
+      {
+        "rawClassName": "che_선동",
+        "lotteryActionName": "선동",
+        "ctor": "general",
+        "statType": "leadership",
+        "injuryGeneral": true,
+        "rngDraws": "nextBool(prob) [성공roll]; on success: SabotageInjury per enemy gen [nextBool(0.3)+nextRangeInt(1,16) on hit], affectDestCity nextRangeInt(damageMin,damageMax)[secu]+nextRange(damageMin,damageMax)/50[trust], nextRangeInt(201,300)[exp]+nextRangeInt(141,210)[ded]; on fail: nextBool(prob)+nextRangeInt(1,100)[exp]+nextRangeInt(1,70)[ded]",
+        "logLines": 2,
+        "logLinesFail": 1,
+        "crossGeneral": true,
+        "broadcast": true,
+        "levelCross": false,
+        "note": "leadership-stat sabotage (che_선동 extends che_화계, overrides affectDestCity + statType='leadership'): damages the enemy dest city's secu/trust + injures generals there. Success: 1 globalAction broadcast ('<도시>의 백성들이 동요하고 있습니다.'), 2 acting lines (성공 + 치안/민심 감소 PLAIN), per-enemy-general PLAIN '<계략>로 인해 부상' line. Fail: 1 acting line (실패). actor gold/rice -= develcost*5 each; leadership_exp += 1; firenum rank += 1 (success only). The prob calc uses the actor's leadership (calcSabotageAttackProb/calcSabotageDefenceProb switch on statType)."
+      },
+      {
+        "rawClassName": "che_파괴",
+        "lotteryActionName": "파괴",
+        "ctor": "general",
+        "statType": "strength",
+        "injuryGeneral": true,
+        "rngDraws": "nextBool(prob) [성공roll]; on success: SabotageInjury per enemy gen [nextBool(0.3)+nextRangeInt(1,16) on hit], affectDestCity nextRangeInt(damageMin,damageMax)x2 [def,wall], nextRangeInt(201,300)[exp]+nextRangeInt(141,210)[ded]; on fail: nextBool(prob)+nextRangeInt(1,100)[exp]+nextRangeInt(1,70)[ded]",
+        "logLines": 2,
+        "logLinesFail": 1,
+        "crossGeneral": true,
+        "broadcast": true,
+        "levelCross": false,
+        "note": "strength-stat sabotage (che_파괴 extends che_화계, overrides affectDestCity + statType='strength'): damages the enemy dest city's def/wall + injures generals there. Success: 1 globalAction broadcast ('누군가가 <도시>의 성벽을 허물었습니다.'), 2 acting lines (성공 + 수비/성벽 감소 PLAIN), per-enemy-general PLAIN '<계략>로 인해 부상' line. Fail: 1 acting line (실패). actor gold/rice -= develcost*5 each; strength_exp += 1; firenum rank += 1 (success only). The prob calc uses the actor's strength (calcSabotageAttackProb/calcSabotageDefenceProb switch on statType)."
+      },
+      {
+        "rawClassName": "che_탈취",
+        "lotteryActionName": "탈취",
+        "ctor": "general",
+        "statType": "strength",
+        "injuryGeneral": false,
+        "rngDraws": "nextBool(prob) [성공roll]; on success: affectDestCity nextRangeInt(damageMin,damageMax)x2 [gold,rice], nextRangeInt(201,300)[exp]+nextRangeInt(141,210)[ded]; on fail: nextBool(prob)+nextRangeInt(1,100)[exp]+nextRangeInt(1,70)[ded]",
+        "logLines": 2,
+        "logLinesFail": 1,
+        "crossGeneral": false,
+        "broadcast": true,
+        "levelCross": false,
+        "note": "strength-stat sabotage (che_탈취 extends che_화계, overrides affectDestCity + statType='strength', injuryGeneral=false): steals gold/rice from enemy dest city. No injury to enemy generals. Success: 1 globalAction broadcast ('<도시>에서 금과 쌀을 도둑맞았습니다.'), 2 acting lines (성공 + 금/쌀 획득 PLAIN). Fail: 1 acting line (실패). actor gold/rice += stolen amount; dest nation gold/rice -= stolen amount."
+      }
+    ]
+  }
+}

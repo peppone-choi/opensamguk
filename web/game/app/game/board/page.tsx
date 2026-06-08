@@ -84,6 +84,10 @@ function ArticleCard({
 }) {
     return (
         <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+            {/* BLOCKED(백로그): author_icon — legacy BoardArticle.vue는 본문 행에 64px <img class="generalIcon">
+               (article.author_icon)를 렌더하지만, 현 스키마(board 테이블)부터 read DTO·이 컴포넌트까지 전구간
+               author_icon 필드가 부재(parityViolation MEDIUM). 복원 = 마이그레이션 + DTO + FE 일괄 필요 → 백로그.
+               댓글에는 author_icon 없음이 정상(article만). */}
             {/* 헤더: 작성자 / 날짜 (legacy 헤더 행) */}
             <div
                 style={{
@@ -245,16 +249,20 @@ export default function BoardPage() {
                 {secret && <StatusBadge variant="crimson">수뇌부 전용</StatusBadge>}
             </div>
 
-            {/* 글쓰기 (boardArticle) — title + text → extraArgs; isSecret = 현재 방. */}
+            {/* 글쓰기 (boardArticle) — title + text → extraArgs; isSecret = 현재 방.
+                legacy PageBoard.vue `#newArticle`: 헤더 '새 게시물 작성', 제목/내용 라벨,
+                title maxlength=250, placeholder '제목'/'내용', 등록 버튼. isSecret은 방(prop)에서 결정.
+                제출 가드 = legacy `if (!title && !text) return;` (article 폼은 client trim 없음 — 서버측 trim). */}
             {canWrite && (
                 <GameCard style={{ marginBottom: 'var(--space-md)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                        <strong style={{ fontSize: 'var(--text-sm)' }}>{secret ? '기밀실 글쓰기' : '회의실 글쓰기'}</strong>
+                        <strong style={{ fontSize: 'var(--text-sm)' }}>새 게시물 작성</strong>
                         <input
                             type="text"
                             placeholder="제목"
                             value={articleTitle}
                             onChange={(e) => setArticleTitle(e.target.value)}
+                            maxLength={250}
                         />
                         <textarea
                             placeholder="내용"
@@ -265,11 +273,12 @@ export default function BoardPage() {
                         />
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <button
-                                disabled={articleTitle.trim().length === 0 && articleText.trim().length === 0}
+                                disabled={articleTitle.length === 0 && articleText.length === 0}
                                 onClick={() =>
                                     setModal({
                                         command: 'boardArticle',
                                         label: secret ? '기밀실 글쓰기' : '회의실 글쓰기',
+                                        // isSecret = 현재 방(legacy PageBoard isSecretBoard prop). 엔진이 모든 guard 재검증.
                                         extraArgs: { isSecret: secret, title: articleTitle, text: articleText },
                                     })
                                 }

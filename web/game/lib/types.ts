@@ -334,9 +334,12 @@ export interface ClaimableGeneral {
     leadership: number;
     strength: number;
     intel: number;
-    officerLevel: number;
     picture: string | null;
     imageServer: number;
+    // legacy select_npc.ts NPCPick 카드 필드 — 한글 표시명(서버 해석). officerLevel은 카드에 없어 제거됨.
+    special: string | null; // 내정특기명 (SpecialityHelper.domesticName)
+    special2: string | null; // 전투특기명 (SpecialityHelper.warName)
+    personal: string | null; // 성격명 (GameConst.personalityNameOf)
 }
 
 export interface ClaimableResponse {

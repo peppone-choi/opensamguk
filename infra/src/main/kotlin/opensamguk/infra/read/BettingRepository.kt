@@ -52,6 +52,24 @@ interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
         @Param("bettingId") bettingId: Int,
         @Param("userId") userId: Int,
     ): List<BettingTypeAggregate>
+
+    /**
+     * D4 — 전체 베팅별 totalAmount 집계. PHP `GetBettingList.php`의
+     * `SELECT betting_id, sum(amount) FROM ng_betting GROUP BY betting_id`.
+     */
+    @Query(
+        "select b.bettingId as bettingId, coalesce(sum(b.amount), 0) as sumAmount " +
+            "from NgBettingEntity b group by b.bettingId",
+    )
+    fun aggregateTotalAmountByBetting(): List<BettingTotalAggregate>
+}
+
+/**
+ * `aggregateTotalAmountByBetting`의 grouped 결과 projection.
+ */
+interface BettingTotalAggregate {
+    val bettingId: Int
+    val sumAmount: Long
 }
 
 /**

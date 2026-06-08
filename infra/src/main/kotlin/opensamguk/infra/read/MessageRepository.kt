@@ -28,4 +28,25 @@ interface MessageRepository : JpaRepository<MessageEntity, Int> {
 
     /** Messages by type within a mailbox. */
     fun findByMailboxAndType(mailbox: Int, type: MessageType): List<MessageEntity>
+
+    /**
+     * D7 GetRecentMessage — messages in a mailbox of a given type, valid and ordered by id DESC.
+     * PHP `getMessagesFromMailBox`: `valid_until > now`, `ORDER BY id DESC`, `LIMIT`.
+     */
+    fun findByMailboxAndTypeAndValidUntilAfterOrderByIdDesc(
+        mailbox: Int,
+        type: MessageType,
+        now: Instant,
+    ): List<MessageEntity>
+
+    /**
+     * D8 GetOldMessage — messages in a mailbox of a given type, valid, id < toSeq, ordered by id DESC.
+     * PHP `getMessagesFromMailBoxOld`: `valid_until > now`, `id < toSeq`, `ORDER BY id DESC`, `LIMIT`.
+     */
+    fun findTop15ByMailboxAndTypeAndValidUntilAfterAndIdLessThanOrderByIdDesc(
+        mailbox: Int,
+        type: MessageType,
+        now: Instant,
+        toSeq: Int,
+    ): List<MessageEntity>
 }

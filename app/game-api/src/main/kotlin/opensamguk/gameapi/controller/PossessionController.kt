@@ -8,6 +8,8 @@ import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralPossessionService
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.common.constants.GameConst
+import opensamguk.logic.world.SpecialityHelper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -60,15 +62,24 @@ class PossessionController(
                     leadership = g.leadership,
                     strength = g.strength,
                     intel = g.intel,
-                    officerLevel = g.officerLevel,
                     picture = g.picture,
                     imageServer = g.imageServer,
+                    special = specialName(SpecialityHelper.domesticName(g.specialCode), g.specialCode),
+                    special2 = specialName(SpecialityHelper.warName(g.special2Code), g.special2Code),
+                    personal = GameConst.personalityNameOf(g.personalCode),
                 )
             }
             .toList()
 
         return ResponseEntity.ok(ClaimableResponse(result = true, hasGeneral = false, candidates = candidates))
     }
+
+    /**
+     * 특기 표시 이름 보정. SpecialityHelper.domesticName/warName은 미등록 코드를 그대로 반환하므로,
+     * code가 "None"/공백이거나 resolved가 code와 동일(=미해석)하면 '-'로 보정한다(PHP None.php `$name`='-').
+     */
+    private fun specialName(resolved: String, code: String): String =
+        if (code.isBlank() || code == "None") "-" else resolved
 
     @PostMapping("/general/claim")
     fun claim(

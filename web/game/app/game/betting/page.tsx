@@ -1,57 +1,46 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+// 베팅(v_betting) — legacy 베팅 목록 + 상세(BettingDetail) 셸. FE grand truth=hwe/ts, PHP가 이김.
+// read: game-api `GET /api/bettings`(D4) {result, bettingList(Map<id,item>), year, month}.
+//   상세는 BettingDetail 컴포넌트가 `GET /api/bettings/{id}/detail`(D5, 인증) 소비.
+// write: 베팅 제출은 BettingDetail이 api.commands.placeBet(wire 기존)으로 수행.
+
+import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
-import CommandModal from '../../../components/CommandModal';
+import BettingDetail from '../../../components/betting/BettingDetail';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 
-interface BettingItem {
-    bettingId: string;
-    type: string;
-    openYearMonth: string;
-    targetNations: { id: number; name: string; odds: number }[];
-    closeCondition: string;
-    status: string;
-    totalPool: number;
-    isExclusivePayout: boolean;
-}
-
-interface NationOption {
+// ── D4 와이어 타입(game-api BettingDto.kt와 동형) ─────────────────────────────────────────
+interface BettingListItem {
     id: number;
+    type: string;
     name: string;
-    color: string;
+    finished: boolean;
+    selectCnt: number;
+    isExclusive: boolean | null;
+    reqInheritancePoint: boolean;
+    openYearMonth: number;
+    closeYearMonth: number;
+    winner: number[] | null;
+    totalAmount: number;
 }
 
-const TYPE_LABEL: Record<string, string> = {
-    NATION_STRENGTH: '국가 강약',
-    TOURNAMENT: '토너먼트',
-    CUSTOM: '커스텀',
-};
-
-const STATUS_VARIANT: Record<string, 'jade' | 'gold' | 'muted'> = {
-    OPEN: 'jade',
-    CLOSED: 'gold',
-    PAYOUT_DONE: 'muted',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-    OPEN: '진행 중',
-    CLOSED: '마감',
-    PAYOUT_DONE: '보상 완료',
-};
+interface BettingListResponse {
+    result: boolean;
+    bettingList: Record<number, BettingListItem>;
+    year: number;
+    month: number;
+}
 
 export default function BettingPage() {
-    const { frontInfo, refresh } = useFrontInfo();
+    const { frontInfo } = useFrontInfo();
     const generalId = frontInfo?.general.generalId ?? null;
-    const nationId = frontInfo?.general.nationId;
-    const [bettings, setBettings] = useState<BettingItem[]>([]);
-    const [nations, setNations] = useState<NationOption[]>([]);
-    const [selectedNation, setSelectedNation] = useState<Record<string, number>>({});
-    // The betting whose 베팅 modal is open (null = closed). amount sub-form lives in CommandModal.
-    const [betTarget, setBetTarget] = useState<BettingItem | null>(null);
+
+    const [list, setList] = useState<BettingListItem[]>([]);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -64,52 +53,37 @@ export default function BettingPage() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [bData, nData] = await Promise.all([
-                api.betting<BettingItem[]>(),
-                api.rankings.kingdoms<NationOption[]>(),
-            ]);
-            setBettings(bData);
-            setNations(nData);
+            const data = await api.betting<BettingListResponse>();
+            // bettingList는 Map<id,item> — 값 배열로 펴서 렌더(삽입순서 보존).
+            const items = Object.values(data.bettingList ?? {});
+            setList(items);
+            // 진행 중 첫 베팅을 자동 선택(상세 자동 로드).
+            setSelectedId(prev => prev ?? items.find(b => !b.finished)?.id ?? items[0]?.id ?? null);
             setError('');
         } catch {
-            setError('데이터를 불러올 수 없습니다.');
+            setError('베팅 목록을 불러올 수 없습니다.');
         } finally {
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchData();
+        void fetchData();
     }, [fetchData]);
 
     useEffect(() => {
         const es = new EventSource('/api/game/sse/turn');
-        es.addEventListener('turnCompleted', () => fetchData());
+        es.addEventListener('turnCompleted', () => { void fetchData(); });
         es.onerror = () => es.close();
         return () => es.close();
     }, [fetchData]);
-
-    function openBetModal(b: BettingItem) {
-        if (generalId == null) {
-            showToast('장수가 없어 베팅할 수 없습니다.');
-            return;
-        }
-        if (!selectedNation[b.bettingId]) {
-            showToast('베팅할 국가를 선택하세요.');
-            return;
-        }
-        setBetTarget(b);
-    }
-
-    const openBettings = bettings.filter(b => b.status === 'OPEN');
-    const closedBettings = bettings.filter(b => b.status !== 'OPEN');
 
     return (
         <Shell>
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>베팅</h1>
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button onClick={fetchData}>새로고침</button>
+                <button onClick={() => void fetchData()}>새로고침</button>
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
@@ -121,112 +95,35 @@ export default function BettingPage() {
                 </div>
             )}
 
-            <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)' }}>진행 중인 베팅</h2>
-            {openBettings.length === 0 && !loading && (
-                <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-xl)' }}>진행 중인 베팅이 없습니다.</p>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginBottom: 'var(--space-xl)' }}>
-                {openBettings.map(b => {
-                    const variant = STATUS_VARIANT[b.status] ?? 'muted';
-                    return (
-                        <GameCard key={b.bettingId}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-sm)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                    <StatusBadge variant="gold">{TYPE_LABEL[b.type] ?? b.type}</StatusBadge>
-                                    <span style={{ fontWeight: 500 }}>{b.bettingId}</span>
-                                </div>
-                                <StatusBadge variant={variant}>{STATUS_LABEL[b.status] ?? b.status}</StatusBadge>
-                            </div>
-                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginBottom: 'var(--space-sm)' }}>
-                                개시: {b.openYearMonth} · 총 풀: {b.totalPool.toLocaleString()} · {b.isExclusivePayout ? '독점 보상' : 'N등분'}
-                            </div>
-
-                            <div style={{ marginBottom: 'var(--space-sm)' }}>
-                                <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 500, marginBottom: 'var(--space-xs)', color: 'var(--text-secondary)' }}>대상 국가 / 배당률</h3>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-                                    {b.targetNations.map(n => {
-                                        const selected = selectedNation[b.bettingId] === n.id;
-                                        return (
-                                            <label
-                                                key={n.id}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: 'var(--space-xs)',
-                                                    padding: 'var(--space-xs) var(--space-sm)',
-                                                    borderRadius: 'var(--radius-sm)',
-                                                    border: `1px solid ${selected ? 'var(--gold)' : 'var(--border-subtle)'}`,
-                                                    background: selected ? 'rgba(201,162,39,0.1)' : 'var(--bg-hover)',
-                                                    cursor: 'pointer',
-                                                    fontSize: 'var(--text-sm)',
-                                                }}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`nation-${b.bettingId}`}
-                                                    style={{ position: 'absolute', opacity: 0 }}
-                                                    checked={selected}
-                                                    onChange={() => setSelectedNation(prev => ({ ...prev, [b.bettingId]: n.id }))}
-                                                />
-                                                <span>{n.name}</span>
-                                                <span style={{ color: 'var(--gold)' }}>x{n.odds.toFixed(2)}</span>
-                                            </label>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
-                                <button onClick={() => openBetModal(b)}>베팅</button>
-                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                                    500원을 초과해 베팅할 수 있습니다.
-                                </span>
-                            </div>
-                        </GameCard>
-                    );
-                })}
+            {/* 베팅 목록 — 클릭 시 상세(BettingDetail) 전환. */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)', marginBottom: 'var(--space-md)' }}>
+                {list.length === 0 && !loading && (
+                    <p style={{ color: 'var(--text-muted)' }}>진행 중인 베팅이 없습니다.</p>
+                )}
+                {list.map(b => (
+                    <GameCard
+                        key={b.id}
+                        style={{
+                            cursor: 'pointer',
+                            border: selectedId === b.id ? '1px solid var(--gold)' : undefined,
+                        }}
+                    >
+                        <div onClick={() => setSelectedId(b.id)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                            <StatusBadge variant={b.finished ? 'muted' : 'gold'}>
+                                {b.finished ? '종료' : '진행 중'}
+                            </StatusBadge>
+                            <span style={{ fontWeight: 500 }}>{b.name}</span>
+                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                                총액 {b.totalAmount.toLocaleString()}
+                            </span>
+                        </div>
+                    </GameCard>
+                ))}
             </div>
 
-            {closedBettings.length > 0 && (
-                <>
-                    <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, marginBottom: 'var(--space-sm)', color: 'var(--text-secondary)' }}>종료된 베팅</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', opacity: 0.6 }}>
-                        {closedBettings.map(b => {
-                            const variant = STATUS_VARIANT[b.status] ?? 'muted';
-                            return (
-                                <GameCard key={b.bettingId}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                                            <StatusBadge variant="muted">{TYPE_LABEL[b.type] ?? b.type}</StatusBadge>
-                                            <span style={{ fontWeight: 500 }}>{b.bettingId}</span>
-                                        </div>
-                                        <StatusBadge variant={variant}>{STATUS_LABEL[b.status] ?? b.status}</StatusBadge>
-                                    </div>
-                                    <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>
-                                        총 풀: {b.totalPool.toLocaleString()} · {b.closeCondition}
-                                    </div>
-                                </GameCard>
-                            );
-                        })}
-                    </div>
-                </>
-            )}
-
-            {/* 베팅 — CommandModal pinned to bet (amount sub-form). bettingId + the radio-selected
-                nationId are page-fixed args; legacy requires a bet > 500원 (amountMin 501). */}
-            {betTarget && generalId != null && (
-                <CommandModal
-                    onClose={() => setBetTarget(null)}
-                    onToast={(msg) => showToast(msg)}
-                    generalId={generalId}
-                    nationId={nationId}
-                    pinnedCommand="bet"
-                    pinnedLabel="베팅"
-                    pinnedArgType="amount"
-                    amountMin={501}
-                    extraArgs={{ bettingId: betTarget.bettingId, nationId: selectedNation[betTarget.bettingId] }}
-                    onReserved={() => { refresh(); fetchData(); }}
-                />
+            {/* 상세 — D5(인증) 소비. 베팅 제출은 컴포넌트 내부 placeBet. */}
+            {selectedId != null && (
+                <BettingDetail bettingId={selectedId} generalId={generalId} onToast={showToast} />
             )}
         </Shell>
     );

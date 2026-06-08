@@ -75,8 +75,10 @@ class DiplomacyAcceptCommandsTest {
     @Test
     fun `bulgachimSuak parseArgs valid`() {
         val cmd = CheBulgachimSuak(makePipeline())
-        val result = cmd.parseArgs(mapOf("destNationID" to 5, "year" to 2026, "month" to 3))
+        // PHP che_불가침수락.php:51-63 — destGeneralID는 필수 인자다(누락 시 argTest false).
+        val result = cmd.parseArgs(mapOf("destNationID" to 5, "destGeneralID" to 7, "year" to 2026, "month" to 3))
         assertEquals(5, result["destNationID"])
+        assertEquals(7, result["destGeneralID"])
         assertEquals(2026, result["year"])
         assertEquals(3, result["month"])
     }
@@ -121,18 +123,25 @@ class DiplomacyAcceptCommandsTest {
         val logs = ctx.logs()
         assertEquals(1, logs.size)
         assertTrue(logs[0].contains("오국"))
-        assertTrue(logs[0].contains("2026년 3월까지 불가침에 성공했습니다"))
+        // PHP che_불가침수락.php:220 — year/month는 <C>…</> 태그로 감싸진다(byte-exact).
+        assertTrue(logs[0].contains("<C>2026</>년 <C>3</>월까지 불가침에 성공했습니다."))
     }
 
     @Test
-    fun `bulgachimSuak resolve rejects term less than 6 months`() {
+    fun `bulgachimSuak resolve writes diplomacy regardless of term length`() {
+        // PHP che_불가침수락.php run()에는 6개월 하한 가드가 없다 — term = reqMonth - currentMonth를
+        // 그대로 적재한다(reqMonth = year*12+month, currentMonth = env.year*12+env.month-1). 6개월 게이트는
+        // 제의(che_불가침제의) 시점 제약일 뿐 수락 run()의 조건이 아니다(이전 if(term<6) return은 날조였다).
         val cmd = CheBulgachimSuak(makePipeline())
-        // Current yearMonth = 2025*12 + 6 - 1 = 24305
-        // Request yearMonth = 2025*12 + 7 - 1 = 24306
-        // term = 1 (< 6) → should return early
+        // env.year=2025, month=6 → currentMonth = 2025*12 + 6 - 1 = 24305
+        // 요청 2025년 7월 → reqMonth = 2025*12 + 7 = 24307 → term = 2 (< 6 이어도 적재된다)
         val ctx = makeContext(args = mapOf("destNationID" to 5, "year" to 2025, "month" to 7))
         cmd.resolve(ctx)
-        assertEquals(0, ctx.draft.cascadeDiplomacy.size)
+        assertEquals(2, ctx.draft.cascadeDiplomacy.size)
+        val forward = ctx.draft.cascadeDiplomacy.find { it.me == 1 && it.you == 5 }
+        assertTrue(forward != null)
+        assertEquals(2, forward!!.term)
+        assertEquals(DiplomacyState.NON_AGGRESSION, forward.state)
     }
 
     @Test
@@ -193,13 +202,17 @@ class DiplomacyAcceptCommandsTest {
         )
         cmd.resolve(ctx)
 
+        // PHP che_종전수락.php:177 — actor 자신의 generalAction(PLAIN)은 "종전에 합의했습니다."이다.
+        // ("종전에 성공했습니다."는 L187 dest 장수 로그로, draft.destGeneral 주입 시에만 dest 버킷에 적재된다.)
         val logs = ctx.logs()
         assertTrue(logs.isNotEmpty())
         assertTrue(logs[0].contains("적국"))
-        assertTrue(logs[0].contains("종전에 성공했습니다"))
+        assertTrue(logs[0].contains("종전에 합의했습니다"))
 
+        // PHP che_종전수락.php:180 — actor globalAction(MONTH): "<Y>{general}</>{이} … <M>종전 합의</> 하였습니다."
         val globalLogs = ctx.globalActionLogs()
         assertTrue(globalLogs.isNotEmpty())
+        assertTrue(globalLogs[0].contains("종전 합의"))
     }
 
     @Test

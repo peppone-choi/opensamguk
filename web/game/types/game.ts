@@ -34,6 +34,104 @@ export interface City {
   trade: number;
 }
 
+// ── 도시정보 b_currentCity.php (GET /api/city/{id}) ───────────────────────────
+// CityDetailController.CityDetailResponse 정합. 헤더/게이지 표면 + 장수 상세표 + 관직자행 + 군사집계행
+// + 도시선택 셀렉터 + 갱신시각 + 도시명행 + 장수명 CSV. 첩보(fog) 마스킹: visible=false면 내정/방어 수치
+// 전부 null(서버 마스킹). showDetailedInfo=false면 장수표/장수명 미노출("알 수 없음"). 수치 날조 없음.
+export interface CityOfficerCell {
+  name: string; // 부재 시 "-"(PHP 기본값)
+  npc: number;
+}
+
+export interface CityMilitaryStat {
+  enemyCrew: number;
+  enemyArmedCnt: number;
+  enemyCnt: number;
+  crewTotal: number;
+  armedGenTotal: number;
+  genTotal: number;
+  crew90: number;
+  gen90: number;
+  crew60: number;
+  gen60: number;
+  crewDef: number;
+  genDef: number;
+}
+
+export interface CityGeneralRow {
+  no: number;
+  ourGeneral: boolean;
+  iconPath: string; // picture 경로(FE가 CDN base 결합)
+  npc: number;
+  isNPC: boolean;
+  wounded: number; // injury — 통무지에 formatWounded 적용
+  name: string;
+  leadership: number;
+  strength: number;
+  intel: number;
+  officerLevel: number;
+  officerLevelText: string;
+  leadershipBonus: number;
+  crewType: number;
+  crewTypeName: string; // 비아국이면 ""(FE "?")
+  crew: number; // 비가시 타국이면 -1(FE "?")
+  train: number; // 비아국이면 -1
+  atmos: number; // 비아국이면 -1
+  nation: number;
+  nationName: string;
+}
+
+export interface CityGeneralNameCell {
+  name: string;
+  npc: number;
+}
+
+export interface CitySelectorOption {
+  cityId: number;
+  cityName: string;
+  relation: number; // 0 공백지 / 1 본국 / 2 타국
+  selected: boolean;
+}
+
+export interface CityDetailResponse {
+  id: number;
+  name: string;
+  level: number;
+  levelName: string; // 치소 등급 한글명 (수/진/관/이/소/중/대/특)
+  region: number;
+  regionName: string; // 지역 한글명 (하북/중원/…/동이)
+  nationId: number;
+  visible: boolean; // 내정 가시 여부(소유/첩보/주둔). false면 아래 수치 null.
+  population: number | null;
+  populationMax: number | null;
+  agriculture: number | null;
+  agricultureMax: number | null;
+  commerce: number | null;
+  commerceMax: number | null;
+  security: number | null;
+  securityMax: number | null;
+  defense: number | null;
+  defenseMax: number | null;
+  wall: number | null;
+  wallMax: number | null;
+  trust: number | null;
+  trade: number | null;
+  supplyState: number;
+  frontState: number;
+  officers: number | null;
+  // ── b_currentCity.php 패러티 확장 ──────────────────────────────────────────
+  showDetailedInfo: boolean; // 장수표/장수명 노출 게이트(visible과 별개)
+  lastExecute: string | null; // "MM-DD HH:MM:SS" — config["turntime"] 미배선 시 null
+  cityName: string;
+  officerGovernor: CityOfficerCell; // 태수(officer_level 4)
+  officerStrategist: CityOfficerCell; // 군사(officer_level 3)
+  officerSecretary: CityOfficerCell; // 종사(officer_level 2)
+  military: CityMilitaryStat;
+  generals: CityGeneralRow[];
+  generalNames: CityGeneralNameCell[];
+  citySelector: CitySelectorOption[];
+}
+
 export interface Nation {
   id: number;
   name: string;
@@ -200,20 +298,71 @@ export interface KingdomRank {
   capitalName: string;
 }
 
-// GET /api/rankings/npcs → WHERE npc_state=1, total DESC, no rank field.
+// GET /api/rankings/npcs → 빙의일람(a_npcList.php). WHERE npc_state=1, no rank field.
+// 12컬럼: 희생장수(name,npc색) | 악령이름(ownerName, BLOCKED→null) | Lv(explevel) | 국가 | 성격(personalText)
+//        | 특기(specialDomesticName/specialWarName) | 종능(total) | 통무지 | 명성(experience raw) | 계급(devotion raw)
 export interface NpcGeneral {
   generalId: number;
   name: string;
+  npc: number; // getNPCColor용(formatName 동치)
   nation: string;
   nationColor: string;
   officerLevel: number;
+  ownerName: string | null; // 악령 이름 — BLOCKED(owner_name 컬럼 부재) → null
+  explevel: number; // Lv
+  personalText: string; // 성격 한글명
+  specialDomesticName: string; // 내정 특기명
+  specialWarName: string; // 전투 특기명
   leadership: number;
   strength: number;
   intel: number;
-  experience: number;
-  devotion: number;
-  crew: number;
-  cityName: string;
+  total: number; // 종능 = 통+무+지
+  experience: number; // 명성 컬럼 raw 값
+  devotion: number; // 계급 컬럼 raw 값(= general.dedication)
+  crew: number; // non-PHP 잉여(미렌더)
+  cityName: string; // non-PHP 잉여(미렌더)
+}
+
+// GET /api/rankings/kingdom-roster → 세력일람(a_kingdomList.php) ROSTER. leaderboard와 별개.
+export interface KingdomRoster {
+  nations: KingdomRosterNation[]; // 국력 DESC
+  neutral: KingdomRosterNeutral;
+}
+export interface KingdomRosterNation {
+  nationId: number;
+  name: string;
+  color: string;
+  typeCode: string; // 성향 — BLOCKED(한글명 헬퍼 미이식) → raw code
+  level: number;
+  levelText: string; // 작위(방랑군..황제; lv8/9 divergence)
+  power: number; // 국력 = nation.power
+  genNum: number;
+  cityCount: number;
+  chiefs: KingdomRosterChief[]; // officer_level 12→5 고정 8칸
+  ambassadors: string[]; // 외교권자 — BLOCKED(permission 컬럼 부재) → []
+  auditorCount: number; // 조언자 수 — BLOCKED → 0
+  cities: KingdomRosterCity[]; // 속령 일람
+  capitalCityId: number | null; // 수도(cyan 강조)
+  generals: KingdomRosterGeneral[]; // 장수 일람(dedication DESC)
+}
+export interface KingdomRosterChief {
+  officerLevelText: string;
+  name: string; // 공석이면 "-"
+  npc: number;
+}
+export interface KingdomRosterCity {
+  cityId: number;
+  name: string;
+}
+export interface KingdomRosterGeneral {
+  name: string;
+  npc: number;
+}
+export interface KingdomRosterNeutral {
+  genNum: number;
+  cityCount: number;
+  cities: KingdomRosterCity[];
+  generals: KingdomRosterGeneral[];
 }
 
 // GET /api/rankings/hall-of-fame → F3 default [] (hall empty in 1010).
@@ -354,6 +503,132 @@ export interface PublicGeneral {
   bill: number;            // 봉록(getBillByLevel)
   crew: number;
   cityName: string;
+  // ── a_genList(장수일람) 15컬럼 보강(C3①) ─────────────────────────────────────
+  picture: string | null;       // 얼굴(초상 파일명) — FE가 CDN base 합성
+  imageServer: number;          // 초상 이미지 서버 번호
+  age: number;                  // 연령("{age}세")
+  personalText: string;         // 성격명(personalityNameOf)
+  specialDomesticText: string;  // 내정 특기명(None→"-")
+  specialWarText: string;       // 전투 특기명(None→"-")
+  injury: number;               // 부상률(0~100) — >0이면 통/무/지 감산·적색
+  lbonus: number;               // 통솔보너스(calcLeadershipBonus) — >0이면 통솔에 "+{lbonus}"(cyan)
+  killturn: number | null;      // 삭턴(meta.killturn) — 미기재 시 null
+  // 벌점(refresh_score_total)은 §2 BLOCKED(general_access_log 부재) — 필드 자체 미노출.
+}
+
+// GET /api/my-generals 의 실제 응답(백엔드 MyGeneralsResponse). b_myGenInfo(세력장수, fid 25) 쌍.
+// a_genList(전체)와 컬럼 set이 유사하되 자금·군량·봉록·사관(belong)이 추가다.
+export interface MyGeneralSummary {
+  generalId: number;
+  name: string;
+  cityId: number;
+  officerLevel: number;
+  leadership: number;
+  strength: number;
+  intel: number;
+  crew: number;
+  npcState: number;
+  mine: boolean;               // 호출자 본인 장수 여부
+  // ── b_myGenInfo 15컬럼 보강(C3①) ────────────────────────────────────────────
+  picture: string | null;       // 얼굴
+  imageServer: number;
+  officerLevelText: string;     // 관직 한글명
+  dedLevelText: string;         // 계급 한글명
+  honorText: string;            // 명성 칭호
+  bill: number;                 // 봉록(getBill)
+  gold: number;                 // 자금
+  rice: number;                 // 군량
+  personalText: string;         // 성격명
+  specialDomesticText: string;  // 내정 특기명(None→"-")
+  specialWarText: string;       // 전투 특기명(None→"-")
+  belong: number;               // 사관(belong)
+  injury: number;               // 부상률
+  lbonus: number;               // 통솔보너스
+  // 벌점(refresh_score_total)은 §2 BLOCKED(general_access_log 부재) — 필드 자체 미노출.
+}
+
+export interface MyGeneralsResponse {
+  result: boolean;
+  nationId: number;
+  generals: MyGeneralSummary[];
+}
+
+// ── 세력정보 (GET /api/my-nation-detail · b_myKingdomInfo, fid 22) ─────────────
+// 19필드(8열) 단일표. 계약 버그 수정 — 더 이상 {nation,generals,cities}가 아니다.
+// 세율/지급률은 §2 BLOCKED(meta UNVERIFIED) → null 가능. income 6종/국가열전은 §2 BLOCKED로 미노출 → FE "-".
+export interface MyNationCityRef {
+  cityId: number;
+  name: string;
+  isCapital: boolean; // 수도 → cyan 강조
+}
+
+export interface MyNationDetailResponse {
+  result: boolean;
+  hasNation: boolean;
+  nationId: number;
+  name: string;
+  color: string;
+  population: number;     // 총주민 현재(SUM city.pop)
+  populationMax: number;  // 총주민 최대(SUM city.pop_max)
+  crew: number;           // 총병사 현재(SUM general.crew, npc!=5)
+  crewMax: number;        // 총병사 최대(SUM general.leadership*100, npc!=5)
+  power: number;          // 국력(nation.power)
+  gold: number;           // 국고
+  rice: number;           // 병량
+  cityCount: number;      // 속령수
+  generalCount: number;   // 장수수(gennum)
+  tech: number;           // 기술력(floor)
+  levelText: string;      // 작위 한글명(getNationLevel)
+  level: number;          // raw level
+  cities: MyNationCityRef[]; // 속령일람(수도 cyan)
+  taxRate: number | null; // 세율 % — §2 BLOCKED(meta UNVERIFIED) → null
+  bill: number | null;    // 지급률 % — §2 BLOCKED(meta UNVERIFIED) → null
+  // income 6종(세금/단기/세곡/둔전/수입금·미/지출/예산/금미차) · 국가열전 = §2 BLOCKED → 미노출, FE "-".
+}
+
+// ── 세력도시 (GET /api/my-cities · b_myCityInfo, fid 22) ──────────────────────
+// 평면 9컬럼 → 도시당 카드(5행). 시세 null→"- ", 민심 소수1자리. 수입 3종은 §2 BLOCKED로 미노출 → FE "-".
+export interface MyCityGeneralName {
+  name: string;
+  npc: number; // getNPCColor 입력
+}
+
+export interface MyCitySummary {
+  cityId: number;
+  name: string;
+  level: number;
+  levelText: string;   // 등급 한글명(수/진/관/이/소/중/대/특)
+  region: number;
+  regionText: string;  // 지역 한글명(하북/중원/…/동이)
+  isCapital: boolean;  // 수도 → 도시명 cyan
+  population: number;
+  populationMax: number;
+  agriculture: number;
+  agricultureMax: number;
+  commerce: number;
+  commerceMax: number;
+  security: number;
+  securityMax: number;
+  defense: number;
+  defenseMax: number;
+  wall: number;
+  wallMax: number;
+  trust: number;       // 민심(소수1자리)
+  trade: number | null; // 시세(null → "- ")
+  governorName: string | null;   // 태수(공석 null → "-")
+  governorNpc: number;
+  strategistName: string | null; // 군사
+  strategistNpc: number;
+  secretaryName: string | null;  // 종사
+  secretaryNpc: number;
+  generals: MyCityGeneralName[];  // 도시 소재 장수(없으면 [] → "-")
+  // 자금/군량/둔전 수입 3종 = §2 BLOCKED(income 파이프라인 미조립) → 미노출, FE "-".
+}
+
+export interface MyCitiesResponse {
+  result: boolean;
+  nationId: number;
+  cities: MyCitySummary[];
 }
 
 // ── page 12/13/11-bracket · 토너먼트 (GET /api/tournament) ────────────────────
@@ -413,26 +688,36 @@ export interface TournamentResponse {
 // Mirrors j_diplomacy_get_letter.php. State text map rendered by page verbatim:
 // 제안됨/승인됨/거부됨/대체됨, 송신측의 파기 요청 …. text_detail masked to
 // '(권한이 부족합니다)' when permission<3 (game-api precheck).
+//
+// 와이어 키는 legacy `ts/diplomacy.ts`(LetterFullTarget/LetterNationTarget/LetterItem) +
+// game-api `DiplomacyController.letters`와 1:1로 맞춘다(C1-α read-DTO shape 정합). 당사자(src/dest)는
+// aux 스냅샷 그대로 = `{nationID, nationName, nationColor, generalName?, generalIcon?}`이며
+// nationID만 컬럼값으로 덮인다. 미서명 수신측은 generalName/generalIcon이 부재(null/undefined).
 export interface DiplomacyLetterParty {
-  nationId: number;        // legacy `nationID`
-  name: string;
-  color: string;
+  nationID: number;            // legacy `nationID` (대문자 D — aux/MessageTarget 키)
+  nationName: string;          // legacy `nationName`
+  nationColor: string;         // legacy `nationColor`
+  generalName?: string | null; // legacy `generalName` — 서명 장수명(미서명 수신측이면 부재)
+  generalIcon?: string | null; // legacy `generalIcon` — 서명 장수 초상 URL(미서명이면 부재)
 }
 
 export interface DiplomacyLetter {
   no: number;
   src: DiplomacyLetterParty;
   dest: DiplomacyLetterParty;
-  prevNo: number | null;   // legacy `prev_no`
-  state: string;           // proposed/accepted/declined/replaced/… (rendered verbatim)
-  stateOpt: string | null; // legacy `state_opt`
+  prev_no: number | null;  // legacy `prev_no` (와이어 키 — game-api @JsonProperty("prev_no"))
+  state: string;           // proposed/activated/cancelled/replaced (rendered verbatim)
+  stateText: string;       // game-api 동봉 한글 라벨(제안됨/승인됨/거부됨/대체됨)
+  state_opt: string | null; // legacy `state_opt` (와이어 키 — try_destroy_src/try_destroy_dest/null)
   brief: string;           // legacy `text_brief`
   detail: string;          // legacy `text_detail` (may be '(권한이 부족합니다)')
   date: string;
 }
 
+// `nations` 맵 1 값 — legacy NationStaticItem 부분집합(game-api DiplomacyNationInfo). 수신국 select
+// 표시(`Lv.{level}`)에 사용. legacy 응답은 `Record<number, NationStaticItem>`(맵, 배열 아님).
 export interface DiplomacyLetterNation {
-  nationId: number;
+  id: number;
   name: string;
   color: string;
   level: number;
@@ -440,9 +725,10 @@ export interface DiplomacyLetterNation {
 
 export interface DiplomacyLettersResponse {
   result: boolean;
-  nations: DiplomacyLetterNation[];   // candidate counter-nations (excludes self & 재야)
-  letters: DiplomacyLetter[];         // newest-first; [] when none
-  myNationId: number;                 // legacy `myNationID`
+  // legacy `Record<number, NationStaticItem>` — id→nation 맵(자국 포함). FE가 키 순회로 후보국 도출.
+  nations: Record<string, DiplomacyLetterNation>;
+  letters: DiplomacyLetter[];         // 오래된→최신(game-api date ASC); [] when none
+  myNationID: number;                 // legacy `myNationID`
 }
 
 // ── page 2 · 중원정보 (GET /api/diplomacy/conflict) ───────────────────────────
@@ -750,17 +1036,30 @@ export interface TroopListResponse {
 }
 
 // ── page 16 · 연감 (GET /api/history?yearMonth=) ──────────────────────────────
-// Mirrors v_history.php + Global/GetHistory.php. Single-server only in F4
-// (cross-server dropped — OQ-8). yearMonth = Util::joinYearMonth; selectable
-// range [firstYearMonth, lastYearMonth]. EMPTY/null record when no ng_history rows.
+// HistoryController.HistoryResponse 정합(PageHistory.vue + Global/GetHistory.php). 단일 서버(F4, OQ-8).
+// yearMonth = Util::joinYearMonth = year*12 + (month-1). 셀렉터 범위 [firstYearMonth, lastYearMonth].
+// 행이 없으면 record=null + 범위 0. record로 MapViewer(map)/SimpleNationList(nations)/중원정세·장수동향 렌더.
+// BLOCKED: yearbook_history에 global_history/global_action 컬럼 부재 → 항상 [](서버 BLOCKED, 날조 없음).
+
+// SimpleNationList(legacy SimpleNationObj) 행 — record.nations jsonb 스냅샷의 원소. 키는 jsonb 원형이라
+// 일부 필드가 없을 수 있어 모두 optional로 둔다(렌더 시 ?? 폴백, 날조 없음).
+export interface SimpleNationObj {
+  nation: number;
+  name: string;
+  color: string;
+  power: number;
+  gennum: number;       // 장수 수
+  cities?: number[];    // 속령(툴팁용)
+}
+
 export interface HistoryRecord {
   serverId: string;        // legacy `server_id`
   year: number;
   month: number;
-  globalHistory: string[]; // legacy `global_history` (decoded; rendered verbatim)
-  globalAction: string[];  // legacy `global_action`
-  nations: unknown[];      // legacy `nations` snapshot (page maps for the map theme)
-  map: unknown;            // legacy `map` snapshot
+  globalHistory: string[]; // legacy `global_history` — BLOCKED(컬럼 부재) → 항상 []
+  globalAction: string[];  // legacy `global_action`  — BLOCKED(컬럼 부재) → 항상 []
+  nations: SimpleNationObj[] | Record<string, SimpleNationObj> | null; // jsonb 원형(배열/맵)
+  map: unknown;            // legacy `map` snapshot (MapViewer 입력)
   hash: string;
 }
 

@@ -20,6 +20,10 @@ import { api } from '@/lib/api';
 import { MAP_CDN } from '@/lib/constants';
 import type { MapPreviewResponse } from '@/lib/types';
 import { tintFlag, FLAG_FRAMES } from '@/lib/flagTint';
+import cityRegionsData from '@/config/cityRegions.json';
+
+// 도시 id → 지역명(지리 속성, 소유 무관). 툴팁에 지역 라벨 표시. gateway MapPreview와 동일 자산.
+const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
 
 const NEUTRAL_COLOR = '#555555';
 const NEUTRAL_NAME = '공 백 지'; // legacy CityBasicCard nationNamePanel fallback
@@ -63,6 +67,20 @@ function sizeOf(level: number): CitySize {
     };
 }
 
+// 치소 등급 라벨 (레거시 defs/index.ts CityLevelText) — lv 4 = 이민족 전용 "이", 한족 군 치소 lv 5 "소". gateway MapPreview와 동일.
+const LEVEL_TEXT: Record<number, string> = {
+    1: '수', 2: '진', 3: '관', 4: '이', 5: '소', 6: '중', 7: '대', 8: '특',
+};
+function levelText(level: number): string {
+    return LEVEL_TEXT[level] ?? String(level);
+}
+
+// CDN 베이스맵 코드 — 시나리오가 맵을 특정 못한 경우(mapCode="scenario") che 베이스로 폴백. gateway MapPreview와 동일.
+const CDN_MAPS = new Set(['che', 'chess', 'cr', 'miniche']);
+function cdnMapCode(mc: string): string {
+    return CDN_MAPS.has(mc) ? mc : 'che';
+}
+
 // season from month (3-5 spring / 6-8 summer / 9-11 fall / else winter) — gateway MapPreview와 동일.
 function seasonOf(month: number): string {
     if (month >= 3 && month <= 5) return 'spring';
@@ -76,6 +94,7 @@ export default function MapViewer() {
     const [data, setData] = useState<MapPreviewResponse | null>(null);
     const [failed, setFailed] = useState(false);
     const [hoverId, setHoverId] = useState<number | null>(null);
+    const [cursor, setCursor] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
         let on = true;
@@ -175,7 +194,7 @@ export default function MapViewer() {
         );
     }
 
-    const mapCode = data.mapCode || 'che';
+    const mapCode = cdnMapCode(data.mapCode || 'che');
     const w = data.width || 700;
     const h = data.height || 500;
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
@@ -183,7 +202,16 @@ export default function MapViewer() {
 
     return (
         <section className="map-viewer" aria-label="세계 지도">
-            <div ref={canvasRef} className="map-viewer-canvas">
+            <div
+                ref={canvasRef}
+                className="map-viewer-canvas"
+                style={{ aspectRatio: `${w} / ${h}` }}
+                onMouseMove={(e) => {
+                    const r = canvasRef.current?.getBoundingClientRect();
+                    if (r) setCursor({ x: e.clientX - r.left, y: e.clientY - r.top });
+                }}
+                onMouseLeave={() => setHoverId(null)}
+            >
                 {/* 맵 좌표계(data.width×height)를 캔버스 폭에 맞춘 정적 스케일 레이어(줌/팬 없음). */}
                 <div
                     className="map-world"
@@ -272,17 +300,25 @@ export default function MapViewer() {
                     })}
                 </div>
 
-                {/* hover 도시정보 툴팁(레거시 .city_tooltip) — 캔버스 좌상단 고정(MapPreview의 경량 hover 툴팁과 동급). */}
-                {hoverCity && (
-                    <div className="map-tooltip" role="status">
-                        <div className="map-tooltip-name">{hoverCity.name}</div>
-                        <div className="map-tooltip-meta">
-                            {`【${hoverCity.level}】 ${nationNameOf(hoverCity.nationId)}`}
-                        </div>
-                    </div>
-                )}
             </div>
 
+            {/* hover 도시정보 툴팁(레거시 .city_tooltip) — 커서 추종. canvas(overflow:hidden) 밖 .map-viewer에 두어
+                경계에서 잘리지 않게(gateway MapPreview와 동일 구조·내용). */}
+            {hoverCity && (
+                <div
+                    className="map-tooltip"
+                    role="status"
+                    style={{
+                        left: Math.min(cursor.x + 12, (canvasW || w) - 130),
+                        top: cursor.y + 16,
+                    }}
+                >
+                    <div className="map-tooltip-name">{hoverCity.name}</div>
+                    <div className="map-tooltip-meta">
+                        {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} ${levelText(hoverCity.level)}】 ${nationNameOf(hoverCity.nationId)}`}
+                    </div>
+                </div>
+            )}
             <div className="map-viewer-cap">{`${data.serverName} · ${data.year}年 ${data.month}月`}</div>
         </section>
     );

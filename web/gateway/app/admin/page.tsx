@@ -4,9 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ConfirmModal from '@/components/ConfirmModal';
+import MemberControl from '@/components/admin/MemberControl';
 
-// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포).
-// "회원 관리"·"게임 환경"은 후속 페이즈 — '준비 중' 플레이스홀더 유지.
+// F5 어드민 = 가드 + 셸 + "서버 제어" 탭(버전 표시/버전-선택 재배포) + "회원 관리" 탭(B2f).
+// "게임 환경"(B1e)은 락(걸기/풀기 + 동결중/가동중) 부분만 우선 배선. 시간조정/봉급/운영자메시지/
+// 시작시간/최대장수·국가/시작년도/턴시간 등 나머지는 후속 웨이브 — '준비 중' 플레이스홀더 유지.
 // 섹션명은 verbatim 패러티 대상, 본문은 탭별로 분기.
 const ADMIN_SECTIONS = [
     { id: 'members', label: '회원 관리' },
@@ -46,6 +48,24 @@ interface DeployResult {
     ok: boolean;
     message: string;
     detail?: string | null;
+}
+
+// ===== B1b 락(동결) — game-engine StatusController DTO 미러 =====
+// GET  /admin/turn-daemon/status → TurnDaemonStatus
+// POST /admin/turn-daemon/pause  → TurnDaemonControlResult (락걸기)
+// POST /admin/turn-daemon/resume → TurnDaemonControlResult (락풀기)
+interface TurnDaemonStatus {
+    profile: string;
+    state: string;
+    running: boolean;
+    paused: boolean;
+    loopAlive: boolean;
+    statusLabel: string; // PHP `_119.php:36` verbatim: "동결중" / "가동중"
+}
+interface TurnDaemonControlResult {
+    paused: boolean;
+    changed: boolean;
+    statusLabel: string;
 }
 
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
@@ -314,6 +334,119 @@ function ServerControl() {
     );
 }
 
+/**
+ * "게임 환경" 탭 — B1e 락(동결) 부분만 배선.
+ * PHP `_119.php:36` `락 풀 기 : [락걸기][락풀기] 현재 : (plock>0?동결중:가동중)` 등가.
+ * 시간조정/봉급/운영자메시지/시작시간/최대장수·국가/시작년도/턴시간은 후속 웨이브 — PLACEHOLDER.
+ */
+function GameEnvControl() {
+    const [status, setStatus] = useState<TurnDaemonStatus | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [busy, setBusy] = useState(false);
+
+    // 데몬 락 상태 재조회. 진입 + 락걸기/락풀기 후 호출.
+    const reload = useCallback(async () => {
+        try {
+            const st = await getJson<TurnDaemonStatus>('admin/turn-daemon/status');
+            setStatus(st);
+            setError(null);
+        } catch {
+            setError('데몬 상태를 불러오지 못했습니다.');
+        }
+    }, []);
+
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            setLoading(true);
+            await reload();
+            if (alive) setLoading(false);
+        })();
+        return () => {
+            alive = false;
+        };
+    }, [reload]);
+
+    // 락걸기(pause) / 락풀기(resume) — POST 후 실 상태로 갱신.
+    async function toggleLock(action: 'pause' | 'resume') {
+        setBusy(true);
+        try {
+            const res = await fetch(`/api/proxy/admin/turn-daemon/${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (res.ok) {
+                const data = (await res.json()) as TurnDaemonControlResult;
+                // 반환 결과로 즉시 라벨 반영 후, 권위 상태로 재조회.
+                setStatus((prev) =>
+                    prev ? { ...prev, paused: data.paused, statusLabel: data.statusLabel } : prev,
+                );
+                setError(null);
+            } else {
+                setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
+            }
+        } catch {
+            setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
+        } finally {
+            await reload();
+            setBusy(false);
+        }
+    }
+
+    return (
+        <div className="game-env-control">
+            {/* B1b 락 — PHP `_119.php:36` verbatim 라벨/표시. */}
+            <div className="env-section">
+                <h3 className="lobby-section-title">락 풀 기</h3>
+                {loading ? (
+                    <div className="center-inline">
+                        <div className="spinner" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="env-lock-row">
+                            <button
+                                type="button"
+                                className="btn-danger"
+                                disabled={busy || status?.paused === true}
+                                onClick={() => toggleLock('pause')}
+                            >
+                                락걸기
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-primary"
+                                disabled={busy || status?.paused === false}
+                                onClick={() => toggleLock('resume')}
+                            >
+                                락풀기
+                            </button>
+                            <span className="env-lock-status">
+                                현재 :{' '}
+                                <span
+                                    className={`status-badge ${status?.paused ? 'status-crimson' : 'status-jade'}`}
+                                >
+                                    {/* PHP `_119.php:36` `plock>0?"동결중":"가동중"` verbatim. */}
+                                    {status?.statusLabel ?? (status?.paused ? '동결중' : '가동중')}
+                                </span>
+                            </span>
+                        </div>
+                        {error && <p className="deploy-result fail">{error}</p>}
+                    </>
+                )}
+            </div>
+
+            {/* 후속 웨이브 — 시간조정 / 토너시간 / 봉급(금·쌀) / 운영자메시지 / 중원정세추가 /
+                시작시간 / 최대장수·국가 / 시작년도 / 턴시간. 아직 미구현. */}
+            <div className="env-section env-pending">
+                <h3 className="lobby-section-title">시간 · 봉급 · 환경 설정</h3>
+                <p>{PLACEHOLDER}</p>
+            </div>
+        </div>
+    );
+}
+
 function AdminView() {
     const [active, setActive] = useState<string>(ADMIN_SECTIONS[0].id);
     const section = ADMIN_SECTIONS.find((s) => s.id === active) ?? ADMIN_SECTIONS[0];
@@ -336,7 +469,15 @@ function AdminView() {
                 </div>
                 <section className="admin-panel">
                     <h2 className="lobby-section-title">{section.label}</h2>
-                    {active === 'server' ? <ServerControl /> : <p>{PLACEHOLDER}</p>}
+                    {active === 'server' ? (
+                        <ServerControl />
+                    ) : active === 'members' ? (
+                        <MemberControl />
+                    ) : active === 'game' ? (
+                        <GameEnvControl />
+                    ) : (
+                        <p>{PLACEHOLDER}</p>
+                    )}
                 </section>
             </main>
         </div>

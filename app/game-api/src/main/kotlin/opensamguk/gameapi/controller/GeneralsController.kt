@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.PublicGeneral
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
@@ -10,6 +11,7 @@ import opensamguk.logic.domestic.getBillByLevel
 import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
 import opensamguk.logic.domestic.getExpLevel
+import opensamguk.logic.world.SpecialityHelper
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -75,9 +77,35 @@ class GeneralsController(
                     bill = getBillByLevel(dedlevel),
                     crew = g.crew,
                     cityName = if (g.cityId == 0) "" else (cityName[g.cityId] ?: ""),
+                    // ── a_genList 15컬럼 보강(C3①). raw 코드 → 한글 해석은 이미 이식된 헬퍼만 재사용(날조 아님). ──
+                    picture = g.picture,
+                    imageServer = g.imageServer,
+                    age = g.age,
+                    // 성격/특기 한글명 — PHP displayCharInfo/displaySpecial*Info의 getName()과 동일 헬퍼.
+                    // None → personalityNameOf="-", SpecialityHelper.domesticName/warName도 "None"이면 buildClass
+                    // 의 getName()="-"이 정답이므로 명시적으로 "-"로 정규화한다(PHP None.php $name='-').
+                    personalText = GameConst.personalityNameOf(g.personalCode),
+                    specialDomesticText = if (g.specialCode == "None") "-" else SpecialityHelper.domesticName(g.specialCode),
+                    specialWarText = if (g.special2Code == "None") "-" else SpecialityHelper.warName(g.special2Code),
+                    injury = g.injury,
+                    // PHP calcLeadershipBonus($officer_level, $nationLevel) — raw officer_level 사용(데모션 미적용).
+                    lbonus = calcLeadershipBonus(g.officerLevel, nationLevel),
+                    // 삭턴 — meta.killturn(스칼라 컬럼 부재). 미기재 시 null(날조 금지).
+                    killturn = (g.meta["killturn"] as? Number)?.toInt(),
                 )
             }
         return ResponseEntity.ok(rows)
+    }
+
+    /**
+     * PHP `calcLeadershipBonus($officerLevel, $nationLevel)` (func_process.php:52-61) 충실 이식.
+     * a_genList(GeneralList.php와 동일)은 raw officer_level을 그대로 넘긴다(데모션 미적용).
+     * 통솔 컬럼에 "+{lbonus}"(cyan)로 부가 표시. GeneralListController.calcLeadershipBonus와 동식.
+     */
+    private fun calcLeadershipBonus(officerLevel: Int, nationLevel: Int): Int = when {
+        officerLevel == 12 -> nationLevel * 2
+        officerLevel >= 5 -> nationLevel
+        else -> 0
     }
 
     /** 국가 조회 결과(이름/색/레벨)를 묶는 내부 보조 타입. */
