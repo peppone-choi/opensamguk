@@ -33,6 +33,7 @@ data class GeneralRole(
 
 data class TurnGeneral(
     val id: Int,
+    val userId: String? = null,
     val name: String,
     val nationId: Int,
     val cityId: Int,

@@ -31,6 +31,7 @@ import opensamguk.infra.persistence.LogRow
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
+import opensamguk.infra.persistence.StatisticInsertRow
 import opensamguk.infra.persistence.TroopRow
 import opensamguk.infra.persistence.VoteCommentInsertRow
 import opensamguk.infra.persistence.VoteInsertRow
@@ -227,6 +228,9 @@ object DatabaseHooks {
                 InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
             },
             inheritanceResultInserts = dirty.inheritanceResultInserts,
+            statisticInserts = dirty.statisticInserts.map {
+                StatisticInsertRow(it.columns)
+            },
         )
     }
 
@@ -287,6 +291,7 @@ object DatabaseHooks {
         return GeneralCreateRow(
             columns = linkedMapOf(
                 "id" to g.id,
+                "user_id" to g.userId,
                 "name" to g.name,
                 "nation_id" to g.nationId,
                 "city_id" to g.cityId,

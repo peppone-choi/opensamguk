@@ -49,7 +49,7 @@ import type {
 } from '../../../lib/types';
 
 // formatVoteColor.ts: css-color-names for red·orange·yellow·green·blue·navy·purple, cyclic by index.
-const VOTE_COLORS = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#000080', '#800080'];
+import { VOTE_COLORS, BRIGHT_COLOR_THRESHOLD, TOAST_DURATION_MS } from '../../../lib/constants';
 function formatVoteColor(idx: number): string {
     return VOTE_COLORS[idx % VOTE_COLORS.length];
 }
@@ -61,7 +61,7 @@ function isBrightColor(color: string): boolean {
     const r = parseInt(m[1], 16);
     const g = parseInt(m[2], 16);
     const b = parseInt(m[3], 16);
-    return r * 0.299 + g * 0.587 + b * 0.114 > 140;
+    return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD;
 }
 
 // PageVote.vue header: multipleOptions !== 1 shows "(N개 선택 가능 )", N = options.length when 0 else N.

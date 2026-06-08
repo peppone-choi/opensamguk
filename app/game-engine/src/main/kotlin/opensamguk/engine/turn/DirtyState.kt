@@ -118,6 +118,13 @@ data class VoteInsert(val columns: Map<String, Any?>)
 data class VoteCommentInsert(val columns: Map<String, Any?>)
 
 /**
+ * `statistic` INSERT 의도 (W1 checkStatistic). INSERT 전용 — 연감 row를 1년 경계에 추가.
+ * `columns`는 statistic 테이블 컬럼을 미러링: year, month, nation_count, nation_name, nation_hist,
+ * gen_count, personal_hist, special_hist, power_hist, crewtype, etc, aux(jsonb).
+ */
+data class StatisticInsert(val columns: Map<String, Any?>)
+
+/**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
  */
@@ -196,4 +203,6 @@ data class DirtyState(
     val inheritanceLogInserts: List<InheritanceLogDraft> = emptyList(),
     /** [inheritanceResultInserts]: the inheritance_result INSERT intents (T0.8). */
     val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(),
+    /** [statisticInserts]: the `statistic` INSERT intents (W1 checkStatistic). INSERT-only. */
+    val statisticInserts: List<StatisticInsert> = emptyList(),
 )

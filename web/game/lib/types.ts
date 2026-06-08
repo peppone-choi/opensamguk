@@ -103,6 +103,14 @@ export interface FrontGeneralInfo {
     dedLevelText?: string | null;     // getDed(dedication) — 공헌
     lbonus?: number | null;           // calcLeadershipBonus(officer_level, nationLevel) — 통솔보너스
     bill?: number | null;             // getBillByLevel(getDedLevel(dedication))
+    // ── 전투 통계 (IdentityDto.kt FrontGeneralInfo war stats) ──
+    warnum?: number | null;           // 전투 횟수
+    killnum?: number | null;          // 승리 횟수
+    deathnum?: number | null;         // 패배 횟수
+    killcrew?: number | null;         // 사살 병력
+    deathcrew?: number | null;        // 피살 병력
+    firenum?: number | null;          // 계략 횟수
+    belong?: number | null;           // 사관(입사 경과 년)
 }
 
 // nation 인구/병력 grouped 집계(IdentityDto.NationPopulationGroup / NationCrewGroup).
@@ -340,12 +348,16 @@ export interface ClaimableGeneral {
     special: string | null; // 내정특기명 (SpecialityHelper.domesticName)
     special2: string | null; // 전투특기명 (SpecialityHelper.warName)
     personal: string | null; // 성격명 (GameConst.personalityNameOf)
+    keepCnt?: number;
 }
 
 export interface ClaimableResponse {
     result: boolean;
     hasGeneral: boolean;
     candidates: ClaimableGeneral[];
+    validUntil?: string;
+    pickMoreFrom?: string;
+    pickMoreSeconds?: number;
 }
 
 export interface ClaimResponse {

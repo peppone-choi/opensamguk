@@ -258,13 +258,21 @@ class ReservedTurnHandler(
         // the actor's (the resolver else falls back to meta["name"]). HandledTurn.args keeps the ORIGINAL
         // args (the parity oracle) — the founding preload never pollutes it.
         val isFounding = actionCode in FOUNDING_COMMANDS
-        val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, args) else args
+        val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, args, general, year, month) else args
         val resolveCtx = GeneralActionResolveContext(
             draft, rng, worldEnv, month, date,
             args = resolveArgs,
             generalName = if (isFounding) general.name else "",
             // 외교 제의 서신 validUntil(= date + max(30, turnterm*3)분) 공식이 읽는 per-game turnterm.
             turnterm = turnTerm,
+            // 무작위건국: rng.choice가 소모하는 도시 id 목록. PHP `SELECT city FROM city WHERE level>=5 AND level<=6 AND nation=0`
+            // 의 기본 정렬(= id 오름차순)이므로 id-ascending으로 정렬해 draw-for-draw 패러티를 유지한다.
+            candidateCityIds = if (actionCode == MUJAKWI_GEONGUK) {
+                world.listCities()
+                    .filter { it.nationId == 0 && it.level in 5..6 }
+                    .map { it.id }
+                    .sorted()
+            } else emptyList(),
         )
         definition.resolve(resolveCtx)
 
@@ -584,7 +592,13 @@ class ReservedTurnHandler(
      *    unchanged — the resolver early-returns (no crash, no found), exactly the pre-fix behavior — and the
      *    drain block above is already laid so WAVE 0b only adds the preload.
      */
-    private fun buildFoundingArgs(actionCode: String, args: Map<String, Any?>): Map<String, Any?> = when (actionCode) {
+    private fun buildFoundingArgs(
+        actionCode: String,
+        args: Map<String, Any?>,
+        general: TurnGeneral,
+        year: Int,
+        month: Int,
+    ): Map<String, Any?> = when (actionCode) {
         GEOBYEONG -> {
             val existing = world.listNations()
             LinkedHashMap(args).apply {
@@ -592,6 +606,13 @@ class ReservedTurnHandler(
                 put("existingNationIds", existing.map { it.id })
                 put("existingNationNames", existing.map { it.name }.toSet())
                 put("scenario", scenario)
+            }
+        }
+        "che_건국", "cr_건국", MUJAKWI_GEONGUK -> {
+            // nationName/nationType/colorType는 예약 arg jsonb에 이미 있음(사용자가 인테이크 시 선택).
+            // 런타임 엔진 스캔 preload만 추가: sameMonthOrBefore 동월 가드(che_건국.php:148).
+            LinkedHashMap(args).apply {
+                put("sameMonthOrBefore", sameMonthOrBefore(general, year, month))
             }
         }
         else -> args
@@ -624,6 +645,20 @@ class ReservedTurnHandler(
         }
     }
 
+    /**
+     * PHP `Util::joinYearMonth(y, m) = y*12 + m - 1` (che_건국.php:148 same-month guard).
+     * `init_year`/`init_month` ride the actor's nation meta (방랑국). `yearMonth <= initYearMonth`
+     * → true → resolver early-returns with "다음 턴..." (no write).
+     */
+    private fun sameMonthOrBefore(general: TurnGeneral, year: Int, month: Int): Boolean {
+        val nation = world.getNationById(general.nationId) ?: return false
+        val initYear = (nation.meta["init_year"] as? Number)?.toInt() ?: return false
+        val initMonth = (nation.meta["init_month"] as? Number)?.toInt() ?: 1
+        val initYearMonth = initYear * 12 + initMonth - 1
+        val yearMonth = year * 12 + month - 1
+        return yearMonth <= initYearMonth
+    }
+
     /** Byte-faithful `{src,dest,text,option}` jsonb for a message row. */
     private fun encodeMessageBody(
         draft: opensamguk.logic.message.MessageRowDraft,
@@ -650,6 +685,9 @@ class ReservedTurnHandler(
 
         /** che_거병 — the no-arg INSERT-created-set founding command (the prod crash seam). */
         const val GEOBYEONG = "che_거병"
+
+        /** che_무작위건국 — the random-city founding command (needs candidateCityIds preload). */
+        const val MUJAKWI_GEONGUK = "che_무작위건국"
 
         /**
          * Founding commands whose resolve seam is augmented with PHP-query preload args (and whose actor

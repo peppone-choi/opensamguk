@@ -6,6 +6,12 @@ import GameCard from '../../../components/GameCard';
 import GameTable from '../../../components/GameTable';
 import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
+import {
+    TOAST_DURATION_MS,
+    TOURNAMENT_STATUS_LABEL,
+    TOURNAMENT_STATUS_VARIANT,
+    DEFAULT_ADMIN_GENERAL_ID,
+} from '../../../lib/constants';
 
 interface TournamentEntry {
     id: number;
@@ -36,29 +42,12 @@ interface TournamentData {
     matches: TournamentMatch[];
 }
 
-interface CommandResult {
-    status: string;
-    reason?: string;
-}
 
-const STATUS_VARIANT: Record<string, 'jade' | 'gold' | 'crimson' | 'muted'> = {
-    PENDING: 'muted',
-    ONGOING: 'gold',
-    FINISHED: 'jade',
-    CANCELLED: 'crimson',
-};
-
-const STATUS_LABEL: Record<string, string> = {
-    PENDING: '대기',
-    ONGOING: '진행 중',
-    FINISHED: '종료',
-    CANCELLED: '취소',
-};
 
 export default function TournamentAdminPage() {
     const [entries, setEntries] = useState<TournamentEntry[]>([]);
     const [matches, setMatches] = useState<TournamentMatch[]>([]);
-    const [generalId, setGeneralId] = useState<number>(1);
+    const [generalId, setGeneralId] = useState<number>(DEFAULT_ADMIN_GENERAL_ID);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -82,38 +71,21 @@ export default function TournamentAdminPage() {
         fetchData();
     }, [fetchData]);
 
+    // TODO: tournament_start/advance/reset는 BE handler 미포팅 (silent no-op).
+    //       PHP hwe/sammo/API/Admin/Tournament.php 포팅 후 제거.
     async function startTournament() {
-        try {
-            const data = await api.command('tournament_start', {}) as CommandResult;
-            setToast(data.status === 'AVAILABLE' ? '토너먼트가 시작되었습니다.' : (data.reason ?? '시작할 수 없습니다.'));
-        } catch {
-            setToast('토너먼트 시작 요청에 실패했습니다.');
-        }
-        setTimeout(() => setToast(''), 3000);
-        fetchData();
+        setToast('토너먼트 시작은 아직 구현되지 않았습니다.');
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
     }
 
     async function advanceRound() {
-        try {
-            const data = await api.command('tournament_advance', {}) as CommandResult;
-            setToast(data.status === 'AVAILABLE' ? '다음 라운드로 진행되었습니다.' : (data.reason ?? '진행할 수 없습니다.'));
-        } catch {
-            setToast('라운드 진행 요청에 실패했습니다.');
-        }
-        setTimeout(() => setToast(''), 3000);
-        fetchData();
+        setToast('라운드 진행은 아직 구현되지 않았습니다.');
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
     }
 
     async function resetTournament() {
-        if (!confirm('토너먼트를 초기화하시겠습니까? 모든 데이터가 삭제됩니다.')) return;
-        try {
-            const data = await api.command('tournament_reset', {}) as CommandResult;
-            setToast(data.status === 'AVAILABLE' ? '토너먼트가 초기화되었습니다.' : (data.reason ?? '초기화할 수 없습니다.'));
-        } catch {
-            setToast('토너먼트 초기화 요청에 실패했습니다.');
-        }
-        setTimeout(() => setToast(''), 3000);
-        fetchData();
+        setToast('토너먼트 초기화는 아직 구현되지 않았습니다.');
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
     }
 
     const activeEntries = entries.filter(e => !e.eliminated);
@@ -133,8 +105,8 @@ export default function TournamentAdminPage() {
         m.attackerName,
         m.defenderName,
         m.winnerName ?? '-',
-        <StatusBadge key={m.id} variant={STATUS_VARIANT[m.status] ?? 'muted'}>
-            {STATUS_LABEL[m.status] ?? m.status}
+        <StatusBadge key={m.id} variant={TOURNAMENT_STATUS_VARIANT[m.status] ?? 'muted'}>
+            {TOURNAMENT_STATUS_LABEL[m.status] ?? m.status}
         </StatusBadge>,
     ]);
 

@@ -34,16 +34,11 @@ import java.nio.charset.StandardCharsets
 class ScenarioSeedRunner(
     private val jdbc: JdbcTemplate,
     private val bootstrap: SeedBootstrap,
-    @Value("\${SCENARIO_SEED_ENABLED:true}") private val seedEnabled: Boolean,
 ) : ApplicationRunner {
 
     private val log = LoggerFactory.getLogger(ScenarioSeedRunner::class.java)
 
     override fun run(args: ApplicationArguments) {
-        if (!seedEnabled) {
-            log.info("Scenario seed skipped — SCENARIO_SEED_ENABLED=false")
-            return
-        }
         bootstrap.ensureSeeded(jdbc)
     }
 }
@@ -56,12 +51,18 @@ class ScenarioSeedRunner(
 @Component
 class SeedBootstrap(
     @Value("\${SCENARIO_CODE:scenario_1010}") private val scenarioCode: String,
+    @Value("\${SCENARIO_SEED_ENABLED:true}") private val seedEnabled: Boolean = true,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
 
     /** Seed the world iff `world_state` is empty. Returns true if it seeded, false if it skipped. */
     @Synchronized
     fun ensureSeeded(jdbc: JdbcTemplate): Boolean {
+        if (!seedEnabled) {
+            log.info("Scenario seed skipped — SCENARIO_SEED_ENABLED=false")
+            return false
+        }
+
         val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: 0
         if (worldCount > 0) {
             log.info("World already exists (world_state={}) — scenario seed skipped (idempotent)", worldCount)

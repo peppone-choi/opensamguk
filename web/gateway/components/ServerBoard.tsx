@@ -21,9 +21,10 @@ interface ServerEntry {
 const SERVERS = serversData.servers as ServerEntry[];
 
 export default function ServerBoard() {
-    const [selectedId, setSelectedId] = useState<string>(SERVERS[0]?.id ?? 'main');
-    const selected = SERVERS.find((s) => s.id === selectedId) ?? SERVERS[0];
+    const [selectedId, setSelectedId] = useState<string | null>(SERVERS[0]?.id ?? null);
+    const selected = selectedId ? (SERVERS.find((s) => s.id === selectedId) ?? SERVERS[0]) : null;
 
+    // 서버는 관리자 생성 런타임 데이터다. 서버가 없으면 로그인/로비에서 맵·로그·서버탭을 만들지 않는다.
     if (!selected) return null;
 
     return (

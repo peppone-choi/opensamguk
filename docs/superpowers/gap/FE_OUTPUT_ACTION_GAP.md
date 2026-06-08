@@ -132,9 +132,11 @@ type/title/host/amount/reqResource/highestBid/남은시간. One **입찰** butto
 **MISSING-ACTION:**
 - **Open a new auction** — no `OpenBuyRiceAuction`/`OpenSellRiceAuction`/`OpenUniqueAuction` surface
   (the 경매 시작 lives on the inherit page in legacy; see §8 — also missing there).
-- **SILENT-NO-OP (CONFIRMED):** the 입찰 button posts `pinnedCommand="auction_bid"`, but the intake code is
+- ~~**SILENT-NO-OP (CONFIRMED):** the 입찰 button posts `pinnedCommand="auction_bid"`, but the intake code is
   **`auctionBid`** (CommandWireMapper.kt:43,112). `auction_bid` ∉ intakeCodes → `toCommand()` returns null →
-  bid silently dropped. (Ledger cross-cutting bug #1.)
+  bid silently dropped. (Ledger cross-cutting bug #1.)~~
+  **FIXED (W2):** `AuctionResource.tsx` and `AuctionUniqueItem.tsx` now call `api.commands.auctionBid(...)`
+  directly (correct casing). `auctionBid` ∈ `intakeCodes` with full `toCommand()` → `AuctionBidHandler` path.
 
 ---
 
@@ -154,11 +156,16 @@ openYearMonth/closeYearMonth/name/finished/(종료/마감); **detail** shows can
 - No **잔여 포인트/금 + 사용 포인트** display, no reqInheritancePoint distinction (포인트 vs 금).
 - No year/month-stamped open/close window text matching `parseYearMonth`.
 **MISSING-ACTION:**
-- **SILENT-NO-OP (CONFIRMED):** 베팅 posts `pinnedCommand="bet"`, intake code is **`placeBet`**
-  (CommandWireMapper.kt:44,105). `bet` ∉ intakeCodes → dropped. (Ledger cross-cutting bug #2.)
-- Bet input also omits `bettingType` (candidate selection) — the Next modal sends amount + nationId only,
+- ~~**SILENT-NO-OP (CONFIRMED):** 베팅 posts `pinnedCommand="bet"`, intake code is **`placeBet`**
+  (CommandWireMapper.kt:44,105). `bet` ∉ intakeCodes → dropped. (Ledger cross-cutting bug #2.)~~
+  **FIXED (W2):** `BettingDetail.tsx` calls `api.commands.placeBet({ bettingId, bettingType, amount }, …)`
+  with `bettingType: number[]` parsed from candidate selection. `placeBet` ∈ `intakeCodes` with full
+  `toCommand()` → `PlaceBetHandler` path.
+- ~~Bet input also omits `bettingType` (candidate selection) — the Next modal sends amount + nationId only,
   but `PlaceBet` requires `bettingType: List<Int>` (the chosen candidate indices). Even after the code fix,
-  the missing candidate-pick means the bet target is unspecified.
+  the missing candidate-pick means the bet target is unspecified.~~
+  **FIXED (W2):** Candidate toggle (`toggleCandidate`) builds `pickedBetTypeKey` as `JSON.stringify([idx])`
+  or multi-select array; `submitBet` parses it and passes `bettingType` to the wire.
 
 ---
 
@@ -195,10 +202,13 @@ Store actions: 다음 전투 특기 선택(SetNextSpecialWar), **유니크 경�
 panels + log + 더 가져오기. Wires a CommandModal for store/reset actions.
 
 **MISSING-ACTION / SILENT-NO-OP:**
-- **SILENT-NO-OP (CONFIRMED, ×2):** buttons post **`BuyHiddenBuff`** and **`BuyRandomUnique`** — *neither* is in
+- ~~**SILENT-NO-OP (CONFIRMED, ×2):** buttons post **`BuyHiddenBuff`** and **`BuyRandomUnique`** — *neither* is in
   `intakeCodes` *nor* a registered `che_*` command. `toCommand()` returns null and there is no ring path →
-  both silently dropped. (Ledger cross-cutting bug #3.) The three resets *do* work
-  (`inheritResetTurnTime / inheritResetSpecialWar / inheritSetNextSpecialWar` ∈ intakeCodes).
+  both silently dropped. (Ledger cross-cutting bug #3.)~~
+  **FIXED (W2):** Both `BuyHiddenBuff` and `BuyRandomUnique` are in `intakeCodes` (CommandWireMapper.kt:58-59),
+  have `toCommand()` mappings (lines 177-183), and `TurnDaemonCommandDispatcher` handlers (lines 192-193).
+  FE `inherit/page.tsx` uses `CommandModal` with `pinnedCommand='BuyHiddenBuff'` / `'BuyRandomUnique'`.
+  The three resets also work (`inheritResetTurnTime / inheritResetSpecialWar / inheritSetNextSpecialWar` ∈ intakeCodes).
 - **MISSING-ACTION:** **유니크 경매 시작 (OpenUniqueAuction)** — the inherit page's "유니크 경매" row (start a
   24-turn unique-item auction by spending points) is **read-only / absent** in Next. No `OpenUniqueAuction`
   intake code exists anywhere → this is also the missing "open auction" path noted in §5.
@@ -271,10 +281,14 @@ are enumerated in `topGaps`.
 - **Read-display parity:** strong for global-diplomacy, vote, board, troop, chief-center (briefs), diplomacy
   (letter cards). Weak for **auction** (no tab/bidList/logs), **betting** (no candidates/배당 table/balances),
   **simulator** (no per-side inputs/log).
-- **Action parity:** GOOD — board, troop, vote, global-diplomacy(read-only), nation-finance(partial).
-  BROKEN/ABSENT — **chief-center** (entire reserved-command editor missing), **auction**+**betting**+**inherit**
-  (3 confirmed SILENT-NO-OP intake-code mismatches), **diplomacy** (send/destroy/rollback letter absent),
-  **npc-control** (all setters deferred), **simulator** (thin), **nation-finance** (3 setters not surfaced).
-- **3 SILENT-NO-OP bugs** are the highest priority (auction `auction_bid`→`auctionBid`, betting `bet`→`placeBet`,
+- **Action parity:** GOOD — board, troop, vote, global-diplomacy(read-only), nation-finance(partial),
+  **auction**+**betting**+**inherit** (3 SILENT-NO-OP bugs FIXED in W2).
+  BROKEN/ABSENT — **chief-center** (entire reserved-command editor missing), **diplomacy**
+  (send/destroy/rollback letter absent), **npc-control** (all setters deferred), **simulator** (thin),
+  **nation-finance** (3 setters not surfaced).
+- ~~**3 SILENT-NO-OP bugs** are the highest priority (auction `auction_bid`→`auctionBid`, betting `bet`→`placeBet`,
   inherit `BuyHiddenBuff`/`BuyRandomUnique` unregistered) — they fail invisibly and match the ledger's
-  cross-cutting bug list; tracked as parity wave W0.
+  cross-cutting bug list; tracked as parity wave W0.~~
+  **FIXED (W2):** All 3 intake-code mismatches resolved — `auctionBid`, `placeBet` (with `bettingType`),
+  `BuyHiddenBuff`, and `BuyRandomUnique` are all correctly wired through `intakeCodes` → `toCommand()`
+  → dispatcher handler. See §5, §6, §8 for per-item notes.

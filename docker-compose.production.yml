@@ -57,8 +57,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
-      # Scenario seed (idempotent on empty world_state) — scenario_1010 = 174 generals.
-      SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
+      # Production starts empty by default; admins create servers before any scenario seed.
+      SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=40.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:

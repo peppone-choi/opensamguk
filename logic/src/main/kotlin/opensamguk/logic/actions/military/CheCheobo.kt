@@ -117,8 +117,8 @@ class CheCheobo(
         // dist 분기별 로그 (che_첩보.php:164-196)
         if (dist <= 1) {
             context.addLog("<G><b>$destCityName</b></>의 정보를 많이 얻었습니다. <1>$date</>")
-            context.addActionPlainLog(cityBrief)
-            context.addActionPlainLog(cityDevel)
+            context.addRawLog(cityBrief)
+            context.addRawLog(cityDevel)
 
             // 병종 분포 (che_첩보.php:168-172)
             val crewTypeTexts = byCrewType.map { (crewTypeId, list) ->
@@ -127,7 +127,7 @@ class CheCheobo(
                 "$crewTypeText:${list.size}"
             }
             val crewTypeLine = if (crewTypeTexts.isNotEmpty()) crewTypeTexts.joinToString(" ") else ""
-            context.addActionPlainLog("【<S>병종</>】 $crewTypeLine")
+            context.addRawLog("【<S>병종</>】 $crewTypeLine")
 
             // 기술 비교 (che_첩보.php:174-188)
             val destNation = d.destNation
@@ -141,15 +141,15 @@ class CheCheobo(
                     techDiff >= -1000 -> "<G>▼</>열위"
                     else -> "<C>↓</>미미"
                 }
-                context.addActionPlainLog("【<span class='ev_notice'>${destNation.name}</span>】아국대비기술:$techText")
+                context.addLog("【<span class='ev_notice'>${destNation.name}</span>】아국대비기술:$techText")
             }
         } else if (dist == 2) {
             context.addLog("<G><b>$destCityName</b></>의 정보를 어느 정도 얻었습니다. <1>$date</>")
-            context.addActionPlainLog(cityBrief)
-            context.addActionPlainLog(cityDevel)
+            context.addRawLog(cityBrief)
+            context.addRawLog(cityDevel)
         } else {
             context.addLog("<G><b>$destCityName</b></>의 소문만 들을 수 있었습니다. <1>$date</>")
-            context.addActionPlainLog(cityBrief)
+            context.addRawLog(cityBrief)
         }
 
         // nation spy 기록 (che_첩보.php:198-203)

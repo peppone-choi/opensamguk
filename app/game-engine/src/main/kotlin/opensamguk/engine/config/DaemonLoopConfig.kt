@@ -1,5 +1,7 @@
 package opensamguk.engine.config
 
+import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -8,6 +10,7 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.RulerSuccessionHandler
@@ -28,9 +31,12 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.CheckStatistic
 import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.MonthlyClock
+import opensamguk.logic.tick.CheckStatisticCalculator
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.PreUpdateMonthly
 import opensamguk.logic.tick.ServerClock
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import org.springframework.beans.factory.annotation.Value
 import java.time.Instant
 import org.springframework.context.annotation.Bean
@@ -214,7 +220,46 @@ class DaemonLoopConfig {
             monthlyRngFactory = { year, month -> MonthScopedRng.forMonth(hiddenSeed, year, month) },
             clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
             preUpdateMonthly = PreUpdateMonthly { true },
-            checkStatistic = CheckStatistic { },
+            checkStatistic = CheckStatistic {
+                val generals = world.listGenerals().map { g ->
+                    val statisticMeta = g.meta +
+                        mapOf(
+                            "personal" to (g.role.personality ?: g.meta["personal"] ?: g.meta["personal_code"] ?: "None"),
+                            "special" to (g.meta["special"] ?: g.meta["special_code"] ?: "None"),
+                            "special2" to (g.role.specialWar ?: g.meta["special2"] ?: g.meta["special2_code"] ?: "None"),
+                        ) +
+                        if (g.recentWarTime != null) mapOf("recent_war" to g.recentWarTime.toString()) else emptyMap()
+                    PerTurnOverlay.toLogicGeneral(g).copy(meta = statisticMeta)
+                }
+                val nations = world.listNations().map { PerTurnOverlay.toLogicNation(it) }
+                val cities = world.listCities().map { PerTurnOverlay.toLogicCity(it) }
+                val row = CheckStatisticCalculator.compute(
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    generals = generals,
+                    nations = nations,
+                    cities = cities,
+                    nationTypeNameOf = { type -> type.removePrefix("che_") },
+                    personalityNameOf = { p -> GameConst.personalityNameOf(p.toString()) },
+                    specialDomesticNameOf = { s -> opensamguk.logic.world.SpecialityHelper.domesticName(s) },
+                    specialWarNameOf = { s -> opensamguk.logic.world.SpecialityHelper.warName(s) },
+                    crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.name ?: "$c" },
+                )
+                handler.recorder.recordStatisticInsert(linkedMapOf(
+                    "year" to row.year,
+                    "month" to row.month,
+                    "nation_count" to row.nationCount,
+                    "nation_name" to row.nationName,
+                    "nation_hist" to row.nationHist,
+                    "gen_count" to row.genCount,
+                    "personal_hist" to row.personalHist,
+                    "special_hist" to row.specialHist,
+                    "power_hist" to row.powerHist,
+                    "crewtype" to row.crewtype,
+                    "etc" to row.etc,
+                    "aux" to Json.encodeToString(row.aux),
+                ))
+            },
             postUpdateMonthly = MonthlyPostUpdateHook(world, handler.recorder, generalActionPipeline),
         )
 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * 어드민 버전/배포 백엔드의 순수 게이트 — 네트워크에 닿지 않는 경로만 검증한다.
- * 레지스트리 파싱/폴백 + deploy 가드(미설정·알수없는서버·잘못된태그)는 전부 RestClient 호출 이전에
+ * 레지스트리 파싱 + deploy 가드(미설정·알수없는서버·잘못된태그)는 전부 RestClient 호출 이전에
  * 결정되므로 deployer 없이도 결정적으로 테스트 가능하다.
  */
 class AdminVersionDeployTest {
@@ -23,15 +23,10 @@ class AdminVersionDeployTest {
     ) = ServerRegistry(json, gameApi, gameEngine, project, "통일 서버", mapper)
 
     @Test
-    fun `빈 JSON이면 단일 서버로 폴백한다`() {
+    fun `빈 JSON이면 서버 목록을 비운다`() {
         val reg = registry(json = "")
-        assertEquals(1, reg.all().size)
-        val s = reg.all().first()
-        assertEquals("main", s.id)
-        assertEquals("통일 서버", s.name)
-        assertEquals("http://game-api:8081", s.gameApiUrl)
-        assertEquals("opensamguk", s.deployProject)
-        assertEquals("main", reg.default()?.id)
+        assertEquals(emptyList<ServerDef>(), reg.all())
+        assertEquals(null, reg.default())
     }
 
     @Test
@@ -58,10 +53,9 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `깨진 JSON이면 단일 서버로 폴백한다`() {
+    fun `깨진 JSON이면 서버 목록을 비운다`() {
         val reg = registry(json = "{not json")
-        assertEquals(1, reg.all().size)
-        assertEquals("main", reg.all().first().id)
+        assertEquals(emptyList<ServerDef>(), reg.all())
     }
 
     @Test
@@ -69,7 +63,7 @@ class AdminVersionDeployTest {
         val svc = DeployService("", "", registry(), mapper)
         val status = svc.status(null)
         assertFalse(status.configured)
-        assertEquals("main", status.serverId)
+        assertEquals(null, status.serverId)
     }
 
     @Test
@@ -81,7 +75,12 @@ class AdminVersionDeployTest {
 
     @Test
     fun `잘못된 태그는 deploy 거부(네트워크 이전)`() {
-        val svc = DeployService("http://deployer:9000", "tok", registry(), mapper)
+        val svc = DeployService(
+            "http://deployer:9000",
+            "tok",
+            registry(json = """[{"id":"main","name":"통일 서버"}]"""),
+            mapper,
+        )
         val result = svc.deploy("main", "bad tag!", "admin")
         assertFalse(result.ok)
         assertEquals("올바르지 않은 버전 태그입니다.", result.message)

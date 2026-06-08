@@ -58,6 +58,9 @@ game-engine 데몬은 **절대** JPA `EntityManager`로 write하지 않습니다
 # 전체 빌드 + 테스트
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew build
 
+# 패러티 백엔드 표준 게이트(XML 검증 포함)
+tools/parity/gate.sh backend
+
 # 단일 모듈
 JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :logic:test
 
@@ -114,6 +117,19 @@ cd web/game    && corepack pnpm dev   # :3001
 
 ---
 
+## 작업 운영 체계 / skills.sh
+
+- 정본 운영 문서: `docs/superpowers/WORKING_SYSTEM.md`.
+- skills.sh 설치 목록은 `skills-lock.json`에 고정. `.agents/skills/`는 로컬 실행 표면이며 git-ignore이므로 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원.
+- 설치된 외부 스킬: `next-best-practices`, `webapp-testing`, `redesign-existing-projects`, `java-spring-boot`, `java-testing`, `kotlin-spring-boot`, `supabase-postgres-best-practices`.
+- `java-testing`은 skills.sh Gen 감사상 High Risk로 표시됨. 참고로만 사용하고, 실제 합격 판정은 repo 테스트와 `tools/parity/gate.sh`가 담당.
+- PHP 레거시 분석은 항상 `legacy/devsam-core` source path + line range → parity dimensions → `tools/php-golden/` capture/compare → Kotlin/Next implementation 순서.
+- 프론트 현대화는 `hwe/ts/` Vue 디자인/흐름을 grand truth로 삼고, 하드코딩 placeholder 대신 실제 API 상태를 렌더.
+- provider/model 공통 개발도구는 `tools/agent-system/check.py`. 로컬은 `tools/agent-system/check.py`, CI/PR은 `tools/agent-system/check.py --strict --base origin/main`, 기계 판독은 `--format json`.
+- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거친다. Kimi-backed Claude Code, Codex, Gemini 등 병렬 agent는 서로 PHP 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge 금지.
+
+---
+
 ## 페이즈 / 브랜치 / 커밋
 
 - 흐름: `P0 → … → P8`, 각 페이즈 = **spec → plan → adversarial review → execute → gate**. 플랜 `docs/superpowers/plans/`, 리서치 `docs/superpowers/research/`.
@@ -132,7 +148,7 @@ cd web/game    && corepack pnpm dev   # :3001
 | 단계 | 핵심 | 상태 |
 |------|------|------|
 | **F0 게이트웨이 인증** | gateway-api 자체 JWT/BCrypt(Kakao 제거 divergence). `web/gateway` 로그인/회원가입/로비/어드민. 토큰은 Next route handler 프록시 + **httpOnly 쿠키**(`sam_access`/`sam_refresh`), 브라우저 JS 미노출, 동일출처(CORS 불필요). `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 peppone(role=ADMIN) 멱등 시드. | ✅ |
-| **F1 시나리오 시드** | `infra/seed/ScenarioImporter` + `engine/boot/ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) → fresh DB에 `scenario_1010` 자동 시드(`world_state` 비어 있을 때만, 멱등). `WorldSnapshotLoader`로 DB→`InMemoryTurnWorld` 부팅. JDBC-only(one-daemon-write 비위반). env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`. | ✅ |
+| **F1 시나리오 시드** | `infra/seed/ScenarioImporter` + `engine/boot/ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) → 로컬 fresh DB에는 `scenario_1010` 자동 시드 가능(`world_state` 비어 있을 때만, 멱등), production은 관리자 서버 생성 전 기본 비활성. `WorldSnapshotLoader`로 DB→`InMemoryTurnWorld` 부팅. JDBC-only(one-daemon-write 비위반). env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지, **read-only 렌더**. | ✅ |
 | **F4 액션 페이지(read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator read 렌더. **명령 제출(mutation) 경로 미완.** | ✅(read) |

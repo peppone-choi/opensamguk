@@ -441,6 +441,21 @@ data class BuyRandomUniqueFail(
     val reason: String,
 ) : TurnDaemonCommandResult()
 
+// ── B1 장수생성(Join) — 새 generalId echo.
+@Serializable
+data class MakeGeneralOk(
+    override val type: String = "makeGeneral",
+    override val ok: Boolean = true,
+    val generalId: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class MakeGeneralFail(
+    override val type: String = "makeGeneral",
+    override val ok: Boolean = false,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
 // ── W6 REST mutation batch — collapsed intake result classes ────────────────────────────────────
 // 메시지(W6a)/경매개설(W6c)/외교서신(W5d)/선택풀(W6f) 인테이크 결과. shape이 동일한 코드들은
 // [NationSettingResult]/[BoardActionResult] 콜랩스 패턴을 따라 `type`만으로 selector가 키잉한다.
@@ -507,6 +522,7 @@ private val NATION_SETTING_TYPES = setOf(
 private val BOOLEAN_OK_TYPES = setOf(
     "dieOnPrestart", "buildNationCandidate", "instantRetreat", "vacation",
     "setMySetting", "dropItem", "changePermission", "kick", "appoint",
+    "claimNpc",
 )
 
 /** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */
@@ -588,6 +604,7 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "placeBet" -> if (ok) PlaceBetOk.serializer() else PlaceBetFail.serializer()
             "acceptDiplomaticMessage" -> if (ok) AcceptDiplomaticMessageOk.serializer() else AcceptDiplomaticMessageFail.serializer()
             "declineDiplomaticMessage" -> if (ok) DeclineDiplomaticMessageOk.serializer() else DeclineDiplomaticMessageFail.serializer()
+            "makeGeneral" -> if (ok) MakeGeneralOk.serializer() else MakeGeneralFail.serializer()
             else -> throw IllegalArgumentException("unknown result type=$type")
         }
     }

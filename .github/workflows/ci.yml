@@ -6,6 +6,15 @@ on:
   pull_request:
 
 jobs:
+  agent-system:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check provider-agnostic agent working system
+        run: python3 tools/agent-system/check.py --strict --base origin/main
+
   jvm:
     runs-on: ubuntu-latest
     steps:

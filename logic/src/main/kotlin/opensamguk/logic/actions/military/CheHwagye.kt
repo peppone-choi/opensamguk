@@ -168,19 +168,21 @@ open class CheHwagye(
         context: GeneralActionResolveContext,
     ): Pair<Int, Int> {
         val agriAmount = valueFit(
-            rng.nextRangeInt(5, 15).toDouble(),
+            rng.nextRangeInt(GameConst.sabotageDamageMin, GameConst.sabotageDamageMax).toDouble(),
             null,
             destCity.agriculture.toDouble(),
         ).toInt()
         val commAmount = valueFit(
-            rng.nextRangeInt(5, 15).toDouble(),
+            rng.nextRangeInt(GameConst.sabotageDamageMin, GameConst.sabotageDamageMax).toDouble(),
             null,
             destCity.commerce.toDouble(),
         ).toInt()
 
-        val josaYi = JosaUtil.pick(commandName, "이")
-        context.addGlobalActionLog("<G><b>$destCityName</b></>${josaYi} 불타고 있습니다.")
-        context.addLog("<G><b>$destCityName</b></>에 $commandName$josaYi 성공했습니다. <1>${context.date}</>")
+        // PHP che_화계.php:237-239 — 조사 둘로 분리: 방송은 도시명 기준, 액션로그는 명령명 기준.
+        val josaCity = JosaUtil.pick(destCityName, "이")
+        context.addGlobalActionLog("<G><b>$destCityName</b></>${josaCity} 불타고 있습니다.")
+        val josaCmd = JosaUtil.pick(commandName, "이")
+        context.addLog("<G><b>$destCityName</b></>에 $commandName$josaCmd 성공했습니다. <1>${context.date}</>")
         context.addActionPlainLog(
             "도시의 농업이 <C>${numberFormat(agriAmount)}</>, 상업이 <C>${numberFormat(commAmount)}</>만큼 감소하고, 장수 <C>$injuryCount</>명이 부상 당했습니다.",
         )

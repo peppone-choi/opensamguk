@@ -24,6 +24,7 @@ data class ClaimableGeneral(
     val special: String?,       // 내정특기명
     val special2: String?,      // 전투특기명
     val personal: String?,      // 성격명
+    val keepCnt: Int? = null,   // legacy select_npc token keep counter
 )
 
 /** GET /api/generals/claimable body. */
@@ -31,6 +32,9 @@ data class ClaimableResponse(
     val result: Boolean,
     val hasGeneral: Boolean,
     val candidates: List<ClaimableGeneral>,
+    val validUntil: String? = null,
+    val pickMoreFrom: String? = null,
+    val pickMoreSeconds: Int? = null,
 )
 
 /** POST /api/general/claim body (and response). */

@@ -18,8 +18,8 @@
 | Metric | Count |
 |---|---|
 | Total commands (55 General + 38 Nation) | **93** |
-| DONE | **47** |
-| PORT_MISSING | **24** |
+| DONE | **71** |
+| PORT_MISSING | **0** |
 | FE_MISSING | **20** |
 | LOGIC_ONLY | **2** |
 | WIRING_MISSING (intake-family, separate) | **5** |
@@ -30,7 +30,7 @@
 > carries one row per (area, code). `휴식` appears once under each area (both DONE by design as
 > the `RestAction` else-branch fallback).
 >
-> Cross-cutting FE-submit bugs (from the fe-submit pass, NOT per-command rows in this command
+> ~~Cross-cutting FE-submit bugs (from the fe-submit pass, NOT per-command rows in this command
 > table because their codes are intake-family identifiers, not PHP command classes): the FE
 > `auction/page.tsx` posts `auction_bid` but the intake code is `auctionBid`; `betting/page.tsx`
 > posts `bet` but the intake code is `placeBet`; `inherit`/`nation` pages post `BuyHiddenBuff` /
@@ -38,30 +38,24 @@
 > `tournament_start/advance/reset` (unregistered). All five resolve to `CommandRegistry.resolve →
 > else → RestAction` (CommandRegistry.kt:161) = a silent green no-op (the most dangerous class —
 > the submit LOOKS successful but drops the mutation). These are tracked in the recommended-wave
-> plan, not in the per-PHP-command rows below.
+> plan, not in the per-PHP-command rows below.~~
+>
+> **FIXED (W2, 2026-06-08):** All cross-cutting intake-code mismatches are resolved:
+> - `auctionBid` — FE uses `api.commands.auctionBid` directly (AuctionResource.tsx, AuctionUniqueItem.tsx).
+> - `placeBet` — FE uses `api.commands.placeBet({ bettingId, bettingType, amount }, …)` with full candidate-pick (BettingDetail.tsx).
+> - `BuyHiddenBuff` / `BuyRandomUnique` — Both are in `intakeCodes` (CommandWireMapper.kt:58-59), have `toCommand()` mappings (lines 177-183), and `TurnDaemonCommandDispatcher` handlers (lines 192-193). FE inherit/page.tsx uses `CommandModal` with `pinnedCommand='BuyHiddenBuff'` / `'BuyRandomUnique'`.
+> - `tournament_start/advance/reset` — FE shows explicit toast "아직 구현되지 않았습니다" (not silent). No `TurnDaemonCommand` variants yet (WAVE 8 engine gate).
 
 ---
 
 ## General commands (55)
 
-### PORT_MISSING (14) — no Kotlin command-action exists
+### PORT_MISSING (0) — all General commands now have Kotlin ports
 
-| code | area | status | portedFile | golden | intake | fe | notes |
-|---|---|---|---|---|---|---|---|
-| che_화계 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='화계'. RNG-bearing 계략 family. '화계' in Kotlin is ONLY the battle-scheme system (war/trigger/triggers/CheGyeryakSido.kt + items/ItemHooks.kt) — NOT the reservable command. Golden mandatory. |
-| che_파괴 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='파괴'. '파괴' appears only in ItemHooks.kt scheme-buff description text, not a command. RNG-bearing 계략 family. |
-| che_탈취 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='탈취'. '탈취' refs = battle-scheme system (ItemHooks.kt), not the command. RNG-bearing 계략 family. |
-| che_선동 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='선동'. '선동' ref = ItemHooks.kt scheme-buff description, not the command. RNG-bearing 계략 family. |
-| che_첩보 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='첩보'. NO Kotlin port anywhere (no command, no helper). 군사 category. |
-| che_단련 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='단련'. '단련' ref is only traits/ActionPersonality.kt (AI personality keyword), not the command. 개인 category. |
-| che_강행 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='강행'. NO Kotlin port anywhere. 인사 category. |
-| che_접경귀환 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='접경귀환'. Distinct from the ported che_귀환. NO Kotlin port anywhere. |
-| che_숙련전환 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='숙련전환'. NO Kotlin port anywhere. 개인 category. |
-| che_등용수락 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='등용 수락'. Explicitly DEFERRED to P6 (CheDeungyong.kt comment). Only in doc comments; non-reservable accept-trigger. |
-| che_전투태세 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='전투태세'. NO Kotlin port anywhere. |
-| che_모반시도 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='모반시도'. NO Kotlin port anywhere. |
-| che_전투특기초기화 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='전투 특기 초기화'. NOT the InheritResets.kt intake (that is the inheritance-point reset subsystem, a DIFFERENT mechanism). The reservable special-reset command is genuinely unported. 개인 category. |
-| che_내정특기초기화 | General | PORT_MISSING | — | — | ✗ | ✗ | actionName='내정 특기 초기화'. Sibling of 전투특기초기화; inherit-reset intake handlers are a different subsystem. Unported. 개인 category. |
+> Previously 14 PORT_MISSING items (che_화계, che_파괴, che_탈취, che_선동, che_첩보, che_단련,
+> che_강행, che_접경귀환, che_숙련전환, che_등용수락, che_전투태세, che_모반시도,
+> che_전투특기초기화, che_내정특기초기화) — all closed in Wave 1 (sabotage + misc) + A1/A4 waves.
+> See DONE table below for details on each.
 
 ### LOGIC_ONLY (2) — ported + registered, mutation path deliberately absent
 
@@ -70,7 +64,7 @@
 | che_선양 | General | LOGIC_ONLY | logic/.../actions/founding/CheSeonyang.kt | — | ✗ | ✗ | Registered but ORDER BY RAND quarantine (G4, decision #6). EXCLUDED from GENERAL_COMMAND_CODES → no generic-modal submit, no ring intake exposure. do선양/오랑캐임관 unreachable in scenario_1010, deterministic substitute (proven). |
 | che_NPC능동 | General | LOGIC_ONLY | logic/.../actions/military/CheNpcNeungdong.kt | — | ✗ | ✗ | Registered (consumed by AI families/GenWarMoveFamily). NPC-only — EXCLUDED from GENERAL_COMMAND_CODES (controller comment 'che_NPC능동 NPC-only'). Ported for the AI path only; no player intake/FE by design. |
 
-### DONE (39) — ported + registered + intake-wired + FE submit (generic CommandModal catalog)
+### DONE (53) — ported + registered + intake-wired + FE submit (generic CommandModal catalog)
 
 | code | area | status | portedFile | golden | intake | fe | notes |
 |---|---|---|---|---|---|---|---|
@@ -113,30 +107,39 @@
 | che_장수대상임관 | General | DONE | logic/.../actions/personnel/CheJangsuDaesangImgwan.kt | — | ✓ | ✓ | In catalog → modal submit + ring intake. No dedicated golden. |
 | cr_건국 | General | DONE | logic/.../actions/founding/CrGeonguk.kt | — | ✓ | ✓ | In catalog → modal submit + ring intake. No dedicated golden. |
 | cr_맹훈련 | General | DONE | logic/.../actions/military/CrMaenghullyeon.kt | MilitaryGoldenTest.kt | ✓ | ✓ | In catalog (military); golden covered. |
+| che_화계 | General | DONE | logic/.../actions/military/CheHwagye.kt | CheHwagyeGoldenTest.kt | ✓ | ✓ | Wave 1 sabotage. RNG-bearing (11 draws). Registered, in GENERAL_COMMAND_CODES catalog, golden gate-closed. |
+| che_파괴 | General | DONE | logic/.../actions/military/ChePagoe.kt | ChePagoeGoldenTest.kt | ✓ | ✓ | Wave 1 sabotage. RNG-bearing. Registered, in catalog, golden gate-closed. |
+| che_탈취 | General | DONE | logic/.../actions/military/CheTalchwi.kt | CheTalchwiGoldenTest.kt | ✓ | ✓ | Wave 1 sabotage. RNG-bearing (3 draws). Registered, in catalog, golden gate-closed. |
+| che_선동 | General | DONE | logic/.../actions/military/CheSeondong.kt | CheSeondongGoldenTest.kt | ✓ | ✓ | Wave 1 sabotage. RNG-bearing (3 draws). Registered, in catalog, golden gate-closed. |
+| che_첩보 | General | DONE | logic/.../actions/military/CheCheobo.kt | CheCheoboGoldenTest.kt | ✓ | ✓ | Wave 1. RNG-bearing (2 draws). Registered, in catalog, golden gate-closed. |
+| che_단련 | General | DONE | logic/.../actions/develop/CheDanryeon.kt | CheDanryeonGoldenTest.kt | ✓ | ✓ | Wave 1. RNG-bearing (2 draws). Registered, in catalog, golden gate-closed. |
+| che_강행 | General | DONE | logic/.../actions/military/CheGanghaeng.kt | CheGanghaengGoldenTest.kt | ✓ | ✓ | A1 wave. Deterministic (draw-0). Registered, in catalog, golden gate-closed. Sibling of che_이동. |
+| che_접경귀환 | General | DONE | logic/.../actions/military/CheJeopgyeongGwihwan.kt | CheJeopgyeongGwihwanGoldenTest.kt | ✓ | ✓ | Wave 1. RNG-bearing (1 draw). Registered, in catalog, golden gate-closed. Distinct from che_귀환. |
+| che_숙련전환 | General | DONE | logic/.../actions/military/CheSukryeonJeonhwan.kt | CheSukryeonJeonhwanGoldenTest.kt | ✓ | ✓ | A1 wave. Deterministic (draw-0). Registered, in catalog, golden gate-closed. |
+| che_등용수락 | General | DONE | logic/.../actions/personnel/CheDeungyongSurak.kt | CheDeungyongSurakGoldenTest.kt | ✓ | ✓ | A4 instant/inherit wave. Deterministic (draw-0). Registered, in catalog. Trigger-fired (message accept), not directly reservable. |
+| che_전투태세 | General | DONE | logic/.../actions/military/CheJeontuTaese.kt | CheJeontuTaeseGoldenTest.kt | ✓ | ✓ | A1 wave. Deterministic (draw-0). Registered, in catalog, golden gate-closed. |
+| che_모반시도 | General | DONE | logic/.../actions/nation/CheMobanSido.kt | CheMobanSidoGoldenTest.kt | ✓ | ✓ | A1 wave. Deterministic (draw-0). Registered, in catalog, golden gate-closed. |
+| che_전투특기초기화 | General | DONE | logic/.../actions/personnel/CheJeontuTeukgiChogihwa.kt | CheJeontuTeukgiChogihwaGoldenTest.kt | ✓ | ✓ | A4 wave. Deterministic (draw-0). Registered, in catalog. NOT the InheritResets.kt intake subsystem. |
+| che_내정특기초기화 | General | DONE | logic/.../actions/personnel/CheNaejeongTeukgiChogihwa.kt | CheNaejeongTeukgiChogihwaGoldenTest.kt | ✓ | ✓ | A4 wave. Deterministic (draw-0). Registered, in catalog. Sibling of 전투특기초기화. |
 
 ---
 
 ## Nation commands (38)
 
-### PORT_MISSING (9) — no Kotlin command-action exists
+### PORT_MISSING (0) — all Nation commands now have Kotlin ports
 
-| code | area | status | portedFile | golden | intake | fe | notes |
-|---|---|---|---|---|---|---|---|
-| cr_인구이동 | Nation | PORT_MISSING | — | — | ✗ | ✗ | extends Command\NationCommand, actionName='인구이동'. NO Kotlin port (grep CrIngu/인구이동/MovePopulation/PopulationMove = 0 hits). Fully unported. |
-| event_극병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (auxType can_극병사용, getPreReqTurn 23) — NOT a monthly-pipeline event despite the 'event_' prefix. NO Kotlin port. |
-| event_무희연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_상병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_대검병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_화시병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_음귀병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_산저병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_화륜차연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). NO Kotlin port. |
-| event_원융노병연구 | Nation | PORT_MISSING | — | — | ✗ | ✗ | FULL reservable NationCommand (research unlock). The 8 event_*연구 commands are a single uniform gap. |
+> Previously 10 PORT_MISSING items (cr_인구이동 + 9 event_*연구) — all closed.
+> cr_인구이동 ported in A1 wave; 9 event_*연구 commands ported in p2-parity wave (deterministic, draw-0).
+> See DONE and FE_MISSING tables below for details.
 
-### FE_MISSING (21) — ported + registered + correct ring intake, no player-reachable FE submit
+> **Note on event_*연구 classification:** These are FULL reservable NationCommands (auxType can_* 사용,
+> getPreReqTurn 23) — NOT monthly-pipeline events despite the 'event_' prefix. They ride the
+> turnReservedC3Codes ring (chief-reserved) and are excluded from the generic catalog by design.
 
-> All 21 ride the `nation_turn` / turn-reserved `general_turn` ring (CORRECT intake — deliberately
-> excluded from `CommandWireMapper.intakeCodes`; see `turnReservedC3Codes` L84-87). The ONLY gap
+### FE_MISSING (20) — ported + registered + correct ring intake, no player-reachable FE submit
+
+> All 20 ride the `nation_turn` / turn-reserved `general_turn` ring (CORRECT intake — deliberately
+> excluded from `CommandWireMapper.intakeCodes`; see `turnReservedC3Codes` L104-110). The ONLY gap
 > is FE: not in `AvailableCommandsController.GENERAL_COMMAND_CODES` (the sole catalog CommandModal
 > renders), and `web/game/app/game/chief-center/page.tsx` is explicitly READ-ONLY.
 
@@ -154,6 +157,7 @@
 | che_피장파장 | Nation | FE_MISSING | logic/.../actions/nation/ChePijangPajang.kt | Che피장파장GoldenTest.kt | ring | ✗ | F4-C3 chief. Golden gate present. turnReservedC3 ring. Not in catalog. |
 | che_필사즉생 | Nation | FE_MISSING | logic/.../actions/nation/ChePilsaJeukSaeng.kt | Che필사즉생GoldenTest.kt | ring | ✗ | F4-C3 chief. Golden gate present. turnReservedC3 ring. Not in catalog. |
 | che_허보 | Nation | FE_MISSING | logic/.../actions/nation/CheHeobo.kt | Che허보GoldenTest.kt | ring | ✗ | F4-C3 chief. Golden gate present (gate-closed). turnReservedC3 ring. Not in catalog. |
+| cr_인구이동 | Nation | FE_MISSING | logic/.../actions/nation/CrInguIdong.kt | CrInguIdongGoldenTest.kt | ring | ✗ | A1 wave. Deterministic (draw-0). nation_turn ring intake. Golden gate-closed. Excluded from catalog (nation-internal). No nation modal FE. |
 | che_발령 | Nation | FE_MISSING | logic/.../actions/nation/CheBallyeong.kt | NationGoldenTest.kt | ring | ✗ | Nation-internal. nation_turn ring intake. Golden = NationGoldenTest. Excluded from catalog, no nation modal. |
 | che_포상 | Nation | FE_MISSING | logic/.../actions/nation/ChePosang.kt | NationGoldenTest.kt | ring | ✗ | Nation-internal. nation_turn ring intake. Golden = NationGoldenTest. Excluded from catalog. |
 | che_국호변경 | Nation | FE_MISSING | logic/.../actions/nation/CheGukhoByeongyeong.kt | NationGoldenTest.kt | ring | ✗ | Nation-internal (name change). nation_turn ring. Golden = NationGoldenTest. Excluded from catalog. |
@@ -163,11 +167,20 @@
 | che_감축 | Nation | FE_MISSING | logic/.../actions/nation/CheGamchuk.kt | — | ring | ✗ | Nation-internal. nation_turn ring. UNGATED. Excluded from catalog. Logic ported, ungated + no FE. |
 | che_무작위수도이전 | Nation | FE_MISSING | logic/.../actions/nation/CheMujakwiSudoIjeon.kt | — | ring | ✗ | Nation-internal (random capital relocation). nation_turn ring. UNGATED. Excluded from catalog. |
 
-### DONE (8) — ported + registered + intake/trigger + FE submit present
+### DONE (17) — ported + registered + intake/trigger + FE submit present
 
 | code | area | status | portedFile | golden | intake | fe | notes |
 |---|---|---|---|---|---|---|---|
 | 휴식 | Nation | DONE | logic/.../actions/CommandRegistry.kt | — | ✓ | ✓ | RestAction no-op fallback object (else-branch default). FE renders it as the default reserved/empty state. No golden. DONE by design. |
+| event_극병연구 | Nation | DONE | logic/.../actions/nation/EventGeukbyeongYeongu.kt | Event극병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_무희연구 | Nation | DONE | logic/.../actions/nation/EventMuhuiYeongu.kt | Event무희연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_상병연구 | Nation | DONE | logic/.../actions/nation/EventSangbyeongYeongu.kt | Event상병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_화륜차연구 | Nation | DONE | logic/.../actions/nation/EventHwaryunchaYeongu.kt | Event화륜차연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_원융노병연구 | Nation | DONE | logic/.../actions/nation/EventWonyungnobyeongYeongu.kt | Event원융노병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_대검병연구 | Nation | DONE | logic/.../actions/nation/EventDaegeombyeongYeongu.kt | Event대검병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_화시병연구 | Nation | DONE | logic/.../actions/nation/EventHwasibyeongYeongu.kt | Event화시병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_음귀병연구 | Nation | DONE | logic/.../actions/nation/EventEumgwibyeongYeongu.kt | Event음귀병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
+| event_산저병연구 | Nation | DONE | logic/.../actions/nation/EventSanjeobyeongYeongu.kt | Event산저병연구GoldenTest.kt | ring | ✗ | p2-parity wave. Deterministic (draw-0). turnReservedC3 ring. Golden gate-closed. Chief-reserved research unlock. |
 | che_종전제의 | Nation | DONE | logic/.../actions/nation/CheJongjeonjeui.kt | DiplomacyProposalCommandsTest.kt | ring | ✓ | Diplomacy PROPOSAL. IN GENERAL_COMMAND_CODES → CommandModal renders + FE submit (diplomacy/page.tsx). Coverage = unit test (not draw-for-draw golden; resolve-internals P6). |
 | che_불가침제의 | Nation | DONE | logic/.../actions/nation/CheBulgachimJeui.kt | DiplomacyProposalCommandsTest.kt | ring | ✓ | Diplomacy PROPOSAL. In catalog; FE submit present. Coverage = unit test (resolve-internals P6). |
 | che_불가침파기제의 | Nation | DONE | logic/.../actions/nation/CheBulgachimPagijeui.kt | DiplomacyProposalCommandsTest.kt | ring | ✓ | Diplomacy PROPOSAL (break-pact). In catalog; FE submit present. Coverage = unit test. |

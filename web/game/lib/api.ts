@@ -251,6 +251,10 @@ export const api = {
         post<T>(`/api/messages/${id}/decline?generalId=${generalId}`, null),
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
+    // B1 Join — 장수생성(재야 등록). 202=성공, 200 BLOCKED=deny.
+    join: (body: { name: string; leadership: number; strength: number; intel: number; character: string; pic?: boolean }) =>
+        post<{ status: string; requestId?: string; reason?: string }>('/api/join', body),
+
     // ── F4 action-page READ endpoints (read-only; all via the /api/game proxy) ──
     // game-api = read-only JPA on existing tables; one-daemon-write rule.
     // Endpoints with no backing rows in the fresh scenario_1010 seed (board / vote /
@@ -276,7 +280,7 @@ export const api = {
     // NPC 정책 (page 8) — default+current policy/priorities/lastSetters/env.
     npcPolicy: () => get<NpcPolicyResponse>('/api/nation/npc-policy'),
     // 유산 (page 15) — inherit items/buffs/costs/availability/logs/currentStat.
-    inheritPoint: () => get<InheritPointResponse>('/api/inherit-point'),
+    inheritPoint: <T>() => get<T>('/api/inherit-point'),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
     // 설문 조사 (page 5) — vote list.

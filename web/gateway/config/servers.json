@@ -1,21 +1,4 @@
 {
     "$comment": "서버 목록은 가변(데이터 주도). 배포 시 이 파일을 편집해 서버를 추가/삭제. gameUrl=게임 프론트(web/game) 진입 URL, gameApiUrl=해당 서버 game-api(맵 프리뷰/현황 read).",
-    "servers": [
-        {
-            "id": "main",
-            "name": "통일 서버",
-            "status": "running",
-            "turnterm": 60,
-            "gameUrl": "/game?server=main",
-            "gameApiUrl": "http://localhost:8081"
-        },
-        {
-            "id": "bbae",
-            "name": "빼섭",
-            "status": "running",
-            "turnterm": 60,
-            "gameUrl": "/game?server=bbae",
-            "gameApiUrl": "http://localhost:18080"
-        }
-    ]
+    "servers": []
 }

@@ -512,8 +512,8 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.posts[7].reservedTurns.length()").value(0))
             // W3 — 부대 목록(troop_leader → name).
             .andExpect(jsonPath("$.troopList.10").value("선봉대"))
-            // W3 — 사령부 명령 팔레트(6 카테고리, GameConst availableChiefCommand 순서).
-            .andExpect(jsonPath("$.commandList.length()").value(6))
+            // W3 — 사령부 명령 팔레트(7 카테고리, GameConst availableChiefCommand 순서).
+            .andExpect(jsonPath("$.commandList.length()").value(7))
             .andExpect(jsonPath("$.commandList[0].category").value("휴식"))
             .andExpect(jsonPath("$.commandList[1].category").value("인사"))
             .andExpect(jsonPath("$.commandList[1].values[0].value").value("che_발령"))
@@ -546,8 +546,8 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.posts[0].name").doesNotExist())
             .andExpect(jsonPath("$.posts[0].reservedTurns.length()").value(0))
             .andExpect(jsonPath("$.troopList.length()").value(0))
-            // 명령 팔레트는 국가 무관 정적 카테고리이므로 항상 6개.
-            .andExpect(jsonPath("$.commandList.length()").value(6))
+            // 명령 팔레트는 국가 무관 정적 카테고리이므로 항상 7개.
+            .andExpect(jsonPath("$.commandList.length()").value(7))
     }
 
     @Test

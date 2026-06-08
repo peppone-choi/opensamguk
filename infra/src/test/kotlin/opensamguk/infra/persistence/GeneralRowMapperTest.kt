@@ -11,6 +11,7 @@ class GeneralRowMapperTest {
 
     private fun row(meta: String, lastTurn: String = "{}"): Map<String, Any?> = linkedMapOf(
         "id" to 10,
+        "user_id" to null,
         "nation_id" to 2,
         "city_id" to 5,
         "leadership" to 70,
@@ -33,6 +34,7 @@ class GeneralRowMapperTest {
         "item_code" to "None",
         "npc_state" to 2,
         "last_turn" to lastTurn,
+        "penalty" to "{}",
         "meta" to meta,
     )
 
@@ -93,6 +95,22 @@ class GeneralRowMapperTest {
         assertEquals("None", cols["book_code"])
         assertEquals("None", cols["item_code"])
         assertEquals(2, cols["npc_state"])
+    }
+
+    @Test
+    fun `possession owner and penalty round trip through dedicated columns`() {
+        val r = row("""{"owner_name":"peppone"}""").toMutableMap()
+        r["user_id"] = "7"
+        r["penalty"] = """{"NoChief":true,"SendPrivateMsgDelay":3}"""
+
+        val g = GeneralRowMapper.fromRow(r)
+        assertEquals("7", g.userId)
+        assertEquals(true, g.penalty["NoChief"])
+        assertEquals(3, g.penalty["SendPrivateMsgDelay"])
+
+        val cols = GeneralRowMapper.toColumns(g)
+        assertEquals("7", cols["user_id"])
+        assertEquals("""{"NoChief":true,"SendPrivateMsgDelay":3}""", cols["penalty"])
     }
 
     @Test

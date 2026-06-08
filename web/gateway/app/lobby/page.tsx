@@ -170,27 +170,29 @@ function LobbyView() {
                 {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
                 <ServerBoard />
 
-                <section>
-                    <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
-                    <div className="game-table-wrap">
-                        <table className="game-table">
-                            <caption>{LOBBY_LABELS.serverSelect}</caption>
-                            <thead>
-                                <tr>
-                                    <th>{LOBBY_LABELS.colServer}</th>
-                                    <th>{LOBBY_LABELS.colInfo}</th>
-                                    <th>{LOBBY_LABELS.colCharacter}</th>
-                                    <th>{LOBBY_LABELS.colSelect}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {SERVERS.map((server) => (
-                                    <ServerRow key={server.id} server={server} />
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                {SERVERS.length > 0 && (
+                    <section>
+                        <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
+                        <div className="game-table-wrap">
+                            <table className="game-table">
+                                <caption>{LOBBY_LABELS.serverSelect}</caption>
+                                <thead>
+                                    <tr>
+                                        <th>{LOBBY_LABELS.colServer}</th>
+                                        <th>{LOBBY_LABELS.colInfo}</th>
+                                        <th>{LOBBY_LABELS.colCharacter}</th>
+                                        <th>{LOBBY_LABELS.colSelect}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {SERVERS.map((server) => (
+                                        <ServerRow key={server.id} server={server} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
 
                 <section>
                     <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>

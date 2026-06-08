@@ -225,6 +225,35 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "buildNationCandidate"
     }
 
+    // ── B1 장수생성(재야→일반/Join) — 즉시 데몬커맨드. RNG-bearing(draw-for-draw).
+    @Serializable
+    @SerialName("makeGeneral")
+    data class MakeGeneral(
+        val requestId: String? = null,
+        val userId: Int,
+        val name: String,
+        val leadership: Int,
+        val strength: Int,
+        val intel: Int,
+        val character: String = "Random",
+        val picture: String? = null,
+        val ownerName: String? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "makeGeneral"
+    }
+
+    @Serializable
+    @SerialName("claimNpc")
+    data class ClaimNpc(
+        val requestId: String? = null,
+        val generalId: Int,
+        val userId: Long,
+        val userNick: String,
+        val userPenaltyJson: String = "{}",
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "claimNpc"
+    }
+
     @Serializable
     @SerialName("instantRetreat")
     data class InstantRetreat(

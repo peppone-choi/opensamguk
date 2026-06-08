@@ -8,6 +8,8 @@ import opensamguk.engine.auction.AuctionOpenHandler
 import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.BuildNationCandidateHandler
+import opensamguk.engine.intake.ClaimNpcHandler
+import opensamguk.engine.intake.MakeGeneralHandler
 import opensamguk.engine.intake.DiplomacyLetterHandler
 import opensamguk.engine.intake.InheritResetHandler
 import opensamguk.engine.intake.MessageHandler
@@ -158,6 +160,12 @@ class TurnDaemonCommandDispatcher(
     // ── W6d 건국 후보(거병) 핸들러 (RNG-bearing — 골든 게이트는 /parity-wave) ──
     private val buildNation = BuildNationCandidateHandler(world, recorder)
 
+    // ── B1 장수생성(재야→일반) 핸들러 (RNG-bearing — 골든 게이트는 MakeGeneralGoldenTest) ──
+    private val makeGeneral = MakeGeneralHandler(world, recorder)
+
+    // ── B2 장수빙의 핸들러 ──
+    private val claimNpc = ClaimNpcHandler(world, recorder)
+
     /**
      * Dispatch one command to its handler.
      *
@@ -165,6 +173,7 @@ class TurnDaemonCommandDispatcher(
      *   this command type yet (control commands + not-yet-built handlers).
      */
     fun dispatch(command: TurnDaemonCommand): TurnDaemonCommandResult? = when (command) {
+        is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
         is TurnDaemonCommand.PlaceBet -> placeBet.handle(command)
@@ -212,6 +221,8 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.SelectPoolUpdate -> selectPool.handleUpdate(command)
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
+        // ── B1 장수생성 바인딩 ──
+        is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
         else -> null
     }
 

@@ -43,6 +43,8 @@ data class General(
     // --- P4 war/conquest surface (Task FU3) ---
     val officerCity: Int = 0,     // V1 general.officer_city — the city a 태수/군사/종사 governs; ConquerCity resets to 0 + officer_level 1 (process_war.php:705-708)
     val lastTurn: LastTurn = LastTurn(),  // rides the general.last_turn jsonb (delete-on-default)
+    val userId: String? = null,    // V1 general.user_id — B2 possession owner; nullable for unclaimed/NPC rows.
+    val penalty: Map<String, Any?> = linkedMapOf(), // V1 general.penalty jsonb, separate from meta.
     val meta: Map<String, Any?> = linkedMapOf(),   // explevel, intel_exp, leadership_exp, strength_exp, dedlevel, aux, max_domestic_critical, killturn …
 )
 

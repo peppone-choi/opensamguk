@@ -35,6 +35,7 @@ import java.time.Instant
 class GeneralPossessionService(
     private val owners: GeneralOwnerRepository,
     private val generals: GeneralReadRepository,
+    private val npcTokens: SelectNpcTokenRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) {
     /** Outcome of a claim attempt. */
@@ -66,6 +67,11 @@ class GeneralPossessionService(
         val general = generals.findById(generalId).orElse(null) ?: return ClaimResult.NotClaimable
         if (general.npcState != CLAIMABLE_NPC_STATE) return ClaimResult.NotClaimable
 
+        val now = Instant.now(clock)
+        val token = npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(userId, now)
+            ?: return ClaimResult.NotClaimable
+        if (!token.pickResult.containsKey(generalId.toString())) return ClaimResult.NotClaimable
+
         // 3. target must be unowned (UNIQUE general_id; re-checked in-tx, DB UNIQUE is the backstop).
         if (owners.existsByGeneralId(generalId.toLong())) return ClaimResult.GeneralAlreadyClaimed
 
@@ -73,9 +79,10 @@ class GeneralPossessionService(
             GeneralOwnerEntity(
                 generalId = generalId.toLong(),
                 userId = userId,
-                claimedAt = Instant.now(clock),
+                claimedAt = now,
             ),
         )
+        npcTokens.deleteOwnerOrExpired(userId, now)
         return ClaimResult.Claimed(generalId)
     }
 
