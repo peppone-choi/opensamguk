@@ -72,7 +72,7 @@ data class FrontGlobalInfo(
     val isFiction: Boolean? = null,
     val npcMode: Int? = null,
     val joinMode: Int? = null,
-    val autorunUser: Boolean? = null,
+    val autorunUser: AutorunUserInfo? = null,
     val lastExecuted: String? = null, // game_env.turntime(마지막 턴 실행 시각 문자열)
     val develCost: Int? = null,
     val noticeMsg: String? = null,
@@ -104,6 +104,12 @@ data class FrontGlobalInfo(
     // [§2 BLOCKED — plock 테이블 부재] PHP `SELECT plock FROM plock WHERE type='GAME'`.
     // 모든 마이그레이션(V1~V10)에 plock 테이블이 없다. interim으로 false 고정(W3_FrontGlobalInfo §2).
     val serverLocked: Boolean? = null,
+)
+
+data class AutorunUserInfo(
+    @JsonProperty("limit_minutes")
+    val limitMinutes: Int,
+    val options: Map<String, Int>,
 )
 
 /** The caller's general gating surface (null when no character). */

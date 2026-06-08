@@ -55,9 +55,18 @@ class FrontInfoControllerTest {
         req
     }
 
-    private fun seedWorld() {
+    private fun seedWorld(config: Map<String, Any?> = emptyMap()) {
         `when`(world.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3, tickSeconds = 3600)),
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "che_1010",
+                    currentYear = 200,
+                    currentMonth = 3,
+                    tickSeconds = 3600,
+                    config = config,
+                ),
+            ),
         )
         `when`(generals.count()).thenReturn(174L)
         `when`(nations.findAll()).thenReturn(listOf(NationReadEntity(id = 1, name = "위", color = "#00f")))
@@ -80,6 +89,29 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.general.hasGeneral").value(false))
             .andExpect(jsonPath("$.nation").doesNotExist())
             .andExpect(jsonPath("$.city").doesNotExist())
+    }
+
+    @Test
+    fun `global autorunUser preserves legacy limit and option shape`() {
+        seedWorld(
+            mapOf(
+                "autorun_user" to mapOf(
+                    "limit_minutes" to 120,
+                    "options" to linkedMapOf(
+                        "develop" to 1,
+                        "recruit" to 0,
+                        "recruit_high" to 2,
+                    ),
+                ),
+            ),
+        )
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.autorunUser.limit_minutes").value(120))
+            .andExpect(jsonPath("$.global.autorunUser.options.develop").value(1))
+            .andExpect(jsonPath("$.global.autorunUser.options.recruit").value(0))
+            .andExpect(jsonPath("$.global.autorunUser.options.recruit_high").value(2))
     }
 
     @Test

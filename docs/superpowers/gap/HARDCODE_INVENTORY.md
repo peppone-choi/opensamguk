@@ -26,16 +26,16 @@
 
 | 영역 | 위반 수 | 참고(합법·기록용) |
 |------|---------|-------------------|
-| **web/game** | 9 | — |
+| **web/game** | 7 | — |
 | **web/gateway** | 0 | 2 (`GW-HC-04`, `GW-HC-05`) |
 | **app** (game-api) | 8 | — |
-| **합계** | **17** | 2 |
+| **합계** | **15** | 2 |
 
 **위반 성격 분류:**
-- 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): `SimulatorController .random()`(D3-01 app), GameInfo "자동"(D3-02 web), NpcPolicy 날조 키(D3-02 app)
+- 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): `SimulatorController .random()`(D3-01 app), NpcPolicy 날조 키(D3-02 app)
 - 🟠 **본인 컨텍스트 미사용 + 디폴트 1 박음** (useFrontInfo 미배선): nation(D3-05), mailbox(D3-06), tournament-admin(D3-07) — web/game
 - 🟡 **값소스 부재 갭** (정본 영속 원천/엔진 미결합으로 0/null/false 고정 — 문서화된 BLOCKED): traffic/hall/emperor(D3-03 app), serverLocked(D3-04 app), iAction name/info(D3-07 app), compensation(D3-08 app)
-- 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): INHERIT_COSTS(D3-04 web), tournamentTerm clamp 누락(D3-03 web), mapWidth/Height(D3-05 app), OFFICER_LEVEL_TEXT(D3-06 app)
+- 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): INHERIT_COSTS(D3-04 web), mapWidth/Height(D3-05 app), OFFICER_LEVEL_TEXT(D3-06 app)
 - ⚪ **mutation 스텁** (read는 정상, write 경로만 미배선): MessagePanel(D3-08 web), npc-control setter(D3-09 web), tournament/mailbox/nation 페이지의 박힌 id로 mutation 전달(D3-06/07 web)
 - 🟣 **dead export 잔재**: 현재 gateway 활성 위반 없음. `GW-HC-02`/`GW-HC-03`은 2026-06-09 제거됨.
 
@@ -46,8 +46,6 @@
 | ID | file:line | 박힌 값 | 대체할 정본 API/필드 | 영역 | 성격 |
 |----|-----------|---------|----------------------|------|------|
 | D3-01(web) | `web/game/app/game/coming-soon/page.tsx:18-19`, `web/game/lib/control-bar-config.ts:36,62` | `STUB='/game/coming-soon'` + 감찰부 href `?feature=감찰부`, "준비 중입니다" | 감찰부(v_audit) 실 read API + 페이지. coming-soon stub 제거 | web/game | ⚪ stub |
-| D3-02(web) | `web/game/components/game/GameInfo.tsx:57` | `기타 설정: 자동` (정적 텍스트) | front-info `global.autorunUser` → `AutorunInfo` 동치(limit_minutes>0 → '자율행동', else 빈칸). 정본 `hwe/ts/components/GameInfo.vue:21-24` | web/game | 🔴 위조 |
-| D3-03(web) | `web/game/components/game/GameInfo.tsx:17-19` | `tournamentTerm = turnterm` (clamp 누락) | `clamp(turnterm,5,120)` = `hwe/ts/utilGame/tournament.ts:2-4` calcTournamentTerm | web/game | 🔵 패러티 우회 |
 | D3-04(web) | `web/game/app/game/nation/page.tsx:43` | `INHERIT_COSTS = [0,200,600,1200,2000,3000]` | GameConst read API / InheritPointResponse가 비용 배열 제공. 정본 `hwe/sammo/GameConstBase.php:240 $inheritBuffPoints` | web/game | 🔵 패러티 우회 |
 | D3-05(web) | `web/game/app/game/nation/page.tsx:49-50,124,128` | `nationId=useState(1)`, `generalId=useState(1)` + number-input | `useFrontInfo()` → `frontInfo.general.nationId`/`generalId`. number-input 제거 | web/game | 🟠 컨텍스트 미사용 |
 | D3-06(web) | `web/game/app/game/mailbox/page.tsx:39-40,79,96` | `mailboxId=useState(1)`, `generalId=useState(1)` → mutation에 정적 1 전달 | `useFrontInfo()` → 본인 generalId(개인) + 9000+nationId(국가) + 9999(전체). number-input 제거 | web/game | 🟠 컨텍스트 미사용 / ⚪ mutation |
@@ -67,14 +65,16 @@
 
 ## 3) 영역별 그룹
 
-### 3.1 web/game (9건)
+### 3.1 web/game (7건)
 
 게임 인게임 프론트(`web/game`). 위반 성격이 세 갈래로 갈린다.
 
-**A. 위조/패러티-우회 (3건) — 즉시 교정 가능, 백엔드 변경 적음**
-- `D3-02(web)` GameInfo "기타 설정: 자동" → front-info `global.autorunUser`로 AutorunInfo 동적 렌더. 정본 `GameInfo.vue:21-24`.
-- `D3-03(web)` tournamentTerm clamp 누락 → `clamp(turnterm,5,120)`. 정본 `tournament.ts:2-4`. 순수 함수 한 줄 수정.
+**A. 위조/패러티-우회 (1건) — 즉시 교정 가능, 백엔드 변경 적음**
 - `D3-04(web)` nation 페이지 INHERIT_COSTS = PHP 패러티 상수를 web에 박음 → GameConst/InheritPoint read API가 비용 배열을 내려주도록 하고 소비. (web 레이어 박힘 = 정본 API 우회이므로 위반)
+
+**해소됨 (2건, 2026-06-09)**
+- `D3-02(web)` GameInfo "기타 설정: 자동" 제거. front-info `global.autorunUser.limit_minutes > 0`일 때만 legacy `AutorunInfo` 동치 텍스트 `자율행동` 렌더.
+- `D3-03(web)` GameInfo tournamentTerm은 `web/game/lib/utilGame/calcTournamentTerm`(`clamp(turnterm,5,120)`) 사용.
 
 **B. 본인 컨텍스트 미사용 + 디폴트 id 1 박음 (3건) — useFrontInfo 배선이 공통 해법**
 - `D3-05(web)` nation: nationId/generalId 디폴트 1 + number-input
@@ -126,10 +126,10 @@
 
 의존성 선후 + ROI(고치는 비용 대비 위조 제거 효과) 기준. 앞쪽일수록 싸고 효과 큼.
 
-### 단계 1 — 순수 프론트 교정 (백엔드 변경 0, 즉시) — 2건 남음
+### 단계 1 — 순수 프론트 교정 (백엔드 변경 0, 즉시) — 완료
 백엔드 의존 없이 web 레이어만 수정. 정본 함수/필드가 이미 존재.
-1. `D3-03(web)` GameInfo tournamentTerm → `clamp(turnterm,5,120)` (한 줄)
-2. `D3-02(web)` GameInfo "자동" → `global.autorunUser` 동적 AutorunInfo (front-info 필드 이미 존재 가정; 없으면 단계 3로 이동)
+1. ✅ `D3-03(web)` GameInfo tournamentTerm → `clamp(turnterm,5,120)` (한 줄)
+2. ✅ `D3-02(web)` GameInfo "자동" → `global.autorunUser` 동적 AutorunInfo
 3. ✅ `GW-HC-02` servers.json turnterm + serverRegistry.ts ServerEntry.turnterm 삭제 (dead field)
 4. ✅ `GW-HC-03` constants.ts dead export 4개 삭제
 5. ✅ `GW-HC-01` ServerBoard 탭 뱃지 제거. 서버가 없으면 로그인/로비 맵·로그·서버탭 전체 미렌더.
