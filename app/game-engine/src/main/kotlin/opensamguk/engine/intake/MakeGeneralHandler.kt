@@ -46,9 +46,12 @@ class MakeGeneralHandler(
         val rng = RandUtil(LiteHashDrbg(seed))
 
         // --- city pool (Join.php:279–281) ----------------------------------------------------------
-        val cityPool = world.listCities()
-            .filter { it.level in 5..6 && it.nationId == 0 }
+        val birthCities = world.listCities()
+            .filter { it.level in 5..6 }
+        val neutralCityPool = birthCities
+            .filter { it.nationId == 0 }
             .map { it.id }
+        val cityPool = neutralCityPool.ifEmpty { birthCities.map { it.id } }
         if (cityPool.isEmpty()) {
             return MakeGeneralFail(reason = "공백지가 없습니다.")
         }
@@ -104,6 +107,7 @@ class MakeGeneralHandler(
             turnTime = turntime,
             meta = linkedMapOf(
                 "killturn" to 6,
+                "affinity" to drawResult.affinity,
                 "born_year" to bornYear,
                 "dead_year" to 300,
                 "picture" to (command.picture ?: "default.jpg"),
