@@ -4,6 +4,7 @@ import opensamguk.engine.boot.WorldSnapshotLoader
 import opensamguk.engine.turn.InMemoryTurnWorld
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Lazy
 
 /**
  * F1b — the missing boot wiring: the `@Bean InMemoryTurnWorld` that every consumer
@@ -26,6 +27,7 @@ import org.springframework.context.annotation.Configuration
 class BootstrapConfig {
 
     @Bean
+    @Lazy
     fun inMemoryTurnWorld(loader: WorldSnapshotLoader): InMemoryTurnWorld =
         InMemoryTurnWorld(loader.buildSnapshot())
 }

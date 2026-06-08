@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.status.DaemonPauseGate
@@ -41,7 +42,7 @@ class TurnDaemonRunnerTest {
     @Test
     fun `disabled runner never starts the loop`() {
         val svc = StubService(ticks = AtomicInteger())
-        val runner = TurnDaemonRunner(provider(svc), DaemonPauseGate(), daemonEnabled = false, idlePollMs = 10)
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = false, idlePollMs = 10)
         runner.start()
         assertTrue(!runner.isRunning, "disabled runner reports not running")
         Thread.sleep(80)
@@ -56,7 +57,7 @@ class TurnDaemonRunnerTest {
         // nextRunTime in the past ⇒ immediately due ⇒ the loop ticks. The stub stops itself after the
         // first tick by advancing its own next-run far into the future, so we count exactly one drive.
         val svc = StubService(ticks = ticks, latch = latch)
-        val runner = TurnDaemonRunner(provider(svc), DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
         runner.start()
         try {
             assertTrue(runner.isRunning, "enabled runner reports running")
@@ -76,7 +77,7 @@ class TurnDaemonRunnerTest {
         // 시작 전에 동결: 루프가 due여도 게이트에 막혀 틱을 건너뛴다.
         assertTrue(gate.lock(), "락걸기(첫 CAS) 성공")
         val svc = StubService(ticks = ticks)
-        val runner = TurnDaemonRunner(provider(svc), gate, daemonEnabled = true, idlePollMs = 10)
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, gate, daemonEnabled = true, idlePollMs = 10)
         runner.start()
         try {
             assertTrue(runner.isRunning, "루프 스레드는 가동 중")
@@ -87,6 +88,49 @@ class TurnDaemonRunnerTest {
             assertTrue(gate.unlock(), "락풀기 — 직전 동결이었으므로 changed")
             val resumed = waitUntil(2_000) { ticks.get() >= 1 }
             assertTrue(resumed, "락풀기 후 틱 재개")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `empty world keeps daemon alive without materializing turn service`() {
+        val provided = AtomicInteger()
+        val provider = countingProvider(StubService(ticks = AtomicInteger()), provided)
+        val runner = TurnDaemonRunner(provider, WorldStateAvailability { false }, DaemonPauseGate(), true, 10)
+
+        runner.start()
+        try {
+            assertTrue(runner.isRunning, "empty-world daemon thread stays alive")
+            Thread.sleep(120)
+            assertEquals(0, provided.get(), "TurnRunService is not materialized before world_state exists")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `daemon materializes turn service once world state appears`() {
+        val ticks = AtomicInteger()
+        val provided = AtomicInteger()
+        val worldExists = AtomicInteger(0)
+        val latch = CountDownLatch(1)
+        val runner = TurnDaemonRunner(
+            countingProvider(StubService(ticks = ticks, latch = latch), provided),
+            WorldStateAvailability { worldExists.get() > 0 },
+            DaemonPauseGate(),
+            daemonEnabled = true,
+            idlePollMs = 10,
+        )
+
+        runner.start()
+        try {
+            Thread.sleep(80)
+            assertEquals(0, provided.get(), "service not requested while world_state is absent")
+            worldExists.incrementAndGet()
+            assertTrue(latch.await(3, TimeUnit.SECONDS), "loop starts ticking after world_state appears")
+            assertEquals(1, provided.get(), "TurnRunService materialized exactly once")
+            assertTrue(ticks.get() >= 1, "tick ran after service materialization")
         } finally {
             runner.stop()
         }
@@ -103,10 +147,23 @@ class TurnDaemonRunnerTest {
 
     // --- stubs ------------------------------------------------------------------------------------
 
+    private val WORLD_EXISTS = WorldStateAvailability { true }
+
     private fun provider(svc: TurnRunService): ObjectProvider<TurnRunService> =
+        countingProvider(svc, AtomicInteger())
+
+    private fun countingProvider(svc: TurnRunService, provided: AtomicInteger): ObjectProvider<TurnRunService> =
         object : ObjectProvider<TurnRunService> {
-            override fun getObject(vararg args: Any?): TurnRunService = svc
-            override fun getObject(): TurnRunService = svc
+            override fun getObject(vararg args: Any?): TurnRunService {
+                provided.incrementAndGet()
+                return svc
+            }
+
+            override fun getObject(): TurnRunService {
+                provided.incrementAndGet()
+                return svc
+            }
+
             override fun getIfAvailable(): TurnRunService = svc
             override fun getIfUnique(): TurnRunService = svc
         }
