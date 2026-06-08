@@ -243,6 +243,28 @@ def check_production_seed_default() -> list[Finding]:
     return []
 
 
+def check_no_baked_secondary_servers() -> list[Finding]:
+    findings: list[Finding] = []
+    deploy_path = ROOT / ".github/workflows/deploy.yml"
+    if deploy_path.exists() and "bbae" in deploy_path.read_text(encoding="utf-8"):
+        findings.append(
+            Finding(
+                "error",
+                "server-registry",
+                "Production deploy workflow must not start baked bbae/secondary servers; admins create servers at runtime.",
+            )
+        )
+    if (ROOT / "docker-compose.bbae.yml").exists():
+        findings.append(
+            Finding(
+                "error",
+                "server-registry",
+                "docker-compose.bbae.yml must not exist while production uses admin-created runtime servers.",
+            )
+        )
+    return findings
+
+
 def check_required_docs() -> list[Finding]:
     findings: list[Finding] = []
     required_phrases = {
@@ -381,6 +403,7 @@ def main() -> int:
     findings += check_behavior_evidence(files, args.strict)
     findings += check_gateway_server_registry()
     findings += check_production_seed_default()
+    findings += check_no_baked_secondary_servers()
 
     if args.format == "json":
         print(
