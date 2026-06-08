@@ -20,8 +20,8 @@ data class ServerDef(
  * 아키텍처: 게임 서버마다 독립 스택(game-engine+game-api+db+redis, 자기 IMAGE_TAG)이고 gateway는 공유다.
  * 그래서 gateway는 "어떤 서버들이 있고 각자의 game-api/game-engine 내부 URL은 무엇인가"를 알아야 fan-out 한다.
  *
- * 설정 소스: env [SERVER_REGISTRY_JSON] (compose가 주입하는 JSON 배열). 비어 있으면(로컬/단일서버)
- * GAME_API_URL/GAME_ENGINE_URL 한 개로 합성한 단일 서버로 폴백한다 — 로컬 개발 무중단.
+ * 설정 소스: env [SERVER_REGISTRY_JSON] (compose가 주입하는 JSON 배열). 비어 있으면 서버 0개로 유지한다.
+ * 초기 운영은 어드민이 서버를 생성하기 전까지 빈 목록이어야 하며, main/bbae 같은 합성 폴백을 만들지 않는다.
  */
 @Component
 class ServerRegistry(
@@ -47,7 +47,7 @@ class ServerRegistry(
     fun default(): ServerDef? = servers.firstOrNull()
 
     private fun parse(): List<ServerDef> {
-        if (registryJson.isBlank()) return listOf(fallback())
+        if (registryJson.isBlank()) return emptyList()
         return try {
             val parsed = objectMapper.readTree(registryJson).mapNotNull { n ->
                 val id = n.path("id").asText("")
@@ -60,13 +60,10 @@ class ServerRegistry(
                     deployProject = n.path("deployProject").asText(deployProject),
                 )
             }
-            // 파싱은 됐으나 유효 서버 0개면 폴백(빈 어드민 방지).
-            parsed.ifEmpty { listOf(fallback()) }
+            parsed
         } catch (e: Exception) {
-            log.error("SERVER_REGISTRY_JSON 파싱 실패 — 단일서버 폴백. {}", e.message)
-            listOf(fallback())
+            log.error("SERVER_REGISTRY_JSON 파싱 실패 — 서버 목록을 비웁니다. {}", e.message)
+            emptyList()
         }
     }
-
-    private fun fallback() = ServerDef("main", defaultServerName, gameApiUrl, gameEngineUrl, deployProject)
 }
