@@ -16,6 +16,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.world.MakeGeneral
+import opensamguk.logic.world.SpecialityHelper
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -120,16 +121,85 @@ class MakeGeneralHandler(
         // --- logs (Join.php:502–528) — 로그 문자열은 PHP grand truth와 byte-match 대상. ---------
         val cityName = world.getCityById(drawResult.cityId)?.name ?: ""
         val josaRa = JosaUtil.pick(command.name, "라")
-        val globalLog = if (drawResult.genius) {
-            "<G><b>${cityName}</b></>에서 <Y>${command.name}</>${josaRa}는 기재가 천하에 이름을 알립니다."
+        val specialWarName = SpecialityHelper.warName(drawResult.special2)
+
+        // PHP pushGlobalActionLog (genius vs non-genius) — Join.php:506-513
+        if (drawResult.genius) {
+            world.pushLog(LogEntryDraft(
+                scope = "global", category = "action",
+                text = "<G><b>${cityName}</b></>에서 <Y>${command.name}</>${josaRa}는 기재가 천하에 이름을 알립니다.",
+                generalId = generalId, nationId = 0,
+            ))
+            world.pushLog(LogEntryDraft(
+                scope = "global", category = "action",
+                text = "<C>${specialWarName}</> 특기를 가진 <C>천재</>의 등장으로 온 천하가 떠들썩합니다.",
+                generalId = generalId, nationId = 0,
+            ))
+            world.pushLog(LogEntryDraft(
+                scope = "global", category = "history",
+                text = "<L><b>【천재】</b></><G><b>${cityName}</b></>에 천재가 등장했습니다.",
+                generalId = generalId, nationId = 0,
+            ))
         } else {
-            "<G><b>${cityName}</b></>에서 <Y>${command.name}</>${josaRa}는 호걸이 천하에 이름을 알립니다."
+            world.pushLog(LogEntryDraft(
+                scope = "global", category = "action",
+                text = "<G><b>${cityName}</b></>에서 <Y>${command.name}</>${josaRa}는 호걸이 천하에 이름을 알립니다.",
+                generalId = generalId, nationId = 0,
+            ))
         }
+
+        // PHP pushGeneralHistoryLog — Join.php:515
         world.pushLog(LogEntryDraft(
-            scope = "global_action",
-            category = "장수생성",
-            text = globalLog,
+            scope = "general", category = "history",
+            text = "<Y>${command.name}</>, <G>${cityName}</>에서 큰 뜻을 품다.",
+            generalId = generalId, nationId = 0,
         ))
+
+        // PHP pushGeneralActionLog (PLAIN) — Join.php:516-521
+        world.pushLog(LogEntryDraft(
+            scope = "general", category = "action",
+            text = "삼국지 모의전투 PHP의 세계에 오신 것을 환영합니다 ^o^",
+            generalId = generalId, nationId = 0,
+        ))
+        world.pushLog(LogEntryDraft(
+            scope = "general", category = "action",
+            text = "처음 하시는 경우에는 <D>도움말</>을 참고하시고,",
+            generalId = generalId, nationId = 0,
+        ))
+        world.pushLog(LogEntryDraft(
+            scope = "general", category = "action",
+            text = "문의사항이 있으시면 게시판에 글을 남겨주시면 되겠네요~",
+            generalId = generalId, nationId = 0,
+        ))
+        world.pushLog(LogEntryDraft(
+            scope = "general", category = "action",
+            text = "부디 즐거운 삼모전 되시길 바랍니다 ^^",
+            generalId = generalId, nationId = 0,
+        ))
+        world.pushLog(LogEntryDraft(
+            scope = "general", category = "action",
+            text = "통솔 <C>${drawResult.bonusLeadership}</> 무력 <C>${drawResult.bonusStrength}</> 지력 <C>${drawResult.bonusIntel}</> 의 보너스를 받으셨습니다.",
+            generalId = generalId, nationId = 0,
+        ))
+        world.pushLog(LogEntryDraft(
+            scope = "general", category = "action",
+            text = "연령은 <C>${drawResult.age}</>세로 시작합니다.",
+            generalId = generalId, nationId = 0,
+        ))
+
+        // PHP pushGeneralActionLog/HistoryLog (genius-only) — Join.php:523-526
+        if (drawResult.genius) {
+            world.pushLog(LogEntryDraft(
+                scope = "general", category = "action",
+                text = "축하합니다! 천재로 태어나 처음부터 <C>${specialWarName}</> 특기를 가지게 됩니다!",
+                generalId = generalId, nationId = 0,
+            ))
+            world.pushLog(LogEntryDraft(
+                scope = "general", category = "history",
+                text = "<C>${specialWarName}</> 특기를 가진 천재로 탄생.",
+                generalId = generalId, nationId = 0,
+            ))
+        }
 
         return MakeGeneralOk(generalId = generalId)
     }
