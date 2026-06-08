@@ -6,6 +6,8 @@ import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
+import { mailboxIdForScope, type MailboxScope } from '../../../lib/mailbox';
+import type { FrontInfoResponse } from '../../../lib/types';
 
 interface MailMessage {
     id: number;
@@ -37,8 +39,8 @@ const TYPE_VARIANT: Record<string, 'gold' | 'jade' | 'muted' | 'crimson'> = {
 
 export default function MailboxPage() {
     const [messages, setMessages] = useState<MailMessage[]>([]);
-    const [mailboxId, setMailboxId] = useState<number>(1);
-    const [generalId, setGeneralId] = useState<number>(1);
+    const [scope, setScope] = useState<MailboxScope>('private');
+    const [identity, setIdentity] = useState<{ generalId: number | null; nationId: number }>({ generalId: null, nationId: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -48,7 +50,13 @@ export default function MailboxPage() {
     const fetchMessages = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await api.mailbox<MailMessage[]>();
+            const mailboxId = mailboxIdForScope(scope, identity);
+            if (mailboxId == null) {
+                setMessages([]);
+                setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
+                return;
+            }
+            const data = await api.mailbox<MailMessage[]>(mailboxId);
             setMessages(data);
             setError('');
         } catch {
@@ -56,7 +64,25 @@ export default function MailboxPage() {
         } finally {
             setLoading(false);
         }
-    }, [mailboxId]);
+    }, [identity, scope]);
+
+    useEffect(() => {
+        let on = true;
+        api.frontInfo()
+            .then((info: FrontInfoResponse) => {
+                if (!on) return;
+                setIdentity({
+                    generalId: info.general?.generalId ?? null,
+                    nationId: info.general?.nationId ?? 0,
+                });
+            })
+            .catch(() => {
+                if (on) setIdentity({ generalId: null, nationId: 0 });
+            });
+        return () => {
+            on = false;
+        };
+    }, []);
 
     useEffect(() => {
         fetchMessages();
@@ -75,9 +101,14 @@ export default function MailboxPage() {
     async function handleAgree(msg: MailMessage) {
         // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 수락 차단
         if (pendingId !== null) return;
+        if (identity.generalId == null) {
+            setToast('장수 정보가 없습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
         setPendingId(msg.id);
         try {
-            await api.messageAccept(msg.id, generalId);
+            await api.messageAccept(msg.id, identity.generalId);
             // 수락은 턴 명령으로 예약된다 — 즉시 적용을 함의하지 않는 표현.
             setToast('수락했습니다.');
         } catch {
@@ -92,9 +123,14 @@ export default function MailboxPage() {
     async function handleDecline(msg: MailMessage) {
         // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 거절 차단
         if (pendingId !== null) return;
+        if (identity.generalId == null) {
+            setToast('장수 정보가 없습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
         setPendingId(msg.id);
         try {
-            await api.messageDecline(msg.id, generalId);
+            await api.messageDecline(msg.id, identity.generalId);
             setToast('거절했습니다.');
         } catch {
             setToast('거절 요청에 실패했습니다.');
@@ -112,14 +148,25 @@ export default function MailboxPage() {
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>메일함</h1>
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>메일함 ID</span>
-                    <input type="number" style={{ width: '6rem' }} value={mailboxId} onChange={e => setMailboxId(Number(e.target.value))} />
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>장수 ID</span>
-                    <input type="number" style={{ width: '5rem' }} value={generalId} onChange={e => setGeneralId(Number(e.target.value))} />
-                </label>
+                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
+                    {([
+                        ['private', '개인'],
+                        ['national', '국가'],
+                        ['public', '전체'],
+                    ] as const).map(([value, label]) => (
+                        <button
+                            key={value}
+                            type="button"
+                            onClick={() => setScope(value)}
+                            style={{
+                                background: scope === value ? 'var(--gold)' : 'transparent',
+                                color: scope === value ? 'var(--bg-base)' : 'var(--text-secondary)',
+                            }}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
                 <button onClick={fetchMessages}>새로고침</button>
                 {unreadCount > 0 && (
                     <StatusBadge variant="crimson">미읽음 {unreadCount}</StatusBadge>
@@ -160,8 +207,8 @@ export default function MailboxPage() {
                             {isDiplomacy && hasAction && (
                                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                                     {/* 요청 진행 중에는 수락/거절 모두 비활성화 — 이중 제출 방지 */}
-                                    <button onClick={() => handleAgree(msg)} disabled={pendingId !== null}>수락</button>
-                                    <button onClick={() => handleDecline(msg)} disabled={pendingId !== null}>거절</button>
+                                    <button onClick={() => handleAgree(msg)} disabled={pendingId !== null || identity.generalId == null}>수락</button>
+                                    <button onClick={() => handleDecline(msg)} disabled={pendingId !== null || identity.generalId == null}>거절</button>
                                 </div>
                             )}
                         </GameCard>

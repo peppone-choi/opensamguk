@@ -10,8 +10,8 @@ import {
     TOAST_DURATION_MS,
     TOURNAMENT_STATUS_LABEL,
     TOURNAMENT_STATUS_VARIANT,
-    DEFAULT_ADMIN_GENERAL_ID,
 } from '../../../lib/constants';
+import type { FrontInfoResponse } from '../../../lib/types';
 
 interface TournamentEntry {
     id: number;
@@ -47,7 +47,7 @@ interface TournamentData {
 export default function TournamentAdminPage() {
     const [entries, setEntries] = useState<TournamentEntry[]>([]);
     const [matches, setMatches] = useState<TournamentMatch[]>([]);
-    const [generalId, setGeneralId] = useState<number>(DEFAULT_ADMIN_GENERAL_ID);
+    const [actor, setActor] = useState<{ generalId: number | null; permission: number }>({ generalId: null, permission: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -71,6 +71,20 @@ export default function TournamentAdminPage() {
         fetchData();
     }, [fetchData]);
 
+    useEffect(() => {
+        let on = true;
+        api.frontInfo()
+            .then((info: FrontInfoResponse) => {
+                if (on) setActor({ generalId: info.general?.generalId ?? null, permission: info.general?.permission ?? 0 });
+            })
+            .catch(() => {
+                if (on) setActor({ generalId: null, permission: 0 });
+            });
+        return () => {
+            on = false;
+        };
+    }, []);
+
     // TODO: tournament_start/advance/reset는 BE handler 미포팅 (silent no-op).
     //       PHP hwe/sammo/API/Admin/Tournament.php 포팅 후 제거.
     async function startTournament() {
@@ -90,6 +104,7 @@ export default function TournamentAdminPage() {
 
     const activeEntries = entries.filter(e => !e.eliminated);
     const eliminatedEntries = entries.filter(e => e.eliminated);
+    const canManageTournament = actor.generalId != null && actor.permission >= 2;
 
     const entryRows = activeEntries.map(e => [
         e.seed.toString(),
@@ -117,10 +132,6 @@ export default function TournamentAdminPage() {
             </h1>
 
             <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>관리자 장수 ID</span>
-                    <input type="number" style={{ width: '5rem' }} value={generalId} onChange={e => setGeneralId(Number(e.target.value))} />
-                </label>
                 <button onClick={fetchData}>새로고침</button>
             </div>
 
@@ -216,18 +227,21 @@ export default function TournamentAdminPage() {
                         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                             <button
                                 onClick={startTournament}
+                                disabled={!canManageTournament}
                                 style={{ background: 'var(--jade)', color: 'white', fontWeight: 600 }}
                             >
                                 토너먼트 시작
                             </button>
                             <button
                                 onClick={advanceRound}
+                                disabled={!canManageTournament}
                                 style={{ background: 'var(--gold)', color: 'var(--bg-base)', fontWeight: 600 }}
                             >
                                 다음 라운드 진행
                             </button>
                             <button
                                 onClick={resetTournament}
+                                disabled={!canManageTournament}
                                 style={{ background: 'var(--crimson)', color: 'white', fontWeight: 600 }}
                             >
                                 초기화

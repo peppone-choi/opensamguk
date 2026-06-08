@@ -26,17 +26,17 @@
 
 | 영역 | 위반 수 | 참고(합법·기록용) |
 |------|---------|-------------------|
-| **web/game** | 7 | — |
+| **web/game** | 4 | — |
 | **web/gateway** | 0 | 2 (`GW-HC-04`, `GW-HC-05`) |
 | **app** (game-api) | 8 | — |
-| **합계** | **15** | 2 |
+| **합계** | **12** | 2 |
 
 **위반 성격 분류:**
 - 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): `SimulatorController .random()`(D3-01 app), NpcPolicy 날조 키(D3-02 app)
-- 🟠 **본인 컨텍스트 미사용 + 디폴트 1 박음** (useFrontInfo 미배선): nation(D3-05), mailbox(D3-06), tournament-admin(D3-07) — web/game
+- 🟠 **본인 컨텍스트 미사용 + 디폴트 1 박음**: 2026-06-09 현재 web/game 활성 위반 없음. `D3-05/06/07(web)` 해소됨.
 - 🟡 **값소스 부재 갭** (정본 영속 원천/엔진 미결합으로 0/null/false 고정 — 문서화된 BLOCKED): traffic/hall/emperor(D3-03 app), serverLocked(D3-04 app), iAction name/info(D3-07 app), compensation(D3-08 app)
 - 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): INHERIT_COSTS(D3-04 web), mapWidth/Height(D3-05 app), OFFICER_LEVEL_TEXT(D3-06 app)
-- ⚪ **mutation 스텁** (read는 정상, write 경로만 미배선): MessagePanel(D3-08 web), npc-control setter(D3-09 web), tournament/mailbox/nation 페이지의 박힌 id로 mutation 전달(D3-06/07 web)
+- ⚪ **mutation 스텁** (read는 정상, write 경로만 미배선): MessagePanel(D3-08 web), npc-control setter(D3-09 web), coming-soon 감찰부(D3-01 web)
 - 🟣 **dead export 잔재**: 현재 gateway 활성 위반 없음. `GW-HC-02`/`GW-HC-03`은 2026-06-09 제거됨.
 
 ---
@@ -47,9 +47,6 @@
 |----|-----------|---------|----------------------|------|------|
 | D3-01(web) | `web/game/app/game/coming-soon/page.tsx:18-19`, `web/game/lib/control-bar-config.ts:36,62` | `STUB='/game/coming-soon'` + 감찰부 href `?feature=감찰부`, "준비 중입니다" | 감찰부(v_audit) 실 read API + 페이지. coming-soon stub 제거 | web/game | ⚪ stub |
 | D3-04(web) | `web/game/app/game/nation/page.tsx:43` | `INHERIT_COSTS = [0,200,600,1200,2000,3000]` | GameConst read API / InheritPointResponse가 비용 배열 제공. 정본 `hwe/sammo/GameConstBase.php:240 $inheritBuffPoints` | web/game | 🔵 패러티 우회 |
-| D3-05(web) | `web/game/app/game/nation/page.tsx:49-50,124,128` | `nationId=useState(1)`, `generalId=useState(1)` + number-input | `useFrontInfo()` → `frontInfo.general.nationId`/`generalId`. number-input 제거 | web/game | 🟠 컨텍스트 미사용 |
-| D3-06(web) | `web/game/app/game/mailbox/page.tsx:39-40,79,96` | `mailboxId=useState(1)`, `generalId=useState(1)` → mutation에 정적 1 전달 | `useFrontInfo()` → 본인 generalId(개인) + 9000+nationId(국가) + 9999(전체). number-input 제거 | web/game | 🟠 컨텍스트 미사용 / ⚪ mutation |
-| D3-07(web) | `web/game/app/game/tournament-admin/page.tsx:61,150` | `generalId=useState(1)` + number-input | `useFrontInfo()` → 본인 generalId(권한 게이트=permission). number-input 제거 | web/game | 🟠 컨텍스트 미사용 |
 | D3-08(web) | `web/game/components/game/MessagePanel.tsx:89,97` | placeholder "서신 보내기 (서버 미지원)" disabled + "읽기 전용입니다" | game-api 메시지 전송/연락처 endpoint. 정본 `MessagePanel.vue`(SendMessage write + 연락처 selector) | web/game | ⚪ mutation stub |
 | D3-09(web) | `web/game/app/game/npc-control/page.tsx:271,92-106` | "(설정 변경은 추후 지원)" + ControlBar disabled | NPC 정책 setter intake(POST) 배선 후 활성화. (표시 수치는 이미 API 소비 — 위반 아님, mutation stub만) | web/game | ⚪ mutation stub |
 | D3-01(app) | `app/game-api/.../controller/SimulatorController.kt:14-22` | `winner = attackerId%2==1 ? attacker : defender`, `(100..500).random()`, `(50..300).random()`, `(3..10).random()`, log=고정 4줄 | `logic/war/processWar`(또는 BattleCommandContextBuilder) — `RandUtil(warSeed)` 정본. raw `.random()` 금지(RNG 규율 위반) | app | 🔴 위조 |
@@ -65,24 +62,21 @@
 
 ## 3) 영역별 그룹
 
-### 3.1 web/game (7건)
+### 3.1 web/game (4건)
 
 게임 인게임 프론트(`web/game`). 위반 성격이 세 갈래로 갈린다.
 
 **A. 위조/패러티-우회 (1건) — 즉시 교정 가능, 백엔드 변경 적음**
 - `D3-04(web)` nation 페이지 INHERIT_COSTS = PHP 패러티 상수를 web에 박음 → GameConst/InheritPoint read API가 비용 배열을 내려주도록 하고 소비. (web 레이어 박힘 = 정본 API 우회이므로 위반)
 
-**해소됨 (2건, 2026-06-09)**
+**해소됨 (5건, 2026-06-09)**
 - `D3-02(web)` GameInfo "기타 설정: 자동" 제거. front-info `global.autorunUser.limit_minutes > 0`일 때만 legacy `AutorunInfo` 동치 텍스트 `자율행동` 렌더.
 - `D3-03(web)` GameInfo tournamentTerm은 `web/game/lib/utilGame/calcTournamentTerm`(`clamp(turnterm,5,120)`) 사용.
+- `D3-05(web)` nation: 현재 코드 기준 `nationId/generalId=1` 디버그 입력 없음. `api.myNationDetail()`/`api.inheritPoint()` identity read surface 사용.
+- `D3-06(web)` mailbox: `useFrontInfo()`로 본인 `generalId`/`nationId`를 읽고, 개인=`generalId`·국가=`9000+nationId`·전체=`9999` 규칙으로 mailbox read/accept/decline 수행. number-input 제거.
+- `D3-07(web)` tournament-admin: `DEFAULT_ADMIN_GENERAL_ID=1` 제거. `useFrontInfo()`의 본인 `generalId`와 `permission >= 2` 수뇌부 게이트를 사용. number-input 제거.
 
-**B. 본인 컨텍스트 미사용 + 디폴트 id 1 박음 (3건) — useFrontInfo 배선이 공통 해법**
-- `D3-05(web)` nation: nationId/generalId 디폴트 1 + number-input
-- `D3-06(web)` mailbox: mailboxId/generalId 디폴트 1, mutation(accept/decline)에 정적 1 전달
-- `D3-07(web)` tournament-admin: generalId 디폴트 1 + number-input
-- → 세 페이지 모두 `useFrontInfo()`로 본인 `frontInfo.general.{nationId,generalId}` 사용. mailbox는 개인 generalId / 9000+nationId(국가) / 9999(전체) 규칙. number-input 디버그 셀렉터 제거.
-
-**C. mutation 스텁 (3건) — read는 정상, write 경로 백엔드 필요**
+**B. mutation 스텁 (3건) — read는 정상, write 경로 백엔드 필요**
 - `D3-01(web)` coming-soon: 감찰부(v_audit)만 잔존 stub. 실 read API+페이지로 대체.
 - `D3-08(web)` MessagePanel: 서신 전송/연락처 API 부재 → disabled. game-api send endpoint 정본화 후 활성화.
 - `D3-09(web)` npc-control: 설정 setter 미배선 disabled. (표시 수치는 이미 API 소비 — mutation stub만 위반)
@@ -134,11 +128,11 @@
 4. ✅ `GW-HC-03` constants.ts dead export 4개 삭제
 5. ✅ `GW-HC-01` ServerBoard 탭 뱃지 제거. 서버가 없으면 로그인/로비 맵·로그·서버탭 전체 미렌더.
 
-### 단계 2 — useFrontInfo 본인 컨텍스트 배선 (web/game) — 3건
-`useFrontInfo()` 훅이 이미 존재. 세 페이지에서 디폴트 id 1 + number-input을 본인 컨텍스트로 교체. 묶어서 한 PR.
-6. `D3-05(web)` nation 페이지
-7. `D3-06(web)` mailbox 페이지 (개인/9000+nationId/9999 규칙 + accept/decline mutation의 본인 id)
-8. `D3-07(web)` tournament-admin 페이지
+### 단계 2 — useFrontInfo 본인 컨텍스트 배선 (web/game) — 완료
+`useFrontInfo()`/`front-info`로 디폴트 id 1 + number-input을 본인 컨텍스트로 교체.
+6. ✅ `D3-05(web)` nation 페이지 — 현재 코드 기준 디폴트 id 1 입력 없음 확인.
+7. ✅ `D3-06(web)` mailbox 페이지 — 개인/9000+nationId/9999 규칙 + accept/decline mutation의 본인 id
+8. ✅ `D3-07(web)` tournament-admin 페이지 — 본인 generalId + permission gate
 
 ### 단계 3 — 정본 상수/resolver 단일 소스화 (BE read API) — 4건
 백엔드에서 정본 정책/상수/resolver를 단일 소스로 직렬화. web의 박힌 상수는 이 API를 소비하도록 후속 전환.
@@ -171,7 +165,7 @@ read는 이미 정상. write intake/endpoint 추가 후 프론트 활성화.
 | 단계 | 항목 수 | 핵심 | 비용 | 위조 제거 효과 |
 |------|---------|------|------|----------------|
 | 1 순수 프론트 | 5 | 정본 함수/필드 이미 존재 | 매우 낮음 | 중(상태 위조 GW-HC-01 포함) |
-| 2 useFrontInfo | 3 | 본인 컨텍스트 배선 | 낮음 | 중(id 1 고정 제거) |
+| 2 useFrontInfo | 3 | 본인 컨텍스트 배선 | 낮음 | ✅ 완료(id 1 고정 제거) |
 | 3 BE 단일소스 | 4 | 정본 정책/상수 직렬화 | 중 | 중(날조 키 D3-02 app) |
 | 4 엔진 결합 | 1 | processWar 결합 | 높음 | **매우 높음(RNG 위반)** |
 | 5 mutation | 3 | write endpoint | 중~높음 | 낮음(read 정상) |
