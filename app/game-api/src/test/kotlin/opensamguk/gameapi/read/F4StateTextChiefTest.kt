@@ -56,9 +56,9 @@ class F4StateTextChiefTest {
 
     // ── CHIEF_COMMAND_TABLE: availableChiefCommand 순서/코드 ────────────────────────────────────────
     @Test
-    fun `사령부 명령 테이블은 6개 카테고리를 GameConst 순서로 가진다`() {
+    fun `사령부 명령 테이블은 7개 카테고리를 GameConst 순서로 가진다`() {
         val categories = F4StateText.CHIEF_COMMAND_TABLE.map { it.first }
-        assertEquals(listOf("휴식", "인사", "외교", "특수", "전략", "기타"), categories)
+        assertEquals(listOf("휴식", "인사", "외교", "특수", "전략", "기타", "연구"), categories)
     }
 
     @Test

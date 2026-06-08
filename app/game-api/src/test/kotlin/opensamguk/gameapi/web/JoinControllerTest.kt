@@ -4,10 +4,10 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
-import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -26,6 +26,9 @@ class JoinControllerTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val worldStates = mock(WorldStateReadRepository::class.java)
     private val reserve = mock(CommandReserveService::class.java)
+
+    @AfterEach
+    fun clearAuth() = SecurityContextHolder.clearContext()
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(JoinController(generals, worldStates, reserve))
@@ -79,7 +82,7 @@ class JoinControllerTest {
             .andExpect(jsonPath("$.status").value("BLOCKED"))
             .andExpect(jsonPath("$.reason").value("장수 직접 생성이 불가능한 모드입니다."))
 
-        verify(reserve, never()).publishImmediate(org.mockito.ArgumentMatchers.any())
+        verifyNoInteractions(reserve)
     }
 
     @Test
@@ -98,7 +101,7 @@ class JoinControllerTest {
             .andExpect(jsonPath("$.status").value("BLOCKED"))
             .andExpect(jsonPath("$.reason").value("더이상 등록할 수 없습니다!"))
 
-        verify(reserve, never()).publishImmediate(org.mockito.ArgumentMatchers.any())
+        verifyNoInteractions(reserve)
     }
 
     @Test
@@ -117,6 +120,6 @@ class JoinControllerTest {
             .andExpect(jsonPath("$.status").value("BLOCKED"))
             .andExpect(jsonPath("$.reason").value("이름이 유효하지 않습니다. 다시 가입해주세요!"))
 
-        verify(reserve, never()).publishImmediate(org.mockito.ArgumentMatchers.any())
+        verifyNoInteractions(reserve)
     }
 }
