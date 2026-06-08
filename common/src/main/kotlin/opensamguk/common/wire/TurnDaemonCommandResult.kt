@@ -522,6 +522,7 @@ private val NATION_SETTING_TYPES = setOf(
 private val BOOLEAN_OK_TYPES = setOf(
     "dieOnPrestart", "buildNationCandidate", "instantRetreat", "vacation",
     "setMySetting", "dropItem", "changePermission", "kick", "appoint",
+    "claimNpc",
 )
 
 /** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */

@@ -37,6 +37,7 @@ object GeneralRowMapper {
     /** Map a JDBC column map (e.g. from `queryForMap`) to a logic [General]. */
     fun fromRow(row: Map<String, Any?>): General = General(
         id = intOf(row["id"]),
+        userId = stringOf(row["user_id"]),
         nationId = intOf(row["nation_id"]),
         cityId = intOf(row["city_id"]),
         leadership = intOf(row["leadership"]),
@@ -60,12 +61,14 @@ object GeneralRowMapper {
         npcType = intOf(row["npc_state"]),
         officerCity = intOf(row["officer_city"]),
         lastTurn = LastTurn.fromRaw(MetaJson.decode(stringOf(row["last_turn"]))),
+        penalty = MetaJson.decode(stringOf(row["penalty"])),
         meta = MetaJson.decode(stringOf(row["meta"])),
     )
 
     /** Map a [ResultSet] (current row) to a logic [General]. */
     fun fromResultSet(rs: ResultSet): General = General(
         id = rs.getInt("id"),
+        userId = rs.getString("user_id"),
         nationId = rs.getInt("nation_id"),
         cityId = rs.getInt("city_id"),
         leadership = rs.getInt("leadership"),
@@ -89,6 +92,7 @@ object GeneralRowMapper {
         npcType = rs.getInt("npc_state"),
         officerCity = rs.getInt("officer_city"),
         lastTurn = LastTurn.fromRaw(MetaJson.decode(rs.getString("last_turn"))),
+        penalty = MetaJson.decode(rs.getString("penalty")),
         meta = MetaJson.decode(rs.getString("meta")),
     )
 
@@ -99,6 +103,7 @@ object GeneralRowMapper {
      */
     fun toColumns(g: General): Map<String, Any?> = linkedMapOf(
         "id" to g.id,
+        "user_id" to g.userId,
         "nation_id" to g.nationId,
         "city_id" to g.cityId,
         "leadership" to g.leadership,
@@ -122,6 +127,7 @@ object GeneralRowMapper {
         "npc_state" to g.npcType,
         "officer_city" to g.officerCity,
         "last_turn" to MetaJson.encode(g.lastTurn.toRaw()),
+        "penalty" to MetaJson.encode(g.penalty),
         "meta" to MetaJson.encode(g.meta),
     )
 }

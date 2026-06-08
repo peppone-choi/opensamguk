@@ -236,7 +236,11 @@ class JdbcFlushExecutor(
             val cols = GeneralRowMapper.toColumns(g)
             val src = MapSqlParameterSource()
             for ((k, v) in cols) {
-                if (k == "meta" || k == "last_turn") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
+                if (k == "meta" || k == "last_turn" || k == "penalty") {
+                    src.addValue(k, jsonb(v as String?))
+                } else {
+                    src.addValue(k, v)
+                }
             }
             src
         }.toTypedArray()
@@ -244,6 +248,7 @@ class JdbcFlushExecutor(
             """
             UPDATE general
                SET nation_id = :nation_id,
+                   user_id = :user_id,
                    city_id = :city_id,
                    leadership = :leadership,
                    strength = :strength,
@@ -265,6 +270,7 @@ class JdbcFlushExecutor(
                    item_code = :item_code,
                    npc_state = :npc_state,
                    last_turn = :last_turn,
+                   penalty = :penalty,
                    meta = :meta,
                    updated_at = now()
              WHERE id = :id

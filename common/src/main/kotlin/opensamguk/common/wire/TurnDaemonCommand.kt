@@ -243,6 +243,18 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
+    @SerialName("claimNpc")
+    data class ClaimNpc(
+        val requestId: String? = null,
+        val generalId: Int,
+        val userId: Long,
+        val userNick: String,
+        val userPenaltyJson: String = "{}",
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "claimNpc"
+    }
+
+    @Serializable
     @SerialName("instantRetreat")
     data class InstantRetreat(
         val requestId: String? = null,

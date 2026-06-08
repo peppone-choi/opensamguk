@@ -243,6 +243,8 @@ class ChangeRecorder(
         diffCol(columns, "book", pre.book, post.book)
         diffCol(columns, "item", pre.item, post.item)
         diffCol(columns, "npcType", pre.npcType, post.npcType)
+        diffCol(columns, "userId", pre.userId, post.userId)
+        diffCol(columns, "penalty", pre.penalty, post.penalty)
         // P4 conquest surface (Task FU3): ConquerCity demotes governors to 재야 (officer_city=0,
         // officer_level=1) — process_war.php:705-708. Generals SURVIVE → no markGeneralDeleted.
         diffCol(columns, "officerCity", pre.officerCity, post.officerCity)

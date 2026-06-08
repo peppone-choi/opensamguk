@@ -96,6 +96,8 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             book = g.role.items.book ?: "None",
             item = g.role.items.item ?: "None",
             npcType = g.npcState,
+            userId = g.userId,
+            penalty = (g.meta["penalty"] as? Map<String, Any?>) ?: linkedMapOf(),
             meta = g.meta,
         )
 
