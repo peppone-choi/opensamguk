@@ -31,6 +31,8 @@ docs/wiki/
 .gstack/
 # Harness scratch/tmp dir
 .claude-tmp/
+.claude-tmp-runner/
+.claude/worktrees/
 # Session tooling state (caveman/bkit/codex/agents — local, never committed)
 .agents/
 .bkit/
