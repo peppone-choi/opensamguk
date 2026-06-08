@@ -166,12 +166,12 @@ docker compose up -d --build
 
 1. `http://localhost:3000/login` 접속.
 2. 관리자 계정으로 로그인 — 기본 admin **`peppone`**. (gateway-api `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 환경변수가 **둘 다** 설정돼 있을 때 부팅 시 1회 생성. 둘 중 하나라도 비면 시드를 건너뜁니다. 일반 계정은 `/join`에서 가입.)
-3. 로그인 성공 → `/lobby`로 이동(서버 목록 + 10분 캐싱 맵 프리뷰).
+3. 로그인 성공 → `/lobby`로 이동. 서버가 있으면 서버 목록 + 10분 캐싱 맵 프리뷰를 보여주고, 서버가 없으면 맵/로그/서버 선택을 렌더하지 않습니다.
 4. 로비에서 **입장** → web/game `/game` 메인 화면.
 
 > 인증 토큰은 Next route handler가 gateway-api로 프록시한 뒤 **httpOnly 쿠키**(`sam_access`/`sam_refresh`)에만 저장합니다. 브라우저 JS는 토큰을 읽지 못하며(XSS 토큰 탈취 방지), gateway-api/game-api를 브라우저가 직접 호출하지 않습니다(동일출처 프록시 → CORS 불필요). access JWT는 15분 만료이고, 만료 시 `/api/auth/me`가 refresh 쿠키로 자동 재발급합니다.
 
-게임 데이터는 game-engine 부팅 시 `scenario_1010`이 **자동 시드**되므로(아래 [시나리오 시드](#시나리오-시드)) 첫 기동만으로 플레이 가능한 월드가 채워집니다.
+로컬 개발 compose는 game-engine 부팅 시 `scenario_1010`을 **자동 시드**하도록 둘 수 있습니다(아래 [시나리오 시드](#시나리오-시드)). 프로덕션 compose는 기본값이 `SCENARIO_SEED_ENABLED=false`라서 관리자 서버 생성 전에는 빈 월드가 정상 상태입니다.
 
 ---
 
@@ -236,7 +236,7 @@ docker compose -f docker-compose.production.yml up -d
 - **임포터**: `infra`의 `ScenarioImporter`(+`ScenarioJson`)가 커밋된 리소스 `scenario/scenario_1010.json` + `scenario/cities_1010.json`(grand truth 값)을 opensamguk 스키마 행으로 매핑해 **JDBC INSERT**(`world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games`).
 - **부팅 배선**: `WorldSnapshotLoader`가 DB → `InMemoryTurnWorld` 스냅샷을 구성(시드 직전 방어적으로 `ensureSeeded` 재호출).
 - **JDBC-only — one-daemon-write 규칙 비위반**: `JdbcTemplate`만 사용(Flyway/AdminSeeder와 동일 범주). JPA `EntityManager`나 `ChangeRecorder`를 쓰지 않으며, 아키텍처 테스트 write-path scan(`opensamguk.engine.{flush,turn,run}`) 밖인 `opensamguk.engine.boot` 패키지에 위치합니다.
-- **env fence**: `SCENARIO_SEED_ENABLED`(기본 `true`, `false`면 시드 비활성) · `SCENARIO_CODE`(기본 `scenario_1010`).
+- **env fence**: `SCENARIO_SEED_ENABLED`(로컬 `.env.example` 기본 `true`, production compose 기본 `false`) · `SCENARIO_CODE`(기본 `scenario_1010`).
 
 > `scenario_1010` = 2국 · 24도시 · 678장수. 24도시는 시나리오 JSON에 없고 `cities_1010.json`로 채웁니다. 게이트: `general`/`city`/`nation` 행 > 0 + 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
 
@@ -328,7 +328,7 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 | 단계 | 내용 | 상태 |
 |------|------|------|
 | **F0 게이트웨이 인증** | `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. JWT를 Next route handler 프록시 + httpOnly 쿠키(`sam_access`/`sam_refresh`)로 연결. `AdminSeeder`로 peppone(role=ADMIN) 자동 생성. | ✅ |
-| **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → fresh DB에 `scenario_1010` 자동 시드. `WorldSnapshotLoader`로 엔진 부팅·턴 진행. | ✅ |
+| **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → 로컬 fresh DB에는 `scenario_1010` 자동 시드 가능, production은 관리자 서버 생성 전 기본 비활성. `WorldSnapshotLoader`로 엔진 부팅·턴 진행. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api로 **read-only 렌더**. | ✅ |
 | **F4 액션 페이지 (read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator 등 read 렌더. **명령 제출(mutation) 경로는 미완** — 현재 read 우선. | ✅(read) |

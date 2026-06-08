@@ -148,7 +148,7 @@ cd web/game    && corepack pnpm dev   # :3001
 | 단계 | 핵심 | 상태 |
 |------|------|------|
 | **F0 게이트웨이 인증** | gateway-api 자체 JWT/BCrypt(Kakao 제거 divergence). `web/gateway` 로그인/회원가입/로비/어드민. 토큰은 Next route handler 프록시 + **httpOnly 쿠키**(`sam_access`/`sam_refresh`), 브라우저 JS 미노출, 동일출처(CORS 불필요). `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 peppone(role=ADMIN) 멱등 시드. | ✅ |
-| **F1 시나리오 시드** | `infra/seed/ScenarioImporter` + `engine/boot/ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) → fresh DB에 `scenario_1010` 자동 시드(`world_state` 비어 있을 때만, 멱등). `WorldSnapshotLoader`로 DB→`InMemoryTurnWorld` 부팅. JDBC-only(one-daemon-write 비위반). env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`. | ✅ |
+| **F1 시나리오 시드** | `infra/seed/ScenarioImporter` + `engine/boot/ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) → 로컬 fresh DB에는 `scenario_1010` 자동 시드 가능(`world_state` 비어 있을 때만, 멱등), production은 관리자 서버 생성 전 기본 비활성. `WorldSnapshotLoader`로 DB→`InMemoryTurnWorld` 부팅. JDBC-only(one-daemon-write 비위반). env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지, **read-only 렌더**. | ✅ |
 | **F4 액션 페이지(read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator read 렌더. **명령 제출(mutation) 경로 미완.** | ✅(read) |

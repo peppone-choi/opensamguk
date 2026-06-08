@@ -55,6 +55,16 @@ EVIDENCE_PREFIXES = (
     "web/gateway/",
 )
 
+BEHAVIOR_AREAS = {
+    "app/game-api/": ("app/game-api/src/test/",),
+    "app/game-engine/": ("app/game-engine/src/test/",),
+    "common/src/": ("common/src/test/",),
+    "infra/src/": ("infra/src/test/",),
+    "logic/src/": ("logic/src/test/", "logic/src/test/resources/golden/", "tools/php-golden/"),
+    "web/game/": ("web/game/",),
+    "web/gateway/": ("web/gateway/",),
+}
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -78,18 +88,18 @@ def run_git(args: list[str]) -> str:
 
 
 def changed_files(base: str | None) -> list[str]:
+    untracked = run_git(["ls-files", "--others", "--exclude-standard"]).splitlines()
     if base:
         diff = run_git(["diff", "--name-only", f"{base}...HEAD"])
         working = run_git(["diff", "--name-only"])
         staged = run_git(["diff", "--cached", "--name-only"])
-        files = diff.splitlines() + working.splitlines() + staged.splitlines()
+        files = diff.splitlines() + working.splitlines() + staged.splitlines() + untracked
     else:
         files = (
             run_git(["diff", "--name-only"]).splitlines()
             + run_git(["diff", "--cached", "--name-only"]).splitlines()
         )
-        status = run_git(["status", "--short"]).splitlines()
-        files += [line[3:] for line in status if line.startswith("?? ")]
+        files += untracked
     return sorted({f for f in files if f})
 
 
@@ -161,20 +171,30 @@ def check_behavior_evidence(files: list[str], strict: bool) -> list[Finding]:
     if not behavior_files:
         return []
 
-    evidence_files = [
-        f
-        for f in files
-        if is_prefix(f, EVIDENCE_PREFIXES)
-        and (
-            f.endswith(".md")
-            or "/src/test/" in f
-            or "resources/golden/" in f
-            or f.startswith("tools/php-golden/")
-            or f.endswith(".test.tsx")
-            or f.endswith(".test.ts")
+    review_files = [f for f in files if f.startswith("docs/superpowers/reviews/") and f.endswith(".md")]
+    review_text = "\n".join((ROOT / f).read_text(encoding="utf-8") for f in review_files if (ROOT / f).exists())
+
+    missing_areas: list[str] = []
+    for area, evidence_prefixes in BEHAVIOR_AREAS.items():
+        area_changed = any(f.startswith(area) for f in behavior_files)
+        if not area_changed:
+            continue
+        area_evidence = any(
+            f.startswith(evidence_prefixes)
+            and (
+                "/src/test/" in f
+                or "resources/golden/" in f
+                or f.startswith("tools/php-golden/")
+                or f.endswith(".test.tsx")
+                or f.endswith(".test.ts")
+            )
+            for f in files
         )
-    ]
-    if evidence_files:
+        review_mentions_area = area.rstrip("/") in review_text
+        if not area_evidence and not review_mentions_area:
+            missing_areas.append(area.rstrip("/"))
+
+    if not missing_areas:
         return []
 
     severity = "error" if strict else "warning"
@@ -182,7 +202,7 @@ def check_behavior_evidence(files: list[str], strict: bool) -> list[Finding]:
         Finding(
             severity,
             "parity-evidence",
-            "Behavior files changed without tests, golden capture, or docs evidence. Add PHP oracle notes and a targeted gate.",
+            "Behavior areas changed without mapped tests, golden capture, or review evidence: " + ", ".join(missing_areas),
         )
     ]
 
@@ -202,6 +222,22 @@ def check_gateway_server_registry() -> list[Finding]:
                 "error",
                 "server-registry",
                 "Default server list must be empty. Servers are admin-created runtime data, not baked config.",
+            )
+        ]
+    return []
+
+
+def check_production_seed_default() -> list[Finding]:
+    path = ROOT / "docker-compose.production.yml"
+    if not path.exists():
+        return [Finding("error", "production-seed", "docker-compose.production.yml is missing.")]
+    text = path.read_text(encoding="utf-8")
+    if "SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}" not in text:
+        return [
+            Finding(
+                "error",
+                "production-seed",
+                "Production must default SCENARIO_SEED_ENABLED to false for admin-created empty-server startup.",
             )
         ]
     return []
@@ -252,6 +288,50 @@ def check_cross_agent_critique(files: list[str], strict: bool) -> list[Finding]:
                 "WORKING_SYSTEM.md is missing cross-agent critique terms: " + ", ".join(missing),
             )
         ]
+
+    review_files = [f for f in files if f.startswith("docs/superpowers/reviews/") and f.endswith(".md")]
+    if not review_files:
+        return [
+            Finding(
+                "error",
+                "cross-agent-critique",
+                "Strict non-trivial changes require a PR-visible docs/superpowers/reviews/*.md critique artifact.",
+            )
+        ]
+
+    valid_verdict = False
+    for rel in review_files:
+        review_text = (ROOT / rel).read_text(encoding="utf-8")
+        if any(f"Verdict: {verdict}" in review_text for verdict in ("cleared", "fix-required", "quarantined-with-proof")):
+            valid_verdict = True
+            break
+    if not valid_verdict:
+        return [
+            Finding(
+                "error",
+                "cross-agent-critique",
+                "Critique artifact must contain Verdict: cleared, Verdict: fix-required, or Verdict: quarantined-with-proof.",
+            )
+        ]
+    return []
+
+
+def check_mandatory_workflow_fallbacks() -> list[Finding]:
+    path = ROOT / "docs/superpowers/WORKING_SYSTEM.md"
+    text = path.read_text(encoding="utf-8") if path.exists() else ""
+    required = (
+        "Provider-agnostic fallback for parity-close",
+        "Provider-agnostic fallback for parity-ship",
+    )
+    missing = [phrase for phrase in required if phrase not in text]
+    if missing:
+        return [
+            Finding(
+                "error",
+                "workflow-fallbacks",
+                "WORKING_SYSTEM.md is missing mandatory workflow fallback docs: " + ", ".join(missing),
+            )
+        ]
     return []
 
 
@@ -295,10 +375,12 @@ def main() -> int:
     findings: list[Finding] = []
     findings += check_skills_lock(files)
     findings += check_required_docs()
+    findings += check_mandatory_workflow_fallbacks()
     findings += check_cross_agent_critique(files, args.strict)
     findings += check_docs_with_code(files, args.strict)
     findings += check_behavior_evidence(files, args.strict)
     findings += check_gateway_server_registry()
+    findings += check_production_seed_default()
 
     if args.format == "json":
         print(

@@ -41,6 +41,29 @@ Start every non-trivial task by classifying the work:
 
 External skills are advisory. If an external skill conflicts with `CLAUDE.md`, `AGENTS.md`, or PHP legacy behavior, the repo rules win.
 
+### Provider-agnostic fallback for parity-close
+
+`parity-close` is a local process skill when available. In fresh providers that only restored `skills-lock.json`, execute the same sequence manually:
+
+1. PHP oracle inventory and real golden capture when needed.
+2. Kotlin logic port plus golden/replay test.
+3. `tools/parity/gate.sh logic` or a narrower targeted Gradle gate.
+4. backend intake/wire/flush integration and tests.
+5. frontend submit wiring when the user action exists.
+6. cross-agent critique artifact under `docs/superpowers/reviews/`.
+7. small Lore commit.
+
+### Provider-agnostic fallback for parity-ship
+
+`parity-ship` is a local process skill when available. In fresh providers, execute:
+
+1. `tools/agent-system/check.py --strict --base origin/main`.
+2. `tools/parity/gate.sh backend`.
+3. frontend typecheck/build for changed apps.
+4. PR creation/update.
+5. explicit human go before main merge/deploy.
+6. production verification: health, nginx route, and either world-clock advancement or intentional empty-world invariant.
+
 ## PHP oracle protocol
 
 PHP is the grand truth. Before changing logic, find and quote the source:
@@ -87,6 +110,8 @@ Every non-trivial slice needs an explicit adversarial review. Use whatever provi
 - **Result**: `cleared`, `fix-required`, or `quarantined-with-proof`.
 
 Do not merge or ship while the latest critique is `fix-required`. If Kimi-backed Claude Code, Codex, Gemini, or another agent is running in parallel, use them as peer critics on disjoint file scopes where possible. The leader owns the final decision and must reconcile conflicting reviews with evidence.
+
+Store the latest review evidence in `docs/superpowers/reviews/<date>-<scope>.md`. Strict CI requires one such artifact for non-trivial code/tool changes.
 
 ## Gate command
 
@@ -135,6 +160,8 @@ The checker enforces:
 - code changes include docs or evidence in strict mode.
 - behavior changes include tests, golden evidence, or docs in strict mode.
 - strict mode requires changed non-trivial work to keep the cross-agent critique rule documented.
+- strict mode requires a changed `docs/superpowers/reviews/*.md` critique artifact for non-trivial code/tool changes.
+- production compose defaults `SCENARIO_SEED_ENABLED` to false.
 - the default gateway server list stays empty.
 
 This is the hook point for all providers. Claude hooks, Codex tools, Gemini agents, local shell scripts, and CI should call the same checker instead of each inventing a separate policy.
@@ -147,7 +174,7 @@ Hardcoded UI/server/game data is a blocker unless it is one of:
 - a documented default in `.env.example`
 - a test fixture
 
-Server lists are admin-created runtime data. If no servers exist, the gateway must not synthesize or render fake server entries.
+Server lists are admin-created runtime data. If no servers exist, the gateway must not synthesize or render fake server entries. Login and lobby must hide server maps, logs, and server tabs entirely.
 
 ## Production policy
 
