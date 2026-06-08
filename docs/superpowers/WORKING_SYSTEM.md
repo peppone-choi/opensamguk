@@ -72,9 +72,21 @@ Every slice follows this loop:
 2. **Lock behavior**: add or identify a golden/replay/API/UI regression test before risky edits.
 3. **Implement narrowly**: prefer deletion and existing utilities. No hardcoded server/data placeholders unless they are PHP parity constants.
 4. **Compare**: run targeted golden/API/UI checks and inspect expected vs actual drift.
-5. **Gate**: run `tools/parity/gate.sh` or a narrower equivalent with Java 21 and XML verification.
-6. **Document**: update the relevant gap, research, plan, or handoff doc with exact evidence.
-7. **Commit small**: one logical commit with Lore trailers and the repo co-author trailers.
+5. **Cross-agent critique**: ask at least one independent agent/reviewer to attack the result before commit. For multi-agent work, the peer must check PHP evidence, changed files, tests, and docs without reusing the implementer's conclusion as truth.
+6. **Gate**: run `tools/parity/gate.sh` or a narrower equivalent with Java 21 and XML verification.
+7. **Document**: update the relevant gap, research, plan, or handoff doc with exact evidence and the critique outcome.
+8. **Commit small**: one logical commit with Lore trailers and the repo co-author trailers.
+
+## Cross-agent critique
+
+Every non-trivial slice needs an explicit adversarial review. Use whatever provider is available, but keep the review contract identical:
+
+- **Implementer claim**: what changed, PHP source/evidence used, commands run, known gaps.
+- **Critic task**: find the strongest reason this is wrong, stale, hardcoded, ungated, or divergent from PHP.
+- **Required checks**: PHP oracle path, RNG/rounding/log/write-order dimensions, test adequacy, docs freshness, production invariants, and hardcoded data.
+- **Result**: `cleared`, `fix-required`, or `quarantined-with-proof`.
+
+Do not merge or ship while the latest critique is `fix-required`. If Kimi-backed Claude Code, Codex, Gemini, or another agent is running in parallel, use them as peer critics on disjoint file scopes where possible. The leader owns the final decision and must reconcile conflicting reviews with evidence.
 
 ## Gate command
 
@@ -122,6 +134,7 @@ The checker enforces:
 - required docs still mention the working system, PHP oracle, and gate commands.
 - code changes include docs or evidence in strict mode.
 - behavior changes include tests, golden evidence, or docs in strict mode.
+- strict mode requires changed non-trivial work to keep the cross-agent critique rule documented.
 - the default gateway server list stays empty.
 
 This is the hook point for all providers. Claude hooks, Codex tools, Gemini agents, local shell scripts, and CI should call the same checker instead of each inventing a separate policy.

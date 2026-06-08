@@ -314,6 +314,7 @@ tools/parity/gate.sh backend
 - `skills-lock.json`은 skills.sh에서 설치한 프로젝트 스킬 목록을 고정합니다.
 - `.agents/skills/`는 로컬 실행 표면이며 git-ignore입니다. 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원합니다.
 - provider/model 공통 개발도구는 `tools/agent-system/check.py`입니다. 로컬은 `tools/agent-system/check.py`, PR/CI는 `tools/agent-system/check.py --strict --base origin/main`, 에이전트 통합은 `--format json`을 사용합니다.
+- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거칩니다. Kimi-backed Claude Code, Codex, Gemini 등 병렬 agent는 서로 PHP 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge하지 않습니다.
 - 백엔드 표준 게이트는 `tools/parity/gate.sh backend`입니다. Java 21로 Gradle을 실행하고 `BUILD SUCCESSFUL` 및 테스트 XML의 `failures=0 errors=0`을 확인합니다.
 - PHP 레거시 분석은 항상 `legacy/devsam-core` 소스 경로와 line range를 먼저 잡고, 실제 캡처가 필요한 동작은 `tools/php-golden/`로 증거를 만든 뒤 Kotlin/Next 구현과 비교합니다.
 - 외부 스킬은 보조 지식입니다. PHP grand truth, `CLAUDE.md`, `AGENTS.md`, one-daemon-write 규칙과 충돌하면 repo 규칙이 이깁니다.

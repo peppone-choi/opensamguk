@@ -126,6 +126,7 @@ cd web/game    && corepack pnpm dev   # :3001
 - PHP 레거시 분석은 항상 `legacy/devsam-core` source path + line range → parity dimensions → `tools/php-golden/` capture/compare → Kotlin/Next implementation 순서.
 - 프론트 현대화는 `hwe/ts/` Vue 디자인/흐름을 grand truth로 삼고, 하드코딩 placeholder 대신 실제 API 상태를 렌더.
 - provider/model 공통 개발도구는 `tools/agent-system/check.py`. 로컬은 `tools/agent-system/check.py`, CI/PR은 `tools/agent-system/check.py --strict --base origin/main`, 기계 판독은 `--format json`.
+- 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거친다. Kimi-backed Claude Code, Codex, Gemini 등 병렬 agent는 서로 PHP 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge 금지.
 
 ---
 

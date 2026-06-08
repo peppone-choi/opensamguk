@@ -227,6 +227,34 @@ def check_required_docs() -> list[Finding]:
     return findings
 
 
+def check_cross_agent_critique(files: list[str], strict: bool) -> list[Finding]:
+    if not strict:
+        return []
+    code_or_tool_files = [
+        f
+        for f in files
+        if is_prefix(f, CODE_PREFIXES)
+        or f.startswith("tools/")
+        or f.startswith(".github/workflows/")
+    ]
+    if not code_or_tool_files:
+        return []
+
+    working_doc = ROOT / "docs/superpowers/WORKING_SYSTEM.md"
+    text = working_doc.read_text(encoding="utf-8") if working_doc.exists() else ""
+    required = ("Cross-agent critique", "fix-required", "quarantined-with-proof")
+    missing = [phrase for phrase in required if phrase not in text]
+    if missing:
+        return [
+            Finding(
+                "error",
+                "cross-agent-critique",
+                "WORKING_SYSTEM.md is missing cross-agent critique terms: " + ", ".join(missing),
+            )
+        ]
+    return []
+
+
 def render_markdown(files: list[str], findings: list[Finding]) -> str:
     errors = [f for f in findings if f.severity == "error"]
     warnings = [f for f in findings if f.severity == "warning"]
@@ -267,6 +295,7 @@ def main() -> int:
     findings: list[Finding] = []
     findings += check_skills_lock(files)
     findings += check_required_docs()
+    findings += check_cross_agent_critique(files, args.strict)
     findings += check_docs_with_code(files, args.strict)
     findings += check_behavior_evidence(files, args.strict)
     findings += check_gateway_server_registry()
@@ -291,4 +320,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
