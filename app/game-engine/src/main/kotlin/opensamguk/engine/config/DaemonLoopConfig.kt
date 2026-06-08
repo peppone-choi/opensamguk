@@ -243,7 +243,7 @@ class DaemonLoopConfig {
                     personalityNameOf = { p -> GameConst.personalityNameOf(p.toString()) },
                     specialDomesticNameOf = { s -> opensamguk.logic.world.SpecialityHelper.domesticName(s) },
                     specialWarNameOf = { s -> opensamguk.logic.world.SpecialityHelper.warName(s) },
-                    crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.shortName ?: "$c" },
+                    crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.name ?: "$c" },
                 )
                 handler.recorder.recordStatisticInsert(linkedMapOf(
                     "year" to row.year,
