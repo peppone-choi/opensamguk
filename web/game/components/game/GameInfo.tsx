@@ -6,6 +6,7 @@
 // fall back gracefully (no fabricated numbers); the render ORDER and label templates are the contract.
 
 import type { FrontGlobalInfo, GameConstResponse } from '@/lib/types';
+import { calcTournamentTerm } from '@/lib/utilGame';
 
 const NPC_MODE_TEXT = ['불가능', '가능', '선택 생성'];
 
@@ -13,9 +14,8 @@ function num(n: number | undefined): string {
     return (n ?? 0).toLocaleString('ko-KR');
 }
 
-// 토너먼트 경기당 분: 경기당 = turnterm 비례(레거시 calcTournamentTerm). 표시용 근사 — turnterm 그대로.
-function tournamentTerm(turnterm: number): number {
-    return turnterm;
+function autorunInfoText(autorunUser: FrontGlobalInfo['autorunUser']): string {
+    return autorunUser && autorunUser.limit_minutes > 0 ? '자율행동' : '';
 }
 
 export default function GameInfo({
@@ -51,10 +51,10 @@ export default function GameInfo({
                 <div className="gi-cell text-cyan">NPC선택: {NPC_MODE_TEXT[global.npcMode ?? 0]}</div>
 
                 {/* 4 subTournamentMode */}
-                <div className="gi-cell text-cyan">토너먼트: 경기당 {tournamentTerm(global.turnterm)}분</div>
+                <div className="gi-cell text-cyan">토너먼트: 경기당 {calcTournamentTerm(global.turnterm)}분</div>
 
                 {/* 5 subOtherSetting */}
-                <div className="gi-cell text-cyan">기타 설정: 자동</div>
+                <div className="gi-cell text-cyan">기타 설정: {autorunInfoText(global.autorunUser)}</div>
 
                 {/* 6 subYearMonth */}
                 <div className="gi-cell gi-wide">

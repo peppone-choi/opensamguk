@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.dto.AutorunUserInfo
 import opensamguk.gameapi.dto.CityOfficer
 import opensamguk.gameapi.dto.FrontCityInfo
 import opensamguk.gameapi.dto.FrontGeneralInfo
@@ -355,7 +356,7 @@ class FrontInfoController(
             isFiction = boolOrNull(config["fiction"]),
             npcMode = intOrNull(config["npcmode"]),
             joinMode = intOrNull(config["join_mode"]),
-            autorunUser = boolOrNull(config["autorun_user"]),
+            autorunUser = autorunUserInfo(config["autorun_user"]),
             lastExecuted = config["turntime"]?.toString(),
             develCost = intOrNull(config["develcost"]),
             noticeMsg = config["msg"]?.toString(),
@@ -406,6 +407,20 @@ class FrontInfoController(
         is Number -> v.toInt()
         is String -> v.toIntOrNull()
         else -> null
+    }
+
+    private fun autorunUserInfo(v: Any?): AutorunUserInfo? {
+        val m = v as? Map<*, *> ?: return null
+        val limitMinutes = intOrNull(m["limit_minutes"]) ?: return null
+        val options = (m["options"] as? Map<*, *>)
+            ?.mapNotNull { (key, value) ->
+                val option = key as? String ?: return@mapNotNull null
+                val weight = intOrNull(value) ?: return@mapNotNull null
+                option to weight
+            }
+            ?.toMap()
+            ?: emptyMap()
+        return AutorunUserInfo(limitMinutes = limitMinutes, options = options)
     }
 
     /** jsonb 값(Boolean/Number 0/1/String)을 Boolean으로 안전 변환. 부재 시 null. */

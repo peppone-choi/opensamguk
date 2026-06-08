@@ -34,6 +34,10 @@ export interface FrontGlobalInfo {
     extendedGeneral?: boolean;
     isFiction?: boolean;
     npcMode?: number; // 0 불가능 / 1 가능 / 2 선택 생성
+    autorunUser?: {
+        limit_minutes: number;
+        options: Record<string, number>;
+    } | null;
     onlineUserCnt?: number;
     apiLimit?: number;
     createdUserCnt?: number;
