@@ -1,5 +1,6 @@
 package opensamguk.logic.actions
 
+import opensamguk.logic.actions.develop.cheDanryeon
 import opensamguk.logic.actions.develop.cheGisulYeongu
 import opensamguk.logic.actions.develop.cheGyeonmun
 import opensamguk.logic.actions.develop.cheJeongchakJangnyeo
@@ -19,9 +20,15 @@ import opensamguk.logic.actions.military.CheIdong
 import opensamguk.logic.actions.military.CheJeontuTaese
 import opensamguk.logic.actions.military.CheJiphap
 import opensamguk.logic.actions.military.CheNpcNeungdong
+import opensamguk.logic.actions.military.CheCheobo
+import opensamguk.logic.actions.military.CheJeopgyeongGwihwan
+import opensamguk.logic.actions.military.cheHwagye
+import opensamguk.logic.actions.military.chePagoe
+import opensamguk.logic.actions.military.cheSeondong
 import opensamguk.logic.actions.military.CheSagiJinjak
 import opensamguk.logic.actions.military.CheSojipHaeje
 import opensamguk.logic.actions.military.CheSukryeonJeonhwan
+import opensamguk.logic.actions.military.CheTalchwi
 import opensamguk.logic.actions.military.CrMaenghullyeon
 import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.actions.nation.cheBaekseongDongwon
@@ -186,13 +193,13 @@ class CommandRegistry(private val pipeline: GeneralActionPipeline, private val m
         "che_요양" -> CheYoyang(pipeline)        // dispatcher-direct, gate-exempt (G14) — def for execution
         "che_선양" -> CheSeonyang(pipeline)        // ORDER BY RAND quarantine (G4, decision #6)
         // --- CMD-GROUP-A stubs (17 missing PHP commands — widened ONCE, disjoint fill per command) ---
-        "che_화계" -> TODO("che_화계 not yet implemented")
-        "che_파괴" -> TODO("che_파괴 not yet implemented")
-        "che_탈취" -> TODO("che_탈취 not yet implemented")
-        "che_선동" -> TODO("che_선동 not yet implemented")
-        "che_첩보" -> TODO("che_첩보 not yet implemented")
-        "che_단련" -> TODO("che_단련 not yet implemented")
-        "che_접경귀환" -> TODO("che_접경귀환 not yet implemented")
+        "che_화계" -> cheHwagye(pipeline, maxLevel)
+        "che_파괴" -> chePagoe(pipeline, maxLevel)
+        "che_탈취" -> CheTalchwi(pipeline, maxLevel)
+        "che_선동" -> cheSeondong(pipeline, maxLevel)
+        "che_첩보" -> CheCheobo(pipeline)
+        "che_단련" -> cheDanryeon(pipeline, maxLevel)
+        "che_접경귀환" -> CheJeopgyeongGwihwan()
         "che_강행" -> CheGanghaeng(pipeline)
         "che_숙련전환" -> CheSukryeonJeonhwan(pipeline)
         "che_전투태세" -> CheJeontuTaese(pipeline, maxLevel)
