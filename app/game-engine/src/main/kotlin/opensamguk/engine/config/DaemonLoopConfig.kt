@@ -8,6 +8,7 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.RulerSuccessionHandler
@@ -218,9 +219,18 @@ class DaemonLoopConfig {
             clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
             preUpdateMonthly = PreUpdateMonthly { true },
             checkStatistic = CheckStatistic {
-                val generals = world.listGenerals()
+                val generals = world.listGenerals().map { g ->
+                    val statisticMeta = g.meta +
+                        mapOf(
+                            "personal" to (g.role.personality ?: g.meta["personal"] ?: g.meta["personal_code"] ?: "None"),
+                            "special" to (g.meta["special"] ?: g.meta["special_code"] ?: "None"),
+                            "special2" to (g.role.specialWar ?: g.meta["special2"] ?: g.meta["special2_code"] ?: "None"),
+                        ) +
+                        if (g.recentWarTime != null) mapOf("recent_war" to g.recentWarTime.toString()) else emptyMap()
+                    PerTurnOverlay.toLogicGeneral(g).copy(meta = statisticMeta)
+                }
                 val nations = world.listNations()
-                val cities = world.listCities()
+                val cities = world.listCities().map { PerTurnOverlay.toLogicCity(it) }
                 val row = CheckStatisticCalculator.compute(
                     year = state.currentYear,
                     month = state.currentMonth,
@@ -229,8 +239,8 @@ class DaemonLoopConfig {
                     cities = cities,
                     nationTypeNameOf = { type -> type.removePrefix("che_") },
                     personalityNameOf = { p -> GameConst.personalityNameOf(p.toString()) },
-                    specialDomesticNameOf = { s -> if (s == 0) "None" else "special_$s" },
-                    specialWarNameOf = { s -> if (s == 0) "None" else "special2_$s" },
+                    specialDomesticNameOf = { s -> opensamguk.logic.world.SpecialityHelper.domesticName(s) },
+                    specialWarNameOf = { s -> opensamguk.logic.world.SpecialityHelper.warName(s) },
                     crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.shortName ?: "$c" },
                 )
                 handler.recorder.recordStatisticInsert(linkedMapOf(

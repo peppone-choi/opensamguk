@@ -3,6 +3,7 @@ package opensamguk.gameapi.web
 import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -34,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/join")
 class JoinController(
     private val generals: GeneralReadRepository,
+    private val worldStates: WorldStateReadRepository,
     private val reserve: CommandReserveService,
 ) {
 
@@ -62,6 +64,17 @@ class JoinController(
                 .body(JoinResponse(status = "BLOCKED", reason = "로그인이 필요합니다."))
         }
 
+        val worldConfig = worldStates.findById(0).orElse(null)?.config ?: emptyMap()
+        val blockGeneralCreate = intConfig(worldConfig["block_general_create"]) ?: 0
+        if (blockGeneralCreate and 1 != 0) {
+            return ResponseEntity.ok(
+                JoinResponse(status = "BLOCKED", reason = "장수 직접 생성이 불가능한 모드입니다."),
+            )
+        }
+
+        val generalCount = generals.countByNpcStateLessThan(2)
+        val maxGeneral = intConfig(worldConfig["maxgeneral"]) ?: GameConst.defaultMaxGeneral
+
         // 1. One general per user (Join.php:181)
         if (generals.findByUserId(userId.toString()) != null) {
             return ResponseEntity.ok(
@@ -71,14 +84,24 @@ class JoinController(
 
         // 2. Name non-empty + uniqueness (Join.php:184)
         val trimmedName = request.name.trim()
-        if (trimmedName.isEmpty()) {
-            return ResponseEntity.ok(
-                JoinResponse(status = "BLOCKED", reason = "이름을 입력해 주세요."),
-            )
-        }
         if (generals.existsByName(trimmedName)) {
             return ResponseEntity.ok(
-                JoinResponse(status = "BLOCKED", reason = "이미 존재하는 이름입니다."),
+                JoinResponse(status = "BLOCKED", reason = "이미 있는 장수입니다. 다른 이름으로 등록해 주세요!"),
+            )
+        }
+        if (maxGeneral <= generalCount) {
+            return ResponseEntity.ok(
+                JoinResponse(status = "BLOCKED", reason = "더이상 등록할 수 없습니다!"),
+            )
+        }
+        if (trimmedName.isEmpty()) {
+            return ResponseEntity.ok(
+                JoinResponse(status = "BLOCKED", reason = "이름이 짧습니다. 다시 가입해주세요!"),
+            )
+        }
+        if (legacyDisplayWidth(trimmedName) > 18 || trimmedName.any { it.isISOControl() }) {
+            return ResponseEntity.ok(
+                JoinResponse(status = "BLOCKED", reason = "이름이 유효하지 않습니다. 다시 가입해주세요!"),
             )
         }
 
@@ -102,7 +125,7 @@ class JoinController(
             return ResponseEntity.ok(
                 JoinResponse(
                     status = "BLOCKED",
-                    reason = "능력치 합계가 ${GameConst.defaultStatTotal}를 초과합니다.",
+                    reason = "능력치가 ${GameConst.defaultStatTotal}을 넘어섰습니다. 다시 가입해주세요!",
                 ),
             )
         }
@@ -120,4 +143,21 @@ class JoinController(
         return ResponseEntity.status(HttpStatus.ACCEPTED)
             .body(JoinResponse(status = "AVAILABLE", requestId = result.requestId))
     }
+
+    private fun intConfig(value: Any?): Int? = when (value) {
+        is Number -> value.toInt()
+        is String -> value.toIntOrNull()
+        else -> null
+    }
+
+    private fun legacyDisplayWidth(value: String): Int =
+        value.codePoints()
+            .map { codePoint ->
+                when {
+                    codePoint <= 0x1F || codePoint == 0x7F -> 0
+                    codePoint < 0x100 -> 1
+                    else -> 2
+                }
+            }
+            .sum()
 }
