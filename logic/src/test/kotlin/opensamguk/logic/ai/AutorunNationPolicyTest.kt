@@ -109,6 +109,39 @@ class AutorunNationPolicyTest {
     // --- (3) the FULL value-key set + numeric defaults (AutorunNationPolicy.php:152-180) ---
 
     @Test
+    fun `defaultPolicy map is the exact PHP initial policy shape`() {
+        val expected = linkedMapOf<String, Any?>(
+            "reqNationGold" to 10000,
+            "reqNationRice" to 12000,
+            "CombatForce" to emptyList<Any>(),
+            "SupportForce" to emptyList<Any>(),
+            "DevelopForce" to emptyList<Any>(),
+            "reqHumanWarUrgentGold" to 0,
+            "reqHumanWarUrgentRice" to 0,
+            "reqHumanWarRecommandGold" to 0,
+            "reqHumanWarRecommandRice" to 0,
+            "reqHumanDevelGold" to 10000,
+            "reqHumanDevelRice" to 10000,
+            "reqNPCWarGold" to 0,
+            "reqNPCWarRice" to 0,
+            "reqNPCDevelGold" to 0,
+            "reqNPCDevelRice" to 500,
+            "minimumResourceActionAmount" to 1000,
+            "maximumResourceActionAmount" to 10000,
+            "minNPCWarLeadership" to 40,
+            "minWarCrew" to 1500,
+            "minNPCRecruitCityPopulation" to 50000,
+            "safeRecruitCityPopulationRatio" to 0.5,
+            "properWarTrainAtmos" to 90,
+            "cureThreshold" to 10,
+        )
+
+        assertEquals(expected, AutorunNationPolicy.DEFAULT_POLICY)
+        assertFalse(AutorunNationPolicy.DEFAULT_POLICY.containsKey("reqHumanWarUprising"))
+        assertFalse(AutorunNationPolicy.DEFAULT_POLICY.containsKey("autorun_user"))
+    }
+
+    @Test
     fun `plain numeric defaults are the defaultPolicy values`() {
         val p = policy()
         assertEquals(10000, p.reqNationGold)

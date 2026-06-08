@@ -3,6 +3,7 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.dto.NpcPolicyResponse
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.logic.ai.AutorunNationPolicy
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -25,17 +26,6 @@ class NpcPolicyController(
     private val resolver: GeneralResolver,
     private val nations: NationReadRepository,
 ) {
-
-    /** Documented default NPC policy seed (legacy `func.php` defaults; the 초깃값으로 baseline). */
-    private val defaultPolicy: Map<String, Any?> = linkedMapOf(
-        "minNPCWarLeadership" to 40,
-        "minNPCRecruitCityPopulation" to 50000,
-        "reqHumanWarUprising" to 12,
-        "reqNationGold" to 0,
-        "reqNationRice" to 0,
-        "autorun_user" to 0,
-    )
-
     @GetMapping("/npc-policy")
     fun npcPolicy(@AuthenticationPrincipal userId: Long?): ResponseEntity<NpcPolicyResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
@@ -59,7 +49,7 @@ class NpcPolicyController(
             NpcPolicyResponse(
                 result = true,
                 nationId = nationId,
-                defaultPolicy = defaultPolicy,
+                defaultPolicy = AutorunNationPolicy.DEFAULT_POLICY,
                 currentPolicy = currentPolicy,
                 chiefPriority = chiefPriority,
                 generalPriority = generalPriority,
