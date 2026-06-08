@@ -1,5 +1,6 @@
 package opensamguk.engine.status
 
+import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.run.TurnDaemonRunner
 import opensamguk.engine.run.TurnRunService
 import org.springframework.beans.factory.ObjectProvider
@@ -25,7 +26,7 @@ class StatusControllerTest {
             override fun getIfAvailable(): TurnRunService? = null
             override fun getIfUnique(): TurnRunService? = null
         }
-        val runner = TurnDaemonRunner(provider, gate, daemonEnabled = false, idlePollMs = 10)
+        val runner = TurnDaemonRunner(provider, WorldStateAvailability { true }, gate, daemonEnabled = false, idlePollMs = 10)
         return StatusController(profile = "che", pauseGate = gate, runner = runner)
     }
 

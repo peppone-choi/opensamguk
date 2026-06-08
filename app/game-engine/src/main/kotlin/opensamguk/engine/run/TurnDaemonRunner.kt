@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.status.DaemonPauseGate
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Component
 class TurnDaemonRunner(
     private val turnRunServiceProvider: ObjectProvider<TurnRunService>,
+    private val worldStateAvailability: WorldStateAvailability,
     /**
      * B1b — 일시정지(동결) 게이트(`plock` 등가). [DaemonPauseGate.isPaused]가 true면 루프가 틱을 건너뛴다
      * (드레인·flush 없음). 어드민 `POST /admin/turn-daemon/pause`(락걸기)/`/resume`(락풀기)가 이 플래그를 토글한다.
@@ -65,8 +67,7 @@ class TurnDaemonRunner(
             return
         }
         if (!running.compareAndSet(false, true)) return
-        val service = turnRunServiceProvider.getObject()
-        val t = Thread({ loop(service) }, "turn-daemon-loop").apply { isDaemon = true }
+        val t = Thread({ loop() }, "turn-daemon-loop").apply { isDaemon = true }
         worker = t
         t.start()
         log.info("TurnDaemonRunner started — idlePollMs={}", idlePollMs)
@@ -86,10 +87,29 @@ class TurnDaemonRunner(
         log.info("TurnDaemonRunner stopped")
     }
 
-    private fun loop(service: TurnRunService) {
+    private fun loop() {
         log.info("turn-daemon-loop entering run loop")
+        var service: TurnRunService? = null
+        var loggedEmptyWorld = false
         while (running.get() && !Thread.currentThread().isInterrupted) {
             try {
+                if (service == null) {
+                    if (!worldStateAvailability.hasWorld()) {
+                        if (!loggedEmptyWorld) {
+                            log.info("turn-daemon-loop waiting — world_state is empty; admin server creation required")
+                            loggedEmptyWorld = true
+                        }
+                        Thread.sleep(idlePollMs)
+                        continue
+                    }
+                    service = turnRunServiceProvider.getObject()
+                    loggedEmptyWorld = false
+                    log.info("turn-daemon-loop materialized TurnRunService after world_state became available")
+                }
+
+                val activeService = service
+                    ?: error("TurnRunService unavailable after world_state availability check")
+
                 // B1b — 동결(pause) 게이트(PHP plock>0). 동결 중이면 틱을 건너뛴다: 드레인도 flush도 없이
                 // 한 폴 간격만 대기 → InMemoryTurnWorld가 그대로 멈춘다(턴 미진행). 락풀기(resume) 시 다음
                 // 폴에서 즉시 due 판정으로 재개. nextRunTime은 진행하지 않으므로 동결 중 누적 지연은 없다.
@@ -97,7 +117,7 @@ class TurnDaemonRunner(
                     Thread.sleep(idlePollMs)
                     continue
                 }
-                val nextRun = service.nextRunTime()
+                val nextRun = activeService.nextRunTime()
                 val now = Instant.now()
                 if (now.isBefore(nextRun)) {
                     // Next turn not yet due — wait (interruptibly), bounded by idlePollMs so a shutdown
@@ -107,7 +127,7 @@ class TurnDaemonRunner(
                     continue
                 }
                 // Due: drain the command stream + advance the turn(s) + flush ONCE at the boundary.
-                val result = service.runTick(nextRun)
+                val result = activeService.runTick(nextRun)
                 log.debug(
                     "tick at {} — generals={} cities={} logs={}",
                     result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
@@ -116,6 +136,10 @@ class TurnDaemonRunner(
                 Thread.currentThread().interrupt()
                 break
             } catch (e: Exception) {
+                if (Thread.currentThread().isInterrupted || e.wasCausedByInterrupt()) {
+                    Thread.currentThread().interrupt()
+                    break
+                }
                 // A tick failed; log and back off one poll interval so we don't hot-spin on a hard error.
                 // The world is the single source of truth — the failed flush left no partial DB write
                 // (JdbcFlushExecutor runs in ONE transaction), so the next tick retries cleanly.
@@ -130,4 +154,7 @@ class TurnDaemonRunner(
         }
         log.info("turn-daemon-loop exited")
     }
+
+    private fun Throwable.wasCausedByInterrupt(): Boolean =
+        generateSequence(this) { it.cause }.any { it is InterruptedException }
 }
