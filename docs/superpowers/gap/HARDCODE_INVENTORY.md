@@ -28,11 +28,11 @@
 |------|---------|-------------------|
 | **web/game** | 4 | — |
 | **web/gateway** | 0 | 2 (`GW-HC-04`, `GW-HC-05`) |
-| **app** (game-api) | 7 | — |
-| **합계** | **11** | 2 |
+| **app** (game-api) | 6 | — |
+| **합계** | **10** | 2 |
 
 **위반 성격 분류:**
-- 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): `SimulatorController .random()`(D3-01 app)
+- 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): 2026-06-09 현재 활성 위반 없음. `D3-01(app)` 해소됨.
 - 🟠 **본인 컨텍스트 미사용 + 디폴트 1 박음**: 2026-06-09 현재 web/game 활성 위반 없음. `D3-05/06/07(web)` 해소됨.
 - 🟡 **값소스 부재 갭** (정본 영속 원천/엔진 미결합으로 0/null/false 고정 — 문서화된 BLOCKED): traffic/hall/emperor(D3-03 app), serverLocked(D3-04 app), iAction name/info(D3-07 app), compensation(D3-08 app)
 - 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): INHERIT_COSTS(D3-04 web), mapWidth/Height(D3-05 app), OFFICER_LEVEL_TEXT(D3-06 app)
@@ -49,7 +49,6 @@
 | D3-04(web) | `web/game/app/game/nation/page.tsx:43` | `INHERIT_COSTS = [0,200,600,1200,2000,3000]` | GameConst read API / InheritPointResponse가 비용 배열 제공. 정본 `hwe/sammo/GameConstBase.php:240 $inheritBuffPoints` | web/game | 🔵 패러티 우회 |
 | D3-08(web) | `web/game/components/game/MessagePanel.tsx:89,97` | placeholder "서신 보내기 (서버 미지원)" disabled + "읽기 전용입니다" | game-api 메시지 전송/연락처 endpoint. 정본 `MessagePanel.vue`(SendMessage write + 연락처 selector) | web/game | ⚪ mutation stub |
 | D3-09(web) | `web/game/app/game/npc-control/page.tsx:271,92-106` | "(설정 변경은 추후 지원)" + ControlBar disabled | NPC 정책 setter intake(POST) 배선 후 활성화. (표시 수치는 이미 API 소비 — 위반 아님, mutation stub만) | web/game | ⚪ mutation stub |
-| D3-01(app) | `app/game-api/.../controller/SimulatorController.kt:14-22` | `winner = attackerId%2==1 ? attacker : defender`, `(100..500).random()`, `(50..300).random()`, `(3..10).random()`, log=고정 4줄 | `logic/war/processWar`(또는 BattleCommandContextBuilder) — `RandUtil(warSeed)` 정본. raw `.random()` 금지(RNG 규율 위반) | app | 🔴 위조 |
 | D3-03(app) | `app/game-api/.../rank/RankReadService.kt:176,179-189,192` | `hallOfFame()=emptyList()`, `traffic()=0/empty`, `emperor()=emptyList()` | `general_access_log`·`hall`·`emperior`(통일사) 영속 원천(OQ-1/2/5) 도입 후 실 집계 | app | 🟡 값소스 부재 갭 |
 | D3-04(app) | `app/game-api/.../controller/FrontInfoController.kt:386`, `dto/IdentityDto.kt:96-98` | `serverLocked = false` (interim) | PHP `SELECT plock FROM plock WHERE type='GAME'` 대응 plock 영속 원천 도입 후 실값 | app | 🟡 값소스 부재 갭 |
 | D3-05(app) | `app/game-api/.../controller/GetConstController.kt:46-47` | `mapWidth=1000`, `mapHeight=714` (매직넘버) | `map/<code>.json`(MapJson.MapData.width/height, MapPreviewController가 이미 사용) 또는 GameConst 상수. 컨트롤러 리터럴 금지 | app | 🔵 패러티 우회 |
@@ -93,14 +92,14 @@
 - `GW-HC-04` lobby 계정관리 / admin 회원관리·게임환경 "PLACEHOLDER 준비 중" disabled → 백엔드 미구현 기능의 정직한 미완 표시. 게임 상태 위조 아님. 백엔드 구현 시 실 핸들러로 교체.
 - `GW-HC-05` ServerLog / MapPreview "준비 중" → read API 404/빈-세계 graceful degrade 폴백 UI. 정본 데이터 200 시 자동 실데이터 렌더.
 
-### 3.3 app (game-api, 7건)
+### 3.3 app (game-api, 6건)
 
 백엔드 read API 컨트롤러. 두 갈래.
 
-**A. 위조/날조 (1건) — 정본 엔진 결합으로 교정**
-- `D3-01(app)` SimulatorController: 전투 결과 전부 `.random()` 날조 + 고정 4줄 로그. **RNG 규율 정면 위반** (raw `.random()`은 `RandUtil(LiteHashDrbg)` 우회). `logic/war/processWar` 결합 필수.
+**A. 위조/날조 — 활성 0건**
 
-**해소됨 (1건, 2026-06-09)**
+**해소됨 (2건, 2026-06-09)**
+- `D3-01(app)` SimulatorController: `.random()` 승패/피해/턴/고정 로그 제거. live read rows(`general/city/nation/world_state`)를 `BattleSimPreview`로 변환해 동일 `processWar`/`RandUtil(warSeed)` 경로를 재사용한다. 프론트도 `attackerWon/Damage/log` fake contract 대신 PHP형 집계(`phase/killed/dead/skills`)를 소비한다. 잔여 전체 패러티: legacy raw-input 전체 폼(`j_export_simulator_object`)과 PHP payload 중 `datetime/lastWarLog/attackerRice/defenderRice` 집계는 아직 별도 갭이다.
 - `D3-02(app)` NpcPolicyController: 인라인 defaultPolicy 제거. `logic/ai/AutorunNationPolicy.DEFAULT_POLICY`가 PHP `AutorunNationPolicy::$defaultPolicy`(`reqNationGold=10000`, `reqNationRice=12000`, PHP 부재 키 제외)를 단일 소스로 직렬화한다.
 
 **B. 인라인 중복 / 매직넘버 (2건) — 정본 resolver·리소스로 통합**
@@ -142,9 +141,9 @@
 11. `D3-05(app)` GetConstController mapWidth/Height → `map/<code>.json` / GameConst
 12. `D3-04(web)` nation INHERIT_COSTS → 단계 3에서 노출된 GameConst/InheritPoint read API 소비 (BE 노출 후 web 전환)
 
-### 단계 4 — 엔진/정책 결합 (위조 제거 핵심) — 1건 + 1건 부분
+### 단계 4 — 엔진/정책 결합 (위조 제거 핵심) — 완료
 가장 무겁지만 가장 큰 위조 제거. RNG 규율 위반 해소.
-13. `D3-01(app)` SimulatorController → `logic/war/processWar`(`RandUtil(warSeed)`) 결합. raw `.random()` 전면 제거. **패러티 RNG 규율 위반이므로 단계 4 중 최우선.**
+13. ✅ `D3-01(app)` SimulatorController → `logic/war/BattleSimPreview`/`processWar`(`RandUtil(warSeed)`) 결합. raw `.random()` 전면 제거.
 
 ### 단계 5 — mutation 경로 배선 (BE write endpoint 필요) — 3건
 read는 이미 정상. write intake/endpoint 추가 후 프론트 활성화.
@@ -168,8 +167,8 @@ read는 이미 정상. write intake/endpoint 추가 후 프론트 활성화.
 | 1 순수 프론트 | 5 | 정본 함수/필드 이미 존재 | 매우 낮음 | 중(상태 위조 GW-HC-01 포함) |
 | 2 useFrontInfo | 3 | 본인 컨텍스트 배선 | 낮음 | ✅ 완료(id 1 고정 제거) |
 | 3 BE 단일소스 | 3 | 정본 상수/resolver 직렬화 | 중 | 중(D3-02 app 완료) |
-| 4 엔진 결합 | 1 | processWar 결합 | 높음 | **매우 높음(RNG 위반)** |
+| 4 엔진 결합 | 1 | processWar 결합 | 높음 | ✅ 완료(RNG 위반 제거) |
 | 5 mutation | 3 | write endpoint | 중~높음 | 낮음(read 정상) |
 | 6 값소스 갭 | 4 | 영속 테이블/결합 BLOCKED | 매우 높음 | 중(0/null/false 실값화) |
 
-**즉효 권장:** 단계 1+2 (8건, 백엔드 거의 무변)로 위반 20→12 감소. **위조 우선:** `D3-02(app)` 날조 키는 해소됨. 남은 최우선 위조 항목은 `D3-01(app)` RNG 위반이다.
+**즉효 권장:** 남은 즉시성 항목은 `D3-05/06(app)` 단일소스화와 `D3-04(web)` API 소비 전환이다. **위조 우선:** `D3-01(app)`/`D3-02(app)` 날조 계열은 해소됨.
