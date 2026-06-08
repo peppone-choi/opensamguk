@@ -340,12 +340,16 @@ export interface ClaimableGeneral {
     special: string | null; // 내정특기명 (SpecialityHelper.domesticName)
     special2: string | null; // 전투특기명 (SpecialityHelper.warName)
     personal: string | null; // 성격명 (GameConst.personalityNameOf)
+    keepCnt?: number;
 }
 
 export interface ClaimableResponse {
     result: boolean;
     hasGeneral: boolean;
     candidates: ClaimableGeneral[];
+    validUntil?: string;
+    pickMoreFrom?: string;
+    pickMoreSeconds?: number;
 }
 
 export interface ClaimResponse {

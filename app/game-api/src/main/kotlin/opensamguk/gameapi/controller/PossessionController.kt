@@ -1,15 +1,10 @@
 package opensamguk.gameapi.controller
 
-import opensamguk.gameapi.dto.ClaimableGeneral
 import opensamguk.gameapi.dto.ClaimableResponse
 import opensamguk.gameapi.dto.ClaimRequest
 import opensamguk.gameapi.dto.ClaimResponse
-import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralPossessionService
-import opensamguk.gameapi.read.GeneralReadRepository
-import opensamguk.gameapi.read.NationReadRepository
-import opensamguk.common.constants.GameConst
-import opensamguk.logic.world.SpecialityHelper
+import opensamguk.gameapi.owner.SelectNpcTokenService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -32,54 +27,14 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class PossessionController(
     private val possession: GeneralPossessionService,
-    private val owners: GeneralOwnerRepository,
-    private val generals: GeneralReadRepository,
-    private val nations: NationReadRepository,
+    private val tokens: SelectNpcTokenService,
 ) {
 
     @GetMapping("/generals/claimable")
     fun claimable(@AuthenticationPrincipal userId: Long?): ResponseEntity<ClaimableResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-
-        val hasGeneral = owners.findByUserId(userId) != null
-        if (hasGeneral) {
-            return ResponseEntity.ok(ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList()))
-        }
-
-        val claimedIds = owners.findAllByOrderByGeneralIdAsc().map { it.generalId.toInt() }.toSet()
-        val nationNames = nations.findAll().associate { it.id to it.name }
-
-        val candidates = generals
-            .findByNpcStateOrderByIdAsc(GeneralPossessionService.CLAIMABLE_NPC_STATE)
-            .asSequence()
-            .filter { it.id !in claimedIds }
-            .map { g ->
-                ClaimableGeneral(
-                    generalId = g.id,
-                    name = g.name,
-                    nationId = g.nationId,
-                    nationName = nationNames[g.nationId],
-                    leadership = g.leadership,
-                    strength = g.strength,
-                    intel = g.intel,
-                    picture = g.picture,
-                    imageServer = g.imageServer,
-                    special = specialName(SpecialityHelper.domesticName(g.specialCode), g.specialCode),
-                    special2 = specialName(SpecialityHelper.warName(g.special2Code), g.special2Code),
-                    personal = GameConst.personalityNameOf(g.personalCode),
-                )
-            }
-            .toList()
-
-        return ResponseEntity.ok(ClaimableResponse(result = true, hasGeneral = false, candidates = candidates))
+        return ResponseEntity.ok(tokens.claimable(userId))
     }
-
-    /**
-     * 특기 표시 이름 보정. SpecialityHelper.domesticName/warName은 미등록 코드를 그대로 반환하므로,
-     * code가 "None"/공백이거나 resolved가 code와 동일(=미해석)하면 '-'로 보정한다(PHP None.php `$name`='-').
-     */
-    private fun specialName(resolved: String, code: String): String =
-        if (code.isBlank() || code == "None") "-" else resolved
 
     @PostMapping("/general/claim")
     fun claim(
