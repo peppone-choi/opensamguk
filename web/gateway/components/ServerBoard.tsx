@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import MapPreview from './MapPreview';
 import ServerLog from './ServerLog';
-import serversData from '../config/servers.json';
 
 /**
  * 서버 보드 — devsam '제 전황' 입구(로그인+로비 공용). 상단 서버 전환 탭 + 선택 서버의 세계지도 현황
@@ -16,11 +15,31 @@ interface ServerEntry {
     id: string;
     name: string;
 }
-const SERVERS = serversData.servers as ServerEntry[];
-
 export default function ServerBoard() {
-    const [selectedId, setSelectedId] = useState<string | null>(SERVERS[0]?.id ?? null);
-    const selected = selectedId ? (SERVERS.find((s) => s.id === selectedId) ?? SERVERS[0]) : null;
+    const [servers, setServers] = useState<ServerEntry[]>([]);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/servers', { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+            .then((data: { servers?: ServerEntry[] }) => {
+                if (!alive) return;
+                const nextServers = data.servers ?? [];
+                setServers(nextServers);
+                setSelectedId((current) => current ?? nextServers[0]?.id ?? null);
+            })
+            .catch(() => {
+                if (!alive) return;
+                setServers([]);
+                setSelectedId(null);
+            });
+        return () => {
+            alive = false;
+        };
+    }, []);
+
+    const selected = selectedId ? (servers.find((s) => s.id === selectedId) ?? servers[0]) : null;
 
     // 서버는 관리자 생성 런타임 데이터다. 서버가 없으면 로그인/로비에서 맵·로그·서버탭을 만들지 않는다.
     if (!selected) return null;
@@ -29,7 +48,7 @@ export default function ServerBoard() {
         <section className="server-board" aria-label="서버 현황">
             {/* 상단 서버 전환 탭 */}
             <div className="server-tabs" role="tablist" aria-label="서버 선택">
-                {SERVERS.map((s) => (
+                {servers.map((s) => (
                     <button
                         key={s.id}
                         type="button"
