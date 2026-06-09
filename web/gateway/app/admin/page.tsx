@@ -371,7 +371,10 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
             .then((data) => {
                 if (!alive) return;
                 setScenarios(data.scenarios);
-                setScenarioCode((current) => current || data.scenarios[0]?.code || '');
+                setScenarioCode((current) => {
+                    const defaultScenario = data.scenarios.find((scenario) => scenario.code === 'scenario_1010');
+                    return current || defaultScenario?.code || data.scenarios[0]?.code || '';
+                });
             })
             .catch(() => {
                 if (alive) setResult({ ok: false, message: '시나리오 목록을 불러오지 못했습니다.' });
