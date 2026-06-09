@@ -5,7 +5,6 @@ import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ServerBoard from '@/components/ServerBoard';
 import { GAME_URL, LOBBY_LABELS, LOBBY_FOOTNOTES } from '@/lib/constants';
-import serversData from '@/config/servers.json';
 
 // servers.json 은 이제 **라우팅 정보만**(id/name/gameUrl) 쓴다. 상태/턴텀/유저수는 전부 라이브
 // basic-info 결과로 그린다(하드코딩 제거 — 진입 플로우 정본화 §5.4). gameApiUrl 은 서버사이드
@@ -15,8 +14,6 @@ interface ServerEntry {
     name: string;
     gameUrl?: string;
 }
-
-const SERVERS = serversData.servers as ServerEntry[];
 
 // game-api ServerBasicInfoResponse 미러(IdentityDto/ServerBasicInfoDto). 전 필드 실쿼리 결과.
 interface ServerGameInfo {
@@ -163,6 +160,23 @@ function ServerRow({ server }: { server: ServerEntry }) {
 }
 
 function LobbyView() {
+    const [servers, setServers] = useState<ServerEntry[]>([]);
+
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/servers', { cache: 'no-store' })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+            .then((data: { servers?: ServerEntry[] }) => {
+                if (alive) setServers(data.servers ?? []);
+            })
+            .catch(() => {
+                if (alive) setServers([]);
+            });
+        return () => {
+            alive = false;
+        };
+    }, []);
+
     return (
         <div className="lobby-shell">
             <Topbar />
@@ -170,7 +184,7 @@ function LobbyView() {
                 {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 전황 로그 (devsam '제 전황' 형태). */}
                 <ServerBoard />
 
-                {SERVERS.length > 0 && (
+                {servers.length > 0 && (
                     <section>
                         <h2 className="lobby-section-title">{LOBBY_LABELS.serverSelect}</h2>
                         <div className="game-table-wrap">
@@ -185,7 +199,7 @@ function LobbyView() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {SERVERS.map((server) => (
+                                    {servers.map((server) => (
                                         <ServerRow key={server.id} server={server} />
                                     ))}
                                 </tbody>

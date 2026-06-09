@@ -9,7 +9,7 @@ export function middleware(req: NextRequest) {
     const server = req.nextUrl.searchParams.get('server');
     if (!server) return NextResponse.next();
     // 영숫자/언더스코어만 허용(주입 방지). 미지값은 route handler가 기본(main)으로 폴백.
-    if (!/^[a-zA-Z0-9_]+$/.test(server)) return NextResponse.next();
+    if (!/^[a-zA-Z0-9_-]+$/.test(server)) return NextResponse.next();
     const res = NextResponse.next();
     res.cookies.set(SERVER_COOKIE, server, {
         path: '/',
