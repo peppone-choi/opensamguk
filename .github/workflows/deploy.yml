@@ -128,9 +128,9 @@ jobs:
           echo "=== GHCR login ==="   # 매 배포 재login → 박스 토큰 만료 무관.
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
-	          COMPOSE="docker compose -f docker-compose.production.yml"
-	          echo "=== Pulling images ==="
-	          $COMPOSE pull gateway-api game-api game-engine gateway-frontend game-frontend
+          COMPOSE="docker compose -f docker-compose.production.yml"
+          echo "=== Pulling images ==="
+          $COMPOSE pull gateway-api game-api game-engine gateway-frontend game-frontend
 
           # Rolling restart — 업스트림 먼저, engine 다음, nginx 마지막(Rule A: stale-DNS 502 방지).
           echo "=== Restarting main upstreams ==="
