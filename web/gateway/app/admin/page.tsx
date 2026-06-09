@@ -49,6 +49,26 @@ interface DeployResult {
     message: string;
     detail?: string | null;
 }
+interface EnvField {
+    key: string;
+    value: string | null;
+    configured: boolean;
+    writeOnly: boolean;
+    masked: boolean;
+    metadata?: {
+        description?: string;
+    };
+}
+interface EnvConfigResponse {
+    ok?: boolean;
+    configured?: boolean;
+    scope: 'shared' | 'server';
+    id?: string;
+    restartRequired?: boolean;
+    affectedServices?: string[];
+    fields: Record<string, EnvField>;
+    message?: string | null;
+}
 
 // ===== B1b 락(동결) — game-engine StatusController DTO 미러 =====
 // GET  /admin/turn-daemon/status → TurnDaemonStatus
@@ -79,6 +99,50 @@ async function getJson<T>(path: string): Promise<T> {
     return (await res.json()) as T;
 }
 
+const BOOLEAN_ENV_KEYS = new Set(['COOKIE_SECURE', 'SCENARIO_SEED_ENABLED']);
+
+function fieldInitialValue(field: EnvField): string {
+    if (field.writeOnly) return '';
+    return field.value ?? '';
+}
+
+function EnvFieldInput({
+    field,
+    value,
+    disabled,
+    onChange,
+}: {
+    field: EnvField;
+    value: string;
+    disabled: boolean;
+    onChange: (value: string) => void;
+}) {
+    if (BOOLEAN_ENV_KEYS.has(field.key)) {
+        return (
+            <label className="env-toggle">
+                <input
+                    type="checkbox"
+                    checked={value === 'true'}
+                    disabled={disabled}
+                    onChange={(e) => onChange(e.target.checked ? 'true' : 'false')}
+                />
+                <span>{value === 'true' ? 'true' : 'false'}</span>
+            </label>
+        );
+    }
+
+    return (
+        <input
+            type={field.writeOnly ? 'password' : field.key.endsWith('_PORT') ? 'number' : 'text'}
+            inputMode={field.key.endsWith('_PORT') ? 'numeric' : undefined}
+            value={value}
+            disabled={disabled}
+            placeholder={field.writeOnly && field.configured ? '새 값 입력' : undefined}
+            onChange={(e) => onChange(e.target.value)}
+        />
+    );
+}
+
 /** 한 서비스 버전 셀 — reachable=false면 '응답 없음' 뱃지, 아니면 버전/태그/빌드시각. */
 function ServiceCell({ svc }: { svc: ServiceVersion }) {
     if (!svc.reachable) {
@@ -89,6 +153,71 @@ function ServiceCell({ svc }: { svc: ServiceVersion }) {
             <span className="svc-version">{svc.version ?? '-'}</span>
             <span className="svc-meta">태그 {svc.imageTag ?? '-'}</span>
             {svc.buildTime && <span className="svc-meta">빌드 {svc.buildTime}</span>}
+        </div>
+    );
+}
+
+function EnvConfigEditor({
+    title,
+    config,
+    drafts,
+    busy,
+    onChange,
+    onSave,
+}: {
+    title: string;
+    config: EnvConfigResponse | null;
+    drafts: Record<string, string>;
+    busy: boolean;
+    onChange: (key: string, value: string) => void;
+    onSave: () => void;
+}) {
+    if (!config) {
+        return <p className="svc-meta">환경 설정 조회 중…</p>;
+    }
+    if (config.configured === false) {
+        return <p className="deploy-note">{config.message ?? 'deployer가 설정되지 않았습니다.'}</p>;
+    }
+    const fields = Object.values(config.fields).sort((a, b) => a.key.localeCompare(b.key));
+    const changed = fields.some((field) => {
+        const value = drafts[field.key] ?? '';
+        if (field.writeOnly) return value.trim() !== '';
+        return value !== fieldInitialValue(field);
+    });
+
+    return (
+        <div className="env-config-editor">
+            <div className="env-config-head">
+                <h3 className="lobby-section-title">{title}</h3>
+                {config.restartRequired && (
+                    <span className="status-badge status-gold">재시작 필요</span>
+                )}
+            </div>
+            <div className="env-field-list">
+                {fields.map((field) => (
+                    <label key={field.key} className="env-field-row">
+                        <span className="env-field-meta">
+                            <strong>{field.key}</strong>
+                            <small>{field.metadata?.description ?? (field.writeOnly ? '비밀값' : '설정값')}</small>
+                        </span>
+                        <EnvFieldInput
+                            field={field}
+                            value={drafts[field.key] ?? fieldInitialValue(field)}
+                            disabled={busy}
+                            onChange={(value) => onChange(field.key, value)}
+                        />
+                        {field.masked && <span className="status-badge status-jade">숨김</span>}
+                    </label>
+                ))}
+            </div>
+            {config.affectedServices && config.affectedServices.length > 0 && (
+                <p className="deploy-note">
+                    적용 대상 {config.affectedServices.join(', ')} · game-engine은 자동 재기동하지 않습니다.
+                </p>
+            )}
+            <button type="button" className="btn-primary" disabled={busy || !changed} onClick={onSave}>
+                저장
+            </button>
         </div>
     );
 }
@@ -341,9 +470,17 @@ function ServerControl() {
  */
 function GameEnvControl() {
     const [status, setStatus] = useState<TurnDaemonStatus | null>(null);
+    const [version, setVersion] = useState<VersionResponse | null>(null);
+    const [selectedServer, setSelectedServer] = useState<string>('');
+    const [sharedEnv, setSharedEnv] = useState<EnvConfigResponse | null>(null);
+    const [serverEnv, setServerEnv] = useState<EnvConfigResponse | null>(null);
+    const [sharedDrafts, setSharedDrafts] = useState<Record<string, string>>({});
+    const [serverDrafts, setServerDrafts] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    const [envBusy, setEnvBusy] = useState(false);
+    const [envMessage, setEnvMessage] = useState<string | null>(null);
 
     // 데몬 락 상태 재조회. 진입 + 락걸기/락풀기 후 호출.
     const reload = useCallback(async () => {
@@ -356,17 +493,66 @@ function GameEnvControl() {
         }
     }, []);
 
+    const loadSharedEnv = useCallback(async () => {
+        const data = await getJson<EnvConfigResponse>('admin/env/shared');
+        setSharedEnv(data);
+        setSharedDrafts(
+            Object.fromEntries(Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)])),
+        );
+    }, []);
+
+    const loadServerEnv = useCallback(async (serverId: string) => {
+        if (!serverId) {
+            setServerEnv(null);
+            setServerDrafts({});
+            return;
+        }
+        const data = await getJson<EnvConfigResponse>(`admin/env/servers/${encodeURIComponent(serverId)}`);
+        setServerEnv(data);
+        setServerDrafts(
+            Object.fromEntries(Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)])),
+        );
+    }, []);
+
     useEffect(() => {
         let alive = true;
         (async () => {
             setLoading(true);
-            await reload();
+            try {
+                const ver = await getJson<VersionResponse>('admin/version');
+                if (!alive) return;
+                setVersion(ver);
+                const firstServer = ver.servers[0]?.id ?? '';
+                setSelectedServer(firstServer);
+                await Promise.all([reload(), loadSharedEnv(), loadServerEnv(firstServer)]);
+            } catch {
+                if (alive) setError('게임 환경 정보를 불러오지 못했습니다.');
+            }
             if (alive) setLoading(false);
         })();
         return () => {
             alive = false;
         };
-    }, [reload]);
+    }, [loadServerEnv, loadSharedEnv, reload]);
+
+    useEffect(() => {
+        if (!selectedServer) return;
+        let alive = true;
+        (async () => {
+            setEnvBusy(true);
+            try {
+                await loadServerEnv(selectedServer);
+                if (alive) setEnvMessage(null);
+            } catch {
+                if (alive) setEnvMessage('서버 환경 설정을 불러오지 못했습니다.');
+            } finally {
+                if (alive) setEnvBusy(false);
+            }
+        })();
+        return () => {
+            alive = false;
+        };
+    }, [loadServerEnv, selectedServer]);
 
     // 락걸기(pause) / 락풀기(resume) — POST 후 실 상태로 갱신.
     async function toggleLock(action: 'pause' | 'resume') {
@@ -391,6 +577,60 @@ function GameEnvControl() {
         } finally {
             await reload();
             setBusy(false);
+        }
+    }
+
+    async function saveEnv(scope: 'shared' | 'server') {
+        const config = scope === 'shared' ? sharedEnv : serverEnv;
+        const drafts = scope === 'shared' ? sharedDrafts : serverDrafts;
+        if (!config) return;
+        const values: Record<string, string> = {};
+        for (const [key, field] of Object.entries(config.fields ?? {})) {
+            const value = drafts[key] ?? '';
+            if (field.writeOnly) {
+                if (value.trim() !== '') values[key] = value;
+            } else if (value !== fieldInitialValue(field)) {
+                values[key] = value;
+            }
+        }
+        if (Object.keys(values).length === 0) return;
+        setEnvBusy(true);
+        setEnvMessage(null);
+        try {
+            const path =
+                scope === 'shared'
+                    ? 'admin/env/shared'
+                    : `admin/env/servers/${encodeURIComponent(selectedServer)}`;
+            const res = await fetch(`/api/proxy/${path}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ values }),
+            });
+            const data = (await res.json()) as EnvConfigResponse;
+            if (!res.ok || data.ok === false) {
+                setEnvMessage(data.message ?? '환경 설정 저장에 실패했습니다.');
+                return;
+            }
+            if (scope === 'shared') {
+                setSharedEnv(data);
+                setSharedDrafts(
+                    Object.fromEntries(
+                        Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+                    ),
+                );
+            } else {
+                setServerEnv(data);
+                setServerDrafts(
+                    Object.fromEntries(
+                        Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+                    ),
+                );
+            }
+            setEnvMessage('저장되었습니다.');
+        } catch {
+            setEnvMessage('환경 설정 저장에 실패했습니다.');
+        } finally {
+            setEnvBusy(false);
         }
     }
 
@@ -441,7 +681,41 @@ function GameEnvControl() {
                 시작시간 / 최대장수·국가 / 시작년도 / 턴시간. 아직 미구현. */}
             <div className="env-section env-pending">
                 <h3 className="lobby-section-title">시간 · 봉급 · 환경 설정</h3>
-                <p>{PLACEHOLDER}</p>
+                <div className="env-server-selector">
+                    <label className="field">
+                        <span>게임 서버</span>
+                        <select
+                            value={selectedServer}
+                            disabled={envBusy || !version?.servers.length}
+                            onChange={(e) => setSelectedServer(e.target.value)}
+                        >
+                            {version?.servers.map((server) => (
+                                <option key={server.id} value={server.id}>
+                                    {server.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+                {envMessage && <p className="deploy-result ok">{envMessage}</p>}
+                <div className="env-config-grid">
+                    <EnvConfigEditor
+                        title="공유 스택"
+                        config={sharedEnv}
+                        drafts={sharedDrafts}
+                        busy={envBusy}
+                        onChange={(key, value) => setSharedDrafts((prev) => ({ ...prev, [key]: value }))}
+                        onSave={() => saveEnv('shared')}
+                    />
+                    <EnvConfigEditor
+                        title="게임 서버"
+                        config={serverEnv}
+                        drafts={serverDrafts}
+                        busy={envBusy || !selectedServer}
+                        onChange={(key, value) => setServerDrafts((prev) => ({ ...prev, [key]: value }))}
+                        onSave={() => saveEnv('server')}
+                    />
+                </div>
             </div>
         </div>
     );

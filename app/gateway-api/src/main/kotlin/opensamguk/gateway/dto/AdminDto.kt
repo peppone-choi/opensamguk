@@ -66,6 +66,11 @@ data class DeployRequest(
     val tag: String,
 )
 
+data class EnvProxyResponse(
+    val status: Int,
+    val body: String,
+)
+
 // ──────────────────────────────────────────────────────────────────────────
 // B2 회원관리(루트DB) — legacy j_get_userlist / j_set_userlist / BanEmailAddress 패러티
 // ──────────────────────────────────────────────────────────────────────────
