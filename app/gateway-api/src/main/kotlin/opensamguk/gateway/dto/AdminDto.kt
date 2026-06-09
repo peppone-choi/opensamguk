@@ -71,6 +71,15 @@ data class EnvProxyResponse(
     val body: String,
 )
 
+data class ScenarioOption(
+    val code: String,
+    val title: String,
+)
+
+data class ScenarioListResponse(
+    val scenarios: List<ScenarioOption>,
+)
+
 // ──────────────────────────────────────────────────────────────────────────
 // B2 회원관리(루트DB) — legacy j_get_userlist / j_set_userlist / BanEmailAddress 패러티
 // ──────────────────────────────────────────────────────────────────────────

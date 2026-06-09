@@ -7,6 +7,7 @@ import opensamguk.gateway.dto.DeployRequest
 import opensamguk.gateway.dto.DeployResult
 import opensamguk.gateway.dto.DeployStatus
 import opensamguk.gateway.dto.ScrubResult
+import opensamguk.gateway.dto.ScenarioListResponse
 import opensamguk.gateway.dto.ServiceVersion
 import opensamguk.gateway.dto.SystemFlagResponse
 import opensamguk.gateway.dto.SystemToggleRequest
@@ -16,6 +17,7 @@ import opensamguk.gateway.dto.VersionResponse
 import opensamguk.gateway.security.CustomUserDetails
 import opensamguk.gateway.service.AdminMemberService
 import opensamguk.gateway.service.DeployService
+import opensamguk.gateway.service.ScenarioCatalogService
 import opensamguk.gateway.service.VersionService
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.info.BuildProperties
@@ -43,6 +45,7 @@ class AdminController(
     private val deployService: DeployService,
     private val versionService: VersionService,
     private val adminMemberService: AdminMemberService,
+    private val scenarioCatalogService: ScenarioCatalogService,
     buildPropertiesProvider: ObjectProvider<BuildProperties>,
 ) {
     // buildInfo가 없는 환경(테스트 등)에서는 null — 그때는 gateway 버전 필드가 null로 응답된다.
@@ -85,6 +88,10 @@ class AdminController(
     @PostMapping("/servers", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createServer(@RequestBody body: String): ResponseEntity<String> =
         deployService.createServer(body).toResponse()
+
+    @GetMapping("/scenarios")
+    fun scenarios(): ResponseEntity<ScenarioListResponse> =
+        ResponseEntity.ok(scenarioCatalogService.list())
 
     @GetMapping("/env/shared", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun sharedEnv(): ResponseEntity<String> =

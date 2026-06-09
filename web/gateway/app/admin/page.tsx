@@ -80,6 +80,13 @@ interface ServerCreateResponse {
     message?: string | null;
     error?: string | null;
 }
+interface ScenarioOption {
+    code: string;
+    title: string;
+}
+interface ScenarioListResponse {
+    scenarios: ScenarioOption[];
+}
 
 // ===== B1b 락(동결) — game-engine StatusController DTO 미러 =====
 // GET  /admin/turn-daemon/status → TurnDaemonStatus
@@ -351,11 +358,28 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [gameApiPort, setGameApiPort] = useState('8101');
     const [webGamePort, setWebGamePort] = useState('3101');
     const [imageTag, setImageTag] = useState('');
-    const [scenarioCode, setScenarioCode] = useState('scenario_1010');
+    const [scenarioCode, setScenarioCode] = useState('');
+    const [scenarios, setScenarios] = useState<ScenarioOption[]>([]);
     const [scenarioSeedEnabled, setScenarioSeedEnabled] = useState(true);
     const [jwtSecret, setJwtSecret] = useState('');
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<ServerCreateResponse | null>(null);
+
+    useEffect(() => {
+        let alive = true;
+        getJson<ScenarioListResponse>('admin/scenarios')
+            .then((data) => {
+                if (!alive) return;
+                setScenarios(data.scenarios);
+                setScenarioCode((current) => current || data.scenarios[0]?.code || '');
+            })
+            .catch(() => {
+                if (alive) setResult({ ok: false, message: '시나리오 목록을 불러오지 못했습니다.' });
+            });
+        return () => {
+            alive = false;
+        };
+    }, []);
 
     async function createServer() {
         setBusy(true);
@@ -385,7 +409,12 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
         }
     }
 
-    const valid = id.trim() !== '' && name.trim() !== '' && gameApiPort.trim() !== '' && webGamePort.trim() !== '';
+    const valid =
+        id.trim() !== '' &&
+        name.trim() !== '' &&
+        gameApiPort.trim() !== '' &&
+        webGamePort.trim() !== '' &&
+        scenarioCode.trim() !== '';
 
     return (
         <div className="deploy-server">
@@ -428,7 +457,13 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                 </label>
                 <label className="field">
                     <span>시나리오</span>
-                    <input value={scenarioCode} disabled={busy} onChange={(e) => setScenarioCode(e.target.value)} />
+                    <select value={scenarioCode} disabled={busy} onChange={(e) => setScenarioCode(e.target.value)}>
+                        {scenarios.map((scenario) => (
+                            <option key={scenario.code} value={scenario.code}>
+                                {scenario.title}
+                            </option>
+                        ))}
+                    </select>
                 </label>
                 <label className="field">
                     <span>JWT_SECRET</span>
