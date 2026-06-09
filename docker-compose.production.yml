@@ -117,6 +117,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as game-api}
       JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION:-900000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-604800000}
+      DEPLOYER_URL: ${DEPLOYER_URL:-http://deployer:9000}
+      DEPLOYER_TOKEN: ${DEPLOYER_TOKEN:?DEPLOYER_TOKEN required for admin deployer controls}
       # Admin seed (idempotent on empty users table).
       ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
