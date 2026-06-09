@@ -55,6 +55,8 @@ class DeployService(
         "GATEWAY_API_URL",
         "JWT_SECRET",
     )
+    private val serverIdRegex = Regex("^s?[A-Za-z0-9_-]+$")
+    private val portRegex = Regex("^[0-9]{1,5}$")
 
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
 
@@ -137,6 +139,9 @@ class DeployService(
             ?: proxyEnvPatch(path = "/env/server?id={id}", serverId = server.id, body = body)
     }
 
+    fun createServer(body: String): EnvProxyResponse =
+        validateCreateServer(body) ?: proxyCreateServer(body)
+
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
     private fun resolve(serverId: String?) =
         if (serverId.isNullOrBlank()) registry.default() else registry.find(serverId)
@@ -157,6 +162,29 @@ class DeployService(
             return json(200, """{"ok":false,"message":"배포 deployer가 설정되지 않았습니다 (DEPLOYER_URL/TOKEN 미설정)."}""")
         }
         return proxyEnv("PATCH", path, serverId, body)
+    }
+
+    private fun proxyCreateServer(body: String): EnvProxyResponse {
+        if (!configured()) {
+            return json(200, """{"ok":false,"message":"배포 deployer가 설정되지 않았습니다 (DEPLOYER_URL/TOKEN 미설정)."}""")
+        }
+        return try {
+            val raw = rest.post()
+                .uri("${deployerUrl.trimEnd('/')}/servers")
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer $deployerToken")
+                .body(body)
+                .retrieve()
+                .body(String::class.java)
+            json(200, raw ?: "{}")
+        } catch (e: RestClientResponseException) {
+            val responseBody = e.responseBodyAsString.takeIf { it.isNotBlank() }
+                ?: """{"ok":false,"message":"deployer 서버 생성 요청 실패"}"""
+            json(e.statusCode.value(), responseBody)
+        } catch (e: Exception) {
+            log.warn("deployer 서버 생성 요청 실패", e)
+            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "deployer 서버 생성 요청 실패: ${e.message}")))
+        }
     }
 
     private fun proxyEnv(method: String, path: String, serverId: String?, body: String?): EnvProxyResponse =
@@ -204,6 +232,41 @@ class DeployService(
         } catch (e: Exception) {
             json(400, """{"ok":false,"message":"환경변수 변경 요청 JSON이 올바르지 않습니다."}""")
         }
+
+    private fun validateCreateServer(body: String): EnvProxyResponse? =
+        try {
+            val node = objectMapper.readTree(body)
+            val id = node.path("id").asText("")
+            val name = node.path("name").asText("")
+            val gameApiPort = node.path("gameApiPort").asText("")
+            val webGamePort = node.path("webGamePort").asText("")
+            val imageTag = node.path("imageTag").asText("")
+            val scenarioCode = node.path("scenarioCode").asText("")
+            val jwtSecret = node.path("jwtSecret").asText("")
+            when {
+                id.isBlank() || !serverIdRegex.matches(id) ->
+                    json(400, """{"ok":false,"message":"서버 id가 올바르지 않습니다."}""")
+                name.isBlank() || name.contains('\n') || name.contains('\r') ->
+                    json(400, """{"ok":false,"message":"서버 이름이 올바르지 않습니다."}""")
+                !validPort(gameApiPort) || !validPort(webGamePort) ->
+                    json(400, """{"ok":false,"message":"포트는 1-65535 숫자여야 합니다."}""")
+                imageTag.isNotBlank() && !imageTag.matches(Regex("^[A-Za-z0-9._-]+$")) ->
+                    json(400, """{"ok":false,"message":"이미지 태그가 올바르지 않습니다."}""")
+                scenarioCode.isNotBlank() && !scenarioCode.matches(Regex("^[A-Za-z0-9_.:-]+$")) ->
+                    json(400, """{"ok":false,"message":"시나리오 코드가 올바르지 않습니다."}""")
+                jwtSecret.contains('\n') || jwtSecret.contains('\r') ->
+                    json(400, """{"ok":false,"message":"JWT_SECRET이 올바르지 않습니다."}""")
+                else -> null
+            }
+        } catch (e: Exception) {
+            json(400, """{"ok":false,"message":"서버 생성 요청 JSON이 올바르지 않습니다."}""")
+        }
+
+    private fun validPort(value: String): Boolean {
+        if (!portRegex.matches(value)) return false
+        val n = value.toIntOrNull() ?: return false
+        return n in 1..65535
+    }
 
     private fun json(status: Int, body: String): EnvProxyResponse =
         EnvProxyResponse(status.coerceIn(100, 599).takeIf { HttpStatus.resolve(it) != null } ?: 500, body)

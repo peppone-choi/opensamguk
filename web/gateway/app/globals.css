@@ -790,6 +790,15 @@ textarea:focus {
     color: var(--text-muted);
     font-size: var(--text-sm);
 }
+.server-create-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-md);
+}
+.server-create-toggle {
+    align-self: end;
+    min-height: 42px;
+}
 .deploy-result {
     font-size: var(--text-sm);
     padding: var(--space-sm) var(--space-md);
@@ -899,6 +908,9 @@ textarea:focus {
 }
 
 @media (max-width: 900px) {
+    .server-create-grid {
+        grid-template-columns: 1fr;
+    }
     .env-config-grid {
         grid-template-columns: 1fr;
     }

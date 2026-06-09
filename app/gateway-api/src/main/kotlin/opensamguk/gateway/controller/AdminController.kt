@@ -82,6 +82,10 @@ class AdminController(
         return ResponseEntity.ok(deployService.deploy(request.serverId, request.tag, actor))
     }
 
+    @PostMapping("/servers", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun createServer(@RequestBody body: String): ResponseEntity<String> =
+        deployService.createServer(body).toResponse()
+
     @GetMapping("/env/shared", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun sharedEnv(): ResponseEntity<String> =
         deployService.sharedEnv().toResponse()

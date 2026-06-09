@@ -69,6 +69,17 @@ interface EnvConfigResponse {
     fields: Record<string, EnvField>;
     message?: string | null;
 }
+interface ServerCreateResponse {
+    ok: boolean;
+    id?: string;
+    name?: string;
+    project?: string;
+    restartRequired?: boolean;
+    affectedServices?: string[];
+    detail?: string | null;
+    message?: string | null;
+    error?: string | null;
+}
 
 // ===== B1b 락(동결) — game-engine StatusController DTO 미러 =====
 // GET  /admin/turn-daemon/status → TurnDaemonStatus
@@ -334,6 +345,128 @@ function DeployControl({
     );
 }
 
+function CreateServerControl({ onCreated }: { onCreated: () => void }) {
+    const [id, setId] = useState('s1');
+    const [name, setName] = useState('통일 서버');
+    const [gameApiPort, setGameApiPort] = useState('8101');
+    const [webGamePort, setWebGamePort] = useState('3101');
+    const [imageTag, setImageTag] = useState('');
+    const [scenarioCode, setScenarioCode] = useState('scenario_1010');
+    const [scenarioSeedEnabled, setScenarioSeedEnabled] = useState(true);
+    const [jwtSecret, setJwtSecret] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState<ServerCreateResponse | null>(null);
+
+    async function createServer() {
+        setBusy(true);
+        setResult(null);
+        try {
+            const res = await fetch('/api/proxy/admin/servers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id,
+                    name,
+                    gameApiPort,
+                    webGamePort,
+                    imageTag,
+                    scenarioCode,
+                    scenarioSeedEnabled,
+                    jwtSecret,
+                }),
+            });
+            const data = (await res.json()) as ServerCreateResponse;
+            setResult(data);
+            if (res.ok && data.ok) onCreated();
+        } catch {
+            setResult({ ok: false, message: '서버 생성 요청에 실패했습니다.' });
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    const valid = id.trim() !== '' && name.trim() !== '' && gameApiPort.trim() !== '' && webGamePort.trim() !== '';
+
+    return (
+        <div className="deploy-server">
+            <div className="deploy-server-head">새 서버 생성</div>
+            <div className="server-create-grid">
+                <label className="field">
+                    <span>서버 ID</span>
+                    <input value={id} disabled={busy} onChange={(e) => setId(e.target.value)} placeholder="s1" />
+                </label>
+                <label className="field">
+                    <span>서버 이름</span>
+                    <input value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
+                </label>
+                <label className="field">
+                    <span>game-api 포트</span>
+                    <input
+                        type="number"
+                        min="1"
+                        max="65535"
+                        value={gameApiPort}
+                        disabled={busy}
+                        onChange={(e) => setGameApiPort(e.target.value)}
+                    />
+                </label>
+                <label className="field">
+                    <span>web-game 포트</span>
+                    <input
+                        type="number"
+                        min="1"
+                        max="65535"
+                        value={webGamePort}
+                        disabled={busy}
+                        onChange={(e) => setWebGamePort(e.target.value)}
+                    />
+                </label>
+                <label className="field">
+                    <span>이미지 태그</span>
+                    <input value={imageTag} disabled={busy} onChange={(e) => setImageTag(e.target.value)} />
+                    <small className="field-hint">비우면 공유 스택 IMAGE_TAG를 사용합니다.</small>
+                </label>
+                <label className="field">
+                    <span>시나리오</span>
+                    <input value={scenarioCode} disabled={busy} onChange={(e) => setScenarioCode(e.target.value)} />
+                </label>
+                <label className="field">
+                    <span>JWT_SECRET</span>
+                    <input
+                        type="password"
+                        value={jwtSecret}
+                        disabled={busy}
+                        onChange={(e) => setJwtSecret(e.target.value)}
+                    />
+                    <small className="field-hint">비우면 공유 스택 JWT_SECRET을 복사합니다.</small>
+                </label>
+                <label className="env-toggle server-create-toggle">
+                    <input
+                        type="checkbox"
+                        checked={scenarioSeedEnabled}
+                        disabled={busy}
+                        onChange={(e) => setScenarioSeedEnabled(e.target.checked)}
+                    />
+                    시나리오 자동 시드
+                </label>
+            </div>
+            <div className="deploy-row">
+                <button type="button" className="btn-primary" disabled={busy || !valid} onClick={createServer}>
+                    {busy ? '생성 중…' : '서버 생성'}
+                </button>
+                <span className="deploy-note">생성 후 gateway-api/web-gateway가 레지스트리를 다시 읽습니다.</span>
+            </div>
+            {result && (
+                <p className={`deploy-result ${result.ok ? 'ok' : 'fail'}`}>
+                    {result.ok
+                        ? `${result.name ?? result.id} 생성 완료 · ${result.project ?? ''}`
+                        : result.message || result.error || result.detail || '서버 생성에 실패했습니다.'}
+                </p>
+            )}
+        </div>
+    );
+}
+
 /** "서버 제어" 탭 — 전 서비스 버전 표 + 서버별 버전-선택 재배포. */
 function ServerControl() {
     const [version, setVersion] = useState<VersionResponse | null>(null);
@@ -351,42 +484,43 @@ function ServerControl() {
         }
     }, []);
 
-    // 진입 시 버전 + 서버별 deploy/status 로드.
+    const loadVersion = useCallback(async (showSpinner = true) => {
+        if (showSpinner) setLoading(true);
+        setError(null);
+        try {
+            const ver = await getJson<VersionResponse>('admin/version');
+            setVersion(ver);
+            const entries = await Promise.all(
+                ver.servers.map(async (s) => {
+                    try {
+                        const st = await getJson<DeployStatus>(
+                            `admin/deploy/status?serverId=${encodeURIComponent(s.id)}`,
+                        );
+                        return [s.id, st] as const;
+                    } catch {
+                        return null;
+                    }
+                }),
+            );
+            const map: Record<string, DeployStatus> = {};
+            for (const e of entries) if (e) map[e[0]] = e[1];
+            setStatuses(map);
+        } catch {
+            setError('서버 버전 정보를 불러오지 못했습니다.');
+        } finally {
+            if (showSpinner) setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         let alive = true;
         (async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const ver = await getJson<VersionResponse>('admin/version');
-                if (!alive) return;
-                setVersion(ver);
-                const entries = await Promise.all(
-                    ver.servers.map(async (s) => {
-                        try {
-                            const st = await getJson<DeployStatus>(
-                                `admin/deploy/status?serverId=${encodeURIComponent(s.id)}`,
-                            );
-                            return [s.id, st] as const;
-                        } catch {
-                            return null;
-                        }
-                    }),
-                );
-                if (!alive) return;
-                const map: Record<string, DeployStatus> = {};
-                for (const e of entries) if (e) map[e[0]] = e[1];
-                setStatuses(map);
-            } catch {
-                if (alive) setError('서버 버전 정보를 불러오지 못했습니다.');
-            } finally {
-                if (alive) setLoading(false);
-            }
+            if (alive) await loadVersion(true);
         })();
         return () => {
             alive = false;
         };
-    }, []);
+    }, [loadVersion]);
 
     if (loading) {
         return (
@@ -402,6 +536,10 @@ function ServerControl() {
     return (
         <div className="server-control">
             {version.skew && <div className="skew-banner">{SKEW_WARNING}</div>}
+
+            <div className="deploy-section">
+                <CreateServerControl onCreated={() => loadVersion(false)} />
+            </div>
 
             <div className="game-table-wrap">
                 <table className="game-table">
