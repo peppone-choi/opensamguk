@@ -22,7 +22,7 @@ class ScenarioCatalogService(
                     ScenarioOption(code = code, title = title)
                 }
             }
-            .sortedBy { it.code }
+            .sortedBy { it.code.removePrefix("scenario_").toIntOrNull() ?: Int.MAX_VALUE }
         return ScenarioListResponse(scenarios)
     }
 }
