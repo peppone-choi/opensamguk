@@ -19,7 +19,7 @@ function Gate({ children }: { children: React.ReactNode }) {
             // web/game엔 로그인 페이지가 없다 → 게이트웨이 로그인으로 보내고 next로 되돌아온다.
             const here = typeof window !== 'undefined' ? window.location.href : pathname;
             const next = encodeURIComponent(here);
-            const gatewayOrigin = CONFIGURED_GATEWAY_PUBLIC_URL ?? window.location.origin;
+            const gatewayOrigin = CONFIGURED_GATEWAY_PUBLIC_URL || window.location.origin;
             window.location.href = `${gatewayOrigin}/login?next=${next}`;
         }
     }, [loading, user, pathname]);

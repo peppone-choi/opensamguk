@@ -166,7 +166,6 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      # Server-only proxy targets (NEXT_PUBLIC_GATEWAY_URL is baked into the image at build).
       GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
     depends_on:
