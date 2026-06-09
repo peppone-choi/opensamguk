@@ -172,6 +172,41 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `서버 생성은 deployer servers endpoint로 POST한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer("""{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""")
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers", request.path)
+            assertEquals("POST", request.method)
+            assertEquals("Bearer tok", request.authorization)
+            assertTrue(request.body.contains(""""id":"s1""""))
+            assertFalse(result.body.contains("tok"))
+        }
+    }
+
+    @Test
+    fun `서버 생성 검증 실패는 deployer 호출 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer("""{"id":"../s1","name":"bad","gameApiPort":"8101","webGamePort":"3101"}""")
+
+            assertEquals(400, result.status)
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
     fun `알 수 없는 env key는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
