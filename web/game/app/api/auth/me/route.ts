@@ -1,41 +1,72 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { GATEWAY_API_URL } from '@/lib/server-api';
-import { ACCESS_COOKIE } from '@/lib/cookies';
+import { ACCESS_COOKIE, REFRESH_COOKIE, clearAuthCookies, setAuthCookies } from '@/lib/cookies';
 import type { User } from '@/lib/types';
 
 /**
- * 현재 사용자 조회 — 읽기 전용.
+ * 현재 사용자 조회 + 토큰 자동 갱신.
  *
- * web/game은 토큰을 발급/갱신하지 않는다(게이트웨이 소유). sam_access 쿠키를 서버사이드로 읽어
- * gateway-api /auth/me에 Bearer로 전달하고, 그 결과를 {user}로 반환한다. 쿠키가 없거나 인증 실패면
- * 401 {user:null} → AuthGate가 게이트웨이 로그인으로 보낸다. 일시적 업스트림 오류(5xx/네트워크)는
- * 502로 전달(쿠키 만료 처리를 트리거하지 않음 — 여기선 쿠키를 건드리지 않는다).
+ * web/game은 로그인/로그아웃 화면을 소유하지 않지만, `/api/auth/me`는 gateway와 같은 세션 회복
+ * 규칙을 유지한다. access가 만료/무효(401/403)면 같은 `/api/auth` path의 `sam_refresh` 쿠키로
+ * gateway-api `/auth/refresh`를 호출하고 갱신된 httpOnly 쿠키를 다시 심는다. 일시적 업스트림 오류는
+ * 쿠키를 건드리지 않고 502로 전달해 유효한 7일 세션을 끊지 않는다.
  */
+type AuthResponse = {
+    accessToken: string;
+    refreshToken: string;
+    user: User;
+};
+
+function isAuthFailure(status: number): boolean {
+    return status === 401 || status === 403;
+}
+
 export async function GET() {
     const store = await cookies();
     const access = store.get(ACCESS_COOKIE)?.value;
+    const refresh = store.get(REFRESH_COOKIE)?.value;
 
-    if (!access) {
-        return NextResponse.json({ user: null }, { status: 401 });
+    if (access) {
+        try {
+            const r = await fetch(`${GATEWAY_API_URL}/auth/me`, {
+                headers: { Authorization: `Bearer ${access}` },
+                cache: 'no-store',
+            });
+            if (r.ok) {
+                const user = (await r.json()) as User;
+                return NextResponse.json({ user });
+            }
+            if (!isAuthFailure(r.status)) {
+                return NextResponse.json({ error: '일시적 오류가 발생했습니다.' }, { status: 502 });
+            }
+        } catch {
+            return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
+        }
     }
 
-    try {
-        const r = await fetch(`${GATEWAY_API_URL}/auth/me`, {
-            headers: { Authorization: `Bearer ${access}` },
-            cache: 'no-store',
-        });
-        if (r.ok) {
-            const user = (await r.json()) as User;
-            return NextResponse.json({ user });
+    if (refresh) {
+        try {
+            const rr = await fetch(`${GATEWAY_API_URL}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refreshToken: refresh }),
+            });
+            if (rr.ok) {
+                const data = (await rr.json()) as AuthResponse;
+                const res = NextResponse.json({ user: data.user });
+                setAuthCookies(res, data);
+                return res;
+            }
+            if (!isAuthFailure(rr.status)) {
+                return NextResponse.json({ error: '일시적 오류가 발생했습니다.' }, { status: 502 });
+            }
+        } catch {
+            return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
         }
-        if (r.status === 401 || r.status === 403) {
-            // 만료/무효 — 게이트웨이가 refresh를 소유. 여기선 단순 미인증으로 취급.
-            return NextResponse.json({ user: null }, { status: 401 });
-        }
-        // 일시적 업스트림 오류 — 세션을 죽이지 않는다.
-        return NextResponse.json({ error: '일시적 오류가 발생했습니다.' }, { status: 502 });
-    } catch {
-        return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
     }
+
+    const res = NextResponse.json({ user: null }, { status: 401 });
+    clearAuthCookies(res);
+    return res;
 }
