@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import opensamguk.gameapi.read.MetaJsonConverter
+import org.hibernate.annotations.ColumnTransformer
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -32,6 +33,7 @@ class SelectNpcTokenEntity(
     var pickMoreFrom: Instant = Instant.EPOCH,
 
     @Convert(converter = MetaJsonConverter::class)
+    @ColumnTransformer(write = "?::jsonb")
     @Column(name = "pick_result", columnDefinition = "jsonb")
     var pickResult: Map<String, Any?> = linkedMapOf(),
 
