@@ -80,6 +80,23 @@ interface ServerCreateResponse {
     message?: string | null;
     error?: string | null;
 }
+interface ServerResetOptions {
+    scenarioCode: string;
+    scenarioSeedEnabled: boolean;
+    turnTerm: string;
+    sync: string;
+    fiction: string;
+    extend: string;
+    blockGeneralCreate: string;
+    npcMode: string;
+    showImgLevel: string;
+    autorunUserOptions: string[];
+    autorunUserMinutes: string;
+    joinMode: string;
+    tournamentTrig: string;
+    reserveOpen: string;
+    preReserveOpen: string;
+}
 interface ScenarioOption {
     code: string;
     title: string;
@@ -109,6 +126,35 @@ interface TurnDaemonControlResult {
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
 const SKEW_WARNING =
     '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
+const AUTORUN_OPTIONS = [
+    ['develop', '내정'],
+    ['warp', '순간이동'],
+    ['recruit', '징병'],
+    ['recruit_high', '모병'],
+    ['train', '훈사'],
+    ['battle', '출병'],
+    ['chief', '기본 사령턴'],
+] as const;
+const AUTORUN_MINUTES = [
+    ['0', '꺼짐'],
+    ['43200', '항상'],
+    ['10', '10분'],
+    ['20', '20분'],
+    ['30', '30분'],
+    ['60', '1시간'],
+    ['120', '2시간'],
+    ['180', '3시간'],
+    ['240', '4시간'],
+    ['360', '6시간'],
+    ['480', '8시간'],
+    ['600', '10시간'],
+    ['720', '12시간'],
+    ['1440', '24시간'],
+    ['2160', '36시간'],
+    ['2880', '48시간'],
+    ['3600', '60시간'],
+    ['4320', '72시간'],
+] as const;
 
 /** 인증 프록시 GET — JSON 파싱. 비-2xx면 throw. */
 async function getJson<T>(path: string): Promise<T> {
@@ -352,6 +398,306 @@ function DeployControl({
     );
 }
 
+function ServerLifecycleControl({
+    server,
+    scenarios,
+    onChanged,
+}: {
+    server: ServerVersion;
+    scenarios: ScenarioOption[];
+    onChanged: () => void;
+}) {
+    const defaultScenario = scenarios.find((scenario) => scenario.code === 'scenario_1010')?.code || scenarios[0]?.code || '';
+    const [mode, setMode] = useState<'reset' | 'delete' | null>(null);
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState<ServerCreateResponse | null>(null);
+    const [resetOptions, setResetOptions] = useState<ServerResetOptions>({
+        scenarioCode: defaultScenario,
+        scenarioSeedEnabled: true,
+        turnTerm: '60',
+        sync: '1',
+        fiction: '1',
+        extend: '1',
+        blockGeneralCreate: '0',
+        npcMode: '0',
+        showImgLevel: '3',
+        autorunUserOptions: ['develop', 'warp', 'recruit', 'recruit_high', 'train', 'battle', 'chief'],
+        autorunUserMinutes: '1440',
+        joinMode: 'full',
+        tournamentTrig: '1',
+        reserveOpen: '',
+        preReserveOpen: '',
+    });
+
+    useEffect(() => {
+        if (!resetOptions.scenarioCode && defaultScenario) {
+            setResetOptions((prev) => ({ ...prev, scenarioCode: defaultScenario }));
+        }
+    }, [defaultScenario, resetOptions.scenarioCode]);
+
+    function setReset<K extends keyof ServerResetOptions>(key: K, value: ServerResetOptions[K]) {
+        setResetOptions((prev) => ({ ...prev, [key]: value }));
+    }
+
+    function toggleAutorun(option: string, checked: boolean) {
+        setResetOptions((prev) => ({
+            ...prev,
+            autorunUserOptions: checked
+                ? Array.from(new Set([...prev.autorunUserOptions, option]))
+                : prev.autorunUserOptions.filter((item) => item !== option),
+        }));
+    }
+
+    async function runDelete() {
+        setBusy(true);
+        setResult(null);
+        try {
+            const res = await fetch(`/api/proxy/admin/servers/${encodeURIComponent(server.id)}`, {
+                method: 'DELETE',
+            });
+            const data = (await res.json()) as ServerCreateResponse;
+            setResult(data);
+            if (res.ok && data.ok) onChanged();
+        } catch {
+            setResult({ ok: false, message: '서버 삭제 요청에 실패했습니다.' });
+        } finally {
+            setBusy(false);
+            setMode(null);
+        }
+    }
+
+    async function runReset() {
+        if (!resetOptions.scenarioCode) {
+            setResult({ ok: false, message: '시나리오를 선택해야 리셋할 수 있습니다.' });
+            setMode(null);
+            return;
+        }
+        setBusy(true);
+        setResult(null);
+        try {
+            const res = await fetch(`/api/proxy/admin/servers/${encodeURIComponent(server.id)}/reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...resetOptions, confirm: `RESET ${server.id}` }),
+            });
+            const data = (await res.json()) as ServerCreateResponse;
+            setResult(data);
+            if (res.ok && data.ok) onChanged();
+        } catch {
+            setResult({ ok: false, message: '서버 리셋 요청에 실패했습니다.' });
+        } finally {
+            setBusy(false);
+            setMode(null);
+        }
+    }
+
+    const resetForm = (
+        <div className="server-reset-grid">
+            <label className="field">
+                <span>턴 시간(분)</span>
+                <select value={resetOptions.turnTerm} disabled={busy} onChange={(e) => setReset('turnTerm', e.target.value)}>
+                    {['120', '60', '30', '20', '10', '5', '2', '1'].map((value) => (
+                        <option key={value} value={value}>{value}</option>
+                    ))}
+                </select>
+            </label>
+            <label className="field">
+                <span>시간 동기화</span>
+                <select value={resetOptions.sync} disabled={busy} onChange={(e) => setReset('sync', e.target.value)}>
+                    <option value="1">Y</option>
+                    <option value="0">N</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>시나리오 선택</span>
+                <select
+                    value={resetOptions.scenarioCode}
+                    disabled={busy}
+                    onChange={(e) => setReset('scenarioCode', e.target.value)}
+                >
+                    {scenarios.map((scenario) => (
+                        <option key={scenario.code} value={scenario.code}>
+                            {scenario.title || scenario.code} ({scenario.code})
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <label className="field">
+                <span>NPC 상성</span>
+                <select value={resetOptions.fiction} disabled={busy} onChange={(e) => setReset('fiction', e.target.value)}>
+                    <option value="0">연의</option>
+                    <option value="1">가상</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>확장 NPC</span>
+                <select value={resetOptions.extend} disabled={busy} onChange={(e) => setReset('extend', e.target.value)}>
+                    <option value="1">포함</option>
+                    <option value="0">미포함</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>장수 임의 생성</span>
+                <select
+                    value={resetOptions.blockGeneralCreate}
+                    disabled={busy}
+                    onChange={(e) => setReset('blockGeneralCreate', e.target.value)}
+                >
+                    <option value="0">가능</option>
+                    <option value="2">장수명무작위</option>
+                    <option value="1">불가</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>NPC 빙의</span>
+                <select value={resetOptions.npcMode} disabled={busy} onChange={(e) => setReset('npcMode', e.target.value)}>
+                    <option value="1">가능</option>
+                    <option value="0">불가</option>
+                    <option value="2">선택 생성 가능</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>이미지 표기</span>
+                <select
+                    value={resetOptions.showImgLevel}
+                    disabled={busy}
+                    onChange={(e) => setReset('showImgLevel', e.target.value)}
+                >
+                    <option value="0">안함</option>
+                    <option value="1">전콘</option>
+                    <option value="2">전콘, 병종</option>
+                    <option value="3">전콘, 병종, NPC</option>
+                </select>
+            </label>
+            <fieldset className="field reset-wide">
+                <legend>휴식 턴 시 장수 턴</legend>
+                <div className="reset-checks">
+                    {AUTORUN_OPTIONS.map(([value, label]) => (
+                        <label key={value} className="env-toggle">
+                            <input
+                                type="checkbox"
+                                checked={resetOptions.autorunUserOptions.includes(value)}
+                                disabled={busy}
+                                onChange={(e) => toggleAutorun(value, e.target.checked)}
+                            />
+                            {label}
+                        </label>
+                    ))}
+                </div>
+            </fieldset>
+            <label className="field">
+                <span>자동 행동 유효 시간</span>
+                <select
+                    value={resetOptions.autorunUserMinutes}
+                    disabled={busy}
+                    onChange={(e) => setReset('autorunUserMinutes', e.target.value)}
+                >
+                    {AUTORUN_MINUTES.map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                    ))}
+                </select>
+            </label>
+            <label className="field">
+                <span>임관 모드</span>
+                <select value={resetOptions.joinMode} disabled={busy} onChange={(e) => setReset('joinMode', e.target.value)}>
+                    <option value="full">일반</option>
+                    <option value="onlyRandom">랜덤 임관</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>토너먼트 자동 시작</span>
+                <select
+                    value={resetOptions.tournamentTrig}
+                    disabled={busy}
+                    onChange={(e) => setReset('tournamentTrig', e.target.value)}
+                >
+                    <option value="0">수동</option>
+                    <option value="1">자동</option>
+                </select>
+            </label>
+            <label className="field">
+                <span>오픈 예약</span>
+                <input
+                    value={resetOptions.reserveOpen}
+                    disabled={busy}
+                    placeholder="YYYY-MM-DD hh:mm"
+                    onChange={(e) => setReset('reserveOpen', e.target.value)}
+                />
+            </label>
+            <label className="field">
+                <span>가오픈 예약</span>
+                <input
+                    value={resetOptions.preReserveOpen}
+                    disabled={busy}
+                    placeholder="YYYY-MM-DD hh:mm"
+                    onChange={(e) => setReset('preReserveOpen', e.target.value)}
+                />
+            </label>
+            <label className="env-toggle server-create-toggle">
+                <input
+                    type="checkbox"
+                    checked={resetOptions.scenarioSeedEnabled}
+                    disabled={busy}
+                    onChange={(e) => setReset('scenarioSeedEnabled', e.target.checked)}
+                />
+                시나리오 자동 시드
+            </label>
+        </div>
+    );
+
+    return (
+        <div className="deploy-control">
+            <div className="deploy-row">
+                <button type="button" className="btn-primary" disabled={busy} onClick={() => setMode('reset')}>
+                    리셋
+                </button>
+                <button type="button" className="btn-danger" disabled={busy} onClick={() => setMode('delete')}>
+                    삭제
+                </button>
+                <span className="deploy-note">리셋은 해당 서버 DB/Redis 볼륨을 초기화합니다.</span>
+            </div>
+            {result && (
+                <p className={`deploy-result ${result.ok ? 'ok' : 'fail'}`}>
+                    {result.ok
+                        ? `${result.name ?? result.id} 처리 완료 · ${result.project ?? ''}`
+                        : result.message || result.error || result.detail || '서버 제어 요청에 실패했습니다.'}
+                </p>
+            )}
+            <ConfirmModal
+                open={mode === 'reset'}
+                title={`${server.name} 리셋`}
+                danger
+                busy={busy}
+                confirmLabel="리셋 실행"
+                message={
+                    <>
+                        <p className="deploy-note">PHP 리셋 화면 항목 기준으로 서버를 다시 초기화합니다.</p>
+                        {resetForm}
+                    </>
+                }
+                onConfirm={runReset}
+                onCancel={() => setMode(null)}
+            />
+            <ConfirmModal
+                open={mode === 'delete'}
+                title={`${server.name} 삭제`}
+                danger
+                busy={busy}
+                confirmLabel="삭제 실행"
+                message={
+                    <>
+                        서버 &apos;{server.name}&apos;의 컨테이너, DB/Redis 볼륨, env, gateway registry 항목을 삭제합니다.
+                        <br />
+                        이 작업은 되돌릴 수 없습니다.
+                    </>
+                }
+                onConfirm={runDelete}
+                onCancel={() => setMode(null)}
+            />
+        </div>
+    );
+}
+
 function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [id, setId] = useState('s1');
     const [name, setName] = useState('통일 서버');
@@ -508,6 +854,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
 /** "서버 제어" 탭 — 전 서비스 버전 표 + 서버별 버전-선택 재배포. */
 function ServerControl() {
     const [version, setVersion] = useState<VersionResponse | null>(null);
+    const [scenarios, setScenarios] = useState<ScenarioOption[]>([]);
     const [statuses, setStatuses] = useState<Record<string, DeployStatus>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -526,8 +873,12 @@ function ServerControl() {
         if (showSpinner) setLoading(true);
         setError(null);
         try {
-            const ver = await getJson<VersionResponse>('admin/version');
+            const [ver, scenarioData] = await Promise.all([
+                getJson<VersionResponse>('admin/version'),
+                getJson<ScenarioListResponse>('admin/scenarios'),
+            ]);
             setVersion(ver);
+            setScenarios(scenarioData.scenarios);
             const entries = await Promise.all(
                 ver.servers.map(async (s) => {
                     try {
@@ -632,6 +983,7 @@ function ServerControl() {
                     <div key={server.id} className="deploy-server">
                         <div className="deploy-server-head">{server.name}</div>
                         <DeployControl server={server} status={statuses[server.id]} onReload={reloadStatus} />
+                        <ServerLifecycleControl server={server} scenarios={scenarios} onChanged={() => loadVersion(false)} />
                     </div>
                 ))}
             </div>

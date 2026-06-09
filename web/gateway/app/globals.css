@@ -795,6 +795,22 @@ textarea:focus {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: var(--space-md);
 }
+.server-reset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-md);
+    max-height: min(62vh, 640px);
+    overflow: auto;
+    padding-right: var(--space-xs);
+}
+.reset-wide {
+    grid-column: 1 / -1;
+}
+.reset-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
 .server-create-toggle {
     align-self: end;
     min-height: 42px;

@@ -24,6 +24,7 @@ import org.springframework.boot.info.BuildProperties
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -88,6 +89,17 @@ class AdminController(
     @PostMapping("/servers", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createServer(@RequestBody body: String): ResponseEntity<String> =
         deployService.createServer(body).toResponse()
+
+    @DeleteMapping("/servers/{serverId}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteServer(@PathVariable serverId: String): ResponseEntity<String> =
+        deployService.deleteServer(serverId).toResponse()
+
+    @PostMapping("/servers/{serverId}/reset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun resetServer(
+        @PathVariable serverId: String,
+        @RequestBody(required = false) body: String?,
+    ): ResponseEntity<String> =
+        deployService.resetServer(serverId, body ?: "{}").toResponse()
 
     @GetMapping("/scenarios")
     fun scenarios(): ResponseEntity<ScenarioListResponse> =

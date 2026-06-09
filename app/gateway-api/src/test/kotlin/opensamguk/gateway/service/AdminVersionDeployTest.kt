@@ -194,6 +194,77 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `서버 삭제는 deployer servers endpoint로 DELETE한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
+            )
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = """[{"id":"s1","name":"통일 서버","deployProject":"opensamguk-s1"}]"""),
+                mapper,
+            )
+
+            val result = svc.deleteServer("s1")
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers?id=s1&confirm=DELETE%20s1", request.path)
+            assertEquals("DELETE", request.method)
+            assertEquals("Bearer tok", request.authorization)
+        }
+    }
+
+    @Test
+    fun `서버 리셋은 deployer reset endpoint로 POST한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
+            )
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = """[{"id":"s1","name":"통일 서버","deployProject":"opensamguk-s1"}]"""),
+                mapper,
+            )
+
+            val result = svc.resetServer("s1", """{"confirm":"RESET s1","scenarioCode":"scenario_1002","turnTerm":"30","sync":"1","fiction":"0","extend":"1","blockGeneralCreate":"2","npcMode":"2","showImgLevel":"3","autorunUserOptions":["develop","battle"],"autorunUserMinutes":"1440","joinMode":"onlyRandom","tournamentTrig":"1","reserveOpen":"2026-06-10 20:00","preReserveOpen":"2026-06-10 19:00"}""")
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers/reset?id=s1", request.path)
+            assertEquals("POST", request.method)
+            assertEquals("Bearer tok", request.authorization)
+            assertTrue(request.body.contains(""""confirm":"RESET s1""""))
+            assertTrue(request.body.contains(""""autorunUserOptions":["develop","battle"]"""))
+            assertTrue(request.body.contains(""""preReserveOpen":"2026-06-10 19:00""""))
+        }
+    }
+
+    @Test
+    fun `서버 리셋 검증 실패는 deployer 호출 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = """[{"id":"s1","name":"통일 서버","deployProject":"opensamguk-s1"}]"""),
+                mapper,
+            )
+
+            val result = svc.resetServer("s1", """{"confirm":"RESET s1","turnTerm":"999","autorunUserOptions":["bad"]}""")
+
+            assertEquals(400, result.status)
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
     fun `서버 생성 검증 실패는 deployer 호출 전에 거부한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->

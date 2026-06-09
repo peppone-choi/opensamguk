@@ -54,6 +54,19 @@ class DeployService(
         "GAME_API_URL",
         "GATEWAY_API_URL",
         "JWT_SECRET",
+        "RESET_TURNTERM",
+        "RESET_SYNC",
+        "RESET_FICTION",
+        "RESET_EXTEND",
+        "RESET_BLOCK_GENERAL_CREATE",
+        "RESET_NPCMODE",
+        "RESET_SHOW_IMG_LEVEL",
+        "RESET_AUTORUN_USER_OPTIONS",
+        "RESET_AUTORUN_USER_MINUTES",
+        "RESET_JOIN_MODE",
+        "RESET_TOURNAMENT_TRIG",
+        "RESET_RESERVE_OPEN",
+        "RESET_PRE_RESERVE_OPEN",
     )
     private val serverIdRegex = Regex("^s?[A-Za-z0-9_-]+$")
     private val portRegex = Regex("^[0-9]{1,5}$")
@@ -142,6 +155,24 @@ class DeployService(
     fun createServer(body: String): EnvProxyResponse =
         validateCreateServer(body) ?: proxyCreateServer(body)
 
+    fun deleteServer(serverId: String): EnvProxyResponse {
+        val server = registry.find(serverId)
+            ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
+        return proxyServerAction(
+            method = "DELETE",
+            path = "/servers?id={id}&confirm={confirm}",
+            serverId = server.id,
+            confirm = "DELETE ${server.id}",
+            body = null,
+        )
+    }
+
+    fun resetServer(serverId: String, body: String): EnvProxyResponse {
+        val server = registry.find(serverId)
+            ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
+        return validateResetServer(body, server.id) ?: proxyServerAction(method = "POST", path = "/servers/reset?id={id}", serverId = server.id, body = body)
+    }
+
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
     private fun resolve(serverId: String?) =
         if (serverId.isNullOrBlank()) registry.default() else registry.find(serverId)
@@ -184,6 +215,37 @@ class DeployService(
         } catch (e: Exception) {
             log.warn("deployer 서버 생성 요청 실패", e)
             json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "deployer 서버 생성 요청 실패: ${e.message}")))
+        }
+    }
+
+    private fun proxyServerAction(method: String, path: String, serverId: String, confirm: String? = null, body: String?): EnvProxyResponse {
+        if (!configured()) {
+            return json(200, """{"ok":false,"message":"배포 deployer가 설정되지 않았습니다 (DEPLOYER_URL/TOKEN 미설정)."}""")
+        }
+        return try {
+            val uri = "${deployerUrl.trimEnd('/')}$path"
+            val raw = when (method) {
+                "DELETE" -> rest.delete()
+                    .uri(uri, serverId, confirm ?: "")
+                    .header("Authorization", "Bearer $deployerToken")
+                    .retrieve()
+                    .body(String::class.java)
+                else -> rest.post()
+                    .uri(uri, serverId)
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer $deployerToken")
+                    .body(body ?: "{}")
+                    .retrieve()
+                    .body(String::class.java)
+            }
+            json(200, raw ?: "{}")
+        } catch (e: RestClientResponseException) {
+            val responseBody = e.responseBodyAsString.takeIf { it.isNotBlank() }
+                ?: """{"ok":false,"message":"deployer 서버 제어 요청 실패"}"""
+            json(e.statusCode.value(), responseBody)
+        } catch (e: Exception) {
+            log.warn("deployer 서버 제어 요청 실패", e)
+            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "deployer 서버 제어 요청 실패: ${e.message}")))
         }
     }
 
@@ -261,6 +323,77 @@ class DeployService(
         } catch (e: Exception) {
             json(400, """{"ok":false,"message":"서버 생성 요청 JSON이 올바르지 않습니다."}""")
         }
+
+    private fun validateResetServer(body: String, serverId: String): EnvProxyResponse? {
+        if (body.isBlank()) {
+            return json(400, """{"ok":false,"message":"서버 리셋 요청 JSON이 필요합니다."}""")
+        }
+        return try {
+            val node = objectMapper.readTree(body)
+            val scenarioCode = node.path("scenarioCode").asText("")
+            val expectedKeys = setOf(
+                "confirm",
+                "scenarioCode",
+                "scenarioSeedEnabled",
+                "turnTerm",
+                "sync",
+                "fiction",
+                "extend",
+                "blockGeneralCreate",
+                "npcMode",
+                "showImgLevel",
+                "autorunUserOptions",
+                "autorunUserMinutes",
+                "joinMode",
+                "tournamentTrig",
+                "reserveOpen",
+                "preReserveOpen",
+            )
+            val unknown = node.fieldNames().asSequence().firstOrNull { it !in expectedKeys }
+            val validAutorunOptions = setOf("develop", "warp", "recruit", "recruit_high", "train", "battle", "chief")
+            val validAutorunMinutes = setOf("0", "43200", "10", "20", "30", "60", "120", "180", "240", "360", "480", "600", "720", "1440", "2160", "2880", "3600", "4320")
+            fun textIn(key: String, allowed: Set<String>) =
+                !node.has(key) || node.path(key).isTextual && node.path(key).asText() in allowed
+            fun cleanText(key: String) =
+                !node.has(key) || node.path(key).isTextual && !node.path(key).asText().contains('\n') && !node.path(key).asText().contains('\r')
+            fun reservation(key: String) =
+                cleanText(key) && (node.path(key).asText("").isBlank() || node.path(key).asText("").matches(Regex("""^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$""")))
+            when {
+                !node.isObject ->
+                    json(400, """{"ok":false,"message":"서버 리셋 요청 JSON이 올바르지 않습니다."}""")
+                unknown != null ->
+                    json(400, """{"ok":false,"message":"허용되지 않은 리셋 값: $unknown"}""")
+                node.path("confirm").asText("") != "RESET $serverId" ->
+                    json(400, """{"ok":false,"message":"리셋 확인 문구가 일치하지 않습니다."}""")
+                scenarioCode.isNotBlank() && !scenarioCode.matches(Regex("^[A-Za-z0-9_.:-]+$")) ->
+                    json(400, """{"ok":false,"message":"시나리오 코드가 올바르지 않습니다."}""")
+                node.has("scenarioSeedEnabled") && !node.path("scenarioSeedEnabled").isBoolean ->
+                    json(400, """{"ok":false,"message":"시나리오 자동 시드 값이 올바르지 않습니다."}""")
+                !textIn("turnTerm", setOf("120", "60", "30", "20", "10", "5", "2", "1")) ->
+                    json(400, """{"ok":false,"message":"턴 시간이 올바르지 않습니다."}""")
+                !textIn("sync", setOf("0", "1")) || !textIn("fiction", setOf("0", "1")) || !textIn("extend", setOf("0", "1")) ->
+                    json(400, """{"ok":false,"message":"Y/N 리셋 값이 올바르지 않습니다."}""")
+                !textIn("blockGeneralCreate", setOf("0", "1", "2")) || !textIn("npcMode", setOf("0", "1", "2")) ->
+                    json(400, """{"ok":false,"message":"NPC/장수 생성 값이 올바르지 않습니다."}""")
+                !textIn("showImgLevel", setOf("0", "1", "2", "3")) ->
+                    json(400, """{"ok":false,"message":"이미지 표기 값이 올바르지 않습니다."}""")
+                node.has("autorunUserOptions") &&
+                    (!node.path("autorunUserOptions").isArray || node.path("autorunUserOptions").any { !it.isTextual || it.asText() !in validAutorunOptions }) ->
+                    json(400, """{"ok":false,"message":"휴식 턴 장수 턴 값이 올바르지 않습니다."}""")
+                !textIn("autorunUserMinutes", validAutorunMinutes) ->
+                    json(400, """{"ok":false,"message":"자동 행동 유효 시간이 올바르지 않습니다."}""")
+                !textIn("joinMode", setOf("onlyRandom", "full")) ->
+                    json(400, """{"ok":false,"message":"임관 모드가 올바르지 않습니다."}""")
+                !textIn("tournamentTrig", setOf("0", "1")) ->
+                    json(400, """{"ok":false,"message":"토너먼트 자동 시작 값이 올바르지 않습니다."}""")
+                !reservation("reserveOpen") || !reservation("preReserveOpen") ->
+                    json(400, """{"ok":false,"message":"예약 시간 형식이 올바르지 않습니다."}""")
+                else -> null
+            }
+        } catch (e: Exception) {
+            json(400, """{"ok":false,"message":"서버 리셋 요청 JSON이 올바르지 않습니다."}""")
+        }
+    }
 
     private fun validPort(value: String): Boolean {
         if (!portRegex.matches(value)) return false
