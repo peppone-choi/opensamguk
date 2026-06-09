@@ -1,8 +1,12 @@
 package opensamguk.gateway.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.sun.net.httpserver.HttpExchange
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -84,5 +88,146 @@ class AdminVersionDeployTest {
         val result = svc.deploy("main", "bad tag!", "admin")
         assertFalse(result.ok)
         assertEquals("올바르지 않은 버전 태그입니다.", result.message)
+    }
+
+    @Test
+    fun `deployer 미설정이면 shared env는 configured=false`() {
+        val svc = DeployService("", "", registry(), mapper)
+        val result = svc.sharedEnv()
+
+        assertEquals(200, result.status)
+        val body = mapper.readTree(result.body)
+        assertFalse(body.path("configured").asBoolean())
+        assertEquals("shared", body.path("scope").asText())
+    }
+
+    @Test
+    fun `알 수 없는 서버는 server env 조회를 deployer 호출 전에 거부`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val result = svc.serverEnv("missing")
+
+            assertEquals(400, result.status)
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
+    fun `shared env 조회는 secret-masked deployer 응답을 보존한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"configured":true,"scope":"shared","fields":{"ADMIN_PASSWORD":{"key":"ADMIN_PASSWORD","value":null,"configured":true,"writeOnly":true,"masked":true}}}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.sharedEnv()
+
+            assertEquals(200, result.status)
+            assertEquals("/env/shared", deployer.requests.single().path)
+            assertEquals("Bearer tok", deployer.requests.single().authorization)
+            assertTrue(result.body.contains(""""masked":true"""))
+            assertTrue(result.body.contains(""""value":null"""))
+            assertFalse(result.body.contains("tok"))
+        }
+    }
+
+    @Test
+    fun `server env 변경은 레지스트리 서버 id로 deployer에 PATCH한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"scope":"server","id":"s1","fields":{"SCENARIO_SEED_ENABLED":{"key":"SCENARIO_SEED_ENABLED","value":"false","configured":true,"writeOnly":false,"masked":false}}}""",
+            )
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = """[{"id":"s1","name":"통일 서버","deployProject":"opensamguk-s1"}]"""),
+                mapper,
+            )
+
+            val result = svc.patchServerEnv("s1", """{"values":{"SCENARIO_SEED_ENABLED":"false"}}""")
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/env/server?id=s1", request.path)
+            assertEquals("PATCH", request.method)
+            assertEquals("""{"values":{"SCENARIO_SEED_ENABLED":"false"}}""", request.body)
+        }
+    }
+
+    @Test
+    fun `잘못된 env key는 deployer 호출 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+            val result = svc.patchSharedEnv("""{"values":{"bad-key":"x"}}""")
+
+            assertEquals(400, result.status)
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    @Test
+    fun `알 수 없는 env key는 deployer 호출 전에 거부한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.patchSharedEnv("""{"values":{"UNKNOWN_KEY":"x"}}""")
+
+            assertEquals(400, result.status)
+            assertTrue(result.body.contains("UNKNOWN_KEY"))
+            assertFalse(result.body.contains("tok"))
+            assertEquals(0, deployer.requests.size)
+        }
+    }
+
+    private data class RecordedRequest(
+        val method: String,
+        val path: String,
+        val authorization: String?,
+        val body: String,
+    )
+
+    private class FakeDeployer : AutoCloseable {
+        private val responses = ArrayDeque<Pair<Int, String>>()
+        val requests = mutableListOf<RecordedRequest>()
+        private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+
+        init {
+            server.createContext("/") { exchange -> handle(exchange) }
+            server.start()
+        }
+
+        fun url(): String = "http://127.0.0.1:${server.address.port}"
+
+        fun enqueue(status: Int, body: String) {
+            responses.add(status to body)
+        }
+
+        private fun handle(exchange: HttpExchange) {
+            val response = responses.removeFirstOrNull() ?: (200 to "{}")
+            val requestBody = exchange.requestBody.readBytes().toString(Charsets.UTF_8)
+            requests.add(
+                RecordedRequest(
+                    method = exchange.requestMethod,
+                    path = exchange.requestURI.toString(),
+                    authorization = exchange.requestHeaders.getFirst("Authorization"),
+                    body = requestBody,
+                ),
+            )
+            val bytes = response.second.toByteArray(Charsets.UTF_8)
+            exchange.responseHeaders.add("Content-Type", "application/json")
+            exchange.sendResponseHeaders(response.first, bytes.size.toLong())
+            exchange.responseBody.use { it.write(bytes) }
+        }
+
+        override fun close() {
+            server.stop(0)
+        }
     }
 }

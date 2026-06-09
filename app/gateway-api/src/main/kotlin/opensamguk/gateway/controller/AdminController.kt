@@ -19,9 +19,11 @@ import opensamguk.gateway.service.DeployService
 import opensamguk.gateway.service.VersionService
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.info.BuildProperties
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -79,6 +81,25 @@ class AdminController(
         val actor = principal?.username ?: "unknown"
         return ResponseEntity.ok(deployService.deploy(request.serverId, request.tag, actor))
     }
+
+    @GetMapping("/env/shared", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun sharedEnv(): ResponseEntity<String> =
+        deployService.sharedEnv().toResponse()
+
+    @PatchMapping("/env/shared", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun patchSharedEnv(@RequestBody body: String): ResponseEntity<String> =
+        deployService.patchSharedEnv(body).toResponse()
+
+    @GetMapping("/env/servers/{serverId}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun serverEnv(@PathVariable serverId: String): ResponseEntity<String> =
+        deployService.serverEnv(serverId).toResponse()
+
+    @PatchMapping("/env/servers/{serverId}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun patchServerEnv(
+        @PathVariable serverId: String,
+        @RequestBody body: String,
+    ): ResponseEntity<String> =
+        deployService.patchServerEnv(serverId, body).toResponse()
 
     // ──────────────────────────────────────────────────────────────────────
     // B2 회원관리(루트DB) — legacy j_get_userlist / j_set_userlist / BanEmailAddress
@@ -146,4 +167,9 @@ class AdminController(
     /** 인증 주체의 role 추출 — ROLE_ADMIN 권한 보유 시 "ADMIN", 아니면 "USER"(방어적). */
     private fun actorRole(principal: CustomUserDetails): String =
         if (principal.authorities.any { it.authority == "ROLE_ADMIN" }) "ADMIN" else "USER"
+
+    private fun opensamguk.gateway.dto.EnvProxyResponse.toResponse(): ResponseEntity<String> =
+        ResponseEntity.status(status)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(body)
 }
