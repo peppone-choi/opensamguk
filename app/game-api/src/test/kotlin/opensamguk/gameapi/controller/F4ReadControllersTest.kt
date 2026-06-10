@@ -17,6 +17,7 @@ import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.HistoryReadRepository
+import opensamguk.gameapi.read.InheritanceLogReadEntity
 import opensamguk.gameapi.read.InheritanceLogReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
@@ -616,7 +617,7 @@ class F4ReadControllersTest {
         `when`(gameKv.findByTableAndNamespaceAndKey(anyString(), anyString(), anyString())).thenReturn(null)
         `when`(inheritLogs.findByUserIdOrderByIdDesc("7", PageRequest.of(0, 30))).thenReturn(emptyList())
 
-        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper)).perform(get("/api/inherit-point").with(principal(7L)))
+        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper, generals)).perform(get("/api/inherit-point").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.items.previous").value(0))
@@ -637,8 +638,37 @@ class F4ReadControllersTest {
 
     @Test
     fun `inherit point 401 for anonymous`() {
-        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper)).perform(get("/api/inherit-point"))
+        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper, generals)).perform(get("/api/inherit-point"))
             .andExpect(status().isUnauthorized)
+    }
+
+    // ── W0-2(P0-25) availableTargetGeneral + (P1-043) InheritLog.date ────────────────────────────────
+    @Test
+    fun `inherit point exposes availableTargetGeneral npc lt 2 and log date chain`() {
+        // PHP v_inheritPoint.php:19-22(SELECT no,name FROM general WHERE npc < 2 → {no: name})
+        // + :74(user_record date 컬럼) + :107(availableTargetGeneral staticValue).
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(gameKv.findByTableAndNamespaceAndKey(anyString(), anyString(), anyString())).thenReturn(null)
+        `when`(generals.findByNpcStateLessThanOrderByIdAsc(2)).thenReturn(
+            listOf(gen(10, "순욱", nationId = 1), gen(20, "하후돈", nationId = 1)),
+        )
+        `when`(inheritLogs.findByUserIdOrderByIdDesc("7", PageRequest.of(0, 30))).thenReturn(
+            listOf(
+                InheritanceLogReadEntity(
+                    id = 5, userId = "7", year = 200, month = 3, text = "유산 포인트 100 획득",
+                    createdAt = Instant.parse("2026-06-01T10:30:00Z"),
+                ),
+            ),
+        )
+
+        mvc(InheritPointController(resolver, gameKv, inheritLogs, objectMapper, generals)).perform(get("/api/inherit-point").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.availableTargetGeneral.10").value("순욱"))
+            .andExpect(jsonPath("$.availableTargetGeneral.20").value("하후돈"))
+            .andExpect(jsonPath("$.lastInheritPointLogs[0].id").value(5))
+            .andExpect(jsonPath("$.lastInheritPointLogs[0].date").value("2026-06-01 10:30:00"))
     }
 
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────

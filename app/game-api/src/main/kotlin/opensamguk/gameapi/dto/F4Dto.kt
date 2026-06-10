@@ -516,6 +516,11 @@ data class InheritLog(
     val year: Int,
     val month: Int,
     val text: String,
+    /**
+     * W0-2(P1-043) — 기록 시각 'yyyy-MM-dd HH:mm:ss'(PHP user_record.date — v_inheritPoint.php:74).
+     * opensamguk 동등 컬럼 inheritance_log.created_at. 부재(레거시 행) 시 null(날조 금지).
+     */
+    val date: String? = null,
 )
 
 data class InheritPointResponse(
@@ -533,6 +538,12 @@ data class InheritPointResponse(
     /** Available unique items: key → {title, rawName, info}. */
     val availableUnique: Map<String, Any?>,
     val lastInheritPointLogs: List<InheritLog>,
+    /**
+     * W0-2(P0-25) — 소유자 확인(CheckOwner) 대상 장수 {no: name} 맵
+     * (PHP v_inheritPoint.php:19-22 `SELECT no, name FROM general WHERE npc < 2`, :107 staticValue).
+     * 삽입순서(id ASC) 보존 — JSON 키는 PHP와 동일하게 장수 no.
+     */
+    val availableTargetGeneral: Map<Int, String> = emptyMap(),
     val currentStat: InheritStat,
 )
 

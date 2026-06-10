@@ -224,6 +224,12 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
     fun countByNpcStateLessThan(npcState: Int): Long
 
     /**
+     * W0-2(P0-25) — 소유자 확인(CheckOwner) 대상 장수 목록. PHP `v_inheritPoint.php:19-22`
+     * `SELECT no, name FROM general WHERE npc < 2`(유저/빙의 장수). id ASC로 안정 순서 고정.
+     */
+    fun findByNpcStateLessThanOrderByIdAsc(npcState: Int): List<GeneralReadEntity>
+
+    /**
      * W3 FrontGlobalInfo — NPC 장수 수(`npc_state > 0`). PHP `SELECT npc, count(no) FROM general GROUP BY npc`의
      * NPC 합과 동치(user는 `countByNpcState(0)`). createdUserCnt/createdNPCCnt 분리 카운트용.
      */
