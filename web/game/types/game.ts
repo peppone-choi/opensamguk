@@ -1079,3 +1079,43 @@ export interface HistoryResponse {
   mapName: string;
   record: HistoryRecord | null;   // selected month; null when range empty
 }
+
+// ── 서신함 (GET /api/mailbox/{mailbox} → MailboxMessage[] · GET /api/messages/{id}) ──
+// [P0-33] game-api MessageDto.kt(MessageResponse/MsgTarget)의 실제 와이어 1:1 미러.
+// legacy 계약: hwe/ts/defs/API/Message.ts MsgItem/MsgTarget (src/dest 타깃 블록 + text + time).
+// 이전 mailbox 페이지의 로컬 MailMessage 인터페이스(srcName/date/read 등)는 실DTO와 불일치 —
+// 발신자/시각 공란 + 위조 '미읽음' 배지의 근원이었다. legacy엔 read 플래그가 없고
+// latestRead 커서(sequence)만 존재 — read/unreadCount류 필드를 여기에 추가(날조)하지 말 것.
+// TODO(P0-33, W1-L): mailbox 페이지가 이 타입을 소비하도록 교체(srcTarget?.name / time / text 매핑).
+
+/** legacy MsgType verbatim — message.type 컬럼 값(type.value, 소문자). */
+export type MailMsgType = 'private' | 'public' | 'national' | 'diplomacy';
+
+/**
+ * 메시지 발/수신 대상 — PHP `MessageTarget::toArray()` `{id, name, nation_id, nation, color, icon}`.
+ * BE(MessageDto.MsgTarget)가 camelCase(nationId)로 직렬화한다(프록시 pass-through).
+ */
+export interface MailMsgTarget {
+  id: number;             // 장수 id (시스템 타깃은 0)
+  name: string;           // 장수 이름 (시스템 타깃은 "")
+  nationId: number;       // 소속 국가 id (재야/시스템 0) — legacy `nation_id`
+  nation: string;         // 소속 국가 이름 (재야 '재야')
+  color: string;          // 국가색 hex
+  icon: string | null;    // 아이콘 경로
+}
+
+/** GET /api/mailbox/{mailbox} 응답 1행 — BE MessageResponse 그대로(bare 배열로 내려온다). */
+export interface MailboxMessage {
+  id: number | null;
+  mailbox: number;
+  type: MailMsgType;
+  src: number;            // 발신 장수 id(라우팅 키 int 컬럼)
+  dest: number;           // 수신 장수 id
+  time: string;           // ISO instant — 표시 시각은 여기서(legacy MsgItem.time)
+  validUntil: string;     // ISO instant — 유효기한
+  message: string;        // 원본 body jsonb 문자열(호환 보존)
+  text: string | null;    // body `text` — 표시 본문
+  srcTarget: MailMsgTarget | null;  // 발신 타깃 블록 — 발신자명은 srcTarget.name
+  destTarget: MailMsgTarget | null; // 수신 타깃 블록(공개 메시지면 null)
+  option: Record<string, unknown> | null; // body `option`(action/deletable/receiverMessageID 등)
+}

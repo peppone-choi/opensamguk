@@ -502,4 +502,7 @@ export type {
     TroopListResponse,
     HistoryRecord,
     HistoryResponse,
+    MailMsgType,
+    MailMsgTarget,
+    MailboxMessage,
 } from '../types/game';
