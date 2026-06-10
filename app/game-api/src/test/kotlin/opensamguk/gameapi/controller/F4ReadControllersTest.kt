@@ -426,22 +426,44 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.diplomacyList.2.3").value(2))
     }
 
-    // ── GET /api/nation/{id}/finance (editable gate) ─────────────────────────────────────────────────
+    // ── GET /api/nation/{id}/finance (W0-2 P0-51 중첩 구조 + P0-53 read 키 정합 + editable gate) ──────
     @Test
-    fun `nation finance reports gold rice and editable only for 수뇌 in nation`() {
+    fun `nation finance emits the legacy nested staticValues shape`() {
+        // PHP v_nationStratFinan.php:126-154 — {editable, nationMsg, scoutMsg, nationID, officerLevel,
+        // year, month, gold, rice, income{...}, outcome, policy{...}, warSettingCnt{remain,inc,max}}.
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
-        val meta = linkedMapOf<String, Any?>("rate" to 20, "notice" to "전군 진격", "block_war" to true)
+        // P0-53: blockWar/blockScout의 실제 write 키는 meta["war"]/["scout"](Int) — NationFinanceSetters.
+        val meta = linkedMapOf<String, Any?>("rate" to 20, "bill" to 100, "secretlimit" to 30, "war" to 1, "scout" to 0)
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", "#c62828", level = 7, gold = 5000, rice = 3000, meta = meta)))
+        `when`(world.findAll()).thenReturn(
+            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3, tickSeconds = 3600)),
+        )
 
-        mvc(NationFinanceController(nations, resolver)).perform(get("/api/nation/1/finance").with(principal(7L)))
+        mvc(NationFinanceController(nations, resolver, world)).perform(get("/api/nation/1/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.gold").value(5000))
             .andExpect(jsonPath("$.rice").value(3000))
-            .andExpect(jsonPath("$.rate").value(20))
-            .andExpect(jsonPath("$.nationMsg").value("전군 진격"))
-            .andExpect(jsonPath("$.blockWar").value(true))
+            .andExpect(jsonPath("$.officerLevel").value(5))
+            .andExpect(jsonPath("$.year").value(200))
+            .andExpect(jsonPath("$.month").value(3))
+            // policy 중첩(PHP policy{rate,bill,secretLimit,blockScout,blockWar}).
+            .andExpect(jsonPath("$.policy.rate").value(20))
+            .andExpect(jsonPath("$.policy.bill").value(100))
+            .andExpect(jsonPath("$.policy.secretLimit").value(30))
+            .andExpect(jsonPath("$.policy.blockWar").value(true))
+            .andExpect(jsonPath("$.policy.blockScout").value(false))
+            // warSettingCnt — inc/max는 GameConst 실상수, remain은 nation_env read 부재로 null(P0-53 BLOCKED).
+            .andExpect(jsonPath("$.warSettingCnt.inc").value(2))
+            .andExpect(jsonPath("$.warSettingCnt.max").value(10))
+            .andExpect(jsonPath("$.warSettingCnt.remain").doesNotExist())
+            // income/outcome — read 경로에 income 파이프라인 미조립(P0-52 BLOCKED, W1-O 배선).
+            .andExpect(jsonPath("$.income").doesNotExist())
+            .andExpect(jsonPath("$.outcome").doesNotExist())
+            // nationMsg/scoutMsg — 실제 write는 nation_env KV(P0-53), read repo 부재 → null(날조 금지).
+            .andExpect(jsonPath("$.nationMsg").doesNotExist())
+            .andExpect(jsonPath("$.scoutMsg").doesNotExist())
             .andExpect(jsonPath("$.editable").value(true))
     }
 
@@ -449,10 +471,11 @@ class F4ReadControllersTest {
     fun `nation finance missing nation returns result-false zeroed shape`() {
         `when`(nations.findById(99)).thenReturn(Optional.empty())
 
-        mvc(NationFinanceController(nations, resolver)).perform(get("/api/nation/99/finance"))
+        mvc(NationFinanceController(nations, resolver, world)).perform(get("/api/nation/99/finance"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(false))
             .andExpect(jsonPath("$.gold").value(0))
+            .andExpect(jsonPath("$.officerLevel").value(0))
             .andExpect(jsonPath("$.editable").value(false))
     }
 

@@ -239,27 +239,124 @@ data class DiplomacyConflictResponse(
     val myNationID: Int,
 )
 
-// ── GET /api/nation/{id}/finance — page 3 ──────────────────────────────────────────────────────────
+// ── GET /api/nation/{id}/finance — page 3 (W0-2 P0-51 legacy 중첩 구조 재구축) ─────────────────────
+/**
+ * 내무부 응답 — PHP `v_nationStratFinan.php:126-154` staticValues 중첩 shape 충실:
+ * `{editable, nationMsg, scoutMsg, nationID, officerLevel, year, month, nationsList, gold, rice,
+ *   income{gold{city,war},rice{city,wall}}, outcome, policy{rate,bill,secretLimit,blockScout,blockWar},
+ *   warSettingCnt{remain,inc,max}}`.
+ *
+ * 기존 평면 shape(income:Int 등)는 FE 타입(중첩)과 불일치해 국가 소속자 전원 런타임 크래시였다(P0-51).
+ *
+ * [§2 BLOCKED — 날조 금지로 nullable, W1-O 배선]
+ *  - income/outcome(P0-52): PHP는 getGoldIncome/getWarGoldIncome/getRiceIncome/getWallIncome/getOutcome
+ *    (v_nationStratFinan.php:77-115, rate=100 기준)로 live 산출. logic 이식은 완료(ProcessIncome.kt)지만
+ *    read game-api에 nation-type income 파이프라인이 조립돼 있지 않아(IdentityDto MyCitySummary §2 동일)
+ *    W1-O가 배선할 때까지 null — 위조 0(아무도 안 쓰는 meta 키 read)을 제거한다.
+ *  - nationMsg/scoutMsg/warSettingCnt.remain(P0-53): 실제 write는 nation_env KV
+ *    (NationFinanceSetters: nationNotice/scout_msg/available_war_setting_cnt)인데 종전 read는 meta 잘못된
+ *    스토어였다(라운드트립 불능). nation_env read repo(W1-O 신설)까지 null(부재=미배선, 날조 금지).
+ *  - nationsList(P0-54): 전국가 7컬럼 외교 표(v_nationStratFinan.php:45-72 diplomacy{state,term}+cityCnt).
+ *    타입([NationFinanceNationItem])만 정본화, 조립은 W1-O.
+ */
 data class NationFinanceResponse(
     val result: Boolean,
     val nationId: Int,
     val name: String,
     val color: String,
     val level: Int,
+    /** 호출자의 officer_level(PHP `$me['officer_level']`, v_nationStratFinan.php:132). 미인증/무장수 → 0. */
+    val officerLevel: Int = 0,
+    /** 현재 게임 연도(PHP game_env year, :133). */
+    val year: Int = 0,
+    /** 현재 게임 월(PHP game_env month, :134). */
+    val month: Int = 0,
     val gold: Int,
     val rice: Int,
-    val income: Int,
-    val outcome: Int,
-    val rate: Int,
-    val bill: Int,
-    val warSettingCnt: Int,
-    val secretLimit: Int,
-    val blockWar: Boolean,
-    val blockScout: Boolean,
-    val nationMsg: String,
-    val scoutMsg: String,
+    /** 수입 4분해(PHP :104-113 income{gold{city,war},rice{city,wall}}). BLOCKED(P0-52) → null. */
+    val income: NationFinanceIncome? = null,
+    /** 지출(PHP :115 getOutcome(100, dedicationList)). BLOCKED(P0-52) → null. */
+    val outcome: Int? = null,
+    /** 국가 방침 묶음(PHP :142-148 policy). */
+    val policy: NationFinancePolicy = NationFinancePolicy(),
+    /** 선포 설정 잔여/증가/최대(PHP :149-153 warSettingCnt). */
+    val warSettingCnt: NationFinanceWarSettingCnt,
+    /** 국가 방침문(PHP :129 nationNotice['msg'] — nation_env KV). BLOCKED(P0-53) → null. */
+    val nationMsg: String? = null,
+    /** 임관 권유문(PHP :130 scout_msg — nation_env KV). BLOCKED(P0-53) → null. */
+    val scoutMsg: String? = null,
+    /** 전국가 외교 표(PHP :135 nationsList). BLOCKED(P0-54, W1-O 조립) → null. */
+    val nationsList: List<NationFinanceNationItem>? = null,
     /** True only when the caller may edit (officer_level >= 5). game-api computes from the principal. */
     val editable: Boolean,
+)
+
+/** PHP `income` 블록(v_nationStratFinan.php:104-113) — 금{도시,전쟁}/쌀{도시,성벽}. */
+data class NationFinanceIncome(
+    val gold: NationFinanceGoldIncome,
+    val rice: NationFinanceRiceIncome,
+)
+
+/** 금 수입 분해 — city=getGoldIncome, war=getWarGoldIncome. */
+data class NationFinanceGoldIncome(
+    val city: Int,
+    val war: Int,
+)
+
+/** 쌀 수입 분해 — city=getRiceIncome, wall=getWallIncome. */
+data class NationFinanceRiceIncome(
+    val city: Int,
+    val wall: Int,
+)
+
+/**
+ * PHP `policy` 블록(v_nationStratFinan.php:142-148). 원천은 nation.meta(rate/bill/secretlimit/war/scout —
+ * NationFinanceSetters 실제 write 키). meta 미기재(시드 미기록) 시 null — 0/false 날조 금지(P1-077 동일 규약).
+ * blockWar/blockScout = `meta[war]/[scout] != 0`(PHP `$nation['war'] != 0` 동식, P0-53 read 키 정합).
+ */
+data class NationFinancePolicy(
+    val rate: Int? = null,
+    val bill: Int? = null,
+    val secretLimit: Int? = null,
+    val blockScout: Boolean? = null,
+    val blockWar: Boolean? = null,
+)
+
+/**
+ * PHP `warSettingCnt` 블록(v_nationStratFinan.php:149-153). inc/max는 GameConst 실상수
+ * (incAvailableWarSettingCnt/maxAvailableWarSettingCnt — GameConstBase 동일 값). remain은 nation_env KV
+ * `available_war_setting_cnt` — read repo 부재로 null(P0-53 BLOCKED, W1-O 배선).
+ */
+data class NationFinanceWarSettingCnt(
+    val remain: Int? = null,
+    val inc: Int,
+    val max: Int,
+)
+
+/**
+ * PHP `nationsList` 한 항목(v_nationStratFinan.php:48-72) — getAllNationStaticInfo 행
+ * (nation/name/color/type/level/capital/gennum/power) + `cityCnt`(속령수) + `diplomacy{state,term}`
+ * (자국은 state 7/term null). W0-2에서 타입만 정본화 — 조립은 W1-O(P0-54).
+ */
+data class NationFinanceNationItem(
+    /** 국가 id(PHP `nation` 컬럼명 그대로). */
+    val nation: Int,
+    val name: String,
+    val color: String,
+    val type: String,
+    val level: Int,
+    val capital: Int,
+    val gennum: Int,
+    val power: Int,
+    /** 속령수(PHP cityCnt — city GROUP BY nation). */
+    val cityCnt: Int,
+    val diplomacy: NationFinanceDiplomacyState,
+)
+
+/** PHP `diplomacy` 블록 — state(0~7, 자국 7)/term(잔여 개월, 자국 null). */
+data class NationFinanceDiplomacyState(
+    val state: Int,
+    val term: Int? = null,
 )
 
 // ── GET /api/nation/chief-reserved — 8 chief posts + reserved turns (page 7) ───────────────────────
