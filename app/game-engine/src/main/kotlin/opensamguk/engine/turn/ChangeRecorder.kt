@@ -167,6 +167,9 @@ class ChangeRecorder(
     /** Statistic channel (W1) — `statistic` INSERT intents (year-boundary checkStatistic). */
     private val statisticInserts = mutableListOf<StatisticInsert>()
 
+    /** 연감 채널 (W0-8) — `yearbook_history` UPSERT 의도 (P0-20 LogHistory 월별 스냅샷). */
+    private val yearbookInserts = mutableListOf<YearbookInsert>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -187,7 +190,10 @@ class ChangeRecorder(
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
             voteCommentInserts.isNotEmpty() ||
             inheritanceKvWrites.isNotEmpty() || inheritanceLogInserts.isNotEmpty() ||
-            inheritanceResultInserts.isNotEmpty()
+            inheritanceResultInserts.isNotEmpty() ||
+            // W0-8: statistic/yearbook 채널도 dirty 신호에 포함 — 기록만 있고 flush 트리거가 안 서는
+            // 조용한 유실을 막는다(statistic은 기존 누락 보강, yearbook은 신규 채널).
+            statisticInserts.isNotEmpty() || yearbookInserts.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -275,6 +281,8 @@ class ChangeRecorder(
         diffCol(columns, "agricultureMax", pre.agricultureMax, post.agricultureMax)
         diffCol(columns, "supplyState", pre.supplyState, post.supplyState)
         diffCol(columns, "frontState", pre.frontState, post.frontState)
+        // W0-8 재해/호황 surface (V14 city.state) — RaiseDisaster 리셋/기록이 flush에 실리는 경로 (P0-36).
+        diffCol(columns, "state", pre.state, post.state)
         diffCol(columns, "trust", pre.trust, post.trust)
         diffCol(columns, "level", pre.level, post.level)
         diffCol(columns, "nationId", pre.nationId, post.nationId)
@@ -565,6 +573,14 @@ class ChangeRecorder(
     /** 기록된 statistic INSERT (W1 flush 소스), emit 순서대로. */
     fun statisticInserts(): List<StatisticInsert> = statisticInserts.toList()
 
+    /** `yearbook_history` UPSERT 기록 (W0-8 연감 채널 — P0-20 LogHistory 월별 스냅샷). */
+    fun recordYearbookInsert(columns: Map<String, Any?>) {
+        yearbookInserts.add(YearbookInsert(columns))
+    }
+
+    /** 기록된 yearbook_history UPSERT (W1-I flush 소스), emit 순서대로. */
+    fun yearbookInserts(): List<YearbookInsert> = yearbookInserts.toList()
+
     /**
      * 기록된 모든 채널을 비운다 — PHP의 요청 단위 스코프에 대응하는 tick 단위 리셋.
      *
@@ -604,6 +620,7 @@ class ChangeRecorder(
         inheritanceLogInserts.clear()
         inheritanceResultInserts.clear()
         statisticInserts.clear()
+        yearbookInserts.clear()
         oldGeneralSnapshots.clear()
         nationSnapshots.clear()
     }

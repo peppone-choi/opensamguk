@@ -8,7 +8,11 @@ import java.sql.ResultSet
  *
  * Scalar columns: `id, nation_id, level, comm, comm_max, agri, agri_max, supply_state, front_state,
  * trust` + the P2 develop/defense surface (Task FD1): `secu, secu_max, def, def_max, wall, wall_max,
- * pop, pop_max, trade, region` + `meta` jsonb. (There is NO `city.tech` — tech is a NATION stat.)
+ * pop, pop_max, trade, region` + the W0-8 재해/호황 surface (V14): `state` + `meta` jsonb.
+ * (There is NO `city.tech` — tech is a NATION stat.)
+ *
+ * `state`는 PHP `city.state INT(2)`(재해/호황 이벤트 코드 1~9; RaiseDisaster가 매월 리셋+기록)의
+ * V14 대응 컬럼 — front_state(전선 0~3)와 별개다(P0-36). 부재 행은 0으로 widen(마이그레이션 DEFAULT 0).
  *
  * `trust` is a logic `Double` (che math uses `trust/100.0` & `trust/80.0`); after the FC1 V4 migration
  * the `city.trust` column is `double precision` (legacy schema is FLOAT) so fractional trust
@@ -36,6 +40,7 @@ object CityRowMapper {
         agricultureMax = intOf(row["agri_max"]),
         supplyState = intOf(row["supply_state"]),
         frontState = intOf(row["front_state"]),
+        state = intOf(row["state"]),
         trust = doubleOf(row["trust"]),
         security = intOf(row["secu"]),
         securityMax = intOf(row["secu_max"]),
@@ -64,6 +69,7 @@ object CityRowMapper {
         agricultureMax = rs.getInt("agri_max"),
         supplyState = rs.getInt("supply_state"),
         frontState = rs.getInt("front_state"),
+        state = rs.getInt("state"),
         trust = rs.getDouble("trust"),
         security = rs.getInt("secu"),
         securityMax = rs.getInt("secu_max"),
@@ -92,6 +98,7 @@ object CityRowMapper {
         "agri_max" to c.agricultureMax,
         "supply_state" to c.supplyState,
         "front_state" to c.frontState,
+        "state" to c.state,
         "trust" to c.trust,
         "secu" to c.security,
         "secu_max" to c.securityMax,

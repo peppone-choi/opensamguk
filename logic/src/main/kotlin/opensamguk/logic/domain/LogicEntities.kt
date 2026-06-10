@@ -76,6 +76,8 @@ data class City(
     val term: Int = 0,              // V1 city.term — owner-tenure turn counter; ConquerCity resets to 0 (process_war.php:779)
     val officerSet: Int = 0,        // V1 city.officer_set — officer-assignment seq; ConquerCity resets to 0 (process_war.php:785)
     val conflict: String = "{}",    // V1 city.conflict jsonb — the nation→Double ConflictMap (A4 writes; insertion-ordered JSON string, byte-faithful); ConquerCity resets to '{}' (process_war.php:780)
+    // --- W0-8 재해/호황 surface (V14 city.state) ---
+    val state: Int = 0,             // V14 city.state — PHP schema.sql `state INT(2)` 재해/호황 이벤트 코드; RaiseDisaster가 매월 state<=10→0 리셋 후 1~9 기록 (P0-36)
     val meta: Map<String, Any?> = linkedMapOf(),
 )
 

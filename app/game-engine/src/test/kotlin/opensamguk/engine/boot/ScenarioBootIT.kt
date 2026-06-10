@@ -116,6 +116,27 @@ class ScenarioBootIT {
         assertEquals(678, count("general"), "no duplicate generals after second seed")
     }
 
+    @Test
+    fun `W0-8 -- city state가 재기동 rehydrate를 살아남는다`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+
+        // 시드 보장(첫 테스트와 순서 무관 — ensureSeeded는 멱등).
+        bootstrap.ensureSeeded(jdbc)
+        val cityId = jdbc.queryForObject("SELECT id FROM city ORDER BY id ASC LIMIT 1", Int::class.java)!!
+
+        // 직전 달 RaiseDisaster가 남긴 재해 코드(예: 4)를 흉내 — DB에 영속된 상태로 가정.
+        jdbc.update("UPDATE city SET state = 4 WHERE id = $cityId")
+
+        // 재기동 경로: WorldSnapshotLoader가 DB → in-memory City로 state를 실어와야 한다.
+        // (V14 이전에는 메모리 전용이라 0으로 떨어졌다 — P0-36 재기동 유실.)
+        val snapshot = loader.buildSnapshot()
+        val rehydrated = snapshot.cities.first { it.id == cityId }
+        assertEquals(4, rehydrated.state, "city.state는 restart-rehydrate를 살아남아야 한다")
+
+        // 다른 테스트와의 간섭 방지 — 원복.
+        jdbc.update("UPDATE city SET state = 0 WHERE id = $cityId")
+    }
+
     private fun count(table: String): Int =
         jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java) ?: 0
 }

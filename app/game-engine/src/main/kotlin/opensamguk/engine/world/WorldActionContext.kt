@@ -441,7 +441,10 @@ class WorldActionContext(
     override fun applyDisaster(result: RaiseDisasterResult) {
         for ((cityId, state) in result.stateResets) {
             val pre = world.getCityById(cityId) ?: continue
-            // city.state is an engine-only column not tracked by diffCity.
+            // W0-8: city.state는 V14부터 영속 컬럼 — 무조건 리셋(state<=10→0)도 diffCity로 기록해
+            // recorder-flush 경로에 싣는다(P0-36 재기동 유실 수정). updateCity는 tick-dirty도 함께 마킹.
+            val preLogic = PerTurnOverlay.toLogicCity(pre)
+            recorder.diffCity(preLogic, preLogic.copy(state = state))
             world.updateCity(pre.copy(state = state))
         }
         for (effect in result.effects) {
@@ -455,6 +458,8 @@ class WorldActionContext(
             }
 
             val postLogic = preLogic.copy(
+                // W0-8: 선택 도시의 stateCode(1~9)도 diff에 포함 — V14 영속 컬럼 (P0-36).
+                state = effect.stateCode,
                 agriculture = newStat(preLogic.agriculture, preLogic.agricultureMax),
                 commerce = newStat(preLogic.commerce, preLogic.commerceMax),
                 security = newStat(preLogic.security, preLogic.securityMax),

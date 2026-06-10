@@ -110,8 +110,10 @@ class WorldSnapshotLoader(
     }
 
     private fun loadCities(): List<City> = jdbc.query(
+        // state(V14 재해/호황 코드)를 SELECT에 포함해야 한다. 누락 시 in-memory City.state가 기본 0으로
+        // 떨어지고, 재기동 직후 flush가 UPDATE city SET state=0 으로 직전 달 재해 표시를 지운다(P0-36).
         """
-        SELECT id, name, nation_id, level, supply_state, front_state,
+        SELECT id, name, nation_id, level, state, supply_state, front_state,
                pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                def, def_max, wall, wall_max, trade, region, meta
           FROM city ORDER BY id ASC
@@ -122,6 +124,7 @@ class WorldSnapshotLoader(
             name = rs.getString("name"),
             nationId = rs.getInt("nation_id"),
             level = rs.getInt("level"),
+            state = rs.getInt("state"),
             supplyState = rs.getInt("supply_state"),
             frontState = rs.getInt("front_state"),
             population = rs.getInt("pop"),

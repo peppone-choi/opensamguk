@@ -146,6 +146,20 @@ class ChangeRecorderTest {
     }
 
     @Test
+    fun `W0-8 -- 재해 state 변경이 diffCity에 잡혀 도시가 dirty 마킹된다`() {
+        // RaiseDisaster: 무조건 리셋(state<=10→0)과 선택 도시 stateCode(1~9) 기록 둘 다
+        // state-only 변경일 수 있다 — diffCity가 state를 비교하지 않으면 recorder-flush에서 유실(P0-36).
+        val pre = city()
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffCity(pre, pre.copy(state = 7))!!
+
+        assertEquals(setOf("state"), patch.columns.keys)
+        assertEquals(7, patch.columns["state"])
+        assertEquals(setOf(5), recorder.dirtyCityIds())
+    }
+
+    @Test
     fun `unchanged meta keys are not in the patch`() {
         // only max_domestic_critical changes; intel_exp + explevel stay
         val pre = general()
