@@ -363,6 +363,7 @@ class FrontInfoController(
             onlineUserCnt = intOrNull(config["online_user_cnt"]),
             startyear = intOrNull(config["startyear"]),
             generalCntLimit = intOrNull(config["maxgeneral"]),
+            blockGeneralCreate = intOrNull(config["block_general_create"]),
             apiLimit = intOrNull(config["refreshLimit"]),
             serverCnt = intOrNull(config["server_cnt"]),
             isunited = boolOrNull(config["isunited"]),

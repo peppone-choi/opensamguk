@@ -814,6 +814,66 @@ input:focus, select:focus, textarea:focus {
 
 /* CharacterClaim (장수선택 / 빙의) */
 .claim-screen { max-width: 960px; margin: 0 auto; }
+.claim-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.claim-mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.claim-mode-card h2 {
+  font-size: var(--text-lg);
+  color: var(--gold);
+  margin: 0;
+}
+.claim-mode-card p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+.claim-mode-card.is-disabled { opacity: 0.68; }
+.claim-mode-action,
+.claim-mode-active,
+.claim-mode-blocked {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0 var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+.claim-mode-action {
+  color: var(--bg-base);
+  background: var(--gold);
+}
+.claim-mode-active {
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+}
+.claim-mode-blocked {
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+.claim-mode-note {
+  padding: var(--space-md);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+.claim-section-title {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-lg);
+  color: var(--text-primary);
+}
 .claim-error {
   margin-bottom: var(--space-md);
   padding: var(--space-sm) var(--space-md);

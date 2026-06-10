@@ -42,6 +42,7 @@ export interface FrontGlobalInfo {
     apiLimit?: number;
     createdUserCnt?: number;
     generalCntLimit?: number;
+    blockGeneralCreate?: number;
     createdNPCCnt?: number;
     auctionCount?: number;
     lastVote?: { title: string } | null;

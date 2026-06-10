@@ -115,6 +115,23 @@ class FrontInfoControllerTest {
     }
 
     @Test
+    fun `global exposes registration mode gates for unowned character UI`() {
+        seedWorld(
+            mapOf(
+                "npcmode" to 2,
+                "block_general_create" to 1,
+                "maxgeneral" to 500,
+            ),
+        )
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.npcMode").value(2))
+            .andExpect(jsonPath("$.global.blockGeneralCreate").value(1))
+            .andExpect(jsonPath("$.global.generalCntLimit").value(500))
+    }
+
+    @Test
     fun `resolved general exposes gating surface (permission derived from officer level)`() {
         seedWorld()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
