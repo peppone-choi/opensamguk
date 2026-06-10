@@ -3,6 +3,7 @@ package opensamguk.gameapi.controller
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.infra.seed.MapJson
 import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.MockMvc
@@ -51,6 +52,18 @@ class GetConstControllerTest {
             // gameConst 번들 표시 상수.
             .andExpect(jsonPath("$.gameConst.maxTurn").value(GameConst.maxTurn))
             .andExpect(jsonPath("$.gameConst.mapName").value(GameConst.mapName))
+    }
+
+    @Test
+    fun `map dims come from the committed map resource, not controller literals`() {
+        // 정본 = 커밋된 map/<GameConst.mapName>.json 리소스(MapJson 디코더, MapPreviewController와
+        // 동일 로더). 컨트롤러 리터럴(1000/714 매직넘버) 금지 — 리소스가 바뀌면 응답도 따라가야 한다.
+        val mapData = MapJson.loadFromClasspath(GameConst.mapName)
+        require(mapData.width > 0 && mapData.height > 0) { "map/${GameConst.mapName}.json 리소스 부재" }
+        mockMvc().perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapWidth").value(mapData.width))
+            .andExpect(jsonPath("$.mapHeight").value(mapData.height))
     }
 
     @Test
