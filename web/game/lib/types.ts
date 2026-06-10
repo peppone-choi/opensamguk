@@ -3,6 +3,8 @@
 //  - Front-info / global-menu / const / identity shapes mirror game-api F2 Wave 1 DTOs (IdentityDto.kt).
 // Field names are STABLE (Jackson default camelCase). Keep in sync with the Kotlin DTOs.
 
+import type { VoteInfo } from '../types/game';
+
 // ── auth (gateway-api UserResponse) ──────────────────────────────────────────
 export interface User {
     id: number;
@@ -45,7 +47,13 @@ export interface FrontGlobalInfo {
     blockGeneralCreate?: number;
     createdNPCCnt?: number;
     auctionCount?: number;
-    lastVote?: { title: string } | null;
+    // [P1-002] legacy GetFrontInfo.php:183-189,231 — lastVote는 VoteInfo 전체
+    // ({id,title,multipleOptions,opener,startDate,endDate,options}, 만료 시 null).
+    // 새 설문 토스트 판정엔 id가 필수(lastVoteID > 저장 커서 && > aux.myLastVote — PageFront.vue:472-474).
+    // TODO(P1-002, W0-2): BE FrontInfoController가 lastVoteID/lastVote/aux.myLastVote 배출 시 소비.
+    lastVote?: VoteInfo | null;
+    /** legacy `lastVoteID` — 최신 설문 id(없으면 0). */
+    lastVoteID?: number;
     lastExecuted?: string | null;
     serverLocked?: boolean;
     isTournamentActive?: boolean;
@@ -211,6 +219,9 @@ export interface FrontInfoResponse {
     nation: FrontNationInfo | null;
     city: FrontCityInfo | null;
     recentRecord: string[];
+    // [P1-002] legacy GetFrontInfo 봉투의 aux 블록(defs/API/Global.ts:224-226) — 내가 마지막으로
+    // 참여한 설문 id. 새 설문 토스트 중복 억제에 사용. TODO(P1-002, W0-2): BE 배출 후 소비.
+    aux?: { myLastVote?: number } | null;
 }
 
 // ── city detail (game-api CityDetailController.CityDetailResponse) ────────────
