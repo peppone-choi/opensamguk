@@ -8,6 +8,7 @@ import opensamguk.gameapi.dto.CityConstMap
 import opensamguk.gameapi.dto.GameUnitConstItem
 import opensamguk.gameapi.dto.GetConstResponse
 import opensamguk.gameapi.dto.IActionItem
+import opensamguk.gameapi.read.F4StateText
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -31,12 +32,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/const")
 class GetConstController {
 
-    /** 직책 라벨(구 GlobalMenuController.gameConst에서 이관). devsam getNationLevelText 서브셋. */
-    private val OFFICER_LEVEL_TEXT: Map<Int, String> = linkedMapOf(
-        0 to "재야", 1 to "일반", 2 to "종사", 3 to "군사", 4 to "태수",
-        5 to "참모", 6 to "장군", 7 to "총사령관", 11 to "군주대리", 12 to "군주",
-    )
-
     @GetMapping
     fun getConst(): ResponseEntity<GetConstResponse> = ResponseEntity.ok(build())
 
@@ -46,7 +41,10 @@ class GetConstController {
         mapWidth = 1000,
         mapHeight = 714,
         maxTurn = GameConst.maxTurn,
-        officerLevelText = OFFICER_LEVEL_TEXT,
+        // 직책 라벨 — 정본 F4StateText 단일 테이블(PHP func_converter.php:522-565 getOfficerLevelText)
+        // 직렬화. 와이어 모양은 hwe/ts/utilGame/formatOfficerLevelText.ts(기본열 + 국가레벨별 테이블).
+        officerLevelText = F4StateText.officerLevelTextDefault(),
+        officerLevelTextByNationLevel = F4StateText.officerLevelTextByNationLevel(),
         gameConst = gameConstBundle(),
         gameUnitConst = GameUnitConst.all().values.map { u ->
             GameUnitConstItem(

@@ -34,7 +34,17 @@ data class GetConstResponse(
     val mapWidth: Int,
     val mapHeight: Int,
     val maxTurn: Int,
+    /**
+     * 직책 라벨 기본열(officerLevel → 한글명) — 정본 `F4StateText`(PHP func_converter.php:522-565
+     * `getOfficerLevelText`) 직렬화. 와이어 모양 = `hwe/ts/utilGame/formatOfficerLevelText.ts`
+     * `OfficerLevelMapDefault`(nlevel=8 기본열 + 공통 0..4).
+     */
     val officerLevelText: Map<Int, String>,
+    /**
+     * 국가레벨(7..0)별 수뇌 직책 맵(nationLevel → officerLevel → 한글명) — 동일 정본 테이블의
+     * `OfficerLevelMapByNationLevel` 와이어. PHP 미정의 코드는 키 생략(PHP '-').
+     */
+    val officerLevelTextByNationLevel: Map<Int, Map<Int, String>>,
     /** 게임 스칼라/리스트 상수 번들(프론트 표시·게이팅용). 키 = 상수명, 값 = 직렬화된 상수값. */
     val gameConst: Map<String, Any?>,
     /** 병종 일람 — id → 유닛 상세 와이어. PHP `GameUnitConst::all()`(id-삽입순). */

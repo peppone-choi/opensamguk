@@ -335,7 +335,11 @@ export interface GameConstResponse {
     mapWidth: number;
     mapHeight: number;
     maxTurn: number;
+    // 직책 라벨 기본열 — 정본 F4StateText(PHP func_converter.php getOfficerLevelText) 직렬화.
+    // 와이어 모양 = legacy hwe/ts/utilGame/formatOfficerLevelText.ts OfficerLevelMapDefault.
     officerLevelText: Record<number, string>;
+    // 국가레벨(7..0)별 수뇌 직책 — OfficerLevelMapByNationLevel 와이어. PHP 미정의 코드는 키 생략.
+    officerLevelTextByNationLevel: Record<number, Record<number, string>>;
 }
 
 // ── possession (game-api Claimable/Claim) ────────────────────────────────────
