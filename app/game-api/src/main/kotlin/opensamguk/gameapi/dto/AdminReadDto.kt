@@ -1,5 +1,44 @@
 package opensamguk.gameapi.dto
 
+data class AdminGameSettingsResponse(
+    val msg: String,
+    val logWritable: Boolean,
+    val scenarioCode: String?,
+    val year: Int?,
+    val month: Int?,
+    val starttime: String?,
+    val startyear: Int?,
+    val maxgeneral: Int?,
+    val maxnation: Int?,
+    val turntime: String?,
+    val turnterm: Int?,
+    val turnOptions: List<Int>,
+    val blockedWrites: List<AdminBlockedWrite>,
+)
+
+data class AdminBlockedWrite(
+    val label: String,
+    val reason: String,
+)
+
+data class AdminGeneralModerationResponse(
+    val generals: List<AdminGeneralModerationRow>,
+    val bulkActions: List<AdminBlockedWrite>,
+    val selectedActions: List<AdminBlockedWrite>,
+)
+
+data class AdminGeneralModerationRow(
+    val no: Int,
+    val name: String,
+    val npc: Int,
+    val block: Int,
+    val killturn: Int?,
+    val nationId: Int,
+    val turnTime: String?,
+    val command0: String?,
+    val command1: String?,
+)
+
 /**
  * B3a/B4a/B4b — 어드민 read API(`_admin5`/`_admin7`/`_admin8`) 응답 DTO 모음.
  *
