@@ -266,6 +266,7 @@ class ChangeRecorderTest {
         recorder.recordBettingInsert(linkedMapOf("betting_id" to 1, "general_id" to 1))  // INSERT 전용 채널
         recorder.recordBoardPostInsert(linkedMapOf("nation_id" to 1, "title" to "t"))    // 게시판 INSERT 전용
         recorder.recordBoardCommentInsert(linkedMapOf("post_id" to 1, "content_text" to "c"))
+        recorder.recordYearbookInsert(linkedMapOf("profile_name" to "sc", "year" to 181, "month" to 1)) // W0-8 연감 채널
         assertTrue(recorder.isDirty, "채널 기록됨 → dirty")
 
         recorder.clear()
@@ -276,5 +277,23 @@ class ChangeRecorderTest {
         assertTrue(recorder.bettingInserts().isEmpty())
         assertTrue(recorder.boardPostInserts().isEmpty(), "board_post INSERT는 다음 tick으로 넘어가면 안 된다")
         assertTrue(recorder.boardCommentInserts().isEmpty(), "board_comment INSERT는 다음 tick으로 넘어가면 안 된다")
+        assertTrue(recorder.yearbookInserts().isEmpty(), "yearbook UPSERT는 다음 tick으로 넘어가면 안 된다")
+    }
+
+    @Test
+    fun `W0-8 -- yearbook 채널은 emit 순서를 보존하고 단독으로도 dirty 신호를 세운다`() {
+        // 연감 채널만 기록된 tick(월별 LogHistory 스냅샷)에서 flush 트리거가 서지 않으면
+        // 스냅샷이 조용히 유실된다 — isDirty가 yearbook 단독으로도 true여야 한다.
+        val recorder = ChangeRecorder()
+        assertFalse(recorder.isDirty)
+
+        recorder.recordYearbookInsert(linkedMapOf("profile_name" to "sc", "year" to 181, "month" to 1))
+        recorder.recordYearbookInsert(linkedMapOf("profile_name" to "sc", "year" to 181, "month" to 2))
+
+        assertTrue(recorder.isDirty, "yearbook 단독 기록 → dirty (flush 트리거)")
+        val rows = recorder.yearbookInserts()
+        assertEquals(2, rows.size)
+        assertEquals(1, rows[0].columns["month"], "emit 순서 보존 — 1월 먼저")
+        assertEquals(2, rows[1].columns["month"])
     }
 }
