@@ -7,12 +7,18 @@ import opensamguk.gameapi.read.DiplomacyReadEntity
 import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralTurnReadEntity
+import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadEntity
 import opensamguk.gameapi.read.RankDataReadRepository
 import opensamguk.gameapi.read.WorldLogReadEntity
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.security.GameApiJwtVerifier
+import opensamguk.infra.entity.GameKvEntity
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
@@ -44,10 +50,13 @@ class AdminReadControllerTest {
     private val ranks = mock(RankDataReadRepository::class.java)
     private val diplomacy = mock(DiplomacyReadRepository::class.java)
     private val generalLogs = mock(AdminGeneralLogReadRepository::class.java)
+    private val world = mock(WorldStateReadRepository::class.java)
+    private val gameKv = mock(GameKvReadRepository::class.java)
+    private val generalTurns = mock(GeneralTurnReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            AdminReadController(verifier, nations, generals, cities, ranks, diplomacy, generalLogs),
+            AdminReadController(verifier, nations, generals, cities, ranks, diplomacy, generalLogs, world, gameKv, generalTurns),
         ).build()
 
     /** ADMIN 토큰 발급(stub) — verifier가 valid + role=ADMIN을 반환하게 한다. */
@@ -57,6 +66,89 @@ class AdminReadControllerTest {
     }
 
     private fun bearer(token: String) = "Bearer $token"
+
+    @Test
+    fun `game-settings returns admin1 read surface with PHP labels blocked as writes`() {
+        stubAdmin()
+        `when`(world.findById(1)).thenReturn(
+            java.util.Optional.of(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "scenario_1010",
+                    currentYear = 181,
+                    currentMonth = 1,
+                    tickSeconds = 1800,
+                    config = mapOf("startyear" to 180, "starttime" to "2026-06-01 00:00:00", "turnterm" to 30),
+                ),
+            ),
+        )
+        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "global", "msg")).thenReturn(
+            GameKvEntity(table = "game_env", namespace = "global", key = "msg", value = "\"공지\\t내용\""),
+        )
+
+        mockMvc().perform(get("/api/admin/game-settings").header("Authorization", bearer("admintok")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.msg").value("공지\t내용"))
+            .andExpect(jsonPath("$.scenarioCode").value("scenario_1010"))
+            .andExpect(jsonPath("$.year").value(181))
+            .andExpect(jsonPath("$.turnterm").value(30))
+            .andExpect(jsonPath("$.turnOptions[5]").value(30))
+            .andExpect(jsonPath("$.blockedWrites[0].label").value("운영자메세지 변경"))
+    }
+
+    @Test
+    fun `general-moderation returns admin2 selector rows and blocked write catalogue`() {
+        stubAdmin()
+        `when`(generals.findAll()).thenReturn(
+            listOf(
+                GeneralReadEntity(id = 2, name = "NPC장", npcState = 2),
+                GeneralReadEntity(id = 1, name = "유저장", npcState = 0, meta = mapOf("block" to 1, "killturn" to 24)),
+            ),
+        )
+        `when`(generalTurns.findReservedByGeneralIds(listOf(1, 2))).thenReturn(
+            listOf(
+                GeneralTurnReadEntity(id = 10, generalId = 1, turnIdx = 0, actionCode = "che_하야", brief = "하야"),
+                GeneralTurnReadEntity(id = 11, generalId = 1, turnIdx = 1, actionCode = "che_해산", brief = "해산"),
+            ),
+        )
+
+        mockMvc().perform(get("/api/admin/general-moderation").header("Authorization", bearer("admintok")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generals[0].no").value(1))
+            .andExpect(jsonPath("$.generals[0].block").value(1))
+            .andExpect(jsonPath("$.generals[0].killturn").value(24))
+            .andExpect(jsonPath("$.generals[0].command0").value("하야"))
+            .andExpect(jsonPath("$.selectedActions[0].label").value("블럭 해제"))
+    }
+
+    @Test
+    fun `game-settings returns defaults when world and game env are absent`() {
+        stubAdmin()
+        `when`(world.findById(1)).thenReturn(java.util.Optional.empty())
+
+        mockMvc().perform(get("/api/admin/game-settings").header("Authorization", bearer("admintok")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.msg").value(""))
+            .andExpect(jsonPath("$.scenarioCode").doesNotExist())
+            .andExpect(jsonPath("$.year").doesNotExist())
+            .andExpect(jsonPath("$.month").doesNotExist())
+            .andExpect(jsonPath("$.startyear").value(180))
+            .andExpect(jsonPath("$.maxgeneral").value(500))
+            .andExpect(jsonPath("$.maxnation").value(55))
+            .andExpect(jsonPath("$.blockedWrites[6].label").value("턴시간 변경"))
+    }
+
+    @Test
+    fun `general-moderation returns empty rows with action catalogues`() {
+        stubAdmin()
+        `when`(generals.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/admin/general-moderation").header("Authorization", bearer("admintok")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generals").isEmpty)
+            .andExpect(jsonPath("$.bulkActions[0].label").value("전체 접속허용"))
+            .andExpect(jsonPath("$.selectedActions[15].label").value("메세지 전달"))
+    }
 
     // ── ADMIN 게이트 ────────────────────────────────────────────────────────
 
@@ -81,6 +173,20 @@ class AdminReadControllerTest {
 
         mockMvc().perform(get("/api/admin/nation-stats").header("Authorization", bearer("bad")))
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `new admin read endpoints require admin token`() {
+        for (path in listOf("/api/admin/game-settings", "/api/admin/general-moderation")) {
+            mockMvc().perform(get(path))
+                .andExpect(status().isUnauthorized)
+
+            `when`(verifier.isValid("usertok")).thenReturn(true)
+            `when`(verifier.getRole("usertok")).thenReturn("USER")
+
+            mockMvc().perform(get(path).header("Authorization", bearer("usertok")))
+                .andExpect(status().isForbidden)
+        }
     }
 
     // ── B3a nation-stats ─────────────────────────────────────────────────────

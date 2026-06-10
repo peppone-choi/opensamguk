@@ -2,13 +2,18 @@ package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.dto.AdminDiplomacyAllResponse
 import opensamguk.gameapi.dto.AdminDiplomacyRow
+import opensamguk.gameapi.dto.AdminBlockedWrite
+import opensamguk.gameapi.dto.AdminGameSettingsResponse
 import opensamguk.gameapi.dto.AdminGeneralDetail
 import opensamguk.gameapi.dto.AdminGeneralLogResponse
+import opensamguk.gameapi.dto.AdminGeneralModerationResponse
+import opensamguk.gameapi.dto.AdminGeneralModerationRow
 import opensamguk.gameapi.dto.AdminGeneralSelectOption
 import opensamguk.gameapi.dto.AdminGeneralSortOption
 import opensamguk.gameapi.dto.AdminNationStatsResponse
 import opensamguk.gameapi.dto.AdminNationStatsRow
 import opensamguk.gameapi.dto.AdminNationStatsSortOption
+import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.read.AdminGeneralLogReadRepository
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
@@ -16,11 +21,15 @@ import opensamguk.gameapi.read.DiplomacyReadEntity
 import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.security.GameApiJwtVerifier
+import opensamguk.common.constants.GameConst
+import opensamguk.logic.util.jsonDecodeAny
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -55,6 +64,9 @@ class AdminReadController(
     private val ranks: RankDataReadRepository,
     private val diplomacy: DiplomacyReadRepository,
     private val generalLogs: AdminGeneralLogReadRepository,
+    private val world: WorldStateReadRepository,
+    private val gameKv: GameKvReadRepository,
+    private val generalTurns: GeneralTurnReadRepository,
 ) {
 
     // ──────────────────────────────────────────────────────────────────────
@@ -72,6 +84,67 @@ class AdminReadController(
     private fun bearer(authorization: String?): String? {
         if (authorization == null || !authorization.startsWith("Bearer ")) return null
         return authorization.substring(7).ifBlank { null }
+    }
+
+    @GetMapping("/game-settings")
+    fun gameSettings(
+        @RequestHeader(value = "Authorization", required = false) authorization: String?,
+    ): ResponseEntity<Any> {
+        requireAdmin(authorization)?.let { return it }
+
+        val w = world.findById(1).orElse(null)
+        val config = w?.config.orEmpty()
+        val msg = firstGameEnvText("msg") ?: stringConfig(config["msg"]) ?: ""
+
+        return ResponseEntity.ok(
+            AdminGameSettingsResponse(
+                msg = msg,
+                logWritable = false,
+                scenarioCode = w?.scenarioCode,
+                year = w?.currentYear,
+                month = w?.currentMonth,
+                starttime = stringConfig(config["starttime"]) ?: stringConfig(w?.meta?.get("startTime")),
+                startyear = intConfig(config["startyear"]) ?: intConfig(w?.meta?.get("startYear")) ?: GameConst.defaultStartYear,
+                maxgeneral = intConfig(config["maxgeneral"]) ?: GameConst.defaultMaxGeneral,
+                maxnation = intConfig(config["maxnation"]) ?: GameConst.defaultMaxNation,
+                turntime = stringConfig(config["turntime"]),
+                turnterm = intConfig(config["turnterm"]) ?: w?.let { it.tickSeconds / 60 },
+                turnOptions = TURN_OPTIONS,
+                blockedWrites = GAME_SETTING_WRITES,
+            ),
+        )
+    }
+
+    @GetMapping("/general-moderation")
+    fun generalModeration(
+        @RequestHeader(value = "Authorization", required = false) authorization: String?,
+    ): ResponseEntity<Any> {
+        requireAdmin(authorization)?.let { return it }
+
+        val all = generals.findAll().sortedWith(compareBy<GeneralReadEntity> { it.npcState }.thenBy { it.name }.thenBy { it.id })
+        val turns = if (all.isEmpty()) emptyMap() else generalTurns.findReservedByGeneralIds(all.map { it.id }).groupBy { it.generalId }
+        val rows = all.map { g ->
+            val ring = turns[g.id].orEmpty()
+            AdminGeneralModerationRow(
+                no = g.id,
+                name = g.name,
+                npc = g.npcState,
+                block = intConfig(g.meta["block"]) ?: intConfig(g.meta["blockLevel"]) ?: intConfig(g.penalty["blockLevel"]) ?: 0,
+                killturn = intConfig(g.meta["killturn"]) ?: intConfig(g.penalty["killturn"]),
+                nationId = g.nationId,
+                turnTime = TurnTimeFormatter.full(g.turnTime),
+                command0 = ring.firstOrNull { it.turnIdx == 0 }?.brief,
+                command1 = ring.firstOrNull { it.turnIdx == 1 }?.brief,
+            )
+        }
+
+        return ResponseEntity.ok(
+            AdminGeneralModerationResponse(
+                generals = rows,
+                bulkActions = GENERAL_BULK_WRITES,
+                selectedActions = GENERAL_SELECTED_WRITES,
+            ),
+        )
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -430,9 +503,71 @@ class AdminReadController(
         else -> "상태$state"
     }
 
+    private fun firstGameEnvText(key: String): String? =
+        gameKv.findByTableAndNamespaceAndKey("game_env", "global", key)?.value?.let(::jsonScalar)
+            ?: gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", key)?.value?.let(::jsonScalar)
+            ?: gameKv.findByTableAndNamespaceAndKey("game_env", "", key)?.value?.let(::jsonScalar)
+            ?: gameKv.findByTableAndNamespaceAndKey("game_env", "default", key)?.value?.let(::jsonScalar)
+
+    private fun stringConfig(value: Any?): String? = when (value) {
+        null -> null
+        is String -> value
+        is Number, is Boolean -> value.toString()
+        else -> null
+    }
+
+    private fun intConfig(value: Any?): Int? = when (value) {
+        is Number -> value.toInt()
+        is String -> value.toIntOrNull()
+        else -> null
+    }
+
+    private fun jsonScalar(raw: String): String =
+        when (val decoded = runCatching { jsonDecodeAny(raw) }.getOrNull()) {
+            null -> ""
+            is String -> decoded
+            is Number, is Boolean -> decoded.toString()
+            else -> raw.trim()
+        }
+
     private companion object {
         const val ADMIN_ROLE = "ADMIN"
         const val LOG_RECENT_COUNT = 24 // PHP _admin7 *Recent($gen, 24)
+        val TURN_OPTIONS = listOf(1, 2, 5, 10, 20, 30, 60, 120)
+
+        val GAME_SETTING_WRITES = listOf(
+            AdminBlockedWrite("운영자메세지 변경", "game_env mutation intake 미포팅"),
+            AdminBlockedWrite("중원정세추가", "log_entry append intake 미포팅"),
+            AdminBlockedWrite("시작시간변경", "world_state config mutation intake 미포팅"),
+            AdminBlockedWrite("최대 장수 변경", "world_state config mutation intake 미포팅"),
+            AdminBlockedWrite("최대 국가 변경", "world_state config mutation intake 미포팅"),
+            AdminBlockedWrite("시작 년도 변경", "world_state config mutation intake 미포팅"),
+            AdminBlockedWrite("턴시간 변경", "ServerTool::changeServerTerm 등가 intake 미포팅"),
+        )
+
+        val GENERAL_BULK_WRITES = listOf(
+            AdminBlockedWrite("전체 접속허용", "general_access_log 테이블 미포팅"),
+            AdminBlockedWrite("전체 접속제한", "general_access_log 테이블 미포팅"),
+        )
+
+        val GENERAL_SELECTED_WRITES = listOf(
+            AdminBlockedWrite("블럭 해제", "general.block mutation intake 미포팅"),
+            AdminBlockedWrite("1단계 블럭", "general.block/killturn 및 root member block_num mutation 미포팅"),
+            AdminBlockedWrite("2단계 블럭", "general.block/gold/rice/killturn 및 root member block_num mutation 미포팅"),
+            AdminBlockedWrite("3단계 블럭", "general.block/gold/rice/killturn 및 root member block_num mutation 미포팅"),
+            AdminBlockedWrite("무한삭턴", "general.killturn mutation 미포팅"),
+            AdminBlockedWrite("강제 사망", "general.turntime/general_turn mutation intake 미포팅"),
+            AdminBlockedWrite("보숙10000", "숙련도 지급 및 private message intake 미포팅"),
+            AdminBlockedWrite("궁숙10000", "숙련도 지급 및 private message intake 미포팅"),
+            AdminBlockedWrite("기숙10000", "숙련도 지급 및 private message intake 미포팅"),
+            AdminBlockedWrite("귀숙10000", "숙련도 지급 및 private message intake 미포팅"),
+            AdminBlockedWrite("차숙10000", "숙련도 지급 및 private message intake 미포팅"),
+            AdminBlockedWrite("접속 허용", "general_access_log 테이블 미포팅"),
+            AdminBlockedWrite("접속 제한", "general_access_log 테이블 미포팅"),
+            AdminBlockedWrite("하야입력", "general_turn 예약 mutation intake 미포팅"),
+            AdminBlockedWrite("방랑해산", "general_turn 예약 mutation intake 미포팅"),
+            AdminBlockedWrite("메세지 전달", "admin private message intake 미포팅"),
+        )
 
         /** `_admin5.php:57-74` type select 옵션(verbatim, value+label). 2/11/12 결번은 legacy도 미노출. */
         val SORT_OPTIONS = listOf(

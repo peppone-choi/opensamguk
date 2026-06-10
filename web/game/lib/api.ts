@@ -164,6 +164,45 @@ export interface AdminDiplomacyAllResponse {
     relations: AdminDiplomacyRow[];
 }
 
+export interface AdminBlockedWrite {
+    label: string;
+    reason: string;
+}
+
+export interface AdminGameSettingsResponse {
+    msg: string;
+    logWritable: boolean;
+    scenarioCode: string | null;
+    year: number | null;
+    month: number | null;
+    starttime: string | null;
+    startyear: number | null;
+    maxgeneral: number | null;
+    maxnation: number | null;
+    turntime: string | null;
+    turnterm: number | null;
+    turnOptions: number[];
+    blockedWrites: AdminBlockedWrite[];
+}
+
+export interface AdminGeneralModerationRow {
+    no: number;
+    name: string;
+    npc: number;
+    block: number;
+    killturn: number | null;
+    nationId: number;
+    turnTime: string | null;
+    command0: string | null;
+    command1: string | null;
+}
+
+export interface AdminGeneralModerationResponse {
+    generals: AdminGeneralModerationRow[];
+    bulkActions: AdminBlockedWrite[];
+    selectedActions: AdminBlockedWrite[];
+}
+
 async function get<T>(path: string): Promise<T> {
     const res = await fetch(`${BASE}${path}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
@@ -390,6 +429,8 @@ export const api = {
     // game-api AdminReadController — 전부 READ-only. 프록시가 httpOnly sam_access 쿠키를
     // Bearer로 붙여 보내므로 별도 헤더 주입 불필요. 비ADMIN은 game-api가 403, 비로그인은 401.
     admin: {
+        gameSettings: () => get<AdminGameSettingsResponse>('/api/admin/game-settings'),
+        generalModeration: () => get<AdminGeneralModerationResponse>('/api/admin/general-moderation'),
         // 일제정보(_admin5) — 국가별 통계 + 정렬(type 0~17, type2 0~6).
         nationStats: (type = 0, type2 = 0) =>
             get<AdminNationStatsResponse>(`/api/admin/nation-stats?type=${type}&type2=${type2}`),
