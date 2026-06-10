@@ -35,8 +35,6 @@ import opensamguk.logic.tick.CheckStatisticCalculator
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.PreUpdateMonthly
 import opensamguk.logic.tick.ServerClock
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 import org.springframework.beans.factory.annotation.Value
 import java.time.Instant
 import org.springframework.context.annotation.Bean
@@ -245,20 +243,10 @@ class DaemonLoopConfig {
                     specialWarNameOf = { s -> opensamguk.logic.world.SpecialityHelper.warName(s) },
                     crewtypeShortNameOf = { c -> GameUnitConst.byId(c)?.name ?: "$c" },
                 )
-                handler.recorder.recordStatisticInsert(linkedMapOf(
-                    "year" to row.year,
-                    "month" to row.month,
-                    "nation_count" to row.nationCount,
-                    "nation_name" to row.nationName,
-                    "nation_hist" to row.nationHist,
-                    "gen_count" to row.genCount,
-                    "personal_hist" to row.personalHist,
-                    "special_hist" to row.specialHist,
-                    "power_hist" to row.powerHist,
-                    "crewtype" to row.crewtype,
-                    "etc" to row.etc,
-                    "aux" to Json.encodeToString(row.aux),
-                ))
+                // aux는 Map<String, Any?> — kotlinx Json.encodeToString은 런타임에
+                // SerializationException("Serializer for class 'Any'")을 던져 연경계(새 달 == 1월)
+                // tick을 영구 동결시킨다(2026-06-09 prod s1/spep 회귀). MetaJson 경로만 허용.
+                handler.recorder.recordStatisticInsert(StatisticInsertColumns.from(row))
             },
             postUpdateMonthly = MonthlyPostUpdateHook(world, handler.recorder, generalActionPipeline),
         )
