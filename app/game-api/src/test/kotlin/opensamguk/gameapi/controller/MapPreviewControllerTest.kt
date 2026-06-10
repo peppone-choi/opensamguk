@@ -94,4 +94,37 @@ class MapPreviewControllerTest {
             .andExpect(jsonPath("$.cities.length()").value(0))
             .andExpect(jsonPath("$.nations.length()").value(0))
     }
+
+    // ── W0-2(P1-060) startYear — legacy 맵 페이로드 필드(func_map.php:68,158) ────────────────────────
+
+    @Test
+    fun `exposes startYear from the world config when seeded`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3,
+                    config = mapOf("startyear" to 180),
+                ),
+            ),
+        )
+        `when`(cityRepo.findAll()).thenReturn(emptyList())
+        `when`(nationRepo.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.startYear").value(180))
+    }
+
+    @Test
+    fun `startYear is null when the config does not carry it`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3)),
+        )
+        `when`(cityRepo.findAll()).thenReturn(emptyList())
+        `when`(nationRepo.findAll()).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.startYear").doesNotExist())
+    }
 }

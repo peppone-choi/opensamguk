@@ -1,5 +1,6 @@
 package opensamguk.gameapi.dto
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
@@ -24,6 +25,13 @@ data class MapPreviewResponse(
     val height: Int,
     val cities: List<MapPreviewCity>,
     val nations: List<MapPreviewNation>,
+    /**
+     * 시나리오 개시 연도 — legacy 맵 페이로드 필드(func_map.php:68,158 `startyear`).
+     * 연월 타이틀 초반 3년 색상 게이트(P1-060)의 소비 원천. world config의 `startyear`
+     * (소문자 — PHP game_env 키 그대로) 부재 시 null이고 직렬화에서 생략한다.
+     */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val startYear: Int? = null,
 )
 
 data class MapPreviewCity(
