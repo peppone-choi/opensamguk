@@ -3,6 +3,7 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.AdminGeneralLogReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.SecretPermissionReader
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -28,8 +29,10 @@ import org.springframework.web.bind.annotation.RestController
  * (recent=DESC LIMIT 30, more=id<reqTo). PHP `checkLimit`(refresh_score 접속 제한)은
  * general_access_log 영속 원천 부재(HARDCODE_INVENTORY D3-03)로 BLOCKED — 분기 자체가 발화 불가.
  *
- * secretPermission은 DiplomacyController와 동일한 officer_level 충실 모델(0~4;
- * ambassador/auditor/secretlimit 분기 BLOCKED) — 단일소스화는 루프 LEDGER 백로그.
+ * secretPermission은 W0-3 공용 헬퍼 [SecretPermissionReader] 정본(0..4/-1) —
+ * PHP `checkSecretPermission($me)`(GetGeneralLog.php:60, 기본 인자 = checkSecretLimit true)와
+ * 동일하게 ambassador/auditor/penalty/사관년도(belong>=secretlimit) 분기가 모두 LIVE다.
+ * (에러 문구 '…사관년도가 부족합니다'가 바로 belong<secretlimit 분기의 존재 증거.)
  */
 @RestController
 @RequestMapping("/api/general-log")
@@ -37,6 +40,7 @@ class GeneralLogController(
     private val resolver: GeneralResolver,
     private val generals: GeneralReadRepository,
     private val logs: AdminGeneralLogReadRepository,
+    private val secretPermission: SecretPermissionReader,
 ) {
 
     @GetMapping
@@ -47,7 +51,7 @@ class GeneralLogController(
         @RequestParam("reqTo", required = false) reqTo: Int?,
     ): Map<String, Any?> {
         val me = userId?.let { resolver.resolve(it) }
-        val permission = secretPermission(me)
+        val permission = secretPermission.of(me)
         if (permission < 0) return err("국가에 소속되어있지 않습니다.")
         if (permission < 1) return err("권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.")
 
@@ -89,22 +93,6 @@ class GeneralLogController(
         else logs.findRecentByGeneralBefore(generalID, category, reqTo, PAGE_SIZE)
 
     private fun err(reason: String): Map<String, Any?> = linkedMapOf("result" to false, "reason" to reason)
-
-    /**
-     * PHP `checkSecretPermission($me)`의 officer_level 충실 모델(DiplomacyController와 동일 산식).
-     * -1=재야/무소속, 0=일반, 1=관직자(level>1), 2=수뇌(level>=5), 4=군주(level==12).
-     */
-    private fun secretPermission(resolved: GeneralResolver.ResolvedGeneral?): Int {
-        if (resolved == null || resolved.nationId == 0) return -1
-        val officerLevel = resolved.officerLevel
-        return when {
-            officerLevel == 0 -> -1
-            officerLevel == 12 -> 4
-            officerLevel >= 5 -> 2
-            officerLevel > 1 -> 1
-            else -> 0
-        }
-    }
 
     private companion object {
         const val GENERAL_HISTORY = "generalHistory"

@@ -14,6 +14,7 @@ import opensamguk.gameapi.read.DiplomacyLetterReadRepository
 import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.SecretPermissionReader
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,6 +32,7 @@ class DiplomacyController(
     private val nations: NationReadRepository,
     private val cities: CityReadRepository,
     private val resolver: GeneralResolver,
+    private val secretPermission: SecretPermissionReader,
 ) {
 
     /**
@@ -69,9 +71,10 @@ class DiplomacyController(
         }
         val resolved = userId?.let { resolver.resolve(it) }
         val myNationID = resolved?.nationId ?: 0
-        // PHP `checkSecretPermission($me)` 호출자 외교 권한(0~4). detail 마스킹 게이트(<3)에 사용.
-        // officer_level 분기만 충실 모델(아래 secretPermission). ambassador/auditor/secretlimit 분기는 BLOCKED.
-        val mySecretPermission = secretPermission(resolved)
+        // PHP `checkSecretPermission($me)`(j_diplomacy_get_letter.php:33 — 기본 인자) = W0-3 공용 헬퍼
+        // [SecretPermissionReader] 정본(0..4/-1, ambassador/auditor/penalty/사관년도 전 분기 LIVE).
+        // detail 마스킹 게이트(<3)에 사용 — auditor(3)/ambassador(4)/군주(4)만 원문 열람.
+        val mySecretPermission = secretPermission.of(resolved)
         val letterRows = if (myNationID != 0) {
             letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(myNationID, myNationID)
                 // PHP `WHERE ... AND state != 'cancelled'`(j_diplomacy_get_letter.php:46) — 거부/파기된 서신은 목록 제외.
@@ -142,30 +145,6 @@ class DiplomacyController(
             generalName = party["generalName"] as? String,
             generalIcon = party["generalIcon"] as? String,
         )
-    }
-
-    /**
-     * PHP `checkSecretPermission($me)`의 officer_level 분기 충실 포팅(0~4 비밀 권한).
-     *  - nation 없음 또는 officer_level==0 → -1(소속 없음/일반).
-     *  - officer_level==12(군주) → 4.
-     *  - officer_level>=5(수뇌) → 2.
-     *  - officer_level>1(관직자) → 1.
-     *  - 그 외 → 0.
-     * BLOCKED(백로그): `permission` enum 컬럼(ambassador 외교권→4 / auditor 감찰권→3),
-     * `secretlimit`+`belong` 분기, `penalty[NoChief]→0`, `checkSecretMaxPermission` 상한 —
-     * 모두 opensamguk general 스키마에 원천 컬럼이 없어(P8 미이식) 재현 불가. 값 날조 금지.
-     * 따라서 현 모델에선 detail(<3) 마스킹 해제는 군주(lv12=4)만 가능하다 — divergence로 표기.
-     */
-    private fun secretPermission(resolved: GeneralResolver.ResolvedGeneral?): Int {
-        if (resolved == null || resolved.nationId == 0) return -1
-        val officerLevel = resolved.officerLevel
-        return when {
-            officerLevel == 0 -> -1
-            officerLevel == 12 -> 4
-            officerLevel >= 5 -> 2
-            officerLevel > 1 -> 1
-            else -> 0
-        }
     }
 
     private companion object {
