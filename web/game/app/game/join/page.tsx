@@ -141,14 +141,14 @@ export default function JoinPage() {
           <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
             {(['random', 'balanced', 'leadership', 'strength', 'intel'] as const).map((t) => (
               <button key={t} type="button" onClick={() => preset(t)} style={{ fontSize: 'var(--text-sm)', padding: '4px 8px' }}>
-                {t === 'random' ? '랜덤' : t === 'balanced' ? '균형' : t === 'leadership' ? '통솔형' : t === 'strength' ? '묵력형' : '지력형'}
+                {t === 'random' ? '랜덤' : t === 'balanced' ? '균형' : t === 'leadership' ? '통솔형' : t === 'strength' ? '무력형' : '지력형'}
               </button>
             ))}
           </div>
 
           {[
             { label: '통솔', value: leadership, set: setLeadership },
-            { label: '묵력', value: strength, set: setStrength },
+            { label: '무력', value: strength, set: setStrength },
             { label: '지력', value: intel, set: setIntel },
           ].map(({ label, value, set }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
