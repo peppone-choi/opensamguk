@@ -493,8 +493,28 @@ data class MyGeneralSummary(
     val injury: Int = 0,
     /** 통솔보너스 = calcLeadershipBonus(officer_level, nationLevel) (PHP). >0이면 통솔에 "+{lbonus}"(cyan). */
     val lbonus: Int = 0,
-    // [§2 BLOCKED — general_access_log 부재] 벌점(refresh_score_total)은 PHP가 LEFT JOIN
-    // general_access_log에서 읽는다(b_myGenInfo.php:118). 테이블이 opensamguk 스키마에 없어(P8 미이식)
+
+    // ── W0-2(P1-071/072/075) raw 정렬 키 — PHP b_myGenInfo.php:90-110 ────────────────────────────────
+    // PHP 정렬은 raw 컬럼 DESC(2계급=dedication/3명성=experience/11성격=personal/12내특=special/
+    // 13전특=special2). 한글 해석값(localeCompare)이 아닌 raw 원값을 배출해 FE가 PHP usort를 재현한다.
+    /** raw 공헌도(PHP `dedication`) — 계급(type 2) 정렬 키. */
+    val dedication: Int = 0,
+    /** raw 경험치(PHP `experience`) — 명성(type 3) 정렬 키. */
+    val experience: Int = 0,
+    /** raw 성격 코드(PHP `personal`, 예: che_정복) — 성격(type 11) 정렬 키. */
+    val personal: String? = null,
+    /** raw 내정 특기 코드(PHP `special`) — 내특(type 12) 정렬 키. */
+    val special: String? = null,
+    /** raw 전투 특기 코드(PHP `special2`) — 전특(type 13) 정렬 키. */
+    val special2: String? = null,
+    /**
+     * W0-2(P1-073/075) isunited 시 소유 플레이어명(PHP b_myGenInfo.php:31-36 member 테이블 →
+     * :155-157 '(ownerName)'). opensamguk은 general.meta.owner_name이 문서화된 동등 키
+     * (FrontGeneralInfo.ownerName 동일 원천) — 방어적 read, 부재 시 null(날조 금지).
+     */
+    val ownerName: String? = null,
+    // [§2 BLOCKED — general_access_log 부재, P1-069/P1-075] 벌점(refresh_score_total)은 PHP가 LEFT JOIN
+    // general_access_log에서 읽는다(b_myGenInfo.php:109-110). 테이블이 opensamguk 스키마에 없어(P8 미이식)
     // read 원천이 없다 → 벌점 컬럼/정렬(type=10) 모두 노출하지 않는다(날조 금지).
 )
 
