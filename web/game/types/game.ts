@@ -735,13 +735,20 @@ export interface DiplomacyLettersResponse {
 // Mirrors Global/GetDiplomacy.php. Matrix symbols ★/▲/ㆍ/@ + colors rendered by
 // page verbatim. `conflict` is per-city 분쟁 share (%); diplomacyList masks
 // neutral states 3-7 → 2 for nations not involving the viewer.
+//
+// [P0-19] 와이어 키는 PHP-verbatim — BE(F4Dto.SimpleNationObj)가 `nation`/`myNationID`로
+// 직렬화한다(GetDiplomacy.php:98-104 그대로, F4ReadControllersTest로 증명). 이전 FE 타입이
+// `nationId`/`myNationId`로 발산해 페이지 전체가 silent 붕괴했었음 — 절대 다시 리네임 금지.
 export interface ConflictNation {
-  nationId: number;        // legacy `nation`
+  nation: number;          // 국가 id — PHP `nation` 컬럼명 verbatim
   name: string;
   color: string;
+  type: string;            // 국가 성향 type_code (PHP `type`)
   level: number;
+  capital: number;         // 수도 도시 id (PHP `capital`, 없으면 0)
+  gennum: number;          // 장수 수 (PHP `gennum`) — P1-038 국가표 '장수' 컬럼 소비처
+  cities: string[];        // 보유 도시명 (insertion order preserved)
   power: number;
-  cities: string[];        // city names owned (insertion order preserved)
 }
 
 // [cityId, { nationId: sharePct }] — share rounded to 1 dp (PhpRound half-away).
@@ -752,7 +759,7 @@ export interface DiplomacyConflictResponse {
   nations: ConflictNation[];               // active nations (level>0), power DESC
   conflict: ConflictCity[];                // [] when no contested cities
   diplomacyList: Record<number, Record<number, number>>; // {me:{you:stateCode}}
-  myNationId: number;
+  myNationID: number;                      // PHP `myNationID` verbatim (P0-19 — 대문자 ID)
 }
 
 // ── page 3 · 내무부 (GET /api/nation/{id}/finance) ────────────────────────────
@@ -1071,4 +1078,44 @@ export interface HistoryResponse {
   serverId: string;
   mapName: string;
   record: HistoryRecord | null;   // selected month; null when range empty
+}
+
+// ── 서신함 (GET /api/mailbox/{mailbox} → MailboxMessage[] · GET /api/messages/{id}) ──
+// [P0-33] game-api MessageDto.kt(MessageResponse/MsgTarget)의 실제 와이어 1:1 미러.
+// legacy 계약: hwe/ts/defs/API/Message.ts MsgItem/MsgTarget (src/dest 타깃 블록 + text + time).
+// 이전 mailbox 페이지의 로컬 MailMessage 인터페이스(srcName/date/read 등)는 실DTO와 불일치 —
+// 발신자/시각 공란 + 위조 '미읽음' 배지의 근원이었다. legacy엔 read 플래그가 없고
+// latestRead 커서(sequence)만 존재 — read/unreadCount류 필드를 여기에 추가(날조)하지 말 것.
+// TODO(P0-33, W1-L): mailbox 페이지가 이 타입을 소비하도록 교체(srcTarget?.name / time / text 매핑).
+
+/** legacy MsgType verbatim — message.type 컬럼 값(type.value, 소문자). */
+export type MailMsgType = 'private' | 'public' | 'national' | 'diplomacy';
+
+/**
+ * 메시지 발/수신 대상 — PHP `MessageTarget::toArray()` `{id, name, nation_id, nation, color, icon}`.
+ * BE(MessageDto.MsgTarget)가 camelCase(nationId)로 직렬화한다(프록시 pass-through).
+ */
+export interface MailMsgTarget {
+  id: number;             // 장수 id (시스템 타깃은 0)
+  name: string;           // 장수 이름 (시스템 타깃은 "")
+  nationId: number;       // 소속 국가 id (재야/시스템 0) — legacy `nation_id`
+  nation: string;         // 소속 국가 이름 (재야 '재야')
+  color: string;          // 국가색 hex
+  icon: string | null;    // 아이콘 경로
+}
+
+/** GET /api/mailbox/{mailbox} 응답 1행 — BE MessageResponse 그대로(bare 배열로 내려온다). */
+export interface MailboxMessage {
+  id: number | null;
+  mailbox: number;
+  type: MailMsgType;
+  src: number;            // 발신 장수 id(라우팅 키 int 컬럼)
+  dest: number;           // 수신 장수 id
+  time: string;           // ISO instant — 표시 시각은 여기서(legacy MsgItem.time)
+  validUntil: string;     // ISO instant — 유효기한
+  message: string;        // 원본 body jsonb 문자열(호환 보존)
+  text: string | null;    // body `text` — 표시 본문
+  srcTarget: MailMsgTarget | null;  // 발신 타깃 블록 — 발신자명은 srcTarget.name
+  destTarget: MailMsgTarget | null; // 수신 타깃 블록(공개 메시지면 null)
+  option: Record<string, unknown> | null; // body `option`(action/deletable/receiverMessageID 등)
 }

@@ -3,6 +3,8 @@
 //  - Front-info / global-menu / const / identity shapes mirror game-api F2 Wave 1 DTOs (IdentityDto.kt).
 // Field names are STABLE (Jackson default camelCase). Keep in sync with the Kotlin DTOs.
 
+import type { VoteInfo } from '../types/game';
+
 // ── auth (gateway-api UserResponse) ──────────────────────────────────────────
 export interface User {
     id: number;
@@ -45,7 +47,13 @@ export interface FrontGlobalInfo {
     blockGeneralCreate?: number;
     createdNPCCnt?: number;
     auctionCount?: number;
-    lastVote?: { title: string } | null;
+    // [P1-002] legacy GetFrontInfo.php:183-189,231 — lastVote는 VoteInfo 전체
+    // ({id,title,multipleOptions,opener,startDate,endDate,options}, 만료 시 null).
+    // 새 설문 토스트 판정엔 id가 필수(lastVoteID > 저장 커서 && > aux.myLastVote — PageFront.vue:472-474).
+    // TODO(P1-002, W0-2): BE FrontInfoController가 lastVoteID/lastVote/aux.myLastVote 배출 시 소비.
+    lastVote?: VoteInfo | null;
+    /** legacy `lastVoteID` — 최신 설문 id(없으면 0). */
+    lastVoteID?: number;
     lastExecuted?: string | null;
     serverLocked?: boolean;
     isTournamentActive?: boolean;
@@ -211,6 +219,9 @@ export interface FrontInfoResponse {
     nation: FrontNationInfo | null;
     city: FrontCityInfo | null;
     recentRecord: string[];
+    // [P1-002] legacy GetFrontInfo 봉투의 aux 블록(defs/API/Global.ts:224-226) — 내가 마지막으로
+    // 참여한 설문 id. 새 설문 토스트 중복 억제에 사용. TODO(P1-002, W0-2): BE 배출 후 소비.
+    aux?: { myLastVote?: number } | null;
 }
 
 // ── city detail (game-api CityDetailController.CityDetailResponse) ────────────
@@ -453,6 +464,78 @@ export interface MyNationDetailResponse {
     generalCount: number;
 }
 
+// ── 명령 인테이크 결과 (POST /api/command/* · /api/instant-action/*) ──────────
+// [W0-1 / P0-04·P0-06 근원] game-api CommandController·InstantActionController의 실제 응답 계약.
+// HTTP 200도 deny일 수 있다(BlockedResponse) — res.ok만 보고 성공 처리하면 위조 성공 토스트가 된다.
+//  - 202 {status:'AVAILABLE', ...} = **큐잉됨**(intake 수락). legacy 동기 실행과 달리 성공 확정이
+//    아니다 — 엔진이 비동기로 deny할 수 있다(결과 회신 채널은 W0-4). 성공 문구가 아니라
+//    "접수/예약" 시멘틱으로 토스트할 것.
+//  - 200 {status:'BLOCKED'|'UNKNOWN', reason} = precheck deny. reason은 PHP byte-parity 문자열 —
+//    페이지는 이 문자열을 그대로(danger/INFO) 노출한다. 날조·대체 금지.
+// 페이지 분기는 api.ts의 isIntakeQueued/isIntakeDenied 타입 가드로 한다.
+
+/** 202 — intake 수락(큐잉). 단건(requestId/turnIdx)·bulk(briefList)·instant(code) 공통 봉투. */
+export interface IntakeQueued {
+    status: 'AVAILABLE';
+    /** 단건/instant 인테이크의 요청 추적 id. bulk엔 없음. */
+    requestId?: string;
+    /** 단건 예약 슬롯 인덱스. */
+    turnIdx?: number;
+    /** bulk(BulkAcceptedResponse): PHP ReserveBulkCommand 성공 반환과 동형. */
+    result?: boolean;
+    briefList?: string[];
+    reason?: string;
+    /** instant-action(IntakeAcceptedResponse): 수락된 액션 코드. */
+    code?: string;
+}
+
+/** 200 — precheck/큐 조작 deny. reason = PHP byte-parity deny 문자열. */
+export interface IntakeDenied {
+    status: 'BLOCKED' | 'UNKNOWN';
+    reason: string;
+    /** 단건 precheck deny의 제약명(BlockedResponse.constraintName). */
+    constraintName?: string | null;
+    /** bulk(BulkBlockedResponse): 부분 실패 지점. */
+    result?: boolean;
+    briefList?: string[];
+    errorIdx?: number;
+}
+
+/** 인테이크 POST의 resolve 값 — status로 판별하는 discriminated union. */
+export type IntakeOutcome = IntakeQueued | IntakeDenied;
+
+// ── 예약 명령 링 read (GET /api/reserved-commands) ────────────────────────────
+// [P0-01] ReservedCommandsController의 실제 응답. 메인 예약 패널은 이걸 소비해야 하며
+// 전 슬롯 '휴식' 하드코딩 렌더(위조)를 금지한다 — 빈 슬롯(slots에 없는 turnIdx)만 '휴식'.
+
+/** 예약 링 1슬롯 — {turnIdx, action, brief, arg}. brief는 패러티 마크업 원문. */
+export interface ReservedSlot {
+    turnIdx: number;
+    action: string;
+    brief: string;
+    arg: Record<string, unknown>;
+}
+
+export interface ReservedCommandsResponse {
+    result: boolean;
+    generalId: number | null;
+    slots: ReservedSlot[];
+    // ── legacy GetReservedCommand.php:55-92 메타(턴 시각/연월/자율행동) — BE 미배출(W0-2에서
+    //    ReservedCommandsResponse widen, P1-004). legacy 계약(hwe/ts/defs/API/Command.ts
+    //    ReservedCommandResponse) 모양으로 선선언 — 값이 올 때까지 렌더는 부재 처리(날조 금지).
+    /** TODO(P1-004, W0-2): 다음 턴 실행 시각 "HH:mm" — legacy `turnTime`. */
+    turnTime?: string;
+    /** TODO(P1-004, W0-2): 턴 간격(분) — legacy `turnTerm`. */
+    turnTerm?: number;
+    /** TODO(P1-004, W0-2): 현재 연/월 — legacy `year`/`month`. */
+    year?: number;
+    month?: number;
+    /** TODO(P1-004, W0-2): 서버 현재 시각 — legacy `date`. */
+    date?: string;
+    /** TODO(P1-004, W0-2): 자율 행동 제한(분) — legacy `autorun_limit`(snake — PHP verbatim 키). */
+    autorun_limit?: number | null;
+}
+
 // ── F4 action-page READ contracts ────────────────────────────────────────────
 // Authored in ../types/game.ts (the domain-contract module the pages import from).
 // Re-exported here so lib/api.ts's `from './types'` import resolves them while the
@@ -502,4 +585,7 @@ export type {
     TroopListResponse,
     HistoryRecord,
     HistoryResponse,
+    MailMsgType,
+    MailMsgTarget,
+    MailboxMessage,
 } from '../types/game';

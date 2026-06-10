@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
-import { api } from '../../../lib/api';
+import { api, isIntakeQueued } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
+import type { FrontInfoResponse } from '../../../lib/types';
 import type { MyNationDetailResponse, MyNationCityRef, InheritPointResponse } from '../../../types/game';
 
 const INHERIT_BUFFS = [
@@ -35,6 +36,9 @@ export default function NationPage() {
     // 유산 버프 비용 — 정본 API(inheritActionCost.buff = PHP GameConstBase $inheritBuffPoints,
     // v_inheritPoint.php 'buff' 직렬화)에서 소비. web 레이어 상수 사본 금지(D3-04).
     const [buffCosts, setBuffCosts] = useState<number[]>([]);
+    // P0-50 — 명령 인테이크는 ?generalId= 필수(누락 시 무조건 400). inherit 페이지 방식대로
+    // front-info.general.generalId를 받아 전달한다.
+    const [generalId, setGeneralId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -42,15 +46,17 @@ export default function NationPage() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
-            const [nationRes, inheritRes] = await Promise.all([
+            const [nationRes, inheritRes, frontRes] = await Promise.all([
                 api.myNationDetail<MyNationDetailResponse>(),
                 api.inheritPoint() as Promise<InheritPointResponse>,
+                api.frontInfo() as Promise<FrontInfoResponse>,
             ]);
             setData(nationRes);
             if (inheritRes?.currentInheritBuff) {
                 setMyBuffs(inheritRes.currentInheritBuff);
             }
             setBuffCosts(inheritRes?.inheritActionCost?.buff ?? []);
+            setGeneralId(frontRes?.general?.generalId ?? null);
             setError('');
         } catch {
             setError('데이터를 불러올 수 없습니다.');
@@ -70,9 +76,15 @@ export default function NationPage() {
             setTimeout(() => setToast(''), 3000);
             return;
         }
+        // P0-50 — generalId 없이 보내면 CommandController @RequestParam 400으로 매번 실패했었다.
+        if (generalId == null) {
+            setToast('장수 정보가 없습니다.');
+            setTimeout(() => setToast(''), 3000);
+            return;
+        }
         try {
-            const data = await api.command<{ status: string; reason?: string }>('BuyHiddenBuff', { buffKey, level, prevLevel });
-            setToast(data.status === 'AVAILABLE' ? '구매가 접수되었습니다.' : (data.reason ?? '구매할 수 없습니다.'));
+            const out = await api.command('BuyHiddenBuff', { buffKey, level, prevLevel }, generalId);
+            setToast(isIntakeQueued(out) ? '구매가 접수되었습니다.' : (out.reason ?? '구매할 수 없습니다.'));
         } catch {
             setToast('구매 요청에 실패했습니다.');
         }
@@ -81,9 +93,14 @@ export default function NationPage() {
     }
 
     async function buyRandomUnique() {
+        if (generalId == null) {
+            setToast('장수 정보가 없습니다.');
+            setTimeout(() => setToast(''), 3000);
+            return;
+        }
         try {
-            const data = await api.command<{ status: string; reason?: string }>('BuyRandomUnique', {});
-            setToast(data.status === 'AVAILABLE' ? '구매가 접수되었습니다.' : (data.reason ?? '구매할 수 없습니다.'));
+            const out = await api.command('BuyRandomUnique', {}, generalId);
+            setToast(isIntakeQueued(out) ? '구매가 접수되었습니다.' : (out.reason ?? '구매할 수 없습니다.'));
         } catch {
             setToast('구매 요청에 실패했습니다.');
         }
