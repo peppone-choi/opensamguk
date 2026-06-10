@@ -26,16 +26,16 @@
 
 | 영역 | 위반 수 | 참고(합법·기록용) |
 |------|---------|-------------------|
-| **web/game** | 4 | — |
+| **web/game** | 3 | — |
 | **web/gateway** | 0 | 2 (`GW-HC-04`, `GW-HC-05`) |
-| **app** (game-api) | 6 | — |
-| **합계** | **10** | 2 |
+| **app** (game-api) | 4 | — |
+| **합계** | **7** | 2 |
 
 **위반 성격 분류:**
 - 🔴 **상태 위조 / 날조값** (실제 데이터 대신 가짜): 2026-06-09 현재 활성 위반 없음. `D3-01(app)` 해소됨.
 - 🟠 **본인 컨텍스트 미사용 + 디폴트 1 박음**: 2026-06-09 현재 web/game 활성 위반 없음. `D3-05/06/07(web)` 해소됨.
 - 🟡 **값소스 부재 갭** (정본 영속 원천/엔진 미결합으로 0/null/false 고정 — 문서화된 BLOCKED): traffic/hall/emperor(D3-03 app), serverLocked(D3-04 app), iAction name/info(D3-07 app), compensation(D3-08 app)
-- 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): INHERIT_COSTS(D3-04 web), mapWidth/Height(D3-05 app), OFFICER_LEVEL_TEXT(D3-06 app)
+- 🔵 **패러티 우회 / 인라인 중복** (정본 API·상수·resolver 대신 web/controller에 재구현): 2026-06-10 현재 활성 위반 없음. `D3-04(web)`/`D3-05(app)`/`D3-06(app)` 해소됨.
 - ⚪ **mutation 스텁** (read는 정상, write 경로만 미배선): MessagePanel(D3-08 web), npc-control setter(D3-09 web), coming-soon 감찰부(D3-01 web)
 - 🟣 **dead export 잔재**: 현재 gateway 활성 위반 없음. `GW-HC-02`/`GW-HC-03`은 2026-06-09 제거됨.
 
@@ -46,13 +46,13 @@
 | ID | file:line | 박힌 값 | 대체할 정본 API/필드 | 영역 | 성격 |
 |----|-----------|---------|----------------------|------|------|
 | D3-01(web) | `web/game/app/game/coming-soon/page.tsx:18-19`, `web/game/lib/control-bar-config.ts:36,62` | `STUB='/game/coming-soon'` + 감찰부 href `?feature=감찰부`, "준비 중입니다" | 감찰부(v_audit) 실 read API + 페이지. coming-soon stub 제거 | web/game | ⚪ stub |
-| D3-04(web) | `web/game/app/game/nation/page.tsx:43` | `INHERIT_COSTS = [0,200,600,1200,2000,3000]` | GameConst read API / InheritPointResponse가 비용 배열 제공. 정본 `hwe/sammo/GameConstBase.php:240 $inheritBuffPoints` | web/game | 🔵 패러티 우회 |
+| ~~D3-04(web)~~ | ~~`web/game/app/game/nation/page.tsx:43`~~ | ~~`INHERIT_COSTS = [0,200,600,1200,2000,3000]`~~ | ✅ **해소됨(2026-06-10)** — 로컬 사본 삭제, `InheritPointResponse.inheritActionCost.buff`(= `GameConst.inheritBuffPoints`, 정본 `hwe/sammo/GameConstBase.php:240` / `v_inheritPoint.php:95`) 소비 | web/game | 🔵→✅ |
 | D3-08(web) | `web/game/components/game/MessagePanel.tsx:89,97` | placeholder "서신 보내기 (서버 미지원)" disabled + "읽기 전용입니다" | game-api 메시지 전송/연락처 endpoint. 정본 `MessagePanel.vue`(SendMessage write + 연락처 selector) | web/game | ⚪ mutation stub |
 | D3-09(web) | `web/game/app/game/npc-control/page.tsx:271,92-106` | "(설정 변경은 추후 지원)" + ControlBar disabled | NPC 정책 setter intake(POST) 배선 후 활성화. (표시 수치는 이미 API 소비 — 위반 아님, mutation stub만) | web/game | ⚪ mutation stub |
 | D3-03(app) | `app/game-api/.../rank/RankReadService.kt:176,179-189,192` | `hallOfFame()=emptyList()`, `traffic()=0/empty`, `emperor()=emptyList()` | `general_access_log`·`hall`·`emperior`(통일사) 영속 원천(OQ-1/2/5) 도입 후 실 집계 | app | 🟡 값소스 부재 갭 |
 | D3-04(app) | `app/game-api/.../controller/FrontInfoController.kt:386`, `dto/IdentityDto.kt:96-98` | `serverLocked = false` (interim) | PHP `SELECT plock FROM plock WHERE type='GAME'` 대응 plock 영속 원천 도입 후 실값 | app | 🟡 값소스 부재 갭 |
-| D3-05(app) | `app/game-api/.../controller/GetConstController.kt:46-47` | `mapWidth=1000`, `mapHeight=714` (매직넘버) | `map/<code>.json`(MapJson.MapData.width/height, MapPreviewController가 이미 사용) 또는 GameConst 상수. 컨트롤러 리터럴 금지 | app | 🔵 패러티 우회 |
-| D3-06(app) | `app/game-api/.../controller/GetConstController.kt:35-38` | `OFFICER_LEVEL_TEXT`(레벨-비의존 고정 맵) | `read/F4StateText.kt:73 officerLevelText(officerLevel, nationLevel)` (PHP `getOfficerLevelText` func_converter.php:522-565, 국가레벨별 변동). 단일 소스로 통합 | app | 🔵 인라인 중복 |
+| ~~D3-05(app)~~ | ~~`app/game-api/.../controller/GetConstController.kt:46-47`~~ | ~~`mapWidth=1000`, `mapHeight=714` (매직넘버)~~ | ✅ **해소됨(2026-06-10)** — `MapJson.loadFromClasspath(GameConst.mapName)` 공유 로더(`map/<code>.json` 리소스, MapPreviewController도 동일 로더로 위임)에서 dims 읽음. 컨트롤러 리터럴 제거 | app | 🔵→✅ |
+| ~~D3-06(app)~~ | ~~`app/game-api/.../controller/GetConstController.kt:35-38`~~ | ~~`OFFICER_LEVEL_TEXT`(레벨-비의존 고정 맵)~~ | ✅ **해소됨(2026-06-10)** — 인라인 맵 삭제, `F4StateText` 단일 테이블(PHP `getOfficerLevelText` func_converter.php:522-565)에서 `officerLevelTextDefault()`/`officerLevelTextByNationLevel()` 직렬화(와이어 모양 = `hwe/ts/utilGame/formatOfficerLevelText.ts`) | app | 🔵→✅ |
 | D3-07(app) | `app/game-api/.../dto/GetConstDto.kt:105,107`, `controller/GetConstController.kt:148-162` | `name=null`, `info=null` 고정 (logic iAction 미결합) | `logic iAction buildXxxClass()->getName()/getInfo()` 인스턴스화 결합(현재 :logic 의존 BLOCKED) | app | 🟡 값소스 부재 갭 |
 | D3-08(app) | `app/game-api/.../controller/ChiefCenterController.kt:210`, `dto/F4Dto.kt:207-208` | `compensation = 0` (중립 고정) | PHP `getCompensationStyle()`(보정 ▲/▼)를 `GeneralActionDefinition`에 포팅 후 실 flag | app | 🟡 값소스 부재 갭 |
 
@@ -60,12 +60,14 @@
 
 ## 3) 영역별 그룹
 
-### 3.1 web/game (4건)
+### 3.1 web/game (3건)
 
 게임 인게임 프론트(`web/game`). 위반 성격이 세 갈래로 갈린다.
 
-**A. 위조/패러티-우회 (1건) — 즉시 교정 가능, 백엔드 변경 적음**
-- `D3-04(web)` nation 페이지 INHERIT_COSTS = PHP 패러티 상수를 web에 박음 → GameConst/InheritPoint read API가 비용 배열을 내려주도록 하고 소비. (web 레이어 박힘 = 정본 API 우회이므로 위반)
+**A. 위조/패러티-우회 — 활성 0건**
+
+**해소됨 (1건, 2026-06-10)**
+- `D3-04(web)` nation 페이지 INHERIT_COSTS 로컬 사본 삭제. `api.inheritPoint()`의 `inheritActionCost.buff`(InheritPointController가 `GameConst.inheritBuffPoints`를 직렬화 — 정본 `GameConstBase.php:240`, `v_inheritPoint.php:95` 동일 경로) 소비. API 미수신 시 비용 표기 생략(사본 폴백 없음). 회귀 테스트 `__tests__/nation-inherit-costs.test.tsx`.
 
 **해소됨 (5건, 2026-06-09)**
 - `D3-02(web)` GameInfo "기타 설정: 자동" 제거. front-info `global.autorunUser.limit_minutes > 0`일 때만 legacy `AutorunInfo` 동치 텍스트 `자율행동` 렌더.
@@ -92,7 +94,7 @@
 - `GW-HC-04` lobby 계정관리 / admin 회원관리·게임환경 "PLACEHOLDER 준비 중" disabled → 백엔드 미구현 기능의 정직한 미완 표시. 게임 상태 위조 아님. 백엔드 구현 시 실 핸들러로 교체.
 - `GW-HC-05` ServerLog / MapPreview "준비 중" → read API 404/빈-세계 graceful degrade 폴백 UI. 정본 데이터 200 시 자동 실데이터 렌더.
 
-### 3.3 app (game-api, 6건)
+### 3.3 app (game-api, 4건)
 
 백엔드 read API 컨트롤러. 두 갈래.
 
@@ -102,9 +104,11 @@
 - `D3-01(app)` SimulatorController: `.random()` 승패/피해/턴/고정 로그 제거. live read rows(`general/city/nation/world_state`)를 `BattleSimPreview`로 변환해 동일 `processWar`/`RandUtil(warSeed)` 경로를 재사용한다. 프론트도 `attackerWon/Damage/log` fake contract 대신 PHP형 집계(`phase/killed/dead/skills`)를 소비한다. 잔여 전체 패러티: legacy raw-input 전체 폼(`j_export_simulator_object`)과 PHP payload 중 `datetime/lastWarLog/attackerRice/defenderRice` 집계는 아직 별도 갭이다.
 - `D3-02(app)` NpcPolicyController: 인라인 defaultPolicy 제거. `logic/ai/AutorunNationPolicy.DEFAULT_POLICY`가 PHP `AutorunNationPolicy::$defaultPolicy`(`reqNationGold=10000`, `reqNationRice=12000`, PHP 부재 키 제외)를 단일 소스로 직렬화한다.
 
-**B. 인라인 중복 / 매직넘버 (2건) — 정본 resolver·리소스로 통합**
-- `D3-05(app)` GetConstController mapWidth=1000/mapHeight=714 매직넘버 → `map/<code>.json` 또는 GameConst.
-- `D3-06(app)` GetConstController OFFICER_LEVEL_TEXT 인라인(레벨-비의존) ↔ 정본 `F4StateText.officerLevelText`(국가레벨별 변동)와 불일치 → 단일 소스 통합.
+**B. 인라인 중복 / 매직넘버 — 활성 0건**
+
+**해소됨 (2건, 2026-06-10)**
+- `D3-05(app)` GetConstController mapWidth/mapHeight 리터럴 제거 → `MapJson.loadFromClasspath(GameConst.mapName)` 공유 로더로 커밋된 `map/<code>.json` 리소스에서 읽음. MapPreviewController의 사설 리소스-read도 같은 로더로 위임(파싱 단일화).
+- `D3-06(app)` GetConstController 인라인 OFFICER_LEVEL_TEXT(5→참모/6→장군/7→총사령관/11→군주대리 — 정본과 모순) 삭제 → `F4StateText` 단일 테이블(PHP `getOfficerLevelText` func_converter.php:522-565)에서 `officerLevelTextDefault()` + `officerLevelTextByNationLevel()` 직렬화. 와이어 모양은 레거시 프론트 정본 `hwe/ts/utilGame/formatOfficerLevelText.ts`(기본열 + 국가레벨별 테이블), 미정의 코드는 PHP '-' 동작대로 키 생략(TS 폴백 아님 — PHP 승).
 
 **C. 값소스 부재 갭 (4건) — 영속 원천/엔진 결합 BLOCKED, 문서화됨**
 - `D3-03(app)` RankReadService traffic/hall-of-fame/emperor → `general_access_log`·`hall`·`emperior`(OQ-1/2/5) 테이블 부재로 0/빈 고정.
@@ -134,12 +138,12 @@
 7. ✅ `D3-06(web)` mailbox 페이지 — 개인/9000+nationId/9999 규칙 + accept/decline mutation의 본인 id
 8. ✅ `D3-07(web)` tournament-admin 페이지 — 본인 generalId + permission gate
 
-### 단계 3 — 정본 상수/resolver 단일 소스화 (BE read API) — 3건
+### 단계 3 — 정본 상수/resolver 단일 소스화 (BE read API) — 완료 (2026-06-10)
 백엔드에서 정본 정책/상수/resolver를 단일 소스로 직렬화. web의 박힌 상수는 이 API를 소비하도록 후속 전환.
 9. ✅ `D3-02(app)` NpcPolicyController → `AutorunNationPolicy.DEFAULT_POLICY` 직렬화 (날조 키 제거)
-10. `D3-06(app)` GetConstController OFFICER_LEVEL_TEXT → `F4StateText.officerLevelText` 통합
-11. `D3-05(app)` GetConstController mapWidth/Height → `map/<code>.json` / GameConst
-12. `D3-04(web)` nation INHERIT_COSTS → 단계 3에서 노출된 GameConst/InheritPoint read API 소비 (BE 노출 후 web 전환)
+10. ✅ `D3-06(app)` GetConstController OFFICER_LEVEL_TEXT → `F4StateText` 단일 테이블 직렬화(`officerLevelTextDefault`/`officerLevelTextByNationLevel`, PHP func_converter.php:522-565 / 와이어 = hwe/ts formatOfficerLevelText.ts)
+11. ✅ `D3-05(app)` GetConstController mapWidth/Height → `MapJson.loadFromClasspath(GameConst.mapName)`(`map/<code>.json` 리소스, MapPreviewController와 공유 로더)
+12. ✅ `D3-04(web)` nation INHERIT_COSTS 사본 삭제 → `InheritPointResponse.inheritActionCost.buff` 소비 (정본 `GameConstBase.php:240` / `v_inheritPoint.php:95`)
 
 ### 단계 4 — 엔진/정책 결합 (위조 제거 핵심) — 완료
 가장 무겁지만 가장 큰 위조 제거. RNG 규율 위반 해소.
@@ -166,9 +170,9 @@ read는 이미 정상. write intake/endpoint 추가 후 프론트 활성화.
 |------|---------|------|------|----------------|
 | 1 순수 프론트 | 5 | 정본 함수/필드 이미 존재 | 매우 낮음 | 중(상태 위조 GW-HC-01 포함) |
 | 2 useFrontInfo | 3 | 본인 컨텍스트 배선 | 낮음 | ✅ 완료(id 1 고정 제거) |
-| 3 BE 단일소스 | 3 | 정본 상수/resolver 직렬화 | 중 | 중(D3-02 app 완료) |
+| 3 BE 단일소스 | 3 | 정본 상수/resolver 직렬화 | 중 | ✅ 완료(2026-06-10, D3-04 web·D3-05/06 app 해소) |
 | 4 엔진 결합 | 1 | processWar 결합 | 높음 | ✅ 완료(RNG 위반 제거) |
 | 5 mutation | 3 | write endpoint | 중~높음 | 낮음(read 정상) |
 | 6 값소스 갭 | 4 | 영속 테이블/결합 BLOCKED | 매우 높음 | 중(0/null/false 실값화) |
 
-**즉효 권장:** 남은 즉시성 항목은 `D3-05/06(app)` 단일소스화와 `D3-04(web)` API 소비 전환이다. **위조 우선:** `D3-01(app)`/`D3-02(app)` 날조 계열은 해소됨.
+**즉효 권장:** 즉시성 항목(`D3-05/06(app)` 단일소스화, `D3-04(web)` API 소비 전환)은 2026-06-10 해소됨. **위조 우선:** `D3-01(app)`/`D3-02(app)` 날조 계열은 해소됨. 잔존은 mutation 스텁(단계 5) + 값소스 부재 갭(단계 6 BLOCKED)뿐이다.
