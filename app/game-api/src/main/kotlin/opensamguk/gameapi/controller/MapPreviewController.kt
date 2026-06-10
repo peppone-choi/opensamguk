@@ -132,6 +132,14 @@ class MapPreviewController(
             .map { MapPreviewNation(id = it.id, name = it.name, color = it.color) }
             .sortedBy { it.id }
 
+        // legacy 맵 페이로드의 startyear(func_map.php:68,158 — game_env 소문자 키). 시드된 world의
+        // config에 실존(ScenarioImporter)하며, 미시드/구버전 world면 null → 직렬화 생략.
+        val startYear = when (val raw = world.config["startyear"]) {
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull()
+            else -> null
+        }
+
         return MapPreviewResponse(
             serverName = serverName,
             year = world.currentYear,
@@ -141,6 +149,7 @@ class MapPreviewController(
             height = mapData.height,
             cities = cities,
             nations = nations,
+            startYear = startYear,
         )
     }
 
