@@ -62,8 +62,15 @@ vi.mock('@/lib/api', () => ({
             availableTargetGeneral: {},
             currentStat: { leadership: 50, strength: 50, intel: 50, statMin: 10, statMax: 90 },
         }),
+        // P0-50 — 페이지가 명령 인테이크용 generalId를 front-info에서 받도록 바뀜.
+        frontInfo: vi.fn().mockResolvedValue({
+            result: true,
+            general: { hasGeneral: true, generalId: 7, nationId: 1 },
+        }),
         command: vi.fn(),
     },
+    // 페이지가 인테이크 결과 분기에 쓰는 타입 가드 — 실제 구현과 동일 시멘틱.
+    isIntakeQueued: (o: { status: string }) => o.status === 'AVAILABLE',
 }));
 
 describe('nation page inherit buff costs (D3-04 web)', () => {

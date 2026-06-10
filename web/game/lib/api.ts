@@ -25,6 +25,10 @@ import type {
     VoteDetailResponse,
     TroopListResponse,
     HistoryResponse,
+    IntakeOutcome,
+    IntakeQueued,
+    IntakeDenied,
+    ReservedCommandsResponse,
 } from './types';
 
 // ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
@@ -215,8 +219,38 @@ async function post<T>(path: string, body: unknown): Promise<T> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`${res.status}: ${res.statusText}`);
+    if (!res.ok) {
+        // 4xx/5xx 본문에 BE가 보낸 실제 사유(reason/error/message)가 있으면 그대로 싣는다 —
+        // 날조 없음(서버 문자열만). 본문 없음/비JSON이면 상태줄로 던진다.
+        let detail = '';
+        try {
+            const parsed: unknown = await res.json();
+            if (parsed && typeof parsed === 'object') {
+                const p = parsed as Record<string, unknown>;
+                const msg = p.reason ?? p.error ?? p.message;
+                if (typeof msg === 'string' && msg.length > 0) detail = msg;
+            }
+        } catch {
+            // 본문 파싱 실패 — 상태줄 폴백.
+        }
+        throw new Error(detail || `${res.status}: ${res.statusText}`);
+    }
     return res.json() as Promise<T>;
+}
+
+// ── 인테이크 결과 타입 가드 (W0-1 — P0-04/P0-06 근원 처리) ─────────────────────
+// 200 BLOCKED/UNKNOWN도 res.ok라 post()가 정상 resolve된다 — 호출부는 반드시 이 가드로
+// 분기해야 한다. queued(202)는 "접수/예약"이지 성공 확정이 아니다(엔진 비동기 deny 가능,
+// 결과 회신 채널은 W0-4). denied.reason은 PHP byte-parity deny 문자열 — 그대로 노출할 것.
+
+/** 202 큐잉(intake 수락) 여부. 성공 확정 아님 — "접수/예약" 시멘틱으로만 표시. */
+export function isIntakeQueued(o: IntakeOutcome): o is IntakeQueued {
+    return o.status === 'AVAILABLE';
+}
+
+/** precheck/큐 조작 deny(200 BLOCKED·UNKNOWN) 여부. reason을 그대로 노출(날조 금지). */
+export function isIntakeDenied(o: IntakeOutcome): o is IntakeDenied {
+    return o.status === 'BLOCKED' || o.status === 'UNKNOWN';
 }
 
 export const api = {
@@ -272,8 +306,11 @@ export const api = {
     // 유니크 경매 상세 D3 — `GET /api/auctions/{id}/unique-detail`
     //   → {result, auction, bidList[], obfuscatedName, remainPoint}. 부재 시 404 + 한글 메시지.
     auctionUniqueDetail: <T>(id: number) => get<T>(`/api/auctions/${id}/unique-detail`),
-    // 베팅 목록 D4 — `GET /api/bettings` → BettingListResponse {result, bettingList(Map<id,item>), year, month}.
-    betting: <T>() => get<T>('/api/bettings'),
+    // 베팅 목록 D4 — `GET /api/bettings?type=` → BettingListResponse {result, bettingList(Map<id,item>), year, month}.
+    // type = legacy GetBettingList `req` 필터('bettingNation'|'tournament' — PHP Validator 화이트리스트
+    // verbatim). 생략 시 전체(P1-013: 국가베팅 페이지는 'bettingNation', 베팅장은 'tournament'를 넘길 것).
+    betting: <T>(type?: 'bettingNation' | 'tournament') =>
+        get<T>(type == null ? '/api/bettings' : `/api/bettings?type=${type}`),
     // 베팅 상세 D5 — `GET /api/bettings/{id}/detail`(per-OWNER, 인증 필요)
     //   → {result, bettingInfo(raw), bettingDetail[], myBetting[], remainPoint, year, month}.
     bettingDetail: <T>(id: number) => get<T>(`/api/bettings/${id}/detail`),
@@ -335,22 +372,54 @@ export const api = {
     worldLog: () => get<WorldLogResponse>('/api/world-log'),
 
     // Commands.
-    //  - game-api CommandController STILL requires ?generalId= (a `@RequestParam`, not yet a verified
-    //    `@AuthenticationPrincipal`) and accepts an optional ?turnIdx= (reservable slot, default 0).
-    //  - We pass the caller's own generalId (from front-info.general.generalId) + turnIdx as query params
-    //    and the collected args as the JSON body. SECURITY FOLLOW-UP (backend, do NOT fix here):
-    //    CommandController should validate the passed generalId against the authenticated principal.
-    //    generalId is OPTIONAL here only so the pre-existing W1–W4 sub-pages (auction/betting/…) that
-    //    call api.command(code, args) keep compiling; the F2 main-screen modal ALWAYS passes it.
-    command: <T>(code: string, args: unknown, generalId?: number, turnIdx = 0) =>
-        post<T>(
-            generalId == null
-                ? `/api/command/${code}`
-                : `/api/command/${code}?generalId=${generalId}&turnIdx=${turnIdx}`,
-            args,
-        ),
+    //  - game-api CommandController는 ?generalId=가 **필수**(@RequestParam — 인증 시 principal 본인
+    //    소유 검증, 불일치 403). 누락하면 무조건 400 = "구매 요청에 실패했습니다" 류 영구 실패(P0-50).
+    //    그래서 W0-1부터 generalId는 시그니처에서도 필수다 — 호출부는 front-info.general.generalId를
+    //    넘긴다(컴파일 타임에 누락을 차단).
+    //  - resolve 값은 IntakeOutcome(& T) — 200 BLOCKED/UNKNOWN도 resolve되므로 호출부는
+    //    isIntakeQueued/isIntakeDenied로 분기한다(202=큐잉이지 성공 확정 아님 — P0-04/06).
+    command: <T = unknown>(code: string, args: unknown, generalId: number, turnIdx = 0) =>
+        post<IntakeOutcome & T>(`/api/command/${code}?generalId=${generalId}&turnIdx=${turnIdx}`, args),
     availableCommands: <T>(generalId?: number) =>
         get<T>(generalId == null ? '/api/commands/available' : `/api/commands/available?generalId=${generalId}`),
+
+    // 예약 명령 링 read — `GET /api/reserved-commands` (P0-01). 인증 principal이 본인 장수로
+    // 해석되므로 인자 불요. 메인 예약 패널은 refreshKey/onReserved마다 재조회해 slots를 렌더하고,
+    // slots에 없는 turnIdx만 '휴식'으로 채운다(전 슬롯 '휴식' 하드코딩 위조 금지).
+    reservedCommands: () => get<ReservedCommandsResponse>('/api/reserved-commands'),
+
+    // 즉시 액션 인테이크 — `POST /api/instant-action/{code}?generalId=` (P0-24/25 소비처).
+    // instant(DieOnPrestart/DropItem/InstantRetreat) + inherit(ResetStat/CheckOwner …) 코드.
+    // legacy SammoAPI.InheritAction.*(예: ResetStat{leadership,strength,intel,inheritBonusStat},
+    // CheckOwner{destGeneralID})와 같은 args 키를 JSON 본문으로 싣는다. 무인자 액션은 args 생략.
+    // 미배선 코드는 BE가 409 {error}로 거른다 — post()가 그 사유 문자열로 reject.
+    instantAction: (code: string, generalId: number, args?: unknown) =>
+        post<IntakeOutcome>(`/api/instant-action/${code}?generalId=${generalId}`, args ?? null),
+
+    // ── 예약 큐 조작 (W6e bulk/push/repeat × {general, nation}) ───────────────────────────────
+    // PHP SammoAPI.Command.* / NationCommand.*(PushCommand·RepeatCommand·ReserveBulkCommand) 대응.
+    // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP byte-parity deny 문자열.
+    // 한계값은 BE가 검증(push ±12, repeat 1..12; 사령부 실효 한계는 maxChiefTurn/2=6 — P0-10).
+    commandQueue: {
+        /** ReserveBulk(장수) — `[{action, turnList, arg?}]` 일괄 예약 (P0-02 고급 모드). */
+        bulk: (generalId: number, commandArray: { action: string; turnList: number[]; arg?: Record<string, unknown> }[]) =>
+            post<IntakeOutcome>(`/api/command/bulk?generalId=${generalId}`, commandArray),
+        /** Push(장수) — 당기기/미루기. amount -12..12, 0 불가 (P0-02). */
+        push: (generalId: number, amount: number) =>
+            post<IntakeOutcome>(`/api/command/push?generalId=${generalId}`, { amount }),
+        /** Repeat(장수) — 앞 amount턴 반복 채움. amount 1..12 (P0-02). */
+        repeat: (generalId: number, amount: number) =>
+            post<IntakeOutcome>(`/api/command/repeat?generalId=${generalId}`, { amount }),
+        /** ReserveBulk(국가) — 사령부 슬롯 제출 정본 경로(nation_turn 링 — P0-09/P0-11). */
+        nationBulk: (generalId: number, commandArray: { action: string; turnList: number[]; arg?: Record<string, unknown> }[]) =>
+            post<IntakeOutcome>(`/api/command/nation/bulk?generalId=${generalId}`, commandArray),
+        /** Push(국가) — 사령부 당기기/미루기 (P0-10). */
+        nationPush: (generalId: number, amount: number) =>
+            post<IntakeOutcome>(`/api/command/nation/push?generalId=${generalId}`, { amount }),
+        /** Repeat(국가) — 사령부 반복 (P0-10). */
+        nationRepeat: (generalId: number, amount: number) =>
+            post<IntakeOutcome>(`/api/command/nation/repeat?generalId=${generalId}`, { amount }),
+    },
 
     // ── C1-α write submit 래퍼 (wire 코드 기존; 백엔드 신규 로직/핸들러/wire 없음) ──────────────────────
     // 모두 단일 mutation seam(POST /api/command/{code} → CommandController → CommandReserveService)을
@@ -358,28 +427,32 @@ export const api = {
     //   diploSendLetter:279 · diploRollbackLetter:287 · diploDestroyLetter:291 · boardArticle:208 · boardComment:214.
     // 얇은 래퍼로 호출부(페이지)가 코드 문자열을 직접 알 필요 없게 한다(generalId는 명령 인테이크 필수).
     // args 모양은 legacy ajax 폼 필드(=devsam-core hwe/j_*.php의 Util::getPost 키)와 동일하게 맞춘다.
+    //
+    // [W0-1] resolve 값은 IntakeOutcome(& T) — 200 BLOCKED/UNKNOWN도 **정상 resolve**된다.
+    // await 후 무조건 성공 토스트(P0-04/06 위조)는 금지: isIntakeDenied(out)면 out.reason을
+    // legacy 문자열 그대로 danger 토스트, isIntakeQueued(out)면 "접수" 시멘틱으로만 표시한다.
     commands: {
         // 외교 서신 보내기 — legacy j_diplomacy_send_letter.php(brief/detail/destNation/prevNo).
-        diploSendLetter: <T>(
+        diploSendLetter: <T = unknown>(
             args: { destNation: number; brief: string; detail: string; prevNo: number | null },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/diploSendLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/diploSendLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 외교 서신 회수(제안 단계 송신측) — legacy j_diplomacy_rollback_letter.php(letterNo).
-        diploRollbackLetter: <T>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
-            post<T>(`/api/command/diploRollbackLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        diploRollbackLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
+            post<IntakeOutcome & T>(`/api/command/diploRollbackLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 외교 서신 파기(승인 단계, 상호 동의 2단계) — legacy j_diplomacy_destroy_letter.php(letterNo).
-        diploDestroyLetter: <T>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
-            post<T>(`/api/command/diploDestroyLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        diploDestroyLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
+            post<IntakeOutcome & T>(`/api/command/diploDestroyLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 게시판 글쓰기(회의실/기밀실) — legacy j_board_article_add.php(isSecret/title/text).
-        boardArticle: <T>(
+        boardArticle: <T = unknown>(
             args: { isSecret: boolean; title: string; text: string },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/boardArticle?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/boardArticle?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 게시판 댓글 — legacy j_board_comment_add.php(articleNo/text, maxlength 250).
-        boardComment: <T>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
-            post<T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        boardComment: <T = unknown>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
+            post<IntakeOutcome & T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
         // ── 거래장/경매 (C1 AuctionResource/AuctionUniqueItem) ───────────────────────────────────
         // CommandWireMapper.intakeCodes에 모두 기존 등록(auctionBid:135 / auctionOpenBuyRice:259 /
@@ -387,39 +460,39 @@ export const api = {
         // 폼 필드)와 byte-동일하게 맞춘다.
         // 입찰 — legacy SammoAPI.Auction.Bid{BuyRice,SellRice,Unique}Auction({auctionID, amount}).
         //   mapper는 `auctionId`/`amount`/(선택)`tryExtendCloseDate`를 읽는다(자원/유니크 동일 typed 명령).
-        auctionBid: <T>(
+        auctionBid: <T = unknown>(
             args: { auctionId: number; amount: number; tryExtendCloseDate?: boolean },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/auctionBid?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/auctionBid?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 쌀 매수 경매 등록 — legacy SammoAPI.Auction.OpenBuyRiceAuction.
         //   {amount, startBidAmount, finishBidAmount, closeTurnCnt}.
-        auctionOpenBuyRice: <T>(
+        auctionOpenBuyRice: <T = unknown>(
             args: { amount: number; startBidAmount: number; finishBidAmount: number; closeTurnCnt: number },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/auctionOpenBuyRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/auctionOpenBuyRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 금(쌀 매도) 경매 등록 — legacy SammoAPI.Auction.OpenSellRiceAuction(동일 폼 필드).
-        auctionOpenSellRice: <T>(
+        auctionOpenSellRice: <T = unknown>(
             args: { amount: number; startBidAmount: number; finishBidAmount: number; closeTurnCnt: number },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/auctionOpenSellRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/auctionOpenSellRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
         // 유니크 아이템 경매 등록 — legacy SammoAPI.Auction.OpenUniqueAuction. mapper는 `itemId`/`amount`.
-        auctionOpenUnique: <T>(
+        auctionOpenUnique: <T = unknown>(
             args: { itemId: string; amount: number },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/auctionOpenUnique?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/auctionOpenUnique?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
         // ── 베팅 (C1 BettingDetail) ────────────────────────────────────────────────────────────
         // CommandWireMapper.intakeCodes `placeBet`:128. legacy SammoAPI.Betting.Bet({bettingID,
         //   bettingType, amount}). mapper는 `bettingId`(camel)/`bettingType`(number[])/`amount`를 읽는다.
-        placeBet: <T>(
+        placeBet: <T = unknown>(
             args: { bettingId: number; bettingType: number[]; amount: number },
             generalId: number,
             turnIdx = 0,
-        ) => post<T>(`/api/command/placeBet?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        ) => post<IntakeOutcome & T>(`/api/command/placeBet?generalId=${generalId}&turnIdx=${turnIdx}`, args),
     },
 
     // Simulator
