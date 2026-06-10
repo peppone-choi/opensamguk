@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
 
+# 연속 머지(auto-merge 케이던스) 시 배포 런 겹침 방지 — 겹친 배포가 컨테이너를
+# Created 상태로 방치해 502를 유발한 회귀(2026-06-10). 진행 중 런은 죽이지 않고
+# 직렬화하되, 대기열에는 최신 1개만 남긴다(중간 커밋 배포는 건너뛰어도 최종 상태 동일).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_TAG: ${{ github.sha }}
