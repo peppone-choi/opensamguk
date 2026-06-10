@@ -141,6 +141,49 @@ class MyControllerTest {
     }
 
     @Test
+    fun `my-generals emits raw sort-key columns - W0-2 P1-071 072 075`() {
+        // PHP b_myGenInfo.php:90-110 — 정렬 키는 raw 컬럼(dedication/experience/personal/special/
+        // special2) DESC. 한글 해석값과 별개로 raw 코드/원값을 그대로 배출해야 FE가 PHP usort를 재현한다.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
+            listOf(
+                GeneralReadEntity(
+                    id = 1, name = "조조", nationId = 1, officerLevel = 12,
+                    dedication = 10000, experience = 50000,
+                    personalCode = "che_정복", specialCode = "che_상재", special2Code = "che_귀모",
+                    // isunited 시 소유 플레이어명(b_myGenInfo.php:31-36,155-157) — meta.owner_name 방어적 read.
+                    meta = linkedMapOf("owner_name" to "페포네"),
+                ),
+            ),
+        )
+
+        mockMvc().perform(get("/api/my-generals").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generals[0].dedication").value(10000))
+            .andExpect(jsonPath("$.generals[0].experience").value(50000))
+            .andExpect(jsonPath("$.generals[0].personal").value("che_정복"))
+            .andExpect(jsonPath("$.generals[0].special").value("che_상재"))
+            .andExpect(jsonPath("$.generals[0].special2").value("che_귀모"))
+            .andExpect(jsonPath("$.generals[0].ownerName").value("페포네"))
+    }
+
+    @Test
+    fun `my-generals ownerName is null when meta has no owner_name`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
+            listOf(gen(10, "순욱", nationId = 1, officerLevel = 5)),
+        )
+
+        mockMvc().perform(get("/api/my-generals").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.generals[0].ownerName").doesNotExist())
+    }
+
+    @Test
     fun `my-generals returns result-false empty when no character`() {
         `when`(owners.findByUserId(7L)).thenReturn(null)
 

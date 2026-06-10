@@ -8,7 +8,9 @@ import opensamguk.gameapi.dto.InheritPointResponse
 import opensamguk.gameapi.dto.InheritStat
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.InheritanceLogReadRepository
+import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.logic.inheritance.BuyHiddenBuffAction
 import opensamguk.logic.inheritance.InheritanceKey
 import opensamguk.logic.inheritance.InheritanceKey.Companion.keyName
@@ -40,6 +42,8 @@ class InheritPointController(
     private val gameKv: GameKvReadRepository,
     private val inheritLogs: InheritanceLogReadRepository,
     private val objectMapper: ObjectMapper,
+    // W0-2(P0-25) availableTargetGeneral — npc<2 장수 목록 read.
+    private val generals: GeneralReadRepository,
 ) {
 
     /** Legacy `GameConst::$defaultStatMin/$defaultStatMax` clamp bounds for the 유산 stat display. */
@@ -86,8 +90,15 @@ class InheritPointController(
         val resetTurnTimeLevel = ((aux["inheritResetTurnTime"] as? Number)?.toInt() ?: -1) + 1
         val resetSpecialWarLevel = ((aux["inheritResetSpecialWar"] as? Number)?.toInt() ?: -1) + 1
 
+        // W0-2(P1-043) — date 체인: created_at(실 컬럼) → 'yyyy-MM-dd HH:mm:ss'(PHP user_record.date).
         val logs = inheritLogs.findByUserIdOrderByIdDesc(ownerKey, PageRequest.of(0, 30))
-            .map { InheritLog(id = it.id, year = it.year, month = it.month, text = it.text) }
+            .map { InheritLog(id = it.id, year = it.year, month = it.month, text = it.text, date = TurnTimeFormatter.full(it.createdAt)) }
+
+        // W0-2(P0-25) — 소유자 확인 대상 {no: name}(PHP v_inheritPoint.php:19-22, npc < 2). 삽입순서 보존.
+        val availableTargetGeneral = LinkedHashMap<Int, String>()
+        for (target in generals.findByNpcStateLessThanOrderByIdAsc(2)) {
+            availableTargetGeneral[target.id] = target.name
+        }
 
         val cost = InheritActionCost(
             buff = GameConst.inheritBuffPoints,
@@ -112,6 +123,7 @@ class InheritPointController(
                 availableSpecialWar = emptyMap(),
                 availableUnique = emptyMap(),
                 lastInheritPointLogs = logs,
+                availableTargetGeneral = availableTargetGeneral,
                 currentStat = InheritStat(
                     leadership = g.leadership.coerceIn(statMin, statMax),
                     strength = g.strength.coerceIn(statMin, statMax),

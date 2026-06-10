@@ -27,11 +27,24 @@ class ReservedCommandsControllerTest {
 
     private val resolver = mock(GeneralResolver::class.java)
     private val reservedTurns = mock(GeneralTurnReadRepository::class.java)
+    private val world = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
+    private val generals = mock(opensamguk.gameapi.read.GeneralReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(ReservedCommandsController(resolver, reservedTurns))
+        MockMvcBuilders.standaloneSetup(ReservedCommandsController(resolver, reservedTurns, world, generals))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
+
+    private fun seedWorld(year: Int = 200, month: Int = 3, tickSeconds: Int = 3600, config: Map<String, Any?> = emptyMap()) {
+        org.mockito.Mockito.`when`(world.findAll()).thenReturn(
+            listOf(
+                opensamguk.gameapi.read.WorldStateReadEntity(
+                    id = 1, scenarioCode = "che_1010", currentYear = year, currentMonth = month,
+                    tickSeconds = tickSeconds, config = config,
+                ),
+            ),
+        )
+    }
 
     private fun principal(userId: Long): RequestPostProcessor = RequestPostProcessor { req ->
         SecurityContextHolder.getContext().authentication =
@@ -80,5 +93,72 @@ class ReservedCommandsControllerTest {
 
         mockMvc().perform(get("/api/reserved-commands").param("generalId", "999").with(principal(7L)))
             .andExpect(status().isForbidden)
+    }
+
+    // ── W0-2(P1-004) 메타 필드 — PHP GetReservedCommand.php:69-92 ────────────────────────────────────
+
+    @Test
+    fun `exposes turnTime turnTerm year month and blocked autorunLimit`() {
+        seedWorld(year = 200, month = 3, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:00:00"))
+        `when`(generals.findById(10)).thenReturn(
+            java.util.Optional.of(
+                opensamguk.gameapi.read.GeneralReadEntity(
+                    id = 10, name = "순욱", nationId = 1,
+                    turnTime = java.time.Instant.parse("2026-06-10T09:30:00Z"),
+                ),
+            ),
+        )
+        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
+
+        // cutTurn(09:30,60분)=09:00 == cutTurn(09:00,60분)=09:00 → 월 전진 없음(PHP :74-81).
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.turnTime").value("2026-06-10 09:30:00"))
+            .andExpect(jsonPath("$.turnTerm").value(60))
+            .andExpect(jsonPath("$.year").value(200))
+            .andExpect(jsonPath("$.month").value(3))
+            .andExpect(jsonPath("$.date").isNotEmpty)
+            // autorun_limit — general.aux 원천 부재(§2 BLOCKED, ChiefReservedResponse 동일) → 미노출.
+            .andExpect(jsonPath("$.autorunLimit").doesNotExist())
+    }
+
+    @Test
+    fun `advances the month when the general turn already ran this tick`() {
+        // PHP GetReservedCommand.php:74-81 — cutTurn(turnTime) > cutTurn(lastExecute)면 month+1.
+        seedWorld(year = 200, month = 3, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:59:00"))
+        `when`(generals.findById(10)).thenReturn(
+            java.util.Optional.of(
+                opensamguk.gameapi.read.GeneralReadEntity(
+                    id = 10, name = "순욱", nationId = 1,
+                    turnTime = java.time.Instant.parse("2026-06-10T10:30:00Z"),
+                ),
+            ),
+        )
+        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.year").value(200))
+            .andExpect(jsonPath("$.month").value(4))
+    }
+
+    @Test
+    fun `month advance rolls over 12 to next year`() {
+        // PHP :77-80 — month >= 13이면 month-=12, year+=1.
+        seedWorld(year = 200, month = 12, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:59:00"))
+        `when`(generals.findById(10)).thenReturn(
+            java.util.Optional.of(
+                opensamguk.gameapi.read.GeneralReadEntity(
+                    id = 10, name = "순욱", nationId = 1,
+                    turnTime = java.time.Instant.parse("2026-06-10T10:30:00Z"),
+                ),
+            ),
+        )
+        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.year").value(201))
+            .andExpect(jsonPath("$.month").value(1))
     }
 }

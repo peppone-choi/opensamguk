@@ -41,6 +41,35 @@ object TurnTimeFormatter {
     fun full(turnTime: OffsetDateTime?): String? = full(turnTime?.toInstant())
 
     /**
+     * W0-2(P1-004) — PHP `cutTurn($date, $turnterm)`(func.php:946-961) 충실 포팅:
+     *   baseDate = (date의 날짜 00:00) - 1일 + 1시간;
+     *   diffMin  = intdiv(epochSec(date) - epochSec(base), 60); diffMin -= diffMin % turnterm;
+     *   결과     = base + diffMin분.
+     * 즉 "전날 01:00" 기준 turnterm 격자로 내림한 시각. PHP는 서버 TZ DateTime, 본 포팅은 UTC
+     * `Instant` 좌표계 — 양변(turnTime/lastExecute)을 같은 함수로 잘라 **순서 비교**만 하므로
+     * (GetReservedCommand.php:74) 좌표계 차이는 비교 결과에 영향이 없다.
+     */
+    fun cutTurn(date: Instant, turntermMin: Int): Instant {
+        require(turntermMin > 0) { "turnterm must be positive" }
+        val utc = date.atOffset(ZoneOffset.UTC)
+        val base = utc.toLocalDate().minusDays(1).atStartOfDay().plusHours(1).toInstant(ZoneOffset.UTC)
+        var diffMin = (date.epochSecond - base.epochSecond) / 60 // Kotlin Long 나눗셈 = PHP intdiv(0방향 절단)
+        diffMin -= diffMin % turntermMin
+        return base.plusSeconds(diffMin * 60)
+    }
+
+    /**
+     * PHP 'Y-m-d H:i:s[.u]' 문자열(game_env.turntime 등)을 UTC `Instant`로 파싱. 형식 불일치/공백 →
+     * null(방어적 — 비교 자체를 생략, 날조 금지). [cutTurn]과 같은 UTC 좌표계.
+     */
+    fun parseFull(s: String?): Instant? {
+        if (s.isNullOrBlank() || s.length < 19) return null
+        return runCatching {
+            java.time.LocalDateTime.parse(s.substring(0, 19).replace(' ', 'T')).toInstant(ZoneOffset.UTC)
+        }.getOrNull()
+    }
+
+    /**
      * ISO-8601 문자열을 PHP `substr($turntime, 0, 19)`와 동형으로 변환:
      * 'T'를 공백으로 치환 후 앞 19자. 초 단위가 모자라면("...T10:30Z") 0초로 패딩해 19자를 보장.
      */

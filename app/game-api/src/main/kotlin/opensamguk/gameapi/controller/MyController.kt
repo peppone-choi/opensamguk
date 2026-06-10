@@ -123,6 +123,14 @@ class MyController(
                 belong = metaInt(g.meta, "belong"),
                 injury = g.injury,
                 lbonus = calcLeadershipBonus(g.officerLevel, nationLevel),
+                // ── W0-2(P1-071/072/075) raw 정렬 키(PHP b_myGenInfo.php:90-110 — 실 컬럼 그대로). ──
+                dedication = g.dedication,
+                experience = g.experience,
+                personal = g.personalCode,
+                special = g.specialCode,
+                special2 = g.special2Code,
+                // W0-2(P1-073) isunited 소유 플레이어명 — meta.owner_name 방어적 read(부재 시 null).
+                ownerName = g.meta["owner_name"] as? String,
             )
         }
         return ResponseEntity.ok(MyGeneralsResponse(result = true, nationId = nationId, generals = summaries))

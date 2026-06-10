@@ -31,6 +31,11 @@ class InheritanceLogReadEntity(
 
     @Column(name = "text")
     var text: String = "",
+
+    // W0-2(P1-043) — 로그 date 체인. PHP user_record.date(v_inheritPoint.php:74 SELECT date)의
+    // opensamguk 동등 컬럼 = inheritance_log.created_at(V1__baseline.sql 실 컬럼).
+    @Column(name = "created_at")
+    var createdAt: java.time.Instant? = null,
 )
 
 interface InheritanceLogReadRepository : JpaRepository<InheritanceLogReadEntity, Int> {

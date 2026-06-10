@@ -2,11 +2,16 @@ package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.dto.AutorunUserInfo
 import opensamguk.gameapi.dto.CityOfficer
+import opensamguk.gameapi.dto.FrontAuxInfo
 import opensamguk.gameapi.dto.FrontCityInfo
 import opensamguk.gameapi.dto.FrontGeneralInfo
 import opensamguk.gameapi.dto.FrontGlobalInfo
 import opensamguk.gameapi.dto.FrontInfoResponse
+import opensamguk.gameapi.dto.FrontLastVote
 import opensamguk.gameapi.dto.FrontNationInfo
+import opensamguk.gameapi.dto.FrontTroopInfo
+import opensamguk.gameapi.dto.FrontTroopLeader
+import opensamguk.gameapi.dto.FrontTroopReservedCommand
 import opensamguk.gameapi.dto.NationCrewGroup
 import opensamguk.gameapi.dto.NationPopulationGroup
 import opensamguk.gameapi.dto.NationTopChief
@@ -18,10 +23,15 @@ import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadRepository
+import opensamguk.gameapi.read.TroopReadRepository
+import opensamguk.gameapi.read.TurnTimeFormatter
+import opensamguk.gameapi.read.VotePollReadEntity
 import opensamguk.gameapi.read.VotePollReadRepository
+import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.common.constants.CityConst
@@ -71,6 +81,11 @@ class FrontInfoController(
     private val ranks: RankDataReadRepository,
     private val auctions: AuctionCountReadRepository,
     private val votePolls: VotePollReadRepository,
+    // W0-2(P1-002) aux.myLastVote — vote 테이블 read.
+    private val votes: VoteReadRepository,
+    // W0-2(P1-005) troopInfo — troop/general_turn read.
+    private val troops: TroopReadRepository,
+    private val generalTurns: GeneralTurnReadRepository,
 ) {
 
     @GetMapping("/front-info")
@@ -94,6 +109,8 @@ class FrontInfoController(
                     nation = null,
                     city = null,
                     recentRecord = emptyList(),
+                    // 장수 미보유 — PHP aux는 장수 컨텍스트에서만 채워지므로 빈 블록.
+                    aux = FrontAuxInfo(),
                 ),
             )
         }
@@ -116,6 +133,8 @@ class FrontInfoController(
                 // [§2 BLOCKED] recentRecord — general_record/world_history 테이블이 모든 마이그레이션에
                 // 부재(W3_FrontGlobalInfo §2). log_entry 대체 feed는 W4. 여기선 빈 리스트(날조 금지).
                 recentRecord = emptyList(),
+                // W0-2(P1-002) aux.myLastVote — PHP GetFrontInfo.php:578-580(내 마지막 투표 vote_id).
+                aux = FrontAuxInfo(myLastVote = votes.findFirstByGeneralIdOrderByVoteIdDesc(general.id)?.voteId),
             ),
         )
     }
@@ -208,7 +227,36 @@ class FrontInfoController(
             deathcrew = rankByType["deathcrew"] ?: 0,
             firenum = rankByType["firenum"] ?: 0,
 
+            // W0-2(P1-005) — 부대 정보 합성(PHP GetFrontInfo.php:446-487 가드 체인 충실).
+            troopInfo = buildTroopInfo(g),
+
             // BLOCKED(dex1-5/refreshScore*/defenceTrain/autorunLimit/reservedCommand)는 DTO 기본 null 유지.
+        )
+    }
+
+    /**
+     * W0-2(P1-005) — PHP GetFrontInfo.php:446-487 troopInfo 가드 체인 충실 포팅:
+     *  1) `troopID = general.troop` 0이면 없음(:447-450);
+     *  2) `SELECT name FROM troop WHERE nation=%i AND troop_leader=%i` 부재면 없음(:452-459);
+     *  3) 부대장 행의 city(같은 국가 소속이어야 함, `SELECT city FROM general WHERE nation=%i AND no=%i`)
+     *     부재/0이면 없음(:461-468);
+     *  4) 부대장 예약(turn_idx < 5, ORDER BY turn_idx ASC) 0행이면 없음(:470-476).
+     * 어느 단계든 끊기면 null — PHP가 `troopInfo` 키를 아예 싣지 않는 것과 동등(날조 금지).
+     */
+    private fun buildTroopInfo(g: GeneralReadEntity): FrontTroopInfo? {
+        val troopId = g.troopId
+        if (troopId == 0) return null
+        val troop = troops.findById(troopId).orElse(null) ?: return null
+        if (troop.nation != g.nationId) return null
+        val leader = generals.findById(troopId).orElse(null) ?: return null
+        if (leader.nationId != g.nationId || leader.cityId == 0) return null
+        val reserved = generalTurns.findByGeneralIdOrderByTurnIdxAsc(troopId)
+            .filter { it.turnIdx < 5 } // PHP `turn_idx < 5` 그대로(상한만 — 음수 정규화는 GetReservedCommand 소관).
+            .map { FrontTroopReservedCommand(action = it.actionCode, arg = it.arg, brief = it.brief) }
+        if (reserved.isEmpty()) return null
+        return FrontTroopInfo(
+            leader = FrontTroopLeader(city = leader.cityId, reservedCommand = reserved),
+            name = troop.name,
         )
     }
 
@@ -337,7 +385,16 @@ class FrontInfoController(
         // startyear/starttime/turnterm만), config에서 방어적으로 읽되 부재 시 null/기본값. 날조 없음.
         val tournament = intOrNull(config["tournament"])
         val auctionCount = auctions.countByFinished(false).toInt()
-        val openPolls = votePolls.countOpenPolls(Instant.now())
+        val now = Instant.now()
+        val openPolls = votePolls.countOpenPolls(now)
+
+        // W0-2(P1-002) — PHP GetFrontInfo.php:182-189,214,231. 마지막 설문 = vote_poll 최신 행
+        // (game_env.lastVote 대체 정본 — countOpenPolls와 동일 규약). 만료(endDate<now)/종료 시
+        // lastVote는 null이되 lastVoteID는 유지(PHP 동일: lastVoteID는 raw 키 그대로 반환).
+        val latestPoll = votePolls.findFirstByOrderByIdDesc()
+        val lastVote = latestPoll
+            ?.takeIf { it.closedAt == null && (it.endAt == null || it.endAt!!.isAfter(now)) }
+            ?.let { toFrontLastVote(it) }
 
         return FrontGlobalInfo(
             year = w?.currentYear ?: 0,
@@ -379,6 +436,14 @@ class FrontInfoController(
             // 설문 진행 여부(미만료 폴 존재).
             vote = openPolls > 0,
 
+            // W0-2(P1-002) — 마지막 설문 id + 진행중 설문 상세(vote_poll 실원천).
+            lastVoteID = latestPoll?.id,
+            lastVote = lastVote,
+
+            // [§2 W0-2(P1-001)] onlineNations — game_env.online_nation(접속중 국가명 CSV,
+            // func.php:1247). 데몬 미기재 → config 방어적 read, 부재 시 null(날조 금지).
+            onlineNations = config["online_nation"]?.toString(),
+
             // COUNT 집계.
             createdUserCnt = generals.countByNpcState(0).toInt(),
             createdNPCCnt = generals.countByNpcStateGreaterThan(0).toInt(),
@@ -402,6 +467,21 @@ class FrontInfoController(
         officerLevel >= 5 -> nationLevel
         else -> 0
     }
+
+    /**
+     * W0-2(P1-002) — vote_poll 행 → PHP `VoteInfo->toArray()` 동형(FrontLastVote).
+     * startDate/endDate는 PHP 'Y-m-d H:i:s' 문자열 규약(TurnTimeFormatter.full 슬라이스),
+     * options는 삽입순 텍스트(PHP array_values — VoteController optionTexts와 동식).
+     */
+    private fun toFrontLastVote(p: VotePollReadEntity): FrontLastVote = FrontLastVote(
+        id = p.id,
+        title = p.title,
+        multipleOptions = p.multipleOptions,
+        opener = p.openerName.takeIf { it.isNotBlank() },
+        startDate = TurnTimeFormatter.full(p.startAt),
+        endDate = TurnTimeFormatter.full(p.endAt),
+        options = p.options.entries.map { e -> e.value?.toString() ?: e.key },
+    )
 
     /** jsonb 값(Number/String)을 Int로 안전 변환. 부재/형변환 실패 시 null(날조 없음). */
     private fun intOrNull(v: Any?): Int? = when (v) {
