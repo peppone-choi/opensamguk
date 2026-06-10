@@ -44,6 +44,27 @@ interface AdminGeneralLogReadRepository : JpaRepository<WorldLogReadEntity, Int>
     ): List<WorldLogReadEntity>
 
     /**
+     * 한 장수의 특정 category 로그 — `id < :before` 페이지네이션(newest-first). PHP `*More($gen,$startSeq,$count)`
+     * 등가 (func_history.php:145-153/185-193/225-233 — `AND id < %i ORDER BY id DESC LIMIT %i`).
+     */
+    @Query(
+        value = """
+            SELECT id, year, month, text FROM log_entry
+            WHERE scope::text = 'GENERAL' AND general_id = :generalId AND category::text = :category
+              AND id < :before
+            ORDER BY id DESC
+            LIMIT :limit
+        """,
+        nativeQuery = true,
+    )
+    fun findRecentByGeneralBefore(
+        @Param("generalId") generalId: Int,
+        @Param("category") category: String,
+        @Param("before") before: Int,
+        @Param("limit") limit: Int,
+    ): List<WorldLogReadEntity>
+
+    /**
      * 한 장수의 HISTORY(장수 열전) 전체(newest-first). PHP `getGeneralHistoryLogAll($gen)`은 LIMIT 없이
      * `order by id desc` 전량을 반환하므로 LIMIT를 두지 않는다.
      */
