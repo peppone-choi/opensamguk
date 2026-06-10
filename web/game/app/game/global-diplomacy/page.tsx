@@ -110,11 +110,12 @@ export default function GlobalDiplomacyPage() {
     const nations: ConflictNation[] = data?.nations ?? [];
     const conflict = data?.conflict ?? [];
     const diplomacyList = data?.diplomacyList ?? {};
-    const myNationId = data?.myNationId ?? 0;
+    // P0-19 — 와이어 키는 PHP-verbatim `myNationID`/`nation`(F4Dto.SimpleNationObj 직렬화 그대로).
+    const myNationId = data?.myNationID ?? 0;
 
-    // nationId → {name,color} for the conflict feed lookups.
+    // nation(국가 id) → {name,color} for the conflict feed lookups.
     const nationById = new Map<number, ConflictNation>();
-    nations.forEach((n) => nationById.set(n.nationId, n));
+    nations.forEach((n) => nationById.set(n.nation, n));
 
     function cellState(me: number, you: number): number | undefined {
         return diplomacyList[me]?.[you];
@@ -146,7 +147,7 @@ export default function GlobalDiplomacyPage() {
                                 <th></th>
                                 {nations.map((nation) => (
                                     <th
-                                        key={nation.nationId}
+                                        key={nation.nation}
                                         style={{
                                             textAlign: 'center',
                                             color: isBrightColor(nation.color) ? '#000' : '#fff',
@@ -163,7 +164,7 @@ export default function GlobalDiplomacyPage() {
                         </thead>
                         <tbody>
                             {nations.map((me) => (
-                                <tr key={me.nationId}>
+                                <tr key={me.nation}>
                                     <th
                                         style={{
                                             textAlign: 'right',
@@ -178,19 +179,19 @@ export default function GlobalDiplomacyPage() {
                                         {me.name}
                                     </th>
                                     {nations.map((you) => {
-                                        if (me.nationId === you.nationId) {
+                                        if (me.nation === you.nation) {
                                             return (
-                                                <td key={you.nationId} style={{ textAlign: 'center' }}>
+                                                <td key={you.nation} style={{ textAlign: 'center' }}>
                                                     ＼
                                                 </td>
                                             );
                                         }
-                                        const state = cellState(me.nationId, you.nationId);
+                                        const state = cellState(me.nation, you.nation);
                                         const involvesViewer =
-                                            me.nationId === myNationId || you.nationId === myNationId;
+                                            me.nation === myNationId || you.nation === myNationId;
                                         return (
                                             <td
-                                                key={you.nationId}
+                                                key={you.nation}
                                                 style={{
                                                     textAlign: 'center',
                                                     ...(involvesViewer ? { backgroundColor: '#660000' } : {}),
@@ -313,7 +314,7 @@ export default function GlobalDiplomacyPage() {
                                 </thead>
                                 <tbody>
                                     {nations.map((n) => (
-                                        <tr key={n.nationId}>
+                                        <tr key={n.nation}>
                                             <td>
                                                 <span
                                                     style={{
