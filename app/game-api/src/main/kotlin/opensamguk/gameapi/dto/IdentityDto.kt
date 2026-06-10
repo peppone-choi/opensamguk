@@ -79,6 +79,7 @@ data class FrontGlobalInfo(
     val onlineUserCnt: Int? = null,
     val startyear: Int? = null,
     val generalCntLimit: Int? = null, // game_env.maxgeneral
+    val blockGeneralCreate: Int? = null,
     val apiLimit: Int? = null, // game_env.refreshLimit
     val serverCnt: Int? = null,
     val isunited: Boolean? = null,

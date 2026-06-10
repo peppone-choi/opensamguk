@@ -66,9 +66,8 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
         );
     }
 
-    // hasGeneral === false → 장수 선택/빙의 화면 (spec §6). On claim, refetch front-info → enter game.
     if (!frontInfo.general.hasGeneral) {
-        return <CharacterClaim onClaimed={refresh} />;
+        return <CharacterClaim global={frontInfo.global} onClaimed={refresh} />;
     }
 
     const flagSource = frontInfo.global as unknown as MenuFlagSource;
