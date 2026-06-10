@@ -41,3 +41,37 @@ if (!HTMLElement.prototype.setPointerCapture) {
 if (!HTMLElement.prototype.releasePointerCapture) {
     HTMLElement.prototype.releasePointerCapture = function releasePointerCapture(): void {};
 }
+
+// Node 25 는 글로벌 localStorage 를 자체 노출하는데 `--localstorage-file` 미설정 시 메서드 없는
+// 스텁이라 jsdom 의 Storage 를 가린다 — 메모리 Storage 폴리필로 교체(MapViewer 토글 영속 테스트용).
+class MemoryStorage implements Storage {
+    private store = new Map<string, string>();
+    get length(): number { return this.store.size; }
+    clear(): void { this.store.clear(); }
+    getItem(key: string): string | null { return this.store.has(key) ? this.store.get(key)! : null; }
+    key(index: number): string | null { return Array.from(this.store.keys())[index] ?? null; }
+    removeItem(key: string): void { this.store.delete(key); }
+    setItem(key: string, value: string): void { this.store.set(key, String(value)); }
+}
+if (typeof globalThis.localStorage?.clear !== 'function') {
+    const mem = new MemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', { value: mem, configurable: true, writable: true });
+    if (typeof window !== 'undefined') {
+        Object.defineProperty(window, 'localStorage', { value: mem, configurable: true, writable: true });
+    }
+}
+
+// jsdom 에는 matchMedia 가 없다 — 항상 false 매치 스텁(MapViewer 터치 기기 감지용).
+if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
+    window.matchMedia = (query: string): MediaQueryList =>
+        ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addListener(): void {},
+            removeListener(): void {},
+            addEventListener(): void {},
+            removeEventListener(): void {},
+            dispatchEvent: () => false,
+        }) as MediaQueryList;
+}
