@@ -21,6 +21,14 @@ const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
  * 인게임 MapViewer와 다른 점(로비 프리뷰 = glance용): 줌/팬/클릭 상세 없음. hover 시에만 도시 정보
  * 툴팁(레거시 .city_tooltip = 도시명 + 소속국, 레벨 추가)을 커서 위치에 띄운다. 공백지(nationId=0)는
  * 회색 오오라 + 깃발 없음으로 렌더(인게임과 동일) — 시드에 공백지가 있으면 그대로 보인다.
+ *
+ * W0-6 능력 표면 미러(두 맵뷰어 불변식 — 데이터 소스만 다르고 기능·겉보기 동일):
+ *   - mapData      : 외부 주입 시 self-fetch 생략(인게임 MapViewer 동일 시멘틱, 레거시 PageHistory.vue:23-33).
+ *   - disallowClick: 타입만 미러 — 로비 프리뷰엔 클릭 자체가 없어 no-op(인게임은 도시 페이지 라우팅 차단).
+ *   - currentCityId: 내(현재) 도시 blink — 레거시 .my_city(map.scss:231-262). 로비는 보통 미전달(데이터 차이).
+ *   - live/showMe  : 타입만 미러 — 게이트웨이 프록시는 캐시 preview 만 노출(라이브 /api/map 은 인게임 전용).
+ *   - refreshKey   : 값 변경 시 재조회(레거시 refreshCounter watch — PageFront.vue:516).
+ *   - 계절 경계(P1-061)·state 캡 해제(P0-36 FE측)·도시명 표기 토글(P1-062)은 인게임 MapViewer 와 동일 적용.
  */
 
 const NEUTRAL_COLOR = '#555555';
@@ -94,8 +102,10 @@ interface MapNation {
     name: string;
     color: string;
 }
-interface MapData {
+export interface MapData {
     serverName: string;
+    /** 시나리오 시작 연도 — W0-2b(MapPreviewDto.startYear, optional). 초반 3년 색상/기술등급 툴팁(P1-060) 소비 예정. */
+    startYear?: number;
     year: number;
     month: number;
     mapCode: string;
@@ -105,20 +115,60 @@ interface MapData {
     nations: MapNation[];
 }
 
-function seasonOf(month: number): string {
-    if (month >= 3 && month <= 5) return 'spring';
-    if (month >= 6 && month <= 8) return 'summer';
-    if (month >= 9 && month <= 11) return 'fall';
+// 계절 경계 — 레거시 MapViewer.vue:306-319 getMapSeasonClassName 패러티(P1-061):
+// month<=3 봄 / <=6 여름 / <=9 가을 / 나머지(10~12) 겨울. 인게임 MapViewer.seasonOf 와 동일 공식.
+export function seasonOf(month: number): string {
+    if (month <= 3) return 'spring';
+    if (month <= 6) return 'summer';
+    if (month <= 9) return 'fall';
     return 'winter';
 }
 
-export default function MapPreview({ serverId = 'main', serverName }: { serverId?: string; serverName?: string }) {
+// 레거시 state/mapViewer.ts 패러티 — 토글 상태는 localStorage('yes'/'no')에 영속(인게임과 동일 키).
+const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
+
+// W0-6 능력 표면 — 인게임 MapViewer(MapViewerProps)와 동일한 prop 세트(두 맵뷰어 불변식).
+// 로비엔 클릭/라이브 데이터가 없어 disallowClick/live/showMe 는 타입만 유지된다(상단 주석 참조).
+export interface MapPreviewProps {
+    serverId?: string;
+    serverName?: string;
+    /** 외부 주입 맵 데이터 — 주입 시 self-fetch 생략(레거시 PageHistory.vue:23-33 :map-data 주입). */
+    mapData?: MapData | null;
+    /** 타입 미러 — 로비 프리뷰는 클릭이 원래 없음(인게임 MapViewer 에서만 동작). */
+    disallowClick?: boolean;
+    /** 내(현재) 도시 blink — 레거시 is-my-city → .my_city(map.scss:231-262). */
+    currentCityId?: number | null;
+    /** 타입 미러 — 게이트웨이 프록시는 캐시 preview 만 노출(라이브 머지는 인게임 MapViewer 전용). */
+    live?: boolean;
+    /** 타입 미러 — live 미배선이므로 로비에선 효과 없음(func_map.php:78-95 showMe 시멘틱). */
+    showMe?: 0 | 1;
+    /** 재조회 트리거 — 값이 바뀌면 다시 fetch(레거시 refreshCounter watch). */
+    refreshKey?: number;
+}
+
+export default function MapPreview({
+    serverId = 'main',
+    serverName,
+    mapData,
+    // disallowClick/live/showMe — 능력 표면 미러용(로비에선 미사용, 인게임 MapViewer 시그니처와 동일 유지).
+    disallowClick: _disallowClick,
+    currentCityId,
+    live: _live,
+    showMe: _showMe,
+    refreshKey = 0,
+}: MapPreviewProps = {}) {
     const [data, setData] = useState<MapData | null>(null);
     const [failed, setFailed] = useState(false);
     const [hoverId, setHoverId] = useState<number | null>(null);
     const [cursor, setCursor] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
+        // 외부 주입 — self-fetch 생략(인게임 MapViewer 와 동일 시멘틱).
+        if (mapData != null) {
+            setData(mapData);
+            setFailed(false);
+            return;
+        }
         let on = true;
         setData(null);
         setFailed(false);
@@ -133,7 +183,20 @@ export default function MapPreview({ serverId = 'main', serverName }: { serverId
         return () => {
             on = false;
         };
-    }, [serverId]);
+    }, [serverId, mapData, refreshKey]);
+
+    // ── P1-062 도시명 표기 토글(레거시 MapViewer.vue:30-40 + state/mapViewer.ts) ──
+    // SSR 안전: 초기값은 effect 에서 localStorage 로 복원. 두번-탭 토글은 클릭이 없는 로비엔 미노출.
+    const [hideCityName, setHideCityName] = useState(false);
+    useEffect(() => {
+        setHideCityName(window.localStorage.getItem(LS_HIDE_CITYNAME) === 'yes');
+    }, []);
+    function toggleHideCityName() {
+        setHideCityName((v) => {
+            window.localStorage.setItem(LS_HIDE_CITYNAME, v ? 'no' : 'yes');
+            return !v;
+        });
+    }
 
     // nationId → {name,color} 룩업 (공백지 = id 0, nations[]에 없음).
     const nationById = useMemo(() => {
@@ -218,7 +281,7 @@ export default function MapPreview({ serverId = 'main', serverName }: { serverId
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
 
     return (
-        <div className="map-preview" aria-label="서버 지도 프리뷰">
+        <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
             <div
                 ref={canvasRef}
                 className="map-preview-canvas"
@@ -250,8 +313,11 @@ export default function MapPreview({ serverId = 'main', serverName }: { serverId
                         const imgTop = (BASE_H - sz.iconH) / 2;
                         const auraLeft = (BASE_W - sz.areaW) / 2;
                         const auraTop = (BASE_H - sz.areaH) / 2;
-                        const showState = (c.state ?? 0) > 0 && (c.state ?? 0) <= 5;
+                        // P0-36 FE측: 레거시 MapCityDetail.vue:44 는 state>0 이면 표시(상한 캡 없음 —
+                        // 재해/사건 코드 6~9 도 event<state>.gif 로 렌더). 옛 <=5 캡 제거(인게임과 동일).
+                        const showState = (c.state ?? 0) > 0;
                         const flagFrameUrl = owned ? flagUrls[col]?.[flagFrame] : undefined;
+                        const isMyCity = currentCityId != null && currentCityId === c.id;
 
                         return (
                             <div
@@ -275,9 +341,10 @@ export default function MapPreview({ serverId = 'main', serverName }: { serverId
                                     />
                                 )}
 
-                                {/* 아이콘 컨테이너(city_img) — 깃발/상태/이름이 모두 이 안에서 아이콘 기준 위치(레거시 DOM 구조). */}
+                                {/* 아이콘 컨테이너(city_img) — 깃발/상태/이름이 모두 이 안에서 아이콘 기준 위치(레거시 DOM 구조).
+                                    내 도시는 my-city(레거시 .my_city — map.scss:231-262 outline 점멸 링). */}
                                 <div
-                                    className="city-img"
+                                    className={`city-img${isMyCity ? ' my-city' : ''}`}
                                     style={{ left: imgLeft, top: imgTop, width: sz.iconW, height: sz.iconH }}
                                 >
                                     {/* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */}
@@ -309,6 +376,19 @@ export default function MapPreview({ serverId = 'main', serverName }: { serverId
                             </div>
                         );
                     })}
+                </div>
+
+                {/* 토글 버튼 스택(레거시 map_button_stack — MapViewer.vue:30-40, map.scss:37-58 우하단).
+                    라벨 뒤 " 끄기/켜기" 접미는 CSS ::after(레거시 동일). 두번-탭 토글은 클릭 없는 로비엔 미노출. */}
+                <div className="map-btn-stack">
+                    <button
+                        type="button"
+                        className={`map-toggle-cityname${hideCityName ? ' active' : ''}`}
+                        aria-pressed={hideCityName}
+                        onClick={toggleHideCityName}
+                    >
+                        도시명 표기
+                    </button>
                 </div>
             </div>
 
