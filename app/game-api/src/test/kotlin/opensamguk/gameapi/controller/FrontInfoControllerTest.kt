@@ -42,10 +42,15 @@ class FrontInfoControllerTest {
     private val ranks = mock(opensamguk.gameapi.read.RankDataReadRepository::class.java)
     private val auctions = mock(opensamguk.gameapi.read.AuctionCountReadRepository::class.java)
     private val votePolls = mock(opensamguk.gameapi.read.VotePollReadRepository::class.java)
+    private val votes = mock(opensamguk.gameapi.read.VoteReadRepository::class.java)
+    private val troops = mock(opensamguk.gameapi.read.TroopReadRepository::class.java)
+    private val generalTurns = mock(opensamguk.gameapi.read.GeneralTurnReadRepository::class.java)
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(FrontInfoController(resolver, world, generals, nations, cities, ranks, auctions, votePolls))
+        MockMvcBuilders.standaloneSetup(
+            FrontInfoController(resolver, world, generals, nations, cities, ranks, auctions, votePolls, votes, troops, generalTurns),
+        )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -165,5 +170,161 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.general.hasGeneral").value(true))
             .andExpect(jsonPath("$.general.generalId").value(10))
             .andExpect(jsonPath("$.general.permission").value(0)) // officer_level 1 → 일반
+    }
+
+    // ── W0-2(P1-002) lastVote / lastVoteID ───────────────────────────────────────────────────────────
+
+    @Test
+    fun `global lastVote exposes the newest open poll in VoteInfo shape`() {
+        seedWorld()
+        `when`(votePolls.findFirstByOrderByIdDesc()).thenReturn(
+            opensamguk.gameapi.read.VotePollReadEntity(
+                id = 3,
+                title = "차기 천하통일 예상 국가는?",
+                multipleOptions = 1,
+                openerName = "운영자",
+                startAt = Instant.parse("2026-06-01T00:00:00Z"),
+                endAt = Instant.now().plusSeconds(3600),
+                options = linkedMapOf("0" to "위", "1" to "촉"),
+            ),
+        )
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.lastVoteID").value(3))
+            .andExpect(jsonPath("$.global.lastVote.id").value(3))
+            .andExpect(jsonPath("$.global.lastVote.title").value("차기 천하통일 예상 국가는?"))
+            .andExpect(jsonPath("$.global.lastVote.opener").value("운영자"))
+            .andExpect(jsonPath("$.global.lastVote.startDate").value("2026-06-01 00:00:00"))
+            .andExpect(jsonPath("$.global.lastVote.options[0]").value("위"))
+            .andExpect(jsonPath("$.global.lastVote.options[1]").value("촉"))
+    }
+
+    @Test
+    fun `global lastVote is null for an expired poll but lastVoteID stays`() {
+        // PHP GetFrontInfo.php:186-188 — endDate가 지났으면 lastVote=null, lastVoteID는 raw 유지.
+        seedWorld()
+        `when`(votePolls.findFirstByOrderByIdDesc()).thenReturn(
+            opensamguk.gameapi.read.VotePollReadEntity(
+                id = 2,
+                title = "지난 설문",
+                endAt = Instant.now().minusSeconds(3600),
+            ),
+        )
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.lastVoteID").value(2))
+            .andExpect(jsonPath("$.global.lastVote").doesNotExist())
+    }
+
+    // ── W0-2(P1-001) onlineNations(방어적 config read) ───────────────────────────────────────────────
+
+    @Test
+    fun `global onlineNations reads the game_env online_nation CSV when present`() {
+        seedWorld(mapOf("online_nation" to "위, 촉, 오"))
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.onlineNations").value("위, 촉, 오"))
+    }
+
+    @Test
+    fun `global onlineNations is null when the daemon has not populated it`() {
+        seedWorld()
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.onlineNations").doesNotExist())
+    }
+
+    // ── W0-2(P1-002) aux.myLastVote ──────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `aux exposes the caller's last vote id`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5)),
+        )
+        `when`(votes.findFirstByGeneralIdOrderByVoteIdDesc(10)).thenReturn(
+            opensamguk.gameapi.read.VoteReadEntity(id = 99, voteId = 3, generalId = 10),
+        )
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.aux.myLastVote").value(3))
+    }
+
+    @Test
+    fun `aux myLastVote is null without a vote history and for anonymous callers`() {
+        seedWorld()
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.aux.myLastVote").doesNotExist())
+    }
+
+    // ── W0-2(P1-005) troopInfo(부대 정보 합성) ───────────────────────────────────────────────────────
+
+    @Test
+    fun `general troopInfo synthesizes leader city and reserved 5 turns`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5, troopId = 20)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(troops.findById(20)).thenReturn(
+            Optional.of(opensamguk.gameapi.read.TroopReadEntity(troopLeader = 20, nation = 1, name = "선봉대")),
+        )
+        `when`(generals.findById(20)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 20, name = "하후돈", nationId = 1, cityId = 8, officerLevel = 4)),
+        )
+        `when`(generalTurns.findByGeneralIdOrderByTurnIdxAsc(20)).thenReturn(
+            listOf(
+                opensamguk.gameapi.read.GeneralTurnReadEntity(
+                    id = 1, generalId = 20, turnIdx = 0, actionCode = "che_출병",
+                    arg = linkedMapOf("destCityID" to 3), brief = "출병",
+                ),
+                // turn_idx 5 이상은 PHP `turn_idx < 5` 게이트로 제외.
+                opensamguk.gameapi.read.GeneralTurnReadEntity(
+                    id = 2, generalId = 20, turnIdx = 5, actionCode = "휴식", brief = "휴식",
+                ),
+            ),
+        )
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.general.troopInfo.name").value("선봉대"))
+            .andExpect(jsonPath("$.general.troopInfo.leader.city").value(8))
+            .andExpect(jsonPath("$.general.troopInfo.leader.reservedCommand.length()").value(1))
+            .andExpect(jsonPath("$.general.troopInfo.leader.reservedCommand[0].action").value("che_출병"))
+            .andExpect(jsonPath("$.general.troopInfo.leader.reservedCommand[0].brief").value("출병"))
+            .andExpect(jsonPath("$.general.troopInfo.leader.reservedCommand[0].arg.destCityID").value(3))
+    }
+
+    @Test
+    fun `general troopInfo is null when the leader has no reserved turns`() {
+        // PHP GetFrontInfo.php:474-476 — 예약 0행이면 troopInfo 키 자체 미기재.
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5, troopId = 20)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(troops.findById(20)).thenReturn(
+            Optional.of(opensamguk.gameapi.read.TroopReadEntity(troopLeader = 20, nation = 1, name = "선봉대")),
+        )
+        `when`(generals.findById(20)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 20, name = "하후돈", nationId = 1, cityId = 8, officerLevel = 4)),
+        )
+        `when`(generalTurns.findByGeneralIdOrderByTurnIdxAsc(20)).thenReturn(emptyList())
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.general.troopInfo").doesNotExist())
     }
 }

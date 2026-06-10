@@ -95,6 +95,21 @@ data class FrontGlobalInfo(
     // 설문(투표) 진행 여부 — vote_poll에서 미만료 폴 존재 시 true(아래 컨트롤러에서 계산).
     val vote: Boolean? = null,
 
+    // ── W0-2(P1-002) 설문 셀 배선 — PHP GetFrontInfo.php:165,174(lastVote 키)·182-189(만료 검사)·
+    // 214('lastVoteID')·231('lastVote' = VoteInfo->toArray()) ───────────────────────────────────────
+    // PHP는 game_env.lastVote(마지막 설문 id)로 vote KV에서 VoteInfo를 읽고, endDate가 지났으면 null로
+    // 둔다. opensamguk은 game_env.lastVote write가 없는 대신 설문 정본이 vote_poll 테이블이므로
+    // (VoteController와 동일 원천 — countOpenPolls 주석의 기존 대체 규약) 최신 폴 행에서 채운다. 실원천.
+    /** 마지막 설문 id(PHP `lastVoteID`). vote_poll 최신 행 id. 폴 0행이면 null. */
+    val lastVoteID: Int? = null,
+    /** 진행중인 마지막 설문(PHP `lastVote` = VoteInfo->toArray()). 만료/종료 시 null(PHP 동일). */
+    val lastVote: FrontLastVote? = null,
+
+    // [§2 W0-2(P1-001) — world_state.config 미기재] onlineNations: PHP game_env.online_nation
+    // (func.php:1247 `join(', ', $onlineNation)` 접속중 국가명 CSV 문자열; GetFrontInfo.php:175,217).
+    // 데몬이 이 키를 아직 채우지 않으므로 config에서 방어적으로 읽고 부재 시 null(날조 금지).
+    val onlineNations: String? = null,
+
     // COUNT 집계(저렴한 인덱스 카운트) — npc_state로 user/NPC 분리.
     val createdUserCnt: Int? = null, // npc_state == 0 (사용자 점유 가능 장수)
     val createdNPCCnt: Int? = null, // npc_state > 0 (NPC 장수)
@@ -111,6 +126,32 @@ data class AutorunUserInfo(
     @JsonProperty("limit_minutes")
     val limitMinutes: Int,
     val options: Map<String, Int>,
+)
+
+/**
+ * W0-2(P1-002) — PHP `VoteInfo`(sammo/DTO/VoteInfo.php:5-20) → `toArray()` 동형:
+ * `{id, title, multipleOptions, opener, startDate, endDate, options}`.
+ * opensamguk 원천은 vote_poll 행(VoteController와 동일): startDate/endDate는 PHP 'Y-m-d H:i:s'
+ * 문자열 규약([opensamguk.gameapi.read.TurnTimeFormatter.full] 슬라이스), options는 삽입순 텍스트
+ * (PHP `array_values` — VoteController optionTexts와 동식).
+ */
+data class FrontLastVote(
+    val id: Int,
+    val title: String,
+    val multipleOptions: Int,
+    val opener: String?,
+    val startDate: String?,
+    val endDate: String?,
+    val options: List<String>,
+)
+
+/**
+ * W0-2(P1-002) — PHP GetFrontInfo.php:573-591 `aux` 블록. 현재 키는 `myLastVote`
+ * (`SELECT vote_id FROM vote WHERE general_id=%i ORDER BY vote_id DESC LIMIT 1`) 하나.
+ * 장수 미보유/투표 이력 없음 → null(PHP는 키 자체 미기재).
+ */
+data class FrontAuxInfo(
+    val myLastVote: Int? = null,
 )
 
 /** The caller's general gating surface (null when no character). */
@@ -200,8 +241,7 @@ data class FrontGeneralInfo(
     //  - defence_train   : 컬럼 없음(W3_PLAN §2). null.
     //  - autorunLimit    : aux 컬럼 없음(W3_PLAN §2 defence_train/autorun_limit). null.
     //  - reservedCommand : general_turn READ는 GeneralList 그룹/W4로 분리(이 그룹 OUT-OF-SCOPE). null.
-    //  - recentWar / troopInfo : recent_war_time은 컬럼이나 PHP `recent_war` 문자열 포맷/troop 합성은
-    //                            W4 후속(이 read 그룹 OUT-OF-SCOPE). null.
+    //  - recentWar       : recent_war_time은 컬럼이나 PHP `recent_war` 문자열 포맷은 W4 후속. null.
     val dex1: Int? = null,
     val dex2: Int? = null,
     val dex3: Int? = null,
@@ -212,6 +252,39 @@ data class FrontGeneralInfo(
     val defenceTrain: Int? = null,
     val autorunLimit: Int? = null,
     val reservedCommand: List<Map<String, Any?>>? = null,
+
+    // ── W0-2(P1-005) troopInfo — PHP GetFrontInfo.php:446-487(부대장 도시·예약 5턴·부대명 합성) ───────
+    // troop/general/general_turn 실 행에서 합성. PHP 가드 체인(부대 미소속/부대 행 부재/부대장 도시
+    // 부재/예약 0행 → 키 자체 미기재 = null) 충실 — 어느 단계든 끊기면 null(날조 금지).
+    val troopInfo: FrontTroopInfo? = null,
+)
+
+/**
+ * W0-2(P1-005) — PHP GetFrontInfo.php:478-484 `troopInfo` 블록:
+ * `{leader: {city, reservedCommand}, name}`. name = troop.name(GetFrontInfo.php:452-456),
+ * leader.city = 부대장 general.city(:461-465), reservedCommand = 부대장 general_turn turn_idx<5
+ * (:470-473).
+ */
+data class FrontTroopInfo(
+    val leader: FrontTroopLeader,
+    val name: String,
+)
+
+/** 부대장 정보(PHP `troopInfo.leader`) — 소재 도시 + 앞 5턴 예약. */
+data class FrontTroopLeader(
+    val city: Int,
+    val reservedCommand: List<FrontTroopReservedCommand>,
+)
+
+/**
+ * 부대장 예약 1행(PHP `SELECT action, arg, brief FROM general_turn ... turn_idx < 5`).
+ * PHP는 arg를 raw JSON 문자열로 내려보내지만 본 read 경로는 기존 ReservedSlot.arg와 동일하게
+ * 디코드된 맵(삽입순서 보존)으로 통일한다(FE 이중 파싱 방지 — 정보 동등, 표기만 구조화).
+ */
+data class FrontTroopReservedCommand(
+    val action: String,
+    val arg: Map<String, Any?>,
+    val brief: String,
 )
 
 /**
@@ -341,6 +414,8 @@ data class FrontInfoResponse(
     val nation: FrontNationInfo?,
     val city: FrontCityInfo?,
     val recentRecord: List<String>,
+    /** W0-2(P1-002) — PHP GetFrontInfo.php:591 `aux` 블록(myLastVote). 장수 미보유 시 빈 블록. */
+    val aux: FrontAuxInfo = FrontAuxInfo(),
 )
 
 // ── my-* read endpoints ──────────────────────────────────────────────────────

@@ -112,6 +112,12 @@ interface VotePollReadRepository : JpaRepository<VotePollReadEntity, Int> {
     fun findAllByOrderByIdDesc(): List<VotePollReadEntity>
 
     /**
+     * W0-2(P1-002) — 마지막 설문 폴 1행. PHP의 game_env.lastVote(마지막 설문 id) 대체 원천:
+     * vote_poll이 opensamguk 설문 정본([countOpenPolls] 주석의 기존 대체 규약과 동일). 0행 → null.
+     */
+    fun findFirstByOrderByIdDesc(): VotePollReadEntity?
+
+    /**
      * W3 FrontGlobalInfo `vote` 게이트 — 아직 열려있는(미종료, 미만료) 설문 폴 수.
      * PHP는 game_env.lastVote가 가리키는 폴의 `endDate < now`를 검사한다(GetFrontInfo.php:182-189).
      * opensamguk엔 game_env.lastVote가 채워지지 않으므로(§2) 대체로 `closed_at IS NULL` AND
@@ -128,6 +134,12 @@ interface VotePollReadRepository : JpaRepository<VotePollReadEntity, Int> {
 interface VoteReadRepository : JpaRepository<VoteReadEntity, Int> {
     /** All cast votes for a poll. */
     fun findByVoteId(voteId: Int): List<VoteReadEntity>
+
+    /**
+     * W0-2(P1-002) — 호출 장수의 마지막 투표 행(PHP GetFrontInfo.php:578
+     * `SELECT vote_id FROM vote WHERE general_id = %i ORDER BY vote_id DESC LIMIT 1`). 없으면 null.
+     */
+    fun findFirstByGeneralIdOrderByVoteIdDesc(generalId: Int): VoteReadEntity?
 }
 
 interface VoteCommentReadRepository : JpaRepository<VoteCommentReadEntity, Int> {
