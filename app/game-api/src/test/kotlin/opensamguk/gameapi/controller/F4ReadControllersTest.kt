@@ -22,6 +22,7 @@ import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.NationTurnReadEntity
 import opensamguk.gameapi.read.NationTurnReadRepository
+import opensamguk.gameapi.read.SecretPermissionReader
 import opensamguk.gameapi.read.TroopReadEntity
 import opensamguk.gameapi.read.TroopReadRepository
 import opensamguk.gameapi.read.VoteCommentReadRepository
@@ -222,7 +223,7 @@ class F4ReadControllersTest {
     }
 
     private fun diplomacyController() =
-        DiplomacyController(diplomacy, letters, nations, cities, resolver)
+        DiplomacyController(diplomacy, letters, nations, cities, resolver, SecretPermissionReader(nations))
 
     // ── GET /api/diplomacy/letters (state text verbatim) ─────────────────────────────────────────────
     @Test
@@ -328,6 +329,28 @@ class F4ReadControllersTest {
         mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
             .andExpect(status().isOk)
             // 군주(secretPermission 4) → detail 원문 노출.
+            .andExpect(jsonPath("$.letters[0].detail").value("5년 불가침을 제안합니다"))
+    }
+
+    // ── W0-3 — 외교권자(ambassador)는 직급 무관 secretPermission 4 → detail 마스킹 해제 ─────────────────
+    @Test
+    fun `diplomacy letters do NOT mask detail for ambassador caller`() {
+        // PHP checkSecretPermission(func.php:413-414): permission=='ambassador' → 4 (>=3 → 원문).
+        // 종전의 officer_level-only 모델은 lv1 외교권자를 0으로 깎아 마스킹했다(감사 P1-031) — 교정 핀.
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(gen(10, "외교관", nationId = 1, officerLevel = 1, meta = linkedMapOf("permission" to "ambassador"))),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "위", "#c62828"), nation(2, "촉", "#2e7d32")))
+        `when`(letters.findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(1, 1)).thenReturn(
+            listOf(
+                DiplomacyLetterReadEntity(id = 1, srcNationId = 1, destNationId = 2, state = "ACTIVATED", textBrief = "불가침", textDetail = "5년 불가침을 제안합니다", srcSigner = 10),
+            ),
+        )
+
+        mvc(diplomacyController()).perform(get("/api/diplomacy/letters").with(principal(7L)))
+            .andExpect(status().isOk)
             .andExpect(jsonPath("$.letters[0].detail").value("5년 불가침을 제안합니다"))
     }
 

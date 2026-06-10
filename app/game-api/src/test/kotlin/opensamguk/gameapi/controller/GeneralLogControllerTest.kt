@@ -6,7 +6,9 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.AdminGeneralLogReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.SecretPermissionReader
 import opensamguk.gameapi.read.WorldLogReadEntity
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -51,7 +53,7 @@ class GeneralLogControllerTest {
     private val logs = mock(AdminGeneralLogReadRepository::class.java)
 
     private fun mvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(GeneralLogController(resolver, generals, logs))
+        MockMvcBuilders.standaloneSetup(GeneralLogController(resolver, generals, logs, SecretPermissionReader(nations)))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -61,8 +63,8 @@ class GeneralLogControllerTest {
         req
     }
 
-    private fun gen(id: Int, name: String, nationId: Int, officerLevel: Int, npcState: Int = 0) =
-        GeneralReadEntity(id = id, name = name, nationId = nationId, officerLevel = officerLevel, npcState = npcState)
+    private fun gen(id: Int, name: String, nationId: Int, officerLevel: Int, npcState: Int = 0, meta: Map<String, Any?> = linkedMapOf()) =
+        GeneralReadEntity(id = id, name = name, nationId = nationId, officerLevel = officerLevel, npcState = npcState, meta = meta)
 
     /** userId가 generalId 장수를 소유 + 그 장수 row를 양쪽 repo에 심는다. */
     private fun own(userId: Long, me: GeneralReadEntity) {
@@ -83,12 +85,30 @@ class GeneralLogControllerTest {
 
     @Test
     fun `일반 장수는 수뇌부 권한 부족 에러`() {
-        // officer_level=1(일반) → secretPermission 0 → PHP permission<1 분기.
+        // officer_level=1(일반), belong 부재(DDL 기본 1, schema.sql:57) < secretlimit 부재(DDL 기본 3,
+        // schema.sql:126) → secretPermission 0 → PHP permission<1 분기(func.php:421-427 사관년도 미달).
         own(10L, gen(1, "졸병", nationId = 1, officerLevel = 1))
         mvc().perform(get("/api/general-log").param("generalID", "2").param("reqType", "generalHistory").with(principal(10L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(false))
             .andExpect(jsonPath("$.reason").value("권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다."))
+    }
+
+    @Test
+    fun `일반 장수도 사관년도 충족이면 열람 허용`() {
+        // W0-3 — PHP checkSecretPermission 기본 인자(checkSecretLimit=true, GetGeneralLog.php:60):
+        // belong(3) >= nation.secretlimit(1) → permission 1 (func.php:421-427) → 열람 게이트 통과.
+        // 에러 문구 '…사관년도가 부족합니다'(GetGeneralLog.php:74)가 이 분기의 존재 증거다.
+        own(10L, gen(1, "노병", nationId = 1, officerLevel = 1, meta = linkedMapOf("belong" to 3)))
+        `when`(nations.findById(1)).thenReturn(
+            Optional.of(NationReadEntity(id = 1, name = "위").also { it.meta = linkedMapOf("secretlimit" to 1) }),
+        )
+        `when`(generals.findById(2)).thenReturn(Optional.of(gen(2, "동료NPC", nationId = 1, officerLevel = 1, npcState = 2)))
+        `when`(logs.findAllHistoryByGeneral(2)).thenReturn(listOf(row(4, "열전")))
+
+        mvc().perform(get("/api/general-log").param("generalID", "2").param("reqType", "generalHistory").with(principal(10L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
     }
 
     @Test
