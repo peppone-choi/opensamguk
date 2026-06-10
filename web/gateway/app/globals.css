@@ -408,6 +408,65 @@ textarea:focus {
 .map-preview-tooltip-name { font-size: var(--text-sm); font-weight: 700; color: var(--text-primary); }
 .map-preview-tooltip-meta { font-size: var(--text-xs); color: var(--text-secondary); }
 
+/* ── W0-6 MapPreview 능력 표면 미러 — web/game MapViewer와 동일 블록(두 맵뷰어 불변식) ──
+   1) 도시명 표기 토글: 레거시 .world_map.hide_cityname .city_detail_name(map.scss:149-151). */
+.hide-cityname .city-name { display: none; }
+/* 2) 클릭 비활성(disallowClick) — 레거시 clickable=0 → cursor default(MapCityDetail.vue:23). */
+.city-noclick { cursor: default; }
+/* 3) 내(현재) 도시 blink 링 — 레거시 .my_city before/after outline 점멸(map.scss:231-262). */
+.city-img.my-city::before {
+    content: "";
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border-radius: 33%;
+    animation: blink-my-city-d1 3.9s infinite;
+    pointer-events: none;
+}
+.city-img.my-city::after {
+    content: "";
+    position: absolute;
+    top: -2px; left: -2px; right: -2px; bottom: -2px;
+    border-radius: 33%;
+    animation: blink-my-city-d2 3.9s infinite;
+    pointer-events: none;
+}
+/* 레거시 map.scss:86-112 keyframes 그대로(d1 빨강 solid / d2 은색 double, 반주기 점멸). */
+@keyframes blink-my-city-d1 {
+    0% { outline: solid 4px transparent; }
+    50% { outline: solid 4px rgba(255, 0, 0, 1); }
+    100% { outline: solid 4px transparent; }
+}
+@keyframes blink-my-city-d2 {
+    0% { outline: double 4px transparent; }
+    50% { outline: double 4px rgba(192, 192, 192, 1); }
+    100% { outline: double 4px transparent; }
+}
+/* 4) 토글 버튼 스택 — 레거시 map_button_stack(map.scss:37-58, 우하단) + " 끄기/켜기" ::after 접미. */
+.map-btn-stack {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 8;
+    text-align: right;
+}
+.map-btn-stack button {
+    display: block;
+    margin-left: auto;
+    margin-top: 2px;
+    padding: 2px 6px;
+    font-size: var(--text-xs);
+    color: var(--text-primary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+.map-btn-stack button.active { background: var(--bg-card); }
+.map-toggle-cityname::after { content: " 끄기"; }
+.map-toggle-cityname.active::after { content: " 켜기"; }
+.map-toggle-singletap::after { content: " 끄기"; }
+.map-toggle-singletap.active::after { content: " 켜기"; }
+
 /* ── 서버 보드 (devsam '제 전황' 입구: 서버탭 + 맵 + 전황로그) ── */
 .server-board {
     width: 100%;
