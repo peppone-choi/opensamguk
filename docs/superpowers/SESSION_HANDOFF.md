@@ -1,3 +1,63 @@
+# SESSION HANDOFF — 2026-06-10 (세션7: 턴동결 핫픽스 + 페이지 패러티 W0/W1 + 루프 가동)
+
+다음 세션은 이 문서부터. 핵심은 git log + `/workflows` + TaskList.
+
+> **main = 전부 머지·배포됨 (PR #68~#79, 오늘 10+개). parity-final 브랜치는 폐기됨(전부 main에 흡수).**
+
+## 0. 즉시 확인할 것 (재개 절차)
+
+1. **W1 워크플로 살아있나**: run ID `wf_3fc9274f-9fc`, 스크립트
+   `~/.claude/projects/-Users-apple-Desktop--------opensamguk/ee322d2d-d0c5-4ea8-a227-175a9874a611/workflows/scripts/w1-page-parity-wave-wf_3fc9274f-9fc.js`.
+   죽었으면 `Workflow({scriptPath, resumeFromRunId: "wf_3fc9274f-9fc"})` — 완료 에이전트는 캐시 재개.
+   구조: W0게이트워처 → 배치1보안(D board/L mailbox/C betting/H generals/O nation-finance) →
+   배치2크래시(F city/G diplomacy/E chief/B auction/M map) → 배치3위조(A main/I history/J inherit/K join/N my-*) →
+   LEDGER 웨이브기록 → s1/spep 바운스+실서버검증.
+2. **W0 잔여 3종** (재개 에이전트가 기존 워크트리에서 작업): 워크트리 = `.claude/worktrees/agent-{aa9f04ab*,a43b4a83*,a521e815*}`
+   = W0-7 wire(`w0/7-wire-contract`) / W0-4 결과채널(`w0/4-intake-result-channel`) / W0-8 infra(`w0/8-infra-flush-migrations`).
+   푸시되면 워크플로 게이트워처가 자동 PR+머지. 에이전트 사망 시: 워크트리 잔존물 회수 절차(아래 §4) 후 재발사.
+3. **세션 리밋 이력**: 두 번 충돌(13:2x, 15:2x — 15:30 리셋). 죽은 에이전트 = 출력파일 145바이트 헤더 동결 + 워크트리 무활동으로 판별.
+
+## 1. 세션7 완료 (전부 main 머지)
+
+- **프로드 턴동결 근본수정** (#69): 신규월드 첫 연경계에서 `Json.encodeToString(aux: Map<String,Any?>)` 런타임 직렬화 예외 + `statistic` 테이블 DDL 부재(2층). → `StatisticInsertColumns`+`MetaJson` / `V13__statistic_table.sql` / `StatisticFlushIT`(실DB) / 리버트가드. **s1/spep 바운스 후 턴 전진 검증 완료**. latent 3건(aux dict-vs-array 등)은 statistic 골든 백로그.
+- **장수 등록 UI 패러티** (#68): npcmode 0/1/2 3서피스 + blockGeneralCreate.
+- **하드코딩 단계3** (#70): OFFICER_LEVEL_TEXT→F4StateText / mapWidth·Height→map json 로더 / INHERIT_COSTS→API 소비. 잔여 = 단계5 mutation 3건(W1 합류) + 단계6 BLOCKED 4건.
+- **루프 엔지니어링 가동**: `docs/loops/page-parity/` GOLDENSET(승인·동결)+LEDGER. **1바퀴 = Nation/GetGeneralLog 포팅(#71)** — 405→406 suites, fresh 채점 PASS. General alias self-view 변형은 백로그.
+- **페이지 패러티 감사** (#71에 동봉): `docs/superpowers/gap/PAGE_PARITY_AUDIT_2026-06-10.md` — 20페이지 P0 54/P1 84+/P2 56+, W0 8종+W1 A~O 웨이브 계획. ⚠️ W0-3가 감사의 BLOCKED 주장 일부 반박(penalty 컬럼/meta 키 실존) — BLOCKED 주장은 실측 후 수용.
+- **W0 파운데이션 6/8 머지**: W0-1 FE와이어(#73, IntakeOutcome=성공토스트위조 근원차단) / W0-2 DTO(#75+#76) / W0-3 권한 단일소스(#74, PHP 전분기+기존버그 3종 교정) / W0-5 log read(#72, SUMMARY+ACTION 합집합 발견) / W0-6 맵뷰어(#78, 두 맵뷰어 불변식).
+- **운영**: 502 원인 실측(배포 경합→gateway-frontend Created 방치+nginx stale-DNS) → 즉시 복구 + deploy.yml concurrency 직렬화(#79). repo `allow_auto_merge=true` — **PR 생성 즉시 auto-merge가 표준**(사용자 지시). 묵력→무력 오타(#77).
+
+## 2. 사용자 지시 (이 세션에서 추가된 것)
+
+1. PR 올리면 자동 머지 (auto-merge 표준).
+2. W1 끝나면: LEDGER 웨이브별 기록 + prod 배포 + 실서버 검증까지.
+3. W1 후 빼섭 보급-동결 버그를 루프 바퀴로 마감 (Task #8).
+4. 페이지 패러티 = 내용+기능+배치+백엔드+게임데이터 **전부**. 컴포넌트 사용·구조 = 레거시 Vue 정본, 모더나이즈는 스타일만. 무장(장수) 생성(join) 풀 패러티 강조.
+5. 워크플로 도구로 오케스트레이션.
+
+## 3. 남은 것 (TaskList와 동기)
+
+- W0-4/7/8 마감 → W1 15페이지(워크플로가 자동 진행) → LEDGER → 배포검증 (Task #6,#7)
+- 빼섭 보급-동결 바퀴 (Task #8) — doNPC구출발령 빈 supplyCities, 상류 보급계산 발산, 로컬 1030 재현
+- gateway-api JwtTokenProviderTest flaky — 오늘 deploy 2회 실패 원인, 근본수정 필요
+- 로컬 스택: web 3종 최신, **백엔드 3종 구이미지**(빌드 OOM) — `docker compose up -d --build` 재시도 (게이트와 동시 실행 금지, OOM 재발)
+- nation-finance 감사 truncated 재감사(W1-O가 처리 예정) · battle-center 페이지 MISSING(백로그)
+- prod statistic INSERT 실증(182.1 도달 시) · 어드민 표면 QA · Tier4 잔여 명령 등 기존 백로그(세션6 §2 유효)
+
+## 4. 죽은 에이전트 회수 절차 (확립됨)
+
+1. 워크트리 확인: `git -C <wt> log --oneline origin/main..HEAD` + `git status --short`
+2. 미커밋 RED 테스트는 패치로 분리(`git diff > /tmp/x.patch && git checkout -- <f>`)
+3. 게이트 재검증(XML) → 회수 크리틱 아티팩트 작성("Verdict: cleared") → strict check → push → PR
+4. 잔여 단위는 백로그/후속 바퀴로 (W0-2→W0-2b 선례)
+
+## 5. 환경/접속 (변경분)
+
+- prod 멀티서버: 공유 스택 + s1(통일 서버)/spep 스택. 바운스: `docker compose -p opensamguk-{srv} -f ~/opensamguk/docker-compose.server.yml --env-file .env --env-file servers/{srv}.env up -d` (선행 docker pull). 502 시: Created 컨테이너 start + `nginx -s reload`.
+- 어드민 peppone / (로컬 메모리 참조). EC2 `ssh -i ~/.ssh/id_ed25519 ubuntu@3.37.232.176`.
+
+---
+
 # SESSION HANDOFF — 2026-06-08 (세션6: B1-B3 완결 + Wave1 계략 + constants.ts + agent-system)
 
 다음 세션은 이 문서부터. 핵심은 git log.
