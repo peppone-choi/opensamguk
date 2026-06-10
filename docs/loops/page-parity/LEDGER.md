@@ -4,7 +4,7 @@
 
 | 바퀴 | 가설 | 점수 전→후 | 채점자 | 판정 | 원인 한 줄 |
 |---|---|---|---|---|---|
-| 0 | (베이스라인) | 측정 중 | gate.sh backend XML (결정적) | — | main be9916d 기준 채점 진행 |
+| 0 | (베이스라인) | BE 405/405 suites (2925 tests) green + FE tsc×2 clean + web/game 42/42 | gate.sh backend XML + pnpm (결정적) | 기준선 | main c75d0f9 (=be9916d+루프파일), 2026-06-10 12:06 KST |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
