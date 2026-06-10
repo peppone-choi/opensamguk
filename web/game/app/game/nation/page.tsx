@@ -19,8 +19,6 @@ const INHERIT_BUFFS = [
     { key: 'warMagicTrialProbOppose', label: '상대 계략 확률 감소', desc: '상대 계략 시도 확률 -1% per level' },
 ];
 
-const INHERIT_COSTS = [0, 200, 600, 1200, 2000, 3000];
-
 // legacy func_converter.php newColor() 충실 포팅.
 const DARK_COLORS = new Set([
     '', '#330000', '#FF0000', '#800000', '#A0522D', '#FF6347', '#808000',
@@ -34,6 +32,9 @@ function newColor(color: string): string {
 export default function NationPage() {
     const [data, setData] = useState<MyNationDetailResponse | null>(null);
     const [myBuffs, setMyBuffs] = useState<Record<string, number>>({});
+    // 유산 버프 비용 — 정본 API(inheritActionCost.buff = PHP GameConstBase $inheritBuffPoints,
+    // v_inheritPoint.php 'buff' 직렬화)에서 소비. web 레이어 상수 사본 금지(D3-04).
+    const [buffCosts, setBuffCosts] = useState<number[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
@@ -49,6 +50,7 @@ export default function NationPage() {
             if (inheritRes?.currentInheritBuff) {
                 setMyBuffs(inheritRes.currentInheritBuff);
             }
+            setBuffCosts(inheritRes?.inheritActionCost?.buff ?? []);
             setError('');
         } catch {
             setError('데이터를 불러올 수 없습니다.');
@@ -232,7 +234,11 @@ export default function NationPage() {
                                 </div>
                                 <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap' }}>
                                     {[1, 2, 3, 4, 5].map(lvl => {
-                                        const cost = INHERIT_COSTS[lvl] - INHERIT_COSTS[currentLevel];
+                                        // 비용 = 누적 차액(BuyHiddenBuff: inheritBuffPoints[lvl] - [prevLevel]).
+                                        // API 배열 미수신 시 비용 표기를 생략(날조 금지 — 사본 폴백 없음).
+                                        const cost = buffCosts[lvl] != null && buffCosts[currentLevel] != null
+                                            ? buffCosts[lvl] - buffCosts[currentLevel]
+                                            : null;
                                         const disabled = currentLevel >= lvl;
                                         return (
                                             <button
@@ -247,7 +253,7 @@ export default function NationPage() {
                                                     color: disabled ? 'var(--text-muted)' : 'var(--gold)',
                                                 }}
                                             >
-                                                L{lvl} ({cost.toLocaleString()}P)
+                                                L{lvl}{cost != null ? ` (${cost.toLocaleString()}P)` : ''}
                                             </button>
                                         );
                                     })}

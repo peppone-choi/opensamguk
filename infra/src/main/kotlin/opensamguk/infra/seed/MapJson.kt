@@ -16,6 +16,17 @@ object MapJson {
 
     data class MapCityCoord(val id: Int, val name: String, val x: Double, val y: Double)
 
+    /**
+     * 클래스패스의 `map/<code>.json` 리소스를 읽어 디코드한다 — MapPreview/GetConst가 공유하는
+     * 단일 로더(리소스 read + 파싱 중복 금지). 리소스 부재 시 빈 MapData(0×0) — graceful, 날조 없음.
+     */
+    fun loadFromClasspath(mapCode: String): MapData {
+        val json = MapJson::class.java.classLoader.getResourceAsStream("map/$mapCode.json")
+            ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+            ?: return MapData(width = 0, height = 0, cities = emptyList())
+        return loadMap(json)
+    }
+
     fun loadMap(json: String): MapData {
         val root = MetaJson.decode(json)
         val width = (root["width"] as? Number)?.toInt() ?: 0

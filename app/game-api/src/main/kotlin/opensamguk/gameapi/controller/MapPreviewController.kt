@@ -145,13 +145,9 @@ class MapPreviewController(
     }
 
     /** Decode `map/<code>.json` (committed, on the classpath via `:infra`) → 표시 dims + id→좌표.
-     *  리소스가 없으면 빈 맵(0×0, 도시 없음) → gateway가 placeholder를 그린다. */
-    private fun loadMapData(mapCode: String): MapJson.MapData {
-        val json = javaClass.classLoader.getResourceAsStream("map/$mapCode.json")
-            ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
-            ?: return MapJson.MapData(width = 0, height = 0, cities = emptyList())
-        return MapJson.loadMap(json)
-    }
+     *  공유 로더 [MapJson.loadFromClasspath]에 위임(GetConst와 단일 소스). 리소스가 없으면
+     *  빈 맵(0×0, 도시 없음) → gateway가 placeholder를 그린다. */
+    private fun loadMapData(mapCode: String): MapJson.MapData = MapJson.loadFromClasspath(mapCode)
 
     companion object {
         private const val CACHE_TTL_MS = 600_000L // 10 minutes

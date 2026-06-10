@@ -112,6 +112,35 @@ object F4StateText {
     )
 
     /**
+     * GetConst 직렬화용 — 국가레벨 무관 기본 직책 맵(officerLevel → 한글명). 와이어 모양은 레거시
+     * 프론트 정본 `hwe/ts/utilGame/formatOfficerLevelText.ts`의 `OfficerLevelMapDefault`와 동일:
+     * nlevel=8 기본열(코드 812..805 = 군주/참모/제1장군/…/제3모사) + 공통 0..4(태수/군사/종사/일반/재야).
+     * 데이터 원천은 위 [OFFICER_LEVEL_TEXT] 단일 테이블(PHP func_converter.php:522-565) — 별도 사본 금지.
+     */
+    fun officerLevelTextDefault(): Map<Int, String> {
+        val out = linkedMapOf<Int, String>()
+        for (lv in 12 downTo 5) OFFICER_LEVEL_TEXT[800 + lv]?.let { out[lv] = it }
+        for (lv in 4 downTo 0) OFFICER_LEVEL_TEXT[lv]?.let { out[lv] = it }
+        return out
+    }
+
+    /**
+     * GetConst 직렬화용 — 국가레벨(7..0)별 수뇌(officerLevel 12..5) 직책 맵. 와이어 모양은
+     * `formatOfficerLevelText.ts`의 `OfficerLevelMapByNationLevel`과 동일. PHP 테이블에 없는 코드
+     * (예: 506)는 키 자체를 생략한다 — PHP는 '-'를 돌려주고(TS는 기본열 폴백) PHP가 이긴다.
+     * 데이터 원천은 [OFFICER_LEVEL_TEXT] 단일 테이블.
+     */
+    fun officerLevelTextByNationLevel(): Map<Int, Map<Int, String>> {
+        val out = linkedMapOf<Int, Map<Int, String>>()
+        for (nlevel in 7 downTo 0) {
+            val inner = linkedMapOf<Int, String>()
+            for (lv in 12 downTo 5) OFFICER_LEVEL_TEXT[nlevel * 100 + lv]?.let { inner[lv] = it }
+            if (inner.isNotEmpty()) out[nlevel] = inner
+        }
+        return out
+    }
+
+    /**
      * 사령부 명령 팔레트의 카테고리 → 명령 코드 목록. PHP `GameConst::$availableChiefCommand`
      * (GameConstBase.php:378-415) byte-for-byte. ChiefCenter `commandList`(=`getChiefCommandTable`)의
      * 정본 순서/카테고리 원천 — 컨트롤러가 각 코드를 CommandRegistry로 풀어 표시 메타를 만든다.

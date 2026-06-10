@@ -8,6 +8,8 @@ import opensamguk.gameapi.dto.CityConstMap
 import opensamguk.gameapi.dto.GameUnitConstItem
 import opensamguk.gameapi.dto.GetConstResponse
 import opensamguk.gameapi.dto.IActionItem
+import opensamguk.gameapi.read.F4StateText
+import opensamguk.infra.seed.MapJson
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -17,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController
  * W3 — `GetConst` 정적 상수 서비스(`GET /api/const`).
  *
  * PHP grand truth: `API/Global/GetConst.php`(NO_SESSION, **DB read 없음** — 파일 캐시 정적 API).
- * 이 컨트롤러도 DB/레포를 주입하지 않고 `:common`의 컴파일타임 상수만 직렬화한다. one-daemon-write
+ * 이 컨트롤러도 DB/레포를 주입하지 않고 `:common`의 컴파일타임 상수 + 커밋된 정적 리소스
+ * (`map/<code>.json` dims, `F4StateText` 직책 테이블)만 직렬화한다. one-daemon-write
  * 규칙·정적 read seam 모두 무관(write 경로 밖, 순수 상수 노출).
  *
  * 캐싱: PHP는 파일 캐시 + cacheKey를 쓰지만 이 번들은 빌드타임 상수라 사실상 불변이므로 별도 캐시
@@ -31,11 +34,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/const")
 class GetConstController {
 
-    /** 직책 라벨(구 GlobalMenuController.gameConst에서 이관). devsam getNationLevelText 서브셋. */
-    private val OFFICER_LEVEL_TEXT: Map<Int, String> = linkedMapOf(
-        0 to "재야", 1 to "일반", 2 to "종사", 3 to "군사", 4 to "태수",
-        5 to "참모", 6 to "장군", 7 to "총사령관", 11 to "군주대리", 12 to "군주",
-    )
+    /** 맵 표시 dims — 커밋된 `map/<GameConst.mapName>.json` 리소스에서 읽는다(MapPreviewController와
+     *  공유하는 [MapJson.loadFromClasspath] 단일 로더 — 컨트롤러 리터럴 금지). 정적 리소스라 1회 로드. */
+    private val mapData: MapJson.MapData by lazy { MapJson.loadFromClasspath(GameConst.mapName) }
 
     @GetMapping
     fun getConst(): ResponseEntity<GetConstResponse> = ResponseEntity.ok(build())
@@ -43,10 +44,13 @@ class GetConstController {
     private fun build(): GetConstResponse = GetConstResponse(
         // 구 /api/const 필드(FE 소비) — mapName/dims/maxTurn/officerLevelText.
         mapName = GameConst.mapName,
-        mapWidth = 1000,
-        mapHeight = 714,
+        mapWidth = mapData.width,
+        mapHeight = mapData.height,
         maxTurn = GameConst.maxTurn,
-        officerLevelText = OFFICER_LEVEL_TEXT,
+        // 직책 라벨 — 정본 F4StateText 단일 테이블(PHP func_converter.php:522-565 getOfficerLevelText)
+        // 직렬화. 와이어 모양은 hwe/ts/utilGame/formatOfficerLevelText.ts(기본열 + 국가레벨별 테이블).
+        officerLevelText = F4StateText.officerLevelTextDefault(),
+        officerLevelTextByNationLevel = F4StateText.officerLevelTextByNationLevel(),
         gameConst = gameConstBundle(),
         gameUnitConst = GameUnitConst.all().values.map { u ->
             GameUnitConstItem(
