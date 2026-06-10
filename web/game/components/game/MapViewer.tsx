@@ -2,23 +2,32 @@
 
 // MapViewer — 인게임 세계 지도(메인화면 §1.1 `.mapView` 중앙 영역).
 // 로비/로그인 맵(gateway `MapPreview.tsx`)과 "보이는 모양"을 동일하게 맞춘 정적 마커 맵이다.
-// 단 하나의 인터랙션만 둔다: 도시 마커 클릭 → 해당 도시 정보 페이지로 이동.
+//
+// W0-6 prop widen(PAGE_PARITY_AUDIT_2026-06-10.md §5) — 레거시 `hwe/ts/components/MapViewer.vue` 패러티:
+//   - mapData    : 외부 주입 시 self-fetch 생략(레거시 Vue 뷰어는 mapData가 required prop —
+//                  MapViewer.vue:241-244 — 이고 페이지가 주입: PageHistory.vue:23-33 /
+//                  PageCachedMap.vue:5-16). 주입 시 기본 클릭 비활성(두 페이지 모두 :disallow-click="true").
+//   - disallowClick : 클릭(도시 페이지 이동) 차단 — 레거시 MapViewer.vue:225 prop → 392-394 clickable=0.
+//                  명시값이 mapData 기본값을 이긴다(PageFront.vue:47 은 주입+클릭 허용).
+//   - currentCityId : 내(현재) 도시 blink 마커 — 레거시 is-my-city(MapViewer.vue:62,76) →
+//                  MapCityDetail.vue:34 `.my_city`(map.scss:231-262 outline 점멸).
+//   - live/showMe : 10분 캐시 preview 대신 GetMap 패러티 `/api/map`(neutralView:0)을 추가 조회해
+//                  소유/상태/연월/내도시를 라이브로 머지 — 레거시 PageFront.vue:516-529
+//                  GetMap({neutralView:0, showMe:1}). showMe → myCity 포함(func_map.php:78-95).
+//   - refreshKey : 값 변경 시 재조회 — 레거시 refreshCounter watch(PageFront.vue:516).
+//
+// P1-062: '도시명 표기'·'두번 탭 해 도시 이동' 클라 토글 — 레거시 MapViewer.vue:30-53 +
+// state/mapViewer.ts(localStorage 'sam.hideMapCityName'/'sam.toggleSingleTap') + map.scss:37-58.
 //
 // 비주얼 정본 = gateway `components/MapPreview.tsx` + `app/globals.css`(.map-preview*/.city-*).
-// 마커 DOM/CSS 구조를 MapPreview와 동일하게 맞춘다:
-//   city-base(40×30) → 오오라(소유국만) + city-img 컨테이너(성 cast / 상태 / 깃발+수도별 / 도시명).
-// 깃발은 city-img 안에서 상대 오프셋(right: flagRight / top: flagTop)으로 배치한다(MapPreview 패턴).
-//
-// 로비와 다르게 game-main은 줌/팬/안개(fog)/현재도시 blink 등 인게임 chrome을 모두 제거해
-// 로비와 픽셀 단위로 같은 정적 모습을 낸다. 데이터 소스는 그대로 game-api(`api.mapPreview()`).
-//
-// 클릭 인터랙션: 도시 마커는 키보드 접근 가능한 <button> — 클릭 시 `/game/city?id=<id>`로 이동한다.
+// 두 맵뷰어 불변식: MapPreview(web/gateway)와 데이터 소스만 다르고 기능·겉보기 동일 — 여기를 고치면
+// MapPreview도 함께 고친다(+ 양쪽 tsc).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { MAP_CDN } from '@/lib/constants';
-import type { MapPreviewResponse } from '@/lib/types';
+import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { tintFlag, FLAG_FRAMES } from '@/lib/flagTint';
 import cityRegionsData from '@/config/cityRegions.json';
 
@@ -81,28 +90,121 @@ function cdnMapCode(mc: string): string {
     return CDN_MAPS.has(mc) ? mc : 'che';
 }
 
-// season from month (3-5 spring / 6-8 summer / 9-11 fall / else winter) — gateway MapPreview와 동일.
-function seasonOf(month: number): string {
-    if (month >= 3 && month <= 5) return 'spring';
-    if (month >= 6 && month <= 8) return 'summer';
-    if (month >= 9 && month <= 11) return 'fall';
+// 계절 경계 — 레거시 MapViewer.vue:306-319 getMapSeasonClassName 패러티(P1-061):
+// month<=3 봄 / <=6 여름 / <=9 가을 / 나머지(10~12) 겨울. gateway MapPreview와 동일 공식.
+export function seasonOf(month: number): string {
+    if (month <= 3) return 'spring';
+    if (month <= 6) return 'summer';
+    if (month <= 9) return 'fall';
     return 'winter';
 }
 
-export default function MapViewer() {
+// 레거시 state/mapViewer.ts 패러티 — 토글 상태는 localStorage('yes'/'no')에 영속.
+const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
+const LS_SINGLE_TAP = 'sam.toggleSingleTap';
+
+// W0-6 prop surface — 모든 prop 은 optional(기존 호출부 `<MapViewer />` 무수정 컴파일).
+// gateway MapPreview 와 동일한 능력 표면을 유지한다(두 맵뷰어 불변식).
+export interface MapViewerProps {
+    /** 외부 주입 맵 데이터 — 주입 시 self-fetch 생략(레거시 PageHistory.vue:23-33 :map-data 주입). */
+    mapData?: MapPreviewResponse | null;
+    /** 클릭(도시 페이지 이동) 차단 — 레거시 MapViewer.vue:225/392-394. 기본값: mapData 주입 시 true. */
+    disallowClick?: boolean;
+    /** 내(현재) 도시 blink — 레거시 is-my-city → .my_city(map.scss:231-262). */
+    currentCityId?: number | null;
+    /** 라이브 모드 — GetMap 패러티 /api/map(neutralView:0)을 머지(레거시 PageFront.vue:516-529). */
+    live?: boolean;
+    /** GetMap showMe 인자(func_map.php:78-95 — 1이면 myCity 포함). live=true일 때만 사용. 기본 1. */
+    showMe?: 0 | 1;
+    /** 재조회 트리거 — 값이 바뀌면 다시 fetch(레거시 refreshCounter watch). */
+    refreshKey?: number;
+}
+
+// 라이브 머지 — preview(좌표/이름 베이스)에 /api/map 라이브 tuple 을 id 로 덮어쓴다.
+// cityList tuple = [city, level, state, nation, region, supply](func_map.php:144-148),
+// nationList tuple = [id, name, color, capital]. isCapital 은 레거시 mergeNationInfo
+// (MapViewer.vue:367-385 — 소유국 tuple 의 capital == city.id)와 동일 판정.
+function mergeLive(
+    preview: MapPreviewResponse,
+    wm: WorldMapResponse,
+): { data: MapPreviewResponse; myCity: number | null } {
+    const tupleById = new Map<number, number[]>();
+    wm.cityList.forEach((t) => tupleById.set(t[0], t));
+    const nationTupleById = new Map<number, (number | string)[]>();
+    wm.nationList.forEach((t) => nationTupleById.set(t[0] as number, t));
+
+    const cities = preview.cities.map((c) => {
+        const t = tupleById.get(c.id);
+        if (!t) return c; // 라이브에 없는 도시는 preview 그대로(좌표 없는 도시는 어차피 미렌더).
+        const [, level, state, nationId, , supply] = t;
+        return {
+            ...c,
+            level,
+            state,
+            nationId,
+            supply: supply !== 0,
+            isCapital: (nationTupleById.get(nationId)?.[3] ?? -1) === c.id,
+        };
+    });
+    const nations = wm.nationList.map((t) => ({
+        id: t[0] as number,
+        name: t[1] as string,
+        color: t[2] as string,
+    }));
+    return {
+        data: { ...preview, startYear: wm.startYear, year: wm.year, month: wm.month, cities, nations },
+        myCity: wm.myCity,
+    };
+}
+
+export default function MapViewer({
+    mapData,
+    disallowClick,
+    currentCityId,
+    live = false,
+    showMe = 1,
+    refreshKey = 0,
+}: MapViewerProps = {}) {
     const router = useRouter();
     const [data, setData] = useState<MapPreviewResponse | null>(null);
     const [failed, setFailed] = useState(false);
     const [hoverId, setHoverId] = useState<number | null>(null);
     const [cursor, setCursor] = useState({ x: 0, y: 0 });
+    // 라이브(showMe) 응답의 myCity — currentCityId prop 미지정 시 blink 대상.
+    const [liveMyCity, setLiveMyCity] = useState<number | null>(null);
+
+    // 클릭 게이트 — 명시 disallowClick 이 우선, 기본값은 "mapData 주입 시 비활성"(감사 P0-22 시멘틱:
+    // 레거시 주입 페이지 PageHistory/PageCachedMap 은 모두 disallow-click=true. PageFront 처럼
+    // 주입+클릭을 원하면 disallowClick={false}를 명시한다).
+    const clickEnabled = !(disallowClick ?? mapData != null);
 
     useEffect(() => {
+        // 외부 주입 — self-fetch 생략(레거시 Vue 뷰어 동작: 페이지가 fetch, 뷰어는 렌더만).
+        if (mapData != null) {
+            setData(mapData);
+            setFailed(false);
+            setLiveMyCity(null);
+            return;
+        }
         let on = true;
         setData(null);
         setFailed(false);
-        api.mapPreview()
-            .then((d) => {
-                if (on) setData(d);
+        const load = async (): Promise<{ data: MapPreviewResponse; myCity: number | null }> => {
+            const preview = await api.mapPreview();
+            if (!live) return { data: preview, myCity: null };
+            try {
+                // GetMap({neutralView:0, showMe}) 패러티 — 실패 시 preview 폴백(graceful).
+                const wm = await api.worldMap(0, showMe);
+                return mergeLive(preview, wm);
+            } catch {
+                return { data: preview, myCity: null };
+            }
+        };
+        load()
+            .then((r) => {
+                if (!on) return;
+                setData(r.data);
+                setLiveMyCity(r.myCity);
             })
             .catch(() => {
                 if (on) setFailed(true);
@@ -110,7 +212,34 @@ export default function MapViewer() {
         return () => {
             on = false;
         };
+    }, [mapData, live, showMe, refreshKey]);
+
+    // 내(현재) 도시 — 명시 prop > 라이브 myCity(레거시 drawableMap.myCity, MapViewer.vue:62,76).
+    const effectiveMyCity = currentCityId ?? liveMyCity;
+
+    // ── P1-062 클라 토글 2종(레거시 MapViewer.vue:30-53 + state/mapViewer.ts) ──
+    // SSR 안전: 초기값은 effect 에서 localStorage 로 복원한다.
+    const [hideCityName, setHideCityName] = useState(false);
+    const [singleTap, setSingleTap] = useState(false);
+    const [touchDevice, setTouchDevice] = useState(false);
+    useEffect(() => {
+        setHideCityName(window.localStorage.getItem(LS_HIDE_CITYNAME) === 'yes');
+        setSingleTap(window.localStorage.getItem(LS_SINGLE_TAP) === 'yes');
+        // 레거시 deviceType != 'mouseOnly'(detect-it) — 터치 가능 기기에서만 탭 토글 노출.
+        setTouchDevice(navigator.maxTouchPoints > 0 || window.matchMedia('(any-pointer: coarse)').matches);
     }, []);
+    function toggleHideCityName() {
+        setHideCityName((v) => {
+            window.localStorage.setItem(LS_HIDE_CITYNAME, v ? 'no' : 'yes');
+            return !v;
+        });
+    }
+    function toggleSingleTap() {
+        setSingleTap((v) => {
+            window.localStorage.setItem(LS_SINGLE_TAP, v ? 'no' : 'yes');
+            return !v;
+        });
+    }
 
     // nationId → {name,color} 룩업 (공백지 = id 0, nations[]에 없음).
     const nationById = useMemo(() => {
@@ -171,8 +300,24 @@ export default function MapViewer() {
         [data, hoverId],
     );
 
-    // 도시 마커 클릭 = 해당 도시 정보 페이지로 이동(유일한 인터랙션).
-    function goCity(cityId: number) {
+    // ── 터치 두번-탭 이동(레거시 MapViewer.vue:439-457 cityClick touchState 머신) ──
+    // 마우스: 즉시 이동. 터치 + singleTap off: 첫 탭=선택(툴팁), 같은 도시 둘째 탭=이동.
+    const lastPointerType = useRef<string>('mouse');
+    const touchArmedId = useRef<number | null>(null);
+
+    // 도시 마커 클릭 = 해당 도시 정보 페이지로 이동(클릭 게이트/터치 상태 머신 통과 시).
+    function onCityClick(cityId: number) {
+        if (!clickEnabled) return; // 레거시 clickable=0(MapViewer.vue:392-394)
+        if (lastPointerType.current === 'touch') {
+            if (touchArmedId.current !== null && touchArmedId.current !== cityId) {
+                touchArmedId.current = null; // 다른 도시 탭 → 선택 초기화(레거시 441-444)
+            }
+            if (touchArmedId.current === null) {
+                touchArmedId.current = cityId;
+                setHoverId(cityId);
+                if (!singleTap) return; // 두번-탭 모드: 첫 탭은 선택만(레거시 450-452)
+            }
+        }
         router.push(`/game/city?id=${cityId}`);
     }
 
@@ -201,7 +346,7 @@ export default function MapViewer() {
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
 
     return (
-        <section className="map-viewer" aria-label="세계 지도">
+        <section className={`map-viewer${hideCityName ? ' hide-cityname' : ''}`} aria-label="세계 지도">
             <div
                 ref={canvasRef}
                 className="map-viewer-canvas"
@@ -211,6 +356,10 @@ export default function MapViewer() {
                     if (r) setCursor({ x: e.clientX - r.left, y: e.clientY - r.top });
                 }}
                 onMouseLeave={() => setHoverId(null)}
+                onClick={() => {
+                    // 빈 영역 탭 → 터치 선택 해제(레거시 clickOutside, MapViewer.vue:459-466).
+                    touchArmedId.current = null;
+                }}
             >
                 {/* 맵 좌표계(data.width×height)를 캔버스 폭에 맞춘 정적 스케일 레이어(줌/팬 없음). */}
                 <div
@@ -233,21 +382,31 @@ export default function MapViewer() {
                         const imgTop = (BASE_H - sz.iconH) / 2;
                         const auraLeft = (BASE_W - sz.areaW) / 2;
                         const auraTop = (BASE_H - sz.areaH) / 2;
-                        const showState = (c.state ?? 0) > 0 && (c.state ?? 0) <= 5;
+                        // P0-36 FE측: 레거시 MapCityDetail.vue:44 는 state>0 이면 표시(상한 캡 없음 —
+                        // 재해/사건 코드 6~9 도 event<state>.gif 로 렌더). 옛 <=5 캡 제거.
+                        const showState = (c.state ?? 0) > 0;
                         const flagFrameUrl = owned ? flagUrls[col]?.[flagFrame] : undefined;
+                        const isMyCity = effectiveMyCity != null && effectiveMyCity === c.id;
 
                         return (
                             <button
                                 type="button"
                                 key={c.id}
-                                className={`city-base${unsupplied ? ' supply-off' : ''}`}
+                                className={`city-base${unsupplied ? ' supply-off' : ''}${clickEnabled ? '' : ' city-noclick'}`}
                                 style={{ left: baseLeft, top: baseTop, width: BASE_W, height: BASE_H }}
                                 aria-label={`${c.name} 레벨 ${c.level} ${nationNameOf(c.nationId)}`}
                                 onMouseEnter={() => setHoverId(c.id)}
                                 onMouseLeave={() => setHoverId((id) => (id === c.id ? null : id))}
                                 onFocus={() => setHoverId(c.id)}
                                 onBlur={() => setHoverId((id) => (id === c.id ? null : id))}
-                                onClick={() => goCity(c.id)}
+                                onPointerDown={(e) => {
+                                    // 직전 포인터 종류 기록 — click 핸들러에서 터치/마우스 분기(레거시 cursorType).
+                                    lastPointerType.current = e.pointerType || 'mouse';
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation(); // 캔버스 clickOutside 와 분리(레거시 silent)
+                                    onCityClick(c.id);
+                                }}
                             >
                                 {/* 1) 오오라(city_bg) — 소유국만(레거시 b<color>.png radial glow). 공백지=오오라 없음. city_img의 형제. */}
                                 {owned && (
@@ -263,9 +422,10 @@ export default function MapViewer() {
                                     />
                                 )}
 
-                                {/* 아이콘 컨테이너(city_img) — 깃발/상태/이름이 모두 이 안에서 아이콘 기준 위치(레거시 DOM 구조). */}
+                                {/* 아이콘 컨테이너(city_img) — 깃발/상태/이름이 모두 이 안에서 아이콘 기준 위치(레거시 DOM 구조).
+                                    내 도시는 my-city(레거시 .my_city — map.scss:231-262 outline 점멸 링). */}
                                 <div
-                                    className="city-img"
+                                    className={`city-img${isMyCity ? ' my-city' : ''}`}
                                     style={{ left: imgLeft, top: imgTop, width: sz.iconW, height: sz.iconH }}
                                 >
                                     {/* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */}
@@ -292,7 +452,8 @@ export default function MapViewer() {
                                         </span>
                                     )}
 
-                                    {/* 6) 도시명(city_detail_name) — 레거시 {left:70%;bottom:-10px} 아이콘 기준, 항상 표시. */}
+                                    {/* 6) 도시명(city_detail_name) — 레거시 {left:70%;bottom:-10px} 아이콘 기준.
+                                        hide-cityname(도시명 표기 토글) 시 CSS 로 숨김(레거시 map.scss:149-151). */}
                                     <span className="city-name">{c.name}</span>
                                 </div>
                             </button>
@@ -300,6 +461,34 @@ export default function MapViewer() {
                     })}
                 </div>
 
+                {/* 토글 버튼 스택(레거시 map_button_stack — MapViewer.vue:30-53, map.scss:37-58 우하단).
+                    라벨 뒤 " 끄기/켜기" 접미는 CSS ::after(레거시 동일). */}
+                <div className="map-btn-stack">
+                    <button
+                        type="button"
+                        className={`map-toggle-cityname${hideCityName ? ' active' : ''}`}
+                        aria-pressed={hideCityName}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleHideCityName();
+                        }}
+                    >
+                        도시명 표기
+                    </button>
+                    {touchDevice && (
+                        <button
+                            type="button"
+                            className={`map-toggle-singletap${singleTap ? ' active' : ''}`}
+                            aria-pressed={singleTap}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSingleTap();
+                            }}
+                        >
+                            두번 탭 해 도시 이동
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* hover 도시정보 툴팁(레거시 .city_tooltip) — 커서 추종. canvas(overflow:hidden) 밖 .map-viewer에 두어
