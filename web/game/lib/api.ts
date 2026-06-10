@@ -393,8 +393,10 @@ export const api = {
     // legacy SammoAPI.InheritAction.*(예: ResetStat{leadership,strength,intel,inheritBonusStat},
     // CheckOwner{destGeneralID})와 같은 args 키를 JSON 본문으로 싣는다. 무인자 액션은 args 생략.
     // 미배선 코드는 BE가 409 {error}로 거른다 — post()가 그 사유 문자열로 reject.
+    // 무인자 액션은 args 생략 → JSON.stringify(undefined)=undefined → 본문 없음 →
+    // BE @RequestBody(required=false) argJson=null로 깔끔히 바인딩(문자열 "null" 전송 금지).
     instantAction: (code: string, generalId: number, args?: unknown) =>
-        post<IntakeOutcome>(`/api/instant-action/${code}?generalId=${generalId}`, args ?? null),
+        post<IntakeOutcome>(`/api/instant-action/${code}?generalId=${generalId}`, args),
 
     // ── 예약 큐 조작 (W6e bulk/push/repeat × {general, nation}) ───────────────────────────────
     // PHP SammoAPI.Command.* / NationCommand.*(PushCommand·RepeatCommand·ReserveBulkCommand) 대응.
