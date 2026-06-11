@@ -123,7 +123,8 @@ interface BuyModalSpec {
         | 'BuyRandomUnique'
         | 'inheritResetTurnTime'
         | 'inheritResetSpecialWar'
-        | 'inheritSetNextSpecialWar';
+        | 'inheritSetNextSpecialWar'
+        | 'OpenUniqueAuction';
     label: string;
     extraArgs: Record<string, unknown>;
 }
@@ -139,6 +140,8 @@ export default function InheritPage() {
     const [buyModal, setBuyModal] = useState<BuyModalSpec | null>(null);
     // F4 C2 — the 다음 전투 특기 select pick (drives the inheritSetNextSpecialWar extraArgs).
     const [nextSpecialPick, setNextSpecialPick] = useState<string>('');
+    // P0-26 — selected unique item for OpenUniqueAuction.
+    const [selectedUnique, setSelectedUnique] = useState<string>('');
     // P0-24 — ResetStat form state (기본3+추가3).
     const [baseLeadership, setBaseLeadership] = useState(55);
     const [baseStrength, setBaseStrength] = useState(55);
@@ -319,7 +322,12 @@ export default function InheritPage() {
                     </div>
                     <div>
                         <div style={labelStyle}>유니크 경매</div>
-                        <select className="form-select" disabled style={{ width: '100%', marginTop: 'var(--space-xs)' }}>
+                        <select
+                            className="form-select"
+                            value={selectedUnique}
+                            onChange={(e) => setSelectedUnique(e.target.value)}
+                            style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                        >
                             <option value="">유니크 선택</option>
                             {Object.entries(availableUnique).map(([key, info]) => (
                                 <option key={key} value={key}>{info.title}</option>
@@ -329,6 +337,14 @@ export default function InheritPage() {
                             얻고자 하는 유니크 아이템으로 경매를 시작합니다. 24턴 동안 진행됩니다.<br />
                             <span style={costStyle}>입찰 포인트(최소): {(cost?.minSpecificUnique ?? 0).toLocaleString()}</span>
                         </div>
+                        <button
+                            type="button"
+                            disabled={!selectedUnique}
+                            style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                            onClick={() => openBuy({ command: 'OpenUniqueAuction', label: '유니크 경매 시작', extraArgs: { item: selectedUnique } })}
+                        >
+                            경매 시작
+                        </button>
                     </div>
                     <div>
                         <div style={labelStyle}>랜덤 턴 초기화</div>
