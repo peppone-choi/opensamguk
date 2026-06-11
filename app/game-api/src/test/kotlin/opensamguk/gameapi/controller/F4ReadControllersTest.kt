@@ -149,7 +149,6 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].nationName").value("위"))
             .andExpect(jsonPath("$[0].nationColor").value("#c62828"))
             .andExpect(jsonPath("$[0].cityName").value("허창"))
-            .andExpect(jsonPath("$[0].crew").value(1000))
             // 명성/계급은 레벨 버킷(raw exp/ded 아님). exp/ded 미지정 → 버킷 0.
             .andExpect(jsonPath("$[0].explevel").value(0))
             .andExpect(jsonPath("$[0].honorText").value("전무"))       // getHonor(0)

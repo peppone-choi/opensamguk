@@ -48,8 +48,7 @@ type SortKey =
     | 'strength'
     | 'intel'
     | 'explevel'
-    | 'dedlevel'
-    | 'crew';
+    | 'dedlevel';
 
 // 헤더 라벨 ↔ 정렬 키. null = 정렬 불가(없음). 레거시 헤더 순서/문자열 그대로.
 const COLUMNS: { label: string; key: SortKey; text?: boolean }[] = [
@@ -60,7 +59,6 @@ const COLUMNS: { label: string; key: SortKey; text?: boolean }[] = [
     { label: '지력', key: 'intel' },
     { label: '명성', key: 'explevel' },
     { label: '계급', key: 'dedlevel' },
-    { label: '병력', key: 'crew' },
 ];
 
 export default function GeneralsPage() {
@@ -240,7 +238,6 @@ export default function GeneralsPage() {
             <span>{g.dedLevelText}</span>
             <small style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>({formatNumber(g.bill)})</small>
         </span>,
-        formatNumber(g.crew),
     ]);
 
     return (

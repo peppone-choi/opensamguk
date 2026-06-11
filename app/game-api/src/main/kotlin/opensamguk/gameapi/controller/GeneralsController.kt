@@ -75,7 +75,6 @@ class GeneralsController(
                     dedlevel = dedlevel,
                     dedLevelText = getDedLevelText(dedlevel),
                     bill = getBillByLevel(dedlevel),
-                    crew = g.crew,
                     cityName = if (g.cityId == 0) "" else (cityName[g.cityId] ?: ""),
                     // ── a_genList 15컬럼 보강(C3①). raw 코드 → 한글 해석은 이미 이식된 헬퍼만 재사용(날조 아님). ──
                     picture = g.picture,

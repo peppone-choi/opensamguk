@@ -47,7 +47,6 @@ data class PublicGeneral(
     val dedLevelText: String,
     /** 봉록 = getBillByLevel(dedlevel). 계급 컬럼 부가 표시("({bill})"). */
     val bill: Int,
-    val crew: Int,
     val cityName: String,
 
     // ── a_genList(장수일람, fid 30) 15컬럼 보강(C3①) ────────────────────────────────────────────────
