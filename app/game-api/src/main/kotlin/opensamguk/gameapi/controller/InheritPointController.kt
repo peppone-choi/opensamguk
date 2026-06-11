@@ -12,6 +12,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.InheritanceLogReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.logic.inheritance.BuyHiddenBuffAction
+import opensamguk.logic.inheritance.InheritCatalog
 import opensamguk.logic.inheritance.InheritanceKey
 import opensamguk.logic.inheritance.InheritanceKey.Companion.keyName
 import org.springframework.data.domain.PageRequest
@@ -120,8 +121,9 @@ class InheritPointController(
                 resetTurnTimeLevel = resetTurnTimeLevel,
                 resetSpecialWarLevel = resetSpecialWarLevel,
                 inheritActionCost = cost,
-                availableSpecialWar = emptyMap(),
-                availableUnique = emptyMap(),
+                // P0-23 — v_inheritPoint.php:41-63 특기/유니크 카탈로그(InheritCatalog, PHP 실행 캡처 byte-exact).
+                availableSpecialWar = InheritCatalog.availableSpecialWar(),
+                availableUnique = InheritCatalog.availableUnique(),
                 lastInheritPointLogs = logs,
                 availableTargetGeneral = availableTargetGeneral,
                 currentStat = InheritStat(

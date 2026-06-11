@@ -656,6 +656,13 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.currentStat.statMin").value(15))
             .andExpect(jsonPath("$.currentStat.statMax").value(80))
             .andExpect(jsonPath("$.lastInheritPointLogs.length()").value(0))
+            // P0-23 — InheritCatalog 배선(v_inheritPoint.php:41-63): 더 이상 emptyMap 아님.
+            .andExpect(jsonPath("$.availableSpecialWar.length()").value(20))
+            .andExpect(jsonPath("$.availableUnique.length()").value(100))
+            // ActionSpecialWar/che_귀병.php:12 / BaseStatItem.php:30(적토마 +15)
+            .andExpect(jsonPath("$.availableSpecialWar.che_귀병.title").value("귀병"))
+            .andExpect(jsonPath("$.availableUnique.che_명마_15_적토마.title").value("적토마(+15)"))
+            .andExpect(jsonPath("$.availableUnique.che_명마_15_적토마.rawName").value("적토마"))
     }
 
     @Test
