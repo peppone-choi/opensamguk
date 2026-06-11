@@ -54,6 +54,20 @@ interface BettingRepository : JpaRepository<NgBettingEntity, Int> {
     ): List<BettingTypeAggregate>
 
     /**
+     * P0-07 — bet() 누적 한도 검사용 합계. PHP `Betting.php:135`:
+     * `SELECT sum(amount) FROM ng_betting WHERE betting_id = %i AND user_id = %i`.
+     * 행이 없으면 0 (PHP `?? 0`).
+     */
+    @Query(
+        "select coalesce(sum(b.amount), 0) from NgBettingEntity b " +
+            "where b.bettingId = :bettingId and b.userId = :userId",
+    )
+    fun sumAmountByBettingIdAndUserId(
+        @Param("bettingId") bettingId: Int,
+        @Param("userId") userId: Int,
+    ): Long
+
+    /**
      * D4 — 전체 베팅별 totalAmount 집계. PHP `GetBettingList.php`의
      * `SELECT betting_id, sum(amount) FROM ng_betting GROUP BY betting_id`.
      */

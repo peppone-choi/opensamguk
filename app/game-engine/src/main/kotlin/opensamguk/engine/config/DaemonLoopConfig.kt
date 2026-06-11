@@ -150,6 +150,9 @@ class DaemonLoopConfig {
         votePollRepository: VotePollRepository,
         diplomacyLetterRepository: DiplomacyLetterRepository,
         contactReader: opensamguk.infra.read.ContactReader,
+        gameKvRepository: opensamguk.infra.read.GameKvRepository,
+        bettingRepository: opensamguk.infra.read.BettingRepository,
+        inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
     ): TurnRunService {
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
@@ -309,6 +312,9 @@ class DaemonLoopConfig {
             votePollRepository = votePollRepository,
             diplomacyLetterRepository = diplomacyLetterRepository,
             contactReader = contactReader,
+            gameKvRepository = gameKvRepository,
+            bettingRepository = bettingRepository,
+            inheritanceRepository = inheritanceRepository,
         )
     }
 }

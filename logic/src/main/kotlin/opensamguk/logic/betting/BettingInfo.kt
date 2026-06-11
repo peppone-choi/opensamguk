@@ -51,6 +51,51 @@ data class BettingInfo(
     companion object {
         /** KV 스토리지에서 사용하는 키 접두사 */
         const val KV_KEY_PREFIX = "betting:"
+
+        /**
+         * game_kv(table='betting') value 맵 → [BettingInfo] — PHP `BettingInfo::fromArray`
+         * (DTO/BettingInfo.php:13-28) 동형 디코드. logic 모듈은 serialization 컴파일러 플러그인을
+         * 적용하지 않으므로(런타임 라이브러리만) `jsonDecode` 맵 경유가 정본 디코드 경로다.
+         * candidates 키 순서는 입력 맵(LinkedHashMap) 삽입 순서를 보존한다.
+         */
+        fun fromKvMap(map: Map<String, Any?>): BettingInfo? {
+            // PHP fromArray(LDTO)는 필수 필드 결손 시 실패한다(DTO/BettingInfo.php:13-28) —
+            // 관용 기본값으로 selectCnt=1/open-forever 베팅을 발명하지 않는다(마스터-부재 취급).
+            val id = (map["id"] as? Number)?.toInt() ?: return null
+            val type = map["type"] as? String ?: return null
+            val name = map["name"] as? String ?: return null
+            val finished = map["finished"] as? Boolean ?: return null
+            val selectCnt = (map["selectCnt"] as? Number)?.toInt() ?: return null
+            val reqInheritancePoint = map["reqInheritancePoint"] as? Boolean ?: return null
+            val openYearMonth = (map["openYearMonth"] as? Number)?.toInt() ?: return null
+            val closeYearMonth = (map["closeYearMonth"] as? Number)?.toInt() ?: return null
+            val rawCandidates = map["candidates"] as? Map<*, *> ?: return null
+            val candidates = LinkedHashMap<Int, SelectItem>()
+            for ((k, v) in rawCandidates) {
+                val key = (k as? String)?.toIntOrNull() ?: (k as? Number)?.toInt() ?: continue
+                val c = v as? Map<*, *> ?: continue
+                @Suppress("UNCHECKED_CAST")
+                candidates[key] = SelectItem(
+                    title = c["title"] as? String ?: "",
+                    info = c["info"] as? String,
+                    isHtml = c["isHtml"] as? Boolean,
+                    aux = c["aux"] as? Map<String, Any?>,
+                )
+            }
+            return BettingInfo(
+                id = id,
+                type = type,
+                name = name,
+                finished = finished,
+                selectCnt = selectCnt,
+                isExclusive = map["isExclusive"] as? Boolean,
+                reqInheritancePoint = reqInheritancePoint,
+                openYearMonth = openYearMonth,
+                closeYearMonth = closeYearMonth,
+                candidates = candidates,
+                winner = (map["winner"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() },
+            )
+        }
     }
 }
 

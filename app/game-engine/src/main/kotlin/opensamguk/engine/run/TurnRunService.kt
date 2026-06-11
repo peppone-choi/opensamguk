@@ -79,6 +79,12 @@ open class TurnRunService(
     private val diplomacyLetterRepository: DiplomacyLetterRepository? = null,
     /** 연락처/메시지 조회용 JDBC read seam (W6a 메시지 — DeleteMessage getMessageByID 게이트). */
     private val contactReader: opensamguk.infra.read.ContactReader? = null,
+    /** game_kv read seam (P0-07 베팅 마스터 — PlaceBet 검증의 BettingInfo 조회). */
+    private val gameKvRepository: opensamguk.infra.read.GameKvRepository? = null,
+    /** ng_betting read seam (P0-07 — user별 누적 베팅 합, PHP Betting.php:135). */
+    private val bettingRepository: opensamguk.infra.read.BettingRepository? = null,
+    /** inheritance KV read seam (P0-07 — `inheritance_{owner}` previous[0], PHP Betting.php:133,142). */
+    private val inheritanceRepository: opensamguk.infra.read.InheritanceRepository? = null,
 ) {
 
     /**
@@ -96,6 +102,10 @@ open class TurnRunService(
             diplomacyLetterRepository = diplomacyLetterRepository,
             // contactReader는 옵셔널 — null이면 MessageHandler가 stub('메시지가 없습니다')로 동작한다(삭제 게이트만 영향).
             contactReader = contactReader,
+            // P0-07 베팅 read seam 3종 — null이면 PlaceBetHandler가 stub('해당 베팅이 없습니다')로 동작한다.
+            gameKvRepository = gameKvRepository,
+            bettingRepository = bettingRepository,
+            inheritanceRepository = inheritanceRepository,
         )
     } else {
         null

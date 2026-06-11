@@ -137,7 +137,7 @@ class ChangeRecorder(
     /** Auction channel (T0.7) — ng_auction_bid INSERTs (INSERT-only; outbid rows NEVER deleted). */
     private val auctionBidInserts = mutableListOf<AuctionBidInsert>()
 
-    /** Betting channel (P6) — ng_betting INSERTs (INSERT-only). */
+    /** Betting channel (P6) — ng_betting insertUpdate 의도(flush가 (general,betting,type) UPSERT amount +=). */
     private val bettingInserts = mutableListOf<BettingInsert>()
 
     /** 게시판 채널 (F4 C2 슬라이스 C) — board_post INSERT (회의실/기밀실 글, INSERT 전용). */
@@ -503,7 +503,7 @@ class ChangeRecorder(
         auctionBidInserts.add(AuctionBidInsert(columns))
     }
 
-    /** Record an `ng_betting` INSERT (P6 betting intake). INSERT-only. */
+    /** Record an `ng_betting` insertUpdate 의도 (P6 betting intake) — 재베팅은 flush UPSERT가 amount +=. */
     fun recordBettingInsert(columns: Map<String, Any?>) {
         bettingInserts.add(BettingInsert(columns))
     }
@@ -608,17 +608,21 @@ class ChangeRecorder(
         nationSnapshots.clear()
     }
 
-    /** Record an inheritance KV write (T0.8) — targets `game_kv` with namespace `inheritance_{ownerID}`. */
+    /**
+     * Record an inheritance KV write (T0.8) — `game_kv` 행의 `"table"` 판별자는 PHP storage 이름
+     * 'inheritance'다(물리 테이블명 'game_kv' 아님 — reader 전부가 'inheritance'로 조회:
+     * InheritanceRepository / InheritPointController / BettingController. V15가 과거 오기록 백필).
+     */
     fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {
         inheritanceKvWrites.add(
-            KvWrite("game_kv", "inheritance_$ownerID", key, listOf(value, aux)),
+            KvWrite("inheritance", "inheritance_$ownerID", key, listOf(value, aux)),
         )
     }
 
     /** Record an inheritance KV write (T0.8) — same flush shape as [recordInheritancePointSet]. */
     fun recordInheritancePointIncrease(ownerID: Int, key: String, value: Double, aux: Any?) {
         inheritanceKvWrites.add(
-            KvWrite("game_kv", "inheritance_$ownerID", key, listOf(value, aux)),
+            KvWrite("inheritance", "inheritance_$ownerID", key, listOf(value, aux)),
         )
     }
 

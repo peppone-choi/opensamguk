@@ -24,6 +24,9 @@
 | 17 | P0-02 개인 예약 명령 당기기/미루기/반복 버튼 추가 — `api.commandQueue.push`/`repeat` 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `PartialReservedCommand`에 numeric input + 적용 버튼 2종, `onToast`로 성공/실패 알림, 예약 후 `refreshKey` 증가. |
 | 18 | MailboxController `mailbox`/`unread` diplomacy 마스킹 적용 — `secretPermission` + `applyDiplomacyMask` | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `mailbox()`/`unread()`에 `secretPermission`+`applyDiplomacyMask` 추가, 테스트 `generals.findAll()` stub 보강 |
 | 19 | (삭제 바퀴) P0-14 city 守·수비○ 위조 표시 '-' 마스킹 — defence_train 원천 배선 전 fabrication 제거 + `formatDefenceTrain` import 제거 | BE diff-0(409 유지) + FE tsc clean + web/game 65/65 + 갭 1 닫힘(p) | fresh 서브에이전트(grader-w19) — legacy b_currentCity.php:304-313,434 대조 + tsc/test, VERDICT PASS | 채택 | 빼기 주기 이행(14~18 더하기 연속). 근본(defence_train read-chain 배선)은 백로그 유지 |
+| 20 | P0-07 PlaceBetHandler ← PHP `Betting::bet()` 전량 포팅 — 마스터/finished/마감/미시작/선택수/purify(print_r)/누적1000(pending 합산)/유산·금 분기 + deny 문자열 byte-동형 + min-10(valitron 추적 "Amount 은(는) 10 이상이어야 합니다.") + flush UPSERT(amount +=) + 비패러티 로그 제거 + userId typed 채널/loader 적재 + inheritance KV 판별자 'game_kv'→'inheritance' 근본수정(V15 백필) | 409→411 suites green (logic 2109·engine 331·infra 87·api 297·common 192) + 갭 1 닫힘(신규 PlaceBetHandlerTest 18 + BettingFlushIT) | fresh 서브에이전트(grader-w20, parity-reviewer) — 3라운드 적대 채점 FAIL→FAIL→PASS, vendor valitron 소스 byte-추적 포함 | 채택 | 채점이 잡은 추가 근본버그 2건 동반 수정: ① 음수 amount 금 채굴 경로 ② 데몬 inheritance KV 쓰기 전부 고아행(reader와 "table" 판별자 불일치) |
+| 15-정정 | (재채점 판정) 바퀴 15 P0-26은 NOT-FIXED — FE가 미등록 코드 `OpenUniqueAuction`(정답 `auctionOpenUnique`) + 잘못된 인자 `{item}`(정답 `{itemId,amount}`) 전송 → CommandRegistry else→RestAction Allow→휴식 턴 잠복 위조 | — | fresh 재채점 워크플로(wf_89ed4731, audit-delta 에이전트) | 정정(재오픈) | 바퀴 15 채점이 tsc+게이트만 보고 intake 코드 매칭을 검증 안 함. 바퀴 24로 재오픈 |
+| 18-정정 | (재채점 판정) 바퀴 18이 P0 회귀 유발 — `applyDiplomacyMask` type 미검사로 일반 개인/국가 서신까지 위조 마스킹(legacy GetRecentMessage.php:125-139는 diplomacy 한정) + `GET /api/messages/{id}` 단건 마스킹 0(누출 잔존) | — | fresh 재채점 워크플로(wf_89ed4731, audit-delta 에이전트) | 정정(재오픈) | 바퀴 18 테스트가 마스킹 적용만 단언, 비외교 서신 통과를 단언 안 함. 바퀴 22로 재오픈 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
@@ -37,6 +40,13 @@
 - secretPermission 단일소스화 (GeneralLogController ↔ DiplomacyController 중복) + penalty/ambassador/auditor/secretlimit 분기 (schema BLOCKED)
 - 페이지 감사 P0 54건 — PAGE_PARITY_AUDIT_2026-06-10.md (W0 파운데이션 8종 → W1 A~O 웨이브)
 - P0-14 근본: GeneralReadEntity `defence_train` read-chain 배선(스키마+flush) → 守/수비○ 마스킹 해제 + formatDefenceTrain 복원
+- 재채점 2026-06-12 (docs/superpowers/gap/regrade-2026-06-12/, critic 10-바퀴): W-1 betting/auction 비패러티 로그 log_scope enum 턴동결(바퀴23) · W-3 mailbox over-mask 회귀(바퀴22) · W-4 경매 환불 자원복제 · W-6 NF income null 크래시 · W-7 NF 권한 게이트 · W-8 nation_env read 채널(setBlockWar 100% deny) · W-9 P0-26 정정(바퀴24) · W-10 che_선전포고 위조 로그 골든
+- OpenNationBetting 미스포트 (logic/event/OpenNationBetting.kt:43,71,73) — reqInheritancePoint false 오기록(PHP true), openYearMonth -1 누락, closeYearMonth +120 날조, candidates 인덱스 키(PHP nation id). 바퀴20 채점자 발견 — bet() 유산 분기를 죽은 코드로 만들던 마스크
+- previousPointReader dead-default 3중복 (PlaceBetHandler/InheritResetHandler/dispatcher 폴백 — world meta `inheritancePrevious`는 main 코드 어디서도 미적재) — 공유 seam으로 수렴
+- V15 백필 pre-seed IT — 구형('game_kv') 행 + 'inheritance' 쌍둥이 시드 후 migrate해 머지 방향 고정(바퀴20 채점 P2)
+- che_견문/che_인재탐색 resolve() 빈 no-op STUB인데 PARITY_LEDGER DONE 분류 — silent no-op 턴 소진 (재채점 command-registry)
+- GameConst availableChiefCommand '연구' 카테고리 — PHP ReserveCommand.php:47 거부, Kotlin 허용 divergence (재채점 command-registry)
+- ResetStat instant-action intakeCodes 미등재 → FE 호출 무조건 409 (재채점 api-surface — 바퀴 8 FE 폼의 BE 짝)
 
 ## 승인 대기
 

@@ -82,6 +82,10 @@ class GameKvFlushIT {
                     // int-ns nation_env via the same channel.
                     KvWrite.nationEnv(namespace = 5, key = "nationNotice", value = mapOf("text" to "공지")),
                     KvWrite.nationEnv(namespace = 5, key = "stale", value = null),
+                    // V15/P0-07 — inheritance 채널: "table" 판별자 = storage 이름 'inheritance'
+                    // (ChangeRecorder.recordInheritancePointSet 출력 shape). reader
+                    // (InheritanceRepository: "table"='inheritance')와 같은 행에 착지해야 한다.
+                    KvWrite("inheritance", "inheritance_77", "previous", listOf(500.0, null)),
                 ),
             ),
         )
@@ -127,6 +131,25 @@ class GameKvFlushIT {
                 "SELECT count(*) FROM nation_env WHERE namespace=5 AND key='stale'",
                 MapSqlParameterSource(), Int::class.java,
             ),
+        )
+        // inheritance 채널 라운드트립 — reader(InheritanceRepository)가 조회하는 정확한
+        // ("table"='inheritance', namespace, key) 좌표에 착지했는지("table"='game_kv' 오기록이면 0행).
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                """SELECT count(*) FROM game_kv WHERE "table"='inheritance'
+                   AND namespace='inheritance_77' AND key='previous'""".trimIndent(),
+                MapSqlParameterSource(), Int::class.java,
+            ),
+            "데몬 inheritance KV 쓰기는 'inheritance' 판별자로 착지해야 reader와 만난다 (V15)",
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """SELECT count(*) FROM game_kv WHERE "table"='game_kv'""",
+                MapSqlParameterSource(), Int::class.java,
+            ),
+            "물리 테이블명 'game_kv'가 판별자로 오기록되면 안 된다",
         )
     }
 }

@@ -23,11 +23,17 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.ContactReader
 import opensamguk.infra.read.DiplomacyLetterRepository
+import opensamguk.infra.read.GameKvRepository
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.infra.read.VotePollRepository
+import opensamguk.infra.read.InheritanceRepository
+import opensamguk.logic.betting.BettingInfo
+import opensamguk.logic.util.jsonDecode
+import opensamguk.logic.util.jsonDecodeAny
 
 /**
  * Routes drained [TurnDaemonCommand]s to their engine handlers.
@@ -78,10 +84,54 @@ class TurnDaemonCommandDispatcher(
      * W6a 메시지 연락처/장수 read seam. null이면 [MessageHandler]가 stub-empty(연락처 없음)로 동작한다.
      */
     contactReader: ContactReader? = null,
+    /**
+     * P0-07 베팅 마스터 read seam — game_kv(table='betting'). null이면 [PlaceBetHandler]가
+     * stub('해당 베팅이 없습니다')로 동작한다(다른 read-repo 주입 패턴과 동일).
+     */
+    gameKvRepository: GameKvRepository? = null,
+    /**
+     * P0-07 ng_betting 누적 합 read seam — PHP Betting.php:135의 user별 sum. null이면 누적 0 가정.
+     */
+    bettingRepository: BettingRepository? = null,
+    /**
+     * P0-07 유산포인트 read seam — `inheritance_{userID}` `previous[0]`(PHP Betting.php:133,142).
+     * null이면 PlaceBetHandler 기본(world meta `inheritancePrevious` 스냅샷)으로 폴백.
+     */
+    inheritanceRepository: InheritanceRepository? = null,
 ) {
     private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
-    private val placeBet = PlaceBetHandler(world, recorder)
+
+    private val placeBet = PlaceBetHandler(
+        world, recorder,
+        // PHP `bettingStor->getValue("id_{n}")`(Betting.php:42-44) — BettingController.loadRawBettingInfo와
+        // 동일하게 table='betting' 전 행을 맵 디코드해 id 일치 행을 찾는다(key 레이아웃 비의존).
+        bettingInfoReader = gameKvRepository?.let { repo ->
+            { bettingId: Int ->
+                repo.findByTable("betting").firstNotNullOfOrNull { row ->
+                    runCatching { jsonDecode(row.value) }.getOrNull()
+                        ?.let { BettingInfo.fromKvMap(it) }
+                        ?.takeIf { it.id == bettingId }
+                }
+            }
+        } ?: { null },
+        prevBetAmountDbReader = bettingRepository?.let { repo ->
+            { bettingId: Int, userId: Int -> repo.sumAmountByBettingIdAndUserId(bettingId, userId).toInt() }
+        } ?: { _, _ -> 0 },
+        // PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
+        // (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
+        previousPointReader = inheritanceRepository?.let { repo ->
+            { ownerId: Int ->
+                repo.findByTableAndNamespaceAndKey("inheritance", "inheritance_$ownerId", "previous")
+                    ?.let { row ->
+                        ((runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*>)
+                            ?.getOrNull(0) as? Number)?.toDouble()
+                    } ?: 0.0
+            }
+        } ?: { ownerId ->
+            ((world.getState().meta["inheritancePrevious"] as? Map<*, *>)?.get(ownerId) as? Number)?.toDouble() ?: 0.0
+        },
+    )
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)

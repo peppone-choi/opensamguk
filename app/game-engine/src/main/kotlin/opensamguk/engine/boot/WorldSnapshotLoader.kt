@@ -147,7 +147,7 @@ class WorldSnapshotLoader(
         SELECT id, name, nation_id, city_id, troop_id, npc_state,
                leadership, strength, intel, experience, dedication, officer_level,
                injury, gold, rice, crew, crew_type_id, train, atmos, age,
-               turn_time, recent_war_time, meta
+               turn_time, recent_war_time, user_id, meta
           FROM general ORDER BY id ASC
         """.trimIndent(),
     ) { rs, _ ->
@@ -176,6 +176,8 @@ class WorldSnapshotLoader(
             npcState = rs.getInt("npc_state"),
             turnTime = rs.getObject("turn_time", OffsetDateTime::class.java).toInstant(),
             recentWarTime = rs.getObject("recent_war_time", OffsetDateTime::class.java)?.toInstant(),
+            // user_id(소유 유저) — 미적재 시 rehydrate 후 PlaceBet 누적한도/유산 분기가 무음 발산(P0-07 채점 F1).
+            userId = rs.getString("user_id"),
             meta = MetaJson.decode(rs.getString("meta")),
         )
     }

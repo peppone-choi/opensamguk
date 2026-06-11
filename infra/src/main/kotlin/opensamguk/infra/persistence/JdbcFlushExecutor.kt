@@ -886,7 +886,12 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("ng_auction_bid", FlushVerb.CREATE_MANY, rows.size))
     }
 
-    /** INSERT the `ng_betting` rows (P6 betting intake, INSERT-only). */
+    /**
+     * UPSERT the `ng_betting` rows (P6 betting intake). PHP `Betting::bet()`은 `insertUpdate`
+     * (Betting.php:162-166) — 같은 (general,betting,type) 재베팅이면 `amount += %i`만 갱신한다.
+     * V7 UNIQUE(general_id,betting_id,betting_type) 위에서 plain INSERT는 재베팅 시 제약 위반으로
+     * flush가 크래시(턴 동결 계열)하므로 ON CONFLICT … amount += 가 패러티이자 안전 경로다.
+     */
     private fun bettingInsertMany(rows: List<BettingInsertRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
@@ -901,6 +906,8 @@ class JdbcFlushExecutor(
             """
             INSERT INTO ng_betting (betting_id, general_id, user_id, betting_type, amount)
             VALUES (:betting_id, :general_id, :user_id, :betting_type, :amount)
+            ON CONFLICT (general_id, betting_id, betting_type)
+            DO UPDATE SET amount = ng_betting.amount + EXCLUDED.amount
             """.trimIndent(),
             batch,
         )

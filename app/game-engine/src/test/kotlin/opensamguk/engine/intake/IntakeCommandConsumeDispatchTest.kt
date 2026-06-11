@@ -71,17 +71,51 @@ class IntakeCommandConsumeDispatchTest {
         }
     } as T
 
-    private fun dispatcher(world: InMemoryTurnWorld, recorder: ChangeRecorder) = TurnDaemonCommandDispatcher(
+    private fun dispatcher(
+        world: InMemoryTurnWorld,
+        recorder: ChangeRecorder,
+        gameKv: opensamguk.infra.read.GameKvRepository? = null,
+    ) = TurnDaemonCommandDispatcher(
         world, recorder,
         noopRepo<opensamguk.infra.read.AuctionRepository>(),
         noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
         noopRepo<opensamguk.infra.read.BoardPostRepository>(),
+        gameKvRepository = gameKv,
     )
+
+    /** game_kv(table='betting') 베팅 마스터를 공급하는 fake — P0-07 이후 PlaceBet은 마스터 검증이 선행된다. */
+    private fun gameKvRepoWith(rows: List<opensamguk.infra.entity.GameKvEntity>): opensamguk.infra.read.GameKvRepository =
+        java.lang.reflect.Proxy.newProxyInstance(
+            opensamguk.infra.read.GameKvRepository::class.java.classLoader,
+            arrayOf(opensamguk.infra.read.GameKvRepository::class.java),
+        ) { _, method, args ->
+            when (method.name) {
+                "findByTable" -> rows.filter { it.table == args!![0] }
+                else -> when (method.returnType) {
+                    java.util.List::class.java -> emptyList<Any>()
+                    java.lang.Boolean.TYPE -> false
+                    else -> null
+                }
+            }
+        } as opensamguk.infra.read.GameKvRepository
 
     @Test
     fun `placeBet payload decodes and dispatches to PlaceBetHandler producing the ng_betting delta`() {
         val world = world()
         val recorder = ChangeRecorder()
+
+        // game_kv 베팅 마스터 — P0-07 이후 bet()의 마스터/마감/후보 검증이 선행된다(Betting.php:100-131).
+        // state(200,3) → ym 2402: open 2400 ≤ ym < close 2500, 후보 {1,3}, selectCnt 2.
+        val gameKv = gameKvRepoWith(
+            listOf(
+                opensamguk.infra.entity.GameKvEntity(
+                    table = "betting", namespace = "betting", key = "id_7",
+                    value = """{"id":7,"type":"bettingNation","name":"천통 베팅","finished":false,""" +
+                        """"selectCnt":2,"reqInheritancePoint":false,"openYearMonth":2400,""" +
+                        """"closeYearMonth":2500,"candidates":{"1":{"title":"위"},"3":{"title":"오"}}}""",
+                ),
+            ),
+        )
 
         // the wire command the publisher (CommandWireMapper) would build + XADD.
         val decoded = decodeAsConsumer(
@@ -90,7 +124,7 @@ class IntakeCommandConsumeDispatchTest {
             ),
         )
 
-        val result = dispatcher(world, recorder).dispatch(decoded)
+        val result = dispatcher(world, recorder, gameKv = gameKv).dispatch(decoded)
 
         // handler ran → ok result + gold deducted + ng_betting INSERT recorded.
         val bet = result as PlaceBetOk

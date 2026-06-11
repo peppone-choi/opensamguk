@@ -78,7 +78,8 @@ data class AuctionUpsert(val id: Int?, val allocatedId: Int?, val columns: Map<S
 data class AuctionBidInsert(val columns: Map<String, Any?>)
 
 /**
- * An `ng_betting` INSERT intent (P6 betting intake). INSERT-only — bet rows are never updated.
+ * An `ng_betting` insertUpdate intent (P6 betting intake). PHP `Betting::bet()` insertUpdate
+ * (Betting.php:162-166) — flush UPSERTs on (general_id,betting_id,betting_type), re-bet = amount +=.
  * `columns` mirrors `NgBettingEntity` fields: betting_id, general_id, user_id, betting_type, amount.
  */
 data class BettingInsert(val columns: Map<String, Any?>)
