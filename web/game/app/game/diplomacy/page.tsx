@@ -74,6 +74,7 @@ export default function DiplomacyPage() {
     const [destNationId, setDestNationId] = useState<number>(0);
     const [briefDraft, setBriefDraft] = useState('');
     const [detailDraft, setDetailDraft] = useState('');
+    const [prevNo, setPrevNo] = useState<number | null>(null);
 
     function showToast(msg: string) {
         setToast(msg);
@@ -129,13 +130,11 @@ export default function DiplomacyPage() {
             return;
         }
         try {
-            // legacy submitLetter는 brief/detail를 $.trim 후 전송, prevNo는 신규(=교체 대상 없음)면 null.
-            // 작성 폼에 이전 문서 교체 selector가 없으므로 항상 null(신규 문서).
             await api.command('diploSendLetter', {
                 destNation: destNationId,
                 brief: briefDraft.trim(),
                 detail: detailDraft.trim(),
-                prevNo: null,
+                prevNo,
             }, generalId);
             // 성공 알림 verbatim — legacy ts/diplomacy.ts submitLetter alert('전송했습니다.')
             showToast('전송했습니다.');
@@ -236,6 +235,26 @@ export default function DiplomacyPage() {
                                             {n.name} (Lv.{n.level})
                                         </option>
                                     ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>이전 문서</label>
+                                <select
+                                    value={prevNo ?? ''}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setPrevNo(v === '' ? null : Number(v));
+                                    }}
+                                    style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                                >
+                                    <option value="">신규</option>
+                                    {letters
+                                        .filter(l => l.state === 'activated')
+                                        .map(l => (
+                                            <option key={l.no} value={l.no}>
+                                                #{l.no} — {l.brief}
+                                            </option>
+                                        ))}
                                 </select>
                             </div>
                             <div>

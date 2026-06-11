@@ -17,6 +17,7 @@
 | 10 | P0-06 `BettingDetail` 베팅 제출 호출부 `isIntakeQueued`/`isIntakeDenied` 가드 적용 + implicit else | BE 409 green + FE tsc clean + 갭 1 닫힘 | fresh 서브에이전트(ce-testing-reviewer) — tsc + 코드 리뷰, feedback: implicit else 추가 | 채택 | `submitBet`에 가드 적용, 채점자 feedback 반영(implicit else→'베팅 처리 중 오류가 발생했습니다.') |
 | 11 | P0-12 `CityDetailController` id<=0 → general.cityId fallback (legacy b_currentCity.php 패러티) | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | id<=0 시 `findById(0)` null→404. general 먼저 resolve 후 `effectiveId=general.cityId`로 city 조회. |
 | 12 | P0-27 `InheritPointController` statMin/statMax 하드코딩 10/90 → `GameConst.defaultStatMin/Max` 15/80 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | legacy `v_inheritPoint.php:108-114` = 15/80. 구현이 날조된 10/90 사용. F4 테스트 기대값 동시 교정. |
+| 13 | P0-18 public generals list에서 `crew` 컬럼 제거 — legacy GeneralList/Global/GeneralList는 permission=0 표면에 병력 미노출 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `PublicGeneral` DTO·`GeneralsController`·FE `generals/page`·F4 테스트 동시 제거. |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
