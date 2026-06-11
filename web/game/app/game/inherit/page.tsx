@@ -124,7 +124,7 @@ interface BuyModalSpec {
         | 'inheritResetTurnTime'
         | 'inheritResetSpecialWar'
         | 'inheritSetNextSpecialWar'
-        | 'OpenUniqueAuction';
+        | 'auctionOpenUnique';
     label: string;
     extraArgs: Record<string, unknown>;
 }
@@ -140,8 +140,12 @@ export default function InheritPage() {
     const [buyModal, setBuyModal] = useState<BuyModalSpec | null>(null);
     // F4 C2 — the 다음 전투 특기 select pick (drives the inheritSetNextSpecialWar extraArgs).
     const [nextSpecialPick, setNextSpecialPick] = useState<string>('');
-    // P0-26 — selected unique item for OpenUniqueAuction.
+    // P0-26 — 유니크 경매(auctionOpenUnique) 선택 아이템 + 입찰 포인트.
+    // 바퀴 24 정정: 종전 'OpenUniqueAuction'은 미등록 코드 + {item} 인자라
+    // CommandRegistry else→휴식 턴 예약으로 잠복 위조였다(재채점 audit-delta).
+    // 정본 = intakeCodes 'auctionOpenUnique' + {itemId, amount}(OpenUniqueAuction.php:33-39).
     const [selectedUnique, setSelectedUnique] = useState<string>('');
+    const [uniqueAmount, setUniqueAmount] = useState<number>(0);
     // P0-24 — ResetStat form state (기본3+추가3).
     const [baseLeadership, setBaseLeadership] = useState(55);
     const [baseStrength, setBaseStrength] = useState(55);
@@ -251,6 +255,14 @@ export default function InheritPage() {
         }
     }, [currentStat]);
 
+    // P0-26 — legacy는 입찰 포인트를 최소값으로 프리필한다(PageInheritPoint.vue:455).
+    useEffect(() => {
+        if (uniqueAmount === 0 && (cost?.minSpecificUnique ?? 0) > 0) {
+            setUniqueAmount(cost!.minSpecificUnique);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cost?.minSpecificUnique]);
+
     // Derived display points (PageInheritPoint.vue): sum = floor(Σ items), new = sum − previous.
     const totalPoint = Math.floor(Object.values(items).reduce((acc, v) => acc + v, 0));
     const previousPoint = Math.floor(items['previous'] ?? 0);
@@ -337,11 +349,34 @@ export default function InheritPage() {
                             얻고자 하는 유니크 아이템으로 경매를 시작합니다. 24턴 동안 진행됩니다.<br />
                             <span style={costStyle}>입찰 포인트(최소): {(cost?.minSpecificUnique ?? 0).toLocaleString()}</span>
                         </div>
+                        {/* 입찰 포인트 — legacy PageInheritPoint.vue:622-648 specificUniqueAmount 입력. */}
+                        <input
+                            type="number"
+                            className="form-input"
+                            min={cost?.minSpecificUnique ?? 0}
+                            max={previousPoint}
+                            step={1}
+                            value={uniqueAmount || ''}
+                            placeholder={`입찰 포인트 (최소 ${(cost?.minSpecificUnique ?? 0).toLocaleString()})`}
+                            onChange={(e) => setUniqueAmount(Math.floor(Number(e.target.value) || 0))}
+                            style={{ width: '100%', marginTop: 'var(--space-xs)' }}
+                        />
                         <button
                             type="button"
-                            disabled={!selectedUnique}
+                            disabled={!selectedUnique || uniqueAmount <= 0}
                             style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
-                            onClick={() => openBuy({ command: 'OpenUniqueAuction', label: '유니크 경매 시작', extraArgs: { item: selectedUnique } })}
+                            onClick={() => {
+                                // legacy 가드(PageInheritPoint.vue:624-627): 보유 유산 포인트 부족.
+                                if (previousPoint < uniqueAmount) {
+                                    showToast('유산 포인트가 부족합니다.');
+                                    return;
+                                }
+                                openBuy({
+                                    command: 'auctionOpenUnique',
+                                    label: '유니크 경매 시작',
+                                    extraArgs: { itemId: selectedUnique, amount: uniqueAmount },
+                                });
+                            }}
                         >
                             경매 시작
                         </button>
