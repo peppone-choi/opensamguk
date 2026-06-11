@@ -3,7 +3,6 @@ package opensamguk.engine.auction
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.auction.AuctionStatus
@@ -56,14 +55,8 @@ class AuctionExpiryDaemon(
             val handler = AuctionFinalizeHandler(world, recorder, auctionRepository, bidRepository)
             val result = handler.handle(TurnDaemonCommand.AuctionFinalize(auctionId = auctionId))
 
-            // 전역 액션 로그 (handler 내에서도 로그를 남기지만, 만료 처리임을 명시)
-            world.pushLog(
-                LogEntryDraft(
-                    scope = "action",
-                    category = "auction",
-                    text = "경매 #${auctionId} 이(가) 마감 시간 만료로 자동 종료되었습니다.",
-                )
-            )
+            // 로그 없음 — PHP 만료 처리엔 이 로그가 없다(위조). scope/category enum 불일치로
+            // flush 턴동결을 유발하던 push를 바퀴 23에서 제거.
 
             processed.add(auctionId)
         }

@@ -487,9 +487,9 @@ object DatabaseHooks {
      * global history를 SYSTEM scope로 본다(`ActionLogger.pushGlobalHistoryLog` → `LogScope.SYSTEM`)
      * → 엔진의 `"global"`을 `SYSTEM`으로 번역한다.
      *
-     * NOTE: betting/auction 핸들러는 scope `"action"`(+ category `"betting"`)를 쓰는데 이는 log_scope/
-     * log_category enum에 없다 — 별개의 P6 flush 버그(월틱 경로 아님, 베팅 발생 시 크래시). 여기선 보존하고
-     * 별도 추적한다.
+     * NOTE: betting/auction 핸들러의 scope `"action"`(+ category `"betting"|"auction"`) 위조 로그는
+     * 바퀴 20/23에서 전부 제거됐다(PHP 무로그 + enum 불일치 flush 크래시). else-가지의 "미지(예: action)
+     * 보존"은 방어적 잔존 — 새 비-enum scope를 들이지 말 것.
      */
     private fun scopeLiteral(scope: String): String = when (scope.lowercase()) {
         "global", "system" -> "SYSTEM"

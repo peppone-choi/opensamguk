@@ -29,6 +29,7 @@
 | 18-정정 | (재채점 판정) 바퀴 18이 P0 회귀 유발 — `applyDiplomacyMask` type 미검사로 일반 개인/국가 서신까지 위조 마스킹(legacy GetRecentMessage.php:125-139는 diplomacy 한정) + `GET /api/messages/{id}` 단건 마스킹 0(누출 잔존) | — | fresh 재채점 워크플로(wf_89ed4731, audit-delta 에이전트) | 정정(재오픈) | 바퀴 18 테스트가 마스킹 적용만 단언, 비외교 서신 통과를 단언 안 함. 바퀴 22로 재오픈 |
 | 21 | (검증만) P0-50 BuyHiddenBuff/BuyRandomUnique generalId 400 — 이미 W0-1(#73, 9222bf2)에서 닫힘 확인: null 가드 + `api.command(…, generalId)` 전달 + front-info 배선 | 변경 0 (코드 직독 검증) | 본인 코드 직독 + git log (결정적 사실 확인) | 기닫힘 확인 | 재채점 api-surface의 해당 finding은 감사 문서 인용의 stale — 실코드 미반영. 바퀴 미소진 |
 | 22 | 바퀴 18 회귀 수정 — `applyDiplomacyMask`에 `type == DIPLOMACY` 게이트(legacy diplomacy-섹션 한정 구조의 등가) + `GET /api/messages/{id}` 단건 마스킹 적용(P0-34 잔여 누출 차단) | game-api 297→301 green (Mailbox 13/13, 신규 매트릭스 4) + 갭 1 닫힘 + 회귀 핀(pre-fix면 신규 테스트 red) | fresh 서브에이전트(grader-w22, parity-reviewer) — GetRecentMessage/GetOldMessage/MessageTarget 대조, 5개 호출지 sweep, VERDICT PASS | 채택 | 비인증(currentGeneral null → permission -1)은 마스킹 방향(비누출)으로 동작 |
+| 23 | (삭제 바퀴) W-1 경매 위조 로그 push 6사이트 제거 — Bid 1 + Finalize 4(유찰/연장/유산차감/일반) + Expiry 1. scope "action"/category "auction"은 PG enum 외 → 로그 1건이 flush BatchUpdateException 틱 롤백(턴 동결 지뢰). PHP 대조: 제거 문자열 전부 legacy 무존재(위조), bid 경로는 PHP 무로그 | engine 52 suites/331 green + 턴동결 클래스 소멸(잔존 LogEntryDraft 전수 enum-안전 확인) | fresh 서브에이전트(grader-w23, parity-reviewer) — 제거 문자열 legacy 전수 grep 0히트 + 잔존 push enum sweep, VERDICT PASS (P2 3) | 채택 | PHP 실로그(AuctionUniqueItem.php:337-351, AuctionBasicResource.php:132,197-222) byte-port는 골든 캡처 동반 백로그 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
@@ -49,6 +50,7 @@
 - che_견문/che_인재탐색 resolve() 빈 no-op STUB인데 PARITY_LEDGER DONE 분류 — silent no-op 턴 소진 (재채점 command-registry)
 - GameConst availableChiefCommand '연구' 카테고리 — PHP ReserveCommand.php:47 거부, Kotlin 허용 divergence (재채점 command-registry)
 - ResetStat instant-action intakeCodes 미등재 → FE 호출 무조건 409 (재채점 api-surface — 바퀴 8 FE 폼의 BE 짝)
+- 경매 PHP 실로그 byte-port — 유찰/성사/습득/유산차감: AuctionBasicResource.php:132(pushAuctionLog),197-203,220-222 + AuctionUniqueItem.php:345(습득)/:351(UserLogger inheritPoint). 골든 캡처 동반. 동시에 `AuctionResultCalculator.logMessage` 죽은 위조 문자열 8개 삭제(바퀴23 채점 P2 — 재배선 지뢰)
 
 ## 승인 대기
 

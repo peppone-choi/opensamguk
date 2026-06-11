@@ -6,7 +6,6 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
@@ -203,15 +202,10 @@ class AuctionBidHandler(
             columns = updatedAuction.toArray(withoutId = true),
         )
 
-        // ── 8. 로그 작성 ─────────────────────────────────────────────────────
-        world.pushLog(
-            LogEntryDraft(
-                scope = "action",
-                category = "auction",
-                text = "경매 #${auctionId} 에 ${general.name} 이(가) $amount 에 입찰했습니다.",
-                generalId = generalId,
-            )
-        )
+        // ── 8. 로그 없음 — PHP bid 경로는 무로그다(AuctionBasicResource.php:233-340 /
+        // AuctionUniqueItem.php:140-260 / Auction.php bidInheritPoint — Logger/push 0건; 로그·Message는
+        // finalize/rollback에서만 발생). 종전 위조 로그(scope "action"/category "auction")는 PG enum에
+        // 없어 로그 1건이 flush BatchUpdateException → 틱 롤백(턴 동결)을 유발했다(바퀴 23 제거).
 
         // ── 9. 결과 반환 ─────────────────────────────────────────────────────
         return AuctionBidOk(

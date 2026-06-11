@@ -6,7 +6,6 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.auction.AuctionBidItemData
@@ -112,14 +111,8 @@ class AuctionFinalizeHandler(
             }
         }
 
-        // 로그
-        world.pushLog(
-            LogEntryDraft(
-                scope = "action",
-                category = "auction",
-                text = result.logMessage,
-            )
-        )
+        // 로그 없음 — 위조 로그(scope/category가 PG enum에 없어 flush 턴동결)는 바퀴 23에서 제거.
+        // PHP 실로그(pushGeneralActionLog/pushAuctionLog)는 LEDGER 백로그(골든 캡처 동반).
 
         // 경매 상태 업데이트 (CANCELED)
         recordAuctionStatusUpdate(auctionId, result.finalStatus)
@@ -155,16 +148,8 @@ class AuctionFinalizeHandler(
                     else -> null
                 }
                 if (currentItem != null && currentItem != "None") {
-                    // 보유 제한 → 경매 연장 (status를 OPEN으로 되돌림)
+                    // 보유 제한 → 경매 연장 (status를 OPEN으로 되돌림). 위조 로그는 바퀴 23 제거.
                     recordAuctionStatusUpdate(auctionId, AuctionStatus.OPEN)
-                    world.pushLog(
-                        LogEntryDraft(
-                            scope = "action",
-                            category = "auction",
-                            text = "유니크 아이템 보유 제한으로 경매 #${auctionId} 를 연장합니다.",
-                            generalId = highestBidGeneralId,
-                        )
-                    )
                     return AuctionFinalizeOk(auctionId = auctionId)
                 }
 
@@ -212,27 +197,9 @@ class AuctionFinalizeHandler(
             }
         }
 
-        // 유니크 아이템의 경우 유산 포인트 차감 로그
-        if (auctionType == AuctionType.UNIQUE_ITEM && result.bidderInheritancePointDelta < 0) {
-            world.pushLog(
-                LogEntryDraft(
-                    scope = "action",
-                    category = "auction",
-                    text = "유니크 아이템 경매로 ${-result.bidderInheritancePointDelta} 포인트를 사용했습니다.",
-                    generalId = highestBidGeneralId,
-                )
-            )
-        }
-
-        // 일반 로그
-        world.pushLog(
-            LogEntryDraft(
-                scope = "action",
-                category = "auction",
-                text = result.logMessage,
-                generalId = highestBidGeneralId,
-            )
-        )
+        // 로그 없음 — 위조 로그 2종(유산 차감/일반)은 바퀴 23 제거. PHP 실로그는
+        // AuctionUniqueItem.php:345(습득)/:351(UserLogger inheritPoint)/AuctionBasicResource.php:197-203
+        // — 골든 캡처 동반 byte-port가 LEDGER 백로그.
 
         // 경매 상태 업데이트 (FINISHED)
         recordAuctionStatusUpdate(auctionId, result.finalStatus)
