@@ -19,6 +19,7 @@
 | 12 | P0-27 `InheritPointController` statMin/statMax 하드코딩 10/90 → `GameConst.defaultStatMin/Max` 15/80 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | legacy `v_inheritPoint.php:108-114` = 15/80. 구현이 날조된 10/90 사용. F4 테스트 기대값 동시 교정. |
 | 13 | P0-18 public generals list에서 `crew` 컬럼 제거 — legacy GeneralList/Global/GeneralList는 permission=0 표면에 병력 미노출 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `PublicGeneral` DTO·`GeneralsController`·FE `generals/page`·F4 테스트 동시 제거. |
 | 14 | P0-17 diplomacy 서신 작성 폼에 '이전 문서' selector 추가 — prevNo 하드코딩 null 제거 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `letters.filter(state==='activated')`를 선택지로 제공, `prevNo` state 연동, `api.command`에 전달. |
+| 15 | P0-26 inherit 페이지 '유니크 경매' 섹션 활성화 — disabled select→활성 + '경매 시작' 버튼 + `OpenUniqueAuction` CommandModal 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `BuyModalSpec`에 `OpenUniqueAuction` 추가, `selectedUnique` state, `extraArgs: { item }` 전달. |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 

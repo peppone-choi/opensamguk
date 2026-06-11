@@ -18,6 +18,7 @@
 //  - 드래그-셀렉트/고급(반복·범위·보관함) 모드는 이 MVP 범위 밖(슬롯 단건 예약). 후속 wave에서 확장.
 
 import { useState } from 'react';
+import { api, isIntakeQueued, isIntakeDenied } from '../../lib/api';
 import type { ChiefCommandCategory, ChiefCommand, ChiefReservedTurn } from '../../types/game';
 
 // 부모가 CommandModal을 띄울 때 필요한 1개 명령 spec(선택된 명령 + 대상 슬롯).
@@ -97,14 +98,19 @@ export default function ChiefCommandReserve({
     reservedTurns,
     commandList,
     onLaunch,
+    generalId,
 }: {
     maxChiefTurn: number;
     reservedTurns: ChiefReservedTurn[];
     commandList: ChiefCommandCategory[];
     onLaunch: (spec: ChiefReserveLaunch) => void;
+    generalId?: number | null;
 }) {
     // 명령 팔레트가 열려 있는 대상 슬롯(turnIdx). null = 닫힘.
     const [openSlot, setOpenSlot] = useState<number | null>(null);
+    // P0-10 — 당기기/미루기/반복 입력값.
+    const [pushAmount, setPushAmount] = useState(1);
+    const [repeatAmount, setRepeatAmount] = useState(1);
 
     // turnIdx → 예약 brief(빠른 조회). 빈 슬롯은 '휴식' fallback.
     const briefByIdx = new Map(reservedTurns.map((t) => [t.turnIdx, t.brief]));
@@ -152,6 +158,61 @@ export default function ChiefCommandReserve({
                     </div>
                 );
             })}
+            {/* P0-10 — 당기기/미루기/반복 (legacy PushCommand/RepeatCommand). */}
+            {generalId != null && (
+                <div style={{ display: 'flex', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>당기기/미루기</label>
+                    <input
+                        type="number"
+                        value={pushAmount}
+                        onChange={(e) => setPushAmount(Number(e.target.value))}
+                        style={{ width: '5ch', fontSize: 'var(--text-sm)' }}
+                    />
+                    <button
+                        type="button"
+                        style={{ fontSize: 'var(--text-xs)' }}
+                        onClick={async () => {
+                            try {
+                                const out = await api.commandQueue.nationPush(generalId, pushAmount);
+                                if (isIntakeQueued(out)) {
+                                    window.alert('적용되었습니다.');
+                                } else if (isIntakeDenied(out)) {
+                                    window.alert(out.reason || '적용할 수 없습니다.');
+                                }
+                            } catch (e: any) {
+                                window.alert('요청에 실패했습니다: ' + (e?.message || ''));
+                            }
+                        }}
+                    >
+                        적용
+                    </button>
+                    <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginLeft: 'var(--space-sm)' }}>반복</label>
+                    <input
+                        type="number"
+                        value={repeatAmount}
+                        onChange={(e) => setRepeatAmount(Number(e.target.value))}
+                        style={{ width: '5ch', fontSize: 'var(--text-sm)' }}
+                    />
+                    <button
+                        type="button"
+                        style={{ fontSize: 'var(--text-xs)' }}
+                        onClick={async () => {
+                            try {
+                                const out = await api.commandQueue.nationRepeat(generalId, repeatAmount);
+                                if (isIntakeQueued(out)) {
+                                    window.alert('적용되었습니다.');
+                                } else if (isIntakeDenied(out)) {
+                                    window.alert(out.reason || '적용할 수 없습니다.');
+                                }
+                            } catch (e: any) {
+                                window.alert('요청에 실패했습니다: ' + (e?.message || ''));
+                            }
+                        }}
+                    >
+                        적용
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

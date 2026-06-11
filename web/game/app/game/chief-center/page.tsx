@@ -53,12 +53,14 @@ function ChiefPostCard({
     isMe,
     commandList,
     onLaunch,
+    generalId,
 }: {
     post: ChiefPost | undefined;
     maxChiefTurn: number;
     isMe: boolean;
     commandList: ChiefCommandCategory[];
     onLaunch: (spec: ChiefReserveLaunch) => void;
+    generalId?: number | null;
 }) {
     const name = post ? (post.name ?? '-') : '-';
     const nameColor = getNPCColor(post?.npcType ?? 0);
@@ -113,6 +115,7 @@ function ChiefPostCard({
                     reservedTurns={turns}
                     commandList={commandList}
                     onLaunch={onLaunch}
+                    generalId={generalId}
                 />
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
@@ -236,6 +239,7 @@ export default function ChiefCenterPage() {
                             maxChiefTurn={maxChiefTurn}
                             isMe={level === myOfficerLevel}
                             commandList={commandList}
+                            generalId={generalId}
                             onLaunch={(spec) => {
                                 if (generalId == null) {
                                     showToast('장수가 없어 명령을 예약할 수 없습니다.');
