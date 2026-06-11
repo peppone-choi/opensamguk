@@ -6,6 +6,7 @@
 |---|---|---|---|---|---|
 | 0 | (베이스라인) | BE 405/405 suites (2925 tests) green + FE tsc×2 clean + web/game 42/42 | gate.sh backend XML + pnpm (결정적) | 기준선 | main c75d0f9 (=be9916d+루프파일), 2026-06-10 12:06 KST |
 | 1 | Nation/GetGeneralLog read API 포팅(§2G) — 4 reqType + 권한사슬 + id<reqTo 페이지네이션 | 405→406 suites green + 갭 1 닫힘 (신규 스위트 10 tests red→green 관찰) | fresh 서브에이전트(a1cbf2aa) — XML 판독 + PHP 대조, score: PASS | 채택 | 1차 게이트런 TC 기동실패 2건은 도커 OOM 플레이크(재실행 green으로 입증) |
+| 2 | P0-01 예약명령 패널 하드코딩 '휴식' 위조 제거 — `GET /api/reserved-commands` 실제 소비 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | fresh 서브에이전트(ce-testing-reviewer) — 코드 리뷰 + gate/tsc 검증, score: PASS | 채택 | `PartialReservedCommand.tsx`: `useEffect`로 `api.reservedCommands()` 호출, `slotMap` 매핑, 빈 슬롯만 '휴식', 예약 후 `refreshKey` 증가 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 

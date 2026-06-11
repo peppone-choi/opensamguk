@@ -4,13 +4,12 @@
 // The legacy 5-col table is [Turn#] [Y/M] [Time] [Command brief] [edit ✎] over `maxTurn` slots, fed by
 // SammoAPI.Command.GetReservedCommand().
 //
-// BACKEND GAP (flagged, NOT fabricated): game-api exposes NO reserved-turn READ endpoint — front-info
-// carries `recentRecord` (a log feed) but no per-slot reserved command list, and there is no
-// GetReservedCommand equivalent. So we render the ring SCAFFOLD with '휴식' defaults and a per-slot
-// edit (✎) button that opens CommandModal targeting that turnIdx (the reserve WRITE path exists:
-// POST /api/command/{code}?turnIdx). When the read endpoint lands, replace `slots` with its data.
+// [P0-01] game-api `GET /api/reserved-commands`를 소비해 실제 예약 슬롯을 렌더한다.
+// 빈 슬롯(slots에 없는 turnIdx)만 '휴식'으로 표시 — 전 슬롯 하드코딩 위조 금지.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../../lib/api';
+import type { ReservedSlot } from '../../lib/types';
 import CommandModal from '../CommandModal';
 
 const DEFAULT_VIEW_TURNS = 14; // legacy flippedMaxTurn
@@ -37,35 +36,86 @@ export default function PartialReservedCommand({
     const total = maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS;
     const [expanded, setExpanded] = useState(false);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
+    const [slots, setSlots] = useState<ReservedSlot[]>([]);
+    const [meta, setMeta] = useState<{ year?: number; month?: number; turnTime?: string }>({});
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const viewCount = expanded ? total : Math.min(DEFAULT_VIEW_TURNS, total);
-    const slots = Array.from({ length: viewCount }, (_, i) => i);
+    const slotMap = new Map(slots.map((s) => [s.turnIdx, s]));
+
+    useEffect(() => {
+        if (!generalId) return;
+        let alive = true;
+        setLoading(true);
+        setError(null);
+        api.reservedCommands()
+            .then((res) => {
+                if (!alive) return;
+                setSlots(res.slots ?? []);
+                setMeta({
+                    year: res.year ?? undefined,
+                    month: res.month ?? undefined,
+                    turnTime: res.turnTime ?? undefined,
+                });
+            })
+            .catch((err: unknown) => {
+                if (!alive) return;
+                const msg = err instanceof Error ? err.message : '예약 명령 조회 실패';
+                setError(msg);
+            })
+            .finally(() => {
+                if (alive) setLoading(false);
+            });
+        return () => {
+            alive = false;
+        };
+    }, [generalId, refreshKey]);
+
+    const handleReserved = () => {
+        setEditTurnIdx(null);
+        setRefreshKey((k) => k + 1);
+        onReserved?.();
+    };
+
+    const formatTurnTime = (tt?: string) => {
+        if (!tt) return '';
+        // 'yyyy-MM-dd HH:mm:ss' → 'HH:mm'
+        const m = tt.match(/(\d{2}):(\d{2}):/);
+        return m ? `${m[1]}:${m[2]}` : '';
+    };
 
     return (
         <section className="reserved-command-panel" id="reservedCommandPanel" aria-label="명령 목록">
             <div className="rcp-title">명령 목록</div>
-            <div className="rcp-flag">예약 명령 조회 API가 아직 없어 기본값(휴식)으로 표시됩니다.</div>
+            {loading && <div className="rcp-flag">불러오는 중…</div>}
+            {error && <div className="rcp-flag" style={{ color: 'var(--color-danger, #dc2626)' }}>{error}</div>}
 
             <div className="rcp-table">
-                {slots.map((turnIdx) => (
-                    <div key={turnIdx} className="rcp-row">
-                        <div className="rcp-idx">{turnIdx + 1}</div>
-                        {/* Y/M + time unknown without the read endpoint → left blank (not fabricated). */}
-                        <div className="rcp-ym" />
-                        <div className="rcp-time" />
-                        <div className="rcp-brief">휴식</div>
-                        <div className="rcp-edit">
-                            <button
-                                type="button"
-                                className="rcp-edit-btn"
-                                aria-label={`${turnIdx + 1}턴 명령 편집`}
-                                onClick={() => setEditTurnIdx(turnIdx)}
-                            >
-                                ✎
-                            </button>
+                {Array.from({ length: viewCount }, (_, i) => i).map((turnIdx) => {
+                    const slot = slotMap.get(turnIdx);
+                    return (
+                        <div key={turnIdx} className="rcp-row">
+                            <div className="rcp-idx">{turnIdx + 1}</div>
+                            <div className="rcp-ym">
+                                {meta.year != null && meta.month != null ? `${meta.year}-${String(meta.month).padStart(2, '0')}` : ''}
+                            </div>
+                            <div className="rcp-time">{formatTurnTime(meta.turnTime)}</div>
+                            <div className="rcp-brief">{slot?.brief ?? '휴식'}</div>
+                            <div className="rcp-edit">
+                                <button
+                                    type="button"
+                                    className="rcp-edit-btn"
+                                    aria-label={`${turnIdx + 1}턴 명령 편집`}
+                                    onClick={() => setEditTurnIdx(turnIdx)}
+                                >
+                                    ✎
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="rcp-actions">
@@ -84,7 +134,7 @@ export default function PartialReservedCommand({
                     generalId={generalId}
                     nationId={nationId}
                     turnIdx={editTurnIdx}
-                    onReserved={onReserved}
+                    onReserved={handleReserved}
                 />
             )}
         </section>
