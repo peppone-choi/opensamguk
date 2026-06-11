@@ -54,6 +54,9 @@ class MailboxControllerTest {
              "option":{"deletable":true,"receiverMessageID":99}}
         """.trimIndent()
         `when`(messages.findByMailboxOrderById(100)).thenReturn(listOf(message(1, 100, body)))
+        // mailbox() now applies diplomacy masking via currentGeneral() → secretPermission.
+        // officerLevel 12 → permission 4 (>=3) so masking is skipped; test target is decoding, not masking.
+        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 12)))
 
         mockMvc().perform(get("/api/mailbox/100"))
             .andExpect(status().isOk)

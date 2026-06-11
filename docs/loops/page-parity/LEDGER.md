@@ -21,6 +21,8 @@
 | 14 | P0-17 diplomacy 서신 작성 폼에 '이전 문서' selector 추가 — prevNo 하드코딩 null 제거 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `letters.filter(state==='activated')`를 선택지로 제공, `prevNo` state 연동, `api.command`에 전달. |
 | 15 | P0-26 inherit 페이지 '유니크 경매' 섹션 활성화 — disabled select→활성 + '경매 시작' 버튼 + `OpenUniqueAuction` CommandModal 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `BuyModalSpec`에 `OpenUniqueAuction` 추가, `selectedUnique` state, `extraArgs: { item }` 전달. |
 | 16 | P0-10 chief-center 당기기/미루기/반복 버튼 추가 — `api.commandQueue.nationPush`/`nationRepeat` 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `ChiefCommandReserve`에 numeric input + 적용 버튼 2종, `generalId` prop widen, `chief-center/page` 전달. |
+| 17 | P0-02 개인 예약 명령 당기기/미루기/반복 버튼 추가 — `api.commandQueue.push`/`repeat` 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `PartialReservedCommand`에 numeric input + 적용 버튼 2종, `onToast`로 성공/실패 알림, 예약 후 `refreshKey` 증가. |
+| 18 | MailboxController `mailbox`/`unread` diplomacy 마스킹 적용 — `secretPermission` + `applyDiplomacyMask` | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `mailbox()`/`unread()`에 `secretPermission`+`applyDiplomacyMask` 추가, 테스트 `generals.findAll()` stub 보강 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 

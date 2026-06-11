@@ -48,8 +48,10 @@ class MailboxController(
     fun mailbox(
         @PathVariable mailbox: Int,
     ): ResponseEntity<List<MessageResponse>> {
+        val me = currentGeneral()
+        val permission = if (me != null) secretPermission(me) else -1
         val messages = messageRepository.findByMailboxOrderById(mailbox)
-            .map { it.toResponse() }
+            .map { applyDiplomacyMask(it, permission).toResponse() }
         return ResponseEntity.ok(messages)
     }
 
@@ -58,8 +60,10 @@ class MailboxController(
         @PathVariable mailbox: Int,
     ): ResponseEntity<List<MessageResponse>> {
         val now = Instant.now()
+        val me = currentGeneral()
+        val permission = if (me != null) secretPermission(me) else -1
         val messages = messageRepository.findByMailboxAndValidUntilAfter(mailbox, now)
-            .map { it.toResponse() }
+            .map { applyDiplomacyMask(it, permission).toResponse() }
         return ResponseEntity.ok(messages)
     }
 
