@@ -71,7 +71,11 @@ class MailboxController(
     fun message(@PathVariable id: Int): ResponseEntity<MessageResponse> {
         val msg = messageRepository.findById(id)
             .orElse(null) ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(msg.toResponse())
+        // 단건 열람도 목록과 동일한 diplomacy 마스킹 — 비외교권자(permission<3)가 단건 GET으로
+        // 외교 서신 원문을 우회 열람하던 누출(P0-34 잔여) 차단.
+        val me = currentGeneral()
+        val permission = if (me != null) secretPermission(me) else -1
+        return ResponseEntity.ok(applyDiplomacyMask(msg, permission).toResponse())
     }
 
     /**
@@ -354,8 +358,15 @@ class MailboxController(
         if (id <= min) setMin(id)
     }
 
-    /** D7 diplomacy 마스킹 — MessageEntity 수준. */
+    /**
+     * D7 diplomacy 마스킹 — MessageEntity 수준.
+     *
+     * legacy GetRecentMessage.php:125-139는 **diplomacy 섹션에만** 마스킹을 적용한다 —
+     * type 게이트 없이 호출하면 일반 개인/국가 서신까지 '(외교 메시지입니다)'로 위조 마스킹된다
+     * (바퀴 18 회귀 — 재채점 2026-06-12 audit-delta 발견, 바퀴 22 수정).
+     */
     private fun applyDiplomacyMask(msg: MessageEntity, permission: Int): MessageEntity {
+        if (msg.type != MessageType.DIPLOMACY) return msg
         if (permission >= 3) return msg
         val body = runCatching { jsonDecode(msg.message) }.getOrDefault(emptyMap())
         @Suppress("UNCHECKED_CAST")

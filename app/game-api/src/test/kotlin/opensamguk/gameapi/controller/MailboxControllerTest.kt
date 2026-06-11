@@ -101,6 +101,67 @@ class MailboxControllerTest {
     }
 
     // ------------------------------------------------------------------
+    // 바퀴 22 — diplomacy 마스킹 type 게이트 (legacy GetRecentMessage.php:125-139는
+    // diplomacy 섹션 한정. 바퀴 18 회귀 = type 미검사로 일반 서신까지 위조 마스킹).
+    // ------------------------------------------------------------------
+
+    private val diploBody =
+        """{"text":"불가침 제의","src":{"id":1,"nation_id":1},"dest":{"id":2,"nation_id":2},"option":{}}"""
+    private val privateBody =
+        """{"text":"개인 서신 원문","src":{"id":1,"nation_id":1},"dest":{"id":2,"nation_id":2},"option":{}}"""
+
+    @Test
+    fun `mailbox masks only diplomacy rows for permission below 3 - private and national stay verbatim`() {
+        val rows = listOf(
+            message(1, 100, privateBody),                                        // type PRIVATE
+            msg(2, 100, MessageType.NATIONAL, privateBody),                      // type NATIONAL
+            msg(3, 100, MessageType.DIPLOMACY, diploBody),                       // type DIPLOMACY
+        )
+        `when`(messages.findByMailboxOrderById(100)).thenReturn(rows)
+        // officerLevel 1 → secretMin 0 → permission < 3.
+        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 1)))
+
+        mockMvc().perform(get("/api/mailbox/100"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].text").value("개인 서신 원문"))
+            .andExpect(jsonPath("$[1].text").value("개인 서신 원문"))
+            .andExpect(jsonPath("$[2].text").value("(외교 메시지입니다)"))
+            .andExpect(jsonPath("$[2].option.invalid").value(true))
+    }
+
+    @Test
+    fun `single message endpoint masks diplomacy for permission below 3`() {
+        `when`(messages.findById(7)).thenReturn(Optional.of(msg(7, 100, MessageType.DIPLOMACY, diploBody)))
+        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 1)))
+
+        mockMvc().perform(get("/api/messages/7"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.text").value("(외교 메시지입니다)"))
+            .andExpect(jsonPath("$.option.invalid").value(true))
+    }
+
+    @Test
+    fun `single message endpoint keeps diplomacy verbatim for permission 3 plus`() {
+        `when`(messages.findById(8)).thenReturn(Optional.of(msg(8, 100, MessageType.DIPLOMACY, diploBody)))
+        // officerLevel 12 (군주) → permission 4.
+        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 12)))
+
+        mockMvc().perform(get("/api/messages/8"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.text").value("불가침 제의"))
+    }
+
+    @Test
+    fun `single message endpoint keeps private verbatim even for permission below 3`() {
+        `when`(messages.findById(9)).thenReturn(Optional.of(message(9, 100, privateBody)))
+        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 1)))
+
+        mockMvc().perform(get("/api/messages/9"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.text").value("개인 서신 원문"))
+    }
+
+    // ------------------------------------------------------------------
     // D7 GetRecentMessage — `/api/mailbox/recent`
     // PHP: GetRecentMessage.php:67-160 + Message::getMessagesFromMailBox (Message.php:170-193).
     // ------------------------------------------------------------------
