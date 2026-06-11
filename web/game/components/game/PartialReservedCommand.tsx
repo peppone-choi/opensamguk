@@ -41,6 +41,9 @@ export default function PartialReservedCommand({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    // P0-02 — 개인 예약 링 당기기/미루기/반복 입력값.
+    const [pushAmount, setPushAmount] = useState(1);
+    const [repeatAmount, setRepeatAmount] = useState(1);
 
     const viewCount = expanded ? total : Math.min(DEFAULT_VIEW_TURNS, total);
     const slotMap = new Map(slots.map((s) => [s.turnIdx, s]));
@@ -125,6 +128,63 @@ export default function PartialReservedCommand({
                         {expanded ? '접기' : '펼치기'}
                     </button>
                 )}
+                {/* P0-02 — 개인 예약 링 당기기/미루기/반복 */}
+                <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>당기기/미루기</span>
+                    <input
+                        type="number"
+                        value={pushAmount}
+                        onChange={(e) => setPushAmount(Number(e.target.value))}
+                        style={{ width: '4ch', fontSize: 'var(--text-xs)' }}
+                    />
+                    <button
+                        type="button"
+                        style={{ fontSize: 'var(--text-xs)' }}
+                        onClick={async () => {
+                            try {
+                                const out = await api.commandQueue.push(generalId, pushAmount);
+                                if (out.status === 'AVAILABLE') {
+                                    onToast('적용되었습니다.', 'success');
+                                    setRefreshKey((k) => k + 1);
+                                    onReserved?.();
+                                } else {
+                                    onToast((out as any).reason || '적용할 수 없습니다.', 'error');
+                                }
+                            } catch (e: any) {
+                                onToast('요청에 실패했습니다: ' + (e?.message || ''), 'error');
+                            }
+                        }}
+                    >
+                        적용
+                    </button>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginLeft: 4 }}>반복</span>
+                    <input
+                        type="number"
+                        value={repeatAmount}
+                        onChange={(e) => setRepeatAmount(Number(e.target.value))}
+                        style={{ width: '4ch', fontSize: 'var(--text-xs)' }}
+                    />
+                    <button
+                        type="button"
+                        style={{ fontSize: 'var(--text-xs)' }}
+                        onClick={async () => {
+                            try {
+                                const out = await api.commandQueue.repeat(generalId, repeatAmount);
+                                if (out.status === 'AVAILABLE') {
+                                    onToast('적용되었습니다.', 'success');
+                                    setRefreshKey((k) => k + 1);
+                                    onReserved?.();
+                                } else {
+                                    onToast((out as any).reason || '적용할 수 없습니다.', 'error');
+                                }
+                            } catch (e: any) {
+                                onToast('요청에 실패했습니다: ' + (e?.message || ''), 'error');
+                            }
+                        }}
+                    >
+                        적용
+                    </button>
+                </span>
             </div>
 
             {editTurnIdx != null && (
