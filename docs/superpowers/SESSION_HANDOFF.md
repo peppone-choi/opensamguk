@@ -13,16 +13,15 @@
 - **바퀴 23** (`de06cff`): W-1 — 경매 위조 로그 push 6사이트 제거. **log_scope enum 외 값 1건이 flush BatchUpdateException 틱 롤백 = 턴 동결 지뢰**였음.
 - **바퀴 24** (`170a960`): W-9 — P0-26 재닫음. FE 미등록 코드 `OpenUniqueAuction`→정본 `auctionOpenUnique`+`{itemId,amount}` 교체(휴식 턴 잠복 위조 소멸).
 - **바퀴 25** (`a38baa8`): P0-23 — `InheritCatalog` 신설(특기 20 + 유니크 100), 실PHP Docker 2회 byte-동일 추출.
-- **바퀴 26** (`db80c05`): W-4 — AuctionBidHandler 환불 복제/미달차감/유산포인트 미차감 3결함 근절(PHP `_bid`/`bidInheritPoint`/`refundBid` 정합, AuctionBidHandlerTest 19종).
+- **바퀴 26** (`db80c05` + 후속 경계수정): W-4 — AuctionBidHandler 환불 복제/미달차감/유산포인트 미차감 3결함 근절(PHP `_bid`/`bidInheritPoint`/`refundBid` 정합). **적대 리뷰(grader-w26) FAIL→PASS 2라운드**: 유니크 래퍼 부위 가드 2종 + obfuscatedName 풀 디코드 + aux.ownerName + tryExtendCloseDate 경로별 고정 + wall-clock 차단 + 유니크 finished 메시지 + 부수효과 순서 + isunited 게이트 + 환불 현재-owner 재해석 + npc>=2 검증 + wire `extendCloseDate` 키. AuctionBidHandlerTest 33종. 아티팩트 `docs/superpowers/reviews/2026-06-12-w4-auction-bid-refund-review.md`.
 
 **게이트 수치 (바퀴 26 시점)**: logic 2123 · engine 350 · game-api 301 · infra 87 · common 192, 전부 green.
 
 ## 0b. 다음 세션 우선순위
 
 1. **재채점 잔여 4건** (LEDGER 백로그): W-6 NF income null 크래시 · W-7 NF 권한 게이트 · W-8 nation_env read 채널(setBlockWar 100% deny) · W-10 che_선전포고 위조 로그 골든.
-2. **바퀴 26 fresh 적대 재채점** — W-4 수정은 게이트 XML만 기록, parity-reviewer 채점 미기록.
-3. LEDGER 백로그 나머지(read-api 4종, intake 6종, statistic 골든 latent 3건, OpenNationBetting 미스포트, 경매 PHP 실로그 byte-port, 빼섭 보급-동결 등) — 가설 1개 = 바퀴 1개.
-4. 배포 후 실서버 검증(턴 전진 + 로그인 + 경매/베팅 경로) — main push = 자동 배포임을 항상 전제.
+2. LEDGER 백로그 나머지(read-api 4종, intake 6종, statistic 골든 latent 3건, OpenNationBetting 미스포트, 경매 PHP 실로그 byte-port, 유니크 1순위 가드 pending 경매 비가시, 빼섭 보급-동결 등) — 가설 1개 = 바퀴 1개.
+3. 배포 후 실서버 검증(턴 전진 + 로그인 + 경매/베팅 경로) — main push = 자동 배포임을 항상 전제.
 
 ---
 

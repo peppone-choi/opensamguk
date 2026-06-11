@@ -137,7 +137,9 @@ object CommandWireMapper {
                 auctionId = args.int("auctionId") ?: 0,
                 generalId = generalId,
                 amount = args.int("amount") ?: 0,
-                tryExtendCloseDate = args.bool("tryExtendCloseDate"),
+                // PHP API 인자 키는 `extendCloseDate`(BidUniqueAuction.php:41) — Vue 프론트 정본이 이
+                // 키로 보낸다. 내부 wire 키 `tryExtendCloseDate` 도 하위호환 수용.
+                tryExtendCloseDate = args.bool("extendCloseDate") ?: args.bool("tryExtendCloseDate"),
             )
             "setNotice" -> TurnDaemonCommand.SetNotice(
                 requestId = requestId, generalId = generalId, msg = args.str("msg") ?: "",
