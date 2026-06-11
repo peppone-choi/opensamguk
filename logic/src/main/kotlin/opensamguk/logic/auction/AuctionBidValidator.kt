@@ -1,5 +1,7 @@
 package opensamguk.logic.auction
 
+import opensamguk.common.constants.GameConst
+
 /**
  * 입찰 검증 결과 — [AuctionBidValidator.validateBid]의 반환 타입.
  */
@@ -11,140 +13,127 @@ sealed class BidValidationResult {
 }
 
 /**
- * 경매 입찰 검증기 — 순수 함수로 구성된 입찰 유효성 검증 로직.
+ * 경매 입찰 검증기 — PHP `Auction::_bid()`(Auction.php:350-455) /
+ * `Auction::bidInheritPoint()`(Auction.php:278-348)의 검증 절반(순수 계산부) 충실 포팅.
  *
- * PHP `Auction::validateBid()` / `UniqueAuctionBidder::validateUniqueBid()`의 Kotlin 포팅.
- * 모든 검증은 메모리상의 순수 계산으로, 외부 의존성 없이 호출 가능하다.
+ * 거부 문자열은 전부 PHP verbatim이다. PHP `_bid`에는 startBidAmount 게이트가 없고
+ * (API 레이어 BidBuyRiceAuction.php:17-28도 int/required만 검사) 시작가는 프론트 표시용이다 —
+ * 시작가 게이트를 두지 않는다(날조 금지).
  *
- * 검증 규칙 (BUY_RICE / SELL_RICE — 자원 경매):
- * 1. 일반 경매 (!isReverse): 입찰가 > 현재 최고가
- * 2. 역경매 (isReverse): 입찰가 < 현재 최저가
- * 3. 시작가(startBidAmount)가 설정된 경우: 입찰가 >= 시작가
- * 4. 입찰 통화(금/쌀)를 보유하고 있어야 함
+ * 검증 순서(자원 경매, Auction.php):
+ *  1. 즉시판매가 캡 — `finishBidAmount < amount`(정방향) / `> amount`(역방향) 거부 (:368-376)
+ *  2. 상회입찰 — `amount <= highest`(정방향) / `>= highest`(역방향) 거부 (:388-396)
+ *  3. 재원 — `getVar(res) < morePoint + minReqRes` 거부 (:405-414).
+ *     morePoint = amount - (유효한 내 이전 입찰액)(:405) — 이전 입찰 무효화 규칙(:399-403)은
+ *     호출자가 적용한 뒤 previousBidAmount 로 전달한다.
+ *     minReqRes = GameConst::$defaultGold / $defaultRice (GameConstBase.php:136,138 = 1000).
  *
- * 검증 규칙 (UNIQUE_ITEM — 유니크 아이템 경매):
- * 1. 입찰가 >= 현재 최고가 * 1.01 (1% 이상 높게)
- * 2. 입찰가 >= 현재 최고가 + 10 (최소 10포인트 이상)
+ * 검증 순서(유산포인트 경매, Auction.php bidInheritPoint):
+ *  1. `amount < highest * 1.01` 거부 (:286-288) — float 비교(반올림/절사 없음)
+ *  2. `amount < highest + 10` 거부 (:289-291)
+ *  3. `currPoint === null || currPoint < morePoint` 거부 (:300-303)
  */
 object AuctionBidValidator {
 
     /**
-     * 입찰 유효성을 검증한다.
+     * 자원 경매(금/쌀) 입찰 검증 — PHP `_bid`의 자원 경로(Auction.php:368-414).
      *
-     * @param auctionType 경매 타입
      * @param bidAmount 제출 입찰가
-     * @param currentWinningBidAmount 현재 우승 입찰가 (null = 입찰 없음). 일반 경매에서는 최고가,
-     *        역경매에서는 최저가를 의미한다.
-     * @param startBidAmount 시작 입찰가 (null = 제한 없음)
+     * @param currentWinningBidAmount 현재 우승 입찰가 (null = 입찰 없음). 정방향 최고가/역방향 최저가.
+     * @param finishBidAmount 즉시판매가 (null = 없음) — `detail.finishBidAmount` (:368-376)
      * @param isReverse 역경매 여부
-     * @param generalGold 장수의 현재 금 보유량
-     * @param generalRice 장수의 현재 쌀 보유량
-     * @param previousBidAmount 이전 내 입찰가 (null = 첫 입찰). 차액 입찰 시 자원 검증에 사용.
-     * @return [BidValidationResult.Ok] 또는 구체적인 실패 사유를 담은 [BidValidationResult.Fail]
+     * @param reqResource 입찰 통화 ([ResourceType.GOLD]/[ResourceType.RICE]만 허용 —
+     *        PHP match (:407-410)와 동일하게 inheritPoint는 [validateUniqueBid] 전용)
+     * @param generalResource 장수의 입찰 통화 보유량 (`getVar(res)`, :412)
+     * @param previousBidAmount **무효화 규칙 적용 후의** 내 이전 입찰액 (null = 첫 입찰 또는 이미 환불됨).
+     *        Auction.php:399-403 — 내 이전 입찰이 현재 최고가 행(`no` 동일)이 아니면 이미 환불된
+     *        입찰이므로 호출자가 null 로 만들어 전달해야 한다.
      */
     fun validateBid(
-        auctionType: AuctionType,
         bidAmount: Int,
         currentWinningBidAmount: Int?,
-        startBidAmount: Int?,
+        finishBidAmount: Int?,
         isReverse: Boolean,
-        generalGold: Int,
-        generalRice: Int,
+        reqResource: ResourceType,
+        generalResource: Int,
         previousBidAmount: Int? = null,
     ): BidValidationResult {
-        // 1. 시작가 검증
-        if (startBidAmount != null && bidAmount < startBidAmount) {
-            return BidValidationResult.Fail("입찰가가 시작가(${startBidAmount})보다 낮습니다.")
-        }
-
-        // 2. 최고/최저가 검증 (자원 경매만 — UNIQUE_ITEM은 validateUniqueBid에서 처리)
-        if (currentWinningBidAmount != null && auctionType != AuctionType.UNIQUE_ITEM) {
-            if (isReverse) {
-                // 역경매: 현재 최저가보다 낮아야 함
-                if (bidAmount >= currentWinningBidAmount) {
-                    return BidValidationResult.Fail(
-                        "역경매에서는 현재 최저가(${currentWinningBidAmount})보다 낮게 입찰해야 합니다."
-                    )
-                }
-            } else {
-                // 일반 경매: 현재 최고가보다 높아야 함
-                if (bidAmount <= currentWinningBidAmount) {
-                    return BidValidationResult.Fail(
-                        "입찰가가 현재 최고가(${currentWinningBidAmount})보다 높아야 합니다."
-                    )
-                }
+        // 1. 즉시판매가 캡 (Auction.php:368-376) — 상회입찰 검사보다 앞.
+        if (!isReverse) {
+            if (finishBidAmount != null && finishBidAmount < bidAmount) {
+                return BidValidationResult.Fail("즉시판매가보다 높을 수 없습니다.")
+            }
+        } else {
+            if (finishBidAmount != null && finishBidAmount > bidAmount) {
+                return BidValidationResult.Fail("즉시판매가보다 낮을 수 없습니다.")
             }
         }
 
-        // 3. 자원 보유량 검증 — 차액 입찰 시 morePoint만큼만 필요
-        val morePoint = calculateMorePoint(bidAmount, previousBidAmount)
-        val requiredResource = when (auctionType) {
-            AuctionType.BUY_RICE -> generalGold // 금으로 쌀 구매 → 입찰 통화 = 금
-            AuctionType.SELL_RICE -> generalRice // 쌀로 금 구매 → 입찰 통화 = 쌀
-            AuctionType.UNIQUE_ITEM -> Int.MAX_VALUE // 유니크는 여기서 검증 안 함 (유산 포인트 별도 검증)
+        // 2. 상회입찰 (Auction.php:388-396) — 정방향 strict 초과 / 역방향 strict 미만.
+        if (currentWinningBidAmount != null) {
+            if (!isReverse && bidAmount <= currentWinningBidAmount) {
+                return BidValidationResult.Fail("현재입찰가보다 높게 입찰해야 합니다.")
+            }
+            if (isReverse && bidAmount >= currentWinningBidAmount) {
+                return BidValidationResult.Fail("현재입찰가보다 낮게 입찰해야 합니다.")
+            }
         }
-        if (auctionType != AuctionType.UNIQUE_ITEM && morePoint > requiredResource) {
-            val resourceName = if (auctionType == AuctionType.BUY_RICE) "금" else "쌀"
-            return BidValidationResult.Fail(
-                "${resourceName}이 부족합니다. (보유: $requiredResource, 필요: $morePoint, 입찰가: $bidAmount, 이전입찰: ${previousBidAmount ?: 0})"
-            )
+
+        // 3. 재원 (Auction.php:405-414) — morePoint(차액) + 기본 자원 예치(minReqRes).
+        val morePoint = calculateMorePoint(bidAmount, previousBidAmount)
+        val (resName, minReqRes) = when (reqResource) {
+            // PHP match: gold => GameConst::$defaultGold, rice => GameConst::$defaultRice (:407-410).
+            ResourceType.GOLD -> "금" to GameConst.defaultGold
+            ResourceType.RICE -> "쌀" to GameConst.defaultRice
+            // PHP match 는 gold|rice 외 케이스가 없다(UnhandledMatchError) — 호출자 계약 위반.
+            ResourceType.INHERITANCE_POINT ->
+                throw IllegalArgumentException("inheritPoint 경매는 validateUniqueBid를 사용해야 합니다.")
+        }
+        if (generalResource < morePoint + minReqRes) {
+            // PHP `$resType->getName() . '이 부족합니다.'` (:413) — '금이 부족합니다.'/'쌀이 부족합니다.'
+            return BidValidationResult.Fail("${resName}이 부족합니다.")
         }
 
         return BidValidationResult.Ok
     }
 
     /**
-     * 유니크 아이템 경매의 전체 검증.
-     *
-     * PHP UniqueAuctionBidder::validateUniqueBid() 포팅.
-     * 유니크 아이템은 validateBid가 아닌 이 함수만 호출하면 된다.
-     *
-     * 검증 규칙:
-     * 1. 입찰가 >= 현재 최고가 * 1.01 (1% 이상 높게)
-     * 2. 입찰가 >= 현재 최고가 + 10 (최소 10포인트 이상)
-     * 3. 유산 포인트 보유량 >= morePoint (차액만 차감)
+     * 유산포인트(유니크 아이템) 경매 입찰 검증 — PHP `bidInheritPoint`(Auction.php:278-303).
      *
      * @param bidAmount 제출 입찰가
      * @param highestBidAmount 현재 최고 입찰가 (null = 입찰 없음)
-     * @param generalInheritancePoint 장수의 유산 포인트 보유량
-     * @param previousBidAmount 이전 내 입찰가 (null = 첫 입찰). 차액 입찰 시 유산 포인트 검증에 사용.
-     * @return [BidValidationResult.Ok] 또는 구체적인 실패 사유
+     * @param currentPoint 장수 소유주의 `previous[0]` 유산포인트 (null = 저장소 부재 —
+     *        PHP `getInheritancePoint` null 케이스(:300-301)와 동일하게 즉시 거부)
+     * @param previousBidAmount **무효화 규칙 적용 후의** 내 이전 입찰액 (Auction.php:293-297) —
+     *        [validateBid]와 동일하게 호출자가 무효화를 적용해 전달한다.
      */
     fun validateUniqueBid(
         bidAmount: Int,
         highestBidAmount: Int?,
-        generalInheritancePoint: Int,
+        currentPoint: Double?,
         previousBidAmount: Int? = null,
     ): BidValidationResult {
-        // 1. 최고가 대비 상승폭 검증
-        if (highestBidAmount != null) {
-            val minByPercent = (highestBidAmount * 1.01).toInt()
-            val minByAbsolute = highestBidAmount + 10
-            val minRequired = maxOf(minByPercent, minByAbsolute)
-            if (bidAmount < minRequired) {
-                return BidValidationResult.Fail(
-                    "입찰가가 현재 최고가(${highestBidAmount})의 최소 상승폭($minRequired)보다 낮습니다."
-                )
-            }
+        // 1. 1% 상승폭 (Auction.php:286-288) — float 비교, toInt 절사 없음.
+        if (highestBidAmount != null && bidAmount < highestBidAmount * 1.01) {
+            return BidValidationResult.Fail("현재입찰가보다 1% 높게 입찰해야 합니다.")
+        }
+        // 2. +10 포인트 상승폭 (Auction.php:289-291).
+        if (highestBidAmount != null && bidAmount < highestBidAmount + 10) {
+            return BidValidationResult.Fail("현재입찰가보다 10 포인트 높게 입찰해야 합니다.")
         }
 
-        // 2. 유산 포인트 보유량 검증 — 차액 입찰 시 morePoint만큼만 필요
+        // 3. 유산포인트 보유량 (Auction.php:299-303) — `currPoint === null || currPoint < morePoint`.
         val morePoint = calculateMorePoint(bidAmount, previousBidAmount)
-        if (morePoint > generalInheritancePoint) {
-            return BidValidationResult.Fail(
-                "유산 포인트가 부족합니다. (보유: $generalInheritancePoint, 필요: $morePoint, 입찰가: $bidAmount, 이전입찰: ${previousBidAmount ?: 0})"
-            )
+        if (currentPoint == null || currentPoint < morePoint) {
+            return BidValidationResult.Fail("유산포인트가 부족합니다.")
         }
 
         return BidValidationResult.Ok
     }
 
     /**
-     * 차액 입찰 계산 — 이전 입찰이 있을 경우 추가로 필요한 금액.
-     *
-     * @param newBidAmount 새 입찰가
-     * @param previousBidAmount 이전 입찰가 (null = 첫 입찰)
-     * @return 새로 차감해야 할 금액 (morePoint)
+     * 차액 입찰 계산 — PHP `$morePoint = $amount - ($myPrevBid ? $myPrevBid->amount : 0)`
+     * (Auction.php:405 / :299). previousBidAmount 는 무효화 규칙 적용 후 값이어야 한다.
      */
     fun calculateMorePoint(newBidAmount: Int, previousBidAmount: Int?): Int {
         return if (previousBidAmount != null) {

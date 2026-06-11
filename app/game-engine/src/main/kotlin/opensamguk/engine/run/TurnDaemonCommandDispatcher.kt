@@ -99,7 +99,27 @@ class TurnDaemonCommandDispatcher(
      */
     inheritanceRepository: InheritanceRepository? = null,
 ) {
-    private val auctionBid = AuctionBidHandler(world, recorder, auctionRepository, auctionBidRepository)
+    /**
+     * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
+     * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
+     * [PlaceBetHandler]와 [AuctionBidHandler]가 동일 seam 을 공유한다(바퀴 20 정본).
+     */
+    private val previousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
+        { ownerId: Int ->
+            repo.findByTableAndNamespaceAndKey("inheritance", "inheritance_$ownerId", "previous")
+                ?.let { row ->
+                    ((runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*>)
+                        ?.getOrNull(0) as? Number)?.toDouble()
+                } ?: 0.0
+        }
+    } ?: { ownerId ->
+        ((world.getState().meta["inheritancePrevious"] as? Map<*, *>)?.get(ownerId) as? Number)?.toDouble() ?: 0.0
+    }
+
+    private val auctionBid = AuctionBidHandler(
+        world, recorder, auctionRepository, auctionBidRepository,
+        previousPointReader = previousPointReader,
+    )
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
 
     private val placeBet = PlaceBetHandler(
@@ -118,19 +138,7 @@ class TurnDaemonCommandDispatcher(
         prevBetAmountDbReader = bettingRepository?.let { repo ->
             { bettingId: Int, userId: Int -> repo.sumAmountByBettingIdAndUserId(bettingId, userId).toInt() }
         } ?: { _, _ -> 0 },
-        // PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
-        // (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
-        previousPointReader = inheritanceRepository?.let { repo ->
-            { ownerId: Int ->
-                repo.findByTableAndNamespaceAndKey("inheritance", "inheritance_$ownerId", "previous")
-                    ?.let { row ->
-                        ((runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*>)
-                            ?.getOrNull(0) as? Number)?.toDouble()
-                    } ?: 0.0
-            }
-        } ?: { ownerId ->
-            ((world.getState().meta["inheritancePrevious"] as? Map<*, *>)?.get(ownerId) as? Number)?.toDouble() ?: 0.0
-        },
+        previousPointReader = previousPointReader,
     )
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
