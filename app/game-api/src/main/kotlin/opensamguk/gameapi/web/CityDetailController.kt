@@ -167,11 +167,13 @@ class CityDetailController(
         @RequestParam(required = false) generalId: Int?,
         @PathVariable id: Int,
     ): ResponseEntity<CityDetailResponse> {
-        val c = cities.findById(id).orElse(null) ?: return ResponseEntity.notFound().build()
-
         // identity → myNation (principal 우선, ?generalId= fallback, 익명이면 null).
         val general = (userId?.let { resolver.resolve(it)?.general })
             ?: generalId?.let { generals.findById(it).orElse(null) }
+
+        // P0-12 — id<=0이면 현재 장수 소재 도시로 해석(legacy b_currentCity.php 패러티).
+        val effectiveId = if (id <= 0) general?.cityId?.takeIf { it > 0 } ?: id else id
+        val c = cities.findById(effectiveId).orElse(null) ?: return ResponseEntity.notFound().build()
         val myNation: Int? = general?.nationId?.takeIf { it != 0 }
 
         // 가시성: 내 소재 도시(재야 포함) OR 아국 소유 OR spy intel OR 아국 장수 주둔 (func_map.php fog 패러티).
