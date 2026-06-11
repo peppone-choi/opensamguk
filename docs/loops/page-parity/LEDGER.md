@@ -15,6 +15,7 @@
 | 8 | P0-24 `inherit` 능력치 초기화(ResetStat) 폼 UI + `api.resetStat` 헬퍼 | BE 409 green + FE tsc clean + 갭 1 닫힘 | Workflow 에이전트 수정 + tsc PASS | 채택 | 기본3(통/무/지)+추가3(통+/무+/지+) 입력 폼, `POST /api/instant-action/ResetStat` 연동, 유산포인트 가드 |
 | 9 | P0-04 `auction` 입찰/등록/개설 호출부 `isIntakeQueued`/`isIntakeDenied` 가드 적용 | BE 409 green + FE tsc clean + 갭 1 닫힘 | fresh 서브에이전트(ce-testing-reviewer) — tsc + 코드 리뷰, score: PASS | 채택 | `AuctionResource`/`AuctionUniqueItem` 3개 호출부에 가드 적용, unconditional success toast 제거 |
 | 10 | P0-06 `BettingDetail` 베팅 제출 호출부 `isIntakeQueued`/`isIntakeDenied` 가드 적용 + implicit else | BE 409 green + FE tsc clean + 갭 1 닫힘 | fresh 서브에이전트(ce-testing-reviewer) — tsc + 코드 리뷰, feedback: implicit else 추가 | 채택 | `submitBet`에 가드 적용, 채점자 feedback 반영(implicit else→'베팅 처리 중 오류가 발생했습니다.') |
+| 11 | P0-12 `CityDetailController` id<=0 → general.cityId fallback (legacy b_currentCity.php 패러티) | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | id<=0 시 `findById(0)` null→404. general 먼저 resolve 후 `effectiveId=general.cityId`로 city 조회. |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 

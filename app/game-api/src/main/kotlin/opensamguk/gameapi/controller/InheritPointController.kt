@@ -47,8 +47,8 @@ class InheritPointController(
 ) {
 
     /** Legacy `GameConst::$defaultStatMin/$defaultStatMax` clamp bounds for the 유산 stat display. */
-    private val statMin = 10
-    private val statMax = 90
+    private val statMin = GameConst.defaultStatMin
+    private val statMax = GameConst.defaultStatMax
 
     /**
      * Faithful `calcResetAttrPoint($level)`: grow [GameConst.inheritResetAttrPointBase] as a Fibonacci

@@ -650,12 +650,12 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.inheritActionCost.resetTurnTime").value(1000))
             .andExpect(jsonPath("$.inheritActionCost.randomUnique").value(3000))
             .andExpect(jsonPath("$.inheritActionCost.bornStatPoint").value(1000))
-            // stat clamp to [10,90]: leadership 95→90, strength 5→10, intel 80→80
-            .andExpect(jsonPath("$.currentStat.leadership").value(90))
-            .andExpect(jsonPath("$.currentStat.strength").value(10))
+            // stat clamp to [15,80](GameConst): leadership 95→80, strength 5→15, intel 80→80
+            .andExpect(jsonPath("$.currentStat.leadership").value(80))
+            .andExpect(jsonPath("$.currentStat.strength").value(15))
             .andExpect(jsonPath("$.currentStat.intel").value(80))
-            .andExpect(jsonPath("$.currentStat.statMin").value(10))
-            .andExpect(jsonPath("$.currentStat.statMax").value(90))
+            .andExpect(jsonPath("$.currentStat.statMin").value(15))
+            .andExpect(jsonPath("$.currentStat.statMax").value(80))
             .andExpect(jsonPath("$.lastInheritPointLogs.length()").value(0))
     }
 
