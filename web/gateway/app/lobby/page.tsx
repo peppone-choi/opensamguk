@@ -32,6 +32,7 @@ interface ServerGameInfo {
     blockGeneralCreate: number;
     defaultStatTotal: number;
     otherTextInfo: string;
+    status: string;
 }
 interface ServerMeInfo {
     name: string;

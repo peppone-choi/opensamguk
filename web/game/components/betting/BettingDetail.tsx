@@ -12,7 +12,7 @@
 // write: api.commands.placeBet({bettingId, bettingType, amount})(wire 코드 기존).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied } from '../../lib/api';
 
 // ── 와이어 타입 ──────────────────────────────────────────────────────────────────────────
 interface SelectItem {
@@ -232,18 +232,32 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
 
     async function submitBet() {
         if (!info) return;
+        if (pickedBetType.size === 0) {
+            onToast('후보를 선택해 주세요.');
+            return;
+        }
+        if (betPoint <= 0) {
+            onToast('베팅 금액은 0보다 커야 합니다.');
+            return;
+        }
         if (generalId == null) {
             onToast('장수가 없어 베팅할 수 없습니다.');
             return;
         }
         const bettingType = JSON.parse(pickedBetTypeKey) as number[];
         try {
-            await api.commands.placeBet(
+            const res = await api.commands.placeBet(
                 { bettingId: info.id, bettingType, amount: betPoint },
                 generalId,
             );
-            onToast('베팅했습니다');
-            await loadBetting(info.id);
+            if (isIntakeQueued(res)) {
+                onToast('베팅했습니다');
+                await loadBetting(info.id);
+            } else if (isIntakeDenied(res)) {
+                onToast(res.reason ?? '베팅할 수 없습니다.');
+            } else {
+                onToast('베팅 처리 중 오류가 발생했습니다.');
+            }
         } catch (e) {
             console.error(e);
             onToast('베팅에 실패했습니다.');
@@ -308,7 +322,7 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
                         type="number" value={betPoint} min={10} max={1000} step={10}
                         onChange={e => setBetPoint(Math.trunc(Number(e.target.value)))}
                     />
-                    <button onClick={() => void submitBet()}>베팅</button>
+                    <button onClick={() => void submitBet()} disabled={pickedBetType.size === 0 || betPoint <= 0}>베팅</button>
                 </div>
             )}
 

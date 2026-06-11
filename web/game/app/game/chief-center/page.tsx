@@ -5,7 +5,7 @@
 // 12/11/10/9/8/7/6/5)을 카드 그리드로 렌더하고, 각 칸은 점유 장수 + 직책별 예약 국가 명령(slot별 brief)을
 // 보여준다. 내 직책 칸(officerLevel === myOfficerLevel)에서는 슬롯을 골라 commandList(사령부 명령 팔레트)
 // 에서 명령을 선택해 예약할 수 있다 → CommandModal을 그 명령 value + 그 turnIdx에 pin해 띄운다.
-// POST /api/command/{value}?generalId=&turnIdx= (nation_turn 링). 팔레트는 백엔드 commandList가
+// POST /api/command/nation/bulk?generalId= (nation_turn 링 — P0-09). 팔레트는 백엔드 commandList가
 // 내려보내는 명령(현재 F4StateText.CHIEF_COMMAND_TABLE의 6개 카테고리: 휴식/인사/외교/특수/전략/기타)만
 // 렌더하며, 렌더된 명령은 모두 이 경로를 탄다. event_*연구 9종은 레지스트리 등록·ring 배선돼 있으나
 // 이 테이블에는 아직 미포함 — 백엔드가 테이블에 포함시키면 함께 노출된다.
@@ -265,6 +265,7 @@ export default function ChiefCenterPage() {
                         refresh();
                         fetchData();
                     }}
+                    isNationCommand
                 />
             )}
         </Shell>

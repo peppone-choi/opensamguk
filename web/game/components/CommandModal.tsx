@@ -58,6 +58,8 @@ interface CommandModalProps {
     amountGuide?: number[];
     /** Page-fixed args merged into every submit body (e.g. {auctionId}, {bettingId}, {isUnique}). */
     extraArgs?: Record<string, unknown>;
+    /** When true, submits via `POST /api/command/nation/bulk` (nation_turn) instead of the personal `/api/command/{code}` (general_turn). */
+    isNationCommand?: boolean;
 }
 
 // Fallback catalog (only used when availableCommands() is absent/empty). Minimal — keeps the modal usable
@@ -98,6 +100,7 @@ export default function CommandModal({
     amountMax,
     amountGuide,
     extraArgs,
+    isNationCommand,
 }: CommandModalProps) {
     // Pinned command (F4 C1): synthesize a one-item AvailableCommand and pre-select it so the modal
     // opens straight on the arg sub-form. `reqArg` follows whether an argType was supplied.
@@ -171,12 +174,19 @@ export default function CommandModal({
             // Page-fixed args (auctionId/bettingId/nationId/isUnique …) merge BENEATH the picked arg
             // so an explicit user pick wins on a key collision.
             const fullBody = { ...(extraArgs ?? {}), ...body };
-            const res = await api.command<{ status: string; reason?: string }>(
-                cmd.value,
-                fullBody,
-                generalId,
-                turnIdx,
-            );
+            let res: { status: string; reason?: string };
+            if (isNationCommand) {
+                res = await api.commandQueue.nationBulk(generalId, [
+                    { action: cmd.value, turnList: [turnIdx], arg: fullBody },
+                ]);
+            } else {
+                res = await api.command<{ status: string; reason?: string }>(
+                    cmd.value,
+                    fullBody,
+                    generalId,
+                    turnIdx,
+                );
+            }
             if (res.status === 'AVAILABLE') {
                 onToast(`${cmd.simpleName} 명령이 예약되었습니다.`, 'success');
                 onReserved?.();

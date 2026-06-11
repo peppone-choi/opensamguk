@@ -85,6 +85,7 @@ class ServerBasicInfoController(
             blockGeneralCreate = intOrNull(config["block_general_create"]) ?: 0,
             defaultStatTotal = GameConst.defaultStatTotal,
             otherTextInfo = otherTextInfo,
+            status = w.status,
         )
     }
 

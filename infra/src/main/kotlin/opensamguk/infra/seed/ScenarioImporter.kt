@@ -137,8 +137,8 @@ class ScenarioImporter(
             """
             INSERT INTO world_state
                 (id, scenario_code, current_year, current_month, tick_seconds,
-                 config, meta, start_year, start_time, turn_term, isunited, hidden_seed)
-            VALUES (1, ?, ?, 1, ?, ?, ?, ?, ?, ?, 0, ?)
+                 config, meta, start_year, start_time, turn_term, isunited, hidden_seed, status)
+            VALUES (1, ?, ?, 1, ?, ?, ?, ?, ?, ?, 0, ?, 'OPEN')
             """.trimIndent(),
             scenarioCode, startYear, tickSeconds,
             jsonb(config), jsonb(meta), startYear, ts, turnTerm, hiddenSeed,

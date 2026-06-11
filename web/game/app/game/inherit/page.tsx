@@ -19,11 +19,11 @@
 //   store action captions (다음 전투 특기 선택 / 유니크 경매 / 랜덤 턴 초기화 / 랜덤 유니크 획득 /
 //   즉시 전투 특기 초기화), 장수 소유자 확인, 능력치 초기화, 유산 포인트 변경 내역.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
-import { api } from '../../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type { InheritPointResponse } from '../../../types/game';
 
@@ -139,6 +139,14 @@ export default function InheritPage() {
     const [buyModal, setBuyModal] = useState<BuyModalSpec | null>(null);
     // F4 C2 — the 다음 전투 특기 select pick (drives the inheritSetNextSpecialWar extraArgs).
     const [nextSpecialPick, setNextSpecialPick] = useState<string>('');
+    // P0-24 — ResetStat form state (기본3+추가3).
+    const [baseLeadership, setBaseLeadership] = useState(55);
+    const [baseStrength, setBaseStrength] = useState(55);
+    const [baseIntel, setBaseIntel] = useState(55);
+    const [bonusLeadership, setBonusLeadership] = useState(0);
+    const [bonusStrength, setBonusStrength] = useState(0);
+    const [bonusIntel, setBonusIntel] = useState(0);
+    const initRef = useRef(false);
 
     function showToast(msg: string) {
         setToast(msg);
@@ -167,6 +175,52 @@ export default function InheritPage() {
 
     useEffect(() => load(), []);
 
+    async function handleResetStat() {
+        if (generalId == null) {
+            showToast('장수가 없어 초기화할 수 없습니다.');
+            return;
+        }
+        const leadership = baseLeadership;
+        const strength = baseStrength;
+        const intel = baseIntel;
+        const bl = bonusLeadership;
+        const bs = bonusStrength;
+        const bi = bonusIntel;
+
+        if (leadership + strength + intel !== 165) {
+            showToast('능력치 총합이 165가 아닙니다. 다시 입력해주세요!');
+            return;
+        }
+        const bonusSum = bl + bs + bi;
+        if (bonusSum > 0 && (bonusSum < 3 || bonusSum > 5)) {
+            showToast('추가 능력치 합이 잘못 지정되었습니다. 다시 입력해주세요!');
+            return;
+        }
+
+        const args: {
+            leadership: number;
+            strength: number;
+            intel: number;
+            inheritBonusStat?: number[];
+        } = { leadership, strength, intel };
+        if (bonusSum > 0) {
+            args.inheritBonusStat = [bl, bs, bi];
+        }
+
+        try {
+            const out = await api.resetStat(args, generalId);
+            if (isIntakeQueued(out)) {
+                showToast('능력치 초기화가 접수되었습니다.');
+                refresh();
+                load();
+            } else if (isIntakeDenied(out)) {
+                showToast(out.reason || '초기화가 거부되었습니다.');
+            }
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : '요청에 실패했습니다.');
+        }
+    }
+
     function openBuy(spec: BuyModalSpec) {
         if (generalId == null) {
             showToast('장수가 없어 구매할 수 없습니다.');
@@ -183,6 +237,16 @@ export default function InheritPage() {
     const availableTargetGeneral = data?.availableTargetGeneral ?? {};
     const currentStat = data?.currentStat;
     const logs = data?.lastInheritPointLogs ?? [];
+
+    // P0-24 — initialize ResetStat inputs from current stat once on load.
+    useEffect(() => {
+        if (currentStat && !initRef.current) {
+            setBaseLeadership(currentStat.leadership);
+            setBaseStrength(currentStat.strength);
+            setBaseIntel(currentStat.intel);
+            initRef.current = true;
+        }
+    }, [currentStat]);
 
     // Derived display points (PageInheritPoint.vue): sum = floor(Σ items), new = sum − previous.
     const totalPoint = Math.floor(Object.values(items).reduce((acc, v) => acc + v, 0));
@@ -373,19 +437,99 @@ export default function InheritPage() {
                     <div style={labelStyle}>능력치 초기화</div>
                     <div style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}>
                         <div style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>기본 능력치</div>
-                        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
-                            <span>통 {currentStat?.leadership ?? 0}</span>
-                            <span>무 {currentStat?.strength ?? 0}</span>
-                            <span>지 {currentStat?.intel ?? 0}</span>
+                        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                통
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={baseLeadership}
+                                    min={currentStat?.statMin ?? 15}
+                                    max={currentStat?.statMax ?? 80}
+                                    onChange={(e) => setBaseLeadership(Number(e.target.value))}
+                                    style={{ width: '5ch' }}
+                                />
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                무
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={baseStrength}
+                                    min={currentStat?.statMin ?? 15}
+                                    max={currentStat?.statMax ?? 80}
+                                    onChange={(e) => setBaseStrength(Number(e.target.value))}
+                                    style={{ width: '5ch' }}
+                                />
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                지
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={baseIntel}
+                                    min={currentStat?.statMin ?? 15}
+                                    max={currentStat?.statMax ?? 80}
+                                    onChange={(e) => setBaseIntel(Number(e.target.value))}
+                                    style={{ width: '5ch' }}
+                                />
+                            </label>
                         </div>
                         <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)', fontSize: 'var(--text-xs)' }}>
-                            범위: {currentStat?.statMin ?? 0} ~ {currentStat?.statMax ?? 0}
+                            범위: {currentStat?.statMin ?? 0} ~ {currentStat?.statMax ?? 0} / 합 165
+                        </div>
+                        <div style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>추가 능력치</div>
+                        <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                통+
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={bonusLeadership}
+                                    min={0}
+                                    onChange={(e) => setBonusLeadership(Number(e.target.value))}
+                                    style={{ width: '5ch' }}
+                                />
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                무+
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={bonusStrength}
+                                    min={0}
+                                    onChange={(e) => setBonusStrength(Number(e.target.value))}
+                                    style={{ width: '5ch' }}
+                                />
+                            </label>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                                지+
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={bonusIntel}
+                                    min={0}
+                                    onChange={(e) => setBonusIntel(Number(e.target.value))}
+                                    style={{ width: '5ch' }}
+                                />
+                            </label>
+                        </div>
+                        <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)', fontSize: 'var(--text-xs)' }}>
+                            합 3~5 (0이면 랜덤 배분)
                         </div>
                     </div>
                     <div style={infoStyle}>
                         시즌 당 1회에 한 해 능력치를 초기화합니다.<br />
                         <span style={costStyle}>추가 능력치 필요 포인트: {(cost?.bornStatPoint ?? 0).toLocaleString()}</span>
                     </div>
+                    <button
+                        type="button"
+                        style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                        onClick={handleResetStat}
+                        disabled={generalId == null}
+                    >
+                        초기화
+                    </button>
                 </GameCard>
             </div>
 

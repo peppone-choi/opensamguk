@@ -41,6 +41,9 @@ class WorldStateReadEntity(
     @Convert(converter = MetaJsonConverter::class)
     @Column(name = "meta", columnDefinition = "jsonb")
     var meta: Map<String, Any?> = linkedMapOf(),
+
+    @Column(name = "status")
+    var status: String = "OPEN",
 )
 
 interface WorldStateReadRepository : JpaRepository<WorldStateReadEntity, Int>

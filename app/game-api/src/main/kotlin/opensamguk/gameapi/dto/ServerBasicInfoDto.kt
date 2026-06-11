@@ -33,6 +33,8 @@ data class ServerGameInfo(
     val blockGeneralCreate: Int, // config.block_general_create (bit&1 = 장수생성 금지)
     val defaultStatTotal: Int, // GameConst.defaultStatTotal (장수 생성 폼 캡)
     val otherTextInfo: String, // '표준' 또는 '랜덤 임관 전용' 등
+    /** 서버 운영 상태 — CLOSED / PRE_OPEN / OPEN */
+    val status: String,
 )
 
 /** devsam `$me` 블록 — owner=userID 장수의 이름/초상(없으면 부모가 me=null). */

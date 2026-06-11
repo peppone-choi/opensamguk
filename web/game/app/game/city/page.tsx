@@ -32,8 +32,8 @@ import {
 // formatInjury 색으로 능력치를 물들인다(값은 그대로). injury==0이면 plain.
 function StatCell({ value, injury }: { value: number; injury: number }) {
     if (injury > 0) {
-        const [, color] = formatInjury(injury);
-        return <span style={{ color }}>{value}</span>;
+        const woundedValue = Math.trunc(value * (100 - injury) / 100);
+        return <span style={{ color: 'red' }}>{woundedValue}</span>;
     }
     return <>{value}</>;
 }

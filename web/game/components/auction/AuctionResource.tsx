@@ -10,7 +10,7 @@
 // write: api.commands.auctionBid / auctionOpenBuyRice / auctionOpenSellRice (wire 코드 기존).
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied } from '../../lib/api';
 import { formatLog } from '../../lib/utilGame';
 
 // ── D1 와이어 타입(game-api AuctionDto.kt와 동형) ──────────────────────────────────────────
@@ -120,9 +120,13 @@ export default function AuctionResource({ generalId, onToast }: Props) {
             return;
         }
         try {
-            await api.commands.auctionBid({ auctionId: a.id, amount }, generalId);
-            onToast('입찰했습니다.');
-            await refresh();
+            const res = await api.commands.auctionBid({ auctionId: a.id, amount }, generalId);
+            if (isIntakeQueued(res)) {
+                onToast('입찰했습니다.');
+                await refresh();
+            } else if (isIntakeDenied(res)) {
+                onToast(res.reason ?? '입찰할 수 없습니다.');
+            }
         } catch (e) {
             console.error(e);
             onToast('입찰에 실패했습니다.');
@@ -137,13 +141,18 @@ export default function AuctionResource({ generalId, onToast }: Props) {
         const { type, amount, startBidAmount, finishBidAmount, closeTurnCnt } = openAuctionInfo;
         try {
             const args = { amount, startBidAmount, finishBidAmount, closeTurnCnt };
+            let res;
             if (type === 'buyRice') {
-                await api.commands.auctionOpenBuyRice<{ auctionID?: number }>(args, generalId);
+                res = await api.commands.auctionOpenBuyRice<{ auctionID?: number }>(args, generalId);
             } else {
-                await api.commands.auctionOpenSellRice<{ auctionID?: number }>(args, generalId);
+                res = await api.commands.auctionOpenSellRice<{ auctionID?: number }>(args, generalId);
             }
-            onToast('경매로 등록되었습니다.');
-            await refresh();
+            if (isIntakeQueued(res)) {
+                onToast('경매로 등록되었습니다.');
+                await refresh();
+            } else if (isIntakeDenied(res)) {
+                onToast(res.reason ?? '경매 등록할 수 없습니다.');
+            }
         } catch (e) {
             console.error(e);
             onToast('경매 등록에 실패했습니다.');

@@ -20,7 +20,7 @@
 //     미제공이라 보류. target(아이템 키)만 title 보조로 노출(툴팁 없음).
 
 import { useCallback, useEffect, useState } from 'react';
-import { api } from '../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied } from '../../lib/api';
 
 // ── D2/D3 와이어 타입(game-api AuctionDto.kt와 동형) ──────────────────────────────────────
 interface UniqueItemAuctionBidder {
@@ -147,10 +147,14 @@ export default function AuctionUniqueItem({ generalId, onToast }: Props) {
         // legacy confirm 다이얼로그 verbatim.
         if (!window.confirm(`${auctionInfo.title}에 ${amount}유산포인트를 입찰하시겠습니까?`)) return;
         try {
-            await api.commands.auctionBid({ auctionId: auctionInfo.id, amount }, generalId);
-            onToast('입찰이 완료되었습니다.');
-            await refreshList();
-            await refreshDetail(currentAuctionId);
+            const res = await api.commands.auctionBid({ auctionId: auctionInfo.id, amount }, generalId);
+            if (isIntakeQueued(res)) {
+                onToast('입찰이 완료되었습니다.');
+                await refreshList();
+                await refreshDetail(currentAuctionId);
+            } else if (isIntakeDenied(res)) {
+                onToast(res.reason ?? '입찰할 수 없습니다.');
+            }
         } catch (e) {
             console.error(e);
             onToast('입찰에 실패했습니다.');

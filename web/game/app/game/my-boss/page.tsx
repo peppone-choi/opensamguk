@@ -5,11 +5,10 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api } from '../../../lib/api';
-import { formatNumber } from '../../../lib/format';
-import type { General } from '../../../types/game';
+import type { MyBossResponse } from '../../../lib/types';
 
 export default function MyBossPage() {
-    const [boss, setBoss] = useState<General | null>(null);
+    const [boss, setBoss] = useState<MyBossResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -17,7 +16,7 @@ export default function MyBossPage() {
         setLoading(true);
         setError('');
         try {
-            const res = await api.myBoss<General>();
+            const res = await api.myBoss<MyBossResponse>();
             setBoss(res);
         } catch {
             setError('상관 정보를 불러올 수 없습니다.');
@@ -55,12 +54,12 @@ export default function MyBossPage() {
         );
     }
 
-    if (!boss) {
+    if (boss == null || boss.nationId === 0 || !boss.hasBoss) {
         return (
             <Shell>
                 <div className="page-content">
                     <h1>내 상관</h1>
-                    <p className="text-muted">상관 정보가 없습니다.</p>
+                    <p className="text-muted">재야입니다.</p>
                 </div>
             </Shell>
         );
@@ -72,38 +71,8 @@ export default function MyBossPage() {
                 <h1>내 상관</h1>
                 <GameCard className="boss-card">
                     <div className="card-header">
-                        <h2>{boss.name}</h2>
-                        <StatusBadge variant="gold">{boss.officerLevel}급</StatusBadge>
-                    </div>
-                    <div className="stat-grid">
-                        <div className="stat-item">
-                            <span className="stat-label">통솔</span>
-                            <span className="stat-value">{boss.leadership}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">무력</span>
-                            <span className="stat-value">{boss.strength}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">지력</span>
-                            <span className="stat-value">{boss.intel}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">경험</span>
-                            <span className="stat-value">{formatNumber(boss.experience)}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">충성</span>
-                            <span className="stat-value">{boss.devotion}</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-label">병사</span>
-                            <span className="stat-value">{formatNumber(boss.crew)}</span>
-                        </div>
-                    </div>
-                    <div className="resource-bar">
-                        <span>금: {formatNumber(boss.gold)}</span>
-                        <span>쌀: {formatNumber(boss.rice)}</span>
+                        <h2>{boss.bossName}</h2>
+                        <StatusBadge variant="gold">{boss.bossOfficerLevel}급</StatusBadge>
                     </div>
                 </GameCard>
             </div>

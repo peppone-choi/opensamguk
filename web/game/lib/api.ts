@@ -398,6 +398,12 @@ export const api = {
     instantAction: (code: string, generalId: number, args?: unknown) =>
         post<IntakeOutcome>(`/api/instant-action/${code}?generalId=${generalId}`, args),
 
+    // 유산 능력치 초기화 — POST /api/instant-action/ResetStat (P0-24)
+    resetStat: (
+        args: { leadership: number; strength: number; intel: number; inheritBonusStat?: number[] },
+        generalId: number,
+    ) => post<IntakeOutcome>(`/api/instant-action/ResetStat?generalId=${generalId}`, args),
+
     // ── 예약 큐 조작 (W6e bulk/push/repeat × {general, nation}) ───────────────────────────────
     // PHP SammoAPI.Command.* / NationCommand.*(PushCommand·RepeatCommand·ReserveBulkCommand) 대응.
     // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP byte-parity deny 문자열.

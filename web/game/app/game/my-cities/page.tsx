@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
@@ -161,6 +161,47 @@ export default function MyCitiesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    type SortKey = '이름' | '등급' | '민심' | '농업' | '상업' | '치안' | '수비' | '성벽' | '인구';
+    const [sortKey, setSortKey] = useState<SortKey>('이름');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+    const sortedCities = useMemo(() => {
+        const dir = sortDir === 'asc' ? 1 : -1;
+        return [...cities].sort((a, b) => {
+            let cmp = 0;
+            switch (sortKey) {
+                case '이름':
+                    cmp = a.name.localeCompare(b.name, 'ko');
+                    break;
+                case '등급':
+                    cmp = a.level - b.level;
+                    break;
+                case '민심':
+                    cmp = a.trust - b.trust;
+                    break;
+                case '농업':
+                    cmp = a.agriculture - b.agriculture;
+                    break;
+                case '상업':
+                    cmp = a.commerce - b.commerce;
+                    break;
+                case '치안':
+                    cmp = a.security - b.security;
+                    break;
+                case '수비':
+                    cmp = a.defense - b.defense;
+                    break;
+                case '성벽':
+                    cmp = a.wall - b.wall;
+                    break;
+                case '인구':
+                    cmp = a.population - b.population;
+                    break;
+            }
+            return cmp * dir;
+        });
+    }, [cities, sortKey, sortDir]);
+
     const fetchData = async () => {
         setLoading(true);
         setError('');
@@ -226,10 +267,57 @@ export default function MyCitiesPage() {
             <div className="page-content">
                 <h1>세력 도시</h1>
                 <p className="page-subtitle">총 {cities.length}개</p>
+
+                {cities.length > 0 && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '4px 6px',
+                            marginBottom: 'var(--space-md)',
+                            fontSize: 'var(--text-sm)',
+                        }}
+                    >
+                        <span style={{ color: 'var(--text-secondary)', marginRight: 4 }}>정렬:</span>
+                        {(['이름', '등급', '민심', '농업', '상업', '치안', '수비', '성벽', '인구'] as SortKey[]).map(
+                            (key) => {
+                                const active = sortKey === key;
+                                return (
+                                    <button
+                                        key={key}
+                                        onClick={() => {
+                                            if (sortKey === key) {
+                                                setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+                                            } else {
+                                                setSortKey(key);
+                                                setSortDir('asc');
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '2px 8px',
+                                            borderRadius: 4,
+                                            border: '1px solid var(--border-color)',
+                                            background: active ? 'var(--accent)' : 'transparent',
+                                            color: active ? '#fff' : 'var(--text-primary)',
+                                            cursor: 'pointer',
+                                            fontSize: 'inherit',
+                                        }}
+                                    >
+                                        {key}
+                                        {active && (sortDir === 'asc' ? ' ▲' : ' ▼')}
+                                    </button>
+                                );
+                            }
+                        )}
+                    </div>
+                )}
+
                 {cities.length === 0 ? (
                     <p className="text-muted">소속 도시가 없습니다.</p>
                 ) : (
-                    cities.map((c) => <CityCard key={c.cityId} city={c} nationColor={nationColor} />)
+                    sortedCities.map((c) => (
+                        <CityCard key={c.cityId} city={c} nationColor={nationColor} />
+                    ))
                 )}
             </div>
         </Shell>
