@@ -23,6 +23,7 @@
 | 16 | P0-10 chief-center 당기기/미루기/반복 버튼 추가 — `api.commandQueue.nationPush`/`nationRepeat` 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `ChiefCommandReserve`에 numeric input + 적용 버튼 2종, `generalId` prop widen, `chief-center/page` 전달. |
 | 17 | P0-02 개인 예약 명령 당기기/미루기/반복 버튼 추가 — `api.commandQueue.push`/`repeat` 연동 | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `PartialReservedCommand`에 numeric input + 적용 버튼 2종, `onToast`로 성공/실패 알림, 예약 후 `refreshKey` 증가. |
 | 18 | MailboxController `mailbox`/`unread` diplomacy 마스킹 적용 — `secretPermission` + `applyDiplomacyMask` | 409→409 suites green + FE tsc clean + 갭 1 닫힘 | gate.sh backend XML + pnpm tsc (결정적) | 채택 | `mailbox()`/`unread()`에 `secretPermission`+`applyDiplomacyMask` 추가, 테스트 `generals.findAll()` stub 보강 |
+| 19 | (삭제 바퀴) P0-14 city 守·수비○ 위조 표시 '-' 마스킹 — defence_train 원천 배선 전 fabrication 제거 + `formatDefenceTrain` import 제거 | BE diff-0(409 유지) + FE tsc clean + web/game 65/65 + 갭 1 닫힘(p) | fresh 서브에이전트(grader-w19) — legacy b_currentCity.php:304-313,434 대조 + tsc/test, VERDICT PASS | 채택 | 빼기 주기 이행(14~18 더하기 연속). 근본(defence_train read-chain 배선)은 백로그 유지 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
@@ -35,6 +36,7 @@
 - General/GetGeneralLog self-view 변형 (checkPermission 무력화 — 재야 포함 본인 로그 열람, PHP General/GetGeneralLog.php:43-50) — 바퀴1 채점자 발견
 - secretPermission 단일소스화 (GeneralLogController ↔ DiplomacyController 중복) + penalty/ambassador/auditor/secretlimit 분기 (schema BLOCKED)
 - 페이지 감사 P0 54건 — PAGE_PARITY_AUDIT_2026-06-10.md (W0 파운데이션 8종 → W1 A~O 웨이브)
+- P0-14 근본: GeneralReadEntity `defence_train` read-chain 배선(스키마+flush) → 守/수비○ 마스킹 해제 + formatDefenceTrain 복원
 
 ## 승인 대기
 

@@ -9,7 +9,6 @@ import Gauge from '../../../components/game/Gauge';
 import { api } from '../../../lib/api';
 import type { CityDetailResponse, CityGeneralRow } from '../../../types/game';
 import {
-    formatDefenceTrain,
     formatInjury,
     getNPCColor,
 } from '../../../lib/utilGame';
@@ -200,7 +199,9 @@ function CityDetail() {
                                     <th>60병장</th>
                                     <td>{`${m.crew60.toLocaleString()}/${m.gen60.toLocaleString()}`}</td>
                                     <th>수비○</th>
-                                    <td>{`${m.crewDef.toLocaleString()}/${m.genDef.toLocaleString()}`}</td>
+                                    {/* 수비○ = min(훈련,사기)>=defence_train 집계. defence_train 원천 미배선(BE 0 하드코딩)
+                                        → 무장 장수 전원이 집계돼 과집계 위조. 배선 전 '-' 마스킹(수치 날조 없음). */}
+                                    <td>-</td>
                                 </tr>
                                 <tr>
                                     <th>장수</th>
@@ -256,8 +257,8 @@ function CityDetail() {
 }
 
 // 장수 상세표 행(cityGeneral.php). ourGeneral이면 병종/병사/훈련/사기/守(defenceTrain) 노출, 타국은 "?",
-// 재야는 "재 야". defenceTrain은 BE 원천 미배선(GeneralReadEntity defence_train 컬럼 부재) → 항상 0이 와서
-// formatDefenceTrain(0)='△'로 표기됨(BLOCKED — 실제 수비 훈련 기호는 원천 배선 후 정합).
+// 재야는 "재 야". defenceTrain은 BE 원천 미배선(GeneralReadEntity defence_train 컬럼 부재) →
+// 守는 '-' 마스킹(P0-14 — 전원 '△' 위조 표기 제거). 원천 배선 후 formatDefenceTrain 복원.
 function GeneralRow({ g }: { g: CityGeneralRow }) {
     return (
         <tr>
@@ -274,8 +275,9 @@ function GeneralRow({ g }: { g: CityGeneralRow }) {
             <td>{g.officerLevelText}</td>
             {g.ourGeneral ? (
                 <>
-                    {/* 守 = 수비 훈련도 기호(formatDefenceTrain). defenceTrain 원천 미배선 → 0 기준(BLOCKED). */}
-                    <td>{formatDefenceTrain(0)}</td>
+                    {/* 守 = 수비 훈련도 기호(formatDefenceTrain). defence_train 원천 미배선이라 전원 '△'로
+                        위조 표기되던 것을 '-' 마스킹(수치 날조 없음). 원천 배선 시 formatDefenceTrain 복원. */}
+                    <td>-</td>
                     <td>{g.crewTypeName}</td>
                     <td>{g.crew}</td>
                     <td>{g.train}</td>
