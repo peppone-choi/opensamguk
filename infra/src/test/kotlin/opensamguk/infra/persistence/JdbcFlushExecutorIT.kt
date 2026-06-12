@@ -253,4 +253,55 @@ class JdbcFlushExecutorIT {
             MapSqlParameterSource(),
         )
     }
+
+    /**
+     * lastTurnTime 영속화 회귀 가드 — 이 키가 flush 되지 않으면 WorldSnapshotLoader 가 부팅 시
+     * start_time 폴백으로 떨어져 **월드 시작부터 전 월을 재생**한다(2026-06-12 s1 프로드 실증:
+     * 엔진 재기동 → 19개월 이중 적용 + 로그 중복 INSERT). 기존 meta 키 보존(병합)도 같이 핀.
+     */
+    @Test
+    fun `world_state flush persists lastTurnTime into meta and preserves existing keys`() {
+        // pre: 기존 meta 키 심기 (startTime/startYear 류 보존 검증용).
+        jdbc.update(
+            "UPDATE world_state SET meta = CAST('{\"startYear\":181,\"hiddenSeed\":\"hs\"}' AS jsonb) WHERE id = 1",
+            MapSqlParameterSource(),
+        )
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf(
+                    "id" to 1, "current_year" to 190, "current_month" to 3,
+                    "last_turn_time" to "2026-06-12T00:30:00Z",
+                ),
+            ),
+        )
+
+        val meta = jdbc.queryForObject(
+            "SELECT meta::text FROM world_state WHERE id = 1",
+            MapSqlParameterSource(),
+            String::class.java,
+        )!!
+        assertEquals(true, meta.contains("\"lastTurnTime\": \"2026-06-12T00:30:00Z\"") || meta.contains("\"lastTurnTime\":\"2026-06-12T00:30:00Z\""))
+        assertEquals(true, meta.contains("\"startYear\": 181") || meta.contains("\"startYear\":181"))
+        assertEquals(true, meta.contains("hiddenSeed"))
+
+        // last_turn_time 미포함 페이로드는 meta 를 건드리지 않는다(키 유지).
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 4),
+            ),
+        )
+        val meta2 = jdbc.queryForObject(
+            "SELECT meta::text FROM world_state WHERE id = 1",
+            MapSqlParameterSource(),
+            String::class.java,
+        )!!
+        assertEquals(true, meta2.contains("lastTurnTime"))
+
+        // cleanup — 다른 테스트와의 격리(meta 원복).
+        jdbc.update(
+            "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1 WHERE id = 1",
+            MapSqlParameterSource(),
+        )
+    }
 }
