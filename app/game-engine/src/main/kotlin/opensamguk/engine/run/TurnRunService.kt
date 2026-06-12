@@ -204,7 +204,26 @@ open class TurnRunService(
         }
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).
-        val payload = buildFlushPayload()
+        //
+        // world_state 행에는 **post-tick 클럭**(새 연/월 + 이번 runTime = lastTurnTime)을 동봉한다 —
+        // PHP 도 턴 트랜잭션 안에서 새 연/월을 기록한다. 이걸 step 4 이후(다음 틱 flush)로 미루면
+        // world_state 가 항상 한 틱 구값이라, 재기동 시 마지막으로 처리된 월이 1회 재적용된다
+        // (2026-06-12 s1 실증 — lastTurnTime 영속화 직후에도 1틱 지연 잔존). 로그 스탬핑(toLogRow)은
+        // 여전히 flush 전 state(구 연/월)를 읽는다 — 골든이 핀한 라벨링이라 불변.
+        val previousTurnTime = world.getState().lastTurnTime
+        val preState = world.getState()
+        val startYear = (preState.meta["startYear"] as? Number)?.toInt() ?: 0
+        val startTime = Instant.parse(preState.meta["startTime"] as? String ?: Instant.now().toString())
+        val turnTerm = preState.tickSeconds / 60
+        val (newYear, newMonth) = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
+        val payload = buildFlushPayload().copy(
+            worldStateUpdate = linkedMapOf(
+                "id" to preState.id,
+                "current_year" to newYear,
+                "current_month" to newMonth,
+                "last_turn_time" to runTime.toString(),
+            ),
+        )
         flushExecutor.flush(payload)
         // 수명이 긴 recorder를 리셋해 이번 tick의 델타가 다음 tick에 재방출되지 않게 한다 — 특히
         // INSERT 전용 채널(board/betting/auction_bid/message)은 그러지 않으면 매 tick 행을 중복 INSERT한다.
@@ -212,12 +231,6 @@ open class TurnRunService(
         handler.recorder.clear()
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
-        val previousTurnTime = world.getState().lastTurnTime
-        val state = world.getState()
-        val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
-        val startTime = Instant.parse(state.meta["startTime"] as? String ?: Instant.now().toString())
-        val turnTerm = state.tickSeconds / 60
-        val (newYear, newMonth) = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
         world.setCurrentDate(newYear, newMonth)
         world.setLastTurnTime(runTime)
         val atIso = runTime.toString()
