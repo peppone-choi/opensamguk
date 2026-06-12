@@ -17,6 +17,11 @@
 
 **게이트 수치 (바퀴 26 시점)**: logic 2123 · engine 350 · game-api 301 · infra 87 · common 192, 전부 green.
 
+## 0a. 운영 사고 2건 + 근본수정 (06-12 새벽, 푸시 후 발견)
+
+1. **배포 파이프라인 사망 은폐**: 06-11 박스가 멀티서버 스택(`~/opensamguk-docker`)으로 이행하며 GH 러너 유실 + 루트 디스크(8G) 100% 포화 → deploy 런 pending→cancelled 연쇄로 바퀴 22~26 미배포가 조용히 누적. 복구: EBS 100G 확장(growpart) + 러너 v2.335.1 **systemd 서비스** 재설치 + deploy.yml 신 스택 재작성(`8808c94` — CI는 공유 스택만, 게임 서버는 서버별 IMAGE_TAG 고정 설계 존중, 갱신은 어드민/deployer bounce). SSH 키 = `개인프로젝트/opens.pem`(id_ed25519 아님).
+2. **"턴 되감김"의 정체 = 전 월 재생(replay)**: s1 엔진 bounce 직후 클럭이 182|6→181|1로 후퇴, 월당 ~2분으로 재생(월수입/AI 이중 적용 + 로그 중복). 근본 = `meta['lastTurnTime']`을 읽는 코드만 있고 **쓰는 코드가 없음** → 재기동마다 start_time 폴백. **근본수정 `953aa8d`**(flush가 매 틱 meta 병합 영속화 + IT 회귀 가드). 라이브 완화 = lastTurnTime 주입 + 중복 로그 5032행 삭제. **잔흔: s1 181|1~7 이중 적용(국가 74→92 증식) — 깨끗하게 하려면 s1 재시드(사용자 결정 대기)**.
+
 ## 0b. 다음 세션 우선순위
 
 1. **재채점 잔여 4건** (LEDGER 백로그): W-6 NF income null 크래시 · W-7 NF 권한 게이트 · W-8 nation_env read 채널(setBlockWar 100% deny) · W-10 che_선전포고 위조 로그 골든.
