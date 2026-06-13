@@ -24,9 +24,11 @@
 
 ## 최종 검증 (세션 종료)
 
-전-backend 게이트(5모듈, Docker up, fresh 채점 a766c776): **3080 tests 실 실패 0** — common 192 · logic 2130 · infra 93 · engine 364 · api 301. baseline 패러티 무손상(flag off 기본). 골든 CLEAN. AuctionFlushIT만 TC 플레이크(격리 pass).
+전-backend 게이트(5모듈, Docker up, fresh 채점 aa471a46): **3092 tests 실 실패 0** — common 192 · logic 2142 · infra 93 · engine 364 · api 301. baseline 패러티 무손상(flag `fiveStatLogic` off 기본). 골든 CLEAN. rename clean(stale 0).
 
-**커밋:** 2f35980(토대) · c815b64(read API+UI) · 2a4008f(carve-out) · 3e2bbdd(flag 로직) · 4367ec3(사이드로드) · 28252a4(docs). 로컬만, prod 미푸시.
+**5스탯 divergence 완성:** 데이터(RTK14+동명이인 지문) → 영속화(V16+flush/read) → read API → UI → flag-gated 로직 **4영역**(내정→정치·민심/인구→매력·등용→매력·외교→정치) → prod 사이드로드. 전부 `fiveStatLogic` off=devsam 패러티.
+
+**커밋(로컬, prod 미푸시):** 2f35980(토대) · c815b64(read API+UI) · 2a4008f(carve-out) · 3e2bbdd(B0/B1/B3 내정·민심) · 4367ec3(사이드로드) · 28252a4·91a1f88(docs) · 4f04761(B2 등용·B4 외교) · bb660c7(docs).
 
 ## 백로그 (가설 후보 — 한 바퀴당 1개씩만)
 
