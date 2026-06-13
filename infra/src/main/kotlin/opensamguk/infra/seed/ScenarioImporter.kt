@@ -530,13 +530,34 @@ internal object Rtk14Stats {
     /** name → (politics, charm). 리소스 부재/파싱실패 시 빈 맵(graceful — never crash). */
     private val table: Map<String, Pair<Int, Int>> by lazy { load() }
 
-    private fun load(): Map<String, Pair<Int, Int>> {
-        val raw = try {
+    /** prod 사이드로드용 외부 경로 키 — 코에이 IP 데이터를 Docker 이미지 밖에서 주입. */
+    private const val PATH_PROPERTY = "rtk14.stats.path"
+    private const val PATH_ENV = "RTK14_STATS_PATH"
+
+    /**
+     * RTK14 JSON 원문 읽기: ① `rtk14.stats.path` 시스템 프로퍼티 / `RTK14_STATS_PATH` env 의 파일시스템
+     * 경로(prod 사이드로드 — 미커밋 코에이 IP를 호스트에서 bind-mount), ② 클래스패스 RESOURCE(로컬 dev),
+     * ③ 둘 다 없으면 null. 어느 단계도 throw하지 않는다(graceful — 기본 50 fallback).
+     */
+    internal fun readRaw(
+        ext: String? = System.getProperty(PATH_PROPERTY) ?: System.getenv(PATH_ENV),
+    ): String? {
+        if (!ext.isNullOrBlank()) {
+            try {
+                val f = java.io.File(ext)
+                if (f.isFile) return f.readText(Charsets.UTF_8)
+            } catch (_: Exception) { /* 외부 경로 실패 시 클래스패스로 폴백 */ }
+        }
+        return try {
             Rtk14Stats::class.java.classLoader.getResourceAsStream(RESOURCE)
                 ?.use { it.readBytes().toString(Charsets.UTF_8) }
         } catch (_: Exception) {
             null
-        } ?: return emptyMap()
+        }
+    }
+
+    private fun load(): Map<String, Pair<Int, Int>> {
+        val raw = readRaw() ?: return emptyMap()
 
         return try {
             val root = opensamguk.infra.persistence.MetaJson.decode(raw)
