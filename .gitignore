@@ -49,3 +49,6 @@ tools/php-golden/probe_*.php
 
 # 감사 raw 스크래치(대용량, working dir 보존)
 docs/superpowers/gap/_*.raw.json
+
+# RTK14(삼국지14) 무장 스탯 = 코에이 IP, 절대 커밋 금지 (정치/매력 divergence 소스)
+**/rtk14_stats.local.json

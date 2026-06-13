@@ -282,6 +282,8 @@ class JdbcFlushExecutor(
                    last_turn = :last_turn,
                    penalty = :penalty,
                    meta = :meta,
+                   politics = :politics,
+                   charm = :charm,
                    updated_at = now()
              WHERE id = :id
             """.trimIndent(),

@@ -36,6 +36,9 @@ class GeneralRowMapperTest {
         "last_turn" to lastTurn,
         "penalty" to "{}",
         "meta" to meta,
+        // RTK14 분기 스탯(정치/매력) — V16 컬럼.
+        "politics" to 30,
+        "charm" to 40,
     )
 
     @Test
@@ -67,6 +70,23 @@ class GeneralRowMapperTest {
         assertEquals(4, cols["officer_level"])
         assertEquals(1500, cols["gold"])
         assertEquals(1200, cols["rice"])
+
+        // RTK14 분기 스탯(정치/매력) 라운드트립.
+        assertEquals(30, g.politics)
+        assertEquals(40, g.charm)
+        assertEquals(30, cols["politics"])
+        assertEquals(40, cols["charm"])
+    }
+
+    @Test
+    fun `politics and charm default to 50 when the columns are absent`() {
+        // V16 이전 행/컬럼 미포함 SELECT 에서도 graceful 기본 50.
+        val r = row("{}").toMutableMap()
+        r.remove("politics")
+        r.remove("charm")
+        val g = GeneralRowMapper.fromRow(r)
+        assertEquals(50, g.politics)
+        assertEquals(50, g.charm)
     }
 
     @Test

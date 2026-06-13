@@ -63,6 +63,9 @@ object GeneralRowMapper {
         lastTurn = LastTurn.fromRaw(MetaJson.decode(stringOf(row["last_turn"]))),
         penalty = MetaJson.decode(stringOf(row["penalty"])),
         meta = MetaJson.decode(stringOf(row["meta"])),
+        // RTK14 분기 스탯(정치/매력) — devsam 패러티 외, 컬럼 부재 시 기본 50.
+        politics = if (row.containsKey("politics")) intOf(row["politics"]) else 50,
+        charm = if (row.containsKey("charm")) intOf(row["charm"]) else 50,
     )
 
     /** Map a [ResultSet] (current row) to a logic [General]. */
@@ -94,6 +97,9 @@ object GeneralRowMapper {
         lastTurn = LastTurn.fromRaw(MetaJson.decode(rs.getString("last_turn"))),
         penalty = MetaJson.decode(rs.getString("penalty")),
         meta = MetaJson.decode(rs.getString("meta")),
+        // RTK14 분기 스탯(정치/매력) — V16 이후 NOT NULL DEFAULT 50 컬럼.
+        politics = rs.getInt("politics"),
+        charm = rs.getInt("charm"),
     )
 
     /**
@@ -129,6 +135,9 @@ object GeneralRowMapper {
         "last_turn" to MetaJson.encode(g.lastTurn.toRaw()),
         "penalty" to MetaJson.encode(g.penalty),
         "meta" to MetaJson.encode(g.meta),
+        // RTK14 분기 스탯(정치/매력) — 컬럼 맵 끝에 APPEND(기존 컬럼 순서 불변).
+        "politics" to g.politics,
+        "charm" to g.charm,
     )
 }
 
