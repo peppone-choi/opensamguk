@@ -12,8 +12,12 @@
 | 2 | 영속화+import: V16 마이그레이션 + GeneralRowMapper(read/write) + generalUpdate SQL + ScenarioImporter RTK14 룩업 | infra 89 + logic 2123 green / fail 0 | fresh 서브에이전트 a890ad9c (infra+logic 재실행) | 채택 | 정치/매력 seed→DB→메모리→flush 왕복 생존. generalCreateMany 무손상(DEFAULT 50). 골든 무수정. |
 | 2b | 동명이인 보정: RTK14 다중행에 통무지 지문 1:1 greedy 최적배정(오프라인) → exact 이름 keying, 로더 strip 제거 | infra 89 green / fail 0 | fresh 서브에이전트 a772d010 (infra 재실행) | 채택 | 유저 지적(중복이름). 마충1≠마충2 distinct(644 distinct/2 붕괴/32 fallback). 재현 스크립트 tools/rtk14/build_rtk14_stats.py 커밋(데이터는 IP gitignore). |
 | 5 | (조사) AvailableCommandsControllerTest 베이스라인 실패 = 실 회귀? | FAILED(backend, docker-down) → 격리 BUILD SUCCESSFUL | 격리 재실행(--rerun-tasks) | 폐기(무결함) | 환경탓: docker-down 전체-컨텍스트 오염/플레이크. 코드 수정 불요. Docker-up 전체 게이트서 재확인 백로그. |
-| 4 | W4 UI 노출: append-safe read DTO(GeneralReadEntity·PublicGeneral·Ranking·Identity)에 정치/매력 + 프론트 9파일 렌더. 패러티잠금 GeneralList 미접촉 | (진행중 — 워크플로 wf_82082fea) | fresh verify 에이전트(워크플로 Verify 페이즈) | 진행중 | generals 페이지(general-list 패러티잠금 소스)·join/inherit(폼)·admin5(집계) defer. |
+| 4 | W4 UI 노출: append-safe read DTO(GeneralReadEntity·PublicGeneral·Ranking·Identity)에 정치/매력 + 프론트 9파일 렌더. 패러티잠금 GeneralList 미접촉 | game-api 301/0/0 green + tsc 0err | fresh verify(wf_82082fea) RED(tsc 6) → 타입3보강 → fresh a92d1327 GREEN | 채택(수정후) | feTypes가 lib/api.ts·lib/types.ts 3타입(AdminGeneralDetail/ClaimableGeneral/FrontGeneralInfo) 누락→TS2339. politics?/charm? 보강. 커밋 c815b64. |
 | 6 | CLAUDE.md divergence carve-out 삽입(rule 6 뒤) + 메모리 project_five_stat_divergence | (규칙변경) → 강화 적용 | fresh 리뷰어 a8111801 (consistency) | 채택(수정후) | 리뷰서 구멍2개 발견→수정: ①baseline=살아있는 green게이트(archive 금지) ②비-RNG 내정/등용/외교만, 전투/AI/RNG 금지. 결론=**divergence 플래그**(off=패러티green, on=정치매력). Track B 아키텍처 확정. |
+
+| B0+B1 | foundation(GetStatValue politics/charm + WorldEnv.fiveStatDomestic 플래그) + 내정 intel→politics(flag·statName==intelligence 가드) @ CommerceInvestment/CheGisulYeongu | logic 2126 → 2130 green / fail 0 | fresh verify(wf_54a25cc5) | 채택 | flag-off baseline 골든 byte-동일. divergence 행동테스트 신설. 커밋 3e2bbdd. |
+| B3 | 민심/인구 leadership→charm(flag) @ CheJuminSeonjeong/CheJeongchakJangnyeo | logic 2130 green / fail 0 | fresh verify(wf_54a25cc5) GREEN | 채택 | 공유헬퍼 criticalRatioDomestic 불변. DevelopGolden 등 baseline green. FiveStatDomesticDivergenceTest 7건. |
+| 7 | prod 사이드로드: Rtk14Stats.readRaw에 env/property 외부경로 우선(파일시스템→classpath→null) | infra 89 → 93 green / fail 0 | fresh 채점 aed074e2 | 채택 | 코에이 IP를 이미지 밖 주입. readRaw(ext) param화로 글로벌 변이 없는 테스트. AuctionFlushIT는 TC 플레이크. 커밋 4367ec3. |
 
 ## 백로그 (가설 후보 — 한 바퀴당 1개씩만)
 

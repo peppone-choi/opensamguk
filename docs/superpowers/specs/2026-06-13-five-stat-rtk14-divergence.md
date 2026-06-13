@@ -55,7 +55,7 @@
 
 ## 운영 backlog
 
-- **prod 사이드로드:** RTK14 JSON 미커밋 → prod 배포 시 별도 경로로 서버에 전달 필요(시드 전). 미해결.
+- ✅ **prod 사이드로드(구현 완료, 커밋 4367ec3):** `Rtk14Stats.readRaw(ext)` — `rtk14.stats.path` 프로퍼티/`RTK14_STATS_PATH` env 파일시스템 경로 우선 → classpath → null(기본50). prod 배포: 파일 EC2 scp + 엔진 컨테이너 bind-mount + `RTK14_STATS_PATH=/data/rtk14_stats.local.json`(코에이 IP 미커밋 유지). 테스트 Rtk14StatsTest 4건.
 - `AvailableCommandsControllerTest` 단위 실패 1건(베이스라인 backend) — 별도 조사(W5).
 
 ## W6 — CLAUDE.md divergence carve-out 삽입안 (⚠️ 승인 대기 = 규칙 변경)
