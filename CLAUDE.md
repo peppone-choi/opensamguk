@@ -37,6 +37,8 @@ Modules (`settings.gradle`):
 5. **Faithful port, never fabricate.** Golden numbers/logs/seeds come **only** from a real PHP capture (`tools/php-golden`, Docker). If a value can't be captured faithfully, **quarantine it with proof** (sibling-code-path byte-match) + log to the phase backlog — do **not** invent it, do **not** weaken a test or edit a golden. On a mismatch: fix the Kotlin impl, not the golden.
 6. **Insertion order matters.** jsonb / conflict-map / trigger-caller keys preserve insertion order (`LinkedHashMap`), never re-keyed by id. PHP 8.0+ sorts are stable — never add a non-stable secondary comparator.
 
+**Sanctioned divergence — 정치·매력 5스탯 (1.0.0+, narrowly scoped).** `politics`(정치)/`charm`(매력)은 레거시 devsam/core(3스탯: 통/무/지)에 없는 오픈삼국 독자 스탯이다. 둘은 PHP 골든 오라클이 없으므로 규율 5번의 "faithful capture" 대상이 **아니다** — 출처는 RTK14(삼국지14, 코에이 IP → `rtk14_stats.local.json` **git-ignore, 미커밋**). 격리는 엄격: (a) leadership/strength/intel 의 `getStatValue`·RNG draw·로그·골든은 **불변**(rule 1–6 그대로). (b) 정치·매력은 **내정·등용·외교 계열의 비-RNG 산정식에만** 주입하며(내정→정치, 등용/민심→매력, 외교→정치/매력), **전투·AI선택·RNG draw 경로에는 절대 주입하지 않는다**(rule 1 불가침). 모든 주입은 divergence **플래그** 뒤에 둔다 — 플래그-**off**(=devsam 통무지 = 0.9.0 패러티) 경로는 devsam-baseline 골든과 **draw-for-draw 동일**해야 하고, devsam-baseline 골든은 archive가 아니라 **살아있는 회귀 게이트로 계속 green**이어야 한다. 플래그-**on**(정치/매력) 동작은 **신규 divergence 골든**으로 별도 신설한다(기존 골든 재생성·완화 금지). (c) 정치·매력 값은 fabricate가 아니라 RTK14 캡처 + 동명이인 통무지 지문배정으로 채운다(미매칭 기본 50). 스펙: `docs/superpowers/specs/2026-06-13-five-stat-rtk14-divergence.md`, 루프: `docs/loops/5stat-divergence-2026-06-13/`.
+
 ## Build & test
 
 - **Java 21 LTS required** (Gradle 8.12 fails to parse Java 25). Always run from the **repo root**:

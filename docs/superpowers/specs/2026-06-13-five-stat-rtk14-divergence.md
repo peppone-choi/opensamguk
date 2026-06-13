@@ -20,17 +20,34 @@
 - **W3** 영속화: Flyway `V*__add_politics_charm.sql`(general.politics/charm int default 0) + JdbcFlushExecutor 매퍼 + JPA read 엔티티 + ChangeRecorder. 게이트: infra flush IT green(Docker).
 - **W4** UI: web/game(b_myGenInfo·랭킹·장수카드) + web/gateway 정치/매력 표시. 두 맵뷰어 불변식 유지. 게이트: tsc + 비주얼.
 
-## Track B — 패러티 일부 포기 (⚠️ 승인 대기 — 골든 재기준선 = 규칙 변경)
+## Track B — 플래그 게이트 divergence (✅승인됨 + 강화된 격리)
 
-정치·매력이 기존 공식 대체 → 해당 골든 RED. **이건 패러티 규율(CLAUDE.md) 변경 = 유저 승인 필수.**
-승인 전 blind 착수 금지(오라클 없는 공식 = fabricate 위반). 각 영역 = 별도 바퀴, 영향 골든만 명시적 재기준선 + LEDGER 기록.
+**핵심 아키텍처(fresh 리뷰 a8111801 반영): divergence 플래그.** 정치·매력 주입은 전부 플래그 뒤.
+- 플래그 **off** = devsam 통무지 = 0.9.0 패러티 → **devsam-baseline 골든 계속 green**(RED 아님, archive 아님).
+- 플래그 **on** = 정치/매력 동작 → **신규 divergence 골든** 별도 신설.
+- 주입 설계는 off 경로가 baseline과 **draw-for-draw 동일**하도록(예: `if (fiveStat) use politics else getStatValue("intel")`).
+- **비-RNG 산정식에만**(내정·등용·외교). **전투·AI선택·RNG draw 절대 금지**(rule 1 불가침).
 
-| 바퀴 | 영역 | 현재 공식(PHP/Kotlin) | 신규(divergence) | 영향 골든 |
+각 영역 = 별도 바퀴: 플래그 분기 추가 + 신규 divergence 골든 + fresh 재채점. baseline 골든 무수정·무완화.
+플래그 위치: `GameConst`(또는 per-server config) — 0.9.0=off, 1.0.0=on. 리서치 워크플로 wf_b01fab06이 주입점/가드골든 매핑 중.
+
+**리서치 확정(wf_b01fab06, 4 Explore agents):**
+
+| 바퀴 | 영역 | 상태 | call site(flag-gated swap) | 가드 골든(flag-off green 유지) |
 |---|---|---|---|---|
-| B1 | 내정 개발 | che_농업/상업/기술 = 지력 기반 (`ActionSpecialDomestic`) | 정치 기반 | che_농업 등 *GoldenTest |
-| B2 | 등용/임관 | 매력 무관 현행 | 매력 가중 | 등용 골든 |
-| B3 | 민심/인구 | 통솔(인덕) 기반 | 매력 기반 | 민심/인구 골든 |
-| B4 | 외교 | 현행 | 정치/매력 가중 | 외교 골든(RNG 적음) |
+| **B1** | 내정 개발(농/상/기) | ✅ **swap가능** | `CommerceInvestment.kt:68`(intel→politics) + `develop/CheGisulYeongu.kt:70` | DevelopGoldenTest, CommerceActionLogGoldenTest, che-action-fixtures.json |
+| **B3** | 민심/인구 | ✅ **swap가능** | `develop/CheJuminSeonjeong.kt:66` + `develop/CheJeongchakJangnyeo.kt:81`(leadership→charm) | 이미 quarantine(DEVELOP_CAPTURE_DEFECT) + 유닛 테스트 |
+| ~~B2~~ | 등용/임관 | ❌ **DEFER** | **공식 부재**(acceptance 결정적·스탯무관). 매력 주입=신규 RNG공식 발명("대체" 아님) | 없음(send만 골든) |
+| ~~B4~~ | 외교 | ❌ **DEFER** | **공식 부재**(수락 constraint-only). 정치/매력 주입=신규 코드패스 | 없음 |
+
+**B2/B4 DEFER 사유:** 리서치상 등용 수락·외교 수락은 현재 **스탯 기반 확률 공식이 없다**(순수 결정적 제약). 매력/정치를 넣으려면 *기존 로직 대체*가 아니라 *신규 성공률 공식 + RNG draw 추가* = 별도 divergence 게임설계(유저가 공식 형태 결정해야). 이번 "기존 로직 일부 대체" 범위 밖 → 백로그.
+
+**B0 (foundation, B1·B3 선결):**
+- `GetStatValue.raw()`에 `"politics"`/`"charm"` 케이스 **additive** 추가(기존 leadership/strength/intel when-branch 불변 — 전투/RNG 공유함수라 내부 동작 무변경, 신규 이름만 인식).
+- divergence **플래그** `GameConst.FIVE_STAT_DOMESTIC`(off 기본=패러티). swap call site: `if (FIVE_STAT_DOMESTIC) "politics" else statName`.
+- ⚠️ 공유헬퍼 `DomesticHelpers.criticalRatioDomestic` **불변**(전 내정명령 공유) — score read call site만 교체.
+
+**B1·B3 divergence 테스트(오라클 없음 → 행동 테스트):** flag-on → score가 politics/charm로 구동됨(정치≠지력인 장수가 flag-off 대비 다른 score), flag-off → baseline과 byte-동일. 가짜 골든 날조 금지.
 
 **Track B 승인 항목:**
 - 영향 골든을 어떻게? (a) devsam-baseline로 quarantine 보존 + 신규 divergence 골든 신설, (b) 기존 골든 재생성. → 유저 결정.
@@ -40,6 +57,24 @@
 
 - **prod 사이드로드:** RTK14 JSON 미커밋 → prod 배포 시 별도 경로로 서버에 전달 필요(시드 전). 미해결.
 - `AvailableCommandsControllerTest` 단위 실패 1건(베이스라인 backend) — 별도 조사(W5).
+
+## W6 — CLAUDE.md divergence carve-out 삽입안 (⚠️ 승인 대기 = 규칙 변경)
+
+아래는 CLAUDE.md "Parity discipline (NON-NEGOTIABLE)" 5번 뒤에 추가할 **제안 문구**. 패러티 규율을 약화하지
+않도록 정치·매력에만 한정·격리한다. **유저 승인 전 CLAUDE.md 미수정.**
+
+> **Sanctioned divergence (1.0.0+, narrowly scoped).** `politics`(정치)/`charm`(매력)은 레거시 devsam/core에
+> 없는 오픈삼국 독자 스탯이다. 이 둘은 PHP 골든 오라클이 없으므로 규율 5번의 "faithful capture" 대상이
+> **아니다** — 출처는 RTK14(삼국지14, 코에이 IP → `rtk14_stats.local.json` git-ignore). 그러나 격리 규칙은
+> 엄격하다: (a) 통/무/지(leadership/strength/intel)의 `getStatValue`·RNG draw·로그·골든은 **불변**(rule 1–6
+> 그대로). (b) 정치·매력을 기존 패러티 공식에 주입하는 변경(Track B)은 영향 골든을 **재생성하지 않고**
+> devsam-baseline로 quarantine 보존 + 신규 divergence 골든을 별도 신설한다. (c) 정치·매력 값은 fabricate가
+> 아니라 RTK14 캡처 + 동명이인 지문배정으로만 채운다(미매칭은 기본 50). 스펙: `docs/superpowers/specs/2026-06-13-five-stat-rtk14-divergence.md`.
+
+추가로 W6에서 적용할 **서술형(규칙 아님 → 승인 후 즉시 적용 가능)** doc 갱신:
+- 로드맵 status에 5스탯 divergence 항목 1줄.
+- README/AGENTS 스탯 설명에 정치·매력 추가.
+- 메모리 `project_versioning_0_9_parity`에 5스탯 divergence 사례 링크.
 
 ## 불변 (frozen — 변경 시 유저 승인)
 
