@@ -63,9 +63,12 @@ open class CommerceInvestment(
         else -> error("unknown cityKey $cityKey")
     }
 
-    private fun calcBaseScore(d: GeneralActionDraft, rng: opensamguk.common.rng.RandUtil): Double {
+    private fun calcBaseScore(d: GeneralActionDraft, rng: opensamguk.common.rng.RandUtil, env: WorldEnv): Double {
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())  // lower-bound only; trust is Double (PHP FLOAT)
-        var score = getStatValue(d.general, statName, pipeline, maxLevel, withInjury = true, useFloor = false)
+        // DIVERGENCE (flag-gated): intel-driven 개발(농지개간/상업투자)만 politics로 스왑. flag OFF 또는
+        // strength-driven(수비/치안/성벽)이면 baseline과 byte-identical.
+        val resolvedStatName = if (env.fiveStatDomestic && statName == "intelligence") "politics" else statName
+        var score = getStatValue(d.general, resolvedStatName, pipeline, maxLevel, withInjury = true, useFloor = false)
         score *= trust / 100.0   // PHP che_상업투자.php:121 — fractional, trust is Double
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))
         score *= rng.nextRange(0.8, 1.2)                                          // DRAW 1
@@ -76,7 +79,7 @@ open class CommerceInvestment(
         val d = context.draft; val rng = context.rng; val env = context.env
         val reqGold = getCost(d.general, env)
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())   // Double (PHP FLOAT)
-        var score = valueFit(calcBaseScore(d, rng), 1.0)
+        var score = valueFit(calcBaseScore(d, rng, env), 1.0)
 
         val ratio = criticalRatioDomestic(d.general, statKey, pipeline, maxLevel)
         var successRatio = ratio.success; var failRatio = ratio.fail

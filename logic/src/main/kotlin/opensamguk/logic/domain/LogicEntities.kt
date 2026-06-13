@@ -106,6 +106,13 @@ data class Nation(
 )
 
 /** World env read by cost/debuff math. */
-data class WorldEnv(val year: Int, val startYear: Int, val develCost: Int) {
+data class WorldEnv(
+    val year: Int,
+    val startYear: Int,
+    val develCost: Int,
+    // DIVERGENCE 플래그 (RTK14 5-stat). 기본 OFF = devsam 패러티. intel-driven 내정개발만 politics로 스왑(B1).
+    // 기본값 덕분에 기존 생성자/골든은 전부 무영향.
+    val fiveStatDomestic: Boolean = false,
+) {
     val relYear: Int get() = year - startYear
 }

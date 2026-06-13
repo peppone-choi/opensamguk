@@ -62,8 +62,10 @@ class CheJuminSeonjeong(
     )
 
     /** PHP che_주민선정.php:102-118 — calcBaseScore ends with its OWN valueFit(score, 1). */
-    private fun calcBaseScore(d: GeneralActionDraft, rng: RandUtil): Double {
-        var score = getStatValue(d.general, "leadership", pipeline, maxLevel, withInjury = true, useFloor = false)
+    private fun calcBaseScore(d: GeneralActionDraft, rng: RandUtil, env: WorldEnv): Double {
+        // DIVERGENCE (flag-gated): leadership-driven 민심을 charm으로 스왑. flag OFF면 baseline과 byte-identical.
+        val resolvedStatName = if (env.fiveStatDomestic) "charm" else "leadership"
+        var score = getStatValue(d.general, resolvedStatName, pipeline, maxLevel, withInjury = true, useFloor = false)
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))
         score *= rng.nextRange(0.8, 1.2)                                          // DRAW 1
         score = pipeline.onCalcDomestic(d.general, actionKey, "score", score)
@@ -73,7 +75,7 @@ class CheJuminSeonjeong(
     override fun resolve(context: GeneralActionResolveContext) {
         val d = context.draft; val rng = context.rng; val env = context.env
         val reqRice = getReqRice(d.general, env)
-        var score = valueFit(calcBaseScore(d, rng), 1.0)                          // run() valueFit on top of calcBaseScore's
+        var score = valueFit(calcBaseScore(d, rng, env), 1.0)                     // run() valueFit on top of calcBaseScore's
 
         val ratio = criticalRatioDomestic(d.general, statKey, pipeline, maxLevel)
         var successRatio = ratio.success; var failRatio = ratio.fail

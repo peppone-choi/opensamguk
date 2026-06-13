@@ -65,9 +65,11 @@ class CheGisulYeongu(
         // NOTE: NO RemainCityCapacity (che_기술연구.php:45-52).
     )
 
-    private fun calcBaseScore(d: GeneralActionDraft, rng: RandUtil): Double {
+    private fun calcBaseScore(d: GeneralActionDraft, rng: RandUtil, env: WorldEnv): Double {
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())
-        var score = getStatValue(d.general, "intelligence", pipeline, maxLevel, withInjury = true, useFloor = false)
+        // DIVERGENCE (flag-gated): intel-driven 기술연구를 politics로 스왑. flag OFF면 baseline과 byte-identical.
+        val resolvedStatName = if (env.fiveStatDomestic) "politics" else "intelligence"
+        var score = getStatValue(d.general, resolvedStatName, pipeline, maxLevel, withInjury = true, useFloor = false)
         score *= trust / 100.0
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))
         score *= rng.nextRange(0.8, 1.2)                                          // DRAW 1
@@ -78,7 +80,7 @@ class CheGisulYeongu(
         val d = context.draft; val rng = context.rng; val env = context.env
         val reqGold = getCost(d.general, env)
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())
-        var score = valueFit(calcBaseScore(d, rng), 1.0)
+        var score = valueFit(calcBaseScore(d, rng, env), 1.0)
 
         val ratio = criticalRatioDomestic(d.general, statKey, pipeline, maxLevel)
         var successRatio = ratio.success; var failRatio = ratio.fail

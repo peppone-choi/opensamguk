@@ -78,6 +78,10 @@ class StatCalc(
         "leadership" -> general.leadership
         "strength" -> general.strength
         "intelligence", "intel" -> general.intel
+        // DIVERGENCE (RTK14 5-stat, flag-gated): 정치/매력 raw 조회. cross-base augment(strength↔intel) 분기엔
+        // 절대 추가하지 않는다 → politics/charm은 교차증강 없이 raw 그대로(모듈 fold도 미처리 → 불변).
+        "politics" -> general.politics
+        "charm" -> general.charm
         else -> error("unknown stat $name")
     }
 
