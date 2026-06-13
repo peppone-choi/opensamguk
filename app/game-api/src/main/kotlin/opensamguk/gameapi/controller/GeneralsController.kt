@@ -69,6 +69,8 @@ class GeneralsController(
                     leadership = g.leadership,
                     strength = g.strength,
                     intel = g.intel,
+                    politics = g.politics, // 정치/매력 (RTK14 divergence)
+                    charm = g.charm, // 정치/매력 (RTK14 divergence)
                     // 명성 = explevel 버킷 + getHonor(experience). 계급 = dedlevel 버킷 + getDedLevelText/getBillByLevel.
                     explevel = explevel,
                     honorText = F4StateText.honorText(g.experience),

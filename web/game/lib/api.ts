@@ -133,6 +133,8 @@ export interface AdminGeneralDetail {
     leadership: number;
     strength: number;
     intel: number;
+    politics?: number; // 정치/매력 (RTK14 divergence)
+    charm?: number;
     officerLevel: number;
     turnTime: string | null;
     actionLog: string[];

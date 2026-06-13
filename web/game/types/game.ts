@@ -10,6 +10,8 @@ export interface General {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number; // 정치/매력 (RTK14 divergence)
+  charm?: number;
   experience: number;
   devotion: number;
   gold: number;
@@ -69,6 +71,8 @@ export interface CityGeneralRow {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   officerLevel: number;
   officerLevelText: string;
   leadershipBonus: number;
@@ -262,6 +266,8 @@ export interface BestGeneral {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   total: number; // leadership + strength + intel
 }
 
@@ -276,6 +282,8 @@ export interface GeneralRank {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   experience: number;
   devotion: number; // = general.dedication
   crew: number;
@@ -316,6 +324,8 @@ export interface NpcGeneral {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   total: number; // 종능 = 통+무+지
   experience: number; // 명성 컬럼 raw 값
   devotion: number; // 계급 컬럼 raw 값(= general.dedication)
@@ -463,6 +473,8 @@ export interface GeneralListItem {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   experience: number;
   dedication: number;
   injury: number;
@@ -496,6 +508,8 @@ export interface PublicGeneral {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   explevel: number;        // 명성 레벨 버킷(getExpLevel) — 명성 표시·정렬 키
   honorText: string;       // 명성 칭호(getHonor)
   dedlevel: number;        // 계급 레벨 버킷(getDedLevel) — 계급 정렬 키
@@ -526,6 +540,8 @@ export interface MyGeneralSummary {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   crew: number;
   npcState: number;
   mine: boolean;               // 호출자 본인 장수 여부
@@ -930,6 +946,8 @@ export interface InheritCurrentStat {
   leadership: number;
   strength: number;
   intel: number;
+  politics?: number;
+  charm?: number;
   statMin: number;
   statMax: number;
 }

@@ -171,6 +171,8 @@ data class AdminGeneralDetail(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int, // 정치/매력 (RTK14 divergence)
+    val charm: Int, // 정치/매력 (RTK14 divergence)
     val officerLevel: Int,
     val turnTime: String?,
     val actionLog: List<String>,

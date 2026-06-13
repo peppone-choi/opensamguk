@@ -159,8 +159,8 @@ export default function Admin7Page() {
                                 <td>{detail.officerLevel}</td>
                             </tr>
                             <tr>
-                                <th style={{ textAlign: 'left' }}>통솔 / 무력 / 지력</th>
-                                <td>{detail.leadership} / {detail.strength} / {detail.intel}</td>
+                                <th style={{ textAlign: 'left' }}>통솔 / 무력 / 지력 / 정치 / 매력</th>
+                                <td>{detail.leadership} / {detail.strength} / {detail.intel} / {detail.politics ?? '-'} / {detail.charm ?? '-'}</td>
                                 <th style={{ textAlign: 'left' }}>최근 턴</th>
                                 <td>{detail.turnTime ?? '-'}</td>
                             </tr>

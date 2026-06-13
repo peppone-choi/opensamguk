@@ -166,6 +166,8 @@ data class FrontGeneralInfo(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int = 50, // 정치/매력 (RTK14 divergence)
+    val charm: Int = 50, // 정치/매력 (RTK14 divergence)
     val injury: Int,
     val gold: Int,
     val rice: Int,
@@ -433,6 +435,8 @@ data class MyPageResponse(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int = 50, // 정치/매력 (RTK14 divergence)
+    val charm: Int = 50, // 정치/매력 (RTK14 divergence)
     val injury: Int,
     val experience: Int,
     val dedication: Int,
@@ -459,6 +463,8 @@ data class MyGeneralSummary(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int = 50, // 정치/매력 (RTK14 divergence)
+    val charm: Int = 50, // 정치/매력 (RTK14 divergence)
     val crew: Int,
     val npcState: Int,
     /** True iff this is the caller's own general. Named `mine` (not `isMe`) so Jackson keeps the field name. */

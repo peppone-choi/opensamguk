@@ -386,6 +386,8 @@ class AdminReadController(
         leadership = g.leadership,
         strength = g.strength,
         intel = g.intel,
+        politics = g.politics, // 정치/매력 (RTK14 divergence)
+        charm = g.charm, // 정치/매력 (RTK14 divergence)
         officerLevel = g.officerLevel,
         turnTime = TurnTimeFormatter.full(g.turnTime),
         actionLog = generalLogs.findRecentByGeneral(g.id, "ACTION", LOG_RECENT_COUNT).map { it.text },

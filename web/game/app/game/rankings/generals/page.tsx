@@ -117,7 +117,7 @@ export default function GeneralsListPage() {
     }
 
     // a_genList 테이블 헤더 — PHP echo 순서/라벨 그대로(벌점은 BLOCKED라 제외).
-    const headers = ['얼굴', '이름', '연령', '성격', '특기', '레벨', '국가', '명성', '계급', '관직', '통솔', '무력', '지력', '삭턴'];
+    const headers = ['얼굴', '이름', '연령', '성격', '특기', '레벨', '국가', '명성', '계급', '관직', '통솔', '무력', '지력', '정치', '매력', '삭턴'];
 
     const rows = sorted.map((g) => {
         const wounded = g.injury > 0;
@@ -149,6 +149,9 @@ export default function GeneralsListPage() {
             </span>,
             <span key={`s-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{str}</span>,
             <span key={`i-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{intel}</span>,
+            // 정치/매력 — RTK14 divergence(부상/통솔보너스 미적용, 평문 표시). 필드 OPTIONAL이라 '-' 폴백.
+            g.politics ?? '-',                  // 정치
+            g.charm ?? '-',                     // 매력
             g.killturn ?? '-',                  // 삭턴(meta.killturn; 미기재 '-')
         ];
     });

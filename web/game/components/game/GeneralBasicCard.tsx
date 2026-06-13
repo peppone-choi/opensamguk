@@ -141,6 +141,8 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
         { label: '통솔', value: leadershipCell },
         { label: '묠력', value: <span style={{ color: injuryColor }}>{general.strength}</span> },
         { label: '지력', value: <span style={{ color: injuryColor }}>{general.intel}</span> },
+        { label: '정치', value: general.politics ?? '-' },
+        { label: '매력', value: general.charm ?? '-' },
         { label: '명마', value: nameOrCode(general.horseName, general.horse) },
         { label: '무기', value: nameOrCode(general.weaponName, general.weapon) },
         { label: '서적', value: nameOrCode(general.bookName, general.book) },

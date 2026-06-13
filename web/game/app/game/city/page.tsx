@@ -237,6 +237,8 @@ function CityDetail() {
                                 <th>통솔</th>
                                 <th>무력</th>
                                 <th>지력</th>
+                                <th>정치</th>
+                                <th>매력</th>
                                 <th>관 직</th>
                                 <th>守</th>
                                 <th>병 종</th>
@@ -272,6 +274,9 @@ function GeneralRow({ g }: { g: CityGeneralRow }) {
             </td>
             <td><StatCell value={g.strength} injury={g.wounded} /></td>
             <td><StatCell value={g.intel} injury={g.wounded} /></td>
+            {/* 정치·매력 — RTK 표준 순서(통무지정매). 부상색·보너스는 통무지 전용이라 미적용, plain 값(필드 optional → '-' fallback). */}
+            <td>{g.politics ?? '-'}</td>
+            <td>{g.charm ?? '-'}</td>
             <td>{g.officerLevelText}</td>
             {g.ourGeneral ? (
                 <>

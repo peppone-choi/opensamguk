@@ -122,6 +122,8 @@ export default function SimulatorPage() {
                             <span style={{ color: 'var(--text-muted)' }}>통솔</span><strong>{attacker.leadership}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>무력</span><strong>{attacker.strength}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>지력</span><strong>{attacker.intel}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>정치</span><strong>{attacker.politics ?? '-'}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>매력</span><strong>{attacker.charm ?? '-'}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>병력</span><strong>{attacker.crew.toLocaleString()}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>소속</span><strong>{attacker.nationName}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>도시</span><strong>{attacker.cityName}</strong>
@@ -151,6 +153,8 @@ export default function SimulatorPage() {
                             <span style={{ color: 'var(--text-muted)' }}>통솔</span><strong>{defender.leadership}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>무력</span><strong>{defender.strength}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>지력</span><strong>{defender.intel}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>정치</span><strong>{defender.politics ?? '-'}</strong>
+                            <span style={{ color: 'var(--text-muted)' }}>매력</span><strong>{defender.charm ?? '-'}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>병력</span><strong>{defender.crew.toLocaleString()}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>소속</span><strong>{defender.nationName}</strong>
                             <span style={{ color: 'var(--text-muted)' }}>도시</span><strong>{defender.cityName}</strong>

@@ -122,7 +122,7 @@ export default function MyGeneralsPage() {
     }
 
     // b_myGenInfo 테이블 헤더 — PHP echo 순서/라벨 그대로(벌점은 BLOCKED라 제외).
-    const headers = ['얼굴', '이름', '관직', '계급', '명성', '봉록', '통솔', '무력', '지력', '자금', '군량', '성격', '특기', '사관'];
+    const headers = ['얼굴', '이름', '관직', '계급', '명성', '봉록', '통솔', '무력', '지력', '정치', '매력', '자금', '군량', '성격', '특기', '사관'];
 
     const rows = sorted.map((g) => {
         const wounded = g.injury > 0;
@@ -144,6 +144,8 @@ export default function MyGeneralsPage() {
             </span>,
             <span key={`s-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{str}</span>,
             <span key={`i-${g.generalId}`} style={{ color: wounded ? 'red' : undefined }}>{intel}</span>,
+            g.politics ?? '-',                  // 정치(부상색/lbonus 미적용 — 통솔/무력/지력 전용)
+            g.charm ?? '-',                     // 매력(부상색/lbonus 미적용 — 통솔/무력/지력 전용)
             formatNumber(g.gold),               // 자금
             formatNumber(g.rice),               // 군량
             g.personalText,                     // 성격

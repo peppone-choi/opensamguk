@@ -62,6 +62,13 @@ class GeneralReadEntity(
     @Column(name = "intel")
     var intel: Int = 0,
 
+    // 정치/매력 (RTK14 divergence) — V16 마이그레이션 INT 컬럼(NOT NULL DEFAULT 50). JPA auto-select.
+    @Column(name = "politics")
+    var politics: Int = 50,
+
+    @Column(name = "charm")
+    var charm: Int = 50,
+
     @Column(name = "injury")
     var injury: Int = 0,
 

@@ -21,6 +21,8 @@ data class BestGeneral(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int, // 정치/매력 (RTK14 divergence)
+    val charm: Int, // 정치/매력 (RTK14 divergence)
     val total: Int,
 )
 
@@ -36,6 +38,8 @@ data class GeneralRank(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int, // 정치/매력 (RTK14 divergence)
+    val charm: Int, // 정치/매력 (RTK14 divergence)
     val experience: Int,
     /** `devotion` = `general.dedication` (충성). */
     val devotion: Int,
@@ -108,6 +112,8 @@ data class NpcGeneral(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int, // 정치/매력 (RTK14 divergence)
+    val charm: Int, // 정치/매력 (RTK14 divergence)
     /** 종능 = leadership + strength + intel(PHP `leadership+strength+intel as sum`). */
     val total: Int,
     /** 명성 컬럼 값 = raw `general.experience`(PHP는 raw 숫자 출력). */

@@ -102,6 +102,8 @@ class RankReadService(
                     leadership = g.leadership,
                     strength = g.strength,
                     intel = g.intel,
+                    politics = g.politics, // 정치/매력 (RTK14 divergence)
+                    charm = g.charm, // 정치/매력 (RTK14 divergence)
                     total = g.total(),
                 )
             }
@@ -124,6 +126,8 @@ class RankReadService(
                     leadership = g.leadership,
                     strength = g.strength,
                     intel = g.intel,
+                    politics = g.politics, // 정치/매력 (RTK14 divergence)
+                    charm = g.charm, // 정치/매력 (RTK14 divergence)
                     experience = g.experience,
                     devotion = g.dedication,
                     crew = g.crew,
@@ -196,6 +200,8 @@ class RankReadService(
                     leadership = g.leadership,
                     strength = g.strength,
                     intel = g.intel,
+                    politics = g.politics, // 정치/매력 (RTK14 divergence)
+                    charm = g.charm, // 정치/매력 (RTK14 divergence)
                     total = g.total(),
                     experience = g.experience,
                     devotion = g.dedication,

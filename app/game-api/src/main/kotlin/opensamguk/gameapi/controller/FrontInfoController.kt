@@ -167,6 +167,8 @@ class FrontInfoController(
             leadership = g.leadership,
             strength = g.strength,
             intel = g.intel,
+            politics = g.politics, // 정치/매력 (RTK14 divergence)
+            charm = g.charm, // 정치/매력 (RTK14 divergence)
             injury = g.injury,
             gold = g.gold,
             rice = g.rice,

@@ -37,6 +37,8 @@ data class PublicGeneral(
     val leadership: Int,
     val strength: Int,
     val intel: Int,
+    val politics: Int, // 정치/매력 (RTK14 divergence)
+    val charm: Int, // 정치/매력 (RTK14 divergence)
     /** 명성 레벨 버킷 = getExpLevel(experience). a_genList "레 벨" 컬럼("Lv {explevel}")·정렬 키. */
     val explevel: Int,
     /** 명성 칭호 = getHonor(experience). a_genList "명 성" 컬럼. */

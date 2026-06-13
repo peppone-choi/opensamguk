@@ -93,6 +93,8 @@ export default function NpcsPage() {
     '통솔',
     '무력',
     '지력',
+    '정치',
+    '매력',
     '명성',
     '계급',
   ];
@@ -112,6 +114,8 @@ export default function NpcsPage() {
     formatNumber(g.leadership),
     formatNumber(g.strength),
     formatNumber(g.intel),
+    g.politics ?? '-', // 정치 (optional, injury/lbonus 미적용 평문)
+    g.charm ?? '-', // 매력 (optional, injury/lbonus 미적용 평문)
     formatNumber(g.experience), // 명성 = raw experience
     formatNumber(g.devotion), // 계급 = raw dedication
   ]);

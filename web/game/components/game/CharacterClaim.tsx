@@ -132,6 +132,8 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
                                         <span>통 {c.leadership}</span>
                                         <span>무 {c.strength}</span>
                                         <span>지 {c.intel}</span>
+                                        <span>정치 {c.politics ?? '-'}</span>
+                                        <span>매력 {c.charm ?? '-'}</span>
                                     </div>
                                     <div className="claim-meta">{c.personal ?? '-'}</div>
                                     <div className="claim-meta">

@@ -77,6 +77,8 @@ export interface FrontGeneralInfo {
     leadership: number;
     strength: number;
     intel: number;
+    politics?: number; // 정치/매력 (RTK14 divergence)
+    charm?: number;
     injury: number;
     gold: number;
     rice: number;
@@ -364,6 +366,8 @@ export interface ClaimableGeneral {
     leadership: number;
     strength: number;
     intel: number;
+    politics?: number; // 정치/매력 (RTK14 divergence)
+    charm?: number;
     picture: string | null;
     imageServer: number;
     // legacy select_npc.ts NPCPick 카드 필드 — 한글 표시명(서버 해석). officerLevel은 카드에 없어 제거됨.
