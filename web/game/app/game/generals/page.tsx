@@ -47,6 +47,8 @@ type SortKey =
     | 'leadership'
     | 'strength'
     | 'intel'
+    | 'politics'
+    | 'charm'
     | 'explevel'
     | 'dedlevel';
 
@@ -57,6 +59,8 @@ const COLUMNS: { label: string; key: SortKey; text?: boolean }[] = [
     { label: '통솔', key: 'leadership' },
     { label: '무력', key: 'strength' },
     { label: '지력', key: 'intel' },
+    { label: '정치', key: 'politics' }, // 정치/매력 (RTK14 divergence)
+    { label: '매력', key: 'charm' },
     { label: '명성', key: 'explevel' },
     { label: '계급', key: 'dedlevel' },
 ];
@@ -147,8 +151,8 @@ export default function GeneralsPage() {
                 const bn = b.nationId === NO_NATION ? '무소속' : b.nationName || '무소속';
                 return an.localeCompare(bn) * dir;
             }
-            // 숫자 컬럼 — 레거시 sortableNumber comparator (a-b).
-            return (a[sortKey] - b[sortKey]) * dir;
+            // 숫자 컬럼 — 레거시 sortableNumber comparator (a-b). 정치/매력은 optional → 0 coalesce.
+            return (((a[sortKey] ?? 0) as number) - ((b[sortKey] ?? 0) as number)) * dir;
         });
         return arr;
     }, [filtered, sortKey, sortDesc]);
@@ -226,6 +230,8 @@ export default function GeneralsPage() {
         formatNumber(g.leadership),
         formatNumber(g.strength),
         formatNumber(g.intel),
+        g.politics != null ? formatNumber(g.politics) : '-', // 정치 (RTK14 divergence)
+        g.charm != null ? formatNumber(g.charm) : '-', // 매력
         // 명성 = 레벨 버킷 "Lv {explevel}" + 칭호(honorText) 둘째 줄(레거시 GeneralList.vue:651 valueGetter).
         <span key={`exp-${g.generalId}`} style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2 }}>
             <span>Lv {formatNumber(g.explevel)}</span>

@@ -53,6 +53,15 @@
 - 영향 골든을 어떻게? (a) devsam-baseline로 quarantine 보존 + 신규 divergence 골든 신설, (b) 기존 골든 재생성. → 유저 결정.
 - 각 영역 신규 공식의 구체 계수(정치/매력을 지력/통솔 자리에 1:1 치환? 가중 혼합?) → 영역별 스펙 필요.
 
+## 프론트 secondary 처리 (2026-06-13)
+
+- ✅ **generals(전체 장수)**: `/api/generals`→PublicGeneral 소비(positional general-list 아님 — W4 understand 오라벨 정정). PublicGeneral에 정치/매력 이미 있어 COLUMNS+SortKey+셀 추가로 close. tsc green.
+- ⏭️ **admin5(일제 정보)**: grand-truth `_admin5.php` **28열 verbatim 패러티 테이블**. 정치/매력 컬럼 추가 = 패러티 깨짐 → **스킵**. 1.0.0에서 신규 divergence stat-type로 추가 가능.
+- ⏭️ **join(장수 등록)**: 순수 **3스탯 할당 폼**(l/s/i 슬라이더+프리셋+total). 정치/매력=RTK14 소스라 유저 할당 대상 아님 → **스킵**. 1.0.0 커스텀 장수 정치/매력 할당은 create-path intake 변경 필요(별도).
+- ⏭️ **inherit(유산)**: 스탯 **리셋** 폼. 정치/매력은 RTK14-고정, 리셋 불가 → **스킵**.
+
+결론: 개별 장수 스탯을 표시하는 프론트 갭은 generals로 close. 나머지 3개는 패러티잠금(admin5)·비할당폼(join/inherit)이라 정치/매력 표시 대상이 아님(누락 아님, 의식적 스킵).
+
 ## 운영 backlog
 
 - ✅ **prod 사이드로드(구현 완료, 커밋 4367ec3):** `Rtk14Stats.readRaw(ext)` — `rtk14.stats.path` 프로퍼티/`RTK14_STATS_PATH` env 파일시스템 경로 우선 → classpath → null(기본50). prod 배포: 파일 EC2 scp + 엔진 컨테이너 bind-mount + `RTK14_STATS_PATH=/data/rtk14_stats.local.json`(코에이 IP 미커밋 유지). 테스트 Rtk14StatsTest 4건.

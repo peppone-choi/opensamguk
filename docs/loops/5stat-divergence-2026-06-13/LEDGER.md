@@ -22,6 +22,8 @@
 | B2 | 등용 매력 평판완화 @ CheDeungyongSurak(factor=1-0.1·betray·(1-charm/200)) + flag rename fiveStatDomestic→fiveStatLogic | logic 2133 green / fail 0 | fresh verify(wf_61fb1e5d) | 채택 | 모집자 destGeneral.charm. flag-off byte-동일. CheDeungyongSurakGolden 20 green. DeungyongCharmMitigation 3건. 커밋 4f04761. |
 | B4 | 외교 정치 수락게이트 @ 종전/불가침/불가침파기 수락(정치<30→실패+거절로그) | logic 2142 green / fail 0 | fresh verify(wf_61fb1e5d) GREEN | 채택 | 신규 DiplomacyDivergence(BAR 30). flag-off 정상. draw 0 유지. DiplomacyPoliticsGate 9건. B2/B4 둘 다 결정적=carve-out "비-RNG" 유지. |
 
+| 8 | 프론트 secondary close: generals 페이지 정치/매력 컬럼(PublicGeneral 소비) | tsc 0 err / 패러티 CLEAN | fresh 채점 aac35ee0 GREEN | 채택 | generals=`/api/generals` PublicGeneral(positional 아님, W4 오라벨 정정). admin5(verbatim 패러티)·join(할당폼)·inherit(리셋폼)=의식적 스킵(정치/매력 비대상). |
+
 ## 최종 검증 (세션 종료)
 
 전-backend 게이트(5모듈, Docker up, fresh 채점 aa471a46): **3092 tests 실 실패 0** — common 192 · logic 2142 · infra 93 · engine 364 · api 301. baseline 패러티 무손상(flag `fiveStatLogic` off 기본). 골든 CLEAN. rename clean(stale 0).
