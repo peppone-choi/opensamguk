@@ -19,6 +19,12 @@
 | B3 | 민심/인구 leadership→charm(flag) @ CheJuminSeonjeong/CheJeongchakJangnyeo | logic 2130 green / fail 0 | fresh verify(wf_54a25cc5) GREEN | 채택 | 공유헬퍼 criticalRatioDomestic 불변. DevelopGolden 등 baseline green. FiveStatDomesticDivergenceTest 7건. |
 | 7 | prod 사이드로드: Rtk14Stats.readRaw에 env/property 외부경로 우선(파일시스템→classpath→null) | infra 89 → 93 green / fail 0 | fresh 채점 aed074e2 | 채택 | 코에이 IP를 이미지 밖 주입. readRaw(ext) param화로 글로벌 변이 없는 테스트. AuctionFlushIT는 TC 플레이크. 커밋 4367ec3. |
 
+## 최종 검증 (세션 종료)
+
+전-backend 게이트(5모듈, Docker up, fresh 채점 a766c776): **3080 tests 실 실패 0** — common 192 · logic 2130 · infra 93 · engine 364 · api 301. baseline 패러티 무손상(flag off 기본). 골든 CLEAN. AuctionFlushIT만 TC 플레이크(격리 pass).
+
+**커밋:** 2f35980(토대) · c815b64(read API+UI) · 2a4008f(carve-out) · 3e2bbdd(flag 로직) · 4367ec3(사이드로드) · 28252a4(docs). 로컬만, prod 미푸시.
+
 ## 백로그 (가설 후보 — 한 바퀴당 1개씩만)
 
 5스탯 divergence 프로그램을 disjoint 바퀴로 분해. Foundation-first.
