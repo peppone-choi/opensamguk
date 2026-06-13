@@ -68,7 +68,7 @@ class CheGisulYeongu(
     private fun calcBaseScore(d: GeneralActionDraft, rng: RandUtil, env: WorldEnv): Double {
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())
         // DIVERGENCE (flag-gated): intel-driven 기술연구를 politics로 스왑. flag OFF면 baseline과 byte-identical.
-        val resolvedStatName = if (env.fiveStatDomestic) "politics" else "intelligence"
+        val resolvedStatName = if (env.fiveStatLogic) "politics" else "intelligence"
         var score = getStatValue(d.general, resolvedStatName, pipeline, maxLevel, withInjury = true, useFloor = false)
         score *= trust / 100.0
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))

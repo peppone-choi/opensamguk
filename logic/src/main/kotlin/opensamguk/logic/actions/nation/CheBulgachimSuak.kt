@@ -112,6 +112,14 @@ class CheBulgachimSuak(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipe
      */
     override fun resolve(context: GeneralActionResolveContext) {
         val draft = context.draft
+
+        // DIVERGENCE (fiveStatLogic ON): 수락측 장수 정치력 부족 → 수락 실패. 외교 효과 없음(아래 cascadeDiplomacy
+        // 미실행). 패러티 오라클 없음 → 한글 실패 로그만 남긴다. 플래그 OFF면 baseline byte-identical.
+        if (context.env.fiveStatLogic && draft.general.politics < DiplomacyDivergence.POLITICS_DIPLOMACY_BAR) {
+            context.addActionPlainLog(DiplomacyDivergence.POLITICS_FAIL_LOG)
+            return
+        }
+
         val me = draft.nation?.id ?: return
         val destNationID = (context.args["destNationID"] as? Number)?.toInt() ?: return
         val year = (context.args["year"] as? Number)?.toInt() ?: return

@@ -79,7 +79,7 @@ class CheJeongchakJangnyeo(
 
     private fun calcBaseScore(d: GeneralActionDraft, rng: RandUtil, env: WorldEnv): Double {
         // DIVERGENCE (flag-gated): leadership-driven 인구를 charm으로 스왑. flag OFF면 baseline과 byte-identical.
-        val resolvedStatName = if (env.fiveStatDomestic) "charm" else "leadership"
+        val resolvedStatName = if (env.fiveStatLogic) "charm" else "leadership"
         var score = getStatValue(d.general, resolvedStatName, pipeline, maxLevel, withInjury = true, useFloor = false)
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))
         score *= rng.nextRange(0.8, 1.2)                                          // DRAW 1

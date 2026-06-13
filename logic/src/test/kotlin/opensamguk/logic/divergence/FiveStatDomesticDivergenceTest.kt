@@ -19,7 +19,7 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * DIVERGENCE TEST — RTK14 5-stat domestic (fiveStatDomestic flag).
+ * DIVERGENCE TEST — RTK14 5-stat domestic (fiveStatLogic flag).
  *
  * **NO PHP GOLDEN ORACLE.** devsam/core (the grand truth) is 3-stat and has NO 정치/매력 column, so
  * this behavior CANNOT be replayed against a captured PHP fixture. The assertions here are purely
@@ -76,7 +76,7 @@ class FiveStatDomesticDivergenceTest {
 
     /** Resolve 상업투자 with the given flag, returning the resulting commerce value. */
     private fun resolveCommerce(flag: Boolean): Int {
-        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatDomestic = flag)
+        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatLogic = flag)
         val draft = GeneralActionDraft(general(), city(), nation)
         val ctx = GeneralActionResolveContext(draft, freshRng("che_상업투자"), env, MONTH, date)
         commerceAction().resolve(ctx)
@@ -85,7 +85,7 @@ class FiveStatDomesticDivergenceTest {
 
     /** Resolve 농지개간 with the given flag, returning the resulting agriculture value. */
     private fun resolveAgri(flag: Boolean): Int {
-        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatDomestic = flag)
+        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatLogic = flag)
         val draft = GeneralActionDraft(general(), city(), nation)
         val ctx = GeneralActionResolveContext(draft, freshRng("che_농지개간"), env, MONTH, date)
         agriAction().resolve(ctx)
@@ -99,7 +99,7 @@ class FiveStatDomesticDivergenceTest {
 
     /** Resolve 주민선정 (민심) with the given flag, returning the resulting city.trust. */
     private fun resolveJuminTrust(flag: Boolean): Double {
-        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatDomestic = flag)
+        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatLogic = flag)
         val draft = GeneralActionDraft(general(), city(), nation)
         val ctx = GeneralActionResolveContext(draft, freshRng("che_주민선정"), env, MONTH, date)
         cheJuminSeonjeong(pipeline).resolve(ctx)
@@ -108,7 +108,7 @@ class FiveStatDomesticDivergenceTest {
 
     /** Resolve 정착장려 (인구) with the given flag, returning the resulting city.population. */
     private fun resolveJeongchakPop(flag: Boolean): Int {
-        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatDomestic = flag)
+        val env = WorldEnv(year = 190, startYear = 184, develCost = 120, fiveStatLogic = flag)
         val draft = GeneralActionDraft(general(), popCity(), nation)
         val ctx = GeneralActionResolveContext(draft, freshRng("che_정착장려"), env, MONTH, date)
         cheJeongchakJangnyeo(pipeline).resolve(ctx)

@@ -150,7 +150,10 @@ class CheDeungyongSurak(private val pipeline: GeneralActionPipeline) : GeneralAc
             // 재야가 아니면 명성/공헌을 betray*10% 감소; addExperience/addDedication(0, false)로 레벨만 재계산.
             // 레벨 변동 시 PLAIN 레벨업/레벨다운 로그(General::addExperience php:464-468)는 본인 PLAIN 스코프로 라우팅.
             val betray = metaInt(g.meta, "betray")
-            val factor = 1 - 0.1 * betray
+            // 매력 평판완화 (RTK14 divergence): flag-ON이면 등용 주체(destGeneral)의 매력이 배신 평판패널티를 완화.
+            // flag-OFF → charmMitig=0 → factor == 원본 1 - 0.1*betray (byte-identical baseline).
+            val charmMitig = if (context.env.fiveStatLogic) ((d.destGeneral?.charm ?: 0).coerceIn(0, 100)) / 200.0 else 0.0  // 0..0.5
+            val factor = 1 - 0.1 * betray * (1 - charmMitig)
             g = g.copy(experience = g.experience * factor)
             val expRecalc = addExperience(g, 0.0, pipeline, affectTrigger = false); g = expRecalc.general
             expRecalc.plainLog?.let { context.addPlainLog(it) }

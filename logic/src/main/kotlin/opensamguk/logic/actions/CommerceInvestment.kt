@@ -67,7 +67,7 @@ open class CommerceInvestment(
         val trust = valueFit(d.city.trust, DEFAULT_TRUST.toDouble())  // lower-bound only; trust is Double (PHP FLOAT)
         // DIVERGENCE (flag-gated): intel-driven 개발(농지개간/상업투자)만 politics로 스왑. flag OFF 또는
         // strength-driven(수비/치안/성벽)이면 baseline과 byte-identical.
-        val resolvedStatName = if (env.fiveStatDomestic && statName == "intelligence") "politics" else statName
+        val resolvedStatName = if (env.fiveStatLogic && statName == "intelligence") "politics" else statName
         var score = getStatValue(d.general, resolvedStatName, pipeline, maxLevel, withInjury = true, useFloor = false)
         score *= trust / 100.0   // PHP che_상업투자.php:121 — fractional, trust is Double
         score *= getDomesticExpLevelBonus(metaInt(d.general.meta, "explevel"))
