@@ -37,10 +37,10 @@
 |---|---|---|---|---|
 | **B1** | 내정 개발(농/상/기) | ✅ **swap가능** | `CommerceInvestment.kt:68`(intel→politics) + `develop/CheGisulYeongu.kt:70` | DevelopGoldenTest, CommerceActionLogGoldenTest, che-action-fixtures.json |
 | **B3** | 민심/인구 | ✅ **swap가능** | `develop/CheJuminSeonjeong.kt:66` + `develop/CheJeongchakJangnyeo.kt:81`(leadership→charm) | 이미 quarantine(DEVELOP_CAPTURE_DEFECT) + 유닛 테스트 |
-| ~~B2~~ | 등용/임관 | ❌ **DEFER** | **공식 부재**(acceptance 결정적·스탯무관). 매력 주입=신규 RNG공식 발명("대체" 아님) | 없음(send만 골든) |
-| ~~B4~~ | 외교 | ❌ **DEFER** | **공식 부재**(수락 constraint-only). 정치/매력 주입=신규 코드패스 | 없음 |
+| **B2** | 등용(매력) | ✅ **완료**(커밋 4f04761) | CheDeungyongSurak: 모집자 매력이 배신 평판패널티 완화 `factor=1-0.1·betray·(1-charm/200)` | CheDeungyongSurakGoldenTest 20 (flag-off green) |
+| **B4** | 외교(정치) | ✅ **완료**(커밋 4f04761) | 종전/불가침/불가침파기 수락: 정치<30→실패+거절로그+효과 skip(DiplomacyDivergence) | CheJongjeonSuak/CheBulgachimSuakGoldenTest (flag-off green) |
 
-**B2/B4 DEFER 사유:** 리서치상 등용 수락·외교 수락은 현재 **스탯 기반 확률 공식이 없다**(순수 결정적 제약). 매력/정치를 넣으려면 *기존 로직 대체*가 아니라 *신규 성공률 공식 + RNG draw 추가* = 별도 divergence 게임설계(유저가 공식 형태 결정해야). 이번 "기존 로직 일부 대체" 범위 밖 → 백로그.
+**B2/B4 설계(유저 결정 2026-06-13):** 두 명령군은 수동 제안+수락이라 확률 슬롯이 없어 **결정적** 공식으로 구현(RNG 없음 → carve-out "비-RNG" 유지, 규칙변경 불요). 등용=매력 평판완화(기존 betray 수량 부착), 외교=정치 수락 성공게이트(BAR 30). 둘 다 flag-off=baseline byte-동일. 신규 divergence 행동테스트(오라클 없음).
 
 **B0 (foundation, B1·B3 선결):**
 - `GetStatValue.raw()`에 `"politics"`/`"charm"` 케이스 **additive** 추가(기존 leadership/strength/intel when-branch 불변 — 전투/RNG 공유함수라 내부 동작 무변경, 신규 이름만 인식).
