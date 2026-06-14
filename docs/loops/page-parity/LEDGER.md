@@ -44,7 +44,13 @@
 | 34 | (삭제 바퀴 빼기-주기) AuctionResultCalculator 죽은 위조 로그문자열 8개 + dead logMessage 2속성 제거 (12줄) | :logic 256/2146 green(=베이스라인, 삭제=dead 증명) | fresh 서브에이전트(a7f3, 적대 삭제안전) — caller가 logMessage 미읽음(AuctionFinalizeHandler returnType/Amount/finalStatus만) + 8문자열 PHP 0매치 + 테스트 미참조, VERDICT PASS | 채택 | bb23이 와이어 절단한 고아 필드의 시신 제거. 재배선 지뢰 제거(rule5 fabrication 청소) |
 | 36 | betting 목록 표시순서 패러티 — `Object.values(bettingList).reverse()` (PageNationBetting.vue:9, 최신 id 우선; API는 삽입순서 보존) | FE tsc clean + web/game 65/65 + 갭 1 닫힘 | fresh 서브에이전트(a7d3, 적대) + 직접 결정적 재확인(tsc clean + vitest 65/65) | 채택 | 클라 reverse=정답(BettingController findAll associate LinkedHashMap 삽입순 → double-reverse 아님). betting/page.tsx:58 1줄 |
 | 37 | che_징병 pure-logic guard test 포팅 (WS-A troops.test.ts) | 무변경(이미 커버) | impl STEP0 점검(a269) | 스킵(중복 회피) | RecruitAlgorithmTest + MilitaryConstraintsTest + MilitaryGoldenTest(che_징병-fixtures.json)가 outcome/guard/golden/zero-draw 전부 커버. ad43 prep가 RecruitAlgorithmTest 미발견 오판. WS-A troops 잔여=train/morale·lifecycle만 |
-| — | (배포) loop-parity 6루프 배치 → main 머지(977f3185)+CI 자동배포 | 풀게이트 backend 418/3096 green + web/game 65/65 | gate.sh backend XML(결정적) + deployer prod 검증(진행) | 배포(유저 go-ahead) | che_견문 mt_rand 격리·OpenNationBetting 정렬/global-diplomacy 차단은 별도 큰 바퀴 |
+| — | (배포) loop-parity 6루프 배치 → main 머지(977f3185)+CI 자동배포 | 풀게이트 backend 418/3096 green + web/game 65/65 | gate.sh backend XML(결정적) + deployer prod 검증 PASS(health 200·502 0·턴 미동결) | 배포 성공(유저 go-ahead) | ⚠️라이브 deploy=shared 스택만(gateway-api/web-gateway/nginx). **s1 게임서버(engine+web-game)는 고정 IMAGE_TAG → 내 fix는 admin bounce 전까지 s1 미반영**(시즌중 desync 방지 설계). docs(7343c563) 2차 push도 동일 직렬배포(concurrency 가드). 프론트 라이브 대조는 opensamguk 로컬(fix 포함) 사용 |
+
+| 38 | /game/map 중원정세 로그 섹션 — MapViewer 하단 api.worldLog() fetch+렌더(world-log 인프라 재사용) | FE tsc clean + web/game 65/65 + 갭 1 닫힘(라이브 대조 GAP6) | fresh 서브에이전트(a3b8, 적대) — PageCachedMap.vue:17-21 placement 대조 + 패턴 재사용 + MapViewer/Preview 무변경, VERDICT PASS | 채택 | devsam cachedMap.history 등가. dangerouslySetInnerHTML(서버 마크업)=v-html formatLog 등가. 라이브 대조(a3705)서 발견·닫음 |
+
+| 39 | 천통국베팅 페이지 신설 + betting type 버그 수정 — /game/nation-betting(type=bettingNation, PageNationBetting.vue 패러티) + /game/betting 무type→tournament + GlobalMenu url 배선 | FE tsc clean + web/game 65/65 + 갭 1 닫힘(MISSING 라우트 + 동반 버그) | fresh 서브에이전트(af88, 적대) — betting 정체성(betting=tournament/nation-betting=bettingNation, BettingController 양type whitelist) + nation-betting 충실 + loop36 reverse 유효 재확인, VERDICT PASS | 채택 | b_betting.php=단일세션 tournament(리스트 grand-truth 무), PageNationBetting.vue=bettingNation. 기존 betting 무type→all-types 반환 버그 동반 수정 |
+
+| 40 | nation 페이지 2종 P0 크래시 graceful 가드 — my-nation newColor(null→'')·nation-finance hasIncome 가드(income/outcome/policy/warSetting null→'-', 날조0) | FE tsc clean + web/game 65/65 + 크래시 2 해소(라이브 no-crash 재확인은 스택 복구후) | fresh 서브에이전트(aee9, 적대) — 가드 충실성(실값 보존·null만 '-'·날조0)+2파일만, VERDICT PASS | 채택 | 라이브 대조(ab5b) P0 크래시. 데이터 본체=백엔드갭 백로그(W1-O). 배선시 가드 dead code화 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
@@ -79,6 +85,9 @@
 - **[WS-C 백엔드 강화]** 유저 지시 "백엔드도 강화" — core2026 백엔드 견고화 패턴(엣지/에러전파/불변식) 대조 후 적용. 기존 골든셋 그린 유지 하에 갭-닫음 루프로 진행
 - **[WS-D 프론트 레이아웃 패러티]** 페이지·컴포넌트 레이아웃 감사 갱신(에이전트 a85c…) → 잔여 P0 레이아웃 갭 바퀴 분해. 두 맵뷰어 동일 불변식 유지
 - **[정책] 머지/배포** 유저 지시 "루프당 push + main 머지"(승인됨, feedback_auto_merge_deploy standing). 규칙: 루프 그린 → 브랜치 push → main 머지(자동배포) → prod health+턴전진 검증. ⚠️red 게이트면 머지 금지(project_deploy_infra_reality 턴되감김 리스크)
+
+- (park, 조사필요) scenario_1010 시드 구조 불일치 — `infra/src/main/resources/scenario/scenario_1010.json`은 nations=[]·generals=null로 읽힘 vs `data/extracted/...`=2국/491장수. ScenarioImporter가 어느 파일을 쓰는지 + devsam `legacy/devsam-core/hwe/scenario/scenario_1010.json`(grand truth, 황건적의 난 startYear 181) 장수수 대조 필요. (seeding 자체는 동작 — 로컬 678장수). 프론트 대조 우선이라 park
+- (park) opensamguk 로컬 DB가 stale(46국, 진행게임) — 깨끗한 devsam-매칭 대조엔 fresh scenario_1010 re-seed 권장. 레이아웃 대조엔 무관
 
 ## 승인 대기
 
