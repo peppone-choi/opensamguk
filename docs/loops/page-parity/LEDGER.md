@@ -54,6 +54,8 @@
 
 | 배포2+bounce | -b 프론트배치 main 머지(d7f2ba0e) + **s1 admin bounce**(loops27-40 s1 라이브) | CI SUCCESS + edge 200(502 0) + 데몬 클린(timeout 0) + 턴 되감김 0(185/7 유지·updated_at 보존) | deployer(a72e) ops-lessons 검증 | 배포 성공(유저 전체승인) | s1 game-api/web-game/game-engine 모두 d7f2ba0e. 롤백앵커 0f71474d. WS-B 발견: repo docker-compose.production.yml/scripts/deploy.sh=obsolete(라이브=~/opensamguk-docker shared/server 구조, 이미 target). s1.env root:root sudo |
 
+| 41(BLOCKED) | 외교 서신 승인/거부 버튼(P0-16) | 미측정(차단·무변경) | impl 사전체크(ad87) | 차단(백엔드 부재) | ng_diplomacy 서신 respond 경로 opensamguk 미존재: diploRespondLetter 미등록(CommandWireMapper/Dispatcher), DiplomaticMessageController.accept/decline은 **message행 전용**(che_*제의)≠letter행, DiplomacyLetter DTO에 mailboxMessageId 없음. devsam=j_diplomacy_respond_letter.php. **단 조약수락은 mailbox 경로 동작中**(message 수락/거절). 수정=백엔드 DiplomacyController state-flip 엔드포인트(PROPOSED→ACTIVATED/CANCELLED)+FE버튼. W1-O 백엔드결합 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
