@@ -40,7 +40,10 @@ class OpenNationBettingAction(
         // 1. env에서 연/월 추출
         val year = (ctx.env["year"] as? Number)?.toInt() ?: return
         val month = (ctx.env["month"] as? Number)?.toInt() ?: return
-        val openYearMonth = year * 12 + month
+        // PHP `Util::joinYearMonth` (src/sammo/Util.php:710): `$year * 12 + $month - 1`.
+        // openYearMonth 는 `Util::joinYearMonth($year, $month)` 와 byte-동일해야 한다
+        // (Event/Action/OpenNationBetting.php:47) — `-1` 누락은 1개월 off-by-one 발산.
+        val openYearMonth = year * 12 + month - 1
 
         // 2. 대상 국가 목록 결정
         val targetNations = if (targetNationsArg is JsonArray) {
@@ -52,7 +55,11 @@ class OpenNationBettingAction(
 
         if (targetNations.isEmpty()) return
 
-        // 3. candidates 구성 — nation_id → SelectItem
+        // 3. candidates 구성 — 후보 인덱스(0,1,2,…) → SelectItem.
+        // PHP `Event/Action/OpenNationBetting.php:56,74`: `$candidates = []; … $candidates[] = new SelectItem(…)`
+        // 는 0-기준 정수 인덱스로 append 한다(국가 id 가 아니라 삽입순 인덱스). 베팅 선택 검증
+        // (`Betting::purifyBettingKey` → `key_exists($bettingKey, $candidates)`, Betting.php:28)도
+        // 이 정수 인덱스를 키로 사용한다. LinkedHashMap 으로 삽입순(=PHP append 순)을 보존한다.
         val candidates = linkedMapOf<Int, SelectItem>()
         for ((idx, nationId) in targetNations.withIndex()) {
             candidates[idx] = SelectItem(
@@ -68,9 +75,13 @@ class OpenNationBettingAction(
             name = "${year}년 ${month}월 국가 강약 내기",
             selectCnt = targetNations.size,
             isExclusive = null,
-            reqInheritancePoint = false,
+            // PHP `Event/Action/OpenNationBetting.php:90`: `reqInheritancePoint: true` — 국가 강약
+            // 베팅은 유산포인트 베팅이다(금이 아니다). false 는 misport.
+            reqInheritancePoint = true,
             openYearMonth = openYearMonth,
-            closeYearMonth = openYearMonth + 120,
+            // PHP `Event/Action/OpenNationBetting.php:48`: `$closeYearMonth = $openYearMonth + 24;`
+            // (24개월 = 2년). +120 은 fabricate 였다.
+            closeYearMonth = openYearMonth + 24,
             candidates = candidates,
         )
 

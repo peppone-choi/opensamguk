@@ -503,6 +503,16 @@ export const api = {
             generalId: number,
             turnIdx = 0,
         ) => post<IntakeOutcome & T>(`/api/command/placeBet?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+
+        // 서신 발송 — legacy SendMessage.php(mailbox, text).
+        // CommandWireMapper.intakeCodes `sendMessage`:75.
+        // mailbox: 9999=전체, 9000+nationId=국가, generalId=개인. 엔진 핸들러가 라우팅 결정.
+        // PHP validateArgs: mailbox(required, integer), text(required, lengthMin 1).
+        sendMessage: <T = unknown>(
+            args: { mailbox: number; text: string },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(`/api/command/sendMessage?generalId=${generalId}&turnIdx=${turnIdx}`, args),
     },
 
     // Simulator

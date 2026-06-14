@@ -35,7 +35,8 @@ function parseYearMonth(yearMonth: number): [number, number] {
     return [(yearMonth / 12) | 0, (yearMonth % 12) + 1];
 }
 
-// CityBasicCard.tsx isBrightColor 충실 복제(공유 export 부재) — 명도≥128이면 어두운 글자.
+// legacy isBrightColor: perceived-luminance threshold (r*.299 + g*.587 + b*.114) > 140 → black text.
+// 출처: legacy/devsam-core/hwe/ts/util/isBrightColor.ts (canonical threshold > 140).
 function isBrightColor(hex?: string): boolean {
     if (!hex) return false;
     const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -44,7 +45,7 @@ function isBrightColor(hex?: string): boolean {
     const r = (v >> 16) & 0xff;
     const g = (v >> 8) & 0xff;
     const b = v & 0xff;
-    return (r * 299 + g * 587 + b * 114) / 1000 >= 128;
+    return r * 0.299 + g * 0.587 + b * 0.114 > 140;
 }
 
 // record.nations(jsonb 원형: 배열 또는 {key:obj} 맵) → SimpleNationObj 배열로 정규화(날조 없음, 통과만).

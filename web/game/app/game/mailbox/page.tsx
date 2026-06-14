@@ -4,9 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
-import { api } from '../../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
-import { mailboxIdForScope, type MailboxScope } from '../../../lib/mailbox';
+import { mailboxIdForScope, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
 import type { FrontInfoResponse } from '../../../lib/types';
 
 interface MailMessage {
@@ -46,6 +46,11 @@ export default function MailboxPage() {
     const [toast, setToast] = useState<string>('');
     // 수락/거절 요청 진행 중인 메시지 id — 중복 클릭(이중 수락) 방지용
     const [pendingId, setPendingId] = useState<number | null>(null);
+    // 서신 발송 폼 상태
+    const [sendText, setSendText] = useState<string>('');
+    // 발송 대상 mailbox id: 9999=전체, 9000+nationId=국가, generalId=개인 (현재 scope 연동)
+    const [sendMailbox, setSendMailbox] = useState<number>(MAILBOX_PUBLIC);
+    const [sending, setSending] = useState(false);
 
     const fetchMessages = useCallback(async () => {
         setLoading(true);
@@ -95,6 +100,38 @@ export default function MailboxPage() {
         return () => es.close();
     }, [fetchMessages]);
 
+    // 서신 발송 — legacy SendMessage.php: POST /api/command/sendMessage?generalId=&turnIdx=0
+    // payload: { mailbox, text }. mailbox 라우팅: 9999=전체, 9000+nationId=국가, generalId=개인.
+    // isIntakeQueued/isIntakeDenied 가드 적용 — 무조건 성공 토스트 금지(P0-04/06).
+    async function handleSend() {
+        if (sending) return;
+        const text = sendText.trim();
+        if (!text) return;
+        if (identity.generalId == null) {
+            setToast('장수 정보가 없습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
+        setSending(true);
+        try {
+            const out = await api.commands.sendMessage({ mailbox: sendMailbox, text }, identity.generalId);
+            if (isIntakeQueued(out)) {
+                setToast('서신을 발송했습니다.');
+                setSendText('');
+                fetchMessages();
+            } else if (isIntakeDenied(out)) {
+                setToast(out.reason ?? '서신을 보낼 수 없습니다.');
+            } else {
+                setToast('발송 처리 중 오류가 발생했습니다.');
+            }
+        } catch {
+            setToast('서신 발송에 실패했습니다.');
+        } finally {
+            setSending(false);
+        }
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
+    }
+
     // 수락/거절은 game-api의 /api/messages/{id}/accept|decline로 직접 호출한다.
     // NEW CONTRACT: 수락 시 서버가 수락 명령(예: che_불가침수락)을 턴 데몬에 직접 예약(reserve)하므로
     // 클라이언트는 commandKey를 읽어 /api/command를 다시 호출하지 않는다(예전 디스패치 설계 폐기).
@@ -141,6 +178,12 @@ export default function MailboxPage() {
         fetchMessages();
     }
 
+    // scope 전환 시 발송 대상 mailbox도 연동 갱신
+    useEffect(() => {
+        const id = mailboxIdForScope(scope, identity);
+        setSendMailbox(id ?? MAILBOX_PUBLIC);
+    }, [scope, identity]);
+
     const unreadCount = messages.filter(m => !m.read).length;
 
     return (
@@ -181,6 +224,49 @@ export default function MailboxPage() {
                     {toast}
                 </div>
             )}
+
+            {/* 서신 발송 폼 — legacy MessagePanel.vue sendMessage(): { mailbox, text } */}
+            <GameCard style={{ marginBottom: 'var(--space-md)' }}>
+                <p style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-xs)' }}>서신 발송</p>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>대상</label>
+                    <select
+                        value={sendMailbox}
+                        onChange={e => setSendMailbox(Number(e.target.value))}
+                        disabled={sending || identity.generalId == null}
+                        style={{ fontSize: 'var(--text-sm)', padding: '2px var(--space-xs)', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)' }}
+                    >
+                        {/* 개인 수신함(현재 장수 본인)은 항상 표시 */}
+                        {identity.generalId != null && identity.generalId > 0 && (
+                            <option value={identity.generalId}>개인</option>
+                        )}
+                        {/* 국가 수신함: nationId > 0 인 경우만 */}
+                        {identity.nationId > 0 && (
+                            <option value={MAILBOX_NATIONAL_BASE + identity.nationId}>국가</option>
+                        )}
+                        <option value={MAILBOX_PUBLIC}>전체</option>
+                    </select>
+                </div>
+                <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-end' }}>
+                    <textarea
+                        value={sendText}
+                        onChange={e => setSendText(e.target.value)}
+                        placeholder="메시지를 입력하세요..."
+                        rows={3}
+                        maxLength={500}
+                        disabled={sending || identity.generalId == null}
+                        style={{ flex: 1, fontSize: 'var(--text-sm)', padding: 'var(--space-xs)', background: 'var(--bg-surface)', color: 'var(--text-primary)', border: '1px solid var(--border)', resize: 'vertical' }}
+                    />
+                    <button
+                        type="button"
+                        onClick={handleSend}
+                        disabled={sending || !sendText.trim() || identity.generalId == null}
+                        style={{ whiteSpace: 'nowrap' }}
+                    >
+                        {sending ? '발송 중...' : '발송'}
+                    </button>
+                </div>
+            </GameCard>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                 {messages.length === 0 && !loading && (
