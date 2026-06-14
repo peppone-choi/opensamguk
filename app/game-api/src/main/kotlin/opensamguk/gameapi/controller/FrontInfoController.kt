@@ -1,5 +1,7 @@
 package opensamguk.gameapi.controller
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.AutorunUserInfo
 import opensamguk.gameapi.dto.CityOfficer
 import opensamguk.gameapi.dto.FrontAuxInfo
@@ -24,6 +26,7 @@ import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadRepository
@@ -86,7 +89,13 @@ class FrontInfoController(
     // W0-2(P1-005) troopInfo — troop/general_turn read.
     private val troops: TroopReadRepository,
     private val generalTurns: GeneralTurnReadRepository,
+    private val nationEnv: NationEnvReadRepository,
+    private val objectMapper: ObjectMapper,
 ) {
+
+    /** nation_env(namespace = nationId, key) jsonb 디코드 — 부재/파싱실패 시 null(loop49 NationFinanceController 동일 패턴; loop51 빼기에서 공유 reader로 수렴 예정). */
+    private fun nationEnvNode(nid: Int, key: String): JsonNode? =
+        nationEnv.findByNamespaceAndKey(nid, key)?.let { runCatching { objectMapper.readTree(it.value) }.getOrNull() }
 
     @GetMapping("/front-info")
     fun frontInfo(
@@ -333,8 +342,9 @@ class FrontInfoController(
             prohibitScout = intOrNull(meta["scout"]),
             prohibitWar = intOrNull(meta["war"]),
 
-            // [§2 BLOCKED] impossibleStrategicCommand(명령엔진 필요)/onlineGen/notice(KV UNVERIFIED)는
-            // DTO 기본값(빈 리스트/null) 유지.
+            // notice(국가방침) — nation_env KV nationNotice.msg(loop49 read 채널 재사용). PageFront.vue:32 `v-html=nationInfo.notice?.msg` 등가. 부재 시 null.
+            notice = nationEnvNode(n.id, "nationNotice")?.get("msg")?.asText(),
+            // [§2 BLOCKED] impossibleStrategicCommand(명령엔진 필요)/onlineGen는 DTO 기본값(빈 리스트/null) 유지.
         )
     }
 
