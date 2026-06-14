@@ -62,6 +62,8 @@
 
 | 44(빼기 주기) | 휘도 임계값 매직넘버 `140` → 공유 상수 `BRIGHT_COLOR_THRESHOLD`(constants.ts) 수렴 — history/global-diplomacy/admin5/admin8 4파일(vote 패턴, NIT dedup 백로그 닫음) | FE tsc clean + web/game 65/65(=베이스라인, 140≡140 무행동변경) + 중복 4건 제거 | fresh 서브에이전트(grader-w44, ce-maintainability 적대) — 값동일성(140≠128_ALT)·isBrightColor↔newColor 임계 등가(isBrightColor.ts:6 `>140`)·완전성(잔여 executable 140 0)·두맵뷰어 불변식·게이트 독립 재확인, VERDICT PASS | 채택 | 더하기 4연속(38·39·40·42) 후 의무 빼기 바퀴 이행. 8줄(4 import + 4 치환). diplomacy/page.tsx `>127`은 별개 임계라 무관(미변경) |
 
+| 45 | nation-finance(내무부) FE 진입 권한 게이트 — permission<1 차단(v_nationStratFinan.php:28-34, loop42 diplomacy 동형). NF-P1-D(W-7 FE절반) 닫음 | FE tsc clean + web/game 65/65 + 평장수(perm 0) 재정 기밀 과노출 차단 | fresh 서브에이전트(grader-w45, ce-correctness 적대) — 메시지 byte-parity(php:29,32 exact)·permission 소스(derivePermission tier=diplomacy 동일 필드)·게이트 순서(무소속→권한부족→data, 과/미차단 0)·스코프 정직(BE NF-P0-D 별건)·단일파일+20줄, VERDICT PASS | 채택 | frontInfo.general.permission(백엔드 무변경). 무소속은 기존 noNation 분기("국가에 소속...") 유지. BE read 게이트(NF-P0-D)는 별건 백로그 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
@@ -74,7 +76,8 @@
 - secretPermission 단일소스화 (GeneralLogController ↔ DiplomacyController 중복) + penalty/ambassador/auditor/secretlimit 분기 (schema BLOCKED)
 - 페이지 감사 P0 54건 — PAGE_PARITY_AUDIT_2026-06-10.md (W0 파운데이션 8종 → W1 A~O 웨이브)
 - P0-14 근본: GeneralReadEntity `defence_train` read-chain 배선(스키마+flush) → 守/수비○ 마스킹 해제 + formatDefenceTrain 복원
-- 재채점 2026-06-12 (docs/superpowers/gap/regrade-2026-06-12/, critic 10-바퀴) — 잔여: W-6 NF income null 크래시 · W-7 NF 권한 게이트 · W-8 nation_env read 채널(setBlockWar 100% deny) · W-10 che_선전포고 위조 로그 골든. (닫힘: W-1→바퀴23 · W-3→바퀴22 · W-4→바퀴26 · W-9→바퀴24)
+- 재채점 2026-06-12 (docs/superpowers/gap/regrade-2026-06-12/, critic 10-바퀴) — 잔여: W-7 **BE절반** NF read API 권한 게이트(NF-P0-D, NationFinanceController 무게이트 타국 재정 열람 — 백엔드 결합) · W-8 nation_env read 채널(setBlockWar 100% deny, NF-P0-C/P1-B) · W-10 che_선전포고 위조 로그 골든. (닫힘: W-1→바퀴23 · W-3→바퀴22 · W-4→바퀴26 · W-9→바퀴24 · **W-6 NF income null 크래시→바퀴40 hasIncome 가드(line147 확인)** · **W-7 FE절반 NF-P1-D 진입 게이트→바퀴45**)
+- (FE/BE divergence, 바퀴45 채점자 grader-w45 발견) `derivePermission(officerLevel)` {≥5→2, ≥2→1, else 0}가 legacy `checkSecretPermission`의 **사관년도 경로**(belong≥nation.secretlimit → 평장수 officer_level 0/1도 tier 1 부여, func.php:390-435)를 미모델링 → 장기근속 평장수가 legacy는 입장 허용인데 현재 게이트(diplomacy/nation-finance/chief-center 공유)는 **과차단**. BE 파운데이션 결손(secretPermission 단일소스화 백로그와 동근). belong/secretlimit read 채널 선결
 - 유니크 1순위 중복 가드의 열린 경매 목록 DB-only — 같은 런 pending 경매 INSERT 비가시(PHP 즉시 INSERT 가시성과 비대칭, AuctionUniqueItem.php:148-152). AuctionOpenHandler 동일-아이템 검사도 같은 비대칭(바퀴26 채점 P2)
 - ~~OpenNationBetting 미스포트 (reqInheritancePoint/openYearMonth/closeYearMonth)~~ **닫힘 바퀴27**. (단 백로그의 "candidates nation id 키" 가설은 바퀴27 fresh 채점자가 반증 — PHP는 0-based 인덱스 키가 정답)
 - **OpenNationBetting candidates SET+payload+ordering (큰 바퀴, 바퀴32 차단 재분류)** — ordering-only 아님. (1) SET: PHP=전 nation 풀행(func.php:69-76), Kotlin=bare List<Int>. (2) payload: PHP SelectItem aux=풀행/title=name/info=`국력·장수수·도시수`(php:63-79), Kotlin=aux{nation}만/title 플레이스홀더. (3) ordering: uasort power-desc stable(php:58-61). 선결: OpenNationBettingAction 엔진 dispatch 조립(P6 betting rework) + power-bearing nation행을 betting env에 스레드(MonthlyPostUpdateHook/WorldEventContextFactory). 다중파일(OpenNationBetting.kt + env-seam + SelectItem). PHP8 stable sort, 비안정 2차 비교자 금지

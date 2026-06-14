@@ -48,6 +48,8 @@ export default function NationFinancePage() {
     // identity for the CommandModal (own general/nation), + the open finance modal spec.
     const [generalId, setGeneralId] = useState<number | null>(null);
     const [nationId, setNationId] = useState<number | null>(null);
+    // 기밀권한 — checkSecretPermission($me)(func.php:390-435). <1 이면 내무부 진입 거부(v_nationStratFinan.php:28-34).
+    const [permission, setPermission] = useState(0);
     const [financeModal, setFinanceModal] = useState<FinanceModalSpec | null>(null);
     const [toast, setToast] = useState<string | null>(null);
     // draft text for the notice / scout-message edits (passed via extraArgs.msg).
@@ -63,6 +65,7 @@ export default function NationFinancePage() {
             const nid = fi.general.nationId;
             setGeneralId(fi.general.generalId);
             setNationId(nid);
+            setPermission(fi.general.permission ?? 0);
             // 재야(무소속): nationId 0 → 내무부 없음.
             if (!nid) {
                 setNoNation(true);
@@ -123,6 +126,23 @@ export default function NationFinancePage() {
                     <h1>내무부</h1>
                     <GameCard>
                         <p className="text-muted">국가에 소속되어있지 않습니다.</p>
+                    </GameCard>
+                </div>
+            </Shell>
+        );
+    }
+
+    // 진입 권한 게이트 — 레거시 v_nationStratFinan.php:28-34 와 동형.
+    // 무소속(!nid)은 위 noNation 분기가 "국가에 소속되어있지 않습니다."로 처리(permission<0 등가).
+    // 소속이나 기밀권한 미달(평장수·사관년도 부족 → permission 0)은 페이지 자체를 거부한다(국고/세율/정책 기밀).
+    // frontInfo 미로드 기본값(permission 0)도 동일 차단. 백엔드 read 게이트(NF-P0-D)는 별건 백로그.
+    if (permission < 1) {
+        return (
+            <Shell>
+                <div className="page-content">
+                    <h1>내무부</h1>
+                    <GameCard>
+                        <p className="text-muted">권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p>
                     </GameCard>
                 </div>
             </Shell>
