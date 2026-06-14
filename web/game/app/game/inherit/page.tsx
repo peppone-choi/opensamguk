@@ -329,7 +329,7 @@ export default function InheritPage() {
                             style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
                             onClick={() => openBuy({ command: 'inheritSetNextSpecialWar', label: '다음 전투 특기 지정', extraArgs: { specialWar: nextSpecialPick } })}
                         >
-                            예약
+                            구입
                         </button>
                     </div>
                     <div>
@@ -392,7 +392,7 @@ export default function InheritPage() {
                             style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
                             onClick={() => openBuy({ command: 'inheritResetTurnTime', label: '랜덤 턴 초기화', extraArgs: {} })}
                         >
-                            초기화
+                            구입
                         </button>
                     </div>
                     <div>
@@ -406,7 +406,7 @@ export default function InheritPage() {
                             style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
                             onClick={() => openBuy({ command: 'BuyRandomUnique', label: '랜덤 유니크 획득', extraArgs: {} })}
                         >
-                            구매
+                            구입
                         </button>
                     </div>
                     <div>
@@ -420,7 +420,7 @@ export default function InheritPage() {
                             style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
                             onClick={() => openBuy({ command: 'inheritResetSpecialWar', label: '즉시 전투 특기 초기화', extraArgs: {} })}
                         >
-                            초기화
+                            구입
                         </button>
                     </div>
                 </div>
@@ -459,7 +459,7 @@ export default function InheritPage() {
                                             extraArgs: { buffKey: def.key, level: level + 1, prevLevel: level },
                                         })}
                                     >
-                                        구매
+                                        구입
                                     </button>
                                 )}
                             </div>
