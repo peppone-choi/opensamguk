@@ -182,6 +182,20 @@ export default function DiplomacyPage() {
         }
     };
 
+    // 페이지 접근 권한 게이트 — legacy t_diplomacy.php:28-30
+    // checkSecretPermission($me) < 1 → "권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다."
+    // frontInfo가 아직 로드되지 않은 경우(permission=0 기본값)도 동일하게 차단된다.
+    if (permission < 1) {
+        return (
+            <Shell>
+                <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>외교부</h1>
+                <GameCard>
+                    <p style={{ color: 'var(--text-secondary)' }}>권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다.</p>
+                </GameCard>
+            </Shell>
+        );
+    }
+
     return (
         <Shell>
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>외교부</h1>

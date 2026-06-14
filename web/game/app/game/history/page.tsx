@@ -27,6 +27,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
+import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 import { formatLog } from '../../../lib/utilGame';
 import type { HistoryResponse, SimpleNationObj } from '../../../types/game';
 
@@ -45,7 +46,7 @@ function isBrightColor(hex?: string): boolean {
     const r = (v >> 16) & 0xff;
     const g = (v >> 8) & 0xff;
     const b = v & 0xff;
-    return r * 0.299 + g * 0.587 + b * 0.114 > 140;
+    return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD;
 }
 
 // record.nations(jsonb 원형: 배열 또는 {key:obj} 맵) → SimpleNationObj 배열로 정규화(날조 없음, 통과만).

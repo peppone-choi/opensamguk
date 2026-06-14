@@ -26,6 +26,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminNationStatsResponse } from '../../../lib/api';
+import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 
 // legacy newColor: perceived-luminance(r*.299+g*.587+b*.114) > 140 → 어두운 글자, 아니면 흰 글자.
 function contrastText(color: string): string {
@@ -34,7 +35,7 @@ function contrastText(color: string): string {
     const r = parseInt(m[1], 16);
     const g = parseInt(m[2], 16);
     const b = parseInt(m[3], 16);
-    return r * 0.299 + g * 0.587 + b * 0.114 > 140 ? '#000' : '#fff';
+    return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD ? '#000' : '#fff';
 }
 
 // _admin5.php 테이블 헤더 verbatim(국명 … 국명 = 좌우 양끝 국명 2회).
