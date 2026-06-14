@@ -24,5 +24,16 @@
 - **일반/재야 역할 대조** — 소스기반(devsam hwe/ts ↔ web/game source) 권장(dual-stack 금지). MENU_SWEEP_CHECKLIST.md 56항목.
 - **감찰부** — devsam b_inspect.php 부재 → core2026 확인 후 격리 결정.
 
+## 일반/재야 역할 대조 결과 (acd49 소스대조, "모든 메뉴" 커버 완성)
+**프론트-cheap P0(백엔드 존재):**
+- **외교 승인/거부 버튼**(P0-16) — DiplomacyMessageController.accept/declineLetter 존재, FE 버튼만 누락. devsam t_diplomacy.php:153-154. **loop41 진행중**
+- my-generals **벌점 컬럼** — refresh_score_total(단 general_access_log 부재면 DTO 미보유 — 확인 필요, loop31서 BLOCKED였음)
+- diplomacy **permission<1 페이지 차단** 미이식(일반/재야 누구나 열람中)
+**백엔드결합/BIG:**
+- join **국가 선택 UI**(nationList/초대장 재활용) + 사진선택 + 유산점수(inheritPoint)
+- **select-pool 전체 미이식**(j_get_select_pool/token/select_npc API 신규 필요) — BIG
+- my-nation income 6종+예산(=위 W1-O #3) · troop 타도시 도시명(cityName, =cityConst 백로그) · nation_history(국가열전)
+**MATCH 확인**: troop 구조, 재야 메인 게이트, diplomacy 수뇌 회수/파기/작성, my-nation 재야 exit.
+
 ## 라이브 오라클 재가동 (필요 시, 단일스택)
 레시피 = [[project_devsam_docker_oracle]]. devsam :8080/sam/che + opensamguk 로컬 :3001, 4역할(general_owner 바인딩, 엔진 stop→update→restart). ⚠️동시 금지.
