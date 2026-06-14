@@ -43,6 +43,8 @@
 | 35(BLOCKED) | global-diplomacy 분쟁 도시 id→도시명 | 미측정(차단·무변경) | impl 사전체크(a3fd) | 차단(스코프) | 갭 실재(PageGlobalDiplomacy.vue:68 `cityConst[id].name`). 수정엔 백엔드 tuple 변경 or 신규 fetch 필요 — 단일파일 룰 밖. ConflictCity=[cityId,pctMap] 이름필드 없음. 재스코프: 프론트 cityConst-equiv id→name 공유 로더(레거시 gameConst 방식). API tuple에 cityName 추가는 PHP 계약 divergence라 금지 |
 | 34 | (삭제 바퀴 빼기-주기) AuctionResultCalculator 죽은 위조 로그문자열 8개 + dead logMessage 2속성 제거 (12줄) | :logic 256/2146 green(=베이스라인, 삭제=dead 증명) | fresh 서브에이전트(a7f3, 적대 삭제안전) — caller가 logMessage 미읽음(AuctionFinalizeHandler returnType/Amount/finalStatus만) + 8문자열 PHP 0매치 + 테스트 미참조, VERDICT PASS | 채택 | bb23이 와이어 절단한 고아 필드의 시신 제거. 재배선 지뢰 제거(rule5 fabrication 청소) |
 | 36 | betting 목록 표시순서 패러티 — `Object.values(bettingList).reverse()` (PageNationBetting.vue:9, 최신 id 우선; API는 삽입순서 보존) | FE tsc clean + web/game 65/65 + 갭 1 닫힘 | fresh 서브에이전트(a7d3, 적대) + 직접 결정적 재확인(tsc clean + vitest 65/65) | 채택 | 클라 reverse=정답(BettingController findAll associate LinkedHashMap 삽입순 → double-reverse 아님). betting/page.tsx:58 1줄 |
+| 37 | che_징병 pure-logic guard test 포팅 (WS-A troops.test.ts) | 무변경(이미 커버) | impl STEP0 점검(a269) | 스킵(중복 회피) | RecruitAlgorithmTest + MilitaryConstraintsTest + MilitaryGoldenTest(che_징병-fixtures.json)가 outcome/guard/golden/zero-draw 전부 커버. ad43 prep가 RecruitAlgorithmTest 미발견 오판. WS-A troops 잔여=train/morale·lifecycle만 |
+| — | (배포) loop-parity 6루프 배치 → main 머지(977f3185)+CI 자동배포 | 풀게이트 backend 418/3096 green + web/game 65/65 | gate.sh backend XML(결정적) + deployer prod 검증(진행) | 배포(유저 go-ahead) | che_견문 mt_rand 격리·OpenNationBetting 정렬/global-diplomacy 차단은 별도 큰 바퀴 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
