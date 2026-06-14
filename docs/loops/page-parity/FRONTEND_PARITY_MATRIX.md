@@ -71,6 +71,29 @@
 - **[D] 장수목록 비교는 매핑 오류** — devsam b_genList.php=**암행부(권한뷰)** ≠ opensamguk /game/generals(공개). opensamguk 암행부 등가 페이지 별도 확인 필요(공개목록은 loop31로 패러티)
 - 스크린샷: tmp/parity-shots/lord/ (devsam-*.png / osam-*.png)
 
+### 군주 갭 소스 스코핑 verdict (a73b)
+- **GAP4 당기기/미루기/반복 = 갭 아님(정정)** — PartialReservedCommand.tsx 이미 구현+GameChrome 마운트. 고급모드=CommandModal 의도적 divergence
+- **GAP6 맵 중원정세 로그 = CHEAP 프론트** — WorldLogController 존재 → fetch+formatLog 재사용. **루프38 진행**
+- **GAP1 외교 메시지 탭** — 탭추가 1줄 cheap, BUT 상대국 mailbox contact-list API 부재 → 선택기 COUPLED. read-only 고정-mailbox 탭만 cheap
+- **GAP5 "기타정보" 레이블** — GlobalMenu 서버드리븐(game-api GetMenu item.name) or rankings/page.tsx:14 로컬 label. 저가치, 출처 확인 필요
+- **GAP2 접속국가/접속자 + GAP3 국가방침 = BACKEND-COUPLED(고가치 파이프라인)** — 데몬이 online_nation/online_user_cnt/onlineGen/nationNotice KV를 world_state.config/nation_env에 미write([§2 BLOCKED]). IdentityDto 필드·FrontInfoController read 코드는 이미 존재→데몬 KV write만 추가하면 언블록. **별도 WS-C 백엔드 루프(엔진 KV write→game-api 언블록→프론트 렌더). Docker IT 필요**
+- **핵심 결론: opensamguk 프론트 *레이아웃* 골격은 대체로 충실. 남은 갭 = 주로 (a) 데몬 KV 파이프라인 미구현 → 정보 미표시 (b) 미구현 페이지(암행부/battle-center/tournament).**
+- **⚠️ 유저 확정(2026-06-14): "정보가 부족하면 그건 갭이다."** — backend-coupled(데몬 KV)는 후순위 아님. devsam이 표시하는 정보를 opensamguk이 못 표시하면 **모두 실 파러티 갭 = 고침 대상**. [§2 BLOCKED] DTO 필드 전수(onlineGen/onlineNations/onlineUserCnt/nationNotice + 기타) = 데몬 KV write 파이프라인으로 언블록 = WS-C 백엔드 루프 패밀리(고가치).
+
+## 라이브 대조 결과 — 수뇌부 (ab5b, devsam chief=공융 lvl11 ↔ opensamguk role_chief=관우 lvl3)
+
+> ⚠️ 셋업 이슈: role_chief lvl3(perm1 관직자) = 수뇌부 자격 미달 → chief-center 차단. **lvl≥5 재바인딩 후 재대조 필요**.
+
+- **[S] P0 nation-finance 크래시** — `Cannot read properties of undefined (reading 'city')`. audit P0-51 라이브 확정. /game/nation-finance 전체 렌더 불가
+- **[S] P0 my-nation 크래시** — `reading 'toUpperCase'` (null 문자열 필드, 성향/type 등). a071 HTTP-200은 셸만, client JS 크래시. role_chief(관우)에서 발생
+- **[P0 셋업] chief-center 권한 차단** — opensamguk 수뇌부 판정 임계 vs role_chief lvl3. 재바인딩(lvl≥5) 후 사령부 그리드 대조
+- **[정보갭 — 유저 "정보부족=갭"] 국가패널 "-"** — 세율/지급률/국력/기술력/전략·외교쿨다운 미매핑(API null)
+- **[정보갭] 장수패널 수비설정/실행잔여/벌점 누락**
+- **[D] 주민 현재값=최대값** — devsam 3M/4.35M(진행) vs opensamguk 4.35M/4.35M(초기). ProcessIncome 미적용 or 로컬 stale(park: stale DB)
+- **[S/P1] 국가메뉴 7항목 비활성** — 기밀실/외교부/내무부/사령부/NPC정책/암행부/감찰부 (devsam 수뇌부 전부 active). 일부 coming-soon, 일부 권한게이트
+- 메인 중원정세 로그(loop38) / 외교탭(GAP1) / 기타정보 레이블(GAP5) — 군주와 공통
+- 스크린샷: parity-shots/chief/
+
 ## 대조 후 루프 분해 원칙
 - 페이지 1개 차이 = 루프 1개(큰 페이지=섹션별 분해). devsam 라이브 렌더가 oracle.
 - mutation 경로는 intake 등록 증명 필수(바퀴30 교훈). 읽기 갭부터.
