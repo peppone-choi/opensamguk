@@ -68,9 +68,11 @@
 
 | 46 | GeneralBasicCard 무력 라벨 오타 수정 — `'묠력'`→`'무력'`(GeneralBasicCard.vue:39 byte-parity, 바인딩 값=general.strength) | FE tsc clean + web/game 65/65 + 본인 카드 매턴 오타 노출 해소 | fresh 서브에이전트(grader-w46, cavecrew-reviewer 적대) — legacy byte-parity(vue:39 `무력`)·값/라벨 정합(통솔/무력/지력 26·39·50)·잔여 `묠` 0·1토큰 단일파일·tsc clean, VERDICT PASS | 채택 | FE갭 서베이(wf_8eacb777, 5클러스터 fan-out) 최강 후보. 5스탯 divergence(정치/매력) 무관 |
 
+| 47(FAIL→원복) | troop cityId→cityName 렌더(87·160) — payload cityName 가정 | tsc RED(TS2339 ×2)→원복 후 tsc clean 복원(diff-0) | fresh 서브에이전트(grader-w47, cavecrew-reviewer 적대) — 실 tsc로 `cityName does not exist on type GeneralListItem` 적발 | 폐기·원복 | 서베이 synthesizer 오판: "GeneralListItem.cityName game.ts:95 VERIFIED"는 실제 **CitySelectorOption**(별개 타입). 진짜 GeneralListItem=game.ts:464, cityName 무. 갭은 실재하나 **단일파일 아님** → cityConst id→name 로더(바퀴35 차단) OR 백엔드 cityName 필드 필요. 원복앵커 f7425c75. 교훈: 서베이 "VERIFIED" 주장도 루프 fresh 그래더(실 게이트) 재검증 필수 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
-- (FE갭 서베이 wf_8eacb777 산출 2026-06-14, 단일파일-닫힘 검증) **troop cityId→cityName P0** — PageTroop.vue:8,47 `cityConst[city].name` 렌더 vs troop/page.tsx:87,160-161,232 raw 숫자 cityId 노출. payload에 cityName 이미 존재(GeneralListItem, game.ts:95) → 백엔드 무변경 단일파일 필드 스왑(서베이 raw가 false 오판한 것 정정). 바퀴 후보 = 다음
+- (FE갭 서베이 wf_8eacb777 산출 2026-06-14, **바퀴47 FAIL로 단일파일 반증**) troop cityId→cityName(troop/page.tsx:87,160) — 갭 실재(PageTroop.vue:8,47 `cityConst[city].name`)이나 GeneralListItem(game.ts:464)에 cityName 무 → tsc RED. **바퀴35 "cityConst-equiv id→name 공유 로더"와 동일 해법**(global-diplomacy 분쟁도시 + troop 주둔도시 동시 해소). API tuple cityName 추가는 PHP divergence 금지 → 프론트 cityConst 로더 1개 도입이 정답
 - (FE갭 서베이 산출, P1 일방증거) inherit 예약→구입 — inherit/page.tsx:333 `inheritSetNextSpecialWar` 버튼 라벨 `예약`, legacy PageInheritPoint.vue:53 `구입` 주장. 착수 전 legacy:53 문자열 직접 확인 필수(일방 증거)
 - (FE갭 서베이 DROP) my-nation 국가열전 `-` = 충실 패러티(legacy b_myKingdomInfo.php도 nation-history 필드 무발행, 날조 아님). 비-갭
 - (FE갭 서베이, 단일파일 아님→백엔드/섹션웨이브) my-boss·npc-control missing-section(신규 백엔드 필드 필요), join preset-stat(generalStats.ts ~140줄 포팅=2파일), nation-finance 외교섹션/income/defence_train/general_turn(백엔드 data-gap=W1-O)
