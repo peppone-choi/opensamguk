@@ -73,7 +73,7 @@
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - (FE갭 서베이 wf_8eacb777 산출 2026-06-14, **바퀴47 FAIL로 단일파일 반증**) troop cityId→cityName(troop/page.tsx:87,160) — 갭 실재(PageTroop.vue:8,47 `cityConst[city].name`)이나 GeneralListItem(game.ts:464)에 cityName 무 → tsc RED. **바퀴35 "cityConst-equiv id→name 공유 로더"와 동일 해법**(global-diplomacy 분쟁도시 + troop 주둔도시 동시 해소). API tuple cityName 추가는 PHP divergence 금지 → 프론트 cityConst 로더 1개 도입이 정답
-- (FE갭 서베이 산출, P1 일방증거) inherit 예약→구입 — inherit/page.tsx:333 `inheritSetNextSpecialWar` 버튼 라벨 `예약`, legacy PageInheritPoint.vue:53 `구입` 주장. 착수 전 legacy:53 문자열 직접 확인 필수(일방 증거)
+- (FE갭 서베이 산출, **양면검증 완료 2026-06-14**) inherit 상점버튼 라벨 legacy `구입` 정합 — legacy PageInheritPoint.vue 5버튼 전부 `구입`(:53 nextSpecial·:93 turnTime·:103 BuyRandomUnique·:113 ResetSpecialWar·:145 BuyHiddenBuff). web inherit/page.tsx는 혼합 드리프트: 332`예약`·395`초기화`·409`구매`·423`초기화`·462`구매`. 엄격 패러티(미승인 divergence)=5개 전부 `구입`. ⚠️**product 판단 대기**: 서술형 라벨(초기화/구매)은 모더나이즈 UX일 수 있어 균일 `구입` 회귀는 UX 가시 변경 — 스코프(332만 vs 5개 전부 vs 서술형 유지=1.0.0 divergence) 유저 결정. 예약(reserve)만은 명백 오류(buy 액션에 reserve 동사 + 잠복버그 이력 inherit:145주석)라 최소 수정 후보
 - (FE갭 서베이 DROP) my-nation 국가열전 `-` = 충실 패러티(legacy b_myKingdomInfo.php도 nation-history 필드 무발행, 날조 아님). 비-갭
 - (FE갭 서베이, 단일파일 아님→백엔드/섹션웨이브) my-boss·npc-control missing-section(신규 백엔드 필드 필요), join preset-stat(generalStats.ts ~140줄 포팅=2파일), nation-finance 외교섹션/income/defence_train/general_turn(백엔드 data-gap=W1-O)
 
