@@ -52,6 +52,8 @@
 
 | 40 | nation 페이지 2종 P0 크래시 graceful 가드 — my-nation newColor(null→'')·nation-finance hasIncome 가드(income/outcome/policy/warSetting null→'-', 날조0) | FE tsc clean + web/game 65/65 + 크래시 2 해소(라이브 no-crash 재확인은 스택 복구후) | fresh 서브에이전트(aee9, 적대) — 가드 충실성(실값 보존·null만 '-'·날조0)+2파일만, VERDICT PASS | 채택 | 라이브 대조(ab5b) P0 크래시. 데이터 본체=백엔드갭 백로그(W1-O). 배선시 가드 dead code화 |
 
+| 배포2+bounce | -b 프론트배치 main 머지(d7f2ba0e) + **s1 admin bounce**(loops27-40 s1 라이브) | CI SUCCESS + edge 200(502 0) + 데몬 클린(timeout 0) + 턴 되감김 0(185/7 유지·updated_at 보존) | deployer(a72e) ops-lessons 검증 | 배포 성공(유저 전체승인) | s1 game-api/web-game/game-engine 모두 d7f2ba0e. 롤백앵커 0f71474d. WS-B 발견: repo docker-compose.production.yml/scripts/deploy.sh=obsolete(라이브=~/opensamguk-docker shared/server 구조, 이미 target). s1.env root:root sudo |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
