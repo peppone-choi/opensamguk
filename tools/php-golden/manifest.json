@@ -34,7 +34,8 @@
       { "rawClassName": "che_사기진작", "lotteryActionName": "사기진작", "ctor": "general", "rngDraws": "morale", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
       { "rawClassName": "che_소집해제", "lotteryActionName": "소집해제", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
       { "rawClassName": "che_이동", "lotteryActionName": "이동", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
-      { "rawClassName": "che_집합", "lotteryActionName": "집합", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true }
+      { "rawClassName": "che_집합", "lotteryActionName": "집합", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": true },
+      { "rawClassName": "che_견문", "lotteryActionName": "견문", "ctor": "general", "rngDraws": "choiceUsingWeightPair(17-entry table) + choice(texts) + optional nextRangeInt(10,20 Wounded) or nextRangeInt(20,50 HeavyWounded)", "logLines": 1, "crossGeneral": false, "broadcast": false, "levelCross": false, "note": "SightseeingMessage::pickAction(): 2 draws always (choiceUsingWeightPair+choice), +1 if Wounded(0x1000), +1 if HeavyWounded(0x2000). fullConditionConstraints=[]. Captured by capture_command_gyeonmun.php (separate script — draw-recording harness)." }
     ],
     "personnel": [
       { "rawClassName": "che_임관", "lotteryActionName": "임관", "ctor": "general", "rngDraws": "none/deterministic", "logLines": 1, "crossGeneral": false, "broadcast": true, "levelCross": true },

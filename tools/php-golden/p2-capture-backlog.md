@@ -77,6 +77,12 @@ goldens stay byte-exact (the fold is identity for them).
 | `che_증축` | nation-internal | `ReqDestCityValue('level','<',8)` on the capital. Both nations' capitals (낙양, 업) are already level **8** (max) in `scenario_1010` (deny `더이상 증축할 수 없습니다`). No nation has a sub-max capital to grow. |
 | `che_무작위수도이전` | nation-internal | Deny `더이상 변경이 불가능합니다` — the random-capital-move variant is gated by a per-nation once/availability flag that is already exhausted/closed in the pristine install. (Deterministic `che_천도` IS captured; the random-pick variant needs the move-availability state this install lacks.) |
 
+## Docker-blocked (capture script written, fixture pending manual run)
+
+| Command | Reason |
+| --- | --- |
+| `che_견문` | Docker daemon not running on the capture host at the time this task executed (`Cannot connect to the Docker daemon at unix:///Users/apple/.docker/run/docker.sock`). The capture script (`tools/php-golden/capture_command_gyeonmun.php`) and the manifest entry (`manifest.json` military group) are ready. Run manually once Docker is available: `docker start devsam-golden-php devsam-golden-db` (or spin fresh containers per README), then `php /work/tools/php-golden/capture_command_gyeonmun.php --out-dir=logic/src/test/resources/golden/p2`. Verify two byte-identical runs on fresh DBs, then commit the fixture. The Kotlin gate test (`CheGyeonmunGoldenTest.kt`) and `resolve()` implementation are separate downstream tasks. |
+
 ## Out of P2 (not backlog — never in the P2 surface)
 
 Per `manifest.json`'s `out` block: `물자원조` (diplomatic, needs a counterpart nation; diplomacy
