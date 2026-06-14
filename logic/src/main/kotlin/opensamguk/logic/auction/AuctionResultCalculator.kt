@@ -13,8 +13,6 @@ data class RollbackResult(
     val returnAmount: Int,
     /** 최종 경매 상태 */
     val finalStatus: AuctionStatus,
-    /** 로그 메시지 */
-    val logMessage: String,
 )
 
 /**
@@ -33,8 +31,6 @@ data class FinishResult(
     val uniqueItemKey: String? = null,
     /** 최종 경매 상태 */
     val finalStatus: AuctionStatus,
-    /** 로그 메시지 */
-    val logMessage: String,
     /** 낙찰자의 유산 포인트 차감량 (UNIQUE_ITEM인 경우) */
     val bidderInheritancePointDelta: Int = 0,
 )
@@ -77,14 +73,12 @@ object AuctionResultCalculator {
                         returnResourceType = "rice",
                         returnAmount = amount,
                         finalStatus = AuctionStatus.CANCELED,
-                        logMessage = "경매가 유찰되어 쌀 ${amount}을 회수했습니다.",
                     )
                 } else {
                     RollbackResult(
                         returnResourceType = null,
                         returnAmount = 0,
                         finalStatus = AuctionStatus.CANCELED,
-                        logMessage = "경매가 유찰되었습니다.",
                     )
                 }
             }
@@ -96,14 +90,12 @@ object AuctionResultCalculator {
                         returnResourceType = "gold",
                         returnAmount = amount,
                         finalStatus = AuctionStatus.CANCELED,
-                        logMessage = "경매가 유찰되어 금 ${amount}을 회수했습니다.",
                     )
                 } else {
                     RollbackResult(
                         returnResourceType = null,
                         returnAmount = 0,
                         finalStatus = AuctionStatus.CANCELED,
-                        logMessage = "경매가 유찰되었습니다.",
                     )
                 }
             }
@@ -114,7 +106,6 @@ object AuctionResultCalculator {
                     returnResourceType = null,
                     returnAmount = 0,
                     finalStatus = AuctionStatus.CANCELED,
-                    logMessage = "유니크 아이템 경매가 유찰되었습니다.",
                 )
             }
         }
@@ -144,7 +135,6 @@ object AuctionResultCalculator {
                     bidderReceiveResource = "rice",
                     bidderReceiveAmount = tradeAmount,
                     finalStatus = AuctionStatus.FINISHED,
-                    logMessage = "쌀 구매 경매가 완료되었습니다. (금 $highestBidAmount → 쌀 $tradeAmount)",
                 )
             }
 
@@ -156,7 +146,6 @@ object AuctionResultCalculator {
                     bidderReceiveResource = "gold",
                     bidderReceiveAmount = tradeAmount,
                     finalStatus = AuctionStatus.FINISHED,
-                    logMessage = "금 구매 경매가 완료되었습니다. (쌀 $highestBidAmount → 금 $tradeAmount)",
                 )
             }
 
@@ -168,7 +157,6 @@ object AuctionResultCalculator {
                     bidderReceiveResource = null,
                     bidderReceiveAmount = 0,
                     finalStatus = AuctionStatus.FINISHED,
-                    logMessage = "유니크 아이템 경매가 완료되었습니다. (유산 포인트 $highestBidAmount 사용)",
                     bidderInheritancePointDelta = -highestBidAmount,
                 )
             }
