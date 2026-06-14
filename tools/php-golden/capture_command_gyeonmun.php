@@ -251,8 +251,9 @@ $dedlevelBefore = $general->getVar('dedlevel');
 $raw = 'che_견문';
 $cmd = buildGeneralCommandClass($raw, $general, $env, null);
 hardAssert($cmd->getRawClassName() === $raw, "factory returned {$cmd->getRawClassName()} for {$raw}");
-hardAssert($cmd->hasFullConditionMet(), "che_견문: full condition not met — " .
-    (method_exists($cmd, 'getFailString') ? str_replace("\n", " ", (string)@$cmd->getFailString()) : ''));
+if (!$cmd->hasFullConditionMet()) {
+    hardAssert(false, "che_견문: full condition not met");
+}
 
 $reqGold = $cmd->getCost()[0] ?? null;
 
