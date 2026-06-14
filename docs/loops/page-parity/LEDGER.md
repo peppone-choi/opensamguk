@@ -64,6 +64,8 @@
 
 | 45 | nation-finance(내무부) FE 진입 권한 게이트 — permission<1 차단(v_nationStratFinan.php:28-34, loop42 diplomacy 동형). NF-P1-D(W-7 FE절반) 닫음 | FE tsc clean + web/game 65/65 + 평장수(perm 0) 재정 기밀 과노출 차단 | fresh 서브에이전트(grader-w45, ce-correctness 적대) — 메시지 byte-parity(php:29,32 exact)·permission 소스(derivePermission tier=diplomacy 동일 필드)·게이트 순서(무소속→권한부족→data, 과/미차단 0)·스코프 정직(BE NF-P0-D 별건)·단일파일+20줄, VERDICT PASS | 채택 | frontInfo.general.permission(백엔드 무변경). 무소속은 기존 noNation 분기("국가에 소속...") 유지. BE read 게이트(NF-P0-D)는 별건 백로그 |
 
+| 배포3 | loop-parity 배치(42·44·45, FE-only web/game) → PR#81 main 머지(7fad0125)+CI 자동배포 | CI 전체 그린(agent-system·jvm·web game·web gateway) + 풀 FE 게이트 65/65 + cross-agent critique 아티팩트(Verdict: cleared) | ship-critic(ce-correctness, 최종 결합 독립 적대) Verdict cleared + deployer(deploy-verify-81) ops-lessons 검증 | 배포 성공(유저 "배치 머지+배포 먼저" go) | health 전부 그린·502/504 0(Rule A: nginx LAST force-recreate)·clock 185/9 되감김 0. CI=shared 스택만(gateway-api·web-gateway·nginx), s1 엔진 고정 IMAGE_TAG 미재생→턴데몬 미재시작(Rule B freeze 비해당)→FE fix는 s1 bounce 전까지 s1 미반영. 60분 턴경계 횡단 확정=poll bevvu9pjl 진행중. SSH 갭(opens.pem 부재)→HTTPS read로 clock 검증. agent-system 가드: web/game=CODE_PREFIX라 strict시 reviews/*.md 아티팩트(Verdict 문자열) 필수 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
