@@ -55,6 +55,22 @@
 | 전투기록실 | v_battleCenter.php | (없음) | 신설 필요 P0 |
 | 토너먼트 | b_tournament.php | (없음) | 신설 필요 P0 |
 
+## 라이브 대조 결과 — 군주 (a3705, 2026-06-14, devsam che ↔ opensamguk 로컬)
+
+> ⚠️ 셋업 결함: role_lord general 미바인딩(null)→/game/my-nation·nation 크래시. a071이 교정 중.
+> 아래 **[S]=구조적(데이터 무관, 확정)** / **[D]=데이터의존(깨끗한 재대조 필요)**.
+
+- **[S] P0 메인 메시지 패널 외교 탭 누락** — devsam 4채널(전체/국가/개인/외교), opensamguk 3채널. + 서신전송 비활성("API 미지원") — loop30이 mailbox엔 추가됐으나 메인 패널은 별개/구빌드 가능성
+- **[S] P0 메인 접속국가·접속자 섹션 없음** — devsam "접속중 국가/【접속자】" 2줄
+- **[S] P1 메인 국가방침 섹션 없음**
+- **[S] P1 개인 명령목록 당기기/미루기/고급모드/반복 버튼 없음** — devsam 메인 명령목록 상/하단 버튼군 (chief-center엔 loop16 추가됐으나 개인 명령목록엔 없음)
+- **[S] P1 감찰부 coming-soon** — devsam v_battleCenter 실기능 vs opensamguk placeholder
+- **[S] P1 맵 페이지 중원정세 로그 없음** — devsam v_cachedMap 하단 4줄
+- **[S] P1 글로벌메뉴 레이블** — devsam "기타정보" vs opensamguk "접속량정보"
+- **[D] P0 /game/my-nation·/game/nation 크래시** — null general deref(셋업 바인딩 이슈 + 방어 부재). a071 바인딩 후 재확인; 방어적 null처리는 WS-C 후보
+- **[D] 장수목록 비교는 매핑 오류** — devsam b_genList.php=**암행부(권한뷰)** ≠ opensamguk /game/generals(공개). opensamguk 암행부 등가 페이지 별도 확인 필요(공개목록은 loop31로 패러티)
+- 스크린샷: tmp/parity-shots/lord/ (devsam-*.png / osam-*.png)
+
 ## 대조 후 루프 분해 원칙
 - 페이지 1개 차이 = 루프 1개(큰 페이지=섹션별 분해). devsam 라이브 렌더가 oracle.
 - mutation 경로는 intake 등록 증명 필수(바퀴30 교훈). 읽기 갭부터.
