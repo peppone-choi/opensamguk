@@ -33,6 +33,7 @@
 | 24 | P0-26 재닫음(바퀴 15-정정) — inherit 유니크 경매를 정본 intake로 교체: `OpenUniqueAuction`+`{item}` → `auctionOpenUnique`+`{itemId,amount}`(OpenUniqueAuction.php:33-39) + 입찰 포인트 입력(min 프리필/max=previous/int 강제, Vue:455,70-71) + '유산 포인트가 부족합니다.' 가드(Vue:624-627) | FE tsc clean + web/game 65/65 + 휴식-턴 잠복 위조 경로 소멸(intakeCodes 경유 확인) | fresh 서브에이전트(grader-w24, parity-reviewer) — wire 계약 end-to-end 추적 + P2 3건 반영 재확인, VERDICT PASS×2 | 채택 | P1: BE `availableUnique` emptyMap(P0-23)이 버튼을 dark 상태로 막음 — 바퀴 25에서 닫아야 본 경로 실가동 |
 | 23 | (삭제 바퀴) W-1 경매 위조 로그 push 6사이트 제거 — Bid 1 + Finalize 4(유찰/연장/유산차감/일반) + Expiry 1. scope "action"/category "auction"은 PG enum 외 → 로그 1건이 flush BatchUpdateException 틱 롤백(턴 동결 지뢰). PHP 대조: 제거 문자열 전부 legacy 무존재(위조), bid 경로는 PHP 무로그 | engine 52 suites/331 green + 턴동결 클래스 소멸(잔존 LogEntryDraft 전수 enum-안전 확인) | fresh 서브에이전트(grader-w23, parity-reviewer) — 제거 문자열 legacy 전수 grep 0히트 + 잔존 push enum sweep, VERDICT PASS (P2 3) | 채택 | PHP 실로그(AuctionUniqueItem.php:337-351, AuctionBasicResource.php:132,197-222) byte-port는 골든 캡처 동반 백로그 |
 | 26 | W-4 AuctionBidHandler 환불 복제/미달차감 수정 — PHP Auction.php `_bid`/`bidInheritPoint`/`refundBid` 정합: R1 이전입찰 무효화 + R2 차액 차감 + R3 조건부 환불 + 유산포인트 바퀴20 정본 seam + same-run pending merge + **적대 리뷰 9건 반영**(유니크 래퍼 부위 가드 2종 '이미 가진 아이템이 있습니다.'/'1순위 입찰자인 경매중에 같은 부위가 있습니다.'(AuctionUniqueItem.php:140-226) + genObfuscatedName 풀 디코드(:305) + aux.ownerName(:316) + tryExtendCloseDate 경로별 고정(자원 강제 true/유니크 ?: false) + wall-clock 차단 2종(:359-366) + 유니크 finished '경매가 종료되었습니다.' + INSERT→연장→차감→환불 순서 + isunited KV 게이트(IPM:241-244) + 환불 현재-owner 재해석(:218-226)) + npc>=2 검증 0포인트(IPM:109-116) + wire `extendCloseDate` 키 수용 | logic 2123 + engine 350(베이스) → AuctionBidHandlerTest 19→33종(회귀 14 핀) + engine 풀 green + game-api CommandWireMapperTest 9/9 + 갭 1 닫힘 | fresh 서브에이전트(grader-w26, parity-reviewer) — 2라운드 적대 채점 FAIL→PASS, PHP 원문 byte-대조. 아티팩트 docs/superpowers/reviews/2026-06-12-w4-auction-bid-refund-review.md | 채택 | 종전 결함 3종(복제/미달차감/유산 미차감) 근절 + 리뷰가 잡은 경계 결함 P0 2·P1 4·P2 5 동반 마감. 잔존 P2 1건(1순위 가드 pending 경매 비가시)은 백로그 |
+| 재기준선 | (세션 재개 베이스라인 2026-06-14) — 신규 요청(core2026 임포트·docker 매칭·백엔드 강화) 착수 전 측정 | common+logic 289 suites/2334 tests green (failures=0 errors=0); infra/engine/api Docker 보류 | ctx_execute gate common+logic XML (결정적) | 기준선 | logic-only 게이트=순수-로직 루프 채점자. 전-backend(5모듈)는 Docker 가용 시 측정 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
@@ -57,6 +58,16 @@
 - InheritCatalog 전수 골든 픽스처 — 120엔트리 중 테스트 byte-핀 7개뿐(바퀴25 채점 P2). logic/src/test/resources/golden/ 픽스처로 전수 핀
 - 경매 PHP 실로그 byte-port — 유찰/성사/습득/유산차감: AuctionBasicResource.php:132(pushAuctionLog),197-203,220-222 + AuctionUniqueItem.php:345(습득)/:351(UserLogger inheritPoint). 골든 캡처 동반. 동시에 `AuctionResultCalculator.logMessage` 죽은 위조 문자열 8개 삭제(바퀴23 채점 P2 — 재배선 지뢰)
 
+### 신규 워크스트림 (2026-06-14 세션 — 가설 1개 = 바퀴 1개로 분해)
+
+- **[WS-A core2026 테스트 포팅]** legacy/devsam-core2026 57 `*.test.ts`(logic27·engine13·api8·integ3·common3·gateway3) → opensamguk Kotlin 커버리지 매핑(에이전트 ad07…) 후 미커버분 TS/PHP 오라클 인용 포팅. 갭-닫음 루프는 기존 골든셋 범위(승인 불요). **"전수 통과"의 동결 게이트화는 승인 대기**
+- **[WS-B docker 매칭]** 레퍼런스 legacy/opensamguk-docker(server/shared overlay·deployer go·nginx·env) vs 로컬 docker-compose.yml/production.yml diff(에이전트 a110…). **승인 대기 + HIGH-RISK**(라이브 prod 스택). 게임 패러티 루프와 분리 권장(별도 루프)
+- **[WS-C 백엔드 강화]** 유저 지시 "백엔드도 강화" — core2026 백엔드 견고화 패턴(엣지/에러전파/불변식) 대조 후 적용. 기존 골든셋 그린 유지 하에 갭-닫음 루프로 진행
+- **[WS-D 프론트 레이아웃 패러티]** 페이지·컴포넌트 레이아웃 감사 갱신(에이전트 a85c…) → 잔여 P0 레이아웃 갭 바퀴 분해. 두 맵뷰어 동일 불변식 유지
+- **[정책] 머지/배포** 유저 지시 "루프당 push + main 머지"(승인됨, feedback_auto_merge_deploy standing). 규칙: 루프 그린 → 브랜치 push → main 머지(자동배포) → prod health+턴전진 검증. ⚠️red 게이트면 머지 금지(project_deploy_infra_reality 턴되감김 리스크)
+
 ## 승인 대기
 
-- 없음 (GOLDENSET.md 2026-06-10 승인·동결)
+- **(1) WS-A 전수 게이트화** — core2026 57 테스트 "전수 통과"를 동결 게이트로 승격할지. 현재는 갭-닫음 루프로만 포팅(기존 골든셋 범위)
+- **(2) WS-B docker-match 변경 착수** — 레퍼런스 repo로 로컬 docker/compose/nginx/deployer 변경. 라이브 prod 영향 HIGH-RISK. 착수 전 승인 + 별도 루프 권장
+- (정책) 메인 머지·배포 = 유저 지시로 접수(승인). 게이트 그린 선결·red 금지·배포후 검증.
