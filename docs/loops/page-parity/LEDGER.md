@@ -58,6 +58,8 @@
 
 | 42 | diplomacy 페이지 접근 권한 게이트 — permission<1 차단(t_diplomacy.php:28-30 checkSecretPermission<1 verbatim) | FE tsc clean + web/game 65/65 + 과노출 차단 | fresh 서브에이전트(병렬 채점) | 채택(채점 병렬) | npc-control 게이트 패턴 동일, frontInfo.permission(백엔드 무변경), "권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다." verbatim. FAIL시 -c 원복 |
 
+| 43(미완→원복) | WS-A nationMissing 테스트 포팅 | 미측정(미완) | — | 폐기·원복 | 에이전트 스텝 소진(조사중 종료, off-track CheChotohwaTest.kt stray 작성·미채점). 무측정 변경 원복(rm, 빌드오염 방지). 재시도시 STEP0(이미 커버 확인) 우선 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
