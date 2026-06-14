@@ -36,6 +36,8 @@
 | 재기준선 | (세션 재개 베이스라인 2026-06-14) — 신규 요청(core2026 임포트·docker 매칭·백엔드 강화) 착수 전 측정 | common+logic 289 suites/2334 tests green (failures=0 errors=0); infra/engine/api Docker 보류 | ctx_execute gate common+logic XML (결정적) | 기준선 | logic-only 게이트=순수-로직 루프 채점자. 전-backend(5모듈)는 Docker 가용 시 측정 |
 | 30 | P0-32 mailbox 서신 발송 FE — 대상selector(개인/국가/전체)+본문 textarea+발송 버튼, `POST /api/command/sendMessage {mailbox,text}` + isIntakeQueued/Denied 가드 | FE tsc clean + web/game 65/65 + 갭 1 닫힘(intake `sendMessage` 등록 증명) | fresh 서브에이전트(af89, 적대 wire-계약) — intakeCodes→toCommand→TurnDaemonCommand.SendMessage→dispatcher→MessageHandler.handleSend 사슬 증명 + PHP MAILBOX_PUBLIC9999/NATIONAL9000 대조, VERDICT PASS | 채택 | 레거시 MessagePanel.vue sendMessage {mailbox,text}; 9999전체/9000+nid국가/gid개인 = SendMessage.php:27-111 패러티. 위조 성공 토스트 없음 |
 | 27 | OpenNationBetting 충실포팅 — reqInheritancePoint false→true(php:90) + openYearMonth `year*12+month-1`(Util.php:710, off-by-one 수정) + closeYearMonth +120위조→+24(php:48) + candidates 0-based 인덱스 키 유지 | :logic:test 256 suites/2146 tests green + 갭 1 닫힘(신규 OpenNationBettingActionTest 4) | fresh 서브에이전트(a921, opus 적대) — 4 facet PHP byte-대조 + 분쟁 facet4 독립판정(FinishNationBetting.php:40-48 nation_id→idx reverse map이 인덱스-키 증명 → 백로그 가설 WRONG) + RNG 무변경, VERDICT PASS | 채택 | 백로그 "candidates nation id 키" 가설을 fresh 채점자가 재현증거로 반증. 3개 실버그 수정 |
+| 28(B2) | che_견문 resolve() silent no-op 수정 — SightseeingMessage RNG 포트 | 미측정(차단) | — (채점 불가) | 차단(Docker 필요) | Docker 데몬 미가동 → 실 PHP golden 캡처 불가(rule5 fabricate 금지). manifest 엔트리 + tools/php-golden/capture_command_gyeonmun.php 준비완료, Docker 가동 시 재개. 골든 없이 RNG resolve 포팅 금지 |
+| 31 | generals 전체장수 공개 컬럼 복원 — a_genList.php 대조 6종(얼굴/연령/성격/특기/관직/삭턴) + 명성/명성칭호 분리 | FE tsc clean + web/game 65/65 + 갭 1 닫힘 | fresh 서브에이전트(affe, 적대 over-exposure) — a_genList.php:127-204 전 컬럼 무조건 렌더 + 6종 ⊆ 공개표면 증명 + 벌점(DTO 부재)·병력(loop13) 제외 검증, VERDICT PASS | 채택 | a_genList.php는 requireGameLogin(컬럼별 마스킹 없음). 벌점=general_access_log 부재로 DTO 미노출. 과노출 0 |
 
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
@@ -55,7 +57,7 @@
 - OpenNationBetting candidates **순서** — PHP는 getAllNationStaticInfo() uasort power-desc(php:58-61)로 정렬 후 인덱스 부여, Kotlin은 targetNations 순서 직접 사용 → 인덱스↔nation 매핑 상이(키 메커니즘은 동일). 바퀴27 채점자 out-of-scope 발견. 별도 바퀴(PHP 8 stable sort — 비안정 2차 비교자 추가 금지)
 - previousPointReader dead-default 3중복 (PlaceBetHandler/InheritResetHandler/dispatcher 폴백 — world meta `inheritancePrevious`는 main 코드 어디서도 미적재) — 공유 seam으로 수렴
 - V15 백필 pre-seed IT — 구형('game_kv') 행 + 'inheritance' 쌍둥이 시드 후 migrate해 머지 방향 고정(바퀴20 채점 P2)
-- che_견문/che_인재탐색 resolve() 빈 no-op STUB인데 PARITY_LEDGER DONE 분류 — silent no-op 턴 소진 (재채점 command-registry)
+- che_견문/che_인재탐색 resolve() 빈 no-op STUB인데 PARITY_LEDGER DONE 분류 — silent no-op 턴 소진 (재채점 command-registry). **che_견문: 바퀴28 Docker 차단** — capture_command_gyeonmun.php+manifest 준비완료, Docker 가동 시 캡처→포팅→CheGyeonmunGoldenTest. che_인재탐색도 동일 RNG/golden 경로 예상
 - GameConst availableChiefCommand '연구' 카테고리 — PHP ReserveCommand.php:47 거부, Kotlin 허용 divergence (재채점 command-registry)
 - ResetStat instant-action intakeCodes 미등재 → FE 호출 무조건 409 (재채점 api-surface — 바퀴 8 FE 폼의 BE 짝)
 - InheritCatalog 전수 골든 픽스처 — 120엔트리 중 테스트 byte-핀 7개뿐(바퀴25 채점 P2). logic/src/test/resources/golden/ 픽스처로 전수 핀

@@ -36,14 +36,19 @@ const NO_NATION = 0;
 //  - 'name'      장수명: 레거시 GeneralList.vue 그대로 npc 우선 → name.localeCompare (텍스트).
 //  - 'nation'    국가  : 국가명 localeCompare (텍스트). 레거시는 국가를 독립 컬럼으로 두지 않으나,
 //                        opensamguk 테이블이 국가 컬럼을 노출하므로 자연스러운 텍스트 정렬로 둔다.
+//  - 'age'       연령  : 레거시 sort option 14 — 숫자 정렬.
 //  - 'explevel'  명성  : 레거시 GeneralList.vue는 explevel 버킷으로 정렬(raw experience 아님).
 //  - 'dedlevel'  계급  : 레거시는 dedlevel 버킷으로 정렬(raw dedication 아님).
-//  - 그 외        통/무/지/병력: 모두 숫자 정렬(레거시 sortableNumber).
+//  - 그 외        통/무/지: 모두 숫자 정렬(레거시 sortableNumber).
+//  - null        정렬 불가: 얼굴·성격·특기·관직·삭턴(레거시 sort=false).
 // (금/쌀 컬럼은 미인증 공개 surface OQ-5라 PublicGeneral에 없으므로 노출하지 않는다 — 자금은 인증
 //  세력 장수 목록(/api/nation/general-list)에서만 본다.)
+// (벌점은 general_access_log 부재로 BLOCKED — PublicGeneral 필드 자체 미노출.)
+// (병력(crew)은 loop-13에서 permission=0 surface 외 노출 제거됨.)
 type SortKey =
     | 'name'
     | 'nation'
+    | 'age'
     | 'leadership'
     | 'strength'
     | 'intel'
@@ -52,17 +57,25 @@ type SortKey =
     | 'explevel'
     | 'dedlevel';
 
-// 헤더 라벨 ↔ 정렬 키. null = 정렬 불가(없음). 레거시 헤더 순서/문자열 그대로.
-const COLUMNS: { label: string; key: SortKey; text?: boolean }[] = [
+// 헤더 라벨 ↔ 정렬 키. key=null = 정렬 불가(레거시 sortable=false). 레거시 a_genList.php 헤더 순서/문자열 그대로.
+// 열 순서: 얼굴·이름·연령·성격·특기·레벨(명성)·국가·명성칭호·계급·관직·통솔·무력·지력·정치·매력·삭턴
+const COLUMNS: { label: string; key: SortKey | null; text?: boolean }[] = [
+    { label: '얼굴', key: null },                       // a_genList.php:127 — picture(CDN 미배선)
     { label: '장수명', key: 'name', text: true },
+    { label: '연령', key: 'age' },                      // a_genList.php:129, sort option 14
+    { label: '성격', key: null },                       // a_genList.php:130 — personal(정렬 불가)
+    { label: '특기', key: null },                       // a_genList.php:131 — special/special2(정렬 불가)
+    { label: '명성', key: 'explevel' },                 // a_genList.php:132 — Lv 버킷
     { label: '국가', key: 'nation', text: true },
+    { label: '명성칭호', key: null },                   // a_genList.php:134 — getHonor(정렬 불가, 명성 서브)
+    { label: '계급', key: 'dedlevel' },
+    { label: '관직', key: null },                       // a_genList.php:136 — officer_level(정렬 불가)
     { label: '통솔', key: 'leadership' },
     { label: '무력', key: 'strength' },
     { label: '지력', key: 'intel' },
-    { label: '정치', key: 'politics' }, // 정치/매력 (RTK14 divergence)
+    { label: '정치', key: 'politics' },                 // 정치/매력 (RTK14 divergence)
     { label: '매력', key: 'charm' },
-    { label: '명성', key: 'explevel' },
-    { label: '계급', key: 'dedlevel' },
+    { label: '삭턴', key: null },                       // a_genList.php:140 — killturn(sort option 8=false)
 ];
 
 export default function GeneralsPage() {
@@ -75,10 +88,12 @@ export default function GeneralsPage() {
     const [sortKey, setSortKey] = useState<SortKey | null>(null);
     const [sortDesc, setSortDesc] = useState(false);
 
-    // 헤더 클릭 = 정렬 토글. 레거시 sortingOrder 모사:
+    // 헤더 클릭 = 정렬 토글. null 키(정렬 불가 컬럼)는 무시.
+    // 레거시 sortingOrder 모사:
     //  - 텍스트(장수명·국가): 첫 클릭 asc → desc 토글  (sortingOrder ["asc","desc",null])
     //  - 숫자 컬럼          : 첫 클릭 desc → asc 토글  (sortingOrder ["desc","asc",null])
-    function toggleSort(key: SortKey, text?: boolean) {
+    function toggleSort(key: SortKey | null, text?: boolean) {
+        if (key === null) return; // 정렬 불가 컬럼
         if (sortKey === key) {
             setSortDesc((d) => !d);
         } else {
@@ -151,7 +166,10 @@ export default function GeneralsPage() {
                 const bn = b.nationId === NO_NATION ? '무소속' : b.nationName || '무소속';
                 return an.localeCompare(bn) * dir;
             }
-            // 숫자 컬럼 — 레거시 sortableNumber comparator (a-b). 정치/매력은 optional → 0 coalesce.
+            // 숫자 컬럼 — 레거시 sortableNumber comparator (a-b).
+            // age: 레거시 sort option 14, 숫자 직접 비교.
+            // politics/charm: optional → 0 coalesce.
+            // killturn은 null 허용이지만 SortKey에 없으므로 여기 도달 안 함.
             return (((a[sortKey] ?? 0) as number) - ((b[sortKey] ?? 0) as number)) * dir;
         });
         return arr;
@@ -187,63 +205,84 @@ export default function GeneralsPage() {
         );
     }
 
-    // 공개 surface 컬럼(GeneralList.vue normal view 중 permission=0 부분):
-    //   장수명 · 국가 · 통솔/무력/지력 · 명성(Lv 버킷) · 계급(품관 버킷) · 병력
-    // (자금 금/쌀은 OQ-5로 공개 surface에서 제외 — 인증 세력 목록에서만 노출.)
-    // 헤더를 클릭 가능한 정렬 토글로 렌더(GameTable이 헤더 셀에 ReactNode를 그대로 렌더).
+    // 공개 surface 컬럼(a_genList.php 헤더 순서 그대로):
+    //   얼굴·장수명·연령·성격·특기·명성(Lv 버킷)·국가·명성칭호·계급·관직·통솔·무력·지력·정치·매력·삭턴
+    // (벌점=BLOCKED, 병력=loop-13 제거, 금/쌀=OQ-5 미노출)
+    // 정렬 가능 컬럼(key≠null)은 클릭 가능한 버튼으로, 불가 컬럼(key=null)은 plain span으로 렌더.
     const headers = COLUMNS.map((col) => (
-        <button
-            key={col.key}
-            type="button"
-            onClick={() => toggleSort(col.key, col.text)}
-            aria-sort={sortKey === col.key ? (sortDesc ? 'descending' : 'ascending') : 'none'}
-            title={`${col.label} 정렬`}
-            style={{
-                background: 'transparent',
-                border: 'none',
-                padding: 0,
-                margin: 0,
-                cursor: 'pointer',
-                color: sortKey === col.key ? 'var(--gold)' : 'inherit',
-                font: 'inherit',
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-                whiteSpace: 'nowrap',
-            }}
-        >
-            {col.label}
-            <span aria-hidden style={{ fontSize: '0.85em', opacity: sortKey === col.key ? 1 : 0.25 }}>
-                {sortKey === col.key ? (sortDesc ? '▼' : '▲') : '↕'}
+        col.key !== null ? (
+            <button
+                key={col.key}
+                type="button"
+                onClick={() => toggleSort(col.key, col.text)}
+                aria-sort={sortKey === col.key ? (sortDesc ? 'descending' : 'ascending') : 'none'}
+                title={`${col.label} 정렬`}
+                style={{
+                    background: 'transparent',
+                    border: 'none',
+                    padding: 0,
+                    margin: 0,
+                    cursor: 'pointer',
+                    color: sortKey === col.key ? 'var(--gold)' : 'inherit',
+                    font: 'inherit',
+                    fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {col.label}
+                <span aria-hidden style={{ fontSize: '0.85em', opacity: sortKey === col.key ? 1 : 0.25 }}>
+                    {sortKey === col.key ? (sortDesc ? '▼' : '▲') : '↕'}
+                </span>
+            </button>
+        ) : (
+            <span key={col.label} style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                {col.label}
             </span>
-        </button>
+        )
     )) as unknown as string[]; // GameTable headers prop은 string[]이지만 런타임은 ReactNode를 그대로 렌더.
 
     const rows = sorted.map((g) => [
+        // 얼굴 — 초상 파일명(CDN 미배선, 다른 read 페이지 동일 컨벤션으로 파일명 텍스트).
+        g.picture
+            ? <span key={`pic-${g.generalId}`} style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>{g.picture}</span>
+            : <span key={`pic-${g.generalId}`} style={{ color: 'var(--text-muted)' }}>-</span>,
+        // 장수명 (npc 색상)
         <span key={`n-${g.generalId}`} style={{ color: npcColor(g.npc) }}>
             {g.name}
         </span>,
+        // 연령 — "{age}세" (a_genList.php:189)
+        `${g.age}세`,
+        // 성격 — personalText (a_genList.php:190 displayCharInfo)
+        g.personalText || '-',
+        // 특기 — "내정특기 / 전투특기" (a_genList.php:191)
+        `${g.specialDomesticText || '-'} / ${g.specialWarText || '-'}`,
+        // 명성 = 레벨 버킷 "Lv {explevel}" (a_genList.php:192 getExpLevel)
+        `Lv ${formatNumber(g.explevel)}`,
+        // 국가
         <span key={`nat-${g.generalId}`} style={{ color: g.nationColor || 'var(--text-muted)' }}>
             {g.nationId === NO_NATION ? '무소속' : g.nationName || '무소속'}
         </span>,
-        formatNumber(g.leadership),
-        formatNumber(g.strength),
-        formatNumber(g.intel),
-        g.politics != null ? formatNumber(g.politics) : '-', // 정치 (RTK14 divergence)
-        g.charm != null ? formatNumber(g.charm) : '-', // 매력
-        // 명성 = 레벨 버킷 "Lv {explevel}" + 칭호(honorText) 둘째 줄(레거시 GeneralList.vue:651 valueGetter).
-        <span key={`exp-${g.generalId}`} style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2 }}>
-            <span>Lv {formatNumber(g.explevel)}</span>
-            {g.honorText && (
-                <small style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>({g.honorText})</small>
-            )}
-        </span>,
+        // 명성칭호 — getHonor (a_genList.php:194)
+        g.honorText || '-',
         // 계급 = "{dedLevelText}" + 봉록(bill) 둘째 줄(레거시 GeneralList.vue:666 valueGetter).
         <span key={`ded-${g.generalId}`} style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2 }}>
             <span>{g.dedLevelText}</span>
             <small style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>({formatNumber(g.bill)})</small>
         </span>,
+        // 관직 — officerLevelText (a_genList.php:136)
+        g.officerLevelText || '-',
+        // 통솔·무력·지력 — injury 감산은 백엔드에서 적용됨(PublicGeneral 필드가 이미 감산 값)
+        formatNumber(g.leadership),
+        formatNumber(g.strength),
+        formatNumber(g.intel),
+        // 정치·매력 (RTK14 divergence)
+        g.politics != null ? formatNumber(g.politics) : '-',
+        g.charm != null ? formatNumber(g.charm) : '-',
+        // 삭턴 — killturn(a_genList.php:140, sort=false)
+        g.killturn != null ? String(g.killturn) : '-',
     ]);
 
     return (
