@@ -20,6 +20,7 @@ import opensamguk.gameapi.read.HistoryReadRepository
 import opensamguk.gameapi.read.InheritanceLogReadEntity
 import opensamguk.gameapi.read.InheritanceLogReadRepository
 import opensamguk.gameapi.read.NationReadEntity
+import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.NationTurnReadEntity
 import opensamguk.gameapi.read.NationTurnReadRepository
@@ -31,6 +32,7 @@ import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.infra.entity.NationEnvEntity
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -89,6 +91,8 @@ class F4ReadControllersTest {
     // (possible=true). 명령 팔레트 카테고리/이름/reqArg 검증에는 이 폴백 동작으로 충분하다.
     private val precheck = mock(CommandPrecheckService::class.java)
     private val objectMapper = ObjectMapper()
+    // nation_env(V3) read mock — 스텁 미설정 시 findByNamespaceAndKey가 null 반환 → nationMsg/scoutMsg/remain null(기존 BLOCKED 동작 보존).
+    private val nationEnv = mock(NationEnvReadRepository::class.java)
 
     /** ChiefCenterController 8-인자 생성 헬퍼(B1 precheck 배선 후 시그니처). */
     private fun chiefCenterController() =
@@ -463,7 +467,7 @@ class F4ReadControllersTest {
             listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3, tickSeconds = 3600)),
         )
 
-        mvc(NationFinanceController(nations, resolver, world)).perform(get("/api/nation/1/finance").with(principal(7L)))
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, objectMapper)).perform(get("/api/nation/1/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.gold").value(5000))
@@ -491,10 +495,41 @@ class F4ReadControllersTest {
     }
 
     @Test
+    fun `nation finance surfaces nation_env notice scout and war-count when present`() {
+        // NF-P1-B/P0-C(W1-O 바퀴49) — 데몬이 nation_env(V3)에 쓴 nationNotice{msg}/scout_msg/available_war_setting_cnt를
+        // NationEnvReadRepository로 read → nationMsg/scoutMsg/warSettingCnt.remain 언블록(부재→null 규약은 위 테스트가 핀).
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", "#c62828", level = 7, gold = 5000, rice = 3000)))
+        `when`(world.findAll()).thenReturn(
+            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3, tickSeconds = 3600)),
+        )
+        // nationNotice = {date,msg,author,authorID} 객체(handler 삽입순서) → nationMsg = .msg.
+        `when`(nationEnv.findByNamespaceAndKey(1, "nationNotice")).thenReturn(
+            NationEnvEntity(namespace = 1, key = "nationNotice", value = """{"date":"200-3","msg":"천하통일을 위하여","author":"순욱","authorID":10}"""),
+        )
+        // scout_msg = JSON 문자열.
+        `when`(nationEnv.findByNamespaceAndKey(1, "scout_msg")).thenReturn(
+            NationEnvEntity(namespace = 1, key = "scout_msg", value = "\"인재를 구합니다\""),
+        )
+        // available_war_setting_cnt = JSON int.
+        `when`(nationEnv.findByNamespaceAndKey(1, "available_war_setting_cnt")).thenReturn(
+            NationEnvEntity(namespace = 1, key = "available_war_setting_cnt", value = "3"),
+        )
+
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, objectMapper)).perform(get("/api/nation/1/finance").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.nationMsg").value("천하통일을 위하여"))
+            .andExpect(jsonPath("$.scoutMsg").value("인재를 구합니다"))
+            .andExpect(jsonPath("$.warSettingCnt.remain").value(3))
+    }
+
+    @Test
     fun `nation finance missing nation returns result-false zeroed shape`() {
         `when`(nations.findById(99)).thenReturn(Optional.empty())
 
-        mvc(NationFinanceController(nations, resolver, world)).perform(get("/api/nation/99/finance"))
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, objectMapper)).perform(get("/api/nation/99/finance"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(false))
             .andExpect(jsonPath("$.gold").value(0))

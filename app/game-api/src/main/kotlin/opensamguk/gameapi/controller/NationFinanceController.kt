@@ -1,10 +1,13 @@
 package opensamguk.gameapi.controller
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.NationFinancePolicy
 import opensamguk.gameapi.dto.NationFinanceResponse
 import opensamguk.gameapi.dto.NationFinanceWarSettingCnt
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.http.ResponseEntity
@@ -45,7 +48,13 @@ class NationFinanceController(
     private val nations: NationReadRepository,
     private val resolver: GeneralResolver,
     private val world: WorldStateReadRepository,
+    private val nationEnv: NationEnvReadRepository,
+    private val objectMapper: ObjectMapper,
 ) {
+
+    /** nation_env(namespace = nationId, key) jsonb를 디코드 — 부재/파싱실패 시 null(날조 금지). */
+    private fun nationEnvNode(nid: Int, key: String): JsonNode? =
+        nationEnv.findByNamespaceAndKey(nid, key)?.let { runCatching { objectMapper.readTree(it.value) }.getOrNull() }
 
     @GetMapping("/{id}/finance")
     fun finance(
@@ -56,7 +65,8 @@ class NationFinanceController(
         val officerLevel = resolved?.officerLevel ?: 0
         val w = world.findAll().firstOrNull()
         val warSetting = NationFinanceWarSettingCnt(
-            remain = null, // P0-53 BLOCKED — nation_env KV read repo 부재(W1-O 배선).
+            // NF-P0-C — nation_env KV `available_war_setting_cnt`(데몬 SetBlockWar write). 부재 시 null(날조 금지).
+            remain = nationEnvNode(id, "available_war_setting_cnt")?.takeIf { it.isNumber }?.asInt(),
             inc = GameConst.incAvailableWarSettingCnt,
             max = GameConst.maxAvailableWarSettingCnt,
         )
@@ -102,9 +112,10 @@ class NationFinanceController(
                     blockWar = metaInt("war")?.let { it != 0 },
                 ),
                 warSettingCnt = warSetting,
-                // nationMsg/scoutMsg/nationsList — P0-53/P0-54 BLOCKED(W1-O 배선) → null.
-                nationMsg = null,
-                scoutMsg = null,
+                // NF-P1-B — nation_env KV: nationNotice{msg}(국가 방침) / scout_msg(임관 권유문). 부재 시 null.
+                // nationsList(P0-54 외교관계)는 별건 백로그(W1-O #3 나머지).
+                nationMsg = nationEnvNode(nation.id, "nationNotice")?.get("msg")?.asText(),
+                scoutMsg = nationEnvNode(nation.id, "scout_msg")?.asText(),
                 nationsList = null,
                 editable = editable,
             ),
