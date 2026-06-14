@@ -54,8 +54,9 @@ export default function BettingPage() {
         setLoading(true);
         try {
             const data = await api.betting<BettingListResponse>();
-            // bettingList는 Map<id,item> — 값 배열로 펴서 렌더(삽입순서 보존).
-            const items = Object.values(data.bettingList ?? {});
+            // bettingList는 Map<id,item> — 값 배열로 펴서 역순 렌더.
+            // legacy PageNationBetting.vue:9 `Object.values(bettingList).reverse()` 패러티.
+            const items = Object.values(data.bettingList ?? {}).reverse();
             setList(items);
             // 진행 중 첫 베팅을 자동 선택(상세 자동 로드).
             setSelectedId(prev => prev ?? items.find(b => !b.finished)?.id ?? items[0]?.id ?? null);
