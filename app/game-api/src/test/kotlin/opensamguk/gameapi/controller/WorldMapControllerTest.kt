@@ -61,7 +61,7 @@ class WorldMapControllerTest {
         )
         `when`(cities.findAll()).thenReturn(
             listOf(
-                CityReadEntity(id = 3, nationId = 1, level = 8, frontState = 1, region = 2, supplyState = 0),
+                CityReadEntity(id = 3, nationId = 1, level = 8, frontState = 1, state = 7, region = 2, supplyState = 0),
                 CityReadEntity(id = 1, nationId = 2, level = 6, frontState = 0, region = 1, supplyState = 1),
             ),
         )
@@ -87,7 +87,7 @@ class WorldMapControllerTest {
             .andExpect(jsonPath("$.cityList[0][4]").value(1)) // region
             .andExpect(jsonPath("$.cityList[0][5]").value(1)) // supply
             .andExpect(jsonPath("$.cityList[1][0]").value(3))
-            .andExpect(jsonPath("$.cityList[1][2]").value(1)) // front_state
+            .andExpect(jsonPath("$.cityList[1][2]").value(7)) // state (재해/사건 코드 — func_map.php tuple state자리, front_state 아님)
             // nationList sorted by id: nation1 then nation2, tuple = [nation, name, color, capital]
             .andExpect(jsonPath("$.nationList.length()").value(2))
             .andExpect(jsonPath("$.nationList[0][0]").value(1))

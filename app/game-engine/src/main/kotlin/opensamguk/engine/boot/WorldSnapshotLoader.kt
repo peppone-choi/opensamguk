@@ -111,7 +111,7 @@ class WorldSnapshotLoader(
 
     private fun loadCities(): List<City> = jdbc.query(
         """
-        SELECT id, name, nation_id, level, supply_state, front_state,
+        SELECT id, name, nation_id, level, supply_state, front_state, state,
                pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                def, def_max, wall, wall_max, trade, region, meta
           FROM city ORDER BY id ASC
@@ -124,6 +124,7 @@ class WorldSnapshotLoader(
             level = rs.getInt("level"),
             supplyState = rs.getInt("supply_state"),
             frontState = rs.getInt("front_state"),
+            state = rs.getInt("state"),
             population = rs.getInt("pop"),
             populationMax = rs.getInt("pop_max"),
             agriculture = rs.getInt("agri"),

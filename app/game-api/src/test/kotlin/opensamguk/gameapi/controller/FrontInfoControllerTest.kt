@@ -7,10 +7,13 @@ import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.infra.entity.NationEnvEntity
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -45,11 +48,14 @@ class FrontInfoControllerTest {
     private val votes = mock(opensamguk.gameapi.read.VoteReadRepository::class.java)
     private val troops = mock(opensamguk.gameapi.read.TroopReadRepository::class.java)
     private val generalTurns = mock(opensamguk.gameapi.read.GeneralTurnReadRepository::class.java)
+    // nation_env(V3) read mock — 스텁 미설정 시 null → notice null(기존 BLOCKED 동작 보존).
+    private val nationEnv = mock(NationEnvReadRepository::class.java)
+    private val objectMapper = ObjectMapper()
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            FrontInfoController(resolver, world, generals, nations, cities, ranks, auctions, votePolls, votes, troops, generalTurns),
+            FrontInfoController(resolver, world, generals, nations, cities, ranks, auctions, votePolls, votes, troops, generalTurns, nationEnv, objectMapper),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
@@ -156,6 +162,42 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.nation.id").value(1))
             .andExpect(jsonPath("$.nation.level").value(7))
             .andExpect(jsonPath("$.city.name").value("허창"))
+    }
+
+    @Test
+    fun `nation notice surfaces from nation_env nationNotice on the main front-info`() {
+        // W1-O 바퀴50 — 데몬이 nation_env에 쓴 nationNotice{msg}(국가방침)를 buildNation이 read → nation.notice 언블록
+        // (PageFront.vue:32 v-html=notice.msg 등가). loop49 nation_env read 채널 재사용.
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(nationEnv.findByNamespaceAndKey(1, "nationNotice")).thenReturn(
+            NationEnvEntity(namespace = 1, key = "nationNotice", value = """{"date":"200-3","msg":"천하통일을 위하여","author":"순욱","authorID":10}"""),
+        )
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.nation.notice").value("천하통일을 위하여"))
+    }
+
+    @Test
+    fun `nation notice is null when nation_env has no nationNotice`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        // nationEnv 미스텁 → null → notice null(날조 금지).
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.nation.notice").doesNotExist())
     }
 
     @Test

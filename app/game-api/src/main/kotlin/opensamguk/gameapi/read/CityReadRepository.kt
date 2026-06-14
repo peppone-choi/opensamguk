@@ -56,6 +56,10 @@ class CityReadEntity(
     @Column(name = "front_state")
     var frontState: Int = 0,
 
+    // PHP city.state — 재해/사건 코드(V17). 맵 tuple 3번째 자리(func_map.php state)에 노출.
+    @Column(name = "state")
+    var state: Int = 0,
+
     @Column(name = "trust")
     var trust: Double = 0.0,
 
@@ -108,6 +112,7 @@ class CityReadEntity(
         agricultureMax = agricultureMax,
         supplyState = supplyState,
         frontState = frontState,
+        state = state,
         trust = trust,
         security = security,
         securityMax = securityMax,
