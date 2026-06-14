@@ -139,7 +139,7 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
         { label: '관직', value: officerText },
         { label: '소속', value: nation?.name ?? '재야' },
         { label: '통솔', value: leadershipCell },
-        { label: '묠력', value: <span style={{ color: injuryColor }}>{general.strength}</span> },
+        { label: '무력', value: <span style={{ color: injuryColor }}>{general.strength}</span> },
         { label: '지력', value: <span style={{ color: injuryColor }}>{general.intel}</span> },
         { label: '정치', value: general.politics ?? '-' },
         { label: '매력', value: general.charm ?? '-' },

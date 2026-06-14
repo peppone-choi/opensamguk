@@ -66,7 +66,14 @@
 
 | 배포3 | loop-parity 배치(42·44·45, FE-only web/game) → PR#81 main 머지(7fad0125)+CI 자동배포 | CI 전체 그린(agent-system·jvm·web game·web gateway) + 풀 FE 게이트 65/65 + cross-agent critique 아티팩트(Verdict: cleared) | ship-critic(ce-correctness, 최종 결합 독립 적대) Verdict cleared + deployer(deploy-verify-81) ops-lessons 검증 | 배포 성공(유저 "배치 머지+배포 먼저" go) | health 전부 그린·502/504 0(Rule A: nginx LAST force-recreate)·clock 185/9 되감김 0. CI=shared 스택만(gateway-api·web-gateway·nginx), s1 엔진 고정 IMAGE_TAG 미재생→턴데몬 미재시작(Rule B freeze 비해당)→FE fix는 s1 bounce 전까지 s1 미반영. 60분 턴경계 횡단 확정=poll bevvu9pjl 진행중. SSH 갭(opens.pem 부재)→HTTPS read로 clock 검증. agent-system 가드: web/game=CODE_PREFIX라 strict시 reviews/*.md 아티팩트(Verdict 문자열) 필수 |
 
+| 46 | GeneralBasicCard 무력 라벨 오타 수정 — `'묠력'`→`'무력'`(GeneralBasicCard.vue:39 byte-parity, 바인딩 값=general.strength) | FE tsc clean + web/game 65/65 + 본인 카드 매턴 오타 노출 해소 | fresh 서브에이전트(grader-w46, cavecrew-reviewer 적대) — legacy byte-parity(vue:39 `무력`)·값/라벨 정합(통솔/무력/지력 26·39·50)·잔여 `묠` 0·1토큰 단일파일·tsc clean, VERDICT PASS | 채택 | FE갭 서베이(wf_8eacb777, 5클러스터 fan-out) 최강 후보. 5스탯 divergence(정치/매력) 무관 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
+
+- (FE갭 서베이 wf_8eacb777 산출 2026-06-14, 단일파일-닫힘 검증) **troop cityId→cityName P0** — PageTroop.vue:8,47 `cityConst[city].name` 렌더 vs troop/page.tsx:87,160-161,232 raw 숫자 cityId 노출. payload에 cityName 이미 존재(GeneralListItem, game.ts:95) → 백엔드 무변경 단일파일 필드 스왑(서베이 raw가 false 오판한 것 정정). 바퀴 후보 = 다음
+- (FE갭 서베이 산출, P1 일방증거) inherit 예약→구입 — inherit/page.tsx:333 `inheritSetNextSpecialWar` 버튼 라벨 `예약`, legacy PageInheritPoint.vue:53 `구입` 주장. 착수 전 legacy:53 문자열 직접 확인 필수(일방 증거)
+- (FE갭 서베이 DROP) my-nation 국가열전 `-` = 충실 패러티(legacy b_myKingdomInfo.php도 nation-history 필드 무발행, 날조 아님). 비-갭
+- (FE갭 서베이, 단일파일 아님→백엔드/섹션웨이브) my-boss·npc-control missing-section(신규 백엔드 필드 필요), join preset-stat(generalStats.ts ~140줄 포팅=2파일), nation-finance 외교섹션/income/defence_train/general_turn(백엔드 data-gap=W1-O)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
 - intake 미등록 6종: General/DieOnPrestart·DropItem·InstantRetreat, InheritAction/CheckOwner·ResetStat, Misc/UploadImage (§2F)
