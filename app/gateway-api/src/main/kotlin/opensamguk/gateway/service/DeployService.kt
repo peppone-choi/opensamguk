@@ -173,6 +173,56 @@ class DeployService(
         return validateResetServer(body, server.id) ?: proxyServerAction(method = "POST", path = "/servers/reset?id={id}", serverId = server.id, body = body)
     }
 
+    // ──────────────────────────────────────────────────────────────────────
+    // 턴 데몬 제어 프록시 — 대상 서버의 game-engine 내부 URL로 직접 hop.
+    //
+    // env/* 와 달리 데몬 상태/동결/해제는 deployer가 아니라 game-engine `StatusController`
+    // (`@RequestMapping("/admin/turn-daemon")`)가 보유한다. 그래서 여기서는 VersionService가
+    // `gameEngineUrl/actuator/info`를 읽는 것과 동일한 패턴으로, serverId로 레지스트리에서 서버를
+    // 찾아(미지정 시 기본 서버) 그 서버의 game-engine 내부 URL로 RestClient 호출한다.
+    //
+    // game-engine은 내부망 전용(Spring Security 미적용)이라 `/admin/turn-daemon/*`에 인증이 없다.
+    // 따라서 토큰 없이 그대로 forward한다(actuator/info fan-out과 동일). 게이트웨이단 ADMIN 게이트는
+    // SecurityConfig `/admin/**` hasRole("ADMIN")에서 이미 강제된다.
+    // ──────────────────────────────────────────────────────────────────────
+
+    /** 턴 데몬 상태 조회 — 대상 서버 game-engine `GET /admin/turn-daemon/status`로 forward. */
+    fun turnDaemonStatus(serverId: String?): EnvProxyResponse =
+        proxyEngine(method = "GET", serverId = serverId, path = "/admin/turn-daemon/status")
+
+    /** 턴 데몬 락걸기(동결) — 대상 서버 game-engine `POST /admin/turn-daemon/pause`로 forward. */
+    fun turnDaemonPause(serverId: String?): EnvProxyResponse =
+        proxyEngine(method = "POST", serverId = serverId, path = "/admin/turn-daemon/pause")
+
+    /** 턴 데몬 락풀기(해제) — 대상 서버 game-engine `POST /admin/turn-daemon/resume`로 forward. */
+    fun turnDaemonResume(serverId: String?): EnvProxyResponse =
+        proxyEngine(method = "POST", serverId = serverId, path = "/admin/turn-daemon/resume")
+
+    /**
+     * 대상 서버의 game-engine 내부 URL로 raw forward. serverId 미지정 시 기본(첫) 서버.
+     * 인증 헤더 없음(game-engine 내부망 전용). 응답 JSON은 EnvProxyResponse로 그대로 통과.
+     */
+    private fun proxyEngine(method: String, serverId: String?, path: String): EnvProxyResponse {
+        val server = resolve(serverId)
+            ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: ${serverId ?: "(없음)"}"}""")
+        return try {
+            val uri = "${server.gameEngineUrl.trimEnd('/')}$path"
+            val raw = if (method == "GET") {
+                rest.get().uri(uri).retrieve().body(String::class.java)
+            } else {
+                rest.post().uri(uri).retrieve().body(String::class.java)
+            }
+            json(200, raw ?: "{}")
+        } catch (e: RestClientResponseException) {
+            val responseBody = e.responseBodyAsString.takeIf { it.isNotBlank() }
+                ?: """{"ok":false,"message":"턴 데몬 제어 요청 실패"}"""
+            json(e.statusCode.value(), responseBody)
+        } catch (e: Exception) {
+            log.warn("턴 데몬 제어 요청 실패 (server={})", server.id, e)
+            json(500, objectMapper.writeValueAsString(mapOf("ok" to false, "message" to "턴 데몬 제어 요청 실패: ${e.message}")))
+        }
+    }
+
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
     private fun resolve(serverId: String?) =
         if (serverId.isNullOrBlank()) registry.default() else registry.find(serverId)

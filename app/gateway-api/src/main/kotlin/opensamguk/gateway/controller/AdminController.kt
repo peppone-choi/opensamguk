@@ -73,6 +73,24 @@ class AdminController(
         ResponseEntity.ok(deployService.status(serverId))
 
     /**
+     * 턴 데몬 상태/제어 — 대상 서버([serverId])의 game-engine `StatusController`로 forward.
+     * serverId 미지정 시 기본(첫) 서버. game-engine은 내부망 전용이라 토큰 없이 forward한다([DeployService]).
+     */
+    @GetMapping("/turn-daemon/status", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun turnDaemonStatus(@RequestParam(required = false) serverId: String?): ResponseEntity<String> =
+        deployService.turnDaemonStatus(serverId).toResponse()
+
+    /** 턴 데몬 락걸기(동결) — game-engine `POST /admin/turn-daemon/pause`로 forward. */
+    @PostMapping("/turn-daemon/pause", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun turnDaemonPause(@RequestParam(required = false) serverId: String?): ResponseEntity<String> =
+        deployService.turnDaemonPause(serverId).toResponse()
+
+    /** 턴 데몬 락풀기(해제) — game-engine `POST /admin/turn-daemon/resume`로 forward. */
+    @PostMapping("/turn-daemon/resume", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun turnDaemonResume(@RequestParam(required = false) serverId: String?): ResponseEntity<String> =
+        deployService.turnDaemonResume(serverId).toResponse()
+
+    /**
      * 한 게임 서버([DeployRequest.serverId])의 스테이트리스 서비스(game-api/web-game)를 목표 버전으로
      * 재배포한다 — 선택/다운그레이드/특정 버전 기동. game-engine은 deployer 대상에서 제외되어 영향받지
      * 않는다(진행 중 턴 desync 방지).
