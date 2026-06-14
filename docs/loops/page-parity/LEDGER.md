@@ -60,6 +60,8 @@
 
 | 43(미완→원복) | WS-A nationMissing 테스트 포팅 | 미측정(미완) | — | 폐기·원복 | 에이전트 스텝 소진(조사중 종료, off-track CheChotohwaTest.kt stray 작성·미채점). 무측정 변경 원복(rm, 빌드오염 방지). 재시도시 STEP0(이미 커버 확인) 우선 |
 
+| 44(빼기 주기) | 휘도 임계값 매직넘버 `140` → 공유 상수 `BRIGHT_COLOR_THRESHOLD`(constants.ts) 수렴 — history/global-diplomacy/admin5/admin8 4파일(vote 패턴, NIT dedup 백로그 닫음) | FE tsc clean + web/game 65/65(=베이스라인, 140≡140 무행동변경) + 중복 4건 제거 | fresh 서브에이전트(grader-w44, ce-maintainability 적대) — 값동일성(140≠128_ALT)·isBrightColor↔newColor 임계 등가(isBrightColor.ts:6 `>140`)·완전성(잔여 executable 140 0)·두맵뷰어 불변식·게이트 독립 재확인, VERDICT PASS | 채택 | 더하기 4연속(38·39·40·42) 후 의무 빼기 바퀴 이행. 8줄(4 import + 4 치환). diplomacy/page.tsx `>127`은 별개 임계라 무관(미변경) |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
@@ -77,7 +79,8 @@
 - ~~OpenNationBetting 미스포트 (reqInheritancePoint/openYearMonth/closeYearMonth)~~ **닫힘 바퀴27**. (단 백로그의 "candidates nation id 키" 가설은 바퀴27 fresh 채점자가 반증 — PHP는 0-based 인덱스 키가 정답)
 - **OpenNationBetting candidates SET+payload+ordering (큰 바퀴, 바퀴32 차단 재분류)** — ordering-only 아님. (1) SET: PHP=전 nation 풀행(func.php:69-76), Kotlin=bare List<Int>. (2) payload: PHP SelectItem aux=풀행/title=name/info=`국력·장수수·도시수`(php:63-79), Kotlin=aux{nation}만/title 플레이스홀더. (3) ordering: uasort power-desc stable(php:58-61). 선결: OpenNationBettingAction 엔진 dispatch 조립(P6 betting rework) + power-bearing nation행을 betting env에 스레드(MonthlyPostUpdateHook/WorldEventContextFactory). 다중파일(OpenNationBetting.kt + env-seam + SelectItem). PHP8 stable sort, 비안정 2차 비교자 금지
 - **cityConst-equiv id→name 공유 로더** (바퀴35 차단 재스코프) — global-diplomacy 분쟁도시 + troop 주둔도시 등이 cityId 숫자 노출. 레거시는 gameConst `cityConst[id].name`로 해석(PageGlobalDiplomacy.vue:68). 프론트 공유 city id→name 맵 로더 1개 도입 → 여러 페이지 동시 해소. ⚠️API tuple/DTO에 cityName 추가는 PHP(GetDiplomacy.php 비포함) divergence — 금지
-- (NIT dedup) history/page.tsx + global-diplomacy/page.tsx가 `140` 하드코딩 — `BRIGHT_COLOR_THRESHOLD`(constants.ts) import으로 수렴(vote/page.tsx 패턴). 바퀴33 채점 NIT. 빼기/정리 바퀴 후보
+- ~~(NIT dedup) history/page.tsx + global-diplomacy/page.tsx가 `140` 하드코딩 — `BRIGHT_COLOR_THRESHOLD`(constants.ts) import으로 수렴~~ **닫힘 바퀴44** (admin5/admin8 동반 = 4파일 전수 수렴)
+- (FE divergence, 바퀴44 채점자 grader-w44 발견) admin5/admin8 `contrastText`는 **휘도 공식**(r*.299+g*.587+b*.114 > 140)인데 legacy `newColor`(func_converter.php:874)는 **하드코딩 hex switch/case** — 공식 자체가 레거시와 불일치(임계 매직넘버 dedup과 별개, 렌더값 차이 가능). 충실 포트 = newColor hex-switch 재현. 별도 바퀴(주석도 "newColor:휘도>140"으로 잘못 기술됨, 동반 정정)
 - previousPointReader dead-default 3중복 (PlaceBetHandler/InheritResetHandler/dispatcher 폴백 — world meta `inheritancePrevious`는 main 코드 어디서도 미적재) — 공유 seam으로 수렴
 - V15 백필 pre-seed IT — 구형('game_kv') 행 + 'inheritance' 쌍둥이 시드 후 migrate해 머지 방향 고정(바퀴20 채점 P2)
 - che_견문/che_인재탐색 resolve() 빈 no-op STUB — silent no-op 턴 소진. **che_견문: 바퀴28 격리(QUARANTINE)** — pickAction이 PHP `mt_rand()`(비결정, hiddenSeed 미경유)라 골든캡처/draw-for-draw 불가(2회 byte-상이 증명, tools/php-golden/p2-capture-backlog.md). 충실 포트 불가. 옵션: (a) 영구 격리 유지(no-op으로 둠), (b) PHP mt_rand 비결정을 의도적 divergence로 받아 RandUtil 기반 자체 결정 포트(골든 없음, 승인 필요). che_인재탐색도 동일 mt_rand 경로 가능성 — 확인 필요

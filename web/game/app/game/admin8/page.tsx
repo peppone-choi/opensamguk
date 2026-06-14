@@ -24,6 +24,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminDiplomacyAllResponse } from '../../../lib/api';
+import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 
 // legacy newColor: perceived-luminance > 140 → 어두운 글자.
 function contrastText(color: string): string {
@@ -32,7 +33,7 @@ function contrastText(color: string): string {
     const r = parseInt(m[1], 16);
     const g = parseInt(m[2], 16);
     const b = parseInt(m[3], 16);
-    return r * 0.299 + g * 0.587 + b * 0.114 > 140 ? '#000' : '#fff';
+    return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD ? '#000' : '#fff';
 }
 
 // 상태 텍스트 색 — legacy <font color=...>(0 교전 red / 1 선포중 magenta / 2 통상 무색 / 7 불가침 green).

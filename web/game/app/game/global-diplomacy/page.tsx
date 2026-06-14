@@ -25,6 +25,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
+import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
 import type {
     DiplomacyConflictResponse,
     ConflictNation,
@@ -38,7 +39,7 @@ function isBrightColor(color: string): boolean {
     const r = parseInt(m[1], 16);
     const g = parseInt(m[2], 16);
     const b = parseInt(m[3], 16);
-    return r * 0.299 + g * 0.587 + b * 0.114 > 140;
+    return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD;
 }
 
 // Verbatim from PageGlobalDiplomacy.vue infomativeStateCharMap (cells involving the viewer).
