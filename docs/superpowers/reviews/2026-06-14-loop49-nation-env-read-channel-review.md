@@ -8,7 +8,7 @@
 
 데몬은 `nationNotice`/`scout_msg`/`available_war_setting_cnt`를 V3 `nation_env` 테이블(int-namespace = nationId)에 flush(`ChangeRecorder.recordNationEnvKv` → `JdbcFlushExecutor.nationEnvKvWrite`)하나, 기존 `GameKvReadRepository`는 V7 `game_kv`(string-namespace) 테이블만 읽어 nation_env를 못 봤다(테이블 미스매치 = NF-P1-B/P0-C 근본원인).
 
-- NEW `infra/.../entity/NationEnvEntity.kt` — `@Table("nation_env")`, namespace:Int, key:text, value:jsonb→String.
+- NEW `infra/src/main/kotlin/opensamguk/infra/entity/NationEnvEntity.kt` — `@Table("nation_env")`, namespace:Int, key:text, value:jsonb→String. (이 `infra/src` 엔티티의 JPA 매핑 정합을 grader-w49가 V3 스키마 대조로 검증; round-trip은 game-api `NationEnvReadIT`가 CI에서 확증.)
 - NEW `app/game-api/.../read/NationEnvReadRepository.kt` — `findByNamespaceAndKey` (read 전용).
 - MOD `NationFinanceController.kt` — nationMsg=`nationNotice.msg` / scoutMsg=`scout_msg` / warSettingCnt.remain=`available_war_setting_cnt` 디코드 배선(부재→null).
 - MOD `F4ReadControllersTest.kt` — nationEnv mock + 신규 populated 테스트(+ 기존 null 동작 핀 보존).
