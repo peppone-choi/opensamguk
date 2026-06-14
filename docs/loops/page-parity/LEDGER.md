@@ -56,6 +56,8 @@
 
 | 41(BLOCKED) | 외교 서신 승인/거부 버튼(P0-16) | 미측정(차단·무변경) | impl 사전체크(ad87) | 차단(백엔드 부재) | ng_diplomacy 서신 respond 경로 opensamguk 미존재: diploRespondLetter 미등록(CommandWireMapper/Dispatcher), DiplomaticMessageController.accept/decline은 **message행 전용**(che_*제의)≠letter행, DiplomacyLetter DTO에 mailboxMessageId 없음. devsam=j_diplomacy_respond_letter.php. **단 조약수락은 mailbox 경로 동작中**(message 수락/거절). 수정=백엔드 DiplomacyController state-flip 엔드포인트(PROPOSED→ACTIVATED/CANCELLED)+FE버튼. W1-O 백엔드결합 |
 
+| 42 | diplomacy 페이지 접근 권한 게이트 — permission<1 차단(t_diplomacy.php:28-30 checkSecretPermission<1 verbatim) | FE tsc clean + web/game 65/65 + 과노출 차단 | fresh 서브에이전트(병렬 채점) | 채택(채점 병렬) | npc-control 게이트 패턴 동일, frontInfo.permission(백엔드 무변경), "권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다." verbatim. FAIL시 -c 원복 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
