@@ -139,12 +139,19 @@ export default function NationFinancePage() {
 
     // Computed budget figures — byte-for-byte the legacy Vue computed() chain
     // (incomeGoldCity = income.gold.city * rate / 100, etc).
-    const incomeGoldCity = (income.gold.city * policy.rate) / 100;
-    const incomeGold = incomeGoldCity + income.gold.war;
-    const incomeRiceCity = (income.rice.city * policy.rate) / 100;
-    const incomeRiceWall = (income.rice.wall * policy.rate) / 100;
-    const incomeRice = incomeRiceCity + incomeRiceWall;
-    const outcomeByBill = (outcome * policy.bill) / 100;
+    //
+    // [§2 BLOCKED — P0-52] income/outcome은 backend read 파이프라인 미조립으로 null.
+    // policy.rate/bill은 meta 미기재 시 null(P1-077 규약).
+    // income 또는 outcome 또는 policy.rate/bill이 null이면 예산 행 전체를 '-'로 표시한다.
+    // W1-O 배선 완료 후 null 가드는 dead code가 되어 자동으로 실값을 보여준다.
+    const hasIncome = income != null && outcome != null && policy.rate != null && policy.bill != null;
+
+    const incomeGoldCity = hasIncome ? (income!.gold.city * policy.rate!) / 100 : 0;
+    const incomeGold = hasIncome ? incomeGoldCity + income!.gold.war : 0;
+    const incomeRiceCity = hasIncome ? (income!.rice.city * policy.rate!) / 100 : 0;
+    const incomeRiceWall = hasIncome ? (income!.rice.wall * policy.rate!) / 100 : 0;
+    const incomeRice = hasIncome ? incomeRiceCity + incomeRiceWall : 0;
+    const outcomeByBill = hasIncome ? (outcome! * policy.bill!) / 100 : 0;
 
     const goldBudget = data.gold + incomeGold - outcomeByBill;
     const goldDelta = incomeGold - outcomeByBill;
@@ -152,26 +159,32 @@ export default function NationFinancePage() {
     const riceDelta = incomeRice - outcomeByBill;
 
     // 자금 예산 — labels verbatim from legacy template (현 재 / 단기수입 / 세 금 / 수입/지출 / 국고 예산).
+    // income null(§2 BLOCKED) → 수입 관련 행은 '-' 표시(날조 금지).
     const goldRows: (string | number | React.ReactNode)[][] = [
         ['현 재', formatNumber(data.gold)],
-        ['단기수입', formatNumber(income.gold.war)],
-        ['세 금', formatNumber(floor(incomeGoldCity))],
-        ['수입/지출', `+${formatNumber(floor(incomeGold))} / ${formatNumber(floor(-outcomeByBill))}`],
+        ['단기수입', hasIncome ? formatNumber(income!.gold.war) : '-'],
+        ['세 금', hasIncome ? formatNumber(floor(incomeGoldCity)) : '-'],
+        ['수입/지출', hasIncome ? `+${formatNumber(floor(incomeGold))} / ${formatNumber(floor(-outcomeByBill))}` : '-'],
         [
             '국고 예산',
-            `${formatNumber(floor(goldBudget))} (${incomeGold >= outcomeByBill ? '+' : ''}${formatNumber(floor(goldDelta))})`,
+            hasIncome
+                ? `${formatNumber(floor(goldBudget))} (${incomeGold >= outcomeByBill ? '+' : ''}${formatNumber(floor(goldDelta))})`
+                : formatNumber(data.gold),
         ],
     ];
 
     // 군량 예산 — labels verbatim (현 재 / 둔전수입 / 세 금 / 수입/지출 / 국고 예산).
+    // income null(§2 BLOCKED) → 수입 관련 행은 '-' 표시(날조 금지).
     const riceRows: (string | number | React.ReactNode)[][] = [
         ['현 재', formatNumber(data.rice)],
-        ['둔전수입', formatNumber(floor(incomeRiceWall))],
-        ['세 금', formatNumber(floor(incomeRiceCity))],
-        ['수입/지출', `+${formatNumber(floor(incomeRice))} / ${formatNumber(floor(-outcomeByBill))}`],
+        ['둔전수입', hasIncome ? formatNumber(floor(incomeRiceWall)) : '-'],
+        ['세 금', hasIncome ? formatNumber(floor(incomeRiceCity)) : '-'],
+        ['수입/지출', hasIncome ? `+${formatNumber(floor(incomeRice))} / ${formatNumber(floor(-outcomeByBill))}` : '-'],
         [
             '국고 예산',
-            `${formatNumber(floor(riceBudget))} (${incomeRice >= outcomeByBill ? '+' : ''}${formatNumber(floor(riceDelta))})`,
+            hasIncome
+                ? `${formatNumber(floor(riceBudget))} (${incomeRice >= outcomeByBill ? '+' : ''}${formatNumber(floor(riceDelta))})`
+                : formatNumber(data.rice),
         ],
     ];
 
@@ -252,7 +265,8 @@ export default function NationFinancePage() {
                         <div className="stat-item">
                             <span className="stat-label">세율 (5 ~ 30%)</span>
                             <span className="stat-value">
-                                {policy.rate}%{' '}
+                                {/* policy.rate: meta 미기재(P1-077) → null → '-' */}
+                                {policy.rate != null ? `${policy.rate}%` : '-'}{' '}
                                 {editable && (
                                     <button onClick={() => setFinanceModal({ command: 'setRate', label: '세율 설정', argType: 'amount', amountMin: 5, amountMax: 30 })}>설정</button>
                                 )}
@@ -261,7 +275,8 @@ export default function NationFinancePage() {
                         <div className="stat-item">
                             <span className="stat-label">지급률 (20 ~ 200%)</span>
                             <span className="stat-value">
-                                {policy.bill}%{' '}
+                                {/* policy.bill: meta 미기재(P1-077) → null → '-' */}
+                                {policy.bill != null ? `${policy.bill}%` : '-'}{' '}
                                 {editable && (
                                     <button onClick={() => setFinanceModal({ command: 'setBill', label: '지급률 설정', argType: 'amount', amountMin: 20, amountMax: 200 })}>설정</button>
                                 )}
@@ -270,7 +285,8 @@ export default function NationFinancePage() {
                         <div className="stat-item">
                             <span className="stat-label">기밀 권한 (1 ~ 99년)</span>
                             <span className="stat-value">
-                                {policy.secretLimit}년{' '}
+                                {/* policy.secretLimit: meta 미기재(P1-077) → null → '-' */}
+                                {policy.secretLimit != null ? `${policy.secretLimit}년` : '-'}{' '}
                                 {editable && (
                                     <button onClick={() => setFinanceModal({ command: 'setSecretLimit', label: '기밀 제한 설정', argType: 'amount', amountMin: 1, amountMax: 99 })}>설정</button>
                                 )}
@@ -279,7 +295,8 @@ export default function NationFinancePage() {
                         <div className="stat-item">
                             <span className="stat-label">전쟁 금지 설정</span>
                             <span className="stat-value">
-                                {warSettingCnt.remain} 회(월 +{warSettingCnt.inc}회, 최대{warSettingCnt.max}회)
+                                {/* warSettingCnt.remain: nation_env KV 미배선(P0-53) → null → '-' */}
+                                {warSettingCnt.remain != null ? warSettingCnt.remain : '-'} 회(월 +{warSettingCnt.inc}회, 최대{warSettingCnt.max}회)
                             </span>
                         </div>
                         <div className="stat-item">

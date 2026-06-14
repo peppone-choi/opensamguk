@@ -50,6 +50,8 @@
 
 | 39 | 천통국베팅 페이지 신설 + betting type 버그 수정 — /game/nation-betting(type=bettingNation, PageNationBetting.vue 패러티) + /game/betting 무type→tournament + GlobalMenu url 배선 | FE tsc clean + web/game 65/65 + 갭 1 닫힘(MISSING 라우트 + 동반 버그) | fresh 서브에이전트(af88, 적대) — betting 정체성(betting=tournament/nation-betting=bettingNation, BettingController 양type whitelist) + nation-betting 충실 + loop36 reverse 유효 재확인, VERDICT PASS | 채택 | b_betting.php=단일세션 tournament(리스트 grand-truth 무), PageNationBetting.vue=bettingNation. 기존 betting 무type→all-types 반환 버그 동반 수정 |
 
+| 40 | nation 페이지 2종 P0 크래시 graceful 가드 — my-nation newColor(null→'')·nation-finance hasIncome 가드(income/outcome/policy/warSetting null→'-', 날조0) | FE tsc clean + web/game 65/65 + 크래시 2 해소(라이브 no-crash 재확인은 스택 복구후) | fresh 서브에이전트(aee9, 적대) — 가드 충실성(실값 보존·null만 '-'·날조0)+2파일만, VERDICT PASS | 채택 | 라이브 대조(ab5b) P0 크래시. 데이터 본체=백엔드갭 백로그(W1-O). 배선시 가드 dead code화 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)

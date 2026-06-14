@@ -13,8 +13,10 @@ const DARK_COLORS = new Set([
     '#008000', '#2E8B57', '#008080', '#6495ED', '#0000FF', '#000080',
     '#483D8B', '#7B68EE', '#800080', '#A9A9A9', '#000000',
 ]);
-function newColor(color: string): string {
-    return DARK_COLORS.has(color === '' ? '' : color.toUpperCase()) ? '#FFFFFF' : '#000000';
+function newColor(color: string | null | undefined): string {
+    // null/undefined → 빈 문자열로 처리(어두운 색 집합에 포함 → 백색 텍스트).
+    const c = color ?? '';
+    return DARK_COLORS.has(c === '' ? '' : c.toUpperCase()) ? '#FFFFFF' : '#000000';
 }
 
 // 8열 단일표 행 — PHP b_myKingdomInfo.php의 td 레이아웃을 grid로 옮긴다(라벨 bg1 + 값).
