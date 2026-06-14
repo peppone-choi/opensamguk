@@ -72,6 +72,8 @@
 
 | 48 | inherit 상점버튼 5종 라벨 legacy `구입` 정합 — 예약/초기화/구매(혼합 드리프트) → `구입` | FE tsc clean + web/game 65/65 + 5버튼 라벨 패러티 | fresh 서브에이전트(grader-w48, cavecrew-reviewer 적대) — legacy 5버튼 전부 `구입`(PageInheritPoint.vue:53·93·103·113·145) + 액션 매핑(setNextSpecialWar/turnTime/BuyRandomUnique/ResetSpecialWar/buyInheritBuff)·모달라벨 `구매`(458)/토스트(233)/주석 미변경·실 tsc 0에러, VERDICT PASS | 채택(유저 "5버튼 전부 구입 엄격패러티" 결정) | 서술형 라벨(초기화/구매)=미승인 divergence(0.9.0 패러티). 모달 헤더 라벨 `구매`는 별개(버튼≠모달). 5site=1가설(loop44식). 예약은 buy액션 의미오류+잠복버그 이력 |
 
+| 49 (W1-O#1/NF-P1-B) | nation_env(V3) read 채널 foundation — `NationEnvReadRepository` 신설 + NationFinanceController 배선(nationMsg=nationNotice.msg / scoutMsg=scout_msg / warSettingCnt.remain=available_war_setting_cnt) | game-api 유닛 F4ReadControllersTest 28/28(신규 populated 테스트 포함, 기존 null 동작 핀 보존) + NationEnvReadIT 작성 | fresh 서브에이전트(grader-w49, ce-correctness 적대) — JPA 매핑 V3 정합(@DataJpaTest validate)·엔티티 discovery(@EntityScan opensamguk.infra)·decode↔encode(MetaJson: obj.msg/str/int)·read-only 스코프·무날조, VERDICT PASS | 채택 | **테이블 미스매치 근본수정**: 데몬 nation_env(V3 int-ns)≠GameKvReadRepository game_kv(V7 str-ns). read-only=turn-freeze 리스크 0. ⚠️로컬 Docker 미가동→round-trip IT는 **CI jvm(Docker)에서 실DB 검증**(머지전 PR jvm check 게이트). NF-P0-D 권한게이트·nationsList(P0-54)·FrontInfo notice(loop50)·엔진 setBlockWar in-mem(NF-P0-C 엔진절반)은 별건 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - (FE갭 서베이 wf_8eacb777 산출 2026-06-14, **바퀴47 FAIL로 단일파일 반증**) troop cityId→cityName(troop/page.tsx:87,160) — 갭 실재(PageTroop.vue:8,47 `cityConst[city].name`)이나 GeneralListItem(game.ts:464)에 cityName 무 → tsc RED. **바퀴35 "cityConst-equiv id→name 공유 로더"와 동일 해법**(global-diplomacy 분쟁도시 + troop 주둔도시 동시 해소). API tuple cityName 추가는 PHP divergence 금지 → 프론트 cityConst 로더 1개 도입이 정답
