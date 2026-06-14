@@ -46,6 +46,8 @@
 | 37 | che_징병 pure-logic guard test 포팅 (WS-A troops.test.ts) | 무변경(이미 커버) | impl STEP0 점검(a269) | 스킵(중복 회피) | RecruitAlgorithmTest + MilitaryConstraintsTest + MilitaryGoldenTest(che_징병-fixtures.json)가 outcome/guard/golden/zero-draw 전부 커버. ad43 prep가 RecruitAlgorithmTest 미발견 오판. WS-A troops 잔여=train/morale·lifecycle만 |
 | — | (배포) loop-parity 6루프 배치 → main 머지(977f3185)+CI 자동배포 | 풀게이트 backend 418/3096 green + web/game 65/65 | gate.sh backend XML(결정적) + deployer prod 검증 PASS(health 200·502 0·턴 미동결) | 배포 성공(유저 go-ahead) | ⚠️라이브 deploy=shared 스택만(gateway-api/web-gateway/nginx). **s1 게임서버(engine+web-game)는 고정 IMAGE_TAG → 내 fix는 admin bounce 전까지 s1 미반영**(시즌중 desync 방지 설계). docs(7343c563) 2차 push도 동일 직렬배포(concurrency 가드). 프론트 라이브 대조는 opensamguk 로컬(fix 포함) 사용 |
 
+| 38 | /game/map 중원정세 로그 섹션 — MapViewer 하단 api.worldLog() fetch+렌더(world-log 인프라 재사용) | FE tsc clean + web/game 65/65 + 갭 1 닫힘(라이브 대조 GAP6) | fresh 서브에이전트(a3b8, 적대) — PageCachedMap.vue:17-21 placement 대조 + 패턴 재사용 + MapViewer/Preview 무변경, VERDICT PASS | 채택 | devsam cachedMap.history 등가. dangerouslySetInnerHTML(서버 마크업)=v-html formatLog 등가. 라이브 대조(a3705)서 발견·닫음 |
+
 ## 백로그 (바퀴 후보 — 가설 1개 = 바퀴 1개)
 
 - read-api 미구현: `Nation/GetGeneralLog`(=General alias), `Global/ExecuteEngine`, `Global/GeneralListWithToken`, `InheritAction/GetMoreLog` (핸드오프 §2G)
