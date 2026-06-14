@@ -9,7 +9,7 @@
 import type { MenuNode } from './menu-types';
 
 export const GLOBAL_MENU_V2: MenuNode[] = [
-    { type: 'item', name: '천통국 베팅', url: 'v_nationBetting.php', newTab: true, condHighlightVar: 'nationBetting' },
+    { type: 'item', name: '천통국 베팅', url: '/game/nation-betting', newTab: true, condHighlightVar: 'nationBetting' },
     {
         type: 'multi',
         name: '게임정보',

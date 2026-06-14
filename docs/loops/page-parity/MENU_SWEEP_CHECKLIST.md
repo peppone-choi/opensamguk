@@ -48,7 +48,14 @@
 
 ## C. route-only (18): admin1/2/5/7/8·tournament-admin(관리자, 저우선), join(재야)·mailbox(✅loop30)·map(✅loop38)·nation·rankings·select-pool·world-log·my-generals·history·simulator·vote·coming-soon(stub)
 
-## 우선 갭 (sweep 무관 확정)
-- ❌ MISSING 6: 천통국베팅·명장일람·명예의전당·왕조일람·접속량정보·감찰부 → 페이지 생성 루프
-- 🔧 P0 크래시 2: my-nation(toUpperCase)·nation-finance(city) → afac06 null필드 진단중
-- 정보 미매핑("-" 필드): 세율/지급률/국력/기술력/쿨다운/수비설정/벌점/주민현재값 (유저: 정보부족=갭) → 백엔드 데이터 파이프라인
+## 우선 갭 (af414 재구성 — "MISSING 6" 실체)
+- **천통국베팅 = CHEAP 프론트 루프**(loop39) — /game/nation-betting 라우트 갭, BettingController type=bettingNation 이미 화이트리스트
+- **명장일람 = 이미 존재**(rankings/best-generals, 5스탯) — NPC토글만 미세갭
+- **명예의전당/왕조일람/접속량정보 = 페이지 존재·데이터 미적재** = 백엔드 데이터 갭(유저 "정보=갭"):
+  - 명예의전당(OQ-5): `hall` 테이블 Flyway + MonthlyPipeline 시즌종료 write
+  - 왕조일람(OQ-1): `emperior` 테이블 Flyway + 통일(ConquerCity) trigger write
+  - 접속량정보(OQ-2): online-count + game_kv `recentTraffic` ring + RankReadService.traffic 배선 (+ general_access_log 테이블=리치분석)
+- **감찰부 = 오라클 부재**(devsam b_inspect.php 없음) → core2026 확인 후 격리(rule5). coming-soon 유지 가능
+- 🔧 **P0 크래시 2**: my-nation(toUpperCase)·nation-finance(city) → afac06 null필드 진단중
+- **정보 미매핑("-")**: 세율/지급률/국력/기술력/쿨다운/수비설정/벌점/주민현재값 + onlineNations/onlineUserCnt/onlineGen/nationNotice([§2 BLOCKED]) → **백엔드 데이터 파이프라인(데몬 KV write→game-api 언블록→프론트)**. WS-C 핵심 프로그램, Docker IT 필요
+- **핵심: opensamguk 프론트 골격 충실. 갭 본체 = 백엔드 데이터 미적재(테이블/write경로/KV). "정보=갭" 정조준.**
