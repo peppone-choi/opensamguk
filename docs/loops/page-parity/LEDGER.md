@@ -80,6 +80,9 @@
 - **[WS-D 프론트 레이아웃 패러티]** 페이지·컴포넌트 레이아웃 감사 갱신(에이전트 a85c…) → 잔여 P0 레이아웃 갭 바퀴 분해. 두 맵뷰어 동일 불변식 유지
 - **[정책] 머지/배포** 유저 지시 "루프당 push + main 머지"(승인됨, feedback_auto_merge_deploy standing). 규칙: 루프 그린 → 브랜치 push → main 머지(자동배포) → prod health+턴전진 검증. ⚠️red 게이트면 머지 금지(project_deploy_infra_reality 턴되감김 리스크)
 
+- (park, 조사필요) scenario_1010 시드 구조 불일치 — `infra/src/main/resources/scenario/scenario_1010.json`은 nations=[]·generals=null로 읽힘 vs `data/extracted/...`=2국/491장수. ScenarioImporter가 어느 파일을 쓰는지 + devsam `legacy/devsam-core/hwe/scenario/scenario_1010.json`(grand truth, 황건적의 난 startYear 181) 장수수 대조 필요. (seeding 자체는 동작 — 로컬 678장수). 프론트 대조 우선이라 park
+- (park) opensamguk 로컬 DB가 stale(46국, 진행게임) — 깨끗한 devsam-매칭 대조엔 fresh scenario_1010 re-seed 권장. 레이아웃 대조엔 무관
+
 ## 승인 대기
 
 - **(1) WS-A 전수 게이트화** — core2026 57 테스트 "전수 통과"를 동결 게이트로 승격할지. 현재는 갭-닫음 루프로만 포팅(기존 골든셋 범위)
