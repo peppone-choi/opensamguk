@@ -275,6 +275,10 @@ class ChangeRecorder(
         diffCol(columns, "agricultureMax", pre.agricultureMax, post.agricultureMax)
         diffCol(columns, "supplyState", pre.supplyState, post.supplyState)
         diffCol(columns, "frontState", pre.frontState, post.frontState)
+        // PHP city.state(재해/사건 코드) dirty-detection 전용 키 — RowPatch.columns는 dirty 마킹용이고
+        // 실제 SQL write는 cityUpdate가 toColumns(전체 city)로 :state 바인딩하므로, 여기 키 이름은
+        // diffCity 관례(logic 필드명)를 따른다(다른 키도 camelCase: commerce/frontState …).
+        diffCol(columns, "state", pre.state, post.state)
         diffCol(columns, "trust", pre.trust, post.trust)
         diffCol(columns, "level", pre.level, post.level)
         diffCol(columns, "nationId", pre.nationId, post.nationId)

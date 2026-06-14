@@ -98,7 +98,7 @@ class WorldMapController(
         // cityList = city 전 행 [city, level, state, nation, region, supply] (func_map.php:144-148).
         val cityList: List<List<Int>> = cities.findAll()
             .sortedBy { it.id }
-            .map { listOf(it.id, it.level, it.frontState, it.nationId, it.region, it.supplyState) }
+            .map { listOf(it.id, it.level, it.state, it.nationId, it.region, it.supplyState) }
 
         return ResponseEntity.ok(
             WorldMapResponse(

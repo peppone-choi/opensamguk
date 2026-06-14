@@ -314,6 +314,7 @@ class JdbcFlushExecutor(
                    agri_max = :agri_max,
                    supply_state = :supply_state,
                    front_state = :front_state,
+                   state = :state,
                    trust = :trust,
                    secu = :secu,
                    secu_max = :secu_max,

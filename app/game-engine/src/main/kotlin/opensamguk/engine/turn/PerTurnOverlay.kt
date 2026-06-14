@@ -112,6 +112,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             agricultureMax = c.agricultureMax,
             supplyState = c.supplyState,
             frontState = c.frontState,
+            state = c.state,
             trust = metaDouble(c.meta, "trust"),
             // P2 develop/defense surface (carried so the widened step-7 city UPDATE round-trips;
             // engine `defence` spelling maps to logic `defense`).

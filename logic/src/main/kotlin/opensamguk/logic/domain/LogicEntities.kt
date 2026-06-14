@@ -68,6 +68,9 @@ data class City(
     val agriculture: Int, val agricultureMax: Int,
     val supplyState: Int,           // truthy = supplied
     val frontState: Int,            // 1|3 = front (debuff)
+    // PHP city.state — 재해/사건 코드(6~9 등). RaiseDisaster가 매월 쓰는 disaster/booming stateCode.
+    // supply_state/front_state와 별개인 PHP의 독립 컬럼(V17 스키마). 평시 0(transient 1개월).
+    val state: Int = 0,             // V1 city.state (재해/사건 코드)
     val trust: Double,              // PHP schema.sql:202 trust FLOAT; che math uses trust/100.0 & trust/80.0 — port faithfully as Double
     // --- P2 develop / defense surface (V1 city columns) ---
     val security: Int = 0, val securityMax: Int = 0,        // V1 secu / secu_max
