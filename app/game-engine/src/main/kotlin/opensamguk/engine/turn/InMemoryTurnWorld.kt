@@ -322,6 +322,17 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     /**
+     * `$gameStor->refreshLimit = $gameStor->refreshLimit * factor` (InvaderEnding.php:65). meta 에만
+     * in-memory 반영한다 — game_env `refreshLimit` 컬럼 flush 와 boot-load(컬럼→meta) 는 [setIsunited] 와
+     * 동일 클래스의 별도 갭(LEDGER 백로그: game_env KV write seam 부재). 부재 시 0 기준(평상시 refreshLimit
+     * 가 boot 에서 안 실리면 곱셈 결과 0 — PHP 도 NULL*100=0 동치). [getState] meta["refreshLimit"] 즉시 반영.
+     */
+    fun multiplyRefreshLimit(factor: Int) {
+        val cur = (state.meta["refreshLimit"] as? Number)?.toInt() ?: 0
+        state = state.copy(meta = state.meta + mapOf("refreshLimit" to cur * factor))
+    }
+
+    /**
      * Single-shot drain: collects the dirty/created/deleted sets into a [DirtyState] and then
      * clears every source set so the next call returns empty collections.
      */

@@ -15,7 +15,9 @@ import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventActionContext
+import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.LightActionWorld
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.traits.NationTypeRegistry
@@ -29,6 +31,7 @@ import opensamguk.logic.world.DisasterWorldView
 import opensamguk.logic.world.IncomeGeneral
 import opensamguk.logic.world.IncomeNation
 import opensamguk.logic.world.IncomeNationUpdate
+import opensamguk.logic.world.InvaderEndingContext
 import opensamguk.logic.world.UpdateNationLevel.LevelUpEffects
 import opensamguk.logic.world.UpdateNationLevel.LotteryResult
 import opensamguk.logic.world.MergeGeneral
@@ -77,6 +80,7 @@ class WorldActionContext(
     ProvideNPCTroopLeaderContext,
     DisasterWorldView,
     SpecialityWorldView,
+    InvaderEndingContext,
     LightActionWorld {
 
     // ── helpers ────────────────────────────────────────────────────────────────────────────────
@@ -547,6 +551,56 @@ class WorldActionContext(
             world.pushLog(LogEntryDraft("general", "action", a.actionLog, generalId = a.generalId, nationId = a.nation))
             world.pushLog(LogEntryDraft("general", "history", a.historyLog, generalId = a.generalId, nationId = a.nation))
         }
+    }
+
+    // ── InvaderEndingContext ───────────────────────────────────────────────────────────────────
+    // 침략자(이민족) 이벤트 종료 leaf(InvaderEnding.php)의 월드 read/write 시임. WorldCheckEmperiorContext
+    // (sibling Q14)와 동일 패턴 — InMemoryTurnWorld read + meta 전이 write + global-history 로그 push.
+
+    /** `$gameStor->isunited`(php:22) — game_env isunited(0=평시,1=침략자 진행,2=천하통일,3=엔딩). */
+    override fun isunited(): Int = (world.getState().meta["isunited"] as? Number)?.toInt() ?: 0
+
+    /** `SELECT count(*) FROM nation`(InvaderEnding.php:25) — level 필터 없는 전 국가 수. */
+    override fun nationCount(): Int = world.listNations().size
+
+    /** `SELECT count(*) FROM city WHERE nation = 0`(php:36) — 공백지(소유국가 0) 도시 수. */
+    override fun neutralCityCount(): Int = world.listCities().count { it.nationId == 0 }
+
+    /** `count(CityConst::all())`(php:44) — 전 도시가 시드되므로 in-memory city 수 = 전체 시나리오 도시 수
+     *  (WorldCheckEmperiorContext.totalCityCount 와 동일 근거: 장기-시뮬 게이트 전제). */
+    override fun totalCityCount(): Int = world.listCities().size
+
+    /** `SELECT name FROM nation LIMIT 1`(php:39) — ORDER BY 없는 LIMIT 1 = 삽입(=PK) 순서 첫 행.
+     *  in-memory 아날로그는 listNations()의 첫 원소(LinkedHashMap PK 삽입 순서). 빈 결과면 null. */
+    override fun firstNationName(): String? = world.listNations().firstOrNull()?.name
+
+    /** `ActionLogger::pushGlobalHistoryLog`(php:54-60) — InvaderEndingContext 의 무-type 시그니처.
+     *  LightActionWorld.pushGlobalHistoryLog(msg, type)와 arity가 달라 별도 override. */
+    override fun pushGlobalHistoryLog(msg: String) {
+        world.pushLog(LogEntryDraft("global", "history", msg))
+    }
+
+    /** `logger->flush()`(php:64) — 엔진은 pushLog로 이미 로그를 큐에 적재하고 flush 단계에서 일괄 드레인하므로
+     *  faithful no-op(PHP의 flush는 pending 로그 확정일 뿐 — 엔진은 이미 큐잉 완료). */
+    override fun flushLogs() {
+        // no-op: 엔진은 world.pushLog 시점에 로그를 큐잉하고 turn flush 에서 드레인한다(위 docstring 참조).
+    }
+
+    /** `$gameStor->setValue('isunited', 3)`(php:63). meta 즉시 반영(컬럼 flush 는 LEDGER 백로그). */
+    // setIsunited(value): 아래 setIsunited(value: Int) — InvaderEndingContext + 공유 시그니처(WorldCheckEmperior 류).
+    override fun setIsunited(value: Int) = world.setIsunited(value)
+
+    /** `$gameStor->refreshLimit = $gameStor->refreshLimit * factor`(php:65). meta 즉시 반영 —
+     *  game_env refreshLimit 컬럼 flush/boot-load 는 isunited 와 동일 클래스의 별도 갭(LEDGER 백로그:
+     *  game_env KV write seam 부재). [InMemoryTurnWorld.multiplyRefreshLimit] 참조. */
+    override fun multiplyRefreshLimit(factor: Int) = world.multiplyRefreshLimit(factor)
+
+    /** `$db->delete('event', 'id = %i', currentEventID)`(php:67-68) — 1회용 event 자기 삭제.
+     *  WorldEventContextFactory 가 env[DeleteEventContext.ENV_KEY] 로 심은 live EventStore 에 위임
+     *  (DeleteEventAction 과 동일 시임). 미공급 시(테스트 등 env 없음) 무음 — store.delete 는 멱등(map remove). */
+    override fun deleteOwnEvent(eventID: Int) {
+        val store = env[DeleteEventContext.ENV_KEY] as? EventStore ?: return
+        store.delete(eventID)
     }
 
     // ── LightActionWorld ───────────────────────────────────────────────────────────────────────
