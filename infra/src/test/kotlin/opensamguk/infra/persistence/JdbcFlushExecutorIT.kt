@@ -2,6 +2,7 @@ package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.Nation
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -97,6 +98,27 @@ class JdbcFlushExecutorIT {
                 (5, '성도', 5, 2, 1, 0, 50000, 100000,
                  1000, 2000, 800, 2000, 500, 1000, 50, 100, 1000, 2000,
                  1000, 2000, 1, CAST('{}' AS jsonb))
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+        // #9 power-영속 가드용 nation 시드 (pre-state: power 1000). 월틱 Q4 재산정값이
+        // nationUpdate SET 절을 통해 실제로 영속되는지 검증한다.
+        jdbc.update(
+            """
+            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
+            VALUES (2, '촉', '#00ff00', 5, 5000, 5000, 0, 1, 'che_촉', 1000, CAST('{}' AS jsonb))
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+        // #17 officer_city-영속 가드용 태수 시드 (pre-state: officer_level 3 = 태수, officer_city 5).
+        // ConquerCity 생존 강등(process_war.php:705-708)을 모사해 officer_city 0 으로 flush 되는지 본다.
+        jdbc.update(
+            """
+            INSERT INTO general
+                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                 experience, dedication, officer_level, officer_city, gold, rice, turn_time, meta)
+            VALUES
+                (11, '태수십일', 2, 5, 60, 60, 60, 0, 0, 0, 3, 5, 100, 100, now(), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -301,6 +323,121 @@ class JdbcFlushExecutorIT {
         // cleanup — 다른 테스트와의 격리(meta 원복).
         jdbc.update(
             "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1 WHERE id = 1",
+            MapSqlParameterSource(),
+        )
+    }
+
+    /**
+     * #9 회귀 가드 — nationUpdate SET 절에 `power = :power` 가 없어 월틱 Q4(func_gamerule.php:322-333)가
+     * 재산정한 nation.power 가 라이브 수렴 경로에서 영속되지 않았다. NationRowMapper.toColumns 는 이미
+     * power 를 방출하므로, 순수 누락된 SET 항목 추가가 round-trip 되는지 확인한다(pre 1000 → post 1234).
+     */
+    @Test
+    fun `nation flush persists power column (the dropped SET clause)`() {
+        val postNation = Nation(
+            id = 2, level = 1, capitalCityId = 5,
+            name = "촉", color = "#00ff00", typeCode = "che_촉",
+            gold = 5000, rice = 5000,
+            power = 1234, // 월틱 Q4 재산정값을 모사
+            tech = 0.0,
+            meta = linkedMapOf(),
+        )
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
+                updatedNations = listOf(postNation),
+            ),
+        )
+
+        val nRow = jdbc.queryForMap(
+            "SELECT power, gold FROM nation WHERE id = 2",
+            MapSqlParameterSource(),
+        )
+        assertEquals(1234, intOf(nRow["power"]))
+        assertEquals(5000, intOf(nRow["gold"]))
+    }
+
+    /**
+     * #17 회귀 가드 — generalUpdate SET 절에 `officer_city = :officer_city` 가 없어 ConquerCity 생존 강등
+     * (process_war.php:705-708, officer_city=0/officer_level=1)이 전용 컬럼에 반영되지 않았다.
+     * GeneralRowMapper.toColumns 는 이미 officer_city 를 방출하므로, 태수(officer_city 5)→일반(0) 강등이
+     * round-trip 되는지 확인한다.
+     */
+    @Test
+    fun `general flush persists officer_city column (governor demotion to 0)`() {
+        val demotedGeneral = General(
+            id = 11, nationId = 2, cityId = 5,
+            leadership = 60, strength = 60, intel = 60, injury = 0,
+            experience = 0.0, dedication = 0.0,
+            officerLevel = 1,        // 태수(3) → 일반(1)
+            gold = 100, rice = 100,
+            officerCity = 0,         // 태수직 도시(5) → 0
+            meta = linkedMapOf(),
+        )
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
+                updatedGenerals = listOf(demotedGeneral),
+            ),
+        )
+
+        val gRow = jdbc.queryForMap(
+            "SELECT officer_city, officer_level FROM general WHERE id = 11",
+            MapSqlParameterSource(),
+        )
+        assertEquals(0, intOf(gRow["officer_city"]))
+        assertEquals(1, intOf(gRow["officer_level"]))
+    }
+
+    /**
+     * #10 회귀 가드 — DatabaseHooks 3-인자 toFlushPayload 가 statisticInserts 를 매핑하지 않아 연경계
+     * (checkStatistic) statistic 행이 라이브 수렴 경로에서 누락됐다. 여기서는 executor 의 step-12
+     * statisticInsertMany 가 StatisticInsertRow 를 받아 statistic 테이블에 INSERT 함을 직접 검증한다
+     * (DatabaseHooks 매핑 자체는 game-engine 측에서 dirty.statisticInserts 빌더로 커버됨).
+     */
+    @Test
+    fun `statistic insert flushes into the statistic table (step-12)`() {
+        val statRow = StatisticInsertRow(
+            linkedMapOf(
+                "year" to 190, "month" to 1,
+                "nation_count" to 2,
+                "nation_name" to "촉,위",
+                "nation_hist" to "1000,900",
+                "gen_count" to "10,8",
+                "personal_hist" to "ph",
+                "special_hist" to "sh",
+                "power_hist" to "1000,900",
+                "crewtype" to "ct",
+                "etc" to "e",
+                "aux" to "{\"k\":\"v\"}",
+            ),
+        )
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
+                statisticInserts = listOf(statRow),
+            ),
+        )
+
+        val sRow = jdbc.queryForMap(
+            "SELECT year, month, nation_count, nation_name, power_hist, aux::text AS aux " +
+                "FROM statistic WHERE year = 190 AND month = 1",
+            MapSqlParameterSource(),
+        )
+        assertEquals(190, intOf(sRow["year"]))
+        assertEquals(1, intOf(sRow["month"]))
+        assertEquals(2, intOf(sRow["nation_count"]))
+        assertEquals("촉,위", sRow["nation_name"])
+        assertEquals("1000,900", sRow["power_hist"])
+        // aux 는 jsonb — 키/값 구조 동등으로 검증(byte-order 계약은 flush 페이로드까지).
+        assertEquals(mapOf<String, Any?>("k" to "v"), MetaJson.decode(stringOf(sRow["aux"])) as Map<String, Any?>)
+
+        // cleanup — 다른 테스트와의 격리(statistic 행 제거).
+        jdbc.update(
+            "DELETE FROM statistic WHERE year = 190 AND month = 1",
             MapSqlParameterSource(),
         )
     }
