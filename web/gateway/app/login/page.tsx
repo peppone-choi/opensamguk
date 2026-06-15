@@ -34,7 +34,9 @@ function LoginForm() {
         setSubmitting(true);
         try {
             await login(username.trim(), password);
-            router.push(params.get('next') || '/lobby');
+            const next = params.get('next');
+            const safe = next && next.startsWith('/') && !next.startsWith('//') ? next : '/lobby';
+            router.push(safe);
             router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : AUTH_LABELS.loginFail);
