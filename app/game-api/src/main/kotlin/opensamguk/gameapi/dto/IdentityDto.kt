@@ -364,9 +364,13 @@ data class FrontNationInfo(
     // 미룬다(값 날조 금지, W3_FrontNationInfo §2). FE는 빈 리스트를 "제한 없음"으로 렌더.
     val impossibleStrategicCommand: List<List<Any?>> = emptyList(),
 
-    // [§2 BLOCKED] onlineGen(game_env.online_genenerals) / notice(nation_env.nationNotice)는 데몬 KV
-    // population이 UNVERIFIED(W3_FrontNationInfo §2). null로 둔다.
+    // [§2 BLOCKED] onlineGen(game_env.online_genenerals)는 데몬 KV population이 UNVERIFIED
+    // (W3_FrontNationInfo §2). null로 둔다.
     val onlineGen: Int? = null,
+    // notice(국가방침) — nation_env KV `nationNotice.msg`(데몬 SetNotice 핸들러가 쓰는 {date,msg,author,authorID}
+    // 객체의 msg). W1-O 바퀴49/50에서 read 채널(NationEnvReadRepository) + buildNation read로 언블록됨.
+    // devsam PageFront.vue:32 `v-html=nationInfo.notice?.msg ?? ''` 등가(opensamguk은 msg 문자열만 노출 —
+    // 프론트는 msg만 렌더). 데몬이 KV에 안 쓴 국가/만료는 부재 → null(날조 금지).
     val notice: String? = null,
 )
 
