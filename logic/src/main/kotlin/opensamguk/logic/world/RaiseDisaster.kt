@@ -32,9 +32,14 @@ import opensamguk.logic.util.valueFit
  *   - if NO target → return (`:66-68`); else `$rng->choice(textList[$month])` picks ONE log triple
  *     `[logTitle, stateCode, logBody]` (`:107`) and the global history log is
  *     `"{$logTitle}<G><b>{names joined by ' '}</b></>에 {$logBody}"` (`:70-111`).
- *   - per-target stat multiplier (`:114-162`): isGood → `affectRatio = 1.01 + valueFit(secu/secu_max/0.8,0,1)*0.04`,
- *     each stat `least(stat * ratio, max)`; bad → `affectRatio = 0.8 + valueFit(secu/secu_max/0.8,0,1)*0.15`,
+ *   - per-target stat multiplier (RaiseDisaster.php:122-160): isGood(호황) → `affectRatio = 1.01 + valueFit(secu/secu_max/0.8,0,1)*0.04`,
+ *     each stat `least(stat * ratio, max)`; bad(재난) → `affectRatio = 0.8 + valueFit(secu/secu_max/0.8,0,1)*0.15`,
  *     each stat `stat * ratio` (no ceiling). The chosen `stateCode` writes to `city.state`.
+ *     무츠(mutated) 스탯 = pop·agri·comm·secu·def·wall·**trust** (PHP `trust` 도 동일 `affectRatio` 곱).
+ *     trust 는 schema FLOAT 컬럼 → RaiseDisaster.php:129 `trust * %d` (재난, 무캡) /
+ *     RaiseDisaster.php:154 `least(trust * %d, 100)` (호황, 리터럴 100 캡, trust_max 아님). round() 없음 = 생 float 곱.
+ *     trust 는 (Int·max 캡과 무관한) Double 이라 [DisasterCityEffect] 자체엔 별도 필드 없이
+ *     엔진 적용단(WorldActionContext.applyDisaster)이 `affectRatio`+`capped` 로 `preTrust * affectRatio` 를 계산한다.
  *
  * SEAM (documented bound): the BAD branch also runs `SabotageInjury($rng, generalsInTargetCity, '재난')`
  * (RaiseDisaster.php:114-145) which draws PER GENERAL via the un-ported `onCalcStat('injuryProb')` general
@@ -61,7 +66,11 @@ data class DisasterCityEffect(
     val cityId: Int,
     val stateCode: Int,
     val affectRatio: Double,
-    /** true → stats are `least(stat*ratio, max)` (booming); false → `stat*ratio` uncapped (disaster). */
+    /**
+     * true(호황) → 정수 스탯은 `least(stat*ratio, max)`, trust 는 `least(trust*ratio, 100)`(리터럴 100 캡);
+     * false(재난) → 정수 스탯은 `stat*ratio`, trust 는 `trust*ratio`(무캡). trust(FLOAT)는 round() 없이 생 float 곱.
+     * (RaiseDisaster.php:129 재난 / :154 호황 — trust 는 pop·agri·comm·secu·def·wall 과 SAME city-update.)
+     */
     val capped: Boolean,
 )
 

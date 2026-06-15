@@ -457,9 +457,20 @@ class WorldActionContext(
                 phpRound(value * effect.affectRatio)
             }
 
+            // trust(FLOAT 컬럼)는 pop·agri·comm·secu·def·wall 과 SAME city-update 에서 같은 affectRatio 로 곱해진다.
+            // RaiseDisaster.php:154 호황 → least(trust * ratio, 100)  (리터럴 100 캡, trust_max 아님)
+            // RaiseDisaster.php:129 재난 → trust * ratio              (무캡)
+            // PHP 는 trust 에 round() 를 걸지 않는 생 float 곱이다 → phpRound/newStat 경유 금지(생 Double 곱).
+            val newTrust = if (effect.capped) {
+                kotlin.math.min(100.0, preLogic.trust * effect.affectRatio)
+            } else {
+                preLogic.trust * effect.affectRatio
+            }
+
             val postLogic = preLogic.copy(
                 // city.state 영속(V17): postLogic에 stateCode 포함해야 diffCity가 state 변화를 감지한다.
                 state = effect.stateCode,
+                trust = newTrust,
                 agriculture = newStat(preLogic.agriculture, preLogic.agricultureMax),
                 commerce = newStat(preLogic.commerce, preLogic.commerceMax),
                 security = newStat(preLogic.security, preLogic.securityMax),
@@ -468,6 +479,10 @@ class WorldActionContext(
                 population = newStat(preLogic.population, preLogic.populationMax),
             )
             recorder.diffCity(preLogic, postLogic)
+            // 엔진 City 는 trust 전용 컬럼이 없고 meta["trust"](Double)에 보관한다(PerTurnOverlay.toLogicCity).
+            // → in-memory 갱신도 meta 에 새 trust 를 써야 diffCity 와 일관되고 다음 틱이 곱셈 결과를 본다.
+            val nextMeta = LinkedHashMap(pre.meta)
+            nextMeta["trust"] = newTrust
             world.updateCity(
                 pre.copy(
                     state = effect.stateCode,
@@ -477,6 +492,7 @@ class WorldActionContext(
                     defence = postLogic.defense,
                     wall = postLogic.wall,
                     population = postLogic.population,
+                    meta = nextMeta,
                 )
             )
         }

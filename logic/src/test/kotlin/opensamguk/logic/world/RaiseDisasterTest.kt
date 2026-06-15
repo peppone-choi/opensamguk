@@ -134,4 +134,43 @@ class RaiseDisasterTest {
             assertTrue(r.logLine!!.contains("에 "), "log embeds the squeezed city names")
         }
     }
+
+    // ── 재난(bad) branch: affectRatio uncapped (capped=false) — trust*ratio 무캡의 근거 ──
+    // RaiseDisaster.php:122-135: affectRatio = 0.8 + valueFit(secu/secu_max/0.8,0,1)*0.15,
+    //   trust => trust * affectRatio (NO least()). 정수 스탯과 SAME affectRatio.
+    @Test
+    fun `재난 branch effects carry capped=false and affectRatio in 0_8 to 0_95`() {
+        // month 1 (boomingRate 0 → isGood false). secu_max>0 인 도시들 중 선택된 타겟의 effect 검증.
+        val cities = (1..300).map { city(it, 0, secu = it % 1000, secuMax = 1000) }
+        val r = raiseDisaster(cities, year = 200, month = 1, startYear = 181, rng = rng(200, 1))
+        assertTrue(!r.isGood, "month 1 → 재난(bad) branch")
+        assertTrue(r.effects.isNotEmpty(), "타겟이 적어도 하나는 잡혀야 effect 검증 가능")
+        for (e in r.effects) {
+            assertTrue(!e.capped, "재난 effect 는 capped=false (trust*ratio 무캡 ⇒ 엔진이 least() 미적용)")
+            // affectRatio = 0.8 + fit*0.15, fit∈[0,1] → [0.8, 0.95].
+            assertTrue(e.affectRatio in 0.8..0.95,
+                "재난 affectRatio 는 0.8~0.95 (got ${e.affectRatio})")
+        }
+    }
+
+    // ── 호황(good) branch: affectRatio capped (capped=true) — least(trust*ratio,100) 캡의 근거 ──
+    // RaiseDisaster.php:147-160: affectRatio = 1.01 + valueFit(secu/secu_max/0.8,0,1)*0.04,
+    //   trust => least(trust * affectRatio, 100) (리터럴 100, trust_max 아님). 정수 스탯과 SAME affectRatio.
+    @Test
+    fun `호황 branch effects carry capped=true and affectRatio in 1_01 to 1_05`() {
+        // month 4 (boomingRate 0.25). isGood 가 true 가 나올 때까지 연도를 바꿔 호황 케이스를 강제 확보.
+        var found: RaiseDisasterResult? = null
+        for (y in 200..400) {
+            val cities = (1..300).map { city(it, 0, secu = it % 1000, secuMax = 1000) }
+            val r = raiseDisaster(cities, year = y, month = 4, startYear = 181, rng = rng(y, 4))
+            if (r.isGood && r.effects.isNotEmpty()) { found = r; break }
+        }
+        val r = found ?: error("호황(isGood) + 타겟 보유 케이스를 찾지 못함")
+        for (e in r.effects) {
+            assertTrue(e.capped, "호황 effect 는 capped=true (trust 는 least(trust*ratio,100) 으로 100 캡)")
+            // affectRatio = 1.01 + fit*0.04, fit∈[0,1] → [1.01, 1.05].
+            assertTrue(e.affectRatio in 1.01..1.05,
+                "호황 affectRatio 는 1.01~1.05 (got ${e.affectRatio})")
+        }
+    }
 }
