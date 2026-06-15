@@ -30,7 +30,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
-import type { GeneralListItem, TroopInfo, TroopListResponse } from '../../../types/game';
+import type { TroopInfo, TroopListResponse, TroopMember } from '../../../types/game';
 
 // One open troop CommandModal spec. argType is always null (args ride extraArgs).
 type TroopModalSpec = { command: string; label: string; extraArgs?: Record<string, unknown> };
@@ -57,15 +57,16 @@ function TroopMembers({
 }: {
     troop: TroopInfo;
     myGeneralId: number;
-    onKick?: (member: GeneralListItem) => void;
+    onKick?: (member: TroopMember) => void;
 }) {
-    const leaderCity = troop.troopLeader.cityId;
+    // 레거시 same-city 판정은 부대장 소재 도시 한글명과 비교(BE가 cityName으로 emit, bug #11).
+    const leaderCityName = troop.leaderCityName;
     return (
         <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.7 }}>
-            {troop.members.map((member: GeneralListItem, idx: number) => {
+            {troop.members.map((member: TroopMember, idx: number) => {
                 // Legacy: leader → troopLeader style; same-city → plain; other-city → red + (city).
-                const isLeader = member.generalId === troop.troopId;
-                const sameCity = member.cityId === leaderCity;
+                const isLeader = member.generalId === troop.troopLeader;
+                const sameCity = member.cityName === leaderCityName;
                 const isMe = member.generalId === myGeneralId;
                 const color = isLeader
                     ? 'var(--gold)'
@@ -84,7 +85,7 @@ function TroopMembers({
                         >
                             {member.name}
                             {!isLeader && !sameCity && (
-                                <span style={{ color: 'var(--crimson)' }}> ({member.cityId})</span>
+                                <span style={{ color: 'var(--crimson)' }}> ({member.cityName})</span>
                             )}
                         </span>
                         {/* 추방 (KickFromTroop): leader-only, never on the leader row. */}
@@ -110,6 +111,7 @@ function TroopItem({
     troop,
     myGeneralId,
     relation,
+    canRename,
     renameDraft,
     setRenameDraft,
     openModal,
@@ -117,11 +119,12 @@ function TroopItem({
     troop: TroopInfo;
     myGeneralId: number;
     relation: 'leader' | 'member' | 'other' | 'none';
+    // 레거시 myPermission >= 4: 모든 부대에 부대명 변경 허용(bug #18).
+    canRename: boolean;
     renameDraft: string;
     setRenameDraft: (v: string) => void;
     openModal: (spec: TroopModalSpec) => void;
 }) {
-    const leader = troop.troopLeader;
     const isMyTroop = relation === 'leader' || relation === 'member';
 
     return (
@@ -154,15 +157,15 @@ function TroopItem({
                             whiteSpace: 'nowrap',
                         }}
                     >
-                        {troop.troopName}
+                        {troop.name}
                     </strong>
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                        【 {leader.cityId} 】
+                        【 {troop.leaderCityName} 】
                     </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                     {relation === 'other' && (
-                        <button onClick={() => openModal({ command: 'troopJoin', label: '부대 가입', extraArgs: { troopId: troop.troopId } })}>
+                        <button onClick={() => openModal({ command: 'troopJoin', label: '부대 가입', extraArgs: { troopId: troop.troopLeader } })}>
                             가입
                         </button>
                     )}
@@ -178,8 +181,8 @@ function TroopItem({
                 </div>
             </div>
 
-            {/* Leader-only rename row. */}
-            {relation === 'leader' && (
+            {/* 부대명 변경 행 — 레거시 myPermission >= 4면 모든 부대에 노출(bug #18). */}
+            {canRename && (
                 <div style={{ display: 'flex', gap: 'var(--space-xs)', marginBottom: 'var(--space-sm)' }}>
                     <input
                         type="text"
@@ -191,7 +194,7 @@ function TroopItem({
                     />
                     <button
                         onClick={() =>
-                            openModal({ command: 'troopSetName', label: '부대명 변경', extraArgs: { troopId: troop.troopId, troopName: renameDraft } })
+                            openModal({ command: 'troopSetName', label: '부대명 변경', extraArgs: { troopId: troop.troopLeader, troopName: renameDraft } })
                         }
                     >
                         부대명 변경
@@ -209,8 +212,8 @@ function TroopItem({
             >
                 {/* Leader + reserved-command brief column. */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
-                    <strong style={{ fontSize: 'var(--text-sm)', color: npcColor(leader.npc) ?? 'var(--text-primary)' }}>
-                        {leader.name}
+                    <strong style={{ fontSize: 'var(--text-sm)', color: npcColor(troop.leaderNpc) ?? 'var(--text-primary)' }}>
+                        {troop.leaderName}
                     </strong>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
                         {troop.reservedCommandBrief.map((brief, idx) => (
@@ -241,7 +244,7 @@ function TroopItem({
                                   openModal({
                                       command: 'troopKick',
                                       label: `${member.name} 추방`,
-                                      extraArgs: { troopId: troop.troopId, targetGeneralId: member.generalId },
+                                      extraArgs: { troopId: troop.troopLeader, targetGeneralId: member.generalId },
                                   })
                             : undefined
                     }
@@ -287,6 +290,9 @@ export default function TroopPage() {
     // EMPTY-SAFE: a fresh seed with no formed troops returns { troops: [] } (200).
     const troops = data?.troops ?? [];
     const myGeneralId = data?.myGeneralId ?? 0;
+    // 레거시 myPermission. 부대명 변경 게이트(>= 4, bug #18).
+    const permission = data?.permission ?? 0;
+    const canRename = permission >= 4;
 
     // My membership: the troop whose roster includes me (if any), and whether I lead it.
     const myTroop = myGeneralId !== 0 ? troops.find((t) => t.members.some((m) => m.generalId === myGeneralId)) ?? null : null;
@@ -294,8 +300,9 @@ export default function TroopPage() {
 
     const relationOf = (troop: TroopInfo): 'leader' | 'member' | 'other' | 'none' => {
         if (myGeneralId === 0) return 'none';
-        if (myTroop && troop.troopId === myTroop.troopId) {
-            return troop.troopId === myGeneralId ? 'leader' : 'member';
+        if (myTroop && troop.troopLeader === myTroop.troopLeader) {
+            // 부대장 == 호출자 → leader(레거시 me.no == me.troop), 아니면 member.
+            return troop.troopLeader === myGeneralId ? 'leader' : 'member';
         }
         return iAmTroopless ? 'other' : 'none';
     };
@@ -351,10 +358,11 @@ export default function TroopPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                     {troops.map((troop) => (
                         <TroopItem
-                            key={troop.troopId}
+                            key={troop.troopLeader}
                             troop={troop}
                             myGeneralId={myGeneralId}
                             relation={relationOf(troop)}
+                            canRename={canRename}
                             renameDraft={renameName}
                             setRenameDraft={setRenameName}
                             openModal={setModal}

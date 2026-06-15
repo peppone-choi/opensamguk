@@ -586,12 +586,17 @@ data class BoardResponse(
 )
 
 // ── GET /api/troops — page 6 ───────────────────────────────────────────────────────────────────────
+// 레거시 grand truth: hwe/ts/PageTroop.vue. 멤버십/뮤테이션 게이팅은 `myGeneralId`(부대장 여부)와
+// `permission`(레거시 myPermission)에서 파생되므로 응답에 둘 다 싣는다(Direction A). 멤버 소속 도시는
+// 숫자 id가 아니라 한글 `cityName`으로 노출한다(레거시는 cityConst[city].name 표시, bug #11).
 data class TroopMember(
     val generalId: Int,
     val name: String,
     val officerLevel: Int,
     val crew: Int,
     val cityName: String,
+    /** 레거시 getNPCColor 색상 티어 입력(npc_state). 0=유저/1=빙의/2+=순수 NPC. */
+    val npc: Int,
 )
 
 data class TroopRow(
@@ -599,6 +604,17 @@ data class TroopRow(
     val name: String,
     val nation: Int,
     val leaderName: String,
+    /** 부대장 소재 도시 한글명(레거시 카드 헤더 '【 <city> 】'). */
+    val leaderCityName: String,
+    /** 부대장 npc 티어(레거시 부대장 이름 색상). */
+    val leaderNpc: Int,
+    /** 부대장 턴 시각 "YYYY-MM-DD HH:MM:SS"(레거시 '【턴】' = turnTime.slice(14,19))., null이면 빈 문자열. */
+    val turnTime: String,
+    /**
+     * 레거시 troop.reservedCommandBrief(예약 명령 브리핑 목록). troop 읽기 모델에 예약명령 원천이 없고
+     * fresh seed에는 부대가 0개이므로 빈 목록으로 둔다(날조 금지 — 규율 5). 추후 예약명령 배선 시 채운다.
+     */
+    val reservedCommandBrief: List<String>,
     val members: List<TroopMember>,
     /** (N명) member count for the 부대 list header. */
     val memberCount: Int,
@@ -607,6 +623,10 @@ data class TroopRow(
 data class TroopsResponse(
     val result: Boolean,
     val troops: List<TroopRow>,
+    /** 호출자가 빙의한 장수 id(레거시 myGeneralID). 멤버십/뮤테이션 게이팅 기준. 미인증/무빙의=0. */
+    val myGeneralId: Int,
+    /** 레거시 myPermission(officer_level 파생: 0 일반/1 관직자/2 수뇌). 부대명 변경(>=4 의도)·게이팅용. */
+    val permission: Int,
 )
 
 // ── GET /api/history?yearMonth — page 16 (연감) ─────────────────────────────────────────────────────

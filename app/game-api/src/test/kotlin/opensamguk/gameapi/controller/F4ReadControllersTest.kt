@@ -801,6 +801,62 @@ class F4ReadControllersTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.troops.length()").value(0))
+            // 익명 호출자 → myGeneralId/permission 0(멤버십/뮤테이션 게이팅 기준, Direction A).
+            .andExpect(jsonPath("$.myGeneralId").value(0))
+            .andExpect(jsonPath("$.permission").value(0))
+    }
+
+    // ── GET /api/troops (populated: myGeneralId/permission + per-member cityName/npc + leader header) ──
+    @Test
+    fun `troops emits myGeneralId permission member cityName npc and leader header`() {
+        // 호출자(userId 7) → 장수 10(부대장, officer_level 5 → permission 2). 부대 = 선봉대(부대장 10).
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(
+                GeneralReadEntity(
+                    id = 10, name = "조조", nationId = 1, cityId = 5, officerLevel = 5, crew = 1000,
+                    troopId = 10, npcState = 0, turnTime = Instant.parse("2026-06-03T10:30:45Z"),
+                ),
+            ),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1)).thenReturn(
+            listOf(TroopReadEntity(troopLeader = 10, nation = 1, name = "선봉대")),
+        )
+        `when`(cities.findAll()).thenReturn(listOf(city(5, "허창", nationId = 1), city(8, "성도", nationId = 2)))
+        // 멤버: 부대장(조조, 허창) + 같은도시 멤버(하후돈, 허창) + 타도시 멤버(빙의NPC, 성도).
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(10)).thenReturn(
+            listOf(
+                GeneralReadEntity(id = 10, name = "조조", nationId = 1, cityId = 5, officerLevel = 5, crew = 1000, troopId = 10, npcState = 0),
+                GeneralReadEntity(id = 20, name = "하후돈", nationId = 1, cityId = 5, officerLevel = 2, crew = 800, troopId = 10, npcState = 0),
+                GeneralReadEntity(id = 30, name = "악진", nationId = 1, cityId = 8, officerLevel = 2, crew = 500, troopId = 10, npcState = 1),
+            ),
+        )
+
+        mvc(TroopController(troops, generals, cities, resolver)).perform(get("/api/troops").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            // 멤버십/게이팅 기준(레거시 myGeneralID/myPermission). officer_level 5 → permission 2.
+            .andExpect(jsonPath("$.myGeneralId").value(10))
+            .andExpect(jsonPath("$.permission").value(2))
+            .andExpect(jsonPath("$.troops.length()").value(1))
+            .andExpect(jsonPath("$.troops[0].troopLeader").value(10))
+            .andExpect(jsonPath("$.troops[0].name").value("선봉대"))
+            .andExpect(jsonPath("$.troops[0].leaderName").value("조조"))
+            // 부대장 카드 헤더 — 한글 도시명 + npc 티어 + turnTime(YYYY-MM-DD HH:MM:SS).
+            .andExpect(jsonPath("$.troops[0].leaderCityName").value("허창"))
+            .andExpect(jsonPath("$.troops[0].leaderNpc").value(0))
+            .andExpect(jsonPath("$.troops[0].turnTime").value("2026-06-03 10:30:45"))
+            // 예약명령 브리핑은 read 모델 미배선 → 빈 목록(날조 금지).
+            .andExpect(jsonPath("$.troops[0].reservedCommandBrief.length()").value(0))
+            .andExpect(jsonPath("$.troops[0].memberCount").value(3))
+            // 멤버 소재 도시는 숫자 id가 아니라 한글 cityName(bug #11) + npc 티어.
+            .andExpect(jsonPath("$.troops[0].members[0].name").value("조조"))
+            .andExpect(jsonPath("$.troops[0].members[0].cityName").value("허창"))
+            .andExpect(jsonPath("$.troops[0].members[0].npc").value(0))
+            .andExpect(jsonPath("$.troops[0].members[2].name").value("악진"))
+            .andExpect(jsonPath("$.troops[0].members[2].cityName").value("성도"))
+            .andExpect(jsonPath("$.troops[0].members[2].npc").value(1))
     }
 
     // ── GET /api/history (empty record + 0 range when no yearbook rows) ───────────────────────────────
