@@ -6,9 +6,147 @@ import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 
+// 능력치 상수 — 레거시 GameConst(d_setting)·BE common GameConst.kt와 동일값.
+//   defaultStatTotal=165 / defaultStatMin=15 / defaultStatMax=80.
+// (api.gameConst()의 FE 타입 GameConstResponse에는 이 세 값이 노출돼 있지 않아
+//  현재는 BE와 동일한 상수로 보존한다. types.ts에 defaultStat* 추가 시 동적 주입 가능 — follow-up.)
 const DEFAULT_STAT_TOTAL = 165;
 const STAT_MIN = 15;
 const STAT_MAX = 80;
+
+// 능력치 분배식 — 레거시 hwe/ts/util/generalStats.ts를 그대로 포팅(통/무/지 순).
+// PHP는 패러티 오라클이 아니다(폼 편의 기능, RNG draw 게이트 밖) → Vue 정본을 충실 이식.
+type Stats = { min: number; max: number; total: number };
+
+// abilityRand: 각 스탯 = random*65+10 → 비율 정규화 → floor → 부족분은 통솔에 가산 → 범위 벗어나면 재추첨.
+function abilityRand(stats: Stats): [number, number, number] {
+  let leadership = Math.random() * 65 + 10;
+  let strength = Math.random() * 65 + 10;
+  let intel = Math.random() * 65 + 10;
+  const rate = leadership + strength + intel;
+
+  leadership = Math.floor((leadership / rate) * stats.total);
+  strength = Math.floor((strength / rate) * stats.total);
+  intel = Math.floor((intel / rate) * stats.total);
+
+  while (leadership + strength + intel < stats.total) {
+    leadership += 1;
+  }
+
+  if (
+    leadership > stats.max || strength > stats.max || intel > stats.max ||
+    leadership < stats.min || strength < stats.min || intel < stats.min
+  ) {
+    return abilityRand(stats);
+  }
+
+  return [leadership, strength, intel];
+}
+
+// abilityLeadpow(통솔무력형): 통6:무6:지1 가중 → 부족분은 무력 가산 → min/max 클램프 캐스케이드.
+function abilityLeadpow(stats: Stats): [number, number, number] {
+  let leadership = Math.random() * 6;
+  let strength = Math.random() * 6;
+  let intel = Math.random() * 1;
+  const rate = leadership + strength + intel;
+
+  leadership = Math.floor((leadership / rate) * stats.total);
+  strength = Math.floor((strength / rate) * stats.total);
+  intel = Math.floor((intel / rate) * stats.total);
+
+  while (leadership + strength + intel < stats.total) {
+    strength += 1;
+  }
+
+  if (intel < stats.min) {
+    leadership -= stats.min - intel;
+    intel = stats.min;
+  }
+  if (leadership > stats.max) {
+    strength += leadership - stats.max;
+    leadership = stats.max;
+  }
+  if (strength > stats.max) {
+    leadership += strength - stats.max;
+    strength = stats.max;
+  }
+  if (leadership > stats.max) {
+    intel += leadership - stats.max;
+    leadership = stats.max;
+  }
+
+  return [leadership, strength, intel];
+}
+
+// abilityLeadint(통솔지력형): 통6:무1:지6 가중 → 부족분은 지력 가산 → min/max 클램프 캐스케이드.
+function abilityLeadint(stats: Stats): [number, number, number] {
+  let leadership = Math.random() * 6;
+  let strength = Math.random() * 1;
+  let intel = Math.random() * 6;
+  const rate = leadership + strength + intel;
+
+  leadership = Math.floor((leadership / rate) * stats.total);
+  strength = Math.floor((strength / rate) * stats.total);
+  intel = Math.floor((intel / rate) * stats.total);
+
+  while (leadership + strength + intel < stats.total) {
+    intel += 1;
+  }
+
+  if (strength < stats.min) {
+    leadership -= stats.min - strength;
+    strength = stats.min;
+  }
+  if (leadership > stats.max) {
+    intel += leadership - stats.max;
+    leadership = stats.max;
+  }
+  if (intel > stats.max) {
+    leadership += intel - stats.max;
+    intel = stats.max;
+  }
+  if (leadership > stats.max) {
+    strength += leadership - stats.max;
+    leadership = stats.max;
+  }
+
+  return [leadership, strength, intel];
+}
+
+// abilityPowint(무력지력형): 통1:무6:지6 가중 → 부족분은 지력 가산 → min/max 클램프 캐스케이드.
+function abilityPowint(stats: Stats): [number, number, number] {
+  let leadership = Math.random() * 1;
+  let strength = Math.random() * 6;
+  let intel = Math.random() * 6;
+  const rate = leadership + strength + intel;
+
+  leadership = Math.floor((leadership / rate) * stats.total);
+  strength = Math.floor((strength / rate) * stats.total);
+  intel = Math.floor((intel / rate) * stats.total);
+
+  while (leadership + strength + intel < stats.total) {
+    intel += 1;
+  }
+
+  if (leadership < stats.min) {
+    strength -= stats.min - leadership;
+    leadership = stats.min;
+  }
+  if (strength > stats.max) {
+    intel += strength - stats.max;
+    strength = stats.max;
+  }
+  if (intel > stats.max) {
+    strength += intel - stats.max;
+    intel = stats.max;
+  }
+  if (strength > stats.max) {
+    leadership += strength - stats.max;
+    strength = stats.max;
+  }
+
+  return [leadership, strength, intel];
+}
 
 const PERSONALITIES = [
   'Random',
@@ -29,11 +167,13 @@ export default function JoinPage() {
   const { frontInfo } = useFrontInfo();
   const memberName = frontInfo?.general?.name ?? '';
 
+  // 레거시 PageJoin 기본 분배: 통=total-2*floor(total/3), 무=floor(total/3), 지=floor(total/3) (165→55/55/55).
   const [name, setName] = useState(memberName);
-  const [leadership, setLeadership] = useState(55);
-  const [strength, setStrength] = useState(55);
-  const [intel, setIntel] = useState(55);
+  const [leadership, setLeadership] = useState(DEFAULT_STAT_TOTAL - 2 * Math.floor(DEFAULT_STAT_TOTAL / 3));
+  const [strength, setStrength] = useState(Math.floor(DEFAULT_STAT_TOTAL / 3));
+  const [intel, setIntel] = useState(Math.floor(DEFAULT_STAT_TOTAL / 3));
   const [character, setCharacter] = useState('Random');
+  const [pic, setPic] = useState(true); // 전콘 사용 — 레거시 args.pic 기본 true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -65,6 +205,7 @@ export default function JoinPage() {
         strength,
         intel,
         character,
+        pic, // 전콘 사용 여부 — 레거시 Join.php 'pic' 필드
       });
       if (res.status === 'AVAILABLE') {
         alert('장수가 생성되었습니다!');
@@ -79,27 +220,18 @@ export default function JoinPage() {
     }
   }
 
-  function preset(type: 'random' | 'leadership' | 'strength' | 'intel' | 'balanced') {
+  // 4가지 능력치 프리셋 — 레거시 PageJoin.vue 버튼(랜덤형/통솔무력형/통솔지력형/무력지력형).
+  function preset(type: 'random' | 'leadpow' | 'leadint' | 'powint') {
+    const stats: Stats = { min: STAT_MIN, max: STAT_MAX, total: DEFAULT_STAT_TOTAL };
+    let next: [number, number, number];
     switch (type) {
-      case 'random':
-        const r = () => Math.floor(Math.random() * (STAT_MAX - STAT_MIN + 1)) + STAT_MIN;
-        let a = r(), b = r(), c = r();
-        while (a + b + c > DEFAULT_STAT_TOTAL) { a = r(); b = r(); c = r(); }
-        setLeadership(a); setStrength(b); setIntel(c);
-        break;
-      case 'leadership':
-        setLeadership(80); setStrength(55); setIntel(30);
-        break;
-      case 'strength':
-        setLeadership(30); setStrength(80); setIntel(55);
-        break;
-      case 'intel':
-        setLeadership(30); setStrength(55); setIntel(80);
-        break;
-      case 'balanced':
-        setLeadership(55); setStrength(55); setIntel(55);
-        break;
+      case 'random': next = abilityRand(stats); break;
+      case 'leadpow': next = abilityLeadpow(stats); break;
+      case 'leadint': next = abilityLeadint(stats); break;
+      case 'powint': next = abilityPowint(stats); break;
     }
+    const [l, s, i] = next;
+    setLeadership(l); setStrength(s); setIntel(i);
   }
 
   return (
@@ -133,15 +265,33 @@ export default function JoinPage() {
           />
         </div>
 
+        {/* 전콘 사용 — 레거시 PageJoin.vue 'args.pic' 체크박스(Join.php 'pic' 필드로 전송) */}
+        <div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={pic}
+              onChange={(e) => setPic(e.target.checked)}
+            />
+            전콘 사용
+          </label>
+        </div>
+
         <div>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
             능력치 (합계 {total} / {DEFAULT_STAT_TOTAL}) {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
           </label>
 
+          {/* 능력치 조절 프리셋 — 레거시 PageJoin.vue 4버튼(랜덤형/통솔무력형/통솔지력형/무력지력형) */}
           <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
-            {(['random', 'balanced', 'leadership', 'strength', 'intel'] as const).map((t) => (
+            {([
+              ['random', '랜덤형'],
+              ['leadpow', '통솔무력형'],
+              ['leadint', '통솔지력형'],
+              ['powint', '무력지력형'],
+            ] as const).map(([t, label]) => (
               <button key={t} type="button" onClick={() => preset(t)} style={{ fontSize: 'var(--text-sm)', padding: '4px 8px' }}>
-                {t === 'random' ? '랜덤' : t === 'balanced' ? '균형' : t === 'leadership' ? '통솔형' : t === 'strength' ? '무력형' : '지력형'}
+                {label}
               </button>
             ))}
           </div>

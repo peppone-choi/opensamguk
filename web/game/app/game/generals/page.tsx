@@ -58,16 +58,16 @@ type SortKey =
     | 'dedlevel';
 
 // 헤더 라벨 ↔ 정렬 키. key=null = 정렬 불가(레거시 sortable=false). 레거시 a_genList.php 헤더 순서/문자열 그대로.
-// 열 순서: 얼굴·이름·연령·성격·특기·레벨(명성)·국가·명성칭호·계급·관직·통솔·무력·지력·정치·매력·삭턴
+// 열 순서: 얼굴·이름·연령·성격·특기·레벨·국가·명성·계급·관직·통솔·무력·지력·정치·매력·삭턴
 const COLUMNS: { label: string; key: SortKey | null; text?: boolean }[] = [
     { label: '얼굴', key: null },                       // a_genList.php:127 — picture(CDN 미배선)
     { label: '장수명', key: 'name', text: true },
     { label: '연령', key: 'age' },                      // a_genList.php:129, sort option 14
     { label: '성격', key: null },                       // a_genList.php:130 — personal(정렬 불가)
     { label: '특기', key: null },                       // a_genList.php:131 — special/special2(정렬 불가)
-    { label: '명성', key: 'explevel' },                 // a_genList.php:132 — Lv 버킷
+    { label: '레벨', key: 'explevel' },                 // a_genList.php:132 — Lv 버킷
     { label: '국가', key: 'nation', text: true },
-    { label: '명성칭호', key: null },                   // a_genList.php:134 — getHonor(정렬 불가, 명성 서브)
+    { label: '명성', key: null },                       // a_genList.php:134 — getHonor(정렬 불가)
     { label: '계급', key: 'dedlevel' },
     { label: '관직', key: null },                       // a_genList.php:136 — officer_level(정렬 불가)
     { label: '통솔', key: 'leadership' },
@@ -263,9 +263,9 @@ export default function GeneralsPage() {
         `Lv ${formatNumber(g.explevel)}`,
         // 국가
         <span key={`nat-${g.generalId}`} style={{ color: g.nationColor || 'var(--text-muted)' }}>
-            {g.nationId === NO_NATION ? '무소속' : g.nationName || '무소속'}
+            {g.nationId === NO_NATION ? '-' : g.nationName || '-'}
         </span>,
-        // 명성칭호 — getHonor (a_genList.php:194)
+        // 명성 — getHonor (a_genList.php:194)
         g.honorText || '-',
         // 계급 = "{dedLevelText}" + 봉록(bill) 둘째 줄(레거시 GeneralList.vue:666 valueGetter).
         <span key={`ded-${g.generalId}`} style={{ display: 'inline-flex', flexDirection: 'column', lineHeight: 1.2 }}>
