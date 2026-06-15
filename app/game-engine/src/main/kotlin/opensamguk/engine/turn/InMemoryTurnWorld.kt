@@ -313,6 +313,15 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     /**
+     * `$gameStor->isunited = value` (Q14 checkEmperior / InvaderEnding). meta 에만 in-memory 반영한다 —
+     * world_state.isunited 컬럼 flush 와 boot-load(컬럼→meta) 는 별도 갭(LEDGER 백로그). [getState] 의
+     * meta["isunited"] 를 읽는 경로(MonthlyPostUpdateHook·TurnDaemonLifecycle 동결판정)가 즉시 본 값을 본다.
+     */
+    fun setIsunited(value: Int) {
+        state = state.copy(meta = state.meta + mapOf("isunited" to value))
+    }
+
+    /**
      * Single-shot drain: collects the dirty/created/deleted sets into a [DirtyState] and then
      * clears every source set so the next call returns empty collections.
      */
