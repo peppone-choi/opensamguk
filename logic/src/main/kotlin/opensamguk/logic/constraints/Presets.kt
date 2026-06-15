@@ -471,6 +471,7 @@ fun reqCityCapacity(cityKey: String, keyNick: String, reqVal: Int) = object : Co
 
 /** Shared city int-field resolver (the V1 city columns the capacity/value constraints read by name). */
 internal fun cityIntField(c: City, key: String): Int = when (key) {
+    "level" -> c.level                  // PHP city.level('규모') — ReqDestCityValue('level',...) in che_감축/che_증축
     "pop" -> c.population
     "pop_max" -> c.populationMax
     "agri" -> c.agriculture

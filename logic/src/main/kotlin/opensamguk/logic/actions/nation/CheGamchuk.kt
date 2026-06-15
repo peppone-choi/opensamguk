@@ -37,11 +37,17 @@ fun cheGamchuk(pipeline: GeneralActionPipeline): NationCommand = object : Nation
     fun getCost(develCost: Int): Int =
         develCost * GameConst.expandCityCostCoef + GameConst.expandCityDefaultCost / 2
 
-    override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
-        occupiedCity(), beChief(), suppliedCity(),
-        // ReqDestCityValue('level','규모','>',4,...) + ('level','규모','>',origCityLevel,...) — both '더이상 감축할 수 없습니다.'
-        reqDestCityValue("level", "규모", ">", 4, "더이상 감축할 수 없습니다."),
-    )
+    override fun buildConstraints(ctx: ConstraintContext): List<Constraint> {
+        // che_감축.php:63 — origCityLevel = CityConst::byID(capital)->level (정적 시나리오 레벨 = 감축 하한).
+        // 확장(증축)으로 정적 레벨 위로 키운 분만 되돌릴 수 있어 현재 level 이 origCityLevel 보다 커야 한다.
+        val origCityLevel = ctx.destCityId?.let { CityConst.byId(it)?.level } ?: 0
+        // che_감축.php:69-70 — 두 ReqDestCityValue (둘 다 '더이상 감축할 수 없습니다.'): level>4 + level>origCityLevel.
+        return listOf(
+            occupiedCity(), beChief(), suppliedCity(),
+            reqDestCityValue("level", "규모", ">", 4, "더이상 감축할 수 없습니다."),
+            reqDestCityValue("level", "규모", ">", origCityLevel, "더이상 감축할 수 없습니다."),
+        )
+    }
 
     override fun buildMinConstraints(ctx: ConstraintContext): List<Constraint> = listOf(notBeNeutral())
 
