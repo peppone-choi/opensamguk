@@ -7,6 +7,7 @@ import opensamguk.gameapi.dto.ServerMeInfo
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.http.ResponseEntity
@@ -34,6 +35,7 @@ class ServerBasicInfoController(
     private val world: WorldStateReadRepository,
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
+    private val scenarioTitle: ScenarioTitleResolver,
 ) {
 
     @GetMapping("/server-basic-info")
@@ -51,7 +53,9 @@ class ServerBasicInfoController(
 
     private fun buildGame(w: WorldStateReadEntity): ServerGameInfo {
         val config = w.config
+        // 표시 제목 우선순위: 시드된 config/meta title → scenario 리소스 read-time 해석(라이브 폴백) → 코드.
         val scenario = (config["title"] ?: w.meta["title"])?.toString()?.takeIf { it.isNotBlank() }
+            ?: scenarioTitle.titleOf(w.scenarioCode)
             ?: w.scenarioCode
 
         // userCnt = npc<2 (PC + 빙의됨), npcCnt = npc>=2 (순수 NPC). opensamguk npcState: 0=PC,1=빙의됨,≥2=NPC.

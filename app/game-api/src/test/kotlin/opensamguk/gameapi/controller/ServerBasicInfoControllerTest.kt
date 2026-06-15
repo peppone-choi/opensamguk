@@ -8,6 +8,7 @@ import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.junit.jupiter.api.Test
@@ -39,7 +40,7 @@ class ServerBasicInfoControllerTest {
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(ServerBasicInfoController(resolver, world, generals, nations))
+        MockMvcBuilders.standaloneSetup(ServerBasicInfoController(resolver, world, generals, nations, ScenarioTitleResolver()))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
