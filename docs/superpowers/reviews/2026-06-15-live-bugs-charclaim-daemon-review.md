@@ -25,3 +25,20 @@
 ## Verdict: cleared
 
 블로커 0. 두 wiring 갭을 sibling/VersionService 동형 패턴으로 최소 수정. 컴파일 green. CI jvm green 후 머지(gateway 자동배포)+s1 bump(game-api).
+
+## 스코프 확장 — loop-parity 배치 12바퀴 (FE 패러티 + 엔진/플러시/재난)
+
+이 PR(#85)은 위 백엔드 wiring 2종에 더해 bug-parity-2026-06-15 루프 바퀴 1–15를 합본한다. 변경 행위영역(behavior areas)과 검증 증거를 명시한다(provider-agnostic guard parity-evidence 경로).
+
+### FE 행위영역 — `web/game` · `web/gateway`
+- **`web/game`**: city·diplomacy·generals·history·inherit·join·rankings/npcs·troop 페이지 + MapViewer·NationBasicCard 컴포넌트 + types — 표시/계약/가드/포맷 패러티(legacy `hwe/ts` Vue grand truth 대조). 바퀴 1–10·12.
+- **`web/gateway`**: lobby(입장행 초상 렌더)·login(next open-redirect 차단)·MapPreview(재난 state 회귀 복원) — 바퀴 11·12 + 로비맵 회귀.
+- **두 맵뷰어 불변식**: MapViewer(`web/game`)↔MapPreview(`web/gateway`)는 데이터만 다르고 기능·툴팁 동일 — 동시 정정(바퀴 1·5).
+
+### 검증 증거 (결정적)
+- FE: `web/game` + `web/gateway` `tsc --noEmit` 양쪽 EXIT 0/0에러, `web/game` vitest **65/65** green. CI `web (game)`·`web (gateway)` 빌드 둘다 PASS.
+- 바퀴별 가설→점수→채점자→판정 원장: `docs/loops/bug-parity-2026-06-15/LEDGER.md`(바퀴 1–15 전부 "채택", fresh 게이트 결정적 채점).
+- 백엔드(엔진 turn-loop·flush·disaster): `:app:game-engine:test` 372/0, `:infra:test` JdbcFlushExecutorIT 6/0(Docker IT), `:logic:test` RaiseDisasterTest 10/0 — CI `jvm` PASS.
+
+### 패러티 규율
+모든 FE 변경은 표시/계약/가드 레이어(RNG draw·로그·골든 불변). 엔진 turn-loop 수정은 8 fixture 재정합(약화 0)으로 닫았고 AiSelectionGate 불변. 골든·테스트 약화 0, 날조 0.
