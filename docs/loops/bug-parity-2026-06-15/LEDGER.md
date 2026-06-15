@@ -31,6 +31,15 @@
 - **Wave 2 진행중**(Docker on): 바퀴 13 turn-loop CRITICAL(turnTime/killturn 미진행 + dueGenerals strict-<), 바퀴 14 RaiseDisaster trust, 바퀴 15 flush 3컬럼(power/statisticInserts/officer_city). 게이트 후 행 추가.
 - 헌트 워크플로: BE `wf_de48944f-a6c`(17확정), FE `wf_644eafb5-0f1`(23확정). 전체 출력 /private/tmp/.../wnebzposs.output·wnanb7z4g.output.
 
+## 최상위 이니셔티브 — 장기-시뮬 패러티 게이트 (공백지→천하통일)
+
+"완벽한 게임"의 진짜 완성 게이트. 계획: `docs/superpowers/plans/2026-06-15-long-sim-parity-gate-plan.md`.
+- **Phase 1 (진행중)**: 천하통일 탐지 포팅 — checkEmperior(func_gamerule.php:696-769, :430 호출) 국가수==1 && 전도시소유 → isunited=2 + 전토통일 로그. 엔진 월틱 Q14. (port-unification 에이전트)
+- Phase 2: PHP 풀게임 캡처 하네스 run_long_sim.php (TimeUtil mock + executeAllCommand 루프 + 턴별 draw/상태/로그). 비결정 차단원 중립화.
+- Phase 3: Kotlin LongSimReplayGateTest (시나리오 부팅 → N턴 → turn-for-turn byte-compare).
+- Phase 4: bounded 결정적 윈도 green → 차단원 중립화하며 천하통일까지 확장(각 1바퀴).
+- 비결정 차단원: TimeUtil::now(PHP wall-clock), ORDER BY RAND GeneralAI.php:3324/3345(do선양/do국가선택, Q1격리), event shuffle, tournament rand. 양측 동일 deterministic 대체 필요.
+
 ## 백로그 (Docker 게이트 필요 — 골든 신규캡처 / 실DB IT)
 
 - BE 명령-패러티(골든캡처 후 1바퀴씩): #7 선동 trustAmount 로그 소수1자리(number_format), #3 급습/#12 이호경식 외교 term 가산식(state IF), #13 약탈발동 float 포맷, #14 감축 2번째 제약, #15 집합 ReqTroopMembers 스텁.
