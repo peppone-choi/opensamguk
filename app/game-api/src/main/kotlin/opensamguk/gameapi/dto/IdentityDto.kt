@@ -84,6 +84,9 @@ data class FrontGlobalInfo(
     val serverCnt: Int? = null,
     val isunited: Boolean? = null,
 
+    /** 현재 요청의 게임 서버 식별자 — middleware/프록시가 `sam_server` 쿠키로 고정한 값. */
+    val serverId: String? = null,
+
     // 토너먼트/베팅 상태(game_env.tournament/tnmt_type) — config 미기재 시 null.
     val tournamentState: Int? = null,
     val tournamentType: String? = null,

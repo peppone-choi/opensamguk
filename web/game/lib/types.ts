@@ -33,6 +33,7 @@ export interface FrontGlobalInfo {
     title?: string;
     serverName?: string;
     serverCnt?: number;
+    serverId?: string;
     extendedGeneral?: boolean;
     isFiction?: boolean;
     npcMode?: number; // 0 불가능 / 1 가능 / 2 선택 생성

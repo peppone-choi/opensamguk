@@ -1,5 +1,6 @@
 package opensamguk.gameapi.controller
 
+import jakarta.servlet.http.Cookie
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
@@ -368,5 +369,23 @@ class FrontInfoControllerTest {
         mockMvc().perform(get("/api/front-info").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.general.troopInfo").doesNotExist())
+    }
+
+    @Test
+    fun `global exposes serverId from sam_server cookie`() {
+        seedWorld()
+
+        mockMvc().perform(get("/api/front-info").cookie(Cookie("sam_server", "smain")))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.serverId").value("smain"))
+    }
+
+    @Test
+    fun `global serverId is absent without sam_server cookie`() {
+        seedWorld()
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.serverId").doesNotExist())
     }
 }

@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
+import { resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { ClaimableGeneral, FrontGlobalInfo } from '@/lib/types';
 
 export default function CharacterClaim({ global, onClaimed }: { global: FrontGlobalInfo; onClaimed: () => void }) {
@@ -19,9 +20,17 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
     const [claiming, setClaiming] = useState<number | null>(null);
     const npcMode = global.npcMode ?? 1;
     const blockGeneralCreate = global.blockGeneralCreate ?? 0;
+    const serverId = global.serverId;
     const canCreate = (blockGeneralCreate & 1) === 0;
     const canSelectNpc = npcMode === 1;
     const canSelectPool = npcMode === 2;
+
+    const joinHref = serverId
+        ? resolveServerGamePath(undefined, serverId, '/game', 'join')
+        : '/game/join';
+    const selectPoolHref = serverId
+        ? resolveServerGamePath(undefined, serverId, '/game', 'select-pool')
+        : '/game/select-pool';
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -73,7 +82,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
                     <h2>장수 생성</h2>
                     <p>새 장수를 만들어 재야에서 시작합니다.</p>
                     {canCreate ? (
-                        <Link className="claim-mode-action" href="/game/join">
+                        <Link className="claim-mode-action" href={joinHref}>
                             생성 화면
                         </Link>
                     ) : (
@@ -93,7 +102,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
                     <h2>장수 선택</h2>
                     <p>서버가 준비한 장수 풀에서 선택하거나 조정합니다.</p>
                     {canSelectPool ? (
-                        <Link className="claim-mode-action" href="/game/select-pool">
+                        <Link className="claim-mode-action" href={selectPoolHref}>
                             선택 화면
                         </Link>
                     ) : (

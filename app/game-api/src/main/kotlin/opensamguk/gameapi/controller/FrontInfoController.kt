@@ -47,6 +47,7 @@ import opensamguk.logic.domestic.getDedLevelText
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.world.SpecialityHelper
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -101,8 +102,10 @@ class FrontInfoController(
     fun frontInfo(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
+        request: HttpServletRequest,
     ): ResponseEntity<FrontInfoResponse> {
-        val global = buildGlobal()
+        val serverId = request.cookies?.find { it.name == "sam_server" }?.value?.takeIf { it.isNotBlank() }
+        val global = buildGlobal(serverId)
 
         // resolve the caller's general: principal first, then the ?generalId= transition fallback.
         val resolved = userId?.let { resolver.resolve(it) }
@@ -386,7 +389,7 @@ class FrontInfoController(
     // global
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    private fun buildGlobal(): FrontGlobalInfo {
+    private fun buildGlobal(serverId: String?): FrontGlobalInfo {
         val w = world.findAll().firstOrNull()
         val scenario = w?.scenarioCode ?: ""
         val config = w?.config ?: emptyMap()
@@ -462,6 +465,9 @@ class FrontInfoController(
             createdUserCnt = generals.countByNpcState(0).toInt(),
             createdNPCCnt = generals.countByNpcStateGreaterThan(0).toInt(),
             auctionCount = auctionCount,
+
+            // 선택 서버 식별자 — 프록시/middleware가 `sam_server` 쿠키로 고정한 값.
+            serverId = serverId,
 
             // [§2 BLOCKED — plock 테이블 부재] interim false(W3_FrontGlobalInfo §2). 마이그레이션 추가 시 교체.
             serverLocked = false,
