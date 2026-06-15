@@ -162,14 +162,40 @@ function ServerRow({ server }: { server: ServerEntry }) {
         characterCell = <span className="text-muted">-</span>;
         selectCell = LOBBY_LABELS.registerClosed;
     } else {
-        // 미등록 — 여석 있음. devsam 은 canCreate/canSelectNPC/canSelectPool 로 장수생성/빙의/선택 3버튼을
-        // 가르나(entrance.ts L270-279), opensamguk 의 v_join/select_npc/select_general 정본 페이지는 B1-B3
-        // (골든 동반)에서 닫는다. 그 전까지는 게임 진입(CharacterClaim 빙의 경로)으로 통합한다.
+        // 미등록 — 여석 있음. devsam entrance.ts:51-58,274-276 의 3-버튼 게이팅을 패러티로 복원한다:
+        //   canCreate    = !(block_general_create & 1) → 장수생성 → /game/join
+        //   canSelectNPC = npcMode == '가능'(1)         → 장수빙의 → /game (CharacterClaim 빙의 후보 목록)
+        //   canSelectPool= npcMode == '선택 생성'(2)     → 장수선택 → /game/select-pool
+        // (ServerBasicInfoDto.npcMode: 0 불가 / 1 가능 / 2 선택 생성.)
+        // gameUrl 은 서버별 게임프론트 진입 URL — /game 베이스로 정규화(prod=.../game, local=localhost:3001 → +/game).
+        const rawUrl = (server.gameUrl || GAME_URL).replace(/\/+$/, '');
+        const gameBase = rawUrl.endsWith('/game') ? rawUrl : `${rawUrl}/game`;
+        const canCreate = (game.blockGeneralCreate & 1) === 0;
+        const canSelectNpc = game.npcMode === 1;
+        const canSelectPool = game.npcMode === 2;
         characterCell = <span className="text-muted">{LOBBY_LABELS.unregistered}</span>;
         selectCell = (
-            <a href={gameUrl} target="_self" className="btn-enter">
-                장수 등록
-            </a>
+            <span style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                {canCreate && (
+                    <a href={`${gameBase}/join`} target="_self" className="btn-enter">
+                        {LOBBY_LABELS.createGeneral}
+                    </a>
+                )}
+                {canSelectNpc && (
+                    <a href={gameBase} target="_self" className="btn-enter">
+                        {LOBBY_LABELS.possessGeneral}
+                    </a>
+                )}
+                {canSelectPool && (
+                    <a href={`${gameBase}/select-pool`} target="_self" className="btn-enter">
+                        {LOBBY_LABELS.selectGeneral}
+                    </a>
+                )}
+                {/* 셋 다 비활성(불가 서버)이면 등록 경로 없음 — legacy 동일(빈 셀). */}
+                {!canCreate && !canSelectNpc && !canSelectPool && (
+                    <span className="text-muted">-</span>
+                )}
+            </span>
         );
     }
 
