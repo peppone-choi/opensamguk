@@ -381,6 +381,7 @@ fun postUpdateMonthlyTail(
     triggerTournament: RngConsumer,
     registerAuction: RngConsumer,
     setNationFront: () -> List<PostFrontResult>,
+    checkEmperior: () -> Unit = {},
     @Suppress("UNUSED_PARAMETER") isUnited: Boolean = false,
 ): PostUpdateMonthlyTailResult {
     val drawOrder = mutableListOf<String>()
@@ -394,7 +395,8 @@ fun postUpdateMonthlyTail(
     }
 
     // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (no rng; daemon-side recompute).
-    // Q14 — checkEmperior (no rng; isUnited threaded for the UNITED target but never affects the stream).
+    // Q14 — checkEmperior (no rng; 천하통일 detection → isunited transition + 전토통일 log; ZERO draws).
+    checkEmperior()
 
     // Q15 — triggerTournament (THIRD consumer).
     triggerTournament(rng)

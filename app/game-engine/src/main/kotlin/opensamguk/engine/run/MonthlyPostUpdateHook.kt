@@ -7,7 +7,9 @@ import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.PostUpdateMonthly
+import opensamguk.logic.world.CheckEmperiorContext
 import opensamguk.logic.world.DiplomacyRow
+import opensamguk.logic.world.checkEmperior
 import opensamguk.logic.world.PostNationPowerInput
 import opensamguk.logic.world.PowerCity
 import opensamguk.logic.world.PowerGeneral
@@ -163,6 +165,7 @@ class MonthlyPostUpdateHook(
             triggerTournament = { _ -> },   // no-op until tournament is ported
             registerAuction = { _ -> },     // no-op until auction is ported
             setNationFront = { emptyList() }, // no-op until SetNationFront is ported
+            checkEmperior = { checkEmperior(WorldCheckEmperiorContext(world)) }, // Q14 천하통일 탐지 (no rng)
             isUnited = isUnited,
         )
     }
@@ -170,4 +173,32 @@ class MonthlyPostUpdateHook(
     companion object {
         private val DEX_KEYS = listOf("dex1", "dex2", "dex3", "dex4", "dex5")
     }
+}
+
+/**
+ * Q14 `checkEmperior` 의 월드 시임을 [InMemoryTurnWorld] 위에 구현한다(`func_gamerule.php:696-769`).
+ * level>0 국가/도시 소유 판정 read + isunited 전이 write + 전토통일 국가사 로그 push.
+ * isunited 는 meta 에만 in-memory 반영(컬럼 flush/boot-load 는 별도 갭 — LEDGER 백로그).
+ */
+class WorldCheckEmperiorContext(
+    private val world: InMemoryTurnWorld,
+) : CheckEmperiorContext {
+    override fun isunited(): Int = (world.getState().meta["isunited"] as? Number)?.toInt() ?: 0
+
+    override fun activeNationIds(): List<Int> =
+        world.listNations().filter { it.level > 0 }.map { it.id }
+
+    override fun cityCountOf(nationId: Int): Int =
+        world.listCities().count { it.nationId == nationId }
+
+    // 전 도시가 시드되므로 in-memory city 수 = count(CityConst::all()) (장기-시뮬 게이트 전제).
+    override fun totalCityCount(): Int = world.listCities().size
+
+    override fun nationName(nationId: Int): String? = world.getNationById(nationId)?.name
+
+    override fun pushNationalHistoryLog(nationId: Int, msg: String) {
+        world.pushLog(LogEntryDraft(scope = "nation", category = "history", text = msg, nationId = nationId))
+    }
+
+    override fun setIsunited(value: Int) = world.setIsunited(value)
 }
