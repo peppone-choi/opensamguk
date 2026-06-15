@@ -5,6 +5,7 @@ import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ServerBoard from '@/components/ServerBoard';
 import { GAME_URL, LOBBY_LABELS, LOBBY_FOOTNOTES, IMAGE_CDN_BASE } from '@/lib/constants';
+import { resolveServerGamePath } from '@/lib/serverGameUrl';
 
 // 장수 초상 URL — legacy hwe/ts/util/getIconPath.ts 동형. imgsvr 0=공유 기본아이콘(d_shared),
 // 1=업로드 초상(d_pic). 두 디렉터리는 devsam/image 자산 루트로, opensam-images CDN(IMAGE_CDN_BASE)이
@@ -97,7 +98,7 @@ function ServerRow({ server }: { server: ServerEntry }) {
     const { loading, info } = state;
     const game = info?.game ?? null;
     const me = info?.me ?? null;
-    const gameUrl = server.gameUrl || GAME_URL;
+    const gameUrl = resolveServerGamePath(server.gameUrl, server.id, GAME_URL);
 
     // 정보 셀.
     let infoCell: ReactNode;
@@ -167,9 +168,6 @@ function ServerRow({ server }: { server: ServerEntry }) {
         //   canSelectNPC = npcMode == '가능'(1)         → 장수빙의 → /game (CharacterClaim 빙의 후보 목록)
         //   canSelectPool= npcMode == '선택 생성'(2)     → 장수선택 → /game/select-pool
         // (ServerBasicInfoDto.npcMode: 0 불가 / 1 가능 / 2 선택 생성.)
-        // gameUrl 은 서버별 게임프론트 진입 URL — /game 베이스로 정규화(prod=.../game, local=localhost:3001 → +/game).
-        const rawUrl = (server.gameUrl || GAME_URL).replace(/\/+$/, '');
-        const gameBase = rawUrl.endsWith('/game') ? rawUrl : `${rawUrl}/game`;
         const canCreate = (game.blockGeneralCreate & 1) === 0;
         const canSelectNpc = game.npcMode === 1;
         const canSelectPool = game.npcMode === 2;
@@ -177,17 +175,25 @@ function ServerRow({ server }: { server: ServerEntry }) {
         selectCell = (
             <span style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                 {canCreate && (
-                    <a href={`${gameBase}/join`} target="_self" className="btn-enter">
+                    <a
+                        href={resolveServerGamePath(gameUrl, server.id, GAME_URL, 'join')}
+                        target="_self"
+                        className="btn-enter"
+                    >
                         {LOBBY_LABELS.createGeneral}
                     </a>
                 )}
                 {canSelectNpc && (
-                    <a href={gameBase} target="_self" className="btn-enter">
+                    <a href={gameUrl} target="_self" className="btn-enter">
                         {LOBBY_LABELS.possessGeneral}
                     </a>
                 )}
                 {canSelectPool && (
-                    <a href={`${gameBase}/select-pool`} target="_self" className="btn-enter">
+                    <a
+                        href={resolveServerGamePath(gameUrl, server.id, GAME_URL, 'select-pool')}
+                        target="_self"
+                        className="btn-enter"
+                    >
                         {LOBBY_LABELS.selectGeneral}
                     </a>
                 )}

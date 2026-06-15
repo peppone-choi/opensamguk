@@ -1,4 +1,5 @@
 import serversData from '@/config/servers.json';
+import { fallbackGameUrlForServer, resolveServerGameBase } from '@/lib/serverGameUrl';
 
 export interface ServerEntry {
     id: string;
@@ -41,8 +42,9 @@ function runtimeEntries(): ServerEntry[] {
 function normalizeServerEntry(entry: Record<string, unknown>): ServerEntry {
     const id = typeof entry.id === 'string' ? entry.id.trim() : '';
     const name = typeof entry.name === 'string' && entry.name.trim() ? entry.name.trim() : id;
-    const fallbackGameUrl = /^s[A-Za-z0-9_-]*$/.test(id) ? `/game/${id}` : `/game?server=${encodeURIComponent(id)}`;
-    const gameUrl = typeof entry.gameUrl === 'string' && entry.gameUrl.trim() ? entry.gameUrl.trim() : fallbackGameUrl;
+    const fallbackGameUrl = fallbackGameUrlForServer(id);
+    const rawGameUrl = typeof entry.gameUrl === 'string' && entry.gameUrl.trim() ? entry.gameUrl.trim() : undefined;
+    const gameUrl = resolveServerGameBase(rawGameUrl, id, fallbackGameUrl);
     const gameApiUrl =
         typeof entry.gameApiUrl === 'string' && entry.gameApiUrl.trim() ? entry.gameApiUrl.trim() : undefined;
     return { id, name, gameUrl, gameApiUrl };
