@@ -170,7 +170,11 @@ class TurnRunServiceIT {
             while (!container.isRunning && System.currentTimeMillis() < subscribeDeadline) Thread.sleep(20)
 
             // --- RUN ONE TICK -------------------------------------------------------------------
-            val runTime = t0  // the due general's turnTime == lastTurnTime == t0 → due this tick
+            // PHP 선택 게이트(TurnExecutionHelper.php:237)는 `turntime < %s`(STRICT <)다. production은
+            // runTick을 nextRunTime()=lastTurnTime+tick(=turnTime보다 STRICT 미래)로 호출한다 — turnTime과
+            // 정확히 같은 시각은 due가 아니다. 과거 fixture는 runTime=t0(==turnTime)로 inclusive `<=` 버그에
+            // 의존했다. strict-< 교정 후엔 turnTime보다 미래 시각을 넘겨야 그 장수가 due가 된다.
+            val runTime = t0.plusSeconds(1)
             val result = service(world, commandStream, lifecycle, handler, realtimePublisher).runTick(runTime)
 
             // the reserved action resolved (not the rest fallback) and exactly one general processed
@@ -282,7 +286,10 @@ class TurnRunServiceIT {
                 id = generalId, name = "g42", nationId = nationId, cityId = cityId, troopId = 0,
                 stats = GeneralStats(leadership = 70, strength = 70, intelligence = 80),
                 experience = 0, dedication = 0, officerLevel = 0, gold = 100_000, rice = 1000, injury = 0,
-                turnTime = t0, meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0),
+                // killturn>0: 살아있는 장수는 양수 killturn을 가진다(PHP는 $gameStor->killturn에서 시드). strict-<
+                // 교정 후 drain 꼬리(updateTurnTime, TurnExecutionHelper.php:185)의 killturn<=0 kill 게이트가
+                // 동작하므로, killturn 미설정(0) 장수는 tail에서 kill되어 flush 대상에서 사라진다 → 양수로 생존.
+                turnTime = t0, meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0, "killturn" to 80),
             ),
         ),
         cities = listOf(

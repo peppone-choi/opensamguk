@@ -85,11 +85,14 @@ class TurnDaemonLifecycle(
 
     /**
      * The generals due at [runTime], in deterministic order (ascending `turnTime`, then ascending id).
-     * A general is due when its `turnTime` is not after [runTime].
+     *
+     * PHP 선택 게이트(`TurnExecutionHelper.php:237`)는 `WHERE turntime < %s`(STRICT `<`)다 — `runTime`과
+     * 정확히 같은 turntime은 아직 due가 아니다. 이전 버그는 `!isAfter`(≤, INCLUSIVE)라서 경계 턴을 한 틱
+     * 일찍 끌어들였다. 이제 `isBefore`(strict <)로 PHP와 draw-순서 동일하게 맞춘다.
      */
     fun dueGenerals(runTime: Instant): List<TurnGeneral> =
         world.listGenerals()
-            .filter { !it.turnTime.isAfter(runTime) }
+            .filter { it.turnTime.isBefore(runTime) }
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
 
     /**
@@ -139,15 +142,41 @@ class TurnDaemonLifecycle(
             }
 
             // --- GENERAL PASS SECOND (R-SEAM §2 `:326-348`) — the existing handler interpose ---
-            handled.add(
-                handler.handle(
-                    generalId = g.id,
-                    reserved = reservedActionOf(g.id),
-                    year = state.currentYear,
-                    month = state.currentMonth,
-                    date = date,
-                ),
+            val reserved = reservedActionOf(g.id)
+            val result = handler.handle(
+                generalId = g.id,
+                reserved = reserved,
+                year = state.currentYear,
+                month = state.currentMonth,
+                date = date,
             )
+            handled.add(result)
+
+            // ── 1) killturn 감소/리셋 (PHP processCommand 꼬리, `TurnExecutionHelper.php:153-165`) ──
+            // PHP는 processCommand 안에서 command.run() 직후 killturn을 처리한다(:348→:153). Kotlin handle()는
+            // 이 꼬리를 제외한 processCommand 본체이므로, handle() 직후 applyKillturnDecrement를 호출해 PHP
+            // 순서(run → killturn → updateTurnTime)를 그대로 재현한다.
+            //
+            // commandClassName(PHP `$commandClassName = $commandObj->getName()`, :118/:147):
+            //  - 명령 정상 실행(fellBack=false): 실제로 resolve된 명령 이름 = result.definition.name.
+            //  - 거부/폴백(fellBack=true): PHP는 commandClassName을 휴식으로 되돌리지 않고 예약 명령 이름을
+            //    그대로 유지한다(while 루프가 hasFullConditionMet 실패 시 break, 이름 미변경 — :121-126).
+            //    killturn 분기는 오직 `== '휴식'` 여부만 보므로, 예약 actionCode가 리터럴 "휴식"일 때만 휴식이고
+            //    그 외 거부된 비-휴식 명령은 비-휴식으로 남아야 한다 → reserved.actionCode를 그대로 쓴다(휴식
+            //    명령의 actionCode만 "휴식"으로 resolve되므로 byte-정확). AI 교체(autorunMode=true)는 :159
+            //    분기에서 commandClassName과 무관하게 감소하므로 영향 없음.
+            //
+            // autorunMode는 PER-GENERAL 신호다(PHP `$autorunMode`, :333-336 — AI가 예약 명령을 다른 명령으로
+            // 교체했을 때만 true). handle()이 HandledTurn.autorunMode로 노출하므로, 틱-레벨 env를 그 값으로
+            // copy해 :159 autorun 분기가 정확히 동작하게 한다(틱 env의 autorunMode 기본 false는 비-AI/AI-동일예약).
+            val commandClassName = if (result.fellBack) reserved.actionCode else result.definition.name
+            handler.applyKillturnDecrement(g.id, commandClassName, env.copy(autorunMode = result.autorunMode))
+
+            // ── 2) updateTurnTime (PHP `:170-230`, 호출부 `:363`) ──
+            // lived_month+1 → killturn<=0 kill/유체이탈 게이트 → age>=retirementYear 환생 게이트 →
+            // `turntime = addTurn(turntime, turnterm)`. KILLED면 updateTurnTime 내부에서 turntime을 advance하지
+            // 않고 일찍 return하므로(:204/:437), 여기서 별도 분기 없이 한 번만 호출한다(이중 처리 금지).
+            handler.updateTurnTime(g.id, env)
         }
         return handled
     }

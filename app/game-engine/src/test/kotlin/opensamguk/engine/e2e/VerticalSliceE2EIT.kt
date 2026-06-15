@@ -261,7 +261,10 @@ class VerticalSliceE2EIT {
                 commandBlockMs = 250,
             )
 
-            val result = runService.runTick(t0)
+            // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+            // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+            // 시각을 넘겨 골든 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+            val result = runService.runTick(t0.plusSeconds(1))
 
             // the reserved action resolved (NOT the 휴식 fallback); exactly one general drained + flushed
             assertEquals(1, result.handled.size, "exactly one due general drained in one pass")
@@ -284,7 +287,9 @@ class VerticalSliceE2EIT {
             assertTrue(latch.await(5, TimeUnit.SECONDS), "turnCompleted delivered on the realtime channel")
             val decoded = WireJson.decodeFromString(RealtimeEvent.serializer(), channelMsg.get()!!)
             assertTrue(decoded is RealtimeEvent.TurnCompleted, "the published event is turnCompleted")
-            assertEquals(t0.toString(), (decoded as RealtimeEvent.TurnCompleted).at)
+            // at = 이번 틱의 runTime(TurnRunService atIso=runTime.toString()) — strict-< 교정으로 runTick을
+            // t0.plusSeconds(1)로 호출하므로 at도 그 값이다(PHP 골든이 아니라 데몬이 echo하는 runTime).
+            assertEquals(t0.plusSeconds(1).toString(), (decoded as RealtimeEvent.TurnCompleted).at)
             assertEquals(t0.toString(), decoded.lastTurnTime, "lastTurnTime = the pre-tick world clock (t0)")
             // the SAME turnCompleted JSON traversed the REAL SSE relay → emitter
             assertEquals(1, sseEvents.size, "exactly one event reached the SSE emitter")
@@ -313,26 +318,37 @@ class VerticalSliceE2EIT {
         // Decode the stored jsonb into the insertion-ordered LinkedHashMap and assert BOTH the
         // logical content AND the KEY ORDER, then re-encode through the PHP-faithful MetaJson writer
         // (the row mapper's byte oracle) and byte-compare against the expected golden jsonb string.
+        // opensamguk 스키마는 PHP의 killturn 전용 컬럼/aux(max_domestic_critical)를 모두 meta jsonb에 접는다.
+        // strict-< 교정 후 per-general 꼬리가 실제로 돌면(applyKillturnDecrement→updateTurnTime, PHP
+        // :153-165/:170-230) meta에 killturn(감소)·lived_month(+1)가 추가된다. 이는 골든 DB(che-golden-db.json)
+        // 76번 행의 `killturn:105`(= BEFORE 106 - 1) AFTER 상태와 정확히 일치한다 — 액션 aux 3키(explevel/
+        // intel_exp/max_domestic_critical)는 불변이고, 꼬리 2키(killturn·lived_month)가 PHP 캡처대로 추가된 것.
         val storedMeta = MetaJson.decode(stringOf(row["meta"]))
         assertEquals(
             linkedMapOf<String, Any?>(
                 "explevel" to g.explevel,
                 "intel_exp" to g.intelExp,
                 "max_domestic_critical" to g.maxDomesticCritical,
+                "killturn" to 105, // 골든 DB che-golden-db.json: "killturn":105 (BEFORE 106 - NPC 1감소).
+                "lived_month" to 1, // updateTurnTime lived_month+1 (PHP :278), BEFORE 미설정(0) → 1.
             ) as Map<String, Any?>,
             storedMeta as Map<String, Any?>,
-            "general.meta content byte-match golden (intel_exp/explevel/max_domestic_critical)",
+            "general.meta content byte-match golden (액션 aux 3키 + 꼬리 killturn/lived_month — PHP 캡처 일치)",
         )
+        // meta KEY ORDER: 이 키들은 PHP에선 전용 컬럼(killturn/explevel/intel_exp) + aux(max_domestic_critical)라
+        // PHP jsonb 골든 순서가 없다 — opensamguk가 slice-meta jsonb로 접은 내부 직렬화 순서다(결정적이면 OK,
+        // 규율6=비결정 reorder 금지). 실제 결정적 순서 = 로직 액션 meta 재구성(explevel→killturn→intel_exp) +
+        // 꼬리(updateTurnTime lived_month 추가) → max_domestic_critical 말미. 매 실행 동일(LinkedHashMap 연산 결정적).
         assertEquals(
-            listOf("explevel", "intel_exp", "max_domestic_critical"),
+            listOf("explevel", "killturn", "intel_exp", "lived_month", "max_domestic_critical"),
             storedMeta.keys.toList(),
-            "general.meta KEY ORDER preserved (insertion order — PHP Json::encode)",
+            "general.meta KEY ORDER 결정적 (PHP는 컬럼/aux라 jsonb 순서 무관 — opensamguk slice-meta 내부 직렬화 결정성)",
         )
-        // The exact PHP-faithful jsonb byte string the golden AFTER state implies.
+        // opensamguk slice-meta jsonb 정확 byte 문자열(결정적 순서, 51.5 not 51, killturn 105, lived_month 1).
         assertEquals(
-            """{"explevel":${g.explevel},"intel_exp":${g.intelExp},"max_domestic_critical":${fmt(g.maxDomesticCritical)}}""",
+            """{"explevel":${g.explevel},"killturn":105,"intel_exp":${g.intelExp},"lived_month":1,"max_domestic_critical":${fmt(g.maxDomesticCritical)}}""",
             MetaJson.encode(storedMeta),
-            "general.meta jsonb byte-string (compact, key order, 51.5 not 51) == golden",
+            "general.meta jsonb byte-string (compact, 결정적 key order, killturn 105, lived_month 1)",
         )
     }
 
@@ -469,11 +485,16 @@ class VerticalSliceE2EIT {
                         id = generalId, name = "ⓝ엄정", nationId = nationId, cityId = cityId, troopId = 0,
                         stats = GeneralStats(leadership = 31, strength = 68, intelligence = 49),
                         experience = b.experience, dedication = b.dedication, officerLevel = 1,
-                        gold = b.gold, rice = 1000, injury = 0, turnTime = t0,
+                        // 골든 PHP 캡처(che-golden-db.json) 76번 장수는 `npc:2`(NPC), AFTER `killturn:105`.
+                        // strict-< 교정 후 drain 꼬리(applyKillturnDecrement, TurnExecutionHelper.php:153-165)가
+                        // NPC(npcState>=2) 분기로 killturn을 -1 하므로 BEFORE killturn=106 → AFTER 105(골든 일치).
+                        // killturn 미설정(0)이면 tail의 killturn<=0 kill 게이트(:185)가 장수를 삭제해 flush가 비어진다.
+                        gold = b.gold, rice = 1000, injury = 0, turnTime = t0, npcState = 2,
                         meta = linkedMapOf(
                             "explevel" to b.explevel,
                             "intel_exp" to b.intelExp,
                             "max_domestic_critical" to b.maxDomesticCritical,
+                            "killturn" to 106,
                         ),
                     ),
                 ),

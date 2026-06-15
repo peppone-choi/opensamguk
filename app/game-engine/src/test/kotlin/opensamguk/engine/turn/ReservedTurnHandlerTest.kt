@@ -51,7 +51,10 @@ class ReservedTurnHandlerTest {
         rice = 1000,
         injury = 0,
         turnTime = t0,
-        meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0),
+        // killturn>0: 살아있는 장수는 양수 killturn을 가진다(PHP는 $gameStor->killturn에서 시드). strict-< 교정
+        // 후 drain 꼬리(updateTurnTime, TurnExecutionHelper.php:185)의 killturn<=0 kill 게이트가 동작하므로,
+        // 기본 env baselineKillturn=0에서 killturn 미설정(0) 장수는 tail에서 kill된다 → 양수로 생존시킨다.
+        meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0, "killturn" to 80),
     )
 
     private fun city(
@@ -222,7 +225,9 @@ class ReservedTurnHandlerTest {
             opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn("che_농지개간", "")
         }
 
-        val runTime = world.getState().lastTurnTime  // both generals' turnTime == lastTurnTime → due
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. t0보다 미래 시각을 넘겨 두 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        val runTime = t0.plusSeconds(1)  // both generals' turnTime(t0) < runTime → due
         val handled = lifecycle.runTick(runTime)
 
         assertEquals(2, handled.size, "both due generals processed in one pass")

@@ -144,7 +144,9 @@ class OneRngPerGeneralTurnTest {
         val world = worldWith(listOf(general(id = gid, officerLevel = 5, npcState = 2)))
         val w = wireDaemon(world)
 
-        w.lifecycle.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. t0보다 미래 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        w.lifecycle.runTick(t0.plusSeconds(1))
 
         // (1) the rng factory fired EXACTLY ONCE for this general — ONE "GeneralAI" rng built per general per
         // turn (PHP `new GeneralAI` once). Two separate rngs (the pre-fix divergence) would fire it twice.
@@ -189,7 +191,9 @@ class OneRngPerGeneralTurnTest {
         val world = worldWith(listOf(general(id = gid, officerLevel = 1, npcState = 2)))
         val w = wireDaemon(world)
 
-        w.lifecycle.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. t0보다 미래 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        w.lifecycle.runTick(t0.plusSeconds(1))
 
         assertEquals(1, w.factoryCalls[gid], "ONE GeneralAI rng for the non-lord general (general pass only)")
         val rec = w.recorders[gid] ?: error("no recorder captured for the non-lord general")

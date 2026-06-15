@@ -1,5 +1,6 @@
 package opensamguk.engine.config
 
+import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.rng.RandUtil
@@ -10,6 +11,7 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.LifecycleEnv
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
@@ -273,6 +275,29 @@ class DaemonLoopConfig {
                 ai.chooseNationTurn(generalId, reserved, lastTurn)
             },
             beginGeneralTurn = { generalId -> ai.beginGeneralTurn(generalId) },
+            // 라이브 LifecycleEnv — per-general 꼬리(killturn 감소/리셋 + updateTurnTime)가 PHP `$gameStor` 값으로
+            // 동작하도록 매 틱 LIVE world state에서 산정한다(이전 stub은 baselineKillturn=0/turnTerm=1 하드코딩이라
+            // killturn 리셋·turntime advance가 발산했다).
+            //  - turnTerm = tickSeconds/60 (PHP `$gameStor->turnterm`; TurnRunService.kt:174와 동일 산식).
+            //  - baselineKillturn = EffectiveGameConst.killturn(turnterm, npcmode) — PHP `$gameStor->killturn`의
+            //    원본 산식(ResetHelper.php:264-265: killturn = 4800/turnterm, npcmode==1 → intdiv(,3)). opensamguk
+            //    seed는 npcmode를 world_state에 영속하지 않으므로(빼섭 1030 외 표준 시나리오 npcmode=0) 0으로 고정 —
+            //    fabricate가 아니라 표준-모드 PHP 기본값이며, npcmode==1(빼섭) 변형이 도입되면 meta 키로 흘려야 한다.
+            //  - isunited = state.meta["isunited"] (TurnRunService.kt:197과 동일 convention; 미존재 시 0).
+            //  - year/month = state.current{Year,Month}. autorunMode는 per-general 값이라 여기서는 false 기본 —
+            //    AI 교체 시 ReservedTurnHandler.handle이 HandledTurn.autorunMode로 노출하고, runTick은 그 신호로
+            //    killturn 분기를 결정한다(env.autorunMode는 사용 안 함; LifecycleEnv.autorunMode는 호환용 기본값).
+            lifecycleEnvOf = { state, date ->
+                val turnTerm = state.tickSeconds / 60
+                LifecycleEnv(
+                    baselineKillturn = EffectiveGameConst.killturn(turnTerm, npcmode = 0),
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    turnTerm = turnTerm,
+                    isunited = state.meta["isunited"] as? Int ?: 0,
+                    turnTimeHm = date,
+                )
+            },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(generalId, 0) },
         )
 

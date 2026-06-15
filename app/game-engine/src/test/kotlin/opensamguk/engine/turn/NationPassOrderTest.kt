@@ -63,7 +63,10 @@ class NationPassOrderTest {
         injury = 0,
         npcState = npcState,
         turnTime = t0,
-        meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0, "block" to block),
+        // killturn>0: 살아있는 장수는 양수 killturn을 가진다(PHP는 $gameStor->killturn에서 시드).
+        // strict-< 교정 후 drain 꼬리(updateTurnTime, TurnExecutionHelper.php:185)의 killturn<=0 kill
+        // 게이트가 동작하므로, kill 의도가 아닌 fixture 장수는 양수 killturn으로 tail을 통과해야 한다.
+        meta = linkedMapOf("explevel" to 10, "intel_exp" to 3, "max_domestic_critical" to 0.0, "killturn" to 80, "block" to block),
     )
 
     private fun city(id: Int = 7, nationId: Int = 1) = City(
@@ -166,7 +169,10 @@ class NationPassOrderTest {
         val order = mutableListOf<String>()
         val lc = lifecycle(world, recorder, order)
 
-        lc.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+        // 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        lc.runTick(t0.plusSeconds(1))
 
         assertEquals(listOf("nation", "general"), order, "NATION pass runs BEFORE the GENERAL pass (R-SEAM §2)")
     }
@@ -178,7 +184,10 @@ class NationPassOrderTest {
         val order = mutableListOf<String>()
         val lc = lifecycle(world, recorder, order)
 
-        lc.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+        // 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        lc.runTick(t0.plusSeconds(1))
 
         assertEquals(listOf("general"), order, "officer_level<5 → no nation pass; only the general pass runs")
         assertTrue(recorder.nationPatches().isEmpty(), "no turn_last KV delta when hasNationTurn is false")
@@ -191,7 +200,10 @@ class NationPassOrderTest {
         val order = mutableListOf<String>()
         val lc = lifecycle(world, recorder, order)
 
-        lc.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+        // 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        lc.runTick(t0.plusSeconds(1))
 
         assertEquals(listOf("general"), order, "nation==0 → no nation pass; only the general pass runs")
     }
@@ -203,7 +215,10 @@ class NationPassOrderTest {
         val order = mutableListOf<String>()
         val lc = lifecycle(world, recorder, order)
 
-        lc.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+        // 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        lc.runTick(t0.plusSeconds(1))
 
         assertTrue(order.isEmpty(), "block>=2 skips BOTH the nation and general passes (single processBlocked gate)")
         assertTrue(recorder.nationPatches().isEmpty(), "no nation delta when the whole command block is skipped")
@@ -220,7 +235,10 @@ class NationPassOrderTest {
         var instantCalled = false
         val lc = lifecycle(world, recorder, order, instantInvoked = { instantCalled = true })
 
-        lc.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+        // 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        lc.runTick(t0.plusSeconds(1))
 
         assertFalse(instantCalled, "chooseInstantNationTurn is NOT wired into the lifecycle (decision #3)")
     }
@@ -234,7 +252,10 @@ class NationPassOrderTest {
         val order = mutableListOf<String>()
         val lc = lifecycle(world, recorder, order)
 
-        lc.runTick(world.getState().lastTurnTime)
+        // PHP 선택 게이트(TurnExecutionHelper.php:237) `turntime < %s`(STRICT <): turnTime(t0)과 같은
+        // 시각은 due가 아니다. production은 nextRunTime()=lastTurnTime+tick으로 호출하므로 t0보다 미래
+        // 시각을 넘겨 그 장수를 due로 만든다(과거 inclusive `<=` 버그 제거).
+        lc.runTick(t0.plusSeconds(1))
 
         // The nation pass still runs (processNationCommand on the reserved command) but the AI
         // chooseNationTurn hook is NOT consulted for a human (no "nation" marker from the AI hook).
