@@ -21,10 +21,21 @@
 | 10 | inherit ResetStat 검증 하드코딩 165→currentStat 합계 derive | green→green + tsc green | fresh: tsc(결정적) | 채택 | gameConst FE 미노출→currentStat sum 사용(GameConst defaultStatTotal=165 동치). FE헌트#23 |
 | 11 | login next 파라미터 open-redirect 차단(내부 '/' 만 허용, '//' 차단) | green→green + tsc green | fresh: tsc(결정적) | 채택 | 보안: 프로토콜-상대 '//evil.com' 리다이렉트 차단. FE헌트#22 |
 | 12 | lobby '입장' 행 장수 초상(picture) 64x64 렌더 (BE가 주는데 드롭) | green→green + tsc green | fresh: tsc(결정적) | 채택 | legacy getIconPath.ts(imgsvr→d_pic/d_shared). 표시-only. FE헌트#8 |
+| 14 | RaiseDisaster city.trust 곱 누락 (재난=trust*ratio 무캡 / 호황=least(trust*ratio,100)) — 커밋 11b9ad75 | green→green + DisasterTrustApplyTest 3/0 + RaiseDisasterTest 10/0 | fresh: :app:game-engine:test+:logic:test XML(결정적) | 채택 | RaiseDisaster.php:129/154. trust=FLOAT raw 곱(round 없음). 엔진 applyDisaster postLogic+meta. BE헌트#2/#11 |
+| 15 | flush-delta 3컬럼 누락: nation.power(#9)/general.officer_city(#17)/statisticInserts(#10) — 커밋 5be70e13 | green→green + JdbcFlushExecutorIT 6/0(power 1000→1234·officer_city 5→0·statistic step-12) | fresh: :infra:test XML(Docker IT, 결정적) | 채택 | process_war.php:705-708·func_gamerule.php:322-333. RowMapper는 방출하나 SET/payload 누락. BE헌트#9/#10/#17 |
+| 13 | turn-loop CRITICAL: runTick 꼬리(applyKillturnDecrement+updateTurnTime) 미실행 + dueGenerals strict-< (PHP TurnExecutionHelper.php:153-230/:237 turntime<date) — 커밋 e8576473 | green→green + :app:game-engine:test 372/0(신규 DrainTailAdvance 5 + 기존 8 fixture 재정합) | fresh: :app:game-engine:test XML(결정적, Docker ITs 포함) | 채택 | 꼬리 미배선=killturn 미감소·kill/환생/유체이탈·lived_month·turntime advance 미발동. 8 fixture가 inclusive<=·killturn0 가정 → strict-<·killturn>0·E2E at=runTime·meta 결정적순서로 재정합(약화 0). AiSelectionGate 불변. BE헌트#1/#6 |
 
-## 백로그 (이번 바퀴 외 — 가설 단위)
+## 진행 현황
 
-- 10-area 패러티 버그-헌트 워크플로(`wf_de48944f-a6c`) 확정 버그 → 각 1바퀴로 소비.
-- 실DB flush 게이트(`:infra:test :app:game-engine:test`)는 Docker 필요 → 유저가 Docker 기동 시 baseline 보강 + city.state V17 회귀 확인.
+- **Wave 1 완료**(바퀴 1–12, 커밋 520ab0e4·a8a83432·6648bbfc·a42304dc): FE 표시/패러티 + 로비맵 회귀 + troop 계약 + diplomacy 가드. 전부 채택(green).
+- **Wave 2 진행중**(Docker on): 바퀴 13 turn-loop CRITICAL(turnTime/killturn 미진행 + dueGenerals strict-<), 바퀴 14 RaiseDisaster trust, 바퀴 15 flush 3컬럼(power/statisticInserts/officer_city). 게이트 후 행 추가.
+- 헌트 워크플로: BE `wf_de48944f-a6c`(17확정), FE `wf_644eafb5-0f1`(23확정). 전체 출력 /private/tmp/.../wnebzposs.output·wnanb7z4g.output.
+
+## 백로그 (Docker 게이트 필요 — 골든 신규캡처 / 실DB IT)
+
+- BE 명령-패러티(골든캡처 후 1바퀴씩): #7 선동 trustAmount 로그 소수1자리(number_format), #3 급습/#12 이호경식 외교 term 가산식(state IF), #13 약탈발동 float 포맷, #14 감축 2번째 제약, #15 집합 ReqTroopMembers 스텁.
+- RNG-draw 경로(draw-for-draw 골든 필수): #4 do선전포고 officer_level<12+TechLimit 게이트 누락(여분 draw desync), #5 preprocessCommand(부상회복+병량소비) 데몬 루프 미실행.
+- #16 C3Strategic 비교 역전 — unreachable/latent(주입처 0), P7 staging seam 배선 시 1바퀴.
+- FE BE-coupled: #1 외교 서신 승인/거부(respond 엔드포인트 신설), #9 my-boss b_myBossInfo 전 섹션(read 컨트롤러 확장), #19 vote voteReward 안내(DTO 확장).
 - bbae(scenario_1030) 보급 동결 근본원인(doNPC구출발령 empty supplyCities → RandUtil.choice throw; 상류 보급계산 발산) — 별도 바퀴.
-- 프론트 버그/패러티 갭 헌트 워크플로(`wf_644eafb5-0f1`) 확정 버그 → 각 1바퀴. FE 채점 = `tsc --noEmit`(web/game·web/gateway) + `web/game` pnpm test (page-parity 루프 동결 시험지 공유, 결정적).
+- FE 채점 = `tsc --noEmit`(web/game·web/gateway) + `web/game` vitest(65). BE = gate.sh 모듈 XML(결정적).
