@@ -31,7 +31,7 @@
 
 ## 단계 (점증 — 게이트가 턴수만큼 자란다)
 
-- **Phase 1 (착수)**: 천하통일 탐지 포팅 — checkStatistic 국가수/전도시 체크 → isunited=2. 골든(1국 전도시→2, 2국→0). 게이트: logic/engine 단위(Docker 불요).
+- **Phase 1 ✅ (바퀴 16, 커밋 d35403c9)**: 천하통일 탐지 포팅 완료 — checkEmperior 국가수==1/전도시소유 → isunited=2 + 전토통일 로그. `logic/world/CheckEmperior.kt`(pure, no-rng Q14) + 엔진 `WorldCheckEmperiorContext`. 게이트 결정적(logic 2154/engine 375 green, CheckEmperiorTest 6/0 + WorldCheckEmperiorContextTest 3/0). 격리: 1회성 부수효과(Phase 4)·DB 영속·로그 YEAR_MONTH 접두(둘 다 별도 바퀴, LEDGER 백로그).
 - **Phase 2**: PHP 풀게임 캡처 하네스 `tools/php-golden/run_long_sim.php` — TimeUtil mock + executeAllCommand 루프(까지 isunited=2 or N턴), 턴별 draw stream + 상태해시 + 로그 덤프. 결정성 차단원 중립화(ORDER BY RAND→deterministic, 양측 합의).
 - **Phase 3**: Kotlin `LongSimReplayGateTest` — 시나리오 부팅 → N턴 드레인(MonthBoundaryDriver+AiTurnAdapter+MonthlyPipeline) → 턴별 draw/상태/로그 캡처 → PHP 골든과 turn-for-turn 비교, first-divergence 리포트(turn,general,seq,expected/actual,cursor).
 - **Phase 4**: bounded(결정적 윈도, 예 36턴=1년) green 확보 → 차단원 하나씩 중립화하며 윈도를 천하통일까지 확장. 각 확장 = 1바퀴.

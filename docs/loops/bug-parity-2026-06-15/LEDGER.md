@@ -24,6 +24,7 @@
 | 14 | RaiseDisaster city.trust 곱 누락 (재난=trust*ratio 무캡 / 호황=least(trust*ratio,100)) — 커밋 11b9ad75 | green→green + DisasterTrustApplyTest 3/0 + RaiseDisasterTest 10/0 | fresh: :app:game-engine:test+:logic:test XML(결정적) | 채택 | RaiseDisaster.php:129/154. trust=FLOAT raw 곱(round 없음). 엔진 applyDisaster postLogic+meta. BE헌트#2/#11 |
 | 15 | flush-delta 3컬럼 누락: nation.power(#9)/general.officer_city(#17)/statisticInserts(#10) — 커밋 5be70e13 | green→green + JdbcFlushExecutorIT 6/0(power 1000→1234·officer_city 5→0·statistic step-12) | fresh: :infra:test XML(Docker IT, 결정적) | 채택 | process_war.php:705-708·func_gamerule.php:322-333. RowMapper는 방출하나 SET/payload 누락. BE헌트#9/#10/#17 |
 | 13 | turn-loop CRITICAL: runTick 꼬리(applyKillturnDecrement+updateTurnTime) 미실행 + dueGenerals strict-< (PHP TurnExecutionHelper.php:153-230/:237 turntime<date) — 커밋 e8576473 | green→green + :app:game-engine:test 372/0(신규 DrainTailAdvance 5 + 기존 8 fixture 재정합) | fresh: :app:game-engine:test XML(결정적, Docker ITs 포함) | 채택 | 꼬리 미배선=killturn 미감소·kill/환생/유체이탈·lived_month·turntime advance 미발동. 8 fixture가 inclusive<=·killturn0 가정 → strict-<·killturn>0·E2E at=runTime·meta 결정적순서로 재정합(약화 0). AiSelectionGate 불변. BE헌트#1/#6 |
+| 16 | 장기-시뮬 게이트 Phase 1 — 천하통일 탐지(checkEmperior) 포팅: Q14 detection(level>0 국가수==1 && 전도시소유 → isunited=2 + 전토통일 국가사 로그). logic `CheckEmperior.kt`(pure)+`postUpdateMonthlyTail` Q14 콜백 + 엔진 `WorldCheckEmperiorContext`+`InMemoryTurnWorld.setIsunited`. 격리(전부 CITED): 1회성 부수효과 5종+checkStatistic+DB영속(컬럼flush/boot-load)+로그 YEAR_MONTH 접두 | logic 2148→2154·engine 372→375 green (신규 CheckEmperiorTest 6/0 + WorldCheckEmperiorContextTest 3/0) | fresh: **parity-reviewer**(적대적 PHP byte-parity + XML 직독, 제안 컨텍스트 0) | 채택 | func_gamerule.php:696-769(:430 호출). no-rng Q14(draw 스트림 불변). 인바리언트 1-6 전부 MATCH, 격리 전부 CITED, 회귀 0. 장기-시뮬 Phase 1 닫음(이전 세션 un-gated 원복분 재포팅+게이트화). 스코어러 P1 2건=선존재 엔진-광역 로그포맷 갭(아래 백로그) |
 
 ## 진행 현황
 
@@ -34,7 +35,7 @@
 ## 최상위 이니셔티브 — 장기-시뮬 패러티 게이트 (공백지→천하통일)
 
 "완벽한 게임"의 진짜 완성 게이트. 계획: `docs/superpowers/plans/2026-06-15-long-sim-parity-gate-plan.md`.
-- **Phase 1 (진행중)**: 천하통일 탐지 포팅 — checkEmperior(func_gamerule.php:696-769, :430 호출) 국가수==1 && 전도시소유 → isunited=2 + 전토통일 로그. 엔진 월틱 Q14. (port-unification 에이전트)
+- **Phase 1 ✅ (바퀴 16)**: 천하통일 탐지 포팅 완료 — checkEmperior(func_gamerule.php:696-769, :430 호출) 국가수==1 && 전도시소유 → isunited=2 + 전토통일 로그. 엔진 월틱 Q14(no-rng). logic `CheckEmperior.kt` + 엔진 `WorldCheckEmperiorContext`. detection+in-memory 전이+로그까지 닫음(영속/부수효과/로그접두는 아래 백로그). 다음=Phase 2(PHP run_long_sim.php 캡처 하네스).
 - Phase 2: PHP 풀게임 캡처 하네스 run_long_sim.php (TimeUtil mock + executeAllCommand 루프 + 턴별 draw/상태/로그). 비결정 차단원 중립화.
 - Phase 3: Kotlin LongSimReplayGateTest (시나리오 부팅 → N턴 → turn-for-turn byte-compare).
 - Phase 4: bounded 결정적 윈도 green → 차단원 중립화하며 천하통일까지 확장(각 1바퀴).
@@ -47,4 +48,7 @@
 - #16 C3Strategic 비교 역전 — unreachable/latent(주입처 0), P7 staging seam 배선 시 1바퀴.
 - FE BE-coupled: #1 외교 서신 승인/거부(respond 엔드포인트 신설), #9 my-boss b_myBossInfo 전 섹션(read 컨트롤러 확장), #19 vote voteReward 안내(DTO 확장).
 - bbae(scenario_1030) 보급 동결 근본원인(doNPC구출발령 empty supplyCities → RandUtil.choice throw; 상류 보급계산 발산) — 별도 바퀴.
+- **(바퀴 16 파생) 로그 YEAR_MONTH 접두 갭 — 선존재 엔진-광역:** 월 파이프라인 history 로그(개전/종전 Q6/Q7 `func_gamerule.php:360,384` + 전토통일 :733)가 PHP store-time YEAR_MONTH 접두 `<C>●</>{year}년 {month}월:`(`ActionLogger.php:183,195,241-243`) 미적용. `LogEntryDraft.format` 필드 존재하나 미소비(flush `DatabaseHooks.toLogRow`가 text verbatim 저장). 별도 바퀴: 적용처(flush vs render) 결정 + 전 history 로그 일괄 적용 + PHP stored-bytes 골든. 장기-시뮬 Phase 4 full-stored-bytes 게이트 전제.
+- **(바퀴 16 파생) isunited DB 영속 갭:** `JdbcFlushExecutor` world_state UPDATE(:222)에 `isunited` 컬럼 미포함(turn-rewind/flush-3col 동류) + `WorldSnapshotLoader` 컬럼→meta 미적재. in-memory 전이가 재기동 시 유실(미영속 시 재탐지로 전토통일 로그 중복 위험). 별도 바퀴 + 실DB IT.
+- **(바퀴 16 격리, Phase 4) checkEmperior 1회성 부수효과:** checkStatistic(:725)·유니크경매 종료(:735-743)·상속 unifier+2000(:745-753)·United 이벤트(:755)·상속 merge/apply(:757-760)·refreshLimit*100(:763)·CheckHall(:765-767). 천하통일 최종턴에서만 발동 — 장기-시뮬 Phase 4 윈도 확장 시 PHP 라인대로 포팅.
 - FE 채점 = `tsc --noEmit`(web/game·web/gateway) + `web/game` vitest(65). BE = gate.sh 모듈 XML(결정적).
