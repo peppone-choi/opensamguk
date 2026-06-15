@@ -450,6 +450,12 @@ object DatabaseHooks {
                 InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
             },
             inheritanceResultInserts = recorder.inheritanceResultInserts(),
+            // 연경계(checkStatistic) statistic INSERT — recorder 채널(W1). 2-인자 빌더는 이미 매핑하는데
+            // 이 라이브 수렴(3-인자) 경로에서 빠져 있어 연간 statistic 행이 영속에서 누락됐다(#10). inheritance
+            // 채널과 동일하게 recorder.statisticInserts() 를 StatisticInsertRow 로 옮긴다.
+            statisticInserts = recorder.statisticInserts().map {
+                StatisticInsertRow(it.columns)
+            },
         )
     }
 

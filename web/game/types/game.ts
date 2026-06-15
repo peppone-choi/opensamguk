@@ -1042,22 +1042,37 @@ export interface VoteDetailResponse {
 }
 
 // ── page 6 · 부대 편성 (GET /api/troops) ──────────────────────────────────────
-// Mirrors PageTroop.vue TroopInfo (built from Nation/GeneralList troops + members).
-// 【턴】/【도시】/(N명) format rendered verbatim. Permission-tiered. EMPTY [] when none.
+// BE TroopsResponse(F4Dto.kt)의 실제 와이어 형태에 1:1 정렬한 타입(Direction A — 날조 필드 없음).
+// 멤버십/뮤테이션 게이팅은 응답의 myGeneralId(레거시 myGeneralID)와 permission(레거시 myPermission)에서
+// 파생한다(legacy hwe/ts/PageTroop.vue). 멤버 소재 도시는 한글 cityName으로 표시(숫자 id 아님, bug #11).
+export interface TroopMember {
+  generalId: number;
+  name: string;
+  officerLevel: number;
+  crew: number;
+  cityName: string;       // 멤버 소재 도시 한글명(빈 문자열이면 미배치)
+  npc: number;            // getNPCColor 색상 티어(0 유저/1 빙의/2+ 순수 NPC)
+}
+
+// BE TroopRow와 1:1. (기존 소비처 호환을 위해 이름은 TroopInfo 유지 — 필드만 실제 와이어로 정렬.)
 export interface TroopInfo {
-  troopId: number;         // = troop leader generalId
-  troopName: string;
-  troopLeader: GeneralListItem;
-  turnTime: string;
-  reservedCommandBrief: string[];  // '집합' or '-' per turn slot (verbatim)
-  members: GeneralListItem[];
+  troopLeader: number;    // = 부대장 generalId (부대 PK)
+  name: string;           // 부대명
+  nation: number;
+  leaderName: string;
+  leaderCityName: string; // 카드 헤더 '【 <city> 】'
+  leaderNpc: number;      // 부대장 이름 색상 티어
+  turnTime: string;       // 'YYYY-MM-DD HH:MM:SS' (레거시 '【턴】' = turnTime.slice(14,19)), 없으면 ''
+  reservedCommandBrief: string[];  // 예약명령 브리핑(현재 BE 미배선 → 빈 목록)
+  members: TroopMember[];
+  memberCount: number;    // (N명) 헤더 카운트
 }
 
 export interface TroopListResponse {
   result: boolean;
-  permission: number;
   troops: TroopInfo[];     // [] when no troops formed
-  myGeneralId: number;
+  myGeneralId: number;     // 호출자 빙의 장수 id(레거시 myGeneralID). 미인증/무빙의=0
+  permission: number;      // 레거시 myPermission(0 일반/1 관직자/2 수뇌)
 }
 
 // ── page 16 · 연감 (GET /api/history?yearMonth=) ──────────────────────────────

@@ -181,6 +181,9 @@ export interface FrontNationInfo {
     strategicCmdLimit?: number | null; // meta.strategic_cmd_limit — 전략 제한 잔여턴
     prohibitScout?: number | null;    // meta.scout — 임관 금지(1=금지)
     prohibitWar?: number | null;      // meta.war — 전쟁 금지(1=금지)
+    // 국가방침 — nation_env KV nationNotice.msg(데몬 SetNotice). devsam PageFront.vue:32
+    // `v-html=notice?.msg ?? ''` 등가(opensamguk BE는 msg 문자열만 내려줌). 부재/만료 시 null(날조 금지).
+    notice?: string | null;
 }
 
 export interface CityOfficer {
@@ -274,7 +277,7 @@ export interface MapPreviewCity {
     nationId: number;
     x: number;
     y: number;
-    /** 전선 상태(front_state 0~3) — 상태 아이콘 event<state>.gif (0=없음). */
+    /** 재해/사건 코드(city.state) — event<state>.gif (0=없음). */
     state: number;
     /** 보급 상태 — 깃발 f(보급)/d(미보급). */
     supply: boolean;
@@ -588,6 +591,7 @@ export type {
     VoteResultRow,
     VoteDetailResponse,
     TroopInfo,
+    TroopMember,
     TroopListResponse,
     HistoryRecord,
     HistoryResponse,

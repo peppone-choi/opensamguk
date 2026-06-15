@@ -254,6 +254,11 @@ class JdbcFlushExecutor(
             }
             src
         }.toTypedArray()
+        // officer_city = :officer_city: ConquerCity 생존(미멸망) 분기에서 태수/군사/종사를 일반으로
+        // 강등하며 officer_city=0, officer_level=1 을 쓴다(process_war.php:705-708 의 일괄 UPDATE).
+        // GeneralRowMapper.toColumns 가 이미 officer_city 를 방출하고 ChangeRecorder.diffGeneral 이
+        // officerCity 를 diff 하는데, 전용 typed 컬럼이 SET 절에서 빠져 있어 라이브 경로에서 누락됐다(#17).
+        // (데몬은 meta 에도 officer_city 를 싣는다 — meta 쓰기는 유지하되 전용 컬럼도 일관되게 영속한다.)
         jdbc.batchUpdate(
             """
             UPDATE general
@@ -279,6 +284,7 @@ class JdbcFlushExecutor(
                    horse_code = :horse_code,
                    item_code = :item_code,
                    npc_state = :npc_state,
+                   officer_city = :officer_city,
                    last_turn = :last_turn,
                    penalty = :penalty,
                    meta = :meta,
@@ -345,6 +351,9 @@ class JdbcFlushExecutor(
             }
             src
         }.toTypedArray()
+        // power = :power: 월틱 Q4(func_gamerule.php:322-333)가 매월 nation.power 를 재산정·기록한다
+        // (PostUpdateMonthly.kt:171,185 power = phpRound(rawPower * draw)). NationRowMapper.toColumns 가
+        // 이미 power 를 방출하는데 SET 절에서 빠져 있어 라이브 수렴 경로에서 power 영속이 누락됐다(#9).
         jdbc.batchUpdate(
             """
             UPDATE nation
@@ -356,6 +365,7 @@ class JdbcFlushExecutor(
                    tech = :tech,
                    level = :level,
                    type_code = :type_code,
+                   power = :power,
                    meta = :meta
              WHERE id = :id
             """.trimIndent(),
@@ -581,10 +591,12 @@ class JdbcFlushExecutor(
             }
             src
         }.toTypedArray()
+        // power: nation.power 컬럼 포함(NationRowMapper.toColumns 와 짝). 건국 시점 power 는 보통 0
+        // (V8 DEFAULT 0)이나, 0 아닌 power 를 실어 생성하는 경우(향후) 누락 없이 영속하도록 명시한다(#9).
         jdbc.batchUpdate(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (:id, :name, :color, :capital_city_id, :gold, :rice, :tech, :level, :type_code, :meta)
+            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
+            VALUES (:id, :name, :color, :capital_city_id, :gold, :rice, :tech, :level, :type_code, :power, :meta)
             """.trimIndent(),
             batch,
         )

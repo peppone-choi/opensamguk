@@ -144,12 +144,14 @@ export default function HistoryPage() {
     const selectMonth = useCallback(
         (ym: number) => {
             let clamped = ym;
-            if (last > 0 && clamped > last) clamped = last;
+            // 라이브 월(현재 = currentYearMonth = last+1)까지 허용 (legacy watch: yearMonth > last+1 → last+1)
+            const upper = current > last ? current : last;
+            if (upper > 0 && clamped > upper) clamped = upper;
             if (first > 0 && clamped < first) clamped = first;
             setQueryYearMonth(clamped);
             fetchData(clamped);
         },
-        [first, last, fetchData],
+        [first, last, current, fetchData],
     );
 
     // Build the dropdown options across [first, last] (verbatim "{year}년 {month}월 (선택)").
@@ -160,6 +162,12 @@ export default function HistoryPage() {
             const info = ym === selected ? ' (선택)' : '';
             options.push({ value: ym, text: `${year}년 ${month}월${info}` });
         }
+    }
+    // 라이브 월 옵션 (legacy generateYearMonthList: last+1=currentYearMonth → "(현재)")
+    if (current > last && current > 0) {
+        const [year, month] = parseYearMonth(current);
+        const tags = [current === selected ? '선택' : '', '현재'].filter(Boolean);
+        options.push({ value: current, text: `${year}년 ${month}월 (${tags.join(', ')})` });
     }
 
     const [selYear, selMonth] = parseYearMonth(selected);
@@ -191,7 +199,7 @@ export default function HistoryPage() {
                         ))
                     )}
                 </select>
-                <button onClick={() => selectMonth(selected + 1)} disabled={selected >= last || last === 0}>
+                <button onClick={() => selectMonth(selected + 1)} disabled={selected >= (current > last ? current : last) || last === 0}>
                     다음달 ▶
                 </button>
             </div>

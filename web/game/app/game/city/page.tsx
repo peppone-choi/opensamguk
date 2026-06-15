@@ -270,7 +270,7 @@ function GeneralRow({ g }: { g: CityGeneralRow }) {
             {/* 통솔 — 통솔 + leadershipBonus(있으면 +N). 부상 시 색. */}
             <td>
                 <StatCell value={g.leadership} injury={g.wounded} />
-                {g.leadershipBonus > 0 && <span style={{ color: 'limegreen' }}>+{g.leadershipBonus}</span>}
+                {g.leadershipBonus > 0 && <span style={{ color: 'cyan' }}>+{g.leadershipBonus}</span>}
             </td>
             <td><StatCell value={g.strength} injury={g.wounded} /></td>
             <td><StatCell value={g.intel} injury={g.wounded} /></td>

@@ -7,6 +7,7 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.TroopReadRepository
+import opensamguk.gameapi.read.TurnTimeFormatter
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -35,14 +36,21 @@ class TroopController(
 
     @GetMapping
     fun list(@AuthenticationPrincipal userId: Long?): ResponseEntity<TroopsResponse> {
-        val nationId = userId?.let { resolver.resolve(it)?.nationId } ?: 0
+        // 호출자 빙의 장수 + permission(레거시 myGeneralID/myPermission). 멤버십·뮤테이션 게이팅의 기준.
+        val resolved = userId?.let { resolver.resolve(it) }
+        val myGeneralId = resolved?.general?.id ?: 0
+        val permission = resolved?.permission ?: 0
+        val nationId = resolved?.nationId ?: 0
+
         val troopRows = if (nationId != 0) {
             troops.findByNationOrderByTroopLeaderAsc(nationId)
         } else {
             troops.findAll().sortedBy { it.troopLeader }
         }
         if (troopRows.isEmpty()) {
-            return ResponseEntity.ok(TroopsResponse(result = true, troops = emptyList()))
+            return ResponseEntity.ok(
+                TroopsResponse(result = true, troops = emptyList(), myGeneralId = myGeneralId, permission = permission),
+            )
         }
 
         val cityName = cities.findAll().associate { it.id to it.name }
@@ -54,19 +62,33 @@ class TroopController(
                     officerLevel = g.officerLevel,
                     crew = g.crew,
                     cityName = if (g.cityId == 0) "" else (cityName[g.cityId] ?: ""),
+                    npc = g.npcState,
                 )
             }
-            val leaderName = members.firstOrNull { it.generalId == t.troopLeader }?.name
-                ?: generals.findById(t.troopLeader).map { it.name }.orElse("")
+            // 부대장 행(roster 멤버) → 없으면 직접 조회로 폴백. 헤더 도시/턴/색상은 부대장 장수에서 취한다.
+            val leader = members.firstOrNull { it.generalId == t.troopLeader }
+            val leaderEntity = generals.findById(t.troopLeader).orElse(null)
+            val leaderName = leader?.name ?: leaderEntity?.name ?: ""
+            val leaderCityName = leader?.cityName
+                ?: leaderEntity?.let { if (it.cityId == 0) "" else (cityName[it.cityId] ?: "") }
+                ?: ""
             TroopRow(
                 troopLeader = t.troopLeader,
                 name = t.name,
                 nation = t.nation,
                 leaderName = leaderName,
+                leaderCityName = leaderCityName,
+                leaderNpc = leaderEntity?.npcState ?: 0,
+                // 레거시는 부대장 turnTime을 그대로 표시(turnTime.slice(14,19)). null이면 빈 문자열.
+                turnTime = TurnTimeFormatter.full(leaderEntity?.turnTime) ?: "",
+                // 예약명령 원천이 read 모델에 없어 빈 목록(날조 금지 — 규율 5).
+                reservedCommandBrief = emptyList(),
                 members = members,
                 memberCount = members.size,
             )
         }
-        return ResponseEntity.ok(TroopsResponse(result = true, troops = rows))
+        return ResponseEntity.ok(
+            TroopsResponse(result = true, troops = rows, myGeneralId = myGeneralId, permission = permission),
+        )
     }
 }

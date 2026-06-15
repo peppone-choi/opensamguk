@@ -41,7 +41,8 @@ data class MapPreviewCity(
     val nationId: Int,
     val x: Double,
     val y: Double,
-    /** 전선 상태(`front_state` 0~3) — 상태 아이콘 `event<state>.gif`. 0이면 표시 안 함. */
+    /** 재해/사건 코드(`city.state`) — 상태 아이콘 `event<state>.gif`(event1 풍작 / event3 혹한 …). 0=없음, 표시 안 함.
+     *  func_map.php:145-147 tuple state자리 = city.state. front_state 아님. */
     val state: Int,
     /** 보급 상태 — 깃발 `f`(보급)/`d`(미보급) 구분. */
     val supply: Boolean,

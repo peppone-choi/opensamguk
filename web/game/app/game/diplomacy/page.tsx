@@ -5,7 +5,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
-import { api } from '../../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type {
     DiplomacyLettersResponse,
@@ -130,13 +130,23 @@ export default function DiplomacyPage() {
             return;
         }
         try {
-            await api.command('diploSendLetter', {
+            // 인테이크 결과 가드 — 202 큐잉만 성공, 200 BLOCKED/UNKNOWN deny는 그대로 노출(P0-04/06).
+            // 무조건 성공 토스트 위조 금지: typed wrapper로 IntakeOutcome을 받아 분기한다.
+            const out = await api.commands.diploSendLetter({
                 destNation: destNationId,
                 brief: briefDraft.trim(),
                 detail: detailDraft.trim(),
                 prevNo,
             }, generalId);
-            // 성공 알림 verbatim — legacy ts/diplomacy.ts submitLetter alert('전송했습니다.')
+            if (isIntakeDenied(out)) {
+                showToast(out.reason ?? '외교 서신을 보내는데 실패했습니다.');
+                return;
+            }
+            if (!isIntakeQueued(out)) {
+                showToast('처리 중 오류가 발생했습니다.');
+                return;
+            }
+            // 성공(접수) 알림 verbatim — legacy ts/diplomacy.ts submitLetter alert('전송했습니다.')
             showToast('전송했습니다.');
             setBriefDraft('');
             setDetailDraft('');
@@ -153,7 +163,16 @@ export default function DiplomacyPage() {
         if (!confirm('회수하시겠습니까?')) return;
         if (generalId == null) return;
         try {
-            await api.command('diploRollbackLetter', { letterNo }, generalId);
+            // 인테이크 결과 가드 — 무조건 성공 토스트 위조 금지(P0-04/06).
+            const out = await api.commands.diploRollbackLetter({ letterNo }, generalId);
+            if (isIntakeDenied(out)) {
+                showToast(out.reason ?? '회수를 실패했습니다.');
+                return;
+            }
+            if (!isIntakeQueued(out)) {
+                showToast('처리 중 오류가 발생했습니다.');
+                return;
+            }
             showToast('회수 했습니다.');
             fetchData();
         } catch (e: any) {
@@ -166,15 +185,21 @@ export default function DiplomacyPage() {
         if (!confirm('본 문서를 파기하겠습니까? (상호 동의 필요)')) return;
         if (generalId == null) return;
         try {
-            // legacy는 응답의 state로 1단계 요청/2단계 완료를 구분한다.
-            //   state == 'activated' → 내가 먼저 요청한 1단계   → '파기를 요청 했습니다.'
-            //   else(=cancelled)     → 상호 동의로 파기된 2단계 → '파기 되었습니다.'
-            const res = await api.command<{ state?: string }>('diploDestroyLetter', { letterNo }, generalId);
-            if (res?.state === 'activated') {
-                showToast('파기를 요청 했습니다.');
-            } else {
-                showToast('파기 되었습니다.');
+            // 인테이크 결과 가드 — 무조건 성공 토스트 위조 금지(P0-04/06).
+            // 주의: 레거시의 1단계(요청)/2단계(완료) 구분은 응답의 state 필드에 의존했으나
+            // IntakeOutcome은 state를 싣지 않는다(인테이크는 비동기 큐잉 — 동기 {state} 계약 불가).
+            // BE가 보내지 않는 state를 날조하지 않는다: 단일 접수 토스트만 표시하고, 갱신된
+            // 서신 상태(state_opt try_destroy_*)는 fetchData() 후 카드 렌더로 드러난다.
+            const out = await api.commands.diploDestroyLetter({ letterNo }, generalId);
+            if (isIntakeDenied(out)) {
+                showToast(out.reason ?? '파기를 실패했습니다.');
+                return;
             }
+            if (!isIntakeQueued(out)) {
+                showToast('처리 중 오류가 발생했습니다.');
+                return;
+            }
+            showToast('파기 요청을 접수했습니다.');
             fetchData();
         } catch (e: any) {
             // 실패 알림 verbatim — legacy destroyLetter catch는 (복붙 버그로) 회수 문구를 쓴다. PHP wins.

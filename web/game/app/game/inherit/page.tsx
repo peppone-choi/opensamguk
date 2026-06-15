@@ -194,8 +194,12 @@ export default function InheritPage() {
         const bs = bonusStrength;
         const bi = bonusIntel;
 
-        if (leadership + strength + intel !== 165) {
-            showToast('능력치 총합이 165가 아닙니다. 다시 입력해주세요!');
+        // 능력치 총합은 하드코딩(165) 대신 현재 능력치(currentStat)에서 파생한다.
+        const statTotal = currentStat
+            ? currentStat.leadership + currentStat.strength + currentStat.intel
+            : leadership + strength + intel;
+        if (leadership + strength + intel !== statTotal) {
+            showToast(`능력치 총합이 ${statTotal}이 아닙니다. 다시 입력해주세요!`);
             return;
         }
         const bonusSum = bl + bs + bi;
@@ -527,7 +531,7 @@ export default function InheritPage() {
                             </label>
                         </div>
                         <div style={{ color: 'var(--text-muted)', marginTop: 'var(--space-xs)', fontSize: 'var(--text-xs)' }}>
-                            범위: {currentStat?.statMin ?? 0} ~ {currentStat?.statMax ?? 0} / 합 165
+                            범위: {currentStat?.statMin ?? 0} ~ {currentStat?.statMax ?? 0} / 합 {currentStat ? currentStat.leadership + currentStat.strength + currentStat.intel : 0}
                         </div>
                         <div style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>추가 능력치</div>
                         <div style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap', alignItems: 'center' }}>

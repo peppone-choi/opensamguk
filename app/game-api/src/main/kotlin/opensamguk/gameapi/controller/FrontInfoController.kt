@@ -423,7 +423,9 @@ class FrontInfoController(
             title = config["title"]?.toString() ?: config["scenario_text"]?.toString(),
             extendedGeneral = boolOrNull(config["extended_general"]),
             isFiction = boolOrNull(config["fiction"]),
-            npcMode = intOrNull(config["npcmode"]),
+            // npcmode 미기재 시 0(생성 모드) — ServerBasicInfoController:74와 동일 폴백. null이면 FE
+            // CharacterClaim이 `npcMode ?? 1`로 빙의(possession) 모드 오판해 장수생성 대신 빙의 그리드를 띄운다.
+            npcMode = intOrNull(config["npcmode"]) ?: 0,
             joinMode = intOrNull(config["join_mode"]),
             autorunUser = autorunUserInfo(config["autorun_user"]),
             lastExecuted = config["turntime"]?.toString(),

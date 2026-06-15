@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
 import { api } from '../../../../lib/api';
-import { formatNumber } from '../../../../lib/format';
 import { getNPCColor } from '../../../../lib/utilGame';
 import type { NpcGeneral } from '../../../../types/game';
 
@@ -110,14 +109,14 @@ export default function NpcsPage() {
     </span>,
     g.personalText,
     `${g.specialDomesticName} / ${g.specialWarName}`,
-    formatNumber(g.total),
-    formatNumber(g.leadership),
-    formatNumber(g.strength),
-    formatNumber(g.intel),
+    String(g.total),
+    String(g.leadership),
+    String(g.strength),
+    String(g.intel),
     g.politics ?? '-', // 정치 (optional, injury/lbonus 미적용 평문)
     g.charm ?? '-', // 매력 (optional, injury/lbonus 미적용 평문)
-    formatNumber(g.experience), // 명성 = raw experience
-    formatNumber(g.devotion), // 계급 = raw dedication
+    String(g.experience), // 명성 = raw experience
+    String(g.devotion), // 계급 = raw dedication
   ]);
 
   return (
