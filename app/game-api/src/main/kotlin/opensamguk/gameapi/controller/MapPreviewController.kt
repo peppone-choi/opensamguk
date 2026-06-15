@@ -119,7 +119,8 @@ class MapPreviewController(
                     nationId = city.nationId,
                     x = coord.x,
                     y = coord.y,
-                    state = city.frontState,
+                    // 재해/사건 코드(city.state) — func_map.php:145-147 tuple state자리. front_state 아님.
+                    state = city.state,
                     supply = city.supplyState != 0,
                     region = city.region, // V1 city.region(int) — 지역 그룹 표시용.
                     isCapital = city.id in capitalIds,

@@ -403,10 +403,11 @@ export default function MapPreview({
                         top: cursor.y + 16,
                     }}
                 >
-                    <div className="map-preview-tooltip-name">{hoverCity.name}</div>
-                    <div className="map-preview-tooltip-meta">
-                        {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} ${levelText(hoverCity.level)}】 ${nationNameOf(hoverCity.nationId)}`}
+                    {/* 레거시 city_tooltip 2줄 구조: 1줄=【지역 | 등급】 도시명(CityBasicCard.vue), 2줄=국가명만(map.ts nation_name) */}
+                    <div className="map-preview-tooltip-name">
+                        {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${levelText(hoverCity.level)}】 ${hoverCity.name}`}
                     </div>
+                    <div className="map-preview-tooltip-meta">{nationNameOf(hoverCity.nationId)}</div>
                 </div>
             )}
             <div className="map-preview-cap">{`${serverName ?? data.serverName} · ${data.year}年 ${data.month}月`}</div>

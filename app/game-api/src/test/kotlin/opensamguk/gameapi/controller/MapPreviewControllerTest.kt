@@ -83,6 +83,28 @@ class MapPreviewControllerTest {
     }
 
     @Test
+    fun `surfaces city state disaster code not front_state`() {
+        // 재해/사건 코드 — func_map.php tuple state자리 = city.state, front_state 아님.
+        // front_state=1(전선)과 state=7(재해코드)를 서로 다르게 둬 노출 컬럼을 분리 검증.
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3)),
+        )
+        `when`(cityRepo.findAll()).thenReturn(
+            listOf(CityReadEntity(id = 3, nationId = 1, level = 8, region = 2, frontState = 1, state = 7)), // 낙양
+        )
+        `when`(nationRepo.findAll()).thenReturn(
+            listOf(nation(id = 1, name = "위", color = "#c62828")),
+        )
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.cities.length()").value(1))
+            .andExpect(jsonPath("$.cities[0].id").value(3))
+            // state = city.state(재해/사건 코드 7), NOT front_state(1)
+            .andExpect(jsonPath("$.cities[0].state").value(7))
+    }
+
+    @Test
     fun `empty world returns 200 with empty cities and nations and zero clock`() {
         `when`(worldRepo.findAll()).thenReturn(emptyList())
 
