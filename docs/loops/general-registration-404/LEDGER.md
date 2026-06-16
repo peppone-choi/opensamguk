@@ -11,7 +11,9 @@
 
 | 3 | BottomNav/Sidebar/MainControlBar/MainControlDropdown/GlobalMenu/GameInfo/BackBar/join/select-pool/emperor 등 인게임 날개를 `resolveServerGamePath` + `useServerId`/`global.serverId`로 일관 server-aware 변환 | 5/5 → 5/5 | oh-my-claudecode:verifier | 채택 | `href="/game`와 `router.push('/game')` 리터럴 0개. tsc/build green. B3 해결. |
 
+| 4 | 레거시 entrance.ts 3버튼 게이트/링크 패러티 감사 + CharacterClaim `npcMode` 폴백 정정 | — | 본인 검토 + tsc/build | 채택 | 3버튼 게이팅 수식은 lobby/CharacterClaim 모두 legacy와 동일. `npcMode ?? 1`은 BE 기본값 0과 달라 미기재 시 빙의 모드 오판 → `?? 0`으로 정정. select-pool 읽기/선택/수정은 미이식 placeholder로 별도 백로그에 둠. |
+
 ## 백로그
 
-- B4: 레거시와의 entrance 플로우 패러티 갭(미등록 3버튼, 장수생성/빙의/선택) 추가 검증.
-- B5: 코드/게임성/성능/기능 발전 아이템은 별도 루프로 분리(본 루프는 404 라우팅에 집중).
+- B5: 코드/게임성/성능/기능 발전 아이템은 별도 루프로 분리(본 루프는 404 라우팅+entrance 감사에 집중).
+- B6: `web/game/app/game/select-pool/page.tsx` 장수 풀 읽기/선택/수정 기능 이식(레거시 `select_general_from_pool.php`).

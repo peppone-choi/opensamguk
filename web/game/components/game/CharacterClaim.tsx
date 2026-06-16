@@ -18,7 +18,7 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [claiming, setClaiming] = useState<number | null>(null);
-    const npcMode = global.npcMode ?? 1;
+    const npcMode = global.npcMode ?? 0;
     const blockGeneralCreate = global.blockGeneralCreate ?? 0;
     const serverId = global.serverId;
     const canCreate = (blockGeneralCreate & 1) === 0;
