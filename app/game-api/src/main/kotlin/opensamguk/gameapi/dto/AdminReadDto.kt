@@ -14,11 +14,34 @@ data class AdminGameSettingsResponse(
     val turnterm: Int?,
     val turnOptions: List<Int>,
     val blockedWrites: List<AdminBlockedWrite>,
+    val editableFields: List<AdminEditableField>,
 )
 
 data class AdminBlockedWrite(
     val label: String,
     val reason: String,
+)
+
+/**
+ * 어드민이 변경 가능한 게임 설정 1항목. FE가 type에 따라 select/number/text 입력기를 렌더한다.
+ * value는 현재 config 값(또는 기본값); options는 select용 [값, 라벨] 쌍.
+ */
+data class AdminEditableField(
+    val key: String,
+    val label: String,
+    val type: String,
+    val value: Any?,
+    val options: List<AdminFieldOption>? = null,
+)
+
+data class AdminFieldOption(
+    val value: String,
+    val label: String,
+)
+
+/** PATCH /api/admin/game-settings 요청 본문. */
+data class AdminGameSettingsPatchRequest(
+    val values: Map<String, Any?>,
 )
 
 data class AdminGeneralModerationResponse(

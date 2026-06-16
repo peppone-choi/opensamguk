@@ -97,6 +97,39 @@ interface ServerResetOptions {
     reserveOpen: string;
     preReserveOpen: string;
 }
+
+// B1e 게임 설정 — world_state.config 에서 읽고 PATCH로 수정 가능한 항목.
+interface AdminFieldOption {
+    value: string;
+    label: string;
+}
+interface AdminEditableField {
+    key: string;
+    label: string;
+    type: string;
+    value: unknown;
+    options?: AdminFieldOption[];
+}
+interface AdminBlockedWrite {
+    label: string;
+    reason: string;
+}
+interface AdminGameSettingsResponse {
+    msg: string;
+    logWritable: boolean;
+    scenarioCode?: string;
+    year?: number;
+    month?: number;
+    starttime?: string;
+    startyear?: number;
+    maxgeneral?: number;
+    maxnation?: number;
+    turntime?: string;
+    turnterm?: number;
+    turnOptions: number[];
+    blockedWrites: AdminBlockedWrite[];
+    editableFields: AdminEditableField[];
+}
 interface ScenarioOption {
     code: string;
     title: string;
@@ -991,6 +1024,116 @@ function ServerControl() {
     );
 }
 
+/** world_state.config 에서 라이브 수정 가능한 항목(현재 npcmode / block_general_create). */
+function GameSettingsControl() {
+    const [settings, setSettings] = useState<AdminGameSettingsResponse | null>(null);
+    const [drafts, setDrafts] = useState<Record<string, string>>({});
+    const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState<string | null>(null);
+
+    const load = useCallback(async () => {
+        try {
+            const data = await getJson<AdminGameSettingsResponse>('admin/game-settings');
+            setSettings(data);
+            setDrafts(
+                Object.fromEntries(
+                    data.editableFields.map((field) => [field.key, String(field.value ?? '')]),
+                ),
+            );
+            setMessage(null);
+        } catch {
+            setMessage('게임 설정을 불러오지 못했습니다.');
+        }
+    }, []);
+
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    async function save() {
+        if (!settings) return;
+        const values: Record<string, number> = {};
+        for (const field of settings.editableFields) {
+            const raw = drafts[field.key]?.trim();
+            const parsed = raw ? parseInt(raw, 10) : NaN;
+            if (Number.isNaN(parsed)) {
+                setMessage(`${field.label} 값이 올바르지 않습니다.`);
+                return;
+            }
+            values[field.key] = parsed;
+        }
+        if (Object.keys(values).length === 0) return;
+
+        setBusy(true);
+        setMessage(null);
+        try {
+            const res = await fetch('/api/proxy/admin/game-settings', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ values }),
+            });
+            const data = (await res.json()) as { result?: boolean; reason?: string };
+            if (!res.ok || data.result === false) {
+                setMessage(data.reason ?? '게임 설정 저장에 실패했습니다.');
+                return;
+            }
+            setMessage('저장되었습니다.');
+            await load();
+        } catch {
+            setMessage('게임 설정 저장에 실패했습니다.');
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    const changed = settings
+        ? settings.editableFields.some((field) => drafts[field.key] !== String(field.value ?? ''))
+        : false;
+
+    return (
+        <div className="env-section">
+            <h3 className="lobby-section-title">입장 설정</h3>
+            {message && <p className={`deploy-result ${message === '저장되었습니다.' ? 'ok' : 'fail'}`}>{message}</p>}
+            {!settings ? (
+                <p className="svc-meta">설정 조회 중…</p>
+            ) : (
+                <div className="server-reset-grid">
+                    {settings.editableFields.map((field) => (
+                        <label key={field.key} className="field">
+                            <span>{field.label}</span>
+                            {field.type === 'select' && field.options ? (
+                                <select
+                                    value={drafts[field.key] ?? String(field.value ?? '')}
+                                    disabled={busy}
+                                    onChange={(e) => setDrafts((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                >
+                                    {field.options.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <input
+                                    type={field.type === 'number' ? 'number' : 'text'}
+                                    value={drafts[field.key] ?? String(field.value ?? '')}
+                                    disabled={busy}
+                                    onChange={(e) => setDrafts((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                />
+                            )}
+                        </label>
+                    ))}
+                    <div className="deploy-row reset-wide">
+                        <button type="button" className="btn-primary" disabled={busy || !changed} onClick={save}>
+                            {busy ? '저장 중…' : '저장'}
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 /**
  * "게임 환경" 탭 — B1e 락(동결) 부분만 배선.
  * PHP `_119.php:36` `락 풀 기 : [락걸기][락풀기] 현재 : (plock>0?동결중:가동중)` 등가.
@@ -1204,6 +1347,8 @@ function GameEnvControl() {
                     </>
                 )}
             </div>
+
+            <GameSettingsControl />
 
             {/* 후속 웨이브 — 시간조정 / 토너시간 / 봉급(금·쌀) / 운영자메시지 / 중원정세추가 /
                 시작시간 / 최대장수·국가 / 시작년도 / 턴시간. 아직 미구현. */}
