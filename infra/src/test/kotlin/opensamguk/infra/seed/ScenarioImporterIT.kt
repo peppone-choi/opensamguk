@@ -157,6 +157,20 @@ class ScenarioImporterIT {
         val cap = jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE id = 1", Int::class.java)
         assertEquals(3, cap)
 
+        // nation.meta 패러티(PHP Scenario/Nation.php) — 종전 시드는 infoText 만 넣어 내무부 예산/정책
+        // 표가 전부 '-'(FE 가드 미충족)였다. rate=15/bill=100/scout=0/war=0/strategic_cmd_limit=24/
+        // surlimit=72 + gennum(소속 장수 수) 가 모두 실려야 한다.
+        val nMeta = jdbc.queryForObject("SELECT meta::text FROM nation WHERE id = 1", String::class.java)!!
+        assertTrue(nMeta.contains("\"rate\": 15") || nMeta.contains("\"rate\":15"), "nation meta has rate=15: $nMeta")
+        assertTrue(nMeta.contains("\"bill\": 100") || nMeta.contains("\"bill\":100"), "nation meta has bill=100: $nMeta")
+        assertTrue(nMeta.contains("\"scout\""), "nation meta has scout: $nMeta")
+        assertTrue(nMeta.contains("\"war\""), "nation meta has war: $nMeta")
+        assertTrue(nMeta.contains("\"gennum\""), "nation meta has gennum: $nMeta")
+        // gennum = 후한 소속 장수 수와 일치(meta jsonb 값 == general 테이블 count).
+        val hanGennum = jdbc.queryForObject("SELECT (meta->>'gennum')::int FROM nation WHERE id = 1", Int::class.java)
+        val hanGenerals = jdbc.queryForObject("SELECT count(*) FROM general WHERE nation_id = 1", Int::class.java)
+        assertEquals(hanGenerals, hanGennum, "nation gennum matches general count")
+
         // world_state.meta carries the hiddenSeed/startYear/startTime EngineEventConfig reads.
         val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(meta.contains("hiddenSeed"), "meta has hiddenSeed: $meta")

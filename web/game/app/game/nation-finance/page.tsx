@@ -40,6 +40,26 @@ function floor(n: number): number {
     return Math.floor(n);
 }
 
+// 외교 상태 → {표시명, 색}. legacy defs/index.ts `diplomacyStateInfo` 충실 포팅(0/1/2/7만 정의,
+// 그 외는 통상 폴백). 색 미지정(통상)은 기본 텍스트색.
+const diplomacyStateInfo: Record<number, { name: string; color?: string }> = {
+    0: { name: '교전', color: 'red' },
+    1: { name: '선포중', color: 'magenta' },
+    2: { name: '통상' },
+    7: { name: '불가침', color: 'green' },
+};
+function diplomacyStateText(state: number): { name: string; color?: string } {
+    return diplomacyStateInfo[state] ?? diplomacyStateInfo[2];
+}
+
+// legacy util/joinYearMonth·parseYearMonth 충실 포팅(year*12+month-1 ↔ [trunc/12, %12+1]).
+function joinYearMonth(year: number, month: number): number {
+    return year * 12 + month - 1;
+}
+function parseYearMonth(yearMonth: number): [number, number] {
+    return [Math.trunc(yearMonth / 12), (yearMonth % 12) + 1];
+}
+
 export default function NationFinancePage() {
     const [data, setData] = useState<NationFinanceResponse | null>(null);
     const [noNation, setNoNation] = useState(false);
@@ -160,10 +180,10 @@ export default function NationFinancePage() {
     // Computed budget figures — byte-for-byte the legacy Vue computed() chain
     // (incomeGoldCity = income.gold.city * rate / 100, etc).
     //
-    // [§2 BLOCKED — P0-52] income/outcome은 backend read 파이프라인 미조립으로 null.
-    // policy.rate/bill은 meta 미기재 시 null(P1-077 규약).
-    // income 또는 outcome 또는 policy.rate/bill이 null이면 예산 행 전체를 '-'로 표시한다.
-    // W1-O 배선 완료 후 null 가드는 dead code가 되어 자동으로 실값을 보여준다.
+    // income/outcome 는 game-api 가 rate=100 LIVE 산정으로 내려준다(NationFinanceController, IncomeTick
+    // 패러티 재사용). policy.rate/bill 은 nation.meta 에서 읽으며 시드가 rate=15/bill=100 을 채운다
+    // (ScenarioImporter — PHP Scenario/Nation.php 패러티). 셋 중 하나라도 부재면(구 game-api 이미지 등)
+    // 날조 대신 수입 행을 '-' 로 표시하는 방어 가드는 유지한다.
     const hasIncome = income != null && outcome != null && policy.rate != null && policy.bill != null;
 
     const incomeGoldCity = hasIncome ? (income!.gold.city * policy.rate!) / 100 : 0;
@@ -179,7 +199,7 @@ export default function NationFinancePage() {
     const riceDelta = incomeRice - outcomeByBill;
 
     // 자금 예산 — labels verbatim from legacy template (현 재 / 단기수입 / 세 금 / 수입/지출 / 국고 예산).
-    // income null(§2 BLOCKED) → 수입 관련 행은 '-' 표시(날조 금지).
+    // income/rate 부재(구 game-api 이미지) 시에만 수입 행 '-' 표시(날조 금지).
     const goldRows: (string | number | React.ReactNode)[][] = [
         ['현 재', formatNumber(data.gold)],
         ['단기수입', hasIncome ? formatNumber(income!.gold.war) : '-'],
@@ -194,7 +214,7 @@ export default function NationFinancePage() {
     ];
 
     // 군량 예산 — labels verbatim (현 재 / 둔전수입 / 세 금 / 수입/지출 / 국고 예산).
-    // income null(§2 BLOCKED) → 수입 관련 행은 '-' 표시(날조 금지).
+    // income/rate 부재(구 game-api 이미지) 시에만 수입 행 '-' 표시(날조 금지).
     const riceRows: (string | number | React.ReactNode)[][] = [
         ['현 재', formatNumber(data.rice)],
         ['둔전수입', hasIncome ? formatNumber(floor(incomeRiceWall)) : '-'],
@@ -212,6 +232,59 @@ export default function NationFinancePage() {
         <Shell>
             <div className="page-content">
                 <h1>내무부</h1>
+
+                {/* 외교관계 — legacy PageNationStratFinan.vue:4-46. nationsList(getAllNationStaticInfo +
+                    cityCnt + diplomacy)를 표로. game-api 가 미배출(구 이미지)이면 미렌더(날조 금지). */}
+                {data.nationsList && data.nationsList.length > 0 && (
+                    <>
+                        <h2>외교관계</h2>
+                        <GameCard>
+                            <div style={{ overflowX: 'auto' }}>
+                                <table className="game-table" style={{ width: '100%' }}>
+                                    <thead>
+                                        <tr>
+                                            <th>국가명</th>
+                                            <th>국력</th>
+                                            <th>장수</th>
+                                            <th>속령</th>
+                                            <th>상태</th>
+                                            <th>기간</th>
+                                            <th>종료 시점</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.nationsList.map((n) => {
+                                            const isSelf = n.nation === data.nationId;
+                                            const term = n.diplomacy.term ?? 0;
+                                            const [endYear, endMonth] = parseYearMonth(
+                                                joinYearMonth(data.year, data.month) + term,
+                                            );
+                                            const st = diplomacyStateText(n.diplomacy.state);
+                                            return (
+                                                <tr key={n.nation}>
+                                                    <td style={{ color: n.color || undefined }}>{n.name}</td>
+                                                    <td>{formatNumber(n.power)}</td>
+                                                    <td>{formatNumber(n.gennum)}</td>
+                                                    <td>{formatNumber(n.cityCnt)}</td>
+                                                    {isSelf ? (
+                                                        // 자국 행은 외교 상태/기간/종료시점을 '-'(legacy v-if 자국 분기).
+                                                        <td colSpan={3} style={{ textAlign: 'center' }}>-</td>
+                                                    ) : (
+                                                        <>
+                                                            <td style={{ color: st.color }}>{st.name}</td>
+                                                            <td>{term === 0 ? '-' : `${term}개월`}</td>
+                                                            <td>{term === 0 ? '-' : `${endYear}년 ${endMonth}월`}</td>
+                                                        </>
+                                                    )}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </GameCard>
+                    </>
+                )}
 
                 {/* 국가 방침 & 임관 권유 메시지 (plaintext display; TipTap rich editor deferred per spec OQ-3) */}
                 <h2>국가 방침 &amp; 임관 권유 메시지</h2>

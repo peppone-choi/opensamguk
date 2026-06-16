@@ -274,9 +274,9 @@ data class NationFinanceResponse(
     val month: Int = 0,
     val gold: Int,
     val rice: Int,
-    /** 수입 4분해(PHP :104-113 income{gold{city,war},rice{city,wall}}). BLOCKED(P0-52) → null. */
+    /** 수입 4분해(PHP :104-113 income{gold{city,war},rice{city,wall}}). rate=100 LIVE 산정(IncomeTick 재사용). */
     val income: NationFinanceIncome? = null,
-    /** 지출(PHP :115 getOutcome(100, dedicationList)). BLOCKED(P0-52) → null. */
+    /** 지출(PHP :115 getOutcome(100, dedicationList) — npc!=5 dedication 합). */
     val outcome: Int? = null,
     /** 국가 방침 묶음(PHP :142-148 policy). */
     val policy: NationFinancePolicy = NationFinancePolicy(),
@@ -286,7 +286,7 @@ data class NationFinanceResponse(
     val nationMsg: String? = null,
     /** 임관 권유문(PHP :130 scout_msg — nation_env KV). BLOCKED(P0-53) → null. */
     val scoutMsg: String? = null,
-    /** 전국가 외교 표(PHP :135 nationsList). BLOCKED(P0-54, W1-O 조립) → null. */
+    /** 전국가 외교 표(PHP :135 nationsList = getAllNationStaticInfo + cityCnt + diplomacy{state,term}). */
     val nationsList: List<NationFinanceNationItem>? = null,
     /** True only when the caller may edit (officer_level >= 5). game-api computes from the principal. */
     val editable: Boolean,

@@ -65,6 +65,10 @@ export interface FrontGlobalInfo {
     vote?: boolean;
     isTournamentApplicationOpen?: boolean;
     isBettingActive?: boolean;
+    /** legacy `develcost`(개발비) — 설문 보상금 산정 원천(voteReward = develcost*5). 부재 시 미정. */
+    develCost?: number;
+    /** legacy v_vote.php:30 `voteReward` = develcost*5 — 설문 제목 "(N금 + 추첨 유니크템)" 안내. */
+    voteReward?: number;
 }
 
 export interface FrontGeneralInfo {
