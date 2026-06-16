@@ -19,6 +19,7 @@ import GameTable from '../../../components/GameTable';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { getNPCColor } from '../../../lib/utilGame';
+import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import type { MyGeneralSummary, MyGeneralsResponse } from '../../../types/game';
 
 // PHP b_myGenInfo 정렬 셀렉터(type 1..15). 벌점(10)은 BLOCKED라 제외, 가용 키만(MyGeneralSummary 보유 필드).
@@ -131,9 +132,18 @@ export default function MyGeneralsPage() {
         const intel = injuredStat(g.intel, g.injury);
         const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
         return [
-            g.picture
-                ? <span key={`pic-${g.generalId}`} style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>{g.picture}</span>
-                : '',
+            // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default).
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                key={`pic-${g.generalId}`}
+                src={portraitUrl(g.picture, g.imageServer)}
+                onError={onPortraitError}
+                alt=""
+                width={32}
+                height={40}
+                style={{ objectFit: 'cover', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
+                draggable={false}
+            />,
             <span key={`nm-${g.generalId}`} style={{ color: getNPCColor(g.npcState) ?? undefined }}>{g.name}</span>,
             g.officerLevelText,                 // 관직
             g.dedLevelText,                     // 계급
