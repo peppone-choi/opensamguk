@@ -93,10 +93,11 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.year").value(181))
             .andExpect(jsonPath("$.turnterm").value(30))
             .andExpect(jsonPath("$.turnOptions[5]").value(30))
-            .andExpect(jsonPath("$.blockedWrites[0].label").value("운영자메세지 변경"))
-            .andExpect(jsonPath("$.editableFields[0].key").value("npcmode"))
-            .andExpect(jsonPath("$.editableFields[1].key").value("block_general_create"))
-            .andExpect(jsonPath("$.editableFields[0].options[0].value").value("0"))
+            .andExpect(jsonPath("$.blockedWrites[0].label").value("중원정세추가"))
+            .andExpect(jsonPath("$.editableFields[0].key").value("msg"))
+            .andExpect(jsonPath("$.editableFields[1].key").value("npcmode"))
+            .andExpect(jsonPath("$.editableFields[2].key").value("block_general_create"))
+            .andExpect(jsonPath("$.editableFields[1].options[0].value").value("0"))
     }
 
     @Test
@@ -138,7 +139,7 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.startyear").value(180))
             .andExpect(jsonPath("$.maxgeneral").value(500))
             .andExpect(jsonPath("$.maxnation").value(55))
-            .andExpect(jsonPath("$.blockedWrites[6].label").value("턴시간 변경"))
+            .andExpect(jsonPath("$.blockedWrites[0].label").value("중원정세추가"))
     }
 
     @Test

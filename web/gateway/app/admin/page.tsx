@@ -1024,7 +1024,7 @@ function ServerControl() {
     );
 }
 
-/** world_state.config 에서 라이브 수정 가능한 항목(현재 npcmode / block_general_create). */
+/** world_state.config 에서 라이브 수정 가능한 게임 환경 설정. */
 function GameSettingsControl() {
     const [settings, setSettings] = useState<AdminGameSettingsResponse | null>(null);
     const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -1052,15 +1052,19 @@ function GameSettingsControl() {
 
     async function save() {
         if (!settings) return;
-        const values: Record<string, number> = {};
+        const values: Record<string, string | number> = {};
         for (const field of settings.editableFields) {
-            const raw = drafts[field.key]?.trim();
-            const parsed = raw ? parseInt(raw, 10) : NaN;
-            if (Number.isNaN(parsed)) {
-                setMessage(`${field.label} 값이 올바르지 않습니다.`);
-                return;
+            const raw = drafts[field.key]?.trim() ?? '';
+            if (field.type === 'text') {
+                values[field.key] = raw;
+            } else if (field.type === 'number' || field.type === 'select') {
+                const parsed = raw ? parseInt(raw, 10) : NaN;
+                if (Number.isNaN(parsed)) {
+                    setMessage(`${field.label} 값이 올바르지 않습니다.`);
+                    return;
+                }
+                values[field.key] = parsed;
             }
-            values[field.key] = parsed;
         }
         if (Object.keys(values).length === 0) return;
 
@@ -1072,12 +1076,12 @@ function GameSettingsControl() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ values }),
             });
-            const data = (await res.json()) as { result?: boolean; reason?: string };
+            const data = (await res.json()) as { result?: boolean; reason?: string; restartRequired?: boolean };
             if (!res.ok || data.result === false) {
                 setMessage(data.reason ?? '게임 설정 저장에 실패했습니다.');
                 return;
             }
-            setMessage('저장되었습니다.');
+            setMessage(data.restartRequired ? '저장되었습니다. 턴 시간 변경은 엔진 재시작 후 적용됩니다.' : '저장되었습니다.');
             await load();
         } catch {
             setMessage('게임 설정 저장에 실패했습니다.');
@@ -1093,7 +1097,7 @@ function GameSettingsControl() {
     return (
         <div className="env-section">
             <h3 className="lobby-section-title">입장 설정</h3>
-            {message && <p className={`deploy-result ${message === '저장되었습니다.' ? 'ok' : 'fail'}`}>{message}</p>}
+            {message && <p className={`deploy-result ${message.startsWith('저장되었습니다') ? 'ok' : 'fail'}`}>{message}</p>}
             {!settings ? (
                 <p className="svc-meta">설정 조회 중…</p>
             ) : (
