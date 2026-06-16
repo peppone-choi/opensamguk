@@ -8,6 +8,7 @@
 
 import Link from 'next/link';
 import { CONTROL_BUTTONS, type GateBucket } from '@/lib/control-bar-config';
+import { gameChildPath, resolveServerGamePath, useServerId } from '@/lib/serverGameUrl';
 import type { ControlGating } from './MainControlBar';
 
 function gateAllows(bucket: GateBucket, g: ControlGating): boolean {
@@ -33,6 +34,11 @@ interface FlatEntry {
     newTab?: boolean;
 }
 
+function resolveControlHref(rawHref: string, serverId: string | undefined): string {
+    if (!serverId) return rawHref;
+    return resolveServerGamePath(undefined, serverId, '/game', gameChildPath(rawHref));
+}
+
 export default function MainControlDropdown({
     gating,
     columns = 4,
@@ -40,6 +46,7 @@ export default function MainControlDropdown({
     gating: ControlGating;
     columns?: number;
 }) {
+    const serverId = useServerId();
     const entries: FlatEntry[] = [];
 
     for (const btn of CONTROL_BUTTONS) {
@@ -47,10 +54,22 @@ export default function MainControlDropdown({
         if (btn.split) {
             // Flatten the 경매장 split into its sub-items (matches legacy dropdown).
             for (const sub of btn.split) {
-                entries.push({ key: `${btn.id}-${sub.label}`, label: sub.label, href: sub.href, enabled, newTab: sub.newTab });
+                entries.push({
+                    key: `${btn.id}-${sub.label}`,
+                    label: sub.label,
+                    href: resolveControlHref(sub.href, serverId),
+                    enabled,
+                    newTab: sub.newTab,
+                });
             }
         } else {
-            entries.push({ key: String(btn.id), label: btn.compactLabel, href: btn.href, enabled, newTab: btn.newTab });
+            entries.push({
+                key: String(btn.id),
+                label: btn.compactLabel,
+                href: resolveControlHref(btn.href, serverId),
+                enabled,
+                newTab: btn.newTab,
+            });
         }
     }
 

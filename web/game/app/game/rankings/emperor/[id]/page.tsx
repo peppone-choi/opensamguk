@@ -9,11 +9,16 @@ import GameTable from '../../../../../components/GameTable';
 import StatusBadge from '../../../../../components/StatusBadge';
 import { api } from '../../../../../lib/api';
 import { formatDate, formatNumber } from '../../../../../lib/format';
+import { resolveServerGamePath, useServerId } from '../../../../../lib/serverGameUrl';
 import type { EmperorDetail } from '../../../../../types/game';
 
 export default function EmperorDetailPage() {
   const params = useParams();
   const id = Number(params.id);
+  const serverId = useServerId();
+  const backHref = serverId
+    ? resolveServerGamePath(undefined, serverId, '/game', 'rankings/emperor')
+    : '/game/rankings/emperor';
   const [data, setData] = useState<EmperorDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,7 +46,7 @@ export default function EmperorDetailPage() {
     <Shell>
       <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>황제 상세</h1>
       <p style={{ color: 'var(--crimson)' }}>{error || '데이터를 찾을 수 없습니다.'}</p>
-      <Link href="/game/rankings/emperor" style={{ color: 'var(--gold)', marginTop: 'var(--space-md)', display: 'inline-block' }}>
+      <Link href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-md)', display: 'inline-block' }}>
         ← 황제 목록으로
       </Link>
     </Shell>
@@ -98,7 +103,7 @@ export default function EmperorDetailPage() {
       <h2 style={{ fontSize: 'var(--text-xl)', margin: 'var(--space-lg) 0 var(--space-md)' }}>지배 도시</h2>
       <GameTable headers={cityHeaders} rows={cityRows} />
 
-      <Link href="/game/rankings/emperor" style={{ color: 'var(--gold)', marginTop: 'var(--space-lg)', display: 'inline-block' }}>
+      <Link href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-lg)', display: 'inline-block' }}>
         ← 황제 목록으로
       </Link>
     </Shell>

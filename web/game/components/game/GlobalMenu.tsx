@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { filterMenu } from '@/lib/menu-filter';
+import { gameChildPath, resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { MenuFlagSource, MenuItem, MenuNode } from '@/lib/menu-types';
 
 interface GlobalMenuProps {
@@ -21,6 +22,12 @@ interface GlobalMenuProps {
 function isHighlighted(item: MenuItem, global: MenuFlagSource): boolean {
     const v = item.condHighlightVar;
     return v ? Boolean(global[v]) : false;
+}
+
+function resolveMenuUrl(url: string, serverId: string | undefined): string {
+    if (!serverId) return url;
+    if (!url.startsWith('/game') || url.startsWith('/game/') === false && url !== '/game') return url;
+    return resolveServerGamePath(undefined, serverId, '/game', gameChildPath(url));
 }
 
 // Resolve a click the same way the legacy menuClick() does. Returns true if navigation was handled
@@ -39,21 +46,24 @@ function handleClick(item: MenuItem, onReqCall?: (url: string) => void): boolean
 function MenuButton({
     item,
     global,
+    serverId,
     onReqCall,
 }: {
     item: MenuItem;
     global: MenuFlagSource;
+    serverId: string | undefined;
     onReqCall?: (url: string) => void;
 }) {
     const highlight = isHighlighted(item, global);
+    const url = resolveMenuUrl(item.url, serverId);
     return (
         <a
             className={`global-menu-btn${highlight ? ' highlight' : ''}`}
-            href={item.url}
+            href={url}
             target={item.newTab ? '_blank' : undefined}
             rel={item.newTab ? 'noopener noreferrer' : undefined}
             onClick={(e) => {
-                if (handleClick(item, onReqCall)) e.preventDefault();
+                if (handleClick({ ...item, url }, onReqCall)) e.preventDefault();
             }}
         >
             {item.name}
@@ -66,12 +76,14 @@ function MenuDropdown({
     mainItem,
     subMenu,
     global,
+    serverId,
     onReqCall,
 }: {
     label: string;
     mainItem?: MenuItem; // present for split (main is itself navigable)
     subMenu: MenuNode[];
     global: MenuFlagSource;
+    serverId: string | undefined;
     onReqCall?: (url: string) => void;
 }) {
     const [open, setOpen] = useState(false);
@@ -80,7 +92,7 @@ function MenuDropdown({
             {mainItem ? (
                 <a
                     className="global-menu-btn global-menu-split-main"
-                    href={mainItem.url}
+                    href={resolveMenuUrl(mainItem.url, serverId)}
                     target={mainItem.newTab ? '_blank' : undefined}
                     rel={mainItem.newTab ? 'noopener noreferrer' : undefined}
                     onClick={(e) => {
@@ -115,7 +127,7 @@ function MenuDropdown({
                             <li key={i}>
                                 <a
                                     className="dropdown-item"
-                                    href={sub.url}
+                                    href={resolveMenuUrl(sub.url, serverId)}
                                     target={sub.newTab ? '_blank' : undefined}
                                     rel={sub.newTab ? 'noopener noreferrer' : undefined}
                                     onClick={(e) => {
@@ -142,6 +154,7 @@ export default function GlobalMenu({
     onReqCall,
 }: GlobalMenuProps) {
     const filtered = filterMenu(menu, global);
+    const serverId = (global?.serverId as string | undefined) || undefined;
 
     return (
         <nav
@@ -156,7 +169,15 @@ export default function GlobalMenu({
         >
             {filtered.map((node, idx) => {
                 if (node.type === 'item') {
-                    return <MenuButton key={idx} item={node} global={global} onReqCall={onReqCall} />;
+                    return (
+                        <MenuButton
+                            key={idx}
+                            item={node}
+                            global={global}
+                            serverId={serverId}
+                            onReqCall={onReqCall}
+                        />
+                    );
                 }
                 if (node.type === 'multi') {
                     return (
@@ -165,6 +186,7 @@ export default function GlobalMenu({
                             label={node.name}
                             subMenu={node.subMenu}
                             global={global}
+                            serverId={serverId}
                             onReqCall={onReqCall}
                         />
                     );
@@ -177,6 +199,7 @@ export default function GlobalMenu({
                             mainItem={node.main}
                             subMenu={node.subMenu}
                             global={global}
+                            serverId={serverId}
                             onReqCall={onReqCall}
                         />
                     );

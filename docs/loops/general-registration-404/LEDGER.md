@@ -9,8 +9,9 @@
 
 | 2 | game-api FrontGlobalInfo에 `serverId` 노출 + CharacterClaim 링크를 `resolveServerGamePath`로 server-aware 변환 | 5/5 → 5/5 | oh-my-claudecode:verifier + tsc/build/test | 채택 | GOLDENSET 점수는 그대로이나 B2(인게임 등록 링크 serverId 노출) 해결. `/api/front-info` 쿠키→`serverId` 테스트 추가. |
 
+| 3 | BottomNav/Sidebar/MainControlBar/MainControlDropdown/GlobalMenu/GameInfo/BackBar/join/select-pool/emperor 등 인게임 날개를 `resolveServerGamePath` + `useServerId`/`global.serverId`로 일관 server-aware 변환 | 5/5 → 5/5 | oh-my-claudecode:verifier | 채택 | `href="/game`와 `router.push('/game')` 리터럴 0개. tsc/build green. B3 해결. |
+
 ## 백로그
 
-- B3: 전체 인게임 URL 체계를 서버 식별자로 일관 노출(path vs query 결정).
 - B4: 레거시와의 entrance 플로우 패러티 갭(미등록 3버튼, 장수생성/빙의/선택) 추가 검증.
 - B5: 코드/게임성/성능/기능 발전 아이템은 별도 루프로 분리(본 루프는 404 라우팅에 집중).

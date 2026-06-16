@@ -2,8 +2,14 @@
 
 import Link from 'next/link';
 import Shell from '../../../components/Shell';
+import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
 
 export default function SelectPoolPage() {
+    const serverId = useServerId();
+    const joinHref = serverId
+        ? resolveServerGamePath(undefined, serverId, '/game', 'join')
+        : '/game/join';
+
     return (
         <Shell>
             <div className="page-content claim-screen">
@@ -29,7 +35,7 @@ export default function SelectPoolPage() {
                     <div className="claim-mode-card game-card">
                         <h2>직접 생성</h2>
                         <p>직접 생성이 허용된 서버라면 기존 생성 화면을 사용할 수 있습니다.</p>
-                        <Link className="claim-mode-action" href="/game/join">
+                        <Link className="claim-mode-action" href={joinHref}>
                             생성 화면
                         </Link>
                     </div>

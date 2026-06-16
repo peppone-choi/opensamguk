@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
+import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
 
 // 능력치 상수 — 레거시 GameConst(d_setting)·BE common GameConst.kt와 동일값.
 //   defaultStatTotal=165 / defaultStatMin=15 / defaultStatMax=80.
@@ -164,6 +165,8 @@ const PERSONALITIES = [
 
 export default function JoinPage() {
   const router = useRouter();
+  const serverId = useServerId();
+  const homeHref = serverId ? resolveServerGamePath(undefined, serverId, '/game', '') : '/game';
   const { frontInfo } = useFrontInfo();
   const memberName = frontInfo?.general?.name ?? '';
 
@@ -209,7 +212,7 @@ export default function JoinPage() {
       });
       if (res.status === 'AVAILABLE') {
         alert('장수가 생성되었습니다!');
-        router.push('/game');
+        router.push(homeHref);
       } else {
         setError(res.reason ?? '등록할 수 없습니다.');
       }

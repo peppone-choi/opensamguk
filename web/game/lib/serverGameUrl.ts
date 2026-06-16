@@ -1,4 +1,9 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 const PATH_SERVER_ID = /^s[A-Za-z0-9_-]*$/;
+const SERVER_COOKIE = 'sam_server';
 
 function splitSuffix(value: string): { base: string; suffix: string } {
     const queryIdx = value.indexOf('?');
@@ -57,4 +62,40 @@ export function resolveServerGamePath(
     if (!cleanChildPath) return gameBase;
     const { base, suffix } = splitSuffix(gameBase);
     return `${base.replace(/\/+$/, '')}/${cleanChildPath}${suffix}`;
+}
+
+function readServerCookie(): string | undefined {
+    if (typeof document === 'undefined') return undefined;
+    const match = document.cookie.split('; ').find((row) => row.startsWith(`${SERVER_COOKIE}=`));
+    return match?.split('=')[1]?.trim() || undefined;
+}
+
+/** 현재 `sam_server` 쿠키 값을 클라이언트에서 읽는다(SSR 시점에는 undefined). */
+export function useServerId(): string | undefined {
+    const [serverId, setServerId] = useState<string | undefined>(undefined);
+    useEffect(() => {
+        setServerId(readServerCookie());
+    }, []);
+    return serverId;
+}
+
+/** `/game/{childPath}`를 현재 서버 식별자에 맞게 변환. */
+export function useServerGameUrl(childPath: string): string {
+    const serverId = useServerId();
+    if (!serverId) return childPath ? `/game/${childPath.replace(/^\/+/, '')}` : '/game';
+    return resolveServerGamePath(undefined, serverId, '/game', childPath);
+}
+
+/** `/game/...` href에서 `/game/` 접두사를 떼어내 resolveServerGamePath용 childPath로 변환. */
+export function gameChildPath(href: string): string {
+    const trimmed = href.trim();
+    if (trimmed === '/game') return '';
+    if (trimmed.startsWith('/game/')) return trimmed.slice('/game/'.length);
+    if (trimmed.startsWith('/game?')) return trimmed.slice('/game'.length); // keep leading ?
+    return trimmed;
+}
+
+/** path serverId URL(`/game/smain/...`)을 정규 `/game/...`로 변환해 active 매칭에 사용. */
+export function normalizeGamePathname(pathname: string): string {
+    return pathname.replace(/^\/game\/s[A-Za-z0-9_-]+(?=\/|$)/, '/game');
 }

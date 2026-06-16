@@ -5,6 +5,7 @@
 // Values come from front-info `global` (+ const for the title). Fields game-api does not yet emit
 // fall back gracefully (no fabricated numbers); the render ORDER and label templates are the contract.
 
+import { resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { FrontGlobalInfo, GameConstResponse } from '@/lib/types';
 import { calcTournamentTerm } from '@/lib/utilGame';
 
@@ -16,6 +17,12 @@ function num(n: number | undefined): string {
 
 function autorunInfoText(autorunUser: FrontGlobalInfo['autorunUser']): string {
     return autorunUser && autorunUser.limit_minutes > 0 ? '자율행동' : '';
+}
+
+function gameHref(global: FrontGlobalInfo, childPath: string): string {
+    const serverId = global.serverId;
+    if (!serverId) return `/game/${childPath}`;
+    return resolveServerGamePath(undefined, serverId, '/game', childPath);
 }
 
 export default function GameInfo({
@@ -76,10 +83,11 @@ export default function GameInfo({
                 {/* 10 subTournamentState */}
                 <div className="gi-cell">
                     {global.isTournamentActive ? (
-                        <a href="/game/tournament" target="_blank" rel="noopener noreferrer">
+                        <a href={gameHref(global, 'tournament')} target="_blank" rel="noopener noreferrer">
                             ↑
                             <span className="text-cyan">
-                                {global.tournamentType ?? ''} <span className="text-orange">{global.tournamentState ?? ''}</span>
+                                {global.tournamentType ?? ''}{' '}
+                                <span className="text-orange">{global.tournamentState ?? ''}</span>
                             </span>
                             ↑
                         </a>
@@ -96,7 +104,12 @@ export default function GameInfo({
                 {/* 12 subAuctionState */}
                 <div className="gi-cell">
                     {global.auctionCount ? (
-                        <a href="/game/auction" target="_blank" rel="noopener noreferrer" className="text-cyan">
+                        <a
+                            href={gameHref(global, 'auction')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cyan"
+                        >
                             {num(global.auctionCount)}건 거래 진행중
                         </a>
                     ) : (
@@ -107,7 +120,7 @@ export default function GameInfo({
                 {/* 13 subVoteState */}
                 <div className="gi-cell gi-wide">
                     {global.lastVote ? (
-                        <a href="/game/vote" target="_blank" rel="noopener noreferrer">
+                        <a href={gameHref(global, 'vote')} target="_blank" rel="noopener noreferrer">
                             <span className="text-cyan">설문 진행 중: </span>
                             <span>{global.lastVote.title}</span>
                         </a>

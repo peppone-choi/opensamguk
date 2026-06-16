@@ -9,6 +9,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { CONTROL_BUTTONS, type ControlButton, type GateBucket } from '@/lib/control-bar-config';
+import { gameChildPath, resolveServerGamePath, useServerId } from '@/lib/serverGameUrl';
 
 export interface ControlGating {
     showSecret: boolean;
@@ -39,14 +40,30 @@ function isHighlighted(btn: ControlButton, g: ControlGating): boolean {
     return Boolean(g[btn.highlightVar]);
 }
 
-function SplitButton({ btn, enabled, highlight }: { btn: ControlButton; enabled: boolean; highlight: boolean }) {
+function resolveControlHref(href: string, serverId: string | undefined): string {
+    if (!serverId) return href;
+    return resolveServerGamePath(undefined, serverId, '/game', gameChildPath(href));
+}
+
+function SplitButton({
+    btn,
+    enabled,
+    highlight,
+    serverId,
+}: {
+    btn: ControlButton;
+    enabled: boolean;
+    highlight: boolean;
+    serverId: string | undefined;
+}) {
     const [open, setOpen] = useState(false);
     const cls = `control-btn${highlight ? ' highlight' : ''}${enabled ? '' : ' disabled'}`;
+    const mainHref = resolveControlHref(btn.href, serverId);
 
     return (
         <div className="control-btn-group" onMouseLeave={() => setOpen(false)}>
             {enabled ? (
-                <Link className={cls} href={btn.href} target={btn.newTab ? '_blank' : undefined}>
+                <Link className={cls} href={mainHref} target={btn.newTab ? '_blank' : undefined}>
                     {btn.label}
                 </Link>
             ) : (
@@ -64,18 +81,21 @@ function SplitButton({ btn, enabled, highlight }: { btn: ControlButton; enabled:
             </button>
             {open && (
                 <ul className="control-split-menu">
-                    {btn.split!.map((sub, i) => (
-                        <li key={i}>
-                            <Link
-                                className="dropdown-item"
-                                href={sub.href}
-                                target={sub.newTab ? '_blank' : undefined}
-                                onClick={() => setOpen(false)}
-                            >
-                                {sub.label}
-                            </Link>
-                        </li>
-                    ))}
+                    {btn.split!.map((sub, i) => {
+                        const subHref = resolveControlHref(sub.href, serverId);
+                        return (
+                            <li key={i}>
+                                <Link
+                                    className="dropdown-item"
+                                    href={subHref}
+                                    target={sub.newTab ? '_blank' : undefined}
+                                    onClick={() => setOpen(false)}
+                                >
+                                    {sub.label}
+                                </Link>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
         </div>
@@ -83,6 +103,8 @@ function SplitButton({ btn, enabled, highlight }: { btn: ControlButton; enabled:
 }
 
 export default function MainControlBar({ gating }: { gating: ControlGating }) {
+    const serverId = useServerId();
+
     return (
         <nav className="control-bar" aria-label="국가 메뉴">
             {CONTROL_BUTTONS.map((btn) => {
@@ -90,10 +112,19 @@ export default function MainControlBar({ gating }: { gating: ControlGating }) {
                 const highlight = isHighlighted(btn, gating);
 
                 if (btn.split) {
-                    return <SplitButton key={btn.id} btn={btn} enabled={enabled} highlight={highlight} />;
+                    return (
+                        <SplitButton
+                            key={btn.id}
+                            btn={btn}
+                            enabled={enabled}
+                            highlight={highlight}
+                            serverId={serverId}
+                        />
+                    );
                 }
 
                 const cls = `control-btn${highlight ? ' highlight' : ''}${enabled ? '' : ' disabled'}`;
+                const href = resolveControlHref(btn.href, serverId);
                 if (!enabled) {
                     return (
                         <span key={btn.id} className={cls} aria-disabled="true">
@@ -102,7 +133,7 @@ export default function MainControlBar({ gating }: { gating: ControlGating }) {
                     );
                 }
                 return (
-                    <Link key={btn.id} className={cls} href={btn.href} target={btn.newTab ? '_blank' : undefined}>
+                    <Link key={btn.id} className={cls} href={href} target={btn.newTab ? '_blank' : undefined}>
                         {btn.label}
                     </Link>
                 );
