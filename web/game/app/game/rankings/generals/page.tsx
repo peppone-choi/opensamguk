@@ -18,6 +18,7 @@ import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
 import { api } from '../../../../lib/api';
 import { getNPCColor } from '../../../../lib/utilGame';
+import { portraitUrl, onPortraitError } from '../../../../lib/portrait';
 import type { PublicGeneral } from '../../../../types/game';
 
 const NO_NATION = 0;
@@ -126,10 +127,18 @@ export default function GeneralsListPage() {
         const intel = injuredStat(g.intel, g.injury);
         const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
         return [
-            // 얼굴 — 초상(있으면). PHP는 GetImageURL(imgsvr)/picture; FE는 파일명만 텍스트로 둔다(CDN 미배선).
-            g.picture
-                ? <span key={`pic-${g.generalId}`} style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>{g.picture}</span>
-                : '',
+            // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default). PHP GetImageURL(imgsvr)/picture.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+                key={`pic-${g.generalId}`}
+                src={portraitUrl(g.picture, g.imageServer)}
+                onError={onPortraitError}
+                alt=""
+                width={32}
+                height={40}
+                style={{ objectFit: 'cover', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
+                draggable={false}
+            />,
             // 이름 — PHP formatName(name, npc): NPC 타입별 색(getNPCColor).
             <span key={`nm-${g.generalId}`} style={{ color: getNPCColor(g.npc) ?? undefined }}>{g.name}</span>,
             `${g.age}세`,                       // 연령

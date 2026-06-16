@@ -6,7 +6,8 @@ import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
-import { JOIN_STAT_TOTAL, JOIN_STAT_MIN, JOIN_STAT_MAX, IMAGE_CDN_BASE, BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
+import { JOIN_STAT_TOTAL, JOIN_STAT_MIN, JOIN_STAT_MAX, BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
+import { DEFAULT_PORTRAIT } from '../../../lib/portrait';
 import type { MapPreviewResponse } from '../../../lib/types';
 
 // 능력치 상수 — 레거시 GameConst(d_setting)·BE common GameConst.kt와 동일값.
@@ -313,8 +314,9 @@ export default function JoinPage() {
 
   // 전콘 미리보기 — 레거시는 member.imgsvr/member.picture(계정 아이콘)로 getIconPath를 호출하나, 회원(member)
   // 테이블 picture/imgsvr는 game-api FE read 채널에 노출돼 있지 않다(v_join.php가 RootDB member 직접 read).
-  // 따라서 기본 아이콘만 표시하고, 미사용 시도 동일 기본 아이콘. 실제 계정 아이콘 노출은 backlog 참고.
-  const iconPath = `${IMAGE_CDN_BASE}/d_shared/icon/default.jpg`;
+  // 따라서 기본 초상만 표시하고, 미사용 시도 동일 기본 초상. 실제 계정 아이콘 노출은 backlog 참고.
+  // (이전 d_shared/icon/default.jpg는 CDN에 없어 403 엑박이었다 → 검증된 icons/default.jpg로 교정.)
+  const iconPath = DEFAULT_PORTRAIT;
 
   return (
     <Shell>

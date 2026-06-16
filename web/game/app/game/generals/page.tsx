@@ -6,6 +6,7 @@ import GameTable from '../../../components/GameTable';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
 import { matchesQuery } from '../../../lib/chosung';
+import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import type { PublicGeneral } from '../../../types/game';
 
 // 전체 장수 (page 14) + 세력 장수 (page 9-P0) fold.
@@ -245,10 +246,18 @@ export default function GeneralsPage() {
     )) as unknown as string[]; // GameTable headers prop은 string[]이지만 런타임은 ReactNode를 그대로 렌더.
 
     const rows = sorted.map((g) => [
-        // 얼굴 — 초상 파일명(CDN 미배선, 다른 read 페이지 동일 컨벤션으로 파일명 텍스트).
-        g.picture
-            ? <span key={`pic-${g.generalId}`} style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>{g.picture}</span>
-            : <span key={`pic-${g.generalId}`} style={{ color: 'var(--text-muted)' }}>-</span>,
+        // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default). a_genList.php:127.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            key={`pic-${g.generalId}`}
+            src={portraitUrl(g.picture, g.imageServer)}
+            onError={onPortraitError}
+            alt=""
+            width={32}
+            height={40}
+            style={{ objectFit: 'cover', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
+            draggable={false}
+        />,
         // 장수명 (npc 색상)
         <span key={`n-${g.generalId}`} style={{ color: npcColor(g.npc) }}>
             {g.name}

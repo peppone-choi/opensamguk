@@ -241,3 +241,41 @@ Rebuilt to surface PageJoin's fields. Wired vs hardcoded vs backlogged:
 
 4. **blockCustomGeneralName(=block_general_create & 2)** — 이름 입력 대신 "무작위" 전환 플래그가 FE에 노출
    안 됨(`/api/const`·front-info 미포함). 현재는 항상 이름 입력 노출. 필요: const 번들에 플래그 추가.
+
+---
+
+## 10. 페이지 출력 패러티 감사 (전 페이지 — 2026-06-16)
+
+"각 페이지에서 출력되는 정보가 전부 출력되도록" 요청에 따라 read 페이지 전수 감사.
+3 read-only 조사 에이전트 + 직접 코드 검증(에이전트 보고는 일부 stale라 코드로 재확인).
+
+### ✅ 이번에 수정(FE-only, 백엔드 무변경 — DTO가 이미 보유)
+
+- **초상(전콘) 렌더** — `lib/portrait.ts`(레거시 `util/getIconPath.ts` 충실 포팅) 신설.
+  `icons/<picture>.jpg`(검증: CDN 200) + `onError`→`icons/default.jpg` 폴백(엑박 방지).
+  적용: `generals`·`rankings/generals`·`my-generals` 얼굴 컬럼(파일명 텍스트 → `<img>`),
+  `join` 전콘(이전 `d_shared/icon/default.jpg`=403 엑박 → `icons/default.jpg` 교정).
+  시드는 `image_server=0`(전부 공유)·`picture`=숫자코드 → `icons/<code>.jpg`로 해소.
+
+### 검증: 이미 패러티 충족(추가 작업 불요)
+
+- `generals`(전체 장수 a_genList 16컬럼), `rankings/generals`(+lbonus cyan·부상 적색), `inherit`(전 필드),
+  `vote`(설문/옵션/댓글), `troop`·`chief-center`·`auction`·`betting`·`board`·`world-log`·`mailbox` 렌더.
+
+### ⛔ Backend-read-blocked 백로그 (날조 금지 — DTO/repo/스키마 확장 + 로컬 DB 검증 필요)
+
+다음 웨이브 후보. 모두 game-api read DTO/repo 또는 스키마가 원천을 안 내려서 막힘:
+
+1. **nation-finance** — `income`/`outcome`(ProcessIncome read-api 조립 미완), `nationMsg`/`scoutMsg`/
+   `warSettingCnt.remain`(`nation_env` KV read repo 미배선), `nationsList`(외교표 조립 미완). [P0-52/53/54]
+2. **벌점(refresh_score_total)** — `general_access_log` 테이블 부재(P8 미이식). generals/rankings/my-generals
+   마지막 컬럼 + a_genList 기본 정렬(type=9) 재현 불가. 원천 생기면 DTO `score` + 컬럼/정렬 추가.
+3. **vote `voteReward`** — 설문 제목의 "(N금+유니크템)" 보상 안내. `VoteListResponse`/`FrontInfoResponse`
+   미포함. 출처(GameConst/서버설정) 확인 후 DTO 1필드 추가.
+4. **history `globalHistory`/`globalAction`(중원정세·장수동향)** — `yearbook_history`에 컬럼 부재.
+   현재 항상 `[]`(빈 placeholder). 스키마 마이그레이션 + 월말 아카이빙 적재 필요.
+5. **history 월별 맵 스냅샷** — `record.map`은 내려오나 `MapViewer`가 라이브 `/api/map` self-fetch.
+   `MapViewer`에 optional `mapSnapshot` prop 추가(라이브 폴백) 필요 — 두-뷰어 동일 불변식 주의.
+6. **nation `impossibleStrategicCommand`** — read API에 명령 precheck 컨텍스트 없음(command engine 결합 필요).
+
+원칙: 위 항목은 PHP 골든/실DB 검증을 동반해야 하므로(메모리: run-locally-before-push) FE 단독 처리 불가.
