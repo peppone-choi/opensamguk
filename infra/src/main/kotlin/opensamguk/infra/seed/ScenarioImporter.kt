@@ -40,6 +40,17 @@ class ScenarioImporter(
     /** Turn cadence in minutes (PHP `turnterm`). `tick_seconds = turnTerm * 60`. */
     private val turnTerm: Int = 60,
     /**
+     * NPC 빙의 모드 (PHP `npcmode`). 0=불가 / 1=가능 / 2=선택 생성.
+     * Legacy install.php 기본값 0 (`npcmode_0` checked) — entrance 3버튼 게이트에 사용.
+     */
+    private val npcMode: Int = 0,
+    /**
+     * 장수 임의 생성 제어 (PHP `block_general_create`). 비트마스크:
+     *   0=가능, 1=불가, 2=장수명 무작위.
+     * Legacy install.php 기본값 0 (`block_general_create_0` checked).
+     */
+    private val blockGeneralCreate: Int = 0,
+    /**
      * The fixed deterministic hidden seed (A). This is the committed live value from
      * `legacy/devsam-core/hwe/d_setting/UniqueConst.php::$hiddenSeed` (a 32-char lowercase hex
      * = `bin2hex(random_bytes(16))`), already used as the G1b golden input and the V4 calendar IT
@@ -132,6 +143,8 @@ class ScenarioImporter(
             "startyear" to startYear,
             "starttime" to installTime.toString(),
             "turnterm" to turnTerm,
+            "npcmode" to npcMode,
+            "block_general_create" to blockGeneralCreate,
         )
         jdbc.update(
             """
