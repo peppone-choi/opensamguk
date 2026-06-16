@@ -4,6 +4,9 @@ import opensamguk.gameapi.dto.AdminGameSettingsPatchRequest
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.security.GameApiJwtVerifier
+import opensamguk.infra.entity.GameKvEntity
+import opensamguk.infra.read.GameKvRepository
+import opensamguk.logic.util.jsonEncode
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminWriteController(
     private val verifier: GameApiJwtVerifier,
     private val world: WorldStateReadRepository,
+    private val gameKv: GameKvRepository,
 ) {
 
     @PostMapping("/server-status")
@@ -63,16 +67,26 @@ class AdminWriteController(
         }
 
         val validated = mutableMapOf<String, Any>()
+        val restartRequiredKeys = mutableSetOf<String>()
         for ((key, raw) in body.values) {
             val result = validateConfigValue(key, raw)
                 ?: return ResponseEntity.badRequest()
                     .body(mapOf("result" to false, "reason" to "invalid value for $key: $raw"))
             validated[key] = result
+            if (key == "turnterm") restartRequiredKeys += key
         }
 
         val nextConfig = LinkedHashMap(entity.config)
         for ((key, value) in validated) {
-            nextConfig[key] = value
+            when (key) {
+                "msg" -> writeGameEnvMsg(value as String)
+                "turnterm" -> {
+                    val minutes = value as Int
+                    nextConfig[key] = minutes
+                    entity.tickSeconds = minutes * 60
+                }
+                else -> nextConfig[key] = value
+            }
         }
         entity.config = nextConfig
         world.save(entity)
@@ -81,11 +95,31 @@ class AdminWriteController(
             mapOf(
                 "result" to true,
                 "updated" to validated.keys,
+                "restartRequired" to restartRequiredKeys.isNotEmpty(),
             ),
         )
     }
 
-    /** 허용된 config 키만 검증·정규화. 현재는 입장 게이팅 2개만 라이브 수정 대상. */
+    private fun writeGameEnvMsg(msg: String) {
+        val trimmed = msg.trim()
+        val existing = gameKv.findByTable("game_env")
+            .firstOrNull { it.namespace == "global" && it.key == "msg" }
+        if (existing != null) {
+            existing.value = jsonEncode(trimmed)
+            gameKv.save(existing)
+        } else {
+            gameKv.save(
+                GameKvEntity(
+                    table = "game_env",
+                    namespace = "global",
+                    key = "msg",
+                    value = jsonEncode(trimmed),
+                ),
+            )
+        }
+    }
+
+    /** 허용된 config / game_env 키만 검증·정규화. */
     private fun validateConfigValue(key: String, raw: Any?): Any? {
         return when (key) {
             "npcmode" -> {
@@ -95,6 +129,30 @@ class AdminWriteController(
             "block_general_create" -> {
                 val v = (raw as? Number)?.toInt() ?: (raw as? String)?.toIntOrNull()
                 if (v in 0..2) v else null
+            }
+            "maxgeneral" -> {
+                val v = (raw as? Number)?.toInt() ?: (raw as? String)?.toIntOrNull()
+                if (v != null && v > 0 && v <= 9999) v else null
+            }
+            "maxnation" -> {
+                val v = (raw as? Number)?.toInt() ?: (raw as? String)?.toIntOrNull()
+                if (v != null && v > 0 && v <= 999) v else null
+            }
+            "startyear" -> {
+                val v = (raw as? Number)?.toInt() ?: (raw as? String)?.toIntOrNull()
+                if (v != null && v > 0 && v <= 9999) v else null
+            }
+            "starttime" -> {
+                val v = raw as? String ?: return null
+                if (v.matches(STARTTIME_REGEX)) v else null
+            }
+            "turnterm" -> {
+                val v = (raw as? Number)?.toInt() ?: (raw as? String)?.toIntOrNull()
+                if (v in TURN_OPTIONS) v else null
+            }
+            "msg" -> {
+                val v = raw as? String ?: return null
+                if (v.length <= MSG_MAX_LENGTH) v else null
             }
             else -> null
         }
@@ -120,5 +178,8 @@ class AdminWriteController(
 
     companion object {
         private const val ADMIN_ROLE = "ADMIN"
+        val STARTTIME_REGEX = Regex("""^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$""")
+        val TURN_OPTIONS = setOf(1, 2, 5, 10, 20, 30, 60, 120)
+        const val MSG_MAX_LENGTH = 500
     }
 }

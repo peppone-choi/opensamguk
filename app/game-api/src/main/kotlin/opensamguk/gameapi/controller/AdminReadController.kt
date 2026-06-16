@@ -97,6 +97,7 @@ class AdminReadController(
         val w = world.findById(1).orElse(null)
         val config = w?.config.orEmpty()
         val msg = firstGameEnvText("msg") ?: stringConfig(config["msg"]) ?: ""
+        val turnterm = intConfig(config["turnterm"]) ?: w?.let { it.tickSeconds / 60 }
 
         return ResponseEntity.ok(
             AdminGameSettingsResponse(
@@ -110,10 +111,10 @@ class AdminReadController(
                 maxgeneral = intConfig(config["maxgeneral"]) ?: GameConst.defaultMaxGeneral,
                 maxnation = intConfig(config["maxnation"]) ?: GameConst.defaultMaxNation,
                 turntime = stringConfig(config["turntime"]),
-                turnterm = intConfig(config["turnterm"]) ?: w?.let { it.tickSeconds / 60 },
+                turnterm = turnterm,
                 turnOptions = TURN_OPTIONS,
                 blockedWrites = GAME_SETTING_WRITES,
-                editableFields = buildEditableFields(config),
+                editableFields = buildEditableFields(config, msg, turnterm ?: DEFAULT_TURN_TERM),
             ),
         )
     }
@@ -535,11 +536,21 @@ class AdminReadController(
             else -> raw.trim()
         }
 
-    /** 어드민이 라이브에서 수정할 수 있는 config 항목 정의(라벨/타입/옵션/현재값). */
-    private fun buildEditableFields(config: Map<String, Any?>): List<AdminEditableField> {
+    /** 어드민이 라이브에서 수정할 수 있는 게임 환경 설정 항목 정의. */
+    private fun buildEditableFields(
+        config: Map<String, Any?>,
+        msg: String,
+        currentTurnTerm: Int,
+    ): List<AdminEditableField> {
         val npcMode = intConfig(config["npcmode"]) ?: 0
         val blockGeneralCreate = intConfig(config["block_general_create"]) ?: 0
         return listOf(
+            AdminEditableField(
+                key = "msg",
+                label = "운영자 메세지",
+                type = "text",
+                value = msg,
+            ),
             AdminEditableField(
                 key = "npcmode",
                 label = "NPC 빙의",
@@ -562,22 +573,48 @@ class AdminReadController(
                     AdminFieldOption("2", "장수명 무작위"),
                 ),
             ),
+            AdminEditableField(
+                key = "maxgeneral",
+                label = "최대 장수",
+                type = "number",
+                value = intConfig(config["maxgeneral"]) ?: GameConst.defaultMaxGeneral,
+            ),
+            AdminEditableField(
+                key = "maxnation",
+                label = "최대 국가",
+                type = "number",
+                value = intConfig(config["maxnation"]) ?: GameConst.defaultMaxNation,
+            ),
+            AdminEditableField(
+                key = "startyear",
+                label = "시작 년도",
+                type = "number",
+                value = intConfig(config["startyear"]) ?: GameConst.defaultStartYear,
+            ),
+            AdminEditableField(
+                key = "starttime",
+                label = "시작 시간",
+                type = "text",
+                value = stringConfig(config["starttime"]) ?: "",
+            ),
+            AdminEditableField(
+                key = "turnterm",
+                label = "턴 시간(분)",
+                type = "select",
+                value = currentTurnTerm,
+                options = TURN_OPTIONS.map { AdminFieldOption(it.toString(), "${it}분") },
+            ),
         )
     }
 
     private companion object {
         const val ADMIN_ROLE = "ADMIN"
         const val LOG_RECENT_COUNT = 24 // PHP _admin7 *Recent($gen, 24)
+        const val DEFAULT_TURN_TERM = 60
         val TURN_OPTIONS = listOf(1, 2, 5, 10, 20, 30, 60, 120)
 
         val GAME_SETTING_WRITES = listOf(
-            AdminBlockedWrite("운영자메세지 변경", "game_env mutation intake 미포팅"),
             AdminBlockedWrite("중원정세추가", "log_entry append intake 미포팅"),
-            AdminBlockedWrite("시작시간변경", "world_state config mutation intake 미포팅"),
-            AdminBlockedWrite("최대 장수 변경", "world_state config mutation intake 미포팅"),
-            AdminBlockedWrite("최대 국가 변경", "world_state config mutation intake 미포팅"),
-            AdminBlockedWrite("시작 년도 변경", "world_state config mutation intake 미포팅"),
-            AdminBlockedWrite("턴시간 변경", "ServerTool::changeServerTerm 등가 intake 미포팅"),
         )
 
         val GENERAL_BULK_WRITES = listOf(
