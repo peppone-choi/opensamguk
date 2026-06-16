@@ -112,10 +112,12 @@ jobs:
   #    SSH/SCP 불필요. build-jvm/build-web은 GH-hosted 유지(GHCR 푸시만 필요).
   #
   #    2026-06-12 멀티서버 스택(~/opensamguk-docker) 전환 반영:
-  #    - 게임 서버(opensamguk-s<N>)는 **서버별 IMAGE_TAG 고정이 정본** — 진행 중 로직 점프는
-  #      RNG/로그 desync(패러티 파괴). CI는 자동으로 건드리지 않는다.
-  #    - 게임 서버 갱신 = 어드민 버전 패널 → deployer bounce(스테이트리스) / 시즌 경계 수동(엔진 포함).
-  #    - CI가 올리는 것은 **공유 스택**(gateway-api·web-gateway·nginx)뿐 — 게임 로직과 무관한 무상태 계층.
+  #    - 게임 서버(opensamguk-s<N>)의 **game-api·game-engine은 서버별 IMAGE_TAG 고정이 정본** —
+  #      진행 중 로직 점프는 RNG/로그 desync(패러티 파괴) + 둘 다 Flyway라 스키마 결합. CI 자동 갱신 금지.
+  #      엔진/리드API 갱신 = 어드민 버전 패널 → deployer bounce / 시즌 경계 수동(엔진 포함).
+  #    2026-06-16 사용자 결정 — **무상태 프론트(web-game)만** 매 push 자동 pull+bounce(WEB_GAME_TAG).
+  #      web-game은 DB/Flyway 무관(순수 프론트) → 스키마 위험 0. game-api/engine 핀은 불변.
+  #    - CI가 올리는 것: **공유 스택**(gateway-api·web-gateway·nginx) + 각 게임서버 **web-game**.
   # ------------------------------------------------------------------
   deploy:
     runs-on: [self-hosted, ec2-prod]
@@ -149,7 +151,41 @@ jobs:
           $COMPOSE up -d --force-recreate --no-deps nginx
 
           docker image prune -af --filter "until=168h"
-          echo "=== Shared deploy complete — 게임 서버는 고정 태그 유지(어드민 bounce로 갱신) ==="
+          echo "=== Shared deploy complete — game-api/engine 고정 태그 유지(어드민 bounce로 갱신) ==="
+
+      - name: Bounce web-game on game servers (frontend auto-pull)
+        # 2026-06-16 사용자 결정: 무상태 프론트(web-game)만 매 push 자동 pull+bounce.
+        # game-api/game-engine은 절대 건드리지 않는다 — 둘 다 Flyway(스키마 결합) + 엔진 RNG/로그 desync 위험.
+        # 각 게임서버는 WEB_GAME_TAG(프론트 전용)만 이 커밋으로 올리고, IMAGE_TAG(api/engine 핀)는 불변.
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          set -uo pipefail
+          STACK="$HOME/opensamguk-docker"
+          cd "$STACK"
+          echo "=== GHCR login (root: sudo docker가 /root/.docker 사용) ==="
+          echo "$GHCR_TOKEN" | sudo docker login ghcr.io -u "$GHCR_USER" --password-stdin
+          shopt -s nullglob
+          for envf in servers/s*.env; do
+            case "$envf" in *.bak*|*.example) continue;; esac
+            sid="$(basename "$envf" .env)"          # s1, s2 ...
+            # 실행 중인 게임서버만 대상(미기동 스킵 — 컨테이너명 규약 s<N>-web-game)
+            if ! docker ps --format '{{.Names}}' | grep -q "^${sid}-web-game$"; then
+              echo "skip ${sid}: web-game 미기동"; continue
+            fi
+            # web-game 전용 태그를 이 커밋으로 영속 고정(.env 단일 진실, 재부팅/수동 up에도 유지).
+            if sudo grep -qE '^WEB_GAME_TAG=' "$envf"; then
+              sudo sed -i "s/^WEB_GAME_TAG=.*/WEB_GAME_TAG=${IMAGE_TAG}/" "$envf"
+            else
+              echo "WEB_GAME_TAG=${IMAGE_TAG}" | sudo tee -a "$envf" >/dev/null
+            fi
+            DC="sudo docker compose -p opensamguk-${sid} -f docker-compose.server.yml --env-file ${envf}"
+            echo "=== ${sid}: web-game pull + bounce @ ${IMAGE_TAG} (api/engine 핀 유지) ==="
+            $DC pull web-game
+            $DC up -d --no-deps web-game
+          done
+          echo "=== web-game 프론트 자동 pull 완료 (game-api/engine 불변) ==="
 
       - name: Verify (health + s1 turn-advance)
         run: |
