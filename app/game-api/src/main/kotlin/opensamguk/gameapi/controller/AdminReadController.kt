@@ -3,6 +3,8 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.dto.AdminDiplomacyAllResponse
 import opensamguk.gameapi.dto.AdminDiplomacyRow
 import opensamguk.gameapi.dto.AdminBlockedWrite
+import opensamguk.gameapi.dto.AdminEditableField
+import opensamguk.gameapi.dto.AdminFieldOption
 import opensamguk.gameapi.dto.AdminGameSettingsResponse
 import opensamguk.gameapi.dto.AdminGeneralDetail
 import opensamguk.gameapi.dto.AdminGeneralLogResponse
@@ -111,6 +113,7 @@ class AdminReadController(
                 turnterm = intConfig(config["turnterm"]) ?: w?.let { it.tickSeconds / 60 },
                 turnOptions = TURN_OPTIONS,
                 blockedWrites = GAME_SETTING_WRITES,
+                editableFields = buildEditableFields(config),
             ),
         )
     }
@@ -531,6 +534,36 @@ class AdminReadController(
             is Number, is Boolean -> decoded.toString()
             else -> raw.trim()
         }
+
+    /** 어드민이 라이브에서 수정할 수 있는 config 항목 정의(라벨/타입/옵션/현재값). */
+    private fun buildEditableFields(config: Map<String, Any?>): List<AdminEditableField> {
+        val npcMode = intConfig(config["npcmode"]) ?: 0
+        val blockGeneralCreate = intConfig(config["block_general_create"]) ?: 0
+        return listOf(
+            AdminEditableField(
+                key = "npcmode",
+                label = "NPC 빙의",
+                type = "select",
+                value = npcMode,
+                options = listOf(
+                    AdminFieldOption("0", "불가"),
+                    AdminFieldOption("1", "가능"),
+                    AdminFieldOption("2", "선택 생성 가능"),
+                ),
+            ),
+            AdminEditableField(
+                key = "block_general_create",
+                label = "장수 임의 생성",
+                type = "select",
+                value = blockGeneralCreate,
+                options = listOf(
+                    AdminFieldOption("0", "가능"),
+                    AdminFieldOption("1", "불가"),
+                    AdminFieldOption("2", "장수명 무작위"),
+                ),
+            ),
+        )
+    }
 
     private companion object {
         const val ADMIN_ROLE = "ADMIN"

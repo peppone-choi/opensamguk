@@ -47,6 +47,14 @@ tools/php-golden/probe_*.php
 
 .claude/scheduled_tasks.lock
 
+# OMC / agent session state (local, never commit)
+.omc/
+web/*/.omc/
+
+# Local scratch directories
+parity-shots/
+tmp/
+
 # 감사 raw 스크래치(대용량, working dir 보존)
 docs/superpowers/gap/_*.raw.json
 

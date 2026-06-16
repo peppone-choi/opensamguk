@@ -94,6 +94,9 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.turnterm").value(30))
             .andExpect(jsonPath("$.turnOptions[5]").value(30))
             .andExpect(jsonPath("$.blockedWrites[0].label").value("운영자메세지 변경"))
+            .andExpect(jsonPath("$.editableFields[0].key").value("npcmode"))
+            .andExpect(jsonPath("$.editableFields[1].key").value("block_general_create"))
+            .andExpect(jsonPath("$.editableFields[0].options[0].value").value("0"))
     }
 
     @Test
