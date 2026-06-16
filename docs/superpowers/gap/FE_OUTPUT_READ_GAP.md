@@ -205,3 +205,39 @@ Biggest structural causes:
 3. **No now/max + bar rendering** — every gauge (city pop/agri/comm/secu/def/wall, nation pop/crew, general
    exp/level/dex) is shown as a flat current number, dropping max and the visual bar.
 4. **Whole log/record sections** (개인 기록/전투 기록/전투 결과/장수 열전, 연감 map+nation ranking) have no Next surface.
+
+---
+
+## 9. 장수 생성 (PageJoin.vue / v_join.php vs join/page.tsx)  — 2026-06-16
+
+Grand truth: `legacy/devsam-core/hwe/ts/PageJoin.vue` (+ `v_join.php` staticValues 셸).
+This repo: `web/game/app/game/join/page.tsx`, `app/game-api/.../web/JoinController.kt`.
+
+Rebuilt to surface PageJoin's fields. Wired vs hardcoded vs backlogged:
+
+- ✅ **Wired (read API)**: 국가 목록(국가명+색상배경) — `api.mapPreview().nations`(id/name/color).
+- ✅ **Hardcoded (form-convenience, RNG-gate 밖 — 출처 명시)**: 성격 이름/설명(레거시 `ActionPersonality/*.php`
+  `$name`/`$info` + `GameConst.kt personalityName`), 능력치 min/max/total(`JOIN_STAT_*`), 가입 보너스
+  `bornMinStatBonus=3`/`bornMaxStatBonus=5`(common `GameConst.kt:177-178`). 능력치 분배식은 기존 보존.
+- ✅ **Added (UI parity)**: 능력치 안내문 2종, 다시 입력(reset), submit `total < defaultStatTotal` confirm,
+  국가표 보이기/숨기기 + 크게/작게 토글, 전콘 미리보기(기본 아이콘) + 사용 체크박스, 성격 설명 노출.
+
+### Backlog (날조 금지 — fabricate 안 함):
+
+1. **임관권유문(scout_msg) 표시** — `nation_env` KV `scout_msg` read 채널이 FE에 없다.
+   `NationFinanceController`가 읽긴 하나 `scoutMsg`는 P0-53 BLOCKED(null)이고 per-nation finance(인증 필요).
+   필요: 가입 화면용 public nation-list(+scout_msg) read 엔드포인트(레거시 v_join `getValuesFromInterNamespace`).
+   현재 UI는 권유문 칸을 `-`로 렌더(graceful).
+
+2. **유산(inherit)-on-join 인터랙티브 적용** — `JoinController.JoinRequest`는 `{name,leadership,strength,
+   intel,character,pic}`만 받고 유산 4필드(inheritCity/inheritBonusStat/inheritSpecial/inheritTurntimeZone)
+   미지원. 보유 유산 포인트 read(`/api/inherit-point`)도 소유 장수 필요 → 가입 전 401이라 잔액 표시 불가.
+   필요: ① 가입 전 유산 잔액 read(user 단위, general 불요) ② `JoinRequest` 유산 4필드 + 엔진 `MakeGeneral`
+   핸들러 포팅 + PHP 골든(parity-porter+golden). UI는 "게임 내 적용 예정" 안내만 표시.
+
+3. **전콘(계정 아이콘) 미리보기** — 레거시는 `member.picture`/`member.imgsvr`(계정 테이블)로 아이콘 표시.
+   `v_join.php`가 RootDB `member`를 직접 read하나 game-api FE read 채널엔 member picture/imgsvr가 없다
+   (front-info의 picture/imgsvr는 *general* 것이라 가입 전엔 없음). 현재 기본 아이콘만 표시.
+
+4. **blockCustomGeneralName(=block_general_create & 2)** — 이름 입력 대신 "무작위" 전환 플래그가 FE에 노출
+   안 됨(`/api/const`·front-info 미포함). 현재는 항상 이름 입력 노출. 필요: const 번들에 플래그 추가.

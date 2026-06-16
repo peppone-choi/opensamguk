@@ -1,19 +1,60 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
+import { JOIN_STAT_TOTAL, JOIN_STAT_MIN, JOIN_STAT_MAX, IMAGE_CDN_BASE, BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
+import type { MapPreviewResponse } from '../../../lib/types';
 
 // 능력치 상수 — 레거시 GameConst(d_setting)·BE common GameConst.kt와 동일값.
 //   defaultStatTotal=165 / defaultStatMin=15 / defaultStatMax=80.
-// (api.gameConst()의 FE 타입 GameConstResponse에는 이 세 값이 노출돼 있지 않아
-//  현재는 BE와 동일한 상수로 보존한다. types.ts에 defaultStat* 추가 시 동적 주입 가능 — follow-up.)
-const DEFAULT_STAT_TOTAL = 165;
-const STAT_MIN = 15;
-const STAT_MAX = 80;
+// 정본 lib/constants.ts의 JOIN_STAT_* 로 통일(종전 로컬 하드코딩 제거).
+const DEFAULT_STAT_TOTAL = JOIN_STAT_TOTAL;
+const STAT_MIN = JOIN_STAT_MIN;
+const STAT_MAX = JOIN_STAT_MAX;
+
+// 가입 보너스 능력치 범위 — 레거시 GameConst.bornMinStatBonus/bornMaxStatBonus(common GameConst.kt:177-178).
+// game-api /api/const GameConstResponse(FE 타입)에는 노출돼 있지 않아 BE 상수와 동일값으로 보존한다(폼 안내문 전용).
+const BORN_MIN_STAT_BONUS = 3;
+const BORN_MAX_STAT_BONUS = 5;
+
+// 성격 코드 → {이름, 설명} — 레거시 ActionPersonality/*.php의 protected $name/$info를 byte-faithful 전사
+// (common GameConst.kt personalityName + 각 클래스 $info). game-api /api/const는 personality name/info를
+// BLOCKED(null)로 비우므로(GetConstController 주석: getName/getInfo 동적 인스턴스화 BLOCKED) 여기서
+// 표시용으로 하드코딩한다 — 폼 편의(RNG draw 게이트 밖). 'Random'은 레거시 PageJoin의 합성 항목.
+const PERSONALITY_INFO: Record<string, { name: string; info: string }> = {
+  Random: { name: '???', info: '무작위 성격을 선택합니다.' },
+  che_안전: { name: '안전', info: '사기 -5, 징·모병 비용 -20%' },
+  che_유지: { name: '유지', info: '훈련 -5, 징·모병 비용 -20%' },
+  che_재간: { name: '재간', info: '명성 -10%, 징·모병 비용 -20%' },
+  che_출세: { name: '출세', info: '명성 +10%, 징·모병 비용 +20%' },
+  che_할거: { name: '할거', info: '명성 -10%, 훈련 +5' },
+  che_정복: { name: '정복', info: '명성 -10%, 사기 +5' },
+  che_패권: { name: '패권', info: '훈련 +5, 징·모병 비용 +20%' },
+  che_의협: { name: '의협', info: '사기 +5, 징·모병 비용 +20%' },
+  che_대의: { name: '대의', info: '명성 +10%, 훈련 -5' },
+  che_왕좌: { name: '왕좌', info: '명성 +10%, 사기 -5' },
+};
+
+// 성격 셀렉트 순서 — 레거시 GameConst.availablePersonality + 합성 'Random'(PageJoin은 Random을 끝에 추가).
+const PERSONALITIES = [
+  'che_안전', 'che_유지', 'che_재간', 'che_출세', 'che_할거', 'che_정복',
+  'che_패권', 'che_의협', 'che_대의', 'che_왕좌', 'Random',
+];
+
+// isBrightColor — 레거시 util: perceived-luminance(r*.299 + g*.587 + b*.114) > 임계값 → 검은 글자.
+// 국가색 배경 위 텍스트 가독성 결정. vote/diplomacy 페이지와 동일 로직.
+function isBrightColor(color: string): boolean {
+  const c = color.replace('#', '');
+  if (c.length !== 6) return false;
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  return r * 0.299 + g * 0.587 + b * 0.114 > BRIGHT_COLOR_THRESHOLD;
+}
 
 // 능력치 분배식 — 레거시 hwe/ts/util/generalStats.ts를 그대로 포팅(통/무/지 순).
 // PHP는 패러티 오라클이 아니다(폼 편의 기능, RNG draw 게이트 밖) → Vue 정본을 충실 이식.
@@ -149,19 +190,9 @@ function abilityPowint(stats: Stats): [number, number, number] {
   return [leadership, strength, intel];
 }
 
-const PERSONALITIES = [
-  'Random',
-  'che_안전',
-  'che_유지',
-  'che_재간',
-  'che_출세',
-  'che_할거',
-  'che_정복',
-  'che_패권',
-  'che_의협',
-  'che_대의',
-  'che_왕좌',
-];
+// 기본 능력치 분배 — 레거시 PageJoin: 통=total-2*floor(total/3), 무=floor(total/3), 지=floor(total/3) (165→55/55/55).
+const DEFAULT_LEADERSHIP = DEFAULT_STAT_TOTAL - 2 * Math.floor(DEFAULT_STAT_TOTAL / 3);
+const DEFAULT_OTHER = Math.floor(DEFAULT_STAT_TOTAL / 3);
 
 export default function JoinPage() {
   const router = useRouter();
@@ -170,15 +201,19 @@ export default function JoinPage() {
   const { frontInfo } = useFrontInfo();
   const memberName = frontInfo?.general?.name ?? '';
 
-  // 레거시 PageJoin 기본 분배: 통=total-2*floor(total/3), 무=floor(total/3), 지=floor(total/3) (165→55/55/55).
   const [name, setName] = useState(memberName);
-  const [leadership, setLeadership] = useState(DEFAULT_STAT_TOTAL - 2 * Math.floor(DEFAULT_STAT_TOTAL / 3));
-  const [strength, setStrength] = useState(Math.floor(DEFAULT_STAT_TOTAL / 3));
-  const [intel, setIntel] = useState(Math.floor(DEFAULT_STAT_TOTAL / 3));
+  const [leadership, setLeadership] = useState(DEFAULT_LEADERSHIP);
+  const [strength, setStrength] = useState(DEFAULT_OTHER);
+  const [intel, setIntel] = useState(DEFAULT_OTHER);
   const [character, setCharacter] = useState('Random');
   const [pic, setPic] = useState(true); // 전콘 사용 — 레거시 args.pic 기본 true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // 국가 목록(임관권유문 표시 전용 — 입장 안 함, 재야로 시작). 레거시 v_join.php nationList + scout_msg.
+  const [nations, setNations] = useState<MapPreviewResponse['nations']>([]);
+  const [displayTable, setDisplayTable] = useState(true); // 국가표 보이기/숨기기 토글
+  const [toggleZoom, setToggleZoom] = useState(true);     // 임관권유문 크게/작게 토글
 
   const total = leadership + strength + intel;
   const remaining = DEFAULT_STAT_TOTAL - total;
@@ -186,6 +221,27 @@ export default function JoinPage() {
   useEffect(() => {
     if (memberName && !name) setName(memberName);
   }, [memberName, name]);
+
+  // 국가 목록 로드 — game-api /api/map/preview의 nations(id/name/color)를 사용한다(레거시는 nation 테이블 직접
+  // read). 임관권유문(scout_msg)은 FE에 노출하는 read 채널이 아직 없어(NationFinance에서 P0-53 BLOCKED) 표시 보류.
+  useEffect(() => {
+    let alive = true;
+    api.mapPreview()
+      .then((res) => { if (alive) setNations(res.nations ?? []); })
+      .catch(() => { /* 부재 시 빈 표(graceful) — 날조 금지 */ });
+    return () => { alive = false; };
+  }, []);
+
+  // 셔플된 국가 목록 — 레거시 PageJoin: shuffle(staticValues.nationList). 마운트 시 1회 고정.
+  const shuffledNations = useMemo(() => {
+    const arr = [...nations];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nations]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -200,6 +256,13 @@ export default function JoinPage() {
       setError(`각 능력치는 ${STAT_MIN}~${STAT_MAX} 사이여야 합니다.`);
       return;
     }
+    // 레거시 PageJoin submitForm: 설정 합이 최대치보다 적으면 진행 여부 확인.
+    if (total < DEFAULT_STAT_TOTAL) {
+      const ok = window.confirm(
+        `설정한 능력치가 ${total}으로, 실제 최대치인 ${DEFAULT_STAT_TOTAL}보다 적습니다. 그래도 진행할까요?`,
+      );
+      if (!ok) return;
+    }
     setLoading(true);
     try {
       const res = await api.join({
@@ -211,7 +274,7 @@ export default function JoinPage() {
         pic, // 전콘 사용 여부 — 레거시 Join.php 'pic' 필드
       });
       if (res.status === 'AVAILABLE') {
-        alert('장수가 생성되었습니다!');
+        alert('정상적으로 생성되었습니다.\n위키와 팁/강좌 게시판을 꼭 읽어보세요!');
         router.push(homeHref);
       } else {
         setError(res.reason ?? '등록할 수 없습니다.');
@@ -237,10 +300,26 @@ export default function JoinPage() {
     setLeadership(l); setStrength(s); setIntel(i);
   }
 
+  // 다시 입력(reset) — 레거시 PageJoin.vue resetArgs: 기본 분배·기본 성격·전콘 사용으로 복귀.
+  function resetArgs() {
+    setName(memberName);
+    setLeadership(DEFAULT_LEADERSHIP);
+    setStrength(DEFAULT_OTHER);
+    setIntel(DEFAULT_OTHER);
+    setCharacter('Random');
+    setPic(true);
+    setError('');
+  }
+
+  // 전콘 미리보기 — 레거시는 member.imgsvr/member.picture(계정 아이콘)로 getIconPath를 호출하나, 회원(member)
+  // 테이블 picture/imgsvr는 game-api FE read 채널에 노출돼 있지 않다(v_join.php가 RootDB member 직접 read).
+  // 따라서 기본 아이콘만 표시하고, 미사용 시도 동일 기본 아이콘. 실제 계정 아이콘 노출은 backlog 참고.
+  const iconPath = `${IMAGE_CDN_BASE}/d_shared/icon/default.jpg`;
+
   return (
     <Shell>
       <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-lg)' }}>
-        장수 등록
+        장수 생성
       </h1>
 
       {error && (
@@ -255,9 +334,53 @@ export default function JoinPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      {/* 국가 목록 — 국가명(색상배경) + 임관권유문. 표시 전용(입장 안 함, 재야로 시작). 레거시 PageJoin nation-list. */}
+      <section style={{ marginBottom: 'var(--space-lg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-sm) var(--space-md)', background: 'var(--color-surface-2, #1f2937)', fontWeight: 600 }}>
+          <span style={{ flex: 1 }}>국가 목록</span>
+          <button type="button" onClick={() => setDisplayTable((v) => !v)} style={{ fontSize: 'var(--text-sm)', padding: '4px 10px' }}>
+            {displayTable ? '숨기기' : '보이기'}
+          </button>
+          <button type="button" disabled={!displayTable} onClick={() => setToggleZoom((v) => !v)} style={{ fontSize: 'var(--text-sm)', padding: '4px 10px', opacity: displayTable ? 1 : 0.5 }}>
+            {toggleZoom ? '작게 보기' : '크게 보기'}
+          </button>
+        </div>
+        {displayTable && (
+          <div>
+            {shuffledNations.length === 0 ? (
+              <div style={{ padding: 'var(--space-md)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>표시할 국가가 없습니다.</div>
+            ) : (
+              shuffledNations.map((nation) => (
+                <div key={nation.id} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', borderTop: '1px solid var(--color-border)' }}>
+                  <div style={{
+                    backgroundColor: nation.color,
+                    color: isBrightColor(nation.color) ? '#000' : '#fff',
+                    fontSize: '1.1em',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 'var(--space-sm)', textAlign: 'center',
+                  }}>
+                    {nation.name}
+                  </div>
+                  {/* 임관권유문(scout_msg) — FE read 채널 미노출(P0-53 BLOCKED) → '-'. 날조 금지(backlog 참고). */}
+                  <div style={{
+                    padding: 'var(--space-sm) var(--space-md)',
+                    fontSize: toggleZoom ? 'var(--text-base)' : 'var(--text-sm)',
+                    color: 'var(--color-text-muted)',
+                    alignSelf: 'center',
+                  }}>
+                    -
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </section>
+
+      <form onSubmit={handleSubmit} style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
         <div>
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>이름</label>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>장수명</label>
+          {/* blockCustomGeneralName(block_general_create & 2)은 FE에 노출되지 않아 '무작위' 전환을 감지할 수 없다(backlog). */}
           <input
             type="text"
             value={name}
@@ -268,21 +391,39 @@ export default function JoinPage() {
           />
         </div>
 
-        {/* 전콘 사용 — 레거시 PageJoin.vue 'args.pic' 체크박스(Join.php 'pic' 필드로 전송) */}
+        {/* 전콘 사용 — 레거시 PageJoin.vue: 아이콘 미리보기 + 'args.pic' 체크박스(Join.php 'pic' 필드로 전송) */}
         <div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', fontWeight: 600 }}>
-            <input
-              type="checkbox"
-              checked={pic}
-              onChange={(e) => setPic(e.target.checked)}
-            />
-            전콘 사용
-          </label>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>전콘 사용</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={iconPath} alt="전콘" style={{ height: 64, width: 64, borderRadius: 'var(--radius-sm)', objectFit: 'cover', background: 'var(--color-surface-2, #1f2937)' }} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+              <input type="checkbox" checked={pic} onChange={(e) => setPic(e.target.checked)} />
+              사용
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>성격</label>
+          <select
+            value={character}
+            onChange={(e) => setCharacter(e.target.value)}
+            style={{ width: '100%', padding: 'var(--space-sm)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+          >
+            {PERSONALITIES.map((p) => (
+              <option key={p} value={p}>{PERSONALITY_INFO[p]?.name ?? p}</option>
+            ))}
+          </select>
+          {/* 선택 성격 설명 — 레거시 availablePersonality[args.character].info */}
+          <small style={{ display: 'block', marginTop: 'var(--space-xs)', color: 'var(--color-text-muted)' }}>
+            {PERSONALITY_INFO[character]?.info ?? ''}
+          </small>
         </div>
 
         <div>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
-            능력치 (합계 {total} / {DEFAULT_STAT_TOTAL}) {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
+            능력치 <small style={{ color: 'var(--color-text-muted)' }}>(통/무/지)</small> &mdash; 합계 {total} / {DEFAULT_STAT_TOTAL} {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
           </label>
 
           {/* 능력치 조절 프리셋 — 레거시 PageJoin.vue 4버튼(랜덤형/통솔무력형/통솔지력형/무력지력형) */}
@@ -326,34 +467,57 @@ export default function JoinPage() {
           ))}
         </div>
 
-        <div>
-          <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>성격</label>
-          <select
-            value={character}
-            onChange={(e) => setCharacter(e.target.value)}
-            style={{ width: '100%', padding: 'var(--space-sm)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
-          >
-            {PERSONALITIES.map((p) => (
-              <option key={p} value={p}>{p === 'Random' ? '무작위' : p}</option>
-            ))}
-          </select>
+        {/* 능력치 안내문 2종 — 레거시 PageJoin.vue 충실 이식 */}
+        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-sm)' }}>
+          <p style={{ textAlign: 'center', color: 'orange', margin: 0 }}>
+            모든 능력치는 ( {STAT_MIN} &lt;= 능력치 &lt;= {STAT_MAX} ) 사이로 잡으셔야 합니다.<br />그 외의 능력치는 가입되지 않습니다.
+          </p>
+          <p style={{ textAlign: 'center', margin: 'var(--space-sm) 0 0', color: 'var(--color-text-muted)' }}>
+            능력치의 총합은 {DEFAULT_STAT_TOTAL} 입니다. 가입후 {BORN_MIN_STAT_BONUS} ~ {BORN_MAX_STAT_BONUS} 의 능력치 보너스를 받게 됩니다.<br />임의의 도시에서 재야로 시작하며 건국과 임관은 게임 내에서 실행합니다.
+          </p>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading || total > DEFAULT_STAT_TOTAL}
-          style={{
-            padding: 'var(--space-md)',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--color-primary)',
-            color: '#fff',
-            fontWeight: 700,
-            opacity: loading || total > DEFAULT_STAT_TOTAL ? 0.6 : 1,
-            cursor: loading || total > DEFAULT_STAT_TOTAL ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {loading ? '등록 중...' : '장수 등록'}
-        </button>
+        {/* 유산 포인트 사용 — 레거시 PageJoin.vue 유산 블록(천재로 생성/도시/턴 시간 지정/추가 능력치 고정).
+            백엔드 JoinController.JoinRequest는 유산 4필드(inheritCity/inheritBonusStat/inheritSpecial/
+            inheritTurntimeZone)를 받지 않고, 보유 유산 포인트 read(/api/inherit-point)는 소유 장수가 있어야
+            하므로(가입 전 401) 이 페이지에서 표시할 수 없다. 인터랙티브 적용은 backlog(가짜 입력 금지). */}
+        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-sm)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+          <strong>유산 포인트 사용</strong> — 천재로 생성 / 도시 / 턴 시간 지정 / 추가 능력치 고정은 게임 내 적용 예정입니다.
+        </div>
+
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
+          <button
+            type="submit"
+            disabled={loading || total > DEFAULT_STAT_TOTAL}
+            style={{
+              flex: 1,
+              padding: 'var(--space-md)',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-primary)',
+              color: '#fff',
+              fontWeight: 700,
+              opacity: loading || total > DEFAULT_STAT_TOTAL ? 0.6 : 1,
+              cursor: loading || total > DEFAULT_STAT_TOTAL ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {loading ? '생성 중...' : '장수 생성'}
+          </button>
+          <button
+            type="button"
+            onClick={resetArgs}
+            disabled={loading}
+            style={{
+              padding: 'var(--space-md) var(--space-lg)',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--color-surface-2, #374151)',
+              color: 'var(--color-text)',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            다시 입력
+          </button>
+        </div>
       </form>
     </Shell>
   );
