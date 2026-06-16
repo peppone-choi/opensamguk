@@ -801,6 +801,25 @@ export interface NationFinanceWarSettingCnt {
   max: number;
 }
 
+// 외교관계 표(legacy PageNationStratFinan.vue:4-46) 1행 — getAllNationStaticInfo + cityCnt + diplomacy.
+export interface NationFinanceDiplomacyState {
+  state: number;           // 0 교전 / 1 선포중 / 2 통상 / 7 불가침(자국). 그 외는 통상 폴백.
+  term: number | null;     // 잔여 개월(0 또는 자국이면 '-').
+}
+
+export interface NationFinanceNationItem {
+  nation: number;          // 국가 id(PHP `nation` 컬럼명)
+  name: string;
+  color: string;
+  type: string;
+  level: number;
+  capital: number;
+  gennum: number;          // 장수 수
+  power: number;           // 국력
+  cityCnt: number;         // 속령 수
+  diplomacy: NationFinanceDiplomacyState;
+}
+
 export interface NationFinanceResponse {
   result: boolean;
   editable: boolean;
@@ -816,6 +835,8 @@ export interface NationFinanceResponse {
   outcome: number;         // 인건비 지출
   policy: NationFinancePolicy;
   warSettingCnt: NationFinanceWarSettingCnt;
+  // 외교관계 표(legacy 내무부 상단). game-api 가 미배출(구 이미지)이면 optional → 미렌더.
+  nationsList?: NationFinanceNationItem[];
 }
 
 // ── page 7 · 사령부 (GET /api/nation/chief-reserved) ──────────────────────────

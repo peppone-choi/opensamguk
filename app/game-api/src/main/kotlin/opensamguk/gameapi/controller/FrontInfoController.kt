@@ -406,6 +406,10 @@ class FrontInfoController(
         // W0-2(P1-002) — PHP GetFrontInfo.php:182-189,214,231. 마지막 설문 = vote_poll 최신 행
         // (game_env.lastVote 대체 정본 — countOpenPolls와 동일 규약). 만료(endDate<now)/종료 시
         // lastVote는 null이되 lastVoteID는 유지(PHP 동일: lastVoteID는 raw 키 그대로 반환).
+        // PHP v_vote.php:30 voteReward = develcost*5(Vote.php:107). develcost는 config 방어적 read와 동일 원천이라
+        // 한 번만 읽어 develCost/voteReward 둘 다에 쓴다. config 미기재 시 둘 다 null(날조 금지).
+        val develCostVal = intOrNull(config["develcost"])
+
         val latestPoll = votePolls.findFirstByOrderByIdDesc()
         val lastVote = latestPoll
             ?.takeIf { it.closedAt == null && (it.endAt == null || it.endAt!!.isAfter(now)) }
@@ -432,7 +436,8 @@ class FrontInfoController(
             joinMode = intOrNull(config["join_mode"]),
             autorunUser = autorunUserInfo(config["autorun_user"]),
             lastExecuted = config["turntime"]?.toString(),
-            develCost = intOrNull(config["develcost"]),
+            develCost = develCostVal,
+            voteReward = develCostVal?.let { it * 5 },
             noticeMsg = config["msg"]?.toString(),
             onlineUserCnt = intOrNull(config["online_user_cnt"]),
             startyear = intOrNull(config["startyear"]),

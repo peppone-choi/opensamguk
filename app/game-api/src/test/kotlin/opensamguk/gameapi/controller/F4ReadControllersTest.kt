@@ -35,6 +35,7 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.entity.NationEnvEntity
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.logic.domestic.getOutcome
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
@@ -467,7 +468,7 @@ class F4ReadControllersTest {
             listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3, tickSeconds = 3600)),
         )
 
-        mvc(NationFinanceController(nations, resolver, world, nationEnv, objectMapper)).perform(get("/api/nation/1/finance").with(principal(7L)))
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper)).perform(get("/api/nation/1/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.gold").value(5000))
@@ -485,9 +486,13 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.warSettingCnt.inc").value(2))
             .andExpect(jsonPath("$.warSettingCnt.max").value(10))
             .andExpect(jsonPath("$.warSettingCnt.remain").doesNotExist())
-            // income/outcome — read 경로에 income 파이프라인 미조립(P0-52 BLOCKED, W1-O 배선).
-            .andExpect(jsonPath("$.income").doesNotExist())
-            .andExpect(jsonPath("$.outcome").doesNotExist())
+            // income/outcome — rate=100 LIVE 산정(IncomeTick 재사용). 도시/장수 stub 없음 → 빈 입력 → 0.
+            .andExpect(jsonPath("$.income.gold.city").value(0))
+            .andExpect(jsonPath("$.income.gold.war").value(0))
+            .andExpect(jsonPath("$.income.rice.city").value(0))
+            .andExpect(jsonPath("$.income.rice.wall").value(0))
+            .andExpect(jsonPath("$.outcome").value(0))
+            .andExpect(jsonPath("$.nationsList").isArray)
             // nationMsg/scoutMsg — 실제 write는 nation_env KV(P0-53), read repo 부재 → null(날조 금지).
             .andExpect(jsonPath("$.nationMsg").doesNotExist())
             .andExpect(jsonPath("$.scoutMsg").doesNotExist())
@@ -517,7 +522,7 @@ class F4ReadControllersTest {
             NationEnvEntity(namespace = 1, key = "available_war_setting_cnt", value = "3"),
         )
 
-        mvc(NationFinanceController(nations, resolver, world, nationEnv, objectMapper)).perform(get("/api/nation/1/finance").with(principal(7L)))
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper)).perform(get("/api/nation/1/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.nationMsg").value("천하통일을 위하여"))
@@ -529,12 +534,74 @@ class F4ReadControllersTest {
     fun `nation finance missing nation returns result-false zeroed shape`() {
         `when`(nations.findById(99)).thenReturn(Optional.empty())
 
-        mvc(NationFinanceController(nations, resolver, world, nationEnv, objectMapper)).perform(get("/api/nation/99/finance"))
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper)).perform(get("/api/nation/99/finance"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(false))
             .andExpect(jsonPath("$.gold").value(0))
             .andExpect(jsonPath("$.officerLevel").value(0))
             .andExpect(jsonPath("$.editable").value(false))
+    }
+
+    @Test
+    fun `nation finance nationsList assembles diplomacy state self-7 row-state and missing-통상`() {
+        // PHP v_nationStratFinan.php:45-72 — 전 국가 표: 자국 state=7/term=null, 타국은 diplomacy WHERE me=id
+        // 행(state/term), 행 부재 시 통상(2). cityCnt = city GROUP BY nation.
+        `when`(nations.findById(1)).thenReturn(Optional.of(nationP(1, "위", level = 7, power = 100, capital = 5, type = "che_위")))
+        `when`(nations.findAll()).thenReturn(
+            listOf(
+                nationP(1, "위", level = 7, power = 100, capital = 5, type = "che_위", meta = linkedMapOf("gennum" to 12)),
+                nationP(2, "촉", level = 5, power = 80, capital = 9, type = "che_촉"),
+                nationP(3, "오", level = 4, power = 60, capital = 12, type = "che_오"),
+            ),
+        )
+        // me=1: 촉(2)과 교전(state=0, 잔여 5개월). 오(3)는 행 없음 → 통상(2) 폴백.
+        `when`(diplomacy.findBySrcNationId(1)).thenReturn(
+            listOf(DiplomacyReadEntity(id = 1, srcNationId = 1, destNationId = 2, stateCode = 0, term = 5)),
+        )
+        `when`(cities.countByNationId(1)).thenReturn(2L)
+        `when`(cities.countByNationId(2)).thenReturn(1L)
+        `when`(cities.countByNationId(3)).thenReturn(0L)
+
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper))
+            .perform(get("/api/nation/1/finance"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            // 자국(1): state=7, term=null, cityCnt=2, gennum=meta.
+            .andExpect(jsonPath("$.nationsList[0].nation").value(1))
+            .andExpect(jsonPath("$.nationsList[0].diplomacy.state").value(7))
+            .andExpect(jsonPath("$.nationsList[0].diplomacy.term").doesNotExist())
+            .andExpect(jsonPath("$.nationsList[0].cityCnt").value(2))
+            .andExpect(jsonPath("$.nationsList[0].gennum").value(12))
+            .andExpect(jsonPath("$.nationsList[0].power").value(100))
+            // 촉(2): diplomacy 행 state=0/term=5.
+            .andExpect(jsonPath("$.nationsList[1].nation").value(2))
+            .andExpect(jsonPath("$.nationsList[1].diplomacy.state").value(0))
+            .andExpect(jsonPath("$.nationsList[1].diplomacy.term").value(5))
+            .andExpect(jsonPath("$.nationsList[1].cityCnt").value(1))
+            // 오(3): 행 부재 → 통상(2), term null.
+            .andExpect(jsonPath("$.nationsList[2].nation").value(3))
+            .andExpect(jsonPath("$.nationsList[2].diplomacy.state").value(2))
+            .andExpect(jsonPath("$.nationsList[2].diplomacy.term").doesNotExist())
+    }
+
+    @Test
+    fun `nation finance outcome sums getBill over npc-not-5 dedications`() {
+        // PHP getOutcome(100, SELECT dedication WHERE nation=id AND npc!=5). npc=5 장수는 지출 제외.
+        `when`(nations.findById(1)).thenReturn(Optional.of(nationP(1, "위", level = 7, type = "che_위")))
+        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
+            listOf(
+                gen(10, "순욱", nationId = 1, officerLevel = 5).also { it.dedication = 1000; it.npcState = 0 },
+                gen(11, "곽가", nationId = 1, officerLevel = 1).also { it.dedication = 2000; it.npcState = 0 },
+                gen(12, "방랑", nationId = 1, officerLevel = 0).also { it.dedication = 9000; it.npcState = 5 },
+            ),
+        )
+
+        val expected = getOutcome(100.0, listOf(1000.0, 2000.0)) // npc=5(9000) 제외
+
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper))
+            .perform(get("/api/nation/1/finance"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.outcome").value(expected))
     }
 
     // ── GET /api/nation/chief-reserved (8 posts, reserved turns by level) ────────────────────────────

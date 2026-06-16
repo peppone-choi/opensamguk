@@ -99,6 +99,8 @@ export default function VotePage() {
     const [myGeneralId, setMyGeneralId] = useState(0);
     // legacy isVoteAdmin 근사: front-info.global.vote(vote 메뉴 show 플래그). 개설/마감 표면을 게이트한다.
     const [isVoteAdmin, setIsVoteAdmin] = useState(false);
+    // legacy v_vote.php:30 voteReward = develcost*5 — 페이지 제목의 "(N금 + 추첨 유니크템)" 안내. 부재 시 null.
+    const [voteReward, setVoteReward] = useState<number | null>(null);
     // 투표 선택 draft (currentId로 keying — 다른 vote로 전환 시 비워진다). 단일=숫자, 다중=숫자 배열.
     const [singlePick, setSinglePick] = useState<number | null>(null);
     const [multiPick, setMultiPick] = useState<number[]>([]);
@@ -146,10 +148,12 @@ export default function VotePage() {
             .then((info) => {
                 setMyGeneralId(info.general?.generalId ?? 0);
                 setIsVoteAdmin(info.global?.vote ?? false);
+                setVoteReward(info.global?.voteReward ?? null);
             })
             .catch(() => {
                 setMyGeneralId(0);
                 setIsVoteAdmin(false);
+                setVoteReward(null);
             });
     }, []);
 
@@ -256,7 +260,10 @@ export default function VotePage() {
 
     return (
         <Shell>
-            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>설문 조사</h1>
+            {/* legacy PageVote.vue:4 — "설문 조사({voteReward}금과 추첨으로 유니크템 증정!)". reward 부재 시 안내 생략. */}
+            <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>
+                설문 조사{voteReward != null && `(${voteReward.toLocaleString()}금과 추첨으로 유니크템 증정!)`}
+            </h1>
 
             <div
                 className="control-bar"

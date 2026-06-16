@@ -163,11 +163,27 @@ class ScenarioImporter(
     // 4b nation
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private fun insertNations(jdbc: JdbcTemplate): Int {
+        // gennum(국가별 장수 수) — PHP `Scenario/Nation.php::postBuild` 가 nation.gennum = count(generals).
+        // 시드 장수는 nationId 로 소속되므로 시나리오 장수를 nationId 별로 센다.
+        val gennumByNation = scenario.generals.groupingBy { it.nationId }.eachCount()
         var n = 0
         for (nation in scenario.nations) {
             val typeCode = nationTypeCode(nation.ideology)
+            // PHP `Scenario/Nation.php::build` 의 nation INSERT 패러티 — 스칼라 PHP `nation` 컬럼들을
+            // opensamguk V1 스키마가 meta jsonb 로 접는다(NationFinanceSetters 가 쓰는 키와 동일).
+            //  - rate=15 / bill=100 / scout=0 / war=0 / strategic_cmd_limit=24 / surlimit=72 (시나리오 고정값).
+            //  - gennum = 소속 장수 수(postBuild). 종전 시드는 infoText 만 넣어 rate/bill 부재 → 내무부
+            //    예산/정책 표가 전부 '-'(FE 가드 `policy.rate/bill != null` 미충족). 이 누락이 그 근본 원인.
+            // (secretlimit 는 PHP INSERT 에서도 미지정 → 스키마 기본값 → 여기서도 미기재; FE 는 null→'-'.)
             val meta = jsonObject(
                 "infoText" to nation.desc,
+                "rate" to 15,
+                "bill" to 100,
+                "scout" to 0,
+                "war" to 0,
+                "strategic_cmd_limit" to 24,
+                "surlimit" to 72,
+                "gennum" to (gennumByNation[nation.id] ?: 0),
             )
             jdbc.update(
                 """

@@ -75,6 +75,8 @@ data class FrontGlobalInfo(
     val autorunUser: AutorunUserInfo? = null,
     val lastExecuted: String? = null, // game_env.turntime(마지막 턴 실행 시각 문자열)
     val develCost: Int? = null,
+    /** 설문 보상금(PHP v_vote.php:30 `voteReward` = develcost*5, Vote.php:107). develCost 부재 시 null(날조 금지). */
+    val voteReward: Int? = null,
     val noticeMsg: String? = null,
     val onlineUserCnt: Int? = null,
     val startyear: Int? = null,
