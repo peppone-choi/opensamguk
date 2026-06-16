@@ -9,6 +9,11 @@ export const IMAGE_CDN_BASE =
 // 게임 맵 타일/베이스 자산 경로 (IMAGE_CDN_BASE 하위 game/map).
 export const MAP_CDN = `${IMAGE_CDN_BASE}/game/map`;
 
+// 도시 상태/성/수도 아이콘 경로 (IMAGE_CDN_BASE 하위 game — event{state}.gif / cast_{level}.gif / event51.gif).
+// 로컬 public/icons/ 대신 CDN 단일 출처를 쓴다 — /game/ 서브패스에서 절대경로 /icons/가 게이트웨이 도메인으로
+// 새는 문제를 제거하고, devsam/image(=ground truth) 미러와 동일한 전체 상태셋(event0~9,31~34,41~43,51)을 보장한다.
+export const ICON_CDN = `${IMAGE_CDN_BASE}/game`;
+
 export const TYPE_LABEL: Record<string, string> = {
     buyRice: '쌀 구매',
     sellRice: '쌀 판매',

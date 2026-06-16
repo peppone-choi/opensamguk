@@ -14,6 +14,9 @@ export const IMAGE_CDN_BASE =
 // 로비 맵 프리뷰의 추상 게임맵 베이스 자산 경로.
 export const MAP_CDN = `${IMAGE_CDN_BASE}/game/map`;
 
+// 도시 상태/성/수도 아이콘 경로 (IMAGE_CDN_BASE 하위 game). MapViewer(web/game)와 동일 불변식 — 둘 다 CDN 단일 출처.
+export const ICON_CDN = `${IMAGE_CDN_BASE}/game`;
+
 export const AUTH_LABELS = {
     loginTitle: '로그인',
     joinTitle: '회원 가입',

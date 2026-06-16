@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { MAP_CDN } from '../lib/constants';
+import { MAP_CDN, ICON_CDN } from '../lib/constants';
 import { tintFlag, FLAG_FRAMES } from '../lib/flagTint';
 import cityRegionsData from '../config/cityRegions.json';
 
@@ -349,12 +349,12 @@ export default function MapPreview({
                                 >
                                     {/* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */}
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img className="city-cast" src={`/icons/cast_${c.level}.gif`} alt="" draggable={false} />
+                                    <img className="city-cast" src={`${ICON_CDN}/cast_${c.level}.gif`} alt="" draggable={false} />
 
                                     {/* 5) 상태 아이콘 event<state>.gif — 레거시 {top:5;left:0} 아이콘 기준. */}
                                     {showState && (
                                         // eslint-disable-next-line @next/next/no-img-element
-                                        <img className="city-state" src={`/icons/event${c.state}.gif`} alt="" draggable={false} />
+                                        <img className="city-state" src={`${ICON_CDN}/event${c.state}.gif`} alt="" draggable={false} />
                                     )}
 
                                     {/* 3) 깃발(소유국만) — 레거시 {right:flagRight;top:flagTop} 아이콘 기준. */}
@@ -365,7 +365,7 @@ export default function MapPreview({
                                             {/* 4) 수도 별 event51.gif — 깃발 우상단. */}
                                             {c.isCapital && (
                                                 // eslint-disable-next-line @next/next/no-img-element
-                                                <img className="city-capital" src="/icons/event51.gif" alt="" width={STAR_PX} height={STAR_PX} draggable={false} />
+                                                <img className="city-capital" src={`${ICON_CDN}/event51.gif`} alt="" width={STAR_PX} height={STAR_PX} draggable={false} />
                                             )}
                                         </span>
                                     )}
