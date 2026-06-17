@@ -1,11 +1,14 @@
 package opensamguk.gameapi.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.infra.entity.NationEnvEntity
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -26,9 +29,11 @@ class MapPreviewControllerTest {
     private val cityRepo = mock(CityReadRepository::class.java)
     private val nationRepo = mock(NationReadRepository::class.java)
     private val worldRepo = mock(WorldStateReadRepository::class.java)
+    private val nationEnv = mock(NationEnvReadRepository::class.java)
+    private val objectMapper = ObjectMapper()
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(MapPreviewController(cityRepo, nationRepo, worldRepo)).build()
+        MockMvcBuilders.standaloneSetup(MapPreviewController(cityRepo, nationRepo, worldRepo, nationEnv, objectMapper)).build()
 
     private fun city(id: Int, level: Int, nationId: Int, region: Int = 0) =
         CityReadEntity(id = id, nationId = nationId, level = level, region = region)
@@ -135,6 +140,32 @@ class MapPreviewControllerTest {
         mockMvc().perform(get("/api/map/preview"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.startYear").value(180))
+    }
+
+    @Test
+    fun `preview nations expose join scout message and scenario info text`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(WorldStateReadEntity(id = 1, scenarioCode = "che_1010", currentYear = 200, currentMonth = 3)),
+        )
+        `when`(cityRepo.findAll()).thenReturn(emptyList())
+        `when`(nationRepo.findAll()).thenReturn(
+            listOf(
+                NationReadEntity(
+                    id = 1,
+                    name = "위",
+                    color = "#c62828",
+                    meta = mapOf("infoText" to "천하를 도모합니다."),
+                ),
+            ),
+        )
+        `when`(nationEnv.findByNamespaceAndKey(1, "scout_msg")).thenReturn(
+            NationEnvEntity(namespace = 1, key = "scout_msg", value = "\"인재를 구합니다\""),
+        )
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.nations[0].scoutMsg").value("인재를 구합니다"))
+            .andExpect(jsonPath("$.nations[0].infoText").value("천하를 도모합니다."))
     }
 
     @Test

@@ -210,6 +210,7 @@ export default function JoinPage() {
   const [pic, setPic] = useState(true); // 전콘 사용 — 레거시 args.pic 기본 true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [displayInherit, setDisplayInherit] = useState(false);
 
   // 국가 목록(임관권유문 표시 전용 — 입장 안 함, 재야로 시작). 레거시 v_join.php nationList + scout_msg.
   const [nations, setNations] = useState<MapPreviewResponse['nations']>([]);
@@ -352,28 +353,31 @@ export default function JoinPage() {
             {shuffledNations.length === 0 ? (
               <div style={{ padding: 'var(--space-md)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>표시할 국가가 없습니다.</div>
             ) : (
-              shuffledNations.map((nation) => (
-                <div key={nation.id} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', borderTop: '1px solid var(--color-border)' }}>
-                  <div style={{
-                    backgroundColor: nation.color,
-                    color: isBrightColor(nation.color) ? '#000' : '#fff',
-                    fontSize: '1.1em',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: 'var(--space-sm)', textAlign: 'center',
-                  }}>
-                    {nation.name}
+              shuffledNations.map((nation) => {
+                const scoutText = nation.scoutMsg ?? nation.infoText ?? '-';
+                return (
+                  <div key={nation.id} style={{ display: 'grid', gridTemplateColumns: '130px 1fr', borderTop: '1px solid var(--color-border)' }}>
+                    <div style={{
+                      backgroundColor: nation.color,
+                      color: isBrightColor(nation.color) ? '#000' : '#fff',
+                      fontSize: '1.1em',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: 'var(--space-sm)', textAlign: 'center',
+                    }}>
+                      {nation.name}
+                    </div>
+                    <div
+                      style={{
+                        padding: 'var(--space-sm) var(--space-md)',
+                        fontSize: toggleZoom ? 'var(--text-base)' : 'var(--text-sm)',
+                        color: 'var(--color-text-muted)',
+                        alignSelf: 'center',
+                      }}
+                      dangerouslySetInnerHTML={{ __html: scoutText }}
+                    />
                   </div>
-                  {/* 임관권유문(scout_msg) — FE read 채널 미노출(P0-53 BLOCKED) → '-'. 날조 금지(backlog 참고). */}
-                  <div style={{
-                    padding: 'var(--space-sm) var(--space-md)',
-                    fontSize: toggleZoom ? 'var(--text-base)' : 'var(--text-sm)',
-                    color: 'var(--color-text-muted)',
-                    alignSelf: 'center',
-                  }}>
-                    -
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -479,13 +483,57 @@ export default function JoinPage() {
           </p>
         </div>
 
-        {/* 유산 포인트 사용 — 레거시 PageJoin.vue 유산 블록(천재로 생성/도시/턴 시간 지정/추가 능력치 고정).
-            백엔드 JoinController.JoinRequest는 유산 4필드(inheritCity/inheritBonusStat/inheritSpecial/
-            inheritTurntimeZone)를 받지 않고, 보유 유산 포인트 read(/api/inherit-point)는 소유 장수가 있어야
-            하므로(가입 전 401) 이 페이지에서 표시할 수 없다. 인터랙티브 적용은 backlog(가짜 입력 금지). */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-sm)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
-          <strong>유산 포인트 사용</strong> — 천재로 생성 / 도시 / 턴 시간 지정 / 추가 능력치 고정은 게임 내 적용 예정입니다.
-        </div>
+        <section style={{ borderTop: '1px solid var(--color-border)', paddingTop: 'var(--space-sm)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)' }}>
+            <strong style={{ flex: 1 }}>유산 포인트 사용</strong>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-sm)' }}>
+              <input type="checkbox" checked={displayInherit} onChange={(e) => setDisplayInherit(e.target.checked)} />
+              {displayInherit ? '숨기기' : '보이기'}
+            </label>
+          </div>
+          {displayInherit && (
+            <div style={{ display: 'grid', gap: 'var(--space-sm)', color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+                <label>
+                  <span style={{ display: 'block', marginBottom: 4 }}>보유한 유산 포인트</span>
+                  <input type="text" value="-" readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
+                </label>
+                <label>
+                  <span style={{ display: 'block', marginBottom: 4 }}>필요 유산 포인트</span>
+                  <input type="text" value="0" readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
+                </label>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-sm)' }}>
+                <label>
+                  <span style={{ display: 'block', marginBottom: 4 }}>천재로 생성</span>
+                  <select disabled value="" style={{ width: '100%', padding: 'var(--space-sm)' }}>
+                    <option value="">사용안함</option>
+                  </select>
+                </label>
+                <label>
+                  <span style={{ display: 'block', marginBottom: 4 }}>도시</span>
+                  <select disabled value="" style={{ width: '100%', padding: 'var(--space-sm)' }}>
+                    <option value="">사용안함</option>
+                  </select>
+                </label>
+                <label>
+                  <span style={{ display: 'block', marginBottom: 4 }}>턴 시간 지정</span>
+                  <select disabled value="" style={{ width: '100%', padding: 'var(--space-sm)' }}>
+                    <option value="">사용안함</option>
+                  </select>
+                </label>
+                <fieldset disabled style={{ border: '1px solid var(--color-border)', padding: 'var(--space-sm)' }}>
+                  <legend>추가 능력치 고정(통/무/지)</legend>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-xs)' }}>
+                    <input type="number" value={0} readOnly />
+                    <input type="number" value={0} readOnly />
+                    <input type="number" value={0} readOnly />
+                  </div>
+                </fieldset>
+              </div>
+            </div>
+          )}
+        </section>
 
         <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-xs)' }}>
           <button

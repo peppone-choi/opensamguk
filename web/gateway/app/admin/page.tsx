@@ -17,6 +17,7 @@ const ADMIN_SECTIONS = [
 ] as const;
 
 const PLACEHOLDER = '준비 중';
+const ADMIN_GAME_SETTINGS_PATH = '/api/game/api/admin/game-settings';
 
 // ===== 백엔드 DTO 미러 (admin/version, admin/deploy) =====
 interface ServiceVersion {
@@ -1070,7 +1071,7 @@ function GameSettingsControl() {
 
     const load = useCallback(async () => {
         try {
-            const res = await fetch('/api/admin/game-settings', { cache: 'no-store' });
+            const res = await fetch(ADMIN_GAME_SETTINGS_PATH, { cache: 'no-store' });
             if (!res.ok) throw new Error(`요청 실패 (${res.status})`);
             const data = (await res.json()) as AdminGameSettingsResponse;
             setSettings(data);
@@ -1110,7 +1111,7 @@ function GameSettingsControl() {
         setBusy(true);
         setMessage(null);
         try {
-            const res = await fetch('/api/admin/game-settings', {
+            const res = await fetch(ADMIN_GAME_SETTINGS_PATH, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ values }),

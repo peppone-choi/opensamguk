@@ -59,4 +59,8 @@ data class MapPreviewNation(
     val name: String,
     /** Hex color e.g. "#c62828", taken VERBATIM from the live `nation.color` column. */
     val color: String,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val scoutMsg: String? = null,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val infoText: String? = null,
 )

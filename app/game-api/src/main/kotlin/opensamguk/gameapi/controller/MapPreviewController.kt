@@ -1,9 +1,11 @@
 package opensamguk.gameapi.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.MapPreviewCity
 import opensamguk.gameapi.dto.MapPreviewNation
 import opensamguk.gameapi.dto.MapPreviewResponse
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.seed.MapJson
@@ -42,6 +44,8 @@ class MapPreviewController(
     private val cityReadRepository: CityReadRepository,
     private val nationReadRepository: NationReadRepository,
     private val worldStateReadRepository: WorldStateReadRepository,
+    private val nationEnvReadRepository: NationEnvReadRepository,
+    private val objectMapper: ObjectMapper,
 ) {
 
     /** 시나리오가 맵을 특정하지 못할 때의 기본 맵 코드. dims/coords는 `map/<code>.json`에서 읽는다
@@ -52,6 +56,11 @@ class MapPreviewController(
     // ── manual 10-minute cache (volatile snapshot + epoch stamp) ──
     @Volatile private var cached: MapPreviewResponse? = null
     @Volatile private var cachedAtMs: Long = 0L
+
+    private fun nationEnvText(nationId: Int, key: String): String? =
+        nationEnvReadRepository.findByNamespaceAndKey(nationId, key)
+            ?.let { runCatching { objectMapper.readTree(it.value).asText() }.getOrNull() }
+            ?.takeIf { it.isNotBlank() }
 
     @GetMapping("/preview")
     fun preview(): ResponseEntity<MapPreviewResponse> {
@@ -130,7 +139,15 @@ class MapPreviewController(
 
         val nations = allNations
             .filter { it.id != 0 } // neutral (nationId 0) has no entry
-            .map { MapPreviewNation(id = it.id, name = it.name, color = it.color) }
+            .map {
+                MapPreviewNation(
+                    id = it.id,
+                    name = it.name,
+                    color = it.color,
+                    scoutMsg = nationEnvText(it.id, "scout_msg"),
+                    infoText = it.meta["infoText"]?.toString()?.takeIf { text -> text.isNotBlank() },
+                )
+            }
             .sortedBy { it.id }
 
         // legacy 맵 페이로드의 startyear(func_map.php:68,158 — game_env 소문자 키). 시드된 world의
