@@ -4,6 +4,7 @@ import { fallbackGameUrlForServer, resolveServerGameBase } from '@/lib/serverGam
 export interface ServerEntry {
     id: string;
     name: string;
+    generation?: number;
     gameUrl?: string;
     gameApiUrl?: string;
 }
@@ -42,12 +43,22 @@ function runtimeEntries(): ServerEntry[] {
 function normalizeServerEntry(entry: Record<string, unknown>): ServerEntry {
     const id = typeof entry.id === 'string' ? entry.id.trim() : '';
     const name = typeof entry.name === 'string' && entry.name.trim() ? entry.name.trim() : id;
+    const generation = parseGeneration(entry.generation);
     const fallbackGameUrl = fallbackGameUrlForServer(id);
     const rawGameUrl = typeof entry.gameUrl === 'string' && entry.gameUrl.trim() ? entry.gameUrl.trim() : undefined;
     const gameUrl = resolveServerGameBase(rawGameUrl, id, fallbackGameUrl);
     const gameApiUrl =
         typeof entry.gameApiUrl === 'string' && entry.gameApiUrl.trim() ? entry.gameApiUrl.trim() : undefined;
-    return { id, name, gameUrl, gameApiUrl };
+    return { id, name, generation, gameUrl, gameApiUrl };
+}
+
+function parseGeneration(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+    if (typeof value === 'string' && value.trim()) {
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isFinite(parsed)) return parsed;
+    }
+    return undefined;
 }
 
 export function getServers(): ServerEntry[] {

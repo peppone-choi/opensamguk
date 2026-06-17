@@ -68,11 +68,16 @@ data class FrontGlobalInfo(
     // 데몬이 채우지 않으므로 source가 없다. 따라서 config에서 **방어적으로 읽되**(데몬이 향후 채우면
     // 그대로 노출), 부재 시 null/기본값으로 둔다 — 값을 날조하지 않는다(W3_PLAN §5 faithful-port).
     val title: String? = null,
+    val serverName: String? = null,
+    val generation: Int? = null,
     val extendedGeneral: Boolean? = null,
     val isFiction: Boolean? = null,
     val npcMode: Int? = null,
+    val npcModeText: String? = null,
+    val npcSummaryText: String? = null,
     val joinMode: Int? = null,
     val autorunUser: AutorunUserInfo? = null,
+    val otherSettingText: String? = null,
     val lastExecuted: String? = null, // game_env.turntime(마지막 턴 실행 시각 문자열)
     val develCost: Int? = null,
     /** 설문 보상금(PHP v_vote.php:30 `voteReward` = develcost*5, Vote.php:107). develCost 부재 시 null(날조 금지). */
@@ -85,6 +90,7 @@ data class FrontGlobalInfo(
     val apiLimit: Int? = null, // game_env.refreshLimit
     val serverCnt: Int? = null,
     val isunited: Boolean? = null,
+    val tournamentTermMinutes: Int? = null,
 
     /** 현재 요청의 게임 서버 식별자 — middleware/프록시가 `sam_server` 쿠키로 고정한 값. */
     val serverId: String? = null,

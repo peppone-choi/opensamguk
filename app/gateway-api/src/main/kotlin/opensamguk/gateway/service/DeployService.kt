@@ -53,6 +53,8 @@ class DeployService(
         "TURN_PROFILE_NAME",
         "SCENARIO_SEED_ENABLED",
         "SCENARIO_CODE",
+        "SERVER_NAME",
+        "SERVER_GENERATION",
         "GAME_API_URL",
         "GATEWAY_API_URL",
         "JWT_SECRET",
@@ -358,6 +360,7 @@ class DeployService(
             val node = objectMapper.readTree(body)
             val id = node.path("id").asText("")
             val name = node.path("name").asText("")
+            val generation = node.path("generation").asText("")
             val gameApiPort = node.path("gameApiPort").asText("")
             val webGamePort = node.path("webGamePort").asText("")
             val imageTag = node.path("imageTag").asText("")
@@ -368,6 +371,8 @@ class DeployService(
                     json(400, """{"ok":false,"message":"서버 id가 올바르지 않습니다."}""")
                 name.isBlank() || name.contains('\n') || name.contains('\r') ->
                     json(400, """{"ok":false,"message":"서버 이름이 올바르지 않습니다."}""")
+                generation.isNotBlank() && !validGeneration(generation) ->
+                    json(400, """{"ok":false,"message":"기수는 1 이상의 숫자여야 합니다."}""")
                 !validPort(gameApiPort) || !validPort(webGamePort) ->
                     json(400, """{"ok":false,"message":"포트는 1-65535 숫자여야 합니다."}""")
                 imageTag.isNotBlank() && !imageTag.matches(Regex("^[A-Za-z0-9._-]+$")) ->
@@ -391,6 +396,7 @@ class DeployService(
             val scenarioCode = node.path("scenarioCode").asText("")
             val expectedKeys = setOf(
                 "confirm",
+                "generation",
                 "scenarioCode",
                 "scenarioSeedEnabled",
                 "turnTerm",
@@ -423,6 +429,8 @@ class DeployService(
                     json(400, """{"ok":false,"message":"허용되지 않은 리셋 값: $unknown"}""")
                 node.path("confirm").asText("") != "RESET $serverId" ->
                     json(400, """{"ok":false,"message":"리셋 확인 문구가 일치하지 않습니다."}""")
+                node.has("generation") && !validGeneration(node.path("generation").asText("")) ->
+                    json(400, """{"ok":false,"message":"기수는 1 이상의 숫자여야 합니다."}""")
                 scenarioCode.isNotBlank() && !scenarioCode.matches(Regex("^[A-Za-z0-9_.:-]+$")) ->
                     json(400, """{"ok":false,"message":"시나리오 코드가 올바르지 않습니다."}""")
                 node.has("scenarioSeedEnabled") && !node.path("scenarioSeedEnabled").isBoolean ->
@@ -480,6 +488,7 @@ class DeployService(
                 gameApiUrl = text(node, "gameApiUrl") ?: fallback?.gameApiUrl ?: defaultGameApiUrl(id),
                 gameEngineUrl = text(node, "gameEngineUrl") ?: fallback?.gameEngineUrl ?: defaultGameEngineUrl(id),
                 deployProject = text(node, "deployProject", "project") ?: fallback?.deployProject ?: defaultDeployProject(id),
+                generation = int(node, "generation") ?: fallback?.generation,
             )
         }
     }
@@ -488,6 +497,15 @@ class DeployService(
         fields.asSequence()
             .map { node.path(it).asText("") }
             .firstOrNull { it.isNotBlank() }
+
+    private fun int(node: JsonNode, field: String): Int? {
+        val value = node.path(field)
+        return when {
+            value.isInt || value.isLong -> value.asInt()
+            value.isTextual -> value.asText().toIntOrNull()
+            else -> null
+        }
+    }
 
     private fun withServerId(body: String, serverId: String): String {
         val node = objectMapper.readTree(body)
@@ -519,6 +537,11 @@ class DeployService(
         if (!portRegex.matches(value)) return false
         val n = value.toIntOrNull() ?: return false
         return n in 1..65535
+    }
+
+    private fun validGeneration(value: String): Boolean {
+        val n = value.toIntOrNull() ?: return false
+        return n >= 1
     }
 
     private fun json(status: Int, body: String): EnvProxyResponse =

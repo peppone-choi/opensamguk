@@ -7,16 +7,9 @@
 
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { FrontGlobalInfo, GameConstResponse } from '@/lib/types';
-import { calcTournamentTerm } from '@/lib/utilGame';
-
-const NPC_MODE_TEXT = ['불가능', '가능', '선택 생성'];
 
 function num(n: number | undefined): string {
     return (n ?? 0).toLocaleString('ko-KR');
-}
-
-function autorunInfoText(autorunUser: FrontGlobalInfo['autorunUser']): string {
-    return autorunUser && autorunUser.limit_minutes > 0 ? '자율행동' : '';
 }
 
 function gameHref(global: FrontGlobalInfo, childPath: string): string {
@@ -34,14 +27,15 @@ export default function GameInfo({
 }) {
     const title = global.title ?? constData?.mapName ?? '삼국지';
     const serverName = global.serverName ?? '';
-    const serverCnt = global.serverCnt ?? 1;
+    const generation = global.generation ?? global.serverCnt;
+    const generationText = generation == null ? '' : `${generation}기`;
+    const titleText = [title, serverName, generationText].filter(Boolean).join(' ');
     const locked = global.serverLocked === true;
 
     return (
         <header className="game-info">
             <h3 className="scenario-name">
-                {title} {serverName}
-                {serverCnt}기 <span className="avoid-wrap text-cyan">{global.scenarioText}</span>
+                {titleText} <span className="avoid-wrap text-cyan">{global.scenarioText}</span>
             </h3>
 
             <div className="game-info-grid">
@@ -49,19 +43,16 @@ export default function GameInfo({
                 <div className="gi-cell gi-wide text-cyan">{global.scenarioText}</div>
 
                 {/* 2 subNPCType */}
-                <div className="gi-cell text-cyan">
-                    NPC {num(global.npcCount)}명, 상성: {global.extendedGeneral ? '확장' : '표준'}{' '}
-                    {global.isFiction ? '가상' : '사실'}
-                </div>
+                <div className="gi-cell text-cyan">{global.npcSummaryText ?? `NPC ${num(global.npcCount)}명`}</div>
 
                 {/* 3 subNPCMode */}
-                <div className="gi-cell text-cyan">NPC선택: {NPC_MODE_TEXT[global.npcMode ?? 0]}</div>
+                <div className="gi-cell text-cyan">NPC선택: {global.npcModeText ?? '-'}</div>
 
                 {/* 4 subTournamentMode */}
-                <div className="gi-cell text-cyan">토너먼트: 경기당 {calcTournamentTerm(global.turnterm)}분</div>
+                <div className="gi-cell text-cyan">토너먼트: 경기당 {num(global.tournamentTermMinutes)}분</div>
 
                 {/* 5 subOtherSetting */}
-                <div className="gi-cell text-cyan">기타 설정: {autorunInfoText(global.autorunUser)}</div>
+                <div className="gi-cell text-cyan">기타 설정: {global.otherSettingText ?? ''}</div>
 
                 {/* 6 subYearMonth */}
                 <div className="gi-cell gi-wide">

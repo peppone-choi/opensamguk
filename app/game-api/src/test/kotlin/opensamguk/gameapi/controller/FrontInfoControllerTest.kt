@@ -54,9 +54,30 @@ class FrontInfoControllerTest {
     private val objectMapper = ObjectMapper()
     private val resolver = GeneralResolver(owners, generals, nations)
 
-    private fun mockMvc(): MockMvc =
+    private fun mockMvc(
+        serverName: String = "",
+        serverGeneration: String = "",
+        serverId: String = "",
+    ): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            FrontInfoController(resolver, world, generals, nations, cities, ranks, auctions, votePolls, votes, troops, generalTurns, nationEnv, objectMapper),
+            FrontInfoController(
+                resolver,
+                world,
+                generals,
+                nations,
+                cities,
+                ranks,
+                auctions,
+                votePolls,
+                votes,
+                troops,
+                generalTurns,
+                nationEnv,
+                objectMapper,
+                serverName,
+                serverGeneration,
+                serverId,
+            ),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
@@ -85,6 +106,7 @@ class FrontInfoControllerTest {
         `when`(cities.count()).thenReturn(42L)
         `when`(generals.countByNpcState(2)).thenReturn(150L)
         `when`(generals.countByNpcState(1)).thenReturn(10L)
+        `when`(generals.countByNpcStateGreaterThan(0)).thenReturn(160L)
     }
 
     @Test
@@ -97,7 +119,11 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.global.year").value(200))
             .andExpect(jsonPath("$.global.month").value(3))
             .andExpect(jsonPath("$.global.turnterm").value(60)) // 3600s / 60
+            .andExpect(jsonPath("$.global.tournamentTermMinutes").value(60))
             .andExpect(jsonPath("$.global.generalCount").value(174))
+            .andExpect(jsonPath("$.global.npcCount").value(160))
+            .andExpect(jsonPath("$.global.npcModeText").value("불가능"))
+            .andExpect(jsonPath("$.global.npcSummaryText").value("NPC 160명, 상성: 표준 사실"))
             .andExpect(jsonPath("$.general.hasGeneral").value(false))
             .andExpect(jsonPath("$.nation").doesNotExist())
             .andExpect(jsonPath("$.city").doesNotExist())
@@ -124,6 +150,7 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.global.autorunUser.options.develop").value(1))
             .andExpect(jsonPath("$.global.autorunUser.options.recruit").value(0))
             .andExpect(jsonPath("$.global.autorunUser.options.recruit_high").value(2))
+            .andExpect(jsonPath("$.global.otherSettingText").value("자율행동"))
     }
 
     @Test
@@ -139,8 +166,22 @@ class FrontInfoControllerTest {
         mockMvc().perform(get("/api/front-info"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.global.npcMode").value(2))
+            .andExpect(jsonPath("$.global.npcModeText").value("선택 생성"))
             .andExpect(jsonPath("$.global.blockGeneralCreate").value(1))
             .andExpect(jsonPath("$.global.generalCntLimit").value(500))
+    }
+
+    @Test
+    fun `global exposes server display metadata for game main`() {
+        seedWorld()
+
+        mockMvc(serverName = "통일 서버", serverGeneration = "7", serverId = "1")
+            .perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.serverName").value("통일 서버"))
+            .andExpect(jsonPath("$.global.generation").value(7))
+            .andExpect(jsonPath("$.global.serverCnt").value(7))
+            .andExpect(jsonPath("$.global.serverId").value("s1"))
     }
 
     @Test

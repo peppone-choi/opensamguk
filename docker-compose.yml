@@ -111,6 +111,9 @@ services:
       REDIS_PORT: 6379
       GAME_API_PORT: 8081
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
+      SERVER_ID: ${SERVER_ID:-s1}
+      SERVER_NAME: ${SERVER_NAME:-통일 서버}
+      SERVER_GENERATION: ${SERVER_GENERATION:-1}
       # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — see .env.example}
       JAVA_OPTS: ${GAME_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}

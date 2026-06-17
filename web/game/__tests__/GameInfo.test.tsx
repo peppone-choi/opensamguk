@@ -13,6 +13,10 @@ const baseGlobal: FrontGlobalInfo = {
     nationCount: 2,
     cityCount: 5,
     npcCount: 3,
+    npcModeText: '불가능',
+    npcSummaryText: 'NPC 3명, 상성: 표준 사실',
+    tournamentTermMinutes: 60,
+    otherSettingText: '',
 };
 
 function renderGameInfo(global: Partial<FrontGlobalInfo>) {
@@ -20,30 +24,31 @@ function renderGameInfo(global: Partial<FrontGlobalInfo>) {
 }
 
 describe('GameInfo parity render', () => {
-    it('clamps tournament term through the legacy calcTournamentTerm helper', () => {
-        const { rerender } = renderGameInfo({ turnterm: 3 });
+    it('renders tournament term from front-info metadata', () => {
+        const { rerender } = renderGameInfo({ turnterm: 3, tournamentTermMinutes: 5 });
 
         expect(screen.getByText('토너먼트: 경기당 5분')).toBeInTheDocument();
 
-        rerender(<GameInfo global={{ ...baseGlobal, turnterm: 200 }} constData={null} />);
+        rerender(<GameInfo global={{ ...baseGlobal, turnterm: 200, tournamentTermMinutes: 120 }} constData={null} />);
         expect(screen.getByText('토너먼트: 경기당 120분')).toBeInTheDocument();
     });
 
-    it('renders 기타 설정 from legacy autorunUser instead of a baked 자동 label', () => {
-        const { rerender } = renderGameInfo({
-            autorunUser: { limit_minutes: 120, options: { develop: 1 } },
-        });
+    it('renders main settings from front-info metadata', () => {
+        const { rerender } = renderGameInfo({ otherSettingText: '자율행동', generation: 7, npcModeText: '선택 생성' });
 
         expect(screen.getByText('기타 설정: 자율행동')).toBeInTheDocument();
+        expect(screen.getByText(/7기/)).toBeInTheDocument();
+        expect(screen.getByText('NPC선택: 선택 생성')).toBeInTheDocument();
         expect(screen.queryByText('기타 설정: 자동')).not.toBeInTheDocument();
 
         rerender(
             <GameInfo
-                global={{ ...baseGlobal, autorunUser: { limit_minutes: 0, options: { develop: 1 } } }}
+                global={{ ...baseGlobal, otherSettingText: '', generation: undefined, npcModeText: '불가능' }}
                 constData={null}
             />,
         );
         expect(screen.getByText('기타 설정:')).toBeInTheDocument();
+        expect(screen.queryByText(/기\s+테스트 시나리오/)).not.toBeInTheDocument();
         expect(screen.queryByText('기타 설정: 자동')).not.toBeInTheDocument();
     });
 });

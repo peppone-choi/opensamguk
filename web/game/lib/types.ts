@@ -32,15 +32,19 @@ export interface FrontGlobalInfo {
     // ── GameInfo header (spec §3) — optional until game-api emits them ──
     title?: string;
     serverName?: string;
+    generation?: number;
     serverCnt?: number;
     serverId?: string;
     extendedGeneral?: boolean;
     isFiction?: boolean;
     npcMode?: number; // 0 불가능 / 1 가능 / 2 선택 생성
+    npcModeText?: string;
+    npcSummaryText?: string;
     autorunUser?: {
         limit_minutes: number;
         options: Record<string, number>;
     } | null;
+    otherSettingText?: string;
     onlineUserCnt?: number;
     apiLimit?: number;
     createdUserCnt?: number;
@@ -58,6 +62,7 @@ export interface FrontGlobalInfo {
     lastExecuted?: string | null;
     serverLocked?: boolean;
     isTournamentActive?: boolean;
+    tournamentTermMinutes?: number;
     tournamentType?: string;
     tournamentState?: string;
     // ── GlobalMenu flags (spec §4) — drive condHighlight/condShow + control-bar highlight ──
