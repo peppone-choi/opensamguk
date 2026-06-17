@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class JwtTokenProviderTest {
 
     private val secret = java.util.Base64.getEncoder().encodeToString(Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256).encoded)
-    private val provider = JwtTokenProvider(secret, 1000L, 2000L)
+    private val provider = JwtTokenProvider(secret, 60_000L, 120_000L)
 
     @Test
     fun `generate and validate access token`() {
