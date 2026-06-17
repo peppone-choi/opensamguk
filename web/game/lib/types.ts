@@ -299,6 +299,8 @@ export interface MapPreviewNation {
     id: number;
     name: string;
     color: string;
+    scoutMsg?: string | null;
+    infoText?: string | null;
 }
 
 export interface MapPreviewResponse {
