@@ -78,16 +78,16 @@ data class AuctionUpsert(val id: Int?, val allocatedId: Int?, val columns: Map<S
 data class AuctionBidInsert(val columns: Map<String, Any?>)
 
 /**
- * An `ng_betting` insertUpdate intent (P6 betting intake). PHP `Betting::bet()` insertUpdate
- * (Betting.php:162-166) — flush UPSERTs on (general_id,betting_id,betting_type), re-bet = amount +=.
- * `columns` mirrors `NgBettingEntity` fields: betting_id, general_id, user_id, betting_type, amount.
+ * An `ng_betting` write intent (P6 betting intake). `columns` mirrors `NgBettingEntity` fields:
+ * betting_id, general_id, user_id, betting_type, amount. W0-8: flush 측은 PHP `insertUpdate`
+ * 패러티의 UPSERT — UNIQUE(general_id,betting_id,betting_type) 충돌(동일 키 재베팅) 시 amount 누적.
  */
 data class BettingInsert(val columns: Map<String, Any?>)
 
 /**
  * `board_post` INSERT 의도 (F4 Wave C2 슬라이스 C, 회의실/기밀실 글). INSERT 전용 — 글은 절대 갱신되지
  * 않는다. `columns`는 board_post 컬럼을 미러링: nation_id, is_secret, author_general_id, author_name,
- * title, content_html.
+ * author_icon(W0-8 V15 — NULL 허용, PHP board.author_icon), title, content_html.
  */
 data class BoardPostInsert(val columns: Map<String, Any?>)
 
@@ -124,6 +124,14 @@ data class VoteCommentInsert(val columns: Map<String, Any?>)
  * gen_count, personal_hist, special_hist, power_hist, crewtype, etc, aux(jsonb).
  */
 data class StatisticInsert(val columns: Map<String, Any?>)
+
+/**
+ * `yearbook_history` UPSERT 의도 (W0-8 연감 채널 — P0-20 LogHistory 월별 스냅샷, func_history.php:436-448).
+ * `columns`는 yearbook_history 컬럼을 미러링: profile_name, year, month, map(jsonb), nations(jsonb),
+ * global_history(jsonb), global_action(jsonb), hash. (profile_name,year,month) UNIQUE 충돌 시 갱신
+ * (재기동-재실행 멱등). 기록 주체는 W1-I의 LogHistory writer — 이 채널은 W0-8이 선공급한 운반체.
+ */
+data class YearbookInsert(val columns: Map<String, Any?>)
 
 /**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive

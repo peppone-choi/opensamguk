@@ -36,6 +36,7 @@ import opensamguk.infra.persistence.TroopRow
 import opensamguk.infra.persistence.VoteCommentInsertRow
 import opensamguk.infra.persistence.VoteInsertRow
 import opensamguk.infra.persistence.VotePollInsertRow
+import opensamguk.infra.persistence.YearbookInsertRow
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -228,7 +229,7 @@ object DatabaseHooks {
             deletedNationSnapshots = deletedNationSnapshots,
             inheritanceKvWrites = dirty.inheritanceKvWrites,
             inheritanceLogInserts = dirty.inheritanceLogInserts.map {
-                InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
+                InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag, it.date)
             },
             inheritanceResultInserts = dirty.inheritanceResultInserts,
             statisticInserts = dirty.statisticInserts.map {
@@ -447,15 +448,14 @@ object DatabaseHooks {
             deletedNationSnapshots = deletedNationSnapshots,
             inheritanceKvWrites = recorder.inheritanceKvWrites(),
             inheritanceLogInserts = recorder.inheritanceLogInserts().map {
-                InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag)
+                InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag, it.date)
             },
             inheritanceResultInserts = recorder.inheritanceResultInserts(),
-            // 연경계(checkStatistic) statistic INSERT — recorder 채널(W1). 2-인자 빌더는 이미 매핑하는데
-            // 이 라이브 수렴(3-인자) 경로에서 빠져 있어 연간 statistic 행이 영속에서 누락됐다(#10). inheritance
-            // 채널과 동일하게 recorder.statisticInserts() 를 StatisticInsertRow 로 옮긴다.
-            statisticInserts = recorder.statisticInserts().map {
-                StatisticInsertRow(it.columns)
-            },
+            // W0-8 버그픽스: recorder statistic 채널 → payload 매핑이 누락돼 있었다 —
+            // DaemonLoopConfig가 연경계에 기록한 checkStatistic INSERT가 flush에서 조용히 사라졌다.
+            statisticInserts = recorder.statisticInserts().map { StatisticInsertRow(it.columns) },
+            // W0-8 연감 채널 — LogHistory 월별 스냅샷(P0-20)의 yearbook_history UPSERT (기록은 W1-I).
+            yearbookInserts = recorder.yearbookInserts().map { YearbookInsertRow(it.columns) },
         )
     }
 

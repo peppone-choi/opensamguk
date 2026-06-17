@@ -160,4 +160,34 @@ class FlushPayloadConvergenceTest {
         assertTrue(kv.containsKey(KvKey("betting", "id_3", "k2")))
         assertEquals(null, kv[KvKey("betting", "id_3", "k2")])
     }
+
+    @Test
+    fun `W0-8 -- statistic과 yearbook recorder 채널이 payload에 실린다 (statistic은 기존 silent-drop 수정)`() {
+        // statistic: DaemonLoopConfig가 연경계에 recorder.recordStatisticInsert로 기록하지만,
+        // 수렴 빌더가 이 채널을 payload로 매핑하지 않아 flush에서 조용히 사라졌다(W0-8 수정 대상).
+        // yearbook: W0-8 신규 채널 — W1-I LogHistory writer가 기록만 하면 flush로 흐른다.
+        val world = world()
+        val recorder = ChangeRecorder()
+        recorder.recordStatisticInsert(linkedMapOf("year" to 200, "month" to 1, "nation_count" to 2))
+        recorder.recordYearbookInsert(
+            linkedMapOf(
+                "profile_name" to "sc", "year" to 200, "month" to 1,
+                "map" to "{}", "nations" to "[]",
+                "global_history" to """["정세"]""", "global_action" to """["동향"]""",
+            ),
+        )
+        assertTrue(recorder.isDirty, "statistic/yearbook 기록만으로도 dirty 신호가 서야 flush가 트리거된다")
+
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+
+        assertEquals(1, payload.statisticInserts.size, "recorder statistic 채널이 payload에 도달해야 한다 (was dropped)")
+        assertEquals(200, payload.statisticInserts.single().columns["year"])
+        assertEquals(1, payload.yearbookInserts.size, "yearbook 채널이 payload에 도달해야 한다")
+        assertEquals("""["정세"]""", payload.yearbookInserts.single().columns["global_history"])
+
+        // clear()가 두 채널을 비운다 — 다음 tick 중복 flush 방지.
+        recorder.clear()
+        assertTrue(recorder.statisticInserts().isEmpty())
+        assertTrue(recorder.yearbookInserts().isEmpty())
+    }
 }

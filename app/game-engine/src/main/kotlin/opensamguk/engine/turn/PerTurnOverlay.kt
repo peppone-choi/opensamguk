@@ -112,6 +112,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             agricultureMax = c.agricultureMax,
             supplyState = c.supplyState,
             frontState = c.frontState,
+            // W0-8: 재해/호황 state(V14 영속 컬럼) — 엔진 인메모리 값을 그대로 실어 flush가 round-trip한다.
             state = c.state,
             trust = metaDouble(c.meta, "trust"),
             // P2 develop/defense surface (carried so the widened step-7 city UPDATE round-trips;

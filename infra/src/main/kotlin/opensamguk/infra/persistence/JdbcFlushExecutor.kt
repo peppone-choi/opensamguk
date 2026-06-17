@@ -124,7 +124,8 @@ class JdbcFlushExecutor(
                 auctionBidInsertMany(payload.auctionBidInserts)
             }
             if (payload.bettingInserts.isNotEmpty()) {
-                bettingInsertMany(payload.bettingInserts)
+                // W0-8: PHP insertUpdate 패러티 — 동일 (general,betting,type) 재베팅은 amount 누적 UPSERT.
+                bettingUpsertMany(payload.bettingInserts)
             }
 
             // 8d. 게시판 채널 (F4 C2 슬라이스 C): board_post INSERT 후 board_comment INSERT —
@@ -200,6 +201,10 @@ class JdbcFlushExecutor(
             // 12. Statistic channel (W1) — year-boundary statistic INSERT.
             if (payload.statisticInserts.isNotEmpty()) {
                 statisticInsertMany(payload.statisticInserts)
+            }
+            // 13. 연감 채널 (W0-8) — yearbook_history UPSERT (P0-20 LogHistory 월별 스냅샷).
+            if (payload.yearbookInserts.isNotEmpty()) {
+                yearbookUpsertMany(payload.yearbookInserts)
             }
             null
         }
@@ -908,12 +913,15 @@ class JdbcFlushExecutor(
     }
 
     /**
-     * UPSERT the `ng_betting` rows (P6 betting intake). PHP `Betting::bet()`은 `insertUpdate`
-     * (Betting.php:162-166) — 같은 (general,betting,type) 재베팅이면 `amount += %i`만 갱신한다.
-     * V7 UNIQUE(general_id,betting_id,betting_type) 위에서 plain INSERT는 재베팅 시 제약 위반으로
-     * flush가 크래시(턴 동결 계열)하므로 ON CONFLICT … amount += 가 패러티이자 안전 경로다.
+     * `ng_betting` UPSERT (P6 베팅 — W0-8에서 INSERT 전용 → upsert로 확장, P0-07 flush 측).
+     *
+     * PHP 정본 Betting::bet(Betting.php:160-164)은
+     * `insertUpdate('ng_betting', row, ['amount' => sqleval('amount + %i', $amount)])` —
+     * UNIQUE(general_id, betting_id, betting_type)(V7, PHP by_general 인덱스 동일) 충돌 시
+     * amount만 누적하고 user_id 등 나머지 컬럼은 기존 행을 유지한다. 동일 키 재베팅이 행을
+     * 중복 적재하던 INSERT-only 결함의 정본 경로. (검증 체인 포팅은 W1-C PlaceBetHandler 소관.)
      */
-    private fun bettingInsertMany(rows: List<BettingInsertRow>) {
+    private fun bettingUpsertMany(rows: List<BettingInsertRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
             MapSqlParameterSource()
@@ -928,16 +936,20 @@ class JdbcFlushExecutor(
             INSERT INTO ng_betting (betting_id, general_id, user_id, betting_type, amount)
             VALUES (:betting_id, :general_id, :user_id, :betting_type, :amount)
             ON CONFLICT (general_id, betting_id, betting_type)
-            DO UPDATE SET amount = ng_betting.amount + EXCLUDED.amount
+                DO UPDATE SET amount = ng_betting.amount + EXCLUDED.amount
             """.trimIndent(),
             batch,
         )
-        lastOps.add(FlushExecOp("ng_betting", FlushVerb.CREATE_MANY, rows.size))
+        lastOps.add(FlushExecOp("ng_betting", FlushVerb.UPSERT, rows.size))
     }
 
     // --- step 8d: 게시판 채널 (F4 C2 슬라이스 C, 회의실/기밀실) ----------------------------------
 
-    /** `board_post` 행 INSERT (INSERT 전용; `id`는 SERIAL — 생략해 DB가 부여). */
+    /**
+     * `board_post` 행 INSERT (INSERT 전용; `id`는 SERIAL — 생략해 DB가 부여).
+     * W0-8: author_icon(V15, PHP board.author_icon VARCHAR(128) NULL — j_board_article_add.php:65,73)
+     * 동반 — columns에 키가 없으면 NULL 바인딩(아이콘 없는 글, PHP NULL 패러티). 채움은 W1-D BoardHandler 소관.
+     */
     private fun boardPostInsertMany(rows: List<BoardPostInsertRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
@@ -946,13 +958,14 @@ class JdbcFlushExecutor(
                 .addValue("is_secret", c["is_secret"])
                 .addValue("author_general_id", c["author_general_id"])
                 .addValue("author_name", c["author_name"])
+                .addValue("author_icon", c["author_icon"])
                 .addValue("title", c["title"])
                 .addValue("content_html", c["content_html"])
         }.toTypedArray()
         jdbc.batchUpdate(
             """
-            INSERT INTO board_post (nation_id, is_secret, author_general_id, author_name, title, content_html)
-            VALUES (:nation_id, :is_secret, :author_general_id, :author_name, :title, :content_html)
+            INSERT INTO board_post (nation_id, is_secret, author_general_id, author_name, author_icon, title, content_html)
+            VALUES (:nation_id, :is_secret, :author_general_id, :author_name, :author_icon, :title, :content_html)
             """.trimIndent(),
             batch,
         )
@@ -1188,7 +1201,7 @@ class JdbcFlushExecutor(
 
     // --- step 11: inheritance channel (T0.8) --------------------------------------------------
 
-    /** INSERT into `inheritance_log`. */
+    /** INSERT into `inheritance_log`. W0-8: date(V17, PHP user_record.date NULL 허용) 동반. */
     private fun inheritanceLogInsertMany(rows: List<InheritanceLogRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             MapSqlParameterSource()
@@ -1196,11 +1209,12 @@ class JdbcFlushExecutor(
                 .addValue("year", r.year)
                 .addValue("month", r.month)
                 .addValue("text", r.text)
+                .addValue("date", r.date)
         }.toTypedArray()
         jdbc.batchUpdate(
             """
-            INSERT INTO inheritance_log (user_id, year, month, text)
-            VALUES (:user_id, :year, :month, :text)
+            INSERT INTO inheritance_log (user_id, year, month, text, date)
+            VALUES (:user_id, :year, :month, :text, CAST(:date AS timestamptz))
             """.trimIndent(),
             batch,
         )
@@ -1256,6 +1270,42 @@ class JdbcFlushExecutor(
             batch,
         )
         lastOps.add(FlushExecOp("statistic", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    /**
+     * `yearbook_history` UPSERT (W0-8 연감 채널, P0-20). PHP 정본 LogHistory(func_history.php:436-448)는
+     * getCurrentHistory 스냅샷을 `ng_history`에 평INSERT하지만, V1 스키마의 UNIQUE(profile_name, year,
+     * month) 위에서 재기동-재실행이 멱등하도록 ON CONFLICT 갱신으로 싣는다(같은 달 재캡처 = 동일 최종
+     * 상태 — 패러티 중립; MySQL ng_history에는 UNIQUE가 없어 평INSERT가 정본이지만 중복 행도 없다).
+     * map은 객체(기본 '{}'), global_history/global_action/nations는 배열(기본 '[]') jsonb.
+     */
+    private fun yearbookUpsertMany(rows: List<YearbookInsertRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("profile_name", c["profile_name"])
+                .addValue("year", c["year"])
+                .addValue("month", c["month"])
+                .addValue("map", jsonb(c["map"] as? String))
+                .addValue("nations", jsonb(c["nations"] as? String ?: "[]"))
+                .addValue("global_history", jsonb(c["global_history"] as? String ?: "[]"))
+                .addValue("global_action", jsonb(c["global_action"] as? String ?: "[]"))
+                .addValue("hash", c["hash"] ?: "")
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO yearbook_history (profile_name, year, month, map, nations, global_history, global_action, hash)
+            VALUES (:profile_name, :year, :month, :map, :nations, :global_history, :global_action, :hash)
+            ON CONFLICT (profile_name, year, month) DO UPDATE
+                SET map = EXCLUDED.map,
+                    nations = EXCLUDED.nations,
+                    global_history = EXCLUDED.global_history,
+                    global_action = EXCLUDED.global_action,
+                    hash = EXCLUDED.hash
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("yearbook_history", FlushVerb.UPSERT, rows.size))
     }
 
     private fun jsonb(json: String?): PGobject {
@@ -1326,10 +1376,20 @@ data class FlushPayload(
     val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(), // step-11c inheritance_result INSERT
     // --- W1 checkStatistic channel ---
     val statisticInserts: List<StatisticInsertRow> = emptyList(),     // step-12 statistic INSERT
+    // --- W0-8 연감 채널 (P0-20 LogHistory 월별 스냅샷) ---
+    val yearbookInserts: List<YearbookInsertRow> = emptyList(),       // step-13 yearbook_history UPSERT
 )
 
 /** One `statistic` INSERT (W1 checkStatistic, INSERT-only). `columns`는 byte-faithful statistic 컬럼 맵. */
 data class StatisticInsertRow(val columns: Map<String, Any?>)
+
+/**
+ * One `yearbook_history` UPSERT (W0-8 연감 채널, P0-20). `columns`는 profile_name/year/month/
+ * map(jsonb)/nations(jsonb)/global_history(jsonb)/global_action(jsonb)/hash 컬럼 맵 —
+ * PHP `ng_history`(schema.sql:465) 월별 스냅샷 행의 opensamguk 대응. (profile_name,year,month)
+ * UNIQUE 충돌 시 스냅샷 4컬럼+hash 갱신(재기동-재실행 멱등).
+ */
+data class YearbookInsertRow(val columns: Map<String, Any?>)
 
 /** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
 data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
@@ -1337,7 +1397,10 @@ data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Ma
 /** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
 data class AuctionBidInsertRow(val columns: Map<String, Any?>)
 
-/** One `ng_betting` INSERT (P6 betting intake, INSERT-only). */
+/**
+ * One `ng_betting` UPSERT (P6 betting intake). W0-8: INSERT 전용 → PHP `insertUpdate` 패러티의
+ * amount-누적 UPSERT (UNIQUE(general_id,betting_id,betting_type) 충돌 시 amount += EXCLUDED.amount).
+ */
 data class BettingInsertRow(val columns: Map<String, Any?>)
 
 /**
@@ -1381,13 +1444,18 @@ data class VoteCommentInsertRow(val columns: Map<String, Any?>)
  */
 data class TroopRow(val troopLeader: Int, val nation: Int, val name: String)
 
-/** One `inheritance_log` INSERT (T0.8). Year/month are stamped by [DatabaseHooks]. */
+/**
+ * One `inheritance_log` INSERT (T0.8). Year/month are stamped by [DatabaseHooks].
+ * `date`(W0-8, V17): PHP user_record.date(DATETIME NULL) 대응의 ISO-8601 timestamptz 문자열 —
+ * null이면 NULL 바인딩(기존 행/미스탬프 행 패러티; 실제 스탬프는 W1-J 소관).
+ */
 data class InheritanceLogRow(
     val ownerID: Int,
     val year: Int,
     val month: Int,
     val text: String,
     val tag: String,
+    val date: String? = null,
 )
 
 /**
