@@ -45,9 +45,10 @@ import java.time.Instant
  * dirty-ids select which world rows to flush. Logs are pushed onto the world and drained from its log
  * list (the only world-dirty signal exercised in P1).
  *
- * **No `commandResult` publish in P1** (design DECISION): the events-stream `commandResult`
- * publisher+consumer is deferred (P-later). The P1 gate uses ONLY the `turnCompleted` realtime
- * pub/sub → SSE relay round-trip.
+ * **`commandResult` 회신 (W0-4, P1 DECISION 해제):** 드레인된 인테이크 엔벨로프의 결과는
+ * (requestId, result) 쌍으로 [RealtimePublisher.publishCommandResult]에 회신된다 — per-requestId
+ * string 키 + 짧은 TTL, game-api `GET /api/command/result/{requestId}` 폴링이 소비한다.
+ * `turnCompleted` realtime pub/sub → SSE relay 왕복은 그대로 유지된다.
  */
 open class TurnRunService(
     private val world: InMemoryTurnWorld,
@@ -90,8 +91,8 @@ open class TurnRunService(
     /**
      * Routes drained intake commands (auction bid/finalize, and the P6/P7 commands that follow) to
      * their engine handlers. Built per-run against the live [world] (mirrors the sibling per-run
-     * handlers — the world is per-run state, not a Spring bean). Results are currently DISCARDED: the
-     * events-stream `commandResult` publish is deferred per the P1 DECISION documented above.
+     * handlers — the world is per-run state, not a Spring bean). 결과는 W0-4부터
+     * [RealtimePublisher.publishCommandResult]로 per-requestId 회신된다(위 헤더 참조).
      */
     private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null && boardPostRepository != null) {
         TurnDaemonCommandDispatcher(
@@ -146,11 +147,18 @@ open class TurnRunService(
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
         //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
-        //    intake commands (auction bid/finalize, …) route to their handler. Results are discarded —
-        //    the `commandResult` publish is deferred (P1 DECISION). The reserved general-turn ACTIONS
-        //    live in the general_turn ring (ReservedTurnRepository), NOT on this stream.
-        val commands = commandStream.readCommands(commandBlockMs)
-        commandDispatcher?.dispatchAll(commands) ?: emptyList()
+        //    intake commands (auction bid/finalize, …) route to their handler. The reserved
+        //    general-turn ACTIONS live in the general_turn ring (ReservedTurnRepository), NOT on this
+        //    stream.
+        //
+        //    W0-4 인테이크 결과 회신: 엔벨로프째 드레인해 각 (requestId, result) 쌍을
+        //    [RealtimePublisher.publishCommandResult]로 SET한다(짧은 TTL — game-api 폴링이 읽는다).
+        //    deny(ok=false)도 회신한다 — 페이지가 성공 토스트를 위조하지 않으려면 deny가 돌아와야
+        //    한다. 이 publish는 Redis 휘발성 회신이며 DB 쓰기가 아니다(one-daemon-write-rule 비위반).
+        val envelopes = commandStream.readEnvelopes(commandBlockMs)
+        commandDispatcher?.dispatchEnvelopes(envelopes)?.forEach { (requestId, result) ->
+            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
+        }
 
         // 1b. auction expiry scan (P6) — expire auctions whose closeDate has passed.
         auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)

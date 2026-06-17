@@ -55,20 +55,29 @@ class RedisCommandStream(
      * `XREAD BLOCK <blockMs> COUNT 100` from the current cursor. Returns the parsed commands and
      * advances [lastId] to the id of the last record read (even when its payload fails to parse).
      */
-    fun readCommands(blockMs: Long): List<TurnDaemonCommand> {
+    fun readCommands(blockMs: Long): List<TurnDaemonCommand> =
+        readEnvelopes(blockMs).map { it.command }
+
+    /**
+     * W0-4 인테이크 결과 회신 채널 — [readCommands]와 동일한 드레인이지만 **엔벨로프째** 돌려준다.
+     * per-requestId 결과 회신([opensamguk.engine.redis.RealtimePublisher.publishCommandResult])은
+     * 엔벨로프의 `requestId`가 필요하므로 커맨드만 벗겨내면 안 된다. 커서 전진 규약은 동일:
+     * 파싱 실패 payload도 [lastId]를 전진시키고 건너뛴다.
+     */
+    fun readEnvelopes(blockMs: Long): List<TurnDaemonCommandEnvelope> {
         val options = StreamReadOptions.empty().count(100).block(Duration.ofMillis(blockMs))
         val offset = StreamOffset.create(keys.commandStream, ReadOffset.from(lastId))
         val records: List<MapRecord<String, Any, Any>> =
             template.opsForStream<Any, Any>().read(options, offset) ?: return emptyList()
 
-        val commands = mutableListOf<TurnDaemonCommand>()
+        val envelopes = mutableListOf<TurnDaemonCommandEnvelope>()
         for (record in records) {
             lastId = record.id.value
             val payload = record.value[WIRE_PAYLOAD_FIELD]?.toString() ?: continue
             val envelope = parseEnvelope(payload) ?: continue
-            commands.add(envelope.command)
+            envelopes.add(envelope)
         }
-        return commands
+        return envelopes
     }
 
     private fun parseEnvelope(payload: String): TurnDaemonCommandEnvelope? =
