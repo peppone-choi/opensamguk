@@ -48,6 +48,7 @@ import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.world.SpecialityHelper
 import jakarta.servlet.http.HttpServletRequest
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -92,6 +93,9 @@ class FrontInfoController(
     private val generalTurns: GeneralTurnReadRepository,
     private val nationEnv: NationEnvReadRepository,
     private val objectMapper: ObjectMapper,
+    @Value("\${SERVER_NAME:}") private val serverNameProperty: String = "",
+    @Value("\${SERVER_GENERATION:}") private val serverGenerationProperty: String = "",
+    @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
 ) {
 
     /** nation_env(namespace = nationId, key) jsonb 디코드 — 부재/파싱실패 시 null(loop49 NationFinanceController 동일 패턴; loop51 빼기에서 공유 reader로 수렴 예정). */
@@ -395,6 +399,7 @@ class FrontInfoController(
         val config = w?.config ?: emptyMap()
         val scenarioText = (config["title"] ?: w?.meta?.get("title"))?.toString()
             ?.takeIf { it.isNotBlank() } ?: scenario
+        val turnTerm = (w?.tickSeconds ?: 0) / 60
 
         // [§2 BLOCKED — world_state.config 미기재] 아래 game_env 키는 데몬이 채우지 않으므로(현재 config는
         // startyear/starttime/turnterm만), config에서 방어적으로 읽되 부재 시 null/기본값. 날조 없음.
@@ -402,6 +407,7 @@ class FrontInfoController(
         val auctionCount = auctions.countByFinished(false).toInt()
         val now = Instant.now()
         val openPolls = votePolls.countOpenPolls(now)
+        val npcCount = generals.countByNpcStateGreaterThan(0).toInt()
 
         // W0-2(P1-002) — PHP GetFrontInfo.php:182-189,214,231. 마지막 설문 = vote_poll 최신 행
         // (game_env.lastVote 대체 정본 — countOpenPolls와 동일 규약). 만료(endDate<now)/종료 시
@@ -409,6 +415,16 @@ class FrontInfoController(
         // PHP v_vote.php:30 voteReward = develcost*5(Vote.php:107). develcost는 config 방어적 read와 동일 원천이라
         // 한 번만 읽어 develCost/voteReward 둘 다에 쓴다. config 미기재 시 둘 다 null(날조 금지).
         val develCostVal = intOrNull(config["develcost"])
+        val npcMode = intOrNull(config["npcmode"]) ?: 0
+        val extendedGeneral = boolOrNull(config["extended_general"]) ?: false
+        val isFiction = boolOrNull(config["fiction"]) ?: false
+        val autorunUser = autorunUserInfo(config["autorun_user"])
+        val generation = intOrNull(config["server_generation"])
+            ?: intOrNull(config["server_cnt"])
+            ?: serverGenerationProperty.toIntOrNull()
+        val resolvedServerId = serverId
+            ?: serverIdProperty.takeIf { it.isNotBlank() }?.let { if (it.startsWith("s")) it else "s$it" }
+        val serverName = (config["server_name"]?.toString() ?: serverNameProperty).takeIf { it.isNotBlank() }
 
         val latestPoll = votePolls.findFirstByOrderByIdDesc()
         val lastVote = latestPoll
@@ -418,23 +434,28 @@ class FrontInfoController(
         return FrontGlobalInfo(
             year = w?.currentYear ?: 0,
             month = w?.currentMonth ?: 0,
-            turnterm = (w?.tickSeconds ?: 0) / 60,
+            turnterm = turnTerm,
             scenario = scenario,
             scenarioText = scenarioText,
             generalCount = generals.count().toInt(),
             nationCount = nations.findAll().count { it.id != 0 },
             cityCount = cities.count().toInt(),
-            npcCount = generals.countByNpcStateGreaterThan(0).toInt(),
+            npcCount = npcCount,
 
             // config 방어적 read(부재 시 null/기본).
             title = config["title"]?.toString() ?: config["scenario_text"]?.toString(),
-            extendedGeneral = boolOrNull(config["extended_general"]),
-            isFiction = boolOrNull(config["fiction"]),
+            serverName = serverName,
+            generation = generation,
+            extendedGeneral = extendedGeneral,
+            isFiction = isFiction,
             // npcmode 미기재 시 0(생성 모드) — ServerBasicInfoController:74와 동일 폴백. null이면 FE
             // CharacterClaim이 `npcMode ?? 1`로 빙의(possession) 모드 오판해 장수생성 대신 빙의 그리드를 띄운다.
-            npcMode = intOrNull(config["npcmode"]) ?: 0,
+            npcMode = npcMode,
+            npcModeText = npcModeText(npcMode),
+            npcSummaryText = "NPC ${npcCount}명, 상성: ${if (extendedGeneral) "확장" else "표준"} ${if (isFiction) "가상" else "사실"}",
             joinMode = intOrNull(config["join_mode"]),
-            autorunUser = autorunUserInfo(config["autorun_user"]),
+            autorunUser = autorunUser,
+            otherSettingText = otherSettingText(autorunUser),
             lastExecuted = config["turntime"]?.toString(),
             develCost = develCostVal,
             voteReward = develCostVal?.let { it * 5 },
@@ -444,8 +465,9 @@ class FrontInfoController(
             generalCntLimit = intOrNull(config["maxgeneral"]),
             blockGeneralCreate = intOrNull(config["block_general_create"]),
             apiLimit = intOrNull(config["refreshLimit"]),
-            serverCnt = intOrNull(config["server_cnt"]),
+            serverCnt = generation,
             isunited = boolOrNull(config["isunited"]),
+            tournamentTermMinutes = turnTerm.coerceIn(5, 120),
 
             // 토너먼트/베팅 — tournament 정수에서 파생(부재 시 모두 null/false).
             tournamentState = tournament,
@@ -472,7 +494,7 @@ class FrontInfoController(
             auctionCount = auctionCount,
 
             // 선택 서버 식별자 — 프록시/middleware가 `sam_server` 쿠키로 고정한 값.
-            serverId = serverId,
+            serverId = resolvedServerId,
 
             // [§2 BLOCKED — plock 테이블 부재] interim false(W3_FrontGlobalInfo §2). 마이그레이션 추가 시 교체.
             serverLocked = false,
@@ -514,6 +536,16 @@ class FrontInfoController(
         is String -> v.toIntOrNull()
         else -> null
     }
+
+    private fun npcModeText(npcMode: Int): String = when (npcMode) {
+        0 -> "불가능"
+        1 -> "가능"
+        2 -> "선택 생성"
+        else -> "불가능"
+    }
+
+    private fun otherSettingText(autorunUser: AutorunUserInfo?): String =
+        if ((autorunUser?.limitMinutes ?: 0) > 0) "자율행동" else ""
 
     private fun autorunUserInfo(v: Any?): AutorunUserInfo? {
         val m = v as? Map<*, *> ?: return null
