@@ -1,6 +1,8 @@
 package opensamguk.gateway.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import opensamguk.gateway.dto.DeployResult
 import opensamguk.gateway.dto.DeployStatus
 import opensamguk.gateway.dto.EnvProxyResponse
@@ -72,6 +74,10 @@ class DeployService(
     private val portRegex = Regex("^[0-9]{1,5}$")
 
     private fun configured() = deployerUrl.isNotBlank() && deployerToken.isNotBlank()
+    private fun deployerBase() = deployerUrl.trimEnd('/')
+
+    fun registeredServers(): List<ServerDef> =
+        fetchDeployerServers() ?: registry.all()
 
     /** deployer 상태: 대상 서버의 현재 IMAGE_TAG + 배포 가능한 태그 목록. serverId 미지정 시 기본 서버. */
     fun status(serverId: String?): DeployStatus {
@@ -88,7 +94,7 @@ class DeployService(
         }
         return try {
             val raw = rest.get()
-                .uri("$deployerUrl/status?project={p}", server.deployProject)
+                .uri("${deployerBase()}/status?project={p}", server.deployProject)
                 .header("Authorization", "Bearer $deployerToken")
                 .retrieve()
                 .body(String::class.java)
@@ -120,7 +126,7 @@ class DeployService(
         log.info("Admin '{}' triggered redeploy server='{}' to tag '{}'", actor, server.id, safeTag)
         return try {
             val body = rest.post()
-                .uri("$deployerUrl/deploy")
+                .uri("${deployerBase()}/deploy")
                 .header("Authorization", "Bearer $deployerToken")
                 .header("Content-Type", "application/json")
                 .body(objectMapper.writeValueAsString(mapOf("project" to server.deployProject, "tag" to safeTag)))
@@ -140,13 +146,13 @@ class DeployService(
         validateEnvPatch(body, sharedEnvKeys) ?: proxyEnvPatch(path = "/env/shared", body = body)
 
     fun serverEnv(serverId: String): EnvProxyResponse {
-        val server = registry.find(serverId)
+        val server = resolve(serverId)
             ?: return json(400, """{"configured":false,"message":"알 수 없는 서버입니다: $serverId"}""")
         return proxyEnvGet(scope = "server", serverId = server.id, path = "/env/server?id={id}")
     }
 
     fun patchServerEnv(serverId: String, body: String): EnvProxyResponse {
-        val server = registry.find(serverId)
+        val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
         return validateEnvPatch(body, serverEnvKeys)
             ?: proxyEnvPatch(path = "/env/server?id={id}", serverId = server.id, body = body)
@@ -156,21 +162,21 @@ class DeployService(
         validateCreateServer(body) ?: proxyCreateServer(body)
 
     fun deleteServer(serverId: String): EnvProxyResponse {
-        val server = registry.find(serverId)
+        val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
         return proxyServerAction(
-            method = "DELETE",
-            path = "/servers?id={id}&confirm={confirm}",
+            method = "POST",
+            path = "/servers/close",
             serverId = server.id,
-            confirm = "DELETE ${server.id}",
-            body = null,
+            body = objectMapper.writeValueAsString(mapOf("id" to server.id)),
         )
     }
 
     fun resetServer(serverId: String, body: String): EnvProxyResponse {
-        val server = registry.find(serverId)
+        val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: $serverId"}""")
-        return validateResetServer(body, server.id) ?: proxyServerAction(method = "POST", path = "/servers/reset?id={id}", serverId = server.id, body = body)
+        return validateResetServer(body, server.id)
+            ?: proxyServerAction(method = "POST", path = "/servers/reset", serverId = server.id, body = withServerId(body, server.id))
     }
 
     // ──────────────────────────────────────────────────────────────────────
@@ -224,8 +230,10 @@ class DeployService(
     }
 
     /** serverId 미지정이면 기본 서버, 아니면 레지스트리 조회. */
-    private fun resolve(serverId: String?) =
-        if (serverId.isNullOrBlank()) registry.default() else registry.find(serverId)
+    private fun resolve(serverId: String?): ServerDef? {
+        if (serverId.isNullOrBlank()) return registeredServers().firstOrNull()
+        return registry.find(serverId) ?: registeredServers().firstOrNull { it.id == serverId }
+    }
 
     private fun proxyEnvGet(scope: String, serverId: String? = null, path: String): EnvProxyResponse {
         if (!configured()) {
@@ -251,10 +259,10 @@ class DeployService(
         }
         return try {
             val raw = rest.post()
-                .uri("${deployerUrl.trimEnd('/')}/servers")
+                .uri("${deployerBase()}/servers/create")
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer $deployerToken")
-                .body(body)
+                .body(createServerBodyForDeployer(body))
                 .retrieve()
                 .body(String::class.java)
             json(200, raw ?: "{}")
@@ -273,7 +281,7 @@ class DeployService(
             return json(200, """{"ok":false,"message":"배포 deployer가 설정되지 않았습니다 (DEPLOYER_URL/TOKEN 미설정)."}""")
         }
         return try {
-            val uri = "${deployerUrl.trimEnd('/')}$path"
+            val uri = "${deployerBase()}$path"
             val raw = when (method) {
                 "DELETE" -> rest.delete()
                     .uri(uri, serverId, confirm ?: "")
@@ -303,13 +311,13 @@ class DeployService(
         try {
             val raw = if (method == "GET") {
                 rest.get()
-                    .uri("${deployerUrl.trimEnd('/')}$path", serverId)
+                    .uri("${deployerBase()}$path", serverId)
                     .header("Authorization", "Bearer $deployerToken")
                     .retrieve()
                     .body(String::class.java)
             } else {
                 rest.patch()
-                    .uri("${deployerUrl.trimEnd('/')}$path", serverId)
+                    .uri("${deployerBase()}$path", serverId)
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer $deployerToken")
                     .body(body ?: "{}")
@@ -444,6 +452,68 @@ class DeployService(
             json(400, """{"ok":false,"message":"서버 리셋 요청 JSON이 올바르지 않습니다."}""")
         }
     }
+
+    private fun fetchDeployerServers(): List<ServerDef>? {
+        if (!configured()) return null
+        return try {
+            val raw = rest.get()
+                .uri("${deployerBase()}/servers")
+                .header("Authorization", "Bearer $deployerToken")
+                .retrieve()
+                .body(String::class.java)
+            parseServerDefs(raw)
+        } catch (e: Exception) {
+            log.warn("deployer 서버 목록 조회 실패 — 부팅 레지스트리로 fallback합니다.", e)
+            null
+        }
+    }
+
+    private fun parseServerDefs(raw: String?): List<ServerDef>? {
+        val root = objectMapper.readTree(raw ?: "[]")
+        if (!root.isArray) return null
+        return root.mapNotNull { node ->
+            val id = text(node, "id") ?: return@mapNotNull null
+            val fallback = registry.find(id)
+            ServerDef(
+                id = id,
+                name = text(node, "name") ?: fallback?.name ?: id,
+                gameApiUrl = text(node, "gameApiUrl") ?: fallback?.gameApiUrl ?: defaultGameApiUrl(id),
+                gameEngineUrl = text(node, "gameEngineUrl") ?: fallback?.gameEngineUrl ?: defaultGameEngineUrl(id),
+                deployProject = text(node, "deployProject", "project") ?: fallback?.deployProject ?: defaultDeployProject(id),
+            )
+        }
+    }
+
+    private fun text(node: JsonNode, vararg fields: String): String? =
+        fields.asSequence()
+            .map { node.path(it).asText("") }
+            .firstOrNull { it.isNotBlank() }
+
+    private fun withServerId(body: String, serverId: String): String {
+        val node = objectMapper.readTree(body)
+        val objectNode = if (node is ObjectNode) node.deepCopy() as ObjectNode else objectMapper.createObjectNode()
+        objectNode.put("id", serverId)
+        return objectMapper.writeValueAsString(objectNode)
+    }
+
+    private fun createServerBodyForDeployer(body: String): String {
+        val node = objectMapper.readTree(body)
+        val objectNode = if (node is ObjectNode) node.deepCopy() as ObjectNode else objectMapper.createObjectNode()
+        val id = objectNode.path("id").asText("")
+        if (id.matches(Regex("^s[0-9][A-Za-z0-9_-]*$"))) {
+            objectNode.put("id", id.removePrefix("s"))
+        }
+        return objectMapper.writeValueAsString(objectNode)
+    }
+
+    private fun defaultDeployProject(id: String): String =
+        "opensamguk-${if (id.startsWith("s")) id else "s$id"}"
+
+    private fun defaultGameApiUrl(id: String): String =
+        "http://${if (id.startsWith("s")) id else "s$id"}-game-api:8081"
+
+    private fun defaultGameEngineUrl(id: String): String =
+        "http://${if (id.startsWith("s")) id else "s$id"}-game-engine:8082"
 
     private fun validPort(value: String): Boolean {
         if (!portRegex.matches(value)) return false

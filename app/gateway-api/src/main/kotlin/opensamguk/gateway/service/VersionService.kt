@@ -18,7 +18,7 @@ import org.springframework.web.client.RestClient
  */
 @Service
 class VersionService(
-    private val registry: ServerRegistry,
+    private val deployService: DeployService,
     private val objectMapper: ObjectMapper,
 ) {
     private val log = LoggerFactory.getLogger(VersionService::class.java)
@@ -26,7 +26,7 @@ class VersionService(
 
     /** gateway 자신의 버전을 받아 레지스트리의 모든 서버 버전을 합쳐 반환한다. */
     fun collect(gateway: ServiceVersion): VersionResponse {
-        val servers = registry.all().map { def ->
+        val servers = deployService.registeredServers().map { def ->
             val gameApi = fetch(def.gameApiUrl)
             val gameEngine = fetch(def.gameEngineUrl)
             val skew = listOf(gameApi, gameEngine).any { it.reachable && it.version != gateway.version }
