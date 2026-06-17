@@ -166,6 +166,83 @@ class CommandWireMapperTest {
         assertEquals("의견", comment.text)
     }
 
+    // ── W0-7 — 외교 서신 승인/거부 + 인사(임명/추방/외교권자·조언자 임명) 인테이크 ──────────────
+
+    @Test
+    fun `diploRespondLetter는 letterNo-isAgree-reason을 PHP 인자명 verbatim으로 매핑한다`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("diploRespondLetter"))
+
+        // 승인 — j_diplomacy_respond_letter.php:16-18 POST {letterNo, isAgree, reason}
+        val approve = roundTrip(
+            CommandWireMapper.toCommand("diploRespondLetter", 10, "r", """{"letterNo":7,"isAgree":true}""")!!,
+        ) as TurnDaemonCommand.DiploRespondLetter
+        assertEquals(10, approve.generalId)
+        assertEquals(7, approve.letterNo)
+        assertTrue(approve.isAgree)
+        assertEquals("", approve.reason)
+
+        // 거부 + 사유. isAgree 부재 → false (PHP getPost('isAgree','bool',false)).
+        val decline = roundTrip(
+            CommandWireMapper.toCommand("diploRespondLetter", 10, "r", """{"letterNo":7,"reason":"조건 불충분"}""")!!,
+        ) as TurnDaemonCommand.DiploRespondLetter
+        assertFalse(decline.isAgree)
+        assertEquals("조건 불충분", decline.reason)
+    }
+
+    @Test
+    fun `appoint는 officerLevel-destGeneralID-destCityID를 매핑한다 - 수뇌임명과 도시임명 겸용`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("appoint"))
+
+        // 수뇌 임명 (j_myBossInfo.php action=임명, officerLevel 5..11 — destCityID 부재 → 0)
+        val chief = roundTrip(
+            CommandWireMapper.toCommand("appoint", 10, "r", """{"officerLevel":11,"destGeneralID":42}""")!!,
+        ) as TurnDaemonCommand.Appoint
+        assertEquals(10, chief.generalId)
+        assertEquals(42, chief.destGeneralId)
+        assertEquals(0, chief.destCityId)
+        assertEquals(11, chief.officerLevel)
+
+        // 도시 임명 (officerLevel 2..4 — destCityID 필수, j_myBossInfo.php:331-352)
+        val city = roundTrip(
+            CommandWireMapper.toCommand("appoint", 10, "r", """{"officerLevel":4,"destGeneralID":42,"destCityID":15}""")!!,
+        ) as TurnDaemonCommand.Appoint
+        assertEquals(15, city.destCityId)
+        assertEquals(4, city.officerLevel)
+    }
+
+    @Test
+    fun `kick은 destGeneralID를 매핑한다`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("kick"))
+
+        val kick = roundTrip(
+            CommandWireMapper.toCommand("kick", 10, "r", """{"destGeneralID":42}""")!!,
+        ) as TurnDaemonCommand.Kick
+        assertEquals(10, kick.generalId)
+        assertEquals(42, kick.destGeneralId)
+
+        // destGeneralID 부재 → 0 (PHP j_myBossInfo.php:42 '장수가 지정되지 않았습니다.' 게이트는 엔진).
+        val none = CommandWireMapper.toCommand("kick", 10, "r", "{}") as TurnDaemonCommand.Kick
+        assertEquals(0, none.destGeneralId)
+    }
+
+    @Test
+    fun `changePermission은 isAmbassador-genlist를 매핑한다`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("changePermission"))
+
+        // 외교권자 임명 (j_general_set_permission.php:11-12 POST {isAmbassador, genlist})
+        val ambassador = roundTrip(
+            CommandWireMapper.toCommand("changePermission", 10, "r", """{"isAmbassador":true,"genlist":[42,43]}""")!!,
+        ) as TurnDaemonCommand.ChangePermission
+        assertEquals(10, ambassador.generalId)
+        assertTrue(ambassador.isAmbassador)
+        assertEquals(listOf(42, 43), ambassador.targetGeneralIds)
+
+        // 조언자 전체 해제 — genlist 부재 → 빈 배열(PHP: normal 리셋 후 success 종료).
+        val reset = CommandWireMapper.toCommand("changePermission", 10, "r", """{"isAmbassador":false}""") as TurnDaemonCommand.ChangePermission
+        assertFalse(reset.isAmbassador)
+        assertTrue(reset.targetGeneralIds.isEmpty())
+    }
+
     @Test
     fun `string-coerced numbers and malformed json degrade gracefully`() {
         // the UI may send numbers as strings; lenient parse coerces them.

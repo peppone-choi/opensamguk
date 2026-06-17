@@ -82,6 +82,13 @@ object CommandWireMapper {
         "diploSendLetter",
         "diploRollbackLetter",
         "diploDestroyLetter",
+        // W0-7 외교 서신 승인/거부 (j_diplomacy_respond_letter.php) — 엔진 handleRespond는 W1 G.
+        "diploRespondLetter",
+        // W0-7 인사부 — 수뇌/도시 임명·추방(j_myBossInfo.php action=임명/추방) + 외교권자/조언자
+        // 임명(j_general_set_permission.php). 엔진 핸들러는 W1 N — 그전까지 dispatcher 명시적 deny.
+        "appoint",
+        "kick",
+        "changePermission",
         // W6f 장수 선택 풀 — 픽/갱신 (RNG-bearing — 골든은 /parity-wave).
         "selectPoolPick",
         "selectPoolUpdate",
@@ -293,6 +300,38 @@ object CommandWireMapper {
             "diploDestroyLetter" -> TurnDaemonCommand.DiploDestroyLetter(
                 requestId = requestId, generalId = generalId,
                 letterNo = args.int("letterNo") ?: 0,
+            )
+            // ── W0-7 외교 서신 승인/거부 — j_diplomacy_respond_letter.php:16-18 POST 인자명 verbatim.
+            //    isAgree 부재 → false(PHP getPost('isAgree','bool',false)), reason 부재 → ''(trim은 엔진).
+            "diploRespondLetter" -> TurnDaemonCommand.DiploRespondLetter(
+                requestId = requestId, generalId = generalId,
+                letterNo = args.int("letterNo") ?: 0,
+                isAgree = args.bool("isAgree") ?: false,
+                reason = args.str("reason") ?: "",
+            )
+            // ── W0-7 인사부 — j_myBossInfo.php:16-19 POST 인자명 verbatim(destGeneralID/destCityID/
+            //    officerLevel). action=임명 한 엔드포인트가 officerLevel로 도시임명(2..4, destCityID 필수,
+            //    :331-352)과 수뇌임명(5..11, :355-371)을 분기 — wire도 단일 appoint로 미러, 분기는 엔진.
+            //    destCityID 부재 → 0 (PHP getPost null도 `if (!$destCityID)` falsy 게이트라 동치).
+            "appoint" -> TurnDaemonCommand.Appoint(
+                requestId = requestId, generalId = generalId,
+                destGeneralId = args.int("destGeneralID") ?: args.int("destGeneralId") ?: 0,
+                destCityId = args.int("destCityID") ?: args.int("destCityId") ?: 0,
+                officerLevel = args.int("officerLevel") ?: 0,
+            )
+            // action=추방 (j_myBossInfo.php:379-395 → do추방 :189-326). destGeneralID==0 게이트(:42
+            //    '장수가 지정되지 않았습니다.')는 엔진이 적용.
+            "kick" -> TurnDaemonCommand.Kick(
+                requestId = requestId, generalId = generalId,
+                destGeneralId = args.int("destGeneralID") ?: args.int("destGeneralId") ?: 0,
+            )
+            // ── W0-7 외교권자/조언자 임명 — j_general_set_permission.php:11-12 POST {isAmbassador,
+            //    genlist}. 군주 전용('군주가 아닙니다')/최대 2 cap('외교권자는 최대 둘까지만…')은 엔진.
+            //    genlist 부재 → 빈 배열(PHP: 해당 permission 전원 normal 리셋 후 success 종료).
+            "changePermission" -> TurnDaemonCommand.ChangePermission(
+                requestId = requestId, generalId = generalId,
+                isAmbassador = args.bool("isAmbassador") ?: false,
+                targetGeneralIds = args.intList("genlist").ifEmpty { args.intList("targetGeneralIds") },
             )
             // ── W6f 장수 선택 풀 — 픽/갱신. 스탯/성격은 nullable 유지(풀 기본값/편집가능 분기는 엔진). ──
             "selectPoolPick" -> TurnDaemonCommand.SelectPoolPick(

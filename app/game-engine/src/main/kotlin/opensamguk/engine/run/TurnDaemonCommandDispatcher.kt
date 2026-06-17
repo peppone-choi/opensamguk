@@ -1,8 +1,12 @@
 package opensamguk.engine.run
 
+import opensamguk.common.wire.DiploLetterResult
+import opensamguk.common.wire.GeneralBoolResult
+import opensamguk.common.wire.MakeGeneralFail
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
+import org.slf4j.LoggerFactory
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.auction.AuctionOpenHandler
@@ -225,6 +229,56 @@ class TurnDaemonCommandDispatcher(
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
 
+    companion object {
+        private val log = LoggerFactory.getLogger(TurnDaemonCommandDispatcher::class.java)
+
+        /**
+         * W0-7 명시적 deny 사유 — wire 계약은 열렸지만 엔진 핸들러가 아직 없는 변형의 스텁 거부
+         * 문자열. **PHP 패러티 문자열이 아니다** — W1 에이전트(G: diploRespondLetter / N: 임명·추방·
+         * set-permission / K: MakeGeneral 유산·전콘)가 핸들러를 구현하며 PHP deny 문자열로 대체한다.
+         * silent-drop(`else -> null`) 금지 계약: 인테이크로 publish된 명령은 반드시 가시적 결과를 남긴다.
+         */
+        const val UNSUPPORTED_REASON = "아직 구현되지 않은 명령입니다 (엔진 핸들러 W1 대기)"
+    }
+
+    /** W0-7 인사부 스텁 deny — appoint/kick/changePermission (boolean-ok 그룹 [GeneralBoolResult]). */
+    private fun denyPersonnelStub(type: String, generalId: Int): GeneralBoolResult {
+        log.warn("W0-7 deny stub: {} (generalId={}) — {}", type, generalId, UNSUPPORTED_REASON)
+        return GeneralBoolResult(type = type, ok = false, generalId = generalId, reason = UNSUPPORTED_REASON)
+    }
+
+    /** W0-7 외교 서신 승인/거부 스텁 deny — handleRespond는 W1 에이전트 G가 구현. */
+    private fun denyDiploRespondStub(c: TurnDaemonCommand.DiploRespondLetter): DiploLetterResult {
+        log.warn(
+            "W0-7 deny stub: diploRespondLetter (generalId={}, letterNo={}, isAgree={}) — {}",
+            c.generalId, c.letterNo, c.isAgree, UNSUPPORTED_REASON,
+        )
+        return DiploLetterResult(
+            type = "diploRespondLetter", ok = false,
+            generalId = c.generalId, letterNo = c.letterNo, reason = UNSUPPORTED_REASON,
+        )
+    }
+
+    /**
+     * W0-7 MakeGeneral 게이트 — 유산 4필드/전콘 imgsvr가 실린 명령을 현 [MakeGeneralHandler]로
+     * 흘리면 포인트 차감·천재 생성·도시 지정 없이 **일반 생성되는 silent 발산**(PHP `Join.php:233-244`
+     * 는 포인트를 차감한다)이므로, 핸들러(W1 에이전트 K)가 소비를 구현할 때까지 명시적 deny.
+     * 옵션이 전혀 없는 명령(기존 페이로드)은 기존 핸들러 경로 그대로.
+     */
+    private fun dispatchMakeGeneral(c: TurnDaemonCommand.MakeGeneral): TurnDaemonCommandResult {
+        val usesInherit = c.inheritSpecial != null || c.inheritTurntimeZone != null ||
+            c.inheritCity != null || c.inheritBonusStat != null
+        val usesImgsvr = (c.imgsvr ?: 0) != 0
+        if (usesInherit || usesImgsvr) {
+            log.warn(
+                "W0-7 deny stub: makeGeneral 유산/전콘 옵션 (userId={}, requestId={}) — {}",
+                c.userId, c.requestId, UNSUPPORTED_REASON,
+            )
+            return MakeGeneralFail(reason = UNSUPPORTED_REASON)
+        }
+        return makeGeneral.handle(c)
+    }
+
     /**
      * Dispatch one command to its handler.
      *
@@ -275,13 +329,19 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.DiploSendLetter -> diplomacyLetter.handleSend(command)
         is TurnDaemonCommand.DiploRollbackLetter -> diplomacyLetter.handleRollback(command)
         is TurnDaemonCommand.DiploDestroyLetter -> diplomacyLetter.handleDestroy(command)
+        // ── W0-7 wire-계약 widen 스텁 — 명시적 deny-with-log (silent-drop 금지). 핸들러 구현은
+        //    W1 에이전트 소관: diploRespondLetter=G, appoint/kick/changePermission=N. ──
+        is TurnDaemonCommand.DiploRespondLetter -> denyDiploRespondStub(command)
+        is TurnDaemonCommand.Appoint -> denyPersonnelStub("appoint", command.generalId)
+        is TurnDaemonCommand.Kick -> denyPersonnelStub("kick", command.generalId)
+        is TurnDaemonCommand.ChangePermission -> denyPersonnelStub("changePermission", command.generalId)
         // ── W6f 장수 선택 풀 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.SelectPoolPick -> selectPool.handlePick(command)
         is TurnDaemonCommand.SelectPoolUpdate -> selectPool.handleUpdate(command)
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
-        // ── B1 장수생성 바인딩 ──
-        is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
+        // ── B1 장수생성 바인딩 (W0-7: 유산/전콘 옵션 게이트 — 미지원 옵션은 명시적 deny) ──
+        is TurnDaemonCommand.MakeGeneral -> dispatchMakeGeneral(command)
         else -> null
     }
 

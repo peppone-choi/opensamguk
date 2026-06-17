@@ -491,10 +491,10 @@ data class AuctionOpenResult(
     val reason: String? = null,
 ) : TurnDaemonCommandResult()
 
-// W5d — 외교 서신 (3 코드 collapse). letterNo echo on success.
+// W5d — 외교 서신 (4 코드 collapse — W0-7에서 diploRespondLetter 합류). letterNo echo on success.
 @Serializable
 data class DiploLetterResult(
-    override val type: String,     // diploSendLetter|diploRollbackLetter|diploDestroyLetter
+    override val type: String,     // diploSendLetter|diploRollbackLetter|diploDestroyLetter|diploRespondLetter
     override val ok: Boolean,
     val generalId: Int,
     val letterNo: Int? = null,
@@ -537,8 +537,9 @@ private val BOARD_ACTION_TYPES = setOf("boardArticle", "boardComment")
 /** 경매 개설 3코드(W6c) — collapsed [AuctionOpenResult] shape. */
 private val AUCTION_OPEN_TYPES = setOf("auctionOpenBuyRice", "auctionOpenSellRice", "auctionOpenUnique")
 
-/** 외교 서신 3코드(W5d) — collapsed [DiploLetterResult] shape. */
-private val DIPLO_LETTER_TYPES = setOf("diploSendLetter", "diploRollbackLetter", "diploDestroyLetter")
+/** 외교 서신 4코드(W5d + W0-7 respond) — collapsed [DiploLetterResult] shape. */
+private val DIPLO_LETTER_TYPES =
+    setOf("diploSendLetter", "diploRollbackLetter", "diploDestroyLetter", "diploRespondLetter")
 
 /** 장수 선택 풀 2코드(W6f) — collapsed [SelectPoolActionResult] shape. */
 private val SELECT_POOL_TYPES = setOf("selectPoolPick", "selectPoolUpdate")

@@ -226,6 +226,22 @@ sealed class TurnDaemonCommand {
     }
 
     // ── B1 장수생성(재야→일반/Join) — 즉시 데몬커맨드. RNG-bearing(draw-for-draw).
+    /**
+     * 장수 생성 (`sammo/API/General/Join.php`).
+     *
+     * **W0-7 widen — 유산 4필드 + 전콘(picture/imgsvr).**
+     *  - 유산 4필드는 PHP POST 인자명 verbatim (`Join.php:142-145`, 모두 `?? null`):
+     *    [inheritSpecial](`Join.php:74` — `in availableSpecialWar`, 천재 생성),
+     *    [inheritTurntimeZone](`Join.php:75-76` — int 0..59, 60-zone 턴 시간 지정),
+     *    [inheritCity](`Join.php:77` — `in array_keys(CityConst::all())`, 생성 도시 지정),
+     *    [inheritBonusStat](`Join.php:78,200-211` — integerArray, count==3 + 합계 검증은 엔진).
+     *    null = 해당 유산 옵션 미사용(PHP 부재와 동일) — 포인트 차감 분기(`Join.php:233-244`)는
+     *    엔진 핸들러(W1 에이전트 K) 소관.
+     *  - 전콘: PHP POST `pic`(boolean, `Join.php:135`)은 REST 계층(JoinController) 인자다. 게이트
+     *    `show_img_level>=1 && grade>=1 && picture!="" && pic`(`Join.php:379-385`)의 member 프로필은
+     *    gateway DB에 있어 엔진이 읽을 수 없으므로, 컨트롤러가 게이트를 적용한 **resolved**
+     *    [picture]/[imgsvr] 쌍(PHP `$face`/`$imgsvr`)을 wire에 싣는다. null = default.jpg/0.
+     */
     @Serializable
     @SerialName("makeGeneral")
     data class MakeGeneral(
@@ -238,6 +254,13 @@ sealed class TurnDaemonCommand {
         val character: String = "Random",
         val picture: String? = null,
         val ownerName: String? = null,
+        // W0-7 — 전콘 resolved 이미지 서버 (PHP `$imgsvr`, Join.php:381/384). null이면 0(기본 서버).
+        val imgsvr: Int? = null,
+        // W0-7 — 유산 포인트 4필드 (Join.php:142-145, PHP 인자명 verbatim. null = 미사용).
+        val inheritSpecial: String? = null,
+        val inheritTurntimeZone: Int? = null,
+        val inheritCity: Int? = null,
+        val inheritBonusStat: List<Int>? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "makeGeneral"
     }
@@ -752,6 +775,27 @@ sealed class TurnDaemonCommand {
         val generalId: Int,
         val letterNo: Int,
     ) : TurnDaemonCommand() { override val type: String get() = "diploDestroyLetter" }
+
+    /**
+     * 외교 서신 승인/거부 (W0-7 — `j_diplomacy_respond_letter.php:16-18`). 수신국 수뇌
+     * (checkSecretPermission >= 4)가 `state='proposed'` 서신에 응답한다 — POST 인자명 verbatim:
+     * [letterNo](`Util::getPost('letterNo','int')`), [isAgree](`'bool', false` — 부재 시 거부),
+     * [reason](`'string', ''` — 거부 사유, trim은 엔진).
+     * 승인: activated + dest_signer 서명 + prev_no 체인 replaced (`:78-93`);
+     * 거부: cancelled + aux.reason (`:96-109`); 메시지 2채널(diplomacy+national) 발송 (`:112-133`).
+     * 엔진 핸들러(handleRespond)는 W1 에이전트 G 소관 — 그전까지 dispatcher가 명시적 deny.
+     */
+    @Serializable
+    @SerialName("diploRespondLetter")
+    data class DiploRespondLetter(
+        val requestId: String? = null,
+        val generalId: Int,
+        val letterNo: Int,
+        // PHP Util::getPost('isAgree','bool',false) — 부재 시 false(거부).
+        val isAgree: Boolean = false,
+        // PHP Util::getPost('reason','string','') — 거부 사유. trim/접미(' 이유 : ')는 엔진.
+        val reason: String = "",
+    ) : TurnDaemonCommand() { override val type: String get() = "diploRespondLetter" }
 
     // ── W6f 장수 선택 풀 pick/update — j_pick_general.php / j_update_picked_general.php (RNG-BEARING) ──
     /**
