@@ -1,5 +1,6 @@
 package opensamguk.gameapi.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
@@ -17,6 +18,7 @@ import org.mockito.Mockito.`when`
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -40,8 +42,14 @@ class CommandControllerSecurityTest {
     private val queue = mock(CommandQueueService::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
 
+    // W0-4 결과 회신 시밍 — 이 테스트는 결과 엔드포인트를 호출하지 않으므로 redis는 미사용 mock.
+    private val redis = mock(StringRedisTemplate::class.java)
+
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(CommandController(precheck, reserve, resolver, queue, generals))
+        MockMvcBuilders
+            .standaloneSetup(
+                CommandController(precheck, reserve, resolver, queue, generals, redis, ObjectMapper(), "che:scenario_2"),
+            )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 

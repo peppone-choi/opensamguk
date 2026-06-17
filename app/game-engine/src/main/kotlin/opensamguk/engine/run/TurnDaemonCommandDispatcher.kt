@@ -1,6 +1,7 @@
 package opensamguk.engine.run
 
 import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
@@ -50,8 +51,8 @@ import opensamguk.infra.read.VotePollRepository
  * Handlers are per-run plain classes built against the live [InMemoryTurnWorld] (the snapshot source
  * of truth), mirroring the sibling turn handlers — NOT Spring beans (the world is per-run state).
  *
- * Result publishing (the events-stream `commandResult` channel) remains deferred per the P1 DECISION
- * in [TurnRunService]; the caller currently discards the returned result.
+ * Result publishing — W0-4부터 [TurnRunService]가 [dispatchEnvelopes]의 (requestId, result) 쌍을
+ * [opensamguk.engine.redis.RealtimePublisher.publishCommandResult]로 회신한다(P1 DECISION 해제).
  */
 class TurnDaemonCommandDispatcher(
     private val world: InMemoryTurnWorld,
@@ -229,4 +230,15 @@ class TurnDaemonCommandDispatcher(
     /** Dispatch a batch (one drained tick's worth), returning only the non-null results in order. */
     fun dispatchAll(commands: List<TurnDaemonCommand>): List<TurnDaemonCommandResult> =
         commands.mapNotNull { dispatch(it) }
+
+    /**
+     * W0-4 인테이크 결과 회신 채널 — 드레인된 엔벨로프 배치를 디스패치하고, 각 결과를 엔벨로프의
+     * `requestId`와 쌍으로 돌려준다. 컨트롤 커맨드(Run/Pause/… — [dispatch]가 null)는 쌍을 만들지
+     * 않고, deny 결과(ok=false)도 성공과 동일하게 회신된다 — 페이지가 성공 토스트를 위조하지
+     * 않으려면 deny가 반드시 돌아와야 한다. 순서는 드레인 순서를 보존한다(실행 순서 = 회신 순서).
+     */
+    fun dispatchEnvelopes(
+        envelopes: List<TurnDaemonCommandEnvelope>,
+    ): List<Pair<String, TurnDaemonCommandResult>> =
+        envelopes.mapNotNull { env -> dispatch(env.command)?.let { env.requestId to it } }
 }

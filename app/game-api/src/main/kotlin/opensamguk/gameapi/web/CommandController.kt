@@ -1,14 +1,23 @@
 package opensamguk.gameapi.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.common.wire.TurnDaemonCommandResultSerializer
+import opensamguk.common.wire.TurnDaemonEvent
+import opensamguk.common.wire.TurnDaemonEventEnvelope
+import opensamguk.common.wire.WireJson
+import opensamguk.common.wire.commandResultKey
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -45,6 +54,11 @@ class CommandController(
     private val resolver: GeneralResolver,
     private val queue: CommandQueueService,
     private val generals: GeneralReadRepository,
+    /** W0-4 인테이크 결과 회신 — 엔진이 SET한 [commandResultKey] string 키를 읽는 폴링 read seam. */
+    private val redis: StringRedisTemplate,
+    /** 엔진 발행 result JSON을 응답 트리로 그대로 옮기는 변환기(타입별 부가 필드 보존). */
+    private val objectMapper: ObjectMapper,
+    @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
 ) {
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)
@@ -85,6 +99,54 @@ class CommandController(
                 BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
             )
         }
+    }
+
+    // ── W0-4 인테이크 결과 회신: GET /api/command/result/{requestId} ───────────────────────────────
+    //
+    // 엔진([opensamguk.engine.redis.RealtimePublisher.publishCommandResult] — engine 모듈)이
+    // [commandResultKey] 아래 짧은 TTL로 SET한 [TurnDaemonEventEnvelope](commandResult)를 폴링한다.
+    //
+    // 응답 규약 (항상 200 — 폴링 채널이므로 404를 쓰지 않는다):
+    //   - 키 부재(아직 미처리 or TTL 만료) → `{status:"PENDING", requestId}` — FE는 폴링을 계속한다.
+    //   - 키 존재 → `{status:"RESOLVED", requestId, ok, type, reason?, result}` — `result`는 엔진이
+    //     발행한 [opensamguk.common.wire.TurnDaemonCommandResult] JSON 객체 그대로(타입별 부가 필드
+    //     보존). deny(ok=false)도 RESOLVED로 돌아온다 — 성공 토스트 위조 금지의 근거 데이터.
+    //   - 손상 페이로드 → PENDING (RESOLVED를 위조하지 않는다).
+
+    /** 키 부재/손상 시의 PENDING 폴링 응답. */
+    private fun pending(requestId: String): ResponseEntity<Any> =
+        ResponseEntity.ok(linkedMapOf<String, Any?>("status" to "PENDING", "requestId" to requestId))
+
+    @GetMapping("/result/{requestId}")
+    fun commandResult(@PathVariable requestId: String): ResponseEntity<Any> {
+        val payload = redis.opsForValue().get(commandResultKey(profile, requestId))
+            ?: return pending(requestId)
+
+        // 엔진과 같은 WireJson 디코더로 검증 — 손상/비정형 페이로드는 RESOLVED를 위조하지 않는다.
+        val envelope = try {
+            WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
+        } catch (_: Exception) {
+            return pending(requestId)
+        }
+        val result = (envelope.event as? TurnDaemonEvent.CommandResult)?.result
+            ?: return pending(requestId)
+
+        // result를 엔진과 동일한 WireJson 인코딩으로 재방출해 Jackson 트리로 — `type`/`ok`가 항상
+        // 포함되고(커스텀 serializer가 encodeDefaults 강제) 타입별 부가 필드가 그대로 보존된다.
+        val resultNode = objectMapper.readTree(
+            WireJson.encodeToString(TurnDaemonCommandResultSerializer, result),
+        )
+
+        val body = linkedMapOf<String, Any?>(
+            "status" to "RESOLVED",
+            "requestId" to requestId,
+            "ok" to result.ok,
+            "type" to result.type,
+        )
+        // reason은 deny류에만 존재 — 있을 때만 톱레벨로 끌어올린다(FE 토스트가 바로 읽는 필드).
+        resultNode.get("reason")?.takeIf { !it.isNull }?.let { body["reason"] = it.asText() }
+        body["result"] = resultNode
+        return ResponseEntity.ok(body)
     }
 
     // ── W6e Command-queue: bulk / push / repeat (×{general, nation}) ──────────────────────────────
