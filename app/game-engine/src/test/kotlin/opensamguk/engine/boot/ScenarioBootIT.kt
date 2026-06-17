@@ -10,7 +10,10 @@ import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
@@ -36,6 +39,9 @@ import kotlin.test.assertTrue
  * Skipped (assumeTrue), not failed, when Docker is unavailable. Mirrors the TurnRunServiceIT setup.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// 순차 end-to-end 게이트: 원본 테스트가 "첫 ensureSeeded가 fresh world를 시드한다"를 단언하므로
+// W0-8 rehydrate 테스트(역시 시드 필요)는 반드시 그 뒤에 와야 한다 — JUnit 기본 메서드 순서는 비보장.
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class ScenarioBootIT {
 
     private lateinit var postgres: PostgreSQLContainer<*>
@@ -75,6 +81,7 @@ class ScenarioBootIT {
     }
 
     @Test
+    @Order(1)
     fun `seed then load then advance one turn green`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
 
@@ -117,10 +124,11 @@ class ScenarioBootIT {
     }
 
     @Test
+    @Order(2)
     fun `W0-8 -- city state가 재기동 rehydrate를 살아남는다`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
 
-        // 시드 보장(첫 테스트와 순서 무관 — ensureSeeded는 멱등).
+        // @Order(2): 원본 테스트의 "첫 ensureSeeded" 단언 뒤에 실행 — 여기서는 시드 보장만(멱등 no-op).
         bootstrap.ensureSeeded(jdbc)
         val cityId = jdbc.queryForObject("SELECT id FROM city ORDER BY id ASC LIMIT 1", Int::class.java)!!
 
