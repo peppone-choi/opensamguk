@@ -1070,7 +1070,9 @@ function GameSettingsControl() {
 
     const load = useCallback(async () => {
         try {
-            const data = await getJson<AdminGameSettingsResponse>('admin/game-settings');
+            const res = await fetch('/api/admin/game-settings', { cache: 'no-store' });
+            if (!res.ok) throw new Error(`요청 실패 (${res.status})`);
+            const data = (await res.json()) as AdminGameSettingsResponse;
             setSettings(data);
             setDrafts(
                 Object.fromEntries(
@@ -1108,7 +1110,7 @@ function GameSettingsControl() {
         setBusy(true);
         setMessage(null);
         try {
-            const res = await fetch('/api/proxy/admin/game-settings', {
+            const res = await fetch('/api/admin/game-settings', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ values }),
