@@ -1,5 +1,6 @@
 package opensamguk.engine.boot
 
+import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.Nation
@@ -50,7 +51,7 @@ class WorldSnapshotLoader(
         val state = loadWorldState()
         val nations = loadNations()
         val cities = loadCities()
-        val generals = loadGenerals()
+        val generals = loadGenerals(state)
         val diplomacy = loadDiplomacy()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} diplomacy={} troops=0",
@@ -68,9 +69,13 @@ class WorldSnapshotLoader(
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, tick_seconds, meta, start_time FROM world_state ORDER BY id ASC LIMIT 1",
+            "SELECT id, current_year, current_month, tick_seconds, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
         ) { rs, _ ->
-            val meta = MetaJson.decode(rs.getString("meta"))
+            val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
+            val config = MetaJson.decode(rs.getString("config"))
+            for (key in listOf("turnterm", "npcmode")) {
+                if (!meta.containsKey(key) && config.containsKey(key)) meta[key] = config[key]
+            }
             // lastTurnTime: prefer the persisted clock; fall back to start_time, then now.
             val lastTurn = (meta["lastTurnTime"] as? String)?.let { Instant.parse(it) }
                 ?: rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
@@ -143,44 +148,53 @@ class WorldSnapshotLoader(
         )
     }
 
-    private fun loadGenerals(): List<TurnGeneral> = jdbc.query(
+    private fun loadGenerals(state: TurnWorldState): List<TurnGeneral> {
+        val turnterm = (state.meta["turnterm"] as? Number)?.toInt() ?: (state.tickSeconds / 60)
+        val npcmode = (state.meta["npcmode"] as? Number)?.toInt() ?: 0
+        return jdbc.query(
         """
         SELECT id, name, nation_id, city_id, troop_id, npc_state,
                leadership, strength, intel, experience, dedication, officer_level,
                injury, gold, rice, crew, crew_type_id, train, atmos, age,
-               turn_time, recent_war_time, user_id, meta
+               turn_time, recent_war_time, user_id, dead_year, meta
           FROM general ORDER BY id ASC
         """.trimIndent(),
-    ) { rs, _ ->
-        TurnGeneral(
-            id = rs.getInt("id"),
-            name = rs.getString("name"),
-            nationId = rs.getInt("nation_id"),
-            cityId = rs.getInt("city_id"),
-            troopId = rs.getInt("troop_id"),
-            stats = GeneralStats(
-                leadership = rs.getInt("leadership"),
-                strength = rs.getInt("strength"),
-                intelligence = rs.getInt("intel"),
-            ),
-            experience = rs.getInt("experience"),
-            dedication = rs.getInt("dedication"),
-            officerLevel = rs.getInt("officer_level"),
-            injury = rs.getInt("injury"),
-            gold = rs.getInt("gold"),
-            rice = rs.getInt("rice"),
-            crew = rs.getInt("crew"),
-            crewTypeId = rs.getInt("crew_type_id"),
-            train = rs.getInt("train"),
-            atmos = rs.getInt("atmos"),
-            age = rs.getInt("age"),
-            npcState = rs.getInt("npc_state"),
-            turnTime = rs.getObject("turn_time", OffsetDateTime::class.java).toInstant(),
-            recentWarTime = rs.getObject("recent_war_time", OffsetDateTime::class.java)?.toInstant(),
-            // user_id(소유 유저) — 미적재 시 rehydrate 후 PlaceBet 누적한도/유산 분기가 무음 발산(P0-07 채점 F1).
-            userId = rs.getString("user_id"),
-            meta = MetaJson.decode(rs.getString("meta")),
-        )
+        ) { rs, _ ->
+            TurnGeneral(
+                id = rs.getInt("id"),
+                name = rs.getString("name"),
+                nationId = rs.getInt("nation_id"),
+                cityId = rs.getInt("city_id"),
+                troopId = rs.getInt("troop_id"),
+                stats = GeneralStats(
+                    leadership = rs.getInt("leadership"),
+                    strength = rs.getInt("strength"),
+                    intelligence = rs.getInt("intel"),
+                ),
+                experience = rs.getInt("experience"),
+                dedication = rs.getInt("dedication"),
+                officerLevel = rs.getInt("officer_level"),
+                injury = rs.getInt("injury"),
+                gold = rs.getInt("gold"),
+                rice = rs.getInt("rice"),
+                crew = rs.getInt("crew"),
+                crewTypeId = rs.getInt("crew_type_id"),
+                train = rs.getInt("train"),
+                atmos = rs.getInt("atmos"),
+                age = rs.getInt("age"),
+                npcState = rs.getInt("npc_state"),
+                turnTime = rs.getObject("turn_time", OffsetDateTime::class.java).toInstant(),
+                recentWarTime = rs.getObject("recent_war_time", OffsetDateTime::class.java)?.toInstant(),
+                // user_id(소유 유저) — 미적재 시 rehydrate 후 PlaceBet 누적한도/유산 분기가 무음 발산(P0-07 채점 F1).
+                userId = rs.getString("user_id"),
+                meta = ScenarioLifecycleMeta.ensureGeneralMeta(
+                    MetaJson.decode(rs.getString("meta")),
+                    deadYear = rs.getInt("dead_year"),
+                    turnterm = turnterm,
+                    npcmode = npcmode,
+                ),
+            )
+        }
     }
 
     private fun loadDiplomacy(): List<TurnDiplomacy> = jdbc.query(

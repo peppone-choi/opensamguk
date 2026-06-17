@@ -1,5 +1,6 @@
 package opensamguk.infra.seed
 
+import opensamguk.common.constants.ScenarioLifecycleMeta
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
@@ -322,7 +323,7 @@ class ScenarioImporter(
                  1000, 1000, 0, 0, 0, 0,
                  'None', 'None', 'None', 'None',
                  ?, ?, ?, ?, ?, 'None', 0,
-                 '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
+                 '{}'::jsonb, ?, '{}'::jsonb,
                  ?, ?)
         """.trimIndent()
 
@@ -349,6 +350,7 @@ class ScenarioImporter(
                 born, dead, "default.jpg",
                 g.leadership, g.strength, g.intel, exp, ded, g.officerLevel,
                 ts, age, age, personal, special,
+                jsonb(ScenarioLifecycleMeta.initialGeneralMeta(dead, turnTerm, npcMode)),
                 politics, charm,
             )
             n++
@@ -510,6 +512,9 @@ class ScenarioImporter(
         pg.value = json
         return pg
     }
+
+    private fun jsonb(map: Map<String, Any?>): PGobject =
+        jsonb(opensamguk.infra.persistence.MetaJson.encode(map))
 
     /** PHP `Util::round` half-away-from-zero (NOT Math.round / banker's rounding). */
     private fun phpRoundHalfAway(v: Double): Int =
