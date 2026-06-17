@@ -121,6 +121,7 @@ cd web/game    && corepack pnpm dev   # :3001
 
 - 정본 운영 문서: `docs/superpowers/WORKING_SYSTEM.md`.
 - 루프 엔지니어링 정본: `docs/superpowers/LOOP_ENGINEERING.md`. Claude/Codex 모두 같은 문서를 기준으로 측정 → 가설 1개 → 재측정 → 채택/원복 루프를 돈다.
+- 레거시 갭·UI 패러티·실서버 버그는 반드시 `opensamguk-php-oracle`(PHP/hwe path+line 증거) → `webapp-testing`(UI 재현/브라우저 관측) → `systematic-debugging`(원인 수렴, 수정 전 root cause) → `loop-engineering`(베이스라인/가설/채점/채택) 순서로 묶는다. 하나라도 못 쓰면 `채점대기`/`blocked`를 기록하고 조용히 ship/merge하지 않는다.
 - skills.sh 설치 목록은 `skills-lock.json`에 고정. `.agents/skills/`는 로컬 실행 표면이며 git-ignore이므로 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원.
 - 설치된 외부 스킬: `next-best-practices`, `webapp-testing`, `redesign-existing-projects`, `java-spring-boot`, `java-testing`, `kotlin-spring-boot`, `supabase-postgres-best-practices`.
 - `java-testing`은 skills.sh Gen 감사상 High Risk로 표시됨. 참고로만 사용하고, 실제 합격 판정은 repo 테스트와 `tools/parity/gate.sh`가 담당.

@@ -69,11 +69,16 @@ provider별 도구 이름은 달라도 루프 규율은 같다. 도구가 없으
 
 opensamguk 패러티/버그 루프에서는 PHP grand truth와 기존 gate가 우선이다.
 
-1. PHP source path + line range를 먼저 찾는다.
-2. 필요하면 `tools/php-golden/`으로 캡처한다.
-3. Kotlin/Next 구현을 고친다. golden/test를 약화하지 않는다.
-4. 좁은 gate를 먼저 돌리고, 필요 시 `tools/parity/gate.sh backend`로 확장한다.
-5. UI/실서버 문제가 포함되면 브라우저/API/DB 중 실제 관측 가능한 표면으로 확인한다.
+레거시 갭, UI 패러티, 실서버 버그가 포함된 바퀴는 아래 스킬 체인을 생략할 수 없다.
+
+1. **레거시 증거**: `opensamguk-php-oracle`로 `legacy/devsam-core` PHP source path + line range를 먼저 찍는다. UI 흐름은 PHP가 침묵할 때만 `hwe/ts/` Vue 경로 + line range를 함께 기록한다.
+2. **UI 재현**: 화면 문제가 있으면 `webapp-testing`으로 Playwright/브라우저/API 관측을 남긴다. 로컬 서버가 필요하면 helper script는 `--help`를 먼저 실행한다.
+3. **버그 수렴**: 예상 밖 동작이나 실패는 `systematic-debugging` 순서로 재현, 최근 변경, 데이터 흐름, working example 차이를 확인한 뒤 가설 1개만 세운다. 원인 확인 전 수정 금지.
+4. **전체 루프**: 위 증거를 `loop-engineering` 바퀴의 베이스라인, 가설, 채점자, 채택/원복 기준에 묶는다.
+5. **구현/채점**: Kotlin/Next 구현을 고친다. golden/test를 약화하지 않는다. 좁은 gate를 먼저 돌리고, 필요 시 `tools/parity/gate.sh backend`로 확장한다.
+6. **실서버 확인**: UI/실서버 문제가 포함되면 브라우저/API/DB 중 실제 관측 가능한 표면으로 재확인한다.
+
+위 체인 중 하나라도 사용할 수 없으면 이유를 LEDGER나 리뷰 아티팩트에 `채점대기`/`blocked`로 기록한다. 조용히 건너뛰고 ship/merge하지 않는다.
 
 ## AI 설정 자산 모드
 
