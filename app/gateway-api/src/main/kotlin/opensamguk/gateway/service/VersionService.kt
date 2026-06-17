@@ -30,7 +30,14 @@ class VersionService(
             val gameApi = fetch(def.gameApiUrl)
             val gameEngine = fetch(def.gameEngineUrl)
             val skew = listOf(gameApi, gameEngine).any { it.reachable && it.version != gateway.version }
-            ServerVersion(id = def.id, name = def.name, gameApi = gameApi, gameEngine = gameEngine, skew = skew)
+            ServerVersion(
+                id = def.id,
+                name = def.name,
+                generation = def.generation,
+                gameApi = gameApi,
+                gameEngine = gameEngine,
+                skew = skew,
+            )
         }
         return VersionResponse(gateway = gateway, servers = servers, skew = servers.any { it.skew })
     }

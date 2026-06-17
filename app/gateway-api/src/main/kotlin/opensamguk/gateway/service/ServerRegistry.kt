@@ -12,6 +12,7 @@ data class ServerDef(
     val gameApiUrl: String,
     val gameEngineUrl: String,
     val deployProject: String,
+    val generation: Int? = null,
 )
 
 /**
@@ -58,6 +59,7 @@ class ServerRegistry(
                     gameApiUrl = n.path("gameApiUrl").asText(gameApiUrl),
                     gameEngineUrl = n.path("gameEngineUrl").asText(gameEngineUrl),
                     deployProject = n.path("deployProject").asText(deployProject),
+                    generation = intOrNull(n.path("generation")),
                 )
             }
             parsed
@@ -66,4 +68,11 @@ class ServerRegistry(
             emptyList()
         }
     }
+
+    private fun intOrNull(node: com.fasterxml.jackson.databind.JsonNode): Int? =
+        when {
+            node.isInt || node.isLong -> node.asInt()
+            node.isTextual -> node.asText().toIntOrNull()
+            else -> null
+        }
 }

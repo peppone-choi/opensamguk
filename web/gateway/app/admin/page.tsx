@@ -28,6 +28,7 @@ interface ServiceVersion {
 interface ServerVersion {
     id: string;
     name: string;
+    generation?: number | null;
     gameApi: ServiceVersion;
     gameEngine: ServiceVersion;
     skew: boolean;
@@ -81,6 +82,7 @@ interface ServerCreateResponse {
     error?: string | null;
 }
 interface ServerResetOptions {
+    generation: string;
     scenarioCode: string;
     scenarioSeedEnabled: boolean;
     turnTerm: string;
@@ -445,6 +447,7 @@ function ServerLifecycleControl({
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<ServerCreateResponse | null>(null);
     const [resetOptions, setResetOptions] = useState<ServerResetOptions>({
+        generation: String((server.generation ?? 0) + 1 || 1),
         scenarioCode: defaultScenario,
         scenarioSeedEnabled: true,
         turnTerm: '60',
@@ -505,6 +508,12 @@ function ServerLifecycleControl({
             setMode(null);
             return;
         }
+        const generationNumber = Number.parseInt(resetOptions.generation, 10);
+        if (!Number.isInteger(generationNumber) || generationNumber < 1) {
+            setResult({ ok: false, message: '기수는 1 이상의 숫자여야 합니다.' });
+            setMode(null);
+            return;
+        }
         setBusy(true);
         setResult(null);
         try {
@@ -526,6 +535,16 @@ function ServerLifecycleControl({
 
     const resetForm = (
         <div className="server-reset-grid">
+            <label className="field">
+                <span>기수</span>
+                <input
+                    type="number"
+                    min="1"
+                    value={resetOptions.generation}
+                    disabled={busy}
+                    onChange={(e) => setReset('generation', e.target.value)}
+                />
+            </label>
             <label className="field">
                 <span>턴 시간(분)</span>
                 <select value={resetOptions.turnTerm} disabled={busy} onChange={(e) => setReset('turnTerm', e.target.value)}>
@@ -734,6 +753,7 @@ function ServerLifecycleControl({
 function CreateServerControl({ onCreated }: { onCreated: () => void }) {
     const [id, setId] = useState('s1');
     const [name, setName] = useState('통일 서버');
+    const [generation, setGeneration] = useState('1');
     const [gameApiPort, setGameApiPort] = useState('8101');
     const [webGamePort, setWebGamePort] = useState('3101');
     const [imageTag, setImageTag] = useState('');
@@ -773,6 +793,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                 body: JSON.stringify({
                     id,
                     name,
+                    generation,
                     gameApiPort,
                     webGamePort,
                     imageTag,
@@ -791,9 +812,12 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
         }
     }
 
+    const generationNumber = Number.parseInt(generation, 10);
     const valid =
         id.trim() !== '' &&
         name.trim() !== '' &&
+        Number.isInteger(generationNumber) &&
+        generationNumber >= 1 &&
         gameApiPort.trim() !== '' &&
         webGamePort.trim() !== '' &&
         scenarioCode.trim() !== '';
@@ -809,6 +833,16 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                 <label className="field">
                     <span>서버 이름</span>
                     <input value={name} disabled={busy} onChange={(e) => setName(e.target.value)} />
+                </label>
+                <label className="field">
+                    <span>기수</span>
+                    <input
+                        type="number"
+                        min="1"
+                        value={generation}
+                        disabled={busy}
+                        onChange={(e) => setGeneration(e.target.value)}
+                    />
                 </label>
                 <label className="field">
                     <span>game-api 포트</span>
@@ -994,6 +1028,9 @@ function ServerControl() {
                                     {i === 0 && (
                                         <td rowSpan={2}>
                                             {server.name}
+                                            {server.generation != null && (
+                                                <span className="status-badge status-gold">{server.generation}기</span>
+                                            )}
                                             {server.skew && (
                                                 <span className="status-badge status-gold skew-tag">불일치</span>
                                             )}

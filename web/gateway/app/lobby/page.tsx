@@ -22,6 +22,7 @@ function getIconPath(imageServer: number, picture: string): string {
 interface ServerEntry {
     id: string;
     name: string;
+    generation?: number;
     gameUrl?: string;
 }
 
@@ -207,7 +208,10 @@ function ServerRow({ server }: { server: ServerEntry }) {
 
     return (
         <tr>
-            <td>{server.name}</td>
+            <td>
+                {server.name}
+                {server.generation != null && <span className="status-badge status-gold">{server.generation}기</span>}
+            </td>
             <td>{infoCell}</td>
             <td>{characterCell}</td>
             <td>{selectCell}</td>

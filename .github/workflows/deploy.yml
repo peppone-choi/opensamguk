@@ -110,14 +110,6 @@ jobs:
   # 3. Deploy to EC2 — self-hosted runner ON the box (GH-hosted 러너 IP가 EC2 SG:22에 차단돼
   #    appleboy ssh/scp가 i/o timeout → 셀프호스티드 러너로 전환. deploy 잡이 박스에서 로컬 실행되어
   #    SSH/SCP 불필요. build-jvm/build-web은 GH-hosted 유지(GHCR 푸시만 필요).
-  #
-  #    2026-06-12 멀티서버 스택(~/opensamguk-docker) 전환 반영:
-  #    - 게임 서버(opensamguk-s<N>)의 **game-api·game-engine은 서버별 IMAGE_TAG 고정이 정본** —
-  #      진행 중 로직 점프는 RNG/로그 desync(패러티 파괴) + 둘 다 Flyway라 스키마 결합. CI 자동 갱신 금지.
-  #      엔진/리드API 갱신 = 어드민 버전 패널 → deployer bounce / 시즌 경계 수동(엔진 포함).
-  #    2026-06-16 사용자 결정 — **무상태 프론트(web-game)만** 매 push 자동 pull+bounce(WEB_GAME_TAG).
-  #      web-game은 DB/Flyway 무관(순수 프론트) → 스키마 위험 0. game-api/engine 핀은 불변.
-  #    - CI가 올리는 것: **공유 스택**(gateway-api·web-gateway·nginx) + 각 게임서버 **web-game**.
   # ------------------------------------------------------------------
   deploy:
     runs-on: [self-hosted, ec2-prod]
@@ -138,6 +130,20 @@ jobs:
           echo "=== GHCR login ==="   # 매 배포 재login → 박스 토큰 만료 무관.
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
+          echo "=== Verifying deployer compatibility ==="
+          DEPLOYER_TOKEN="$(grep '^DEPLOYER_TOKEN=' .env | cut -d= -f2-)"
+          docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
+            sh -c 'wget -qO- --header="Authorization: Bearer $DEPLOYER_TOKEN" "http://localhost:9000/env/shared"' \
+            | grep -q '"ok":true'
+          shopt -s nullglob
+          for envf in servers/s*.env; do
+            case "$envf" in *.bak*|*.example) continue;; esac
+            sid="$(basename "$envf" .env)"
+            docker exec -e DEPLOYER_TOKEN="$DEPLOYER_TOKEN" opensamguk-deployer \
+              sh -c "wget -qO- --header=\"Authorization: Bearer \$DEPLOYER_TOKEN\" \"http://localhost:9000/env/server?id=${sid}\"" \
+              | grep -q '"ok":true'
+          done
+
           # 공유 스택 IMAGE_TAG를 이 커밋 SHA로 영속 고정(.env가 단일 진실 — 재부팅/수동 up에도 유지).
           sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
 
@@ -151,45 +157,32 @@ jobs:
           $COMPOSE up -d --force-recreate --no-deps nginx
 
           docker image prune -af --filter "until=168h"
-          echo "=== Shared deploy complete — game-api/engine 고정 태그 유지(어드민 bounce로 갱신) ==="
+          echo "=== Shared deploy complete; game server pins are unchanged ==="
 
-      - name: Bounce web-game on game servers (frontend auto-pull)
-        # 2026-06-16 사용자 결정: 무상태 프론트(web-game)만 매 push 자동 pull+bounce.
-        # game-api/game-engine은 절대 건드리지 않는다 — 둘 다 Flyway(스키마 결합) + 엔진 RNG/로그 desync 위험.
-        # 각 게임서버는 WEB_GAME_TAG(프론트 전용)만 이 커밋으로 올리고, IMAGE_TAG(api/engine 핀)는 불변.
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
+      - name: Preserve game server version pins
         run: |
-          set -uo pipefail
+          set -euo pipefail
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
-          echo "=== GHCR login (root: sudo docker가 /root/.docker 사용) ==="
-          echo "$GHCR_TOKEN" | sudo docker login ghcr.io -u "$GHCR_USER" --password-stdin
           shopt -s nullglob
+          found=0
           for envf in servers/s*.env; do
             case "$envf" in *.bak*|*.example) continue;; esac
-            sid="$(basename "$envf" .env)"          # s1, s2 ...
-            # 실행 중인 게임서버만 대상(미기동 스킵 — 컨테이너명 규약 s<N>-web-game)
-            if ! docker ps --format '{{.Names}}' | grep -q "^${sid}-web-game$"; then
-              echo "skip ${sid}: web-game 미기동"; continue
-            fi
-            # web-game 전용 태그를 이 커밋으로 영속 고정(.env 단일 진실, 재부팅/수동 up에도 유지).
-            if sudo grep -qE '^WEB_GAME_TAG=' "$envf"; then
-              sudo sed -i "s/^WEB_GAME_TAG=.*/WEB_GAME_TAG=${IMAGE_TAG}/" "$envf"
-            else
-              echo "WEB_GAME_TAG=${IMAGE_TAG}" | sudo tee -a "$envf" >/dev/null
-            fi
-            DC="sudo docker compose -p opensamguk-${sid} -f docker-compose.server.yml --env-file ${envf}"
-            echo "=== ${sid}: web-game pull + bounce @ ${IMAGE_TAG} (api/engine 핀 유지) ==="
-            $DC pull web-game
-            $DC up -d --no-deps web-game
+            found=$((found + 1))
+            sid="$(basename "$envf" .env)"
+            current="$(sudo grep -E '^IMAGE_TAG=' "$envf" | cut -d= -f2- || true)"
+            web="$(sudo grep -E '^WEB_GAME_TAG=' "$envf" | cut -d= -f2- || true)"
+            echo "${sid}: IMAGE_TAG=${current:-unset} WEB_GAME_TAG=${web:-unset}"
           done
-          echo "=== web-game 프론트 자동 pull 완료 (game-api/engine 불변) ==="
+          if [ "$found" -eq 0 ]; then
+            echo "no game servers registered yet; shared stack only"
+          else
+            echo "game server pins preserved; promote explicitly outside this workflow"
+          fi
 
       - name: Verify (health + s1 turn-advance)
         run: |
-          set -uo pipefail
+          set -euo pipefail
           # Rule A — nginx/gateway health (localhost, 박스 내부).
           for i in $(seq 1 30); do
             curl -sf "http://localhost/health" >/dev/null 2>&1 && { echo "nginx health: OK"; break; }
@@ -200,11 +193,15 @@ jobs:
             echo "$RESP" | grep -q '"status":"UP"' && { echo "web-gateway health: OK"; break; }
             sleep 5
           done
-          # Rule B — s1 world_state clock 전진(이 잡은 게임 서버를 안 건드리지만 부수 피해 감지용).
-          # 비차단 WARN(턴 주기상 75s 내 미전진은 정상일 수 있음).
-          C1=$(docker exec s1-game-postgres psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
-          sleep 75
-          C2=$(docker exec s1-game-postgres psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
-          echo "s1 world clock: $C1 -> $C2"
-          if [ -n "$C1" ] && [ "$C1" != "$C2" ]; then echo "turn-advance: OK"; else echo "INFO: clock unchanged in 75s ($C1 -> $C2) — 턴 주기상 정상 가능, 동결 의심 시 엔진 로그 확인"; fi
+          if docker ps --format '{{.Names}}' | grep -q '^s1-game-api$'; then
+            docker exec s1-game-api wget -qO- http://localhost:8081/actuator/health | grep -q '"status":"UP"'
+            docker exec s1-game-engine wget -qO- http://localhost:8082/actuator/health | grep -q '"status":"UP"'
+            C1=$(docker exec s1-game-postgres psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
+            sleep 75
+            C2=$(docker exec s1-game-postgres psql -U sammo -d sammo -tAc 'select current_year*100+current_month from world_state;' 2>/dev/null | tr -d ' ')
+            echo "s1 world clock: $C1 -> $C2"
+            if [ -n "$C1" ] && [ "$C1" != "$C2" ]; then echo "turn-advance: OK"; else echo "INFO: clock unchanged in 75s ($C1 -> $C2) — 턴 주기상 정상 가능, 동결 의심 시 엔진 로그 확인"; fi
+          else
+            echo "s1 not running; game-server verification skipped"
+          fi
           echo "=== Verify done ==="

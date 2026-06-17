@@ -37,13 +37,14 @@ class AdminVersionDeployTest {
     fun `유효 JSON 배열은 삽입 순서대로 파싱된다`() {
         val json = """
             [
-              {"id":"s1","name":"통일 서버","gameApiUrl":"http://s1-game-api:8081","gameEngineUrl":"http://s1-game-engine:8082","deployProject":"opensamguk-s1"},
-              {"id":"s2","name":"군웅 서버","gameApiUrl":"http://s2-game-api:8081","gameEngineUrl":"http://s2-game-engine:8082","deployProject":"opensamguk-s2"}
+              {"id":"s1","name":"통일 서버","generation":1,"gameApiUrl":"http://s1-game-api:8081","gameEngineUrl":"http://s1-game-engine:8082","deployProject":"opensamguk-s1"},
+              {"id":"s2","name":"군웅 서버","generation":7,"gameApiUrl":"http://s2-game-api:8081","gameEngineUrl":"http://s2-game-engine:8082","deployProject":"opensamguk-s2"}
             ]
         """.trimIndent()
         val reg = registry(json = json)
         assertEquals(listOf("s1", "s2"), reg.all().map { it.id })
         assertEquals("opensamguk-s2", reg.find("s2")?.deployProject)
+        assertEquals(7, reg.find("s2")?.generation)
         assertEquals("http://s1-game-engine:8082", reg.find("s1")?.gameEngineUrl)
         assertEquals("s1", reg.default()?.id) // 첫 서버가 기본값
     }
@@ -149,13 +150,13 @@ class AdminVersionDeployTest {
                 mapper,
             )
 
-            val result = svc.patchServerEnv("s1", """{"values":{"SCENARIO_SEED_ENABLED":"false"}}""")
+            val result = svc.patchServerEnv("s1", """{"values":{"SCENARIO_SEED_ENABLED":"false","SERVER_GENERATION":"2"}}""")
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
             assertEquals("/env/server?id=s1", request.path)
             assertEquals("PATCH", request.method)
-            assertEquals("""{"values":{"SCENARIO_SEED_ENABLED":"false"}}""", request.body)
+            assertEquals("""{"values":{"SCENARIO_SEED_ENABLED":"false","SERVER_GENERATION":"2"}}""", request.body)
         }
     }
 
@@ -181,7 +182,7 @@ class AdminVersionDeployTest {
             )
             val svc = DeployService(deployer.url(), "tok", registry(), mapper)
 
-            val result = svc.createServer("""{"id":"s1","name":"통일 서버","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""")
+            val result = svc.createServer("""{"id":"s1","name":"통일 서버","generation":"3","gameApiPort":"8101","webGamePort":"3101","imageTag":"v1"}""")
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
@@ -189,6 +190,7 @@ class AdminVersionDeployTest {
             assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
             assertTrue(request.body.contains(""""id":"1""""))
+            assertTrue(request.body.contains(""""generation":"3""""))
             assertFalse(result.body.contains("tok"))
         }
     }
@@ -234,7 +236,7 @@ class AdminVersionDeployTest {
                 mapper,
             )
 
-            val result = svc.resetServer("s1", """{"confirm":"RESET s1","scenarioCode":"scenario_1002","turnTerm":"30","sync":"1","fiction":"0","extend":"1","blockGeneralCreate":"2","npcMode":"2","showImgLevel":"3","autorunUserOptions":["develop","battle"],"autorunUserMinutes":"1440","joinMode":"onlyRandom","tournamentTrig":"1","reserveOpen":"2026-06-10 20:00","preReserveOpen":"2026-06-10 19:00"}""")
+            val result = svc.resetServer("s1", """{"confirm":"RESET s1","generation":"2","scenarioCode":"scenario_1002","turnTerm":"30","sync":"1","fiction":"0","extend":"1","blockGeneralCreate":"2","npcMode":"2","showImgLevel":"3","autorunUserOptions":["develop","battle"],"autorunUserMinutes":"1440","joinMode":"onlyRandom","tournamentTrig":"1","reserveOpen":"2026-06-10 20:00","preReserveOpen":"2026-06-10 19:00"}""")
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
@@ -243,6 +245,7 @@ class AdminVersionDeployTest {
             assertEquals("Bearer tok", request.authorization)
             assertTrue(request.body.contains(""""id":"s1""""))
             assertTrue(request.body.contains(""""confirm":"RESET s1""""))
+            assertTrue(request.body.contains(""""generation":"2""""))
             assertTrue(request.body.contains(""""autorunUserOptions":["develop","battle"]"""))
             assertTrue(request.body.contains(""""preReserveOpen":"2026-06-10 19:00""""))
         }
@@ -254,7 +257,7 @@ class AdminVersionDeployTest {
         fake.use { deployer ->
             deployer.enqueue(
                 200,
-                """[{"id":"s9","name":"런타임 서버","gameApiUrl":"http://s9-api:8081","gameEngineUrl":"http://s9-engine:8082","deployProject":"opensamguk-s9"}]""",
+                """[{"id":"s9","name":"런타임 서버","generation":9,"gameApiUrl":"http://s9-api:8081","gameEngineUrl":"http://s9-engine:8082","deployProject":"opensamguk-s9"}]""",
             )
             deployer.enqueue(
                 200,

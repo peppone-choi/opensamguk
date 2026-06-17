@@ -14,6 +14,7 @@ import ServerLog from './ServerLog';
 interface ServerEntry {
     id: string;
     name: string;
+    generation?: number;
 }
 export default function ServerBoard() {
     const [servers, setServers] = useState<ServerEntry[]>([]);
@@ -58,6 +59,7 @@ export default function ServerBoard() {
                         onClick={() => setSelectedId(s.id)}
                     >
                         {s.name}
+                        {s.generation != null && <span className="status-badge status-gold">{s.generation}기</span>}
                     </button>
                 ))}
             </div>
