@@ -8,6 +8,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyString
@@ -58,6 +59,9 @@ class CommandControllerSecurityTest {
             UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
         req
     }
+
+    @BeforeEach
+    fun setup() = SecurityContextHolder.clearContext()
 
     @AfterEach
     fun clearAuth() = SecurityContextHolder.clearContext()
