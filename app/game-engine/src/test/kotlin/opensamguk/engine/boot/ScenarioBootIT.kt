@@ -1,5 +1,6 @@
 package opensamguk.engine.boot
 
+import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
@@ -91,6 +92,15 @@ class ScenarioBootIT {
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)
+        val expectedKillturn = EffectiveGameConst.killturn(snapshot.state.tickSeconds / 60, npcmode = 0)
+        assertTrue(
+            snapshot.generals.all { (it.meta["killturn"] as? Number)?.toInt() == expectedKillturn },
+            "seeded generals load with PHP reset killturn baseline",
+        )
+        assertTrue(
+            snapshot.generals.all { (it.meta["deadyear"] as? Number)?.toInt() ?: 0 > snapshot.state.currentYear },
+            "seeded generals load with PHP deadyear lifecycle meta",
+        )
 
         val world = InMemoryTurnWorld(snapshot)
         val registry = CommandRegistry(GeneralActionPipeline())
@@ -110,6 +120,7 @@ class ScenarioBootIT {
         assertTrue(handled.isNotEmpty(), "the turn loop advanced at least one due general")
         // The seeded ring is all 휴식 → every advanced general resolves the rest action (no exception).
         assertTrue(handled.all { it.definition.key == "휴식" }, "every advanced turn resolved 휴식")
+        assertEquals(2, world.listNations().size, "seeded nations survive the first due-turn tick")
 
         // 5. second seed is a no-op (emptiness gate).
         assertTrue(!bootstrap.ensureSeeded(jdbc), "second ensureSeeded is a no-op")

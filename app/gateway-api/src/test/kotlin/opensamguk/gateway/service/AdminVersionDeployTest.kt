@@ -102,14 +102,14 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `알 수 없는 서버는 server env 조회를 deployer 호출 전에 거부`() {
+    fun `알 수 없는 서버는 deployer registry 확인 후 server env 조회 전에 거부`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
             val svc = DeployService(deployer.url(), "tok", registry(), mapper)
             val result = svc.serverEnv("missing")
 
             assertEquals(400, result.status)
-            assertEquals(0, deployer.requests.size)
+            assertEquals(listOf("/servers"), deployer.requests.map { it.path })
         }
     }
 
@@ -172,7 +172,7 @@ class AdminVersionDeployTest {
     }
 
     @Test
-    fun `서버 생성은 deployer servers endpoint로 POST한다`() {
+    fun `서버 생성은 deployer create endpoint로 POST한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
             deployer.enqueue(
@@ -185,16 +185,16 @@ class AdminVersionDeployTest {
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
-            assertEquals("/servers", request.path)
+            assertEquals("/servers/create", request.path)
             assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
-            assertTrue(request.body.contains(""""id":"s1""""))
+            assertTrue(request.body.contains(""""id":"1""""))
             assertFalse(result.body.contains("tok"))
         }
     }
 
     @Test
-    fun `서버 삭제는 deployer servers endpoint로 DELETE한다`() {
+    fun `서버 삭제는 deployer close endpoint로 POST한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
             deployer.enqueue(
@@ -212,9 +212,10 @@ class AdminVersionDeployTest {
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
-            assertEquals("/servers?id=s1&confirm=DELETE%20s1", request.path)
-            assertEquals("DELETE", request.method)
+            assertEquals("/servers/close", request.path)
+            assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
+            assertTrue(request.body.contains(""""id":"s1""""))
         }
     }
 
@@ -237,12 +238,37 @@ class AdminVersionDeployTest {
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
-            assertEquals("/servers/reset?id=s1", request.path)
+            assertEquals("/servers/reset", request.path)
             assertEquals("POST", request.method)
             assertEquals("Bearer tok", request.authorization)
+            assertTrue(request.body.contains(""""id":"s1""""))
             assertTrue(request.body.contains(""""confirm":"RESET s1""""))
             assertTrue(request.body.contains(""""autorunUserOptions":["develop","battle"]"""))
             assertTrue(request.body.contains(""""preReserveOpen":"2026-06-10 19:00""""))
+        }
+    }
+
+    @Test
+    fun `deployer registry can resolve runtime-created servers without gateway restart`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """[{"id":"s9","name":"런타임 서버","gameApiUrl":"http://s9-api:8081","gameEngineUrl":"http://s9-engine:8082","deployProject":"opensamguk-s9"}]""",
+            )
+            deployer.enqueue(
+                200,
+                """{"currentTag":"v9","availableTags":["v9"]}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(json = ""), mapper)
+
+            val status = svc.status("s9")
+
+            assertTrue(status.configured)
+            assertEquals("s9", status.serverId)
+            assertEquals("v9", status.currentTag)
+            assertEquals("/servers", deployer.requests[0].path)
+            assertEquals("/status?project=opensamguk-s9", deployer.requests[1].path)
         }
     }
 
