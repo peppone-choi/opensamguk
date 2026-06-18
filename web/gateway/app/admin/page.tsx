@@ -448,7 +448,7 @@ function ServerLifecycleControl({
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<ServerCreateResponse | null>(null);
     const [resetOptions, setResetOptions] = useState<ServerResetOptions>({
-        generation: String((server.generation ?? 0) + 1 || 1),
+        generation: String(server.generation ?? 1),
         scenarioCode: defaultScenario,
         scenarioSeedEnabled: true,
         turnTerm: '60',
@@ -510,8 +510,8 @@ function ServerLifecycleControl({
             return;
         }
         const generationNumber = Number.parseInt(resetOptions.generation, 10);
-        if (!Number.isInteger(generationNumber) || generationNumber < 1) {
-            setResult({ ok: false, message: '기수는 1 이상의 숫자여야 합니다.' });
+        if (!Number.isInteger(generationNumber) || generationNumber < 0) {
+            setResult({ ok: false, message: '기수는 0 이상의 숫자여야 합니다.' });
             setMode(null);
             return;
         }
@@ -540,7 +540,7 @@ function ServerLifecycleControl({
                 <span>기수</span>
                 <input
                     type="number"
-                    min="1"
+                    min="0"
                     value={resetOptions.generation}
                     disabled={busy}
                     onChange={(e) => setReset('generation', e.target.value)}
@@ -818,7 +818,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
         id.trim() !== '' &&
         name.trim() !== '' &&
         Number.isInteger(generationNumber) &&
-        generationNumber >= 1 &&
+        generationNumber >= 0 &&
         gameApiPort.trim() !== '' &&
         webGamePort.trim() !== '' &&
         scenarioCode.trim() !== '';
@@ -839,7 +839,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                     <span>기수</span>
                     <input
                         type="number"
-                        min="1"
+                        min="0"
                         value={generation}
                         disabled={busy}
                         onChange={(e) => setGeneration(e.target.value)}

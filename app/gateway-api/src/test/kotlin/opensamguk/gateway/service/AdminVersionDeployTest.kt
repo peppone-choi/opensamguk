@@ -196,6 +196,25 @@ class AdminVersionDeployTest {
     }
 
     @Test
+    fun `알파 서버 생성은 0기를 허용한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"s0","name":"알파 서버","project":"opensamguk-s0"}""",
+            )
+            val svc = DeployService(deployer.url(), "tok", registry(), mapper)
+
+            val result = svc.createServer("""{"id":"s0","name":"알파 서버","generation":"0","gameApiPort":"8102","webGamePort":"3102","imageTag":"v1"}""")
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers/create", request.path)
+            assertTrue(request.body.contains(""""generation":"0""""))
+        }
+    }
+
+    @Test
     fun `서버 삭제는 deployer close endpoint로 POST한다`() {
         val fake = FakeDeployer()
         fake.use { deployer ->
@@ -248,6 +267,30 @@ class AdminVersionDeployTest {
             assertTrue(request.body.contains(""""generation":"2""""))
             assertTrue(request.body.contains(""""autorunUserOptions":["develop","battle"]"""))
             assertTrue(request.body.contains(""""preReserveOpen":"2026-06-10 19:00""""))
+        }
+    }
+
+    @Test
+    fun `알파 서버 리셋은 0기를 허용한다`() {
+        val fake = FakeDeployer()
+        fake.use { deployer ->
+            deployer.enqueue(
+                200,
+                """{"ok":true,"id":"s1","name":"통일 서버","project":"opensamguk-s1"}""",
+            )
+            val svc = DeployService(
+                deployer.url(),
+                "tok",
+                registry(json = """[{"id":"s1","name":"통일 서버","deployProject":"opensamguk-s1"}]"""),
+                mapper,
+            )
+
+            val result = svc.resetServer("s1", """{"confirm":"RESET s1","generation":"0","scenarioCode":"scenario_1010"}""")
+
+            val request = deployer.requests.single()
+            assertEquals(200, result.status)
+            assertEquals("/servers/reset", request.path)
+            assertTrue(request.body.contains(""""generation":"0""""))
         }
     }
 
