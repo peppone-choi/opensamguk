@@ -484,6 +484,7 @@ class JdbcFlushExecutor(
             val c = r.columns
             MapSqlParameterSource()
                 .addValue("id", c["id"])
+                .addValue("user_id", c["user_id"])
                 .addValue("name", c["name"])
                 .addValue("nation_id", c["nation_id"])
                 .addValue("city_id", c["city_id"])
@@ -525,7 +526,7 @@ class JdbcFlushExecutor(
         jdbc.batchUpdate(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, troop_id, npc_state, affinity,
+                (id, user_id, name, nation_id, city_id, troop_id, npc_state, affinity,
                  born_year, dead_year, picture, image_server,
                  leadership, strength, intel, injury, experience, dedication, officer_level,
                  gold, rice, crew, crew_type_id, train, atmos,
@@ -533,7 +534,7 @@ class JdbcFlushExecutor(
                  turn_time, age, start_age, personal_code, special_code, special2_code, officer_city,
                  last_turn, meta, penalty)
             VALUES
-                (:id, :name, :nation_id, :city_id, :troop_id, :npc_state, :affinity,
+                (:id, :user_id, :name, :nation_id, :city_id, :troop_id, :npc_state, :affinity,
                  :born_year, :dead_year, :picture, :image_server,
                  :leadership, :strength, :intel, :injury, :experience, :dedication, :officer_level,
                  :gold, :rice, :crew, :crew_type_id, :train, :atmos,

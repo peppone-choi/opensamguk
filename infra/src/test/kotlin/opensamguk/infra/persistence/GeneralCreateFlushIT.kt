@@ -69,11 +69,12 @@ class GeneralCreateFlushIT {
         val row = GeneralCreateRow(
             columns = linkedMapOf(
                 "id" to 9001,
+                "user_id" to "7",
                 "name" to "신규장수",
                 "nation_id" to 0,
                 "city_id" to 5,
                 "troop_id" to 0,
-                "npc_state" to 2,
+                "npc_state" to 0,
                 "affinity" to 42,
                 "born_year" to 175,
                 "dead_year" to 250,
@@ -117,11 +118,12 @@ class GeneralCreateFlushIT {
             MapSqlParameterSource("id", 9001),
         )
         assertEquals(9001, (g["id"] as Number).toInt())
+        assertEquals("7", g["user_id"])
         assertEquals("신규장수", g["name"])
         assertEquals(0, (g["nation_id"] as Number).toInt())
         assertEquals(5, (g["city_id"] as Number).toInt())
         assertEquals(0, (g["troop_id"] as Number).toInt())
-        assertEquals(2, (g["npc_state"] as Number).toInt())
+        assertEquals(0, (g["npc_state"] as Number).toInt())
         assertEquals(42, (g["affinity"] as Number).toInt())
         assertEquals(175, (g["born_year"] as Number).toInt())
         assertEquals(250, (g["dead_year"] as Number).toInt())
