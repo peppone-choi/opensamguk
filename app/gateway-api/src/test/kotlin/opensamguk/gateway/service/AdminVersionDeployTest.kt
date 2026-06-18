@@ -150,13 +150,15 @@ class AdminVersionDeployTest {
                 mapper,
             )
 
-            val result = svc.patchServerEnv("s1", """{"values":{"SCENARIO_SEED_ENABLED":"false","SERVER_GENERATION":"2"}}""")
+            val webGameTag = "057ea7ff7242a84c426d9c8e958751f4029d2421"
+            val body = """{"values":{"SCENARIO_SEED_ENABLED":"false","SERVER_GENERATION":"2","WEB_GAME_TAG":"$webGameTag"}}"""
+            val result = svc.patchServerEnv("s1", body)
 
             val request = deployer.requests.single()
             assertEquals(200, result.status)
             assertEquals("/env/server?id=s1", request.path)
             assertEquals("PATCH", request.method)
-            assertEquals("""{"values":{"SCENARIO_SEED_ENABLED":"false","SERVER_GENERATION":"2"}}""", request.body)
+            assertEquals(body, request.body)
         }
     }
 
