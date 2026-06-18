@@ -160,8 +160,7 @@ interface TurnDaemonControlResult {
 }
 
 // 버전 불일치 경고 — game-engine은 자동 재배포 제외라 시즌 경계에서 수동 갱신 필요.
-const SKEW_WARNING =
-    '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
+const SKEW_WARNING = '⚠ 버전 불일치 — game-engine은 자동 재배포 제외, 시즌 경계에서 수동 갱신 필요';
 const AUTORUN_OPTIONS = [
     ['develop', '내정'],
     ['warp', '순간이동'],
@@ -200,6 +199,7 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 const BOOLEAN_ENV_KEYS = new Set(['COOKIE_SECURE', 'SCENARIO_SEED_ENABLED']);
+const GLOBAL_GAME_SETTING_KEYS = new Set(['msg']);
 
 function fieldInitialValue(field: EnvField): string {
     if (field.writeOnly) return '';
@@ -289,9 +289,7 @@ function EnvConfigEditor({
         <div className="env-config-editor">
             <div className="env-config-head">
                 <h3 className="lobby-section-title">{title}</h3>
-                {config.restartRequired && (
-                    <span className="status-badge status-gold">재시작 필요</span>
-                )}
+                {config.restartRequired && <span className="status-badge status-gold">재시작 필요</span>}
             </div>
             <div className="env-field-list">
                 {fields.map((field) => (
@@ -349,9 +347,7 @@ function DeployControl({
     // deployer 미설정 — 컨트롤 숨기고 안내만.
     if (!status.configured) {
         return (
-            <p className="deploy-note">
-                {status.message ?? '배포 deployer가 설정되지 않았습니다 (로컬/미배포 환경).'}
-            </p>
+            <p className="deploy-note">{status.message ?? '배포 deployer가 설정되지 않았습니다 (로컬/미배포 환경).'}</p>
         );
     }
 
@@ -443,7 +439,8 @@ function ServerLifecycleControl({
     scenarios: ScenarioOption[];
     onChanged: () => void;
 }) {
-    const defaultScenario = scenarios.find((scenario) => scenario.code === 'scenario_1010')?.code || scenarios[0]?.code || '';
+    const defaultScenario =
+        scenarios.find((scenario) => scenario.code === 'scenario_1010')?.code || scenarios[0]?.code || '';
     const [mode, setMode] = useState<'reset' | 'delete' | null>(null);
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<ServerCreateResponse | null>(null);
@@ -505,7 +502,10 @@ function ServerLifecycleControl({
 
     async function runReset() {
         if (!resetOptions.scenarioCode) {
-            setResult({ ok: false, message: '시나리오를 선택해야 리셋할 수 있습니다.' });
+            setResult({
+                ok: false,
+                message: '시나리오를 선택해야 리셋할 수 있습니다.',
+            });
             setMode(null);
             return;
         }
@@ -521,7 +521,10 @@ function ServerLifecycleControl({
             const res = await fetch(`/api/proxy/admin/servers/${encodeURIComponent(server.id)}/reset`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...resetOptions, confirm: `RESET ${server.id}` }),
+                body: JSON.stringify({
+                    ...resetOptions,
+                    confirm: `RESET ${server.id}`,
+                }),
             });
             const data = (await res.json()) as ServerCreateResponse;
             setResult(data);
@@ -548,9 +551,15 @@ function ServerLifecycleControl({
             </label>
             <label className="field">
                 <span>턴 시간(분)</span>
-                <select value={resetOptions.turnTerm} disabled={busy} onChange={(e) => setReset('turnTerm', e.target.value)}>
+                <select
+                    value={resetOptions.turnTerm}
+                    disabled={busy}
+                    onChange={(e) => setReset('turnTerm', e.target.value)}
+                >
                     {['120', '60', '30', '20', '10', '5', '2', '1'].map((value) => (
-                        <option key={value} value={value}>{value}</option>
+                        <option key={value} value={value}>
+                            {value}
+                        </option>
                     ))}
                 </select>
             </label>
@@ -577,14 +586,22 @@ function ServerLifecycleControl({
             </label>
             <label className="field">
                 <span>NPC 상성</span>
-                <select value={resetOptions.fiction} disabled={busy} onChange={(e) => setReset('fiction', e.target.value)}>
+                <select
+                    value={resetOptions.fiction}
+                    disabled={busy}
+                    onChange={(e) => setReset('fiction', e.target.value)}
+                >
                     <option value="0">연의</option>
                     <option value="1">가상</option>
                 </select>
             </label>
             <label className="field">
                 <span>확장 NPC</span>
-                <select value={resetOptions.extend} disabled={busy} onChange={(e) => setReset('extend', e.target.value)}>
+                <select
+                    value={resetOptions.extend}
+                    disabled={busy}
+                    onChange={(e) => setReset('extend', e.target.value)}
+                >
                     <option value="1">포함</option>
                     <option value="0">미포함</option>
                 </select>
@@ -603,7 +620,11 @@ function ServerLifecycleControl({
             </label>
             <label className="field">
                 <span>NPC 빙의</span>
-                <select value={resetOptions.npcMode} disabled={busy} onChange={(e) => setReset('npcMode', e.target.value)}>
+                <select
+                    value={resetOptions.npcMode}
+                    disabled={busy}
+                    onChange={(e) => setReset('npcMode', e.target.value)}
+                >
                     <option value="1">가능</option>
                     <option value="0">불가</option>
                     <option value="2">선택 생성 가능</option>
@@ -646,13 +667,19 @@ function ServerLifecycleControl({
                     onChange={(e) => setReset('autorunUserMinutes', e.target.value)}
                 >
                     {AUTORUN_MINUTES.map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
+                        <option key={value} value={value}>
+                            {label}
+                        </option>
                     ))}
                 </select>
             </label>
             <label className="field">
                 <span>임관 모드</span>
-                <select value={resetOptions.joinMode} disabled={busy} onChange={(e) => setReset('joinMode', e.target.value)}>
+                <select
+                    value={resetOptions.joinMode}
+                    disabled={busy}
+                    onChange={(e) => setReset('joinMode', e.target.value)}
+                >
                     <option value="full">일반</option>
                     <option value="onlyRandom">랜덤 임관</option>
                 </select>
@@ -739,9 +766,9 @@ function ServerLifecycleControl({
                 confirmLabel="삭제 실행"
                 message={
                     <>
-                        서버 &apos;{server.name}&apos;의 컨테이너, DB/Redis 볼륨, env, gateway registry 항목을 삭제합니다.
-                        <br />
-                        이 작업은 되돌릴 수 없습니다.
+                        서버 &apos;{server.name}&apos;의 컨테이너, DB/Redis 볼륨, env, gateway registry 항목을
+                        삭제합니다.
+                        <br />이 작업은 되돌릴 수 없습니다.
                     </>
                 }
                 onConfirm={runDelete}
@@ -777,7 +804,11 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                 });
             })
             .catch(() => {
-                if (alive) setResult({ ok: false, message: '시나리오 목록을 불러오지 못했습니다.' });
+                if (alive)
+                    setResult({
+                        ok: false,
+                        message: '시나리오 목록을 불러오지 못했습니다.',
+                    });
             });
         return () => {
             alive = false;
@@ -1054,7 +1085,11 @@ function ServerControl() {
                     <div key={server.id} className="deploy-server">
                         <div className="deploy-server-head">{server.name}</div>
                         <DeployControl server={server} status={statuses[server.id]} onReload={reloadStatus} />
-                        <ServerLifecycleControl server={server} scenarios={scenarios} onChanged={() => loadVersion(false)} />
+                        <ServerLifecycleControl
+                            server={server}
+                            scenarios={scenarios}
+                            onChanged={() => loadVersion(false)}
+                        />
                     </div>
                 ))}
             </div>
@@ -1062,39 +1097,48 @@ function ServerControl() {
     );
 }
 
+function adminGameSettingsPath(serverId: string): string {
+    return `${ADMIN_GAME_SETTINGS_PATH}?server=${encodeURIComponent(serverId)}`;
+}
+
 /** world_state.config 에서 라이브 수정 가능한 게임 환경 설정. */
-function GameSettingsControl() {
+function GameSettingsControl({ selectedServer, servers }: { selectedServer: string; servers: ServerVersion[] }) {
     const [settings, setSettings] = useState<AdminGameSettingsResponse | null>(null);
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [busy, setBusy] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
 
     const load = useCallback(async () => {
+        if (!selectedServer) {
+            setSettings(null);
+            setDrafts({});
+            setMessage('게임 서버를 선택하세요.');
+            return;
+        }
         try {
-            const res = await fetch(ADMIN_GAME_SETTINGS_PATH, { cache: 'no-store' });
+            const res = await fetch(adminGameSettingsPath(selectedServer), {
+                cache: 'no-store',
+            });
             if (!res.ok) throw new Error(`요청 실패 (${res.status})`);
             const data = (await res.json()) as AdminGameSettingsResponse;
             setSettings(data);
-            setDrafts(
-                Object.fromEntries(
-                    data.editableFields.map((field) => [field.key, String(field.value ?? '')]),
-                ),
-            );
+            setDrafts(Object.fromEntries(data.editableFields.map((field) => [field.key, String(field.value ?? '')])));
             setMessage(null);
         } catch {
             setMessage('게임 설정을 불러오지 못했습니다.');
         }
-    }, []);
+    }, [selectedServer]);
 
     useEffect(() => {
         load();
     }, [load]);
 
     async function save() {
-        if (!settings) return;
+        if (!settings || !selectedServer) return;
         const values: Record<string, string | number> = {};
         for (const field of settings.editableFields) {
             const raw = drafts[field.key]?.trim() ?? '';
+            if (raw === String(field.value ?? '')) continue;
             if (field.type === 'text') {
                 values[field.key] = raw;
             } else if (field.type === 'number' || field.type === 'select') {
@@ -1111,20 +1155,46 @@ function GameSettingsControl() {
         setBusy(true);
         setMessage(null);
         try {
-            const res = await fetch(ADMIN_GAME_SETTINGS_PATH, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ values }),
-            });
-            const data = (await res.json()) as { result?: boolean; reason?: string; restartRequired?: boolean };
-            if (!res.ok || data.result === false) {
-                setMessage(data.reason ?? '게임 설정 저장에 실패했습니다.');
-                return;
+            const globalValues = Object.fromEntries(
+                Object.entries(values).filter(([key]) => GLOBAL_GAME_SETTING_KEYS.has(key)),
+            );
+            const serverValues = Object.fromEntries(
+                Object.entries(values).filter(([key]) => !GLOBAL_GAME_SETTING_KEYS.has(key)),
+            );
+
+            async function patch(serverId: string, nextValues: Record<string, string | number>) {
+                const res = await fetch(adminGameSettingsPath(serverId), {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ values: nextValues }),
+                });
+                const data = (await res.json()) as {
+                    result?: boolean;
+                    reason?: string;
+                    restartRequired?: boolean;
+                };
+                if (!res.ok || data.result === false) {
+                    throw new Error(data.reason ?? `게임 설정 저장 실패 (${serverId})`);
+                }
+                return data;
             }
-            setMessage(data.restartRequired ? '저장되었습니다. 턴 시간 변경은 엔진 재시작 후 적용됩니다.' : '저장되었습니다.');
+
+            let restartRequired = false;
+            if (Object.keys(globalValues).length > 0) {
+                const targetServers = servers.length > 0 ? servers : [{ id: selectedServer } as ServerVersion];
+                const results = await Promise.all(targetServers.map((server) => patch(server.id, globalValues)));
+                restartRequired = restartRequired || results.some((result) => result.restartRequired);
+            }
+            if (Object.keys(serverValues).length > 0) {
+                const result = await patch(selectedServer, serverValues);
+                restartRequired = restartRequired || result.restartRequired === true;
+            }
+            setMessage(
+                restartRequired ? '저장되었습니다. 턴 시간 변경은 엔진 재시작 후 적용됩니다.' : '저장되었습니다.',
+            );
             await load();
-        } catch {
-            setMessage('게임 설정 저장에 실패했습니다.');
+        } catch (e) {
+            setMessage(e instanceof Error ? e.message : '게임 설정 저장에 실패했습니다.');
         } finally {
             setBusy(false);
         }
@@ -1136,8 +1206,15 @@ function GameSettingsControl() {
 
     return (
         <div className="env-section">
-            <h3 className="lobby-section-title">입장 설정</h3>
-            {message && <p className={`deploy-result ${message.startsWith('저장되었습니다') ? 'ok' : 'fail'}`}>{message}</p>}
+            <h3 className="lobby-section-title">
+                입장 설정
+                {selectedServer
+                    ? ` · ${servers.find((server) => server.id === selectedServer)?.name ?? selectedServer}`
+                    : ''}
+            </h3>
+            {message && (
+                <p className={`deploy-result ${message.startsWith('저장되었습니다') ? 'ok' : 'fail'}`}>{message}</p>
+            )}
             {!settings ? (
                 <p className="svc-meta">설정 조회 중…</p>
             ) : (
@@ -1149,7 +1226,12 @@ function GameSettingsControl() {
                                 <select
                                     value={drafts[field.key] ?? String(field.value ?? '')}
                                     disabled={busy}
-                                    onChange={(e) => setDrafts((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                    onChange={(e) =>
+                                        setDrafts((prev) => ({
+                                            ...prev,
+                                            [field.key]: e.target.value,
+                                        }))
+                                    }
                                 >
                                     {field.options.map((opt) => (
                                         <option key={opt.value} value={opt.value}>
@@ -1162,7 +1244,12 @@ function GameSettingsControl() {
                                     type={field.type === 'number' ? 'number' : 'text'}
                                     value={drafts[field.key] ?? String(field.value ?? '')}
                                     disabled={busy}
-                                    onChange={(e) => setDrafts((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                                    onChange={(e) =>
+                                        setDrafts((prev) => ({
+                                            ...prev,
+                                            [field.key]: e.target.value,
+                                        }))
+                                    }
                                 />
                             )}
                         </label>
@@ -1198,9 +1285,15 @@ function GameEnvControl() {
     const [envMessage, setEnvMessage] = useState<string | null>(null);
 
     // 데몬 락 상태 재조회. 진입 + 락걸기/락풀기 후 호출.
-    const reload = useCallback(async () => {
+    const reload = useCallback(async (serverId: string) => {
+        if (!serverId) {
+            setStatus(null);
+            return;
+        }
         try {
-            const st = await getJson<TurnDaemonStatus>('admin/turn-daemon/status');
+            const st = await getJson<TurnDaemonStatus>(
+                `admin/turn-daemon/status?serverId=${encodeURIComponent(serverId)}`,
+            );
             setStatus(st);
             setError(null);
         } catch {
@@ -1212,7 +1305,9 @@ function GameEnvControl() {
         const data = await getJson<EnvConfigResponse>('admin/env/shared');
         setSharedEnv(data);
         setSharedDrafts(
-            Object.fromEntries(Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)])),
+            Object.fromEntries(
+                Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+            ),
         );
     }, []);
 
@@ -1225,7 +1320,9 @@ function GameEnvControl() {
         const data = await getJson<EnvConfigResponse>(`admin/env/servers/${encodeURIComponent(serverId)}`);
         setServerEnv(data);
         setServerDrafts(
-            Object.fromEntries(Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)])),
+            Object.fromEntries(
+                Object.entries(data.fields ?? {}).map(([key, field]) => [key, fieldInitialValue(field)]),
+            ),
         );
     }, []);
 
@@ -1239,7 +1336,7 @@ function GameEnvControl() {
                 setVersion(ver);
                 const firstServer = ver.servers[0]?.id ?? '';
                 setSelectedServer(firstServer);
-                await Promise.all([reload(), loadSharedEnv(), loadServerEnv(firstServer)]);
+                await loadSharedEnv();
             } catch {
                 if (alive) setError('게임 환경 정보를 불러오지 못했습니다.');
             }
@@ -1256,7 +1353,7 @@ function GameEnvControl() {
         (async () => {
             setEnvBusy(true);
             try {
-                await loadServerEnv(selectedServer);
+                await Promise.all([reload(selectedServer), loadServerEnv(selectedServer)]);
                 if (alive) setEnvMessage(null);
             } catch {
                 if (alive) setEnvMessage('서버 환경 설정을 불러오지 못했습니다.');
@@ -1271,18 +1368,20 @@ function GameEnvControl() {
 
     // 락걸기(pause) / 락풀기(resume) — POST 후 실 상태로 갱신.
     async function toggleLock(action: 'pause' | 'resume') {
+        if (!selectedServer) return;
         setBusy(true);
         try {
-            const res = await fetch(`/api/proxy/admin/turn-daemon/${action}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-            });
+            const res = await fetch(
+                `/api/proxy/admin/turn-daemon/${action}?serverId=${encodeURIComponent(selectedServer)}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                },
+            );
             if (res.ok) {
                 const data = (await res.json()) as TurnDaemonControlResult;
                 // 반환 결과로 즉시 라벨 반영 후, 권위 상태로 재조회.
-                setStatus((prev) =>
-                    prev ? { ...prev, paused: data.paused, statusLabel: data.statusLabel } : prev,
-                );
+                setStatus((prev) => (prev ? { ...prev, paused: data.paused, statusLabel: data.statusLabel } : prev));
                 setError(null);
             } else {
                 setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
@@ -1290,7 +1389,7 @@ function GameEnvControl() {
         } catch {
             setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
         } finally {
-            await reload();
+            await reload(selectedServer);
             setBusy(false);
         }
     }
@@ -1313,9 +1412,7 @@ function GameEnvControl() {
         setEnvMessage(null);
         try {
             const path =
-                scope === 'shared'
-                    ? 'admin/env/shared'
-                    : `admin/env/servers/${encodeURIComponent(selectedServer)}`;
+                scope === 'shared' ? 'admin/env/shared' : `admin/env/servers/${encodeURIComponent(selectedServer)}`;
             const res = await fetch(`/api/proxy/${path}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
@@ -1349,8 +1446,29 @@ function GameEnvControl() {
         }
     }
 
+    const selectedServerInfo = version?.servers.find((server) => server.id === selectedServer);
+
     return (
         <div className="game-env-control">
+            <div className="env-section">
+                <div className="env-server-selector">
+                    <label className="field">
+                        <span>게임 서버</span>
+                        <select
+                            value={selectedServer}
+                            disabled={envBusy || !version?.servers.length}
+                            onChange={(e) => setSelectedServer(e.target.value)}
+                        >
+                            {version?.servers.map((server) => (
+                                <option key={server.id} value={server.id}>
+                                    {server.generation != null ? `${server.name}${server.generation}기` : server.name}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                </div>
+            </div>
+
             {/* B1b 락 — PHP `_119.php:36` verbatim 라벨/표시. */}
             <div className="env-section">
                 <h3 className="lobby-section-title">락 풀 기</h3>
@@ -1364,7 +1482,7 @@ function GameEnvControl() {
                             <button
                                 type="button"
                                 className="btn-danger"
-                                disabled={busy || status?.paused === true}
+                                disabled={busy || !selectedServer || status?.paused === true}
                                 onClick={() => toggleLock('pause')}
                             >
                                 락걸기
@@ -1372,16 +1490,14 @@ function GameEnvControl() {
                             <button
                                 type="button"
                                 className="btn-primary"
-                                disabled={busy || status?.paused === false}
+                                disabled={busy || !selectedServer || status?.paused === false}
                                 onClick={() => toggleLock('resume')}
                             >
                                 락풀기
                             </button>
                             <span className="env-lock-status">
                                 현재 :{' '}
-                                <span
-                                    className={`status-badge ${status?.paused ? 'status-crimson' : 'status-jade'}`}
-                                >
+                                <span className={`status-badge ${status?.paused ? 'status-crimson' : 'status-jade'}`}>
                                     {/* PHP `_119.php:36` `plock>0?"동결중":"가동중"` verbatim. */}
                                     {status?.statusLabel ?? (status?.paused ? '동결중' : '가동중')}
                                 </span>
@@ -1392,28 +1508,15 @@ function GameEnvControl() {
                 )}
             </div>
 
-            <GameSettingsControl />
+            <GameSettingsControl selectedServer={selectedServer} servers={version?.servers ?? []} />
 
             {/* 후속 웨이브 — 시간조정 / 토너시간 / 봉급(금·쌀) / 운영자메시지 / 중원정세추가 /
                 시작시간 / 최대장수·국가 / 시작년도 / 턴시간. 아직 미구현. */}
             <div className="env-section env-pending">
-                <h3 className="lobby-section-title">시간 · 봉급 · 환경 설정</h3>
-                <div className="env-server-selector">
-                    <label className="field">
-                        <span>게임 서버</span>
-                        <select
-                            value={selectedServer}
-                            disabled={envBusy || !version?.servers.length}
-                            onChange={(e) => setSelectedServer(e.target.value)}
-                        >
-                            {version?.servers.map((server) => (
-                                <option key={server.id} value={server.id}>
-                                    {server.name}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
+                <h3 className="lobby-section-title">
+                    시간 · 봉급 · 환경 설정
+                    {selectedServerInfo ? ` · ${selectedServerInfo.name}` : ''}
+                </h3>
                 {envMessage && <p className="deploy-result ok">{envMessage}</p>}
                 <div className="env-config-grid">
                     <EnvConfigEditor

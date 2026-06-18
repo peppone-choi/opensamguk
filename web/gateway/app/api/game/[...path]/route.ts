@@ -22,11 +22,14 @@ function resolveSelectedGameApiOrigin(serverId: string | undefined | null): stri
 async function forward(req: NextRequest, path: string[]): Promise<NextResponse> {
     const store = await cookies();
     const access = store.get(ACCESS_COOKIE)?.value;
-    const serverId = store.get(SERVER_COOKIE)?.value ?? req.nextUrl.searchParams.get('server');
+    const serverId = req.nextUrl.searchParams.get('server') ?? store.get(SERVER_COOKIE)?.value;
     const base = resolveSelectedGameApiOrigin(serverId)?.replace(/\/+$/, '');
     if (!base) return NextResponse.json({ error: '게임 서버를 찾을 수 없습니다.' }, { status: 503 });
 
-    const target = `${base}/${path.join('/')}${req.nextUrl.search}`;
+    const searchParams = new URLSearchParams(req.nextUrl.searchParams);
+    searchParams.delete('server');
+    const search = searchParams.toString();
+    const target = `${base}/${path.join('/')}${search ? `?${search}` : ''}`;
     const headers: Record<string, string> = {};
     if (access) headers.Authorization = `Bearer ${access}`;
 
@@ -46,7 +49,9 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     const body = await upstream.text();
     return new NextResponse(body, {
         status: upstream.status,
-        headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
+        headers: {
+            'Content-Type': upstream.headers.get('content-type') ?? 'application/json',
+        },
     });
 }
 
