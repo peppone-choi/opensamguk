@@ -3,11 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 
-interface HeaderProps {
-    onCommand: () => void;
-}
-
-export default function Header({ onCommand }: HeaderProps) {
+export default function Header() {
     const [turnText, setTurnText] = useState('서버 갱신 중');
 
     useEffect(() => {
@@ -31,7 +27,6 @@ export default function Header({ onCommand }: HeaderProps) {
                 <span className="game-header-turn">{turnText}</span>
             </div>
             <div className="game-header-right">
-                <button className="game-header-cmd" onClick={onCommand}>명령</button>
                 <span className="game-header-res">금: 10,000 · 쌀: 5,000</span>
             </div>
         </header>
