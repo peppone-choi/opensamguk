@@ -103,7 +103,7 @@ class MakeGeneralHandler(
             train = 0,
             atmos = 0,
             age = drawResult.age,
-            npcState = 2,
+            npcState = 0,
             turnTime = turntime,
             meta = linkedMapOf(
                 "killturn" to 6,

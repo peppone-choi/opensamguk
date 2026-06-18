@@ -11,6 +11,7 @@ import opensamguk.engine.turn.WorldSnapshot
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertIs
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -72,6 +73,8 @@ class MakeGeneralHandlerTest {
         val result = assertIs<MakeGeneralOk>(MakeGeneralHandler(world, ChangeRecorder()).handle(command(userId = 8)))
         val created = world.getGeneralById(result.generalId)
         assertNotNull(created)
+        assertEquals("8", created.userId)
+        assertEquals(0, created.npcState)
         val affinity = created.meta["affinity"] as? Number
         assertNotNull(affinity, "PHP Join.php:392/413 stores the RNG-drawn affinity in general.affinity.")
         assertTrue(affinity.toInt() in 1..150)
@@ -80,6 +83,8 @@ class MakeGeneralHandlerTest {
 
         assertTrue(payload.createdGenerals.isNotEmpty())
         val columns = payload.createdGenerals.single().columns
+        assertEquals("8", columns["user_id"])
+        assertEquals(0, columns["npc_state"])
         assertTrue(columns["affinity"] is Int)
         assertTrue((columns["affinity"] as Int) in 1..150)
     }

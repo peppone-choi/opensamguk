@@ -143,7 +143,7 @@ open class TurnRunService(
     /** The next due run time (`lastTurnTime + tickSeconds`); the daemon loop waits until this arrives. */
     open fun nextRunTime(): Instant = lifecycle.nextRunTime()
 
-    open fun runIntakeCommands(blockMs: Long = 0): Int {
+    open fun runIntakeCommands(blockMs: Long = 1): Int {
         val envelopes = commandStream.readEnvelopes(blockMs)
         if (envelopes.isEmpty()) return 0
 

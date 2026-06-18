@@ -120,7 +120,7 @@ class TurnDaemonRunner(
                 val nextRun = activeService.nextRunTime()
                 val now = Instant.now()
                 if (now.isBefore(nextRun)) {
-                    if (activeService.runIntakeCommands() > 0) {
+                    if (activeService.runIntakeCommands(blockMs = 1) > 0) {
                         continue
                     }
                     // Next turn not yet due — wait (interruptibly), bounded by idlePollMs so a shutdown
