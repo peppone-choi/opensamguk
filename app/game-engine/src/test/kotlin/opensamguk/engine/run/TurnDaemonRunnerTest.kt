@@ -69,6 +69,28 @@ class TurnDaemonRunnerTest {
         }
     }
 
+    @Test
+    fun `enabled runner drains immediate intake while waiting for the next turn`() {
+        val ticks = AtomicInteger()
+        val intakeDrains = AtomicInteger()
+        val intakeLatch = CountDownLatch(1)
+        val svc = StubService(
+            ticks = ticks,
+            intakeDrains = intakeDrains,
+            intakeLatch = intakeLatch,
+            initialNextRun = Instant.now().plusSeconds(3600),
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
+        runner.start()
+        try {
+            assertTrue(intakeLatch.await(3, TimeUnit.SECONDS), "loop drained immediate intake before the next turn")
+            assertEquals(1, intakeDrains.get(), "one immediate intake drain was observed")
+            assertEquals(0, ticks.get(), "scheduled tick stayed idle while nextRunTime is in the future")
+        } finally {
+            runner.stop()
+        }
+    }
+
     // ── B1b — pause(동결) 게이트: 동결 중 틱 미진행, 해제 후 재개 ──────────────────────────────────────
     @Test
     fun `paused runner skips ticks until resumed`() {
@@ -176,6 +198,9 @@ class TurnDaemonRunnerTest {
     private class StubService(
         val ticks: AtomicInteger,
         private val latch: CountDownLatch? = null,
+        private val intakeDrains: AtomicInteger? = null,
+        private val intakeLatch: CountDownLatch? = null,
+        initialNextRun: Instant = Instant.now().minusSeconds(5),
     ) : TurnRunService(
         world = stubWorld(),
         commandStream = RedisCommandStream(StringRedisTemplate(), "che:test", startId = "0"),
@@ -185,9 +210,20 @@ class TurnDaemonRunnerTest {
         realtimePublisher = RealtimePublisher(StringRedisTemplate(), "che:test"),
     ) {
         // Past ⇒ due now; after the first tick push it far out so the loop idles (one observable drive).
-        @Volatile private var next: Instant = Instant.now().minusSeconds(5)
+        @Volatile private var next: Instant = initialNextRun
+        private val pendingIntakeDrains = AtomicInteger(if (intakeDrains == null) 0 else 1)
 
         override fun nextRunTime(): Instant = next
+
+        override fun runIntakeCommands(blockMs: Long): Int {
+            val counter = intakeDrains ?: return 0
+            if (pendingIntakeDrains.getAndUpdate { if (it > 0) it - 1 else 0 } <= 0) {
+                return 0
+            }
+            counter.incrementAndGet()
+            intakeLatch?.countDown()
+            return 1
+        }
 
         override fun runTick(runTime: Instant): TickResult {
             ticks.incrementAndGet()

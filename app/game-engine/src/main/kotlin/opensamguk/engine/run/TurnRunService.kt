@@ -143,6 +143,28 @@ open class TurnRunService(
     /** The next due run time (`lastTurnTime + tickSeconds`); the daemon loop waits until this arrives. */
     open fun nextRunTime(): Instant = lifecycle.nextRunTime()
 
+    open fun runIntakeCommands(blockMs: Long = 0): Int {
+        val envelopes = commandStream.readEnvelopes(blockMs)
+        if (envelopes.isEmpty()) return 0
+
+        commandDispatcher?.dispatchEnvelopes(envelopes)?.forEach { (requestId, result) ->
+            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
+        }
+
+        val state = world.getState()
+        val payload = buildFlushPayload().copy(
+            worldStateUpdate = linkedMapOf(
+                "id" to state.id,
+                "current_year" to state.currentYear,
+                "current_month" to state.currentMonth,
+                "last_turn_time" to state.lastTurnTime.toString(),
+            ),
+        )
+        flushExecutor.flush(payload)
+        handler.recorder.clear()
+        return envelopes.size
+    }
+
     open fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
