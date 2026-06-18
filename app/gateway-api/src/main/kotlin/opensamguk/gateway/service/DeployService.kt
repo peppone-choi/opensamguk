@@ -372,7 +372,7 @@ class DeployService(
                 name.isBlank() || name.contains('\n') || name.contains('\r') ->
                     json(400, """{"ok":false,"message":"서버 이름이 올바르지 않습니다."}""")
                 generation.isNotBlank() && !validGeneration(generation) ->
-                    json(400, """{"ok":false,"message":"기수는 1 이상의 숫자여야 합니다."}""")
+                    json(400, """{"ok":false,"message":"기수는 0 이상의 숫자여야 합니다."}""")
                 !validPort(gameApiPort) || !validPort(webGamePort) ->
                     json(400, """{"ok":false,"message":"포트는 1-65535 숫자여야 합니다."}""")
                 imageTag.isNotBlank() && !imageTag.matches(Regex("^[A-Za-z0-9._-]+$")) ->
@@ -430,7 +430,7 @@ class DeployService(
                 node.path("confirm").asText("") != "RESET $serverId" ->
                     json(400, """{"ok":false,"message":"리셋 확인 문구가 일치하지 않습니다."}""")
                 node.has("generation") && !validGeneration(node.path("generation").asText("")) ->
-                    json(400, """{"ok":false,"message":"기수는 1 이상의 숫자여야 합니다."}""")
+                    json(400, """{"ok":false,"message":"기수는 0 이상의 숫자여야 합니다."}""")
                 scenarioCode.isNotBlank() && !scenarioCode.matches(Regex("^[A-Za-z0-9_.:-]+$")) ->
                     json(400, """{"ok":false,"message":"시나리오 코드가 올바르지 않습니다."}""")
                 node.has("scenarioSeedEnabled") && !node.path("scenarioSeedEnabled").isBoolean ->
@@ -541,7 +541,7 @@ class DeployService(
 
     private fun validGeneration(value: String): Boolean {
         val n = value.toIntOrNull() ?: return false
-        return n >= 1
+        return n >= 0
     }
 
     private fun json(status: Int, body: String): EnvProxyResponse =
