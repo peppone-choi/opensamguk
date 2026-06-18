@@ -195,6 +195,8 @@ function abilityPowint(stats: Stats): [number, number, number] {
 const DEFAULT_LEADERSHIP = DEFAULT_STAT_TOTAL - 2 * Math.floor(DEFAULT_STAT_TOTAL / 3);
 const DEFAULT_OTHER = Math.floor(DEFAULT_STAT_TOTAL / 3);
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default function JoinPage() {
   const router = useRouter();
   const serverId = useServerId();
@@ -210,6 +212,7 @@ export default function JoinPage() {
   const [pic, setPic] = useState(true); // 전콘 사용 — 레거시 args.pic 기본 true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [joinStatus, setJoinStatus] = useState('');
   const [displayInherit, setDisplayInherit] = useState(false);
 
   // 국가 목록(임관권유문 표시 전용 — 입장 안 함, 재야로 시작). 레거시 v_join.php nationList + scout_msg.
@@ -245,9 +248,27 @@ export default function JoinPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nations]);
 
+  async function waitForCreatedGeneral(timeoutMs = 20000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      try {
+        const info = await api.frontInfo();
+        if (info.general?.hasGeneral) {
+          return true;
+        }
+      } catch {
+        await delay(700);
+        continue;
+      }
+      await delay(700);
+    }
+    return false;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setJoinStatus('');
     if (total > DEFAULT_STAT_TOTAL) {
       setError(`능력치 합계가 ${DEFAULT_STAT_TOTAL}를 초과합니다.`);
       return;
@@ -267,6 +288,7 @@ export default function JoinPage() {
     }
     setLoading(true);
     try {
+      setJoinStatus('장수 생성 요청 중...');
       const res = await api.join({
         name: name.trim(),
         leadership,
@@ -276,14 +298,21 @@ export default function JoinPage() {
         pic, // 전콘 사용 여부 — 레거시 Join.php 'pic' 필드
       });
       if (res.status === 'AVAILABLE') {
+        setJoinStatus('장수 생성 반영 중...');
+        const ready = await waitForCreatedGeneral();
+        if (!ready) {
+          setError('장수 생성은 접수됐지만 아직 게임에 반영되지 않았습니다. 잠시 후 로비에서 다시 확인해주세요.');
+          return;
+        }
         alert('정상적으로 생성되었습니다.\n위키와 팁/강좌 게시판을 꼭 읽어보세요!');
         router.push(homeHref);
       } else {
         setError(res.reason ?? '등록할 수 없습니다.');
       }
-    } catch (err: any) {
-      setError(err?.message ?? '서버 오류가 발생했습니다.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '서버 오류가 발생했습니다.');
     } finally {
+      setJoinStatus('');
       setLoading(false);
     }
   }
@@ -334,6 +363,18 @@ export default function JoinPage() {
           marginBottom: 'var(--space-md)',
         }}>
           {error}
+        </div>
+      )}
+
+      {joinStatus && (
+        <div style={{
+          background: 'var(--color-surface-2, #1f2937)',
+          color: 'var(--color-text)',
+          padding: 'var(--space-md)',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: 'var(--space-md)',
+        }}>
+          {joinStatus}
         </div>
       )}
 

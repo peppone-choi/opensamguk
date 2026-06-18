@@ -106,6 +106,21 @@ class ServerBasicInfoControllerTest {
     }
 
     @Test
+    fun `created general fills lobby me from legacy owner column`() {
+        seedWorld(mapOf("maxgeneral" to 500))
+        val created = GeneralReadEntity(id = 21, name = "신규장수", nationId = 0, picture = "0002.jpg", imageServer = 1)
+        `when`(owners.findByUserId(7L)).thenReturn(null)
+        `when`(generals.findByUserId("7")).thenReturn(created)
+        `when`(generals.findById(21)).thenReturn(Optional.of(created))
+
+        mockMvc().perform(get("/api/server-basic-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.me.name").value("신규장수"))
+            .andExpect(jsonPath("$.me.picture").value("0002.jpg"))
+            .andExpect(jsonPath("$.me.imageServer").value(1))
+    }
+
+    @Test
     fun `missing maxgeneral falls back to GameConst default cap (never zero)`() {
         seedWorld(emptyMap()) // config 부재
 

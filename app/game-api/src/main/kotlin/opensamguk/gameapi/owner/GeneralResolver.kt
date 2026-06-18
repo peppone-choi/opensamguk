@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service
 /**
  * F2 Wave 1 — resolve a verified `userId` (JWT subject) to the game-state general they own.
  *
- * The link is the account-side [GeneralOwnerEntity] (V10 `general_owner`): `userId → general_id`, then
- * a READ-ONLY join to the game-state `general` row via [GeneralReadRepository] (the legitimate
- * precheck-path JPA read; never a write). Returns null when the user owns no general — the UI then
- * shows 장수선택/빙의.
+ * The primary link is the account-side [GeneralOwnerEntity] (V10 `general_owner`): `userId → general_id`,
+ * then a READ-ONLY join to the game-state `general` row via [GeneralReadRepository] (the legitimate
+ * precheck-path JPA read; never a write). Legacy-created characters, including `/api/join`, also carry
+ * ownership directly on `general.user_id` (PHP `general.owner`), so that column is the read-only fallback
+ * when `general_owner` is absent. Returns null when the user owns no general — the UI then shows
+ * 장수선택/빙의.
  *
  * [ResolvedGeneral] exposes exactly the fields MainControlBar gating keys on
  * (officer_level/permission/nation_id/nation level), derived PHP-faithfully:
@@ -44,8 +46,8 @@ class GeneralResolver(
 
     /** Resolve the caller's owned general, or null when they have no character. */
     fun resolve(userId: Long): ResolvedGeneral? {
-        val link = owners.findByUserId(userId) ?: return null
-        val general = generals.findById(link.generalId.toInt()).orElse(null) ?: return null
+        val generalId = resolveGeneralId(userId) ?: return null
+        val general = generals.findById(generalId).orElse(null) ?: return null
         val nationLevel = if (general.nationId != 0) {
             nations.findById(general.nationId).map { it.level }.orElse(0)
         } else {
@@ -60,8 +62,9 @@ class GeneralResolver(
         )
     }
 
-    /** The general id this user owns, or null. (Cheap lookup that skips the game-state read.) */
-    fun resolveGeneralId(userId: Long): Int? = owners.findByUserId(userId)?.generalId?.toInt()
+    fun resolveGeneralId(userId: Long): Int? =
+        owners.findByUserId(userId)?.generalId?.toInt()
+            ?: generals.findByUserId(userId.toString())?.id
 
     companion object {
         /**
