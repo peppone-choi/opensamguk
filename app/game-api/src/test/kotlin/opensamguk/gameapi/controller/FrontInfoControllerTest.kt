@@ -207,6 +207,22 @@ class FrontInfoControllerTest {
     }
 
     @Test
+    fun `created general resolves from legacy owner column for game entry`() {
+        seedWorld()
+        val created = GeneralReadEntity(id = 21, name = "신규장수", nationId = 0, cityId = 0, officerLevel = 1)
+        `when`(owners.findByUserId(7L)).thenReturn(null)
+        `when`(generals.findByUserId("7")).thenReturn(created)
+        `when`(generals.findById(21)).thenReturn(Optional.of(created))
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.general.hasGeneral").value(true))
+            .andExpect(jsonPath("$.general.generalId").value(21))
+            .andExpect(jsonPath("$.general.name").value("신규장수"))
+            .andExpect(jsonPath("$.general.permission").value(0))
+    }
+
+    @Test
     fun `nation notice surfaces from nation_env nationNotice on the main front-info`() {
         // W1-O 바퀴50 — 데몬이 nation_env에 쓴 nationNotice{msg}(국가방침)를 buildNation이 read → nation.notice 언블록
         // (PageFront.vue:32 v-html=notice.msg 등가). loop49 nation_env read 채널 재사용.
