@@ -50,6 +50,7 @@ class DeployService(
         "IMAGE_TAG",
         "GAME_API_PORT",
         "WEB_GAME_PORT",
+        "WEB_GAME_TAG",
         "TURN_PROFILE_NAME",
         "SCENARIO_SEED_ENABLED",
         "SCENARIO_CODE",
