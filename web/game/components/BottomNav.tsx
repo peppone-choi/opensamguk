@@ -5,11 +5,7 @@ import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '../lib/constants';
 import { normalizeGamePathname, resolveServerGamePath, useServerId } from '../lib/serverGameUrl';
 
-interface BottomNavProps {
-    onCommand: () => void;
-}
-
-export default function BottomNav({ onCommand }: BottomNavProps) {
+export default function BottomNav() {
     const pathname = usePathname();
     const serverId = useServerId();
     const normalizedPathname = normalizeGamePathname(pathname ?? '');
@@ -32,10 +28,6 @@ export default function BottomNav({ onCommand }: BottomNavProps) {
                     </Link>
                 );
             })}
-            <button className="game-bottom-item" onClick={onCommand}>
-                <span className="game-bottom-icon">⚡</span>
-                <span className="game-bottom-label">명령</span>
-            </button>
         </nav>
     );
 }
