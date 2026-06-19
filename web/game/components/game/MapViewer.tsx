@@ -29,6 +29,7 @@ import { api } from '@/lib/api';
 import { MAP_CDN, ICON_CDN } from '@/lib/constants';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { tintFlag, FLAG_FRAMES } from '@/lib/flagTint';
+import { useServerGameUrl } from '@/lib/serverGameUrl';
 import cityRegionsData from '@/config/cityRegions.json';
 
 // 도시 id → 지역명(지리 속성, 소유 무관). 툴팁에 지역 라벨 표시. gateway MapPreview와 동일 자산.
@@ -166,6 +167,7 @@ export default function MapViewer({
     refreshKey = 0,
 }: MapViewerProps = {}) {
     const router = useRouter();
+    const cityBaseHref = useServerGameUrl('city');
     const [data, setData] = useState<MapPreviewResponse | null>(null);
     const [failed, setFailed] = useState(false);
     const [hoverId, setHoverId] = useState<number | null>(null);
@@ -318,7 +320,7 @@ export default function MapViewer({
                 if (!singleTap) return; // 두번-탭 모드: 첫 탭은 선택만(레거시 450-452)
             }
         }
-        router.push(`/game/city?id=${cityId}`);
+        router.push(`${cityBaseHref}?id=${encodeURIComponent(String(cityId))}`);
     }
 
     // 미시드 / 실패 / 빈 세계 → placeholder (크래시 없음).

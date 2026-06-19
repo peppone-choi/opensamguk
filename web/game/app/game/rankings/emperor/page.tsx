@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
 import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatDate } from '../../../../lib/format';
+import { useServerGameUrl } from '../../../../lib/serverGameUrl';
 import type { EmperorRecord } from '../../../../types/game';
 
 export default function EmperorPage() {
+  const emperorBaseHref = useServerGameUrl('rankings/emperor');
   const [data, setData] = useState<EmperorRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +41,7 @@ export default function EmperorPage() {
     e.id <= 3
       ? <StatusBadge variant={e.id === 1 ? 'gold' : e.id === 2 ? 'jade' : 'muted'}>{e.id}</StatusBadge>
       : e.id,
-    <Link key="emperor" href={`/game/rankings/emperor/${e.id}`} style={{ color: 'var(--gold)' }}>{e.name}</Link>,
+    <a key="emperor" href={`${emperorBaseHref}/${encodeURIComponent(String(e.id))}`} style={{ color: 'var(--gold)' }}>{e.name}</a>,
     <span key="nation" style={{ color: e.nationColor }}>{e.nation}</span>,
     formatDate(e.unifiedAt),
     `${e.year}년 ${e.month}월`,
