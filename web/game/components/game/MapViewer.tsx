@@ -24,7 +24,6 @@
 // MapPreview도 함께 고친다(+ 양쪽 tsc).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { MAP_CDN, ICON_CDN } from '@/lib/constants';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
@@ -166,7 +165,6 @@ export default function MapViewer({
     showMe = 1,
     refreshKey = 0,
 }: MapViewerProps = {}) {
-    const router = useRouter();
     const cityBaseHref = useServerGameUrl('city');
     const [data, setData] = useState<MapPreviewResponse | null>(null);
     const [failed, setFailed] = useState(false);
@@ -313,9 +311,8 @@ export default function MapViewer({
     const lastPointerType = useRef<string>('mouse');
     const touchArmedId = useRef<number | null>(null);
 
-    // 도시 마커 클릭 = 해당 도시 정보 페이지로 이동(클릭 게이트/터치 상태 머신 통과 시).
-    function onCityClick(cityId: number) {
-        if (!clickEnabled) return; // 레거시 clickable=0(MapViewer.vue:392-394)
+    function canFollowCityLink(cityId: number): boolean {
+        if (!clickEnabled) return false; // 레거시 clickable=0(MapViewer.vue:392-394)
         if (lastPointerType.current === 'touch') {
             if (touchArmedId.current !== null && touchArmedId.current !== cityId) {
                 touchArmedId.current = null; // 다른 도시 탭 → 선택 초기화(레거시 441-444)
@@ -323,10 +320,10 @@ export default function MapViewer({
             if (touchArmedId.current === null) {
                 touchArmedId.current = cityId;
                 setHoverId(cityId);
-                if (!singleTap) return; // 두번-탭 모드: 첫 탭은 선택만(레거시 450-452)
+                if (!singleTap) return false; // 두번-탭 모드: 첫 탭은 선택만(레거시 450-452)
             }
         }
-        router.push(`${cityBaseHref}?id=${encodeURIComponent(String(cityId))}`);
+        return true;
     }
 
     // 미시드 / 실패 / 빈 세계 → placeholder (크래시 없음).
@@ -395,14 +392,16 @@ export default function MapViewer({
                         const showState = (c.state ?? 0) > 0;
                         const flagFrameUrl = owned ? flagUrls[col]?.[flagFrame] : undefined;
                         const isMyCity = effectiveMyCity != null && effectiveMyCity === c.id;
+                        const cityHref = `${cityBaseHref}?id=${encodeURIComponent(String(c.id))}`;
 
                         return (
-                            <button
-                                type="button"
+                            <a
+                                href={clickEnabled ? cityHref : undefined}
                                 key={c.id}
                                 className={`city-base${unsupplied ? ' supply-off' : ''}${clickEnabled ? '' : ' city-noclick'}`}
                                 style={{ left: baseLeft, top: baseTop, width: BASE_W, height: BASE_H }}
                                 aria-label={`${c.name} 레벨 ${c.level} ${nationNameOf(c.nationId)}`}
+                                aria-disabled={clickEnabled ? undefined : true}
                                 onMouseEnter={() => setHoverId(c.id)}
                                 onMouseLeave={() => setHoverId((id) => (id === c.id ? null : id))}
                                 onFocus={() => setHoverId(c.id)}
@@ -413,7 +412,7 @@ export default function MapViewer({
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation(); // 캔버스 clickOutside 와 분리(레거시 silent)
-                                    onCityClick(c.id);
+                                    if (!canFollowCityLink(c.id)) e.preventDefault();
                                 }}
                             >
                                 {/* 1) 오오라(city_bg) — 소유국만(레거시 b<color>.png radial glow). 공백지=오오라 없음. city_img의 형제. */}
@@ -464,7 +463,7 @@ export default function MapViewer({
                                         hide-cityname(도시명 표기 토글) 시 CSS 로 숨김(레거시 map.scss:149-151). */}
                                     <span className="city-name">{c.name}</span>
                                 </div>
-                            </button>
+                            </a>
                         );
                     })}
                 </div>

@@ -1,6 +1,6 @@
 // 컴포넌트 상호작용 테스트 — components/game/MapViewer.tsx.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const tintedColors: string[] = [];
@@ -10,11 +10,6 @@ vi.mock('@/lib/flagTint', () => ({
         tintedColors.push(color);
         return Array.from({ length: 4 }, (_, i) => `data:image/png;tint=${color};frame=${i}`);
     }),
-}));
-
-const pushMock = vi.fn();
-vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push: pushMock, replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
 }));
 
 import MapViewer from '@/components/game/MapViewer';
@@ -66,7 +61,6 @@ function clearServerCookie() {
 beforeEach(() => {
     clearServerCookie();
     tintedColors.length = 0;
-    pushMock.mockReset();
     vi.stubGlobal('fetch', mockFetch());
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
         configurable: true,
@@ -104,37 +98,32 @@ describe('MapViewer — 정적 렌더(로비 MapPreview와 동일)', () => {
 });
 
 describe('MapViewer — 도시 마커 클릭 → 도시 정보 페이지 라우팅', () => {
-    it('도시 클릭 시 router.push 가 `/game/city?id=<id>` 로 호출된다', async () => {
+    it('도시 마커가 `/game/city?id=<id>` 링크를 가진다', async () => {
         await renderAndLoad();
-        const cityBtn = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
-        fireEvent.click(cityBtn);
-        expect(pushMock).toHaveBeenCalledTimes(1);
-        expect(pushMock).toHaveBeenCalledWith('/game/city?id=11');
+        const cityLink = screen.getByRole('link', { name: /낙양 레벨 8 위/ });
+        expect(cityLink).toHaveAttribute('href', '/game/city?id=11');
     });
 
-    it('공백지(장안 id 22) 클릭도 해당 id 로 라우팅된다', async () => {
+    it('공백지(장안 id 22)도 해당 id 링크를 가진다', async () => {
         await renderAndLoad();
-        const cityBtn = screen.getByRole('button', { name: /장안 레벨 3 공 백 지/ });
-        fireEvent.click(cityBtn);
-        expect(pushMock).toHaveBeenCalledWith('/game/city?id=22');
+        const cityLink = screen.getByRole('link', { name: /장안 레벨 3 공 백 지/ });
+        expect(cityLink).toHaveAttribute('href', '/game/city?id=22');
     });
 
     it('선택 서버 쿠키가 있으면 도시 클릭 URL에 서버 경로를 보존한다', async () => {
         setServerCookie('s1');
         await renderAndLoad();
-        const cityBtn = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
-        fireEvent.click(cityBtn);
-        expect(pushMock).toHaveBeenCalledTimes(1);
-        expect(pushMock).toHaveBeenCalledWith('/game/s1/city?id=11');
+        const cityLink = screen.getByRole('link', { name: /낙양 레벨 8 위/ });
+        expect(cityLink).toHaveAttribute('href', '/game/s1/city?id=11');
     });
 });
 
 describe('MapViewer — 오오라(소유국만)', () => {
     it('소유국 마커에는 city-aura 가 있고 공백지에는 없다', async () => {
         await renderAndLoad();
-        const ownedBase = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
+        const ownedBase = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(ownedBase.querySelector('.city-aura')).toBeTruthy();
-        const neutralBase = screen.getByRole('button', { name: /장안 레벨 3 공 백 지/ });
+        const neutralBase = screen.getByLabelText(/장안 레벨 3 공 백 지/);
         expect(neutralBase.querySelector('.city-aura')).toBeNull();
     });
 });
@@ -158,7 +147,7 @@ describe('MapViewer — 깃발 틴트(nation 색)', () => {
 
     it('공백지 마커에는 깃발 이미지가 없다', async () => {
         await renderAndLoad();
-        const neutralBase = screen.getByRole('button', { name: /장안 레벨 3 공 백 지/ });
+        const neutralBase = screen.getByLabelText(/장안 레벨 3 공 백 지/);
         expect(neutralBase.querySelector('.city-flag-img')).toBeNull();
     });
 });
@@ -166,9 +155,9 @@ describe('MapViewer — 깃발 틴트(nation 색)', () => {
 describe('MapViewer — 미보급(supply-off) 도시 흐리게', () => {
     it('소유국 미보급(supply=false)은 city-base 에 supply-off 가 붙고, 보급(supply=true)은 붙지 않는다', async () => {
         await renderAndLoad();
-        const unsuppliedBase = screen.getByRole('button', { name: /허창 레벨 6 위/ });
+        const unsuppliedBase = screen.getByLabelText(/허창 레벨 6 위/);
         expect(unsuppliedBase.className).toContain('supply-off');
-        const suppliedBase = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
+        const suppliedBase = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(suppliedBase.className).not.toContain('supply-off');
     });
 });
