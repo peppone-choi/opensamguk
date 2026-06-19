@@ -25,12 +25,6 @@ vi.mock('@/lib/flagTint', () => ({
     ),
 }));
 
-// ── next/navigation 모킹: 라우팅 push 캡처. ──
-const pushMock = vi.fn();
-vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push: pushMock, replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
-}));
-
 import MapViewer, { seasonOf } from '@/components/game/MapViewer';
 
 const NATION_RED = '#ff0000';
@@ -109,7 +103,6 @@ function getCanvas(): HTMLElement {
 }
 
 beforeEach(() => {
-    pushMock.mockReset();
     fetchedPaths.length = 0;
     window.localStorage.clear();
     vi.stubGlobal('fetch', mockFetch());
@@ -149,15 +142,15 @@ describe('MapViewer — mapData 주입(P0-22)', () => {
     it('mapData 주입 기본값은 클릭 비활성(레거시 PageHistory disallow-click 패턴)', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        fireEvent.click(screen.getByRole('button', { name: /낙양 레벨 8 위/ }));
-        expect(pushMock).not.toHaveBeenCalled();
+        const cityMarker = screen.getByLabelText(/낙양 레벨 8 위/);
+        expect(cityMarker).not.toHaveAttribute('href');
+        expect(cityMarker).toHaveAttribute('aria-disabled', 'true');
     });
 
     it('mapData 주입 + disallowClick={false} 면 클릭이 살아있다(레거시 PageFront 패턴)', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} disallowClick={false} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        fireEvent.click(screen.getByRole('button', { name: /낙양 레벨 8 위/ }));
-        expect(pushMock).toHaveBeenCalledWith('/game/city?id=11');
+        expect(screen.getByRole('link', { name: /낙양 레벨 8 위/ })).toHaveAttribute('href', '/game/city?id=11');
     });
 });
 
@@ -165,8 +158,9 @@ describe('MapViewer — disallowClick(레거시 MapViewer.vue:392-394 clickable=
     it('self-fetch 모드에서도 disallowClick 이면 클릭이 라우팅하지 않는다', async () => {
         render(<MapViewer disallowClick />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        fireEvent.click(screen.getByRole('button', { name: /낙양 레벨 8 위/ }));
-        expect(pushMock).not.toHaveBeenCalled();
+        const cityMarker = screen.getByLabelText(/낙양 레벨 8 위/);
+        expect(cityMarker).not.toHaveAttribute('href');
+        expect(cityMarker).toHaveAttribute('aria-disabled', 'true');
     });
 });
 
@@ -174,9 +168,9 @@ describe('MapViewer — currentCityId(레거시 is-my-city → .my_city blink)',
     it('currentCityId 도시의 마커에 my-city 클래스가 붙는다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} currentCityId={33} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        const mine = screen.getByRole('button', { name: /허창 레벨 6 위/ });
+        const mine = screen.getByLabelText(/허창 레벨 6 위/);
         expect(mine.querySelector('.my-city')).toBeTruthy();
-        const other = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
+        const other = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(other.querySelector('.my-city')).toBeNull();
     });
 });
@@ -187,7 +181,7 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
         await waitFor(() => expect(getCanvas()).toBeTruthy());
         expect(fetchedPaths.some((p) => p.includes('/api/map?neutralView=0&showMe=1'))).toBe(true);
         // 낙양 소유가 라이브 기준 오(2)로 바뀐다(프리뷰 캐시는 위(1)).
-        expect(screen.getByRole('button', { name: /낙양 레벨 8 오/ })).toBeTruthy();
+        expect(screen.getByRole('link', { name: /낙양 레벨 8 오/ })).toBeTruthy();
         // 연월도 라이브(201年 7月).
         expect(screen.getByText(/201年 7月/)).toBeInTheDocument();
     });
@@ -195,7 +189,7 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
     it('live + showMe=1 이면 myCity(허창)가 my-city 마커를 받는다(func_map.php:78-95)', async () => {
         render(<MapViewer live />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        const mine = screen.getByRole('button', { name: /허창 레벨 6 위/ });
+        const mine = screen.getByLabelText(/허창 레벨 6 위/);
         expect(mine.querySelector('.my-city')).toBeTruthy();
     });
 
@@ -245,7 +239,7 @@ describe('MapViewer — P0-36 FE측 state 아이콘(레거시 MapCityDetail.vue:
     it('state=6(코드 6~9)도 상태 아이콘이 렌더된다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        const jangan = screen.getByRole('button', { name: /장안 레벨 3 공 백 지/ });
+        const jangan = screen.getByLabelText(/장안 레벨 3 공 백 지/);
         const stateImg = jangan.querySelector('.city-state') as HTMLImageElement | null;
         expect(stateImg).toBeTruthy();
         expect(stateImg!.getAttribute('src')).toContain('event6.gif');
@@ -254,7 +248,7 @@ describe('MapViewer — P0-36 FE측 state 아이콘(레거시 MapCityDetail.vue:
     it('state=0 은 상태 아이콘이 없다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        const nakyang = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
+        const nakyang = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(nakyang.querySelector('.city-state')).toBeNull();
     });
 });

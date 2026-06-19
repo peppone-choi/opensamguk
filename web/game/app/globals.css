@@ -973,13 +973,15 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── 도시 마커 (gateway 로비 MapPreview와 구조·CSS 동일한 정적 마커) ──────────── */
-/* city_base — 40×30, 중심이 도시 좌표. 클릭 시 도시 정보 페이지로 이동하는 <button>(버튼 기본 스타일 제거). */
+/* city_base — 40×30, 중심이 도시 좌표. 클릭 시 도시 정보 페이지로 이동하는 링크. */
 .city-base {
   position: absolute;
   padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
+  display: block;
+  text-decoration: none;
 }
 .city-base:focus { outline: none; }
 .city-base:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 4px; }
