@@ -12,25 +12,39 @@ export function useSSE(onEvent: () => void) {
     const esRef = useRef<EventSource | null>(null);
     const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const delayRef = useRef(1000);
+    const onEventRef = useRef(onEvent);
+
+    useEffect(() => {
+        onEventRef.current = onEvent;
+    }, [onEvent]);
 
     const connect = useCallback(() => {
-        if (esRef.current?.readyState === EventSource.OPEN) return;
+        const current = esRef.current;
+        if (current && current.readyState !== EventSource.CLOSED) return;
 
         const es = new EventSource(SSE_URL);
         esRef.current = es;
 
+        es.onopen = () => {
+            delayRef.current = 1000;
+        };
+
         es.addEventListener(SSE_EVENT, () => {
             delayRef.current = 1000;
-            onEvent();
+            onEventRef.current();
         });
 
         es.onerror = () => {
             es.close();
             esRef.current = null;
             delayRef.current = Math.min(delayRef.current * 2, 30000);
-            reconnectRef.current = setTimeout(connect, delayRef.current);
+            if (reconnectRef.current) clearTimeout(reconnectRef.current);
+            reconnectRef.current = setTimeout(() => {
+                reconnectRef.current = null;
+                connect();
+            }, delayRef.current);
         };
-    }, [onEvent]);
+    }, []);
 
     useEffect(() => {
         connect();
