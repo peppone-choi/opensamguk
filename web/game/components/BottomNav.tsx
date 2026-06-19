@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NAV_ITEMS } from '../lib/constants';
 import { normalizeGamePathname, resolveServerGamePath, useServerId } from '../lib/serverGameUrl';
@@ -18,14 +17,14 @@ export default function BottomNav() {
                     ? resolveServerGamePath(undefined, serverId, '/game', childPath)
                     : item.path;
                 return (
-                    <Link
+                    <a
                         key={item.path}
                         href={href}
                         className={`game-bottom-item${normalizedPathname === item.path ? ' active' : ''}`}
                     >
                         <span className="game-bottom-icon">{item.icon}</span>
                         <span className="game-bottom-label">{item.label}</span>
-                    </Link>
+                    </a>
                 );
             })}
         </nav>

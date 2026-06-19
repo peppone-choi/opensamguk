@@ -7,7 +7,6 @@
 // carries result:false + reason; the proxy returns 409 as a thrown Error, also handled).
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
@@ -82,9 +81,9 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
                     <h2>장수 생성</h2>
                     <p>새 장수를 만들어 재야에서 시작합니다.</p>
                     {canCreate ? (
-                        <Link className="claim-mode-action" href={joinHref}>
+                        <a className="claim-mode-action" href={joinHref}>
                             생성 화면
-                        </Link>
+                        </a>
                     ) : (
                         <span className="claim-mode-blocked">직접 생성 금지 모드</span>
                     )}
@@ -102,9 +101,9 @@ export default function CharacterClaim({ global, onClaimed }: { global: FrontGlo
                     <h2>장수 선택</h2>
                     <p>서버가 준비한 장수 풀에서 선택하거나 조정합니다.</p>
                     {canSelectPool ? (
-                        <Link className="claim-mode-action" href={selectPoolHref}>
+                        <a className="claim-mode-action" href={selectPoolHref}>
                             선택 화면
-                        </Link>
+                        </a>
                     ) : (
                         <span className="claim-mode-blocked">선택 풀 모드 아님</span>
                     )}

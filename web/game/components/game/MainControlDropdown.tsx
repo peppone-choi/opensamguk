@@ -6,7 +6,6 @@
 // get `.open-window`. Disabled items render a non-navigating <span>. The split (#19) is flattened
 // into its two sub-items (금/쌀 + 유니크), matching the legacy dropdown.
 
-import Link from 'next/link';
 import { CONTROL_BUTTONS, type GateBucket } from '@/lib/control-bar-config';
 import { gameChildPath, resolveServerGamePath, useServerId } from '@/lib/serverGameUrl';
 import type { ControlGating } from './MainControlBar';
@@ -81,13 +80,14 @@ export default function MainControlDropdown({
             {entries.map((e) => (
                 <li key={e.key}>
                     {e.enabled ? (
-                        <Link
+                        <a
                             className={`dropdown-item${e.newTab ? ' open-window' : ''}`}
                             href={e.href}
                             target={e.newTab ? '_blank' : undefined}
+                            rel={e.newTab ? 'noopener noreferrer' : undefined}
                         >
                             {e.label}
-                        </Link>
+                        </a>
                     ) : (
                         <span className="dropdown-item disabled" aria-disabled="true">
                             {e.label}

@@ -6,7 +6,6 @@
 // (the legacy <a class="disabled"> still navigated; our port must block). new-window buttons open
 // in a new tab. #19 경매장 is a split with a 금/쌀 ↔ 유니크 sub-dropdown.
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { CONTROL_BUTTONS, type ControlButton, type GateBucket } from '@/lib/control-bar-config';
 import { gameChildPath, resolveServerGamePath, useServerId } from '@/lib/serverGameUrl';
@@ -63,9 +62,14 @@ function SplitButton({
     return (
         <div className="control-btn-group" onMouseLeave={() => setOpen(false)}>
             {enabled ? (
-                <Link className={cls} href={mainHref} target={btn.newTab ? '_blank' : undefined}>
+                <a
+                    className={cls}
+                    href={mainHref}
+                    target={btn.newTab ? '_blank' : undefined}
+                    rel={btn.newTab ? 'noopener noreferrer' : undefined}
+                >
                     {btn.label}
-                </Link>
+                </a>
             ) : (
                 <span className={cls} aria-disabled="true">
                     {btn.label}
@@ -85,14 +89,15 @@ function SplitButton({
                         const subHref = resolveControlHref(sub.href, serverId);
                         return (
                             <li key={i}>
-                                <Link
+                                <a
                                     className="dropdown-item"
                                     href={subHref}
                                     target={sub.newTab ? '_blank' : undefined}
+                                    rel={sub.newTab ? 'noopener noreferrer' : undefined}
                                     onClick={() => setOpen(false)}
                                 >
                                     {sub.label}
-                                </Link>
+                                </a>
                             </li>
                         );
                     })}
@@ -133,9 +138,15 @@ export default function MainControlBar({ gating }: { gating: ControlGating }) {
                     );
                 }
                 return (
-                    <Link key={btn.id} className={cls} href={href} target={btn.newTab ? '_blank' : undefined}>
+                    <a
+                        key={btn.id}
+                        className={cls}
+                        href={href}
+                        target={btn.newTab ? '_blank' : undefined}
+                        rel={btn.newTab ? 'noopener noreferrer' : undefined}
+                    >
                         {btn.label}
-                    </Link>
+                    </a>
                 );
             })}
         </nav>
