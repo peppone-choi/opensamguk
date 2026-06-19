@@ -138,6 +138,14 @@ describe('formatLog — 색 태그 → span', () => {
     expect(formatLog('')).toBe('');
     expect(formatLog('평문')).toBe('평문');
   });
+
+  it('허용된 강조 태그만 보존하고 나머지 HTML은 escape', () => {
+    expect(formatLog('<C><b>【지배】</b></>')).toBe('<span style="color: cyan;"><b>【지배】</b></span>');
+    expect(formatLog("<span class='ev_failed'>실패</span>")).toBe('<span class="ev_failed">실패</span>');
+    expect(formatLog("<span style='color:#FFFF00;'><b>국기</b></span>")).toBe('<span style="color:#FFFF00;"><b>국기</b></span>');
+    expect(formatLog('<img src=x onerror=alert(1)>')).toBe('&lt;img src=x onerror=alert(1)&gt;');
+    expect(formatLog('장수<script>alert(1)</script>')).toBe('장수&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
 });
 
 describe('formatTournament', () => {

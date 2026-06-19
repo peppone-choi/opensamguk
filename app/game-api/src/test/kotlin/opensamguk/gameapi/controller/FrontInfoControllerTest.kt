@@ -8,12 +8,15 @@ import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.LogFeedReadRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.WorldLogReadEntity
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import org.mockito.ArgumentMatchers.anyInt
 import opensamguk.infra.entity.NationEnvEntity
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -49,6 +52,7 @@ class FrontInfoControllerTest {
     private val votes = mock(opensamguk.gameapi.read.VoteReadRepository::class.java)
     private val troops = mock(opensamguk.gameapi.read.TroopReadRepository::class.java)
     private val generalTurns = mock(opensamguk.gameapi.read.GeneralTurnReadRepository::class.java)
+    private val logFeeds = mock(LogFeedReadRepository::class.java)
     // nation_env(V3) read mock — 스텁 미설정 시 null → notice null(기존 BLOCKED 동작 보존).
     private val nationEnv = mock(NationEnvReadRepository::class.java)
     private val objectMapper = ObjectMapper()
@@ -72,6 +76,7 @@ class FrontInfoControllerTest {
                 votes,
                 troops,
                 generalTurns,
+                logFeeds,
                 nationEnv,
                 objectMapper,
                 serverName,
@@ -107,6 +112,9 @@ class FrontInfoControllerTest {
         `when`(generals.countByNpcState(2)).thenReturn(150L)
         `when`(generals.countByNpcState(1)).thenReturn(10L)
         `when`(generals.countByNpcStateGreaterThan(0)).thenReturn(160L)
+        `when`(logFeeds.findGlobalHistorySince(anyInt(), anyInt())).thenReturn(emptyList())
+        `when`(logFeeds.findGlobalActionSince(anyInt(), anyInt())).thenReturn(emptyList())
+        `when`(logFeeds.findGeneralActionSince(anyInt(), anyInt(), anyInt())).thenReturn(emptyList())
     }
 
     @Test
@@ -209,6 +217,83 @@ class FrontInfoControllerTest {
     }
 
     @Test
+    fun `front-info returns legacy recent record feeds`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(logFeeds.findGlobalHistorySince(4, 16)).thenReturn(
+            listOf(
+                WorldLogReadEntity(id = 9, year = 200, month = 3, text = "<C>중원 새 기록</>"),
+                WorldLogReadEntity(id = 4, year = 200, month = 3, text = "<C>중원 경계</>"),
+            ),
+        )
+        `when`(logFeeds.findGlobalActionSince(5, 16)).thenReturn(
+            listOf(
+                WorldLogReadEntity(id = 11, year = 200, month = 3, text = "장수 동향 새 기록"),
+                WorldLogReadEntity(id = 5, year = 200, month = 3, text = "장수 동향 경계"),
+            ),
+        )
+        `when`(logFeeds.findGeneralActionSince(10, 5, 16)).thenReturn(
+            listOf(
+                WorldLogReadEntity(id = 12, year = 200, month = 3, text = "개인 새 기록"),
+                WorldLogReadEntity(id = 5, year = 200, month = 3, text = "개인 경계"),
+            ),
+        )
+
+        mockMvc()
+            .perform(
+                get("/api/front-info?lastGeneralRecordID=5&lastWorldHistoryID=4").with(principal(7L)),
+            )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.recentRecord.history[0][0]").value(9))
+            .andExpect(jsonPath("$.recentRecord.history[0][1]").value("<C>중원 새 기록</>"))
+            .andExpect(jsonPath("$.recentRecord.history[1]").doesNotExist())
+            .andExpect(jsonPath("$.recentRecord.global[0][0]").value(11))
+            .andExpect(jsonPath("$.recentRecord.global[1]").doesNotExist())
+            .andExpect(jsonPath("$.recentRecord.general[0][0]").value(12))
+            .andExpect(jsonPath("$.recentRecord.general[1]").doesNotExist())
+            .andExpect(jsonPath("$.recentRecord.flushHistory").value(0))
+            .andExpect(jsonPath("$.recentRecord.flushGlobal").value(0))
+            .andExpect(jsonPath("$.recentRecord.flushGeneral").value(0))
+    }
+
+    @Test
+    fun `front-info trims overflow feeds while keeping legacy flush flags unset`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        val historyRows = (30 downTo 15).map { WorldLogReadEntity(id = it, year = 200, month = 3, text = "history-$it") }
+        val globalRows = (50 downTo 35).map { WorldLogReadEntity(id = it, year = 200, month = 3, text = "global-$it") }
+        val generalRows = (70 downTo 55).map { WorldLogReadEntity(id = it, year = 200, month = 3, text = "general-$it") }
+        `when`(logFeeds.findGlobalHistorySince(0, 16)).thenReturn(historyRows)
+        `when`(logFeeds.findGlobalActionSince(0, 16)).thenReturn(globalRows)
+        `when`(logFeeds.findGeneralActionSince(10, 0, 16)).thenReturn(generalRows)
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.recentRecord.history[0][0]").value(30))
+            .andExpect(jsonPath("$.recentRecord.history[14][0]").value(16))
+            .andExpect(jsonPath("$.recentRecord.history[15]").doesNotExist())
+            .andExpect(jsonPath("$.recentRecord.global[0][1]").value("global-50"))
+            .andExpect(jsonPath("$.recentRecord.global[14][1]").value("global-36"))
+            .andExpect(jsonPath("$.recentRecord.global[15]").doesNotExist())
+            .andExpect(jsonPath("$.recentRecord.general[0][1]").value("general-70"))
+            .andExpect(jsonPath("$.recentRecord.general[14][1]").value("general-56"))
+            .andExpect(jsonPath("$.recentRecord.general[15]").doesNotExist())
+            .andExpect(jsonPath("$.recentRecord.flushHistory").value(0))
+            .andExpect(jsonPath("$.recentRecord.flushGlobal").value(0))
+            .andExpect(jsonPath("$.recentRecord.flushGeneral").value(0))
+    }
+
+    @Test
     fun `city info uses occupying nation rather than player nation`() {
         seedWorld()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
@@ -285,12 +370,16 @@ class FrontInfoControllerTest {
         `when`(generals.findById(10)).thenReturn(
             Optional.of(GeneralReadEntity(id = 10, name = "관우", nationId = 0, officerLevel = 1)),
         )
+        `when`(logFeeds.findGeneralActionSince(10, 0, 16)).thenReturn(
+            listOf(WorldLogReadEntity(id = 77, year = 200, month = 3, text = "비공개 개인 기록")),
+        )
 
         mockMvc().perform(get("/api/front-info?generalId=10"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.general.hasGeneral").value(true))
             .andExpect(jsonPath("$.general.generalId").value(10))
             .andExpect(jsonPath("$.general.permission").value(0)) // officer_level 1 → 일반
+            .andExpect(jsonPath("$.recentRecord.general[0]").doesNotExist())
     }
 
     // ── W0-2(P1-002) lastVote / lastVoteID ───────────────────────────────────────────────────────────

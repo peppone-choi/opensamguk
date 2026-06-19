@@ -11,6 +11,7 @@ import opensamguk.gameapi.dto.FrontGlobalInfo
 import opensamguk.gameapi.dto.FrontInfoResponse
 import opensamguk.gameapi.dto.FrontLastVote
 import opensamguk.gameapi.dto.FrontNationInfo
+import opensamguk.gameapi.dto.FrontRecentRecord
 import opensamguk.gameapi.dto.FrontTroopInfo
 import opensamguk.gameapi.dto.FrontTroopLeader
 import opensamguk.gameapi.dto.FrontTroopReservedCommand
@@ -26,6 +27,7 @@ import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.gameapi.read.LogFeedReadRepository
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
@@ -35,6 +37,7 @@ import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.VotePollReadEntity
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
+import opensamguk.gameapi.read.WorldLogReadEntity
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.common.constants.CityConst
@@ -91,12 +94,15 @@ class FrontInfoController(
     // W0-2(P1-005) troopInfo — troop/general_turn read.
     private val troops: TroopReadRepository,
     private val generalTurns: GeneralTurnReadRepository,
+    private val logFeeds: LogFeedReadRepository,
     private val nationEnv: NationEnvReadRepository,
     private val objectMapper: ObjectMapper,
     @Value("\${SERVER_NAME:}") private val serverNameProperty: String = "",
     @Value("\${SERVER_GENERATION:}") private val serverGenerationProperty: String = "",
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
 ) {
+    private val recentRecordRowLimit = 15
+    private val recentRecordFetchLimit = recentRecordRowLimit + 1
 
     /** nation_env(namespace = nationId, key) jsonb 디코드 — 부재/파싱실패 시 null(loop49 NationFinanceController 동일 패턴; loop51 빼기에서 공유 reader로 수렴 예정). */
     private fun nationEnvNode(nid: Int, key: String): JsonNode? =
@@ -106,6 +112,8 @@ class FrontInfoController(
     fun frontInfo(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam(required = false) generalId: Int?,
+        @RequestParam(defaultValue = "0") lastGeneralRecordID: Int,
+        @RequestParam(defaultValue = "0") lastWorldHistoryID: Int,
         request: HttpServletRequest,
     ): ResponseEntity<FrontInfoResponse> {
         val serverId = request.cookies?.find { it.name == "sam_server" }?.value?.takeIf { it.isNotBlank() }
@@ -124,7 +132,7 @@ class FrontInfoController(
                     general = emptyGeneral(),
                     nation = null,
                     city = null,
-                    recentRecord = emptyList(),
+                    recentRecord = emptyRecentRecord(),
                     // 장수 미보유 — PHP aux는 장수 컨텍스트에서만 채워지므로 빈 블록.
                     aux = FrontAuxInfo(),
                 ),
@@ -146,14 +154,80 @@ class FrontInfoController(
                 general = buildGeneral(general, permission, nationLevel),
                 nation = nationEntity?.let { buildNation(it) },
                 city = cityEntity?.let { buildCity(it) },
-                // [§2 BLOCKED] recentRecord — general_record/world_history 테이블이 모든 마이그레이션에
-                // 부재(W3_FrontGlobalInfo §2). log_entry 대체 feed는 W4. 여기선 빈 리스트(날조 금지).
-                recentRecord = emptyList(),
+                recentRecord = buildRecentRecord(
+                    generalId = general.id,
+                    lastGeneralRecordId = lastGeneralRecordID,
+                    lastWorldHistoryId = lastWorldHistoryID,
+                    includeGeneralFeed = resolved != null,
+                ),
                 // W0-2(P1-002) aux.myLastVote — PHP GetFrontInfo.php:578-580(내 마지막 투표 vote_id).
                 aux = FrontAuxInfo(myLastVote = votes.findFirstByGeneralIdOrderByVoteIdDesc(general.id)?.voteId),
             ),
         )
     }
+
+    private fun emptyRecentRecord() = FrontRecentRecord(
+        history = emptyList(),
+        global = emptyList(),
+        general = emptyList(),
+        flushHistory = 0,
+        flushGlobal = 0,
+        flushGeneral = 0,
+    )
+
+    private fun buildRecentRecord(
+        generalId: Int,
+        lastGeneralRecordId: Int,
+        lastWorldHistoryId: Int,
+        includeGeneralFeed: Boolean,
+    ): FrontRecentRecord {
+        val history = trimRecentRecord(
+            rows = logFeeds.findGlobalHistorySince(lastWorldHistoryId, recentRecordFetchLimit),
+            lastRecordId = lastWorldHistoryId,
+            inclusiveBoundary = true,
+        )
+        val global = trimRecentRecord(
+            rows = logFeeds.findGlobalActionSince(lastGeneralRecordId, recentRecordFetchLimit),
+            lastRecordId = lastGeneralRecordId,
+            inclusiveBoundary = false,
+        )
+        val general = if (includeGeneralFeed) {
+            trimRecentRecord(
+                rows = logFeeds.findGeneralActionSince(generalId, lastGeneralRecordId, recentRecordFetchLimit),
+                lastRecordId = lastGeneralRecordId,
+                inclusiveBoundary = false,
+            )
+        } else {
+            emptyList()
+        }
+
+        return FrontRecentRecord(
+            history = history.toRecentRecordRows(),
+            global = global.toRecentRecordRows(),
+            general = general.toRecentRecordRows(),
+            flushHistory = 0,
+            flushGlobal = 0,
+            flushGeneral = 0,
+        )
+    }
+
+    private fun trimRecentRecord(
+        rows: List<WorldLogReadEntity>,
+        lastRecordId: Int,
+        inclusiveBoundary: Boolean,
+    ): List<WorldLogReadEntity> {
+        if (rows.isEmpty()) return rows
+        val trimmed = rows.toMutableList()
+        val lastId = trimmed.last().id
+        val reachedBoundary = if (inclusiveBoundary) lastId <= lastRecordId else lastId == lastRecordId
+        if (reachedBoundary || trimmed.size > recentRecordRowLimit) {
+            trimmed.removeAt(trimmed.lastIndex)
+        }
+        return trimmed
+    }
+
+    private fun List<WorldLogReadEntity>.toRecentRecordRows(): List<List<Any>> =
+        map { listOf(it.id, it.text) }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // general

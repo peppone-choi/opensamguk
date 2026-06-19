@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import GameChrome from '@/components/game/GameChrome';
 
@@ -27,9 +27,9 @@ vi.mock('@/components/game/MainControlBar', () => ({ default: () => null }));
 vi.mock('@/components/game/MainControlDropdown', () => ({ default: () => null }));
 vi.mock('@/components/game/CharacterClaim', () => ({ default: () => null }));
 vi.mock('@/components/game/PartialReservedCommand', () => ({ default: () => null }));
-vi.mock('@/components/game/GeneralBasicCard', () => ({ default: () => null }));
-vi.mock('@/components/game/NationBasicCard', () => ({ default: () => null }));
-vi.mock('@/components/game/CityBasicCard', () => ({ default: () => null }));
+vi.mock('@/components/game/GeneralBasicCard', () => ({ default: () => <div data-testid="general-card" /> }));
+vi.mock('@/components/game/NationBasicCard', () => ({ default: () => <div data-testid="nation-card" /> }));
+vi.mock('@/components/game/CityBasicCard', () => ({ default: () => <div data-testid="city-card" /> }));
 vi.mock('@/components/game/MessagePanel', () => ({ default: () => null }));
 vi.mock('@/components/Toast', () => ({ default: () => null }));
 
@@ -52,7 +52,14 @@ const frontInfo = {
     city: {
         id: 11,
     },
-    recentRecord: [],
+    recentRecord: {
+        history: [],
+        global: [],
+        general: [],
+        flushHistory: 0,
+        flushGlobal: 0,
+        flushGeneral: 0,
+    },
 };
 
 describe('GameChrome main map', () => {
@@ -89,5 +96,53 @@ describe('GameChrome main map', () => {
             currentCityId: 11,
         });
         expect(props.disallowClick).not.toBe(true);
+    });
+
+    it('keeps legacy main-board slots for map and info cards', () => {
+        const { container } = render(<GameChrome />);
+
+        expect(container.querySelector('.ingame-board')).not.toBeNull();
+        expect(container.querySelector('.ib-map')).not.toBeNull();
+        expect(screen.getByTestId('city-card').parentElement).toHaveClass('ib-city');
+        expect(screen.getByTestId('nation-card').parentElement).toHaveClass('ib-nation');
+        expect(screen.getByTestId('general-card').parentElement).toHaveClass('ib-general');
+    });
+
+    it('passes front-info into function children for the main record zone', () => {
+        render(
+            <GameChrome>
+                {(loadedFrontInfo) => (
+                    <div data-testid="record-probe">{loadedFrontInfo.recentRecord.global[0]?.[1]}</div>
+                )}
+            </GameChrome>,
+        );
+
+        expect(screen.getByTestId('record-probe')).toHaveTextContent('');
+
+        mocks.useFrontInfo.mockReturnValueOnce({
+            frontInfo: {
+                ...frontInfo,
+                recentRecord: {
+                    ...frontInfo.recentRecord,
+                    global: [[99, '장수 동향 연결']],
+                },
+            },
+            constData: { maxTurn: 10 },
+            menu: [],
+            loading: false,
+            error: null,
+            refreshKey: 8,
+            refresh: vi.fn(),
+        });
+
+        render(
+            <GameChrome>
+                {(loadedFrontInfo) => (
+                    <div data-testid="record-probe-filled">{loadedFrontInfo.recentRecord.global[0]?.[1]}</div>
+                )}
+            </GameChrome>,
+        );
+
+        expect(screen.getByTestId('record-probe-filled')).toHaveTextContent('장수 동향 연결');
     });
 });

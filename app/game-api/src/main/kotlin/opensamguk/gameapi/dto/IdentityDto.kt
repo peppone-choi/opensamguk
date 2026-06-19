@@ -425,6 +425,15 @@ data class CityOfficer(
     val npc: Int,
 )
 
+data class FrontRecentRecord(
+    val history: List<List<Any>>,
+    val global: List<List<Any>>,
+    val general: List<List<Any>>,
+    val flushHistory: Int,
+    val flushGlobal: Int,
+    val flushGeneral: Int,
+)
+
 /** GET /api/front-info body. `general.hasGeneral=false` (others null) when the caller has no character. */
 data class FrontInfoResponse(
     val result: Boolean,
@@ -432,7 +441,7 @@ data class FrontInfoResponse(
     val general: FrontGeneralInfo,
     val nation: FrontNationInfo?,
     val city: FrontCityInfo?,
-    val recentRecord: List<String>,
+    val recentRecord: FrontRecentRecord,
     /** W0-2(P1-002) — PHP GetFrontInfo.php:591 `aux` 블록(myLastVote). 장수 미보유 시 빈 블록. */
     val aux: FrontAuxInfo = FrontAuxInfo(),
 )
