@@ -7,6 +7,10 @@ const SERVER_COOKIE = 'sam_server';
 
 export const dynamic = 'force-dynamic';
 
+function isEventStream(contentType: string): boolean {
+    return contentType.includes('text/event-stream');
+}
+
 function selectedServerId(raw: string | undefined | null): string | undefined {
     const value = raw?.trim();
     if (value) return value;
@@ -46,11 +50,24 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     }
 
     const upstream = await fetch(target, init);
+    const contentType = upstream.headers.get('content-type') ?? 'application/json';
+
+    if (isEventStream(contentType)) {
+        return new NextResponse(upstream.body, {
+            status: upstream.status,
+            headers: {
+                'Content-Type': contentType,
+                'Cache-Control': 'no-cache, no-transform',
+                Connection: 'keep-alive',
+            },
+        });
+    }
+
     const body = await upstream.text();
     return new NextResponse(body, {
         status: upstream.status,
         headers: {
-            'Content-Type': upstream.headers.get('content-type') ?? 'application/json',
+            'Content-Type': contentType,
         },
     });
 }
