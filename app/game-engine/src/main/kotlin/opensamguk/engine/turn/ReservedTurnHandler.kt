@@ -10,6 +10,7 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.founding.CheHaesan
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
@@ -275,6 +276,15 @@ class ReservedTurnHandler(
             } else emptyList(),
         )
         definition.resolve(resolveCtx)
+
+        // che_해산 exposes deleteNation(func.php:1713-1805) through its tombstone seam. Capture the
+        // snapshot before applying the draft's general/city neutralization so ng_old_nations keeps the
+        // pre-delete member list, matching the ruler-death deleteNation path.
+        if (definition is CheHaesan) {
+            definition.lastDeletedNationId?.let { deletedNationId ->
+                recorder.markNationDeleted(world, deletedNationId)
+            }
+        }
 
         // --- ChangeRecorder = the SINGLE dirty source ---
         recorder.diffGeneral(preGeneral, draft.general)
