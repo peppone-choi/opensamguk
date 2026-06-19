@@ -1,5 +1,5 @@
 // legacy hwe/ts/utilGame/formatLog.ts 충실 포팅 — 게임 로그 색/태그 마크업 → HTML span 변환.
-const regex = /<([RBGMCLSODYW]1?|1|\/)>/g;
+const tokenRegex = /<([RBGMCLSODYW]1?|1|\/)>|<\/?b>|<span class=(['"])ev_failed\2>|<span style=(['"])color:\s*#[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{3})?;?\3>|<\/span>/g;
 
 //TODO: <R>에서 더 확장해서, <R|G>, <R|N> 형태로 뒤에 타입을 지정할 수 있도록 한다.
 
@@ -22,6 +22,29 @@ const convertMap2: Record<string, string> = {
   '1': 'font-size: 0.9em;',
 };
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function safeHtmlTag(tag: string): string {
+  if (tag === '<b>' || tag === '</b>' || tag === '</span>') {
+    return tag;
+  }
+  if (tag === '<span class=\'ev_failed\'>' || tag === '<span class="ev_failed">') {
+    return '<span class="ev_failed">';
+  }
+  const color = /^<span style=(['"])color:\s*(#[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{3})?);?\1>$/.exec(tag)?.[2];
+  if (color) {
+    return `<span style="color:${color};">`;
+  }
+  return escapeHtml(tag);
+}
+
 export function formatLog(text?: string): string {
   if (!text) {
     return '';
@@ -30,14 +53,16 @@ export function formatLog(text?: string): string {
   let matchRes;
   let lastIndex = 0;
   const result = [];
-  while ((matchRes = regex.exec(text)) !== null) {
+  while ((matchRes = tokenRegex.exec(text)) !== null) {
     const { 0: partAll, 1: subPart, index } = matchRes;
     if (lastIndex != index) {
-      result.push(text.slice(lastIndex, index));
+      result.push(escapeHtml(text.slice(lastIndex, index)));
     }
 
-    if (subPart == '/') {
-      result.push(`</span>`);
+    if (!subPart) {
+      result.push(safeHtmlTag(partAll));
+    } else if (subPart == '/') {
+      result.push('</span>');
     } else if (subPart.length == 2) {
       result.push(`<span style="${convertMap[subPart[0]] ?? ''}${convertMap2[subPart[1]] ?? ''}">`);
     } else {
@@ -48,7 +73,7 @@ export function formatLog(text?: string): string {
   }
 
   if (lastIndex != text.length) {
-    result.push(text.slice(lastIndex));
+    result.push(escapeHtml(text.slice(lastIndex)));
   }
 
   return result.join('');

@@ -229,13 +229,24 @@ export interface FrontCityInfo {
     trade: number | null;
 }
 
+export type FrontRecentRecordRow = [number, string];
+
+export interface FrontRecentRecord {
+    history: FrontRecentRecordRow[];
+    global: FrontRecentRecordRow[];
+    general: FrontRecentRecordRow[];
+    flushHistory: 0 | 1;
+    flushGlobal: 0 | 1;
+    flushGeneral: 0 | 1;
+}
+
 export interface FrontInfoResponse {
     result: boolean;
     global: FrontGlobalInfo;
     general: FrontGeneralInfo;
     nation: FrontNationInfo | null;
     city: FrontCityInfo | null;
-    recentRecord: string[];
+    recentRecord: FrontRecentRecord;
     // [P1-002] legacy GetFrontInfo 봉투의 aux 블록(defs/API/Global.ts:224-226) — 내가 마지막으로
     // 참여한 설문 id. 새 설문 토스트 중복 억제에 사용. TODO(P1-002, W0-2): BE 배출 후 소비.
     aux?: { myLastVote?: number } | null;

@@ -1216,7 +1216,6 @@ input:focus, select:focus, textarea:focus {
 .ib-reserved,
 .ib-content,
 .ib-controlbar { width: 100%; }
-.ib-cards { display: contents; }
 @media (max-width: 999px) {
   .ib-reserved { grid-row: 1; }
   .ib-controlbar { grid-row: 2; }
@@ -1242,6 +1241,46 @@ input:focus, select:focus, textarea:focus {
 .ib-content { width: 100%; }
 .ib-content:empty { display: none; }
 .ib-controlbar { width: 100%; }
+.ib-map .map-viewer { border-radius: 0; }
+
+.main-record-zone {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  width: 100%;
+}
+.main-record-feed {
+  min-width: 0;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.main-record-feed:first-child { border-top: 1px solid var(--border-subtle); }
+.main-record-title {
+  padding: var(--space-xs) var(--space-sm);
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.main-record-body {
+  min-height: 2rem;
+  font-size: var(--text-sm);
+  line-height: 1.65;
+}
+.main-record-row {
+  padding: 2px var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+  word-break: break-word;
+}
+.main-record-row:last-child { border-bottom: 0; }
+@media (min-width: 1000px) {
+  .main-record-zone { grid-template-columns: 1fr 1fr; }
+  .main-record-feed:nth-child(2) { border-left: 0; border-top: 1px solid var(--border-subtle); }
+  .main-record-world { grid-column: 1 / -1; }
+}
 
 /* Basic info cards (GeneralBasicCard / NationBasicCard) — verbatim labels, grid head/body rows. */
 .basic-card {

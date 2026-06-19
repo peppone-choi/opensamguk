@@ -16,8 +16,11 @@ import CityBasicCard from './CityBasicCard';
 import MessagePanel from './MessagePanel';
 import Toast from '../Toast';
 import type { MenuFlagSource } from '@/lib/menu-types';
+import type { FrontInfoResponse } from '@/lib/types';
 
-export default function GameChrome({ children }: { children?: React.ReactNode }) {
+type GameChromeChildren = React.ReactNode | ((frontInfo: FrontInfoResponse) => React.ReactNode);
+
+export default function GameChrome({ children }: { children?: GameChromeChildren }) {
     const { frontInfo, constData, menu, loading, error, refresh, refreshKey } = useFrontInfo();
     const { toasts, show, remove } = useToast();
 
@@ -94,9 +97,13 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
                     )}
                 </div>
 
-                <div className="ib-cards">
+                <div className="ib-city">
                     <CityBasicCard city={city} />
+                </div>
+                <div className="ib-nation">
                     <NationBasicCard nation={nation} />
+                </div>
+                <div className="ib-general">
                     <GeneralBasicCard general={general} nation={nation} />
                 </div>
 
@@ -106,7 +113,7 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
                     </div>
                 )}
 
-                <div className="ib-content">{children}</div>
+                <div className="ib-content">{typeof children === 'function' ? children(frontInfo) : children}</div>
             </div>
 
             {/* MessagePanel (#msgPanel) */}
