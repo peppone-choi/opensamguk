@@ -99,6 +99,14 @@ export function seasonOf(month: number): string {
     return 'winter';
 }
 
+export function mapTitleColor(startYear: number | undefined, year: number): string | undefined {
+    if (startYear == null) return undefined;
+    if (year < startYear + 1) return 'magenta';
+    if (year < startYear + 2) return 'orange';
+    if (year < startYear + 3) return 'yellow';
+    return undefined;
+}
+
 // 레거시 state/mapViewer.ts 패러티 — 토글 상태는 localStorage('yes'/'no')에 영속.
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 const LS_SINGLE_TAP = 'sam.toggleSingleTap';
@@ -349,9 +357,13 @@ export default function MapViewer({
     const h = data.height || 500;
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
+    const titleText = `${data.year}年 ${data.month}月`;
 
     return (
         <section className={`map-viewer${hideCityName ? ' hide-cityname' : ''}`} aria-label="세계 지도">
+            <div className="map-viewer-title" style={{ color: mapTitleColor(data.startYear, data.year) }}>
+                {titleText}
+            </div>
             <div
                 ref={canvasRef}
                 className="map-viewer-canvas"
@@ -506,7 +518,7 @@ export default function MapViewer({
                     role="status"
                     style={{
                         left: Math.min(cursor.x + 12, (canvasW || w) - 130),
-                        top: cursor.y + 16,
+                        top: cursor.y + 30,
                     }}
                 >
                     {/* 레거시 city_tooltip 2줄 구조: 1줄=【지역 | 등급】 도시명(CityBasicCard.vue), 2줄=국가명만(map.ts nation_name) */}
@@ -516,7 +528,6 @@ export default function MapViewer({
                     <div className="map-tooltip-meta">{nationNameOf(hoverCity.nationId)}</div>
                 </div>
             )}
-            <div className="map-viewer-cap">{`${data.serverName} · ${data.year}年 ${data.month}月`}</div>
         </section>
     );
 }

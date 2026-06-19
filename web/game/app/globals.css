@@ -927,10 +927,19 @@ input:focus, select:focus, textarea:focus {
 .map-viewer {
   position: relative;
   width: 100%;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  background: #000;
+  color: #fff;
+}
+.map-viewer-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  width: 100%;
+  text-align: center;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 700;
 }
 .map-viewer-canvas {
   position: relative;
@@ -963,13 +972,6 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
   color: var(--text-muted);
   font-size: var(--text-sm);
-}
-.map-viewer-cap {
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-  text-align: center;
-  border-top: 1px solid var(--border-subtle);
 }
 
 /* ── 도시 마커 (gateway 로비 MapPreview와 구조·CSS 동일한 정적 마커) ──────────── */
