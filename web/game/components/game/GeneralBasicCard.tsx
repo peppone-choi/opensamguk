@@ -17,6 +17,7 @@
 // defence_train(컬럼 부재), train/atmos bonus(onCalcStat 미배선).
 
 import { formatNumber } from '@/lib/format';
+import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { formatInjury, nextExpLevelRemain } from '@/lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';
 
@@ -135,7 +136,7 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
     const specialCell = `${nameOrCode(general.specialDomesticName, general.specialDomestic)} / ${nameOrCode(general.specialWarName, general.specialWar)}`;
 
     // generalInfo 패널 행들.
-    const rows: { label: string; value: React.ReactNode }[] = [
+    const rows: { label: string; value: React.ReactNode; wide?: boolean }[] = [
         { label: '관직', value: officerText },
         { label: '소속', value: nation?.name ?? '재야' },
         { label: '통솔', value: leadershipCell },
@@ -154,7 +155,7 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
         { label: '병사', value: formatNumber(general.crew) },
         { label: '훈련', value: general.train ?? 0 },
         { label: '사기', value: general.atmos ?? 0 },
-        { label: 'Lv', value: <LevelBar experience={general.experience} explevel={general.explevel} /> },
+        { label: 'Lv', value: <LevelBar experience={general.experience} explevel={general.explevel} />, wide: true },
         { label: '연령', value: general.age != null ? <AgeLabel age={general.age} /> : '-' },
         { label: '호칭', value: general.honorText ?? '-' },
         { label: '공헌', value: general.dedLevelText ?? '-' },
@@ -174,18 +175,26 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
 
     return (
         <section className="basic-card general-basic-card ib-general" aria-label="장수 정보">
-            <div className="basic-card-name" style={{ backgroundColor: nationColor, color: headerText }}>
-                {general.name ?? '-'}
-                {general.injury > 0 && <span style={{ color: 'orange' }}> 【 부상 】</span>}
+            <div className="general-card-head" style={{ backgroundColor: nationColor, color: headerText }}>
+                <img
+                    className="general-card-portrait"
+                    src={portraitUrl(general.picture, general.imageServer)}
+                    alt=""
+                    onError={onPortraitError}
+                />
+                <div className="basic-card-name">
+                    {general.name ?? '-'}
+                    {general.injury > 0 && <span style={{ color: 'orange' }}> 【 부상 】</span>}
+                </div>
             </div>
             <div className="basic-card-grid">
                 {/* 특기 — head 없는 전폭 행(레거시 단일 칸 "내정 / 전투"). */}
-                <div className="basic-card-row">
+                <div className="basic-card-row basic-card-row-wide">
                     <div className="basic-card-head">특기</div>
                     <div className="basic-card-body">{specialCell}</div>
                 </div>
                 {rows.map((r) => (
-                    <div key={r.label} className="basic-card-row">
+                    <div key={r.label} className={`basic-card-row${r.wide ? ' basic-card-row-wide' : ''}`}>
                         <div className="basic-card-head">{r.label}</div>
                         <div className="basic-card-body">{r.value}</div>
                     </div>

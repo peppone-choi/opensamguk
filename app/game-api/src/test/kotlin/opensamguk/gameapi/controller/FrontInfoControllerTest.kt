@@ -204,6 +204,27 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.nation.id").value(1))
             .andExpect(jsonPath("$.nation.level").value(7))
             .andExpect(jsonPath("$.city.name").value("허창"))
+            .andExpect(jsonPath("$.city.nationName").value("위"))
+            .andExpect(jsonPath("$.city.nationColor").value("#00f"))
+    }
+
+    @Test
+    fun `city info uses occupying nation rather than player nation`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(GeneralReadEntity(id = 10, name = "순욱", nationId = 1, cityId = 5, officerLevel = 5)),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(nations.findById(2)).thenReturn(Optional.of(NationReadEntity(id = 2, name = "촉", color = "#0f0", level = 5)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 2)))
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.nation.name").value("위"))
+            .andExpect(jsonPath("$.city.nationId").value(2))
+            .andExpect(jsonPath("$.city.nationName").value("촉"))
+            .andExpect(jsonPath("$.city.nationColor").value("#0f0"))
     }
 
     @Test

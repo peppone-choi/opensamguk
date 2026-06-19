@@ -5,6 +5,28 @@ import { useEffect, useState } from 'react';
 const PATH_SERVER_ID = /^s[A-Za-z0-9_-]*$/;
 const SERVER_COOKIE = 'sam_server';
 
+const LEGACY_GAME_ROUTE_MAP: Record<string, string> = {
+    'v_nationBetting.php': '/game/nation-betting',
+    'a_kingdomList.php': '/game/rankings/kingdoms',
+    'v_nationList.php': '/game/rankings/kingdoms',
+    'a_genList.php': '/game/rankings/generals',
+    'v_generalList.php': '/game/rankings/generals',
+    'a_bestGeneral.php': '/game/rankings/best-generals',
+    'v_bestGeneral.php': '/game/rankings/best-generals',
+    'a_hallOfFame.php': '/game/rankings/hall-of-fame',
+    'v_hallOfFame.php': '/game/rankings/hall-of-fame',
+    'a_emperior.php': '/game/rankings/emperor',
+    'v_dynastyList.php': '/game/rankings/emperor',
+    'v_history.php': '/game/history',
+    'battle_simulator.php': '/game/simulator',
+    'a_traffic.php': '/game/rankings/traffic',
+    'v_trafficInfo.php': '/game/rankings/traffic',
+    a_npcList: '/game/rankings/npcs',
+    'a_npcList.php': '/game/rankings/npcs',
+    'v_npcList.php': '/game/rankings/npcs',
+    'v_vote.php': '/game/vote',
+};
+
 function splitSuffix(value: string): { base: string; suffix: string } {
     const queryIdx = value.indexOf('?');
     const hashIdx = value.indexOf('#');
@@ -49,6 +71,21 @@ export function resolveServerGameBase(
         return `${baseNoSlash}${suffix}`;
     }
     return `${baseNoSlash}/${encodeURIComponent(id)}${suffix}`;
+}
+
+export function normalizeLegacyGamePath(href: string): string {
+    const trimmed = href.trim();
+    if (!trimmed) return trimmed;
+    if (/^(?:https?:)?\/\//i.test(trimmed) || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return trimmed;
+
+    const { base, suffix } = splitSuffix(trimmed);
+    const key = base
+        .replace(/^\/game\//, '')
+        .replace(/^\.?\//, '')
+        .replace(/^game\//, '')
+        .replace(/\/+$/, '');
+    const mapped = LEGACY_GAME_ROUTE_MAP[key];
+    return mapped ? `${mapped}${suffix}` : trimmed;
 }
 
 export function resolveServerGamePath(

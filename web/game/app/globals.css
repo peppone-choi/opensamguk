@@ -1192,52 +1192,50 @@ input:focus, select:focus, textarea:focus {
   .gauge-metrics { grid-template-columns: 1fr; }
 }
 
-/* ── F2 Wave 5 — main-screen assembly (1000px 중앙 정렬, 로비/로그인과 동일 폭) ───────────────
-   #ingameBoard 는 단일 세로 스택이다(부모 .shell-main > * 가 max-width:1000px + auto margin 으로 중앙
-   정렬). 영역 순서: map(상단 풀폭) → reserved(예약명령) → info 카드(nation/general/city 2~3열 그리드) →
-   content(서브페이지 슬롯) → controlbar(풀폭, 마지막). 모바일은 .ib-cards 가 단일 열로 collapse 한다. */
+/* ── F2 Wave 5 — main-screen assembly (#ingameBoard legacy grid) ─────────────── */
 .ingame-board {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-/* 맵 = 자체 1000px 기준. 공간 부족 시 비례축소(MapViewer aspect 700/500 유지). 스택 시 최대 1000px 중앙. */
-.ib-map { width: 100%; max-width: 1000px; margin-left: auto; margin-right: auto; }
-.ib-reserved { width: 100%; }
-/* 데스크톱+ (≥1200px, Montage lg/xl): 맵(자체 1000px 좌측, 공간 부족 시 비례축소) + 턴테이블(예약명령 우측 360px).
-   맵+테이블 묶음 중앙 정렬, 카드/콘텐츠/컨트롤바는 그 폭에 맞춰 span. md 미만(<1200)은 단일 컬럼 스택. */
-@media (min-width: 1200px) {
-  .ingame-board {
-    display: grid;
-    grid-template-columns: minmax(0, 1000px) 360px;
-    gap: var(--space-md);
-    align-items: start;
-    justify-content: center;
-  }
-  .ib-map { width: auto; max-width: none; margin: 0; }
-  .ib-reserved { width: auto; }
-  .ib-cards,
-  .ib-content,
-  .ib-controlbar { grid-column: 1 / -1; }
-}
-/* info 카드 묶음 — 1000px 내부에서 nation/general/city 2~3열(데스크톱), 모바일 단일 열. align:start 로
-   각 카드가 내용 높이만큼만 차지(레거시 dense 카드 비율 유지). */
-.ib-cards {
   display: grid;
-  gap: var(--space-md);
   grid-template-columns: 1fr;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
   align-items: start;
 }
-/* Montage 브레이크포인트 정합 — sm/md(768~1199) 2열, lg/xl(≥1200) 3열, 모바일(<768) 1열. */
-@media (min-width: 768px) {
-  .ib-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* 도시 카드는 수치가 많아 2열 구간에선 아래 줄 전체로 펼친다. */
-  .ib-cards > .ib-city { grid-column: 1 / -1; }
+.ib-map,
+.ib-reserved,
+.ib-city,
+.ib-nation,
+.ib-general,
+.ib-content,
+.ib-controlbar { min-width: 0; }
+.ib-map,
+.ib-reserved,
+.ib-content,
+.ib-controlbar { width: 100%; }
+.ib-cards { display: contents; }
+@media (max-width: 999px) {
+  .ib-reserved { grid-row: 1; }
+  .ib-controlbar { grid-row: 2; }
+  .ib-nation { grid-row: 3; }
+  .ib-general { grid-row: 4; }
+  .ib-city { grid-row: 5; }
+  .ib-map { grid-row: 6; }
+  .ib-content { grid-row: 7; }
 }
-@media (min-width: 1200px) {
-  .ib-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  /* 3열: general | nation | city 한 줄. 도시 카드 원복(2열 span 해제). */
-  .ib-cards > .ib-city { grid-column: auto; }
+@media (min-width: 1000px) {
+  .ingame-board {
+    grid-template-columns: 500px 200px 300px;
+    gap: 0;
+  }
+  .ib-map { grid-column: 1 / 3; grid-row: 1; }
+  .ib-reserved { grid-column: 3; grid-row: 1 / 3; }
+  .ib-city { grid-column: 1 / 3; grid-row: 2 / 4; }
+  .ib-controlbar { grid-column: 1 / 4; grid-row: 4; }
+  .ib-nation { grid-column: 1; grid-row: 5; }
+  .ib-general { grid-column: 2 / 4; grid-row: 5; }
+  .ib-content { grid-column: 1 / 4; grid-row: 6; margin-top: var(--space-md); }
 }
 .ib-content { width: 100%; }
 .ib-content:empty { display: none; }
@@ -1246,7 +1244,7 @@ input:focus, select:focus, textarea:focus {
 /* Basic info cards (GeneralBasicCard / NationBasicCard) — verbatim labels, grid head/body rows. */
 .basic-card {
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   overflow: hidden;
   background: var(--bg-card);
 }
@@ -1261,6 +1259,12 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 1fr 2fr;
   gap: 1px;
   background: var(--border-subtle);
+}
+.general-basic-card .basic-card-grid {
+  grid-template-columns: repeat(3, minmax(36px, 2fr) minmax(64px, 5fr));
+}
+.nation-basic-card .basic-card-grid {
+  grid-template-columns: 7fr 18fr 7fr 18fr;
 }
 .basic-card-row { display: contents; }
 .basic-card-head {
@@ -1277,9 +1281,26 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
   text-align: center;
 }
-/* 전폭 행(특기 내정/전투처럼 head 없이 본문만 펼치는 칸) — 레거시 type-body grid-column span 동치. */
-.basic-card-row.basic-card-row-full { display: block; }
-.basic-card-row-full .basic-card-body { text-align: center; }
+.general-basic-card .basic-card-row-wide .basic-card-body { grid-column: span 5; }
+.nation-basic-card .basic-card-row-wide .basic-card-body { grid-column: span 3; }
+.general-card-head {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  min-height: 64px;
+}
+.general-card-head .basic-card-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.general-card-portrait {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  background: #111;
+  border-right: 1px solid var(--border-subtle);
+}
 /* 성향 pros(cyan) / cons(magenta) — 레거시 NationBasicCard type 색상 그대로. */
 .bc-pros { color: cyan; }
 .bc-cons { color: magenta; }

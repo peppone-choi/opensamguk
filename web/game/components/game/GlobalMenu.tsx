@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { filterMenu } from '@/lib/menu-filter';
-import { gameChildPath, resolveServerGamePath } from '@/lib/serverGameUrl';
+import { gameChildPath, normalizeLegacyGamePath, resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { MenuFlagSource, MenuItem, MenuNode } from '@/lib/menu-types';
 
 interface GlobalMenuProps {
@@ -25,9 +25,12 @@ function isHighlighted(item: MenuItem, global: MenuFlagSource): boolean {
 }
 
 function resolveMenuUrl(url: string, serverId: string | undefined): string {
-    if (!serverId) return url;
-    if (!url.startsWith('/game') || url.startsWith('/game/') === false && url !== '/game') return url;
-    return resolveServerGamePath(undefined, serverId, '/game', gameChildPath(url));
+    const normalized = normalizeLegacyGamePath(url);
+    if (!serverId) return normalized;
+    if (!normalized.startsWith('/game') || (normalized !== '/game' && !normalized.startsWith('/game/'))) {
+        return normalized;
+    }
+    return resolveServerGamePath(undefined, serverId, '/game', gameChildPath(normalized));
 }
 
 // Resolve a click the same way the legacy menuClick() does. Returns true if navigation was handled
@@ -87,16 +90,17 @@ function MenuDropdown({
     onReqCall?: (url: string) => void;
 }) {
     const [open, setOpen] = useState(false);
+    const mainUrl = mainItem ? resolveMenuUrl(mainItem.url, serverId) : '';
     return (
         <div className={`global-menu-group${open ? ' open' : ''}`} onMouseLeave={() => setOpen(false)}>
             {mainItem ? (
                 <a
                     className="global-menu-btn global-menu-split-main"
-                    href={resolveMenuUrl(mainItem.url, serverId)}
+                    href={mainUrl}
                     target={mainItem.newTab ? '_blank' : undefined}
                     rel={mainItem.newTab ? 'noopener noreferrer' : undefined}
                     onClick={(e) => {
-                        if (handleClick(mainItem, onReqCall)) e.preventDefault();
+                        if (handleClick({ ...mainItem, url: mainUrl }, onReqCall)) e.preventDefault();
                     }}
                 >
                     {label}
@@ -118,28 +122,33 @@ function MenuDropdown({
             )}
             {open && (
                 <ul className="global-menu-dropdown">
-                    {subMenu.map((sub, i) =>
-                        sub.type === 'line' ? (
-                            <li key={i}>
-                                <hr className="dropdown-divider" />
-                            </li>
-                        ) : sub.type === 'item' ? (
+                    {subMenu.map((sub, i) => {
+                        if (sub.type === 'line') {
+                            return (
+                                <li key={i}>
+                                    <hr className="dropdown-divider" />
+                                </li>
+                            );
+                        }
+                        if (sub.type !== 'item') return null;
+                        const subUrl = resolveMenuUrl(sub.url, serverId);
+                        return (
                             <li key={i}>
                                 <a
                                     className="dropdown-item"
-                                    href={resolveMenuUrl(sub.url, serverId)}
+                                    href={subUrl}
                                     target={sub.newTab ? '_blank' : undefined}
                                     rel={sub.newTab ? 'noopener noreferrer' : undefined}
                                     onClick={(e) => {
-                                        if (handleClick(sub, onReqCall)) e.preventDefault();
+                                        if (handleClick({ ...sub, url: subUrl }, onReqCall)) e.preventDefault();
                                         setOpen(false);
                                     }}
                                 >
                                     {sub.name}
                                 </a>
                             </li>
-                        ) : null,
-                    )}
+                        );
+                    })}
                 </ul>
             )}
         </div>

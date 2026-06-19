@@ -356,38 +356,47 @@ class FrontInfoController(
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    // city (unchanged shape)
+    // city
     // ─────────────────────────────────────────────────────────────────────────────────────────────
 
-    private fun buildCity(c: CityReadEntity) = FrontCityInfo(
-        id = c.id,
-        name = c.name,
-        level = c.level,
-        // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시(레거시
-        // CityBasicCard.vue cityConstMap.level[level]). 미정의 레벨 → '-'.
-        levelName = getCityLevelList()[c.level] ?: "-",
-        nationId = c.nationId,
-        region = c.region,
-        // 지역 한글명 = CityConst.regionMap[region] (하북/중원/…/동이). raw 숫자 대신 표시. 미정의 → '-'.
-        regionName = CityConst.regionMap[c.region] as? String ?: "-",
-        // 도시 관직(태수4/군사3/종사2) = officer_city == 이 도시 AND officer_level IN (4,3,2) (PHP officerList).
-        officers = generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))
-            .map { CityOfficer(officerLevel = it.officerLevel, name = it.name, npc = it.npcState) },
-        population = c.population,
-        populationMax = c.populationMax,
-        agriculture = c.agriculture,
-        agricultureMax = c.agricultureMax,
-        commerce = c.commerce,
-        commerceMax = c.commerceMax,
-        security = c.security,
-        securityMax = c.securityMax,
-        defense = c.defense,
-        defenseMax = c.defenseMax,
-        wall = c.wall,
-        wallMax = c.wallMax,
-        trust = c.trust,
-        trade = c.trade,
-    )
+    private fun buildCity(c: CityReadEntity): FrontCityInfo {
+        val cityNation = if (c.nationId == 0) {
+            null
+        } else {
+            runCatching { nations.findById(c.nationId).orElse(null) }.getOrNull()
+        }
+        return FrontCityInfo(
+            id = c.id,
+            name = c.name,
+            level = c.level,
+            // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시(레거시
+            // CityBasicCard.vue cityConstMap.level[level]). 미정의 레벨 → '-'.
+            levelName = getCityLevelList()[c.level] ?: "-",
+            nationId = c.nationId,
+            nationName = cityNation?.name,
+            nationColor = cityNation?.color,
+            region = c.region,
+            // 지역 한글명 = CityConst.regionMap[region] (하북/중원/…/동이). raw 숫자 대신 표시. 미정의 → '-'.
+            regionName = CityConst.regionMap[c.region] as? String ?: "-",
+            // 도시 관직(태수4/군사3/종사2) = officer_city == 이 도시 AND officer_level IN (4,3,2) (PHP officerList).
+            officers = generals.findByOfficerCityAndOfficerLevelInOrderByIdAsc(c.id, listOf(4, 3, 2))
+                .map { CityOfficer(officerLevel = it.officerLevel, name = it.name, npc = it.npcState) },
+            population = c.population,
+            populationMax = c.populationMax,
+            agriculture = c.agriculture,
+            agricultureMax = c.agricultureMax,
+            commerce = c.commerce,
+            commerceMax = c.commerceMax,
+            security = c.security,
+            securityMax = c.securityMax,
+            defense = c.defense,
+            defenseMax = c.defenseMax,
+            wall = c.wall,
+            wallMax = c.wallMax,
+            trust = c.trust,
+            trade = c.trade,
+        )
+    }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // global
