@@ -35,6 +35,7 @@ function sseHeaders(contentType = 'text/event-stream;charset=UTF-8'): HeadersIni
         'Content-Type': contentType,
         'Cache-Control': 'no-cache, no-transform',
         Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
     };
 }
 
