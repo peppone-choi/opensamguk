@@ -1,9 +1,10 @@
 package opensamguk.infra.entity
 
+import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
+import jakarta.persistence.Converter
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -21,8 +22,8 @@ import java.time.Instant
 @Entity
 @Table(name = "ng_auction")
 class AuctionEntity(
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Convert(converter = AuctionTypeValueConverter::class)
+    @Column(name = "type", nullable = false, columnDefinition = "ng_auction_type")
     var type: AuctionType,
 
     @Column(name = "finished", nullable = false)
@@ -34,8 +35,8 @@ class AuctionEntity(
     @Column(name = "host_general_id", nullable = false)
     var hostGeneralId: Int,
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "req_resource", nullable = false)
+    @Convert(converter = AuctionResourceValueConverter::class)
+    @Column(name = "req_resource", nullable = false, columnDefinition = "ng_auction_resource")
     var reqResource: ResourceType,
 
     @Column(name = "open_date", nullable = false)
@@ -51,3 +52,19 @@ class AuctionEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,
 )
+
+@Converter
+class AuctionTypeValueConverter : AttributeConverter<AuctionType, String> {
+    override fun convertToDatabaseColumn(attribute: AuctionType?): String? = attribute?.value
+
+    override fun convertToEntityAttribute(dbData: String?): AuctionType? =
+        dbData?.let(AuctionType::from)
+}
+
+@Converter
+class AuctionResourceValueConverter : AttributeConverter<ResourceType, String> {
+    override fun convertToDatabaseColumn(attribute: ResourceType?): String? = attribute?.value
+
+    override fun convertToEntityAttribute(dbData: String?): ResourceType? =
+        dbData?.let(ResourceType::from)
+}

@@ -78,7 +78,7 @@ class AuctionControllerTest {
 
     @Test
     fun `D1 listActive returns PHP envelope with buyRice and sellRice separated`() {
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.BUY_RICE)).thenReturn(
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value)).thenReturn(
             listOf(
                 auction(
                     id = 7, type = AuctionType.BUY_RICE, hostGeneralId = 42,
@@ -87,7 +87,7 @@ class AuctionControllerTest {
                 ),
             ),
         )
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.SELL_RICE)).thenReturn(
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)).thenReturn(
             listOf(
                 auction(
                     id = 8, type = AuctionType.SELL_RICE, hostGeneralId = 5,
@@ -138,8 +138,8 @@ class AuctionControllerTest {
 
     @Test
     fun `D1 listActive uses detail hostName only and no live-general fallback`() {
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.BUY_RICE)).thenReturn(emptyList())
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.SELL_RICE)).thenReturn(
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value)).thenReturn(emptyList())
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)).thenReturn(
             listOf(
                 auction(
                     id = 9, type = AuctionType.SELL_RICE, hostGeneralId = 10,
@@ -162,8 +162,8 @@ class AuctionControllerTest {
         // highestBid null이면 startBidAmount로 폴백한다(legacy watch). 또 단가=highestBid.amount/amount,
         // 입찰자 generalName?? '-' 렌더 — 이 와이어 필드(startBidAmount/finishBidAmount/amount/
         // highestBid.amount/highestBid.generalName)를 고정해 컴포넌트 회귀를 가드한다.
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.BUY_RICE)).thenReturn(emptyList())
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.SELL_RICE)).thenReturn(
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value)).thenReturn(emptyList())
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)).thenReturn(
             listOf(
                 auction(
                     id = 11, type = AuctionType.SELL_RICE, hostGeneralId = 3,
@@ -193,7 +193,7 @@ class AuctionControllerTest {
     @Test
     fun `D1 listActive orders combined lists by close_date ASC`() {
         // buyRice 마감이 sellRice보다 늦음 — 합쳐 정렬 후 type별 분배(순서는 각 리스트 내부 정렬 검증)
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.BUY_RICE)).thenReturn(
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value)).thenReturn(
             listOf(
                 auction(id = 1, type = AuctionType.BUY_RICE, hostGeneralId = 1,
                     detailJson = """{"hostName":"늦은","amount":10,"startBidAmount":1}""",
@@ -203,7 +203,7 @@ class AuctionControllerTest {
                     closeDate = Instant.parse("2026-06-05T00:00:00Z")),
             ),
         )
-        `when`(auctions.findByFinishedFalseAndType(AuctionType.SELL_RICE)).thenReturn(emptyList())
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)).thenReturn(emptyList())
         `when`(bids.findHighestBidsByAuctionIds(listOf(1, 2))).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/auctions"))
@@ -217,7 +217,7 @@ class AuctionControllerTest {
 
     @Test
     fun `D2 listUniqueItems returns PHP envelope and item field set`() {
-        `when`(auctions.findByTypeOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM)).thenReturn(
+        `when`(auctions.findByTypeValueOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM.value)).thenReturn(
             listOf(
                 auction(
                     id = 20, type = AuctionType.UNIQUE_ITEM, hostGeneralId = 42, target = "적토마",
@@ -258,7 +258,7 @@ class AuctionControllerTest {
 
     @Test
     fun `D2 listUniqueItems skips items with no highestBid`() {
-        `when`(auctions.findByTypeOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM)).thenReturn(
+        `when`(auctions.findByTypeValueOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM.value)).thenReturn(
             listOf(
                 auction(
                     id = 21, type = AuctionType.UNIQUE_ITEM, hostGeneralId = 42, target = "적토마",
@@ -277,7 +277,7 @@ class AuctionControllerTest {
 
     @Test
     fun `D2 listUniqueItems empty returns envelope with empty list`() {
-        `when`(auctions.findByTypeOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM)).thenReturn(emptyList())
+        `when`(auctions.findByTypeValueOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM.value)).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/auctions/unique"))
             .andExpect(status().isOk)

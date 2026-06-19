@@ -1,7 +1,6 @@
 package opensamguk.infra.read
 
 import opensamguk.infra.entity.AuctionEntity
-import opensamguk.logic.auction.AuctionType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -20,12 +19,32 @@ interface AuctionRepository : JpaRepository<AuctionEntity, Int> {
     /** Active auctions: `finished = false`. */
     fun findByFinishedFalse(): List<AuctionEntity>
 
-    /** Find auctions by type (e.g. `buyRice`, `sellRice`, `uniqueItem`). */
-    fun findByType(type: AuctionType): List<AuctionEntity>
+    @Query(
+        value = """
+            SELECT * FROM ng_auction
+            WHERE type = CAST(:type AS ng_auction_type)
+        """,
+        nativeQuery = true,
+    )
+    fun findByTypeValue(@Param("type") type: String): List<AuctionEntity>
 
-    /** Active auctions by type. */
-    fun findByFinishedFalseAndType(type: AuctionType): List<AuctionEntity>
+    @Query(
+        value = """
+            SELECT * FROM ng_auction
+            WHERE finished = false
+              AND type = CAST(:type AS ng_auction_type)
+        """,
+        nativeQuery = true,
+    )
+    fun findByFinishedFalseAndTypeValue(@Param("type") type: String): List<AuctionEntity>
 
-    /** All auctions by type, ordered by close_date ascending. */
-    fun findByTypeOrderByCloseDateAsc(type: AuctionType): List<AuctionEntity>
+    @Query(
+        value = """
+            SELECT * FROM ng_auction
+            WHERE type = CAST(:type AS ng_auction_type)
+            ORDER BY close_date ASC
+        """,
+        nativeQuery = true,
+    )
+    fun findByTypeValueOrderByCloseDateAsc(@Param("type") type: String): List<AuctionEntity>
 }

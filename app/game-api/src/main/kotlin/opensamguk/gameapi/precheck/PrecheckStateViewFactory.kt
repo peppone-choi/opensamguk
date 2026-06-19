@@ -82,8 +82,13 @@ class PrecheckStateViewFactory(
         val ws = worldStates.findAll().firstOrNull()
             ?: error("world_state singleton row is missing")
         val year = ws.currentYear
-        val startYear = (ws.config["startYear"] as? Number)?.toInt()
+        val startYear = numberOf(ws.config["startYear"])
+            ?: numberOf(ws.config["startyear"])
+            ?: ws.startYear
+            ?: numberOf(ws.meta["startYear"])
             ?: error("world_state.config.startYear is missing")
         return WorldEnvBuilder.envMap(year, startYear)
     }
+
+    private fun numberOf(value: Any?): Int? = (value as? Number)?.toInt()
 }
