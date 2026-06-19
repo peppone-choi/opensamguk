@@ -174,6 +174,10 @@ export default function MapViewer({
     const [cursor, setCursor] = useState({ x: 0, y: 0 });
     // 라이브(showMe) 응답의 myCity — currentCityId prop 미지정 시 blink 대상.
     const [liveMyCity, setLiveMyCity] = useState<number | null>(null);
+    const dataRef = useRef<MapPreviewResponse | null>(null);
+    useEffect(() => {
+        dataRef.current = data;
+    }, [data]);
 
     // 클릭 게이트 — 명시 disallowClick 이 우선, 기본값은 "mapData 주입 시 비활성"(감사 P0-22 시멘틱:
     // 레거시 주입 페이지 PageHistory/PageCachedMap 은 모두 disallow-click=true. PageFront 처럼
@@ -183,13 +187,14 @@ export default function MapViewer({
     useEffect(() => {
         // 외부 주입 — self-fetch 생략(레거시 Vue 뷰어 동작: 페이지가 fetch, 뷰어는 렌더만).
         if (mapData != null) {
+            dataRef.current = mapData;
             setData(mapData);
             setFailed(false);
             setLiveMyCity(null);
             return;
         }
         let on = true;
-        setData(null);
+        const hadData = dataRef.current != null;
         setFailed(false);
         const load = async (): Promise<{ data: MapPreviewResponse; myCity: number | null }> => {
             const preview = await api.mapPreview();
@@ -205,11 +210,12 @@ export default function MapViewer({
         load()
             .then((r) => {
                 if (!on) return;
+                dataRef.current = r.data;
                 setData(r.data);
                 setLiveMyCity(r.myCity);
             })
             .catch(() => {
-                if (on) setFailed(true);
+                if (on && !hadData) setFailed(true);
             });
         return () => {
             on = false;
