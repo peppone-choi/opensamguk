@@ -200,8 +200,9 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export default function JoinPage() {
   const router = useRouter();
   const serverId = useServerId();
-  const homeHref = serverId ? resolveServerGamePath(undefined, serverId, '/game', '') : '/game';
-  const { frontInfo } = useFrontInfo();
+  const { frontInfo, loading: frontInfoLoading } = useFrontInfo();
+  const selectedServerId = serverId ?? frontInfo?.global.serverId;
+  const homeHref = selectedServerId ? resolveServerGamePath(undefined, selectedServerId, '/game', '') : '/game';
   const memberName = frontInfo?.general?.name ?? '';
 
   const [name, setName] = useState(memberName);
@@ -226,6 +227,12 @@ export default function JoinPage() {
   useEffect(() => {
     if (memberName && !name) setName(memberName);
   }, [memberName, name]);
+
+  useEffect(() => {
+    if (!frontInfoLoading && !loading && frontInfo?.general?.hasGeneral) {
+      router.replace(homeHref);
+    }
+  }, [frontInfo?.general?.hasGeneral, frontInfoLoading, homeHref, loading, router]);
 
   // 국가 목록 로드 — game-api /api/map/preview의 nations(id/name/color)를 사용한다(레거시는 nation 테이블 직접
   // read). 임관권유문(scout_msg)은 FE에 노출하는 read 채널이 아직 없어(NationFinance에서 P0-53 BLOCKED) 표시 보류.
@@ -306,6 +313,7 @@ export default function JoinPage() {
         }
         alert('정상적으로 생성되었습니다.\n위키와 팁/강좌 게시판을 꼭 읽어보세요!');
         router.push(homeHref);
+        router.refresh();
       } else {
         setError(res.reason ?? '등록할 수 없습니다.');
       }
