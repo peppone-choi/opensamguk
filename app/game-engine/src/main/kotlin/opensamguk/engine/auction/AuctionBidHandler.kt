@@ -374,7 +374,7 @@ class AuctionBidHandler(
         }
 
         // (:202-226) 1순위 중복 가드.
-        val openUnique = auctionRepository.findByFinishedFalseAndType(AuctionType.UNIQUE_ITEM)
+        val openUnique = auctionRepository.findByFinishedFalseAndTypeValue(AuctionType.UNIQUE_ITEM.value)
             .sortedBy { it.id ?: 0 }
         for (other in openUnique) {
             val otherId = other.id ?: continue

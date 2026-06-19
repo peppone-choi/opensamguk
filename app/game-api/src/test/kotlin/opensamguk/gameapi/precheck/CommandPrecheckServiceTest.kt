@@ -60,6 +60,7 @@ class CommandPrecheckServiceTest {
         generalEntity: GeneralReadEntity = general(),
         cityEntity: CityReadEntity = city(),
         nationEntity: NationReadEntity = nation(),
+        worldStateEntity: WorldStateReadEntity = worldState(),
     ): CommandPrecheckService {
         val generals = mock(GeneralReadRepository::class.java)
         val cities = mock(CityReadRepository::class.java)
@@ -70,7 +71,7 @@ class CommandPrecheckServiceTest {
         `when`(cities.findById(5)).thenReturn(Optional.of(cityEntity))
         `when`(nations.findById(1)).thenReturn(Optional.of(nationEntity))
         `when`(diplomacies.findBySrcNationId(1)).thenReturn(emptyList())
-        `when`(worldStates.findAll()).thenReturn(listOf(worldState()))
+        `when`(worldStates.findAll()).thenReturn(listOf(worldStateEntity))
         val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
         return CommandPrecheckService(factory, registry)
     }
@@ -79,6 +80,26 @@ class CommandPrecheckServiceTest {
     fun `owned supplied funded city with che_농지개간 is AVAILABLE`() {
         val result = service().precheck(generalId = 10, actionCode = "che_농지개간")
         assertEquals(PrecheckResult.Available, result)
+    }
+
+    @Test
+    fun `lowercase or column startyear keeps precheck AVAILABLE`() {
+        val lowercaseConfig = worldState().apply {
+            config = linkedMapOf("startyear" to 190)
+        }
+        val columnValue = worldState().apply {
+            config = linkedMapOf()
+            startYear = 190
+        }
+
+        assertEquals(
+            PrecheckResult.Available,
+            service(worldStateEntity = lowercaseConfig).precheck(generalId = 10, actionCode = "che_농지개간"),
+        )
+        assertEquals(
+            PrecheckResult.Available,
+            service(worldStateEntity = columnValue).precheck(generalId = 10, actionCode = "che_농지개간"),
+        )
     }
 
     @Test

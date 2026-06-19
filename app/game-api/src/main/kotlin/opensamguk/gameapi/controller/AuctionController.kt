@@ -68,8 +68,8 @@ class AuctionController(
     @GetMapping
     fun listActive(): ResponseEntity<AuctionResourceListResponse> {
         val auctions = (
-            auctionRepository.findByFinishedFalseAndType(AuctionType.BUY_RICE) +
-                auctionRepository.findByFinishedFalseAndType(AuctionType.SELL_RICE)
+            auctionRepository.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value) +
+                auctionRepository.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)
             ).sortedBy { it.closeDate } // PHP ORDER BY close_date ASC
 
         val highestBids = resolveHighestBids(auctions)
@@ -101,7 +101,7 @@ class AuctionController(
      */
     @GetMapping("/unique")
     fun listUniqueItems(): ResponseEntity<UniqueItemAuctionListResponse> {
-        val auctions = auctionRepository.findByTypeOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM)
+        val auctions = auctionRepository.findByTypeValueOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM.value)
         val highestBids = resolveHighestBids(auctions)
 
         val list = auctions.mapNotNull { auction ->

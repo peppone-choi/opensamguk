@@ -34,6 +34,9 @@ class WorldStateReadEntity(
     @Column(name = "tick_seconds")
     var tickSeconds: Int = 0,
 
+    @Column(name = "start_year")
+    var startYear: Int? = null,
+
     @Convert(converter = MetaJsonConverter::class)
     @Column(name = "config", columnDefinition = "jsonb")
     var config: Map<String, Any?> = linkedMapOf(),

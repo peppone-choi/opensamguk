@@ -157,14 +157,13 @@ class AuctionBidHandlerTest {
         }
     } as AuctionBidRepository
 
-    /** 복수 경매 프록시 — findById + findByFinishedFalseAndType (유니크 래퍼 부위 가드용). */
     private fun auctionRepoMulti(vararg entities: AuctionEntity): AuctionRepository = Proxy.newProxyInstance(
         AuctionRepository::class.java.classLoader,
         arrayOf(AuctionRepository::class.java),
     ) { _, method, args ->
         when (method.name) {
             "findById" -> Optional.ofNullable(entities.firstOrNull { it.id == args?.get(0) })
-            "findByFinishedFalseAndType" -> entities.filter { !it.finished && it.type == args?.get(0) }
+            "findByFinishedFalseAndTypeValue" -> entities.filter { !it.finished && it.type.value == args?.get(0) }
             else -> when (method.returnType) {
                 java.util.List::class.java -> emptyList<Any>()
                 else -> null
