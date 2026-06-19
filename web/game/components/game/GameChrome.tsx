@@ -87,9 +87,8 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
             {/* GameInfo status header */}
             <GameInfo global={frontInfo.global} constData={constData} />
 
-            {/* #ingameBoard — 1000px 중앙 정렬 세로 스택(부모 .shell-main > * 가 max-width:1000px+auto margin).
-                영역 순서: mapView(풀폭 상단) → reservedCommandZone → info 카드(general/nation/city, .ib-cards
-                2~3열 그리드 — 모바일 단일 열) → content(서브페이지 슬롯) → MainControlBar(풀폭, 마지막).
+            {/* #ingameBoard — 레거시 1000px 보드 그리드.
+                영역 순서: mapView → reservedCommandZone → city/nation/general → MainControlBar → content.
                 맵은 로비와 동일한 정적 마커 맵 — 도시 클릭 시 도시 정보 페이지로 이동.
                 NOTE(de-dup): general/nation/city 카드는 여기서만 렌더한다. 메인 라우트(/game page.tsx)는
                 children 을 비워(중복 '내 정보' 카드 제거) 이 카드들이 단 한 번만 보이게 한다. */}
@@ -110,22 +109,21 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
                     )}
                 </div>
 
-                {/* info 카드 묶음 — 1000px 내부 그리드. 각 카드가 .ib-general/.ib-nation/.ib-city 를 자체 보유. */}
+                {/* info 카드 묶음 — wrapper는 display: contents, 카드들이 #ingameBoard grid에 직접 배치된다. */}
                 <div className="ib-cards">
-                    <GeneralBasicCard general={general} nation={nation} />
+                    <CityBasicCard city={city} />
                     <NationBasicCard nation={nation} />
-                    <CityBasicCard city={city} nation={nation} />
+                    <GeneralBasicCard general={general} nation={nation} />
                 </div>
 
-                {/* generalInfo content slot (서브페이지 content 가 여기 렌더; 메인 라우트는 비어 있음 → :empty 숨김). */}
-                <div className="ib-content">{children}</div>
-
-                {/* MainControlBar (국가 메뉴) — spans full width, last row. */}
                 {gating && (
                     <div className="ib-controlbar">
                         <MainControlBar gating={gating} />
                     </div>
                 )}
+
+                {/* generalInfo content slot (서브페이지 content 가 여기 렌더; 메인 라우트는 비어 있음 → :empty 숨김). */}
+                <div className="ib-content">{children}</div>
             </div>
 
             {/* MessagePanel (#msgPanel) */}

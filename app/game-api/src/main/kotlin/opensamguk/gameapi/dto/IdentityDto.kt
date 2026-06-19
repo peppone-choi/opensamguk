@@ -392,6 +392,8 @@ data class FrontCityInfo(
     // 치소 등급 한글명 = getCityLevelList()[level] (수/진/관/이/소/중/대/특). raw 숫자 대신 표시. 미정의 → '-'.
     val levelName: String? = null,
     val nationId: Int,
+    val nationName: String? = null,
+    val nationColor: String? = null,
     val region: Int,
     // 지역 한글명 = CityConst.regionMap[region] (하북/중원/서북/서촉/남중/초/오월/동이). raw 숫자 대신 표시. 미정의 → '-'.
     val regionName: String? = null,

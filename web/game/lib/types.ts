@@ -208,6 +208,8 @@ export interface FrontCityInfo {
     level: number;
     levelName?: string | null; // 치소 등급 한글명 getCityLevelList()[level] (수/진/관/이/소/중/대/특)
     nationId: number;
+    nationName?: string | null;
+    nationColor?: string | null;
     region: number;
     regionName?: string | null; // 지역 한글명 CityConst.regionMap[region] (하북/중원/서북/서촉/남중/초/오월/동이)
     officers?: CityOfficer[]; // 도시 관직(태수4/군사3/종사2) — 빈 슬롯 미포함, FE가 officerLevel로 조회

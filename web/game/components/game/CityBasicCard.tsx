@@ -6,15 +6,15 @@
 // (FrontCityInfo)가 싣는 now/max 수치만 게이지로 렌더한다(날조 금지). 게이지는 기존 Gauge 컴포넌트
 // (레거시 SammoBar 동치) 재사용.
 //
-// 렌더 필드(API 보유): name + level(등급) + 지배국(nationId↔player nation 매칭 시 국가명/색, 아니면
-// 공백지) + 주민/농업/상업/치안/수비/성벽(now/max Gauge) + 민심(trust, barOnly) + 시세(trade % 막대).
+// 렌더 필드(API 보유): name + level(등급) + 지배국(nationId/nationName/nationColor) + 주민/농업/상업/
+// 치안/수비/성벽(now/max Gauge) + 민심(trust, barOnly) + 시세(trade % 막대).
 //
 // 등급(level)=getCityLevelList()[level] 한글명(수/진/관/이/소/중/대/특), 지역(region)=CityConst.regionMap[region]
 // 한글명(하북/중원/…/동이)을 서버가 levelName/regionName 으로 해석해 내려준다. 도시 관직(태수4/군사3/종사2)은
 // front-info.city.officers(officer_city==이 도시 AND officer_level∈{4,3,2}, PHP officerList GetFrontInfo:504).
 
 import Gauge from './Gauge';
-import type { FrontCityInfo, FrontNationInfo } from '@/lib/types';
+import type { FrontCityInfo } from '@/lib/types';
 
 // NPC 이름 색상 — 레거시 hwe/ts/utilGame/getNPCColor.ts verbatim 포팅(npc_state → CSS color).
 function getNPCColor(npc: number): string | undefined {
@@ -39,11 +39,9 @@ function isBrightColor(hex?: string): boolean {
 
 export interface CityBasicCardProps {
     city: FrontCityInfo | null;
-    /** 플레이어 국가 — city.nationId 와 일치할 때만 헤더 국가색/국가명에 사용(레거시 nationInfo 패러티). */
-    nation: FrontNationInfo | null;
 }
 
-export default function CityBasicCard({ city, nation }: CityBasicCardProps) {
+export default function CityBasicCard({ city }: CityBasicCardProps) {
     if (!city) {
         return (
             <section className="basic-card city-basic-card ib-city" aria-label="도시 정보">
@@ -55,11 +53,9 @@ export default function CityBasicCard({ city, nation }: CityBasicCardProps) {
         );
     }
 
-    // 지배국 — city.nationId 가 player nation 과 같으면 그 색/이름, 아니면 공백지(레거시 `!nationInfo.id`).
-    const sameNation = nation != null && nation.id === city.nationId && city.nationId !== 0;
-    const cityNationColor = sameNation ? nation!.color : '#333333';
+    const cityNationColor = city.nationColor ?? '#333333';
     const cityHeaderText = isBrightColor(cityNationColor) ? '#000' : '#fff';
-    const nationLabel = sameNation ? `지배 국가 【 ${nation!.name} 】` : city.nationId !== 0 ? '지배 국가' : '공 백 지';
+    const nationLabel = city.nationId !== 0 ? `지배 국가 【 ${city.nationName ?? '-'} 】` : '공 백 지';
 
     return (
         <section className="basic-card city-basic-card ib-city" aria-label="도시 정보">
