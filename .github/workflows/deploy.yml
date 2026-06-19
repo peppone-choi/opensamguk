@@ -118,6 +118,8 @@ jobs:
       contents: read
       packages: read
     steps:
+      - uses: actions/checkout@v4
+
       - name: Deploy shared stack on box
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -129,6 +131,15 @@ jobs:
 
           echo "=== GHCR login ==="   # 매 배포 재login → 박스 토큰 만료 무관.
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          COMPOSE="docker compose -p opensamguk-shared -f docker-compose.shared.yml --env-file .env"
+
+          echo "=== Ensuring deployer force-recreates stateless services ==="
+          if ! grep -q -- '--force-recreate' deployer/main.go; then
+            perl -0pi -e 's/"up",\s*"-d",\s*"--no-deps"/"up", "-d", "--force-recreate", "--no-deps"/g' deployer/main.go
+          fi
+          grep -q -- '--force-recreate' deployer/main.go
+          $COMPOSE up -d --build --no-deps deployer
 
           echo "=== Verifying deployer compatibility ==="
           DEPLOYER_TOKEN="$(grep '^DEPLOYER_TOKEN=' .env | cut -d= -f2-)"
@@ -147,12 +158,16 @@ jobs:
           # 공유 스택 IMAGE_TAG를 이 커밋 SHA로 영속 고정(.env가 단일 진실 — 재부팅/수동 up에도 유지).
           sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${IMAGE_TAG}/" .env
 
-          COMPOSE="docker compose -p opensamguk-shared -f docker-compose.shared.yml --env-file .env"
+          SHARED_SERVICES="gateway-api web-gateway"
+          if $COMPOSE config --services | grep -qx 'game-frontend'; then
+            SHARED_SERVICES="$SHARED_SERVICES game-frontend"
+          fi
+
           echo "=== Pulling shared images ==="
-          $COMPOSE pull gateway-api web-gateway
+          $COMPOSE pull $SHARED_SERVICES
 
           echo "=== Restarting shared upstreams ==="
-          $COMPOSE up -d --no-deps gateway-api web-gateway
+          $COMPOSE up -d --force-recreate --no-deps $SHARED_SERVICES
           # nginx LAST + force-recreate(업스트림 IP 재해석 — Rule A: stale-DNS 502 방지)
           $COMPOSE up -d --force-recreate --no-deps nginx
 
