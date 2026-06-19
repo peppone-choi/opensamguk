@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import Shell from '../../../../../components/Shell';
 import GameCard from '../../../../../components/GameCard';
 import GameTable from '../../../../../components/GameTable';
@@ -46,9 +45,9 @@ export default function EmperorDetailPage() {
     <Shell>
       <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>황제 상세</h1>
       <p style={{ color: 'var(--crimson)' }}>{error || '데이터를 찾을 수 없습니다.'}</p>
-      <Link href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-md)', display: 'inline-block' }}>
+      <a href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-md)', display: 'inline-block' }}>
         ← 황제 목록으로
-      </Link>
+      </a>
     </Shell>
   );
 
@@ -103,9 +102,9 @@ export default function EmperorDetailPage() {
       <h2 style={{ fontSize: 'var(--text-xl)', margin: 'var(--space-lg) 0 var(--space-md)' }}>지배 도시</h2>
       <GameTable headers={cityHeaders} rows={cityRows} />
 
-      <Link href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-lg)', display: 'inline-block' }}>
+      <a href={backHref} style={{ color: 'var(--gold)', marginTop: 'var(--space-lg)', display: 'inline-block' }}>
         ← 황제 목록으로
-      </Link>
+      </a>
     </Shell>
   );
 }

@@ -1,17 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 
 const RANKING_PAGES = [
-  { href: '/game/rankings/best-generals', label: '명장 순위', desc: '통솔·무력·지력 종합 평가', icon: '⚔️' },
-  { href: '/game/rankings/emperor', label: '황제 정보', desc: '천하 통일 황제 기록', icon: '👑' },
-  { href: '/game/rankings/generals', label: '장수 일람', desc: '모든 장수 능력치 순위', icon: '📜' },
-  { href: '/game/rankings/kingdoms', label: '세력 순위', desc: '국가별 병력·자원·영토', icon: '🏛️' },
-  { href: '/game/rankings/npcs', label: 'NPC 일람', desc: '비플레이어 장수 목록', icon: '🤖' },
-  { href: '/game/rankings/hall-of-fame', label: '명예의 전당', desc: '역대 최고 기록 보관', icon: '🏆' },
-  { href: '/game/rankings/traffic', label: '접속 통계', desc: '서버 접속자 현황', icon: '📊' },
+  { href: 'rankings/best-generals', label: '명장 순위', desc: '통솔·무력·지력 종합 평가', icon: '⚔️' },
+  { href: 'rankings/emperor', label: '황제 정보', desc: '천하 통일 황제 기록', icon: '👑' },
+  { href: 'rankings/generals', label: '장수 일람', desc: '모든 장수 능력치 순위', icon: '📜' },
+  { href: 'rankings/kingdoms', label: '세력 순위', desc: '국가별 병력·자원·영토', icon: '🏛️' },
+  { href: 'rankings/npcs', label: 'NPC 일람', desc: '비플레이어 장수 목록', icon: '🤖' },
+  { href: 'rankings/hall-of-fame', label: '명예의 전당', desc: '역대 최고 기록 보관', icon: '🏆' },
+  { href: 'rankings/traffic', label: '접속 통계', desc: '서버 접속자 현황', icon: '📊' },
 ];
 
 export default function RankingsLobbyPage() {
@@ -28,7 +27,7 @@ export default function RankingsLobbyPage() {
         }}
       >
         {RANKING_PAGES.map((p) => (
-          <Link key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
+          <a key={p.href} href={p.href} style={{ textDecoration: 'none' }}>
             <GameCard
               style={{
                 display: 'flex',
@@ -59,7 +58,7 @@ export default function RankingsLobbyPage() {
                 </div>
               </div>
             </GameCard>
-          </Link>
+          </a>
         ))}
       </div>
     </Shell>

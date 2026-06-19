@@ -12,6 +12,7 @@ import {
     formatInjury,
     getNPCColor,
 } from '../../../lib/utilGame';
+import { useServerGameUrl } from '../../../lib/serverGameUrl';
 
 // 도시 상세 본문(b_currentCity.php 패러티) — 쿼리 ?id=<도시번호>로 특정 도시를 조회한다(MapViewer 도시 클릭 진입).
 // id가 없거나 0이면 현재 장수 소재 도시(서버가 0을 현재 도시로 해석).
@@ -49,6 +50,7 @@ const RELATION_TEXT: Record<number, string> = { 0: '공백지', 1: '본국', 2: 
 function CityDetail() {
     const searchParams = useSearchParams();
     const router = useRouter();
+    const cityBaseHref = useServerGameUrl('city');
     const idParam = searchParams.get('id');
     const cityId = idParam != null && idParam !== '' ? Number(idParam) : 0;
 
@@ -119,7 +121,7 @@ function CityDetail() {
                     <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>도시선택:</span>
                     <select
                         value={city.id}
-                        onChange={(e) => router.push(`/game/city?id=${e.target.value}`)}
+                        onChange={(e) => router.push(`${cityBaseHref}?id=${encodeURIComponent(e.target.value)}`)}
                         style={{ minWidth: '20rem' }}
                     >
                         {city.citySelector.map((o) => (
