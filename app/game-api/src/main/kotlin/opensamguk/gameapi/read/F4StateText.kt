@@ -1,5 +1,7 @@
 package opensamguk.gameapi.read
 
+import opensamguk.common.constants.GameConst
+
 /**
  * F4 — shared READ-only state-text / permission projection helper (the tiny Tier-0 the F4 read
  * controllers consume; spec `2026-06-03-F4-action-pages-spec.md` build_order Wave-B "Shared
@@ -145,22 +147,8 @@ object F4StateText {
      * (GameConstBase.php:378-415) byte-for-byte. ChiefCenter `commandList`(=`getChiefCommandTable`)의
      * 정본 순서/카테고리 원천 — 컨트롤러가 각 코드를 CommandRegistry로 풀어 표시 메타를 만든다.
      */
-    val CHIEF_COMMAND_TABLE: List<Pair<String, List<String>>> = listOf(
-        "휴식" to listOf("휴식"),
-        "인사" to listOf("che_발령", "che_포상", "che_몰수", "che_부대탈퇴지시"),
-        "외교" to listOf("che_물자원조", "che_불가침제의", "che_선전포고", "che_종전제의", "che_불가침파기제의"),
-        "특수" to listOf("che_초토화", "che_천도", "che_증축", "che_감축"),
-        "전략" to listOf(
-            "che_필사즉생", "che_백성동원", "che_수몰", "che_허보",
-            "che_의병모집", "che_이호경식", "che_급습", "che_피장파장",
-        ),
-        "기타" to listOf("che_국기변경", "che_국호변경"),
-        "연구" to listOf(
-            "event_극병연구", "event_무희연구", "event_상병연구",
-            "event_화륜차연구", "event_원융노병연구", "event_대검병연구",
-            "event_화시병연구", "event_음귀병연구", "event_산저병연구",
-        ),
-    )
+    val CHIEF_COMMAND_TABLE: List<Pair<String, List<String>>> =
+        GameConst.availableChiefCommand.map { (category, commands) -> category to commands }
 
     /**
      * 토너먼트 type → display text. Verbatim from `b_tournament.php` switch

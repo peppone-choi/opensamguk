@@ -7,6 +7,7 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyList
@@ -49,6 +50,7 @@ class AvailableCommandsControllerTest {
         req
     }
 
+    @BeforeEach
     @AfterEach
     fun clearAuth() = SecurityContextHolder.clearContext()
 

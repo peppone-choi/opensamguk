@@ -303,6 +303,20 @@ class CommandQueueTest {
     }
 
     @Test
+    fun `nation bulk rejects event research command code`() {
+        val repo = RecordingReservedTurns()
+        val ex = assertFailsWith<CommandQueueService.CommandQueueDenied> {
+            service(repo).reserveBulkNation(
+                generalId = 10, nationId = 7, officerLevel = 5,
+                commands = listOf(
+                    CommandQueueService.CommandBulkItem(action = "event_극병연구", turnList = listOf(0), arg = null),
+                ),
+            )
+        }
+        assertEquals("0: 사용할 수 없는 커맨드입니다.", ex.reason)
+    }
+
+    @Test
     fun `nation bulk turnIdx out of chief range (12) is denied`() {
         val repo = RecordingReservedTurns()
         val result = service(repo).reserveBulkNation(

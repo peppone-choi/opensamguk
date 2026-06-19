@@ -2,6 +2,7 @@ package opensamguk.common.constants
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class GameConstTest {
@@ -26,6 +27,8 @@ class GameConstTest {
         assertEquals(listOf("che_농지개간","che_상업투자","che_기술연구","che_수비강화","che_성벽보수","che_치안강화","che_정착장려","che_주민선정"),
             GameConst.availableGeneralCommand.getValue("내정"))
         assertTrue(GameConst.availableChiefCommand.getValue("외교").contains("che_물자원조"))
+        assertEquals(listOf("휴식", "인사", "외교", "특수", "전략", "기타"), GameConst.availableChiefCommand.keys.toList())
+        assertFalse(GameConst.availableChiefCommand.values.flatten().contains("event_극병연구"))
     }
     @Test fun eventTablesAreDeclarativeData() {
         val first = GameConst.defaultInitialEvents.first(); assertEquals(2, first.size)
