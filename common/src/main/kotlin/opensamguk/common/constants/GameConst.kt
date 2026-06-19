@@ -489,17 +489,6 @@ object GameConst {
             "che_국기변경",
             "che_국호변경",
         ),
-        "연구" to listOf(
-            "event_극병연구",
-            "event_무희연구",
-            "event_상병연구",
-            "event_화륜차연구",
-            "event_원융노병연구",
-            "event_대검병연구",
-            "event_화시병연구",
-            "event_음귀병연구",
-            "event_산저병연구",
-        ),
     )
     const val retirementYear = 80
 
