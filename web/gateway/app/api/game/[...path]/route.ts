@@ -7,8 +7,15 @@ const SERVER_COOKIE = 'sam_server';
 
 export const dynamic = 'force-dynamic';
 
+const encoder = new TextEncoder();
+const SSE_HEARTBEAT_MS = 25_000;
+
 function isEventStream(contentType: string): boolean {
     return contentType.includes('text/event-stream');
+}
+
+function isTurnSsePath(path: string[]): boolean {
+    return path.join('/') === 'sse/turn';
 }
 
 function selectedServerId(raw: string | undefined | null): string | undefined {
@@ -21,6 +28,67 @@ function resolveSelectedGameApiOrigin(serverId: string | undefined | null): stri
     const selected = selectedServerId(serverId);
     if (selected) return resolveGameApiOrigin(selected) ?? process.env.GAME_API_ORIGIN;
     return process.env.GAME_API_ORIGIN;
+}
+
+function sseHeaders(contentType = 'text/event-stream;charset=UTF-8'): HeadersInit {
+    return {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+    };
+}
+
+function streamEventSource(target: string, init: RequestInit): NextResponse {
+    const upstreamAbort = new AbortController();
+    let heartbeat: ReturnType<typeof setInterval> | null = null;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    let closed = false;
+
+    const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+            const send = (text: string) => {
+                if (!closed) controller.enqueue(encoder.encode(text));
+            };
+            const close = () => {
+                if (closed) return;
+                closed = true;
+                if (heartbeat) clearInterval(heartbeat);
+                controller.close();
+            };
+
+            send(': proxy-connected\n\n');
+            heartbeat = setInterval(() => send(': proxy-hb\n\n'), SSE_HEARTBEAT_MS);
+
+            void (async () => {
+                try {
+                    const upstream = await fetch(target, { ...init, signal: upstreamAbort.signal });
+                    if (!upstream.ok) {
+                        send('event: error\ndata: {}\n\n');
+                        return;
+                    }
+                    reader = upstream.body?.getReader() ?? null;
+                    if (!reader) return;
+                    while (!closed) {
+                        const chunk = await reader.read();
+                        if (chunk.done) break;
+                        if (!closed && chunk.value) controller.enqueue(chunk.value);
+                    }
+                } catch {
+                    send('event: error\ndata: {}\n\n');
+                } finally {
+                    close();
+                }
+            })();
+        },
+        cancel() {
+            closed = true;
+            if (heartbeat) clearInterval(heartbeat);
+            void reader?.cancel();
+            upstreamAbort.abort();
+        },
+    });
+
+    return new NextResponse(stream, { status: 200, headers: sseHeaders() });
 }
 
 async function forward(req: NextRequest, path: string[]): Promise<NextResponse> {
@@ -49,17 +117,17 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
         init.body = await req.text();
     }
 
+    if (req.method === 'GET' && isTurnSsePath(path)) {
+        return streamEventSource(target, init);
+    }
+
     const upstream = await fetch(target, init);
     const contentType = upstream.headers.get('content-type') ?? 'application/json';
 
     if (isEventStream(contentType)) {
         return new NextResponse(upstream.body, {
             status: upstream.status,
-            headers: {
-                'Content-Type': contentType,
-                'Cache-Control': 'no-cache, no-transform',
-                Connection: 'keep-alive',
-            },
+            headers: sseHeaders(contentType),
         });
     }
 

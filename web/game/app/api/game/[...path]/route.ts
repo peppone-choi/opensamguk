@@ -15,11 +15,79 @@ const SERVER_COOKIE = 'sam_server';
  * 식별을 해결(W1 GeneralResolver)하므로 ?generalId= 를 주입하지 않는다. JWT는 절대 클라이언트 JS에
  * 노출되지 않는다(httpOnly 쿠키 → 서버 route handler에서만 읽힘).
  *
- * SSE(/api/game/sse/turn): text/event-stream 응답은 버퍼링하지 않고 upstream.body를 그대로 스트리밍한다.
+ * SSE(/api/game/sse/turn): 프록시가 즉시 event-stream을 열고 upstream.body를 그대로 스트리밍한다.
  */
 
 // SSE는 무한 스트림이므로 정적 최적화/캐시를 끈다.
 export const dynamic = 'force-dynamic';
+
+const encoder = new TextEncoder();
+const SSE_HEARTBEAT_MS = 25_000;
+
+function isTurnSsePath(path: string[]): boolean {
+    return path.join('/') === 'sse/turn';
+}
+
+function sseHeaders(contentType = 'text/event-stream;charset=UTF-8'): HeadersInit {
+    return {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+    };
+}
+
+function streamEventSource(target: string, init: RequestInit): NextResponse {
+    const upstreamAbort = new AbortController();
+    let heartbeat: ReturnType<typeof setInterval> | null = null;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    let closed = false;
+
+    const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+            const send = (text: string) => {
+                if (!closed) controller.enqueue(encoder.encode(text));
+            };
+            const close = () => {
+                if (closed) return;
+                closed = true;
+                if (heartbeat) clearInterval(heartbeat);
+                controller.close();
+            };
+
+            send(': proxy-connected\n\n');
+            heartbeat = setInterval(() => send(': proxy-hb\n\n'), SSE_HEARTBEAT_MS);
+
+            void (async () => {
+                try {
+                    const upstream = await fetch(target, { ...init, signal: upstreamAbort.signal });
+                    if (!upstream.ok) {
+                        send('event: error\ndata: {}\n\n');
+                        return;
+                    }
+                    reader = upstream.body?.getReader() ?? null;
+                    if (!reader) return;
+                    while (!closed) {
+                        const chunk = await reader.read();
+                        if (chunk.done) break;
+                        if (!closed && chunk.value) controller.enqueue(chunk.value);
+                    }
+                } catch {
+                    send('event: error\ndata: {}\n\n');
+                } finally {
+                    close();
+                }
+            })();
+        },
+        cancel() {
+            closed = true;
+            if (heartbeat) clearInterval(heartbeat);
+            void reader?.cancel();
+            upstreamAbort.abort();
+        },
+    });
+
+    return new NextResponse(stream, { status: 200, headers: sseHeaders() });
+}
 
 async function forward(req: NextRequest, path: string[]): Promise<NextResponse> {
     const store = await cookies();
@@ -46,6 +114,10 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
         init.body = await req.text();
     }
 
+    if (req.method === 'GET' && isTurnSsePath(path)) {
+        return streamEventSource(target, init);
+    }
+
     const upstream = await fetch(target, init);
     const contentType = upstream.headers.get('content-type') ?? 'application/json';
 
@@ -53,11 +125,7 @@ async function forward(req: NextRequest, path: string[]): Promise<NextResponse> 
     if (contentType.includes('text/event-stream')) {
         return new NextResponse(upstream.body, {
             status: upstream.status,
-            headers: {
-                'Content-Type': contentType,
-                'Cache-Control': 'no-cache, no-transform',
-                Connection: 'keep-alive',
-            },
+            headers: sseHeaders(contentType),
         });
     }
 
