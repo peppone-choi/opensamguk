@@ -39,5 +39,11 @@ The current `MapViewer` wrapped the canvas in a bordered card and placed the yea
 
 - `pnpm --dir web/game test -- MapViewer.props MapViewer.interaction GameChrome.main-map --run`
 - `pnpm --dir web/game typecheck`
-
-Deploy verification remains required: after merge/deploy and s1 promotion, recheck `.map-viewer-canvas=700×500`, title above the canvas, 94 city links, and city click to `/game/s1/city?id=1`.
+- `pnpm --dir web/game build`
+- `tools/agent-system/check.py --strict --base origin/main --format json`
+- GitHub Actions: main CI success; Build + Deploy to EC2 success.
+- Admin deploy: s1 promoted to `34e092476dadcb230357ac8fe8b9b20ead03d7bc`.
+- Live Playwright after promotion:
+  - desktop `/game/s1`: `.ib-map=700×520`, `.map-viewer-title=700×20`, `.map-viewer-canvas=700×500`, 94 city anchors, first city click commits `/game/s1/city?id=1`.
+  - mobile `/game/s1`: title above map, no bottom caption, 94 city anchors.
+  - screenshots: `/tmp/opensamguk-main-after-map-box-desktop-82252750.png`, `/tmp/opensamguk-main-after-map-box-mobile-82252750.png`.
