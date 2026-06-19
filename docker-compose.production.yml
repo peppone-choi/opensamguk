@@ -150,6 +150,7 @@ services:
       PORT: 3000
       # Server-only proxy target (NEXT_PUBLIC_GAME_URL is baked into the image at build).
       GATEWAY_API_URL: ${GATEWAY_API_URL:-http://gateway-api:8080}
+      GAME_API_ORIGIN: ${GAME_API_ORIGIN:-http://game-api:8081}
       SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-"[]"}
     depends_on:
       - gateway-api

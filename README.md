@@ -190,7 +190,7 @@ docker compose up -d --build
 | `web-game` | `docker/web-game.Dockerfile` | 3001 | Next.js 게임 프론트 |
 | `nginx` | `nginx:1.27-alpine` | 80 | 리버스 프록시 (`./nginx/nginx.conf`) |
 
-nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/game/` → game-api · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
+nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gateway-api · `/api/game/` → web-gateway Next 프록시(httpOnly 쿠키 → Bearer, 서버 선택) · `/api/game/realtime/` → game-api(SSE, 버퍼링 off) · `/game/` → web-game · `/` → web-gateway · `/health` 헬스 체크.
 
 ### 환경변수 (`.env.example`)
 
