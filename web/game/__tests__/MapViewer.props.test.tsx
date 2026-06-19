@@ -25,7 +25,7 @@ vi.mock('@/lib/flagTint', () => ({
     ),
 }));
 
-import MapViewer, { seasonOf } from '@/components/game/MapViewer';
+import MapViewer, { mapTitleColor, seasonOf } from '@/components/game/MapViewer';
 
 const NATION_RED = '#ff0000';
 const NATION_BLUE = '#0000ff';
@@ -128,6 +128,26 @@ describe('seasonOf — P1-061 계절 경계(레거시 MapViewer.vue:306-319 <=3/
         expect(seasonOf(9)).toBe('fall');
         expect(seasonOf(10)).toBe('winter');
         expect(seasonOf(12)).toBe('winter');
+    });
+});
+
+describe('MapViewer — 레거시 박스 구조(map_title + 700x500 map_body)', () => {
+    it('연월 제목을 캔버스 위에 두고 하단 캡션을 만들지 않는다', async () => {
+        render(<MapViewer mapData={MAP_FIXTURE} />);
+        await waitFor(() => expect(getCanvas()).toBeTruthy());
+
+        const section = document.querySelector('.map-viewer') as HTMLElement;
+        expect(section.firstElementChild).toHaveClass('map-viewer-title');
+        expect(section.firstElementChild).toHaveTextContent('200年 5月');
+        expect(section.children[1]).toHaveClass('map-viewer-canvas');
+        expect(section.querySelector('.map-viewer-cap')).toBeNull();
+    });
+
+    it('초반 3년 제목 색상은 legacy MapViewer.vue getTitleColor 와 같다', async () => {
+        expect(mapTitleColor(200, 200)).toBe('magenta');
+        expect(mapTitleColor(200, 201)).toBe('orange');
+        expect(mapTitleColor(200, 202)).toBe('yellow');
+        expect(mapTitleColor(200, 203)).toBeUndefined();
     });
 });
 
