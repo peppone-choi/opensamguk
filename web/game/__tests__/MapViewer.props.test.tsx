@@ -82,6 +82,16 @@ function jsonResponse(body: unknown): Response {
     });
 }
 
+function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
+
 // fetch 모킹 — 호출 경로를 기록해 self-fetch 생략/라이브 재조회를 검증한다.
 const fetchedPaths: string[] = [];
 function mockFetch() {
@@ -198,6 +208,36 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
             const after = fetchedPaths.filter((p) => p.includes('/api/map?')).length;
             expect(after).toBeGreaterThan(before);
         });
+    });
+
+    it('refreshKey 재조회 중에는 기존 지도를 유지한다(레거시 map.value 교체 시점 패리티)', async () => {
+        const pendingPreview = deferred<Response>();
+        let previewCalls = 0;
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string | URL | Request) => {
+                const path = typeof url === 'string' ? url : url.toString();
+                fetchedPaths.push(path);
+                if (path.includes('/api/map/preview')) {
+                    previewCalls += 1;
+                    if (previewCalls === 1) return jsonResponse(MAP_FIXTURE);
+                    return pendingPreview.promise;
+                }
+                if (path.includes('/api/map?')) return jsonResponse(WM_FIXTURE);
+                return new Response('not found', { status: 404, statusText: 'Not Found' });
+            }),
+        );
+
+        const { rerender } = render(<MapViewer live refreshKey={0} />);
+        await waitFor(() => expect(screen.getByText(/201年 7月/)).toBeInTheDocument());
+
+        rerender(<MapViewer live refreshKey={1} />);
+        await waitFor(() => expect(previewCalls).toBe(2));
+
+        expect(screen.getByText(/201年 7月/)).toBeInTheDocument();
+        expect(document.querySelector('.map-viewer-ph')).toBeNull();
+
+        pendingPreview.resolve(jsonResponse(MAP_FIXTURE));
     });
 });
 

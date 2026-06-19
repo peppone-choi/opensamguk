@@ -1,15 +1,5 @@
 'use client';
 
-// GameChrome — the F2 chrome spine. Composes GameInfo (header) + GlobalMenu (server-driven menu) +
-// MainControlBar (20-button bar), and gates CharacterClaim when hasGeneral === false. NOT the full
-// main-screen assembly (MapViewer + reserved-command + info cards are W4/W5) — it exposes a placeholder
-// slot (`children`) where those + sub-pages render. Loads everything through useFrontInfo (front-info +
-// const + global-menu), soft-refreshes on SSE turnCompleted, and refetches after a successful claim.
-//
-// Gating derivation (spec §2 buckets ← front-info general): myLevel = officerLevel, permission =
-// permission, showSecret = showSecret, nationLevel = nation.level (0 when factionless). Highlight flags
-// come off `global` (isTournamentApplicationOpen / isBettingActive), defaulting to falsy when absent.
-
 import { useMemo } from 'react';
 import { useFrontInfo } from '@/hooks/useFrontInfo';
 import { useToast } from '@/hooks/useToast';
@@ -87,14 +77,9 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
             {/* GameInfo status header */}
             <GameInfo global={frontInfo.global} constData={constData} />
 
-            {/* #ingameBoard — 레거시 1000px 보드 그리드.
-                영역 순서: mapView → reservedCommandZone → city/nation/general → MainControlBar → content.
-                맵은 로비와 동일한 정적 마커 맵 — 도시 클릭 시 도시 정보 페이지로 이동.
-                NOTE(de-dup): general/nation/city 카드는 여기서만 렌더한다. 메인 라우트(/game page.tsx)는
-                children 을 비워(중복 '내 정보' 카드 제거) 이 카드들이 단 한 번만 보이게 한다. */}
             <div className="ingame-board">
                 <div className="ib-map">
-                    <MapViewer />
+                    <MapViewer live showMe={1} refreshKey={refreshKey} currentCityId={city?.id ?? null} />
                 </div>
 
                 <div className="ib-reserved">
@@ -109,7 +94,6 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
                     )}
                 </div>
 
-                {/* info 카드 묶음 — wrapper는 display: contents, 카드들이 #ingameBoard grid에 직접 배치된다. */}
                 <div className="ib-cards">
                     <CityBasicCard city={city} />
                     <NationBasicCard nation={nation} />
@@ -122,7 +106,6 @@ export default function GameChrome({ children }: { children?: React.ReactNode })
                     </div>
                 )}
 
-                {/* generalInfo content slot (서브페이지 content 가 여기 렌더; 메인 라우트는 비어 있음 → :empty 숨김). */}
                 <div className="ib-content">{children}</div>
             </div>
 
