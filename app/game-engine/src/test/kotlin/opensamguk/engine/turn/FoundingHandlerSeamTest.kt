@@ -9,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -59,6 +60,11 @@ class FoundingHandlerSeamTest {
         meta = linkedMapOf("name" to name, "explevel" to 1, "dedlevel" to 1, "officer_city" to 5),
     )
 
+    private fun wanderingLord(id: Int = 42, name: String = "진표") = actor(id, name).copy(
+        nationId = 7,
+        officerLevel = 12,
+    )
+
     private fun homeCity() = City(
         id = 5,
         name = "성도",
@@ -75,6 +81,9 @@ class FoundingHandlerSeamTest {
 
     private fun existingNation(id: Int) =
         Nation(id = id, name = "n$id", color = "#000", level = 2, capitalCityId = 90 + id)
+
+    private fun wanderingNation(id: Int = 7, name: String = "진표") =
+        Nation(id = id, name = name, color = "#330000", level = 0, capitalCityId = 0, meta = mapOf("gennum" to 1))
 
     private fun baseState() = TurnWorldState(
         id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
@@ -191,5 +200,28 @@ class FoundingHandlerSeamTest {
             (wLegacy.consumeDirtyState().createdNations.single().meta["secretlimit"] as Number).toInt(),
             "scenario 999 < 1000 ⇒ secretlimit 3",
         )
+    }
+
+    @Test
+    fun `che_해산 through the handler tombstones the wandering nation`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(wanderingLord()),
+                cities = listOf(homeCity()),
+                nations = listOf(wanderingNation()),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(42, ReservedTurn("che_해산", ""), YEAR, MONTH, "08:30")
+
+        assertFalse(outcome.fellBack, "해산 passed FULL constraints and resolved")
+        assertNull(world.getNationById(7), "the disbanded wandering nation leaves the world")
+        val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, world.consumeDirtyState())
+        assertEquals(listOf(7), payload.deletedNations, "deleted nation reaches the flush payload")
+        assertEquals(7, payload.deletedNationSnapshots.single()["nation"])
+        assertEquals(listOf(42), payload.deletedNationSnapshots.single()["general_ids"])
+        assertEquals(0, payload.updatedGenerals.single { it.id == 42 }.nationId)
     }
 }

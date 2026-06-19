@@ -717,7 +717,9 @@ class ChangeRecorder(
     fun markNationDeleted(world: InMemoryTurnWorld, nationId: Int): Boolean {
         val nation = world.getNationById(nationId) ?: return false
         val ownedGeneralIds = world.listGenerals().filter { it.nationId == nationId }.map { it.id }
-        nationSnapshots.add(DeletedNationSnapshot(nation, ownedGeneralIds, Instant.now()))
+        val snapshot = DeletedNationSnapshot(nation, ownedGeneralIds, Instant.now())
+        nationSnapshots.add(snapshot)
+        world.recordDeletedNationSnapshot(snapshot)
 
         // revert the nation's cities to neutral as recorded city patches (the cascade side effect).
         for (city in world.listCities().filter { it.nationId == nationId }) {
