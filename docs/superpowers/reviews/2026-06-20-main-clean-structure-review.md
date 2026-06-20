@@ -7,7 +7,7 @@ Verdict: cleared
 - `opensamguk-php-oracle`: legacy `hwe/ts/PageFront.vue` 구조를 source path+line으로 대조.
 - `webapp-testing`: live Playwright로 prod `/game/s1` DOM, 맵 치수, 도시 링크를 측정.
 - `systematic-debugging`: 맵 기능 문제가 아니라 메인 chrome composition 문제로 원인 수렴.
-- `loop-engineering`: baseline -> one hypothesis -> local gates -> prod adoption pending.
+- `loop-engineering`: baseline -> one hypothesis -> local gates -> prod adoption.
 
 ## Legacy Oracle
 
@@ -47,12 +47,27 @@ Separately, `GameChrome` mounted its `children` inside `.ingame-board` as `.ib-c
 - `pnpm --dir web/game build`: passed; only pre-existing warnings in `generals`, `tournament`, and `GeneralBasicCard`.
 - `git diff --check`: passed.
 
-## Pending Prod Adoption
+## Prod Adoption
 
-After merge/deploy/s1 promotion, remeasure live `/game/s1`:
+- PR #126 merged to `main` as `d59068be805f8d41b6eb6221069fed4bc74afa1b`.
+- Build + Deploy to EC2 run `27856660193` succeeded: web images, JVM images, shared stack deploy, version-pin preservation, health + `s1` turn-advance verification.
+- Admin deploy promoted `s1` from `c925a8a712f7e4775453b7b2220c41f808968417` to `d59068be805f8d41b6eb6221069fed4bc74afa1b`.
+- Live desktop `/game/s1` with QA general `QAmqlq39vg`:
+  - `BackBar` buttons absent on main.
+  - `.shell-main > *` is only `game-chrome`.
+  - `.game-chrome > *` order is `common-toolbar`, `game-info`, `main-status`, `ingame-board`, `main-page-content`, `message-panel`, `common-toolbar`, `toast-container`.
+  - `.main-status + .ingame-board` still holds.
+  - `.ingame-board` next sibling is `.main-page-content`.
+  - `.main-record-zone` parent is `.main-page-content`.
+  - Map invariant remains `.ib-map=700x520`, `.map-viewer-title=700x20`, `.map-viewer-canvas=700x500`, city anchors `94`, city buttons `0`, first city href `/game/s1/city?id=1`.
+  - First city click commits to `https://sam.peppone.dev/game/s1/city?id=1`.
+  - 4xx/5xx responses: `0`.
+- Live mobile viewport `390x844` with QA general `QMmqlq45uh`:
+  - `BackBar` buttons absent on main.
+  - Same `game-chrome` child order and `main-page-content` record parent.
+  - Map scales to `.ib-map=374x287`, `.map-viewer-title=374x20`, `.map-viewer-canvas=374x267`.
+  - `mapOverflowsViewport=false`, city anchors `94`, city buttons `0`.
+  - First city click commits to `https://sam.peppone.dev/game/s1/city?id=1`.
+  - 4xx/5xx responses: `0`.
 
-- `BackBar` buttons absent on main.
-- `.main-status + .ingame-board` still holds.
-- `.ingame-board` next sibling is `.main-page-content`.
-- `.main-record-zone` parent is `.main-page-content`.
-- Map invariant remains `.ib-map=700x520`, `.map-viewer-title=700x20`, `.map-viewer-canvas=700x500`, city anchors `94`, first city href `/game/s1/city?id=1`, bad responses `0`.
+Adoption status: accepted.
