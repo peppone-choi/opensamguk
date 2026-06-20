@@ -114,9 +114,9 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
                         <MainControlBar gating={gating} />
                     </div>
                 )}
-
-                <div className="ib-content">{typeof children === 'function' ? children(frontInfo) : children}</div>
             </div>
+
+            <div className="main-page-content">{typeof children === 'function' ? children(frontInfo) : children}</div>
 
             {/* MessagePanel (#msgPanel) */}
             {generalId != null && (
