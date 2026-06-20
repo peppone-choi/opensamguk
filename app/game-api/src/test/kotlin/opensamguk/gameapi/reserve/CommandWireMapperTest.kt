@@ -109,6 +109,21 @@ class CommandWireMapperTest {
         val nextSp = roundTrip(CommandWireMapper.toCommand("inheritSetNextSpecialWar", 10, "r", """{"specialWar":"귀병"}""")!!) as TurnDaemonCommand.InheritSetNextSpecialWar
         assertEquals("귀병", nextSp.specialWar)
         assertEquals(10, nextSp.generalId)
+
+        assertTrue(CommandWireMapper.isIntakeCommand("ResetStat"))
+        val resetStat = roundTrip(
+            CommandWireMapper.toCommand(
+                "ResetStat",
+                10,
+                "r",
+                """{"leadership":55,"strength":55,"intel":55,"inheritBonusStat":[1,1,1]}""",
+            )!!,
+        ) as TurnDaemonCommand.ResetStat
+        assertEquals(10, resetStat.generalId)
+        assertEquals(55, resetStat.leadership)
+        assertEquals(55, resetStat.strength)
+        assertEquals(55, resetStat.intel)
+        assertEquals(listOf(1, 1, 1), resetStat.inheritBonusStat)
     }
 
     @Test

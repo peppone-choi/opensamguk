@@ -10,9 +10,12 @@ import opensamguk.common.wire.InheritResetTurnTimeFail
 import opensamguk.common.wire.InheritResetTurnTimeOk
 import opensamguk.common.wire.InheritSetNextSpecialWarFail
 import opensamguk.common.wire.InheritSetNextSpecialWarOk
+import opensamguk.common.wire.ResetStatFail
+import opensamguk.common.wire.ResetStatOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
@@ -20,6 +23,7 @@ import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.actions.intake.InheritBuys
 import opensamguk.logic.actions.intake.InheritResetOutcome
 import opensamguk.logic.actions.intake.InheritResets
+import opensamguk.logic.actions.intake.ResetStatOutcome
 
 /**
  * 유산 (inheritance) reset/reserve 핸들러 — `ResetTurnTime` / `ResetSpecialWar` / `SetNextSpecialWar`.
@@ -46,7 +50,15 @@ class InheritResetHandler(
     private val recorder: ChangeRecorder,
     private val previousPointReader: (ownerId: Int) -> Double = { ownerId ->
         @Suppress("UNCHECKED_CAST")
-        ((world.getState().meta["inheritancePrevious"] as? Map<*, *>)?.get(ownerId) as? Number)?.toDouble() ?: 0.0
+        (ownerScopedMetaValue(world.getState().meta["inheritancePrevious"] as? Map<*, *>, ownerId) as? Number)
+            ?.toDouble()
+            ?: 0.0
+    },
+    private val lastStatResetReader: (ownerId: Int) -> List<Int> = { ownerId ->
+        @Suppress("UNCHECKED_CAST")
+        (ownerScopedMetaValue(world.getState().meta["lastStatReset"] as? Map<*, *>, ownerId) as? List<*>)
+            ?.mapNotNull { (it as? Number)?.toInt() }
+            ?: emptyList()
     },
     private val specialWarName: (type: String) -> String = { it },
     /**
@@ -124,6 +136,38 @@ class InheritResetHandler(
             is InheritResetOutcome.Applied -> {
                 apply(me, ownerId, out)
                 InheritSetNextSpecialWarOk(generalId = c.generalId, spent = out.spent)
+            }
+        }
+    }
+
+    fun handleResetStat(c: TurnDaemonCommand.ResetStat): TurnDaemonCommandResult {
+        val me = world.getGeneralById(c.generalId)
+            ?: return ResetStatFail(generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        val ownerId = ownerId(me)
+        val out = InheritResets.resetStat(
+            userId = ownerId,
+            leadership = c.leadership,
+            strength = c.strength,
+            intel = c.intel,
+            inheritBonusStat = c.inheritBonusStat,
+            previousPoint = previousPointReader(ownerId),
+            isUnited = isUnited(),
+            season = season(),
+            lastStatReset = lastStatResetReader(ownerId),
+            npcType = me.npcState,
+            hiddenSeed = hiddenSeed(),
+        )
+        return when (out) {
+            is ResetStatOutcome.Denied -> ResetStatFail(generalId = c.generalId, reason = out.reason)
+            is ResetStatOutcome.Applied -> {
+                applyResetStat(me, ownerId, out)
+                ResetStatOk(
+                    generalId = c.generalId,
+                    spent = out.spent,
+                    leadership = out.nextLeadership,
+                    strength = out.nextStrength,
+                    intel = out.nextIntel,
+                )
             }
         }
     }
@@ -210,6 +254,21 @@ class InheritResetHandler(
         recorder.recordRankIncrease(me.id, RankColumn.INHERIT_SPENT_DYN, out.spent)
     }
 
+    private fun applyResetStat(me: TurnGeneral, ownerId: Int, out: ResetStatOutcome.Applied) {
+        for (log in out.logs) {
+            recorder.recordInheritanceLog(ownerId, log, "inheritPoint")
+        }
+
+        val pre = PerTurnOverlay.toLogicGeneral(me)
+        val next = me.copy(stats = GeneralStats(out.nextLeadership, out.nextStrength, out.nextIntel))
+        world.applyGeneralDirtyFree(next)
+        recorder.diffGeneral(pre, PerTurnOverlay.toLogicGeneral(next))
+
+        recorder.recordInheritancePointSet(ownerId, "previous", out.remainingPrevious, null)
+        recorder.recordKv("user", "user_$ownerId", "last_stat_reset", out.nextLastStatReset)
+        recorder.recordRankIncrease(me.id, RankColumn.INHERIT_SPENT_DYN, out.spent)
+    }
+
     // ── env readers ─────────────────────────────────────────────────────────────
 
     private fun ownerId(me: TurnGeneral): Int = (me.meta["owner"] as? Number)?.toInt() ?: me.id
@@ -228,4 +287,13 @@ class InheritResetHandler(
     private fun turnTerm(): Int = (world.getState().meta["turnterm"] as? Number)?.toInt() ?: 1
 
     private fun hiddenSeed(): String = world.getState().meta["hiddenSeed"] as? String ?: ""
+
+    private fun season(): Int =
+        (world.getState().meta["season"] as? Number)?.toInt()
+            ?: (world.getState().meta["server_generation"] as? Number)?.toInt()
+            ?: (world.getState().meta["serverCnt"] as? Number)?.toInt()
+            ?: 0
 }
+
+private fun ownerScopedMetaValue(map: Map<*, *>?, ownerId: Int): Any? =
+    map?.get(ownerId) ?: map?.get(ownerId.toString())
