@@ -67,7 +67,8 @@ const ICON_SCALE = 0.72;
 // 깃발/수도별 아이콘 픽셀 — 도시 cast 아이콘과 같은 ICON_SCALE로 축소(레거시 기본 12/10 → 사용자 요청 축소).
 const FLAG_PX = Math.round(12 * ICON_SCALE); // 12 → 9
 const STAR_PX = Math.round(10 * ICON_SCALE); // 10 → 7
-const STATE_PX = Math.round(15 * ICON_SCALE);
+const STATE_ICON_SCALE = 0.54;
+const STATE_PX = Math.round(15 * STATE_ICON_SCALE);
 // 표에 없는 레벨(예: 0)도 깨지지 않게 lv3 기준으로 폴백.
 function sizeOf(level: number): CitySize {
     const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];

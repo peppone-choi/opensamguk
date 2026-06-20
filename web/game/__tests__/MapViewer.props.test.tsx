@@ -279,8 +279,8 @@ describe('MapViewer — P0-36 FE측 state 아이콘(레거시 MapCityDetail.vue:
         const stateImg = jangan.querySelector('.city-state') as HTMLImageElement | null;
         expect(stateImg).toBeTruthy();
         expect(stateImg!.getAttribute('src')).toContain('event6.gif');
-        expect(stateImg!.getAttribute('width')).toBe('11');
-        expect(stateImg!.getAttribute('height')).toBe('11');
+        expect(stateImg!.getAttribute('width')).toBe('8');
+        expect(stateImg!.getAttribute('height')).toBe('8');
     });
 
     it('state=0 은 상태 아이콘이 없다', async () => {

@@ -53,3 +53,22 @@ Accepted after production merge/deploy/promotion, with the data-condition caveat
 - Live `/game/s1/map` rendered map title `187年 1月`, city anchors 94, city buttons 0, first href `/game/s1/city?id=1`.
 - Because current production data has no state icons, `.city-state` live count was 0. The state icon size itself is pinned by `MapViewer.props.test.tsx` with `state=6` expecting `width=11` and `height=11`.
 - First city click committed to `/game/s1/city?id=1` and rendered `도시 정보`.
+
+## 2026-06-20 Follow-Up
+
+Verdict: cleared
+
+User re-evaluation found the 11px state icon still visually too large on the current map. The root cause after the first fix was subtler: `cast_3.gif` is `14x14` and scales to `10x10`, so the 11px state icon remained larger than a low-level city marker.
+
+The follow-up hypothesis changes only the state icon scale:
+
+- Keep city cast, flag, and capital icon sizing unchanged.
+- Add `STATE_ICON_SCALE = 0.54`.
+- Render `.city-state` as `8x8` in both `web/game` `MapViewer` and `web/gateway` `MapPreview`.
+- Update the `state=6` fixture pin from `11x11` to `8x8`.
+
+Verification:
+
+- `/usr/local/bin/pnpm --dir web/game test -- MapViewer.props --run`: 17 files / 86 tests passed.
+- `/usr/local/bin/pnpm --dir web/game typecheck`: passed.
+- `/usr/local/bin/pnpm --dir web/gateway typecheck`: passed.

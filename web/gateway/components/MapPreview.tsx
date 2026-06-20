@@ -63,7 +63,8 @@ const ICON_SCALE = 0.72;
 // 깃발/수도별 아이콘도 도시 아이콘과 같은 ICON_SCALE로 축소(인게임 MapViewer와 일치 — 사용자 요청).
 const FLAG_PX = Math.round(12 * ICON_SCALE); // 12 → 9
 const STAR_PX = Math.round(10 * ICON_SCALE); // 10 → 7
-const STATE_PX = Math.round(15 * ICON_SCALE);
+const STATE_ICON_SCALE = 0.54;
+const STATE_PX = Math.round(15 * STATE_ICON_SCALE);
 function sizeOf(level: number): CitySize {
     const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
     return {
