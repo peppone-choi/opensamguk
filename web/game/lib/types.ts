@@ -52,6 +52,7 @@ export interface FrontGlobalInfo {
     blockGeneralCreate?: number;
     createdNPCCnt?: number;
     auctionCount?: number;
+    onlineNations?: string | null;
     // [P1-002] legacy GetFrontInfo.php:183-189,231 — lastVote는 VoteInfo 전체
     // ({id,title,multipleOptions,opener,startDate,endDate,options}, 만료 시 null).
     // 새 설문 토스트 판정엔 id가 필수(lastVoteID > 저장 커서 && > aux.myLastVote — PageFront.vue:472-474).
@@ -192,6 +193,7 @@ export interface FrontNationInfo {
     strategicCmdLimit?: number | null; // meta.strategic_cmd_limit — 전략 제한 잔여턴
     prohibitScout?: number | null;    // meta.scout — 임관 금지(1=금지)
     prohibitWar?: number | null;      // meta.war — 전쟁 금지(1=금지)
+    onlineGen?: number | null;
     // 국가방침 — nation_env KV nationNotice.msg(데몬 SetNotice). devsam PageFront.vue:32
     // `v-html=notice?.msg ?? ''` 등가(opensamguk BE는 msg 문자열만 내려줌). 부재/만료 시 null(날조 금지).
     notice?: string | null;

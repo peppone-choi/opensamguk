@@ -8,6 +8,7 @@ import GlobalMenu from './GlobalMenu';
 import MainControlBar, { type ControlGating } from './MainControlBar';
 import MainControlDropdown from './MainControlDropdown';
 import CharacterClaim from './CharacterClaim';
+import MainStatusPanel from './MainStatusPanel';
 import MapViewer from './MapViewer';
 import PartialReservedCommand from './PartialReservedCommand';
 import GeneralBasicCard from './GeneralBasicCard';
@@ -79,6 +80,7 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
 
             {/* GameInfo status header */}
             <GameInfo global={frontInfo.global} constData={constData} />
+            <MainStatusPanel frontInfo={frontInfo} />
 
             <div className="ingame-board">
                 <div className="ib-map">
