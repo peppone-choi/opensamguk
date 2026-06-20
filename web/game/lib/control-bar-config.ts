@@ -61,7 +61,7 @@ export const CONTROL_BUTTONS: ControlButton[] = [
     { id: 15, label: '현재 도시', compactLabel: '현재 도시', href: '/game/city', bucket: 'always' },
     { id: 16, label: '감 찰 부', compactLabel: '감찰부', href: `${STUB}?feature=${encodeURIComponent('감찰부')}`, bucket: 'showSecret', newTab: true },
     { id: 17, label: '유산 관리', compactLabel: '유산 관리', href: '/game/inherit', bucket: 'always' },
-    { id: 18, label: '내 정보&설정', compactLabel: '내 정보&설정', href: '/game', bucket: 'always' },
+    { id: 18, label: '내 정보&설정', compactLabel: '내 정보&설정', href: '/game/my', bucket: 'always' },
     {
         id: 19,
         label: '경 매 장',

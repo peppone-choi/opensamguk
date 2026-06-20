@@ -25,6 +25,7 @@ const LEGACY_GAME_ROUTE_MAP: Record<string, string> = {
     'a_npcList.php': '/game/rankings/npcs',
     'v_npcList.php': '/game/rankings/npcs',
     'v_vote.php': '/game/vote',
+    'b_myPage.php': '/game/my',
 };
 
 function splitSuffix(value: string): { base: string; suffix: string } {
