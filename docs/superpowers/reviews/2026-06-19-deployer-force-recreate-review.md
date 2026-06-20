@@ -54,6 +54,17 @@ After merge and deploy:
 - `/game/s1` DOM renders `a.city-base=94` and `button.city-base=0`.
 - Clicking city 1 commits to `/game/s1/city?id=1`.
 
+## Production Remeasure
+
+2026-06-20 live remeasure:
+
+- Main deploy run `27855366232` succeeded and rebuilt the shared stack/deployer path.
+- `s1` deploy status reports `currentTag=c925a8a712f7e4775453b7b2220c41f808968417`.
+- Repository deployer source now runs stateless `up -d --force-recreate --no-deps`.
+- Live `/game/s1` renders `a.city-base=94` and `button.city-base=0`.
+- Clicking city 1 commits to `/game/s1/city?id=1`.
+- Response capture found no 4xx/5xx responses.
+
 ## Fresh Review
 
 Verdict: cleared

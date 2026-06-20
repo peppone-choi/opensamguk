@@ -54,6 +54,18 @@ After merge, deploy, and `s1` promotion:
 - Clicking city 1 on the main map must commit to `/game/s1/city?id=1`.
 - Existing map baseline must hold: approximately 700 x 500 map, 94 cities, `neutralView=0`, `showMe=1`, SSE first byte succeeds.
 
+## Production Remeasure
+
+2026-06-20 live Playwright/API remeasure:
+
+- `s1` deploy status: `currentTag=c925a8a712f7e4775453b7b2220c41f808968417`.
+- `/game/s1` returned HTTP 200 with `cache-control=private, no-cache, no-store, max-age=0, must-revalidate`.
+- `s-maxage=31536000` was absent.
+- DOM rendered `a.city-base=94` and `button.city-base=0`.
+- First city click committed to `/game/s1/city?id=1`.
+- Map baseline held: `.ib-map=700x520`, `.map-viewer-canvas=700x500`.
+- Response capture found no 4xx/5xx responses.
+
 ## Fresh Review
 
 Verdict: cleared
@@ -66,4 +78,4 @@ Fresh correctness reviewer Lagrange the 2nd returned no findings. Evidence revie
 - `infra/nginx/default.conf:52` production nginx also rewrites `/game/s*` requests into `/game` with server selection.
 - `docs/loops/page-parity/LEDGER.md:93` records the stale static HTML symptom, route-segment fix, and post-deploy acceptance checks.
 
-Residual risk: production proof remains pending until merge, deploy, and `s1` promotion.
+Residual risk: none for this loop. Production proof is recorded above.

@@ -42,6 +42,10 @@ PR#116 배포 및 s1 승격 후:
   - 기존 lint warnings only.
 - `git diff --check`
 
-## Pending
+## Production Remeasure
 
-머지/배포/s1 승격 후 Playwright로 `/game/s1` 도시 클릭이 `/game/s1/city?id=1`로 실제 URL commit되는지 재측정한다.
+- `s1` deploy status: `currentTag=c925a8a712f7e4775453b7b2220c41f808968417`.
+- Live `/game/s1`: `a.city-base=94`, `button.city-base=0`.
+- First city href: `/game/s1/city?id=1`.
+- Browser click committed to `https://sam.peppone.dev/game/s1/city?id=1`.
+- Response capture across the run found no 4xx/5xx responses.
