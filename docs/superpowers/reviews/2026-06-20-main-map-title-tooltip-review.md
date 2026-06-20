@@ -50,8 +50,16 @@ After PR #127 was promoted to `s1`, live QA exposed a second contract gap: the f
 
 ## Adoption Status
 
-Pending second production merge/deploy/promotion and live Playwright remeasure for:
+Accepted after second production merge/deploy/promotion.
 
-- `.map-viewer-title[title]` contains `초반제한 기간`.
-- `.map-viewer-title[title]` contains `기술등급 제한`.
-- Map box invariants remain `title 700x20`, `canvas 700x500`, city anchors 94, and first city click commits to `/game/s1/city?id=1`.
+- PR #128 merged to main as `2f30e96ac1c73d9374ca886f4950693a4747b208`.
+- Deploy run `27858476514` passed: JVM image build/push, web image build/push, shared stack deploy, pin preservation, health + `s1` turn verification.
+- `s1` promoted to `2f30e96ac1c73d9374ca886f4950693a4747b208`; `/health` returned 200.
+- Live `/api/game/api/{const,front-info,map}` returned 200; `gameConst.maxTechLevel=12`, `initialAllowedTechLevel=1`, `techLevelIncYear=5`.
+- Live `/game/s1` title: `184年 12月`.
+- Live `.map-viewer-title[title]`: `초반제한 기간 : -1년 1개월 (184년)\n기술등급 제한 : 1등급 (186년 해제)`.
+- Live `.map-viewer-title[aria-label]` includes both tooltip lines.
+- Map invariants: `.ib-map 700x520`, title `700x20`, canvas `700x500`, city anchors 94, city buttons 0, first href `/game/s1/city?id=1`.
+- First city click committed to `/game/s1/city?id=1` and rendered `도시 정보`.
+
+Operational note: one manual promotion attempt used an incorrect full SHA and failed at image pull; it was immediately overwritten by the correct tag above and final deploy status confirmed the correct `s1 currentTag`.
