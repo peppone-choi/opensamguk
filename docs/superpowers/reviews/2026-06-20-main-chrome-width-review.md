@@ -44,12 +44,32 @@ This intentionally does not change `MapViewer`, city links, live map fetching, o
 
 ## Production Status
 
-Pending. After merge/deploy, remeasure:
+Accepted after production merge, deploy, promotion, and browser remeasurement.
 
-- `.game-chrome=1000px`
-- `.ingame-board=1000px`
-- `.ib-map=700x520`
-- `.map-viewer-title=700x20`
-- `.map-viewer-canvas=700x500`
-- city anchors `94`
-- first city click reaches `/game/s1/city?id=1`
+- PR #129 merged to `main` as `eec1b6c91b49b35f9d1e53cde172040e47cee6bf`.
+- CI run `27859382738` passed.
+- Build + Deploy to EC2 run `27859382732` passed: image builds, shared stack deploy, pin preservation, health, and `s1` turn verification.
+- Admin deploy promoted `s1` from `2f30e96ac1c73d9374ca886f4950693a4747b208` to `eec1b6c91b49b35f9d1e53cde172040e47cee6bf`.
+- Live desktop `/game/s1` at `1280x900`:
+  - `.game-chrome=1000px`
+  - `.ingame-board=1000px`
+  - `.shell-main > *` is only `game-chrome`
+  - `.game-chrome > *` order is `common-toolbar`, `game-info`, `main-status`, `ingame-board`, `main-page-content`, `message-panel`, `common-toolbar`, `toast-container`
+  - `.ib-map=700x520`
+  - `.map-viewer-title=700x20`
+  - `.map-viewer-canvas=700x500`
+  - city anchors `94`, city buttons `0`
+  - first city href `/game/s1/city?id=1`
+  - first city click reaches `/game/s1/city?id=1` and renders `도시 정보`
+  - 4xx/5xx responses: `0`
+- Live mobile `/game/s1` at `390x844`:
+  - `.game-chrome=374px`
+  - `.ingame-board=374px`
+  - `.ib-map=374x287`
+  - `.map-viewer-title=374x20`
+  - `.map-viewer-canvas=374x267`
+  - `mapOverflowsViewport=false`
+  - city anchors `94`, city buttons `0`
+  - first city href `/game/s1/city?id=1`
+  - city detail renders `도시 정보`
+  - 4xx/5xx responses: `0`
