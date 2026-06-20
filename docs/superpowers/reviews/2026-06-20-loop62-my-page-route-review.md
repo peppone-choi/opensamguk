@@ -29,10 +29,12 @@ Adding `/game/my` as a read-only `b_myPage.php` equivalent, mapping legacy `b_my
 - `pnpm --dir web/game build` — passed; `/game/my` appears as a dynamic app route. Existing warnings only.
 - `pnpm --dir web/gateway typecheck`
 
-## Pending Live Check
+## Live Check
 
-- Deploy and promote s1 to the new image tag.
-- Browser-check `/game/s1/my` after login: no 404, heading `내 정보&설정`, current general info visible, and `MyInfoLogPanel` sections visible.
-- Click the main control button and confirm it resolves to `/game/s1/my`.
+- PR #124 was merged to main, then PR #125 deployed via Actions run `27855366232`.
+- Promoted `s1` to `c925a8a712f7e4775453b7b2220c41f808968417` through the admin deployer path.
+- Live browser QA with QA general `코덱스3bpr` confirmed `/game/s1/my` renders h1 `내 정보&설정`, current general info, and the four log panels: `개인 기록`, `전투 기록`, `장수 열전`, `전투 결과`.
+- The main control surface exposes `내 정보&설정` as `/game/s1/my`.
+- Follow-up response-status capture across `/game/s1` and `/game/s1/my` found no 4xx/5xx responses.
 
 Verdict: cleared

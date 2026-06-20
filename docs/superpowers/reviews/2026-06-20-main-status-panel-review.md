@@ -38,7 +38,17 @@ Verdict: cleared
   - `.map-viewer-canvas` `700x500`
   - first city link `/game/s1/city?id=1`
 - `pnpm --dir web/game build` passed with pre-existing warnings only.
+- PR #125 was merged to main, Actions run `27855366232` passed, and `s1` was promoted to `c925a8a712f7e4775453b7b2220c41f808968417`.
+- Live Playwright with QA general `코덱스3bpr` confirmed:
+  - `.main-status + .ingame-board` count `1`
+  - status labels `접속중인 국가:`, `【 접속자 】`, and `【 국가방침 】`
+  - `.ib-map` `700x520`
+  - `.map-viewer-title` `700x20`
+  - `.map-viewer-canvas` `700x500`
+  - city anchors `94`
+  - first city click reached `/game/s1/city?id=1`
+  - `/game/s1` and `/game/s1/my` response-status capture found no 4xx/5xx responses
 
 ## Residual Risk
 
-Production still needs PR merge, image build, `s1` promotion, and live browser remeasurement before marking the loop row adopted.
+No known residual risk for this loop. The live labels can be empty when the source reports no active nations/users or no nation notice, but the legacy row structure and map behavior are present.
