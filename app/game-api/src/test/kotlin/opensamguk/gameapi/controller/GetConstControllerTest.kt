@@ -52,6 +52,8 @@ class GetConstControllerTest {
             // gameConst 번들 표시 상수.
             .andExpect(jsonPath("$.gameConst.maxTurn").value(GameConst.maxTurn))
             .andExpect(jsonPath("$.gameConst.mapName").value(GameConst.mapName))
+            .andExpect(jsonPath("$.gameConst.initialAllowedTechLevel").value(GameConst.initialAllowedTechLevel))
+            .andExpect(jsonPath("$.gameConst.techLevelIncYear").value(GameConst.techLevelIncYear))
     }
 
     @Test
