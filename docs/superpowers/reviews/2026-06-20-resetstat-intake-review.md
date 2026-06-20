@@ -51,6 +51,18 @@ The previous frontend loop restored the form and POST surface but did not connec
 - `git diff --check` passed.
 - Broader local `:common:test :logic:test :app:game-api:test :app:game-engine:test` was blocked only by local Docker/Testcontainers: `DockerClientProviderStrategy` could not find a valid Docker environment.
 
+## Production Adoption
+
+Accepted on production after engine-inclusive `s1` reset/reseed.
+
+- Main deploy run `27862293912` passed for `d2188c79677ac99ef70949b95c842258431a2e31`.
+- Because `ResetStat` requires `game-engine` changes and the normal deployer promotion bounces only stateless `game-api`/`web-game`, `s1` was first patched to `IMAGE_TAG=d2188c79677ac99ef70949b95c842258431a2e31` and `WEB_GAME_TAG=d2188c79677ac99ef70949b95c842258431a2e31`, then reset with DB/Redis volumes cleared.
+- Reset kept server-scoped settings: `SERVER_GENERATION=0`, `SCENARIO_CODE=scenario_1021`, `SCENARIO_SEED_ENABLED=true`, turn term `60`, full join mode, tournament auto-start enabled.
+- Post-reset polling reached `health=up`, `deploy/status.currentTag=d2188c79677ac99ef70949b95c842258431a2e31`, `front-info=200`, and authenticated `game-api`/`game-engine` reachability.
+- Live browser QA created account `codex37075247`, registered general `코덱스5247`, observed `front-info.general.hasGeneral=true` with `generalId=1681`, and submitted `ResetStat` successfully: HTTP 202, `code=ResetStat` (no 409).
+- Live `/game/s1` rendered the game main instead of registration after the general existed: map `700x520`, title `700x20`, canvas `700x500`, city anchors `94`, no frontend console errors, no error text.
+- First city click navigated to `/game/s1/city?id=1` and rendered `도시 정보` without 404/500 text or console errors.
+
 ## Residual Risk
 
 No known code-level blocker remains for `ResetStat`. Full integration suites still need a Docker-capable runner, which CI should provide.
