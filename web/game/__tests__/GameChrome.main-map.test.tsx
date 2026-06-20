@@ -122,7 +122,7 @@ describe('GameChrome main map', () => {
     });
 
     it('passes front-info into function children for the main record zone', () => {
-        render(
+        const { container } = render(
             <GameChrome>
                 {(loadedFrontInfo) => (
                     <div data-testid="record-probe">{loadedFrontInfo.recentRecord.global[0]?.[1]}</div>
@@ -131,6 +131,8 @@ describe('GameChrome main map', () => {
         );
 
         expect(screen.getByTestId('record-probe')).toHaveTextContent('');
+        expect(screen.getByTestId('record-probe').closest('.main-page-content')).not.toBeNull();
+        expect(container.querySelector('.ingame-board')?.nextElementSibling).toHaveClass('main-page-content');
 
         mocks.useFrontInfo.mockReturnValueOnce({
             frontInfo: {

@@ -1,15 +1,20 @@
 'use client';
 
 import { useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import Header from './Header';
 import BackBar from './BackBar';
 import BottomNav from './BottomNav';
 import { useSSE } from '../hooks/useSSE';
+import { normalizeGamePathname } from '../lib/serverGameUrl';
 
 export default function Shell({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
     const refresh = useCallback(() => {
         window.location.reload();
     }, []);
+    const normalizedPathname = normalizeGamePathname(pathname ?? '');
+    const isMainPage = normalizedPathname === '/game';
 
     useSSE(refresh);
 
@@ -20,7 +25,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <div className="shell-body">
                 <main className="shell-main">
                     {/* 서브 페이지 공통 돌아가기/갱신 바(레거시 TopBackBar). 메인은 GameChrome이라 미적용. */}
-                    <BackBar />
+                    {!isMainPage && <BackBar />}
                     {children}
                 </main>
             </div>

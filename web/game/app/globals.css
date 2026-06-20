@@ -645,7 +645,7 @@ input:focus, select:focus, textarea:focus {
 .game-chrome {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: 0;
 }
 
 /* GameInfo header */
@@ -1227,7 +1227,7 @@ input:focus, select:focus, textarea:focus {
 .ingame-board {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-sm);
+  gap: 0;
   width: 100%;
   max-width: 1000px;
   margin-left: auto;
@@ -1239,20 +1239,17 @@ input:focus, select:focus, textarea:focus {
 .ib-city,
 .ib-nation,
 .ib-general,
-.ib-content,
 .ib-controlbar { min-width: 0; }
 .ib-map,
 .ib-reserved,
-.ib-content,
 .ib-controlbar { width: 100%; }
 @media (max-width: 999px) {
-  .ib-reserved { grid-row: 1; }
-  .ib-controlbar { grid-row: 2; }
-  .ib-nation { grid-row: 3; }
-  .ib-general { grid-row: 4; }
-  .ib-city { grid-row: 5; }
-  .ib-map { grid-row: 6; }
-  .ib-content { grid-row: 7; }
+  .ib-map { grid-row: 1; }
+  .ib-reserved { grid-row: 2; }
+  .ib-controlbar { grid-row: 3; }
+  .ib-city { grid-row: 4; }
+  .ib-nation { grid-row: 5; }
+  .ib-general { grid-row: 6; }
 }
 @media (min-width: 1000px) {
   .ingame-board {
@@ -1265,12 +1262,16 @@ input:focus, select:focus, textarea:focus {
   .ib-controlbar { grid-column: 1 / 4; grid-row: 4; }
   .ib-nation { grid-column: 1; grid-row: 5; }
   .ib-general { grid-column: 2 / 4; grid-row: 5; }
-  .ib-content { grid-column: 1 / 4; grid-row: 6; margin-top: var(--space-md); }
 }
-.ib-content { width: 100%; }
-.ib-content:empty { display: none; }
 .ib-controlbar { width: 100%; }
 .ib-map .map-viewer { border-radius: 0; }
+.main-page-content {
+  width: 100%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.main-page-content:empty { display: none; }
 
 .main-record-zone {
   display: grid;
