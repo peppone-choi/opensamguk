@@ -12,14 +12,15 @@
 //     호칭(experience) + 공헌(dedication) + 부상(텍스트+색).
 //   generalInfo2: 명성/계급(원시값+색) + 전투/계략/사관 + 승률/승리/패배 + 살상률/사살/피살.
 //
-// 미렌더(API-BLOCKED, 날조 금지): 통/무/지 *_exp 경험치 막대, turntime/실행 남은시간,
-// dex1..5(숙련도 컬럼 부재), refreshScore(general_access_log 부재), troopInfo(부대명 합성),
-// defence_train(컬럼 부재), train/atmos bonus(onCalcStat 미배선).
+// 미렌더(API-BLOCKED, 날조 금지): turntime/실행 남은시간, dex1..5(숙련도 컬럼 부재),
+// refreshScore(general_access_log 부재), defence_train(컬럼 부재), train/atmos bonus(onCalcStat 미배선).
 
 import { formatNumber } from '@/lib/format';
 import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { formatInjury, nextExpLevelRemain } from '@/lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';
+import { STAT_UP_THRESHOLD } from '@/lib/constants';
+import SammoBar from './SammoBar';
 
 function isBrightColor(hex?: string): boolean {
     if (!hex) return false;
@@ -64,6 +65,35 @@ function AgeLabel({ age }: { age: number }) {
     return <span style={{ color }}>{age}세</span>;
 }
 
+function SignedBonus({ value }: { value: number | null | undefined }) {
+    const v = value ?? 0;
+    if (v === 0) return null;
+    return <span className={v > 0 ? 'bc-bonus' : 'bc-penalty'}> {v > 0 ? `+${v}` : v}</span>;
+}
+
+function StatValue({
+    value,
+    bonus,
+    color,
+    exp,
+}: {
+    value: number;
+    bonus?: number | null;
+    color?: string;
+    exp?: number | null;
+}) {
+    const expPercent = exp == null ? null : (exp / STAT_UP_THRESHOLD) * 100;
+    return (
+        <div className={expPercent == null ? 'stat-value-cell' : 'stat-value-cell stat-value-cell-with-bar'}>
+            <span className="stat-value-text">
+                <span style={color ? { color } : undefined}>{value}</span>
+                <SignedBonus value={bonus} />
+            </span>
+            {expPercent != null && <SammoBar percent={expPercent} height={10} className="stat-exp-bar" />}
+        </div>
+    );
+}
+
 // Lv + 경험치 막대 — PHP generalInfo() bar(getLevelPer(experience, explevel), 20) 동치.
 function LevelBar({ experience, explevel }: { experience: number | null | undefined; explevel: number | null | undefined }) {
     const exp = experience ?? 0;
@@ -73,9 +103,7 @@ function LevelBar({ experience, explevel }: { experience: number | null | undefi
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', width: '100%' }}>
             <span>Lv {lv}</span>
-            <div className="mcd-bar" style={{ flex: 1, height: 12 }}>
-                <div className="mcd-bar-fill" style={{ width: `${pct}%` }} />
-            </div>
+            <SammoBar percent={pct} height={10} className="level-exp-bar" />
         </div>
     );
 }
@@ -126,24 +154,33 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
 
     const officerText = general.officerLevelText ?? (general.officerLevel <= 0 ? '재야' : `${general.officerLevel}급`);
 
-    const leadershipCell = (
-        <>
-            <span style={{ color: injuryColor }}>{general.leadership}</span>
-            {(general.lbonus ?? 0) > 0 && <span className="bc-bonus"> +{general.lbonus}</span>}
-        </>
-    );
-
     const specialCell = `${nameOrCode(general.specialDomesticName, general.specialDomestic)} / ${nameOrCode(general.specialWarName, general.specialWar)}`;
 
     // generalInfo 패널 행들.
     const rows: { label: string; value: React.ReactNode; wide?: boolean }[] = [
         { label: '관직', value: officerText },
         { label: '소속', value: nation?.name ?? '재야' },
-        { label: '통솔', value: leadershipCell },
-        { label: '무력', value: <span style={{ color: injuryColor }}>{general.strength}</span> },
-        { label: '지력', value: <span style={{ color: injuryColor }}>{general.intel}</span> },
-        { label: '정치', value: general.politics ?? '-' },
-        { label: '매력', value: general.charm ?? '-' },
+        {
+            label: '통솔',
+            value: (
+                <StatValue
+                    value={general.leadership}
+                    bonus={general.leadershipBonus ?? general.lbonus}
+                    color={injuryColor}
+                    exp={general.leadershipExp}
+                />
+            ),
+        },
+        {
+            label: '무력',
+            value: <StatValue value={general.strength} bonus={general.strengthBonus} color={injuryColor} exp={general.strengthExp} />,
+        },
+        {
+            label: '지력',
+            value: <StatValue value={general.intel} bonus={general.intelBonus} color={injuryColor} exp={general.intelExp} />,
+        },
+        { label: '정치', value: <StatValue value={general.politics ?? 0} bonus={general.politicsBonus} /> },
+        { label: '매력', value: <StatValue value={general.charm ?? 0} bonus={general.charmBonus} /> },
         { label: '명마', value: nameOrCode(general.horseName, general.horse) },
         { label: '무기', value: nameOrCode(general.weaponName, general.weapon) },
         { label: '서적', value: nameOrCode(general.bookName, general.book) },
@@ -204,18 +241,7 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
             {/* generalInfo2 — 추가 정보 패널 (war stats 있을 때만 렌더). */}
             {hasWarStats && (
                 <div className="basic-card-grid" style={{ marginTop: 'var(--space-md)' }}>
-                    <div className="basic-card-row" style={{ gridColumn: '1 / -1' }}>
-                        <div
-                            className="basic-card-head"
-                            style={{
-                                textAlign: 'center',
-                                background: 'var(--bg-elevated)',
-                                fontWeight: 700,
-                            }}
-                        >
-                            추 가 정 보
-                        </div>
-                    </div>
+                    <div className="basic-card-head basic-card-section-head">추 가 정 보</div>
                     <div className="basic-card-row">
                         <div className="basic-card-head">명성</div>
                         <div className="basic-card-body">

@@ -385,10 +385,11 @@ export const api = {
     availableCommands: <T>(generalId?: number) =>
         get<T>(generalId == null ? '/api/commands/available' : `/api/commands/available?generalId=${generalId}`),
 
-    // 예약 명령 링 read — `GET /api/reserved-commands` (P0-01). 인증 principal이 본인 장수로
-    // 해석되므로 인자 불요. 메인 예약 패널은 refreshKey/onReserved마다 재조회해 slots를 렌더하고,
-    // slots에 없는 turnIdx만 '휴식'으로 채운다(전 슬롯 '휴식' 하드코딩 위조 금지).
-    reservedCommands: () => get<ReservedCommandsResponse>('/api/reserved-commands'),
+    // 예약 명령 링 read — `GET /api/reserved-commands` (P0-01). 인증 principal 우선, generalId fallback.
+    reservedCommands: (generalId?: number) =>
+        get<ReservedCommandsResponse>(
+            generalId == null ? '/api/reserved-commands' : `/api/reserved-commands?generalId=${generalId}`,
+        ),
 
     // 즉시 액션 인테이크 — `POST /api/instant-action/{code}?generalId=` (P0-24/25 소비처).
     // instant(DieOnPrestart/DropItem/InstantRetreat) + inherit(ResetStat/CheckOwner …) 코드.

@@ -365,6 +365,15 @@ textarea:focus {
 .city-aura { position: absolute; z-index: 1; pointer-events: none; border-radius: 50%; }
 /* 아이콘 컨테이너(city_img) — 깃발/상태/이름의 위치 기준(레거시 .city_img position:absolute). */
 .city-img { position: absolute; z-index: 2; }
+.city-filler {
+    position: absolute;
+    z-index: 6;
+    left: -1px;
+    top: -1px;
+    width: calc(100% + 2px);
+    height: calc(100% + 2px);
+    pointer-events: none;
+}
 .city-cast {
     position: absolute;
     left: 0;
@@ -414,7 +423,7 @@ textarea:focus {
 /* 2) 클릭 비활성(disallowClick) — 레거시 clickable=0 → cursor default(MapCityDetail.vue:23). */
 .city-noclick { cursor: default; }
 /* 3) 내(현재) 도시 blink 링 — 레거시 .my_city before/after outline 점멸(map.scss:231-262). */
-.city-img.my-city::before {
+.city-filler.my-city::before {
     content: "";
     position: absolute;
     top: -2px; left: -2px; right: -2px; bottom: -2px;
@@ -422,7 +431,7 @@ textarea:focus {
     animation: blink-my-city-d1 3.9s infinite;
     pointer-events: none;
 }
-.city-img.my-city::after {
+.city-filler.my-city::after {
     content: "";
     position: absolute;
     top: -2px; left: -2px; right: -2px; bottom: -2px;

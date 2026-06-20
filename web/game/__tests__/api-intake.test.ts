@@ -79,6 +79,14 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
         const url = fetchMock.mock.calls[0][0] as string;
         expect(url).toBe('/api/game/api/command/BuyHiddenBuff?generalId=42&turnIdx=2');
     });
+
+    it('reservedCommands는 generalId fallback을 쿼리에 싣는다', async () => {
+        mockFetchOnce(200, { result: true, generalId: 42, slots: [] });
+        await api.reservedCommands(42);
+        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+        const url = fetchMock.mock.calls[0][0] as string;
+        expect(url).toBe('/api/game/api/reserved-commands?generalId=42');
+    });
 });
 
 describe('큐 조작 헬퍼 (push/repeat/bulk × general/nation)', () => {

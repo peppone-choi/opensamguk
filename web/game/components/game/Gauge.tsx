@@ -12,6 +12,8 @@
 // 막대 없는 평문이거나(국가 금/쌀) 별도 경험치 막대(장수 통/무/지의 *_exp)이며 web/game DTO 엔 그 분모가
 // 없다. 분모를 날조하지 않는다 — 그런 값은 호출부에서 평문으로 렌더한다.
 
+import SammoBar from './SammoBar';
+
 interface GaugeProps {
     /** 행 라벨(예: '인구', '농업'). 레거시 gHead 텍스트와 동일하게 전달한다. */
     label: string;
@@ -37,9 +39,7 @@ export default function Gauge({ label, now, max, barOnly = false }: GaugeProps) 
         <div className="mcd-metric gauge-metric">
             <div className="mcd-metric-head">{label}</div>
             <div className="mcd-metric-body">
-                <div className="mcd-bar">
-                    <div className="mcd-bar-fill" style={{ width: `${pct}%` }} />
-                </div>
+                <SammoBar percent={pct} height={7} />
                 <div className="mcd-metric-text">
                     {barOnly
                         ? now.toLocaleString(undefined, { maximumFractionDigits: 1 })

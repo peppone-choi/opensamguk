@@ -6,6 +6,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import Gauge from '../../../components/game/Gauge';
+import SammoBar from '../../../components/game/SammoBar';
 import { api } from '../../../lib/api';
 import type { CityDetailResponse, CityGeneralRow } from '../../../types/game';
 import {
@@ -160,9 +161,7 @@ function CityDetail() {
                                 <div className="mcd-metric-head">시세</div>
                                 <div className="mcd-metric-body">
                                     {city.trade != null && (
-                                        <div className="mcd-bar">
-                                            <div className="mcd-bar-fill" style={{ width: `${Math.min(100, Math.max(0, (city.trade - 95) * 10))}%` }} />
-                                        </div>
+                                        <SammoBar percent={Math.min(100, Math.max(0, (city.trade - 95) * 10))} height={7} />
                                     )}
                                     <div className="mcd-metric-text">{city.trade != null ? `${city.trade}%` : '상인 없음'}</div>
                                 </div>

@@ -107,6 +107,8 @@ export const CITY_TRADE_BASE = 95;
 /** 시세 게이지 — 배율. */
 export const CITY_TRADE_MULTIPLIER = 10;
 
+export const STAT_UP_THRESHOLD = 30;
+
 /** SSE 엔드포인트 — 턴 완료 이벤트. */
 export const SSE_TURN_ENDPOINT = '/api/game/sse/turn';
 

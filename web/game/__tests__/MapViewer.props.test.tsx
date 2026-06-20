@@ -201,11 +201,12 @@ describe('MapViewer — disallowClick(레거시 MapViewer.vue:392-394 clickable=
 });
 
 describe('MapViewer — currentCityId(레거시 is-my-city → .my_city blink)', () => {
-    it('currentCityId 도시의 마커에 my-city 클래스가 붙는다', async () => {
+    it('currentCityId 도시의 filler에 my-city 클래스가 붙는다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} currentCityId={33} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
         const mine = screen.getByLabelText(/허창 레벨 6 위/);
-        expect(mine.querySelector('.my-city')).toBeTruthy();
+        expect(mine.querySelector('.city-filler.my-city')).toBeTruthy();
+        expect(mine.querySelector('.city-img.my-city')).toBeNull();
         const other = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(other.querySelector('.my-city')).toBeNull();
     });
@@ -226,7 +227,7 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
         render(<MapViewer live />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
         const mine = screen.getByLabelText(/허창 레벨 6 위/);
-        expect(mine.querySelector('.my-city')).toBeTruthy();
+        expect(mine.querySelector('.city-filler.my-city')).toBeTruthy();
     });
 
     it('refreshKey 변경 시 재조회한다(레거시 refreshCounter watch)', async () => {

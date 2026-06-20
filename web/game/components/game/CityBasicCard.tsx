@@ -14,6 +14,7 @@
 // front-info.city.officers(officer_city==이 도시 AND officer_level∈{4,3,2}, PHP officerList GetFrontInfo:504).
 
 import Gauge from './Gauge';
+import SammoBar from './SammoBar';
 import type { FrontCityInfo } from '@/lib/types';
 
 // NPC 이름 색상 — 레거시 hwe/ts/utilGame/getNPCColor.ts verbatim 포팅(npc_state → CSS color).
@@ -83,12 +84,7 @@ export default function CityBasicCard({ city }: CityBasicCardProps) {
                     <div className="mcd-metric-head">시세</div>
                     <div className="mcd-metric-body">
                         {city.trade != null && (
-                            <div className="mcd-bar">
-                                <div
-                                    className="mcd-bar-fill"
-                                    style={{ width: `${Math.min(100, Math.max(0, (city.trade - 95) * 10))}%` }}
-                                />
-                            </div>
+                            <SammoBar percent={Math.min(100, Math.max(0, (city.trade - 95) * 10))} height={7} />
                         )}
                         <div className="mcd-metric-text">{city.trade != null ? `${city.trade}%` : '상인 없음'}</div>
                     </div>

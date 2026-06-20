@@ -14,6 +14,14 @@ import CommandModal from '../CommandModal';
 
 const DEFAULT_VIEW_TURNS = 14; // legacy flippedMaxTurn
 
+function outcomeReason(out: { reason?: unknown }): string | null {
+    return typeof out.reason === 'string' && out.reason.length > 0 ? out.reason : null;
+}
+
+function errorMessage(e: unknown): string {
+    return e instanceof Error ? e.message : '';
+}
+
 export interface PartialReservedCommandProps {
     /** Caller's own general id (front-info.general.generalId) — required to reserve. */
     generalId: number;
@@ -53,7 +61,7 @@ export default function PartialReservedCommand({
         let alive = true;
         setLoading(true);
         setError(null);
-        api.reservedCommands()
+        api.reservedCommands(generalId)
             .then((res) => {
                 if (!alive) return;
                 setSlots(res.slots ?? []);
@@ -122,7 +130,6 @@ export default function PartialReservedCommand({
             </div>
 
             <div className="rcp-actions">
-                <button type="button" onClick={() => setEditTurnIdx(0)}>명령</button>
                 {total > DEFAULT_VIEW_TURNS && (
                     <button type="button" onClick={() => setExpanded((v) => !v)}>
                         {expanded ? '접기' : '펼치기'}
@@ -148,10 +155,10 @@ export default function PartialReservedCommand({
                                     setRefreshKey((k) => k + 1);
                                     onReserved?.();
                                 } else {
-                                    onToast((out as any).reason || '적용할 수 없습니다.', 'error');
+                                    onToast(outcomeReason(out) ?? '적용할 수 없습니다.', 'error');
                                 }
-                            } catch (e: any) {
-                                onToast('요청에 실패했습니다: ' + (e?.message || ''), 'error');
+                            } catch (e: unknown) {
+                                onToast('요청에 실패했습니다: ' + errorMessage(e), 'error');
                             }
                         }}
                     >
@@ -175,10 +182,10 @@ export default function PartialReservedCommand({
                                     setRefreshKey((k) => k + 1);
                                     onReserved?.();
                                 } else {
-                                    onToast((out as any).reason || '적용할 수 없습니다.', 'error');
+                                    onToast(outcomeReason(out) ?? '적용할 수 없습니다.', 'error');
                                 }
-                            } catch (e: any) {
-                                onToast('요청에 실패했습니다: ' + (e?.message || ''), 'error');
+                            } catch (e: unknown) {
+                                onToast('요청에 실패했습니다: ' + errorMessage(e), 'error');
                             }
                         }}
                     >

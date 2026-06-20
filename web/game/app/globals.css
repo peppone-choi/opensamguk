@@ -647,7 +647,7 @@ input:focus, select:focus, textarea:focus {
   flex-direction: column;
   gap: 0;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -686,7 +686,7 @@ input:focus, select:focus, textarea:focus {
 
 .main-status {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-subtle);
@@ -1016,6 +1016,7 @@ input:focus, select:focus, textarea:focus {
   display: block;
   text-decoration: none;
 }
+.city-base:hover { text-decoration: none; }
 .city-base:focus { outline: none; }
 .city-base:focus-visible { outline: 2px solid #fff; outline-offset: 1px; border-radius: 4px; }
 /* 미보급(supply=false) 도시 — devsam-core2026 .supply-off{opacity:0.6} 그대로(opacity만). */
@@ -1024,6 +1025,15 @@ input:focus, select:focus, textarea:focus {
 .city-aura { position: absolute; z-index: 1; pointer-events: none; border-radius: 50%; }
 /* 아이콘 컨테이너(city_img) — 깃발/상태/이름의 위치 기준(레거시 .city_img position:absolute). */
 .city-img { position: absolute; z-index: 2; }
+.city-filler {
+  position: absolute;
+  z-index: 6;
+  left: -1px;
+  top: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  pointer-events: none;
+}
 /* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */
 .city-cast {
   position: absolute;
@@ -1079,7 +1089,7 @@ input:focus, select:focus, textarea:focus {
 /* 2) 클릭 비활성(disallowClick) — 레거시 clickable=0 → cursor default(MapCityDetail.vue:23). */
 .city-noclick { cursor: default; }
 /* 3) 내(현재) 도시 blink 링 — 레거시 .my_city before/after outline 점멸(map.scss:231-262). */
-.city-img.my-city::before {
+.city-filler.my-city::before {
   content: "";
   position: absolute;
   top: -2px; left: -2px; right: -2px; bottom: -2px;
@@ -1087,7 +1097,7 @@ input:focus, select:focus, textarea:focus {
   animation: blink-my-city-d1 3.9s infinite;
   pointer-events: none;
 }
-.city-img.my-city::after {
+.city-filler.my-city::after {
   content: "";
   position: absolute;
   top: -2px; left: -2px; right: -2px; bottom: -2px;
@@ -1201,6 +1211,27 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 2px;
 }
 .mcd-bar-fill { height: 100%; background: var(--gold); }
+.sammo-bar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin: 0 auto 2px;
+  overflow: hidden;
+  border-top: 1px solid #888;
+  border-bottom: 1px solid #333;
+}
+.sammo-bar-base,
+.sammo-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-repeat: repeat-x;
+}
+.sammo-bar-base {
+  width: 100%;
+  background-position: center;
+}
+.sammo-bar-fill { background-position: left center; }
 .mcd-metric-text { text-align: center; line-height: 1.2; }
 .mcd-empty {
   display: flex;
@@ -1233,7 +1264,7 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 1fr;
   gap: 0;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
   align-items: start;
@@ -1247,7 +1278,7 @@ input:focus, select:focus, textarea:focus {
 .ib-map,
 .ib-reserved,
 .ib-controlbar { width: 100%; }
-@media (max-width: 999px) {
+@media (max-width: 1199px) {
   .ib-map { grid-row: 1; }
   .ib-reserved { grid-row: 2; }
   .ib-controlbar { grid-row: 3; }
@@ -1255,9 +1286,9 @@ input:focus, select:focus, textarea:focus {
   .ib-nation { grid-row: 5; }
   .ib-general { grid-row: 6; }
 }
-@media (min-width: 1000px) {
+@media (min-width: 1200px) {
   .ingame-board {
-    grid-template-columns: 500px 200px 300px;
+    grid-template-columns: 700px 200px 300px;
     gap: 0;
   }
   .ib-map { grid-column: 1 / 3; grid-row: 1; }
@@ -1271,7 +1302,7 @@ input:focus, select:focus, textarea:focus {
 .ib-map .map-viewer { border-radius: 0; }
 .main-page-content {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -1358,6 +1389,29 @@ input:focus, select:focus, textarea:focus {
 }
 .general-basic-card .basic-card-row-wide .basic-card-body { grid-column: span 5; }
 .nation-basic-card .basic-card-row-wide .basic-card-body { grid-column: span 3; }
+.general-basic-card .basic-card-section-head {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+.stat-value-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+.stat-value-cell-with-bar {
+  display: grid;
+  grid-template-columns: minmax(2.4rem, auto) minmax(2.6rem, 1fr);
+}
+.stat-value-text {
+  white-space: nowrap;
+}
+.stat-exp-bar,
+.level-exp-bar {
+  min-width: 2.6rem;
+}
 .general-card-head {
   display: grid;
   grid-template-columns: 64px 1fr;
@@ -1384,6 +1438,7 @@ input:focus, select:focus, textarea:focus {
 .bc-no { color: red; }
 /* 통솔보너스(+lbonus) — 레거시 cyan. */
 .bc-bonus { color: cyan; }
+.bc-penalty { color: magenta; }
 /* 도시 카드 머리(레거시 cityNamePanel/nationNamePanel) — 국가색 배경, 굵게. */
 .city-basic-card .basic-card-name + .basic-card-name { border-top: 1px solid var(--bg-card); }
 /* Reserved-command panel (PartialReservedCommand) — 5-col ring table. */

@@ -47,8 +47,14 @@ import opensamguk.common.constants.getCityLevelList
 import opensamguk.logic.domestic.getBillByLevel
 import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
+import opensamguk.logic.items.ItemRegistry
+import opensamguk.logic.stats.GeneralActionModuleFactory
+import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.traits.NationTypeModule
 import opensamguk.logic.traits.NationTypeRegistry
+import opensamguk.logic.traits.PersonalityRegistry
+import opensamguk.logic.traits.SpecialDomesticRegistry
+import opensamguk.logic.war.specialty.SpecialWarRegistry
 import opensamguk.logic.world.SpecialityHelper
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.beans.factory.annotation.Value
@@ -59,6 +65,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.Instant
+import kotlin.math.truncate
 
 /**
  * F2 Wave 1 — `GET /api/front-info` (spec §3): the per-refresh envelope the `/game` main screen renders.
@@ -145,13 +152,13 @@ class FrontInfoController(
             if (general.nationId != 0) nations.findById(general.nationId).orElse(null) else null
         val cityEntity: CityReadEntity? =
             if (general.cityId != 0) cities.findById(general.cityId).orElse(null) else null
-        val nationLevel = nationEntity?.level ?: 0
+        val relativeYear = (global.year - (global.startyear ?: global.year)).coerceAtLeast(0)
 
         return ResponseEntity.ok(
             FrontInfoResponse(
                 result = true,
                 global = global,
-                general = buildGeneral(general, permission, nationLevel),
+                general = buildGeneral(general, permission, nationEntity, relativeYear),
                 nation = nationEntity?.let { buildNation(it) },
                 city = cityEntity?.let { buildCity(it) },
                 recentRecord = buildRecentRecord(
@@ -237,7 +244,12 @@ class FrontInfoController(
      * W3 — PHP `generateGeneralInfo`의 enrich 포팅. 실 컬럼/meta 파생값 + F2 rank_data 전투통계.
      * BLOCKED 필드(dex/refresh/defence_train/autorun/reservedCommand)는 DTO 기본값(null)을 그대로 둔다.
      */
-    private fun buildGeneral(g: GeneralReadEntity, permission: Int, nationLevel: Int): FrontGeneralInfo {
+    private fun buildGeneral(
+        g: GeneralReadEntity,
+        permission: Int,
+        nation: NationReadEntity?,
+        relativeYear: Int,
+    ): FrontGeneralInfo {
         // rank_data READ(F2) — 전투 통계 6종. (general_id, type) UNIQUE이므로 type별 단일 값, 미기록=0.
         val rankByType = ranks.findByGeneralId(g.id).associate { it.type to it.value }
 
@@ -245,6 +257,8 @@ class FrontInfoController(
         // 데몬이 안 쓴 키는 null(부재 = 미기록). intOrNull로 안전 변환, 값 날조 없음.
         val meta = g.meta
         val dedLevel = getDedLevel(g.dedication.toDouble())
+        val nationLevel = nation?.level ?: 0
+        val statBonuses = displayStatBonuses(g, nation, relativeYear)
 
         return FrontGeneralInfo(
             hasGeneral = true,
@@ -310,6 +324,14 @@ class FrontInfoController(
             dedLevelText = getDedLevelText(dedLevel),
             lbonus = calcLeadershipBonus(g.officerLevel, nationLevel),
             bill = getBillByLevel(dedLevel),
+            leadershipExp = doubleOrNull(meta["leadership_exp"]) ?: 0.0,
+            strengthExp = doubleOrNull(meta["strength_exp"]) ?: 0.0,
+            intelExp = doubleOrNull(meta["intel_exp"]) ?: 0.0,
+            leadershipBonus = statBonuses.leadership,
+            strengthBonus = statBonuses.strength,
+            intelBonus = statBonuses.intel,
+            politicsBonus = statBonuses.politics,
+            charmBonus = statBonuses.charm,
 
             // 전투 통계(rank_data) — 미기록 type은 0.
             warnum = rankByType["warnum"] ?: 0,
@@ -323,6 +345,52 @@ class FrontInfoController(
             troopInfo = buildTroopInfo(g),
 
             // BLOCKED(dex1-5/refreshScore*/defenceTrain/autorunLimit/reservedCommand)는 DTO 기본 null 유지.
+        )
+    }
+
+    private data class DisplayStatBonuses(
+        val leadership: Int,
+        val strength: Int,
+        val intel: Int,
+        val politics: Int,
+        val charm: Int,
+    )
+
+    private fun displayStatBonuses(
+        g: GeneralReadEntity,
+        nation: NationReadEntity?,
+        relativeYear: Int,
+    ): DisplayStatBonuses {
+        val logicGeneral = g.toLogic().copy(
+            officerCity = g.officerCity,
+            politics = g.politics,
+            charm = g.charm,
+        )
+        val modules = GeneralActionModuleFactory(
+            nationTypeRegistry = NationTypeRegistry,
+            specialDomesticRegistry = SpecialDomesticRegistry,
+            personalityRegistry = PersonalityRegistry(),
+            itemRegistry = ItemRegistry { relativeYear },
+            specialWarRegistry = SpecialWarRegistry,
+        ).build(
+            general = logicGeneral,
+            nationTypeCode = nation?.typeCode,
+            specialDomesticCode = g.specialCode,
+            personalityCode = g.personalCode,
+            nationLevel = nation?.level ?: 0,
+            officerCity = g.officerCity,
+            specialWarCode = g.special2Code,
+        )
+        val pipeline = GeneralActionPipeline(modules)
+        fun bonus(statName: String, base: Int): Int =
+            truncate(pipeline.onCalcStat(logicGeneral, statName, base.toDouble())).toInt() - base
+
+        return DisplayStatBonuses(
+            leadership = bonus("leadership", g.leadership),
+            strength = bonus("strength", g.strength),
+            intel = bonus("intel", g.intel),
+            politics = bonus("politics", g.politics),
+            charm = bonus("charm", g.charm),
         )
     }
 
@@ -544,7 +612,7 @@ class FrontInfoController(
             voteReward = develCostVal?.let { it * 5 },
             noticeMsg = config["msg"]?.toString(),
             onlineUserCnt = intOrNull(config["online_user_cnt"]),
-            startyear = intOrNull(config["startyear"]),
+            startyear = w?.startYear ?: intOrNull(config["startyear"]),
             generalCntLimit = intOrNull(config["maxgeneral"]),
             blockGeneralCreate = intOrNull(config["block_general_create"]),
             apiLimit = intOrNull(config["refreshLimit"]),
@@ -617,6 +685,12 @@ class FrontInfoController(
     private fun intOrNull(v: Any?): Int? = when (v) {
         is Number -> v.toInt()
         is String -> v.toIntOrNull()
+        else -> null
+    }
+
+    private fun doubleOrNull(v: Any?): Double? = when (v) {
+        is Number -> v.toDouble()
+        is String -> v.toDoubleOrNull()
         else -> null
     }
 

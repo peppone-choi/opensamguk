@@ -217,6 +217,49 @@ class FrontInfoControllerTest {
     }
 
     @Test
+    fun `resolved general exposes stat exp bars and signed display bonuses`() {
+        seedWorld()
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(
+                GeneralReadEntity(
+                    id = 10,
+                    name = "순욱",
+                    nationId = 1,
+                    cityId = 5,
+                    officerLevel = 5,
+                    leadership = 70,
+                    strength = 60,
+                    intel = 80,
+                    politics = 55,
+                    charm = 45,
+                    horseCode = "che_명마_02_절영",
+                    weaponCode = "che_무기_03_청강검",
+                    bookCode = "che_서적_04_맹덕신서",
+                    meta = linkedMapOf(
+                        "leadership_exp" to 15.5,
+                        "strength_exp" to 2,
+                        "intel_exp" to "29.25",
+                    ),
+                ),
+            ),
+        )
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+
+        mockMvc().perform(get("/api/front-info").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.general.leadershipExp").value(15.5))
+            .andExpect(jsonPath("$.general.strengthExp").value(2.0))
+            .andExpect(jsonPath("$.general.intelExp").value(29.25))
+            .andExpect(jsonPath("$.general.leadershipBonus").value(9))
+            .andExpect(jsonPath("$.general.strengthBonus").value(3))
+            .andExpect(jsonPath("$.general.intelBonus").value(4))
+            .andExpect(jsonPath("$.general.politicsBonus").value(0))
+            .andExpect(jsonPath("$.general.charmBonus").value(0))
+    }
+
+    @Test
     fun `front-info returns legacy recent record feeds`() {
         seedWorld()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))

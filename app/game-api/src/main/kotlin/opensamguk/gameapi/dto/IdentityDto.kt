@@ -240,6 +240,15 @@ data class FrontGeneralInfo(
     val lbonus: Int? = null, // calcLeadershipBonus(officer_level, nationLevel)
     val bill: Int? = null, // getBillByLevel(getDedLevel(dedication))
 
+    val leadershipExp: Double? = null,
+    val strengthExp: Double? = null,
+    val intelExp: Double? = null,
+    val leadershipBonus: Int? = null,
+    val strengthBonus: Int? = null,
+    val intelBonus: Int? = null,
+    val politicsBonus: Int? = null,
+    val charmBonus: Int? = null,
+
     // 전투 통계 — F2 RankDataReadRepository(rank_data READ 경로)로 채운다. 미기록 type은 0.
     val warnum: Int? = null,
     val killnum: Int? = null,

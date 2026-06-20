@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { formatNumber } from '@/lib/format';
 import type { CityDetailResponse, MapPreviewCity } from '@/lib/types';
+import SammoBar from './SammoBar';
 
 // Level → 치소 등급 label (legacy cityConstMap.level). lv 4 = 이민족 전용 "이"; 한족 군 치소는 lv 5 "소".
 const LEVEL_TEXT: Record<number, string> = {
@@ -66,9 +67,7 @@ function MetricRow({ m }: { m: Metric }) {
         <div className="mcd-metric">
             <div className="mcd-metric-head">{m.label}</div>
             <div className="mcd-metric-body">
-                <div className="mcd-bar">
-                    <div className="mcd-bar-fill" style={{ width: `${pct}%` }} />
-                </div>
+                <SammoBar percent={pct} height={7} />
                 <div className="mcd-metric-text">
                     {m.barOnlyMax
                         ? m.cur.toLocaleString(undefined, { maximumFractionDigits: 1 })
@@ -197,14 +196,7 @@ export default function MapCityDetail({
                         <div className="mcd-metric-head">시세</div>
                         <div className="mcd-metric-body">
                             {detail.trade != null && (
-                                <div className="mcd-bar">
-                                    <div
-                                        className="mcd-bar-fill"
-                                        style={{
-                                            width: `${Math.min(100, Math.max(0, (detail.trade - 95) * 10))}%`,
-                                        }}
-                                    />
-                                </div>
+                                <SammoBar percent={Math.min(100, Math.max(0, (detail.trade - 95) * 10))} height={7} />
                             )}
                             <div className="mcd-metric-text">
                                 {detail.trade != null ? `${detail.trade}%` : '상인 없음'}

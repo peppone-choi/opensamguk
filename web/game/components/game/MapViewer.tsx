@@ -508,12 +508,12 @@ export default function MapViewer({
                                     />
                                 )}
 
-                                {/* 아이콘 컨테이너(city_img) — 깃발/상태/이름이 모두 이 안에서 아이콘 기준 위치(레거시 DOM 구조).
-                                    내 도시는 my-city(레거시 .my_city — map.scss:231-262 outline 점멸 링). */}
+                                {/* 아이콘 컨테이너(city_img) — 깃발/상태/이름이 모두 이 안에서 아이콘 기준 위치(레거시 DOM 구조). */}
                                 <div
-                                    className={`city-img${isMyCity ? ' my-city' : ''}`}
+                                    className="city-img"
                                     style={{ left: imgLeft, top: imgTop, width: sz.iconW, height: sz.iconH }}
                                 >
+                                    <div className={`city-filler${isMyCity ? ' my-city' : ''}`} />
                                     {/* 2) 성 아이콘 cast_<level>.gif — city_img를 채움(픽셀아트). */}
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img className="city-cast" src={`${ICON_CDN}/cast_${c.level}.gif`} alt="" draggable={false} />

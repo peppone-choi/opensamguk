@@ -130,6 +130,14 @@ export interface FrontGeneralInfo {
     dedLevelText?: string | null;     // getDed(dedication) — 공헌
     lbonus?: number | null;           // calcLeadershipBonus(officer_level, nationLevel) — 통솔보너스
     bill?: number | null;             // getBillByLevel(getDedLevel(dedication))
+    leadershipExp?: number | null;
+    strengthExp?: number | null;
+    intelExp?: number | null;
+    leadershipBonus?: number | null;
+    strengthBonus?: number | null;
+    intelBonus?: number | null;
+    politicsBonus?: number | null;
+    charmBonus?: number | null;
     // ── 전투 통계 (IdentityDto.kt FrontGeneralInfo war stats) ──
     warnum?: number | null;           // 전투 횟수
     killnum?: number | null;          // 승리 횟수
