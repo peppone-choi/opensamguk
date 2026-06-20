@@ -1,6 +1,6 @@
 # Chief Research Command Parity Review — 2026-06-20
 
-Verdict: cleared locally, pending deploy QA
+Verdict: cleared
 
 ## Scope
 
@@ -42,5 +42,9 @@ The Kotlin port mixed two separate concepts: `event_*연구` actions exist in th
 - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test --tests opensamguk.common.constants.GameConstTest :app:game-api:test --tests opensamguk.gameapi.reserve.CommandQueueTest --tests opensamguk.gameapi.read.F4StateTextChiefTest --tests opensamguk.gameapi.controller.F4ReadControllersTest --tests opensamguk.gameapi.web.AvailableCommandsControllerTest --rerun-tasks`
 - `git diff --check`
 - `tools/agent-system/check.py --strict --base origin/main --format json`
+- PR #122 CI: agent-system, jvm, web-gateway, and web-game all passed.
+- Main deploy run `27838423051`: shared deploy success, preserve game server pins, health + s1 turn-advance success.
+- s1 promotion: `currentTag=5961295038cec09468afec2cc35c3091deb32999`.
+- Production API QA after auth/proxy repair: joining QA general returned `202`, front-info returned `hasGeneral=true/generalId=1679`, and `/api/game/api/nation/chief-reserved` returned HTTP 200 with six command categories: `휴식`, `인사`, `외교`, `특수`, `전략`, `기타`; no `연구` or `event_극병연구` text.
 
-Deploy verification remains required: after merge/deploy and s1 promotion, check `/api/nation/chief-reserved` has six command categories and nation bulk rejects `event_극병연구` with `사용할 수 없는 커맨드입니다.`
+Residual risk: the live QA general is 재야, so this confirms the rendered chief command catalog shape; the mutation-level rejection is covered by `CommandQueueTest`.
