@@ -123,6 +123,7 @@ export interface FrontGeneralInfo {
     explevel?: number | null;          // Lv(meta.explevel)
     dedlevel?: number | null;          // meta.dedlevel
     killturn?: number | null;          // 삭턴(meta.killturn)
+    defenceTrain?: number | null;
     officerLevelText?: string | null; // getOfficerLevelText(officer_level, nationLevel)
     honorText?: string | null;        // getHonor(experience) — 호칭
     dedLevelText?: string | null;     // getDed(dedication) — 공헌
@@ -433,6 +434,8 @@ export interface MyPageResponse {
     leadership: number;
     strength: number;
     intel: number;
+    politics?: number;
+    charm?: number;
     injury: number;
     experience: number;
     dedication: number;
