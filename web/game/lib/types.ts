@@ -381,6 +381,12 @@ export interface GameConstResponse {
     mapWidth: number;
     mapHeight: number;
     maxTurn: number;
+    gameConst?: {
+        maxTechLevel?: number;
+        initialAllowedTechLevel?: number;
+        techLevelIncYear?: number;
+        [key: string]: unknown;
+    };
     // 직책 라벨 기본열 — 정본 F4StateText(PHP func_converter.php getOfficerLevelText) 직렬화.
     // 와이어 모양 = legacy hwe/ts/utilGame/formatOfficerLevelText.ts OfficerLevelMapDefault.
     officerLevelText: Record<number, string>;

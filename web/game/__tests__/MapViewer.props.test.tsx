@@ -25,7 +25,7 @@ vi.mock('@/lib/flagTint', () => ({
     ),
 }));
 
-import MapViewer, { mapTitleColor, seasonOf } from '@/components/game/MapViewer';
+import MapViewer, { mapTitleColor, mapTitleTooltip, seasonOf } from '@/components/game/MapViewer';
 
 const NATION_RED = '#ff0000';
 const NATION_BLUE = '#0000ff';
@@ -148,6 +148,22 @@ describe('MapViewer — 레거시 박스 구조(map_title + 700x500 map_body)', 
         expect(mapTitleColor(200, 201)).toBe('orange');
         expect(mapTitleColor(200, 202)).toBe('yellow');
         expect(mapTitleColor(200, 203)).toBeUndefined();
+    });
+
+    it('연월 제목 툴팁은 초반제한과 기술등급 제한을 legacy MapViewer.vue 공식으로 노출한다', async () => {
+        const gameConst = { maxTechLevel: 12, initialAllowedTechLevel: 1, techLevelIncYear: 5 };
+        expect(mapTitleTooltip(200, 200, 5, gameConst)).toBe(
+            '초반제한 기간 : 2년 8개월 (203년)\n기술등급 제한 : 1등급 (205년 해제)',
+        );
+
+        render(<MapViewer mapData={{ ...MAP_FIXTURE, startYear: 200 }} gameConst={gameConst} />);
+        await waitFor(() => expect(getCanvas()).toBeTruthy());
+
+        const title = screen.getByText('200年 5月');
+        expect(title).toHaveAttribute(
+            'title',
+            '초반제한 기간 : 2년 8개월 (203년)\n기술등급 제한 : 1등급 (205년 해제)',
+        );
     });
 });
 

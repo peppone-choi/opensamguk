@@ -84,7 +84,13 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
 
             <div className="ingame-board">
                 <div className="ib-map">
-                    <MapViewer live showMe={1} refreshKey={refreshKey} currentCityId={city?.id ?? null} />
+                    <MapViewer
+                        live
+                        showMe={1}
+                        refreshKey={refreshKey}
+                        currentCityId={city?.id ?? null}
+                        gameConst={constData?.gameConst}
+                    />
                 </div>
 
                 <div className="ib-reserved">

@@ -26,10 +26,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { MAP_CDN, ICON_CDN } from '@/lib/constants';
-import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
+import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { tintFlag, FLAG_FRAMES } from '@/lib/flagTint';
 import { useServerGameUrl } from '@/lib/serverGameUrl';
 import cityRegionsData from '@/config/cityRegions.json';
+import { getMaxRelativeTechLevel } from '@/lib/utilGame';
 
 // 도시 id → 지역명(지리 속성, 소유 무관). 툴팁에 지역 라벨 표시. gateway MapPreview와 동일 자산.
 const CITY_REGIONS = cityRegionsData.regions as Record<string, string>;
@@ -107,6 +108,62 @@ export function mapTitleColor(startYear: number | undefined, year: number): stri
     return undefined;
 }
 
+type MapTitleGameConst = NonNullable<GameConstResponse['gameConst']>;
+
+function joinYearMonth(year: number, month: number): number {
+    return year * 12 + (month - 1);
+}
+
+function parseYearMonth(yearMonth: number): [number, number] {
+    return [Math.trunc(yearMonth / 12), (yearMonth % 12) + 1];
+}
+
+function beginGameLimitTooltip(startYear: number | undefined, year: number, month: number): string | undefined {
+    if (startYear == null || year > startYear + 3) return undefined;
+    const [remainYear, remainMonth] = parseYearMonth(
+        joinYearMonth(startYear + 3, 0) - joinYearMonth(year, month),
+    );
+    return `초반제한 기간 : ${remainYear}년${remainMonth > 0 ? ` ${remainMonth}개월` : ''} (${startYear + 3}년)`;
+}
+
+export function mapTitleTooltip(
+    startYear: number | undefined,
+    year: number,
+    month: number,
+    gameConst?: MapTitleGameConst | null,
+): string | undefined {
+    const result: string[] = [];
+    const beginLimit = beginGameLimitTooltip(startYear, year, month);
+    if (beginLimit) result.push(beginLimit);
+
+    const maxTechLevel = gameConst?.maxTechLevel;
+    const initialAllowedTechLevel = gameConst?.initialAllowedTechLevel;
+    const techLevelIncYear = gameConst?.techLevelIncYear;
+    if (
+        startYear != null &&
+        typeof maxTechLevel === 'number' &&
+        typeof initialAllowedTechLevel === 'number' &&
+        typeof techLevelIncYear === 'number' &&
+        techLevelIncYear > 0
+    ) {
+        const currentTechLimit = getMaxRelativeTechLevel(
+            startYear,
+            year,
+            maxTechLevel,
+            initialAllowedTechLevel,
+            techLevelIncYear,
+        );
+        if (currentTechLimit === maxTechLevel) {
+            result.push(`기술등급 제한 : ${currentTechLimit}등급 (최종)`);
+        } else {
+            const nextTechLimitYear = currentTechLimit * techLevelIncYear + startYear;
+            result.push(`기술등급 제한 : ${currentTechLimit}등급 (${nextTechLimitYear}년 해제)`);
+        }
+    }
+
+    return result.length ? result.join('\n') : undefined;
+}
+
 // 레거시 state/mapViewer.ts 패러티 — 토글 상태는 localStorage('yes'/'no')에 영속.
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 const LS_SINGLE_TAP = 'sam.toggleSingleTap';
@@ -126,6 +183,7 @@ export interface MapViewerProps {
     showMe?: 0 | 1;
     /** 재조회 트리거 — 값이 바뀌면 다시 fetch(레거시 refreshCounter watch). */
     refreshKey?: number;
+    gameConst?: MapTitleGameConst | null;
 }
 
 // 라이브 머지 — preview(좌표/이름 베이스)에 /api/map 라이브 tuple 을 id 로 덮어쓴다.
@@ -172,6 +230,7 @@ export default function MapViewer({
     live = false,
     showMe = 1,
     refreshKey = 0,
+    gameConst,
 }: MapViewerProps = {}) {
     const cityBaseHref = useServerGameUrl('city');
     const [data, setData] = useState<MapPreviewResponse | null>(null);
@@ -358,10 +417,16 @@ export default function MapViewer({
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
     const titleText = `${data.year}年 ${data.month}月`;
+    const titleTooltip = mapTitleTooltip(data.startYear, data.year, data.month, gameConst);
 
     return (
         <section className={`map-viewer${hideCityName ? ' hide-cityname' : ''}`} aria-label="세계 지도">
-            <div className="map-viewer-title" style={{ color: mapTitleColor(data.startYear, data.year) }}>
+            <div
+                className="map-viewer-title"
+                style={{ color: mapTitleColor(data.startYear, data.year) }}
+                title={titleTooltip}
+                aria-label={titleTooltip ? `${titleText} ${titleTooltip.replace(/\n/g, ' ')}` : titleText}
+            >
                 {titleText}
             </div>
             <div
