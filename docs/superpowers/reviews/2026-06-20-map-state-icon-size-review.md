@@ -5,7 +5,7 @@ Verdict: cleared
 ## Skill Chain
 
 - `opensamguk-php-oracle`: legacy `hwe/ts/components/MapCityDetail.vue` and `hwe/scss/map.scss` state-icon rendering were used as the oracle.
-- `webapp-testing`: production `/game/s1` will be remeasured after promotion because the current deployed tag still has the oversized state icon path.
+- `webapp-testing`: production `/game/s1/map` was remeasured after promotion; current world data has no `state > 0` cities, so live state-icon bounding boxes were not observable.
 - `systematic-debugging`: root cause was isolated to the state icon missing the existing map icon scale path.
 - `loop-engineering`: baseline evidence -> one hypothesis -> local gates -> production adoption wait.
 
@@ -43,4 +43,13 @@ Current source before this loop scaled city cast icons with `ICON_SCALE=0.72`, b
 
 ## Adoption Status
 
-Pending PR merge, deploy, server promotion, and production browser remeasurement.
+Accepted after production merge/deploy/promotion, with the data-condition caveat above.
+
+- PR #130 merged to main as `c7fafb4a485aec6c1c197d8b7954eb8f6e590e52`.
+- Deploy run `27860548398` passed: JVM image build/push, web image build/push, shared stack deploy, pin preservation, health + `s1` turn verification.
+- Admin deploy promoted `s1` from `eec1b6c91b49b35f9d1e53cde172040e47cee6bf` to `c7fafb4a485aec6c1c197d8b7954eb8f6e590e52`.
+- `/health` returned `status=up`, `nginx=ok`.
+- Live `/api/game/api/map?server=s1&neutralView=0&showMe=1` returned 94 cities and `state > 0` count 0.
+- Live `/game/s1/map` rendered map title `187年 1月`, city anchors 94, city buttons 0, first href `/game/s1/city?id=1`.
+- Because current production data has no state icons, `.city-state` live count was 0. The state icon size itself is pinned by `MapViewer.props.test.tsx` with `state=6` expecting `width=11` and `height=11`.
+- First city click committed to `/game/s1/city?id=1` and rendered `도시 정보`.
