@@ -410,6 +410,25 @@ data class InheritSetNextSpecialWarFail(
 ) : TurnDaemonCommandResult()
 
 @Serializable
+data class ResetStatOk(
+    override val type: String = "resetStat",
+    override val ok: Boolean = true,
+    val generalId: Int,
+    val spent: Int,
+    val leadership: Int,
+    val strength: Int,
+    val intel: Int,
+) : TurnDaemonCommandResult()
+
+@Serializable
+data class ResetStatFail(
+    override val type: String = "resetStat",
+    override val ok: Boolean = false,
+    val generalId: Int,
+    val reason: String,
+) : TurnDaemonCommandResult()
+
+@Serializable
 data class BuyHiddenBuffOk(
     override val type: String = "buyHiddenBuff",
     override val ok: Boolean = true,
@@ -587,6 +606,7 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "inheritResetTurnTime" -> if (ok) InheritResetTurnTimeOk.serializer() else InheritResetTurnTimeFail.serializer()
             "inheritResetSpecialWar" -> if (ok) InheritResetSpecialWarOk.serializer() else InheritResetSpecialWarFail.serializer()
             "inheritSetNextSpecialWar" -> if (ok) InheritSetNextSpecialWarOk.serializer() else InheritSetNextSpecialWarFail.serializer()
+            "resetStat" -> if (ok) ResetStatOk.serializer() else ResetStatFail.serializer()
             "buyHiddenBuff" -> if (ok) BuyHiddenBuffOk.serializer() else BuyHiddenBuffFail.serializer()
             "buyRandomUnique" -> if (ok) BuyRandomUniqueOk.serializer() else BuyRandomUniqueFail.serializer()
             "auctionFinalize" -> if (ok) AuctionFinalizeOk.serializer() else AuctionFinalizeFail.serializer()

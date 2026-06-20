@@ -193,19 +193,17 @@
 
 ## Cross-cutting intake-family note (not PHP command classes)
 
-The intake-wiring pass confirmed the immediate-intake seam is **fully symmetric** — all 24
-`CommandWireMapper.intakeCodes` map 1:1 to a `TurnDaemonCommand` variant with a matching
-dispatcher branch. These NON-`che_` camelCase codes back the F4 mutation pages and are tracked
-here for the wave plan, separate from the per-PHP-command rows:
+The intake-wiring pass tracks immediate-intake codes separately from the per-PHP `che_` command
+rows. An intake code is DONE only when `CommandWireMapper.intakeCodes` maps to a typed
+`TurnDaemonCommand` variant and the dispatcher has a matching handler branch.
 
 - **DONE (working FE + intake):** `setNotice` `setScoutMsg` `setRate` `setBill` `setSecretLimit`
   `setBlockWar` `setBlockScout` (nation-finance) · `troopNew` `troopJoin` `troopExit` `troopKick`
   `troopSetName` (troop) · `boardArticle` `boardComment` (board) · `newVote` `voteCast`
   `voteComment` `voteClose` (vote, VoteLottery golden green) · `inheritResetTurnTime`
-  `inheritResetSpecialWar` `inheritSetNextSpecialWar` (inherit) · `tournamentEnroll`.
+  `inheritResetSpecialWar` `inheritSetNextSpecialWar` `ResetStat` (inherit) · `BuyHiddenBuff`
+  `BuyRandomUnique` (inherit buy) · `placeBet` · `auctionBid` · `tournamentEnroll`.
 - **WIRING_MISSING (intake handler exists, FE posts the WRONG code → silent RestAction no-op):**
-  `placeBet` (betting/page.tsx posts `bet`), `auctionBid` (auction/page.tsx posts `auction_bid`),
-  `BuyHiddenBuff` / `BuyRandomUnique` (inherit/nation pages post these but they are neither
-  intakeCodes nor registered che_), `tournament_start/advance/reset` (tournament-admin posts
+  `tournament_start/advance/reset` (tournament-admin posts
   unregistered codes). `AuctionFinalize` is dispatcher-bound but daemon-internal (no intake) by
   design — not a gap.

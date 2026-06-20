@@ -54,6 +54,7 @@ object CommandWireMapper {
         "inheritResetTurnTime",
         "inheritResetSpecialWar",
         "inheritSetNextSpecialWar",
+        "ResetStat",
         // 유산 포인트 구매 — FE(inherit/nation page)가 PHP API 이름 그대로 BuyHiddenBuff/BuyRandomUnique 전송.
         "BuyHiddenBuff",
         "BuyRandomUnique",
@@ -180,6 +181,14 @@ object CommandWireMapper {
             )
             "inheritSetNextSpecialWar" -> TurnDaemonCommand.InheritSetNextSpecialWar(
                 requestId = requestId, generalId = generalId, specialWar = args.str("specialWar") ?: "",
+            )
+            "ResetStat" -> TurnDaemonCommand.ResetStat(
+                requestId = requestId,
+                generalId = generalId,
+                leadership = args.int("leadership") ?: 0,
+                strength = args.int("strength") ?: 0,
+                intel = args.int("intel") ?: 0,
+                inheritBonusStat = if ("inheritBonusStat" in args) args.intList("inheritBonusStat") else null,
             )
             // 유산 포인트 구매. FE는 `buffKey`(PHP arg `type`)+`level`을 전송. prevLevel은 클라가 보내도
             // 무시 — 엔진 핸들러가 general aux.inheritBuff에서 서버측으로 산출(PHP launch와 동일).

@@ -652,6 +652,19 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "inheritSetNextSpecialWar"
     }
 
+    @Serializable
+    @SerialName("resetStat")
+    data class ResetStat(
+        val requestId: String? = null,
+        val generalId: Int,
+        val leadership: Int,
+        val strength: Int,
+        val intel: Int,
+        val inheritBonusStat: List<Int>? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "resetStat"
+    }
+
     /**
      * 유산: 히든 버프 구매 (BuyHiddenBuff.php). 누적 차분 `inheritBuffPoints[level]-inheritBuffPoints[prevLevel]`
      * 만큼 inheritance `previous` 잔액을 차감하고 `aux.inheritBuff[buffKey]=level`을 적재한다. 뽑지 않음.

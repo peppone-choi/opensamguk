@@ -118,7 +118,25 @@ class TurnDaemonCommandDispatcher(
                 } ?: 0.0
         }
     } ?: { ownerId ->
-        ((world.getState().meta["inheritancePrevious"] as? Map<*, *>)?.get(ownerId) as? Number)?.toDouble() ?: 0.0
+        (ownerScopedMetaValue(world.getState().meta["inheritancePrevious"] as? Map<*, *>, ownerId) as? Number)
+            ?.toDouble()
+            ?: 0.0
+    }
+
+    private val lastStatResetReader: (Int) -> List<Int> = gameKvRepository?.let { repo ->
+        { ownerId: Int ->
+            repo.findByTable("user")
+                .firstOrNull { it.namespace == "user_$ownerId" && it.key == "last_stat_reset" }
+                ?.let { row ->
+                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*>)
+                        ?.mapNotNull { (it as? Number)?.toInt() }
+                }
+                ?: emptyList()
+        }
+    } ?: { ownerId ->
+        (ownerScopedMetaValue(world.getState().meta["lastStatReset"] as? Map<*, *>, ownerId) as? List<*>)
+            ?.mapNotNull { (it as? Number)?.toInt() }
+            ?: emptyList()
     }
 
     private val auctionBid = AuctionBidHandler(
@@ -149,7 +167,12 @@ class TurnDaemonCommandDispatcher(
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
     private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
-    private val inheritReset = InheritResetHandler(world, recorder)
+    private val inheritReset = InheritResetHandler(
+        world,
+        recorder,
+        previousPointReader = previousPointReader,
+        lastStatResetReader = lastStatResetReader,
+    )
 
     // ── F4 Wave C2 (slice B) — troop intake handler ──
     private val troop = TroopHandler(world, recorder)
@@ -302,6 +325,7 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
+        is TurnDaemonCommand.ResetStat -> inheritReset.handleResetStat(command)
         is TurnDaemonCommand.BuyHiddenBuff -> inheritReset.handleBuyHiddenBuff(command)
         is TurnDaemonCommand.BuyRandomUnique -> inheritReset.handleBuyRandomUnique(command)
         // ── F4 Wave C2 (slice B) troop intake bindings ──
@@ -360,3 +384,6 @@ class TurnDaemonCommandDispatcher(
     ): List<Pair<String, TurnDaemonCommandResult>> =
         envelopes.mapNotNull { env -> dispatch(env.command)?.let { env.requestId to it } }
 }
+
+private fun ownerScopedMetaValue(map: Map<*, *>?, ownerId: Int): Any? =
+    map?.get(ownerId) ?: map?.get(ownerId.toString())

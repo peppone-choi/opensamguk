@@ -55,8 +55,8 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
     });
 
     it('4xx는 reject — BE 본문의 실제 사유(error)를 그대로 싣는다', async () => {
-        mockFetchOnce(409, { error: '아직 배선되지 않은 즉시 액션입니다.', code: 'ResetStat' });
-        await expect(api.instantAction('ResetStat', 7, { leadership: 70 })).rejects.toThrow(
+        mockFetchOnce(409, { error: '아직 배선되지 않은 즉시 액션입니다.', code: 'CheckOwner' });
+        await expect(api.instantAction('CheckOwner', 7, {})).rejects.toThrow(
             '아직 배선되지 않은 즉시 액션입니다.',
         );
     });

@@ -32,7 +32,7 @@
 - **General/GetGeneralLog + Nation/GetGeneralLog** (paged action/battle/history) — 어느 인벤토리에도 없음 → W3/W4 read 또는 W9
 - **General/DieOnPrestart · DropItem · InstantRetreat** — 미배정 (DropItem/InstantRetreat은 PARITY_LEDGER 명령포트=W7 가능, DieOnPrestart prestart flow 미배정)
 - **Nation/SetScoutMsg** (등용 메시지) — intake code 없음, 미배정
-- **InheritAction/ResetStat·ResetTurnTime·ResetSpecialWar·SetNextSpecialWar** (×4) — 인벤토리는 BuyHiddenBuff/BuyRandomUnique만(W2/W5), Reset/Set 4종 미배정
+- **InheritAction/CheckOwner** — 유산포인트 NPC 소유권 이전 write 액션 미배정. `ResetStat`은 2026-06-20 바퀴68에서, ResetTurnTime/ResetSpecialWar/SetNextSpecialWar는 C2 intake로 배선 완료.
 - **Global/GetRecentRecord + GeneralListWithToken** — GetRecentRecord는 W3 DTO필드와 겹치나 REST route 미배정; GeneralListWithToken은 W6f와 모호
 - **Diplomacy letters: j_diplomacy_{send,rollback,destroy}_letter** (×3) — W5d FE에만, API 웨이브 없음
 - **j_board_article_add · j_board_comment_add** — board write 경로 미배정

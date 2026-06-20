@@ -159,6 +159,111 @@ object InheritResets {
             log = "$reqAmount 포인트로 다음 전투 특기로 $specialWarName 지정",
         )
     }
+
+    fun resetStat(
+        userId: Int,
+        leadership: Int,
+        strength: Int,
+        intel: Int,
+        inheritBonusStat: List<Int>?,
+        previousPoint: Double,
+        isUnited: Boolean,
+        season: Int,
+        lastStatReset: List<Int>,
+        npcType: Int,
+        hiddenSeed: String,
+    ): ResetStatOutcome {
+        if (
+            listOf(leadership, strength, intel).any {
+                it < GameConst.defaultStatMin || it > GameConst.defaultStatMax
+            }
+        ) {
+            return ResetStatOutcome.Denied("능력치가 잘못 지정되었습니다. 다시 입력해주세요!")
+        }
+        if (leadership + strength + intel != GameConst.defaultStatTotal) {
+            return ResetStatOutcome.Denied("능력치 총합이 ${GameConst.defaultStatTotal}이 아닙니다. 다시 입력해주세요!")
+        }
+
+        val explicitBonus = when (val b = normalizeBonus(inheritBonusStat)) {
+            is BonusInput.Denied -> return ResetStatOutcome.Denied(b.reason)
+            is BonusInput.Empty -> null
+            is BonusInput.Explicit -> b.values
+        }
+
+        if (npcType != 0) return ResetStatOutcome.Denied("NPC는 능력치 초기화를 할 수 없습니다.")
+        if (isUnited) return ResetStatOutcome.Denied("이미 천하가 통일되었습니다.")
+        if (season in lastStatReset) return ResetStatOutcome.Denied("이번 시즌에 이미 능력치를 초기화하셨습니다.")
+
+        val reqAmount = if (explicitBonus != null) GameConst.inheritBornStatPoint else 0
+        if (previousPoint < reqAmount) {
+            return ResetStatOutcome.Denied("충분한 유산 포인트를 가지고 있지 않습니다.")
+        }
+
+        val bonus = explicitBonus ?: drawResetStatBonus(userId, leadership, strength, intel, hiddenSeed)
+        val bonusLog = if (explicitBonus != null) {
+            "${reqAmount}로 통솔 ${bonus[0]}, 무력 ${bonus[1]}, 지력 ${bonus[2]} 보너스 능력치 적용"
+        } else {
+            "통솔 ${bonus[0]}, 무력 ${bonus[1]}, 지력 ${bonus[2]} 보너스 능력치 적용"
+        }
+
+        return ResetStatOutcome.Applied(
+            spent = reqAmount,
+            remainingPrevious = previousPoint - reqAmount,
+            nextLeadership = leadership + bonus[0],
+            nextStrength = strength + bonus[1],
+            nextIntel = intel + bonus[2],
+            nextLastStatReset = lastStatReset + season,
+            logs = listOf(
+                "통솔 $leadership, 무력 $strength, 지력 $intel 스탯 재설정",
+                bonusLog,
+            ),
+        )
+    }
+
+    private sealed interface BonusInput {
+        data object Empty : BonusInput
+        data class Explicit(val values: List<Int>) : BonusInput
+        data class Denied(val reason: String) : BonusInput
+    }
+
+    private fun normalizeBonus(inheritBonusStat: List<Int>?): BonusInput {
+        if (inheritBonusStat == null) return BonusInput.Empty
+        if (inheritBonusStat.size != 3) {
+            return BonusInput.Denied("보너스 능력치가 잘못 지정되었습니다. 다시 입력해주세요!")
+        }
+        if (inheritBonusStat.any { it < 0 }) {
+            return BonusInput.Denied("보너스 능력치가 음수입니다. 다시 입력해주세요!")
+        }
+        val sum = inheritBonusStat.sum()
+        if (sum == 0) return BonusInput.Empty
+        if (sum < GameConst.bornMinStatBonus || sum > GameConst.bornMaxStatBonus) {
+            return BonusInput.Denied("보너스 능력치 합이 잘못 지정되었습니다. 다시 입력해주세요!")
+        }
+        return BonusInput.Explicit(inheritBonusStat)
+    }
+
+    private fun drawResetStatBonus(
+        userId: Int,
+        leadership: Int,
+        strength: Int,
+        intel: Int,
+        hiddenSeed: String,
+    ): List<Int> {
+        val rng = RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "ResetStat", userId)))
+        val bonus = IntArray(3)
+        repeat(rng.nextRangeInt(GameConst.bornMinStatBonus, GameConst.bornMaxStatBonus)) {
+            when (rng.choiceUsingWeight(linkedMapOf(
+                "0" to leadership.toDouble(),
+                "1" to strength.toDouble(),
+                "2" to intel.toDouble(),
+            ))) {
+                "0" -> bonus[0]++
+                "1" -> bonus[1]++
+                "2" -> bonus[2]++
+            }
+        }
+        return bonus.toList()
+    }
 }
 
 /** The resolved effect an inherit reset produces (applied by the engine handler). */
@@ -179,4 +284,18 @@ sealed interface InheritResetOutcome {
         val varUpdates: Map<String, Any?>,
         val log: String,
     ) : InheritResetOutcome
+}
+
+sealed interface ResetStatOutcome {
+    data class Denied(val reason: String) : ResetStatOutcome
+
+    data class Applied(
+        val spent: Int,
+        val remainingPrevious: Double,
+        val nextLeadership: Int,
+        val nextStrength: Int,
+        val nextIntel: Int,
+        val nextLastStatReset: List<Int>,
+        val logs: List<String>,
+    ) : ResetStatOutcome
 }

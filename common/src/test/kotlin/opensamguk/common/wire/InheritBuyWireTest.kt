@@ -32,6 +32,10 @@ class InheritBuyWireTest {
             TurnDaemonCommand.BuyRandomUnique(generalId = 10),
             cmdRoundTrip(TurnDaemonCommand.BuyRandomUnique(generalId = 10)),
         )
+        assertEquals(
+            TurnDaemonCommand.ResetStat(generalId = 10, leadership = 55, strength = 55, intel = 55, inheritBonusStat = listOf(1, 1, 1)),
+            cmdRoundTrip(TurnDaemonCommand.ResetStat(generalId = 10, leadership = 55, strength = 55, intel = 55, inheritBonusStat = listOf(1, 1, 1))),
+        )
     }
 
     @Test
@@ -40,5 +44,7 @@ class InheritBuyWireTest {
         assertIs<BuyHiddenBuffFail>(resRoundTrip(BuyHiddenBuffFail(generalId = 10, reason = "이미 구입했습니다.")))
         assertIs<BuyRandomUniqueOk>(resRoundTrip(BuyRandomUniqueOk(generalId = 10, spent = 3000)))
         assertIs<BuyRandomUniqueFail>(resRoundTrip(BuyRandomUniqueFail(generalId = 10, reason = "충분한 유산 포인트를 가지고 있지 않습니다.")))
+        assertIs<ResetStatOk>(resRoundTrip(ResetStatOk(generalId = 10, spent = 1000, leadership = 56, strength = 56, intel = 56)))
+        assertIs<ResetStatFail>(resRoundTrip(ResetStatFail(generalId = 10, reason = "이번 시즌에 이미 능력치를 초기화하셨습니다.")))
     }
 }

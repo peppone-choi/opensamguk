@@ -90,11 +90,11 @@ WorldActions.register 미등록. 이민족 시나리오 핵심(게임 후반부)
 - `Global/GeneralListWithToken`: GeneralList + select_npc_token 병합 응답. 토큰 필드 누락.
 - `InheritAction/GetMoreLog`: 유산 로그 페이지네이션(lastID 기반). 최근 30건만 제공, getMore 없음.
 
-### 2.6 intake-api (6)
+### 2.6 intake-api (5)
 - `General/DieOnPrestart`, `General/DropItem`, `General/InstantRetreat`: TurnDaemonCommand 정의는 common에 있으나 CommandWireMapper intakeCodes 미등록 + 디스패처 미바인딩 → 엔드포인트 없음.
 - `InheritAction/CheckOwner`: 유산포인트로 NPC 소유권 이전. cost read만, write 액션 없음.
-- `InheritAction/ResetStat`: 유산포인트로 스탯 재분배. TurnDaemonCommand 정의 자체 없음.
 - `Misc/UploadImage`: 장수/국가 이미지 업로드. 엔드포인트 없음.
+  - 닫힘(2026-06-20 바퀴68): `InheritAction/ResetStat`은 `TurnDaemonCommand.ResetStat` + result + mapper + dispatcher/handler까지 배선됨.
 
 ### 2.7 php-page (5) · vue-page (2)
 - php-page: `admin1-game-env-ui`, `admin2-ingame-member-ui`, `admin5-nation-stats-ui`, `admin7-general-log-ui`, `admin8-diplomacy-ui` — 모두 어드민 UI(§2.2와 짝).
@@ -300,7 +300,7 @@ WorldActions.register 미등록. 이민족 시나리오 핵심(게임 후반부)
 ### Tier-0 — 공유 시드(순차, creator-then-consumer)
 1. **Scenario/풀/트리거 도메인**(§2.4): `Scenario/{GeneralBuilder, Nation}`, `AbsGeneralPool`/`RandomNameGeneral`, `GeneralTriggerCaller`/`BaseGeneralTrigger` — 이민족 event·NPC 생성·장수직접생성이 모두 의존. 가장 먼저.
 2. **utilGame 포매터 12종**(§2.10): `formatLog/honor/injury/dexLevel/cityName/...` — 거의 모든 FE 페이지가 소비. 단일 PR로 시드.
-3. **intake/wire 시드**: `CommandWireMapper` intakeCodes + 디스패처에 `DieOnPrestart/DropItem/InstantRetreat/InheritAction.ResetStat/CheckOwner` 1회 등록.
+3. **intake/wire 시드**: `CommandWireMapper` intakeCodes + 디스패처에 `DieOnPrestart/DropItem/InstantRetreat/InheritAction.CheckOwner` 1회 등록. `InheritAction.ResetStat`은 2026-06-20 바퀴68에서 완료.
 
 ### 그룹 A — missing command + event (/parity-wave, 골든 필수)
 - **A1 che_계략 패밀리**(§2.1): `che_{화계, 파괴, 탈취, 선동, 첩보, 단련, 강행, 숙련전환, 전투태세, 모반시도, 전투특기초기화, 내정특기초기화, 접경귀환}` + `cr_인구이동`, `che_등용수락`. 각자 disjoint Che*.kt. /parity-wave로 골든→port→gate.

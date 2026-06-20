@@ -3,6 +3,8 @@ package opensamguk.engine.intake
 import opensamguk.common.wire.InheritResetTurnTimeFail
 import opensamguk.common.wire.InheritResetTurnTimeOk
 import opensamguk.common.wire.NationSettingResult
+import opensamguk.common.wire.ResetStatFail
+import opensamguk.common.wire.ResetStatOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.run.TurnDaemonCommandDispatcher
@@ -330,6 +332,110 @@ class IntakeWaveC2SliceATest {
         assertEquals("이미 천하가 통일되었습니다.", (res as InheritResetTurnTimeFail).reason)
     }
 
+    @Test
+    fun `resetStat explicit bonus writes stats previous user season log and rank`() {
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100)),
+            stateMeta = linkedMapOf(
+                "isunited" to 0,
+                "season" to 7,
+                "hiddenSeed" to "seed-xyz",
+                "inheritancePrevious" to linkedMapOf(100 to 5000.0),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder)
+
+        val res = handler.handleResetStat(
+            TurnDaemonCommand.ResetStat(
+                generalId = 10,
+                leadership = 55,
+                strength = 55,
+                intel = 55,
+                inheritBonusStat = listOf(1, 1, 1),
+            ),
+        )
+
+        val ok = res as ResetStatOk
+        assertEquals(1000, ok.spent)
+        assertEquals(56, ok.leadership)
+        assertEquals(56, ok.strength)
+        assertEquals(56, ok.intel)
+        assertEquals(GeneralStats(56, 56, 56), world.getGeneralById(10)!!.stats)
+
+        val invKv = recorder.inheritanceKvWrites().single { it.namespace == "inheritance_100" && it.key == "previous" }
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(4000.0, (invKv.value as List<Any?>)[0])
+        assertEquals(listOf(7), recorder.kvDirty()[KvKey("user", "user_100", "last_stat_reset")])
+        assertEquals(opensamguk.engine.turn.RankDelta.Increment(1000), recorder.rankPatches()[10]!![RankColumn.INHERIT_SPENT_DYN])
+        assertEquals(
+            listOf(
+                "통솔 55, 무력 55, 지력 55 스탯 재설정",
+                "1000로 통솔 1, 무력 1, 지력 1 보너스 능력치 적용",
+            ),
+            recorder.inheritanceLogInserts().map { it.text },
+        )
+
+        val payload = flush(world, recorder)
+        assertTrue(payload.updatedGenerals.any {
+            it.id == 10 && it.leadership == 56 && it.strength == 56 && it.intel == 56
+        })
+        assertTrue(payload.inheritanceKvWrites.any { it.namespace == "inheritance_100" && it.key == "previous" })
+        assertTrue(payload.kvWrites.any { it.table == "user" && it.namespace == "user_100" && it.key == "last_stat_reset" })
+        assertEquals(2, payload.inheritanceLogInserts.size)
+    }
+
+    @Test
+    fun `resetStat denied when the user already reset in this season`() {
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100)),
+            stateMeta = linkedMapOf("isunited" to 0, "season" to 7, "hiddenSeed" to "seed-xyz"),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder, lastStatResetReader = { listOf(7) })
+
+        val res = handler.handleResetStat(
+            TurnDaemonCommand.ResetStat(generalId = 10, leadership = 55, strength = 55, intel = 55),
+        )
+
+        assertEquals("이번 시즌에 이미 능력치를 초기화하셨습니다.", (res as ResetStatFail).reason)
+        assertTrue(recorder.inheritanceKvWrites().isEmpty())
+        assertTrue(recorder.kvDirty().isEmpty())
+        assertTrue(recorder.dirtyGeneralIds().isEmpty())
+    }
+
+    @Test
+    fun `resetStat reads string keyed world meta snapshots`() {
+        val world = world(
+            general = general(meta = linkedMapOf("owner" to 100)),
+            stateMeta = linkedMapOf(
+                "isunited" to 0,
+                "season" to 7,
+                "hiddenSeed" to "seed-xyz",
+                "inheritancePrevious" to linkedMapOf("100" to 5000.0),
+                "lastStatReset" to linkedMapOf("100" to listOf(6)),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val handler = InheritResetHandler(world, recorder)
+
+        val res = handler.handleResetStat(
+            TurnDaemonCommand.ResetStat(
+                generalId = 10,
+                leadership = 55,
+                strength = 55,
+                intel = 55,
+                inheritBonusStat = listOf(1, 1, 1),
+            ),
+        )
+
+        assertEquals(1000, (res as ResetStatOk).spent)
+        val invKv = recorder.inheritanceKvWrites().single { it.namespace == "inheritance_100" && it.key == "previous" }
+        @Suppress("UNCHECKED_CAST")
+        assertEquals(4000.0, (invKv.value as List<Any?>)[0])
+        assertEquals(listOf(6, 7), recorder.kvDirty()[KvKey("user", "user_100", "last_stat_reset")])
+    }
+
     // ── inheritance buy: BuyHiddenBuff / BuyRandomUnique ──────────────────────────
 
     @Test
@@ -471,6 +577,9 @@ class IntakeWaveC2SliceATest {
         assertEquals("buyHiddenBuff", buff!!.type)
         val rnd = dispatcher.dispatch(TurnDaemonCommand.BuyRandomUnique(generalId = 10))
         assertEquals("buyRandomUnique", rnd!!.type)
+
+        val resetStat = dispatcher.dispatch(TurnDaemonCommand.ResetStat(generalId = 10, leadership = 55, strength = 55, intel = 55))
+        assertEquals("resetStat", resetStat!!.type)
 
         // an unbound type still returns null (control command).
         assertNull(dispatcher.dispatch(TurnDaemonCommand.Pause()))
