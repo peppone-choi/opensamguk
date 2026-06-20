@@ -105,6 +105,8 @@ class GetConstController {
         "maxTurn" to GameConst.maxTurn,
         "maxChiefTurn" to GameConst.maxChiefTurn,
         "maxTechLevel" to GameConst.maxTechLevel,
+        "initialAllowedTechLevel" to GameConst.initialAllowedTechLevel,
+        "techLevelIncYear" to GameConst.techLevelIncYear,
         "maxLevel" to GameConst.maxLevel,
         "maxDedLevel" to GameConst.maxDedLevel,
         "statGradeLevel" to GameConst.statGradeLevel,
