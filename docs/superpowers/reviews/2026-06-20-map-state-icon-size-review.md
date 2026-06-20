@@ -1,0 +1,46 @@
+# 2026-06-20 map state icon size review
+
+Verdict: cleared
+
+## Skill Chain
+
+- `opensamguk-php-oracle`: legacy `hwe/ts/components/MapCityDetail.vue` and `hwe/scss/map.scss` state-icon rendering were used as the oracle.
+- `webapp-testing`: production `/game/s1` will be remeasured after promotion because the current deployed tag still has the oversized state icon path.
+- `systematic-debugging`: root cause was isolated to the state icon missing the existing map icon scale path.
+- `loop-engineering`: baseline evidence -> one hypothesis -> local gates -> production adoption wait.
+
+## Legacy Oracle
+
+- `legacy/devsam-core/hwe/ts/components/MapCityDetail.vue:44-45` renders `event<state>.gif` whenever `city.state > 0`.
+- `legacy/devsam-core/hwe/scss/map.scss:540-549` shows the responsive map state icon uses a constrained `10px` image, while the detail map keeps the same absolute slot.
+- `legacy/devsam-image/game/event6.gif` is `15x15`; `legacy/devsam-image/game/cast_3.gif` is `14x14`.
+
+## Baseline
+
+Current source before this loop scaled city cast icons with `ICON_SCALE=0.72`, but rendered `.city-state` without `width` or `height`.
+
+- `cast_3.gif`: `14x14` -> `10x10` after `ICON_SCALE`.
+- `event6.gif`: natural `15x15` because `.city-state` had no size attributes.
+- Result: disaster/state icons looked larger than the city icon they sit on.
+
+## Root Cause
+
+`MapViewer.tsx` and `MapPreview.tsx` already share one visual scale for cast, flag, and capital icons. The state icon path was left out of that scale thread and therefore used the raw asset size. Because `event*.gif` is larger than small city cast assets, the mismatch is visible on the main map.
+
+## Fix
+
+- Add `STATE_PX = Math.round(15 * ICON_SCALE)` beside the existing map icon scale constants.
+- Apply `width={STATE_PX}` and `height={STATE_PX}` to `.city-state` in both `web/game` and `web/gateway`.
+- Pin `state=6` in `MapViewer.props.test.tsx` to `width=11` and `height=11`.
+
+## Verification
+
+- `/usr/local/bin/pnpm --dir web/game test -- MapViewer.props --run`: 17 files / 86 tests passed.
+- `/usr/local/bin/pnpm --dir web/game typecheck`: passed.
+- `/usr/local/bin/pnpm --dir web/gateway typecheck`: passed.
+- `/usr/local/bin/pnpm --dir web/game build`: passed; only pre-existing warnings in `generals`, `tournament`, and `GeneralBasicCard`.
+- `/usr/local/bin/pnpm --dir web/gateway build`: passed; only pre-existing `admin/page.tsx` hook dependency warning.
+
+## Adoption Status
+
+Pending PR merge, deploy, server promotion, and production browser remeasurement.
