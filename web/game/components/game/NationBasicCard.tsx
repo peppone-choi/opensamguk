@@ -111,16 +111,6 @@ export default function NationBasicCard({ nation }: NationBasicCardProps) {
                     </div>
                 ))}
             </div>
-            {/* 국가방침 — 레거시 PageFront.vue nationNotice 블록(`【 국가방침 】` + notice.msg). BE는
-                nation_env nationNotice.msg(데몬 SetNotice)를 string 으로 내려준다(htmlPurify 격리로 raw
-                text). 안전상 v-html(dangerouslySetInnerHTML) 대신 텍스트로 렌더한다. 부재/만료 → null →
-                빈 본문(날조 금지). 재야(!has)이거나 방침 미설정이면 본문은 빈 문자열. */}
-            {has && (
-                <div className="basic-card-notice nation-notice">
-                    <div className="basic-card-notice-head">【 국가방침 】</div>
-                    <div className="basic-card-notice-body">{nation!.notice ?? ''}</div>
-                </div>
-            )}
         </section>
     );
 }

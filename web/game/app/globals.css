@@ -680,6 +680,33 @@ input:focus, select:focus, textarea:focus {
   .gi-cell.gi-wide { grid-column: span 8; }
 }
 
+.main-status {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.main-status-row {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+.main-status-notice {
+  padding-left: 0;
+  padding-right: 0;
+}
+.main-status-notice-head {
+  padding: 0 var(--space-md);
+}
+.main-status-notice-body {
+  min-height: 1.45em;
+  padding: var(--space-xs) var(--space-md) 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* GlobalMenu (server-driven menu spine) */
 .common-toolbar { width: 100%; }
 .global-menu {
@@ -1354,27 +1381,6 @@ input:focus, select:focus, textarea:focus {
 .bc-bonus { color: cyan; }
 /* 도시 카드 머리(레거시 cityNamePanel/nationNamePanel) — 국가색 배경, 굵게. */
 .city-basic-card .basic-card-name + .basic-card-name { border-top: 1px solid var(--bg-card); }
-/* 국가방침(레거시 PageFront.vue nationNotice 블록) — 【국가방침】 머리 + 본문(좌측 정렬, 줄바꿈 보존). */
-.basic-card-notice {
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-card);
-}
-.basic-card-notice-head {
-  background: var(--bg-elevated);
-  color: var(--text-secondary);
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
-  text-align: center;
-}
-.basic-card-notice-body {
-  color: var(--text-primary);
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--text-xs);
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 1.5em;
-}
-
 /* Reserved-command panel (PartialReservedCommand) — 5-col ring table. */
 .reserved-command-panel {
   border: 1px solid var(--border-subtle);

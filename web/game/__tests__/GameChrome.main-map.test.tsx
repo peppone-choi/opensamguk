@@ -35,6 +35,7 @@ vi.mock('@/components/Toast', () => ({ default: () => null }));
 
 const frontInfo = {
     global: {
+        onlineNations: '위, 촉',
         isTournamentApplicationOpen: false,
         isBettingActive: false,
     },
@@ -48,6 +49,8 @@ const frontInfo = {
     },
     nation: {
         level: 1,
+        onlineGen: 3,
+        notice: '한실부흥',
     },
     city: {
         id: 11,
@@ -106,6 +109,16 @@ describe('GameChrome main map', () => {
         expect(screen.getByTestId('city-card').parentElement).toHaveClass('ib-city');
         expect(screen.getByTestId('nation-card').parentElement).toHaveClass('ib-nation');
         expect(screen.getByTestId('general-card').parentElement).toHaveClass('ib-general');
+    });
+
+    it('renders legacy PageFront status rows before the main board', () => {
+        const { container } = render(<GameChrome />);
+
+        expect(screen.getByText('접속중인 국가: 위, 촉')).toBeInTheDocument();
+        expect(screen.getByText('【 접속자 】 3')).toBeInTheDocument();
+        expect(screen.getByText('【 국가방침 】')).toBeInTheDocument();
+        expect(screen.getByText('한실부흥')).toBeInTheDocument();
+        expect(container.querySelector('.main-status')?.nextElementSibling).toHaveClass('ingame-board');
     });
 
     it('passes front-info into function children for the main record zone', () => {
