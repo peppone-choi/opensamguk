@@ -327,6 +327,8 @@ class FrontInfoController(
             leadershipExp = doubleOrNull(meta["leadership_exp"]) ?: 0.0,
             strengthExp = doubleOrNull(meta["strength_exp"]) ?: 0.0,
             intelExp = doubleOrNull(meta["intel_exp"]) ?: 0.0,
+            politicsExp = doubleOrNull(meta["politics_exp"]) ?: 0.0,
+            charmExp = doubleOrNull(meta["charm_exp"]) ?: 0.0,
             leadershipBonus = statBonuses.leadership,
             strengthBonus = statBonuses.strength,
             intelBonus = statBonuses.intel,
@@ -551,6 +553,7 @@ class FrontInfoController(
         val scenarioText = (config["title"] ?: w?.meta?.get("title"))?.toString()
             ?.takeIf { it.isNotBlank() } ?: scenario
         val turnTerm = (w?.tickSeconds ?: 0) / 60
+        val turnPhase = turnPhase(w)
 
         // [§2 BLOCKED — world_state.config 미기재] 아래 game_env 키는 데몬이 채우지 않으므로(현재 config는
         // startyear/starttime/turnterm만), config에서 방어적으로 읽되 부재 시 null/기본값. 날조 없음.
@@ -585,6 +588,8 @@ class FrontInfoController(
         return FrontGlobalInfo(
             year = w?.currentYear ?: 0,
             month = w?.currentMonth ?: 0,
+            turnPhase = turnPhase,
+            turnPhaseText = turnPhase?.let { turnPhaseText(it) },
             turnterm = turnTerm,
             scenario = scenario,
             scenarioText = scenarioText,
@@ -699,6 +704,20 @@ class FrontInfoController(
         1 -> "가능"
         2 -> "선택 생성"
         else -> "불가능"
+    }
+
+    private fun turnPhase(w: WorldStateReadEntity?): Int? {
+        val startTime = w?.startTime ?: return null
+        val tickSeconds = w.tickSeconds.takeIf { it > 0 } ?: return null
+        val elapsedTurns = Math.floorDiv(java.time.Duration.between(startTime, Instant.now()).seconds, tickSeconds.toLong())
+        return Math.floorMod(elapsedTurns.toInt(), 3) + 1
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 
     private fun otherSettingText(autorunUser: AutorunUserInfo?): String =

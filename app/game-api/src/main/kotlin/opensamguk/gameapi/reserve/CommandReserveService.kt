@@ -20,8 +20,8 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * Step 2 of the 8-step flow — reserve. Called by [opensamguk.gameapi.web.CommandController] ONLY when
- * the E2 precheck returned `AVAILABLE`.
+ * Step 2 of the 8-step flow — reserve. Called by [opensamguk.gameapi.web.CommandController] for known
+ * reservable commands; execution-time constraints are rechecked by the daemon.
  *
  * **Two intake models, selected by the command code** ([CommandWireMapper]):
  *

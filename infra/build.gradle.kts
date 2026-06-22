@@ -28,7 +28,10 @@ dependencies {
 
 // Library module: produce a plain jar, not an executable bootJar.
 tasks.named("bootJar") { enabled = false }
-tasks.named("jar") { enabled = true }
+tasks.named<Jar>("jar") {
+    enabled = true
+    archiveClassifier.set("")
+}
 
 tasks.test {
     useJUnitPlatform()

@@ -34,6 +34,7 @@ class VersionService(
                 id = def.id,
                 name = def.name,
                 generation = def.generation,
+                scenarioCode = def.scenarioCode,
                 gameApi = gameApi,
                 gameEngine = gameEngine,
                 skew = skew,

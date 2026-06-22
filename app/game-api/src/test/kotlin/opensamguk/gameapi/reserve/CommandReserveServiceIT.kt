@@ -8,7 +8,9 @@ import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.infra.persistence.ReservedTurnRepository
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.TestInstance
+import org.testcontainers.DockerClientFactory
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.connection.stream.ReadOffset
@@ -81,6 +83,8 @@ class CommandReserveServiceIT {
 
     @BeforeAll
     fun setUp() {
+        val dockerAvailable = runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false)
+        assumeTrue(dockerAvailable, "Docker unavailable — command reserve IT skipped (not failed)")
         postgres.start()
         redis.start()
 

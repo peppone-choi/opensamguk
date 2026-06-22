@@ -1,6 +1,7 @@
 package opensamguk.gameapi.owner
 
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
@@ -36,6 +37,7 @@ class GeneralPossessionService(
     private val owners: GeneralOwnerRepository,
     private val generals: GeneralReadRepository,
     private val npcTokens: SelectNpcTokenRepository,
+    private val worldStates: WorldStateReadRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) {
     /** Outcome of a claim attempt. */
@@ -49,10 +51,14 @@ class GeneralPossessionService(
         object GeneralAlreadyClaimed : ClaimResult
         /** The target general does not exist or is not a claimable NPC candidate. */
         object NotClaimable : ClaimResult
+        /** This server does not allow legacy possession mode. */
+        object ServerModeBlocked : ClaimResult
     }
 
     @Transactional
     fun claim(userId: Long, generalId: Int): ClaimResult {
+        if (npcMode() != 1) return ClaimResult.ServerModeBlocked
+
         // 1. one-per-user guard (idempotent on the same general).
         val existingForUser = owners.findByUserId(userId)
         if (existingForUser != null) {
@@ -86,11 +92,26 @@ class GeneralPossessionService(
         return ClaimResult.Claimed(generalId)
     }
 
+    private fun npcMode(): Int =
+        intOf(runCatching { worldStates.findById(1)?.orElse(null) }.getOrNull()?.config?.get("npcmode")) ?: 0
+
     companion object {
         /**
          * Legacy `npc=2` = the pure-NPC pool a user may 빙의(possess). After claim the legacy flips it to
          * `npc=1` (possessed-player-NPC) — that flip is the DEFERRED game-state side-effect (see class doc).
          */
         const val CLAIMABLE_NPC_STATE = 2
+
+        private fun intOf(value: Any?): Int? = when (value) {
+            is Int -> value
+            is Long -> value.toInt()
+            is Short -> value.toInt()
+            is Byte -> value.toInt()
+            is Double -> value.toInt()
+            is Float -> value.toInt()
+            is Number -> value.toInt()
+            is String -> value.toIntOrNull()
+            else -> null
+        }
     }
 }

@@ -1,18 +1,7 @@
 'use client';
 
-// MessagePanel — multi-channel messaging (spec §7, legacy MessagePanel.vue). The legacy panel has four
-// stacked channels (전체/국가/개인/외교) fed by a polling SammoAPI.Message feed + a contact-list selector
-// + a SendMessage write. game-api today exposes only READS by mailbox id (GET /api/mailbox/{mailbox})
-// and accept/decline; there is NO contact-list endpoint and NO send endpoint.
-//
-// So this is a READ-ONLY port (flagged): a mailbox selector over the favorites the legacy hardcodes
-// (【전체 메세지】 = 9999, 【아국 메세지】 = 9000+nationId, 개인 = own generalId), each rendering its
-// MessagePlate rows. Verbatim labels (전체/국가/개인 메시지, 메시지가 없습니다., 서신전달&갱신). SSE soft
-// refresh is driven by the parent's refreshKey (re-mounts via key) — NOT a raw 2.5s poll. SEND is disabled
-// with a flag note (no backend send endpoint).
-
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import MessagePlate from './MessagePlate';
 
 // game-api MessageResponse (MessageDto.kt) — the lean read shape.
@@ -51,6 +40,9 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
     const [active, setActive] = useState<number>(channels[0].mailbox);
     const [messages, setMessages] = useState<MailboxMessage[] | null>(null);
     const [failed, setFailed] = useState(false);
+    const [loadSeq, setLoadSeq] = useState(0);
+    const [sendText, setSendText] = useState('');
+    const [sending, setSending] = useState(false);
 
     useEffect(() => {
         let on = true;
@@ -62,17 +54,47 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
         return () => {
             on = false;
         };
-    }, [active, refreshKey]);
+    }, [active, refreshKey, loadSeq]);
 
-    const reload = () => setActive((m) => m); // no-op state churn; the effect dep refreshKey drives reload
+    const reload = () => setLoadSeq((n) => n + 1);
+
+    async function handleSend() {
+        if (sending) return;
+        const text = sendText.trim();
+        if (!text) return;
+        setSending(true);
+        try {
+            const out = await api.commands.sendMessage({ mailbox: active, text }, generalId);
+            if (isIntakeQueued(out)) {
+                onToast('서신을 접수했습니다.', 'success');
+                setSendText('');
+                reload();
+            } else if (isIntakeDenied(out)) {
+                onToast(out.reason ?? '서신을 보낼 수 없습니다.', 'error');
+            } else {
+                onToast('서신 처리 상태를 확인할 수 없습니다.', 'error');
+            }
+        } catch {
+            onToast('서신 발송에 실패했습니다.', 'error');
+        } finally {
+            setSending(false);
+        }
+    }
 
     return (
         <section className="message-panel" id="msgPanel" aria-label="메시지">
-            <div className="msg-input-form">
+            <form
+                className="msg-input-form"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleSend();
+                }}
+            >
                 <select
                     className="msg-mailbox-select"
                     value={active}
                     onChange={(e) => setActive(Number(e.target.value))}
+                    disabled={sending}
                 >
                     <optgroup label="즐겨찾기">
                         {channels.map((c) => (
@@ -86,15 +108,15 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
                     type="text"
                     maxLength={99}
                     className="msg-input"
-                    placeholder="서신 보내기 (서버 미지원)"
-                    disabled
+                    placeholder="서신을 입력하세요"
+                    value={sendText}
+                    onChange={(e) => setSendText(e.target.value)}
+                    disabled={sending}
                 />
-                <button type="button" className="msg-send-btn" disabled>
+                <button type="submit" className="msg-send-btn" disabled={sending || !sendText.trim()}>
                     서신전달&amp;갱신
                 </button>
-            </div>
-
-            <p className="msg-flag">서신 전송/연락처 API가 아직 없어 읽기 전용입니다.</p>
+            </form>
 
             <div className="msg-list">
                 {messages == null && !failed && (

@@ -129,17 +129,17 @@ jobs:
           STACK="$HOME/opensamguk-docker"
           cd "$STACK"
 
+          echo "=== Syncing opensamguk-docker main ==="
+          git fetch origin main
+          git reset --hard origin/main
+
           echo "=== GHCR login ==="   # 매 배포 재login → 박스 토큰 만료 무관.
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
           COMPOSE="docker compose -p opensamguk-shared -f docker-compose.shared.yml --env-file .env"
 
-          echo "=== Ensuring deployer force-recreates stateless services ==="
-          if ! grep -q -- '--force-recreate' deployer/main.go; then
-            perl -0pi -e 's/"up",\s*"-d",\s*"--no-deps"/"up", "-d", "--force-recreate", "--no-deps"/g' deployer/main.go
-          fi
-          grep -q -- '--force-recreate' deployer/main.go
-          $COMPOSE up -d --build --no-deps deployer
+          echo "=== Updating deployer from opensamguk-docker ==="
+          $COMPOSE up -d --build --force-recreate --no-deps deployer
 
           echo "=== Verifying deployer compatibility ==="
           DEPLOYER_TOKEN="$(grep '^DEPLOYER_TOKEN=' .env | cut -d= -f2-)"

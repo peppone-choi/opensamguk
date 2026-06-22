@@ -34,6 +34,14 @@ class SelectNpcTokenService(
 ) {
     @Transactional
     fun claimable(userId: Long): ClaimableResponse {
+        if (npcMode() != 1) {
+            return ClaimableResponse(
+                result = false,
+                hasGeneral = false,
+                candidates = emptyList(),
+                reason = NPC_MODE_BLOCKED_REASON,
+            )
+        }
         if (owners.findByUserId(userId) != null) {
             return ClaimableResponse(result = true, hasGeneral = true, candidates = emptyList())
         }
@@ -158,6 +166,9 @@ class SelectNpcTokenService(
         return max(1, seconds / 60)
     }
 
+    private fun npcMode(): Int =
+        intOf(worldState()?.config?.get("npcmode")) ?: 0
+
     private fun worldState() = runCatching { worldStates.findById(1)?.orElse(null) }.getOrNull()
 
     private fun legacyNow(now: Instant): String = LEGACY_NOW_FORMATTER.format(now)
@@ -168,6 +179,7 @@ class SelectNpcTokenService(
     companion object {
         private const val PICK_COUNT = 5
         private const val PICK_MORE_SECONDS_KEY = "__pickMoreSeconds"
+        const val NPC_MODE_BLOCKED_REASON = "빙의 가능한 서버가 아닙니다"
         private val LEGACY_PICK_MORE_EPOCH: Instant = Instant.parse("2000-01-01T01:00:00Z")
         private val LEGACY_NOW_FORMATTER: DateTimeFormatter =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("Asia/Seoul"))

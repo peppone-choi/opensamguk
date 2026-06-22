@@ -1,5 +1,4 @@
 package opensamguk.gameapi.read
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -14,7 +13,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-
 /**
  * W3 Wave-0 FOUNDATION IT — F1(GeneralReadEntity 신규 컬럼 매핑) + F2(RankDataReadRepository) +
  * F4(NationReadRepository 집계)가 V1/V6/V8 baseline 행을 정확히 materialize함을 증명한다.
@@ -22,18 +20,16 @@ import kotlin.test.assertNull
  * `ReadRepositoryIT`와 동일한 Testcontainers `postgres:16-alpine` + `:infra` Flyway baseline
  * (`ddl-auto: validate`) 패턴. raw SQL로 행을 심고 read 레포로 로드해 단언한다.
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class W3FoundationReadIT {
-
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var nations: NationReadRepository
     @Autowired lateinit var rankData: RankDataReadRepository
     @Autowired lateinit var nationTurns: NationTurnReadRepository
-
     /** general 행 1개를 신규 컬럼(special/personal/penalty/officer_city/turn_time)까지 포함해 심는다. */
     private fun insertGeneral(
         id: Int,
@@ -68,7 +64,6 @@ class W3FoundationReadIT {
             """.trimIndent(),
         )
     }
-
     private fun insertCity(id: Int, nationId: Int, pop: Int, popMax: Int) {
         jdbc.update(
             """
@@ -84,7 +79,6 @@ class W3FoundationReadIT {
             """.trimIndent(),
         )
     }
-
     @Test
     fun `F1 - general 신규 컬럼이 baseline 행에서 materialize 된다`() {
         insertGeneral(
@@ -102,7 +96,6 @@ class W3FoundationReadIT {
         // F3 포맷터가 이 turn_time을 TURNTIME_FULL로 변환.
         assertEquals("2026-06-03 10:30:45", TurnTimeFormatter.full(g.turnTime))
     }
-
     @Test
     fun `F2 - rank_data 전투 통계 read 경로가 동작한다`() {
         insertGeneral(id = 11, nationId = 1, cityId = 5, crew = 0, leadership = 50, npc = 0)
@@ -116,17 +109,14 @@ class W3FoundationReadIT {
                 type, value,
             )
         }
-
         val rows = rankData.findByGeneralId(11)
         assertEquals(6, rows.size)
         val byType = rows.associate { it.type to it.value }
         assertEquals(12, byType["warnum"])
         assertEquals(5000, byType["killcrew"])
-
         // 단건 조회
         assertEquals(30, rankData.findByGeneralIdAndType(11, "killnum")?.value)
         assertNull(rankData.findByGeneralIdAndType(11, "occupied")) // 미기록 type → null
-
         // N+1-safe 일괄 조회: 장수 집합 × 전투-통계 type 집합
         insertGeneral(id = 12, nationId = 1, cityId = 5, crew = 0, leadership = 50, npc = 0)
         jdbc.update("INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (1, 12, 'warnum', 99)")
@@ -136,7 +126,6 @@ class W3FoundationReadIT {
         assertEquals(12, folded[11 to "warnum"])
         assertEquals(99, folded[12 to "warnum"])
     }
-
     @Test
     fun `F4 - 국가별 인구-병력 집계가 단일 grouped query로 나온다`() {
         // nation 1: city 5(pop 50000/100000) + city 6(pop 30000/60000) → cityCnt 2, now 80000, max 160000
@@ -148,21 +137,18 @@ class W3FoundationReadIT {
         insertGeneral(id = 31, nationId = 1, cityId = 6, crew = 300, leadership = 50, npc = 0)
         // npc_state=5 장수는 crew 집계에서 제외되어야 한다.
         insertGeneral(id = 32, nationId = 1, cityId = 5, crew = 9999, leadership = 99, npc = 5)
-
         val pops = nations.aggregatePopulationByNation().associateBy { it.nationId }
         val p1 = pops[1]
         assertNotNull(p1)
         assertEquals(2L, p1.cityCnt)
         assertEquals(80000L, p1.now)
         assertEquals(160000L, p1.max)
-
         val crews = nations.aggregateCrewByNation().associateBy { it.nationId }
         val c1 = crews[1]
         assertNotNull(c1)
         assertEquals(2L, c1.generalCnt)        // npc=5 제외
         assertEquals(800L, c1.now)             // 500+300, npc=5의 9999 제외
         assertEquals(12000L, c1.max)           // (70+50)*100, npc=5의 99 제외
-
         // 단일 국가 오버로드도 동일 값.
         val singleP = nations.aggregatePopulationOfNation(1)
         assertEquals(80000L, singleP?.now)
@@ -172,7 +158,6 @@ class W3FoundationReadIT {
         assertNull(nations.aggregatePopulationOfNation(999))
         assertNull(nations.aggregateCrewOfNation(999))
     }
-
     @Test
     fun `ChiefCenter - nation_turn arg jsonb가 read 경로에서 디코드된다`() {
         // V1 baseline nation_turn: 예약 국가 명령 슬롯(arg jsonb). PHP가 슬롯마다 Json::decode($arg)로
@@ -184,7 +169,6 @@ class W3FoundationReadIT {
                    (1, 12, 1, '휴식', '{}'::jsonb, '휴식')
             """.trimIndent(),
         )
-
         val rows = nationTurns.findByNationIdOrderByOfficerLevelDescTurnIdxAsc(1)
         assertEquals(2, rows.size)
         val slot0 = rows.first { it.turnIdx == 0 }
@@ -195,12 +179,10 @@ class W3FoundationReadIT {
         val slot1 = rows.first { it.turnIdx == 1 }
         assertEquals(0, slot1.arg.size)
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

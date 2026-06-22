@@ -13,6 +13,7 @@ data class ServerDef(
     val gameEngineUrl: String,
     val deployProject: String,
     val generation: Int? = null,
+    val scenarioCode: String? = null,
 )
 
 /**
@@ -60,6 +61,7 @@ class ServerRegistry(
                     gameEngineUrl = n.path("gameEngineUrl").asText(gameEngineUrl),
                     deployProject = n.path("deployProject").asText(deployProject),
                     generation = intOrNull(n.path("generation")),
+                    scenarioCode = textOrNull(n, "scenarioCode", "scenario"),
                 )
             }
             parsed
@@ -75,4 +77,9 @@ class ServerRegistry(
             node.isTextual -> node.asText().toIntOrNull()
             else -> null
         }
+
+    private fun textOrNull(node: com.fasterxml.jackson.databind.JsonNode, vararg fields: String): String? =
+        fields.asSequence()
+            .map { node.path(it).asText("") }
+            .firstOrNull { it.isNotBlank() }
 }

@@ -4,6 +4,7 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
+import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.Duration
 import java.time.Instant
 
 /**
@@ -70,6 +72,8 @@ class ReservedCommandsController(
         val year: Int? = null,
         /** 게임 월(cutTurn 월 전진 반영). */
         val month: Int? = null,
+        val turnPhase: Int? = null,
+        val turnPhaseText: String? = null,
         /** 서버 현재 시각(PHP date — TimeUtil::now). */
         val date: String? = null,
         /** [§2 BLOCKED] general.aux.autorun_limit — aux read 원천 부재(P1-004/P1-020) → 항상 null. */
@@ -118,6 +122,7 @@ class ReservedCommandsController(
             }
         }
 
+        val currentTurnPhase = turnPhase(w)
         return ResponseEntity.ok(
             ReservedCommandsResponse(
                 result = true,
@@ -127,10 +132,26 @@ class ReservedCommandsController(
                 turnTerm = turnTermMin,
                 year = year,
                 month = month,
+                turnPhase = currentTurnPhase,
+                turnPhaseText = currentTurnPhase?.let { turnPhaseText(it) },
                 date = TurnTimeFormatter.full(Instant.now()),
                 // autorunLimit — §2 BLOCKED(aux 원천 부재) 항상 null(날조 금지).
                 autorunLimit = null,
             ),
         )
+    }
+
+    private fun turnPhase(w: WorldStateReadEntity?): Int? {
+        val startTime = w?.startTime ?: return null
+        val tickSeconds = w.tickSeconds.takeIf { it > 0 } ?: return null
+        val elapsedTurns = Math.floorDiv(Duration.between(startTime, Instant.now()).seconds, tickSeconds.toLong())
+        return Math.floorMod(elapsedTurns.toInt(), 3) + 1
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 }

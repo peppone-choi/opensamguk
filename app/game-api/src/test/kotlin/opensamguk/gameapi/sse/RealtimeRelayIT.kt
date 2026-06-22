@@ -1,5 +1,4 @@
 package opensamguk.gameapi.sse
-
 import opensamguk.common.wire.RealtimeEvent
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.gameEventChannel
@@ -20,26 +19,22 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
 /**
  * Exercises the pub/sub -> MessageListener delivery path that the production
  * [RealtimeSubscriber] @Bean wires. Publishes a `turnCompleted` payload on the per-profile
  * channel and asserts the listener receives it, then relays it through a real
  * [RealtimeRelayController.fanOut].
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class RealtimeRelayIT {
     private val profile = "default"
     private val channel = gameEventChannel(profile)
-
     @Test
     fun `turnCompleted published on the channel is delivered to the listener and relayed`() {
         assertTrue(redis.isRunning, "redis:7-alpine container must be running")
-
         val relay = RealtimeRelayController()
         val received = AtomicReference<String?>(null)
         val latch = CountDownLatch(1)
-
         val container = RedisMessageListenerContainer()
         container.setConnectionFactory(connectionFactory)
         val listener = MessageListener { message, _ ->
@@ -57,7 +52,6 @@ class RealtimeRelayIT {
             while (!container.isRunning && System.currentTimeMillis() < subscribeDeadline) {
                 Thread.sleep(20)
             }
-
             val event = RealtimeEvent.TurnCompleted(
                 at = "0200-01-01T00:00:00.000Z",
                 lastTurnTime = "0199-12-01T00:00:00.000Z",
@@ -66,7 +60,6 @@ class RealtimeRelayIT {
                 turnNumber = 1,
             )
             val payload = WireJson.encodeToString(RealtimeEvent.serializer(), event)
-
             // publish until delivered (handles the pub/sub subscription warm-up race)
             val deadline = System.currentTimeMillis() + 5000
             var delivered = false
@@ -77,7 +70,6 @@ class RealtimeRelayIT {
                     break
                 }
             }
-
             assertTrue(delivered, "listener received the turnCompleted message within the deadline")
             assertEquals(payload, received.get())
             val decoded = WireJson.decodeFromString(RealtimeEvent.serializer(), received.get()!!)
@@ -86,15 +78,12 @@ class RealtimeRelayIT {
             container.stop()
         }
     }
-
     companion object {
         @Container
         @JvmStatic
         val redis: GenericContainer<*> = GenericContainer("redis:7-alpine").withExposedPorts(6379)
-
         private lateinit var connectionFactory: LettuceConnectionFactory
         lateinit var template: StringRedisTemplate
-
         @BeforeAll
         @JvmStatic
         fun setup() {
@@ -104,7 +93,6 @@ class RealtimeRelayIT {
             template = StringRedisTemplate(connectionFactory)
             template.afterPropertiesSet()
         }
-
         @AfterAll
         @JvmStatic
         fun teardown() {

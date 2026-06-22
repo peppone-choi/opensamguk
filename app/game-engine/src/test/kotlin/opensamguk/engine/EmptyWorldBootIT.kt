@@ -1,5 +1,4 @@
 package opensamguk.engine
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -13,8 +12,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = [
@@ -26,33 +24,26 @@ import kotlin.test.assertTrue
     ],
 )
 class EmptyWorldBootIT {
-
     @LocalServerPort
     var port: Int = 0
-
     @Autowired
     lateinit var rest: TestRestTemplate
-
     @Autowired
     lateinit var jdbc: JdbcTemplate
-
     @Test
     fun `daemon starts and idles when admin has not created a world yet`() {
         val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: -1
         assertEquals(0, worldCount, "test starts with the intentional empty-server invariant")
-
         val body = rest.getForObject(
             "http://localhost:$port/admin/turn-daemon/status", String::class.java,
         )
         assertTrue(body!!.contains("\"loopAlive\":true"), "status body: $body")
         assertTrue(body.contains("\"state\":\"running\""), "status body: $body")
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

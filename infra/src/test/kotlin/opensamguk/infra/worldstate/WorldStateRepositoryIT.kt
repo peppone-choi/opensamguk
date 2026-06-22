@@ -1,5 +1,4 @@
 package opensamguk.infra.worldstate
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -13,16 +12,13 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.OffsetDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class WorldStateRepositoryIT {
-
     @Autowired
     lateinit var repository: WorldStateRepository
-
     @Test
     fun `flyway baseline applied and world_state round-trips`() {
         val saved = repository.save(
@@ -34,7 +30,6 @@ class WorldStateRepositoryIT {
             )
         )
         assertNotNull(saved.id)
-
         val found = repository.findById(saved.id!!).orElseThrow()
         assertEquals("scenario_2", found.scenarioCode)
         assertEquals(190, found.currentYear)
@@ -44,7 +39,6 @@ class WorldStateRepositoryIT {
         assertEquals(null, found.startYear)
         assertEquals(null, found.hiddenSeed)
     }
-
     @Test
     fun `FC1 -- world-state read exposes the calendar columns + hidden_seed for ServerClock`() {
         val saved = repository.save(
@@ -69,12 +63,10 @@ class WorldStateRepositoryIT {
         assertEquals("8ebfeb6fa932a181ec9ef43b7473f4c9", found.hiddenSeed)
         assertEquals(32, found.hiddenSeed!!.length)
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

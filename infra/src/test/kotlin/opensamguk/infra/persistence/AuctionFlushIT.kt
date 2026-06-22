@@ -28,6 +28,10 @@ class AuctionFlushIT {
     @BeforeAll
     fun setUp() {
         postgres = PostgreSQLContainer("postgres:16-alpine")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            runCatching { org.testcontainers.DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false),
+            "Docker unavailable — Testcontainers IT skipped (not failed)",
+        )
         postgres.start()
         val ds: DataSource = DriverManagerDataSource().apply {
             setDriverClassName("org.postgresql.Driver")

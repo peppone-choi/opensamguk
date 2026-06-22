@@ -11,6 +11,7 @@ import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.GameApiJwtVerifier
@@ -52,7 +53,7 @@ class PossessionControllerTest {
     private val reserve = mock(CommandReserveService::class.java)
     private val jwtVerifier = mock(GameApiJwtVerifier::class.java)
     private val fixedClock = Clock.fixed(Instant.parse("2026-06-02T00:00:00Z"), ZoneOffset.UTC)
-    private val possession = GeneralPossessionService(owners, generals, npcTokens, fixedClock)
+    private val possession = GeneralPossessionService(owners, generals, npcTokens, worldStates, fixedClock)
     private val selectNpcTokens =
         SelectNpcTokenService(npcTokens, owners, generals, nations, worldStates, fixedClock)
 
@@ -86,8 +87,15 @@ class PossessionControllerTest {
         updatedAt = Instant.parse("2026-06-02T00:00:00Z"),
     )
 
+    private fun seedNpcMode(mode: Int = 1) {
+        `when`(worldStates.findById(1)).thenReturn(
+            Optional.of(WorldStateReadEntity(id = 1, scenarioCode = "scenario_1010", tickSeconds = 3600, config = mapOf("npcmode" to mode))),
+        )
+    }
+
     @Test
     fun `claimable lists unowned npc=2 candidates minus already-claimed, with nation names`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(null)
         `when`(
             npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(
@@ -122,6 +130,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claimable issues a tokenized shortlist capped at five picks`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(null)
         `when`(
             npcTokens.findFirstByOwnerIdAndValidUntilAfterOrderByIdDesc(
@@ -148,6 +157,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claimable returns empty when the caller already owns a general`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
 
         mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
@@ -158,6 +168,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claim inserts general_owner for an unowned npc=2 candidate`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(null)
         `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
         `when`(
@@ -186,6 +197,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claim 409 when the requested general is outside the active token`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(null)
         `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
         `when`(
@@ -205,6 +217,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claim is idempotent when the caller already owns exactly that general`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
 
         mockMvc().perform(
@@ -218,6 +231,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claim 409 when the caller already owns a different general`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 5L, userId = 7L, claimedAt = Instant.EPOCH))
 
         mockMvc().perform(
@@ -230,6 +244,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claim 409 when the general is already claimed by someone else`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(null)
         `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "여포")))
         `when`(
@@ -250,6 +265,7 @@ class PossessionControllerTest {
 
     @Test
     fun `claim 409 when the target is not a claimable npc=2 candidate`() {
+        seedNpcMode()
         `when`(owners.findByUserId(7L)).thenReturn(null)
         `when`(generals.findById(10)).thenReturn(Optional.of(npc(10, "조조", npcState = 0)))
 
@@ -259,5 +275,29 @@ class PossessionControllerTest {
         )
             .andExpect(status().isConflict)
             .andExpect(jsonPath("$.result").value(false))
+    }
+
+    @Test
+    fun `claimable blocks when server does not allow possession`() {
+        seedNpcMode(0)
+
+        mockMvc().perform(get("/api/generals/claimable").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 가능한 서버가 아닙니다"))
+            .andExpect(jsonPath("$.candidates.length()").value(0))
+    }
+
+    @Test
+    fun `claim blocks when server does not allow possession`() {
+        seedNpcMode(0)
+
+        mockMvc().perform(
+            post("/api/general/claim").with(principal(7L))
+                .contentType(MediaType.APPLICATION_JSON).content("""{"generalId":10}"""),
+        )
+            .andExpect(status().isConflict)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.reason").value("빙의 가능한 서버가 아닙니다"))
     }
 }

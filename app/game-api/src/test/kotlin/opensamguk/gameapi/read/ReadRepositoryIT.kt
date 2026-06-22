@@ -1,5 +1,4 @@
 package opensamguk.gameapi.read
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -14,7 +13,6 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-
 /**
  * Task E1 — proves the precheck JPA READ repos materialize the V1 baseline rows into the shared
  * `:logic` entities. Testcontainers `postgres:16-alpine` + the `:infra` Flyway baseline (on the
@@ -25,19 +23,17 @@ import kotlin.test.assertTrue
  * - `intel_exp`/`explevel`/`max_domestic_critical` come from `meta` (NO such column on the entity);
  * - `city.trust` (INTEGER baseline column) widens to the logic `Double`.
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class ReadRepositoryIT {
-
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var cities: CityReadRepository
     @Autowired lateinit var nations: NationReadRepository
     @Autowired lateinit var diplomacies: DiplomacyReadRepository
     @Autowired lateinit var worldStates: WorldStateReadRepository
-
     @Test
     fun `read entities materialize from the baseline rows`() {
         // world_state singleton
@@ -97,14 +93,12 @@ class ReadRepositoryIT {
             )
             """.trimIndent()
         )
-
         // --- world_state ---
         val ws = worldStates.findAll().single()
         assertEquals("scenario_2", ws.scenarioCode)
         assertEquals(195, ws.currentYear)
         assertEquals(3, ws.currentMonth)
         assertEquals(180, (ws.config["startYear"] as Number).toInt())
-
         // --- nation: full P2 shape; gennum/capset read back FROM meta (no dedicated columns) ---
         val nation = nations.findById(1).orElseThrow().toLogic()
         assertEquals(1, nation.id)
@@ -118,7 +112,6 @@ class ReadRepositoryIT {
         assertEquals(1234.5, nation.tech)
         assertEquals(24, nation.gennum)
         assertEquals(3, nation.capset)
-
         // --- diplomacy: directional row materializes into the logic Diplomacy via the read repo ---
         val diplo = diplomacies.findBySrcNationId(1).map { it.toLogic() }
         assertEquals(1, diplo.size)
@@ -126,7 +119,6 @@ class ReadRepositoryIT {
         assertEquals(2, diplo[0].you)
         assertEquals(2, diplo[0].state)
         assertEquals(6, diplo[0].term)
-
         // --- city: int trust widens to Double; P2 develop/defense surface materializes ---
         val city = cities.findById(5).orElseThrow().toLogic()
         assertEquals(5, city.id)
@@ -146,7 +138,6 @@ class ReadRepositoryIT {
         assertEquals(100000, city.populationMax)
         assertEquals(100, city.trade)
         assertEquals(3, city.region)
-
         // --- general: meta carries intel_exp/explevel/max_domestic_critical (NO entity column) ---
         val general = generals.findById(10).orElseThrow().toLogic()
         assertEquals(10, general.id)
@@ -179,7 +170,6 @@ class ReadRepositoryIT {
         assertNull(general.meta["nonexistent"])
         assertTrue(general.meta.keys.toList() == listOf("explevel", "intel_exp", "max_domestic_critical"))
     }
-
     /**
      * W9 (9a) T0 — `findDistinctCityIdByNationId`(`getWorldMap`의 shownByGeneralList 원천). 같은 도시의
      * 여러 장수는 1번만, cityId-ascending 정렬. 다른 국가/같은 도시는 제외.
@@ -212,17 +202,14 @@ class ReadRepositoryIT {
         insertGeneral(23, 1, 3)
         // nation 2 in city 3 → must NOT leak into nation 1's set
         insertGeneral(24, 2, 3)
-
         val cityIds = generals.findDistinctCityIdByNationId(1)
         assertEquals(listOf(3, 5, 12), cityIds)
         assertEquals(listOf(3), generals.findDistinctCityIdByNationId(2))
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

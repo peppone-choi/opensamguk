@@ -30,6 +30,7 @@ interface ServerVersion {
     id: string;
     name: string;
     generation?: number | null;
+    scenarioCode?: string | null;
     gameApi: ServiceVersion;
     gameEngine: ServiceVersion;
     skew: boolean;
@@ -439,8 +440,10 @@ function ServerLifecycleControl({
     scenarios: ScenarioOption[];
     onChanged: () => void;
 }) {
-    const defaultScenario =
-        scenarios.find((scenario) => scenario.code === 'scenario_1010')?.code || scenarios[0]?.code || '';
+    const serverScenario = server.scenarioCode && scenarios.some((scenario) => scenario.code === server.scenarioCode)
+        ? server.scenarioCode
+        : '';
+    const defaultScenario = serverScenario || scenarios[0]?.code || '';
     const [mode, setMode] = useState<'reset' | 'delete' | null>(null);
     const [busy, setBusy] = useState(false);
     const [result, setResult] = useState<ServerCreateResponse | null>(null);
@@ -799,8 +802,7 @@ function CreateServerControl({ onCreated }: { onCreated: () => void }) {
                 if (!alive) return;
                 setScenarios(data.scenarios);
                 setScenarioCode((current) => {
-                    const defaultScenario = data.scenarios.find((scenario) => scenario.code === 'scenario_1010');
-                    return current || defaultScenario?.code || data.scenarios[0]?.code || '';
+                    return current || data.scenarios[0]?.code || '';
                 });
             })
             .catch(() => {

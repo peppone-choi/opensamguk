@@ -218,7 +218,16 @@ class FoundingHandlerSeamTest {
 
         assertFalse(outcome.fellBack, "해산 passed FULL constraints and resolved")
         assertNull(world.getNationById(7), "the disbanded wandering nation leaves the world")
-        val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, world.consumeDirtyState())
+        val dirty = world.consumeDirtyState()
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "global" &&
+                    it.category == "action" &&
+                    it.text == "<C>●</>${MONTH}월:<Y>진표</>가 세력을 해산했습니다."
+            },
+            "해산 global action log must keep the actor name; empty '<Y></>가 …' is a prod regression",
+        )
+        val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
         assertEquals(listOf(7), payload.deletedNations, "deleted nation reaches the flush payload")
         assertEquals(7, payload.deletedNationSnapshots.single()["nation"])
         assertEquals(listOf(42), payload.deletedNationSnapshots.single()["general_ids"])

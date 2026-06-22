@@ -38,13 +38,14 @@ class AdminVersionDeployTest {
         val json = """
             [
               {"id":"s1","name":"통일 서버","generation":1,"gameApiUrl":"http://s1-game-api:8081","gameEngineUrl":"http://s1-game-engine:8082","deployProject":"opensamguk-s1"},
-              {"id":"s2","name":"군웅 서버","generation":7,"gameApiUrl":"http://s2-game-api:8081","gameEngineUrl":"http://s2-game-engine:8082","deployProject":"opensamguk-s2"}
+              {"id":"s2","name":"군웅 서버","generation":7,"scenarioCode":"scenario_1021","gameApiUrl":"http://s2-game-api:8081","gameEngineUrl":"http://s2-game-engine:8082","deployProject":"opensamguk-s2"}
             ]
         """.trimIndent()
         val reg = registry(json = json)
         assertEquals(listOf("s1", "s2"), reg.all().map { it.id })
         assertEquals("opensamguk-s2", reg.find("s2")?.deployProject)
         assertEquals(7, reg.find("s2")?.generation)
+        assertEquals("scenario_1021", reg.find("s2")?.scenarioCode)
         assertEquals("http://s1-game-engine:8082", reg.find("s1")?.gameEngineUrl)
         assertEquals("s1", reg.default()?.id) // 첫 서버가 기본값
     }

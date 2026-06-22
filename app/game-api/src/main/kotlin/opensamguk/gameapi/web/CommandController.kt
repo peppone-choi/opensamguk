@@ -1,6 +1,7 @@
 package opensamguk.gameapi.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommandResultSerializer
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
@@ -12,6 +13,7 @@ import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.reserve.CommandWireMapper
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
@@ -28,13 +30,13 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * Step 1 + step 2 of the 8-step flow, exposed to the Next.js client.
  *
- * `POST /api/command/{code}?generalId=` runs the E2 precheck (the SHARED `:logic` constraints) and,
- * ONLY when it returns `AVAILABLE`, runs the E3 reserve (durable `general_turn` + daemon poke):
+ * `POST /api/command/{code}?generalId=` runs the E2 precheck (the SHARED `:logic` constraints) and
+ * then reserves known general-turn or immediate-intake commands (durable `general_turn` or typed publish):
  *
  *  - `AVAILABLE` → `202 Accepted` carrying the reserve `requestId` (the command is queued; the daemon
  *    will process it on its next run).
- *  - `BLOCKED`   → `200 OK` carrying the PHP-faithful deny reason (NOT an error — the player simply
- *    cannot run the command right now; the UI shows the reason).
+ *  - known `BLOCKED`/`UNKNOWN` command → `202 Accepted`; the daemon re-evaluates on the execution turn.
+ *  - unknown command code → `200 OK` carrying the unavailable reason.
  *  - `UNKNOWN`   → `200 OK` carrying a generic unavailable reason (a precheck input row was absent).
  *
  * `turnIdx` defaults to `0` (the next reservable slot); the TS `setGeneralTurn` route accepts an
@@ -79,26 +81,43 @@ class CommandController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
         return when (val result = precheck.precheck(generalId = generalId, actionCode = code)) {
-            PrecheckResult.Available -> {
-                val reserved = reserve.reserve(
-                    generalId = generalId,
-                    actionCode = code,
-                    turnIdx = turnIdx,
-                    argJson = argJson,
-                )
-                ResponseEntity.status(HttpStatus.ACCEPTED).body(
-                    ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),
-                )
-            }
+            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, argJson)
 
-            is PrecheckResult.Blocked -> ResponseEntity.ok(
-                BlockedResponse(status = "BLOCKED", reason = result.reason, constraintName = result.constraintName),
-            )
+            is PrecheckResult.Blocked ->
+                if (isForecastReservable(code)) {
+                    reserveAccepted(generalId, code, turnIdx, argJson)
+                } else {
+                    ResponseEntity.ok(
+                        BlockedResponse(status = "BLOCKED", reason = result.reason, constraintName = result.constraintName),
+                    )
+                }
 
-            is PrecheckResult.Unknown -> ResponseEntity.ok(
-                BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
-            )
+            is PrecheckResult.Unknown ->
+                if (isForecastReservable(code)) {
+                    reserveAccepted(generalId, code, turnIdx, argJson)
+                } else {
+                    ResponseEntity.ok(
+                        BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
+                    )
+                }
         }
+    }
+
+    private fun reserveAccepted(
+        generalId: Int,
+        code: String,
+        turnIdx: Int,
+        argJson: String?,
+    ): ResponseEntity<Any> {
+        val reserved = reserve.reserve(
+            generalId = generalId,
+            actionCode = code,
+            turnIdx = turnIdx,
+            argJson = argJson,
+        )
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
+            ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),
+        )
     }
 
     // ── W0-4 인테이크 결과 회신: GET /api/command/result/{requestId} ───────────────────────────────
@@ -342,4 +361,12 @@ class CommandController(
         } catch (e: CommandQueueService.CommandQueueDenied) {
             blocked(e.reason)
         }
+
+    private companion object {
+        private val FORECAST_RESERVABLE_COMMANDS: Set<String> =
+            GameConst.availableGeneralCommand.values.flatten().toSet()
+
+        private fun isForecastReservable(code: String): Boolean =
+            code in FORECAST_RESERVABLE_COMMANDS || CommandWireMapper.isIntakeCommand(code)
+    }
 }

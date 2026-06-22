@@ -1,5 +1,4 @@
 package opensamguk.engine
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -11,8 +10,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertTrue
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     // game-engine 자체엔 Spring Security가 없다. 다만 test classpath가 game-api(:mainClassesForTest)의
@@ -33,13 +31,10 @@ import kotlin.test.assertTrue
     ],
 )
 class GameEngineApplicationTests {
-
     @LocalServerPort
     var port: Int = 0
-
     @Autowired
     lateinit var rest: TestRestTemplate
-
     @Test
     fun `status endpoint reports the configured profile and idle state`() {
         val body = rest.getForObject(
@@ -48,12 +43,10 @@ class GameEngineApplicationTests {
         assertTrue(body!!.contains("\"state\":\"idle\""), "status body: $body")
         assertTrue(body.contains("che:scenario_2"), "status body: $body")
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

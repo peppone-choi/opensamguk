@@ -36,6 +36,10 @@ class NationTurnRingIT {
     @BeforeAll
     fun setUp() {
         postgres = PostgreSQLContainer("postgres:16-alpine")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            runCatching { org.testcontainers.DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false),
+            "Docker unavailable — Testcontainers IT skipped (not failed)",
+        )
         postgres.start()
 
         dataSource = DriverManagerDataSource().apply {

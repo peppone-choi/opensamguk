@@ -158,7 +158,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 
 ### 턴 박자 (turn cadence)
 
-- **현실 1시간 = 게임 1턴(1순)** · **36턴 = 게임 1년**
+- **현실 1시간 = 게임 1턴(상순/중순/하순)** · **36턴 = 게임 1년**
 - 명령 큐 + 알림 패턴. 메모리=진실의 원천, DB=영속화.
 
 ---
@@ -240,11 +240,13 @@ TURN_PROFILE_NAME=che:scenario_2
 
 ### 프로덕션 (EC2 t3.large)
 
-`docker-compose.production.yml`은 GHCR 이미지(`ghcr.io/${GHCR_OWNER}/<svc>:${IMAGE_TAG}`)를 풀해서 메모리 제한·헬스체크·볼륨(`pgdata`/`redisdata`/`nginx-cache`)·`opensamguk` 브리지 네트워크로 기동합니다. `POSTGRES_PASSWORD`는 필수(미설정 시 기동 실패). 배포는 `.github/workflows/deploy.yml`(빌드 → GHCR push → SSH → 롤링 재시작) + `scripts/deploy.sh`(수동 EC2 배포 + 헬스 체크 루프)로 수행합니다.
+운영 오케스트레이션 정본은 별도 저장소 [`opensamguk-docker`](https://github.com/peppone-choi/opensamguk-docker)입니다. 이 앱 저장소는 GHCR 이미지를 빌드·푸시하고, EC2 self-hosted runner에서 docker repo main을 동기화한 뒤 **공유 스택**(`gateway-api`, `web-gateway`, `nginx`, `deployer`)만 자동 갱신합니다.
 
-```bash
-docker compose -f docker-compose.production.yml up -d
-```
+- 첫 설치 직후에는 게임 서버가 0개여도 정상입니다. 공유 스택과 `SERVER_REGISTRY_JSON=[]`만 먼저 뜰 수 있어야 합니다.
+- 실행 중인 게임 서버의 `servers/<id>.env` 버전 핀(`IMAGE_TAG`, `WEB_GAME_TAG`)은 앱 CI가 수정하지 않습니다.
+- 게임 서버 승격은 어드민/deployer에서 서버별로 하거나, 리셋·재시드·새 기수 시작 같은 명시 운영 시점에 수행합니다.
+- `deployer` 자체는 docker repo main 동기화 후 공유 스택에서 자동 rebuild/recreate됩니다.
+- 레거시 단일 compose(`docker-compose.production.yml`, `scripts/deploy.sh`)는 앱 이미지/로컬 smoke용 호환 표면입니다. 멀티서버 운영은 docker repo의 `docker-compose.shared.yml` + `docker-compose.server.yml`를 따릅니다.
 
 ---
 
