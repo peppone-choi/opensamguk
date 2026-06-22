@@ -1,5 +1,4 @@
 package opensamguk.engine.redis
-
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonStreamKeys
@@ -20,12 +19,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 class RedisCommandStreamIT {
     private val profile = "che:scenario_2"
     private val keys = TurnDaemonStreamKeys.of(profile)
-
     private fun addCommand(template: StringRedisTemplate, requestId: String, generalId: Int) {
         val envelope = TurnDaemonCommandEnvelope(
             requestId = requestId,
@@ -40,45 +37,34 @@ class RedisCommandStreamIT {
         @Suppress("UNCHECKED_CAST")
         template.opsForStream<Any, Any>().add(record as ObjectRecord<String, Any>)
     }
-
     @AfterTest
     fun cleanup() {
         template.delete(keys.commandStream)
     }
-
     @Test
     fun `only-new cursor ignores pre-construction message and drains the post-construction one`() {
         assertTrue(redis.isRunning, "redis:7-alpine container must be running")
-
         // message BEFORE consumer construction -> startId '$' resolves past it -> ignored
         addCommand(template, "before", 100)
-
         val consumer = RedisCommandStream(template, profile) // startId defaults to '$'
         val startCursor = consumer.lastId()
-
         // a NEW message after construction (the resume the consumer should see)
         addCommand(template, "after", 200)
-
         val drained = consumer.readCommands(2000)
         assertEquals(1, drained.size, "exactly the post-construction message is consumed")
         val cmd = drained.single()
         assertTrue(cmd is TurnDaemonCommand.TroopJoin)
         assertEquals(200, (cmd as TurnDaemonCommand.TroopJoin).generalId)
-
         assertNotEquals(startCursor, consumer.lastId(), "lastId advanced past the consumed record")
-
         val second = consumer.readCommands(500)
         assertTrue(second.isEmpty(), "second drain is empty")
     }
-
     companion object {
         @Container
         @JvmStatic
         val redis: GenericContainer<*> = GenericContainer("redis:7-alpine").withExposedPorts(6379)
-
         private lateinit var connectionFactory: LettuceConnectionFactory
         lateinit var template: StringRedisTemplate
-
         @BeforeAll
         @JvmStatic
         fun setup() {
@@ -88,7 +74,6 @@ class RedisCommandStreamIT {
             template = StringRedisTemplate(connectionFactory)
             template.afterPropertiesSet()
         }
-
         @AfterAll
         @JvmStatic
         fun teardown() {

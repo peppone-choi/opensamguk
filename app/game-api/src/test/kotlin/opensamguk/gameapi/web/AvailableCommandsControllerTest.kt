@@ -62,10 +62,15 @@ class AvailableCommandsControllerTest {
         mockMvc().perform(get("/api/commands/available").param("generalId", "10"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
-            // grouped into categories (내정/군사/인사/국가/외교/자원교역/…)
             .andExpect(jsonPath("$.commandTable").isArray)
-            .andExpect(jsonPath("$.commandTable[0].category").isNotEmpty)
+            .andExpect(jsonPath("$.commandTable[0].category").value("개인"))
             .andExpect(jsonPath("$.commandTable[0].values").isArray)
+            .andExpect(jsonPath("$.commandTable[0].values[0].value").value("휴식"))
+            .andExpect(jsonPath("$.commandTable[0].values[1].value").value("che_요양"))
+            .andExpect(jsonPath("$.commandTable[1].category").value("내정"))
+            .andExpect(jsonPath("$.commandTable[1].values[0].value").value("che_농지개간"))
+            .andExpect(jsonPath("$.commandTable[*].values[?(@.value == 'cr_건국')]").isEmpty)
+            .andExpect(jsonPath("$.commandTable[*].values[?(@.value == 'che_무작위건국')]").isEmpty)
     }
 
     @Test

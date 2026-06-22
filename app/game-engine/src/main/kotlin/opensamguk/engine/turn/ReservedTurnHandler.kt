@@ -256,14 +256,14 @@ class ReservedTurnHandler(
         // stand-ins — they consume NOTHING from the action rng (GeobyeongTest proves a fresh rng yields the
         // same first draw post-resolve). Built ONLY after constraints Allow (we are past the early-return),
         // so a denied 거병 never allocates an id. The actor name is threaded so the created nation's name is
-        // the actor's (the resolver else falls back to meta["name"]). HandledTurn.args keeps the ORIGINAL
-        // args (the parity oracle) — the founding preload never pollutes it.
+        // the actor's and general/global logs can use the same actor name PHP's General object exposes.
+        // HandledTurn.args keeps the ORIGINAL args (the parity oracle) — the founding preload never pollutes it.
         val isFounding = actionCode in FOUNDING_COMMANDS
         val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, args, general, year, month) else args
         val resolveCtx = GeneralActionResolveContext(
             draft, rng, worldEnv, month, date,
             args = resolveArgs,
-            generalName = if (isFounding) general.name else "",
+            generalName = general.name,
             // 외교 제의 서신 validUntil(= date + max(30, turnterm*3)분) 공식이 읽는 per-game turnterm.
             turnterm = turnTerm,
             // 무작위건국: rng.choice가 소모하는 도시 id 목록. PHP `SELECT city FROM city WHERE level>=5 AND level<=6 AND nation=0`

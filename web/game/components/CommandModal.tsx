@@ -13,7 +13,7 @@
 //   - 200 {status:"BLOCKED"|"UNKNOWN", reason}       → render the PHP-faithful reason as INFO (not error).
 //
 // No-arg commands reserve instantly on click; reqArg commands open the relevant field sub-form first.
-// Graceful: if availableCommands() is absent/empty we fall back to a minimal built-in catalog and FLAG it.
+// If availableCommands() is absent/empty, surface the failure instead of fabricating a local command list.
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
@@ -62,15 +62,6 @@ interface CommandModalProps {
     isNationCommand?: boolean;
 }
 
-// Fallback catalog (only used when availableCommands() is absent/empty). Minimal — keeps the modal usable
-// before the W5 endpoint lands. FLAGGED in the report as a backend gap, NOT a fabricated parity surface.
-const FALLBACK_CATALOG: AvailableCommandCategory[] = [
-    {
-        category: '휴식',
-        values: [{ value: '휴식', simpleName: '휴식', title: '휴식', compensation: 0, possible: true, reqArg: false }],
-    },
-];
-
 function normalize(res: AvailableCommandsResponse | null): AvailableCommandCategory[] {
     if (!res) return [];
     if (res.commandTable && res.commandTable.length) return res.commandTable;
@@ -117,7 +108,7 @@ export default function CommandModal({
         : null;
 
     const [catalog, setCatalog] = useState<AvailableCommandCategory[]>([]);
-    const [usingFallback, setUsingFallback] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [cat, setCat] = useState<string>('');
     const [selected, setSelected] = useState<AvailableCommand | null>(pinned);
     const [argValue, setArgValue] = useState<number | null>(null);
@@ -135,17 +126,18 @@ export default function CommandModal({
                 if (norm.length) {
                     setCatalog(norm);
                     setCat(norm[0].category);
+                    setLoadError(null);
                 } else {
-                    setCatalog(FALLBACK_CATALOG);
-                    setCat(FALLBACK_CATALOG[0].category);
-                    setUsingFallback(true);
+                    setCatalog([]);
+                    setCat('');
+                    setLoadError('명령 목록을 불러오지 못했습니다.');
                 }
             })
             .catch(() => {
                 if (!on) return;
-                setCatalog(FALLBACK_CATALOG);
-                setCat(FALLBACK_CATALOG[0].category);
-                setUsingFallback(true);
+                setCatalog([]);
+                setCat('');
+                setLoadError('명령 목록을 불러오지 못했습니다.');
             });
         return () => {
             on = false;
@@ -225,41 +217,45 @@ export default function CommandModal({
                     <button onClick={onClose} aria-label="닫기">×</button>
                 </div>
 
-                {usingFallback && (
-                    <p className="cmd-flag">명령 목록을 불러올 수 없어 기본 목록만 표시합니다.</p>
-                )}
+                {loadError && <p className="cmd-flag">{loadError}</p>}
 
                 {!selected ? (
                     <>
-                        <div className="cmd-cats">
-                            {categories.map((c) => (
-                                <button key={c} className={cat === c ? 'active' : ''} onClick={() => setCat(c)}>
-                                    {c}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="cmd-grid">
-                            {filtered.map((cmd) => (
-                                <button
-                                    key={cmd.value}
-                                    className="cmd-item"
-                                    title={cmd.title}
-                                    onClick={() => pick(cmd)}
-                                    disabled={loading}
-                                >
-                                    <span className={cmd.possible ? '' : 'cmd-impossible'}>
-                                        {cmd.simpleName} {compensationTag(cmd.compensation)}
-                                    </span>
-                                    {cmd.title && cmd.title !== cmd.simpleName && (
-                                        <small className="cmd-item-sub">
-                                            {cmd.title.startsWith(cmd.simpleName)
-                                                ? cmd.title.substring(cmd.simpleName.length)
-                                                : cmd.title}
-                                        </small>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
+                        {categories.length > 0 && (
+                            <div className="cmd-cats">
+                                {categories.map((c) => (
+                                    <button key={c} className={cat === c ? 'active' : ''} onClick={() => setCat(c)}>
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {filtered.length > 0 ? (
+                            <div className="cmd-grid">
+                                {filtered.map((cmd) => (
+                                    <button
+                                        key={cmd.value}
+                                        className="cmd-item"
+                                        title={cmd.title}
+                                        onClick={() => pick(cmd)}
+                                        disabled={loading}
+                                    >
+                                        <span className={cmd.possible ? '' : 'cmd-impossible'}>
+                                            {cmd.simpleName} {compensationTag(cmd.compensation)}
+                                        </span>
+                                        {cmd.title && cmd.title !== cmd.simpleName && (
+                                            <small className="cmd-item-sub">
+                                                {cmd.title.startsWith(cmd.simpleName)
+                                                    ? cmd.title.substring(cmd.simpleName.length)
+                                                    : cmd.title}
+                                            </small>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="cmd-empty">표시할 명령이 없습니다.</div>
+                        )}
                     </>
                 ) : (
                     <>

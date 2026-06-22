@@ -31,6 +31,7 @@ export default function GameInfo({
     const generationText = generation == null ? '' : `${generation}기`;
     const titleText = [title, serverName, generationText].filter(Boolean).join(' ');
     const locked = global.serverLocked === true;
+    const currentText = `${global.year}年 ${global.month}月${global.turnPhaseText ? ` ${global.turnPhaseText}` : ''}`;
 
     return (
         <header className="game-info">
@@ -56,7 +57,7 @@ export default function GameInfo({
 
                 {/* 6 subYearMonth */}
                 <div className="gi-cell gi-wide">
-                    현재: {global.year}年 {global.month}月 ({global.turnterm}분 턴 서버)
+                    현재: {currentText} ({global.turnterm}분 턴 서버)
                 </div>
 
                 {/* 7 subOnlineUserCnt */}

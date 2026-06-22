@@ -319,6 +319,21 @@ class GenFoundBodiesTest {
     }
 
     @Test
+    fun `do거병 preserves non-foundable city draw before occupied BFS filtering`() {
+        val rng = RecordingRng("reb-occupied-current")
+        val ctx = ctxOf(
+            rng,
+            instance(nationId = 0),
+            selfNpcType = 2,
+            selfCityId = 100,
+            selfCityLevel = 1,
+            foundOccupiedCities = (1..3000).toSet(),
+        )
+        assertNull(GenFoundFamily.do거병(ctx)(null))
+        assertEquals(0.5, rng.draws.first().prob)
+    }
+
+    @Test
     fun `do거병 on a non-foundable city draws the 0_5 nextBit FIRST`() {
         // selfCityLevel=1 (non-foundable) → :3232 `&&` reaches nextBool(0.5)=nextBit as the FIRST draw.
         val rng = RecordingRng("reb-nonfoundable")

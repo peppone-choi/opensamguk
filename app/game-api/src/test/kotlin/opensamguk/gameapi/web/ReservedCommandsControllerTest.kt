@@ -35,12 +35,18 @@ class ReservedCommandsControllerTest {
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
-    private fun seedWorld(year: Int = 200, month: Int = 3, tickSeconds: Int = 3600, config: Map<String, Any?> = emptyMap()) {
+    private fun seedWorld(
+        year: Int = 200,
+        month: Int = 3,
+        tickSeconds: Int = 3600,
+        config: Map<String, Any?> = emptyMap(),
+        startTime: java.time.Instant? = null,
+    ) {
         org.mockito.Mockito.`when`(world.findAll()).thenReturn(
             listOf(
                 opensamguk.gameapi.read.WorldStateReadEntity(
                     id = 1, scenarioCode = "che_1010", currentYear = year, currentMonth = month,
-                    tickSeconds = tickSeconds, config = config,
+                    tickSeconds = tickSeconds, startTime = startTime, config = config,
                 ),
             ),
         )
@@ -99,7 +105,13 @@ class ReservedCommandsControllerTest {
 
     @Test
     fun `exposes turnTime turnTerm year month and blocked autorunLimit`() {
-        seedWorld(year = 200, month = 3, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:00:00"))
+        seedWorld(
+            year = 200,
+            month = 3,
+            tickSeconds = 3600,
+            config = mapOf("turntime" to "2026-06-10 09:00:00"),
+            startTime = java.time.Instant.now().minusSeconds(3600),
+        )
         `when`(generals.findById(10)).thenReturn(
             java.util.Optional.of(
                 opensamguk.gameapi.read.GeneralReadEntity(
@@ -117,6 +129,8 @@ class ReservedCommandsControllerTest {
             .andExpect(jsonPath("$.turnTerm").value(60))
             .andExpect(jsonPath("$.year").value(200))
             .andExpect(jsonPath("$.month").value(3))
+            .andExpect(jsonPath("$.turnPhase").value(2))
+            .andExpect(jsonPath("$.turnPhaseText").value("중순"))
             .andExpect(jsonPath("$.date").isNotEmpty)
             // autorun_limit — general.aux 원천 부재(§2 BLOCKED, ChiefReservedResponse 동일) → 미노출.
             .andExpect(jsonPath("$.autorunLimit").doesNotExist())

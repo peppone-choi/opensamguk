@@ -35,6 +35,7 @@ data class ClaimableResponse(
     val validUntil: String? = null,
     val pickMoreFrom: String? = null,
     val pickMoreSeconds: Int? = null,
+    val reason: String? = null,
 )
 
 /** POST /api/general/claim body (and response). */
@@ -51,6 +52,8 @@ data class ClaimResponse(
 data class FrontGlobalInfo(
     val year: Int,
     val month: Int,
+    val turnPhase: Int? = null,
+    val turnPhaseText: String? = null,
     val turnterm: Int,
     val scenario: String,
     val scenarioText: String,
@@ -243,6 +246,8 @@ data class FrontGeneralInfo(
     val leadershipExp: Double? = null,
     val strengthExp: Double? = null,
     val intelExp: Double? = null,
+    val politicsExp: Double? = null,
+    val charmExp: Double? = null,
     val leadershipBonus: Int? = null,
     val strengthBonus: Int? = null,
     val intelBonus: Int? = null,

@@ -22,6 +22,8 @@ export interface User {
 export interface FrontGlobalInfo {
     year: number;
     month: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
     turnterm: number;
     scenario: string;
     scenarioText: string;
@@ -133,6 +135,8 @@ export interface FrontGeneralInfo {
     leadershipExp?: number | null;
     strengthExp?: number | null;
     intelExp?: number | null;
+    politicsExp?: number | null;
+    charmExp?: number | null;
     leadershipBonus?: number | null;
     strengthBonus?: number | null;
     intelBonus?: number | null;
@@ -429,6 +433,7 @@ export interface ClaimableResponse {
     validUntil?: string;
     pickMoreFrom?: string;
     pickMoreSeconds?: number;
+    reason?: string | null;
 }
 
 export interface ClaimResponse {
@@ -583,6 +588,8 @@ export interface ReservedCommandsResponse {
     /** TODO(P1-004, W0-2): 현재 연/월 — legacy `year`/`month`. */
     year?: number;
     month?: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
     /** TODO(P1-004, W0-2): 서버 현재 시각 — legacy `date`. */
     date?: string;
     /** TODO(P1-004, W0-2): 자율 행동 제한(분) — legacy `autorun_limit`(snake — PHP verbatim 키). */

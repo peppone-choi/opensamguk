@@ -6,6 +6,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.springframework.data.jpa.repository.JpaRepository
+import java.time.Instant
 
 /**
  * Read-only JPA mapping of the singleton `world_state` row for the PRECHECK path
@@ -36,6 +37,9 @@ class WorldStateReadEntity(
 
     @Column(name = "start_year")
     var startYear: Int? = null,
+
+    @Column(name = "start_time")
+    var startTime: Instant? = null,
 
     @Convert(converter = MetaJsonConverter::class)
     @Column(name = "config", columnDefinition = "jsonb")

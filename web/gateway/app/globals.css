@@ -385,9 +385,9 @@ textarea:focus {
     -webkit-user-drag: none;
     pointer-events: none;
 }
-.city-flag { position: absolute; z-index: 3; width: 12px; height: 12px; pointer-events: none; }
-.city-flag-img { display: block; width: 12px; height: 12px; image-rendering: pixelated; -webkit-user-drag: none; }
-.city-capital { position: absolute; z-index: 4; top: 0; right: -1px; width: 10px; height: 10px; image-rendering: pixelated; -webkit-user-drag: none; }
+.city-flag { position: absolute; z-index: 3; width: 9px; height: 9px; pointer-events: none; }
+.city-flag-img { display: block; width: 9px; height: 9px; image-rendering: pixelated; -webkit-user-drag: none; }
+.city-capital { position: absolute; z-index: 4; top: 0; right: -1px; width: 7px; height: 7px; image-rendering: pixelated; -webkit-user-drag: none; }
 .city-state { position: absolute; z-index: 3; top: 5px; left: 0; image-rendering: pixelated; pointer-events: none; -webkit-user-drag: none; }
 .city-name {
     position: absolute;

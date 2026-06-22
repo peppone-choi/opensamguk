@@ -21,6 +21,7 @@ data class ServerVersion(
     val id: String,
     val name: String,
     val generation: Int?,
+    val scenarioCode: String?,
     val gameApi: ServiceVersion,
     val gameEngine: ServiceVersion,
     val skew: Boolean,

@@ -146,6 +146,10 @@ class VerticalSliceE2EIT {
     fun setUpClass() {
         // --- postgres + Flyway baseline -----------------------------------------------------------
         postgres = org.testcontainers.containers.PostgreSQLContainer("postgres:16-alpine")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            runCatching { org.testcontainers.DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false),
+            "Docker unavailable — Testcontainers IT skipped (not failed)",
+        )
         postgres.start()
         dataSource = DriverManagerDataSource().apply {
             setDriverClassName("org.postgresql.Driver")

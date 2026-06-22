@@ -395,7 +395,6 @@ object GenFoundFamily {
         if (ctx.selfMakeLimit != 0) return null // :3221 makelimit
         if (ctx.selfNpcType > 2) return null // :3224 npcType>2
         if (!ctx.generalPolicy.can건국) return null // :3227 !can건국
-
         // PHP `:3231-3234` — the `&&` 0.5 skip (nextBit) ONLY on a non-foundable city (level ∉ {5,6}).
         val cityLevelNotFoundable = ctx.selfCityLevel < 5 || 6 < ctx.selfCityLevel
         if (nonFoundableCitySkip(cityLevelNotFoundable, rng)) return null // :3232

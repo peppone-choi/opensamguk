@@ -490,6 +490,7 @@ class DeployService(
                 gameEngineUrl = text(node, "gameEngineUrl") ?: fallback?.gameEngineUrl ?: defaultGameEngineUrl(id),
                 deployProject = text(node, "deployProject", "project") ?: fallback?.deployProject ?: defaultDeployProject(id),
                 generation = int(node, "generation") ?: fallback?.generation,
+                scenarioCode = text(node, "scenarioCode", "scenario") ?: fallback?.scenarioCode,
             )
         }
     }

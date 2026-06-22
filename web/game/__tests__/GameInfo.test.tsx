@@ -33,6 +33,13 @@ describe('GameInfo parity render', () => {
         expect(screen.getByText('토너먼트: 경기당 120분')).toBeInTheDocument();
     });
 
+    it('renders the server-provided ten-day phase instead of a fixed turn label', () => {
+        renderGameInfo({ turnPhase: 2, turnPhaseText: '중순' });
+
+        expect(screen.getByText('현재: 200年 3月 중순 (60분 턴 서버)')).toBeInTheDocument();
+        expect(screen.queryByText(/1순/)).not.toBeInTheDocument();
+    });
+
     it('renders main settings from front-info metadata', () => {
         const { rerender } = renderGameInfo({ otherSettingText: '자율행동', generation: 7, npcModeText: '선택 생성' });
 

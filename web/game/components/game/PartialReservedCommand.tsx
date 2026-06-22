@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { TURN_PHASE_LABELS } from '../../lib/format';
 import type { ReservedSlot } from '../../lib/types';
 import CommandModal from '../CommandModal';
 
@@ -45,7 +46,13 @@ export default function PartialReservedCommand({
     const [expanded, setExpanded] = useState(false);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
     const [slots, setSlots] = useState<ReservedSlot[]>([]);
-    const [meta, setMeta] = useState<{ year?: number; month?: number; turnTime?: string }>({});
+    const [meta, setMeta] = useState<{
+        year?: number;
+        month?: number;
+        turnPhase?: number | null;
+        turnTime?: string;
+        turnTerm?: number;
+    }>({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
@@ -68,7 +75,9 @@ export default function PartialReservedCommand({
                 setMeta({
                     year: res.year ?? undefined,
                     month: res.month ?? undefined,
+                    turnPhase: res.turnPhase ?? undefined,
                     turnTime: res.turnTime ?? undefined,
+                    turnTerm: res.turnTerm ?? undefined,
                 });
             })
             .catch((err: unknown) => {
@@ -90,11 +99,30 @@ export default function PartialReservedCommand({
         onReserved?.();
     };
 
-    const formatTurnTime = (tt?: string) => {
-        if (!tt) return '';
-        // 'yyyy-MM-dd HH:mm:ss' → 'HH:mm'
-        const m = tt.match(/(\d{2}):(\d{2}):/);
-        return m ? `${m[1]}:${m[2]}` : '';
+    const parseTurnTime = (tt?: string): Date | null => {
+        if (!tt) return null;
+        const m = tt.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+        if (!m) return null;
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]), Number(m[6] ?? 0));
+    };
+
+    const pad2 = (value: number) => String(value).padStart(2, '0');
+
+    const slotYearMonthText = (turnIdx: number) => {
+        if (meta.year == null || meta.month == null) return '';
+        const phase = meta.turnPhase != null && meta.turnPhase >= 1 && meta.turnPhase <= 3 ? meta.turnPhase : 1;
+        const absolutePhase = (meta.month - 1) * 3 + (phase - 1) + turnIdx;
+        const year = meta.year + Math.floor(absolutePhase / 36);
+        const phaseOfYear = ((absolutePhase % 36) + 36) % 36;
+        const month = Math.floor(phaseOfYear / 3) + 1;
+        return `${year}-${pad2(month)} ${TURN_PHASE_LABELS[phaseOfYear % 3]}`;
+    };
+
+    const slotTimeFor = (turnIdx: number) => {
+        const base = parseTurnTime(meta.turnTime);
+        if (!base || !meta.turnTerm) return '';
+        const time = new Date(base.getTime() + turnIdx * meta.turnTerm * 60_000);
+        return `${pad2(time.getHours())}:${pad2(time.getMinutes())}`;
     };
 
     return (
@@ -109,11 +137,9 @@ export default function PartialReservedCommand({
                     return (
                         <div key={turnIdx} className="rcp-row">
                             <div className="rcp-idx">{turnIdx + 1}</div>
-                            <div className="rcp-ym">
-                                {meta.year != null && meta.month != null ? `${meta.year}-${String(meta.month).padStart(2, '0')}` : ''}
-                            </div>
-                            <div className="rcp-time">{formatTurnTime(meta.turnTime)}</div>
-                            <div className="rcp-brief">{slot?.brief ?? '휴식'}</div>
+                            <div className="rcp-ym">{slotYearMonthText(turnIdx)}</div>
+                            <div className="rcp-time">{slotTimeFor(turnIdx)}</div>
+                            <div className="rcp-brief" title={slot?.brief ?? '휴식'}>{slot?.brief ?? '휴식'}</div>
                             <div className="rcp-edit">
                                 <button
                                     type="button"

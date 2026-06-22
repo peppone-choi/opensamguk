@@ -1,5 +1,4 @@
 package opensamguk.gameapi.owner
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -13,16 +12,13 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Instant
 import kotlin.test.assertEquals
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class SelectNpcTokenRepositoryIT {
-
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var tokens: SelectNpcTokenRepository
-
     @Test
     fun `pick result writes to the jsonb token column`() {
         val saved = tokens.save(
@@ -40,7 +36,6 @@ class SelectNpcTokenRepositoryIT {
             ),
         )
         tokens.flush()
-
         val storedType = jdbc.queryForObject(
             "select pg_typeof(pick_result)::text from select_npc_token where id = ?",
             String::class.java,
@@ -51,17 +46,14 @@ class SelectNpcTokenRepositoryIT {
             String::class.java,
             saved.id,
         )
-
         assertEquals("jsonb", storedType)
         assertEquals("여포", storedName)
         assertEquals("여포", (tokens.findById(saved.id!!).orElseThrow().pickResult["10"] as Map<*, *>)["name"])
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

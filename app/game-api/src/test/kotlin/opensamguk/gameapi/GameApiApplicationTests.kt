@@ -1,5 +1,4 @@
 package opensamguk.gameapi
-
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -12,28 +11,22 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class GameApiApplicationTests {
-
     @LocalServerPort
     var port: Int = 0
-
     @Autowired
     lateinit var rest: TestRestTemplate
-
     @Test
     fun `context loads and health endpoint reports UP`() {
         val body = rest.getForObject("http://localhost:$port/actuator/health", String::class.java)
         assertTrue(body!!.contains("\"status\":\"UP\""), "health body: $body")
     }
-
     companion object {
         @Container
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
-
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

@@ -7,6 +7,7 @@ import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -79,32 +80,47 @@ class CommandControllerSecurityTest {
     }
 
     @Test
-    fun `authenticated caller with their own generalId runs the normal flow`() {
+    fun `authenticated caller with their own generalId can reserve a blocked forecast command`() {
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(precheck.precheck(10, "che_농지개간")).thenReturn(
             PrecheckResult.Blocked("아국이 아닙니다.", "OccupiedCity"),
         )
+        `when`(reserve.reserve(10, "che_농지개간", 0, null)).thenReturn(ReserveResult("req-1", 0))
 
         mockMvc().perform(
             post("/api/command/{code}", "che_농지개간").param("generalId", "10").with(principal(7L)),
         )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.status").value("BLOCKED"))
-            .andExpect(jsonPath("$.reason").value("아국이 아닙니다."))
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.requestId").value("req-1"))
     }
 
     @Test
-    fun `unauthenticated caller keeps the generalId transition fallback`() {
+    fun `unauthenticated caller keeps the generalId transition fallback and can reserve blocked forecast commands`() {
         `when`(precheck.precheck(10, "che_농지개간")).thenReturn(
             PrecheckResult.Blocked("아국이 아닙니다.", "OccupiedCity"),
         )
+        `when`(reserve.reserve(10, "che_농지개간", 0, null)).thenReturn(ReserveResult("req-2", 0))
 
         mockMvc().perform(
             post("/api/command/{code}", "che_농지개간").param("generalId", "10"),
         )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.status").value("BLOCKED"))
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
 
         verify(precheck).precheck(10, "che_농지개간")
+    }
+
+    @Test
+    fun `immediate intake commands are accepted even when precheck has no catalog definition`() {
+        `when`(precheck.precheck(10, "sendMessage")).thenReturn(PrecheckResult.Unknown(emptyList()))
+        `when`(reserve.reserve(10, "sendMessage", 0, null)).thenReturn(ReserveResult("req-msg", 0))
+
+        mockMvc().perform(
+            post("/api/command/{code}", "sendMessage").param("generalId", "10"),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.requestId").value("req-msg"))
     }
 }

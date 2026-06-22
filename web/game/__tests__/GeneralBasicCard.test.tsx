@@ -17,8 +17,8 @@ const general: FrontGeneralInfo = {
     politics: 55,
     charm: 45,
     injury: 0,
-    gold: 1000,
-    rice: 2000,
+    gold: 12345,
+    rice: 67890,
     crew: 300,
     cityId: 5,
     experience: 1200,
@@ -27,6 +27,8 @@ const general: FrontGeneralInfo = {
     leadershipExp: 15,
     strengthExp: 2,
     intelExp: 29,
+    politicsExp: 8,
+    charmExp: 13,
     leadershipBonus: 7,
     strengthBonus: -2,
     intelBonus: 0,
@@ -60,7 +62,10 @@ describe('GeneralBasicCard', () => {
         expect(screen.getByText('-2')).toBeInTheDocument();
         expect(screen.getByText('+3')).toBeInTheDocument();
         expect(screen.getByText('-1')).toBeInTheDocument();
+        expect(screen.getByText('12,345')).toBeInTheDocument();
+        expect(screen.getByText('67,890')).toBeInTheDocument();
         expect(screen.getByText('추 가 정 보')).toHaveClass('basic-card-section-head');
-        expect(container.querySelectorAll('.sammo-bar').length).toBeGreaterThanOrEqual(4);
+        expect(container.querySelectorAll('.stat-band-item')).toHaveLength(5);
+        expect(container.querySelectorAll('.sammo-bar').length).toBeGreaterThanOrEqual(6);
     });
 });

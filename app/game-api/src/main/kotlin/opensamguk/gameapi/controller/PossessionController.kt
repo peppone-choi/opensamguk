@@ -77,6 +77,10 @@ class PossessionController(
             GeneralPossessionService.ClaimResult.NotClaimable ->
                 ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ClaimResponse(result = false, generalId = null, reason = "빙의 가능한 장수가 아닙니다."))
+
+            GeneralPossessionService.ClaimResult.ServerModeBlocked ->
+                ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ClaimResponse(result = false, generalId = null, reason = SelectNpcTokenService.NPC_MODE_BLOCKED_REASON))
         }
     }
 

@@ -94,6 +94,29 @@ function StatValue({
     );
 }
 
+function StatBand({
+    items,
+}: {
+    items: {
+        label: string;
+        value: number;
+        bonus?: number | null;
+        color?: string;
+        exp?: number | null;
+    }[];
+}) {
+    return (
+        <div className="stat-band" aria-label="통솔 무력 지력 정치 매력">
+            {items.map((item) => (
+                <div className="stat-band-item" key={item.label}>
+                    <span className="stat-band-label">{item.label}</span>
+                    <StatValue value={item.value} bonus={item.bonus} color={item.color} exp={item.exp} />
+                </div>
+            ))}
+        </div>
+    );
+}
+
 // Lv + 경험치 막대 — PHP generalInfo() bar(getLevelPer(experience, explevel), 20) 동치.
 function LevelBar({ experience, explevel }: { experience: number | null | undefined; explevel: number | null | undefined }) {
     const exp = experience ?? 0;
@@ -155,32 +178,25 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
     const officerText = general.officerLevelText ?? (general.officerLevel <= 0 ? '재야' : `${general.officerLevel}급`);
 
     const specialCell = `${nameOrCode(general.specialDomesticName, general.specialDomestic)} / ${nameOrCode(general.specialWarName, general.specialWar)}`;
+    const statItems = [
+        {
+            label: '통',
+            value: general.leadership,
+            bonus: general.leadershipBonus ?? general.lbonus,
+            color: injuryColor,
+            exp: general.leadershipExp,
+        },
+        { label: '무', value: general.strength, bonus: general.strengthBonus, color: injuryColor, exp: general.strengthExp },
+        { label: '지', value: general.intel, bonus: general.intelBonus, color: injuryColor, exp: general.intelExp },
+        { label: '정', value: general.politics ?? 0, bonus: general.politicsBonus, color: injuryColor, exp: general.politicsExp },
+        { label: '매', value: general.charm ?? 0, bonus: general.charmBonus, color: injuryColor, exp: general.charmExp },
+    ];
 
     // generalInfo 패널 행들.
     const rows: { label: string; value: React.ReactNode; wide?: boolean }[] = [
         { label: '관직', value: officerText },
         { label: '소속', value: nation?.name ?? '재야' },
-        {
-            label: '통솔',
-            value: (
-                <StatValue
-                    value={general.leadership}
-                    bonus={general.leadershipBonus ?? general.lbonus}
-                    color={injuryColor}
-                    exp={general.leadershipExp}
-                />
-            ),
-        },
-        {
-            label: '무력',
-            value: <StatValue value={general.strength} bonus={general.strengthBonus} color={injuryColor} exp={general.strengthExp} />,
-        },
-        {
-            label: '지력',
-            value: <StatValue value={general.intel} bonus={general.intelBonus} color={injuryColor} exp={general.intelExp} />,
-        },
-        { label: '정치', value: <StatValue value={general.politics ?? 0} bonus={general.politicsBonus} /> },
-        { label: '매력', value: <StatValue value={general.charm ?? 0} bonus={general.charmBonus} /> },
+        { label: '능력', value: <StatBand items={statItems} />, wide: true },
         { label: '명마', value: nameOrCode(general.horseName, general.horse) },
         { label: '무기', value: nameOrCode(general.weaponName, general.weapon) },
         { label: '서적', value: nameOrCode(general.bookName, general.book) },

@@ -3,6 +3,7 @@ package opensamguk.gameapi.web
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import org.springframework.http.HttpStatus
@@ -85,20 +86,21 @@ class AvailableCommandsController(
         val effectiveId = resolvedId ?: generalId
 
         // Resolve every reservable general command through the SHARED registry (definitions, not codes).
-        val definitions: List<GeneralActionDefinition> = GENERAL_COMMAND_CODES.map { registry.resolve(it) }
+        val catalog: List<Pair<String, GeneralActionDefinition>> = GameConst.availableGeneralCommand
+            .flatMap { (category, codes) -> codes.map { code -> category to registry.resolve(code) } }
+        val definitions = catalog.map { it.second }
 
         // Real precheck (possible/reason) when we have an actor; registry-only (possible=true) otherwise.
         val results: Map<String, PrecheckResult>? =
             effectiveId?.let { precheck.precheckAll(it, definitions) }
 
-        val rows = definitions.map { def -> toRow(def, results?.get(def.key)) }
-        val table = rows
-            .groupBy { it.category }
+        val table = catalog
+            .groupBy({ it.first }, { (category, def) -> toRow(def, results?.get(def.key), category) })
             .map { (category, values) -> CommandCategory(category, values) }
         return ResponseEntity.ok(AvailableCommandsResponse(result = true, commandTable = table))
     }
 
-    private fun toRow(def: GeneralActionDefinition, result: PrecheckResult?): AvailableCommand {
+    private fun toRow(def: GeneralActionDefinition, result: PrecheckResult?, legacyCategory: String): AvailableCommand {
         val reqArg = def.argsSchema.isNotEmpty()
         val (possible, reason) = when (result) {
             null -> true to null // no actor → registry-only catalog (possible defaults true, no deny reason)
@@ -115,7 +117,7 @@ class AvailableCommandsController(
             value = def.key,
             simpleName = def.name,
             title = def.name,
-            category = def.category,
+            category = legacyCategory,
             compensation = 0,
             possible = possible,
             reqArg = reqArg,
@@ -135,39 +137,5 @@ class AvailableCommandsController(
 
     companion object {
         private const val UNKNOWN_REASON = "정보 부족"
-
-        /**
-         * The player-reservable general command codes, mirroring `CommandRegistry.resolve`'s general
-         * `che_*`/`cr_*` entries (the registry exposes no `listAll()`, so the catalog is enumerated
-         * here in game-api). EXCLUDED: the diplomacy-accept triggers (che_불가침수락/che_종전수락/
-         * che_불가침파기수락 — fired by message accept, not directly reservable), che_NPC능동 (NPC-only).
-         * Nation-internal commands (감축/증축/발령/포상/국호변경/국기변경/천도/무작위수도이전) ride the
-         * separate nation_turn ring and are NOT part of the per-general catalog.
-         */
-        val GENERAL_COMMAND_CODES: List<String> = listOf(
-            // 내정 develop
-            "che_상업투자", "che_농지개간", "che_성벽보수", "che_수비강화", "che_치안강화",
-            "che_기술연구", "che_정착장려", "che_주민선정", "che_물자조달", "che_군량매매",
-            // 군사 military
-            "che_징병", "che_모병", "che_훈련", "cr_맹훈련", "che_사기진작", "che_소집해제",
-            "che_귀환", "che_견문",
-            // 개인 personal (PHP availableGeneralCommand['개인']) — 숙련전환/특기초기화 짝
-            "che_숙련전환", "che_내정특기초기화", "che_전투특기초기화",
-            // 인사 personnel / movement (che_강행 = che_이동 형제, PHP availableGeneralCommand['인사'])
-            "che_이동", "che_강행", "che_집합", "che_임관", "che_장수대상임관", "che_하야", "che_방랑",
-            "che_랜덤임관", "che_은퇴", "che_등용", "che_인재탐색",
-            // 건국/거병 founding
-            "che_거병", "che_건국", "cr_건국", "che_무작위건국", "che_해산",
-            // 출병 war
-            "che_출병",
-            // 자원교역 trade
-            "che_증여", "che_헌납", "che_장비매매",
-            // 외교 diplomacy proposals
-            "che_불가침제의", "che_종전제의", "che_불가침파기제의", "che_선전포고",
-            // 요양 (dispatcher-direct, gate-exempt)
-            "che_요양",
-            // 계략/정보 stubs (CMD-GROUP-A — widened ONCE, disjoint fill per command)
-            "che_화계", "che_파괴", "che_탈취", "che_선동", "che_첩보", "che_단련", "che_접경귀환",
-        )
     }
 }

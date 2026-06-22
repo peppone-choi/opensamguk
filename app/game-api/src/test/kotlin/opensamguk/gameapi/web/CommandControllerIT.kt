@@ -27,13 +27,14 @@ import kotlin.test.assertEquals
  * context (JPA read repos + Flyway + Redis) and drives `POST /api/command/{code}`:
  *
  *  - AVAILABLE path (owned/supplied/funded city + `che_농지개간`) → `202` + a `requestId`;
- *  - BLOCKED path (non-owned city) → `200` + the PHP-faithful `OccupiedCity` reason, and NO message
- *    is published to the MUTATION stream (the precheck short-circuits before reserve).
+ *  - forecast reservation path (non-owned city) → still `202`; the UI can mark it impossible from the
+ *    catalog precheck, but the player may reserve future-turn/prediction commands and let the daemon
+ *    re-evaluate at execution time.
  *
  * The fixture is the same baseline rows the E1/E2 tests use (nation 1 lvl7 / city 5 owned, agri
  * 4000<8000 / general 10 gold 4000; world_state year 200 startYear 190 → develCost 40 < 4000).
  */
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = ["opensamguk.profile=che:scenario_2"])
 class CommandControllerIT {
 
@@ -73,7 +74,7 @@ class CommandControllerIT {
     }
 
     @Test
-    fun `BLOCKED command returns 200 with the reason and publishes NO stream message`() {
+    fun `blocked forecast command is still reserved and pokes the daemon`() {
         // re-seed so the city belongs to a different nation -> OccupiedCity denies.
         jdbc.update("DELETE FROM city")
         seedCity(ownerNationId = 2)
@@ -83,13 +84,11 @@ class CommandControllerIT {
                 .param("generalId", "10")
                 .contentType(MediaType.APPLICATION_JSON),
         )
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.status").value("BLOCKED"))
-            .andExpect(jsonPath("$.reason").value("아국이 아닙니다."))
-            .andExpect(jsonPath("$.constraintName").value("OccupiedCity"))
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.requestId").isNotEmpty)
 
-        // precheck short-circuited before reserve -> no poke published.
-        assertEquals(0L, redis.opsForStream<Any, Any>().size(commandStream))
+        assertEquals(1L, redis.opsForStream<Any, Any>().size(commandStream))
     }
 
     private fun seedBaseline(ownerNationId: Int) {

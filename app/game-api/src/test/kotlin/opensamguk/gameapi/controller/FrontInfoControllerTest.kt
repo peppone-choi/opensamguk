@@ -93,7 +93,7 @@ class FrontInfoControllerTest {
         req
     }
 
-    private fun seedWorld(config: Map<String, Any?> = emptyMap()) {
+    private fun seedWorld(config: Map<String, Any?> = emptyMap(), startTime: Instant? = null) {
         `when`(world.findAll()).thenReturn(
             listOf(
                 WorldStateReadEntity(
@@ -102,6 +102,7 @@ class FrontInfoControllerTest {
                     currentYear = 200,
                     currentMonth = 3,
                     tickSeconds = 3600,
+                    startTime = startTime,
                     config = config,
                 ),
             ),
@@ -193,6 +194,16 @@ class FrontInfoControllerTest {
     }
 
     @Test
+    fun `global exposes the current ten-day phase from the server clock`() {
+        seedWorld(startTime = Instant.now().minusSeconds(3700))
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.turnPhase").value(2))
+            .andExpect(jsonPath("$.global.turnPhaseText").value("중순"))
+    }
+
+    @Test
     fun `resolved general exposes gating surface (permission derived from officer level)`() {
         seedWorld()
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
@@ -240,6 +251,8 @@ class FrontInfoControllerTest {
                         "leadership_exp" to 15.5,
                         "strength_exp" to 2,
                         "intel_exp" to "29.25",
+                        "politics_exp" to 8,
+                        "charm_exp" to "13.5",
                     ),
                 ),
             ),
@@ -252,6 +265,8 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.general.leadershipExp").value(15.5))
             .andExpect(jsonPath("$.general.strengthExp").value(2.0))
             .andExpect(jsonPath("$.general.intelExp").value(29.25))
+            .andExpect(jsonPath("$.general.politicsExp").value(8.0))
+            .andExpect(jsonPath("$.general.charmExp").value(13.5))
             .andExpect(jsonPath("$.general.leadershipBonus").value(9))
             .andExpect(jsonPath("$.general.strengthBonus").value(3))
             .andExpect(jsonPath("$.general.intelBonus").value(4))
