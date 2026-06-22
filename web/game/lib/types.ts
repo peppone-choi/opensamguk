@@ -397,13 +397,53 @@ export interface GameConstResponse {
         maxTechLevel?: number;
         initialAllowedTechLevel?: number;
         techLevelIncYear?: number;
+        nationColors?: string[];
         [key: string]: unknown;
     };
+    gameUnitConst?: GameUnitConstItem[];
+    cityConst?: GameCityConstItem[];
+    iAction?: Record<string, IActionConstItem[]>;
     // 직책 라벨 기본열 — 정본 F4StateText(PHP func_converter.php getOfficerLevelText) 직렬화.
     // 와이어 모양 = legacy hwe/ts/utilGame/formatOfficerLevelText.ts OfficerLevelMapDefault.
     officerLevelText: Record<number, string>;
     // 국가레벨(7..0)별 수뇌 직책 — OfficerLevelMapByNationLevel 와이어. PHP 미정의 코드는 키 생략.
     officerLevelTextByNationLevel: Record<number, Record<number, string>>;
+}
+
+export interface GameUnitConstItem {
+    id: number;
+    armType: number;
+    name: string;
+    attack: number;
+    defence: number;
+    speed: number;
+    avoid: number;
+    magicCoef: number;
+    cost: number;
+    rice: number;
+    info: string[];
+}
+
+export interface GameCityConstItem {
+    id: number;
+    name: string;
+    level: number;
+    population: number;
+    agriculture: number;
+    commerce: number;
+    security: number;
+    defence: number;
+    wall: number;
+    region: number;
+    posX: number;
+    posY: number;
+    path: Record<number, string>;
+}
+
+export interface IActionConstItem {
+    value: string;
+    name?: string | null;
+    info?: string[] | null;
 }
 
 // ── possession (game-api Claimable/Claim) ────────────────────────────────────

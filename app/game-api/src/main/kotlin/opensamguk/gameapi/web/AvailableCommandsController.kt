@@ -128,6 +128,8 @@ class AvailableCommandsController(
 
     /** Derive the modal field-type from the command's declared `argsSchema` keys (faithful, not guessed). */
     private fun argTypeOf(keys: Set<String>): String? = when {
+        "nationName" in keys && "nationType" in keys && "colorType" in keys -> "founding"
+        "crewType" in keys && "amount" in keys -> "recruit"
         "destCityID" in keys -> "city"
         "destNationID" in keys -> "nation"
         "destGeneralID" in keys -> "general"

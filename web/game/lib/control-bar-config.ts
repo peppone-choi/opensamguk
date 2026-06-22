@@ -56,7 +56,7 @@ export const CONTROL_BUTTONS: ControlButton[] = [
     },
     { id: 11, label: '세력 정보', compactLabel: '세력 정보', href: '/game/my-nation', bucket: 'myLevel' },
     { id: 12, label: '세력 도시', compactLabel: '세력도시', href: '/game/my-cities', bucket: 'myLevelAndNation' },
-    { id: 13, label: '세력 장수', compactLabel: '세력 장수', href: '/game/generals', bucket: 'myLevel' },
+    { id: 13, label: '세력 장수', compactLabel: '세력 장수', href: '/game/my-generals', bucket: 'myLevel' },
     { id: 14, label: '중원 정보', compactLabel: '중원 정보', href: '/game/global-diplomacy', bucket: 'always' },
     { id: 15, label: '현재 도시', compactLabel: '현재 도시', href: '/game/city', bucket: 'always' },
     { id: 16, label: '감 찰 부', compactLabel: '감찰부', href: `${STUB}?feature=${encodeURIComponent('감찰부')}`, bucket: 'showSecret', newTab: true },

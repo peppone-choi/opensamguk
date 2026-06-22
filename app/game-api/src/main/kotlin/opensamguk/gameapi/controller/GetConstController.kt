@@ -10,6 +10,9 @@ import opensamguk.gameapi.dto.GetConstResponse
 import opensamguk.gameapi.dto.IActionItem
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.infra.seed.MapJson
+import opensamguk.logic.domain.GetNationColors
+import opensamguk.logic.traits.NationTypeModule
+import opensamguk.logic.traits.NationTypeRegistry
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -131,6 +134,7 @@ class GetConstController {
         "nationLevelByCityCnt" to GameConst.nationLevelByCityCnt09,
         "availableNationType" to GameConst.availableNationType,
         "neutralNationType" to GameConst.neutralNationType,
+        "nationColors" to GetNationColors(),
         "availableSpecialDomestic" to GameConst.availableSpecialDomestic,
         "availableSpecialWar" to GameConst.availableSpecialWar,
         "availablePersonality" to GameConst.availablePersonality,
@@ -153,7 +157,7 @@ class GetConstController {
      */
     private fun iActionBundle(): Map<String, List<IActionItem>> = linkedMapOf(
         "nationType" to (GameConst.availableNationType + GameConst.neutralNationType)
-            .map { IActionItem(value = it) },
+            .map { nationTypeItem(it) },
         "specialDomestic" to (listOf(GameConst.defaultSpecialDomestic) +
             GameConst.availableSpecialDomestic + GameConst.optionalSpecialDomestic)
             .distinct().map { IActionItem(value = it) },
@@ -167,4 +171,13 @@ class GetConstController {
         "item" to GameConst.allItems.values.flatMap { it.keys }.map { IActionItem(value = it) },
         "crewtype" to GameUnitConst.all().keys.map { IActionItem(value = it.toString()) },
     )
+
+    private fun nationTypeItem(code: String): IActionItem {
+        val module = NationTypeRegistry.resolve(code) as? NationTypeModule
+        return IActionItem(
+            value = code,
+            name = module?.typeName,
+            info = module?.info?.takeIf { it.isNotBlank() }?.let { listOf(it) },
+        )
+    }
 }

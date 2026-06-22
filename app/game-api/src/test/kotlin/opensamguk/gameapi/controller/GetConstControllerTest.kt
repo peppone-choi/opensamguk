@@ -4,7 +4,6 @@ import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.infra.seed.MapJson
-import org.hamcrest.Matchers.nullValue
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -20,7 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
  *  - gameUnitConst가 `GameUnitConst.all()`의 모든 병종을 노출(첫 행 = 성벽 id 1000).
  *  - cityConst가 `CityConst.all()`의 94개 도시를 노출(id 1 = 업).
  *  - cityConstMap.region/level이 라벨→int 한 방향으로 노출(하북→1, 수→1).
- *  - iAction 키맵이 nationType/crewtype 등을 value-only로 노출, name은 BLOCKED(null/부재).
+     *  - iAction 키맵이 nationType 표시명/소개와 crewtype value를 노출.
  *  - gameConst 번들에 표시 상수가 담김(maxTurn 등).
  */
 class GetConstControllerTest {
@@ -44,9 +43,9 @@ class GetConstControllerTest {
             .andExpect(jsonPath("$.cityConstMap.region.하북").value(1))
             .andExpect(jsonPath("$.cityConstMap.level.수").value(1))
             .andExpect(jsonPath("$.cityConstMap.level.소").value(5)) // lv5='소'(프로젝트 메모리)
-            // iAction: nationType value-only(name은 BLOCKED → null).
             .andExpect(jsonPath("$.iAction.nationType[0].value").value(GameConst.availableNationType[0]))
-            .andExpect(jsonPath("$.iAction.nationType[0].name").value(nullValue())) // BLOCKED → null
+            .andExpect(jsonPath("$.iAction.nationType[0].name").value("도적"))
+            .andExpect(jsonPath("$.iAction.nationType[0].info[0]").value("계략↑ 금수입↓ 치안↓ 민심↓"))
 
             .andExpect(jsonPath("$.iAction.crewtype[0].value").value("1000")) // 첫 병종 id 문자열
             // gameConst 번들 표시 상수.

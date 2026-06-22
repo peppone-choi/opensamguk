@@ -217,7 +217,7 @@ export interface GameCommand {
 //   value=command key, simpleName=display, title=tooltip, compensation=-1/0/+1 stat tag,
 //   possible=executable-now, reqArg=needs an argument form. argType drives which modal sub-form opens.
 // game-api may not emit `argType` yet — when absent we infer it from the command key (ARG_TYPE_BY_KEY).
-export type CommandArgType = 'city' | 'general' | 'nation' | 'amount';
+export type CommandArgType = 'city' | 'general' | 'nation' | 'amount' | 'founding' | 'recruit';
 
 export interface AvailableCommand {
   value: string;

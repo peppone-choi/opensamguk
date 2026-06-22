@@ -19,7 +19,7 @@ import { formatNumber } from '@/lib/format';
 import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { formatInjury, nextExpLevelRemain } from '@/lib/utilGame';
 import type { FrontGeneralInfo, FrontNationInfo } from '@/lib/types';
-import { STAT_UP_THRESHOLD } from '@/lib/constants';
+import { ICON_CDN, STAT_UP_THRESHOLD } from '@/lib/constants';
 import SammoBar from './SammoBar';
 
 function isBrightColor(hex?: string): boolean {
@@ -94,25 +94,23 @@ function StatValue({
     );
 }
 
-function StatBand({
-    items,
-}: {
-    items: {
-        label: string;
-        value: number;
-        bonus?: number | null;
-        color?: string;
-        exp?: number | null;
-    }[];
-}) {
+function CrewTypeCell({ general }: { general: FrontGeneralInfo }) {
+    const crewTypeName = nameOrCode(general.crewTypeName, general.crewTypeId != null ? String(general.crewTypeId) : null);
+    const crewTypeId = general.crewTypeId;
+    const imageUrl = crewTypeId != null && crewTypeId >= 0 ? `${ICON_CDN}/crewtype${crewTypeId}.png` : null;
     return (
-        <div className="stat-band" aria-label="통솔 무력 지력 정치 매력">
-            {items.map((item) => (
-                <div className="stat-band-item" key={item.label}>
-                    <span className="stat-band-label">{item.label}</span>
-                    <StatValue value={item.value} bonus={item.bonus} color={item.color} exp={item.exp} />
-                </div>
-            ))}
+        <div className="crewtype-cell">
+            {imageUrl && (
+                <img
+                    className="crewtype-icon"
+                    src={imageUrl}
+                    alt=""
+                    onError={(event) => {
+                        event.currentTarget.style.display = 'none';
+                    }}
+                />
+            )}
+            <span>{crewTypeName}</span>
         </div>
     );
 }
@@ -124,8 +122,8 @@ function LevelBar({ experience, explevel }: { experience: number | null | undefi
     const [remain, span] = nextExpLevelRemain(exp, lv);
     const pct = span > 0 ? Math.min(100, Math.max(0, (remain / span) * 100)) : 0;
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', width: '100%' }}>
-            <span>Lv {lv}</span>
+        <div className="level-exp-cell">
+            <span>{lv}</span>
             <SammoBar percent={pct} height={10} className="level-exp-bar" />
         </div>
     );
@@ -180,35 +178,42 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
     const specialCell = `${nameOrCode(general.specialDomesticName, general.specialDomestic)} / ${nameOrCode(general.specialWarName, general.specialWar)}`;
     const statItems = [
         {
-            label: '통',
+            label: '통솔',
             value: general.leadership,
             bonus: general.leadershipBonus ?? general.lbonus,
             color: injuryColor,
             exp: general.leadershipExp,
         },
-        { label: '무', value: general.strength, bonus: general.strengthBonus, color: injuryColor, exp: general.strengthExp },
-        { label: '지', value: general.intel, bonus: general.intelBonus, color: injuryColor, exp: general.intelExp },
-        { label: '정', value: general.politics ?? 0, bonus: general.politicsBonus, color: injuryColor, exp: general.politicsExp },
-        { label: '매', value: general.charm ?? 0, bonus: general.charmBonus, color: injuryColor, exp: general.charmExp },
+        { label: '무력', value: general.strength, bonus: general.strengthBonus, color: injuryColor, exp: general.strengthExp },
+        { label: '지력', value: general.intel, bonus: general.intelBonus, color: injuryColor, exp: general.intelExp },
+        { label: '정치', value: general.politics ?? 0, bonus: general.politicsBonus, color: injuryColor, exp: general.politicsExp },
+        { label: '매력', value: general.charm ?? 0, bonus: general.charmBonus, color: injuryColor, exp: general.charmExp },
+    ];
+
+    const statRows: { label: string; value: React.ReactNode; wide?: boolean }[] = [
+        ...statItems.map((item) => ({
+            label: item.label,
+            value: <StatValue value={item.value} bonus={item.bonus} color={item.color} exp={item.exp} />,
+        })),
+        { label: 'Lv', value: <LevelBar experience={general.experience} explevel={general.explevel} /> },
     ];
 
     // generalInfo 패널 행들.
     const rows: { label: string; value: React.ReactNode; wide?: boolean }[] = [
         { label: '관직', value: officerText },
         { label: '소속', value: nation?.name ?? '재야' },
-        { label: '능력', value: <StatBand items={statItems} />, wide: true },
         { label: '명마', value: nameOrCode(general.horseName, general.horse) },
         { label: '무기', value: nameOrCode(general.weaponName, general.weapon) },
         { label: '서적', value: nameOrCode(general.bookName, general.book) },
         { label: '도구', value: nameOrCode(general.itemName, general.item) },
-        { label: '병종', value: nameOrCode(general.crewTypeName, general.crewTypeId != null ? String(general.crewTypeId) : null) },
+        { label: '병종', value: <CrewTypeCell general={general} /> },
         { label: '성격', value: nameOrCode(general.personalName, general.personal) },
         { label: '자금', value: formatNumber(general.gold) },
         { label: '군량', value: formatNumber(general.rice) },
         { label: '병사', value: formatNumber(general.crew) },
         { label: '훈련', value: general.train ?? 0 },
         { label: '사기', value: general.atmos ?? 0 },
-        { label: 'Lv', value: <LevelBar experience={general.experience} explevel={general.explevel} />, wide: true },
+        { label: '특기', value: specialCell, wide: true },
         { label: '연령', value: general.age != null ? <AgeLabel age={general.age} /> : '-' },
         { label: '호칭', value: general.honorText ?? '-' },
         { label: '공헌', value: general.dedLevelText ?? '-' },
@@ -241,11 +246,12 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
                 </div>
             </div>
             <div className="basic-card-grid">
-                {/* 특기 — head 없는 전폭 행(레거시 단일 칸 "내정 / 전투"). */}
-                <div className="basic-card-row basic-card-row-wide">
-                    <div className="basic-card-head">특기</div>
-                    <div className="basic-card-body">{specialCell}</div>
-                </div>
+                {statRows.map((r) => (
+                    <div key={r.label} className={`basic-card-row${r.wide ? ' basic-card-row-wide' : ''}`}>
+                        <div className="basic-card-head">{r.label}</div>
+                        <div className="basic-card-body">{r.value}</div>
+                    </div>
+                ))}
                 {rows.map((r) => (
                     <div key={r.label} className={`basic-card-row${r.wide ? ' basic-card-row-wide' : ''}`}>
                         <div className="basic-card-head">{r.label}</div>
@@ -256,8 +262,9 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
 
             {/* generalInfo2 — 추가 정보 패널 (war stats 있을 때만 렌더). */}
             {hasWarStats && (
-                <div className="basic-card-grid" style={{ marginTop: 'var(--space-md)' }}>
-                    <div className="basic-card-head basic-card-section-head">추 가 정 보</div>
+                <details className="basic-card-extra">
+                    <summary>추가정보</summary>
+                    <div className="basic-card-grid">
                     <div className="basic-card-row">
                         <div className="basic-card-head">명성</div>
                         <div className="basic-card-body">
@@ -310,7 +317,8 @@ export default function GeneralBasicCard({ general, nation }: GeneralBasicCardPr
                         <div className="basic-card-head">피살</div>
                         <div className="basic-card-body">{formatNumber(general.deathcrew ?? 0)}</div>
                     </div>
-                </div>
+                    </div>
+                </details>
             )}
         </section>
     );

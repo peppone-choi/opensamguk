@@ -28,6 +28,8 @@ import SelectCityField from './command/SelectCityField';
 import SelectGeneralField from './command/SelectGeneralField';
 import SelectNationField from './command/SelectNationField';
 import SelectAmountField from './command/SelectAmountField';
+import SelectFoundingField from './command/SelectFoundingField';
+import SelectRecruitField from './command/SelectRecruitField';
 
 interface CommandModalProps {
     onClose: () => void;
@@ -61,6 +63,8 @@ interface CommandModalProps {
     /** When true, submits via `POST /api/command/nation/bulk` (nation_turn) instead of the personal `/api/command/{code}` (general_turn). */
     isNationCommand?: boolean;
 }
+
+type CommandArgBody = Record<string, unknown> | null;
 
 function normalize(res: AvailableCommandsResponse | null): AvailableCommandCategory[] {
     if (!res) return [];
@@ -112,6 +116,7 @@ export default function CommandModal({
     const [cat, setCat] = useState<string>('');
     const [selected, setSelected] = useState<AvailableCommand | null>(pinned);
     const [argValue, setArgValue] = useState<number | null>(null);
+    const [argBody, setArgBody] = useState<CommandArgBody>(null);
     const [loading, setLoading] = useState(false);
     const [blockedReason, setBlockedReason] = useState<string | null>(null);
 
@@ -157,6 +162,7 @@ export default function CommandModal({
         }
         setSelected(cmd);
         setArgValue(null);
+        setArgBody(null);
     }
 
     async function submit(cmd: AvailableCommand, body: Record<string, unknown>) {
@@ -196,11 +202,20 @@ export default function CommandModal({
 
     function submitWithArg() {
         if (!selected || !argType) return;
+        if (argBody != null) {
+            void submit(selected, argBody);
+            return;
+        }
         if (argValue == null) {
             setBlockedReason('대상을 선택해 주세요.');
             return;
         }
-        void submit(selected, { [argFieldName(argType)]: argValue });
+        const fieldName = argFieldName(argType);
+        if (!fieldName) {
+            setBlockedReason('대상을 선택해 주세요.');
+            return;
+        }
+        void submit(selected, { [fieldName]: argValue });
     }
 
     function compensationTag(c: number) {
@@ -265,7 +280,11 @@ export default function CommandModal({
                                 setBlockedReason(null);
                                 // Pinned mode has no catalog to return to → close the modal.
                                 if (pinnedCommand) onClose();
-                                else setSelected(null);
+                                else {
+                                    setSelected(null);
+                                    setArgValue(null);
+                                    setArgBody(null);
+                                }
                             }}
                         >
                             ← 뒤로
@@ -275,7 +294,14 @@ export default function CommandModal({
                             <p className="cmd-item-sub">{selected.title}</p>
                         )}
                         <div className="cmd-form">
-                            {argType === 'city' && <SelectCityField value={argValue} onChange={setArgValue} />}
+                            {argType === 'city' && (
+                                <SelectCityField
+                                    commandKey={selected.value}
+                                    commandName={selected.simpleName}
+                                    value={argValue}
+                                    onChange={setArgValue}
+                                />
+                            )}
                             {argType === 'general' && (
                                 <SelectGeneralField value={argValue} onChange={setArgValue} ownGeneralId={generalId} />
                             )}
@@ -291,6 +317,8 @@ export default function CommandModal({
                                     guide={amountGuide}
                                 />
                             )}
+                            {argType === 'founding' && <SelectFoundingField onChange={setArgBody} />}
+                            {argType === 'recruit' && <SelectRecruitField onChange={setArgBody} />}
                             {/* reqArg but unknown argType → free numeric target input (never crash). */}
                             {selected.reqArg && !argType && (
                                 <label>
