@@ -3,6 +3,7 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.dto.HistoryRecord
 import opensamguk.gameapi.dto.HistoryResponse
 import opensamguk.gameapi.read.HistoryReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -18,15 +19,16 @@ import org.springframework.web.bind.annotation.RestController
  * SimpleNationList(nations)/중원정세(globalHistory)/장수동향(globalAction)을 렌더한다.
  *
  * Backed by `yearbook_history`(월별 map/nations 스냅샷의 충실 포팅 — 이 스키마엔 `ng_history` 테이블이
- * 없다). 테이블은 존재하나 fresh seed에선 0행(월틱이 진행하며 매월 1행 기록) → `record=null` + 범위 0,
- * 절대 500/날조 없음. 교차 서버 뷰는 F4(단일서버)에서 드롭.
+ * 없다). 테이블은 존재하나 fresh seed에선 0행(월틱이 진행하며 매월 1행 기록). 레거시 현재 서버는 빈
+ * `ng_history`에서도 `world_state` 현재 월 기준으로 이전 월 범위 + 현재 월 옵션을 만든다.
+ * 교차 서버 뷰는 F4(단일서버)에서 드롭.
  *
  * **BLOCKED(§5)**: `yearbook_history`엔 `global_history`/`global_action` 컬럼이 없어(중원 정세/장수 동향
  * 월별 글로벌 로그) `record.globalHistory`/`globalAction`은 항상 빈 배열로 나간다. 월별 글로벌 로그가
  * 영속화되면 1줄로 채워진다(REPORT 기재).
  *
- * `yearMonth`(선택) = `Util::joinYearMonth` = `year*12 + (month-1)`. 부재 시 currentYearMonth(=last+1)로
- * 클램프, 행이 없으면 마지막 행을 선택. parseYearMonth = [ym/12, ym%12+1]로 FE와 동형.
+ * `yearMonth`(선택) = `Util::joinYearMonth` = `year*12 + (month-1)`. 부재 시 마지막 기록 월로 클램프,
+ * 행이 없으면 `record=null`. parseYearMonth = [ym/12, ym%12+1]로 FE와 동형.
  */
 @RestController
 @RequestMapping("/api/history")
@@ -38,19 +40,22 @@ class HistoryController(
     @GetMapping
     fun history(@RequestParam(name = "yearMonth", required = false) yearMonth: Int?): ResponseEntity<HistoryResponse> {
         val rows = history.findAllByOrderByYearAscMonthAsc()
-        val serverId = world.findAll().firstOrNull()?.scenarioCode ?: ""
+        val currentWorld = world.findAll().firstOrNull()
+        val serverId = currentWorld?.scenarioCode ?: ""
         // mapName: opensamguk엔 별도 맵 테마명이 없다(시나리오 코드로 대체). MapViewer는 record.map으로 렌더.
         val mapName = serverId
+        val liveYearMonth = currentYearMonth(currentWorld)
 
-        // 행이 없으면 빈 상태(셀렉터 범위 0, record null). PHP는 빈 ng_history에서 에러 반환하지만, read-only
-        // 빈 연감은 200 + 빈 셰이프가 옳다(F4 단일서버, 날조 없음).
+        // 현재 서버의 빈 연감은 PHP `v_history.php`처럼 현재 월의 직전 월을 first/last로 삼고 현재 월 옵션을
+        // 노출한다. world_state까지 없는 진짜 빈 DB만 0-range로 둔다.
         if (rows.isEmpty()) {
+            val lastYearMonth = liveYearMonth?.let { it - 1 } ?: 0
             return ResponseEntity.ok(
                 HistoryResponse(
                     result = true,
-                    firstYearMonth = 0,
-                    lastYearMonth = 0,
-                    currentYearMonth = 0,
+                    firstYearMonth = lastYearMonth,
+                    lastYearMonth = lastYearMonth,
+                    currentYearMonth = liveYearMonth ?: 0,
                     serverId = serverId,
                     mapName = mapName,
                     record = null,
@@ -62,8 +67,9 @@ class HistoryController(
         val lastRow = rows.last()
         val firstYearMonth = joinYearMonth(firstRow.year, firstRow.month)
         val lastYearMonth = joinYearMonth(lastRow.year, lastRow.month)
-        // 진행중 서버: 현재 달은 마지막 기록의 다음 달(PageHistory.vue currentYearMonth = last+1).
-        val currentYearMonth = lastYearMonth + 1
+        // 진행중 서버: PHP staticValues.currentYearMonth는 gameStor 현재 월이다. 월 기록이 더 오래된
+        // 테스트/덤프에서는 기존 last+1 폴백을 보존한다.
+        val currentYearMonth = liveYearMonth ?: (lastYearMonth + 1)
 
         // 선택 월: yearMonth 미지정/범위 밖이면 마지막 기록 월로 클램프(빈 상태 회피).
         val targetYearMonth = (yearMonth ?: lastYearMonth).coerceIn(firstYearMonth, lastYearMonth)
@@ -102,4 +108,9 @@ class HistoryController(
 
     /** PHP `parseYearMonth`(util/parseYearMonth.ts) = `[ym/12, ym%12 + 1]`(정수 나눗셈). */
     private fun parseYearMonth(yearMonth: Int): Pair<Int, Int> = Pair(yearMonth / 12, yearMonth % 12 + 1)
+
+    private fun currentYearMonth(world: WorldStateReadEntity?): Int? =
+        world
+            ?.takeIf { it.currentYear > 0 && it.currentMonth in 1..12 }
+            ?.let { joinYearMonth(it.currentYear, it.currentMonth) }
 }

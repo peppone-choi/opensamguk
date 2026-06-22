@@ -658,7 +658,7 @@ data class HistoryResponse(
     val result: Boolean,
     val firstYearMonth: Int,        // Util::joinYearMonth(first row)
     val lastYearMonth: Int,         // Util::joinYearMonth(last row)
-    val currentYearMonth: Int,      // 진행중 서버: lastYearMonth+1(다음 달). 행 없으면 0.
+    val currentYearMonth: Int,      // 진행중 서버: world_state 현재 월. world_state도 없으면 0.
     val serverId: String,
     val mapName: String,
     val record: HistoryRecord?,     // 선택 월 레코드. 범위 밖/행 없음이면 null(빈 상태).

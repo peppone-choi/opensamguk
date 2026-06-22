@@ -926,10 +926,37 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.troops[0].members[2].npc").value(1))
     }
 
-    // ── GET /api/history (empty record + 0 range when no yearbook rows) ───────────────────────────────
+    // ── GET /api/history (empty record + legacy current-server range when no yearbook rows) ────────────
     @Test
-    fun `history returns null record and zero range when yearbook table has no rows`() {
+    fun `history anchors empty yearbook range to previous live month`() {
         `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
+        `when`(world.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "scenario_1021",
+                    currentYear = 190,
+                    currentMonth = 7,
+                    tickSeconds = 3600,
+                ),
+            ),
+        )
+
+        mvc(HistoryController(history, world)).perform(get("/api/history"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.firstYearMonth").value(2285))
+            .andExpect(jsonPath("$.lastYearMonth").value(2285))
+            .andExpect(jsonPath("$.currentYearMonth").value(2286))
+            .andExpect(jsonPath("$.serverId").value("scenario_1021"))
+            .andExpect(jsonPath("$.mapName").value("scenario_1021"))
+            .andExpect(jsonPath("$.record").value(org.hamcrest.Matchers.nullValue()))
+    }
+
+    @Test
+    fun `history returns zero range only when yearbook and world state are both empty`() {
+        `when`(history.findAllByOrderByYearAscMonthAsc()).thenReturn(emptyList())
+        `when`(world.findAll()).thenReturn(emptyList())
 
         mvc(HistoryController(history, world)).perform(get("/api/history"))
             .andExpect(status().isOk)
