@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldLogReadEntity
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -79,6 +80,7 @@ class FrontInfoControllerTest {
                 logFeeds,
                 nationEnv,
                 objectMapper,
+                ScenarioTitleResolver(),
                 serverName,
                 serverGeneration,
                 serverId,
@@ -93,12 +95,16 @@ class FrontInfoControllerTest {
         req
     }
 
-    private fun seedWorld(config: Map<String, Any?> = emptyMap(), startTime: Instant? = null) {
+    private fun seedWorld(
+        config: Map<String, Any?> = emptyMap(),
+        startTime: Instant? = null,
+        scenarioCode: String = "che_1010",
+    ) {
         `when`(world.findAll()).thenReturn(
             listOf(
                 WorldStateReadEntity(
                     id = 1,
-                    scenarioCode = "che_1010",
+                    scenarioCode = scenarioCode,
                     currentYear = 200,
                     currentMonth = 3,
                     tickSeconds = 3600,
@@ -191,6 +197,16 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.global.generation").value(7))
             .andExpect(jsonPath("$.global.serverCnt").value(7))
             .andExpect(jsonPath("$.global.serverId").value("s1"))
+    }
+
+    @Test
+    fun `global resolves committed scenario resource title before falling back to raw code`() {
+        seedWorld(scenarioCode = "scenario_1021")
+
+        mockMvc().perform(get("/api/front-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.global.scenario").value("scenario_1021"))
+            .andExpect(jsonPath("$.global.scenarioText").value("【역사모드2-2】 반동탁연합 결성(정사)"))
     }
 
     @Test

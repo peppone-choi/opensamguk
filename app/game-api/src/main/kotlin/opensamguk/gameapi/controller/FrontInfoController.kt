@@ -32,6 +32,7 @@ import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.TroopReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.VotePollReadEntity
@@ -104,6 +105,7 @@ class FrontInfoController(
     private val logFeeds: LogFeedReadRepository,
     private val nationEnv: NationEnvReadRepository,
     private val objectMapper: ObjectMapper,
+    private val scenarioTitle: ScenarioTitleResolver,
     @Value("\${SERVER_NAME:}") private val serverNameProperty: String = "",
     @Value("\${SERVER_GENERATION:}") private val serverGenerationProperty: String = "",
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
@@ -551,7 +553,9 @@ class FrontInfoController(
         val scenario = w?.scenarioCode ?: ""
         val config = w?.config ?: emptyMap()
         val scenarioText = (config["title"] ?: w?.meta?.get("title"))?.toString()
-            ?.takeIf { it.isNotBlank() } ?: scenario
+            ?.takeIf { it.isNotBlank() }
+            ?: scenarioTitle.titleOf(scenario)
+            ?: scenario
         val turnTerm = (w?.tickSeconds ?: 0) / 60
         val turnPhase = turnPhase(w)
 
