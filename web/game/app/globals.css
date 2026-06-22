@@ -647,7 +647,7 @@ input:focus, select:focus, textarea:focus {
   flex-direction: column;
   gap: 0;
   width: 100%;
-  max-width: 1200px;
+  max-width: min(100%, 1200px);
   margin-left: auto;
   margin-right: auto;
 }
@@ -686,7 +686,7 @@ input:focus, select:focus, textarea:focus {
 
 .main-status {
   width: 100%;
-  max-width: 1200px;
+  max-width: min(100%, 1200px);
   margin: 0 auto;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-subtle);
@@ -1279,7 +1279,7 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 1fr;
   gap: 0;
   width: 100%;
-  max-width: 1200px;
+  max-width: min(100%, 1200px);
   margin-left: auto;
   margin-right: auto;
   align-items: start;
@@ -1293,7 +1293,7 @@ input:focus, select:focus, textarea:focus {
 .ib-map,
 .ib-reserved,
 .ib-controlbar { width: 100%; }
-@media (max-width: 1199px) {
+@media (max-width: 1231px) {
   .ib-map { grid-row: 1; }
   .ib-reserved { grid-row: 2; }
   .ib-controlbar { grid-row: 3; }
@@ -1301,7 +1301,7 @@ input:focus, select:focus, textarea:focus {
   .ib-nation { grid-row: 5; }
   .ib-general { grid-row: 6; }
 }
-@media (min-width: 1200px) {
+@media (min-width: 1232px) {
   .ingame-board {
     grid-template-columns: 700px 200px 300px;
     gap: 0;
@@ -1317,7 +1317,7 @@ input:focus, select:focus, textarea:focus {
 .ib-map .map-viewer { border-radius: 0; }
 .main-page-content {
   width: 100%;
-  max-width: 1200px;
+  max-width: min(100%, 1200px);
   margin-left: auto;
   margin-right: auto;
 }

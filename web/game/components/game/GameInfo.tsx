@@ -25,8 +25,8 @@ export default function GameInfo({
     global: FrontGlobalInfo;
     constData: GameConstResponse | null;
 }) {
-    const title = global.title ?? constData?.mapName ?? '삼국지';
     const serverName = global.serverName ?? '';
+    const title = global.title ?? (serverName ? '' : constData?.mapName ?? '삼국지');
     const generation = global.generation ?? global.serverCnt;
     const generationText = generation == null ? '' : `${generation}기`;
     const titleText = [title, serverName, generationText].filter(Boolean).join(' ');

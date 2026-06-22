@@ -58,4 +58,32 @@ describe('GameInfo parity render', () => {
         expect(screen.queryByText(/기\s+테스트 시나리오/)).not.toBeInTheDocument();
         expect(screen.queryByText('기타 설정: 자동')).not.toBeInTheDocument();
     });
+
+    it('does not expose the internal map code when a server name is present', () => {
+        render(
+            <GameInfo
+                global={{
+                    ...baseGlobal,
+                    title: undefined,
+                    serverName: '빼섭',
+                    generation: 0,
+                    scenarioText: '【역사모드2-2】 반동탁연합 결성(정사)',
+                }}
+                constData={{
+                    result: true,
+                    mapName: 'che',
+                    mapWidth: 700,
+                    mapHeight: 500,
+                    maxTurn: 14,
+                    officerLevelText: {},
+                    officerLevelTextByNationLevel: {},
+                }}
+            />,
+        );
+
+        expect(screen.getByText(/빼섭 0기/)).toBeInTheDocument();
+        expect(screen.getAllByText('【역사모드2-2】 반동탁연합 결성(정사)').length).toBeGreaterThan(0);
+        expect(screen.queryByText(/che/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/scenario_1021/)).not.toBeInTheDocument();
+    });
 });
