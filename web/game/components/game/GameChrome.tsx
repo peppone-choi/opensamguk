@@ -1,13 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useFrontInfo } from '@/hooks/useFrontInfo';
 import { useToast } from '@/hooks/useToast';
 import GameInfo from './GameInfo';
 import GlobalMenu from './GlobalMenu';
 import MainControlBar, { type ControlGating } from './MainControlBar';
 import MainControlDropdown from './MainControlDropdown';
-import CharacterClaim from './CharacterClaim';
 import MainStatusPanel from './MainStatusPanel';
 import MapViewer from './MapViewer';
 import PartialReservedCommand from './PartialReservedCommand';
@@ -16,12 +16,14 @@ import NationBasicCard from './NationBasicCard';
 import CityBasicCard from './CityBasicCard';
 import MessagePanel from './MessagePanel';
 import Toast from '../Toast';
+import { resolveServerGamePath } from '@/lib/serverGameUrl';
 import type { MenuFlagSource } from '@/lib/menu-types';
 import type { FrontInfoResponse } from '@/lib/types';
 
 type GameChromeChildren = React.ReactNode | ((frontInfo: FrontInfoResponse) => React.ReactNode);
 
 export default function GameChrome({ children }: { children?: GameChromeChildren }) {
+    const router = useRouter();
     const { frontInfo, constData, menu, loading, error, refresh, refreshKey } = useFrontInfo();
     const { toasts, show, remove } = useToast();
 
@@ -38,6 +40,17 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
             isBettingActive: Boolean(global.isBettingActive),
         };
     }, [frontInfo]);
+    const hasGeneral = frontInfo?.general.hasGeneral ?? null;
+    const joinHref = useMemo(() => {
+        const serverId = frontInfo?.global.serverId;
+        return serverId ? resolveServerGamePath(undefined, serverId, '/game', 'join') : '/game/join';
+    }, [frontInfo?.global.serverId]);
+
+    useEffect(() => {
+        if (!loading && hasGeneral === false) {
+            router.replace(joinHref);
+        }
+    }, [hasGeneral, joinHref, loading, router]);
 
     // asyncReady gate (spec §1.1): suppress everything until the first front-info + const resolve.
     if (loading) {
@@ -61,7 +74,14 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
     }
 
     if (!frontInfo.general.hasGeneral) {
-        return <CharacterClaim global={frontInfo.global} onClaimed={refresh} />;
+        return (
+            <div className="center-screen">
+                <div className="spinner" />
+                <p className="text-muted" style={{ marginTop: '1rem' }}>
+                    장수 생성 화면으로 이동 중입니다.
+                </p>
+            </div>
+        );
     }
 
     const flagSource = frontInfo.global as unknown as MenuFlagSource;
