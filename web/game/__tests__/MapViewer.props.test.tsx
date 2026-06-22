@@ -13,6 +13,7 @@
 //   - 계절: MapViewer.vue:306-319 — month<=3 봄 / <=6 여름 / <=9 가을 / 나머지 겨울.
 //   - state 아이콘: MapCityDetail.vue:44 `v-if="city.state > 0"` — 상한 캡 없음(코드 6~9 포함).
 //   - 도시명 토글: MapViewer.vue:30-40 + state/mapViewer.ts(localStorage 'sam.hideMapCityName').
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
@@ -209,6 +210,24 @@ describe('MapViewer — currentCityId(레거시 is-my-city → .my_city blink)',
         expect(mine.querySelector('.city-img.my-city')).toBeNull();
         const other = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(other.querySelector('.my-city')).toBeNull();
+    });
+});
+
+describe('MapViewer CSS — legacy hover tooltip and my-city marker', () => {
+    const css = readFileSync('app/globals.css', 'utf8');
+
+    it('hover tooltip은 카드형 UI가 아니라 legacy city_tooltip 형태다', () => {
+        const block = css.match(/\.map-tooltip\s*\{[^}]+\}/s)?.[0] ?? '';
+        expect(block).toContain('min-width: 120px');
+        expect(block).toContain('border: 1px solid gray');
+        expect(block).toContain('border-radius: 0');
+        expect(block).toContain('box-shadow: none');
+        expect(block).not.toContain('var(--shadow-md)');
+        expect(css).toMatch(/\.map-tooltip-name,\s*\.map-tooltip-meta\s*\{[^}]*background-color: rgb\(30, 164, 255\)/s);
+    });
+
+    it('내 도시 filler 자체도 legacy my_city처럼 둥근 링 기준을 가진다', () => {
+        expect(css).toMatch(/\.city-filler\.my-city\s*\{\s*border-radius: 33%;\s*\}/);
     });
 });
 

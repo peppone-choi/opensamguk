@@ -1072,16 +1072,31 @@ input:focus, select:focus, textarea:focus {
 /* hover tooltip (legacy .city_tooltip) — 커서 추종(gateway MapPreview .map-preview-tooltip과 동일, 위치 inline). */
 .map-tooltip {
   position: absolute;
-  z-index: 10;
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
+  z-index: 16;
+  min-width: 120px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid gray;
+  border-radius: 0;
+  box-shadow: none;
+  white-space: nowrap;
   pointer-events: none;
 }
-.map-tooltip-name { font-size: var(--text-sm); font-weight: 700; color: var(--text-primary); }
-.map-tooltip-meta { font-size: var(--text-xs); color: var(--text-secondary); }
+.map-tooltip-name,
+.map-tooltip-meta {
+  display: block;
+  height: 15px;
+  padding: 0 2px;
+  background-color: rgb(30, 164, 255);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 15px;
+}
+.map-tooltip-meta {
+  border-top: 1px solid gray;
+  text-align: right;
+}
 
 /* ── W0-6 MapViewer prop widen — gateway MapPreview와 동일 블록(두 맵뷰어 불변식) ──
    1) 도시명 표기 토글: 레거시 .world_map.hide_cityname .city_detail_name(map.scss:149-151). */
@@ -1089,6 +1104,7 @@ input:focus, select:focus, textarea:focus {
 /* 2) 클릭 비활성(disallowClick) — 레거시 clickable=0 → cursor default(MapCityDetail.vue:23). */
 .city-noclick { cursor: default; }
 /* 3) 내(현재) 도시 blink 링 — 레거시 .my_city before/after outline 점멸(map.scss:231-262). */
+.city-filler.my-city { border-radius: 33%; }
 .city-filler.my-city::before {
   content: "";
   position: absolute;

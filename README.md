@@ -15,16 +15,17 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 ## 목차
 
 1. [프로젝트 소개](#프로젝트-소개)
-2. [아키텍처](#아키텍처)
-3. [빠른 시작](#빠른-시작)
-4. [서비스 / 포트](#서비스--포트)
-5. [시나리오 시드](#시나리오-시드)
-6. [개발](#개발)
-7. [테스트](#테스트)
-8. [작업 운영 체계](#작업-운영-체계)
-9. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
-10. [패러티 규율](#패러티-규율)
-11. [감사 / 라이선스](#감사--라이선스)
+2. [현재 패러티 상태](#현재-패러티-상태)
+3. [아키텍처](#아키텍처)
+4. [빠른 시작](#빠른-시작)
+5. [서비스 / 포트](#서비스--포트)
+6. [시나리오 시드](#시나리오-시드)
+7. [개발](#개발)
+8. [테스트](#테스트)
+9. [작업 운영 체계](#작업-운영-체계)
+10. [프론트엔드 / 배포 (F0–F5)](#프론트엔드--배포-f0f5)
+11. [패러티 규율](#패러티-규율)
+12. [감사 / 라이선스](#감사--라이선스)
 
 ---
 
@@ -55,6 +56,26 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 | 테스트 | JUnit 5 + kotlin.test + Testcontainers |
 | 리버스 프록시 | nginx 1.27 |
 | 배포 | AWS EC2 t3.large · Docker Compose · GitHub Actions (GHCR) |
+
+---
+
+## 현재 패러티 상태
+
+2026-06-22 기준 이 프로젝트는 **알파**입니다. 레거시 `hwe/ts/` Vue와 PHP API를 grand truth로 삼아 page-parity 루프를 계속 닫고 있으며, 진행 현황은 [`docs/loops/page-parity/LEDGER.md`](docs/loops/page-parity/LEDGER.md)에 바퀴 71까지 기록돼 있습니다.
+
+요약하면 **메인 화면·로비·서버 경로·SSE·맵·주요 read 페이지는 실서버 `s1`에서 반복 측정하며 상당 부분 수렴**했고, **mutation/월드 이벤트/관리자 legacy 화면/일부 스키마 갭은 아직 진행 중**입니다. "완전 패러티"가 아니라, 실제 PHP 근거와 브라우저 관측으로 닫힌 바퀴만 닫힌 것으로 봅니다.
+
+| 영역 | 현재 수준 | 근거 / 남은 일 |
+|------|-----------|----------------|
+| 코어 규칙(RNG·반올림·로그·델타 flush) | 높음 | `common`/`logic`/`engine` 테스트와 `tools/parity/gate.sh backend`가 표준 게이트. 단, PHP 캡처 불가능한 `mt_rand()` 계열은 격리 백로그로 둡니다. |
+| 메인/맵/경로/SSE UI | 높음 | `/game/s1` path-server 링크, SSE 첫 바이트, 맵 크기, 도시 링크, 현재 위치, 제목 툴팁, 상태 아이콘, hover tooltip을 바퀴 51-71에서 수렴. |
+| read API와 read 페이지 | 중상 | 랭킹, 내정보, 도시/국가/외교/메시지/경매/베팅/유산 등 주요 read 표면을 렌더. `cityConst` id→name 공유 로더, 재난 맵 state 등은 백로그. |
+| 명령 예약과 일부 mutation | 중간 | 개인/수뇌 예약, 서신 발송, 베팅, 경매, 유산 `ResetStat` 등은 배선·테스트된 경로가 있음. 아직 미등록 intake와 페이지별 write 흐름이 남아 있습니다. |
+| 관리자/운영 표면 | 중간 이하 | 현 운영 모델은 deployer/서버 레지스트리 기반으로 전환 중입니다. legacy 서버관리 화면의 상태·명령·회원관리·공지 일부는 아직 gap 또는 의도 divergence입니다. |
+| 시나리오 시드 | 플레이 가능 시드 | `scenario_1010` JSON 기반 quick seed로 로컬/신규 서버 기동은 가능. PHP `Scenario::build` draw-for-draw 시드는 별도 후속 작업입니다. |
+| 프로덕션 반영 | 분리 승격 모델 | shared deployer는 자동 갱신되지만, 실행 중인 game server는 시즌 중 desync 방지를 위해 고정 태그를 유지합니다. 새 코드의 `s1` 적용은 관리자 승격/재시드/새 기수 생성 시 명시적으로 수행합니다. |
+
+현재 알려진 큰 갭은 `docs/loops/page-parity/LEDGER.md`의 백로그가 정본입니다. 특히 재난-맵 `city.state` 스키마, `cityConst` id→name 로더, 일부 미등록 intake(`DieOnPrestart`, `DropItem`, `InstantRetreat`, `CheckOwner`, `UploadImage`), legacy 관리자 서버관리 화면, PHP 비결정 난수 계열은 아직 닫히지 않았습니다.
 
 ---
 
@@ -329,12 +350,12 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 |------|------|------|
 | **F0 게이트웨이 인증** | `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. JWT를 Next route handler 프록시 + httpOnly 쿠키(`sam_access`/`sam_refresh`)로 연결. `AdminSeeder`로 peppone(role=ADMIN) 자동 생성. | ✅ |
 | **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → 로컬 fresh DB에는 `scenario_1010` 자동 시드 가능, production은 관리자 서버 생성 전 기본 비활성. `WorldSnapshotLoader`로 엔진 부팅·턴 진행. | ✅ |
-| **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
-| **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api로 **read-only 렌더**. | ✅ |
-| **F4 액션 페이지 (read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator 등 read 렌더. **명령 제출(mutation) 경로는 미완** — 현재 read 우선. | ✅(read) |
-| **F5 turnkey + docs** | 정본 compose(로컬 + production) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드. | 🔄 |
+| **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar + 메인 보드). path-server, SSE, 맵 크기/링크/현재 위치/툴팁은 실서버 루프로 지속 수렴 중. | ✅ |
+| **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api read 데이터 렌더가 기본 완성선. | ✅ |
+| **F4 액션 페이지 + 일부 mutation** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator 등 read 렌더. 예약, 서신, 베팅, 경매, `ResetStat`처럼 검증된 write 경로가 늘었지만 전체 mutation 패러티는 아직 진행 중. | 🔄 |
+| **F5 turnkey + docs** | 로컬 compose + app repo 문서 + production 앱 이미지. 실제 운영 오케스트레이션 정본은 `opensamguk-docker`의 shared/server/deployer 분리 모델과 맞춰갑니다. | 🔄 |
 
-> **상태 표기 주의**: F0–F4의 화면은 game-api **read 데이터를 렌더**하는 단계까지 구축돼 있습니다. 프론트에서의 명령 제출(mutation/턴 예약) 경로는 아직 완성되지 않았습니다. 백엔드 로직(P2~P6 명령·전투·경매·베팅·외교)은 게이트가 닫혀 있으나, 그 기능을 프론트에서 끝까지 조작하는 흐름은 후속 작업입니다.
+> **상태 표기 주의**: F0–F3는 "기본 동선 사용 가능"에 가깝고, F4는 read 중심에서 일부 mutation까지 확장된 상태입니다. 모든 버튼과 모든 명령이 PHP와 완전 동형이라는 뜻은 아닙니다. 새 gap은 `opensamguk-php-oracle` → `webapp-testing` → `systematic-debugging` → `loop-engineering` 순서로 바퀴 하나씩 닫습니다.
 
 ---
 
@@ -362,4 +383,4 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 
 ---
 
-*최종 갱신: 2026-06-08 · skills.sh + working-system 기준.*
+*최종 갱신: 2026-06-22 · page-parity LEDGER 바퀴 71 기준.*
