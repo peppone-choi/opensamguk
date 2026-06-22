@@ -7,6 +7,13 @@ const mocks = vi.hoisted(() => ({
     useFrontInfo: vi.fn(),
     showToast: vi.fn(),
     removeToast: vi.fn(),
+    routerReplace: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({
+        replace: mocks.routerReplace,
+    }),
 }));
 
 vi.mock('@/hooks/useFrontInfo', () => ({
@@ -25,7 +32,6 @@ vi.mock('@/components/game/GameInfo', () => ({ default: () => null }));
 vi.mock('@/components/game/GlobalMenu', () => ({ default: () => null }));
 vi.mock('@/components/game/MainControlBar', () => ({ default: () => null }));
 vi.mock('@/components/game/MainControlDropdown', () => ({ default: () => null }));
-vi.mock('@/components/game/CharacterClaim', () => ({ default: () => null }));
 vi.mock('@/components/game/PartialReservedCommand', () => ({ default: () => null }));
 vi.mock('@/components/game/GeneralBasicCard', () => ({ default: () => <div data-testid="general-card" /> }));
 vi.mock('@/components/game/NationBasicCard', () => ({ default: () => <div data-testid="nation-card" /> }));
@@ -35,6 +41,7 @@ vi.mock('@/components/Toast', () => ({ default: () => null }));
 
 const frontInfo = {
     global: {
+        serverId: 's1',
         onlineNations: '위, 촉',
         isTournamentApplicationOpen: false,
         isBettingActive: false,
@@ -68,6 +75,7 @@ const frontInfo = {
 describe('GameChrome main map', () => {
     beforeEach(() => {
         mocks.mapViewer.mockClear();
+        mocks.routerReplace.mockClear();
         mocks.useFrontInfo.mockReturnValue({
             frontInfo,
             constData: { maxTurn: 10 },
@@ -159,5 +167,31 @@ describe('GameChrome main map', () => {
         );
 
         expect(screen.getByTestId('record-probe-filled')).toHaveTextContent('장수 동향 연결');
+    });
+
+    it('redirects no-general users to the server-scoped join page instead of rendering the retired inline claim screen', () => {
+        mocks.useFrontInfo.mockReturnValueOnce({
+            frontInfo: {
+                ...frontInfo,
+                general: {
+                    ...frontInfo.general,
+                    hasGeneral: false,
+                    generalId: null,
+                },
+            },
+            constData: { maxTurn: 10 },
+            menu: [],
+            loading: false,
+            error: null,
+            refreshKey: 7,
+            refresh: vi.fn(),
+        });
+
+        render(<GameChrome />);
+
+        expect(mocks.routerReplace).toHaveBeenCalledWith('/game/s1/join');
+        expect(screen.getByText('장수 생성 화면으로 이동 중입니다.')).toBeInTheDocument();
+        expect(screen.queryByText('장수 등록')).not.toBeInTheDocument();
+        expect(mocks.mapViewer).not.toHaveBeenCalled();
     });
 });
