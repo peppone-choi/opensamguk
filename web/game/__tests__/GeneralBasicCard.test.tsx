@@ -55,7 +55,7 @@ const nation: FrontNationInfo = {
 };
 
 describe('GeneralBasicCard', () => {
-    it('renders signed stat bonuses, stat bars, and the full-width extra-info header', () => {
+    it('renders stat and level as six key-value pairs and keeps extra info collapsed', () => {
         const { container } = render(<GeneralBasicCard general={general} nation={nation} />);
 
         expect(screen.getByText('+7')).toBeInTheDocument();
@@ -64,8 +64,14 @@ describe('GeneralBasicCard', () => {
         expect(screen.getByText('-1')).toBeInTheDocument();
         expect(screen.getByText('12,345')).toBeInTheDocument();
         expect(screen.getByText('67,890')).toBeInTheDocument();
-        expect(screen.getByText('추 가 정 보')).toHaveClass('basic-card-section-head');
-        expect(container.querySelectorAll('.stat-band-item')).toHaveLength(5);
+        expect(screen.getByText('추가정보').closest('details')).not.toHaveAttribute('open');
+        expect(container.querySelectorAll('.general-basic-card .basic-card-head').length).toBeGreaterThanOrEqual(6);
+        expect(screen.getByText('통솔')).toHaveClass('basic-card-head');
+        expect(screen.getByText('무력')).toHaveClass('basic-card-head');
+        expect(screen.getByText('지력')).toHaveClass('basic-card-head');
+        expect(screen.getByText('정치')).toHaveClass('basic-card-head');
+        expect(screen.getByText('매력')).toHaveClass('basic-card-head');
+        expect(screen.getByText('Lv')).toHaveClass('basic-card-head');
         expect(container.querySelectorAll('.sammo-bar').length).toBeGreaterThanOrEqual(6);
     });
 });

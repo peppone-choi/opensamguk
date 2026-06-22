@@ -8,6 +8,9 @@ import type { CommandArgType } from '@/types/game';
 
 // suffix → argType. The first matching suffix wins (longest-first so 부대_탈퇴 beats 탈퇴).
 const ARG_TYPE_BY_SUFFIX: [string, CommandArgType][] = [
+    ['건국', 'founding'],
+    ['징병', 'recruit'],
+    ['모병', 'recruit'],
     // city (destCityID): 강행/이동/출병/첩보/화계/탈취/파괴/선동/수몰/백성동원/천도/초토화
     ['강행', 'city'],
     ['이동', 'city'],
@@ -39,7 +42,7 @@ const ARG_TYPE_BY_SUFFIX: [string, CommandArgType][] = [
     ['기부', 'amount'],
 ];
 
-const ARG_FIELD: Record<CommandArgType, string> = {
+const ARG_FIELD: Partial<Record<CommandArgType, string>> = {
     city: 'destCityID',
     general: 'destGeneralID',
     nation: 'destNationID',
@@ -55,6 +58,6 @@ export function inferArgType(commandKey: string): CommandArgType | null {
 }
 
 /** The JSON body field name for a given argType (matches the spec §5.4 payload table). */
-export function argFieldName(type: CommandArgType): string {
-    return ARG_FIELD[type];
+export function argFieldName(type: CommandArgType): string | null {
+    return ARG_FIELD[type] ?? null;
 }

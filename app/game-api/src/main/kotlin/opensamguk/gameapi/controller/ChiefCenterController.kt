@@ -221,6 +221,8 @@ class ChiefCenterController(
 
     /** 명령의 `argsSchema` 키에서 모달 필드 타입을 파생(AvailableCommandsController.argTypeOf 정본 미러). */
     private fun argTypeOf(keys: Set<String>): String? = when {
+        "nationName" in keys && "nationType" in keys && "colorType" in keys -> "founding"
+        "crewType" in keys && "amount" in keys -> "recruit"
         "destCityID" in keys -> "city"
         "destNationID" in keys -> "nation"
         "destGeneralID" in keys -> "general"

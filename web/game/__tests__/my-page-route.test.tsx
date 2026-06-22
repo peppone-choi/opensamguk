@@ -89,6 +89,7 @@ describe('MyPage route', () => {
 
     it('routes the legacy 내 정보&설정 control button to /game/my', () => {
         expect(CONTROL_BUTTONS.find((button) => button.label === '내 정보&설정')?.href).toBe('/game/my');
+        expect(CONTROL_BUTTONS.find((button) => button.label === '세력 장수')?.href).toBe('/game/my-generals');
     });
 
     it('renders the legacy b_myPage read structure instead of a 404 route gap', async () => {

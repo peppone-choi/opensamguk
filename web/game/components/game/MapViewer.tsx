@@ -186,6 +186,8 @@ export interface MapViewerProps {
     /** 재조회 트리거 — 값이 바뀌면 다시 fetch(레거시 refreshCounter watch). */
     refreshKey?: number;
     gameConst?: MapTitleGameConst | null;
+    selectedCityId?: number | null;
+    onCitySelect?: (cityId: number) => void;
 }
 
 // 라이브 머지 — preview(좌표/이름 베이스)에 /api/map 라이브 tuple 을 id 로 덮어쓴다.
@@ -233,6 +235,8 @@ export default function MapViewer({
     showMe = 1,
     refreshKey = 0,
     gameConst,
+    selectedCityId,
+    onCitySelect,
 }: MapViewerProps = {}) {
     const cityBaseHref = useServerGameUrl('city');
     const [data, setData] = useState<MapPreviewResponse | null>(null);
@@ -249,7 +253,9 @@ export default function MapViewer({
     // 클릭 게이트 — 명시 disallowClick 이 우선, 기본값은 "mapData 주입 시 비활성"(감사 P0-22 시멘틱:
     // 레거시 주입 페이지 PageHistory/PageCachedMap 은 모두 disallow-click=true. PageFront 처럼
     // 주입+클릭을 원하면 disallowClick={false}를 명시한다).
-    const clickEnabled = !(disallowClick ?? mapData != null);
+    const selectionEnabled = onCitySelect != null;
+    const navigationEnabled = !selectionEnabled && !(disallowClick ?? mapData != null);
+    const clickEnabled = selectionEnabled || navigationEnabled;
 
     useEffect(() => {
         // 외부 주입 — self-fetch 생략(레거시 Vue 뷰어 동작: 페이지가 fetch, 뷰어는 렌더만).
@@ -381,7 +387,7 @@ export default function MapViewer({
     const touchArmedId = useRef<number | null>(null);
 
     function canFollowCityLink(cityId: number): boolean {
-        if (!clickEnabled) return false; // 레거시 clickable=0(MapViewer.vue:392-394)
+        if (!navigationEnabled) return false; // 레거시 clickable=0(MapViewer.vue:392-394)
         if (lastPointerType.current === 'touch') {
             if (touchArmedId.current !== null && touchArmedId.current !== cityId) {
                 touchArmedId.current = null; // 다른 도시 탭 → 선택 초기화(레거시 441-444)
@@ -471,16 +477,20 @@ export default function MapViewer({
                         const showState = (c.state ?? 0) > 0;
                         const flagFrameUrl = owned ? flagUrls[col]?.[flagFrame] : undefined;
                         const isMyCity = effectiveMyCity != null && effectiveMyCity === c.id;
+                        const isSelectedCity = selectedCityId != null && selectedCityId === c.id;
                         const cityHref = `${cityBaseHref}?id=${encodeURIComponent(String(c.id))}`;
 
                         return (
                             <a
-                                href={clickEnabled ? cityHref : undefined}
+                                href={navigationEnabled ? cityHref : undefined}
                                 key={c.id}
-                                className={`city-base${unsupplied ? ' supply-off' : ''}${clickEnabled ? '' : ' city-noclick'}`}
+                                className={`city-base${unsupplied ? ' supply-off' : ''}${clickEnabled ? '' : ' city-noclick'}${selectionEnabled ? ' city-selectable' : ''}${isSelectedCity ? ' city-selected' : ''}`}
                                 style={{ left: baseLeft, top: baseTop, width: BASE_W, height: BASE_H }}
                                 aria-label={`${c.name} 레벨 ${c.level} ${nationNameOf(c.nationId)}`}
                                 aria-disabled={clickEnabled ? undefined : true}
+                                aria-pressed={selectionEnabled ? isSelectedCity : undefined}
+                                role={selectionEnabled ? 'button' : undefined}
+                                tabIndex={selectionEnabled ? 0 : undefined}
                                 onMouseEnter={() => setHoverId(c.id)}
                                 onMouseLeave={() => setHoverId((id) => (id === c.id ? null : id))}
                                 onFocus={() => setHoverId(c.id)}
@@ -491,7 +501,19 @@ export default function MapViewer({
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation(); // 캔버스 clickOutside 와 분리(레거시 silent)
+                                    if (selectionEnabled) {
+                                        e.preventDefault();
+                                        setHoverId(c.id);
+                                        onCitySelect(c.id);
+                                        return;
+                                    }
                                     if (!canFollowCityLink(c.id)) e.preventDefault();
+                                }}
+                                onKeyDown={(e) => {
+                                    if (!selectionEnabled || (e.key !== 'Enter' && e.key !== ' ')) return;
+                                    e.preventDefault();
+                                    setHoverId(c.id);
+                                    onCitySelect(c.id);
                                 }}
                             >
                                 {/* 1) 오오라(city_bg) — 소유국만(레거시 b<color>.png radial glow). 공백지=오오라 없음. city_img의 형제. */}
@@ -595,11 +617,12 @@ export default function MapViewer({
                         top: cursor.y + 30,
                     }}
                 >
-                    {/* 레거시 city_tooltip 2줄 구조: 1줄=【지역 | 등급】 도시명(CityBasicCard.vue), 2줄=국가명만(map.ts nation_name) */}
                     <div className="map-tooltip-name">
                         {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${levelText(hoverCity.level)}】 ${hoverCity.name}`}
                     </div>
-                    <div className="map-tooltip-meta">{nationNameOf(hoverCity.nationId)}</div>
+                    {hoverCity.nationId !== 0 && (
+                        <div className="map-tooltip-meta">{nationNameOf(hoverCity.nationId)}</div>
+                    )}
                 </div>
             )}
         </section>

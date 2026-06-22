@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import { TURN_PHASE_LABELS } from '../../lib/format';
+import { formatYearMonthPhase, TURN_PHASE_LABELS } from '../../lib/format';
 import type { ReservedSlot } from '../../lib/types';
 import CommandModal from '../CommandModal';
 
@@ -115,7 +115,7 @@ export default function PartialReservedCommand({
         const year = meta.year + Math.floor(absolutePhase / 36);
         const phaseOfYear = ((absolutePhase % 36) + 36) % 36;
         const month = Math.floor(phaseOfYear / 3) + 1;
-        return `${year}-${pad2(month)} ${TURN_PHASE_LABELS[phaseOfYear % 3]}`;
+        return formatYearMonthPhase(year, month, TURN_PHASE_LABELS[phaseOfYear % 3]);
     };
 
     const slotTimeFor = (turnIdx: number) => {

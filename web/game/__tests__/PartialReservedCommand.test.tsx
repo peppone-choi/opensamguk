@@ -39,10 +39,10 @@ describe('PartialReservedCommand', () => {
 
         await waitFor(() => expect(mocks.reservedCommands).toHaveBeenCalledWith(10));
 
-        expect(screen.getByText('190-08 중순')).toBeInTheDocument();
-        expect(screen.getByText('190-08 하순')).toBeInTheDocument();
-        expect(screen.getByText('190-09 상순')).toBeInTheDocument();
-        expect(screen.getByText('190-09 중순')).toBeInTheDocument();
+        expect(screen.getByText('190년 8월 중순')).toBeInTheDocument();
+        expect(screen.getByText('190년 8월 하순')).toBeInTheDocument();
+        expect(screen.getByText('190년 9월 상순')).toBeInTheDocument();
+        expect(screen.getByText('190년 9월 중순')).toBeInTheDocument();
         expect(screen.getByText('07:12')).toBeInTheDocument();
         expect(screen.getByText('08:12')).toBeInTheDocument();
         expect(screen.getByText('09:12')).toBeInTheDocument();

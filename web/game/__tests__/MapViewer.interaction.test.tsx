@@ -1,6 +1,6 @@
 // 컴포넌트 상호작용 테스트 — components/game/MapViewer.tsx.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const tintedColors: string[] = [];
@@ -115,6 +115,30 @@ describe('MapViewer — 도시 마커 클릭 → 도시 정보 페이지 라우�
         await renderAndLoad();
         const cityLink = screen.getByRole('link', { name: /낙양 레벨 8 위/ });
         expect(cityLink).toHaveAttribute('href', '/game/s1/city?id=11');
+    });
+});
+
+describe('MapViewer — 명령 모달 도시 선택 모드', () => {
+    it('도시 마커가 링크 이동 대신 onCitySelect 를 호출한다', async () => {
+        const onCitySelect = vi.fn();
+        render(<MapViewer mapData={MAP_FIXTURE} selectedCityId={22} onCitySelect={onCitySelect} />);
+        await waitFor(() => expect(tintedColors).toContain(NATION_RED));
+
+        const cityButton = screen.getByRole('button', { name: /낙양 레벨 8 위/ });
+        expect(cityButton).not.toHaveAttribute('href');
+        fireEvent.click(cityButton);
+
+        expect(onCitySelect).toHaveBeenCalledWith(11);
+        expect(screen.getByRole('button', { name: /장안 레벨 3 공 백 지/ })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('공백지 툴팁은 공백지 국가명을 화면 텍스트로 표시하지 않는다', async () => {
+        render(<MapViewer mapData={MAP_FIXTURE} />);
+        await waitFor(() => expect(tintedColors).toContain(NATION_RED));
+
+        fireEvent.mouseEnter(screen.getByLabelText(/장안 레벨 3 공 백 지/));
+
+        expect(screen.queryByText('공 백 지')).toBeNull();
     });
 });
 

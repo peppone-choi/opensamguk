@@ -2,19 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
+import type { MailboxMessage } from '@/types/game';
 import MessagePlate from './MessagePlate';
-
-// game-api MessageResponse (MessageDto.kt) — the lean read shape.
-export interface MailboxMessage {
-    id: number | null;
-    mailbox: number;
-    type: string;
-    src: number;
-    dest: number;
-    time: string;
-    validUntil: string;
-    message: string;
-}
 
 const PUBLIC_MAILBOX = 9999;
 

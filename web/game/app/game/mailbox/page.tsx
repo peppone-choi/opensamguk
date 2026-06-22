@@ -8,20 +8,7 @@ import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
 import { mailboxIdForScope, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
 import type { FrontInfoResponse } from '../../../lib/types';
-
-interface MailMessage {
-    id: number;
-    type: string;
-    srcId: number;
-    srcName: string;
-    destId: number;
-    text: string;
-    date: string;
-    validUntil: string;
-    isInboxMail: boolean;
-    option?: Record<string, unknown>;
-    read?: boolean;
-}
+import type { MailboxMessage } from '../../../types/game';
 
 const TYPE_LABEL: Record<string, string> = {
     private: '개인',
@@ -38,7 +25,7 @@ const TYPE_VARIANT: Record<string, 'gold' | 'jade' | 'muted' | 'crimson'> = {
 };
 
 export default function MailboxPage() {
-    const [messages, setMessages] = useState<MailMessage[]>([]);
+    const [messages, setMessages] = useState<MailboxMessage[]>([]);
     const [scope, setScope] = useState<MailboxScope>('private');
     const [identity, setIdentity] = useState<{ generalId: number | null; nationId: number }>({ generalId: null, nationId: 0 });
     const [loading, setLoading] = useState(true);
@@ -61,7 +48,7 @@ export default function MailboxPage() {
                 setError(scope === 'national' ? '소속 국가가 없습니다.' : '장수 정보가 없습니다.');
                 return;
             }
-            const data = await api.mailbox<MailMessage[]>(mailboxId);
+            const data = await api.mailbox<MailboxMessage[]>(mailboxId);
             setMessages(data);
             setError('');
         } catch {
@@ -135,7 +122,7 @@ export default function MailboxPage() {
     // 수락/거절은 game-api의 /api/messages/{id}/accept|decline로 직접 호출한다.
     // NEW CONTRACT: 수락 시 서버가 수락 명령(예: che_불가침수락)을 턴 데몬에 직접 예약(reserve)하므로
     // 클라이언트는 commandKey를 읽어 /api/command를 다시 호출하지 않는다(예전 디스패치 설계 폐기).
-    async function handleAgree(msg: MailMessage) {
+    async function handleAgree(msg: MailboxMessage) {
         // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 수락 차단
         if (pendingId !== null) return;
         if (identity.generalId == null) {
@@ -143,6 +130,7 @@ export default function MailboxPage() {
             setTimeout(() => setToast(''), TOAST_DURATION_MS);
             return;
         }
+        if (msg.id == null) return;
         setPendingId(msg.id);
         try {
             await api.messageAccept(msg.id, identity.generalId);
@@ -157,7 +145,7 @@ export default function MailboxPage() {
         fetchMessages();
     }
 
-    async function handleDecline(msg: MailMessage) {
+    async function handleDecline(msg: MailboxMessage) {
         // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 거절 차단
         if (pendingId !== null) return;
         if (identity.generalId == null) {
@@ -165,6 +153,7 @@ export default function MailboxPage() {
             setTimeout(() => setToast(''), TOAST_DURATION_MS);
             return;
         }
+        if (msg.id == null) return;
         setPendingId(msg.id);
         try {
             await api.messageDecline(msg.id, identity.generalId);
@@ -184,7 +173,19 @@ export default function MailboxPage() {
         setSendMailbox(id ?? MAILBOX_PUBLIC);
     }, [scope, identity]);
 
-    const unreadCount = messages.filter(m => !m.read).length;
+    const messageName = (msg: MailboxMessage) => msg.srcTarget?.name || String(msg.src);
+    const messageTime = (value: string) => {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    };
+    const showValidUntil = (value: string) => value && !value.startsWith(INFINITE_DATE);
 
     return (
         <Shell>
@@ -211,9 +212,6 @@ export default function MailboxPage() {
                     ))}
                 </div>
                 <button onClick={fetchMessages}>새로고침</button>
-                {unreadCount > 0 && (
-                    <StatusBadge variant="crimson">미읽음 {unreadCount}</StatusBadge>
-                )}
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
@@ -277,19 +275,16 @@ export default function MailboxPage() {
                     const hasAction = !!msg.option?.action;
                     const variant = TYPE_VARIANT[msg.type] ?? 'muted';
                     return (
-                        <GameCard key={msg.id} className={msg.read ? 'muted' : ''}>
+                        <GameCard key={msg.id ?? `${msg.mailbox}-${msg.time}`}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap' }}>
-                                {!msg.read && (
-                                    <span style={{ width: 8, height: 8, background: 'var(--gold)', borderRadius: '50%', display: 'inline-block' }} />
-                                )}
                                 <StatusBadge variant={variant}>{TYPE_LABEL[msg.type] ?? msg.type}</StatusBadge>
-                                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{msg.srcName}</span>
-                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{msg.date}</span>
-                                {msg.validUntil && msg.validUntil !== INFINITE_DATE && (
-                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>~{msg.validUntil}</span>
+                                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{messageName(msg)}</span>
+                                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{messageTime(msg.time)}</span>
+                                {showValidUntil(msg.validUntil) && (
+                                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>~{messageTime(msg.validUntil)}</span>
                                 )}
                             </div>
-                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>{msg.text ?? ''}</p>
                             {isDiplomacy && hasAction && (
                                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                                     {/* 요청 진행 중에는 수락/거절 모두 비활성화 — 이중 제출 방지 */}
