@@ -2,6 +2,8 @@
 FROM gradle:8.12-jdk21 AS build
 WORKDIR /src
 COPY . .
+ARG IMAGE_TAG=dev
+ENV IMAGE_TAG=$IMAGE_TAG
 RUN gradle :app:game-api:bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre AS run

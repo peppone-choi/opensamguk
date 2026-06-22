@@ -53,6 +53,7 @@ jobs:
       - name: Build + push gateway-api image
         run: |
           docker build -f docker/gateway-api.Dockerfile \
+            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-${{ env.IMAGE_TAG }} \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:gateway-api-${{ env.IMAGE_TAG }}
@@ -61,6 +62,7 @@ jobs:
       - name: Build + push game-api image
         run: |
           docker build -f docker/game-api.Dockerfile \
+            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-${{ env.IMAGE_TAG }} \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-api-${{ env.IMAGE_TAG }}
@@ -69,6 +71,7 @@ jobs:
       - name: Build + push game-engine image
         run: |
           docker build -f docker/game-engine.Dockerfile \
+            --build-arg IMAGE_TAG="${{ env.IMAGE_TAG }}" \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-${{ env.IMAGE_TAG }} \
             -t ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-latest .
           docker push ${{ env.REGISTRY }}/${{ github.repository_owner }}/opensamguk:game-engine-${{ env.IMAGE_TAG }}
