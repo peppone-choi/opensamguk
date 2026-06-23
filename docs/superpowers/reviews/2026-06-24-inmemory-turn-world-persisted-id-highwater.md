@@ -40,11 +40,13 @@ No README/AGENTS/CLAUDE update is required: this is an internal engine invariant
 ## Verification
 
 - `:app:game-engine:test --tests opensamguk.engine.turn.InMemoryTurnWorldTest` → 12 tests, 0 failures, 0 errors.
-- `tools/parity/gate.sh backend` → BUILD SUCCESSFUL (result captured in LEDGER).
+- `:infra:test --tests opensamguk.infra.persistence.JdbcFlushExecutorIT` → BUILD SUCCESSFUL (high-water mark SQL round-trip).
+- `tools/parity/gate.sh backend` → BUILD SUCCESSFUL, XML aggregate 3226 tests / 0 failures / 0 errors.
 - `cd web/game && pnpm typecheck` → no errors.
 - `cd web/gateway && pnpm typecheck` → no errors.
-- `cd web/game && pnpm test` → 107 tests passed.
-- `tools/agent-system/check.py --strict` → cleared after review artifact and LEDGER update.
+- `cd web/game && pnpm test` → 23 files, 107 tests passed.
+- `tools/agent-system/check.py --strict` → 0 errors, 0 warnings.
+- GitHub Actions deploy run `28044408990` → all jobs green, verify step passed (health + s1 turn-advance).
 
 ## Verdict
 
