@@ -26,10 +26,12 @@ import GameCard from '../../../components/GameCard';
 import MapViewer from '../../../components/game/MapViewer';
 import { api } from '../../../lib/api';
 import { BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
+import { formatCityName } from '../../../lib/utilGame/formatCityName';
 import type {
     DiplomacyConflictResponse,
     ConflictNation,
     FrontInfoResponse,
+    GameCityConstItem,
 } from '../../../lib/types';
 
 // legacy isBrightColor: perceived-luminance threshold (r*.299 + g*.587 + b*.114) > 140 → black text.
@@ -67,6 +69,7 @@ function neutralCell(state: number): React.ReactNode {
 export default function GlobalDiplomacyPage() {
     const [data, setData] = useState<DiplomacyConflictResponse | null>(null);
     const [currentCityId, setCurrentCityId] = useState<number | null>(null);
+    const [cityConst, setCityConst] = useState<GameCityConstItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
 
@@ -85,6 +88,22 @@ export default function GlobalDiplomacyPage() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    // 도시 id → 이름 해석용 cityConst (legacy gameConstStore.cityConst 등가, /api/const).
+    // 상수라 1회 로드. 분쟁 현황의 도시 id를 PageGlobalDiplomacy.vue:68처럼 도시명으로 표시.
+    useEffect(() => {
+        let on = true;
+        api.gameConst()
+            .then((c) => {
+                if (on) setCityConst(c.cityConst ?? []);
+            })
+            .catch(() => {
+                /* graceful: cityConst 미로드 시 도시 id 폴백 라벨 유지 */
+            });
+        return () => {
+            on = false;
+        };
+    }, []);
 
     // current general's city → MapViewer highlight ring (no extra map fetch; MapViewer fetches its own).
     useEffect(() => {
@@ -235,9 +254,8 @@ export default function GlobalDiplomacyPage() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                             {conflict.map(([cityId, conflictNations]) => (
                                 <div key={cityId} style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                                    {/* legacy resolves the city name from gameConst.cityConst[cityID]; the F4
-                                        conflict contract keys by cityId only — render the id-labelled row,
-                                        per-nation share% verbatim (toLocaleString minimumFractionDigits:1). */}
+                                    {/* legacy PageGlobalDiplomacy.vue:68 — gameConst.cityConst[cityID].name 으로 도시명 표시.
+                                        cityConst 미로드/미존재 시에만 `도시 {id}` 폴백(날조 아님). */}
                                     <div
                                         style={{
                                             flexBasis: '16ch',
@@ -247,7 +265,7 @@ export default function GlobalDiplomacyPage() {
                                             color: 'var(--text-secondary)',
                                         }}
                                     >
-                                        도시 {cityId}
+                                        {formatCityName(cityId, cityConst) || `도시 ${cityId}`}
                                     </div>
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
                                         {Object.entries(conflictNations).map(([nationIdStr, percent]) => {
