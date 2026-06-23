@@ -224,30 +224,29 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     /**
-     * The next free nation id (`maxNationId + 1`) over the LIVE world. `nation.id` is `integer PRIMARY KEY`
-     * (NOT serial), so opensamguk assigns the id engine-side rather than via a DB autoincrement — the
-     * placeholder IS the final id (no flush-time reconciliation). Single-daemon + no concurrent INSERT ⇒ it
-     * cannot race; sequential same-tick founds increment naturally because [createNation] adds the prior
-     * nation to the live map before the next call reads it.
+     * The next free nation id (`maxNationId + 1`) over the live + same-tick-deleted world. `nation.id` is
+     * `integer PRIMARY KEY` (NOT serial), so opensamguk assigns the id engine-side — the placeholder IS the
+     * final id (no flush-time reconciliation). Including [deletedNationIds] prevents the same-tick crash where
+     * a deleted nation's row is still in the DB during flush because inserts run before deletes.
      *
-     * KNOWN DIVERGENCE (WAVE 0b backlog — id reuse after deletion): unlike MySQL `AUTO_INCREMENT` (monotonic,
-     * never reuses a freed id), `max(live keys)+1` REUSES the id of a deleted tail nation. For the prod
-     * recovery + the founding golden (a fresh, never-deleted world) this is exact; in a long game a 거병
-     * after a 멸망/흡수 could reuse a freed id and inherit stale id-keyed rows (logs/records/nation_env KV).
-     * The faithful fix is a monotonic high-water-mark persisted in `world_state` meta (seeded at boot from the
-     * max id ever assigned), advanced past every created AND deleted id — deferred, not fabricated here.
+     * REMAINING DIVERGENCE (WAVE 0b backlog — cross-tick id reuse): unlike MySQL `AUTO_INCREMENT`, this still
+     * reuses ids of nations deleted in *earlier* ticks after a restart, because the high-water mark is not
+     * persisted. The faithful fix is a monotonic high-water mark in `world_state` meta — deferred, not
+     * fabricated here.
      */
-    fun allocateNationId(): Int = (nations.keys.maxOrNull() ?: 0) + 1
+    fun allocateNationId(): Int = (nations.keys.plus(deletedNationIds).maxOrNull() ?: 0) + 1
 
     /**
-     * Next free general id over the LIVE world. Mirrors [allocateNationId] — `general.id` is
-     * `serial PRIMARY KEY` in the schema, but opensamguk assigns the id engine-side via explicit
-     * INSERT (same pattern as [ScenarioImporter]'s icon-id assignment, starting at 1001). The
-     * placeholder IS the final id (no flush-time reconciliation). In a long-running world this
-     * reuses freed ids just like the nation id allocator; the faithful fix (monotonic high-water-
-     * mark in world_state) is deferred to the W0b backlog.
+     * Next free general id over the live + same-tick-deleted world. Mirrors [allocateNationId]:
+     * `general.id` is `serial PRIMARY KEY` in the schema, but opensamguk assigns the id engine-side via
+     * explicit INSERT. Including [deletedGeneralIds] prevents the same-tick duplicate-key crash where a
+     * deleted general's row is still in the DB during flush because inserts run before deletes.
+     *
+     * REMAINING DIVERGENCE (WAVE 0b backlog — cross-tick id reuse): cross-tick reuse after restart is still
+     * possible because the high-water mark is not persisted. The faithful fix (monotonic high-water mark in
+     * `world_state`) is deferred.
      */
-    fun allocateGeneralId(): Int = (generals.keys.maxOrNull() ?: 0) + 1
+    fun allocateGeneralId(): Int = (generals.keys.plus(deletedGeneralIds).maxOrNull() ?: 0) + 1
 
     /**
      * Replace a troop's row (SetTroopName rename) — marks it dirty ONLY (not created), so the flush

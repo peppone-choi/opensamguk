@@ -95,4 +95,27 @@ class InMemoryTurnWorldTest {
         assertTrue(drained.nations.none { it.id == 1 }, "removed nation not in dirty nations")
         assertTrue(world.listDiplomacy().none { it.fromNationId == 1 || it.toNationId == 1 }, "diplomacy gone from world")
     }
+
+    @Test
+    fun `allocateNationId skips a nation deleted in the same tick`() {
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1), nation(2), nation(3))))
+        world.removeNation(3)
+        assertEquals(4, world.allocateNationId(), "deleted id must not be reused before flush")
+    }
+
+    @Test
+    fun `allocateNationId increments sequentially across a same-tick delete and create`() {
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1), nation(2), nation(3))))
+        world.removeNation(3)
+        assertEquals(4, world.allocateNationId())
+        world.createNation(nation(4))
+        assertEquals(5, world.allocateNationId())
+    }
+
+    @Test
+    fun `allocateGeneralId skips a general deleted in the same tick`() {
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1), general(2), general(3))))
+        world.removeGeneral(3)
+        assertEquals(4, world.allocateGeneralId(), "deleted id must not be reused before flush")
+    }
 }
