@@ -12,7 +12,8 @@
 //
 // Parity notes (legacy hwe/ts/PageChiefCenter.vue + ChiefCenter/TopItem.vue + ChiefReservedCommand.vue):
 //  - Display order of the 8 posts is the legacy [12, 10, 8, 6, 11, 9, 7, 5] (two columns of 4).
-//  - officerLevelText / name / turnTime come from the server (postFilterNationCommand applied server-side).
+//  - officerLevelText / name / turnTime come from the server; 예약 brief의 che_발령 후처리
+//    (postFilterNationCommand)는 legacy와 동일하게 CLIENT에서 적용한다(서버는 generic brief 저장).
 //  - Vacant occupant name renders as '-' (legacy `officer?.name ?? "-"`).
 //  - Occupant name color follows the NPC tier (legacy getNPCColor).
 //  - turnTime is shown as its last 5 chars (HH:mm), matching BottomItem's `.slice(-5)`.
@@ -28,6 +29,8 @@ import ChiefCommandReserve, { type ChiefReserveLaunch } from '../../../component
 import { api } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type { ChiefReservedResponse, ChiefPost, ChiefCommandCategory } from '../../../types/game';
+import { postFilterNationCommandGen, type TurnObj } from '../../../lib/utilGame/postFilterNationCommandGen';
+import type { GameCityConstItem } from '../../../lib/types';
 
 // Legacy [12, 10, 8, 6, 11, 9, 7, 5] — preserved verbatim for parity of the post grid order.
 const CHIEF_LEVEL_ORDER = [12, 10, 8, 6, 11, 9, 7, 5];
@@ -54,6 +57,7 @@ function ChiefPostCard({
     commandList,
     onLaunch,
     generalId,
+    postFilter,
 }: {
     post: ChiefPost | undefined;
     maxChiefTurn: number;
@@ -61,10 +65,16 @@ function ChiefPostCard({
     commandList: ChiefCommandCategory[];
     onLaunch: (spec: ChiefReserveLaunch) => void;
     generalId?: number | null;
+    postFilter: (turnObj: TurnObj) => TurnObj;
 }) {
     const name = post ? (post.name ?? '-') : '-';
     const nameColor = getNPCColor(post?.npcType ?? 0);
-    const turns = post?.reservedTurns ?? [];
+    // legacy PageChiefCenter.vue: officer.turn.map(postFilterNationCommand) — che_발령 예약 brief를
+    // 《부대명》【도시명】로 발령으로 후처리(dest가 부대장일 때만). 양 브랜치(편집/read-only) 공유.
+    const turns = (post?.reservedTurns ?? []).map((t) => {
+        const out = postFilter({ action: t.actionCode, brief: t.brief, arg: (t.arg ?? {}) as TurnObj['arg'] });
+        return { ...t, brief: out.brief };
+    });
 
     return (
         <GameCard
@@ -158,6 +168,8 @@ export default function ChiefCenterPage() {
     const [toast, setToast] = useState<string>('');
     // 슬롯+명령이 선택돼 열린 CommandModal spec(null = 닫힘).
     const [launch, setLaunch] = useState<ChiefReserveLaunch | null>(null);
+    // che_발령 brief 후처리에 필요한 도시상수(불변 → 1회 로드). legacy gameConstStore.cityConst 등가.
+    const [cityConst, setCityConst] = useState<GameCityConstItem[]>([]);
 
     function showToast(msg: string) {
         setToast(msg);
@@ -181,6 +193,15 @@ export default function ChiefCenterPage() {
         fetchData();
     }, [fetchData]);
 
+    // 도시상수 1회 로드(불변). 미로드/실패시 postFilter는 brief 원본을 그대로 둔다(graceful).
+    useEffect(() => {
+        let on = true;
+        api.gameConst()
+            .then((c) => { if (on) setCityConst(c.cityConst ?? []); })
+            .catch(() => { /* graceful: cityConst 미로드 → che_발령 brief 원본 유지 */ });
+        return () => { on = false; };
+    }, []);
+
     useEffect(() => {
         const es = new EventSource('/api/game/sse/turn');
         es.addEventListener('turnCompleted', () => fetchData());
@@ -196,6 +217,11 @@ export default function ChiefCenterPage() {
     // myOfficerLevel >= 5 gate: only 수뇌부 (chief posts lv 5+) may view/edit the 사령부.
     const myOfficerLevel = data?.myOfficerLevel ?? 0;
     const isAllowed = myOfficerLevel >= 5;
+    // troopList(troopLeaderId→부대명)를 number 키 맵으로 변환 → legacy postFilterNationCommandGen 생성.
+    // arg.destGeneralID가 부대장이면 brief를 《부대명》【도시명】로 발령으로 후처리(아니면 원본 유지).
+    const troopMap: Record<number, string> = {};
+    for (const [k, v] of Object.entries(data?.troopList ?? {})) troopMap[Number(k)] = v;
+    const postFilter = postFilterNationCommandGen<TurnObj>(troopMap, cityConst);
 
     return (
         <Shell>
@@ -240,6 +266,7 @@ export default function ChiefCenterPage() {
                             isMe={level === myOfficerLevel}
                             commandList={commandList}
                             generalId={generalId}
+                            postFilter={postFilter}
                             onLaunch={(spec) => {
                                 if (generalId == null) {
                                     showToast('장수가 없어 명령을 예약할 수 없습니다.');

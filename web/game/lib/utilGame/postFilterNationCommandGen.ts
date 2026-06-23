@@ -4,12 +4,16 @@
 
 import type { CityConstItem } from './formatCityName';
 
-/** JosaUtil.pick("로") 충실 재현 — 받침 유무에 따른 조사 선택. */
+/**
+ * JosaUtil.pick(name, "로") 충실 재현 — legacy hwe/ts/util/JosaUtil.ts `checkCode(code, isRo=true)`:
+ *   jongsung = (code - 0xAC00) % 28; 받침 없음(0) **또는 ㄹ받침(8)** → "로", 그 외 받침 → "으로".
+ * (ㄹ받침 예외가 핵심 — 단순 `%28 !== 0` 근사는 "산월" 같은 ㄹ받침 도시에서 "으로"로 오역됨.)
+ * 도메인: scenario_1010 도시명은 전부 한글 음절(Hanja/ASCII 종성 없음) → checkCode 한글 경로로 충분.
+ */
 function josaRo(cityName: string): string {
-  // 받침 있으면 "으로", 없으면 "로"
-  const lastChar = cityName.charCodeAt(cityName.length - 1);
-  const hasJong = (lastChar - 0xac00) % 28 !== 0;
-  return hasJong ? '으로' : '로';
+  const code = cityName.charCodeAt(cityName.length - 1);
+  const jongsung = (code - 0xac00) % 28;
+  return jongsung === 0 || jongsung === 8 ? '로' : '으로';
 }
 
 export interface TurnObj {
