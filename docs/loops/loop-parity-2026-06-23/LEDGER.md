@@ -21,6 +21,7 @@
 | 3 | `InMemoryTurnWorld`의 id high-water mark가 영속화되지 않아 재기동 후 삭제된 nation/general id를 재사용해 참조 오염 가능 | backend gate 3226/0 green, FE tsc/vitest green, agent-system 0/0 green | `tools/parity/gate.sh backend` + FE gates + `agent-system/check.py --strict` | 채택 | `world_state.meta.maxNationId/maxGeneralId`에 단조 증가 high-water mark 저장/복원 |
 | 3b | WAVE 1b 백로그: `DiplomacyMonthProcessor` 틱 호출 | backend gate 3215/0 green, FE tsc/vitest green, agent-system 0/0 green | `tools/parity/gate.sh backend` + FE gates + `agent-system/check.py --strict` | 채택 | `MonthlyPostUpdateHook` Q9이 이미 불가침/선포 term 카운트다운 처리; `DiplomacyMonthProcessor`는 미사용 orphan → 삭제 |
 | 3c | WAVE 1c 백로그: `checkStatistic` 빈 람다 스텁 | `StatisticFlushIT` green, engine `StatisticEncodePathGuardTest` green | `:infra:test --tests StatisticFlushIT` + engine tests | 채택 | `DaemonLoopConfig`에서 `CheckStatisticCalculator.compute` 호출 + `ChangeRecorder.recordStatisticInsert` + `JdbcFlushExecutor` step-12 flush 이미 배선 완료 |
+| 4 | Phase 2 long-sim PHP 캡처 하네스 설계/구현 | 3파일 작성(capture_longsim.php, run_longsim.sh, manifest_longsim.json), review findings 13건 수정, agent-system 0/0 | `agent-system/check.py --strict` + review artifact | 채택 | `executeGeneralCommandUntil` 시그니처/인자 오류 수정, turntime 단조 증가 assertion 수정, quarantine/OLD-date seed 문서화, 실제 Docker 캡처 실행 pending |
 
 ## 바퀴 기록
 
