@@ -16,7 +16,11 @@ web/*/out/
 # Env / OS
 .env
 .env.local
+.env.headroom.example
+.mcp.json
 .DS_Store
+# Local headroom/docker overrides
+docker-compose.headroom.yml
 # Legacy reference repos (kept locally, never committed)
 legacy/
 # Decompiled / generated artifacts

@@ -1,0 +1,5 @@
+# Generated long-simulation golden capture files.
+# The harness writes here by default; committed fixtures should be explicitly
+# force-added with `git add -f <path>` and named for stability.
+capture-*.json
+manifest_longsim.json

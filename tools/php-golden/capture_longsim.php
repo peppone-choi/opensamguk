@@ -228,8 +228,9 @@ while (true) {
     $oldMonth = (int)$gameStor->month;
 
     // Snapshot turntime at tick start to assert monotonic advance later.
+    // game_env.turntime is a MySQL datetime string; compare via DateTime, not int.
     $gameStor->resetCache();
-    $tickStartTurntime = (int)$gameStor->turntime;
+    $tickStartTurntime = new \DateTimeImmutable($gameStor->turntime);
 
     // 5a. Per-general command drain.
     // Signature: executeGeneralCommandUntil(string $date, DateTimeInterface $limitActionTime, int $year, int $month)
@@ -287,9 +288,9 @@ while (true) {
     $gameStor->resetCache();
 
     // Assertion: turntime strictly advanced from tick start.
-    $currentTurntime = (int)$gameStor->turntime;
+    $currentTurntime = new \DateTimeImmutable($gameStor->turntime);
     hardAssert($currentTurntime > $tickStartTurntime,
-        "month {$totalMonths}: turntime did not advance monotonically ({$currentTurntime} <= {$tickStartTurntime})");
+        "month {$totalMonths}: turntime did not advance monotonically ({$currentTurntime->format('Y-m-d H:i:s')} <= {$tickStartTurntime->format('Y-m-d H:i:s')})");
 
     $totalMonths++;
 

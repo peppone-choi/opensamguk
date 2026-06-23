@@ -32,7 +32,7 @@
 ## 단계 (점증 — 게이트가 턴수만큼 자란다)
 
 - **Phase 1 ✅ (바퀴 16, 커밋 d35403c9)**: 천하통일 탐지 포팅 완료 — checkEmperior 국가수==1/전도시소유 → isunited=2 + 전토통일 로그. `logic/world/CheckEmperior.kt`(pure, no-rng Q14) + 엔진 `WorldCheckEmperiorContext`. 게이트 결정적(logic 2154/engine 375 green, CheckEmperiorTest 6/0 + WorldCheckEmperiorContextTest 3/0). 격리: 1회성 부수효과(Phase 4)·DB 영속·로그 YEAR_MONTH 접두(둘 다 별도 바퀴, LEDGER 백로그).
-- **Phase 2**: PHP 풀게임 캡처 하네스 `tools/php-golden/run_long_sim.php` — TimeUtil mock + executeAllCommand 루프(까지 isunited=2 or N턴), 턴별 draw stream + 상태해시 + 로그 덤프. 결정성 차단원 중립화(ORDER BY RAND→deterministic, 양측 합의).
+- **Phase 2 ✅ (바퀴 4-4b, 2026-06-24)**: PHP 풀게임 캡처 하네스 구현 완료. `tools/php-golden/Dockerfile`로 `opensamguk-php-golden` 이미지 빌드, `capture_longsim.php`가 `executeGeneralCommandUntil` drain → `preUpdateMonthly` → `turnDate` → `checkStatistic` → `postUpdateMonthly` 루프를 매월 실행, 12개월 간격 상태 스냅샷 + `manifest_longsim.json` 기록. `run_longsim.sh`는 MariaDB 컨테이너 기동/설치/캡처를 한 번에 수행하며 TCP readiness 검사, host↔container out-dir 변환, 출력 디렉터리 정리 적용. Smoke test 12개월/36개월 green.
 - **Phase 3**: Kotlin `LongSimReplayGateTest` — 시나리오 부팅 → N턴 드레인(MonthBoundaryDriver+AiTurnAdapter+MonthlyPipeline) → 턴별 draw/상태/로그 캡처 → PHP 골든과 turn-for-turn 비교, first-divergence 리포트(turn,general,seq,expected/actual,cursor).
 - **Phase 4**: bounded(결정적 윈도, 예 36턴=1년) green 확보 → 차단원 하나씩 중립화하며 윈도를 천하통일까지 확장. 각 확장 = 1바퀴.
 

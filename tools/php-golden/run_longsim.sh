@@ -5,11 +5,12 @@
 # ONE-SHOT, MANUAL HOST STEP — NEVER CI.
 #
 # Orchestrates the full long-sim capture pipeline:
-#   1. Creates docker network (if absent)
-#   2. Starts MariaDB container
-#   3. Runs install_scenario.php (pristine baseline, fresh DB per run)
-#   4. Runs capture_longsim.php (the long-sim loop)
-#   5. Copies output to host logic/src/test/resources/golden/longsim/
+#   1. Builds the opensamguk-php-golden image if missing
+#   2. Creates docker network (if absent)
+#   3. Starts MariaDB container
+#   4. Runs install_scenario.php (pristine baseline, fresh DB per run)
+#   5. Runs capture_longsim.php (the long-sim loop)
+#   6. Copies output to host logic/src/test/resources/golden/longsim/
 #
 # Usage:
 #   tools/php-golden/run_longsim.sh [--months-max=360] [--out-dir=logic/src/test/resources/golden/longsim]
@@ -31,15 +32,37 @@ for arg in "$@"; do
   esac
 done
 
+# Inside the container the repo is mounted at /work, so convert host paths under
+# REPO_ROOT to container paths.
+if [[ "$OUT_DIR" == "$REPO_ROOT"* ]]; then
+  CONTAINER_OUT_DIR="/work${OUT_DIR#$REPO_ROOT}"
+else
+  echo "out-dir must be inside repo root: $OUT_DIR" >&2
+  exit 64
+fi
+
 # Normalize OUT_DIR to absolute path
 if [[ ! "$OUT_DIR" = /* ]]; then
   OUT_DIR="${REPO_ROOT}/${OUT_DIR}"
 fi
 
+# Re-validate after normalization
+if [[ "$OUT_DIR" != "$REPO_ROOT"* ]]; then
+  echo "out-dir must resolve inside repo root: $OUT_DIR" >&2
+  exit 64
+fi
+CONTAINER_OUT_DIR="/work${OUT_DIR#$REPO_ROOT}"
+
 NETWORK="devsam-golden-net"
 DB_CONTAINER="devsam-golden-db"
 DB_IMAGE="mariadb:11.4"
-PHP_IMAGE="php:8.3-cli"
+PHP_IMAGE="opensamguk-php-golden:latest"
+
+# Build the PHP capture image if it does not exist.
+if ! docker image inspect "$PHP_IMAGE" >/dev/null 2>&1; then
+  echo "Building PHP capture image ($PHP_IMAGE)..." >&2
+  docker build -t "$PHP_IMAGE" -f "${REPO_ROOT}/tools/php-golden/Dockerfile" "$REPO_ROOT"
+fi
 
 DB_HOST="${SAMMO_DB_HOST:-$DB_CONTAINER}"
 DB_PORT="${SAMMO_DB_PORT:-3306}"
@@ -53,8 +76,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Ensure output directory exists on host
+# Ensure output directory exists on host and is clean of stale captures
 mkdir -p "$OUT_DIR"
+rm -f "$OUT_DIR"/capture-*.json "$OUT_DIR"/manifest_longsim.json
 
 # ── 1. Docker network ───────────────────────────────────────────────────────
 if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
@@ -82,7 +106,9 @@ docker run -d \
 # Wait for MariaDB to be ready
 echo "Waiting for MariaDB..." >&2
 for i in {1..60}; do
-  if docker exec "$DB_CONTAINER" mariadb-admin ping -u"$DB_USER" -p"$DB_PASS" --silent 2>/dev/null; then
+  # TCP readiness check: socket ping reports alive before TCP is listening on 3306,
+  # and PHP/PDO connects via TCP, so check the TCP port explicitly.
+  if docker exec "$DB_CONTAINER" mariadb-admin ping -h127.0.0.1 --protocol=tcp -u"$DB_USER" -p"$DB_PASS" --silent 2>/dev/null; then
     echo "MariaDB ready" >&2
     break
   fi
@@ -121,7 +147,7 @@ docker run --rm \
   -e SAMMO_DB_PASS="$DB_PASS" \
   -e SAMMO_DB_NAME="$DB_NAME" \
   "$PHP_IMAGE" \
-  php tools/php-golden/capture_longsim.php --months-max="$MONTHS_MAX" --out-dir="$OUT_DIR"
+  php tools/php-golden/capture_longsim.php --months-max="$MONTHS_MAX" --out-dir="$CONTAINER_OUT_DIR"
 
 echo "Long-sim capture complete." >&2
 
