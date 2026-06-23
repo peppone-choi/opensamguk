@@ -9,8 +9,8 @@
 // Select*/amount sub-form, so pinnedArgType is always null.
 //
 // Mutation gating (membership-derived from myGeneralId; the engine re-validates every guard):
-//  - 부대 결성 (NewTroop): shown when I am troopless. troopName via a text input → extraArgs.
-//  - 부대 가입 (JoinTroop): shown on OTHER troops when I am troopless. troopId = that card's troop.
+//  - 부대 창설 (NewTroop): shown when I am troopless. troopName via a text input → extraArgs.
+//  - 부대 탑승 (JoinTroop): shown on OTHER troops when I am troopless. troopId = that card's troop.
 //  - 부대 탈퇴 (ExitTroop, member) / 부대 해산 (ExitTroop, leader): on MY troop card.
 //  - 부대명 변경 (SetTroopName): on MY troop when I am the leader. troopName via a text input.
 //  - 추방 (KickFromTroop): per non-leader member of MY troop when I am the leader.
@@ -165,8 +165,8 @@ function TroopItem({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                     {relation === 'other' && (
-                        <button onClick={() => openModal({ command: 'troopJoin', label: '부대 가입', extraArgs: { troopId: troop.troopLeader } })}>
-                            가입
+                        <button onClick={() => openModal({ command: 'troopJoin', label: '부대 탑승', extraArgs: { troopId: troop.troopLeader } })}>
+                            부대 탑승
                         </button>
                     )}
                     {relation === 'member' && (
@@ -328,11 +328,11 @@ export default function TroopPage() {
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
 
-            {/* 부대 결성 (NewTroop) — shown only when I am troopless. */}
+            {/* 부대 창설 (NewTroop) — shown only when I am troopless. */}
             {iAmTroopless && (
                 <GameCard style={{ marginBottom: 'var(--space-md)' }}>
                     <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <strong style={{ fontSize: 'var(--text-sm)' }}>부대 결성</strong>
+                        <strong style={{ fontSize: 'var(--text-sm)' }}>부대 창설</strong>
                         <input
                             type="text"
                             maxLength={18}
@@ -341,8 +341,8 @@ export default function TroopPage() {
                             onChange={(e) => setCreateName(e.target.value)}
                             style={{ flex: '0 1 220px' }}
                         />
-                        <button onClick={() => setModal({ command: 'troopNew', label: '부대 결성', extraArgs: { troopName: createName } })}>
-                            결성
+                        <button onClick={() => setModal({ command: 'troopNew', label: '부대 창설', extraArgs: { troopName: createName } })}>
+                            부대 창설
                         </button>
                     </div>
                 </GameCard>
