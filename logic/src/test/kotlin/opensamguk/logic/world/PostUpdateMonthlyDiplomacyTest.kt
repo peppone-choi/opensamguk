@@ -1,5 +1,6 @@
 package opensamguk.logic.world
 
+import opensamguk.logic.diplomacy.DiplomacyConst
 import opensamguk.logic.log.HistoryTokens
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -151,6 +152,18 @@ class PostUpdateMonthlyDiplomacyTest {
             maxPower = mapOf(1 to 9), nations = listOf(1),
         )
         assertEquals(10, out.availableWarSettingCnt.getValue(1))  // 9+2=11 → clamp 10
+    }
+
+    @Test
+    fun `Q5 clamp and Q9 declaration expiry use DiplomacyConst`() {
+        // Q5: term should clamp to MAX_WAR_TERM.
+        val rows = listOf(
+            dip(me = 1, you = 2, state = 0, term = 0, dead = 999_999), // huge dead → huge delta, clamped
+            dip(me = 3, you = 4, state = 1, term = 1, dead = 0),       // 선포 만료 → 교전 기본 턴
+        )
+        val out = postUpdateMonthlyDiplomacy(rows, mapOf(1 to 1, 3 to 1), nameMap(), emptyMap(), emptyList())
+        assertEquals(DiplomacyConst.MAX_WAR_TERM, out.q5Updates.single().newTerm)
+        assertEquals(DiplomacyConst.DEFAULT_WAR_TERM, out.q9Updates.first { it.me == 3 && it.you == 4 }.newTerm)
     }
 
     // ── helpers ──
