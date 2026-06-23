@@ -19,7 +19,7 @@
 - WAVE 4a: FE `묠력`→`묵력` mojibake.
 - Phase 2: long-sim PHP 캡처 하네스.
 
-| 2 | `InMemoryTurnWorld.allocateNationId/GeneralId`가 live key만 볼 때 동일 틱 내 삭제된 id를 재사용해 flush INSERT 단계에서 `DuplicateKeyException` 발생 | backend gate 3221/0 green, FE tsc/vitest green, agent-system 채점대기 | `tools/parity/gate.sh backend` + FE gates + `agent-system/check.py --strict` | 채점대기 | 삭제 집합을 max에 포함, 크로스-틱 재사용은 W0b 백로그 유지 |
+| 2 | `InMemoryTurnWorld.allocateNationId/GeneralId`가 live key만 볼 때 동일 틱 내 삭제된 id를 재사용해 flush INSERT 단계에서 `DuplicateKeyException` 발생 | backend gate 3221/0 green, FE tsc/vitest green, agent-system 0/0 green | `tools/parity/gate.sh backend` + FE gates + `agent-system/check.py --strict` | 채택 | 삭제 집합을 max에 포함, 크로스-틱 재사용은 W0b 백로그 유지 |
 
 ## 바퀴 기록
 
