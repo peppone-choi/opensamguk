@@ -1,6 +1,7 @@
 package opensamguk.logic.world
 
 import opensamguk.common.rng.RandUtil
+import opensamguk.logic.diplomacy.DiplomacyConst
 import opensamguk.logic.log.HistoryTokens
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.valueFit
@@ -229,7 +230,7 @@ data class PostUpdateMonthlyDiplomacyResult(
  * (`genNum`) + nation names + the existing `available_war_setting_cnt` KV (`maxPower`) + the active nation
  * IDs (`nations`), and produces the ordered settlement updates + logs.
  *
- *   Q5  state=0 rows: term=floor(dead/100/genCount[me]); dead-=term*100*genCount; term=valueFit(term+Δ,0,13).
+ *   Q5  state=0 rows: term=floor(dead/100/genCount[me]); dead-=term*100*genCount; term=valueFit(term+Δ,0,MAX_WAR_TERM).
  *   Q6  개전 log for state=1 AND term<=1 AND me<you (input row order — DB query order).
  *   Q7  종전: state=0 AND term<=1 ORDER BY me desc,you desc; first occurrence of the {min}_{max} key seen
  *       → continue; second occurrence → push 종전 log + set BOTH directions state=2,term=0.
@@ -261,7 +262,7 @@ fun postUpdateMonthlyDiplomacy(
         // PHP: floor($dead / 100 / $genCount) — FLOAT division throughout, then floor (faithful to :341).
         val deltaTerm = Math.floor(d.dead.toDouble() / 100.0 / genCount.toDouble()).toInt()
         val newDead = d.dead - deltaTerm * 100 * genCount
-        val newTerm = valueFit((d.term + deltaTerm).toDouble(), 0.0, 13.0).toInt()
+        val newTerm = valueFit((d.term + deltaTerm).toDouble(), 0.0, DiplomacyConst.MAX_WAR_TERM.toDouble()).toInt()
         q5Updates += DiplomacyWarTermUpdate(d.me, d.you, newTerm, newDead)
         postQ5Term[d.me to d.you] = newTerm
     }
@@ -300,7 +301,7 @@ fun postUpdateMonthlyDiplomacy(
             newState = 2
         } else if (newState == 1 && termDec == 0) {   // 선포 → 교전
             newState = 0
-            newTerm = 6
+            newTerm = DiplomacyConst.DEFAULT_WAR_TERM
         }
         DiplomacyFinalUpdate(d.me, d.you, newState, newTerm, deadReset)
     }

@@ -4,6 +4,7 @@
 |---|---|---|---|---|---|---|
 | 0 | 베이스라인 | backend 3216 green | `tools/parity/gate.sh backend` | 채택 | 시작 상태 | 없음 |
 | 1 | `isunited` world_state 컬럼 영속화 + 재기동 로드 | backend 3217 green, FE tsc/vitest green, agent-system check green | `tools/parity/gate.sh backend`, `pnpm tsc --noEmit`, `pnpm test`, `tools/agent-system/check.py --strict`, cross-agent review | 채택 | `CheckEmperior`/`InvaderEndingAction`이 meta["isunited"]만 쓰다보니 재기동 시 통일/엔딩 플래그 유실 → 건국/천하통일 재탐지 불가 | 특기 밸류 셀 UI 버그 |
+| 2 | GameTable `vertical-align: middle` — 특기 텍스트 셀 baseline 처짐 | web/game + web/gateway tsc green, web/game vitest 107 green, agent-system check green | `pnpm tsc --noEmit`, `pnpm test`, `tools/agent-system/check.py --strict`, cross-agent review | 채택 | 이미지(초상) 셀과 텍스트 셀이 섞인 행에서 기본 baseline 정렬로 특기 셀이 시각적으로 아래로 낮아짐 | (배포중) |
 
 ## Backlog (next wheels)
 
