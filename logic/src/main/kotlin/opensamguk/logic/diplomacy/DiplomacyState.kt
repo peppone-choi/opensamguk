@@ -9,7 +9,7 @@ package opensamguk.logic.diplomacy
  * These values are the grand-truth keys used in:
  *   - DB `diplomacy.state`
  *   - `DisallowDiplomacyBetweenStatus` / `AllowDiplomacyBetweenStatus` constraint maps
- *   - `DiplomacyMonthProcessor` state-machine transitions
+ *   - `postUpdateMonthlyDiplomacy` state-machine transitions (Q5-Q10)
  */
 object DiplomacyState {
     const val WAR = 0
