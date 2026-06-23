@@ -199,10 +199,12 @@ input:focus, select:focus, textarea:focus {
   text-align: left;
   font-weight: 600;
   border-bottom: 1px solid var(--border-medium);
+  vertical-align: middle;
 }
 .game-table td {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
 }
 .game-table tr:nth-child(even) { background: var(--bg-card); }
 .game-table tr:hover { background: var(--bg-hover); }
