@@ -45,12 +45,37 @@ export default function KingdomsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // 성향(nation type) code→한글명 — legacy buildNationTypeClass()->getName() 등가.
+  // /api/const 의 iAction.nationType[] 가 {value: che_code, name: typeName} 직렬화
+  // (GetConstController.nationTypeItem, FrontInfoController 성향 해석과 동일 소스). 상수라 1회 로드.
+  const [typeNameMap, setTypeNameMap] = useState<Map<string, string>>(new Map());
+
   useEffect(() => {
     api.rankings
       .kingdomRoster<KingdomRoster>()
       .then(setData)
       .catch(() => setError('데이터를 불러올 수 없습니다.'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let on = true;
+    api
+      .gameConst()
+      .then((c) => {
+        if (!on) return;
+        const m = new Map<string, string>();
+        (c.iAction?.nationType ?? []).forEach((it) => {
+          if (it.name) m.set(it.value, it.name);
+        });
+        setTypeNameMap(m);
+      })
+      .catch(() => {
+        /* graceful: cityConst/nationType 미로드시 raw type_code 폴백 유지 */
+      });
+    return () => {
+      on = false;
+    };
   }, []);
 
   if (loading)
@@ -92,8 +117,9 @@ export default function KingdomsPage() {
           {/* 성향 / 작위 / 국력 / 장수·속령 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto 1fr', gap: 'var(--space-xs) var(--space-sm)', fontSize: 'var(--text-sm)', marginBottom: 'var(--space-sm)' }}>
             <span style={{ color: 'var(--text-secondary)' }}>성 향</span>
-            {/* 성향 한글명 BLOCKED → raw type_code */}
-            <span style={{ color: 'var(--gold)' }}>{n.typeCode}</span>
+            {/* 성향 한글명 = gameConst nationType typeName(legacy getName 등가). map 미스/미로드시에도
+                `che_` 접두사는 절대 화면에 노출하지 않음 — 접두사 제거 폴백(표준 타입은 클래스명=che_+name). */}
+            <span style={{ color: 'var(--gold)' }}>{typeNameMap.get(n.typeCode) || n.typeCode.replace(/^che_/, '')}</span>
             <span style={{ color: 'var(--text-secondary)' }}>작 위</span>
             <span>{n.levelText}</span>
             <span style={{ color: 'var(--text-secondary)' }}>국 력</span>
