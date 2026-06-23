@@ -69,13 +69,15 @@ class WorldSnapshotLoader(
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, tick_seconds, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
+            "SELECT id, current_year, current_month, tick_seconds, isunited, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
         ) { rs, _ ->
             val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
             val config = MetaJson.decode(rs.getString("config"))
             for (key in listOf("turnterm", "npcmode")) {
                 if (!meta.containsKey(key) && config.containsKey(key)) meta[key] = config[key]
             }
+            // isunited: dedicated column is source of truth (flush writes it; meta-only fallback for legacy rows).
+            meta["isunited"] = rs.getInt("isunited")
             // lastTurnTime: prefer the persisted clock; fall back to start_time, then now.
             val lastTurn = (meta["lastTurnTime"] as? String)?.let { Instant.parse(it) }
                 ?: rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()

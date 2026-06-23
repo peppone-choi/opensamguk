@@ -326,7 +326,36 @@ class JdbcFlushExecutorIT {
 
         // cleanup — 다른 테스트와의 격리(meta 원복).
         jdbc.update(
-            "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1 WHERE id = 1",
+            "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1, isunited = 0 WHERE id = 1",
+            MapSqlParameterSource(),
+        )
+    }
+
+    /**
+     * isunited column flush round-trip — 천하통일/엔딩 상태가 world_state 컬럼에 영속되고,
+     * payload 미포함 시 0으로 동기화된다.
+     */
+    @Test
+    fun `world_state flush persists isunited column`() {
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf(
+                    "id" to 1, "current_year" to 190, "current_month" to 5,
+                    "isunited" to 2,
+                ),
+            ),
+        )
+        assertEquals(2, jdbc.queryForObject("SELECT isunited FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 6),
+            ),
+        )
+        assertEquals(0, jdbc.queryForObject("SELECT isunited FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+
+        jdbc.update(
+            "UPDATE world_state SET current_year = 190, current_month = 1, isunited = 0 WHERE id = 1",
             MapSqlParameterSource(),
         )
     }

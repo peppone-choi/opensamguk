@@ -209,6 +209,8 @@ object DatabaseHooks {
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
+                // isunited 영속화 — 천하통일/엔딩 상태가 재기동 시 유실되지 않도록 컬럼에 동기화.
+                "isunited" to ((state.meta["isunited"] as? Number)?.toInt() ?: 0),
             ),
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
@@ -390,6 +392,8 @@ object DatabaseHooks {
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
+                // isunited 영속화 — 천하통일/엔딩 상태가 재기동 시 유실되지 않도록 컬럼에 동기화.
+                "isunited" to ((state.meta["isunited"] as? Number)?.toInt() ?: 0),
             ),
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,

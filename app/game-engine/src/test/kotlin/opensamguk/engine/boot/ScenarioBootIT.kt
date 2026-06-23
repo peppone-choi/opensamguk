@@ -99,6 +99,7 @@ class ScenarioBootIT {
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)
+        assertEquals(0, (snapshot.state.meta["isunited"] as? Number)?.toInt() ?: -1, "isunited loaded from world_state column")
         val expectedKillturn = EffectiveGameConst.killturn(snapshot.state.tickSeconds / 60, npcmode = 0)
         assertTrue(
             snapshot.generals.all { (it.meta["killturn"] as? Number)?.toInt() == expectedKillturn },

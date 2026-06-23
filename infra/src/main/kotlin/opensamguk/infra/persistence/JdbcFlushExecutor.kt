@@ -222,11 +222,14 @@ class JdbcFlushExecutor(
         // 월드 시작부터 전 월을 재생(월수입/AI 이중 적용 + 로그 중복 INSERT)했다 (2026-06-12 s1 실증:
         // 19개월 재생, 월당 ~2분). meta 병합(||)이라 다른 meta 키는 보존된다.
         params.addValue("last_turn_time", worldState["last_turn_time"]?.toString())
+        // isunited 영속화 — 천하통일/엔딩 상태가 재기동 시 유실되지 않도록 컬럼에 동기화.
+        params.addValue("isunited", (worldState["isunited"] as? Number)?.toInt() ?: 0)
         jdbc.update(
             """
             UPDATE world_state
                SET current_year = :current_year,
                    current_month = :current_month,
+                   isunited = :isunited,
                    meta = CASE WHEN CAST(:last_turn_time AS text) IS NULL THEN meta
                                ELSE meta || jsonb_build_object('lastTurnTime', CAST(:last_turn_time AS text)) END,
                    updated_at = now()
