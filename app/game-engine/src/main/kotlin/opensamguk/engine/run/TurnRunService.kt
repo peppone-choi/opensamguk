@@ -152,14 +152,15 @@ open class TurnRunService(
         }
 
         val state = world.getState()
-        val payload = buildFlushPayload().copy(
-            worldStateUpdate = linkedMapOf(
-                "id" to state.id,
-                "current_year" to state.currentYear,
-                "current_month" to state.currentMonth,
-                "last_turn_time" to state.lastTurnTime.toString(),
-            ),
-        )
+        val base = buildFlushPayload()
+        val worldState = base.worldStateUpdate.toMutableMap()
+        worldState["id"] = state.id
+        worldState["current_year"] = state.currentYear
+        worldState["current_month"] = state.currentMonth
+        worldState["last_turn_time"] = state.lastTurnTime.toString()
+        worldState["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
+        worldState["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
+        val payload = base.copy(worldStateUpdate = worldState)
         flushExecutor.flush(payload)
         handler.recorder.clear()
         return envelopes.size
@@ -252,6 +253,9 @@ open class TurnRunService(
                 "current_year" to newYear,
                 "current_month" to newMonth,
                 "last_turn_time" to runTime.toString(),
+                "isunited" to ((preState.meta["isunited"] as? Number)?.toInt() ?: 0),
+                "max_nation_id" to ((preState.meta["maxNationId"] as? Number)?.toInt() ?: 0),
+                "max_general_id" to ((preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ),
         )
         flushExecutor.flush(payload)

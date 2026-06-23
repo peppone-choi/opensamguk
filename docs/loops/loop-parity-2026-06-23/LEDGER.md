@@ -20,6 +20,7 @@
 - Phase 2: long-sim PHP 캡처 하네스.
 
 | 2 | `InMemoryTurnWorld.allocateNationId/GeneralId`가 live key만 볼 때 동일 틱 내 삭제된 id를 재사용해 flush INSERT 단계에서 `DuplicateKeyException` 발생 | backend gate 3221/0 green, FE tsc/vitest green, agent-system 0/0 green | `tools/parity/gate.sh backend` + FE gates + `agent-system/check.py --strict` | 채택 | 삭제 집합을 max에 포함, 크로스-틱 재사용은 W0b 백로그 유지 |
+| 3 | `InMemoryTurnWorld`의 id high-water mark가 영속화되지 않아 재기동 후 삭제된 nation/general id를 재사용해 참조 오염 가능 | backend gate 3226/0 green, FE tsc/vitest green, agent-system 0/0 green | `tools/parity/gate.sh backend` + FE gates + `agent-system/check.py --strict` | 채택 | `world_state.meta.maxNationId/maxGeneralId`에 단조 증가 high-water mark 저장/복원 |
 
 ## 바퀴 기록
 

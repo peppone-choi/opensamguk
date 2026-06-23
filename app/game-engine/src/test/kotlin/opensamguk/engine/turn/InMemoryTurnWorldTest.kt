@@ -27,8 +27,9 @@ class InMemoryTurnWorldTest {
 
     private fun diplomacy(from: Int, to: Int) = TurnDiplomacy(from, to, state = 7, term = 0)
 
-    private fun baseState() = TurnWorldState(
+    private fun baseState(meta: Map<String, Any?> = emptyMap()) = TurnWorldState(
         id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0,
+        meta = meta,
     )
 
     @Test
@@ -113,9 +114,55 @@ class InMemoryTurnWorldTest {
     }
 
     @Test
-    fun `allocateGeneralId skips a general deleted in the same tick`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1), general(2), general(3))))
-        world.removeGeneral(3)
-        assertEquals(4, world.allocateGeneralId(), "deleted id must not be reused before flush")
+    fun `allocateNationId uses persisted maxNationId from meta after restart`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(meta = mapOf("maxNationId" to 7)),
+                nations = listOf(nation(1), nation(2), nation(3)),
+            ),
+        )
+        assertEquals(8, world.allocateNationId(), "persisted high-water mark must dominate live keys")
+    }
+
+    @Test
+    fun `allocateGeneralId uses persisted maxGeneralId from meta after restart`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(meta = mapOf("maxGeneralId" to 9)),
+                generals = listOf(general(1), general(2)),
+            ),
+        )
+        assertEquals(10, world.allocateGeneralId(), "persisted high-water mark must dominate live keys")
+    }
+
+    @Test
+    fun `restart after deletion does not reuse id below persisted high-water mark`() {
+        val first = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1))))
+        assertEquals(2, first.allocateNationId())
+        first.createNation(nation(2))
+        first.removeNation(1)
+        val meta = first.getState().meta
+
+        val restarted = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(meta = meta),
+                nations = listOf(nation(2)),
+            ),
+        )
+        assertEquals(3, restarted.allocateNationId(), "deleted id below high-water mark must not be reused")
+    }
+
+    @Test
+    fun `createNation bumps maxNationId in state meta`() {
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1))))
+        world.createNation(nation(5))
+        assertEquals(5, world.getState().meta["maxNationId"])
+    }
+
+    @Test
+    fun `createGeneral bumps maxGeneralId in state meta`() {
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1))))
+        world.createGeneral(general(12))
+        assertEquals(12, world.getState().meta["maxGeneralId"])
     }
 }

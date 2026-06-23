@@ -224,14 +224,20 @@ class JdbcFlushExecutor(
         params.addValue("last_turn_time", worldState["last_turn_time"]?.toString())
         // isunited 영속화 — 천하통일/엔딩 상태가 재기동 시 유실되지 않도록 컬럼에 동기화.
         params.addValue("isunited", (worldState["isunited"] as? Number)?.toInt() ?: 0)
+        // Persistent monotonic high-water marks for engine-assigned ids.
+        params.addValue("max_nation_id", (worldState["max_nation_id"] as? Number)?.toInt() ?: 0)
+        params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
         jdbc.update(
             """
             UPDATE world_state
                SET current_year = :current_year,
                    current_month = :current_month,
                    isunited = :isunited,
-                   meta = CASE WHEN CAST(:last_turn_time AS text) IS NULL THEN meta
-                               ELSE meta || jsonb_build_object('lastTurnTime', CAST(:last_turn_time AS text)) END,
+                   meta = meta || jsonb_build_object(
+                       'lastTurnTime', CAST(:last_turn_time AS text),
+                       'maxNationId', :max_nation_id,
+                       'maxGeneralId', :max_general_id
+                   ),
                    updated_at = now()
              WHERE id = :id
             """.trimIndent(),

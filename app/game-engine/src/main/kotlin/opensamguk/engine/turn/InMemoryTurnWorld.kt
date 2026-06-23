@@ -59,6 +59,15 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
 
     private var state: TurnWorldState
 
+    /**
+     * Persistent monotonic high-water marks for engine-assigned ids. Unlike MySQL `AUTO_INCREMENT`,
+     * opensamguk assigns `nation.id` and `general.id` engine-side, so the next free id must survive
+     * restarts. These are seeded from `world_state.meta` (if previously flushed) and from the live
+     * snapshot, then bumped by [allocateNationId]/[allocateGeneralId] and persisted each tick.
+     */
+    private var maxNationId: Int
+    private var maxGeneralId: Int
+
     init {
         state = snapshot.state
         for (general in snapshot.generals) generals[general.id] = general
@@ -68,6 +77,18 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         for (entry in snapshot.diplomacy) {
             diplomacy[buildDiplomacyKey(entry.fromNationId, entry.toNationId)] = entry
         }
+        maxNationId = maxOf(
+            snapshot.nations.maxOfOrNull { it.id } ?: 0,
+            (snapshot.state.meta["maxNationId"] as? Number)?.toInt() ?: 0,
+        )
+        maxGeneralId = maxOf(
+            snapshot.generals.maxOfOrNull { it.id } ?: 0,
+            (snapshot.state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0,
+        )
+        // Persist the seeded high-water marks immediately so a world that never allocates a new id
+        // still flushes the previous maximum back into world_state.meta (restart parity).
+        recordMaxNationId()
+        recordMaxGeneralId()
     }
 
     fun getState(): TurnWorldState = state
@@ -100,6 +121,10 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         generals[general.id] = general
         dirtyGeneralIds.add(general.id)
         createdGeneralIds.add(general.id)
+        if (general.id > maxGeneralId) {
+            maxGeneralId = general.id
+            recordMaxGeneralId()
+        }
         return general
     }
 
@@ -198,6 +223,10 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         nations[nation.id] = nation
         dirtyNationIds.add(nation.id)
         createdNationIds.add(nation.id)
+        if (nation.id > maxNationId) {
+            maxNationId = nation.id
+            recordMaxNationId()
+        }
         return nation
     }
 
@@ -224,29 +253,46 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     /**
-     * The next free nation id (`maxNationId + 1`) over the live + same-tick-deleted world. `nation.id` is
-     * `integer PRIMARY KEY` (NOT serial), so opensamguk assigns the id engine-side — the placeholder IS the
-     * final id (no flush-time reconciliation). Including [deletedNationIds] prevents the same-tick crash where
-     * a deleted nation's row is still in the DB during flush because inserts run before deletes.
+     * The next free nation id (`maxNationId + 1`). `nation.id` is `integer PRIMARY KEY` (NOT serial), so
+     * opensamguk assigns the id engine-side — the placeholder IS the final id (no flush-time reconciliation).
      *
-     * REMAINING DIVERGENCE (WAVE 0b backlog — cross-tick id reuse): unlike MySQL `AUTO_INCREMENT`, this still
-     * reuses ids of nations deleted in *earlier* ticks after a restart, because the high-water mark is not
-     * persisted. The faithful fix is a monotonic high-water mark in `world_state` meta — deferred, not
-     * fabricated here.
+     * The high-water mark is seeded from `world_state.meta['maxNationId']` on boot and bumped here, so ids
+     * deleted in earlier ticks are NOT reused after a restart (MySQL `AUTO_INCREMENT` parity). Same-tick
+     * deletions are still handled: the live/deleted key max feeds the bump, so a row deleted this tick but
+     * not yet flushed cannot collide with a new founding in the same tick.
      */
-    fun allocateNationId(): Int = (nations.keys.plus(deletedNationIds).maxOrNull() ?: 0) + 1
+    fun allocateNationId(): Int {
+        maxNationId = maxOf(
+            maxNationId,
+            nations.keys.maxOrNull() ?: 0,
+            deletedNationIds.maxOrNull() ?: 0,
+        ) + 1
+        recordMaxNationId()
+        return maxNationId
+    }
 
     /**
-     * Next free general id over the live + same-tick-deleted world. Mirrors [allocateNationId]:
-     * `general.id` is `serial PRIMARY KEY` in the schema, but opensamguk assigns the id engine-side via
-     * explicit INSERT. Including [deletedGeneralIds] prevents the same-tick duplicate-key crash where a
-     * deleted general's row is still in the DB during flush because inserts run before deletes.
-     *
-     * REMAINING DIVERGENCE (WAVE 0b backlog — cross-tick id reuse): cross-tick reuse after restart is still
-     * possible because the high-water mark is not persisted. The faithful fix (monotonic high-water mark in
-     * `world_state`) is deferred.
+     * Next free general id (`maxGeneralId + 1`). Mirrors [allocateNationId]: `general.id` is `serial PRIMARY KEY`
+     * in the schema, but opensamguk assigns the id engine-side via explicit INSERT. The persistent high-water
+     * mark prevents cross-tick reuse after restart.
      */
-    fun allocateGeneralId(): Int = (generals.keys.plus(deletedGeneralIds).maxOrNull() ?: 0) + 1
+    fun allocateGeneralId(): Int {
+        maxGeneralId = maxOf(
+            maxGeneralId,
+            generals.keys.maxOrNull() ?: 0,
+            deletedGeneralIds.maxOrNull() ?: 0,
+        ) + 1
+        recordMaxGeneralId()
+        return maxGeneralId
+    }
+
+    private fun recordMaxNationId() {
+        state = state.copy(meta = state.meta + mapOf("maxNationId" to maxNationId))
+    }
+
+    private fun recordMaxGeneralId() {
+        state = state.copy(meta = state.meta + mapOf("maxGeneralId" to maxGeneralId))
+    }
 
     /**
      * Replace a troop's row (SetTroopName rename) — marks it dirty ONLY (not created), so the flush

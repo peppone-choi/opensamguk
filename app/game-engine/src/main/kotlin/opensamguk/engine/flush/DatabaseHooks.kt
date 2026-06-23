@@ -211,6 +211,10 @@ object DatabaseHooks {
                 "last_turn_time" to state.lastTurnTime.toString(),
                 // isunited 영속화 — 천하통일/엔딩 상태가 재기동 시 유실되지 않도록 컬럼에 동기화.
                 "isunited" to ((state.meta["isunited"] as? Number)?.toInt() ?: 0),
+                // Persistent monotonic high-water marks for engine-assigned ids (nation.id/general.id are
+                // NOT serial). Prevents cross-tick id reuse after restart.
+                "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
+                "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ),
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
@@ -394,6 +398,10 @@ object DatabaseHooks {
                 "last_turn_time" to state.lastTurnTime.toString(),
                 // isunited 영속화 — 천하통일/엔딩 상태가 재기동 시 유실되지 않도록 컬럼에 동기화.
                 "isunited" to ((state.meta["isunited"] as? Number)?.toInt() ?: 0),
+                // Persistent monotonic high-water marks for engine-assigned ids (nation.id/general.id are
+                // NOT serial). Prevents cross-tick id reuse after restart.
+                "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
+                "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ),
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,

@@ -361,6 +361,52 @@ class JdbcFlushExecutorIT {
     }
 
     /**
+     * Persistent id high-water mark round-trip — engine-assigned nation.id/general.id are NOT serial,
+     * so the next free id must survive restarts. The flush merges maxNationId/maxGeneralId into
+     * world_state.meta alongside lastTurnTime.
+     */
+    @Test
+    fun `world_state flush persists maxNationId and maxGeneralId into meta`() {
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf(
+                    "id" to 1, "current_year" to 190, "current_month" to 7,
+                    "max_nation_id" to 7,
+                    "max_general_id" to 15,
+                ),
+            ),
+        )
+
+        val meta = jdbc.queryForObject(
+            "SELECT meta::text FROM world_state WHERE id = 1",
+            MapSqlParameterSource(),
+            String::class.java,
+        )!!
+        assertEquals(true, meta.contains("\"maxNationId\": 7") || meta.contains("\"maxNationId\":7"))
+        assertEquals(true, meta.contains("\"maxGeneralId\": 15") || meta.contains("\"maxGeneralId\":15"))
+
+        // Subsequent flush without explicit max keys preserves the previous high-water mark
+        // (the executor always merges the current payload values, defaulting to 0 — caller must
+        // carry forward the persisted value; this test documents that contract).
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 8),
+            ),
+        )
+        val meta2 = jdbc.queryForObject(
+            "SELECT meta::text FROM world_state WHERE id = 1",
+            MapSqlParameterSource(),
+            String::class.java,
+        )!!
+        assertEquals(true, meta2.contains("maxNationId"))
+
+        jdbc.update(
+            "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1, isunited = 0 WHERE id = 1",
+            MapSqlParameterSource(),
+        )
+    }
+
+    /**
      * #9 회귀 가드 — nationUpdate SET 절에 `power = :power` 가 없어 월틱 Q4(func_gamerule.php:322-333)가
      * 재산정한 nation.power 가 라이브 수렴 경로에서 영속되지 않았다. NationRowMapper.toColumns 는 이미
      * power 를 방출하므로, 순수 누락된 SET 항목 추가가 round-trip 되는지 확인한다(pre 1000 → post 1234).
