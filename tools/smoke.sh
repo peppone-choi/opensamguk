@@ -18,12 +18,20 @@ wait_for() {
     echo "OK: $name"
 }
 
-wait_for "gateway-api" "http://localhost:8080/actuator/health"
-wait_for "game-api"    "http://localhost:8081/actuator/health"
-wait_for "game-engine" "http://localhost:8082/admin/turn-daemon/status"
-wait_for "web-gateway" "http://localhost:3000/api/health"
-wait_for "web-game"    "http://localhost:3001/api/health"
-wait_for "nginx->gateway" "http://localhost:80/api/gateway/actuator/health"
+# Use the same host ports docker-compose.yml binds (defaults match .env.example).
+GATEWAY_API_PORT="${GATEWAY_API_PORT:-8080}"
+GAME_API_PORT="${GAME_API_PORT:-8081}"
+GAME_ENGINE_PORT="${GAME_ENGINE_PORT:-8082}"
+WEB_GATEWAY_PORT="${WEB_GATEWAY_PORT:-3000}"
+WEB_GAME_PORT="${WEB_GAME_PORT:-3001}"
+NGINX_HTTP_PORT="${NGINX_HTTP_PORT:-80}"
+
+wait_for "gateway-api" "http://localhost:${GATEWAY_API_PORT}/actuator/health"
+wait_for "game-api"    "http://localhost:${GAME_API_PORT}/actuator/health"
+wait_for "game-engine" "http://localhost:${GAME_ENGINE_PORT}/admin/turn-daemon/status"
+wait_for "web-gateway" "http://localhost:${WEB_GATEWAY_PORT}/api/health"
+wait_for "web-game"    "http://localhost:${WEB_GAME_PORT}/api/health"
+wait_for "nginx->gateway" "http://localhost:${NGINX_HTTP_PORT}/api/gateway/actuator/health"
 
 echo "==> ALL SERVICES HEALTHY"
 docker compose down
