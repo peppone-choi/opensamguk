@@ -355,7 +355,7 @@ class JdbcFlushExecutorIT {
         assertEquals(0, jdbc.queryForObject("SELECT isunited FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
 
         jdbc.update(
-            "UPDATE world_state SET current_year = 190, current_month = 1, isunited = 0 WHERE id = 1",
+            "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1, isunited = 0 WHERE id = 1",
             MapSqlParameterSource(),
         )
     }
