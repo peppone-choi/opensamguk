@@ -87,26 +87,33 @@ class MonthTickReplayGateTest {
     }
 
     /**
-     * Gate (b) — the calendar advance. `ServerClock.turnDate` reproduces each month's
-     * `oldDate → newDate`. The install epoch isn't dumped, so we anchor a synthetic startTime grid
-     * on the FIRST month's oldDate (= startYear/1) and walk it forward `turnterm`-minutes per month,
-     * exactly as `executeAllCommand` advances `nextTurn`. The arithmetic (`startYear*12 + num`) is the
-     * port target; this proves it yields the golden's exact month sequence + that each step is +1 month.
+     * Gate (b) — the calendar advance. `ServerClock.turnDate` now exposes 삼모's ten-day phase:
+     * one turn advances 상순→중순→하순, and the third turn lands on the golden's next month 상순.
      */
     @Test
-    fun `calendar advances exactly one month per tick matching the golden sequence`() {
-        // synthetic install epoch: startTime cut to the grid; nextTurn = +turnterm per month.
+    fun `calendar advances three ten-day turns per golden month`() {
         val startTime = ServerClock.cutTurn(Instant.parse("2181-01-01T12:00:00Z"), turnterm)
         var prevTurn = startTime
         for (m in months) {
-            val nextTurn = ServerClock.addTurn(prevTurn, turnterm)
-            val (year, month) = ServerClock.turnDate(nextTurn, startYear, startTime, turnterm)
-            val newDate = m["newDate"]!!.jsonObject
-            assertEquals(newDate["year"]!!.jsonPrimitive.int, year, "month ${m["month"]} new year")
-            assertEquals(newDate["month"]!!.jsonPrimitive.int, month, "month ${m["month"]} new month")
-            // +1 month over the golden's own old→new pair.
             val old = m["oldDate"]!!.jsonObject
-            val oy = old["year"]!!.jsonPrimitive.int; val om = old["month"]!!.jsonPrimitive.int
+            val oldYear = old["year"]!!.jsonPrimitive.int
+            val oldMonth = old["month"]!!.jsonPrimitive.int
+            val middle = ServerClock.turnDate(ServerClock.addTurn(prevTurn, turnterm, 1), startYear, startTime, turnterm)
+            val late = ServerClock.turnDate(ServerClock.addTurn(prevTurn, turnterm, 2), startYear, startTime, turnterm)
+            assertEquals(oldYear, middle.year, "month ${m["month"]} middle-phase year")
+            assertEquals(oldMonth, middle.month, "month ${m["month"]} middle-phase month")
+            assertEquals(2, middle.phase, "month ${m["month"]} middle phase")
+            assertEquals(oldYear, late.year, "month ${m["month"]} late-phase year")
+            assertEquals(oldMonth, late.month, "month ${m["month"]} late-phase month")
+            assertEquals(3, late.phase, "month ${m["month"]} late phase")
+
+            val nextTurn = ServerClock.addTurn(prevTurn, turnterm, 3)
+            val date = ServerClock.turnDate(nextTurn, startYear, startTime, turnterm)
+            val newDate = m["newDate"]!!.jsonObject
+            assertEquals(newDate["year"]!!.jsonPrimitive.int, date.year, "month ${m["month"]} new year")
+            assertEquals(newDate["month"]!!.jsonPrimitive.int, date.month, "month ${m["month"]} new month")
+            assertEquals(1, date.phase, "month ${m["month"]} new phase")
+            val oy = oldYear; val om = oldMonth
             val ny = newDate["year"]!!.jsonPrimitive.int; val nm = newDate["month"]!!.jsonPrimitive.int
             assertEquals(oy * 12 + om + 1, ny * 12 + nm, "month ${m["month"]} must advance exactly +1 month")
             prevTurn = nextTurn

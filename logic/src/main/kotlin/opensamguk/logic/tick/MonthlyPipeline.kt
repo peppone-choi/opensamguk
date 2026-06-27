@@ -12,6 +12,7 @@ import java.time.Instant
 data class MonthlyEnv(
     val year: Int,
     val month: Int,
+    val phase: Int = 1,
     val currentEventID: Int = 0,
 )
 
@@ -44,9 +45,9 @@ fun interface CheckStatistic {
     fun run()
 }
 
-/** Recomputes `(year, month)` from the advanced `nextTurn` (F1's [ServerClock.turnDate]). */
+/** Recomputes `(year, month, phase)` from the advanced `nextTurn` (F1's [ServerClock.turnDate]). */
 fun interface MonthlyClock {
-    fun turnDate(nextTurn: Instant, startTime: Instant): Pair<Int, Int>
+    fun turnDate(nextTurn: Instant, startTime: Instant): GameDate
 }
 
 /**
@@ -59,9 +60,9 @@ fun interface MonthlyClock {
  *   L4  monthlyRng = monthlyRngFactory(year, month)        // built ONCE, pre-advance
  *   L5  dispatcher.run(PRE_MONTH, env(OLD year/month))     // PreMonth events see the OLD date
  *   L6  if (!preUpdateMonthly.run()) return                // false aborts the tick (after unlock)
- *   L7  (year, month) = clock.turnDate(nextTurn)           // advance the calendar BETWEEN batches
- *   L8  if (month == 1) checkStatistic.run()               // year-boundary statistics
- *   L9  dispatcher.run(MONTH, env(NEW year/month))         // Month events see the NEW date
+ *   L7  date = clock.turnDate(nextTurn)                    // advance the calendar BETWEEN batches
+ *   L8  if (month == 1 && phase == 1) checkStatistic.run() // year-boundary statistics
+ *   L9  dispatcher.run(MONTH, env(NEW date))               // Month events see the NEW date
  *   L10 postUpdateMonthly.run(monthlyRng)                  // the ONLY consumer of monthlyRng
  * ```
  *
@@ -87,8 +88,8 @@ open class MonthlyPipeline<R>(
 ) {
 
     /**
-     * Run ONE month between per-general drains. `oldYear`/`oldMonth` are the calendar BEFORE this
-     * month advances (what PreMonth observes); [clock] recomputes the NEW date from [nextTurn].
+     * Run ONE turn between per-general drains. `oldYear`/`oldMonth`/`oldPhase` are the calendar BEFORE this
+     * turn advances (what PreMonth observes); [clock] recomputes the NEW date from [nextTurn].
      */
     // open: @Lazy CGLIB 프록시가 이 메서드를 인터셉트해 실제 빈으로 위임할 수 있어야 한다(클래스 주석 ⚠️ 참조).
     open fun runMonth(
@@ -98,25 +99,26 @@ open class MonthlyPipeline<R>(
         turnTerm: Int,
         oldYear: Int,
         oldMonth: Int,
+        oldPhase: Int = 1,
         dispatcher: EventDispatcher,
     ) {
         // L4 — month-scoped RNG built ONCE, before the PreMonth batch (pre-advance).
         val monthlyRng = monthlyRngFactory(oldYear, oldMonth)
 
-        // L5 — PreMonth events fire with the OLD year/month (turnDate has NOT run yet).
-        dispatcher.run(EventTarget.PRE_MONTH, MonthlyEnv(oldYear, oldMonth))
+        // L5 — PreMonth events fire with the OLD date (turnDate has NOT run yet).
+        dispatcher.run(EventTarget.PRE_MONTH, MonthlyEnv(oldYear, oldMonth, oldPhase))
 
         // L6 — preUpdateMonthly; false aborts the whole tick (PHP throws after unlock).
         if (!preUpdateMonthly.run()) return
 
         // L7 — advance the calendar BETWEEN the two event batches.
-        val (newYear, newMonth) = clock.turnDate(nextTurn, startTime)
+        val newDate = clock.turnDate(nextTurn, startTime)
 
-        // L8 — year-boundary statistics (only when the NEW month is January).
-        if (newMonth == 1) checkStatistic.run()
+        // L8 — year-boundary statistics (only when the NEW date is January 상순).
+        if (newDate.month == 1 && newDate.phase == 1) checkStatistic.run()
 
-        // L9 — Month events fire with the NEW year/month.
-        dispatcher.run(EventTarget.MONTH, MonthlyEnv(newYear, newMonth))
+        // L9 — Month events fire with the NEW date.
+        dispatcher.run(EventTarget.MONTH, MonthlyEnv(newDate.year, newDate.month, newDate.phase))
 
         // L10 — postUpdateMonthly is the ONLY consumer of the month-scoped RNG.
         postUpdateMonthly.run(monthlyRng)

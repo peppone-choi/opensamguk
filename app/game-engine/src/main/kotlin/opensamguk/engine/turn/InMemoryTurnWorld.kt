@@ -349,11 +349,12 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         )
     }
 
-    fun setCurrentDate(year: Int, month: Int) {
+    fun setCurrentDate(year: Int, month: Int, phase: Int = 1) {
         state = state.copy(
             currentYear = year,
             currentMonth = month,
-            meta = state.meta + mapOf("currentYear" to year, "currentMonth" to month),
+            currentPhase = phase.coerceIn(1, 3),
+            meta = state.meta + mapOf("currentYear" to year, "currentMonth" to month, "currentPhase" to phase.coerceIn(1, 3)),
         )
     }
 

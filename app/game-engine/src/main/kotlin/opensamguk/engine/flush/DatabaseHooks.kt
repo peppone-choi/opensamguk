@@ -206,6 +206,7 @@ object DatabaseHooks {
                 "id" to state.id,
                 "current_year" to state.currentYear,
                 "current_month" to state.currentMonth,
+                "current_phase" to state.currentPhase,
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
@@ -393,6 +394,7 @@ object DatabaseHooks {
                 "id" to state.id,
                 "current_year" to state.currentYear,
                 "current_month" to state.currentMonth,
+                "current_phase" to state.currentPhase,
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),

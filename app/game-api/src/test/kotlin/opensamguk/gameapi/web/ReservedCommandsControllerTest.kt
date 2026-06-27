@@ -4,8 +4,10 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralTurnReadEntity
 import opensamguk.gameapi.read.GeneralTurnReadRepository
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.reset
 import org.mockito.Mockito.`when`
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -38,6 +40,7 @@ class ReservedCommandsControllerTest {
     private fun seedWorld(
         year: Int = 200,
         month: Int = 3,
+        phase: Int = 1,
         tickSeconds: Int = 3600,
         config: Map<String, Any?> = emptyMap(),
         startTime: java.time.Instant? = null,
@@ -46,7 +49,7 @@ class ReservedCommandsControllerTest {
             listOf(
                 opensamguk.gameapi.read.WorldStateReadEntity(
                     id = 1, scenarioCode = "che_1010", currentYear = year, currentMonth = month,
-                    tickSeconds = tickSeconds, startTime = startTime, config = config,
+                    currentPhase = phase, tickSeconds = tickSeconds, startTime = startTime, config = config,
                 ),
             ),
         )
@@ -56,6 +59,12 @@ class ReservedCommandsControllerTest {
         SecurityContextHolder.getContext().authentication =
             UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
         req
+    }
+
+    @BeforeEach
+    fun resetFixtures() {
+        clearAuth()
+        reset(resolver, reservedTurns, world, generals)
     }
 
     @AfterEach
@@ -108,6 +117,7 @@ class ReservedCommandsControllerTest {
         seedWorld(
             year = 200,
             month = 3,
+            phase = 2,
             tickSeconds = 3600,
             config = mapOf("turntime" to "2026-06-10 09:00:00"),
             startTime = java.time.Instant.now().minusSeconds(3600),
@@ -137,8 +147,7 @@ class ReservedCommandsControllerTest {
     }
 
     @Test
-    fun `advances the month when the general turn already ran this tick`() {
-        // PHP GetReservedCommand.php:74-81 — cutTurn(turnTime) > cutTurn(lastExecute)면 month+1.
+    fun `advances the ten-day phase when the general turn already ran this tick`() {
         seedWorld(year = 200, month = 3, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:59:00"))
         `when`(generals.findById(10)).thenReturn(
             java.util.Optional.of(
@@ -153,13 +162,14 @@ class ReservedCommandsControllerTest {
         mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.year").value(200))
-            .andExpect(jsonPath("$.month").value(4))
+            .andExpect(jsonPath("$.month").value(3))
+            .andExpect(jsonPath("$.turnPhase").value(2))
+            .andExpect(jsonPath("$.turnPhaseText").value("중순"))
     }
 
     @Test
-    fun `month advance rolls over 12 to next year`() {
-        // PHP :77-80 — month >= 13이면 month-=12, year+=1.
-        seedWorld(year = 200, month = 12, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:59:00"))
+    fun `phase advance rolls over 12 late phase to next year`() {
+        seedWorld(year = 200, month = 12, phase = 3, tickSeconds = 3600, config = mapOf("turntime" to "2026-06-10 09:59:00"))
         `when`(generals.findById(10)).thenReturn(
             java.util.Optional.of(
                 opensamguk.gameapi.read.GeneralReadEntity(
@@ -174,5 +184,7 @@ class ReservedCommandsControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.year").value(201))
             .andExpect(jsonPath("$.month").value(1))
+            .andExpect(jsonPath("$.turnPhase").value(1))
+            .andExpect(jsonPath("$.turnPhaseText").value("상순"))
     }
 }

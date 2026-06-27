@@ -2,6 +2,7 @@ package opensamguk.engine.config
 
 import opensamguk.logic.tick.CheckStatistic
 import opensamguk.logic.tick.EventDispatcher
+import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.MonthlyClock
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.MonthlyRngFactory
@@ -36,7 +37,7 @@ class MonthlyPipelineLazyProxyTest {
         var reachedRealBean = false
         val real = MonthlyPipeline<Unit>(
             monthlyRngFactory = MonthlyRngFactory { _, _ -> },              // non-null ONLY on the real bean
-            clock = MonthlyClock { _, _ -> 200 to 1 },
+            clock = MonthlyClock { _, _ -> GameDate(200, 1, 1) },
             // L6 aborts right after L4 (rng) + L5 (PreMonth) — proving execution reached the real bean.
             preUpdateMonthly = PreUpdateMonthly { reachedRealBean = true; false },
             checkStatistic = CheckStatistic { },
@@ -67,6 +68,7 @@ class MonthlyPipelineLazyProxyTest {
             turnTerm = 60,
             oldYear = 199,
             oldMonth = 12,
+            oldPhase = 3,
             dispatcher = EventDispatcher { _, _ -> },
         )
 

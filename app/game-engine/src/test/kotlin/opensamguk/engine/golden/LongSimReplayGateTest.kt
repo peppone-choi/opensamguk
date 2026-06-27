@@ -208,11 +208,13 @@ class LongSimReplayGateTest {
                     turnTerm = turnterm,
                     oldYear = state.currentYear,
                     oldMonth = state.currentMonth,
+                    oldPhase = state.currentPhase,
                     dispatcher = { target, env ->
                         val supplier = {
                             mutableMapOf<String, Any?>(
                                 "year" to env.year,
                                 "month" to env.month,
+                                "phase" to env.phase,
                                 "currentEventID" to env.currentEventID,
                             )
                         }
@@ -229,14 +231,14 @@ class LongSimReplayGateTest {
             val targetNow = ServerClock.addTurn(startTime, turnterm, gameMonths)
             val isUnited = world.getState().meta["isunited"] as? Int ?: 0
             driver.run(world.getState().lastTurnTime, targetNow, turnterm, isUnited)
-            val (newYear, newMonth) = ServerClock.turnDate(targetNow, startYear, startTime, turnterm)
-            world.setCurrentDate(newYear, newMonth)
+            val newDate = ServerClock.turnDate(targetNow, startYear, startTime, turnterm)
+            world.setCurrentDate(newDate.year, newDate.month, newDate.phase)
             world.setLastTurnTime(targetNow)
 
             // Assert the monthly seed + draw count for the LAST crossed month.
-            val oldDate = startYear * 12 + (gameMonths - 1)
-            val oldYear = Math.floorDiv(oldDate, 12)
-            val oldMonth = Math.floorMod(oldDate, 12) + 1
+            val oldDate = ServerClock.advance(newDate, turns = -1)
+            val oldYear = oldDate.year
+            val oldMonth = oldDate.month
             val expectedCapture = loadJson("golden/longsim/${point["file"]!!.jsonPrimitive.content}")
             val rec = monthlyRecorders[oldYear to oldMonth]
             val expectedSeed = MonthScopedRng.monthlySeed(hiddenSeed, oldYear, oldMonth)

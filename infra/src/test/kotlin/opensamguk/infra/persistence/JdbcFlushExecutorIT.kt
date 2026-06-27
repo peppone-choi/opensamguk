@@ -166,7 +166,7 @@ class JdbcFlushExecutorIT {
         )
 
         val payload = FlushPayload(
-            worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 2),
+            worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 2, "current_phase" to 3),
             updatedGenerals = listOf(postGeneral),
             updatedCities = listOf(postCity),
             logEntries = listOf(logRow),
@@ -215,11 +215,12 @@ class JdbcFlushExecutorIT {
 
         // --- world_state advanced -----------------------------------------------------------------
         val wRow = jdbc.queryForMap(
-            "SELECT current_year, current_month FROM world_state WHERE id = 1",
+            "SELECT current_year, current_month, current_phase FROM world_state WHERE id = 1",
             MapSqlParameterSource(),
         )
         assertEquals(190, intOf(wRow["current_year"]))
         assertEquals(2, intOf(wRow["current_month"]))
+        assertEquals(3, intOf(wRow["current_phase"]))
 
         // --- exactly ONE log_entry INSERT fired ---------------------------------------------------
         val logCount = jdbc.queryForObject(

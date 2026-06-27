@@ -711,10 +711,7 @@ class FrontInfoController(
     }
 
     private fun turnPhase(w: WorldStateReadEntity?): Int? {
-        val startTime = w?.startTime ?: return null
-        val tickSeconds = w.tickSeconds.takeIf { it > 0 } ?: return null
-        val elapsedTurns = Math.floorDiv(java.time.Duration.between(startTime, Instant.now()).seconds, tickSeconds.toLong())
-        return Math.floorMod(elapsedTurns.toInt(), 3) + 1
+        return w?.currentPhase?.takeIf { it in 1..3 }
     }
 
     private fun turnPhaseText(phase: Int): String = when (phase) {

@@ -4,8 +4,9 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
-import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.logic.tick.GameDate
+import opensamguk.logic.tick.ServerClock
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.time.Duration
 import java.time.Instant
 
 /**
@@ -27,9 +27,9 @@ import java.time.Instant
  *
  * W0-2(P1-004) — PHP `GetReservedCommand.php:69-92` 메타 필드 widen:
  *  - `turnTime`  : 장수 다음 턴 시각(general.turn_time, TURNTIME_FULL 문자열).
- *  - `turnTerm`  : 턴 텀(분, world_state.tick_seconds/60).
- *  - `year/month`: 게임 클럭 — `cutTurn(turnTime) > cutTurn(lastExecute)`면 이미 이번달 턴이 실행된
- *    것이므로 month+1(13이면 year 이월) — PHP :74-81의 cutTurn 비교 충실([TurnTimeFormatter.cutTurn]).
+     *  - `turnTerm`  : 턴 텀(분, world_state.tick_seconds/60).
+     *  - `year/month/turnPhase`: 게임 클럭 — `cutTurn(turnTime) > cutTurn(lastExecute)`면 이미 이번 순 턴이
+     *    실행된 것이므로 1순 전진 — PHP :74-81의 cutTurn 비교를 삼모 상/중/하순 달력에 적용한다.
  *    lastExecute(game_env.turntime)는 world_state.config에서 방어적으로 읽고, 부재/파싱 불가면 비교를
  *    생략(클럭 원값 그대로 — 날조 금지).
  *  - `date`      : 서버 현재 시각(PHP `TimeUtil::now(true)`; 본 포팅은 초 단위 'yyyy-MM-dd HH:mm:ss' —
@@ -108,21 +108,14 @@ class ReservedCommandsController(
         // lastExecute(game_env.turntime) — config 방어적 read(데몬 미기재 시 비교 생략).
         val lastExecute = TurnTimeFormatter.parseFull(w?.config?.get("turntime")?.toString())
 
-        var year = w?.currentYear
-        var month = w?.currentMonth
+        var gameDate = w?.let { GameDate(it.currentYear, it.currentMonth, it.currentPhase.coerceIn(1, 3)) }
         if (generalTurnTime != null && lastExecute != null && turnTermMin != null && turnTermMin > 0 &&
-            year != null && month != null &&
+            gameDate != null &&
             TurnTimeFormatter.cutTurn(generalTurnTime, turnTermMin).isAfter(TurnTimeFormatter.cutTurn(lastExecute, turnTermMin))
         ) {
-            // 이미 이번달에 실행된 턴(PHP :75-81) — month+1, 13이면 연도 이월.
-            month += 1
-            if (month >= 13) {
-                month -= 12
-                year += 1
-            }
+            gameDate = ServerClock.advance(gameDate, turns = 1)
         }
 
-        val currentTurnPhase = turnPhase(w)
         return ResponseEntity.ok(
             ReservedCommandsResponse(
                 result = true,
@@ -130,10 +123,10 @@ class ReservedCommandsController(
                 slots = slots,
                 turnTime = TurnTimeFormatter.full(generalTurnTime),
                 turnTerm = turnTermMin,
-                year = year,
-                month = month,
-                turnPhase = currentTurnPhase,
-                turnPhaseText = currentTurnPhase?.let { turnPhaseText(it) },
+                year = gameDate?.year,
+                month = gameDate?.month,
+                turnPhase = gameDate?.phase,
+                turnPhaseText = gameDate?.phaseText,
                 date = TurnTimeFormatter.full(Instant.now()),
                 // autorunLimit — §2 BLOCKED(aux 원천 부재) 항상 null(날조 금지).
                 autorunLimit = null,
@@ -141,17 +134,4 @@ class ReservedCommandsController(
         )
     }
 
-    private fun turnPhase(w: WorldStateReadEntity?): Int? {
-        val startTime = w?.startTime ?: return null
-        val tickSeconds = w.tickSeconds.takeIf { it > 0 } ?: return null
-        val elapsedTurns = Math.floorDiv(Duration.between(startTime, Instant.now()).seconds, tickSeconds.toLong())
-        return Math.floorMod(elapsedTurns.toInt(), 3) + 1
-    }
-
-    private fun turnPhaseText(phase: Int): String = when (phase) {
-        1 -> "상순"
-        2 -> "중순"
-        3 -> "하순"
-        else -> "상순"
-    }
 }

@@ -138,6 +138,7 @@ data class TurnWorldState(
     val currentMonth: Int,
     val tickSeconds: Int,
     val lastTurnTime: Instant,
+    val currentPhase: Int = 1,
     val meta: Map<String, Any?> = emptyMap(),
 )
 

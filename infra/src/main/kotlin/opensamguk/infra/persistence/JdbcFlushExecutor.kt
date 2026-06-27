@@ -217,6 +217,7 @@ class JdbcFlushExecutor(
         params.addValue("id", worldState["id"])
         params.addValue("current_year", worldState["current_year"])
         params.addValue("current_month", worldState["current_month"])
+        params.addValue("current_phase", (worldState["current_phase"] as? Number)?.toInt()?.coerceIn(1, 3) ?: 1)
         // lastTurnTime 영속화 — WorldSnapshotLoader 가 부팅 시 meta['lastTurnTime'] 을 1순위로 읽는데
         // 이 키를 쓰는 경로가 없어서 매 엔진 재기동마다 start_time 폴백 → MonthBoundaryDriver 가
         // 월드 시작부터 전 월을 재생(월수입/AI 이중 적용 + 로그 중복 INSERT)했다 (2026-06-12 s1 실증:
@@ -232,6 +233,7 @@ class JdbcFlushExecutor(
             UPDATE world_state
                SET current_year = :current_year,
                    current_month = :current_month,
+                   current_phase = :current_phase,
                    isunited = :isunited,
                    meta = meta || jsonb_build_object(
                        'lastTurnTime', CAST(:last_turn_time AS text),

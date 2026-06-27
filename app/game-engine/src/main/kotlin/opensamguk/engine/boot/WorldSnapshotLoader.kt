@@ -69,7 +69,7 @@ class WorldSnapshotLoader(
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, tick_seconds, isunited, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
         ) { rs, _ ->
             val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
             val config = MetaJson.decode(rs.getString("config"))
@@ -86,6 +86,7 @@ class WorldSnapshotLoader(
                 id = rs.getInt("id"),
                 currentYear = rs.getInt("current_year"),
                 currentMonth = rs.getInt("current_month"),
+                currentPhase = rs.getInt("current_phase").takeIf { it in 1..3 } ?: 1,
                 tickSeconds = rs.getInt("tick_seconds"),
                 lastTurnTime = lastTurn,
                 meta = meta,

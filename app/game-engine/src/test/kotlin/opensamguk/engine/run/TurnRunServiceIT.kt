@@ -81,6 +81,7 @@ class TurnRunServiceIT {
     private val cityId = 7
     private val nationId = 1
     private val t0: Instant = Instant.parse("0200-01-01T12:34:00Z")
+    private val calendarStartTime: Instant = Instant.parse("0200-01-01T12:00:00Z")
     private val tickSeconds = 3600
 
     private lateinit var postgres: PostgreSQLContainer<*>
@@ -227,12 +228,22 @@ class TurnRunServiceIT {
             assertEquals(year, intOf(logRow["year"]))
             assertEquals(month, intOf(logRow["month"]))
 
+            val wRow = jdbc.queryForMap(
+                "SELECT current_year, current_month, current_phase FROM world_state WHERE id = 1",
+                MapSqlParameterSource(),
+            )
+            assertEquals(year, intOf(wRow["current_year"]))
+            assertEquals(month, intOf(wRow["current_month"]))
+            assertEquals(1, intOf(wRow["current_phase"]))
+
             // --- (b) a turnCompleted realtime event was published -------------------------------
             assertTrue(latch.await(5, TimeUnit.SECONDS), "turnCompleted delivered on the realtime channel")
             val decoded = WireJson.decodeFromString(RealtimeEvent.serializer(), received.get()!!)
             assertTrue(decoded is RealtimeEvent.TurnCompleted, "the published event is turnCompleted")
             assertEquals(runTime.toString(), (decoded as RealtimeEvent.TurnCompleted).at)
             assertEquals(t0.toString(), decoded.lastTurnTime, "lastTurnTime = the pre-tick world clock")
+            assertEquals(1, decoded.turnPhase)
+            assertEquals("상순", decoded.turnPhaseText)
         } finally {
             container.stop()
             template.delete(streamKeys.commandStream)
@@ -283,7 +294,12 @@ class TurnRunServiceIT {
 
     private fun worldSnapshot() = WorldSnapshot(
         state = TurnWorldState(
-            id = 1, currentYear = year, currentMonth = month, tickSeconds = tickSeconds, lastTurnTime = t0,
+            id = 1,
+            currentYear = year,
+            currentMonth = month,
+            tickSeconds = tickSeconds,
+            lastTurnTime = t0,
+            meta = linkedMapOf("startYear" to year, "startTime" to calendarStartTime.toString()),
         ),
         generals = listOf(
             TurnGeneral(

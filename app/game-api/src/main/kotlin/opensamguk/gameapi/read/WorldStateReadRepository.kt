@@ -35,6 +35,9 @@ class WorldStateReadEntity(
     @Column(name = "tick_seconds")
     var tickSeconds: Int = 0,
 
+    @Column(name = "current_phase")
+    var currentPhase: Int = 1,
+
     @Column(name = "start_year")
     var startYear: Int? = null,
 

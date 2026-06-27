@@ -23,6 +23,9 @@ class WorldStateEntity(
     @Column(name = "tick_seconds", nullable = false)
     var tickSeconds: Int,
 
+    @Column(name = "current_phase", nullable = false)
+    var currentPhase: Int = 1,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,

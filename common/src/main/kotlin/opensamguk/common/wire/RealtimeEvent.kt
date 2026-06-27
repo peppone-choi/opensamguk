@@ -26,6 +26,8 @@ sealed class RealtimeEvent {
         val year: Int,
         val month: Int,
         val turnNumber: Int,
+        val turnPhase: Int? = null,
+        val turnPhaseText: String? = null,
     ) : RealtimeEvent() {
         override val type: String get() = "turnCompleted"
     }

@@ -57,6 +57,8 @@ class RealtimePublisher(
         year: Int,
         month: Int,
         turnNumber: Int,
+        turnPhase: Int? = null,
+        turnPhaseText: String? = null,
     ) {
         val event = RealtimeEvent.TurnCompleted(
             at = atIso,
@@ -64,6 +66,8 @@ class RealtimePublisher(
             year = year,
             month = month,
             turnNumber = turnNumber,
+            turnPhase = turnPhase,
+            turnPhaseText = turnPhaseText,
         )
         template.convertAndSend(
             gameEventChannel(profileName),

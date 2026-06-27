@@ -99,6 +99,7 @@ class FrontInfoControllerTest {
         config: Map<String, Any?> = emptyMap(),
         startTime: Instant? = null,
         scenarioCode: String = "che_1010",
+        phase: Int = 1,
     ) {
         `when`(world.findAll()).thenReturn(
             listOf(
@@ -107,6 +108,7 @@ class FrontInfoControllerTest {
                     scenarioCode = scenarioCode,
                     currentYear = 200,
                     currentMonth = 3,
+                    currentPhase = phase,
                     tickSeconds = 3600,
                     startTime = startTime,
                     config = config,
@@ -210,8 +212,8 @@ class FrontInfoControllerTest {
     }
 
     @Test
-    fun `global exposes the current ten-day phase from the server clock`() {
-        seedWorld(startTime = Instant.now().minusSeconds(3700))
+    fun `global exposes the current ten-day phase from world state`() {
+        seedWorld(phase = 2)
 
         mockMvc().perform(get("/api/front-info"))
             .andExpect(status().isOk)

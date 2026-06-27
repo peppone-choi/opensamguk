@@ -22,8 +22,9 @@ import java.time.ZoneOffset
  * one turn step is `turnTerm * 60` seconds. Wall-clock dates are interpreted in UTC (the daemon runs
  * on a single fixed zone; the parity capture pins the same).
  *
- * The helpers are PURE and change-gated at the call site: [turnDate] returns `(year, month)`; the
- * caller writes the world clock only if it changed (PHP `if ($admin['month'] != $month || ...)`).
+ * The helpers are PURE and change-gated at the call site: [turnDate] returns `(year, month, phase)`;
+ * the caller writes the world clock only if it changed. Opensamguk intentionally uses the 삼모
+ * ten-day calendar: 상순/중순/하순, 36 turns per year.
  */
 object ServerClock {
 
@@ -61,21 +62,33 @@ object ServerClock {
     }
 
     /**
-     * PHP `turnDate`: resolve the game `(year, month)` of [curtime] from the install epoch.
+     * Resolve the game `(year, month, phase)` of [curtime] from the install epoch.
      *
-     * `num = intdiv(cutTurn(curtime) - startTime, turnTerm*60)` (SECONDS, floor); then
-     * `date = startYear*12 + num`, `year = intdiv(date,12)`, `month = 1 + date%12` (1-based).
+     * `num = intdiv(cutTurn(curtime) - startTime, turnTerm*60)` (SECONDS, floor); then map the
+     * absolute turn onto 12 months × 3 phases. Phase is 1=상순, 2=중순, 3=하순.
      *
      * Change-gated by the CALLER: this returns the pair; the caller writes the world clock only when
      * it differs from the stored `(year, month)`.
      */
-    fun turnDate(curtime: Instant, startYear: Int, startTime: Instant, turnTerm: Int): Pair<Int, Int> {
+    fun turnDate(curtime: Instant, startYear: Int, startTime: Instant, turnTerm: Int): GameDate {
         val curturn = cutTurn(curtime, turnTerm)
         val num = floorDiv(curturn.epochSecond - startTime.epochSecond, turnTerm.toLong() * 60L)
-        val date = startYear.toLong() * 12L + num
-        val year = floorDiv(date, 12L).toInt()
-        val month = (1L + Math.floorMod(date, 12L)).toInt()
-        return year to month
+        return dateFromElapsedTurns(startYear, num)
+    }
+
+    fun advance(date: GameDate, turns: Int): GameDate {
+        val absolute = date.year.toLong() * TURNS_PER_YEAR +
+            (date.month - 1L) * PHASES_PER_MONTH +
+            (date.phase - 1L) +
+            turns
+        return dateFromAbsoluteTurn(absolute)
+    }
+
+    fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 
     /**
@@ -103,4 +116,26 @@ object ServerClock {
 
     /** Integer floor-division (PHP `intdiv` on a non-negative pair; floor-safe for negatives). */
     private fun floorDiv(a: Long, b: Long): Long = Math.floorDiv(a, b)
+
+    private fun dateFromElapsedTurns(startYear: Int, elapsedTurns: Long): GameDate =
+        dateFromAbsoluteTurn(startYear.toLong() * TURNS_PER_YEAR + elapsedTurns)
+
+    private fun dateFromAbsoluteTurn(absolute: Long): GameDate {
+        val year = floorDiv(absolute, TURNS_PER_YEAR).toInt()
+        val withinYear = Math.floorMod(absolute, TURNS_PER_YEAR)
+        val month = (withinYear / PHASES_PER_MONTH + 1L).toInt()
+        val phase = (withinYear % PHASES_PER_MONTH + 1L).toInt()
+        return GameDate(year, month, phase)
+    }
+
+    private const val PHASES_PER_MONTH = 3L
+    private const val TURNS_PER_YEAR = 36L
+}
+
+data class GameDate(
+    val year: Int,
+    val month: Int,
+    val phase: Int = 1,
+) {
+    val phaseText: String get() = ServerClock.turnPhaseText(phase)
 }

@@ -157,6 +157,7 @@ open class TurnRunService(
         worldState["id"] = state.id
         worldState["current_year"] = state.currentYear
         worldState["current_month"] = state.currentMonth
+        worldState["current_phase"] = state.currentPhase
         worldState["last_turn_time"] = state.lastTurnTime.toString()
         worldState["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
         worldState["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
@@ -205,11 +206,13 @@ open class TurnRunService(
                         turnTerm = state.tickSeconds / 60,
                         oldYear = state.currentYear,
                         oldMonth = state.currentMonth,
+                        oldPhase = state.currentPhase,
                         dispatcher = { target, env ->
                             val supplier = {
                                 mutableMapOf<String, Any?>(
                                     "year" to env.year,
                                     "month" to env.month,
+                                    "phase" to env.phase,
                                     "currentEventID" to env.currentEventID,
                                 )
                             }
@@ -246,12 +249,13 @@ open class TurnRunService(
         val startYear = (preState.meta["startYear"] as? Number)?.toInt() ?: 0
         val startTime = Instant.parse(preState.meta["startTime"] as? String ?: Instant.now().toString())
         val turnTerm = preState.tickSeconds / 60
-        val (newYear, newMonth) = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
+        val newDate = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
         val payload = buildFlushPayload().copy(
             worldStateUpdate = linkedMapOf(
                 "id" to preState.id,
-                "current_year" to newYear,
-                "current_month" to newMonth,
+                "current_year" to newDate.year,
+                "current_month" to newDate.month,
+                "current_phase" to newDate.phase,
                 "last_turn_time" to runTime.toString(),
                 "isunited" to ((preState.meta["isunited"] as? Number)?.toInt() ?: 0),
                 "max_nation_id" to ((preState.meta["maxNationId"] as? Number)?.toInt() ?: 0),
@@ -265,12 +269,20 @@ open class TurnRunService(
         handler.recorder.clear()
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
-        world.setCurrentDate(newYear, newMonth)
+        world.setCurrentDate(newDate.year, newDate.month, newDate.phase)
         world.setLastTurnTime(runTime)
         val atIso = runTime.toString()
         val lastTurnTimeIso = previousTurnTime.toString()
         val turnNumber = computeTurnNumber(previousTurnTime, startYear, startTime, turnTerm)
-        realtimePublisher.publishTurnCompleted(atIso, lastTurnTimeIso, newYear, newMonth, turnNumber)
+        realtimePublisher.publishTurnCompleted(
+            atIso,
+            lastTurnTimeIso,
+            newDate.year,
+            newDate.month,
+            turnNumber,
+            newDate.phase,
+            newDate.phaseText,
+        )
 
         return TickResult(
             handled = handled,
