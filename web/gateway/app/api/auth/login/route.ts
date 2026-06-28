@@ -9,11 +9,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: '아이디와 비밀번호를 입력해주세요.' }, { status: 400 });
     }
 
-    const upstream = await fetch(`${GATEWAY_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: body.username, password: body.password }),
-    });
+    let upstream: Response;
+    try {
+        upstream = await fetch(`${GATEWAY_API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: body.username, password: body.password }),
+        });
+    } catch {
+        return NextResponse.json({ error: '로그인 서버에 연결할 수 없습니다.' }, { status: 502 });
+    }
 
     const text = await upstream.text();
     if (!upstream.ok) {

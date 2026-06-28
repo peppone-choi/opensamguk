@@ -33,7 +33,7 @@ class UserEntity(
     val nickname: String? = null,
 
     @Column(nullable = false, length = 20)
-    val role: String = "USER",
+    var role: String = "USER",
 
     // ── 회원관리(어드민) 컬럼 — legacy `member` 대응 (V11) ──
     // legacy member.GRADE(0–9 다단계). 0.9.0은 role 단일 게이트 유지 → nullable(미사용 기본 null).
