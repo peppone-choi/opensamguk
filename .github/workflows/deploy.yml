@@ -166,6 +166,9 @@ jobs:
             SHARED_SERVICES="$SHARED_SERVICES game-frontend"
           fi
 
+          echo "=== Ensuring shared dependencies ==="
+          $COMPOSE up -d gateway-postgres gateway-redis
+
           echo "=== Pulling shared images ==="
           $COMPOSE pull $SHARED_SERVICES
 
@@ -201,14 +204,51 @@ jobs:
       - name: Verify (health + s1 turn-advance)
         run: |
           set -euo pipefail
+          dump_shared_diagnostics() {
+            status=$?
+            echo "=== Shared diagnostics (status=$status) ==="
+            docker ps -a --filter 'name=opensamguk-' --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
+            for c in opensamguk-gateway-api opensamguk-web-gateway opensamguk-nginx opensamguk-gateway-postgres opensamguk-gateway-redis; do
+              echo "=== docker logs --tail 160 $c ==="
+              docker logs --tail 160 "$c" || true
+            done
+            exit "$status"
+          }
+          trap dump_shared_diagnostics ERR
           # Rule A — nginx/gateway health (localhost, 박스 내부).
           for i in $(seq 1 30); do
-            curl -sf "http://localhost/health" >/dev/null 2>&1 && { echo "nginx health: OK"; break; }
+            if curl -sf "http://localhost/health" >/dev/null 2>&1; then
+              echo "nginx health: OK"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "nginx health: FAILED"
+              false
+            fi
+            sleep 5
+          done
+          for i in $(seq 1 30); do
+            RESP=$(curl -sf "http://localhost/api/gateway/actuator/health" 2>/dev/null || echo DOWN)
+            if echo "$RESP" | grep -q '"status":"UP"'; then
+              echo "gateway-api health: OK"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "gateway-api health: FAILED — $RESP"
+              false
+            fi
             sleep 5
           done
           for i in $(seq 1 30); do
             RESP=$(curl -sf "http://localhost/api/health" 2>/dev/null || echo DOWN)
-            echo "$RESP" | grep -q '"status":"UP"' && { echo "web-gateway health: OK"; break; }
+            if echo "$RESP" | grep -q '"status":"UP"'; then
+              echo "web-gateway health: OK"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "web-gateway health: FAILED — $RESP"
+              false
+            fi
             sleep 5
           done
           if docker ps --format '{{.Names}}' | grep -q '^s1-game-api$'; then
