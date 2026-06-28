@@ -169,7 +169,7 @@ object DatabaseHooks {
             .map { PerTurnOverlay.toLogicNation(it) }
         val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
         val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
-        val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth) }
+        val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth, state.currentPhase) }
 
         // P2 satellite write-set: thread the rank/nationTurn dirty sets into the payload. The
         // rank map is flattened increments-before-sets (matching the General.applyDB iteration:
@@ -380,7 +380,7 @@ object DatabaseHooks {
 
         val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
         val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
-        val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth) }
+        val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth, state.currentPhase) }
 
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
             linkedMapOf<String, Any?>(
@@ -486,17 +486,18 @@ object DatabaseHooks {
         }
 
     /**
-     * Finalize an engine [LogEntryDraft] into an infra [LogRow]: stamp the year/month from world
+     * Finalize an engine [LogEntryDraft] into an infra [LogRow]: stamp the year/month/phase from world
      * state (the draft does not carry them) and uppercase `scope`/`category` to the PG enum literals
      * (`log_scope`/`log_category`) the INSERT casts to. `meta` defaults to an empty insertion-ordered
      * map when the draft carries none.
      */
-    private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int): LogRow = LogRow(
+    private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int, phase: Int): LogRow = LogRow(
         scope = scopeLiteral(draft.scope),
         category = draft.category.uppercase(),
         text = draft.text,
         year = year,
         month = month,
+        phase = phase,
         subType = draft.subType,
         generalId = draft.generalId,
         nationId = draft.nationId,

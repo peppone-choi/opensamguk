@@ -836,6 +836,7 @@ class JdbcFlushExecutor(
                 .addValue("sub_type", l.subType)
                 .addValue("year", l.year)
                 .addValue("month", l.month)
+                .addValue("phase", l.phase.coerceIn(1, 3))
                 .addValue("text", l.text)
                 .addValue("general_id", l.generalId)
                 .addValue("nation_id", l.nationId)
@@ -845,9 +846,9 @@ class JdbcFlushExecutor(
         jdbc.batchUpdate(
             """
             INSERT INTO log_entry
-                (scope, category, sub_type, year, month, text, general_id, nation_id, user_id, meta)
+                (scope, category, sub_type, year, month, phase, text, general_id, nation_id, user_id, meta)
             VALUES
-                (CAST(:scope AS log_scope), CAST(:category AS log_category), :sub_type, :year, :month,
+                (CAST(:scope AS log_scope), CAST(:category AS log_category), :sub_type, :year, :month, :phase,
                  :text, :general_id, :nation_id, :user_id, :meta)
             """.trimIndent(),
             batch,
@@ -1538,7 +1539,7 @@ data class KvWrite(val table: String, val namespace: String, val key: String, va
 /**
  * A finalized `log_entry` row ready to INSERT. `scope`/`category` are the PG enum literals
  * (`log_scope`/`log_category`); they bind through a `CAST(... AS log_scope)` in the INSERT.
- * `year`/`month` come from world state (the engine `LogEntryDraft` does not carry them; they are
+ * `year`/`month`/`phase` come from world state (the engine `LogEntryDraft` does not carry them; they are
  * stamped at finalize). `meta` is encoded jsonb via [MetaJson] (insertion-order, PHP-faithful).
  */
 data class LogRow(
@@ -1547,6 +1548,7 @@ data class LogRow(
     val text: String,
     val year: Int,
     val month: Int,
+    val phase: Int = 1,
     val subType: String? = null,
     val generalId: Int? = null,
     val nationId: Int? = null,

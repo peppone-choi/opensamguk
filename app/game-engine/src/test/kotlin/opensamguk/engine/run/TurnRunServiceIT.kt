@@ -219,7 +219,7 @@ class TurnRunServiceIT {
             )
             assertEquals(1, logCount, "exactly one action log row written")
             val logRow = jdbc.queryForMap(
-                "SELECT scope::text AS scope, category::text AS category, general_id, year, month FROM log_entry",
+                "SELECT scope::text AS scope, category::text AS category, general_id, year, month, phase FROM log_entry",
                 MapSqlParameterSource(),
             )
             assertEquals("GENERAL", logRow["scope"])
@@ -227,6 +227,7 @@ class TurnRunServiceIT {
             assertEquals(generalId, intOf(logRow["general_id"]))
             assertEquals(year, intOf(logRow["year"]))
             assertEquals(month, intOf(logRow["month"]))
+            assertEquals(1, intOf(logRow["phase"]))
 
             val wRow = jdbc.queryForMap(
                 "SELECT current_year, current_month, current_phase FROM world_state WHERE id = 1",

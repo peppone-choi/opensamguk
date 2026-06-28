@@ -12,7 +12,6 @@ CREATE TABLE world_state (
     scenario_code text NOT NULL,
     current_year  integer NOT NULL,
     current_month integer NOT NULL,
-    current_phase integer NOT NULL DEFAULT 1,
     tick_seconds  integer NOT NULL,
     config        jsonb NOT NULL DEFAULT '{}'::jsonb,
     meta          jsonb NOT NULL DEFAULT '{}'::jsonb,

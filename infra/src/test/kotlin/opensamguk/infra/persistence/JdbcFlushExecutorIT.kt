@@ -160,7 +160,7 @@ class JdbcFlushExecutorIT {
         val logRow = LogRow(
             scope = "GENERAL", category = "ACTION",
             text = "농지를 개간하였습니다.",
-            year = 190, month = 1,
+            year = 190, month = 1, phase = 2,
             generalId = 10, nationId = 2,
             meta = linkedMapOf(),
         )
@@ -230,7 +230,7 @@ class JdbcFlushExecutorIT {
         )
         assertEquals(1, logCount)
         val logRowBack = jdbc.queryForMap(
-            "SELECT scope::text AS scope, category::text AS category, text, year, month, general_id FROM log_entry",
+            "SELECT scope::text AS scope, category::text AS category, text, year, month, phase, general_id FROM log_entry",
             MapSqlParameterSource(),
         )
         assertEquals("GENERAL", logRowBack["scope"])
@@ -238,6 +238,7 @@ class JdbcFlushExecutorIT {
         assertEquals("농지를 개간하였습니다.", logRowBack["text"])
         assertEquals(190, intOf(logRowBack["year"]))
         assertEquals(1, intOf(logRowBack["month"]))
+        assertEquals(2, intOf(logRowBack["phase"]))
         assertEquals(10, intOf(logRowBack["general_id"]))
     }
 

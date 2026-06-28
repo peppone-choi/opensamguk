@@ -28,8 +28,8 @@ class FlushPayloadConvergenceTest {
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
-    private fun baseState() = TurnWorldState(
-        id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0,
+    private fun baseState(phase: Int = 1) = TurnWorldState(
+        id = 1, currentYear = 200, currentMonth = 1, currentPhase = phase, tickSeconds = 3600, lastTurnTime = t0,
     )
 
     private fun engineGeneral(id: Int, nationId: Int = 1) = TurnGeneral(
@@ -146,6 +146,23 @@ class FlushPayloadConvergenceTest {
         assertEquals("SYSTEM", payload.logEntries.first { it.text.startsWith("봄이") }.scope)
         assertEquals("NATION", payload.logEntries.first { it.text == "n" }.scope)
         assertEquals("GENERAL", payload.logEntries.first { it.text == "g" }.scope)
+    }
+
+    @Test
+    fun `log rows are stamped with the current ten-day phase`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(phase = 3),
+                generals = listOf(engineGeneral(10)),
+                nations = listOf(engineNation(1, gold = 1000)),
+                cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5)),
+            ),
+        )
+        world.pushLog(LogEntryDraft(scope = "general", category = "action", text = "하순 행동", generalId = 10, nationId = 1))
+
+        val payload = DatabaseHooks.toFlushPayload(world, ChangeRecorder(), world.consumeDirtyState())
+
+        assertEquals(3, payload.logEntries.single().phase)
     }
 
     @Test
