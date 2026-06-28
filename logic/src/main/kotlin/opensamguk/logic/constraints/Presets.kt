@@ -521,6 +521,9 @@ internal fun nationNumField(n: Nation, key: String): Number = when (key) {
     "gennum" -> n.gennum
     "level" -> n.level
     "capset" -> n.capset
+    // V1 keeps these PHP nation scalar columns in Nation.meta; ReqNationValue still addresses them
+    // by their PHP field names, so the generic comparator must resolve them here.
+    "rate", "bill", "surlimit", "secretlimit", "strategic_cmd_limit", "war", "scout" -> metaInt(n.meta, key)
     else -> error("unknown nation num field $key")
 }
 

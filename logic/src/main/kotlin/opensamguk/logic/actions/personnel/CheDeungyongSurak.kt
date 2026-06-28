@@ -87,7 +87,10 @@ class CheDeungyongSurak(private val pipeline: GeneralActionPipeline) : GeneralAc
         if (destGeneralID <= 0) return emptyMap()
         val destNationID = (raw["destNationID"] as? Number)?.toInt() ?: return emptyMap()
         if (destNationID <= 0) return emptyMap()
-        return linkedMapOf("destGeneralID" to destGeneralID, "destNationID" to destNationID)
+        val parsed = linkedMapOf<String, Any?>("destGeneralID" to destGeneralID, "destNationID" to destNationID)
+        (raw["relYear"] as? Number)?.toInt()?.let { parsed["relYear"] = it }
+        (raw["actorNpcType"] as? Number)?.toInt()?.let { parsed["actorNpcType"] = it }
+        return parsed
     }
 
     /**
