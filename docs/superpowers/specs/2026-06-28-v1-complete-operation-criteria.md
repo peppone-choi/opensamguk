@@ -134,9 +134,9 @@ v2 구현 착수는 아래가 모두 참일 때만 허용한다.
 
 | 축 | 증거 | 결과 | 남은 위험 |
 |---|---|---|---|
-| backend parity | `tools/parity/gate.sh backend` | pending | pending |
-| command lifecycle | registry/wire/API/daemon tests | pending | pending |
-| battle/conquest | battle/conquer replay gates | pending | pending |
-| founding | geobyeong/founding seam tests | pending | pending |
-| unification convergence | succession/month/long-sim tests | pending | pending |
-| web/prod surface | browser/API observation | pending | pending |
+| backend parity | 2026-06-28 KST `tools/parity/gate.sh backend`: `BUILD SUCCESSFUL`, XML 438 suites / 3410 tests / failures 0 / errors 0 / skipped 1 | pass-with-risk | `LongSimReplayGateTest` 구조 리플레이 1건은 여전히 disabled |
+| command lifecycle | `CommandContractMatrixTest` 187, `CommandRegistryTest` 5, `MissingAiCommandDefsTest` 19, game-api command lifecycle 24, engine reserved handler 7 | pass | 전체 API→예약→데몬→결과 e2e UI 조작은 별도 prod smoke 필요 |
+| battle/conquest | `BattleReplayGateTest`, `ConquerCityReplayGateTest`, `ProcessWarNGOrderTest`, `ProcessWarWrapperTest`, `BattleCommandContextBuilderTest`: focused XML failures 0 | pass | 실제 장기 NPC 전쟁 빈도/수렴은 long-sim disabled와 연결 |
+| founding | `GeobyeongTest`, `GeongukTest`, `FoundingGoldenTest`, `PresetsFoundingTest`, `FoundingHandlerSeamTest` 7 tests, `JdbcFlushExecutorIT --rerun-tasks`: failures 0 | pass | 이번 바퀴에서 `che_건국`/`cr_건국`/`che_무작위건국` daemon seam을 새로 잠금 |
+| unification convergence | `RulerSuccessionTest`, `ChangeRecorderNationTest`, `UpdateNationLevel*Test`, `MonthTickReplayGateTest`, `ScenarioBootIT`/`isunited` boot-load, backend gate XML failures 0 | blocked | `LongSimReplayGateTest.12 month structural replay matches PHP golden()` disabled: PHP 12국 vs Kotlin 5국 장기 AI/founding 수렴 갭 |
+| web/prod surface | `web/gateway` and `web/game`: `tsc --noEmit` pass, `next build` pass | partial | prod 로그인→게임 진입→명령 예약→결과 관측은 이번 코드 배포 후 재확인 필요; build warnings는 남아 있음 |

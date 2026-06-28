@@ -60,16 +60,25 @@ class FoundingHandlerSeamTest {
         meta = linkedMapOf("name" to name, "explevel" to 1, "dedlevel" to 1, "officer_city" to 5),
     )
 
-    private fun wanderingLord(id: Int = 42, name: String = "진표") = actor(id, name).copy(
+    private fun wanderingLord(id: Int = 42, name: String = "진표", cityId: Int = 5) = actor(id, name).copy(
         nationId = 7,
+        cityId = cityId,
         officerLevel = 12,
+        meta = actor(id, name).meta + ("officer_city" to cityId),
     )
 
-    private fun homeCity() = City(
-        id = 5,
-        name = "성도",
+    private fun member(id: Int = 43, name: String = "관우", cityId: Int = 5) = actor(id, name).copy(
+        nationId = 7,
+        cityId = cityId,
+        officerLevel = 1,
+        meta = actor(id, name).meta + ("officer_city" to cityId),
+    )
+
+    private fun homeCity(id: Int = 5, name: String = "성도", level: Int = 5) = City(
+        id = id,
+        name = name,
         nationId = 0,
-        level = 5,
+        level = level,
         commerce = 100,
         commerceMax = 100,
         agriculture = 100,
@@ -82,8 +91,8 @@ class FoundingHandlerSeamTest {
     private fun existingNation(id: Int) =
         Nation(id = id, name = "n$id", color = "#000", level = 2, capitalCityId = 90 + id)
 
-    private fun wanderingNation(id: Int = 7, name: String = "진표") =
-        Nation(id = id, name = name, color = "#330000", level = 0, capitalCityId = 0, meta = mapOf("gennum" to 1))
+    private fun wanderingNation(id: Int = 7, name: String = "진표", gennum: Int = 1) =
+        Nation(id = id, name = name, color = "#330000", level = 0, capitalCityId = 0, meta = mapOf("gennum" to gennum))
 
     private fun baseState() = TurnWorldState(
         id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
@@ -232,5 +241,119 @@ class FoundingHandlerSeamTest {
         assertEquals(7, payload.deletedNationSnapshots.single()["nation"])
         assertEquals(listOf(42), payload.deletedNationSnapshots.single()["general_ids"])
         assertEquals(0, payload.updatedGenerals.single { it.id == 42 }.nationId)
+    }
+
+    @Test
+    fun `che_건국 through the handler raises the wandering nation and claims the city`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(wanderingLord()),
+                cities = listOf(homeCity()),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_건국", """{"nationName":"촉","nationType":"che_명사","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(
+            outcome.fellBack,
+            "건국 args must pass full constraints through the daemon seam: ${outcome.denyReason}",
+        )
+        val nation = world.getNationById(7)!!
+        assertEquals(1, nation.level)
+        assertEquals("촉", nation.name)
+        assertEquals("che_명사", nation.typeCode)
+        assertEquals(5, nation.capitalCityId)
+        assertEquals(7, world.getCityById(5)!!.nationId)
+        assertEquals(1000, world.getGeneralById(42)!!.experience)
+
+        val dirty = world.consumeDirtyState()
+        val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
+        assertEquals(7, payload.updatedNations.single { it.id == 7 }.id)
+        assertEquals(7, payload.updatedCities.single { it.id == 5 }.nationId)
+        assertEquals(1000.0, payload.updatedGenerals.single { it.id == 42 }.experience)
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "global" &&
+                    it.text == "<C>●</>${MONTH}월:<Y>진표</>가 <G><b>성도</b></>에 국가를 건설하였습니다."
+            },
+            "건국 global action log is drained to the global scope",
+        )
+    }
+
+    @Test
+    fun `cr_건국 through the handler carries args into constraints and does not fallback`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(wanderingLord()),
+                cities = listOf(homeCity()),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("cr_건국", """{"nationName":"촉","nationType":"che_명사","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack, "cr_건국 args must pass full constraints through the daemon seam")
+        assertEquals(1, world.getNationById(7)!!.level)
+        assertEquals(7, world.getCityById(5)!!.nationId)
+    }
+
+    @Test
+    fun `che_무작위건국 through the handler relocates all nation generals to the chosen city`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(wanderingLord(cityId = 99), member(cityId = 99)),
+                cities = listOf(
+                    homeCity(id = 99, name = "임시", level = 3),
+                    homeCity(id = 5, name = "성도", level = 5),
+                ),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_무작위건국", """{"nationName":"촉","nationType":"che_명사","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack, "무작위건국 args must pass full constraints through the daemon seam")
+        assertEquals(5, world.getGeneralById(42)!!.cityId)
+        assertEquals(5, world.getGeneralById(43)!!.cityId)
+        assertEquals(7, world.getCityById(5)!!.nationId)
+        assertEquals(0, world.getCityById(99)!!.nationId)
+        val nation = world.getNationById(7)!!
+        assertEquals(1, nation.level)
+        assertEquals(5, nation.capitalCityId)
+        @Suppress("UNCHECKED_CAST")
+        val aux = nation.meta["aux"] as Map<String, Any?>
+        assertEquals(1, aux["can_국기변경"])
+        assertEquals(1, aux["can_무작위수도이전"])
+
+        val dirty = world.consumeDirtyState()
+        val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
+        assertEquals(listOf(42, 43), payload.updatedGenerals.map { it.id }.sorted())
+        assertEquals(5, payload.updatedCities.single { it.id == 5 }.id)
+        assertEquals(7, payload.updatedCities.single { it.id == 5 }.nationId)
     }
 }

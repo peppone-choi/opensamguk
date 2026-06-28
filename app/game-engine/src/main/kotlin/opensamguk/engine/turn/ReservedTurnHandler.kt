@@ -209,6 +209,7 @@ class ReservedTurnHandler(
             destGeneralId = (args["destGeneralID"] as? Number)?.toInt(),
             destCityId = (args["destCityID"] as? Number)?.toInt(),
             destNationId = (args["destNationID"] as? Number)?.toInt(),
+            args = args,
             env = env,
             mode = ConstraintMode.FULL,
         )
@@ -268,6 +269,11 @@ class ReservedTurnHandler(
             turnterm = turnTerm,
             // 무작위건국: rng.choice가 소모하는 도시 id 목록. PHP `SELECT city FROM city WHERE level>=5 AND level<=6 AND nation=0`
             // 의 기본 정렬(= id 오름차순)이므로 id-ascending으로 정렬해 draw-for-draw 패러티를 유지한다.
+            candidateGenerals = if (actionCode == MUJAKWI_GEONGUK) {
+                world.listGenerals()
+                    .filter { it.nationId == nationId && it.id != generalId }
+                    .map { PerTurnOverlay.toLogicGeneral(it) }
+            } else emptyList(),
             candidateCityIds = if (actionCode == MUJAKWI_GEONGUK) {
                 world.listCities()
                     .filter { it.nationId == 0 && it.level in 5..6 }
@@ -288,11 +294,17 @@ class ReservedTurnHandler(
 
         // --- ChangeRecorder = the SINGLE dirty source ---
         recorder.diffGeneral(preGeneral, draft.general)
-        recorder.diffCity(preCity, draft.city)
+        val postCity = draft.city
+        val enginePostCity = world.getCityById(postCity.id)
+        if (enginePostCity != null) {
+            recorder.diffCity(PerTurnOverlay.toLogicCity(enginePostCity), postCity)
+        } else {
+            recorder.diffCity(preCity, postCity)
+        }
 
         // --- dirty-free apply: write the post-state engine rows; ChangeRecorder owns dirtiness ---
         world.applyGeneralDirtyFree(applyGeneralPatch(general, draft.general))
-        world.applyCityDirtyFree(applyCityPatch(world.getCityById(cityId)!!, draft.city))
+        enginePostCity?.let { world.applyCityDirtyFree(applyCityPatch(it, postCity)) }
 
         // --- 외교 cascade 적용 (외교 수락/파기 등 nation-command가 일반 패스로 들어온 경우) ---
         // 외교 수락(불가침/종전/파기 수락)은 NationCommand로서 양방향 diplomacy 행을 draft.cascadeDiplomacy에
@@ -797,8 +809,11 @@ class ReservedTurnHandler(
             engine.copy(
                 name = logic.name,
                 color = logic.color,
+                capitalCityId = logic.capitalCityId,
                 gold = logic.gold,
                 rice = logic.rice,
+                power = logic.power,
+                tech = logic.tech,
                 level = logic.level,
                 typeCode = logic.typeCode,
                 meta = logic.meta,

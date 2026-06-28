@@ -151,6 +151,8 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             power = n.power,
             // tech를 그대로 전달해야 flush가 시드값을 보존한다(미전달 시 LogicNation.tech 기본 0.0 → DB 0 덮어쓰기).
             tech = n.tech,
+            gennum = (n.meta["gennum"] as? Number)?.toInt() ?: 0,
+            capset = (n.meta["capset"] as? Number)?.toInt() ?: 0,
             meta = n.meta,
         )
 
