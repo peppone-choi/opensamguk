@@ -206,11 +206,10 @@ class CheChulbyeong(
 
         // (4) pre-battle attacker mutations (che_출병.php:225-241).
         // PHP `UPDATE city SET state=43, term=3 WHERE city=destCityID` — a DEST-city delta (the engine folds
-        // it via the destCity carrier). The logic City has no generic `state` column, so the battle-state
-        // flag rides `meta['state']` (term is a first-class column).
+        // it via the destCity carrier).
         d.destCity = destCity.copy(
+            state = 43,
             term = 3,
-            meta = withMeta(destCity.meta, "state" to 43),
         )
 
         val crewType = GameUnitConst.byId(g0.crewTypeId) ?: GameUnitConst.byId(1100)!!

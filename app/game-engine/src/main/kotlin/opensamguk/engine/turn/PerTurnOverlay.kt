@@ -127,6 +127,9 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             populationMax = c.populationMax,
             trade = c.trade,
             region = c.region,
+            term = c.term,
+            officerSet = c.officerSet,
+            conflict = c.conflict,
             meta = c.meta,
         )
 

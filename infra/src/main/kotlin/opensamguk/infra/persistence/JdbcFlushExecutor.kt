@@ -348,6 +348,9 @@ class JdbcFlushExecutor(
                    pop_max = :pop_max,
                    trade = :trade,
                    region = :region,
+                   term = :term,
+                   officer_set = :officer_set,
+                   conflict = CAST(:conflict AS jsonb),
                    meta = :meta
              WHERE id = :id
             """.trimIndent(),

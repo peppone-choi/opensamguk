@@ -76,8 +76,12 @@ class AiTurnAdapterE2ETest {
         id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
     )
 
-    private fun worldWith(generals: List<TurnGeneral>) =
-        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation())))
+    private fun worldWith(
+        generals: List<TurnGeneral>,
+        cities: List<City> = listOf(city()),
+        nations: List<Nation> = listOf(nation()),
+        diplomacy: List<TurnDiplomacy> = emptyList(),
+    ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations, diplomacy = diplomacy))
 
     // ── (1) a wired general dispatches a NON-neutral command through the real priority loop + resolves ──
 
@@ -116,6 +120,108 @@ class AiTurnAdapterE2ETest {
         // proving the nation dispatch + hooks are assembled and run end-to-end (not an empty bundle crash).
         assertTrue(chosen.actionCode.isNotEmpty(), "chooseNationTurn produced a command code")
         assertTrue(chosen.reason.isNotEmpty(), "the nation pass tagged a reason")
+    }
+
+    @Test fun `a wandering NPC ruler chooses and resolves founding when legacy gates are satisfied`() {
+        val ruler = general(id = 10, nationId = 10, cityId = 17, officerLevel = 12, npcState = 2).copy(crew = 0)
+        val follower = general(id = 11, nationId = 10, cityId = 17, officerLevel = 1, npcState = 2).copy(crew = 0)
+        val foundableCity = city(id = 17, nationId = 0).copy(level = 6, supplyState = 1, frontState = 0)
+        val wandering = nation(id = 10, capital = 0).copy(
+            name = "방랑",
+            level = 0,
+            gold = 100_000,
+            rice = 100_000,
+            meta = linkedMapOf("gennum" to 2),
+        )
+        val world = worldWith(listOf(ruler, follower), cities = listOf(foundableCity), nations = listOf(wandering))
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+        val chosen = adapter.chooseGeneralTurn(10, ReservedTurn("휴식", ""))
+
+        assertEquals("che_건국", chosen.actionCode, "wandering ruler should take the PHP do건국 pre-loop branch")
+        assertEquals("do건국", chosen.reason)
+
+        adapter.beginGeneralTurn(10)
+        val handler = ReservedTurnHandler(
+            world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+            aiHook = { gid, reserved -> adapter.chooseGeneralTurn(gid, reserved) },
+        )
+        val outcome = handler.handle(10, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack, "AI-selected che_건국 must pass the live FULL gate")
+        assertEquals("che_건국", outcome.definition.key)
+        assertEquals(1, world.getNationById(10)!!.level, "resolved founding raises the wandering nation")
+        assertEquals(10, world.getCityById(17)!!.nationId, "resolved founding claims the neutral city")
+    }
+
+    @Test fun `a war-ready NPC chooses and resolves sortie through the live adapter gate`() {
+        val attackerCity = city(id = 7, nationId = 1).copy(level = 8, supplyState = 1, frontState = 3)
+        val targetCity = city(id = 31, nationId = 2).copy(level = 6, supplyState = 1, frontState = 3)
+        val attackerNation = nation(id = 1, capital = 7).copy(
+            gold = 100_000,
+            rice = 100_000,
+            meta = linkedMapOf("gennum" to 1),
+        )
+        val targetNation = nation(id = 2, capital = 31).copy(
+            name = "target",
+            gold = 100_000,
+            rice = 100_000,
+            meta = linkedMapOf("gennum" to 1),
+        )
+        val attacker = general(
+            id = 42,
+            nationId = 1,
+            cityId = 7,
+            officerLevel = 1,
+            npcState = 2,
+        ).copy(
+            crew = 9_999,
+            crewTypeId = 1100,
+            train = 100,
+            atmos = 100,
+            rice = 100_000,
+        )
+        val defender = general(
+            id = 43,
+            nationId = 2,
+            cityId = 31,
+            officerLevel = 1,
+            npcState = 2,
+        ).copy(
+            crew = 3_000,
+            crewTypeId = 1100,
+            train = 100,
+            atmos = 100,
+            rice = 100_000,
+        )
+        val world = worldWith(
+            generals = listOf(attacker, defender),
+            cities = listOf(attackerCity, targetCity),
+            nations = listOf(attackerNation, targetNation),
+            diplomacy = listOf(TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0)),
+        )
+        val adapter = AiTurnAdapter(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
+
+        val chosen = adapter.chooseGeneralTurn(42, ReservedTurn("휴식", ""))
+
+        assertEquals("che_출병", chosen.actionCode, "war-ready NPC should select do출병 before domestic fallback")
+        assertEquals("do출병", chosen.reason)
+        assertEquals(31, chosen.args["destCityID"])
+
+        adapter.beginGeneralTurn(42)
+        val handler = ReservedTurnHandler(
+            world, registry, FIXTURE_HIDDEN_SEED, START_YEAR,
+            aiHook = { gid, reserved -> adapter.chooseGeneralTurn(gid, reserved) },
+        )
+        val outcome = handler.handle(42, ReservedTurn("휴식", ""), YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack, "AI-selected che_출병 must pass the live FULL gate and resolve")
+        assertEquals("che_출병", outcome.definition.key)
+        assertEquals(43, world.getCityById(31)!!.state, "resolved sortie marks the target city as in battle")
+        assertEquals(3, world.getCityById(31)!!.term, "resolved sortie sets the PHP city term")
+        val cityPatch = handler.recorder.cityPatches().single { it.id == 31 }
+        assertEquals(43, cityPatch.columns["state"])
+        assertEquals(3, cityPatch.columns["term"])
     }
 
     // ── (3) READ-ONLY over GAME ENTITIES — the AI selection writes no general/city row inline ──────────

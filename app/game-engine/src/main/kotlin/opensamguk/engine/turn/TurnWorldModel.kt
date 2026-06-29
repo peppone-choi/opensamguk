@@ -79,6 +79,9 @@ data class City(
     val wallMax: Int = 0,
     val trade: Int? = 100,   // V1 city.trade — NOT NULL DEFAULT 100 (95..105; null = disabled)
     val region: Int = 0,     // V1 city.region
+    val term: Int = 0,
+    val officerSet: Int = 0,
+    val conflict: String = "{}",
     val meta: Map<String, Any?> = emptyMap(),
 )
 

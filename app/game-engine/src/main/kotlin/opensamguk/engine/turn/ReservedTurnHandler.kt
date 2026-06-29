@@ -6,6 +6,7 @@ import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.engine.war.BattleCommandContextBuilder
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
@@ -261,6 +262,20 @@ class ReservedTurnHandler(
         // HandledTurn.args keeps the ORIGINAL args (the parity oracle) — the founding preload never pollutes it.
         val isFounding = actionCode in FOUNDING_COMMANDS
         val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, args, general, year, month) else args
+        val battleContext = if (actionCode == "che_출병") {
+            val destCityId = (args["destCityID"] as? Number)?.toInt()
+                ?: error("che_출병 passed constraints without destCityID")
+            BattleCommandContextBuilder.build(
+                world = world,
+                attackerGeneralId = generalId,
+                finalTargetCityId = destCityId,
+                hiddenSeed = hiddenSeed,
+                loggerYear = year,
+                loggerMonth = month,
+            )
+        } else {
+            null
+        }
         val resolveCtx = GeneralActionResolveContext(
             draft, rng, worldEnv, month, date,
             args = resolveArgs,
@@ -280,6 +295,7 @@ class ReservedTurnHandler(
                     .map { it.id }
                     .sorted()
             } else emptyList(),
+            battleContext = battleContext,
         )
         definition.resolve(resolveCtx)
 
@@ -305,6 +321,12 @@ class ReservedTurnHandler(
         // --- dirty-free apply: write the post-state engine rows; ChangeRecorder owns dirtiness ---
         world.applyGeneralDirtyFree(applyGeneralPatch(general, draft.general))
         enginePostCity?.let { world.applyCityDirtyFree(applyCityPatch(it, postCity)) }
+        draft.destCity?.takeIf { it.id != postCity.id }?.let { destCity ->
+            val pre = world.getCityById(destCity.id)
+                ?: error("ReservedTurnHandler: dest city ${destCity.id} not in world")
+            recorder.diffCity(PerTurnOverlay.toLogicCity(pre), destCity)
+            world.applyCityDirtyFree(applyCityPatch(pre, destCity))
+        }
 
         // --- 외교 cascade 적용 (외교 수락/파기 등 nation-command가 일반 패스로 들어온 경우) ---
         // 외교 수락(불가침/종전/파기 수락)은 NationCommand로서 양방향 diplomacy 행을 draft.cascadeDiplomacy에
@@ -831,13 +853,27 @@ class ReservedTurnHandler(
             }
             return engine.copy(
                 level = post.level,
+                state = post.state,
                 commerce = post.commerce,
                 commerceMax = post.commerceMax,
                 agriculture = post.agriculture,
                 agricultureMax = post.agricultureMax,
+                population = post.population,
+                populationMax = post.populationMax,
+                security = post.security,
+                securityMax = post.securityMax,
+                defence = post.defense,
+                defenceMax = post.defenseMax,
+                wall = post.wall,
+                wallMax = post.wallMax,
                 supplyState = post.supplyState,
                 frontState = post.frontState,
                 nationId = post.nationId,
+                trade = post.trade,
+                region = post.region,
+                term = post.term,
+                officerSet = post.officerSet,
+                conflict = post.conflict,
                 meta = nextMeta,
             )
         }

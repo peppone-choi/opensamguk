@@ -123,7 +123,7 @@ class WorldSnapshotLoader(
         """
         SELECT id, name, nation_id, level, state, supply_state, front_state,
                pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
-               def, def_max, wall, wall_max, trade, region, meta
+               def, def_max, wall, wall_max, trade, region, term, officer_set, conflict, meta
           FROM city ORDER BY id ASC
         """.trimIndent(),
     ) { rs, _ ->
@@ -149,6 +149,9 @@ class WorldSnapshotLoader(
             wallMax = rs.getInt("wall_max"),
             trade = nullableInt(rs, "trade"),
             region = rs.getInt("region"),
+            term = rs.getInt("term"),
+            officerSet = rs.getInt("officer_set"),
+            conflict = rs.getString("conflict") ?: "{}",
             meta = MetaJson.decode(rs.getString("meta")),
         )
     }

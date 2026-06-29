@@ -196,9 +196,19 @@ object LongSimWorldMaterializer {
             wallMax = o["wall_max"]?.jsonPrimitive?.intOrNull ?: 0,
             trade = o["trade"]?.takeIf { it !is JsonNull }?.jsonPrimitive?.intOrNull,
             region = o["region"]?.jsonPrimitive?.intOrNull ?: 0,
+            term = o["term"]?.jsonPrimitive?.intOrNull ?: 0,
+            officerSet = o["officer_set"]?.jsonPrimitive?.intOrNull ?: 0,
+            conflict = jsonStorageString(o["conflict"]),
             meta = meta,
         )
     }
+
+    private fun jsonStorageString(value: JsonElement?): String =
+        when (value) {
+            null, JsonNull -> "{}"
+            is JsonPrimitive -> value.contentOrNull ?: value.toString()
+            else -> value.toString()
+        }
 
     private fun toNation(o: JsonObject, nationEnvByNation: Map<Int, Map<String, Any?>>): Nation {
         val nid = o["nation"]!!.jsonPrimitive.int
