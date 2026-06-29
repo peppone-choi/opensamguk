@@ -307,7 +307,7 @@ class AdminVersionDeployTest {
             )
             deployer.enqueue(
                 200,
-                """{"currentTag":"v9","availableTags":["v9"]}""",
+                """{"currentTag":"v8","availableTags":["v9","v8"]}""",
             )
             val svc = DeployService(deployer.url(), "tok", registry(json = ""), mapper)
 
@@ -315,7 +315,9 @@ class AdminVersionDeployTest {
 
             assertTrue(status.configured)
             assertEquals("s9", status.serverId)
-            assertEquals("v9", status.currentTag)
+            assertEquals("v8", status.currentTag)
+            assertEquals("v9", status.latestTag)
+            assertTrue(status.promotionAvailable)
             assertEquals("/servers", deployer.requests[0].path)
             assertEquals("/status?project=opensamguk-s9", deployer.requests[1].path)
         }

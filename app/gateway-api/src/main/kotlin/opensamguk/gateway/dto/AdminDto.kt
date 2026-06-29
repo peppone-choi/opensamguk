@@ -59,6 +59,8 @@ data class DeployStatus(
     val serverId: String?,
     val currentTag: String?,
     val availableTags: List<String>,
+    val latestTag: String? = null,
+    val promotionAvailable: Boolean = false,
     val message: String? = null,
 )
 

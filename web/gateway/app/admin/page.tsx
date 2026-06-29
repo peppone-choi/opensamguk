@@ -45,6 +45,8 @@ interface DeployStatus {
     serverId: string | null;
     currentTag: string | null;
     availableTags: string[];
+    latestTag?: string | null;
+    promotionAvailable?: boolean;
     message?: string | null;
 }
 interface DeployResult {
@@ -357,7 +359,16 @@ function DeployControl({
         );
     }
 
+    const latestTag = status.latestTag ?? status.availableTags[0] ?? null;
+    const promotionAvailable = Boolean(status.promotionAvailable ?? (latestTag && latestTag !== status.currentTag));
     const isCurrent = selected === status.currentTag;
+    const isLatestSelected = latestTag != null && selected === latestTag;
+
+    function selectLatest() {
+        if (!latestTag) return;
+        setSelected(latestTag);
+        setConfirming(true);
+    }
 
     async function runDeploy() {
         setBusy(true);
@@ -385,6 +396,11 @@ function DeployControl({
                 <span className="svc-meta">
                     현재 버전 <strong>{status.currentTag ?? '-'}</strong>
                 </span>
+                {promotionAvailable && latestTag && (
+                    <span className="status-badge status-jade deploy-promotion-badge">
+                        최신 버전 있음 {latestTag}
+                    </span>
+                )}
                 <select
                     aria-label={`${server.name} 배포 태그 선택`}
                     value={selected}
@@ -399,13 +415,23 @@ function DeployControl({
                         </option>
                     ))}
                 </select>
+                {promotionAvailable && latestTag && (
+                    <button
+                        type="button"
+                        className="btn-ghost"
+                        disabled={busy}
+                        onClick={selectLatest}
+                    >
+                        최신으로 승격
+                    </button>
+                )}
                 <button
                     type="button"
                     className="btn-primary"
                     disabled={busy || isCurrent || !selected}
                     onClick={() => setConfirming(true)}
                 >
-                    {isCurrent ? '현재 버전' : '이 버전으로 배포'}
+                    {isCurrent ? '현재 버전' : isLatestSelected ? '최신 버전 배포' : '이 버전으로 배포'}
                 </button>
             </div>
 

@@ -870,6 +870,9 @@ textarea:focus {
     gap: var(--space-md);
     flex-wrap: wrap;
 }
+.deploy-promotion-badge {
+    overflow-wrap: anywhere;
+}
 .deploy-note {
     color: var(--text-muted);
     font-size: var(--text-sm);

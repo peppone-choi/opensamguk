@@ -102,11 +102,16 @@ class DeployService(
                 .retrieve()
                 .body(String::class.java)
             val node = objectMapper.readTree(raw)
+            val currentTag = node.path("currentTag").asText(null)
+            val availableTags = node.path("availableTags").map { it.asText() }
+            val latestTag = availableTags.firstOrNull()
             DeployStatus(
                 configured = true,
                 serverId = server.id,
-                currentTag = node.path("currentTag").asText(null),
-                availableTags = node.path("availableTags").map { it.asText() },
+                currentTag = currentTag,
+                availableTags = availableTags,
+                latestTag = latestTag,
+                promotionAvailable = latestTag != null && currentTag != latestTag,
             )
         } catch (e: Exception) {
             log.warn("deployer status 조회 실패 (server={})", server.id, e)
