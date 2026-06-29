@@ -134,11 +134,16 @@ class ScenarioImporter(
     private fun insertWorldState(jdbc: JdbcTemplate, startYear: Int): Int {
         val tickSeconds = turnTerm * 60
         val ts = Timestamp.from(installTime.toInstant())
+        val mapConfig = scenarioMapConfig()
+        val mapName = mapConfig["mapName"] as? String ?: "che"
+        val unitSet = mapConfig["unitSet"] as? String ?: "che"
         // meta keys consumed by EngineEventConfig.monthlyPipeline: hiddenSeed/startYear/startTime.
         val meta = jsonObject(
             "hiddenSeed" to hiddenSeed,
             "startYear" to startYear,
             "startTime" to installTime.toString(),
+            "map" to mapName,
+            "unitSet" to unitSet,
         )
         val config = jsonObject(
             "startyear" to startYear,
@@ -146,6 +151,9 @@ class ScenarioImporter(
             "turnterm" to turnTerm,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
+            "map" to mapConfig,
+            "mapName" to mapName,
+            "unitSet" to unitSet,
         )
         jdbc.update(
             """
@@ -158,6 +166,15 @@ class ScenarioImporter(
             jsonb(config), jsonb(meta), startYear, ts, turnTerm, hiddenSeed,
         )
         return 1
+    }
+
+    private fun scenarioMapConfig(): Map<String, Any?> {
+        val merged = LinkedHashMap<String, Any?>()
+        merged.putAll(scenario.map)
+        merged.putAll(scenario.const)
+        if (merged["mapName"] !is String) merged["mapName"] = "che"
+        if (merged["unitSet"] !is String) merged["unitSet"] = "che"
+        return merged
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────

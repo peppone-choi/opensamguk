@@ -175,11 +175,13 @@ class ScenarioImporterIT {
         val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(meta.contains("hiddenSeed"), "meta has hiddenSeed: $meta")
         assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
+        assertTrue(meta.contains("\"map\": \"che\"") || meta.contains("\"map\":\"che\""), "meta has map=che: $meta")
 
         // world_state.config carries entrance-gating values used by ServerBasicInfoController/FrontInfoController.
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(config.contains("\"npcmode\""), "config has npcmode: $config")
         assertTrue(config.contains("\"block_general_create\""), "config has block_general_create: $config")
+        assertTrue(config.contains("\"map\""), "config has map block: $config")
     }
 
     @Test

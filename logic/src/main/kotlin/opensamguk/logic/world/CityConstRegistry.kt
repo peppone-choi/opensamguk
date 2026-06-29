@@ -147,9 +147,12 @@ object CityConstRegistry {
     )
 
     private val variants: Map<String, CityConstVariant> by lazy {
+        val miniche = InitCityOverrideVariant("miniche", minicheInitCity)
         linkedMapOf(
             "che" to CheCityConst,
-            "miniche" to InitCityOverrideVariant("miniche", minicheInitCity),
+            "miniche" to miniche,
+            "miniche_b" to miniche,
+            "miniche_clean" to miniche,
         )
     }
 

@@ -62,6 +62,13 @@ class CityConstRegistryTest {
     }
 
     @Test
+    fun `miniche display variants use the miniche city constant variant`() {
+        val miniche = CityConstRegistry.of("miniche")
+        assertEquals(miniche.all(), CityConstRegistry.of("miniche_b").all())
+        assertEquals(miniche.all(), CityConstRegistry.of("miniche_clean").all())
+    }
+
+    @Test
     fun `miniche resolves levels and regions through the inherited shared maps`() {
         val miniche = CityConstRegistry.of("miniche")
         // 낙양(id 1) is 특(level 8), region 중원(2); pos NOT scaled; stats ×100.

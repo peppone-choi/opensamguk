@@ -57,6 +57,8 @@ object ScenarioJson {
         val root = MetaJson.decode(json)
         val title = strOrNull(root["title"]) ?: ""
         val startYear = intOf(root["startYear"], 0)
+        val map = stringMap(root["map"])
+        val const = stringMap(root["const"])
 
         val nations = arr(root["nation"]).mapIndexed { idx, raw ->
             val t = asList(raw)
@@ -91,7 +93,15 @@ object ScenarioJson {
             )
         }
 
-        return Scenario(title = title, startYear = startYear, nations = nations, generals = generals, diplomacy = diplomacy)
+        return Scenario(
+            title = title,
+            startYear = startYear,
+            map = map,
+            const = const,
+            nations = nations,
+            generals = generals,
+            diplomacy = diplomacy,
+        )
     }
 
     private fun decodeGeneral(t: List<Any?>): ScenarioGeneral = ScenarioGeneral(
@@ -150,6 +160,15 @@ object ScenarioJson {
     @Suppress("UNCHECKED_CAST")
     private fun asMap(v: Any?): Map<String, Any?> = v as? Map<String, Any?> ?: error("expected JSON object, got $v")
 
+    private fun stringMap(v: Any?): Map<String, Any?> {
+        val raw = v as? Map<*, *> ?: return emptyMap()
+        val out = LinkedHashMap<String, Any?>()
+        for ((key, value) in raw) {
+            if (key is String) out[key] = value
+        }
+        return out
+    }
+
     private fun asList(v: Any?): List<Any?> = v as? List<Any?> ?: error("expected JSON tuple, got $v")
 
     private fun strOf(v: Any?): String = v?.toString() ?: error("expected non-null string")
@@ -177,6 +196,8 @@ object ScenarioJson {
 data class Scenario(
     val title: String,
     val startYear: Int,
+    val map: Map<String, Any?> = emptyMap(),
+    val const: Map<String, Any?> = emptyMap(),
     val nations: List<ScenarioNation>,
     val generals: List<ScenarioGeneral>,
     val diplomacy: List<ScenarioDiplomacy>,
