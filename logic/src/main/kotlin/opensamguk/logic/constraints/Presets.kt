@@ -415,8 +415,6 @@ fun battleGroundCity(atWarWithDest: (ConstraintContext, StateView) -> Boolean) =
     }
 }
 
-// --- Env / relYear state (BeOpeningPart/NotOpeningPart compare a relYear arg to GameConst.openingPartYear) ---
-
 /** BeOpeningPart.php — pass when relYear(arg) < GameConst.openingPartYear; else `초반이 지났습니다.`. */
 fun beOpeningPart(relYear: (ConstraintContext, StateView) -> Int) = object : Constraint {
     override val name = "BeOpeningPart"
@@ -430,7 +428,20 @@ fun notOpeningPart(relYear: (ConstraintContext, StateView) -> Int) = object : Co
     override val name = "NotOpeningPart"
     override fun requires(ctx: ConstraintContext) = emptyList<RequirementKey>()
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult =
-        if (relYear(ctx, view) >= GameConst.openingPartYear) ConstraintResult.Allow else ConstraintResult.Deny("초반 제한 중에는 불가능합니다.")
+        if (openingLimitCleared(ctx, relYear(ctx, view))) {
+            ConstraintResult.Allow
+        } else {
+            ConstraintResult.Deny("초반 제한 중에는 불가능합니다.")
+        }
+}
+
+private fun openingLimitCleared(ctx: ConstraintContext, relYear: Int): Boolean {
+    val elapsedTurns = (ctx.env["elapsedTurns"] as? Number)?.toInt()
+        ?: (ctx.args["elapsedTurns"] as? Number)?.toInt()
+        ?: relYear * GameConst.turnsPerYear
+    val openingLimitTurns = (ctx.env["openingLimitTurns"] as? Number)?.toInt()
+        ?: GameConst.openingLimitTurns
+    return elapsedTurns >= openingLimitTurns
 }
 
 // --- Military presets the Wave-3 protocol moves into C-PURE ---
@@ -852,7 +863,7 @@ fun checkNationNameDuplicate(nameArg: String = "name") = object : Constraint {
 
 /**
  * AllowJoinDestNation.php — 4-branch order (FIRST failing branch wins):
- *  1. relYear < openingPartYear && destNation.gennum >= initialNationGenLimit → `임관이 제한되고 있습니다.`
+ *  1. opening limit active && destNation.gennum >= initialNationGenLimit → `임관이 제한되고 있습니다.`
  *  2. destNation.scout == 1 → `임관이 금지되어 있습니다.`
  *  3. general.npc < 2 (default 2) && destNation.name starts with `ⓤ` → `유저장은 태수국에 임관할 수 없습니다.`
  *  4. general.npc != 9 && destNation.name starts with `ⓞ` → `이민족 국가에 임관할 수 없습니다.`
@@ -870,7 +881,7 @@ fun allowJoinDestNation(npcType: (ConstraintContext, StateView) -> Int) = object
         val scout = metaInt(d.meta, "scout")
         val npc = npcType(ctx, view)
 
-        if (relYear < GameConst.openingPartYear && d.gennum >= GameConst.initialNationGenLimit) {
+        if (!openingLimitCleared(ctx, relYear) && d.gennum >= GameConst.initialNationGenLimit) {
             return ConstraintResult.Deny("임관이 제한되고 있습니다.")
         }
         if (scout == 1) {

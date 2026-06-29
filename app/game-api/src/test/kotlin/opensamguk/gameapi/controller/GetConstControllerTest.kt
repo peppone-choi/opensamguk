@@ -53,6 +53,9 @@ class GetConstControllerTest {
             .andExpect(jsonPath("$.gameConst.mapName").value(GameConst.mapName))
             .andExpect(jsonPath("$.gameConst.initialAllowedTechLevel").value(GameConst.initialAllowedTechLevel))
             .andExpect(jsonPath("$.gameConst.techLevelIncYear").value(GameConst.techLevelIncYear))
+            .andExpect(jsonPath("$.gameConst.phasesPerMonth").value(GameConst.phasesPerMonth))
+            .andExpect(jsonPath("$.gameConst.turnsPerYear").value(GameConst.turnsPerYear))
+            .andExpect(jsonPath("$.gameConst.openingLimitTurns").value(GameConst.openingLimitTurns))
     }
 
     @Test

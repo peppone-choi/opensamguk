@@ -143,7 +143,7 @@ class ReservedCommandsControllerTest {
             java.util.Optional.of(
                 opensamguk.gameapi.read.GeneralReadEntity(
                     id = 10, name = "순욱", nationId = 1,
-                    turnTime = java.time.Instant.parse("2026-06-10T09:30:00Z"),
+                    turnTime = java.time.Instant.parse("2026-06-10T00:30:00Z"),
                 ),
             ),
         )
@@ -170,7 +170,7 @@ class ReservedCommandsControllerTest {
             java.util.Optional.of(
                 opensamguk.gameapi.read.GeneralReadEntity(
                     id = 10, name = "순욱", nationId = 1,
-                    turnTime = java.time.Instant.parse("2026-06-10T10:30:00Z"),
+                    turnTime = java.time.Instant.parse("2026-06-10T01:30:00Z"),
                 ),
             ),
         )
@@ -191,7 +191,7 @@ class ReservedCommandsControllerTest {
             java.util.Optional.of(
                 opensamguk.gameapi.read.GeneralReadEntity(
                     id = 10, name = "순욱", nationId = 1,
-                    turnTime = java.time.Instant.parse("2026-06-10T10:30:00Z"),
+                    turnTime = java.time.Instant.parse("2026-06-10T01:30:00Z"),
                 ),
             ),
         )

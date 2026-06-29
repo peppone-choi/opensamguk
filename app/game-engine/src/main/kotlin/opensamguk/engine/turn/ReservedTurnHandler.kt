@@ -192,7 +192,8 @@ class ReservedTurnHandler(
         }
 
         // ONE env, built by THE shared env-builder (same call as E2 precheck — cannot drift).
-        val env: Map<String, Any?> = WorldEnvBuilder.envMap(year, startYear)
+        val phase = world.getState().currentPhase.coerceIn(1, GameConst.phasesPerMonth)
+        val env: Map<String, Any?> = WorldEnvBuilder.commandEnvMap(year, startYear, month, phase)
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear)
 
         val definition = registry.resolve(actionCode)

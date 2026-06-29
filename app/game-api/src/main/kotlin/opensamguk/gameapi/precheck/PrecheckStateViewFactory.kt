@@ -87,7 +87,12 @@ class PrecheckStateViewFactory(
             ?: ws.startYear
             ?: numberOf(ws.meta["startYear"])
             ?: error("world_state.config.startYear is missing")
-        return WorldEnvBuilder.envMap(year, startYear)
+        return WorldEnvBuilder.commandEnvMap(
+            year = year,
+            startYear = startYear,
+            month = ws.currentMonth,
+            phase = ws.currentPhase,
+        )
     }
 
     private fun numberOf(value: Any?): Int? = (value as? Number)?.toInt()

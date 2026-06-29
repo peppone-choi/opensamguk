@@ -37,6 +37,7 @@ import opensamguk.infra.persistence.VoteCommentInsertRow
 import opensamguk.infra.persistence.VoteInsertRow
 import opensamguk.infra.persistence.VotePollInsertRow
 import opensamguk.infra.persistence.YearbookInsertRow
+import opensamguk.logic.tick.ServerClock
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -494,7 +495,7 @@ object DatabaseHooks {
     private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int, phase: Int): LogRow = LogRow(
         scope = scopeLiteral(draft.scope),
         category = draft.category.uppercase(),
-        text = draft.text,
+        text = stampPhaseInLogText(draft.text, phase),
         year = year,
         month = month,
         phase = phase,
@@ -504,6 +505,17 @@ object DatabaseHooks {
         userId = draft.userId,
         meta = draft.meta ?: linkedMapOf(),
     )
+
+    private fun stampPhaseInLogText(text: String, phase: Int): String {
+        val phaseText = ServerClock.turnPhaseText(phase)
+        val yearMonth = Regex("""^(<[^>]+>[^<]+</>)(\d+년 \d+월)(?!\s*(?:상순|중순|하순)):""")
+        val monthOnly = Regex("""^(<[^>]+>[^<]+</>)(\d+월)(?!\s*(?:상순|중순|하순)):""")
+        return when {
+            yearMonth.containsMatchIn(text) -> yearMonth.replaceFirst(text, "\$1\$2 $phaseText:")
+            monthOnly.containsMatchIn(text) -> monthOnly.replaceFirst(text, "\$1\$2 $phaseText:")
+            else -> text
+        }
+    }
 
     /**
      * 엔진 [LogEntryDraft]의 문자열 scope 어휘 → PG enum `log_scope` 리터럴(SYSTEM/NATION/GENERAL/USER).

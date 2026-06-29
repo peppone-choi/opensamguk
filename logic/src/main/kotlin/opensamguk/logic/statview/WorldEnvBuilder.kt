@@ -1,6 +1,7 @@
 package opensamguk.logic.statview
 
 import opensamguk.common.constants.EffectiveGameConst
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.domain.WorldEnv
 
 /**
@@ -43,6 +44,19 @@ object WorldEnvBuilder {
         )
     }
 
+    fun commandEnvMap(year: Int, startYear: Int, month: Int, phase: Int): Map<String, Any?> {
+        val e = worldEnv(year, startYear)
+        return linkedMapOf(
+            "year" to e.year,
+            "startYear" to e.startYear,
+            "develCost" to e.develCost,
+            "month" to month,
+            "phase" to phase.coerceIn(1, GameConst.phasesPerMonth),
+            "elapsedTurns" to elapsedTurns(year, startYear, month, phase),
+            "openingLimitTurns" to GameConst.openingLimitTurns,
+        )
+    }
+
     /**
      * FC2 — the widened monthly-tick env: the P2 keys (`year`, `startYear`, `develCost`) PLUS `month`
      * (PHP event-env key `$env['month']`, read by Date/DateRelative conditions + the
@@ -66,6 +80,11 @@ object WorldEnvBuilder {
 
     /** Convenience: derive the env map directly from a [WorldEnv] (same single source of `develCost`). */
     fun envMap(env: WorldEnv): Map<String, Any?> = envMap(env.year, env.startYear)
+
+    fun elapsedTurns(year: Int, startYear: Int, month: Int, phase: Int): Int =
+        (year - startYear) * GameConst.turnsPerYear +
+            (month - 1) * GameConst.phasesPerMonth +
+            (phase.coerceIn(1, GameConst.phasesPerMonth) - 1)
 
     /**
      * FS2 (F-SEED) — the AI env SUPERSET (research §9). `GeneralAI` reads `$env = $gameStor->getAll(true)`

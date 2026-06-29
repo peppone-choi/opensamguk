@@ -36,6 +36,8 @@ const MAP_FIXTURE: MapPreviewResponse = {
     serverName: '테스트섭',
     year: 200,
     month: 5,
+    turnPhase: 1,
+    turnPhaseText: '상순',
     mapCode: 'che',
     width: 700,
     height: 500,
@@ -55,6 +57,8 @@ const WM_FIXTURE: WorldMapResponse = {
     startYear: 180,
     year: 201,
     month: 7,
+    turnPhase: 3,
+    turnPhaseText: '하순',
     cityList: [
         [11, 8, 0, 2, 0, 1],
         [22, 3, 0, 0, 0, 1],
@@ -139,7 +143,7 @@ describe('MapViewer — 레거시 박스 구조(map_title + 700x500 map_body)', 
 
         const section = document.querySelector('.map-viewer') as HTMLElement;
         expect(section.firstElementChild).toHaveClass('map-viewer-title');
-        expect(section.firstElementChild).toHaveTextContent('200年 5月');
+        expect(section.firstElementChild).toHaveTextContent('200년 5월 상순');
         expect(section.children[1]).toHaveClass('map-viewer-canvas');
         expect(section.querySelector('.map-viewer-cap')).toBeNull();
     });
@@ -151,19 +155,19 @@ describe('MapViewer — 레거시 박스 구조(map_title + 700x500 map_body)', 
         expect(mapTitleColor(200, 203)).toBeUndefined();
     });
 
-    it('연월 제목 툴팁은 초반제한과 기술등급 제한을 legacy MapViewer.vue 공식으로 노출한다', async () => {
-        const gameConst = { maxTechLevel: 12, initialAllowedTechLevel: 1, techLevelIncYear: 5 };
-        expect(mapTitleTooltip(200, 200, 5, gameConst)).toBe(
-            '초반제한 기간 : 2년 8개월 (203년)\n기술등급 제한 : 1등급 (205년 해제)',
+    it('연월 제목 툴팁은 36턴 초반제한과 기술등급 제한을 노출한다', async () => {
+        const gameConst = { maxTechLevel: 12, initialAllowedTechLevel: 1, techLevelIncYear: 5, openingLimitTurns: 36 };
+        expect(mapTitleTooltip(200, 200, 5, 1, gameConst)).toBe(
+            '초반제한 기간 : 8개월 (201년 1월 상순 해제)\n기술등급 제한 : 1등급 (205년 해제)',
         );
 
         render(<MapViewer mapData={{ ...MAP_FIXTURE, startYear: 200 }} gameConst={gameConst} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
 
-        const title = screen.getByText('200年 5月');
+        const title = screen.getByText('200년 5월 상순');
         expect(title).toHaveAttribute(
             'title',
-            '초반제한 기간 : 2년 8개월 (203년)\n기술등급 제한 : 1등급 (205년 해제)',
+            '초반제한 기간 : 8개월 (201년 1월 상순 해제)\n기술등급 제한 : 1등급 (205년 해제)',
         );
     });
 });
@@ -238,8 +242,7 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
         expect(fetchedPaths.some((p) => p.includes('/api/map?neutralView=0&showMe=1'))).toBe(true);
         // 낙양 소유가 라이브 기준 오(2)로 바뀐다(프리뷰 캐시는 위(1)).
         expect(screen.getByRole('link', { name: /낙양 레벨 8 오/ })).toBeTruthy();
-        // 연월도 라이브(201年 7月).
-        expect(screen.getByText(/201年 7月/)).toBeInTheDocument();
+        expect(screen.getByText(/201년 7월/)).toBeInTheDocument();
     });
 
     it('live + showMe=1 이면 myCity(허창)가 my-city 마커를 받는다(func_map.php:78-95)', async () => {
@@ -279,12 +282,12 @@ describe('MapViewer — live/showMe(P1-003, GetMap neutralView:0 showMe:1 패러
         );
 
         const { rerender } = render(<MapViewer live refreshKey={0} />);
-        await waitFor(() => expect(screen.getByText(/201年 7月/)).toBeInTheDocument());
+        await waitFor(() => expect(screen.getByText(/201년 7월/)).toBeInTheDocument());
 
         rerender(<MapViewer live refreshKey={1} />);
         await waitFor(() => expect(previewCalls).toBe(2));
 
-        expect(screen.getByText(/201年 7月/)).toBeInTheDocument();
+        expect(screen.getByText(/201년 7월/)).toBeInTheDocument();
         expect(document.querySelector('.map-viewer-ph')).toBeNull();
 
         pendingPreview.resolve(jsonResponse(MAP_FIXTURE));
@@ -295,7 +298,7 @@ describe('MapViewer — P0-36 FE측 state 아이콘(레거시 MapCityDetail.vue:
     it('state=6(코드 6~9)도 상태 아이콘이 렌더된다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
-        const jangan = screen.getByLabelText(/장안 레벨 3 공 백 지/);
+        const jangan = screen.getByLabelText(/장안 레벨 3/);
         const stateImg = jangan.querySelector('.city-state') as HTMLImageElement | null;
         expect(stateImg).toBeTruthy();
         expect(stateImg!.getAttribute('src')).toContain('event6.gif');

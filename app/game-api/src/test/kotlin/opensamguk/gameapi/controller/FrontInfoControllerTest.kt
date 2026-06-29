@@ -481,7 +481,7 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.global.lastVote.id").value(3))
             .andExpect(jsonPath("$.global.lastVote.title").value("차기 천하통일 예상 국가는?"))
             .andExpect(jsonPath("$.global.lastVote.opener").value("운영자"))
-            .andExpect(jsonPath("$.global.lastVote.startDate").value("2026-06-01 00:00:00"))
+            .andExpect(jsonPath("$.global.lastVote.startDate").value("2026-06-01 09:00:00"))
             .andExpect(jsonPath("$.global.lastVote.options[0]").value("위"))
             .andExpect(jsonPath("$.global.lastVote.options[1]").value("촉"))
     }

@@ -799,7 +799,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.availableTargetGeneral.10").value("순욱"))
             .andExpect(jsonPath("$.availableTargetGeneral.20").value("하후돈"))
             .andExpect(jsonPath("$.lastInheritPointLogs[0].id").value(5))
-            .andExpect(jsonPath("$.lastInheritPointLogs[0].date").value("2026-06-01 10:30:00"))
+            .andExpect(jsonPath("$.lastInheritPointLogs[0].date").value("2026-06-01 19:30:00"))
     }
 
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
@@ -913,7 +913,7 @@ class F4ReadControllersTest {
             // 부대장 카드 헤더 — 한글 도시명 + npc 티어 + turnTime(YYYY-MM-DD HH:MM:SS).
             .andExpect(jsonPath("$.troops[0].leaderCityName").value("허창"))
             .andExpect(jsonPath("$.troops[0].leaderNpc").value(0))
-            .andExpect(jsonPath("$.troops[0].turnTime").value("2026-06-03 10:30:45"))
+            .andExpect(jsonPath("$.troops[0].turnTime").value("2026-06-03 19:30:45"))
             // 예약명령 브리핑은 read 모델 미배선 → 빈 목록(날조 금지).
             .andExpect(jsonPath("$.troops[0].reservedCommandBrief.length()").value(0))
             .andExpect(jsonPath("$.troops[0].memberCount").value(3))

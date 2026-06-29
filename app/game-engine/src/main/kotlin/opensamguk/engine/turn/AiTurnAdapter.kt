@@ -198,7 +198,7 @@ class AiTurnAdapter(
         )
 
         // (3) the F-BRIDGE candidate gate over the FULL-mode WorldStateViewAdapter.
-        val envMap = WorldEnvBuilder.envMap(year, startYear)
+        val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
         val candidateAllowedHook = candidateAllowedHook(generalId, general.cityId, nationId, envMap)
 
         val recordGeneralKv: (Int, String, Any?) -> Unit = { gid, key, value ->
@@ -290,7 +290,7 @@ class AiTurnAdapter(
         )
         instance.updateInstance()
 
-        val envMap = WorldEnvBuilder.envMap(year, startYear)
+        val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
         val candidateAllowedHook = candidateAllowedHook(generalId, general.cityId, nationId, envMap)
         val recordGeneralKv: (Int, String, Any?) -> Unit = { gid, key, value ->
             _kvDeltas.add(KvDelta(gid, key, value))
@@ -1525,7 +1525,13 @@ class AiTurnAdapter(
 
     /** The F-BRIDGE trade gate (the acting general's canonical ctx), reused by [tradeDecision]. */
     private fun candidateAllowedHookForTrade(general: TurnGeneral, args: Map<String, Any?>): Boolean {
-        val envMap = WorldEnvBuilder.envMap(world.getState().currentYear, startYear)
+        val state = world.getState()
+        val envMap = WorldEnvBuilder.commandEnvMap(
+            state.currentYear,
+            startYear,
+            state.currentMonth,
+            state.currentPhase,
+        )
         return candidateAllowedHook(general.id, general.cityId, general.nationId, envMap)(
             GenDomesticFamily.TRADE_ACTION, args,
         )

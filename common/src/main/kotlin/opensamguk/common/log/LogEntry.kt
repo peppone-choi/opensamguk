@@ -8,7 +8,8 @@ data class LogEntryDraft(
 )
 data class LogEntryRecord(
     val scope: LogScope, val category: LogCategory, val text: String, val year: Int, val month: Int,
+    val phase: Int = 1,
     val generalId: Int? = null, val nationId: Int? = null, val userId: Int? = null,
     val subType: String? = null, val meta: Map<String, Any?>? = null, val createdAt: java.time.Instant? = null,
 )
-data class LogContext(val year: Int, val month: Int, val at: java.time.Instant? = null)
+data class LogContext(val year: Int, val month: Int, val phase: Int = 1, val at: java.time.Instant? = null)

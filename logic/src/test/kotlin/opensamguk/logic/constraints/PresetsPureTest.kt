@@ -266,10 +266,10 @@ class PresetsPureTest {
         assertEquals(ConstraintResult.Allow, beOpeningPart { _, _ -> 2 }.test(ctx(), view()))
     @Test fun `beOpeningPart denies when relYear at opening year`() =
         assertEquals("초반이 지났습니다.", deny(beOpeningPart { _, _ -> 3 }.test(ctx(), view())))
-    @Test fun `notOpeningPart allows when relYear at opening year`() =
-        assertEquals(ConstraintResult.Allow, notOpeningPart { _, _ -> 3 }.test(ctx(), view()))
-    @Test fun `notOpeningPart denies when relYear below opening year`() =
-        assertEquals("초반 제한 중에는 불가능합니다.", deny(notOpeningPart { _, _ -> 2 }.test(ctx(), view())))
+    @Test fun `notOpeningPart allows after one opensamguk year`() =
+        assertEquals(ConstraintResult.Allow, notOpeningPart { _, _ -> 1 }.test(ctx(), view()))
+    @Test fun `notOpeningPart denies before one opensamguk year`() =
+        assertEquals("초반 제한 중에는 불가능합니다.", deny(notOpeningPart { _, _ -> 0 }.test(ctx(), view())))
 
     // --- allowWar / allowStrategicCommand (meta.war == 0 → allow) ---
     @Test fun `allowWar allows when nation war is 0`() =

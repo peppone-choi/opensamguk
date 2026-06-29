@@ -204,7 +204,7 @@ class ReservedTurnHandlerTest {
         val outcome = handler.handle(42, "che_농지개간", YEAR, MONTH, "12:34")
 
         // The precheck call site (E2 PrecheckStateViewFactory) builds its env through the SAME helper.
-        val precheckEnv = WorldEnvBuilder.envMap(YEAR, START_YEAR)
+        val precheckEnv = WorldEnvBuilder.commandEnvMap(YEAR, START_YEAR, MONTH, 1)
 
         // key-for-key equality proves the one shared helper — neither call site can drift (P1 #7).
         assertEquals(precheckEnv, outcome.env, "full-mode env == precheck env (same WorldEnvBuilder)")

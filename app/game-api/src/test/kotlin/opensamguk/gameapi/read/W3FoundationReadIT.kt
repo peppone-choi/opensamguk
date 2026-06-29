@@ -94,7 +94,7 @@ class W3FoundationReadIT {
         assertEquals(5, g.officerCity)                            // V6 officer_city
         assertNotNull(g.turnTime)
         // F3 포맷터가 이 turn_time을 TURNTIME_FULL로 변환.
-        assertEquals("2026-06-03 10:30:45", TurnTimeFormatter.full(g.turnTime))
+        assertEquals("2026-06-03 19:30:45", TurnTimeFormatter.full(g.turnTime))
     }
     @Test
     fun `F2 - rank_data 전투 통계 read 경로가 동작한다`() {

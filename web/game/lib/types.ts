@@ -401,6 +401,9 @@ export interface GameConstResponse {
         maxTechLevel?: number;
         initialAllowedTechLevel?: number;
         techLevelIncYear?: number;
+        phasesPerMonth?: number;
+        turnsPerYear?: number;
+        openingLimitTurns?: number;
         nationColors?: string[];
         [key: string]: unknown;
     };

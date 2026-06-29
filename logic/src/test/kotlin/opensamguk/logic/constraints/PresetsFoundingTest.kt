@@ -138,7 +138,7 @@ class PresetsFoundingTest {
 
     @Test fun `notOpeningPart denies inside the opening window with 초반 제한 중에는 불가능합니다`() =
         assertEquals("초반 제한 중에는 불가능합니다.",
-            deny(notOpeningPart { _, _ -> GameConst.openingPartYear - 1 }.test(ctx(), view())))
+            deny(notOpeningPart { _, _ -> 0 }.test(ctx(), view())))
 
     // --- CheckNationNameDuplicate (건국 family) — C-DEST ---
 

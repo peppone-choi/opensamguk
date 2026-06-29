@@ -8,6 +8,7 @@ services:
     container_name: opensamguk-postgres
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       POSTGRES_DB: ${POSTGRES_DB:-sammo}
       POSTGRES_USER: ${POSTGRES_USER:-sammo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
@@ -31,6 +32,8 @@ services:
     container_name: opensamguk-redis
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
     volumes:
       - redisdata:/data
     healthcheck:
@@ -51,6 +54,7 @@ services:
     container_name: opensamguk-game-engine
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
@@ -60,6 +64,7 @@ services:
       # Production starts empty by default; admins create servers before any scenario seed.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=40.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
       postgres:
@@ -80,6 +85,7 @@ services:
     container_name: opensamguk-game-api
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
@@ -91,6 +97,7 @@ services:
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
       # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — same value as gateway-api}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=50.0 -XX:InitialRAMPercentage=30.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
       postgres:
@@ -111,6 +118,7 @@ services:
     container_name: opensamguk-gateway-api
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
@@ -126,6 +134,7 @@ services:
       # Admin seed (idempotent on empty users table).
       ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=40.0 -XX:InitialRAMPercentage=25.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
       postgres:
@@ -146,6 +155,7 @@ services:
     container_name: opensamguk-web-gateway
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: production
       PORT: 3000
       # Server-only proxy target (NEXT_PUBLIC_GAME_URL is baked into the image at build).
@@ -168,6 +178,7 @@ services:
     container_name: opensamguk-web-game
     restart: unless-stopped
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: production
       PORT: 3001
       GAME_API_URL: ${GAME_API_URL:-http://game-api:8081}

@@ -19,6 +19,8 @@ const MAP_FIXTURE: MapPreviewResponse = {
     serverName: '테스트섭',
     year: 200,
     month: 5,
+    turnPhase: 1,
+    turnPhaseText: '상순',
     mapCode: 'che',
     width: 700,
     height: 500,
@@ -106,7 +108,7 @@ describe('MapViewer — 도시 마커 클릭 → 도시 정보 페이지 라우�
 
     it('공백지(장안 id 22)도 해당 id 링크를 가진다', async () => {
         await renderAndLoad();
-        const cityLink = screen.getByRole('link', { name: /장안 레벨 3 공 백 지/ });
+        const cityLink = screen.getByRole('link', { name: /장안 레벨 3/ });
         expect(cityLink).toHaveAttribute('href', '/game/city?id=22');
     });
 
@@ -129,14 +131,14 @@ describe('MapViewer — 명령 모달 도시 선택 모드', () => {
         fireEvent.click(cityButton);
 
         expect(onCitySelect).toHaveBeenCalledWith(11);
-        expect(screen.getByRole('button', { name: /장안 레벨 3 공 백 지/ })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('button', { name: /장안 레벨 3/ })).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('공백지 툴팁은 공백지 국가명을 화면 텍스트로 표시하지 않는다', async () => {
         render(<MapViewer mapData={MAP_FIXTURE} />);
         await waitFor(() => expect(tintedColors).toContain(NATION_RED));
 
-        fireEvent.mouseEnter(screen.getByLabelText(/장안 레벨 3 공 백 지/));
+        fireEvent.mouseEnter(screen.getByLabelText(/장안 레벨 3/));
 
         expect(screen.queryByText('공 백 지')).toBeNull();
     });
@@ -147,7 +149,7 @@ describe('MapViewer — 오오라(소유국만)', () => {
         await renderAndLoad();
         const ownedBase = screen.getByLabelText(/낙양 레벨 8 위/);
         expect(ownedBase.querySelector('.city-aura')).toBeTruthy();
-        const neutralBase = screen.getByLabelText(/장안 레벨 3 공 백 지/);
+        const neutralBase = screen.getByLabelText(/장안 레벨 3/);
         expect(neutralBase.querySelector('.city-aura')).toBeNull();
     });
 });
@@ -171,7 +173,7 @@ describe('MapViewer — 깃발 틴트(nation 색)', () => {
 
     it('공백지 마커에는 깃발 이미지가 없다', async () => {
         await renderAndLoad();
-        const neutralBase = screen.getByLabelText(/장안 레벨 3 공 백 지/);
+        const neutralBase = screen.getByLabelText(/장안 레벨 3/);
         expect(neutralBase.querySelector('.city-flag-img')).toBeNull();
     });
 });

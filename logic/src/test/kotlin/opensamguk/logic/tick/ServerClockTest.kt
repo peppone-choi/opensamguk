@@ -2,7 +2,6 @@ package opensamguk.logic.tick
 
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 
@@ -16,9 +15,8 @@ import kotlin.test.assertEquals
  */
 class ServerClockTest {
 
-    /** UTC instant for a wall-clock date-time (PHP `DateTime` strings are wall-clock). */
     private fun at(y: Int, mo: Int, d: Int, h: Int, mi: Int, s: Int = 0): Instant =
-        ZonedDateTime.of(y, mo, d, h, mi, s, 0, ZoneOffset.UTC).toInstant()
+        ZonedDateTime.of(y, mo, d, h, mi, s, 0, ServerClock.SERVER_ZONE).toInstant()
 
     @Test
     fun `addTurn adds turnTerm minutes times turn`() {
@@ -38,6 +36,15 @@ class ServerClockTest {
         assertEquals(at(2024, 1, 2, 11, 0), ServerClock.cutTurn(at(2024, 1, 2, 12, 0), turnTerm = 120))
         // already on grid: 2024-01-02 11:00 stays put.
         assertEquals(at(2024, 1, 2, 11, 0), ServerClock.cutTurn(at(2024, 1, 2, 11, 0), turnTerm = 120))
+    }
+
+    @Test
+    fun `cutTurn uses the Korean server date for the day anchor`() {
+        val lateUtcButKoreanMorning = Instant.parse("2024-01-01T16:30:00Z")
+        assertEquals(
+            ZonedDateTime.of(2024, 1, 2, 1, 0, 0, 0, ServerClock.SERVER_ZONE).toInstant(),
+            ServerClock.cutTurn(lateUtcButKoreanMorning, turnTerm = 60),
+        )
     }
 
     @Test

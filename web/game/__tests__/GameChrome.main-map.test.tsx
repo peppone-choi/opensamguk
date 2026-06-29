@@ -109,14 +109,18 @@ describe('GameChrome main map', () => {
         expect(props.disallowClick).not.toBe(true);
     });
 
-    it('keeps legacy main-board slots for map and info cards', () => {
+    it('groups the owned city nation and general cards in the subject panel', () => {
         const { container } = render(<GameChrome />);
 
         expect(container.querySelector('.ingame-board')).not.toBeNull();
         expect(container.querySelector('.ib-map')).not.toBeNull();
-        expect(screen.getByTestId('city-card').parentElement).toHaveClass('ib-city');
-        expect(screen.getByTestId('nation-card').parentElement).toHaveClass('ib-nation');
-        expect(screen.getByTestId('general-card').parentElement).toHaveClass('ib-general');
+        const subjectPanel = screen.getByRole('region', { name: '현재 조작 대상' });
+        expect(subjectPanel).toHaveClass('ib-subject-panel');
+        expect(subjectPanel).toHaveTextContent('조작 대상');
+        expect(subjectPanel).toHaveTextContent('본인');
+        expect(subjectPanel).toContainElement(screen.getByTestId('city-card'));
+        expect(subjectPanel).toContainElement(screen.getByTestId('nation-card'));
+        expect(subjectPanel).toContainElement(screen.getByTestId('general-card'));
     });
 
     it('renders legacy PageFront status rows before the main board', () => {

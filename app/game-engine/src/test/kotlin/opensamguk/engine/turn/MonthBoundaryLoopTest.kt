@@ -3,29 +3,28 @@ package opensamguk.engine.turn
 import opensamguk.logic.tick.ServerClock
 import org.junit.jupiter.api.Test
 import java.time.Instant
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * FT3 — wrap the P2 per-general drain in the `executeAllCommand` two-level month-boundary loop.
+ * FT3 — wrap the P2 per-general drain in the `executeAllCommand` boundary loop.
  *
  * Port target: PHP `TurnExecutionHelper.php:393-517`. The loop keeps the P2 single-pass drain
- * (`compareBy(turnTime,id)` == `ORDER BY turntime ASC, no ASC`) and interleaves ONE
- * `MonthlyPipeline.runMonth` per month boundary. The clean-boundary / processed-count model is kept
+ * (`compareBy(turnTime,id)` == `ORDER BY turntime ASC, no ASC`) and interleaves the monthly
+ * `MonthlyPipeline.runMonth` only on 상순. The clean-boundary / processed-count model is kept
  * (we drain ALL due, then flush ONCE per boundary — the divergence from PHP's wall-clock partial
  * checkpoint is documented in [TurnDaemonLifecycle.runMonthBoundaryLoop]).
  */
 class MonthBoundaryLoopTest {
 
     private fun at(y: Int, mo: Int, d: Int, h: Int, mi: Int): Instant =
-        ZonedDateTime.of(y, mo, d, h, mi, 0, 0, ZoneOffset.UTC).toInstant()
+        ZonedDateTime.of(y, mo, d, h, mi, 0, 0, ServerClock.SERVER_ZONE).toInstant()
 
     private val turnTerm = 120 // minutes
 
     @Test
-    fun `one month boundary runs one drain pass then one month`() {
+    fun `one phase boundary runs one drain pass then one gated month run`() {
         val log = mutableListOf<String>()
         val lc = TurnDaemonLifecycle.MonthBoundaryDriver(
             drain = { upto -> log.add("drain<$upto") },
@@ -43,7 +42,7 @@ class MonthBoundaryLoopTest {
     }
 
     @Test
-    fun `two month catch-up runs drain month drain month`() {
+    fun `two phase catch-up runs drain month drain month when ungated`() {
         val log = mutableListOf<String>()
         val lc = TurnDaemonLifecycle.MonthBoundaryDriver(
             drain = { _ -> log.add("drain") },
@@ -58,7 +57,7 @@ class MonthBoundaryLoopTest {
     }
 
     @Test
-    fun `monthly pipeline can be gated while every phase still drains`() {
+    fun `monthly pipeline runs only once across three phase drains when gate opens on 상순`() {
         val log = mutableListOf<String>()
         var phase = 0
         val lc = TurnDaemonLifecycle.MonthBoundaryDriver(

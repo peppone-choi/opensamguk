@@ -195,12 +195,9 @@ class TurnDaemonLifecycle(
         return LastTurn.fromRaw(raw as? Map<String, Any?>)
     }
 
-    /** `HH:MM` of the run time in UTC (the `<1>date</>` log suffix; PHP logs the turn clock time). */
     private fun formatTurnTime(at: Instant): String {
-        val secondsOfDay = Math.floorMod(at.epochSecond, 86_400L)
-        val hh = secondsOfDay / 3_600L
-        val mm = (secondsOfDay % 3_600L) / 60L
-        return "%02d:%02d".format(hh, mm)
+        val local = at.atZone(ServerClock.SERVER_ZONE).toLocalTime()
+        return "%02d:%02d".format(local.hour, local.minute)
     }
 
     /**
@@ -218,19 +215,20 @@ class TurnDaemonLifecycle(
      *
      * **Clean-boundary / processed-count model (consolidated OQ #4):** PHP's wall-clock budget can
      * partial-checkpoint mid-pass; we do NOT port that. We drain ALL due generals so the golden
-     * compares at a clean monthly boundary (design §11 implies a clean boundary).
+     * compares at a clean phase boundary (design §11 implies a clean boundary).
      *
      * The loop:
      * - `now < turntime` → no-op (the next turn has not arrived).
      * - `isUnitedState ∈ {2,3}` → freeze the whole tick (천통 — unification settled/locked).
      * - `prevTurn = cutTurn(turntime)`, `nextTurn = addTurn(prevTurn)`; `while (nextTurn <= now)`:
-     *   **L1** [drain] all generals with `turnTime < nextTurn` (the P2 pass), **L2** [runMonth] at
-     *   `nextTurn` (`MonthlyPipeline.runMonth`), **L11** advance `prevTurn=nextTurn`,
+     *   **L1** [drain] all generals with `turnTime < nextTurn` (the P2 pass), **L2** optionally
+     *   [runMonth] at `nextTurn` (`MonthlyPipeline.runMonth`; currently only when the new phase is 상순),
+     *   **L11** advance `prevTurn=nextTurn`,
      *   `nextTurn=addTurn(prevTurn)`.
-     * - After the loop: a FINAL sub-month [drain] at `now` (the partial month since the last
+     * - After the loop: a FINAL sub-phase [drain] at `now` (the partial phase since the last
      *   boundary), then the daemon flushes.
      *
-     * @return the number of month boundaries crossed (0 when no-op / frozen).
+     * @return the number of monthly pipeline runs (0 when no-op / frozen).
      */
     class MonthBoundaryDriver(
         /** The per-general drain pass for all generals due strictly before the given instant. */

@@ -70,7 +70,7 @@ class GeneralListReadIT {
         insertGeneral(id = 13, nationId = 1, npc = 0, turnTime = "2026-06-03 11:00:00+00", recentWar = "2026-06-02 22:15:30+00", age = 41)
         val g13 = generals.findById(13).orElseThrow()
         assertEquals(41, g13.age)
-        assertEquals("2026-06-02 22:15:30", TurnTimeFormatter.full(g13.recentWarTime))
+        assertEquals("2026-06-03 07:15:30", TurnTimeFormatter.full(g13.recentWarTime))
     }
     @Test
     fun `findReservedByGeneralIds 는 turn_idx 5 미만만 general별 정렬해 일괄 반환한다`() {

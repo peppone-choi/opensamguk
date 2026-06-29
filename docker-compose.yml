@@ -25,6 +25,7 @@ services:
     image: postgres:16-alpine
     container_name: opensamguk-postgres
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       POSTGRES_DB: ${POSTGRES_DB:-sammo}
       POSTGRES_USER: ${POSTGRES_USER:-sammo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
@@ -45,6 +46,8 @@ services:
     image: redis:7-alpine
     container_name: opensamguk-redis
     command: redis-server --appendonly yes
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -65,6 +68,7 @@ services:
       dockerfile: docker/gateway-api.Dockerfile
     container_name: opensamguk-gateway-api
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
@@ -81,6 +85,7 @@ services:
       # Admin seed (gateway-api AdminSeeder, idempotent on empty users table).
       ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-peppone}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GATEWAY_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:
       postgres:
@@ -104,6 +109,7 @@ services:
       dockerfile: docker/game-api.Dockerfile
     container_name: opensamguk-game-api
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
@@ -116,6 +122,7 @@ services:
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
       # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — see .env.example}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GAME_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:
       postgres:
@@ -139,6 +146,7 @@ services:
       dockerfile: docker/game-engine.Dockerfile
     container_name: opensamguk-game-engine
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sammo}
       GAME_DB_USER: ${POSTGRES_USER:-sammo}
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:-sammo}
@@ -149,6 +157,7 @@ services:
       # Scenario seed (ScenarioSeedRunner, idempotent on empty world_state).
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GAME_ENGINE_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:
       postgres:
@@ -176,6 +185,7 @@ services:
         NEXT_PUBLIC_GAME_URL: ${NEXT_PUBLIC_GAME_URL:-http://localhost:3001}
     container_name: opensamguk-web-gateway
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       # Session-cookie Secure flag. Default false so login works over HTTP (local/LAN compose on
@@ -205,6 +215,7 @@ services:
         NEXT_PUBLIC_GATEWAY_URL: ${NEXT_PUBLIC_GATEWAY_URL:-http://localhost:3000}
     container_name: opensamguk-web-game
     environment:
+      TZ: ${TZ:-Asia/Seoul}
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3001
       # Server-only (route handlers proxy to game-api/gateway-api; never exposed to the browser).

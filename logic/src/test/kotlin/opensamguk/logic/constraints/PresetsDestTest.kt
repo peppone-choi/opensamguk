@@ -235,9 +235,8 @@ class PresetsDestTest {
         return view(generals = listOf(actor), nations = listOf(destN))
     }
     @Test fun `allowJoinDestNation branch1 opening-part gennum limit`() {
-        // relYear < openingPartYear(3) && gennum >= initialNationGenLimit(10)
         val v = joinView(gennum = 10)
-        assertEquals("임관이 제한되고 있습니다.", deny(allowJoinDestNation { _, _ -> 2 }.test(ctx(destNationId = 2, args = mapOf("relYear" to 2)), v)))
+        assertEquals("임관이 제한되고 있습니다.", deny(allowJoinDestNation { _, _ -> 2 }.test(ctx(destNationId = 2, args = mapOf("relYear" to 0)), v)))
     }
     @Test fun `allowJoinDestNation branch2 scout banned`() {
         val v = joinView(scout = 1)
@@ -260,7 +259,7 @@ class PresetsDestTest {
     @Test fun `allowJoinDestNation branch order branch1 wins over scout`() {
         // both branch1 (opening gennum) and branch2 (scout) hold → branch1 reason
         val v = joinView(gennum = 10, scout = 1)
-        assertEquals("임관이 제한되고 있습니다.", deny(allowJoinDestNation { _, _ -> 2 }.test(ctx(destNationId = 2, args = mapOf("relYear" to 1)), v)))
+        assertEquals("임관이 제한되고 있습니다.", deny(allowJoinDestNation { _, _ -> 2 }.test(ctx(destNationId = 2, args = mapOf("relYear" to 0)), v)))
     }
 
     // --- AllowDiplomacyStatus (preloaded directional diplomacy existence predicate) ---

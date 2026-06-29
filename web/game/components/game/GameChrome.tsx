@@ -130,15 +130,32 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
                     )}
                 </div>
 
-                <div className="ib-city">
+                <section className="ib-subject-panel" aria-label="현재 조작 대상">
+                    <div className="subject-target-bar">
+                        <div className="subject-target-title">조작 대상</div>
+                        <div className="subject-target-tabs" role="tablist" aria-label="명령 대상">
+                            <button type="button" className="subject-target-tab active" aria-selected="true">
+                                본인
+                            </button>
+                            <button type="button" className="subject-target-tab" disabled>
+                                가신
+                            </button>
+                            <button type="button" className="subject-target-tab" disabled>
+                                부곡
+                            </button>
+                        </div>
+                        <div className="subject-target-current">
+                            <span>{general.name ?? '장수'}</span>
+                            <span>{nation?.name ?? '재야'}</span>
+                            <span>{city?.name ?? '소재 없음'}</span>
+                        </div>
+                    </div>
                     <CityBasicCard city={city} />
-                </div>
-                <div className="ib-nation">
-                    <NationBasicCard nation={nation} />
-                </div>
-                <div className="ib-general">
-                    <GeneralBasicCard general={general} nation={nation} />
-                </div>
+                    <div className="subject-secondary-grid">
+                        <NationBasicCard nation={nation} />
+                        <GeneralBasicCard general={general} nation={nation} />
+                    </div>
+                </section>
 
                 {gating && (
                     <div className="ib-controlbar">

@@ -149,7 +149,7 @@ class FlushPayloadConvergenceTest {
     }
 
     @Test
-    fun `log rows are stamped with the current ten-day phase`() {
+    fun `log rows are stamped and prefixed with the current ten-day phase`() {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state = baseState(phase = 3),
@@ -158,11 +158,12 @@ class FlushPayloadConvergenceTest {
                 cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5)),
             ),
         )
-        world.pushLog(LogEntryDraft(scope = "general", category = "action", text = "하순 행동", generalId = 10, nationId = 1))
+        world.pushLog(LogEntryDraft(scope = "general", category = "action", text = "<C>●</>1월:하순 행동", generalId = 10, nationId = 1))
 
         val payload = DatabaseHooks.toFlushPayload(world, ChangeRecorder(), world.consumeDirtyState())
 
         assertEquals(3, payload.logEntries.single().phase)
+        assertEquals("<C>●</>1월 하순:하순 행동", payload.logEntries.single().text)
     }
 
     @Test

@@ -8,7 +8,7 @@ internal fun shouldDropEntry(entry: LogEntryDraft): Boolean {
 fun finalizeLogEntry(entry: LogEntryDraft, context: LogContext): LogEntryRecord? {
     if (shouldDropEntry(entry)) return null
     val format = entry.format ?: LogFormat.RAWTEXT
-    val text = formatLogText(entry.text, format, context.year, context.month)
-    return LogEntryRecord(entry.scope, entry.category, text, context.year, context.month,
+    val text = formatLogText(entry.text, format, context.year, context.month, context.phase)
+    return LogEntryRecord(entry.scope, entry.category, text, context.year, context.month, context.phase,
         entry.generalId, entry.nationId, entry.userId, entry.subType, entry.meta, context.at)
 }

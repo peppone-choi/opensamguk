@@ -172,6 +172,9 @@ object GameConst {
     const val statGradeLevel = 5
 
     const val openingPartYear = 3
+    const val phasesPerMonth = 3
+    const val turnsPerYear = 36
+    const val openingLimitTurns = turnsPerYear
     const val joinActionLimit = 12
 
     const val bornMinStatBonus = 3

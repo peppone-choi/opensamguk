@@ -34,6 +34,17 @@ class WorldEnvBuilderTest {
     }
 
     @Test
+    fun `commandEnvMap carries phase-aware elapsed turn count`() {
+        val env = WorldEnvBuilder.commandEnvMap(year = 185, startYear = 184, month = 1, phase = 1)
+        assertEquals(listOf("year", "startYear", "develCost", "month", "phase", "elapsedTurns", "openingLimitTurns"), env.keys.toList())
+        assertEquals(36, (env["elapsedTurns"] as Number).toInt())
+        assertEquals(36, (env["openingLimitTurns"] as Number).toInt())
+
+        val midYear = WorldEnvBuilder.commandEnvMap(year = 184, startYear = 184, month = 6, phase = 2)
+        assertEquals(16, (midYear["elapsedTurns"] as Number).toInt())
+    }
+
+    @Test
     fun `envMap from WorldEnv equals envMap from year startYear (single source)`() {
         val typed = WorldEnv(year = 220, startYear = 184, develCost = 999) // bogus develCost ignored
         val fromTyped = WorldEnvBuilder.envMap(typed)

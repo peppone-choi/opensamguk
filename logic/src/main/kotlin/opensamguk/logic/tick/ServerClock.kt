@@ -1,9 +1,10 @@
 package opensamguk.logic.tick
 
+import opensamguk.common.constants.GameConst
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 /**
  * FT1 — pure calendar helpers for the monthly tick.
@@ -18,15 +19,16 @@ import java.time.ZoneOffset
  *   calendar day 01:00 (PHP `$baseDate = midnight(date) - P1D + PT1H`).
  * - `cutDay` (`:969-...`) — the day-sync variant (grid of `12 * turnTerm` minutes).
  *
- * Time is modeled as [Instant] (UTC), matching the engine world model. `turnTerm` is in MINUTES, so
- * one turn step is `turnTerm * 60` seconds. Wall-clock dates are interpreted in UTC (the daemon runs
- * on a single fixed zone; the parity capture pins the same).
+ * Time is modeled as [Instant] while wall-clock dates are interpreted in the fixed opensamguk server
+ * zone, [SERVER_ZONE] (`Asia/Seoul`). `turnTerm` is in MINUTES, so one turn step is `turnTerm * 60`
+ * seconds.
  *
  * The helpers are PURE and change-gated at the call site: [turnDate] returns `(year, month, phase)`;
  * the caller writes the world clock only if it changed. Opensamguk intentionally uses the 삼모
  * ten-day calendar: 상순/중순/하순, 36 turns per year.
  */
 object ServerClock {
+    val SERVER_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
     /** PHP `addTurn`: `$date + PT{turnTerm*turn}M`. */
     fun addTurn(date: Instant, turnTerm: Int, turn: Int = 1): Instant =
@@ -38,7 +40,7 @@ object ServerClock {
 
     /**
      * PHP `cutTurn`: floor [date] to the `turnTerm`-minute grid measured from the anchor
-     * `midnight(date's day) - 1 day + 1 hour` (i.e. the PRIOR calendar day at 01:00 UTC).
+     * `midnight(date's day) - 1 day + 1 hour` (i.e. the PRIOR Korean calendar day at 01:00).
      *
      * `diffMin = intdiv(date - anchor, 60); diffMin -= diffMin % turnTerm; result = anchor + diffMin`.
      */
@@ -77,8 +79,8 @@ object ServerClock {
     }
 
     fun advance(date: GameDate, turns: Int): GameDate {
-        val absolute = date.year.toLong() * TURNS_PER_YEAR +
-            (date.month - 1L) * PHASES_PER_MONTH +
+        val absolute = date.year.toLong() * GameConst.turnsPerYear +
+            (date.month - 1L) * GameConst.phasesPerMonth +
             (date.phase - 1L) +
             turns
         return dateFromAbsoluteTurn(absolute)
@@ -109,8 +111,8 @@ object ServerClock {
 
     /** PHP `$baseDate = new DateTime(date->format('Y-m-d')); $baseDate->sub(P1D)->add(PT1H);` */
     private fun anchorOf(date: Instant): Instant {
-        val day: LocalDate = date.atZone(ZoneOffset.UTC).toLocalDate()
-        val priorMidnight = day.minusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
+        val day: LocalDate = date.atZone(SERVER_ZONE).toLocalDate()
+        val priorMidnight = day.minusDays(1).atStartOfDay(SERVER_ZONE).toInstant()
         return priorMidnight.plus(Duration.ofHours(1))
     }
 
@@ -118,18 +120,15 @@ object ServerClock {
     private fun floorDiv(a: Long, b: Long): Long = Math.floorDiv(a, b)
 
     private fun dateFromElapsedTurns(startYear: Int, elapsedTurns: Long): GameDate =
-        dateFromAbsoluteTurn(startYear.toLong() * TURNS_PER_YEAR + elapsedTurns)
+        dateFromAbsoluteTurn(startYear.toLong() * GameConst.turnsPerYear + elapsedTurns)
 
     private fun dateFromAbsoluteTurn(absolute: Long): GameDate {
-        val year = floorDiv(absolute, TURNS_PER_YEAR).toInt()
-        val withinYear = Math.floorMod(absolute, TURNS_PER_YEAR)
-        val month = (withinYear / PHASES_PER_MONTH + 1L).toInt()
-        val phase = (withinYear % PHASES_PER_MONTH + 1L).toInt()
+        val year = floorDiv(absolute, GameConst.turnsPerYear.toLong()).toInt()
+        val withinYear = Math.floorMod(absolute, GameConst.turnsPerYear.toLong())
+        val month = (withinYear / GameConst.phasesPerMonth.toLong() + 1L).toInt()
+        val phase = (withinYear % GameConst.phasesPerMonth.toLong() + 1L).toInt()
         return GameDate(year, month, phase)
     }
-
-    private const val PHASES_PER_MONTH = 3L
-    private const val TURNS_PER_YEAR = 36L
 }
 
 data class GameDate(

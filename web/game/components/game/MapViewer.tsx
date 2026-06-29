@@ -69,6 +69,9 @@ const FLAG_PX = Math.round(12 * ICON_SCALE); // 12 → 9
 const STAR_PX = Math.round(10 * ICON_SCALE); // 10 → 7
 const STATE_ICON_SCALE = 0.54;
 const STATE_PX = Math.round(15 * STATE_ICON_SCALE);
+const DEFAULT_PHASES_PER_MONTH = 3;
+const DEFAULT_TURNS_PER_YEAR = 36;
+const DEFAULT_OPENING_LIMIT_TURNS = DEFAULT_TURNS_PER_YEAR;
 // 표에 없는 레벨(예: 0)도 깨지지 않게 lv3 기준으로 폴백.
 function sizeOf(level: number): CitySize {
     const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
@@ -112,30 +115,59 @@ export function mapTitleColor(startYear: number | undefined, year: number): stri
 
 type MapTitleGameConst = NonNullable<GameConstResponse['gameConst']>;
 
-function joinYearMonth(year: number, month: number): number {
-    return year * 12 + (month - 1);
+function phaseName(phase: number): string {
+    if (phase === 2) return '중순';
+    if (phase === 3) return '하순';
+    return '상순';
 }
 
-function parseYearMonth(yearMonth: number): [number, number] {
-    return [Math.trunc(yearMonth / 12), (yearMonth % 12) + 1];
+function dateFromElapsedTurns(startYear: number, elapsedTurns: number): { year: number; month: number; phase: number } {
+    const year = startYear + Math.floor(elapsedTurns / DEFAULT_TURNS_PER_YEAR);
+    const withinYear = ((elapsedTurns % DEFAULT_TURNS_PER_YEAR) + DEFAULT_TURNS_PER_YEAR) % DEFAULT_TURNS_PER_YEAR;
+    const month = Math.floor(withinYear / DEFAULT_PHASES_PER_MONTH) + 1;
+    const phase = (withinYear % DEFAULT_PHASES_PER_MONTH) + 1;
+    return { year, month, phase };
 }
 
-function beginGameLimitTooltip(startYear: number | undefined, year: number, month: number): string | undefined {
-    if (startYear == null || year > startYear + 3) return undefined;
-    const [remainYear, remainMonth] = parseYearMonth(
-        joinYearMonth(startYear + 3, 0) - joinYearMonth(year, month),
-    );
-    return `초반제한 기간 : ${remainYear}년${remainMonth > 0 ? ` ${remainMonth}개월` : ''} (${startYear + 3}년)`;
+function turnSpanText(turns: number): string {
+    const safeTurns = Math.max(0, turns);
+    const months = Math.floor(safeTurns / DEFAULT_PHASES_PER_MONTH);
+    const phases = safeTurns % DEFAULT_PHASES_PER_MONTH;
+    const years = Math.floor(months / 12);
+    const remainMonths = months % 12;
+    const parts: string[] = [];
+    if (years > 0) parts.push(`${years}년`);
+    if (remainMonths > 0) parts.push(`${remainMonths}개월`);
+    if (phases > 0) parts.push(`${phases}순`);
+    return parts.length ? parts.join(' ') : '0순';
+}
+
+function beginGameLimitTooltip(
+    startYear: number | undefined,
+    year: number,
+    month: number,
+    phase: number,
+    gameConst?: MapTitleGameConst | null,
+): string | undefined {
+    if (startYear == null) return undefined;
+    const safePhase = Math.min(Math.max(Math.trunc(phase || 1), 1), DEFAULT_PHASES_PER_MONTH);
+    const openingLimitTurns =
+        typeof gameConst?.openingLimitTurns === 'number' ? gameConst.openingLimitTurns : DEFAULT_OPENING_LIMIT_TURNS;
+    const elapsedTurns = (year - startYear) * DEFAULT_TURNS_PER_YEAR + (month - 1) * DEFAULT_PHASES_PER_MONTH + (safePhase - 1);
+    if (elapsedTurns >= openingLimitTurns) return undefined;
+    const unlock = dateFromElapsedTurns(startYear, openingLimitTurns);
+    return `초반제한 기간 : ${turnSpanText(openingLimitTurns - elapsedTurns)} (${unlock.year}년 ${unlock.month}월 ${phaseName(unlock.phase)} 해제)`;
 }
 
 export function mapTitleTooltip(
     startYear: number | undefined,
     year: number,
     month: number,
+    phase: number | undefined = 1,
     gameConst?: MapTitleGameConst | null,
 ): string | undefined {
     const result: string[] = [];
-    const beginLimit = beginGameLimitTooltip(startYear, year, month);
+    const beginLimit = beginGameLimitTooltip(startYear, year, month, phase ?? 1, gameConst);
     if (beginLimit) result.push(beginLimit);
 
     const maxTechLevel = gameConst?.maxTechLevel;
@@ -434,7 +466,7 @@ export default function MapViewer({
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
     const titleText = `${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`;
-    const titleTooltip = mapTitleTooltip(data.startYear, data.year, data.month, gameConst);
+    const titleTooltip = mapTitleTooltip(data.startYear, data.year, data.month, data.turnPhase ?? 1, gameConst);
 
     return (
         <section className={`map-viewer${hideCityName ? ' hide-cityname' : ''}`} aria-label="세계 지도">
