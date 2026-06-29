@@ -24,7 +24,7 @@ export default function Home() {
         <Shell>
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
                 <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-sm)' }}>
-                    opensamguk
+                    오픈삼국
                 </h1>
                 <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-sm)' }}>
                     오픈삼국 — 메모리 중심 CQRS 재작성

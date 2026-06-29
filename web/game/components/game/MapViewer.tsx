@@ -88,7 +88,7 @@ function levelText(level: number): string {
 }
 
 // CDN 베이스맵 코드 — 시나리오가 맵을 특정 못한 경우(mapCode="scenario") che 베이스로 폴백. gateway MapPreview와 동일.
-const CDN_MAPS = new Set(['che', 'chess', 'cr', 'miniche']);
+const CDN_MAPS = new Set(['che', 'chess', 'cr', 'ludo_rathowm', 'miniche', 'miniche_b', 'miniche_clean', 'pokemon_v1']);
 function cdnMapCode(mc: string): string {
     return CDN_MAPS.has(mc) ? mc : 'che';
 }
@@ -222,7 +222,16 @@ function mergeLive(
         color: t[2] as string,
     }));
     return {
-        data: { ...preview, startYear: wm.startYear, year: wm.year, month: wm.month, cities, nations },
+        data: {
+            ...preview,
+            startYear: wm.startYear,
+            year: wm.year,
+            month: wm.month,
+            turnPhase: wm.turnPhase ?? preview.turnPhase,
+            turnPhaseText: wm.turnPhaseText ?? preview.turnPhaseText,
+            cities,
+            nations,
+        },
         myCity: wm.myCity,
     };
 }
@@ -424,7 +433,7 @@ export default function MapViewer({
     const h = data.height || 500;
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
     const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
-    const titleText = `${data.year}年 ${data.month}月`;
+    const titleText = `${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`;
     const titleTooltip = mapTitleTooltip(data.startYear, data.year, data.month, gameConst);
 
     return (
@@ -479,6 +488,10 @@ export default function MapViewer({
                         const isMyCity = effectiveMyCity != null && effectiveMyCity === c.id;
                         const isSelectedCity = selectedCityId != null && selectedCityId === c.id;
                         const cityHref = `${cityBaseHref}?id=${encodeURIComponent(String(c.id))}`;
+                        const cityAriaLabel =
+                            c.nationId !== 0
+                                ? `${c.name} 레벨 ${c.level} ${nationNameOf(c.nationId)}`
+                                : `${c.name} 레벨 ${c.level}`;
 
                         return (
                             <a
@@ -486,7 +499,7 @@ export default function MapViewer({
                                 key={c.id}
                                 className={`city-base${unsupplied ? ' supply-off' : ''}${clickEnabled ? '' : ' city-noclick'}${selectionEnabled ? ' city-selectable' : ''}${isSelectedCity ? ' city-selected' : ''}`}
                                 style={{ left: baseLeft, top: baseTop, width: BASE_W, height: BASE_H }}
-                                aria-label={`${c.name} 레벨 ${c.level} ${nationNameOf(c.nationId)}`}
+                                aria-label={cityAriaLabel}
                                 aria-disabled={clickEnabled ? undefined : true}
                                 aria-pressed={selectionEnabled ? isSelectedCity : undefined}
                                 role={selectionEnabled ? 'button' : undefined}

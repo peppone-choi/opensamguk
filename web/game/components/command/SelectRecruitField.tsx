@@ -28,6 +28,7 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
     const [failed, setFailed] = useState(false);
     const [crewType, setCrewType] = useState<number | null>(null);
     const [amountUnit, setAmountUnit] = useState(0);
+    const [showAllUnits, setShowAllUnits] = useState(false);
 
     useEffect(() => {
         let on = true;
@@ -44,6 +45,14 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
     }, []);
 
     const units = useMemo(() => constData?.gameUnitConst ?? [], [constData]);
+    const unitAvailability = useCallback((unit: GameUnitConstItem): { available: boolean; reason: string | null } => {
+        const reason = unit.info.find((line) => line.includes('불가능')) ?? null;
+        return { available: reason == null, reason };
+    }, []);
+    const visibleUnits = useMemo(
+        () => units.filter((unit) => showAllUnits || unitAvailability(unit).available),
+        [showAllUnits, unitAvailability, units],
+    );
     const currentGeneral = frontInfo?.general ?? null;
     const fullLeadership = Math.max(
         1,
@@ -61,12 +70,19 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
     }, [currentGeneral, fullLeadership, maxAmountUnit]);
 
     useEffect(() => {
-        if (crewType != null || units.length === 0) return;
+        if (crewType != null || visibleUnits.length === 0) return;
         const current = currentGeneral?.crewTypeId;
-        const next = current && units.some((u) => u.id === current) ? current : units[0].id;
+        const next = current && visibleUnits.some((u) => u.id === current) ? current : visibleUnits[0].id;
         setCrewType(next);
         setAmountUnit(fillAmountFor(next));
-    }, [crewType, currentGeneral, fillAmountFor, units]);
+    }, [crewType, currentGeneral, fillAmountFor, visibleUnits]);
+
+    useEffect(() => {
+        if (crewType == null || visibleUnits.some((unit) => unit.id === crewType)) return;
+        const next = visibleUnits[0]?.id ?? null;
+        setCrewType(next);
+        setAmountUnit(fillAmountFor(next));
+    }, [crewType, fillAmountFor, visibleUnits]);
 
     useEffect(() => {
         if (crewType == null) {
@@ -78,16 +94,18 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
 
     const grouped = useMemo(() => {
         const result = new Map<number, GameUnitConstItem[]>();
-        for (const unit of units) {
+        for (const unit of visibleUnits) {
             const list = result.get(unit.armType) ?? [];
             list.push(unit);
             result.set(unit.armType, list);
         }
         return Array.from(result.entries());
-    }, [units]);
+    }, [visibleUnits]);
     const selected = units.find((unit) => unit.id === crewType) ?? null;
 
     function chooseUnit(id: number) {
+        const unit = units.find((u) => u.id === id);
+        if (unit && !unitAvailability(unit).available) return;
         setCrewType(id);
         setAmountUnit(fillAmountFor(id));
     }
@@ -136,6 +154,14 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
                     <em>00명</em>
                 </label>
             </div>
+            <label className="cmd-recruit-toggle">
+                <input
+                    type="checkbox"
+                    checked={showAllUnits}
+                    onChange={(e) => setShowAllUnits(e.target.checked)}
+                />
+                <span>전체 병과 보기</span>
+            </label>
             {selected && (
                 <div className="cmd-recruit-cost">
                     예상 비용 {(amountUnit * selected.cost).toLocaleString('ko-KR')}금 / 군량{' '}
@@ -147,17 +173,23 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
                     <section key={armType}>
                         <h4>{armTypeLabel(armType)}</h4>
                         <div>
-                            {armUnits.map((unit) => (
-                                <button
-                                    key={unit.id}
-                                    type="button"
-                                    className={unit.id === crewType ? 'selected' : ''}
-                                    onClick={() => chooseUnit(unit.id)}
-                                >
-                                    <img src={`${ICON_CDN}/crewtype${unit.id}.png`} alt="" width={28} height={28} />
-                                    <span>{unit.name}</span>
-                                </button>
-                            ))}
+                            {armUnits.map((unit) => {
+                                const availability = unitAvailability(unit);
+                                return (
+                                    <button
+                                        key={unit.id}
+                                        type="button"
+                                        className={`${unit.id === crewType ? 'selected' : ''}${availability.available ? '' : ' unavailable'}`}
+                                        disabled={!availability.available}
+                                        title={availability.reason ?? undefined}
+                                        onClick={() => chooseUnit(unit.id)}
+                                    >
+                                        <img src={`${ICON_CDN}/crewtype${unit.id}.png`} alt="" width={28} height={28} />
+                                        <span>{unit.name}</span>
+                                        {!availability.available && <small>{availability.reason ?? '불가능'}</small>}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </section>
                 ))}

@@ -22,6 +22,8 @@ data class ServerGameInfo(
     val npcMode: Int, // config.npcmode (0 불가 / 1 가능 / 2 선택 생성)
     val year: Int, // world_state.current_year
     val month: Int, // world_state.current_month
+    val turnPhase: Int,
+    val turnPhaseText: String,
     val scenario: String, // config.title(scenario_text) || scenario_code
     val maxUserCnt: Int, // config.maxgeneral || GameConst.defaultMaxGeneral(패러티 기본 캡)
     val turnTerm: Int, // tick_seconds / 60 (분)

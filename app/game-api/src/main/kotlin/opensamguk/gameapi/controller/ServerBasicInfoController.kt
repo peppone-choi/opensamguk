@@ -78,6 +78,8 @@ class ServerBasicInfoController(
             npcMode = intOrNull(config["npcmode"]) ?: 0,
             year = w.currentYear,
             month = w.currentMonth,
+            turnPhase = w.currentPhase.takeIf { it in 1..3 } ?: 1,
+            turnPhaseText = turnPhaseText(w.currentPhase),
             scenario = scenario,
             maxUserCnt = maxUserCnt,
             turnTerm = w.tickSeconds / 60,
@@ -98,6 +100,13 @@ class ServerBasicInfoController(
         is Number -> v.toInt()
         is String -> v.toIntOrNull()
         else -> null
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 
     /** jsonb 값(Boolean/Number 0/1/String)을 Boolean으로 안전 변환(부재 시 null). */

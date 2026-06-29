@@ -237,6 +237,7 @@ class TurnDaemonLifecycle(
         private val drain: (upto: Instant) -> Unit,
         /** `MonthlyPipeline.runMonth` for the month whose boundary is the given `nextTurn`. */
         private val runMonth: (nextTurn: Instant) -> Unit,
+        private val runMonthWhen: (nextTurn: Instant) -> Boolean = { true },
     ) {
         fun run(turntime: Instant, now: Instant, turnTerm: Int, isUnitedState: Int): Int {
             if (now.isBefore(turntime)) return 0           // next turn not yet arrived
@@ -247,10 +248,12 @@ class TurnDaemonLifecycle(
             var crossed = 0
             while (!nextTurn.isAfter(now)) {
                 drain(nextTurn)        // L1 — drain all generals with turnTime < nextTurn
-                runMonth(nextTurn)     // L2 — the monthly 6-step pipeline
+                if (runMonthWhen(nextTurn)) {
+                    runMonth(nextTurn) // L2 — the monthly 6-step pipeline
+                    crossed++
+                }
                 prevTurn = nextTurn    // L11 — advance the boundary
                 nextTurn = ServerClock.addTurn(prevTurn, turnTerm)
-                crossed++
             }
             // Final sub-month drain of the partial month since the last crossed boundary.
             drain(now)

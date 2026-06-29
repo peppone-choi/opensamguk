@@ -915,6 +915,37 @@ textarea:focus {
     color: var(--crimson);
 }
 
+.game-settings-panel {
+    gap: var(--space-sm);
+}
+.game-settings-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+}
+.game-settings-summary > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-sm);
+    border-right: 1px solid var(--border-subtle);
+}
+.game-settings-summary > div:last-child {
+    border-right: 0;
+}
+.game-settings-summary span {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+}
+.game-settings-summary strong {
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
 .game-env-control {
     display: flex;
     flex-direction: column;

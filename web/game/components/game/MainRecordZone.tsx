@@ -1,6 +1,7 @@
 'use client';
 
 import { formatLog } from '@/lib/utilGame';
+import { formatYearMonthPhase } from '@/lib/format';
 import type { FrontRecentRecordRow, FrontRecentRecord } from '@/lib/types';
 
 interface RecordFeedProps {
@@ -27,6 +28,12 @@ function recordRows(value: unknown): FrontRecentRecordRow[] {
     return value.filter(isRecordRow);
 }
 
+function recordDate(row: FrontRecentRecordRow): string {
+    const [, , year, month, , phaseText] = row;
+    if (typeof year !== 'number' || typeof month !== 'number' || year <= 0) return '';
+    return formatYearMonthPhase(year, month, typeof phaseText === 'string' ? phaseText : null);
+}
+
 function normalizeRecentRecord(value: unknown): FrontRecentRecord {
     if (value == null || Array.isArray(value) || typeof value !== 'object') return EMPTY_RECENT_RECORD;
     const record = value as Partial<Record<keyof FrontRecentRecord, unknown>>;
@@ -45,13 +52,15 @@ function RecordFeed({ title, rows, className }: RecordFeedProps) {
         <section className={`main-record-feed ${className}`} aria-label={title}>
             <div className="main-record-title">{title}</div>
             <div className="main-record-body">
-                {rows.map(([id, text]) => (
+                {rows.map((row) => (
                     <div
-                        key={id}
+                        key={row[0]}
                         className="main-record-row"
-                        data-record-id={id}
-                        dangerouslySetInnerHTML={{ __html: formatLog(text) }}
-                    />
+                        data-record-id={row[0]}
+                    >
+                        {recordDate(row) && <span className="main-record-date">{recordDate(row)}</span>}
+                        <span className="main-record-text" dangerouslySetInnerHTML={{ __html: formatLog(row[1]) }} />
+                    </div>
                 ))}
             </div>
         </section>

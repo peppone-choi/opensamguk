@@ -58,6 +58,25 @@ class MonthBoundaryLoopTest {
     }
 
     @Test
+    fun `monthly pipeline can be gated while every phase still drains`() {
+        val log = mutableListOf<String>()
+        var phase = 0
+        val lc = TurnDaemonLifecycle.MonthBoundaryDriver(
+            drain = { _ -> log.add("drain") },
+            runMonth = { _ -> log.add("month") },
+            runMonthWhen = {
+                phase += 1
+                phase == 3
+            },
+        )
+        val prevTurn = ServerClock.cutTurn(at(180, 1, 1, 12, 0), turnTerm)
+        val now = ServerClock.addTurn(prevTurn, turnTerm, 3)
+        val months = lc.run(turntime = prevTurn, now = now, turnTerm = turnTerm, isUnitedState = 0)
+        assertEquals(1, months)
+        assertEquals(listOf("drain", "drain", "drain", "month", "drain"), log)
+    }
+
+    @Test
     fun `isunited 2 freezes the whole tick - no drain no pipeline`() {
         val log = mutableListOf<String>()
         val lc = TurnDaemonLifecycle.MonthBoundaryDriver(

@@ -3,6 +3,8 @@ package opensamguk.gameapi.web
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralTurnReadEntity
 import opensamguk.gameapi.read.GeneralTurnReadRepository
+import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -31,9 +33,10 @@ class ReservedCommandsControllerTest {
     private val reservedTurns = mock(GeneralTurnReadRepository::class.java)
     private val world = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
     private val generals = mock(opensamguk.gameapi.read.GeneralReadRepository::class.java)
+    private val registry = CommandRegistry(GeneralActionPipeline())
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(ReservedCommandsController(resolver, reservedTurns, world, generals))
+        MockMvcBuilders.standaloneSetup(ReservedCommandsController(resolver, reservedTurns, world, generals, registry))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -92,6 +95,20 @@ class ReservedCommandsControllerTest {
             .andExpect(jsonPath("$.slots[0].brief").value("농지개간"))
             .andExpect(jsonPath("$.slots[1].action").value("che_출병"))
             .andExpect(jsonPath("$.slots[1].arg.destCityID").value(5))
+    }
+
+    @Test
+    fun `recovers display brief from action code when an existing reserved row still has rest brief`() {
+        `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(
+            listOf(
+                GeneralTurnReadEntity(id = 1, generalId = 10, turnIdx = 0, actionCode = "che_견문", brief = "휴식"),
+            ),
+        )
+
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.slots[0].action").value("che_견문"))
+            .andExpect(jsonPath("$.slots[0].brief").value("견문"))
     }
 
     @Test

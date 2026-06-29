@@ -210,6 +210,7 @@ class VerticalSliceE2EIT {
         val reserveService = CommandReserveService(
             reservedTurns = reservedRepo,
             redis = template,
+            registry = CommandRegistry(GeneralActionPipeline()),
             profile = profile,
             clock = Clock.fixed(t0, ZoneOffset.UTC),
             requestIds = { "gate-req-1" },

@@ -27,6 +27,7 @@ import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.security.GameApiJwtVerifier
@@ -69,6 +70,7 @@ class AdminReadController(
     private val world: WorldStateReadRepository,
     private val gameKv: GameKvReadRepository,
     private val generalTurns: GeneralTurnReadRepository,
+    private val scenarioTitle: ScenarioTitleResolver,
 ) {
 
     // ──────────────────────────────────────────────────────────────────────
@@ -88,6 +90,22 @@ class AdminReadController(
         return authorization.substring(7).ifBlank { null }
     }
 
+    private fun mapCodeOf(config: Map<String, Any?>, meta: Map<String, Any?>): String =
+        mapNameOf(config["map"]) ?: mapNameOf(meta["map"]) ?: "che"
+
+    private fun mapNameOf(raw: Any?): String? = when (raw) {
+        is String -> raw.takeIf { it.isNotBlank() }
+        is Map<*, *> -> (raw["mapName"] ?: raw["name"] ?: raw["code"])?.toString()?.takeIf { it.isNotBlank() }
+        else -> null
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
+    }
+
     @GetMapping("/game-settings")
     fun gameSettings(
         @RequestHeader(value = "Authorization", required = false) authorization: String?,
@@ -104,8 +122,13 @@ class AdminReadController(
                 msg = msg,
                 logWritable = false,
                 scenarioCode = w?.scenarioCode,
+                scenarioText = w?.let { scenarioTitle.titleOf(it.scenarioCode) ?: it.scenarioCode },
+                mapCode = w?.let { mapCodeOf(it.config, it.meta) },
                 year = w?.currentYear,
                 month = w?.currentMonth,
+                turnPhase = w?.currentPhase?.takeIf { it in 1..3 },
+                turnPhaseText = w?.currentPhase?.let { turnPhaseText(it) },
+                status = w?.status,
                 starttime = stringConfig(config["starttime"]) ?: stringConfig(w?.meta?.get("startTime")),
                 startyear = intConfig(config["startyear"]) ?: intConfig(w?.meta?.get("startYear")) ?: GameConst.defaultStartYear,
                 maxgeneral = intConfig(config["maxgeneral"]) ?: GameConst.defaultMaxGeneral,

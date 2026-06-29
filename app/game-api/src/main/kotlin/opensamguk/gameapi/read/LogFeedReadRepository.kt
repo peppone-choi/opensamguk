@@ -40,7 +40,7 @@ import org.springframework.data.repository.query.Param
  *    [findRecentGlobalHistory] (HISTORY 단독 — [WorldLogReadRepository]의 HISTORY+SUMMARY 혼합과 다름).
  *
  * `scope`/`category`는 Postgres enum 타입이라 비교 시 `::text` 캐스트가 필요 → 네이티브 쿼리
- * ([WorldLogReadRepository]/[AdminGeneralLogReadRepository] 선례 동형). 결과 컬럼(id/year/month/text)이
+ * ([WorldLogReadRepository]/[AdminGeneralLogReadRepository] 선례 동형). 결과 컬럼(id/year/month/phase/text)이
  * [WorldLogReadEntity]와 1:1이라 그 엔티티를 read-only 프로젝션으로 재사용한다. id는 RecordZone 증분
  * lastID 북키핑에 필수라 함께 반환한다(GetFrontInfo도 `SELECT id, text`).
  *
@@ -57,7 +57,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text = 'HISTORY'
             ORDER BY id DESC
             LIMIT :limit
@@ -73,7 +73,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text = 'HISTORY' AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
@@ -91,7 +91,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text = 'HISTORY'
               AND year = :year AND month = :month
             ORDER BY id DESC
@@ -112,7 +112,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text IN ('SUMMARY', 'ACTION')
             ORDER BY id DESC
             LIMIT :limit
@@ -127,7 +127,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text IN ('SUMMARY', 'ACTION') AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
@@ -145,7 +145,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text IN ('SUMMARY', 'ACTION')
               AND year = :year AND month = :month
             ORDER BY id DESC
@@ -167,7 +167,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'GENERAL' AND general_id = :generalId
               AND category::text = 'ACTION' AND id >= :sinceId
             ORDER BY id DESC
@@ -193,7 +193,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = :scope AND category::text = :category
             ORDER BY id DESC
             LIMIT :limit

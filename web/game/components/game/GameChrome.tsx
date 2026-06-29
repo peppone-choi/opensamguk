@@ -100,6 +100,11 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
 
             {/* GameInfo status header */}
             <GameInfo global={frontInfo.global} constData={constData} />
+            <div className="main-refresh-row">
+                <button type="button" className="main-refresh-btn" onClick={refresh}>
+                    갱신
+                </button>
+            </div>
             <MainStatusPanel frontInfo={frontInfo} />
 
             <div className="ingame-board">

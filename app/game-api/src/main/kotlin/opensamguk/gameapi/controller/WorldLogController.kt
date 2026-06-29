@@ -23,9 +23,23 @@ class WorldLogController(
     @GetMapping
     fun worldLog(): WorldLogResponse {
         val entries = worldLog.findRecentWorldLog(RECENT_LIMIT).map { row ->
-            WorldLogEntry(id = row.id, year = row.year, month = row.month, text = row.text)
+            WorldLogEntry(
+                id = row.id,
+                year = row.year,
+                month = row.month,
+                phase = row.phase,
+                phaseText = turnPhaseText(row.phase),
+                text = row.text,
+            )
         }
         return WorldLogResponse(entries = entries)
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 
     companion object {
@@ -37,6 +51,8 @@ data class WorldLogEntry(
     val id: Int,
     val year: Int,
     val month: Int,
+    val phase: Int,
+    val phaseText: String,
     val text: String,
 )
 

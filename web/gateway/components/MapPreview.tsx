@@ -83,7 +83,7 @@ function levelText(level: number): string {
 }
 
 // CDN 베이스맵 코드 — 시나리오가 맵을 특정 못한 경우(mapCode="scenario") che 베이스로 폴백.
-const CDN_MAPS = new Set(['che', 'chess', 'cr', 'miniche']);
+const CDN_MAPS = new Set(['che', 'chess', 'cr', 'ludo_rathowm', 'miniche', 'miniche_b', 'miniche_clean', 'pokemon_v1']);
 function cdnMapCode(mc: string): string {
     return CDN_MAPS.has(mc) ? mc : 'che';
 }
@@ -110,6 +110,8 @@ export interface MapData {
     startYear?: number;
     year: number;
     month: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
     mapCode: string;
     width: number;
     height: number;
@@ -416,10 +418,14 @@ export default function MapPreview({
                     <div className="map-preview-tooltip-name">
                         {`【${CITY_REGIONS[String(hoverCity.id)] ?? ''} | ${levelText(hoverCity.level)}】 ${hoverCity.name}`}
                     </div>
-                    <div className="map-preview-tooltip-meta">{nationNameOf(hoverCity.nationId)}</div>
+                    {hoverCity.nationId !== 0 && (
+                        <div className="map-preview-tooltip-meta">{nationNameOf(hoverCity.nationId)}</div>
+                    )}
                 </div>
             )}
-            <div className="map-preview-cap">{`${serverName ?? data.serverName} · ${data.year}年 ${data.month}月`}</div>
+            <div className="map-preview-cap">
+                {`${serverName ?? data.serverName} · ${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`}
+            </div>
         </div>
     );
 }

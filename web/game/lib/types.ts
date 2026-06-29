@@ -244,7 +244,7 @@ export interface FrontCityInfo {
     trade: number | null;
 }
 
-export type FrontRecentRecordRow = [number, string];
+export type FrontRecentRecordRow = [number, string, number?, number?, number?, string?];
 
 export interface FrontRecentRecord {
     history: FrontRecentRecordRow[];
@@ -337,6 +337,8 @@ export interface MapPreviewResponse {
     startYear?: number;
     year: number;
     month: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
     mapCode: string;
     width: number;
     height: number;
@@ -356,6 +358,8 @@ export interface WorldMapResponse {
     startYear: number;
     year: number;
     month: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
     cityList: number[][];
     nationList: (number | string)[][];
     /** {cityNo: remainMonth} — 내 국가 정찰 잔여개월. myNation 없으면 빈 객체. */

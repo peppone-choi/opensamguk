@@ -88,6 +88,35 @@ class MapPreviewControllerTest {
     }
 
     @Test
+    fun `uses the scenario mapName from world config`() {
+        `when`(worldRepo.findAll()).thenReturn(
+            listOf(
+                WorldStateReadEntity(
+                    id = 1,
+                    scenarioCode = "scenario_2",
+                    currentYear = 200,
+                    currentMonth = 3,
+                    currentPhase = 3,
+                    config = mapOf("map" to mapOf("mapName" to "miniche_b")),
+                ),
+            ),
+        )
+        `when`(cityRepo.findAll()).thenReturn(listOf(city(id = 1, level = 8, nationId = 1, region = 2)))
+        `when`(nationRepo.findAll()).thenReturn(listOf(nation(id = 1, name = "위", color = "#c62828")))
+
+        mockMvc().perform(get("/api/map/preview"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapCode").value("miniche_b"))
+            .andExpect(jsonPath("$.width").value(1000))
+            .andExpect(jsonPath("$.height").value(714))
+            .andExpect(jsonPath("$.turnPhase").value(3))
+            .andExpect(jsonPath("$.turnPhaseText").value("하순"))
+            .andExpect(jsonPath("$.cities[0].name").value("낙양"))
+            .andExpect(jsonPath("$.cities[0].x").value(407.14))
+            .andExpect(jsonPath("$.cities[0].y").value(251.43))
+    }
+
+    @Test
     fun `surfaces city state disaster code not front_state`() {
         // 재해/사건 코드 — func_map.php tuple state자리 = city.state, front_state 아님.
         // front_state=1(전선)과 state=7(재해코드)를 서로 다르게 둬 노출 컬럼을 분리 검증.

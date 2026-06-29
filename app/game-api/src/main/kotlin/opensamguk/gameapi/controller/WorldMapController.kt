@@ -107,6 +107,8 @@ class WorldMapController(
                 startYear = startYear,
                 year = w?.currentYear ?: 0,
                 month = w?.currentMonth ?: 0,
+                turnPhase = w?.currentPhase?.takeIf { it in 1..3 } ?: 1,
+                turnPhaseText = turnPhaseText(w?.currentPhase ?: 1),
                 cityList = cityList,
                 nationList = nationList,
                 spyList = spyList,
@@ -115,6 +117,13 @@ class WorldMapController(
                 myNation = myNation,
             ),
         )
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 
     /**

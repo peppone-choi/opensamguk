@@ -39,14 +39,17 @@ describe('PartialReservedCommand', () => {
 
         await waitFor(() => expect(mocks.reservedCommands).toHaveBeenCalledWith(10));
 
-        expect(screen.getByText('190년 8월 중순')).toBeInTheDocument();
-        expect(screen.getByText('190년 8월 하순')).toBeInTheDocument();
-        expect(screen.getByText('190년 9월 상순')).toBeInTheDocument();
-        expect(screen.getByText('190년 9월 중순')).toBeInTheDocument();
-        expect(screen.getByText('07:12')).toBeInTheDocument();
-        expect(screen.getByText('08:12')).toBeInTheDocument();
-        expect(screen.getByText('09:12')).toBeInTheDocument();
-        expect(screen.getByText('10:12')).toBeInTheDocument();
+        expect(document.querySelectorAll('.rcp-row')).toHaveLength(36);
+        expect(screen.queryByText('접기')).not.toBeInTheDocument();
+        expect(screen.queryByText('펼치기')).not.toBeInTheDocument();
+        expect(screen.getAllByText('190년 8월 중순').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('190년 8월 하순').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('190년 9월 상순').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('190년 9월 중순').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('07:12').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('08:12').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('09:12').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('10:12').length).toBeGreaterThan(0);
         expect(screen.getByText('농지개간')).toBeInTheDocument();
     });
 });

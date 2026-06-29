@@ -20,6 +20,10 @@ data class MapPreviewResponse(
     val serverName: String,
     val year: Int,
     val month: Int,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val turnPhase: Int? = null,
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val turnPhaseText: String? = null,
     val mapCode: String,
     val width: Int,
     val height: Int,

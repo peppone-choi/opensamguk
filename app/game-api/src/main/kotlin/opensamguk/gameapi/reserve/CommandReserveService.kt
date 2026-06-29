@@ -7,6 +7,7 @@ import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.infra.persistence.ReservedTurnRepository
+import opensamguk.logic.actions.CommandRegistry
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -55,6 +56,7 @@ import java.util.UUID
 class CommandReserveService(
     private val reservedTurns: ReservedTurnRepository,
     private val redis: StringRedisTemplate,
+    private val registry: CommandRegistry,
     @Value("\${opensamguk.profile:che:scenario_2}") profile: String,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
@@ -93,7 +95,13 @@ class CommandReserveService(
 
         // Model A — turn-reserved che_* command.
         // 1. durable reservation FIRST (DB is the source of truth for the reserved action).
-        reservedTurns.reserve(generalId = generalId, turnIdx = turnIdx, actionCode = actionCode, argJson = argJson)
+        reservedTurns.reserve(
+            generalId = generalId,
+            turnIdx = turnIdx,
+            actionCode = actionCode,
+            argJson = argJson,
+            brief = registry.resolve(actionCode).name,
+        )
 
         // 2. wake the daemon via the EXISTING P0-B control signal (Run/POKE) on the command stream.
         publish(

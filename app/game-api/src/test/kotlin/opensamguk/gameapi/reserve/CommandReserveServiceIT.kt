@@ -6,6 +6,8 @@ import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.infra.persistence.ReservedTurnRepository
+import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -117,6 +119,7 @@ class CommandReserveServiceIT {
         service = CommandReserveService(
             reservedTurns = ReservedTurnRepository(jdbc),
             redis = redisTemplate,
+            registry = CommandRegistry(GeneralActionPipeline()),
             profile = profile,
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00.000Z"), ZoneOffset.UTC),
             requestIds = { "req-e3-fixed" },

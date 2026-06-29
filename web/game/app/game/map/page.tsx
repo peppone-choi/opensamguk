@@ -41,6 +41,11 @@ const yearMonthLabelStyle: React.CSSProperties = {
     whiteSpace: 'nowrap',
 };
 
+function logDateLabel(item: { year: number; month: number; phaseText?: string | null }): string {
+    if (item.year <= 0) return '';
+    return `${item.year}년 ${item.month}월${item.phaseText ? ` ${item.phaseText}` : ''}`;
+}
+
 export default function GameMapPage() {
     const [logData, setLogData] = useState<WorldLogResponse | null>(null);
     const [logLoading, setLogLoading] = useState(true);
@@ -85,7 +90,7 @@ export default function GameMapPage() {
                                 {entries.map((item) => (
                                     <div key={item.id} style={logRowStyle}>
                                         <span style={yearMonthLabelStyle}>
-                                            {item.year > 0 ? `${item.year}년 ${item.month}월` : ''}
+                                            {logDateLabel(item)}
                                         </span>
                                         {/* text는 서버 패러티 로그 원문(색/태그) — devsam v-html="formatLog(item)" 동일 패턴 */}
                                         <span style={{ flex: '1 1 auto' }} dangerouslySetInnerHTML={{ __html: item.text }} />

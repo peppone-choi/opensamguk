@@ -6,6 +6,7 @@ import type { MailboxMessage } from '@/types/game';
 import MessagePlate from './MessagePlate';
 
 const PUBLIC_MAILBOX = 9999;
+const NATIONAL_MAILBOX_BASE = 9000;
 
 export interface MessagePanelProps {
     generalId: number;
@@ -17,16 +18,20 @@ export interface MessagePanelProps {
 
 type Channel = { key: string; label: string; mailbox: number };
 
+function defaultMailbox(generalId: number, nationId?: number): number {
+    return nationId != null && nationId !== 0 ? NATIONAL_MAILBOX_BASE + nationId : generalId;
+}
+
 export default function MessagePanel({ generalId, nationId, refreshKey, onToast }: MessagePanelProps) {
     const channels: Channel[] = [
-        { key: 'public', label: '전체 메시지', mailbox: PUBLIC_MAILBOX },
         ...(nationId != null && nationId !== 0
-            ? [{ key: 'national', label: '국가 메시지', mailbox: 9000 + nationId }]
+            ? [{ key: 'national', label: '국가 메시지', mailbox: NATIONAL_MAILBOX_BASE + nationId }]
             : []),
+        { key: 'public', label: '전체 메시지', mailbox: PUBLIC_MAILBOX },
         { key: 'private', label: '개인 메시지', mailbox: generalId },
     ];
 
-    const [active, setActive] = useState<number>(channels[0].mailbox);
+    const [active, setActive] = useState<number>(() => defaultMailbox(generalId, nationId));
     const [messages, setMessages] = useState<MailboxMessage[] | null>(null);
     const [failed, setFailed] = useState(false);
     const [loadSeq, setLoadSeq] = useState(0);

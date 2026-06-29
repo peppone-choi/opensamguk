@@ -122,8 +122,13 @@ interface AdminGameSettingsResponse {
     msg: string;
     logWritable: boolean;
     scenarioCode?: string;
+    scenarioText?: string | null;
+    mapCode?: string | null;
     year?: number;
     month?: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
+    status?: string | null;
     starttime?: string;
     startyear?: number;
     maxgeneral?: number;
@@ -1205,9 +1210,12 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
     const changed = settings
         ? settings.editableFields.some((field) => drafts[field.key] !== String(field.value ?? ''))
         : false;
+    const currentDate = settings?.year && settings.month
+        ? `${settings.year}년 ${settings.month}월${settings.turnPhaseText ? ` ${settings.turnPhaseText}` : ''}`
+        : '-';
 
     return (
-        <div className="env-section">
+        <div className="env-section game-settings-panel">
             <h3 className="lobby-section-title">
                 입장 설정
                 {selectedServer
@@ -1220,48 +1228,57 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
             {!settings ? (
                 <p className="svc-meta">설정 조회 중…</p>
             ) : (
-                <div className="server-reset-grid">
-                    {settings.editableFields.map((field) => (
-                        <label key={field.key} className="field">
-                            <span>{field.label}</span>
-                            {field.type === 'select' && field.options ? (
-                                <select
-                                    value={drafts[field.key] ?? String(field.value ?? '')}
-                                    disabled={busy}
-                                    onChange={(e) =>
-                                        setDrafts((prev) => ({
-                                            ...prev,
-                                            [field.key]: e.target.value,
-                                        }))
-                                    }
-                                >
-                                    {field.options.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input
-                                    type={field.type === 'number' ? 'number' : 'text'}
-                                    value={drafts[field.key] ?? String(field.value ?? '')}
-                                    disabled={busy}
-                                    onChange={(e) =>
-                                        setDrafts((prev) => ({
-                                            ...prev,
-                                            [field.key]: e.target.value,
-                                        }))
-                                    }
-                                />
-                            )}
-                        </label>
-                    ))}
-                    <div className="deploy-row reset-wide">
-                        <button type="button" className="btn-primary" disabled={busy || !changed} onClick={save}>
-                            {busy ? '저장 중…' : '저장'}
-                        </button>
+                <>
+                    <div className="game-settings-summary">
+                        <div><span>상태</span><strong>{settings.status ?? '-'}</strong></div>
+                        <div><span>시나리오</span><strong>{settings.scenarioText ?? settings.scenarioCode ?? '-'}</strong></div>
+                        <div><span>맵</span><strong>{settings.mapCode ?? '-'}</strong></div>
+                        <div><span>현재</span><strong>{currentDate}</strong></div>
+                        <div><span>턴</span><strong>{settings.turnterm ? `${settings.turnterm}분` : '-'}</strong></div>
                     </div>
-                </div>
+                    <div className="server-reset-grid">
+                        {settings.editableFields.map((field) => (
+                            <label key={field.key} className="field">
+                                <span>{field.label}</span>
+                                {field.type === 'select' && field.options ? (
+                                    <select
+                                        value={drafts[field.key] ?? String(field.value ?? '')}
+                                        disabled={busy}
+                                        onChange={(e) =>
+                                            setDrafts((prev) => ({
+                                                ...prev,
+                                                [field.key]: e.target.value,
+                                            }))
+                                        }
+                                    >
+                                        {field.options.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type={field.type === 'number' ? 'number' : 'text'}
+                                        value={drafts[field.key] ?? String(field.value ?? '')}
+                                        disabled={busy}
+                                        onChange={(e) =>
+                                            setDrafts((prev) => ({
+                                                ...prev,
+                                                [field.key]: e.target.value,
+                                            }))
+                                        }
+                                    />
+                                )}
+                            </label>
+                        ))}
+                        <div className="deploy-row reset-wide">
+                            <button type="button" className="btn-primary" disabled={busy || !changed} onClick={save}>
+                                {busy ? '저장 중…' : '저장'}
+                            </button>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );

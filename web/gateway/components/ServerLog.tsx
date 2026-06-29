@@ -14,6 +14,8 @@ interface LogEntry {
     id: number;
     year: number;
     month: number;
+    phase?: number | null;
+    phaseText?: string | null;
     text: string;
 }
 
@@ -69,7 +71,9 @@ export default function ServerLog({ serverId = 'main' }: { serverId?: string }) 
             <ul className="server-log-list">
                 {entries.map((e) => (
                     <li key={e.id} className="server-log-item">
-                        <span className="server-log-date">{`${e.year}年 ${e.month}月`}</span>
+                        <span className="server-log-date">
+                            {`${e.year}년 ${e.month}월${e.phaseText ? ` ${e.phaseText}` : ''}`}
+                        </span>
                         <span className="server-log-text">{stripTags(e.text)}</span>
                     </li>
                 ))}

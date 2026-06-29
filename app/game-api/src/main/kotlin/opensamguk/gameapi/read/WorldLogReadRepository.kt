@@ -31,6 +31,9 @@ class WorldLogReadEntity(
     @Column(name = "month")
     var month: Int = 0,
 
+    @Column(name = "phase")
+    var phase: Int = 1,
+
     @Column(name = "text")
     var text: String = "",
 )
@@ -39,7 +42,7 @@ interface WorldLogReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     /** 월드 전황 최신 N건(newest first) — SYSTEM 스코프의 history/summary. */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'SYSTEM' AND category::text IN ('HISTORY', 'SUMMARY')
             ORDER BY id DESC
             LIMIT :limit

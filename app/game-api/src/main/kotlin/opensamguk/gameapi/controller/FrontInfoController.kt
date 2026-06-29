@@ -236,7 +236,7 @@ class FrontInfoController(
     }
 
     private fun List<WorldLogReadEntity>.toRecentRecordRows(): List<List<Any>> =
-        map { listOf(it.id, it.text) }
+        map { listOf(it.id, it.text, it.year, it.month, it.phase, turnPhaseText(it.phase)) }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // general

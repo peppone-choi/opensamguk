@@ -32,7 +32,7 @@ import type {
 } from './types';
 
 // ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
-// game-api `GET /api/world-log` (WorldLogController) → {entries:[{id,year,month,text}]}.
+// game-api `GET /api/world-log` (WorldLogController) → {entries:[{id,year,month,phase,phaseText,text}]}.
 // 월드 전체 글로벌 이력(log_entry SYSTEM 스코프)을 최신순 30건 반환. `text`는 패러티 로그
 // 원문(devsam 색/태그 마크업 포함) 그대로 — 표시 렌더는 프론트(history와 동일 v-html 패턴).
 // (W4 read surface 전용이라 도메인 types 모듈을 건드리지 않고 여기 인라인 정의·export.)
@@ -40,6 +40,8 @@ export interface WorldLogEntry {
     id: number;
     year: number;
     month: number;
+    phase?: number | null;
+    phaseText?: string | null;
     text: string;
 }
 
@@ -179,8 +181,13 @@ export interface AdminGameSettingsResponse {
     msg: string;
     logWritable: boolean;
     scenarioCode: string | null;
+    scenarioText?: string | null;
+    mapCode?: string | null;
     year: number | null;
     month: number | null;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
+    status?: string | null;
     starttime: string | null;
     startyear: number | null;
     maxgeneral: number | null;

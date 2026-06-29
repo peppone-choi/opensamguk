@@ -398,6 +398,7 @@ export default function DiplomacyPage() {
                     pinnedLabel={quickAction.label}
                     pinnedArgType="nation"
                     onReserved={() => { refresh(); fetchData(); }}
+                    isNationCommand
                 />
             )}
         </Shell>

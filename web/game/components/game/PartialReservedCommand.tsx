@@ -13,7 +13,7 @@ import { formatYearMonthPhase, TURN_PHASE_LABELS } from '../../lib/format';
 import type { ReservedSlot } from '../../lib/types';
 import CommandModal from '../CommandModal';
 
-const DEFAULT_VIEW_TURNS = 14; // legacy flippedMaxTurn
+const DEFAULT_VIEW_TURNS = 36;
 
 function outcomeReason(out: { reason?: unknown }): string | null {
     return typeof out.reason === 'string' && out.reason.length > 0 ? out.reason : null;
@@ -42,8 +42,7 @@ export default function PartialReservedCommand({
     onReserved,
     onToast,
 }: PartialReservedCommandProps) {
-    const total = maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS;
-    const [expanded, setExpanded] = useState(false);
+    const total = Math.max(DEFAULT_VIEW_TURNS, maxTurn && maxTurn > 0 ? maxTurn : DEFAULT_VIEW_TURNS);
     const [editTurnIdx, setEditTurnIdx] = useState<number | null>(null);
     const [slots, setSlots] = useState<ReservedSlot[]>([]);
     const [meta, setMeta] = useState<{
@@ -60,7 +59,7 @@ export default function PartialReservedCommand({
     const [pushAmount, setPushAmount] = useState(1);
     const [repeatAmount, setRepeatAmount] = useState(1);
 
-    const viewCount = expanded ? total : Math.min(DEFAULT_VIEW_TURNS, total);
+    const viewCount = total;
     const slotMap = new Map(slots.map((s) => [s.turnIdx, s]));
 
     useEffect(() => {
@@ -156,12 +155,6 @@ export default function PartialReservedCommand({
             </div>
 
             <div className="rcp-actions">
-                {total > DEFAULT_VIEW_TURNS && (
-                    <button type="button" onClick={() => setExpanded((v) => !v)}>
-                        {expanded ? '접기' : '펼치기'}
-                    </button>
-                )}
-                {/* P0-02 — 개인 예약 링 당기기/미루기/반복 */}
                 <span style={{ marginLeft: 'auto', display: 'inline-flex', gap: 4, alignItems: 'center' }}>
                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>당기기/미루기</span>
                     <input

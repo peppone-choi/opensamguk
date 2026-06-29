@@ -1,7 +1,7 @@
 'use client';
 
 // ── 전황 (World-Log) — READ-ONLY 월드 글로벌 이력 뷰어 ──────────────────────────
-// game-api `GET /api/world-log`(WorldLogController) → {entries:[{id,year,month,text}]}.
+// game-api `GET /api/world-log`(WorldLogController) → {entries:[{id,year,month,phase,phaseText,text}]}.
 // log_entry SYSTEM 스코프(정복/멸망/건국/작위 등) 글로벌 이력 최신순 30건을 그대로 렌더한다.
 // 헤더 셀에만 노출되던 전황을 전용 페이지로 분리(W4 read surface). 연감(history/page.tsx)과
 // 동일한 레이아웃/스타일을 따른다.
@@ -45,6 +45,11 @@ const yearMonthLabelStyle: React.CSSProperties = {
     color: 'var(--text-secondary)',
     whiteSpace: 'nowrap',
 };
+
+function logDateLabel(item: { year: number; month: number; phaseText?: string | null }): string {
+    if (item.year <= 0) return '';
+    return `${item.year}년 ${item.month}월${item.phaseText ? ` ${item.phaseText}` : ''}`;
+}
 
 export default function WorldLogPage() {
     const [data, setData] = useState<WorldLogResponse | null>(null);
@@ -92,7 +97,7 @@ export default function WorldLogPage() {
                                 {entries.map((item) => (
                                     <div key={item.id} style={logRowStyle}>
                                         <span style={yearMonthLabelStyle}>
-                                            {item.year > 0 ? `${item.year}년 ${item.month}월` : ''}
+                                            {logDateLabel(item)}
                                         </span>
                                         {/* text는 서버 패러티 로그 원문(색/태그) — 연감과 동일 v-html 렌더. */}
                                         <span style={{ flex: '1 1 auto' }} dangerouslySetInnerHTML={{ __html: item.text }} />

@@ -7,9 +7,9 @@ describe('MainRecordZone', () => {
         render(
             <MainRecordZone
                 recentRecord={{
-                    global: [[11, '장수 동향 새 기록']],
-                    general: [[12, '개인 새 기록']],
-                    history: [[9, '<C>중원 새 기록</>']],
+                    global: [[11, '장수 동향 새 기록', 181, 1, 2, '중순']],
+                    general: [[12, '개인 새 기록', 181, 1, 2, '중순']],
+                    history: [[9, '<C>중원 새 기록</>', 181, 1, 2, '중순']],
                     flushGlobal: 0,
                     flushGeneral: 0,
                     flushHistory: 0,
@@ -20,6 +20,7 @@ describe('MainRecordZone', () => {
         expect(screen.getByRole('region', { name: '장수 동향' })).toHaveTextContent('장수 동향 새 기록');
         expect(screen.getByRole('region', { name: '개인 기록' })).toHaveTextContent('개인 새 기록');
         expect(screen.getByRole('region', { name: '중원 정세' })).toHaveTextContent('중원 새 기록');
+        expect(screen.getAllByText('181년 1월 중순')).toHaveLength(3);
     });
 
     it('keeps rendering during mixed-version deploys that still return an empty array', () => {

@@ -5,6 +5,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.TurnTimeFormatter
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.ServerClock
 import org.springframework.http.HttpStatus
@@ -49,6 +50,7 @@ class ReservedCommandsController(
     private val reservedTurns: GeneralTurnReadRepository,
     private val world: WorldStateReadRepository,
     private val generals: GeneralReadRepository,
+    private val registry: CommandRegistry,
 ) {
 
     /** One reserved ring slot (matches the W5 reserved-command panel shape). */
@@ -96,7 +98,7 @@ class ReservedCommandsController(
             ReservedSlot(
                 turnIdx = row.turnIdx,
                 action = row.actionCode,
-                brief = row.brief,
+                brief = displayBrief(row.actionCode, row.brief),
                 arg = row.arg,
             )
         }
@@ -133,5 +135,12 @@ class ReservedCommandsController(
             ),
         )
     }
+
+    private fun displayBrief(actionCode: String, brief: String): String =
+        if (actionCode != "휴식" && (brief.isBlank() || brief == "휴식")) {
+            registry.resolve(actionCode).name
+        } else {
+            brief
+        }
 
 }

@@ -14,6 +14,7 @@ import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadEntity
 import opensamguk.gameapi.read.RankDataReadRepository
+import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldLogReadEntity
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -53,10 +54,23 @@ class AdminReadControllerTest {
     private val world = mock(WorldStateReadRepository::class.java)
     private val gameKv = mock(GameKvReadRepository::class.java)
     private val generalTurns = mock(GeneralTurnReadRepository::class.java)
+    private val scenarioTitle = mock(ScenarioTitleResolver::class.java)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            AdminReadController(verifier, nations, generals, cities, ranks, diplomacy, generalLogs, world, gameKv, generalTurns),
+            AdminReadController(
+                verifier,
+                nations,
+                generals,
+                cities,
+                ranks,
+                diplomacy,
+                generalLogs,
+                world,
+                gameKv,
+                generalTurns,
+                scenarioTitle,
+            ),
         ).build()
 
     /** ADMIN 토큰 발급(stub) — verifier가 valid + role=ADMIN을 반환하게 한다. */
@@ -77,11 +91,18 @@ class AdminReadControllerTest {
                     scenarioCode = "scenario_1010",
                     currentYear = 181,
                     currentMonth = 1,
+                    currentPhase = 2,
                     tickSeconds = 1800,
-                    config = mapOf("startyear" to 180, "starttime" to "2026-06-01 00:00:00", "turnterm" to 30),
+                    config = mapOf(
+                        "startyear" to 180,
+                        "starttime" to "2026-06-01 00:00:00",
+                        "turnterm" to 30,
+                        "map" to mapOf("mapName" to "miniche_b"),
+                    ),
                 ),
             ),
         )
+        `when`(scenarioTitle.titleOf("scenario_1010")).thenReturn("황건적의 난")
         `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "global", "msg")).thenReturn(
             GameKvEntity(table = "game_env", namespace = "global", key = "msg", value = "\"공지\\t내용\""),
         )
@@ -90,7 +111,11 @@ class AdminReadControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.msg").value("공지\t내용"))
             .andExpect(jsonPath("$.scenarioCode").value("scenario_1010"))
+            .andExpect(jsonPath("$.scenarioText").value("황건적의 난"))
+            .andExpect(jsonPath("$.mapCode").value("miniche_b"))
             .andExpect(jsonPath("$.year").value(181))
+            .andExpect(jsonPath("$.turnPhase").value(2))
+            .andExpect(jsonPath("$.turnPhaseText").value("중순"))
             .andExpect(jsonPath("$.turnterm").value(30))
             .andExpect(jsonPath("$.turnOptions[5]").value(30))
             .andExpect(jsonPath("$.blockedWrites[0].label").value("중원정세추가"))

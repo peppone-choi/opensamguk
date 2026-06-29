@@ -18,7 +18,7 @@ import org.springframework.data.repository.query.Param
  *
  * 정렬은 PHP `order by id desc`(newest-first) 그대로. `scope`/`category`는 Postgres enum 타입이라
  * 파라미터·리터럴 비교 시 `::text` 캐스트가 필요 → 네이티브 쿼리([WorldLogReadRepository] 선례 동형).
- * 결과 컬럼(id/year/month/text)이 [WorldLogReadEntity]와 1:1이라 그 엔티티를 read-only 프로젝션으로
+ * 결과 컬럼(id/year/month/phase/text)이 [WorldLogReadEntity]와 1:1이라 그 엔티티를 read-only 프로젝션으로
  * 재사용한다([AdminGeneralLogReadRepository] 선례 — 동일 테이블 중복 @Entity 선언 회피).
  *
  * game-api ONLY(§7); 절대 write하지 않는다(데몬 write는 ChangeRecorder→JdbcFlushExecutor 전용).
@@ -32,7 +32,7 @@ interface NationLogReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      */
     @Query(
         value = """
-            SELECT id, year, month, text FROM log_entry
+            SELECT id, year, month, phase, text FROM log_entry
             WHERE scope::text = 'NATION' AND nation_id = :nationId AND category::text = 'HISTORY'
             ORDER BY id DESC
         """,

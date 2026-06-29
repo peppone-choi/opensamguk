@@ -32,6 +32,8 @@ interface ServerGameInfo {
     npcMode: number;
     year: number;
     month: number;
+    turnPhase?: number | null;
+    turnPhaseText?: string | null;
     scenario: string;
     maxUserCnt: number;
     turnTerm: number;
@@ -114,7 +116,7 @@ function ServerRow({ server }: { server: ServerEntry }) {
                     <strong>{nCountryLabel(game)}</strong>
                 </div>
                 <div>
-                    서기 {game.year}년 {game.month}월{' '}
+                    서기 {game.year}년 {game.month}월{game.turnPhaseText ? ` ${game.turnPhaseText}` : ''}{' '}
                     <span style={{ color: 'var(--accent-gold, orange)' }}>{game.scenario}</span>
                 </div>
                 <div>

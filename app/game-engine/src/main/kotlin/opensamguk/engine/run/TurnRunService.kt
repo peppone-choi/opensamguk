@@ -199,14 +199,21 @@ open class TurnRunService(
                     val startTime = Instant.parse(
                         state.meta["startTime"] as? String ?: Instant.now().toString()
                     )
+                    val turnTerm = state.tickSeconds / 60
+                    val oldDate = ServerClock.turnDate(
+                        ServerClock.subTurn(nextTurn, turnTerm),
+                        startYear,
+                        startTime,
+                        turnTerm,
+                    )
                     pipeline.runMonth(
                         nextTurn = nextTurn,
                         startYear = startYear,
                         startTime = startTime,
-                        turnTerm = state.tickSeconds / 60,
-                        oldYear = state.currentYear,
-                        oldMonth = state.currentMonth,
-                        oldPhase = state.currentPhase,
+                        turnTerm = turnTerm,
+                        oldYear = oldDate.year,
+                        oldMonth = oldDate.month,
+                        oldPhase = oldDate.phase,
                         dispatcher = { target, env ->
                             val supplier = {
                                 mutableMapOf<String, Any?>(
@@ -225,6 +232,15 @@ open class TurnRunService(
                             }
                         },
                     )
+                },
+                runMonthWhen = { nextTurn ->
+                    val state = world.getState()
+                    val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
+                    val startTime = Instant.parse(
+                        state.meta["startTime"] as? String ?: Instant.now().toString()
+                    )
+                    val turnTerm = state.tickSeconds / 60
+                    ServerClock.turnDate(nextTurn, startYear, startTime, turnTerm).phase == 1
                 },
             )
             val state = world.getState()

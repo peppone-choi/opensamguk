@@ -25,6 +25,8 @@ data class WorldMapResponse(
     val startYear: Int,
     val year: Int,
     val month: Int,
+    val turnPhase: Int,
+    val turnPhaseText: String,
     /** `[city, level, state, nation, region, supply]` 정수 6-튜플 배열. */
     val cityList: List<List<Int>>,
     /** `[nation, name, color, capital]` 혼합 4-튜플 배열(name/color는 String). */

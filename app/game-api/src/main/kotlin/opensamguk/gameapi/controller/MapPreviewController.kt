@@ -27,10 +27,8 @@ import org.springframework.web.bind.annotation.RestController
  *  - nations `id`/`name`/`color`: LIVE from [NationReadRepository] (`nation.color` hex, verbatim);
  *  - `serverName`/`year`/`month`/`mapCode`: from the singleton [WorldStateReadRepository] row.
  *
- * **Caching.** The assembled response is cached for 10 minutes in a tiny manual holder (volatile snapshot
- * + epoch-millis stamp; recompute when older than [CACHE_TTL_MS]). Per-process is fine — single server,
- * single daemon. We DON'T pull in Spring Cache / Caffeine: neither is a declared game-api dependency,
- * and a static lobby preview needs nothing fancier than a double-checked volatile.
+ * **Freshness.** The assembled response is rebuilt per request so scenario/map/date changes show up in
+ * login and lobby immediately.
  *
  * **Public access.** game-api has NO Spring Security on the classpath (no `SecurityFilterChain`), so this
  * is open by default — matching the other plain `@RestController`s ([AuctionController], [DiplomacyController]).
@@ -53,10 +51,6 @@ class MapPreviewController(
      *  맞춰 좌표·아이콘·폰트를 균일 확대(컬럼 폭 ≈1000 → 약 ×1.43)하므로 비율은 php와 동일. */
     private val defaultMapCode = "che"
 
-    // ── manual 10-minute cache (volatile snapshot + epoch stamp) ──
-    @Volatile private var cached: MapPreviewResponse? = null
-    @Volatile private var cachedAtMs: Long = 0L
-
     private fun nationEnvText(nationId: Int, key: String): String? =
         nationEnvReadRepository.findByNamespaceAndKey(nationId, key)
             ?.let { runCatching { objectMapper.readTree(it.value).asText() }.getOrNull() }
@@ -64,32 +58,14 @@ class MapPreviewController(
 
     @GetMapping("/preview")
     fun preview(): ResponseEntity<MapPreviewResponse> {
-        val now = System.currentTimeMillis()
-        val snapshot = cached
-        if (snapshot != null && now - cachedAtMs < CACHE_TTL_MS) {
-            return ResponseEntity.ok(snapshot)
-        }
-        val fresh = synchronized(this) {
-            val again = cached
-            if (again != null && System.currentTimeMillis() - cachedAtMs < CACHE_TTL_MS) {
-                again
-            } else {
-                val built = build()
-                cached = built
-                cachedAtMs = System.currentTimeMillis()
-                built
-            }
-        }
-        return ResponseEntity.ok(fresh)
+        return ResponseEntity.ok(build())
     }
 
     private fun build(): MapPreviewResponse {
         // world clock — the singleton row. Unseeded ⇒ empty snapshot (year/month 0), never 500.
         val world = worldStateReadRepository.findAll().firstOrNull()
 
-        // 맵 표시 데이터(dims + id→좌표)를 map/<code>.json에서 읽는다 — 백엔드가 dims/coords를 하드코딩하지
-        // 않는다. (시나리오→맵 매핑은 후속; 현재는 defaultMapCode=che. 8종 맵 리소스가 모두 준비돼 있다.)
-        val mapCode = defaultMapCode
+        val mapCode = world?.let { mapCodeOf(it.config, it.meta) } ?: defaultMapCode
         val mapData = loadMapData(mapCode)
 
         if (world == null) {
@@ -97,6 +73,8 @@ class MapPreviewController(
                 serverName = "",
                 year = 0,
                 month = 0,
+                turnPhase = null,
+                turnPhaseText = null,
                 mapCode = mapCode,
                 width = mapData.width,
                 height = mapData.height,
@@ -162,6 +140,8 @@ class MapPreviewController(
             serverName = serverName,
             year = world.currentYear,
             month = world.currentMonth,
+            turnPhase = world.currentPhase.takeIf { it in 1..3 },
+            turnPhaseText = turnPhaseText(world.currentPhase),
             mapCode = mapCode,
             width = mapData.width,
             height = mapData.height,
@@ -176,7 +156,19 @@ class MapPreviewController(
      *  빈 맵(0×0, 도시 없음) → gateway가 placeholder를 그린다. */
     private fun loadMapData(mapCode: String): MapJson.MapData = MapJson.loadFromClasspath(mapCode)
 
-    companion object {
-        private const val CACHE_TTL_MS = 600_000L // 10 minutes
+    private fun mapCodeOf(config: Map<String, Any?>, meta: Map<String, Any?>): String =
+        mapNameOf(config["map"]) ?: mapNameOf(meta["map"]) ?: defaultMapCode
+
+    private fun mapNameOf(raw: Any?): String? = when (raw) {
+        is String -> raw.takeIf { it.isNotBlank() }
+        is Map<*, *> -> (raw["mapName"] ?: raw["name"] ?: raw["code"])?.toString()?.takeIf { it.isNotBlank() }
+        else -> null
+    }
+
+    private fun turnPhaseText(phase: Int): String = when (phase) {
+        1 -> "상순"
+        2 -> "중순"
+        3 -> "하순"
+        else -> "상순"
     }
 }
