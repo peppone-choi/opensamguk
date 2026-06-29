@@ -19,4 +19,8 @@ Verification plan:
 - Push and wait for CI/deploy success so the requested tag exists in GHCR.
 - Dispatch this workflow with `include_engine=true`, then verify deploy status and actuator health for `s1`/`s2`.
 
+Follow-up critique after first dispatch:
+- The first run recreated and started `s1` containers, but failed because actuator verification ran immediately after `docker compose up -d`.
+- The workflow now retries `game-api`, `game-engine`, and the public `/game/<server>` route before failing, preserving the same non-destructive deployment behavior.
+
 Verdict: cleared

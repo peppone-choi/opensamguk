@@ -64,6 +64,37 @@ jobs:
             exit 0
           fi
 
+          wait_container_health() {
+            local container="$1"
+            local port="$2"
+            for i in $(seq 1 36); do
+              if docker exec "$container" wget -qO- "http://localhost:${port}/actuator/health" 2>/dev/null | grep -q '"status":"UP"'; then
+                echo "${container} health: OK"
+                return 0
+              fi
+              echo "${container} health pending (${i}/36)"
+              sleep 5
+            done
+            echo "${container} health: FAILED" >&2
+            docker logs --tail 160 "$container" || true
+            return 1
+          }
+
+          wait_public_route() {
+            local sid="$1"
+            for i in $(seq 1 24); do
+              if curl -fsSI "http://localhost/game/${sid}" >/dev/null; then
+                echo "${sid} public route: OK"
+                return 0
+              fi
+              echo "${sid} public route pending (${i}/24)"
+              sleep 5
+            done
+            echo "${sid} public route: FAILED" >&2
+            docker logs --tail 120 opensamguk-nginx || true
+            return 1
+          }
+
           for sid in "${SERVERS[@]}"; do
             envf="servers/${sid}.env"
             project="opensamguk-${sid}"
@@ -92,9 +123,9 @@ jobs:
             fi
 
             echo "=== ${sid}: verify containers ==="
-            docker exec "${sid}-game-api" wget -qO- http://localhost:8081/actuator/health | grep -q '"status":"UP"'
-            docker exec "${sid}-game-engine" wget -qO- http://localhost:8082/actuator/health | grep -q '"status":"UP"'
-            curl -fsSI "http://localhost/game/${sid}" >/dev/null
+            wait_container_health "${sid}-game-api" 8081
+            wait_container_health "${sid}-game-engine" 8082
+            wait_public_route "$sid"
 
             docker inspect "${sid}-game-api" "${sid}-game-engine" "${sid}-web-game" \
               --format '{{.Name}} {{.Config.Image}}'
