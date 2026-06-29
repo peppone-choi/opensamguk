@@ -38,6 +38,7 @@ import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.tick.ServerClock
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -126,9 +127,7 @@ class VerticalSliceE2EIT {
     private val startYear = 181
     private val tickSeconds = 3600
 
-    // The golden log suffix is `<1>21:47</>`; the lifecycle derives the `HH:MM` date from the run
-    // time in UTC, so seed the world clock + run the tick at 21:47:00 UTC of the game year.
-    private val t0: Instant = Instant.parse("0181-01-01T21:47:00Z")
+    private val t0: Instant = Instant.parse("0181-01-01T12:47:00Z")
 
     private lateinit var postgres: org.testcontainers.containers.PostgreSQLContainer<*>
     private lateinit var dataSource: DataSource
@@ -371,14 +370,13 @@ class VerticalSliceE2EIT {
         assertEquals(c.trust.toInt(), intOf(row["trust"]), "city.trust byte-match golden")
     }
 
-    /** the single action `log_entry.text` byte-matches the golden raw stored log line. */
     private fun assertLogEntryMatchesGolden() {
         val count = jdbc.queryForObject(
             "SELECT count(*) FROM log_entry", MapSqlParameterSource(), Int::class.java,
         )
         assertEquals(1, count, "exactly one action log_entry row written")
         val row = jdbc.queryForMap(
-            "SELECT scope::text AS scope, category::text AS category, text, year, month, general_id, nation_id " +
+            "SELECT scope::text AS scope, category::text AS category, text, year, month, phase, general_id, nation_id " +
                 "FROM log_entry",
             MapSqlParameterSource(),
         )
@@ -388,7 +386,13 @@ class VerticalSliceE2EIT {
         assertEquals(nationId, intOf(row["nation_id"]))
         assertEquals(year, intOf(row["year"]))
         assertEquals(month, intOf(row["month"]))
-        assertEquals(golden.logText, row["text"], "log_entry.text byte-match golden raw stored log line")
+        val phase = intOf(row["phase"])
+        assertEquals(1, phase, "log_entry.phase stores the current 삼모 순")
+        assertEquals(
+            golden.logText.replaceFirst("${month}월:", "${month}월 ${ServerClock.turnPhaseText(phase)}:"),
+            row["text"],
+            "log_entry.text byte-matches the PHP raw log plus the stored 삼모 순 stamp",
+        )
     }
 
     /** TruncateContract: ONLY general + city + log_entry changed; the rest stay empty. */

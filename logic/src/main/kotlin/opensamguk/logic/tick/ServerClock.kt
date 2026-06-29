@@ -5,6 +5,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 /**
  * FT1 — pure calendar helpers for the monthly tick.
@@ -20,15 +21,15 @@ import java.time.ZoneId
  * - `cutDay` (`:969-...`) — the day-sync variant (grid of `12 * turnTerm` minutes).
  *
  * Time is modeled as [Instant] while wall-clock dates are interpreted in the fixed opensamguk server
- * zone, [SERVER_ZONE] (`Asia/Seoul`). `turnTerm` is in MINUTES, so one turn step is `turnTerm * 60`
- * seconds.
+ * zone, [SERVER_ZONE] (fixed KST, UTC+09:00). `turnTerm` is in MINUTES, so one turn step is
+ * `turnTerm * 60` seconds.
  *
  * The helpers are PURE and change-gated at the call site: [turnDate] returns `(year, month, phase)`;
  * the caller writes the world clock only if it changed. Opensamguk intentionally uses the 삼모
  * ten-day calendar: 상순/중순/하순, 36 turns per year.
  */
 object ServerClock {
-    val SERVER_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
+    val SERVER_ZONE: ZoneId = ZoneOffset.ofHours(9)
 
     /** PHP `addTurn`: `$date + PT{turnTerm*turn}M`. */
     fun addTurn(date: Instant, turnTerm: Int, turn: Int = 1): Instant =

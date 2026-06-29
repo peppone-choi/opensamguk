@@ -76,4 +76,10 @@ class ServerClockTest {
         assertEquals(GameDate(180, 2, 1), ServerClock.advance(GameDate(180, 1, 3), 1))
         assertEquals(GameDate(181, 1, 1), ServerClock.advance(GameDate(180, 12, 3), 1))
     }
+
+    @Test
+    fun `server zone is fixed KST for ancient game years`() {
+        val local = Instant.parse("0181-01-01T12:47:00Z").atZone(ServerClock.SERVER_ZONE).toLocalTime()
+        assertEquals("21:47", "%02d:%02d".format(local.hour, local.minute))
+    }
 }
