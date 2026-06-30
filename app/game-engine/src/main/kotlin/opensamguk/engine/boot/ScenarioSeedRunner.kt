@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.infra.seed.ScenarioImporter
+import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioJson
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -69,14 +70,13 @@ class SeedBootstrap(
             return false
         }
 
-        val scenarioJson = readResource("scenario/$scenarioCode.json")
-        val citiesJson = readResource("scenario/cities_1010.json")
-        val scenario = ScenarioJson.loadScenario(scenarioJson)
-        val cities = ScenarioJson.loadCities(citiesJson)
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/$scenarioCode.json"))
+        val mapName = scenarioMapName(scenario)
+        val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
 
         log.info(
-            "Seeding fresh world '{}' — nations={} generals={} cities={}",
-            scenarioCode, scenario.nations.size, scenario.generals.size, cities.size,
+            "Seeding fresh world '{}' — map={} nations={} generals={} cities={}",
+            scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size,
         )
         val importer = ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = scenarioCode)
         val counts = importer.importAll(jdbc)
@@ -91,7 +91,14 @@ class SeedBootstrap(
 
     private fun readResource(path: String): String {
         val stream = javaClass.classLoader.getResourceAsStream(path)
-            ?: error("scenario resource not found on classpath: $path")
+            ?: error("resource not found on classpath: $path")
         return stream.use { it.readBytes().toString(StandardCharsets.UTF_8) }
+    }
+
+    private fun scenarioMapName(scenario: Scenario): String {
+        val merged = LinkedHashMap<String, Any?>()
+        merged.putAll(scenario.map)
+        merged.putAll(scenario.const)
+        return merged["mapName"] as? String ?: "che"
     }
 }

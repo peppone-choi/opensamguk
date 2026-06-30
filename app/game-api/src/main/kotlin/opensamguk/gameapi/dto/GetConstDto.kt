@@ -5,14 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 /**
  * W3 — `GetConst` 정적 상수 번들 응답 (`GET /api/const`).
  *
- * PHP grand truth: `legacy/devsam-core/hwe/sammo/API/Global/GetConst.php::genConstData()` —
- * `NO_SESSION` 정적 API로, **DB read가 전혀 없다**(파일 캐시만 사용). 우리도 DB를 만지지 않고
- * `:common`의 [opensamguk.common.constants.GameConst] / [opensamguk.common.constants.GameUnitConst] /
- * [opensamguk.common.constants.CityConst]를 그대로 직렬화한다.
+ * PHP grand truth: `legacy/devsam-core/hwe/sammo/API/Global/GetConst.php::genConstData()`.
+ * Opensamguk overlays the active server map's city catalog so `cityConst` follows scenario maps.
  *
  * 본 번들에 담는 것(no-DB 정적 부분, W3 스펙):
  *  - `gameUnitConst` = `GameUnitConst.all()`의 유닛 상세(병종 일람) — PHP `GameUnitConst::all()`.
- *  - `cityConst`     = `CityConst.all()`의 도시 초기치 — PHP `CityConst::all()`.
+ *  - `cityConst`     = active `map/<code>.json` 도시 초기치 — PHP `CityConst::all()`.
  *  - `cityConstMap`  = region/level 양방향 라벨↔int 맵 — PHP `CityConst::$regionMap`/`$levelMap`.
  *  - `iAction`       = nationType/specialDomestic/specialWar/personality/item/crewtype 키맵 — PHP
  *    `genConstData()`의 `iActionInfo`에 대응(여기서는 키→표시문자열 번들로 단순화; getName/getInfo의

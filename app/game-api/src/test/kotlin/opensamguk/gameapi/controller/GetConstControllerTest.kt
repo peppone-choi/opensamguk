@@ -3,8 +3,12 @@ package opensamguk.gameapi.controller
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.seed.MapJson
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -24,8 +28,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
  */
 class GetConstControllerTest {
 
-    private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(GetConstController()).build()
+    private fun mockMvc(worlds: List<WorldStateReadEntity> = emptyList()): MockMvc {
+        val worldRepo = mock(WorldStateReadRepository::class.java)
+        `when`(worldRepo.findAll()).thenReturn(worlds)
+        return MockMvcBuilders.standaloneSetup(GetConstController(worldRepo)).build()
+    }
 
     @Test
     fun `const bundle exposes unit, city, cityConstMap, iAction, gameConst`() {
@@ -56,6 +63,29 @@ class GetConstControllerTest {
             .andExpect(jsonPath("$.gameConst.phasesPerMonth").value(GameConst.phasesPerMonth))
             .andExpect(jsonPath("$.gameConst.turnsPerYear").value(GameConst.turnsPerYear))
             .andExpect(jsonPath("$.gameConst.openingLimitTurns").value(GameConst.openingLimitTurns))
+    }
+
+    @Test
+    fun `const bundle follows the active scenario map`() {
+        val world = WorldStateReadEntity(
+            id = 1,
+            scenarioCode = "scenario_2",
+            currentYear = 200,
+            currentMonth = 1,
+            config = mapOf("map" to mapOf("mapName" to "miniche_b")),
+        )
+
+        mockMvc(listOf(world)).perform(get("/api/const"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.mapName").value("miniche_b"))
+            .andExpect(jsonPath("$.mapWidth").value(1000))
+            .andExpect(jsonPath("$.mapHeight").value(714))
+            .andExpect(jsonPath("$.gameConst.mapName").value("miniche_b"))
+            .andExpect(jsonPath("$.cityConst.length()").value(78))
+            .andExpect(jsonPath("$.cityConst[0].id").value(1))
+            .andExpect(jsonPath("$.cityConst[0].name").value("낙양"))
+            .andExpect(jsonPath("$.cityConst[0].population").value(668600))
+            .andExpect(jsonPath("$.cityConst[0].path['32']").value("하내"))
     }
 
     @Test

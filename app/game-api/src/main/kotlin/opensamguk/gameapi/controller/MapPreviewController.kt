@@ -20,10 +20,8 @@ import org.springframework.web.bind.annotation.RestController
  *
  * **Data sources** (matching the field contract in [MapPreviewResponse]):
  *  - cities `id`/`level`/`nationId`: LIVE from [CityReadRepository] (ownership changes as the game runs);
- *  - cities `name`/`x`/`y`: merged by city-id from the committed `scenario/cities_1010.json` resource
- *    (those fields are NOT in the `city` table). `ScenarioJson.loadCities` is the SAME reusable decoder
- *    the F1 seed importer uses — game-api sees the resource via its `:infra` dependency. A city whose id
- *    has no coord row is OMITTED (nothing to draw);
+ *  - cities `name`/`x`/`y`: merged by city-id from the active `map/<code>.json` resource.
+ *    A city whose id has no coord row is OMITTED (nothing to draw);
  *  - nations `id`/`name`/`color`: LIVE from [NationReadRepository] (`nation.color` hex, verbatim);
  *  - `serverName`/`year`/`month`/`mapCode`: from the singleton [WorldStateReadRepository] row.
  *

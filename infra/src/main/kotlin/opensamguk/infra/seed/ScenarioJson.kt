@@ -150,6 +150,31 @@ object ScenarioJson {
         }
     }
 
+    fun loadMapCities(json: String): List<ScenarioCity> =
+        MapJson.loadCityDetails(json).map { c ->
+            ScenarioCity(
+                id = c.id,
+                name = c.name,
+                level = c.level,
+                region = c.region,
+                nationId = 0,
+                popMax = c.populationMax,
+                agriMax = c.agricultureMax,
+                commMax = c.commerceMax,
+                secuMax = c.securityMax,
+                defMax = c.defenceMax,
+                wallMax = c.wallMax,
+                x = c.x?.toInt(),
+                y = c.y?.toInt(),
+                popInit = c.populationInit,
+                agriInit = c.agricultureInit,
+                commInit = c.commerceInit,
+                secuInit = c.securityInit,
+                defInit = c.defenceInit,
+                wallInit = c.wallInit,
+            )
+        }
+
     // ── small typed accessors over the MetaJson tree ──
     private fun arr(v: Any?): List<Any?> = when (v) {
         null -> emptyList()

@@ -70,15 +70,21 @@ class ScenarioImporterIT {
 
     private fun newImporter(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
-        val cities = ScenarioJson.loadCities(readResource("scenario/cities_1010.json"))
+        val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
         return ScenarioImporter(scenario = scenario, cities = cities)
     }
 
     // 빼섭(2번째 서버)용 scenario_1030 군웅할거. cities는 che 풀맵 공용(맵 바운드, 시나리오 무관).
     private fun newImporter1030(): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
-        val cities = ScenarioJson.loadCities(readResource("scenario/cities_1010.json"))
+        val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
         return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
+    }
+
+    private fun newImporter2(): ScenarioImporter {
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
+        val cities = ScenarioJson.loadMapCities(readResource("map/miniche_b.json"))
+        return ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_2", scenarioNumber = 2)
     }
 
     @Test
@@ -228,6 +234,32 @@ class ScenarioImporterIT {
         // world_state.meta startYear 191(군웅할거).
         val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
+    }
+
+    @Test
+    fun `importAll seeds scenario_2 with miniche_b city catalog`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val counts = newImporter2().importAll(jdbc)
+
+        assertEquals(1, counts.worldState)
+        assertEquals(0, counts.nation)
+        assertEquals(78, counts.city)
+        assertEquals(0, counts.general)
+        assertEquals(0, counts.generalTurn)
+        assertEquals(0, counts.rankData)
+        assertEquals(1, counts.ngGames)
+        assertEquals(78, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+
+        val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
+        assertEquals("낙양", sso(city["name"]))
+        assertEquals(8, soi(city["level"]))
+        assertEquals(668600, soi(city["pop_max"]))
+        assertEquals(7800, soi(city["agri_max"]))
+        assertEquals(8000, soi(city["comm_max"]))
+
+        val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
+        assertTrue(config.contains("\"mapName\":\"miniche_b\"") || config.contains("\"mapName\": \"miniche_b\""), config)
     }
 
     @Test
