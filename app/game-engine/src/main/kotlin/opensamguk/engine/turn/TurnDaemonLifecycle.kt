@@ -64,6 +64,8 @@ class TurnDaemonLifecycle(
     private val lifecycleEnvOf: (state: TurnWorldState, date: String) -> LifecycleEnv = { state, date ->
         LifecycleEnv(baselineKillturn = 0, year = state.currentYear, month = state.currentMonth, turnTerm = 1, turnTimeHm = date)
     },
+    private val pullNationTurnOf: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
+    private val pullGeneralTurnOf: (generalId: Int) -> Unit = { _ -> },
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -151,6 +153,9 @@ class TurnDaemonLifecycle(
                 date = date,
             )
             handled.add(result)
+
+            pullNationTurnOf(g.nationId, g.officerLevel)
+            pullGeneralTurnOf(g.id)
 
             // ── 1) killturn 감소/리셋 (PHP processCommand 꼬리, `TurnExecutionHelper.php:153-165`) ──
             // PHP는 processCommand 안에서 command.run() 직후 killturn을 처리한다(:348→:153). Kotlin handle()는
