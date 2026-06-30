@@ -143,12 +143,18 @@ class TurnRunServiceIT {
         // --- the reserved general turn lives in the general_turn ring, NOT on the command stream --
         val reservedRepo = ReservedTurnRepository(jdbc)
         reservedRepo.reserve(generalId = generalId, turnIdx = 0, actionCode = "che_농지개간")
+        reservedRepo.reserve(generalId = generalId, turnIdx = 1, actionCode = "che_기술연구")
 
         // --- the in-memory world (the daemon source of truth, matching the DB pre-state) ---------
         val world = InMemoryTurnWorld(worldSnapshot())
         val registry = CommandRegistry(GeneralActionPipeline())
         val handler = ReservedTurnHandler(world, registry, hiddenSeed, startYear)
-        val lifecycle = TurnDaemonLifecycle(world, handler) { gid ->
+        val lifecycle = TurnDaemonLifecycle(
+            world = world,
+            handler = handler,
+            pullNationTurnOf = { nationId, officerLevel -> reservedRepo.pullNationTurn(nationId, officerLevel) },
+            pullGeneralTurnOf = { generalId -> reservedRepo.pullGeneralTurn(generalId) },
+        ) { gid ->
             reservedRepo.readReserved(gid, 0)
         }
         val commandStream = RedisCommandStream(template, profile)
@@ -190,6 +196,16 @@ class TurnRunServiceIT {
             assertEquals(1, result.flushedGenerals)
             assertEquals(1, result.flushedCities)
             assertEquals(1, result.flushedLogs)
+            assertEquals(
+                "che_기술연구",
+                reservedRepo.readReserved(generalId, 0).actionCode,
+                "slot 0 should advance to the next reserved command after runTick",
+            )
+            assertEquals(
+                "휴식",
+                reservedRepo.readReserved(generalId, 29).actionCode,
+                "the consumed slot should rotate to the ring tail as 휴식",
+            )
 
             // --- (a) general + city post-state flushed to Postgres ------------------------------
             val gRow = jdbc.queryForMap(

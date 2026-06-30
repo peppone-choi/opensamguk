@@ -2,11 +2,13 @@ package opensamguk.engine.turn
 
 import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.ServerClock
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -136,6 +138,32 @@ class DrainTailAdvanceTest {
 
         // 예약=휴식 → applyKillturnDecrement의 `commandClassName == 휴식` 분기 (:161-162) → killturn -1.
         assertEquals(4, killturnOf(w, 1), "휴식 예약 장수는 killturn이 1 감소해야 한다 (processCommand 꼬리 :153-165)")
+    }
+
+    @Test
+    fun `runTick consumes the ring for an NPC general too`() {
+        val pullNationCalls = AtomicInteger(0)
+        val pullGeneralCalls = AtomicInteger(0)
+        val w = world(gen(id = 1, npc = 2, killturn = 5))
+        val handler = ReservedTurnHandler(
+            w,
+            registry = CommandRegistry(GeneralActionPipeline()),
+            hiddenSeed = "0".repeat(32),
+            startYear = 184,
+            aiHook = { _, reserved -> ChosenCommand(reserved.actionCode, emptyMap()) },
+        )
+        val lc = TurnDaemonLifecycle(
+            world = w,
+            handler = handler,
+            lifecycleEnvOf = ::lifecycleEnvOf,
+            pullNationTurnOf = { nationId, officerLevel -> pullNationCalls.incrementAndGet() },
+            pullGeneralTurnOf = { pullGeneralCalls.incrementAndGet() },
+        ) { ReservedTurn("che_농지개간", "") }
+
+        lc.runTick()
+
+        assertEquals(1, pullNationCalls.get(), "NPC general should still rotate the nation ring")
+        assertEquals(1, pullGeneralCalls.get(), "NPC general should still rotate the general ring")
     }
 
     @Test

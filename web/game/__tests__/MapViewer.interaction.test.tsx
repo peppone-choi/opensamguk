@@ -99,6 +99,23 @@ describe('MapViewer — 정적 렌더(로비 MapPreview와 동일)', () => {
     });
 });
 
+describe('MapViewer — miniche 계열 CDN 폴백', () => {
+    it.each(['miniche', 'miniche_b', 'miniche_clean'] as const)(
+        '%s는 che 배경과 miniche_road.png를 쓴다',
+        async (mapCode) => {
+            render(<MapViewer mapData={{ ...MAP_FIXTURE, mapCode }} />);
+            await waitFor(() => expect(getCanvas()).toBeTruthy());
+
+            const bg = document.querySelector('.map-bg') as HTMLImageElement | null;
+            const road = document.querySelector('.map-road') as HTMLImageElement | null;
+            expect(bg).toBeTruthy();
+            expect(road).toBeTruthy();
+            expect(bg!.src).toContain('/game/map/che/bg_summer.jpg');
+            expect(road!.src).toContain('/game/map/che/miniche_road.png');
+        },
+    );
+});
+
 describe('MapViewer — 도시 마커 클릭 → 도시 정보 페이지 라우팅', () => {
     it('도시 마커가 `/game/city?id=<id>` 링크를 가진다', async () => {
         await renderAndLoad();
