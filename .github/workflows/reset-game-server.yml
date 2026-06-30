@@ -84,6 +84,8 @@ jobs:
             echo "Missing env file: $ENV_FILE" >&2
             exit 3
           fi
+          OLD_API_ID="$(docker inspect -f '{{.Id}}' "${SERVER}-game-api" 2>/dev/null || true)"
+          OLD_ENGINE_ID="$(docker inspect -f '{{.Id}}' "${SERVER}-game-engine" 2>/dev/null || true)"
 
           read_env() {
             local key="$1"
@@ -221,6 +223,24 @@ jobs:
             | tee "$BACKUP_DIR/reset-response.json"
           grep -q '"ok":true' "$BACKUP_DIR/reset-response.json"
 
+          wait_container_recreated() {
+            local container="$1"
+            local old_id="$2"
+            for i in $(seq 1 72); do
+              local new_id
+              new_id="$(docker inspect -f '{{.Id}}' "$container" 2>/dev/null || true)"
+              if [[ -n "$new_id" && ( -z "$old_id" || "$new_id" != "$old_id" ) ]]; then
+                echo "${container} recreated: OK"
+                return 0
+              fi
+              echo "${container} recreate pending (${i}/72)"
+              sleep 5
+            done
+            echo "${container} recreate: FAILED" >&2
+            docker ps -a --filter "name=${container}" --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
+            return 1
+          }
+
           wait_container_health() {
             local container="$1"
             local port="$2"
@@ -252,6 +272,8 @@ jobs:
             return 1
           }
 
+          wait_container_recreated "${SERVER}-game-api" "$OLD_API_ID"
+          wait_container_recreated "${SERVER}-game-engine" "$OLD_ENGINE_ID"
           wait_container_health "${SERVER}-game-api" 8081
           wait_container_health "${SERVER}-game-engine" 8082
           wait_public_route
@@ -278,29 +300,38 @@ jobs:
               with urlopen(req, timeout=20) as res:
                   return json.loads(res.read().decode("utf-8"))
 
-          preview = get("/api/game/api/map/preview")
-          const = get("/api/game/api/const")
-          cities = get("/api/game/api/cities")
-          city1 = get("/api/game/api/city/1")
-          summary = {
-              "previewMap": preview.get("mapCode"),
-              "previewCityCount": len(preview.get("cities") or []),
-              "constMap": const.get("mapName"),
-              "constCityCount": len(const.get("cityConst") or []),
-              "citiesCount": len(cities.get("cities") or []),
-              "citiesFirst": (cities.get("cities") or [None])[0],
-              "city1Name": city1.get("name"),
-          }
-          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          last_error = None
+          for attempt in range(1, 61):
+              try:
+                  preview = get("/api/game/api/map/preview")
+                  const = get("/api/game/api/const")
+                  cities = get("/api/game/api/cities")
+                  city1 = get("/api/game/api/city/1")
+                  summary = {
+                      "previewMap": preview.get("mapCode"),
+                      "previewCityCount": len(preview.get("cities") or []),
+                      "constMap": const.get("mapName"),
+                      "constCityCount": len(const.get("cityConst") or []),
+                      "citiesCount": len(cities.get("cities") or []),
+                      "citiesFirst": (cities.get("cities") or [None])[0],
+                      "city1Name": city1.get("name"),
+                  }
+                  print(json.dumps({"attempt": attempt, **summary}, ensure_ascii=False, indent=2))
 
-          if expected_count:
-              want = int(expected_count)
-              if summary["citiesCount"] != want:
-                  print(f"Expected /cities count {want}, got {summary['citiesCount']}", file=sys.stderr)
-                  sys.exit(1)
-          if expected_first and summary["city1Name"] != expected_first:
-              print(f"Expected city/1 name {expected_first}, got {summary['city1Name']}", file=sys.stderr)
-              sys.exit(1)
+                  if expected_count:
+                      want = int(expected_count)
+                      if summary["citiesCount"] != want:
+                          raise AssertionError(f"Expected /cities count {want}, got {summary['citiesCount']}")
+                  if expected_first and summary["city1Name"] != expected_first:
+                      raise AssertionError(f"Expected city/1 name {expected_first}, got {summary['city1Name']}")
+                  break
+              except Exception as exc:
+                  last_error = exc
+                  print(f"public API pending ({attempt}/60): {exc}", file=sys.stderr)
+                  if attempt == 60:
+                      raise
+                  import time
+                  time.sleep(5)
           PY
 
           echo "=== Reset complete; backup retained at $BACKUP_DIR ==="

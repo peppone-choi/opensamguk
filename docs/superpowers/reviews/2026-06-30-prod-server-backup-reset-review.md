@@ -43,6 +43,8 @@ Then it calls the existing internal deployer `/servers/reset` endpoint from the 
 
 - YAML parse: `ruby -e 'require "yaml"; YAML.load_file(".github/workflows/reset-game-server.yml")'`
 - Shell parse: extracted `run:` body and checked with `bash -n`.
+- First live run `28418347393` confirmed backup and reset execution, then failed in the final public API assertion because the deployer reset is asynchronous and the workflow checked the API before the recreated stack was fully ready.
+- Follow-up workflow change waits for `game-api` and `game-engine` container IDs to change after reset and retries the public API assertion for up to 5 minutes.
 
 ## Known Gaps
 
