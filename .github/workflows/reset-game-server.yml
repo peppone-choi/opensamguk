@@ -1,0 +1,306 @@
+name: Backup and Reset Game Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      server:
+        description: "Game server id to reset"
+        required: true
+        default: "s2"
+        type: choice
+        options:
+          - s1
+          - s2
+      confirm:
+        description: "Type RESET <server>, for example RESET s2"
+        required: true
+        default: "RESET s2"
+        type: string
+      scenario_code:
+        description: "Scenario code to seed after reset"
+        required: true
+        default: "scenario_2"
+        type: string
+      generation:
+        description: "Generation number, or current to preserve env"
+        required: true
+        default: "current"
+        type: string
+      turn_term:
+        description: "Turn term minutes, or current to preserve env"
+        required: true
+        default: "current"
+        type: string
+      expected_city_count:
+        description: "Optional public API city count assertion"
+        required: false
+        default: "78"
+        type: string
+      expected_first_city:
+        description: "Optional public API first-city assertion"
+        required: false
+        default: "낙양"
+        type: string
+
+concurrency:
+  group: reset-game-server-${{ inputs.server }}
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: [self-hosted, Linux, X64, ec2-prod]
+    steps:
+      - name: Backup, reset, and verify selected game server
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          STACK="$HOME/opensamguk-docker"
+          SERVER="${{ inputs.server }}"
+          CONFIRM="${{ inputs.confirm }}"
+          SCENARIO_CODE="${{ inputs.scenario_code }}"
+          GENERATION_INPUT="${{ inputs.generation }}"
+          TURN_TERM_INPUT="${{ inputs.turn_term }}"
+          EXPECTED_CITY_COUNT="${{ inputs.expected_city_count }}"
+          EXPECTED_FIRST_CITY="${{ inputs.expected_first_city }}"
+
+          if [[ ! "$SERVER" =~ ^s[0-9][A-Za-z0-9_-]*$ ]]; then
+            echo "Invalid server id: $SERVER" >&2
+            exit 2
+          fi
+          if [[ "$CONFIRM" != "RESET $SERVER" ]]; then
+            echo "Confirmation must be exactly: RESET $SERVER" >&2
+            exit 2
+          fi
+          if [[ ! "$SCENARIO_CODE" =~ ^[A-Za-z0-9_.:-]+$ ]]; then
+            echo "Invalid scenario code: $SCENARIO_CODE" >&2
+            exit 2
+          fi
+
+          cd "$STACK"
+          ENV_FILE="servers/${SERVER}.env"
+          PROJECT="opensamguk-${SERVER}"
+          if [[ ! -f "$ENV_FILE" ]]; then
+            echo "Missing env file: $ENV_FILE" >&2
+            exit 3
+          fi
+
+          read_env() {
+            local key="$1"
+            local value
+            value="$(sudo awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, ""); print; exit }' "$ENV_FILE" || true)"
+            value="${value%\"}"
+            value="${value#\"}"
+            value="${value%\'}"
+            value="${value#\'}"
+            printf '%s' "$value"
+          }
+
+          env_or_default() {
+            local key="$1"
+            local fallback="$2"
+            local value
+            value="$(read_env "$key")"
+            if [[ -n "$value" ]]; then
+              printf '%s' "$value"
+            else
+              printf '%s' "$fallback"
+            fi
+          }
+
+          GENERATION="$GENERATION_INPUT"
+          if [[ "$GENERATION" == "current" || -z "$GENERATION" ]]; then
+            GENERATION="$(env_or_default SERVER_GENERATION 1)"
+          fi
+          if [[ ! "$GENERATION" =~ ^[0-9]+$ ]]; then
+            echo "Invalid generation: $GENERATION" >&2
+            exit 2
+          fi
+
+          TURN_TERM="$TURN_TERM_INPUT"
+          if [[ "$TURN_TERM" == "current" || -z "$TURN_TERM" ]]; then
+            TURN_TERM="$(env_or_default RESET_TURNTERM 60)"
+          fi
+          case "$TURN_TERM" in
+            120|60|30|20|10|5|2|1) ;;
+            *) echo "Invalid turn term: $TURN_TERM" >&2; exit 2 ;;
+          esac
+
+          TS="$(date -u +%Y%m%dT%H%M%SZ)"
+          BACKUP_DIR="$HOME/opensamguk-backups/${SERVER}/${TS}"
+          mkdir -p "$BACKUP_DIR"
+          sudo cp "$ENV_FILE" "$BACKUP_DIR/${SERVER}.env"
+
+          echo "=== Backup destination: $BACKUP_DIR ==="
+          PG_CONTAINER="${SERVER}-game-postgres"
+          REDIS_CONTAINER="${SERVER}-game-redis"
+          if docker ps -a --format '{{.Names}}' | grep -qx "$PG_CONTAINER"; then
+            echo "=== Backing up PostgreSQL with pg_dump ==="
+            docker exec "$PG_CONTAINER" sh -c 'pg_dump -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}"' \
+              | gzip > "$BACKUP_DIR/${SERVER}-postgres.sql.gz"
+            docker exec "$PG_CONTAINER" sh -c 'psql -U "${POSTGRES_USER:-sammo}" -d "${POSTGRES_DB:-sammo}" -tAc "
+              select concat('\''world_state='\'', count(*)) from world_state
+              union all select concat('\''city='\'', count(*)) from city
+              union all select concat('\''nation='\'', count(*)) from nation
+              union all select concat('\''general='\'', count(*)) from general;
+            "' | tee "$BACKUP_DIR/${SERVER}-row-counts.txt"
+          else
+            echo "PostgreSQL container not found; skipping pg_dump"
+          fi
+          if docker ps -a --format '{{.Names}}' | grep -qx "$REDIS_CONTAINER"; then
+            echo "=== Backing up Redis data directory ==="
+            docker exec "$REDIS_CONTAINER" redis-cli SAVE >/dev/null || true
+            docker cp "${REDIS_CONTAINER}:/data" "$BACKUP_DIR/redis-data" || true
+          else
+            echo "Redis container not found; skipping Redis backup"
+          fi
+
+          set -a
+          # shellcheck disable=SC1091
+          source .env
+          set +a
+          : "${DEPLOYER_TOKEN:?DEPLOYER_TOKEN is required in shared .env}"
+
+          RESET_SYNC="$(env_or_default RESET_SYNC 1)"
+          RESET_FICTION="$(env_or_default RESET_FICTION 1)"
+          RESET_EXTEND="$(env_or_default RESET_EXTEND 1)"
+          RESET_BLOCK_GENERAL_CREATE="$(env_or_default RESET_BLOCK_GENERAL_CREATE 0)"
+          RESET_NPCMODE="$(env_or_default RESET_NPCMODE 0)"
+          RESET_SHOW_IMG_LEVEL="$(env_or_default RESET_SHOW_IMG_LEVEL 3)"
+          RESET_AUTORUN_USER_OPTIONS="$(env_or_default RESET_AUTORUN_USER_OPTIONS develop,warp,recruit,recruit_high,train,battle,chief)"
+          RESET_AUTORUN_USER_MINUTES="$(env_or_default RESET_AUTORUN_USER_MINUTES 1440)"
+          RESET_JOIN_MODE="$(env_or_default RESET_JOIN_MODE full)"
+          RESET_TOURNAMENT_TRIG="$(env_or_default RESET_TOURNAMENT_TRIG 1)"
+          RESET_RESERVE_OPEN="$(env_or_default RESET_RESERVE_OPEN '')"
+          RESET_PRE_RESERVE_OPEN="$(env_or_default RESET_PRE_RESERVE_OPEN '')"
+
+          export SERVER CONFIRM SCENARIO_CODE GENERATION TURN_TERM
+          export RESET_SYNC RESET_FICTION RESET_EXTEND RESET_BLOCK_GENERAL_CREATE RESET_NPCMODE RESET_SHOW_IMG_LEVEL
+          export RESET_AUTORUN_USER_OPTIONS RESET_AUTORUN_USER_MINUTES RESET_JOIN_MODE RESET_TOURNAMENT_TRIG
+          export RESET_RESERVE_OPEN RESET_PRE_RESERVE_OPEN
+
+          BODY="$(python3 - <<'PY'
+          import json
+          import os
+
+          options = [
+              item.strip()
+              for item in os.environ["RESET_AUTORUN_USER_OPTIONS"].split(",")
+              if item.strip()
+          ]
+          print(json.dumps({
+              "id": os.environ["SERVER"],
+              "confirm": os.environ["CONFIRM"],
+              "generation": os.environ["GENERATION"],
+              "scenarioCode": os.environ["SCENARIO_CODE"],
+              "scenarioSeedEnabled": True,
+              "turnTerm": os.environ["TURN_TERM"],
+              "sync": os.environ["RESET_SYNC"],
+              "fiction": os.environ["RESET_FICTION"],
+              "extend": os.environ["RESET_EXTEND"],
+              "blockGeneralCreate": os.environ["RESET_BLOCK_GENERAL_CREATE"],
+              "npcMode": os.environ["RESET_NPCMODE"],
+              "showImgLevel": os.environ["RESET_SHOW_IMG_LEVEL"],
+              "autorunUserOptions": options,
+              "autorunUserMinutes": os.environ["RESET_AUTORUN_USER_MINUTES"],
+              "joinMode": os.environ["RESET_JOIN_MODE"],
+              "tournamentTrig": os.environ["RESET_TOURNAMENT_TRIG"],
+              "reserveOpen": os.environ["RESET_RESERVE_OPEN"],
+              "preReserveOpen": os.environ["RESET_PRE_RESERVE_OPEN"],
+          }, ensure_ascii=False))
+          PY
+          )"
+
+          echo "=== Triggering deployer reset for $SERVER ($PROJECT, $SCENARIO_CODE) ==="
+          docker run --rm --network opensamguk-net curlimages/curl:8.10.1 \
+            -fsS -X POST \
+            -H "Authorization: Bearer ${DEPLOYER_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "$BODY" \
+            http://opensamguk-deployer:9000/servers/reset \
+            | tee "$BACKUP_DIR/reset-response.json"
+          grep -q '"ok":true' "$BACKUP_DIR/reset-response.json"
+
+          wait_container_health() {
+            local container="$1"
+            local port="$2"
+            for i in $(seq 1 72); do
+              if docker ps --format '{{.Names}}' | grep -qx "$container" &&
+                 docker exec "$container" wget -qO- "http://localhost:${port}/actuator/health" 2>/dev/null | grep -q '"status":"UP"'; then
+                echo "${container} health: OK"
+                return 0
+              fi
+              echo "${container} health pending (${i}/72)"
+              sleep 5
+            done
+            echo "${container} health: FAILED" >&2
+            docker logs --tail 160 "$container" || true
+            return 1
+          }
+
+          wait_public_route() {
+            for i in $(seq 1 36); do
+              if curl -fsSI "http://localhost/game/${SERVER}" >/dev/null; then
+                echo "${SERVER} public route: OK"
+                return 0
+              fi
+              echo "${SERVER} public route pending (${i}/36)"
+              sleep 5
+            done
+            echo "${SERVER} public route: FAILED" >&2
+            docker logs --tail 120 opensamguk-nginx || true
+            return 1
+          }
+
+          wait_container_health "${SERVER}-game-api" 8081
+          wait_container_health "${SERVER}-game-engine" 8082
+          wait_public_route
+
+          echo "=== Verifying public game API ==="
+          export EXPECTED_CITY_COUNT EXPECTED_FIRST_CITY
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          from urllib.request import Request, urlopen
+
+          server = os.environ["SERVER"]
+          expected_count = os.environ.get("EXPECTED_CITY_COUNT", "").strip()
+          expected_first = os.environ.get("EXPECTED_FIRST_CITY", "").strip()
+          headers = {
+              "Cookie": f"sam_server={server}",
+              "User-Agent": "opensamguk-reset-workflow",
+              "Accept": "application/json",
+          }
+
+          def get(path):
+              req = Request("http://localhost" + path, headers=headers)
+              with urlopen(req, timeout=20) as res:
+                  return json.loads(res.read().decode("utf-8"))
+
+          preview = get("/api/game/api/map/preview")
+          const = get("/api/game/api/const")
+          cities = get("/api/game/api/cities")
+          city1 = get("/api/game/api/city/1")
+          summary = {
+              "previewMap": preview.get("mapCode"),
+              "previewCityCount": len(preview.get("cities") or []),
+              "constMap": const.get("mapName"),
+              "constCityCount": len(const.get("cityConst") or []),
+              "citiesCount": len(cities.get("cities") or []),
+              "citiesFirst": (cities.get("cities") or [None])[0],
+              "city1Name": city1.get("name"),
+          }
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+
+          if expected_count:
+              want = int(expected_count)
+              if summary["citiesCount"] != want:
+                  print(f"Expected /cities count {want}, got {summary['citiesCount']}", file=sys.stderr)
+                  sys.exit(1)
+          if expected_first and summary["city1Name"] != expected_first:
+              print(f"Expected city/1 name {expected_first}, got {summary['city1Name']}", file=sys.stderr)
+              sys.exit(1)
+          PY
+
+          echo "=== Reset complete; backup retained at $BACKUP_DIR ==="
