@@ -70,8 +70,8 @@ class TurnDaemonLifecycle(
      * (`TurnExecutionHelper.php:350-351`). Keep these callbacks separate from [reservedActionOf]
      * so tests can record the lifecycle order while production wires the JDBC ring repository.
      */
-    private val pullNationTurn: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
-    private val pullGeneralTurn: (generalId: Int) -> Unit = { },
+    private val pullNationTurnOf: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
+    private val pullGeneralTurnOf: (generalId: Int) -> Unit = { _ -> },
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -186,8 +186,8 @@ class TurnDaemonLifecycle(
             // ── 1b) command ring pull (PHP `TurnExecutionHelper.php:350-351`) ──
             // This is intentionally outside the `!blocked` command block: a blocked turn and a failed
             // reserved command both consume one visible row in the turn table.
-            pullNationTurn(g.nationId, g.officerLevel)
-            pullGeneralTurn(g.id)
+            pullNationTurnOf(g.nationId, g.officerLevel)
+            pullGeneralTurnOf(g.id)
 
             // ── 2) updateTurnTime (PHP `:170-230`, 호출부 `:363`) ──
             // lived_month+1 → killturn<=0 kill/유체이탈 게이트 → age>=retirementYear 환생 게이트 →

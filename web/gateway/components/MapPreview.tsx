@@ -84,8 +84,13 @@ function levelText(level: number): string {
 
 // CDN 베이스맵 코드 — 시나리오가 맵을 특정 못한 경우(mapCode="scenario") che 베이스로 폴백.
 const CDN_MAPS = new Set(['che', 'chess', 'cr', 'ludo_rathowm', 'miniche', 'miniche_b', 'miniche_clean', 'pokemon_v1']);
+const MINICHE_MAPS = new Set(['miniche', 'miniche_b', 'miniche_clean']);
 function cdnMapCode(mc: string): string {
+    if (MINICHE_MAPS.has(mc)) return 'che';
     return CDN_MAPS.has(mc) ? mc : 'che';
+}
+function cdnRoadName(mc: string): string {
+    return MINICHE_MAPS.has(mc) ? 'miniche_road.png' : `${cdnMapCode(mc)}_road.png`;
 }
 
 interface MapCity {
@@ -279,10 +284,11 @@ export default function MapPreview({
     }
 
     const mapCode = cdnMapCode(data.mapCode || 'che');
+    const roadName = cdnRoadName(data.mapCode || 'che');
     const w = data.width || 700;
     const h = data.height || 500;
     const bg = `${MAP_CDN}/${mapCode}/bg_${seasonOf(data.month || 1)}.jpg`;
-    const road = `${MAP_CDN}/${mapCode}/${mapCode}_road.png`;
+    const road = `${MAP_CDN}/${mapCode}/${roadName}`;
 
     return (
         <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
