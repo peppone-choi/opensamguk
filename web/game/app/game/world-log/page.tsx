@@ -12,11 +12,12 @@
 // EMPTY-SAFE: 신선 시드면 entries === [] → 빈-상태 안내. 절대 크래시하지 않는다.
 // (개인 전투 기록 / 장수 행동 로그(general_record)는 백엔드에 테이블이 없어 범위 밖 — 미구현 갭.)
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { WorldLogResponse } from '../../../lib/api';
+import { useSSE } from '../../../hooks/useSSE';
 
 const sectionBarStyle: React.CSSProperties = {
     textAlign: 'center',
@@ -56,6 +57,12 @@ export default function WorldLogPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
 
+    const fetchData = useCallback(async () => {
+        const d = await api.worldLog();
+        setData(d);
+        setError('');
+    }, []);
+
     useEffect(() => {
         let alive = true;
         (async () => {
@@ -75,6 +82,10 @@ export default function WorldLogPage() {
             alive = false;
         };
     }, []);
+
+    useSSE(() => {
+        fetchData().catch(() => setError('데이터를 불러올 수 없습니다.'));
+    });
 
     const entries = data?.entries ?? [];
 

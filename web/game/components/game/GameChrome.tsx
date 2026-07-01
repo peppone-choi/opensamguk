@@ -124,6 +124,7 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
                             generalId={generalId}
                             nationId={general.nationId}
                             maxTurn={constData?.maxTurn}
+                            refreshKey={refreshKey}
                             onReserved={refresh}
                             onToast={show}
                         />
