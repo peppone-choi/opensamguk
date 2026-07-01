@@ -139,6 +139,34 @@ class RandomImgwanTest {
         assertEquals(picked.lordCityId, draft.general.cityId, "joined lord's city")
     }
 
+    @Test
+    fun `global join log uses the actor name supplied by the engine context`() {
+        val weighted = listOf(
+            RandomImgwanWeightedCandidate(
+                nationId = 21,
+                name = "견초",
+                gennum = 3,
+                warpower = 100.0,
+                develpower = 50.0,
+                npcLeq1 = false,
+                lordCityId = 210,
+            ),
+        )
+        val actorWithoutNameMeta = neutralGeneral(npc = 2).copy(
+            meta = linkedMapOf("explevel" to 10, "affinity" to 50),
+        )
+        val draft = GeneralActionDraft(actorWithoutNameMeta, City(
+            id = 0, nationId = 0, level = 0, commerce = 0, commerceMax = 0,
+            agriculture = 0, agricultureMax = 0, supplyState = 1, frontState = 0, trust = 0.0), null)
+        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date, generalName = "견초")
+
+        CheRandomImgwan(pipeline, emptyList(), weighted, useNpcForeignBranch = false).resolve(ctx)
+
+        val globalLog = ctx.globalActionLogs().single()
+        assertTrue(globalLog.startsWith("<C>●</>${MONTH}월:<Y>견초</>가 "), "actor name should not be blank: $globalLog")
+        assertTrue(globalLog.contains("<D><b>견초</b></>에 <S>임관</>했습니다."), "dest nation log mismatch: $globalLog")
+    }
+
     // -------- exp branch + determinism --------
 
     @Test

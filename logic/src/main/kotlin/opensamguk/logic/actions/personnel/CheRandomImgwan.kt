@@ -111,7 +111,7 @@ class CheRandomImgwan(
         // talk choice — AFTER the dest pick (draw order: [shuffle|weighted] → choice(talk)).
         val randomTalk = rng.choice(TALK_LIST)
 
-        val generalName = (d.general.meta["name"] as? String) ?: ""
+        val generalName = context.generalName.ifEmpty { (d.general.meta["name"] as? String) ?: "" }
         val josaYi = JosaUtil.pick(generalName, "이")
         context.addLog("<D>${chosen.name}</>에 랜덤 임관했습니다. <1>${context.date}</>")
         context.addGlobalActionLog("<Y>$generalName</>$josaYi $randomTalk <D><b>${chosen.name}</b></>에 <S>임관</>했습니다.")
