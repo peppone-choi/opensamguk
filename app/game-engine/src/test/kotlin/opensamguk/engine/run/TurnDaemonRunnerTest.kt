@@ -64,6 +64,11 @@ class TurnDaemonRunnerTest {
             assertTrue(runner.isRunning, "enabled runner reports running")
             assertTrue(latch.await(3, TimeUnit.SECONDS), "loop drove runTick on the cadence")
             assertTrue(ticks.get() >= 1, "at least one tick was driven")
+            val recorded = waitUntil(2_000) {
+                val snapshot = runner.diagnostics()
+                snapshot.successfulTicks >= 1 && snapshot.lastTickCompletedAt != null
+            }
+            assertTrue(recorded, "successful tick metrics are recorded after runTick returns")
             val diagnostics = runner.diagnostics()
             assertTrue(diagnostics.successfulTicks >= 1, "successful tick count is exposed")
             assertEquals(0, diagnostics.consecutiveFailures, "success resets consecutive failures")
