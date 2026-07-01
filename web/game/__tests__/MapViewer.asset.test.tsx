@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
+import type { MapPreviewResponse } from '@/lib/types';
 
-import MapPreview from '../../gateway/components/MapPreview';
+import MapViewer from '@/components/game/MapViewer';
 
-const MAP_FIXTURE = {
+const MAP_FIXTURE: MapPreviewResponse = {
     serverName: '테스트섭',
     year: 200,
     month: 5,
@@ -26,7 +27,7 @@ function jsonResponse(body: unknown): Response {
 }
 
 function getCanvas(): HTMLElement {
-    return document.querySelector('.map-preview-canvas') as HTMLElement;
+    return document.querySelector('.map-viewer-canvas') as HTMLElement;
 }
 
 beforeEach(() => {
@@ -37,7 +38,7 @@ beforeEach(() => {
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
         configurable: true,
         get() {
-            return this.classList?.contains('map-preview-canvas') ? 700 : 0;
+            return this.classList?.contains('map-viewer-canvas') ? 700 : 0;
         },
     });
 });
@@ -46,9 +47,9 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-describe('MapPreview — miniche 계열 CDN 폴백', () => {
+describe('MapViewer — miniche 계열 CDN 폴백', () => {
     it('miniche_b는 che 배경과 miniche_road.png를 쓴다', async () => {
-        render(<MapPreview mapData={MAP_FIXTURE} />);
+        render(<MapViewer mapData={MAP_FIXTURE} />);
         await waitFor(() => expect(getCanvas()).toBeTruthy());
 
         const bg = document.querySelector('.map-bg') as HTMLImageElement | null;
