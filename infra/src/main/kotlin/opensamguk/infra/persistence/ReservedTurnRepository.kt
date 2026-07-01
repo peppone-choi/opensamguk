@@ -113,26 +113,27 @@ open class ReservedTurnRepository(
     open fun pullGeneralTurn(generalId: Int, turnCnt: Int = 1) {
         if (turnCnt == 0 || turnCnt >= MAX_GENERAL_TURNS) return
         val base = MapSqlParameterSource().addValue("general_id", generalId)
-        // 1. reset the slots being pulled (turn_idx < turnCnt) to 휴식/{} and rotate them to the back.
         jdbc.update(
             """
             UPDATE general_turn
-               SET turn_idx = turn_idx + :max_turn,
-                   action_code = '휴식',
-                   arg = '{}'::jsonb,
-                   brief = '휴식'
-             WHERE general_id = :general_id AND turn_idx < :turn_cnt
-            """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("max_turn", MAX_GENERAL_TURNS).addValue("turn_cnt", turnCnt),
-        )
-        // 2. shift every row down by turnCnt.
-        jdbc.update(
-            """
-            UPDATE general_turn
-               SET turn_idx = turn_idx - :turn_cnt
+               SET turn_idx = turn_idx + :offset
              WHERE general_id = :general_id
             """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+            MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
+        )
+        jdbc.update(
+            """
+            UPDATE general_turn
+               SET turn_idx = ((((turn_idx - :offset) % :max_turn) - :turn_cnt + :max_turn) % :max_turn),
+                   action_code = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE action_code END,
+                   arg = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
+                   brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END
+             WHERE general_id = :general_id
+            """.trimIndent(),
+            MapSqlParameterSource(base.values)
+                .addValue("offset", MAX_GENERAL_TURNS * 2)
+                .addValue("max_turn", MAX_GENERAL_TURNS)
+                .addValue("turn_cnt", turnCnt),
         )
     }
 
@@ -150,26 +151,27 @@ open class ReservedTurnRepository(
     open fun pushGeneralTurn(generalId: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
         val base = MapSqlParameterSource().addValue("general_id", generalId)
-        // 1. 모든 행을 아래로 민다(turn_idx 증가). PHP의 `ORDER BY turn_idx DESC`는 UNIQUE 충돌을 피하기 위한 것.
         jdbc.update(
             """
             UPDATE general_turn
-               SET turn_idx = turn_idx + :turn_cnt
+               SET turn_idx = turn_idx + :offset
              WHERE general_id = :general_id
             """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+            MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
         )
-        // 2. MAX 이상으로 넘친 행을 앞으로 되감고 휴식/{}/휴식으로 리셋.
         jdbc.update(
             """
             UPDATE general_turn
-               SET turn_idx = turn_idx - :max_turn,
-                   action_code = '휴식',
-                   arg = '{}'::jsonb,
-                   brief = '휴식'
-             WHERE general_id = :general_id AND turn_idx >= :max_turn
+               SET turn_idx = ((((turn_idx - :offset) % :max_turn) + :turn_cnt) % :max_turn),
+                   action_code = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE action_code END,
+                   arg = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '{}'::jsonb ELSE arg END,
+                   brief = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE brief END
+             WHERE general_id = :general_id
             """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("max_turn", MAX_GENERAL_TURNS),
+            MapSqlParameterSource(base.values)
+                .addValue("offset", MAX_GENERAL_TURNS * 2)
+                .addValue("max_turn", MAX_GENERAL_TURNS)
+                .addValue("turn_cnt", turnCnt),
         )
     }
 
@@ -302,26 +304,27 @@ open class ReservedTurnRepository(
         val base = MapSqlParameterSource()
             .addValue("nation_id", nationId)
             .addValue("officer_level", officerLevel)
-        // 1. reset the slots being pulled (turn_idx < turnCnt) to 휴식/{} and rotate them to the back.
         jdbc.update(
             """
             UPDATE nation_turn
-               SET turn_idx = turn_idx + :max_chief,
-                   action_code = '휴식',
-                   arg = '{}'::jsonb,
-                   brief = '휴식'
-             WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx < :turn_cnt
-            """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("max_chief", MAX_CHIEF_TURNS).addValue("turn_cnt", turnCnt),
-        )
-        // 2. shift every row down by turnCnt.
-        jdbc.update(
-            """
-            UPDATE nation_turn
-               SET turn_idx = turn_idx - :turn_cnt
+               SET turn_idx = turn_idx + :offset
              WHERE nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+            MapSqlParameterSource(base.values).addValue("offset", MAX_CHIEF_TURNS * 2),
+        )
+        jdbc.update(
+            """
+            UPDATE nation_turn
+               SET turn_idx = ((((turn_idx - :offset) % :max_chief) - :turn_cnt + :max_chief) % :max_chief),
+                   action_code = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE action_code END,
+                   arg = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
+                   brief = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE brief END
+             WHERE nation_id = :nation_id AND officer_level = :officer_level
+            """.trimIndent(),
+            MapSqlParameterSource(base.values)
+                .addValue("offset", MAX_CHIEF_TURNS * 2)
+                .addValue("max_chief", MAX_CHIEF_TURNS)
+                .addValue("turn_cnt", turnCnt),
         )
     }
 
@@ -337,26 +340,27 @@ open class ReservedTurnRepository(
         val base = MapSqlParameterSource()
             .addValue("nation_id", nationId)
             .addValue("officer_level", officerLevel)
-        // 1. 모든 행을 아래로 민다(turn_idx 증가).
         jdbc.update(
             """
             UPDATE nation_turn
-               SET turn_idx = turn_idx + :turn_cnt
+               SET turn_idx = turn_idx + :offset
              WHERE nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("turn_cnt", turnCnt),
+            MapSqlParameterSource(base.values).addValue("offset", MAX_CHIEF_TURNS * 2),
         )
-        // 2. MAX_CHIEF 이상으로 넘친 행을 앞으로 되감고 휴식/{}/휴식으로 리셋.
         jdbc.update(
             """
             UPDATE nation_turn
-               SET turn_idx = turn_idx - :max_chief,
-                   action_code = '휴식',
-                   arg = '{}'::jsonb,
-                   brief = '휴식'
-             WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx >= :max_chief
+               SET turn_idx = ((((turn_idx - :offset) % :max_chief) + :turn_cnt) % :max_chief),
+                   action_code = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE action_code END,
+                   arg = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '{}'::jsonb ELSE arg END,
+                   brief = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE brief END
+             WHERE nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
-            MapSqlParameterSource(base.values).addValue("max_chief", MAX_CHIEF_TURNS),
+            MapSqlParameterSource(base.values)
+                .addValue("offset", MAX_CHIEF_TURNS * 2)
+                .addValue("max_chief", MAX_CHIEF_TURNS)
+                .addValue("turn_cnt", turnCnt),
         )
     }
 

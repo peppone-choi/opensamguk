@@ -115,10 +115,87 @@ class ReservedTurnRepositoryIT {
         assertEquals(0, rowCount(generalId = 99, turnIdx = 7))
     }
 
+    @Test
+    fun `pullGeneralTurn rotates a full ring without unique collisions`() {
+        val generalId = 120
+        seedFullGeneralRing(generalId)
+
+        repo.pullGeneralTurn(generalId)
+
+        assertEquals("cmd_1", repo.readReserved(generalId, 0).actionCode)
+        assertEquals("cmd_29", repo.readReserved(generalId, 28).actionCode)
+        assertEquals("휴식", repo.readReserved(generalId, 29).actionCode)
+        assertEquals(ReservedTurnRepository.MAX_GENERAL_TURNS, totalRows(generalId))
+        assertEquals(0, outOfRangeRows(generalId))
+    }
+
+    @Test
+    fun `pullGeneralTurn completes a legacy half-rotated tail row`() {
+        val generalId = 121
+        seedFullGeneralRing(generalId)
+        jdbc.update(
+            """
+            UPDATE general_turn
+               SET turn_idx = :max_turn,
+                   action_code = '휴식',
+                   arg = '{}'::jsonb,
+                   brief = '휴식'
+             WHERE general_id = :g AND turn_idx = 0
+            """.trimIndent(),
+            MapSqlParameterSource()
+                .addValue("g", generalId)
+                .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS),
+        )
+
+        repo.pullGeneralTurn(generalId)
+
+        assertEquals("cmd_1", repo.readReserved(generalId, 0).actionCode)
+        assertEquals("cmd_29", repo.readReserved(generalId, 28).actionCode)
+        assertEquals("휴식", repo.readReserved(generalId, 29).actionCode)
+        assertEquals(ReservedTurnRepository.MAX_GENERAL_TURNS, totalRows(generalId))
+        assertEquals(0, outOfRangeRows(generalId))
+    }
+
+    @Test
+    fun `pushGeneralTurn rotates a full ring without unique collisions`() {
+        val generalId = 122
+        seedFullGeneralRing(generalId)
+
+        repo.pushGeneralTurn(generalId, turnCnt = 1)
+
+        assertEquals("휴식", repo.readReserved(generalId, 0).actionCode)
+        assertEquals("cmd_0", repo.readReserved(generalId, 1).actionCode)
+        assertEquals("cmd_28", repo.readReserved(generalId, 29).actionCode)
+        assertEquals(ReservedTurnRepository.MAX_GENERAL_TURNS, totalRows(generalId))
+        assertEquals(0, outOfRangeRows(generalId))
+    }
+
     private fun rowCount(generalId: Int, turnIdx: Int): Int =
         jdbc.queryForObject(
             "SELECT count(*) FROM general_turn WHERE general_id = :g AND turn_idx = :t",
             MapSqlParameterSource().addValue("g", generalId).addValue("t", turnIdx),
+            Int::class.java,
+        ) ?: 0
+
+    private fun seedFullGeneralRing(generalId: Int) {
+        for (idx in 0 until ReservedTurnRepository.MAX_GENERAL_TURNS) {
+            repo.reserve(generalId = generalId, turnIdx = idx, actionCode = "cmd_$idx", brief = "brief_$idx")
+        }
+    }
+
+    private fun totalRows(generalId: Int): Int =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM general_turn WHERE general_id = :g",
+            MapSqlParameterSource().addValue("g", generalId),
+            Int::class.java,
+        ) ?: 0
+
+    private fun outOfRangeRows(generalId: Int): Int =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM general_turn WHERE general_id = :g AND (turn_idx < 0 OR turn_idx >= :max_turn)",
+            MapSqlParameterSource()
+                .addValue("g", generalId)
+                .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS),
             Int::class.java,
         ) ?: 0
 }

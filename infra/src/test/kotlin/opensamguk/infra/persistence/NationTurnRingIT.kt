@@ -114,10 +114,67 @@ class NationTurnRingIT {
         assertEquals("휴식", tail.brief)
     }
 
+    @Test
+    fun `pullNationTurn rotates a full ring without unique collisions`() {
+        val nationId = 17
+        seedFullNationRing(nationId, 12)
+
+        repo.pullNationTurn(nationId = nationId, officerLevel = 12)
+
+        assertEquals("cmd_1", repo.readReservedNationTurn(nationId, 12, 0).actionCode)
+        assertEquals("cmd_11", repo.readReservedNationTurn(nationId, 12, 10).actionCode)
+        assertEquals("휴식", repo.readReservedNationTurn(nationId, 12, 11).actionCode)
+        assertEquals(ReservedTurnRepository.MAX_CHIEF_TURNS, totalRows(nationId, 12))
+        assertEquals(0, outOfRangeRows(nationId, 12))
+    }
+
+    @Test
+    fun `pushNationTurn rotates a full ring without unique collisions`() {
+        val nationId = 18
+        seedFullNationRing(nationId, 12)
+
+        repo.pushNationTurn(nationId = nationId, officerLevel = 12, turnCnt = 1)
+
+        assertEquals("휴식", repo.readReservedNationTurn(nationId, 12, 0).actionCode)
+        assertEquals("cmd_0", repo.readReservedNationTurn(nationId, 12, 1).actionCode)
+        assertEquals("cmd_10", repo.readReservedNationTurn(nationId, 12, 11).actionCode)
+        assertEquals(ReservedTurnRepository.MAX_CHIEF_TURNS, totalRows(nationId, 12))
+        assertEquals(0, outOfRangeRows(nationId, 12))
+    }
+
     private fun rowCount(nationId: Int, officerLevel: Int, turnIdx: Int): Int =
         jdbc.queryForObject(
             "SELECT count(*) FROM nation_turn WHERE nation_id = :n AND officer_level = :o AND turn_idx = :t",
             MapSqlParameterSource().addValue("n", nationId).addValue("o", officerLevel).addValue("t", turnIdx),
+            Int::class.java,
+        ) ?: 0
+
+    private fun seedFullNationRing(nationId: Int, officerLevel: Int) {
+        for (idx in 0 until ReservedTurnRepository.MAX_CHIEF_TURNS) {
+            repo.reserveNationTurn(nationId, officerLevel, idx, actionCode = "cmd_$idx", brief = "brief_$idx")
+        }
+    }
+
+    private fun totalRows(nationId: Int, officerLevel: Int): Int =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM nation_turn WHERE nation_id = :n AND officer_level = :o",
+            MapSqlParameterSource().addValue("n", nationId).addValue("o", officerLevel),
+            Int::class.java,
+        ) ?: 0
+
+    private fun outOfRangeRows(nationId: Int, officerLevel: Int): Int =
+        jdbc.queryForObject(
+            """
+            SELECT count(*)
+              FROM nation_turn
+             WHERE nation_id = :n
+               AND officer_level = :o
+               AND (turn_idx < 0 OR turn_idx >= :max_chief)
+            """.trimIndent(),
+            MapSqlParameterSource()
+                .addValue("n", nationId)
+                .addValue("o", officerLevel)
+                .addValue("max_chief", ReservedTurnRepository.MAX_CHIEF_TURNS),
             Int::class.java,
         ) ?: 0
 }
