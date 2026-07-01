@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -63,9 +64,32 @@ class TurnDaemonRunnerTest {
             assertTrue(runner.isRunning, "enabled runner reports running")
             assertTrue(latch.await(3, TimeUnit.SECONDS), "loop drove runTick on the cadence")
             assertTrue(ticks.get() >= 1, "at least one tick was driven")
+            val diagnostics = runner.diagnostics()
+            assertTrue(diagnostics.successfulTicks >= 1, "successful tick count is exposed")
+            assertEquals(0, diagnostics.consecutiveFailures, "success resets consecutive failures")
+            assertNotNull(diagnostics.lastTickStartedAt, "started-at metric is exposed")
+            assertNotNull(diagnostics.lastTickCompletedAt, "completed-at metric is exposed")
         } finally {
             runner.stop()
             assertTrue(!runner.isRunning, "stop() flips running false (graceful join)")
+        }
+    }
+
+    @Test
+    fun `runner records tick failures without killing the loop`() {
+        val svc = StubService(ticks = AtomicInteger(), failTicks = true)
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
+        runner.start()
+        try {
+            val failed = waitUntil(2_000) { runner.diagnostics().failedTicks >= 1 }
+            assertTrue(failed, "tick failure is recorded")
+            val diagnostics = runner.diagnostics()
+            assertTrue(runner.isRunning, "loop stays alive after a failed tick")
+            assertTrue(diagnostics.consecutiveFailures >= 1, "consecutive failure count is exposed")
+            assertNotNull(diagnostics.lastTickFailedAt, "failure-at metric is exposed")
+            assertTrue(diagnostics.lastTickError?.contains("IllegalStateException") == true, "error class is exposed")
+        } finally {
+            runner.stop()
         }
     }
 
@@ -200,6 +224,7 @@ class TurnDaemonRunnerTest {
         private val latch: CountDownLatch? = null,
         private val intakeDrains: AtomicInteger? = null,
         private val intakeLatch: CountDownLatch? = null,
+        private val failTicks: Boolean = false,
         initialNextRun: Instant = Instant.now().minusSeconds(5),
     ) : TurnRunService(
         world = stubWorld(),
@@ -227,6 +252,9 @@ class TurnDaemonRunnerTest {
 
         override fun runTick(runTime: Instant): TickResult {
             ticks.incrementAndGet()
+            if (failTicks) {
+                throw IllegalStateException("boom")
+            }
             next = Instant.now().plusSeconds(3600)
             latch?.countDown()
             return TickResult(

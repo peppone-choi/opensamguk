@@ -36,6 +36,9 @@ class StatusControllerTest {
         assertFalse(status.paused, "초기 동결 아님")
         assertEquals("가동중", status.statusLabel)
         assertEquals("che", status.profile)
+        assertFalse(status.serviceMaterialized, "미기동 상태에서는 TurnRunService를 만들지 않는다")
+        assertEquals(0, status.successfulTicks)
+        assertEquals(0, status.failedTicks)
     }
 
     @Test

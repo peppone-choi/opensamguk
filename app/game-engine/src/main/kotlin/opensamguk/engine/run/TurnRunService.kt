@@ -18,8 +18,19 @@ import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
+import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.ServerClock
 import java.time.Instant
+
+data class TurnClockSnapshot(
+    val currentYear: Int,
+    val currentMonth: Int,
+    val currentPhase: Int,
+    val currentPhaseText: String,
+    val tickSeconds: Int,
+    val lastTurnTime: String,
+    val nextRunTime: String,
+)
 
 /**
  * P1 Task F5 / P6 Task 6 — the daemon-side run orchestrator (steps 3-7 daemon side, design §12).
@@ -142,6 +153,20 @@ open class TurnRunService(
      */
     /** The next due run time (`lastTurnTime + tickSeconds`); the daemon loop waits until this arrives. */
     open fun nextRunTime(): Instant = lifecycle.nextRunTime()
+
+    open fun clockSnapshot(): TurnClockSnapshot {
+        val state = world.getState()
+        val phase = state.currentPhase.coerceIn(1, 3)
+        return TurnClockSnapshot(
+            currentYear = state.currentYear,
+            currentMonth = state.currentMonth,
+            currentPhase = phase,
+            currentPhaseText = GameDate(state.currentYear, state.currentMonth, phase).phaseText,
+            tickSeconds = state.tickSeconds,
+            lastTurnTime = state.lastTurnTime.toString(),
+            nextRunTime = nextRunTime().toString(),
+        )
+    }
 
     open fun runIntakeCommands(blockMs: Long = 1): Int {
         val envelopes = commandStream.readEnvelopes(blockMs)

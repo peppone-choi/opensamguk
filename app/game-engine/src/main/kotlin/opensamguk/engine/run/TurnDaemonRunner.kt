@@ -10,6 +10,20 @@ import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
+
+data class TurnDaemonDiagnostics(
+    val serviceMaterialized: Boolean,
+    val clock: TurnClockSnapshot?,
+    val lastTickStartedAt: String?,
+    val lastTickCompletedAt: String?,
+    val lastTickFailedAt: String?,
+    val lastTickError: String?,
+    val successfulTicks: Long,
+    val failedTicks: Long,
+    val consecutiveFailures: Int,
+)
 
 /**
  * F-LOOP — the production daemon loop driver: the ONE thing that finally turns the wired
@@ -53,6 +67,14 @@ class TurnDaemonRunner(
     private val log = LoggerFactory.getLogger(TurnDaemonRunner::class.java)
     private val running = AtomicBoolean(false)
     @Volatile private var worker: Thread? = null
+    @Volatile private var service: TurnRunService? = null
+    @Volatile private var lastTickStartedAt: Instant? = null
+    @Volatile private var lastTickCompletedAt: Instant? = null
+    @Volatile private var lastTickFailedAt: Instant? = null
+    @Volatile private var lastTickError: String? = null
+    private val successfulTicks = AtomicLong(0)
+    private val failedTicks = AtomicLong(0)
+    private val consecutiveFailures = AtomicInteger(0)
 
     override fun isAutoStartup(): Boolean = daemonEnabled
 
@@ -60,6 +82,34 @@ class TurnDaemonRunner(
     override fun getPhase(): Int = Int.MAX_VALUE
 
     override fun isRunning(): Boolean = running.get()
+
+    fun diagnostics(): TurnDaemonDiagnostics {
+        val activeService = service
+        val clock = try {
+            activeService?.clockSnapshot()
+        } catch (e: Exception) {
+            TurnClockSnapshot(
+                currentYear = 0,
+                currentMonth = 0,
+                currentPhase = 0,
+                currentPhaseText = "unknown",
+                tickSeconds = 0,
+                lastTurnTime = "unavailable",
+                nextRunTime = "unavailable: ${e.message}",
+            )
+        }
+        return TurnDaemonDiagnostics(
+            serviceMaterialized = activeService != null,
+            clock = clock,
+            lastTickStartedAt = lastTickStartedAt?.toString(),
+            lastTickCompletedAt = lastTickCompletedAt?.toString(),
+            lastTickFailedAt = lastTickFailedAt?.toString(),
+            lastTickError = lastTickError,
+            successfulTicks = successfulTicks.get(),
+            failedTicks = failedTicks.get(),
+            consecutiveFailures = consecutiveFailures.get(),
+        )
+    }
 
     override fun start() {
         if (!daemonEnabled) {
@@ -89,7 +139,6 @@ class TurnDaemonRunner(
 
     private fun loop() {
         log.info("turn-daemon-loop entering run loop")
-        var service: TurnRunService? = null
         var loggedEmptyWorld = false
         while (running.get() && !Thread.currentThread().isInterrupted) {
             try {
@@ -130,7 +179,11 @@ class TurnDaemonRunner(
                     continue
                 }
                 // Due: drain the command stream + advance the turn(s) + flush ONCE at the boundary.
+                lastTickStartedAt = Instant.now()
                 val result = activeService.runTick(nextRun)
+                lastTickCompletedAt = Instant.now()
+                successfulTicks.incrementAndGet()
+                consecutiveFailures.set(0)
                 log.debug(
                     "tick at {} — generals={} cities={} logs={}",
                     result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
@@ -146,6 +199,10 @@ class TurnDaemonRunner(
                 // A tick failed; log and back off one poll interval so we don't hot-spin on a hard error.
                 // The world is the single source of truth — the failed flush left no partial DB write
                 // (JdbcFlushExecutor runs in ONE transaction), so the next tick retries cleanly.
+                lastTickFailedAt = Instant.now()
+                lastTickError = "${e::class.qualifiedName}: ${e.message}"
+                failedTicks.incrementAndGet()
+                consecutiveFailures.incrementAndGet()
                 log.error("turn-daemon-loop tick failed — backing off {}ms", idlePollMs, e)
                 try {
                     Thread.sleep(idlePollMs)
