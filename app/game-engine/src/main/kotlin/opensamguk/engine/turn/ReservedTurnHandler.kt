@@ -12,6 +12,8 @@ import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.founding.CheHaesan
+import opensamguk.logic.actions.personnel.RandomImgwanNpcCandidate
+import opensamguk.logic.actions.personnel.RandomImgwanWeightedCandidate
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
@@ -30,6 +32,7 @@ import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.long
 import kotlinx.serialization.json.longOrNull
+import kotlin.math.sqrt
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
@@ -196,7 +199,8 @@ class ReservedTurnHandler(
         val env: Map<String, Any?> = WorldEnvBuilder.commandEnvMap(year, startYear, month, phase)
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear)
 
-        val definition = registry.resolve(actionCode)
+        val actionArgs = augmentGeneralActionArgs(actionCode, args, general, year)
+        val definition = resolveRuntimeDefinition(actionCode, general, year)
 
         // --- FULL-mode constraints over the live world (the SAME :logic constraint library) ---
         // dest-* 제약(ExistsDestNation/ExistsDestGeneral/Allow·DisallowDiplomacyBetweenStatus 등)은
@@ -208,14 +212,14 @@ class ReservedTurnHandler(
             actorId = generalId,
             cityId = cityId,
             nationId = nationId,
-            destGeneralId = (args["destGeneralID"] as? Number)?.toInt(),
-            destCityId = (args["destCityID"] as? Number)?.toInt(),
-            destNationId = (args["destNationID"] as? Number)?.toInt(),
-            args = args,
+            destGeneralId = intArg(actionArgs, "destGeneralID"),
+            destCityId = intArg(actionArgs, "destCityID"),
+            destNationId = intArg(actionArgs, "destNationID"),
+            args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
         )
-        val view = WorldStateViewAdapter(overlay, env = env)
+        val view = WorldStateViewAdapter(overlay, env = env, args = actionArgs)
         val result = evaluateConstraints(definition.buildConstraints(ctx), ctx, view)
 
         if (result !is ConstraintResult.Allow) {
@@ -262,9 +266,10 @@ class ReservedTurnHandler(
         // the actor's and general/global logs can use the same actor name PHP's General object exposes.
         // HandledTurn.args keeps the ORIGINAL args (the parity oracle) — the founding preload never pollutes it.
         val isFounding = actionCode in FOUNDING_COMMANDS
-        val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, args, general, year, month) else args
+        val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, actionArgs, general, year, month) else actionArgs
+        preloadDraftTargets(actionCode, draft, resolveArgs)
         val battleContext = if (actionCode == "che_출병") {
-            val destCityId = (args["destCityID"] as? Number)?.toInt()
+            val destCityId = intArg(actionArgs, "destCityID")
                 ?: error("che_출병 passed constraints without destCityID")
             BattleCommandContextBuilder.build(
                 world = world,
@@ -299,6 +304,7 @@ class ReservedTurnHandler(
             battleContext = battleContext,
         )
         definition.resolve(resolveCtx)
+        backfillRandomImgwanDestNation(actionCode, draft, preGeneral)
 
         // che_해산 exposes deleteNation(func.php:1713-1805) through its tombstone seam. Capture the
         // snapshot before applying the draft's general/city neutralization so ng_old_nations keeps the
@@ -353,6 +359,12 @@ class ReservedTurnHandler(
         if (nation != null && postNation != null && postNation !== nation) {
             recorder.diffNation(nation, postNation)
             world.getNationById(nationId)?.let { world.applyNationDirtyFree(applyNationPatch(it, postNation)) }
+        }
+        draft.destNation?.takeIf { it.id != nationId }?.let { destNation ->
+            val pre = world.getNationById(destNation.id)
+                ?: error("ReservedTurnHandler: dest nation ${destNation.id} not in world")
+            recorder.diffNation(PerTurnOverlay.toLogicNation(pre), destNation)
+            world.applyNationDirtyFree(applyNationPatch(pre, destNation))
         }
         // cascade generals (무작위건국 follower moves; 이동 roaming-leader / 집합 troop members — these were
         // previously DROPPED: the handler only drained cascadeDiplomacy). The actor itself is NOT here (it is
@@ -623,6 +635,153 @@ class ReservedTurnHandler(
         world.pushLog(historyLog(general, "나이가 들어 은퇴하고, 자손에게 관직을 물려줌"))
     }
 
+    private fun augmentGeneralActionArgs(
+        actionCode: String,
+        args: Map<String, Any?>,
+        general: TurnGeneral,
+        year: Int,
+    ): Map<String, Any?> {
+        if (actionCode !in JOIN_COMMANDS_WITH_DEST_NATION) return args
+        val out = LinkedHashMap(args)
+        out["relYear"] = year - startYear
+        out["actorNpcType"] = general.npcState
+        if (actionCode == JANGSU_DAESANG_IMGWAN) {
+            val destGeneralId = intArg(args, "destGeneralID")
+            val destNationId = destGeneralId?.let { world.getGeneralById(it)?.nationId }?.takeIf { it > 0 }
+            if (destNationId != null) out["destNationID"] = destNationId
+        }
+        return out
+    }
+
+    private fun resolveRuntimeDefinition(
+        actionCode: String,
+        general: TurnGeneral,
+        year: Int,
+    ): GeneralActionDefinition {
+        if (actionCode != RANDOM_IMGWAN) return registry.resolve(actionCode)
+        val relYear = year - startYear
+        val genLimit = if (relYear < GameConst.openingPartYear) {
+            GameConst.initialNationGenLimit
+        } else {
+            GameConst.defaultMaxGeneral
+        }
+        val useNpcForeignBranch = general.npcState >= 2 && worldFiction() == 0 && scenario in 1000 until 2000
+        return registry.resolveRandomImgwan(
+            npcCandidates = if (useNpcForeignBranch) randomImgwanNpcCandidates(genLimit) else emptyList(),
+            weightedCandidates = if (useNpcForeignBranch) emptyList() else randomImgwanWeightedCandidates(genLimit),
+            useNpcForeignBranch = useNpcForeignBranch,
+        )
+    }
+
+    private fun preloadDraftTargets(
+        actionCode: String,
+        draft: GeneralActionDraft,
+        args: Map<String, Any?>,
+    ) {
+        when (actionCode) {
+            IMGWAN -> intArg(args, "destNationID")?.let { preloadDestNationAndLordCity(draft, it) }
+            JANGSU_DAESANG_IMGWAN -> {
+                val target = intArg(args, "destGeneralID")?.let { world.getGeneralById(it) } ?: return
+                draft.destGeneral = PerTurnOverlay.toLogicGeneral(target)
+                preloadDestNationAndLordCity(draft, target.nationId)
+            }
+        }
+    }
+
+    private fun preloadDestNationAndLordCity(draft: GeneralActionDraft, nationId: Int) {
+        val nation = world.getNationById(nationId) ?: return
+        draft.destNation = PerTurnOverlay.toLogicNation(nation)
+        val lord = lordOf(nationId) ?: return
+        draft.destCity = world.getCityById(lord.cityId)?.let { PerTurnOverlay.toLogicCity(it) }
+    }
+
+    private fun backfillRandomImgwanDestNation(
+        actionCode: String,
+        draft: GeneralActionDraft,
+        preGeneral: LogicGeneral,
+    ) {
+        if (actionCode != RANDOM_IMGWAN || draft.destNation != null) return
+        val destNationId = draft.general.nationId
+        if (destNationId == 0 || destNationId == preGeneral.nationId) return
+        val pre = world.getNationById(destNationId) ?: return
+        val logic = PerTurnOverlay.toLogicNation(pre)
+        draft.destNation = logic.copy(
+            gennum = logic.gennum + 1,
+            meta = withMeta(logic.meta, "gennum" to logic.gennum + 1),
+        )
+    }
+
+    private fun randomImgwanNpcCandidates(genLimit: Int): List<RandomImgwanNpcCandidate> {
+        val lords = world.listGenerals()
+            .filter { it.nationId > 0 && it.officerLevel == 12 }
+            .associateBy { it.nationId }
+        return world.listNations().mapNotNull { nation ->
+            val lord = lords[nation.id] ?: return@mapNotNull null
+            val gennum = nationGennum(nation)
+            if (nationScout(nation) != 0 || gennum >= genLimit) return@mapNotNull null
+            RandomImgwanNpcCandidate(
+                nationId = nation.id,
+                name = nation.name,
+                gennum = gennum,
+                affinity = metaInt(nation.meta, "affinity"),
+                lordCityId = lord.cityId,
+            )
+        }
+    }
+
+    private fun randomImgwanWeightedCandidates(genLimit: Int): List<RandomImgwanWeightedCandidate> {
+        val nations = world.listNations().associateBy { it.id }
+        val lords = world.listGenerals()
+            .filter { it.nationId > 0 && it.officerLevel == 12 }
+            .associateBy { it.nationId }
+        return world.listGenerals()
+            .filter { it.npcState in RANDOM_IMGWAN_WEIGHTED_NPC_TYPES && it.nationId != 0 }
+            .groupBy { it.nationId }
+            .mapNotNull { (nationId, generals) ->
+                val nation = nations[nationId] ?: return@mapNotNull null
+                val gennum = nationGennum(nation)
+                if (nationScout(nation) != 0 || gennum >= genLimit) return@mapNotNull null
+                val lordCityId = lords[nationId]?.cityId ?: nation.capitalCityId ?: return@mapNotNull null
+                val warpower = generals.sumOf { randomImgwanWarpower(it) }
+                val develpower = generals.sumOf { randomImgwanDevelpower(it) }
+                if (warpower + develpower <= 0.0) return@mapNotNull null
+                RandomImgwanWeightedCandidate(
+                    nationId = nationId,
+                    name = nation.name,
+                    gennum = gennum,
+                    warpower = warpower,
+                    develpower = develpower,
+                    npcLeq1 = generals.any { it.npcState < 2 },
+                    lordCityId = lordCityId,
+                )
+            }
+    }
+
+    private fun randomImgwanWarpower(general: TurnGeneral): Double {
+        val kill = rankVar(general, "killcrew_person") + 50_000.0
+        val death = rankVar(general, "deathcrew_person") + 50_000.0
+        val npcCoef = if (general.npcState < 2) 1.15 else 1.0
+        val lead = if (general.stats.leadership >= 40) general.stats.leadership.toDouble() else 0.0
+        return (kill / death) * npcCoef * lead
+    }
+
+    private fun randomImgwanDevelpower(general: TurnGeneral): Double =
+        (sqrt(general.stats.intelligence.toDouble() * general.stats.strength.toDouble()) * 2.0 +
+            general.stats.leadership / 2.0) / 5.0
+
+    private fun lordOf(nationId: Int): TurnGeneral? =
+        world.listGenerals().firstOrNull { it.nationId == nationId && it.officerLevel == 12 }
+
+    private fun nationGennum(nation: Nation): Int =
+        metaInt(nation.meta, "gennum", world.listGenerals().count { it.nationId == nation.id })
+
+    private fun nationScout(nation: Nation): Int = metaInt(nation.meta, "scout")
+
+    private fun rankVar(general: TurnGeneral, key: String): Double =
+        (general.meta[key] as? Number)?.toDouble() ?: 0.0
+
+    private fun worldFiction(): Int = metaInt(world.getState().meta, "fiction")
+
     /**
      * Build the FOUNDING preload args — the PHP-query substitutes the founding resolver expects but cannot
      * run itself (the daemon supplies them; `che_거병.php:79-110` reads them off the adapter). These are pure
@@ -734,6 +893,14 @@ class ReservedTurnHandler(
         /** che_무작위건국 — the random-city founding command (needs candidateCityIds preload). */
         const val MUJAKWI_GEONGUK = "che_무작위건국"
 
+        const val IMGWAN = "che_임관"
+        const val JANGSU_DAESANG_IMGWAN = "che_장수대상임관"
+        const val RANDOM_IMGWAN = "che_랜덤임관"
+
+        val JOIN_COMMANDS_WITH_DEST_NATION = setOf(IMGWAN, JANGSU_DAESANG_IMGWAN)
+
+        val RANDOM_IMGWAN_WEIGHTED_NPC_TYPES = setOf(0, 1, 2, 3, 6)
+
         /**
          * Founding commands whose resolve seam is augmented with PHP-query preload args (and whose actor
          * name is threaded as the created nation's name). 거병 INSERTs a nation; 건국/cr_건국/무작위건국 UPDATE
@@ -790,6 +957,12 @@ class ReservedTurnHandler(
         internal fun metaInt(g: TurnGeneral, key: String, default: Int): Int =
             (g.meta[key] as? Number)?.toInt() ?: default
 
+        internal fun metaInt(meta: Map<String, Any?>, key: String, default: Int = 0): Int =
+            (meta[key] as? Number)?.toInt() ?: default
+
+        internal fun intArg(args: Map<String, Any?>, key: String): Int? =
+            (args[key] as? Number)?.toInt()
+
         /** Read a lifecycle scalar as a string (e.g. `owner_name`), or null. */
         internal fun metaString(g: TurnGeneral, key: String): String? = g.meta[key] as? String
 
@@ -816,6 +989,7 @@ class ReservedTurnHandler(
                 officerLevel = post.officerLevel,
                 cityId = post.cityId,
                 nationId = post.nationId,
+                troopId = post.troop,
                 experience = phpRound(post.experience),
                 dedication = phpRound(post.dedication),
                 meta = post.meta,

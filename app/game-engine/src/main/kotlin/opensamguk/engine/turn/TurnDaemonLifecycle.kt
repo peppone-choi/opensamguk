@@ -65,6 +65,14 @@ class TurnDaemonLifecycle(
         LifecycleEnv(baselineKillturn = 0, year = state.currentYear, month = state.currentMonth, turnTerm = 1, turnTimeHm = date)
     },
     /**
+     * PHP pulls both command rings after each due general, outside the command-condition block:
+     * `pullNationCommand(...)` then `pullGeneralCommand(...)`
+     * (`TurnExecutionHelper.php:350-351`). Keep these callbacks separate from [reservedActionOf]
+     * so tests can record the lifecycle order while production wires the JDBC ring repository.
+     */
+    private val pullNationTurn: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
+    private val pullGeneralTurn: (generalId: Int) -> Unit = { },
+    /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
      * jsonb (R-SEAM §1 / FM1) — the seed still keys on `definition.key`, so the widening only feeds the
@@ -109,68 +117,77 @@ class TurnDaemonLifecycle(
         for (g in due) {
             // The SINGLE processBlocked() gate (PHP `:299`): `block>=2` skips the WHOLE command block —
             // BOTH the nation pass AND the general pass (R-SEAM §2). The handler's processBlocked pushes
-            // the block log + decrements killturn, then we skip both resolves for this general.
-            if (handler.processBlocked(g.id, env)) continue
+            // the block log + decrements killturn, then only the COMMAND block is skipped. PHP still pulls
+            // the rings and calls updateTurnTime afterward (`TurnExecutionHelper.php:350-363`), so do not
+            // `continue` here.
+            val blocked = handler.processBlocked(g.id, env)
+            if (!blocked) {
+                // OPEN this due general's per-general "GeneralAI" decision window (PHP `:290/294` `new GeneralAI`).
+                // Invoked ONCE per general, BEFORE the nation pass, so the nation pass (`chooseNationTurn`, stream
+                // PREFIX) and the general pass (`chooseGeneralTurn`, continuation) share ONE per-general decision
+                // rng — matching the gated AiSelectionGateIT. No-op by default. The execution rngs are re-seeded
+                // downstream and stay DISTINCT (R-SEAM §2).
+                beginGeneralTurn(g.id)
 
-            // OPEN this due general's per-general "GeneralAI" decision window (PHP `:290/294` `new GeneralAI`).
-            // Invoked ONCE per general, BEFORE the nation pass, so the nation pass (`chooseNationTurn`, stream
-            // PREFIX) and the general pass (`chooseGeneralTurn`, continuation) share ONE per-general decision
-            // rng — matching the gated AiSelectionGateIT. No-op by default. The execution rngs are re-seeded
-            // downstream and stay DISTINCT (R-SEAM §2).
-            beginGeneralTurn(g.id)
-
-            // --- NATION PASS FIRST (R-SEAM §2 `:301-324`), under the same processBlocked() gate ---
-            // hasNationTurn ⇐ nation!=0 && officer_level>=5 (PHP `:260`). Only when a nation processor is
-            // wired. The AI hook (chooseNationTurn ONLY — chooseInstantNationTurn is NOT wired, decision #3)
-            // replaces the reserved nation command BEFORE the resolve; a human chief runs it verbatim.
-            if (nationProcessor != null && hasNationTurn(g)) {
-                val reservedNation = reservedNationActionOf(g.nationId, g.officerLevel)
-                var nationCmd = ChosenCommand(reservedNation.actionCode, ReservedTurnHandler.decodeArgs(reservedNation.argJson))
-                if (chooseNationTurn != null && ReservedTurnHandler.isAiControlled(g) && useAutoNationTurn(g)) {
-                    nationCmd = chooseNationTurn.invoke(g.id, reservedNation)
+                // --- NATION PASS FIRST (R-SEAM §2 `:301-324`), under the same processBlocked() gate ---
+                // hasNationTurn ⇐ nation!=0 && officer_level>=5 (PHP `:260`). Only when a nation processor is
+                // wired. The AI hook (chooseNationTurn ONLY — chooseInstantNationTurn is NOT wired, decision #3)
+                // replaces the reserved nation command BEFORE the resolve; a human chief runs it verbatim.
+                if (nationProcessor != null && hasNationTurn(g)) {
+                    val reservedNation = reservedNationActionOf(g.nationId, g.officerLevel)
+                    var nationCmd = ChosenCommand(reservedNation.actionCode, ReservedTurnHandler.decodeArgs(reservedNation.argJson))
+                    if (chooseNationTurn != null && ReservedTurnHandler.isAiControlled(g) && useAutoNationTurn(g)) {
+                        nationCmd = chooseNationTurn.invoke(g.id, reservedNation)
+                    }
+                    val lastTurn = lastNationTurnOf(g.nationId, g.officerLevel)
+                    nationProcessor.process(
+                        generalId = g.id,
+                        officerLevel = g.officerLevel,
+                        nationCommand = nationCmd,
+                        lastTurn = lastTurn,
+                        year = state.currentYear,
+                        month = state.currentMonth,
+                        date = date,
+                    )
                 }
-                val lastTurn = lastNationTurnOf(g.nationId, g.officerLevel)
-                nationProcessor.process(
+
+                // --- GENERAL PASS SECOND (R-SEAM §2 `:326-348`) — the existing handler interpose ---
+                val reserved = reservedActionOf(g.id)
+                val result = handler.handle(
                     generalId = g.id,
-                    officerLevel = g.officerLevel,
-                    nationCommand = nationCmd,
-                    lastTurn = lastTurn,
+                    reserved = reserved,
                     year = state.currentYear,
                     month = state.currentMonth,
                     date = date,
                 )
+                handled.add(result)
+
+                // ── 1) killturn 감소/리셋 (PHP processCommand 꼬리, `TurnExecutionHelper.php:153-165`) ──
+                // PHP는 processCommand 안에서 command.run() 직후 killturn을 처리한다(:348→:153). Kotlin handle()는
+                // 이 꼬리를 제외한 processCommand 본체이므로, handle() 직후 applyKillturnDecrement를 호출해 PHP
+                // 순서(run → killturn → updateTurnTime)를 그대로 재현한다.
+                //
+                // commandClassName(PHP `$commandClassName = $commandObj->getName()`, :118/:147):
+                //  - 명령 정상 실행(fellBack=false): 실제로 resolve된 명령 이름 = result.definition.name.
+                //  - 거부/폴백(fellBack=true): PHP는 commandClassName을 휴식으로 되돌리지 않고 예약 명령 이름을
+                //    그대로 유지한다(while 루프가 hasFullConditionMet 실패 시 break, 이름 미변경 — :121-126).
+                //    killturn 분기는 오직 `== '휴식'` 여부만 보므로, 예약 actionCode가 리터럴 "휴식"일 때만 휴식이고
+                //    그 외 거부된 비-휴식 명령은 비-휴식으로 남아야 한다 → reserved.actionCode를 그대로 쓴다(휴식
+                //    명령의 actionCode만 "휴식"으로 resolve되므로 byte-정확). AI 교체(autorunMode=true)는 :159
+                //    분기에서 commandClassName과 무관하게 감소하므로 영향 없음.
+                //
+                // autorunMode는 PER-GENERAL 신호다(PHP `$autorunMode`, :333-336 — AI가 예약 명령을 다른 명령으로
+                // 교체했을 때만 true). handle()이 HandledTurn.autorunMode로 노출하므로, 틱-레벨 env를 그 값으로
+                // copy해 :159 autorun 분기가 정확히 동작하게 한다(틱 env의 autorunMode 기본 false는 비-AI/AI-동일예약).
+                val commandClassName = if (result.fellBack) reserved.actionCode else result.definition.name
+                handler.applyKillturnDecrement(g.id, commandClassName, env.copy(autorunMode = result.autorunMode))
             }
 
-            // --- GENERAL PASS SECOND (R-SEAM §2 `:326-348`) — the existing handler interpose ---
-            val reserved = reservedActionOf(g.id)
-            val result = handler.handle(
-                generalId = g.id,
-                reserved = reserved,
-                year = state.currentYear,
-                month = state.currentMonth,
-                date = date,
-            )
-            handled.add(result)
-
-            // ── 1) killturn 감소/리셋 (PHP processCommand 꼬리, `TurnExecutionHelper.php:153-165`) ──
-            // PHP는 processCommand 안에서 command.run() 직후 killturn을 처리한다(:348→:153). Kotlin handle()는
-            // 이 꼬리를 제외한 processCommand 본체이므로, handle() 직후 applyKillturnDecrement를 호출해 PHP
-            // 순서(run → killturn → updateTurnTime)를 그대로 재현한다.
-            //
-            // commandClassName(PHP `$commandClassName = $commandObj->getName()`, :118/:147):
-            //  - 명령 정상 실행(fellBack=false): 실제로 resolve된 명령 이름 = result.definition.name.
-            //  - 거부/폴백(fellBack=true): PHP는 commandClassName을 휴식으로 되돌리지 않고 예약 명령 이름을
-            //    그대로 유지한다(while 루프가 hasFullConditionMet 실패 시 break, 이름 미변경 — :121-126).
-            //    killturn 분기는 오직 `== '휴식'` 여부만 보므로, 예약 actionCode가 리터럴 "휴식"일 때만 휴식이고
-            //    그 외 거부된 비-휴식 명령은 비-휴식으로 남아야 한다 → reserved.actionCode를 그대로 쓴다(휴식
-            //    명령의 actionCode만 "휴식"으로 resolve되므로 byte-정확). AI 교체(autorunMode=true)는 :159
-            //    분기에서 commandClassName과 무관하게 감소하므로 영향 없음.
-            //
-            // autorunMode는 PER-GENERAL 신호다(PHP `$autorunMode`, :333-336 — AI가 예약 명령을 다른 명령으로
-            // 교체했을 때만 true). handle()이 HandledTurn.autorunMode로 노출하므로, 틱-레벨 env를 그 값으로
-            // copy해 :159 autorun 분기가 정확히 동작하게 한다(틱 env의 autorunMode 기본 false는 비-AI/AI-동일예약).
-            val commandClassName = if (result.fellBack) reserved.actionCode else result.definition.name
-            handler.applyKillturnDecrement(g.id, commandClassName, env.copy(autorunMode = result.autorunMode))
+            // ── 1b) command ring pull (PHP `TurnExecutionHelper.php:350-351`) ──
+            // This is intentionally outside the `!blocked` command block: a blocked turn and a failed
+            // reserved command both consume one visible row in the turn table.
+            pullNationTurn(g.nationId, g.officerLevel)
+            pullGeneralTurn(g.id)
 
             // ── 2) updateTurnTime (PHP `:170-230`, 호출부 `:363`) ──
             // lived_month+1 → killturn<=0 kill/유체이탈 게이트 → age>=retirementYear 환생 게이트 →

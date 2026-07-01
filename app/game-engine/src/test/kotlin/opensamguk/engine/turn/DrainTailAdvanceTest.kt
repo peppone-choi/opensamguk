@@ -91,7 +91,12 @@ class DrainTailAdvanceTest {
             ),
         )
 
-    private fun lifecycle(world: InMemoryTurnWorld): TurnDaemonLifecycle {
+    private fun lifecycle(
+        world: InMemoryTurnWorld,
+        reservedActionOf: (Int) -> ReservedTurn = { ReservedTurn("휴식", "") },
+        pullNationTurn: (Int, Int) -> Unit = { _, _ -> },
+        pullGeneralTurn: (Int) -> Unit = { },
+    ): TurnDaemonLifecycle {
         val handler = ReservedTurnHandler(
             world,
             registry = CommandRegistry(GeneralActionPipeline()),
@@ -102,8 +107,9 @@ class DrainTailAdvanceTest {
             world = world,
             handler = handler,
             lifecycleEnvOf = ::lifecycleEnvOf,
-            // 예약 명령 없음 → 휴식(REST). 휴식 분기는 killturn을 -1 한다(:161-162).
-            reservedActionOf = { ReservedTurn("휴식", "") },
+            pullNationTurn = pullNationTurn,
+            pullGeneralTurn = pullGeneralTurn,
+            reservedActionOf = reservedActionOf,
         )
     }
 
@@ -147,6 +153,56 @@ class DrainTailAdvanceTest {
 
         val g = w.getGeneralById(1)!!
         assertEquals(101, (g.meta["lived_month"] as Number).toInt(), "updateTurnTime은 lived_month를 +1 한다")
+    }
+
+    @Test
+    fun `runTick pulls command rings after a successful reserved command`() {
+        val pulledGenerals = mutableListOf<Int>()
+        val pulledNations = mutableListOf<Pair<Int, Int>>()
+        val w = world(gen(id = 1, killturn = 5))
+        val lc = lifecycle(
+            world = w,
+            pullNationTurn = { nationId, officerLevel -> pulledNations += nationId to officerLevel },
+            pullGeneralTurn = { generalId -> pulledGenerals += generalId },
+        )
+
+        lc.runTick()
+
+        assertEquals(listOf(1), pulledGenerals, "처리된 장수의 general_turn 0번 슬롯을 소비해야 한다")
+        assertEquals(listOf(1 to 1), pulledNations, "PHP처럼 nation_turn도 같은 루프 꼬리에서 한 칸 당긴다")
+    }
+
+    @Test
+    fun `runTick pulls the general ring even when the reserved command fails constraints`() {
+        val pulledGenerals = mutableListOf<Int>()
+        val w = world(gen(id = 1, killturn = 5))
+        val lc = lifecycle(
+            world = w,
+            reservedActionOf = { ReservedTurn("che_건국", """{"nationName":"n","nationType":"che_중립","colorType":0}""") },
+            pullGeneralTurn = { generalId -> pulledGenerals += generalId },
+        )
+
+        val handled = lc.runTick()
+
+        assertEquals(1, handled.size, "조건 실패도 장수 턴 하나를 처리한 것으로 기록된다")
+        assertTrue(handled.single().fellBack, "군주가 아닌 장수의 건국 예약은 조건 실패로 휴식 폴백이어야 한다")
+        assertEquals(listOf(1), pulledGenerals, "조건 실패 후에도 general_turn은 한 칸 위로 당겨야 한다")
+    }
+
+    @Test
+    fun `runTick pulls rings and advances turnTime for a blocked general`() {
+        val pulledGenerals = mutableListOf<Int>()
+        val w = world(gen(id = 1, killturn = 5, block = 2))
+        val lc = lifecycle(
+            world = w,
+            pullGeneralTurn = { generalId -> pulledGenerals += generalId },
+        )
+
+        val handled = lc.runTick()
+
+        assertTrue(handled.isEmpty(), "블럭 장수는 명령 블록 자체를 실행하지 않는다")
+        assertEquals(listOf(1), pulledGenerals, "블럭으로 스킵되어도 PHP 루프 꼬리에서 예약 슬롯은 소비된다")
+        assertEquals(ServerClock.addTurn(t0, turnTerm, 1), w.getGeneralById(1)!!.turnTime)
     }
 
     @Test

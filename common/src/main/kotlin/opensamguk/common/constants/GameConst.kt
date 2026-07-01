@@ -570,25 +570,19 @@ object GameConst {
         ),
         listOf(
             "month", 2000,
-            listOf("DateRelative", "==", 1, 1),
-            listOf("NoticeToHistoryLog", "<S>2년 뒤 출병 제한이 풀립니다.</>", LOGFORMAT_EVENT_YEAR_MONTH),
-            listOf("DeleteEvent"),
-        ),
-        listOf(
-            "month", 2000,
-            listOf("DateRelative", "==", 2, 1),
+            listOf("DateRelative", "==", 0, 1),
             listOf("NoticeToHistoryLog", "<S>1년 뒤 출병 제한이 풀립니다.</>", LOGFORMAT_EVENT_YEAR_MONTH),
             listOf("DeleteEvent"),
         ),
         listOf(
             "month", 2000,
-            listOf("DateRelative", "==", 2, 7),
+            listOf("DateRelative", "==", 0, 7),
             listOf("NoticeToHistoryLog", "<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>", LOGFORMAT_EVENT_YEAR_MONTH),
             listOf("DeleteEvent"),
         ),
         listOf(
             "month", 2000,
-            listOf("DateRelative", "==", 3, 1),
+            listOf("DateRelative", "==", 1, 1),
             listOf("NoticeToHistoryLog", "<S>출병 제한이 풀렸습니다.</>", LOGFORMAT_EVENT_YEAR_MONTH),
             listOf("DeleteEvent"),
         ),

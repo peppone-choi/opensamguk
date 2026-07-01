@@ -1,6 +1,7 @@
 package opensamguk.logic.event
 
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -170,5 +171,24 @@ class LightActionsTest {
         }
         val brNames = betrayRow.actions.map { it.name }
         assertEquals(listOf("NoticeToHistoryLog", "AddGlobalBetray", "AddGlobalBetray", "DeleteEvent"), brNames)
+    }
+
+    @Test
+    fun `the default sortie-limit notices follow the one-year opensamguk schedule`() {
+        val store = EventStore.withDefaults()
+        val notices = store.rowsFor(EventTarget.MONTH)
+            .filter { it.priority == 2000 && it.actions.firstOrNull()?.name == "NoticeToHistoryLog" }
+            .mapNotNull { row ->
+                val condition = row.condition as? EventCondition.DateRelative ?: return@mapNotNull null
+                val message = row.actions.first().args.firstOrNull()?.jsonPrimitive?.content ?: ""
+                (condition.year to condition.month) to message
+            }
+            .toMap()
+
+        assertEquals("<S>1년 뒤 출병 제한이 풀립니다.</>", notices[0 to 1])
+        assertEquals("<S>6개월 뒤 출병 제한이 풀립니다. 병력을 준비해주세요.</>", notices[0 to 7])
+        assertEquals("<S>출병 제한이 풀렸습니다.</>", notices[1 to 1])
+        assertTrue((2 to 1) !in notices)
+        assertTrue((3 to 1) !in notices)
     }
 }

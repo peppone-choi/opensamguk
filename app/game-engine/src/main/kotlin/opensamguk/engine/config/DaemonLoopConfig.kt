@@ -298,6 +298,12 @@ class DaemonLoopConfig {
                     turnTimeHm = date,
                 )
             },
+            pullNationTurn = { nationId, officerLevel ->
+                reservedTurnRepository.pullNationTurn(nationId, officerLevel)
+            },
+            pullGeneralTurn = { generalId ->
+                reservedTurnRepository.pullGeneralTurn(generalId)
+            },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(generalId, 0) },
         )
 

@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -91,8 +92,8 @@ class ReservedTurnHandlerTest {
         nations: List<Nation> = listOf(nation()),
     ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations))
 
-    private fun handlerFor(world: InMemoryTurnWorld) =
-        ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR)
+    private fun handlerFor(world: InMemoryTurnWorld, scenario: Int = 0) =
+        ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, scenario = scenario)
 
     @Test
     fun `available general che_농지개간 increases agriculture decreases gold pushes log and records dirty`() {
@@ -212,6 +213,82 @@ class ReservedTurnHandlerTest {
         assertEquals(YEAR, outcome.env["year"])
         assertEquals(START_YEAR, outcome.env["startYear"])
         assertEquals((YEAR - START_YEAR + 10) * 2, outcome.env["develCost"], "develCost = (year-startYear+10)*2")
+    }
+
+    @Test
+    fun `che_임관 preloads the destination nation and increments gennum`() {
+        val actor = general(nationId = 0, cityId = 7).copy(troopId = 42)
+        val lord = general(id = 50, nationId = 2, cityId = 8).copy(officerLevel = 12)
+        val destNation = nation(id = 2).copy(meta = linkedMapOf("gennum" to 1, "scout" to 0))
+        val world = worldWith(
+            generals = listOf(actor, lord),
+            cities = listOf(city(id = 7, nationId = 0), city(id = 8, nationId = 2)),
+            nations = listOf(destNation),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(42, ReservedTurn("che_임관", """{"destNationID":2}"""), YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack, "임관 should pass full constraints: ${outcome.denyReason}")
+        val joined = world.getGeneralById(42)!!
+        assertEquals(2, joined.nationId)
+        assertEquals(1, joined.officerLevel)
+        assertEquals(8, joined.cityId, "지정 국가 임관은 목적 국가 군주의 도시로 이동한다")
+        assertEquals(0, joined.troopId, "che_임관은 PHP처럼 troop을 0으로 리셋한다")
+        assertEquals(2, (world.getNationById(2)!!.meta["gennum"] as Number).toInt())
+        assertEquals(setOf(2), handler.recorder.dirtyNationIds())
+    }
+
+    @Test
+    fun `che_랜덤임관 loads live candidate nations and increments gennum`() {
+        val actor = general(nationId = 0, cityId = 7).copy(
+            npcState = 2,
+            meta = general().meta + mapOf("affinity" to 40, "name" to "g42"),
+        )
+        val lord = general(id = 50, nationId = 2, cityId = 8).copy(officerLevel = 12, npcState = 2)
+        val destNation = nation(id = 2).copy(meta = linkedMapOf("gennum" to 1, "scout" to 0, "affinity" to 45))
+        val world = worldWith(
+            generals = listOf(actor, lord),
+            cities = listOf(city(id = 7, nationId = 0), city(id = 8, nationId = 2)),
+            nations = listOf(destNation),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(42, ReservedTurn("che_랜덤임관", ""), YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack, "랜덤임관 should pass full constraints: ${outcome.denyReason}")
+        val joined = world.getGeneralById(42)!!
+        assertEquals(2, joined.nationId)
+        assertEquals(1, joined.officerLevel)
+        assertEquals(8, joined.cityId)
+        assertEquals(2, (world.getNationById(2)!!.meta["gennum"] as Number).toInt())
+        assertTrue(outcome.logs.none { it.contains("임관 가능한 국가가 없습니다.") })
+        assertEquals(setOf(2), handler.recorder.dirtyNationIds())
+    }
+
+    @Test
+    fun `che_장수대상임관 follows the target general city and keeps troop`() {
+        val actor = general(nationId = 0, cityId = 7).copy(troopId = 42)
+        val target = general(id = 50, nationId = 2, cityId = 8).copy(officerLevel = 1)
+        val lord = general(id = 51, nationId = 2, cityId = 9).copy(officerLevel = 12)
+        val destNation = nation(id = 2).copy(meta = linkedMapOf("gennum" to 1, "scout" to 0))
+        val world = worldWith(
+            generals = listOf(actor, target, lord),
+            cities = listOf(city(id = 7, nationId = 0), city(id = 8, nationId = 2), city(id = 9, nationId = 2)),
+            nations = listOf(destNation),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(42, ReservedTurn("che_장수대상임관", """{"destGeneralID":50}"""), YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack, "장수대상임관 should pass full constraints: ${outcome.denyReason}")
+        val joined = world.getGeneralById(42)!!
+        assertEquals(2, joined.nationId)
+        assertEquals(1, joined.officerLevel)
+        assertEquals(8, joined.cityId, "장수대상임관은 목적 장수의 도시를 따른다")
+        assertEquals(42, joined.troopId, "che_장수대상임관은 PHP처럼 troop을 유지한다")
+        assertEquals(2, (world.getNationById(2)!!.meta["gennum"] as Number).toInt())
+        assertEquals(setOf(2), handler.recorder.dirtyNationIds())
     }
 
     @Test
