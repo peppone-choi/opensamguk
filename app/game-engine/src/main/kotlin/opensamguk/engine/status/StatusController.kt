@@ -1,6 +1,7 @@
 package opensamguk.engine.status
 
 import opensamguk.engine.run.TurnDaemonRunner
+import opensamguk.engine.run.TurnClockSnapshot
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,6 +25,15 @@ data class TurnDaemonStatus(
     val paused: Boolean,
     val loopAlive: Boolean,
     val statusLabel: String,
+    val serviceMaterialized: Boolean,
+    val clock: TurnClockSnapshot?,
+    val lastTickStartedAt: String?,
+    val lastTickCompletedAt: String?,
+    val lastTickFailedAt: String?,
+    val lastTickError: String?,
+    val successfulTicks: Long,
+    val failedTicks: Long,
+    val consecutiveFailures: Int,
 )
 
 /** pause/resume 호출 결과 — 호출 후 실제 상태 + 호출이 상태를 바꿨는지(`changed`). */
@@ -57,6 +67,7 @@ class StatusController(
         val paused = pauseGate.isPaused()
         val loopAlive = runner.isRunning
         val running = loopAlive && !paused
+        val diagnostics = runner.diagnostics()
         // 동결(plock>0) 여부가 우선 — PHP `_119.php:36`은 루프 생존과 무관하게 plock만으로 동결중/가동중을
         // 가른다. 따라서 paused면 루프 미가동이라도 state="paused". 미동결·루프 미가동은 "idle"(데몬
         // enabled=false / 부팅 직후 등 — 표시는 statusLabel 가동중이지만 실 틱 미진행).
@@ -73,6 +84,15 @@ class StatusController(
             loopAlive = loopAlive,
             // PHP `_119.php:36` 표시 라벨 verbatim.
             statusLabel = if (paused) "동결중" else "가동중",
+            serviceMaterialized = diagnostics.serviceMaterialized,
+            clock = diagnostics.clock,
+            lastTickStartedAt = diagnostics.lastTickStartedAt,
+            lastTickCompletedAt = diagnostics.lastTickCompletedAt,
+            lastTickFailedAt = diagnostics.lastTickFailedAt,
+            lastTickError = diagnostics.lastTickError,
+            successfulTicks = diagnostics.successfulTicks,
+            failedTicks = diagnostics.failedTicks,
+            consecutiveFailures = diagnostics.consecutiveFailures,
         )
     }
 
