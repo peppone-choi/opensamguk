@@ -29,7 +29,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *
  * fullConditionConstraints (che_선전포고.php:82-95), in PHP ORDER (first-deny-wins):
  *   [BeChief, NotBeNeutral, OccupiedCity, SuppliedCity,
- *    ReqEnvValue('year','>=',startYear+1,'초반제한 해제 2년전부터 가능합니다.'),
+ *    ReqEnvValue('year','>=',startYear+1,'초반제한 해제 1년 후부터 가능합니다.'),
  *    ExistsDestNation, NearNation,
  *    DisallowDiplomacyBetweenStatus({0:'아국과 이미 교전중입니다.', 1:'아국과 이미 선포중입니다.', 7:'불가침국입니다.'})].
  *
@@ -61,7 +61,7 @@ class CheSeonjeonpogo(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
         val startYear = (ctx.env["startyear"] as? Number ?: ctx.env["startYear"] as? Number)?.toInt() ?: 0
         return listOf(
             beChief(), notBeNeutral(), occupiedCity(), suppliedCity(),
-            reqEnvValue("year", ">=", startYear + 1, "초반제한 해제 2년전부터 가능합니다."),
+            reqEnvValue("year", ">=", startYear + 1, "초반제한 해제 1년 후부터 가능합니다."),
         )
     }
 
@@ -72,7 +72,7 @@ class CheSeonjeonpogo(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipel
             notBeNeutral(),
             occupiedCity(),
             suppliedCity(),
-            reqEnvValue("year", ">=", startYear + 1, "초반제한 해제 2년전부터 가능합니다."),
+            reqEnvValue("year", ">=", startYear + 1, "초반제한 해제 1년 후부터 가능합니다."),
             existsDestNation(),
             // NearNation: the map-adjacency predicate is preloaded by the caller (the AI bridge stages it as the
             // env `__isNeighbor` via AiDistance.isNeighbor over the live cities; precheck has no staging seam yet

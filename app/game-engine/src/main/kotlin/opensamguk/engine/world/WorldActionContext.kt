@@ -88,9 +88,31 @@ class WorldActionContext(
     private fun resolveHiddenSeed(): String = world.getState().meta["hiddenSeed"] as? String ?: ""
     private fun resolveYear(): Int = (env["year"] as? Number)?.toInt() ?: world.getState().currentYear
     private fun resolveMonth(): Int = (env["month"] as? Number)?.toInt() ?: world.getState().currentMonth
+    private fun resolvePhase(): Int = (env["phase"] as? Number)?.toInt() ?: world.getState().currentPhase
     private fun resolveStartYear(): Int = (world.getState().meta["startYear"] as? Number)?.toInt() ?: 0
     private fun resolveKillturnEnv(): Int = (world.getState().meta["killturn"] as? Number)?.toInt() ?: 0
     private fun resolveTurnterm(): Int = (world.getState().meta["turnterm"] as? Number)?.toInt() ?: 1
+
+    private fun logDraft(
+        scope: String,
+        category: String,
+        text: String,
+        generalId: Int? = null,
+        nationId: Int? = null,
+        userId: Int? = null,
+        subType: String? = null,
+    ): LogEntryDraft = LogEntryDraft(
+        scope = scope,
+        category = category,
+        text = text,
+        generalId = generalId,
+        nationId = nationId,
+        userId = userId,
+        subType = subType,
+        year = resolveYear(),
+        month = resolveMonth(),
+        phase = resolvePhase(),
+    )
 
     private fun officerCntByCity(nationId: Int): Map<Int, Int> {
         val out = LinkedHashMap<Int, Int>()
@@ -172,10 +194,10 @@ class WorldActionContext(
             recorder.diffGeneral(preLogic, postLogic)
             world.updateGeneral(postEngine)
             for (line in pg.logLines) {
-                world.pushLog(LogEntryDraft("general", "history", line, generalId = pre.id, nationId = pre.nationId))
+                world.pushLog(logDraft("general", "history", line, generalId = pre.id, nationId = pre.nationId))
             }
         }
-        world.pushLog(LogEntryDraft("global", "history", result.globalHistory))
+        world.pushLog(logDraft("global", "history", result.globalHistory))
     }
 
     // ── ProcessWarIncomeContext ────────────────────────────────────────────────────────────────
@@ -357,7 +379,7 @@ class WorldActionContext(
             )
         }
         for (log in result.isolatedLogs) {
-            world.pushLog(LogEntryDraft("global", "history", log))
+            world.pushLog(logDraft("global", "history", log))
         }
         // Thread lost-city ids through env so the F3 tombstone seam can consume them later.
         env["lostCityIds"] = result.lostCityIds
@@ -388,10 +410,10 @@ class WorldActionContext(
             )
         )
         if (effects.globalHistoryLog.isNotBlank()) {
-            world.pushLog(LogEntryDraft("global", "history", effects.globalHistoryLog))
+            world.pushLog(logDraft("global", "history", effects.globalHistoryLog))
         }
         if (effects.nationalHistoryLog.isNotBlank()) {
-            world.pushLog(LogEntryDraft("nation", "history", effects.nationalHistoryLog, nationId = effects.nation.id))
+            world.pushLog(logDraft("nation", "history", effects.nationalHistoryLog, nationId = effects.nation.id))
         }
         // Thread nation-turn seed through env until the world gains a native nation_turn dirty channel.
         val existing = (env["nationTurnSeed"] as? MutableList<NationTurn>) ?: mutableListOf()
@@ -501,7 +523,7 @@ class WorldActionContext(
             )
         }
         result.logLine?.let {
-            world.pushLog(LogEntryDraft("global", "history", it))
+            world.pushLog(logDraft("global", "history", it))
         }
     }
 
@@ -537,8 +559,8 @@ class WorldActionContext(
             val post = pre.copy(role = pre.role.copy(specialDomestic = a.special))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), PerTurnOverlay.toLogicGeneral(post))
             world.updateGeneral(post)
-            world.pushLog(LogEntryDraft("general", "action", a.actionLog, generalId = a.generalId, nationId = a.nation))
-            world.pushLog(LogEntryDraft("general", "history", a.historyLog, generalId = a.generalId, nationId = a.nation))
+            world.pushLog(logDraft("general", "action", a.actionLog, generalId = a.generalId, nationId = a.nation))
+            world.pushLog(logDraft("general", "history", a.historyLog, generalId = a.generalId, nationId = a.nation))
         }
         for (a in result.warAssignments) {
             val pre = world.getGeneralById(a.generalId) ?: continue
@@ -548,8 +570,8 @@ class WorldActionContext(
             val post = pre.copy(role = pre.role.copy(specialWar = a.special), meta = newMeta)
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), PerTurnOverlay.toLogicGeneral(post))
             world.updateGeneral(post)
-            world.pushLog(LogEntryDraft("general", "action", a.actionLog, generalId = a.generalId, nationId = a.nation))
-            world.pushLog(LogEntryDraft("general", "history", a.historyLog, generalId = a.generalId, nationId = a.nation))
+            world.pushLog(logDraft("general", "action", a.actionLog, generalId = a.generalId, nationId = a.nation))
+            world.pushLog(logDraft("general", "history", a.historyLog, generalId = a.generalId, nationId = a.nation))
         }
     }
 
@@ -577,7 +599,7 @@ class WorldActionContext(
     /** `ActionLogger::pushGlobalHistoryLog`(php:54-60) — InvaderEndingContext 의 무-type 시그니처.
      *  LightActionWorld.pushGlobalHistoryLog(msg, type)와 arity가 달라 별도 override. */
     override fun pushGlobalHistoryLog(msg: String) {
-        world.pushLog(LogEntryDraft("global", "history", msg))
+        world.pushLog(logDraft("global", "history", msg))
     }
 
     /** `logger->flush()`(php:64) — 엔진은 pushLog로 이미 로그를 큐에 적재하고 flush 단계에서 일괄 드레인하므로
@@ -644,14 +666,14 @@ class WorldActionContext(
     }
 
     override fun pushGlobalActionLog(msg: String) {
-        world.pushLog(LogEntryDraft("global", "action", msg))
+        world.pushLog(logDraft("global", "action", msg))
     }
 
     override fun pushGlobalHistoryLog(msg: String, type: Int) {
-        world.pushLog(LogEntryDraft("global", "history", msg, subType = type.toString()))
+        world.pushLog(logDraft("global", "history", msg, subType = type.toString()))
     }
 
     override fun pushGeneralHistoryLog(msg: String, type: Int) {
-        world.pushLog(LogEntryDraft("general", "history", msg, subType = type.toString()))
+        world.pushLog(logDraft("general", "history", msg, subType = type.toString()))
     }
 }

@@ -28,8 +28,8 @@ class FlushPayloadConvergenceTest {
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 
-    private fun baseState(phase: Int = 1) = TurnWorldState(
-        id = 1, currentYear = 200, currentMonth = 1, currentPhase = phase, tickSeconds = 3600, lastTurnTime = t0,
+    private fun baseState(year: Int = 200, month: Int = 1, phase: Int = 1) = TurnWorldState(
+        id = 1, currentYear = year, currentMonth = month, currentPhase = phase, tickSeconds = 3600, lastTurnTime = t0,
     )
 
     private fun engineGeneral(id: Int, nationId: Int = 1) = TurnGeneral(
@@ -164,6 +164,36 @@ class FlushPayloadConvergenceTest {
 
         assertEquals(3, payload.logEntries.single().phase)
         assertEquals("<C>●</>1월 하순:하순 행동", payload.logEntries.single().text)
+    }
+
+    @Test
+    fun `log draft date overrides the pre-flush world date for monthly event logs`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(year = 187, month = 12, phase = 3),
+                generals = listOf(engineGeneral(10)),
+                nations = listOf(engineNation(1, gold = 1000)),
+                cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5)),
+            ),
+        )
+        world.pushLog(
+            LogEntryDraft(
+                scope = "global",
+                category = "history",
+                text = "<C>●</>1월:봄이 되어 봉록에 따라 자금이 지급됩니다.",
+                year = 188,
+                month = 1,
+                phase = 1,
+            ),
+        )
+
+        val payload = DatabaseHooks.toFlushPayload(world, ChangeRecorder(), world.consumeDirtyState())
+
+        val row = payload.logEntries.single()
+        assertEquals(188, row.year)
+        assertEquals(1, row.month)
+        assertEquals(1, row.phase)
+        assertEquals("<C>●</>1월 상순:봄이 되어 봉록에 따라 자금이 지급됩니다.", row.text)
     }
 
     @Test

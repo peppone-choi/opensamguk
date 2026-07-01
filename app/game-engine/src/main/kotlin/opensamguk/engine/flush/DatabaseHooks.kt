@@ -492,19 +492,24 @@ object DatabaseHooks {
      * (`log_scope`/`log_category`) the INSERT casts to. `meta` defaults to an empty insertion-ordered
      * map when the draft carries none.
      */
-    private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int, phase: Int): LogRow = LogRow(
+    private fun toLogRow(draft: LogEntryDraft, year: Int, month: Int, phase: Int): LogRow {
+        val rowYear = draft.year ?: year
+        val rowMonth = draft.month ?: month
+        val rowPhase = draft.phase ?: phase
+        return LogRow(
         scope = scopeLiteral(draft.scope),
         category = draft.category.uppercase(),
-        text = stampPhaseInLogText(draft.text, phase),
-        year = year,
-        month = month,
-        phase = phase,
+        text = stampPhaseInLogText(draft.text, rowPhase),
+        year = rowYear,
+        month = rowMonth,
+        phase = rowPhase,
         subType = draft.subType,
         generalId = draft.generalId,
         nationId = draft.nationId,
         userId = draft.userId,
         meta = draft.meta ?: linkedMapOf(),
     )
+    }
 
     private fun stampPhaseInLogText(text: String, phase: Int): String {
         val phaseText = ServerClock.turnPhaseText(phase)

@@ -133,6 +133,9 @@ data class LogEntryDraft(
     val subType: String? = null,
     val meta: Map<String, Any?>? = null,
     val format: Int? = null,
+    val year: Int? = null,
+    val month: Int? = null,
+    val phase: Int? = null,
 )
 
 data class TurnWorldState(

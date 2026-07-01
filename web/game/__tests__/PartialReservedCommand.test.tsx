@@ -52,4 +52,37 @@ describe('PartialReservedCommand', () => {
         expect(screen.getAllByText('10:12').length).toBeGreaterThan(0);
         expect(screen.getByText('농지개간')).toBeInTheDocument();
     });
+
+    it('refetches slots when parent refreshKey changes after a turn completes', async () => {
+        mocks.reservedCommands
+            .mockResolvedValueOnce({
+                result: true,
+                slots: [{ turnIdx: 0, brief: '농지개간' }],
+                maxTurn: 4,
+                year: 190,
+                month: 8,
+                turnPhase: 2,
+            })
+            .mockResolvedValueOnce({
+                result: true,
+                slots: [{ turnIdx: 0, brief: '상업투자' }],
+                maxTurn: 4,
+                year: 190,
+                month: 8,
+                turnPhase: 3,
+            });
+
+        const { rerender } = render(
+            <PartialReservedCommand generalId={10} nationId={1} maxTurn={4} refreshKey={0} onToast={vi.fn()} />,
+        );
+
+        await waitFor(() => expect(screen.getByText('농지개간')).toBeInTheDocument());
+
+        rerender(
+            <PartialReservedCommand generalId={10} nationId={1} maxTurn={4} refreshKey={1} onToast={vi.fn()} />,
+        );
+
+        await waitFor(() => expect(screen.getByText('상업투자')).toBeInTheDocument());
+        expect(mocks.reservedCommands).toHaveBeenCalledTimes(2);
+    });
 });

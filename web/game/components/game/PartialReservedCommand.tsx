@@ -30,6 +30,7 @@ export interface PartialReservedCommandProps {
     nationId?: number;
     /** Total reservable slots (const.maxTurn); falls back to the 14-row view. */
     maxTurn?: number;
+    refreshKey?: number;
     /** Soft-refresh after a reserve. */
     onReserved?: () => void;
     onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -39,6 +40,7 @@ export default function PartialReservedCommand({
     generalId,
     nationId,
     maxTurn,
+    refreshKey: externalRefreshKey = 0,
     onReserved,
     onToast,
 }: PartialReservedCommandProps) {
@@ -90,7 +92,7 @@ export default function PartialReservedCommand({
         return () => {
             alive = false;
         };
-    }, [generalId, refreshKey]);
+    }, [generalId, refreshKey, externalRefreshKey]);
 
     const handleReserved = () => {
         setEditTurnIdx(null);

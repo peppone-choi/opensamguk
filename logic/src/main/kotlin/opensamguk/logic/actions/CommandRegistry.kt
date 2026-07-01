@@ -80,6 +80,8 @@ import opensamguk.logic.actions.personnel.CheJangsuDaesangImgwan
 import opensamguk.logic.actions.personnel.CheJeontuTeukgiChogihwa
 import opensamguk.logic.actions.personnel.CheNaejeongTeukgiChogihwa
 import opensamguk.logic.actions.personnel.CheRandomImgwan
+import opensamguk.logic.actions.personnel.RandomImgwanNpcCandidate
+import opensamguk.logic.actions.personnel.RandomImgwanWeightedCandidate
 import opensamguk.logic.actions.personnel.CheYoyang
 import opensamguk.logic.actions.trade.CheHeonnap
 import opensamguk.logic.actions.trade.CheJangbiMaemae
@@ -105,6 +107,17 @@ object RestAction : GeneralActionDefinition {
  * reserved action-code and the fallback.
  */
 class CommandRegistry(private val pipeline: GeneralActionPipeline, private val maxLevel: Int = 255) {
+    fun resolveRandomImgwan(
+        npcCandidates: List<RandomImgwanNpcCandidate>,
+        weightedCandidates: List<RandomImgwanWeightedCandidate>,
+        useNpcForeignBranch: Boolean,
+    ): GeneralActionDefinition = CheRandomImgwan(
+        pipeline = pipeline,
+        npcCandidates = npcCandidates,
+        weightedCandidates = weightedCandidates,
+        useNpcForeignBranch = useNpcForeignBranch,
+    )
+
     fun resolve(actionCode: String): GeneralActionDefinition = when (actionCode) {
         "che_상업투자" -> cheSangeobTuja(pipeline, maxLevel)
         "che_농지개간" -> cheNongjigaegan(pipeline, maxLevel)
