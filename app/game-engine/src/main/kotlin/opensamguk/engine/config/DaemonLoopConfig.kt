@@ -27,6 +27,7 @@ import opensamguk.infra.read.VotePollRepository
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
+import opensamguk.logic.actions.nation.NationCommand
 import opensamguk.logic.actions.nation.withNationAux
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.diplomacy.DiplomacyConst
@@ -39,6 +40,7 @@ import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.util.phpRound
 import opensamguk.logic.tick.CheckStatistic
 import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.MonthlyClock
@@ -517,6 +519,40 @@ class DaemonLoopConfig {
                 rice = destNation.rice + riceAmount,
             )
             applyExpDed(ctx, pipeline, magnitude = 5.0)
+        }
+
+        // 피장파장 — che_피장파장.php:201-242 logs + exp/ded + nation_env delay KV (delayCnt=60).
+        NationActionResolverRegistry.register("che_피장파장") { ctx ->
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+            val commandType = ctx.args["commandType"] as? String ?: return@register
+            val targetName = commandType.removePrefix("che_")
+            val commandName = "피장파장"
+            ctx.addActionLog("<G><b>$targetName</b></> 전략의 $commandName 발동! <1>${ctx.date}</>")
+            applyExpDed(ctx, pipeline, magnitude = 10.0) // 5*(1+1)
+            val yearMonth = NationCommand.joinYearMonth(ctx.year, ctx.month)
+            val genCount = metaInt(ctx.nation.meta, "gennum").coerceAtLeast(GameConst.initialNationGenLimit)
+            // PHP: round(sqrt(genCount*2)*10) then valueFit min = round(delayCnt*1.2)
+            var targetPost = phpRound(kotlin.math.sqrt(genCount * 2.0) * 10)
+            val minDelay = phpRound(60 * 1.2) // delayCnt*1.2
+            if (targetPost < minDelay) targetPost = minDelay
+            val nextKey = "next_execute_$targetName"
+            ctx.recordKv("nation_env", ctx.nation.id.toString(), nextKey, yearMonth + targetPost)
+            // dest delay = max(existing, yearMonth) + 60
+            val destExisting = (destNation.meta[nextKey] as? Number)?.toInt() ?: 0
+            val destDelay = maxOf(destExisting, yearMonth) + 60
+            ctx.recordKv("nation_env", you.toString(), nextKey, destDelay)
+            val generalName = ctx.generalName.ifEmpty { "장수" }
+            val destName = ctx.destName.ifEmpty { destNation.name }
+            val josaUl = JosaUtil.pick(commandName, "을")
+            val josaYi = JosaUtil.pick(generalName, "이")
+            ctx.addGeneralHistoryLog(
+                "<D><b>$destName</b></>에 <G><b>$targetName</b></> <M>$commandName</>$josaUl 발동",
+            )
+            ctx.addNationalHistoryLog(
+                "<Y>$generalName</>$josaYi <D><b>$destName</b></>에 <G><b>$targetName</b></> <M>$commandName</>$josaUl 발동",
+            )
         }
 
         // event_*연구 family — gold/rice/aux unlock + exp/ded + action log (PHP deterministic run).

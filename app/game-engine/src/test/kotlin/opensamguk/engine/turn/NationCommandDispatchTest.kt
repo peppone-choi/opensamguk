@@ -297,7 +297,10 @@ class NationCommandDispatchTest {
 
         proc.process(
             generalId = 10, officerLevel = 12,
-            nationCommand = ChosenCommand("che_피장파장", linkedMapOf("commandType" to "che_급습")),
+            nationCommand = ChosenCommand(
+                "che_피장파장",
+                linkedMapOf("commandType" to "che_급습", "destNationID" to 2),
+            ),
             lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
         )
 
@@ -306,6 +309,75 @@ class NationCommandDispatchTest {
         assertEquals(10, world.getGeneralById(10)!!.dedication)
         val dirty = world.consumeDirtyState()
         assertTrue(dirty.logs.any { it.text.contains("피장파장") || it.text.contains("급습") })
+    }
+
+    @Test
+    fun `installed 피장파장 writes delay KV on both nations`() {
+        installDaemonResolvers()
+        val world = world(diplomacyState = DiplomacyState.DECLARATION, diplomacyTerm = 12)
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand(
+                "che_피장파장",
+                linkedMapOf("commandType" to "che_급습", "destNationID" to 2),
+            ),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        assertEquals(10, world.getGeneralById(10)!!.experience)
+        val kv = recorder.kvDirty()
+        assertTrue(kv.any { it.key.key == "next_execute_급습" && it.key.namespace == "1" })
+        assertTrue(kv.any { it.key.key == "next_execute_급습" && it.key.namespace == "2" })
+    }
+
+    @Test
+    fun `logic bridge scorches city on 초토화`() {
+        NationActionResolverRegistry.clear()
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                generals = listOf(
+                    TurnGeneral(
+                        id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
+                        stats = GeneralStats(80, 70, 60), experience = 100, dedication = 100,
+                        officerLevel = 12, gold = 100, turnTime = t0,
+                    ),
+                ),
+                cities = listOf(
+                    City(
+                        id = 5, name = "업", nationId = 1, level = 6,
+                        population = 10000, populationMax = 20000,
+                        agriculture = 1000, agricultureMax = 2000,
+                        commerce = 1000, commerceMax = 2000,
+                        security = 500, securityMax = 1000,
+                        defence = 500, defenceMax = 1000,
+                        wall = 800, wallMax = 1000,
+                    ),
+                ),
+                nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 5000, rice = 5000)),
+                diplomacy = emptyList(),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(
+            world, recorder, hiddenSeed = "seed",
+            registry = CommandRegistry(GeneralActionPipeline()), startYear = 200,
+        )
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("che_초토화", linkedMapOf("destCityID" to 5)),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        val city = world.getCityById(5)!!
+        assertEquals(0, city.nationId, "scorched city becomes neutral")
+        assertEquals(0, city.frontState)
+        assertTrue(city.population < 10000, "population reduced")
+        assertTrue(world.getNationById(1)!!.gold >= 5000, "treasury gains return amount")
     }
 
     @Test
