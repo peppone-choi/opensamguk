@@ -73,7 +73,8 @@ fun cheGukhoByeongyeong(pipeline: GeneralActionPipeline): NationCommand = object
  * Write `key=value` into the nested `aux` map on a NATION's `meta` jsonb (rate/bill/aux ride meta),
  * preserving existing entries + insertion order. Mirrors PHP `nation['aux'][key] = value` + Json::encode.
  */
-internal fun withNationAux(meta: Map<String, Any?>, vararg pairs: Pair<String, Any?>): Map<String, Any?> {
+/** Merge keys into nation.meta['aux'] LinkedHashMap preserving insertion order (research unlocks). */
+fun withNationAux(meta: Map<String, Any?>, vararg pairs: Pair<String, Any?>): Map<String, Any?> {
     @Suppress("UNCHECKED_CAST")
     val curAux = (meta["aux"] as? Map<String, Any?>) ?: emptyMap()
     val nextAux = LinkedHashMap(curAux)

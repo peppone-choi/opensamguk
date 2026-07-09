@@ -367,7 +367,8 @@ class ScenarioImporter(
                 born, dead, "default.jpg",
                 g.leadership, g.strength, g.intel, exp, ded, g.officerLevel,
                 ts, age, age, personal, special,
-                jsonb(ScenarioLifecycleMeta.initialGeneralMeta(dead, turnTerm, npcMode)),
+                // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
+                jsonb(ScenarioLifecycleMeta.initialGeneralMeta(dead, startYear, SEED_START_MONTH)),
                 politics, charm,
             )
             n++
@@ -543,6 +544,9 @@ class ScenarioImporter(
 
         /** Nation/chief ring capacity (= common GameConst.maxChiefTurn). */
         const val MAX_CHIEF_TURNS = 12
+
+        /** 시드 시작 월 — insertWorldState가 current_month=1로 고정 시드하므로 killturn 파생도 월1 기준. */
+        const val SEED_START_MONTH = 1
 
         /**
          * The 37 `rank_data.type` column names — VERBATIM mirror of

@@ -33,7 +33,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *    ReqNationValue('surlimit','제한 턴','==',0,'외교제한 턴이 남아있습니다.'),
  *    DisallowDiplomacyStatus(nationID, {0:'평시에만 가능합니다.'})].
  *
- * TODO(포팅): run() — dest 도시 공백지화(scorched: nation=0, 스탯/시설 초기화 CityInitialDetail),
+ * Live path: ProcessNationCommand CommandRegistry bridge drains destCity/nation/general.
  *   addExperience(-exp*0.1), pushGlobalActionLog broadcast + 초토화 발동/전역 로그.
  */
 fun cheChotohwa(pipeline: GeneralActionPipeline): CheChotohwa =

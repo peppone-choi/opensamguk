@@ -3,53 +3,41 @@ package opensamguk.engine.turn
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.GeneralActionDraft
+import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.RestAction
 import opensamguk.logic.actions.nation.NationActionResolveContext
 import opensamguk.logic.actions.nation.NationActionResolver
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.statview.WorldEnvBuilder
+import opensamguk.logic.util.phpRound
+import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicCity
+import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicGeneral
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
 
 /**
  * P5 Task FM2 (F-SEAM) — the NATION-command resolve path (R-SEAM §4).
  *
- * **No nation-command resolve path existed in the Kotlin daemon before P5** — `ReservedTurnHandler`
- * ported ONLY `processCommand` (the GENERAL path). This is the faithful port of
- * `processNationCommand` (`legacy/devsam-core/hwe/sammo/TurnExecutionHelper.php:72-109`), reusing the
- * GREEN general `processCommand` while-loop (`:111-167`) as the structural template — the SAME
- * full-condition → addTermStack → run → getAlternativeCommand spine, sharing the same
- * `getFailString`/`getTermString` log strings.
- *
- * It runs in the daemon's nation pass, which executes BEFORE the general pass within one general's
- * turn (R-SEAM §2 `:299-348`), seeded with the `'nationCommand'` 6-component RNG
- * (`serializeSeed(hiddenSeed,'nationCommand',year,month,generalId,cmd.getRawClassName())`, `:310-317`),
- * and writes the `turn_last_{officer_level}` KV (`:322`) + clears the general's cached city handle
- * (`setRawCity(null)`, `:323`).
+ * Dispatch order (live daemon):
+ *  1. [NationActionResolverRegistry] when a code is registered (diplomacy accepts, strategic leaves).
+ *  2. [CommandRegistry] logic definition bridge — runs the same `NationCommand.resolve(GeneralAction…)`
+ *     bodies the golden tests use, then drains draft/cascade through [ChangeRecorder].
+ *  3. Optional [nationCommandResolver] pass-through (tests / unknown codes).
  *
  * ## The ONE daemon-write rule (architecture-test enforced)
- * The nation resolve writes ONLY through the [ChangeRecorder] single-dirty-source (the
- * `turn_last_{officer_level}` nation-meta delta) — NEVER a JPA `EntityManager`, NEVER an inline
- * `world.updateNation`/`updateGeneral`. The `nation_turn` ring rotation + the actual `che_*`
- * nation-command state-mutation/logs (불가침제의/선전포고/천도 …) are P6; here the seam ports the
- * seed + the while-loop structure + the KV delta + the `setRawCity` invalidation. The per-command
- * mutation is delegated to a pluggable [nationCommandResolver] hook (default = a structural no-op
- * producing the command's `getResultTurn` — mirroring the [ReservedTurnHandler.nextRuler]/
- * [ReservedTurnHandler.dyingMessage] hook pattern), so no P6 internals are fabricated.
- *
- * @param world the live in-memory turn world (read-only here; the resolver hook may queue recorder deltas).
- * @param recorder the SINGLE dirty source — the `turn_last_{officer_level}` nation-meta delta lands here.
- * @param hiddenSeed the per-game `UniqueConst::$hiddenSeed` (the captured golden FIXTURE INPUT) — seed
- *   component 1 of the `'nationCommand'` lineage.
- * @param nationCommandResolver the per-command resolve hook (the `che_*` nation-command `run`). It is
- *   handed the SOLE per-command `'nationCommand'` [RandUtil] (threaded by reference) + the reserved/
- *   AI-chosen [ChosenCommand] + the pre-turn [LastTurn], and returns the result [LastTurn]
- *   (`$commandObj->getResultTurn()`, `:108`). Default = pass-through of the pre-turn lastTurn (the P6
- *   nation-command internals are NOT ported here — the seam + seed + KV delta are).
+ * Mutations go ONLY through [ChangeRecorder] + dirty-free world apply — never JPA EntityManager.
  */
 class ProcessNationCommand(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val hiddenSeed: String,
+    private val registry: CommandRegistry? = null,
+    private val startYear: Int = 0,
+    private val turnTerm: Int = 60,
     private val nationCommandResolver: NationCommandResolver = NationCommandResolver { _, _, lastTurn -> lastTurn },
 ) {
 
@@ -98,19 +86,15 @@ class ProcessNationCommand(
             ),
         )
 
-        // --- registry-backed dispatch (T0.6) ---
-        // The diplomacy / nation-internal / event_*연구 leaf families register a NationActionResolver
-        // by action code (Wave A1/B/D). When one exists, build the NationActionResolveContext from the
-        // world's draft state, run resolve(), and route the buffered side effects through the
-        // ChangeRecorder single-dirty-source (diplomacy deltas → diffDiplomacy, logs → ActionLogger
-        // scopes, messages → the mailbox channel, KV → recordKv, draft nation/dest → diffNation) — NEVER
-        // an inline write / EntityManager. When no resolver is registered (the family has not landed),
-        // fall back to the legacy pass-through hook (default no-op getResultTurn).
+        // --- dispatch: registry leaf → logic CommandRegistry bridge → pass-through ---
         val registered: NationActionResolver? = NationActionResolverRegistry.resolve(nationCommand.actionCode)
-        val resultTurn = if (registered != null) {
-            dispatchRegistered(registered, rng, general, officerLevel, nationCommand, lastTurn, year, month, date)
-        } else {
-            nationCommandResolver.resolve(rng, nationCommand, lastTurn)
+        val resultTurn = when {
+            registered != null ->
+                dispatchRegistered(registered, rng, general, officerLevel, nationCommand, lastTurn, year, month, date)
+            registry != null ->
+                dispatchLogicDefinition(registry, rng, general, nationCommand, lastTurn, year, month, date)
+            else ->
+                nationCommandResolver.resolve(rng, nationCommand, lastTurn)
         }
 
         // --- $nationStor->setValue("turn_last_{officer_level}", $resultNationTurn->toRaw()) (:322) ---
@@ -128,15 +112,225 @@ class ProcessNationCommand(
     }
 
     /**
+     * Bridge: run the logic-module [CommandRegistry] definition (`NationCommand.resolve` on
+     * [GeneralActionResolveContext]) and drain draft/cascade identically to [ReservedTurnHandler].
+     * Closes the "logic golden green, live nation pass silent no-op" gap for every ported nation cmd.
+     */
+    private fun dispatchLogicDefinition(
+        registry: CommandRegistry,
+        rng: RandUtil,
+        general: TurnGeneral,
+        nationCommand: ChosenCommand,
+        lastTurn: LastTurn,
+        year: Int,
+        month: Int,
+        date: String,
+    ): LastTurn {
+        val definition = registry.resolve(nationCommand.actionCode)
+        if (definition === RestAction || definition.key == "휴식") {
+            return nationCommandResolver.resolve(rng, nationCommand, lastTurn)
+        }
+
+        val nationId = general.nationId
+        val preGeneral = toLogicGeneral(general)
+        val preCity = world.getCityById(general.cityId)?.let { toLogicCity(it) }
+            ?: error("ProcessNationCommand: city ${general.cityId} not in world")
+        val preNation = world.getNationById(nationId)?.let { toLogicNation(it) }
+        val draft = GeneralActionDraft(preGeneral, preCity, preNation)
+        val args = LinkedHashMap(nationCommand.args)
+        // parseArgs normalizes (argTest); empty map keeps raw if parse fails.
+        val parsed = try {
+            definition.parseArgs(args)
+        } catch (_: Exception) {
+            args
+        }
+        val resolveArgs = LinkedHashMap(if (parsed.isNotEmpty()) parsed else args)
+        preloadLogicTargets(draft, resolveArgs)
+        stageWorldInputs(nationCommand.actionCode, draft, resolveArgs, general)
+
+        val destName = draft.destGeneral?.let { world.getGeneralById(it.id)?.name }
+            ?: draft.destNation?.name
+            ?: draft.destCity?.let { world.getCityById(it.id)?.name }
+            ?: ""
+
+        val candidateGenerals = stageCandidateGenerals(nationCommand.actionCode, general, resolveArgs)
+        val candidateCityIds = stageCandidateCityIds(nationCommand.actionCode)
+
+        val ctx = GeneralActionResolveContext(
+            draft = draft,
+            rng = rng,
+            env = WorldEnvBuilder.worldEnv(year, startYear.ifZero { year }),
+            month = month,
+            date = date,
+            args = resolveArgs,
+            candidateGenerals = candidateGenerals,
+            candidateCityIds = candidateCityIds,
+            generalName = general.name,
+            destGeneralName = destName,
+            turnterm = turnTerm,
+        )
+        definition.resolve(ctx)
+
+        // --- drain draft (mirrors ReservedTurnHandler nation-capable path) ---
+        recorder.diffGeneral(preGeneral, draft.general)
+        world.applyGeneralDirtyFree(applyLogicToGeneral(general, draft.general))
+
+        if (preNation != null && draft.nation != null && draft.nation !== preNation) {
+            recorder.diffNation(preNation, draft.nation!!)
+            world.getNationById(nationId)?.let { world.applyNationDirtyFree(applyLogicToNation(it, draft.nation!!)) }
+        }
+        draft.destNation?.let { destN ->
+            if (destN.id == nationId) return@let
+            val pre = world.getNationById(destN.id)?.let { toLogicNation(it) } ?: return@let
+            if (destN != pre) {
+                recorder.diffNation(pre, destN)
+                world.getNationById(destN.id)?.let { world.applyNationDirtyFree(applyLogicToNation(it, destN)) }
+            }
+        }
+        draft.destGeneral?.let { destG ->
+            if (destG.id == general.id) return@let
+            val pre = world.getGeneralById(destG.id)?.let { toLogicGeneral(it) } ?: return@let
+            if (destG != pre) {
+                recorder.diffGeneral(pre, destG)
+                world.getGeneralById(destG.id)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, destG)) }
+            }
+        }
+        draft.destCity?.let { destC ->
+            if (destC.id == preCity.id) {
+                // actor city may also be dest for some cmds — still apply if mutated
+            }
+            val pre = world.getCityById(destC.id)?.let { toLogicCity(it) } ?: return@let
+            if (destC != pre) {
+                recorder.diffCity(pre, destC)
+                world.getCityById(destC.id)?.let { world.applyCityDirtyFree(applyLogicToCity(it, destC)) }
+            }
+        }
+        if (draft.city != preCity) {
+            recorder.diffCity(preCity, draft.city)
+            world.getCityById(preCity.id)?.let { world.applyCityDirtyFree(applyLogicToCity(it, draft.city)) }
+        }
+
+        for (delta in draft.cascadeDiplomacy) {
+            val pre = world.getDiplomacy(delta.me, delta.you) ?: continue
+            val applied = DiplomacyCascadeTerm.apply(pre.state, pre.term, delta.state, delta.term)
+            world.updateDiplomacy(delta.me, delta.you, applied.state, applied.term)
+            val post = world.getDiplomacy(delta.me, delta.you) ?: continue
+            recorder.diffDiplomacy(pre, post)
+        }
+        for (moved in draft.cascadeGenerals) {
+            val pre = world.getGeneralById(moved.id) ?: continue
+            recorder.diffGeneral(toLogicGeneral(pre), moved)
+            world.applyGeneralDirtyFree(applyLogicToGeneral(pre, moved))
+        }
+        for (moved in draft.cascadeCities) {
+            val pre = world.getCityById(moved.id) ?: continue
+            recorder.diffCity(toLogicCity(pre), moved)
+            world.applyCityDirtyFree(applyLogicToCity(pre, moved))
+        }
+
+        for (line in ctx.logs()) world.pushLog(nationLog(general, "action", "general", line))
+        for (line in ctx.plainLogs()) world.pushLog(nationLog(general, "action", "general", line))
+        for (line in ctx.globalActionLogs()) world.pushLog(nationLog(general, "action", "global", line))
+        draft.destGeneral?.id?.let { gid ->
+            for (line in ctx.logsTo(gid)) {
+                world.pushLog(
+                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
+                )
+            }
+            for (line in ctx.plainLogsTo(gid)) {
+                world.pushLog(
+                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
+                )
+            }
+        }
+
+        for (message in ctx.messages()) routeMessage(message, year, month)
+
+        return LastTurn(command = definition.name, arg = resolveArgs)
+    }
+
+    private fun preloadLogicTargets(draft: GeneralActionDraft, args: Map<String, Any?>) {
+        (args["destGeneralID"] as? Number)?.toInt()?.let { id ->
+            world.getGeneralById(id)?.let { draft.destGeneral = toLogicGeneral(it) }
+        }
+        (args["destNationID"] as? Number)?.toInt()?.let { id ->
+            world.getNationById(id)?.let { draft.destNation = toLogicNation(it) }
+        }
+        (args["destCityID"] as? Number)?.toInt()?.let { id ->
+            world.getCityById(id)?.let { draft.destCity = toLogicCity(it) }
+        }
+    }
+
+    /**
+     * Stage live-world query substitutes that logic resolvers expect as fixture args / context lists
+     * (PHP SELECT results the golden harness injects).
+     */
+    private fun stageWorldInputs(
+        actionCode: String,
+        draft: GeneralActionDraft,
+        args: MutableMap<String, Any?>,
+        general: TurnGeneral,
+    ) {
+        when (actionCode) {
+            "che_허보" -> {
+                val destCityId = (args["destCityID"] as? Number)?.toInt() ?: return
+                val destCity = world.getCityById(destCityId) ?: return
+                val destNationId = destCity.nationId
+                if (destNationId == 0) return
+                // PHP: SELECT city FROM city WHERE nation=dest AND supply=1
+                val supplied = world.listCities()
+                    .filter { it.nationId == destNationId && it.supplyState != 0 }
+                    .map { it.id }
+                    .sorted()
+                args["__suppliedEnemyCities"] = supplied
+            }
+            "che_초토화" -> {
+                draft.destCity?.let { dc ->
+                    args.putIfAbsent("__destLevel", dc.level)
+                }
+            }
+        }
+    }
+
+    private fun stageCandidateGenerals(
+        actionCode: String,
+        general: TurnGeneral,
+        args: Map<String, Any?>,
+    ): List<opensamguk.logic.domain.General> {
+        val nationId = general.nationId
+        return when (actionCode) {
+            // same-nation peers (초토화 betray, 필사즉생, 백성동원)
+            "che_초토화", "che_필사즉생", "che_백성동원" ->
+                world.listGenerals()
+                    .filter { it.nationId == nationId && it.id != general.id }
+                    .map { toLogicGeneral(it) }
+            // 허보: generals in dest city of enemy nation
+            "che_허보" -> {
+                val destCityId = (args["destCityID"] as? Number)?.toInt() ?: return emptyList()
+                world.listGenerals()
+                    .filter { it.cityId == destCityId && it.nationId != nationId && it.nationId != 0 }
+                    .map { toLogicGeneral(it) }
+            }
+            else -> emptyList()
+        }
+    }
+
+    private fun stageCandidateCityIds(actionCode: String): List<Int> =
+        when (actionCode) {
+            // 무작위수도이전: neutral level 5-6 cities (PHP SELECT)
+            "che_무작위수도이전" ->
+                world.listCities()
+                    .filter { it.nationId == 0 && it.level in 5..6 }
+                    .map { it.id }
+                    .sorted()
+            else -> emptyList()
+        }
+
+    private fun Int.ifZero(block: () -> Int): Int = if (this == 0) block() else this
+
+    /**
      * Build the [NationActionResolveContext] from the world's draft state, run the registered resolver,
-     * and route every buffered side effect through the [ChangeRecorder] single-dirty-source (T0.6):
-     *  - diplomacy deltas → [InMemoryTurnWorld.updateDiplomacy] (dirty-free apply) + `diffDiplomacy`,
-     *  - the actor draft nation + dest nation → `diffNation`,
-     *  - the four ActionLogger scopes (action/general-history/national-history/global-history +
-     *    global-action + dest-national-history) → `world.pushLog` with the matching scope/category,
-     *  - the buffered Messages → the mailbox channel (receiver row BEFORE sender row),
-     *  - the buffered KV writes → `recorder.recordKv`.
-     * Returns the resolver's result [LastTurn].
+     * and route every buffered side effect through the [ChangeRecorder] single-dirty-source (T0.6).
      */
     private fun dispatchRegistered(
         resolver: NationActionResolver,
@@ -152,9 +346,18 @@ class ProcessNationCommand(
         val nationId = general.nationId
         val preNation = world.getNationById(nationId)?.let { toLogicNation(it) }
             ?: error("ProcessNationCommand: nation $nationId not in world")
+        val preGeneral = toLogicGeneral(general)
         // dest nation (선전포고/수락/파기/종전 target) — derived from the parsed args' destNationID if present.
         val destNationId = (nationCommand.args["destNationID"] as? Number)?.toInt()
         val preDestNation = destNationId?.let { world.getNationById(it)?.let { n -> toLogicNation(n) } }
+        // dest general (몰수 등) — destGeneralID when present.
+        val destGeneralId = (nationCommand.args["destGeneralID"] as? Number)?.toInt()
+        val preDestGeneral = destGeneralId?.let { world.getGeneralById(it)?.let { g -> toLogicGeneral(g) } }
+        val destDisplayName = when {
+            preDestNation != null -> preDestNation.name
+            preDestGeneral != null -> world.getGeneralById(preDestGeneral.id)?.name.orEmpty()
+            else -> ""
+        }
 
         // snapshot the diplomacy matrix the resolver reads.
         val matrix = LinkedHashMap<Pair<Int, Int>, opensamguk.logic.domain.Diplomacy>()
@@ -172,11 +375,27 @@ class ProcessNationCommand(
             date = date,
             args = nationCommand.args,
             destNation = preDestNation,
+            general = preGeneral,
+            destGeneral = preDestGeneral,
+            generalName = general.name,
+            destName = destDisplayName,
             diplomacyMatrix = matrix,
             lastTurn = lastTurn,
         )
 
         resolver.resolve(ctx)
+
+        // --- route the actor general draft → recorder diffs (exp/ded/meta) ---
+        val postGeneral = ctx.general
+        if (postGeneral != null && postGeneral != preGeneral) {
+            recorder.diffGeneral(preGeneral, postGeneral)
+            world.getGeneralById(general.id)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, postGeneral)) }
+        }
+        val postDestGeneral = ctx.destGeneral
+        if (destGeneralId != null && preDestGeneral != null && postDestGeneral != null && postDestGeneral != preDestGeneral) {
+            recorder.diffGeneral(preDestGeneral, postDestGeneral)
+            world.getGeneralById(destGeneralId)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, postDestGeneral)) }
+        }
 
         // --- route the actor + dest nation drafts → recorder diffs (single dirty source) ---
         if (ctx.nation != preNation) {
@@ -287,6 +506,57 @@ class ProcessNationCommand(
             typeCode = logic.typeCode,
             meta = logic.meta,
         )
+
+    /**
+     * Apply logic General exp/ded/gold/rice/meta back onto the engine row (same rounding as
+     * [ReservedTurnHandler] general-pass applyGeneralPatch — phpRound half-away).
+     */
+    private fun applyLogicToGeneral(engine: TurnGeneral, logic: opensamguk.logic.domain.General): TurnGeneral =
+        engine.copy(
+            experience = phpRound(logic.experience),
+            dedication = phpRound(logic.dedication),
+            gold = logic.gold,
+            rice = logic.rice,
+            officerLevel = logic.officerLevel,
+            cityId = logic.cityId,
+            nationId = logic.nationId,
+            troopId = logic.troop,
+            injury = logic.injury,
+            meta = logic.meta,
+        )
+
+    private fun applyLogicToCity(engine: City, post: opensamguk.logic.domain.City): City {
+        val nextMeta = if (post.trust != (engine.meta["trust"] as? Number)?.toDouble()) {
+            val m = LinkedHashMap(engine.meta); m["trust"] = post.trust; m
+        } else {
+            engine.meta
+        }
+        return engine.copy(
+            level = post.level,
+            state = post.state,
+            commerce = post.commerce,
+            commerceMax = post.commerceMax,
+            agriculture = post.agriculture,
+            agricultureMax = post.agricultureMax,
+            population = post.population,
+            populationMax = post.populationMax,
+            security = post.security,
+            securityMax = post.securityMax,
+            defence = post.defense,
+            defenceMax = post.defenseMax,
+            wall = post.wall,
+            wallMax = post.wallMax,
+            supplyState = post.supplyState,
+            frontState = post.frontState,
+            nationId = post.nationId,
+            trade = post.trade,
+            region = post.region,
+            term = post.term,
+            officerSet = post.officerSet,
+            conflict = post.conflict,
+            meta = nextMeta,
+        )
+    }
 
     /**
      * Queue the `turn_last_{officer_level}` nation-meta KV delta via the [ChangeRecorder] single-dirty-source.

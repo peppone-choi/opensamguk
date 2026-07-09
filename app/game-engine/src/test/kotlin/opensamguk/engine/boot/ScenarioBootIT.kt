@@ -1,6 +1,6 @@
 package opensamguk.engine.boot
 
-import opensamguk.common.constants.EffectiveGameConst
+import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
@@ -100,10 +100,20 @@ class ScenarioBootIT {
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)
         assertEquals(0, (snapshot.state.meta["isunited"] as? Number)?.toInt() ?: -1, "isunited loaded from world_state column")
-        val expectedKillturn = EffectiveGameConst.killturn(snapshot.state.tickSeconds / 60, npcmode = 0)
+        val seedStartYear = (snapshot.state.meta["startYear"] as Number).toInt()
+        val seedStartMonth = 1
+        val killturns = snapshot.generals.map { (it.meta["killturn"] as Number).toInt() }
         assertTrue(
-            snapshot.generals.all { (it.meta["killturn"] as? Number)?.toInt() == expectedKillturn },
-            "seeded generals load with PHP reset killturn baseline",
+            killturns.toSet().size > 1,
+            "seeded generals load with per-general killturns, not one global collapse",
+        )
+        assertTrue(
+            snapshot.generals.all {
+                val deadYear = (it.meta["deadyear"] as Number).toInt()
+                (it.meta["killturn"] as Number).toInt() ==
+                    ScenarioLifecycleMeta.killturnFor(deadYear, seedStartYear, seedStartMonth)
+            },
+            "seeded generals load with deadyear-derived killturn lifecycle meta",
         )
         assertTrue(
             snapshot.generals.all { (it.meta["deadyear"] as? Number)?.toInt() ?: 0 > snapshot.state.currentYear },
