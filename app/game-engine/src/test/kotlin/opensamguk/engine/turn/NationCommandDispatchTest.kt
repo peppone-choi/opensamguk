@@ -334,6 +334,58 @@ class NationCommandDispatchTest {
     }
 
     @Test
+    fun `logic bridge 허보 moves enemy generals in dest city`() {
+        NationActionResolverRegistry.clear()
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                generals = listOf(
+                    TurnGeneral(
+                        id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
+                        stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0,
+                        officerLevel = 12, gold = 100, turnTime = t0,
+                    ),
+                    TurnGeneral(
+                        id = 30, name = "조운", nationId = 2, cityId = 8, troopId = 0,
+                        stats = GeneralStats(70, 80, 50), experience = 0, dedication = 0,
+                        officerLevel = 1, gold = 100, turnTime = t0,
+                    ),
+                ),
+                cities = listOf(
+                    City(id = 5, name = "업", nationId = 1, level = 6, supplyState = 1),
+                    City(id = 8, name = "허창", nationId = 2, level = 6, supplyState = 1),
+                    City(id = 9, name = "낙양", nationId = 2, level = 5, supplyState = 1),
+                ),
+                nations = listOf(
+                    Nation(id = 1, name = "촉", color = "#0f0"),
+                    Nation(id = 2, name = "위", color = "#00f"),
+                ),
+                diplomacy = listOf(
+                    TurnDiplomacy(1, 2, state = DiplomacyState.WAR, term = 3),
+                    TurnDiplomacy(2, 1, state = DiplomacyState.WAR, term = 3),
+                ),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(
+            world, recorder, hiddenSeed = "seed",
+            registry = CommandRegistry(GeneralActionPipeline()), startYear = 200,
+        )
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("che_허보", linkedMapOf("destCityID" to 8)),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        // enemy general in city 8 must move to a supplied enemy city (8 or 9)
+        val moved = world.getGeneralById(30)!!
+        assertTrue(moved.cityId == 8 || moved.cityId == 9, "moved city=${moved.cityId}")
+        // preReqTurn=1 → exp/ded += 5*(1+1)=10
+        assertEquals(10, world.getGeneralById(10)!!.experience)
+    }
+
+    @Test
     fun `logic bridge scorches city on 초토화`() {
         NationActionResolverRegistry.clear()
         val world = InMemoryTurnWorld(

@@ -144,21 +144,17 @@ class ProcessNationCommand(
         } catch (_: Exception) {
             args
         }
-        val resolveArgs = if (parsed.isNotEmpty()) parsed else args
+        val resolveArgs = LinkedHashMap(if (parsed.isNotEmpty()) parsed else args)
         preloadLogicTargets(draft, resolveArgs)
+        stageWorldInputs(nationCommand.actionCode, draft, resolveArgs, general)
 
         val destName = draft.destGeneral?.let { world.getGeneralById(it.id)?.name }
             ?: draft.destNation?.name
             ?: draft.destCity?.let { world.getCityById(it.id)?.name }
             ?: ""
 
-        // 초토화 etc. need same-nation candidates for betray/exp cascade.
-        val candidateGenerals = when (nationCommand.actionCode) {
-            "che_초토화" -> world.listGenerals()
-                .filter { it.nationId == nationId && it.id != general.id }
-                .map { toLogicGeneral(it) }
-            else -> emptyList()
-        }
+        val candidateGenerals = stageCandidateGenerals(nationCommand.actionCode, general, resolveArgs)
+        val candidateCityIds = stageCandidateCityIds(nationCommand.actionCode)
 
         val ctx = GeneralActionResolveContext(
             draft = draft,
@@ -168,6 +164,7 @@ class ProcessNationCommand(
             date = date,
             args = resolveArgs,
             candidateGenerals = candidateGenerals,
+            candidateCityIds = candidateCityIds,
             generalName = general.name,
             destGeneralName = destName,
             turnterm = turnTerm,
@@ -263,6 +260,71 @@ class ProcessNationCommand(
             world.getCityById(id)?.let { draft.destCity = toLogicCity(it) }
         }
     }
+
+    /**
+     * Stage live-world query substitutes that logic resolvers expect as fixture args / context lists
+     * (PHP SELECT results the golden harness injects).
+     */
+    private fun stageWorldInputs(
+        actionCode: String,
+        draft: GeneralActionDraft,
+        args: MutableMap<String, Any?>,
+        general: TurnGeneral,
+    ) {
+        when (actionCode) {
+            "che_허보" -> {
+                val destCityId = (args["destCityID"] as? Number)?.toInt() ?: return
+                val destCity = world.getCityById(destCityId) ?: return
+                val destNationId = destCity.nationId
+                if (destNationId == 0) return
+                // PHP: SELECT city FROM city WHERE nation=dest AND supply=1
+                val supplied = world.listCities()
+                    .filter { it.nationId == destNationId && it.supplyState != 0 }
+                    .map { it.id }
+                    .sorted()
+                args["__suppliedEnemyCities"] = supplied
+            }
+            "che_초토화" -> {
+                draft.destCity?.let { dc ->
+                    args.putIfAbsent("__destLevel", dc.level)
+                }
+            }
+        }
+    }
+
+    private fun stageCandidateGenerals(
+        actionCode: String,
+        general: TurnGeneral,
+        args: Map<String, Any?>,
+    ): List<opensamguk.logic.domain.General> {
+        val nationId = general.nationId
+        return when (actionCode) {
+            // same-nation peers (초토화 betray, 필사즉생, 백성동원)
+            "che_초토화", "che_필사즉생", "che_백성동원" ->
+                world.listGenerals()
+                    .filter { it.nationId == nationId && it.id != general.id }
+                    .map { toLogicGeneral(it) }
+            // 허보: generals in dest city of enemy nation
+            "che_허보" -> {
+                val destCityId = (args["destCityID"] as? Number)?.toInt() ?: return emptyList()
+                world.listGenerals()
+                    .filter { it.cityId == destCityId && it.nationId != nationId && it.nationId != 0 }
+                    .map { toLogicGeneral(it) }
+            }
+            else -> emptyList()
+        }
+    }
+
+    private fun stageCandidateCityIds(actionCode: String): List<Int> =
+        when (actionCode) {
+            // 무작위수도이전: neutral level 5-6 cities (PHP SELECT)
+            "che_무작위수도이전" ->
+                world.listCities()
+                    .filter { it.nationId == 0 && it.level in 5..6 }
+                    .map { it.id }
+                    .sorted()
+            else -> emptyList()
+        }
 
     private fun Int.ifZero(block: () -> Int): Int = if (this == 0) block() else this
 

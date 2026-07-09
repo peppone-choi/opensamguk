@@ -28,7 +28,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  * fullConditionConstraints(che_허보.php:69-78), PHP ORDER:
  *   [OccupiedCity, BeChief, NotNeutralDestCity, NotOccupiedDestCity, AllowDiplomacyBetweenStatus([0,1],…), AvailableStrategicCommand].
  *
- * TODO(포팅): run() — dest 도시 각 적 장수를 `context.rng.choice(suppliedEnemyCityIds)`로 이동(같은
+ * Live path: ProcessNationCommand stages __suppliedEnemyCities + candidateGenerals from world.
  *   도시 re-roll), 각 dest 장수 PLAIN 로그 + 허보 발동 로그. RNG는 골든 시드로 1회 빌드되어 ctx에 threaded.
  */
 fun cheHeobo(pipeline: GeneralActionPipeline): CheHeobo =
