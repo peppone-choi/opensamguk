@@ -40,7 +40,7 @@ import opensamguk.logic.util.numberFormat
  * 작위 제한량(level*coefAidAmount) 비교는 nation.level이 필요 — staging이 `__aidLimit`(Int)을 주면
  * 그것으로, 부재 시 `ctx.env["nationLevel"]`로 계산한다(둘 다 없으면 제한 미적용 → 통과).
  *
- * TODO(포팅): run() — 아국 gold/rice -= amount, dest nation gold/rice += amount, broadcast + PLAIN
+ * Live path: NationActionResolverRegistry + logic bridge. Remaining backlog:
  *   ACTING 라인(2) + pushGlobalHistoryLog.
  */
 fun cheMuljaWonjo(pipeline: GeneralActionPipeline): CheMuljaWonjo =

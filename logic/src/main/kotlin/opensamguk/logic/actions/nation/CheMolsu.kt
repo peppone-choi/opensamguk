@@ -35,8 +35,7 @@ import opensamguk.logic.util.valueFit
  *   - else: [NotBeNeutral, OccupiedCity, BeChief, NotOpeningPart(relYear), SuppliedCity,
  *            ExistsDestGeneral, FriendlyDestGeneral].
  *
- * TODO(포팅): run() — dest 장수 gold/rice -= amount, nation 국고 += amount, NPCType>=2 메시지 RNG(nextBool→choice),
- *   dest PLAIN action 라인 + 몰수 발동 로그.
+ * Live path: ProcessNationCommand CommandRegistry bridge drains destGeneral + nation + messages.
  */
 fun cheMolsu(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline): CheMolsu =
     CheMolsu(pipeline)

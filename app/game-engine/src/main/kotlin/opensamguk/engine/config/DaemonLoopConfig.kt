@@ -219,7 +219,16 @@ class DaemonLoopConfig {
 
         // The nation pass writes through the SAME recorder the handler owns — the lone dirty source the
         // flush reads (P2 Risk #4). The handler exposes its internal ChangeRecorder via `.recorder`.
-        val nationProcessor = ProcessNationCommand(world, handler.recorder, hiddenSeed)
+        val nationProcessor = ProcessNationCommand(
+            world = world,
+            recorder = handler.recorder,
+            hiddenSeed = hiddenSeed,
+            // Logic bridge: every ported NationCommand.resolve body runs live when no explicit
+            // NationActionResolverRegistry leaf is registered (closes silent no-op gap).
+            registry = registry,
+            startYear = startYear,
+            turnTerm = turnTerm,
+        )
 
         // The monthly pipeline is PER-RUN state: its PostUpdate hook writes through `handler.recorder` —
         // the SAME lone dirty source as the handler + nation processor (single-dirty-source, P2 Risk #4).

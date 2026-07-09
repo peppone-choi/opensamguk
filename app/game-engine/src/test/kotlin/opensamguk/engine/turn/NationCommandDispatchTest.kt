@@ -1,6 +1,7 @@
 package opensamguk.engine.turn
 
 import opensamguk.engine.config.DaemonLoopConfig
+import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.diplomacy.DiplomacyState
@@ -9,6 +10,7 @@ import opensamguk.logic.message.Mailbox
 import opensamguk.logic.message.Message
 import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.message.MessageType
+import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 import kotlin.test.AfterTest
 import kotlin.test.Test
@@ -33,6 +35,10 @@ class NationCommandDispatchTest {
             generals = listOf(
                 TurnGeneral(id = 10, name = "유비", nationId = 1, cityId = 5, troopId = 0,
                     stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0, officerLevel = 12, gold = 100, turnTime = t0),
+            ),
+            cities = listOf(
+                City(id = 5, name = "업", nationId = 1, level = 6),
+                City(id = 8, name = "허창", nationId = 2, level = 6),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0"), Nation(id = 2, name = "위", color = "#00f")),
             diplomacy = listOf(
@@ -248,6 +254,58 @@ class NationCommandDispatchTest {
         assertEquals(100 + 300, you.rice)
         assertEquals(12, me.meta["surlimit"])
         assertEquals(5, world.getGeneralById(10)!!.experience)
+    }
+
+    @Test
+    fun `logic bridge runs 몰수 without NationActionResolverRegistry entry`() {
+        // 몰수 is NOT in installNationActionResolvers — must still mutate via CommandRegistry bridge.
+        NationActionResolverRegistry.clear()
+        val world = world().also {
+            it.createGeneral(
+                TurnGeneral(
+                    id = 20, name = "장비", nationId = 1, cityId = 5, troopId = 0,
+                    stats = GeneralStats(70, 90, 40), experience = 0, dedication = 0,
+                    officerLevel = 1, gold = 5000, rice = 3000, turnTime = t0,
+                ),
+            )
+            it.applyNationDirtyFree(it.getNationById(1)!!.copy(gold = 1000, rice = 1000))
+        }
+        val recorder = ChangeRecorder()
+        val reg = CommandRegistry(GeneralActionPipeline())
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed", registry = reg, startYear = 200)
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand(
+                "che_몰수",
+                linkedMapOf("isGold" to true, "amount" to 1000, "destGeneralID" to 20),
+            ),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        assertEquals(4000, world.getGeneralById(20)!!.gold, "dest gold seized by 1000")
+        assertEquals(2000, world.getNationById(1)!!.gold, "nation treasury +1000")
+    }
+
+    @Test
+    fun `logic bridge runs 피장파장 exp ded without registry entry`() {
+        NationActionResolverRegistry.clear()
+        val world = world()
+        val recorder = ChangeRecorder()
+        val reg = CommandRegistry(GeneralActionPipeline())
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed", registry = reg, startYear = 200)
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("che_피장파장", linkedMapOf("commandType" to "che_급습")),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        // preReqTurn for 피장파장 = 1 → exp/ded = 5*(1+1)=10
+        assertEquals(10, world.getGeneralById(10)!!.experience)
+        assertEquals(10, world.getGeneralById(10)!!.dedication)
+        val dirty = world.consumeDirtyState()
+        assertTrue(dirty.logs.any { it.text.contains("피장파장") || it.text.contains("급습") })
     }
 
     @Test

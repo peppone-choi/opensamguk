@@ -28,7 +28,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *   commandType의 getNextAvailableTurn(대상 전략 재사용 대기) 비교는 nation_env delay KV 조회 →
  *   staging 대상; seam 미구현 시 `ctx.env["__targetStrategyAvailable"]`(Boolean)가 없으면 통과로 본다.
  *
- * TODO(포팅): run() — nation_env/dest nation_env에 commandType delay KV(delayCnt=60) write +
+ * Live path: ProcessNationCommand logic bridge runs resolve (exp/ded+log). Remaining backlog:
  *   dest-nation PLAIN/national-history + 피장파장 발동 로그.
  */
 fun chePijangPajang(pipeline: GeneralActionPipeline): ChePijangPajang = ChePijangPajang(pipeline)
