@@ -2,6 +2,7 @@ package opensamguk.logic.actions.nation
 
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.Diplomacy
+import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.message.Message
@@ -22,16 +23,16 @@ data class DiplomacyDelta(
 /**
  * The mutable per-command DRAFT + sinks for a NATION command resolve (T0.6 — the foundation the
  * diplomacy / nation-internal / event_*연구 leaf families consume). Faithful to the PHP NationCommand
- * `run()` surface: the actor [nation] (draft), the [destNation] (선전포고/수락 target), the diplomacy
- * matrix read ([diplomacyOf]), and the side-effect sinks (diplomacy deltas, the four ActionLogger
- * scopes — action / general-history / national-history / global-history + global-action — and the
- * Message sink).
+ * `run()` surface: the actor [nation] (draft), the actor [general] (exp/ded), the [destNation]
+ * (선전포고/수락 target), the diplomacy matrix read ([diplomacyOf]), and the side-effect sinks
+ * (diplomacy deltas, the four ActionLogger scopes — action / general-history / national-history /
+ * global-history + global-action — and the Message sink).
  *
- * The leaf `resolve()` MUTATES `nation`/`destNation` in place and BUFFERS its side effects; the engine
- * [opensamguk.engine.turn.ProcessNationCommand] diffs the drafts → recorder deltas, routes the
- * buffered logs to the ActionLogger scopes, the diplomacy deltas to `diffDiplomacy`, and the messages
- * to the mailbox channel — NEVER an inline write (the ONE daemon-write rule). The leaf returns its
- * result [LastTurn] via [setResultTurn] (`$commandObj->getResultTurn()`).
+ * The leaf `resolve()` MUTATES `nation`/`destNation`/`general` in place and BUFFERS its side effects;
+ * the engine [opensamguk.engine.turn.ProcessNationCommand] diffs the drafts → recorder deltas, routes
+ * the buffered logs to the ActionLogger scopes, the diplomacy deltas to `diffDiplomacy`, and the
+ * messages to the mailbox channel — NEVER an inline write (the ONE daemon-write rule). The leaf
+ * returns its result [LastTurn] via [setResultTurn] (`$commandObj->getResultTurn()`).
  *
  * Accept-flow leaves (불가침수락/등용수락 …) run on a [NoRng][opensamguk.common.rng.NoRng]-backed [rng]
  * (zero-draw invariant) — a stray draw throws.
@@ -53,6 +54,19 @@ class NationActionResolveContext(
     val args: Map<String, Any?> = emptyMap(),
     /** The dest nation draft (선전포고/수락/파기/종전 target); mutate in place. Null for nation-internal. */
     var destNation: Nation? = null,
+    /**
+     * Actor general draft (exp/ded/meta). Engine seeds from the live world; null only in pure
+     * foundation tests that never touch general state.
+     */
+    var general: General? = null,
+    /**
+     * Dest general draft (몰수 등). Engine seeds when args carry destGeneralID; null otherwise.
+     */
+    var destGeneral: General? = null,
+    /** Actor general display name for log tokens (engine supplies from TurnGeneral.name). */
+    val generalName: String = "",
+    /** Dest nation/general display name for log tokens. */
+    val destName: String = "",
     /** The diplomacy matrix snapshot keyed `(from, to)` (the resolver reads current state/term). */
     private val diplomacyMatrix: Map<Pair<Int, Int>, Diplomacy> = emptyMap(),
     private val lastTurn: LastTurn,

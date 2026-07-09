@@ -24,11 +24,17 @@ import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
+import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
+import opensamguk.logic.actions.nation.withNationAux
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.diplomacy.DiplomacyConst
 import opensamguk.logic.diplomacy.DiplomacyState
+import opensamguk.logic.domain.metaInt
+import opensamguk.logic.domestic.addDedication
+import opensamguk.logic.domestic.addExperience
+import opensamguk.logic.util.numberFormat
 import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
@@ -159,7 +165,7 @@ class DaemonLoopConfig {
         bettingRepository: opensamguk.infra.read.BettingRepository,
         inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
     ): TurnRunService {
-        installNationActionResolvers()
+        installNationActionResolvers(generalActionPipeline)
 
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
@@ -354,7 +360,11 @@ class DaemonLoopConfig {
         )
     }
 
-    private fun installNationActionResolvers() {
+    /**
+     * Live nation-pass resolvers. Logic-side `NationCommand.resolve(GeneralAction…)` is golden-path;
+     * the daemon only runs codes registered here via [ProcessNationCommand].
+     */
+    private fun installNationActionResolvers(pipeline: GeneralActionPipeline) {
         NationActionResolverRegistry.register("che_선전포고") { ctx ->
             val me = ctx.nation.id
             val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
@@ -362,6 +372,15 @@ class DaemonLoopConfig {
             if (destNation.id != you) return@register
 
             ctx.setDiplomacyBidirectional(me, you, DiplomacyState.DECLARATION, DiplomacyConst.DEFAULT_DECLARE_WAR_TERM)
+            val actorName = ctx.generalName.ifEmpty { ctx.nation.name }
+            val destName = ctx.destName.ifEmpty { destNation.name }
+            val josaEul = JosaUtil.pick(destName, "을", "를")
+            val josaI = JosaUtil.pick(actorName, "이", "가")
+            ctx.addActionLog("<D><b>$destName</b></>$josaEul 선전포고했습니다.")
+            ctx.addGlobalActionLog("<D><b>$actorName</b></>$josaI <D><b>$destName</b></>에 선전포고했습니다.")
+            ctx.addGlobalHistoryLog(
+                "<D><b>$actorName</b></>가 <D><b>$destName</b></>에게 ${ctx.year}년 ${ctx.month}월에 선전포고했습니다.",
+            )
         }
         NationActionResolverRegistry.register("che_불가침수락") { ctx ->
             val me = ctx.nation.id
@@ -383,6 +402,12 @@ class DaemonLoopConfig {
             val currentMonth = ctx.year * 12 + ctx.month - 1
             val reqMonth = year * 12 + month
             ctx.setDiplomacyBidirectional(me, you, DiplomacyState.NON_AGGRESSION, reqMonth - currentMonth)
+
+            val destName = ctx.destName.ifEmpty { destNation.name }
+            val josaWa = JosaUtil.pick(destName, "와")
+            ctx.addActionLog(
+                "<D><b>$destName</b></>$josaWa <C>$year</>년 <C>$month</>월까지 불가침에 성공했습니다.",
+            )
         }
         NationActionResolverRegistry.register("che_종전수락") { ctx ->
             val me = ctx.nation.id
@@ -400,29 +425,136 @@ class DaemonLoopConfig {
 
             ctx.setDiplomacyBidirectional(me, you, DiplomacyState.TRADE, 0)
         }
-        // 급습 — PHP che_급습.php:192-194 `term = term - 3` (state 불변). 이전에는 nation registry 미배선으로
-        // 라이브 데몬이 조용히 pass-through no-op 했다. exp/ded·broadcast 로그는 general 채널이 필요해 후속.
+
+        // 급습 — che_급습.php:157-194 (action log, exp/ded+5, strategic_cmd_limit, term-3).
+        // 타 장수 broadcast PLAIN 은 엔진 스코프(다른 ActionLogger) — actor 골든 broadcastLines=[].
         NationActionResolverRegistry.register("che_급습") { ctx ->
             val me = ctx.nation.id
             val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
             val destNation = ctx.destNation ?: return@register
             if (destNation.id != you) return@register
             val pre = ctx.diplomacyOf(me, you) ?: return@register
-            // PHP: state unchanged, term -= 3 (no floor clamp in SQL).
-            ctx.setDiplomacyBidirectional(me, you, pre.state, pre.term - 3)
-            // strategic_cmd_limit = onCalcStrategic(..., 9); 기본 국가 타입은 9 그대로 (che_급습.php:189-191).
+            val commandName = "급습"
+            val generalName = ctx.generalName.ifEmpty { "장수" }
+            val destName = ctx.destName.ifEmpty { destNation.name }
+            val josaUl = JosaUtil.pick(commandName, "을")
+            val josaYi = JosaUtil.pick(generalName, "이")
+
+            ctx.addActionLog("$commandName 발동! <1>${ctx.date}</>")
+            applyExpDed(ctx, pipeline, magnitude = 5.0)
             ctx.nation = ctx.nation.copy(meta = ctx.nation.meta + ("strategic_cmd_limit" to 9))
+            ctx.setDiplomacyBidirectional(me, you, pre.state, pre.term - 3)
+            ctx.addGeneralHistoryLog("<D><b>$destName</b></>에 <M>$commandName</>$josaUl 발동")
+            ctx.addNationalHistoryLog(
+                "<Y>$generalName</>$josaYi <D><b>$destName</b></>에 <M>$commandName</>$josaUl 발동",
+            )
+            ctx.addDestNationalHistoryLog(
+                "<D><b>${ctx.nation.name}</b></>의 <Y>$generalName</>$josaYi 아국에 <M>$commandName</>$josaUl 발동",
+            )
         }
-        // 이호경식 — PHP che_이호경식.php:187-190 `term = IF(state=0, 3, term+3)`, state→1.
+        // 이호경식 — che_이호경식.php:152-190.
         NationActionResolverRegistry.register("che_이호경식") { ctx ->
             val me = ctx.nation.id
             val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
             val destNation = ctx.destNation ?: return@register
             if (destNation.id != you) return@register
             val pre = ctx.diplomacyOf(me, you) ?: return@register
+            val commandName = "이호경식"
+            val generalName = ctx.generalName.ifEmpty { "장수" }
+            val destName = ctx.destName.ifEmpty { destNation.name }
+            val josaUl = JosaUtil.pick(commandName, "을")
+            val josaYi = JosaUtil.pick(generalName, "이")
+
+            ctx.addActionLog("$commandName 발동! <1>${ctx.date}</>")
+            applyExpDed(ctx, pipeline, magnitude = 5.0)
             val newTerm = if (pre.state == DiplomacyState.WAR) 3 else pre.term + 3
             ctx.setDiplomacyBidirectional(me, you, DiplomacyState.DECLARATION, newTerm)
             ctx.nation = ctx.nation.copy(meta = ctx.nation.meta + ("strategic_cmd_limit" to 9))
+            ctx.addGeneralHistoryLog("<D><b>$destName</b></>에 <M>$commandName</>$josaUl 발동")
+            ctx.addNationalHistoryLog(
+                "<Y>$generalName</>$josaYi <D><b>$destName</b></>에 <M>$commandName</>$josaUl 발동",
+            )
+            ctx.addDestNationalHistoryLog(
+                "<D><b>${ctx.nation.name}</b></>의 <Y>$generalName</>$josaYi 아국에 <M>$commandName</>$josaUl 발동",
+            )
         }
+
+        // 물자원조 — che_물자원조.php run (deterministic): clamp amounts, transfer, surlimit+12, exp/ded+5.
+        NationActionResolverRegistry.register("che_물자원조") { ctx ->
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+            @Suppress("UNCHECKED_CAST")
+            val amountList = (ctx.args["amountList"] as? List<*>)?.mapNotNull { (it as? Number)?.toInt() } ?: emptyList()
+            var goldAmount = amountList.getOrElse(0) { 0 }
+            var riceAmount = amountList.getOrElse(1) { 0 }
+            val nation = ctx.nation
+            goldAmount = goldAmount.coerceIn(0, (nation.gold - GameConst.basegold).coerceAtLeast(0))
+            riceAmount = riceAmount.coerceIn(0, (nation.rice - GameConst.baserice).coerceAtLeast(0))
+            val destName = ctx.destName.ifEmpty { destNation.name }
+            val josaRo = JosaUtil.pick(destName, "로")
+            val goldText = numberFormat(goldAmount)
+            val riceText = numberFormat(riceAmount)
+            ctx.addActionLog("<D><b>$destName</b></>$josaRo 금<C>$goldText</> 쌀<C>$riceText</>을 지원했습니다.")
+            ctx.addActionLog("<D><b>$destName</b></>$josaRo 물자를 지원합니다. <1>${ctx.date}</>")
+            val nextSurlimit = metaInt(nation.meta, "surlimit") + 12
+            ctx.nation = nation.copy(
+                gold = nation.gold - goldAmount,
+                rice = nation.rice - riceAmount,
+                meta = nation.meta + ("surlimit" to nextSurlimit),
+            )
+            ctx.destNation = destNation.copy(
+                gold = destNation.gold + goldAmount,
+                rice = destNation.rice + riceAmount,
+            )
+            applyExpDed(ctx, pipeline, magnitude = 5.0)
+        }
+
+        // event_*연구 family — gold/rice/aux unlock + exp/ded + action log (PHP deterministic run).
+        // costs/preReq mirror the logic leaf classes (event_*.php getCost / getPreReqTurn).
+        registerEventResearch(pipeline, "event_상병연구", "상병 연구", "can_상병사용", 100_000, 100_000, preReqTurn = 23)
+        registerEventResearch(pipeline, "event_극병연구", "극병 연구", "can_극병사용", 100_000, 100_000, preReqTurn = 23)
+        registerEventResearch(pipeline, "event_원융노병연구", "원융노병 연구", "can_원융노병사용", 100_000, 100_000, preReqTurn = 23)
+        registerEventResearch(pipeline, "event_화륜차연구", "화륜차 연구", "can_화륜차사용", 100_000, 100_000, preReqTurn = 23)
+        registerEventResearch(pipeline, "event_무희연구", "무희 연구", "can_무희사용", 100_000, 100_000, preReqTurn = 23)
+        registerEventResearch(pipeline, "event_산저병연구", "산저병 연구", "can_산저병사용", 50_000, 50_000, preReqTurn = 11)
+        registerEventResearch(pipeline, "event_화시병연구", "화시병 연구", "can_화시병사용", 50_000, 50_000, preReqTurn = 11)
+        registerEventResearch(pipeline, "event_음귀병연구", "음귀병 연구", "can_음귀병사용", 50_000, 50_000, preReqTurn = 11)
+        registerEventResearch(pipeline, "event_대검병연구", "대검병 연구", "can_대검병사용", 50_000, 50_000, preReqTurn = 11)
+    }
+
+    private fun registerEventResearch(
+        pipeline: GeneralActionPipeline,
+        code: String,
+        actionName: String,
+        auxKey: String,
+        reqGold: Int,
+        reqRice: Int,
+        preReqTurn: Int,
+    ) {
+        NationActionResolverRegistry.register(code) { ctx ->
+            val nation = ctx.nation
+            val mag = 5.0 * (preReqTurn + 1)
+            applyExpDed(ctx, pipeline, magnitude = mag)
+            ctx.nation = nation.copy(
+                gold = nation.gold - reqGold,
+                rice = nation.rice - reqRice,
+                meta = withNationAux(nation.meta, auxKey to 1),
+            )
+            ctx.addActionLog("<M>$actionName</> 완료")
+        }
+    }
+
+    private fun applyExpDed(
+        ctx: opensamguk.logic.actions.nation.NationActionResolveContext,
+        pipeline: GeneralActionPipeline,
+        magnitude: Double,
+    ) {
+        val general = ctx.general ?: return
+        val expRes = addExperience(general, magnitude, pipeline)
+        val dedRes = addDedication(expRes.general, magnitude, pipeline)
+        ctx.general = dedRes.general
+        expRes.plainLog?.let { ctx.addActionLog(it) }
+        dedRes.plainLog?.let { ctx.addActionLog(it) }
     }
 }

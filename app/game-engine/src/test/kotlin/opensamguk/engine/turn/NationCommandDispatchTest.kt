@@ -44,9 +44,12 @@ class NationCommandDispatchTest {
 
     private fun installDaemonResolvers() {
         NationActionResolverRegistry.clear()
-        val method = DaemonLoopConfig::class.java.getDeclaredMethod("installNationActionResolvers")
+        val method = DaemonLoopConfig::class.java.getDeclaredMethod(
+            "installNationActionResolvers",
+            opensamguk.logic.stats.GeneralActionPipeline::class.java,
+        )
         method.isAccessible = true
-        method.invoke(DaemonLoopConfig())
+        method.invoke(DaemonLoopConfig(), opensamguk.logic.stats.GeneralActionPipeline())
     }
 
     @Test
@@ -123,6 +126,9 @@ class NationCommandDispatchTest {
         assertNotNull(NationActionResolverRegistry.resolve("che_불가침파기수락"))
         assertNotNull(NationActionResolverRegistry.resolve("che_급습"))
         assertNotNull(NationActionResolverRegistry.resolve("che_이호경식"))
+        assertNotNull(NationActionResolverRegistry.resolve("che_물자원조"))
+        assertNotNull(NationActionResolverRegistry.resolve("event_상병연구"))
+        assertNotNull(NationActionResolverRegistry.resolve("event_대검병연구"))
     }
 
     @Test
@@ -188,6 +194,85 @@ class NationCommandDispatchTest {
             expectedState = DiplomacyState.DECLARATION,
             expectedTerm = 15,
         )
+    }
+
+    @Test
+    fun `급습 resolver also applies exp ded and action log through general channel`() {
+        installDaemonResolvers()
+        val world = world(diplomacyState = DiplomacyState.DECLARATION, diplomacyTerm = 15)
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("che_급습", linkedMapOf("destNationID" to 2)),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        // term-3
+        assertEquals(12, world.getDiplomacy(1, 2)!!.term)
+        // exp/ded +5 via general draft → world apply
+        val g = world.getGeneralById(10)!!
+        assertEquals(5, g.experience)
+        assertEquals(5, g.dedication)
+        // action log present
+        val dirty = world.consumeDirtyState()
+        assertTrue(dirty.logs.any { it.text.contains("급습 발동") })
+    }
+
+    @Test
+    fun `물자원조 resolver transfers gold rice and raises surlimit`() {
+        installDaemonResolvers()
+        val world = world(diplomacyState = DiplomacyState.TRADE, diplomacyTerm = 0).also {
+            // enrich nations with treasury
+            it.applyNationDirtyFree(it.getNationById(1)!!.copy(gold = 10_000, rice = 10_000))
+            it.applyNationDirtyFree(it.getNationById(2)!!.copy(gold = 100, rice = 100))
+        }
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand(
+                "che_물자원조",
+                linkedMapOf("destNationID" to 2, "amountList" to listOf(500, 300)),
+            ),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        val me = world.getNationById(1)!!
+        val you = world.getNationById(2)!!
+        assertEquals(10_000 - 500, me.gold)
+        assertEquals(10_000 - 300, me.rice)
+        assertEquals(100 + 500, you.gold)
+        assertEquals(100 + 300, you.rice)
+        assertEquals(12, me.meta["surlimit"])
+        assertEquals(5, world.getGeneralById(10)!!.experience)
+    }
+
+    @Test
+    fun `event 상병연구 resolver spends gold rice and sets aux unlock`() {
+        installDaemonResolvers()
+        val world = world().also {
+            it.applyNationDirtyFree(it.getNationById(1)!!.copy(gold = 200_000, rice = 200_000))
+        }
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand("event_상병연구", emptyMap()),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        val n = world.getNationById(1)!!
+        assertEquals(100_000, n.gold)
+        assertEquals(100_000, n.rice)
+        @Suppress("UNCHECKED_CAST")
+        val aux = n.meta["aux"] as? Map<String, Any?>
+        assertEquals(1, aux?.get("can_상병사용"))
+        // exp/ded = 5*(23+1)=120
+        assertEquals(120, world.getGeneralById(10)!!.experience)
     }
 
     private fun assertAcceptCommandDelta(

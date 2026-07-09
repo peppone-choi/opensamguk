@@ -1,19 +1,26 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadEntity
-import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.infra.entity.MessageEntity
 import opensamguk.infra.read.MessageRepository
 import opensamguk.logic.message.Mailbox
 import opensamguk.logic.message.MessageType
 import org.hamcrest.Matchers.nullValue
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -25,14 +32,38 @@ import java.util.Optional
  *
  * 검증: message body jsonb의 `{src, dest, text, option}`이 srcTarget/destTarget(MsgTarget) + text +
  * option으로 디코드되고, raw message 문자열도 보존되며, body 디코드 실패/누락 시 graceful(null).
+ * Identity is JWT principal → [GeneralResolver] (not first-playable fallback).
  */
 class MailboxControllerTest {
 
     private val messages = mock(MessageRepository::class.java)
-    private val generals = mock(GeneralReadRepository::class.java)
+    private val resolver = mock(GeneralResolver::class.java)
+
+    @AfterEach
+    fun clearAuth() = SecurityContextHolder.clearContext()
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(MailboxController(messages, generals)).build()
+        MockMvcBuilders.standaloneSetup(MailboxController(messages, resolver))
+            .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
+            .build()
+
+    private fun principal(userId: Long = 7L): RequestPostProcessor = RequestPostProcessor { req ->
+        SecurityContextHolder.getContext().authentication =
+            UsernamePasswordAuthenticationToken(userId, null, listOf(SimpleGrantedAuthority("ROLE_USER")))
+        req
+    }
+
+    private fun stubResolved(general: GeneralReadEntity) {
+        `when`(resolver.resolve(anyLong())).thenReturn(
+            GeneralResolver.ResolvedGeneral(
+                general = general,
+                officerLevel = general.officerLevel,
+                permission = GeneralResolver.derivePermission(general.officerLevel),
+                nationId = general.nationId,
+                nationLevel = 1,
+            ),
+        )
+    }
 
     private fun message(id: Int, mailbox: Int, body: String) = MessageEntity(
         mailbox = mailbox,
@@ -54,11 +85,11 @@ class MailboxControllerTest {
              "option":{"deletable":true,"receiverMessageID":99}}
         """.trimIndent()
         `when`(messages.findByMailboxOrderById(100)).thenReturn(listOf(message(1, 100, body)))
-        // mailbox() now applies diplomacy masking via currentGeneral() → secretPermission.
+        // mailbox() applies diplomacy masking via JWT → GeneralResolver → secretPermission.
         // officerLevel 12 → permission 4 (>=3) so masking is skipped; test target is decoding, not masking.
-        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 12)))
+        stubResolved(me(id = 1, officerLevel = 12))
 
-        mockMvc().perform(get("/api/mailbox/100"))
+        mockMvc().perform(get("/api/mailbox/100").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].id").value(1))
@@ -119,9 +150,9 @@ class MailboxControllerTest {
         )
         `when`(messages.findByMailboxOrderById(100)).thenReturn(rows)
         // officerLevel 1 → secretMin 0 → permission < 3.
-        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 1)))
+        stubResolved(me(id = 1, officerLevel = 1))
 
-        mockMvc().perform(get("/api/mailbox/100"))
+        mockMvc().perform(get("/api/mailbox/100").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].text").value("개인 서신 원문"))
             .andExpect(jsonPath("$[1].text").value("개인 서신 원문"))
@@ -132,9 +163,9 @@ class MailboxControllerTest {
     @Test
     fun `single message endpoint masks diplomacy for permission below 3`() {
         `when`(messages.findById(7)).thenReturn(Optional.of(msg(7, 100, MessageType.DIPLOMACY, diploBody)))
-        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 1)))
+        stubResolved(me(id = 1, officerLevel = 1))
 
-        mockMvc().perform(get("/api/messages/7"))
+        mockMvc().perform(get("/api/messages/7").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.text").value("(외교 메시지입니다)"))
             .andExpect(jsonPath("$.option.invalid").value(true))
@@ -144,9 +175,9 @@ class MailboxControllerTest {
     fun `single message endpoint keeps diplomacy verbatim for permission 3 plus`() {
         `when`(messages.findById(8)).thenReturn(Optional.of(msg(8, 100, MessageType.DIPLOMACY, diploBody)))
         // officerLevel 12 (군주) → permission 4.
-        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 12)))
+        stubResolved(me(id = 1, officerLevel = 12))
 
-        mockMvc().perform(get("/api/messages/8"))
+        mockMvc().perform(get("/api/messages/8").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.text").value("불가침 제의"))
     }
@@ -154,9 +185,9 @@ class MailboxControllerTest {
     @Test
     fun `single message endpoint keeps private verbatim even for permission below 3`() {
         `when`(messages.findById(9)).thenReturn(Optional.of(message(9, 100, privateBody)))
-        `when`(generals.findAll()).thenReturn(listOf(me(id = 1, officerLevel = 1)))
+        stubResolved(me(id = 1, officerLevel = 1))
 
-        mockMvc().perform(get("/api/messages/9"))
+        mockMvc().perform(get("/api/messages/9").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.text").value("개인 서신 원문"))
     }
@@ -204,7 +235,7 @@ class MailboxControllerTest {
         national: List<MessageEntity> = emptyList(),
         diplomacy: List<MessageEntity> = emptyList(),
     ) {
-        `when`(generals.findAll()).thenReturn(listOf(general))
+        stubResolved(general)
         val natBox = Mailbox.NATIONAL_BASE + general.nationId
         `when`(
             messages.findByMailboxAndTypeAndValidUntilAfterOrderByIdDesc(
@@ -232,7 +263,7 @@ class MailboxControllerTest {
             public = listOf(msg(4, Mailbox.PUBLIC, MessageType.PUBLIC, """{"text":"공개","src":{"id":1}}""")),
         )
 
-        mockMvc().perform(get("/api/mailbox/recent"))
+        mockMvc().perform(get("/api/mailbox/recent").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.nationID").value(1))
@@ -268,7 +299,7 @@ class MailboxControllerTest {
 
         // sequence=4: 커서 id>=4 → 9,7,5 (id 3 제외). minSequence=4라 보존행(9,7,5) 중 id<=4가 없어
         // array_pop 트림이 발동하지 않는다(트림은 다음 테스트에서 단독 검증). PHP: id>=fromSeq + id<=minSeq.
-        mockMvc().perform(get("/api/mailbox/recent").param("sequence", "4"))
+        mockMvc().perform(get("/api/mailbox/recent").param("sequence", "4").with(principal()))
             .andExpect(status().isOk)
             // id>=4 만: 9,7,5 (3건); id 3 제외
             .andExpect(jsonPath("$.private.length()").value(3))
@@ -293,7 +324,7 @@ class MailboxControllerTest {
             ),
         )
 
-        mockMvc().perform(get("/api/mailbox/recent").param("sequence", "8"))
+        mockMvc().perform(get("/api/mailbox/recent").param("sequence", "8").with(principal()))
             .andExpect(status().isOk)
             // private의 유일 항목(id 8 == minSequence 8)이 array_pop으로 제거됨
             .andExpect(jsonPath("$.private.length()").value(0))
@@ -317,7 +348,7 @@ class MailboxControllerTest {
             ),
         )
 
-        mockMvc().perform(get("/api/mailbox/recent"))
+        mockMvc().perform(get("/api/mailbox/recent").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.diplomacy[0].text").value("(외교 메시지입니다)"))
             .andExpect(jsonPath("$.diplomacy[0].option.invalid").value(true))
@@ -338,7 +369,7 @@ class MailboxControllerTest {
             ),
         )
 
-        mockMvc().perform(get("/api/mailbox/recent"))
+        mockMvc().perform(get("/api/mailbox/recent").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.diplomacy[0].text").value("열람가능"))
     }
@@ -357,8 +388,17 @@ class MailboxControllerTest {
             ),
         )
 
-        mockMvc().perform(get("/api/mailbox/recent"))
+        mockMvc().perform(get("/api/mailbox/recent").with(principal()))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.diplomacy[0].text").value("전체공지"))
+    }
+
+    @Test
+    fun `recent without principal returns empty envelope (no first-playable fallback)`() {
+        mockMvc().perform(get("/api/mailbox/recent"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.generalName").value(""))
+            .andExpect(jsonPath("$.nationID").value(0))
     }
 }

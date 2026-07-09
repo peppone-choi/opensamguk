@@ -7,8 +7,8 @@ import opensamguk.gameapi.dto.MsgTarget
 import opensamguk.gameapi.dto.MsgTargetMap
 import opensamguk.gameapi.dto.OldMessageResponse
 import opensamguk.gameapi.dto.RecentMessageResponse
+import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadEntity
-import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.infra.entity.MessageEntity
 import opensamguk.infra.read.MessageRepository
 import opensamguk.logic.message.Mailbox
@@ -16,6 +16,7 @@ import opensamguk.logic.message.MessageType
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonEncode
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -35,20 +36,24 @@ import java.time.format.DateTimeFormatter
  * D7 GetRecentMessage — `/api/mailbox/recent` (신규). 4섹션 봉투 + valid_until 필터 + diplomacy 마스킹.
  * D8 GetOldMessage — `/api/mailbox/old` (봉투 재구성). `to(id<to)+type` 페이징 + valid_until 필터.
  *
+ * Identity: JWT principal → [GeneralResolver] (general_owner / general.user_id). Never falls back to
+ * "first playable general" — that leaked other players' mailboxes when unauthenticated or mis-bound.
+ *
  * read-only(§7).
  */
 @RestController
 @RequestMapping("/api")
 class MailboxController(
     private val messageRepository: MessageRepository,
-    private val generals: GeneralReadRepository,
+    private val generalResolver: GeneralResolver,
 ) {
 
     @GetMapping("/mailbox/{mailbox}")
     fun mailbox(
         @PathVariable mailbox: Int,
+        @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<List<MessageResponse>> {
-        val me = currentGeneral()
+        val me = currentGeneral(userId)
         val permission = if (me != null) secretPermission(me) else -1
         val messages = messageRepository.findByMailboxOrderById(mailbox)
             .map { applyDiplomacyMask(it, permission).toResponse() }
@@ -58,9 +63,10 @@ class MailboxController(
     @GetMapping("/mailbox/{mailbox}/unread")
     fun unread(
         @PathVariable mailbox: Int,
+        @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<List<MessageResponse>> {
         val now = Instant.now()
-        val me = currentGeneral()
+        val me = currentGeneral(userId)
         val permission = if (me != null) secretPermission(me) else -1
         val messages = messageRepository.findByMailboxAndValidUntilAfter(mailbox, now)
             .map { applyDiplomacyMask(it, permission).toResponse() }
@@ -68,12 +74,15 @@ class MailboxController(
     }
 
     @GetMapping("/messages/{id}")
-    fun message(@PathVariable id: Int): ResponseEntity<MessageResponse> {
+    fun message(
+        @PathVariable id: Int,
+        @AuthenticationPrincipal userId: Long?,
+    ): ResponseEntity<MessageResponse> {
         val msg = messageRepository.findById(id)
             .orElse(null) ?: return ResponseEntity.notFound().build()
         // 단건 열람도 목록과 동일한 diplomacy 마스킹 — 비외교권자(permission<3)가 단건 GET으로
         // 외교 서신 원문을 우회 열람하던 누출(P0-34 잔여) 차단.
-        val me = currentGeneral()
+        val me = currentGeneral(userId)
         val permission = if (me != null) secretPermission(me) else -1
         return ResponseEntity.ok(applyDiplomacyMask(msg, permission).toResponse())
     }
@@ -98,8 +107,9 @@ class MailboxController(
     @GetMapping("/mailbox/recent")
     fun recent(
         @RequestParam(name = "sequence", defaultValue = "0") sequence: Int,
+        @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<RecentMessageResponse> {
-        val me = currentGeneral() ?: return ResponseEntity.ok(
+        val me = currentGeneral(userId) ?: return ResponseEntity.ok(
             RecentMessageResponse(
                 result = false,
                 private = emptyList(),
@@ -183,8 +193,9 @@ class MailboxController(
     fun old(
         @RequestParam(name = "to") to: Int,
         @RequestParam(name = "type") typeStr: String,
+        @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<OldMessageResponse> {
-        val me = currentGeneral() ?: return ResponseEntity.ok(
+        val me = currentGeneral(userId) ?: return ResponseEntity.ok(
             OldMessageResponse(
                 private = emptyList(),
                 public = emptyList(),
@@ -273,10 +284,13 @@ class MailboxController(
     // Helpers
     // ------------------------------------------------------------------
 
-    /** 현재 로그인한 장수 조회. game-api는 세션 기반 — 여기서는 첫 번째 playable 장수로 폴백. */
-    private fun currentGeneral(): GeneralReadEntity? {
-        // TODO: 세션 기반 userID → general 매핑 (현재는 첫 번째 playable 장수로 폴백)
-        return generals.findAll().firstOrNull { it.npcState < 2 }
+    /**
+     * JWT principal → owned general via [GeneralResolver] (general_owner, then general.user_id).
+     * Null when anonymous or no character — never "first playable" (cross-user mailbox leak).
+     */
+    private fun currentGeneral(userId: Long?): GeneralReadEntity? {
+        if (userId == null) return null
+        return generalResolver.resolve(userId)?.general
     }
 
     /** D6/D7/D8 공용 — PHP `checkSecretPermission` (func.php:390-434) 포팅. */

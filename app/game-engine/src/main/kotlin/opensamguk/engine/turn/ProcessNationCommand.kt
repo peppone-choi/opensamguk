@@ -8,6 +8,8 @@ import opensamguk.logic.actions.nation.NationActionResolver
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.util.phpRound
+import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicGeneral
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
 
 /**
@@ -152,9 +154,18 @@ class ProcessNationCommand(
         val nationId = general.nationId
         val preNation = world.getNationById(nationId)?.let { toLogicNation(it) }
             ?: error("ProcessNationCommand: nation $nationId not in world")
+        val preGeneral = toLogicGeneral(general)
         // dest nation (선전포고/수락/파기/종전 target) — derived from the parsed args' destNationID if present.
         val destNationId = (nationCommand.args["destNationID"] as? Number)?.toInt()
         val preDestNation = destNationId?.let { world.getNationById(it)?.let { n -> toLogicNation(n) } }
+        // dest general (몰수 등) — destGeneralID when present.
+        val destGeneralId = (nationCommand.args["destGeneralID"] as? Number)?.toInt()
+        val preDestGeneral = destGeneralId?.let { world.getGeneralById(it)?.let { g -> toLogicGeneral(g) } }
+        val destDisplayName = when {
+            preDestNation != null -> preDestNation.name
+            preDestGeneral != null -> world.getGeneralById(preDestGeneral.id)?.name.orEmpty()
+            else -> ""
+        }
 
         // snapshot the diplomacy matrix the resolver reads.
         val matrix = LinkedHashMap<Pair<Int, Int>, opensamguk.logic.domain.Diplomacy>()
@@ -172,11 +183,27 @@ class ProcessNationCommand(
             date = date,
             args = nationCommand.args,
             destNation = preDestNation,
+            general = preGeneral,
+            destGeneral = preDestGeneral,
+            generalName = general.name,
+            destName = destDisplayName,
             diplomacyMatrix = matrix,
             lastTurn = lastTurn,
         )
 
         resolver.resolve(ctx)
+
+        // --- route the actor general draft → recorder diffs (exp/ded/meta) ---
+        val postGeneral = ctx.general
+        if (postGeneral != null && postGeneral != preGeneral) {
+            recorder.diffGeneral(preGeneral, postGeneral)
+            world.getGeneralById(general.id)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, postGeneral)) }
+        }
+        val postDestGeneral = ctx.destGeneral
+        if (destGeneralId != null && preDestGeneral != null && postDestGeneral != null && postDestGeneral != preDestGeneral) {
+            recorder.diffGeneral(preDestGeneral, postDestGeneral)
+            world.getGeneralById(destGeneralId)?.let { world.applyGeneralDirtyFree(applyLogicToGeneral(it, postDestGeneral)) }
+        }
 
         // --- route the actor + dest nation drafts → recorder diffs (single dirty source) ---
         if (ctx.nation != preNation) {
@@ -285,6 +312,20 @@ class ProcessNationCommand(
             rice = logic.rice,
             level = logic.level,
             typeCode = logic.typeCode,
+            meta = logic.meta,
+        )
+
+    /**
+     * Apply logic General exp/ded/gold/rice/meta back onto the engine row (same rounding as
+     * [ReservedTurnHandler] general-pass applyGeneralPatch — phpRound half-away).
+     */
+    private fun applyLogicToGeneral(engine: TurnGeneral, logic: opensamguk.logic.domain.General): TurnGeneral =
+        engine.copy(
+            experience = phpRound(logic.experience),
+            dedication = phpRound(logic.dedication),
+            gold = logic.gold,
+            rice = logic.rice,
+            officerLevel = logic.officerLevel,
             meta = logic.meta,
         )
 
