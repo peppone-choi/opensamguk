@@ -25,7 +25,10 @@ import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.diplomacy.DiplomacyConst
+import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
@@ -156,6 +159,8 @@ class DaemonLoopConfig {
         bettingRepository: opensamguk.infra.read.BettingRepository,
         inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
     ): TurnRunService {
+        installNationActionResolvers()
+
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: state.currentYear
@@ -347,5 +352,77 @@ class DaemonLoopConfig {
             bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
         )
+    }
+
+    private fun installNationActionResolvers() {
+        NationActionResolverRegistry.register("che_선전포고") { ctx ->
+            val me = ctx.nation.id
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+
+            ctx.setDiplomacyBidirectional(me, you, DiplomacyState.DECLARATION, DiplomacyConst.DEFAULT_DECLARE_WAR_TERM)
+        }
+        NationActionResolverRegistry.register("che_불가침수락") { ctx ->
+            val me = ctx.nation.id
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+            val year = (ctx.args["year"] as? Number)?.toInt() ?: return@register
+            val month = (ctx.args["month"] as? Number)?.toInt() ?: return@register
+
+            val recvAssist = destNation.meta["recv_assist"] as? Map<*, *> ?: emptyMap<Any?, Any?>()
+            val respAssist = LinkedHashMap<String, Any?>()
+            (destNation.meta["resp_assist"] as? Map<*, *>)?.forEach { (key, value) ->
+                if (key is String) respAssist[key] = value
+            }
+            val recvForMe = recvAssist["n$me"] as? List<*>
+            respAssist["n$me"] = listOf(me, recvForMe?.getOrNull(1) ?: 0)
+            ctx.recordKv("nation_env", you.toString(), "resp_assist", respAssist)
+
+            val currentMonth = ctx.year * 12 + ctx.month - 1
+            val reqMonth = year * 12 + month
+            ctx.setDiplomacyBidirectional(me, you, DiplomacyState.NON_AGGRESSION, reqMonth - currentMonth)
+        }
+        NationActionResolverRegistry.register("che_종전수락") { ctx ->
+            val me = ctx.nation.id
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+
+            ctx.setDiplomacyBidirectional(me, you, DiplomacyState.TRADE, 0)
+        }
+        NationActionResolverRegistry.register("che_불가침파기수락") { ctx ->
+            val me = ctx.nation.id
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+
+            ctx.setDiplomacyBidirectional(me, you, DiplomacyState.TRADE, 0)
+        }
+        // 급습 — PHP che_급습.php:192-194 `term = term - 3` (state 불변). 이전에는 nation registry 미배선으로
+        // 라이브 데몬이 조용히 pass-through no-op 했다. exp/ded·broadcast 로그는 general 채널이 필요해 후속.
+        NationActionResolverRegistry.register("che_급습") { ctx ->
+            val me = ctx.nation.id
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+            val pre = ctx.diplomacyOf(me, you) ?: return@register
+            // PHP: state unchanged, term -= 3 (no floor clamp in SQL).
+            ctx.setDiplomacyBidirectional(me, you, pre.state, pre.term - 3)
+            // strategic_cmd_limit = onCalcStrategic(..., 9); 기본 국가 타입은 9 그대로 (che_급습.php:189-191).
+            ctx.nation = ctx.nation.copy(meta = ctx.nation.meta + ("strategic_cmd_limit" to 9))
+        }
+        // 이호경식 — PHP che_이호경식.php:187-190 `term = IF(state=0, 3, term+3)`, state→1.
+        NationActionResolverRegistry.register("che_이호경식") { ctx ->
+            val me = ctx.nation.id
+            val you = (ctx.args["destNationID"] as? Number)?.toInt() ?: return@register
+            val destNation = ctx.destNation ?: return@register
+            if (destNation.id != you) return@register
+            val pre = ctx.diplomacyOf(me, you) ?: return@register
+            val newTerm = if (pre.state == DiplomacyState.WAR) 3 else pre.term + 3
+            ctx.setDiplomacyBidirectional(me, you, DiplomacyState.DECLARATION, newTerm)
+            ctx.nation = ctx.nation.copy(meta = ctx.nation.meta + ("strategic_cmd_limit" to 9))
+        }
     }
 }

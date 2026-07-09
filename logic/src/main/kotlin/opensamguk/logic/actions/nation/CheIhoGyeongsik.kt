@@ -89,8 +89,9 @@ class CheIhoGyeongsik(private val pipeline: GeneralActionPipeline) : NationComma
         }
 
         // 5) diplomacy state→1 + term = IF(state=0, 3, term+3) (양방향) (che_이호경식.php:187-190).
-        //    선포(1)/전쟁중(0) 상대에 한해 발동(AllowDiplomacyBetweenStatus([0,1])). cascadeDiplomacy는
-        //    additive term +3 델타를 state=DECLARATION으로 인코딩 — engine 행 단위 IF(state=0,3,…) 적용은 CheGeupseup(-3)과 동일.
+        //    선포(1)/전쟁중(0) 상대에 한해 발동(AllowDiplomacyBetweenStatus([0,1])). cascade 인코딩:
+        //    state=DECLARATION + term=3 → 엔진 DiplomacyCascadeTerm.apply 가 pre-row 기준 IF 전개.
+        //    절대 term=3 덮어쓰기 금지(선언 12개월 → 15가 되어야 함).
         //    SetNationFront 양국(che_이호경식.php:192-193)은 엔진-스코프 부수효과.
         val me = nation?.id ?: return
         d.cascadeDiplomacy.add(Diplomacy(me = me, you = destNationID, state = DiplomacyState.DECLARATION, term = 3))

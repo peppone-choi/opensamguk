@@ -19,6 +19,7 @@ import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.evaluateConstraints
+import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.tick.ServerClock
@@ -340,9 +341,18 @@ class ReservedTurnHandler(
         // 누적한다. 일반 패스도 이 cascade를 ChangeRecorder 단일 dirty 소스를 통해 적용해야 행이 실제 전환된다
         // (ProcessNationCommand.dispatchRegistered의 diplomacyDeltas 적용 패턴과 동일). state/term/dead만
         // 전환되는 UPSERT이며, 사전 행이 없으면(현재 슬라이스 범위 밖) 건너뛴다.
+        //
+        // term encoding: 급습(term<0 relative) / 이호경식(IF state=0 → 3 else term+3) 은 absolute 가 아니다.
+        // [DiplomacyCascadeTerm.apply] 가 pre-row 기준으로 PHP UPDATE 결과를 전개한다.
         for (delta in draft.cascadeDiplomacy) {
             val pre = world.getDiplomacy(delta.me, delta.you) ?: continue
-            world.updateDiplomacy(delta.me, delta.you, delta.state, delta.term)
+            val applied = DiplomacyCascadeTerm.apply(
+                preState = pre.state,
+                preTerm = pre.term,
+                deltaState = delta.state,
+                deltaTerm = delta.term,
+            )
+            world.updateDiplomacy(delta.me, delta.you, applied.state, applied.term)
             val post = world.getDiplomacy(delta.me, delta.you) ?: continue
             recorder.diffDiplomacy(pre, post)
         }

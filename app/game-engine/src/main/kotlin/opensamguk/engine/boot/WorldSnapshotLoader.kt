@@ -157,8 +157,9 @@ class WorldSnapshotLoader(
     }
 
     private fun loadGenerals(state: TurnWorldState): List<TurnGeneral> {
-        val turnterm = (state.meta["turnterm"] as? Number)?.toInt() ?: (state.tickSeconds / 60)
-        val npcmode = (state.meta["npcmode"] as? Number)?.toInt() ?: 0
+        // killturn 누락 legacy 행 보정용 시작 연/월 — 시드 시점(startYear, 월1) 기준.
+        val seedStartYear = (state.meta["startYear"] as? Number)?.toInt() ?: state.currentYear
+        val seedStartMonth = 1
         return jdbc.query(
         """
         SELECT id, name, nation_id, city_id, troop_id, npc_state,
@@ -198,8 +199,8 @@ class WorldSnapshotLoader(
                 meta = ScenarioLifecycleMeta.ensureGeneralMeta(
                     MetaJson.decode(rs.getString("meta")),
                     deadYear = rs.getInt("dead_year"),
-                    turnterm = turnterm,
-                    npcmode = npcmode,
+                    startYear = seedStartYear,
+                    startMonth = seedStartMonth,
                 ),
             )
         }

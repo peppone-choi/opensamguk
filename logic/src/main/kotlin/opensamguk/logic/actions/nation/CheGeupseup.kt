@@ -25,7 +25,8 @@ import opensamguk.logic.stats.GeneralActionPipeline
  * fullConditionConstraints(che_급습.php:77-86), PHP ORDER(first-deny-wins):
  *   [OccupiedCity, BeChief, ExistsDestNation, AllowDiplomacyWithTerm(1, 12, …), AvailableStrategicCommand].
  *
- * TODO(포팅): run() — diplomacy term -3 적용 + dest-nation PLAIN/national-history 로그.
+ * diplomacy term -3 은 cascade 인코딩(term=-3 relative) → 엔진 [DiplomacyCascadeTerm] 전개.
+ * dest-nation PLAIN/national-history broadcast 는 엔진 스코프(다른 ActionLogger) — golden broadcastLines=[].
  */
 fun cheGeupseup(pipeline: GeneralActionPipeline): CheGeupseup = CheGeupseup(pipeline)
 
@@ -86,6 +87,8 @@ class CheGeupseup(private val pipeline: GeneralActionPipeline) : NationCommand()
         }
 
         // 5) diplomacy term -= 3 (양방향) (che_급습.php:192-194). state 변동 없음.
+        //    cascade 인코딩: term=-3 (relative). ReservedTurnHandler → DiplomacyCascadeTerm.apply 가
+        //    pre.term + (-3) 으로 전개. 절대값 -3 으로 덮어쓰면 안 된다(과거 버그).
         val me = nation?.id ?: return
         d.cascadeDiplomacy.add(Diplomacy(me = me, you = destNationID, state = DIPLO_STATE_DECLARE, term = -3))
         d.cascadeDiplomacy.add(Diplomacy(me = destNationID, you = me, state = DIPLO_STATE_DECLARE, term = -3))

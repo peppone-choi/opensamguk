@@ -1,7 +1,9 @@
 package opensamguk.engine.turn
 
+import opensamguk.engine.config.DaemonLoopConfig
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.message.Mailbox
 import opensamguk.logic.message.Message
@@ -11,6 +13,7 @@ import java.time.Instant
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -24,7 +27,7 @@ class NationCommandDispatchTest {
 
     @AfterTest fun reset() = NationActionResolverRegistry.clear()
 
-    private fun world(): InMemoryTurnWorld = InMemoryTurnWorld(
+    private fun world(diplomacyState: Int = DiplomacyState.TRADE, diplomacyTerm: Int = 0): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
             generals = listOf(
@@ -32,9 +35,19 @@ class NationCommandDispatchTest {
                     stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0, officerLevel = 12, gold = 100, turnTime = t0),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0"), Nation(id = 2, name = "위", color = "#00f")),
-            diplomacy = listOf(TurnDiplomacy(1, 2, state = 2, term = 0), TurnDiplomacy(2, 1, state = 2, term = 0)),
+            diplomacy = listOf(
+                TurnDiplomacy(1, 2, state = diplomacyState, term = diplomacyTerm),
+                TurnDiplomacy(2, 1, state = diplomacyState, term = diplomacyTerm),
+            ),
         ),
     )
+
+    private fun installDaemonResolvers() {
+        NationActionResolverRegistry.clear()
+        val method = DaemonLoopConfig::class.java.getDeclaredMethod("installNationActionResolvers")
+        method.isAccessible = true
+        method.invoke(DaemonLoopConfig())
+    }
 
     @Test
     fun `a registered diplomacy resolver routes the bidirectional delta + logs + message + kv through the recorder`() {
@@ -98,5 +111,118 @@ class NationCommandDispatchTest {
         // only the turn_last KV nation-meta diff is recorded (the legacy seam), no diplomacy/message.
         assertTrue(recorder.diplomacyUpdateDirty().isEmpty())
         assertTrue(recorder.createdMessages().isEmpty())
+    }
+
+    @Test
+    fun `DaemonLoopConfig installs diplomacy accept resolvers into the nation registry`() {
+        installDaemonResolvers()
+
+        assertNotNull(NationActionResolverRegistry.resolve("che_선전포고"))
+        assertNotNull(NationActionResolverRegistry.resolve("che_불가침수락"))
+        assertNotNull(NationActionResolverRegistry.resolve("che_종전수락"))
+        assertNotNull(NationActionResolverRegistry.resolve("che_불가침파기수락"))
+        assertNotNull(NationActionResolverRegistry.resolve("che_급습"))
+        assertNotNull(NationActionResolverRegistry.resolve("che_이호경식"))
+    }
+
+    @Test
+    fun `installed diplomacy accept resolvers produce real ProcessNationCommand diplomacy deltas`() {
+        installDaemonResolvers()
+
+        assertAcceptCommandDelta(
+            actionCode = "che_불가침수락",
+            startState = DiplomacyState.TRADE,
+            args = linkedMapOf("destNationID" to 2, "destGeneralID" to 20, "year" to 201, "month" to 3),
+            expectedState = DiplomacyState.NON_AGGRESSION,
+            expectedTerm = 13,
+            assertKv = true,
+        )
+        assertAcceptCommandDelta(
+            actionCode = "che_종전수락",
+            startState = DiplomacyState.WAR,
+            args = linkedMapOf("destNationID" to 2, "destGeneralID" to 20),
+            expectedState = DiplomacyState.TRADE,
+            expectedTerm = 0,
+        )
+        assertAcceptCommandDelta(
+            actionCode = "che_불가침파기수락",
+            startState = DiplomacyState.NON_AGGRESSION,
+            args = linkedMapOf("destNationID" to 2, "destGeneralID" to 20),
+            expectedState = DiplomacyState.TRADE,
+            expectedTerm = 0,
+        )
+    }
+
+    @Test
+    fun `installed 급습 resolver subtracts 3 from current diplomacy term (PHP term-3)`() {
+        installDaemonResolvers()
+        // pre declaration term=15 → after 12 (che_급습.php:192-194)
+        assertAcceptCommandDelta(
+            actionCode = "che_급습",
+            startState = DiplomacyState.DECLARATION,
+            startTerm = 15,
+            args = linkedMapOf("destNationID" to 2),
+            expectedState = DiplomacyState.DECLARATION,
+            expectedTerm = 12,
+        )
+    }
+
+    @Test
+    fun `installed 이호경식 resolver applies IF state0 then 3 else term plus 3`() {
+        installDaemonResolvers()
+        // war → declaration term=3
+        assertAcceptCommandDelta(
+            actionCode = "che_이호경식",
+            startState = DiplomacyState.WAR,
+            startTerm = 6,
+            args = linkedMapOf("destNationID" to 2),
+            expectedState = DiplomacyState.DECLARATION,
+            expectedTerm = 3,
+        )
+        // declaration term=12 → 15
+        assertAcceptCommandDelta(
+            actionCode = "che_이호경식",
+            startState = DiplomacyState.DECLARATION,
+            startTerm = 12,
+            args = linkedMapOf("destNationID" to 2),
+            expectedState = DiplomacyState.DECLARATION,
+            expectedTerm = 15,
+        )
+    }
+
+    private fun assertAcceptCommandDelta(
+        actionCode: String,
+        startState: Int,
+        args: LinkedHashMap<String, Any?>,
+        expectedState: Int,
+        expectedTerm: Int,
+        assertKv: Boolean = false,
+        startTerm: Int = 9,
+    ) {
+        val world = world(diplomacyState = startState, diplomacyTerm = startTerm)
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed")
+
+        proc.process(
+            generalId = 10, officerLevel = 12,
+            nationCommand = ChosenCommand(actionCode, args),
+            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+        )
+
+        val dip = recorder.diplomacyUpdateDirty()
+        assertEquals(2, dip.size, "$actionCode must record both directional diplomacy rows")
+        assertEquals(listOf(1 to 2, 2 to 1), dip.map { it.fromNationId to it.toNationId })
+        assertTrue(dip.all { it.state == expectedState && it.term == expectedTerm },
+            "$actionCode expected state=$expectedState term=$expectedTerm, got ${dip.map { it.state to it.term }}")
+        assertEquals(expectedState, world.getDiplomacy(1, 2)!!.state)
+        assertEquals(expectedTerm, world.getDiplomacy(2, 1)!!.term)
+
+        if (assertKv) {
+            val kv = recorder.kvDirty().entries.single { it.key.table == "nation_env" && it.key.key == "resp_assist" }
+            assertEquals("2", kv.key.namespace)
+            @Suppress("UNCHECKED_CAST")
+            val respAssist = kv.value as Map<String, Any?>
+            assertEquals(listOf(1, 0), respAssist["n1"])
+        }
     }
 }
