@@ -388,25 +388,29 @@ export interface HallRecord {
   turn: number;
 }
 
-// GET /api/rankings/traffic → F3 zero-fill summary, history [] (OQ-2, no online-tracking infra).
 export interface TrafficStat {
+  year: number;
+  month: number;
   date: string;
-  uniqueVisitors: number;
-  pageViews: number;
-  avgSessionMin: number;
-  peakConcurrent: number;
+  refresh: number;
+  online: number;
+}
+
+export interface TrafficUser {
+  name: string;
+  refresh: number;
+  refreshScoreTotal: number;
 }
 
 export interface TrafficSummary {
-  todayUnique: number;
-  todayViews: number;
-  weekUnique: number;
-  weekViews: number;
-  monthUnique: number;
-  monthViews: number;
-  peakConcurrent: number;
+  refresh: number;
+  maxRefresh: number;
   currentOnline: number;
+  maxOnline: number;
   history: TrafficStat[];
+  totalRefresh: number;
+  totalRefreshScore: number;
+  topRefreshers: TrafficUser[];
 }
 
 // GET /api/rankings/emperor → F3 default [] (no unification-history table, OQ-1).
@@ -527,7 +531,7 @@ export interface PublicGeneral {
   injury: number;               // 부상률(0~100) — >0이면 통/무/지 감산·적색
   lbonus: number;               // 통솔보너스(calcLeadershipBonus) — >0이면 통솔에 "+{lbonus}"(cyan)
   killturn: number | null;      // 삭턴(meta.killturn) — 미기재 시 null
-  // 벌점(refresh_score_total)은 §2 BLOCKED(general_access_log 부재) — 필드 자체 미노출.
+  refreshScoreTotal: number;
 }
 
 // GET /api/my-generals 의 실제 응답(백엔드 MyGeneralsResponse). b_myGenInfo(세력장수, fid 25) 쌍.
@@ -560,7 +564,13 @@ export interface MyGeneralSummary {
   belong: number;               // 사관(belong)
   injury: number;               // 부상률
   lbonus: number;               // 통솔보너스
-  // 벌점(refresh_score_total)은 §2 BLOCKED(general_access_log 부재) — 필드 자체 미노출.
+  dedication: number;
+  experience: number;
+  personal: string | null;
+  special: string | null;
+  special2: string | null;
+  ownerName: string | null;
+  refreshScoreTotal: number;
 }
 
 export interface MyGeneralsResponse {
@@ -599,6 +609,15 @@ export interface MyNationDetailResponse {
   cities: MyNationCityRef[]; // 속령일람(수도 cyan)
   taxRate: number | null; // 세율 % — §2 BLOCKED(meta UNVERIFIED) → null
   bill: number | null;    // 지급률 % — §2 BLOCKED(meta UNVERIFIED) → null
+  goldIncome: number | null;
+  warIncome: number | null;
+  riceIncome: number | null;
+  farmIncome: number | null;
+  outcome: number | null;
+  goldBudget: number | null;
+  goldBudgetDiff: number | null;
+  riceBudget: number | null;
+  riceBudgetDiff: number | null;
   // income 6종(세금/단기/세곡/둔전/수입금·미/지출/예산/금미차) · 국가열전 = §2 BLOCKED → 미노출, FE "-".
 }
 
@@ -638,7 +657,9 @@ export interface MyCitySummary {
   secretaryName: string | null;  // 종사
   secretaryNpc: number;
   generals: MyCityGeneralName[];  // 도시 소재 장수(없으면 [] → "-")
-  // 자금/군량/둔전 수입 3종 = §2 BLOCKED(income 파이프라인 미조립) → 미노출, FE "-".
+  goldIncome: number | null;
+  riceIncome: number | null;
+  farmIncome: number | null;
 }
 
 export interface MyCitiesResponse {
@@ -648,56 +669,58 @@ export interface MyCitiesResponse {
 }
 
 // ── page 12/13/11-bracket · 토너먼트 (GET /api/tournament) ────────────────────
-// state 0-8 (phase), tnmt_type 전력전/통솔전/일기토/설전, 8 group standings, 16강
-// bracket, 4 ranking types. EMPTY/zeroed when no tournament is active in 1010.
 export type TournamentTypeText = '전력전' | '통솔전' | '일기토' | '설전';
+export type TournamentGroupStage = 'MAIN' | 'PRELIMINARY';
 
 export interface TournamentEntrant {
-  generalId: number;
-  generalName: string;
-  nationName: string;
-  nationColor: string;
-  win: number;
-  draw: number;
-  lose: number;
-  group: number;           // 0-7 (예선 8개 조)
-  groupRank: number;
+  readonly generalId: number;
+  readonly npc: number;
+  readonly generalName: string;
+  readonly stage: TournamentGroupStage;
+  readonly groupNo: number;
+  readonly groupRank: number;
+  readonly ability: number;
+  readonly games: number;
+  readonly win: number;
+  readonly draw: number;
+  readonly lose: number;
+  readonly points: number;
+  readonly goalDifference: number;
+  readonly promoted: boolean;
 }
 
-// 16강 single-elimination bracket; one node per match.
 export interface TournamentBracketMatch {
-  round: number;           // 16/8/4/2 (강) — higher = earlier
-  matchIdx: number;
-  leftGeneralId: number | null;
-  leftName: string | null;
-  rightGeneralId: number | null;
-  rightName: string | null;
-  winnerGeneralId: number | null;
+  readonly round: number;
+  readonly matchIdx: number;
+  readonly leftGeneralId: number | null;
+  readonly leftName: string | null;
+  readonly rightGeneralId: number | null;
+  readonly rightName: string | null;
+  readonly winnerGeneralId: number | null;
+  readonly winnerName: string | null;
 }
 
-// 전력전/통솔전/일기토/설전 ranking row (4 ranking types).
 export interface TournamentRankRow {
-  rank: number;
-  generalId: number;
-  generalName: string;
-  nationName: string;
-  value: number;
+  readonly rank: number;
+  readonly generalName: string;
+  readonly nationName: string;
+  readonly value: number;
+}
+
+export interface TournamentRankingBoard {
+  readonly type: TournamentTypeText;
+  readonly rows: readonly TournamentRankRow[];
 }
 
 export interface TournamentResponse {
-  result: boolean;
-  state: number;           // legacy gameStor `tournament` phase 0-8
-  tnmtType: number;        // legacy `tnmt_type` raw code
-  tnmtTypeText: TournamentTypeText;
-  tnmtMsg: string;         // 운영자 메세지 (verbatim, may be '')
-  entrants: TournamentEntrant[];      // 8 group standings flattened ([] when none)
-  bracket: TournamentBracketMatch[];  // 16강 상황 ([] until drawn)
-  rankings: {              // 4 ranking tables; each [] when no data
-    total: TournamentRankRow[];        // 전력전 (종합)
-    leadership: TournamentRankRow[];   // 통솔전 (통솔)
-    strength: TournamentRankRow[];     // 일기토 (무력)
-    intel: TournamentRankRow[];        // 설전 (지력)
-  };
+  readonly state: number;
+  readonly tnmtType: number;
+  readonly tnmtTypeText: TournamentTypeText;
+  readonly tnmtMsg: string;
+  readonly turnTerm: number;
+  readonly entrants: readonly TournamentEntrant[];
+  readonly bracket: readonly TournamentBracketMatch[];
+  readonly rankings: readonly TournamentRankingBoard[];
 }
 
 // ── page 1 · 외교부 (GET /api/diplomacy/letters) ──────────────────────────────
@@ -907,12 +930,14 @@ export interface NpcPolicyLastSetter {
   date: string | null;
 }
 
+export type NpcPolicyValue = number | string[] | number[] | Record<string, unknown>;
+
 export interface NpcPolicyResponse {
   result: boolean;
   nationId: number;
-  defaultNationPolicy: Record<string, number>;   // server defaults + class defaults
-  currentNationPolicy: Record<string, number>;   // nation overrides folded on default
-  zeroPolicy: Record<string, number>;            // 초깃값으로 reset target
+  defaultNationPolicy: Record<string, NpcPolicyValue>;
+  currentNationPolicy: Record<string, NpcPolicyValue>;
+  zeroPolicy: Record<string, NpcPolicyValue>;
   defaultNationPriority: string[];
   currentNationPriority: string[];
   availableNationPriorityItems: string[];

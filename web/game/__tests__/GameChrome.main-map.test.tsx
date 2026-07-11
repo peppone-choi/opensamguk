@@ -118,6 +118,9 @@ describe('GameChrome main map', () => {
         expect(subjectPanel).toHaveClass('ib-subject-panel');
         expect(subjectPanel).toHaveTextContent('조작 대상');
         expect(subjectPanel).toHaveTextContent('본인');
+        expect(screen.queryByRole('tab', { name: '가신' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('tab', { name: '부곡' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('tablist', { name: '명령 대상' })).not.toBeInTheDocument();
         expect(subjectPanel).toContainElement(screen.getByTestId('city-card'));
         expect(subjectPanel).toContainElement(screen.getByTestId('nation-card'));
         expect(subjectPanel).toContainElement(screen.getByTestId('general-card'));

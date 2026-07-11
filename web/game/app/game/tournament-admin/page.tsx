@@ -51,6 +51,7 @@ export default function TournamentAdminPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
+    const [actionLoading, setActionLoading] = useState<'start' | 'reset' | null>(null);
     const [activeTab, setActiveTab] = useState<'entries' | 'matches' | 'admin'>('entries');
 
     const fetchData = useCallback(async () => {
@@ -85,21 +86,36 @@ export default function TournamentAdminPage() {
         };
     }, []);
 
-    // TODO: tournament_start/advance/reset는 BE handler 미포팅 (silent no-op).
-    //       PHP hwe/sammo/API/Admin/Tournament.php 포팅 후 제거.
     async function startTournament() {
-        setToast('토너먼트 시작은 아직 구현되지 않았습니다.');
-        setTimeout(() => setToast(''), TOAST_DURATION_MS);
-    }
-
-    async function advanceRound() {
-        setToast('라운드 진행은 아직 구현되지 않았습니다.');
-        setTimeout(() => setToast(''), TOAST_DURATION_MS);
+        if (actor.generalId == null) return;
+        setActionLoading('start');
+        setError('');
+        try {
+            await api.tournamentStart(actor.generalId);
+            setToast('토너먼트 시작 요청이 접수되었습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '토너먼트 시작에 실패했습니다.');
+        } finally {
+            setActionLoading(null);
+        }
     }
 
     async function resetTournament() {
-        setToast('토너먼트 초기화는 아직 구현되지 않았습니다.');
-        setTimeout(() => setToast(''), TOAST_DURATION_MS);
+        if (actor.generalId == null) return;
+        setActionLoading('reset');
+        setError('');
+        try {
+            await api.tournamentReset(actor.generalId);
+            setToast('토너먼트 초기화 요청이 접수되었습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            await fetchData();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '토너먼트 초기화에 실패했습니다.');
+        } finally {
+            setActionLoading(null);
+        }
     }
 
     const activeEntries = entries.filter(e => !e.eliminated);
@@ -136,7 +152,7 @@ export default function TournamentAdminPage() {
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
-            {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {error && <p role="alert" style={{ color: 'var(--crimson)' }}>{error}</p>}
 
             {toast && (
                 <div className="toast" style={{ position: 'fixed', top: 'var(--space-md)', right: 'var(--space-md)', zIndex: 200 }}>
@@ -227,30 +243,23 @@ export default function TournamentAdminPage() {
                         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                             <button
                                 onClick={startTournament}
-                                disabled={!canManageTournament}
+                                disabled={!canManageTournament || actionLoading != null}
                                 style={{ background: 'var(--jade)', color: 'white', fontWeight: 600 }}
                             >
-                                토너먼트 시작
-                            </button>
-                            <button
-                                onClick={advanceRound}
-                                disabled={!canManageTournament}
-                                style={{ background: 'var(--gold)', color: 'var(--bg-base)', fontWeight: 600 }}
-                            >
-                                다음 라운드 진행
+                                {actionLoading === 'start' ? '시작 요청 중...' : '토너먼트 시작'}
                             </button>
                             <button
                                 onClick={resetTournament}
-                                disabled={!canManageTournament}
+                                disabled={!canManageTournament || actionLoading != null}
                                 style={{ background: 'var(--crimson)', color: 'white', fontWeight: 600 }}
                             >
-                                초기화
+                                {actionLoading === 'reset' ? '초기화 요청 중...' : '초기화'}
                             </button>
                         </div>
                         <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
                             토너먼트 시작: 참가자 등록 및 1라운드 대진 생성<br />
-                            다음 라운드: 현재 라운드 종료 후 다음 라운드 진행<br />
-                            초기화: 모든 토너먼트 데이터 삭제 (되돌릴 수 없음)
+                            진행: 토너먼트는 턴 처리에서 자동 진행<br />
+                            초기화: 토너먼트 상태 초기화
                         </p>
                     </div>
                 </GameCard>

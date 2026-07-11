@@ -4,14 +4,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Shell from '../../../components/Shell';
 import { api } from '../../../lib/api';
+import type { JoinFormResponse } from '../../../lib/api';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import { resolveServerGamePath, useServerId } from '../../../lib/serverGameUrl';
 import { JOIN_STAT_TOTAL, JOIN_STAT_MIN, JOIN_STAT_MAX, BRIGHT_COLOR_THRESHOLD } from '../../../lib/constants';
-import { DEFAULT_PORTRAIT } from '../../../lib/portrait';
+import { onPortraitError, portraitUrl } from '../../../lib/portrait';
 import type { MapPreviewResponse } from '../../../lib/types';
 
 // 능력치 상수 — 레거시 GameConst(d_setting)·BE common GameConst.kt와 동일값.
-//   defaultStatTotal=165 / defaultStatMin=15 / defaultStatMax=80.
+//   defaultStatTotal=275 / defaultStatMin=15 / defaultStatMax=80.
 // 정본 lib/constants.ts의 JOIN_STAT_* 로 통일(종전 로컬 하드코딩 제거).
 const DEFAULT_STAT_TOTAL = JOIN_STAT_TOTAL;
 const STAT_MIN = JOIN_STAT_MIN;
@@ -192,8 +193,10 @@ function abilityPowint(stats: Stats): [number, number, number] {
 }
 
 // 기본 능력치 분배 — 레거시 PageJoin: 통=total-2*floor(total/3), 무=floor(total/3), 지=floor(total/3) (165→55/55/55).
-const DEFAULT_LEADERSHIP = DEFAULT_STAT_TOTAL - 2 * Math.floor(DEFAULT_STAT_TOTAL / 3);
-const DEFAULT_OTHER = Math.floor(DEFAULT_STAT_TOTAL / 3);
+const DEFAULT_STAT = Math.floor(DEFAULT_STAT_TOTAL / 5);
+const LEGACY_THREE_STAT_TOTAL = DEFAULT_STAT_TOTAL - DEFAULT_STAT * 2;
+const DEFAULT_LEADERSHIP = LEGACY_THREE_STAT_TOTAL - 2 * Math.floor(LEGACY_THREE_STAT_TOTAL / 3);
+const DEFAULT_OTHER = Math.floor(LEGACY_THREE_STAT_TOTAL / 3);
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -203,30 +206,76 @@ export default function JoinPage() {
   const { frontInfo, loading: frontInfoLoading } = useFrontInfo();
   const selectedServerId = serverId ?? frontInfo?.global.serverId;
   const homeHref = selectedServerId ? resolveServerGamePath(undefined, selectedServerId, '/game', '') : '/game';
-  const memberName = frontInfo?.general?.name ?? '';
+  const frontMemberName = frontInfo?.general?.name ?? '';
 
-  const [name, setName] = useState(memberName);
+  const [name, setName] = useState(frontMemberName);
   const [leadership, setLeadership] = useState(DEFAULT_LEADERSHIP);
   const [strength, setStrength] = useState(DEFAULT_OTHER);
   const [intel, setIntel] = useState(DEFAULT_OTHER);
+  const [politics, setPolitics] = useState(DEFAULT_STAT);
+  const [charm, setCharm] = useState(DEFAULT_STAT);
   const [character, setCharacter] = useState('Random');
   const [pic, setPic] = useState(true); // 전콘 사용 — 레거시 args.pic 기본 true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [joinStatus, setJoinStatus] = useState('');
   const [displayInherit, setDisplayInherit] = useState(false);
+  const [joinForm, setJoinForm] = useState<JoinFormResponse | null>(null);
+  const [inheritSpecial, setInheritSpecial] = useState<string | undefined>();
+  const [inheritTurntimeZone, setInheritTurntimeZone] = useState<number | undefined>();
+  const [inheritCity, setInheritCity] = useState<number | undefined>();
+  const [inheritBonusStat, setInheritBonusStat] = useState<[number, number, number]>([0, 0, 0]);
 
   // 국가 목록(임관권유문 표시 전용 — 입장 안 함, 재야로 시작). 레거시 v_join.php nationList + scout_msg.
   const [nations, setNations] = useState<MapPreviewResponse['nations']>([]);
   const [displayTable, setDisplayTable] = useState(true); // 국가표 보이기/숨기기 토글
   const [toggleZoom, setToggleZoom] = useState(true);     // 임관권유문 크게/작게 토글
 
-  const total = leadership + strength + intel;
+  const total = leadership + strength + intel + politics + charm;
   const remaining = DEFAULT_STAT_TOTAL - total;
+  const memberName = joinForm?.member.name ?? frontMemberName;
+  const inheritBonusTotal = inheritBonusStat.reduce((sum, value) => sum + value, 0);
+  const inheritRequiredPoint =
+    (inheritSpecial === undefined ? 0 : (joinForm?.inheritCosts.special ?? 0)) +
+    (inheritTurntimeZone === undefined ? 0 : (joinForm?.inheritCosts.turntime ?? 0)) +
+    (inheritCity === undefined ? 0 : (joinForm?.inheritCosts.city ?? 0)) +
+    (inheritBonusTotal === 0 ? 0 : (joinForm?.inheritCosts.stat ?? 0));
+
+  const turnTimeZoneList = useMemo(() => {
+    const zoneSeconds = joinForm?.turnTermMinutes ?? 0;
+    if (zoneSeconds <= 0) return [];
+    const format = (seconds: number) => {
+      const minute = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const second = (seconds % 60).toString().padStart(2, '0');
+      return `${minute}:${second}`;
+    };
+    return Array.from({ length: 60 }, (_, index) => {
+      const start = index * zoneSeconds;
+      const end = start + zoneSeconds - 1;
+      return `${format(start)}.000 ~ ${format(end)}.999`;
+    });
+  }, [joinForm?.turnTermMinutes]);
 
   useEffect(() => {
     if (memberName && !name) setName(memberName);
   }, [memberName, name]);
+
+  useEffect(() => {
+    let alive = true;
+    api.joinForm()
+      .then((data) => {
+        if (!alive) return;
+        setJoinForm(data);
+        setName((current) => current === '' || current === frontMemberName ? data.member.name : current);
+        setPic(data.member.canUsePicture);
+      })
+      .catch((cause: unknown) => {
+        if (!alive) return;
+        setPic(false);
+        setError(cause instanceof Error ? cause.message : '장수 생성 정보를 불러오지 못했습니다.');
+      });
+    return () => { alive = false; };
+  }, [frontMemberName]);
 
   useEffect(() => {
     if (!frontInfoLoading && !loading && frontInfo?.general?.hasGeneral) {
@@ -282,7 +331,9 @@ export default function JoinPage() {
     }
     if (leadership < STAT_MIN || leadership > STAT_MAX ||
         strength < STAT_MIN || strength > STAT_MAX ||
-        intel < STAT_MIN || intel > STAT_MAX) {
+        intel < STAT_MIN || intel > STAT_MAX ||
+        politics < STAT_MIN || politics > STAT_MAX ||
+        charm < STAT_MIN || charm > STAT_MAX) {
       setError(`각 능력치는 ${STAT_MIN}~${STAT_MAX} 사이여야 합니다.`);
       return;
     }
@@ -293,6 +344,18 @@ export default function JoinPage() {
       );
       if (!ok) return;
     }
+    if (inheritBonusTotal !== 0 && (inheritBonusTotal < 3 || inheritBonusTotal > 5)) {
+      setError('보너스 능력치 합은 3~5 사이여야 합니다.');
+      return;
+    }
+    if (inheritRequiredPoint > (joinForm?.inheritTotalPoint ?? 0)) {
+      setError('유산 포인트가 부족합니다. 다시 가입해주세요!');
+      return;
+    }
+    if (inheritSpecial !== undefined && (joinForm?.geniusRemaining ?? 0) <= 0) {
+      setError('이미 천재가 모두 나타났습니다. 다시 가입해주세요!');
+      return;
+    }
     setLoading(true);
     try {
       setJoinStatus('장수 생성 요청 중...');
@@ -301,8 +364,14 @@ export default function JoinPage() {
         leadership,
         strength,
         intel,
+        politics,
+        charm,
         character,
         pic, // 전콘 사용 여부 — 레거시 Join.php 'pic' 필드
+        ...(inheritSpecial === undefined ? {} : { inheritSpecial }),
+        ...(inheritTurntimeZone === undefined ? {} : { inheritTurntimeZone }),
+        ...(inheritCity === undefined ? {} : { inheritCity }),
+        ...(inheritBonusTotal === 0 ? {} : { inheritBonusStat }),
       });
       if (res.status === 'AVAILABLE') {
         setJoinStatus('장수 생성 반영 중...');
@@ -327,7 +396,7 @@ export default function JoinPage() {
 
   // 4가지 능력치 프리셋 — 레거시 PageJoin.vue 버튼(랜덤형/통솔무력형/통솔지력형/무력지력형).
   function preset(type: 'random' | 'leadpow' | 'leadint' | 'powint') {
-    const stats: Stats = { min: STAT_MIN, max: STAT_MAX, total: DEFAULT_STAT_TOTAL };
+    const stats: Stats = { min: STAT_MIN, max: STAT_MAX, total: LEGACY_THREE_STAT_TOTAL };
     let next: [number, number, number];
     switch (type) {
       case 'random': next = abilityRand(stats); break;
@@ -345,16 +414,18 @@ export default function JoinPage() {
     setLeadership(DEFAULT_LEADERSHIP);
     setStrength(DEFAULT_OTHER);
     setIntel(DEFAULT_OTHER);
+    setPolitics(DEFAULT_STAT);
+    setCharm(DEFAULT_STAT);
     setCharacter('Random');
-    setPic(true);
+    setPic(joinForm?.member.canUsePicture ?? false);
     setError('');
   }
 
   // 전콘 미리보기 — 레거시는 member.imgsvr/member.picture(계정 아이콘)로 getIconPath를 호출하나, 회원(member)
-  // 테이블 picture/imgsvr는 game-api FE read 채널에 노출돼 있지 않다(v_join.php가 RootDB member 직접 read).
-  // 따라서 기본 초상만 표시하고, 미사용 시도 동일 기본 초상. 실제 계정 아이콘 노출은 backlog 참고.
-  // (이전 d_shared/icon/default.jpg는 CDN에 없어 403 엑박이었다 → 검증된 icons/default.jpg로 교정.)
-  const iconPath = DEFAULT_PORTRAIT;
+  const iconPath = portraitUrl(
+    pic ? joinForm?.member.picture : null,
+    pic ? joinForm?.member.imageServer : 0,
+  );
 
   return (
     <Shell>
@@ -451,9 +522,14 @@ export default function JoinPage() {
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>전콘 사용</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={iconPath} alt="전콘" style={{ height: 64, width: 64, borderRadius: 'var(--radius-sm)', objectFit: 'cover', background: 'var(--color-surface-2, #1f2937)' }} />
+            <img src={iconPath} alt="전콘" onError={onPortraitError} style={{ height: 64, width: 64, borderRadius: 'var(--radius-sm)', objectFit: 'cover', background: 'var(--color-surface-2, #1f2937)' }} />
             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <input type="checkbox" checked={pic} onChange={(e) => setPic(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={pic}
+                disabled={!joinForm?.member.canUsePicture}
+                onChange={(e) => setPic(e.target.checked)}
+              />
               사용
             </label>
           </div>
@@ -478,7 +554,7 @@ export default function JoinPage() {
 
         <div>
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>
-            능력치 <small style={{ color: 'var(--color-text-muted)' }}>(통/무/지)</small> &mdash; 합계 {total} / {DEFAULT_STAT_TOTAL} {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
+            능력치 <small style={{ color: 'var(--color-text-muted)' }}>(통/무/지/정/매)</small> &mdash; 합계 {total} / {DEFAULT_STAT_TOTAL} {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
           </label>
 
           {/* 능력치 조절 프리셋 — 레거시 PageJoin.vue 4버튼(랜덤형/통솔무력형/통솔지력형/무력지력형) */}
@@ -499,6 +575,8 @@ export default function JoinPage() {
             { label: '통솔', value: leadership, set: setLeadership },
             { label: '무력', value: strength, set: setStrength },
             { label: '지력', value: intel, set: setIntel },
+            { label: '정치', value: politics, set: setPolitics },
+            { label: '매력', value: charm, set: setCharm },
           ].map(({ label, value, set }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
               <span style={{ width: 48, fontWeight: 500 }}>{label}</span>
@@ -545,38 +623,80 @@ export default function JoinPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
                 <label>
                   <span style={{ display: 'block', marginBottom: 4 }}>보유한 유산 포인트</span>
-                  <input type="text" value="-" readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
+                  <input type="text" value={joinForm?.inheritTotalPoint ?? 0} readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
                 </label>
                 <label>
                   <span style={{ display: 'block', marginBottom: 4 }}>필요 유산 포인트</span>
-                  <input type="text" value="0" readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
+                  <input type="text" value={inheritRequiredPoint} readOnly style={{ width: '100%', padding: 'var(--space-sm)' }} />
                 </label>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-sm)' }}>
                 <label>
                   <span style={{ display: 'block', marginBottom: 4 }}>천재로 생성</span>
-                  <select disabled value="" style={{ width: '100%', padding: 'var(--space-sm)' }}>
+                  <select
+                    value={inheritSpecial ?? ''}
+                    disabled={joinForm === null || joinForm.geniusRemaining <= 0}
+                    onChange={(e) => setInheritSpecial(e.target.value || undefined)}
+                    style={{ width: '100%', padding: 'var(--space-sm)' }}
+                  >
                     <option value="">사용안함</option>
+                    {Object.entries(joinForm?.availableSpecialWar ?? {}).map(([key, special]) => (
+                      <option key={key} value={key}>{special.title}</option>
+                    ))}
                   </select>
+                  {inheritSpecial !== undefined && (
+                    <small dangerouslySetInnerHTML={{ __html: joinForm?.availableSpecialWar[inheritSpecial]?.info ?? '' }} />
+                  )}
                 </label>
                 <label>
                   <span style={{ display: 'block', marginBottom: 4 }}>도시</span>
-                  <select disabled value="" style={{ width: '100%', padding: 'var(--space-sm)' }}>
+                  <select
+                    value={inheritCity ?? ''}
+                    disabled={joinForm === null}
+                    onChange={(e) => setInheritCity(e.target.value === '' ? undefined : Number(e.target.value))}
+                    style={{ width: '100%', padding: 'var(--space-sm)' }}
+                  >
                     <option value="">사용안함</option>
+                    {(joinForm?.cities ?? []).map((city) => (
+                      <option key={city.id} value={city.id}>{`[${city.region}] ${city.name}`}</option>
+                    ))}
                   </select>
                 </label>
                 <label>
                   <span style={{ display: 'block', marginBottom: 4 }}>턴 시간 지정</span>
-                  <select disabled value="" style={{ width: '100%', padding: 'var(--space-sm)' }}>
+                  <select
+                    value={inheritTurntimeZone ?? ''}
+                    disabled={joinForm === null}
+                    onChange={(e) => setInheritTurntimeZone(e.target.value === '' ? undefined : Number(e.target.value))}
+                    style={{ width: '100%', padding: 'var(--space-sm)' }}
+                  >
                     <option value="">사용안함</option>
+                    {turnTimeZoneList.map((zone, index) => (
+                      <option key={zone} value={index}>{zone}</option>
+                    ))}
                   </select>
                 </label>
-                <fieldset disabled style={{ border: '1px solid var(--color-border)', padding: 'var(--space-sm)' }}>
+                <fieldset disabled={joinForm === null} style={{ border: '1px solid var(--color-border)', padding: 'var(--space-sm)' }}>
                   <legend>추가 능력치 고정(통/무/지)</legend>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-xs)' }}>
-                    <input type="number" value={0} readOnly />
-                    <input type="number" value={0} readOnly />
-                    <input type="number" value={0} readOnly />
+                    {(['통솔', '무력', '지력'] as const).map((statName, index) => (
+                      <input
+                        key={statName}
+                        aria-label={`추가 능력치 ${statName}`}
+                        type="number"
+                        min={0}
+                        max={BORN_MAX_STAT_BONUS}
+                        value={inheritBonusStat[index]}
+                        onChange={(e) => {
+                          const value = Math.max(0, Math.min(BORN_MAX_STAT_BONUS, Number(e.target.value) || 0));
+                          setInheritBonusStat((current) => {
+                            if (index === 0) return [value, current[1], current[2]];
+                            if (index === 1) return [current[0], value, current[2]];
+                            return [current[0], current[1], value];
+                          });
+                        }}
+                      />
+                    ))}
                   </div>
                 </fieldset>
               </div>

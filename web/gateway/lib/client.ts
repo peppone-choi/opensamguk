@@ -45,3 +45,27 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function logout(): Promise<void> {
     await fetch('/api/auth/logout', { method: 'POST' });
 }
+
+async function accountRequest(path: string, body: Record<string, unknown>, method = 'POST'): Promise<Record<string, unknown>> {
+    const res = await fetch(path, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    const data = await readJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? '계정 변경에 실패했습니다.');
+    return data;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await accountRequest('/api/account/password', { currentPassword, newPassword });
+}
+
+export async function updateProfileIcon(picture: string | null, imgsvr: number): Promise<User> {
+    const data = await accountRequest('/api/account/profile-icon', { picture, imgsvr });
+    return data as unknown as User;
+}
+
+export async function deleteAccount(currentPassword: string): Promise<void> {
+    await accountRequest('/api/account', { currentPassword }, 'DELETE');
+}

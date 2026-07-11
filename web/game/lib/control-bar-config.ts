@@ -1,11 +1,3 @@
-// MainControlBar — verbatim 20-button config (spec §2 + §2.1 route mapping).
-// Labels (spaced Hangul for the bar, compact for the dropdown), gating bucket, target route, and
-// new-window behavior are the PARITY CONTRACT. Legacy used full-page <a href="*.php">; F2 remaps each
-// to an App-Router path. Existing routes are linked directly; deferred targets point at a labeled
-// '준비 중' stub (NOT a 404). The 경매장 entry carries a split sub-dropdown (금/쌀 vs 유니크).
-
-// Gating buckets — each reads front-info general fields (officerLevel/permission/showSecret +
-// nation level). See gateAllows() in MainControlBar.tsx for how each bucket maps to props.
 export type GateBucket =
     | 'always'
     | 'myLevel' // myLevel >= 1
@@ -32,9 +24,6 @@ export interface ControlButton {
     split?: ControlSubItem[];
 }
 
-// '준비 중' deferred-target stub. board / troop / battle-center / inherit route here in F2.
-const STUB = '/game/coming-soon';
-
 export const CONTROL_BUTTONS: ControlButton[] = [
     { id: 1, label: '회 의 실', compactLabel: '회의실', href: '/game/board', bucket: 'myLevel' },
     { id: 2, label: '기 밀 실', compactLabel: '기밀실', href: '/game/board?secret=1', bucket: 'permission2' },
@@ -59,7 +48,7 @@ export const CONTROL_BUTTONS: ControlButton[] = [
     { id: 13, label: '세력 장수', compactLabel: '세력 장수', href: '/game/my-generals', bucket: 'myLevel' },
     { id: 14, label: '중원 정보', compactLabel: '중원 정보', href: '/game/global-diplomacy', bucket: 'always' },
     { id: 15, label: '현재 도시', compactLabel: '현재 도시', href: '/game/city', bucket: 'always' },
-    { id: 16, label: '감 찰 부', compactLabel: '감찰부', href: `${STUB}?feature=${encodeURIComponent('감찰부')}`, bucket: 'showSecret', newTab: true },
+    { id: 16, label: '감 찰 부', compactLabel: '감찰부', href: '/game/battle-center', bucket: 'showSecret', newTab: true },
     { id: 17, label: '유산 관리', compactLabel: '유산 관리', href: '/game/inherit', bucket: 'always' },
     { id: 18, label: '내 정보&설정', compactLabel: '내 정보&설정', href: '/game/my', bucket: 'always' },
     {

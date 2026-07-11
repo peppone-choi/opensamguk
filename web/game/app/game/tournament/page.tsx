@@ -8,26 +8,22 @@ import StatusBadge from '../../../components/StatusBadge';
 import CommandModal from '../../../components/CommandModal';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
+import { getNPCColor } from '../../../lib/utilGame';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type {
     TournamentResponse,
     TournamentEntrant,
     TournamentBracketMatch,
-    TournamentRankRow,
+    TournamentRankingBoard,
 } from '../../../types/game';
+import {
+    buildBracketRounds,
+    buildStandingSections,
+    tournamentAbilityLabel,
+    tournamentStateText,
+    tournamentTermText,
+} from './view-model';
 
-// 토너먼트 (page 12) — view-only. Consumes the foundation read contract
-// api.tournamentView() → TournamentResponse (GET /api/tournament). Legacy: b_tournament.php
-// + func_tournament.php + utilGame/formatTournament.ts. The betting bracket (page 11) can
-// consume the SAME contract for its 16강 상황 panel.
-//
-// READ-ONLY this wave. 참가 (enroll) is an INTAKE command deferred to Wave C — no mutation
-// wiring here beyond what already exists. Admin actions live on /game/tournament-admin.
-//
-// EMPTY-SAFE: scenario_1010 has no active tournament → the controller returns a zeroed shape
-// (state 0, empty entrants/bracket/rankings) (200, never 500). Every array maps over [] and
-// renders an empty table; never crashes.
-//
 // Verbatim Korean parity (byte-for-byte from the legacy PHP/Vue):
 //   - state text  : func_tournament.php getTournament() / formatTournament.ts stepMap
 //   - type text   : 전력전 / 통솔전 / 일기토 / 설전  (+ 종합 / 통솔 / 무력 / 지력)
@@ -36,48 +32,11 @@ import type {
 //   - group names : 一조 … 八조
 //   - footer rules: b_tournament.php trailing <font> block
 
-// 토너먼트 진행 상태 (state 0-10) — getTournament() byte-verbatim.
-// Index beyond the array degrades gracefully to a passthrough label.
-const STATE_TEXT: string[] = [
-    '경기 없음',
-    '참가 모집중',
-    '예선 진행중',
-    '본선 추첨중',
-    '본선 진행중',
-    '16강 배정중',
-    '베팅 진행중',
-    '16강 진행중',
-    '8강 진행중',
-    '4강 진행중',
-    '결승 진행중',
-];
-
 // state 0 = magenta(없음), the rest are orange(진행중) per getTournament().
 function stateVariant(state: number): 'gold' | 'crimson' | 'jade' | 'muted' {
     if (state <= 0) return 'muted';
     return 'gold';
 }
-
-// tnmt_type → 능력치 컬럼 표기 (tp2). b_tournament.php switch($admin['tnmt_type']).
-//   전력전→종합 / 통솔전→통솔 / 일기토→무력 / 설전→지력
-const ABILITY_LABEL: Record<string, string> = {
-    전력전: '종합',
-    통솔전: '통솔',
-    일기토: '무력',
-    설전: '지력',
-};
-
-// 一 ~ 八 (1조 ~ 8조). b_tournament.php $num.
-const GROUP_NUM = ['一', '二', '三', '四', '五', '六', '七', '八'];
-
-// 16강 single-elimination rounds, earliest → latest (round number = remaining slots).
-// b_tournament.php prints 16강 / 8강 / 4강 / 결승 layers from grp>=20 down to grp>=60.
-const BRACKET_ROUNDS: { round: number; label: string }[] = [
-    { round: 16, label: '16강' },
-    { round: 8, label: '8강' },
-    { round: 4, label: '4강' },
-    { round: 2, label: '결승' },
-];
 
 export default function TournamentPage() {
     const [data, setData] = useState<TournamentResponse | null>(null);
@@ -110,39 +69,13 @@ export default function TournamentPage() {
             .catch(() => { /* identity optional — enroll button hides when absent */ });
     }, []);
 
-    // EMPTY-SAFE accessors — the controller may zero-fill, but never trust shape at runtime.
-    const entrants: TournamentEntrant[] = Array.isArray(data?.entrants) ? data!.entrants : [];
-    const bracket: TournamentBracketMatch[] = Array.isArray(data?.bracket) ? data!.bracket : [];
+    const entrants: readonly TournamentEntrant[] = data && Array.isArray(data.entrants) ? data.entrants : [];
+    const bracket: readonly TournamentBracketMatch[] = data && Array.isArray(data.bracket) ? data.bracket : [];
+    const rankings: readonly TournamentRankingBoard[] = data && Array.isArray(data.rankings) ? data.rankings : [];
     const tnmtType = data?.tnmtTypeText ?? '전력전';
-    const abilityLabel = ABILITY_LABEL[tnmtType] ?? '종합';
-
-    // 조별 순위 — group by `group` (0-7). Insertion order preserved (do NOT re-key by id);
-    // the controller already orders rows within a group (승점/득실/시드). 8 groups always shown.
-    const groups = useMemo(() => {
-        const byGroup = new Map<number, TournamentEntrant[]>();
-        for (const e of entrants) {
-            const g = e.group ?? 0;
-            if (!byGroup.has(g)) byGroup.set(g, []);
-            byGroup.get(g)!.push(e);
-        }
-        return Array.from({ length: 8 }, (_, i) => ({
-            group: i,
-            label: `${GROUP_NUM[i]}조`,
-            rows: byGroup.get(i) ?? [],
-        }));
-    }, [entrants]);
-
-    // 16강 상황 — group bracket matches by round (16/8/4/2), preserving matchIdx order.
-    const bracketRounds = useMemo(() => {
-        return BRACKET_ROUNDS.map(({ round, label }) => ({
-            round,
-            label,
-            matches: bracket
-                .filter((m) => m.round === round)
-                .slice()
-                .sort((a, b) => a.matchIdx - b.matchIdx),
-        }));
-    }, [bracket]);
+    const abilityLabel = tournamentAbilityLabel(tnmtType);
+    const standingSections = useMemo(() => buildStandingSections(entrants), [entrants]);
+    const bracketRounds = useMemo(() => buildBracketRounds(bracket), [bracket]);
 
     const hasBracket = bracketRounds.some((r) => r.matches.length > 0);
 
@@ -177,37 +110,24 @@ export default function TournamentPage() {
     }
 
     const state = data?.state ?? 0;
-    const stateText = STATE_TEXT[state] ?? `TOURNAMENT_TYPE_ERR_${state}`;
+    const stateText = tournamentStateText(state);
 
-    // 조별 순위 컬럼 — 순 · 장수 · {tp2} · 경 · 승 · 무 · 패 · 점 · 득 (printRow header).
-    //   경 = 경기수(win+draw+lose) · 점 = 승점(win*3+draw) · 득 = 득실(gl).
     const groupHeaders = ['순', '장수', abilityLabel, '경', '승', '무', '패', '점', '득'];
-    const groupRow = (e: TournamentEntrant, idx: number) => {
-        const games = (e.win ?? 0) + (e.draw ?? 0) + (e.lose ?? 0);
-        const points = (e.win ?? 0) * 3 + (e.draw ?? 0);
-        // The standings ability column ({tp2}) tracks tnmt_type; the entrant contract only carries
-        // win/draw/lose, so the ability + 득실 cells render '-' until the read shape supplies them.
-        return [
-            idx + 1,
-            <span key={`g-${e.generalId}-${idx}`} style={{ color: e.nationColor || undefined }}>
-                {e.generalName}
-            </span>,
-            '-',
-            formatNumber(games),
-            formatNumber(e.win ?? 0),
-            formatNumber(e.draw ?? 0),
-            formatNumber(e.lose ?? 0),
-            formatNumber(points),
-            '-',
-        ];
-    };
-
-    // 4 ranking tables — 전력전(종합) / 통솔전(통솔) / 일기토(무력) / 설전(지력).
-    const rankingTables: { title: string; rows: TournamentRankRow[] }[] = [
-        { title: '전력전', rows: data?.rankings?.total ?? [] },
-        { title: '통솔전', rows: data?.rankings?.leadership ?? [] },
-        { title: '일기토', rows: data?.rankings?.strength ?? [] },
-        { title: '설전', rows: data?.rankings?.intel ?? [] },
+    const groupRow = (e: TournamentEntrant) => [
+        e.groupRank,
+        <span
+            key={`g-${e.generalId}-${e.stage}-${e.groupNo}`}
+            style={{ color: e.promoted ? 'var(--gold)' : getNPCColor(e.npc) }}
+        >
+            {e.generalName}
+        </span>,
+        formatNumber(e.ability),
+        formatNumber(e.games),
+        formatNumber(e.win),
+        formatNumber(e.draw),
+        formatNumber(e.lose),
+        formatNumber(e.points),
+        formatNumber(e.goalDifference),
     ];
 
     const bracketName = (n: string | null) => (n && n.length > 0 ? n : '-');
@@ -231,6 +151,9 @@ export default function TournamentPage() {
                     <h2 style={{ fontSize: 'var(--text-lg)', fontWeight: 600 }}>삼모전 토너먼트</h2>
                     <StatusBadge variant="jade">{tnmtType}</StatusBadge>
                     <StatusBadge variant={stateVariant(state)}>{stateText}</StatusBadge>
+                    {data && data.turnTerm > 0 ? (
+                        <StatusBadge variant="muted">{tournamentTermText(data.turnTerm)}</StatusBadge>
+                    ) : null}
                     {/* F4 C2 — 참가/불참 토글 (enroll). tnmt 1 = 참가, 0 = 불참. */}
                     {generalId != null && (
                         <>
@@ -313,49 +236,49 @@ export default function TournamentPage() {
                 </p>
             )}
 
-            {/* 조별 순위 (一조 ~ 八조) */}
-            <h2
-                style={{
-                    fontSize: 'var(--text-lg)',
-                    fontWeight: 600,
-                    margin: 'var(--space-lg) 0 var(--space-sm)',
-                }}
-            >
-                조별 순위
-            </h2>
             {entrants.length === 0 ? (
                 <p style={{ color: 'var(--text-muted)' }}>참가자가 없습니다.</p>
             ) : (
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                        gap: 'var(--space-md)',
-                    }}
-                >
-                    {groups.map((g) => (
-                        <GameCard key={g.group}>
-                            <h3
-                                style={{
-                                    fontSize: 'var(--text-sm)',
-                                    fontWeight: 600,
-                                    marginBottom: 'var(--space-sm)',
-                                    color: 'var(--text-secondary)',
-                                }}
-                            >
-                                {g.label}
-                            </h3>
-                            {g.rows.length === 0 ? (
-                                <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>-</p>
-                            ) : (
-                                <GameTable
-                                    headers={groupHeaders}
-                                    rows={g.rows.map((e, i) => groupRow(e, i))}
-                                />
-                            )}
-                        </GameCard>
-                    ))}
-                </div>
+                standingSections.map((section) => (
+                    <section key={section.stage}>
+                        <h2
+                            style={{
+                                fontSize: 'var(--text-lg)',
+                                fontWeight: 600,
+                                margin: 'var(--space-lg) 0 var(--space-sm)',
+                            }}
+                        >
+                            {section.title}
+                        </h2>
+                        <div
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                                gap: 'var(--space-md)',
+                            }}
+                        >
+                            {section.groups.map((group) => (
+                                <GameCard key={`${section.stage}-${group.groupNo}`}>
+                                    <h3
+                                        style={{
+                                            fontSize: 'var(--text-sm)',
+                                            fontWeight: 600,
+                                            marginBottom: 'var(--space-sm)',
+                                            color: 'var(--text-secondary)',
+                                        }}
+                                    >
+                                        {group.label}
+                                    </h3>
+                                    {group.rows.length === 0 ? (
+                                        <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>-</p>
+                                    ) : (
+                                        <GameTable headers={groupHeaders} rows={group.rows.map(groupRow)} />
+                                    )}
+                                </GameCard>
+                            ))}
+                        </div>
+                    </section>
+                ))
             )}
 
             {/* 종목별 순위 — 전력전 / 통솔전 / 일기토 / 설전 */}
@@ -375,8 +298,8 @@ export default function TournamentPage() {
                     gap: 'var(--space-md)',
                 }}
             >
-                {rankingTables.map((t) => (
-                    <GameCard key={t.title}>
+                {rankings.map((board) => (
+                    <GameCard key={board.type}>
                         <h3
                             style={{
                                 fontSize: 'var(--text-sm)',
@@ -385,16 +308,16 @@ export default function TournamentPage() {
                                 color: 'var(--text-secondary)',
                             }}
                         >
-                            {t.title}
+                            {board.type}
                         </h3>
-                        {t.rows.length === 0 ? (
+                        {board.rows.length === 0 ? (
                             <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>
                                 순위 정보가 없습니다.
                             </p>
                         ) : (
                             <GameTable
                                 headers={['순위', '장수', '국가', '점수']}
-                                rows={t.rows.map((r) => [
+                                rows={board.rows.map((r) => [
                                     r.rank,
                                     r.generalName,
                                     r.nationName,

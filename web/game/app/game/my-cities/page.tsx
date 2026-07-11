@@ -74,11 +74,11 @@ function CityCard({ city, nationColor }: { city: MyCitySummary; nationColor: str
                 <span style={labelStyle}>인구율</span>
                 <span style={cellStyle}>{popRate.toFixed(2)}%</span>
                 <span style={labelStyle}>자금 수입</span>
-                <span style={cellStyle}>-</span>
+                <span style={cellStyle}>{city.goldIncome == null ? '-' : formatNumber(city.goldIncome)}</span>
                 <span style={labelStyle}>군량 수입</span>
-                <span style={cellStyle}>-</span>
+                <span style={cellStyle}>{city.riceIncome == null ? '-' : formatNumber(city.riceIncome)}</span>
                 <span style={labelStyle}>둔전 수입</span>
-                <span style={cellStyle}>-</span>
+                <span style={cellStyle}>{city.farmIncome == null ? '-' : formatNumber(city.farmIncome)}</span>
             </div>
 
             {/* 행2: 농업 / 상업 / 치안 / 수비 / 성벽 (cur/max) */}

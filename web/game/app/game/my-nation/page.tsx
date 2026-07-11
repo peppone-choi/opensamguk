@@ -19,6 +19,11 @@ function newColor(color: string | null | undefined): string {
     return DARK_COLORS.has(c === '' ? '' : c.toUpperCase()) ? '#FFFFFF' : '#000000';
 }
 
+function signedNumber(value: number | null): string {
+    if (value == null) return '-';
+    return `${value > 0 ? '+' : ''}${formatNumber(value)}`;
+}
+
 // 8열 단일표 행 — PHP b_myKingdomInfo.php의 td 레이아웃을 grid로 옮긴다(라벨 bg1 + 값).
 const labelStyle: React.CSSProperties = {
     color: 'var(--text-secondary)',
@@ -139,26 +144,26 @@ export default function MyNationPage() {
 
                         {/* 3행: 세금/단기 · 세곡/둔전 · 지급률 — income 6종은 §2 BLOCKED → "-" */}
                         <span style={labelStyle}>세금/단기</span>
-                        <span style={cellStyle}>-</span>
+                        <span style={cellStyle}>{signedNumber(data.goldIncome)} / {signedNumber(data.warIncome)}</span>
                         <span style={labelStyle}>세곡/둔전</span>
-                        <span style={cellStyle}>-</span>
+                        <span style={cellStyle}>{signedNumber(data.riceIncome)} / {signedNumber(data.farmIncome)}</span>
                         <span style={labelStyle}>지급률</span>
                         {/* 지급률 — §2 BLOCKED(meta UNVERIFIED) → null이면 "-" */}
                         <span style={cellStyle}>{data.bill == null ? '-' : `${data.bill} %`}</span>
 
                         {/* 4행: 수입/지출 · 수입/지출 · 속령 / 장수 — income §2 BLOCKED → "-" */}
                         <span style={labelStyle}>수입/지출</span>
-                        <span style={cellStyle}>-</span>
+                        <span style={cellStyle}>{signedNumber(data.goldIncome == null || data.warIncome == null ? null : data.goldIncome + data.warIncome)} / {data.outcome == null ? '-' : `-${formatNumber(data.outcome)}`}</span>
                         <span style={labelStyle}>수입/지출</span>
-                        <span style={cellStyle}>-</span>
+                        <span style={cellStyle}>{signedNumber(data.riceIncome == null || data.farmIncome == null ? null : data.riceIncome + data.farmIncome)} / {data.outcome == null ? '-' : `-${formatNumber(data.outcome)}`}</span>
                         <span style={labelStyle}>속 령</span>
                         <span style={cellStyle}>{data.cityCount}</span>
 
                         {/* 5행: 국고 예산 · 병량 예산 · 장수 + 기술력 — 예산 §2 BLOCKED → "-" */}
                         <span style={labelStyle}>국고 예산</span>
-                        <span style={cellStyle}>-</span>
+                        <span style={cellStyle}>{data.goldBudget == null ? '-' : `${formatNumber(data.goldBudget)} (${signedNumber(data.goldBudgetDiff)})`}</span>
                         <span style={labelStyle}>병량 예산</span>
-                        <span style={cellStyle}>-</span>
+                        <span style={cellStyle}>{data.riceBudget == null ? '-' : `${formatNumber(data.riceBudget)} (${signedNumber(data.riceBudgetDiff)})`}</span>
                         <span style={labelStyle}>장 수</span>
                         <span style={cellStyle}>{data.generalCount}</span>
 

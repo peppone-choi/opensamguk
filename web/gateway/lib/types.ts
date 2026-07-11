@@ -6,6 +6,8 @@ export interface User {
     email: string | null;
     nickname: string | null;
     role: string; // "USER" | "ADMIN"
+    picture: string | null;
+    imageServer: number;
 }
 
 export interface AuthResponse {

@@ -22,13 +22,24 @@ function errorText(e: unknown): string {
 
 export default function Admin1Page() {
     const [data, setData] = useState<AdminGameSettingsResponse | null>(null);
+    const [draft, setDraft] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [saving, setSaving] = useState('');
+    const [notice, setNotice] = useState('');
 
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            setData(await api.admin.gameSettings());
+            const next = await api.admin.gameSettings();
+            setData(next);
+            setDraft({
+                msg: next.msg,
+                starttime: next.starttime ?? '',
+                maxgeneral: next.maxgeneral?.toString() ?? '',
+                maxnation: next.maxnation?.toString() ?? '',
+                startyear: next.startyear?.toString() ?? '',
+            });
             setError('');
         } catch (e) {
             setError(errorText(e));
@@ -41,12 +52,31 @@ export default function Admin1Page() {
         load();
     }, [load]);
 
+    const save = useCallback(async (key: string, value: string | number) => {
+        setSaving(key);
+        setNotice('');
+        try {
+            const result = await api.admin.patchGameSettings({ [key]: value });
+            setNotice(result.restartRequired ? '저장했습니다. 엔진 재시작이 필요합니다.' : '저장했습니다.');
+            await load();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : '저장할 수 없습니다.');
+        } finally {
+            setSaving('');
+        }
+    }, [load]);
+
+    const setValue = (key: string, value: string) => {
+        setDraft((current) => ({ ...current, [key]: value }));
+    };
+
     return (
         <Shell>
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>게임 관리</h1>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>로딩 중...</p>}
             {error && <p style={{ color: 'var(--crimson)' }}>{error}</p>}
+            {notice && <p style={{ color: 'var(--gold)' }}>{notice}</p>}
 
             {data && !error && (
                 <>
@@ -56,16 +86,16 @@ export default function Admin1Page() {
                                 <tr>
                                     <th style={{ width: 140, textAlign: 'right' }}>운영자메세지</th>
                                     <td>
-                                        <input readOnly value={data.msg} style={inputStyle} />
+                                        <input aria-label="운영자메세지" value={draft.msg ?? ''} onChange={(e) => setValue('msg', e.target.value)} style={inputStyle} />
                                     </td>
                                     <td style={{ width: 100 }}>
-                                        <button disabled>변경</button>
+                                        <button disabled={saving !== ''} onClick={() => save('msg', draft.msg ?? '')}>변경</button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th style={{ textAlign: 'right' }}>중원정세추가</th>
                                     <td>
-                                        <input readOnly value="" maxLength={80} style={inputStyle} />
+                                        <input aria-label="중원정세추가" readOnly value="" maxLength={80} style={inputStyle} />
                                     </td>
                                     <td>
                                         <button disabled>로그쓰기</button>
@@ -74,37 +104,37 @@ export default function Admin1Page() {
                                 <tr>
                                     <th style={{ textAlign: 'right' }}>시작시간변경</th>
                                     <td>
-                                        <input readOnly value={data.starttime ?? ''} style={{ ...inputStyle, textAlign: 'right', maxWidth: 260 }} />
+                                        <input aria-label="시작시간변경" value={draft.starttime ?? ''} onChange={(e) => setValue('starttime', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 260 }} />
                                     </td>
                                     <td>
-                                        <button disabled>변경1</button>
+                                        <button disabled={saving !== ''} onClick={() => save('starttime', draft.starttime ?? '')}>변경1</button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th style={{ textAlign: 'right' }}>최대 장수</th>
                                     <td>
-                                        <input readOnly value={data.maxgeneral ?? ''} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
+                                        <input aria-label="최대 장수" type="number" min={1} max={9999} value={draft.maxgeneral ?? ''} onChange={(e) => setValue('maxgeneral', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
                                     </td>
                                     <td>
-                                        <button disabled>변경2</button>
+                                        <button disabled={saving !== '' || draft.maxgeneral === ''} onClick={() => save('maxgeneral', Number(draft.maxgeneral))}>변경2</button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th style={{ textAlign: 'right' }}>최대 국가</th>
                                     <td>
-                                        <input readOnly value={data.maxnation ?? ''} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
+                                        <input aria-label="최대 국가" type="number" min={1} max={999} value={draft.maxnation ?? ''} onChange={(e) => setValue('maxnation', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
                                     </td>
                                     <td>
-                                        <button disabled>변경3</button>
+                                        <button disabled={saving !== '' || draft.maxnation === ''} onClick={() => save('maxnation', Number(draft.maxnation))}>변경3</button>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th style={{ textAlign: 'right' }}>시작 년도</th>
                                     <td>
-                                        <input readOnly value={data.startyear ?? ''} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
+                                        <input aria-label="시작 년도" type="number" min={1} max={9999} value={draft.startyear ?? ''} onChange={(e) => setValue('startyear', e.target.value)} style={{ ...inputStyle, textAlign: 'right', maxWidth: 80 }} />
                                     </td>
                                     <td>
-                                        <button disabled>변경4</button>
+                                        <button disabled={saving !== '' || draft.startyear === ''} onClick={() => save('startyear', Number(draft.startyear))}>변경4</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -122,7 +152,7 @@ export default function Admin1Page() {
                                     <td colSpan={2}>
                                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                             {data.turnOptions.map((m) => (
-                                                <button key={m} disabled style={m === data.turnterm ? { borderColor: 'var(--gold)' } : undefined}>
+                                                <button key={m} disabled={saving !== '' || m === data.turnterm} onClick={() => save('turnterm', m)} style={m === data.turnterm ? { borderColor: 'var(--gold)' } : undefined}>
                                                     {m}분턴
                                                 </button>
                                             ))}

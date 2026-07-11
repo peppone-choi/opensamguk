@@ -23,16 +23,7 @@ export const GLOBAL_MENU_V2: MenuNode[] = [
         ],
     },
     { type: 'item', name: '연감', url: 'v_history.php', newTab: true },
-    {
-        type: 'split',
-        main: { type: 'item', name: '게시판', url: '/board/community', newTab: true },
-        subMenu: [
-            { type: 'item', name: '건의/제안', url: '/board/suggestion', newTab: true },
-            { type: 'item', name: '팁/강좌', url: '/board/tip', newTab: true },
-            { type: 'line' },
-            { type: 'item', name: '패치 내역', url: '/board/patch', newTab: true },
-        ],
-    },
+    { type: 'item', name: '게시판', url: '/game/board', newTab: true },
     {
         type: 'split',
         main: { type: 'item', name: '공식 오픈 톡', url: 'https://open.kakao.com/o/', newTab: true },

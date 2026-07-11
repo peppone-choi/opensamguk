@@ -9,22 +9,18 @@
 //    specialWarText/officerLevelText/honorText/dedLevelText). FE는 표시만.
 //  - 부상 반영 스탯 = PHP intdiv(stat*(100-injury), 100) (truncate toward zero) — 절사로 계산한다
 //    (utilGame/calcInjury는 Math.round라 PHP와 발산하므로 여기선 사용하지 않고 인라인 절사).
-//  - 벌점(refresh_score_total) = §2 BLOCKED(general_access_log 부재). 컬럼·정렬(기본 type=9 벌점 DESC)
-//    모두 미노출. 백엔드 데이터가 생기면(P8) 컬럼/정렬 추가.
 //  - READ-ONLY. EMPTY-SAFE(빈 seed → 빈 표).
 
 import { useEffect, useMemo, useState } from 'react';
 import Shell from '../../../../components/Shell';
 import GameTable from '../../../../components/GameTable';
 import { api } from '../../../../lib/api';
-import { getNPCColor } from '../../../../lib/utilGame';
+import { formatRefreshScore, getNPCColor } from '../../../../lib/utilGame';
 import { portraitUrl, onPortraitError } from '../../../../lib/portrait';
 import type { PublicGeneral } from '../../../../types/game';
 
 const NO_NATION = 0;
 
-// PHP a_genList 정렬 셀렉터(type 1..15). 벌점(9·기본)/삭턴 외 NPC도 노출. 벌점(type=9)은 BLOCKED라
-// 셀렉터에서 제외하고, 가용한 키만 둔다(PublicGeneral 보유 필드 기준). text=문자열 정렬.
 type SortKey =
     | 'nationId'    // 1 국가(PHP ORDER BY nation = 국가 id ASC)
     | 'leadership'  // 2 통솔
@@ -34,6 +30,7 @@ type SortKey =
     | 'dedlevel'    // 6 계급
     | 'officerLevel'// 7 관직
     | 'killturn'    // 8 삭턴
+    | 'refreshScoreTotal'
     | 'personalText'// 11 성격
     | 'specialDomesticText' // 12 내특
     | 'specialWarText'      // 13 전특
@@ -49,6 +46,7 @@ const SORTS: { value: SortKey; label: string; text?: boolean }[] = [
     { value: 'dedlevel', label: '계급' },
     { value: 'officerLevel', label: '관직' },
     { value: 'killturn', label: '삭턴' },
+    { value: 'refreshScoreTotal', label: '벌점' },
     { value: 'explevel', label: 'Lv' },
     { value: 'personalText', label: '성격', text: true },
     { value: 'specialDomesticText', label: '내특', text: true },
@@ -56,6 +54,8 @@ const SORTS: { value: SortKey; label: string; text?: boolean }[] = [
     { value: 'age', label: '연령' },
     { value: 'npc', label: 'NPC' },
 ];
+
+const DEFAULT_SORT_INDEX = SORTS.findIndex(({ value }) => value === 'refreshScoreTotal');
 
 // 부상 반영 스탯 — PHP intdiv(stat*(100-injury), 100): 0 이하 절사(truncate toward zero).
 function injuredStat(stat: number, injury: number): number {
@@ -67,8 +67,7 @@ export default function GeneralsListPage() {
     const [data, setData] = useState<PublicGeneral[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    // 기본 정렬 = PHP type=9(벌점 DESC). 벌점은 BLOCKED라 서버 순서(원순서)를 기본으로 둔다(sortIdx=null).
-    const [sortIdx, setSortIdx] = useState<number | null>(null);
+    const [sortIdx, setSortIdx] = useState(DEFAULT_SORT_INDEX);
 
     const fetchData = () => {
         setLoading(true);
@@ -83,11 +82,10 @@ export default function GeneralsListPage() {
     useEffect(fetchData, []);
 
     const sorted = useMemo(() => {
-        if (sortIdx === null) return data;
         const { value, text } = SORTS[sortIdx];
         const arr = [...data];
         // PHP: 정렬은 거의 전부 DESC(국가만 ASC). 텍스트 컬럼은 localeCompare DESC.
-        const dir = value === 'nationId' ? 1 : -1;
+        const dir = value === 'nationId' || value === 'killturn' ? 1 : -1;
         arr.sort((a, b) => {
             if (text) {
                 return String(a[value] ?? '').localeCompare(String(b[value] ?? '')) * dir;
@@ -117,14 +115,14 @@ export default function GeneralsListPage() {
         );
     }
 
-    // a_genList 테이블 헤더 — PHP echo 순서/라벨 그대로(벌점은 BLOCKED라 제외).
-    const headers = ['얼굴', '이름', '연령', '성격', '특기', '레벨', '국가', '명성', '계급', '관직', '통솔', '무력', '지력', '정치', '매력', '삭턴'];
+    const headers = ['얼굴', '이름', '연령', '성격', '특기', '레벨', '국가', '명성', '계급', '관직', '통솔', '무력', '지력', '정치', '매력', '삭턴', '벌점'];
 
     const rows = sorted.map((g) => {
         const wounded = g.injury > 0;
         const lead = injuredStat(g.leadership, g.injury);
         const str = injuredStat(g.strength, g.injury);
         const intel = injuredStat(g.intel, g.injury);
+        const roundedRefreshScoreTotal = Math.round(g.refreshScoreTotal / 10) * 10;
         const lbonusText = g.lbonus > 0 ? <span style={{ color: 'cyan' }}> +{g.lbonus}</span> : null;
         return [
             // 얼굴 — 초상(getIconPath 포팅: icons/<picture>.jpg, onError→default). PHP GetImageURL(imgsvr)/picture.
@@ -162,6 +160,7 @@ export default function GeneralsListPage() {
             g.politics ?? '-',                  // 정치
             g.charm ?? '-',                     // 매력
             g.killturn ?? '-',                  // 삭턴(meta.killturn; 미기재 '-')
+            <span key={`r-${g.generalId}`}>{roundedRefreshScoreTotal}<br />【{formatRefreshScore(roundedRefreshScoreTotal)}】</span>,
         ];
     });
 
@@ -171,11 +170,10 @@ export default function GeneralsListPage() {
             <div style={{ marginBottom: 'var(--space-md)', display: 'flex', gap: 'var(--space-sm)', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ color: 'var(--text-muted)', fontSize: 'var(--text-sm)' }}>정렬순서 :</span>
                 <select
-                    value={sortIdx ?? ''}
-                    onChange={(e) => setSortIdx(e.target.value === '' ? null : Number(e.target.value))}
+                    value={sortIdx}
+                    onChange={(e) => setSortIdx(Number(e.target.value))}
                     style={{ background: 'var(--bg-hover)', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', padding: 'var(--space-xs) var(--space-sm)' }}
                 >
-                    <option value="">기본</option>
                     {SORTS.map((s, i) => (
                         <option key={`${s.value}-${i}`} value={i}>{s.label}</option>
                     ))}

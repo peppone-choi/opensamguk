@@ -13,7 +13,6 @@
 //   generalInfo2: 명성/계급(원시값+색) + 전투/계략/사관 + 승률/승리/패배 + 살상률/사살/피살.
 //
 // 미렌더(API-BLOCKED, 날조 금지): turntime/실행 남은시간, dex1..5(숙련도 컬럼 부재),
-// refreshScore(general_access_log 부재), defence_train(컬럼 부재), train/atmos bonus(onCalcStat 미배선).
 
 import { formatNumber } from '@/lib/format';
 import { onPortraitError, portraitUrl } from '@/lib/portrait';

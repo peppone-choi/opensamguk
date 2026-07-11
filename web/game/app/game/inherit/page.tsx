@@ -1,13 +1,11 @@
 'use client';
 
-// ── page 15 · 유산 (Inherit Points) — READ-ONLY display this wave ──────────────
+// ── page 15 · 유산 (Inherit Points) ───────────────────────────────────────────
 // Consumes api.inheritPoint() → InheritPointResponse (foundation phase). Mirrors
 // legacy hwe/v_inheritPoint.php + ts/PageInheritPoint.vue. Title "유산 관리".
 //
-// Buy/reset actions are DEFERRED (no mutation wiring this wave): the 유산 포인트 상점
-// rows, buff grid, 장수 소유자 확인 / 능력치 초기화 panels, and 더 가져오기 button render
-// as a read-only display. Per the F4 contract, mutations route through CommandModal /
-// intake in a later wave — this page only displays items/buffs/costs/currentStat/logs.
+// Store/reset actions use the existing typed intake seam. CheckOwner is also submitted
+// from this page so its PHP denial string can be shown without fabricating client errors.
 //
 // EMPTY-SAFE: missing item keys → 0; empty availableSpecialWar / availableUnique /
 // availableTargetGeneral maps → empty selects; lastInheritPointLogs [] → empty log list.
@@ -137,6 +135,7 @@ export default function InheritPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string>('');
     const [toast, setToast] = useState<string>('');
+    const [ownerTarget, setOwnerTarget] = useState('');
     const [buyModal, setBuyModal] = useState<BuyModalSpec | null>(null);
     // F4 C2 — the 다음 전투 특기 select pick (drives the inheritSetNextSpecialWar extraArgs).
     const [nextSpecialPick, setNextSpecialPick] = useState<string>('');
@@ -226,6 +225,21 @@ export default function InheritPage() {
                 load();
             } else if (isIntakeDenied(out)) {
                 showToast(out.reason || '초기화가 거부되었습니다.');
+            }
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : '요청에 실패했습니다.');
+        }
+    }
+
+    async function handleCheckOwner() {
+        if (generalId == null || !ownerTarget) return;
+        try {
+            const out = await api.instantAction('CheckOwner', generalId, { destGeneralID: Number(ownerTarget) });
+            if (isIntakeQueued(out)) {
+                showToast('장수 소유자 확인이 접수되었습니다.');
+                load();
+            } else if (isIntakeDenied(out)) {
+                showToast(out.reason || '소유자 확인이 거부되었습니다.');
             }
         } catch (err) {
             showToast(err instanceof Error ? err.message : '요청에 실패했습니다.');
@@ -472,12 +486,12 @@ export default function InheritPage() {
                 </div>
             </GameCard>
 
-            {/* ── 장수 소유자 확인 / 능력치 초기화 (read-only display) ────────────── */}
+            {/* ── 장수 소유자 확인 / 능력치 초기화 ──────────────────────────────── */}
             <div style={{ ...hr }} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-lg)' }}>
                 <GameCard>
                     <div style={labelStyle}>장수 소유자 확인</div>
-                    <select className="form-select" disabled style={{ width: '100%', marginTop: 'var(--space-xs)' }}>
+                    <select className="form-select" value={ownerTarget} onChange={(e) => setOwnerTarget(e.target.value)} style={{ width: '100%', marginTop: 'var(--space-xs)' }}>
                         <option value="">장수 선택</option>
                         {Object.entries(availableTargetGeneral).map(([key, name]) => (
                             <option key={key} value={key}>{name}</option>
@@ -487,6 +501,14 @@ export default function InheritPage() {
                         장수의 소유자를 찾습니다.<br />
                         <span style={costStyle}>필요 포인트: {(cost?.checkOwner ?? 0).toLocaleString()}</span>
                     </div>
+                    <button
+                        type="button"
+                        style={{ marginTop: 'var(--space-xs)', fontSize: 'var(--text-sm)' }}
+                        onClick={handleCheckOwner}
+                        disabled={generalId == null || !ownerTarget}
+                    >
+                        확인
+                    </button>
                 </GameCard>
                 <GameCard>
                     <div style={labelStyle}>능력치 초기화</div>
