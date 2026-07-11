@@ -28,6 +28,13 @@
 - 프론트: 감찰부 coming-soon, tournament toast-only, 내정보 로그 fake load-more, 선발장 mutation.
 - 5능력치: alias/fingerprint 매칭, MakeGeneral 입력·검증·영속화·read/UI, 5능력치 총량.
 
+## 바퀴 8 — 서브에이전트 버그 헌팅 (2026-07-11)
+
+5축 병렬 리뷰(intake/월간훅·전투영속/대회/game-api보안/web프론트)로 15건 접수, 오케스트레이터 검증 결과:
+
+- **기각 14건**: `listGenerals()`는 `.toList()` 복사(반복 중 변이 불가), intake 핸들러는 데몬 단일스레드(race 불가), world_state는 flush step 1 always-UPDATE로 status/config/tick_seconds 영속, auctionRepository는 `DaemonLoopConfig.kt:297` prod 주입, `TournamentAdminService` 무상태, `refresh_score_total`은 V25 마이그레이션 존재, select-pool base path 명시 매칭.
+- **실질 파리티 갭 1건 (백로그)**: `logic/tournament/ProcessTournament.kt` `resolveMatch()`가 결정론 점수비교(`score = total + level`, goal `/10`)인 반면 PHP 정본 `hwe/func_tournament.php` `fight()`(1004행~)는 에너지 기반 RNG 전투 시뮬(아이템 로그, `rand()%4` 문구, `Util::round($gen[$tp]*getLog(...)*10)`, win/draw/lose 3상태 + rank_data gl `Util::round(($gd2-$gd1)/50)`). 대회 승패·로그 byte-parity 미달 — `fight()` 풀 포트 + PHP 골든 캡처 필요. 상태기계 전이(조·토너먼트 단계)는 계약 수준 일치.
+
 ## 승인 대기
 
 없음. 사용자가 수정·푸시·머지·prod 재기동과 DB 유실 허용을 명시했다.
