@@ -1,11 +1,17 @@
 package opensamguk.engine.turn
 
 import java.time.Instant
+import opensamguk.infra.persistence.EventInsertRow
 import opensamguk.infra.persistence.KvWrite
+import opensamguk.infra.persistence.SelectPoolMutation
+import opensamguk.infra.persistence.SelectPoolMutationType
+import opensamguk.infra.persistence.SelectPoolCandidate
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.event.EventCodec
+import opensamguk.logic.event.EventStore
 
 /**
  * Column patch for ONE dirty row — only the columns that actually changed. `meta` deep-changes are
@@ -54,11 +60,14 @@ class ChangeRecorder(
      * 테스트/fresh world용 1-based 카운터.
      */
     private val diplomacyLetterIdAllocator: () -> Int = AtomicCounter()::next,
+    private val kvWriteObserver: (KvKey, Any?) -> Unit = { _, _ -> },
 ) {
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
     private val cityPatches = LinkedHashMap<Int, RowPatch>()
     private val nationPatches = LinkedHashMap<Int, RowPatch>()
+    private val eventInserts = mutableListOf<EventInsertRow>()
+    private val eventDeletes = mutableListOf<Int>()
 
     /**
      * Per-general rank_data deltas — the 3-Map collapse. At most ONE [RankDelta] per `(general,
@@ -76,6 +85,9 @@ class ChangeRecorder(
      */
     private val deletedGeneralIds = LinkedHashSet<Int>()
     private val deletedNationIds = LinkedHashSet<Int>()
+
+    private val accessLogUpserts = LinkedHashMap<Int, GeneralAccessLog>()
+    private val accessLogDeletes = LinkedHashSet<Int>()
 
     /**
      * KV delta channel (T0.3) — `(table, namespace, key)` → encoded value | `null`-delete. The recorder
@@ -170,6 +182,8 @@ class ChangeRecorder(
     /** 연감 채널 (W0-8) — `yearbook_history` UPSERT 의도 (P0-20 LogHistory 월별 스냅샷). */
     private val yearbookInserts = mutableListOf<YearbookInsert>()
 
+    private val selectPoolMutations = mutableListOf<SelectPoolMutation>()
+
     /** storeOldGeneral content — the pre-delete general rows (`ng_old_generals` archive, `func_gamerule.php:668`). */
     private val oldGeneralSnapshots = mutableListOf<TurnGeneral>()
 
@@ -180,6 +194,7 @@ class ChangeRecorder(
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
+            accessLogUpserts.isNotEmpty() || accessLogDeletes.isNotEmpty() ||
             kvDirty.isNotEmpty() || diplomacyUpdateDirty.isNotEmpty() ||
             votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
@@ -193,7 +208,8 @@ class ChangeRecorder(
             inheritanceResultInserts.isNotEmpty() ||
             // W0-8: statistic/yearbook 채널도 dirty 신호에 포함 — 기록만 있고 flush 트리거가 안 서는
             // 조용한 유실을 막는다(statistic은 기존 누락 보강, yearbook은 신규 채널).
-            statisticInserts.isNotEmpty() || yearbookInserts.isNotEmpty()
+            statisticInserts.isNotEmpty() || yearbookInserts.isNotEmpty() ||
+            selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -208,6 +224,20 @@ class ChangeRecorder(
 
     /** The captured pre-delete nation snapshots (the `ng_old_nations` archive write). */
     fun nationSnapshots(): List<DeletedNationSnapshot> = nationSnapshots.toList()
+    fun accessLogUpserts(): List<GeneralAccessLog> = accessLogUpserts.values.toList()
+    fun accessLogDeletes(): Set<Int> = accessLogDeletes.toSet()
+
+    fun recordAccessLogUpsert(world: InMemoryTurnWorld, row: GeneralAccessLog) {
+        world.applyAccessLogDirtyFree(row)
+        accessLogDeletes.remove(row.generalId)
+        accessLogUpserts[row.generalId] = row
+    }
+
+    fun recordAccessLogDelete(world: InMemoryTurnWorld, generalId: Int) {
+        world.removeAccessLogDirtyFree(generalId)
+        accessLogUpserts.remove(generalId)
+        accessLogDeletes.add(generalId)
+    }
     fun generalPatches(): List<RowPatch> = generalPatches.values.toList()
     fun cityPatches(): List<RowPatch> = cityPatches.values.toList()
     fun nationPatches(): List<RowPatch> = nationPatches.values.toList()
@@ -241,6 +271,10 @@ class ChangeRecorder(
         diffCol(columns, "leadership", pre.leadership, post.leadership)
         diffCol(columns, "strength", pre.strength, post.strength)
         diffCol(columns, "intel", pre.intel, post.intel)
+        diffCol(columns, "politics", pre.politics, post.politics)
+        diffCol(columns, "charm", pre.charm, post.charm)
+        diffCol(columns, "age", pre.age, post.age)
+        diffCol(columns, "turnTime", pre.turnTime, post.turnTime)
         // P2 military / equip surface (Task FF1).
         diffCol(columns, "crew", pre.crew, post.crew)
         diffCol(columns, "train", pre.train, post.train)
@@ -264,8 +298,7 @@ class ChangeRecorder(
 
         if (columns.isEmpty() && metaPatch.isEmpty()) return null
         val patch = RowPatch(post.id, columns, metaPatch)
-        generalPatches[post.id] = patch
-        return patch
+        return mergeRowPatch(generalPatches, patch)
     }
 
     /**
@@ -297,6 +330,7 @@ class ChangeRecorder(
         diffCol(columns, "wallMax", pre.wallMax, post.wallMax)
         diffCol(columns, "population", pre.population, post.population)
         diffCol(columns, "populationMax", pre.populationMax, post.populationMax)
+        diffCol(columns, "dead", pre.dead, post.dead)
         diffCol(columns, "trade", pre.trade, post.trade)
         diffCol(columns, "region", pre.region, post.region)
         // P4 war/conquest surface (Task FU3). `front` is already covered by frontState→front_state
@@ -309,8 +343,7 @@ class ChangeRecorder(
 
         if (columns.isEmpty() && metaPatch.isEmpty()) return null
         val patch = RowPatch(post.id, columns, metaPatch)
-        cityPatches[post.id] = patch
-        return patch
+        return mergeRowPatch(cityPatches, patch)
     }
 
     /**
@@ -341,8 +374,20 @@ class ChangeRecorder(
 
         if (columns.isEmpty() && metaPatch.isEmpty()) return null
         val patch = RowPatch(post.id, columns, metaPatch)
-        nationPatches[post.id] = patch
-        return patch
+        return mergeRowPatch(nationPatches, patch)
+    }
+
+    private fun mergeRowPatch(target: MutableMap<Int, RowPatch>, next: RowPatch): RowPatch {
+        val previous = target[next.id]
+        if (previous == null) {
+            target[next.id] = next
+            return next
+        }
+        val columns = LinkedHashMap(previous.columns)
+        columns.putAll(next.columns)
+        val meta = LinkedHashMap(previous.meta)
+        meta.putAll(next.meta)
+        return RowPatch(next.id, columns, meta).also { target[next.id] = it }
     }
 
     /**
@@ -380,7 +425,9 @@ class ChangeRecorder(
      *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`) → V7 `game_kv` string-namespace store.
      */
     fun recordKv(table: String, namespace: String, key: String, value: Any?) {
-        kvDirty[KvKey(table, namespace, key)] = value
+        val kvKey = KvKey(table, namespace, key)
+        kvDirty[kvKey] = value
+        kvWriteObserver(kvKey, value)
     }
 
     /** Convenience for the V3 int-namespace `nation_env` writes (setNationMeta, term-stacks). */
@@ -390,6 +437,64 @@ class ChangeRecorder(
 
     /** The recorded KV delta channel (the T0.3 step-10 source), insertion-ordered. */
     fun kvDirty(): Map<KvKey, Any?> = LinkedHashMap(kvDirty)
+
+    fun recordEventMutation(mutation: EventStore.Mutation) {
+        when (mutation) {
+            is EventStore.Mutation.Insert -> {
+                val row = mutation.row
+                eventInserts += EventInsertRow(
+                    id = row.id,
+                    targetCode = row.target.name.lowercase(),
+                    priority = row.priority,
+                    condition = EventCodec.encodeCondition(row.condition).toString(),
+                    action = EventCodec.encodeActionList(row.actions).toString(),
+                )
+            }
+            is EventStore.Mutation.Delete -> eventDeletes += mutation.id
+        }
+    }
+
+    fun eventInserts(): List<EventInsertRow> = eventInserts.toList()
+    fun eventDeletes(): List<Int> = eventDeletes.toList()
+
+    fun recordSelectPoolPick(uniqueName: String, ownerUserId: Int, generalId: Int, now: Instant) {
+        selectPoolMutations += SelectPoolMutation(
+            SelectPoolMutationType.PICK,
+            uniqueName,
+            ownerUserId,
+            generalId,
+            now,
+        )
+    }
+
+    fun recordSelectPoolRefresh(
+        ownerUserId: Int,
+        now: Instant,
+        reservedUntil: Instant,
+        candidates: List<SelectPoolCandidate>,
+    ) {
+        selectPoolMutations += SelectPoolMutation(
+            type = SelectPoolMutationType.REFRESH,
+            uniqueName = "",
+            ownerUserId = ownerUserId,
+            generalId = 0,
+            now = now,
+            reservedUntil = reservedUntil,
+            candidates = candidates,
+        )
+    }
+
+    fun recordSelectPoolUpdate(uniqueName: String, ownerUserId: Int, generalId: Int, now: Instant) {
+        selectPoolMutations += SelectPoolMutation(
+            SelectPoolMutationType.UPDATE,
+            uniqueName,
+            ownerUserId,
+            generalId,
+            now,
+        )
+    }
+
+    fun selectPoolMutations(): List<SelectPoolMutation> = selectPoolMutations.toList()
 
     /**
      * Diff a diplomacy row's pre/post (T0.4). Returns the [DiplomacyRowPatch] (and records it dirty)
@@ -603,6 +708,8 @@ class ChangeRecorder(
         rankPatches.clear()
         deletedGeneralIds.clear()
         deletedNationIds.clear()
+        accessLogUpserts.clear()
+        accessLogDeletes.clear()
         kvDirty.clear()
         diplomacyUpdateDirty.clear()
         votePollUpdates.clear()
@@ -623,6 +730,9 @@ class ChangeRecorder(
         inheritanceResultInserts.clear()
         statisticInserts.clear()
         yearbookInserts.clear()
+        selectPoolMutations.clear()
+        eventInserts.clear()
+        eventDeletes.clear()
         oldGeneralSnapshots.clear()
         nationSnapshots.clear()
     }
@@ -702,6 +812,7 @@ class ChangeRecorder(
         generalPatches.remove(generalId)
         rankPatches.remove(generalId)
         deletedGeneralIds.add(generalId)
+        recordAccessLogDelete(world, generalId)
         return world.removeGeneral(generalId)
     }
 

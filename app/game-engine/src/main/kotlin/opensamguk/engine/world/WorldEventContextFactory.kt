@@ -8,10 +8,12 @@ import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.LightActionWorld
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.AssignGeneralSpecialityAction
+import opensamguk.logic.world.BlockScoutAction
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.InvaderEndingContext
 import opensamguk.logic.world.MergeInheritWorld
 import opensamguk.logic.world.RaiseDisasterAction
+import opensamguk.logic.world.UnblockScoutAction
 
 /**
  * 월간 world-event 디스패치용 [EventActionContext] 팩토리.
@@ -68,6 +70,8 @@ object WorldEventContextFactory {
             // env-read leaf의 world-view 키 (모두 같은 wctx — WorldActionContext가 전부 구현).
             env[AssignGeneralSpecialityAction.ENV_WORLD] = wctx // "specialityWorld"
             env[RaiseDisasterAction.ENV_WORLD] = wctx           // "disasterWorld"
+            env[BlockScoutAction.ENV_WORLD] = wctx
+            env[UnblockScoutAction.ENV_WORLD] = wctx
             env[MergeInheritWorld.ENV_KEY] = wctx         // "mergeInheritWorld"
             env[LightActionWorld.ENV_KEY] = wctx          // "lightActionWorld"
             env[InvaderEndingContext.ENV_KEY] = wctx      // "invaderEndingWorld" — InvaderEnding leaf(침략자 종료) 시임

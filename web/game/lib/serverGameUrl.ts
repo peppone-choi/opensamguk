@@ -18,6 +18,7 @@ const LEGACY_GAME_ROUTE_MAP: Record<string, string> = {
     'a_emperior.php': '/game/rankings/emperor',
     'v_dynastyList.php': '/game/rankings/emperor',
     'v_history.php': '/game/history',
+    'v_battleCenter.php': '/game/battle-center',
     'battle_simulator.php': '/game/simulator',
     'a_traffic.php': '/game/rankings/traffic',
     'v_trafficInfo.php': '/game/rankings/traffic',

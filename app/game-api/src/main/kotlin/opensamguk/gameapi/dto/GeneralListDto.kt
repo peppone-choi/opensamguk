@@ -131,6 +131,9 @@ data class GeneralListRow(
     val item: String,                  // item_code
     val recentWar: String?,            // TURNTIME_FULL(recent_war_time)
 
+    val refreshScoreTotal: Int,
+    val refreshScore: Int,
+
     // ── RANK(P1) — rank_data(F2) ────────────────────────────────────────────────
     val warnum: Int,
     val killnum: Int,

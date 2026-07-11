@@ -1,6 +1,7 @@
 package opensamguk.engine.turn
 
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
+import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -213,6 +214,57 @@ class ReservedTurnHandlerTest {
         assertEquals(YEAR, outcome.env["year"])
         assertEquals(START_YEAR, outcome.env["startYear"])
         assertEquals((YEAR - START_YEAR + 10) * 2, outcome.env["develCost"], "develCost = (year-startYear+10)*2")
+    }
+
+    @Test
+    fun `che_인재탐색 creates discovered NPC and records active action inheritance through flush payload`() {
+        val actor = general(id = 42, gold = 100_000).copy(
+            userId = "777",
+            name = "유비",
+            stats = GeneralStats(leadership = 95, strength = 90, intelligence = 85, politics = 77, charm = 66),
+            meta = linkedMapOf(
+                "name" to "유비",
+                "leadership_exp" to 0.0,
+                "strength_exp" to 0.0,
+                "intel_exp" to 0.0,
+                "explevel" to 10,
+                "killturn" to 80,
+                "dex1" to 4,
+                "dex2" to 3,
+                "dex3" to 2,
+                "dex4" to 1,
+                "dex5" to 5,
+            ),
+        )
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState().copy(meta = linkedMapOf("maxgeneral" to 500, "develcost" to 52, "turnterm" to 60)),
+                generals = listOf(actor),
+                cities = listOf(city(id = 7, nationId = 1), city(id = 8, nationId = 0)),
+                nations = listOf(nation(id = 1)),
+            ),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(42, "che_인재탐색", YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack)
+        assertEquals("che_인재탐색", outcome.definition.key)
+        assertEquals(2, world.listGenerals().size, "the discovered NPC is visible in the live world")
+        val created = world.listGenerals().single { it.id != 42 }
+        assertEquals(3, created.npcState)
+        assertEquals(50, created.stats.politics, "scout NPC keeps the 5-stat raw politics contract")
+        assertEquals(50, created.stats.charm, "scout NPC keeps the 5-stat raw charm contract")
+        assertTrue((created.meta["dex5"] as Number).toInt() >= 0, "dex5 is carried in meta for JSON raw round-trip")
+
+        val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, world.consumeDirtyState())
+        assertEquals(listOf(created.id), payload.createdGenerals.map { it.columns["id"] })
+        assertEquals(listOf("inheritance_777"), payload.inheritanceKvWrites.map { it.namespace })
+        assertEquals(listOf("active_action"), payload.inheritanceKvWrites.map { it.key })
+        assertTrue(
+            (payload.inheritanceKvWrites.single().value as List<*>).first() as Double >= 1.0,
+            "PHP valueFit(sqrt(1 / foundProp), 1) lower-bound is persisted",
+        )
     }
 
     @Test

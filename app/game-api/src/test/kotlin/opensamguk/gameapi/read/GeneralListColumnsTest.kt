@@ -25,6 +25,7 @@ class GeneralListColumnsTest {
         // P0 customViewColumns
         assertTrue("officerLevelText" in cols)
         assertTrue("bill" in cols)
+        assertTrue("refreshScoreTotal" in cols)
         // P1 컬럼은 빠진다
         assertFalse("leadership_exp" in cols)
         assertFalse("officer_city" in cols)
@@ -41,6 +42,7 @@ class GeneralListColumnsTest {
         assertTrue("crew" in cols)
         assertTrue("turntime" in cols)
         assertTrue("recent_war" in cols)
+        assertTrue("refreshScore" in cols)
         assertTrue("warnum" in cols)
         assertTrue("firenum" in cols)
         assertTrue("reservedCommand" in cols)
@@ -98,6 +100,8 @@ class GeneralListColumnsTest {
         assertTrue(idx("bill") < idx("reservedCommand"))
         // P1 RANK 컬럼이 P1 viewColumns(recent_war) 뒤.
         assertTrue(idx("recent_war") < idx("warnum"))
+        assertTrue(idx("recent_war") < idx("refreshScoreTotal"))
+        assertTrue(idx("refreshScore") < idx("warnum"))
     }
 
     // ── 셀 추출 ────────────────────────────────────────────────────────────────────
@@ -109,6 +113,8 @@ class GeneralListColumnsTest {
         assertEquals("관우", GeneralListColumns.cell(row, "name", 2))
         assertEquals("급습", GeneralListColumns.cell(row, "specialDomestic", 2))
         assertEquals("보병", GeneralListColumns.cell(row, "specialWar", 2))
+        assertEquals(120, GeneralListColumns.cell(row, "refreshScoreTotal", 2))
+        assertEquals(3, GeneralListColumns.cell(row, "refreshScore", 2))
         assertEquals(12, GeneralListColumns.cell(row, "warnum", 2))
         // ownerName은 §2 BLOCKED → 항상 null.
         assertEquals(null, GeneralListColumns.cell(row, "ownerName", 2))
@@ -184,6 +190,7 @@ class GeneralListColumnsTest {
         crewtype = 0, crew = 1000, train = 80, atmos = 90,
         turntime = "2026-06-03 10:30:45", horse = "None", weapon = "None",
         book = "None", item = "None", recentWar = null,
+        refreshScoreTotal = 120, refreshScore = 3,
         warnum = 12, killnum = 30, deathnum = 4, killcrew = 5000, deathcrew = 800, firenum = 7,
         officerLevelText = "제3장군", lbonus = 8, ownerName = null,
         honorText = "신동", dedLevelText = "30품관", bill = 1000,

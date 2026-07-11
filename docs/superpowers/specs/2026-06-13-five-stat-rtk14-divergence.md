@@ -5,9 +5,9 @@
 ## 결정 (유저, 2026-06-13)
 
 1. **정치(politics)·매력(charm) 추가** → 오픈삼국 5스탯. 레거시 devsam/core(3스탯)에서 의도적 divergence. 1.0.0+ 독자기능.
-2. **값 소스 = 삼국지14 무장정보.xlsx** (RTK14, 955 무장, 통무지정매 완비). **코에이 IP** → 절대 커밋 금지. git-ignored 로컬 리소스 `infra/src/main/resources/scenario/rtk14_stats.local.json`(955건, 생성됨)로만 로드.
+2. **값 소스 = 삼국지14 무장정보.xlsx** (현재 입력 1000행, 통무지정매 완비). **코에이 IP** → 원본·source JSON·생성 시나리오 절대 커밋 금지. `tools/rtk14/build_rtk14_stats.py` 알고리즘만 커밋한다.
 3. **스탯값 범위 = devsam 통무지 유지 + 정치·매력만 RTK14에서 추가.** 통/무/지는 scenario 그대로(패러티 보존).
-4. **이름 keying** — devsam 장수명 ↔ RTK14 무장명. 직매칭 439/491(89%). 끝자리 숫자 정규화(`장소1→장소`)로 ~95%+. 잔여 미매칭 → fallback(파생 또는 0).
+4. **이름 keying** — 모든 시나리오의 devsam 장수명 ↔ RTK14 무장명. 끝자리 숫자, 자가 붙은 이름, 명시 별칭을 정규화한 뒤 통무지·생몰년 거리로 동명이인을 1:1 배정한다. 원본에 없는 인물만 정치/매력 50/50 fallback을 사용한다.
 5. **Track B(로직 대체) 영역:** 내정(개발 농/상/기)→정치, 등용/임관→매력, 민심/인구→매력, 외교→정치/매력.
 6. **시퀀스:** 둘 같이(Track A 실행 + Track B 스펙 후 승인 게이트).
 
@@ -16,9 +16,9 @@
 기존 골든 green 유지가 게이트. 순수 추가.
 
 - **W1 ✅** `General`(logic `LogicEntities.kt`)에 `politics:Int=0`/`charm:Int=0` inert 필드(끝 append). 커널 2315 green 무회귀.
-- **W2** RTK14 로더: `rtk14_stats.local.json`(없으면 graceful skip) → 이름정규화 매칭 → 정치/매력 lookup. ScenarioImporter가 seed 시 주입.
+- **W2 ✅** all-scenario 빌더: 저장소의 30개 `scenario_*.json`을 읽어 장수 10,176개 tuple의 인덱스 14/15에 정치·매력 원수치를 직접 주입. `SCENARIO_DIR` 외부 파일 우선, classpath 폴백.
 - **W3** 영속화: Flyway `V*__add_politics_charm.sql`(general.politics/charm int default 0) + JdbcFlushExecutor 매퍼 + JPA read 엔티티 + ChangeRecorder. 게이트: infra flush IT green(Docker).
-- **W4** UI: web/game(b_myGenInfo·랭킹·장수카드) + web/gateway 정치/매력 표시. 두 맵뷰어 불변식 유지. 게이트: tsc + 비주얼.
+- **W4 ✅** UI/API: 장수 정보·랭킹·카드·NPC 정책·장수 등록에 정치/매력을 노출한다. 유저 생성은 5개 슬라이더와 총합 275 상한을 사용하며 API·wire·engine·flush가 동일 값을 보존한다.
 
 ## Track B — 플래그 게이트 divergence (✅승인됨 + 강화된 격리)
 
@@ -57,14 +57,14 @@
 
 - ✅ **generals(전체 장수)**: `/api/generals`→PublicGeneral 소비(positional general-list 아님 — W4 understand 오라벨 정정). PublicGeneral에 정치/매력 이미 있어 COLUMNS+SortKey+셀 추가로 close. tsc green.
 - ⏭️ **admin5(일제 정보)**: grand-truth `_admin5.php` **28열 verbatim 패러티 테이블**. 정치/매력 컬럼 추가 = 패러티 깨짐 → **스킵**. 1.0.0에서 신규 divergence stat-type로 추가 가능.
-- ⏭️ **join(장수 등록)**: 순수 **3스탯 할당 폼**(l/s/i 슬라이더+프리셋+total). 정치/매력=RTK14 소스라 유저 할당 대상 아님 → **스킵**. 1.0.0 커스텀 장수 정치/매력 할당은 create-path intake 변경 필요(별도).
-- ⏭️ **inherit(유산)**: 스탯 **리셋** 폼. 정치/매력은 RTK14-고정, 리셋 불가 → **스킵**.
+- ✅ **join(장수 등록)**: 통솔·무력·지력·정치·매력 5개 할당 폼과 총합 275 상한. create-path intake와 JWT owner 경계, DB flush까지 연결.
+- ✅ **inherit(유산)**: 통무지 리셋은 기존 패러티 총합을 유지하고 현재 정치·매력은 그대로 보존해 유실하지 않는다.
 
-결론: 개별 장수 스탯을 표시하는 프론트 갭은 generals로 close. 나머지 3개는 패러티잠금(admin5)·비할당폼(join/inherit)이라 정치/매력 표시 대상이 아님(누락 아님, 의식적 스킵).
+결론: 표시뿐 아니라 NPC 시드, 유저 생성, 유산 리셋 보존, API/wire/flush 라운드트립까지 5능력치 경계를 닫는다. admin5의 레거시 28열 표는 별도 divergence 화면 없이 유지한다.
 
 ## 운영 backlog
 
-- ✅ **prod 사이드로드(구현 완료, 커밋 4367ec3):** `Rtk14Stats.readRaw(ext)` — `rtk14.stats.path` 프로퍼티/`RTK14_STATS_PATH` env 파일시스템 경로 우선 → classpath → null(기본50). prod 배포: 파일 EC2 scp + 엔진 컨테이너 bind-mount + `RTK14_STATS_PATH=/data/rtk14_stats.local.json`(코에이 IP 미커밋 유지). 테스트 Rtk14StatsTest 4건.
+- ✅ **prod 사이드로드:** 별도 stats lookup을 제거하고 완성된 `scenario_*.json` 자체를 덮어쓴다. workflow가 `RTK14_STATS_JSON_B64` source secret과 checkout 시나리오를 결합해 gitignored 외부 디렉터리를 생성하고, 엔진은 `SCENARIO_DIR=/data/scenarios`를 classpath보다 우선한다.
 - `AvailableCommandsControllerTest` 단위 실패 1건(베이스라인 backend) — 별도 조사(W5).
 
 ## W6 — CLAUDE.md divergence carve-out 삽입안 (⚠️ 승인 대기 = 규칙 변경)
@@ -74,7 +74,7 @@
 
 > **Sanctioned divergence (1.0.0+, narrowly scoped).** `politics`(정치)/`charm`(매력)은 레거시 devsam/core에
 > 없는 오픈삼국 독자 스탯이다. 이 둘은 PHP 골든 오라클이 없으므로 규율 5번의 "faithful capture" 대상이
-> **아니다** — 출처는 RTK14(삼국지14, 코에이 IP → `rtk14_stats.local.json` git-ignore). 그러나 격리 규칙은
+> **아니다** — 출처는 RTK14(삼국지14, 코에이 IP → 원본/source JSON/생성 시나리오 git-ignore). 그러나 격리 규칙은
 > 엄격하다: (a) 통/무/지(leadership/strength/intel)의 `getStatValue`·RNG draw·로그·골든은 **불변**(rule 1–6
 > 그대로). (b) 정치·매력을 기존 패러티 공식에 주입하는 변경(Track B)은 영향 골든을 **재생성하지 않고**
 > devsam-baseline로 quarantine 보존 + 신규 divergence 골든을 별도 신설한다. (c) 정치·매력 값은 fabricate가

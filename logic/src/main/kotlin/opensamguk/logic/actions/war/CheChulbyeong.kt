@@ -16,6 +16,7 @@ import opensamguk.logic.domestic.uniqueLotterySeed
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.war.ProcessWarEnv
 import opensamguk.logic.war.ProcessWarResult
+import opensamguk.logic.war.ProductionWarBattleHooks
 import opensamguk.logic.war.WarSeed
 import opensamguk.logic.war.candidateCities
 import opensamguk.logic.war.processWar
@@ -241,11 +242,15 @@ class CheChulbyeong(
         val bctx = context.battleContext!!
         val d = context.draft
         val attackerNation = d.nation ?: error("che_출병: attacker nation missing")
-        val destCity = bctx.cityById.getValue(chosenCityId)
+        val destCity = d.destCity ?: bctx.cityById.getValue(chosenCityId)
         val defenderNation = bctx.nationById[destCity.nationId]
         val defenders = bctx.defenderGeneralsByCity[chosenCityId] ?: emptyList()
         val attackerCrewType = GameUnitConst.byId(d.general.crewTypeId) ?: GameUnitConst.byId(1100)!!
-        val defenderCrewType = GameUnitConst.byId(1100)!!   // per-defender crewType resolved by the wrapper in full impl
+        val defenderCrewType = GameUnitConst.byId(1100)!!
+        val hooks = ProductionWarBattleHooks(
+            defenderNationRice = (defenderNation?.rice ?: 0).toDouble(),
+            citySupply = destCity.supplyState != 0,
+        )
         return processWar(
             warSeed = warSeed,
             attackerGeneral = d.general,
@@ -266,6 +271,7 @@ class CheChulbyeong(
                 attackerCityId = bctx.attackerCityId,
                 defenderCityId = chosenCityId,
             ),
+            hooks = hooks,
         )
     }
 

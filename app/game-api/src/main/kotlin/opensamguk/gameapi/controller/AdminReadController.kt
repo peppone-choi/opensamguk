@@ -641,27 +641,27 @@ class AdminReadController(
         )
 
         val GENERAL_BULK_WRITES = listOf(
-            AdminBlockedWrite("전체 접속허용", "general_access_log 테이블 미포팅"),
-            AdminBlockedWrite("전체 접속제한", "general_access_log 테이블 미포팅"),
+            AdminBlockedWrite("전체 접속허용", "PHP _admin2_submit 전체 접속허용", "allowAccessAll", true),
+            AdminBlockedWrite("전체 접속제한", "PHP _admin2_submit 전체 접속제한", "denyAccessAll", true),
         )
 
         val GENERAL_SELECTED_WRITES = listOf(
-            AdminBlockedWrite("블럭 해제", "general.block mutation intake 미포팅"),
-            AdminBlockedWrite("1단계 블럭", "general.block/killturn 및 root member block_num mutation 미포팅"),
-            AdminBlockedWrite("2단계 블럭", "general.block/gold/rice/killturn 및 root member block_num mutation 미포팅"),
-            AdminBlockedWrite("3단계 블럭", "general.block/gold/rice/killturn 및 root member block_num mutation 미포팅"),
-            AdminBlockedWrite("무한삭턴", "general.killturn mutation 미포팅"),
-            AdminBlockedWrite("강제 사망", "general.turntime/general_turn mutation intake 미포팅"),
-            AdminBlockedWrite("보숙10000", "숙련도 지급 및 private message intake 미포팅"),
-            AdminBlockedWrite("궁숙10000", "숙련도 지급 및 private message intake 미포팅"),
-            AdminBlockedWrite("기숙10000", "숙련도 지급 및 private message intake 미포팅"),
-            AdminBlockedWrite("귀숙10000", "숙련도 지급 및 private message intake 미포팅"),
-            AdminBlockedWrite("차숙10000", "숙련도 지급 및 private message intake 미포팅"),
-            AdminBlockedWrite("접속 허용", "general_access_log 테이블 미포팅"),
-            AdminBlockedWrite("접속 제한", "general_access_log 테이블 미포팅"),
-            AdminBlockedWrite("하야입력", "general_turn 예약 mutation intake 미포팅"),
-            AdminBlockedWrite("방랑해산", "general_turn 예약 mutation intake 미포팅"),
-            AdminBlockedWrite("메세지 전달", "admin private message intake 미포팅"),
+            AdminBlockedWrite("블럭 해제", "PHP _admin2_submit 블럭 해제", "unblock", true),
+            AdminBlockedWrite("1단계 블럭", "PHP _admin2_submit 1단계 블럭", "block1", true),
+            AdminBlockedWrite("2단계 블럭", "PHP _admin2_submit 2단계 블럭", "block2", true),
+            AdminBlockedWrite("3단계 블럭", "PHP _admin2_submit 3단계 블럭", "block3", true),
+            AdminBlockedWrite("무한삭턴", "PHP _admin2_submit 무한삭턴", "infiniteKillturn", true),
+            AdminBlockedWrite("강제 사망", "PHP _admin2_submit 강제 사망", "forceDeath", true),
+            AdminBlockedWrite("보숙10000", "PHP _admin2_submit 보숙10000", "dex1", true),
+            AdminBlockedWrite("궁숙10000", "PHP _admin2_submit 궁숙10000", "dex2", true),
+            AdminBlockedWrite("기숙10000", "PHP _admin2_submit 기숙10000", "dex3", true),
+            AdminBlockedWrite("귀숙10000", "PHP _admin2_submit 귀숙10000", "dex4", true),
+            AdminBlockedWrite("차숙10000", "PHP _admin2_submit 차숙10000", "dex5", true),
+            AdminBlockedWrite("접속 허용", "PHP _admin2_submit 접속 허용", "allowAccess", true),
+            AdminBlockedWrite("접속 제한", "PHP _admin2_submit 접속 제한", "denyAccess", true),
+            AdminBlockedWrite("하야입력", "PHP _admin2_submit 하야입력", "resign", true),
+            AdminBlockedWrite("방랑해산", "PHP _admin2_submit 방랑해산", "wanderDismiss", true),
+            AdminBlockedWrite("메세지 전달", "PHP _admin2_submit 메세지 전달", "sendMessage", true),
         )
 
         /** `_admin5.php:57-74` type select 옵션(verbatim, value+label). 2/11/12 결번은 legacy도 미노출. */

@@ -2,7 +2,10 @@ package opensamguk.gateway.controller
 
 import jakarta.validation.Valid
 import opensamguk.gateway.dto.AuthResponse
+import opensamguk.gateway.dto.ChangePasswordRequest
+import opensamguk.gateway.dto.DeleteAccountRequest
 import opensamguk.gateway.dto.LoginRequest
+import opensamguk.gateway.dto.ProfileIconRequest
 import opensamguk.gateway.dto.RefreshRequest
 import opensamguk.gateway.dto.RegisterRequest
 import opensamguk.gateway.dto.UserResponse
@@ -11,6 +14,7 @@ import opensamguk.gateway.service.AuthService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -44,5 +48,30 @@ class AuthController(
     fun me(@AuthenticationPrincipal userDetails: CustomUserDetails): ResponseEntity<UserResponse> {
         val response = authService.me(userDetails)
         return ResponseEntity.ok(response)
+    }
+
+    @PostMapping("/account/password")
+    fun changePassword(
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
+        @Valid @RequestBody request: ChangePasswordRequest,
+    ): ResponseEntity<Void> {
+        authService.changePassword(userDetails, request)
+        return ResponseEntity.noContent().build()
+    }
+
+    @PostMapping("/account/profile-icon")
+    fun updateProfileIcon(
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
+        @Valid @RequestBody request: ProfileIconRequest,
+    ): ResponseEntity<UserResponse> =
+        ResponseEntity.ok(authService.updateProfileIcon(userDetails, request))
+
+    @DeleteMapping("/account")
+    fun deleteAccount(
+        @AuthenticationPrincipal userDetails: CustomUserDetails,
+        @Valid @RequestBody request: DeleteAccountRequest,
+    ): ResponseEntity<Void> {
+        authService.deleteAccount(userDetails, request)
+        return ResponseEntity.noContent().build()
     }
 }

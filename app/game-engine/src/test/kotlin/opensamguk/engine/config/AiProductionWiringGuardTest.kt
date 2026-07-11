@@ -1,0 +1,21 @@
+package opensamguk.engine.config
+
+import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertTrue
+
+class AiProductionWiringGuardTest {
+    private fun source(): String = listOf(
+        File("src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
+        File("app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
+    ).firstOrNull { it.isFile }?.readText()
+        ?: error("DaemonLoopConfig.kt source not found from ${File(".").absolutePath}")
+
+    @Test
+    fun `production drains nation and general AI state at both lifecycle boundaries`() {
+        val source = source()
+
+        assertTrue(source.contains("ai.drainNationPassDeltas(recorder)"))
+        assertTrue(source.contains("ai.drainGeneralPassDeltas(recorder)"))
+    }
+}

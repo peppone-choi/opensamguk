@@ -261,10 +261,11 @@ data class FrontGeneralInfo(
     val killcrew: Int? = null,
     val deathcrew: Int? = null,
     val firenum: Int? = null,
+    val refreshScore: Int? = null,
+    val refreshScoreTotal: Int? = null,
 
     // [§2 BLOCKED — opensamguk source 부재] 아래는 의도적으로 null/omit. 컨트롤러가 절대 채우지 않는다.
     //  - dex1..dex5      : V1/V6 어디에도 컬럼 없음, meta 키도 없음(W3_FrontGeneralInfo §2). null.
-    //  - refreshScore / refreshScoreTotal : general_access_log 테이블 부재(W3_PLAN §2). null.
     //  - defence_train   : 컬럼 없음(W3_PLAN §2). null.
     //  - autorunLimit    : aux 컬럼 없음(W3_PLAN §2 defence_train/autorun_limit). null.
     //  - reservedCommand : general_turn READ는 GeneralList 그룹/W4로 분리(이 그룹 OUT-OF-SCOPE). null.
@@ -274,8 +275,6 @@ data class FrontGeneralInfo(
     val dex3: Int? = null,
     val dex4: Int? = null,
     val dex5: Int? = null,
-    val refreshScore: Int? = null,
-    val refreshScoreTotal: Int? = null,
     val defenceTrain: Int? = null,
     val autorunLimit: Int? = null,
     val reservedCommand: List<Map<String, Any?>>? = null,
@@ -559,9 +558,7 @@ data class MyGeneralSummary(
      * (FrontGeneralInfo.ownerName 동일 원천) — 방어적 read, 부재 시 null(날조 금지).
      */
     val ownerName: String? = null,
-    // [§2 BLOCKED — general_access_log 부재, P1-069/P1-075] 벌점(refresh_score_total)은 PHP가 LEFT JOIN
-    // general_access_log에서 읽는다(b_myGenInfo.php:109-110). 테이블이 opensamguk 스키마에 없어(P8 미이식)
-    // read 원천이 없다 → 벌점 컬럼/정렬(type=10) 모두 노출하지 않는다(날조 금지).
+    val refreshScoreTotal: Int = 0,
 )
 
 data class MyGeneralsResponse(
@@ -621,10 +618,9 @@ data class MyCitySummary(
     val secretaryNpc: Int = 0,
     /** 도시 소재 장수 일람(PHP `cityGeneralList[cityID]` = formatName CSV, npc 색상). 없으면 빈 리스트 → FE "-". */
     val generals: List<MyCityGeneralName> = emptyList(),
-    // [§2 BLOCKED — nation-type income 파이프라인 미조립] 자금/군량/둔전 수입 3종(PHP
-    // calcCityGoldIncome/calcCityRiceIncome/calcCityWallRiceIncome × rate/20)은 read game-api에서
-    // 산출하지 않는다. 비-중립 nationType의 onCalcNationalIncome fold가 PHP와 달라져(precheck는
-    // identity-fold 빈 파이프라인) byte-parity가 깨지므로 날조 금지로 누락한다(MyKingdomInfo income과 동일).
+    val goldIncome: Int? = null,
+    val riceIncome: Int? = null,
+    val farmIncome: Int? = null,
 )
 
 /** 도시 소재 장수 1명(PHP formatName: 이름 + npc 색상). */
@@ -706,9 +702,15 @@ data class MyNationDetailResponse(
     val taxRate: Int? = null,
     /** 지급률 % (PHP `nation.bill`) — meta.bill, UNVERIFIED → null. */
     val bill: Int? = null,
-    // [§2 BLOCKED — income 파이프라인 미조립] 세금(goldIncome)/단기(warIncome)/세곡(riceIncome)/
-    //   둔전(wallIncome)/수입금(totalGoldIncome)/수입미(totalRiceIncome)/지출(outcome)/
-    //   국고예산(budgetgold)/병량예산(budgetrice)/금미차(budgetgolddiff/budgetricediff) — 전부 누락.
+    val goldIncome: Int? = null,
+    val warIncome: Int? = null,
+    val riceIncome: Int? = null,
+    val farmIncome: Int? = null,
+    val outcome: Int? = null,
+    val goldBudget: Int? = null,
+    val goldBudgetDiff: Int? = null,
+    val riceBudget: Int? = null,
+    val riceBudgetDiff: Int? = null,
     // [§2 BLOCKED — nation-history read 원천 부재] 국가열전(getNationHistoryLogAll) — 누락.
 )
 

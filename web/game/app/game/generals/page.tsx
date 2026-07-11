@@ -5,6 +5,7 @@ import Shell from '../../../components/Shell';
 import GameTable from '../../../components/GameTable';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
+import { formatRefreshScore } from '../../../lib/utilGame';
 import { matchesQuery } from '../../../lib/chosung';
 import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import type { PublicGeneral } from '../../../types/game';
@@ -44,7 +45,6 @@ const NO_NATION = 0;
 //  - null        정렬 불가: 얼굴·성격·특기·관직·삭턴(레거시 sort=false).
 // (금/쌀 컬럼은 미인증 공개 surface OQ-5라 PublicGeneral에 없으므로 노출하지 않는다 — 자금은 인증
 //  세력 장수 목록(/api/nation/general-list)에서만 본다.)
-// (벌점은 general_access_log 부재로 BLOCKED — PublicGeneral 필드 자체 미노출.)
 // (병력(crew)은 loop-13에서 permission=0 surface 외 노출 제거됨.)
 type SortKey =
     | 'name'
@@ -56,7 +56,8 @@ type SortKey =
     | 'politics'
     | 'charm'
     | 'explevel'
-    | 'dedlevel';
+    | 'dedlevel'
+    | 'refreshScoreTotal';
 
 // 헤더 라벨 ↔ 정렬 키. key=null = 정렬 불가(레거시 sortable=false). 레거시 a_genList.php 헤더 순서/문자열 그대로.
 // 열 순서: 얼굴·이름·연령·성격·특기·레벨·국가·명성·계급·관직·통솔·무력·지력·정치·매력·삭턴
@@ -77,6 +78,7 @@ const COLUMNS: { label: string; key: SortKey | null; text?: boolean }[] = [
     { label: '정치', key: 'politics' },                 // 정치/매력 (RTK14 divergence)
     { label: '매력', key: 'charm' },
     { label: '삭턴', key: null },                       // a_genList.php:140 — killturn(sort option 8=false)
+    { label: '벌점', key: 'refreshScoreTotal' },
 ];
 
 export default function GeneralsPage() {
@@ -86,8 +88,8 @@ export default function GeneralsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     // 정렬 상태 — sortKey가 null이면 서버 제공 순서(레거시 AG-Grid: 미클릭 시 rowData 원순서) 그대로.
-    const [sortKey, setSortKey] = useState<SortKey | null>(null);
-    const [sortDesc, setSortDesc] = useState(false);
+    const [sortKey, setSortKey] = useState<SortKey | null>('refreshScoreTotal');
+    const [sortDesc, setSortDesc] = useState(true);
 
     // 헤더 클릭 = 정렬 토글. null 키(정렬 불가 컬럼)는 무시.
     // 레거시 sortingOrder 모사:
@@ -208,7 +210,6 @@ export default function GeneralsPage() {
 
     // 공개 surface 컬럼(a_genList.php 헤더 순서 그대로):
     //   얼굴·장수명·연령·성격·특기·명성(Lv 버킷)·국가·명성칭호·계급·관직·통솔·무력·지력·정치·매력·삭턴
-    // (벌점=BLOCKED, 병력=loop-13 제거, 금/쌀=OQ-5 미노출)
     // 정렬 가능 컬럼(key≠null)은 클릭 가능한 버튼으로, 불가 컬럼(key=null)은 plain span으로 렌더.
     const headers = COLUMNS.map((col) => (
         col.key !== null ? (
@@ -292,6 +293,10 @@ export default function GeneralsPage() {
         g.charm != null ? formatNumber(g.charm) : '-',
         // 삭턴 — killturn(a_genList.php:140, sort=false)
         g.killturn != null ? String(g.killturn) : '-',
+        <span key={`refresh-${g.generalId}`}>
+            {Math.round(g.refreshScoreTotal / 10) * 10}
+            <br />【{formatRefreshScore(Math.round(g.refreshScoreTotal / 10) * 10)}】
+        </span>,
     ]);
 
     return (

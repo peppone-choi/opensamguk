@@ -61,16 +61,7 @@ class GlobalMenuController {
                 ),
             ),
             item("연감", "v_history.php", newTab = true),
-            MenuNode(
-                type = "split",
-                main = item("게시판", "/board/community", newTab = true),
-                subMenu = listOf(
-                    item("건의/제안", "/board/request", newTab = true),
-                    item("팁/강좌", "/board/tip", newTab = true),
-                    line,
-                    item("패치 내역", "/board/patch", newTab = true),
-                ),
-            ),
+            item("게시판", "/game/board", newTab = true),
             MenuNode(
                 type = "split",
                 main = item("공식 오픈 톡", "https://open.kakao.com/o/", newTab = true),

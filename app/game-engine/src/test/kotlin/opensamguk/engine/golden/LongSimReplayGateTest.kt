@@ -133,7 +133,9 @@ class LongSimReplayGateTest {
                 val g = world.getGeneralById(generalId)!!
                 val raw = world.getNationById(g.nationId)?.meta?.get("turn_last_${g.officerLevel}")
                 @Suppress("UNCHECKED_CAST")
-                ai.chooseNationTurn(generalId, reserved, LastTurn.fromRaw(raw as? Map<String, Any?>))
+                ai.chooseNationTurn(generalId, reserved, LastTurn.fromRaw(raw as? Map<String, Any?>)).also {
+                    ai.drainNationPassDeltas(recorder)
+                }
             },
             beginGeneralTurn = { generalId -> ai.beginGeneralTurn(generalId) },
             lifecycleEnvOf = { state, date ->
@@ -147,6 +149,7 @@ class LongSimReplayGateTest {
                     turnTimeHm = date,
                 )
             },
+            pullGeneralTurnOf = { ai.drainGeneralPassDeltas(recorder) },
             reservedActionOf = { _ -> ReservedTurn("휴식", "") },
         )
 
@@ -174,17 +177,6 @@ class LongSimReplayGateTest {
             eventStore = EventStore.withDefaults(),
         )
 
-        var aiKvApplied = 0
-        fun applyAiKvDeltas() {
-            val deltas = ai.kvDeltas
-            while (aiKvApplied < deltas.size) {
-                val d = deltas[aiKvApplied++]
-                val nation = world.getNationById(d.nationId) ?: continue
-                world.applyNationDirtyFree(nation.copy(meta = nation.meta + (d.key to d.value)))
-                recorder.recordNationEnvKv(d.nationId, d.key, d.value)
-            }
-        }
-
         fun applyRecorderKvToWorld() {
             for ((kvKey, value) in recorder.kvDirty()) {
                 if (kvKey.table != "nation_env") continue
@@ -197,7 +189,6 @@ class LongSimReplayGateTest {
         val driver = TurnDaemonLifecycle.MonthBoundaryDriver(
             drain = { upto ->
                 lifecycle.runTick(upto)
-                applyAiKvDeltas()
             },
             runMonth = { nextTurn ->
                 val state = world.getState()

@@ -3,6 +3,7 @@ package opensamguk.gameapi.security
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
+import opensamguk.common.auth.GatewayJwtClaims
 import org.junit.jupiter.api.Test
 import java.util.Date
 import kotlin.test.assertEquals
@@ -22,11 +23,27 @@ class GameApiJwtVerifierTest {
     private val sharedSecret = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
     private val verifier = GameApiJwtVerifier(sharedSecret)
 
-    private fun mint(secret: String, userId: Long, username: String? = null, expiresInMs: Long = 900_000): String {
+    private fun mint(
+        secret: String,
+        userId: Long,
+        username: String? = "alice",
+        tokenType: String = GatewayJwtClaims.ACCESS_TOKEN,
+        expiresInMs: Long = 900_000,
+    ): String {
         val key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret))
         val now = Date()
-        val b = Jwts.builder().subject(userId.toString()).issuedAt(now).expiration(Date(now.time + expiresInMs)).signWith(key)
-        if (username != null) b.claim("username", username)
+        val b = Jwts.builder()
+            .subject(userId.toString())
+            .issuedAt(now)
+            .expiration(Date(now.time + expiresInMs))
+            .claim(GatewayJwtClaims.TOKEN_TYPE, tokenType)
+            .claim(GatewayJwtClaims.ROLE, "USER")
+            .claim(GatewayJwtClaims.NICKNAME, "앨리스")
+            .claim(GatewayJwtClaims.GRADE, 1)
+            .claim(GatewayJwtClaims.PICTURE, "alice.jpg")
+            .claim(GatewayJwtClaims.IMAGE_SERVER, 1)
+            .signWith(key)
+        if (username != null) b.claim(GatewayJwtClaims.USERNAME, username)
         return b.compact()
     }
 
@@ -36,6 +53,11 @@ class GameApiJwtVerifierTest {
         assertTrue(verifier.isValid(token))
         assertEquals(42L, verifier.getUserId(token))
         assertEquals("alice", verifier.getUsername(token))
+        val profile = verifier.verifyAccessToken(token)
+        assertEquals("앨리스", profile?.nickname)
+        assertEquals(1, profile?.grade)
+        assertEquals("alice.jpg", profile?.picture)
+        assertEquals(1, profile?.imageServer)
     }
 
     @Test
@@ -56,5 +78,14 @@ class GameApiJwtVerifierTest {
     fun `rejects garbage`() {
         assertFalse(verifier.isValid("not-a-jwt"))
         assertNull(verifier.getUserId("not-a-jwt"))
+    }
+
+    @Test
+    fun `rejects a signed refresh token and an access token missing profile claims`() {
+        val refresh = mint(sharedSecret, userId = 42L, tokenType = GatewayJwtClaims.REFRESH_TOKEN)
+        val incomplete = mint(sharedSecret, userId = 42L, username = null)
+
+        assertNull(verifier.verifyAccessToken(refresh))
+        assertNull(verifier.verifyAccessToken(incomplete))
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
+import java.time.Instant
 import kotlin.test.assertEquals
 
 /**
@@ -125,6 +126,66 @@ class JdbcFlushExecutorIT {
                 (11, '태수십일', 2, 5, 60, 60, 60, 0, 0, 0, 3, 5, 100, 100, now(), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
+        )
+    }
+
+    @Test
+    fun `flush upserts and deletes general access log rows`() {
+        val worldState = linkedMapOf<String, Any?>(
+            "id" to 1,
+            "current_year" to 190,
+            "current_month" to 1,
+            "current_phase" to 1,
+        )
+        val lastRefresh = Instant.parse("2026-07-11T08:00:00Z")
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = worldState,
+                generalAccessLogUpserts = listOf(
+                    GeneralAccessLogWriteRow(10, 7, lastRefresh, 3, 30, 4, 40),
+                ),
+            ),
+        )
+
+        val stored = jdbc.queryForMap(
+            "SELECT user_id, refresh, refresh_total, refresh_score, refresh_score_total FROM general_access_log WHERE general_id = 10",
+            MapSqlParameterSource(),
+        )
+        assertEquals(7L, (stored["user_id"] as Number).toLong())
+        assertEquals(3, intOf(stored["refresh"]))
+        assertEquals(30, intOf(stored["refresh_total"]))
+        assertEquals(4, intOf(stored["refresh_score"]))
+        assertEquals(40, intOf(stored["refresh_score_total"]))
+        assertEquals(
+            listOf(
+                FlushExecOp("world_state", FlushVerb.UPDATE, 1),
+                FlushExecOp("general_access_log", FlushVerb.UPSERT, 1),
+            ),
+            executor.lastOps(),
+        )
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = worldState,
+                generalAccessLogDeletes = listOf(10),
+            ),
+        )
+
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general_access_log WHERE general_id = 10",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
+        assertEquals(
+            listOf(
+                FlushExecOp("world_state", FlushVerb.UPDATE, 1),
+                FlushExecOp("general_access_log", FlushVerb.DELETE_MANY, 1),
+            ),
+            executor.lastOps(),
         )
     }
 
@@ -358,6 +419,34 @@ class JdbcFlushExecutorIT {
 
         jdbc.update(
             "UPDATE world_state SET meta = CAST('{}' AS jsonb), current_year = 190, current_month = 1, isunited = 0 WHERE id = 1",
+            MapSqlParameterSource(),
+        )
+    }
+
+    @Test
+    fun `world_state flush persists admin status cadence and config`() {
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf(
+                    "id" to 1,
+                    "current_year" to 190,
+                    "current_month" to 6,
+                    "status" to "PRE_OPEN",
+                    "tick_seconds" to 1_800,
+                    "config" to linkedMapOf("npcmode" to 2, "turnterm" to 30),
+                ),
+            ),
+        )
+
+        val row = jdbc.queryForMap("SELECT status, tick_seconds, config::text AS config FROM world_state WHERE id = 1", MapSqlParameterSource())
+        assertEquals("PRE_OPEN", row["status"])
+        assertEquals(1_800, row["tick_seconds"])
+        val config = row["config"].toString()
+        assertEquals(true, config.contains("\"npcmode\": 2") || config.contains("\"npcmode\":2"))
+        assertEquals(true, config.contains("\"turnterm\": 30") || config.contains("\"turnterm\":30"))
+
+        jdbc.update(
+            "UPDATE world_state SET status = 'OPEN', tick_seconds = 3600, config = CAST('{}' AS jsonb) WHERE id = 1",
             MapSqlParameterSource(),
         )
     }

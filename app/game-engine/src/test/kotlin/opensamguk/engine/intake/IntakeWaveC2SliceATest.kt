@@ -335,7 +335,9 @@ class IntakeWaveC2SliceATest {
     @Test
     fun `resetStat explicit bonus writes stats previous user season log and rank`() {
         val world = world(
-            general = general(meta = linkedMapOf("owner" to 100)),
+            general = general(meta = linkedMapOf("owner" to 100)).copy(
+                stats = GeneralStats(80, 70, 60, 73, 84),
+            ),
             stateMeta = linkedMapOf(
                 "isunited" to 0,
                 "season" to 7,
@@ -361,7 +363,7 @@ class IntakeWaveC2SliceATest {
         assertEquals(56, ok.leadership)
         assertEquals(56, ok.strength)
         assertEquals(56, ok.intel)
-        assertEquals(GeneralStats(56, 56, 56), world.getGeneralById(10)!!.stats)
+        assertEquals(GeneralStats(56, 56, 56, 73, 84), world.getGeneralById(10)!!.stats)
 
         val invKv = recorder.inheritanceKvWrites().single { it.namespace == "inheritance_100" && it.key == "previous" }
         @Suppress("UNCHECKED_CAST")
@@ -378,7 +380,8 @@ class IntakeWaveC2SliceATest {
 
         val payload = flush(world, recorder)
         assertTrue(payload.updatedGenerals.any {
-            it.id == 10 && it.leadership == 56 && it.strength == 56 && it.intel == 56
+            it.id == 10 && it.leadership == 56 && it.strength == 56 && it.intel == 56 &&
+                it.politics == 73 && it.charm == 84
         })
         assertTrue(payload.inheritanceKvWrites.any { it.namespace == "inheritance_100" && it.key == "previous" })
         assertTrue(payload.kvWrites.any { it.table == "user" && it.namespace == "user_100" && it.key == "last_stat_reset" })

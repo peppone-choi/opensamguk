@@ -123,4 +123,30 @@ class CommandControllerSecurityTest {
             .andExpect(jsonPath("$.status").value("AVAILABLE"))
             .andExpect(jsonPath("$.requestId").value("req-msg"))
     }
+
+    @Test
+    fun `select pool pick uses the authenticated account without requiring an existing general`() {
+        `when`(reserve.reserveForOwner(0, "selectPoolPick", 0, null, 7)).thenReturn(ReserveResult("req-pick", 0))
+
+        mockMvc().perform(
+            post("/api/command/{code}", "selectPoolPick")
+                .param("generalId", "999")
+                .with(principal(7L)),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.requestId").value("req-pick"))
+
+        verify(precheck, never()).precheck(anyInt(), anyString())
+        verify(reserve).reserveForOwner(0, "selectPoolPick", 0, null, 7)
+    }
+
+    @Test
+    fun `select pool commands reject an unauthenticated account`() {
+        mockMvc().perform(
+            post("/api/command/{code}", "selectPoolPick").param("generalId", "0"),
+        )
+            .andExpect(status().isUnauthorized)
+
+        verify(precheck, never()).precheck(anyInt(), anyString())
+    }
 }

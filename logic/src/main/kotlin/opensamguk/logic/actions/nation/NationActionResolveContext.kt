@@ -6,6 +6,7 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.message.Message
+import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
  * A diplomacy `(from, to)` state transition the nation-command resolver buffers (T0.6). The engine
@@ -67,6 +68,7 @@ class NationActionResolveContext(
     val generalName: String = "",
     /** Dest nation/general display name for log tokens. */
     val destName: String = "",
+    val pipeline: GeneralActionPipeline? = null,
     /** The diplomacy matrix snapshot keyed `(from, to)` (the resolver reads current state/term). */
     private val diplomacyMatrix: Map<Pair<Int, Int>, Diplomacy> = emptyMap(),
     private val lastTurn: LastTurn,

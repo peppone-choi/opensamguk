@@ -31,9 +31,9 @@ class GlobalMenuControllerTest {
             .andExpect(jsonPath("$.menu[1].type").value("multi"))
             .andExpect(jsonPath("$.menu[1].subMenu.length()").value(6))
             .andExpect(jsonPath("$.menu[1].subMenu[3].type").value("line"))
-            // #4 게시판 — split with main
-            .andExpect(jsonPath("$.menu[3].type").value("split"))
-            .andExpect(jsonPath("$.menu[3].main.name").value("게시판"))
+            .andExpect(jsonPath("$.menu[3].type").value("item"))
+            .andExpect(jsonPath("$.menu[3].name").value("게시판"))
+            .andExpect(jsonPath("$.menu[3].url").value("/game/board"))
             // #7 기타 정보 — 빙의일람 gated by condShowVar npcMode
             .andExpect(jsonPath("$.menu[6].subMenu[1].condShowVar").value("npcMode"))
     }

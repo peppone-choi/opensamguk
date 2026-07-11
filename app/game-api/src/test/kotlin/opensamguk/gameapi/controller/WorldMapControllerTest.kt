@@ -13,6 +13,9 @@ import opensamguk.gameapi.read.WorldStateReadRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -136,6 +139,25 @@ class WorldMapControllerTest {
             .andExpect(jsonPath("$.myCity").value(3))
             .andExpect(jsonPath("$.spyList").isEmpty)
             .andExpect(jsonPath("$.shownByGeneralList").isEmpty)
+    }
+
+    @Test
+    fun `admin sees every city through fog`() {
+        seedWorld()
+        SecurityContextHolder.getContext().authentication = UsernamePasswordAuthenticationToken(
+            1L,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_ADMIN")),
+        )
+
+        try {
+            mockMvc().perform(get("/api/map"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.spyList.1").value(1))
+                .andExpect(jsonPath("$.spyList.3").value(1))
+        } finally {
+            SecurityContextHolder.clearContext()
+        }
     }
 
     @Test

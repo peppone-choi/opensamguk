@@ -527,6 +527,7 @@ export interface MyGeneralSummary {
     crew: number;
     npcState: number;
     mine: boolean;
+    refreshScoreTotal: number;
 }
 
 export interface MyGeneralsResponse {

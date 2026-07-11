@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets
  * Optional env fences:
  *  - `SCENARIO_SEED_ENABLED` (default true) — set false to disable seeding entirely.
  *  - `SCENARIO_CODE` (default `scenario_1010`) — selects the committed resource set.
+ *  - `SCENARIO_DIR` — optional external directory containing `${SCENARIO_CODE}.json`.
  */
 @Component
 class ScenarioSeedRunner(
@@ -53,6 +54,7 @@ class ScenarioSeedRunner(
 class SeedBootstrap(
     @Value("\${SCENARIO_CODE:scenario_1010}") private val scenarioCode: String,
     @Value("\${SCENARIO_SEED_ENABLED:true}") private val seedEnabled: Boolean = true,
+    @Value("\${SCENARIO_DIR:}") private val scenarioDir: String = "",
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
 
@@ -70,7 +72,7 @@ class SeedBootstrap(
             return false
         }
 
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/$scenarioCode.json"))
+        val scenario = ScenarioJson.loadScenario(readScenarioJson())
         val mapName = scenarioMapName(scenario)
         val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
 
@@ -82,9 +84,9 @@ class SeedBootstrap(
         val counts = importer.importAll(jdbc)
         log.info(
             "Scenario seed complete — world_state={} nation={} city={} general={} general_turn={} " +
-                "nation_turn={} diplomacy={} rank_data={} ng_games={}",
+                "nation_turn={} diplomacy={} rank_data={} ng_games={} event={}",
             counts.worldState, counts.nation, counts.city, counts.general, counts.generalTurn,
-            counts.nationTurn, counts.diplomacy, counts.rankData, counts.ngGames,
+            counts.nationTurn, counts.diplomacy, counts.rankData, counts.ngGames, counts.event,
         )
         return true
     }
@@ -93,6 +95,14 @@ class SeedBootstrap(
         val stream = javaClass.classLoader.getResourceAsStream(path)
             ?: error("resource not found on classpath: $path")
         return stream.use { it.readBytes().toString(StandardCharsets.UTF_8) }
+    }
+
+    internal fun readScenarioJson(): String {
+        if (scenarioDir.isNotBlank()) {
+            val file = java.io.File(scenarioDir, "$scenarioCode.json")
+            if (file.isFile) return file.readText(StandardCharsets.UTF_8)
+        }
+        return readResource("scenario/$scenarioCode.json")
     }
 
     private fun scenarioMapName(scenario: Scenario): String {

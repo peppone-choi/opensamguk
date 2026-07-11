@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Shell from '../../../../components/Shell';
-import GameCard from '../../../../components/GameCard';
 import GameTable from '../../../../components/GameTable';
-import StatusBadge from '../../../../components/StatusBadge';
 import { api } from '../../../../lib/api';
 import { formatNumber } from '../../../../lib/format';
 import type { TrafficSummary } from '../../../../types/game';
@@ -35,50 +33,50 @@ export default function TrafficPage() {
     </Shell>
   );
 
-  const summaryCards = [
-    { label: '현재 접속', value: data.currentOnline, variant: 'jade' as const },
-    { label: '오늘 방문자', value: data.todayUnique, variant: 'gold' as const },
-    { label: '오늘 페이지뷰', value: data.todayViews, variant: 'muted' as const },
-    { label: '이번 주 방문자', value: data.weekUnique, variant: 'muted' as const },
-    { label: '이번 주 페이지뷰', value: data.weekViews, variant: 'muted' as const },
-    { label: '이번 달 방문자', value: data.monthUnique, variant: 'muted' as const },
-    { label: '이번 달 페이지뷰', value: data.monthViews, variant: 'muted' as const },
-    { label: '최고 동시접속', value: data.peakConcurrent, variant: 'crimson' as const },
-  ];
-
-  const headers = ['날짜', '방문자', '페이지뷰', '평균 체류', '최고 동시접속'];
-  const rows = data.history.map((h) => [
+  const refreshRows = data.history.map((h) => [
+    `${h.year}년 ${h.month}월`,
     h.date,
-    formatNumber(h.uniqueVisitors),
-    formatNumber(h.pageViews),
-    `${h.avgSessionMin}분`,
-    formatNumber(h.peakConcurrent),
+    formatNumber(h.refresh),
   ]);
+  const onlineRows = data.history.map((h) => [
+    `${h.year}년 ${h.month}월`,
+    h.date,
+    formatNumber(h.online),
+  ]);
+  const refresherRows = [
+    ['접속자 총합', formatNumber(data.totalRefreshScore), formatNumber(data.totalRefresh)],
+    ...data.topRefreshers.map((user) => [
+      user.name,
+      formatNumber(user.refreshScoreTotal),
+      formatNumber(user.refresh),
+    ]),
+  ];
 
   return (
     <Shell>
       <h1 style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-lg)' }}>접속 통계</h1>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
-        gap: 'var(--space-md)',
-        marginBottom: 'var(--space-lg)',
-      }}>
-        {summaryCards.map((c) => (
-          <GameCard key={c.label}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>{c.label}</div>
-              <div style={{ fontSize: 'var(--text-xl)', fontWeight: 700, marginTop: 'var(--space-xs)' }}>
-                <StatusBadge variant={c.variant}>{formatNumber(c.value)}</StatusBadge>
-              </div>
-            </div>
-          </GameCard>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 360px), 1fr))', gap: 'var(--space-lg)' }}>
+        <section>
+          <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-sm)' }}>접 속 량</h2>
+          <GameTable headers={['연월', '시각', '갱신']} rows={refreshRows} />
+          <p style={{ marginTop: 'var(--space-sm)', color: 'var(--text-muted)' }}>
+            현재 {formatNumber(data.refresh)} · 최고 {formatNumber(data.maxRefresh)}
+          </p>
+        </section>
+        <section>
+          <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-sm)' }}>접 속 자</h2>
+          <GameTable headers={['연월', '시각', '접속자']} rows={onlineRows} />
+          <p style={{ marginTop: 'var(--space-sm)', color: 'var(--text-muted)' }}>
+            현재 {formatNumber(data.currentOnline)} · 최고 {formatNumber(data.maxOnline)}
+          </p>
+        </section>
       </div>
 
-      <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>일자별 통계</h2>
-      <GameTable headers={headers} rows={rows} />
+      <section style={{ marginTop: 'var(--space-xl)' }}>
+        <h2 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-md)' }}>주 의 대 상 자 (순간과도갱신)</h2>
+        <GameTable headers={['장수', '누적 벌점', '갱신']} rows={refresherRows} />
+      </section>
     </Shell>
   );
 }

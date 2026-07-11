@@ -76,16 +76,28 @@ class CommandController(
         @RequestParam(required = false, defaultValue = "0") turnIdx: Int,
         @RequestBody(required = false) argJson: String? = null,
     ): ResponseEntity<Any> {
+        val ownerUserId = if (code in SELECT_POOL_COMMANDS) {
+            if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+            }
+            userId.toInt()
+        } else {
+            null
+        }
+        if (code == SELECT_POOL_PICK) {
+            return reserveAccepted(0, code, turnIdx, argJson, ownerUserId)
+        }
+
         // Task 4 — when authenticated, the passed generalId MUST be the caller's own general.
         if (userId != null && generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
         return when (val result = precheck.precheck(generalId = generalId, actionCode = code)) {
-            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, argJson)
+            PrecheckResult.Available -> reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
 
             is PrecheckResult.Blocked ->
                 if (isForecastReservable(code)) {
-                    reserveAccepted(generalId, code, turnIdx, argJson)
+                    reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
                 } else {
                     ResponseEntity.ok(
                         BlockedResponse(status = "BLOCKED", reason = result.reason, constraintName = result.constraintName),
@@ -94,7 +106,7 @@ class CommandController(
 
             is PrecheckResult.Unknown ->
                 if (isForecastReservable(code)) {
-                    reserveAccepted(generalId, code, turnIdx, argJson)
+                    reserveAccepted(generalId, code, turnIdx, argJson, ownerUserId)
                 } else {
                     ResponseEntity.ok(
                         BlockedResponse(status = "UNKNOWN", reason = "명령을 확인할 수 없습니다."),
@@ -108,13 +120,24 @@ class CommandController(
         code: String,
         turnIdx: Int,
         argJson: String?,
+        ownerUserId: Int? = null,
     ): ResponseEntity<Any> {
-        val reserved = reserve.reserve(
-            generalId = generalId,
-            actionCode = code,
-            turnIdx = turnIdx,
-            argJson = argJson,
-        )
+        val reserved = if (ownerUserId == null) {
+            reserve.reserve(
+                generalId = generalId,
+                actionCode = code,
+                turnIdx = turnIdx,
+                argJson = argJson,
+            )
+        } else {
+            reserve.reserveForOwner(
+                generalId = generalId,
+                actionCode = code,
+                turnIdx = turnIdx,
+                argJson = argJson,
+                ownerUserId = ownerUserId,
+            )
+        }
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(
             ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),
         )
@@ -363,6 +386,8 @@ class CommandController(
         }
 
     private companion object {
+        private const val SELECT_POOL_PICK = "selectPoolPick"
+        private val SELECT_POOL_COMMANDS = setOf(SELECT_POOL_PICK, "selectPoolUpdate")
         private val FORECAST_RESERVABLE_COMMANDS: Set<String> =
             GameConst.availableGeneralCommand.values.flatten().toSet()
 

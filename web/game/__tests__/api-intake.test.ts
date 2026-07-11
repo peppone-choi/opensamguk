@@ -54,11 +54,18 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
         }
     });
 
+    it('registered CheckOwner posts the PHP argument shape and resolves the intake', async () => {
+        mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'owner-1', code: 'CheckOwner' });
+        const out = await api.instantAction('CheckOwner', 7, { destGeneralID: 27 });
+        expect(isIntakeQueued(out)).toBe(true);
+        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+        expect(fetchMock.mock.calls[0][0]).toBe('/api/game/api/instant-action/CheckOwner?generalId=7');
+        expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ destGeneralID: 27 });
+    });
+
     it('4xx는 reject — BE 본문의 실제 사유(error)를 그대로 싣는다', async () => {
-        mockFetchOnce(409, { error: '아직 배선되지 않은 즉시 액션입니다.', code: 'CheckOwner' });
-        await expect(api.instantAction('CheckOwner', 7, {})).rejects.toThrow(
-            '아직 배선되지 않은 즉시 액션입니다.',
-        );
+        mockFetchOnce(400, { error: '대상 장수가 존재하지 않습니다.', code: 'CheckOwner' });
+        await expect(api.instantAction('CheckOwner', 7, {})).rejects.toThrow('대상 장수가 존재하지 않습니다.');
     });
 
     it('본문 없는 4xx는 상태줄로 reject된다 (사유 날조 없음)', async () => {

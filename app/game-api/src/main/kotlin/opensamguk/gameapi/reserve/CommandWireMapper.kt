@@ -51,10 +51,16 @@ object CommandWireMapper {
         "setBlockWar",
         "setBlockScout",
         "tournamentEnroll",
+        "tournamentStart",
+        "tournamentReset",
         "inheritResetTurnTime",
         "inheritResetSpecialWar",
         "inheritSetNextSpecialWar",
         "ResetStat",
+        "DieOnPrestart",
+        "DropItem",
+        "InstantRetreat",
+        "CheckOwner",
         // 유산 포인트 구매 — FE(inherit/nation page)가 PHP API 이름 그대로 BuyHiddenBuff/BuyRandomUnique 전송.
         "BuyHiddenBuff",
         "BuyRandomUnique",
@@ -128,8 +134,16 @@ object CommandWireMapper {
      * @param generalId the RESOLVED acting general (from the controller's ownership check — never the body).
      * @param requestId the generated request id (echoed back to the UI as the 202 requestId).
      * @param argJson the raw JSON body (the merged extraArgs + picked arg), or null/blank for no-arg commands.
+     * @param ownerUserId verified gateway JWT subject for account-owned out-of-band commands. It is
+     * never read from [argJson].
      */
-    fun toCommand(code: String, generalId: Int, requestId: String, argJson: String?): TurnDaemonCommand? {
+    fun toCommand(
+        code: String,
+        generalId: Int,
+        requestId: String,
+        argJson: String?,
+        ownerUserId: Int? = null,
+    ): TurnDaemonCommand? {
         if (code !in intakeCodes) return null
         val args = parseArgs(argJson)
         return when (code) {
@@ -173,6 +187,15 @@ object CommandWireMapper {
             "tournamentEnroll" -> TurnDaemonCommand.TournamentEnroll(
                 requestId = requestId, generalId = generalId, value = args.int("value") ?: 1,
             )
+            "tournamentStart" -> TurnDaemonCommand.TournamentStart(
+                requestId = requestId,
+                generalId = generalId,
+                tournamentType = args.int("type") ?: args.int("tournamentType") ?: args.int("tnmtType") ?: 0,
+            )
+            "tournamentReset" -> TurnDaemonCommand.TournamentReset(
+                requestId = requestId,
+                generalId = generalId,
+            )
             "inheritResetTurnTime" -> TurnDaemonCommand.InheritResetTurnTime(
                 requestId = requestId, generalId = generalId,
             )
@@ -189,6 +212,18 @@ object CommandWireMapper {
                 strength = args.int("strength") ?: 0,
                 intel = args.int("intel") ?: 0,
                 inheritBonusStat = if ("inheritBonusStat" in args) args.intList("inheritBonusStat") else null,
+            )
+            "DieOnPrestart" -> TurnDaemonCommand.DieOnPrestart(requestId = requestId, generalId = generalId)
+            "DropItem" -> TurnDaemonCommand.DropItem(
+                requestId = requestId,
+                generalId = generalId,
+                itemType = args.str("itemType") ?: "",
+            )
+            "InstantRetreat" -> TurnDaemonCommand.InstantRetreat(requestId = requestId, generalId = generalId)
+            "CheckOwner" -> TurnDaemonCommand.CheckOwner(
+                requestId = requestId,
+                generalId = generalId,
+                destGeneralId = args.int("destGeneralID") ?: args.int("destGeneralId") ?: 0,
             )
             // 유산 포인트 구매. FE는 `buffKey`(PHP arg `type`)+`level`을 전송. prevLevel은 클라가 보내도
             // 무시 — 엔진 핸들러가 general aux.inheritBuff에서 서버측으로 산출(PHP launch와 동일).
@@ -345,6 +380,7 @@ object CommandWireMapper {
             // ── W6f 장수 선택 풀 — 픽/갱신. 스탯/성격은 nullable 유지(풀 기본값/편집가능 분기는 엔진). ──
             "selectPoolPick" -> TurnDaemonCommand.SelectPoolPick(
                 requestId = requestId, generalId = generalId,
+                ownerUserId = ownerUserId,
                 uniqueName = args.str("uniqueName") ?: "",
                 leadership = args.int("leadership"), strength = args.int("strength"), intel = args.int("intel"),
                 personalityName = args.str("personalityName"),
@@ -352,6 +388,7 @@ object CommandWireMapper {
             )
             "selectPoolUpdate" -> TurnDaemonCommand.SelectPoolUpdate(
                 requestId = requestId, generalId = generalId,
+                ownerUserId = ownerUserId,
                 uniqueName = args.str("uniqueName") ?: "",
                 leadership = args.int("leadership"), strength = args.int("strength"), intel = args.int("intel"),
                 personalityName = args.str("personalityName"),

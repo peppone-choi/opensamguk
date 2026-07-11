@@ -43,6 +43,8 @@ object MakeGeneral {
         val leadership: Int,        // 폼 + dL
         val strength: Int,          // 폼 + dS
         val intel: Int,             // 폼 + dI
+        val politics: Int,
+        val charm: Int,
         val age: Int,               // 20 + (dL+dS+dI)*2 - nextRangeInt(0,1)
         val special2: String,       // 천재면 전투특기 id, 아니면 GameConst.defaultSpecialWar("None")
         val personal: String,       // 폼 성격, 'Random'/무효면 choice 결과
@@ -65,36 +67,48 @@ object MakeGeneral {
         formLeadership: Int,
         formStrength: Int,
         formIntel: Int,
+        formPolitics: Int = 50,
+        formCharm: Int = 50,
         cityPool: List<Int>,
         availablePersonality: List<String>,
         character: String,
         turnterm: Int,
         geniusProb: Double = 0.01,
+        geniusRemaining: Int = GameConst.defaultMaxGenius,
+        inheritSpecial: String? = null,
+        inheritCity: Int? = null,
+        inheritBonusStat: List<Int>? = null,
+        inheritTurntimeZone: Int? = null,
     ): Result {
-        // 1. 천재 여부 — Join.php:264. 드로우는 항상 소비(천재풀 차감/게이트는 드로우 이후라 무관).
-        val genius = rng.nextBool(geniusProb)
+        val geniusCandidate = inheritSpecial != null || rng.nextBool(geniusProb)
+        val genius = geniusCandidate && geniusRemaining > 0
 
-        // 2. 공백지 출생 도시 — Join.php:283.
-        val cityId = rng.choice(cityPool)
+        val cityId = inheritCity ?: rng.choice(cityPool)
 
-        // 3. 보너스 횟수 N — Join.php:293.
-        val n = rng.nextRangeInt(3, 5)
-
-        // 4. 보너스 분배 — Join.php:293-294. 가중치는 폼 입력값 고정(재대입 전).
         var dL = 0
         var dS = 0
         var dI = 0
-        val weights = linkedMapOf(
-            "0" to formLeadership.toDouble(),
-            "1" to formStrength.toDouble(),
-            "2" to formIntel.toDouble(),
-        )
-        repeat(n) {
-            when (rng.choiceUsingWeight(weights)) {
-                "0" -> dL++
-                "1" -> dS++
-                "2" -> dI++
+        val n = if (inheritBonusStat != null) {
+            require(inheritBonusStat.size == 3)
+            dL = inheritBonusStat[0]
+            dS = inheritBonusStat[1]
+            dI = inheritBonusStat[2]
+            dL + dS + dI
+        } else {
+            val count = rng.nextRangeInt(3, 5)
+            val weights = linkedMapOf(
+                "0" to formLeadership.toDouble(),
+                "1" to formStrength.toDouble(),
+                "2" to formIntel.toDouble(),
+            )
+            repeat(count) {
+                when (rng.choiceUsingWeight(weights)) {
+                    "0" -> dL++
+                    "1" -> dS++
+                    "2" -> dI++
+                }
             }
+            count
         }
         val leadership = formLeadership + dL
         val strength = formStrength + dS
@@ -105,13 +119,18 @@ object MakeGeneral {
 
         // 6. 천재 전투특기 — Join.php:316-331. post-bonus L/S/I, dex 전부 0.
         val special2 = if (genius) {
-            SpecialityHelper.pickSpecialWar(rng, leadership, strength, intel, 0, 0, 0, 0, 0)
+            inheritSpecial ?: SpecialityHelper.pickSpecialWar(rng, leadership, strength, intel, 0, 0, 0, 0, 0)
         } else {
             GameConst.defaultSpecialWar // "None"
         }
 
         // 7. 턴타임 — Join.php:369 (getRandTurn). 성격/상성 드로우보다 먼저.
-        val turntimeSecond = rng.nextRangeInt(0, 60 * turnterm - 1)
+        val turnSeconds = 60 * turnterm
+        val turntimeSecond = if (inheritTurntimeZone == null) {
+            rng.nextRangeInt(0, turnSeconds - 1)
+        } else {
+            inheritTurntimeZone * turnterm + rng.nextRangeInt(0, (turnterm - 1).coerceAtLeast(0))
+        }
         val turntimeFraction = rng.nextRangeInt(0, 999999)
 
         // 8. 성격 — Join.php:388-389. 폼값이 availablePersonality 에 없으면(='Random') 무작위.
@@ -130,6 +149,8 @@ object MakeGeneral {
             leadership = leadership,
             strength = strength,
             intel = intel,
+            politics = formPolitics,
+            charm = formCharm,
             age = age,
             special2 = special2,
             personal = personal,

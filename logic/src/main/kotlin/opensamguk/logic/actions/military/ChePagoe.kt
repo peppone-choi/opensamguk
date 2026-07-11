@@ -17,10 +17,12 @@ import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.actions.GeneralRankIncrement
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
+import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.valueFit
 import kotlin.math.log2
 
@@ -45,7 +47,7 @@ import kotlin.math.log2
  *   3. prob /= distance; prob = valueFit(prob, 0, 0.5)
  *   4. DRAW1: rng.nextBool(prob) → false면 실패 분기 (골든 캡처 대상)
  *   5. 실패: 로그 + DRAW2(nextRangeInt 1,100) + DRAW3(nextRangeInt 1,70) + cost 차감 + exp/ded + stat_exp+1 + lastTurn
- *   6. 성공: SabotageInjury(미포팅) + affectDestCity(2 draws) + item + DRAW4/5 + cost + exp/ded + stat_exp+1 + rank+1 + lastTurn + staticEvent
+ *   6. 성공: SabotageInjury + affectDestCity(2 draws) + item + DRAW4/5 + cost + exp/ded + stat_exp+1 + rank+1 + lastTurn + staticEvent
  */
 fun chePagoe(pipeline: GeneralActionPipeline, maxLevel: Int = 255): ChePagoe =
     ChePagoe(pipeline, maxLevel)
@@ -171,7 +173,53 @@ class ChePagoe(
             return
         }
 
-        // 성공 분기 — 골든 미캡처, SabotageInjury 서브시스템 미포팅으로 quarantine
-        // TODO(백로그): che_화계.php:308-340 성공 경로 전체 포팅 (SabotageInjury + affectDestCity + item + exp/ded + rank)
+        val destCityGeneralList = context.candidateGenerals.filter { it.nationId == destCity.nationId }
+        val injuryCount = sabotageInjury(rng, destCityGeneralList, "계략", context, pipeline)
+
+        val defAmount = maxOf(
+            0,
+            valueFit(
+                rng.nextRangeInt(GameConst.sabotageDamageMin, GameConst.sabotageDamageMax).toDouble(),
+                null,
+                destCity.defense.toDouble(),
+            ).toInt(),
+        )
+        val wallAmount = maxOf(
+            0,
+            valueFit(
+                rng.nextRangeInt(GameConst.sabotageDamageMin, GameConst.sabotageDamageMax).toDouble(),
+                null,
+                destCity.wall.toDouble(),
+            ).toInt(),
+        )
+        d.destCity = destCity.copy(
+            defense = destCity.defense - defAmount,
+            wall = destCity.wall - wallAmount,
+            state = 32,
+        )
+
+        context.addGlobalActionLog("누군가가 <G><b>$destCityName</b></>의 성벽을 허물었습니다.")
+        val josaYi = JosaUtil.pick(commandName, "이")
+        context.addLog("<G><b>$destCityName</b></>에 $commandName$josaYi 성공했습니다. <1>${context.date}</>")
+        context.addActionPlainLog(
+            "도시의 수비가 <C>${numberFormat(defAmount)}</>, 성벽이 <C>${numberFormat(wallAmount)}</>만큼 감소하고, 장수 <C>$injuryCount</>명이 부상 당했습니다.",
+        )
+
+        consumeSabotageItemIfNeeded(context)
+
+        val exp = rng.nextRangeInt(201, 300)
+        val ded = rng.nextRangeInt(141, 210)
+
+        val (reqGold, reqRice) = getCost(env)
+        val postItemGeneral = d.general
+        d.general = postItemGeneral.copy(
+            gold = maxOf(0, postItemGeneral.gold - reqGold),
+            rice = maxOf(0, postItemGeneral.rice - reqRice),
+            experience = postItemGeneral.experience + exp,
+            dedication = postItemGeneral.dedication + ded,
+            meta = withMeta(postItemGeneral.meta, "${statType}_exp" to metaInt(postItemGeneral.meta, "${statType}_exp") + 1),
+            lastTurn = LastTurn(name, arg = linkedMapOf("destCityID" to destCityId)),
+        )
+        d.rankIncrements.add(GeneralRankIncrement(g.id, "firenum", 1))
     }
 }

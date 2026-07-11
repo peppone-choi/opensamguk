@@ -64,7 +64,7 @@ class ScenarioImporterIT {
         // Truncate all seeded tables so each @Test starts from an empty world (idempotency depends on
         // world_state emptiness, asserted per-test).
         jdbc.execute(
-            "TRUNCATE world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games RESTART IDENTITY CASCADE",
+            "TRUNCATE world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games, event RESTART IDENTITY CASCADE",
         )
     }
 
@@ -101,6 +101,13 @@ class ScenarioImporterIT {
         assertEquals(678 * 30, counts.generalTurn)
         assertEquals(678 * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
+        assertEquals(counts.event, count("event"))
+        assertTrue(counts.event > 1, "1010 stores defaults plus the scenario event")
+        assertEquals("pre_month", jdbc.queryForObject("SELECT target_code FROM event ORDER BY id ASC LIMIT 1", String::class.java))
+        assertEquals(
+            "destroy_nation",
+            jdbc.queryForObject("SELECT target_code FROM event ORDER BY id DESC LIMIT 1", String::class.java),
+        )
 
         assertEquals(1, count("world_state"))
         assertEquals(2, count("nation"))
@@ -188,6 +195,7 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"npcmode\""), "config has npcmode: $config")
         assertTrue(config.contains("\"block_general_create\""), "config has block_general_create: $config")
         assertTrue(config.contains("\"map\""), "config has map block: $config")
+        assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
     }
 
     @Test

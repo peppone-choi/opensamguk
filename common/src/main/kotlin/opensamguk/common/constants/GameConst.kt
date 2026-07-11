@@ -182,10 +182,11 @@ object GameConst {
 
     // 장수 생성/빙의 스탯 캡 — devsam d_setting/GameConst.php(per-server override, scenario_1010 라이브값).
     // GameConstBase엔 없고 d_setting에만 정의된다. PageJoin 폼·진입(server-basic-info) defaultStatTotal 노출에 사용.
-    const val defaultStatTotal = 165 // 유저 장수 통무지 합 상한
+    const val defaultStatTotal = 275
+    const val defaultLegacyStatTotal = 165
     const val defaultStatMin = 15 // 유저 장수 각 스탯 최소
     const val defaultStatMax = 80 // 유저 장수 각 스탯 최대
-    const val defaultStatNPCTotal = 150 // NPC 통무지 합
+    const val defaultStatNPCTotal = 150
     const val defaultStatNPCMax = 75 // NPC 각 스탯 최대
     const val defaultStatNPCMin = 10 // NPC 각 스탯 최소
     const val chiefStatMin = 65 // 군주/수뇌 각 스탯 최소

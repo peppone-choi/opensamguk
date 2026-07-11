@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
+import opensamguk.common.auth.GatewayJwtClaims
+import opensamguk.common.auth.GatewayProfileClaims
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import javax.crypto.SecretKey
@@ -28,43 +30,45 @@ class GameApiJwtVerifier(
 ) {
     private val key: SecretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey))
 
-    /** True iff [token] is a well-formed, unexpired, correctly-signed access token. */
-    fun isValid(token: String): Boolean =
-        try {
-            parseClaims(token)
-            true
+    fun verifyAccessToken(token: String): GatewayProfileClaims? {
+        return try {
+            val claims = parseClaims(token)
+            if (claims.get(GatewayJwtClaims.TOKEN_TYPE, String::class.java) != GatewayJwtClaims.ACCESS_TOKEN) {
+                return null
+            }
+            val userId = claims.subject?.toLongOrNull() ?: return null
+            val username = claims.get(GatewayJwtClaims.USERNAME, String::class.java) ?: return null
+            val role = claims.get(GatewayJwtClaims.ROLE, String::class.java)
+                ?.takeIf { it == "USER" || it == "ADMIN" }
+                ?: return null
+            val grade = (claims[GatewayJwtClaims.GRADE] as? Number)?.toInt()
+                ?.takeIf { it in 0..9 }
+                ?: return null
+            val imageServer = (claims[GatewayJwtClaims.IMAGE_SERVER] as? Number)?.toInt()
+                ?.takeIf { it in 0..1 }
+                ?: return null
+            GatewayProfileClaims(
+                userId = userId,
+                username = username,
+                role = role,
+                nickname = claims.get(GatewayJwtClaims.NICKNAME, String::class.java),
+                grade = grade,
+                picture = claims.get(GatewayJwtClaims.PICTURE, String::class.java),
+                imageServer = imageServer,
+            )
         } catch (e: Exception) {
-            false
+            null
         }
+    }
+
+    fun isValid(token: String): Boolean = verifyAccessToken(token) != null
 
     /** The verified user id (JWT subject). Null if the token is invalid or the subject is not numeric. */
-    fun getUserId(token: String): Long? =
-        try {
-            parseClaims(token).subject?.toLongOrNull()
-        } catch (e: Exception) {
-            null
-        }
+    fun getUserId(token: String): Long? = verifyAccessToken(token)?.userId
 
-    /** The `username` claim, if present (gateway-api sets it on the access token). */
-    fun getUsername(token: String): String? =
-        try {
-            parseClaims(token).get("username", String::class.java)
-        } catch (e: Exception) {
-            null
-        }
+    fun getUsername(token: String): String? = verifyAccessToken(token)?.username
 
-    /**
-     * `role` 클레임(gateway-api가 access token에 함께 실음: `generateAccessToken(userId, username, role)`).
-     * 토큰이 무효/role 부재면 null. 어드민 read 게이트(0.9.0 단일 ADMIN 롤)가 `"ADMIN"`인지 확인하는 데 쓴다.
-     * 가산 헬퍼 — 기존 getUserId/getUsername와 동형. (gateway 토큰은 role 클레임을 항상 싣지만 refresh
-     * 토큰엔 없으므로 안전하게 nullable.)
-     */
-    fun getRole(token: String): String? =
-        try {
-            parseClaims(token).get("role", String::class.java)
-        } catch (e: Exception) {
-            null
-        }
+    fun getRole(token: String): String? = verifyAccessToken(token)?.role
 
     private fun parseClaims(token: String): Claims =
         Jwts.parser()

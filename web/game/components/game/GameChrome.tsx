@@ -134,18 +134,8 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
                 <section className="ib-subject-panel" aria-label="현재 조작 대상">
                     <div className="subject-target-bar">
                         <div className="subject-target-title">조작 대상</div>
-                        <div className="subject-target-tabs" role="tablist" aria-label="명령 대상">
-                            <button type="button" className="subject-target-tab active" aria-selected="true">
-                                본인
-                            </button>
-                            <button type="button" className="subject-target-tab" disabled>
-                                가신
-                            </button>
-                            <button type="button" className="subject-target-tab" disabled>
-                                부곡
-                            </button>
-                        </div>
                         <div className="subject-target-current">
+                            <span>본인</span>
                             <span>{general.name ?? '장수'}</span>
                             <span>{nation?.name ?? '재야'}</span>
                             <span>{city?.name ?? '소재 없음'}</span>

@@ -3,6 +3,7 @@ package opensamguk.engine.boot
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
+import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
@@ -48,14 +49,42 @@ class WorldSnapshotLoader(
         // Guarantee the seed has run (idempotent) before reading.
         seedBootstrap.ensureSeeded(jdbc)
 
-        val state = loadWorldState()
-        val nations = loadNations()
+        val state = loadWorldState().let { loaded ->
+            val merged = LinkedHashMap(loaded.meta)
+            merged.putAll(loadGameEnv())
+            val snapshotKeys = listOf(
+                "isunited",
+                "lastTurnTime",
+                "hiddenSeed",
+                "startYear",
+                "startTime",
+                "scenario",
+                "map",
+                "maxNationId",
+                "maxGeneralId",
+            )
+            for (key in snapshotKeys) {
+                if (loaded.meta.containsKey(key)) merged[key] = loaded.meta[key]
+            }
+            loaded.copy(meta = merged)
+        }
+        val nationEnv = loadNationEnv()
+        val nations = loadNations().map { nation ->
+            val env = nationEnv[nation.id] ?: return@map nation
+            val meta = LinkedHashMap(nation.meta)
+            val mergedEnv = LinkedHashMap<String, Any?>()
+            (meta["nation_env"] as? Map<*, *>)?.forEach { (key, value) -> mergedEnv[key.toString()] = value }
+            mergedEnv.putAll(env)
+            meta["nation_env"] = mergedEnv
+            nation.copy(meta = meta)
+        }
         val cities = loadCities()
         val generals = loadGenerals(state)
         val diplomacy = loadDiplomacy()
+        val accessLogs = loadAccessLogs()
         log.info(
-            "WorldSnapshot loaded — generals={} cities={} nations={} diplomacy={} troops=0",
-            generals.size, cities.size, nations.size, diplomacy.size,
+            "WorldSnapshot loaded — generals={} cities={} nations={} diplomacy={} accessLogs={} troops=0",
+            generals.size, cities.size, nations.size, diplomacy.size, accessLogs.size,
         )
         return WorldSnapshot(
             state = state,
@@ -64,17 +93,18 @@ class WorldSnapshotLoader(
             nations = nations,
             troops = emptyList(),
             diplomacy = diplomacy,
+            accessLogs = accessLogs,
         )
     }
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
         ) { rs, _ ->
             val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
             val config = MetaJson.decode(rs.getString("config"))
-            for (key in listOf("turnterm", "npcmode")) {
-                if (!meta.containsKey(key) && config.containsKey(key)) meta[key] = config[key]
+            for ((key, value) in config) {
+                if (!meta.containsKey(key)) meta[key] = value
             }
             // isunited: dedicated column is source of truth (flush writes it; meta-only fallback for legacy rows).
             meta["isunited"] = rs.getInt("isunited")
@@ -90,6 +120,8 @@ class WorldSnapshotLoader(
                 tickSeconds = rs.getInt("tick_seconds"),
                 lastTurnTime = lastTurn,
                 meta = meta,
+                status = rs.getString("status"),
+                config = config,
             )
         }
         return rows.firstOrNull()
@@ -117,16 +149,37 @@ class WorldSnapshotLoader(
         )
     }
 
+    private fun loadGameEnv(): Map<String, Any?> = linkedMapOf<String, Any?>().apply {
+        jdbc.query(
+            """SELECT key, CAST(value AS VARCHAR) AS value_json FROM game_kv WHERE "table" = 'game_env' AND namespace IN ('', 'game_env') ORDER BY id ASC""",
+        ) { rs ->
+            this[rs.getString("key")] = decodeKvValue(rs.getString("value_json"))
+        }
+    }
+
+    private fun loadNationEnv(): Map<Int, Map<String, Any?>> {
+        val result = LinkedHashMap<Int, LinkedHashMap<String, Any?>>()
+        jdbc.query("SELECT namespace, key, CAST(value AS VARCHAR) AS value_json FROM nation_env ORDER BY id ASC") { rs ->
+            result.getOrPut(rs.getInt("namespace")) { LinkedHashMap() }[rs.getString("key")] =
+                decodeKvValue(rs.getString("value_json"))
+        }
+        return result
+    }
+
+    private fun decodeKvValue(json: String): Any? = MetaJson.decode("{\"value\":$json}")["value"]
+
     private fun loadCities(): List<City> = jdbc.query(
         // state(V14 재해/호황 코드)를 SELECT에 포함해야 한다. 누락 시 in-memory City.state가 기본 0으로
         // 떨어지고, 재기동 직후 flush가 UPDATE city SET state=0 으로 직전 달 재해 표시를 지운다(P0-36).
         """
         SELECT id, name, nation_id, level, state, supply_state, front_state,
-               pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
+               pop, pop_max, dead, agri, agri_max, comm, comm_max, secu, secu_max, trust,
                def, def_max, wall, wall_max, trade, region, term, officer_set, conflict, meta
           FROM city ORDER BY id ASC
         """.trimIndent(),
     ) { rs, _ ->
+        val cityMeta = MetaJson.decode(rs.getString("meta")).toMutableMap()
+        cityMeta["trust"] = rs.getDouble("trust")
         City(
             id = rs.getInt("id"),
             name = rs.getString("name"),
@@ -137,6 +190,7 @@ class WorldSnapshotLoader(
             frontState = rs.getInt("front_state"),
             population = rs.getInt("pop"),
             populationMax = rs.getInt("pop_max"),
+            dead = rs.getInt("dead"),
             agriculture = rs.getInt("agri"),
             agricultureMax = rs.getInt("agri_max"),
             commerce = rs.getInt("comm"),
@@ -152,7 +206,7 @@ class WorldSnapshotLoader(
             term = rs.getInt("term"),
             officerSet = rs.getInt("officer_set"),
             conflict = rs.getString("conflict") ?: "{}",
-            meta = MetaJson.decode(rs.getString("meta")),
+            meta = cityMeta,
         )
     }
 
@@ -163,12 +217,19 @@ class WorldSnapshotLoader(
         return jdbc.query(
         """
         SELECT id, name, nation_id, city_id, troop_id, npc_state,
-               leadership, strength, intel, experience, dedication, officer_level,
+               leadership, strength, intel, politics, charm, experience, dedication, officer_level,
                injury, gold, rice, crew, crew_type_id, train, atmos, age,
-               turn_time, recent_war_time, user_id, dead_year, meta
+               turn_time, recent_war_time, user_id, dead_year, penalty, meta
           FROM general ORDER BY id ASC
         """.trimIndent(),
         ) { rs, _ ->
+            val generalMeta = ScenarioLifecycleMeta.ensureGeneralMeta(
+                MetaJson.decode(rs.getString("meta")),
+                deadYear = rs.getInt("dead_year"),
+                startYear = seedStartYear,
+                startMonth = seedStartMonth,
+            ).toMutableMap()
+            generalMeta["penalty"] = MetaJson.decode(rs.getString("penalty"))
             TurnGeneral(
                 id = rs.getInt("id"),
                 name = rs.getString("name"),
@@ -179,6 +240,8 @@ class WorldSnapshotLoader(
                     leadership = rs.getInt("leadership"),
                     strength = rs.getInt("strength"),
                     intelligence = rs.getInt("intel"),
+                    politics = rs.getInt("politics"),
+                    charm = rs.getInt("charm"),
                 ),
                 experience = rs.getInt("experience"),
                 dedication = rs.getInt("dedication"),
@@ -196,12 +259,7 @@ class WorldSnapshotLoader(
                 recentWarTime = rs.getObject("recent_war_time", OffsetDateTime::class.java)?.toInstant(),
                 // user_id(소유 유저) — 미적재 시 rehydrate 후 PlaceBet 누적한도/유산 분기가 무음 발산(P0-07 채점 F1).
                 userId = rs.getString("user_id"),
-                meta = ScenarioLifecycleMeta.ensureGeneralMeta(
-                    MetaJson.decode(rs.getString("meta")),
-                    deadYear = rs.getInt("dead_year"),
-                    startYear = seedStartYear,
-                    startMonth = seedStartMonth,
-                ),
+                meta = generalMeta,
             )
         }
     }
@@ -216,6 +274,23 @@ class WorldSnapshotLoader(
             term = rs.getInt("term"),
             dead = if (rs.getBoolean("is_dead")) 1 else 0,
             meta = MetaJson.decode(rs.getString("meta")),
+        )
+    }
+
+    private fun loadAccessLogs(): List<GeneralAccessLog> = jdbc.query(
+        """
+        SELECT general_id, user_id, last_refresh, refresh, refresh_total, refresh_score, refresh_score_total
+          FROM general_access_log ORDER BY general_id ASC
+        """.trimIndent(),
+    ) { rs, _ ->
+        GeneralAccessLog(
+            generalId = rs.getInt("general_id"),
+            userId = rs.getLong("user_id").let { if (rs.wasNull()) null else it },
+            lastRefresh = rs.getObject("last_refresh", OffsetDateTime::class.java)?.toInstant(),
+            refresh = rs.getInt("refresh"),
+            refreshTotal = rs.getInt("refresh_total"),
+            refreshScore = rs.getInt("refresh_score"),
+            refreshScoreTotal = rs.getInt("refresh_score_total"),
         )
     }
 

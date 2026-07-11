@@ -8,6 +8,8 @@ import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralAccessLogReadEntity
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.LogFeedReadRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.NationEnvReadRepository
@@ -44,6 +46,7 @@ class FrontInfoControllerTest {
 
     private val owners = mock(GeneralOwnerRepository::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
+    private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
@@ -84,6 +87,7 @@ class FrontInfoControllerTest {
                 serverName,
                 serverGeneration,
                 serverId,
+                accessLogs,
             ),
         )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
@@ -230,6 +234,9 @@ class FrontInfoControllerTest {
         )
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(accessLogs.findByGeneralId(10)).thenReturn(
+            GeneralAccessLogReadEntity(id = 1, generalId = 10, refreshScore = 6, refreshScoreTotal = 142),
+        )
 
         mockMvc().perform(get("/api/front-info").with(principal(7L)))
             .andExpect(status().isOk)
@@ -238,6 +245,8 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.general.officerLevel").value(5))
             .andExpect(jsonPath("$.general.permission").value(2))
             .andExpect(jsonPath("$.general.showSecret").value(true))
+            .andExpect(jsonPath("$.general.refreshScore").value(6))
+            .andExpect(jsonPath("$.general.refreshScoreTotal").value(142))
             .andExpect(jsonPath("$.nation.id").value(1))
             .andExpect(jsonPath("$.nation.level").value(7))
             .andExpect(jsonPath("$.city.name").value("허창"))

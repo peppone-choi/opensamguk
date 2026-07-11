@@ -252,16 +252,29 @@ TURN_PROFILE_NAME=che:scenario_2
 
 ## 시나리오 시드
 
-게임 엔진은 부팅 시 **DB만 읽습니다**(`WorldStateReadRepository`) — 시나리오 JSON을 런타임에 직접 로드하지 않습니다. fresh/빈 DB가 비어 있지 않도록, 부팅 시 한 번 시드합니다.
+게임 루프는 부팅된 **DB 스냅샷만 읽습니다**. 다만 fresh/빈 DB에서는 `ScenarioSeedRunner`가 외부 시나리오 디렉터리를 먼저 확인하고, 없으면 classpath 시나리오로 폴백해 한 번 시드합니다.
 
 - **시드 주체**: `app/game-engine`의 `ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) — `ApplicationRunner`로 부팅 시 실행.
 - **멱등**: `world_state` 행이 이미 있으면(`count(*) > 0`) 로그 남기고 건너뜁니다. 두 번째 호출은 no-op이라 시드→로드 순서가 빈 라이프사이클에 무관하게 보장됩니다.
-- **임포터**: `infra`의 `ScenarioImporter`(+`ScenarioJson`)가 커밋된 리소스 `scenario/scenario_1010.json` + `scenario/cities_1010.json`(grand truth 값)을 opensamguk 스키마 행으로 매핑해 **JDBC INSERT**(`world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games`).
+- **임포터**: `infra`의 `ScenarioImporter`(+`ScenarioJson`)가 선택된 `scenario_*.json`과 대응 `cities_*.json`을 opensamguk 스키마 행으로 매핑해 **JDBC INSERT**(`world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games`).
 - **부팅 배선**: `WorldSnapshotLoader`가 DB → `InMemoryTurnWorld` 스냅샷을 구성(시드 직전 방어적으로 `ensureSeeded` 재호출).
 - **JDBC-only — one-daemon-write 규칙 비위반**: `JdbcTemplate`만 사용(Flyway/AdminSeeder와 동일 범주). JPA `EntityManager`나 `ChangeRecorder`를 쓰지 않으며, 아키텍처 테스트 write-path scan(`opensamguk.engine.{flush,turn,run}`) 밖인 `opensamguk.engine.boot` 패키지에 위치합니다.
-- **env fence**: `SCENARIO_SEED_ENABLED`(로컬 `.env.example` 기본 `true`, production compose 기본 `false`) · `SCENARIO_CODE`(기본 `scenario_1010`).
+- **env fence**: `SCENARIO_SEED_ENABLED`(로컬 `.env.example` 기본 `true`, production compose 기본 `false`) · `SCENARIO_CODE`(기본 `scenario_1010`) · `SCENARIO_DIR`(외부 JSON 우선 디렉터리).
 
 > `scenario_1010` = 2국 · 24도시 · 678장수. 24도시는 시나리오 JSON에 없고 `cities_1010.json`로 채웁니다. 게이트: `general`/`city`/`nation` 행 > 0 + 엔진 부팅·턴 진행. (이는 빠른 플레이를 위한 최소 시드(A)이며, PHP `Scenario::build` draw-for-draw 패러티 보정(B)은 후속 작업입니다.)
+
+### RTK14 정치·매력
+
+`tools/rtk14/build_rtk14_stats.py`는 RTK14 원본의 정치·매력을 저장소의 모든 `scenario_*.json`에 주입합니다. 통솔·무력·지력 지문, 생몰년, 별칭, 자가 붙은 이름을 함께 사용해 동명이인을 1:1 배정하며, 원본에 없는 인물만 50/50으로 둡니다. 생성물은 각 장수 tuple의 인덱스 14/15에 원수치를 넣은 완성 시나리오 JSON이고, 원본과 생성물은 모두 gitignored입니다.
+
+```bash
+python3 tools/rtk14/build_rtk14_stats.py \
+  --xlsx "/path/to/삼국지14 무장정보.xlsx" \
+  --scenario-dir infra/src/main/resources/scenario \
+  --out-dir /data/scenarios
+```
+
+프로덕션 workflow는 `RTK14_STATS_JSON_B64` secret의 gzip+base64 source JSON과 checkout된 시나리오를 결합해 동일한 외부 디렉터리를 재생성합니다. `SCENARIO_DIR`에 해당 파일이 없을 때만 classpath 기본 시나리오를 사용합니다.
 
 ---
 
@@ -351,13 +364,13 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 | 단계 | 내용 | 상태 |
 |------|------|------|
 | **F0 게이트웨이 인증** | `web/gateway` 엔트런스/로그인/회원가입/로비/어드민. JWT를 Next route handler 프록시 + httpOnly 쿠키(`sam_access`/`sam_refresh`)로 연결. `AdminSeeder`로 peppone(role=ADMIN) 자동 생성. | ✅ |
-| **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → 로컬 fresh DB에는 `scenario_1010` 자동 시드 가능, production은 관리자 서버 생성 전 기본 비활성. `WorldSnapshotLoader`로 엔진 부팅·턴 진행. | ✅ |
+| **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → 외부 `SCENARIO_DIR` 우선, classpath 폴백으로 모든 시나리오를 시드. 로컬 fresh DB 자동 시드 가능, production은 관리자 서버 생성 전 기본 비활성. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar + 메인 보드). path-server, SSE, 맵 크기/링크/현재 위치/툴팁은 실서버 루프로 지속 수렴 중. | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api read 데이터 렌더가 기본 완성선. | ✅ |
-| **F4 액션 페이지 + 일부 mutation** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator 등 read 렌더. 예약, 서신, 베팅, 경매, `ResetStat`, 건국/징병/도시 선택 명령 폼처럼 검증된 write 경로가 늘었지만 전체 mutation 패러티는 아직 진행 중. | 🔄 |
+| **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결. 라이브 감사와 PHP 골든으로 남은 명령을 계속 폐쇄 중. | 🔄 |
 | **F5 turnkey + docs** | 로컬 compose + app repo 문서 + production 앱 이미지. 실제 운영 오케스트레이션 정본은 `opensamguk-docker`의 shared/server/deployer 분리 모델과 맞춰갑니다. | 🔄 |
 
-> **상태 표기 주의**: F0–F3는 "기본 동선 사용 가능"에 가깝고, F4는 read 중심에서 일부 mutation까지 확장된 상태입니다. 모든 버튼과 모든 명령이 PHP와 완전 동형이라는 뜻은 아닙니다. 새 gap은 `opensamguk-php-oracle` → `webapp-testing` → `systematic-debugging` → `loop-engineering` 순서로 바퀴 하나씩 닫습니다.
+> **상태 표기 주의**: F0–F3는 기본 동선 사용 가능, F4는 실제 mutation을 포함합니다. 모든 명령의 완전 동형 여부는 `opensamguk-php-oracle` → `webapp-testing` → `systematic-debugging` → `loop-engineering` 순서의 라이브 루프로 계속 검증합니다.
 
 ---
 

@@ -72,6 +72,28 @@ class IntakeWaveW6WireTest {
 
         val update = TurnDaemonCommand.SelectPoolUpdate(generalId = 10, uniqueName = "조조")
         assertEquals(update, cmdRoundTrip(update))
+
+        val refresh = TurnDaemonCommand.SelectPoolRefresh(
+            ownerUserId = 77,
+            requestedAt = "2026-07-10T03:00:00Z",
+        )
+        assertEquals(refresh, cmdRoundTrip(refresh))
+
+        val moderation = TurnDaemonCommand.AdminGeneralModeration(
+            actorGeneralId = 10,
+            generalIds = listOf(20, 30),
+            action = "block2",
+        )
+        assertEquals(moderation, cmdRoundTrip(moderation))
+
+        val settings = TurnDaemonCommand.AdminWorldSettings(
+            status = "PRE_OPEN",
+            settings = listOf(
+                AdminWorldSetting("turnterm", intValue = 30),
+                AdminWorldSetting("msg", stringValue = "점검 중"),
+            ),
+        )
+        assertEquals(settings, cmdRoundTrip(settings))
     }
 
     @Test
@@ -141,6 +163,7 @@ class IntakeWaveW6WireTest {
         assertEquals(ok, rok)
 
         assertIs<SelectPoolActionResult>(resRoundTrip(SelectPoolActionResult(type = "selectPoolUpdate", ok = false, generalId = 10, reason = "미구현")))
+        assertIs<SelectPoolActionResult>(resRoundTrip(SelectPoolActionResult(type = "selectPoolRefresh", ok = true, generalId = 0)))
     }
 
     @Test

@@ -4,6 +4,7 @@ import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
+import opensamguk.logic.actions.GeneralRankIncrement
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
@@ -42,7 +43,7 @@ import kotlin.math.truncate
  *       - nextRangeInt(100,800) × level × yearCoef × ratio → DRAW4(gold), DRAW5(rice)
  *       - dest nation gold/rice 차감, actor nation 70% 회수, actor 30% 회수
  *       - global log + personal logs
- *       - item consume skip (no item system in P2)
+ *       - existing sabotage consumable item seam, if present
  *       - nextRangeInt(201,300)=exp, nextRangeInt(141,210)=ded
  *       - cost 차감 + exp/ded + stat_exp += 1 + lastTurn
  *
@@ -185,8 +186,7 @@ class CheTalchwi(
 
         affectDestCity(context, rng, destCity, destCityName, destCityId, destNationId, commandName, date, injuryCount)
 
-        // item consume — P2 에는 아이템 시스템이 없어 quarantine (che_화계.php:316-323)
-        // TODO: 아이템 시스템 구현 시 추가. 현재는 draw 추가 없이 skip.
+        consumeSabotageItemIfNeeded(context)
 
         val exp = rng.nextRangeInt(201, 300)                                 // DRAWn (success branch)
         val ded = rng.nextRangeInt(141, 210)                                 // DRAWn (success branch)
@@ -202,6 +202,7 @@ class CheTalchwi(
             lastTurn = LastTurn(name, linkedMapOf("destCityID" to destCityId)),
         )
         d.general = g
+        d.rankIncrements.add(GeneralRankIncrement(g0.id, "firenum", 1))
     }
 
     /**
@@ -260,14 +261,14 @@ class CheTalchwi(
 
                 d.destNation = destNation.copy(gold = destNationGold.toInt(), rice = destNationRice.toInt())
                 // city state = 34 (탈취 상태)
-                d.destCity = destCity.copy(meta = withMeta(destCity.meta, "state" to 34))
+                d.destCity = destCity.copy(state = 34)
             }
         } else {
             // supply 없음 → 도시 상업/농업 직접 차감
             d.destCity = destCity.copy(
                 commerce = maxOf(0, truncate(destCity.commerce - gold / 12.0).toInt()),
                 agriculture = maxOf(0, truncate(destCity.agriculture - rice / 12.0).toInt()),
-                meta = withMeta(destCity.meta, "state" to 34),
+                state = 34,
             )
         }
 
@@ -296,7 +297,7 @@ class CheTalchwi(
         // city state 복원 (32) 및 agri/comm 원래 값으로 (che_탈취.php:86-90)
         // PHP는 DB 업데이트 후 city['agri']/city['comm']을 원래 값으로 되돌림
         d.destCity = d.destCity?.copy(
-            meta = withMeta(d.destCity?.meta ?: linkedMapOf(), "state" to 32),
+            state = 32,
             agriculture = destCity.agriculture,
             commerce = destCity.commerce,
         )

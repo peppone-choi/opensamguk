@@ -583,6 +583,7 @@ class AiSelectionGateIT {
             gold = o["gold"]?.jsonPrimitive?.intOrNull ?: 0,
             rice = o["rice"]?.jsonPrimitive?.intOrNull ?: 0,
             power = o["power"]?.jsonPrimitive?.intOrNull ?: 0,
+            tech = o["tech"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
             level = o["level"]?.jsonPrimitive?.intOrNull ?: 0,
             typeCode = o["type"]?.jsonPrimitive?.contentOrNull ?: "None",
             meta = meta,

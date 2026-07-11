@@ -214,10 +214,6 @@ data class KingdomRosterNeutral(
     val generals: List<KingdomRosterGeneral>,
 )
 
-/**
- * `/api/rankings/hall-of-fame` — F3 default is an empty list (`hall` empty in the 1010 capture). The page
- * renders an empty table without error. NOT fabricated; see spec OQ-5.
- */
 data class HallRecord(
     val id: Int,
     val category: String,
@@ -230,34 +226,31 @@ data class HallRecord(
     val turn: Int,
 )
 
-/**
- * `/api/rankings/traffic` — F3 zero-fill (no `general_access_log` / online-tracking infra; spec OQ-2).
- * All counters 0, `history` empty. This is an explicit "no data source yet" zero-fill, NOT fabricated.
- */
 data class TrafficSummary(
-    val todayUnique: Int,
-    val todayViews: Int,
-    val weekUnique: Int,
-    val weekViews: Int,
-    val monthUnique: Int,
-    val monthViews: Int,
-    val peakConcurrent: Int,
+    val refresh: Int,
+    val maxRefresh: Int,
     val currentOnline: Int,
+    val maxOnline: Int,
     val history: List<TrafficStat>,
+    val totalRefresh: Int = 0,
+    val totalRefreshScore: Int = 0,
+    val topRefreshers: List<TrafficUser> = emptyList(),
 )
 
 data class TrafficStat(
+    val year: Int,
+    val month: Int,
     val date: String,
-    val uniqueVisitors: Int,
-    val pageViews: Int,
-    val avgSessionMin: Int,
-    val peakConcurrent: Int,
+    val refresh: Int,
+    val online: Int,
 )
 
-/**
- * `/api/rankings/emperor` — F3 default is an empty list (no `emperior`/unification-history table; spec OQ-1).
- * The page renders an empty table. NOT fabricated.
- */
+data class TrafficUser(
+    val name: String,
+    val refresh: Int,
+    val refreshScoreTotal: Int,
+)
+
 data class EmperorRecord(
     val id: Int,
     val name: String,

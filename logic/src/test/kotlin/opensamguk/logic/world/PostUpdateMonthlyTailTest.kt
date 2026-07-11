@@ -122,6 +122,21 @@ class PostUpdateMonthlyTailTest {
         assertEquals(capturedNot.size, capturedUnified.size)
     }
 
+    @Test
+    fun `Q13 refreshNationStaticInfo is PHP request-local cache only and has no Kotlin world callback`() {
+        val order = mutableListOf<String>()
+        postUpdateMonthlyTail(
+            year = 185, startYear = 184, rng = rng(),
+            checkWander = { order += "Q11" },
+            triggerTournament = { order += "Q15" },
+            registerAuction = { order += "Q16" },
+            checkEmperior = { order += "Q14" },
+            setNationFront = { order += "Q17"; emptyList() },
+        )
+
+        assertEquals(listOf("Q14", "Q15", "Q16", "Q17"), order)
+    }
+
     // ── Q17 SetNationFront runs LAST (after the rng consumers) ──
 
     @Test

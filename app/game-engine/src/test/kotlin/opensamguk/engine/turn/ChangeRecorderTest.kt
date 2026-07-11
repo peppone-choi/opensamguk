@@ -2,6 +2,7 @@ package opensamguk.engine.turn
 
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -22,6 +23,8 @@ class ChangeRecorderTest {
         gold: Int = 100,
         experience: Double = 12.0,
         dedication: Double = 34.0,
+        politics: Int = 50,
+        charm: Int = 50,
         commerce: Int = 0, // unused placeholder for symmetry; ignore
         meta: Map<String, Any?> = linkedMapOf("intel_exp" to 7, "explevel" to 2, "max_domestic_critical" to 0.0),
     ) = LogicGeneral(
@@ -31,6 +34,8 @@ class ChangeRecorderTest {
         leadership = 80,
         strength = 70,
         intel = 60,
+        politics = politics,
+        charm = charm,
         injury = 0,
         experience = experience,
         dedication = dedication,
@@ -118,6 +123,39 @@ class ChangeRecorderTest {
     }
 
     @Test
+    fun `changed politics and charm mark the general dirty`() {
+        val pre = general(politics = 71, charm = 82)
+        val recorder = ChangeRecorder()
+
+        val patch = recorder.diffGeneral(pre, pre.copy(politics = 72, charm = 83))!!
+
+        assertEquals(setOf("politics", "charm"), patch.columns.keys)
+        assertEquals(72, patch.columns["politics"])
+        assertEquals(83, patch.columns["charm"])
+        assertEquals(setOf(1), recorder.dirtyGeneralIds())
+    }
+
+    @Test
+    fun `kv observer keeps live game and nation env in sync`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH),
+                nations = listOf(Nation(1, "촉", "#00ff00")),
+            ),
+        )
+        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+
+        recorder.recordKv("game_env", "game_env", "tournament", 1)
+        recorder.recordNationEnvKv(1, "available_war_setting_cnt", 2)
+
+        assertEquals(1, world.getState().meta["tournament"])
+        assertEquals(
+            2,
+            (world.getNationById(1)!!.meta["nation_env"] as Map<*, *>)["available_war_setting_cnt"],
+        )
+    }
+
+    @Test
     fun `changed commerce listed for city`() {
         val pre = city()
         val post = pre.copy(commerce = 250)
@@ -143,6 +181,20 @@ class ChangeRecorderTest {
 
         assertEquals(setOf("agriculture"), patch.columns.keys)
         assertEquals(175, patch.columns["agriculture"])
+    }
+
+    @Test
+    fun `successive patches for one city preserve earlier columns`() {
+        val pre = city()
+        val recorder = ChangeRecorder()
+
+        val mid = pre.copy(state = 43, term = 3)
+        recorder.diffCity(pre, mid)
+        recorder.diffCity(mid, mid.copy(term = 0))
+
+        val patch = recorder.cityPatches().single()
+        assertEquals(43, patch.columns["state"])
+        assertEquals(0, patch.columns["term"])
     }
 
     @Test

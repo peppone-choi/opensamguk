@@ -5,6 +5,8 @@ import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.WorldActions
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlinx.serialization.json.Json
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -23,7 +25,43 @@ import org.springframework.context.annotation.Configuration
 class EngineEventConfig {
 
     @Bean
-    fun eventStore(): EventStore = EventStore.withDefaults()
+    fun eventStore(jdbc: JdbcTemplate, bootstrap: opensamguk.engine.boot.SeedBootstrap): EventStore {
+        bootstrap.ensureSeeded(jdbc)
+        val ignoreDefaults = jdbc.query(
+            "SELECT COALESCE((config->>'ignoreDefaultEvents')::boolean, false) FROM world_state ORDER BY id ASC LIMIT 1",
+        ) { rs, _ -> rs.getBoolean(1) }.firstOrNull() ?: false
+        val rows = jdbc.query(
+            "SELECT id, target_code, priority, condition::text AS condition_json, action::text AS action_json FROM event ORDER BY id ASC",
+        ) { rs, _ ->
+            PersistedEvent(
+                id = rs.getInt("id"),
+                target = rs.getString("target_code"),
+                priority = rs.getInt("priority"),
+                condition = rs.getString("condition_json"),
+                action = rs.getString("action_json"),
+            )
+        }
+        if (rows.isEmpty()) return EventStore.withDefaults(ignoreDefaults)
+        return EventStore().also { store ->
+            rows.forEach { row ->
+                store.loadRaw(
+                    row.id,
+                    row.target,
+                    row.priority,
+                    Json.parseToJsonElement(row.condition),
+                    Json.parseToJsonElement(row.action),
+                )
+            }
+        }
+    }
+
+    private data class PersistedEvent(
+        val id: Int,
+        val target: String,
+        val priority: Int,
+        val condition: String,
+        val action: String,
+    )
 
     @Bean
     fun eventActionFactory(): EventActionFactory =

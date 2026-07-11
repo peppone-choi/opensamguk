@@ -1,31 +1,32 @@
 'use client';
 
-// MyInfoLogPanel — b_myPage.php의 개인기록/전투기록/전투결과/장수열전 4개 패널을 렌더한다.
-// BE API(generalAction/battleDetail/battleResult/generalHistory 로그 read)가 아직 없으므로
-// 구조만 마련하고 빈 상태를 안내한다. API가 생기면 fetch 로직 + 데이터 렌더만 추가하면 된다.
-//
-// PHP b_myPage.php 구조:
-//   1) 개인 기록(generalAction log, 24 rows + "이전 로그 불러오기")
-//   2) 전투 기록(battleDetail log, 24 rows + "이전 로그 불러오기")
-//   3) 장수 열전(generalHistory log, 전체)
-//   4) 전투 결과(battleResult log, 24 rows + "이전 로그 불러오기")
-
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import GameCard from '../GameCard';
 import { formatLog } from '@/lib/utilGame';
+import { api, type GeneralLogType } from '@/lib/api';
 
-type LogType = 'generalAction' | 'battleDetail' | 'battleResult' | 'generalHistory';
+type LogType = GeneralLogType;
+
+interface LogEntry {
+    id: number;
+    text: string;
+}
+
+type LogState = Record<LogType, LogEntry[]>;
+type LogErrorState = Partial<Record<LogType, string>>;
 
 interface LogSectionProps {
     title: string;
     titleColor: string;
-    logs: string[];
+    logs: LogEntry[];
     logType: LogType;
     onLoadMore?: (type: LogType) => void;
     loadingMore?: boolean;
+    loading?: boolean;
+    error?: string;
 }
 
-function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore }: LogSectionProps) {
+function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore, loading, error }: LogSectionProps) {
     return (
         <GameCard style={{ marginBottom: 'var(--space-md)' }}>
             <div
@@ -41,20 +42,29 @@ function LogSection({ title, titleColor, logs, logType, onLoadMore, loadingMore 
             >
                 {title}
             </div>
+            {error && (
+                <p role="alert" style={{ color: 'var(--crimson)', textAlign: 'center', margin: 0 }}>
+                    {error}
+                </p>
+            )}
             <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.7 }}>
-                {logs.length === 0 ? (
+                {loading ? (
+                    <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
+                        불러오는 중...
+                    </p>
+                ) : logs.length === 0 ? (
                     <p style={{ color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>
                         기록이 없습니다.
                     </p>
                 ) : (
-                    logs.map((item, idx) => (
+                    logs.map((item) => (
                         <div
-                            key={idx}
+                            key={item.id}
                             style={{
                                 padding: 'var(--space-xs) 0',
                                 borderBottom: '1px solid var(--border-subtle)',
                             }}
-                            dangerouslySetInnerHTML={{ __html: formatLog(item) }}
+                            dangerouslySetInnerHTML={{ __html: formatLog(item.text) }}
                         />
                     ))
                 )}
@@ -79,28 +89,79 @@ interface MyInfoLogPanelProps {
 }
 
 export default function MyInfoLogPanel({ generalId }: MyInfoLogPanelProps) {
+    const [loading, setLoading] = useState<Record<LogType, boolean>>({
+        generalAction: true,
+        battleDetail: true,
+        battleResult: true,
+        generalHistory: true,
+    });
     const [loadingMore, setLoadingMore] = useState<Record<LogType, boolean>>({
         generalAction: false,
         battleDetail: false,
         battleResult: false,
         generalHistory: false,
     });
+    const [errors, setErrors] = useState<LogErrorState>({});
 
-    // BE API 미구현 — 빈 배열로 초기화. API 생기면 useEffect + fetch 로직 추가.
-    const [logs] = useState<Record<LogType, string[]>>({
+    const [logs, setLogs] = useState<LogState>({
         generalAction: [],
         battleDetail: [],
         battleResult: [],
         generalHistory: [],
     });
 
+    const loadLog = useCallback(async (type: LogType, reqTo?: number) => {
+        const more = reqTo != null;
+        if (more) {
+            setLoadingMore((prev) => ({ ...prev, [type]: true }));
+        } else {
+            setLoading((prev) => ({ ...prev, [type]: true }));
+        }
+        try {
+            const res = await api.generalLog(generalId, type, reqTo);
+            if (!res.result) {
+                setErrors((prev) => ({ ...prev, [type]: res.reason ?? '로그를 불러올 수 없습니다.' }));
+                return;
+            }
+            const next = Object.entries(res.log ?? {})
+                .map(([id, text]) => ({ id: Number(id), text }))
+                .sort((a, b) => b.id - a.id);
+            setLogs((prev) => ({
+                ...prev,
+                [type]: more ? [...prev[type], ...next] : next,
+            }));
+            setErrors((prev) => {
+                const { [type]: _removed, ...rest } = prev;
+                return rest;
+            });
+        } catch (e) {
+            setErrors((prev) => ({
+                ...prev,
+                [type]: e instanceof Error ? e.message : '로그를 불러올 수 없습니다.',
+            }));
+        } finally {
+            if (more) {
+                setLoadingMore((prev) => ({ ...prev, [type]: false }));
+            } else {
+                setLoading((prev) => ({ ...prev, [type]: false }));
+            }
+        }
+    }, [generalId]);
+
+    useEffect(() => {
+        void loadLog('generalAction');
+        void loadLog('battleDetail');
+        void loadLog('battleResult');
+        void loadLog('generalHistory');
+    }, [loadLog]);
+
     const handleLoadMore = (type: LogType) => {
-        setLoadingMore((prev) => ({ ...prev, [type]: true }));
-        // TODO: BE API 구현 시 fetch 로직 추가
-        // api.generalLogs(generalId, type, offset).then(...)
-        setTimeout(() => {
-            setLoadingMore((prev) => ({ ...prev, [type]: false }));
-        }, 300);
+        const lastId = logs[type].at(-1)?.id;
+        if (lastId == null) {
+            void loadLog(type);
+            return;
+        }
+        void loadLog(type, lastId);
     };
 
     return (
@@ -117,7 +178,9 @@ export default function MyInfoLogPanel({ generalId }: MyInfoLogPanelProps) {
                 logs={logs.generalAction}
                 logType="generalAction"
                 onLoadMore={handleLoadMore}
+                loading={loading.generalAction}
                 loadingMore={loadingMore.generalAction}
+                error={errors.generalAction}
             />
             <LogSection
                 title="전투 기록"
@@ -125,13 +188,17 @@ export default function MyInfoLogPanel({ generalId }: MyInfoLogPanelProps) {
                 logs={logs.battleDetail}
                 logType="battleDetail"
                 onLoadMore={handleLoadMore}
+                loading={loading.battleDetail}
                 loadingMore={loadingMore.battleDetail}
+                error={errors.battleDetail}
             />
             <LogSection
                 title="장수 열전"
                 titleColor="skyblue"
                 logs={logs.generalHistory}
                 logType="generalHistory"
+                loading={loading.generalHistory}
+                error={errors.generalHistory}
             />
             <LogSection
                 title="전투 결과"
@@ -139,7 +206,9 @@ export default function MyInfoLogPanel({ generalId }: MyInfoLogPanelProps) {
                 logs={logs.battleResult}
                 logType="battleResult"
                 onLoadMore={handleLoadMore}
+                loading={loading.battleResult}
                 loadingMore={loadingMore.battleResult}
+                error={errors.battleResult}
             />
         </div>
     );

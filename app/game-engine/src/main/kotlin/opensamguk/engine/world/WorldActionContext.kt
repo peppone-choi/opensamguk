@@ -23,6 +23,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.AssignSpecialityResult
+import opensamguk.logic.world.BlockScoutWorld
 import opensamguk.logic.world.CityConstVariant
 import opensamguk.logic.world.CityLevel
 import opensamguk.logic.world.CitySupplyResult
@@ -50,6 +51,7 @@ import opensamguk.logic.world.RaiseDisasterResult
 import opensamguk.logic.world.SpecialityGeneral
 import opensamguk.logic.world.SpecialityWorldView
 import opensamguk.logic.world.SupplyCapital
+import opensamguk.logic.world.UnblockScoutWorldView
 import opensamguk.logic.world.UpdateCitySupplyContext
 import opensamguk.logic.world.UpdateNationLevelContext
 import opensamguk.logic.world.WarIncomeNation
@@ -80,6 +82,8 @@ class WorldActionContext(
     ProvideNPCTroopLeaderContext,
     DisasterWorldView,
     SpecialityWorldView,
+    BlockScoutWorld,
+    UnblockScoutWorldView,
     InvaderEndingContext,
     LightActionWorld {
 
@@ -573,6 +577,24 @@ class WorldActionContext(
             world.pushLog(logDraft("general", "action", a.actionLog, generalId = a.generalId, nationId = a.nation))
             world.pushLog(logDraft("general", "history", a.historyLog, generalId = a.generalId, nationId = a.nation))
         }
+    }
+
+    override fun setAllNationScout(value: Int) {
+        for (nation in world.listNations().sortedBy { it.id }) {
+            val nextMeta = LinkedHashMap(nation.meta)
+            nextMeta["scout"] = value
+            val post = nation.copy(meta = nextMeta)
+            recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(post))
+            world.updateNation(post)
+        }
+    }
+
+    override fun setBlockChangeScout(value: Boolean) {
+        recorder.recordKv("game_env", "game_env", "block_change_scout", value)
+    }
+
+    override fun setGameEnvBlockChangeScout(value: Boolean) {
+        setBlockChangeScout(value)
     }
 
     // ── InvaderEndingContext ───────────────────────────────────────────────────────────────────

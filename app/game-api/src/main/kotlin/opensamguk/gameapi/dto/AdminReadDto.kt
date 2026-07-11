@@ -25,6 +25,8 @@ data class AdminGameSettingsResponse(
 data class AdminBlockedWrite(
     val label: String,
     val reason: String,
+    val code: String? = null,
+    val enabled: Boolean = false,
 )
 
 /**
@@ -47,6 +49,18 @@ data class AdminFieldOption(
 /** PATCH /api/admin/game-settings 요청 본문. */
 data class AdminGameSettingsPatchRequest(
     val values: Map<String, Any?>,
+)
+
+data class AdminGeneralModerationActionRequest(
+    val action: String,
+    val generalIds: List<Int> = emptyList(),
+    val message: String? = null,
+)
+
+data class AdminGeneralModerationActionResponse(
+    val result: Boolean,
+    val action: String,
+    val affected: Int,
 )
 
 data class AdminGeneralModerationResponse(

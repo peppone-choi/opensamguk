@@ -9,7 +9,6 @@
 //    personalText/specialDomesticText/specialWarText/bill/lbonus).
 //  - 부상 반영 스탯 = PHP intdiv(stat*(100-injury), 100) (절사). utilGame/calcInjury는 Math.round라
 //    PHP와 발산하므로 사용하지 않고 인라인 절사한다.
-//  - 벌점(refresh_score_total) = §2 BLOCKED(general_access_log 부재). 컬럼·정렬(type=10) 미노출.
 //  - 기본 정렬 = PHP type=1(관직 DESC) — 백엔드가 officer_level DESC로 정렬해 내려준다(서버 순서 기본).
 //  - READ-ONLY. EMPTY-SAFE(소속 없음 → 안내 / 빈 표).
 
@@ -18,38 +17,41 @@ import Shell from '../../../components/Shell';
 import GameTable from '../../../components/GameTable';
 import { api } from '../../../lib/api';
 import { formatNumber } from '../../../lib/format';
-import { getNPCColor } from '../../../lib/utilGame';
+import { formatRefreshScore, getNPCColor } from '../../../lib/utilGame';
 import { portraitUrl, onPortraitError } from '../../../lib/portrait';
 import type { MyGeneralSummary, MyGeneralsResponse } from '../../../types/game';
 
-// PHP b_myGenInfo 정렬 셀렉터(type 1..15). 벌점(10)은 BLOCKED라 제외, 가용 키만(MyGeneralSummary 보유 필드).
-// PHP type=2(계급, dedication DESC)/type=10(벌점)은 raw dedication·refresh_score_total가 공개 surface에
-// 없어(전자=인증 raw 미노출 정책 일관, 후자=§2 BLOCKED) 셀렉터에서 제외. 가용 키만 둔다.
 type SortKey =
     | 'officerLevel'        // 1 관직(기본)
+    | 'dedication'
+    | 'experience'
     | 'leadership'          // 4 통솔
     | 'strength'            // 5 무력
     | 'intel'               // 6 지력
     | 'gold'                // 7 자금
     | 'rice'                // 8 군량
     | 'crew'                // 9 병사
-    | 'personalText'        // 11 성격
-    | 'specialDomesticText' // 12 내특
-    | 'specialWarText'      // 13 전특
+    | 'refreshScoreTotal'
+    | 'personal'            // 11 성격
+    | 'special'             // 12 내특
+    | 'special2'            // 13 전특
     | 'belong'              // 14 사관
     | 'npcState';           // 15 NPC
 
 const SORTS: { value: SortKey; label: string; text?: boolean }[] = [
     { value: 'officerLevel', label: '관직' },
+    { value: 'dedication', label: '계급' },
+    { value: 'experience', label: '명성' },
     { value: 'leadership', label: '통솔' },
     { value: 'strength', label: '무력' },
     { value: 'intel', label: '지력' },
     { value: 'gold', label: '자금' },
     { value: 'rice', label: '군량' },
     { value: 'crew', label: '병사' },
-    { value: 'personalText', label: '성격', text: true },
-    { value: 'specialDomesticText', label: '내특', text: true },
-    { value: 'specialWarText', label: '전특', text: true },
+    { value: 'refreshScoreTotal', label: '벌점' },
+    { value: 'personal', label: '성격', text: true },
+    { value: 'special', label: '내특', text: true },
+    { value: 'special2', label: '전특', text: true },
     { value: 'belong', label: '사관' },
     { value: 'npcState', label: 'NPC' },
 ];
@@ -122,8 +124,7 @@ export default function MyGeneralsPage() {
         );
     }
 
-    // b_myGenInfo 테이블 헤더 — PHP echo 순서/라벨 그대로(벌점은 BLOCKED라 제외).
-    const headers = ['얼굴', '이름', '관직', '계급', '명성', '봉록', '통솔', '무력', '지력', '정치', '매력', '자금', '군량', '성격', '특기', '사관'];
+    const headers = ['얼굴', '이름', '관직', '계급', '명성', '봉록', '통솔', '무력', '지력', '정치', '매력', '자금', '군량', '성격', '특기', '사관', '벌점'];
 
     const rows = sorted.map((g) => {
         const wounded = g.injury > 0;
@@ -161,6 +162,7 @@ export default function MyGeneralsPage() {
             g.personalText,                     // 성격
             `${g.specialDomesticText} / ${g.specialWarText}`, // 특기(내정 / 전투)
             g.belong,                           // 사관(belong)
+            <span key={`r-${g.generalId}`}>{g.refreshScoreTotal}<br />({formatRefreshScore(g.refreshScoreTotal)})</span>,
         ];
     });
 

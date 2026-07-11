@@ -16,12 +16,6 @@ package opensamguk.logic.actions.intake
  * + `belong`을 배선하지 않고 `SecretPermission.check(me)`의 기본값(checkSecretLimit = false)으로
  * `permission`을 해석한다.
  *
- * 격리(QUARANTINED, 증명 + P8 백로그): `checkLimit(refresh_score) >= 2 → '접속 제한입니다.'` 접속
- * rate-limit + `increaseRefresh("회의실", 1)`. `refresh_score`는 `general_access_log`에 있고(world
- * game-state가 아니며, PreUpdateMonthly만 이를 decay시킨다), `checkLimit`/`increaseRefresh`는 포팅되지
- * 않았다 — 이는 anti-spam 접속 제한으로 game-state parity와 직교하며, 새로운 access-log 데이터 경로
- * 없이는 충실히 캡처할 수 없다. 또한 누락(OMITTED): `author_icon`(`GetImageURL`) — opensamguk의
- * `board_post` 스키마는 해당 컬럼을 제거한다(F0 auth divergence처럼 의도적인 divergence).
  */
 object BoardActions {
 

@@ -13,6 +13,7 @@ data class WorldSnapshot(
     val nations: List<Nation> = emptyList(),
     val troops: List<Troop> = emptyList(),
     val diplomacy: List<TurnDiplomacy> = emptyList(),
+    val accessLogs: List<GeneralAccessLog> = emptyList(),
 )
 
 /**
@@ -34,6 +35,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     private val nations = LinkedHashMap<Int, Nation>()
     private val troops = LinkedHashMap<Int, Troop>()
     private val diplomacy = LinkedHashMap<String, TurnDiplomacy>()
+    private val accessLogs = LinkedHashMap<Int, GeneralAccessLog>()
 
     private val dirtyGeneralIds = LinkedHashSet<Int>()
     private val dirtyCityIds = LinkedHashSet<Int>()
@@ -77,6 +79,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         for (entry in snapshot.diplomacy) {
             diplomacy[buildDiplomacyKey(entry.fromNationId, entry.toNationId)] = entry
         }
+        for (entry in snapshot.accessLogs) accessLogs[entry.generalId] = entry
         maxNationId = maxOf(
             snapshot.nations.maxOfOrNull { it.id } ?: 0,
             (snapshot.state.meta["maxNationId"] as? Number)?.toInt() ?: 0,
@@ -100,11 +103,19 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun listNations(): List<Nation> = nations.values.toList()
     fun listTroops(): List<Troop> = troops.values.toList()
     fun listDiplomacy(): List<TurnDiplomacy> = diplomacy.values.toList()
+    fun listAccessLogs(): List<GeneralAccessLog> = accessLogs.values.toList()
 
     fun getGeneralById(id: Int): TurnGeneral? = generals[id]
     fun getCityById(id: Int): City? = cities[id]
     fun getNationById(id: Int): Nation? = nations[id]
     fun getTroopById(id: Int): Troop? = troops[id]
+    fun getAccessLog(generalId: Int): GeneralAccessLog? = accessLogs[generalId]
+
+    fun applyAccessLogDirtyFree(next: GeneralAccessLog) {
+        accessLogs[next.generalId] = next
+    }
+
+    fun removeAccessLogDirtyFree(generalId: Int): Boolean = accessLogs.remove(generalId) != null
 
     fun pushLog(entry: LogEntryDraft) {
         logs.add(entry)
@@ -178,6 +189,27 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         if (!nations.containsKey(next.id)) return null
         nations[next.id] = next
         return next
+    }
+
+    fun applyKvDirtyFree(key: KvKey, value: Any?) {
+        when (key.table) {
+            "game_env" -> {
+                val nextMeta = LinkedHashMap(state.meta)
+                if (value == null) nextMeta.remove(key.key) else nextMeta[key.key] = value
+                state = state.copy(meta = nextMeta)
+            }
+            "nation_env" -> {
+                val nationId = key.namespace.toIntOrNull() ?: return
+                val nation = nations[nationId] ?: return
+                val currentEnv = nation.meta["nation_env"] as? Map<*, *>
+                val nextEnv = LinkedHashMap<String, Any?>()
+                currentEnv?.forEach { (envKey, envValue) -> nextEnv[envKey.toString()] = envValue }
+                if (value == null) nextEnv.remove(key.key) else nextEnv[key.key] = value
+                val nextMeta = LinkedHashMap(nation.meta)
+                nextMeta["nation_env"] = nextEnv
+                nations[nationId] = nation.copy(meta = nextMeta)
+            }
+        }
     }
 
     /** Read a single diplomacy row by `(from, to)` (null if absent). */
@@ -356,6 +388,27 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
             currentPhase = phase.coerceIn(1, 3),
             meta = state.meta + mapOf("currentYear" to year, "currentMonth" to month, "currentPhase" to phase.coerceIn(1, 3)),
         )
+    }
+
+    fun applyAdminWorldSettings(
+        status: String?,
+        configPatch: Map<String, Any?>,
+        tickSeconds: Int?,
+    ) {
+        val nextConfig = LinkedHashMap(state.config)
+        nextConfig.putAll(configPatch)
+        val nextMeta = LinkedHashMap(state.meta)
+        for ((key, value) in configPatch) nextMeta[key] = value
+        state = state.copy(
+            status = status ?: state.status,
+            config = nextConfig,
+            tickSeconds = tickSeconds ?: state.tickSeconds,
+            meta = nextMeta,
+        )
+    }
+
+    fun setGameEnvValue(key: String, value: Any?) {
+        state = state.copy(meta = state.meta + mapOf(key to value))
     }
 
     /**

@@ -178,6 +178,8 @@ class CommandContractMatrixTest {
         StateFixture.PEACE_DIPLOMACY_SUCCESS -> defaultSuccessView(diplomacyState = 2)
         StateFixture.NON_AGGRESSION_SUCCESS -> defaultSuccessView(diplomacyState = 7)
         StateFixture.DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1)
+        StateFixture.STRATEGIC_READY_SUCCESS -> defaultSuccessView(strategicCmdLimit = 0)
+        StateFixture.STRATEGIC_DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1, strategicCmdLimit = 0)
         StateFixture.OFFICER_SUCCESS -> defaultSuccessView(actorOfficerLevel = 5)
         StateFixture.AWAY_FROM_CAPITAL_SUCCESS -> defaultSuccessView(capitalCityId = OWN_DEST_CITY_ID)
         StateFixture.DEFAULT_FAILURE -> defaultFailureView()
@@ -192,6 +194,7 @@ class CommandContractMatrixTest {
         diplomacyState: Int = 0,
         actorOfficerLevel: Int = 12,
         capitalCityId: Int? = CITY_ID,
+        strategicCmdLimit: Int = 99,
     ): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
             ACTOR_ID to general(ACTOR_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = actorOfficerLevel, crew = actorCrew, npcType = actorNpcType),
@@ -204,7 +207,7 @@ class CommandContractMatrixTest {
             OWN_DEST_CITY_ID to city(OWN_DEST_CITY_ID, nationId = NATION_ID, level = 7, frontState = 1),
         ),
         nations = linkedMapOf(
-            NATION_ID to nation(NATION_ID, capitalCityId = capitalCityId, level = 9),
+            NATION_ID to nation(NATION_ID, capitalCityId = capitalCityId, level = 9, strategicCmdLimit = strategicCmdLimit),
             DEST_NATION_ID to nation(DEST_NATION_ID, capitalCityId = DEST_CITY_ID, level = 9),
         ),
         env = env,
@@ -350,7 +353,13 @@ class CommandContractMatrixTest {
         region = 1,
     )
 
-    private fun nation(id: Int, capitalCityId: Int?, level: Int, gennum: Int = 20) = Nation(
+    private fun nation(
+        id: Int,
+        capitalCityId: Int?,
+        level: Int,
+        gennum: Int = 20,
+        strategicCmdLimit: Int = 99,
+    ) = Nation(
         id = id,
         level = level,
         capitalCityId = capitalCityId,
@@ -365,7 +374,7 @@ class CommandContractMatrixTest {
         meta = linkedMapOf(
             "gennum" to gennum,
             "capset" to 0,
-            "strategic_cmd_limit" to 99,
+            "strategic_cmd_limit" to strategicCmdLimit,
             "surlimit" to 0,
             "secretlimit" to 99,
             "war" to 0,
@@ -394,6 +403,8 @@ class CommandContractMatrixTest {
         PEACE_DIPLOMACY_SUCCESS,
         NON_AGGRESSION_SUCCESS,
         DECLARATION_SUCCESS,
+        STRATEGIC_READY_SUCCESS,
+        STRATEGIC_DECLARATION_SUCCESS,
         OFFICER_SUCCESS,
         AWAY_FROM_CAPITAL_SUCCESS,
         DEFAULT_FAILURE,
@@ -472,21 +483,31 @@ class CommandContractMatrixTest {
             "che_국기변경" to CommandContract(mapOf("colorType" to 1)),
             "che_천도" to CommandContract(COMMON_OWN_DEST_CITY),
             "che_무작위수도이전" to CommandContract(envOverride = mapOf("year" to START_YEAR, "startYear" to START_YEAR)),
-            "che_급습" to CommandContract(COMMON_DEST_NATION, successFixture = StateFixture.DECLARATION_SUCCESS),
+            "che_급습" to CommandContract(
+                COMMON_DEST_NATION,
+                successFixture = StateFixture.STRATEGIC_DECLARATION_SUCCESS,
+            ),
             "che_몰수" to CommandContract(
                 COMMON_DEST_GENERAL + mapOf("isGold" to true, "amount" to 1_000),
                 envOverride = COMMON_LATE_REL_YEAR,
             ),
             "che_물자원조" to CommandContract(COMMON_DEST_NATION + mapOf("amountList" to listOf(1_000, 0))),
-            "che_백성동원" to CommandContract(COMMON_OWN_DEST_CITY),
+            "che_백성동원" to CommandContract(COMMON_OWN_DEST_CITY, successFixture = StateFixture.STRATEGIC_READY_SUCCESS),
             "che_부대탈퇴지시" to CommandContract(COMMON_DEST_GENERAL),
-            "che_수몰" to CommandContract(COMMON_DEST_CITY),
-            "che_의병모집" to CommandContract(COMMON_DEST_CITY, envOverride = COMMON_LATE_REL_YEAR),
-            "che_이호경식" to CommandContract(COMMON_DEST_NATION),
+            "che_수몰" to CommandContract(COMMON_DEST_CITY, successFixture = StateFixture.STRATEGIC_READY_SUCCESS),
+            "che_의병모집" to CommandContract(
+                COMMON_DEST_CITY,
+                successFixture = StateFixture.STRATEGIC_READY_SUCCESS,
+                envOverride = COMMON_LATE_REL_YEAR,
+            ),
+            "che_이호경식" to CommandContract(COMMON_DEST_NATION, successFixture = StateFixture.STRATEGIC_READY_SUCCESS),
             "che_초토화" to CommandContract(COMMON_OWN_DEST_CITY),
-            "che_피장파장" to CommandContract(COMMON_DEST_NATION + mapOf("commandType" to "che_몰수")),
-            "che_필사즉생" to CommandContract(),
-            "che_허보" to CommandContract(COMMON_DEST_CITY),
+            "che_피장파장" to CommandContract(
+                COMMON_DEST_NATION + mapOf("commandType" to "che_몰수"),
+                successFixture = StateFixture.STRATEGIC_READY_SUCCESS,
+            ),
+            "che_필사즉생" to CommandContract(successFixture = StateFixture.STRATEGIC_READY_SUCCESS),
+            "che_허보" to CommandContract(COMMON_DEST_CITY, successFixture = StateFixture.STRATEGIC_READY_SUCCESS),
             "event_극병연구" to CommandContract(),
             "event_무희연구" to CommandContract(),
             "event_상병연구" to CommandContract(),

@@ -33,12 +33,6 @@ import java.time.format.DateTimeFormatter
  *  - `>=9000` (MAILBOX_NATIONAL)  → 국가(national, dest==자국) / 외교(diplomacy, dest!=자국). receiver+sender.
  *  - `<9000` (그 외 양수)         → 개인(private, 상대 generalID). receiver+sender + receiver.newmsg=1.
  *
- * **게이트웨이/세션 레이어 게이트(차단/접속제한/penalty/throttle)는 데몬 world에 없다** — PHP
- * `getBlockLevel`/`checkLimit`/`penalty`/`session->lastMsg`는 precheck(게이트웨이) 관심사다(스펙
- * Implementation Notes 7). 데몬은 구조적 게이트(장수/상대장수/국가 존재, mailbox 라우팅, 외교권자 차단)를
- * 충실히 수행하고, penalty/block/rate는 general.meta에 실려 오면 그대로 평가하되 부재 시 not-blocked로 본다.
- * penalty 키가 meta["penalty"]에 실려 있으면 PHP와 동일하게 평가한다(faithful — fabricate 아님).
- *
  * [contactReader]는 nullable — null이면 stub-empty(연락처 없음)로 동작한다([VotePollRepository] 주입 패턴).
  * 이 핸들러의 send/delete 게이트는 world(in-memory source of truth)로 충족되므로 reader 부재여도 동작한다.
  */
@@ -46,21 +40,19 @@ class MessageHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     @Suppress("unused") private val contactReader: ContactReader? = null,
+    private val nowProvider: () -> Instant = Instant::now,
 ) {
     // ── SendMessage.php::launch ──────────────────────────────────────────────────────────────────
     fun handleSend(c: TurnDaemonCommand.SendMessage): TurnDaemonCommandResult {
-        // PHP: increaseRefresh('서신전달', 1) — 단일 토큰 로그(부수 효과, 결과 미포함, 골든 미캡처).
-        // 로그 푸시는 게이트웨이 refresh 카운터 개념이라 데몬 결과 경로엔 싣지 않는다(스펙 §Log).
-
         val me = world.getGeneralById(c.generalId)
             ?: return fail(c.generalId, "장수가 없습니다.")
 
-        // PHP: getBlockLevel()==1||3 → '차단되었습니다.' / checkLimit(refresh_score)>=2 → '접속 제한입니다.'.
-        // 둘 다 게이트웨이/세션 레이어(blockLevel/refresh_score). meta에 실려 오면 평가, 부재 시 not-blocked.
+        val accessBlocked = AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)
+
         if (blockLevel(me) == 1 || blockLevel(me) == 3) {
             return fail(c.generalId, "차단되었습니다.")
         }
-        if (checkLimit(me) >= 2) {
+        if (accessBlocked) {
             return fail(c.generalId, "접속 제한입니다.")
         }
 
@@ -467,9 +459,6 @@ class MessageHandler(
     // ── env / meta 헬퍼 (게이트웨이 레이어 게이트는 meta 운반분만 평가) ────────────────────────────
 
     private fun blockLevel(g: TurnGeneral): Int = (g.meta["blockLevel"] as? Number)?.toInt() ?: 0
-
-    /** PHP checkLimit(refresh_score): 데몬은 게이트웨이 refresh_score를 안 들고 있다 — meta 운반분만. */
-    private fun checkLimit(g: TurnGeneral): Int = (g.meta["limitState"] as? Number)?.toInt() ?: 0
 
     @Suppress("UNCHECKED_CAST")
     private fun penaltyOf(g: TurnGeneral): Map<String, Any?> =

@@ -251,6 +251,8 @@ sealed class TurnDaemonCommand {
         val leadership: Int,
         val strength: Int,
         val intel: Int,
+        val politics: Int = 50,
+        val charm: Int = 50,
         val character: String = "Random",
         val picture: String? = null,
         val ownerName: String? = null,
@@ -313,6 +315,16 @@ sealed class TurnDaemonCommand {
         val itemType: String,
     ) : TurnDaemonCommand() {
         override val type: String get() = "dropItem"
+    }
+
+    @Serializable
+    @SerialName("checkOwner")
+    data class CheckOwner(
+        val requestId: String? = null,
+        val generalId: Int,
+        val destGeneralId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "checkOwner"
     }
 
     @Serializable
@@ -595,6 +607,17 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "setBlockScout"
     }
 
+    @Serializable
+    @SerialName("npcPolicyUpdate")
+    data class NpcPolicyUpdate(
+        val requestId: String? = null,
+        val generalId: Int,
+        val policyType: String,
+        val data: kotlinx.serialization.json.JsonElement,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "npcPolicyUpdate"
+    }
+
     /**
      * 토너먼트 참가 (enroll) — `j_set_my_setting.php` 의 `tnmt` 토글. Writes the acting general's
      * `tnmt` (0/1) into the general row. `value` clamps to 0..1 (PHP: `< 0 || > 1 → 1`).
@@ -607,6 +630,25 @@ sealed class TurnDaemonCommand {
         val value: Int,
     ) : TurnDaemonCommand() {
         override val type: String get() = "tournamentEnroll"
+    }
+
+    @Serializable
+    @SerialName("tournamentStart")
+    data class TournamentStart(
+        val requestId: String? = null,
+        val generalId: Int,
+        val tournamentType: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "tournamentStart"
+    }
+
+    @Serializable
+    @SerialName("tournamentReset")
+    data class TournamentReset(
+        val requestId: String? = null,
+        val generalId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "tournamentReset"
     }
 
     /**
@@ -820,6 +862,7 @@ sealed class TurnDaemonCommand {
     data class SelectPoolPick(
         val requestId: String? = null,
         val generalId: Int,
+        val ownerUserId: Int? = null,
         val uniqueName: String,
         // 선택 스탯(풀 항목이 stat-editable일 때만 유효). 부재 시 null → 엔진이 풀 기본값 사용.
         val leadership: Int? = null,
@@ -836,6 +879,7 @@ sealed class TurnDaemonCommand {
     data class SelectPoolUpdate(
         val requestId: String? = null,
         val generalId: Int,
+        val ownerUserId: Int? = null,
         val uniqueName: String,
         val leadership: Int? = null,
         val strength: Int? = null,
@@ -843,7 +887,39 @@ sealed class TurnDaemonCommand {
         val personalityName: String? = null,
         val useOwnPicture: Boolean = false,
     ) : TurnDaemonCommand() { override val type: String get() = "selectPoolUpdate" }
+
+    @Serializable
+    @SerialName("selectPoolRefresh")
+    data class SelectPoolRefresh(
+        val requestId: String? = null,
+        val ownerUserId: Int,
+        val requestedAt: String,
+    ) : TurnDaemonCommand() { override val type: String get() = "selectPoolRefresh" }
+
+    @Serializable
+    @SerialName("adminGeneralModeration")
+    data class AdminGeneralModeration(
+        val requestId: String? = null,
+        val actorGeneralId: Int,
+        val generalIds: List<Int>,
+        val action: String,
+    ) : TurnDaemonCommand() { override val type: String get() = "adminGeneralModeration" }
+
+    @Serializable
+    @SerialName("adminWorldSettings")
+    data class AdminWorldSettings(
+        val requestId: String? = null,
+        val status: String? = null,
+        val settings: List<AdminWorldSetting> = emptyList(),
+    ) : TurnDaemonCommand() { override val type: String get() = "adminWorldSettings" }
 }
+
+@Serializable
+data class AdminWorldSetting(
+    val key: String,
+    val intValue: Int? = null,
+    val stringValue: String? = null,
+)
 
 @Serializable
 data class MySettings(

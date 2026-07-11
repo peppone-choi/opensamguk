@@ -1,8 +1,10 @@
 package opensamguk.logic.stats
 
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.domain.General
 import opensamguk.logic.inheritance.InheritBuffModuleFactory
 import opensamguk.logic.traits.OfficerLevelModule
+import opensamguk.logic.war.specialty.CrewTypeWarModule
 
 /**
  * A per-family registry that resolves a string code (the persisted DB column value — e.g. nation
@@ -47,6 +49,7 @@ class GeneralActionModuleFactory(
     private val personalityRegistry: GeneralActionModuleSource,
     private val itemRegistry: GeneralActionModuleSource,
     private val specialWarRegistry: GeneralActionModuleSource = GeneralActionModuleSource { null },
+    private val scenarioEffectRegistry: GeneralActionModuleSource = GeneralActionModuleSource { null },
 ) {
     /**
      * @param general          supplies the four equip slots (horse/weapon/book/item) + officerLevel + cityId.
@@ -70,6 +73,7 @@ class GeneralActionModuleFactory(
         nationLevel: Int,
         officerCity: Int = general.cityId,
         specialWarCode: String? = null,
+        scenarioEffectCode: String? = null,
     ): List<GeneralActionModule> {
         val mods = ArrayList<GeneralActionModule>(12)
 
@@ -83,7 +87,9 @@ class GeneralActionModuleFactory(
         specialWarRegistry.resolve(specialWarCode)?.let { mods.add(it) }
         // #5 personality
         personalityRegistry.resolve(personalityCode)?.let { mods.add(it) }
-        // #6 crew — identity stub (P4 crew-type sub-fold)
+        if (general.crewTypeId >= 1000) {
+            GameUnitConst.byId(general.crewTypeId)?.let { mods.add(CrewTypeWarModule(it)) }
+        }
         // #7 inherit — the inherit-buff module pair (general then war), folded from aux.inheritBuff
         //   (PHP General.php:125-128 builds inheritBuffObj; :787-799 merges it at slot #7). Resolves
         //   from general.meta triggerState/inheritBuff; null (no buff) ⇒ skipped (identity).
@@ -91,7 +97,7 @@ class GeneralActionModuleFactory(
             mods.add(generalModule)
             mods.add(warModule)
         }
-        // #8 scenario — identity stub (P6)
+        scenarioEffectRegistry.resolve(scenarioEffectCode)?.let { mods.add(it) }
         // #9.. items: horse, weapon, book, item (in that exact order)
         itemRegistry.resolve(general.horse)?.let { mods.add(it) }
         itemRegistry.resolve(general.weapon)?.let { mods.add(it) }

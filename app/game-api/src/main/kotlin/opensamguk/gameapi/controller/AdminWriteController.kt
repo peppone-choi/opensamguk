@@ -1,12 +1,14 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.admin.AdminGeneralModerationService
+import opensamguk.common.wire.AdminWorldSetting
+import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.dto.AdminGameSettingsPatchRequest
-import opensamguk.gameapi.read.WorldStateReadEntity
-import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.dto.AdminGeneralModerationActionRequest
+import opensamguk.gameapi.dto.AdminGeneralModerationActionResponse
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.GameApiJwtVerifier
-import opensamguk.infra.entity.GameKvEntity
-import opensamguk.infra.read.GameKvRepository
-import opensamguk.logic.util.jsonEncode
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PatchMapping
@@ -17,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Admin write API — server management mutations that do NOT touch game-state
- * (no ChangeRecorder / one-daemon-write rule violation).
+ * Admin write API. Every game-state and server-setting mutation is queued to the daemon command
+ * stream; this controller only authenticates, validates, and publishes intake commands.
  *
  * ADMIN gate: same pattern as AdminReadController.requireAdmin —
  * gateway access token `role` claim must be `"ADMIN"`.
@@ -27,8 +29,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/admin")
 class AdminWriteController(
     private val verifier: GameApiJwtVerifier,
-    private val world: WorldStateReadRepository,
-    private val gameKv: GameKvRepository,
+    private val commands: CommandReserveService,
+    private val generalResolver: GeneralResolver,
+    private val generalModeration: AdminGeneralModerationService,
 ) {
 
     @PostMapping("/server-status")
@@ -39,14 +42,38 @@ class AdminWriteController(
         val gate = requireAdmin(authorization)
         if (gate != null) return gate
 
-        val entity = world.findById(1).orElse(null)
-            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(mapOf("result" to false, "reason" to "world_state not found"))
+        if (body.status !in SERVER_STATUSES) {
+            return ResponseEntity.badRequest().body(mapOf("result" to false, "reason" to "invalid status"))
+        }
+        commands.publishImmediate(TurnDaemonCommand.AdminWorldSettings(status = body.status))
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .body(mapOf("result" to true, "status" to body.status))
+    }
 
-        entity.status = body.status
-        world.save(entity)
+    @PostMapping("/general-moderation")
+    fun generalModerationAction(
+        @RequestHeader(value = "Authorization", required = false) authorization: String?,
+        @RequestBody body: AdminGeneralModerationActionRequest,
+    ): ResponseEntity<Any> {
+        val gate = requireAdmin(authorization)
+        if (gate != null) return gate
 
-        return ResponseEntity.ok(mapOf("result" to true, "status" to body.status))
+        val token = bearer(authorization)
+        val actorGeneralId = token
+            ?.let { verifier.getUserId(it) }
+            ?.let { generalResolver.resolveGeneralId(it) }
+        return try {
+            val result = generalModeration.apply(body.action, body.generalIds, body.message, actorGeneralId)
+            ResponseEntity.status(HttpStatus.ACCEPTED).body(
+                AdminGeneralModerationActionResponse(
+                    result = true,
+                    action = result.action,
+                    affected = result.affected,
+                ),
+            )
+        } catch (e: IllegalArgumentException) {
+            ResponseEntity.badRequest().body(mapOf("result" to false, "reason" to (e.message ?: "잘못된 요청입니다.")))
+        }
     }
 
     @PatchMapping("/game-settings")
@@ -56,10 +83,6 @@ class AdminWriteController(
     ): ResponseEntity<Any> {
         val gate = requireAdmin(authorization)
         if (gate != null) return gate
-
-        val entity = world.findById(1).orElse(null)
-            ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(mapOf("result" to false, "reason" to "world_state not found"))
 
         if (body.values.isEmpty()) {
             return ResponseEntity.badRequest()
@@ -76,47 +99,22 @@ class AdminWriteController(
             if (key == "turnterm") restartRequiredKeys += key
         }
 
-        val nextConfig = LinkedHashMap(entity.config)
-        for ((key, value) in validated) {
-            when (key) {
-                "msg" -> writeGameEnvMsg(value as String)
-                "turnterm" -> {
-                    val minutes = value as Int
-                    nextConfig[key] = minutes
-                    entity.tickSeconds = minutes * 60
-                }
-                else -> nextConfig[key] = value
+        val settings = validated.map { (key, value) ->
+            when (value) {
+                is Int -> AdminWorldSetting(key = key, intValue = value)
+                is String -> AdminWorldSetting(key = key, stringValue = if (key == "msg") value.trim() else value)
+                else -> error("validated admin setting has unsupported type: ${value::class}")
             }
         }
-        entity.config = nextConfig
-        world.save(entity)
+        commands.publishImmediate(TurnDaemonCommand.AdminWorldSettings(settings = settings))
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
             mapOf(
                 "result" to true,
                 "updated" to validated.keys,
                 "restartRequired" to restartRequiredKeys.isNotEmpty(),
             ),
         )
-    }
-
-    private fun writeGameEnvMsg(msg: String) {
-        val trimmed = msg.trim()
-        val existing = gameKv.findByTable("game_env")
-            .firstOrNull { it.namespace == "global" && it.key == "msg" }
-        if (existing != null) {
-            existing.value = jsonEncode(trimmed)
-            gameKv.save(existing)
-        } else {
-            gameKv.save(
-                GameKvEntity(
-                    table = "game_env",
-                    namespace = "global",
-                    key = "msg",
-                    value = jsonEncode(trimmed),
-                ),
-            )
-        }
     }
 
     /** 허용된 config / game_env 키만 검증·정규화. */
@@ -178,6 +176,7 @@ class AdminWriteController(
 
     companion object {
         private const val ADMIN_ROLE = "ADMIN"
+        private val SERVER_STATUSES = setOf("CLOSED", "PRE_OPEN", "OPEN")
         val STARTTIME_REGEX = Regex("""^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$""")
         val TURN_OPTIONS = setOf(1, 2, 5, 10, 20, 30, 60, 120)
         const val MSG_MAX_LENGTH = 500

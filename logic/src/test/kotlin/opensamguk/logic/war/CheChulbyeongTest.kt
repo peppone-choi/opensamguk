@@ -108,6 +108,7 @@ class CheChulbyeongTest {
                     conquerCity = false, defenderNationRice = null,
                     attackerCityDeadDelta = 0, defenderCityDeadDelta = 0,
                     attacker = dummyAttacker(rng), city = dummyCity(rng),
+                    defenders = emptyList(),
                     defenderCityTrainAtmosForTest = 0,
                 )
             },
@@ -152,7 +153,7 @@ class CheChulbyeongTest {
             pipeline,
             processWarFn = { ws, _, _ ->
                 capturedSeed = ws
-                ProcessWarResult(false, null, 0, 0, dummyAttacker(rng), dummyCity(rng), 0)
+                ProcessWarResult(false, null, 0, 0, dummyAttacker(rng), dummyCity(rng), emptyList(), 0)
             },
             lotteryFn = { _, _, _, _ -> false },
         )
@@ -175,7 +176,7 @@ class CheChulbyeongTest {
             pipeline,
             processWarFn = { _, _, _ ->
                 order.add("processWar")
-                ProcessWarResult(true, 6000, 100, 150, dummyAttacker(rng), dummyCity(rng), 0)
+                ProcessWarResult(true, 6000, 100, 150, dummyAttacker(rng), dummyCity(rng), emptyList(), 0)
             },
             lotteryFn = { _, _, _, _ -> order.add("lottery"); false },
         )

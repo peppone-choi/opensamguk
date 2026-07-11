@@ -115,6 +115,7 @@ class RebirthAndRingTest {
         assertEquals(0, (after.meta["specage2"] as Number).toInt())
         assertEquals(500, (after.meta["dex1"] as Number).toInt())   // 1000*0.5
         assertEquals(2500, (after.meta["dex5"] as Number).toInt())  // 5000*0.5
+        assertEquals(setOf(1), h.recorder.dirtyGeneralIds(), "rebirth general UPDATE must ride ChangeRecorder")
 
         // in-place — the row is NOT tombstoned.
         assertFalse(w.consumeDirtyState().deletedGenerals.contains(1), "rebirth does NOT delete")
@@ -185,14 +186,17 @@ class RebirthAndRingTest {
     }
 
     @Test
-    fun `rebirth does NOT fire when isunited is not 0`() {
+    fun `isunited 1 still rebirths but does not suppress the in-place update`() {
         val g = gen(age = 90)
         val w = world(g)
-        val outcome = handler(w).updateTurnTime(1, env(isunited = 1))
-        assertEquals(LifecycleOutcome.SURVIVED, outcome, "no rebirth on a unified server")
-        // stats untouched, turntime still advanced.
-        assertEquals(80, w.getGeneralById(1)!!.stats.leadership)
-        assertEquals(90, w.getGeneralById(1)!!.age)
+        val h = handler(w)
+
+        val outcome = h.updateTurnTime(1, env(isunited = 1))
+
+        assertEquals(LifecycleOutcome.REBIRTHED, outcome, "PHP gates CheckHall, not rebirth, on isunited == 0")
+        assertEquals(68, w.getGeneralById(1)!!.stats.leadership)
+        assertEquals(20, w.getGeneralById(1)!!.age)
+        assertEquals(setOf(1), h.recorder.dirtyGeneralIds())
     }
 
     @Test

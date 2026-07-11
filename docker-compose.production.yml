@@ -64,6 +64,7 @@ services:
       # Production starts empty by default; admins create servers before any scenario seed.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
+      SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: "-XX:+UseG1GC -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=40.0 -Djava.security.egd=file:/dev/./urandom"
     depends_on:
@@ -73,6 +74,8 @@ services:
         condition: service_healthy
     expose:
       - "8082"
+    volumes:
+      - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     networks:
       - opensamguk
     deploy:

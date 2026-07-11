@@ -49,6 +49,109 @@ export interface WorldLogResponse {
     entries: WorldLogEntry[];
 }
 
+export type GeneralLogType = 'generalAction' | 'battleDetail' | 'battleResult' | 'generalHistory';
+
+export interface SelectPoolCard {
+    uniqueName: string;
+    generalName: string;
+    picture: string | null;
+    imageServer: number;
+    leadership: number | null;
+    strength: number | null;
+    intel: number | null;
+    politics: number | null;
+    charm: number | null;
+    dex: number[];
+    personality: string | null;
+    specialDomestic: string | null;
+    specialWar: string | null;
+    statEditable: boolean;
+}
+
+export interface SelectPoolResponse {
+    result: boolean;
+    generalId: number | null;
+    validUntil: string | null;
+    pick: SelectPoolCard[];
+}
+
+export interface SelectPoolRefreshAccepted {
+    status: 'AVAILABLE';
+    requestId: string;
+}
+
+export interface GeneralLogResponse {
+    result: boolean;
+    reqType?: GeneralLogType;
+    generalID?: number;
+    log?: Record<string, string>;
+    reason?: string;
+}
+
+export interface CommandResultPending {
+    status: 'PENDING';
+    requestId: string;
+}
+
+export interface CommandResultResolved {
+    status: 'RESOLVED';
+    requestId: string;
+    ok: boolean;
+    type: string;
+    reason?: string;
+    result: Record<string, unknown>;
+}
+
+export type CommandResultResponse = CommandResultPending | CommandResultResolved;
+
+export interface NationGeneralListEnv {
+    year: number;
+    month: number;
+    turnterm: number;
+    turntime: string | null;
+    autorunUser?: number | null;
+    killturn?: number | null;
+}
+
+export interface NationGeneralListResponse {
+    result: boolean;
+    permission: number;
+    column: string[];
+    list: unknown[][];
+    troops: unknown[];
+    env: NationGeneralListEnv;
+    myGeneralID: number | null;
+    reason?: string;
+}
+
+export interface JoinFormResponse {
+    readonly result: boolean;
+    readonly member: {
+        readonly name: string;
+        readonly picture: string | null;
+        readonly imageServer: number;
+        readonly canUsePicture: boolean;
+    };
+    readonly inheritTotalPoint: number;
+    readonly inheritCosts: {
+        readonly special: number;
+        readonly turntime: number;
+        readonly city: number;
+        readonly stat: number;
+    };
+    readonly turnTermMinutes: number;
+    readonly cities: readonly {
+        readonly id: number;
+        readonly name: string;
+        readonly region: string;
+    }[];
+    readonly availableSpecialWar: Readonly<Record<string, {
+        readonly title: string;
+        readonly info: string;
+    }>>;
+    readonly geniusRemaining: number;
+}
+
 // ── 어드민 read 계약 (B3c/B4c — _admin5/_admin7/_admin8) ─────────────────────────
 // game-api `GET /api/admin/*` (AdminReadController) — 전부 READ-only(JPA read). 0.9.0 단일 ADMIN
 // 롤 게이트: 비로그인 401 / ADMIN 아님 403. (W4 read surface 전용이라 도메인 types 모듈을
@@ -175,6 +278,8 @@ export interface AdminDiplomacyAllResponse {
 export interface AdminBlockedWrite {
     label: string;
     reason: string;
+    code?: string | null;
+    enabled?: boolean;
 }
 
 export interface AdminGameSettingsResponse {
@@ -198,6 +303,12 @@ export interface AdminGameSettingsResponse {
     blockedWrites: AdminBlockedWrite[];
 }
 
+export interface AdminGameSettingsPatchResponse {
+    result: boolean;
+    updated: string[];
+    restartRequired: boolean;
+}
+
 export interface AdminGeneralModerationRow {
     no: number;
     name: string;
@@ -214,6 +325,12 @@ export interface AdminGeneralModerationResponse {
     generals: AdminGeneralModerationRow[];
     bulkActions: AdminBlockedWrite[];
     selectedActions: AdminBlockedWrite[];
+}
+
+export interface AdminGeneralModerationActionResponse {
+    result: boolean;
+    action: string;
+    affected: number;
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -247,6 +364,29 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     return res.json() as Promise<T>;
 }
 
+async function patch<T>(path: string, body: unknown): Promise<T> {
+    const res = await fetch(`${BASE}${path}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+        let detail = '';
+        try {
+            const parsed: unknown = await res.json();
+            if (parsed && typeof parsed === 'object') {
+                const p = parsed as Record<string, unknown>;
+                const msg = p.reason ?? p.error ?? p.message;
+                if (typeof msg === 'string' && msg.length > 0) detail = msg;
+            }
+        } catch {
+            detail = '';
+        }
+        throw new Error(detail || `${res.status}: ${res.statusText}`);
+    }
+    return res.json() as Promise<T>;
+}
+
 // ── 인테이크 결과 타입 가드 (W0-1 — P0-04/P0-06 근원 처리) ─────────────────────
 // 200 BLOCKED/UNKNOWN도 res.ok라 post()가 정상 resolve된다 — 호출부는 반드시 이 가드로
 // 분기해야 한다. queued(202)는 "접수/예약"이지 성공 확정이 아니다(엔진 비동기 deny 가능,
@@ -265,6 +405,7 @@ export function isIntakeDenied(o: IntakeOutcome): o is IntakeDenied {
 export const api = {
     get,
     post,
+    patch,
 
     // Identity envelope + server-driven menu/const (F2 Wave 1)
     frontInfo: () => get<FrontInfoResponse>('/api/front-info'),
@@ -290,7 +431,18 @@ export const api = {
     myNationDetail: <T>() => get<T>('/api/my-nation-detail'),
     city: <T>(id: number) => get<T>(`/api/city/${id}`),
     generals: <T>() => get<T>('/api/generals'),
+    nationGeneralList: () => get<NationGeneralListResponse>('/api/nation/general-list'),
     tournament: <T>() => get<T>('/api/tournament'),
+    generalLog: (generalId: number, reqType: GeneralLogType, reqTo?: number) =>
+        get<GeneralLogResponse>(
+            reqTo == null
+                ? `/api/general-log?generalID=${generalId}&reqType=${reqType}`
+                : `/api/general-log?generalID=${generalId}&reqType=${reqType}&reqTo=${reqTo}`,
+        ),
+    tournamentStart: <T = { result: boolean; reason?: string }>(generalId: number) =>
+        post<T>(`/api/tournament/start?generalId=${generalId}`, {}),
+    tournamentReset: <T = { result: boolean; reason?: string }>(generalId: number) =>
+        post<T>(`/api/tournament/reset?generalId=${generalId}`, {}),
 
     // Rankings
     rankings: {
@@ -337,7 +489,21 @@ export const api = {
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
     // B1 Join — 장수생성(재야 등록). 202=성공, 200 BLOCKED=deny.
-    join: (body: { name: string; leadership: number; strength: number; intel: number; character: string; pic?: boolean }) =>
+    joinForm: () => get<JoinFormResponse>('/api/join'),
+    join: (body: {
+        name: string;
+        leadership: number;
+        strength: number;
+        intel: number;
+        politics: number;
+        charm: number;
+        character: string;
+        pic?: boolean;
+        inheritSpecial?: string;
+        inheritTurntimeZone?: number;
+        inheritCity?: number;
+        inheritBonusStat?: readonly number[];
+    }) =>
         post<{ status: string; requestId?: string; reason?: string }>('/api/join', body),
 
     // ── F4 action-page READ endpoints (read-only; all via the /api/game proxy) ──
@@ -364,6 +530,11 @@ export const api = {
     chiefReserved: () => get<ChiefReservedResponse>('/api/nation/chief-reserved'),
     // NPC 정책 (page 8) — default+current policy/priorities/lastSetters/env.
     npcPolicy: () => get<NpcPolicyResponse>('/api/nation/npc-policy'),
+    updateNpcPolicy: (body: { type: 'nationPolicy' | 'nationPriority' | 'generalPriority'; data: unknown }) =>
+        post<IntakeOutcome>('/api/nation/npc-policy', body),
+    commandResult: (requestId: string) => get<CommandResultResponse>(`/api/command/result/${requestId}`),
+    selectPool: () => get<SelectPoolResponse>('/api/select-pool'),
+    refreshSelectPool: () => post<SelectPoolRefreshAccepted>('/api/select-pool/refresh', {}),
     // 유산 (page 15) — inherit items/buffs/costs/availability/logs/currentStat.
     inheritPoint: <T>() => get<T>('/api/inherit-point'),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
@@ -511,6 +682,30 @@ export const api = {
             generalId: number,
             turnIdx = 0,
         ) => post<IntakeOutcome & T>(`/api/command/placeBet?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        selectPoolPick: <T = unknown>(
+            args: {
+                uniqueName: string;
+                leadership?: number;
+                strength?: number;
+                intel?: number;
+                personalityName?: string;
+                useOwnPicture?: boolean;
+            },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(`/api/command/selectPoolPick?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        selectPoolUpdate: <T = unknown>(
+            args: {
+                uniqueName: string;
+                leadership?: number;
+                strength?: number;
+                intel?: number;
+                personalityName?: string;
+                useOwnPicture?: boolean;
+            },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(`/api/command/selectPoolUpdate?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
         // 서신 발송 — legacy SendMessage.php(mailbox, text).
         // CommandWireMapper.intakeCodes `sendMessage`:75.
@@ -531,7 +726,11 @@ export const api = {
     // Bearer로 붙여 보내므로 별도 헤더 주입 불필요. 비ADMIN은 game-api가 403, 비로그인은 401.
     admin: {
         gameSettings: () => get<AdminGameSettingsResponse>('/api/admin/game-settings'),
+        patchGameSettings: (values: Record<string, string | number>) =>
+            patch<AdminGameSettingsPatchResponse>('/api/admin/game-settings', { values }),
         generalModeration: () => get<AdminGeneralModerationResponse>('/api/admin/general-moderation'),
+        generalModerationAction: (args: { action: string; generalIds: number[]; message?: string }) =>
+            post<AdminGeneralModerationActionResponse>('/api/admin/general-moderation', args),
         // 일제정보(_admin5) — 국가별 통계 + 정렬(type 0~17, type2 0~6).
         nationStats: (type = 0, type2 = 0) =>
             get<AdminNationStatsResponse>(`/api/admin/nation-stats?type=${type}&type2=${type2}`),

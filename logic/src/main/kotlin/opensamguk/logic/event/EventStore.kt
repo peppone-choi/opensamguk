@@ -26,6 +26,18 @@ import kotlinx.serialization.json.buildJsonArray
  */
 class EventStore {
 
+    sealed interface Mutation {
+        data class Insert(val row: EventRow) : Mutation
+        data class Delete(val id: Int) : Mutation
+    }
+
+    data class WireRow(
+        val target: String,
+        val priority: Int,
+        val condition: String,
+        val action: String,
+    )
+
     /** One materialized event row: the serial-PK [id], target, priority, decoded condition + actions. */
     data class EventRow(
         val id: Int,
@@ -37,11 +49,18 @@ class EventStore {
 
     private val rows = LinkedHashMap<Int, EventRow>()
     private var nextId = 1
+    private var mutationSink: ((Mutation) -> Unit)? = null
+
+    fun bindMutationSink(sink: (Mutation) -> Unit) {
+        mutationSink = sink
+    }
 
     /** Insert a row from ALREADY-DECODED condition + actions (the self-insert / test path). */
     fun insert(targetCode: String, priority: Int, condition: EventCondition, actions: List<RawAction>): Int {
         val id = nextId++
-        rows[id] = EventRow(id, EventTarget.fromCode(targetCode), priority, condition, actions)
+        val row = EventRow(id, EventTarget.fromCode(targetCode), priority, condition, actions)
+        rows[id] = row
+        mutationSink?.invoke(Mutation.Insert(row))
         return id
     }
 
@@ -52,9 +71,22 @@ class EventStore {
         return insert(targetCode, priority, cond, actions)
     }
 
+    fun loadRaw(id: Int, targetCode: String, priority: Int, conditionJson: JsonElement, actionJson: JsonElement) {
+        require(id > 0) { "event id must be positive: $id" }
+        val row = EventRow(
+            id = id,
+            target = EventTarget.fromCode(targetCode),
+            priority = priority,
+            condition = EventCodec.decodeCondition(conditionJson),
+            actions = EventCodec.decodeActionList(actionJson),
+        )
+        rows[id] = row
+        nextId = maxOf(nextId, id + 1)
+    }
+
     /** PHP `DeleteEvent` (`Action/DeleteEvent.php:18`): `DELETE FROM event WHERE id = %i`. Idempotent. */
     fun delete(id: Int) {
-        rows.remove(id)
+        if (rows.remove(id) != null) mutationSink?.invoke(Mutation.Delete(id))
     }
 
     /** All rows for [target], ordered the EXACT dispatch order: `priority DESC, id ASC`. */
@@ -84,6 +116,10 @@ class EventStore {
                 store.insertRaw(row.target, row.priority, row.condition, row.action)
             }
             return store
+        }
+
+        fun defaultWireRows(): List<WireRow> = DEFAULT_EVENTS.map { row ->
+            WireRow(row.target, row.priority, row.condition.toString(), row.action.toString())
         }
 
         private data class SeedRow(

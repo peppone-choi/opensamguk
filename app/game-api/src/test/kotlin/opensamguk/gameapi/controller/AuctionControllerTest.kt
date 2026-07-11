@@ -2,8 +2,16 @@ package opensamguk.gameapi.controller
 
 import opensamguk.infra.entity.AuctionBidEntity
 import opensamguk.infra.entity.AuctionEntity
+import opensamguk.infra.entity.GameKvEntity
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.LogFeedReadRepository
+import opensamguk.gameapi.read.WorldLogReadEntity
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.auction.ResourceType
 import org.hamcrest.Matchers.nullValue
@@ -16,6 +24,11 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
+import org.springframework.test.web.servlet.request.RequestPostProcessor
 import java.time.Instant
 import java.util.Optional
 
@@ -37,9 +50,29 @@ class AuctionControllerTest {
 
     private val auctions = mock(AuctionRepository::class.java)
     private val bids = mock(AuctionBidRepository::class.java)
+    private val resolver = mock(GeneralResolver::class.java)
+    private val gameKv = mock(GameKvReadRepository::class.java)
+    private val world = mock(WorldStateReadRepository::class.java)
+    private val logFeeds = mock(LogFeedReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(AuctionController(auctions, bids)).build()
+        MockMvcBuilders.standaloneSetup(AuctionController(auctions, bids, resolver, gameKv, world, logFeeds))
+            .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
+            .build()
+
+    private fun principal(userId: Long): RequestPostProcessor = RequestPostProcessor { request ->
+        val authentication = UsernamePasswordAuthenticationToken(
+            userId,
+            null,
+            listOf(SimpleGrantedAuthority("ROLE_USER")),
+        )
+        SecurityContextHolder.getContext().authentication = authentication
+        request.setUserPrincipal(authentication)
+        request
+    }
+
+    private fun resolvedViewer(generalId: Int = 42): GeneralResolver.ResolvedGeneral =
+        GeneralResolver.ResolvedGeneral(GeneralReadEntity(id = generalId), 0, 0, 0, 0)
 
     private fun auction(
         id: Int,
@@ -365,5 +398,49 @@ class AuctionControllerTest {
         mockMvc().perform(get("/api/auctions/999/unique-detail"))
             .andExpect(status().isNotFound)
             .andExpect(content().string("선택한 경매가 없습니다."))
+    }
+
+    @Test
+    fun `authenticated viewer context drives self flags balance pseudonym and recent logs`() {
+        `when`(resolver.resolve(7L)).thenReturn(resolvedViewer(42))
+        `when`(world.findById(1)).thenReturn(Optional.of(WorldStateReadEntity(meta = mapOf("hiddenSeed" to "seed"))))
+        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", "obfuscatedNamePool"))
+            .thenReturn(GameKvEntity("game_env", "game_env", "obfuscatedNamePool", "[\"가나다\"]", 1))
+        `when`(gameKv.findByTableAndNamespaceAndKey("inheritance", "inheritance_7", "previous"))
+            .thenReturn(GameKvEntity("inheritance", "inheritance_7", "previous", "[3210,0]", 2))
+        `when`(logFeeds.findRecentByScopeAndCategory("action", "auction", 20)).thenReturn(
+            listOf(WorldLogReadEntity(id = 2, text = "최신"), WorldLogReadEntity(id = 1, text = "이전")),
+        )
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value)).thenReturn(emptyList())
+        `when`(auctions.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)).thenReturn(emptyList())
+        `when`(auctions.findByTypeValueOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM.value)).thenReturn(
+            listOf(auction(
+                id = 20, type = AuctionType.UNIQUE_ITEM, hostGeneralId = 42, target = "적토마",
+                detailJson = """{"title":"전설의 말","hostName":"비밀장수"}""",
+            )),
+        )
+        `when`(bids.findHighestBidsByAuctionIds(listOf(20))).thenReturn(
+            listOf(bid(20, 42, 300, "입찰자A")),
+        )
+
+        mockMvc().perform(get("/api/auctions").with(principal(7)))
+            .andExpect(jsonPath("$.generalID").value(42))
+            .andExpect(jsonPath("$.recentLogs[0]").value("이전"))
+            .andExpect(jsonPath("$.recentLogs[1]").value("최신"))
+
+        mockMvc().perform(get("/api/auctions/unique").with(principal(7)))
+            .andExpect(jsonPath("$.obfuscatedName").value("가나다42"))
+            .andExpect(jsonPath("$.list[0].isCallerHost").value(true))
+            .andExpect(jsonPath("$.list[0].highestBid.isCallerHighestBidder").value(true))
+
+        `when`(auctions.findById(20)).thenReturn(Optional.of(auction(
+            id = 20, type = AuctionType.UNIQUE_ITEM, hostGeneralId = 42,
+            detailJson = """{"title":"전설의 말","hostName":"비밀장수"}""",
+        )))
+        `when`(bids.findByAuctionIdOrderByAmountDesc(20)).thenReturn(listOf(bid(20, 42, 300, "입찰자A")))
+        mockMvc().perform(get("/api/auctions/20/unique-detail").with(principal(7)))
+            .andExpect(jsonPath("$.obfuscatedName").value("가나다42"))
+            .andExpect(jsonPath("$.remainPoint").value(3210))
+            .andExpect(jsonPath("$.bidList[0].isCallerHighestBidder").value(true))
     }
 }

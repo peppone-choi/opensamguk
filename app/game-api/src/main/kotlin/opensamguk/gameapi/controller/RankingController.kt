@@ -25,10 +25,8 @@ import org.springframework.web.server.ResponseStatusException
  * paths need no auth — an anonymous visitor must see every board (esp. npcs/traffic). Do NOT add a
  * `.authenticated()` matcher for the rankings paths.
  *
- * Computed boards (best-generals/generals/kingdoms/npcs) are pure projections of live `general`/`nation`/
- * `city` rows ([RankReadService]). emperor/traffic/hall-of-fame return the documented empty/zero defaults
- * (no source table — OQ-1/2/5, NOT fabricated). `emperor/{id}` is 404 until a dynasty-history table exists
- * (the emperor page returns `[]` → no UI link → the detail page only hits this via `.catch()`).
+ * Computed boards are pure projections of live read rows ([RankReadService]). Historical boards read only
+ * persisted `hall`/`world_state`/`statistic` data and leave missing source fields empty/zero.
  */
 @RestController
 @RequestMapping("/api/rankings")
@@ -72,10 +70,6 @@ class RankingController(
     fun emperor(): ResponseEntity<List<EmperorRecord>> =
         ResponseEntity.ok(rankReadService.emperor())
 
-    /**
-     * No `emperior`/unification-history table (OQ-1) → always 404. The emperor page returns `[]` so no
-     * link reaches this path through the UI; the detail page handles the 404 in its `.catch()` branch.
-     */
     @GetMapping("/emperor/{id}")
     fun emperorDetail(@PathVariable id: Int): Nothing =
         throw ResponseStatusException(HttpStatus.NOT_FOUND, "no emperor record $id")

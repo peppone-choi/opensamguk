@@ -235,7 +235,7 @@ open class CheHwagye(
 
         // 성공 분기 (che_화계.php:307-340)
         val injuryCount = if (injuryGeneral) {
-            sabotageInjury(rng, context.candidateGenerals, commandName, context, pipeline)
+            sabotageInjury(rng, context.candidateGenerals, "계략", context, pipeline)
         } else {
             0
         }
@@ -246,10 +246,10 @@ open class CheHwagye(
         d.destCity = destCity.copy(
             agriculture = destCity.agriculture - agriAmount,
             commerce = destCity.commerce - commAmount,
+            state = 32,
         )
 
-        // 아이템 소모 (che_화계.php:315-320)
-        // TODO(백로그): 아이템 시스템 미포팅. PHP tryConsumeNow + deleteItem.
+        consumeSabotageItemIfNeeded(context)
 
         // DRAW4: nextRangeInt(201, 300) (che_화계.php:323)
         val exp = rng.nextRangeInt(201, 300)
@@ -258,18 +258,17 @@ open class CheHwagye(
 
         val (reqGold, reqRice) = getCost(env)
 
-        d.general = g.copy(
-            gold = maxOf(0, g.gold - reqGold),
-            rice = maxOf(0, g.rice - reqRice),
-            experience = g.experience + exp,
-            dedication = g.dedication + ded,
-            meta = withMeta(g.meta, "${st}_exp" to metaInt(g.meta, "${st}_exp") + 1),
+        val postItemGeneral = d.general
+        d.general = postItemGeneral.copy(
+            gold = maxOf(0, postItemGeneral.gold - reqGold),
+            rice = maxOf(0, postItemGeneral.rice - reqRice),
+            experience = postItemGeneral.experience + exp,
+            dedication = postItemGeneral.dedication + ded,
+            meta = withMeta(postItemGeneral.meta, "${st}_exp" to metaInt(postItemGeneral.meta, "${st}_exp") + 1),
             lastTurn = LastTurn(name, arg = linkedMapOf("destCityID" to destCityId)),
         )
 
-        // rank_data firenum 증가 — 계략 성공 횟수 (PHP increaseRankVar(RankColumn::firenum, 1))
-        // rank_data는 별도 테이블; 엔진/플러시 단계에서 general_id + type='firenum' 레코드 업데이트.
-        // TODO(백로그): rank_data firenum 증가 — ChangeRecorder 채널 또는 엔진 seam 필요.
+        d.rankIncrements.add(opensamguk.logic.actions.GeneralRankIncrement(g.id, "firenum", 1))
 
         // StaticEventHandler (che_화계.php:338)
         // scenario 1010 빈 맵이 정본이므로 no-op.
@@ -281,4 +280,19 @@ open class CheHwagye(
             linkedMapOf("destCityID" to destCityId),
         )
     }
+}
+
+private data class SabotageConsumableItem(val displayName: String, val rawName: String)
+
+private val sabotageConsumableItems = mapOf(
+    "che_계략_이추" to SabotageConsumableItem("이추(계략)", "이추"),
+    "che_계략_향낭" to SabotageConsumableItem("향낭(계략)", "향낭"),
+)
+
+internal fun consumeSabotageItemIfNeeded(context: GeneralActionResolveContext) {
+    val current = context.draft.general
+    val item = sabotageConsumableItems[current.item] ?: return
+    val josaUl = JosaUtil.pick(item.rawName, "을")
+    context.addActionPlainLog("<C>${item.displayName}</>$josaUl 사용!")
+    context.draft.general = current.copy(item = "None")
 }

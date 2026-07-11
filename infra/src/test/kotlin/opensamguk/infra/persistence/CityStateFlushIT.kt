@@ -80,7 +80,7 @@ class CityStateFlushIT {
         if (this::postgres.isInitialized) postgres.stop()
     }
 
-    private fun city(state: Int) = City(
+    private fun city(state: Int, dead: Int = 0) = City(
         id = 5, nationId = 2, level = 5,
         commerce = 800, commerceMax = 2000,
         agriculture = 1000, agricultureMax = 2000,
@@ -89,6 +89,7 @@ class CityStateFlushIT {
         defense = 1000, defenseMax = 2000,
         wall = 1000, wallMax = 2000,
         population = 50000, populationMax = 100000,
+        dead = dead,
         trade = 100, region = 1,
         state = state,
     )
@@ -99,12 +100,14 @@ class CityStateFlushIT {
         assertEquals(0, selectState())
 
         // RaiseDisaster가 stateCode 7(혹한 등)을 기록한 도시를 flush.
-        executor.flush(FlushPayload(worldStateUpdate = ws(), updatedCities = listOf(city(state = 7))))
+        executor.flush(FlushPayload(worldStateUpdate = ws(), updatedCities = listOf(city(state = 7, dead = 321))))
         assertEquals(7, selectState())
+        assertEquals(321, selectDead())
 
         // 되읽기: CityRowMapper.fromRow가 state를 그대로 실어 round-trip이 무손실이다.
         val row = jdbc.jdbcTemplate.queryForMap("SELECT * FROM city WHERE id = 5")
         assertEquals(7, CityRowMapper.fromRow(row).state)
+        assertEquals(321, CityRowMapper.fromRow(row).dead)
 
         // 다음 달 무조건 리셋(state<=10 → 0)도 같은 경로로 영속된다.
         executor.flush(FlushPayload(worldStateUpdate = ws(), updatedCities = listOf(city(state = 0))))
@@ -113,4 +116,7 @@ class CityStateFlushIT {
 
     private fun selectState(): Int =
         jdbc.jdbcTemplate.queryForObject("SELECT state FROM city WHERE id = 5", Int::class.java)!!
+
+    private fun selectDead(): Int =
+        jdbc.jdbcTemplate.queryForObject("SELECT dead FROM city WHERE id = 5", Int::class.java)!!
 }

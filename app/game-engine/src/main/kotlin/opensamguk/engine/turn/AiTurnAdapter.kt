@@ -26,7 +26,6 @@ import opensamguk.logic.ai.GeneralAiContext
 import opensamguk.logic.ai.GeneralAiDoBodies
 import opensamguk.logic.ai.GeneralAiFactory
 import opensamguk.logic.ai.GeneralAiInput
-import opensamguk.logic.ai.KvDelta
 import opensamguk.logic.ai.NationAiInput
 import opensamguk.logic.ai.NationPassHooks
 import opensamguk.logic.ai.candidateAllowed
@@ -46,6 +45,56 @@ import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.statview.WorldEnvBuilder
 import java.time.Duration
 
+private sealed interface AiStateDelta {
+    data class GeneralRow(
+        val generalId: Int,
+        val field: AiGeneralField,
+        val value: Any?,
+    ) : AiStateDelta
+
+    data class NationRow(
+        val nationId: Int,
+        val field: AiNationField,
+        val value: Any?,
+    ) : AiStateDelta
+
+    data class NationEnv(
+        val nationId: Int,
+        val key: String,
+        val value: Any?,
+    ) : AiStateDelta
+}
+
+private enum class AiGeneralField(val wireKey: String) {
+    DEFENCE_TRAIN("defence_train"),
+    KILLTURN("killturn"),
+    USE_AUTO_NATION_TURN("use_auto_nation_turn"),
+    OFFICER_LEVEL("officer_level"),
+    OFFICER_CITY("officer_city"),
+    MOVING_TARGET_CITY_ID("movingTargetCityID"),
+    ;
+
+    companion object {
+        fun fromWireKey(key: String): AiGeneralField =
+            entries.firstOrNull { it.wireKey == key }
+                ?: error("Unsupported AI general delta key: $key")
+    }
+}
+
+private enum class AiNationField(val wireKey: String) {
+    CHIEF_SET("chief_set"),
+    WAR("war"),
+    RATE("rate"),
+    BILL("bill"),
+    ;
+
+    companion object {
+        fun fromWireKey(key: String): AiNationField =
+            entries.firstOrNull { it.wireKey == key }
+                ?: error("Unsupported AI nation delta key: $key")
+    }
+}
+
 /**
  * P5 F-SEAM (Task FM1 + MATERIALIZE) — the SINGLE seam owner that bridges the daemon's in-memory world to
  * the PURE `:logic` [GeneralAI] decision spine.
@@ -57,7 +106,7 @@ import java.time.Duration
  *  2. constructs the read-only [AiInstanceState] (`updateInstance`/`calcGenType` FIRST-draw) + [AiWorldView]
  *     (the categorize/derive facade) over the live [InMemoryTurnWorld] — READ-ONLY over GAME ENTITIES;
  *  3. wires the `candidateAllowed` F-BRIDGE gate over a [WorldStateViewAdapter] (FULL mode);
- *  4. routes the AI's meta-KV side-effects through the [AiKvRecorder] delta seam ([kvDeltas]);
+ *  4. routes AI general rows, nation rows, and nation-env writes through typed state deltas;
  *  5. runs [GeneralAI.chooseGeneralTurn]/`chooseNationTurn` and returns the chosen [ChosenCommand].
  *
  * **MATERIALIZE wave:** every stubbed/defaulted context input is now sourced from the live world:
@@ -73,10 +122,9 @@ import java.time.Duration
  *  - S18 — the [NationPassHooks] (categorize / choosePromotion / chooseNonLordPromotion[MAY draw] /
  *    chooseTexRate / chooseGoldBillRate / chooseRiceBillRate[NO draw]) wired over the live nation buckets.
  *
- * **The AI is READ-ONLY over GAME ENTITIES** — this adapter never mutates a general/city/nation row; the
- * chosen command's mutation runs the EXISTING [ReservedTurnHandler] resolve → [ChangeRecorder] delta path.
- * The only AI-side writes are the queued [kvDeltas] (visible NEXT turn). NO JPA `EntityManager` (the daemon
- * write-path rule, enforced by `DaemonNoEntityManagerTest`).
+ * The choice phase stays read-only. Production drains the typed deltas through [ChangeRecorder] at the
+ * PHP-equivalent boundary, updating the in-memory row through the dirty-free path before the next consumer.
+ * NO JPA `EntityManager` is used (the daemon write-path rule, enforced by `DaemonNoEntityManagerTest`).
  *
  * @param world the live in-memory turn world (read-only here).
  * @param registry the command registry (the F-BRIDGE gate resolves a `che_*` to its def).
@@ -95,6 +143,8 @@ class AiTurnAdapter(
     private val startYear: Int,
     private val turnTerm: Int = 1,
     private val pipeline: GeneralActionPipeline = GeneralActionPipeline(),
+    private val pipelineBuilder: EngineGeneralActionPipelineBuilder =
+        EngineGeneralActionPipelineBuilder(world, startYear),
     private val reservedCommandNameOf: (generalId: Int) -> String? = { null },
     /**
      * P5 GT3 — the per-general-per-decision `"GeneralAI"` [opensamguk.common.rng.RandUtil] factory (F-SEED).
@@ -107,12 +157,109 @@ class AiTurnAdapter(
         { hidden, year, month, gid -> AiSeed.rng(hidden, year, month, gid) },
 ) {
 
-    /**
-     * The queued meta-KV deltas this decision produced (decision #12 / M4). The AI is read-only over GAME
-     * ENTITIES; its only writes are these deltas. Insertion order = write order.
-     */
-    val kvDeltas: List<KvDelta> get() = _kvDeltas.toList()
-    private val _kvDeltas = ArrayList<KvDelta>()
+    private val stateDeltas = ArrayList<AiStateDelta>()
+
+    internal fun drainNationPassDeltas(recorder: ChangeRecorder) {
+        drainStateDeltas(recorder, decrementNpcKillturnAfterLifecycle = false)
+    }
+
+    internal fun drainGeneralPassDeltas(recorder: ChangeRecorder) {
+        drainStateDeltas(recorder, decrementNpcKillturnAfterLifecycle = true)
+    }
+
+    private fun drainStateDeltas(
+        recorder: ChangeRecorder,
+        decrementNpcKillturnAfterLifecycle: Boolean,
+    ) {
+        val pending = stateDeltas.toList()
+        for (delta in pending) {
+            when (delta) {
+                is AiStateDelta.GeneralRow ->
+                    applyGeneralDelta(delta, recorder, decrementNpcKillturnAfterLifecycle)
+                is AiStateDelta.NationRow -> applyNationDelta(delta, recorder)
+                is AiStateDelta.NationEnv -> recorder.recordNationEnvKv(delta.nationId, delta.key, delta.value)
+            }
+        }
+        stateDeltas.subList(0, pending.size).clear()
+    }
+
+    private fun applyGeneralDelta(
+        delta: AiStateDelta.GeneralRow,
+        recorder: ChangeRecorder,
+        decrementNpcKillturnAfterLifecycle: Boolean,
+    ) {
+        val pre = world.getGeneralById(delta.generalId) ?: return
+        val post = when (delta.field) {
+            AiGeneralField.OFFICER_LEVEL -> pre.copy(officerLevel = delta.intValue())
+            AiGeneralField.MOVING_TARGET_CITY_ID -> pre.copy(
+                meta = withAuxValue(pre.meta, delta.field.wireKey, delta.value),
+            )
+            else -> {
+                val value = if (
+                    delta.field == AiGeneralField.KILLTURN && decrementNpcKillturnAfterLifecycle
+                ) {
+                    delta.intValue() - 1
+                } else {
+                    delta.value
+                }
+                pre.copy(meta = withMetaValue(pre.meta, delta.field.wireKey, value))
+            }
+        }
+        if (post == pre) return
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), PerTurnOverlay.toLogicGeneral(post))
+        world.applyGeneralDirtyFree(post)
+    }
+
+    private fun applyNationDelta(delta: AiStateDelta.NationRow, recorder: ChangeRecorder) {
+        val pre = world.getNationById(delta.nationId) ?: return
+        val value = when (delta.field) {
+            AiNationField.CHIEF_SET -> {
+                val current = (pre.meta[delta.field.wireKey] as? Number)?.toInt() ?: 0
+                current or (1 shl delta.intValue())
+            }
+            else -> delta.value
+        }
+        val post = pre.copy(meta = withMetaValue(pre.meta, delta.field.wireKey, value))
+        if (post == pre) return
+        recorder.diffNation(PerTurnOverlay.toLogicNation(pre), PerTurnOverlay.toLogicNation(post))
+        world.applyNationDirtyFree(post)
+    }
+
+    private fun AiStateDelta.GeneralRow.intValue(): Int =
+        (value as? Number)?.toInt() ?: error("AI general delta ${field.wireKey} requires a number: $value")
+
+    private fun AiStateDelta.NationRow.intValue(): Int =
+        (value as? Number)?.toInt() ?: error("AI nation delta ${field.wireKey} requires a number: $value")
+
+    private fun recordGeneralDelta(generalId: Int, key: String, value: Any?) {
+        stateDeltas.add(AiStateDelta.GeneralRow(generalId, AiGeneralField.fromWireKey(key), value))
+    }
+
+    private fun recordNationDelta(nationId: Int, key: String, value: Any?) {
+        stateDeltas.add(AiStateDelta.NationRow(nationId, AiNationField.fromWireKey(key), value))
+    }
+
+    private fun nationEnvRecorder(): AiKvRecorder = object : AiKvRecorder {
+        override fun recordNationKv(nationId: Int, key: String, value: Any?) {
+            stateDeltas.add(AiStateDelta.NationEnv(nationId, key, value))
+        }
+    }
+
+    private fun withMetaValue(meta: Map<String, Any?>, key: String, value: Any?): Map<String, Any?> =
+        LinkedHashMap(meta).apply {
+            if (value == null) remove(key) else put(key, value)
+        }
+
+    private fun withAuxValue(meta: Map<String, Any?>, key: String, value: Any?): Map<String, Any?> {
+        val nextMeta = LinkedHashMap(meta)
+        val nextAux = LinkedHashMap<String, Any?>()
+        (meta["aux"] as? Map<*, *>)?.forEach { (auxKey, auxValue) ->
+            nextAux[auxKey.toString()] = auxValue
+        }
+        if (value == null) nextAux.remove(key) else nextAux[key] = value
+        if (nextAux.isEmpty()) nextMeta.remove("aux") else nextMeta["aux"] = nextAux
+        return nextMeta
+    }
 
     /**
      * P5 GT3 — the SOLE per-general rng cache (PHP single-`GeneralAI`-per-general semantics, `GeneralAI.php`
@@ -181,11 +328,7 @@ class AiTurnAdapter(
 
         // (2) the read-only instance + world view over the live world (READ-ONLY over GAME ENTITIES).
         val aiEnv = AiEnv(year = year, month = month, startYear = startYear, develCost = develCost)
-        val kvRecorder = object : AiKvRecorder {
-            override fun recordNationKv(nationId: Int, key: String, value: Any?) {
-                _kvDeltas.add(KvDelta(nationId, key, value))
-            }
-        }
+        val kvRecorder = nationEnvRecorder()
         val instance = AiInstanceState(
             generalNationId = nationId,
             env = aiEnv,
@@ -201,9 +344,7 @@ class AiTurnAdapter(
         val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
         val candidateAllowedHook = candidateAllowedHook(generalId, general.cityId, nationId, envMap)
 
-        val recordGeneralKv: (Int, String, Any?) -> Unit = { gid, key, value ->
-            _kvDeltas.add(KvDelta(gid, key, value))
-        }
+        val recordGeneralKv: (Int, String, Any?) -> Unit = ::recordGeneralDelta
 
         // Eagerly run updateInstance() (NO draws) so instance.dipState is available below; the guard makes
         // the hook's second updateInstance() a no-op so calcGenType still fires exactly once on the rng.
@@ -273,11 +414,7 @@ class AiTurnAdapter(
         val nationPolicy = AutorunNationPolicy(npcType = npcType, tech = nationTech, develcost = develCost)
 
         val aiEnv = AiEnv(year = year, month = month, startYear = startYear, develCost = develCost)
-        val kvRecorder = object : AiKvRecorder {
-            override fun recordNationKv(nationId: Int, key: String, value: Any?) {
-                _kvDeltas.add(KvDelta(nationId, key, value))
-            }
-        }
+        val kvRecorder = nationEnvRecorder()
         val instance = AiInstanceState(
             generalNationId = nationId,
             env = aiEnv,
@@ -292,9 +429,7 @@ class AiTurnAdapter(
 
         val envMap = WorldEnvBuilder.commandEnvMap(year, startYear, month, state.currentPhase)
         val candidateAllowedHook = candidateAllowedHook(generalId, general.cityId, nationId, envMap)
-        val recordGeneralKv: (Int, String, Any?) -> Unit = { gid, key, value ->
-            _kvDeltas.add(KvDelta(gid, key, value))
-        }
+        val recordGeneralKv: (Int, String, Any?) -> Unit = ::recordGeneralDelta
 
         val statCalc = statCalcFor(general)
         val worldView = buildWorldView(nationId, generalId, instance, nationPolicy)
@@ -495,75 +630,18 @@ class AiTurnAdapter(
         )
     }
 
-    /** S4 — `$nation['tech']` rides `Nation.meta["tech"]` (no tech column); default 0. */
-    private fun nationTechOf(nationId: Int): Int =
-        (world.getNationById(nationId)?.meta?.get("tech") as? Number)?.toInt() ?: 0
+    internal fun nationTechOf(nationId: Int): Int =
+        world.getNationById(nationId)?.tech?.toInt() ?: 0
 
-    /**
-     * S-MODULES (parity) — the per-general [GeneralActionModule] stack the PHP `General::getActionList()` folds
-     * into EVERY `getStatValue`/`onCalcDomestic`. The AI reads stats THROUGH this stack: e.g. `getLeadership(false)`
-     * for a lord (officer_level 12) gains `calcLeadershipBonus = nationLevel*2` via [OfficerLevelModule] (PHP
-     * `TriggerOfficerLevel`) — a +14 for a level-7 nation, which sets do징병's `crew = fullLeadership*100`. A naive
-     * identity pipeline read the RAW column (49 not 63) → wrong recruit crew. The war specialty (source #4) ALSO
-     * folds into every stat read — e.g. `che_징병` = leadership +25% (`ActionSpecialWar/che_징병.php:42`), which
-     * the 포상/긴급포상 reqMoney ladder and do징병 crew depend on. We build the SAME factory order (nationType #1,
-     * officer #2, specialDomestic #3, specialWar #4, personality #5, items #9..) the resolve/battle path uses,
-     * keyed off the general's nation type + meta `special`/`special2`/`personal` codes + equip slots.
-     */
-    private val moduleFactory by lazy {
-        opensamguk.logic.stats.GeneralActionModuleFactory(
-            nationTypeRegistry = opensamguk.logic.traits.NationTypeRegistry,
-            specialDomesticRegistry = opensamguk.logic.traits.SpecialDomesticRegistry,
-            personalityRegistry = opensamguk.logic.traits.PersonalityRegistry(),
-            itemRegistry = opensamguk.logic.items.ItemRegistry(relYearProvider = {
-                maxOf(0, world.getState().currentYear - startYear)
-            }),
-            specialWarRegistry = opensamguk.logic.war.specialty.SpecialWarRegistry,
-        )
-    }
-
-    /** A per-general module-backed [GeneralActionPipeline] (the full getActionList stat stack). */
-    private fun pipelineFor(tg: TurnGeneral): GeneralActionPipeline {
-        val logicGeneral = PerTurnOverlay.toLogicGeneral(tg)
-        val nationLevel = world.getNationById(tg.nationId)?.level ?: 0
-        // PHP `officer_city` raw column (default 0 when unassigned), NOT the general's own city — defaulting to
-        // cityId would suppress the OfficerLevelModule officer-2..4 demotion (officer_level→1 when officer_city
-        // != city, TriggerOfficerLevel.php:16). UNCOVERED by the current gate (world-1010 has no level-2..4 general).
-        val officerCity = (tg.meta["officer_city"] as? Number)?.toInt() ?: 0
-        val mods = moduleFactory.build(
-            general = logicGeneral,
-            nationTypeCode = world.getNationById(tg.nationId)?.typeCode,
-            specialDomesticCode = tg.meta["special"] as? String,
-            personalityCode = tg.meta["personal"] as? String,
-            nationLevel = nationLevel,
-            officerCity = officerCity,
-            specialWarCode = tg.role.specialWar ?: tg.meta["special2"] as? String,
-        )
-        return GeneralActionPipeline(mods)
-    }
+    private fun pipelineFor(tg: TurnGeneral): GeneralActionPipeline =
+        pipelineBuilder.pipelineFor(tg)
 
     /** A [StatCalc] over the per-general module-backed pipeline (PHP `getActionList()` stat stack). */
     private fun statCalcFor(tg: TurnGeneral): StatCalc =
         StatCalc(PerTurnOverlay.toLogicGeneral(tg), pipelineFor(tg))
 
-    /**
-     * The module-backed pipeline for a [opensamguk.logic.domain.General] (the promotion-candidate stat reads).
-     * Same factory order as [pipelineFor]; the nation type/level come from the general's nation row.
-     */
-    private fun pipelineForLogic(g: opensamguk.logic.domain.General): GeneralActionPipeline {
-        val nationLevel = world.getNationById(g.nationId)?.level ?: 0
-        val officerCity = (g.meta["officer_city"] as? Number)?.toInt() ?: 0 // PHP raw column default 0 (see pipelineFor).
-        val mods = moduleFactory.build(
-            general = g,
-            nationTypeCode = world.getNationById(g.nationId)?.typeCode,
-            specialDomesticCode = g.meta["special"] as? String,
-            personalityCode = g.meta["personal"] as? String,
-            nationLevel = nationLevel,
-            officerCity = officerCity,
-            specialWarCode = g.meta["special2"] as? String,
-        )
-        return GeneralActionPipeline(mods)
-    }
+    private fun pipelineForLogic(g: opensamguk.logic.domain.General): GeneralActionPipeline =
+        pipelineBuilder.pipelineFor(g)
 
     /**
      * Build the per-general [GeneralAiContext] with every derived scalar sourced from the live world
@@ -645,7 +723,7 @@ class AiTurnAdapter(
             cityDevelRateOf = { cityId -> cityDevelRateTriples(cityId) }, // S3
             cityGeneralCountOf = { cityId -> world.listGenerals().count { it.cityId == cityId } }, // S7
             wanderOccupiedCities = occupiedCities, // S8
-            movingTargetCityId = (general.meta["movingTargetCityID"] as? Number)?.toInt(), // S9
+            movingTargetCityId = (auxVar(general, "movingTargetCityID") as? Number)?.toInt(), // S9
             dupLordAtSelfCity = world.listGenerals().count { it.officerLevel == 12 && it.cityId == general.cityId }, // S9
             selfCityLevel = selfCity?.level ?: 0, // S9
             // --- L-GENFOUND scalars + world inputs ---
@@ -690,11 +768,11 @@ class AiTurnAdapter(
         val nationRow = world.getNationById(nationId)
         val deltaSink = object : RatesPromoFamily.RatesPromoDeltaSink {
             override fun recordGeneralKv(generalId: Int, key: String, value: Any?) {
-                _kvDeltas.add(KvDelta(generalId, key, value))
+                recordGeneralDelta(generalId, key, value)
             }
 
             override fun recordNationKv(nationId: Int, key: String, value: Any?) {
-                _kvDeltas.add(KvDelta(nationId, key, value))
+                recordNationDelta(nationId, key, value)
             }
         }
 
@@ -1169,8 +1247,11 @@ class AiTurnAdapter(
      * default (empty-module) pipeline the fold is the identity 100.0 (> 1 → the recruit-viability gate passes).
      * Threaded through the SAME ActionPipeline the resolve shares (NO decision-rng draw).
      */
-    private fun recruitPopScoreOf(gv: AiGeneralView): Double =
-        pipeline.onCalcDomestic(gv.general, "징집인구", "score", 100.0)
+    internal fun recruitPopScoreOf(gv: AiGeneralView): Double {
+        val source = world.getGeneralById(gv.general.id)
+        val actorPipeline = source?.let(pipelineBuilder::pipelineFor) ?: pipelineForLogic(gv.general)
+        return actorPipeline.onCalcDomestic(gv.general, "징집인구", "score", 100.0)
+    }
 
     /** S15 — `getCrewTypeObj()->costWithTech(nation['tech'], toInt(getLeadership(false)))` (PHP reward base). */
     private fun unitCostWithTechOf(gv: AiGeneralView, nationTech: Int): Double {

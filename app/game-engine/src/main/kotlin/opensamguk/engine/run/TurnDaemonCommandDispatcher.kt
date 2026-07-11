@@ -1,29 +1,33 @@
 package opensamguk.engine.run
 
-import opensamguk.common.wire.DiploLetterResult
-import opensamguk.common.wire.GeneralBoolResult
-import opensamguk.common.wire.MakeGeneralFail
+import opensamguk.common.constants.GameConst
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
-import org.slf4j.LoggerFactory
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.auction.AuctionOpenHandler
 import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
+import opensamguk.engine.intake.AdminGeneralModerationHandler
+import opensamguk.engine.intake.AdminWorldSettingsHandler
 import opensamguk.engine.intake.BuildNationCandidateHandler
 import opensamguk.engine.intake.ClaimNpcHandler
 import opensamguk.engine.intake.MakeGeneralHandler
 import opensamguk.engine.intake.DiplomacyLetterHandler
 import opensamguk.engine.intake.InheritResetHandler
+import opensamguk.engine.intake.InstantActionHandler
 import opensamguk.engine.intake.MessageHandler
 import opensamguk.engine.intake.NationFinanceSetterHandler
+import opensamguk.engine.intake.NpcPolicyHandler
+import opensamguk.engine.intake.PersonnelHandler
 import opensamguk.engine.intake.SelectPoolHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
 import opensamguk.engine.intake.VotePollState
+import opensamguk.engine.tournament.ProductionTournamentBettingPort
+import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.read.AuctionBidRepository
@@ -123,6 +127,18 @@ class TurnDaemonCommandDispatcher(
             ?: 0.0
     }
 
+    private val geniusRemainingReader: () -> Int = gameKvRepository?.let { repo ->
+        {
+            repo.findByTable("game_env").firstNotNullOfOrNull { row ->
+                if (row.namespace == "game_env" && row.key == "genius") {
+                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
+                } else {
+                    null
+                }
+            } ?: GameConst.defaultMaxGenius
+        }
+    } ?: { GameConst.defaultMaxGenius }
+
     private val lastStatResetReader: (Int) -> List<Int> = gameKvRepository?.let { repo ->
         { ownerId: Int ->
             repo.findByTable("user")
@@ -166,13 +182,38 @@ class TurnDaemonCommandDispatcher(
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
+    private val npcPolicy = NpcPolicyHandler(world, recorder)
     private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
+    private val tournamentBettingPort =
+        if (gameKvRepository != null && bettingRepository != null && inheritanceRepository != null) {
+            ProductionTournamentBettingPort(world, recorder, gameKvRepository, bettingRepository, inheritanceRepository)
+        } else {
+            null
+        }
+    private val lastTournamentBettingIdReader: () -> Int = gameKvRepository?.let { repo ->
+        {
+            repo.findByTable("game_env").firstNotNullOfOrNull { row ->
+                if (row.namespace == "game_env" && row.key == "last_tournament_betting_id") {
+                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
+                } else {
+                    null
+                }
+            } ?: 0
+        }
+    } ?: { 0 }
+    private val tournamentAdmin = TournamentAdminHandler(
+        world,
+        recorder,
+        lastBettingIdReader = lastTournamentBettingIdReader,
+        bettingPort = tournamentBettingPort,
+    )
     private val inheritReset = InheritResetHandler(
         world,
         recorder,
         previousPointReader = previousPointReader,
         lastStatResetReader = lastStatResetReader,
     )
+    private val instantAction = InstantActionHandler(world, recorder)
 
     // ── F4 Wave C2 (slice B) — troop intake handler ──
     private val troop = TroopHandler(world, recorder)
@@ -239,6 +280,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── W5d 외교 서신 핸들러 (ng_diplomacy read seam은 nullable) ──
     private val diplomacyLetter = DiplomacyLetterHandler(world, recorder, diplomacyLetterRepository)
+    private val personnel = PersonnelHandler(world, recorder)
 
     // ── W6f 장수 선택 풀 핸들러 (RNG-bearing — 골든 게이트는 /parity-wave; read seam은 nullable) ──
     private val selectPool = SelectPoolHandler(world, recorder, selectPoolRepository)
@@ -247,60 +289,17 @@ class TurnDaemonCommandDispatcher(
     private val buildNation = BuildNationCandidateHandler(world, recorder)
 
     // ── B1 장수생성(재야→일반) 핸들러 (RNG-bearing — 골든 게이트는 MakeGeneralGoldenTest) ──
-    private val makeGeneral = MakeGeneralHandler(world, recorder)
+    private val makeGeneral = MakeGeneralHandler(
+        world,
+        recorder,
+        previousPointReader = previousPointReader,
+        geniusRemainingReader = geniusRemainingReader,
+    )
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
-
-    companion object {
-        private val log = LoggerFactory.getLogger(TurnDaemonCommandDispatcher::class.java)
-
-        /**
-         * W0-7 명시적 deny 사유 — wire 계약은 열렸지만 엔진 핸들러가 아직 없는 변형의 스텁 거부
-         * 문자열. **PHP 패러티 문자열이 아니다** — W1 에이전트(G: diploRespondLetter / N: 임명·추방·
-         * set-permission / K: MakeGeneral 유산·전콘)가 핸들러를 구현하며 PHP deny 문자열로 대체한다.
-         * silent-drop(`else -> null`) 금지 계약: 인테이크로 publish된 명령은 반드시 가시적 결과를 남긴다.
-         */
-        const val UNSUPPORTED_REASON = "아직 구현되지 않은 명령입니다 (엔진 핸들러 W1 대기)"
-    }
-
-    /** W0-7 인사부 스텁 deny — appoint/kick/changePermission (boolean-ok 그룹 [GeneralBoolResult]). */
-    private fun denyPersonnelStub(type: String, generalId: Int): GeneralBoolResult {
-        log.warn("W0-7 deny stub: {} (generalId={}) — {}", type, generalId, UNSUPPORTED_REASON)
-        return GeneralBoolResult(type = type, ok = false, generalId = generalId, reason = UNSUPPORTED_REASON)
-    }
-
-    /** W0-7 외교 서신 승인/거부 스텁 deny — handleRespond는 W1 에이전트 G가 구현. */
-    private fun denyDiploRespondStub(c: TurnDaemonCommand.DiploRespondLetter): DiploLetterResult {
-        log.warn(
-            "W0-7 deny stub: diploRespondLetter (generalId={}, letterNo={}, isAgree={}) — {}",
-            c.generalId, c.letterNo, c.isAgree, UNSUPPORTED_REASON,
-        )
-        return DiploLetterResult(
-            type = "diploRespondLetter", ok = false,
-            generalId = c.generalId, letterNo = c.letterNo, reason = UNSUPPORTED_REASON,
-        )
-    }
-
-    /**
-     * W0-7 MakeGeneral 게이트 — 유산 4필드/전콘 imgsvr가 실린 명령을 현 [MakeGeneralHandler]로
-     * 흘리면 포인트 차감·천재 생성·도시 지정 없이 **일반 생성되는 silent 발산**(PHP `Join.php:233-244`
-     * 는 포인트를 차감한다)이므로, 핸들러(W1 에이전트 K)가 소비를 구현할 때까지 명시적 deny.
-     * 옵션이 전혀 없는 명령(기존 페이로드)은 기존 핸들러 경로 그대로.
-     */
-    private fun dispatchMakeGeneral(c: TurnDaemonCommand.MakeGeneral): TurnDaemonCommandResult {
-        val usesInherit = c.inheritSpecial != null || c.inheritTurntimeZone != null ||
-            c.inheritCity != null || c.inheritBonusStat != null
-        val usesImgsvr = (c.imgsvr ?: 0) != 0
-        if (usesInherit || usesImgsvr) {
-            log.warn(
-                "W0-7 deny stub: makeGeneral 유산/전콘 옵션 (userId={}, requestId={}) — {}",
-                c.userId, c.requestId, UNSUPPORTED_REASON,
-            )
-            return MakeGeneralFail(reason = UNSUPPORTED_REASON)
-        }
-        return makeGeneral.handle(c)
-    }
+    private val adminGeneralModeration = AdminGeneralModerationHandler(world, recorder)
+    private val adminWorldSettings = AdminWorldSettingsHandler(world, recorder)
 
     /**
      * Dispatch one command to its handler.
@@ -321,13 +320,20 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.SetSecretLimit -> nationFinance.handleSetSecretLimit(command)
         is TurnDaemonCommand.SetBlockWar -> nationFinance.handleSetBlockWar(command)
         is TurnDaemonCommand.SetBlockScout -> nationFinance.handleSetBlockScout(command)
+        is TurnDaemonCommand.NpcPolicyUpdate -> npcPolicy.handle(command)
         is TurnDaemonCommand.TournamentEnroll -> tournamentEnroll.handle(command)
+        is TurnDaemonCommand.TournamentStart -> tournamentAdmin.handleStart(command)
+        is TurnDaemonCommand.TournamentReset -> tournamentAdmin.handleReset(command)
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
         is TurnDaemonCommand.ResetStat -> inheritReset.handleResetStat(command)
         is TurnDaemonCommand.BuyHiddenBuff -> inheritReset.handleBuyHiddenBuff(command)
         is TurnDaemonCommand.BuyRandomUnique -> inheritReset.handleBuyRandomUnique(command)
+        is TurnDaemonCommand.DieOnPrestart -> instantAction.handleDieOnPrestart(command)
+        is TurnDaemonCommand.DropItem -> instantAction.handleDropItem(command)
+        is TurnDaemonCommand.InstantRetreat -> instantAction.handleInstantRetreat(command)
+        is TurnDaemonCommand.CheckOwner -> instantAction.handleCheckOwner(command)
         // ── F4 Wave C2 (slice B) troop intake bindings ──
         is TurnDaemonCommand.TroopNew -> troop.handleNew(command)
         is TurnDaemonCommand.TroopJoin -> troop.handleJoin(command)
@@ -355,17 +361,19 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.DiploDestroyLetter -> diplomacyLetter.handleDestroy(command)
         // ── W0-7 wire-계약 widen 스텁 — 명시적 deny-with-log (silent-drop 금지). 핸들러 구현은
         //    W1 에이전트 소관: diploRespondLetter=G, appoint/kick/changePermission=N. ──
-        is TurnDaemonCommand.DiploRespondLetter -> denyDiploRespondStub(command)
-        is TurnDaemonCommand.Appoint -> denyPersonnelStub("appoint", command.generalId)
-        is TurnDaemonCommand.Kick -> denyPersonnelStub("kick", command.generalId)
-        is TurnDaemonCommand.ChangePermission -> denyPersonnelStub("changePermission", command.generalId)
+        is TurnDaemonCommand.DiploRespondLetter -> diplomacyLetter.handleRespond(command)
+        is TurnDaemonCommand.Appoint -> personnel.handleAppoint(command)
+        is TurnDaemonCommand.Kick -> personnel.handleKick(command)
+        is TurnDaemonCommand.ChangePermission -> personnel.handleChangePermission(command)
         // ── W6f 장수 선택 풀 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.SelectPoolPick -> selectPool.handlePick(command)
         is TurnDaemonCommand.SelectPoolUpdate -> selectPool.handleUpdate(command)
+        is TurnDaemonCommand.SelectPoolRefresh -> selectPool.handleRefresh(command)
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
-        // ── B1 장수생성 바인딩 (W0-7: 유산/전콘 옵션 게이트 — 미지원 옵션은 명시적 deny) ──
-        is TurnDaemonCommand.MakeGeneral -> dispatchMakeGeneral(command)
+        is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
+        is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)
+        is TurnDaemonCommand.AdminWorldSettings -> adminWorldSettings.handle(command)
         else -> null
     }
 

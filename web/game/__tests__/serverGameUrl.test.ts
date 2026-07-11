@@ -4,6 +4,7 @@ import { gameChildPath, normalizeLegacyGamePath, resolveServerGamePath } from '@
 describe('serverGameUrl', () => {
     it('normalizes legacy PHP menu URLs to app routes', () => {
         expect(normalizeLegacyGamePath('v_history.php')).toBe('/game/history');
+        expect(normalizeLegacyGamePath('v_battleCenter.php')).toBe('/game/battle-center');
         expect(normalizeLegacyGamePath('b_myPage.php')).toBe('/game/my');
         expect(normalizeLegacyGamePath('v_nationGeneral.php')).toBe('/game/my-generals');
         expect(normalizeLegacyGamePath('/game/a_genList.php')).toBe('/game/rankings/generals');

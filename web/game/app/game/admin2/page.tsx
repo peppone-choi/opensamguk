@@ -6,11 +6,11 @@ import GameCard from '../../../components/GameCard';
 import { api } from '../../../lib/api';
 import type { AdminBlockedWrite, AdminGeneralModerationResponse, AdminGeneralModerationRow } from '../../../lib/api';
 
-function errorText(e: unknown): string {
+function errorText(e: unknown, fallback = '데이터를 불러올 수 없습니다.'): string {
     const msg = e instanceof Error ? e.message : '';
     if (msg.startsWith('403')) return '관리자 권한이 필요합니다.';
     if (msg.startsWith('401')) return '로그인이 필요합니다.';
-    return '데이터를 불러올 수 없습니다.';
+    return msg || fallback;
 }
 
 function optionStyle(g: AdminGeneralModerationRow): React.CSSProperties {
@@ -21,11 +21,24 @@ function optionStyle(g: AdminGeneralModerationRow): React.CSSProperties {
     return style;
 }
 
-function DisabledActions({ actions }: { actions: AdminBlockedWrite[] }) {
+function ActionButtons({
+    actions,
+    disabled,
+    onAction,
+}: {
+    actions: AdminBlockedWrite[];
+    disabled: boolean;
+    onAction: (action: AdminBlockedWrite) => void;
+}) {
     return (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {actions.map((a) => (
-                <button key={a.label} disabled title={a.reason}>
+                <button
+                    key={a.label}
+                    disabled={disabled || !a.enabled || !a.code}
+                    title={a.enabled ? a.reason : a.reason}
+                    onClick={() => onAction(a)}
+                >
                     {a.label}
                 </button>
             ))}
@@ -38,7 +51,9 @@ export default function Admin2Page() {
     const [selected, setSelected] = useState<number[]>([]);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [error, setError] = useState('');
+    const [notice, setNotice] = useState('');
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -62,6 +77,41 @@ export default function Admin2Page() {
         [data?.generals, selected],
     );
 
+    const runAction = useCallback(
+        async (action: AdminBlockedWrite) => {
+            if (!action.enabled || !action.code) return;
+            const isBulk = action.code.endsWith('All');
+            const targetIds = isBulk ? data?.generals.map((g) => g.no) ?? [] : selected;
+            if (targetIds.length === 0) {
+                setError('대상 장수를 선택하세요.');
+                return;
+            }
+            const text = message.slice(0, 255);
+            if (action.code === 'sendMessage' && text.length > 255) {
+                setError('메세지는 255자 이하여야 합니다.');
+                return;
+            }
+            setActionLoading(action.code);
+            setError('');
+            setNotice('');
+            try {
+                const result = await api.admin.generalModerationAction({
+                    action: action.code,
+                    generalIds: targetIds,
+                    ...(action.code === 'sendMessage' ? { message: text } : {}),
+                });
+                setNotice(`${action.label}: ${result.affected}건 요청했습니다.`);
+                if (action.code === 'sendMessage') setMessage('');
+                await load();
+            } catch (e) {
+                setError(errorText(e, '관리자 조치에 실패했습니다.'));
+            } finally {
+                setActionLoading(null);
+            }
+        },
+        [data?.generals, load, message, selected],
+    );
+
     return (
         <Shell>
             <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, marginBottom: 'var(--space-md)' }}>회원 관리</h1>
@@ -77,7 +127,7 @@ export default function Admin2Page() {
                                 <tr>
                                     <th style={{ width: 120, textAlign: 'center' }}>접속제한</th>
                                     <td>
-                                        <DisabledActions actions={data.bulkActions} />
+                                        <ActionButtons actions={data.bulkActions} disabled={actionLoading != null} onAction={runAction} />
                                     </td>
                                 </tr>
                             </tbody>
@@ -110,26 +160,27 @@ export default function Admin2Page() {
                             </div>
 
                             <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
+                                {notice && <p style={{ margin: 0, color: 'var(--sam-green)' }}>{notice}</p>}
                                 <section>
                                     <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>블럭</h2>
-                                    <DisabledActions actions={data.selectedActions.slice(0, 5)} />
+                                    <ActionButtons actions={data.selectedActions.slice(0, 5)} disabled={actionLoading != null} onAction={runAction} />
                                     <p style={{ margin: '8px 0 0', color: 'var(--text-muted)' }}>1단계:발언권, 2단계:턴블럭</p>
                                 </section>
                                 <section>
                                     <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>강제 사망</h2>
-                                    <DisabledActions actions={data.selectedActions.slice(5, 6)} />
+                                    <ActionButtons actions={data.selectedActions.slice(5, 6)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
                                     <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>이벤트2</h2>
-                                    <DisabledActions actions={data.selectedActions.slice(6, 11)} />
+                                    <ActionButtons actions={data.selectedActions.slice(6, 11)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
                                     <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>접속제한</h2>
-                                    <DisabledActions actions={data.selectedActions.slice(11, 13)} />
+                                    <ActionButtons actions={data.selectedActions.slice(11, 13)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
                                     <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>명령 설정</h2>
-                                    <DisabledActions actions={data.selectedActions.slice(13, 15)} />
+                                    <ActionButtons actions={data.selectedActions.slice(13, 15)} disabled={actionLoading != null} onAction={runAction} />
                                 </section>
                                 <section>
                                     <h2 style={{ fontSize: 'var(--text-base)', margin: '0 0 8px' }}>메세지 전달</h2>
@@ -139,7 +190,18 @@ export default function Admin2Page() {
                                         maxLength={255}
                                         style={{ width: 'min(100%, 520px)', background: '#000', color: '#fff', marginRight: 8 }}
                                     />
-                                    <button disabled title={data.selectedActions[15]?.reason}>메세지 전달</button>
+                                    <button
+                                        disabled={
+                                            actionLoading != null ||
+                                            selected.length === 0 ||
+                                            !data.selectedActions[15]?.enabled ||
+                                            !data.selectedActions[15]?.code
+                                        }
+                                        title={data.selectedActions[15]?.reason}
+                                        onClick={() => runAction(data.selectedActions[15])}
+                                    >
+                                        {actionLoading === data.selectedActions[15]?.code ? '처리 중...' : '메세지 전달'}
+                                    </button>
                                 </section>
                             </div>
                         </div>

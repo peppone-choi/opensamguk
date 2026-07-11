@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ServerBoard from '@/components/ServerBoard';
@@ -272,10 +273,9 @@ function LobbyView() {
 
                 <section>
                     <h2 className="lobby-section-title">{LOBBY_LABELS.accountSection}</h2>
-                    {/* 비밀번호/전콘/탈퇴 관리 — 백엔드 미구현(F0). 로그아웃은 상단바. */}
-                    <button className="btn-ghost" disabled title="준비 중">
+                    <Link className="btn-ghost" href="/account">
                         {LOBBY_LABELS.accountManage}
-                    </button>
+                    </Link>
                 </section>
 
                 <ul className="footnotes">

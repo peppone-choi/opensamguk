@@ -41,7 +41,15 @@ class GeneralActionDraft(
     val cascadeGenerals: MutableList<General> = mutableListOf()
     val cascadeCities: MutableList<City> = mutableListOf()
     val cascadeDiplomacy: MutableList<Diplomacy> = mutableListOf()
+
+    val rankIncrements: MutableList<GeneralRankIncrement> = mutableListOf()
 }
+
+data class GeneralRankIncrement(
+    val generalId: Int,
+    val column: String,
+    val value: Int,
+)
 
 class GeneralActionResolveContext(
     val draft: GeneralActionDraft,
@@ -171,6 +179,7 @@ class GeneralActionResolveContext(
     fun logs(): List<String> = logs.toList()
     fun logsTo(targetGeneralId: Int): List<String> = destLogs[targetGeneralId]?.toList() ?: emptyList()
     fun plainLogsTo(targetGeneralId: Int): List<String> = destPlainLogs[targetGeneralId]?.toList() ?: emptyList()
+    fun targetLogIds(): Set<Int> = (destLogs.keys + destPlainLogs.keys).toSet()
     fun globalActionLogs(): List<String> = globalActionLogs.toList()
     fun plainLogs(): List<String> = plainLogs.toList()
 

@@ -18,6 +18,7 @@ import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.message.MessageType
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonEncode
+import java.time.Instant
 
 /**
  * 외교 서신 (diplomacy_letter) intake 핸들러 — `j_diplomacy_send_letter.php` /
@@ -35,15 +36,6 @@ import opensamguk.logic.util.jsonEncode
  * PHP 그대로 소문자 비교로 게이트한다. write 시점에는 opensamguk enum 대문자('PROPOSED'/…)로 싣고
  * executor가 `CAST(... AS diplomacy_letter_state)`로 바인딩한다([letterStateEnum] 헬퍼가 변환).
  *
- * **`increaseRefresh`/`checkLimit`(접속 제한) 비모델링 — 충실한 격리(fabricate 금지).** PHP 3종 모두
- * 진입부에서 `increaseRefresh("외교부",1)`로 `general_access_log.refresh_score`를 증가시키고
- * `checkLimit($me['refresh_score']) >= 2`면 '접속 제한입니다.'로 deny한다. 그러나 `general_access_log`는
- * opensamguk V1 baseline 스키마에 **없는 테이블**이며([ReservedTurnHandler]도 동일하게 no-op 처리),
- * refresh_score는 데몬 world 상태에 표현이 없는 게이트웨이/접속-로그 개념이다. 다른 인테이크
- * 핸들러([BoardHandler]/[VoteHandler])와 동일하게 이 throttle 게이트는 게이트웨이/precheck 측 관심사로
- * 두고 데몬에서 재평가하지 않는다(없는 컬럼을 발명하지 않음 — rule 5). spec의 'general.refresh_score+=1'은
- * access-log throttle의 단순화 표기이며, 데몬-world에는 대응 필드가 없으므로 모델링하지 않는다.
- *
  * **generalIcon(메시지/aux 아이콘) — 설정 측 관심사.** PHP `GetImageURL($me['imgsvr'],$me['picture'])`는
  * config(공유 아이콘 경로)에 의존하는 문자열로, [MessageTarget] 격리 노트대로 daemon-golden 패러티 대상이
  * 아니다(P7/config request-side 해소). 게이트웨이가 인테이크 시 `general.meta["icon"]`을 실어 보내면 그
@@ -55,14 +47,16 @@ class DiplomacyLetterHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val diplomacyLetterRepository: DiplomacyLetterRepository? = null,
+    private val nowProvider: () -> Instant = Instant::now,
 ) {
 
     // ── j_diplomacy_send_letter.php ─────────────────────────────────────────────────────────────
     fun handleSend(c: TurnDaemonCommand.DiploSendLetter): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return fail("diploSendLetter", c.generalId, reason = "장수가 없습니다.")
-
-        // (increaseRefresh / checkLimit '접속 제한입니다.' — 게이트웨이 access-log throttle, 데몬 비모델링.)
+        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return fail("diploSendLetter", c.generalId, reason = "접속 제한입니다.")
+        }
 
         var destNationNo = c.destNationId
 
@@ -179,8 +173,9 @@ class DiplomacyLetterHandler(
     fun handleRollback(c: TurnDaemonCommand.DiploRollbackLetter): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return fail("diploRollbackLetter", c.generalId, letterNo = c.letterNo, reason = "장수가 없습니다.")
-
-        // (increaseRefresh / checkLimit '접속 제한입니다.' — 게이트웨이 throttle, 데몬 비모델링.)
+        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return fail("diploRollbackLetter", c.generalId, letterNo = c.letterNo, reason = "접속 제한입니다.")
+        }
 
         // PHP :41 — 수뇌부 게이트(letterNo null 검사는 wire Int라 항상 통과; PHP order는 limit→permission→read).
         if (SecretPermission.check(PerTurnOverlay.toLogicGeneral(me)) < 4) {
@@ -221,8 +216,9 @@ class DiplomacyLetterHandler(
     fun handleDestroy(c: TurnDaemonCommand.DiploDestroyLetter): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return fail("diploDestroyLetter", c.generalId, letterNo = c.letterNo, reason = "장수가 없습니다.")
-
-        // (increaseRefresh / checkLimit '접속 제한입니다.' — 게이트웨이 throttle, 데몬 비모델링.)
+        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return fail("diploDestroyLetter", c.generalId, letterNo = c.letterNo, reason = "접속 제한입니다.")
+        }
 
         // PHP :41 — 수뇌부 게이트.
         if (SecretPermission.check(PerTurnOverlay.toLogicGeneral(me)) < 4) {
@@ -287,6 +283,85 @@ class DiplomacyLetterHandler(
         return DiploLetterResult(type = "diploDestroyLetter", ok = true, generalId = c.generalId, letterNo = c.letterNo)
     }
 
+    fun handleRespond(c: TurnDaemonCommand.DiploRespondLetter): TurnDaemonCommandResult {
+        val me = world.getGeneralById(c.generalId)
+            ?: return fail("diploRespondLetter", c.generalId, letterNo = c.letterNo, reason = "장수가 없습니다.")
+        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return fail("diploRespondLetter", c.generalId, letterNo = c.letterNo, reason = "접속 제한입니다.")
+        }
+
+        if (SecretPermission.check(PerTurnOverlay.toLogicGeneral(me)) < 4) {
+            return fail("diploRespondLetter", c.generalId, letterNo = c.letterNo, reason = "권한이 부족합니다. 수뇌부가 아닙니다.")
+        }
+
+        val letter = repo()?.findLetter(c.letterNo)
+        if (letter == null || letter.destNationId != me.nationId || letter.state != "proposed") {
+            return fail("diploRespondLetter", c.generalId, letterNo = c.letterNo, reason = "서신이 없습니다.")
+        }
+
+        val aux = LinkedHashMap<String, Any?>(jsonDecode(letter.auxJson))
+        if (c.isAgree) {
+            @Suppress("UNCHECKED_CAST")
+            val dest = LinkedHashMap((aux["dest"] as? Map<String, Any?>) ?: emptyMap())
+            dest["generalName"] = me.name
+            dest["generalIcon"] = generalIcon(me)
+            aux["dest"] = dest
+            recorder.recordDiplomacyLetterUpdate(
+                c.letterNo,
+                linkedMapOf(
+                    "state" to letterStateEnum("activated"),
+                    "dest_signer" to me.id,
+                    "aux" to jsonEncode(aux),
+                ),
+            )
+            var prevLetterNo = letter.prevNo
+            while (prevLetterNo != null) {
+                recorder.recordDiplomacyLetterUpdate(prevLetterNo, linkedMapOf("state" to letterStateEnum("replaced")))
+                prevLetterNo = repo()?.findLetter(prevLetterNo)?.prevNo
+            }
+        } else {
+            aux["reason"] = reasonMap(me.id, action = "disagree", reason = c.reason.trim())
+            recorder.recordDiplomacyLetterUpdate(
+                c.letterNo,
+                linkedMapOf(
+                    "state" to letterStateEnum("cancelled"),
+                    "aux" to jsonEncode(aux),
+                ),
+            )
+        }
+
+        val (srcNation, destNation) = nationsFor(letter)
+            ?: return fail("diploRespondLetter", c.generalId, letterNo = c.letterNo, reason = "올바르지 않은 국가입니다.")
+        val text = if (c.isAgree) {
+            "외교 서신( #${c.letterNo})이 승인되었습니다."
+        } else {
+            buildString {
+                append("외교 서신(#${c.letterNo})이 거부되었습니다.")
+                val trimmed = c.reason.trim()
+                if (trimmed.isNotEmpty()) append(" 이유 : ").append(trimmed)
+            }
+        }
+        routeMessage(
+            type = MessageType.DIPLOMACY,
+            srcGeneralId = me.id,
+            srcGeneralName = me.name,
+            srcIcon = generalIcon(me),
+            srcNation = destNation,
+            destNation = srcNation,
+            text = text,
+        )
+        routeMessage(
+            type = MessageType.NATIONAL,
+            srcGeneralId = me.id,
+            srcGeneralName = me.name,
+            srcIcon = generalIcon(me),
+            srcNation = destNation,
+            destNation = srcNation,
+            text = text,
+        )
+        return DiploLetterResult(type = "diploRespondLetter", ok = true, generalId = c.generalId, letterNo = c.letterNo)
+    }
+
     // ── 부수 효과 헬퍼 ───────────────────────────────────────────────────────────────────────────
 
     /**
@@ -301,12 +376,22 @@ class DiplomacyLetterHandler(
         srcNation: Nation,
         destNation: Nation,
         text: String,
+    ) = routeMessage(MessageType.DIPLOMACY, srcGeneralId, srcGeneralName, srcIcon, srcNation, destNation, text)
+
+    private fun routeMessage(
+        type: MessageType,
+        srcGeneralId: Int,
+        srcGeneralName: String,
+        srcIcon: String,
+        srcNation: Nation,
+        destNation: Nation,
+        text: String,
     ) {
         val src = MessageTarget(srcGeneralId, srcGeneralName, srcNation.id, srcNation.name, srcNation.color, srcIcon)
         val dest = MessageTarget(0, "", destNation.id, destNation.name, destNation.color)
         val now = nowString()
         val unlimited = UNLIMITED
-        val message = Message(MessageType.DIPLOMACY, src, dest, text, now, unlimited, linkedMapOf("deletable" to false))
+        val message = Message(type, src, dest, text, now, unlimited, linkedMapOf("deletable" to false))
         val drafts = message.send()
         var receiverId: Int? = null
         for (draft in drafts) {

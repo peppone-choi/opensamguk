@@ -5,6 +5,7 @@ import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
+import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.read.BoardCommentReadRepository
 import opensamguk.gameapi.read.BoardPostReadRepository
 import opensamguk.gameapi.read.CityReadEntity
@@ -14,6 +15,8 @@ import opensamguk.gameapi.read.DiplomacyLetterReadRepository
 import opensamguk.gameapi.read.DiplomacyReadEntity
 import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.GeneralAccessLogReadEntity
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.HistoryReadRepository
@@ -40,16 +43,21 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.ArgumentMatchers.anyList
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.springframework.data.domain.PageRequest
+import org.springframework.http.MediaType
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -69,6 +77,7 @@ import java.util.Optional
 class F4ReadControllersTest {
 
     private val generals = mock(GeneralReadRepository::class.java)
+    private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val owners = mock(GeneralOwnerRepository::class.java)
@@ -145,8 +154,11 @@ class F4ReadControllersTest {
                 gen(id = 1, name = "조조", nationId = 1, cityId = 5, officerLevel = 12, leadership = 90, strength = 80, intel = 95, crew = 1000),
             ),
         )
+        `when`(accessLogs.findByGeneralIdIn(listOf(1, 2))).thenReturn(
+            listOf(GeneralAccessLogReadEntity(id = 1, generalId = 1, refreshScoreTotal = 73)),
+        )
 
-        mvc(GeneralsController(generals, nations, cities)).perform(get("/api/generals"))
+        mvc(GeneralsController(generals, nations, cities, accessLogs)).perform(get("/api/generals"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.length()").value(2))
             .andExpect(jsonPath("$[0].generalId").value(1)) // sorted by id asc
@@ -169,8 +181,8 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].experience").doesNotExist())
             .andExpect(jsonPath("$[0].dedication").doesNotExist())
             .andExpect(jsonPath("$[0].rice").doesNotExist())
-            // 벌점(refresh_score_total)은 §2 BLOCKED — 필드 자체가 없어야 한다(날조 금지).
-            .andExpect(jsonPath("$[0].refreshScoreTotal").doesNotExist())
+            .andExpect(jsonPath("$[0].refreshScoreTotal").value(73))
+            .andExpect(jsonPath("$[1].refreshScoreTotal").value(0))
     }
 
     // ── GET /api/generals — a_genList 15컬럼 보강(C3①) 한글 해석/부상보너스/삭턴 검증 ──────────────────
@@ -218,7 +230,7 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.tnmtType").value(0))
             .andExpect(jsonPath("$.tnmtTypeText").value("전력전"))
             .andExpect(jsonPath("$.tnmtMsg").value(""))
-            .andExpect(jsonPath("$.groups.length()").value(0))
+            .andExpect(jsonPath("$.entrants.length()").value(0))
             .andExpect(jsonPath("$.bracket.length()").value(0))
             .andExpect(jsonPath("$.rankings.length()").value(4))
             .andExpect(jsonPath("$.rankings[0].type").value("전력전"))
@@ -709,18 +721,27 @@ class F4ReadControllersTest {
     fun `npc policy returns defaults plus current for a 관직자`() {
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
-        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7, meta = linkedMapOf("npc_policy" to linkedMapOf("minNPCWarLeadership" to 55)))))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        `when`(nationEnv.findByNamespaceAndKey(1, "npc_nation_policy")).thenReturn(
+            NationEnvEntity(
+                1,
+                "npc_nation_policy",
+                """{"values":{"minNPCWarLeadership":55},"priority":["천도"],"valueSetter":"순욱","valueSetTime":"2026-07-10T01:02:03Z"}""",
+            ),
+        )
 
-        mvc(NpcPolicyController(resolver, nations)).perform(get("/api/nation/npc-policy").with(principal(7L)))
+        mvc(NpcPolicyController(resolver, nations, nationEnv, gameKv, null, null, objectMapper)).perform(get("/api/nation/npc-policy").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.defaultPolicy.reqNationGold").value(10000))
-            .andExpect(jsonPath("$.defaultPolicy.reqNationRice").value(12000))
-            .andExpect(jsonPath("$.defaultPolicy.reqHumanWarUprising").doesNotExist())
-            .andExpect(jsonPath("$.defaultPolicy.autorun_user").doesNotExist())
-            .andExpect(jsonPath("$.defaultPolicy.CombatForce.length()").value(0))
-            .andExpect(jsonPath("$.defaultPolicy.minNPCWarLeadership").value(40))
-            .andExpect(jsonPath("$.currentPolicy.minNPCWarLeadership").value(55))
+            .andExpect(jsonPath("$.defaultNationPolicy.reqNationGold").value(10000))
+            .andExpect(jsonPath("$.defaultNationPolicy.reqNationRice").value(12000))
+            .andExpect(jsonPath("$.defaultNationPolicy.reqHumanWarUprising").doesNotExist())
+            .andExpect(jsonPath("$.defaultNationPolicy.autorun_user").doesNotExist())
+            .andExpect(jsonPath("$.defaultNationPolicy.CombatForce.length()").value(0))
+            .andExpect(jsonPath("$.defaultNationPolicy.minNPCWarLeadership").value(40))
+            .andExpect(jsonPath("$.currentNationPolicy.minNPCWarLeadership").value(55))
+            .andExpect(jsonPath("$.currentNationPriority[0]").value("천도"))
+            .andExpect(jsonPath("$.lastSetters.policy.setter").value("순욱"))
     }
 
     @Test
@@ -730,6 +751,55 @@ class F4ReadControllersTest {
 
         mvc(NpcPolicyController(resolver, nations)).perform(get("/api/nation/npc-policy").with(principal(7L)))
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `npc policy save denies non diplomatic permission with legacy reason`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "문관", nationId = 1, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+
+        mvc(NpcPolicyController(resolver, nations, nationEnv, gameKv, SecretPermissionReader(nations), mock(CommandReserveService::class.java), objectMapper))
+            .perform(
+                post("/api/nation/npc-policy")
+                    .with(principal(7L))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"type":"nationPriority","data":["천도"]}"""),
+            )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("BLOCKED"))
+            .andExpect(jsonPath("$.reason").value("권한이 부족합니다. 군주, 외교권자, 조언자가 아닙니다."))
+    }
+
+    @Test
+    fun `npc policy save publishes typed daemon command for diplomat`() {
+        val reserve = mock(CommandReserveService::class.java)
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "외교관", nationId = 1, officerLevel = 2, meta = mapOf("permission" to "auditor", "belong" to 9))))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
+        val anyCommand = any(opensamguk.common.wire.TurnDaemonCommand::class.java)
+            ?: opensamguk.common.wire.TurnDaemonCommand.Pause()
+        `when`(reserve.publishImmediate(anyCommand))
+            .thenReturn(CommandReserveService.ReserveResult("req-npc", 0))
+
+        mvc(NpcPolicyController(resolver, nations, nationEnv, gameKv, SecretPermissionReader(nations), reserve, objectMapper))
+            .perform(
+                post("/api/nation/npc-policy")
+                    .with(principal(7L))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"type":"generalPriority","data":["출병","일반내정"]}"""),
+            )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("AVAILABLE"))
+            .andExpect(jsonPath("$.requestId").value("req-npc"))
+
+        val captor = ArgumentCaptor.forClass(opensamguk.common.wire.TurnDaemonCommand::class.java)
+        verify(reserve).publishImmediate(
+            captor.capture() ?: opensamguk.common.wire.TurnDaemonCommand.Pause(),
+        )
+        val command = captor.value as opensamguk.common.wire.TurnDaemonCommand.NpcPolicyUpdate
+        kotlin.test.assertEquals("generalPriority", command.policyType)
+        kotlin.test.assertEquals(10, command.generalId)
     }
 
     // ── GET /api/inherit-point (cost table + stat clamp + zeroed items) ──────────────────────────────

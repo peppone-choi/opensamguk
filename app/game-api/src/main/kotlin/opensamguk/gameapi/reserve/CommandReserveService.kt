@@ -77,11 +77,28 @@ class CommandReserveService(
      *
      * Returns the generated [ReserveResult.requestId] (echoed to the UI as the 202 requestId) in both.
      */
-    fun reserve(generalId: Int, actionCode: String, turnIdx: Int = 0, argJson: String? = null): ReserveResult {
+    fun reserve(generalId: Int, actionCode: String, turnIdx: Int = 0, argJson: String? = null): ReserveResult =
+        reserveInternal(generalId, actionCode, turnIdx, argJson, ownerUserId = null)
+
+    fun reserveForOwner(
+        generalId: Int,
+        actionCode: String,
+        turnIdx: Int = 0,
+        argJson: String? = null,
+        ownerUserId: Int,
+    ): ReserveResult = reserveInternal(generalId, actionCode, turnIdx, argJson, ownerUserId)
+
+    private fun reserveInternal(
+        generalId: Int,
+        actionCode: String,
+        turnIdx: Int,
+        argJson: String?,
+        ownerUserId: Int?,
+    ): ReserveResult {
         val requestId = requestIds()
 
         // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
-        val intake = CommandWireMapper.toCommand(actionCode, generalId, requestId, argJson)
+        val intake = CommandWireMapper.toCommand(actionCode, generalId, requestId, argJson, ownerUserId)
         if (intake != null) {
             publish(
                 TurnDaemonCommandEnvelope(

@@ -72,7 +72,7 @@ export const BRIGHT_COLOR_THRESHOLD = 140;
 export const BRIGHT_COLOR_THRESHOLD_ALT = 128;
 
 /** 장수 등록 기본 능력치 총합. */
-export const JOIN_STAT_TOTAL = 165;
+export const JOIN_STAT_TOTAL = 275;
 
 /** 장수 등록 능력치 최소값. */
 export const JOIN_STAT_MIN = 15;

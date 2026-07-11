@@ -29,10 +29,17 @@ class WarUnitCityState(initial: City) {
 
     fun updateDefense(value: Int) { defense = value }
     fun updateWall(value: Double) { wall = value }
+    fun updateConflict(value: String) { city = city.copy(conflict = value) }
 
     /** PHP `increaseVarWithLimit('wall', delta, min)` — float add, lower-clamped. */
     fun increaseWallWithLimit(delta: Double, min: Double) {
         wall = maxOf(min, wall + delta)
+    }
+
+    fun heavyDecreaseWealth() {
+        agriculture *= 0.5
+        commerce *= 0.5
+        security *= 0.5
     }
 
     /** PHP `heavyDecreaseWealth`-style agri/comm/secu lower-clamped add (the DEAD-CODE wealth block). */

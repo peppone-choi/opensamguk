@@ -7,6 +7,8 @@ import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralAccessLogReadEntity
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.NationCrewAggregate
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
@@ -37,10 +39,11 @@ class MyControllerTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
+    private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(MyController(resolver, generals, cities, nations))
+        MockMvcBuilders.standaloneSetup(MyController(resolver, generals, cities, nations, accessLogs))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -94,7 +97,6 @@ class MyControllerTest {
         `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
             listOf(gen(1, "조조", nationId = 1, officerLevel = 12), gen(10, "순욱", nationId = 1, officerLevel = 5)),
         )
-
         mockMvc().perform(get("/api/my-generals").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
@@ -123,6 +125,9 @@ class MyControllerTest {
                 ),
             ),
         )
+        `when`(accessLogs.findByGeneralIdIn(listOf(1))).thenReturn(
+            listOf(GeneralAccessLogReadEntity(id = 1, generalId = 1, refreshScoreTotal = 88)),
+        )
 
         mockMvc().perform(get("/api/my-generals").with(principal(7L)))
             .andExpect(status().isOk)
@@ -136,8 +141,7 @@ class MyControllerTest {
             .andExpect(jsonPath("$.generals[0].belong").value(12))
             .andExpect(jsonPath("$.generals[0].personalText").value("정복"))
             .andExpect(jsonPath("$.generals[0].specialDomesticText").value("-"))
-            // 벌점(refresh_score_total)은 §2 BLOCKED — 필드 자체가 없어야 한다(날조 금지).
-            .andExpect(jsonPath("$.generals[0].refreshScoreTotal").doesNotExist())
+            .andExpect(jsonPath("$.generals[0].refreshScoreTotal").value(88))
     }
 
     @Test
