@@ -50,12 +50,17 @@ jobs:
   reset:
     runs-on: [self-hosted, Linux, X64, ec2-prod]
     steps:
+      - uses: actions/checkout@v4
+
       - name: Backup, reset, and verify selected game server
         shell: bash
+        env:
+          RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
         run: |
           set -euo pipefail
 
           STACK="$HOME/opensamguk-docker"
+          SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
           SERVER="${{ inputs.server }}"
           CONFIRM="${{ inputs.confirm }}"
           SCENARIO_CODE="${{ inputs.scenario_code }}"
@@ -132,6 +137,47 @@ jobs:
           BACKUP_DIR="$HOME/opensamguk-backups/${SERVER}/${TS}"
           mkdir -p "$BACKUP_DIR"
           sudo cp "$ENV_FILE" "$BACKUP_DIR/${SERVER}.env"
+
+          if [[ -n "${RTK14_STATS_JSON_B64:-}" ]]; then
+            rm -rf "$SCENARIO_OUTPUT_DIR"
+            mkdir -p "$SCENARIO_OUTPUT_DIR"
+            RTK_SOURCE_JSON="$(mktemp)"
+            printf '%s' "$RTK14_STATS_JSON_B64" | base64 -d | gzip -dc > "$RTK_SOURCE_JSON"
+            python3 "$GITHUB_WORKSPACE/tools/rtk14/build_rtk14_stats.py" \
+              --rtk-source-json "$RTK_SOURCE_JSON" \
+              --scenario-dir "$GITHUB_WORKSPACE/infra/src/main/resources/scenario" \
+              --out-dir "$SCENARIO_OUTPUT_DIR"
+            rm -f "$RTK_SOURCE_JSON"
+            chmod 700 "$SCENARIO_OUTPUT_DIR"
+            chmod 600 "$SCENARIO_OUTPUT_DIR"/scenario_*.json
+            if sudo grep -q '^SCENARIO_HOST_DIR=' "$ENV_FILE"; then
+              sudo sed -i "s|^SCENARIO_HOST_DIR=.*|SCENARIO_HOST_DIR=./data/scenarios|" "$ENV_FILE"
+            else
+              printf 'SCENARIO_HOST_DIR=./data/scenarios\n' | sudo tee -a "$ENV_FILE" >/dev/null
+            fi
+            if sudo grep -q '^SCENARIO_DIR=' "$ENV_FILE"; then
+              sudo sed -i "s|^SCENARIO_DIR=.*|SCENARIO_DIR=/data/scenarios|" "$ENV_FILE"
+            else
+              printf 'SCENARIO_DIR=/data/scenarios\n' | sudo tee -a "$ENV_FILE" >/dev/null
+            fi
+            echo "RTK14 local scenario directory materialized for ${SERVER}: ${SCENARIO_OUTPUT_DIR}"
+          else
+            if compgen -G "$SCENARIO_OUTPUT_DIR/scenario_*.json" >/dev/null; then
+              if sudo grep -q '^SCENARIO_HOST_DIR=' "$ENV_FILE"; then
+                sudo sed -i "s|^SCENARIO_HOST_DIR=.*|SCENARIO_HOST_DIR=./data/scenarios|" "$ENV_FILE"
+              else
+                printf 'SCENARIO_HOST_DIR=./data/scenarios\n' | sudo tee -a "$ENV_FILE" >/dev/null
+              fi
+              if sudo grep -q '^SCENARIO_DIR=' "$ENV_FILE"; then
+                sudo sed -i "s|^SCENARIO_DIR=.*|SCENARIO_DIR=/data/scenarios|" "$ENV_FILE"
+              else
+                printf 'SCENARIO_DIR=/data/scenarios\n' | sudo tee -a "$ENV_FILE" >/dev/null
+              fi
+              echo "RTK14_STATS_JSON_B64 is not set; retaining existing external scenario directory"
+            else
+              echo "RTK14_STATS_JSON_B64 is not set and no external scenarios exist; classpath fallback will be used"
+            fi
+          fi
 
           echo "=== Backup destination: $BACKUP_DIR ==="
           PG_CONTAINER="${SERVER}-game-postgres"

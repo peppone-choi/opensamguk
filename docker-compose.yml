@@ -157,6 +157,7 @@ services:
       # Scenario seed (ScenarioSeedRunner, idempotent on empty world_state).
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
+      SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GAME_ENGINE_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:
@@ -166,6 +167,8 @@ services:
         condition: service_healthy
     ports:
       - "${GAME_ENGINE_PORT:-8082}:8082"
+    volumes:
+      - ${SCENARIO_HOST_DIR:-./data/scenarios}:${SCENARIO_DIR:-/data/scenarios}:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
       interval: 10s

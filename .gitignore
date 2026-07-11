@@ -1,5 +1,7 @@
 # Gradle / JVM
 .gradle/
+# Python bytecode (tools/rtk14 등 스크립트)
+__pycache__/
 .kotlin/
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -64,3 +66,6 @@ docs/superpowers/gap/_*.raw.json
 
 # RTK14(삼국지14) 무장 스탯 = 코에이 IP, 절대 커밋 금지 (정치/매력 divergence 소스)
 **/rtk14_stats.local.json
+**/scenario_*.local.json
+**/rtk14-scenarios.local/
+data/scenarios/

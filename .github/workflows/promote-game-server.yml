@@ -13,7 +13,7 @@ on:
           - s1
           - s2
       tag:
-        description: "Immutable opensamguk image tag/commit SHA"
+        description: "Git ref that is also the immutable GHCR image tag (normally commit SHA)"
         required: true
         type: string
       include_engine:
@@ -30,12 +30,19 @@ jobs:
   promote:
     runs-on: [self-hosted, Linux, X64, ec2-prod]
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+
       - name: Promote selected game server
         shell: bash
+        env:
+          RTK14_STATS_JSON_B64: ${{ secrets.RTK14_STATS_JSON_B64 }}
         run: |
           set -euo pipefail
 
           STACK="$HOME/opensamguk-docker"
+          SCENARIO_OUTPUT_DIR="$STACK/data/scenarios"
           SERVER="${{ inputs.server }}"
           TAG="${{ inputs.tag }}"
           INCLUDE_ENGINE="${{ inputs.include_engine }}"
@@ -63,6 +70,46 @@ jobs:
             echo "No game servers found"
             exit 0
           fi
+
+          materialize_rtk14_scenarios() {
+            if [[ -z "${RTK14_STATS_JSON_B64:-}" ]]; then
+              if compgen -G "$SCENARIO_OUTPUT_DIR/scenario_*.json" >/dev/null; then
+                echo "RTK14_STATS_JSON_B64 is not set; retaining existing external scenario directory"
+              else
+                echo "RTK14_STATS_JSON_B64 is not set and no external scenarios exist; classpath fallback will be used"
+              fi
+              return 0
+            fi
+            rm -rf "$SCENARIO_OUTPUT_DIR"
+            mkdir -p "$SCENARIO_OUTPUT_DIR"
+            local rtk_source_json
+            rtk_source_json="$(mktemp)"
+            printf '%s' "$RTK14_STATS_JSON_B64" | base64 -d | gzip -dc > "$rtk_source_json"
+            python3 "$GITHUB_WORKSPACE/tools/rtk14/build_rtk14_stats.py" \
+              --rtk-source-json "$rtk_source_json" \
+              --scenario-dir "$GITHUB_WORKSPACE/infra/src/main/resources/scenario" \
+              --out-dir "$SCENARIO_OUTPUT_DIR"
+            rm -f "$rtk_source_json"
+            chmod 700 "$SCENARIO_OUTPUT_DIR"
+            chmod 600 "$SCENARIO_OUTPUT_DIR"/scenario_*.json
+            echo "RTK14 local scenario directory materialized: ${SCENARIO_OUTPUT_DIR}"
+          }
+
+          ensure_scenario_env() {
+            local envf="$1"
+            if sudo grep -q '^SCENARIO_HOST_DIR=' "$envf"; then
+              sudo sed -i "s|^SCENARIO_HOST_DIR=.*|SCENARIO_HOST_DIR=./data/scenarios|" "$envf"
+            else
+              printf 'SCENARIO_HOST_DIR=./data/scenarios\n' | sudo tee -a "$envf" >/dev/null
+            fi
+            if sudo grep -q '^SCENARIO_DIR=' "$envf"; then
+              sudo sed -i "s|^SCENARIO_DIR=.*|SCENARIO_DIR=/data/scenarios|" "$envf"
+            else
+              printf 'SCENARIO_DIR=/data/scenarios\n' | sudo tee -a "$envf" >/dev/null
+            fi
+          }
+
+          materialize_rtk14_scenarios
 
           wait_container_health() {
             local container="$1"
@@ -110,6 +157,8 @@ jobs:
             else
               printf 'WEB_GAME_TAG=%s\n' "$TAG" | sudo tee -a "$envf" >/dev/null
             fi
+
+            ensure_scenario_env "$envf"
 
             echo "=== ${sid}: pull selected images ==="
             if [[ "$INCLUDE_ENGINE" == "true" ]]; then

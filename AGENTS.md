@@ -150,13 +150,13 @@ cd web/game    && corepack pnpm dev   # :3001
 | 단계 | 핵심 | 상태 |
 |------|------|------|
 | **F0 게이트웨이 인증** | gateway-api 자체 JWT/BCrypt(Kakao 제거 divergence). `web/gateway` 로그인/회원가입/로비/어드민. 토큰은 Next route handler 프록시 + **httpOnly 쿠키**(`sam_access`/`sam_refresh`), 브라우저 JS 미노출, 동일출처(CORS 불필요). `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` env로 peppone(role=ADMIN) 멱등 시드. | ✅ |
-| **F1 시나리오 시드** | `infra/seed/ScenarioImporter` + `engine/boot/ScenarioSeedRunner`(`SeedBootstrap.ensureSeeded`) → 로컬 fresh DB에는 `scenario_1010` 자동 시드 가능(`world_state` 비어 있을 때만, 멱등), production은 관리자 서버 생성 전 기본 비활성. `WorldSnapshotLoader`로 DB→`InMemoryTurnWorld` 부팅. JDBC-only(one-daemon-write 비위반). env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`. | ✅ |
+| **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner`가 외부 `SCENARIO_DIR`의 동일 파일명을 classpath보다 우선해 모든 시나리오를 시드. 정치·매력은 tuple 14/15 원수치, 생성물은 gitignored. env: `SCENARIO_SEED_ENABLED`/`SCENARIO_CODE`/`SCENARIO_DIR`. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼 + 게이팅). | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지, **read-only 렌더**. | ✅ |
-| **F4 액션 페이지(read)** | chief-center/battle/troop/auction/board/vote/diplomacy/inherit/npc-control/simulator read 렌더. **명령 제출(mutation) 경로 미완.** | ✅(read) |
+| **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결. 잔여 명령은 라이브 루프로 폐쇄 중. | 🔄 |
 | **F5 turnkey + docs** | 정본 `docker-compose.yml`(로컬) + `docker-compose.production.yml`(EC2/GHCR) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드. | 🔄 |
 
-> 프론트는 현재 game-api **read 데이터 렌더**까지 구축. 프론트에서의 명령 제출/턴 예약(mutation)은 후속 작업입니다. 백엔드 명령·전투·경매·베팅·외교 로직(P2~P6)은 게이트 닫힘이나, 그것을 프론트에서 끝까지 조작하는 흐름은 미완으로 표기합니다.
+> 프론트는 read-only 단계를 지났습니다. 버튼이 보이면 실제 API/daemon 결과까지 검증해야 하며, 하드 스텁·상수 빈 응답·disabled dead control은 완료로 세지 않습니다.
 
 ---
 
@@ -171,7 +171,7 @@ docker compose -f docker-compose.production.yml up -d
 ```
 
 - 백엔드 이미지 멀티스테이지: `gradle:8.12-jdk21` 빌드 → `eclipse-temurin:21-jre` 런타임. 프론트: `node:22-alpine` 빌드(`next build`) → `node:22-alpine` standalone 런타임.
-- nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/game/`→game-api · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
+- nginx(`infra/nginx/nginx.conf`) 라우팅: `/api/gateway/`→gateway-api · `/api/game/`→web-gateway Next 프록시(httpOnly 쿠키→Bearer, 서버 선택) · `/api/game/realtime/`→game-api(SSE, 버퍼링 off) · `/game/`→web-game · `/`→web-gateway · `/health`.
 - CI/CD: `.github/workflows/deploy.yml`(빌드 → GHCR push → SSH → 롤링 재시작), 수동 `scripts/deploy.sh`(헬스 체크 루프). 런타임 외부 API 의존 0, LLM-free.
 
 ---
