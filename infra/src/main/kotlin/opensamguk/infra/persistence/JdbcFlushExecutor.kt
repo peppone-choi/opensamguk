@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.core.namedparam.SqlParameterSource
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.Instant
 
 /**
  * The real `FlushOp` sink for the daemon write path (P1).
@@ -71,6 +72,9 @@ class JdbcFlushExecutor(
             if (payload.createdDiplomacy.isNotEmpty()) diplomacyCreateMany(payload.createdDiplomacy)
             if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.createdNationTurns)
             if (payload.createdTroops.isNotEmpty()) troopCreateMany(payload.createdTroops)
+            if (payload.generalAccessLogUpserts.isNotEmpty()) {
+                generalAccessLogUpsertMany(payload.generalAccessLogUpserts)
+            }
 
             // 4. deleteMany troop (by troop_leader; ExitTroop leader-disband + outright removal).
             if (payload.deletedTroops.isNotEmpty()) troopDeleteMany(payload.deletedTroops)
@@ -79,6 +83,9 @@ class JdbcFlushExecutor(
             if (payload.deletedGenerals.isNotEmpty()) {
                 generalDeleteMany(payload.deletedGenerals)
                 rankDataDeleteMany(payload.deletedGenerals)
+            }
+            if (payload.generalAccessLogDeletes.isNotEmpty()) {
+                generalAccessLogDeleteMany(payload.generalAccessLogDeletes)
             }
 
             // 6. nation cascade: diplomacy, nation_turn, nation (guarded on deletedNations > 0).
@@ -95,6 +102,9 @@ class JdbcFlushExecutor(
             }
             if (payload.updatedNations.isNotEmpty()) {
                 nationUpdate(payload.updatedNations)
+            }
+            if (payload.selectPoolMutations.isNotEmpty()) {
+                selectPoolMutate(payload.selectPoolMutations)
             }
             // 7c. troop UPDATE (rename via SetTroopName; created-this-tick troops are excluded upstream).
             if (payload.updatedTroops.isNotEmpty()) {
@@ -176,6 +186,13 @@ class JdbcFlushExecutor(
                 diplomacyLetterUpdateMany(payload.diplomacyLetterUpdates)
             }
 
+            if (payload.eventInserts.isNotEmpty()) {
+                eventInsertMany(payload.eventInserts)
+            }
+            if (payload.eventDeletes.isNotEmpty()) {
+                eventDeleteMany(payload.eventDeletes)
+            }
+
             // 9. log_entry createMany.
             if (payload.logEntries.isNotEmpty()) {
                 logEntryCreateMany(payload.logEntries)
@@ -218,6 +235,9 @@ class JdbcFlushExecutor(
         params.addValue("current_year", worldState["current_year"])
         params.addValue("current_month", worldState["current_month"])
         params.addValue("current_phase", (worldState["current_phase"] as? Number)?.toInt()?.coerceIn(1, 3) ?: 1)
+        params.addValue("status", worldState["status"] as? String)
+        params.addValue("tick_seconds", (worldState["tick_seconds"] as? Number)?.toInt())
+        params.addValue("config", (worldState["config"] as? Map<*, *>)?.let(MetaJson::encode))
         // lastTurnTime 영속화 — WorldSnapshotLoader 가 부팅 시 meta['lastTurnTime'] 을 1순위로 읽는데
         // 이 키를 쓰는 경로가 없어서 매 엔진 재기동마다 start_time 폴백 → MonthBoundaryDriver 가
         // 월드 시작부터 전 월을 재생(월수입/AI 이중 적용 + 로그 중복 INSERT)했다 (2026-06-12 s1 실증:
@@ -234,6 +254,9 @@ class JdbcFlushExecutor(
                SET current_year = :current_year,
                    current_month = :current_month,
                    current_phase = :current_phase,
+                   status = COALESCE(:status, status),
+                   tick_seconds = COALESCE(:tick_seconds, tick_seconds),
+                   config = COALESCE(CAST(:config AS jsonb), config),
                    isunited = :isunited,
                    meta = meta || jsonb_build_object(
                        'lastTurnTime', CAST(:last_turn_time AS text),
@@ -306,6 +329,8 @@ class JdbcFlushExecutor(
                    meta = :meta,
                    politics = :politics,
                    charm = :charm,
+                   age = COALESCE(:age, age),
+                   turn_time = COALESCE(CAST(:turn_time AS timestamptz), turn_time),
                    updated_at = now()
              WHERE id = :id
             """.trimIndent(),
@@ -346,6 +371,7 @@ class JdbcFlushExecutor(
                    wall_max = :wall_max,
                    pop = :pop,
                    pop_max = :pop_max,
+                   dead = :dead,
                    trade = :trade,
                    region = :region,
                    term = :term,
@@ -488,9 +514,6 @@ class JdbcFlushExecutor(
      *     (ScenarioImporter.MAX_GENERAL_TURNS = 30 ring buffer 풀시드).
      *  3. `rank_data` 37행 — RANK_COLUMNS 전체, value=0, nation_id=0 (장수 생성 시 미리 시드 →
      *     이후 rankVarIncrease/Set UPDATE의 대상; ScenarioImporter.insertRankData와 동일).
-     *
-     * general_access_log는 V1 baseline 스키마에 없다(kill() delete 경로 주석과 동일 — 미포팅) → 생략.
-     * B1 핸들러가 나중에 추가할 수 있다.
      */
     private fun generalCreateMany(rows: List<GeneralCreateRow>) {
         // 1. general 행 INSERT (ScenarioImporter.insertGenerals 컬럼/순서 verbatim).
@@ -512,6 +535,8 @@ class JdbcFlushExecutor(
                 .addValue("leadership", c["leadership"])
                 .addValue("strength", c["strength"])
                 .addValue("intel", c["intel"])
+                .addValue("politics", c["politics"])
+                .addValue("charm", c["charm"])
                 .addValue("injury", c["injury"])
                 .addValue("experience", c["experience"])
                 .addValue("dedication", c["dedication"])
@@ -546,7 +571,8 @@ class JdbcFlushExecutor(
                  gold, rice, crew, crew_type_id, train, atmos,
                  weapon_code, book_code, horse_code, item_code,
                  turn_time, age, start_age, personal_code, special_code, special2_code, officer_city,
-                 last_turn, meta, penalty)
+                 last_turn, meta, penalty,
+                 politics, charm)
             VALUES
                 (:id, :user_id, :name, :nation_id, :city_id, :troop_id, :npc_state, :affinity,
                  :born_year, :dead_year, :picture, :image_server,
@@ -555,7 +581,8 @@ class JdbcFlushExecutor(
                  :weapon_code, :book_code, :horse_code, :item_code,
                  CAST(:turn_time AS timestamptz), :age, :start_age, :personal_code, :special_code,
                  :special2_code, :officer_city,
-                 :last_turn, :meta, :penalty)
+                 :last_turn, :meta, :penalty,
+                 :politics, :charm)
             """.trimIndent(),
             generalBatch,
         )
@@ -598,6 +625,37 @@ class JdbcFlushExecutor(
             rankBatch.toTypedArray(),
         )
         lastOps.add(FlushExecOp("rank_data", FlushVerb.CREATE_MANY, rows.size * rankColumns.size))
+    }
+
+    private fun generalAccessLogUpsertMany(rows: List<GeneralAccessLogWriteRow>) {
+        val batch = rows.map { row ->
+            MapSqlParameterSource()
+                .addValue("general_id", row.generalId)
+                .addValue("user_id", row.userId)
+                .addValue("last_refresh", row.lastRefresh?.toString())
+                .addValue("refresh", row.refresh)
+                .addValue("refresh_total", row.refreshTotal)
+                .addValue("refresh_score", row.refreshScore)
+                .addValue("refresh_score_total", row.refreshScoreTotal)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO general_access_log
+                (general_id, user_id, last_refresh, refresh, refresh_total, refresh_score, refresh_score_total)
+            VALUES
+                (:general_id, :user_id, CAST(:last_refresh AS timestamptz), :refresh, :refresh_total,
+                 :refresh_score, :refresh_score_total)
+            ON CONFLICT (general_id) DO UPDATE SET
+                user_id = EXCLUDED.user_id,
+                last_refresh = EXCLUDED.last_refresh,
+                refresh = EXCLUDED.refresh,
+                refresh_total = EXCLUDED.refresh_total,
+                refresh_score = EXCLUDED.refresh_score,
+                refresh_score_total = EXCLUDED.refresh_score_total
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("general_access_log", FlushVerb.UPSERT, rows.size))
     }
 
     // --- step 3: nation / nation_turn createMany ------------------------------------------------
@@ -673,9 +731,6 @@ class JdbcFlushExecutor(
             MapSqlParameterSource().addValue("ids", ids),
         )
         lastOps.add(FlushExecOp("general", FlushVerb.DELETE_MANY, ids.size))
-        // kill()'s 4-table delete (`General.php:92-95`): general / general_turn / rank_data /
-        // general_access_log. general_turn is deleted here (rank_data follows in step-5);
-        // general_access_log is NOT ported to the V1 baseline schema (no table), so it is a no-op.
         jdbc.update(
             "DELETE FROM general_turn WHERE general_id IN (:ids)",
             MapSqlParameterSource().addValue("ids", ids),
@@ -689,6 +744,14 @@ class JdbcFlushExecutor(
             MapSqlParameterSource().addValue("ids", generalIds),
         )
         lastOps.add(FlushExecOp("rank_data", FlushVerb.DELETE_MANY, generalIds.size))
+    }
+
+    private fun generalAccessLogDeleteMany(generalIds: List<Int>) {
+        jdbc.update(
+            "DELETE FROM general_access_log WHERE general_id IN (:ids)",
+            MapSqlParameterSource().addValue("ids", generalIds),
+        )
+        lastOps.add(FlushExecOp("general_access_log", FlushVerb.DELETE_MANY, generalIds.size))
     }
 
     // --- step 6: nation cascade (diplomacy, nation_turn, nation) --------------------------------
@@ -1324,6 +1387,125 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("yearbook_history", FlushVerb.UPSERT, rows.size))
     }
 
+    private fun eventInsertMany(rows: List<EventInsertRow>) {
+        val batch = rows.map { row ->
+            MapSqlParameterSource()
+                .addValue("id", row.id)
+                .addValue("target_code", row.targetCode)
+                .addValue("priority", row.priority)
+                .addValue("condition", row.condition)
+                .addValue("action", row.action)
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO event (id, target_code, priority, condition, action)
+            VALUES (:id, :target_code, :priority, CAST(:condition AS jsonb), CAST(:action AS jsonb))
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("event", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun eventDeleteMany(ids: List<Int>) {
+        val batch = ids.map { id -> MapSqlParameterSource().addValue("id", id) }.toTypedArray()
+        jdbc.batchUpdate("DELETE FROM event WHERE id = :id", batch)
+        lastOps.add(FlushExecOp("event", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun selectPoolMutate(mutations: List<SelectPoolMutation>) {
+        for (mutation in mutations) {
+            val params = MapSqlParameterSource()
+                .addValue("unique_name", mutation.uniqueName)
+                .addValue("owner", mutation.ownerUserId)
+                .addValue("general_id", mutation.generalId)
+                .addValue("claimed_general_id", -mutation.generalId)
+                .addValue("now", java.sql.Timestamp.from(mutation.now))
+            when (mutation.type) {
+                SelectPoolMutationType.REFRESH -> {
+                    jdbc.update(
+                        "DELETE FROM select_pool WHERE (reserved_until < :now OR reserved_until IS NULL) AND general_id IS NULL",
+                        params,
+                    )
+                    val reservedUntil = requireNotNull(mutation.reservedUntil)
+                    val batch = mutation.candidates.map { candidate ->
+                        MapSqlParameterSource()
+                            .addValue("owner", mutation.ownerUserId)
+                            .addValue("unique_name", candidate.uniqueName)
+                            .addValue("reserved_until", java.sql.Timestamp.from(reservedUntil))
+                            .addValue("info", MetaJson.encode(candidate.info))
+                    }.toTypedArray()
+                    jdbc.batchUpdate(
+                        """
+                        INSERT INTO select_pool (owner, unique_name, reserved_until, info)
+                        VALUES (:owner, :unique_name, :reserved_until, :info)
+                        """.trimIndent(),
+                        batch,
+                    )
+                }
+                SelectPoolMutationType.PICK -> {
+                    val claimed = jdbc.update(
+                        """
+                        UPDATE select_pool
+                           SET general_id = :general_id,
+                               owner = NULL,
+                               reserved_until = NULL
+                         WHERE unique_name = :unique_name
+                           AND owner = :owner
+                           AND reserved_until >= :now
+                           AND general_id IS NULL
+                        """.trimIndent(),
+                        params,
+                    )
+                    check(claimed == 1) { "select_pool pick claim lost: ${mutation.uniqueName}" }
+                }
+                SelectPoolMutationType.UPDATE -> {
+                    val marked = jdbc.update(
+                        """
+                        UPDATE select_pool
+                           SET general_id = :claimed_general_id,
+                               owner = NULL,
+                               reserved_until = NULL
+                         WHERE unique_name = :unique_name
+                           AND owner = :owner
+                           AND reserved_until >= :now
+                        """.trimIndent(),
+                        params,
+                    )
+                    check(marked == 1) { "select_pool update claim lost: ${mutation.uniqueName}" }
+                    jdbc.update(
+                        """
+                        UPDATE select_pool
+                           SET general_id = NULL,
+                               owner = NULL,
+                               reserved_until = NULL
+                         WHERE unique_name <> :unique_name
+                           AND general_id = :general_id
+                        """.trimIndent(),
+                        params,
+                    )
+                    val swapped = jdbc.update(
+                        "UPDATE select_pool SET general_id = :general_id WHERE general_id = :claimed_general_id",
+                        params,
+                    )
+                    check(swapped == 1) { "select_pool update swap lost: ${mutation.uniqueName}" }
+                }
+            }
+            if (mutation.type != SelectPoolMutationType.REFRESH) {
+                jdbc.update(
+                    """
+                    UPDATE select_pool
+                       SET owner = NULL,
+                           reserved_until = NULL
+                     WHERE (owner = :owner OR reserved_until < :now)
+                       AND general_id IS NULL
+                    """.trimIndent(),
+                    params,
+                )
+            }
+        }
+        lastOps.add(FlushExecOp("select_pool", FlushVerb.UPDATE, mutations.size))
+    }
+
     private fun jsonb(json: String?): PGobject {
         val obj = PGobject()
         obj.type = "jsonb"
@@ -1354,6 +1536,8 @@ data class FlushPayload(
     // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board/auction
     // INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
     val createdGenerals: List<GeneralCreateRow> = emptyList(),
+    val generalAccessLogUpserts: List<GeneralAccessLogWriteRow> = emptyList(),
+    val generalAccessLogDeletes: List<Int> = emptyList(),
     // --- P2 satellite write-set (Task FF2) ---
     val updatedNations: List<Nation> = emptyList(),           // step-7 nation UPDATE (excl created)
     val createdNations: List<Nation> = emptyList(),           // step-3 createMany
@@ -1394,6 +1578,36 @@ data class FlushPayload(
     val statisticInserts: List<StatisticInsertRow> = emptyList(),     // step-12 statistic INSERT
     // --- W0-8 연감 채널 (P0-20 LogHistory 월별 스냅샷) ---
     val yearbookInserts: List<YearbookInsertRow> = emptyList(),       // step-13 yearbook_history UPSERT
+    val selectPoolMutations: List<SelectPoolMutation> = emptyList(),
+    val eventInserts: List<EventInsertRow> = emptyList(),
+    val eventDeletes: List<Int> = emptyList(),
+)
+
+enum class SelectPoolMutationType { REFRESH, PICK, UPDATE }
+
+data class SelectPoolCandidate(
+    val uniqueName: String,
+    val info: Map<String, Any?>,
+)
+
+data class SelectPoolMutation(
+    val type: SelectPoolMutationType,
+    val uniqueName: String,
+    val ownerUserId: Int,
+    val generalId: Int,
+    val now: Instant,
+    val reservedUntil: Instant? = null,
+    val candidates: List<SelectPoolCandidate> = emptyList(),
+)
+
+data class GeneralAccessLogWriteRow(
+    val generalId: Int,
+    val userId: Long?,
+    val lastRefresh: Instant?,
+    val refresh: Int,
+    val refreshTotal: Int,
+    val refreshScore: Int,
+    val refreshScoreTotal: Int,
 )
 
 /** One `statistic` INSERT (W1 checkStatistic, INSERT-only). `columns`는 byte-faithful statistic 컬럼 맵. */
@@ -1406,6 +1620,14 @@ data class StatisticInsertRow(val columns: Map<String, Any?>)
  * UNIQUE 충돌 시 스냅샷 4컬럼+hash 갱신(재기동-재실행 멱등).
  */
 data class YearbookInsertRow(val columns: Map<String, Any?>)
+
+data class EventInsertRow(
+    val id: Int,
+    val targetCode: String,
+    val priority: Int,
+    val condition: String,
+    val action: String,
+)
 
 /** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
 data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)

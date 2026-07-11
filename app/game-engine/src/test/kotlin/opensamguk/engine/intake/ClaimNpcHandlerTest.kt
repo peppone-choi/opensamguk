@@ -51,7 +51,7 @@ class ClaimNpcHandlerTest {
     fun `claim npc mutates possession state into the daemon flush payload`() {
         val world = world()
         val recorder = ChangeRecorder()
-        val result = ClaimNpcHandler(world, recorder).handle(
+        val result = ClaimNpcHandler(world, recorder, nowProvider = { t0 }).handle(
             TurnDaemonCommand.ClaimNpc(
                 generalId = 10,
                 userId = 7L,
@@ -76,6 +76,9 @@ class ClaimNpcHandlerTest {
         assertEquals(true, updated.penalty["NoChief"])
         assertEquals(3, updated.penalty["SendPrivateMsgDelay"])
         assertEquals(2, payload.logEntries.size)
+        assertEquals(7L, world.getAccessLog(10)?.userId)
+        assertEquals(t0, world.getAccessLog(10)?.lastRefresh)
+        assertEquals(10, payload.generalAccessLogUpserts.single().generalId)
     }
 
     @Test

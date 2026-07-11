@@ -12,9 +12,12 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralRole
 import opensamguk.engine.turn.GeneralStats
+import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
+import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.MakeGeneral
 import opensamguk.logic.world.SpecialityHelper
 import java.time.Instant
@@ -30,15 +33,85 @@ import java.time.format.DateTimeFormatter
  */
 class MakeGeneralHandler(
     private val world: InMemoryTurnWorld,
-    @Suppress("unused") private val recorder: ChangeRecorder,
+    private val recorder: ChangeRecorder,
+    private val previousPointReader: (Int) -> Double = { 0.0 },
+    private val geniusRemainingReader: () -> Int = { GameConst.defaultMaxGenius },
+    private val nowProvider: () -> Instant = Instant::now,
 ) {
 
     fun handle(command: TurnDaemonCommand.MakeGeneral): TurnDaemonCommandResult {
         val state = world.getState()
         val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
+        val inheritSpecial = command.inheritSpecial
+        val inheritTurntimeZone = command.inheritTurntimeZone
+        val inheritCity = command.inheritCity
+        val requestedBonusStat = command.inheritBonusStat
+
+        if (world.listGenerals().any { it.userId == command.userId.toString() }) {
+            return MakeGeneralFail(reason = "이미 등록하셨습니다!")
+        }
+        if (world.listGenerals().any { it.name == command.name }) {
+            return MakeGeneralFail(reason = "이미 있는 장수입니다. 다른 이름으로 등록해 주세요!")
+        }
+        if (command.name.isBlank()) {
+            return MakeGeneralFail(reason = "이름이 짧습니다. 다시 가입해주세요!")
+        }
+        val stats = listOf(command.leadership, command.strength, command.intel, command.politics, command.charm)
+        if (stats.any { it !in GameConst.defaultStatMin..GameConst.defaultStatMax }) {
+            return MakeGeneralFail(reason = "능력치는 ${GameConst.defaultStatMin}~${GameConst.defaultStatMax} 사이여야 합니다.")
+        }
+        if (stats.sum() > GameConst.defaultStatTotal) {
+            return MakeGeneralFail(reason = "능력치가 ${GameConst.defaultStatTotal}을 넘어섰습니다. 다시 가입해주세요!")
+        }
+        if (command.character != "Random" && command.character !in GameConst.availablePersonality) {
+            return MakeGeneralFail(reason = "'character' 항목이 올바르지 않습니다.")
+        }
+        if (inheritSpecial != null && inheritSpecial !in GameConst.availableSpecialWar) {
+            return MakeGeneralFail(reason = "'inheritSpecial' 항목이 올바르지 않습니다.")
+        }
+        if (inheritTurntimeZone != null && inheritTurntimeZone !in 0..59) {
+            return MakeGeneralFail(reason = "'inheritTurntimeZone' 항목이 올바르지 않습니다.")
+        }
+        if (inheritCity != null && world.getCityById(inheritCity) == null) {
+            return MakeGeneralFail(reason = "도시가 잘못 지정되었습니다. 다시 가입해주세요!")
+        }
+        if (command.imgsvr != null && command.imgsvr !in 0..1) {
+            return MakeGeneralFail(reason = "잘못된 접근입니다!!!")
+        }
+        if ((command.imgsvr ?: 0) != 0 && command.picture.isNullOrBlank()) {
+            return MakeGeneralFail(reason = "잘못된 접근입니다!!!")
+        }
+
+        val inheritBonusStat = when {
+            requestedBonusStat == null -> null
+            requestedBonusStat.size != 3 -> {
+                return MakeGeneralFail(reason = "보너스 능력치가 잘못 지정되었습니다. 다시 가입해주세요!")
+            }
+            requestedBonusStat.any { it < 0 } -> {
+                return MakeGeneralFail(reason = "보너스 능력치가 음수입니다. 다시 가입해주세요!")
+            }
+            requestedBonusStat.sum() == 0 -> null
+            requestedBonusStat.sum() !in 3..5 -> {
+                return MakeGeneralFail(reason = "보너스 능력치 합이 잘못 지정되었습니다. 다시 가입해주세요!")
+            }
+            else -> requestedBonusStat
+        }
+        val inheritRequiredPoint =
+            (if (inheritCity != null) GameConst.inheritBornCityPoint else 0) +
+                (if (inheritBonusStat != null) GameConst.inheritBornStatPoint else 0) +
+                (if (inheritSpecial != null) GameConst.inheritBornSpecialPoint else 0) +
+                (if (inheritTurntimeZone != null) GameConst.inheritBornTurntimePoint else 0)
+        val inheritTotalPoint = currentPreviousPoint(command.userId)
+        if (inheritTotalPoint < inheritRequiredPoint) {
+            return MakeGeneralFail(reason = "유산 포인트가 부족합니다. 다시 가입해주세요!")
+        }
+        val geniusRemaining = currentGeniusRemaining()
+        if (inheritSpecial != null && geniusRemaining == 0) {
+            return MakeGeneralFail(reason = "이미 천재가 모두 나타났습니다. 다시 가입해주세요!")
+        }
 
         // --- seed (Join.php:225–231) ---------------------------------------------------------------
-        val now = Instant.now()
+        val now = nowProvider()
         val nowStr = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             .withZone(ZoneId.of("UTC"))
             .format(now)
@@ -52,7 +125,7 @@ class MakeGeneralHandler(
             .filter { it.nationId == 0 }
             .map { it.id }
         val cityPool = neutralCityPool.ifEmpty { birthCities.map { it.id } }
-        if (cityPool.isEmpty()) {
+        if (cityPool.isEmpty() && inheritCity == null) {
             return MakeGeneralFail(reason = "공백지가 없습니다.")
         }
 
@@ -63,20 +136,49 @@ class MakeGeneralHandler(
             formLeadership = command.leadership,
             formStrength = command.strength,
             formIntel = command.intel,
+            formPolitics = command.politics,
+            formCharm = command.charm,
             cityPool = cityPool,
             availablePersonality = GameConst.availablePersonality,
             character = command.character,
             turnterm = turntermMin,
+            geniusRemaining = geniusRemaining,
+            inheritSpecial = inheritSpecial,
+            inheritCity = inheritCity,
+            inheritBonusStat = inheritBonusStat,
+            inheritTurntimeZone = inheritTurntimeZone,
         )
 
         // --- turntime (getRandTurn + base now) -----------------------------------------------------
-        val turntime = now
+        val turnBase = if (inheritTurntimeZone == null) {
+            state.lastTurnTime
+        } else {
+            ServerClock.cutTurn(state.lastTurnTime, turntermMin)
+        }
+        var turntime = turnBase
             .plusSeconds(drawResult.turntimeSecond.toLong())
             .plusNanos(drawResult.turntimeFraction.toLong() * 1000L)
+        if (!turntime.isAfter(now)) {
+            turntime = ServerClock.addTurn(turntime, turntermMin)
+        }
 
         // --- build TurnGeneral (Join.php:404–438) --------------------------------------------------
         val generalId = world.allocateGeneralId()
         val bornYear = state.currentYear - drawResult.age
+        val generalMeta = linkedMapOf<String, Any?>(
+            "killturn" to 6,
+            "affinity" to drawResult.affinity,
+            "born_year" to bornYear,
+            "dead_year" to 300,
+            "picture" to (command.picture?.takeIf { it.isNotBlank() } ?: "default.jpg"),
+            "image_server" to (command.imgsvr ?: 0),
+            "start_age" to drawResult.age,
+            "specage" to (drawResult.age + 3),
+            "specage2" to if (drawResult.genius) drawResult.age else (drawResult.age + 3),
+            "betray" to 0,
+            "penalty" to emptyMap<String, Any?>(),
+        )
+        command.ownerName?.takeIf { it.isNotBlank() }?.let { generalMeta["owner_name"] = it }
         val turnGeneral = TurnGeneral(
             id = generalId,
             userId = command.userId.toString(),
@@ -88,6 +190,8 @@ class MakeGeneralHandler(
                 leadership = drawResult.leadership,
                 strength = drawResult.strength,
                 intelligence = drawResult.intel,
+                politics = drawResult.politics,
+                charm = drawResult.charm,
             ),
             experience = 0,
             dedication = 0,
@@ -105,22 +209,60 @@ class MakeGeneralHandler(
             age = drawResult.age,
             npcState = 0,
             turnTime = turntime,
-            meta = linkedMapOf(
-                "killturn" to 6,
-                "affinity" to drawResult.affinity,
-                "born_year" to bornYear,
-                "dead_year" to 300,
-                "picture" to (command.picture ?: "default.jpg"),
-                "image_server" to 0,
-                "start_age" to drawResult.age,
-                "specage" to (drawResult.age + 3),
-                "specage2" to if (drawResult.genius) drawResult.age else (drawResult.age + 3),
-                "betray" to 0,
-                "penalty" to emptyMap<String, Any?>(),
-            ),
+            meta = generalMeta,
         )
 
         world.createGeneral(turnGeneral)
+        recorder.recordAccessLogUpsert(
+            world,
+            GeneralAccessLog(generalId = generalId, userId = command.userId.toLong(), lastRefresh = now),
+        )
+
+        if (drawResult.genius) {
+            recorder.recordKv("game_env", "game_env", "genius", geniusRemaining - 1)
+        }
+        if (inheritSpecial != null) {
+            recorder.recordInheritanceLog(
+                command.userId,
+                "${SpecialityHelper.warName(inheritSpecial)} 전투 특기를 가진 천재 생성",
+                "inheritPoint",
+            )
+        }
+        if (inheritCity != null) {
+            val inheritedCityName = world.getCityById(inheritCity)?.name.orEmpty()
+            recorder.recordInheritanceLog(command.userId, "${inheritedCityName}에 장수 생성", "inheritPoint")
+        }
+        if (inheritBonusStat != null) {
+            recorder.recordInheritanceLog(
+                command.userId,
+                "${inheritBonusStat[0]}, ${inheritBonusStat[1]}, ${inheritBonusStat[2]} 보너스 능력치로 생성",
+                "inheritPoint",
+            )
+        }
+        if (inheritTurntimeZone != null) {
+            recorder.recordInheritanceLog(
+                command.userId,
+                "턴 시간 %02d:%02d 로 지정".format(
+                    drawResult.turntimeSecond / 60,
+                    drawResult.turntimeSecond % 60,
+                ),
+                "inheritPoint",
+            )
+        }
+        if (inheritRequiredPoint > 0) {
+            recorder.recordInheritanceLog(
+                command.userId,
+                "장수 생성으로 포인트 $inheritRequiredPoint 소모",
+                "inheritPoint",
+            )
+            recorder.recordInheritancePointSet(
+                command.userId,
+                "previous",
+                inheritTotalPoint - inheritRequiredPoint,
+                null,
+            )
+            recorder.recordRankIncrease(generalId, RankColumn.INHERIT_SPENT_DYN, inheritRequiredPoint)
+        }
 
         // --- logs (Join.php:502–528) — 로그 문자열은 PHP grand truth와 byte-match 대상. ---------
         val cityName = world.getCityById(drawResult.cityId)?.name ?: ""
@@ -206,5 +348,19 @@ class MakeGeneralHandler(
         }
 
         return MakeGeneralOk(generalId = generalId)
+    }
+
+    private fun currentPreviousPoint(ownerId: Int): Double {
+        val pending = recorder.inheritanceKvWrites()
+            .lastOrNull { it.namespace == "inheritance_$ownerId" && it.key == "previous" }
+            ?.value as? List<*>
+        return (pending?.getOrNull(0) as? Number)?.toDouble() ?: previousPointReader(ownerId)
+    }
+
+    private fun currentGeniusRemaining(): Int {
+        val pending = recorder.kvDirty().entries
+            .lastOrNull { (key, _) -> key.table == "game_env" && key.namespace == "game_env" && key.key == "genius" }
+            ?.value
+        return (pending as? Number)?.toInt() ?: geniusRemainingReader()
     }
 }

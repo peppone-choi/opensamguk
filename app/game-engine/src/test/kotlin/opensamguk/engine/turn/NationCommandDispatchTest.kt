@@ -29,7 +29,11 @@ class NationCommandDispatchTest {
 
     @AfterTest fun reset() = NationActionResolverRegistry.clear()
 
-    private fun world(diplomacyState: Int = DiplomacyState.TRADE, diplomacyTerm: Int = 0): InMemoryTurnWorld = InMemoryTurnWorld(
+    private fun world(
+        diplomacyState: Int = DiplomacyState.TRADE,
+        diplomacyTerm: Int = 0,
+        nationMeta: Map<String, Any?> = emptyMap(),
+    ): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
             generals = listOf(
@@ -37,10 +41,13 @@ class NationCommandDispatchTest {
                     stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0, officerLevel = 12, gold = 100, turnTime = t0),
             ),
             cities = listOf(
-                City(id = 5, name = "업", nationId = 1, level = 6),
-                City(id = 8, name = "허창", nationId = 2, level = 6),
+                City(id = 5, name = "업", nationId = 1, level = 6, supplyState = 1),
+                City(id = 8, name = "허창", nationId = 2, level = 6, supplyState = 1),
             ),
-            nations = listOf(Nation(id = 1, name = "촉", color = "#0f0"), Nation(id = 2, name = "위", color = "#00f")),
+            nations = listOf(
+                Nation(id = 1, name = "촉", color = "#0f0", meta = nationMeta),
+                Nation(id = 2, name = "위", color = "#00f"),
+            ),
             diplomacy = listOf(
                 TurnDiplomacy(1, 2, state = diplomacyState, term = diplomacyTerm),
                 TurnDiplomacy(2, 1, state = diplomacyState, term = diplomacyTerm),
@@ -120,6 +127,104 @@ class NationCommandDispatchTest {
         // only the turn_last KV nation-meta diff is recorded (the legacy seam), no diplomacy/message.
         assertTrue(recorder.diplomacyUpdateDirty().isEmpty())
         assertTrue(recorder.createdMessages().isEmpty())
+    }
+
+    @Test
+    fun `stale strategic nation command is denied before resolver and does not mutate state`() {
+        installDaemonResolvers()
+        val last = LastTurn()
+        val world = world(
+            diplomacyState = DiplomacyState.DECLARATION,
+            diplomacyTerm = 15,
+            nationMeta = linkedMapOf(
+                "strategic_cmd_limit" to 9,
+                "turn_last_12" to last.toRaw(),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val beforeGeneral = world.getGeneralById(10)!!
+        val beforeNation = world.getNationById(1)!!
+        val beforeDiplomacy = world.getDiplomacy(1, 2)!!
+        val proc = ProcessNationCommand(
+            world,
+            recorder,
+            hiddenSeed = "seed",
+            registry = CommandRegistry(GeneralActionPipeline()),
+        )
+
+        val result = proc.process(
+            generalId = 10,
+            officerLevel = 12,
+            nationCommand = ChosenCommand("che_급습", linkedMapOf("destNationID" to 2)),
+            lastTurn = last,
+            year = 200,
+            month = 3,
+            date = "12:00",
+        )
+
+        assertEquals(last, result)
+        assertEquals(beforeGeneral, world.getGeneralById(10))
+        assertEquals(beforeNation, world.getNationById(1))
+        assertEquals(beforeDiplomacy, world.getDiplomacy(1, 2))
+        assertTrue(recorder.diplomacyUpdateDirty().isEmpty())
+        assertTrue(recorder.createdMessages().isEmpty())
+    }
+
+    @Test
+    fun `research commands keep their multi-turn stack before one resolver success`() {
+        installDaemonResolvers()
+        val cases = listOf(
+            Triple("event_상병연구", "상병 연구", 23),
+            Triple("event_대검병연구", "대검병 연구", 11),
+        )
+
+        for ((code, name, preReqTurn) in cases) {
+            val world = world(
+                nationMeta = linkedMapOf(
+                    "turn_last_12" to LastTurn().toRaw(),
+                    "aux" to linkedMapOf<String, Any?>(),
+                ),
+            ).also { it.applyNationDirtyFree(it.getNationById(1)!!.copy(gold = 500_000, rice = 500_000)) }
+            val proc = ProcessNationCommand(
+                world,
+                ChangeRecorder(),
+                hiddenSeed = "seed",
+                registry = CommandRegistry(GeneralActionPipeline()),
+            )
+            var last = LastTurn()
+
+            repeat(preReqTurn) {
+                last = proc.process(
+                    generalId = 10,
+                    officerLevel = 12,
+                    nationCommand = ChosenCommand(code, emptyMap()),
+                    lastTurn = last,
+                    year = 200,
+                    month = 3,
+                    date = "12:00",
+                )
+            }
+
+            assertEquals(name, last.command)
+            assertEquals(preReqTurn, last.term)
+            assertEquals(500_000, world.getNationById(1)!!.gold)
+            assertEquals(0, world.getGeneralById(10)!!.experience)
+
+            last = proc.process(
+                generalId = 10,
+                officerLevel = 12,
+                nationCommand = ChosenCommand(code, emptyMap()),
+                lastTurn = last,
+                year = 200,
+                month = 3,
+                date = "12:00",
+            )
+
+            assertEquals(name, last.command)
+            assertEquals(0, last.term)
+            assertEquals(500_000 - if (preReqTurn == 23) 100_000 else 50_000, world.getNationById(1)!!.gold)
+            assertEquals(5 * (preReqTurn + 1), world.getGeneralById(10)!!.experience)
+        }
     }
 
     @Test
@@ -272,7 +377,7 @@ class NationCommandDispatchTest {
         }
         val recorder = ChangeRecorder()
         val reg = CommandRegistry(GeneralActionPipeline())
-        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed", registry = reg, startYear = 200)
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed", registry = reg, startYear = 184)
 
         proc.process(
             generalId = 10, officerLevel = 12,
@@ -290,10 +395,13 @@ class NationCommandDispatchTest {
     @Test
     fun `logic bridge runs 피장파장 exp ded without registry entry`() {
         NationActionResolverRegistry.clear()
-        val world = world()
+        val world = world(
+            diplomacyState = DiplomacyState.WAR,
+            nationMeta = linkedMapOf("strategic_cmd_limit" to 0),
+        )
         val recorder = ChangeRecorder()
         val reg = CommandRegistry(GeneralActionPipeline())
-        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed", registry = reg, startYear = 200)
+        val proc = ProcessNationCommand(world, recorder, hiddenSeed = "seed", registry = reg, startYear = 184)
 
         proc.process(
             generalId = 10, officerLevel = 12,
@@ -301,7 +409,13 @@ class NationCommandDispatchTest {
                 "che_피장파장",
                 linkedMapOf("commandType" to "che_급습", "destNationID" to 2),
             ),
-            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+            lastTurn = LastTurn(
+                command = "피장파장",
+                arg = linkedMapOf("destNationID" to 2, "commandType" to "che_급습"),
+                term = 1,
+                seq = 0,
+            ),
+            year = 200, month = 3, date = "12:00",
         )
 
         // preReqTurn for 피장파장 = 1 → exp/ded = 5*(1+1)=10
@@ -357,7 +471,7 @@ class NationCommandDispatchTest {
                     City(id = 9, name = "낙양", nationId = 2, level = 5, supplyState = 1),
                 ),
                 nations = listOf(
-                    Nation(id = 1, name = "촉", color = "#0f0"),
+                    Nation(id = 1, name = "촉", color = "#0f0", meta = linkedMapOf("strategic_cmd_limit" to 0)),
                     Nation(id = 2, name = "위", color = "#00f"),
                 ),
                 diplomacy = listOf(
@@ -369,13 +483,19 @@ class NationCommandDispatchTest {
         val recorder = ChangeRecorder()
         val proc = ProcessNationCommand(
             world, recorder, hiddenSeed = "seed",
-            registry = CommandRegistry(GeneralActionPipeline()), startYear = 200,
+            registry = CommandRegistry(GeneralActionPipeline()), startYear = 184,
         )
 
         proc.process(
             generalId = 10, officerLevel = 12,
             nationCommand = ChosenCommand("che_허보", linkedMapOf("destCityID" to 8)),
-            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+            lastTurn = LastTurn(
+                command = "허보",
+                arg = linkedMapOf("destCityID" to 8),
+                term = 1,
+                seq = 0,
+            ),
+            year = 200, month = 3, date = "12:00",
         )
 
         // enemy general in city 8 must move to a supplied enemy city (8 or 9)
@@ -401,6 +521,7 @@ class NationCommandDispatchTest {
                 cities = listOf(
                     City(
                         id = 5, name = "업", nationId = 1, level = 6,
+                        supplyState = 1,
                         population = 10000, populationMax = 20000,
                         agriculture = 1000, agricultureMax = 2000,
                         commerce = 1000, commerceMax = 2000,
@@ -416,13 +537,19 @@ class NationCommandDispatchTest {
         val recorder = ChangeRecorder()
         val proc = ProcessNationCommand(
             world, recorder, hiddenSeed = "seed",
-            registry = CommandRegistry(GeneralActionPipeline()), startYear = 200,
+            registry = CommandRegistry(GeneralActionPipeline()), startYear = 184,
         )
 
         proc.process(
             generalId = 10, officerLevel = 12,
             nationCommand = ChosenCommand("che_초토화", linkedMapOf("destCityID" to 5)),
-            lastTurn = LastTurn(), year = 200, month = 3, date = "12:00",
+            lastTurn = LastTurn(
+                command = "초토화",
+                arg = linkedMapOf("destCityID" to 5),
+                term = 2,
+                seq = 0,
+            ),
+            year = 200, month = 3, date = "12:00",
         )
 
         val city = world.getCityById(5)!!

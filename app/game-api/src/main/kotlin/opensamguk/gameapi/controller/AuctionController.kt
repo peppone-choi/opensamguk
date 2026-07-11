@@ -8,13 +8,20 @@ import opensamguk.gameapi.dto.UniqueItemAuctionDetail
 import opensamguk.gameapi.dto.UniqueItemAuctionDetailResponse
 import opensamguk.gameapi.dto.UniqueItemAuctionItem
 import opensamguk.gameapi.dto.UniqueItemAuctionListResponse
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.LogFeedReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.entity.AuctionBidEntity
 import opensamguk.infra.entity.AuctionEntity
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.auction.AuctionInfoDetail
 import opensamguk.logic.auction.AuctionType
+import opensamguk.logic.auction.ObfuscatedNamePool
 import opensamguk.logic.util.jsonDecode
+import opensamguk.logic.util.jsonDecodeAny
+import opensamguk.common.rng.serializeSeed
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -34,14 +42,8 @@ import java.time.format.DateTimeFormatter
  *  - D2 `API/Auction/GetUniqueItemAuctionList.php`     — 유니크 아이템 목록
  *  - D3 `API/Auction/GetUniqueItemAuctionDetail.php`   — 유니크 아이템 상세
  *
- * 인증 divergence(EXECUTION_PLAN §read 규칙): game-api에 세션 필터 없음 → viewer generalID = 0.
- * 따라서 `generalID`/`isCallerHost`/`isCallerHighestBidder`는 0 대조(graceful, parityViolation 아님).
- *
- * BLOCKED(§W3_PLAN §2, 값 날조 금지):
- *  - `recentLogs`(PHP `getAuctionLogRecent(20)`, _auctionlog.txt) — 원천 미포팅 → 빈 배열.
- *  - `obfuscatedName`(PHP `genObfuscatedName($generalID)`) — 세션 generalID + game_env KV hiddenSeed
- *    모두 본 컨트롤러에 미주입 → null.
- *  - `remainPoint`(PHP InheritancePointManager previous) — viewer-specific + 세션 없음 → null.
+ * 인증 주체는 [GeneralResolver]로 소유 장수까지 확인한다. 익명 요청이나 장수가 없는 계정은
+ * 기존 익명 동작(0/null)을 유지하고, 인증된 장수 요청만 자기 입찰/주최자/가명/잔액을 노출한다.
  *
  * read-only — 절대 write 없음.
  */
@@ -50,10 +52,17 @@ import java.time.format.DateTimeFormatter
 class AuctionController(
     private val auctionRepository: AuctionRepository,
     private val auctionBidRepository: AuctionBidRepository,
+    private val resolver: GeneralResolver,
+    private val gameKv: GameKvReadRepository,
+    private val world: WorldStateReadRepository,
+    private val logFeeds: LogFeedReadRepository,
 ) {
 
-    /** 세션 미연동 — viewer generalID 항상 0. */
-    private val viewerGeneralId = 0
+    private data class ViewerContext(
+        val generalId: Int,
+        val obfuscatedName: String?,
+        val remainPoint: Int,
+    )
 
     /** PHP `TimeUtil::format($date, false)` 동치: 'yyyy-MM-dd HH:mm:ss'(Asia/Seoul). */
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -66,7 +75,8 @@ class AuctionController(
      * 두 타입을 합쳐 close_date ASC 정렬 후 type별로 분배.
      */
     @GetMapping
-    fun listActive(): ResponseEntity<AuctionResourceListResponse> {
+    fun listActive(@AuthenticationPrincipal userId: Long?): ResponseEntity<AuctionResourceListResponse> {
+        val viewer = resolveViewer(userId)
         val auctions = (
             auctionRepository.findByFinishedFalseAndTypeValue(AuctionType.BUY_RICE.value) +
                 auctionRepository.findByFinishedFalseAndTypeValue(AuctionType.SELL_RICE.value)
@@ -87,8 +97,8 @@ class AuctionController(
                 result = true,
                 buyRice = buyRice,
                 sellRice = sellRice,
-                recentLogs = emptyList(), // BLOCKED: 원천 테이블 미확정
-                generalID = viewerGeneralId, // BLOCKED: 세션 컨텍스트 없음
+                recentLogs = recentAuctionLogs(),
+                generalID = viewer?.generalId ?: 0,
             )
         )
     }
@@ -100,7 +110,8 @@ class AuctionController(
      * highestBid==null 경매는 skip(PHP continue).
      */
     @GetMapping("/unique")
-    fun listUniqueItems(): ResponseEntity<UniqueItemAuctionListResponse> {
+    fun listUniqueItems(@AuthenticationPrincipal userId: Long?): ResponseEntity<UniqueItemAuctionListResponse> {
+        val viewer = resolveViewer(userId)
         val auctions = auctionRepository.findByTypeValueOrderByCloseDateAsc(AuctionType.UNIQUE_ITEM.value)
         val highestBids = resolveHighestBids(auctions)
 
@@ -112,12 +123,12 @@ class AuctionController(
                 finished = auction.finished,
                 title = detail.title,
                 target = auction.target,
-                isCallerHost = auction.hostGeneralId == viewerGeneralId,
+                isCallerHost = auction.hostGeneralId == viewer?.generalId,
                 hostName = detail.hostName,
                 closeDate = formatInstant(auction.closeDate),
                 remainCloseDateExtensionCnt = detail.remainCloseDateExtensionCnt,
                 availableLatestBidCloseDate = formatIsoString(detail.availableLatestBidCloseDate),
-                highestBid = top.toUniqueBid(),
+                highestBid = top.toUniqueBid(viewer?.generalId ?: 0),
             )
         }
 
@@ -125,7 +136,7 @@ class AuctionController(
             UniqueItemAuctionListResponse(
                 result = true,
                 list = list,
-                obfuscatedName = null, // BLOCKED: 세션 generalID + game_env KV hiddenSeed 미주입
+                obfuscatedName = viewer?.obfuscatedName,
             )
         )
     }
@@ -137,7 +148,11 @@ class AuctionController(
      * 부재 시 PHP는 한글 문자열 '선택한 경매가 없습니다.'를 반환(launch가 string 반환 = 에러).
      */
     @GetMapping("/{id}/unique-detail")
-    fun uniqueDetail(@PathVariable id: Int): ResponseEntity<Any> {
+    fun uniqueDetail(
+        @PathVariable id: Int,
+        @AuthenticationPrincipal userId: Long?,
+    ): ResponseEntity<Any> {
+        val viewer = resolveViewer(userId)
         val auction = auctionRepository.findById(id).orElse(null)
         if (auction == null || auction.type != AuctionType.UNIQUE_ITEM) {
             // PHP: return '선택한 경매가 없습니다.'(GetUniqueItemAuctionDetail.php:55-57)
@@ -159,15 +174,15 @@ class AuctionController(
                     finished = auction.finished,
                     title = detail.title,
                     target = auction.target,
-                    isCallerHost = auction.hostGeneralId == viewerGeneralId,
+                    isCallerHost = auction.hostGeneralId == viewer?.generalId,
                     hostName = detail.hostName,
                     closeDate = formatInstant(auction.closeDate),
                     remainCloseDateExtensionCnt = detail.remainCloseDateExtensionCnt,
                     availableLatestBidCloseDate = formatIsoString(detail.availableLatestBidCloseDate),
                 ),
-                bidList = bids.map { it.toUniqueBid() },
-                obfuscatedName = null, // BLOCKED: 세션 generalID + game_env KV hiddenSeed 미주입
-                remainPoint = null,    // BLOCKED: viewer-specific(유산 포인트), 세션 없음
+                bidList = bids.map { it.toUniqueBid(viewer?.generalId ?: 0) },
+                obfuscatedName = viewer?.obfuscatedName,
+                remainPoint = viewer?.remainPoint,
             )
         )
     }
@@ -230,7 +245,7 @@ class AuctionController(
     }
 
     /** D2/D3 입찰: PHP `{generalName, amount, isCallerHighestBidder, date}` (raw generalId 제거). */
-    private fun AuctionBidEntity.toUniqueBid(): AuctionUniqueHighestBid {
+    private fun AuctionBidEntity.toUniqueBid(viewerGeneralId: Int): AuctionUniqueHighestBid {
         val auxMap = runCatching { jsonDecode(aux) }.getOrDefault(emptyMap())
         return AuctionUniqueHighestBid(
             generalName = auxMap["generalName"] as? String,
@@ -239,4 +254,37 @@ class AuctionController(
             date = formatInstant(date),
         )
     }
+
+    private fun resolveViewer(userId: Long?): ViewerContext? {
+        if (userId == null) return null
+        val resolved = resolver.resolve(userId) ?: return null
+        return ViewerContext(
+            generalId = resolved.general.id,
+            obfuscatedName = resolveObfuscatedName(resolved.general.id),
+            remainPoint = loadInheritancePoint(userId),
+        )
+    }
+
+    private fun loadInheritancePoint(userId: Long): Int {
+        val row = gameKv.findByTableAndNamespaceAndKey("inheritance", "inheritance_$userId", "previous")
+            ?: return 0
+        val values = runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*> ?: return 0
+        return (values.firstOrNull() as? Number)?.toInt() ?: 0
+    }
+
+    private fun resolveObfuscatedName(generalId: Int): String? {
+        val hiddenSeed = world.findById(1).orElse(null)?.let { state ->
+            state.meta["hiddenSeed"]?.toString() ?: state.config["hiddenSeed"]?.toString()
+        } ?: return null
+        val cached = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", ObfuscatedNamePool.KV_KEY)
+            ?.let { runCatching { jsonDecodeAny(it.value) }.getOrNull() as? List<*> }
+            ?.mapNotNull { it as? String }
+        val pool = cached ?: ObfuscatedNamePool.buildPool(serializeSeed(hiddenSeed, ObfuscatedNamePool.KV_KEY))
+        return if (pool.isEmpty()) null else ObfuscatedNamePool.decode(generalId, pool)
+    }
+
+    private fun recentAuctionLogs(): List<String> =
+        logFeeds.findRecentByScopeAndCategory("action", "auction", 20)
+            .asReversed()
+            .map { it.text }
 }

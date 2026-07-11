@@ -11,7 +11,9 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.actions.war.CheChulbyeong
 import opensamguk.logic.actions.founding.CheHaesan
+import opensamguk.logic.actions.personnel.CheInjaeTamsaek
 import opensamguk.logic.actions.personnel.RandomImgwanNpcCandidate
 import opensamguk.logic.actions.personnel.RandomImgwanWeightedCandidate
 import opensamguk.logic.ai.ChosenCommand
@@ -23,7 +25,14 @@ import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.tick.ServerClock
+import opensamguk.logic.util.valueFit
+import opensamguk.logic.war.ConquerAdmin
+import opensamguk.logic.war.ConquerCity
+import opensamguk.logic.war.ConquerCityInput
+import opensamguk.logic.war.ProcessWarResult
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.world.BuiltGeneral
+import opensamguk.logic.world.GeneralBuilder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
@@ -113,6 +122,7 @@ class ReservedTurnHandler(
      * Default `null` = no AI (the P1–P4 general/E2E call sites stay on the human reserved path).
      */
     private val aiHook: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
+    private val pipelineBuilder: EngineGeneralActionPipelineBuilder? = null,
     /**
      * The lone dirty source — exposed so the flush (F4)/tests/nation-pass read its patches. A
      * constructor param (default = fresh) so the live config can share ONE recorder with the ruler-
@@ -175,6 +185,7 @@ class ReservedTurnHandler(
             ?: error("ReservedTurnHandler: general $generalId not in world")
         val cityId = general.cityId
         val nationId = general.nationId
+        val runtimeRegistry = pipelineBuilder?.registryFor(general) ?: registry
 
         // --- the GENERAL-pass AI interpose (R-SEAM §2 :332-336) ---
         // For an AI-controlled general the hook replaces the reserved command BEFORE resolve; the AI is
@@ -201,7 +212,7 @@ class ReservedTurnHandler(
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear)
 
         val actionArgs = augmentGeneralActionArgs(actionCode, args, general, year)
-        val definition = resolveRuntimeDefinition(actionCode, general, year)
+        val definition = resolveRuntimeDefinition(runtimeRegistry, actionCode, general, year)
 
         // --- FULL-mode constraints over the live world (the SAME :logic constraint library) ---
         // dest-* 제약(ExistsDestNation/ExistsDestGeneral/Allow·DisallowDiplomacyBetweenStatus 등)은
@@ -233,7 +244,7 @@ class ReservedTurnHandler(
             if (reason != null) world.pushLog(denyLog(general, definition, reason, date))
             return HandledTurn(
                 generalId = generalId,
-                definition = registry.fallback,
+                definition = runtimeRegistry.fallback,
                 fellBack = true,
                 denyReason = reason,
                 logs = if (reason != null) listOf(reason) else emptyList(),
@@ -267,7 +278,11 @@ class ReservedTurnHandler(
         // the actor's and general/global logs can use the same actor name PHP's General object exposes.
         // HandledTurn.args keeps the ORIGINAL args (the parity oracle) — the founding preload never pollutes it.
         val isFounding = actionCode in FOUNDING_COMMANDS
-        val resolveArgs = if (isFounding) buildFoundingArgs(actionCode, actionArgs, general, year, month) else actionArgs
+        val resolveArgs = when {
+            isFounding -> buildFoundingArgs(actionCode, actionArgs, general, year, month)
+            actionCode == INJAE_TAMSAEK -> buildScoutArgs(actionArgs, year, month)
+            else -> actionArgs
+        }
         preloadDraftTargets(actionCode, draft, resolveArgs)
         val battleContext = if (actionCode == "che_출병") {
             val destCityId = intArg(actionArgs, "destCityID")
@@ -306,6 +321,13 @@ class ReservedTurnHandler(
         )
         definition.resolve(resolveCtx)
         backfillRandomImgwanDestNation(actionCode, draft, preGeneral)
+        if (definition is CheChulbyeong) {
+            drainWarBattleResult(definition.lastBattleResult, draft)
+        }
+        if (definition is CheInjaeTamsaek) {
+            drainScoutNpc(definition.lastBuiltNpc)
+            recordScoutInheritance(definition.lastBuiltNpc, general.userId, resolveArgs)
+        }
 
         // che_해산 exposes deleteNation(func.php:1713-1805) through its tombstone seam. Capture the
         // snapshot before applying the draft's general/city neutralization so ng_old_nations keeps the
@@ -390,6 +412,13 @@ class ReservedTurnHandler(
             recorder.diffCity(PerTurnOverlay.toLogicCity(pre), movedCity)
             world.applyCityDirtyFree(applyCityPatch(pre, movedCity))
         }
+        if (definition is CheChulbyeong) {
+            drainConquerCity(definition.lastBattleResult, general, year, month)
+        }
+        for (rankIncrement in draft.rankIncrements) {
+            val column = RankColumn.byColumn(rankIncrement.column) ?: continue
+            recorder.recordRankIncrease(rankIncrement.generalId, column, rankIncrement.value)
+        }
         // CREATED-set (거병 INSERTs). Ordering is LOAD-BEARING: nation FIRST (the FK target + the frozen
         // step-3 contract general→nation→troop→diplomacy), then diplomacy, then nation_turn. The world's
         // LinkedHashSet/list preserves the enqueue order through consumeDirtyState.
@@ -405,6 +434,18 @@ class ReservedTurnHandler(
         // (The per-target/PLAIN level-change side-bucket — resolveCtx.plainLogs()/dest logs — is a broader
         // general-pass log-routing parity item deferred to the WAVE 4 log/output pass.)
         for (line in resolveCtx.globalActionLogs()) world.pushLog(globalLog(general, line))
+        for (gid in resolveCtx.targetLogIds()) {
+            for (line in resolveCtx.logsTo(gid)) {
+                world.pushLog(
+                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
+                )
+            }
+            for (line in resolveCtx.plainLogsTo(gid)) {
+                world.pushLog(
+                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
+                )
+            }
+        }
 
         // --- buffered Messages → mailbox channel (receiver row BEFORE sender row) ---
         for (message in resolveCtx.messages()) routeMessage(message, year, month)
@@ -421,6 +462,112 @@ class ReservedTurnHandler(
         )
     }
 
+    private fun drainWarBattleResult(result: ProcessWarResult?, draft: GeneralActionDraft) {
+        if (result == null) return
+        draft.general = result.attacker.state.snapshot()
+
+        if (result.attackerCityDeadDelta != 0) {
+            draft.city = draft.city.copy(dead = draft.city.dead + result.attackerCityDeadDelta)
+        }
+
+        val defenderCityPost = result.city.state.snapshot().copy(
+            dead = result.city.state.snapshot().dead + result.defenderCityDeadDelta,
+        )
+        if (defenderCityPost.id == draft.city.id) {
+            draft.city = defenderCityPost
+        } else {
+            draft.destCity = defenderCityPost
+        }
+
+        for (defender in result.defenders) {
+            val post = defender.state.snapshot()
+            if (post != defender.getGeneral()) {
+                draft.cascadeGenerals.add(post)
+            }
+        }
+
+        val defenderNationId = result.city.state.city.nationId
+        val rice = result.defenderNationRice
+        if (defenderNationId > 0 && rice != null) {
+            val pre = world.getNationById(defenderNationId)?.let { PerTurnOverlay.toLogicNation(it) }
+            if (pre != null) {
+                draft.destNation = pre.copy(rice = rice)
+            }
+        }
+    }
+
+    private fun drainConquerCity(result: ProcessWarResult?, attacker: TurnGeneral, year: Int, month: Int) {
+        if (result?.conquerCity != true) return
+        val cityId = result.city.state.city.id
+        val defenderCity = world.getCityById(cityId) ?: return
+        val defenderNationId = defenderCity.nationId
+        val defenderNation = if (defenderNationId > 0) world.getNationById(defenderNationId) else null
+        val postBattleGenerals = result.defenders.associate { it.getGeneral().id to it.state.snapshot() } +
+            mapOf(result.attacker.getGeneral().id to result.attacker.state.snapshot())
+        val logicGenerals = world.listGenerals().map { g ->
+            postBattleGenerals[g.id] ?: PerTurnOverlay.toLogicGeneral(g)
+        }
+        val defenderCityGenerals = logicGenerals
+            .filter { it.nationId == defenderNationId && it.cityId == cityId }
+            .sortedBy { it.id }
+        val defenderNationGenerals = logicGenerals
+            .filter { it.nationId == defenderNationId }
+            .sortedBy { it.id }
+        val logicCities = world.listCities().map { PerTurnOverlay.toLogicCity(it) }
+        val logicNations = world.listNations().associate { it.id to PerTurnOverlay.toLogicNation(it) }
+        val attackerNation = logicNations[attacker.nationId]
+        val conquer = ConquerCity.resolve(
+            ConquerCityInput(
+                admin = ConquerAdmin(hiddenSeed = hiddenSeed, year = year, month = month, joinMode = ""),
+                attacker = PerTurnOverlay.toLogicGeneral(world.getGeneralById(attacker.id) ?: attacker),
+                defenderCity = PerTurnOverlay.toLogicCity(defenderCity),
+                defenderNation = defenderNation?.let { PerTurnOverlay.toLogicNation(it) },
+                attackerNation = attackerNation,
+                defenderCityGenerals = defenderCityGenerals,
+                defenderNationCityCount = world.listCities().count { it.nationId == defenderNationId },
+                defenderNationGenerals = defenderNationGenerals,
+                allCitiesForBfs = logicCities,
+                diplomacyForFront = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) },
+                attackerNationName = world.getNationById(attacker.nationId)?.name ?: "",
+                defenderNationName = defenderNation?.name ?: "",
+                cityName = defenderCity.name,
+                nationNames = world.listNations().associate { it.id to it.name },
+            ),
+        )
+
+        conquer.deletedNationId?.let { recorder.markNationDeleted(world, it) }
+        for (delta in conquer.generalDeltas) applyWarGeneralDelta(delta.post)
+        for (delta in conquer.nationDeltas) applyWarNationDelta(delta.post)
+        for (delta in conquer.cityDeltas) applyWarCityDelta(delta.post)
+        for (front in conquer.frontResults) {
+            for ((frontCityId, frontState) in front.fronts) {
+                val pre = world.getCityById(frontCityId) ?: continue
+                applyWarCityDelta(PerTurnOverlay.toLogicCity(pre).copy(frontState = frontState))
+            }
+        }
+        for (line in conquer.conquerLogs) {
+            world.pushLog(actionLog(attacker, line))
+        }
+    }
+
+    private fun applyWarGeneralDelta(post: LogicGeneral) {
+        val pre = world.getGeneralById(post.id) ?: return
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), post)
+        world.applyGeneralDirtyFree(applyGeneralPatch(pre, post))
+    }
+
+    private fun applyWarCityDelta(post: LogicCity) {
+        val pre = world.getCityById(post.id) ?: return
+        recorder.diffCity(PerTurnOverlay.toLogicCity(pre), post)
+        world.applyCityDirtyFree(applyCityPatch(pre, post))
+    }
+
+    private fun applyWarNationDelta(post: LogicNation) {
+        val pre = world.getNationById(post.id) ?: return
+        recorder.diffNation(PerTurnOverlay.toLogicNation(pre), post)
+        world.applyNationDirtyFree(applyNationPatch(pre, post))
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // B4 — the post-command lifecycle tail (TurnExecutionHelper.php:47-230, General.php:515-639).
     //
@@ -430,6 +577,11 @@ class ReservedTurnHandler(
     // convention `UpdateNationLevel` reads `meta["killturn"]`. These methods mutate the world's
     // stored row in place; the per-general drain owns the flush seam.
     // ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    private fun applyLifecycleGeneral(pre: TurnGeneral, post: TurnGeneral) {
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), PerTurnOverlay.toLogicGeneral(post))
+        world.applyGeneralDirtyFree(post)
+    }
 
     /**
      * killturn decrement / reset after a command runs (`processCommand`, `TurnExecutionHelper.php:153-165`).
@@ -453,7 +605,7 @@ class ReservedTurnHandler(
         } else {
             env.baselineKillturn // setVar('killturn', $killTurn).
         }
-        world.applyGeneralDirtyFree(general.copy(meta = withMeta(general.meta, "killturn" to next)))
+        applyLifecycleGeneral(general, general.copy(meta = withMeta(general.meta, "killturn" to next)))
     }
 
     /**
@@ -474,7 +626,7 @@ class ReservedTurnHandler(
         }
         val killturn = metaInt(general, "killturn", 0)
         val next = maxOf(0, killturn - 1) // increaseVarWithLimit('killturn', -1, 0) — floored at 0.
-        world.applyGeneralDirtyFree(general.copy(meta = withMeta(general.meta, "killturn" to next)))
+        applyLifecycleGeneral(general, general.copy(meta = withMeta(general.meta, "killturn" to next)))
         world.pushLog(actionLog(general, message))
         return true
     }
@@ -491,11 +643,15 @@ class ReservedTurnHandler(
         val general = world.getGeneralById(generalId)
             ?: error("ReservedTurnHandler.updateTurnTime: general $generalId not in world")
 
+        world.getAccessLog(generalId)?.let {
+            recorder.recordAccessLogUpsert(world, it.copy(refreshScore = 0))
+        }
+
         // +1 lived_month inheritance (`:278` increaseInheritancePoint(lived_month, 1) is in the drain;
         // the inheritance accumulator rides meta in the slice).
         val livedMonth = metaInt(general, "lived_month", 0) + 1
         var current = general.copy(meta = withMeta(general.meta, "lived_month" to livedMonth))
-        world.applyGeneralDirtyFree(current)
+        applyLifecycleGeneral(general, current)
 
         // 삭턴장수 삭제처리 — killturn<=0 (LC2: kill() / possession-release).
         val killturn = metaInt(current, "killturn", 0)
@@ -506,19 +662,19 @@ class ReservedTurnHandler(
             current = world.getGeneralById(generalId)!!
         }
 
-        // 은퇴 — age>=retirementYear, human only (LC3: rebirth()). `General.php:209-216` gates the
-        // applyDB+CheckHall on isunited==0; here the rebirth itself is gated on isunited==0 (B4 test
-        // contract: rebirth must NOT fire on a unified server — and the daemon already freezes the
-        // whole tick at isunited 2|3 upstream, so this only diverges for the transient isunited==1).
+        // 은퇴 — age>=retirementYear, human only (LC3: rebirth()). PHP `TurnExecutionHelper.php:209-216`
+        // gates only the pre-rebirth applyDB+CheckHall call on isunited==0; rebirth itself runs in both
+        // state 0 and the transient state 1. The daemon freezes state 2|3 before this drain.
         var rebirthed = false
-        if (current.age >= GameConst.retirementYear && current.npcState == 0 && env.isunited == 0) {
+        if (current.age >= GameConst.retirementYear && current.npcState == 0) {
             rebirth(current, env)
             rebirthed = true
             current = world.getGeneralById(generalId)!!
         }
 
         // advance turntime by addTurn (the nextTurnTimeBase aux variant is out of the slice scope).
-        world.applyGeneralDirtyFree(
+        applyLifecycleGeneral(
+            current,
             current.copy(turnTime = ServerClock.addTurn(current.turnTime, env.turnTerm, 1)),
         )
         return when {
@@ -532,7 +688,7 @@ class ReservedTurnHandler(
      * killturn<=0 branch of [updateTurnTime] (`TurnExecutionHelper.php:185-206`).
      *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
      *    log FIRST, then `killturn=(deadyear-year)*12, npc=npc_org, owner=0, defence_train=80,
-     *    owner_name=null`, then DELETE general_access_log ONLY (no-op in the V1 slice — no table).
+     *    owner_name=null`, then DELETE general_access_log ONLY.
      *  - else → [kill] (the F3 tombstone + 4-table delete).
      */
     internal fun killOrReleasePossession(general: TurnGeneral, env: LifecycleEnv): LifecycleOutcome {
@@ -555,8 +711,8 @@ class ReservedTurnHandler(
                     "owner_name" to null,
                 ),
             )
-            world.applyGeneralDirtyFree(released)
-            // (3) DELETE general_access_log — NOT ported to the V1 baseline schema (no table): no-op.
+            applyLifecycleGeneral(general, released)
+            recorder.recordAccessLogDelete(world, general.id)
             return LifecycleOutcome.POSSESSION_RELEASED
         }
         kill(general, env)
@@ -577,13 +733,13 @@ class ReservedTurnHandler(
         // 군주였으면 유지 이음 — officer_level==12 → nextRuler() then setVar('officer_level', 1) (:554-558).
         if (general.officerLevel == 12) {
             nextRuler(generalId, env)
-            world.getGeneralById(generalId)?.let { world.applyGeneralDirtyFree(it.copy(officerLevel = 1)) }
+            world.getGeneralById(generalId)?.let { applyLifecycleGeneral(it, it.copy(officerLevel = 1)) }
         }
 
         // 부대 처리 — troop leader (troop == own id) → free all members + delete the troop (:560-570).
         if (general.troopId == generalId) {
             for (member in world.listGenerals().filter { it.troopId == generalId }) {
-                world.applyGeneralDirtyFree(member.copy(troopId = 0))
+                applyLifecycleGeneral(member, member.copy(troopId = 0))
             }
             world.removeTroop(generalId)
         }
@@ -615,6 +771,8 @@ class ReservedTurnHandler(
             leadership = maxOf(10, phpRound(general.stats.leadership * 0.85)),
             strength = maxOf(10, phpRound(general.stats.strength * 0.85)),
             intelligence = maxOf(10, phpRound(general.stats.intelligence * 0.85)),
+            politics = general.stats.politics,
+            charm = general.stats.charm,
         )
         val nextMeta = LinkedHashMap(general.meta)
         nextMeta["specage"] = 0
@@ -633,7 +791,7 @@ class ReservedTurnHandler(
             age = 20,
             meta = nextMeta,
         )
-        world.applyGeneralDirtyFree(reborn)
+        applyLifecycleGeneral(general, reborn)
 
         // ALL 37 rank_data rows reset to 0 (setRankVar — a Set displaces any pending delta).
         for (col in RankColumn.entries) recorder.recordRankSet(general.id, col, 0)
@@ -664,6 +822,7 @@ class ReservedTurnHandler(
     }
 
     private fun resolveRuntimeDefinition(
+        registry: CommandRegistry,
         actionCode: String,
         general: TurnGeneral,
         year: Int,
@@ -832,6 +991,140 @@ class ReservedTurnHandler(
         else -> args
     }
 
+    private fun buildScoutArgs(args: Map<String, Any?>, year: Int, month: Int): Map<String, Any?> {
+        val generals = world.listGenerals()
+        val dexSource = generals.filter { it.npcState < 4 }
+        val avgDexTotal = if (dexSource.isEmpty()) {
+            0.0
+        } else {
+            dexSource.sumOf { metaInt(it.meta, "dex1") + metaInt(it.meta, "dex2") + metaInt(it.meta, "dex3") + metaInt(it.meta, "dex4") }
+                .toDouble() / dexSource.size
+        }
+        val avgDex5 = if (dexSource.isEmpty()) {
+            0
+        } else {
+            (dexSource.sumOf { metaInt(it.meta, "dex5") }.toDouble() / dexSource.size).toInt()
+        }
+        val state = world.getState()
+        val maxGeneral = (state.meta["maxgeneral"] as? Number)?.toInt() ?: GameConst.defaultMaxGeneral
+        val develCost = (state.meta["develcost"] as? Number)?.toInt()
+            ?: (WorldEnvBuilder.envMap(year, startYear)["develCost"] as Int)
+        val turnterm = (state.meta["turnterm"] as? Number)?.toInt() ?: turnTerm
+        return LinkedHashMap(args).apply {
+            put("maxGenCnt", maxGeneral)
+            put("totalGenCnt", generals.count { it.npcState <= 2 })
+            put("totalNpcCnt", generals.count { it.npcState in 3..4 })
+            put("avgGenDexTotal", avgDexTotal)
+            put("avgGenDex5", avgDex5)
+            put("year", year)
+            put("startYear", startYear)
+            put("month", month)
+            put("develCost", develCost)
+            put("turnterm", turnterm)
+            put("cityPool", world.listCities().sortedBy { it.id }.map { linkedMapOf("id" to it.id, "nationId" to it.nationId) })
+        }
+    }
+
+    private fun drainScoutNpc(builtNpc: CheInjaeTamsaek.BuiltScoutNpc?) {
+        val built = builtNpc?.built ?: return
+        recorder.recordGeneralCreate(world, built.toTurnGeneral(world.allocateGeneralId()))
+    }
+
+    private fun recordScoutInheritance(
+        builtNpc: CheInjaeTamsaek.BuiltScoutNpc?,
+        ownerId: String?,
+        args: Map<String, Any?>,
+    ) {
+        if (builtNpc == null) return
+        val owner = ownerId?.toIntOrNull() ?: return
+        val maxGenCnt = (args["maxGenCnt"] as? Number)?.toInt() ?: return
+        val totalGenCnt = (args["totalGenCnt"] as? Number)?.toInt() ?: return
+        val totalNpcCnt = (args["totalNpcCnt"] as? Number)?.toInt() ?: return
+        val foundProp = calcScoutFoundProp(maxGenCnt, totalGenCnt, totalNpcCnt)
+        recorder.recordInheritancePointIncrease(
+            ownerID = owner,
+            key = "active_action",
+            value = valueFit(sqrt(1.0 / foundProp), 1.0),
+            aux = null,
+        )
+    }
+
+    private fun calcScoutFoundProp(maxGenCnt: Int, totalGenCnt: Int, totalNpcCnt: Int): Double {
+        val current = (totalGenCnt + totalNpcCnt / 2.0).toInt()
+        val remain = maxOf(0, maxGenCnt - current)
+        val main = (remain.toDouble() / maxGenCnt).let { it * it * it * it * it * it }
+        val small = 1.0 / (totalNpcCnt / 3.0 + 1.0)
+        val big = 1.0 / maxGenCnt
+        return if (totalNpcCnt < 50) maxOf(main, small) else maxOf(main, big)
+    }
+
+    private fun BuiltGeneral.toTurnGeneral(id: Int): TurnGeneral {
+        val state = world.getState()
+        val turntime = state.lastTurnTime
+            .plusSeconds(turntimeSecond.toLong())
+            .plusNanos(turntimeFraction.toLong() * 1000L)
+        return TurnGeneral(
+            id = id,
+            name = name,
+            nationId = nation,
+            cityId = cityId,
+            troopId = 0,
+            stats = GeneralStats(
+                leadership = leadership,
+                strength = strength,
+                intelligence = intel,
+                politics = 50,
+                charm = 50,
+            ),
+            experience = experience,
+            dedication = dedication,
+            officerLevel = officerLevel,
+            role = GeneralRole(
+                personality = ego,
+                specialDomestic = specialDomestic,
+                specialWar = specialWar,
+            ),
+            gold = gold,
+            rice = rice,
+            crew = 0,
+            crewTypeId = crewType,
+            train = 0,
+            atmos = 0,
+            age = age,
+            npcState = npc,
+            turnTime = turntime,
+            meta = linkedMapOf(
+                "owner" to 0,
+                "npc_org" to npc,
+                "affinity" to affinity,
+                "born_year" to birth,
+                "dead_year" to death,
+                "picture" to "default.jpg",
+                "image_server" to 0,
+                "start_age" to 20,
+                "specage" to specAge,
+                "specage2" to specAge2,
+                "dex1" to dex1,
+                "dex2" to dex2,
+                "dex3" to dex3,
+                "dex4" to dex4,
+                "dex5" to dex5,
+                "officer_city" to 0,
+                "permission" to "normal",
+                "killturn" to killturn,
+                "block" to 0,
+                "belong" to 0,
+                "betray" to 0,
+                "defence_train" to 80,
+                "tnmt" to 1,
+                "myset" to 6,
+                "tournament" to 0,
+                "newvote" to 0,
+                "penalty" to emptyMap<String, Any?>(),
+            ),
+        )
+    }
+
     /**
      * Route a logic [opensamguk.logic.message.Message] through the mailbox channel: produce its send
      * rows (receiver BEFORE sender) and record each INSERT with the pre-assigned in-memory id folded
@@ -906,6 +1199,7 @@ class ReservedTurnHandler(
         const val IMGWAN = "che_임관"
         const val JANGSU_DAESANG_IMGWAN = "che_장수대상임관"
         const val RANDOM_IMGWAN = "che_랜덤임관"
+        const val INJAE_TAMSAEK = "che_인재탐색"
 
         val JOIN_COMMANDS_WITH_DEST_NATION = setOf(IMGWAN, JANGSU_DAESANG_IMGWAN)
 
@@ -993,6 +1287,7 @@ class ReservedTurnHandler(
          */
         private fun applyGeneralPatch(engine: TurnGeneral, post: LogicGeneral): TurnGeneral =
             engine.copy(
+                userId = post.userId,
                 gold = post.gold,
                 rice = post.rice,
                 injury = post.injury,
@@ -1000,8 +1295,30 @@ class ReservedTurnHandler(
                 cityId = post.cityId,
                 nationId = post.nationId,
                 troopId = post.troop,
+                stats = GeneralStats(
+                    leadership = post.leadership,
+                    strength = post.strength,
+                    intelligence = post.intel,
+                    politics = post.politics,
+                    charm = post.charm,
+                ),
                 experience = phpRound(post.experience),
                 dedication = phpRound(post.dedication),
+                crew = post.crew,
+                crewTypeId = post.crewTypeId,
+                train = phpRound(post.train),
+                atmos = phpRound(post.atmos),
+                npcState = post.npcType,
+                age = post.age ?: engine.age,
+                turnTime = post.turnTime ?: engine.turnTime,
+                role = engine.role.copy(
+                    items = GeneralItems(
+                        horse = post.horse,
+                        weapon = post.weapon,
+                        book = post.book,
+                        item = post.item,
+                    ),
+                ),
                 meta = post.meta,
             )
 
@@ -1045,6 +1362,7 @@ class ReservedTurnHandler(
                 agricultureMax = post.agricultureMax,
                 population = post.population,
                 populationMax = post.populationMax,
+                dead = post.dead,
                 security = post.security,
                 securityMax = post.securityMax,
                 defence = post.defense,

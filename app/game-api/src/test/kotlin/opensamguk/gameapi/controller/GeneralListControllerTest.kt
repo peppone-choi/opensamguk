@@ -3,6 +3,8 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.read.GeneralAccessLogReadEntity
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadEntity
@@ -45,11 +47,12 @@ class GeneralListControllerTest {
     private val rankData = mock(RankDataReadRepository::class.java)
     private val troops = mock(TroopReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
+    private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
         MockMvcBuilders.standaloneSetup(
-            GeneralListController(resolver, generals, nations, generalTurns, rankData, troops, world),
+            GeneralListController(resolver, generals, nations, generalTurns, rankData, troops, world, accessLogs),
         ).setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver()).build()
 
     private fun principal(userId: Long): RequestPostProcessor = RequestPostProcessor { req ->
@@ -88,6 +91,7 @@ class GeneralListControllerTest {
         `when`(troops.findByNationOrderByTroopLeaderAsc(1)).thenReturn(emptyList())
         `when`(rankData.findByGeneralIdsAndTypes(anyCollection(), anyCollection())).thenReturn(emptyList())
         `when`(generalTurns.findReservedByGeneralIds(anyCollection())).thenReturn(emptyList())
+        `when`(accessLogs.findByGeneralIdIn(anyCollection())).thenReturn(emptyList())
     }
 
     @Test
@@ -101,6 +105,9 @@ class GeneralListControllerTest {
                 gen(11, "하후돈", nationId = 1, officerLevel = 4, turnTime = early, special = "급습"),
                 gen(10, "조조", nationId = 1, officerLevel = 5, turnTime = late),
             ),
+        )
+        `when`(accessLogs.findByGeneralIdIn(anyCollection())).thenReturn(
+            listOf(GeneralAccessLogReadEntity(id = 1, generalId = 11, refreshScore = 4, refreshScoreTotal = 120)),
         )
 
         mockMvc().perform(get("/api/nation/general-list").with(principal(7L)))
@@ -117,9 +124,9 @@ class GeneralListControllerTest {
             // P1 컬럼이 column에 존재
             .andExpect(jsonPath("$.column[?(@ == 'warnum')]").exists())
             .andExpect(jsonPath("$.column[?(@ == 'reservedCommand')]").exists())
-            // BLOCKED 컬럼은 없음
             .andExpect(jsonPath("$.column[?(@ == 'dex1')]").doesNotExist())
-            .andExpect(jsonPath("$.column[?(@ == 'refresh_score')]").doesNotExist())
+            .andExpect(jsonPath("$.column[?(@ == 'refreshScoreTotal')]").exists())
+            .andExpect(jsonPath("$.column[?(@ == 'refreshScore')]").exists())
     }
 
     @Test
@@ -152,6 +159,7 @@ class GeneralListControllerTest {
         `when`(troops.findByNationOrderByTroopLeaderAsc(1)).thenReturn(emptyList())
         `when`(rankData.findByGeneralIdsAndTypes(anyCollection(), anyCollection())).thenReturn(emptyList())
         `when`(generalTurns.findReservedByGeneralIds(anyCollection())).thenReturn(emptyList())
+        `when`(accessLogs.findByGeneralIdIn(anyCollection())).thenReturn(emptyList())
         `when`(generals.findByNationIdOrderByTurnTimeAsc(1)).thenReturn(listOf(gen(20, "병졸", nationId = 1, officerLevel = 1)))
 
         mockMvc().perform(get("/api/nation/general-list").with(principal(7L)))

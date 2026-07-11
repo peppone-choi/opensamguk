@@ -26,6 +26,7 @@ import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
 import opensamguk.gameapi.read.LogFeedReadRepository
 import opensamguk.gameapi.read.NationEnvReadRepository
@@ -109,6 +110,7 @@ class FrontInfoController(
     @Value("\${SERVER_NAME:}") private val serverNameProperty: String = "",
     @Value("\${SERVER_GENERATION:}") private val serverGenerationProperty: String = "",
     @Value("\${SERVER_ID:}") private val serverIdProperty: String = "",
+    private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
     private val recentRecordRowLimit = 15
     private val recentRecordFetchLimit = recentRecordRowLimit + 1
@@ -244,7 +246,7 @@ class FrontInfoController(
 
     /**
      * W3 — PHP `generateGeneralInfo`의 enrich 포팅. 실 컬럼/meta 파생값 + F2 rank_data 전투통계.
-     * BLOCKED 필드(dex/refresh/defence_train/autorun/reservedCommand)는 DTO 기본값(null)을 그대로 둔다.
+     * BLOCKED 필드(dex/defence_train/autorun/reservedCommand)는 DTO 기본값(null)을 그대로 둔다.
      */
     private fun buildGeneral(
         g: GeneralReadEntity,
@@ -261,6 +263,7 @@ class FrontInfoController(
         val dedLevel = getDedLevel(g.dedication.toDouble())
         val nationLevel = nation?.level ?: 0
         val statBonuses = displayStatBonuses(g, nation, relativeYear)
+        val accessLog = accessLogs?.findByGeneralId(g.id)
 
         return FrontGeneralInfo(
             hasGeneral = true,
@@ -344,11 +347,12 @@ class FrontInfoController(
             killcrew = rankByType["killcrew"] ?: 0,
             deathcrew = rankByType["deathcrew"] ?: 0,
             firenum = rankByType["firenum"] ?: 0,
+            refreshScore = accessLog?.refreshScore ?: 0,
+            refreshScoreTotal = accessLog?.refreshScoreTotal ?: 0,
 
             // W0-2(P1-005) — 부대 정보 합성(PHP GetFrontInfo.php:446-487 가드 체인 충실).
             troopInfo = buildTroopInfo(g),
 
-            // BLOCKED(dex1-5/refreshScore*/defenceTrain/autorunLimit/reservedCommand)는 DTO 기본 null 유지.
         )
     }
 

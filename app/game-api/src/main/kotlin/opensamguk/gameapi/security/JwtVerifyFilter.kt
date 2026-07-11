@@ -3,6 +3,7 @@ package opensamguk.gameapi.security
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import opensamguk.common.auth.GatewayProfileClaims
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
@@ -33,17 +34,16 @@ class JwtVerifyFilter(
         filterChain: FilterChain,
     ) {
         val token = resolveToken(request)
-        if (token != null && SecurityContextHolder.getContext().authentication == null && verifier.isValid(token)) {
-            val userId = verifier.getUserId(token)
-            if (userId != null) {
-                val auth = UsernamePasswordAuthenticationToken(
-                    userId, // principal = verified userId (Long)
-                    null,
-                    listOf(SimpleGrantedAuthority("ROLE_USER")),
-                )
-                auth.details = WebAuthenticationDetailsSource().buildDetails(request)
-                SecurityContextHolder.getContext().authentication = auth
-            }
+        val profile = token?.let(verifier::verifyAccessToken)
+        if (profile != null && SecurityContextHolder.getContext().authentication == null) {
+            request.setAttribute(PROFILE_ATTRIBUTE, profile)
+            val auth = UsernamePasswordAuthenticationToken(
+                profile.userId,
+                null,
+                listOf(SimpleGrantedAuthority("ROLE_${profile.role}")),
+            )
+            auth.details = WebAuthenticationDetailsSource().buildDetails(request)
+            SecurityContextHolder.getContext().authentication = auth
         }
         filterChain.doFilter(request, response)
     }
@@ -51,5 +51,12 @@ class JwtVerifyFilter(
     private fun resolveToken(request: HttpServletRequest): String? {
         val bearer = request.getHeader("Authorization") ?: return null
         return if (bearer.startsWith("Bearer ")) bearer.substring(7) else null
+    }
+
+    companion object {
+        const val PROFILE_ATTRIBUTE = "opensamguk.gateway.profile"
+
+        fun profile(request: HttpServletRequest): GatewayProfileClaims? =
+            request.getAttribute(PROFILE_ATTRIBUTE) as? GatewayProfileClaims
     }
 }

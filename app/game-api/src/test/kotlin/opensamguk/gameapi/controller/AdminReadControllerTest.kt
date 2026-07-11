@@ -148,6 +148,10 @@ class AdminReadControllerTest {
             .andExpect(jsonPath("$.generals[0].killturn").value(24))
             .andExpect(jsonPath("$.generals[0].command0").value("하야"))
             .andExpect(jsonPath("$.selectedActions[0].label").value("블럭 해제"))
+            .andExpect(jsonPath("$.bulkActions[0].code").value("allowAccessAll"))
+            .andExpect(jsonPath("$.bulkActions[0].enabled").value(true))
+            .andExpect(jsonPath("$.selectedActions[11].code").value("allowAccess"))
+            .andExpect(jsonPath("$.selectedActions[12].code").value("denyAccess"))
     }
 
     @Test

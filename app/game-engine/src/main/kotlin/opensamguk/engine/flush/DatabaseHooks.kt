@@ -22,6 +22,7 @@ import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.GeneralCreateRow
+import opensamguk.infra.persistence.GeneralAccessLogWriteRow
 import opensamguk.infra.persistence.InheritanceLogRow
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.KvWrite
@@ -94,8 +95,6 @@ object DatabaseHooks {
         // 4. deleteMany troop.
         recorder.record("troop", FlushOp.Verb.DELETE_MANY, dirty.deletedTroops.size)
 
-        // 5. kill()'s ported delete: general, general_turn, then rank_data (`General.php:92-95`;
-        //    general_access_log is not ported to the V1 schema). All guarded on deletedGenerals > 0.
         if (dirty.deletedGenerals.isNotEmpty()) {
             recorder.record("general", FlushOp.Verb.DELETE_MANY, dirty.deletedGenerals.size)
             recorder.record("general_turn", FlushOp.Verb.DELETE_MANY, dirty.deletedGenerals.size)
@@ -208,6 +207,9 @@ object DatabaseHooks {
                 "current_year" to state.currentYear,
                 "current_month" to state.currentMonth,
                 "current_phase" to state.currentPhase,
+                "status" to state.status,
+                "tick_seconds" to state.tickSeconds,
+                "config" to state.config,
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
@@ -318,6 +320,8 @@ object DatabaseHooks {
                 "leadership" to g.stats.leadership,
                 "strength" to g.stats.strength,
                 "intel" to g.stats.intelligence,
+                "politics" to g.stats.politics,
+                "charm" to g.stats.charm,
                 "injury" to g.injury,
                 "experience" to g.experience,
                 "dedication" to g.dedication,
@@ -396,6 +400,9 @@ object DatabaseHooks {
                 "current_year" to state.currentYear,
                 "current_month" to state.currentMonth,
                 "current_phase" to state.currentPhase,
+                "status" to state.status,
+                "tick_seconds" to state.tickSeconds,
+                "config" to state.config,
                 // 매 틱 lastTurnTime 영속화 — 부재 시 재기동마다 start_time 폴백으로 월드 시작부터
                 // 전 월 재생(이중 적용) 사고가 난다. WorldSnapshotLoader meta['lastTurnTime'] 의 쓰기 짝.
                 "last_turn_time" to state.lastTurnTime.toString(),
@@ -413,6 +420,18 @@ object DatabaseHooks {
             // (생성은 world-lifecycle 효과 — recorder 채널이 아니라 world DirtyState가 dirty 소스다. 생성된
             // 장수 id는 위 updatedGenerals 산출에서 createdGeneralIds로 이미 step-7 UPDATE에서 제외됐다.)
             createdGenerals = dirty.createdGenerals.map { toGeneralCreateRow(it) },
+            generalAccessLogUpserts = recorder.accessLogUpserts().map {
+                GeneralAccessLogWriteRow(
+                    generalId = it.generalId,
+                    userId = it.userId,
+                    lastRefresh = it.lastRefresh,
+                    refresh = it.refresh,
+                    refreshTotal = it.refreshTotal,
+                    refreshScore = it.refreshScore,
+                    refreshScoreTotal = it.refreshScoreTotal,
+                )
+            },
+            generalAccessLogDeletes = (recorder.accessLogDeletes() + dirty.deletedGenerals).toList(),
             createdNations = createdNations,
             createdNationTurns = dirty.nationTurnDirty,
             createdDiplomacy = createdDiplomacy,
@@ -471,6 +490,9 @@ object DatabaseHooks {
             statisticInserts = recorder.statisticInserts().map { StatisticInsertRow(it.columns) },
             // W0-8 연감 채널 — LogHistory 월별 스냅샷(P0-20)의 yearbook_history UPSERT (기록은 W1-I).
             yearbookInserts = recorder.yearbookInserts().map { YearbookInsertRow(it.columns) },
+            selectPoolMutations = recorder.selectPoolMutations(),
+            eventInserts = recorder.eventInserts(),
+            eventDeletes = recorder.eventDeletes(),
         )
     }
 

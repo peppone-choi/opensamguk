@@ -5,8 +5,15 @@ import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralAccessLogReadEntity
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
+import opensamguk.gameapi.read.HallReadEntity
+import opensamguk.gameapi.read.HallReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.StatisticReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -15,6 +22,8 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.time.Instant
+import java.util.Optional
 
 /**
  * F3 slice test for [RankingController] — MockMvc standalone over a real [RankReadService] backed by
@@ -28,9 +37,25 @@ class RankingControllerTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
+    private val hall = mock(HallReadRepository::class.java)
+    private val worldStates = mock(WorldStateReadRepository::class.java)
+    private val statistics = mock(StatisticReadRepository::class.java)
+    private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(RankingController(RankReadService(generals, nations, cities))).build()
+        MockMvcBuilders.standaloneSetup(
+            RankingController(
+                RankReadService(
+                    generals,
+                    nations,
+                    cities,
+                    hall,
+                    worldStates,
+                    statistics,
+                    accessLogs = accessLogs,
+                ),
+            ),
+        ).build()
 
     private fun gen(
         id: Int,
@@ -307,34 +332,127 @@ class RankingControllerTest {
             .andExpect(jsonPath("$[1].specialWarName").value("-"))
     }
 
-    // ── 2.5 hall-of-fame (empty default) ─────────────────────────────────────────────────────────────
     @Test
-    fun `hall-of-fame returns empty array (F3 default, no fabrication)`() {
+    fun `hall-of-fame reads persisted hall rows`() {
+        `when`(hall.findAllByOrderByTypeAscValueDescIdAsc()).thenReturn(
+            listOf(
+                HallReadEntity(
+                    id = 10,
+                    season = 3,
+                    generalNo = 7,
+                    type = "experience",
+                    value = 1200.0,
+                    aux = linkedMapOf(
+                        "name" to "관우",
+                        "nationName" to "촉",
+                        "bgColor" to "#2e7d32",
+                        "unitedTime" to "2026-01-02T00:00:00Z",
+                    ),
+                ),
+            ),
+        )
+
         mockMvc().perform(get("/api/rankings/hall-of-fame"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(0))
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].id").value(10))
+            .andExpect(jsonPath("$[0].category").value("명 성"))
+            .andExpect(jsonPath("$[0].name").value("관우"))
+            .andExpect(jsonPath("$[0].nation").value("촉"))
+            .andExpect(jsonPath("$[0].nationColor").value("#2e7d32"))
+            .andExpect(jsonPath("$[0].value").value(1200.0))
+            .andExpect(jsonPath("$[0].valueLabel").value("1,200"))
+            .andExpect(jsonPath("$[0].achievedAt").value("2026-01-02T00:00:00Z"))
+            .andExpect(jsonPath("$[0].turn").value(3))
     }
 
-    // ── 2.6 traffic (zero-fill) ──────────────────────────────────────────────────────────────────────
     @Test
-    fun `traffic returns zeroed summary with empty history`() {
+    fun `traffic reads world-state refresh and recent traffic values`() {
+        `when`(generals.findAll()).thenReturn(listOf(gen(1, "유비"), gen(2, "관우")))
+        `when`(accessLogs.findAll()).thenReturn(
+            listOf(
+                GeneralAccessLogReadEntity(1, 1, 7, Instant.parse("2026-01-01T00:00:00Z"), 12, 20, 3, 30),
+                GeneralAccessLogReadEntity(2, 2, 8, Instant.parse("2026-01-01T00:01:00Z"), 5, 10, 1, 10),
+            ),
+        )
+        `when`(worldStates.findById(1)).thenReturn(
+            Optional.of(
+                WorldStateReadEntity(
+                    id = 1,
+                    currentYear = 181,
+                    currentMonth = 7,
+                    config = linkedMapOf(
+                        "refresh" to 42,
+                        "maxrefresh" to 50,
+                        "maxonline" to 8,
+                        "online_user_cnt" to 3,
+                        "recentTraffic" to listOf(
+                            linkedMapOf(
+                                "year" to 181,
+                                "month" to 6,
+                                "refresh" to 30,
+                                "online" to 5,
+                                "date" to "2026-01-01T00:00:00Z",
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         mockMvc().perform(get("/api/rankings/traffic"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.todayUnique").value(0))
-            .andExpect(jsonPath("$.todayViews").value(0))
-            .andExpect(jsonPath("$.weekUnique").value(0))
-            .andExpect(jsonPath("$.monthViews").value(0))
-            .andExpect(jsonPath("$.peakConcurrent").value(0))
-            .andExpect(jsonPath("$.currentOnline").value(0))
-            .andExpect(jsonPath("$.history.length()").value(0))
+            .andExpect(jsonPath("$.refresh").value(42))
+            .andExpect(jsonPath("$.maxRefresh").value(50))
+            .andExpect(jsonPath("$.currentOnline").value(3))
+            .andExpect(jsonPath("$.maxOnline").value(8))
+            .andExpect(jsonPath("$.history.length()").value(1))
+            .andExpect(jsonPath("$.history[0].year").value(181))
+            .andExpect(jsonPath("$.history[0].month").value(6))
+            .andExpect(jsonPath("$.history[0].date").value("2026-01-01T00:00:00Z"))
+            .andExpect(jsonPath("$.history[0].refresh").value(30))
+            .andExpect(jsonPath("$.history[0].online").value(5))
+            .andExpect(jsonPath("$.totalRefresh").value(17))
+            .andExpect(jsonPath("$.totalRefreshScore").value(40))
+            .andExpect(jsonPath("$.topRefreshers.length()").value(2))
+            .andExpect(jsonPath("$.topRefreshers[0].name").value("유비"))
+            .andExpect(jsonPath("$.topRefreshers[0].refresh").value(12))
+            .andExpect(jsonPath("$.topRefreshers[0].refreshScoreTotal").value(30))
     }
 
-    // ── 2.7 emperor (empty default) ──────────────────────────────────────────────────────────────────
     @Test
-    fun `emperor returns empty array (F3 default, no unification table)`() {
+    fun `emperor returns live unification record from world and ownership state`() {
+        `when`(worldStates.findById(1)).thenReturn(
+            Optional.of(
+                WorldStateReadEntity(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 12,
+                    currentPhase = 2,
+                    isunited = 2,
+                    updatedAt = Instant.parse("2026-01-03T00:00:00Z"),
+                ),
+            ),
+        )
+        `when`(nations.findAll()).thenReturn(listOf(nation(1, "촉", "#2e7d32", level = 7)))
+        `when`(cities.countByNationId(1)).thenReturn(3)
+        `when`(cities.count()).thenReturn(3)
+        `when`(generals.countByNationId(1)).thenReturn(6)
+        `when`(statistics.findFirstByOrderByIdDesc()).thenReturn(null)
+
         mockMvc().perform(get("/api/rankings/emperor"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.length()").value(0))
+            .andExpect(jsonPath("$.length()").value(1))
+            .andExpect(jsonPath("$[0].id").value(1))
+            .andExpect(jsonPath("$[0].name").value("촉"))
+            .andExpect(jsonPath("$[0].nation").value("촉"))
+            .andExpect(jsonPath("$[0].nationColor").value("#2e7d32"))
+            .andExpect(jsonPath("$[0].unifiedAt").value("2026-01-03T00:00:00Z"))
+            .andExpect(jsonPath("$[0].turn").value(2))
+            .andExpect(jsonPath("$[0].year").value(200))
+            .andExpect(jsonPath("$[0].month").value(12))
+            .andExpect(jsonPath("$[0].generalCount").value(6))
+            .andExpect(jsonPath("$[0].cityCount").value(3))
     }
 
     // ── 2.8 emperor detail (404) ─────────────────────────────────────────────────────────────────────

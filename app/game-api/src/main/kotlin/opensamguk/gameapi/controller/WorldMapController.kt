@@ -9,6 +9,7 @@ import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -31,8 +32,7 @@ import org.springframework.web.bind.annotation.RestController
  *  1. general 있고 (showMe || !neutralView) → myCity=general.city(showMe시), myNation=general.nation(!neutralView시).
  *  2. myNation 있으면 spyList = nation.meta["spy"] decode `{cityNo:remainMonth}`, 없으면 빈 맵.
  *  3. myNation 있으면 shownByGeneralList = distinct 아국 장수 소재 도시, 없으면 빈 목록.
- *  4. (PHP) userGrade≥5(어드민)는 전 도시 spyList=1 — game-api JWT principal엔 grade claim이 없어 이 분기는
- *     도달 불가(OQ-4): 보수적으로 일반 fog만 적용한다(어드민 전-도시 정찰 해제는 미구현, 의도적 divergence).
+ *  4. userGrade≥5에 대응하는 ADMIN 역할은 전 도시 spyList=1.
  *
  * cityList/nationList 튜플은 PHP `Util::toInt`/raw 그대로의 compact 배열(`WorldMapResponse` 참조).
  * 빈 world ⇒ 200 result=true + 빈 cityList(절대 500 아님). READ-ONLY(§7) — write-path 무관.
@@ -81,10 +81,18 @@ class WorldMapController(
             myNation = if (neutral) null else general.nationId.takeIf { it != 0 }
         }
 
-        // fog 게이트 2 — spyList(func_map.php:98-121). myNation의 meta["spy"]를 {cityNo:remainMonth}로 디코드.
-        val spyList: Map<Int, Int> = myNation?.let { nid ->
-            nations.findById(nid).orElse(null)?.let { decodeSpy(it.meta["spy"]) }
-        } ?: emptyMap()
+        val cityRows = cities.findAll().sortedBy { it.id }
+        val isAdmin = SecurityContextHolder.getContext().authentication
+            ?.authorities
+            ?.any { it.authority == "ROLE_ADMIN" } == true
+
+        val spyList: Map<Int, Int> = if (isAdmin) {
+            cityRows.associateTo(LinkedHashMap()) { it.id to 1 }
+        } else {
+            myNation?.let { nid ->
+                nations.findById(nid).orElse(null)?.let { decodeSpy(it.meta["spy"]) }
+            } ?: emptyMap()
+        }
 
         // fog 게이트 3 — shownByGeneralList(func_map.php:133-142). 아국 장수 소재 도시.
         val shownByGeneralList: List<Int> =
@@ -96,8 +104,7 @@ class WorldMapController(
             .map { listOf(it.id, it.name, it.color, it.capitalCityId ?: 0) }
 
         // cityList = city 전 행 [city, level, state, nation, region, supply] (func_map.php:144-148).
-        val cityList: List<List<Int>> = cities.findAll()
-            .sortedBy { it.id }
+        val cityList: List<List<Int>> = cityRows
             .map { listOf(it.id, it.level, it.state, it.nationId, it.region, it.supplyState) }
 
         return ResponseEntity.ok(

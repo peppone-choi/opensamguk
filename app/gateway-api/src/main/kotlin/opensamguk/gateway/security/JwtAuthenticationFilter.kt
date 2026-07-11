@@ -25,7 +25,7 @@ class JwtAuthenticationFilter(
         filterChain: FilterChain,
     ) {
         val token = resolveToken(request)
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        if (token != null && jwtTokenProvider.validateAccessToken(token)) {
             val userId = jwtTokenProvider.getUserIdFromToken(token)
             val username = jwtTokenProvider.getUsernameFromToken(token)
             if (userId != null && username != null && SecurityContextHolder.getContext().authentication == null) {

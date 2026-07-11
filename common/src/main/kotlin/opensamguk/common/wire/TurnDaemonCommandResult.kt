@@ -535,13 +535,14 @@ data class SelectPoolActionResult(
  */
 private val NATION_SETTING_TYPES = setOf(
     "setNotice", "setScoutMsg", "setRate", "setBill", "setSecretLimit",
-    "setBlockWar", "setBlockScout", "tournamentEnroll",
+    "setBlockWar", "setBlockScout", "npcPolicyUpdate", "tournamentEnroll",
 )
 
 private val BOOLEAN_OK_TYPES = setOf(
     "dieOnPrestart", "buildNationCandidate", "instantRetreat", "vacation",
-    "setMySetting", "dropItem", "changePermission", "kick", "appoint",
-    "claimNpc",
+    "setMySetting", "dropItem", "checkOwner", "changePermission", "kick", "appoint",
+    "claimNpc", "tournamentStart", "tournamentReset",
+    "adminGeneralModeration", "adminWorldSettings",
 )
 
 /** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */
@@ -561,7 +562,7 @@ private val DIPLO_LETTER_TYPES =
     setOf("diploSendLetter", "diploRollbackLetter", "diploDestroyLetter", "diploRespondLetter")
 
 /** 장수 선택 풀 2코드(W6f) — collapsed [SelectPoolActionResult] shape. */
-private val SELECT_POOL_TYPES = setOf("selectPoolPick", "selectPoolUpdate")
+private val SELECT_POOL_TYPES = setOf("selectPoolPick", "selectPoolUpdate", "selectPoolRefresh")
 
 /**
  * Custom `(type, ok)` selector. [JsonContentPolymorphicSerializer] cannot be used because

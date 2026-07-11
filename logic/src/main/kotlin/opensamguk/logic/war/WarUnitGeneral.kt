@@ -11,6 +11,7 @@ import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.StatCalc
 import opensamguk.logic.war.trigger.WarUnit as WarUnitContract
+import opensamguk.logic.war.trigger.WarUnitTriggerCaller
 
 /**
  * F2 — port target = PHP `sammo/WarUnitGeneral.php:7-378`.
@@ -100,6 +101,14 @@ class WarUnitGeneral(
     fun addTrain(amount: Int) {
         state.increaseTrainWithLimit(amount.toDouble(), 0.0, GameConst.maxTrainByWar.toDouble())
     }
+
+    fun addLevelExpBonus(value: Double) {
+        state.addExperience(value)
+    }
+
+    fun battleInitCaller(): WarUnitTriggerCaller = pipeline.getBattleInitSkillTriggerList(this)
+
+    fun battlePhaseCaller(): WarUnitTriggerCaller = pipeline.getBattlePhaseSkillTriggerList(this)
 
     /** PHP `WarUnitGeneral::addAtmos` (`:86-89`): `increaseVarWithLimit('atmos', $n, 0, maxAtmosByWar)`. */
     fun addAtmos(amount: Int) {

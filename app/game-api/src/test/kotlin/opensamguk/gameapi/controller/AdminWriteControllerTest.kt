@@ -1,11 +1,11 @@
 package opensamguk.gameapi.controller
 
-import opensamguk.gameapi.read.WorldStateReadEntity
-import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.admin.AdminGeneralModerationService
+import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.security.GameApiJwtVerifier
 import org.junit.jupiter.api.Test
-import opensamguk.infra.entity.GameKvEntity
-import opensamguk.infra.read.GameKvRepository
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
@@ -20,36 +20,38 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
- * Admin write API slice tests — ADMIN gate + config patch persistence.
+ * Admin write API slice tests — ADMIN gate + daemon command intake.
  */
 class AdminWriteControllerTest {
 
     private val verifier = mock(GameApiJwtVerifier::class.java)
-    private val world = mock(WorldStateReadRepository::class.java)
-    private val gameKv = mock(GameKvRepository::class.java)
+    private val commands = mock(CommandReserveService::class.java)
+    private val generalResolver = mock(GeneralResolver::class.java)
+    private val generalModeration = mock(AdminGeneralModerationService::class.java)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(AdminWriteController(verifier, world, gameKv)).build()
+        MockMvcBuilders.standaloneSetup(AdminWriteController(verifier, commands, generalResolver, generalModeration)).build()
 
     private fun stubAdmin(token: String = "admintok") {
         `when`(verifier.isValid(token)).thenReturn(true)
         `when`(verifier.getRole(token)).thenReturn("ADMIN")
+        `when`(verifier.getUserId(token)).thenReturn(7L)
+        `when`(generalResolver.resolveGeneralId(7L)).thenReturn(77)
     }
 
     private fun bearer(token: String) = "Bearer $token"
 
+    private fun anyCommand(): TurnDaemonCommand =
+        any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()
+
+    private fun captureCommand(captor: ArgumentCaptor<TurnDaemonCommand>): TurnDaemonCommand =
+        captor.capture() ?: TurnDaemonCommand.Pause()
+
     @Test
     fun `patch game-settings updates whitelisted config keys`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(
-            id = 1,
-            config = linkedMapOf("startyear" to 180, "npcmode" to 0, "block_general_create" to 0),
-        )
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-        `when`(world.save(any(WorldStateReadEntity::class.java))).thenReturn(entity)
 
         mockMvc().perform(
             patch("/api/admin/game-settings")
@@ -57,22 +59,18 @@ class AdminWriteControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"values":{"npcmode":1,"block_general_create":2}}"""),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.updated[0]").exists())
 
-        verify(world).save(any(WorldStateReadEntity::class.java))
-        assertEquals(1, entity.config["npcmode"])
-        assertEquals(2, entity.config["block_general_create"])
-        assertEquals(180, entity.config["startyear"])
+        val command = captureWorldCommand()
+        assertEquals(listOf("npcmode", "block_general_create"), command.settings.map { it.key })
+        assertEquals(listOf(1, 2), command.settings.map { it.intValue })
     }
 
     @Test
     fun `patch game-settings rejects unknown key`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf("npcmode" to 0))
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
@@ -82,15 +80,12 @@ class AdminWriteControllerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.result").value(false))
 
-        verify(world, never()).save(any())
+        verify(commands, never()).publishImmediate(anyCommand())
     }
 
     @Test
     fun `patch game-settings rejects out of range value`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf("npcmode" to 0))
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
@@ -128,9 +123,6 @@ class AdminWriteControllerTest {
     @Test
     fun `patch game-settings rejects empty body`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf("npcmode" to 0))
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
@@ -158,32 +150,20 @@ class AdminWriteControllerTest {
     @Test
     fun `patch game-settings preserves insertion order`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(
-            id = 1,
-            config = linkedMapOf("a" to 1, "b" to 2, "c" to 3),
-        )
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-        `when`(world.save(any(WorldStateReadEntity::class.java))).thenReturn(entity)
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"values":{"npcmode":1}}"""),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isAccepted)
 
-        // LinkedHashMap preserves insertion order: a, b, c, npcmode
-        val keys = entity.config.keys.toList()
-        assertEquals(listOf("a", "b", "c", "npcmode"), keys)
+        assertEquals(listOf("npcmode"), captureWorldCommand().settings.map { it.key })
     }
 
     @Test
     fun `patch game-settings rejects string value that is not numeric`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf("npcmode" to 0))
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
@@ -195,13 +175,8 @@ class AdminWriteControllerTest {
     }
 
     @Test
-    fun `patch game-settings writes msg to game_env global namespace`() {
+    fun `patch game-settings queues trimmed msg for daemon game-env write`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf())
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-        `when`(world.save(any(WorldStateReadEntity::class.java))).thenReturn(entity)
-        `when`(gameKv.findByTable("game_env")).thenReturn(emptyList())
-        `when`(gameKv.save(any(GameKvEntity::class.java))).thenAnswer { it.arguments[0] }
 
         mockMvc().perform(
             patch("/api/admin/game-settings")
@@ -209,44 +184,33 @@ class AdminWriteControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"values":{"msg":"  안녕하세요  "}}"""),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.result").value(true))
 
-        val captor = ArgumentCaptor.forClass(GameKvEntity::class.java)
-        verify(gameKv).save(captor.capture())
-        assertEquals("game_env", captor.value.table)
-        assertEquals("global", captor.value.namespace)
-        assertEquals("msg", captor.value.key)
-        assertEquals("\"안녕하세요\"", captor.value.value)
+        val setting = captureWorldCommand().settings.single()
+        assertEquals("msg", setting.key)
+        assertEquals("안녕하세요", setting.stringValue)
     }
 
     @Test
     fun `patch game-settings updates turnterm and tickSeconds and signals restart required`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, tickSeconds = 3600, config = linkedMapOf("turnterm" to 60))
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-        `when`(world.save(any(WorldStateReadEntity::class.java))).thenReturn(entity)
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"values":{"turnterm":30}}"""),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isAccepted)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.restartRequired").value(true))
 
-        assertEquals(30, entity.config["turnterm"])
-        assertEquals(1800, entity.tickSeconds)
+        assertEquals(30, captureWorldCommand().settings.single().intValue)
     }
 
     @Test
     fun `patch game-settings validates maxgeneral range`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf("maxgeneral" to 500))
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
@@ -260,9 +224,6 @@ class AdminWriteControllerTest {
     @Test
     fun `patch game-settings validates starttime format`() {
         stubAdmin()
-        val entity = WorldStateReadEntity(id = 1, config = linkedMapOf())
-        `when`(world.findById(1)).thenReturn(java.util.Optional.of(entity))
-
         mockMvc().perform(
             patch("/api/admin/game-settings")
                 .header("Authorization", bearer("admintok"))
@@ -271,5 +232,62 @@ class AdminWriteControllerTest {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.result").value(false))
+    }
+
+    @Test
+    fun `post general-moderation applies action with selected generals and actor general`() {
+        stubAdmin()
+        `when`(generalModeration.apply("block1", listOf(1, 2), null, 77))
+            .thenReturn(AdminGeneralModerationService.Result("block1", 2))
+
+        mockMvc().perform(
+            post("/api/admin/general-moderation")
+                .header("Authorization", bearer("admintok"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"action":"block1","generalIds":[1,2]}"""),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.action").value("block1"))
+            .andExpect(jsonPath("$.affected").value(2))
+    }
+
+    @Test
+    fun `post general-moderation surfaces validation failure`() {
+        stubAdmin()
+        `when`(generalModeration.apply("sendMessage", emptyList(), "안녕", 77))
+            .thenThrow(IllegalArgumentException("대상 장수를 선택하세요."))
+
+        mockMvc().perform(
+            post("/api/admin/general-moderation")
+                .header("Authorization", bearer("admintok"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"action":"sendMessage","generalIds":[],"message":"안녕"}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.result").value(false))
+            .andExpect(jsonPath("$.reason").value("대상 장수를 선택하세요."))
+    }
+
+    @Test
+    fun `post server-status queues validated daemon command`() {
+        stubAdmin()
+
+        mockMvc().perform(
+            post("/api/admin/server-status")
+                .header("Authorization", bearer("admintok"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"status":"PRE_OPEN"}"""),
+        )
+            .andExpect(status().isAccepted)
+            .andExpect(jsonPath("$.status").value("PRE_OPEN"))
+
+        assertEquals("PRE_OPEN", captureWorldCommand().status)
+    }
+
+    private fun captureWorldCommand(): TurnDaemonCommand.AdminWorldSettings {
+        val captor = ArgumentCaptor.forClass(TurnDaemonCommand::class.java)
+        verify(commands).publishImmediate(captureCommand(captor))
+        return captor.value as TurnDaemonCommand.AdminWorldSettings
     }
 }

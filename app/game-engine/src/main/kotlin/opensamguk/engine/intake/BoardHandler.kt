@@ -9,6 +9,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.logic.actions.intake.BoardActions
 import opensamguk.logic.actions.intake.SecretPermission
+import java.time.Instant
 
 /**
  * 회의실/기밀실 (board) intake 핸들러 — `j_board_article_add.php` /
@@ -28,11 +29,15 @@ class BoardHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val boardPostRepository: BoardPostRepository,
+    private val nowProvider: () -> Instant = Instant::now,
 ) {
     // ── j_board_article_add.php ────────────────────────────────────────────────────────────────
     fun handleArticle(c: TurnDaemonCommand.BoardArticle): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return BoardActionResult("boardArticle", ok = false, generalId = c.generalId, reason = "접속 제한입니다.")
+        }
 
         val permission = SecretPermission.check(PerTurnOverlay.toLogicGeneral(me))
         return when (val out = BoardActions.addArticle(c.isSecret, c.title, c.text, permission)) {
@@ -58,6 +63,9 @@ class BoardHandler(
     fun handleComment(c: TurnDaemonCommand.BoardComment): TurnDaemonCommandResult {
         val me = world.getGeneralById(c.generalId)
             ?: return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "장수가 존재하지 않습니다.")
+        if (AccessLogThrottle(world, recorder, nowProvider).increaseAndBlocked(c.generalId)) {
+            return BoardActionResult("boardComment", ok = false, generalId = c.generalId, reason = "접속 제한입니다.")
+        }
 
         // PHP 순서 :32-72 — 결합된 null 게이트가 FIRST (`$articleNo === null || $text === null` →
         // '올바르지 않은 입력입니다.'), THEN text trim/blank, THEN 게시물 읽기, THEN 권한 게이트.

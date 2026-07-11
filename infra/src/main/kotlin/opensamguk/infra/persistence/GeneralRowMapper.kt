@@ -4,6 +4,9 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.util.phpRound
 import java.sql.ResultSet
+import java.sql.Timestamp
+import java.time.Instant
+import java.time.OffsetDateTime
 
 /**
  * Logic `General` <-> DB `general` row mapper.
@@ -66,6 +69,8 @@ object GeneralRowMapper {
         // RTK14 분기 스탯(정치/매력) — devsam 패러티 외, 컬럼 부재 시 기본 50.
         politics = if (row.containsKey("politics")) intOf(row["politics"]) else 50,
         charm = if (row.containsKey("charm")) intOf(row["charm"]) else 50,
+        age = row["age"]?.let(::intOf),
+        turnTime = nullableInstantOf(row["turn_time"]),
     )
 
     /** Map a [ResultSet] (current row) to a logic [General]. */
@@ -100,6 +105,8 @@ object GeneralRowMapper {
         // RTK14 분기 스탯(정치/매력) — V16 이후 NOT NULL DEFAULT 50 컬럼.
         politics = rs.getInt("politics"),
         charm = rs.getInt("charm"),
+        age = rs.getInt("age"),
+        turnTime = rs.getTimestamp("turn_time")?.toInstant(),
     )
 
     /**
@@ -138,6 +145,8 @@ object GeneralRowMapper {
         // RTK14 분기 스탯(정치/매력) — 컬럼 맵 끝에 APPEND(기존 컬럼 순서 불변).
         "politics" to g.politics,
         "charm" to g.charm,
+        "age" to g.age,
+        "turn_time" to g.turnTime?.toString(),
     )
 }
 
@@ -177,4 +186,13 @@ internal fun stringOf(v: Any?): String? = when (v) {
     null -> null
     is String -> v
     else -> v.toString()
+}
+
+internal fun nullableInstantOf(v: Any?): Instant? = when (v) {
+    null -> null
+    is Instant -> v
+    is Timestamp -> v.toInstant()
+    is OffsetDateTime -> v.toInstant()
+    is String -> runCatching { Instant.parse(v) }.getOrElse { OffsetDateTime.parse(v).toInstant() }
+    else -> error("not an instant: $v")
 }

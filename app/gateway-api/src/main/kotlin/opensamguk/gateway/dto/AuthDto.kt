@@ -50,4 +50,27 @@ data class UserResponse(
     val email: String?,
     val nickname: String?,
     val role: String,
+    val picture: String? = null,
+    val imageServer: Int = 0,
+)
+
+data class ChangePasswordRequest(
+    @field:NotBlank
+    val currentPassword: String,
+
+    @field:NotBlank
+    @field:Size(min = 6, max = 100)
+    val newPassword: String,
+)
+
+data class ProfileIconRequest(
+    @field:Size(max = 64)
+    val picture: String? = null,
+
+    val imgsvr: Int = 0,
+)
+
+data class DeleteAccountRequest(
+    @field:NotBlank
+    val currentPassword: String,
 )

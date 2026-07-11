@@ -21,7 +21,7 @@ class PerTurnOverlayTest {
             nationId = nationId,
             cityId = cityId,
             troopId = 0,
-            stats = GeneralStats(leadership = 80, strength = 70, intelligence = intel),
+            stats = GeneralStats(leadership = 80, strength = 70, intelligence = intel, politics = 44, charm = 55),
             experience = 12,
             dedication = 34,
             officerLevel = 0,
@@ -100,6 +100,8 @@ class PerTurnOverlayTest {
 
         val g = overlay.getLogicGeneral(1)!!
         assertEquals(60, g.intel, "intel <- stats.intelligence")
+        assertEquals(44, g.politics)
+        assertEquals(55, g.charm)
         assertEquals(12.0, g.experience, "experience Int -> raw Double")
         assertEquals(34.0, g.dedication, "dedication Int -> raw Double")
         assertEquals(7, g.meta["intel_exp"], "meta carried verbatim")

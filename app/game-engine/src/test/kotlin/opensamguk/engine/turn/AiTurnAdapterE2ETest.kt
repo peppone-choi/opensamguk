@@ -218,10 +218,10 @@ class AiTurnAdapterE2ETest {
         assertFalse(outcome.fellBack, "AI-selected che_출병 must pass the live FULL gate and resolve")
         assertEquals("che_출병", outcome.definition.key)
         assertEquals(43, world.getCityById(31)!!.state, "resolved sortie marks the target city as in battle")
-        assertEquals(3, world.getCityById(31)!!.term, "resolved sortie sets the PHP city term")
+        assertEquals(0, world.getCityById(31)!!.term, "a conquered city resets the PHP city term")
         val cityPatch = handler.recorder.cityPatches().single { it.id == 31 }
         assertEquals(43, cityPatch.columns["state"])
-        assertEquals(3, cityPatch.columns["term"])
+        assertEquals(0, cityPatch.columns["term"])
     }
 
     // ── (3) READ-ONLY over GAME ENTITIES — the AI selection writes no general/city row inline ──────────

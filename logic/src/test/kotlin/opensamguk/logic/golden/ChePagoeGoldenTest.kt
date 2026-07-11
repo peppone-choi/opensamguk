@@ -9,6 +9,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.logic.actions.GeneralRankIncrement
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -19,6 +20,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * AREA GATE-RUNTIME — che_파괴(ChePagoe) PHP-골든 draw-for-draw 바이트 게이트.
@@ -155,5 +157,80 @@ class ChePagoeGoldenTest {
         assertEquals(ag.int("rice"), g.rice, "[$command] general.rice")
         assertEquals(ag.int("strength_exp"), metaInt(g.meta, "strength_exp"), "[$command] meta.strength_exp")
         assertEquals(ag.int("explevel"), metaInt(g.meta, "explevel"), "[$command] meta.explevel")
+    }
+
+    @Test
+    fun `che_파괴 success path mutates destination city, consumes sabotage item, and records firenum`() {
+        val def = registry.resolve("che_파괴")
+        val actor = General(
+            id = 77,
+            nationId = 1,
+            cityId = 1,
+            leadership = 60,
+            strength = 255,
+            intel = 60,
+            injury = 0,
+            experience = 0.0,
+            dedication = 0.0,
+            officerLevel = 1,
+            gold = 1000,
+            rice = 1000,
+            item = "che_계략_이추",
+        )
+        val city = City(1, 1, 8, 0, 1, 0, 1, 1, 0, 100.0)
+        val destCity = City(
+            id = 2,
+            nationId = 2,
+            level = 8,
+            commerce = 1000,
+            commerceMax = 1000,
+            agriculture = 1000,
+            agricultureMax = 1000,
+            supplyState = 1,
+            frontState = 0,
+            trust = 100.0,
+            security = 0,
+            securityMax = 10000,
+            defense = 900,
+            defenseMax = 1000,
+            wall = 800,
+            wallMax = 1000,
+        )
+        val draft = GeneralActionDraft(actor, city, P2GoldenSupport.nationFrom(P2GoldenSupport.load("che_파괴").cases.first(), gold = 1000, rice = 1000))
+        draft.destCity = destCity
+        val ctx = successContext(def, draft)
+
+        assertEquals(32, draft.destCity?.state)
+        kotlin.test.assertTrue((draft.destCity?.defense ?: 900) < 900)
+        kotlin.test.assertTrue((draft.destCity?.wall ?: 800) < 800)
+        assertEquals("None", draft.general.item)
+        kotlin.test.assertTrue(ctx.logs().any { it.contains("파괴가 성공했습니다") })
+        kotlin.test.assertTrue(ctx.logs().any { it.contains("이추(계략)") })
+        assertEquals(listOf(GeneralRankIncrement(77, "firenum", 1)), draft.rankIncrements)
+    }
+
+    private fun successContext(def: opensamguk.logic.actions.GeneralActionDefinition, draft: GeneralActionDraft): GeneralActionResolveContext {
+        val seed = successSeed("che-pagoe-success")
+        val ctx = GeneralActionResolveContext(
+            draft = draft,
+            rng = RandUtil(LiteHashDrbg(seed)),
+            env = P2GoldenSupport.envOf(P2GoldenSupport.load("che_파괴").cases.first()),
+            month = 1,
+            date = "03:34",
+            args = linkedMapOf("destCityID" to 2),
+            candidateGenerals = emptyList(),
+            cityDistance = 1,
+        )
+        def.resolve(ctx)
+        assertTrue(ctx.globalActionLogs().isNotEmpty())
+        return ctx
+    }
+
+    private fun successSeed(prefix: String): String {
+        for (i in 0 until 128) {
+            val seed = "$prefix-$i"
+            if (RandUtil(LiteHashDrbg(seed)).nextBool(0.5)) return seed
+        }
+        error("no deterministic success seed found")
     }
 }

@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * + `General.php:515-600` (kill()). The killturn<=0 branch of [ReservedTurnHandler.updateTurnTime]:
  *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
  *    log FIRST, then `killturn=(deadyear-year)*12, npc=npc_org, owner=0, defence_train=80,
- *    owner_name=null`, then DELETE general_access_log ONLY (no-op in the V1 slice — no table).
+ *    owner_name=null`, then DELETE general_access_log ONLY.
  *  - else → kill(): nextRuler/demote → troop cleanup → dying message → storeOldGeneral → the F3
  *    4-table delete (the row leaves the update-set, no double-apply) → nation gennum-1.
  */
@@ -70,12 +70,14 @@ class KillTombstoneTest {
         generals: List<TurnGeneral>,
         nations: List<Nation> = listOf(nation()),
         troops: List<Troop> = emptyList(),
+        accessLogs: List<GeneralAccessLog> = emptyList(),
     ) = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(1, 200, 6, 3600, t0),
             generals = generals,
             nations = nations,
             troops = troops,
+            accessLogs = accessLogs,
         ),
     )
 
@@ -92,7 +94,7 @@ class KillTombstoneTest {
     @Test
     fun `NPC type 1 with deadyear ahead releases possession - field set, log, no delete`() {
         val g = gen(npc = 1, killturn = 0, deadyear = 205)
-        val w = world(listOf(g))
+        val w = world(listOf(g), accessLogs = listOf(GeneralAccessLog(1, 77, t0, refreshScore = 9)))
         val h = handler(w)
 
         val outcome = h.updateTurnTime(1, env(year = 200))
@@ -106,6 +108,8 @@ class KillTombstoneTest {
         assertEquals(0, (after.meta["owner"] as Number).toInt())
         assertEquals(80, (after.meta["defence_train"] as Number).toInt())
         assertNull(after.meta["owner_name"])
+        assertNull(w.getAccessLog(1))
+        assertEquals(setOf(1), h.recorder.accessLogDeletes())
 
         val drained = w.consumeDirtyState()
         assertFalse(drained.deletedGenerals.contains(1), "possession release does NOT delete the general")
@@ -137,7 +141,7 @@ class KillTombstoneTest {
     @Test
     fun `killturn zero non-possession kills - F3 tombstone, 4-table delete, excluded from update-set`() {
         val g = gen(npc = 0, killturn = 0)
-        val w = world(listOf(g))
+        val w = world(listOf(g), accessLogs = listOf(GeneralAccessLog(1, 77, t0, refreshScore = 9)))
         val h = handler(w)
 
         val outcome = h.updateTurnTime(1, env(year = 200))
@@ -148,6 +152,8 @@ class KillTombstoneTest {
         val drained = w.consumeDirtyState()
         assertEquals(listOf(1), drained.deletedGenerals)
         assertTrue(drained.generals.none { it.id == 1 }, "killed general not in dirty rows")
+        assertNull(w.getAccessLog(1))
+        assertEquals(setOf(1), h.recorder.accessLogDeletes())
     }
 
     @Test

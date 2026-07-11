@@ -42,7 +42,7 @@ fun sabotageInjury(
         injuryProb = pipeline.onCalcStat(general, "injuryProb", injuryProb)
         if (!rng.nextBool(injuryProb)) continue
 
-        context.addLogTo(general.id, text)
+        context.addLogTo(general.id, "<C>●</>${context.month}월:$text")
 
         val newInjury = valueFit(
             general.injury + rng.nextRangeInt(1, 16).toDouble(),

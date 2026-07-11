@@ -7,10 +7,16 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.RestAction
+import opensamguk.logic.actions.addTermStack
+import opensamguk.logic.actions.onTermStackSuccess
 import opensamguk.logic.actions.nation.NationActionResolveContext
 import opensamguk.logic.actions.nation.NationActionResolver
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.ConstraintMode
+import opensamguk.logic.constraints.ConstraintResult
+import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.statview.WorldEnvBuilder
@@ -38,6 +44,7 @@ class ProcessNationCommand(
     private val registry: CommandRegistry? = null,
     private val startYear: Int = 0,
     private val turnTerm: Int = 60,
+    private val pipelineBuilder: EngineGeneralActionPipelineBuilder? = null,
     private val nationCommandResolver: NationCommandResolver = NationCommandResolver { _, _, lastTurn -> lastTurn },
 ) {
 
@@ -75,6 +82,73 @@ class ProcessNationCommand(
         val general = world.getGeneralById(generalId)
             ?: error("ProcessNationCommand: general $generalId not in world")
         val nationId = general.nationId
+        val runtimeRegistry = pipelineBuilder?.registryFor(general) ?: registry
+        val definition = runtimeRegistry?.resolve(nationCommand.actionCode)
+        val normalizedArgs = definition?.let { normalizeArgs(it, nationCommand.args) } ?: LinkedHashMap(nationCommand.args)
+        val commandForResolve = nationCommand.copy(args = normalizedArgs)
+
+        fun finish(resultTurn: LastTurn): LastTurn {
+            recordTurnLastKv(nationId, officerLevel, resultTurn)
+            return resultTurn
+        }
+
+        if (definition != null && definition !== RestAction) {
+            val env = nationConstraintEnv(year, month, nationId)
+            val destGeneralId = ReservedTurnHandler.intArg(normalizedArgs, "destGeneralID")
+            val destCityId = ReservedTurnHandler.intArg(normalizedArgs, "destCityID")
+            val destNationId = ReservedTurnHandler.intArg(normalizedArgs, "destNationID")
+                ?: destGeneralId?.let { world.getGeneralById(it)?.nationId }
+                ?: destCityId?.let { world.getCityById(it)?.nationId }
+            val ctx = ConstraintContext(
+                actorId = generalId,
+                cityId = general.cityId,
+                nationId = nationId,
+                destGeneralId = destGeneralId,
+                destCityId = destCityId,
+                destNationId = destNationId,
+                args = normalizedArgs,
+                env = env,
+                mode = ConstraintMode.FULL,
+            )
+            val result = evaluateConstraints(
+                definition.buildConstraints(ctx),
+                ctx,
+                WorldStateViewAdapter(PerTurnOverlay(world), env = env, args = normalizedArgs),
+            )
+            if (result !is ConstraintResult.Allow) {
+                val reason = when (result) {
+                    is ConstraintResult.Deny -> result.reason
+                    is ConstraintResult.Unknown -> "처리할 수 없습니다."
+                    ConstraintResult.Allow -> null
+                }
+                if (reason != null) {
+                    world.pushLog(nationLog(general, "action", "general", "$reason <1>$date</>"))
+                }
+                return finish(lastTurn)
+            }
+
+            val nationDefinition = definition as? opensamguk.logic.actions.nation.NationCommand
+            if (nationDefinition != null) {
+                val stack = addTermStack(
+                    lastTurn = lastTurn,
+                    command = nationDefinition.name,
+                    arg = normalizedArgs,
+                    preReqTurn = nationDefinition.getPreReqTurn(),
+                    capset = (world.getNationById(nationId)?.meta?.get("capset") as? Number)?.toInt() ?: 0,
+                )
+                if (!stack.ready) {
+                    world.pushLog(
+                        nationLog(
+                            general,
+                            "action",
+                            "general",
+                            "${nationDefinition.name} 수행중... (${stack.resultTurn.term ?: 0}/${nationDefinition.getPreReqTurn() + 1}) <1>$date</>",
+                        ),
+                    )
+                    return finish(stack.resultTurn)
+                }
+            }
+        }
 
         // --- the 'nationCommand' 6-component RNG (PHP grand truth :310-317) ---
         // Component 2 is the LITERAL string "nationCommand" (DISTINCT from "generalCommand"); component 6
@@ -87,28 +161,51 @@ class ProcessNationCommand(
         )
 
         // --- dispatch: registry leaf → logic CommandRegistry bridge → pass-through ---
-        val registered: NationActionResolver? = NationActionResolverRegistry.resolve(nationCommand.actionCode)
+        val registered: NationActionResolver? = NationActionResolverRegistry.resolve(commandForResolve.actionCode)
         val resultTurn = when {
             registered != null ->
-                dispatchRegistered(registered, rng, general, officerLevel, nationCommand, lastTurn, year, month, date)
-            registry != null ->
-                dispatchLogicDefinition(registry, rng, general, nationCommand, lastTurn, year, month, date)
+                dispatchRegistered(registered, rng, general, officerLevel, commandForResolve, lastTurn, year, month, date)
+            runtimeRegistry != null ->
+                dispatchLogicDefinition(
+                    checkNotNull(runtimeRegistry),
+                    rng,
+                    general,
+                    commandForResolve,
+                    lastTurn,
+                    year,
+                    month,
+                    date,
+                )
             else ->
-                nationCommandResolver.resolve(rng, nationCommand, lastTurn)
+                nationCommandResolver.resolve(rng, commandForResolve, lastTurn)
         }
 
-        // --- $nationStor->setValue("turn_last_{officer_level}", $resultNationTurn->toRaw()) (:322) ---
-        // Recorded as the nation-meta KV delta through the ChangeRecorder single-dirty-source (NOT inline,
-        // NOT an EntityManager). The nation KV rides the `nation` row meta jsonb in the engine slice.
-        recordTurnLastKv(nationId, officerLevel, resultTurn)
+        val completedTurn = if (definition is opensamguk.logic.actions.nation.NationCommand) {
+            onTermStackSuccess(definition.name, normalizedArgs)
+        } else {
+            resultTurn
+        }
+        return finish(completedTurn)
+    }
 
-        // --- $general->setRawCity(null) (:323) ---
-        // PHP clears the general's lazily-cached City object handle so the next read re-fetches it. The
-        // in-memory world has NO such cached handle (the city is always read fresh via world.getCityById),
-        // so this is a faithful no-op marker — there is nothing to invalidate.
-        // (intentionally empty)
+    private fun normalizeArgs(
+        definition: opensamguk.logic.actions.GeneralActionDefinition,
+        raw: Map<String, Any?>,
+    ): LinkedHashMap<String, Any?> {
+        val parsed = runCatching { definition.parseArgs(raw) }.getOrElse { raw }
+        return LinkedHashMap(if (parsed.isNotEmpty() || definition.argsSchema.isEmpty()) parsed else raw)
+    }
 
-        return resultTurn
+    private fun nationConstraintEnv(year: Int, month: Int, nationId: Int): Map<String, Any?> {
+        val phase = world.getState().currentPhase.coerceIn(1, opensamguk.common.constants.GameConst.phasesPerMonth)
+        val base = WorldEnvBuilder.commandEnvMap(year, startYear, month, phase)
+        val blockedState = world.listDiplomacy()
+            .firstOrNull { it.fromNationId == nationId && it.state == 0 }
+            ?.state
+        return base + linkedMapOf<String, Any?>(
+            "__disallowDiplomacyHit" to (blockedState != null),
+            "__disallowDiplomacyHitState" to blockedState,
+        )
     }
 
     /**
@@ -227,11 +324,15 @@ class ProcessNationCommand(
             recorder.diffCity(toLogicCity(pre), moved)
             world.applyCityDirtyFree(applyLogicToCity(pre, moved))
         }
+        for (rankIncrement in draft.rankIncrements) {
+            val column = RankColumn.byColumn(rankIncrement.column) ?: continue
+            recorder.recordRankIncrease(rankIncrement.generalId, column, rankIncrement.value)
+        }
 
         for (line in ctx.logs()) world.pushLog(nationLog(general, "action", "general", line))
         for (line in ctx.plainLogs()) world.pushLog(nationLog(general, "action", "general", line))
         for (line in ctx.globalActionLogs()) world.pushLog(nationLog(general, "action", "global", line))
-        draft.destGeneral?.id?.let { gid ->
+        for (gid in ctx.targetLogIds()) {
             for (line in ctx.logsTo(gid)) {
                 world.pushLog(
                     LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
@@ -243,7 +344,6 @@ class ProcessNationCommand(
                 )
             }
         }
-
         for (message in ctx.messages()) routeMessage(message, year, month)
 
         return LastTurn(command = definition.name, arg = resolveArgs)
@@ -379,6 +479,7 @@ class ProcessNationCommand(
             destGeneral = preDestGeneral,
             generalName = general.name,
             destName = destDisplayName,
+            pipeline = pipelineBuilder?.pipelineFor(general),
             diplomacyMatrix = matrix,
             lastTurn = lastTurn,
         )
@@ -513,6 +614,7 @@ class ProcessNationCommand(
      */
     private fun applyLogicToGeneral(engine: TurnGeneral, logic: opensamguk.logic.domain.General): TurnGeneral =
         engine.copy(
+            userId = logic.userId,
             experience = phpRound(logic.experience),
             dedication = phpRound(logic.dedication),
             gold = logic.gold,
@@ -522,6 +624,28 @@ class ProcessNationCommand(
             nationId = logic.nationId,
             troopId = logic.troop,
             injury = logic.injury,
+            stats = GeneralStats(
+                leadership = logic.leadership,
+                strength = logic.strength,
+                intelligence = logic.intel,
+                politics = logic.politics,
+                charm = logic.charm,
+            ),
+            crew = logic.crew,
+            crewTypeId = logic.crewTypeId,
+            train = phpRound(logic.train),
+            atmos = phpRound(logic.atmos),
+            npcState = logic.npcType,
+            age = logic.age ?: engine.age,
+            turnTime = logic.turnTime ?: engine.turnTime,
+            role = engine.role.copy(
+                items = GeneralItems(
+                    horse = logic.horse,
+                    weapon = logic.weapon,
+                    book = logic.book,
+                    item = logic.item,
+                ),
+            ),
             meta = logic.meta,
         )
 
@@ -540,6 +664,7 @@ class ProcessNationCommand(
             agricultureMax = post.agricultureMax,
             population = post.population,
             populationMax = post.populationMax,
+            dead = post.dead,
             security = post.security,
             securityMax = post.securityMax,
             defence = post.defense,
@@ -561,15 +686,17 @@ class ProcessNationCommand(
     /**
      * Queue the `turn_last_{officer_level}` nation-meta KV delta via the [ChangeRecorder] single-dirty-source.
      * Diffs the nation's pre-state against a post-state carrying the new meta key (insertion-order-preserving),
-     * so the recorder owns dirtiness — the world's own `updateNation` (the JPA-competing dirty path) is never
-     * touched.
+     * so the recorder owns dirtiness; the dirty-free world mirror is updated so the next due tick sees the
+     * same term-stack state before the next flush.
      */
     private fun recordTurnLastKv(nationId: Int, officerLevel: Int, resultTurn: LastTurn) {
         val nation = world.getNationById(nationId) ?: return
         val pre = toLogicNation(nation)
         val nextMeta = LinkedHashMap(pre.meta)
         nextMeta["turn_last_$officerLevel"] = resultTurn.toRaw()
-        recorder.diffNation(pre, pre.copy(meta = nextMeta))
+        val post = pre.copy(meta = nextMeta)
+        recorder.diffNation(pre, post)
+        world.applyNationDirtyFree(nation.copy(meta = nextMeta))
     }
 
     companion object {

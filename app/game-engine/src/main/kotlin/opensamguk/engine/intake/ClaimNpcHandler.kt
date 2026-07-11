@@ -5,9 +5,11 @@ import opensamguk.common.wire.GeneralBoolResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.util.jsonDecodeAny
+import java.time.Instant
 
 /**
  * B2 장수빙의(claim NPC) 데몬 핸들러.
@@ -27,6 +29,7 @@ import opensamguk.logic.util.jsonDecodeAny
 class ClaimNpcHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
+    private val nowProvider: () -> Instant = Instant::now,
 ) {
 
     fun handle(command: TurnDaemonCommand.ClaimNpc): TurnDaemonCommandResult {
@@ -73,6 +76,10 @@ class ClaimNpcHandler(
 
         world.applyGeneralDirtyFree(post)
         recorder.diffGeneral(preLogic, PerTurnOverlay.toLogicGeneral(post))
+        recorder.recordAccessLogUpsert(
+            world,
+            GeneralAccessLog(generalId = generalId, userId = command.userId, lastRefresh = nowProvider()),
+        )
 
         // 로그 — PHP j_select_npc.php:121-122
         val josaYi = JosaUtil.pick(command.userNick, "이")

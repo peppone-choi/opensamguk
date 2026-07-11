@@ -8,6 +8,8 @@ import opensamguk.gameapi.dto.ReservedCommandItem
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralListColumns
 import opensamguk.gameapi.read.GeneralListText
+import opensamguk.gameapi.read.GeneralAccessLogReadEntity
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadRepository
@@ -41,8 +43,8 @@ import org.springframework.web.bind.annotation.RestController
  * 전부 read-only — game-state write 없음.
  *
  * §2 BLOCKED(원천 없음 → 컬럼 자체를 노출하지 않음, fabricate 금지):
- *  - dex1..dex5(general 컬럼/meta 미존재), defence_train(원천 미검증), refresh_score/refresh_score_total
- *    (general_access_log 테이블 부재), autorun_limit(컬럼 부재). PHP viewColumns에는 있으나 opensamguk
+ *  - dex1..dex5(general 컬럼/meta 미존재), defence_train(원천 미검증), autorun_limit(컬럼 부재).
+ *    PHP viewColumns에는 있으나 opensamguk
  *    원천이 없어 `column` 목록에서 제외한다. ownerName은 컬럼으로는 유지하되 항상 null(owner_name 부재).
  */
 @RestController
@@ -55,6 +57,7 @@ class GeneralListController(
     private val rankData: RankDataReadRepository,
     private val troops: TroopReadRepository,
     private val world: WorldStateReadRepository,
+    private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
 
     @GetMapping("/general-list")
@@ -92,6 +95,11 @@ class GeneralListController(
 
         // rank_data(F2) — 이 국가 장수들의 전투 통계 6종을 1회 일괄 조회 후 (generalId,type)로 색인.
         val generalIds = rawGenerals.map { it.id }
+        val accessByGeneral = if (generalIds.isEmpty()) {
+            emptyMap()
+        } else {
+            accessLogs?.findByGeneralIdIn(generalIds)?.associateBy { it.generalId }.orEmpty()
+        }
         val rankByGeneral: Map<Pair<Int, String>, Int> =
             if (generalIds.isEmpty()) {
                 emptyMap()
@@ -127,7 +135,7 @@ class GeneralListController(
 
         // 각 장수를 P0/P1 채운 중간 표현으로(officerLevelText는 호출자 permission에 의존하는 마스킹 사용).
         val rows = rawGenerals.map { g ->
-            buildRow(g, nationLevel, permission, rankByGeneral, reservedByGeneral[g.id])
+            buildRow(g, nationLevel, permission, rankByGeneral, reservedByGeneral[g.id], accessByGeneral[g.id])
         }
 
         // 컬럼 순서대로 flat array 평탄화.
@@ -166,6 +174,7 @@ class GeneralListController(
         permission: Int,
         rankByGeneral: Map<Pair<Int, String>, Int>,
         reserved: List<ReservedCommandItem>?,
+        accessLog: GeneralAccessLogReadEntity?,
     ): GeneralListRow {
         val meta = g.meta
         // PHP officerLevelText = getOfficerLevelText(getOfficerLevel($rawGeneral), nationLevel)
@@ -221,6 +230,8 @@ class GeneralListController(
             book = g.bookCode,
             item = g.itemCode,
             recentWar = TurnTimeFormatter.full(g.recentWarTime),
+            refreshScoreTotal = accessLog?.refreshScoreTotal ?: 0,
+            refreshScore = accessLog?.refreshScore ?: 0,
             // RANK(F2) — 미기록 type은 0(PHP `?? 0`).
             warnum = rankByGeneral[g.id to "warnum"] ?: 0,
             killnum = rankByGeneral[g.id to "killnum"] ?: 0,

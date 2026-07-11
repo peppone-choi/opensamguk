@@ -10,7 +10,7 @@ import java.time.Instant
 
 // ── GET /api/generals — PUBLIC, permission=0 fields only (page 14 / 9-P0) ──────────────────────────
 /**
- * Public all-general row. permission=0 surface ONLY: NO refresh_score, NO raw exp/ded breakdown,
+ * Public all-general row. permission=0 surface ONLY: NO raw exp/ded breakdown,
  * NO gold/rice (OQ-5 — 미인증 공개 surface라 자금/경험치 원값을 노출하지 않는다).
  * `nationName`은 국가 NAME(재야 for nationId 0); `nationColor`는 hex(#000000 for 재야).
  *
@@ -75,20 +75,53 @@ data class PublicGeneral(
      * meta(`killturn`)에서 읽는다(GeneralListController와 동일 원천). meta 미기재 시 null(부재=미기록, 날조 금지).
      */
     val killturn: Int?,
-    // [§2 BLOCKED — general_access_log 부재] 벌점(refresh_score_total)은 PHP가
-    // `LEFT JOIN general_access_log`에서 읽는다(a_genList.php:114). 해당 테이블이 opensamguk 스키마
-    // 어디에도 없어(P8 미이식) read 원천이 없다 → 컬럼 자체를 노출하지 않는다(값 날조 금지).
-    // 또한 a_genList의 기본 정렬(type=9, refresh_score_total DESC)도 이 원천 부재로 재현 불가 —
-    // FE는 가용한 정렬 키만 제공하고 벌점 정렬/컬럼은 데이터가 생길 때(P8) 추가한다.
+    val refreshScoreTotal: Int,
 )
 
 // ── GET /api/tournament — state/bracket/standings/rankings/msg (pages 12, 13, 11-bracket) ──────────
 data class TournamentBracketMatch(
-    val groupNo: Int,
-    val seq: Int,
+    val round: Int,
+    val matchIdx: Int,
+    val leftGeneralId: Int?,
     val leftName: String?,
+    val rightGeneralId: Int?,
     val rightName: String?,
+    val winnerGeneralId: Int?,
     val winnerName: String?,
+)
+
+enum class TournamentGroupStage {
+    MAIN,
+    PRELIMINARY,
+}
+
+data class TournamentStandingRow(
+    val generalId: Int,
+    val npc: Int,
+    val generalName: String,
+    val stage: TournamentGroupStage,
+    val groupNo: Int,
+    val groupRank: Int,
+    val ability: Int,
+    val games: Int,
+    val win: Int,
+    val draw: Int,
+    val lose: Int,
+    val points: Int,
+    val goalDifference: Int,
+    val promoted: Boolean,
+)
+
+data class TournamentFightLog(
+    val groupNo: Int,
+    val lines: List<String>,
+)
+
+data class TournamentBettingCandidate(
+    val id: String,
+    val title: String,
+    val generalId: Int?,
+    val groupNo: Int?,
 )
 
 data class TournamentRankingRow(
@@ -104,19 +137,44 @@ data class TournamentRankingBoard(
     val rows: List<TournamentRankingRow>,
 )
 
+data class TournamentAdminEntry(
+    val id: Int,
+    val generalId: Int,
+    val generalName: String,
+    val nationId: Int,
+    val nationName: String,
+    val round: Int,
+    val seed: Int,
+    val eliminated: Boolean,
+)
+
+data class TournamentAdminMatch(
+    val id: Int,
+    val round: Int,
+    val bracket: String,
+    val attackerId: Int,
+    val attackerName: String,
+    val defenderId: Int,
+    val defenderName: String,
+    val winnerId: Int? = null,
+    val winnerName: String? = null,
+    val status: String,
+)
+
 data class TournamentResponse(
-    /** Legacy tournament state machine 0-8 (0 = no tournament / closed). */
     val state: Int,
     val tnmtType: Int,
     val tnmtTypeText: String,
     val tnmtMsg: String,
     val turnTerm: Int,
-    /** 8 preliminary group standings; each group is an ordered list of ranking rows. */
-    val groups: List<List<TournamentRankingRow>>,
-    /** 16강 bracket matches. */
+    val entrants: List<TournamentStandingRow>,
     val bracket: List<TournamentBracketMatch>,
     /** The 4 ranking-type boards (always present, possibly empty). */
     val rankings: List<TournamentRankingBoard>,
+    val fightLogs: List<TournamentFightLog> = emptyList(),
+    val bettingCandidates: List<TournamentBettingCandidate> = emptyList(),
+    val entries: List<TournamentAdminEntry> = emptyList(),
+    val matches: List<TournamentAdminMatch> = emptyList(),
 )
 
 // ── GET /api/diplomacy/letters — nations map + letters + myNationID (page 1) ───────────────────────
@@ -480,16 +538,34 @@ data class ChiefReservedResponse(
 data class NpcPolicyResponse(
     val result: Boolean,
     val nationId: Int,
-    /** Default policy field map (initial values; 초깃값으로 button). */
-    val defaultPolicy: Map<String, Any?>,
-    /** Current policy field map (live values). */
-    val currentPolicy: Map<String, Any?>,
-    /** Ordered chief-command priority list. */
-    val chiefPriority: List<String>,
-    /** Ordered general-command priority list. */
-    val generalPriority: List<String>,
-    /** Who last set each policy section (auditing). */
-    val lastSetters: Map<String, Any?>,
+    val defaultNationPolicy: Map<String, Any?>,
+    val currentNationPolicy: Map<String, Any?>,
+    val zeroPolicy: Map<String, Any?>,
+    val defaultNationPriority: List<String>,
+    val currentNationPriority: List<String>,
+    val availableNationPriorityItems: List<String>,
+    val defaultGeneralActionPriority: List<String>,
+    val currentGeneralActionPriority: List<String>,
+    val availableGeneralActionPriorityItems: List<String>,
+    val lastSetters: Map<String, NpcPolicyLastSetter>,
+    val defaultStatNPCMax: Int,
+    val defaultStatMax: Int,
+)
+
+data class NpcPolicyLastSetter(
+    val setter: String?,
+    val date: String?,
+)
+
+data class NpcPolicyUpdateRequest(
+    val type: String,
+    val data: com.fasterxml.jackson.databind.JsonNode?,
+)
+
+data class NpcPolicyUpdateAcceptedResponse(
+    val status: String,
+    val requestId: String,
+    val code: String,
 )
 
 // ── GET /api/inherit-point — page 15 ───────────────────────────────────────────────────────────────

@@ -362,12 +362,13 @@ data class PostUpdateMonthlyTailResult(
  *   Q11 checkWander($rng)        — runs ONLY if `year >= startYear+2`; draws inside the che_해산 command run
  *                                  per wanderer (routes through the P2 CommandRegistry + 9-source pipeline).
  *   Q12 updateGeneralNumber()    — no rng (recompute nation.gennum; daemon side-effect).
- *   Q13 refreshNationStaticInfo()— no rng (static-info cache refresh; daemon side-effect).
+ *   Q13 refreshNationStaticInfo()— no rng. PHP `func.php:87-92` invalidates only a request-local static
+ *                                  nation cache; the Kotlin daemon has no equivalent persistent cache here.
  *   Q14 checkEmperior()          — NO rng (천통 detection → isunited / UNITED target; verified takes no rng).
  *   Q15 triggerTournament($rng)  — at most ONE `nextBool(0.4)`; if it proceeds AND tnmt_pattern is empty, a
  *                                  5-element `shuffle`. (Default golden: tnmt_trig off → ZERO draws; the
  *                                  injected consumer reproduces the faithful count.)
- *   Q16 registerAuction($rng)    — EXACTLY two `nextBool(1/(cnt+5))` gates (sell-rice + buy-rice), each
+ *   Q16 registerAuction($rng)    — EXACTLY two `nextBool(1/(cnt+5))` gates (buy-rice then sell-rice), each
  *                                  optionally followed by `nextRangeInt(1,5)` + `nextRangeInt(3,12)`.
  *   Q17 SetNationFront(nation)   — per level>0 nation in static-info order, runs LAST, NO rng (B3 body).
  *
@@ -379,6 +380,7 @@ fun postUpdateMonthlyTail(
     startYear: Int,
     rng: RandUtil,
     checkWander: RngConsumer,
+    updateGeneralNumber: () -> Unit = {},
     triggerTournament: RngConsumer,
     registerAuction: RngConsumer,
     setNationFront: () -> List<PostFrontResult>,
@@ -395,7 +397,8 @@ fun postUpdateMonthlyTail(
         checkWanderRan = true
     }
 
-    // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (no rng; daemon-side recompute).
+    // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (Q13 is PHP request-local cache only).
+    updateGeneralNumber()
     // Q14 — checkEmperior (no rng; 천하통일 detection → isunited transition + 전토통일 log; ZERO draws).
     checkEmperior()
 

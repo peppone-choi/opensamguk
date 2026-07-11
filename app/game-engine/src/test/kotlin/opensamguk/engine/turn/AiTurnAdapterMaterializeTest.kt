@@ -219,13 +219,12 @@ class AiTurnAdapterMaterializeTest {
         )
         val a = AiTurnAdapter(worldM3, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
         a.chooseNationTurn(1, ReservedTurn("휴식", ""), LastTurn())
+        val recorder = ChangeRecorder(kvWriteObserver = worldM3::applyKvDirtyFree)
+        a.drainNationPassDeltas(recorder)
 
-        // The promotion hooks routed officer_level deltas through the recorder (a real chief was chosen
-        // from a non-empty nationGenerals bucket — the bucket is no longer empty).
-        val officerLevelDeltas = a.kvDeltas.filter { it.key == "officer_level" }
         assertTrue(
-            officerLevelDeltas.isNotEmpty(),
-            "choosePromotion materialised the nationGenerals bucket and promoted a chief (officer_level delta queued)",
+            recorder.dirtyGeneralIds().any { it in 30..36 },
+            "choosePromotion materialised the nationGenerals bucket and persisted a promoted chief",
         )
     }
 

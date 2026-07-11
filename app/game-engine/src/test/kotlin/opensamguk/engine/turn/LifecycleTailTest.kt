@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.ServerClock
@@ -18,7 +19,7 @@ import kotlin.test.assertTrue
  * The engine [TurnGeneral] is the P0-B/P1 slice: `npcState` is the `npc` column, `age` is a column,
  * and the lifecycle scalars (`killturn`/`deadyear`/`block`/`owner`/`owner_name`/`npc_org`/`lived_month`)
  * ride the `meta` bag (same convention `UpdateNationLevel` reads `meta["killturn"]`). LC1 mutates the
- * world's stored row in place (no flush concern — the per-general drain owns the dirty seam).
+ * world's stored row in place while [ReservedTurnHandler.recorder] remains the single dirty seam.
  */
 class LifecycleTailTest {
 
@@ -69,12 +70,13 @@ class LifecycleTailTest {
         ) + extraMeta,
     )
 
-    private fun world(g: TurnGeneral) =
+    private fun world(g: TurnGeneral, accessLog: GeneralAccessLog? = null) =
         InMemoryTurnWorld(
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 6, 3600, t0),
                 generals = listOf(g),
                 nations = listOf(Nation(1, "n1", "#000")),
+                accessLogs = listOfNotNull(accessLog),
             ),
         )
 
@@ -108,8 +110,12 @@ class LifecycleTailTest {
     @Test
     fun `휴식 command decrements killturn by 1`() {
         val w = world(gen(npc = 0, killturn = 5))
-        handler(w).applyKillturnDecrement(1, commandClassName = "휴식", env = env(killturn = 12))
+        val h = handler(w)
+
+        h.applyKillturnDecrement(1, commandClassName = "휴식", env = env(killturn = 12))
+
         assertEquals(4, killturnOf(w, 1))
+        assertEquals(setOf(1), h.recorder.dirtyGeneralIds(), "휴식 후처리도 general UPDATE를 flush해야 한다")
     }
 
     @Test
@@ -147,9 +153,13 @@ class LifecycleTailTest {
     @Test
     fun `block 2 decrements killturn floored at 0, pushes the multi-block log, and skips the command`() {
         val w = world(gen(block = 2, killturn = 5))
-        val blocked = handler(w).processBlocked(1, env = env())
+        val h = handler(w)
+
+        val blocked = h.processBlocked(1, env = env())
+
         assertTrue(blocked, "block>=2 returns true to skip the command")
         assertEquals(4, killturnOf(w, 1))
+        assertEquals(setOf(1), h.recorder.dirtyGeneralIds(), "블럭 후처리도 general UPDATE를 flush해야 한다")
         val logs = w.consumeDirtyState().logs
         assertTrue(logs.any { it.text.contains("멀티, 또는 비매너로 인한") && it.text.contains("<R>블럭</>") })
     }
@@ -174,11 +184,23 @@ class LifecycleTailTest {
 
     @Test
     fun `updateTurnTime increments lived_month and advances turntime by addTurn`() {
-        val w = world(gen(npc = 0, age = 30, killturn = 5))
-        handler(w).updateTurnTime(1, env = env())
+        val w = world(
+            gen(npc = 0, age = 30, killturn = 5),
+            GeneralAccessLog(1, 7, t0, refreshScore = 17, refreshScoreTotal = 90),
+        )
+        val h = handler(w)
+
+        h.updateTurnTime(1, env = env())
+
         val g = w.getGeneralById(1)!!
         assertEquals(101, (g.meta["lived_month"] as Number).toInt(), "lived_month +1")
         assertEquals(ServerClock.addTurn(t0, turnTerm, 1), g.turnTime, "turntime advanced by addTurn")
+        assertEquals(setOf(1), h.recorder.dirtyGeneralIds(), "turntime 후처리도 general UPDATE를 flush해야 한다")
+        val payload = DatabaseHooks.toFlushPayload(w, h.recorder, w.consumeDirtyState())
+        assertEquals(ServerClock.addTurn(t0, turnTerm, 1), payload.updatedGenerals.single().turnTime)
+        assertEquals(30, payload.updatedGenerals.single().age)
+        assertEquals(0, payload.generalAccessLogUpserts.single().refreshScore)
+        assertEquals(90, payload.generalAccessLogUpserts.single().refreshScoreTotal)
     }
 
     @Test

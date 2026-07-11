@@ -96,9 +96,14 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             book = g.role.items.book ?: "None",
             item = g.role.items.item ?: "None",
             npcType = g.npcState,
+            officerCity = (g.meta["officer_city"] as? Number)?.toInt() ?: 0,
             userId = g.userId,
             penalty = (g.meta["penalty"] as? Map<String, Any?>) ?: linkedMapOf(),
             meta = g.meta,
+            politics = g.stats.politics,
+            charm = g.stats.charm,
+            age = g.age,
+            turnTime = g.turnTime,
         )
 
         /** Engine [City] -> logic [City] (slice subset + P2 develop/defense; `trust` from `meta["trust"]`). */
@@ -125,6 +130,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             wallMax = c.wallMax,
             population = c.population,
             populationMax = c.populationMax,
+            dead = c.dead,
             trade = c.trade,
             region = c.region,
             term = c.term,

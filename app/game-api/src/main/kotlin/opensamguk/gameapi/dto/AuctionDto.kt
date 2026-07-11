@@ -47,9 +47,7 @@ data class AuctionResourceListResponse(
     val result: Boolean,
     val buyRice: List<AuctionResourceItem>,
     val sellRice: List<AuctionResourceItem>,
-    /** BLOCKED: PHP `getAuctionLogRecent(20)`(_auctionlog.txt) 원천 미포팅 → 빈 배열. */
     val recentLogs: List<String>,
-    /** BLOCKED: game-api에 세션 없음 → 0(PHP `$session->generalID`). */
     @get:JsonProperty("generalID")
     val generalID: Int,
 )
@@ -67,7 +65,6 @@ data class UniqueItemAuctionItem(
     /** detail.title. */
     val title: String,
     val target: String?,
-    /** `$auction->hostGeneralID === $generalID`. 세션 없음 → 항상 false(generalID=0). */
     @get:JsonProperty("isCallerHost")
     val isCallerHost: Boolean,
     /** detail.hostName (난독화된 host 이름). */
@@ -90,7 +87,6 @@ data class UniqueItemAuctionListResponse(
     val list: List<UniqueItemAuctionItem>,
     /**
      * PHP `AuctionUniqueItem::genObfuscatedName($session->generalID)` — viewer 본인의 난독 이름(1회 계산).
-     * BLOCKED: 세션 generalID(0) + game_env KV hiddenSeed 모두 본 read 컨트롤러에 미주입 → null(날조 금지).
      */
     val obfuscatedName: String?,
 )
@@ -126,12 +122,10 @@ data class UniqueItemAuctionDetailResponse(
     val bidList: List<UniqueItemAuctionBid>,
     /**
      * PHP `AuctionUniqueItem::genObfuscatedName($session->generalID)`(caller 난독, 1회).
-     * BLOCKED: 세션 generalID + game_env KV hiddenSeed 미주입 → null.
      */
     val obfuscatedName: String?,
     /**
      * PHP `InheritancePointManager::getInheritancePoint(general, previous)`.
-     * BLOCKED: viewer-specific(유산 포인트 previous KV) + 세션 없음 → null.
      */
     val remainPoint: Int?,
 )
@@ -164,7 +158,6 @@ data class AuctionUniqueHighestBid(
     /** aux.generalName(입찰 당시 스냅샷). */
     val generalName: String?,
     val amount: Int,
-    /** `$bid->generalID === $generalID`. 세션 없음 → 항상 false(generalID=0). */
     @get:JsonProperty("isCallerHighestBidder")
     val isCallerHighestBidder: Boolean,
     /**

@@ -1,0 +1,1 @@
+ALTER TABLE city ADD COLUMN dead integer NOT NULL DEFAULT 0;

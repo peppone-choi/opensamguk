@@ -114,6 +114,11 @@ class CheHwagyeGoldenTest {
         // dest 장수 부상 (cascadeGenerals): gid 8→1, 58→11, 106→16
         val injuredById = draft.cascadeGenerals.associate { it.id to it.injury }
         assertEquals(mapOf(8 to 1, 58 to 11, 106 to 16), injuredById, "[$command] dest 장수 부상량")
+        for (destGeneralJson in c["destGenerals"]!!.jsonArray) {
+            val gid = destGeneralJson.jsonObject["generalId"]!!.jsonPrimitive.int
+            val expectedLogs = destGeneralJson.jsonObject["logLines"]!!.jsonArray.map { it.jsonPrimitive.content }
+            assertEquals(expectedLogs, ctx.logsTo(gid), "[$command] dest general $gid action-log")
+        }
 
         // actor after-state
         val ag = c["after"]!!.jsonObject["general"]!!.jsonObject
@@ -123,5 +128,8 @@ class CheHwagyeGoldenTest {
         assertEquals(ag["gold"]!!.jsonPrimitive.int, g.gold, "[$command] general.gold")
         assertEquals(ag["rice"]!!.jsonPrimitive.int, g.rice, "[$command] general.rice")
         assertEquals(ag["intel_exp"]!!.jsonPrimitive.int, metaInt(g.meta, "intel_exp"), "[$command] meta.intel_exp")
+        val dc = c["destCityAfter"]!!.jsonObject["city"]!!.jsonObject
+        assertEquals(dc["state"]!!.jsonPrimitive.int, draft.destCity?.state, "[$command] dest city state")
+        assertEquals(listOf(opensamguk.logic.actions.GeneralRankIncrement(generalId, "firenum", 1)), draft.rankIncrements)
     }
 }

@@ -180,8 +180,8 @@ object InheritResets {
         ) {
             return ResetStatOutcome.Denied("능력치가 잘못 지정되었습니다. 다시 입력해주세요!")
         }
-        if (leadership + strength + intel != GameConst.defaultStatTotal) {
-            return ResetStatOutcome.Denied("능력치 총합이 ${GameConst.defaultStatTotal}이 아닙니다. 다시 입력해주세요!")
+        if (leadership + strength + intel != GameConst.defaultLegacyStatTotal) {
+            return ResetStatOutcome.Denied("능력치 총합이 ${GameConst.defaultLegacyStatTotal}이 아닙니다. 다시 입력해주세요!")
         }
 
         val explicitBonus = when (val b = normalizeBonus(inheritBonusStat)) {

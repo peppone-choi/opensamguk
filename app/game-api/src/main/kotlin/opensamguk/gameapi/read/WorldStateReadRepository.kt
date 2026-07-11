@@ -44,6 +44,9 @@ class WorldStateReadEntity(
     @Column(name = "start_time")
     var startTime: Instant? = null,
 
+    @Column(name = "isunited")
+    var isunited: Int = 0,
+
     @Convert(converter = MetaJsonConverter::class)
     @Column(name = "config", columnDefinition = "jsonb")
     var config: Map<String, Any?> = linkedMapOf(),
@@ -54,6 +57,9 @@ class WorldStateReadEntity(
 
     @Column(name = "status")
     var status: String = "OPEN",
+
+    @Column(name = "updated_at")
+    var updatedAt: Instant? = null,
 )
 
 interface WorldStateReadRepository : JpaRepository<WorldStateReadEntity, Int>

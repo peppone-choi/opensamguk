@@ -8,6 +8,7 @@ import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
+import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.read.AuctionBidRepository
@@ -15,6 +16,7 @@ import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
+import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
@@ -97,6 +99,8 @@ open class TurnRunService(
     private val bettingRepository: opensamguk.infra.read.BettingRepository? = null,
     /** inheritance KV read seam (P0-07 — `inheritance_{owner}` previous[0], PHP Betting.php:133,142). */
     private val inheritanceRepository: opensamguk.infra.read.InheritanceRepository? = null,
+    private val selectPoolRepository: SelectPoolRepository? = null,
+    private val tournamentDaemon: TournamentDaemon? = null,
 ) {
 
     /**
@@ -118,6 +122,7 @@ open class TurnRunService(
             gameKvRepository = gameKvRepository,
             bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
+            selectPoolRepository = selectPoolRepository,
         )
     } else {
         null
@@ -209,9 +214,6 @@ open class TurnRunService(
             realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
         }
 
-        // 1b. auction expiry scan (P6) — expire auctions whose closeDate has passed.
-        auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)
-
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>
         val crossed: Int
@@ -277,6 +279,9 @@ open class TurnRunService(
             handled = lifecycle.runTick(runTime)
             crossed = 0
         }
+
+        tournamentDaemon?.processTournament(world, handler.recorder, runTime)
+        auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).
         //

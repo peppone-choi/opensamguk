@@ -6,6 +6,7 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralRole
 import opensamguk.engine.turn.GeneralStats
+import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnGeneral
@@ -53,12 +54,18 @@ class MessageHandlerTest {
     /**
      * 2국(촉=1, 위=2) world. me(유비, 촉, 수뇌) + 손권(오 없음 — 위 소속 군주) + 위 군주(조조, officer_level=12).
      */
-    private fun world(generals: List<TurnGeneral>): InMemoryTurnWorld = InMemoryTurnWorld(
+    private fun world(
+        generals: List<TurnGeneral>,
+        accessLogs: List<GeneralAccessLog> = emptyList(),
+        refreshLimit: Int = 30_000,
+    ): InMemoryTurnWorld = InMemoryTurnWorld(
         WorldSnapshot(
             state = TurnWorldState(
                 id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0,
+                meta = mapOf("refreshLimit" to refreshLimit),
             ),
             generals = generals,
+            accessLogs = accessLogs,
             nations = listOf(
                 Nation(id = 1, name = "촉", color = "#00ff00", gold = 1000),
                 Nation(id = 2, name = "위", color = "#0000ff", gold = 1000),
@@ -272,13 +279,33 @@ class MessageHandlerTest {
 
     @Test
     fun `send denied when access-limited`() {
-        val me = general(1, "유비", 1, meta = mapOf("limitState" to 2))
-        val world = world(listOf(me))
+        val me = general(1, "유비", 1)
+        val world = world(
+            listOf(me),
+            accessLogs = listOf(
+                GeneralAccessLog(
+                    generalId = 1,
+                    userId = 7,
+                    lastRefresh = t0,
+                    refresh = 2,
+                    refreshTotal = 20,
+                    refreshScore = 10,
+                    refreshScoreTotal = 30,
+                ),
+            ),
+            refreshLimit = 10,
+        )
         val recorder = ChangeRecorder()
         val res = handler(world, recorder).handleSend(
             TurnDaemonCommand.SendMessage(generalId = 1, mailbox = 9999, text = "x"),
         )
         assertEquals("접속 제한입니다.", (res as SendMessageResult).reason)
+        val accessLog = recorder.accessLogUpserts().single()
+        assertEquals(3, accessLog.refresh)
+        assertEquals(21, accessLog.refreshTotal)
+        assertEquals(11, accessLog.refreshScore)
+        assertEquals(31, accessLog.refreshScoreTotal)
+        assertTrue(recorder.createdMessages().isEmpty())
     }
 
     @Test

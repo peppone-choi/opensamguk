@@ -6,10 +6,14 @@ import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
+import opensamguk.engine.run.MonthlyPreUpdateHook
 import opensamguk.engine.run.MonthlyPostUpdateHook
 import opensamguk.engine.run.TurnRunService
+import opensamguk.engine.tournament.ProductionTournamentBettingPort
+import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.EngineGeneralActionPipelineBuilder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LifecycleEnv
 import opensamguk.engine.turn.PerTurnOverlay
@@ -24,6 +28,7 @@ import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
+import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
@@ -46,7 +51,6 @@ import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.MonthlyClock
 import opensamguk.logic.tick.CheckStatisticCalculator
 import opensamguk.logic.tick.MonthlyPipeline
-import opensamguk.logic.tick.PreUpdateMonthly
 import opensamguk.logic.tick.ServerClock
 import org.springframework.beans.factory.annotation.Value
 import java.time.Instant
@@ -115,6 +119,10 @@ class DaemonLoopConfig {
     fun diplomacyLetterRepository(jdbc: NamedParameterJdbcTemplate): DiplomacyLetterRepository =
         DiplomacyLetterRepository(jdbc)
 
+    @Bean
+    fun selectPoolRepository(jdbc: NamedParameterJdbcTemplate): SelectPoolRepository =
+        SelectPoolRepository(jdbc)
+
     /**
      * 연락처/메시지 read seam (W6a 메시지). 데몬 [MessageHandler]의 삭제 게이트(getMessageByID)의 read 경로.
      * JDBC read 전용 — write 경로(message INSERT/UPDATE, general.newmsg)는 [JdbcFlushExecutor]뿐(one-daemon-write).
@@ -166,6 +174,8 @@ class DaemonLoopConfig {
         gameKvRepository: opensamguk.infra.read.GameKvRepository,
         bettingRepository: opensamguk.infra.read.BettingRepository,
         inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
+        @Value("\${opensamguk.profile}") profile: String,
+        selectPoolRepository: SelectPoolRepository,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -175,6 +185,7 @@ class DaemonLoopConfig {
         val turnTerm = state.tickSeconds / 60
 
         val registry = CommandRegistry(generalActionPipeline)
+        val pipelineBuilder = EngineGeneralActionPipelineBuilder(world, startYear)
 
         // ONE GeneralAI per general per turn — its single RandUtil is threaded through BOTH the nation
         // pass (chooseNationTurn, stream PREFIX) and the general pass (chooseGeneralTurn, continuation).
@@ -186,6 +197,7 @@ class DaemonLoopConfig {
             startYear = startYear,
             turnTerm = turnTerm,
             pipeline = generalActionPipeline,
+            pipelineBuilder = pipelineBuilder,
             reservedCommandNameOf = { gid -> reservedTurnRepository.readReserved(gid, 0).actionCode },
         )
 
@@ -200,7 +212,8 @@ class DaemonLoopConfig {
         // Built here (not inside RTH) so the succession handler diffs into the SAME recorder the reserved
         // turns + nation pass use — the nextRuler hook (군주 사망 후계/멸망) writes heir-promote / 재야-reset /
         // markNationDeleted deltas that must flush alongside the rest of the tick.
-        val recorder = ChangeRecorder()
+        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+        eventStore.bindMutationSink(recorder::recordEventMutation)
         val rulerSuccession = RulerSuccessionHandler(world, recorder, hiddenSeed)
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
@@ -217,6 +230,7 @@ class DaemonLoopConfig {
             nextRuler = { generalId, env -> rulerSuccession.succeed(generalId, env) },
             recorder = recorder,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
+            pipelineBuilder = pipelineBuilder,
         )
 
         // The nation pass writes through the SAME recorder the handler owns — the lone dirty source the
@@ -230,6 +244,7 @@ class DaemonLoopConfig {
             registry = registry,
             startYear = startYear,
             turnTerm = turnTerm,
+            pipelineBuilder = pipelineBuilder,
         )
 
         // The monthly pipeline is PER-RUN state: its PostUpdate hook writes through `handler.recorder` —
@@ -244,7 +259,7 @@ class DaemonLoopConfig {
         val monthlyPipeline = MonthlyPipeline(
             monthlyRngFactory = { year, month -> MonthScopedRng.forMonth(hiddenSeed, year, month) },
             clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
-            preUpdateMonthly = PreUpdateMonthly { true },
+            preUpdateMonthly = MonthlyPreUpdateHook(world, handler.recorder, profile),
             checkStatistic = CheckStatistic {
                 val generals = world.listGenerals().map { g ->
                     val statisticMeta = g.meta +
@@ -275,7 +290,12 @@ class DaemonLoopConfig {
                 // tick을 영구 동결시킨다(2026-06-09 prod s1/spep 회귀). MetaJson 경로만 허용.
                 handler.recorder.recordStatisticInsert(StatisticInsertColumns.from(row))
             },
-            postUpdateMonthly = MonthlyPostUpdateHook(world, handler.recorder, generalActionPipeline),
+            postUpdateMonthly = MonthlyPostUpdateHook(
+                world,
+                handler.recorder,
+                generalActionPipeline,
+                auctionRepository = auctionRepository,
+            ),
         )
 
         val lifecycle = TurnDaemonLifecycle(
@@ -294,7 +314,9 @@ class DaemonLoopConfig {
                 val raw = g?.let { world.getNationById(it.nationId)?.meta?.get("turn_last_${it.officerLevel}") }
                 @Suppress("UNCHECKED_CAST")
                 val lastTurn = LastTurn.fromRaw(raw as? Map<String, Any?>)
-                ai.chooseNationTurn(generalId, reserved, lastTurn)
+                ai.chooseNationTurn(generalId, reserved, lastTurn).also {
+                    ai.drainNationPassDeltas(recorder)
+                }
             },
             beginGeneralTurn = { generalId -> ai.beginGeneralTurn(generalId) },
             // 라이브 LifecycleEnv — per-general 꼬리(killturn 감소/리셋 + updateTurnTime)가 PHP `$gameStor` 값으로
@@ -324,6 +346,7 @@ class DaemonLoopConfig {
                 reservedTurnRepository.pullNationTurn(nationId, officerLevel)
             },
             pullGeneralTurnOf = { generalId ->
+                ai.drainGeneralPassDeltas(recorder)
                 reservedTurnRepository.pullGeneralTurn(generalId)
             },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(generalId, 0) },
@@ -368,6 +391,19 @@ class DaemonLoopConfig {
             gameKvRepository = gameKvRepository,
             bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
+            selectPoolRepository = selectPoolRepository,
+            tournamentDaemon = TournamentDaemon(
+                gameKvRepository = gameKvRepository,
+                bettingFactory = { liveWorld, liveRecorder ->
+                    ProductionTournamentBettingPort(
+                        world = liveWorld,
+                        recorder = liveRecorder,
+                        gameKvRepository = gameKvRepository,
+                        bettingRepository = bettingRepository,
+                        inheritanceRepository = inheritanceRepository,
+                    )
+                },
+            ),
         )
     }
 
@@ -596,8 +632,9 @@ class DaemonLoopConfig {
         magnitude: Double,
     ) {
         val general = ctx.general ?: return
-        val expRes = addExperience(general, magnitude, pipeline)
-        val dedRes = addDedication(expRes.general, magnitude, pipeline)
+        val actorPipeline = ctx.pipeline ?: pipeline
+        val expRes = addExperience(general, magnitude, actorPipeline)
+        val dedRes = addDedication(expRes.general, magnitude, actorPipeline)
         ctx.general = dedRes.general
         expRes.plainLog?.let { ctx.addActionLog(it) }
         dedRes.plainLog?.let { ctx.addActionLog(it) }

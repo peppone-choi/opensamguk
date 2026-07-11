@@ -218,6 +218,30 @@ class DrainTailAdvanceTest {
     }
 
     @Test
+    fun `constraint-denied drain still records the lifecycle general update for flush`() {
+        val w = world(gen(id = 1, killturn = 5))
+        val h = ReservedTurnHandler(
+            w,
+            registry = CommandRegistry(GeneralActionPipeline()),
+            hiddenSeed = "0".repeat(32),
+            startYear = 184,
+        )
+        val lc = TurnDaemonLifecycle(
+            world = w,
+            handler = h,
+            lifecycleEnvOf = ::lifecycleEnvOf,
+            reservedActionOf = {
+                ReservedTurn("che_건국", """{"nationName":"n","nationType":"che_중립","colorType":0}""")
+            },
+        )
+
+        val handled = lc.runTick()
+
+        assertTrue(handled.single().fellBack, "군주가 아닌 장수의 건국 예약은 조건거부여야 한다")
+        assertEquals(setOf(1), h.recorder.dirtyGeneralIds(), "조건거부 후처리도 general UPDATE를 flush해야 한다")
+    }
+
+    @Test
     fun `runTick pulls rings and advances turnTime for a blocked general`() {
         val pulledGenerals = mutableListOf<Int>()
         val w = world(gen(id = 1, killturn = 5, block = 2))

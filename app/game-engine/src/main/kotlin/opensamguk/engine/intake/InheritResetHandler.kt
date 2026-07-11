@@ -260,7 +260,15 @@ class InheritResetHandler(
         }
 
         val pre = PerTurnOverlay.toLogicGeneral(me)
-        val next = me.copy(stats = GeneralStats(out.nextLeadership, out.nextStrength, out.nextIntel))
+        val next = me.copy(
+            stats = GeneralStats(
+                out.nextLeadership,
+                out.nextStrength,
+                out.nextIntel,
+                me.stats.politics,
+                me.stats.charm,
+            ),
+        )
         world.applyGeneralDirtyFree(next)
         recorder.diffGeneral(pre, PerTurnOverlay.toLogicGeneral(next))
 

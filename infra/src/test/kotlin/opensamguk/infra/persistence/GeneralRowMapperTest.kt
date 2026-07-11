@@ -2,6 +2,7 @@ package opensamguk.infra.persistence
 
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -33,6 +34,8 @@ class GeneralRowMapperTest {
         "book_code" to "None",
         "item_code" to "None",
         "npc_state" to 2,
+        "age" to 31,
+        "turn_time" to "0200-01-02T03:04:05Z",
         "last_turn" to lastTurn,
         "penalty" to "{}",
         "meta" to meta,
@@ -56,6 +59,8 @@ class GeneralRowMapperTest {
         assertEquals(4, g.officerLevel)
         assertEquals(1500, g.gold)
         assertEquals(1200, g.rice)
+        assertEquals(31, g.age)
+        assertEquals(Instant.parse("0200-01-02T03:04:05Z"), g.turnTime)
 
         val cols = GeneralRowMapper.toColumns(g)
         assertEquals(10, cols["id"])
@@ -70,6 +75,8 @@ class GeneralRowMapperTest {
         assertEquals(4, cols["officer_level"])
         assertEquals(1500, cols["gold"])
         assertEquals(1200, cols["rice"])
+        assertEquals(31, cols["age"])
+        assertEquals("0200-01-02T03:04:05Z", cols["turn_time"])
 
         // RTK14 분기 스탯(정치/매력) 라운드트립.
         assertEquals(30, g.politics)

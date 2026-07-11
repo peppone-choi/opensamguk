@@ -42,6 +42,7 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/general/claim").authenticated()
                     .requestMatchers("/api/generals/claimable").authenticated()
+                    .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()
                     // ── everything else stays public (transition: ?generalId= reads, health, const, menu, map) ──
                     .anyRequest().permitAll()
             }

@@ -87,6 +87,8 @@ class GeneralCreateFlushIT {
                 "leadership" to 70,
                 "strength" to 65,
                 "intel" to 80,
+                "politics" to 73,
+                "charm" to 84,
                 "injury" to 0,
                 "experience" to 2500,
                 "dedication" to 2500,
@@ -135,6 +137,8 @@ class GeneralCreateFlushIT {
         assertEquals(70, (g["leadership"] as Number).toInt())
         assertEquals(65, (g["strength"] as Number).toInt())
         assertEquals(80, (g["intel"] as Number).toInt())
+        assertEquals(73, (g["politics"] as Number).toInt())
+        assertEquals(84, (g["charm"] as Number).toInt())
         assertEquals(2500, (g["experience"] as Number).toInt())
         assertEquals(2500, (g["dedication"] as Number).toInt())
         assertEquals(0, (g["officer_level"] as Number).toInt())

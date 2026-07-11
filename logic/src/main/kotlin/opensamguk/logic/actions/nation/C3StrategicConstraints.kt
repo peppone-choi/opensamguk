@@ -5,6 +5,7 @@ import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.RequirementKey
 import opensamguk.logic.constraints.StateView
+import opensamguk.logic.domain.Nation
 
 /**
  * C3 전략(strategic) 커맨드 전용 로컬 제약 헬퍼.
@@ -22,19 +23,23 @@ import opensamguk.logic.constraints.StateView
  *
  * 기존 `allowStrategicCommand()`(C-PURE, `AllowStrategicCommand` = nation.war==0 전쟁금지 게이트)와는
  * 다른 PHP 제약이다 — 혼동 금지. 매니페스트(manifest_c3.json)대로 전략 게이트는 문서화된 정적 선결
- * 조건(static precondition)이므로, staging 시드(`ctx.env["__strategicCmdLimit"]`)가 없으면 통과로
- * 처리한다(precheck staging seam 미구현 → P7 read-side TODO). 음수/0이면 deny.
+ * 조건(static precondition)이다. PHP의 비교는 `strategic_cmd_limit <= allowTurnCnt`이며 기본
+ * `allowTurnCnt`는 0이다. 국가 행 또는 명시적 staging 값이 없으면 실행을 허용하지 않는다.
  */
 internal fun availableStrategicCommand(): Constraint = object : Constraint {
     override val name = "AvailableStrategicCommand"
-    override fun requires(ctx: ConstraintContext): List<RequirementKey> = emptyList()
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> =
+        ctx.nationId?.let { listOf(RequirementKey.Nation(it)) } ?: emptyList()
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
-        // staging seam이 채워지면 실제 잔여 횟수를 본다; 부재 시(정적 선결조건) 통과.
-        val remain = (ctx.env["__strategicCmdLimit"] as? Number)?.toInt()
+        val nationLimit = ctx.nationId?.let { nationId ->
+            (view.get(RequirementKey.Nation(nationId)) as? Nation)?.meta?.get("strategic_cmd_limit") as? Number
+        }?.toInt()
+        val remain = nationLimit
+            ?: (ctx.env["__strategicCmdLimit"] as? Number)?.toInt()
             ?: (ctx.args["__strategicCmdLimit"] as? Number)?.toInt()
-            ?: return ConstraintResult.Allow
-        return if (remain > 0) ConstraintResult.Allow
-        else ConstraintResult.Deny("전략 커맨드 제한 횟수를 초과했습니다.")
+            ?: return ConstraintResult.Deny("전략기한이 남았습니다.")
+        return if (remain <= 0) ConstraintResult.Allow
+        else ConstraintResult.Deny("전략기한이 남았습니다.")
     }
 }
 
@@ -43,17 +48,17 @@ internal fun availableStrategicCommand(): Constraint = object : Constraint {
  * 있으면 deny(초토화: state 0(교전) 금지 = 평시에만 가능). `DisallowDiplomacyBetweenStatus`(양방향
  * dest 국가와의 상태)와 달리, 이쪽은 아국의 ANY 외교관계가 금지 상태에 걸리면 deny한다.
  *
- * 인접/외교 인접성은 F-BFS preload(staging) 대상이다. precheck staging seam 미구현 시
- * `ctx.env["__disallowDiplomacyHit"]`(Boolean: 금지 상태에 걸린 관계가 하나라도 있는가)가 없으면
- * 통과로 처리한다(P7 read-side TODO). PHP는 `getMyNationStaticInfo` + 모든 외교행을 순회한다.
+ * 인접/외교 인접성은 F-BFS preload(staging) 대상이다. `ctx.env["__disallowDiplomacyHit"]`가
+ * 없으면 데이터가 준비되지 않은 것으로 보고 deny한다. PHP는 `getMyNationStaticInfo` + 모든 외교행을 순회한다.
  */
 internal fun disallowDiplomacyStatus(disallowStatus: Map<Int, String>): Constraint = object : Constraint {
     override val name = "DisallowDiplomacyStatus"
-    override fun requires(ctx: ConstraintContext): List<RequirementKey> = emptyList()
+    override fun requires(ctx: ConstraintContext): List<RequirementKey> =
+        listOf(RequirementKey.Env("__disallowDiplomacyHit"))
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         val hit = (ctx.env["__disallowDiplomacyHit"] as? Boolean)
             ?: (ctx.args["__disallowDiplomacyHit"] as? Boolean)
-            ?: return ConstraintResult.Allow
+            ?: return ConstraintResult.Deny(disallowStatus.values.firstOrNull() ?: "외교상태 제한입니다.")
         if (!hit) return ConstraintResult.Allow
         // 어떤 state가 걸렸는지는 staging이 알려준다; 부재 시 첫 메시지로 deny(게이트 미평가 경로).
         val hitState = (ctx.env["__disallowDiplomacyHitState"] as? Number)?.toInt()

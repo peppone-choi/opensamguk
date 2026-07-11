@@ -15,6 +15,8 @@ data class GeneralStats(
     val leadership: Int,
     val strength: Int,
     val intelligence: Int,
+    val politics: Int = 50,
+    val charm: Int = 50,
 )
 
 data class GeneralItems(
@@ -29,6 +31,16 @@ data class GeneralRole(
     val specialDomestic: String? = null,
     val specialWar: String? = null,
     val items: GeneralItems = GeneralItems(),
+)
+
+data class GeneralAccessLog(
+    val generalId: Int,
+    val userId: Long? = null,
+    val lastRefresh: Instant? = null,
+    val refresh: Int = 0,
+    val refreshTotal: Int = 0,
+    val refreshScore: Int = 0,
+    val refreshScoreTotal: Int = 0,
 )
 
 data class TurnGeneral(
@@ -65,6 +77,7 @@ data class City(
     val state: Int = 0,
     val population: Int = 0,
     val populationMax: Int = 0,
+    val dead: Int = 0,
     val agriculture: Int = 0,
     val agricultureMax: Int = 0,
     val commerce: Int = 0,
@@ -146,6 +159,8 @@ data class TurnWorldState(
     val lastTurnTime: Instant,
     val currentPhase: Int = 1,
     val meta: Map<String, Any?> = emptyMap(),
+    val status: String = "OPEN",
+    val config: Map<String, Any?> = emptyMap(),
 )
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"

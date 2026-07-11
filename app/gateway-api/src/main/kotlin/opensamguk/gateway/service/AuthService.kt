@@ -1,7 +1,11 @@
 package opensamguk.gateway.service
 
+import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.gateway.dto.AuthResponse
+import opensamguk.gateway.dto.ChangePasswordRequest
+import opensamguk.gateway.dto.DeleteAccountRequest
 import opensamguk.gateway.dto.LoginRequest
+import opensamguk.gateway.dto.ProfileIconRequest
 import opensamguk.gateway.dto.RegisterRequest
 import opensamguk.gateway.dto.UserResponse
 import opensamguk.gateway.security.CustomUserDetails
@@ -12,6 +16,7 @@ import opensamguk.infra.read.EmailHasher
 import opensamguk.infra.read.SystemFlagRepository
 import opensamguk.infra.read.UserRepository
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -52,7 +57,7 @@ class AuthService(
             nickname = request.nickname,
         )
         val saved = userRepository.save(user)
-        val accessToken = jwtTokenProvider.generateAccessToken(saved.id, saved.username, saved.role)
+        val accessToken = jwtTokenProvider.generateAccessToken(saved.toGatewayProfile())
         val refreshToken = jwtTokenProvider.generateRefreshToken(saved.id)
         return AuthResponse(accessToken, refreshToken, saved.toResponse())
     }
@@ -71,21 +76,21 @@ class AuthService(
         if ((systemFlag == null || !systemFlag.allowLogin) && user.role != "ADMIN") {
             throw IllegalArgumentException("현재는 로그인이 금지되어있습니다!")
         }
-        val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.username, user.role)
+        val accessToken = jwtTokenProvider.generateAccessToken(user.toGatewayProfile())
         val refreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, refreshToken, user.toResponse())
     }
 
     @Transactional(readOnly = true)
     fun refresh(refreshToken: String): AuthResponse {
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
+        if (!jwtTokenProvider.validateRefreshToken(refreshToken)) {
             throw IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.")
         }
         val userId = jwtTokenProvider.getUserIdFromToken(refreshToken)
             ?: throw IllegalArgumentException("토큰에서 사용자 ID를 추출할 수 없습니다.")
         val user = userRepository.findById(userId)
             .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
-        val accessToken = jwtTokenProvider.generateAccessToken(user.id, user.username, user.role)
+        val accessToken = jwtTokenProvider.generateAccessToken(user.toGatewayProfile())
         val newRefreshToken = jwtTokenProvider.generateRefreshToken(user.id)
         return AuthResponse(accessToken, newRefreshToken, user.toResponse())
     }
@@ -97,11 +102,64 @@ class AuthService(
         return user.toResponse()
     }
 
+    @Transactional
+    fun changePassword(userDetails: CustomUserDetails, request: ChangePasswordRequest) {
+        val user = findUser(userDetails)
+        assertCurrentPassword(user, request.currentPassword)
+        user.password = passwordEncoder.encode(request.newPassword)
+        user.updatedAt = java.time.LocalDateTime.now()
+    }
+
+    @Transactional
+    fun updateProfileIcon(userDetails: CustomUserDetails, request: ProfileIconRequest): UserResponse {
+        val user = findUser(userDetails)
+        if (request.imgsvr !in 0..1) {
+            throw IllegalArgumentException("이미지 서버 값은 0 또는 1이어야 합니다.")
+        }
+        val picture = request.picture?.trim()?.takeIf { it.isNotEmpty() }
+        if (picture != null && (picture.contains('/') || picture.contains('\\') || picture.contains(".."))) {
+            throw IllegalArgumentException("올바르지 않은 전콘 파일명입니다.")
+        }
+        user.picture = picture
+        user.imgsvr = picture != null && request.imgsvr == 1
+        user.updatedAt = java.time.LocalDateTime.now()
+        return user.toResponse()
+    }
+
+    @Transactional
+    fun deleteAccount(userDetails: CustomUserDetails, request: DeleteAccountRequest) {
+        val user = findUser(userDetails)
+        assertCurrentPassword(user, request.currentPassword)
+        userRepository.delete(user)
+    }
+
+    private fun findUser(userDetails: CustomUserDetails): UserEntity =
+        userRepository.findByUsername(userDetails.username)
+            .orElseThrow { IllegalArgumentException("사용자를 찾을 수 없습니다.") }
+
+    private fun assertCurrentPassword(user: UserEntity, currentPassword: String) {
+        if (!passwordEncoder.matches(currentPassword, user.password)) {
+            throw BadCredentialsException("현재 비밀번호가 올바르지 않습니다.")
+        }
+    }
+
     private fun UserEntity.toResponse(): UserResponse = UserResponse(
         id = id,
         username = username,
         email = email,
         nickname = nickname,
         role = role,
+        picture = picture,
+        imageServer = if (imgsvr) 1 else 0,
+    )
+
+    private fun UserEntity.toGatewayProfile(): GatewayProfileClaims = GatewayProfileClaims(
+        userId = id,
+        username = username,
+        role = role,
+        nickname = nickname,
+        grade = grade ?: if (role == "ADMIN") 6 else 1,
+        picture = picture,
+        imageServer = if (imgsvr) 1 else 0,
     )
 }

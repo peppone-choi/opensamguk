@@ -1,6 +1,7 @@
 package opensamguk.infra.seed
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.logic.event.EventStore
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
@@ -74,6 +75,7 @@ class ScenarioImporter(
         val diplomacy: Int,
         val rankData: Int,
         val ngGames: Int,
+        val event: Int,
     )
 
     /**
@@ -115,6 +117,8 @@ class ScenarioImporter(
         // 4j — ng_games (1 session record).
         val ngGamesCount = insertNgGames(jdbc)
 
+        val eventCount = insertEvents(jdbc)
+
         return ImportCounts(
             worldState = worldStateCount,
             nation = nationCount,
@@ -125,6 +129,7 @@ class ScenarioImporter(
             diplomacy = diplomacyCount,
             rankData = rankCount,
             ngGames = ngGamesCount,
+            event = eventCount,
         )
     }
 
@@ -151,6 +156,7 @@ class ScenarioImporter(
             "turnterm" to turnTerm,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
+            "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
@@ -359,8 +365,6 @@ class ScenarioImporter(
             val ded = age * 100
             val personal = personalCode(g.ego)
             val special = g.special ?: "None"
-            // RTK14 분기 스탯(정치/매력) 룩업 — 리소스 부재/미스 시 기본 50.
-            val (politics, charm) = Rtk14Stats.lookup(g.name)
             jdbc.update(
                 sql,
                 bg.id, g.name, g.nationId, cityId, npcState, g.affinity,
@@ -369,7 +373,7 @@ class ScenarioImporter(
                 ts, age, age, personal, special,
                 // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
                 jsonb(ScenarioLifecycleMeta.initialGeneralMeta(dead, startYear, SEED_START_MONTH)),
-                politics, charm,
+                g.politics, g.charm,
             )
             n++
         }
@@ -516,6 +520,49 @@ class ScenarioImporter(
         return 1
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    // 4k event — persisted merged default + scenario rows
+    // ─────────────────────────────────────────────────────────────────────────────────────────────
+    private fun insertEvents(jdbc: JdbcTemplate): Int {
+        val defaults = if (scenario.ignoreDefaultEvents) {
+            emptyList()
+        } else {
+            EventStore.defaultWireRows().map { row ->
+                EventRowToInsert(
+                    target = row.target,
+                    priority = row.priority,
+                    condition = row.condition,
+                    action = row.action,
+                )
+            }
+        }
+        val scenarioRows = scenario.events.map { row ->
+            EventRowToInsert(
+                target = row.target,
+                priority = row.priority,
+                condition = opensamguk.infra.persistence.MetaJson.encode(row.condition),
+                action = opensamguk.infra.persistence.MetaJson.encode(row.actions),
+            )
+        }
+        for (row in defaults + scenarioRows) {
+            jdbc.update(
+                """
+                INSERT INTO event (target_code, priority, condition, action)
+                VALUES (?, ?, ?, ?)
+                """.trimIndent(),
+                row.target, row.priority, jsonb(row.condition), jsonb(row.action),
+            )
+        }
+        return defaults.size + scenarioRows.size
+    }
+
+    private data class EventRowToInsert(
+        val target: String,
+        val priority: Int,
+        val condition: String,
+        val action: String,
+    )
+
     // ── jsonb helpers ──
     private fun jsonObject(vararg pairs: Pair<String, Any?>): String {
         // Insertion-order-preserving compact JSON (PHP-faithful). Reuse MetaJson via opensamguk.infra.
@@ -565,82 +612,4 @@ class ScenarioImporter(
             "inherit_earned", "inherit_spent", "inherit_earned_dyn", "inherit_earned_act", "inherit_spent_dyn",
         )
     }
-}
-
-/**
- * RTK14(삼국지14) 분기 스탯 룩업 — politics(정치)/charm(매력) 한정. **DIVERGENCE**: devsam/core 패러티
- * 대상이 아니며 PHP 골든 오라클이 없다. **exact 무장명**(접미숫자 포함)을 키로 git-ignored 클래스패스 리소스
- * `scenario/rtk14_stats.local.json`(`{"마충1":{"politics":..,"charm":..}, ...}` — 동명이인은 오프라인
- * 지문 1:1 배정 후 exact 이름으로 구워짐)을 **1회 lazy** 로드한다. 리소스가 없거나(=CI/prod) 파싱
- * 실패하면 맵은 비고, 모든 lookup은 기본 (50,50).
- *
- * 이미 모듈에서 쓰는 [opensamguk.infra.persistence.MetaJson] 파서를 재사용한다(새 Jackson 의존 없음).
- */
-internal object Rtk14Stats {
-    /** 기본값 — 리소스 미스/부재 시 leadership/strength/intel과 동일한 50. */
-    private const val DEFAULT = 50
-
-    private const val RESOURCE = "scenario/rtk14_stats.local.json"
-
-    /** name → (politics, charm). 리소스 부재/파싱실패 시 빈 맵(graceful — never crash). */
-    private val table: Map<String, Pair<Int, Int>> by lazy { load() }
-
-    /** prod 사이드로드용 외부 경로 키 — 코에이 IP 데이터를 Docker 이미지 밖에서 주입. */
-    private const val PATH_PROPERTY = "rtk14.stats.path"
-    private const val PATH_ENV = "RTK14_STATS_PATH"
-
-    /**
-     * RTK14 JSON 원문 읽기: ① `rtk14.stats.path` 시스템 프로퍼티 / `RTK14_STATS_PATH` env 의 파일시스템
-     * 경로(prod 사이드로드 — 미커밋 코에이 IP를 호스트에서 bind-mount), ② 클래스패스 RESOURCE(로컬 dev),
-     * ③ 둘 다 없으면 null. 어느 단계도 throw하지 않는다(graceful — 기본 50 fallback).
-     */
-    internal fun readRaw(
-        ext: String? = System.getProperty(PATH_PROPERTY) ?: System.getenv(PATH_ENV),
-    ): String? {
-        if (!ext.isNullOrBlank()) {
-            try {
-                val f = java.io.File(ext)
-                if (f.isFile) return f.readText(Charsets.UTF_8)
-            } catch (_: Exception) { /* 외부 경로 실패 시 클래스패스로 폴백 */ }
-        }
-        return try {
-            Rtk14Stats::class.java.classLoader.getResourceAsStream(RESOURCE)
-                ?.use { it.readBytes().toString(Charsets.UTF_8) }
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun load(): Map<String, Pair<Int, Int>> {
-        val raw = readRaw() ?: return emptyMap()
-
-        return try {
-            val root = opensamguk.infra.persistence.MetaJson.decode(raw)
-            val out = LinkedHashMap<String, Pair<Int, Int>>(root.size)
-            for ((name, v) in root) {
-                val stats = v as? Map<*, *> ?: continue
-                val politics = intOrNull(stats["politics"]) ?: DEFAULT
-                val charm = intOrNull(stats["charm"]) ?: DEFAULT
-                out[name] = politics to charm
-            }
-            out
-        } catch (_: Exception) {
-            // 손상된 리소스가 시드를 막아선 안 된다 — 기본값으로 안착.
-            emptyMap()
-        }
-    }
-
-    private fun intOrNull(v: Any?): Int? = when (v) {
-        is Int -> v
-        is Number -> v.toInt()
-        is String -> v.toIntOrNull()
-        else -> null
-    }
-
-    /**
-     * devsam 무장명(접미숫자 포함, 예 `마충1`)으로 **정확** 룩업. 리소스 JSON은 오프라인 생성 단계에서
-     * 동명이인을 RTK14 다중행에 1:1 최적배정(통/무/지 지문 기반)해 **exact 이름 키**로 굽기 때문에,
-     * 런타임 정규화/strip가 불필요하다(오히려 동명이인을 붕괴시켜 틀린 값을 준다). 미스 시 기본 (50,50).
-     */
-    fun lookup(name: String): Pair<Int, Int> = table[name] ?: (DEFAULT to DEFAULT)
 }

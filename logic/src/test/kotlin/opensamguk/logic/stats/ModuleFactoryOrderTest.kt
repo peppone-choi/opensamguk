@@ -33,18 +33,21 @@ class ModuleFactoryOrderTest {
         specialDomesticRegistry = reg("specialDomestic"),
         personalityRegistry = reg("personality"),
         itemRegistry = reg("item"),
+        scenarioEffectRegistry = reg("scenario"),
     )
 
     private fun general(
         officerLevel: Int = 1,
         horse: String = "None", weapon: String = "None",
         book: String = "None", item: String = "None",
+        crewTypeId: Int = 0,
     ) = General(
         id = 1, nationId = 1, cityId = 5,
         leadership = 70, strength = 60, intel = 80, injury = 0,
         experience = 0.0, dedication = 0.0, officerLevel = officerLevel,
         gold = 1000, rice = 1000,
         horse = horse, weapon = weapon, book = book, item = item,
+        crewTypeId = crewTypeId,
     )
 
     private fun tagsOf(mods: List<GeneralActionModule>): List<String> = mods.map {
@@ -58,20 +61,28 @@ class ModuleFactoryOrderTest {
     @Test
     fun `fully equipped general yields modules in MODULE_ORDER`() {
         val mods = factory.build(
-            general = general(officerLevel = 5, horse = "명마", weapon = "보검", book = "병법서", item = "보물"),
+            general = general(
+                officerLevel = 5,
+                horse = "명마",
+                weapon = "보검",
+                book = "병법서",
+                item = "보물",
+                crewTypeId = 1100,
+            ),
             nationTypeCode = "che_유가",
             specialDomesticCode = "che_상재",
             personalityCode = "che_명사",
             nationLevel = 3,
+            scenarioEffectCode = "event_MoreEffect",
         )
-        // nationType, officer, specialDomestic, (specialWar stub skipped), personality,
-        // (crew/inherit/scenario stubs skipped), horse, weapon, book, item
         assertEquals(
             listOf(
                 "nationType:che_유가",
                 "officer",
                 "specialDomestic:che_상재",
                 "personality:che_명사",
+                "CrewTypeWarModule",
+                "scenario:event_MoreEffect",
                 "item:명마",
                 "item:보검",
                 "item:병법서",
@@ -110,6 +121,7 @@ class ModuleFactoryOrderTest {
             specialDomesticCode = null,
             personalityCode = "che_명사",
             nationLevel = 3,
+            scenarioEffectCode = "event_MoreEffect",
         )
         // #1 nationType, #2 officer, #5 personality, #7 inherit(general, war), #9 horse — at slot #7.
         assertEquals(
@@ -119,6 +131,7 @@ class ModuleFactoryOrderTest {
                 "personality:che_명사",
                 "InheritBuffGeneralModule",
                 "InheritBuffWarModule",
+                "scenario:event_MoreEffect",
                 "item:명마",
             ),
             tagsOf(mods),
@@ -219,6 +232,7 @@ class ModuleFactoryOrderTest {
             specialDomesticRegistry = reg("sd"),
             personalityRegistry = reg("p"),
             itemRegistry = reg("i"),
+            scenarioEffectRegistry = reg("scenario"),
         )
         val mods = f.build(
             general = general(officerLevel = 1),

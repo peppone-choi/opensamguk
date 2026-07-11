@@ -1,10 +1,15 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.engine.config.EngineEventConfig
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
+import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.ReservedTurnRepository
+import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.logic.event.EventCondition
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.flywaydb.core.Flyway
@@ -18,6 +23,8 @@ import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.temporal.ChronoUnit
@@ -100,6 +107,10 @@ class ScenarioBootIT {
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
         assertEquals(2, snapshot.diplomacy.size)
         assertEquals(0, (snapshot.state.meta["isunited"] as? Number)?.toInt() ?: -1, "isunited loaded from world_state column")
+        val firstCity = snapshot.cities.first()
+        val storedCity = jdbc.queryForMap("SELECT trust, dead FROM city WHERE id = ?", firstCity.id)
+        assertEquals((storedCity["trust"] as Number).toDouble(), (firstCity.meta["trust"] as Number).toDouble())
+        assertEquals((storedCity["dead"] as Number).toInt(), firstCity.dead)
         val seedStartYear = (snapshot.state.meta["startYear"] as Number).toInt()
         val seedStartMonth = 1
         val killturns = snapshot.generals.map { (it.meta["killturn"] as Number).toInt() }
@@ -167,6 +178,93 @@ class ScenarioBootIT {
         jdbc.update("UPDATE city SET state = 0 WHERE id = $cityId")
     }
 
+    @Test
+    @Order(3)
+    fun `politics and charm survive restart rehydrate`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+
+        bootstrap.ensureSeeded(jdbc)
+        val generalId = jdbc.queryForObject("SELECT id FROM general ORDER BY id ASC LIMIT 1", Int::class.java)!!
+        jdbc.update("UPDATE general SET politics = 73, charm = 84 WHERE id = $generalId")
+
+        val rehydrated = loader.buildSnapshot().generals.first { it.id == generalId }
+
+        assertEquals(73, rehydrated.stats.politics)
+        assertEquals(84, rehydrated.stats.charm)
+    }
+
+    @Test
+    @Order(4)
+    fun `game and nation kv survive restart rehydrate`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+
+        bootstrap.ensureSeeded(jdbc)
+        val nationId = jdbc.queryForObject("SELECT id FROM nation ORDER BY id ASC LIMIT 1", Int::class.java)!!
+        jdbc.update(
+            """INSERT INTO game_kv ("table", namespace, key, value) VALUES ('game_env', 'game_env', 'tnmt_pattern', '[0,1,2]'::jsonb) ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value""",
+        )
+        jdbc.update(
+            """INSERT INTO game_kv ("table", namespace, key, value) VALUES ('game_env', 'game_env', 'isunited', '99'::jsonb) ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value""",
+        )
+        jdbc.update(
+            """INSERT INTO nation_env (namespace, key, value) VALUES ($nationId, 'available_war_setting_cnt', '3'::jsonb) ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value""",
+        )
+
+        val snapshot = loader.buildSnapshot()
+
+        assertEquals(listOf(0, 1, 2), snapshot.state.meta["tnmt_pattern"])
+        assertEquals(0, snapshot.state.meta["isunited"])
+        assertEquals(
+            3,
+            (snapshot.nations.first { it.id == nationId }.meta["nation_env"] as Map<*, *>)["available_war_setting_cnt"],
+        )
+    }
+
+    @Test
+    @Order(5)
+    fun `event store boot rows and mutation flush survive restart`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+
+        bootstrap.ensureSeeded(jdbc)
+        val configuredStore = EngineEventConfig().eventStore(jdbc, bootstrap)
+        val deletedId = jdbc.queryForObject(
+            "SELECT id FROM event WHERE target_code = 'destroy_nation' AND priority = 1000 ORDER BY id ASC LIMIT 1",
+            Int::class.java,
+        )!!
+        assertEquals(count("event"), configuredStore.allRows().size)
+
+        val recorder = ChangeRecorder()
+        configuredStore.bindMutationSink(recorder::recordEventMutation)
+        configuredStore.delete(deletedId)
+        val insertedId = configuredStore.insert(
+            targetCode = "month",
+            priority = 1234,
+            condition = EventCondition.ConstBool(true),
+            actions = emptyList(),
+        )
+        val world = InMemoryTurnWorld(loader.buildSnapshot())
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        val dataSource = DriverManagerDataSource().apply {
+            setDriverClassName("org.postgresql.Driver")
+            url = postgres.jdbcUrl
+            username = postgres.username
+            password = postgres.password
+        }
+        JdbcFlushExecutor(
+            NamedParameterJdbcTemplate(dataSource),
+            TransactionTemplate(DataSourceTransactionManager(dataSource)),
+        ).flush(payload)
+
+        assertEquals(0, countWhere("event", "id = $deletedId"))
+        assertEquals(1, countWhere("event", "id = $insertedId"))
+        val restarted = EngineEventConfig().eventStore(jdbc, bootstrap)
+        assertTrue(restarted.allRows().none { it.id == deletedId })
+        assertTrue(restarted.allRows().any { it.id == insertedId && it.priority == 1234 })
+    }
+
     private fun count(table: String): Int =
         jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java) ?: 0
+
+    private fun countWhere(table: String, predicate: String): Int =
+        jdbc.queryForObject("SELECT count(*) FROM $table WHERE $predicate", Int::class.java) ?: 0
 }

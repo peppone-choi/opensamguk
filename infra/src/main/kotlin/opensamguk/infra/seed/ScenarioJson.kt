@@ -39,6 +39,8 @@ object ScenarioJson {
     private const val G_DEAD = 10
     private const val G_EGO = 11
     private const val G_CHAR = 12
+    private const val G_POLITICS = 14
+    private const val G_CHARM = 15
 
     // ── nation[] 9-tuple positional index (PHP) ──
     // [0]name [1]color [2]gold [3]rice [4]desc [5]tech [6]ideology [7]scale(level) [8]cities[]
@@ -59,6 +61,9 @@ object ScenarioJson {
         val startYear = intOf(root["startYear"], 0)
         val map = stringMap(root["map"])
         val const = stringMap(root["const"])
+        val events = arr(root["events"]).map { decodeEvent(asList(it)) }
+        val initialEvents = arr(root["initialEvents"]).map { decodeInitialEvent(asList(it)) }
+        val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
 
         val nations = arr(root["nation"]).mapIndexed { idx, raw ->
             val t = asList(raw)
@@ -101,7 +106,22 @@ object ScenarioJson {
             nations = nations,
             generals = generals,
             diplomacy = diplomacy,
+            events = events,
+            initialEvents = initialEvents,
+            ignoreDefaultEvents = ignoreDefaultEvents,
         )
+    }
+
+    private fun decodeEvent(t: List<Any?>): ScenarioEvent {
+        require(t.size >= 3) { "scenario event must contain target, priority, and condition: $t" }
+        val target = t[0] as? String ?: error("scenario event target must be a string: ${t[0]}")
+        val priority = intRequired(t[1], "scenario event priority")
+        return ScenarioEvent(target, priority, t[2], t.drop(3))
+    }
+
+    private fun decodeInitialEvent(t: List<Any?>): ScenarioInitialEvent {
+        require(t.isNotEmpty()) { "scenario initial event must contain a condition" }
+        return ScenarioInitialEvent(t[0], t.drop(1))
     }
 
     private fun decodeGeneral(t: List<Any?>): ScenarioGeneral = ScenarioGeneral(
@@ -118,6 +138,8 @@ object ScenarioJson {
         deadYear = intOrNull(t.getOrNull(G_DEAD)),
         ego = strOrNull(t.getOrNull(G_EGO)),
         special = strOrNull(t.getOrNull(G_CHAR)),
+        politics = intOf(t.getOrNull(G_POLITICS), 50),
+        charm = intOf(t.getOrNull(G_CHARM), 50),
     )
 
     /** Decode `cities_1010.json` (che 풀맵 94도시). Stats are already x100-scaled. */
@@ -215,6 +237,20 @@ object ScenarioJson {
         is String -> v.toIntOrNull()
         else -> null
     }
+
+    private fun intRequired(v: Any?, label: String): Int = when (v) {
+        is Int -> v
+        is Number -> v.toInt()
+        is String -> v.toIntOrNull() ?: error("$label must be an integer: $v")
+        else -> error("$label must be an integer: $v")
+    }
+
+    private fun boolOf(v: Any?, default: Boolean): Boolean = when (v) {
+        null -> default
+        is Boolean -> v
+        is String -> v.toBooleanStrictOrNull() ?: default
+        else -> default
+    }
 }
 
 /** Position-resolved scenario header + rosters. */
@@ -226,6 +262,21 @@ data class Scenario(
     val nations: List<ScenarioNation>,
     val generals: List<ScenarioGeneral>,
     val diplomacy: List<ScenarioDiplomacy>,
+    val events: List<ScenarioEvent> = emptyList(),
+    val initialEvents: List<ScenarioInitialEvent> = emptyList(),
+    val ignoreDefaultEvents: Boolean = false,
+)
+
+data class ScenarioEvent(
+    val target: String,
+    val priority: Int,
+    val condition: Any?,
+    val actions: List<Any?>,
+)
+
+data class ScenarioInitialEvent(
+    val condition: Any?,
+    val actions: List<Any?>,
 )
 
 data class ScenarioNation(
@@ -262,6 +313,8 @@ data class ScenarioGeneral(
     val ego: String?,
     /** 특기 (null for almost all 1010 rows). */
     val special: String?,
+    val politics: Int = 50,
+    val charm: Int = 50,
 )
 
 data class ScenarioDiplomacy(

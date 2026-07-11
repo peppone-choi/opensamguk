@@ -127,6 +127,56 @@ class CommandWireMapperTest {
     }
 
     @Test
+    fun `tournament admin start and reset map to immediate daemon commands`() {
+        assertTrue(CommandWireMapper.isIntakeCommand("tournamentStart"))
+        assertTrue(CommandWireMapper.isIntakeCommand("tournamentReset"))
+
+        val start = roundTrip(
+            CommandWireMapper.toCommand("tournamentStart", 10, "req-start", """{"type":2}""")!!,
+        ) as TurnDaemonCommand.TournamentStart
+        assertEquals("req-start", start.requestId)
+        assertEquals(10, start.generalId)
+        assertEquals(2, start.tournamentType)
+
+        val reset = roundTrip(
+            CommandWireMapper.toCommand("tournamentReset", 10, "req-reset", null)!!,
+        ) as TurnDaemonCommand.TournamentReset
+        assertEquals("req-reset", reset.requestId)
+        assertEquals(10, reset.generalId)
+    }
+
+    @Test
+    fun `registered instant actions map to typed commands with authenticated general identity`() {
+        val die = roundTrip(CommandWireMapper.toCommand("DieOnPrestart", 10, "r", null)!!) as TurnDaemonCommand.DieOnPrestart
+        assertEquals(10, die.generalId)
+        val drop = roundTrip(CommandWireMapper.toCommand("DropItem", 10, "r", "{\"itemType\":\"weapon\"}")!!) as TurnDaemonCommand.DropItem
+        assertEquals(10, drop.generalId)
+        assertEquals("weapon", drop.itemType)
+        val retreat = roundTrip(CommandWireMapper.toCommand("InstantRetreat", 10, "r", null)!!) as TurnDaemonCommand.InstantRetreat
+        assertEquals(10, retreat.generalId)
+        val owner = roundTrip(CommandWireMapper.toCommand("CheckOwner", 10, "r", "{\"destGeneralID\":27}")!!) as TurnDaemonCommand.CheckOwner
+        assertEquals(10, owner.generalId)
+        assertEquals(27, owner.destGeneralId)
+    }
+
+    @Test
+    fun `select pool owner comes only from the verified intake argument`() {
+        val pick = roundTrip(
+            CommandWireMapper.toCommand(
+                "selectPoolPick",
+                0,
+                "req-pick",
+                """{"uniqueName":"청룡","ownerUserId":999}""",
+                ownerUserId = 7,
+            )!!,
+        ) as TurnDaemonCommand.SelectPoolPick
+
+        assertEquals(0, pick.generalId)
+        assertEquals(7, pick.ownerUserId)
+        assertEquals("청룡", pick.uniqueName)
+    }
+
+    @Test
     fun `troop intake codes map their args and thread the resolved acting generalId`() {
         val new = roundTrip(CommandWireMapper.toCommand("troopNew", 7, "r", """{"troopName":"제1군단"}""")!!) as TurnDaemonCommand.TroopNew
         assertEquals("제1군단", new.troopName)

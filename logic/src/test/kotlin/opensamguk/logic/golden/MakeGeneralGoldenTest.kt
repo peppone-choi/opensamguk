@@ -61,6 +61,8 @@ class MakeGeneralGoldenTest {
                 formLeadership = form["leadership"]!!.jsonPrimitive.int,
                 formStrength = form["strength"]!!.jsonPrimitive.int,
                 formIntel = form["intel"]!!.jsonPrimitive.int,
+                formPolitics = 61,
+                formCharm = 62,
                 cityPool = cityPool,
                 availablePersonality = personalities,
                 character = character,
@@ -94,6 +96,8 @@ class MakeGeneralGoldenTest {
             assertEquals(o["leadership"]!!.jsonPrimitive.int, result.leadership, "$tag leadership")
             assertEquals(o["strength"]!!.jsonPrimitive.int, result.strength, "$tag strength")
             assertEquals(o["intel"]!!.jsonPrimitive.int, result.intel, "$tag intel")
+            assertEquals(61, result.politics, "$tag politics")
+            assertEquals(62, result.charm, "$tag charm")
             assertEquals(o["age"]!!.jsonPrimitive.int, result.age, "$tag age")
             assertEquals(o["personal"]!!.jsonPrimitive.content, result.personal, "$tag personal")
             assertEquals(o["affinity"]!!.jsonPrimitive.int, result.affinity, "$tag affinity")

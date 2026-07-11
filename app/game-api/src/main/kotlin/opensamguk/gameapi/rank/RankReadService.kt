@@ -14,17 +14,29 @@ import opensamguk.gameapi.dto.KingdomRosterNation
 import opensamguk.gameapi.dto.KingdomRosterNeutral
 import opensamguk.gameapi.dto.NpcGeneral
 import opensamguk.gameapi.dto.TrafficSummary
+import opensamguk.gameapi.dto.TrafficStat
+import opensamguk.gameapi.dto.TrafficUser
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.GeneralListText
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
+import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.HallReadEntity
+import opensamguk.gameapi.read.HallReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.StatisticReadEntity
+import opensamguk.gameapi.read.StatisticReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domestic.getExpLevel
+import opensamguk.logic.util.jsonDecodeAny
 import opensamguk.logic.world.SpecialityHelper
 import org.springframework.stereotype.Service
+import java.util.Locale
 
 /**
  * F3 — read-only ranking projections (spec `2026-06-02-F3-rankings-spec.md`).
@@ -38,14 +50,19 @@ import org.springframework.stereotype.Service
  * is stable on 8.0+; the id tiebreak preserves that without adding a non-stable comparator — CLAUDE.md
  * rule 6). `rank` is the 1-based array index assigned AFTER the sort.
  *
- * Empty/zero defaults (NOT fabricated): hall-of-fame (`hall` empty in 1010, OQ-5), traffic (no
- * access-log infra, OQ-2), emperor (no unification-history table, OQ-1).
+ * Historical boards read only persisted rows: `hall`, `world_state`, and `statistic`-backed live
+ * state. Missing source values stay empty/zero instead of being invented.
  */
 @Service
 class RankReadService(
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val cities: CityReadRepository,
+    private val hall: HallReadRepository,
+    private val worldStates: WorldStateReadRepository,
+    private val statistics: StatisticReadRepository,
+    private val gameKv: GameKvReadRepository? = null,
+    private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
 
     companion object {
@@ -58,6 +75,35 @@ class RankReadService(
         /** `general.npc_state = 1` = 빙의(악령) gallery — the legacy `npc=1` set (spec OQ-7). */
         const val NPC_STATE_GALLERY = 1
     }
+
+    private data class HallType(val label: String, val percent: Boolean)
+
+    private val hallTypes = linkedMapOf(
+        "experience" to HallType("명 성", false),
+        "dedication" to HallType("계 급", false),
+        "firenum" to HallType("계 략 성 공", false),
+        "warnum" to HallType("전 투 횟 수", false),
+        "killnum" to HallType("승 리", false),
+        "winrate" to HallType("승 률", true),
+        "occupied" to HallType("점 령", false),
+        "killcrew" to HallType("사 살", false),
+        "killrate" to HallType("살 상 률", true),
+        "killcrew_person" to HallType("대 인 사 살", false),
+        "killrate_person" to HallType("대 인 살 상 률", true),
+        "dex1" to HallType("보 병 숙 련 도", false),
+        "dex2" to HallType("궁 병 숙 련 도", false),
+        "dex3" to HallType("기 병 숙 련 도", false),
+        "dex4" to HallType("귀 병 숙 련 도", false),
+        "dex5" to HallType("차 병 숙 련 도", false),
+        "ttrate" to HallType("전 력 전 승 률", true),
+        "tlrate" to HallType("통 솔 전 승 률", true),
+        "tsrate" to HallType("일 기 토 승 률", true),
+        "tirate" to HallType("설 전 승 률", true),
+        "betgold" to HallType("베 팅 투 자 액", false),
+        "betwin" to HallType("베 팅 당 첨", false),
+        "betwingold" to HallType("베 팅 수 익 금", false),
+        "betrate" to HallType("베 팅 수 익 률", true),
+    )
 
     /** Name/color lookup for the nation join (id 0 / unknown id → 재야 / #000000). */
     private fun nationIndex(): Map<Int, NationReadEntity> =
@@ -286,22 +332,127 @@ class RankReadService(
         return KingdomRoster(nations = rosterNations, neutral = neutral)
     }
 
-    // ── 2.5 hall-of-fame: F3 default empty (OQ-5) ──────────────────────────────────────────────────
-    fun hallOfFame(): List<HallRecord> = emptyList()
+    fun hallOfFame(): List<HallRecord> =
+        hall.findAllByOrderByTypeAscValueDescIdAsc()
+            .groupBy { it.type }
+            .flatMap { (type, rows) ->
+                val hallType = hallTypes[type] ?: return@flatMap emptyList()
+                rows.take(10).map { it.toHallRecord(hallType) }
+            }
 
-    // ── 2.6 traffic: F3 zero-fill (OQ-2) ───────────────────────────────────────────────────────────
-    fun traffic(): TrafficSummary = TrafficSummary(
-        todayUnique = 0,
-        todayViews = 0,
-        weekUnique = 0,
-        weekViews = 0,
-        monthUnique = 0,
-        monthViews = 0,
-        peakConcurrent = 0,
-        currentOnline = 0,
-        history = emptyList(),
-    )
+    private fun HallReadEntity.toHallRecord(hallType: HallType): HallRecord {
+        return HallRecord(
+            id = id,
+            category = hallType.label,
+            name = aux.stringValue("name").ifBlank { "-" },
+            nation = aux.stringValue("nationName").ifBlank { "-" },
+            nationColor = aux.stringValue("bgColor"),
+            value = value,
+            valueLabel = if (hallType.percent) "%.2f%%".format(Locale.US, value * 100.0) else "%,.0f".format(Locale.US, value),
+            achievedAt = aux.stringValue("unitedTime"),
+            turn = season,
+        )
+    }
 
-    // ── 2.7 emperor: F3 default empty (OQ-1) ───────────────────────────────────────────────────────
-    fun emperor(): List<EmperorRecord> = emptyList()
+    fun traffic(): TrafficSummary {
+        val config = gameEnvironment()
+        val recent = trafficHistory(config["recentTraffic"])
+        val rows = runCatching { accessLogs?.findAll() }.getOrNull().orEmpty()
+        val generalNames = generals.findAll().associate { it.id to it.name }
+        val topRefreshers = rows
+            .sortedWith(compareByDescending<opensamguk.gameapi.read.GeneralAccessLogReadEntity> { it.refresh }.thenBy { it.generalId })
+            .mapNotNull { row ->
+                val name = generalNames[row.generalId] ?: return@mapNotNull null
+                TrafficUser(name, row.refresh, row.refreshScoreTotal)
+            }
+            .take(5)
+
+        return TrafficSummary(
+            refresh = config.intValue("refresh"),
+            maxRefresh = config.intValue("maxrefresh"),
+            currentOnline = config.intValue("online_user_cnt"),
+            maxOnline = config.intValue("maxonline"),
+            history = recent,
+            totalRefresh = rows.sumOf { it.refresh },
+            totalRefreshScore = rows.sumOf { it.refreshScoreTotal },
+            topRefreshers = topRefreshers,
+        )
+    }
+
+    private fun gameEnvironment(): Map<String, Any?> {
+        val merged = LinkedHashMap(currentWorld()?.config.orEmpty())
+        for (namespace in listOf("", "game_env", "global")) {
+            val rows = runCatching { gameKv?.findByTableAndNamespace("game_env", namespace) }
+                .getOrNull()
+                .orEmpty()
+            for (row in rows) {
+                if (row.key !in merged) {
+                    merged[row.key] = runCatching { jsonDecodeAny(row.value) }.getOrNull()
+                }
+            }
+        }
+        return merged
+    }
+
+    private fun trafficHistory(raw: Any?): List<TrafficStat> =
+        (raw as? List<*>).orEmpty().mapNotNull { item ->
+            val row = item as? Map<*, *> ?: return@mapNotNull null
+            TrafficStat(
+                year = row.intValue("year"),
+                month = row.intValue("month"),
+                date = row.stringValue("date"),
+                refresh = row.intValue("refresh"),
+                online = row.intValue("online"),
+            )
+        }
+
+    fun emperor(): List<EmperorRecord> {
+        val world = currentWorld() ?: return emptyList()
+        if (world.isunited !in setOf(2, 3)) return emptyList()
+
+        val activeNations = nations.findAll().filter { it.level > 0 }
+        if (activeNations.size != 1) return emptyList()
+
+        val winner = activeNations.single()
+        val cityCount = cities.countByNationId(winner.id).toInt()
+        if (cityCount == 0 || cityCount != cities.count().toInt()) return emptyList()
+
+        val latestStatistic = statistics.findFirstByOrderByIdDesc()
+        return listOf(
+            EmperorRecord(
+                id = 1,
+                name = winner.name,
+                nation = winner.name,
+                nationColor = winner.color,
+                unifiedAt = world.updatedAt?.toString() ?: world.startTime?.toString() ?: "",
+                turn = world.currentPhase,
+                year = world.currentYear,
+                month = world.currentMonth,
+                generalCount = liveGeneralCount(winner.id, latestStatistic),
+                cityCount = cityCount,
+            ),
+        )
+    }
+
+    private fun liveGeneralCount(nationId: Int, latestStatistic: StatisticReadEntity?): Int =
+        generals.countByNationId(nationId).toInt().takeIf { it > 0 }
+            ?: latestStatistic?.genCount?.substringBefore(" / ")?.toIntOrNull()
+            ?: 0
+
+    private fun currentWorld(): WorldStateReadEntity? =
+        worldStates.findById(1).orElse(null)
+
+    private fun Map<*, *>.stringValue(key: String): String =
+        when (val value = this[key]) {
+            null -> ""
+            is String -> value
+            else -> value.toString()
+        }
+
+    private fun Map<*, *>.intValue(key: String): Int =
+        when (val value = this[key]) {
+            is Number -> value.toInt()
+            is String -> value.toIntOrNull() ?: 0
+            else -> 0
+        }
 }

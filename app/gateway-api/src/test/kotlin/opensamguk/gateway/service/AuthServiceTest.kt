@@ -1,5 +1,6 @@
 package opensamguk.gateway.service
 
+import opensamguk.common.auth.GatewayProfileClaims
 import opensamguk.gateway.dto.LoginRequest
 import opensamguk.gateway.dto.RegisterRequest
 import opensamguk.gateway.security.CustomUserDetails
@@ -14,9 +15,11 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
-import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.security.authentication.AuthenticationManager
@@ -50,6 +53,12 @@ class AuthServiceTest {
     /** allow_join/allow_login 둘 다 허용된 시스템 플래그(기본 정상 경로). */
     private fun allowAllFlag() = SystemFlagEntity(id = 1, allowJoin = true, allowLogin = true)
 
+    private fun anyProfile(): GatewayProfileClaims =
+        any(GatewayProfileClaims::class.java) ?: GatewayProfileClaims(0, "", "USER", null, 1, null, 0)
+
+    private fun captureProfile(captor: ArgumentCaptor<GatewayProfileClaims>): GatewayProfileClaims =
+        captor.capture() ?: GatewayProfileClaims(0, "", "USER", null, 1, null, 0)
+
     @BeforeEach
     fun setUp() {
         authService = AuthService(
@@ -71,7 +80,7 @@ class AuthServiceTest {
             val user = it.getArgument<UserEntity>(0)
             UserEntity(id = 1L, username = user.username, password = user.password)
         }
-        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("access-token")
+        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
         val result = authService.register(RegisterRequest("newuser", "password123", null, null))
@@ -116,18 +125,32 @@ class AuthServiceTest {
     @Test
     fun `login with valid credentials`() {
         `when`(systemFlagRepository.findSingleton()).thenReturn(allowAllFlag())
-        val user = UserEntity(id = 1L, username = "testuser", password = passwordEncoder.encode("pass123"))
+        val user = UserEntity(
+            id = 1L,
+            username = "testuser",
+            password = passwordEncoder.encode("pass123"),
+            nickname = "테스터",
+            grade = 4,
+            picture = "profile.jpg",
+            imgsvr = true,
+        )
         `when`(authenticationManager.authenticate(org.mockito.ArgumentMatchers.any())).thenReturn(
             UsernamePasswordAuthenticationToken(CustomUserDetails(user), null, emptyList())
         )
         `when`(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user))
-        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("access-token")
+        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
         val result = authService.login(LoginRequest("testuser", "pass123"))
 
         assertEquals("testuser", result.user.username)
         assertEquals("access-token", result.accessToken)
+        val profile = ArgumentCaptor.forClass(GatewayProfileClaims::class.java)
+        verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
+        assertEquals("테스터", profile.value.nickname)
+        assertEquals(4, profile.value.grade)
+        assertEquals("profile.jpg", profile.value.picture)
+        assertEquals(1, profile.value.imageServer)
     }
 
     @Test
@@ -160,7 +183,7 @@ class AuthServiceTest {
             UsernamePasswordAuthenticationToken(CustomUserDetails(admin), null, emptyList())
         )
         `when`(userRepository.findByUsername("peppone")).thenReturn(Optional.of(admin))
-        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("access-token")
+        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("access-token")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("refresh-token")
 
         val result = authService.login(LoginRequest("peppone", "pass123"))
@@ -172,15 +195,19 @@ class AuthServiceTest {
     @Test
     fun `refresh with valid token`() {
         val user = UserEntity(id = 1L, username = "testuser", password = "encoded")
-        `when`(jwtTokenProvider.validateToken("refresh-token")).thenReturn(true)
+        `when`(jwtTokenProvider.validateRefreshToken("refresh-token")).thenReturn(true)
         `when`(jwtTokenProvider.getUserIdFromToken("refresh-token")).thenReturn(1L)
         `when`(userRepository.findById(1L)).thenReturn(Optional.of(user))
-        `when`(jwtTokenProvider.generateAccessToken(anyLong(), anyString(), anyString())).thenReturn("new-access")
+        `when`(jwtTokenProvider.generateAccessToken(anyProfile())).thenReturn("new-access")
         `when`(jwtTokenProvider.generateRefreshToken(anyLong())).thenReturn("new-refresh")
 
         val result = authService.refresh("refresh-token")
 
         assertEquals("testuser", result.user.username)
         assertEquals("new-access", result.accessToken)
+        val profile = ArgumentCaptor.forClass(GatewayProfileClaims::class.java)
+        verify(jwtTokenProvider).generateAccessToken(captureProfile(profile))
+        assertEquals(1, profile.value.grade)
+        assertEquals(0, profile.value.imageServer)
     }
 }

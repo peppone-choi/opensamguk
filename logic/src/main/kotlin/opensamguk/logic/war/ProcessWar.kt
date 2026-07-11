@@ -1,6 +1,7 @@
 package opensamguk.logic.war
 
 import opensamguk.common.constants.GameUnitDetail
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.getTechCost
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
@@ -54,6 +55,7 @@ data class ProcessWarResult(
     val attacker: WarUnitGeneral,
     /** The mutated defender-city working state (snapshot delta source). */
     val city: WarUnitCity,
+    val defenders: List<WarUnitGeneral>,
     /** Exposed for the wrapper test's supply-rice oracle (the city train/atmos used in the rice formula). */
     val defenderCityTrainAtmosForTest: Int,
 )
@@ -100,9 +102,10 @@ fun processWar(
 
     // (2) the defender candidate WarUnits (each on the SHARED rng) + the ordered battle queue.
     val candidateUnits = defenderCandidates.map { g ->
+        val crewType = GameUnitConst.byId(g.crewTypeId) ?: defenderCrewType
         WarUnitGeneral(
             rng = rng, state = WarUnitGeneralState(g), pipeline = pipeline,
-            crewType = defenderCrewType, tech = defenderTech, isAttacker = false,
+            crewType = crewType, tech = defenderTech, isAttacker = false,
             cityLevel = defenderCity.level, isCapital = false,
         )
     }
@@ -157,6 +160,7 @@ fun processWar(
         defenderCityDeadDelta = defenderCityDeadDelta,
         attacker = attacker,
         city = city,
+        defenders = candidateUnits,
         defenderCityTrainAtmosForTest = cta,
     )
 }

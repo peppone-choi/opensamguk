@@ -28,6 +28,7 @@ class CityRowMapperTest {
         "wall_max" to 1500,
         "pop" to 50000,
         "pop_max" to 100000,
+        "dead" to 321,
         "trade" to 100,
         "region" to 3,
         "meta" to meta,
@@ -47,6 +48,7 @@ class CityRowMapperTest {
         assertEquals(0, c.frontState)
         assertEquals(7, c.state) // W0-8: V14 재해/호황 state — front_state와 별개로 round-trip (P0-36)
         assertEquals(90.0, c.trust)
+        assertEquals(321, c.dead)
 
         val cols = CityRowMapper.toColumns(c)
         assertEquals(5, cols["id"])
@@ -60,6 +62,7 @@ class CityRowMapperTest {
         assertEquals(0, cols["front_state"])
         assertEquals(7, cols["state"])
         assertEquals(90.0, cols["trust"]) // FC1: Double -> double precision column (no truncation)
+        assertEquals(321, cols["dead"])
         assertEquals("{}", cols["meta"])
     }
 

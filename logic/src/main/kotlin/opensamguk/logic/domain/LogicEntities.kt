@@ -1,5 +1,7 @@
 package opensamguk.logic.domain
 
+import java.time.Instant
+
 /**
  * General as the logic layer sees it. `intel` (not intelligence) matches the DB column.
  *
@@ -51,6 +53,8 @@ data class General(
     // getStatValue·battle·draw)에는 절대 주입하지 않는다. 기본 0으로 inert; 값 부여·UI는 후속 바퀴(W2/W4).
     val politics: Int = 0,        // 정치 (divergence)
     val charm: Int = 0,           // 매력 (divergence)
+    val age: Int? = null,
+    val turnTime: Instant? = null,
 )
 
 /**

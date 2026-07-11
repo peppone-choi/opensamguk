@@ -12,8 +12,10 @@ import opensamguk.gameapi.dto.MyPageResponse
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
+import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.NationFinanceReadProjector
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.domestic.getBill
@@ -43,7 +45,9 @@ class MyController(
     private val generals: GeneralReadRepository,
     private val cities: CityReadRepository,
     private val nations: NationReadRepository,
+    private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
+    private val financeProjector = NationFinanceReadProjector()
 
     @GetMapping("/my-page")
     fun myPage(@AuthenticationPrincipal userId: Long?): ResponseEntity<MyPageResponse> {
@@ -96,6 +100,10 @@ class MyController(
         } else {
             listOf(resolved.general) // 재야: only self
         }
+        val accessByGeneral = accessLogs
+            ?.findByGeneralIdIn(rows.map { it.id })
+            ?.associateBy { it.generalId }
+            .orEmpty()
         val summaries = rows.map { g ->
             MyGeneralSummary(
                 generalId = g.id,
@@ -135,6 +143,7 @@ class MyController(
                 special2 = g.special2Code,
                 // W0-2(P1-073) isunited 소유 플레이어명 — meta.owner_name 방어적 read(부재 시 null).
                 ownerName = g.meta["owner_name"] as? String,
+                refreshScoreTotal = accessByGeneral[g.id]?.refreshScoreTotal ?: 0,
             )
         }
         return ResponseEntity.ok(MyGeneralsResponse(result = true, nationId = nationId, generals = summaries))
@@ -150,10 +159,14 @@ class MyController(
             return ResponseEntity.ok(MyCitiesResponse(result = true, nationId = 0, cities = emptyList()))
         }
         val capitalCityId = nations.findById(nationId).map { it.capitalCityId }.orElse(null)
+        val nation = nations.findById(nationId).orElse(null)
+        val financeNation = nation?.toLogic()
+        val nationGenerals = generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
+        val officerCounts = nationGenerals.filter { it.officerLevel in 2..4 && it.cityId == it.officerCity }
+            .groupingBy { it.officerCity }.eachCount()
 
         // PHP `SELECT npc, name, city FROM general WHERE nation = %i` → cityID별 formatName CSV.
         // 1회 로드 후 city_id로 그룹핑(N+1 방지). 순서는 PHP 쿼리(무순서)와 동형이 되도록 id ASC 고정.
-        val nationGenerals = generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
         val generalsByCity: Map<Int, List<MyCityGeneralName>> = nationGenerals
             .groupBy { it.cityId }
             .mapValues { (_, gs) -> gs.sortedBy { it.id }.map { MyCityGeneralName(name = it.name, npc = it.npcState) } }
@@ -193,6 +206,9 @@ class MyController(
                 secretaryName = secretary?.name,
                 secretaryNpc = secretary?.npcState ?: 0,
                 generals = generalsByCity[c.id] ?: emptyList(),
+                goldIncome = financeNation?.let { financeProjector.city(c.toLogic(), it, officerCounts[c.id] ?: 0)?.goldIncome },
+                riceIncome = financeNation?.let { financeProjector.city(c.toLogic(), it, officerCounts[c.id] ?: 0)?.riceIncome },
+                farmIncome = financeNation?.let { financeProjector.city(c.toLogic(), it, officerCounts[c.id] ?: 0)?.farmIncome },
             )
         }
         return ResponseEntity.ok(MyCitiesResponse(result = true, nationId = nationId, cities = rows))
@@ -234,6 +250,7 @@ class MyController(
 
         // 속령일람 + 총주민 집계(PHP foreach $cityList: currPop += pop; maxPop += pop_max; 수도는 cyan).
         val cityRows = cities.findByNationIdOrderByIdAsc(nationId)
+        val nationGenerals = generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
         var currPop = 0
         var maxPop = 0
         val cityRefs = cityRows.map { c ->
@@ -257,6 +274,12 @@ class MyController(
         // [§2 BLOCKED — meta UNVERIFIED] 세율/지급률: 방어적 read, 부재 시 null(날조 금지).
         val taxRate = (nation.meta["rate"] as? Number)?.toInt()
         val bill = (nation.meta["bill"] as? Number)?.toInt()
+        val finance = financeProjector.nation(
+            cityRows.map { it.toLogic() },
+            nation.toLogic(),
+            nationGenerals.filter { it.officerLevel in 2..4 && it.cityId == it.officerCity }.groupingBy { it.officerCity }.eachCount(),
+            nationGenerals.filter { it.npcState != 5 }.map { it.dedication.toDouble() },
+        )
 
         return ResponseEntity.ok(
             MyNationDetailResponse(
@@ -281,6 +304,15 @@ class MyController(
                 cities = cityRefs,
                 taxRate = taxRate,
                 bill = bill,
+                goldIncome = finance.goldIncome,
+                warIncome = finance.warIncome,
+                riceIncome = finance.riceIncome,
+                farmIncome = finance.farmIncome,
+                outcome = finance.outcome,
+                goldBudget = finance.goldBudget,
+                goldBudgetDiff = finance.goldBudgetDiff,
+                riceBudget = finance.riceBudget,
+                riceBudgetDiff = finance.riceBudgetDiff,
             ),
         )
     }

@@ -16,7 +16,6 @@ import opensamguk.gameapi.dto.GeneralListRow
  * §2 BLOCKED(opensamguk 원천 부재 → **컬럼 자체를 노출하지 않음**, fabricate 금지):
  *   - dex1..dex5            : general 컬럼/meta 미존재.
  *   - defence_train         : 원천 미검증.
- *   - refresh_score(_total) : general_access_log 테이블 부재.
  *   - autorun_limit         : aux 컬럼/meta 미존재.
  *   PHP `$viewColumns`/`$customViewColumns`엔 있으나 위 키들은 본 목록에서 생략한다. (ownerName은
  *   컬럼으로는 유지하되 값이 항상 null — owner_name 원천 부재.)
@@ -82,7 +81,8 @@ object GeneralListColumns {
         "item" to 1,
         "recent_war" to 1,
         // aux(remap→null) / owner_name(reqPerm 9) — PHP도 출력 안 함, 생략.
-        // refresh_score_total / refresh_score — §2 BLOCKED, 생략.
+        "refreshScoreTotal" to 0,
+        "refreshScore" to 1,
         // RANK(P1)
         "warnum" to 1,
         "killnum" to 1,
@@ -157,6 +157,8 @@ object GeneralListColumns {
         "book" -> row.book
         "item" -> row.item
         "recent_war" -> row.recentWar
+        "refreshScoreTotal" -> row.refreshScoreTotal
+        "refreshScore" -> row.refreshScore
         // RANK
         "warnum" -> row.warnum
         "killnum" -> row.killnum
