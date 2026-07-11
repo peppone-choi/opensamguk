@@ -4,11 +4,19 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.math.max
 import kotlin.math.min
+import opensamguk.logic.util.PhpMt19937
 
 class TournamentProcessor(
     private val store: TournamentStore,
     private val betting: TournamentBettingPort,
+    rank: TournamentRankPort = NoopTournamentRankPort,
+    fightLog: TournamentFightLogPort = NoopTournamentFightLogPort,
+    // PHP는 전역 mt_rand(미시드 = 엔트로피 자동 시드)를 쓴다 — 파리티는 시드 고정 시에만 성립(골든 경로).
+    rng: PhpMt19937 = PhpMt19937((System.nanoTime() and 0x7FFFFFFFL).toInt()),
 ) {
+    // 한 프로세스 틱의 모든 fight가 같은 스트림을 순서대로 소비 (PHP 전역 mt_rand 상태와 동일).
+    private val fightEngine = TournamentFightEngine(store, rank, fightLog, rng)
+
     fun process(state: TournamentState, now: Instant): TournamentProcessResult {
         val baseTime = state.time ?: return TournamentProcessResult(state, changed = false)
         if (!state.auto || now.isBefore(baseTime)) return TournamentProcessResult(state, changed = false)
@@ -26,7 +34,8 @@ class TournamentProcessor(
                     next.copy(tournament = 2, phase = 0)
                 }
                 2 -> {
-                    playGroupPair(next.phase, groupBase = 0, groupCount = 8)
+                    // qualify() (func_tournament.php:583-612): getTwo(2,phase) 페어로 8조 각 1경기
+                    playQualifyPhase(next.type, tnmt = 2, phase = next.phase, groupBase = 0)
                     val phase = next.phase + 1
                     if (phase >= 56) {
                         promoteGroups(groupBase = 0, groupCount = 8, promotedPerGroup = 4)
@@ -41,7 +50,8 @@ class TournamentProcessor(
                     if (phase >= 32) next.copy(tournament = 4, phase = 0) else next.copy(phase = phase)
                 }
                 4 -> {
-                    playGroupPair(next.phase, groupBase = 10, groupCount = 8)
+                    // finallySingle() (func_tournament.php:688-717): getTwo(4,phase) 페어로 10~17조 각 1경기
+                    playQualifyPhase(next.type, tnmt = 4, phase = next.phase, groupBase = 10)
                     val phase = next.phase + 1
                     if (phase >= 6) {
                         promoteGroups(groupBase = 10, groupCount = 8, promotedPerGroup = 2)
@@ -107,22 +117,18 @@ class TournamentProcessor(
         store.replaceAll(seeded)
     }
 
-    private fun playGroupPair(phase: Int, groupBase: Int, groupCount: Int) {
-        val localPhase = phase / groupCount
-        val group = groupBase + phase % groupCount
-        val members = store.entries().filter { it.group == group }.sortedBy { it.groupNo }
-        if (members.size < 2) return
-        val pair = roundRobinPair(members.size, localPhase) ?: return
-        resolveMatch(members[pair.first], members[pair.second], targetGroup = null)
-    }
-
-    private fun roundRobinPair(size: Int, phase: Int): Pair<Int, Int>? {
-        val pairs = buildList {
-            for (left in 0 until size) {
-                for (right in left + 1 until size) add(left to right)
-            }
+    /**
+     * qualify()/finallySingle()의 조별 페이즈 — getTwo 페어로 8개 조 각 1경기(fight type=0 승무패).
+     * 8경기가 같은 RNG 스트림을 순서대로 소비한다(PHP 전역 mt_rand — qualify 골든이 증명).
+     */
+    private fun playQualifyPhase(tnmtType: Int, tnmt: Int, phase: Int, groupBase: Int) {
+        val cand = getTwo(tnmt, phase) ?: return
+        for (grp in groupBase until groupBase + 8) {
+            // PHP는 fillLowGenAll이 8×8을 무명장수로 채워 항상 성립 — 미충족 스토어만 방어(파리티 상태에선 미도달).
+            val members = store.entries().filter { it.group == grp }
+            if (members.none { it.groupNo == cand.first } || members.none { it.groupNo == cand.second }) continue
+            fightEngine.fight(tnmtType, tnmt, phase, grp, cand.first, cand.second, 0)
         }
-        return pairs.getOrNull(phase)
     }
 
     private fun promoteGroups(groupBase: Int, groupCount: Int, promotedPerGroup: Int) {
@@ -170,30 +176,23 @@ class TournamentProcessor(
         val group = sourceGroup + state.phase
         val members = store.entries().filter { it.group == group }.sortedBy { it.groupNo }
         if (members.size >= 2) {
-            val winner = resolveMatch(members[0], members[1], targetGroup = targetGroup + state.phase / 2)
-            store.upsert(winner.copy(groupNo = state.phase % 2, promote = 0))
+            // finalFight (func_tournament.php:765-808): fight(grp, 0, 1, type=1 승패전) 후 승자 진출.
+            val sel = fightEngine.fight(state.type, state.tournament, state.phase, group, 0, 1, 1)
+            // PHP는 `win>0 AND (grp_no=0 OR grp_no=1)` 행 조회 — 매 라운드 새 행(win=0)이라 이번 승자와 동치.
+            // sel=2(100합 무승부)는 PHP도 null 행 접근으로 fatal — 동일하게 실패시킨다.
+            val winnerNo = when (sel) {
+                0 -> 0
+                1 -> 1
+                else -> error("MustNotBeReached: knockout draw (PHP fight sel=2 → null row fatal)")
+            }
+            val winner = store.entries().first { it.group == group && it.groupNo == winnerNo }
+            // PHP는 승자를 다음 라운드 조에 새 행으로 INSERT(이전 행 보존)하지만, 스토어가 id-키라
+            // 승자 행 이동으로 대체(기존 상태머신 계약 유지 — tools/php-golden/tournament-capture-backlog.md).
+            store.upsert(winner.copy(group = targetGroup + state.phase / 2, groupNo = state.phase % 2, promote = 0))
         }
         val phase = state.phase + 1
         return if (phase >= phaseLimit) state.copy(tournament = nextTournament, phase = 0) else state.copy(phase = phase)
     }
-
-    private fun resolveMatch(left: TournamentEntry, right: TournamentEntry, targetGroup: Int?): TournamentEntry {
-        val leftScore = score(left)
-        val rightScore = score(right)
-        val winner = if (leftScore >= rightScore) left else right
-        val loser = if (winner.id == left.id) right else left
-        val winnerNext = winner.copy(
-            win = winner.win + 1,
-            goal = winner.goal + max(1, kotlin.math.abs(leftScore - rightScore) / 10),
-            group = targetGroup ?: winner.group,
-        )
-        val loserNext = loser.copy(lose = loser.lose + 1, goal = loser.goal - 1)
-        store.upsert(loserNext)
-        store.upsert(winnerNext)
-        return winnerNext
-    }
-
-    private fun score(entry: TournamentEntry): Int = entry.total + entry.level
 
     private fun finalists(): List<TournamentEntry> =
         store.entries().filter { it.group >= 20 }.sortedWith(compareBy<TournamentEntry> { it.group }.thenBy { it.groupNo })
