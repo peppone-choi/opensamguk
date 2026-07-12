@@ -259,11 +259,24 @@ class ReservedTurnHandler(
             LiteHashDrbg(serializeSeed(hiddenSeed, "generalCommand", year, month, generalId, definition.key)),
         )
 
+        val currentCity = world.getCityById(cityId)
+        if (currentCity == null) {
+            val isRest = definition.key == runtimeRegistry.fallback.key
+            return HandledTurn(
+                generalId = generalId,
+                definition = if (isRest) definition else runtimeRegistry.fallback,
+                fellBack = !isRest,
+                denyReason = null,
+                logs = emptyList(),
+                env = env,
+                args = args,
+                autorunMode = autorunMode,
+            )
+        }
+
         // --- resolve over a logic draft (the Immer-draft replacement) ---
         val preGeneral: LogicGeneral = PerTurnOverlay.toLogicGeneral(general)
-        val preCity: LogicCity = PerTurnOverlay.toLogicCity(
-            world.getCityById(cityId) ?: error("ReservedTurnHandler: city $cityId not in world"),
-        )
+        val preCity: LogicCity = PerTurnOverlay.toLogicCity(currentCity)
         val nation = world.getNationById(nationId)?.let { PerTurnOverlay.toLogicNation(it) }
 
         val draft = GeneralActionDraft(preGeneral, preCity, nation)

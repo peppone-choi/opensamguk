@@ -97,6 +97,23 @@ class ReservedTurnHandlerTest {
         ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, scenario = scenario)
 
     @Test
+    fun `cityless general can consume a reserved rest turn without resolving a city`() {
+        val world = worldWith(
+            generals = listOf(general(id = 1012, nationId = 8, cityId = 0)),
+            cities = emptyList(),
+            nations = listOf(nation(id = 8, level = 0, capital = 0)),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(1012, "휴식", YEAR, MONTH, "12:34")
+
+        assertFalse(outcome.fellBack, "an actual reserved 휴식 is not a command fallback")
+        assertEquals("휴식", outcome.definition.key)
+        assertNull(outcome.denyReason)
+        assertFalse(handler.recorder.isDirty, "cityless 휴식 must not invent a city delta")
+    }
+
+    @Test
     fun `available general che_농지개간 increases agriculture decreases gold pushes log and records dirty`() {
         val world = worldWith()
         val handler = handlerFor(world)
