@@ -19,6 +19,8 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.valueFit
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 /**
  * che_몰수 — faithful port of `legacy/devsam-core/hwe/sammo/Command/Nation/che_몰수.php`.
@@ -136,7 +138,7 @@ class CheMolsu(@Suppress("UNUSED_PARAMETER") pipeline: GeneralActionPipeline) : 
                     src = src,
                     dest = src,
                     msg = text,
-                    date = context.date,
+                    date = LocalDateTime.now(ZoneOffset.UTC).format(DiplomacySeam.YMDHIS),
                     validUntil = "9999-12-31 00:00:00",
                     msgOption = null,
                 ),
