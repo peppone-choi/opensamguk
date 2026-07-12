@@ -18,4 +18,12 @@ class AiProductionWiringGuardTest {
         assertTrue(source.contains("ai.drainNationPassDeltas(recorder)"))
         assertTrue(source.contains("ai.drainGeneralPassDeltas(recorder)"))
     }
+
+    @Test
+    fun `production seeds auction ids from persisted rows`() {
+        val source = source()
+
+        assertTrue(source.contains("auctionRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0"))
+        assertTrue(source.contains("auctionIdAllocator = { ++nextAuctionId }"))
+    }
 }

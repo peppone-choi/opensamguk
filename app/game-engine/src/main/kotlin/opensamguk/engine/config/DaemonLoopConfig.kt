@@ -208,11 +208,16 @@ class DaemonLoopConfig {
             ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
             ?: 0
 
+        var nextAuctionId = auctionRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0
+
         // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
         // Built here (not inside RTH) so the succession handler diffs into the SAME recorder the reserved
         // turns + nation pass use — the nextRuler hook (군주 사망 후계/멸망) writes heir-promote / 재야-reset /
         // markNationDeleted deltas that must flush alongside the rest of the tick.
-        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+        val recorder = ChangeRecorder(
+            auctionIdAllocator = { ++nextAuctionId },
+            kvWriteObserver = world::applyKvDirtyFree,
+        )
         eventStore.bindMutationSink(recorder::recordEventMutation)
         val rulerSuccession = RulerSuccessionHandler(world, recorder, hiddenSeed)
 
