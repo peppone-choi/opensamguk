@@ -3,6 +3,7 @@ package opensamguk.infra.read
 import opensamguk.infra.entity.MessageEntity
 import opensamguk.logic.message.MessageType
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import java.time.Instant
 
@@ -16,6 +17,9 @@ import java.time.Instant
  */
 @Repository
 interface MessageRepository : JpaRepository<MessageEntity, Int> {
+
+    @Query(value = "SELECT COALESCE(MAX(id), 0) FROM message", nativeQuery = true)
+    fun findMaxId(): Int
 
     /** All messages in a mailbox, ordered by id (newest last — PHP default). */
     fun findByMailboxOrderById(mailbox: Int): List<MessageEntity>

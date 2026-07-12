@@ -31,7 +31,7 @@ class AiProductionWiringGuardTest {
     fun `production seeds message ids from persisted rows`() {
         val source = source()
 
-        assertTrue(source.contains("messageRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0"))
+        assertTrue(source.contains("messageRepository.findMaxId()"))
         assertTrue(source.contains("messageIdAllocator = { ++nextMessageId }"))
     }
 }

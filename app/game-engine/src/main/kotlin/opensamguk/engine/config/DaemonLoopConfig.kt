@@ -210,7 +210,7 @@ class DaemonLoopConfig {
             ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
             ?: 0
 
-        var nextMessageId = messageRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0
+        var nextMessageId = messageRepository.findMaxId()
         var nextAuctionId = auctionRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0
 
         // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
