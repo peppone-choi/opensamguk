@@ -192,6 +192,26 @@ function abilityPowint(stats: Stats): [number, number, number] {
   return [leadership, strength, intel];
 }
 
+function abilityRandAll(stats: Stats): [number, number, number, number, number] {
+  const count = 5;
+  const remainingTotal = stats.total - stats.min * count;
+
+  while (true) {
+    const weights = Array.from({ length: count }, () => Math.random() * 65 + 10);
+    const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
+    const values = weights.map((weight) => stats.min + Math.floor((weight / weightTotal) * remainingTotal));
+
+    const remainder = stats.total - values.reduce((sum, value) => sum + value, 0);
+    for (let i = 0; i < remainder; i += 1) {
+      values[i % count] += 1;
+    }
+
+    if (values.every((value) => value <= stats.max && value >= stats.min)) {
+      return values as [number, number, number, number, number];
+    }
+  }
+}
+
 // 기본 능력치 분배 — 레거시 PageJoin: 통=total-2*floor(total/3), 무=floor(total/3), 지=floor(total/3) (165→55/55/55).
 const DEFAULT_STAT = Math.floor(DEFAULT_STAT_TOTAL / 5);
 const LEGACY_THREE_STAT_TOTAL = DEFAULT_STAT_TOTAL - DEFAULT_STAT * 2;
@@ -206,9 +226,7 @@ export default function JoinPage() {
   const { frontInfo, loading: frontInfoLoading } = useFrontInfo();
   const selectedServerId = serverId ?? frontInfo?.global.serverId;
   const homeHref = selectedServerId ? resolveServerGamePath(undefined, selectedServerId, '/game', '') : '/game';
-  const frontMemberName = frontInfo?.general?.name ?? '';
-
-  const [name, setName] = useState(frontMemberName);
+  const [name, setName] = useState('');
   const [leadership, setLeadership] = useState(DEFAULT_LEADERSHIP);
   const [strength, setStrength] = useState(DEFAULT_OTHER);
   const [intel, setIntel] = useState(DEFAULT_OTHER);
@@ -233,7 +251,6 @@ export default function JoinPage() {
 
   const total = leadership + strength + intel + politics + charm;
   const remaining = DEFAULT_STAT_TOTAL - total;
-  const memberName = joinForm?.member.name ?? frontMemberName;
   const inheritBonusTotal = inheritBonusStat.reduce((sum, value) => sum + value, 0);
   const inheritRequiredPoint =
     (inheritSpecial === undefined ? 0 : (joinForm?.inheritCosts.special ?? 0)) +
@@ -257,16 +274,11 @@ export default function JoinPage() {
   }, [joinForm?.turnTermMinutes]);
 
   useEffect(() => {
-    if (memberName && !name) setName(memberName);
-  }, [memberName, name]);
-
-  useEffect(() => {
     let alive = true;
     api.joinForm()
       .then((data) => {
         if (!alive) return;
         setJoinForm(data);
-        setName((current) => current === '' || current === frontMemberName ? data.member.name : current);
         setPic(data.member.canUsePicture);
       })
       .catch((cause: unknown) => {
@@ -275,7 +287,7 @@ export default function JoinPage() {
         setError(cause instanceof Error ? cause.message : '장수 생성 정보를 불러오지 못했습니다.');
       });
     return () => { alive = false; };
-  }, [frontMemberName]);
+  }, []);
 
   useEffect(() => {
     if (!frontInfoLoading && !loading && frontInfo?.general?.hasGeneral) {
@@ -394,8 +406,20 @@ export default function JoinPage() {
     }
   }
 
-  // 4가지 능력치 프리셋 — 레거시 PageJoin.vue 버튼(랜덤형/통솔무력형/통솔지력형/무력지력형).
-  function preset(type: 'random' | 'leadpow' | 'leadint' | 'powint') {
+  function preset(type: 'random' | 'leadpow' | 'leadint' | 'powint' | 'allRandom') {
+    if (type === 'allRandom') {
+      const [nextLeadership, nextStrength, nextIntel, nextPolitics, nextCharm] = abilityRandAll({
+        min: STAT_MIN,
+        max: STAT_MAX,
+        total: DEFAULT_STAT_TOTAL,
+      });
+      setLeadership(nextLeadership);
+      setStrength(nextStrength);
+      setIntel(nextIntel);
+      setPolitics(nextPolitics);
+      setCharm(nextCharm);
+      return;
+    }
     const stats: Stats = { min: STAT_MIN, max: STAT_MAX, total: LEGACY_THREE_STAT_TOTAL };
     let next: [number, number, number];
     switch (type) {
@@ -410,7 +434,7 @@ export default function JoinPage() {
 
   // 다시 입력(reset) — 레거시 PageJoin.vue resetArgs: 기본 분배·기본 성격·전콘 사용으로 복귀.
   function resetArgs() {
-    setName(memberName);
+    setName('');
     setLeadership(DEFAULT_LEADERSHIP);
     setStrength(DEFAULT_OTHER);
     setIntel(DEFAULT_OTHER);
@@ -557,13 +581,13 @@ export default function JoinPage() {
             능력치 <small style={{ color: 'var(--color-text-muted)' }}>(통/무/지/정/매)</small> &mdash; 합계 {total} / {DEFAULT_STAT_TOTAL} {remaining >= 0 ? `(남음 ${remaining})` : <span style={{ color: 'var(--color-danger)' }}>초과 {-remaining}</span>}
           </label>
 
-          {/* 능력치 조절 프리셋 — 레거시 PageJoin.vue 4버튼(랜덤형/통솔무력형/통솔지력형/무력지력형) */}
           <div style={{ display: 'flex', gap: 'var(--space-sm)', marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
             {([
               ['random', '랜덤형'],
               ['leadpow', '통솔무력형'],
               ['leadint', '통솔지력형'],
               ['powint', '무력지력형'],
+              ['allRandom', '전체 랜덤형'],
             ] as const).map(([t, label]) => (
               <button key={t} type="button" onClick={() => preset(t)} style={{ fontSize: 'var(--text-sm)', padding: '4px 8px' }}>
                 {label}

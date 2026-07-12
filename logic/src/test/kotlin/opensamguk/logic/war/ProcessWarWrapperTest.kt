@@ -114,6 +114,27 @@ class ProcessWarWrapperTest {
     }
 
     @Test
+    fun `invalid defender crew type falls back to the default footman`() {
+        val inner = FakeInner(conquerCity = false, log = mutableListOf())
+
+        processWar(
+            warSeed = WarSeed.build("0".repeat(32), 200, 6, 1, 200),
+            attackerGeneral = general(id = 1),
+            attackerNation = nationStub(),
+            defenderCity = city(id = 200, nationId = 2),
+            defenderCandidates = listOf(general(id = 2).copy(crewTypeId = 0)),
+            attackerCrewType = footman, attackerTech = 0,
+            defenderCrewType = footman, defenderTech = 0,
+            pipeline = pipeline,
+            year = 200, startYear = 180,
+            env = warEnv(),
+            runInner = { rng, attacker, gnd, c -> inner.run(rng, attacker, gnd, c) },
+        )
+
+        assertEquals(1, inner.calls)
+    }
+
+    @Test
     fun `supply-rice decrement applied as a delta when supply and phase greater than zero`() {
         val log = mutableListOf<String>()
         val defNationTech = 1000.0

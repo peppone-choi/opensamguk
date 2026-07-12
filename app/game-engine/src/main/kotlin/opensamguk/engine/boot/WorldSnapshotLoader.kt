@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.GeneralAccessLog
@@ -250,7 +251,8 @@ class WorldSnapshotLoader(
                 gold = rs.getInt("gold"),
                 rice = rs.getInt("rice"),
                 crew = rs.getInt("crew"),
-                crewTypeId = rs.getInt("crew_type_id"),
+                crewTypeId = rs.getInt("crew_type_id").takeIf { it >= GameUnitConst.CREWTYPE_CASTLE }
+                    ?: GameUnitConst.DEFAULT_CREWTYPE,
                 train = rs.getInt("train"),
                 atmos = rs.getInt("atmos"),
                 age = rs.getInt("age"),

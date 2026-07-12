@@ -213,7 +213,9 @@ class CheChulbyeong(
             term = 3,
         )
 
-        val crewType = GameUnitConst.byId(g0.crewTypeId) ?: GameUnitConst.byId(1100)!!
+        val crewType = GameUnitConst.byId(
+            g0.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
+        ) ?: GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         var g = addDexForChulbyeong(g0, crewType.id, g0.crew / 100.0)
         // +1 inheritance (active_action) when crew>500 && train*atmos > 70*70 — P6 succession seam (no write).
         // (modeled as a no-op write; the predicate is preserved for parity.)
@@ -245,8 +247,10 @@ class CheChulbyeong(
         val destCity = d.destCity ?: bctx.cityById.getValue(chosenCityId)
         val defenderNation = bctx.nationById[destCity.nationId]
         val defenders = bctx.defenderGeneralsByCity[chosenCityId] ?: emptyList()
-        val attackerCrewType = GameUnitConst.byId(d.general.crewTypeId) ?: GameUnitConst.byId(1100)!!
-        val defenderCrewType = GameUnitConst.byId(1100)!!
+        val attackerCrewType = GameUnitConst.byId(
+            d.general.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
+        ) ?: GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
+        val defenderCrewType = GameUnitConst.byId(GameUnitConst.DEFAULT_CREWTYPE)!!
         val hooks = ProductionWarBattleHooks(
             defenderNationRice = (defenderNation?.rice ?: 0).toDouble(),
             citySupply = destCity.supplyState != 0,

@@ -102,7 +102,9 @@ fun processWar(
 
     // (2) the defender candidate WarUnits (each on the SHARED rng) + the ordered battle queue.
     val candidateUnits = defenderCandidates.map { g ->
-        val crewType = GameUnitConst.byId(g.crewTypeId) ?: defenderCrewType
+        val crewType = GameUnitConst.byId(
+            g.crewTypeId.takeIf { it >= GameUnitConst.CREWTYPE_CASTLE } ?: GameUnitConst.DEFAULT_CREWTYPE,
+        ) ?: defenderCrewType
         WarUnitGeneral(
             rng = rng, state = WarUnitGeneralState(g), pipeline = pipeline,
             crewType = crewType, tech = defenderTech, isAttacker = false,

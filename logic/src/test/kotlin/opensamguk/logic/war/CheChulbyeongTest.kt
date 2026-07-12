@@ -123,6 +123,24 @@ class CheChulbyeongTest {
     }
 
     @Test
+    fun `invalid attacker crew type falls back to the default footman`() {
+        val rng = RecordingRng(seed, mutableListOf())
+        var processWarCalls = 0
+        val cmd = CheChulbyeong(
+            pipeline,
+            processWarFn = { _, _, _ ->
+                processWarCalls++
+                ProcessWarResult(false, null, 0, 0, dummyAttacker(rng), dummyCity(rng), emptyList(), 0)
+            },
+            lotteryFn = { _, _, _, _ -> false },
+        )
+
+        cmd.resolve(resolveCtx(rng, battleCtx(), general().copy(crewTypeId = 0)))
+
+        assertEquals(1, processWarCalls)
+    }
+
+    @Test
     fun `friendly target returns che_이동 alternative and runs NO battle`() {
         val log = mutableListOf<String>()
         val rng = RecordingRng(seed, log)

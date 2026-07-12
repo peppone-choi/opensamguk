@@ -97,6 +97,7 @@ describe('JoinPage route guard', () => {
         apiMocks.join.mockResolvedValue({ status: 'BLOCKED', reason: '테스트 종료' });
         render(<JoinPage />);
 
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: '조조' } });
         const sliders = screen.getAllByRole('slider');
         expect(sliders).toHaveLength(5);
         fireEvent.change(sliders[3], { target: { value: '60' } });
@@ -114,11 +115,36 @@ describe('JoinPage route guard', () => {
         });
     });
 
+    it('장수명은 계정명으로 자동 채워지지 않고 지운 뒤에도 복원되지 않는다', async () => {
+        frontInfoState.hasGeneral = false;
+        render(<JoinPage />);
+
+        const nameInput = await screen.findByRole('textbox') as HTMLInputElement;
+        expect(nameInput.value).toBe('');
+        fireEvent.change(nameInput, { target: { value: '새장수' } });
+        fireEvent.change(nameInput, { target: { value: '' } });
+        expect(nameInput.value).toBe('');
+    });
+
+    it('전체 랜덤형은 다섯 능력치를 범위 내에서 합계 275로 재분배한다', async () => {
+        frontInfoState.hasGeneral = false;
+        render(<JoinPage />);
+
+        fireEvent.click(await screen.findByRole('button', { name: '전체 랜덤형' }));
+        const values = screen.getAllByRole('spinbutton').map((input) => Number((input as HTMLInputElement).value));
+
+        expect(values).toHaveLength(5);
+        expect(values.reduce((sum, value) => sum + value, 0)).toBe(275);
+        values.forEach((value) => expect(value).toBeGreaterThanOrEqual(15));
+        values.forEach((value) => expect(value).toBeLessThanOrEqual(80));
+    });
+
     it('유산과 계정 초상을 실제 선택해 join 요청에 전달한다', async () => {
         frontInfoState.hasGeneral = false;
         apiMocks.join.mockResolvedValue({ status: 'BLOCKED', reason: '테스트 종료' });
         render(<JoinPage />);
 
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: '조조' } });
         await waitFor(() => {
             expect(screen.getByRole('img', { name: '전콘' })).toHaveAttribute('src', expect.stringContaining('/custom.jpg'));
         });

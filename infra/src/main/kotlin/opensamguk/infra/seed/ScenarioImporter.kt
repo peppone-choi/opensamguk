@@ -1,6 +1,7 @@
 package opensamguk.infra.seed
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.event.EventStore
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
@@ -343,7 +344,7 @@ class ScenarioImporter(
                 (?, ?, ?, ?, 0, ?, ?,
                  ?, ?, ?, 0,
                  ?, ?, ?, 0, ?, ?, ?,
-                 1000, 1000, 0, 0, 0, 0,
+                 1000, 1000, 0, ?, 0, 0,
                  'None', 'None', 'None', 'None',
                  ?, ?, ?, ?, ?, 'None', 0,
                  '{}'::jsonb, ?, '{}'::jsonb,
@@ -370,6 +371,7 @@ class ScenarioImporter(
                 bg.id, g.name, g.nationId, cityId, npcState, g.affinity,
                 born, dead, "default.jpg",
                 g.leadership, g.strength, g.intel, exp, ded, g.officerLevel,
+                GameUnitConst.DEFAULT_CREWTYPE,
                 ts, age, age, personal, special,
                 // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
                 jsonb(ScenarioLifecycleMeta.initialGeneralMeta(dead, startYear, SEED_START_MONTH)),
