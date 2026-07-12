@@ -70,6 +70,7 @@ V2-0 exit에 `FormationBattle`의 완성 콘텐츠를 요구하지는 않지만,
 - 메인에 `현재 조작 대상` 패널과 subject type/id를 추가한다.
 - 본인 장수 대상의 기존 예약턴은 동작 불변으로 유지한다.
 - command catalog에 `personal.*`, `chief.*`, `operation.*`, `battle.*`, `campaign.*` layer와 legacy adapter/version/parityStatus를 추가한다.
+- 상세 카탈로그의 재배치·추가·삭제·병합·분리 기준은 `docs/superpowers/specs/2026-07-12-v2-command-catalog-and-rollout.md`를 따른다.
 - `che_출병`은 개인턴의 침공 의미를 보존하고, sandbox adapter가 Operation/BattleSession을 만든다. 사령턴은 열린 전선 정책·보급·원군만 조정한다.
 - 삭제·통합은 parser에서 먼저 하지 않는다. 보존·확장·분리·공통 precheck 통합·deprecated 순서로 이행한다.
 

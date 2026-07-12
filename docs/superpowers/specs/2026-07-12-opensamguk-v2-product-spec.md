@@ -261,6 +261,8 @@ adapter, version, parityStatus, deprecatedAt
 
 새 커맨드의 기본 namespace는 `personal.*`(general_turn), `chief.*`(nation_turn), `operation.*`(전선 생성·참여·지원), `battle.*`(BattleSession 실시간 명령), `campaign.*`(전투 정산·도시·인사)로 둔다. 개인턴·사령턴과 전술 명령을 같은 예약 링에 섞지 않는다.
 
+세부 legacy 목록·병합/분리 후보·추가/삭제 기준·단계별 이행은 `docs/superpowers/specs/2026-07-12-v2-command-catalog-and-rollout.md`를 정본으로 참조한다.
+
 ### 건물·인프라의 추가 방식
 
 건물은 즉시 수치 버프가 아니라 국가 계획과 도시 현장 프로젝트의 중간 상태로 둔다.
