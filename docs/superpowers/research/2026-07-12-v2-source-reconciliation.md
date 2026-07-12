@@ -49,7 +49,7 @@
 
 현재 v1의 즉시 명령은 `Redis Streams → engine handler → ChangeRecorder → JDBC flush → commandResult` 순서로 확정한다. `commandResult`는 flush 이후에만 발행한다. 읽기 API의 `front-info` polling은 장수 생성 완료 신호가 아니라 보조 read model 확인용으로만 남긴다.
 
-레거시 `TurnExecutionHelper.php:259-347`에서는 한 장수의 due 시점에 `nation_turn` 사령 명령을 먼저 처리하고 `general_turn` 개인 명령을 다음에 처리한 뒤 각각 `pullNationCommand`/`pullGeneralCommand`를 실행한다. v2에서도 이 링과 순서는 보존한다. 개인턴의 `che_출병`이 침공과 `Operation/BattleSession`을 만들고, 사령턴은 열린 전선의 보급·원군·방어·퇴각 정책만 조정한다. v2 전술 명령은 두 링을 대체하지 않고 별도 battle order stream을 사용한다.
+레거시 `TurnExecutionHelper.php:259-347`에서는 한 장수의 due 시점에 `nation_turn` 사령 명령을 먼저 처리하고 `general_turn` 개인 명령을 다음에 처리한 뒤 각각 `pullNationCommand`/`pullGeneralCommand`를 실행한다. v2에서도 이 링과 순서는 보존한다. 개인턴의 `che_출병`이 침공 `Operation`을 만들고, 실제 교전 조건이 충족된 뒤 별도 전술 세션이 열린다. 사령턴은 열린 전선의 보급·원군·방어·퇴각 정책만 조정하고, v2 전술 명령은 두 링을 대체하지 않는 battle order stream을 사용한다.
 
 ### 범위
 

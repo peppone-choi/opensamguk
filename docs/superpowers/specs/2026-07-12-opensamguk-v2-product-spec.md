@@ -1,7 +1,7 @@
 # 오픈삼국 v2 제품·시스템 정본
 
 > 작성일: 2026-07-12
-> 상태: proposed-source-of-truth
+> 상태: reviewed-source-of-truth
 > 선행 자료: `docs/superpowers/research/2026-07-12-v2-source-reconciliation.md`, `docs/wiki/pages/game/opensamguk-v2-direction.md`, `docs/wiki/raw/opensamguk-v2-downloads/PRD.md`
 
 ## 1. 제품 정의
@@ -10,7 +10,7 @@
 
 v2의 첫 제품 약속은 “기능이 많은 삼국지”가 아니라 다음 한 장면이다.
 
-> 플레이어가 전쟁을 승인하고, 참모와 군수관의 의견을 비교하고, 봉신 원군의 지연을 감수하며, 단계별 전쟁 replay와 관계 변화를 확인한다.
+> 플레이어 장수가 출병을 결심해 자신의 작전을 열고, 참모와 군수관의 의견을 비교하고, 봉신 원군의 지연을 감수하며, 단계별 전쟁 replay와 관계 변화를 확인한다.
 
 ## 2. v1과 v2의 경계
 
@@ -29,6 +29,19 @@ v2의 첫 제품 약속은 “기능이 많은 삼국지”가 아니라 다음 
 - 전쟁 replay: 접근·정찰·요격·야전·공성·시가전·전후 처리 phase.
 - 가신 제안과 편견: deterministic score, 근거, confidence, 관계 변화.
 - 도독부·봉토·봉신 계약: 중앙 권위, 자율성, 조공, 원군 의무.
+- 도시별 재정·곡물·주둔군·수송과 실시간 formation 전투.
+- 이름을 유지한 국가 성향 15종의 정통성·통치제도·조직망·정책 조합.
+- 황제·조정·상서·인장·조서와 중앙/지방 관직의 추천·자칭·임명·실권 분리.
+- 전국 tech boolean이 아닌 관직·시범 군현·시설·예산을 통한 개혁 확산.
+
+세부 정본은 다음 문서다.
+
+- `docs/superpowers/specs/2026-07-13-v2-historical-city-army-terrain-design.md`
+- `docs/superpowers/specs/2026-07-13-v2-troop-building-content-catalog.md`
+- `docs/superpowers/specs/2026-07-13-v2-nation-identity-rework.md`
+- `docs/superpowers/specs/2026-07-13-v2-imperial-court-office-reform-equipment-design.md`
+
+v1의 `nation.level`, `officer_level`, 도시 수 기반 작위 상승은 `LEGACY` 패리티와 호환 adapter로 보존한다. v2에서 공·왕·황제·중앙관직·지방관직은 도시 수 경험치 단계가 아니다. 발령 주체, 조서·인장, 추천·수락, 실제 관할, 타 세력의 인정으로 성립한다.
 
 v2 기능은 v1 명령의 결과를 바꾸는 방식으로 먼저 구현하지 않는다. 동일한 기능이 v1과 v2에 모두 존재해야 하면 world/profile/feature flag 경계로 분리한다.
 
@@ -82,7 +95,7 @@ monthly_effect: month boundary에서 한 번
 
 1. 플레이어가 참모 제안을 받는다.
 2. 군수관이 보급 부족을 이유로 반대한다.
-3. 플레이어가 작전을 승인한다.
+3. 플레이어가 출병을 결심하고 자신의 작전안을 확정한다. 이는 사령턴의 전쟁 승인 절차가 아니다.
 4. 도독부 원군이 수락·지연·축소 중 하나로 응답한다.
 5. 작전이 접근·정찰·요격·야전 또는 공성·시가전·전후 처리로 진행된다.
 6. replay와 정세 로그가 생성된다.
@@ -98,7 +111,7 @@ monthly_effect: month boundary에서 한 번
 |---|---|---|
 | 대상 | 한 장수와 자신의 retinue | 국가·도시·외교·이미 열린 전선 | 열린 `BattleSession` 안의 부대·대형·지점 |
 | 정본 | `general_turn` 링 | `nation_turn` 링의 국가·직책별 슬롯 | tactical order stream와 `BattleState` |
-| 예시 | 출병, 이동, 징병, 훈련, 개인 참전·지원 | 보급 우선순위, 원군·예비대, 방어 정책, 전쟁 목표, 퇴각 정책 | 이동, 방향 전환, 선형/종대/방진, 사격, 돌격, 추격, 예비대 투입 |
+| 예시 | 출병, 이동, 징병, 훈련, 개인 참전·지원 | 보급 우선순위, 원군·예비대 배정 정책, 방어 정책, 전쟁 목표, 퇴각 정책 | 이동, 방향 전환, 선형/종대/방진, 사격, 돌격, 추격, 배정된 예비대의 전장 투입 |
 | 시간 | production 3600초, QA/s1 60초 프로파일의 장수 예약턴 | 국가 수뇌부 직책별 예약턴 | 서버 fixed tick의 실시간 전투. 명령은 즉시 접수하고 짧은 만료 시각을 가진다 |
 | 처리 엔진 | campaign/turn engine의 general-turn drain | campaign/turn engine의 nation-turn drain | tactical battle engine |
 | 저장 | 장수·retinue·개인 상태를 기존 flush로 확정 | 국가·도시·외교·전선 정책을 기존 flush로 확정 | `BattleState`와 `BattleEvent`를 기록하고 종료 시 campaign 결과로 정산 |
@@ -109,16 +122,17 @@ monthly_effect: month boundary에서 한 번
 ```text
 개인턴: `che_출병` 실행
   → 침공 의도·목표 도시·참가 부대·도착 시각 생성
-  → Operation/BattleSession 생성·참가 부대 잠금
+  → Operation 생성·참가 부대 예약
 사령턴: 열린 Operation에 보급·원군·방어·퇴각 정책 적용
 개인턴: 다른 장수의 참전·정찰·보급 지원 합류
+  → 교전 조건 충족 시 BattleSession 생성·참가 부대 잠금
   → 전술 초기 배치
   → tactical order stream에서 실시간 대형 지휘
   → BattleEvent/replay 생성
   → 승패·손실·포로·보급·도시/인물 변화로 Operation 정산
 ```
 
-사령턴은 전쟁 개시 권한이 아니라 `전선 보급`, `원군 소집`, `예비대 투입`, `방어 태세`, `퇴각선`, `전쟁 목표`를 조정하는 국가 정책이다. 개인턴의 출병이 없으면 사령턴은 정책만 저장하고 전투를 만들지 않는다. 전술 명령은 국가 전체의 예약턴을 소비하지 않고, `battleId + formationId + sequence + issuedAtTick + expiresAtTick`를 갖는 전용 명령으로 만든다. 전투가 끝날 때만 tactical result adapter가 전략 상태 변경안을 만들고, campaign engine이 기존 단일 flush 경로로 확정한다.
+사령턴은 전쟁 개시 권한이 아니라 `전선 보급`, `원군 소집`, `예비대 배정`, `방어 태세`, `퇴각선`, `전쟁 목표`를 조정하는 국가 정책이다. 개인턴의 출병이 없으면 사령턴은 정책만 저장하고 전투를 만들지 않는다. 배정된 부대가 작전에 실제 합류하는 것은 `operation.reinforce`, 전장에 들어가는 시점과 위치를 정하는 것은 `battle.formation.commitReserve`가 담당한다. 전술 명령은 국가 전체의 예약턴을 소비하지 않고, `battleId + formationId + sequence + issuedAtTick + expiresAtTick`를 갖는 전용 명령으로 만든다. 전투가 끝날 때만 tactical result adapter가 전략 상태 변경안을 만들고, campaign engine이 기존 단일 flush 경로로 확정한다.
 
 플레이어가 전투에서 이탈하면 마지막 유효 명령과 장수별 doctrine/retainer AI가 계속 실행한다. 전체 월드의 턴을 멈추는 전역 일시정지는 production에 두지 않고, sandbox·관전·replay에서만 허용한다.
 
@@ -144,17 +158,24 @@ route
 rules: intercept, retreat, siege, supply
 ```
 
-기존 `che_출병`은 v2에서 단독 `Operation`으로 감싼다. 기존 v1 예약턴을 직접 변경하지 않고 adapter로 연결한다.
+기존 `che_출병`은 **v2 sandbox/world profile에서만** 단독 `Operation`으로 감싼다. v1 production의 예약 queue·판정·로그·result는 변경하지 않고 adapter 밖에서 끝난다.
 
 ### BattleReplay
 
 ```text
-replayId, worldId, operationId, seed, createdAt
-phases[]: APPROACH, SCOUT, INTERCEPT, FIELD, SIEGE, URBAN, AFTERMATH
-phaseInput, phaseDecision, rngDraws, stateDiff, logEntryIds
+ReplayEnvelope
+  replayId, worldId, operationId, createdAt, persistedLogEntryIds[]
+
+DeterministicReplayBody
+  worldSnapshotHash, operationInputHash, seed
+  contentVersion, balanceVersion, geographyVersion
+  phases[]: APPROACH, SCOUT, INTERCEPT, FIELD, SIEGE, URBAN, AFTERMATH
+  phaseInput, phaseDecision, rngDraws, orderedStateDiff, normalizedLogEntries
+
+deterministicReplayHash = hash(canonicalSerialize(DeterministicReplayBody))
 ```
 
-같은 `world snapshot + operation input + seed`는 같은 replay JSON과 같은 결과를 만들어야 한다. replay는 UI 장식이 아니라 검증 가능한 결과 계약이다.
+같은 `world snapshot + operation input + seed + content/balance/geography version`은 같은 `DeterministicReplayBody`와 hash, 같은 결과를 만들어야 한다. `replayId`, `createdAt`, DB log id 같은 persistence metadata는 동등성 비교에서 제외하고 필요하면 normalized sequence key로 대응한다. replay는 UI 장식이 아니라 검증 가능한 결과 계약이다.
 
 ### RetainerProposal
 
@@ -226,7 +247,7 @@ v2의 첫 수직 루프는 `개인턴 출병 → 실시간 대형 부대 전투 
 - 부대마다 명확한 base/footprint, 전면 방향, 대형 폭·깊이, 색상·깃발·장수 표식을 보여준다.
 - 이동은 자유로운 연속 좌표지만 부대 간격과 대형 질서를 유지한다. 겹침·측면·후방·지휘거리·보급선이 결과에 영향을 준다.
 - 전투 목표는 적 섬멸 하나가 아니라 고지 점유, 관문 방어, 보급 마차 호송, 퇴로 확보, 적 지휘부 압박처럼 테이블탑 시나리오 목표로 정의한다.
-- 실시간 시뮬레이션 위에 일시정지·저속·명령 재확인·전황 보고를 제공한다. 플레이어는 클릭 속도가 아니라 명령의 우선순위와 부대 배치로 승부한다.
+- production 실시간 시뮬레이션에는 짧은 명령 창·예약 명령·전황 보고·AI 위임을 제공한다. 일시정지·저속은 sandbox·관전·replay 전용이며, 플레이어는 클릭 속도가 아니라 명령의 우선순위와 부대 배치로 승부한다.
 - 피해는 병사 한 명을 직접 조작하는 대신 부대 strength, cohesion, morale, fatigue, ammunition/supply의 변화로 읽는다. 중요한 붕괴·돌격·지휘관 손실은 replay event로 강조한다.
 - UI는 부대 카드, 명령선, 지휘 반경, 사격 범위, 보급 경로, 목표 지점을 명확히 표시하고, 화면을 가리는 화려한 이펙트는 줄인다.
 
@@ -279,16 +300,16 @@ adapter, version, parityStatus, deprecatedAt
 
 v2 첫 건물군은 다음처럼 전쟁과 국가 운영을 동시에 바꾼다.
 
-| 건물/시설 | 국가·도시 효과 | 전술 효과 |
+| 건물/시설 | 제공 capability | 실제 효력이 생기는 조건 |
 |---|---|---|
-| 곡창·군량창 | 식량 저장·보급 유지·흉년 완충 | 장기전 보급선과 재보급 거점 |
-| 역참·군도 | 장수·원군 이동 시간 감소 | 증원 도착·퇴각 경로 개선 |
-| 망루·봉화대 | 시야·첩보·경보 시간 증가 | 적 접근 탐지·매복 대응 |
-| 성벽·관문 | 도시 방어·공성 단계 증가 | 방어선·사격 위치·퇴로 제공 |
-| 병영·훈련장 | 모집·훈련·부곡 회복 속도 증가 | 사기·대형 유지·재편성 보조 |
-| 시장·수운 시설 | 세입·교역·물자 이동 증가 | 전장 보급 비용과 작전 지속력 개선 |
+| 곡창·군량창 | 곡물 보관·예약·배급·재보급 거점 | 실제 재고, 관리 인력, 부패·화재 상태, 연결된 수송로가 필요 |
+| 역참·군도 | 전령 교대, 숙영, 노선별 수송 capacity | 역마·인부·노면 정비·통행권·중간 거점이 유지된 구간만 이용 가능 |
+| 망루·봉화대 | 관측 보고와 봉수 전달 | 관측 인력·가시선·날씨·연결된 봉수망이 있어야 경보가 도착 |
+| 성벽·관문 | 물리 장애물, 수비 위치, 통행 통제 | 수비대·성문 인력·보수 자재가 없으면 파손·침투·우회에 취약 |
+| 병영·훈련장 | 모집 queue, 교련 배정, 장비 지급·재편성 | 교관·장비·급료·군량과 모집원이 있어야 formation을 준비 |
+| 시장·수운 시설 | 거래 계약, 집산, 선박·창고·하역 capacity | 상인 관계·현물 재고·운송 수단·치안·계절 수위에 따라 실제 흐름 결정 |
 
-사령턴은 `chief.buildPlan`, `chief.allocateBudget`, `chief.assignCityProject`처럼 국가 계획을 예약하고, 개인턴은 `personal.startProject`, `personal.superviseProject`, `personal.pauseProject`처럼 현장 실행을 예약한다. 건설 완료는 전술 화면에서 직접 발생하지 않고 campaign engine이 확정한다. 건물 template과 효과는 `EraPack`에 두어 오픈삼국의 성곽·곡창·역참과 나폴레오닉/엠파이어의 도로·창고·항만을 같은 프로젝트 계약으로 확장한다.
+사령턴은 `chief.build.plan`, `chief.build.assign`으로 국가 계획·예산·건설권한·담당자를 예약하고, 개인턴은 `personal.cityProject.execute`, `personal.cityProject.pause`로 현장 실행·감독·중단을 예약한다. `campaign.cityProject.created/progressed/paused/completed`는 제출 명령이 아니라 campaign engine이 확정한 domain event다. 건설 완료는 전술 화면에서 직접 발생하지 않는다. 건물 template과 capability는 `EraPack`에 두어 오픈삼국의 성곽·곡창·역참과 나폴레오닉/엠파이어의 도로·창고·항만을 같은 프로젝트 계약으로 확장한다.
 
 ### 전술 전투의 플레이 주체
 
@@ -297,7 +318,7 @@ v2 첫 건물군은 다음처럼 전쟁과 국가 운영을 동시에 바꾼다.
 | 주체 | 맡는 일 | 맡기지 않는 일 |
 |---|---|---|
 | 플레이어 | 목표·진형·집결지·보급 우선순위·공격/퇴각 시점·원군 투입을 결정 | 병사 한 명 단위 이동과 매 타격 직접 조작 |
-| 주공 장수 플레이어 | 본인 부대의 핵심 타일 명령과 작전 phase 승인 | 다른 유저의 부대를 강제 이동 |
+| 주공 장수 플레이어 | 본인 부대의 핵심 전술 명령과 본인 작전 phase 확정 | 다른 유저의 부대를 강제 이동 |
 | 참모·가신 | 정찰 결과, 위험 경고, 대안 경로와 보급안 제안 | 플레이어 승인 없이 중요한 작전 목표 변경 |
 | 부대 AI | 이동 경로, 교전 간격, 적 추적, 자동 퇴각 등 세부 실행 | 상위 작전의 승리 목표를 임의로 변경 |
 | 적 세력 AI | 방어선, 요격, 증원, 거짓 정보, 퇴각 판단 | 플레이어에게 보이지 않는 정보를 근거 없이 사용 |
@@ -378,7 +399,7 @@ CampaignWorld      도시·국가·경제·외교·인물·시즌
 ### 전투 규칙셋 확장 순서
 
 1. 공통 전술 기반: `BattleState`, topology, fixed clock, order intent, formation, authority, event/replay를 먼저 고정한다.
-2. `FormationRealtimeBattle`: 연속 좌표, 대형 footprint, 선형·종대·방진, 실시간 fixed tick, 일시정지/저속 명령, 사기·피로·지휘 반경·보급. 오픈삼국 v2의 첫 노출 방식.
+2. `FormationRealtimeBattle`: 연속 좌표, 대형 footprint, 선형·종대·방진, 실시간 fixed tick, 명령 창·queued order·AI 위임, 사기·피로·지휘 반경·보급. 오픈삼국 v2의 첫 노출 방식이며 pause/slow는 sandbox·관전·replay에서만 허용한다.
 3. `TabletopScenarioLayer`: 고지·관문·호송·퇴로 확보 같은 시나리오 목표, 전장 배치·전면 방향·지휘선·replay를 미니어처 워게임처럼 읽게 하는 표현 계층.
 4. `NapoleonicRuleset`: 선열·종대·방진, 포병 사격, 기병 돌격, 장교 지휘, 명령 전달 지연을 `UnitTemplate`과 전투 규칙으로 추가한다.
 5. `EmpireRuleset`: 전투 외에 산업·무역·해군·식민지·국제 외교를 CampaignWorld와 Operation에 추가한다. 전술전투 자체를 비대하게 만들지 않는다.
@@ -392,7 +413,7 @@ CampaignWorld      도시·국가·경제·외교·인물·시즌
 - command acceptance p95 < 200ms.
 - commandResolved 후 영향 query가 2초 이내 갱신.
 - replay 생성 p95 < 1초(정산 자체는 비동기 가능).
-- 동일 seed 재실행 replay diff 0.
+- 동일 입력·버전·seed 재실행 시 `DeterministicReplayBody`와 hash diff 0. envelope id/timestamp는 비교 제외.
 - v1 backend gate와 web typecheck/build 회귀 0.
 - v2 sandbox에서 승인부터 replay·관계 변화까지 한 번에 재현.
 - production에서는 v1 world와 v2 sandbox world를 명확히 구분.

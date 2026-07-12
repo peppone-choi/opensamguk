@@ -1,7 +1,8 @@
 # 오픈삼국 v2 게임 기획안
 
 > 작성일: 2026-06-28
-> 상태: draft
+> 상태: superseded-by-2026-07-12-product-spec
+> 후속 정본: `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md`
 > 근거: `docs/superpowers/research/2026-06-27-v2-samnet-myosam-gap-design.md`, `docs/wiki/raw/myosam-help/`, `/Users/apple/Downloads/files/` raw copy
 > 원칙: v1 패러티는 보존하고, v2는 별도 제품 방향으로 설계한다.
 
@@ -309,7 +310,7 @@ Deliverables:
 
 Exit:
 
-- 같은 seed로 같은 replay JSON 생성.
+- 같은 입력·버전·seed로 wall-clock id/timestamp를 제외한 deterministic replay body와 hash 생성.
 - 전쟁 결과 로그와 replay가 연결됨.
 
 ### Phase V2-2 — 가신 1명 vertical slice
