@@ -27,6 +27,7 @@ import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
+import opensamguk.infra.read.MessageRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.common.josa.JosaUtil
@@ -170,6 +171,7 @@ class DaemonLoopConfig {
         boardPostRepository: BoardPostRepository,
         votePollRepository: VotePollRepository,
         diplomacyLetterRepository: DiplomacyLetterRepository,
+        messageRepository: MessageRepository,
         contactReader: opensamguk.infra.read.ContactReader,
         gameKvRepository: opensamguk.infra.read.GameKvRepository,
         bettingRepository: opensamguk.infra.read.BettingRepository,
@@ -208,6 +210,7 @@ class DaemonLoopConfig {
             ?: System.getenv("SCENARIO_CODE")?.removePrefix("scenario_")?.toIntOrNull()
             ?: 0
 
+        var nextMessageId = messageRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0
         var nextAuctionId = auctionRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0
 
         // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
@@ -215,6 +218,7 @@ class DaemonLoopConfig {
         // turns + nation pass use — the nextRuler hook (군주 사망 후계/멸망) writes heir-promote / 재야-reset /
         // markNationDeleted deltas that must flush alongside the rest of the tick.
         val recorder = ChangeRecorder(
+            messageIdAllocator = { ++nextMessageId },
             auctionIdAllocator = { ++nextAuctionId },
             kvWriteObserver = world::applyKvDirtyFree,
         )

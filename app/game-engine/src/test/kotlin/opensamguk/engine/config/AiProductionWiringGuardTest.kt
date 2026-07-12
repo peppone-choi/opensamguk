@@ -26,4 +26,12 @@ class AiProductionWiringGuardTest {
         assertTrue(source.contains("auctionRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0"))
         assertTrue(source.contains("auctionIdAllocator = { ++nextAuctionId }"))
     }
+
+    @Test
+    fun `production seeds message ids from persisted rows`() {
+        val source = source()
+
+        assertTrue(source.contains("messageRepository.findAll().mapNotNull { it.id }.maxOrNull() ?: 0"))
+        assertTrue(source.contains("messageIdAllocator = { ++nextMessageId }"))
+    }
 }
