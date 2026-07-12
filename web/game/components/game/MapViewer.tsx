@@ -61,6 +61,16 @@ const DETAIL_SIZES: Record<number, CitySize> = {
     7: { areaW: 84, areaH: 60, iconW: 28, iconH: 20, flagRight: -6, flagTop: -4 },
     8: { areaW: 96, areaH: 72, iconW: 32, iconH: 24, flagRight: -6, flagTop: -3 },
 };
+const BASIC_SIZES: Record<number, Pick<CitySize, 'iconW' | 'iconH'>> = {
+    1: { iconW: 12, iconH: 12 },
+    2: { iconW: 12, iconH: 12 },
+    3: { iconW: 14, iconH: 14 },
+    4: { iconW: 16, iconH: 14 },
+    5: { iconW: 18, iconH: 16 },
+    6: { iconW: 20, iconH: 16 },
+    7: { iconW: 22, iconH: 18 },
+    8: { iconW: 24, iconH: 18 },
+};
 // 로그인/로비/메인 3개 맵의 모양을 동일하게 맞추는 단일 노브 — 값은 gateway MapPreview.ICON_SCALE와 일치.
 // 아우라(areaW/areaH)·깃발 위치는 레거시 비율 유지, cast 아이콘(iconW/iconH)만 ICON_SCALE로 줄인다.
 const ICON_SCALE = 0.72;
@@ -73,8 +83,11 @@ const DEFAULT_PHASES_PER_MONTH = 3;
 const DEFAULT_TURNS_PER_YEAR = 36;
 const DEFAULT_OPENING_LIMIT_TURNS = DEFAULT_TURNS_PER_YEAR;
 // 표에 없는 레벨(예: 0)도 깨지지 않게 lv3 기준으로 폴백.
-function sizeOf(level: number): CitySize {
+function sizeOf(level: number, detail: boolean): CitySize {
     const base = DETAIL_SIZES[level] ?? DETAIL_SIZES[3];
+    if (!detail) {
+        return { ...base, ...(BASIC_SIZES[level] ?? BASIC_SIZES[3]) };
+    }
     return {
         ...base,
         iconW: Math.round(base.iconW * ICON_SCALE),
@@ -211,6 +224,7 @@ const LS_SINGLE_TAP = 'sam.toggleSingleTap';
 export interface MapViewerProps {
     /** 외부 주입 맵 데이터 — 주입 시 self-fetch 생략(레거시 PageHistory.vue:23-33 :map-data 주입). */
     mapData?: MapPreviewResponse | null;
+    isDetailMap?: boolean;
     /** 클릭(도시 페이지 이동) 차단 — 레거시 MapViewer.vue:225/392-394. 기본값: mapData 주입 시 true. */
     disallowClick?: boolean;
     /** 내(현재) 도시 blink — 레거시 is-my-city → .my_city(map.scss:231-262). */
@@ -274,6 +288,7 @@ function mergeLive(
 
 export default function MapViewer({
     mapData,
+    isDetailMap = true,
     disallowClick,
     currentCityId,
     live = false,
@@ -508,7 +523,7 @@ export default function MapViewer({
                     <img className="map-road" src={road} alt="" width={w} height={h} draggable={false} />
 
                     {data.cities.map((c) => {
-                        const sz = sizeOf(c.level);
+                        const sz = sizeOf(c.level, isDetailMap);
                         const owned = c.nationId !== 0;
                         const unsupplied = owned && c.supply === false;
                         const col = colorOf(c.nationId);

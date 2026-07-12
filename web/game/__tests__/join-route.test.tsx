@@ -11,6 +11,7 @@ const apiMocks = vi.hoisted(() => ({
     join: vi.fn(),
     joinForm: vi.fn(),
     mapPreview: vi.fn(),
+    commandResult: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -48,6 +49,7 @@ vi.mock('@/lib/api', () => ({
         mapPreview: apiMocks.mapPreview,
         join: apiMocks.join,
         joinForm: apiMocks.joinForm,
+        commandResult: apiMocks.commandResult,
     },
 }));
 
@@ -57,6 +59,7 @@ describe('JoinPage route guard', () => {
         pushMock.mockReset();
         refreshMock.mockReset();
         apiMocks.join.mockReset();
+        apiMocks.commandResult.mockReset();
         apiMocks.joinForm.mockReset().mockResolvedValue({
             result: true,
             member: {
@@ -137,6 +140,23 @@ describe('JoinPage route guard', () => {
         expect(values.reduce((sum, value) => sum + value, 0)).toBe(275);
         values.forEach((value) => expect(value).toBeGreaterThanOrEqual(15));
         values.forEach((value) => expect(value).toBeLessThanOrEqual(80));
+    });
+
+    it('장수 생성은 턴 완료가 아니라 엔진 command result 완료를 기다린다', async () => {
+        frontInfoState.hasGeneral = false;
+        apiMocks.join.mockResolvedValue({ status: 'AVAILABLE', requestId: 'join-1' });
+        apiMocks.commandResult
+            .mockResolvedValueOnce({ status: 'PENDING', requestId: 'join-1' })
+            .mockResolvedValue({ status: 'RESOLVED', requestId: 'join-1', ok: true, type: 'makeGeneral', result: { generalId: 1001 } });
+        const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
+        render(<JoinPage />);
+
+        fireEvent.change(await screen.findByRole('textbox'), { target: { value: '조조' } });
+        fireEvent.click(screen.getByRole('button', { name: '장수 생성' }));
+
+        await waitFor(() => expect(pushMock).toHaveBeenCalled());
+        expect(apiMocks.commandResult).toHaveBeenCalledWith('join-1');
+        alertMock.mockRestore();
     });
 
     it('유산과 계정 초상을 실제 선택해 join 요청에 전달한다', async () => {

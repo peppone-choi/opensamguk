@@ -105,6 +105,7 @@ export default function SelectCityField({ commandKey, commandName, value, onChan
             {data && (
                 <MapViewer
                     mapData={data}
+                    isDetailMap={false}
                     currentCityId={currentCityId}
                     selectedCityId={value}
                     onCitySelect={onChange}

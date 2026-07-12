@@ -193,6 +193,15 @@ describe('MapViewer — mapData 주입(P0-22)', () => {
         await waitFor(() => expect(getCanvas()).toBeTruthy());
         expect(screen.getByRole('link', { name: /낙양 레벨 8 위/ })).toHaveAttribute('href', '/game/city?id=11');
     });
+
+    it('단순 지도는 레거시 basicMapCitySize를 사용하고 상세 지도와 크기를 섞지 않는다', async () => {
+        render(<MapViewer mapData={MAP_FIXTURE} isDetailMap={false} />);
+        await waitFor(() => expect(getCanvas()).toBeTruthy());
+
+        const icon = document.querySelector('.city-img') as HTMLElement;
+        expect(icon.style.width).toBe('24px');
+        expect(icon.style.height).toBe('18px');
+    });
 });
 
 describe('MapViewer — disallowClick(레거시 MapViewer.vue:392-394 clickable=0)', () => {

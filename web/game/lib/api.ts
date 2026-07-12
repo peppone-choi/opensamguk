@@ -505,6 +505,7 @@ export const api = {
         inheritBonusStat?: readonly number[];
     }) =>
         post<{ status: string; requestId?: string; reason?: string }>('/api/join', body),
+    commandResult: (requestId: string) => get<CommandResultResponse>(`/api/command/result/${requestId}`),
 
     // ── F4 action-page READ endpoints (read-only; all via the /api/game proxy) ──
     // game-api = read-only JPA on existing tables; one-daemon-write rule.
@@ -532,7 +533,6 @@ export const api = {
     npcPolicy: () => get<NpcPolicyResponse>('/api/nation/npc-policy'),
     updateNpcPolicy: (body: { type: 'nationPolicy' | 'nationPriority' | 'generalPriority'; data: unknown }) =>
         post<IntakeOutcome>('/api/nation/npc-policy', body),
-    commandResult: (requestId: string) => get<CommandResultResponse>(`/api/command/result/${requestId}`),
     selectPool: () => get<SelectPoolResponse>('/api/select-pool'),
     refreshSelectPool: () => post<SelectPoolRefreshAccepted>('/api/select-pool/refresh', {}),
     // 유산 (page 15) — inherit items/buffs/costs/availability/logs/currentStat.

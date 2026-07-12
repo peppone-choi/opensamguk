@@ -177,9 +177,7 @@ open class TurnRunService(
         val envelopes = commandStream.readEnvelopes(blockMs)
         if (envelopes.isEmpty()) return 0
 
-        commandDispatcher?.dispatchEnvelopes(envelopes)?.forEach { (requestId, result) ->
-            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
-        }
+        val intakeResults = commandDispatcher?.dispatchEnvelopes(envelopes).orEmpty()
 
         val state = world.getState()
         val base = buildFlushPayload()
@@ -194,6 +192,9 @@ open class TurnRunService(
         val payload = base.copy(worldStateUpdate = worldState)
         flushExecutor.flush(payload)
         handler.recorder.clear()
+        intakeResults.forEach { (requestId, result) ->
+            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
+        }
         return envelopes.size
     }
 
@@ -210,9 +211,7 @@ open class TurnRunService(
         //    deny(ok=false)도 회신한다 — 페이지가 성공 토스트를 위조하지 않으려면 deny가 돌아와야
         //    한다. 이 publish는 Redis 휘발성 회신이며 DB 쓰기가 아니다(one-daemon-write-rule 비위반).
         val envelopes = commandStream.readEnvelopes(commandBlockMs)
-        commandDispatcher?.dispatchEnvelopes(envelopes)?.forEach { (requestId, result) ->
-            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
-        }
+        val intakeResults = commandDispatcher?.dispatchEnvelopes(envelopes).orEmpty()
 
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>
@@ -313,6 +312,10 @@ open class TurnRunService(
         // INSERT 전용 채널(board/betting/auction_bid/message)은 그러지 않으면 매 tick 행을 중복 INSERT한다.
         // flush 성공 시에만: 위에서 throw되면 이 호출을 건너뛰어 다음 tick이 재시도한다.
         handler.recorder.clear()
+
+        intakeResults.forEach { (requestId, result) ->
+            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
+        }
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
         world.setCurrentDate(newDate.year, newDate.month, newDate.phase)

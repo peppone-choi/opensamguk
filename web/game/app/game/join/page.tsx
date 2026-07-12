@@ -316,21 +316,21 @@ export default function JoinPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nations]);
 
-  async function waitForCreatedGeneral(timeoutMs = 20000): Promise<boolean> {
+  async function waitForJoinResult(requestId: string, timeoutMs = 20000): Promise<string | null> {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       try {
-        const info = await api.frontInfo();
-        if (info.general?.hasGeneral) {
-          return true;
+        const result = await api.commandResult(requestId);
+        if (result.status === 'RESOLVED') {
+          return result.ok ? null : (result.reason ?? '장수 생성에 실패했습니다.');
         }
       } catch {
-        await delay(700);
+        await delay(250);
         continue;
       }
-      await delay(700);
+      await delay(250);
     }
-    return false;
+    return '장수 생성은 접수됐지만 아직 게임에 반영되지 않았습니다. 잠시 후 로비에서 다시 확인해주세요.';
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -385,16 +385,18 @@ export default function JoinPage() {
         ...(inheritCity === undefined ? {} : { inheritCity }),
         ...(inheritBonusTotal === 0 ? {} : { inheritBonusStat }),
       });
-      if (res.status === 'AVAILABLE') {
+      if (res.status === 'AVAILABLE' && res.requestId) {
         setJoinStatus('장수 생성 반영 중...');
-        const ready = await waitForCreatedGeneral();
-        if (!ready) {
-          setError('장수 생성은 접수됐지만 아직 게임에 반영되지 않았습니다. 잠시 후 로비에서 다시 확인해주세요.');
+        const resultError = await waitForJoinResult(res.requestId);
+        if (resultError) {
+          setError(resultError);
           return;
         }
         alert('정상적으로 생성되었습니다.\n위키와 팁/강좌 게시판을 꼭 읽어보세요!');
         router.push(homeHref);
         router.refresh();
+      } else if (res.status === 'AVAILABLE') {
+        setError('장수 생성 요청 ID를 받지 못했습니다. 잠시 후 다시 시도해주세요.');
       } else {
         setError(res.reason ?? '등록할 수 없습니다.');
       }
