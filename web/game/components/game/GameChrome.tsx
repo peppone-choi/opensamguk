@@ -22,6 +22,9 @@ import type { FrontInfoResponse } from '@/lib/types';
 
 type GameChromeChildren = React.ReactNode | ((frontInfo: FrontInfoResponse) => React.ReactNode);
 
+const gatewayPublicUrl = process.env.NEXT_PUBLIC_GATEWAY_URL ?? process.env.NEXT_PUBLIC_GATEWAY_ORIGIN;
+const lobbyHref = gatewayPublicUrl ? `${gatewayPublicUrl.replace(/\/$/, '')}/lobby` : '/lobby';
+
 export default function GameChrome({ children }: { children?: GameChromeChildren }) {
     const router = useRouter();
     const { frontInfo, constData, menu, loading, error, refresh, refreshKey } = useFrontInfo();
@@ -104,6 +107,9 @@ export default function GameChrome({ children }: { children?: GameChromeChildren
                 <button type="button" className="main-refresh-btn" onClick={refresh}>
                     갱신
                 </button>
+                <a className="main-refresh-btn" href={lobbyHref}>
+                    로비로
+                </a>
             </div>
             <MainStatusPanel frontInfo={frontInfo} />
 

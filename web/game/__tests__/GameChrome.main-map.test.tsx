@@ -136,6 +136,12 @@ describe('GameChrome main map', () => {
         expect(container.querySelector('.main-status')?.nextElementSibling).toHaveClass('ingame-board');
     });
 
+    it('links back to the gateway lobby from the main action row', () => {
+        render(<GameChrome />);
+
+        expect(screen.getByRole('link', { name: '로비로' })).toHaveAttribute('href', '/lobby');
+    });
+
     it('passes front-info into function children for the main record zone', () => {
         const { container } = render(
             <GameChrome>

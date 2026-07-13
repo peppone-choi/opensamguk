@@ -1433,8 +1433,11 @@ input:focus, select:focus, textarea:focus {
   border-left: 1px solid var(--border-subtle);
   background: var(--bg-elevated);
   color: var(--gold);
+  display: inline-flex;
+  align-items: center;
   padding: var(--space-xs) var(--space-sm);
   font-size: var(--text-sm);
+  text-decoration: none;
   cursor: pointer;
 }
 .main-page-content {
