@@ -10,6 +10,8 @@
 | 5 | 활성 UI 무동작을 실제 route/request로 교체 | 31 files / 128 tests green | typecheck/test + Playwright | 채택 | 감찰부, 대회 관리, 내정보 로그, 선발장 request 연결 |
 | 6 | NPC·유저 5능력치 경로와 총량 상한을 완결 | 30 scenarios / 10,176 tuples + Python 8 tests + join tests | importer/creation/API/UI 테스트 | 채택 | tuple 14/15 원수치, 유저 total 275, reset 정치·매력 보존 |
 | 7 | 런타임 P0 감사에서 발견한 저장·제약·이벤트 유실을 닫기 | 전투/PRE/AI/이벤트 결과 유실 → backend 3,599 tests fail 0 | `tools/parity/gate.sh backend` + web tsc/test | 채택 | 2026-07-11 전체 게이트: infra `BettingUpsertFlushIT` init 1건은 Testcontainers 접속 flake(단독 재실행 2/2 green), web/game 143/143 + tsc 0, web/gateway tsc 0 |
+| 9 | 인재탐색 NPC 이름 선택을 PHP 이름 풀의 중복 회피 규칙으로 복원 | prod 256년 괴포 3개 ID·비포 2개 ID가 동일 표시명 재사용 → focused Kotlin 회귀 1/1 green, 전체 게이트·prod 재측정 중 | PHP `RandomNameGeneral.php:30-62`, `AbsGeneralPool.php:79-85`, `GeneralBuilder.php:42-52` + 운영 DB ID별 로그 | 채점중 | 사망 중복이 아니라 `che_인재탐색`이 현재 장수명 중복 검사와 숫자 접미사를 우회한 이름 풀 divergence |
+| 10 | 선전포고 실행 게이트에도 실제 보급 인접국 판정을 공급 | prod 57년간 신규 전쟁 0·`인접 국가가 아닙니다.` 반복 → 실제 인접 허용 RED→green, 무보급 인접 거부 RED→green, 전체 게이트·prod 재측정 중 | PHP `che_선전포고.php:76-95`, `Constraint/NearNation.php:23`, `GeneralAI.php:1848-1970` + `NationCommandDispatchTest` | 채점중 | AI 후보 선택에는 `__isNeighbor`가 있었으나 최종 full constraint 재평가에는 없었고, 복구 시 PHP의 `isNeighbor(..., false)` 보급 필터도 함께 명시해야 함 |
 
 ## RTK14 매칭 기준
 

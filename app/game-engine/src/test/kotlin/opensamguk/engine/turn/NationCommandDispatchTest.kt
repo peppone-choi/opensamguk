@@ -66,6 +66,105 @@ class NationCommandDispatchTest {
     }
 
     @Test
+    fun `installed declaration resolver accepts an actually adjacent nation in the execution gate`() {
+        installDaemonResolvers()
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                generals = listOf(
+                    TurnGeneral(
+                        id = 10, name = "유비", nationId = 1, cityId = 1, troopId = 0,
+                        stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0,
+                        officerLevel = 12, gold = 100, turnTime = t0,
+                    ),
+                ),
+                cities = listOf(
+                    City(id = 1, name = "업", nationId = 1, level = 6, supplyState = 1),
+                    City(id = 9, name = "남피", nationId = 2, level = 6, supplyState = 1),
+                ),
+                nations = listOf(
+                    Nation(id = 1, name = "촉", color = "#0f0"),
+                    Nation(id = 2, name = "위", color = "#00f"),
+                ),
+                diplomacy = listOf(
+                    TurnDiplomacy(1, 2, state = DiplomacyState.TRADE, term = 0),
+                    TurnDiplomacy(2, 1, state = DiplomacyState.TRADE, term = 0),
+                ),
+            ),
+        )
+        val recorder = ChangeRecorder()
+        val proc = ProcessNationCommand(
+            world = world,
+            recorder = recorder,
+            hiddenSeed = "seed",
+            registry = CommandRegistry(GeneralActionPipeline()),
+            startYear = 184,
+        )
+
+        proc.process(
+            generalId = 10,
+            officerLevel = 12,
+            nationCommand = ChosenCommand("che_선전포고", linkedMapOf("destNationID" to 2)),
+            lastTurn = LastTurn(),
+            year = 200,
+            month = 3,
+            date = "12:00",
+        )
+
+        assertEquals(DiplomacyState.DECLARATION, world.getDiplomacy(1, 2)?.state)
+        assertEquals(DiplomacyState.DECLARATION, world.getDiplomacy(2, 1)?.state)
+    }
+
+    @Test
+    fun `installed declaration resolver rejects adjacency through an unsupplied destination city`() {
+        installDaemonResolvers()
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
+                generals = listOf(
+                    TurnGeneral(
+                        id = 10, name = "유비", nationId = 1, cityId = 1, troopId = 0,
+                        stats = GeneralStats(80, 70, 60), experience = 0, dedication = 0,
+                        officerLevel = 12, gold = 100, turnTime = t0,
+                    ),
+                ),
+                cities = listOf(
+                    City(id = 1, name = "업", nationId = 1, level = 6, supplyState = 1),
+                    City(id = 9, name = "남피", nationId = 2, level = 6, supplyState = 0),
+                ),
+                nations = listOf(
+                    Nation(id = 1, name = "촉", color = "#0f0"),
+                    Nation(id = 2, name = "위", color = "#00f"),
+                ),
+                diplomacy = listOf(
+                    TurnDiplomacy(1, 2, state = DiplomacyState.TRADE, term = 0),
+                    TurnDiplomacy(2, 1, state = DiplomacyState.TRADE, term = 0),
+                ),
+            ),
+        )
+        val proc = ProcessNationCommand(
+            world = world,
+            recorder = ChangeRecorder(),
+            hiddenSeed = "seed",
+            registry = CommandRegistry(GeneralActionPipeline()),
+            startYear = 184,
+        )
+
+        proc.process(
+            generalId = 10,
+            officerLevel = 12,
+            nationCommand = ChosenCommand("che_선전포고", linkedMapOf("destNationID" to 2)),
+            lastTurn = LastTurn(),
+            year = 200,
+            month = 3,
+            date = "12:00",
+        )
+
+        assertEquals(DiplomacyState.TRADE, world.getDiplomacy(1, 2)?.state)
+        assertEquals(DiplomacyState.TRADE, world.getDiplomacy(2, 1)?.state)
+    }
+
+    @Test
     fun `a registered diplomacy resolver routes the bidirectional delta + logs + message + kv through the recorder`() {
         // a fake 선전포고-like resolver: state 2->1/term 24 both dirs, an action log, a national message, a KV write.
         NationActionResolverRegistry.register("che_선전포고") { ctx ->

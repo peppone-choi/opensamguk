@@ -83,11 +83,7 @@ class CheInjaeTamsaek(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
         val age = context.rng.nextRangeInt(20, 25)
         val birthYear = input.year - age
         val deathYear = input.year + context.rng.nextRangeInt(10, 50)
-        val npcName = listOf(
-            context.rng.choice(GameConst.randGenFirstName),
-            context.rng.choice(GameConst.randGenMiddleName),
-            context.rng.choice(GameConst.randGenLastName),
-        ).joinToString("")
+        val npcName = pickRandomGeneralName(context.rng, input.existingGeneralNames)
         val specAge = phpRound((GameConst.retirementYear - age).toDouble() / 12.0).toInt() + age
         val specAge2 = phpRound((GameConst.retirementYear - age).toDouble() / 6.0).toInt() + age
         val built = GeneralBuilder(context.rng, npcName, 0)
@@ -164,6 +160,7 @@ class CheInjaeTamsaek(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
         val develCost: Int,
         val turnterm: Int,
         val cityPool: List<GeneralBuilder.CityChoice>,
+        val existingGeneralNames: List<String>,
     ) {
         companion object {
             fun from(args: Map<String, Any?>): ScoutInput? {
@@ -186,8 +183,30 @@ class CheInjaeTamsaek(@Suppress("UNUSED_PARAMETER") private val pipeline: Genera
                     int("develCost") ?: return null,
                     int("turnterm") ?: return null,
                     pool,
+                    (args["existingGeneralNames"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList(),
                 )
             }
         }
+    }
+
+    companion object {
+        internal fun pickRandomGeneralName(rng: opensamguk.common.rng.RandUtil, existingGeneralNames: List<String>): String {
+            var loopCnt = 0
+            while (true) {
+                val generalName = listOf(
+                    rng.choice(GameConst.randGenFirstName),
+                    rng.choice(GameConst.randGenMiddleName),
+                    rng.choice(GameConst.randGenLastName),
+                ).joinToString("")
+                val duplicateCnt = GENERAL_NAME_PREFIXES.sumOf { npcPrefix ->
+                    existingGeneralNames.count { it.startsWith(npcPrefix + generalName) }
+                }
+                if (duplicateCnt == 0) return generalName
+                if (loopCnt >= 99 || duplicateCnt < 2) return generalName + (duplicateCnt + 1)
+                loopCnt += 1
+            }
+        }
+
+        private val GENERAL_NAME_PREFIXES = listOf("", "ⓝ", "ⓝ", "ⓜ", "ⓖ", "㉥", "ⓤ", "ⓞ")
     }
 }

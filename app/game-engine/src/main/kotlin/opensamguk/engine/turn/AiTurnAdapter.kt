@@ -545,8 +545,8 @@ class AiTurnAdapter(
      *  - **che_천도** — `__distance` = the capital→dest BFS distance over the nation's capital-connected cities
      *    (PHP `CalcCityDistance(capital, dest, ownedCities) ?? 50`). Without it the cost defaults to distance 50
      *    → `develCost*5*2^50` → ReqNationGold always denies.
-     *  - **che_선전포고** — `__isNeighbor` = `AiDistance.isNeighbor(nation, destNation, cityRows)` so NearNation
-     *    can read the REAL adjacency (the def's hardcoded `false` placeholder always denies).
+     *  - **che_선전포고** — `__isNeighbor` = supplied-city adjacency so NearNation can read the REAL
+     *    `isNeighbor(src, dest, false)` result (the def's hardcoded `false` placeholder always denies).
      */
     private fun stageFullGateEnv(
         actionCode: String,
@@ -564,7 +564,7 @@ class AiTurnAdapter(
             "che_선전포고" -> {
                 val destNationId = (rawArgs["destNationID"] as? Number)?.toInt() ?: return envMap
                 val cityRows = world.listCities().sortedBy { it.id }.map { PerTurnOverlay.toLogicCity(it) }
-                val neighbor = AiDistance.isNeighbor(nationId, destNationId, cityRows)
+                val neighbor = AiDistance.isNeighbor(nationId, destNationId, cityRows, includeNoSupply = false)
                 LinkedHashMap(envMap).apply { put("__isNeighbor", neighbor) }
             }
             else -> envMap

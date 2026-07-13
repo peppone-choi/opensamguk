@@ -13,6 +13,7 @@ import opensamguk.logic.actions.nation.NationActionResolveContext
 import opensamguk.logic.actions.nation.NationActionResolver
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
 import opensamguk.logic.ai.ChosenCommand
+import opensamguk.logic.ai.bfs.AiDistance
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
@@ -93,7 +94,7 @@ class ProcessNationCommand(
         }
 
         if (definition != null && definition !== RestAction) {
-            val env = nationConstraintEnv(year, month, nationId)
+            val env = nationConstraintEnv(year, month, nationId, commandForResolve.actionCode, normalizedArgs)
             val destGeneralId = ReservedTurnHandler.intArg(normalizedArgs, "destGeneralID")
             val destCityId = ReservedTurnHandler.intArg(normalizedArgs, "destCityID")
             val destNationId = ReservedTurnHandler.intArg(normalizedArgs, "destNationID")
@@ -196,16 +197,30 @@ class ProcessNationCommand(
         return LinkedHashMap(if (parsed.isNotEmpty() || definition.argsSchema.isEmpty()) parsed else raw)
     }
 
-    private fun nationConstraintEnv(year: Int, month: Int, nationId: Int): Map<String, Any?> {
+    private fun nationConstraintEnv(
+        year: Int,
+        month: Int,
+        nationId: Int,
+        actionCode: String,
+        args: Map<String, Any?>,
+    ): Map<String, Any?> {
         val phase = world.getState().currentPhase.coerceIn(1, opensamguk.common.constants.GameConst.phasesPerMonth)
         val base = WorldEnvBuilder.commandEnvMap(year, startYear, month, phase)
         val blockedState = world.listDiplomacy()
             .firstOrNull { it.fromNationId == nationId && it.state == 0 }
             ?.state
-        return base + linkedMapOf<String, Any?>(
-            "__disallowDiplomacyHit" to (blockedState != null),
-            "__disallowDiplomacyHitState" to blockedState,
-        )
+        return LinkedHashMap(base).apply {
+            put("__disallowDiplomacyHit", blockedState != null)
+            put("__disallowDiplomacyHitState", blockedState)
+            if (actionCode == "che_선전포고") {
+                val destNationId = (args["destNationID"] as? Number)?.toInt()
+                val cityRows = world.listCities().sortedBy { it.id }.map { toLogicCity(it) }
+                put(
+                    "__isNeighbor",
+                    destNationId != null && AiDistance.isNeighbor(nationId, destNationId, cityRows, includeNoSupply = false),
+                )
+            }
+        }
     }
 
     /**

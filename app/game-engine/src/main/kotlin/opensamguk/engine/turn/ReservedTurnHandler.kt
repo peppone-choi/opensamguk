@@ -1035,6 +1035,7 @@ class ReservedTurnHandler(
             put("develCost", develCost)
             put("turnterm", turnterm)
             put("cityPool", world.listCities().sortedBy { it.id }.map { linkedMapOf("id" to it.id, "nationId" to it.nationId) })
+            put("existingGeneralNames", generals.map { it.name })
         }
     }
 
