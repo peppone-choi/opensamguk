@@ -4,7 +4,7 @@
 
 ## 결론
 
-로컬 구현·회귀 게이트와 독립 검토는 PASS다. 운영 s1 승격 및 1분 턴 재측정 전까지 배포 판정은 대기한다.
+로컬 구현·회귀 게이트, 독립 검토, 운영 s1 승격과 1분 턴 재측정은 모두 PASS다. QA 종료 후 공식 관리자 API로 정상 60분 턴을 복원했다.
 
 ## 운영 기준선
 
@@ -51,11 +51,12 @@
 | 보안 | PASS | 신규 사용자 입력 sink, 권한 우회, secret, dependency 없음 |
 | 맥락 감사 | PASS | PHP 중복 `ⓝ` prefix의 재추첨 quirk까지 직접 재확인 |
 
-## 운영 재측정 체크리스트
+## 운영 재측정 결과
 
-- s1 이미지 태그가 새 commit으로 바뀌고 game-api/game-engine/web-game health가 UP인지 확인한다.
-- 60초 턴이 2회 이상 성공하고 failed tick이 증가하지 않는지 확인한다.
-- 신규 선전포고 로그와 diplomacy DECLARATION 상태가 생성되는지 확인한다.
-- 배포 이후 생성된 인재탐색 NPC가 기존 표시명을 그대로 재사용하지 않는지 확인한다.
-- 실제 브라우저에서 메인의 `로비로`를 클릭해 `/lobby`로 이동하고 4xx/5xx·page error가 없는지 확인한다.
-- 검증 후 정상 60분 turnterm으로 복원한다.
+- CI run `29220077925`, shared deploy run `29220077923`, s1 promotion run `29220631009`가 모두 성공했다.
+- s1 game-api/game-engine/web-game은 이미지 `eb3f0765e57465e81400280b616204b55023ef24`로 실행됐고 두 API health가 UP이었다.
+- QA 60초 턴에서 10 tick 연속 성공, failed tick 0, lastTickError null을 확인했다.
+- 선전포고는 7개 국가쌍·양방향 14행이 DECLARATION으로 영속됐고 term은 23~24에서 20~21로 감소했다.
+- 배포 후 생성된 장수 8명의 동일 이름 중복은 0건이었다. 첫 인재탐색 생성 장수 `ⓜ장거`도 활성 동일명 1건뿐이었다.
+- prod Playwright에서 메인 링크 `href=/lobby`, 클릭 후 최종 URL `/lobby`, 4xx/5xx 0, page error 0, 로비 서버 표기를 확인했다.
+- 공식 `PATCH /api/admin/game-settings`로 `turnterm=60`을 적용하고 엔진을 재기동했다. 최종 clock은 `tickSeconds=3600`, 다음 실행 시각은 lastTurnTime에서 60분 뒤다.
