@@ -1,6 +1,7 @@
 package opensamguk.engine.turn
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
@@ -11,11 +12,24 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
-import opensamguk.logic.actions.war.CheChulbyeong
+import opensamguk.logic.actions.founding.CheGeonguk
+import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
 import opensamguk.logic.actions.founding.CheHaesan
+import opensamguk.logic.actions.founding.CheSeonyang
+import opensamguk.logic.actions.develop.CheGunryangMaemae
+import opensamguk.logic.actions.military.CheSukryeonJeonhwan
+import opensamguk.logic.actions.military.RecruitAlgorithm
 import opensamguk.logic.actions.personnel.CheInjaeTamsaek
+import opensamguk.logic.actions.personnel.CheRandomImgwan
+import opensamguk.logic.actions.personnel.JoinCommand
 import opensamguk.logic.actions.personnel.RandomImgwanNpcCandidate
 import opensamguk.logic.actions.personnel.RandomImgwanWeightedCandidate
+import opensamguk.logic.actions.trade.CheJangbiMaemae
+import opensamguk.logic.actions.vote.deriveItemPool
+import opensamguk.logic.actions.vote.giveRandomUniqueItem
+import opensamguk.logic.actions.war.CheChulbyeong
+import opensamguk.logic.domestic.uniqueLotterySeed
+import opensamguk.logic.inheritance.InheritCatalog
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
@@ -23,6 +37,7 @@ import opensamguk.logic.constraints.ConstraintResult
 import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.diplomacy.DiplomacyCascadeTerm
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.event.EventTarget
 import opensamguk.logic.statview.WorldEnvBuilder
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.util.valueFit
@@ -31,7 +46,6 @@ import opensamguk.logic.war.ConquerCity
 import opensamguk.logic.war.ConquerCityInput
 import opensamguk.logic.war.ProcessWarResult
 import opensamguk.logic.util.phpRound
-import opensamguk.logic.world.BuiltGeneral
 import opensamguk.logic.world.GeneralBuilder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -46,6 +60,27 @@ import kotlin.math.sqrt
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
+
+private data class UniqueItemInfo(val name: String, val rawName: String)
+
+private data class ResolvedCommandExecution(
+    val actionCode: String,
+    val definition: GeneralActionDefinition,
+    val context: GeneralActionResolveContext,
+)
+
+private data class AlternativeCommandSpec(
+    val actionCode: String,
+    val args: Map<String, Any?> = emptyMap(),
+)
+
+private val UNIQUE_ITEM_CATALOG: Map<String, UniqueItemInfo> =
+    InheritCatalog.availableUnique().mapValues { (_, item) ->
+        UniqueItemInfo(
+            name = item.getValue("title"),
+            rawName = item.getValue("rawName"),
+        )
+    }
 
 /**
  * P1 Task F3 — the daemon-side reserved-turn handler.
@@ -123,6 +158,7 @@ class ReservedTurnHandler(
      */
     private val aiHook: ((generalId: Int, reserved: ReservedTurn) -> ChosenCommand)? = null,
     private val pipelineBuilder: EngineGeneralActionPipelineBuilder? = null,
+    private val dynamicEventHandler: (EventTarget) -> Unit = { },
     /**
      * The lone dirty source — exposed so the flush (F4)/tests/nation-pass read its patches. A
      * constructor param (default = fresh) so the live config can share ONE recorder with the ruler-
@@ -208,11 +244,31 @@ class ReservedTurnHandler(
 
         // ONE env, built by THE shared env-builder (same call as E2 precheck — cannot drift).
         val phase = world.getState().currentPhase.coerceIn(1, GameConst.phasesPerMonth)
-        val env: Map<String, Any?> = WorldEnvBuilder.commandEnvMap(year, startYear, month, phase)
+        val env = LinkedHashMap(WorldEnvBuilder.commandEnvMap(year, startYear, month, phase))
+        env["ownCities"] = world.listCities()
+            .filter { it.nationId == nationId }
+            .sortedBy { it.id }
+            .associateTo(LinkedHashMap()) { it.id to it.level }
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear)
 
-        val actionArgs = augmentGeneralActionArgs(actionCode, args, general, year)
-        val definition = resolveRuntimeDefinition(runtimeRegistry, actionCode, general, year)
+        val baseDefinition = resolveRuntimeDefinition(runtimeRegistry, actionCode, general, year)
+        val parsedArgs = runCatching { baseDefinition.parseArgsForGeneral(args, generalId) }.getOrNull()
+        if (parsedArgs == null || !baseDefinition.matchesArgsSchema(parsedArgs)) {
+            world.pushLog(denyLog(general, baseDefinition, INVALID_ARGS_DENY_REASON, month, date))
+            return HandledTurn(
+                generalId = generalId,
+                definition = runtimeRegistry.fallback,
+                fellBack = true,
+                denyReason = INVALID_ARGS_DENY_REASON,
+                logs = listOf(INVALID_ARGS_DENY_REASON),
+                env = env,
+                args = args,
+                autorunMode = autorunMode,
+            )
+        }
+        val normalizedArgs = parsedArgs
+        val actionArgs = augmentGeneralActionArgs(actionCode, normalizedArgs, general, year)
+        val definition = baseDefinition.bindArgs(actionArgs)
 
         // --- FULL-mode constraints over the live world (the SAME :logic constraint library) ---
         // dest-* 제약(ExistsDestNation/ExistsDestGeneral/Allow·DisallowDiplomacyBetweenStatus 등)은
@@ -241,7 +297,7 @@ class ReservedTurnHandler(
                 is ConstraintResult.Unknown -> UNKNOWN_DENY_REASON
                 ConstraintResult.Allow -> null // unreachable
             }
-            if (reason != null) world.pushLog(denyLog(general, definition, reason, date))
+            if (reason != null) world.pushLog(denyLog(general, definition, reason, month, date))
             return HandledTurn(
                 generalId = generalId,
                 definition = runtimeRegistry.fallback,
@@ -249,7 +305,7 @@ class ReservedTurnHandler(
                 denyReason = reason,
                 logs = if (reason != null) listOf(reason) else emptyList(),
                 env = env,
-                args = args,
+                args = normalizedArgs,
                 autorunMode = autorunMode,
             )
         }
@@ -269,7 +325,7 @@ class ReservedTurnHandler(
                 denyReason = null,
                 logs = emptyList(),
                 env = env,
-                args = args,
+                args = normalizedArgs,
                 autorunMode = autorunMode,
             )
         }
@@ -293,10 +349,14 @@ class ReservedTurnHandler(
         val isFounding = actionCode in FOUNDING_COMMANDS
         val resolveArgs = when {
             isFounding -> buildFoundingArgs(actionCode, actionArgs, general, year, month)
+            actionCode == HAESAN -> buildSameMonthGuardArgs(actionArgs, general, year, month)
             actionCode == INJAE_TAMSAEK -> buildScoutArgs(actionArgs, year, month)
             else -> actionArgs
         }
         preloadDraftTargets(actionCode, draft, resolveArgs)
+        if (actionCode == HAESAN) {
+            preloadDisbandCascade(draft, nationId, generalId)
+        }
         val battleContext = if (actionCode == "che_출병") {
             val destCityId = intArg(actionArgs, "destCityID")
                 ?: error("che_출병 passed constraints without destCityID")
@@ -311,10 +371,12 @@ class ReservedTurnHandler(
         } else {
             null
         }
+        val destGeneralName = intArg(actionArgs, "destGeneralID")?.let { world.getGeneralById(it)?.name }.orEmpty()
         val resolveCtx = GeneralActionResolveContext(
             draft, rng, worldEnv, month, date,
             args = resolveArgs,
             generalName = general.name,
+            destGeneralName = destGeneralName,
             // 외교 제의 서신 validUntil(= date + max(30, turnterm*3)분) 공식이 읽는 per-game turnterm.
             turnterm = turnTerm,
             // 무작위건국: rng.choice가 소모하는 도시 id 목록. PHP `SELECT city FROM city WHERE level>=5 AND level<=6 AND nation=0`
@@ -333,27 +395,55 @@ class ReservedTurnHandler(
             battleContext = battleContext,
         )
         definition.resolve(resolveCtx)
+        val executions = mutableListOf(ResolvedCommandExecution(actionCode, definition, resolveCtx))
+        val successfulExecution = resolveAlternativeChain(
+            registry = runtimeRegistry,
+            first = executions.single(),
+            draft = draft,
+            rng = rng,
+            worldEnv = worldEnv,
+            month = month,
+            date = date,
+            general = general,
+            cityId = cityId,
+            nationId = nationId,
+            year = year,
+            env = env,
+            executions = executions,
+        )
+        val resolveContexts = executions.mapTo(mutableListOf()) { it.context }
         backfillRandomImgwanDestNation(actionCode, draft, preGeneral)
-        if (definition is CheChulbyeong) {
-            drainWarBattleResult(definition.lastBattleResult, draft)
+        for (execution in executions) {
+            when (val executedDefinition = execution.definition) {
+                is CheChulbyeong -> drainWarBattleResult(executedDefinition.lastBattleResult, draft)
+                is CheInjaeTamsaek -> {
+                    drainScoutNpc(executedDefinition.lastBuiltNpc)
+                    recordScoutInheritance(executedDefinition.lastBuiltNpc, general.userId, execution.context.args)
+                }
+            }
+            recordCommandInheritance(execution.definition, general, draft.general)
         }
-        if (definition is CheInjaeTamsaek) {
-            drainScoutNpc(definition.lastBuiltNpc)
-            recordScoutInheritance(definition.lastBuiltNpc, general.userId, resolveArgs)
+        val rareSaleHistory = rareSaleHistoryLog(actionCode, resolveArgs, general, nation, year, month)
+        successfulExecution?.let { execution ->
+            uniqueLotteryIntent(execution.actionCode, execution.definition, execution.context)
+                ?.let { consumeUniqueLottery(it, draft, execution.context) }
         }
 
         // che_해산 exposes deleteNation(func.php:1713-1805) through its tombstone seam. Capture the
         // snapshot before applying the draft's general/city neutralization so ng_old_nations keeps the
         // pre-delete member list, matching the ruler-death deleteNation path.
-        if (definition is CheHaesan) {
-            definition.lastDeletedNationId?.let { deletedNationId ->
-                recorder.markNationDeleted(world, deletedNationId)
+        for (execution in executions) {
+            val executedDefinition = execution.definition
+            if (executedDefinition is CheHaesan) {
+                executedDefinition.lastDeletedNationId?.let { deletedNationId ->
+                    recorder.markNationDeleted(world, deletedNationId)
+                }
             }
         }
 
         // --- ChangeRecorder = the SINGLE dirty source ---
         recorder.diffGeneral(preGeneral, draft.general)
-        val postCity = draft.city
+        val postCity = effectivePostCity(actionCode, draft.city)
         val enginePostCity = world.getCityById(postCity.id)
         if (enginePostCity != null) {
             recorder.diffCity(PerTurnOverlay.toLogicCity(enginePostCity), postCity)
@@ -363,6 +453,14 @@ class ReservedTurnHandler(
 
         // --- dirty-free apply: write the post-state engine rows; ChangeRecorder owns dirtiness ---
         world.applyGeneralDirtyFree(applyGeneralPatch(general, draft.general))
+        draft.destGeneral?.let { destG ->
+            if (destG.id != generalId) {
+                val pre = world.getGeneralById(destG.id)
+                    ?: error("ReservedTurnHandler: dest general ${destG.id} not in world")
+                recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(pre), destG)
+                world.applyGeneralDirtyFree(applyGeneralPatch(pre, destG))
+            }
+        }
         enginePostCity?.let { world.applyCityDirtyFree(applyCityPatch(it, postCity)) }
         draft.destCity?.takeIf { it.id != postCity.id }?.let { destCity ->
             val pre = world.getCityById(destCity.id)
@@ -425,8 +523,11 @@ class ReservedTurnHandler(
             recorder.diffCity(PerTurnOverlay.toLogicCity(pre), movedCity)
             world.applyCityDirtyFree(applyCityPatch(pre, movedCity))
         }
-        if (definition is CheChulbyeong) {
-            drainConquerCity(definition.lastBattleResult, general, year, month)
+        for (execution in executions) {
+            val executedDefinition = execution.definition
+            if (executedDefinition is CheChulbyeong) {
+                drainConquerCity(executedDefinition.lastBattleResult, general, year, month)
+            }
         }
         for (rankIncrement in draft.rankIncrements) {
             val column = RankColumn.byColumn(rankIncrement.column) ?: continue
@@ -440,37 +541,32 @@ class ReservedTurnHandler(
         for (createdNationTurn in draft.createdNationTurns) world.createNationTurn(createdNationTurn)
 
         // --- logs ---
-        for (line in resolveCtx.logs()) world.pushLog(actionLog(general, line))
-        // The broadcast (general_id=0) action log — 거병's "<Y>{name}</>{josa} <G><b>{city}</b></>에 거병하였습니다."
-        // headline (che_거병.php:161) routes here. Mirror ProcessNationCommand:207 so the founding broadcast
-        // survives the general-pass handler (was silently dropped — only resolveCtx.logs() was drained).
-        // (The per-target/PLAIN level-change side-bucket — resolveCtx.plainLogs()/dest logs — is a broader
-        // general-pass log-routing parity item deferred to the WAVE 4 log/output pass.)
-        for (line in resolveCtx.globalActionLogs()) world.pushLog(globalLog(general, line))
-        for (gid in resolveCtx.targetLogIds()) {
-            for (line in resolveCtx.logsTo(gid)) {
-                world.pushLog(
-                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
-                )
-            }
-            for (line in resolveCtx.plainLogsTo(gid)) {
-                world.pushLog(
-                    LogEntryDraft(scope = "general", category = "action", text = line, generalId = gid, nationId = world.getGeneralById(gid)?.nationId),
-                )
+        for (ctx in resolveContexts) {
+            for (event in ctx.orderedLogEvents()) {
+                world.pushLog(logEvent(general, event))
+                if (rareSaleHistory != null && isRareSaleGlobalAction(event)) {
+                    world.pushLog(globalHistoryLog(general, rareSaleHistory))
+                }
             }
         }
 
         // --- buffered Messages → mailbox channel (receiver row BEFORE sender row) ---
-        for (message in resolveCtx.messages()) routeMessage(message, year, month)
+        for (ctx in resolveContexts) {
+            for (message in ctx.messages()) routeMessage(message, year, month)
+        }
+
+        if (executions.any { it.definition is CheHaesan && it.definition.lastDeletedNationId != null }) {
+            dynamicEventHandler(EventTarget.OCCUPY_CITY)
+        }
 
         return HandledTurn(
             generalId = generalId,
             definition = definition,
             fellBack = false,
             denyReason = null,
-            logs = resolveCtx.logs(),
+            logs = resolveContexts.flatMap { it.logs() },
             env = env,
-            args = args,
+            args = normalizedArgs,
             autorunMode = autorunMode,
         )
     }
@@ -700,7 +796,8 @@ class ReservedTurnHandler(
     /**
      * killturn<=0 branch of [updateTurnTime] (`TurnExecutionHelper.php:185-206`).
      *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
-     *    log FIRST, then `killturn=(deadyear-year)*12, npc=npc_org, owner=0, defence_train=80,
+     *    log FIRST, then legacy `killturn=(deadyear-year)*12` converted to three phase turns,
+     *    `npc=npc_org, owner=0, defence_train=80,
      *    owner_name=null`, then DELETE general_access_log ONLY.
      *  - else → [kill] (the F3 tombstone + 4-table delete).
      */
@@ -718,7 +815,8 @@ class ReservedTurnHandler(
                 npcState = npcOrg, // npc = npc_org
                 meta = withMeta(
                     general.meta,
-                    "killturn" to (deadyear - env.year) * 12,
+                    "killturn" to (deadyear - env.year) * 12 * GameConst.phasesPerMonth,
+                    "killturn_unit" to ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE,
                     "owner" to 0,
                     "defence_train" to 80,
                     "owner_name" to null,
@@ -860,6 +958,9 @@ class ReservedTurnHandler(
         draft: GeneralActionDraft,
         args: Map<String, Any?>,
     ) {
+        intArg(args, "destGeneralID")?.let { id ->
+            world.getGeneralById(id)?.let { draft.destGeneral = PerTurnOverlay.toLogicGeneral(it) }
+        }
         when (actionCode) {
             IMGWAN -> intArg(args, "destNationID")?.let { preloadDestNationAndLordCity(draft, it) }
             JANGSU_DAESANG_IMGWAN -> {
@@ -868,6 +969,194 @@ class ReservedTurnHandler(
                 preloadDestNationAndLordCity(draft, target.nationId)
             }
         }
+    }
+
+    private fun preloadDisbandCascade(draft: GeneralActionDraft, nationId: Int, generalId: Int) {
+        world.listGenerals()
+            .filter { it.nationId == nationId && it.id != generalId }
+            .sortedBy { it.id }
+            .mapTo(draft.cascadeGenerals) { PerTurnOverlay.toLogicGeneral(it) }
+        world.listCities()
+            .filter { it.nationId == nationId }
+            .sortedBy { it.id }
+            .mapTo(draft.cascadeCities) { PerTurnOverlay.toLogicCity(it) }
+    }
+
+    private fun recordCommandInheritance(
+        definition: GeneralActionDefinition,
+        general: TurnGeneral,
+        postGeneral: LogicGeneral,
+    ) {
+        val owner = general.userId?.toIntOrNull() ?: return
+        if (owner <= 0 || general.npcState >= 2) return
+        when (definition) {
+            is CheGeonguk -> {
+                if (definition.lastAlternative != null) return
+                recorder.recordInheritancePointIncrease(owner, "active_action", 1.0, null)
+                if (definition.lastUnifierGrant > 0) {
+                    recorder.recordInheritancePointIncrease(owner, "unifier", definition.lastUnifierGrant.toDouble(), null)
+                }
+            }
+            is CheSeonyang -> {
+                if (!definition.lastRuntimeDenied && postGeneral.lastTurn.command == definition.name) {
+                    recorder.recordInheritancePointIncrease(owner, "active_action", 1.0, null)
+                }
+            }
+            is JoinCommand -> {
+                if (postGeneral.lastTurn.command == definition.name) {
+                    recorder.recordInheritancePointIncrease(owner, "active_action", 1.0, null)
+                }
+            }
+            is CheRandomImgwan -> {
+                if (definition.lastAlternative == null && postGeneral.lastTurn.command == definition.name) {
+                    recorder.recordInheritancePointIncrease(owner, "active_action", 1.0, null)
+                }
+            }
+        }
+    }
+
+    private fun resolveAlternativeChain(
+        registry: CommandRegistry,
+        first: ResolvedCommandExecution,
+        draft: GeneralActionDraft,
+        rng: RandUtil,
+        worldEnv: WorldEnv,
+        month: Int,
+        date: String,
+        general: TurnGeneral,
+        cityId: Int,
+        nationId: Int,
+        year: Int,
+        env: Map<String, Any?>,
+        executions: MutableList<ResolvedCommandExecution>,
+    ): ResolvedCommandExecution? {
+        var current = first
+        val visited = linkedSetOf(first.actionCode)
+        while (true) {
+            val alternative = alternativeSpec(current.definition) ?: return current
+            check(visited.add(alternative.actionCode)) {
+                "ReservedTurnHandler: alternative cycle ${visited.joinToString(" -> ")} -> ${alternative.actionCode}"
+            }
+            val next = resolveAlternativeCommand(
+                registry = registry,
+                spec = alternative,
+                draft = draft,
+                rng = rng,
+                worldEnv = worldEnv,
+                month = month,
+                date = date,
+                general = general,
+                cityId = cityId,
+                nationId = nationId,
+                year = year,
+                env = env,
+                failureContext = executions.first().context,
+            ) ?: return null
+            executions.add(next)
+            current = next
+        }
+    }
+
+    private fun alternativeSpec(definition: GeneralActionDefinition): AlternativeCommandSpec? {
+        val actionCode = when (definition) {
+            is CheGeonguk -> definition.lastAlternative
+            is CheHaesan -> definition.lastAlternative
+            is CheRandomImgwan -> definition.lastAlternative
+            is CheChulbyeong -> definition.lastAlternative
+            else -> null
+        } ?: return null
+        val args = if (definition is CheChulbyeong && actionCode == IDONG) {
+            linkedMapOf("destCityID" to (definition.lastChosenCityId ?: return null))
+        } else {
+            emptyMap()
+        }
+        return AlternativeCommandSpec(actionCode, args)
+    }
+
+    private fun resolveAlternativeCommand(
+        registry: CommandRegistry,
+        spec: AlternativeCommandSpec,
+        draft: GeneralActionDraft,
+        rng: RandUtil,
+        worldEnv: WorldEnv,
+        month: Int,
+        date: String,
+        general: TurnGeneral,
+        cityId: Int,
+        nationId: Int,
+        year: Int,
+        env: Map<String, Any?>,
+        failureContext: GeneralActionResolveContext,
+    ): ResolvedCommandExecution? {
+        val baseDefinition = resolveRuntimeDefinition(registry, spec.actionCode, general, year)
+        val parsedArgs = runCatching { baseDefinition.parseArgsForGeneral(spec.args, general.id) }.getOrNull()
+        if (parsedArgs == null || !baseDefinition.matchesArgsSchema(parsedArgs)) {
+            failureContext.addLog("$INVALID_ARGS_DENY_REASON ${baseDefinition.name} 실패. <1>$date</>")
+            return null
+        }
+        val actionArgs = augmentGeneralActionArgs(spec.actionCode, parsedArgs, general, year)
+        val definition = baseDefinition.bindArgs(actionArgs)
+        val constraintContext = ConstraintContext(
+            actorId = general.id,
+            cityId = cityId,
+            nationId = nationId,
+            destGeneralId = intArg(actionArgs, "destGeneralID"),
+            destCityId = intArg(actionArgs, "destCityID"),
+            destNationId = intArg(actionArgs, "destNationID"),
+            args = actionArgs,
+            env = env,
+            mode = ConstraintMode.FULL,
+        )
+        when (val result = evaluateConstraints(
+            definition.buildConstraints(constraintContext),
+            constraintContext,
+            WorldStateViewAdapter(PerTurnOverlay(world), env = env, args = actionArgs),
+        )) {
+            ConstraintResult.Allow -> Unit
+            is ConstraintResult.Deny -> {
+                failureContext.addLog("${result.reason} ${definition.name} 실패. <1>$date</>")
+                return null
+            }
+            is ConstraintResult.Unknown -> {
+                failureContext.addLog("$UNKNOWN_DENY_REASON ${definition.name} 실패. <1>$date</>")
+                return null
+            }
+        }
+
+        val resolveArgs = when {
+            spec.actionCode in FOUNDING_COMMANDS -> buildFoundingArgs(spec.actionCode, actionArgs, general, year, month)
+            spec.actionCode == HAESAN -> buildSameMonthGuardArgs(actionArgs, general, year, month)
+            spec.actionCode == INJAE_TAMSAEK -> buildScoutArgs(actionArgs, year, month)
+            else -> actionArgs
+        }
+        preloadDraftTargets(spec.actionCode, draft, resolveArgs)
+        if (spec.actionCode == HAESAN) {
+            preloadDisbandCascade(draft, nationId, general.id)
+        }
+        val context = GeneralActionResolveContext(
+            draft, rng, worldEnv, month, date,
+            args = resolveArgs,
+            generalName = general.name,
+            destGeneralName = intArg(actionArgs, "destGeneralID")?.let { world.getGeneralById(it)?.name }.orEmpty(),
+            turnterm = turnTerm,
+            candidateGenerals = if (spec.actionCode == MUJAKWI_GEONGUK || spec.actionCode == IDONG) {
+                world.listGenerals()
+                    .filter { it.nationId == nationId && it.id != general.id }
+                    .map { PerTurnOverlay.toLogicGeneral(it) }
+            } else {
+                emptyList()
+            },
+            candidateCityIds = if (spec.actionCode == MUJAKWI_GEONGUK) {
+                world.listCities()
+                    .filter { it.nationId == 0 && it.level in 5..6 }
+                    .map { it.id }
+                    .sorted()
+            } else {
+                emptyList()
+            },
+        )
+        definition.resolve(context)
+        return ResolvedCommandExecution(spec.actionCode, definition, context)
     }
 
     private fun preloadDestNationAndLordCity(draft: GeneralActionDraft, nationId: Int) {
@@ -1004,6 +1293,15 @@ class ReservedTurnHandler(
         else -> args
     }
 
+    private fun buildSameMonthGuardArgs(
+        args: Map<String, Any?>,
+        general: TurnGeneral,
+        year: Int,
+        month: Int,
+    ): Map<String, Any?> = LinkedHashMap(args).apply {
+        put("sameMonthOrBefore", sameMonthOrBefore(general, year, month))
+    }
+
     private fun buildScoutArgs(args: Map<String, Any?>, year: Int, month: Int): Map<String, Any?> {
         val generals = world.listGenerals()
         val dexSource = generals.filter { it.npcState < 4 }
@@ -1041,7 +1339,7 @@ class ReservedTurnHandler(
 
     private fun drainScoutNpc(builtNpc: CheInjaeTamsaek.BuiltScoutNpc?) {
         val built = builtNpc?.built ?: return
-        recorder.recordGeneralCreate(world, built.toTurnGeneral(world.allocateGeneralId()))
+        recorder.recordGeneralCreate(world, built.toTurnGeneral(world.allocateGeneralId(), world.getState()))
     }
 
     private fun recordScoutInheritance(
@@ -1070,73 +1368,6 @@ class ReservedTurnHandler(
         val small = 1.0 / (totalNpcCnt / 3.0 + 1.0)
         val big = 1.0 / maxGenCnt
         return if (totalNpcCnt < 50) maxOf(main, small) else maxOf(main, big)
-    }
-
-    private fun BuiltGeneral.toTurnGeneral(id: Int): TurnGeneral {
-        val state = world.getState()
-        val turntime = state.lastTurnTime
-            .plusSeconds(turntimeSecond.toLong())
-            .plusNanos(turntimeFraction.toLong() * 1000L)
-        return TurnGeneral(
-            id = id,
-            name = name,
-            nationId = nation,
-            cityId = cityId,
-            troopId = 0,
-            stats = GeneralStats(
-                leadership = leadership,
-                strength = strength,
-                intelligence = intel,
-                politics = 50,
-                charm = 50,
-            ),
-            experience = experience,
-            dedication = dedication,
-            officerLevel = officerLevel,
-            role = GeneralRole(
-                personality = ego,
-                specialDomestic = specialDomestic,
-                specialWar = specialWar,
-            ),
-            gold = gold,
-            rice = rice,
-            crew = 0,
-            crewTypeId = crewType,
-            train = 0,
-            atmos = 0,
-            age = age,
-            npcState = npc,
-            turnTime = turntime,
-            meta = linkedMapOf(
-                "owner" to 0,
-                "npc_org" to npc,
-                "affinity" to affinity,
-                "born_year" to birth,
-                "dead_year" to death,
-                "picture" to "default.jpg",
-                "image_server" to 0,
-                "start_age" to 20,
-                "specage" to specAge,
-                "specage2" to specAge2,
-                "dex1" to dex1,
-                "dex2" to dex2,
-                "dex3" to dex3,
-                "dex4" to dex4,
-                "dex5" to dex5,
-                "officer_city" to 0,
-                "permission" to "normal",
-                "killturn" to killturn,
-                "block" to 0,
-                "belong" to 0,
-                "betray" to 0,
-                "defence_train" to 80,
-                "tnmt" to 1,
-                "myset" to 6,
-                "tournament" to 0,
-                "newvote" to 0,
-                "penalty" to emptyMap<String, Any?>(),
-            ),
-        )
     }
 
     /**
@@ -1168,13 +1399,14 @@ class ReservedTurnHandler(
 
     /**
      * PHP `Util::joinYearMonth(y, m) = y*12 + m - 1` (che_건국.php:148 same-month guard).
-     * `init_year`/`init_month` ride the actor's nation meta (방랑국). `yearMonth <= initYearMonth`
+     * `init_year`/`init_month` ride the game env/world state, not the actor's nation meta.
+     * `yearMonth <= initYearMonth`
      * → true → resolver early-returns with "다음 턴..." (no write).
      */
-    private fun sameMonthOrBefore(general: TurnGeneral, year: Int, month: Int): Boolean {
-        val nation = world.getNationById(general.nationId) ?: return false
-        val initYear = (nation.meta["init_year"] as? Number)?.toInt() ?: return false
-        val initMonth = (nation.meta["init_month"] as? Number)?.toInt() ?: 1
+    private fun sameMonthOrBefore(@Suppress("UNUSED_PARAMETER") general: TurnGeneral, year: Int, month: Int): Boolean {
+        val state = world.getState()
+        val initYear = (state.meta["init_year"] as? Number)?.toInt() ?: return false
+        val initMonth = (state.meta["init_month"] as? Number)?.toInt() ?: 1
         val initYearMonth = initYear * 12 + initMonth - 1
         val yearMonth = year * 12 + month - 1
         return yearMonth <= initYearMonth
@@ -1200,6 +1432,7 @@ class ReservedTurnHandler(
     companion object {
         /** Deny reason when the full-mode evaluator can't resolve a requirement (shouldn't occur in FULL). */
         const val UNKNOWN_DENY_REASON = "처리할 수 없습니다."
+        const val INVALID_ARGS_DENY_REASON = "인자가 올바르지 않습니다."
 
         /** The 휴식 (rest) command name — the killturn-decrement branch in [applyKillturnDecrement]. */
         const val REST_COMMAND = "휴식"
@@ -1209,6 +1442,8 @@ class ReservedTurnHandler(
 
         /** che_무작위건국 — the random-city founding command (needs candidateCityIds preload). */
         const val MUJAKWI_GEONGUK = "che_무작위건국"
+        const val HAESAN = "che_해산"
+        const val IDONG = "che_이동"
 
         const val IMGWAN = "che_임관"
         const val JANGSU_DAESANG_IMGWAN = "che_장수대상임관"
@@ -1225,6 +1460,42 @@ class ReservedTurnHandler(
          * a wandering nation (Bug B — WAVE 0b preload pending). Anything else passes through unchanged.
          */
         val FOUNDING_COMMANDS = setOf("che_거병", "che_건국", "cr_건국", "che_무작위건국")
+
+        internal val UNIQUE_ITEM_LOTTERY_COMMAND_CODES: Set<String> = linkedSetOf(
+            "che_강행",
+            "che_거병",
+            "che_건국",
+            "che_견문",
+            "che_군량매매",
+            "che_귀환",
+            "che_기술연구",
+            "che_단련",
+            "che_등용",
+            "che_랜덤임관",
+            "che_무작위건국",
+            "che_물자조달",
+            "che_사기진작",
+            "che_상업투자",
+            "che_숙련전환",
+            "che_은퇴",
+            "che_이동",
+            "che_인재탐색",
+            "che_임관",
+            "che_장비매매",
+            "che_장수대상임관",
+            "che_전투태세",
+            "che_전투특기초기화",
+            "che_정착장려",
+            "che_주민선정",
+            "che_증여",
+            "che_집합",
+            "che_징병",
+            "che_출병",
+            "che_헌납",
+            "che_훈련",
+            "cr_건국",
+            "cr_맹훈련",
+        )
 
         /** A lenient JSON reader for the stored `arg` jsonb (tolerant of trailing commas / lax keys). */
         private val ARG_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -1333,7 +1604,7 @@ class ReservedTurnHandler(
                         item = post.item,
                     ),
                 ),
-                meta = post.meta,
+                meta = withMeta(post.meta, "last_turn" to post.lastTurn.toRaw()),
             )
 
         /**
@@ -1413,6 +1684,14 @@ class ReservedTurnHandler(
             nationId = general.nationId,
         )
 
+        private fun globalHistoryLog(general: TurnGeneral, text: String): LogEntryDraft = LogEntryDraft(
+            scope = "global",
+            category = "history",
+            text = text,
+            generalId = general.id,
+            nationId = general.nationId,
+        )
+
         /** Wrap a line as a `general` history [LogEntryDraft] (pushGeneralHistoryLog). */
         private fun historyLog(general: TurnGeneral, text: String): LogEntryDraft = LogEntryDraft(
             scope = "general",
@@ -1421,6 +1700,36 @@ class ReservedTurnHandler(
             generalId = general.id,
             nationId = general.nationId,
         )
+
+        private fun logEvent(
+            actor: TurnGeneral,
+            event: GeneralActionResolveContext.BufferedLog,
+        ): LogEntryDraft {
+            val targetId = event.targetGeneralId ?: actor.id
+            val targetNationId = if (event.targetGeneralId == null) actor.nationId else null
+            return when (event.scope) {
+                "global" -> LogEntryDraft(
+                    scope = "global",
+                    category = event.category,
+                    text = event.text,
+                    generalId = actor.id,
+                    nationId = actor.nationId,
+                )
+                "nation" -> LogEntryDraft(
+                    scope = "nation",
+                    category = event.category,
+                    text = event.text,
+                    nationId = actor.nationId,
+                )
+                else -> LogEntryDraft(
+                    scope = "general",
+                    category = event.category,
+                    text = event.text,
+                    generalId = targetId,
+                    nationId = targetNationId,
+                )
+            }
+        }
 
         /**
          * The byte-exact PHP `DyingMessage::$defaultMessage` (`<Y>;name;</>;이; <R>사망</>했습니다.`) with
@@ -1436,14 +1745,310 @@ class ReservedTurnHandler(
             general: TurnGeneral,
             definition: GeneralActionDefinition,
             reason: String,
+            month: Int,
             date: String,
         ): LogEntryDraft = LogEntryDraft(
             scope = "general",
             category = "action",
-            text = "${definition.name} 실패: $reason <1>$date</>",
+            text = "<C>●</>${month}월:$reason ${definition.name} 실패. <1>$date</>",
             generalId = general.id,
             nationId = general.nationId,
         )
+    }
+
+    private fun effectivePostCity(actionCode: String, postCity: LogicCity): LogicCity {
+        if (actionCode != MUJAKWI_GEONGUK) return postCity
+        val current = world.getCityById(postCity.id)?.let { PerTurnOverlay.toLogicCity(it) } ?: return postCity
+        return current.copy(
+            nationId = postCity.nationId,
+            conflict = postCity.conflict,
+        )
+    }
+
+    private fun rareSaleHistoryLog(
+        actionCode: String,
+        args: Map<String, Any?>,
+        general: TurnGeneral,
+        nation: LogicNation?,
+        year: Int,
+        month: Int,
+    ): String? {
+        if (actionCode != "che_장비매매") return null
+        if (args["itemCode"] != "None") return null
+        val itemType = args["itemType"] as? String ?: return null
+        val soldCode = when (itemType) {
+            "horse" -> general.role.items.horse
+            "weapon" -> general.role.items.weapon
+            "book" -> general.role.items.book
+            "item" -> general.role.items.item
+            else -> null
+        } ?: "None"
+        val info = uniqueItemInfo(soldCode) ?: return null
+        val josaYi = JosaUtil.pick(general.name, "이")
+        val josaUl = JosaUtil.pick(info.rawName, "을")
+        val nationName = nation?.name ?: "재야"
+        val body = "<R><b>【판매】</b></><D><b>$nationName</b></>의 <Y>${general.name}</>$josaYi <C>${info.name}</>$josaUl 판매했습니다!"
+        return "<C>●</>${year}년 ${month}월:$body"
+    }
+
+    private fun isRareSaleGlobalAction(event: GeneralActionResolveContext.BufferedLog): Boolean =
+        event.scope == "global" &&
+            event.category == "action" &&
+            (event.text.contains("</>가 <C>") || event.text.contains("</>이 <C>")) &&
+            event.text.contains("판매했습니다!")
+
+    private fun uniqueLotteryIntent(
+        actionCode: String,
+        definition: GeneralActionDefinition,
+        context: GeneralActionResolveContext,
+    ): GeneralUniqueLotteryIntent? {
+        val explicit = when (definition) {
+            is CheGeonguk -> definition.lastUniqueLotteryIntent
+            is RecruitAlgorithm -> definition.lastUniqueLotteryIntent
+            is CheSukryeonJeonhwan -> definition.lastUniqueLotteryIntent
+            is CheGunryangMaemae -> definition.lastUniqueLotteryIntent
+            is CheJangbiMaemae -> definition.lastUniqueLotteryIntent
+            is JoinCommand -> definition.lastUniqueLotteryIntent
+            is CheRandomImgwan -> definition.lastUniqueLotteryIntent
+            else -> null
+        }
+        if (explicit != null) return explicit
+        if (actionCode !in UNIQUE_ITEM_LOTTERY_COMMAND_CODES) return null
+        return GeneralUniqueLotteryIntent(
+            generalId = context.draft.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = definition.lotteryActionName,
+            acquireType = when (actionCode) {
+                "che_건국", "cr_건국", MUJAKWI_GEONGUK -> "건국"
+                RANDOM_IMGWAN -> "랜덤 임관"
+                else -> "아이템"
+            },
+            afterTail = "handlerCommandTail",
+        )
+    }
+
+    private fun consumeUniqueLottery(
+        intent: GeneralUniqueLotteryIntent,
+        draft: GeneralActionDraft,
+        context: GeneralActionResolveContext,
+    ) {
+        if (draft.general.npcType >= 2) return
+
+        val allItems = activeAllItemsTable()
+        val uniqueCatalog = uniqueCatalogFor(allItems)
+        val itemTypeCount = allItems.size
+        var maxTrialsByYear = 1
+        val relativeYear = intent.year - startYear
+        for ((targetYear, targetTrials) in activeMaxUniqueItemLimit()) {
+            if (relativeYear < targetYear) break
+            maxTrialsByYear = targetTrials
+        }
+        var trialCount = minOf(itemTypeCount, maxTrialsByYear)
+        var maxCount = itemTypeCount
+        for (code in generalItemCodes(draft.general)) {
+            if (code != null && isUniqueItem(code, uniqueCatalog)) {
+                trialCount -= 1
+                maxCount -= 1
+            }
+        }
+        if (trialCount <= 0) {
+            refundRandomUniqueIfNeeded(draft, "유니크를 얻을 공간이 없어 ${activeInheritItemRandomPoint()} 포인트 반환")
+            return
+        }
+
+        val state = world.getState()
+        val initialYear = (state.meta["init_year"] as? Number)?.toInt() ?: intent.year
+        val initialMonth = (state.meta["init_month"] as? Number)?.toInt() ?: 1
+        val relativeMonth = intent.year * 12 + intent.month - (initialYear * 12 + initialMonth)
+        val randomUniqueOrdered = generalAux(draft.general)["inheritRandomUnique"] != null
+        val availableBuyUnique = relativeMonth >= activeMinMonthToAllowInheritItem()
+        val humanCount = world.listGenerals().count { it.npcState < 2 }.coerceAtLeast(1)
+        var probability = if (scenario < 100) {
+            1.0 / (humanCount * 3 * itemTypeCount)
+        } else {
+            1.0 / (humanCount * itemTypeCount)
+        }
+        if (intent.acquireType == "랜덤 임관") {
+            probability = 1.0 / (humanCount * itemTypeCount / 10.0 / 2.0)
+        }
+        probability = minOf(probability * activeUniqueTrialCoef(), activeMaxUniqueTrialProb()) / sqrt(7.0)
+        if ((randomUniqueOrdered && availableBuyUnique) || intent.acquireType == "건국") probability = 1.0
+
+        val rng = RandUtil(LiteHashDrbg(uniqueLotterySeed(hiddenSeed, intent.year, intent.month, intent.generalId, intent.seedReason)))
+        var won = false
+        for (idx in 0 until maxCount) {
+            if (rng.nextBool(probability)) {
+                won = true
+                break
+            }
+            probability *= Math.pow(10.0, 0.25)
+        }
+        if (!won) return
+
+        val unavailableSlots = generalItemCodesByType(draft.general)
+            .filterValues { it != null && isUniqueItem(it, uniqueCatalog) }
+            .keys
+        val occupied = occupiedUniqueCounts(draft.general, uniqueCatalog)
+        val available = deriveItemPool(allItems)
+            .asSequence()
+            .filterNot { it.itemType in unavailableSlots }
+            .mapNotNull { entry ->
+                val remaining = entry.weight - (occupied[entry.itemCode] ?: 0)
+                if (remaining > 0) entry.copy(weight = remaining) else null
+            }
+            .toList()
+        if (available.isEmpty()) {
+            refundRandomUniqueIfNeeded(draft, "얻을 유니크가 없어 ${activeInheritItemRandomPoint()} 포인트 반환")
+            return
+        }
+
+        val (itemType, itemCode) = giveRandomUniqueItem(rng, available)
+        draft.general = applyGeneralItem(draft.general, itemType, itemCode)
+        if (randomUniqueOrdered && availableBuyUnique) {
+            draft.general = draft.general.copy(meta = withGeneralAux(draft.general.meta, "inheritRandomUnique", null))
+        }
+        val info = uniqueItemInfo(itemCode, uniqueCatalog)
+            ?: error("unique lottery selected an uncatalogued item: $itemCode")
+        val generalName = world.getGeneralById(draft.general.id)?.name.orEmpty()
+        val nationName = draft.nation?.name
+            ?: world.getNationById(draft.general.nationId)?.name
+            ?: "재야"
+        val josaYi = JosaUtil.pick(generalName, "이")
+        val josaUl = JosaUtil.pick(info.rawName, "을")
+        context.addLog("<C>${info.name}</>$josaUl 습득했습니다!")
+        context.addGeneralHistoryLog("<C>${info.name}</>$josaUl 습득")
+        context.addGlobalActionLog("<Y>$generalName</>$josaYi <C>${info.name}</>$josaUl 습득했습니다!")
+        context.addGlobalHistoryLog("<C><b>【${intent.acquireType}】</b></><D><b>$nationName</b></>의 <Y>$generalName</>$josaYi <C>${info.name}</>$josaUl 습득했습니다!")
+    }
+
+    private fun occupiedUniqueCounts(
+        postGeneral: LogicGeneral,
+        uniqueCatalog: Map<String, UniqueItemInfo>,
+    ): Map<String, Int> {
+        val occupied = LinkedHashMap<String, Int>()
+        for (general in world.listGenerals().sortedBy { it.id }) {
+            val codes = if (general.id == postGeneral.id) generalItemCodes(postGeneral) else generalItemCodes(general)
+            for (code in codes) {
+                if (code != null && isUniqueItem(code, uniqueCatalog)) occupied[code] = (occupied[code] ?: 0) + 1
+            }
+        }
+        val auctionItems = world.getState().meta["activeUniqueAuctionItems"] as? Iterable<*>
+        auctionItems?.forEach { code -> code?.toString()?.let { occupied[it] = (occupied[it] ?: 0) + 1 } }
+        val stored = world.getState().meta["storedUniqueItemCounts"] as? Map<*, *>
+        stored?.forEach { (code, count) ->
+            val key = code?.toString() ?: return@forEach
+            occupied[key] = (occupied[key] ?: 0) + ((count as? Number)?.toInt() ?: 0)
+        }
+        return occupied
+    }
+
+    private fun activeAllItemsTable(): Map<String, Map<String, Int>> {
+        val raw = world.getState().meta["allItems"] as? Map<*, *> ?: return GameConst.allItems
+        val out = LinkedHashMap<String, Map<String, Int>>()
+        for ((typeKey, typeItems) in raw) {
+            val type = typeKey?.toString() ?: continue
+            val items = typeItems as? Map<*, *> ?: continue
+            val converted = LinkedHashMap<String, Int>()
+            for ((code, amount) in items) {
+                val itemCode = code?.toString() ?: continue
+                val count = (amount as? Number)?.toInt() ?: continue
+                converted[itemCode] = count
+            }
+            out[type] = converted
+        }
+        return out.ifEmpty { GameConst.allItems }
+    }
+
+    private fun uniqueCatalogFor(allItems: Map<String, Map<String, Int>>): Map<String, UniqueItemInfo> {
+        val out = LinkedHashMap<String, UniqueItemInfo>()
+        for ((_, items) in allItems) {
+            for ((code, amount) in items) {
+                if (amount == 0) continue
+                out[code] = UNIQUE_ITEM_CATALOG[code] ?: continue
+            }
+        }
+        return out
+    }
+
+    private fun activeMaxUniqueItemLimit(): List<List<Int>> {
+        val raw = world.getState().meta["maxUniqueItemLimit"] as? List<*> ?: return GameConst.maxUniqueItemLimit
+        val rows = raw.mapNotNull { row ->
+            val values = row as? List<*> ?: return@mapNotNull null
+            val year = (values.getOrNull(0) as? Number)?.toInt() ?: return@mapNotNull null
+            val trials = (values.getOrNull(1) as? Number)?.toInt() ?: return@mapNotNull null
+            listOf(year, trials)
+        }
+        return rows.ifEmpty { GameConst.maxUniqueItemLimit }
+    }
+
+    private fun activeUniqueTrialCoef(): Double =
+        (world.getState().meta["uniqueTrialCoef"] as? Number)?.toDouble() ?: GameConst.uniqueTrialCoef.toDouble()
+
+    private fun activeMaxUniqueTrialProb(): Double =
+        (world.getState().meta["maxUniqueTrialProb"] as? Number)?.toDouble() ?: GameConst.maxUniqueTrialProb
+
+    private fun activeMinMonthToAllowInheritItem(): Int =
+        (world.getState().meta["minMonthToAllowInheritItem"] as? Number)?.toInt()
+            ?: GameConst.minMonthToAllowInheritItem
+
+    private fun activeInheritItemRandomPoint(): Int =
+        (world.getState().meta["inheritItemRandomPoint"] as? Number)?.toInt()
+            ?: GameConst.inheritItemRandomPoint
+
+    private fun isUniqueItem(code: String, uniqueCatalog: Map<String, UniqueItemInfo>): Boolean =
+        uniqueCatalog.containsKey(code)
+
+    private fun uniqueItemInfo(code: String): UniqueItemInfo? = UNIQUE_ITEM_CATALOG[code]
+
+    private fun uniqueItemInfo(code: String, uniqueCatalog: Map<String, UniqueItemInfo>): UniqueItemInfo? =
+        uniqueCatalog[code] ?: UNIQUE_ITEM_CATALOG[code]
+
+    private fun refundRandomUniqueIfNeeded(draft: GeneralActionDraft, logText: String) {
+        if (generalAux(draft.general)["inheritRandomUnique"] == null) return
+        draft.general = draft.general.copy(meta = withGeneralAux(draft.general.meta, "inheritRandomUnique", null))
+        val ownerId = draft.general.userId?.toIntOrNull() ?: return
+        val point = activeInheritItemRandomPoint()
+        recorder.recordInheritancePointIncrease(ownerId, "previous", point.toDouble(), null)
+        recorder.recordInheritanceLog(ownerId, logText, "inheritPoint")
+        recorder.recordRankIncrease(draft.general.id, RankColumn.INHERIT_SPENT_DYN, -point)
+    }
+
+    private fun generalAux(general: LogicGeneral): Map<*, *> = general.meta["aux"] as? Map<*, *> ?: emptyMap<Any?, Any?>()
+
+    private fun withGeneralAux(meta: Map<String, Any?>, key: String, value: Any?): Map<String, Any?> {
+        val aux = LinkedHashMap<String, Any?>()
+        (meta["aux"] as? Map<*, *>)?.forEach { (k, v) -> if (k is String) aux[k] = v }
+        if (value == null) {
+            aux.remove(key)
+        } else {
+            aux[key] = value
+        }
+        return LinkedHashMap(meta).apply { this["aux"] = aux }
+    }
+
+    private fun generalItemCodes(general: LogicGeneral): List<String?> = listOf(general.horse, general.weapon, general.book, general.item)
+
+    private fun generalItemCodes(general: TurnGeneral): List<String?> = listOf(
+        general.role.items.horse,
+        general.role.items.weapon,
+        general.role.items.book,
+        general.role.items.item,
+    )
+
+    private fun generalItemCodesByType(general: LogicGeneral): Map<String, String?> = linkedMapOf(
+        "horse" to general.horse,
+        "weapon" to general.weapon,
+        "book" to general.book,
+        "item" to general.item,
+    )
+
+    private fun applyGeneralItem(general: LogicGeneral, itemType: String, itemCode: String): LogicGeneral = when (itemType) {
+        "horse" -> general.copy(horse = itemCode)
+        "weapon" -> general.copy(weapon = itemCode)
+        "book" -> general.copy(book = itemCode)
+        "item" -> general.copy(item = itemCode)
+        else -> general
     }
 }
 

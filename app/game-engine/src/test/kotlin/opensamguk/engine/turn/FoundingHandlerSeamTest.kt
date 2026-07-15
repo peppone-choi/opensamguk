@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.event.EventTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 import kotlin.test.Test
@@ -108,8 +109,18 @@ class FoundingHandlerSeamTest {
         ),
     )
 
-    private fun handlerFor(world: InMemoryTurnWorld, scenario: Int) =
-        ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, scenario = scenario)
+    private fun handlerFor(
+        world: InMemoryTurnWorld,
+        scenario: Int,
+        dynamicEventHandler: (EventTarget) -> Unit = { },
+    ) = ReservedTurnHandler(
+        world,
+        registry,
+        FIXTURE_HIDDEN_SEED,
+        START_YEAR,
+        scenario = scenario,
+        dynamicEventHandler = dynamicEventHandler,
+    )
 
     // ── (1) 거병 founds through the handler + drains the created-set ─────────────────────────────────
 
@@ -161,9 +172,13 @@ class FoundingHandlerSeamTest {
         // 성도 + 유비 (josa 가) → "<Y>유비</>가 <G><b>성도</b></>에 거병하였습니다." under the MONTH-prefix render.
         val broadcast = dirty.logs.filter { it.scope == "global" }.map { it.text }
         assertEquals(
-            listOf("<C>●</>${MONTH}월:<Y>유비</>가 <G><b>성도</b></>에 거병하였습니다."),
+            listOf(
+                "<C>●</>${MONTH}월:<Y>유비</>가 <G><b>성도</b></>에 거병하였습니다.",
+                "<C>●</>${MONTH}월:<Y>유비</>가 <C>흉노마(+8)</>를 습득했습니다!",
+                "<C>●</>${YEAR}년 ${MONTH}월:<C><b>【아이템】</b></><D><b>재야</b></>의 <Y>유비</>가 <C>흉노마(+8)</>를 습득했습니다!",
+            ),
             broadcast,
-            "거병 broadcast action log is drained to the global scope",
+            "거병 broadcast precedes the PHP-tail lottery logs and neutral winners are 재야",
         )
     }
 
@@ -216,17 +231,43 @@ class FoundingHandlerSeamTest {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 baseState(),
-                generals = listOf(wanderingLord()),
-                cities = listOf(homeCity()),
+                generals = listOf(
+                    wanderingLord().copy(gold = 5_000, rice = 5_000, troopId = 42, meta = wanderingLord().meta + ("belong" to 9)),
+                    member(id = 43, name = "관우").copy(gold = 5_000, rice = 7_000, troopId = 42, meta = member(43, "관우").meta + ("belong" to 4)),
+                ),
+                cities = listOf(homeCity().copy(nationId = 7, frontState = 1), homeCity(id = 6, name = "허창", level = 5).copy(nationId = 7, frontState = 3)),
                 nations = listOf(wanderingNation()),
             ),
         )
-        val handler = handlerFor(world, scenario = 1010)
+        val dispatched = mutableListOf<EventTarget>()
+        val handler = handlerFor(world, scenario = 1010) { target ->
+            assertNull(world.getNationById(7), "nation deletion must precede OCCUPY_CITY")
+            assertTrue(world.listGenerals().all { it.nationId == 0 }, "general neutralization must precede OCCUPY_CITY")
+            assertTrue(world.listCities().all { it.nationId == 0 && it.frontState == 0 }, "city release must precede OCCUPY_CITY")
+            dispatched += target
+        }
 
         val outcome = handler.handle(42, ReservedTurn("che_해산", ""), YEAR, MONTH, "08:30")
 
         assertFalse(outcome.fellBack, "해산 passed FULL constraints and resolved")
         assertNull(world.getNationById(7), "the disbanded wandering nation leaves the world")
+        val lord = world.getGeneralById(42)!!
+        val follower = world.getGeneralById(43)!!
+        assertEquals(0, lord.nationId)
+        assertEquals(0, follower.nationId)
+        assertEquals(0, lord.officerLevel)
+        assertEquals(0, follower.officerLevel)
+        assertEquals(0, lord.troopId)
+        assertEquals(0, follower.troopId)
+        assertEquals(1_000, lord.gold, "lord gold clamps to default")
+        assertEquals(1_000, lord.rice, "lord rice clamps to default")
+        assertEquals(1_000, follower.gold, "member gold clamps through deleteNation pre-update")
+        assertEquals(7_000, follower.rice, "PHP rice clamp bug leaves member rice unchanged after gold clamp")
+        assertEquals(0, world.getCityById(5)!!.nationId)
+        assertEquals(0, world.getCityById(5)!!.frontState)
+        assertEquals(0, world.getCityById(6)!!.nationId)
+        assertEquals(0, world.getCityById(6)!!.frontState)
+        assertEquals(listOf(EventTarget.OCCUPY_CITY), dispatched, "successful disband dispatches OCCUPY_CITY once")
         val dirty = world.consumeDirtyState()
         assertTrue(
             dirty.logs.any {
@@ -236,10 +277,13 @@ class FoundingHandlerSeamTest {
             },
             "해산 global action log must keep the actor name; empty '<Y></>가 …' is a prod regression",
         )
+        assertTrue(dirty.logs.any { it.scope == "global" && it.category == "history" && it.text.contains("【멸망】") })
+        assertTrue(dirty.logs.any { it.scope == "general" && it.generalId == 43 && it.category == "history" && it.text.contains("<R>멸망</>") })
         val payload = DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
         assertEquals(listOf(7), payload.deletedNations, "deleted nation reaches the flush payload")
         assertEquals(7, payload.deletedNationSnapshots.single()["nation"])
-        assertEquals(listOf(42), payload.deletedNationSnapshots.single()["general_ids"])
+        assertEquals(listOf(42, 43), payload.updatedGenerals.map { it.id }.sorted())
+        assertEquals(listOf(5, 6), payload.updatedCities.map { it.id }.sorted())
         assertEquals(0, payload.updatedGenerals.single { it.id == 42 }.nationId)
     }
 
@@ -248,7 +292,7 @@ class FoundingHandlerSeamTest {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 baseState(),
-                generals = listOf(wanderingLord()),
+                generals = listOf(wanderingLord().copy(userId = "55")),
                 cities = listOf(homeCity()),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
             ),
@@ -257,7 +301,7 @@ class FoundingHandlerSeamTest {
 
         val outcome = handler.handle(
             42,
-            ReservedTurn("che_건국", """{"nationName":"촉","nationType":"che_명사","colorType":5}"""),
+            ReservedTurn("che_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
             YEAR,
             MONTH,
             "08:30",
@@ -270,7 +314,7 @@ class FoundingHandlerSeamTest {
         val nation = world.getNationById(7)!!
         assertEquals(1, nation.level)
         assertEquals("촉", nation.name)
-        assertEquals("che_명사", nation.typeCode)
+        assertEquals("che_명가", nation.typeCode)
         assertEquals(5, nation.capitalCityId)
         assertEquals(7, world.getCityById(5)!!.nationId)
         assertEquals(1000, world.getGeneralById(42)!!.experience)
@@ -287,6 +331,147 @@ class FoundingHandlerSeamTest {
             },
             "건국 global action log is drained to the global scope",
         )
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "global" &&
+                    it.category == "history" &&
+                    it.text == "<C>●</>${YEAR}년 ${MONTH}월:<Y><b>【건국】</b></>명가 <D><b>촉</b></>이 새로이 등장하였습니다."
+            },
+            "건국 global history log is drained",
+        )
+        assertEquals(
+            listOf("active_action", "unifier"),
+            handler.recorder.inheritanceKvWrites().map { it.key },
+            "che_건국 grants active_action then unifier",
+        )
+    }
+
+    @Test
+    fun `che_건국 same-month guard executes 인재탐색 alternative with the same turn rng`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState().copy(meta = linkedMapOf("init_year" to YEAR, "init_month" to MONTH)),
+                generals = listOf(wanderingLord().copy(gold = 1_000)),
+                cities = listOf(homeCity()),
+                nations = listOf(
+                    wanderingNation(gennum = 2),
+                    existingNation(1),
+                ),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(0, world.getNationById(7)!!.level, "same-month guard must leave the wandering nation untouched")
+        val logs = world.consumeDirtyState().logs.map { it.text }
+        assertTrue(logs.first().contains("다음 턴부터 건국할 수 있습니다."))
+        assertTrue(logs.drop(1).any { it.contains("인재") }, "alternative scout must run after the block log")
+    }
+
+    @Test
+    fun `che_건국 same-month guard ignores stale nation init meta and reads game env`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState().copy(meta = linkedMapOf("init_year" to YEAR - 1, "init_month" to MONTH)),
+                generals = listOf(wanderingLord().copy(userId = "55")),
+                cities = listOf(homeCity()),
+                nations = listOf(
+                    wanderingNation(gennum = 2).copy(meta = mapOf("gennum" to 2, "init_year" to YEAR, "init_month" to MONTH)),
+                    existingNation(1),
+                ),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(1, world.getNationById(7)!!.level, "stale nation init meta must not trigger the same-month block")
+        assertEquals(7, world.getCityById(5)!!.nationId)
+    }
+
+    @Test
+    fun `che_건국 same-month alternative respects 인재탐색 full constraints before mutation`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState().copy(meta = linkedMapOf("init_year" to YEAR, "init_month" to MONTH, "develcost" to 52)),
+                generals = listOf(wanderingLord().copy(gold = 0)),
+                cities = listOf(homeCity(), homeCity(id = 6, name = "허창", level = 5)),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(0, world.getNationById(7)!!.level)
+        assertEquals(0, world.getGeneralById(42)!!.gold, "denied alternative scout must not spend gold")
+        assertEquals(1, world.listGenerals().size, "denied alternative scout must not create an NPC")
+        assertFalse(handler.recorder.isDirty, "same-month block plus denied alternative is a no-write turn")
+        val logs = world.consumeDirtyState().logs.map { it.text }
+        assertTrue(logs.any { it.contains("다음 턴부터 건국할 수 있습니다.") })
+        assertTrue(logs.any { it.contains("자금이 모자랍니다. 인재탐색 실패.") })
+    }
+
+    @Test
+    fun `che_선양 through the handler applies destGeneral and drains PHP logs`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(
+                    wanderingLord(name = "유비").copy(userId = "55", experience = 1000, nationId = 7),
+                    member(id = 43, name = "관우").copy(nationId = 7, officerLevel = 1),
+                ),
+                cities = listOf(homeCity()),
+                nations = listOf(wanderingNation(id = 7, name = "촉", gennum = 2).copy(level = 1)),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_선양", """{"destGeneralID":43}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack, "선양 must pass with a same-nation target: ${outcome.denyReason}")
+        assertEquals(1, world.getGeneralById(42)!!.officerLevel)
+        assertEquals(700, world.getGeneralById(42)!!.experience)
+        assertEquals(12, world.getGeneralById(43)!!.officerLevel)
+        val dirty = world.consumeDirtyState()
+        assertEquals(listOf(42, 43), DatabaseHooks.toFlushPayload(world, handler.recorder, dirty).updatedGenerals.map { it.id }.sorted())
+        assertTrue(
+            dirty.logs.any {
+                it.scope == "general" &&
+                    it.generalId == 43 &&
+                    it.text == "<C>●</>${MONTH}월:<Y>유비</>에게서 군주의 자리를 물려받습니다."
+            },
+        )
+        assertTrue(dirty.logs.any { it.scope == "global" && it.category == "history" && it.text.contains("【선양】") })
+        assertEquals(listOf("active_action"), handler.recorder.inheritanceKvWrites().map { it.key })
     }
 
     @Test
@@ -303,7 +488,7 @@ class FoundingHandlerSeamTest {
 
         val outcome = handler.handle(
             42,
-            ReservedTurn("cr_건국", """{"nationName":"촉","nationType":"che_명사","colorType":5}"""),
+            ReservedTurn("cr_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
             YEAR,
             MONTH,
             "08:30",
@@ -315,6 +500,47 @@ class FoundingHandlerSeamTest {
     }
 
     @Test
+    fun `active_action inheritance is recorded only for human owned generals`() {
+        val npcWorld = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(wanderingLord().copy(userId = "55", npcState = 2)),
+                cities = listOf(homeCity()),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val npcHandler = handlerFor(npcWorld, scenario = 1010)
+        val npcOutcome = npcHandler.handle(
+            42,
+            ReservedTurn("cr_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+        assertFalse(npcOutcome.fellBack)
+        assertTrue(npcHandler.recorder.inheritanceKvWrites().isEmpty(), "npc>=2 must not earn active_action")
+
+        val unownedWorld = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState(),
+                generals = listOf(wanderingLord().copy(userId = null, npcState = 0)),
+                cities = listOf(homeCity()),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val unownedHandler = handlerFor(unownedWorld, scenario = 1010)
+        val unownedOutcome = unownedHandler.handle(
+            42,
+            ReservedTurn("cr_건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+        assertFalse(unownedOutcome.fellBack)
+        assertTrue(unownedHandler.recorder.inheritanceKvWrites().isEmpty(), "owner<=0 or absent must not earn active_action")
+    }
+
+    @Test
     fun `che_무작위건국 through the handler relocates all nation generals to the chosen city`() {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
@@ -322,7 +548,7 @@ class FoundingHandlerSeamTest {
                 generals = listOf(wanderingLord(cityId = 99), member(cityId = 99)),
                 cities = listOf(
                     homeCity(id = 99, name = "임시", level = 3),
-                    homeCity(id = 5, name = "성도", level = 5),
+                    homeCity(id = 5, name = "성도", level = 5).copy(conflict = "{\"1\":0.5}"),
                 ),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
             ),
@@ -331,7 +557,7 @@ class FoundingHandlerSeamTest {
 
         val outcome = handler.handle(
             42,
-            ReservedTurn("che_무작위건국", """{"nationName":"촉","nationType":"che_명사","colorType":5}"""),
+            ReservedTurn("che_무작위건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
             YEAR,
             MONTH,
             "08:30",
@@ -341,6 +567,9 @@ class FoundingHandlerSeamTest {
         assertEquals(5, world.getGeneralById(42)!!.cityId)
         assertEquals(5, world.getGeneralById(43)!!.cityId)
         assertEquals(7, world.getCityById(5)!!.nationId)
+        assertEquals(100, world.getCityById(5)!!.commerce, "random founding keeps the chosen city's full row")
+        assertEquals(100, world.getCityById(5)!!.agriculture, "random founding keeps the chosen city's full row")
+        assertEquals("{}", world.getCityById(5)!!.conflict, "random founding clears only the city conflict")
         assertEquals(0, world.getCityById(99)!!.nationId)
         val nation = world.getNationById(7)!!
         assertEquals(1, nation.level)
@@ -355,5 +584,50 @@ class FoundingHandlerSeamTest {
         assertEquals(listOf(42, 43), payload.updatedGenerals.map { it.id }.sorted())
         assertEquals(5, payload.updatedCities.single { it.id == 5 }.id)
         assertEquals(7, payload.updatedCities.single { it.id == 5 }.nationId)
+    }
+
+    @Test
+    fun `che_무작위건국 without a candidate executes 해산 and skips the founding lottery`() {
+        val lord = wanderingLord(cityId = 99).copy(
+            meta = LinkedHashMap(wanderingLord(cityId = 99).meta).apply {
+                put("aux", linkedMapOf("inheritRandomUnique" to "MARK"))
+            },
+        )
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                baseState().copy(
+                    meta = linkedMapOf(
+                        "minMonthToAllowInheritItem" to 0,
+                        "allItems" to linkedMapOf(
+                            "horse" to linkedMapOf("che_명마_15_적토마" to 1),
+                        ),
+                    ),
+                ),
+                generals = listOf(lord, member(cityId = 99)),
+                cities = listOf(homeCity(id = 99, name = "임시", level = 3).copy(nationId = 7)),
+                nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+            ),
+        )
+        val handler = handlerFor(world, scenario = 1010)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_무작위건국", """{"nationName":"촉","nationType":"che_명가","colorType":5}"""),
+            YEAR,
+            MONTH,
+            "08:30",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertNull(world.getNationById(7))
+        assertEquals(0, world.getGeneralById(42)!!.nationId)
+        assertEquals(0, world.getGeneralById(43)!!.nationId)
+        assertEquals("None", world.getGeneralById(42)!!.role.items.horse)
+        @Suppress("UNCHECKED_CAST")
+        val aux = world.getGeneralById(42)!!.meta["aux"] as Map<String, Any?>
+        assertEquals("MARK", aux["inheritRandomUnique"])
+        val logs = world.consumeDirtyState().logs.map { it.text }
+        assertTrue(logs.any { it.contains("건국할 수 있는 도시가 없습니다.") })
+        assertTrue(logs.any { it.contains("세력을 해산했습니다.") })
     }
 }

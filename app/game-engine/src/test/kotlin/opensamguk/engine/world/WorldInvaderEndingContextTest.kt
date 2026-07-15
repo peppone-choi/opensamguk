@@ -11,6 +11,7 @@ import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.RawAction
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.InvaderEndingAction
 import opensamguk.logic.world.InvaderEndingContext
 import java.time.Instant
@@ -23,13 +24,12 @@ import kotlin.test.assertTrue
  * 침략자(이민족) 종료 leaf [InvaderEndingAction] 의 엔진 시임([WorldActionContext] 가 구현하는
  * [InvaderEndingContext]) 통합 검증 — PHP `Event/Action/InvaderEnding.php`.
  *
- * sibling Q14([opensamguk.engine.run.WorldCheckEmperiorContext]) 와 동일 형태: InMemoryTurnWorld read
+ * sibling Q14([WorldActionContext] 의 CheckEmperiorContext 구현) 와 동일 형태: InMemoryTurnWorld read
  * + isunited/refreshLimit meta 전이 write + global-history 로그 push. Docker 불요(in-memory). leaf 의
  * byte-exact 로그/로직은 logic 측 InvaderEndingActionTest 가 본수(本守); 본 테스트는 **엔진 배선**(env 공급 +
  * WorldActionContext 의 10 메서드 위임)이 실제로 leaf 를 실행시키는지를 검증한다.
  *
- * 로그는 leaf 내부 텍스트만 검사한다(YEAR_MONTH 날짜 prefix 미검 — checkEmperior 와 동일하게, 엔진-전역
- * 로그-포맷 prefix 갭은 별도 백로그).
+ * 로그는 ActionLogger::pushGlobalHistoryLog 기본 YEAR_MONTH 포맷까지 저장 byte 전체를 검사한다.
  *
  * 도달성 정직성: live 에서 InvaderEnding 은 RaiseInvader(침략자 START, isunited=1) 가 켜져야 발화하는데
  * 그 start-event 배선은 엔진에 아직 없다 → live LATENT. 본 wheel 은 dispatched-no-op 시임만 닫는다.
@@ -45,6 +45,7 @@ class WorldInvaderEndingContextTest {
         refreshLimit: Int? = null,
     ): InMemoryTurnWorld {
         val meta = LinkedHashMap<String, Any?>()
+        meta["map"] = "miniche"
         meta["isunited"] = isunited
         if (refreshLimit != null) meta["refreshLimit"] = refreshLimit
         return InMemoryTurnWorld(
@@ -112,8 +113,8 @@ class WorldInvaderEndingContextTest {
         val dirty = w.consumeDirtyState()
         assertEquals(
             listOf(
-                "<L><b>【이벤트】</b></>이민족을 모두 소탕했습니다!",
-                "<L><b>【이벤트】</b></>중원은 당분간 태평성대를 누릴 것입니다.",
+                "<C>●</>200년 1월:<L><b>【이벤트】</b></>이민족을 모두 소탕했습니다!",
+                "<C>●</>200년 1월:<L><b>【이벤트】</b></>중원은 당분간 태평성대를 누릴 것입니다.",
             ),
             dirty.logs.filter { it.scope == "global" && it.category == "history" }.map { it.text },
         )
@@ -126,7 +127,9 @@ class WorldInvaderEndingContextTest {
     fun `defeat 엔딩 — 모든 도시가 공백지(cityCnt==total) → 패배로그2 + isunited3`() {
         // php:44-47, 58-61. 전 도시 공백지(이민족 중원 장악) → 유저 패배.
         val nations = listOf(Nation(id = 7, name = "촉", color = "#fff", level = 1))
-        val cities = (1..3).map { City(id = it, name = "c$it", nationId = 0, level = 5) }
+        val cities = CityConstRegistry.of("miniche").all().values.map {
+            City(id = it.id, name = it.name, nationId = 0, level = it.level)
+        }
         val w = world(isunited = 1, nations = nations, cities = cities)
         val store = storeWithRow(1)
 
@@ -135,8 +138,8 @@ class WorldInvaderEndingContextTest {
         val dirty = w.consumeDirtyState()
         assertEquals(
             listOf(
-                "<L><b>【이벤트】</b></>중원은 이민족에 의해 혼란에 빠졌습니다.",
-                "<L><b>【이벤트】</b></>백성은 언젠가 영웅이 나타나길 기다립니다.",
+                "<C>●</>200년 1월:<L><b>【이벤트】</b></>중원은 이민족에 의해 혼란에 빠졌습니다.",
+                "<C>●</>200년 1월:<L><b>【이벤트】</b></>백성은 언젠가 영웅이 나타나길 기다립니다.",
             ),
             dirty.logs.filter { it.scope == "global" && it.category == "history" }.map { it.text },
         )
@@ -157,8 +160,8 @@ class WorldInvaderEndingContextTest {
         val texts = w.consumeDirtyState().logs.filter { it.scope == "global" }.map { it.text }
         assertEquals(
             listOf(
-                "<L><b>【이벤트】</b></>중원은 이민족에 의해 혼란에 빠졌습니다.",
-                "<L><b>【이벤트】</b></>백성은 언젠가 영웅이 나타나길 기다립니다.",
+                "<C>●</>200년 1월:<L><b>【이벤트】</b></>중원은 이민족에 의해 혼란에 빠졌습니다.",
+                "<C>●</>200년 1월:<L><b>【이벤트】</b></>백성은 언젠가 영웅이 나타나길 기다립니다.",
             ),
             texts,
         )

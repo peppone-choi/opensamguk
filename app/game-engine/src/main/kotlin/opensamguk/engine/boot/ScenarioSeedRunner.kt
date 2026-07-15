@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets
  * (`opensamguk.engine.{flush,turn,run}`).
  *
  * Optional env fences:
- *  - `SCENARIO_SEED_ENABLED` (default true) — set false to disable seeding entirely.
+ *  - `SCENARIO_SEED_ENABLED` (default true) — set false to disable fresh-world seeding.
  *  - `SCENARIO_CODE` (default `scenario_1010`) — selects the committed resource set.
  *  - `SCENARIO_DIR` — optional external directory containing `${SCENARIO_CODE}.json`.
  */
@@ -61,14 +61,14 @@ class SeedBootstrap(
     /** Seed the world iff `world_state` is empty. Returns true if it seeded, false if it skipped. */
     @Synchronized
     fun ensureSeeded(jdbc: JdbcTemplate): Boolean {
-        if (!seedEnabled) {
-            log.info("Scenario seed skipped — SCENARIO_SEED_ENABLED=false")
-            return false
-        }
-
         val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: 0
         if (worldCount > 0) {
             log.info("World already exists (world_state={}) — scenario seed skipped (idempotent)", worldCount)
+            return false
+        }
+
+        if (!seedEnabled) {
+            log.info("Fresh-world scenario seed skipped — SCENARIO_SEED_ENABLED=false")
             return false
         }
 

@@ -80,8 +80,7 @@ class Che부대탈퇴지시GoldenTest {
         assertEquals(c.broadcastLines, ctx.globalActionLogs(), "[부대탈퇴지시] broadcast (empty)")
         assertEquals(emptyList(), ctx.plainLogs(), "[부대탈퇴지시] plain (empty)")
 
-        // dest action 라인: addLogTo(MONTH body, 접두사 없음) → dest 로거가 `<C>●</>{month}월:` 래핑.
-        val monthDest = ctx.logsTo(dg.generalId).map { "<C>●</>${c.env.month}월:$it" }
+        val monthDest = ctx.logsTo(dg.generalId)
         assertEquals(dg.logLines, monthDest, "[부대탈퇴지시] dest log")
 
         // state 델타: dest.troop=0 (강제 탈퇴), 그 외 dest after byte-state.

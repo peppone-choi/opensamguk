@@ -12,6 +12,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
+import java.time.Instant
 import javax.sql.DataSource
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -161,6 +162,173 @@ class DeleteFlushNoDoubleApplyIT {
             "INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code) VALUES (9, 12, 0, '휴식')",
             MapSqlParameterSource(),
         )
+        jdbc.update(
+            "INSERT INTO troop (troop_leader, nation, name) VALUES (90, 9, '망국부대')",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            "INSERT INTO nation_env (namespace, key, value) VALUES (9, 'scout_msg', '\"비밀\"'::jsonb)",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO log_entry (scope, category, year, month, text, general_id, nation_id)
+            VALUES
+              ('GENERAL', 'HISTORY', 200, 1, '장수사', 10, 2),
+              ('NATION', 'HISTORY', 200, 1, '국가사', NULL, 9)
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+    }
+
+    @Test
+    fun `unification action logs flush before old-general archives without changing normal delete ordering`() {
+        val payload = FlushPayload(
+            worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+            archiveServerId = "archive-server",
+            logEntries = listOf(
+                LogRow(
+                    scope = "NATION",
+                    category = "HISTORY",
+                    text = "<C>●</>200년 1월:통일 국가사",
+                    year = 200,
+                    month = 1,
+                    nationId = 2,
+                ),
+                LogRow(
+                    scope = "GENERAL",
+                    category = "ACTION",
+                    text = "<C>●</>200년 1월:통일",
+                    year = 200,
+                    month = 1,
+                    generalId = 10,
+                    nationId = 2,
+                    flushBeforeArchive = true,
+                ),
+                LogRow(
+                    scope = "SYSTEM",
+                    category = "HISTORY",
+                    text = "<C>●</>200년 1월:통일 세계사",
+                    year = 200,
+                    month = 1,
+                ),
+            ),
+            oldGeneralSnapshots = listOf(
+                OldGeneralArchiveRow(
+                    serverId = null,
+                    generalNo = 10,
+                    owner = "owner-10",
+                    name = "장수십",
+                    lastYearMonth = 20001,
+                    turnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                    data = linkedMapOf("no" to 10, "name" to "장수십"),
+                ),
+            ),
+            kvWrites = listOf(KvWrite("game_env", "game_env", "refreshLimit", 100)),
+            deletedNationSnapshots = listOf(
+                linkedMapOf(
+                    "nation" to 0,
+                    "data" to linkedMapOf("nation" to 0, "name" to "재야", "generals" to listOf(10)),
+                ),
+            ),
+            statisticInserts = listOf(
+                StatisticInsertRow(
+                    linkedMapOf(
+                        "year" to 200,
+                        "month" to 1,
+                        "nation_count" to 1,
+                        "nation_name" to "촉",
+                        "nation_hist" to "촉(1)",
+                        "gen_count" to "2(2+0)",
+                        "personal_hist" to "",
+                        "special_hist" to "",
+                        "power_hist" to "촉(1)",
+                        "crewtype" to "",
+                        "etc" to "",
+                        "aux" to "{}",
+                    ),
+                ),
+            ),
+            hallUpserts = listOf(
+                HallUpsertRow(
+                    linkedMapOf(
+                        "server_id" to "archive-server",
+                        "season" to 1,
+                        "scenario" to 1,
+                        "general_no" to 10,
+                        "type" to "dedication",
+                        "value" to 1,
+                        "owner" to "owner-10",
+                        "aux" to "{}",
+                    ),
+                ),
+            ),
+            gameWinnerUpdates = listOf(GameWinnerUpdateRow("archive-server", 2)),
+            emperiorInserts = listOf(
+                EmperiorInsertRow(
+                    linkedMapOf(
+                        "phase" to "테스트1기",
+                        "server_id" to "archive-server",
+                        "nation_count" to "1 / 1",
+                        "nation_name" to "촉",
+                        "nation_hist" to "촉(1)",
+                        "gen_count" to "2 / 2(2+0)",
+                        "personal_hist" to "",
+                        "special_hist" to "",
+                        "name" to "촉",
+                        "type" to "che_명가",
+                        "color" to "#00ff00",
+                        "year" to 200,
+                        "month" to 1,
+                        "power" to 1,
+                        "gennum" to 2,
+                        "citynum" to 1,
+                        "pop" to "1 / 1",
+                        "poprate" to "100 %",
+                        "gold" to 1,
+                        "rice" to 1,
+                        "tiger" to "",
+                        "eagle" to "",
+                        "gen" to "장수십",
+                        "history" to "[]",
+                        "aux" to "{}",
+                    ),
+                ),
+            ),
+            yearbookInserts = listOf(
+                YearbookInsertRow(
+                    linkedMapOf(
+                        "server_id" to "archive-server",
+                        "year" to 200,
+                        "month" to 1,
+                        "map" to "{}",
+                        "nations" to "[]",
+                        "global_history" to "[]",
+                        "global_action" to "[]",
+                    ),
+                ),
+            ),
+        )
+
+        executor.flush(payload)
+
+        assertEquals(
+            listOf(
+                "statistic",
+                "log_entry",
+                "world_state",
+                "kv",
+                "hall",
+                "log_entry",
+                "ng_old_generals",
+                "ng_old_nations",
+                "ng_games",
+                "emperior",
+                "log_entry",
+                "yearbook_history",
+            ),
+            executor.lastOps().map { it.table },
+        )
     }
 
     @Test
@@ -173,7 +341,19 @@ class DeleteFlushNoDoubleApplyIT {
         )
         val payload = FlushPayload(
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+            archiveServerId = "archive-server",
             deletedGenerals = listOf(10),
+            oldGeneralSnapshots = listOf(
+                OldGeneralArchiveRow(
+                    serverId = null,
+                    generalNo = 10,
+                    owner = "owner-10",
+                    name = "장수십",
+                    lastYearMonth = 20001,
+                    turnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                    data = linkedMapOf("no" to 10, "name" to "장수십", "gold" to 1000),
+                ),
+            ),
             updatedNations = listOf(nation2AfterKill),
         )
 
@@ -183,6 +363,20 @@ class DeleteFlushNoDoubleApplyIT {
         assertEquals(0, count("SELECT count(*) FROM general WHERE id = 10"))
         assertEquals(0, count("SELECT count(*) FROM general_turn WHERE general_id = 10"))
         assertEquals(0, count("SELECT count(*) FROM rank_data WHERE general_id = 10"))
+        assertEquals(
+            1,
+            count(
+                """
+                SELECT count(*)
+                  FROM ng_old_generals
+                 WHERE server_id = 'archive-server'
+                   AND general_no = 10
+                   AND owner = 'owner-10'
+                   AND last_yearmonth = 20001
+                   AND data = '{"no":10,"name":"장수십","gold":1000,"history":["장수사"]}'::jsonb
+                """.trimIndent(),
+            ),
+        )
 
         // --- the surviving general (and its rank rows) are untouched -------------------------------
         assertEquals(1, count("SELECT count(*) FROM general WHERE id = 11"))
@@ -196,6 +390,8 @@ class DeleteFlushNoDoubleApplyIT {
         assertEquals(2, gennum)
 
         // --- the op sequence shows step-5 fired general + general_turn + rank_data DELETE_MANY ------
+        val ops = executor.lastOps().map { it.table to it.verb }
+        assertTrue(ops.indexOf("ng_old_generals" to FlushVerb.UPSERT) < ops.indexOf("general" to FlushVerb.DELETE_MANY))
         val deleteOps = executor.lastOps().filter { it.verb == FlushVerb.DELETE_MANY }.map { it.table }
         assertEquals(listOf("general", "general_turn", "rank_data"), deleteOps)
 
@@ -215,26 +411,76 @@ class DeleteFlushNoDoubleApplyIT {
     fun `nation cascade deletes diplomacy + nation_turn + nation exactly once`() {
         val payload = FlushPayload(
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+            archiveServerId = "archive-server",
             deletedNations = listOf(9),
+            deletedNationSnapshots = listOf(
+                linkedMapOf(
+                    "nation" to 9,
+                    "data" to linkedMapOf("nation" to 9, "name" to "망국"),
+                ),
+            ),
         )
 
         executor.flush(payload)
 
         assertEquals(0, count("SELECT count(*) FROM nation WHERE id = 9"))
         assertEquals(0, count("SELECT count(*) FROM nation_turn WHERE nation_id = 9"))
+        assertEquals(0, count("SELECT count(*) FROM troop WHERE nation = 9"))
+        assertEquals(0, count("SELECT count(*) FROM nation_env WHERE namespace = 9"))
         assertEquals(
             0,
             count("SELECT count(*) FROM diplomacy WHERE src_nation_id = 9 OR dest_nation_id = 9"),
         )
+        assertEquals(
+            1,
+            count(
+                """
+                SELECT count(*)
+                  FROM ng_old_nations
+                 WHERE server_id = 'archive-server'
+                   AND nation = 9
+                   AND data = '{"nation":9,"name":"망국","history":["국가사"]}'::jsonb
+                """.trimIndent(),
+            ),
+        )
 
         val cascadeOps = executor.lastOps().filter { it.verb == FlushVerb.DELETE_MANY }.map { it.table }
-        assertEquals(listOf("diplomacy", "nation_turn", "nation"), cascadeOps)
+        assertEquals(listOf("troop", "nation", "nation_turn", "diplomacy", "nation_env"), cascadeOps)
 
         // re-flush of an empty delta does not error and does not re-delete.
         executor.flush(
             FlushPayload(worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1)),
         )
         assertTrue(executor.lastOps().none { it.verb == FlushVerb.DELETE_MANY })
+    }
+
+    @Test
+    fun `neutral unification archive keeps exact PHP payload without history backfill`() {
+        val payload = FlushPayload(
+            worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+            archiveServerId = "archive-server",
+            deletedNationSnapshots = listOf(
+                linkedMapOf(
+                    "nation" to 0,
+                    "data" to linkedMapOf("nation" to 0, "name" to "재야", "generals" to listOf(10)),
+                ),
+            ),
+        )
+
+        executor.flush(payload)
+
+        assertEquals(
+            1,
+            count(
+                """
+                SELECT count(*)
+                  FROM ng_old_nations
+                 WHERE server_id = 'archive-server'
+                   AND nation = 0
+                   AND data = '{"nation":0,"name":"재야","generals":[10]}'::jsonb
+                """.trimIndent(),
+            ),
+        )
     }
 
     private fun count(sql: String): Int =

@@ -18,6 +18,7 @@ import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.SelectPoolRepository
 import opensamguk.logic.event.EventActionContext
+import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.GameDate
@@ -33,6 +34,17 @@ data class TurnClockSnapshot(
     val lastTurnTime: String,
     val nextRunTime: String,
 )
+
+internal class LiveRemainNationEnv(
+    initial: Map<String, Any?>,
+    private val nationCount: () -> Int,
+) : LinkedHashMap<String, Any?>(initial) {
+    override fun get(key: String): Any? =
+        if (key == EventCondition.REMAIN_NATION_COUNT_KEY) nationCount() else super.get(key)
+
+    override fun containsKey(key: String): Boolean =
+        key == EventCondition.REMAIN_NATION_COUNT_KEY || super.containsKey(key)
+}
 
 /**
  * P1 Task F5 / P6 Task 6 — the daemon-side run orchestrator (steps 3-7 daemon side, design §12).
@@ -242,11 +254,14 @@ open class TurnRunService(
                         oldPhase = oldDate.phase,
                         dispatcher = { target, env ->
                             val supplier = {
-                                mutableMapOf<String, Any?>(
-                                    "year" to env.year,
-                                    "month" to env.month,
-                                    "phase" to env.phase,
-                                    "currentEventID" to env.currentEventID,
+                                LiveRemainNationEnv(
+                                    linkedMapOf(
+                                        "year" to env.year,
+                                        "month" to env.month,
+                                        "phase" to env.phase,
+                                        "currentEventID" to env.currentEventID,
+                                    ),
+                                    nationCount = { world.listNations().size },
                                 )
                             }
                             // worldContextFactory가 있으면 WorldActionContext(+ env 키)를 공급 — 월간

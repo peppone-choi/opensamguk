@@ -74,7 +74,15 @@ class GeneralBuilder(
     fun setOfficerLevel(level: Int): GeneralBuilder { this.officerLevel = level; return this }
     fun setNPCText(text: String?): GeneralBuilder { this.text = text; return this }
     fun setEgo(ego: String?): GeneralBuilder { this.ego = ego; return this }
-    fun setAffinity(affinity: Int): GeneralBuilder { this.affinity = affinity; return this }
+    fun setAffinity(affinity: Int): GeneralBuilder {
+        this.affinity = when {
+            affinity < 1 -> rng.nextRangeInt(1, 150)
+            affinity >= 900 -> 999
+            affinity in 1..150 -> affinity
+            else -> throw IllegalArgumentException("invalid affinity: $affinity")
+        }
+        return this
+    }
     fun setStat(leadership: Int, strength: Int, intel: Int): GeneralBuilder {
         this.leadership = leadership; this.strength = strength; this.intel = intel; return this
     }
@@ -92,13 +100,15 @@ class GeneralBuilder(
     }
     fun setLifeSpan(birth: Int, death: Int): GeneralBuilder { this.birth = birth; this.death = death; return this }
 
-    /**
-     * setSpecialSingle(null) 만 게이트가 사용(default war/dom). 비-null 분기(특기명 조회)는 미사용 경로.
-     * PHP setSpecialSingle('') → catch 분기에서 getWarClassByName('') throw → default 로 떨어짐.
-     */
     fun setSpecialSingle(special: String?): GeneralBuilder {
         this.specialDomestic = GameConst.defaultSpecialDomestic
         this.specialWar = GameConst.defaultSpecialWar
+        val code = special?.takeIf { it.isNotBlank() }?.let { if ('_' in it) it else "che_$it" }
+            ?: return this
+        when (code) {
+            in GameConst.availableSpecialDomestic -> this.specialDomestic = code
+            in GameConst.availableSpecialWar -> this.specialWar = code
+        }
         return this
     }
 
@@ -230,8 +240,14 @@ class GeneralBuilder(
      * @param cityPool      cityID 미지정 시 choice 대상(getAllCities | getAllNationCities). id+nation 보유.
      * @return null = 사망(death<=year) 또는 예약(age<adultAge)으로 행 미생성.
      */
-    fun build(year: Int, month: Int, turnterm: Int, cityPool: List<CityChoice>): BuiltGeneral? {
-        val isFictionMode = false // env[fiction]=0 (capture 정본). fiction 분기는 별도 캡처 후 확장.
+    fun build(
+        year: Int,
+        month: Int,
+        turnterm: Int,
+        cityPool: List<CityChoice>,
+        isFictionMode: Boolean = false,
+        onAdultGeneral: ((String) -> Unit)? = null,
+    ): BuiltGeneral? {
         val age = year - birth!!
 
         val finalName = (nameCustomPrefix ?: (prefixList[npc] ?: "ⓧ")) + name
@@ -242,6 +258,8 @@ class GeneralBuilder(
 
         var nation = nationID
         if (isFictionMode && isNewGeneral) nation = 0
+
+        if (isNewGeneral) onAdultGeneral?.invoke(finalName)
 
         if (cityID == null) {
             val pool = if (nation == 0) cityPool else cityPool.filter { it.nationId == nation }.ifEmpty { cityPool }
@@ -258,7 +276,7 @@ class GeneralBuilder(
         val turntimeFraction = rng.nextRangeInt(0, 999999)
 
         val kt = when {
-            killturn != null -> killturn!!
+            (killturn ?: 0) != 0 -> killturn!!
             else -> (death!! - year) * 12 + rng.nextRangeInt(0, 11) + month - 1
         }
 
@@ -289,6 +307,7 @@ class GeneralBuilder(
             dex1 = dex1, dex2 = dex2, dex3 = dex3, dex4 = dex4, dex5 = dex5,
             turntimeSecond = turntimeSecond,
             turntimeFraction = turntimeFraction,
+            npcText = text ?: "",
         )
     }
 
@@ -324,4 +343,6 @@ data class BuiltGeneral(
     val dex1: Int, val dex2: Int, val dex3: Int, val dex4: Int, val dex5: Int,
     val turntimeSecond: Int,
     val turntimeFraction: Int,
+    val picture: String = "default.jpg",
+    val npcText: String = "",
 )

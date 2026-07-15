@@ -39,6 +39,7 @@ object ScenarioJson {
     private const val G_DEAD = 10
     private const val G_EGO = 11
     private const val G_CHAR = 12
+    private const val G_TEXT = 13
     private const val G_POLITICS = 14
     private const val G_CHARM = 15
 
@@ -61,6 +62,8 @@ object ScenarioJson {
         val startYear = intOf(root["startYear"], 0)
         val map = stringMap(root["map"])
         val const = stringMap(root["const"])
+        val iconPath = strOrNull(root["iconPath"]) ?: "."
+        val storedIcons = stringMap(root["stored_icons"] ?: root["storedIcons"])
         val events = arr(root["events"]).map { decodeEvent(asList(it)) }
         val initialEvents = arr(root["initialEvents"]).map { decodeInitialEvent(asList(it)) }
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
@@ -81,11 +84,19 @@ object ScenarioJson {
                 cities = arr(t.getOrNull(N_CITIES)).map { strOf(it) },
             )
         }
+        val nationIdsByToken = LinkedHashMap<Any?, Int>()
+        nationIdsByToken[0] = 0
+        nationIdsByToken["0"] = 0
+        nationIdsByToken["재야"] = 0
+        for (nation in nations) {
+            nationIdsByToken[nation.id] = nation.id
+            nationIdsByToken[nation.id.toString()] = nation.id
+            nationIdsByToken[nation.name] = nation.id
+        }
 
-        val generals = ArrayList<ScenarioGeneral>()
-        // general[] (npcType 2) THEN general_ex[] (npcType 2) — PHP build order. Both into `general`.
-        for (raw in arr(root["general"])) generals.add(decodeGeneral(asList(raw)))
-        for (raw in arr(root["general_ex"])) generals.add(decodeGeneral(asList(raw)))
+        val baseGenerals = arr(root["general"]).map { decodeGeneral(asList(it), nationIdsByToken, npcType = 2) }
+        val generalEx = arr(root["general_ex"]).map { decodeGeneral(asList(it), nationIdsByToken, npcType = 2) }
+        val generalNeutral = arr(root["general_neutral"]).map { decodeGeneral(asList(it), nationIdsByToken, npcType = 6) }
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
@@ -103,8 +114,13 @@ object ScenarioJson {
             startYear = startYear,
             map = map,
             const = const,
+            iconPath = iconPath,
+            storedIcons = storedIcons,
             nations = nations,
-            generals = generals,
+            generals = baseGenerals + generalEx + generalNeutral,
+            baseGenerals = baseGenerals,
+            generalEx = generalEx,
+            generalNeutral = generalNeutral,
             diplomacy = diplomacy,
             events = events,
             initialEvents = initialEvents,
@@ -124,23 +140,34 @@ object ScenarioJson {
         return ScenarioInitialEvent(t[0], t.drop(1))
     }
 
-    private fun decodeGeneral(t: List<Any?>): ScenarioGeneral = ScenarioGeneral(
-        affinity = intOrNull(t.getOrNull(G_AFFINITY)),
-        name = strOf(t[G_NAME]),
-        picture = strOrNull(t.getOrNull(G_PICTURE)),
-        nationId = intOf(t.getOrNull(G_NATION), 0),
-        locatedCity = strOrNull(t.getOrNull(G_CITY)),
-        leadership = intOf(t.getOrNull(G_LEADERSHIP), 0),
-        strength = intOf(t.getOrNull(G_STRENGTH), 0),
-        intel = intOf(t.getOrNull(G_INTEL), 0),
-        officerLevel = intOf(t.getOrNull(G_OFFICER_LEVEL), 0),
-        bornYear = intOrNull(t.getOrNull(G_BORN)),
-        deadYear = intOrNull(t.getOrNull(G_DEAD)),
-        ego = strOrNull(t.getOrNull(G_EGO)),
-        special = strOrNull(t.getOrNull(G_CHAR)),
-        politics = intOf(t.getOrNull(G_POLITICS), 50),
-        charm = intOf(t.getOrNull(G_CHARM), 50),
-    )
+    private fun decodeGeneral(
+        t: List<Any?>,
+        nationIdsByToken: Map<Any?, Int>,
+        npcType: Int,
+    ): ScenarioGeneral {
+        val rawTuple = if (t.size >= 14) t.toList() else t + List(14 - t.size) { null }
+        return ScenarioGeneral(
+            affinity = intOrNull(t.getOrNull(G_AFFINITY)),
+            name = strOf(t[G_NAME]),
+            picture = strOrNull(t.getOrNull(G_PICTURE)),
+            nationId = nationIdsByToken[t.getOrNull(G_NATION)]
+                ?: intOf(t.getOrNull(G_NATION), 0),
+            locatedCity = strOrNull(t.getOrNull(G_CITY)),
+            leadership = intOf(t.getOrNull(G_LEADERSHIP), 0),
+            strength = intOf(t.getOrNull(G_STRENGTH), 0),
+            intel = intOf(t.getOrNull(G_INTEL), 0),
+            officerLevel = intOf(t.getOrNull(G_OFFICER_LEVEL), 0),
+            bornYear = intOrNull(t.getOrNull(G_BORN)),
+            deadYear = intOrNull(t.getOrNull(G_DEAD)),
+            ego = strOrNull(t.getOrNull(G_EGO)),
+            special = strOrNull(t.getOrNull(G_CHAR)),
+            text = strOrNull(t.getOrNull(G_TEXT)),
+            politics = intOf(t.getOrNull(G_POLITICS), 50),
+            charm = intOf(t.getOrNull(G_CHARM), 50),
+            npcType = npcType,
+            rawTuple = rawTuple,
+        )
+    }
 
     /** Decode `cities_1010.json` (che 풀맵 94도시). Stats are already x100-scaled. */
     fun loadCities(json: String): List<ScenarioCity> {
@@ -259,13 +286,23 @@ data class Scenario(
     val startYear: Int,
     val map: Map<String, Any?> = emptyMap(),
     val const: Map<String, Any?> = emptyMap(),
+    val iconPath: String = ".",
+    val storedIcons: Map<String, Any?> = emptyMap(),
     val nations: List<ScenarioNation>,
     val generals: List<ScenarioGeneral>,
+    val baseGenerals: List<ScenarioGeneral> = generals,
+    val generalEx: List<ScenarioGeneral> = emptyList(),
+    val generalNeutral: List<ScenarioGeneral> = emptyList(),
     val diplomacy: List<ScenarioDiplomacy>,
     val events: List<ScenarioEvent> = emptyList(),
     val initialEvents: List<ScenarioInitialEvent> = emptyList(),
     val ignoreDefaultEvents: Boolean = false,
-)
+) {
+    fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> =
+        if (extendedGeneral) baseGenerals + generalEx + generalNeutral else baseGenerals + generalNeutral
+
+    fun initGenerals(): List<ScenarioGeneral> = baseGenerals + generalEx + generalNeutral
+}
 
 data class ScenarioEvent(
     val target: String,
@@ -313,8 +350,11 @@ data class ScenarioGeneral(
     val ego: String?,
     /** 특기 (null for almost all 1010 rows). */
     val special: String?,
+    val text: String? = null,
     val politics: Int = 50,
     val charm: Int = 50,
+    val npcType: Int = 2,
+    val rawTuple: List<Any?> = emptyList(),
 )
 
 data class ScenarioDiplomacy(

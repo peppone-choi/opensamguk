@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.ServerClock
@@ -16,7 +17,8 @@ import kotlin.test.assertTrue
  * Port target: `TurnExecutionHelper.php:185-206` (the killturn<=0 gate: possession-release vs kill())
  * + `General.php:515-600` (kill()). The killturn<=0 branch of [ReservedTurnHandler.updateTurnTime]:
  *  - NPCType==1 & deadyear>year → 유체이탈 possession release (a NON-delete branch): push the global
- *    log FIRST, then `killturn=(deadyear-year)*12, npc=npc_org, owner=0, defence_train=80,
+ *    log FIRST, then legacy `killturn=(deadyear-year)*12` converted to three phase turns,
+ *    `npc=npc_org, owner=0, defence_train=80,
  *    owner_name=null`, then DELETE general_access_log ONLY.
  *  - else → kill(): nextRuler/demote → troop cleanup → dying message → storeOldGeneral → the F3
  *    4-table delete (the row leaves the update-set, no double-apply) → nation gennum-1.
@@ -101,8 +103,16 @@ class KillTombstoneTest {
         assertEquals(LifecycleOutcome.POSSESSION_RELEASED, outcome)
 
         val after = w.getGeneralById(1)!!
-        // killturn = (deadyear - year) * 12 = (205-200)*12 = 60
-        assertEquals(60, (after.meta["killturn"] as Number).toInt())
+        assertEquals(180, (after.meta["killturn"] as Number).toInt())
+        assertEquals(ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE, after.meta["killturn_unit"])
+        val reloadedMeta = ScenarioLifecycleMeta.ensureGeneralMeta(
+            after.meta,
+            deadYear = 205,
+            startYear = 184,
+            startMonth = 1,
+            convertLegacyNpcKillturn = true,
+        )
+        assertEquals(180, (reloadedMeta["killturn"] as Number).toInt())
         // npc = npc_org (3)
         assertEquals(3, after.npcState)
         assertEquals(0, (after.meta["owner"] as Number).toInt())

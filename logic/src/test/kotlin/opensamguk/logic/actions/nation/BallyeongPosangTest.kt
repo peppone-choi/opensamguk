@@ -70,7 +70,7 @@ class BallyeongPosangTest {
         assertEquals(2404, (d.destGeneral!!.auxVar("last발령") as Number).toInt(), "last발령 yearMonth")
 
         // dest-scope log (계양, josa-로: 계양+로 → '으로')
-        assertEquals(listOf("<Y>조조</>에 의해 <G><b>계양</b></>으로 발령됐습니다. <1>09:00</>"), c.logsTo(2))
+        assertEquals(listOf("<C>●</>5월:<Y>조조</>에 의해 <G><b>계양</b></>으로 발령됐습니다. <1>09:00</>"), c.logsTo(2))
         // actor-scope log (하후돈, josa-을: 돈+을 → '을')
         assertEquals(1, c.logs().size)
         assertEquals("<C>●</>5월:<Y>하후돈</>을 <G><b>계양</b></>으로 발령했습니다. <1>09:00</>", c.logs()[0])

@@ -14,6 +14,8 @@ data class WorldSnapshot(
     val troops: List<Troop> = emptyList(),
     val diplomacy: List<TurnDiplomacy> = emptyList(),
     val accessLogs: List<GeneralAccessLog> = emptyList(),
+    val archivedNationIds: List<Int> = emptyList(),
+    val serverId: String? = state.serverId,
 )
 
 /**
@@ -60,6 +62,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     private val logs = mutableListOf<LogEntryDraft>()
 
     private var state: TurnWorldState
+    private val serverId: String?
 
     /**
      * Persistent monotonic high-water marks for engine-assigned ids. Unlike MySQL `AUTO_INCREMENT`,
@@ -71,7 +74,8 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     private var maxGeneralId: Int
 
     init {
-        state = snapshot.state
+        serverId = snapshot.serverId ?: snapshot.state.serverId
+        state = snapshot.state.copy(serverId = serverId)
         for (general in snapshot.generals) generals[general.id] = general
         for (city in snapshot.cities) cities[city.id] = city
         for (nation in snapshot.nations) nations[nation.id] = nation
@@ -82,6 +86,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
         for (entry in snapshot.accessLogs) accessLogs[entry.generalId] = entry
         maxNationId = maxOf(
             snapshot.nations.maxOfOrNull { it.id } ?: 0,
+            snapshot.archivedNationIds.maxOrNull() ?: 0,
             (snapshot.state.meta["maxNationId"] as? Number)?.toInt() ?: 0,
         )
         maxGeneralId = maxOf(
@@ -95,6 +100,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     fun getState(): TurnWorldState = state
+    fun archiveServerId(): String? = serverId
 
     // Getters return defensive copies. Data classes are immutable so the value itself is
     // safe; returning fresh lists prevents the caller from mutating the internal collections.
@@ -104,6 +110,7 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun listTroops(): List<Troop> = troops.values.toList()
     fun listDiplomacy(): List<TurnDiplomacy> = diplomacy.values.toList()
     fun listAccessLogs(): List<GeneralAccessLog> = accessLogs.values.toList()
+    fun peekLogs(): List<LogEntryDraft> = logs.toList()
 
     fun getGeneralById(id: Int): TurnGeneral? = generals[id]
     fun getCityById(id: Int): City? = cities[id]
@@ -412,9 +419,9 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     }
 
     /**
-     * `$gameStor->isunited = value` (Q14 checkEmperior / InvaderEnding). meta 에만 in-memory 반영한다 —
-     * world_state.isunited 컬럼 flush 와 boot-load(컬럼→meta) 는 별도 갭(LEDGER 백로그). [getState] 의
-     * meta["isunited"] 를 읽는 경로(MonthlyPostUpdateHook·TurnDaemonLifecycle 동결판정)가 즉시 본 값을 본다.
+     * `$gameStor->isunited = value` (Q14 checkEmperior / InvaderEnding). meta 에 in-memory 반영하고,
+     * flush payload가 world_state.isunited 컬럼에 저장한다. boot-load는 전용 컬럼을 meta로 복원하므로
+     * [getState] 를 읽는 MonthlyPostUpdateHook·TurnDaemonLifecycle과 재기동 스냅샷이 같은 값을 본다.
      */
     fun setIsunited(value: Int) {
         state = state.copy(meta = state.meta + mapOf("isunited" to value))
@@ -422,8 +429,8 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
 
     /**
      * `$gameStor->refreshLimit = $gameStor->refreshLimit * factor` (InvaderEnding.php:65). meta 에만
-     * in-memory 반영한다 — game_env `refreshLimit` 컬럼 flush 와 boot-load(컬럼→meta) 는 [setIsunited] 와
-     * 동일 클래스의 별도 갭(LEDGER 백로그: game_env KV write seam 부재). 부재 시 0 기준(평상시 refreshLimit
+     * in-memory 반영한다. isunited 영속화와 달리 game_env `refreshLimit` KV flush/load는 별도 갭이다
+     * (LEDGER 백로그: game_env KV write seam 부재). 부재 시 0 기준(평상시 refreshLimit
      * 가 boot 에서 안 실리면 곱셈 결과 0 — PHP 도 NULL*100=0 동치). [getState] meta["refreshLimit"] 즉시 반영.
      */
     fun multiplyRefreshLimit(factor: Int) {

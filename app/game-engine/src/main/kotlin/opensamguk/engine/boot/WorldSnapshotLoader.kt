@@ -1,10 +1,12 @@
 package opensamguk.engine.boot
 
-import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.engine.turn.City
-import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.GeneralAccessLog
+import opensamguk.engine.turn.GeneralItems
+import opensamguk.engine.turn.GeneralRole
+import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
@@ -50,7 +52,7 @@ class WorldSnapshotLoader(
         // Guarantee the seed has run (idempotent) before reading.
         seedBootstrap.ensureSeeded(jdbc)
 
-        val state = loadWorldState().let { loaded ->
+        val loadedState = loadWorldState().let { loaded ->
             val merged = LinkedHashMap(loaded.meta)
             merged.putAll(loadGameEnv())
             val snapshotKeys = listOf(
@@ -69,6 +71,44 @@ class WorldSnapshotLoader(
             }
             loaded.copy(meta = merged)
         }
+        val activeGame = resolveActiveGame(loadedState.meta)
+        val activeServerId = activeGame?.serverId
+        val serverCount = loadServerCount()
+        val statisticRows = loadStatisticRows()
+        val nationHistory = loadNationHistory()
+        val generalHistory = loadGeneralHistory()
+        val globalLogs = loadGlobalLogs()
+        val activeUniqueAuctionItems = loadActiveUniqueAuctionItems()
+        val storedUniqueItemCounts = loadStoredUniqueItemCounts()
+        val inheritancePoints = loadInheritancePoints()
+        val inheritancePrevious = inheritancePoints.mapValues { (_, values) ->
+            (values["previous"]?.getOrNull(0) as? Number)?.toDouble() ?: 0.0
+        }.filterValues { it != 0.0 }
+        val state = loadedState.copy(
+            serverId = activeServerId,
+            meta = LinkedHashMap(loadedState.meta).apply {
+                if (activeGame != null) {
+                    for ((key, value) in activeGame.env) putIfAbsent(key, value)
+                    this["serverId"] = activeGame.serverId
+                    this["server_id"] = activeGame.serverId
+                    this["ngGameId"] = activeGame.id
+                    this["season"] = activeGame.season
+                    this["scenario"] = activeGame.scenario
+                    this["scenario_text"] = activeGame.scenarioName
+                    this["scenarioName"] = activeGame.scenarioName
+                    activeGame.map?.let { this["map_theme"] = it }
+                }
+                this["serverCount"] = serverCount
+                this["statisticRows"] = statisticRows
+                this["nationHistory"] = nationHistory
+                this["generalHistory"] = generalHistory
+                this["globalLogs"] = globalLogs
+                this["activeUniqueAuctionItems"] = activeUniqueAuctionItems
+                this["storedUniqueItemCounts"] = storedUniqueItemCounts
+                this["inheritancePoints"] = inheritancePoints
+                this["inheritancePrevious"] = inheritancePrevious
+            },
+        )
         val nationEnv = loadNationEnv()
         val nations = loadNations().map { nation ->
             val env = nationEnv[nation.id] ?: return@map nation
@@ -83,18 +123,21 @@ class WorldSnapshotLoader(
         val generals = loadGenerals(state)
         val diplomacy = loadDiplomacy()
         val accessLogs = loadAccessLogs()
+        val archivedNationIds = loadArchivedNationIds(activeServerId)
         log.info(
-            "WorldSnapshot loaded — generals={} cities={} nations={} diplomacy={} accessLogs={} troops=0",
-            generals.size, cities.size, nations.size, diplomacy.size, accessLogs.size,
+            "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops=0",
+            generals.size, cities.size, nations.size, archivedNationIds.size, diplomacy.size, accessLogs.size,
         )
         return WorldSnapshot(
             state = state,
+            serverId = activeServerId,
             generals = generals,
             cities = cities,
             nations = nations,
             troops = emptyList(),
             diplomacy = diplomacy,
             accessLogs = accessLogs,
+            archivedNationIds = archivedNationIds,
         )
     }
 
@@ -150,6 +193,129 @@ class WorldSnapshotLoader(
         )
     }
 
+    private fun resolveActiveGame(meta: Map<String, Any?>): ActiveGame? {
+        val configured = listOf(meta["serverId"], meta["server_id"])
+            .mapNotNull { it?.toString()?.takeIf(String::isNotBlank) }
+            .firstOrNull()
+        if (configured != null) {
+            return jdbc.query(
+                """
+                SELECT id, server_id, season, scenario, scenario_name, map, CAST(env AS VARCHAR) AS env
+                  FROM ng_games
+                 WHERE server_id = ?
+                """.trimIndent(),
+                { rs, _ -> activeGame(rs) },
+                configured,
+            ).singleOrNull()
+                ?: error("world_state.meta serverId '$configured' does not exist in ng_games")
+        }
+
+        val rows = jdbc.query(
+            """
+            SELECT id, server_id, season, scenario, scenario_name, map, CAST(env AS VARCHAR) AS env
+              FROM ng_games
+             ORDER BY id ASC
+            """.trimIndent(),
+        ) { rs, _ -> activeGame(rs) }
+        return when (rows.size) {
+            0 -> null
+            1 -> rows.single()
+            else -> error("active serverId is missing from world_state.meta; refusing to infer it from newest ng_games row")
+        }
+    }
+
+    private fun loadArchivedNationIds(serverId: String?): List<Int> {
+        if (serverId == null) return emptyList()
+        return jdbc.query(
+            "SELECT nation FROM ng_old_nations WHERE server_id = ? ORDER BY nation ASC",
+            { rs, _ -> rs.getInt("nation") },
+            serverId,
+        )
+    }
+
+    private fun loadServerCount(): Int =
+        jdbc.queryForObject("SELECT count(*) FROM ng_games", Int::class.java) ?: 0
+
+    private fun loadStatisticRows(): List<Map<String, Any?>> = jdbc.query(
+        """
+        SELECT id, nation_count, nation_name, nation_hist, gen_count,
+               personal_hist, special_hist, CAST(aux AS VARCHAR) AS aux
+          FROM statistic
+         ORDER BY id ASC
+        """.trimIndent(),
+    ) { rs, _ ->
+        linkedMapOf(
+            "id" to rs.getInt("id"),
+            "nation_count" to rs.getInt("nation_count"),
+            "nation_name" to rs.getString("nation_name"),
+            "nation_hist" to rs.getString("nation_hist"),
+            "gen_count" to rs.getString("gen_count"),
+            "personal_hist" to rs.getString("personal_hist"),
+            "special_hist" to rs.getString("special_hist"),
+            "aux" to (rs.getString("aux") ?: "{}"),
+        )
+    }
+
+    private fun loadNationHistory(): Map<Int, List<String>> {
+        val result = LinkedHashMap<Int, MutableList<String>>()
+        jdbc.query(
+            """
+            SELECT nation_id, text
+              FROM log_entry
+             WHERE scope = 'NATION' AND category = 'HISTORY' AND nation_id IS NOT NULL
+             ORDER BY nation_id ASC, id DESC
+            """.trimIndent(),
+        ) { rs ->
+            result.getOrPut(rs.getInt("nation_id")) { mutableListOf() }.add(rs.getString("text"))
+        }
+        return result
+    }
+
+    private fun loadGeneralHistory(): Map<Int, List<String>> {
+        val result = LinkedHashMap<Int, MutableList<String>>()
+        jdbc.query(
+            """
+            SELECT general_id, text
+              FROM log_entry
+             WHERE scope = 'GENERAL' AND category = 'HISTORY' AND general_id IS NOT NULL
+             ORDER BY general_id ASC, id DESC
+            """.trimIndent(),
+        ) { rs ->
+            result.getOrPut(rs.getInt("general_id")) { mutableListOf() }.add(rs.getString("text"))
+        }
+        return result
+    }
+
+    private fun loadGlobalLogs(): List<Map<String, Any?>> = jdbc.query(
+        """
+        SELECT category, year, month, text
+          FROM log_entry
+         WHERE scope = 'SYSTEM' AND category IN ('HISTORY', 'ACTION')
+         ORDER BY id DESC
+        """.trimIndent(),
+    ) { rs, _ ->
+        linkedMapOf(
+            "category" to rs.getString("category"),
+            "year" to rs.getInt("year"),
+            "month" to rs.getInt("month"),
+            "text" to rs.getString("text"),
+        )
+    }
+
+    private fun loadActiveUniqueAuctionItems(): List<String> = jdbc.query(
+        "SELECT target FROM ng_auction WHERE type = 'uniqueItem' AND finished = false ORDER BY id ASC",
+    ) { rs, _ -> rs.getString("target") }
+
+    private fun loadStoredUniqueItemCounts(): Map<String, Int> {
+        val counts = LinkedHashMap<String, Int>()
+        jdbc.query(
+            "SELECT namespace, count(*) AS cnt FROM game_kv WHERE left(namespace, 3) = 'ut_' GROUP BY namespace ORDER BY namespace ASC",
+        ) { rs ->
+            counts[rs.getString("namespace").removePrefix("ut_")] = rs.getInt("cnt")
+        }
+        return counts
+    }
+
     private fun loadGameEnv(): Map<String, Any?> = linkedMapOf<String, Any?>().apply {
         jdbc.query(
             """SELECT key, CAST(value AS VARCHAR) AS value_json FROM game_kv WHERE "table" = 'game_env' AND namespace IN ('', 'game_env') ORDER BY id ASC""",
@@ -163,6 +329,25 @@ class WorldSnapshotLoader(
         jdbc.query("SELECT namespace, key, CAST(value AS VARCHAR) AS value_json FROM nation_env ORDER BY id ASC") { rs ->
             result.getOrPut(rs.getInt("namespace")) { LinkedHashMap() }[rs.getString("key")] =
                 decodeKvValue(rs.getString("value_json"))
+        }
+        return result
+    }
+
+    private fun loadInheritancePoints(): Map<Int, Map<String, List<Any?>>> {
+        val result = LinkedHashMap<Int, LinkedHashMap<String, List<Any?>>>()
+        jdbc.query(
+            """
+            SELECT namespace, key, CAST(value AS VARCHAR) AS value_json
+              FROM game_kv
+             WHERE "table" = 'inheritance'
+               AND namespace LIKE 'inheritance_%'
+             ORDER BY id ASC
+            """.trimIndent(),
+        ) { rs ->
+            val ownerId = rs.getString("namespace").removePrefix("inheritance_").toIntOrNull()
+                ?: return@query
+            val decoded = decodeKvValue(rs.getString("value_json")) as? List<*> ?: return@query
+            result.getOrPut(ownerId) { LinkedHashMap() }[rs.getString("key")] = decoded.toList()
         }
         return result
     }
@@ -215,21 +400,43 @@ class WorldSnapshotLoader(
         // killturn 누락 legacy 행 보정용 시작 연/월 — 시드 시점(startYear, 월1) 기준.
         val seedStartYear = (state.meta["startYear"] as? Number)?.toInt() ?: state.currentYear
         val seedStartMonth = 1
+        val rankValues = loadRankValues()
         return jdbc.query(
         """
-        SELECT id, name, nation_id, city_id, troop_id, npc_state,
+        SELECT id, name, nation_id, city_id, troop_id, npc_state, affinity,
                leadership, strength, intel, politics, charm, experience, dedication, officer_level,
                injury, gold, rice, crew, crew_type_id, train, atmos, age,
-               turn_time, recent_war_time, user_id, dead_year, penalty, meta
+               weapon_code, book_code, horse_code, item_code,
+               turn_time, recent_war_time, user_id, born_year, dead_year, picture, image_server,
+               start_age, personal_code, special_code, special2_code, officer_city,
+               last_turn, penalty, meta
           FROM general ORDER BY id ASC
         """.trimIndent(),
         ) { rs, _ ->
+            val npcState = rs.getInt("npc_state")
             val generalMeta = ScenarioLifecycleMeta.ensureGeneralMeta(
                 MetaJson.decode(rs.getString("meta")),
                 deadYear = rs.getInt("dead_year"),
                 startYear = seedStartYear,
                 startMonth = seedStartMonth,
+                convertLegacyNpcKillturn = npcState >= 2,
             ).toMutableMap()
+            generalMeta.putIfAbsent("born_year", rs.getInt("born_year"))
+            generalMeta.putIfAbsent("bornyear", rs.getInt("born_year"))
+            generalMeta.putIfAbsent("dead_year", rs.getInt("dead_year"))
+            generalMeta["deadyear"] = rs.getInt("dead_year")
+            nullableInt(rs, "affinity")?.let { generalMeta.putIfAbsent("affinity", it) }
+            generalMeta.putIfAbsent("picture", rs.getString("picture") ?: "default.jpg")
+            generalMeta.putIfAbsent("image_server", rs.getInt("image_server"))
+            generalMeta.putIfAbsent("imgsvr", rs.getInt("image_server"))
+            generalMeta.putIfAbsent("start_age", rs.getInt("start_age"))
+            generalMeta.putIfAbsent("startage", rs.getInt("start_age"))
+            generalMeta.putIfAbsent("personal_code", rs.getString("personal_code") ?: "None")
+            generalMeta.putIfAbsent("special_code", rs.getString("special_code") ?: "None")
+            generalMeta.putIfAbsent("special2_code", rs.getString("special2_code") ?: "None")
+            generalMeta.putIfAbsent("officer_city", rs.getInt("officer_city"))
+            generalMeta["last_turn"] = MetaJson.decode(rs.getString("last_turn"))
+            generalMeta.putAll(rankValues[rs.getInt("id")].orEmpty())
             generalMeta["penalty"] = MetaJson.decode(rs.getString("penalty"))
             TurnGeneral(
                 id = rs.getInt("id"),
@@ -247,6 +454,17 @@ class WorldSnapshotLoader(
                 experience = rs.getInt("experience"),
                 dedication = rs.getInt("dedication"),
                 officerLevel = rs.getInt("officer_level"),
+                role = GeneralRole(
+                    personality = rs.getString("personal_code") ?: "None",
+                    specialDomestic = rs.getString("special_code") ?: "None",
+                    specialWar = rs.getString("special2_code") ?: "None",
+                    items = GeneralItems(
+                        horse = rs.getString("horse_code") ?: "None",
+                        weapon = rs.getString("weapon_code") ?: "None",
+                        book = rs.getString("book_code") ?: "None",
+                        item = rs.getString("item_code") ?: "None",
+                    ),
+                ),
                 injury = rs.getInt("injury"),
                 gold = rs.getInt("gold"),
                 rice = rs.getInt("rice"),
@@ -256,7 +474,7 @@ class WorldSnapshotLoader(
                 train = rs.getInt("train"),
                 atmos = rs.getInt("atmos"),
                 age = rs.getInt("age"),
-                npcState = rs.getInt("npc_state"),
+                npcState = npcState,
                 turnTime = rs.getObject("turn_time", OffsetDateTime::class.java).toInstant(),
                 recentWarTime = rs.getObject("recent_war_time", OffsetDateTime::class.java)?.toInstant(),
                 // user_id(소유 유저) — 미적재 시 rehydrate 후 PlaceBet 누적한도/유산 분기가 무음 발산(P0-07 채점 F1).
@@ -264,6 +482,14 @@ class WorldSnapshotLoader(
                 meta = generalMeta,
             )
         }
+    }
+
+    private fun loadRankValues(): Map<Int, Map<String, Int>> {
+        val result = LinkedHashMap<Int, LinkedHashMap<String, Int>>()
+        jdbc.query("SELECT general_id, type, value FROM rank_data ORDER BY general_id, id") { rs ->
+            result.getOrPut(rs.getInt("general_id")) { LinkedHashMap() }[rs.getString("type")] = rs.getInt("value")
+        }
+        return result
     }
 
     private fun loadDiplomacy(): List<TurnDiplomacy> = jdbc.query(
@@ -300,4 +526,24 @@ class WorldSnapshotLoader(
         val v = rs.getInt(col)
         return if (rs.wasNull()) null else v
     }
+
+    private fun activeGame(rs: ResultSet): ActiveGame = ActiveGame(
+        id = rs.getInt("id"),
+        serverId = rs.getString("server_id"),
+        season = rs.getInt("season"),
+        scenario = rs.getInt("scenario"),
+        scenarioName = rs.getString("scenario_name"),
+        map = rs.getString("map"),
+        env = MetaJson.decode(rs.getString("env") ?: "{}"),
+    )
+
+    private data class ActiveGame(
+        val id: Int,
+        val serverId: String,
+        val season: Int,
+        val scenario: Int,
+        val scenarioName: String,
+        val map: String?,
+        val env: Map<String, Any?>,
+    )
 }

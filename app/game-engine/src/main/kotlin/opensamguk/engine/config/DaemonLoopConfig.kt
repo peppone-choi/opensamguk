@@ -9,6 +9,7 @@ import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.run.MonthlyPreUpdateHook
 import opensamguk.engine.run.MonthlyPostUpdateHook
 import opensamguk.engine.run.TurnRunService
+import opensamguk.engine.run.LiveRemainNationEnv
 import opensamguk.engine.tournament.ProductionTournamentBettingPort
 import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.AiTurnAdapter
@@ -45,6 +46,7 @@ import opensamguk.logic.util.numberFormat
 import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
+import opensamguk.logic.event.EventTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.tick.CheckStatistic
@@ -221,9 +223,21 @@ class DaemonLoopConfig {
             messageIdAllocator = { ++nextMessageId },
             auctionIdAllocator = { ++nextAuctionId },
             kvWriteObserver = world::applyKvDirtyFree,
+            initialInheritancePoints = state.meta["inheritancePoints"] as? Map<*, *> ?: emptyMap<Any?, Any?>(),
         )
         eventStore.bindMutationSink(recorder::recordEventMutation)
         val rulerSuccession = RulerSuccessionHandler(world, recorder, hiddenSeed)
+
+        val mapName = state.meta["map"] as? String ?: "che"
+        val worldContextFactory = WorldEventContextFactory.create(
+            world = world,
+            recorder = recorder,
+            pipeline = generalActionPipeline,
+            hiddenSeed = hiddenSeed,
+            startYear = startYear,
+            mapName = mapName,
+            eventStore = eventStore,
+        )
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
@@ -240,6 +254,25 @@ class DaemonLoopConfig {
             recorder = recorder,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
+            dynamicEventHandler = { target: EventTarget ->
+                eventDispatcher.run(
+                    target = target,
+                    contextFactory = worldContextFactory,
+                    envSupplier = {
+                        val live = world.getState()
+                        val eventEnv = LinkedHashMap(live.meta).apply {
+                            this["year"] = live.currentYear
+                            this["month"] = live.currentMonth
+                            this["phase"] = live.currentPhase
+                            this["startyear"] = startYear
+                            this["startYear"] = startYear
+                            this["develcost"] = EffectiveGameConst.develcost(live.currentYear, startYear)
+                            this["develCost"] = EffectiveGameConst.develcost(live.currentYear, startYear)
+                        }
+                        LiveRemainNationEnv(eventEnv) { world.listNations().size }
+                    },
+                )
+            },
         )
 
         // The nation pass writes through the SAME recorder the handler owns — the lone dirty source the
@@ -288,7 +321,7 @@ class DaemonLoopConfig {
                     generals = generals,
                     nations = nations,
                     cities = cities,
-                    nationTypeNameOf = { type -> type.removePrefix("che_") },
+                    nationTypeNameOf = { type -> if (type == GameConst.neutralNationType || type == "None") "-" else type.removePrefix("che_") },
                     personalityNameOf = { p -> GameConst.personalityNameOf(p.toString()) },
                     specialDomesticNameOf = { s -> opensamguk.logic.world.SpecialityHelper.domesticName(s) },
                     specialWarNameOf = { s -> opensamguk.logic.world.SpecialityHelper.warName(s) },
@@ -304,6 +337,8 @@ class DaemonLoopConfig {
                 handler.recorder,
                 generalActionPipeline,
                 auctionRepository = auctionRepository,
+                auctionBidRepository = auctionBidRepository,
+                eventDispatcher = eventDispatcher,
             ),
         )
 
@@ -359,20 +394,6 @@ class DaemonLoopConfig {
                 reservedTurnRepository.pullGeneralTurn(generalId)
             },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(generalId, 0) },
-        )
-
-        // 월간 world-event 디스패치 컨텍스트 팩토리 — UpdateCitySupply 등 cast-ctx leaf에 WorldActionContext를
-        // 공급하고 RaiseDisaster/특기/유산 등 env-read leaf의 world-view/hiddenSeed/startYear/cityConst/
-        // eventStore 키를 심는다. 이게 없으면 월경계 정산이 크래시(cast)하거나 무음 no-op(env-read)한다.
-        val mapName = state.meta["map"] as? String ?: "che"
-        val worldContextFactory = WorldEventContextFactory.create(
-            world = world,
-            recorder = handler.recorder,
-            pipeline = generalActionPipeline,
-            hiddenSeed = hiddenSeed,
-            startYear = startYear,
-            mapName = mapName,
-            eventStore = eventStore,
         )
 
         return TurnRunService(

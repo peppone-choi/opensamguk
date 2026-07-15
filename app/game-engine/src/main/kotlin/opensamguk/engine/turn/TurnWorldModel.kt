@@ -161,6 +161,7 @@ data class TurnWorldState(
     val meta: Map<String, Any?> = emptyMap(),
     val status: String = "OPEN",
     val config: Map<String, Any?> = emptyMap(),
+    val serverId: String? = null,
 )
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"

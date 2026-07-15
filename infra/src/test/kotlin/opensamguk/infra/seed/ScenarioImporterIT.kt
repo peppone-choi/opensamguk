@@ -2,6 +2,7 @@ package opensamguk.infra.seed
 
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.jdbc.core.JdbcTemplate
@@ -9,17 +10,17 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.nio.charset.StandardCharsets
+import java.time.OffsetDateTime
 import javax.sql.DataSource
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.Assumptions.assumeTrue
 
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the seed counts (`world_state`=1, `nation`=2, `city`=94[소유24+공백지70], `general`=678,
+ * Asserts the seed counts (`world_state`=1, `nation`=2, `city`=94[소유24+공백지70], `general`=229,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -64,14 +65,22 @@ class ScenarioImporterIT {
         // Truncate all seeded tables so each @Test starts from an empty world (idempotency depends on
         // world_state emptiness, asserted per-test).
         jdbc.execute(
-            "TRUNCATE world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games, event RESTART IDENTITY CASCADE",
+            "TRUNCATE world_state, nation, city, general, general_turn, nation_turn, diplomacy, rank_data, ng_games, event, game_kv RESTART IDENTITY CASCADE",
         )
     }
 
-    private fun newImporter(): ScenarioImporter {
+    private fun newImporter(
+        showImageLevel: Int = 3,
+        extendedGeneral: Boolean = true,
+    ): ScenarioImporter {
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
         val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
-        return ScenarioImporter(scenario = scenario, cities = cities)
+        return ScenarioImporter(
+            scenario = scenario,
+            cities = cities,
+            showImageLevel = showImageLevel,
+            extendedGeneral = extendedGeneral,
+        )
     }
 
     // 빼섭(2번째 서버)용 scenario_1030 군웅할거. cities는 che 풀맵 공용(맵 바운드, 시나리오 무관).
@@ -94,22 +103,63 @@ class ScenarioImporterIT {
         val counts = newImporter().importAll(jdbc)
 
         assertEquals(1, counts.worldState)
+        assertTrue(counts.gameEnv > 0)
         assertEquals(2, counts.nation)
         // che 풀맵 94도시 = 소유 24(후한 14 + 황건적 10) + 공백지 70(nation_id=0).
         assertEquals(94, counts.city)
-        assertEquals(678, counts.general)
-        assertEquals(678 * 30, counts.generalTurn)
-        assertEquals(678 * 37, counts.rankData)
+        assertEquals(229, counts.general)
+        assertEquals(229 * 30, counts.generalTurn)
+        assertEquals(229 * 37, counts.rankData)
         assertEquals(1, counts.ngGames)
         assertEquals(counts.event, count("event"))
         assertTrue(counts.event > 1, "1010 stores defaults plus the scenario event")
         assertEquals("pre_month", jdbc.queryForObject("SELECT target_code FROM event ORDER BY id ASC LIMIT 1", String::class.java))
         assertEquals(
-            "destroy_nation",
+            "Month",
             jdbc.queryForObject("SELECT target_code FROM event ORDER BY id DESC LIMIT 1", String::class.java),
         )
+        assertEquals(
+            77,
+            jdbc.queryForObject("SELECT count(*) FROM event WHERE action::text LIKE '%RegNPC%'", Int::class.java),
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general WHERE born_year + 14 > 181 OR dead_year <= 181",
+                Int::class.java,
+            ),
+        )
+        val firstDeferred = jdbc.queryForMap(
+            """
+            SELECT condition::text condition,
+                   action::text action,
+                   jsonb_array_length(action) AS action_count,
+                   action -> (jsonb_array_length(action) - 1) ->> 0 AS last_action
+              FROM event
+             WHERE action::text LIKE '%소제1%'
+            """.trimIndent(),
+        )
+        assertTrue(sso(firstDeferred["condition"]).contains("182"))
+        assertTrue(sso(firstDeferred["action"]).endsWith("[\"DeleteEvent\"]]"))
+        assertTrue(soi(firstDeferred["action_count"]) > 2, "same adult-year generals are grouped in one event")
+        assertEquals("DeleteEvent", sso(firstDeferred["last_action"]))
 
         assertEquals(1, count("world_state"))
+        assertEquals(counts.gameEnv, jdbc.queryForObject("SELECT count(*) FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env'", Int::class.java))
+        assertEquals(
+            "30000",
+            jdbc.queryForObject(
+                "SELECT value::text FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env' AND key = 'refreshLimit'",
+                String::class.java,
+            ),
+        )
+        assertEquals(
+            "0",
+            jdbc.queryForObject(
+                "SELECT value::text FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env' AND key = 'fiction'",
+                String::class.java,
+            ),
+        )
         assertEquals(2, count("nation"))
         assertEquals(94, count("city"))
         // 공백지 70(nation_id=0).
@@ -127,9 +177,9 @@ class ScenarioImporterIT {
         val ly = jdbc.queryForMap("SELECT pop, trust FROM city WHERE name = '낙양'")
         assertEquals(584990, (ly["pop"] as Number).toInt())
         assertEquals(80.0, (ly["trust"] as Number).toDouble())
-        assertEquals(678, count("general"))
-        assertEquals(678 * 30, count("general_turn"))
-        assertEquals(678 * 37, count("rank_data"))
+        assertEquals(229, count("general"))
+        assertEquals(229 * 30, count("general_turn"))
+        assertEquals(229 * 37, count("rank_data"))
         assertEquals(1, count("ng_games"))
 
         // diplomacy: 2 nations → 2 ordered neutral pairs (no JSON overrides in 1010).
@@ -149,14 +199,148 @@ class ScenarioImporterIT {
             Boolean::class.java,
         )
         assertTrue(every30 == true, "every general has exactly 30 general_turn rows")
+        assertEquals(
+            0,
+            jdbc.queryForObject("SELECT count(*) FROM general WHERE picture ~ '^[0-9]+$'", Int::class.java),
+            "numeric scenario picture ids require stored icon resolution and otherwise fall back to default.jpg",
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """
+                SELECT count(*) FROM general
+                 WHERE age = 14
+                   AND ((nation_id = 0 AND officer_level <> 0) OR (nation_id <> 0 AND officer_level <> 1))
+                """.trimIndent(),
+                Int::class.java,
+            ),
+            "age-14 generals use PHP new-general officer normalization",
+        )
+        assertTrue(
+            jdbc.queryForObject(
+                """
+                SELECT count(*) > 0 FROM general
+                 WHERE (meta ->> 'killturn')::integer <>
+                       ((dead_year - 181) * 12 * 3)
+                """.trimIndent(),
+                Boolean::class.java,
+            ) == true,
+            "seeded generals carry PHP killturn jitter, not the zero-jitter baseline",
+        )
+        assertTrue(
+            jdbc.queryForObject("SELECT count(DISTINCT turn_time) > 1 FROM general", Boolean::class.java) == true,
+            "seeded turn_time uses PHP getRandTurn jitter per general",
+        )
+        assertTrue(
+            jdbc.queryForObject("SELECT count(DISTINCT city_id) > 3 FROM general", Boolean::class.java) == true,
+            "active generals persist PHP city choice results instead of collapsing to capitals/default city",
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general WHERE affinity IS NULL OR (affinity NOT BETWEEN 1 AND 150 AND affinity <> 999)",
+                Int::class.java,
+            ),
+            "InitScenario affinity RNG results are persisted, including PHP's 900+ to 999 normalization",
+        )
+        assertEquals(
+            999,
+            jdbc.queryForObject("SELECT affinity FROM general WHERE name = 'ⓝ우길'", Int::class.java),
+            "scenario affinity 900+ normalizes to PHP sentinel 999",
+        )
+        val halfAwaySpec = jdbc.queryForMap(
+            """
+            SELECT (meta ->> 'specage')::int AS specage,
+                   (meta ->> 'specage2')::int AS specage2
+              FROM general
+             WHERE name = 'ⓝ우길'
+            """.trimIndent(),
+        )
+        assertEquals(53, soi(halfAwaySpec["specage"]), "seed specage uses PHP half-away rounding")
+        assertEquals(55, soi(halfAwaySpec["specage2"]), "seed specage2 uses PHP half-away rounding")
+        val seedMeta = jdbc.queryForMap(
+            """
+            SELECT (meta ->> 'npc_org')::int AS npc_org,
+                   (meta ->> 'dedlevel')::int AS dedlevel,
+                   (meta ->> 'specage')::int AS specage,
+                   (meta ->> 'specage2')::int AS specage2
+              FROM general
+             WHERE name = 'ⓝ간옹'
+            """.trimIndent(),
+        )
+        assertEquals(2, soi(seedMeta["npc_org"]), "active scenario general meta carries PHP npc_org")
+        assertEquals(1, soi(seedMeta["dedlevel"]), "active scenario general meta carries PHP dedlevel seed")
+        assertEquals(22, soi(seedMeta["specage"]), "active scenario general meta carries PHP specage")
+        assertEquals(28, soi(seedMeta["specage2"]), "active scenario general meta carries PHP specage2")
+        assertEquals(
+            0,
+            jdbc.queryForObject("SELECT count(*) FROM general WHERE nation_id <> 0 AND officer_level NOT IN (1, 12)", Int::class.java),
+            "PHP normalizes seeded officer_level=0 to 1 while preserving explicit rulers",
+        )
+        assertEquals(12, jdbc.queryForObject("SELECT officer_level FROM general WHERE name = 'ⓝ장각'", Int::class.java))
+        assertEquals(12, jdbc.queryForObject("SELECT officer_level FROM general WHERE name = 'ⓝ하진'", Int::class.java))
+        assertEquals(
+            0,
+            jdbc.queryForObject("SELECT count(*) FROM general WHERE personal_code = 'None'", Int::class.java),
+            "InitScenario ego RNG results are consumed and persisted",
+        )
+        assertTrue(
+            jdbc.queryForObject("SELECT count(*) > 0 FROM general WHERE meta ? 'npcmsg'", Boolean::class.java) == true,
+            "fresh seed preserves scenario npcmsg in general meta",
+        )
 
-        // STAT MAPPING (parity): 소제1 = [..., leadership 20, strength 11, intel 48].
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """
+                SELECT count(*) FROM general
+                 WHERE (npc_state = 2 AND name NOT LIKE 'ⓝ%')
+                    OR (npc_state = 6 AND name NOT LIKE 'ⓤ%')
+                """.trimIndent(),
+                Int::class.java,
+            ),
+            "active scenario NPC names mirror GeneralBuilder prefixList",
+        )
+        assertEquals(
+            20,
+            jdbc.queryForObject("SELECT min(start_age) FROM general", Int::class.java),
+            "PHP GeneralBuilder omits startage so schema default 20 is used",
+        )
+        assertEquals(20, jdbc.queryForObject("SELECT max(start_age) FROM general", Int::class.java))
+
+        val domestic = jdbc.queryForMap(
+            """
+            SELECT special_code, special2_code, meta ->> 'special' AS meta_special,
+                   meta ->> 'special2' AS meta_special2, meta ->> 'start_age' AS meta_start_age
+              FROM general
+             WHERE name = 'ⓝ간옹'
+            """.trimIndent(),
+        )
+        assertEquals("che_경작", sso(domestic["special_code"]))
+        assertEquals("None", sso(domestic["special2_code"]))
+        assertEquals("che_경작", sso(domestic["meta_special"]))
+        assertEquals("None", sso(domestic["meta_special2"]))
+        assertEquals("20", sso(domestic["meta_start_age"]))
+
+        val war = jdbc.queryForMap(
+            """
+            SELECT special_code, special2_code, meta ->> 'special' AS meta_special,
+                   meta ->> 'special2' AS meta_special2
+              FROM general
+             WHERE name = 'ⓝ노식'
+            """.trimIndent(),
+        )
+        assertEquals("None", sso(war["special_code"]))
+        assertEquals("che_징병", sso(war["special2_code"]))
+        assertEquals("None", sso(war["meta_special"]))
+        assertEquals("che_징병", sso(war["meta_special2"]))
+
         val so = jdbc.queryForMap("SELECT name, leadership, strength, intel, nation_id FROM general WHERE id = 1001")
-        assertEquals("소제1", sso(so["name"]))
-        assertEquals(20, soi(so["leadership"]))
-        assertEquals(11, soi(so["strength"]))
-        assertEquals(48, soi(so["intel"]))
-        assertEquals(1, soi(so["nation_id"]))
+        assertEquals("ⓝ우길", sso(so["name"]))
+        assertEquals(17, soi(so["leadership"]))
+        assertEquals(13, soi(so["strength"]))
+        assertEquals(83, soi(so["intel"]))
+        assertEquals(0, soi(so["nation_id"]))
 
         // City x100 scaling + level/region int map: 낙양 (id 3) pop_max 835700, level 8 (특), region 2 (중원).
         val nak = jdbc.queryForMap("SELECT name, level, region, pop_max, nation_id FROM city WHERE id = 3")
@@ -188,14 +372,280 @@ class ScenarioImporterIT {
         val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(meta.contains("hiddenSeed"), "meta has hiddenSeed: $meta")
         assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
+        assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
+        assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
         assertTrue(meta.contains("\"map\": \"che\"") || meta.contains("\"map\":\"che\""), "meta has map=che: $meta")
 
         // world_state.config carries entrance-gating values used by ServerBasicInfoController/FrontInfoController.
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(config.contains("\"npcmode\""), "config has npcmode: $config")
         assertTrue(config.contains("\"block_general_create\""), "config has block_general_create: $config")
+        assertTrue(config.contains("\"show_img_level\""), "config has show_img_level: $config")
+        assertTrue(config.contains("\"extended_general\""), "config has extended_general: $config")
+        assertTrue(config.contains("\"refreshLimit\""), "config has refreshLimit: $config")
+        assertTrue(config.contains("\"fiction\""), "config has fiction: $config")
         assertTrue(config.contains("\"map\""), "config has map block: $config")
         assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
+        assertEquals(
+            "30000",
+            jdbc.queryForObject("SELECT env ->> 'refreshLimit' FROM ng_games", String::class.java),
+        )
+        assertEquals("0", jdbc.queryForObject("SELECT env ->> 'fiction' FROM ng_games", String::class.java))
+    }
+
+    @Test
+    fun `importAll excludes general_ex when extended_general is disabled`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
+        val extendedName = scenario.generalEx.first().name
+        val cities = ScenarioJson.loadMapCities(readResource("map/che.json"))
+        val counts = ScenarioImporter(
+            scenario = scenario,
+            cities = cities,
+            extendedGeneral = false,
+        ).importAll(jdbc)
+
+        assertTrue(counts.general < 229, "disabled extended_general seeds fewer active generals")
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE name = ?", Int::class.java, extendedName))
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """
+                SELECT count(*)
+                  FROM event
+                  CROSS JOIN LATERAL jsonb_array_elements(action) action_row
+                 WHERE action_row ->> 0 = 'RegNPC'
+                   AND action_row ->> 2 = ?
+                """.trimIndent(),
+                Int::class.java,
+                extendedName,
+            ),
+        )
+        val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
+        assertTrue(config.contains("\"extended_general\": false") || config.contains("\"extended_general\":false"))
+    }
+
+    @Test
+    fun `extended_general false still consumes InitScenario rng for general_ex before active build draws`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val baseline = scenarioWithExtendedGeneral(
+            extendedAffinity = 1,
+            extendedEgo = "유지",
+        )
+        ScenarioImporter(
+            scenario = baseline,
+            cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+            scenarioCode = "scenario_rng_explicit",
+            scenarioNumber = 9001,
+            extendedGeneral = false,
+            installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+        ).importAll(jdbc)
+        val explicitTurnTime = jdbc.queryForObject(
+            "SELECT turn_time::text FROM general WHERE name = 'ⓝActiveBase'",
+            String::class.java,
+        )
+
+        cleanRows()
+
+        val consuming = scenarioWithExtendedGeneral(
+            extendedAffinity = 0,
+            extendedEgo = null,
+        )
+        ScenarioImporter(
+            scenario = consuming,
+            cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+            scenarioCode = "scenario_rng_consuming",
+            scenarioNumber = 9002,
+            extendedGeneral = false,
+            installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+        ).importAll(jdbc)
+        val consumingTurnTime = jdbc.queryForObject(
+            "SELECT turn_time::text FROM general WHERE name = 'ⓝActiveBase'",
+            String::class.java,
+        )
+
+        assertTrue(
+            explicitTurnTime != consumingTurnTime,
+            "PHP Scenario::initFull consumes general_ex affinity/ego RNG before build even when extended_general=false",
+        )
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE name = 'ExtendedOnly'", Int::class.java))
+    }
+
+    @Test
+    fun `deferred NPC events preserve PHP raw tuples and neutral action names`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "deferred",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [[0, "UnderBase", null, 0, null, 10, 11, 12, 0, 190, 260, null, "che_event_신산", "base text"]],
+              "general_ex": [[0, "UnderEx", null, 0, null, 20, 21, 22, 0, 190, 260, null, "che_event_신산", "ex text"]],
+              "general_neutral": [[0, "UnderNeutral", null, 0, null, 30, 31, 32, 0, 190, 260, null, "che_event_신산", "neutral text"]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+        ScenarioImporter(
+            scenario = scenario,
+            cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+            scenarioCode = "scenario_deferred",
+            scenarioNumber = 9003,
+            extendedGeneral = false,
+            installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
+        ).importAll(jdbc)
+
+        val event = jdbc.queryForMap(
+            """
+            SELECT jsonb_array_length(action) AS action_count,
+                   action #>> '{0,0}' AS first_action,
+                   action #>> '{0,1}' AS first_raw_affinity,
+                   action #>> '{0,2}' AS first_name,
+                   action #>> '{0,14}' AS first_text,
+                   action #>> '{1,0}' AS second_action,
+                   action #>> '{1,2}' AS second_name,
+                   action #>> '{1,14}' AS second_text,
+                   action #>> '{2,0}' AS last_action
+              FROM event
+             WHERE priority = 1000
+            """.trimIndent(),
+        )
+
+        assertEquals(3, soi(event["action_count"]))
+        assertEquals("RegNPC", event["first_action"])
+        assertEquals("0", event["first_raw_affinity"])
+        assertEquals("UnderBase", event["first_name"])
+        assertEquals("base text", event["first_text"])
+        assertEquals("RegNeutralNPC", event["second_action"])
+        assertEquals("UnderNeutral", event["second_name"])
+        assertEquals("neutral text", event["second_text"])
+        assertEquals("DeleteEvent", event["last_action"])
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                """
+                SELECT count(*)
+                  FROM event
+                  CROSS JOIN LATERAL jsonb_array_elements(action) action_row
+                 WHERE action_row ->> 2 = 'UnderEx'
+                """.trimIndent(),
+                Int::class.java,
+            ),
+            "extended_general=false excludes general_ex from deferred event creation",
+        )
+    }
+
+    @Test
+    fun `importAll mirrors GeneralBuilder picture city officer and affinity edge branches`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "edge",
+              "startYear": 200,
+              "iconPath": "custom",
+              "stored_icons": {
+                ".": {"1001": "numeric.png"},
+                "custom": {"Named": "named.png", "Other": "other.png", "2": "file.png"}
+              },
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [["세력", "#112233", 0, 0, "", 0, "유가", 1, ["낙양"]]],
+              "general": [
+                [0, "DrawAffinity", "1001", 1, "성도", 10, 11, 12, 0, 180, 260, "유지", null],
+                [999, "Named", null, 0, "강주", 20, 21, 22, 0, 180, 260, "안전", null],
+                [150, "File", "file.png", 0, null, 30, 31, 32, 0, 180, 260, "은둔", null],
+                [-5, "NegativeAffinity", "-1", 0, null, 40, 41, 42, 0, 180, 260, "재간", null]
+              ],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+        val counts = ScenarioImporter(
+            scenario = scenario,
+            cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+            scenarioCode = "scenario_edge",
+            scenarioNumber = 9999,
+        ).importAll(jdbc)
+
+        assertEquals(4, counts.general)
+
+        val drawAffinity = jdbc.queryForMap("SELECT city_id, affinity, picture, officer_level FROM general WHERE name = 'ⓝDrawAffinity'")
+        assertEquals(
+            jdbc.queryForObject("SELECT id FROM city WHERE name = '성도'", Int::class.java),
+            soi(drawAffinity["city_id"]),
+            "explicit locatedCity is persisted without consuming/replacing the city choice",
+        )
+        assertTrue(soi(drawAffinity["affinity"]) in 1..150, "affinity <1 consumes PHP RNG into 1..150")
+        assertEquals("numeric.png", sso(drawAffinity["picture"]))
+        assertEquals(1, soi(drawAffinity["officer_level"]), "officer_level=0 normalizes to 1 for faction generals")
+
+        val named = jdbc.queryForMap("SELECT city_id, affinity, picture, officer_level FROM general WHERE name = 'ⓝNamed'")
+        assertEquals(jdbc.queryForObject("SELECT id FROM city WHERE name = '강주'", Int::class.java), soi(named["city_id"]))
+        assertEquals(999, soi(named["affinity"]))
+        assertEquals("custom/named.png", sso(named["picture"]))
+        assertEquals(0, soi(named["officer_level"]), "neutral officer_level=0 remains 0")
+
+        val file = jdbc.queryForMap("SELECT affinity, picture FROM general WHERE name = 'ⓝFile'")
+        assertEquals(150, soi(file["affinity"]))
+        assertEquals("custom/file.png", sso(file["picture"]))
+
+        val negative = jdbc.queryForMap("SELECT affinity, picture FROM general WHERE name = 'ⓝNegativeAffinity'")
+        assertTrue(soi(negative["affinity"]) in 1..150, "negative affinity consumes PHP RNG into 1..150")
+        assertEquals("default.jpg", sso(negative["picture"]))
+    }
+
+    private fun scenarioWithExtendedGeneral(extendedAffinity: Int, extendedEgo: String?): Scenario =
+        ScenarioJson.loadScenario(
+            """
+            {
+              "title": "rng",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [[1, "ActiveBase", null, 0, null, 10, 11, 12, 0, 180, 260, "유지", null]],
+              "general_ex": [[$extendedAffinity, "ExtendedOnly", null, 0, null, 20, 21, 22, 0, 180, 260, ${extendedEgo?.let { "\"$it\"" } ?: "null"}, null]],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+    @Test
+    fun `importAll rejects invalid GeneralBuilder affinity gap`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "invalid",
+              "startYear": 200,
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [[151, "BadAffinity", null, 0, null, 10, 11, 12, 0, 180, 260, "유지", null]],
+              "general_ex": [],
+              "diplomacy": []
+            }
+            """.trimIndent(),
+        )
+
+        kotlin.test.assertFailsWith<IllegalArgumentException> {
+            ScenarioImporter(
+                scenario = scenario,
+                cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
+                scenarioCode = "scenario_invalid",
+                scenarioNumber = 9998,
+            ).importAll(jdbc)
+        }
     }
 
     @Test
@@ -208,7 +658,7 @@ class ScenarioImporterIT {
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
         assertEquals(94, counts.city)              // che 풀맵 94도시(소유+공백지) — 맵 공용
-        assertTrue(counts.general > 400, "generals seeded: ${counts.general}")
+        assertEquals(327, counts.general)
         assertEquals(counts.general * 30, counts.generalTurn)
         assertEquals(counts.general * 37, counts.rankData)
         assertEquals(1, counts.ngGames)

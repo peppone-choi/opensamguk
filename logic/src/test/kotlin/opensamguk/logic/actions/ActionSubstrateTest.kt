@@ -242,8 +242,7 @@ class ActionSubstrateTest {
         // addLog: MONTH prefix per ActionLogger.php:250 — <C>●</>{month}월:{body}
         assertEquals(listOf("<C>●</>3월:본인행동"), c.logs())
 
-        // addLogTo: a per-target scope keyed by targetGeneralId, two lines bucketed under 2
-        assertEquals(listOf("대상행동", "대상행동2"), c.logsTo(2))
+        assertEquals(listOf("<C>●</>3월:대상행동", "<C>●</>3월:대상행동2"), c.logsTo(2))
         assertTrue(c.logsTo(3).isEmpty())
 
         // addGlobalActionLog: MONTH-format but a separate global bucket

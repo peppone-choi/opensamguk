@@ -58,3 +58,13 @@ was found in the asserted surface** — every asserted fact matched the PHP orac
 
 The capture harness (`capture_monthtick.php`) drives the REAL tick — re-running it with a larger
 `--months` regenerates a faithful, larger oracle with no code changes.
+
+## Ambient native-shuffle PLAN-MISS (2026-07-14)
+
+These are not `RandUtil` draws and therefore are absent from `monthlyRngDraws` and
+`RandUtilDrawRecorder`. `capture_ambient_shuffle_quarantine.php` pins PHP's native global
+MT19937 only to prove reproducibility and prefix-draw sensitivity; that controlled seed is not
+present in the real game path and must not be promoted to a turn golden.
+
+- RaiseNPCNation::Util::shuffle_assoc — native shuffle() uses an automatically seeded process-global RNG; devsam-core never calls mt_srand/srand, and neither the seed nor pre-call cursor is present in game state or RandUtilDrawRecorder.
+- triggerTournament::shuffle — native shuffle() is outside the monthly RandUtil; its automatically seeded process-global seed and pre-call cursor are not persisted or captured, so the selected type cannot be replayed byte-identically from the monthly seed.

@@ -13,6 +13,8 @@ import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.GeneralBuilder
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * AREA GATE-RUNTIME — Tier-0 B1 [GeneralBuilder] PHP-골든 draw-for-draw 바이트 게이트.
@@ -86,6 +88,7 @@ class GeneralBuilderGoldenTest {
                         .setNPCText("")
                         .setAffinity(77)
                         .setLifeSpan(year - 40, year + 40)
+                        .setKillturn(0)
                     builder.fillRemainSpecAsZero(year, startYear)
                 }
                 "C" -> {
@@ -154,6 +157,90 @@ class GeneralBuilderGoldenTest {
             }
         }
     }
+
+    @Test
+    fun `setAffinity mirrors PHP random preserve sentinel and reject branches`() {
+        val recorder = JoinDrawRecorder(LiteHashDrbg(expectedSeed("A")))
+        val randomBuilder = GeneralBuilder(recorder, "상성", 0).setAffinity(0)
+        assertEquals(
+            listOf(JoinDrawRecorder.Draw(0, "nextRangeInt", "138", 1, 0)),
+            recorder.drawStream(),
+            "setAffinity(0) must match the captured PHP draw exactly",
+        )
+        val randomAffinity = randomBuilder
+            .setCityID(1)
+            .setStat(70, 60, 50)
+            .setEgo("che_유지")
+            .setLifeSpan(year - 20, year + 40)
+            .fillRemainSpecAsZero(year, startYear)
+            .build(year, month, turnterm, cityPool)
+            ?.affinity
+        assertEquals(138, randomAffinity)
+
+        assertEquals(1, buildWithAffinity(1).affinity)
+        assertEquals(150, buildWithAffinity(150).affinity)
+        assertEquals(999, buildWithAffinity(900).affinity)
+        assertEquals(999, buildWithAffinity(999).affinity)
+
+        assertFailsWith<IllegalArgumentException> { baseBuilder().setAffinity(151) }
+        assertFailsWith<IllegalArgumentException> { baseBuilder().setAffinity(899) }
+    }
+
+    @Test
+    fun `adult callback follows PHP build position before city turntime and killturn draws without new golden values`() {
+        val recorder = JoinDrawRecorder(LiteHashDrbg(serializeSeed(hiddenSeed, "AdultCallbackOrder")))
+        var callbackName: String? = null
+        var callbackDrawMethods: List<String>? = null
+
+        val built = GeneralBuilder(recorder, "성인", 1)
+            .setStat(70, 60, 50)
+            .setOfficerLevel(3)
+            .setEgo("che_유지")
+            .setSpecialSingle("")
+            .setAffinity(42)
+            .setLifeSpan(year - 14, year + 20)
+            .fillRemainSpecAsZero(year, startYear)
+            .build(
+                year,
+                month,
+                turnterm,
+                cityPool,
+                isFictionMode = true,
+                onAdultGeneral = { adultName ->
+                    callbackName = adultName
+                    callbackDrawMethods = recorder.drawStream().map { it.method }
+                },
+            )
+            ?: error("adult callback order fixture should build a general")
+
+        assertEquals("ⓝ성인", callbackName)
+        assertEquals(
+            emptyList(),
+            callbackDrawMethods,
+            "PHP GeneralBuilder.php:596-600 emits adult global action before picture/city/turntime/killturn work",
+        )
+        assertEquals(
+            listOf("choice", "nextRangeInt", "nextRangeInt", "nextRangeInt"),
+            recorder.drawStream().map { it.method },
+            "post-callback draw shape is city choice, getRandTurn seconds, getRandTurn fraction, killturn",
+        )
+        assertEquals(0, built.nation, "env fiction truthy + newly adult general forces neutral nation")
+        assertEquals(0, built.officerLevel, "newly adult fiction-neutral general receives neutral officer level")
+    }
+
+    private fun buildWithAffinity(affinity: Int): opensamguk.logic.world.BuiltGeneral =
+        baseBuilder()
+            .setAffinity(affinity)
+            .fillRemainSpecAsZero(year, startYear)
+            .build(year, month, turnterm, cityPool)
+            ?: error("affinity branch fixture should build an adult active general")
+
+    private fun baseBuilder(): GeneralBuilder =
+        GeneralBuilder(JoinDrawRecorder(LiteHashDrbg(serializeSeed(hiddenSeed, "AffinityBranch"))), "상성", 0)
+            .setCityID(1)
+            .setStat(70, 60, 50)
+            .setEgo("che_유지")
+            .setLifeSpan(year - 20, year + 40)
 
     private fun dexOf(b: opensamguk.logic.world.BuiltGeneral, n: Int) = when (n) {
         1 -> b.dex1; 2 -> b.dex2; 3 -> b.dex3; 4 -> b.dex4; else -> b.dex5

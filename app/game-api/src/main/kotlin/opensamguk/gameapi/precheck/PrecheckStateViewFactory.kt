@@ -24,9 +24,9 @@ import org.springframework.stereotype.Component
  * `startYear` lives in the scenario `config` jsonb bag (`config["startYear"]`); `develCost` is then
  * derived per-turn inside the builder (`EffectiveGameConst.develcost`).
  *
- * Only the actor general's own city/nation are loaded into the view — the precheck slice evaluates
- * the SAME constraint set the daemon does, and those constraints reference only the actor + its
- * city/nation (OccupiedCity/SuppliedCity/RemainCityCapacity/NotWanderingNation/ReqGeneralGold).
+     * The view materializes the actor's current city/nation. The env also carries every city level owned
+     * by that nation because recruit constraints evaluate nation-wide unit unlocks in both precheck and
+     * daemon full mode.
  */
 @Component
 class PrecheckStateViewFactory(
@@ -56,6 +56,7 @@ class PrecheckStateViewFactory(
 
         val cityById = LinkedHashMap<Int, City>()
         cities.findById(actor.cityId).orElse(null)?.toLogic()?.let { cityById[it.id] = it }
+        val ownCities = cities.findByNationIdOrderByIdAsc(actor.nationId).map { it.toLogic() }
 
         val nationById = LinkedHashMap<Int, Nation>()
         nations.findById(actor.nationId).orElse(null)?.toLogic()?.let { nationById[it.id] = it }
@@ -63,7 +64,9 @@ class PrecheckStateViewFactory(
         val diplomacy: List<Diplomacy> =
             diplomacies.findBySrcNationId(actor.nationId).map { it.toLogic() }
 
-        val env = envMap()
+        val env = LinkedHashMap(envMap()).apply {
+            this["ownCities"] = ownCities.associateTo(LinkedHashMap()) { it.id to it.level }
+        }
         // CD1 — preload the actor nation's directional diplomacy rows into the view so the dest-*
         // constraint family (AllowDiplomacyStatus / battleground at-war existence) resolves
         // RequirementKey.Diplomacy WITHOUT touching the DB inside test().

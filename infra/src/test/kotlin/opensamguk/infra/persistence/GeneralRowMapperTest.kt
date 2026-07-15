@@ -162,6 +162,24 @@ class GeneralRowMapperTest {
     }
 
     @Test
+    fun `dedicated jsonb columns are not duplicated into meta`() {
+        val g = GeneralRowMapper.fromRow(
+            row(
+                """{"explevel":3,"last_turn":{"command":"stale"},"penalty":{"NoChief":false}}""",
+                lastTurn = """{"command":"che_이동","arg":{"destCityID":12}}""",
+            ).toMutableMap().also {
+                it["penalty"] = """{"NoChief":true}"""
+            },
+        )
+
+        val cols = GeneralRowMapper.toColumns(g)
+
+        assertEquals("""{"command":"che_이동","arg":{"destCityID":12}}""", cols["last_turn"])
+        assertEquals("""{"NoChief":true}""", cols["penalty"])
+        assertEquals("""{"explevel":3}""", cols["meta"])
+    }
+
+    @Test
     fun `null equip codes materialize as the None sentinel`() {
         val r = row("{}").toMutableMap()
         r["horse_code"] = null

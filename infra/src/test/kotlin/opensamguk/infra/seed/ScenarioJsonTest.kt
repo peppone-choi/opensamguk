@@ -86,6 +86,63 @@ class ScenarioJsonTest {
     }
 
     @Test
+    fun `scenario general_neutral keeps npc type nation name resolution and raw tuple`() {
+        val json = """
+            {
+              "title": "neutral",
+              "startYear": 180,
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [["후한", "#fff", 0, 0, "", 0, "유가", 1, ["낙양"]]],
+              "general": [[1,"소속",null,"후한",null,51,52,53,0,150,210,null,null]],
+              "general_ex": [],
+              "general_neutral": [[0,"재야",null,"후한",null,61,62,63,0,170,230,null,null,"대사",71,72]],
+              "diplomacy": []
+            }
+        """.trimIndent()
+
+        val scenario = ScenarioJson.loadScenario(json)
+
+        assertEquals(2, scenario.generals.size)
+        assertEquals(1, scenario.baseGenerals.single().nationId)
+        assertEquals(1, scenario.generalNeutral.single().nationId)
+        assertEquals(6, scenario.generalNeutral.single().npcType)
+        assertEquals(16, scenario.generalNeutral.single().rawTuple.size)
+        assertEquals("대사", scenario.generalNeutral.single().rawTuple[13])
+        assertEquals(71, scenario.generalNeutral.single().politics)
+        assertEquals(72, scenario.generalNeutral.single().charm)
+    }
+
+    @Test
+    fun `scenario icon environment preserves iconPath and stored_icons`() {
+        val json = """
+            {
+              "title": "icons",
+              "startYear": 180,
+              "iconPath": "custom",
+              "stored_icons": {
+                ".": {"1001": "numeric.png"},
+                "custom": {"장수A": "named.png"}
+              },
+              "map": {"mapName": "che"},
+              "const": {},
+              "nation": [],
+              "general": [],
+              "general_ex": [],
+              "diplomacy": []
+            }
+        """.trimIndent()
+
+        val scenario = ScenarioJson.loadScenario(json)
+
+        assertEquals("custom", scenario.iconPath)
+        val dotIcons = scenario.storedIcons["."] as Map<*, *>
+        val customIcons = scenario.storedIcons["custom"] as Map<*, *>
+        assertEquals("numeric.png", dotIcons["1001"])
+        assertEquals("named.png", customIcons["장수A"])
+    }
+
+    @Test
     fun `map_miniche_b city data keeps its own city stats`() {
         val cities = ScenarioJson.loadMapCities(readResource("map/miniche_b.json"))
 

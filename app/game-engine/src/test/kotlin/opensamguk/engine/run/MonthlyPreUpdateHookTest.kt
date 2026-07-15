@@ -6,10 +6,12 @@ import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.KvKey
+import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.infra.persistence.MetaJson
 import java.io.File
 import java.time.Instant
 import kotlin.test.Test
@@ -58,20 +60,108 @@ class MonthlyPreUpdateHookTest {
         // Given
         val world = world()
         val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+        world.pushLog(LogEntryDraft("global", "history", "이번 틱 첫 정세", year = 200, month = 4))
+        world.pushLog(LogEntryDraft("system", "history", "이번 틱 최근 정세", year = 200, month = 4))
+        world.pushLog(LogEntryDraft("global", "action", "이번 틱 활동", year = 200, month = 4))
 
         // When
         MonthlyPreUpdateHook(world, recorder, profileName = "s1").run()
 
         // Then
         val history = recorder.yearbookInserts().single().columns
-        assertEquals("s1", history["profile_name"])
+        assertEquals("s1", history["server_id"])
         assertEquals(200, history["year"])
         assertEquals(4, history["month"])
-        assertTrue((history["map"] as String).contains("\"year\":200"))
-        assertTrue((history["nations"] as String).contains("\"name\":\"후한\""))
-        assertEquals("[]", history["global_history"])
-        assertEquals("[]", history["global_action"])
-        assertFalse((history["hash"] as String).isBlank())
+        val map = MetaJson.decode(history["map"] as String)
+        assertEquals(
+            setOf("startYear", "year", "month", "cityList", "nationList", "spyList", "shownByGeneralList", "myCity", "myNation", "version", "result"),
+            map.keys,
+        )
+        val nations = MetaJson.decode("""{"rows":${history["nations"]}}""")["rows"] as List<*>
+        val nationRows = nations.map { it as Map<*, *> }
+        assertEquals(listOf(1, 0), nationRows.map { (it["nation"] as Number).toInt() })
+        assertEquals("후한", nationRows.first()["name"])
+        assertEquals(listOf("낙양"), nationRows.first()["cities"])
+        assertEquals("재야", nationRows.last()["name"])
+        assertEquals(
+            listOf("이번 틱 최근 정세", "이번 틱 첫 정세", "기존 정세"),
+            MetaJson.decode("""{"rows":${history["global_history"]}}""")["rows"],
+        )
+        assertEquals(
+            listOf("이번 틱 활동", "기존 활동"),
+            MetaJson.decode("""{"rows":${history["global_action"]}}""")["rows"],
+        )
+        assertFalse(history.containsKey("profile_name"))
+        assertFalse(history.containsKey("hash"))
+    }
+
+    @Test
+    fun `월간 연감 국가 power 동률은 PHP stable sort로 입력 순서를 보존한다`() {
+        val base = world()
+        val first = base.getNationById(1)!!
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = base.getState(),
+                generals = base.listGenerals(),
+                cities = base.listCities(),
+                nations = listOf(first, Nation(id = 2, name = "동률국", color = "#00c", power = first.power)),
+                accessLogs = base.listAccessLogs(),
+            ),
+        )
+        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+
+        MonthlyPreUpdateHook(world, recorder, profileName = "s1").run()
+
+        val rows = MetaJson.decode("""{"rows":${recorder.yearbookInserts().single().columns["nations"]}}""")["rows"] as List<*>
+        assertEquals(listOf(1, 2, 0), rows.map { ((it as Map<*, *>)["nation"] as Number).toInt() })
+    }
+
+    @Test
+    fun `월간 연감 server_id는 profile 이름보다 active ng_games identity를 우선한다`() {
+        val base = world()
+        val state = base.getState().copy(meta = base.getState().meta + ("serverId" to "current-server"))
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = state,
+                serverId = "current-server",
+                generals = base.listGenerals(),
+                cities = base.listCities(),
+                nations = base.listNations(),
+                accessLogs = base.listAccessLogs(),
+            ),
+        )
+        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+
+        MonthlyPreUpdateHook(world, recorder, profileName = "profile-s1").run()
+
+        assertEquals("current-server", recorder.yearbookInserts().single().columns["server_id"])
+    }
+
+    @Test
+    fun `월간 연감의 빈 전역 로그는 PHP 기록 없음 행을 보존한다`() {
+        val base = world()
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = base.getState().copy(meta = base.getState().meta - "globalLogs"),
+                generals = base.listGenerals(),
+                cities = base.listCities(),
+                nations = base.listNations(),
+                accessLogs = base.listAccessLogs(),
+            ),
+        )
+        val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
+
+        MonthlyPreUpdateHook(world, recorder, profileName = "s1").run()
+
+        val yearbook = recorder.yearbookInserts().single().columns
+        assertEquals(
+            listOf("<C>●</>200년 4월: 기록 없음"),
+            MetaJson.decode("""{"rows":${yearbook["global_history"]}}""")["rows"],
+        )
+        assertEquals(
+            listOf("<C>●</>4월: 기록 없음"),
+            MetaJson.decode("""{"rows":${yearbook["global_action"]}}""")["rows"],
+        )
     }
 
     @Test
@@ -142,6 +232,10 @@ class MonthlyPreUpdateHookTest {
                 meta = linkedMapOf(
                     "startYear" to 184,
                     "map" to linkedMapOf("mapName" to "che"),
+                    "globalLogs" to listOf(
+                        linkedMapOf("category" to "history", "year" to 200, "month" to 4, "text" to "기존 정세"),
+                        linkedMapOf("category" to "action", "year" to 200, "month" to 4, "text" to "기존 활동"),
+                    ),
                 ),
             ),
             generals = listOf(

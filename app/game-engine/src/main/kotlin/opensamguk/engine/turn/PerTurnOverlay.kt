@@ -1,6 +1,7 @@
 package opensamguk.engine.turn
 
 import opensamguk.logic.domain.metaDouble
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.Diplomacy as LogicDiplomacy
 import opensamguk.logic.domain.General as LogicGeneral
@@ -99,6 +100,7 @@ class PerTurnOverlay(private val world: InMemoryTurnWorld) {
             officerCity = (g.meta["officer_city"] as? Number)?.toInt() ?: 0,
             userId = g.userId,
             penalty = (g.meta["penalty"] as? Map<String, Any?>) ?: linkedMapOf(),
+            lastTurn = LastTurn.fromRaw(g.meta["last_turn"] as? Map<String, Any?>),
             meta = g.meta,
             politics = g.stats.politics,
             charm = g.stats.charm,

@@ -3,6 +3,8 @@
 Date: 2026-06-27
 Status: draft
 
+> 2026-07-14 후속: 인증 후 실플레이로 3D 지도·이동 명령·24칸 큐·일괄등록·프리셋·전투 replay를 재검증했고, v2의 기본 surface를 3D로 확정했다. 최신 역기획은 `docs/superpowers/research/2026-07-14-samnet-live-play-reverse-design.md`를 따른다.
+
 ## 입력 소스
 
 - `https://www.samnet.kr/`: 현재 공개 화면 관측. 첫 화면에서 `218년 11월 하순`, 2D 지도 토글, 황건적 토벌, 최근 정세 로그가 노출된다.

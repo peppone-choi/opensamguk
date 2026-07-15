@@ -76,7 +76,7 @@ object WorldEventContextFactory {
             env[LightActionWorld.ENV_KEY] = wctx          // "lightActionWorld"
             env[InvaderEndingContext.ENV_KEY] = wctx      // "invaderEndingWorld" — InvaderEnding leaf(침략자 종료) 시임
             // 도달성 정직성: InvaderEnding 은 RaiseInvader(침략자 START 이벤트, isunited=1 셋) 가 켜져야만 발화한다.
-            // RaiseInvader/RaiseNPCNation start-event 배선 + 트리거 조건은 엔진에 아직 없음 → InvaderEnding 은
+            // RaiseInvader start-event 배선 + 트리거 조건은 엔진에 아직 없음 → InvaderEnding 은
             // live 에서 LATENT(dispatched-no-op 시임만 본 wheel 에서 닫음). 침략자-이벤트 family 배선은
             // 별도 백로그 이니셔티브(P3 "9 leaves" 밖). 본 wheel 범위 아님(다른 가설).
             wctx

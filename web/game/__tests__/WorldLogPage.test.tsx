@@ -66,23 +66,24 @@ describe('WorldLogPage', () => {
   it('refetches world logs when a turn completes', async () => {
     mocks.worldLog
       .mockResolvedValueOnce({
-        entries: [{ id: 1, year: 187, month: 1, phase: 1, phaseText: '상순', text: '첫 기록' }],
+        entries: [{ id: 1, year: 187, month: 1, phase: 1, phaseText: '상순', text: '<C>●</>187년 1월:첫 기록' }],
       })
       .mockResolvedValueOnce({
-        entries: [{ id: 2, year: 187, month: 1, phase: 2, phaseText: '중순', text: '새 기록' }],
+        entries: [{ id: 2, year: 187, month: 1, phase: 2, phaseText: '중순', text: '<C>●</>187년 1월:새 기록' }],
       });
 
     render(<WorldLogPage />);
 
-    await waitFor(() => expect(screen.getByText('첫 기록')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/첫 기록/)).toBeInTheDocument());
     expect(eventSources).toHaveLength(1);
 
     await act(async () => {
       eventSources[0].emit('turnCompleted');
     });
 
-    await waitFor(() => expect(screen.getByText('새 기록')).toBeInTheDocument());
-    expect(screen.getByText('187년 1월 중순')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/새 기록/)).toBeInTheDocument());
+    expect(screen.queryByText('187년 1월 중순')).not.toBeInTheDocument();
+    expect(screen.getByText('●187년 1월:새 기록')).toBeInTheDocument();
     expect(mocks.worldLog).toHaveBeenCalledTimes(2);
   });
 });

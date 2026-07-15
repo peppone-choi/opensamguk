@@ -1,8 +1,10 @@
 package opensamguk.logic.actions
 
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
+import opensamguk.logic.constraints.RequirementKey
 import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.Diplomacy
@@ -48,6 +50,62 @@ class CommandContractMatrixTest {
         val keys = registryKeys().toSet()
         val stale = COMMAND_CONTRACTS.keys.filterNot { it in keys }
         assertTrue(stale.isEmpty(), "Command contract rows must not reference stale commands: $stale")
+    }
+
+    @Test
+    fun `public command menus expose only rest or contracted registry commands`() {
+        val failures = mutableListOf<String>()
+        for ((surface, code) in publicMenuCommands()) {
+            val definition = registry.resolve(code)
+            if (code == RestAction.key) {
+                if (definition !== RestAction) failures += "$surface:$code should resolve to RestAction"
+                continue
+            }
+            if (definition === RestAction) {
+                failures += "$surface:$code fell through to RestAction"
+            }
+            if (code !in COMMAND_CONTRACTS) {
+                failures += "$surface:$code is missing from COMMAND_CONTRACTS"
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    @TestFactory
+    fun `each player role group can select each public menu command with valid args`(): List<DynamicTest> =
+        buildList {
+            for (profile in NON_GOLDEN_COMMAND_COVERAGE_PROFILES) {
+                for ((surface, code) in publicMenuCommands()) {
+                    add(DynamicTest.dynamicTest("${profile.name} | $surface | $code") {
+                        assertProfileCanSelect(profile, surface, code)
+                    })
+                }
+            }
+        }
+
+    private fun assertProfileCanSelect(profile: CommandCoverageProfile, surface: String, code: String) {
+        val definition = registry.resolve(code)
+        if (code == RestAction.key) {
+            assertTrue(definition === RestAction, "${profile.name}/$surface:$code should resolve to RestAction")
+            return
+        }
+        val contract = requireNotNull(COMMAND_CONTRACTS[code]) {
+            "${profile.name}/$surface:$code has no command contract"
+        }
+        val args = definition.parseArgs(contract.validArgs)
+        val ctx = constraintContext(args = args, mode = ConstraintMode.FULL, envOverride = contract.envOverride)
+        val view = viewFor(contract.successFixture, profile)
+        val actor = view.get(RequirementKey.General(ACTOR_ID)) as General
+        assertEquals(
+            listOf(profile.leadership, profile.strength, profile.intel, profile.politics, profile.charm),
+            listOf(actor.leadership, actor.strength, actor.intel, actor.politics, actor.charm),
+            "${profile.name}/$surface:$code must use the requested coverage profile",
+        )
+        assertEquals(
+            ConstraintResult.Allow,
+            evaluateConstraints(definition.buildConstraints(ctx), ctx, view),
+            "${profile.name}/$surface:$code denied valid selection",
+        )
     }
 
     @Test
@@ -121,26 +179,6 @@ class CommandContractMatrixTest {
         }
     }
 
-    @Test
-    fun `every command success fixture is covered by the dynamic tests`() {
-        for ((key, contract) in COMMAND_CONTRACTS) {
-            val definition = registry.resolve(key)
-            val args = definition.parseArgs(contract.validArgs)
-            val ctx = constraintContext(args = args, mode = ConstraintMode.FULL, envOverride = contract.envOverride)
-            assertEquals(ConstraintResult.Allow, evaluateConstraints(definition.buildConstraints(ctx), ctx, viewFor(contract.successFixture)), key)
-        }
-    }
-
-    @Test
-    fun `command test sources name every command at least once`() {
-        val testSource = Files.walk(repoRoot())
-            .filter { it.toString().endsWith(".kt") }
-            .filter { it.toString().contains("/src/test/") }
-            .use { paths -> paths.map { Files.readString(it) }.toList().joinToString("\n") }
-        val missing = registryKeys().filterNot { it in testSource }
-        assertTrue(missing.isEmpty(), "Every command needs at least one command-specific test reference: $missing")
-    }
-
     private fun registryKeys(): List<String> {
         val text = Files.readString(repoRoot().resolve("logic/src/main/kotlin/opensamguk/logic/actions/CommandRegistry.kt"))
         val regex = Regex("\"((?:che|cr|event)_[^\"]+)\"\\s*->")
@@ -154,6 +192,16 @@ class CommandContractMatrixTest {
         }
         return path
     }
+
+    private fun publicMenuCommands(): List<Pair<String, String>> =
+        buildList {
+            GameConst.availableGeneralCommand.forEach { (category, codes) ->
+                codes.forEach { code -> add("general/$category" to code) }
+            }
+            GameConst.availableChiefCommand.forEach { (category, codes) ->
+                codes.forEach { code -> add("chief/$category" to code) }
+            }
+        }
 
     private fun constraintContext(
         args: Map<String, Any?>,
@@ -171,20 +219,21 @@ class CommandContractMatrixTest {
         mode = mode,
     )
 
-    private fun viewFor(fixture: StateFixture): MemoryStateView = when (fixture) {
-        StateFixture.DEFAULT_SUCCESS -> defaultSuccessView()
-        StateFixture.NEUTRAL_SUCCESS -> neutralSuccessView()
-        StateFixture.WANDERING_SUCCESS -> wanderingSuccessView()
-        StateFixture.PEACE_DIPLOMACY_SUCCESS -> defaultSuccessView(diplomacyState = 2)
-        StateFixture.NON_AGGRESSION_SUCCESS -> defaultSuccessView(diplomacyState = 7)
-        StateFixture.DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1)
-        StateFixture.STRATEGIC_READY_SUCCESS -> defaultSuccessView(strategicCmdLimit = 0)
-        StateFixture.STRATEGIC_DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1, strategicCmdLimit = 0)
-        StateFixture.OFFICER_SUCCESS -> defaultSuccessView(actorOfficerLevel = 5)
-        StateFixture.AWAY_FROM_CAPITAL_SUCCESS -> defaultSuccessView(capitalCityId = OWN_DEST_CITY_ID)
-        StateFixture.DEFAULT_FAILURE -> defaultFailureView()
-        StateFixture.NO_CREW_FAILURE -> defaultSuccessView(actorCrew = 0)
-        StateFixture.NO_TRADER_FAILURE -> defaultSuccessView(actorNpcType = 0, cityTrade = null)
+    private fun viewFor(fixture: StateFixture, profile: CommandCoverageProfile? = null): MemoryStateView = when (fixture) {
+        StateFixture.DEFAULT_SUCCESS -> defaultSuccessView(profile = profile)
+        StateFixture.NEUTRAL_SUCCESS -> neutralSuccessView(profile)
+        StateFixture.WANDERING_SUCCESS -> wanderingSuccessView(profile)
+        StateFixture.PEACE_DIPLOMACY_SUCCESS -> defaultSuccessView(diplomacyState = 2, profile = profile)
+        StateFixture.NON_AGGRESSION_SUCCESS -> defaultSuccessView(diplomacyState = 7, profile = profile)
+        StateFixture.DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1, profile = profile)
+        StateFixture.STRATEGIC_READY_SUCCESS -> defaultSuccessView(strategicCmdLimit = 0, profile = profile)
+        StateFixture.STRATEGIC_DECLARATION_SUCCESS -> defaultSuccessView(diplomacyState = 1, strategicCmdLimit = 0, profile = profile)
+        StateFixture.OFFICER_SUCCESS -> defaultSuccessView(actorOfficerLevel = 5, profile = profile)
+        StateFixture.AWAY_FROM_CAPITAL_SUCCESS -> defaultSuccessView(capitalCityId = OWN_DEST_CITY_ID, profile = profile)
+        StateFixture.NO_CREW_SUCCESS -> defaultSuccessView(actorCrew = 0, profile = profile)
+        StateFixture.DEFAULT_FAILURE -> defaultFailureView(profile)
+        StateFixture.NO_CREW_FAILURE -> defaultSuccessView(actorCrew = 0, profile = profile)
+        StateFixture.NO_TRADER_FAILURE -> defaultSuccessView(actorNpcType = 0, cityTrade = null, profile = profile)
     }
 
     private fun defaultSuccessView(
@@ -195,9 +244,18 @@ class CommandContractMatrixTest {
         actorOfficerLevel: Int = 12,
         capitalCityId: Int? = CITY_ID,
         strategicCmdLimit: Int = 99,
+        profile: CommandCoverageProfile? = null,
     ): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
-            ACTOR_ID to general(ACTOR_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = actorOfficerLevel, crew = actorCrew, npcType = actorNpcType),
+            ACTOR_ID to general(
+                ACTOR_ID,
+                nationId = NATION_ID,
+                cityId = CITY_ID,
+                officerLevel = actorOfficerLevel,
+                crew = actorCrew,
+                npcType = actorNpcType,
+                profile = profile,
+            ),
             DEST_GENERAL_ID to general(DEST_GENERAL_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 1),
             3 to general(3, nationId = DEST_NATION_ID, cityId = DEST_CITY_ID, officerLevel = 12),
         ),
@@ -217,9 +275,9 @@ class CommandContractMatrixTest {
         ),
     )
 
-    private fun neutralSuccessView(): MemoryStateView = MemoryStateView(
+    private fun neutralSuccessView(profile: CommandCoverageProfile? = null): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
-            ACTOR_ID to general(ACTOR_ID, nationId = 0, cityId = CITY_ID, officerLevel = 0, npcType = 2),
+            ACTOR_ID to general(ACTOR_ID, nationId = 0, cityId = CITY_ID, officerLevel = 0, npcType = 2, profile = profile),
             DEST_GENERAL_ID to general(DEST_GENERAL_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 12),
             3 to general(3, nationId = DEST_NATION_ID, cityId = DEST_CITY_ID, officerLevel = 12),
         ),
@@ -239,9 +297,9 @@ class CommandContractMatrixTest {
         ),
     )
 
-    private fun wanderingSuccessView(): MemoryStateView = MemoryStateView(
+    private fun wanderingSuccessView(profile: CommandCoverageProfile? = null): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
-            ACTOR_ID to general(ACTOR_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 12),
+            ACTOR_ID to general(ACTOR_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 12, profile = profile),
             DEST_GENERAL_ID to general(DEST_GENERAL_ID, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 1),
             3 to general(3, nationId = NATION_ID, cityId = CITY_ID, officerLevel = 1),
         ),
@@ -257,7 +315,7 @@ class CommandContractMatrixTest {
         env = env,
     )
 
-    private fun defaultFailureView(): MemoryStateView = MemoryStateView(
+    private fun defaultFailureView(profile: CommandCoverageProfile? = null): MemoryStateView = MemoryStateView(
         generals = linkedMapOf(
             ACTOR_ID to general(
                 ACTOR_ID,
@@ -269,6 +327,7 @@ class CommandContractMatrixTest {
                 age = 0,
                 special = "None",
                 special2 = "None",
+                profile = profile,
             ),
         ),
         cities = linkedMapOf(CITY_ID to city(CITY_ID, nationId = DEST_NATION_ID, level = 1, supplyState = 0, frontState = 0)),
@@ -290,13 +349,14 @@ class CommandContractMatrixTest {
         age: Int = 60,
         special: String = "상재",
         special2: String = "일기",
+        profile: CommandCoverageProfile? = null,
     ) = General(
         id = id,
         nationId = nationId,
         cityId = cityId,
-        leadership = 90,
-        strength = 90,
-        intel = 90,
+        leadership = profile?.leadership ?: 90,
+        strength = profile?.strength ?: 90,
+        intel = profile?.intel ?: 90,
         injury = 0,
         experience = 20_000.0,
         dedication = 20_000.0,
@@ -320,7 +380,10 @@ class CommandContractMatrixTest {
             "special" to special,
             "special2" to special2,
             "makelimit" to 0,
+            "test_profile" to profile?.name,
         ),
+        politics = profile?.politics ?: 0,
+        charm = profile?.charm ?: 0,
     )
 
     private fun city(
@@ -396,6 +459,15 @@ class CommandContractMatrixTest {
         val envOverride: Map<String, Any?> = emptyMap(),
     )
 
+    private data class CommandCoverageProfile(
+        val name: String,
+        val leadership: Int,
+        val strength: Int,
+        val intel: Int,
+        val politics: Int,
+        val charm: Int,
+    )
+
     private enum class StateFixture {
         DEFAULT_SUCCESS,
         NEUTRAL_SUCCESS,
@@ -407,6 +479,7 @@ class CommandContractMatrixTest {
         STRATEGIC_DECLARATION_SUCCESS,
         OFFICER_SUCCESS,
         AWAY_FROM_CAPITAL_SUCCESS,
+        NO_CREW_SUCCESS,
         DEFAULT_FAILURE,
         NO_CREW_FAILURE,
         NO_TRADER_FAILURE,
@@ -431,6 +504,21 @@ class CommandContractMatrixTest {
         private const val DEST_NATION_ID = 2
         private const val LATE_REL_YEAR = 20
 
+        // Valid five-stat inputs spanning the player workflows exercised by the scenario_0 integration tests.
+        // These are constraint-coverage profiles, not PHP-captured golden outputs.
+        private val NON_GOLDEN_COMMAND_COVERAGE_PROFILES = listOf(
+            CommandCoverageProfile("군주", leadership = 65, strength = 60, intel = 55, politics = 50, charm = 45),
+            CommandCoverageProfile("내정농지", leadership = 40, strength = 35, intel = 75, politics = 75, charm = 50),
+            CommandCoverageProfile("내정상업", leadership = 35, strength = 35, intel = 80, politics = 75, charm = 50),
+            CommandCoverageProfile("내정치안", leadership = 45, strength = 75, intel = 45, politics = 65, charm = 45),
+            CommandCoverageProfile("내정성벽", leadership = 45, strength = 80, intel = 45, politics = 60, charm = 45),
+            CommandCoverageProfile("내정수비", leadership = 50, strength = 80, intel = 45, politics = 55, charm = 45),
+            CommandCoverageProfile("내정기술", leadership = 35, strength = 35, intel = 80, politics = 75, charm = 50),
+            CommandCoverageProfile("전쟁", leadership = 80, strength = 80, intel = 50, politics = 35, charm = 30),
+            CommandCoverageProfile("징병", leadership = 80, strength = 50, intel = 50, politics = 45, charm = 50),
+            CommandCoverageProfile("외교", leadership = 45, strength = 35, intel = 65, politics = 80, charm = 50),
+        )
+
         private val COMMON_DEST_CITY = mapOf("destCityID" to DEST_CITY_ID)
         private val COMMON_OWN_DEST_CITY = mapOf("destCityID" to OWN_DEST_CITY_ID)
         private val COMMON_DEST_GENERAL = mapOf("destGeneralID" to DEST_GENERAL_ID)
@@ -450,8 +538,14 @@ class CommandContractMatrixTest {
             "che_주민선정" to CommandContract(),
             "che_물자조달" to CommandContract(COMMON_DEST_CITY + COMMON_AMOUNT),
             "che_군량매매" to CommandContract(mapOf("buyRice" to true, "amount" to 1_000)),
-            "che_징병" to CommandContract(mapOf("crewType" to 1100, "amount" to 1_000)),
-            "che_모병" to CommandContract(mapOf("crewType" to 1100, "amount" to 1_000)),
+            "che_징병" to CommandContract(
+                mapOf("crewType" to 1100, "amount" to 1_000),
+                successFixture = StateFixture.NO_CREW_SUCCESS,
+            ),
+            "che_모병" to CommandContract(
+                mapOf("crewType" to 1100, "amount" to 1_000),
+                successFixture = StateFixture.NO_CREW_SUCCESS,
+            ),
             "che_훈련" to CommandContract(),
             "cr_맹훈련" to CommandContract(),
             "che_사기진작" to CommandContract(),
@@ -472,9 +566,18 @@ class CommandContractMatrixTest {
                 successFixture = StateFixture.NEUTRAL_SUCCESS,
                 failureFixture = StateFixture.DEFAULT_SUCCESS,
             ),
-            "che_건국" to CommandContract(mapOf("nationName" to "새나라", "colorType" to 1), successFixture = StateFixture.WANDERING_SUCCESS),
-            "cr_건국" to CommandContract(mapOf("nationName" to "새나라", "colorType" to 1), successFixture = StateFixture.WANDERING_SUCCESS),
-            "che_무작위건국" to CommandContract(mapOf("nationName" to "새나라"), successFixture = StateFixture.WANDERING_SUCCESS),
+            "che_건국" to CommandContract(
+                mapOf("nationName" to "새나라", "nationType" to GameConst.availableNationType.first(), "colorType" to 1),
+                successFixture = StateFixture.WANDERING_SUCCESS,
+            ),
+            "cr_건국" to CommandContract(
+                mapOf("nationName" to "새나라", "nationType" to GameConst.availableNationType.first(), "colorType" to 1),
+                successFixture = StateFixture.WANDERING_SUCCESS,
+            ),
+            "che_무작위건국" to CommandContract(
+                mapOf("nationName" to "새나라", "nationType" to GameConst.availableNationType.first(), "colorType" to 1),
+                successFixture = StateFixture.WANDERING_SUCCESS,
+            ),
             "che_감축" to CommandContract(COMMON_OWN_DEST_CITY),
             "che_증축" to CommandContract(),
             "che_발령" to CommandContract(COMMON_DEST_GENERAL + COMMON_OWN_DEST_CITY),

@@ -10,8 +10,12 @@ import opensamguk.logic.constraints.allowJoinAction
 import opensamguk.logic.constraints.allowJoinDestNation
 import opensamguk.logic.constraints.beNeutral
 import opensamguk.logic.constraints.noPenalty
+import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -35,8 +39,17 @@ abstract class JoinCommand(
 
     override val category: String get() = "인사"
 
+    var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
+        private set
+
     /** che_임관 resets `troop`; che_장수대상임관 does NOT (the PHP run() divergence). */
     protected abstract val resetsTroop: Boolean
+
+    /** PHP argTest-normalized payload persisted by setResultTurn for the concrete command. */
+    protected abstract fun lastTurnArg(
+        draft: opensamguk.logic.actions.GeneralActionDraft,
+        destNationId: Int,
+    ): Map<String, Any?>
 
     /**
      * The destination CITY id the general moves to: che_임관 uses the dest LORD's city (the
@@ -49,15 +62,15 @@ abstract class JoinCommand(
         ?: error("JoinCommand requires a destGeneral or destCity to resolve the join city")
 
     override fun resolve(context: GeneralActionResolveContext) {
+        lastUniqueLotteryIntent = null
         val d = context.draft
         val destNation = d.destNation ?: error("JoinCommand requires a destNation")
         val destNationId = destNation.id
         val destNationName = destNation.name
 
-        // 3 logs (PHP run()): general action (MONTH), global action (MONTH global).
-        // pushGeneralHistoryLog is a GATE-RUNTIME history-bucket seam (not modeled by the resolve context).
         context.addLog("<D>$destNationName</>에 임관했습니다. <1>${context.date}</>")
-        val generalName = (d.general.meta["name"] as? String) ?: ""
+        context.addGeneralHistoryLog("<D><b>$destNationName</b></>에 임관")
+        val generalName = context.generalName.ifEmpty { (d.general.meta["name"] as? String) ?: "" }
         val josaYi = JosaUtil.pick(generalName, "이")
         context.addGlobalActionLog("<Y>$generalName</>$josaYi <D><b>$destNationName</b></>에 <S>임관</>했습니다.")
 
@@ -86,7 +99,20 @@ abstract class JoinCommand(
 
         // addExperience(exp) — raw increaseVar (no per-add round; truncated to int only at flush).
         g = g.copy(experience = g.experience + exp)
-        d.general = g
+        val statChange = checkStatChange(
+            g.copy(lastTurn = LastTurn(command = name, arg = lastTurnArg(d, destNationId))),
+        )
+        d.general = statChange.general
+        for (line in statChange.plainLogs) context.addPlainLog(line)
+        StaticEventHandler.handleEvent(d.general, null, key, emptyMap(), context.args)
+        lastUniqueLotteryIntent = GeneralUniqueLotteryIntent(
+            generalId = d.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = lotteryActionName,
+            acquireType = "아이템",
+            afterTail = "setResultTurn>checkStatChange>StaticEventHandler",
+        )
     }
 
     protected fun joinConstraints(npc: (ConstraintContext, opensamguk.logic.constraints.StateView) -> Int):
@@ -124,6 +150,10 @@ class CheImgwan(pipeline: GeneralActionPipeline) : JoinCommand(pipeline) {
     override val name: String get() = "임관"
     override val resetsTroop: Boolean get() = true
     override val argsSchema: Map<String, Any?> get() = linkedMapOf("destNationID" to "int")
+    override fun lastTurnArg(
+        draft: opensamguk.logic.actions.GeneralActionDraft,
+        destNationId: Int,
+    ): Map<String, Any?> = linkedMapOf("destNationID" to destNationId)
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> =
         joinConstraints { c, _ ->
@@ -145,6 +175,12 @@ class CheJangsuDaesangImgwan(pipeline: GeneralActionPipeline) : JoinCommand(pipe
     override val name: String get() = "장수를 따라 임관"
     override val resetsTroop: Boolean get() = false
     override val argsSchema: Map<String, Any?> get() = linkedMapOf("destGeneralID" to "int")
+    override fun lastTurnArg(
+        draft: opensamguk.logic.actions.GeneralActionDraft,
+        destNationId: Int,
+    ): Map<String, Any?> = linkedMapOf(
+        "destGeneralID" to (draft.destGeneral?.id ?: error("che_장수대상임관 requires a destGeneral")),
+    )
 
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> =
         joinConstraints { c, _ -> (c.args["actorNpcType"] as? Number)?.toInt() ?: 2 }

@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.infra.seed.ScenarioJson
+import org.mockito.Mockito
 import org.springframework.jdbc.core.JdbcTemplate
 import java.io.File
 import java.nio.file.Files
@@ -11,10 +12,14 @@ import kotlin.test.assertFalse
 class ScenarioSeedDisabledTest {
 
     @Test
-    fun `disabled seed fence prevents defensive bootstrap from touching the database`() {
+    fun `disabled seed fence checks for an existing world but does not seed an empty database`() {
         val bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", seedEnabled = false)
+        val jdbc = Mockito.mock(JdbcTemplate::class.java)
+        Mockito.`when`(jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java)).thenReturn(0)
 
-        assertFalse(bootstrap.ensureSeeded(JdbcTemplate()))
+        assertFalse(bootstrap.ensureSeeded(jdbc))
+        Mockito.verify(jdbc).queryForObject("SELECT count(*) FROM world_state", Int::class.java)
+        Mockito.verifyNoMoreInteractions(jdbc)
     }
 
     @Test

@@ -23,12 +23,16 @@ import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.GeneralCreateRow
 import opensamguk.infra.persistence.GeneralAccessLogWriteRow
+import opensamguk.infra.persistence.GameWinnerUpdateRow
+import opensamguk.infra.persistence.EmperiorInsertRow
+import opensamguk.infra.persistence.HallUpsertRow
 import opensamguk.infra.persistence.InheritanceLogRow
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.KvWrite
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.MessageInvalidateRow
 import opensamguk.infra.persistence.LogRow
+import opensamguk.infra.persistence.OldGeneralArchiveRow
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
 import opensamguk.infra.persistence.RankWrite
@@ -38,7 +42,11 @@ import opensamguk.infra.persistence.VoteCommentInsertRow
 import opensamguk.infra.persistence.VoteInsertRow
 import opensamguk.infra.persistence.VotePollInsertRow
 import opensamguk.infra.persistence.YearbookInsertRow
-import opensamguk.logic.tick.ServerClock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
 
 /**
  * Flush STUB recording the exact write ORDER of `databaseHooks.ts` `flushChanges`.
@@ -196,8 +204,9 @@ object DatabaseHooks {
         // (the ng_old_nations archive write).
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
             linkedMapOf<String, Any?>(
+                "server_id" to snap.serverId,
                 "nation" to snap.nation.id,
-                "general_ids" to snap.generalIds,
+                "data" to toDeletedNationArchiveData(state, snap, dirty.logs),
             )
         }
 
@@ -220,6 +229,7 @@ object DatabaseHooks {
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ),
+            archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
             updatedNations = updatedNations,
@@ -237,6 +247,7 @@ object DatabaseHooks {
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,
+            oldGeneralSnapshots = emptyList(),
             inheritanceKvWrites = dirty.inheritanceKvWrites,
             inheritanceLogInserts = dirty.inheritanceLogInserts.map {
                 InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag, it.date)
@@ -280,6 +291,174 @@ object DatabaseHooks {
 
     /** Engine [Troop] → infra [TroopRow]. The troop's id IS its `troop_leader` (PK). */
     private fun toTroopRow(t: Troop): TroopRow = TroopRow(troopLeader = t.id, nation = t.nationId, name = t.name)
+
+    private fun toOldGeneralArchiveRow(
+        state: TurnWorldState,
+        general: TurnGeneral,
+        pendingLogs: List<LogEntryDraft>,
+    ): OldGeneralArchiveRow {
+        val meta = general.meta
+        fun mInt(key: String, default: Int = 0): Int = (meta[key] as? Number)?.toInt() ?: default
+        fun mStr(key: String, default: String = ""): String = meta[key]?.toString() ?: default
+        fun jsonValue(key: String): String = when (val value = meta[key]) {
+            is String -> value
+            null -> "{}"
+            else -> MetaJson.encode(value)
+        }
+        val persistedHistory = (state.meta["generalHistory"] as? Map<*, *>)
+            ?.get(general.id) as? List<*>
+        val currentHistory = pendingLogs.asReversed()
+            .filter {
+                it.scope.equals("general", ignoreCase = true) &&
+                    it.category.equals("history", ignoreCase = true) &&
+                    it.generalId == general.id
+            }
+            .map { it.text }
+        val history = currentHistory + persistedHistory.orEmpty().map { it.toString() }
+        val legacyOwner = general.userId?.toIntOrNull() ?: general.userId ?: mInt("owner")
+        val data = linkedMapOf<String, Any?>(
+            "no" to general.id,
+            "owner" to legacyOwner,
+            "npcmsg" to mStr("npcmsg"),
+            "npc" to general.npcState,
+            "npc_org" to mInt("npc_org"),
+            "affinity" to mInt("affinity"),
+            "bornyear" to mInt("bornyear", 180),
+            "deadyear" to mInt("deadyear", 300),
+            "newmsg" to mInt("newmsg"),
+            "picture" to mStr("picture", "default.jpg"),
+            "imgsvr" to mInt("imgsvr"),
+            "name" to general.name,
+            "owner_name" to meta["owner_name"],
+            "nation" to general.nationId,
+            "city" to general.cityId,
+            "troop" to general.troopId,
+            "leadership" to general.stats.leadership,
+            "leadership_exp" to mInt("leadership_exp"),
+            "strength" to general.stats.strength,
+            "strength_exp" to mInt("strength_exp"),
+            "intel" to general.stats.intelligence,
+            "intel_exp" to mInt("intel_exp"),
+            "injury" to general.injury,
+            "experience" to general.experience,
+            "dedication" to general.dedication,
+            "dex1" to mInt("dex1"),
+            "dex2" to mInt("dex2"),
+            "dex3" to mInt("dex3"),
+            "dex4" to mInt("dex4"),
+            "dex5" to mInt("dex5"),
+            "officer_level" to general.officerLevel,
+            "officer_city" to mInt("officer_city"),
+            "permission" to mStr("permission", "normal"),
+            "gold" to general.gold,
+            "rice" to general.rice,
+            "crew" to general.crew,
+            "crewtype" to general.crewTypeId,
+            "train" to general.train,
+            "atmos" to general.atmos,
+            "weapon" to (general.role.items.weapon ?: "None"),
+            "book" to (general.role.items.book ?: "None"),
+            "horse" to (general.role.items.horse ?: "None"),
+            "item" to (general.role.items.item ?: "None"),
+            "turntime" to formatPhpDateTime(general.turnTime),
+            "recent_war" to general.recentWarTime?.let(::formatPhpDateTime),
+            "makelimit" to mInt("makelimit"),
+            "killturn" to meta["killturn"],
+            "block" to mInt("block"),
+            "dedlevel" to mInt("dedlevel"),
+            "explevel" to mInt("explevel"),
+            "age" to general.age,
+            "startage" to mInt("startage", 20),
+            "belong" to mInt("belong", 1),
+            "betray" to mInt("betray"),
+            "personal" to (general.role.personality ?: "None"),
+            "special" to (general.role.specialDomestic ?: "None"),
+            "specage" to mInt("specage"),
+            "special2" to (general.role.specialWar ?: "None"),
+            "specage2" to mInt("specage2"),
+            "defence_train" to mInt("defence_train", 80),
+            "tnmt" to mInt("tnmt", 1),
+            "myset" to mInt("myset", 6),
+            "tournament" to mInt("tournament"),
+            "newvote" to mInt("newvote"),
+            "last_turn" to jsonValue("last_turn"),
+            "aux" to jsonValue("aux"),
+            "penalty" to jsonValue("penalty"),
+            "history" to history,
+        )
+        return OldGeneralArchiveRow(
+            serverId = state.serverId,
+            generalNo = general.id,
+            owner = legacyOwner.toString(),
+            name = general.name,
+            lastYearMonth = state.currentYear * 100 + state.currentMonth,
+            turnTime = general.turnTime,
+            data = data,
+        )
+    }
+
+    private fun toDeletedNationArchiveData(
+        state: TurnWorldState,
+        snapshot: opensamguk.engine.turn.DeletedNationSnapshot,
+        pendingLogs: List<LogEntryDraft>,
+    ): Map<String, Any?> {
+        val nation = snapshot.nation
+        val nationEnv = (nation.meta["nation_env"] as? Map<*, *>)
+            ?.entries
+            ?.associate { (key, value) -> key.toString() to value }
+            ?: emptyMap()
+        val aux = LinkedHashMap<String, Any?>()
+        (nation.meta["aux"] as? Map<*, *>)?.forEach { (key, value) -> aux[key.toString()] = value }
+        (nationEnv["max_power"] as? Map<*, *>)?.forEach { (key, value) ->
+            val textKey = key.toString()
+            if (!aux.containsKey(textKey)) aux[textKey] = value
+        }
+        val loadedHistory = state.meta["nationHistory"] as? Map<*, *>
+        val persistedHistory = (loadedHistory?.get(nation.id) ?: loadedHistory?.get(nation.id.toString())) as? List<*>
+        val currentHistory = pendingLogs.asReversed()
+            .filter {
+                it.scope.equals("nation", ignoreCase = true) &&
+                    it.category.equals("history", ignoreCase = true) &&
+                    it.nationId == nation.id
+            }
+            .map { it.text }
+        return linkedMapOf(
+            "nation" to nation.id,
+            "name" to nation.name,
+            "color" to nation.color,
+            "capital" to (nation.capitalCityId ?: 0),
+            "capset" to (nation.meta["capset"] ?: 0),
+            "gennum" to (nation.meta["gennum"] ?: snapshot.generalIds.size),
+            "gold" to nation.gold,
+            "rice" to nation.rice,
+            "bill" to (nation.meta["bill"] ?: 0),
+            "rate" to (nation.meta["rate"] ?: 0),
+            "rate_tmp" to (nation.meta["rate_tmp"] ?: 0),
+            "secretlimit" to (nation.meta["secretlimit"] ?: 3),
+            "chief_set" to (nation.meta["chief_set"] ?: 0),
+            "scout" to (nation.meta["scout"] ?: 0),
+            "war" to (nation.meta["war"] ?: 0),
+            "strategic_cmd_limit" to (nation.meta["strategic_cmd_limit"] ?: 36),
+            "surlimit" to (nation.meta["surlimit"] ?: 72),
+            "tech" to nation.tech,
+            "power" to nation.power,
+            "spy" to jsonColumn(nation.meta["spy"] ?: emptyMap<String, Any?>()),
+            "level" to nation.level,
+            "type" to nation.typeCode,
+            "aux" to aux,
+            "generals" to snapshot.generalIds,
+            "msg" to ((nationEnv["nationNotice"] as? Map<*, *>)?.get("msg") ?: ""),
+            "scout_msg" to nationEnv["scout_msg"],
+            "history" to (currentHistory + persistedHistory.orEmpty().map { it.toString() }),
+        )
+    }
+
+    private fun jsonColumn(value: Any?): String = when (value) {
+        is String -> value
+        else -> MetaJson.encode(value)
+    }
+
+    private fun formatPhpDateTime(value: Instant): String = PHP_DATETIME.format(value)
 
     /**
      * 엔진 [TurnGeneral] → infra [GeneralCreateRow] (B1 장수생성 foundation). 신규 장수 INSERT의 컬럼맵을
@@ -389,10 +568,11 @@ object DatabaseHooks {
 
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
             linkedMapOf<String, Any?>(
+                "server_id" to snap.serverId,
                 "nation" to snap.nation.id,
-                "general_ids" to snap.generalIds,
+                "data" to toDeletedNationArchiveData(state, snap, dirty.logs),
             )
-        }
+        } + recorder.nationArchiveSnapshots().map { LinkedHashMap(it) }
 
         return FlushPayload(
             worldStateUpdate = linkedMapOf(
@@ -413,6 +593,7 @@ object DatabaseHooks {
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ),
+            archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
             updatedNations = updatedNations,
@@ -480,6 +661,7 @@ object DatabaseHooks {
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,
+            oldGeneralSnapshots = recorder.oldGeneralSnapshots().map { toOldGeneralArchiveRow(state, it, dirty.logs) },
             inheritanceKvWrites = recorder.inheritanceKvWrites(),
             inheritanceLogInserts = recorder.inheritanceLogInserts().map {
                 InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag, it.date)
@@ -490,6 +672,9 @@ object DatabaseHooks {
             statisticInserts = recorder.statisticInserts().map { StatisticInsertRow(it.columns) },
             // W0-8 연감 채널 — LogHistory 월별 스냅샷(P0-20)의 yearbook_history UPSERT (기록은 W1-I).
             yearbookInserts = recorder.yearbookInserts().map { YearbookInsertRow(it.columns) },
+            gameWinnerUpdates = recorder.gameWinnerUpdates().map { GameWinnerUpdateRow(it.serverId, it.winnerNation) },
+            emperiorInserts = recorder.emperiorInserts().map { EmperiorInsertRow(it.columns) },
+            hallUpserts = recorder.hallUpserts().map { HallUpsertRow(it.columns) },
             selectPoolMutations = recorder.selectPoolMutations(),
             eventInserts = recorder.eventInserts(),
             eventDeletes = recorder.eventDeletes(),
@@ -518,30 +703,21 @@ object DatabaseHooks {
         val rowYear = draft.year ?: year
         val rowMonth = draft.month ?: month
         val rowPhase = draft.phase ?: phase
+        val draftMeta = draft.meta.orEmpty()
         return LogRow(
-        scope = scopeLiteral(draft.scope),
-        category = draft.category.uppercase(),
-        text = stampPhaseInLogText(draft.text, rowPhase),
-        year = rowYear,
-        month = rowMonth,
-        phase = rowPhase,
-        subType = draft.subType,
-        generalId = draft.generalId,
-        nationId = draft.nationId,
-        userId = draft.userId,
-        meta = draft.meta ?: linkedMapOf(),
-    )
-    }
-
-    private fun stampPhaseInLogText(text: String, phase: Int): String {
-        val phaseText = ServerClock.turnPhaseText(phase)
-        val yearMonth = Regex("""^(<[^>]+>[^<]+</>)(\d+년 \d+월)(?!\s*(?:상순|중순|하순)):""")
-        val monthOnly = Regex("""^(<[^>]+>[^<]+</>)(\d+월)(?!\s*(?:상순|중순|하순)):""")
-        return when {
-            yearMonth.containsMatchIn(text) -> yearMonth.replaceFirst(text, "\$1\$2 $phaseText:")
-            monthOnly.containsMatchIn(text) -> monthOnly.replaceFirst(text, "\$1\$2 $phaseText:")
-            else -> text
-        }
+            scope = scopeLiteral(draft.scope),
+            category = draft.category.uppercase(),
+            text = draft.text,
+            year = rowYear,
+            month = rowMonth,
+            phase = rowPhase,
+            subType = draft.subType,
+            generalId = draft.generalId,
+            nationId = draft.nationId,
+            userId = draft.userId,
+            meta = draftMeta.filterTo(LinkedHashMap()) { (key, _) -> key != INTERNAL_FLUSH_BEFORE_ARCHIVE },
+            flushBeforeArchive = draftMeta[INTERNAL_FLUSH_BEFORE_ARCHIVE] == true,
+        )
     }
 
     /**
@@ -564,4 +740,12 @@ object DatabaseHooks {
         "user" -> "USER"
         else -> scope.uppercase() // 이미 enum 리터럴이거나 미지(예: action) — 기존 동작 보존
     }
+
+    private val PHP_DATETIME: DateTimeFormatter = DateTimeFormatterBuilder()
+        .appendPattern("yyyy-MM-dd HH:mm:ss")
+        .appendFraction(ChronoField.MICRO_OF_SECOND, 6, 6, true)
+        .toFormatter()
+        .withZone(ZoneId.of("Asia/Seoul"))
+
+    private const val INTERNAL_FLUSH_BEFORE_ARCHIVE = "_flushBeforeArchive"
 }

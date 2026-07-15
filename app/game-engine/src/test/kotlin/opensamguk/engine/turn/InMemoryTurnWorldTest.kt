@@ -125,6 +125,19 @@ class InMemoryTurnWorldTest {
     }
 
     @Test
+    fun `allocateNationId uses archived nation ids from snapshot after restart`() {
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = baseState(),
+                nations = listOf(nation(1), nation(2), nation(3)),
+                archivedNationIds = listOf(9),
+            ),
+        )
+
+        assertEquals(10, world.allocateNationId(), "archived ng_old_nations ids must not be reused")
+    }
+
+    @Test
     fun `allocateGeneralId uses persisted maxGeneralId from meta after restart`() {
         val world = InMemoryTurnWorld(
             WorldSnapshot(

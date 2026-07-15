@@ -109,16 +109,44 @@ class GeneralActionResolveContext(
     private val destLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val destPlainLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val globalActionLogs: MutableList<String> = mutableListOf(),
+    private val generalHistoryLogs: MutableList<String> = mutableListOf(),
+    private val nationalHistoryLogs: MutableList<String> = mutableListOf(),
+    private val globalHistoryLogs: MutableList<String> = mutableListOf(),
+    private val destHistoryLogs: MutableMap<Int, MutableList<String>> = linkedMapOf(),
     private val plainLogs: MutableList<String> = mutableListOf(),
     private val messages: MutableList<Message> = mutableListOf(),
 ) {
+    data class BufferedLog(
+        val scope: String,
+        val category: String,
+        val text: String,
+        val targetGeneralId: Int? = null,
+    )
+
+    private val orderedLogs: MutableList<BufferedLog> = mutableListOf()
+
+    private fun hasActionLoggerPrefix(text: String): Boolean =
+        text.startsWith("<C>●</>") || text.startsWith("<S>◆</>") || text.startsWith("<R>★</>")
+
+    private fun monthLine(text: String): String =
+        if (hasActionLoggerPrefix(text)) text else "<C>●</>${month}월:$text"
+
+    private fun yearMonthLine(text: String): String =
+        if (hasActionLoggerPrefix(text)) text else "<C>●</>${env.year}년 ${month}월:$text"
+    private fun plainLine(text: String): String = "<C>●</>$text"
+
     /**
      * Buffer an action-log line, applying PHP `ActionLogger::pushGeneralActionLog`'s DEFAULT
      * `MONTH` format (ActionLogger.php:135 + formatText:250): `<C>●</>{month}월:{body}`.
      * The resolver passes the BODY (mirroring che `run()` which passes the body to
      * `pushGeneralActionLog`); the logger boundary owns the month prefix. (G2 byte oracle.)
      */
-    fun addLog(text: String) { if (text.isNotEmpty()) logs.add("<C>●</>${month}월:$text") }
+    fun addLog(text: String) {
+        if (text.isEmpty()) return
+        val line = monthLine(text)
+        logs.add(line)
+        orderedLogs.add(BufferedLog("general", "action", line))
+    }
 
     /**
      * Buffer a line on a DEST general's own action-log scope (a separate bucket keyed by
@@ -129,7 +157,9 @@ class GeneralActionResolveContext(
      */
     fun addLogTo(targetGeneralId: Int, text: String) {
         if (text.isEmpty()) return
-        destLogs.getOrPut(targetGeneralId) { mutableListOf() }.add(text)
+        val line = monthLine(text)
+        destLogs.getOrPut(targetGeneralId) { mutableListOf() }.add(line)
+        orderedLogs.add(BufferedLog("general", "action", line, targetGeneralId))
     }
 
     /**
@@ -138,7 +168,38 @@ class GeneralActionResolveContext(
      * + formatText:250) — `<C>●</>{month}월:{body}` — but routes to a distinct global bucket.
      */
     fun addGlobalActionLog(text: String) {
-        if (text.isNotEmpty()) globalActionLogs.add("<C>●</>${month}월:$text")
+        if (text.isEmpty()) return
+        val line = monthLine(text)
+        globalActionLogs.add(line)
+        orderedLogs.add(BufferedLog("global", "action", line))
+    }
+
+    fun addGeneralHistoryLog(text: String) {
+        if (text.isEmpty()) return
+        val line = yearMonthLine(text)
+        generalHistoryLogs.add(line)
+        orderedLogs.add(BufferedLog("general", "history", line))
+    }
+
+    fun addNationalHistoryLog(text: String) {
+        if (text.isEmpty()) return
+        val line = yearMonthLine(text)
+        nationalHistoryLogs.add(line)
+        orderedLogs.add(BufferedLog("nation", "history", line))
+    }
+
+    fun addGlobalHistoryLog(text: String) {
+        if (text.isEmpty()) return
+        val line = yearMonthLine(text)
+        globalHistoryLogs.add(line)
+        orderedLogs.add(BufferedLog("global", "history", line))
+    }
+
+    fun addHistoryLogTo(targetGeneralId: Int, text: String) {
+        if (text.isEmpty()) return
+        val line = yearMonthLine(text)
+        destHistoryLogs.getOrPut(targetGeneralId) { mutableListOf() }.add(line)
+        orderedLogs.add(BufferedLog("general", "history", line, targetGeneralId))
     }
 
     /**
@@ -147,7 +208,10 @@ class GeneralActionResolveContext(
      * carries its own `<1>HH:MM</>` suffix. No `{month}월:` segment.
      */
     fun addPlainLog(text: String) {
-        if (text.isNotEmpty()) plainLogs.add("<C>●</>$text")
+        if (text.isEmpty()) return
+        val line = plainLine(text)
+        plainLogs.add(line)
+        orderedLogs.add(BufferedLog("general", "action", line))
     }
 
     /**
@@ -157,14 +221,23 @@ class GeneralActionResolveContext(
      * (golden `logLines`), unlike [addPlainLog] which routes to the separate plainLogs side-bucket
      * (per-target 이동/집합 + 레벨 변동 lines). Same `<C>●</>{text}` render, different stream.
      */
-    fun addActionPlainLog(text: String) { if (text.isNotEmpty()) logs.add("<C>●</>$text") }
+    fun addActionPlainLog(text: String) {
+        if (text.isEmpty()) return
+        val line = plainLine(text)
+        logs.add(line)
+        orderedLogs.add(BufferedLog("general", "action", line))
+    }
 
     /**
      * Buffer a RAWTEXT line into the ACTOR's action-log stream ([logs]) VERBATIM — no `<C>●</>` bullet,
      * no MONTH prefix. PHP `$logger->pushGeneralActionLog(body, ActionLogger::RAWTEXT)` (che_첩보.php:166-192
      * cityBrief/cityDevel/병종) renders the body raw as a continuation line of the preceding action log.
      */
-    fun addRawLog(text: String) { if (text.isNotEmpty()) logs.add(text) }
+    fun addRawLog(text: String) {
+        if (text.isEmpty()) return
+        logs.add(text)
+        orderedLogs.add(BufferedLog("general", "action", text))
+    }
 
     /**
      * Buffer a PLAIN-format line on a DEST general's own action-log scope. PHP che_포상.php:174
@@ -173,15 +246,22 @@ class GeneralActionResolveContext(
      */
     fun addPlainLogTo(targetGeneralId: Int, text: String) {
         if (text.isEmpty()) return
-        destPlainLogs.getOrPut(targetGeneralId) { mutableListOf() }.add("<C>●</>$text")
+        val line = plainLine(text)
+        destPlainLogs.getOrPut(targetGeneralId) { mutableListOf() }.add(line)
+        orderedLogs.add(BufferedLog("general", "action", line, targetGeneralId))
     }
 
     fun logs(): List<String> = logs.toList()
     fun logsTo(targetGeneralId: Int): List<String> = destLogs[targetGeneralId]?.toList() ?: emptyList()
     fun plainLogsTo(targetGeneralId: Int): List<String> = destPlainLogs[targetGeneralId]?.toList() ?: emptyList()
-    fun targetLogIds(): Set<Int> = (destLogs.keys + destPlainLogs.keys).toSet()
+    fun historyLogsTo(targetGeneralId: Int): List<String> = destHistoryLogs[targetGeneralId]?.toList() ?: emptyList()
+    fun targetLogIds(): Set<Int> = (destLogs.keys + destPlainLogs.keys + destHistoryLogs.keys).toSet()
     fun globalActionLogs(): List<String> = globalActionLogs.toList()
+    fun generalHistoryLogs(): List<String> = generalHistoryLogs.toList()
+    fun nationalHistoryLogs(): List<String> = nationalHistoryLogs.toList()
+    fun globalHistoryLogs(): List<String> = globalHistoryLogs.toList()
     fun plainLogs(): List<String> = plainLogs.toList()
+    fun orderedLogEvents(): List<BufferedLog> = orderedLogs.toList()
 
     /** Buffer a [Message] to send (the engine routes it to the mailbox channel, receiver-before-sender). */
     fun sendMessage(message: Message) { messages.add(message) }

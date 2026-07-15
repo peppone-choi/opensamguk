@@ -9,7 +9,7 @@
 #
 # First `up` against an EMPTY DB seeds itself:
 #   - game-engine  → ScenarioSeedRunner imports scenario_1010 (174 generals) when world_state is empty
-#   - gateway-api  → AdminSeeder creates the ADMIN_USERNAME/ADMIN_PASSWORD account (peppone) if missing
+#   - gateway-api  → AdminSeeder creates ADMIN_USERNAME when both admin env values are set
 # Both are idempotent: a second `up` is a no-op on already-seeded data (volumes persist it).
 #
 # JWT: JWT_SECRET is defined ONCE in .env and wired to BOTH gateway-api (issuer,
@@ -84,7 +84,7 @@ services:
       SERVER_REGISTRY_JSON: ${SERVER_REGISTRY_JSON:-"[]"}
       # Admin seed (gateway-api AdminSeeder, idempotent on empty users table).
       ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-peppone}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GATEWAY_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:

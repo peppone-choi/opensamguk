@@ -134,6 +134,26 @@ class ChangeRecorderNationTest {
     }
 
     @Test
+    fun `inheritance increase starts from loaded KV and resets base on aux mismatch`() {
+        val recorder = ChangeRecorder(
+            initialInheritancePoints = mapOf(
+                77 to mapOf(
+                    "active_action" to listOf(9.0, mapOf("source" to "old")),
+                ),
+            ),
+        )
+
+        recorder.recordInheritancePointIncrease(77, "active_action", 1.0, mapOf("source" to "old"))
+        recorder.recordInheritancePointIncrease(77, "active_action", 1.0, mapOf("source" to "new"))
+        recorder.recordInheritancePointIncrease(77, "active_action", 1.0, mapOf("source" to "new"))
+
+        assertEquals(
+            listOf(12.0, 3.0, 6.0),
+            recorder.inheritanceKvWrites().map { (it.value as List<*>)[0] as Double },
+        )
+    }
+
+    @Test
     fun `RankColumn has exactly 37 cases with the PHP backing-value column names in order`() {
         // Verified against sammo\Enums\RankColumn (hwe/sammo/Enums/RankColumn.php) — 37 cases; the
         // enum case backing VALUES are the rank_data `type` column names.

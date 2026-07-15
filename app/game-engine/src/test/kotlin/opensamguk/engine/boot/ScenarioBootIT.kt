@@ -2,6 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.engine.config.EngineEventConfig
+import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
@@ -10,6 +11,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.logic.event.EventCondition
+import opensamguk.logic.event.EventTarget
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.flywaydb.core.Flyway
@@ -31,12 +33,13 @@ import java.time.temporal.ChronoUnit
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
  * F1b boot/tick gate — proves the FULL fresh-DB → playable-world path end-to-end:
  *  1. fresh Postgres + Flyway baseline,
- *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (678 generals / 24 cities / 2 nations),
+ *  2. [SeedBootstrap.ensureSeeded] seeds `scenario_1010` (229 active generals / 24 cities / 2 nations),
  *  3. [WorldSnapshotLoader.buildSnapshot] materializes the [opensamguk.engine.turn.WorldSnapshot],
  *  4. an [InMemoryTurnWorld] is constructed from it and a [TurnDaemonLifecycle] tick ADVANCES the turn
  *     loop (the seeded ring is all 휴식 → each due general resolves the rest no-op) GREEN, no exception,
@@ -95,13 +98,13 @@ class ScenarioBootIT {
 
         // 2. seed
         assertTrue(bootstrap.ensureSeeded(jdbc), "first ensureSeeded seeds the fresh world")
-        assertEquals(678, count("general"))
+        assertEquals(229, count("general"))
         assertEquals(94, count("city")) // che 풀맵: 점유 24 + 공백지 70 = 94 (cities_1010.json)
         assertEquals(2, count("nation"))
 
         // 3. load snapshot → 4. build the in-memory world
         val snapshot = loader.buildSnapshot()
-        assertEquals(678, snapshot.generals.size)
+        assertEquals(229, snapshot.generals.size)
         assertEquals(94, snapshot.cities.size) // che 풀맵: 점유 24 + 공백지 70 = 94
         assertEquals(2, snapshot.nations.size)
         assertEquals(0, snapshot.troops.size, "no troops at scenario start")
@@ -121,15 +124,29 @@ class ScenarioBootIT {
         assertTrue(
             snapshot.generals.all {
                 val deadYear = (it.meta["deadyear"] as Number).toInt()
-                (it.meta["killturn"] as Number).toInt() ==
-                    ScenarioLifecycleMeta.killturnFor(deadYear, seedStartYear, seedStartMonth)
+                val killturn = (it.meta["killturn"] as Number).toInt()
+                val min = ScenarioLifecycleMeta.killturnFor(deadYear, seedStartYear, seedStartMonth, 0)
+                val max = ScenarioLifecycleMeta.killturnFor(deadYear, seedStartYear, seedStartMonth, 11)
+                killturn in min..max && killturn % 3 == 0
             },
-            "seeded generals load with deadyear-derived killturn lifecycle meta",
+            "seeded generals load with PHP deadyear+jitter lifecycle meta",
+        )
+        assertTrue(
+            snapshot.generals.any {
+                val deadYear = (it.meta["deadyear"] as Number).toInt()
+                (it.meta["killturn"] as Number).toInt() !=
+                    ScenarioLifecycleMeta.killturnFor(deadYear, seedStartYear, seedStartMonth, 0)
+            },
+            "at least one seeded general carries the PHP killturn jitter draw",
         )
         assertTrue(
             snapshot.generals.all { (it.meta["deadyear"] as? Number)?.toInt() ?: 0 > snapshot.state.currentYear },
             "seeded generals load with PHP deadyear lifecycle meta",
         )
+        val firstGeneral = snapshot.generals.first()
+        val storedGeneral = jdbc.queryForMap("SELECT picture, image_server FROM general WHERE id = ?", firstGeneral.id)
+        assertEquals(storedGeneral["picture"], firstGeneral.meta["picture"])
+        assertEquals((storedGeneral["image_server"] as Number).toInt(), firstGeneral.meta["image_server"])
 
         val world = InMemoryTurnWorld(snapshot)
         val registry = CommandRegistry(GeneralActionPipeline())
@@ -153,7 +170,7 @@ class ScenarioBootIT {
 
         // 5. second seed is a no-op (emptiness gate).
         assertTrue(!bootstrap.ensureSeeded(jdbc), "second ensureSeeded is a no-op")
-        assertEquals(678, count("general"), "no duplicate generals after second seed")
+        assertEquals(229, count("general"), "no duplicate generals after second seed")
     }
 
     @Test
@@ -260,6 +277,148 @@ class ScenarioBootIT {
         val restarted = EngineEventConfig().eventStore(jdbc, bootstrap)
         assertTrue(restarted.allRows().none { it.id == deletedId })
         assertTrue(restarted.allRows().any { it.id == insertedId && it.priority == 1234 })
+    }
+
+    @Test
+    @Order(6)
+    fun `deferred scenario generals appear at adult year and survive restart`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+
+        bootstrap.ensureSeeded(jdbc)
+        val eventConfig = EngineEventConfig()
+        val eventStore = eventConfig.eventStore(jdbc, bootstrap)
+        val world = InMemoryTurnWorld(loader.buildSnapshot())
+        val recorder = ChangeRecorder()
+        eventStore.bindMutationSink(recorder::recordEventMutation)
+        val pipeline = GeneralActionPipeline()
+        val dispatcher = eventConfig.eventDispatcher(eventStore, eventConfig.eventActionFactory())
+        val contextFactory = WorldEventContextFactory.create(
+            world = world,
+            recorder = recorder,
+            pipeline = pipeline,
+            hiddenSeed = world.getState().meta["hiddenSeed"] as String,
+            startYear = world.getState().meta["startYear"] as Int,
+            mapName = world.getState().meta["map"] as String,
+            eventStore = eventStore,
+        )
+
+        assertEquals(0, countWhere("general", "name = 'ⓝ소제1'"))
+        dispatcher.run(
+            EventTarget.MONTH,
+            contextFactory = contextFactory,
+            envSupplier = { linkedMapOf("year" to 182, "month" to 1, "phase" to 1) },
+        )
+
+        assertEquals(20, world.listGenerals().count { it.name.startsWith("ⓝ") && it.age == 14 })
+        assertFalse(eventStore.allRows().any { row -> row.actions.any { it.args.any { arg -> arg.toString().contains("소제1") } } })
+
+        val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        val dataSource = DriverManagerDataSource().apply {
+            setDriverClassName("org.postgresql.Driver")
+            url = postgres.jdbcUrl
+            username = postgres.username
+            password = postgres.password
+        }
+        JdbcFlushExecutor(
+            NamedParameterJdbcTemplate(dataSource),
+            TransactionTemplate(DataSourceTransactionManager(dataSource)),
+        ).flush(payload)
+
+        val appearedId = jdbc.queryForObject("SELECT id FROM general WHERE name = 'ⓝ소제1'", Int::class.java)!!
+        assertEquals(30, countWhere("general_turn", "general_id = $appearedId"))
+        assertEquals(37, countWhere("rank_data", "general_id = $appearedId"))
+        assertEquals(0, countWhere("event", "action::text LIKE '%소제1%'"))
+        assertTrue(loader.buildSnapshot().generals.any { it.id == appearedId && it.name == "ⓝ소제1" })
+    }
+
+    @Test
+    @Order(7)
+    fun `existing world does not resurrect a removed scenario NPC`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+        val missing = jdbc.queryForMap(
+            """
+            SELECT id, name
+              FROM general
+             WHERE npc_state >= 2 AND officer_level <> 12 AND troop_id = 0
+             ORDER BY id
+             LIMIT 1
+            """.trimIndent(),
+        )
+        val generalId = (missing["id"] as Number).toInt()
+        val generalName = missing["name"] as String
+        jdbc.update("DELETE FROM general_turn WHERE general_id = ?", generalId)
+        jdbc.update("DELETE FROM rank_data WHERE general_id = ?", generalId)
+        jdbc.update("DELETE FROM general WHERE id = ?", generalId)
+
+        assertFalse(bootstrap.ensureSeeded(jdbc))
+
+        val pendingBefore = jdbc.queryForObject(
+            """
+            SELECT count(*)
+              FROM event
+              CROSS JOIN LATERAL jsonb_array_elements(action) action_row
+             WHERE action_row ->> 0 = 'RegNPC'
+               AND action_row ->> 2 = ?
+            """.trimIndent(),
+            Int::class.java,
+            generalName,
+        )
+        assertEquals(0, pendingBefore)
+        assertFalse(bootstrap.ensureSeeded(jdbc))
+        val pendingAfter = jdbc.queryForObject(
+            """
+            SELECT count(*)
+              FROM event
+              CROSS JOIN LATERAL jsonb_array_elements(action) action_row
+             WHERE action_row ->> 0 = 'RegNPC'
+               AND action_row ->> 2 = ?
+            """.trimIndent(),
+            Int::class.java,
+            generalName,
+        )
+        assertEquals(0, pendingAfter)
+    }
+
+    @Test
+    @Order(8)
+    fun `archived nation ids seed allocator high-water on restart`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
+        bootstrap.ensureSeeded(jdbc)
+        val archivedId = (
+            jdbc.queryForObject(
+                "SELECT greatest(coalesce((SELECT max(id) FROM nation), 0), coalesce((SELECT max(nation) FROM ng_old_nations), 0))",
+                Int::class.java,
+            ) ?: 0
+            ) + 50
+        val currentServerId = loader.buildSnapshot().serverId!!
+        jdbc.update(
+            """
+            INSERT INTO ng_games (server_id, date, season, scenario, scenario_name, env)
+            VALUES ('newest-wrong-server', now() + interval '1 day', 1, 0, 'wrong', '{}'::jsonb)
+            ON CONFLICT (server_id) DO UPDATE SET date = EXCLUDED.date
+            """.trimIndent(),
+        )
+
+        try {
+            jdbc.update(
+                """
+                INSERT INTO ng_old_nations (server_id, nation, data)
+                VALUES (?, ?, '{}'::jsonb)
+                ON CONFLICT (server_id, nation) DO UPDATE SET data = EXCLUDED.data
+                """.trimIndent(),
+                currentServerId,
+                archivedId,
+            )
+
+            val snapshot = loader.buildSnapshot()
+            assertEquals(currentServerId, snapshot.serverId)
+            assertTrue(snapshot.archivedNationIds.contains(archivedId))
+            val restarted = InMemoryTurnWorld(snapshot)
+            assertEquals(archivedId + 1, restarted.allocateNationId())
+        } finally {
+            jdbc.update("DELETE FROM ng_old_nations WHERE server_id = ? AND nation = ?", currentServerId, archivedId)
+            jdbc.update("DELETE FROM ng_games WHERE server_id = 'newest-wrong-server'")
+        }
     }
 
     private fun count(table: String): Int =

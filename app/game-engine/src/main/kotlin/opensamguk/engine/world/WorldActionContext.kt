@@ -1,7 +1,11 @@
 package opensamguk.engine.world
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
+import opensamguk.common.rng.serializeSeed
+import opensamguk.engine.config.StatisticInsertColumns
 import opensamguk.engine.turn.City as EngineCity
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -9,23 +13,51 @@ import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation as EngineNation
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RankColumn
+import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.engine.turn.toTurnGeneral
+import opensamguk.infra.persistence.MetaJson
+import opensamguk.infra.read.AuctionBidRepository
+import opensamguk.infra.read.AuctionRepository
+import opensamguk.logic.auction.AuctionInfo
+import opensamguk.logic.auction.AuctionType
+import opensamguk.logic.auction.ResourceType
+import opensamguk.logic.domain.City as LogicCity
+import opensamguk.logic.domain.Diplomacy as LogicDiplomacy
 import opensamguk.logic.domain.General as LogicGeneral
+import opensamguk.logic.domain.Nation as LogicNation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.event.DeleteEventContext
+import opensamguk.logic.event.EventDispatcher
+import opensamguk.logic.event.EventTarget
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.LightActionWorld
+import opensamguk.logic.inheritance.GeneralProxy
+import opensamguk.logic.inheritance.InheritancePointStore
+import opensamguk.logic.inheritance.applyInheritanceUser
+import opensamguk.logic.inheritance.mergeTotalInheritancePoint
+import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.tick.CheckStatisticCalculator
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.util.phpRoundDecimal
+import java.text.NumberFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import opensamguk.logic.world.AssignSpecialityResult
 import opensamguk.logic.world.BlockScoutWorld
+import opensamguk.logic.world.BuiltGeneral
 import opensamguk.logic.world.CityConstVariant
+import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.CityLevel
+import opensamguk.logic.world.CheckEmperiorContext
 import opensamguk.logic.world.CitySupplyResult
 import opensamguk.logic.world.DisasterCity
 import opensamguk.logic.world.DisasterWorldView
@@ -48,6 +80,9 @@ import opensamguk.logic.world.ProcessWarIncomeResult
 import opensamguk.logic.world.ProvideNPCTroopLeaderContext
 import opensamguk.logic.world.RandomizeCityTradeRateContext
 import opensamguk.logic.world.RaiseDisasterResult
+import opensamguk.logic.world.RaiseNPCNationAction
+import opensamguk.logic.world.ScenarioStartEventContext
+import opensamguk.logic.world.SpecialityHelper
 import opensamguk.logic.world.SpecialityGeneral
 import opensamguk.logic.world.SpecialityWorldView
 import opensamguk.logic.world.SupplyCapital
@@ -71,6 +106,8 @@ class WorldActionContext(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     override val pipeline: GeneralActionPipeline,
+    private val auctionRepository: AuctionRepository? = null,
+    private val auctionBidRepository: AuctionBidRepository? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
     ProcessWarIncomeContext,
@@ -85,9 +122,20 @@ class WorldActionContext(
     BlockScoutWorld,
     UnblockScoutWorldView,
     InvaderEndingContext,
+    CheckEmperiorContext,
+    ScenarioStartEventContext,
     LightActionWorld {
 
     // ── helpers ────────────────────────────────────────────────────────────────────────────────
+
+    companion object {
+        const val ENV_EVENT_DISPATCHER = "eventDispatcher"
+        private const val INTERNAL_FLUSH_BEFORE_ARCHIVE = "_flushBeforeArchive"
+        private val SEOUL_ZONE: ZoneId = ZoneId.of("Asia/Seoul")
+        private val PHP_DATETIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    }
+
+    private var bufferedUnificationHistoryDraft: LogEntryDraft? = null
 
     private fun resolveHiddenSeed(): String = world.getState().meta["hiddenSeed"] as? String ?: ""
     private fun resolveYear(): Int = (env["year"] as? Number)?.toInt() ?: world.getState().currentYear
@@ -96,6 +144,12 @@ class WorldActionContext(
     private fun resolveStartYear(): Int = (world.getState().meta["startYear"] as? Number)?.toInt() ?: 0
     private fun resolveKillturnEnv(): Int = (world.getState().meta["killturn"] as? Number)?.toInt() ?: 0
     private fun resolveTurnterm(): Int = (world.getState().meta["turnterm"] as? Number)?.toInt() ?: 1
+    private fun activeCityConst(): CityConstVariant {
+        val fromEnv = env["cityConst"] as? CityConstVariant
+        if (fromEnv != null) return fromEnv
+        val mapName = world.getState().meta["map"] as? String ?: "che"
+        return CityConstRegistry.find(mapName) ?: CityConstRegistry.of("che")
+    }
 
     private fun logDraft(
         scope: String,
@@ -105,6 +159,7 @@ class WorldActionContext(
         nationId: Int? = null,
         userId: Int? = null,
         subType: String? = null,
+        flushBeforeArchive: Boolean = false,
     ): LogEntryDraft = LogEntryDraft(
         scope = scope,
         category = category,
@@ -113,10 +168,25 @@ class WorldActionContext(
         nationId = nationId,
         userId = userId,
         subType = subType,
+        meta = if (flushBeforeArchive) mapOf(INTERNAL_FLUSH_BEFORE_ARCHIVE to true) else null,
         year = resolveYear(),
         month = resolveMonth(),
         phase = resolvePhase(),
     )
+
+    private fun actionLogText(text: String, formatType: Int): String =
+        when (formatType) {
+            0 -> text
+            1 -> "<C>●</>$text"
+            2 -> "<C>●</>${resolveYear()}년 ${resolveMonth()}월:$text"
+            3 -> "<C>●</>${resolveYear()}년:$text"
+            4 -> "<C>●</>${resolveMonth()}월:$text"
+            5 -> "<S>◆</>$text"
+            6 -> "<S>◆</>${resolveYear()}년 ${resolveMonth()}월:$text"
+            7 -> "<R>★</>$text"
+            8 -> "<R>★</>${resolveYear()}년 ${resolveMonth()}월:$text"
+            else -> text
+        }
 
     private fun officerCntByCity(nationId: Int): Map<Int, Int> {
         val out = LinkedHashMap<Int, Int>()
@@ -148,12 +218,80 @@ class WorldActionContext(
 
     /** [UpdateCitySupplyContext], [UpdateNationLevelContext]. */
     override fun cityConst(): CityConstVariant =
-        env["cityConst"] as? CityConstVariant
-            ?: error("cityConst must be threaded in env before UpdateCitySupply/UpdateNationLevel runs")
+        activeCityConst()
 
     /** [UpdateNationLevelContext], [ProvideNPCTroopLeaderContext]. */
     override fun nations(): List<opensamguk.logic.domain.Nation> =
         world.listNations().sortedBy { it.id }.map { PerTurnOverlay.toLogicNation(it) }
+
+    override fun generalNames(): List<String> = world.listGenerals().map { it.name }
+
+    override fun shuffleNpcNationCandidates(cities: List<LogicCity>): List<LogicCity> {
+        // PHP RaiseNPCNation uses ambient Util::shuffle_assoc outside the seeded action RandUtil.
+        // Sanctioned deterministic divergence: preserve the action stream boundary and replayability;
+        // do not claim byte-identical PHP ambient permutation parity.
+        val seed = serializeSeed(resolveHiddenSeed(), RaiseNPCNationAction.NAME, resolveYear(), resolveMonth())
+        return RandUtil(LiteHashDrbg(seed)).shuffle(cities)
+    }
+
+    override fun allocateNationId(): Int = world.allocateNationId()
+
+    override fun stageGeneral(general: BuiltGeneral): Int {
+        val id = world.allocateGeneralId()
+        recorder.recordGeneralCreate(world, general.toTurnGeneral(id, world.getState()))
+        return id
+    }
+
+    override fun stageNation(nation: LogicNation) {
+        world.createNation(PerTurnOverlay.toEngineNation(nation))
+    }
+
+    override fun stageDiplomacy(diplomacy: LogicDiplomacy) {
+        world.createDiplomacy(PerTurnOverlay.toEngineDiplomacy(diplomacy))
+    }
+
+    override fun stageNationTurn(turn: NationTurn) {
+        world.createNationTurn(turn)
+    }
+
+    override fun stageCity(city: LogicCity) {
+        val pre = world.getCityById(city.id) ?: return
+        recorder.diffCity(PerTurnOverlay.toLogicCity(pre), city)
+        val nextMeta = LinkedHashMap(pre.meta)
+        nextMeta["trust"] = city.trust
+        world.applyCityDirtyFree(
+            pre.copy(
+                nationId = city.nationId,
+                level = city.level,
+                state = city.state,
+                population = city.population,
+                populationMax = city.populationMax,
+                dead = city.dead,
+                agriculture = city.agriculture,
+                agricultureMax = city.agricultureMax,
+                commerce = city.commerce,
+                commerceMax = city.commerceMax,
+                security = city.security,
+                securityMax = city.securityMax,
+                supplyState = city.supplyState,
+                frontState = city.frontState,
+                defence = city.defense,
+                defenceMax = city.defenseMax,
+                wall = city.wall,
+                wallMax = city.wallMax,
+                trade = city.trade,
+                region = city.region,
+                term = city.term,
+                officerSet = city.officerSet,
+                conflict = city.conflict,
+                meta = nextMeta,
+            ),
+        )
+    }
+
+    override fun stageNationEnv(nationId: Int, key: String, value: Any?) {
+        recorder.recordNationEnvKv(nationId, key, value)
+    }
 
     // ── ProcessIncomeContext ───────────────────────────────────────────────────────────────────
 
@@ -598,9 +736,6 @@ class WorldActionContext(
     }
 
     // ── InvaderEndingContext ───────────────────────────────────────────────────────────────────
-    // 침략자(이민족) 이벤트 종료 leaf(InvaderEnding.php)의 월드 read/write 시임. WorldCheckEmperiorContext
-    // (sibling Q14)와 동일 패턴 — InMemoryTurnWorld read + meta 전이 write + global-history 로그 push.
-
     /** `$gameStor->isunited`(php:22) — game_env isunited(0=평시,1=침략자 진행,2=천하통일,3=엔딩). */
     override fun isunited(): Int = (world.getState().meta["isunited"] as? Number)?.toInt() ?: 0
 
@@ -610,9 +745,9 @@ class WorldActionContext(
     /** `SELECT count(*) FROM city WHERE nation = 0`(php:36) — 공백지(소유국가 0) 도시 수. */
     override fun neutralCityCount(): Int = world.listCities().count { it.nationId == 0 }
 
-    /** `count(CityConst::all())`(php:44) — 전 도시가 시드되므로 in-memory city 수 = 전체 시나리오 도시 수
-     *  (WorldCheckEmperiorContext.totalCityCount 와 동일 근거: 장기-시뮬 게이트 전제). */
-    override fun totalCityCount(): Int = world.listCities().size
+    /** `count(CityConst::all())`(php:44 / checkEmperior php:716-723) — loaded-row count가 아니라
+     *  active scenario map의 static city count를 쓴다. 부분 로딩/누락 시 조기 통일을 막는다. */
+    override fun totalCityCount(): Int = activeCityConst().all().size
 
     /** `SELECT name FROM nation LIMIT 1`(php:39) — ORDER BY 없는 LIMIT 1 = 삽입(=PK) 순서 첫 행.
      *  in-memory 아날로그는 listNations()의 첫 원소(LinkedHashMap PK 삽입 순서). 빈 결과면 null. */
@@ -621,6 +756,10 @@ class WorldActionContext(
     /** `ActionLogger::pushGlobalHistoryLog`(php:54-60) — InvaderEndingContext 의 무-type 시그니처.
      *  LightActionWorld.pushGlobalHistoryLog(msg, type)와 arity가 달라 별도 override. */
     override fun pushGlobalHistoryLog(msg: String) {
+        world.pushLog(logDraft("global", "history", actionLogText(msg, LightActionWorld.YEAR_MONTH)))
+    }
+
+    override fun pushPreformattedGlobalHistoryLog(msg: String) {
         world.pushLog(logDraft("global", "history", msg))
     }
 
@@ -634,10 +773,810 @@ class WorldActionContext(
     // setIsunited(value): 아래 setIsunited(value: Int) — InvaderEndingContext + 공유 시그니처(WorldCheckEmperior 류).
     override fun setIsunited(value: Int) = world.setIsunited(value)
 
+    override fun activeNationIds(): List<Int> =
+        world.listNations().filter { it.level > 0 }.map { it.id }
+
+    override fun cityCountOf(nationId: Int): Int =
+        world.listCities().count { it.nationId == nationId }
+
+    override fun nationName(nationId: Int): String? = world.getNationById(nationId)?.name
+
+    override fun pushNationalHistoryLog(nationId: Int, msg: String) {
+        val draft = logDraft("nation", "history", actionLogText(msg, LightActionWorld.YEAR_MONTH), nationId = nationId)
+        bufferedUnificationHistoryDraft = draft
+        world.pushLog(draft)
+    }
+
+    override fun checkStatistic() {
+        val row = CheckStatisticCalculator.compute(
+            year = resolveYear(),
+            month = resolveMonth(),
+            generals = world.listGenerals().map { statisticGeneral(it) },
+            nations = world.listNations().map { PerTurnOverlay.toLogicNation(it) },
+            cities = world.listCities().map { PerTurnOverlay.toLogicCity(it) },
+            nationTypeNameOf = ::nationTypeDisplayName,
+            personalityNameOf = { GameConst.personalityNameOf(it.toString()) },
+            specialDomesticNameOf = { SpecialityHelper.domesticName(it) },
+            specialWarNameOf = { SpecialityHelper.warName(it) },
+            crewtypeShortNameOf = { GameUnitConst.byId(it)?.name ?: "$it" },
+        )
+        recorder.recordStatisticInsert(StatisticInsertColumns.from(row))
+    }
+
+    private fun statisticGeneral(g: TurnGeneral): LogicGeneral {
+        val statisticMeta = g.meta +
+            mapOf(
+                "personal" to (g.role.personality ?: g.meta["personal"] ?: g.meta["personal_code"] ?: "None"),
+                "special" to (g.meta["special"] ?: g.meta["special_code"] ?: "None"),
+                "special2" to (g.role.specialWar ?: g.meta["special2"] ?: g.meta["special2_code"] ?: "None"),
+            ) +
+            if (g.recentWarTime != null) mapOf("recent_war" to g.recentWarTime.toString()) else emptyMap()
+        return PerTurnOverlay.toLogicGeneral(g).copy(meta = statisticMeta)
+    }
+
+    override fun closeActiveUniqueAuctions() {
+        val repo = auctionRepository ?: return
+        val activeAuctions = repo.findByFinishedFalseAndTypeValue(AuctionType.UNIQUE_ITEM.value)
+            .sortedBy { it.closeDate }
+        if (activeAuctions.isEmpty()) return
+        val bidRepo = requireNotNull(auctionBidRepository) {
+            "AuctionBidRepository is required to rollback active unique auctions"
+        }
+        activeAuctions.forEach { entity ->
+            val auctionId = entity.id ?: return@forEach
+            val info = AuctionInfo(
+                id = auctionId,
+                type = entity.type,
+                finished = true,
+                target = entity.target,
+                hostGeneralId = entity.hostGeneralId,
+                reqResource = entity.reqResource,
+                openDate = entity.openDate.toString(),
+                closeDate = entity.closeDate.toString(),
+                detail = AuctionInfo.fromArray(
+                    linkedMapOf(
+                        "type" to entity.type.value,
+                        "req_resource" to entity.reqResource.value,
+                        "open_date" to entity.openDate.toString(),
+                        "close_date" to entity.closeDate.toString(),
+                        "detail" to entity.detail,
+                    ),
+                ).detail,
+            )
+            bidRepo.findTopByAuctionIdOrderByAmountDesc(auctionId)?.let { bid ->
+                refundCancelledAuctionBid(info, bid.generalId, bid.amount)
+            }
+            recorder.recordAuctionUpsert(id = auctionId, columns = info.toArray(withoutId = true))
+        }
+    }
+
+    private fun refundCancelledAuctionBid(info: AuctionInfo, generalId: Int, amount: Int) {
+        val bidder = world.getGeneralById(generalId) ?: return
+        when (info.reqResource) {
+            ResourceType.INHERITANCE_POINT -> {
+                val ownerId = bidder.userId?.toIntOrNull()
+                val isUnited = ((world.getState().meta["isunited"] as? Number)?.toInt() ?: 0) != 0
+                if (ownerId != null && bidder.npcState < 2 && !isUnited) {
+                    recorder.recordInheritancePointIncrease(ownerId, "previous", amount.toDouble(), null)
+                }
+                recorder.recordRankIncrease(generalId, RankColumn.INHERIT_SPENT_DYN, -amount)
+            }
+            ResourceType.GOLD -> updateRefundedResource(bidder, bidder.copy(gold = bidder.gold + amount))
+            ResourceType.RICE -> updateRefundedResource(bidder, bidder.copy(rice = bidder.rice + amount))
+        }
+
+        markNewMessage(bidder)
+        val nation = world.getNationById(bidder.nationId)
+        val dest = MessageTarget(
+            generalId = bidder.id,
+            generalName = bidder.name,
+            nationId = bidder.nationId,
+            nationName = nation?.name ?: "재야",
+            color = nation?.color ?: "#000000",
+            icon = bidder.meta["picture"]?.toString() ?: "",
+        )
+        val body = MetaJson.encode(
+            linkedMapOf(
+                "src" to MessageTarget.buildSystemTarget().toArray(),
+                "dest" to dest.toArray(),
+                "text" to "${info.id}번 ${info.detail.title}가 취소되었습니다.",
+                "option" to linkedMapOf<String, Any?>(),
+            ),
+        )
+        recorder.recordMessageInsert(
+            mailbox = bidder.id,
+            type = "private",
+            srcId = 0,
+            destId = bidder.id,
+            time = world.getState().lastTurnTime.toString(),
+            validUntil = "9999-12-31T00:00:00Z",
+            bodyJson = body,
+        )
+    }
+
+    private fun updateRefundedResource(before: TurnGeneral, after: TurnGeneral) {
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
+        world.updateGeneral(after)
+    }
+
+    override fun grantUnifierInheritancePoint(nationId: Int, points: Int) {
+        world.listGenerals()
+            .filter { it.nationId == nationId && it.npcState < 2 && it.officerLevel > 4 }
+            .forEach { g ->
+                g.userId?.toIntOrNull()?.let { owner ->
+                    recorder.recordInheritancePointIncrease(owner, "unifier", points.toDouble(), null)
+                }
+            }
+    }
+
+    override fun runUnitedEvent() {
+        val dispatcher = env[ENV_EVENT_DISPATCHER] as? EventDispatcher ?: return
+        val factory = env["worldEventContextFactory"] as? ((MutableMap<String, Any?>) -> EventActionContext)
+            ?: { mutableEnv: MutableMap<String, Any?> ->
+                WorldActionContext(mutableEnv, world, recorder, pipeline, auctionRepository, auctionBidRepository)
+            }
+        dispatcher.run(
+            target = EventTarget.UNITED,
+            contextFactory = factory,
+            envSupplier = { env },
+        )
+    }
+
+    override fun mergeAndApplyInheritance() {
+        val store = inheritanceStoreSnapshot()
+        val serverID = (world.getState().meta["ngGameId"] as? Number)?.toInt()
+            ?: world.archiveServerId()?.toIntOrNull()
+            ?: 0
+        for (general in world.listGenerals().filter { it.userId != null && it.npcState < 2 }) {
+            val ownerID = general.userId?.toIntOrNull() ?: continue
+            mergeTotalInheritancePoint(
+                general = inheritanceGeneralProxy(general, ownerID),
+                isRebirth = false,
+                isUnited = false,
+                year = resolveYear(),
+                startYear = resolveStartYear(),
+                month = resolveMonth(),
+                store = store,
+                serverID = serverID,
+                resultSink = recorder::recordInheritanceResultSnapshot,
+            )
+            val previous = applyInheritanceUser(
+                ownerID = ownerID,
+                isRebirth = false,
+                store = store,
+                userLogSink = { text, tag -> recorder.recordInheritanceLog(ownerID, text, tag) },
+            )
+            recorder.recordInheritancePointSet(ownerID, "previous", previous.toDouble(), null)
+        }
+    }
+
+    private fun inheritanceStoreSnapshot(): InheritancePointStore {
+        val store = InheritancePointStore()
+        val loaded = world.getState().meta["inheritancePoints"] as? Map<*, *> ?: emptyMap<Any?, Any?>()
+        for ((ownerAny, entriesAny) in loaded) {
+            val ownerID = when (ownerAny) {
+                is Number -> ownerAny.toInt()
+                is String -> ownerAny.toIntOrNull()
+                else -> null
+            } ?: continue
+            val entries = entriesAny as? Map<*, *> ?: continue
+            for ((keyAny, valueAny) in entries) {
+                val key = keyAny?.toString() ?: continue
+                val pair = valueAny as? List<*> ?: continue
+                val value = (pair.getOrNull(0) as? Number)?.toDouble() ?: continue
+                store.putRaw(ownerID, key, value, pair.getOrNull(1))
+            }
+        }
+        for (write in recorder.inheritanceKvWrites()) {
+            if (write.table != "inheritance") continue
+            val ownerID = write.namespace.removePrefix("inheritance_").toIntOrNull() ?: continue
+            val pair = write.value as? List<*> ?: continue
+            val value = (pair.getOrNull(0) as? Number)?.toDouble() ?: continue
+            store.putRaw(ownerID, write.key, value, pair.getOrNull(1))
+        }
+        return store
+    }
+
+    private fun inheritanceGeneralProxy(general: TurnGeneral, ownerID: Int): GeneralProxy =
+        object : GeneralProxy {
+            override val id: Int = general.id
+            override val owner: Int = ownerID
+            override val npc: Int = general.npcState
+            override fun getVar(key: String): Int = when (key) {
+                "belong" -> (general.meta["belong"] as? Number)?.toInt() ?: 0
+                else -> (general.meta[key] as? Number)?.toInt() ?: 0
+            }
+            override fun getRankVar(key: String): Int {
+                val base = (general.meta[key] as? Number)?.toInt() ?: 0
+                val column = RankColumn.byColumn(key) ?: return base
+                return when (val delta = recorder.rankDeltas(general.id)[column]) {
+                    is RankDelta.Increment -> base + delta.value
+                    is RankDelta.Set -> delta.value
+                    null -> base
+                }
+            }
+            override fun getAuxVar(key: String): Any? {
+                val aux = general.meta["aux"] as? Map<*, *> ?: return null
+                return aux[key]
+            }
+        }
+
+    override fun checkHallForEligibleUserGenerals() {
+        val serverId = world.archiveServerId() ?: return
+        val season = (world.getState().meta["season"] as? Number)?.toInt() ?: 0
+        val scenario = (world.getState().meta["scenario"] as? Number)?.toInt() ?: 0
+        val serverCnt = (world.getState().meta["serverCount"] as? Number)?.toInt() ?: 0
+        val serverName = world.getState().meta["serverName"]?.toString() ?: ""
+        val scenarioName = world.getState().meta["scenario_text"]?.toString()
+            ?: world.getState().meta["scenarioText"]?.toString()
+            ?: ""
+        val startTime = world.getState().meta["starttime"]?.toString()
+            ?: world.getState().meta["startTime"]?.toString()
+            ?: ""
+        val unitedTime = Instant.now().atZone(SEOUL_ZONE).format(PHP_DATETIME_FORMAT)
+        for (g in world.listGenerals().filter { it.npcState < 2 && it.age >= GameConst.minPushHallAge }) {
+            val nation = hallNationOf(g)
+            for ((type, value) in hallMetricRows(g)) {
+                recorder.recordHallUpsert(
+                    linkedMapOf(
+                        "server_id" to serverId,
+                        "season" to season,
+                        "scenario" to scenario,
+                        "general_no" to g.id,
+                        "type" to type,
+                        "value" to value,
+                        "owner" to g.userId,
+                        "aux" to MetaJson.encode(
+                            linkedMapOf(
+                                "name" to g.name,
+                                "nationName" to nation.name,
+                                "bgColor" to nation.color,
+                                "fgColor" to phpNewColor(nation.color),
+                                "picture" to (g.meta["picture"] ?: "default.jpg"),
+                                "imgsvr" to ((g.meta["imgsvr"] as? Number)?.toInt()
+                                    ?: (g.meta["image_server"] as? Number)?.toInt()
+                                    ?: 0),
+                                "startTime" to startTime,
+                                "unitedTime" to unitedTime,
+                                "ownerName" to ownerDisplayName(g),
+                                "serverID" to serverId,
+                                "serverIdx" to serverCnt,
+                                "serverName" to serverName,
+                                "scenarioName" to scenarioName,
+                            ),
+                        ),
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun hallMetricRows(g: TurnGeneral): List<Pair<String, Any>> {
+        fun rank(type: String): Int = effectiveRankValue(g, type)
+        fun natural(type: String): Int = when (type) {
+            "experience" -> g.experience
+            "dedication" -> g.dedication
+            "dex1", "dex2", "dex3", "dex4", "dex5" -> (g.meta[type] as? Number)?.toInt() ?: 0
+            else -> 0
+        }
+        fun fit(value: Int): Int = value.coerceAtLeast(1)
+        val ttw = rank("ttw")
+        val ttd = rank("ttd")
+        val ttl = rank("ttl")
+        val tlw = rank("tlw")
+        val tld = rank("tld")
+        val tll = rank("tll")
+        val tsw = rank("tsw")
+        val tsd = rank("tsd")
+        val tsl = rank("tsl")
+        val tiw = rank("tiw")
+        val tid = rank("tid")
+        val til = rank("til")
+        val betGold = fit(rank("betgold"))
+        val war = fit(rank("warnum"))
+        val deathCrew = fit(rank("deathcrew"))
+        val deathPerson = fit(rank("deathcrew_person"))
+        val tt = fit(ttw + ttd + ttl)
+        val tl = fit(tlw + tld + tll)
+        val ts = fit(tsw + tsd + tsl)
+        val ti = fit(tiw + tid + til)
+        val calc = mapOf(
+            "ttrate" to ttw.toDouble() / tt,
+            "tlrate" to tlw.toDouble() / tl,
+            "tsrate" to tsw.toDouble() / ts,
+            "tirate" to tiw.toDouble() / ti,
+            "betrate" to rank("betwingold").toDouble() / betGold,
+            "winrate" to rank("killnum").toDouble() / war,
+            "killrate" to rank("killcrew").toDouble() / deathCrew,
+            "killrate_person" to rank("killcrew_person").toDouble() / deathPerson,
+        )
+        val types = listOf(
+            "experience" to "natural",
+            "dedication" to "natural",
+            "firenum" to "rank",
+            "warnum" to "rank",
+            "killnum" to "rank",
+            "winrate" to "calc",
+            "occupied" to "rank",
+            "killcrew" to "rank",
+            "killrate" to "calc",
+            "killcrew_person" to "rank",
+            "killrate_person" to "calc",
+            "dex1" to "natural",
+            "dex2" to "natural",
+            "dex3" to "natural",
+            "dex4" to "natural",
+            "dex5" to "natural",
+            "ttrate" to "calc",
+            "tlrate" to "calc",
+            "tsrate" to "calc",
+            "tirate" to "calc",
+            "betgold" to "rank",
+            "betwin" to "rank",
+            "betwingold" to "rank",
+            "betrate" to "calc",
+        )
+        return types.mapNotNull { (type, valueType) ->
+            if ((type == "winrate" || type == "killrate") && rank("warnum") < 10) return@mapNotNull null
+            if (type == "ttrate" && tt < 50) return@mapNotNull null
+            if (type == "tlrate" && tl < 50) return@mapNotNull null
+            if (type == "tsrate" && ts < 50) return@mapNotNull null
+            if (type == "tirate" && ti < 50) return@mapNotNull null
+            if (type == "betrate" && rank("betgold") < 1000) return@mapNotNull null
+            val value: Any = when (valueType) {
+                "natural" -> natural(type)
+                "rank" -> rank(type)
+                else -> calc.getValue(type)
+            }
+            val numericValue = when (value) {
+                is Number -> value.toDouble()
+                else -> value.toString().toDoubleOrNull() ?: 0.0
+            }
+            if (numericValue <= 0.0) null else type to value
+        }
+    }
+
+    private fun hallNationOf(general: TurnGeneral): EngineNation =
+        world.getNationById(general.nationId)
+            ?: EngineNation(
+                id = 0,
+                name = "재야",
+                color = "#000000",
+                typeCode = GameConst.neutralNationType,
+            )
+
+    private fun ownerDisplayName(general: TurnGeneral): String? {
+        val ownerId = general.userId ?: return general.meta["owner_name"]?.toString()
+        val owners = world.getState().meta["ownerNames"] as? Map<*, *>
+            ?: world.getState().meta["memberNames"] as? Map<*, *>
+            ?: world.getState().meta["userNames"] as? Map<*, *>
+        return owners?.get(ownerId)?.toString()
+            ?: owners?.get(ownerId.toIntOrNull())?.toString()
+            ?: general.meta["owner_name"]?.toString()
+    }
+
+    private fun nationTypeDisplayName(typeCode: String): String =
+        if (typeCode == GameConst.neutralNationType || typeCode == "None") "-" else typeCode.removePrefix("che_")
+
+    private fun phpNewColor(color: String): String =
+        when (color.uppercase()) {
+            "",
+            "#330000",
+            "#FF0000",
+            "#800000",
+            "#A0522D",
+            "#FF6347",
+            "#808000",
+            "#008000",
+            "#2E8B57",
+            "#008080",
+            "#6495ED",
+            "#0000FF",
+            "#000080",
+            "#483D8B",
+            "#7B68EE",
+            "#800080",
+            "#A9A9A9",
+            "#000000",
+            -> "#FFFFFF"
+            else -> "#000000"
+        }
+
+    override fun persistUnificationArchive(nationId: Int, josaYi: String) {
+        val nation = world.getNationById(nationId) ?: return
+        val serverId = world.archiveServerId() ?: return
+        val generals = world.listGenerals()
+        val nationGenerals = generals.filter { it.nationId == nationId }
+        val rankedNationGenerals = nationGenerals.sortedByDescending { it.dedication }
+        val archiveHistory = archiveVisibleNationHistory(nationId)
+        rankedNationGenerals.forEach {
+            world.pushLog(
+                logDraft(
+                    "general",
+                    "action",
+                    actionLogText("<D><b>${nation.name}</b></>${josaYi} 전토를 통일하였습니다.", LightActionWorld.YEAR_MONTH),
+                    generalId = it.id,
+                    nationId = nationId,
+                    userId = it.userId?.toIntOrNull(),
+                    flushBeforeArchive = true,
+                ),
+            )
+        }
+        generals.filter { it.nationId == 0 }.forEach { recorder.recordOldGeneralSnapshot(it) }
+        nationGenerals.forEach { recorder.recordOldGeneralSnapshot(it) }
+
+        recorder.recordNationArchiveSnapshot(nationArchive(serverId, nation, nationGenerals, archiveHistory))
+        recorder.recordNationArchiveSnapshot(
+            linkedMapOf(
+                "server_id" to serverId,
+                "nation" to 0,
+                "data" to linkedMapOf("nation" to 0, "name" to "재야", "generals" to generals.filter { it.nationId == 0 }.map { it.id }),
+            ),
+        )
+        recorder.recordGameWinnerUpdate(serverId, nationId)
+        recorder.recordEmperiorInsert(emperiorColumns(serverId, nation, rankedNationGenerals, josaYi, archiveHistory))
+    }
+
+    private fun nationArchive(
+        serverId: String,
+        nation: EngineNation,
+        nationGenerals: List<TurnGeneral>,
+        history: List<String>,
+    ): Map<String, Any?> {
+        val nationEnv = (nation.meta["nation_env"] as? Map<*, *>)?.entries?.associate { it.key.toString() to it.value } ?: emptyMap()
+        val aux = LinkedHashMap<String, Any?>()
+        (nation.meta["aux"] as? Map<*, *>)?.forEach { (k, v) -> aux[k.toString()] = v }
+        (nationEnv["max_power"] as? Map<*, *>)?.forEach { (k, v) ->
+            val key = k.toString()
+            if (!aux.containsKey(key)) aux[key] = v
+        }
+        val data = linkedMapOf<String, Any?>(
+            "nation" to nation.id,
+            "name" to nation.name,
+            "color" to nation.color,
+            "capital" to nation.capitalCityId,
+            "capset" to (nation.meta["capset"] ?: 0),
+            "gennum" to (nation.meta["gennum"] ?: nationGenerals.size),
+            "gold" to nation.gold,
+            "rice" to nation.rice,
+            "bill" to (nation.meta["bill"] ?: 0),
+            "rate" to (nation.meta["rate"] ?: 0),
+            "rate_tmp" to (nation.meta["rate_tmp"] ?: 0),
+            "secretlimit" to (nation.meta["secretlimit"] ?: 3),
+            "chief_set" to (nation.meta["chief_set"] ?: 0),
+            "scout" to (nation.meta["scout"] ?: 0),
+            "war" to (nation.meta["war"] ?: 0),
+            "strategic_cmd_limit" to (nation.meta["strategic_cmd_limit"] ?: 36),
+            "surlimit" to (nation.meta["surlimit"] ?: 72),
+            "tech" to nation.tech,
+            "power" to nation.power,
+            "spy" to jsonColumn(nation.meta["spy"] ?: emptyMap<String, Any?>()),
+            "level" to nation.level,
+            "type" to nation.typeCode,
+            "aux" to aux,
+            "generals" to nationGenerals.map { it.id },
+            "msg" to ((nationEnv["nationNotice"] as? Map<*, *>)?.get("msg") ?: ""),
+            "scout_msg" to nationEnv["scout_msg"],
+            "history" to history,
+        )
+        return linkedMapOf(
+            "server_id" to serverId,
+            "nation" to nation.id,
+            "data" to data,
+        )
+    }
+
+    private fun jsonColumn(value: Any?): String = when (value) {
+        is String -> value
+        else -> MetaJson.encode(value)
+    }
+
+    private fun emperiorColumns(
+        serverId: String,
+        nation: EngineNation,
+        nationGenerals: List<TurnGeneral>,
+        josaYi: String,
+        history: List<String>,
+    ): Map<String, Any?> {
+        val cities = world.listCities()
+        val totalPop = cities.sumOf { it.population }
+        val totalMaxPop = cities.sumOf { it.populationMax }.coerceAtLeast(1)
+        val chiefs = nationGenerals.filter { it.officerLevel >= 5 }.associateBy { it.officerLevel }
+        val genNames = nationGenerals.sortedByDescending { it.dedication }.joinToString(", ") { it.name }
+        val statisticRows = loadedStatisticRows() + recorder.statisticInserts().map { it.columns }
+        val maxNationCount = statisticRows.maxOfOrNull { statisticInt(it["nation_count"]) } ?: 1
+        val maxGeneralCount = statisticRows.mapNotNull { it["gen_count"]?.toString() }.maxOrNull()
+            ?: world.listGenerals().size.toString()
+        val nationStat = statisticRows.firstOrNull { statisticInt(it["nation_count"]) == maxNationCount }.orEmpty()
+        val latestStat = statisticRows.lastOrNull().orEmpty()
+        val serverName = world.getState().meta["serverName"]?.toString() ?: ""
+        val serverCnt = (world.getState().meta["serverCount"] as? Number)?.toInt() ?: 0
+        fun chiefName(level: Int) = chiefs[level]?.name
+        fun chiefPic(level: Int) = chiefs[level]?.meta?.get("picture")?.toString()
+        return linkedMapOf(
+            "phase" to "$serverName${serverCnt}기",
+            "server_id" to serverId,
+            "nation_count" to "1 / $maxNationCount",
+            "nation_name" to (nationStat["nation_name"] ?: ""),
+            "nation_hist" to (nationStat["nation_hist"] ?: ""),
+            "gen_count" to "${world.listGenerals().size} / $maxGeneralCount",
+            "personal_hist" to (latestStat["personal_hist"] ?: ""),
+            "special_hist" to (latestStat["special_hist"] ?: ""),
+            "name" to nation.name,
+            "type" to nation.typeCode,
+            "color" to nation.color,
+            "year" to resolveYear(),
+            "month" to resolveMonth(),
+            "power" to nation.power,
+            "gennum" to ((nation.meta["gennum"] as? Number)?.toInt() ?: nationGenerals.size),
+            "citynum" to cityCountOf(nation.id),
+            "pop" to "$totalPop / $totalMaxPop",
+            "poprate" to "${phpRoundString(totalPop.toDouble() / totalMaxPop * 100, 2)} %",
+            "gold" to nation.gold,
+            "rice" to nation.rice,
+            "l12name" to chiefName(12),
+            "l12pic" to chiefPic(12),
+            "l11name" to chiefName(11),
+            "l11pic" to chiefPic(11),
+            "l10name" to chiefName(10),
+            "l10pic" to chiefPic(10),
+            "l9name" to chiefName(9),
+            "l9pic" to chiefPic(9),
+            "l8name" to chiefName(8),
+            "l8pic" to chiefPic(8),
+            "l7name" to chiefName(7),
+            "l7pic" to chiefPic(7),
+            "l6name" to chiefName(6),
+            "l6pic" to chiefPic(6),
+            "l5name" to chiefName(5),
+            "l5pic" to chiefPic(5),
+            "tiger" to topRankString("killnum", nation.id, 5),
+            "eagle" to topRankString("firenum", nation.id, 7),
+            "gen" to genNames,
+            "history" to MetaJson.encode(history),
+            "aux" to (latestStat["aux"] ?: "{}"),
+        )
+    }
+
+    private fun loadedStatisticRows(): List<Map<String, Any?>> =
+        (world.getState().meta["statisticRows"] as? List<*>)
+            .orEmpty()
+            .mapNotNull { row ->
+                (row as? Map<*, *>)?.entries?.associateTo(LinkedHashMap()) { (key, value) ->
+                    key.toString() to value
+                }
+            }
+
+    private fun statisticInt(value: Any?): Int = when (value) {
+        is Number -> value.toInt()
+        else -> value?.toString()?.toIntOrNull() ?: 0
+    }
+
+    private fun archiveVisibleNationHistory(nationId: Int): List<String> {
+        val loaded = world.getState().meta["nationHistory"] as? Map<*, *>
+        val persisted = (loaded?.get(nationId) ?: loaded?.get(nationId.toString()) as? List<*>)
+            .let { it as? List<*> }
+            .orEmpty()
+            .mapNotNull { it?.toString() }
+        val buffered = bufferedUnificationHistoryDraft
+        val pending = world.peekLogs()
+            .filter {
+                it !== buffered &&
+                    it.scope == "nation" &&
+                    it.category == "history" &&
+                    it.nationId == nationId
+            }
+            .map { it.text }
+            .asReversed()
+        return pending + persisted
+    }
+
+    private fun topRankString(type: String, nationId: Int, limit: Int): String =
+        world.listGenerals()
+            .asSequence()
+            .filter { it.nationId == nationId }
+            .map { it to effectiveRankValue(it, type) }
+            .filter { (_, value) -> value > 0 }
+            .sortedByDescending { (_, value) -> value }
+            .take(limit)
+            .joinToString(", ") { (general, value) ->
+                "${general.name}【${NumberFormat.getIntegerInstance(Locale.US).format(value)}】"
+            }
+
+    private fun effectiveRankValue(general: TurnGeneral, type: String): Int {
+        val base = (general.meta[type] as? Number)?.toInt() ?: 0
+        val column = RankColumn.byColumn(type) ?: return base
+        return when (val delta = recorder.rankDeltas(general.id)[column]) {
+            is RankDelta.Increment -> base + delta.value
+            is RankDelta.Set -> delta.value
+            null -> base
+        }
+    }
+
+    private fun phpRoundString(value: Double, scale: Int): String =
+        phpRoundDecimal(value, scale).stripTrailingZeros().toPlainString()
+
+    override fun logHistory() {
+        val state = world.getState()
+        val map = linkedMapOf<String, Any?>(
+            "startYear" to ((state.meta["startYear"] as? Number)?.toInt() ?: resolveYear()),
+            "year" to resolveYear(),
+            "month" to resolveMonth(),
+            "cityList" to world.listCities().map {
+                listOf(it.id, it.level, it.state, it.nationId, it.region, it.supplyState)
+            },
+            "nationList" to world.listNations().filter { it.id != 0 }.map {
+                listOf(it.id, it.name, it.color, it.capitalCityId ?: 0)
+            },
+            "spyList" to emptyMap<String, Any?>(),
+            "shownByGeneralList" to emptyList<Int>(),
+            "myCity" to null,
+            "myNation" to null,
+            "version" to 0,
+            "result" to true,
+        )
+        val nations = world.listNations().filter { it.id != 0 }.map {
+            linkedMapOf<String, Any?>(
+                "nation" to it.id,
+                "name" to it.name,
+                "color" to it.color,
+                "type" to it.typeCode,
+                "level" to it.level,
+                "capital" to (it.capitalCityId ?: 0),
+                "gennum" to (it.meta["gennum"] ?: world.listGenerals().count { general -> general.nationId == it.id }),
+                "power" to it.power,
+            )
+        }.toMutableList()
+        nations += linkedMapOf(
+            "nation" to 0,
+            "name" to "재야",
+            "color" to "#000000",
+            "type" to GameConst.neutralNationType,
+            "level" to 0,
+            "capital" to 0,
+            "gold" to 0,
+            "rice" to 2000,
+            "tech" to 0,
+            "gennum" to 1,
+            "power" to 1,
+        )
+        val nationsById = nations.associateByTo(LinkedHashMap()) { (it["nation"] as Number).toInt() }
+        for (city in world.listCities()) {
+            val nation = nationsById[city.nationId] ?: continue
+            @Suppress("UNCHECKED_CAST")
+            val cities = nation.getOrPut("cities") { mutableListOf<String>() } as MutableList<String>
+            cities += city.name
+        }
+        val sortedNations = nations.sortedByDescending { (it["power"] as Number).toInt() }
+        val globalHistory = currentGlobalLogs("history")
+        val globalAction = currentGlobalLogs("action")
+        val mapJson = MetaJson.encode(map)
+        val nationsJson = MetaJson.encode(sortedNations)
+        val globalHistoryJson = MetaJson.encode(globalHistory)
+        val globalActionJson = MetaJson.encode(globalAction)
+        recorder.recordYearbookInsert(
+            linkedMapOf(
+                "server_id" to (world.archiveServerId() ?: world.getState().serverId ?: "default"),
+                "year" to resolveYear(),
+                "month" to resolveMonth(),
+                "map" to mapJson,
+                "nations" to nationsJson,
+                "global_history" to globalHistoryJson,
+                "global_action" to globalActionJson,
+            ),
+        )
+    }
+
+    private fun currentGlobalLogs(category: String): List<String> {
+        val persisted = (world.getState().meta["globalLogs"] as? List<*>)
+            .orEmpty()
+            .mapNotNull { it as? Map<*, *> }
+            .filter {
+                it["category"]?.toString()?.equals(category, ignoreCase = true) == true &&
+                    (it["year"] as? Number)?.toInt() == resolveYear() &&
+                    (it["month"] as? Number)?.toInt() == resolveMonth()
+            }
+            .mapNotNull { it["text"]?.toString() }
+        val pending = world.peekLogs()
+            .filter {
+                it.scope.lowercase() in setOf("global", "system") &&
+                    it.category.equals(category, ignoreCase = true) &&
+                    (it.year ?: resolveYear()) == resolveYear() &&
+                    (it.month ?: resolveMonth()) == resolveMonth()
+            }
+            .map { it.text }
+            .asReversed()
+        val logs = pending + persisted
+        if (logs.isNotEmpty()) return logs
+        return when (category.lowercase()) {
+            "history" -> listOf("<C>●</>${resolveYear()}년 ${resolveMonth()}월: 기록 없음")
+            "action" -> listOf("<C>●</>${resolveMonth()}월: 기록 없음")
+            else -> emptyList()
+        }
+    }
+
+    override fun raiseInvaderMessages() {
+        if (activeCityConst().all().none { it.value.level == 4 }) return
+        val winnerNationId = activeNationIds().singleOrNull() ?: return
+        val chiefs = world.listGenerals()
+            .filter { it.nationId == winnerNationId && it.officerLevel >= 5 }
+            .associateBy { it.officerLevel }
+        (12 downTo 5)
+            .mapNotNull(chiefs::get)
+            .filter { it.npcState < 2 }
+            .take(2)
+            .forEach(::recordInvaderOfferMessages)
+    }
+
+    private fun recordInvaderOfferMessages(general: TurnGeneral) {
+        markNewMessage(general)
+        val nation = world.getNationById(general.nationId)
+        val src = linkedMapOf<String, Any?>(
+            "id" to 0,
+            "name" to "",
+            "nation_id" to 0,
+            "nation" to "System",
+            "color" to "#000000",
+            "icon" to "",
+        )
+        val dest = linkedMapOf<String, Any?>(
+            "id" to general.id,
+            "name" to general.name,
+            "nation_id" to general.nationId,
+            "nation" to (nation?.name ?: "재야"),
+            "color" to (nation?.color ?: "#000000"),
+            "icon" to (general.meta["picture"]?.toString() ?: ""),
+        )
+        val now = world.getState().lastTurnTime.toString()
+        val validUntil = "9999-12-31T00:00:00Z"
+        val offers = listOf(
+            listOf(-2.0, -1.2, 15000.0, -1.0) to "어려움",
+            listOf(-2.0, -1.2, -1.0, -0.5) to "보통",
+            listOf(-1.0, -1.0, -0.8, 0.0) to "쉬움",
+        )
+        for ((args, difficulty) in offers) {
+            val option = linkedMapOf<String, Any?>(
+                "action" to "raiseInvader",
+                "args" to args,
+                "used" to false,
+            )
+            val text = "이벤트 게임으로 이민족[$difficulty]을 소환"
+            val receiverBody = MetaJson.encode(
+                linkedMapOf("src" to src, "dest" to dest, "text" to text, "option" to option),
+            )
+            val receiverId = recorder.recordMessageInsert(
+                general.id,
+                "private",
+                0,
+                general.id,
+                now,
+                validUntil,
+                receiverBody,
+            )
+            val senderOption = LinkedHashMap(option).apply { this["receiverMessageID"] = receiverId }
+            val senderBody = MetaJson.encode(
+                linkedMapOf("src" to src, "dest" to dest, "text" to text, "option" to senderOption),
+            )
+            recorder.recordMessageInsert(0, "private", 0, general.id, now, validUntil, senderBody)
+        }
+    }
+
+    private fun markNewMessage(general: TurnGeneral) {
+        if ((general.meta["newmsg"] as? Number)?.toInt() == 1) return
+        val nextMeta = LinkedHashMap(general.meta)
+        nextMeta["newmsg"] = 1
+        val next = general.copy(meta = nextMeta)
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(general), PerTurnOverlay.toLogicGeneral(next))
+        world.updateGeneral(next)
+    }
+
     /** `$gameStor->refreshLimit = $gameStor->refreshLimit * factor`(php:65). meta 즉시 반영 —
      *  game_env refreshLimit 컬럼 flush/boot-load 는 isunited 와 동일 클래스의 별도 갭(LEDGER 백로그:
      *  game_env KV write seam 부재). [InMemoryTurnWorld.multiplyRefreshLimit] 참조. */
-    override fun multiplyRefreshLimit(factor: Int) = world.multiplyRefreshLimit(factor)
+    override fun multiplyRefreshLimit(factor: Int) {
+        world.multiplyRefreshLimit(factor)
+        recorder.recordKv("game_env", "game_env", "refreshLimit", world.getState().meta["refreshLimit"])
+    }
 
     /** `$db->delete('event', 'id = %i', currentEventID)`(php:67-68) — 1회용 event 자기 삭제.
      *  WorldEventContextFactory 가 env[DeleteEventContext.ENV_KEY] 로 심은 live EventStore 에 위임
@@ -688,14 +1627,14 @@ class WorldActionContext(
     }
 
     override fun pushGlobalActionLog(msg: String) {
-        world.pushLog(logDraft("global", "action", msg))
+        world.pushLog(logDraft("global", "action", actionLogText(msg, 4)))
     }
 
     override fun pushGlobalHistoryLog(msg: String, type: Int) {
-        world.pushLog(logDraft("global", "history", msg, subType = type.toString()))
+        world.pushLog(logDraft("global", "history", actionLogText(msg, type), subType = type.toString()))
     }
 
     override fun pushGeneralHistoryLog(msg: String, type: Int) {
-        world.pushLog(logDraft("general", "history", msg, subType = type.toString()))
+        world.pushLog(logDraft("general", "history", actionLogText(msg, type), subType = type.toString()))
     }
 }

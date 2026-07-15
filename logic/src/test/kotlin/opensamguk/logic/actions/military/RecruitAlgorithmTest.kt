@@ -3,14 +3,22 @@ package opensamguk.logic.actions.military
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
+import opensamguk.logic.constraints.ConstraintContext
+import opensamguk.logic.constraints.ConstraintMode
+import opensamguk.logic.constraints.ConstraintResult
+import opensamguk.logic.constraints.evaluateConstraints
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.statview.MemoryStateView
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -28,18 +36,18 @@ class RecruitAlgorithmTest {
     private val date = "12:34"
 
     private fun general(
-        leadership: Int = 70, crew: Int = 0, crewTypeId: Int = 1100,
+        leadership: Int = 70, crew: Int = 0, crewTypeId: Int = 1100, cityId: Int = 7,
         train: Double = 0.0, atmos: Double = 0.0, gold: Int = 1_000_000, rice: Int = 1_000_000,
     ) = General(
-        id = 42, nationId = 1, cityId = 7,
+        id = 42, nationId = 1, cityId = cityId,
         leadership = leadership, strength = 70, intel = 70, injury = 0,
         experience = 0.0, dedication = 0.0, officerLevel = 1,
         gold = gold, rice = rice, crew = crew, train = train, atmos = atmos, crewTypeId = crewTypeId,
         meta = linkedMapOf("leadership_exp" to 0.0),
     )
 
-    private fun city(pop: Int = 100_000, trust: Double = 50.0) = City(
-        id = 7, nationId = 1, level = 5,
+    private fun city(id: Int = 7, pop: Int = 100_000, trust: Double = 50.0) = City(
+        id = id, nationId = 1, level = 5,
         commerce = 1000, commerceMax = 20000, agriculture = 1000, agricultureMax = 20000,
         supplyState = 1, frontState = 0, trust = trust, population = pop, populationMax = 200000,
     )
@@ -53,14 +61,148 @@ class RecruitAlgorithmTest {
     private fun ctx(draft: GeneralActionDraft, args: Map<String, Any?>, rng: RandUtil = rng()) =
         GeneralActionResolveContext(draft, rng, env, MONTH, date, args = args)
 
+    private fun constraintCtx(
+        args: Map<String, Any?>,
+        mode: ConstraintMode = ConstraintMode.FULL,
+        cityId: Int = 7,
+        env: Map<String, Any?> = emptyMap(),
+    ) = ConstraintContext(actorId = 42, cityId = cityId, nationId = 1, args = args, env = env, mode = mode)
+
+    private fun view(
+        g: General = general(),
+        c: City = city(id = g.cityId),
+        n: Nation = nation,
+    ) = MemoryStateView(
+        generals = linkedMapOf(g.id to g),
+        cities = linkedMapOf(c.id to c),
+        nations = linkedMapOf(n.id to n),
+        env = emptyMap(),
+    )
+
     private fun jingbyeong() = RecruitAlgorithm.cheJingbyeong(pipeline)
     private fun mobyeong() = RecruitAlgorithm.cheMobyeong(pipeline)
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     @Test
     fun `key name category for 징병 and 모병`() {
         assertEquals("che_징병", jingbyeong().key); assertEquals("징병", jingbyeong().name)
         assertEquals("che_모병", mobyeong().key); assertEquals("모병", mobyeong().name)
         assertEquals("군사", jingbyeong().category)
+    }
+
+    @Test
+    fun `parseArgs accepts PHP numeric amount strings and rejects invalid crewType without throwing`() {
+        assertEquals(linkedMapOf("crewType" to 1100, "amount" to 123), jingbyeong().parseArgs(mapOf("crewType" to 1100, "amount" to "123.9")))
+        assertEquals(emptyMap(), jingbyeong().parseArgs(mapOf("crewType" to 999, "amount" to 100)))
+        assertEquals(emptyMap(), jingbyeong().parseArgs(mapOf("crewType" to 1100, "amount" to -1)))
+    }
+
+    @Test
+    fun `FULL constraint list matches PHP che_jingbyeong initWithArg order`() {
+        val names = jingbyeong().buildConstraints(constraintCtx(linkedMapOf("crewType" to 1100, "amount" to 500))).map { it.name }
+        assertEquals(
+            listOf(
+                "NotBeNeutral",
+                "OccupiedCity",
+                "ReqCityCapacity",
+                "ReqCityTrust",
+                "ReqGeneralGold",
+                "ReqGeneralRice",
+                "ReqGeneralCrewMargin",
+                "AvailableRecruitCrewType",
+            ),
+            names,
+        )
+
+        val minNames = jingbyeong().buildMinConstraints(constraintCtx(emptyMap())).map { it.name }
+        assertEquals(listOf("NotBeNeutral", "OccupiedCity", "ReqCityCapacity", "ReqCityTrust"), minNames)
+    }
+
+    @Test
+    fun `FULL population gate uses requested crew before leadership cap`() {
+        val args = linkedMapOf<String, Any?>("crewType" to 1100, "amount" to 9999)
+        val ctx = constraintCtx(args)
+        val pop = GameConst.minAvailableRecruitPop + 9999 - 1
+        val result = evaluateConstraints(jingbyeong().buildConstraints(ctx), ctx, view(g = general(leadership = 70), c = city(pop = pop)))
+        assertEquals(ConstraintResult.Deny("주민이 부족합니다.", "ReqCityCapacity"), result)
+    }
+
+    @Test
+    fun `FULL gold and rice gates use applied crew after leadership cap`() {
+        val args = linkedMapOf<String, Any?>("crewType" to 1100, "amount" to 9999)
+
+        val goldCtx = constraintCtx(args)
+        val goldResult = evaluateConstraints(
+            jingbyeong().buildConstraints(goldCtx),
+            goldCtx,
+            view(g = general(leadership = 70, gold = 629, rice = 70), c = city(pop = 100_000)),
+        )
+        assertEquals(ConstraintResult.Deny("자금이 모자랍니다.", "ReqGeneralGold"), goldResult)
+
+        val riceCtx = constraintCtx(args)
+        val riceResult = evaluateConstraints(
+            jingbyeong().buildConstraints(riceCtx),
+            riceCtx,
+            view(g = general(leadership = 70, gold = 630, rice = 69), c = city(pop = 100_000)),
+        )
+        assertEquals(ConstraintResult.Deny("군량이 모자랍니다.", "ReqGeneralRice"), riceResult)
+    }
+
+    @Test
+    fun `FULL crew margin uses computed leadership and current crewType`() {
+        val args = linkedMapOf<String, Any?>("crewType" to 1100, "amount" to 100)
+        val ctx = constraintCtx(args)
+        val result = evaluateConstraints(
+            jingbyeong().buildConstraints(ctx),
+            ctx,
+            view(g = general(leadership = 70, crew = 7000, crewTypeId = 1100), c = city(pop = 100_000)),
+        )
+        assertEquals(ConstraintResult.Deny("이미 많은 병력을 보유하고 있습니다.", "ReqGeneralCrewMargin"), result)
+    }
+
+    @Test
+    fun `FULL recruitable unit gate denies PHP Impossible unit and respects tech city requirements`() {
+        val castleArgs = linkedMapOf<String, Any?>("crewType" to 1000, "amount" to 100)
+        val castleCtx = constraintCtx(castleArgs)
+        val castleResult = evaluateConstraints(
+            jingbyeong().buildConstraints(castleCtx),
+            castleCtx,
+            view(g = general(leadership = 70, crewTypeId = 1100), c = city(pop = 100_000)),
+        )
+        assertEquals(ConstraintResult.Deny("현재 선택할 수 없는 병종입니다.", "AvailableRecruitCrewType"), castleResult)
+
+        val eliteArgs = linkedMapOf<String, Any?>("crewType" to 1104, "amount" to 100)
+        val denyCtx = constraintCtx(eliteArgs, cityId = 7)
+        val denyResult = evaluateConstraints(
+            jingbyeong().buildConstraints(denyCtx),
+            denyCtx,
+            view(g = general(cityId = 7), c = city(id = 7, pop = 100_000), n = nation.copy(tech = 3000.0)),
+        )
+        assertEquals(ConstraintResult.Deny("현재 선택할 수 없는 병종입니다.", "AvailableRecruitCrewType"), denyResult)
+
+        val allowCtx = constraintCtx(eliteArgs, cityId = 3)
+        val allowResult = evaluateConstraints(
+            jingbyeong().buildConstraints(allowCtx),
+            allowCtx,
+            view(g = general(cityId = 3), c = city(id = 3, pop = 100_000), n = nation.copy(tech = 3000.0)),
+        )
+        assertEquals(ConstraintResult.Allow, allowResult)
+    }
+
+    @Test
+    fun `same recruitment view yields identical PRECHECK and FULL results`() {
+        val args = linkedMapOf<String, Any?>("crewType" to 1100, "amount" to 1000)
+        val freshView = view(g = general(leadership = 80, gold = 1000, rice = 1000), c = city(pop = 100_000))
+        val preCtx = constraintCtx(args, mode = ConstraintMode.PRECHECK)
+        val fullCtx = constraintCtx(args, mode = ConstraintMode.FULL)
+
+        val precheck = evaluateConstraints(jingbyeong().buildConstraints(preCtx), preCtx, freshView)
+        val full = evaluateConstraints(jingbyeong().buildConstraints(fullCtx), fullCtx, freshView)
+
+        assertEquals(ConstraintResult.Allow, precheck)
+        assertEquals(precheck, full)
     }
 
     @Test
@@ -151,6 +293,29 @@ class RecruitAlgorithmTest {
         val aux = draft.general.meta["aux"] as Map<String, Any?>
         assertEquals(UnitSetTable.T_FOOTMAN, aux["armType"])
         assertEquals("징병", draft.general.lastTurn.command)
+    }
+
+    @Test
+    fun `tail order is lastTurn checkStat staticEvent setAux then unique intent`() {
+        val observed = mutableListOf<Pair<String, Any?>>()
+        StaticEventHandler.register("che_징병") { general, _, _, _ ->
+            @Suppress("UNCHECKED_CAST")
+            val aux = general.meta["aux"] as? Map<String, Any?>
+            observed += general.lastTurn.command to aux?.get("armType")
+        }
+
+        val command = jingbyeong()
+        val draft = GeneralActionDraft(general(leadership = 100, crew = 0), city(), nation)
+        command.resolve(ctx(draft, linkedMapOf("crewType" to 1100, "amount" to 1000)))
+
+        assertEquals(listOf<Pair<String, Any?>>("징병" to null), observed)
+        @Suppress("UNCHECKED_CAST")
+        val aux = draft.general.meta["aux"] as Map<String, Any?>
+        assertEquals(UnitSetTable.T_FOOTMAN, aux["armType"])
+        assertEquals("징병", draft.general.lastTurn.command)
+        assertEquals("징병", command.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("아이템", command.lastUniqueLotteryIntent?.acquireType)
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler>setAux", command.lastUniqueLotteryIntent?.afterTail)
     }
 
     @Test

@@ -15,6 +15,14 @@ import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.entity.AuctionEntity
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.auction.AuctionType
+import opensamguk.logic.event.EventAction
+import opensamguk.logic.event.EventActionContext
+import opensamguk.logic.event.EventActionFactory
+import opensamguk.logic.event.EventCondition
+import opensamguk.logic.event.EventDispatcher
+import opensamguk.logic.event.EventStore
+import opensamguk.logic.event.LightActionWorld
+import opensamguk.logic.event.RawAction
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.jsonDecode
 import java.lang.reflect.Proxy
@@ -58,6 +66,83 @@ class MonthlyPostUpdateHookTailWiringTest {
         assertEquals(null, world.getNationById(7))
         assertEquals(0, world.getGeneralById(70)!!.nationId)
         assertTrue(recorder.deletedNationIds().contains(7))
+    }
+
+    @Test
+    fun `Q11 auto-disband drains ordered PHP logs before one OccupyCity dispatch`() {
+        val world = world(
+            nations = listOf(nation(7, "방랑", level = 0, meta = mapOf("gennum" to 2))),
+            generals = listOf(
+                general(70, name = "방랑군", nationId = 7, officerLevel = 12, npc = 0),
+                general(71, name = "부장", nationId = 7, officerLevel = 1, npc = 0),
+            ),
+            cities = listOf(city(1, "낙양", nationId = 7, front = 3)),
+        )
+        val recorder = ChangeRecorder()
+        val dispatchObservations = mutableListOf<String>()
+        val dispatcher = occupyCityDispatcher(world, dispatchObservations)
+
+        MonthlyPostUpdateHook(
+            world,
+            recorder,
+            GeneralActionPipeline(),
+            auctionRepository = auctionRepo(),
+            eventDispatcher = dispatcher,
+        ).run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+
+        assertEquals(
+            listOf("nation=null,generals=0/0,cities=0/0"),
+            dispatchObservations,
+            "OCCUPY_CITY runs once after deletion state has been applied",
+        )
+        val logs = world.consumeDirtyState().logs.map { it.scope to it.category to it.text }
+        assertEquals(
+            listOf(
+                "general" to "action" to "<C>●</>초반 제한후 방랑군은 자동 해산됩니다.",
+                "general" to "action" to "<C>●</>4월:세력을 해산했습니다. <1>00:00</>",
+                "global" to "action" to "<C>●</>4월:<Y>방랑군</>이 세력을 해산했습니다.",
+                "general" to "history" to "<C>●</>200년 4월:<D><b>방랑</b></>을 해산",
+                "global" to "history" to "<C>●</>200년 4월:<R><b>【멸망】</b></><D><b>방랑</b></>은 <R>멸망</>했습니다.",
+                "general" to "action" to "<C>●</><D><b>방랑</b></>이 <R>멸망</>했습니다.",
+                "general" to "history" to "<C>●</>200년 4월:<D><b>방랑</b></>이 <R>멸망</>",
+                "general" to "action" to "<C>●</><D><b>방랑</b></>이 <R>멸망</>했습니다.",
+                "general" to "history" to "<C>●</>200년 4월:<D><b>방랑</b></>이 <R>멸망</>",
+                "global" to "action" to "<C>●</>4월:OCCUPY marker",
+            ),
+            logs,
+        )
+    }
+
+    @Test
+    fun `Q11 auto-disband uses game env sameMonth guard and skips delete event on failed run`() {
+        val world = world(
+            meta = mapOf("init_year" to 200, "init_month" to 4),
+            nations = listOf(nation(7, "방랑", level = 0, meta = mapOf("gennum" to 1))),
+            generals = listOf(general(70, name = "방랑군", nationId = 7, officerLevel = 12, npc = 0)),
+            cities = listOf(city(1, "낙양", nationId = 7, front = 3)),
+        )
+        val recorder = ChangeRecorder()
+        val dispatchObservations = mutableListOf<String>()
+
+        MonthlyPostUpdateHook(
+            world,
+            recorder,
+            GeneralActionPipeline(),
+            auctionRepository = auctionRepo(),
+            eventDispatcher = occupyCityDispatcher(world, dispatchObservations),
+        ).run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+
+        assertEquals(emptyList(), dispatchObservations)
+        assertEquals(null, recorder.deletedNationIds().singleOrNull())
+        assertEquals(7, world.getNationById(7)!!.id)
+        assertEquals(7, world.getGeneralById(70)!!.nationId)
+        assertEquals(
+            listOf(
+                "<C>●</>초반 제한후 방랑군은 자동 해산됩니다.",
+                "<C>●</>4월:다음 턴부터 해산할 수 있습니다. <1>00:00</>",
+            ),
+            world.consumeDirtyState().logs.map { it.text },
+        )
     }
 
     @Test
@@ -176,7 +261,7 @@ class MonthlyPostUpdateHookTailWiringTest {
     }
 
     @Test
-    fun `Q15 consumes only the trigger draw and emits emperor recruitment log`() {
+    fun `Q15 ambient tournament pattern does not consume the monthly RNG shuffle cursor`() {
         val world = world(
             meta = mapOf(
                 "tournament" to 0,
@@ -198,6 +283,37 @@ class MonthlyPostUpdateHookTailWiringTest {
         assertTrue(log.contains("황제 <Y>유비</>의 명으로 "))
         assertTrue(log.contains("대회가 개최됩니다! 천하의 "))
         assertTrue(log.contains("</span>들을 모집하고 있습니다!"))
+    }
+
+    @Test
+    fun `Q15 sanctioned tournament divergence is repeatable without claiming PHP shuffle parity`() {
+        fun runPattern(): List<Int> {
+            val world = world(
+                meta = mapOf(
+                    "hiddenSeed" to "0123456789abcdef0123456789abcdef",
+                    "tournament" to 0,
+                    "tnmt_trig" to true,
+                    "tnmt_pattern" to emptyList<Int>(),
+                ),
+                nations = listOf(nation(1, "후한", level = 7, meta = mapOf("gennum" to 1))),
+                generals = listOf(general(10, name = "유비", nationId = 1, officerLevel = 12, npc = 0)),
+                cities = listOf(city(1, "낙양", nationId = 1)),
+            )
+            val recorder = ChangeRecorder()
+            val rng = ScriptedRng(bools = ArrayDeque(listOf(true, false, false)))
+
+            MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
+                .run(rng)
+
+            assertEquals(0, rng.shuffleCalls)
+            val kv = recorder.kvDirty()
+            @Suppress("UNCHECKED_CAST")
+            val remaining = kv.getValue(KvKey("game_env", "game_env", "tnmt_pattern")) as List<Int>
+            val selected = kv.getValue(KvKey("game_env", "game_env", "tnmt_type")) as Int
+            return remaining + selected
+        }
+
+        assertEquals(1, List(12) { runPattern() }.toSet().size)
     }
 
     @Test
@@ -303,4 +419,21 @@ class MonthlyPostUpdateHookTailWiringTest {
                 }
             }
         } as AuctionRepository
+
+    private fun occupyCityDispatcher(
+        world: InMemoryTurnWorld,
+        observations: MutableList<String>,
+    ): EventDispatcher {
+        val store = EventStore()
+        store.insert("occupy_city", 1, EventCondition.ConstBool(true), listOf(RawAction("Probe", emptyList())))
+        val factory = EventActionFactory().register("Probe") {
+            object : EventAction {
+                override fun run(ctx: EventActionContext) {
+                    observations += "nation=${world.getNationById(7)},generals=${world.getGeneralById(70)?.nationId}/${world.getGeneralById(71)?.nationId},cities=${world.getCityById(1)?.nationId}/${world.getCityById(1)?.frontState}"
+                    (ctx as LightActionWorld).pushGlobalActionLog("OCCUPY marker")
+                }
+            }
+        }
+        return EventDispatcher(store, factory)
+    }
 }
