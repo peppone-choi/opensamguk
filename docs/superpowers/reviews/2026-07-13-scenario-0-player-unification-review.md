@@ -1,6 +1,8 @@
 # Review: scenario_0 player-command unification gate
 
-## Verdict: full gates green; fresh independent review pending
+## Verdict: cleared
+
+SHIP_READY
 
 The first independent review returned `fix-required` despite green gates. Its scenario, lifecycle,
 archive, command, lottery, and `checkEmperior` findings have since been remediated. The former
@@ -70,20 +72,20 @@ The B1 harness directly drives `ReservedTurnHandler` and the nation-command hand
 - Earlier canonical backend parity gate: `BUILD SUCCESSFUL in 2m 40s`; XML gate green with 480 suites and 4,358 tests. The previously observed 22 failures and the three subsequently exposed stale log assertions were absent; whole-suite failures/errors were 0 and the single skip was the existing Docker-availability assumption path.
 - Final isolated rerun after unification archive, dissolution-event, and persistence-boundary remediation: forced five-module gate `BUILD SUCCESSFUL in 30m 44s`, then canonical `tools/parity/gate.sh backend` `BUILD SUCCESSFUL in 15m 52s`; both report 481 suites and 4,406 tests with failures/errors 0 and one existing assumption skip. The original 22 failures remain absent.
 - Final canonical rerun after the four direct PHP parity repairs: `tools/parity/gate.sh backend` `BUILD SUCCESSFUL in 20m 51s`; an independent XML aggregation confirms 481 suites, 4,406 tests, failures/errors 0, skip 1. The original 22 failures remain absent.
+- Final-review remediation target: `JoinTest`, `RandomImgwanTest`, and `ReservedTurnHandlerTest` `BUILD SUCCESSFUL in 11m 55s`. This proves `che_장수대상임관` persists `destGeneralID`, forced-unique refunds delete the aux marker, and the random-join test no longer claims PHP native-shuffle order.
 - The final forced run exposed three additional assertions: `last_turn` duplicated into `general.meta`, NPC random-join inheritance, and conflict JSON `8.0`. The first was fixed at `GeneralRowMapper`; the latter two expectations were aligned to PHP `InheritancePointManager.php:261-270` and `process_war.php:508-522`. Their focused rerun and both full gates are green.
 - Frontend verification on the current Next 15-line patch `15.5.20`: `web/game` typecheck, 37 files/148 tests, and production build green; `web/gateway` typecheck, 1 file/3 tests, and production build green. The ActionLogger-prefix RED reproduced two duplicate-date assertions before the three live log surfaces were aligned to the legacy inline rendering contract.
 - Production dependency audit: the prior `15.5.19` dependency graphs reported zero vulnerabilities. The final `15.5.20` re-audit could not produce a result because both npm audit endpoints returned HTTP 410; this external failure is recorded and is not treated as a successful audit.
 - Credential-default hardening: the tracked weak admin password example and local Compose fallback were removed. Production Compose still requires an explicit server-side secret, and blank local values skip the idempotent admin seed.
-- Strict agent-system evidence: `tools/agent-system/check.py --strict --base origin/main --format json` returned `findings: []` and `ok: true`.
+- Final strict agent-system rerun after the cleared critique artifact returned `findings: []` and `ok: true`.
 - The first independent read-only parity review returned `fix-required`. Remediation now includes
   PHP seed RNG replay, neutral/deferred NPCs, a source-verified V26 deferred-event migration,
   active server identity, restart-safe archives/inheritance, dissolution/founding alternatives,
   exhaustive unique-lottery call-site coverage, ambient-shuffle proof, and the complete unification
-  tail. Full gates are now green; shipment remains blocked until a fresh reviewer returns
-  `ship-ready` and the strict agent-system check is repeated against the final diff.
+  tail. Fresh reviewer `019f6495-1e81-74a3-ab98-f1f4f12e1c0a` rechecked the four final findings
+  and returned exact `Verdict: cleared` plus `SHIP_READY` after the targeted gate passed.
 
-## Remaining gates
+## Residual scope
 
-- Obtain a fresh `ship-ready` parity verdict and repeat the strict agent-system check against the final diff.
 - B1b peace/non-aggression/break diplomacy policy remains planned and is not claimed by this review.
 - B2 must cover Redis intake, `TurnRunService`, API/SSE observation, and atomic rollback/retry of a failed fresh-world seed.

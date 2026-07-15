@@ -2,12 +2,14 @@
 
 ## Scope
 
-This review resolves only the two ambient-shuffle P0 findings. Runtime Kotlin files and their
-tests are owned by the surrounding scenario work and were not modified in this slice. The
-owned evidence is:
+This review records the three native-PHP ambient-shuffle boundaries found before shipment.
+Runtime substitutes remain deterministic and preserve their enclosing seeded `RandUtil` cursors.
+The owned evidence is:
 
 - `tools/php-golden/capture_ambient_shuffle_quarantine.php`
 - `tools/php-golden/p3-capture-backlog.md`
+- `logic/src/main/kotlin/opensamguk/logic/actions/personnel/CheRandomImgwan.kt`
+- `logic/src/test/kotlin/opensamguk/logic/actions/personnel/RandomImgwanTest.kt`
 - this review artifact
 
 This artifact is intentionally separate from the shared scenario review and LEDGER.
@@ -27,7 +29,10 @@ This artifact is intentionally separate from the shared scenario review and LEDG
   - Consumes `$rng->nextBool(0.4)` at line 1292.
   - Calls ambient `shuffle($tnmt_pattern)` at line 1300 when no pattern exists.
   - Pops the selected type at line 1303, stores the remainder, then passes the type to
-    `startTournament`, which persists it as `tnmt_type` (`func_tournament.php:277-292`).
+  `startTournament`, which persists it as `tnmt_type` (`func_tournament.php:277-292`).
+- `legacy/devsam-core/hwe/sammo/Command/General/che_랜덤임관.php:150-173`
+  - Calls native `shuffle($nations)` before the seeded command RNG score loop.
+  - The native permutation is not recoverable from the command seed or persisted game state.
 - `legacy/devsam-core/hwe/func_gamerule.php:423-434`
   - Q11 `checkWander`, Q15 `triggerTournament`, and Q16 `registerAuction` share the monthly
     `RandUtil`; the native Q15 shuffle is not a call on that object.
@@ -41,8 +46,8 @@ This artifact is intentionally separate from the shared scenario review and LEDG
 
 ## Disposition
 
-**Verdict: sanctioned deterministic divergence**. Neither ambient permutation is claimed as
-byte-parity-complete; the enclosing mechanics remain executable and replayable.
+**Verdict: sanctioned deterministic divergence**. None of the three ambient permutations is
+claimed as byte-parity-complete; the enclosing mechanics remain executable and replayable.
 
 On 2026-07-15 the user explicitly directed the release to proceed without additional tests for
 these ambient permutations. This waives no seeded-stream invariant and does not convert either
@@ -56,6 +61,11 @@ The tournament path executes the deterministic month-scoped substitute adopted b
 It preserves the PHP source-stream boundary by keeping the permutation outside the monthly
 `RandUtil` cursor. This is a replay-safety divergence, not proof that the selected tournament type
 matches PHP.
+
+The NPC foreign branch of random join keeps the supplied insertion order as its deterministic
+substitute, then preserves PHP's per-nation `nextFloat1`, cumulative-affinity, and minimum-score
+loop. Its tests validate only that post-boundary behavior and do not claim the insertion order is
+the PHP native permutation.
 
 ## Real PHP 8.3 capture evidence
 

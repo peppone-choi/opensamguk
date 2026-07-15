@@ -58,6 +58,9 @@
 | 47 | 랜덤임관 `last_turn.arg`에 실행 보조값이 남는다 | `RandomImgwanTest` 표적 gate GREEN | fresh: PHP `che_랜덤임관.php:31-34,281` + 대상 XML | 채택 | PHP `argTest()`가 arg를 null로 덮어쓰므로 Kotlin LastTurn도 null을 저장한다. |
 | 48 | 해산이 전 장수를 먼저 재야화한 뒤 로그를 몰아서 적재한다 | `GeongukTest` 표적 gate GREEN | fresh: PHP `func.php:1753-1778` + 대상 XML | 채택 | PHP foreach처럼 각 멤버의 재야화와 action/history 로그를 같은 반복에서 처리하고 군주는 마지막에 처리한다. |
 | 49 | LEDGER 26/27의 결정적 ambient divergence 채택 뒤 `RaiseNPCNation`에만 fail-fast가 남아 시나리오 이벤트를 중단한다 | compile 경계 복원; 추가 ambient 전용 게이트는 사용자 지시로 생략 | fresh: PHP `RaiseNPCNation.php:199-232`, `func.php:1278-1305` + 사용자 결정 | 채택(명시적 divergence) | 저장되지 않는 PHP 전역 native RNG 순열은 byte parity로 주장하지 않는다. action/monthly RandUtil 커서를 보존하는 별도 결정적 스트림을 유지하고, 사용자는 이 ambient 순열의 추가 테스트 없이 진행하도록 지시했다. |
+| 50 | NPC 랜덤임관도 seeded command RNG 전에 PHP native `shuffle($nations)`을 사용하지만 Kotlin 테스트가 공급 순서를 "exact PHP loop"라고 표현한다 | 잘못된 byte-parity 표현 제거; 공급 순서 결정론적 substitute와 이후 seeded score-loop 경계를 분리 문서화 | fresh review: PHP `che_랜덤임관.php:150-173` + 사용자 ambient-test 생략 결정 | 채택(명시적 divergence) | 추가 native permutation 테스트 없이 진행한다. Kotlin은 공급 insertion order를 사용하고 이후 `nextFloat1`/누적 affinity/MIN score만 PHP source-faithful로 검증한다. |
+| 51 | 공용 Join resolver가 `che_장수대상임관` LastTurn에도 `destNationID`를 기록한다 | concrete command별 argTest-normalized LastTurn payload; Join/RandomImgwan + engine 표적 gate GREEN | fresh: PHP `che_장수대상임관.php:28-50,172` + `BUILD SUCCESSFUL in 11m 55s` | 채택 | 일반 임관은 `destNationID`, 장수대상임관은 `destGeneralID` 하나만 저장한다. |
+| 52 | 강제 유니크 환불이 `inheritRandomUnique:null`을 aux JSON에 남긴다 | null이면 insertion-order map에서 key 삭제; 환불 두 경로 key 부재 회귀 GREEN | fresh: PHP `LazyVarAndAuxUpdater.php:35-48` + `ReservedTurnHandlerTest` | 채택 | PHP `setAuxVar(key, null)`은 JSON null 대입이 아니라 `unset`이다. |
 
 ## 진행 현황
 
