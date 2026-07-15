@@ -39,19 +39,6 @@ const logRowStyle: React.CSSProperties = {
     gap: 'var(--space-sm)',
 };
 
-// 연월 라벨 — devsam 전황 표기와 동일하게 "{year}년 {month}월". 0/음수면 라벨 생략(빈 셀).
-const yearMonthLabelStyle: React.CSSProperties = {
-    flex: '0 0 auto',
-    minWidth: '6.5rem',
-    color: 'var(--text-secondary)',
-    whiteSpace: 'nowrap',
-};
-
-function logDateLabel(item: { year: number; month: number; phaseText?: string | null }): string {
-    if (item.year <= 0) return '';
-    return `${item.year}년 ${item.month}월${item.phaseText ? ` ${item.phaseText}` : ''}`;
-}
-
 export default function WorldLogPage() {
     const [data, setData] = useState<WorldLogResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -107,9 +94,6 @@ export default function WorldLogPage() {
                             <div>
                                 {entries.map((item) => (
                                     <div key={item.id} style={logRowStyle}>
-                                        <span style={yearMonthLabelStyle}>
-                                            {logDateLabel(item)}
-                                        </span>
                                         {/* text는 서버 패러티 로그 원문(색/태그) — 연감과 동일 v-html 렌더. */}
                                         <span style={{ flex: '1 1 auto' }} dangerouslySetInnerHTML={{ __html: item.text }} />
                                     </div>

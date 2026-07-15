@@ -1,6 +1,7 @@
 package opensamguk.logic.actions.founding
 
 import opensamguk.common.constants.CityConst
+import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
@@ -18,7 +19,28 @@ import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import opensamguk.logic.util.StringUtil
+import opensamguk.logic.traits.NationTypeModule
+import opensamguk.logic.traits.NationTypeRegistry
+
+/**
+ * Typed intent for PHP's trailing `tryUniqueItemLottery(genGenericUniqueRNGFromGeneral(...), ...)`.
+ *
+ * The actual lottery is DB-wide engine work: it needs live human general count, occupied non-buyable
+ * item slots, inheritRandomUnique/return-point handling, and the unique item grant/update channel.
+ * Logic resolvers therefore only publish this tail intent after the PHP-ordered writes/checkStat/static
+ * hooks have completed; production must consume it in the engine instead of fabricating local odds.
+ */
+data class GeneralUniqueLotteryIntent(
+    val generalId: Int,
+    val year: Int,
+    val month: Int,
+    val seedReason: String,
+    val acquireType: String,
+    val afterTail: String,
+)
 
 /**
  * che_건국 — faithful port of `che_건국.php`. RAISES the actor's existing WANDERING nation (level 0→1)
@@ -30,7 +52,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *      engine/env math (init_year/init_month are not on the logic WorldEnv) → preloaded as the
  *      `sameMonthOrBefore` arg.
  *   2. resolve nationName/nationType (the arg map) + colorType → GetNationColors()[colorType].
- *   3. general/global action logs (no MONTH-suffix history logs — those are GATE-RUNTIME seams).
+ *   3. general/global action logs, then global/general/national history logs.
  *   4. exp += 1000, ded += 1000 (folded through the pipeline).
  *   5. aux['can_국기변경'] = 1 on the nation.
  *   6. city UPDATE nation=me, conflict='{}' (the home-city claim).
@@ -62,6 +84,9 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
     var lastAlternative: String? = null
         protected set
 
+    var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
+        protected set
+
     /** che_건국 grants unifier +250; cr_건국 overrides to 0 (the divergence). */
     protected open val unifierGrant: Int get() = 250
 
@@ -69,11 +94,19 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
     protected open fun cityConstraint(): Constraint = constructableCity()
     protected open fun extraFullConstraints(): List<Constraint> = listOf(noPenalty(PENALTY_NO_FOUND_NATION))
 
-    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = linkedMapOf(
-        "nationName" to raw["nationName"] as? String,
-        "nationType" to raw["nationType"] as? String,
-        "colorType" to (raw["colorType"] as? Number)?.toInt(),
-    )
+    override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> {
+        val nationName = raw["nationName"] as? String ?: return emptyMap()
+        val nationType = raw["nationType"] as? String ?: return emptyMap()
+        val colorType = raw["colorType"] as? Int ?: return emptyMap()
+        if (nationName.isEmpty() || StringUtil.mbStrwidth(nationName) > 18) return emptyMap()
+        if (!isKnownNationTypeAlias(nationType)) return emptyMap()
+        if (colorType !in GetNationColors().indices) return emptyMap()
+        return linkedMapOf(
+            "nationName" to nationName,
+            "nationType" to nationType,
+            "colorType" to colorType,
+        )
+    }
 
     // che_건국.php:84-88 — min: BeOpeningPart(relYear+1), ReqNationValue('level','국가규모','==',0), NoPenalty.
     override fun buildMinConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
@@ -98,6 +131,7 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
     override fun resolve(context: GeneralActionResolveContext) {
         lastUnifierGrant = 0
         lastAlternative = null
+        lastUniqueLotteryIntent = null
 
         val d = context.draft
         val nation = d.nation ?: return
@@ -126,19 +160,24 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
         val color = GetNationColors().getOrNull(colorType) ?: return
         val cityName = CityConst.byId(cityId)?.name ?: ""
 
-        // 3. logs (che_건국.php:172-173). The history logs (176-178) are GATE-RUNTIME seams.
+        // 3. logs (che_건국.php:172-178).
         val josaUl = JosaUtil.pick(nationName, "을")
         val josaYi = JosaUtil.pick(context.generalName, "이")
         context.addLog("<D><b>$nationName</b></>$josaUl 건국하였습니다. <1>${context.date}</>")
         context.addGlobalActionLog(
             "<Y>${context.generalName}</>$josaYi <G><b>$cityName</b></>에 국가를 건설하였습니다.")
+        val nationTypeName = (NationTypeRegistry.resolve(nationTypeModuleKey(nationType)) as? NationTypeModule)?.typeName ?: "-"
+        val josaNationYi = JosaUtil.pick(nationName, "이")
+        context.addGlobalHistoryLog("<Y><b>【건국】</b></>$nationTypeName <D><b>$nationName</b></>$josaNationYi 새로이 등장하였습니다.")
+        context.addGeneralHistoryLog("<D><b>$nationName</b></>$josaUl 건국")
+        context.addNationalHistoryLog("<Y>${context.generalName}</>$josaYi <D><b>$nationName</b></>$josaUl 건국")
 
         // 4. exp/ded +1000 (che_건국.php:180-184).
         val expRes = addExperienceFold(context)
         // 6. city claim: nation=me, conflict={} (che_건국.php:189-192).
         val nextCityMeta = LinkedHashMap(d.city.meta)
         nextCityMeta.remove("conflict")
-        d.city = d.city.copy(nationId = nation.id, meta = nextCityMeta)
+        d.city = d.city.copy(nationId = nation.id, conflict = "{}", meta = nextCityMeta)
 
         // 5 + 7. nation: name/color/level=1/type/capital + aux can_국기변경=1 (+ extras for 무작위건국)
         //         (che_건국.php:186-201). PHP sets aux BEFORE the UPDATE; aux key order = set order.
@@ -164,10 +203,19 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
         val statRes = opensamguk.logic.domestic.checkStatChange(g)
         statRes.plainLogs.forEach { context.addPlainLog(it) }
         d.general = statRes.general
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), context.args)
 
         // 11. tryUniqueItemLottery(genGenericUniqueRNGFromGeneral(general, static::$actionName), general, '건국')
         //     — the SEPARATE unique-rng seam (NPCType>=2 short-circuit), fired AFTER all writes by the
         //     engine handler. It NEVER draws from the action stream; the default P2 human wins nothing.
+        lastUniqueLotteryIntent = GeneralUniqueLotteryIntent(
+            generalId = d.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = lotteryActionName,
+            acquireType = "건국",
+            afterTail = "setResultTurn>checkStatChange>StaticEventHandler",
+        )
     }
 
     /** exp/ded +1000 through the pipeline (che_건국.php:183-184); PLAIN level logs routed to the context. */
@@ -181,6 +229,19 @@ open class CheGeonguk(protected val pipeline: GeneralActionPipeline) : GeneralAc
 
     protected fun relYearOf(ctx: ConstraintContext): Int =
         (ctx.args["relYear"] as? Number)?.toInt() ?: 0
+
+    private fun isKnownNationTypeAlias(nationType: String): Boolean {
+        val normalized = nationTypeModuleKey(nationType)
+        return normalized == "None" || normalized == GameConst.neutralNationType || normalized in GameConst.availableNationType
+    }
+
+    private fun nationTypeModuleKey(nationType: String): String =
+        when {
+            nationType.isEmpty() -> GameConst.neutralNationType
+            nationType == "None" -> nationType
+            nationType.startsWith("che_") -> nationType
+            else -> "che_$nationType"
+        }
 
     companion object {
         /** PenaltyKey::NoFoundNation enum VALUE (Enums/PenaltyKey.php) — the penalty-map key. */

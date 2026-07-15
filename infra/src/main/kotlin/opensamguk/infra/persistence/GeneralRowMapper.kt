@@ -37,6 +37,8 @@ import java.time.OffsetDateTime
  */
 object GeneralRowMapper {
 
+    private val dedicatedJsonColumns = setOf("last_turn", "penalty")
+
     /** Map a JDBC column map (e.g. from `queryForMap`) to a logic [General]. */
     fun fromRow(row: Map<String, Any?>): General = General(
         id = intOf(row["id"]),
@@ -141,7 +143,7 @@ object GeneralRowMapper {
         "officer_city" to g.officerCity,
         "last_turn" to MetaJson.encode(g.lastTurn.toRaw()),
         "penalty" to MetaJson.encode(g.penalty),
-        "meta" to MetaJson.encode(g.meta),
+        "meta" to MetaJson.encode(g.meta.filterKeys { it !in dedicatedJsonColumns }),
         // RTK14 분기 스탯(정치/매력) — 컬럼 맵 끝에 APPEND(기존 컬럼 순서 불변).
         "politics" to g.politics,
         "charm" to g.charm,

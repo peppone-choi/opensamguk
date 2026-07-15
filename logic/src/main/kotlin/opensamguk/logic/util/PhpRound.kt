@@ -18,6 +18,11 @@ fun phpRound(value: Double, pos: Int): Int {
     return BigDecimal.valueOf(value).setScale(pos, RoundingMode.HALF_UP).toInt()
 }
 
+fun phpRoundDecimal(value: Double, scale: Int): BigDecimal {
+    require(scale >= 0) { "phpRoundDecimal scale must be >= 0: $scale" }
+    return BigDecimal.valueOf(value).setScale(scale, RoundingMode.HALF_UP)
+}
+
 /**
  * PHP Util::toInt = intval($v) = TRUNCATE-TOWARD-ZERO (NOT floor). The war collapse gold/rice and
  * the ConquerCity city-reset `%d` int-casts use this; distinct from [phpRound] (half-away).

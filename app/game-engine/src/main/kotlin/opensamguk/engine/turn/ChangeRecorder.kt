@@ -10,8 +10,10 @@ import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.General as LogicGeneral
 import opensamguk.logic.domain.Nation as LogicNation
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.inheritance.InheritanceKey
 import opensamguk.logic.event.EventCodec
 import opensamguk.logic.event.EventStore
+import opensamguk.logic.war.ConflictMap
 
 /**
  * Column patch for ONE dirty row — only the columns that actually changed. `meta` deep-changes are
@@ -61,6 +63,7 @@ class ChangeRecorder(
      */
     private val diplomacyLetterIdAllocator: () -> Int = AtomicCounter()::next,
     private val kvWriteObserver: (KvKey, Any?) -> Unit = { _, _ -> },
+    initialInheritancePoints: Map<*, *> = emptyMap<Any?, Any?>(),
 ) {
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
@@ -175,12 +178,21 @@ class ChangeRecorder(
 
     /** Inheritance channel (T0.8) — `inheritance_result` INSERT intents. */
     private val inheritanceResultInserts = mutableListOf<InheritanceResultRow>()
+    private val inheritancePointBase = LinkedHashMap<Pair<Int, String>, Pair<Double, Any?>>()
+
+    init {
+        preloadInheritancePoints(initialInheritancePoints)
+    }
 
     /** Statistic channel (W1) — `statistic` INSERT intents (year-boundary checkStatistic). */
     private val statisticInserts = mutableListOf<StatisticInsert>()
 
     /** 연감 채널 (W0-8) — `yearbook_history` UPSERT 의도 (P0-20 LogHistory 월별 스냅샷). */
     private val yearbookInserts = mutableListOf<YearbookInsert>()
+
+    private val gameWinnerUpdates = mutableListOf<GameWinnerUpdate>()
+    private val emperiorInserts = mutableListOf<EmperiorInsert>()
+    private val hallUpserts = mutableListOf<HallUpsert>()
 
     private val selectPoolMutations = mutableListOf<SelectPoolMutation>()
 
@@ -189,6 +201,7 @@ class ChangeRecorder(
 
     /** Pre-delete nation snapshots (the `ng_old_nations` archive write — `DatabaseHooks` step-2). */
     private val nationSnapshots = mutableListOf<DeletedNationSnapshot>()
+    private val nationArchiveSnapshots = mutableListOf<Map<String, Any?>>()
 
     val isDirty: Boolean
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
@@ -209,6 +222,8 @@ class ChangeRecorder(
             // W0-8: statistic/yearbook 채널도 dirty 신호에 포함 — 기록만 있고 flush 트리거가 안 서는
             // 조용한 유실을 막는다(statistic은 기존 누락 보강, yearbook은 신규 채널).
             statisticInserts.isNotEmpty() || yearbookInserts.isNotEmpty() ||
+            nationArchiveSnapshots.isNotEmpty() ||
+            gameWinnerUpdates.isNotEmpty() || emperiorInserts.isNotEmpty() || hallUpserts.isNotEmpty() ||
             selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
@@ -688,6 +703,31 @@ class ChangeRecorder(
     /** 기록된 yearbook_history UPSERT (W1-I flush 소스), emit 순서대로. */
     fun yearbookInserts(): List<YearbookInsert> = yearbookInserts.toList()
 
+    fun recordOldGeneralSnapshot(general: TurnGeneral) {
+        oldGeneralSnapshots.add(general)
+    }
+
+    fun recordNationArchiveSnapshot(columns: Map<String, Any?>) {
+        nationArchiveSnapshots.add(LinkedHashMap(columns))
+    }
+
+    fun recordGameWinnerUpdate(serverId: String, winnerNation: Int) {
+        gameWinnerUpdates.add(GameWinnerUpdate(serverId, winnerNation))
+    }
+
+    fun recordEmperiorInsert(columns: Map<String, Any?>) {
+        emperiorInserts.add(EmperiorInsert(columns))
+    }
+
+    fun recordHallUpsert(columns: Map<String, Any?>) {
+        hallUpserts.add(HallUpsert(columns))
+    }
+
+    fun gameWinnerUpdates(): List<GameWinnerUpdate> = gameWinnerUpdates.toList()
+    fun emperiorInserts(): List<EmperiorInsert> = emperiorInserts.toList()
+    fun hallUpserts(): List<HallUpsert> = hallUpserts.toList()
+    fun nationArchiveSnapshots(): List<Map<String, Any?>> = nationArchiveSnapshots.toList()
+
     /**
      * 기록된 모든 채널을 비운다 — PHP의 요청 단위 스코프에 대응하는 tick 단위 리셋.
      *
@@ -730,6 +770,10 @@ class ChangeRecorder(
         inheritanceResultInserts.clear()
         statisticInserts.clear()
         yearbookInserts.clear()
+        nationArchiveSnapshots.clear()
+        gameWinnerUpdates.clear()
+        emperiorInserts.clear()
+        hallUpserts.clear()
         selectPoolMutations.clear()
         eventInserts.clear()
         eventDeletes.clear()
@@ -743,6 +787,7 @@ class ChangeRecorder(
      * InheritanceRepository / InheritPointController / BettingController. V15가 과거 오기록 백필).
      */
     fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {
+        inheritancePointBase[ownerID to key] = value to aux
         inheritanceKvWrites.add(
             KvWrite("inheritance", "inheritance_$ownerID", key, listOf(value, aux)),
         )
@@ -750,10 +795,41 @@ class ChangeRecorder(
 
     /** Record an inheritance KV write (T0.8) — same flush shape as [recordInheritancePointSet]. */
     fun recordInheritancePointIncrease(ownerID: Int, key: String, value: Double, aux: Any?) {
+        val namespace = "inheritance_$ownerID"
+        val pending = inheritanceKvWrites
+            .asReversed()
+            .firstOrNull { it.table == "inheritance" && it.namespace == namespace && it.key == key }
+            ?.value as? List<*>
+        val base = inheritancePointBase[ownerID to key]
+        val oldValue = (pending?.getOrNull(0) as? Number)?.toDouble() ?: base?.first ?: 0.0
+        val oldAux = if (pending != null) pending.getOrNull(1) else base?.second
+        val nextBase = if (oldAux == aux) oldValue else 0.0
+        val nextValue = nextBase + value * inheritanceCoefficient(key)
+        inheritancePointBase[ownerID to key] = nextValue to aux
         inheritanceKvWrites.add(
-            KvWrite("inheritance", "inheritance_$ownerID", key, listOf(value, aux)),
+            KvWrite("inheritance", namespace, key, listOf(nextValue, aux)),
         )
     }
+
+    fun preloadInheritancePoints(points: Map<*, *>) {
+        for ((ownerKey, entriesAny) in points) {
+            val ownerId = when (ownerKey) {
+                is Number -> ownerKey.toInt()
+                is String -> ownerKey.toIntOrNull()
+                else -> null
+            } ?: continue
+            val entries = entriesAny as? Map<*, *> ?: continue
+            for ((keyAny, pairAny) in entries) {
+                val key = keyAny?.toString() ?: continue
+                val pair = pairAny as? List<*> ?: continue
+                val value = (pair.getOrNull(0) as? Number)?.toDouble() ?: continue
+                inheritancePointBase[ownerId to key] = value to pair.getOrNull(1)
+            }
+        }
+    }
+
+    private fun inheritanceCoefficient(key: String): Double =
+        InheritanceKey.entries.firstOrNull { it.name.lowercase() == key }?.coefficient ?: 1.0
 
     /** Record an `inheritance_log` INSERT intent (T0.8). */
     fun recordInheritanceLog(ownerID: Int, text: String, tag: String) {
@@ -827,22 +903,41 @@ class ChangeRecorder(
      */
     fun markNationDeleted(world: InMemoryTurnWorld, nationId: Int): Boolean {
         val nation = world.getNationById(nationId) ?: return false
-        val ownedGeneralIds = world.listGenerals().filter { it.nationId == nationId }.map { it.id }
-        val snapshot = DeletedNationSnapshot(nation, ownedGeneralIds, Instant.now())
+        val ownedGenerals = world.listGenerals().filter { it.nationId == nationId }
+        val rulerId = nation.chiefGeneralId ?: ownedGenerals.firstOrNull { it.officerLevel == 12 }?.id
+        val ownedGeneralIds = if (rulerId == null) {
+            ownedGenerals.map { it.id }
+        } else {
+            ownedGenerals.filter { it.id != rulerId }.map { it.id } + rulerId
+        }
+        val snapshot = DeletedNationSnapshot(nation, ownedGeneralIds, Instant.now(), world.archiveServerId())
         nationSnapshots.add(snapshot)
         world.recordDeletedNationSnapshot(snapshot)
 
-        // revert the nation's cities to neutral as recorded city patches (the cascade side effect).
-        for (city in world.listCities().filter { it.nationId == nationId }) {
+        for (city in world.listCities()) {
             val pre = opensamguk.engine.turn.PerTurnOverlay.toLogicCity(city)
             val nextMeta = LinkedHashMap(pre.meta)
-            nextMeta.remove("conflict")
-            // conflict now rides the dedicated city.conflict column (Task FU3) — reset it to '{}'
-            // alongside the legacy meta-key cleanup so the neutralize is byte-faithful either way.
-            val neutral = pre.copy(nationId = 0, frontState = 0, conflict = "{}", meta = nextMeta)
-            diffCity(pre, neutral)
+            val conflict = ConflictMap.decode(city.conflict)
+            conflict.deleteConflict(nationId)
+            val nextConflict = if (city.nationId == nationId) "{}" else conflict.encode()
+            if (nextConflict == "{}") nextMeta.remove("conflict") else nextMeta["conflict"] = nextConflict
+
+            val post = if (city.nationId == nationId) {
+                pre.copy(nationId = 0, frontState = 0, conflict = nextConflict, meta = nextMeta)
+            } else {
+                pre.copy(conflict = nextConflict, meta = nextMeta)
+            }
+            if (post == pre) continue
+            diffCity(pre, post)
             // keep the world's read-state consistent (dirty-free: the city patch owns dirtiness).
-            world.applyCityDirtyFree(city.copy(nationId = 0, frontState = 0, meta = nextMeta))
+            world.applyCityDirtyFree(
+                city.copy(
+                    nationId = post.nationId,
+                    frontState = post.frontState,
+                    conflict = post.conflict,
+                    meta = nextMeta,
+                ),
+            )
         }
 
         nationPatches.remove(nationId)

@@ -15,10 +15,12 @@ import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.clamp
 import kotlin.math.truncate
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -65,6 +67,9 @@ class CheGunryangMaemaeTest {
 
     private fun nation() = Nation(id = 1, level = 2, capitalCityId = 99, gold = 10000, rice = 10000)
     private fun action() = cheGunryangMaemae(pipeline)
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     // ---------- argTest ----------
     @Test
@@ -195,12 +200,32 @@ class CheGunryangMaemaeTest {
         ctx_run(draft, ctx, buyRice = false, amount = 1000)
         assertEquals(30.0, draft.general.experience, 1e-12, "fixed exp 30")
         assertEquals(50.0, draft.general.dedication, 1e-12, "fixed ded 50")
+        assertEquals("군량매매", draft.general.lastTurn.command, "setResultTurn after exp/ded/stat tail")
+        assertEquals(mapOf("buyRice" to false, "amount" to 1000), draft.general.lastTurn.arg)
         // exactly one incStat bumped (the others unchanged)
         val before = general()
         val bumped = listOf("leadership_exp", "strength_exp", "intel_exp").count {
             metaInt(draft.general.meta, it) == metaInt(before.meta, it) + 1
         }
         assertEquals(1, bumped, "exactly one weighted incStat bumped by 1")
+    }
+
+    @Test
+    fun `tail publishes static event after lastTurn and then unique lottery intent`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_군량매매") { general, _, _, params ->
+            observed += "${general.lastTurn.command}:${params["buyRice"]}"
+        }
+
+        val command = action()
+        val draft = GeneralActionDraft(general(), city(100), nation())
+        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+        command.resolveWith(ctx, command.parseArgs(mapOf("buyRice" to false, "amount" to 1000)))
+
+        assertEquals(listOf("군량매매:false"), observed)
+        assertEquals("군량매매", command.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("아이템", command.lastUniqueLotteryIntent?.acquireType)
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler", command.lastUniqueLotteryIntent?.afterTail)
     }
 
     @Test

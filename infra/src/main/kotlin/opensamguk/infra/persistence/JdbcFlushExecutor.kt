@@ -55,12 +55,50 @@ class JdbcFlushExecutor(
         transactionTemplate.execute {
             lastOps.clear()
 
-            // 1. world_state UPDATE — always fires.
-            worldStateUpdate(payload.worldStateUpdate)
+            val (preArchiveLogs, regularLogs) = payload.logEntries.partition { it.flushBeforeArchive }
+            val isUnificationFlush = payload.emperiorInserts.isNotEmpty()
+            val nationHistoryLogs = regularLogs.filter { it.scope == "NATION" && it.category == "HISTORY" }
+            val postEmperorLogs = regularLogs.filter { it.scope == "SYSTEM" && it.category == "HISTORY" }
+            val middleLogs = regularLogs.filterNot { it in nationHistoryLogs || it in postEmperorLogs }
+            val (invaderMessages, earlierMessages) = payload.createdMessages.partition {
+                it.bodyJson.contains("\"action\":\"raiseInvader\"")
+            }
 
-            // 2. ng_old_nations UPSERT per deleted-nation snapshot.
-            if (payload.deletedNationSnapshots.isNotEmpty()) {
-                ngOldNationsUpsert(payload.deletedNationSnapshots)
+            if (isUnificationFlush) {
+                if (payload.statisticInserts.isNotEmpty()) statisticInsertMany(payload.statisticInserts)
+                if (nationHistoryLogs.isNotEmpty()) logEntryCreateMany(nationHistoryLogs)
+                if (payload.auctionUpserts.isNotEmpty()) auctionUpsertMany(payload.auctionUpserts)
+                if (payload.auctionBidInserts.isNotEmpty()) auctionBidInsertMany(payload.auctionBidInserts)
+                if (payload.eventInserts.isNotEmpty()) eventInsertMany(payload.eventInserts)
+                if (payload.eventDeletes.isNotEmpty()) eventDeleteMany(payload.eventDeletes)
+                if (earlierMessages.isNotEmpty()) messageCreateMany(earlierMessages)
+                if (middleLogs.isNotEmpty()) logEntryCreateMany(middleLogs)
+                if (payload.inheritanceResultInserts.isNotEmpty()) {
+                    inheritanceResultInsertMany(payload.inheritanceResultInserts)
+                }
+                if (payload.inheritanceKvWrites.isNotEmpty()) {
+                    kvWriteFlush(payload.inheritanceKvWrites)
+                }
+                if (payload.inheritanceLogInserts.isNotEmpty()) {
+                    inheritanceLogInsertMany(payload.inheritanceLogInserts)
+                }
+            }
+
+            worldStateUpdate(payload.worldStateUpdate)
+            if (isUnificationFlush && payload.kvWrites.isNotEmpty()) {
+                kvWriteFlush(payload.kvWrites)
+            }
+
+            if (!isUnificationFlush && preArchiveLogs.isNotEmpty()) logEntryCreateMany(preArchiveLogs)
+
+            if (payload.deletedNations.isNotEmpty()) {
+                troopDeleteByNation(payload.deletedNations)
+            }
+            if (!isUnificationFlush && payload.oldGeneralSnapshots.isNotEmpty()) {
+                ngOldGeneralsUpsert(payload.archiveServerId, payload.oldGeneralSnapshots)
+            }
+            if (!isUnificationFlush && payload.deletedNationSnapshots.isNotEmpty()) {
+                ngOldNationsUpsert(payload.archiveServerId, payload.deletedNationSnapshots)
             }
 
             // 3. createMany general → nation → nation_turn → diplomacy → troop (각 > 0 가드, 동결된
@@ -127,10 +165,10 @@ class JdbcFlushExecutor(
 
             // 8b. auction channel (T0.7): ng_auction UPSERT (open INSERT / extend-finish UPDATE) then
             //     ng_auction_bid INSERT (INSERT-only — outbid rows are NEVER deleted, research §3).
-            if (payload.auctionUpserts.isNotEmpty()) {
+            if (!isUnificationFlush && payload.auctionUpserts.isNotEmpty()) {
                 auctionUpsertMany(payload.auctionUpserts)
             }
-            if (payload.auctionBidInserts.isNotEmpty()) {
+            if (!isUnificationFlush && payload.auctionBidInserts.isNotEmpty()) {
                 auctionBidInsertMany(payload.auctionBidInserts)
             }
             if (payload.bettingInserts.isNotEmpty()) {
@@ -169,7 +207,7 @@ class JdbcFlushExecutor(
 
             // 8c. mailbox channel (T0.5): message INSERT (append-additive, receiver-before-sender —
             //     the engine emits them in that order) then invalidate UPDATE (deleteMsg/sibling-sweep).
-            if (payload.createdMessages.isNotEmpty()) {
+            if (!isUnificationFlush && payload.createdMessages.isNotEmpty()) {
                 messageCreateMany(payload.createdMessages)
             }
             if (payload.messageInvalidates.isNotEmpty()) {
@@ -186,42 +224,66 @@ class JdbcFlushExecutor(
                 diplomacyLetterUpdateMany(payload.diplomacyLetterUpdates)
             }
 
-            if (payload.eventInserts.isNotEmpty()) {
+            if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.eventInserts)
             }
-            if (payload.eventDeletes.isNotEmpty()) {
+            if (!isUnificationFlush && payload.eventDeletes.isNotEmpty()) {
                 eventDeleteMany(payload.eventDeletes)
             }
 
             // 9. log_entry createMany.
-            if (payload.logEntries.isNotEmpty()) {
-                logEntryCreateMany(payload.logEntries)
+            if (!isUnificationFlush && regularLogs.isNotEmpty()) {
+                logEntryCreateMany(regularLogs)
             }
 
             // 10. KV writes (nation_env int-ns + game_kv string-ns, delete-on-null) + reserved_turns
             //     flush (ring write via ReservedTurnRepository, recorded here for contract-order
             //     completeness).
-            if (payload.kvWrites.isNotEmpty()) {
+            if (!isUnificationFlush && payload.kvWrites.isNotEmpty()) {
                 kvWriteFlush(payload.kvWrites)
             }
 
             // 11. Inheritance channel (T0.8) — KV writes, log inserts, result inserts.
-            if (payload.inheritanceKvWrites.isNotEmpty()) {
+            if (!isUnificationFlush && payload.inheritanceKvWrites.isNotEmpty()) {
                 kvWriteFlush(payload.inheritanceKvWrites)
             }
-            if (payload.inheritanceLogInserts.isNotEmpty()) {
+            if (!isUnificationFlush && payload.inheritanceLogInserts.isNotEmpty()) {
                 inheritanceLogInsertMany(payload.inheritanceLogInserts)
             }
-            if (payload.inheritanceResultInserts.isNotEmpty()) {
+            if (!isUnificationFlush && payload.inheritanceResultInserts.isNotEmpty()) {
                 inheritanceResultInsertMany(payload.inheritanceResultInserts)
             }
             // 12. Statistic channel (W1) — year-boundary statistic INSERT.
-            if (payload.statisticInserts.isNotEmpty()) {
+            if (!isUnificationFlush && payload.statisticInserts.isNotEmpty()) {
                 statisticInsertMany(payload.statisticInserts)
             }
-            // 13. 연감 채널 (W0-8) — yearbook_history UPSERT (P0-20 LogHistory 월별 스냅샷).
-            if (payload.yearbookInserts.isNotEmpty()) {
-                yearbookUpsertMany(payload.yearbookInserts)
+            // 13. 연감 채널 (W0-8) — yearbook_history INSERT (P0-20 LogHistory 월별 스냅샷).
+            if (!isUnificationFlush && payload.yearbookInserts.isNotEmpty()) {
+                yearbookInsertMany(payload.yearbookInserts)
+            }
+            if (!isUnificationFlush && payload.gameWinnerUpdates.isNotEmpty()) {
+                gameWinnerUpdateMany(payload.gameWinnerUpdates)
+            }
+            if (!isUnificationFlush && payload.emperiorInserts.isNotEmpty()) {
+                emperiorInsertMany(payload.emperiorInserts)
+            }
+            if (!isUnificationFlush && payload.hallUpserts.isNotEmpty()) {
+                hallUpsertMany(payload.hallUpserts)
+            }
+            if (isUnificationFlush) {
+                if (payload.hallUpserts.isNotEmpty()) hallUpsertMany(payload.hallUpserts)
+                if (preArchiveLogs.isNotEmpty()) logEntryCreateMany(preArchiveLogs)
+                if (payload.oldGeneralSnapshots.isNotEmpty()) {
+                    ngOldGeneralsUpsert(payload.archiveServerId, payload.oldGeneralSnapshots)
+                }
+                if (payload.deletedNationSnapshots.isNotEmpty()) {
+                    ngOldNationsUpsert(payload.archiveServerId, payload.deletedNationSnapshots)
+                }
+                if (payload.gameWinnerUpdates.isNotEmpty()) gameWinnerUpdateMany(payload.gameWinnerUpdates)
+                emperiorInsertMany(payload.emperiorInserts)
+                if (postEmperorLogs.isNotEmpty()) logEntryCreateMany(postEmperorLogs)
+                if (payload.yearbookInserts.isNotEmpty()) yearbookInsertMany(payload.yearbookInserts)
+                if (invaderMessages.isNotEmpty()) messageCreateMany(invaderMessages)
             }
             null
         }
@@ -273,10 +335,88 @@ class JdbcFlushExecutor(
 
     // --- step 2 ---------------------------------------------------------------------------------
 
-    private fun ngOldNationsUpsert(snapshots: List<Map<String, Any?>>) {
-        // Full contract present for later phases; P1 never populates this list.
+    private fun ngOldNationsUpsert(archiveServerId: String?, snapshots: List<Map<String, Any?>>) {
+        val batch = snapshots.map { snapshot ->
+            val serverId = snapshot["server_id"]?.toString()?.takeIf(String::isNotBlank)
+                ?: archiveServerId?.takeIf(String::isNotBlank)
+                ?: error("ng_old_nations archive write requires FlushPayload.archiveServerId")
+            val nation = (snapshot["nation"] as? Number)?.toInt()
+                ?: error("deleted nation snapshot is missing numeric nation id: $snapshot")
+            val data = LinkedHashMap((snapshot["data"] as? Map<*, *>)?.entries?.associate { (key, value) ->
+                key.toString() to value
+            } ?: LinkedHashMap(snapshot).also {
+                it.remove("server_id")
+                it.remove("nation")
+            })
+            if (nation != 0) {
+                data.putIfAbsent("history", historyRows("NATION", nation))
+            }
+            MapSqlParameterSource()
+                .addValue("server_id", serverId)
+                .addValue("nation", nation)
+                .addValue("data", jsonb(MetaJson.encode(data)))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO ng_old_nations (server_id, nation, data)
+            VALUES (:server_id, :nation, :data)
+            ON CONFLICT (server_id, nation) DO UPDATE
+               SET data = EXCLUDED.data
+            """.trimIndent(),
+            batch,
+        )
         lastOps.add(FlushExecOp("ng_old_nations", FlushVerb.UPSERT, snapshots.size))
     }
+
+    private fun ngOldGeneralsUpsert(archiveServerId: String?, snapshots: List<OldGeneralArchiveRow>) {
+        val batch = snapshots.map { snapshot ->
+            val serverId = snapshot.serverId?.takeIf(String::isNotBlank)
+                ?: archiveServerId?.takeIf(String::isNotBlank)
+                ?: error("ng_old_generals archive write requires FlushPayload.archiveServerId")
+            val data = LinkedHashMap(snapshot.data)
+            data.putIfAbsent("history", historyRows("GENERAL", snapshot.generalNo))
+            MapSqlParameterSource()
+                .addValue("server_id", serverId)
+                .addValue("general_no", snapshot.generalNo)
+                .addValue("owner", snapshot.owner)
+                .addValue("name", snapshot.name)
+                .addValue("last_yearmonth", snapshot.lastYearMonth)
+                .addValue("turntime", snapshot.turnTime.toString())
+                .addValue("data", jsonb(MetaJson.encode(data)))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO ng_old_generals
+                (server_id, general_no, owner, name, last_yearmonth, turntime, data)
+            VALUES
+                (:server_id, :general_no, :owner, :name, :last_yearmonth, CAST(:turntime AS timestamptz), :data)
+            ON CONFLICT (server_id, general_no) DO UPDATE SET
+                owner = EXCLUDED.owner,
+                name = EXCLUDED.name,
+                last_yearmonth = EXCLUDED.last_yearmonth,
+                turntime = EXCLUDED.turntime,
+                data = EXCLUDED.data
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("ng_old_generals", FlushVerb.UPSERT, snapshots.size))
+    }
+
+    private fun historyRows(scope: String, id: Int): List<String> =
+        jdbc.queryForList(
+            """
+            SELECT text
+              FROM log_entry
+             WHERE scope = CAST(:scope AS log_scope)
+               AND category = 'HISTORY'
+               AND ((general_id = :id AND :scope = 'GENERAL') OR (nation_id = :id AND :scope = 'NATION'))
+             ORDER BY id DESC
+            """.trimIndent(),
+            MapSqlParameterSource()
+                .addValue("scope", scope)
+                .addValue("id", id),
+            String::class.java,
+        )
 
     // --- step 7: general UPDATE -----------------------------------------------------------------
 
@@ -446,6 +586,14 @@ class JdbcFlushExecutor(
             MapSqlParameterSource().addValue("ids", ids),
         )
         lastOps.add(FlushExecOp("troop", FlushVerb.DELETE_MANY, ids.size))
+    }
+
+    private fun troopDeleteByNation(nationIds: List<Int>) {
+        jdbc.update(
+            "DELETE FROM troop WHERE nation IN (:ids)",
+            MapSqlParameterSource().addValue("ids", nationIds),
+        )
+        lastOps.add(FlushExecOp("troop", FlushVerb.DELETE_MANY, nationIds.size))
     }
 
     private fun troopUpdate(rows: List<TroopRow>) {
@@ -754,24 +902,29 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("general_access_log", FlushVerb.DELETE_MANY, generalIds.size))
     }
 
-    // --- step 6: nation cascade (diplomacy, nation_turn, nation) --------------------------------
+    // --- step 6: nation cascade -----------------------------------------------------------------
 
     private fun nationCascadeDelete(nationIds: List<Int>) {
         jdbc.update(
-            "DELETE FROM diplomacy WHERE src_nation_id IN (:ids) OR dest_nation_id IN (:ids)",
+            "DELETE FROM nation WHERE id IN (:ids)",
             MapSqlParameterSource().addValue("ids", nationIds),
         )
-        lastOps.add(FlushExecOp("diplomacy", FlushVerb.DELETE_MANY, nationIds.size))
+        lastOps.add(FlushExecOp("nation", FlushVerb.DELETE_MANY, nationIds.size))
         jdbc.update(
             "DELETE FROM nation_turn WHERE nation_id IN (:ids)",
             MapSqlParameterSource().addValue("ids", nationIds),
         )
         lastOps.add(FlushExecOp("nation_turn", FlushVerb.DELETE_MANY, nationIds.size))
         jdbc.update(
-            "DELETE FROM nation WHERE id IN (:ids)",
+            "DELETE FROM diplomacy WHERE src_nation_id IN (:ids) OR dest_nation_id IN (:ids)",
             MapSqlParameterSource().addValue("ids", nationIds),
         )
-        lastOps.add(FlushExecOp("nation", FlushVerb.DELETE_MANY, nationIds.size))
+        lastOps.add(FlushExecOp("diplomacy", FlushVerb.DELETE_MANY, nationIds.size))
+        jdbc.update(
+            "DELETE FROM nation_env WHERE namespace IN (:ids)",
+            MapSqlParameterSource().addValue("ids", nationIds),
+        )
+        lastOps.add(FlushExecOp("nation_env", FlushVerb.DELETE_MANY, nationIds.size))
     }
 
     // --- step 8: rank_data UPDATE (increment then set) + nation_id sync -------------------------
@@ -824,8 +977,8 @@ class JdbcFlushExecutor(
      * (`game_env`, `betting`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
      * `table` discriminator. A `null` value DELETEs the row; a non-null value UPSERTs the
      * [MetaJson]-encoded jsonb (bare int for `next_execute_*`, object for `turn_last_{officer_level}`,
-     * etc.). The KvWrite values are pre-encoded where the caller already holds a jsonb String (the
-     * `value` is encoded only if it is not already a raw json String — see [encodeKvValue]).
+     * etc.). Every value is encoded here, matching `KVStorage::setDBValue`'s unconditional
+     * `Json::encode($value)` call. Callers pass structured values rather than pre-encoded JSON.
      */
     private fun kvWriteFlush(writes: List<KvWrite>) {
         for (w in writes) {
@@ -883,14 +1036,7 @@ class JdbcFlushExecutor(
         }
     }
 
-    /**
-     * A KV value already materialized as a raw jsonb String (e.g. a byte-faithful `Json::encode`
-     * payload the family produced) is bound as-is; any other value (Int/Map/List …) is encoded via
-     * [MetaJson]. This lets the obfuscatedNamePool / BettingInfo families hand the executor the exact
-     * PHP-`json_encode` bytes without a re-encode round-trip.
-     */
-    private fun encodeKvValue(value: Any?): String =
-        if (value is String) value else MetaJson.encode(value)
+    private fun encodeKvValue(value: Any?): String = MetaJson.encode(value)
 
     // --- step 9: log_entry createMany -----------------------------------------------------------
 
@@ -1352,17 +1498,19 @@ class JdbcFlushExecutor(
     }
 
     /**
-     * `yearbook_history` UPSERT (W0-8 연감 채널, P0-20). PHP 정본 LogHistory(func_history.php:436-448)는
-     * getCurrentHistory 스냅샷을 `ng_history`에 평INSERT하지만, V1 스키마의 UNIQUE(profile_name, year,
-     * month) 위에서 재기동-재실행이 멱등하도록 ON CONFLICT 갱신으로 싣는다(같은 달 재캡처 = 동일 최종
-     * 상태 — 패러티 중립; MySQL ng_history에는 UNIQUE가 없어 평INSERT가 정본이지만 중복 행도 없다).
+     * `yearbook_history` INSERT (W0-8 연감 채널, P0-20). PHP 정본 LogHistory(func_history.php:436-448)는
+     * `ng_history`에 server_id/year/month + map/global_history/global_action/nations를 평INSERT한다.
+     * V28부터 server_id를 정본 컬럼으로 싣고, profile_name/hash는 기존 loader/test 호환용으로만 보존한다.
      * map은 객체(기본 '{}'), global_history/global_action/nations는 배열(기본 '[]') jsonb.
      */
-    private fun yearbookUpsertMany(rows: List<YearbookInsertRow>) {
+    private fun yearbookInsertMany(rows: List<YearbookInsertRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
+            val serverId = c["server_id"] ?: c["profile_name"]
+                ?: error("yearbook_history insert requires server_id or legacy profile_name")
             MapSqlParameterSource()
-                .addValue("profile_name", c["profile_name"])
+                .addValue("server_id", serverId)
+                .addValue("profile_name", c["profile_name"] ?: serverId)
                 .addValue("year", c["year"])
                 .addValue("month", c["month"])
                 .addValue("map", jsonb(c["map"] as? String))
@@ -1373,18 +1521,128 @@ class JdbcFlushExecutor(
         }.toTypedArray()
         jdbc.batchUpdate(
             """
-            INSERT INTO yearbook_history (profile_name, year, month, map, nations, global_history, global_action, hash)
-            VALUES (:profile_name, :year, :month, :map, :nations, :global_history, :global_action, :hash)
-            ON CONFLICT (profile_name, year, month) DO UPDATE
-                SET map = EXCLUDED.map,
-                    nations = EXCLUDED.nations,
-                    global_history = EXCLUDED.global_history,
-                    global_action = EXCLUDED.global_action,
-                    hash = EXCLUDED.hash
+            INSERT INTO yearbook_history
+                (server_id, profile_name, year, month, map, nations, global_history, global_action, hash)
+            VALUES
+                (:server_id, :profile_name, :year, :month, :map, :nations, :global_history, :global_action, :hash)
             """.trimIndent(),
             batch,
         )
-        lastOps.add(FlushExecOp("yearbook_history", FlushVerb.UPSERT, rows.size))
+        lastOps.add(FlushExecOp("yearbook_history", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun gameWinnerUpdateMany(rows: List<GameWinnerUpdateRow>) {
+        for (row in rows) {
+            jdbc.update(
+                "UPDATE ng_games SET winner_nation = :winner_nation WHERE server_id = :server_id",
+                MapSqlParameterSource()
+                    .addValue("server_id", row.serverId)
+                    .addValue("winner_nation", row.winnerNation),
+            )
+        }
+        lastOps.add(FlushExecOp("ng_games", FlushVerb.UPDATE, rows.size))
+    }
+
+    private fun emperiorInsertMany(rows: List<EmperiorInsertRow>) {
+        val batch = rows.map { row ->
+            val c = row.columns
+            MapSqlParameterSource()
+                .addValue("phase", c["phase"])
+                .addValue("server_id", c["server_id"])
+                .addValue("nation_count", c["nation_count"])
+                .addValue("nation_name", c["nation_name"])
+                .addValue("nation_hist", c["nation_hist"])
+                .addValue("gen_count", c["gen_count"])
+                .addValue("personal_hist", c["personal_hist"])
+                .addValue("special_hist", c["special_hist"])
+                .addValue("name", c["name"])
+                .addValue("type", c["type"])
+                .addValue("color", c["color"])
+                .addValue("year", c["year"])
+                .addValue("month", c["month"])
+                .addValue("power", c["power"])
+                .addValue("gennum", c["gennum"])
+                .addValue("citynum", c["citynum"])
+                .addValue("pop", c["pop"])
+                .addValue("poprate", c["poprate"])
+                .addValue("gold", c["gold"])
+                .addValue("rice", c["rice"])
+                .addValue("l12name", c["l12name"])
+                .addValue("l12pic", c["l12pic"])
+                .addValue("l11name", c["l11name"])
+                .addValue("l11pic", c["l11pic"])
+                .addValue("l10name", c["l10name"])
+                .addValue("l10pic", c["l10pic"])
+                .addValue("l9name", c["l9name"])
+                .addValue("l9pic", c["l9pic"])
+                .addValue("l8name", c["l8name"])
+                .addValue("l8pic", c["l8pic"])
+                .addValue("l7name", c["l7name"])
+                .addValue("l7pic", c["l7pic"])
+                .addValue("l6name", c["l6name"])
+                .addValue("l6pic", c["l6pic"])
+                .addValue("l5name", c["l5name"])
+                .addValue("l5pic", c["l5pic"])
+                .addValue("tiger", c["tiger"])
+                .addValue("eagle", c["eagle"])
+                .addValue("gen", c["gen"])
+                .addValue("history", jsonb(c["history"] as? String ?: "[]"))
+                .addValue("aux", jsonb(c["aux"] as? String ?: "{}"))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO emperior (
+                phase, server_id, nation_count, nation_name, nation_hist, gen_count, personal_hist, special_hist,
+                name, type, color, year, month, power, gennum, citynum, pop, poprate, gold, rice,
+                l12name, l12pic, l11name, l11pic, l10name, l10pic, l9name, l9pic, l8name, l8pic,
+                l7name, l7pic, l6name, l6pic, l5name, l5pic, tiger, eagle, gen, history, aux
+            ) VALUES (
+                :phase, :server_id, :nation_count, :nation_name, :nation_hist, :gen_count, :personal_hist, :special_hist,
+                :name, :type, :color, :year, :month, :power, :gennum, :citynum, :pop, :poprate, :gold, :rice,
+                :l12name, :l12pic, :l11name, :l11pic, :l10name, :l10pic, :l9name, :l9pic, :l8name, :l8pic,
+                :l7name, :l7pic, :l6name, :l6pic, :l5name, :l5pic, :tiger, :eagle, :gen, :history, :aux
+            )
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("emperior", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun hallUpsertMany(rows: List<HallUpsertRow>) {
+        val batch = rows.map { row ->
+            val c = row.columns
+            MapSqlParameterSource()
+                .addValue("server_id", c["server_id"])
+                .addValue("season", c["season"])
+                .addValue("scenario", c["scenario"])
+                .addValue("general_no", c["general_no"])
+                .addValue("type", c["type"])
+                .addValue("value", c["value"])
+                .addValue("owner", c["owner"])
+                .addValue("aux", jsonb(c["aux"] as? String ?: "{}"))
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            INSERT INTO hall (server_id, season, scenario, general_no, type, value, owner, aux)
+            VALUES (:server_id, :season, :scenario, :general_no, :type, :value, :owner, :aux)
+            ON CONFLICT DO NOTHING
+            """.trimIndent(),
+            batch,
+        )
+        jdbc.batchUpdate(
+            """
+            UPDATE hall
+               SET value = :value,
+                   aux = :aux
+             WHERE server_id = :server_id
+               AND type = :type
+               AND scenario = :scenario
+               AND general_no = :general_no
+               AND value < :value
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("hall", FlushVerb.UPSERT, rows.size))
     }
 
     private fun eventInsertMany(rows: List<EventInsertRow>) {
@@ -1527,10 +1785,12 @@ enum class FlushVerb { UPDATE, UPSERT, CREATE_MANY, DELETE_MANY }
  */
 data class FlushPayload(
     val worldStateUpdate: Map<String, Any?>,
+    val archiveServerId: String? = null,
     val updatedGenerals: List<General> = emptyList(),   // logic entities
     val updatedCities: List<City> = emptyList(),
     val logEntries: List<LogRow> = emptyList(),
     val deletedNationSnapshots: List<Map<String, Any?>> = emptyList(),
+    val oldGeneralSnapshots: List<OldGeneralArchiveRow> = emptyList(),
     // --- B1 장수생성 foundation: 신규 장수 INSERT (step-3 createMany) ---
     // 새로 만든 장수 행 + 30개 general_turn(휴식) + 37개 rank_data(value 0). 컬럼맵 운반체
     // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board/auction
@@ -1577,7 +1837,10 @@ data class FlushPayload(
     // --- W1 checkStatistic channel ---
     val statisticInserts: List<StatisticInsertRow> = emptyList(),     // step-12 statistic INSERT
     // --- W0-8 연감 채널 (P0-20 LogHistory 월별 스냅샷) ---
-    val yearbookInserts: List<YearbookInsertRow> = emptyList(),       // step-13 yearbook_history UPSERT
+    val yearbookInserts: List<YearbookInsertRow> = emptyList(),       // step-13 yearbook_history INSERT
+    val gameWinnerUpdates: List<GameWinnerUpdateRow> = emptyList(),
+    val emperiorInserts: List<EmperiorInsertRow> = emptyList(),
+    val hallUpserts: List<HallUpsertRow> = emptyList(),
     val selectPoolMutations: List<SelectPoolMutation> = emptyList(),
     val eventInserts: List<EventInsertRow> = emptyList(),
     val eventDeletes: List<Int> = emptyList(),
@@ -1614,12 +1877,17 @@ data class GeneralAccessLogWriteRow(
 data class StatisticInsertRow(val columns: Map<String, Any?>)
 
 /**
- * One `yearbook_history` UPSERT (W0-8 연감 채널, P0-20). `columns`는 profile_name/year/month/
- * map(jsonb)/nations(jsonb)/global_history(jsonb)/global_action(jsonb)/hash 컬럼 맵 —
- * PHP `ng_history`(schema.sql:465) 월별 스냅샷 행의 opensamguk 대응. (profile_name,year,month)
- * UNIQUE 충돌 시 스냅샷 4컬럼+hash 갱신(재기동-재실행 멱등).
+ * One `yearbook_history` INSERT (W0-8 연감 채널, P0-20). `columns`는 PHP `ng_history`
+ * server_id/year/month/map(jsonb)/global_history(jsonb)/global_action(jsonb)/nations(jsonb)
+ * 대응이며, legacy profile_name/hash 입력도 compatibility로 허용한다.
  */
 data class YearbookInsertRow(val columns: Map<String, Any?>)
+
+data class GameWinnerUpdateRow(val serverId: String, val winnerNation: Int)
+
+data class EmperiorInsertRow(val columns: Map<String, Any?>)
+
+data class HallUpsertRow(val columns: Map<String, Any?>)
 
 data class EventInsertRow(
     val id: Int,
@@ -1627,6 +1895,16 @@ data class EventInsertRow(
     val priority: Int,
     val condition: String,
     val action: String,
+)
+
+data class OldGeneralArchiveRow(
+    val serverId: String?,
+    val generalNo: Int,
+    val owner: String?,
+    val name: String,
+    val lastYearMonth: Int,
+    val turnTime: Instant,
+    val data: Map<String, Any?>,
 )
 
 /** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
@@ -1751,7 +2029,7 @@ data class DiplomacyUpdate(
  *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`/…) → the V7 string-namespace
  *    `game_kv` store keyed by `(table, namespace, key)`.
  *
- * A `value` that is already a raw json String is bound verbatim; any other value is [MetaJson]-encoded.
+ * Every non-null `value` is [MetaJson]-encoded at flush, matching PHP `Json::encode`.
  */
 data class KvWrite(val table: String, val namespace: String, val key: String, val value: Any?) {
     companion object {
@@ -1779,4 +2057,5 @@ data class LogRow(
     val nationId: Int? = null,
     val userId: Int? = null,
     val meta: Map<String, Any?> = linkedMapOf(),
+    val flushBeforeArchive: Boolean = false,
 )

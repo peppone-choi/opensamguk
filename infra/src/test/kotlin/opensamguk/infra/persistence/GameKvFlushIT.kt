@@ -54,6 +54,15 @@ class GameKvFlushIT {
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'sc', 200, 1, 3600)",
             MapSqlParameterSource(),
         )
+        jdbc.update(
+            """
+            INSERT INTO ng_games (server_id, date, season, scenario, scenario_name, env)
+            VALUES
+              ('archive-server', '2026-01-01T00:00:00Z', 1, 0, 'archive test', '{}'::jsonb),
+              ('newest-wrong-server', '2026-01-03T00:00:00Z', 1, 0, 'wrong archive', '{}'::jsonb)
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
         // pre-seed a stale game_kv row to exercise delete-on-null.
         jdbc.update(
             """INSERT INTO game_kv ("table", namespace, key, value) VALUES ('betting', 'id_3', 'stale', '1'::jsonb)""",
@@ -78,13 +87,14 @@ class GameKvFlushIT {
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 kvWrites = listOf(
                     // string-ns game_kv: a raw-json String value bound verbatim (PHP json_encode bytes).
-                    KvWrite("game_env", "global", "obfuscatedNamePool", """["가","나"]"""),
+                    KvWrite("game_env", "global", "obfuscatedNamePool", listOf("가", "나")),
                     // string-ns game_kv: an Int value MetaJson-encoded at flush.
                     KvWrite("game_env", "global", "last_betting_id", 7),
                     // string-ns game_kv delete-on-null.
                     KvWrite("betting", "id_3", "stale", null),
                     // int-ns nation_env via the same channel.
                     KvWrite.nationEnv(namespace = 5, key = "nationNotice", value = mapOf("text" to "공지")),
+                    KvWrite.nationEnv(namespace = 5, key = "scout_msg", value = "우리도 할 수 있다! 낙양군"),
                     KvWrite.nationEnv(namespace = 5, key = "stale", value = null),
                     // V15/P0-07 — inheritance 채널: "table" 판별자 = storage 이름 'inheritance'
                     // (ChangeRecorder.recordInheritancePointSet 출력 shape). reader
@@ -121,6 +131,13 @@ class GameKvFlushIT {
                 MapSqlParameterSource(), Int::class.java,
             ),
         )
+        assertEquals(
+            "우리도 할 수 있다! 낙양군",
+            jdbc.queryForObject(
+                "SELECT value #>> '{}' FROM nation_env WHERE namespace=5 AND key='scout_msg'",
+                MapSqlParameterSource(), String::class.java,
+            ),
+        )
         // nation_env int-ns set + delete-on-null.
         assertEquals(
             1,
@@ -154,6 +171,76 @@ class GameKvFlushIT {
                 MapSqlParameterSource(), Int::class.java,
             ),
             "물리 테이블명 'game_kv'가 판별자로 오기록되면 안 된다",
+        )
+    }
+
+    @Test
+    fun `deleted nation snapshots are archived under current server id`() {
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+                archiveServerId = "archive-server",
+                deletedNationSnapshots = listOf(
+                    linkedMapOf(
+                        "nation" to 7,
+                        "general_ids" to listOf(42, 43),
+                        "name" to "삭제국",
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                """
+                SELECT count(*)
+                  FROM ng_old_nations
+                 WHERE server_id = 'archive-server'
+                   AND nation = 7
+                   AND data = '{"general_ids":[42,43],"name":"삭제국","history":[]}'::jsonb
+                """.trimIndent(),
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
+
+        executor.flush(
+            FlushPayload(
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+                archiveServerId = "archive-server",
+                deletedNationSnapshots = listOf(
+                    linkedMapOf(
+                        "nation" to 7,
+                        "general_ids" to listOf(99),
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM ng_old_nations WHERE server_id = 'archive-server' AND nation = 7",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
+        assertEquals(
+            "[99]",
+            jdbc.queryForObject(
+                "SELECT data -> 'general_ids' #>> '{}' FROM ng_old_nations WHERE server_id = 'archive-server' AND nation = 7",
+                MapSqlParameterSource(),
+                String::class.java,
+            ),
+        )
+        assertEquals(
+            0,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM ng_old_nations WHERE server_id = 'newest-wrong-server' AND nation = 7",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
         )
     }
 }

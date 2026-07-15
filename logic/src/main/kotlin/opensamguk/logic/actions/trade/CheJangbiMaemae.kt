@@ -15,8 +15,11 @@ import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
+import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
 import opensamguk.logic.items.BaseStatItemModule
 import opensamguk.logic.items.ItemRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -47,7 +50,7 @@ import kotlin.math.truncate
  *
  * run (che_장비매매.php:146-205):
  *   BUY  → log "<C>{name}</>{josa-을} 구입했습니다. <1>date</>"; gold -= cost (increaseVarWithLimit floor 0);
- *          setItem(type, code); onArbitraryAction('장비매매','구매',{itemCode}).
+ *          setItem(type, code); onArbitraryAction('장비매매','구매',{itemCode}) (환약 initializes remain환약=3).
  *   SELL → itemCode = the equipped slot code; log "<C>{name}</>{josa-을} 판매했습니다. <1>date</>";
  *          gold += cost/2 (increaseVarWithLimit, no floor); onArbitraryAction('장비매매','판매',{itemCode});
  *          setItem(type, null→'None'); when the sold item is NOT buyable → a global action log
@@ -71,8 +74,13 @@ class CheJangbiMaemae(
     override val category: String = "자원교역"
     override val argsSchema: Map<String, Any?> get() = mapOf("itemType" to "string", "itemCode" to "string")
 
-    /** Re-bind with a parsed arg (the handler/registry sets it for a reserved turn). */
-    fun withArg(parsed: Map<String, Any?>): CheJangbiMaemae = CheJangbiMaemae(pipeline, maxLevel, parsed)
+    override fun bindArgs(parsed: Map<String, Any?>): CheJangbiMaemae =
+        CheJangbiMaemae(pipeline, maxLevel, parsed)
+
+    fun withArg(parsed: Map<String, Any?>): CheJangbiMaemae = bindArgs(parsed)
+
+    var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
+        private set
 
     /** PHP $itemMap (che_장비매매.php:32-37): the four equip-slot keys → the Korean slot name. */
     private val itemMap: Map<String, String> = ITEM_MAP
@@ -142,11 +150,13 @@ class CheJangbiMaemae(
     override fun buildMinConstraints(ctx: ConstraintContext): List<Constraint> = listOf(reqCityTrader(::npcType))
 
     override fun resolve(context: GeneralActionResolveContext) {
+        lastUniqueLotteryIntent = null
         val parsed = arg ?: return     // unbound → argTest would have failed → no run
         resolveWith(context, parsed)
     }
 
     fun resolveWith(context: GeneralActionResolveContext, parsed: Map<String, Any?>) {
+        lastUniqueLotteryIntent = null
         val d = context.draft
         val itemType = parsed["itemType"] as String
         val itemCodeArg = parsed["itemCode"] as String
@@ -163,7 +173,7 @@ class CheJangbiMaemae(
             context.addLog("<C>${info.name}</>$josaUl 구입했습니다. <1>${context.date}</>")
             d.general = d.general.copy(gold = maxOf(d.general.gold - cost, 0))   // increaseVarWithLimit floor 0
             d.general = setSlot(d.general, itemType, itemCode)
-            // onArbitraryAction('장비매매','구매',...): no item in P2-domestic scope reacts to a BUY.
+            onArbitraryActionBuy(context, itemCode)
         } else {
             // che_장비매매.php:181-192.
             context.addLog("<C>${info.name}</>$josaUl 판매했습니다. <1>${context.date}</>")
@@ -176,7 +186,7 @@ class CheJangbiMaemae(
 
             if (!info.buyable) {
                 // che_장비매매.php:187-191 — global broadcast (the HISTORY log is a GATE-RUNTIME seam).
-                val generalName = nameOf(d.general)
+                val generalName = context.generalName.ifEmpty { nameOf(d.general) }
                 val josaYi = JosaUtil.pick(generalName, "이")
                 context.addGlobalActionLog("<Y>$generalName</>$josaYi <C>${info.name}</>$josaUl 판매했습니다!")
             }
@@ -192,16 +202,23 @@ class CheJangbiMaemae(
         val sc = checkStatChange(d.general)
         d.general = sc.general
         for (line in sc.plainLogs) context.addPlainLog(line)
-        // tryUniqueItemLottery (che_장비매매.php:201) rides a SEPARATE rng — not drawn here.
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), parsed)
+        lastUniqueLotteryIntent = GeneralUniqueLotteryIntent(
+            generalId = d.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = lotteryActionName,
+            acquireType = "아이템",
+            afterTail = "setResultTurn>checkStatChange>StaticEventHandler",
+        )
     }
 
     /**
-     * che_보물_도기.onArbitraryAction (che_보물_도기.php:18-52) — the ONLY P2-domestic item reacting to
-     * 장비매매. Fires on SELL ('판매') when the sold item IS 도기. Draws one rng `choice([금/gold, 쌀/쌀])`,
+     * che_보물_도기.onArbitraryAction (che_보물_도기.php:18-52) fires on SELL ('판매') when the sold item IS 도기.
+     * Draws one rng `choice([금/gold, 쌀/쌀])`,
      * computes score=10000+5000*valueFit(intdiv(relYear,2),0), adds toInt(score/2) to the nation treasury
      * (when the general has a nation) and the remainder to the general, and pushes a general action log.
-     * `onArbitraryAction` iterates the full action module list; every other module is identity, so this
-     * single hook is the whole 장비매매 onArbitraryAction surface.
+     * `onArbitraryAction` iterates the full action module list; 도기 is the sell-side resource hook.
      */
     private fun onArbitraryActionSell(context: GeneralActionResolveContext, soldItemCode: String) {
         if (soldItemCode != "che_보물_도기") return
@@ -228,6 +245,16 @@ class CheJangbiMaemae(
         // Util::round(score) on an integer score is a no-op; number_format(score, 0) = comma grouping.
         val scoreText = numberFormat(score)
         context.addLog("재산과 국고에 총 $resName <C>$scoreText</>을 보충합니다.")
+    }
+
+    private fun onArbitraryActionBuy(context: GeneralActionResolveContext, boughtItemCode: String) {
+        if (boughtItemCode != "che_치료_환약") return
+        val aux = (context.draft.general.meta["aux"] as? Map<String, Any?>) ?: emptyMap()
+        val nextAux = LinkedHashMap(aux)
+        nextAux["remain환약"] = 3
+        context.draft.general = context.draft.general.copy(
+            meta = withMeta(context.draft.general.meta, "aux" to nextAux),
+        )
     }
 
     private fun slotCode(g: General, itemType: String): String = when (itemType) {
@@ -301,6 +328,7 @@ private val STAT_TIER: Map<Int, Triple<Int, Int, Boolean>> = linkedMapOf(
 /** Explicit metadata for the non-stat 도구 items 장비매매 may sell (도기 …). */
 private val ITEM_SLOT_META: Map<String, ItemTradeInfo> = linkedMapOf(
     "che_보물_도기" to ItemTradeInfo(cost = 200, buyable = false, reqSecu = 0, name = "도기(보물)", rawName = "도기"),
+    "che_치료_환약" to ItemTradeInfo(cost = 200, buyable = true, reqSecu = 0, name = "환약(치료)", rawName = "환약"),
 )
 
 fun itemTradeInfo(code: String?): ItemTradeInfo {

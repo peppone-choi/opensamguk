@@ -126,13 +126,12 @@ class CheMobanSidoGoldenTest {
     }
 
     @Test
-    fun `lord action log is byte-exact (dest scope, raw body)`() {
+    fun `lord action log is byte-exact in dest scope`() {
         val ctx = context(RandUtil(NoRng()))
         cheMobanSido(pipeline).resolve(ctx)
-        // (:93) lord generalAction — dest 장수 id=42 스코프. addLogTo는 raw body(월 프리픽스는 lord 로거가 flush 시 부착).
         val lordLogs = ctx.logsTo(42)
         assertEquals(1, lordLogs.size)
-        assertEquals("<Y>동탁</>에게 군주의 자리를 뺏겼습니다.", lordLogs[0])
+        assertEquals("<C>●</>3월:<Y>동탁</>에게 군주의 자리를 뺏겼습니다.", lordLogs[0])
     }
 
     @Test

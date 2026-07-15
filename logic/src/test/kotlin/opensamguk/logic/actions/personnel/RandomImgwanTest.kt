@@ -21,12 +21,13 @@ import kotlin.test.assertTrue
 /**
  * Port-faithful test for che_랜덤임관 (`che_랜덤임관.php:113-289`) — the highest parity-risk personnel
  * command. Pins:
- *   - NPC-foreign branch: shuffle($nations) FIRST → score loop → choice(talk). The score loop draws ONE
- *     nextFloat1 per nation, keeps the MIN score (maxScore init 1<<30), and BUG-FAITHFULLY accumulates
+ *   - NPC-foreign branch: PHP shuffle($nations) is ambient and not replayable from command state. The
+ *     sanctioned Kotlin substitute keeps supplied insertion order, then draws ONE nextFloat1 per nation,
+ *     keeps the MIN score (maxScore init 1<<30), and accumulates
  *     `$affinity` ACROSS iterations (each iter: affinity = abs(affinity - testNation.affinity);
  *     affinity = min(affinity, abs(affinity - 150)); score = log2(affinity+1) + nextFloat1 + sqrt(gennum/allGen)).
  *   - ELSE branch: weighted pair (1/(warpower+develpower))^3 via choiceUsingWeightPair, then choice(talk).
- *   - draw order [shuffle|weighted] → choice(talk); determinism with a fixed seed.
+ *   - command RandUtil draw order [score-loop|weighted] → choice(talk); determinism with a fixed seed.
  */
 class RandomImgwanTest {
 
@@ -55,7 +56,7 @@ class RandomImgwanTest {
     // -------- NPC-foreign branch: in-loop affinity accumulation + MIN-score pick --------
 
     @Test
-    fun `npc-foreign branch reproduces in-loop affinity accumulation and picks min score`() {
+    fun `npc-foreign deterministic substitute preserves affinity accumulation and min score`() {
         val candidates = listOf(
             RandomImgwanNpcCandidate(nationId = 11, name = "위", gennum = 4, affinity = 10, lordCityId = 110),
             RandomImgwanNpcCandidate(nationId = 12, name = "촉", gennum = 6, affinity = 90, lordCityId = 120),
@@ -69,7 +70,7 @@ class RandomImgwanTest {
         val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
         cmd.resolve(ctx)
 
-        // independent replay of the EXACT PHP loop with a parallel identically-seeded rng.
+        // Independent replay after the explicitly divergent ambient-order boundary.
         val expected = replayNpcBranch(candidates, startAffinity = 50)
         assertEquals(expected.nationId, draft.general.nationId, "picked nation matches replay")
         assertEquals(expected.lordCityId, draft.general.cityId, "joined city = picked lord's city")
@@ -78,10 +79,10 @@ class RandomImgwanTest {
 
     private data class NpcPick(val nationId: Int, val lordCityId: Int)
 
-    /** Mirror of che_랜덤임관.php:152-173 — shuffle FIRST, then per-nation nextFloat1, keep MIN, accumulate affinity. */
+    /** Deterministic-order replay of che_랜덤임관.php:152-173 after the ambient-order boundary. */
     private fun replayNpcBranch(candidates: List<RandomImgwanNpcCandidate>, startAffinity: Int): NpcPick {
         val rng = freshRng()
-        val shuffled = rng.shuffle(candidates)
+        val shuffled = candidates
         val allGen = shuffled.sumOf { it.gennum }.toDouble()
         var maxScore = (1 shl 30).toDouble()
         var affinity = startAffinity
@@ -98,7 +99,7 @@ class RandomImgwanTest {
     }
 
     @Test
-    fun `npc-foreign branch draw order is shuffle then per-nation float then choice talk`() {
+    fun `npc-foreign branch draw order is per-nation float then choice talk`() {
         val candidates = listOf(
             RandomImgwanNpcCandidate(nationId = 11, name = "위", gennum = 4, affinity = 10, lordCityId = 110),
             RandomImgwanNpcCandidate(nationId = 12, name = "촉", gennum = 6, affinity = 90, lordCityId = 120),
@@ -111,7 +112,6 @@ class RandomImgwanTest {
 
         // replay the same draw order and assert the talk token chosen matches.
         val rng = freshRng()
-        rng.shuffle(candidates)
         repeat(candidates.size) { rng.nextFloat1() }
         val talk = rng.choice(TALK_LIST)
         assertTrue(ctx.globalActionLogs().any { it.contains(talk) }, "global log carries the replayed talk token '$talk'; got ${ctx.globalActionLogs()}")
@@ -128,7 +128,14 @@ class RandomImgwanTest {
         val draft = GeneralActionDraft(neutralGeneral(npc = 0), City(
             id = 0, nationId = 0, level = 0, commerce = 0, commerceMax = 0,
             agriculture = 0, agricultureMax = 0, supplyState = 1, frontState = 0, trust = 0.0), null)
-        val ctx = GeneralActionResolveContext(draft, freshRng(), env, MONTH, date)
+        val ctx = GeneralActionResolveContext(
+            draft,
+            freshRng(),
+            env,
+            MONTH,
+            date,
+            args = linkedMapOf("relYear" to 16, "actorNpcType" to 2),
+        )
         CheRandomImgwan(pipeline, emptyList(), weighted, useNpcForeignBranch = false).resolve(ctx)
 
         // replay
@@ -137,6 +144,7 @@ class RandomImgwanTest {
         val picked = rng.choiceUsingWeightPair(pairs)
         assertEquals(picked.nationId, draft.general.nationId, "weighted-pair pick matches replay")
         assertEquals(picked.lordCityId, draft.general.cityId, "joined lord's city")
+        assertEquals(null, draft.general.lastTurn.arg, "PHP argTest normalizes 랜덤임관 arg to null")
     }
 
     @Test

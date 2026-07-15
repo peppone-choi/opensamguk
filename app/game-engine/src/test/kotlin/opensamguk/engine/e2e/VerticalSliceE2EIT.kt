@@ -38,7 +38,6 @@ import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
-import opensamguk.logic.tick.ServerClock
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -389,9 +388,9 @@ class VerticalSliceE2EIT {
         val phase = intOf(row["phase"])
         assertEquals(1, phase, "log_entry.phase stores the current 삼모 순")
         assertEquals(
-            golden.logText.replaceFirst("${month}월:", "${month}월 ${ServerClock.turnPhaseText(phase)}:"),
+            golden.logText,
             row["text"],
-            "log_entry.text byte-matches the PHP raw log plus the stored 삼모 순 stamp",
+            "log_entry.text byte-matches the PHP raw log",
         )
     }
 

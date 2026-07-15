@@ -58,7 +58,24 @@ interface GeneralActionDefinition {
     fun buildMinConstraints(ctx: ConstraintContext): List<Constraint> = buildConstraints(ctx)
 
     /** Normalize the raw reserved arg map into the command's canonical arg map. Default identity. */
-    fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> = raw
+    fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> {
+        return if (matchesArgsSchema(raw)) raw else emptyMap()
+    }
+
+    fun parseArgsForGeneral(raw: Map<String, Any?>, generalId: Int): Map<String, Any?> = parseArgs(raw)
+
+    fun matchesArgsSchema(args: Map<String, Any?>): Boolean = argsSchema.all { (key, type) ->
+        val value = args[key] ?: return@all false
+        when (type) {
+            "int" -> value is Int
+            "bool" -> value is Boolean
+            "string" -> value is String
+            "intList" -> value is List<*> && value.all { it is Int }
+            else -> true
+        }
+    }
+
+    fun bindArgs(parsed: Map<String, Any?>): GeneralActionDefinition = this
 
     fun resolve(context: GeneralActionResolveContext)
 }

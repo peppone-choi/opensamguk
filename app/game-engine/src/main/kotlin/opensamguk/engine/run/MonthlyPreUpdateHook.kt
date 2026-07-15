@@ -4,6 +4,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.persistence.MetaJson
+import opensamguk.common.constants.GameConst
 import opensamguk.logic.tick.PreUpdateMonthly
 import opensamguk.logic.world.PreUpdateAccessLog
 import opensamguk.logic.world.PreUpdateCity
@@ -12,7 +13,6 @@ import opensamguk.logic.world.PreUpdateMonthlyContext
 import opensamguk.logic.world.PreUpdateMonthlyHook
 import opensamguk.logic.world.PreUpdateMonthlyResult
 import opensamguk.logic.world.PreUpdateNation
-import java.security.MessageDigest
 
 class MonthlyPreUpdateHook(
     private val world: InMemoryTurnWorld,
@@ -122,52 +122,105 @@ class MonthlyPreUpdateHook(
 
     private fun yearbookColumns(year: Int, month: Int): Map<String, Any?> {
         val state = world.getState()
-        val map = linkedMapOf<String, Any?>()
-        val rawMap = state.meta["map"]
-        if (rawMap is Map<*, *>) {
-            rawMap.forEach { (key, value) -> map[key.toString()] = value }
-        } else if (rawMap != null) {
-            map["mapName"] = rawMap
+        val map = linkedMapOf<String, Any?>(
+            "startYear" to ((state.meta["startYear"] as? Number)?.toInt() ?: year),
+            "year" to year,
+            "month" to month,
+            "cityList" to world.listCities().map {
+                listOf(it.id, it.level, it.state, it.nationId, it.region, it.supplyState)
+            },
+            "nationList" to world.listNations().filter { it.id != 0 }.map {
+                listOf(it.id, it.name, it.color, it.capitalCityId ?: 0)
+            },
+            "spyList" to emptyMap<String, Any?>(),
+            "shownByGeneralList" to emptyList<Int>(),
+            "myCity" to null,
+            "myNation" to null,
+            "version" to 0,
+            "result" to true,
+        )
+        val nations = world.listNations().filter { it.id != 0 }.map { nation ->
+            linkedMapOf<String, Any?>(
+                "nation" to nation.id,
+                "name" to nation.name,
+                "color" to nation.color,
+                "type" to nation.typeCode,
+                "level" to nation.level,
+                "capital" to (nation.capitalCityId ?: 0),
+                "gennum" to (nation.meta["gennum"] ?: world.listGenerals().count { it.nationId == nation.id }),
+                "power" to nation.power,
+            )
+        }.toMutableList()
+        nations += linkedMapOf(
+            "nation" to 0,
+            "name" to "재야",
+            "color" to "#000000",
+            "type" to GameConst.neutralNationType,
+            "level" to 0,
+            "capital" to 0,
+            "gold" to 0,
+            "rice" to 2000,
+            "tech" to 0,
+            "gennum" to 1,
+            "power" to 1,
+        )
+        val nationsById = nations.associateByTo(LinkedHashMap()) { (it["nation"] as Number).toInt() }
+        for (city in world.listCities()) {
+            val nation = nationsById[city.nationId] ?: continue
+            @Suppress("UNCHECKED_CAST")
+            val cities = nation.getOrPut("cities") { mutableListOf<String>() } as MutableList<String>
+            cities += city.name
         }
-        map["startYear"] = (state.meta["startYear"] as? Number)?.toInt() ?: year
-        map["year"] = year
-        map["month"] = month
-
-        val citiesByNation = world.listCities()
-            .groupBy { it.nationId }
-            .mapValues { (_, cities) -> cities.sortedBy { it.id }.map { it.name } }
-        val nations = world.listNations()
-            .sortedWith(compareByDescending<opensamguk.engine.turn.Nation> { it.power }.thenBy { it.id })
-            .map { nation ->
-                linkedMapOf<String, Any?>(
-                    "nation" to nation.id,
-                    "name" to nation.name,
-                    "color" to nation.color,
-                    "power" to nation.power,
-                    "level" to nation.level,
-                    "capital" to nation.capitalCityId,
-                    "cities" to (citiesByNation[nation.id] ?: emptyList<String>()),
-                )
-            }
+        val sortedNations = nations.sortedByDescending { (it["power"] as Number).toInt() }
 
         val mapJson = MetaJson.encode(map)
-        val nationsJson = MetaJson.encode(nations)
-        val globalHistoryJson = "[]"
-        val globalActionJson = "[]"
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest("$mapJson\n$nationsJson\n$globalHistoryJson\n$globalActionJson".toByteArray(Charsets.UTF_8))
-            .joinToString("") { "%02x".format(it) }
-
+        val nationsJson = MetaJson.encode(sortedNations)
+        val globalHistoryJson = MetaJson.encode(currentGlobalLogs("history", year, month))
+        val globalActionJson = MetaJson.encode(currentGlobalLogs("action", year, month))
         return linkedMapOf(
-            "profile_name" to profileName,
+            "server_id" to activeServerId(),
             "year" to year,
             "month" to month,
             "map" to mapJson,
             "nations" to nationsJson,
             "global_history" to globalHistoryJson,
             "global_action" to globalActionJson,
-            "hash" to digest,
         )
+    }
+
+    private fun activeServerId(): String =
+        world.archiveServerId()
+            ?: world.getState().serverId
+            ?: world.getState().meta["serverId"]?.toString()?.takeIf(String::isNotBlank)
+            ?: world.getState().meta["server_id"]?.toString()?.takeIf(String::isNotBlank)
+            ?: profileName
+
+    private fun currentGlobalLogs(category: String, year: Int, month: Int): List<String> {
+        val persisted = (world.getState().meta["globalLogs"] as? List<*>)
+            .orEmpty()
+            .mapNotNull { it as? Map<*, *> }
+            .filter {
+                it["category"]?.toString()?.equals(category, ignoreCase = true) == true &&
+                    (it["year"] as? Number)?.toInt() == year &&
+                    (it["month"] as? Number)?.toInt() == month
+            }
+            .mapNotNull { it["text"]?.toString() }
+        val pending = world.peekLogs()
+            .filter {
+                it.scope.lowercase() in setOf("global", "system") &&
+                    it.category.equals(category, ignoreCase = true) &&
+                    (it.year ?: year) == year &&
+                    (it.month ?: month) == month
+            }
+            .map { it.text }
+            .asReversed()
+        val logs = pending + persisted
+        if (logs.isNotEmpty()) return logs
+        return when (category.lowercase()) {
+            "history" -> listOf("<C>●</>${year}년 ${month}월: 기록 없음")
+            "action" -> listOf("<C>●</>${month}월: 기록 없음")
+            else -> emptyList()
+        }
     }
 
     private fun spyMap(raw: Any?): Map<Int, Int> {

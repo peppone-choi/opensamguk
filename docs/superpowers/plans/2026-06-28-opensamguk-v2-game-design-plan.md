@@ -5,6 +5,7 @@
 > 후속 정본: `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md`
 > 근거: `docs/superpowers/research/2026-06-27-v2-samnet-myosam-gap-design.md`, `docs/wiki/raw/myosam-help/`, `/Users/apple/Downloads/files/` raw copy
 > 원칙: v1 패러티는 보존하고, v2는 별도 제품 방향으로 설계한다.
+> 2026-07-14 정정: 인증 후 삼넷 실플레이와 사용자 결정에 따라 3D를 v2 기본 지도·전장 surface로 확정했다. 최신 근거는 `docs/superpowers/research/2026-07-14-samnet-live-play-reverse-design.md`다.
 
 ## 1. 한 줄 정의
 
@@ -24,9 +25,9 @@ v2는 v1 패러티 작업을 대체하지 않는다. v1은 PHP `legacy/devsam-co
 
 | 입력 | 관측/요구 | v2에 넣을 것 | v1과 분리할 것 |
 |---|---|---|---|
-| samnet 현재 공개 화면 | 첫 화면에서 날짜/순, 2D 지도 토글, 최근 정세, 최근 전쟁 로그가 바로 보인다. | 랜딩 대신 게임 현황 대시보드, 지도 모드, 정세/전쟁 타임라인을 첫 화면에 배치. | v1 PHP 화면 byte 패러티 요구로 보지 않는다. |
+| samnet 실플레이 표면 | 상태 작업대에서 날짜/순, WebGL 3D 지도, 24칸 명령 큐, 일괄등록·프리셋, 정세와 전투 replay가 연결된다. | 랜딩 대신 게임 현황 대시보드, 3D 지도·명령·정세·replay를 한 작업 흐름으로 배치. | 화면·자산·수치 복제나 v1 PHP 화면 byte 패러티 요구로 보지 않는다. |
 | myosam 도움말 37페이지 | 예약턴, 관직, 지휘부, 부대, 요격/농성/공성, 건설물/장애물, NPC 관리가 상세하다. | 전쟁 phase, 부대 전술, 관직/권한, NPC/위임 플레이를 v2 시스템의 근거로 사용. | 원문 UI/자산/명칭을 그대로 복제하지 않는다. |
-| 다운로드 PRD/ROADMAP | 실시간 tick, 3D 지도, 추종+가신 2트랙, 창고/건설/황제제/명령 코드젠이 제안되어 있다. | 추종/가신, replay-first 전쟁, 실시간 이벤트, 3D 지도는 v2 방향으로 채택. | 첫 MVP에서 3D 지도와 전체 명령 70개를 선행하지 않는다. |
+| 다운로드 PRD/ROADMAP | 실시간 tick, 3D 지도, 추종+가신 2트랙, 창고/건설/황제제/명령 코드젠이 제안되어 있다. | 추종/가신, replay-first 전쟁, 실시간 이벤트, 제한된 3D 수직 슬라이스를 v2 기반으로 채택. | 전체 대륙 지도와 전체 명령 70개를 첫 MVP 선행 조건으로 삼지 않는다. |
 | 사용자 추가 요구 | 가신 상호작용, 명령/제안, 편견/어전회의, 부세력/봉건제, 동적 전쟁. | v2 핵심 차별점으로 승격. 기획과 schema 첫 스파이크의 중심으로 둔다. | 단순 버프, 단순 추천 UI, 깡대깡 전투로 축소하지 않는다. |
 
 ## 4. 플레이어 판타지
@@ -248,6 +249,17 @@ v2의 모든 자동 판단은 replay 가능해야 한다.
 - 다음 턴 명령.
 - 가신 제안.
 
+임관은 화면 토글이 아니라 하나의 상태 전이다. 소속, 현재 도시, 봉록, 국가 채널, 개인·정세 로그, 국정 메뉴와 command capability가 같은 사건을 반영해야 하며 재접속 후에도 서로 어긋나면 안 된다.
+
+명령 버튼은 네 조건을 분리해 설명한다.
+
+- 현재 장수의 소속·관직·부대 역할이 허용하는가.
+- 조작 대상 장수가 선택됐는가.
+- 기록할 queue slot이 선택됐는가.
+- 서버가 현재 시각의 목적지 후보를 허용했는가.
+
+일반 장수, 부대장, 군주·참모는 같은 화면을 사용하되 허용 후보와 비활성 사유가 달라진다. 클라이언트가 역할명을 보고 권한을 추론하지 않고 서버 capability 응답을 렌더한다.
+
 ### 9.2 전쟁 화면
 
 전쟁은 결과 텍스트 한 줄이 아니라 timeline이다.
@@ -291,6 +303,7 @@ Deliverables:
 - samnet 공개 화면 feature snapshot 작성.
 - v2 ERD 초안 작성.
 - v1 패러티와 v2 확장 브랜치 분리 원칙 문서화.
+- 도시 3개·route 2개·terrain patch 1개·formation 4개의 3D foundation proof와 camera/picking/performance 계약.
 
 Exit:
 
@@ -380,14 +393,14 @@ Exit:
 
 ## 11. 우선순위
 
-1. replay schema.
-2. 가신 proposal schema.
-3. court council schema.
-4. fief/feudal contract schema.
-5. UI timeline.
-6. 3D 지도.
+1. 3D world coordinate·selection·terrain version foundation.
+2. replay schema.
+3. 가신 proposal schema.
+4. court council schema.
+5. fief/feudal contract schema.
+6. UI timeline과 3D replay presentation.
 
-3D 지도는 멋있지만 핵심 재미의 원인은 아니다. 먼저 "세계가 사건을 기억하고 NPC가 의견을 낸다"를 만들어야 한다.
+3D는 장식이 아니라 작전 경로·지형·formation·replay를 같은 공간 계약으로 묶는 기본 surface다. 다만 3D 표현이 서버 권위, replay, NPC 제안과 관계 변화를 대체해서는 안 된다.
 
 ## 12. 비목표
 

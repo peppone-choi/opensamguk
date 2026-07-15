@@ -10,11 +10,14 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaDouble
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.phpToInt
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * che_숙련전환 byte/draw 게이트 (deterministic, draw-0) — golden은 PHP run()(che_숙련전환.php:159-185)에서
@@ -37,6 +40,9 @@ class CheSukryeonJeonhwanGoldenTest {
 
     private val pipeline = GeneralActionPipeline()
     private val develCost = 12
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     /** 어떤 추첨도 호출되면 즉시 실패시키는 RNG — run()의 0-draw 불변식 강제. */
     private class DrawGuardRng : RandUtil(LiteHashDrbg("00")) {
@@ -123,6 +129,23 @@ class CheSukryeonJeonhwanGoldenTest {
     }
 
     @Test
+    fun `tail reaches StaticEventHandler after lastTurn and publishes unique intent without drawing action rng`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_숙련전환") { general, _, _, params ->
+            observed += "${general.lastTurn.command}:${params["srcArmType"]}:${params["destArmType"]}"
+        }
+
+        val def = CheSukryeonJeonhwan(pipeline).withArg(linkedMapOf("srcArmType" to 1, "destArmType" to 3))
+        val draft = GeneralActionDraft(actor(), city(), nation())
+        def.resolve(newCtx(draft))
+
+        assertEquals(listOf("숙련전환:1:3"), observed)
+        assertEquals("숙련전환", def.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("아이템", def.lastUniqueLotteryIntent?.acquireType)
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler", def.lastUniqueLotteryIntent?.afterTail)
+    }
+
+    @Test
     fun `cut and add values match toInt truncation and number_format`() {
         // 절단(toInt) 검증: 357 * 0.4 = 142.8 → 142;  142 * 0.9 = 127.8 → 127.
         val cut = phpToInt(357.0 * 0.4)
@@ -131,5 +154,15 @@ class CheSukryeonJeonhwanGoldenTest {
         assertEquals(127, add, "addDex = toInt(142*0.9)")
         // number_format(콤마 구분).
         assertEquals("1,234", numberFormat(1234), "number_format 콤마 그룹")
+    }
+
+    @Test
+    fun `argTest requires PHP is_int arm types`() {
+        val def = CheSukryeonJeonhwan(pipeline)
+
+        assertEquals(linkedMapOf("srcArmType" to 1, "destArmType" to 3), def.parseArgs(linkedMapOf("srcArmType" to 1, "destArmType" to 3)))
+        assertTrue(def.parseArgs(linkedMapOf("srcArmType" to "1", "destArmType" to 3)).isEmpty())
+        assertTrue(def.parseArgs(linkedMapOf("srcArmType" to 1.0, "destArmType" to 3)).isEmpty())
+        assertTrue(def.parseArgs(linkedMapOf("srcArmType" to 1, "destArmType" to 1)).isEmpty())
     }
 }

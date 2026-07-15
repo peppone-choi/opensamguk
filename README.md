@@ -186,7 +186,7 @@ docker compose up -d --build
 ### 로그인 → 로비 → 게임
 
 1. `http://localhost:3000/login` 접속.
-2. 관리자 계정으로 로그인 — 기본 admin **`peppone`**. (gateway-api `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 환경변수가 **둘 다** 설정돼 있을 때 부팅 시 1회 생성. 둘 중 하나라도 비면 시드를 건너뜁니다. 일반 계정은 `/join`에서 가입.)
+2. 관리자 계정으로 로그인 — 기본 admin 아이디는 **`peppone`**이며 비밀번호는 `.env`의 `ADMIN_PASSWORD`에 직접 설정합니다. (gateway-api `AdminSeeder`가 `ADMIN_USERNAME`/`ADMIN_PASSWORD` 환경변수가 **둘 다** 설정돼 있을 때 부팅 시 1회 생성. 둘 중 하나라도 비면 시드를 건너뜁니다. 일반 계정은 `/join`에서 가입.)
 3. 로그인 성공 → `/lobby`로 이동. 서버가 있으면 서버 목록 + 10분 캐싱 맵 프리뷰를 보여주고, 서버가 없으면 맵/로그/서버 선택을 렌더하지 않습니다.
 4. 로비에서 **입장** → web/game `/game` 메인 화면.
 

@@ -149,7 +149,7 @@ class FlushPayloadConvergenceTest {
     }
 
     @Test
-    fun `log rows are stamped and prefixed with the current ten-day phase`() {
+    fun `log rows retain PHP text while storing the ten-day phase separately`() {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state = baseState(phase = 3),
@@ -163,7 +163,7 @@ class FlushPayloadConvergenceTest {
         val payload = DatabaseHooks.toFlushPayload(world, ChangeRecorder(), world.consumeDirtyState())
 
         assertEquals(3, payload.logEntries.single().phase)
-        assertEquals("<C>●</>1월 하순:하순 행동", payload.logEntries.single().text)
+        assertEquals("<C>●</>1월:하순 행동", payload.logEntries.single().text)
     }
 
     @Test
@@ -193,7 +193,7 @@ class FlushPayloadConvergenceTest {
         assertEquals(188, row.year)
         assertEquals(1, row.month)
         assertEquals(1, row.phase)
-        assertEquals("<C>●</>1월 상순:봄이 되어 봉록에 따라 자금이 지급됩니다.", row.text)
+        assertEquals("<C>●</>1월:봄이 되어 봉록에 따라 자금이 지급됩니다.", row.text)
     }
 
     @Test

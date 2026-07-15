@@ -91,10 +91,54 @@ class ReservedTurnHandlerTest {
         generals: List<TurnGeneral> = listOf(general()),
         cities: List<City> = listOf(city()),
         nations: List<Nation> = listOf(nation()),
+        meta: Map<String, Any?> = emptyMap(),
     ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations))
+        .let { world ->
+            if (meta.isEmpty()) world else InMemoryTurnWorld(WorldSnapshot(baseState().copy(meta = meta), generals, cities, nations))
+        }
 
     private fun handlerFor(world: InMemoryTurnWorld, scenario: Int = 0) =
         ReservedTurnHandler(world, registry, FIXTURE_HIDDEN_SEED, START_YEAR, scenario = scenario)
+
+    private fun forcedLotteryMeta(): Map<String, Any?> = linkedMapOf(
+        "init_year" to YEAR,
+        "init_month" to MONTH,
+        "minMonthToAllowInheritItem" to 0,
+        "allItems" to linkedMapOf(
+            "horse" to linkedMapOf("che_명마_15_적토마" to 1),
+            "weapon" to linkedMapOf("che_무기_15_의천검" to 1),
+        ),
+    )
+
+    private fun withForcedLottery(general: TurnGeneral): TurnGeneral = general.copy(
+        userId = "777",
+        meta = LinkedHashMap(general.meta).apply {
+            put("aux", linkedMapOf("inheritRandomUnique" to "MARK"))
+        },
+    )
+
+    private fun uniqueItemCount(general: TurnGeneral): Int = listOf(
+        general.role.items.horse,
+        general.role.items.weapon,
+        general.role.items.book,
+        general.role.items.item,
+    ).count { it != null && it != "None" }
+
+    @Test
+    fun `PHP unique lottery call-site contract is exhaustive`() {
+        val callSites = checkNotNull(javaClass.getResourceAsStream("/parity/php-unique-item-lottery-call-sites.txt"))
+            .bufferedReader()
+            .useLines { lines -> lines.filter { it.isNotBlank() }.toList() }
+        val codes = callSites.map { it.substringBefore('|') }
+
+        assertEquals(34, callSites.size)
+        assertEquals(33, codes.toSet().size)
+        assertEquals(2, codes.count { it == "che_인재탐색" })
+        assertEquals(codes.toSet(), ReservedTurnHandler.UNIQUE_ITEM_LOTTERY_COMMAND_CODES)
+        assertTrue("cr_건국" in codes)
+        assertTrue("cr_맹훈련" in codes)
+        assertFalse("che_선양" in codes)
+    }
 
     @Test
     fun `cityless general can consume a reserved rest turn without resolving a city`() {
@@ -142,6 +186,385 @@ class ReservedTurnHandlerTest {
         assertTrue(worldDirty.generals.isEmpty(), "dirty-free apply never marks the world general dirty")
         assertTrue(worldDirty.cities.isEmpty(), "dirty-free apply never marks the world city dirty")
         assertEquals(1, worldDirty.logs.size, "the action log was pushed to the world")
+    }
+
+    @Test
+    fun `reserved arg command binds a PHP numeric string before resolve`() {
+        val world = worldWith(
+            generals = listOf(general(gold = 0).copy(rice = 2_000)),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_군량매매", """{"buyRice":false,"amount":"1234"}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(1_200, outcome.args["amount"])
+        assertEquals(800, world.getGeneralById(42)!!.rice)
+        assertEquals(1_188, world.getGeneralById(42)!!.gold)
+        assertTrue(handler.recorder.dirtyGeneralIds().contains(42))
+    }
+
+    @Test
+    fun `invalid reserved args fall back without reaching the resolver`() {
+        val world = worldWith(
+            generals = listOf(general(gold = 0).copy(rice = 2_000)),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_군량매매", """{"buyRice":false,"amount":"oops"}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertTrue(outcome.fellBack)
+        assertEquals("휴식", outcome.definition.key)
+        assertEquals("인자가 올바르지 않습니다.", outcome.denyReason)
+        assertEquals(2_000, world.getGeneralById(42)!!.rice)
+        assertEquals(0, world.getGeneralById(42)!!.gold)
+        assertFalse(handler.recorder.isDirty)
+        assertEquals(
+            "<C>●</>${MONTH}월:인자가 올바르지 않습니다. 군량매매 실패. <1>12:34</>",
+            world.consumeDirtyState().logs.single().text,
+        )
+    }
+
+    @Test
+    fun `rare equipment sale records PHP global history`() {
+        val actor = general(gold = 1_000).copy(
+            name = "최강자",
+            role = GeneralRole(items = GeneralItems(horse = "che_명마_15_적토마")),
+        )
+        val world = worldWith(generals = listOf(actor))
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_장비매매", """{"itemType":"horse","itemCode":"None"}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        val logs = world.consumeDirtyState().logs
+        val actionIndex = logs.indexOfFirst {
+            it.scope == "global" && it.category == "action" && it.text.contains("적토마(+15)</>를 판매했습니다!")
+        }
+        val historyIndex = logs.indexOfFirst {
+            it.scope == "global" &&
+                it.category == "history" &&
+                it.text == "<C>●</>${YEAR}년 ${MONTH}월:<R><b>【판매】</b></><D><b>n1</b></>의 <Y>최강자</>가 <C>적토마(+15)</>를 판매했습니다!"
+        }
+        assertTrue(actionIndex >= 0, "rare sale must emit the PHP global action line")
+        assertTrue(historyIndex >= 0, "rare sale must emit the PHP YEAR_MONTH global history line")
+        assertEquals(
+            actionIndex + 1,
+            historyIndex,
+            "PHP emits rare-sale history immediately after the global sale action, before tail logs and lottery",
+        )
+    }
+
+    @Test
+    fun `rare equipment sale by a neutral general uses 재야 in global history`() {
+        val actor = general(gold = 1_000, nationId = 0).copy(
+            name = "방랑객",
+            role = GeneralRole(items = GeneralItems(horse = "che_명마_15_적토마")),
+        )
+        val world = worldWith(generals = listOf(actor), cities = listOf(city(nationId = 0)), nations = emptyList())
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_장비매매", """{"itemType":"horse","itemCode":"None"}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertTrue(
+            world.consumeDirtyState().logs.any {
+                it.scope == "global" &&
+                    it.category == "history" &&
+                    it.text == "<C>●</>${YEAR}년 ${MONTH}월:<R><b>【판매】</b></><D><b>재야</b></>의 <Y>방랑객</>이 <C>적토마(+15)</>를 판매했습니다!"
+            },
+        )
+    }
+
+    @Test
+    fun `unique lottery uses active scenario allItems catalog and insertion order`() {
+        fun resolveWith(allItems: Map<String, Map<String, Int>>): String {
+            val actor = general(gold = 100_000).copy(
+                userId = "777",
+                meta = linkedMapOf(
+                    "explevel" to 10,
+                    "intel_exp" to 3,
+                    "max_domestic_critical" to 0.0,
+                    "killturn" to 80,
+                    "aux" to linkedMapOf("inheritRandomUnique" to "MARK"),
+                ),
+            )
+            val meta = linkedMapOf<String, Any?>(
+                "init_year" to YEAR,
+                "init_month" to MONTH,
+                "minMonthToAllowInheritItem" to 0,
+                "allItems" to allItems,
+            )
+            val world = worldWith(generals = listOf(actor), meta = meta)
+            val handler = handlerFor(world, scenario = 905)
+
+            val outcome = handler.handle(
+                42,
+                ReservedTurn("che_군량매매", """{"buyRice":false,"amount":100}"""),
+                YEAR,
+                MONTH,
+                "12:34",
+            )
+
+            assertFalse(outcome.fellBack)
+            return listOfNotNull(
+                world.getGeneralById(42)!!.role.items.weapon,
+                world.getGeneralById(42)!!.role.items.horse,
+            ).single { it != "None" }
+        }
+
+        val weaponFirst = resolveWith(
+            linkedMapOf(
+                "weapon" to linkedMapOf("che_무기_15_의천검" to 1),
+                "horse" to linkedMapOf("che_명마_15_적토마" to 1),
+            ),
+        )
+        val horseFirst = resolveWith(
+            linkedMapOf(
+                "horse" to linkedMapOf("che_명마_15_적토마" to 1),
+                "weapon" to linkedMapOf("che_무기_15_의천검" to 1),
+            ),
+        )
+
+        assertEquals(
+            setOf("che_무기_15_의천검", "che_명마_15_적토마"),
+            setOf(weaponFirst, horseFirst),
+            "scenario 905 active allItems insertion order must drive the weighted selection",
+        )
+    }
+
+    @Test
+    fun `forced unique refund logs exact PHP no-space inheritance log`() {
+        val actor = general(gold = 100_000).copy(
+            userId = "777",
+            role = GeneralRole(items = GeneralItems(horse = "che_명마_15_적토마")),
+            meta = linkedMapOf(
+                "explevel" to 10,
+                "intel_exp" to 3,
+                "max_domestic_critical" to 0.0,
+                "killturn" to 80,
+                "aux" to linkedMapOf("inheritRandomUnique" to "MARK"),
+            ),
+        )
+        val meta = linkedMapOf<String, Any?>(
+            "init_year" to YEAR,
+            "init_month" to MONTH,
+            "minMonthToAllowInheritItem" to 0,
+            "allItems" to linkedMapOf("horse" to linkedMapOf("che_명마_15_적토마" to 1)),
+        )
+        val world = worldWith(generals = listOf(actor), meta = meta)
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_군량매매", """{"buyRice":false,"amount":100}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(
+            listOf("유니크를 얻을 공간이 없어 3000 포인트 반환"),
+            handler.recorder.inheritanceLogInserts().map { it.text },
+        )
+        assertEquals(listOf("inheritPoint"), handler.recorder.inheritanceLogInserts().map { it.tag })
+        val aux = world.getGeneralById(42)!!.meta["aux"] as Map<*, *>
+        assertFalse(aux.containsKey("inheritRandomUnique"))
+    }
+
+    @Test
+    fun `forced unique refund logs exact PHP no-available inheritance log`() {
+        val actor = general(gold = 100_000).copy(
+            userId = "777",
+            meta = linkedMapOf(
+                "explevel" to 10,
+                "intel_exp" to 3,
+                "max_domestic_critical" to 0.0,
+                "killturn" to 80,
+                "aux" to linkedMapOf("inheritRandomUnique" to "MARK"),
+            ),
+        )
+        val meta = linkedMapOf<String, Any?>(
+            "init_year" to YEAR,
+            "init_month" to MONTH,
+            "minMonthToAllowInheritItem" to 0,
+            "allItems" to linkedMapOf(
+                "horse" to linkedMapOf<String, Int>(),
+                "weapon" to linkedMapOf<String, Int>(),
+                "book" to linkedMapOf<String, Int>(),
+                "item" to linkedMapOf<String, Int>(),
+            ),
+        )
+        val world = worldWith(generals = listOf(actor), meta = meta)
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_군량매매", """{"buyRice":false,"amount":100}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(
+            listOf("얻을 유니크가 없어 3000 포인트 반환"),
+            handler.recorder.inheritanceLogInserts().map { it.text },
+        )
+        assertEquals(listOf("inheritPoint"), handler.recorder.inheritanceLogInserts().map { it.tag })
+        val aux = world.getGeneralById(42)!!.meta["aux"] as Map<*, *>
+        assertFalse(aux.containsKey("inheritRandomUnique"))
+    }
+
+    @Test
+    fun `che_임관 consumes exactly one unique lottery after success`() {
+        val actor = withForcedLottery(general(nationId = 0, cityId = 1))
+        val lord = general(id = 50, nationId = 2, cityId = 9).copy(officerLevel = 12)
+        val destNation = nation(id = 2).copy(meta = linkedMapOf("gennum" to 1, "scout" to 0))
+        val world = worldWith(
+            generals = listOf(actor, lord),
+            cities = listOf(city(id = 1, nationId = 0), city(id = 9, nationId = 2)),
+            nations = listOf(destNation),
+            meta = forcedLotteryMeta(),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_임관", """{"destNationID":2}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(1, uniqueItemCount(world.getGeneralById(42)!!))
+    }
+
+    @Test
+    fun `previously uncovered che_이동 consumes exactly one unique lottery after success`() {
+        val actor = withForcedLottery(general(nationId = 1, cityId = 1))
+        val world = worldWith(
+            generals = listOf(actor),
+            cities = listOf(city(id = 1, nationId = 1), city(id = 9, nationId = 1)),
+            nations = listOf(nation(id = 1)),
+            meta = forcedLotteryMeta(),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_이동", """{"destCityID":9}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertFalse(outcome.fellBack)
+        assertEquals(9, world.getGeneralById(42)!!.cityId)
+        assertEquals(1, uniqueItemCount(world.getGeneralById(42)!!))
+    }
+
+    @Test
+    fun `failed che_훈련 consumes no unique lottery`() {
+        val actor = withForcedLottery(general(nationId = 1, cityId = 1).copy(crew = 0))
+        val world = worldWith(
+            generals = listOf(actor),
+            cities = listOf(city(id = 1, nationId = 1)),
+            nations = listOf(nation(id = 1)),
+            meta = forcedLotteryMeta(),
+        )
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(42, "che_훈련", YEAR, MONTH, "12:34")
+
+        assertTrue(outcome.fellBack)
+        val post = world.getGeneralById(42)!!
+        assertEquals(0, uniqueItemCount(post))
+        @Suppress("UNCHECKED_CAST")
+        val aux = post.meta["aux"] as Map<String, Any?>
+        assertEquals("MARK", aux["inheritRandomUnique"])
+    }
+
+    @Test
+    fun `schema integer rejects a fractional destination before constraints`() {
+        val world = worldWith()
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_임관", """{"destNationID":2.5}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertTrue(outcome.fellBack)
+        assertEquals("인자가 올바르지 않습니다.", outcome.denyReason)
+        assertFalse(handler.recorder.isDirty)
+    }
+
+    @Test
+    fun `recruit rejects a negative amount before applying the minimum clamp`() {
+        val world = worldWith()
+        val handler = handlerFor(world)
+        val before = world.getGeneralById(42)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_징병", """{"crewType":1100,"amount":-1}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertTrue(outcome.fellBack)
+        assertEquals("인자가 올바르지 않습니다.", outcome.denyReason)
+        assertEquals(before, world.getGeneralById(42))
+        assertFalse(handler.recorder.isDirty)
+    }
+
+    @Test
+    fun `abdication rejects the actor as its own successor`() {
+        val world = worldWith()
+        val handler = handlerFor(world)
+
+        val outcome = handler.handle(
+            42,
+            ReservedTurn("che_선양", """{"destGeneralID":42}"""),
+            YEAR,
+            MONTH,
+            "12:34",
+        )
+
+        assertTrue(outcome.fellBack)
+        assertEquals("인자가 올바르지 않습니다.", outcome.denyReason)
+        assertFalse(handler.recorder.isDirty)
     }
 
     @Test
@@ -223,7 +646,9 @@ class ReservedTurnHandlerTest {
         val outcome = handler.handle(42, "che_농지개간", YEAR, MONTH, "12:34")
 
         // The precheck call site (E2 PrecheckStateViewFactory) builds its env through the SAME helper.
-        val precheckEnv = WorldEnvBuilder.commandEnvMap(YEAR, START_YEAR, MONTH, 1)
+        val precheckEnv = LinkedHashMap(WorldEnvBuilder.commandEnvMap(YEAR, START_YEAR, MONTH, 1)).apply {
+            this["ownCities"] = linkedMapOf(7 to 5)
+        }
 
         // key-for-key equality proves the one shared helper — neither call site can drift (P1 #7).
         assertEquals(precheckEnv, outcome.env, "full-mode env == precheck env (same WorldEnvBuilder)")
@@ -285,8 +710,37 @@ class ReservedTurnHandlerTest {
     }
 
     @Test
+    fun `inheritance point increases are ordered cumulative deltas with key multiplier`() {
+        val recorder = ChangeRecorder()
+        val aux = mapOf("source" to "same")
+
+        recorder.recordInheritancePointIncrease(777, "active_action", 1.0, null)
+        recorder.recordInheritancePointIncrease(777, "active_action", 2.0, null)
+        recorder.recordInheritancePointIncrease(777, "active_action", 1.0, aux)
+        recorder.recordInheritancePointIncrease(777, "active_action", 1.0, aux)
+        recorder.recordInheritancePointIncrease(777, "unifier", 250.0, null)
+
+        val writes = recorder.inheritanceKvWrites()
+        assertEquals(
+            listOf(3.0, 9.0, 3.0, 6.0, 250.0),
+            writes.map { (it.value as List<*>)[0] as Double },
+            "increase writes must carry old + value * InheritanceKey coefficient in emission order",
+        )
+        assertEquals(
+            listOf(null, null, aux, aux, null),
+            writes.map { (it.value as List<*>)[1] },
+            "aux is rewritten only when the requested aux differs from the pending aux",
+        )
+        assertEquals(
+            listOf("active_action", "active_action", "active_action", "active_action", "unifier"),
+            writes.map { it.key },
+            "increment deltas stay ordered instead of collapsing to an absolute overwrite",
+        )
+    }
+
+    @Test
     fun `che_임관 preloads the destination nation and increments gennum`() {
-        val actor = general(nationId = 0, cityId = 7).copy(troopId = 42)
+        val actor = general(nationId = 0, cityId = 7).copy(troopId = 42, userId = "777")
         val lord = general(id = 50, nationId = 2, cityId = 8).copy(officerLevel = 12)
         val destNation = nation(id = 2).copy(meta = linkedMapOf("gennum" to 1, "scout" to 0))
         val world = worldWith(
@@ -306,12 +760,14 @@ class ReservedTurnHandlerTest {
         assertEquals(0, joined.troopId, "che_임관은 PHP처럼 troop을 0으로 리셋한다")
         assertEquals(2, (world.getNationById(2)!!.meta["gennum"] as Number).toInt())
         assertEquals(setOf(2), handler.recorder.dirtyNationIds())
+        assertEquals(listOf("active_action"), handler.recorder.inheritanceKvWrites().map { it.key })
     }
 
     @Test
     fun `che_랜덤임관 loads live candidate nations and increments gennum`() {
         val actor = general(nationId = 0, cityId = 7).copy(
             npcState = 2,
+            userId = "777",
             meta = general().meta + mapOf("affinity" to 40, "name" to "g42"),
         )
         val lord = general(id = 50, nationId = 2, cityId = 8).copy(officerLevel = 12, npcState = 2)
@@ -333,6 +789,8 @@ class ReservedTurnHandlerTest {
         assertEquals(2, (world.getNationById(2)!!.meta["gennum"] as Number).toInt())
         assertTrue(outcome.logs.none { it.contains("임관 가능한 국가가 없습니다.") })
         assertEquals(setOf(2), handler.recorder.dirtyNationIds())
+        // PHP InheritancePointManager.php:261-270 skips every npc >= 2 even when owner is present.
+        assertTrue(handler.recorder.inheritanceKvWrites().isEmpty())
     }
 
     @Test

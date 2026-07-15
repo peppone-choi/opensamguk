@@ -12,6 +12,7 @@ import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.mock
@@ -204,18 +205,21 @@ class PrecheckFullCrossCallSiteTest {
         )
     }
 
-    // --- CMD-TRADE: che_헌납 (notBeNeutral/occupiedCity/suppliedCity + reqGeneralRice; empty args
-    // -> isGold=false -> the rice branch, identical on both sites). ---
+    // --- CMD-TRADE: che_헌납 (notBeNeutral/occupiedCity/suppliedCity + reqGeneralRice). The daemon
+    // receives the valid required payload that PHP argTest demands; PRECHECK has no request-arg seam,
+    // so its empty args select the same isGold=false rice constraint branch. ---
 
     @Test
     fun `P2 trade che_헌납 AVAILABLE both real call sites agree go`() {
-        // owned, supplied, rice(3000) >= generalMinimumRice(500) -> both ALLOW + resolve (amount 0).
-        assertAvailableAgreement("che_헌납", Fixture())
+        assertAvailableAgreement("che_헌납", Fixture(), tributeRiceArgs)
     }
 
     @Test
     fun `P2 trade che_헌납 SuppliedCity deny both real call sites agree`() {
-        assertDenyAgreement(Fixture(supplyState = 0), "고립된 도시입니다.", "SuppliedCity", action = "che_헌납")
+        assertDenyAgreement(
+            Fixture(supplyState = 0), "고립된 도시입니다.", "SuppliedCity",
+            action = "che_헌납", argJson = tributeRiceArgs,
+        )
     }
 
     // --- CMD-PERSONNEL: che_하야 (notBeNeutral/notLord). DENY-only via NotLord (a lord cannot
@@ -229,8 +233,6 @@ class PrecheckFullCrossCallSiteTest {
 
     // --- CMD-NATION: che_포상 (NationCommand: notBeNeutral/occupiedCity/beChief/suppliedCity +
     // existsDestGeneral/friendlyDestGeneral/reqNation). DENY via BeChief (a non-수뇌 cannot reward).
-    // BeChief is the 3rd constraint, ahead of the dest-general requirements — so it denies on BOTH
-    // sides with empty args (no dest general loaded), keeping this a clean pure-state cross-site deny.
     // (A funded-chief ALLOW is NOT a valid cross-site case: 포상's FULL set genuinely requires a dest
     // general, which the no-args precheck cannot supply — precheck would return Unknown there, the
     // designed precheck/full divergence, not a parity failure. So 포상 is exercised DENY-only here.) ---
@@ -239,7 +241,13 @@ class PrecheckFullCrossCallSiteTest {
     fun `P2 nation che_포상 BeChief deny both real call sites agree`() {
         // officerLevel 4 (an ordinary general, not a 수뇌 > 4) -> BeChief denies in BOTH modes,
         // ahead of the dest-general requirement.
-        assertDenyAgreement(Fixture(officerLevel = 4), "수뇌가 아닙니다.", "BeChief", action = "che_포상")
+        assertDenyAgreement(
+            Fixture(officerLevel = 4),
+            "수뇌가 아닙니다.",
+            "BeChief",
+            action = "che_포상",
+            argJson = rewardRiceArgs,
+        )
     }
 
     /**
@@ -247,12 +255,12 @@ class PrecheckFullCrossCallSiteTest {
      * agree on "go": game-api precheck == [PrecheckResult.Available] AND game-engine full resolves
      * the requested action (did NOT fall back to 휴식, carries no deny reason).
      */
-    private fun assertAvailableAgreement(action: String, fixture: Fixture) {
+    private fun assertAvailableAgreement(action: String, fixture: Fixture, argJson: String = "") {
         val precheck = precheckService(fixture).precheck(GENERAL_ID, action)
         assertEquals(PrecheckResult.Available, precheck, "game-api precheck: AVAILABLE ($action)")
 
         val (handler, _) = engineHandler(fixture)
-        val outcome = handler.handle(GENERAL_ID, action, YEAR, MONTH, "12:34")
+        val outcome = handler.handle(GENERAL_ID, ReservedTurn(action, argJson), YEAR, MONTH, "12:34")
         assertFalse(outcome.fellBack, "game-engine full: Allow — resolved, did NOT fall back ($action)")
         assertEquals(action, outcome.definition.key, "the requested action resolved, not the fallback")
         assertEquals(null, outcome.denyReason, "no deny reason on an allowed turn ($action)")
@@ -267,6 +275,7 @@ class PrecheckFullCrossCallSiteTest {
         reason: String,
         constraintName: String,
         action: String = ACTION,
+        argJson: String = "",
     ) {
         // game-api PRECHECK -> Blocked(reason, constraintName)
         val precheck = precheckService(fixture).precheck(GENERAL_ID, action)
@@ -276,7 +285,7 @@ class PrecheckFullCrossCallSiteTest {
 
         // game-engine FULL -> fell back to 휴식 carrying the SAME deny reason
         val (handler, _) = engineHandler(fixture)
-        val outcome = handler.handle(GENERAL_ID, action, YEAR, MONTH, "12:34")
+        val outcome = handler.handle(GENERAL_ID, ReservedTurn(action, argJson), YEAR, MONTH, "12:34")
         assertTrue(outcome.fellBack, "game-engine full denies — falls back to 휴식 ($action)")
         assertEquals("휴식", outcome.definition.key, "denied turn resolves to the fallback ($action)")
         assertEquals(reason, outcome.denyReason, "game-engine deny reason ($action)")
@@ -284,5 +293,10 @@ class PrecheckFullCrossCallSiteTest {
         // THE invariant: both REAL call sites returned the SAME class + the SAME byte-identical reason.
         assertEquals(blocked.reason, outcome.denyReason,
             "precheck reason == full reason (one shared constraint library, two real call sites)")
+    }
+
+    private companion object {
+        const val tributeRiceArgs = """{"isGold":false,"amount":1000}"""
+        const val rewardRiceArgs = """{"isGold":false,"amount":1000,"destGeneralID":99}"""
     }
 }

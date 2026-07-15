@@ -27,8 +27,8 @@ class ProductionPipelineIntegrationTest {
                         name = "업",
                         nationId = 1,
                         level = 6,
-                        population = 50_000,
-                        populationMax = 100_000,
+                        population = 200_000,
+                        populationMax = 200_000,
                         supplyState = 1,
                         meta = linkedMapOf("trust" to 80),
                     ),
@@ -54,8 +54,8 @@ class ProductionPipelineIntegrationTest {
             experience = 0,
             dedication = 0,
             officerLevel = 12,
-            gold = 1000,
-            rice = 1000,
+            gold = 1_000_000,
+            rice = 1_000_000,
             crew = 0,
             crewTypeId = 1100,
             turnTime = t0,
@@ -80,6 +80,72 @@ class ProductionPipelineIntegrationTest {
         )
 
         assertEquals(10_100, world.getGeneralById(10)!!.crew)
+    }
+
+    @Test
+    fun `reserved command hydrates and persists general last_turn`() {
+        val previous = linkedMapOf<String, Any?>(
+            "command" to "전투태세",
+            "arg" to linkedMapOf("mode" to "old"),
+            "term" to 2,
+            "seq" to 7,
+        )
+        val general = TurnGeneral(
+            id = 10,
+            name = "유비",
+            nationId = 1,
+            cityId = 5,
+            troopId = 0,
+            stats = GeneralStats(leadership = 70, strength = 60, intelligence = 80),
+            experience = 0,
+            dedication = 0,
+            officerLevel = 12,
+            gold = 1_000,
+            rice = 1_000,
+            turnTime = t0,
+            meta = linkedMapOf("last_turn" to previous, "explevel" to 0),
+        )
+        val city = City(
+            id = 5,
+            name = "업",
+            nationId = 1,
+            level = 6,
+            security = 10_000,
+            securityMax = 10_000,
+            supplyState = 1,
+            trade = 100,
+            meta = linkedMapOf("trust" to 80),
+        )
+        val world = InMemoryTurnWorld(
+            WorldSnapshot(
+                state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0),
+                generals = listOf(general),
+                cities = listOf(city),
+                nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", level = 7)),
+            ),
+        )
+        assertEquals(LastTurn("전투태세", linkedMapOf("mode" to "old"), term = 2, seq = 7), PerTurnOverlay.toLogicGeneral(general).lastTurn)
+
+        val handler = ReservedTurnHandler(
+            world = world,
+            registry = CommandRegistry(GeneralActionPipeline()),
+            hiddenSeed = hiddenSeed,
+            startYear = 184,
+        )
+
+        val outcome = handler.handle(
+            10,
+            ReservedTurn("che_장비매매", """{"itemType":"item","itemCode":"che_치료_환약"}"""),
+            200,
+            1,
+            "12:00",
+        )
+
+        assertEquals(false, outcome.fellBack, "장비매매 should pass full constraints: ${outcome.denyReason}")
+        @Suppress("UNCHECKED_CAST")
+        val stored = world.getGeneralById(10)!!.meta["last_turn"] as Map<String, Any?>
+        assertEquals("장비매매", stored["command"])
+        assertEquals(linkedMapOf("itemType" to "item", "itemCode" to "che_치료_환약"), stored["arg"])
     }
 
     @Test

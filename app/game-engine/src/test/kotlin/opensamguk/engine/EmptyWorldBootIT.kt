@@ -1,18 +1,25 @@
 package opensamguk.engine
+
+import opensamguk.engine.run.TurnDaemonRunner
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+
 @Testcontainers(disabledWithoutDocker = true)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = [
@@ -30,6 +37,16 @@ class EmptyWorldBootIT {
     lateinit var rest: TestRestTemplate
     @Autowired
     lateinit var jdbc: JdbcTemplate
+
+    @Autowired
+    lateinit var daemonRunner: TurnDaemonRunner
+
+    @AfterEach
+    fun stopDaemonBeforeContainerShutdown() {
+        daemonRunner.stop()
+        assertFalse(daemonRunner.isRunning, "daemon thread must join before Testcontainers stops PostgreSQL")
+    }
+
     @Test
     fun `daemon starts and idles when admin has not created a world yet`() {
         val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: -1

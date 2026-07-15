@@ -8,8 +8,12 @@ import opensamguk.logic.constraints.Constraint
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.allowJoinAction
 import opensamguk.logic.constraints.beNeutral
+import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 import kotlin.math.abs
 import kotlin.math.ln
@@ -51,17 +55,18 @@ data class RandomImgwanWeightedCandidate(
  * `getNPCType()>=2 && !fiction && 1000<=scenario<2000`, computed at the adapter boundary since
  * scenario/fiction are not on the typed WorldEnv):
  *
- *  - NPC-foreign branch: `shuffle($nations)` FIRST (one RNG draw), then per-nation score loop keeping the
+ *  - NPC-foreign branch: PHP `shuffle($nations)` runs on ambient PHP RNG, not the command RandUtil; the
+ *    command stream therefore starts at the per-nation score loop keeping the
  *    MIN score (`maxScore` init `1<<30`). Each iteration BUG-FAITHFULLY ACCUMULATES `$affinity`
  *    (it is reassigned from the previous iteration's value — `che_랜덤임관.php:159-160`):
  *      affinity = abs(affinity - testNation.affinity); affinity = min(affinity, abs(affinity - 150));
  *      score = log2(affinity+1) + rng.nextFloat1() + sqrt(testNation.gennum / allGen).
- *    The nextFloat1 is drawn ONCE per nation, in shuffled order.
+ *    The nextFloat1 is drawn ONCE per candidate in the adapter-provided order.
  *  - ELSE branch: weighted pair `(1/(warpower+develpower))^3` (×100 when actor npc<2 AND nation name ⓤ),
  *    one `choiceUsingWeightPair` draw.
  *
- * AFTER the dest is chosen: `randomTalk = rng.choice(talkList)`. Draw order is therefore
- * [shuffle | weightedPair] → choice(talk) → (trailing unique lottery on the SEPARATE "unique" rng with
+ * AFTER the dest is chosen: `randomTalk = rng.choice(talkList)`. Command-RNG draw order is therefore
+ * [per-nation nextFloat1 | weightedPair] → choice(talk) → (trailing unique lottery on the SEPARATE "unique" rng with
  * reason '랜덤 임관'). When no candidate exists, the PHP logs "임관 가능한 국가가 없습니다." and returns
  * false (alternative che_인재탐색) WITHOUT a talk draw or transition.
  *
@@ -84,6 +89,11 @@ class CheRandomImgwan(
     override val rawClassName: String get() = "che_랜덤임관"
     override val lotteryActionName: String get() = "무작위 국가로 임관"
 
+    var lastAlternative: String? = null
+        private set
+    var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
+        private set
+
     override fun buildConstraints(ctx: ConstraintContext): List<Constraint> = listOf(
         beNeutral(),
         allowJoinAction(),
@@ -93,6 +103,8 @@ class CheRandomImgwan(
     private data class Chosen(val nationId: Int, val name: String, val gennum: Int, val lordCityId: Int)
 
     override fun resolve(context: GeneralActionResolveContext) {
+        lastAlternative = null
+        lastUniqueLotteryIntent = null
         val d = context.draft
         val rng = context.rng
 
@@ -105,6 +117,7 @@ class CheRandomImgwan(
         if (chosen == null) {
             // 임관 가능한 국가가 없습니다 — no talk draw, no transition (PHP returns false + che_인재탐색 alternative).
             context.addLog("임관 가능한 국가가 없습니다. <1>${context.date}</>")
+            lastAlternative = "che_인재탐색"
             return
         }
 
@@ -114,6 +127,7 @@ class CheRandomImgwan(
         val generalName = context.generalName.ifEmpty { (d.general.meta["name"] as? String) ?: "" }
         val josaYi = JosaUtil.pick(generalName, "이")
         context.addLog("<D>${chosen.name}</>에 랜덤 임관했습니다. <1>${context.date}</>")
+        context.addGeneralHistoryLog("<D><b>${chosen.name}</b></>에 랜덤 임관")
         context.addGlobalActionLog("<Y>$generalName</>$josaYi $randomTalk <D><b>${chosen.name}</b></>에 <S>임관</>했습니다.")
 
         val exp = if (chosen.gennum < GameConst.initialNationGenLimit) 700.0 else 100.0
@@ -134,18 +148,33 @@ class CheRandomImgwan(
             }
         }
 
-        // increaseInheritancePoint(active_action, 1) — succession seam; no write here.
         g = g.copy(experience = g.experience + exp)
-        d.general = g
+        val statChange = checkStatChange(
+            g.copy(lastTurn = LastTurn(command = name, arg = null)),
+        )
+        d.general = statChange.general
+        for (line in statChange.plainLogs) context.addPlainLog(line)
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
 
-        // trailing unique lottery rides the SEPARATE "unique" rng (reason '랜덤 임관'); a downstream seam.
+        lastUniqueLotteryIntent = GeneralUniqueLotteryIntent(
+            generalId = d.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = lotteryActionName,
+            acquireType = "랜덤 임관",
+            afterTail = "setResultTurn>checkStatChange>StaticEventHandler",
+        )
     }
 
-    /** che_랜덤임관.php:150-173 — shuffle FIRST, per-nation nextFloat1, keep MIN, accumulate affinity. */
+    /**
+     * che_랜덤임관.php:150-173 uses an unrecoverable ambient PHP shuffle before this loop.
+     * Kotlin deliberately keeps the supplied insertion order as a sanctioned deterministic divergence;
+     * per-nation nextFloat1 and MIN-score semantics remain source-faithful after that boundary.
+     */
     private fun pickNpcForeign(context: GeneralActionResolveContext): Chosen? {
         if (npcCandidates.isEmpty()) return null
         val rng = context.rng
-        val shuffled = rng.shuffle(npcCandidates)
+        val shuffled = npcCandidates
         val allGen = shuffled.sumOf { it.gennum }.toDouble()
         var maxScore = (1 shl 30).toDouble()
         var affinity = metaInt(context.draft.general.meta, "affinity")

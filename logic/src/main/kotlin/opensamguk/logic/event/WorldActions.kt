@@ -5,13 +5,17 @@ import opensamguk.logic.world.AssignGeneralSpecialityAction
 import opensamguk.logic.world.AutoDeleteInvaderAction
 import opensamguk.logic.world.BlockScoutAction
 import opensamguk.logic.world.ChangeCityAction
+import opensamguk.logic.world.CreateManyNPCAction
 import opensamguk.logic.world.InvaderEndingAction
 import opensamguk.logic.world.MergeInheritPointRankAction
 import opensamguk.logic.world.ProcessIncomeAction
 import opensamguk.logic.world.ProcessSemiAnnualAction
 import opensamguk.logic.world.ProcessWarIncomeAction
 import opensamguk.logic.world.RaiseDisasterAction
+import opensamguk.logic.world.RaiseNPCNationAction
 import opensamguk.logic.world.RandomizeCityTradeRateAction
+import opensamguk.logic.world.RegNeutralNpcAction
+import opensamguk.logic.world.RegNpcAction
 import opensamguk.logic.world.UnblockScoutAction
 import opensamguk.logic.world.UpdateCitySupplyAction
 
@@ -43,6 +47,10 @@ object WorldActions {
         f = InvaderEndingAction.register(f)     // "InvaderEnding"
         f = AutoDeleteInvaderAction.register(f) // "AutoDeleteInvader"
         f = ChangeCityAction.register(f)        // "ChangeCity"
+        f = CreateManyNPCAction.register(f)
+        f = RegNpcAction.register(f)
+        f = RegNeutralNpcAction.register(f)
+        f = RaiseNPCNationAction.register(f)
         f = DeleteEventAction.register(f)
         return f
     }

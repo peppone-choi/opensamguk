@@ -57,11 +57,8 @@ class NationGoldenTest {
                 assertEquals(c.broadcastLines, ctx.globalActionLogs(), "[$command/${c.name}] broadcast")
                 assertEquals(c.after.general.int("experience"), phpRound(draft.general.experience), "[$command/${c.name}] exp")
                 assertEquals(c.after.general.int("dedication"), phpRound(draft.general.dedication), "[$command/${c.name}] ded")
-                // dest general log. 발령 uses addLogTo (MONTH body, no prefix) → the DEST logger wraps it
-                // with `<C>●</>{month}월:` at flush, so the golden dest line = prefix + body. 포상 uses
-                // addPlainLogTo (already `<C>●</>` prefixed, no month).
                 c.destGenerals.firstOrNull()?.let { dg ->
-                    val monthDest = ctx.logsTo(dg.generalId).map { "<C>●</>${c.env.month}월:$it" }
+                    val monthDest = ctx.logsTo(dg.generalId)
                     val plainDest = ctx.plainLogsTo(dg.generalId)
                     assertEquals(dg.logLines, monthDest + plainDest, "[$command/${c.name}] dest log")
                 }

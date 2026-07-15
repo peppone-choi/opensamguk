@@ -10,10 +10,11 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -81,6 +82,9 @@ class JangbiMaemaeTest {
 
     private fun cmd(arg: Map<String, Any?>) = CheJangbiMaemae(pipeline).withArg(arg)
 
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
+
     // --- registry metadata --------------------------------------------------
 
     @Test
@@ -121,6 +125,12 @@ class JangbiMaemaeTest {
         assertTrue(!dogi.buyable)
         assertEquals("도기(보물)", dogi.name)
         assertEquals("도기", dogi.rawName)
+        val hwanYak = itemTradeInfo("che_치료_환약")!!
+        assertEquals(200, hwanYak.cost)
+        assertEquals(0, hwanYak.reqSecu)
+        assertTrue(hwanYak.buyable)
+        assertEquals("환약(치료)", hwanYak.name)
+        assertEquals("환약", hwanYak.rawName)
     }
 
     // --- argTest: itemType in itemMap, itemCode in allItems, buyable --------
@@ -173,6 +183,39 @@ class JangbiMaemaeTest {
         assertTrue(ctx.globalActionLogs().isEmpty())
     }
 
+    @Test
+    fun `buying 환약 initializes the remaining-use aux counter`() {
+        val draft = GeneralActionDraft(actor(gold = 50000), city(), nation())
+        val ctx = GeneralActionResolveContext(draft, rng(), env, MONTH, date)
+
+        cmd(mapOf("itemType" to "item", "itemCode" to "che_치료_환약")).resolve(ctx)
+
+        assertEquals(49800, draft.general.gold)
+        assertEquals("che_치료_환약", draft.general.item)
+        @Suppress("UNCHECKED_CAST")
+        val aux = draft.general.meta["aux"] as Map<String, Any?>
+        assertEquals(3, aux["remain환약"])
+        assertEquals("<C>●</>${MONTH}월:<C>환약(치료)</>을 구입했습니다. <1>$date</>", ctx.logs().single())
+    }
+
+    @Test
+    fun `tail reaches StaticEventHandler after lastTurn and publishes unique intent`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_장비매매") { general, _, _, params ->
+            observed += "${general.lastTurn.command}:${general.horse}:${params["itemCode"]}"
+        }
+
+        val action = cmd(mapOf("itemType" to "horse", "itemCode" to "che_명마_02_조랑"))
+        val draft = GeneralActionDraft(actor(gold = 50000), city(), nation())
+        val ctx = GeneralActionResolveContext(draft, rng(), env, MONTH, date, generalName = "유비")
+        action.resolve(ctx)
+
+        assertEquals(listOf("장비매매:che_명마_02_조랑:che_명마_02_조랑"), observed)
+        assertEquals("장비매매", action.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("아이템", action.lastUniqueLotteryIntent?.acquireType)
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler", action.lastUniqueLotteryIntent?.afterTail)
+    }
+
     // --- SELL (buyable item): refund cost/2, clear slot, MONTH log, no broadcast
 
     @Test
@@ -180,7 +223,7 @@ class JangbiMaemaeTest {
         // selling the equipped 갈색마 (che_명마_05_갈색마, cost 15000 → refund 7500)
         val a = actor(gold = 1000, horse = "che_명마_05_갈색마", arg = mapOf("itemType" to "horse", "itemCode" to "None"))
         val draft = GeneralActionDraft(a, city(), nation())
-        val ctx = GeneralActionResolveContext(draft, rng(), env, MONTH, date)
+        val ctx = GeneralActionResolveContext(draft, rng(), env, MONTH, date, generalName = "유비")
         cmd(mapOf("itemType" to "horse", "itemCode" to "None")).resolve(ctx)
 
         assertEquals(8500, draft.general.gold, "gold 1000 + 15000/2")
@@ -199,16 +242,15 @@ class JangbiMaemaeTest {
         // selling the equipped 적토마 (che_명마_15_적토마, cost 200 → refund 100, NOT buyable)
         val a = actor(gold = 1000, horse = "che_명마_15_적토마", arg = mapOf("itemType" to "horse", "itemCode" to "None"))
         val draft = GeneralActionDraft(a, city(), nation())
-        val ctx = GeneralActionResolveContext(draft, rng(), env, MONTH, date)
+        val ctx = GeneralActionResolveContext(draft, rng(), env, MONTH, date, generalName = "유비")
         cmd(mapOf("itemType" to "horse", "itemCode" to "None")).resolve(ctx)
 
         assertEquals(1100, draft.general.gold, "gold 1000 + 200/2")
         assertEquals("None", draft.general.horse)
         // own MONTH log — 적토마 is statValue 15 (token[-2]); josa-를 on the open-syllable raw name 적토마
         assertEquals("<C>●</>${MONTH}월:<C>적토마(+15)</>를 판매했습니다. <1>$date</>", ctx.logs().single())
-        // global broadcast (general name 최강자 + josa-가 [open syllable], item display name 적토마(+15), josa-를 on raw 적토마)
         assertEquals(
-            "<C>●</>${MONTH}월:<Y>최강자</>가 <C>적토마(+15)</>를 판매했습니다!",
+            "<C>●</>${MONTH}월:<Y>유비</>가 <C>적토마(+15)</>를 판매했습니다!",
             ctx.globalActionLogs().single(),
         )
     }

@@ -2,11 +2,19 @@ package opensamguk.infra.seed
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.constants.GameUnitConst
+import opensamguk.common.constants.GameConst
+import opensamguk.common.rng.LiteHashDrbg
+import opensamguk.common.rng.RandUtil
+import opensamguk.common.rng.serializeSeed
 import opensamguk.logic.event.EventStore
+import opensamguk.logic.util.phpRound
+import opensamguk.logic.util.valueFit
+import opensamguk.logic.world.SpecialityHelper
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
 import java.time.OffsetDateTime
+import java.util.IdentityHashMap
 
 /**
  * A-minimal scenario-seed importer (F1a). Turns a fresh/empty PostgreSQL into a playable world by
@@ -18,19 +26,20 @@ import java.time.OffsetDateTime
  * JPA `EntityManager` for *gameplay* writes — two competing dirty-truths (JPA dirty-checking +
  * ChangeRecorder) would silently diverge. This class is a **bootstrap row-loader via raw
  * [JdbcTemplate]**, in the SAME category as Flyway migrations and `AdminSeeder`: it runs ONCE, before
- * any turn loop, makes ZERO RNG draws, and never touches `ChangeRecorder` or an `EntityManager`. It is
+ * any turn loop, replays only the deterministic PHP seed RNG stream, and never touches
+ * `ChangeRecorder` or an `EntityManager`. It is
  * therefore NOT a gameplay write and not subject to the flush-delta discipline. (The architecture
  * guards `DaemonNoEntityManagerTest` / `InfraNoEntityManagerTest` only scan the write-path packages
  * `opensamguk.engine.{flush,turn,run}` and `opensamguk.infra.persistence`; this `opensamguk.infra.seed`
  * package is outside both, and uses only `org.springframework.jdbc.*` regardless.)
  *
  * ## Parity boundary (A-minimal, non-strict)
- * This is the (A) playable seed — it makes ZERO RNG draws and is NOT gated against a PHP golden. Stat
- * splits are VERBATIM from the JSON. RNG/sync fields are deterministic A-approximations:
+ * This is the playable seed. Stat splits are VERBATIM from the JSON. Seeded affinity, personality,
+ * turn-time, and NPC killturn replay the PHP `InitScenario`/`GeneralBuilder::build` draw order:
  *  - `world_state.hidden_seed` = the committed live config hex (`UniqueConst::$hiddenSeed`) — fixed, not drawn.
- *  - `general.city_id` = the nation's capital (deterministic) for faction generals; 0 for neutrals.
- *  - `general.affinity` / `personal_code` when null in JSON → null / 'None' (PHP would RNG-pick; B only).
- *  - `general.turn_time` = the install instant (PHP applies getRandTurn jitter; B only).
+ *  - `general.city_id` = PHP's chosen city when `locatedCity` is absent; explicit `locatedCity` is preserved.
+ *  - missing/zero affinity and personality consume the PHP RNG draws; affinity >= 900 normalizes to 999.
+ *  - `general.turn_time` and `meta.killturn` consume the PHP jitter draws after city placement.
  * See `docs/superpowers/research/2026-06-02-F1-scenario-seed-spec.md` §5 for the full A↔B ledger.
  */
 class ScenarioImporter(
@@ -53,6 +62,9 @@ class ScenarioImporter(
      * Legacy install.php 기본값 0 (`block_general_create_0` checked).
      */
     private val blockGeneralCreate: Int = 0,
+    private val fiction: Int = 0,
+    private val showImageLevel: Int = 3,
+    private val extendedGeneral: Boolean = true,
     /**
      * The fixed deterministic hidden seed (A). This is the committed live value from
      * `legacy/devsam-core/hwe/d_setting/UniqueConst.php::$hiddenSeed` (a 32-char lowercase hex
@@ -65,9 +77,12 @@ class ScenarioImporter(
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
 ) {
 
+    private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
+
     /** Result counts for the boot log + idempotency assertions. */
     data class ImportCounts(
         val worldState: Int,
+        val gameEnv: Int,
         val nation: Int,
         val city: Int,
         val general: Int,
@@ -90,6 +105,8 @@ class ScenarioImporter(
         // 4a — world_state (singleton id=1). meta carries the fields EngineEventConfig.monthlyPipeline reads.
         val worldStateCount = insertWorldState(jdbc, startYear)
 
+        val gameEnvCount = insertGameEnv(jdbc, startYear)
+
         // 4b — nation (2 rows; neutral id 0 has NO row — generals just carry nation_id 0).
         val nationCount = insertNations(jdbc)
 
@@ -99,11 +116,9 @@ class ScenarioImporter(
         // 4d — UPDATE nation.capital_city_id = first owned city in nation[].cities order.
         updateCapitals(jdbc)
 
-        // 4e — general (678). id = sequential icon id; see assignGeneralIds.
-        val (general, byId) = buildGenerals()
+        val general = buildGenerals(startYear)
         val generalCount = insertGenerals(jdbc, general, startYear)
 
-        // 4f — general_turn (678 × 30 ring rows, all 휴식).
         val generalTurnCount = insertGeneralTurns(jdbc, general)
 
         // 4g — nation_turn (per nation: officer_levels chiefLevel..12 × 12 turn_idx, all 휴식).
@@ -112,16 +127,16 @@ class ScenarioImporter(
         // 4h — diplomacy (ordered neutral pairs + JSON overrides).
         val diplomacyCount = insertDiplomacy(jdbc, startYear)
 
-        // 4i — rank_data (678 × 37 rows, value 0).
         val rankCount = insertRankData(jdbc, general)
 
         // 4j — ng_games (1 session record).
         val ngGamesCount = insertNgGames(jdbc)
 
-        val eventCount = insertEvents(jdbc)
+        val eventCount = insertEvents(jdbc, startYear)
 
         return ImportCounts(
             worldState = worldStateCount,
+            gameEnv = gameEnvCount,
             nation = nationCount,
             city = cityCount,
             general = generalCount,
@@ -148,8 +163,16 @@ class ScenarioImporter(
             "hiddenSeed" to hiddenSeed,
             "startYear" to startYear,
             "startTime" to installTime.toString(),
+            "serverId" to activeServerId,
+            "season" to 1,
+            "scenario" to scenarioNumber,
+            "scenario_text" to scenario.title,
+            "fiction" to fiction,
+            "refreshLimit" to PHP_REFRESH_LIMIT,
             "map" to mapName,
             "unitSet" to unitSet,
+            "show_img_level" to showImageLevel,
+            "extended_general" to extendedGeneral,
         )
         val config = jsonObject(
             "startyear" to startYear,
@@ -157,6 +180,10 @@ class ScenarioImporter(
             "turnterm" to turnTerm,
             "npcmode" to npcMode,
             "block_general_create" to blockGeneralCreate,
+            "show_img_level" to showImageLevel,
+            "extended_general" to extendedGeneral,
+            "fiction" to fiction,
+            "refreshLimit" to PHP_REFRESH_LIMIT,
             "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
             "map" to mapConfig,
             "mapName" to mapName,
@@ -175,6 +202,43 @@ class ScenarioImporter(
         return 1
     }
 
+    private fun insertGameEnv(jdbc: JdbcTemplate, startYear: Int): Int {
+        val rows = resetGameEnv(startYear).map { (key, value) -> arrayOf<Any?>(key, jsonbValue(value)) }
+        jdbc.batchUpdate(
+            """
+            INSERT INTO game_kv ("table", namespace, key, value)
+            VALUES ('game_env', 'game_env', ?, ?)
+            """.trimIndent(),
+            rows,
+        )
+        return rows.size
+    }
+
+    private fun resetGameEnv(startYear: Int): Map<String, Any?> = linkedMapOf(
+        "scenario" to scenarioNumber,
+        "scenario_text" to scenario.title,
+        "icon_path" to scenario.iconPath,
+        "startyear" to startYear,
+        "year" to startYear,
+        "month" to SEED_START_MONTH,
+        "isunited" to 0,
+        "init_year" to startYear,
+        "init_month" to SEED_START_MONTH,
+        "map_theme" to (scenarioMapConfig()["mapName"] ?: "che"),
+        "season" to 1,
+        "msg" to "공지사항",
+        "maxgeneral" to GameConst.defaultMaxGeneral,
+        "maxnation" to GameConst.defaultMaxNation,
+        "refreshLimit" to PHP_REFRESH_LIMIT,
+        "develcost" to PHP_INITIAL_DEVELCOST,
+        "turnterm" to turnTerm,
+        "npcmode" to npcMode,
+        "block_general_create" to blockGeneralCreate,
+        "extended_general" to extendedGeneral,
+        "fiction" to fiction,
+        "tournament" to 0,
+    )
+
     private fun scenarioMapConfig(): Map<String, Any?> {
         val merged = LinkedHashMap<String, Any?>()
         merged.putAll(scenario.map)
@@ -190,7 +254,10 @@ class ScenarioImporter(
     private fun insertNations(jdbc: JdbcTemplate): Int {
         // gennum(국가별 장수 수) — PHP `Scenario/Nation.php::postBuild` 가 nation.gennum = count(generals).
         // 시드 장수는 nationId 로 소속되므로 시나리오 장수를 nationId 별로 센다.
-        val gennumByNation = scenario.generals.groupingBy { it.nationId }.eachCount()
+        val gennumByNation = seedGenerals()
+            .filter { isActiveAtStart(it, scenario.startYear) }
+            .groupingBy { it.nationId }
+            .eachCount()
         var n = 0
         for (nation in scenario.nations) {
             val typeCode = nationTypeCode(nation.ideology)
@@ -287,7 +354,7 @@ class ScenarioImporter(
     }
 
     /** PHP `Util::round` = half-away-from-zero. 70% initial ratio for occupied cities. */
-    private fun ratio70(max: Int): Int = phpRoundHalfAway(max * 0.7)
+    private fun ratio70(max: Int): Int = phpRound(max * 0.7)
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4d capital
@@ -308,27 +375,19 @@ class ScenarioImporter(
     /** A general row with its assigned id + resolved derived fields. */
     private data class BuiltGeneral(val id: Int, val src: ScenarioGeneral)
 
+    private fun seedGenerals(): List<ScenarioGeneral> = scenario.seedGenerals(extendedGeneral)
+
     /**
      * Assign general ids by build order (general[] then general_ex[]) starting at 1001 — the PHP icon-id
      * base. ids are sequential and stable so general_turn/rank_data foreign keys line up.
      */
-    private fun buildGenerals(): Pair<List<BuiltGeneral>, Map<Int, BuiltGeneral>> {
-        val built = scenario.generals.mapIndexed { idx, g -> BuiltGeneral(id = 1001 + idx, src = g) }
-        return built to built.associateBy { it.id }
-    }
+    private fun buildGenerals(startYear: Int): List<BuiltGeneral> = seedGenerals()
+        .filter { isActiveAtStart(it, startYear) }
+        .mapIndexed { idx, g -> BuiltGeneral(id = 1001 + idx, src = g) }
 
     private fun insertGenerals(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, startYear: Int): Int {
-        // capital city id per nation, for deterministic A placement of faction generals.
         val cityIdByName = cities.associate { it.name to it.id }
-        val capitalByNation = scenario.nations.associate { n ->
-            n.id to (n.cities.firstOrNull()?.let { cityIdByName[it] } ?: 0)
-        }
-        // EVERY general is physically located in a city (PHP: even 재야/neutral wanderers occupy a city —
-        // the reserved-turn handler resolves over the general's city, so city 0 is not a valid location).
-        // A-deterministic placement: faction generals → their nation capital; neutrals (nation 0) → the
-        // first seeded city (deterministic). PHP would `rng->choice(nationCities | allCities)` — B only.
-        val defaultNeutralCity = cities.firstOrNull()?.id ?: 0
-        val ts = Timestamp.from(installTime.toInstant())
+        val rngRows = replayInitScenarioGeneralRng(startYear)
 
         val sql = """
             INSERT INTO general
@@ -337,7 +396,7 @@ class ScenarioImporter(
                  leadership, strength, intel, injury, experience, dedication, officer_level,
                  gold, rice, crew, crew_type_id, train, atmos,
                  weapon_code, book_code, horse_code, item_code,
-                 turn_time, age, start_age, personal_code, special_code, special2_code, officer_city,
+                 turn_time, age, personal_code, special_code, special2_code, officer_city,
                  last_turn, meta, penalty,
                  politics, charm)
             VALUES
@@ -346,7 +405,7 @@ class ScenarioImporter(
                  ?, ?, ?, 0, ?, ?, ?,
                  1000, 1000, 0, ?, 0, 0,
                  'None', 'None', 'None', 'None',
-                 ?, ?, ?, ?, ?, 'None', 0,
+                 ?, ?, ?, ?, ?, 0,
                  '{}'::jsonb, ?, '{}'::jsonb,
                  ?, ?)
         """.trimIndent()
@@ -354,27 +413,38 @@ class ScenarioImporter(
         var n = 0
         for (bg in generals) {
             val g = bg.src
+            val rngRow = rngRows.getValue(g)
             val born = g.bornYear ?: 180
             val dead = g.deadYear ?: 300
             val age = (startYear - born).coerceAtLeast(0)
-            // npc_state: all 1010 rosters are NPC type 2 (general[]/general_ex[] both npcType=2).
-            val npcState = 2
-            // city placement (A deterministic): faction generals → nation capital; neutrals → first city.
-            val cityId = if (g.nationId != 0) capitalByNation[g.nationId] ?: defaultNeutralCity else defaultNeutralCity
+            val npcState = g.npcType
+            val activeName = activeGeneralName(g)
+            val cityId = rngRow.cityId ?: resolveLocatedCityId(g.locatedCity, cityIdByName)
+                ?: error("active general $activeName has no PHP-resolved city")
             // experience/dedication default branch: age*100 (matches PHP GeneralBuilder default).
             val exp = age * 100
             val ded = age * 100
-            val personal = personalCode(g.ego)
-            val special = g.special ?: "None"
+            val personal = personalCode(rngRow.ego)
+            val special = scenarioSpecial(g.special)
+            val turnTime = Timestamp.from(
+                installTime.toInstant()
+                    .plusSeconds(rngRow.turntimeSecond.toLong())
+                    .plusNanos(rngRow.turntimeFraction.toLong() * 1000L),
+            )
+            val officerLevel = if (g.officerLevel == 0 || age == GameConst.adultAge.toInt()) {
+                if (g.nationId != 0) 1 else 0
+            } else {
+                g.officerLevel
+            }
             jdbc.update(
                 sql,
-                bg.id, g.name, g.nationId, cityId, npcState, g.affinity,
-                born, dead, "default.jpg",
-                g.leadership, g.strength, g.intel, exp, ded, g.officerLevel,
+                bg.id, activeName, g.nationId, cityId, npcState, rngRow.affinity,
+                born, dead, resolvedScenarioPicture(g.picture, g.name),
+                g.leadership, g.strength, g.intel, exp, ded, officerLevel,
                 GameUnitConst.DEFAULT_CREWTYPE,
-                ts, age, age, personal, special,
+                turnTime, age, personal, special.domestic, special.war,
                 // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
-                jsonb(ScenarioLifecycleMeta.initialGeneralMeta(dead, startYear, SEED_START_MONTH)),
+                jsonb(initialGeneralMeta(g.npcType, born, dead, startYear, rngRow.killturnJitter, g.text, special)),
                 g.politics, g.charm,
             )
             n++
@@ -382,7 +452,173 @@ class ScenarioImporter(
         return n
     }
 
-    /** PHP stores `Util::getClassName(getPersonalityClass($ego))` = `che_<ego>`. A: 'None' when null. */
+    private fun activeGeneralName(general: ScenarioGeneral): String =
+        (NPC_PREFIX_BY_TYPE[general.npcType] ?: "ⓧ") + general.name
+
+    private data class ScenarioSpecial(val domestic: String, val war: String)
+
+    private fun scenarioSpecial(special: String?): ScenarioSpecial {
+        if (special.isNullOrEmpty() || special == "None") {
+            return ScenarioSpecial(GameConst.defaultSpecialDomestic, GameConst.defaultSpecialWar)
+        }
+        val domestic = SpecialityHelper.DOMESTIC.firstOrNull { it.name == special }?.id
+        if (domestic != null) {
+            return ScenarioSpecial(domestic, GameConst.defaultSpecialWar)
+        }
+        val war = SpecialityHelper.WAR.firstOrNull { it.name == special }?.id
+            ?: throw IllegalArgumentException("invalid scenario special: $special")
+        return ScenarioSpecial(GameConst.defaultSpecialDomestic, war)
+    }
+
+    private fun resolvedScenarioPicture(picture: String?, generalName: String): String {
+        if (showImageLevel < 3) return "default.jpg"
+
+        val iconPath = scenario.iconPath.ifBlank { "." }
+        var picturePath = picture
+        val numericPicture = picturePath?.toIntOrNull()
+        if (numericPicture != null) {
+            picturePath = when {
+                numericPicture < 0 -> null
+                else -> storedIconByKey(".", numericPicture.toString())
+            }
+        } else if (picturePath != null && storedIconValues(iconPath).contains(picturePath)) {
+            picturePath = "$iconPath/$picturePath"
+        } else if (picturePath == null && scenario.storedIcons.isNotEmpty()) {
+            picturePath = storedIconByKey(iconPath, generalName)?.let { "$iconPath/$it" }
+        }
+
+        return picturePath ?: "default.jpg"
+    }
+
+    private fun storedIconByKey(group: String, key: String): String? {
+        val target = scenario.storedIcons[group] ?: return null
+        return when (target) {
+            is Map<*, *> -> target[key]?.toString()
+            is List<*> -> key.toIntOrNull()?.let { target.getOrNull(it)?.toString() }
+            else -> null
+        }
+    }
+
+    private fun storedIconValues(group: String): Set<String> {
+        val target = scenario.storedIcons[group] ?: return emptySet()
+        return when (target) {
+            is Map<*, *> -> target.values.mapNotNull { it?.toString() }.toSet()
+            is List<*> -> target.mapNotNull { it?.toString() }.toSet()
+            else -> emptySet()
+        }
+    }
+
+    private fun initialGeneralMeta(
+        npcType: Int,
+        bornYear: Int,
+        deadYear: Int,
+        startYear: Int,
+        legacyMonthJitter: Int,
+        npcText: String?,
+        special: ScenarioSpecial,
+    ): Map<String, Any?> {
+        val meta = linkedMapOf(
+            "killturn" to ScenarioLifecycleMeta.killturnFor(
+                deadYear,
+                startYear,
+                SEED_START_MONTH,
+                legacyMonthJitter,
+            ),
+            "killturn_unit" to ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE,
+            "npc_org" to npcType,
+            "deadyear" to deadYear,
+            "dedlevel" to 1,
+            "start_age" to DEFAULT_START_AGE,
+            "special" to special.domestic,
+            "special_code" to special.domestic,
+            "specage" to computeSpecialityAge(startYear, startYear, bornYear, 12),
+            "special2" to special.war,
+            "special2_code" to special.war,
+            "specage2" to computeSpecialityAge(startYear, startYear, bornYear, 6),
+        )
+        if (npcText != null) meta["npcmsg"] = npcText
+        return meta
+    }
+
+    private fun computeSpecialityAge(year: Int, scenarioStartYear: Int, bornYear: Int, div: Int): Int {
+        val age = year - bornYear
+        val relYear = valueFit((year - scenarioStartYear).toDouble(), 0.0).toInt()
+        return valueFit(phpRound((GameConst.retirementYear - age).toDouble() / div - relYear / 2.0).toDouble(), 3.0)
+            .toInt() + age
+    }
+
+    private data class ScenarioGeneralRngRow(
+        val affinity: Int,
+        val ego: String,
+        val cityId: Int?,
+        val turntimeSecond: Int,
+        val turntimeFraction: Int,
+        val killturnJitter: Int,
+    )
+
+    private fun replayInitScenarioGeneralRng(startYear: Int): Map<ScenarioGeneral, ScenarioGeneralRngRow> {
+        val rng = RandUtil(LiteHashDrbg(serializeSeed(hiddenSeed, "InitScenario")))
+        val activeRows = IdentityHashMap<ScenarioGeneral, ScenarioGeneralRngRow>()
+
+        for (g in scenario.initGenerals()) {
+            val affinity = normalizeScenarioAffinity(g, rng)
+            val ego = g.ego ?: rng.choice(GameConst.availablePersonality)
+            activeRows[g] = ScenarioGeneralRngRow(
+                affinity = affinity,
+                ego = ego,
+                cityId = null,
+                turntimeSecond = 0,
+                turntimeFraction = 0,
+                killturnJitter = 0,
+            )
+        }
+
+        val allCityIds = cities.map { it.id }
+        val cityIdsByNation = scenario.nations.associate { nation ->
+            nation.id to nation.cities.mapNotNull { cityName -> cities.firstOrNull { it.name == cityName }?.id }
+        }
+        val cityIdByName = cities.associate { it.name to it.id }
+        for (g in seedGenerals()) {
+            val birth = g.bornYear ?: DEFAULT_BIRTH_YEAR
+            val death = g.deadYear ?: DEFAULT_DEATH_YEAR
+            val age = startYear - birth
+            if (death <= startYear || age < GameConst.adultAge.toInt()) continue
+
+            val locatedCityId = resolveLocatedCityId(g.locatedCity, cityIdByName)
+            val cityId = if (locatedCityId != null) {
+                locatedCityId
+            } else {
+                val pool = if (g.nationId == 0) allCityIds else cityIdsByNation[g.nationId].orEmpty().ifEmpty { allCityIds }
+                rng.choice(pool)
+            }
+            val filled = activeRows.getValue(g)
+            activeRows[g] = filled.copy(
+                cityId = cityId,
+                turntimeSecond = rng.nextRangeInt(0, 60 * turnTerm - 1),
+                turntimeFraction = rng.nextRangeInt(0, 999999),
+                killturnJitter = rng.nextRangeInt(0, 11),
+            )
+        }
+        return activeRows
+    }
+
+    private fun normalizeScenarioAffinity(general: ScenarioGeneral, rng: RandUtil): Int {
+        val affinity = general.affinity ?: 0
+        return when {
+            affinity < 1 -> rng.nextRangeInt(1, 150)
+            affinity >= 900 -> 999
+            affinity in 1..150 -> affinity
+            else -> throw IllegalArgumentException("invalid scenario affinity for ${general.name}: $affinity")
+        }
+    }
+
+    private fun resolveLocatedCityId(locatedCity: String?, cityIdByName: Map<String, Int>): Int? {
+        if (locatedCity == null) return null
+        val id = locatedCity.toIntOrNull()
+        if (id != null && cities.any { it.id == id }) return id
+        return cityIdByName[locatedCity]
+    }
+
     private fun personalCode(ego: String?): String {
         if (ego.isNullOrBlank()) return "None"
         return if (ego.contains('_')) ego else "che_$ego"
@@ -503,21 +739,37 @@ class ScenarioImporter(
     // 4j ng_games — session record
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     private fun insertNgGames(jdbc: JdbcTemplate): Int {
-        val serverId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
         val ts = Timestamp.from(installTime.toInstant())
         val env = jsonObject(
-            "scenario" to scenarioCode,
+            "server_id" to activeServerId,
+            "scenario" to scenarioNumber,
+            "scenario_code" to scenarioCode,
+            "scenario_text" to scenario.title,
             "startyear" to scenario.startYear,
+            "season" to 1,
             "turnterm" to turnTerm,
+            "fiction" to fiction,
+            "refreshLimit" to PHP_REFRESH_LIMIT,
             "hiddenSeed" to hiddenSeed,
         )
-        jdbc.update(
+        val ngGameId = jdbc.queryForObject(
             """
             INSERT INTO ng_games
                 (server_id, date, winner_nation, map, season, scenario, scenario_name, env)
             VALUES (?, ?, NULL, NULL, 1, ?, ?, ?)
+            RETURNING id
             """.trimIndent(),
-            serverId, ts, scenarioNumber, scenario.title, jsonb(env),
+            Int::class.java,
+            activeServerId, ts, scenarioNumber, scenario.title, jsonb(env),
+        ) ?: error("ng_games insert did not return an id")
+        jdbc.update(
+            """
+            UPDATE world_state
+               SET meta = meta || jsonb_build_object('serverId', ?, 'ngGameId', ?)
+             WHERE id = 1
+            """.trimIndent(),
+            activeServerId,
+            ngGameId,
         )
         return 1
     }
@@ -525,7 +777,7 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4k event — persisted merged default + scenario rows
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertEvents(jdbc: JdbcTemplate): Int {
+    private fun insertEvents(jdbc: JdbcTemplate, startYear: Int): Int {
         val defaults = if (scenario.ignoreDefaultEvents) {
             emptyList()
         } else {
@@ -546,7 +798,8 @@ class ScenarioImporter(
                 action = opensamguk.infra.persistence.MetaJson.encode(row.actions),
             )
         }
-        for (row in defaults + scenarioRows) {
+        val deferredRows = deferredGeneralRows(startYear)
+        for (row in defaults + scenarioRows + deferredRows) {
             jdbc.update(
                 """
                 INSERT INTO event (target_code, priority, condition, action)
@@ -555,7 +808,38 @@ class ScenarioImporter(
                 row.target, row.priority, jsonb(row.condition), jsonb(row.action),
             )
         }
-        return defaults.size + scenarioRows.size
+        return defaults.size + scenarioRows.size + deferredRows.size
+    }
+
+    private fun deferredGeneralRows(startYear: Int): List<EventRowToInsert> {
+        val byBirth = LinkedHashMap<Int, MutableList<List<Any?>>>()
+        val rngRows = replayInitScenarioGeneralRng(startYear)
+        for (general in seedGenerals()) {
+            val birth = general.bornYear ?: DEFAULT_BIRTH_YEAR
+            val death = general.deadYear ?: DEFAULT_DEATH_YEAR
+            if (death <= startYear || birth + GameConst.adultAge.toInt() <= startYear) continue
+            byBirth.getOrPut(birth) { mutableListOf() }.add(
+                listOf(
+                    general.deferredActionName(),
+                ) + general.rawTuple,
+            )
+        }
+        return byBirth.map { (birth, actions) ->
+            EventRowToInsert(
+                target = "Month",
+                priority = 1000,
+                condition = opensamguk.infra.persistence.MetaJson.encode(
+                    listOf("Date", ">=", birth + GameConst.adultAge.toInt(), "1"),
+                ),
+                action = opensamguk.infra.persistence.MetaJson.encode(actions + listOf(listOf("DeleteEvent"))),
+            )
+        }
+    }
+
+    private fun isActiveAtStart(general: ScenarioGeneral, startYear: Int): Boolean {
+        val birth = general.bornYear ?: DEFAULT_BIRTH_YEAR
+        val death = general.deadYear ?: DEFAULT_DEATH_YEAR
+        return death > startYear && birth + GameConst.adultAge.toInt() <= startYear
     }
 
     private data class EventRowToInsert(
@@ -564,6 +848,9 @@ class ScenarioImporter(
         val condition: String,
         val action: String,
     )
+
+    private fun ScenarioGeneral.deferredActionName(): String =
+        if (npcType == 6) "RegNeutralNPC" else "RegNPC"
 
     // ── jsonb helpers ──
     private fun jsonObject(vararg pairs: Pair<String, Any?>): String {
@@ -583,11 +870,27 @@ class ScenarioImporter(
     private fun jsonb(map: Map<String, Any?>): PGobject =
         jsonb(opensamguk.infra.persistence.MetaJson.encode(map))
 
-    /** PHP `Util::round` half-away-from-zero (NOT Math.round / banker's rounding). */
-    private fun phpRoundHalfAway(v: Double): Int =
-        if (v >= 0) Math.floor(v + 0.5).toInt() else Math.ceil(v - 0.5).toInt()
+    private fun jsonbValue(value: Any?): PGobject =
+        jsonb(opensamguk.infra.persistence.MetaJson.encode(value))
 
     companion object {
+        private const val PHP_REFRESH_LIMIT = 30_000
+        private const val PHP_INITIAL_DEVELCOST = 20
+        private const val DEFAULT_BIRTH_YEAR = 180
+        private const val DEFAULT_DEATH_YEAR = 300
+        private const val DEFAULT_START_AGE = 20
+
+        private val NPC_PREFIX_BY_TYPE = mapOf(
+            0 to "",
+            1 to "ⓝ",
+            2 to "ⓝ",
+            3 to "ⓜ",
+            4 to "ⓖ",
+            5 to "㉥",
+            6 to "ⓤ",
+            9 to "ⓞ",
+        )
+
         /** GeneralAi/reserved ring capacity (= common GameConst.maxTurn). */
         const val MAX_GENERAL_TURNS = 30
 

@@ -15,6 +15,12 @@ class PhpRoundTest {
     }
 
     @Test
+    fun `phpRoundDecimal preserves PHP positive precision rounding`() {
+        assertEquals("12.35", phpRoundDecimal(12.345, 2).toPlainString())
+        assertEquals("-12.35", phpRoundDecimal(-12.345, 2).toPlainString())
+    }
+
+    @Test
     fun `numberFormat groups thousands with comma, no decimals`() {
         assertEquals("12,345", numberFormat(12345))
         assertEquals("0", numberFormat(0))

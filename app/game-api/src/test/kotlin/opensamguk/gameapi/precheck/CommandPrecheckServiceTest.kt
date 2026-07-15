@@ -128,4 +128,27 @@ class CommandPrecheckServiceTest {
         assertEquals("농지 개간은 충분합니다.", blocked.reason)
         assertEquals("RemainCityCapacity", blocked.constraintName)
     }
+
+    @Test
+    fun `precheck env includes every city owned by the actor nation`() {
+        val generals = mock(GeneralReadRepository::class.java)
+        val cities = mock(CityReadRepository::class.java)
+        val nations = mock(NationReadRepository::class.java)
+        val diplomacies = mock(DiplomacyReadRepository::class.java)
+        val worldStates = mock(WorldStateReadRepository::class.java)
+        val secondCity = city().apply {
+            id = 9
+            level = 6
+        }
+        `when`(generals.findById(10)).thenReturn(Optional.of(general()))
+        `when`(cities.findById(5)).thenReturn(Optional.of(city()))
+        `when`(cities.findByNationIdOrderByIdAsc(1)).thenReturn(listOf(city(), secondCity))
+        `when`(nations.findById(1)).thenReturn(Optional.of(nation()))
+        `when`(diplomacies.findBySrcNationId(1)).thenReturn(emptyList())
+        `when`(worldStates.findAll()).thenReturn(listOf(worldState()))
+
+        val state = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates).build(10)!!
+
+        assertEquals(linkedMapOf(5 to 5, 9 to 6), state.env["ownCities"])
+    }
 }

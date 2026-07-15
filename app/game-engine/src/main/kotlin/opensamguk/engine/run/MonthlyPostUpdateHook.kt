@@ -9,17 +9,21 @@ import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.engine.world.WorldActionContext
 import opensamguk.engine.tournament.TournamentAdminService
+import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.founding.CheHaesan
 import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.auction.registerNeutralAuctions
+import opensamguk.logic.event.EventDispatcher
+import opensamguk.logic.event.EventTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
+import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.PostUpdateMonthly
-import opensamguk.logic.world.CheckEmperiorContext
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.DiplomacyRow
 import opensamguk.logic.world.FrontCity
@@ -50,7 +54,9 @@ class MonthlyPostUpdateHook(
     private val recorder: ChangeRecorder,
     private val pipeline: GeneralActionPipeline,
     private val auctionRepository: AuctionRepository? = null,
+    private val auctionBidRepository: AuctionBidRepository? = null,
     private val tournamentAdmin: TournamentAdminService = TournamentAdminService(),
+    private val eventDispatcher: EventDispatcher? = null,
 ) : PostUpdateMonthly<RandUtil> {
 
     override fun run(monthlyRng: RandUtil) {
@@ -184,6 +190,22 @@ class MonthlyPostUpdateHook(
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
         val isUnited = (state.meta["isunited"] as? Int ?: 0) != 0
 
+        val cityConst = CityConstRegistry.find(state.meta["map"] as? String ?: "che") ?: CityConstRegistry.of("che")
+        val checkEmperiorContext = WorldActionContext(
+            env = mutableMapOf(
+                "year" to year,
+                "month" to state.currentMonth,
+                "phase" to state.currentPhase,
+                "cityConst" to cityConst,
+                WorldActionContext.ENV_EVENT_DISPATCHER to eventDispatcher,
+            ),
+            world = world,
+            recorder = recorder,
+            pipeline = pipeline,
+            auctionRepository = auctionRepository,
+            auctionBidRepository = auctionBidRepository,
+        )
+
         postUpdateMonthlyTail(
             year = year,
             startYear = startYear,
@@ -193,7 +215,7 @@ class MonthlyPostUpdateHook(
             triggerTournament = { rng -> triggerTournament(rng) },
             registerAuction = { rng -> registerAuction(rng) },
             setNationFront = { setNationFronts() },
-            checkEmperior = { checkEmperior(WorldCheckEmperiorContext(world)) }, // Q14 천하통일 탐지 (no rng)
+            checkEmperior = { checkEmperior(checkEmperiorContext) },
             isUnited = isUnited,
         )
     }
@@ -230,11 +252,13 @@ class MonthlyPostUpdateHook(
                 month = month,
                 date = turnTimeHm(wanderer.turnTime),
                 generalName = wanderer.name,
+                args = linkedMapOf("sameMonthOrBefore" to sameMonthOrBefore(year, month)),
             )
-            ctx.addLog("초반 제한후 방랑군은 자동 해산됩니다.")
+            ctx.addActionPlainLog("초반 제한후 방랑군은 자동 해산됩니다.")
             val command = CheHaesan(pipeline)
             command.resolve(ctx)
-            command.lastDeletedNationId?.let { recorder.markNationDeleted(world, it) }
+            val deletedNationId = command.lastDeletedNationId
+            val deletionSucceeded = deletedNationId?.let { recorder.markNationDeleted(world, it) } == true
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(wanderer), draft.general)
             world.applyGeneralDirtyFree(applyGeneralPatch(wanderer, draft.general))
             for (general in draft.cascadeGenerals) {
@@ -247,9 +271,67 @@ class MonthlyPostUpdateHook(
                 recorder.diffCity(PerTurnOverlay.toLogicCity(pre), city)
                 world.applyCityDirtyFree(applyCityPatch(pre, city))
             }
-            for (line in ctx.logs()) world.pushLog(LogEntryDraft("general", "action", line, generalId = wanderer.id, nationId = wanderer.nationId))
-            for (line in ctx.globalActionLogs()) world.pushLog(LogEntryDraft("global", "action", line, generalId = wanderer.id, nationId = wanderer.nationId))
+            for (event in ctx.orderedLogEvents()) {
+                world.pushLog(logEvent(wanderer, event))
+            }
+            if (deletionSucceeded) {
+                runOccupyCityEvent(year, month)
+            }
         }
+    }
+
+    private fun sameMonthOrBefore(year: Int, month: Int): Boolean {
+        val state = world.getState()
+        val initYear = (state.meta["init_year"] as? Number)?.toInt() ?: return false
+        val initMonth = (state.meta["init_month"] as? Number)?.toInt() ?: 1
+        return year * 12 + month - 1 <= initYear * 12 + initMonth - 1
+    }
+
+    private fun logEvent(
+        actor: TurnGeneral,
+        event: GeneralActionResolveContext.BufferedLog,
+    ): LogEntryDraft {
+        val generalId = event.targetGeneralId ?: actor.id
+        val nationId = when (event.scope.lowercase()) {
+            "general" -> world.getGeneralById(generalId)?.nationId ?: actor.nationId
+            "nation" -> actor.nationId
+            else -> actor.nationId
+        }
+        return LogEntryDraft(
+            scope = event.scope,
+            category = event.category,
+            text = event.text,
+            generalId = if (event.scope.equals("general", ignoreCase = true)) generalId else actor.id,
+            nationId = nationId,
+        )
+    }
+
+    private fun runOccupyCityEvent(year: Int, month: Int) {
+        val dispatcher = eventDispatcher ?: return
+        val state = world.getState()
+        val cityConst = CityConstRegistry.find(state.meta["map"] as? String ?: "che") ?: CityConstRegistry.of("che")
+        dispatcher.run(
+            target = EventTarget.OCCUPY_CITY,
+            contextFactory = { env ->
+                WorldActionContext(
+                    env = env,
+                    world = world,
+                    recorder = recorder,
+                    pipeline = pipeline,
+                    auctionRepository = auctionRepository,
+                    auctionBidRepository = auctionBidRepository,
+                )
+            },
+            envSupplier = {
+                mutableMapOf(
+                    "year" to year,
+                    "month" to month,
+                    "phase" to state.currentPhase,
+                    "cityConst" to cityConst,
+                    WorldActionContext.ENV_EVENT_DISPATCHER to dispatcher,
+                )
+            },
+        )
     }
 
     private fun updateGeneralNumber() {
@@ -278,7 +360,11 @@ class MonthlyPostUpdateHook(
         val rawPattern = state.meta["tnmt_pattern"] as? List<*> ?: emptyList<Any?>()
         val pattern = rawPattern.mapNotNull { (it as? Number)?.toInt() }.toMutableList()
         if (pattern.isEmpty()) {
-            pattern.addAll(listOf(0, 0, 1, 2, 3).shuffled())
+            // PHP shuffle() is ambient and does not advance the monthly RandUtil passed to Q15.
+            // Sanctioned deterministic divergence: preserve the monthly stream boundary and replayability.
+            val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
+            val shuffleRng = MonthScopedRng.forMonth(hiddenSeed, state.currentYear, state.currentMonth)
+            pattern.addAll(shuffleRng.shuffle(listOf(0, 0, 1, 2, 3)))
         }
         val tournamentType = pattern.removeAt(pattern.lastIndex)
         recorder.recordKv("game_env", "game_env", "tnmt_pattern", pattern)
@@ -441,32 +527,4 @@ class MonthlyPostUpdateHook(
     companion object {
         private val DEX_KEYS = listOf("dex1", "dex2", "dex3", "dex4", "dex5")
     }
-}
-
-/**
- * Q14 `checkEmperior` 의 월드 시임을 [InMemoryTurnWorld] 위에 구현한다(`func_gamerule.php:696-769`).
- * level>0 국가/도시 소유 판정 read + isunited 전이 write + 전토통일 국가사 로그 push.
- * isunited 는 meta 에만 in-memory 반영(컬럼 flush/boot-load 는 별도 갭 — LEDGER 백로그).
- */
-class WorldCheckEmperiorContext(
-    private val world: InMemoryTurnWorld,
-) : CheckEmperiorContext {
-    override fun isunited(): Int = (world.getState().meta["isunited"] as? Number)?.toInt() ?: 0
-
-    override fun activeNationIds(): List<Int> =
-        world.listNations().filter { it.level > 0 }.map { it.id }
-
-    override fun cityCountOf(nationId: Int): Int =
-        world.listCities().count { it.nationId == nationId }
-
-    // 전 도시가 시드되므로 in-memory city 수 = count(CityConst::all()) (장기-시뮬 게이트 전제).
-    override fun totalCityCount(): Int = world.listCities().size
-
-    override fun nationName(nationId: Int): String? = world.getNationById(nationId)?.name
-
-    override fun pushNationalHistoryLog(nationId: Int, msg: String) {
-        world.pushLog(LogEntryDraft(scope = "nation", category = "history", text = msg, nationId = nationId))
-    }
-
-    override fun setIsunited(value: Int) = world.setIsunited(value)
 }

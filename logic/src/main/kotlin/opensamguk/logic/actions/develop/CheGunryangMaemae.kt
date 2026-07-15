@@ -14,8 +14,12 @@ import opensamguk.logic.constraints.reqGeneralGold
 import opensamguk.logic.constraints.reqGeneralRice
 import opensamguk.logic.constraints.suppliedCity
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.stats.getStatValue
 import opensamguk.logic.util.clamp
@@ -52,8 +56,13 @@ class CheGunryangMaemae(
     override val name: String = "군량매매"
     override val argsSchema: Map<String, Any?> get() = mapOf("buyRice" to "bool", "amount" to "int")
 
-    /** Re-bind this command with a parsed arg (the handler/registry sets it for a reserved turn). */
-    fun withArg(parsed: Map<String, Any?>): CheGunryangMaemae = CheGunryangMaemae(pipeline, maxLevel, parsed)
+    var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
+        private set
+
+    override fun bindArgs(parsed: Map<String, Any?>): CheGunryangMaemae =
+        CheGunryangMaemae(pipeline, maxLevel, parsed)
+
+    fun withArg(parsed: Map<String, Any?>): CheGunryangMaemae = bindArgs(parsed)
 
     /**
      * PHP argTest (che_군량매매.php:26-49): buyRice must be a bool; amount must be numeric; then
@@ -64,8 +73,12 @@ class CheGunryangMaemae(
      */
     override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> {
         val buyRice = raw["buyRice"] as? Boolean ?: return emptyMap()
-        val amountRaw = (raw["amount"] as? Number)?.toDouble() ?: return emptyMap()
-        val rounded = phpRound(amountRaw / 100.0) * 100                         // Util::round(amount, -2)
+        val amountRaw = when (val value = raw["amount"]) {
+            is Number -> value.toDouble()
+            is String -> value.toDoubleOrNull() ?: return emptyMap()
+            else -> return emptyMap()
+        }
+        val rounded = phpRound(amountRaw, -2)                                  // Util::round(amount, -2)
         val amount = valueFit(rounded.toDouble(), 100.0, GameConst.maxResourceActionAmount.toDouble()).toInt()
         if (amount <= 0) return emptyMap()    // PHP `if($amount <= 0) return false` — unreachable after the floor of 100
         return linkedMapOf("buyRice" to buyRice, "amount" to amount)
@@ -98,12 +111,14 @@ class CheGunryangMaemae(
     )
 
     override fun resolve(context: GeneralActionResolveContext) {
+        lastUniqueLotteryIntent = null
         val parsed = arg ?: return    // no arg bound → argTest would have failed → command does not run
         resolveWith(context, parsed)
     }
 
     /** The real entrypoint — resolve with an explicit parsed arg (buyRice/amount). */
     fun resolveWith(context: GeneralActionResolveContext, parsed: Map<String, Any?>) {
+        lastUniqueLotteryIntent = null
         val d = context.draft; val rng = context.rng
         val buyRice = parsed["buyRice"] as Boolean
         val amount = (parsed["amount"] as Number).toDouble()
@@ -117,6 +132,7 @@ class CheGunryangMaemae(
         val tax: Double
         val buyAmount: Double
         val sellAmount: Double
+        val tradedGeneral: General
         if (buyRice) {
             // gold → rice
             var sell = valueFit(amount * tradeRate, null, d.general.gold.toDouble())
@@ -129,7 +145,7 @@ class CheGunryangMaemae(
             sell += t
             tax = t; buyAmount = buy; sellAmount = sell
             // general: rice += buy ; gold = max(gold - sell, 0). Int columns → truncate the combined value.
-            d.general = d.general.copy(
+            tradedGeneral = d.general.copy(
                 rice = truncate(d.general.rice + buyAmount).toInt(),
                 gold = truncate(maxOf(d.general.gold - sellAmount, 0.0)).toInt(),
             )
@@ -140,7 +156,7 @@ class CheGunryangMaemae(
             val t = buy * GameConst.exchangeFee
             buy -= t
             tax = t; buyAmount = buy; sellAmount = sell
-            d.general = d.general.copy(
+            tradedGeneral = d.general.copy(
                 gold = truncate(d.general.gold + buyAmount).toInt(),
                 rice = truncate(maxOf(d.general.rice - sellAmount, 0.0)).toInt(),
             )
@@ -155,6 +171,7 @@ class CheGunryangMaemae(
             "군량 <C>$sellText</>을 팔아 자금 <C>$buyText</>을 얻었습니다. <1>${context.date}</>"
         }
         context.addLog(log)
+        d.general = tradedGeneral
 
         // nation.gold += (int)tax (meekrodb %i → truncate).
         d.nation = d.nation?.copy(gold = (d.nation?.gold ?: 0) + truncate(tax).toInt())
@@ -168,6 +185,19 @@ class CheGunryangMaemae(
             experience = d.general.experience + 30.0,
             dedication = d.general.dedication + 50.0,
             meta = withMeta(d.general.meta, incStat to metaInt(d.general.meta, incStat) + 1),
+            lastTurn = LastTurn(command = name, arg = parsed),
+        )
+        val statResult = checkStatChange(d.general)
+        d.general = statResult.general
+        statResult.plainLogs.forEach { context.addPlainLog(it) }
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), parsed)
+        lastUniqueLotteryIntent = GeneralUniqueLotteryIntent(
+            generalId = d.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = lotteryActionName,
+            acquireType = "아이템",
+            afterTail = "setResultTurn>checkStatChange>StaticEventHandler",
         )
     }
 

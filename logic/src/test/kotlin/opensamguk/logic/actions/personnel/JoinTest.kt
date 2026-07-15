@@ -13,7 +13,9 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -63,6 +65,9 @@ class JoinTest {
 
     private val env = WorldEnv(year = 190, startYear = 184, develCost = 120)
     private val date = "12:34"
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     // -------- che_임관 --------
 
@@ -133,22 +138,88 @@ class JoinTest {
     }
 
     @Test
-    fun `che_임관 emits action log and global log`() {
+    fun `che_임관 publishes PHP trailing unique lottery intent`() {
+        val destNation = Nation(id = 7, level = 3, capitalCityId = 500, name = "위", gennum = 5)
+        val draft = GeneralActionDraft(general(), destLordCity(), null).apply {
+            this.destNation = destNation
+            this.destCity = destLordCity()
+        }
+        val ctx = GeneralActionResolveContext(
+            draft,
+            freshRng("che_임관"),
+            env,
+            MONTH,
+            date,
+            args = linkedMapOf("destNationID" to 7, "relYear" to 6, "actorNpcType" to 0),
+        )
+        val command = CheImgwan(pipeline)
+
+        command.resolve(ctx)
+
+        assertEquals(42, command.lastUniqueLotteryIntent?.generalId)
+        assertEquals("임관", command.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("아이템", command.lastUniqueLotteryIntent?.acquireType)
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler", command.lastUniqueLotteryIntent?.afterTail)
+        assertEquals("임관", draft.general.lastTurn.command)
+        assertEquals(linkedMapOf("destNationID" to 7), draft.general.lastTurn.arg)
+    }
+
+    @Test
+    fun `che_임관 emits action history and global logs using context generalName`() {
         val destNation = Nation(id = 7, level = 3, capitalCityId = 500, name = "위", gennum = 5)
         val draft = GeneralActionDraft(general().copy(meta = linkedMapOf("explevel" to 10, "name" to "조조")), destLordCity(), null).apply {
             this.destNation = destNation
             this.destCity = destLordCity()
         }
-        val ctx = GeneralActionResolveContext(draft, freshRng("che_임관"), env, MONTH, date)
+        val ctx = GeneralActionResolveContext(draft, freshRng("che_임관"), env, MONTH, date, generalName = "유비")
         CheImgwan(pipeline).resolve(ctx)
 
         val logs = ctx.logs()
         assertEquals(1, logs.size, "one action log line")
         assertEquals("<C>●</>${MONTH}월:<D>위</>에 임관했습니다. <1>$date</>", logs[0])
+        assertEquals(listOf("<C>●</>190년 3월:<D><b>위</b></>에 임관"), ctx.generalHistoryLogs())
 
         val globals = ctx.globalActionLogs()
         assertEquals(1, globals.size, "one global action log line")
-        assertTrue(globals[0].contains("<D><b>위</b></>에 <S>임관</>했습니다."), "global join log; got: ${globals[0]}")
+        assertEquals("<C>●</>${MONTH}월:<Y>유비</>가 <D><b>위</b></>에 <S>임관</>했습니다.", globals[0])
+    }
+
+    @Test
+    fun `che_랜덤임관 sets LastTurn finalizes stats calls StaticEvent and publishes logs`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_랜덤임관") { general, _, _, _ ->
+            observed += "${general.lastTurn.command}:${general.strength}:${general.meta["strength_exp"]}"
+        }
+        val actor = general().copy(meta = linkedMapOf("explevel" to 10, "name" to "메타명", "strength_exp" to 30))
+        val draft = GeneralActionDraft(actor, destLordCity(), null)
+        val command = CheRandomImgwan(
+            pipeline = pipeline,
+            weightedCandidates = listOf(
+                RandomImgwanWeightedCandidate(
+                    nationId = 7,
+                    name = "위",
+                    gennum = 5,
+                    warpower = 100.0,
+                    develpower = 100.0,
+                    npcLeq1 = false,
+                    lordCityId = 500,
+                ),
+            ),
+        )
+        val ctx = GeneralActionResolveContext(draft, freshRng("che_랜덤임관"), env, MONTH, date, generalName = "유비")
+
+        command.resolve(ctx)
+
+        assertEquals(7, draft.general.nationId)
+        assertEquals(500, draft.general.cityId)
+        assertEquals("무작위 국가로 임관", draft.general.lastTurn.command)
+        assertEquals(71, draft.general.strength)
+        assertEquals(0.0, draft.general.meta["strength_exp"])
+        assertEquals(listOf("무작위 국가로 임관:71:0.0"), observed)
+        assertEquals(listOf("<C>●</>190년 3월:<D><b>위</b></>에 랜덤 임관"), ctx.generalHistoryLogs())
+        assertTrue(ctx.globalActionLogs().single().contains("<Y>유비</>가 "), "global log uses context.generalName")
+        assertEquals("무작위 국가로 임관", command.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("랜덤 임관", command.lastUniqueLotteryIntent?.acquireType)
     }
 
     // -------- che_장수대상임관 --------
@@ -183,6 +254,7 @@ class JoinTest {
         assertEquals(1, g.officerLevel)
         assertEquals(6, draft.destNation!!.gennum, "gennum + 1")
         assertEquals(700.0, g.experience, "exp +700")
+        assertEquals(linkedMapOf("destGeneralID" to 88), g.lastTurn.arg)
     }
 
     // -------- registry --------

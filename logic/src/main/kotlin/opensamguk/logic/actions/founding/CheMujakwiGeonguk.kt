@@ -64,6 +64,7 @@ class CheMujakwiGeonguk(pipeline: GeneralActionPipeline) : CheGeonguk(pipeline) 
     override fun resolve(context: GeneralActionResolveContext) {
         lastUnifierGrant = 0
         lastAlternative = null
+        lastUniqueLotteryIntent = null
 
         val d = context.draft
         val nation = d.nation ?: return
@@ -85,11 +86,12 @@ class CheMujakwiGeonguk(pipeline: GeneralActionPipeline) : CheGeonguk(pipeline) 
         // 3. rng->choice over the DB-ascending neutral level-5/6 cities — the ONLY action-stream draw.
         val chosenCityId = context.rng.choice(context.candidateCityIds)
 
-        // 4. relocate the actor + every OTHER nation general to the chosen city
-        //    (che_무작위건국.php:159-168 `UPDATE general SET city=cityID WHERE nation=me`).
-        d.general = d.general.copy(cityId = chosenCityId)
-        for (follower in context.candidateGenerals) {
-            d.cascadeGenerals.add(follower.copy(cityId = chosenCityId))
+        // 4. PHP only runs the nation-wide UPDATE when the actor is not already in the chosen city.
+        if (d.general.cityId != chosenCityId) {
+            d.general = d.general.copy(cityId = chosenCityId)
+            for (follower in context.candidateGenerals) {
+                d.cascadeGenerals.add(follower.copy(cityId = chosenCityId))
+            }
         }
 
         // draft.city ← the chosen city (PHP `$this->setCity()` after the choice). A minimal logic City;

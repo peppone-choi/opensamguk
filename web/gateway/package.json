@@ -12,18 +12,18 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "next": "15.5.19",
+    "next": "15.5.20",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
-    "@types/node": "22.10.2",
+    "@types/node": "^22.12.0",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
     "eslint": "9.39.4",
-    "eslint-config-next": "15.5.19",
+    "eslint-config-next": "15.5.20",
     "jsdom": "^25.0.1",
     "postcss": "8.5.15",
     "typescript": "5.7.2",
@@ -31,6 +31,7 @@
   },
   "pnpm": {
     "overrides": {
+      "js-yaml": "^4.2.0",
       "postcss": "^8.5.15"
     }
   }

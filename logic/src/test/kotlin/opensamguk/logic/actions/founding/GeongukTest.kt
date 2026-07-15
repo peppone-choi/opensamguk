@@ -1,5 +1,6 @@
 package opensamguk.logic.actions.founding
 
+import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
@@ -11,7 +12,9 @@ import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.WorldEnv
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -40,6 +43,9 @@ class GeongukTest {
     private val FIXTURE_HIDDEN_SEED = "00000000000000000000000000000000"
     private val env = WorldEnv(year = 190, startYear = 184, develCost = 120)
     private val date = "08:30"
+
+    @AfterTest
+    fun clearStaticHandlers() = StaticEventHandler.clear()
 
     private fun freshRng(rawClassName: String) = RandUtil(
         LiteHashDrbg(serializeSeed(FIXTURE_HIDDEN_SEED, "generalCommand", 190, MONTH, 42, rawClassName)))
@@ -93,6 +99,38 @@ class GeongukTest {
     // ---- che_건국 ----
 
     @Test
+    fun `che_건국 rejects malformed PHP argTest boundaries`() {
+        val command = CheGeonguk(pipeline)
+        val valid = mapOf("nationName" to "대한민국", "nationType" to GameConst.availableNationType.first(), "colorType" to 2)
+
+        assertEquals(valid, command.parseArgs(valid))
+        assertEquals(
+            valid + ("nationType" to GameConst.neutralNationType),
+            command.parseArgs(valid + ("nationType" to GameConst.neutralNationType)),
+        )
+        assertEquals(
+            valid + ("nationType" to "명가"),
+            command.parseArgs(valid + ("nationType" to "명가")),
+            "buildNationTypeClass accepts the non-prefixed class alias and keeps the original arg value",
+        )
+        assertEquals(
+            valid + ("nationType" to ""),
+            command.parseArgs(valid + ("nationType" to "")),
+            "buildNationTypeClass treats an empty type as neutral for validation while preserving the raw arg",
+        )
+        assertEquals(
+            valid + ("nationType" to "None"),
+            command.parseArgs(valid + ("nationType" to "None")),
+            "buildNationTypeClass accepts the exact None nation-type alias",
+        )
+        assertTrue(command.parseArgs(valid + ("nationName" to "")).isEmpty())
+        assertTrue(command.parseArgs(valid + ("nationName" to "가나다라마바사아자차")).isEmpty())
+        assertTrue(command.parseArgs(valid + ("nationType" to "che_날조")).isEmpty())
+        assertTrue(command.parseArgs(valid + ("colorType" to 2.5)).isEmpty())
+        assertTrue(command.parseArgs(valid + ("colorType" to 999)).isEmpty())
+    }
+
+    @Test
     fun `che_건국 claims the city and raises the nation to level 1`() {
         val draft = GeneralActionDraft(lord(), homeCity(), wanderingNation())
         val context = ctx(draft, "che_건국", args = founeArgs())
@@ -129,6 +167,24 @@ class GeongukTest {
     }
 
     @Test
+    fun `che_건국 tail reaches StaticEventHandler and publishes founding unique intent`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_건국") { general, _, _, params ->
+            observed += "${general.lastTurn.command}:${params["nationName"]}"
+        }
+
+        val draft = GeneralActionDraft(lord(), homeCity(), wanderingNation())
+        val command = CheGeonguk(pipeline)
+        command.resolve(ctx(draft, "che_건국", args = founeArgs()))
+
+        assertEquals(listOf("건국:촉"), observed)
+        assertEquals(42, command.lastUniqueLotteryIntent?.generalId)
+        assertEquals("건국", command.lastUniqueLotteryIntent?.seedReason)
+        assertEquals("건국", command.lastUniqueLotteryIntent?.acquireType)
+        assertEquals("setResultTurn>checkStatChange>StaticEventHandler", command.lastUniqueLotteryIntent?.afterTail)
+    }
+
+    @Test
     fun `che_건국 grants the unifier inheritance point (+250)`() {
         val draft = GeneralActionDraft(lord(), homeCity(), wanderingNation())
         val cmd = CheGeonguk(pipeline)
@@ -154,6 +210,40 @@ class GeongukTest {
     }
 
     @Test
+    fun `che_건국 emits PHP history logs before actor plain level logs`() {
+        val draft = GeneralActionDraft(lord().copy(meta = linkedMapOf("name" to "유비")), homeCity(), wanderingNation())
+        val context = ctx(draft, "che_건국", args = founeArgs() + ("nationType" to "che_명가"))
+
+        CheGeonguk(pipeline).resolve(context)
+
+        assertEquals(
+            listOf("<C>●</>190년 7월:<Y><b>【건국】</b></>명가 <D><b>촉</b></>이 새로이 등장하였습니다."),
+            context.globalHistoryLogs(),
+        )
+        assertEquals(listOf("<C>●</>190년 7월:<D><b>촉</b></>을 건국"), context.generalHistoryLogs())
+        assertEquals(listOf("<C>●</>190년 7월:<Y>유비</>가 <D><b>촉</b></>을 건국"), context.nationalHistoryLogs())
+        assertEquals(
+            listOf("action", "action", "history", "history", "history"),
+            context.orderedLogEvents().take(5).map { it.category },
+        )
+    }
+
+    @Test
+    fun `che_건국 resolves unprefixed nation type module name while preserving raw stored type`() {
+        val draft = GeneralActionDraft(lord(), homeCity(), wanderingNation())
+        val context = ctx(draft, "che_건국", args = founeArgs() + ("nationType" to "명가"))
+
+        CheGeonguk(pipeline).resolve(context)
+
+        assertEquals("명가", draft.nation!!.typeCode)
+        assertEquals("명가", draft.general.lastTurn.arg!!["nationType"])
+        assertEquals(
+            listOf("<C>●</>190년 7월:<Y><b>【건국】</b></>명가 <D><b>촉</b></>이 새로이 등장하였습니다."),
+            context.globalHistoryLogs(),
+        )
+    }
+
+    @Test
     fun `che_건국 same-month-or-before blocks with the alternative seam`() {
         val draft = GeneralActionDraft(lord(), homeCity(), wanderingNation())
         val cmd = CheGeonguk(pipeline)
@@ -169,6 +259,7 @@ class GeongukTest {
         assertEquals(0, draft.city.nationId, "city untouched on same-month block")
         assertEquals(0.0, draft.general.experience, "no exp grant on block")
         assertEquals("che_인재탐색", cmd.lastAlternative)
+        assertNull(cmd.lastUniqueLotteryIntent)
     }
 
     // ---- cr_건국 (divergence: NeutralCity + NO unifier) ----
@@ -223,6 +314,27 @@ class GeongukTest {
     }
 
     @Test
+    fun `무작위건국 does not relocate followers when the chosen city is already the lord city`() {
+        val member = lord(name = "관우", cityId = 99).copy(id = 43, officerLevel = 1)
+        val draft = GeneralActionDraft(lord(cityId = 5), homeCity(id = 5, nation = 0), wanderingNation())
+
+        CheMujakwiGeonguk(pipeline).resolve(
+            ctx(
+                draft,
+                "che_무작위건국",
+                args = founeArgs(),
+                candidateCityIds = listOf(5),
+                candidateGenerals = listOf(member),
+            ),
+        )
+
+        assertEquals(5, draft.general.cityId)
+        assertTrue(draft.cascadeGenerals.isEmpty(), "PHP skips the nation-wide UPDATE in the same-city branch")
+        assertEquals(5, draft.city.id)
+        assertEquals(NATION_ID, draft.city.nationId)
+    }
+
+    @Test
     fun `무작위건국 sets BOTH aux can_국기변경 and can_무작위수도이전, and NO unifier`() {
         val draft = GeneralActionDraft(lord(cityId = 5), homeCity(id = 5, nation = 0), wanderingNation())
         val cmd = CheMujakwiGeonguk(pipeline)
@@ -271,6 +383,81 @@ class GeongukTest {
         CheGeonguk(pipeline).resolve(context)
         assertEquals(freshRng("che_건국").nextInt(0, 1_000_000), rngTracking.nextInt(0, 1_000_000))
         assertEquals("None", draft.general.item, "default human general acquires nothing in P2")
+    }
+
+    @Test
+    fun `che_해산 neutralizes complete nation state and emits PHP log order`() {
+        val member = lord(name = "관우", cityId = 6).copy(
+            id = 43,
+            officerLevel = 1,
+            gold = 5_000,
+            rice = 7_000,
+            troop = 42,
+            meta = linkedMapOf("name" to "관우", "belong" to 4),
+        )
+        val draft = GeneralActionDraft(
+            lord(name = "진표").copy(gold = 5_000, rice = 5_000, troop = 42, meta = linkedMapOf("name" to "진표", "belong" to 9)),
+            homeCity(nation = NATION_ID).copy(frontState = 1),
+            wanderingNation().copy(name = "진표"),
+        )
+        draft.cascadeGenerals.add(member)
+        draft.cascadeCities.add(homeCity(id = 6, nation = NATION_ID).copy(frontState = 3))
+        val context = ctx(draft, "che_해산", name = "진표")
+
+        CheHaesan(pipeline).resolve(context)
+
+        assertEquals(0, draft.general.nationId)
+        assertEquals(0, draft.general.officerLevel)
+        assertEquals(0, draft.general.troop)
+        assertEquals(1_000, draft.general.gold)
+        assertEquals(1_000, draft.general.rice)
+        assertEquals("해산", draft.general.lastTurn.command)
+        assertEquals(emptyMap(), draft.general.lastTurn.arg)
+        assertEquals(12, metaInt(draft.general.meta, "makelimit"))
+        assertEquals(0, draft.cascadeGenerals.single().nationId)
+        assertEquals(0, draft.cascadeGenerals.single().officerLevel)
+        assertEquals(0, draft.cascadeGenerals.single().troop)
+        assertEquals(1_000, draft.cascadeGenerals.single().gold)
+        assertEquals(7_000, draft.cascadeGenerals.single().rice)
+        assertTrue(draft.cascadeCities.all { it.nationId == 0 && it.frontState == 0 })
+        assertEquals(
+            listOf("action", "action", "history", "history", "action", "history", "action", "history"),
+            context.orderedLogEvents().map { it.category },
+            "PHP order: 해산 action/global/history, 멸망 global-history, then each general action/history",
+        )
+    }
+
+    @Test
+    fun `che_선양 result LastTurn carries the destGeneralID arg`() {
+        val draft = GeneralActionDraft(lord(name = "유비"), homeCity(nation = NATION_ID), wanderingNation().copy(name = "촉"))
+        draft.destGeneral = lord(name = "관우").copy(id = 43, officerLevel = 1, meta = linkedMapOf("name" to "관우"))
+
+        CheSeonyang(pipeline).resolve(ctx(draft, "che_선양", args = linkedMapOf("destGeneralID" to 43), name = "유비"))
+
+        assertEquals("선양", draft.general.lastTurn.command)
+        assertEquals(linkedMapOf("destGeneralID" to 43), draft.general.lastTurn.arg)
+    }
+
+    @Test
+    fun `che_선양 runs checkStatChange before StaticEvent`() {
+        val observed = mutableListOf<String>()
+        StaticEventHandler.register("che_선양") { general, _, _, _ ->
+            observed += "${general.lastTurn.command}:${general.leadership}:${general.meta["leadership_exp"]}"
+        }
+        val draft = GeneralActionDraft(
+            lord(name = "유비").copy(meta = linkedMapOf("name" to "유비", "leadership_exp" to 30)),
+            homeCity(nation = NATION_ID),
+            wanderingNation().copy(name = "촉"),
+        )
+        draft.destGeneral = lord(name = "관우").copy(id = 43, officerLevel = 1, meta = linkedMapOf("name" to "관우"))
+
+        val context = ctx(draft, "che_선양", args = linkedMapOf("destGeneralID" to 43), name = "유비")
+        CheSeonyang(pipeline).resolve(context)
+
+        assertEquals(81, draft.general.leadership)
+        assertEquals(0.0, draft.general.meta["leadership_exp"])
+        assertEquals(listOf("선양:81:0.0"), observed)
+        assertEquals(listOf("<C>●</><S>통솔</>이 <C>1</> 올랐습니다!"), context.plainLogs())
     }
 
     // --- helpers ---

@@ -7,12 +7,23 @@ import kotlin.test.assertTrue
 class ScenarioLifecycleMetaTest {
 
     @Test
-    fun `killturn is per-general derived from deadYear (PHP GeneralBuilder formula)`() {
-        // (deadYear - startYear)*12 + (startMonth-1); 지터 생략(B-track 결정론).
-        assertEquals(1272, ScenarioLifecycleMeta.killturnFor(deadYear = 300, startYear = 194, startMonth = 1))
-        assertEquals(72, ScenarioLifecycleMeta.killturnFor(deadYear = 200, startYear = 194, startMonth = 1))
-        // startMonth 반영: (206-194)*12 + (3-1) = 146.
-        assertEquals(146, ScenarioLifecycleMeta.killturnFor(deadYear = 206, startYear = 194, startMonth = 3))
+    fun `killturn converts PHP month lifespan to three phase turns`() {
+        assertEquals(3816, ScenarioLifecycleMeta.killturnFor(deadYear = 300, startYear = 194, startMonth = 1))
+        assertEquals(216, ScenarioLifecycleMeta.killturnFor(deadYear = 200, startYear = 194, startMonth = 1))
+        assertEquals(438, ScenarioLifecycleMeta.killturnFor(deadYear = 206, startYear = 194, startMonth = 3))
+    }
+
+    @Test
+    fun `killturn includes PHP month jitter before phase conversion`() {
+        assertEquals(
+            ((220 - 182) * 12 + 11 + 2) * GameConst.phasesPerMonth,
+            ScenarioLifecycleMeta.killturnFor(
+                deadYear = 220,
+                startYear = 182,
+                startMonth = 3,
+                legacyMonthJitter = 11,
+            ),
+        )
     }
 
     @Test
@@ -25,16 +36,17 @@ class ScenarioLifecycleMetaTest {
     }
 
     @Test
-    fun `deadYear at or before startYear is clamped to at least 1`() {
-        assertEquals(1, ScenarioLifecycleMeta.killturnFor(deadYear = 194, startYear = 194, startMonth = 1))
-        assertEquals(1, ScenarioLifecycleMeta.killturnFor(deadYear = 180, startYear = 194, startMonth = 1))
+    fun `deadYear at or before startYear is clamped to one three-phase month`() {
+        assertEquals(3, ScenarioLifecycleMeta.killturnFor(deadYear = 194, startYear = 194, startMonth = 1))
+        assertEquals(3, ScenarioLifecycleMeta.killturnFor(deadYear = 180, startYear = 194, startMonth = 1))
     }
 
     @Test
     fun `seeded general lifecycle meta carries per-general killturn and deadyear`() {
         val meta = ScenarioLifecycleMeta.initialGeneralMeta(deadYear = 300, startYear = 194, startMonth = 1)
 
-        assertEquals(1272, meta["killturn"])
+        assertEquals(3816, meta["killturn"])
+        assertEquals(ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE, meta["killturn_unit"])
         assertEquals(300, meta["deadyear"])
     }
 
@@ -59,7 +71,30 @@ class ScenarioLifecycleMetaTest {
             startMonth = 1,
         )
 
-        assertEquals((250 - 194) * 12, enriched["killturn"])
+        assertEquals((250 - 194) * 12 * GameConst.phasesPerMonth, enriched["killturn"])
+        assertEquals(ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE, enriched["killturn_unit"])
         assertEquals(250, enriched["deadyear"])
+    }
+
+    @Test
+    fun `loader converts an unmarked NPC killturn exactly once`() {
+        val converted = ScenarioLifecycleMeta.ensureGeneralMeta(
+            linkedMapOf("killturn" to 72),
+            deadYear = 250,
+            startYear = 194,
+            startMonth = 1,
+            convertLegacyNpcKillturn = true,
+        )
+        val reloaded = ScenarioLifecycleMeta.ensureGeneralMeta(
+            converted,
+            deadYear = 250,
+            startYear = 194,
+            startMonth = 1,
+            convertLegacyNpcKillturn = true,
+        )
+
+        assertEquals(216, converted["killturn"])
+        assertEquals(ScenarioLifecycleMeta.KILLTURN_UNIT_PHASE, converted["killturn_unit"])
+        assertEquals(216, reloaded["killturn"])
     }
 }

@@ -227,6 +227,14 @@ TerrainPatch
 
 `terrainReconstructionStatus`는 전장 geometry가 관측 자료·복원·개연 생성 중 어디에서 왔는지를 나타내며 `evidenceClass`가 아니다. 사료에 특정 고지·나루·성벽이 확인되면 authored feature로 고정한다. 나머지 숲 밀도·길 폭·마을 배치는 `PLAUSIBLE`로 표시한다.
 
+### 3D 표현 계약
+
+- 전략 지도와 전술 전장은 같은 world coordinate와 `projectionVersion`을 사용한다. 전략 scene은 도시·관문·나루·route·작전 경로를, 전술 scene은 terrain patch·formation·시설·장애물을 렌더한다.
+- 렌더링은 Three.js 기반 3D를 기본으로 한다. 정사영 지휘 카메라가 기본이며, 회전·틸트·줌은 명령 정확도를 해치지 않는 범위로 제한한다.
+- terrain LOD와 asset streaming은 simulation 판정을 바꾸지 않는다. 서버가 좌표·가시성·충돌·피해를 계산하고 클라이언트는 presentation만 담당한다.
+- `uncertaintyRadius`와 `PLAUSIBLE` geometry는 시각적으로 구분한다. 개연 생성 경계나 지형을 확정 사료처럼 정밀하게 표시하지 않는다.
+- WebGL 불가 환경에서는 같은 read model의 정사영 정보 fallback을 제공하지만 별도 simulation이나 다른 이동 규칙을 만들지 않는다.
+
 ## 8. 개인턴·사령턴·전술 명령과의 연결
 
 | 계층 | 역사 기반 책임 |
@@ -249,6 +257,7 @@ TerrainPatch
 - 실명 병종은 소유자·시기·지역 제약과 evidence를 가져야 한다.
 - 토탈 워나 코에이에서 가져온 수치는 `BALANCE_ONLY`로 표시한다.
 - 전술 전장은 `OBSERVED`, `RECONSTRUCTED`, `PLAUSIBLE` 공간 재구성 상태를 `terrainReconstructionStatus`로 replay에 남긴다.
+- replay는 `geographyVersion`, `terrainTileVersion`, `projectionVersion`, `assetManifestVersion`을 기록하고, 관전 camera keyframe은 판정 body와 분리한다.
 - game-engine write는 기존 `ChangeRecorder → JdbcFlushExecutor` 단일 경로만 사용한다.
 
 ## 10. 4/3 기술 증명 슬라이스
@@ -262,6 +271,7 @@ DB 전체를 먼저 바꾸지 않는다. 이 gate는 다음 4개 formation과 3�
 5. 개인 출병이 수행 부대와 휴대 군량을 예약하고, 전투가 피로·사기·탄약·보급을 소비한다.
 6. 생존자·부상자·포로·탈영자와 남은 물자를 원소속 또는 점령 거점에 정산한다.
 7. 같은 snapshot·명령·seed·content version에서 deterministic replay body hash와 자원 보존 결과가 동일한지 검증한다.
+8. 도시 3개·route 2개·terrain patch 1개·formation 4개를 3D proof scene에 렌더하고, 전략 route에서 전술 anchor와 replay까지 spatial identity가 유지되는지 검증한다.
 
 실명 역사 부대, 등갑병·화공, 나폴레오닉 전열보병, 엠파이어 포병은 이 gate에 들어오지 않는다. 4/3 proof가 통과한 뒤 `역사 fixture → CLASSIC 연의 fixture → 타 시대 conformance fixture` 순서로 별도 gate를 연다. 첫 역사 fixture 후보는 조조의 허하 둔전·전방 수송 또는 합비 주둔·작피 둔전이고, 첫 연의 fixture 후보는 등갑병과 화공 상호작용이다.
 

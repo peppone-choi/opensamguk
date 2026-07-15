@@ -17,6 +17,8 @@ import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.withMeta
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.domestic.checkStatChange
+import opensamguk.logic.event.StaticEventHandler
+import opensamguk.logic.actions.founding.GeneralUniqueLotteryIntent
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.numberFormat
 import opensamguk.logic.util.phpToInt
@@ -59,8 +61,13 @@ class CheSukryeonJeonhwan(
     override val category: String = "군사"
     override val argsSchema: Map<String, Any?> get() = mapOf("srcArmType" to "int", "destArmType" to "int")
 
-    /** 파싱 arg로 재바인딩(핸들러/레지스트리가 예약 턴에 설정). */
-    fun withArg(parsed: Map<String, Any?>): CheSukryeonJeonhwan = CheSukryeonJeonhwan(pipeline, parsed)
+    override fun bindArgs(parsed: Map<String, Any?>): CheSukryeonJeonhwan =
+        CheSukryeonJeonhwan(pipeline, parsed)
+
+    fun withArg(parsed: Map<String, Any?>): CheSukryeonJeonhwan = bindArgs(parsed)
+
+    var lastUniqueLotteryIntent: GeneralUniqueLotteryIntent? = null
+        private set
 
     /** che_숙련전환.php:32-33 — 고정 계수. */
     private val decreaseCoeff = 0.4
@@ -71,10 +78,8 @@ class CheSukryeonJeonhwan(
      * 키여야 하고 src != dest. 정규화된 {srcArmType, destArmType} 맵 반환, reject 시 빈 맵(PHP arg=null → 실행 불가).
      */
     override fun parseArgs(raw: Map<String, Any?>): Map<String, Any?> {
-        val src = (raw["srcArmType"] as? Number)?.let { if (it.toDouble() == it.toInt().toDouble()) it.toInt() else null }
-            ?: return emptyMap()
-        val dest = (raw["destArmType"] as? Number)?.let { if (it.toDouble() == it.toInt().toDouble()) it.toInt() else null }
-            ?: return emptyMap()
+        val src = raw["srcArmType"] as? Int ?: return emptyMap()
+        val dest = raw["destArmType"] as? Int ?: return emptyMap()
         if (src !in GameUnitConst.allType().keys) return emptyMap()
         if (dest !in GameUnitConst.allType().keys) return emptyMap()
         if (src == dest) return emptyMap()
@@ -96,6 +101,7 @@ class CheSukryeonJeonhwan(
     }
 
     override fun resolve(context: GeneralActionResolveContext) {
+        lastUniqueLotteryIntent = null
         val parsed = arg ?: context.args
         val srcArmType = (parsed["srcArmType"] as? Number)?.toInt() ?: return   // 미바인딩 → argTest 실패 → 실행 안 됨
         val destArmType = (parsed["destArmType"] as? Number)?.toInt() ?: return
@@ -148,7 +154,15 @@ class CheSukryeonJeonhwan(
         for (line in sc.plainLogs) context.addPlainLog(line)
 
         d.general = g
-        // che_숙련전환.php:181-182 — StaticEventHandler / tryUniqueItemLottery(별도 'unique' 시드)는 하류 seam.
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, rawClassName, emptyMap(), parsed)
+        lastUniqueLotteryIntent = GeneralUniqueLotteryIntent(
+            generalId = d.general.id,
+            year = context.env.year,
+            month = context.month,
+            seedReason = lotteryActionName,
+            acquireType = "아이템",
+            afterTail = "setResultTurn>checkStatChange>StaticEventHandler",
+        )
     }
 }
 

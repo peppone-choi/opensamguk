@@ -10,9 +10,11 @@ import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.beLord
 import opensamguk.logic.constraints.wanderingNation
 import opensamguk.logic.domain.General
+import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.domain.NpcType
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.event.StaticEventHandler
 import opensamguk.logic.stats.GeneralActionPipeline
 
 /**
@@ -60,7 +62,7 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *       - refreshNationStaticInfo + nationStor.resetValues — 엔진 seam.
  *  6. 군주 makelimit=12 (che_해산.php:109). (deleteNation의 nation=0 등은 군주에게도 적용; 5에서 함께 처리.)
  *  7. StaticEventHandler + TurnExecutionHelper::runEventHandler(OccupyCity) (che_해산.php:113/117) —
- *     **엔진 seam**(OccupyCity 이벤트 핸들러는 데몬 위임; resolve는 호출하지 않는다).
+ *     resolve는 static hook을 실행하고, daemon은 draft/state/log drain 뒤 OccupyCity를 dispatch한다.
  *
  * draft 모델링:
  *   - actor(군주) = [GeneralActionDraft.general]; 나머지 멤버 = [GeneralActionDraft.cascadeGenerals]
@@ -69,8 +71,8 @@ import opensamguk.logic.stats.GeneralActionPipeline
  *   - 국가/nation_turn/troop/diplomacy 삭제는 logic draft에 nation-삭제 셋이 없으므로 [lastDeletedNationId]
  *     로 노출 → 엔진(ChangeRecorder/JdbcFlushExecutor)이 tombstone + ng_old_nations 보존을 수행(seam).
  *     이는 ConquerCity 의 `deletedNationId` 와 동일한 nation-teardown idiom 이다.
- *   - 히스토리 로그(general history / 【멸망】 global history) + DeleteConflict + OccupyCity 이벤트는 모두
- *     GATE-RUNTIME seam(resolve 컨텍스트에 history 버킷이 없음) — 액션/글로벌 ACTION 로그만 byte-assert.
+ *   - 히스토리 로그(general history / 【멸망】 global history)는 resolve context에 적재하고,
+ *     DeleteConflict/tombstone + OccupyCity dispatch는 daemon seam이 담당한다.
  */
 class CheHaesan(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActionPipeline) : GeneralActionDefinition {
     override val key: String get() = "che_해산"
@@ -108,11 +110,10 @@ class CheHaesan(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActio
             return
         }
 
-        val generalName = (d.general.meta["name"] as? String) ?: context.generalName
+        val generalName = context.generalName.ifEmpty { (d.general.meta["name"] as? String) ?: "" }
         val josaYi = JosaUtil.pick(generalName, "이")
         val nationName = nation.name
-        @Suppress("UNUSED_VARIABLE")
-        val josaUl = JosaUtil.pick(nationName, "을")   // general history "…{josaUl} 해산" — history seam(미assert)
+        val josaUl = JosaUtil.pick(nationName, "을")
 
         // 2. 국가 전 장수 자원 절삭 (che_해산.php:90-98).
         //    (a) gold>defaultGold → defaultGold (멤버 + 군주 모두 DB 대상; 군주는 (c)에서 다시 절삭).
@@ -135,26 +136,29 @@ class CheHaesan(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActio
         // 4. 로그 3종 (che_해산.php:103-105). general/global ACTION 만 byte-assert; general history 는 seam.
         context.addLog("세력을 해산했습니다. <1>${context.date}</>")
         context.addGlobalActionLog("<Y>$generalName</>$josaYi 세력을 해산했습니다.")
-        // general history: "<D><b>$nationName</b></>$josaUl 해산" — HISTORY 버킷(GATE-RUNTIME seam).
+        context.addGeneralHistoryLog("<D><b>$nationName</b></>$josaUl 해산")
+        d.general = d.general.copy(lastTurn = LastTurn(command = name, arg = emptyMap()))
 
         // 5. deleteNation cascade (func.php:1713-1805, applyDB=false).
         //    멸망 로그(PLAIN action) — 모든 장수에게 동일 문구.
+        val josaUn = JosaUtil.pick(nationName, "은")
+        context.addGlobalHistoryLog("<R><b>【멸망】</b></><D><b>$nationName</b></>$josaUn <R>멸망</>했습니다.")
         val destroyLog = "<D><b>$nationName</b></>$josaYi <R>멸망</>했습니다."
-        // global HISTORY 【멸망】 + general history "…멸망" — 모두 GATE-RUNTIME history seam(미assert).
+        val destroyHistoryLog = "<D><b>$nationName</b></>$josaYi <R>멸망</>"
 
         // 전 장수 재야로 (func.php:1753-1778). 순서: 멤버 ascending PK(어댑터 선적재) + 군주 LAST.
         for (i in d.cascadeGenerals.indices) {
-            d.cascadeGenerals[i] = neutralizeMember(d.cascadeGenerals[i])
+            val neutralMember = neutralizeMember(d.cascadeGenerals[i])
+            d.cascadeGenerals[i] = neutralMember
+            context.addPlainLogTo(neutralMember.id, destroyLog)
+            context.addHistoryLogTo(neutralMember.id, destroyHistoryLog)
         }
         // 군주 본인(LAST) — 재야화 + makelimit=12 (che_해산.php:109).
         val neutralLord = neutralizeMember(d.general)
         d.general = neutralLord.copy(meta = withMeta(neutralLord.meta, "makelimit" to GameConst.maxChiefTurn))
-        // 멤버 PLAIN action 멸망 로그는 dest-general 스코프(각 장수 자기 로거)로 적재.
-        for (m in d.cascadeGenerals) {
-            context.addPlainLogTo(m.id, destroyLog)
-        }
         // 군주 본인 PLAIN action 멸망 로그(자기 액션 스트림).
         context.addActionPlainLog(destroyLog)
+        context.addGeneralHistoryLog(destroyHistoryLog)
 
         // 도시 공백지로 (func.php:1781-1784): nation=0, front=0.
         for (i in d.cascadeCities.indices) {
@@ -165,7 +169,8 @@ class CheHaesan(@Suppress("UNUSED_PARAMETER") private val pipeline: GeneralActio
         // troop/nation/nation_turn/diplomacy 삭제 + ng_old_nations 보존 — 엔진 tombstone seam.
         lastDeletedNationId = nation.id
 
-        // 7. StaticEventHandler + OccupyCity 이벤트 핸들러(che_해산.php:113/117) — 엔진 seam(여기선 미호출).
+        // 7. StaticEventHandler (che_해산.php:113). OccupyCity(:117)는 daemon이 state/log drain 뒤 dispatch한다.
+        StaticEventHandler.handleEvent(d.general, d.destGeneral, key, emptyMap(), context.args)
     }
 
     /**

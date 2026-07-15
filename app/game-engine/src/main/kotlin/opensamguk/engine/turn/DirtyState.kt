@@ -133,6 +133,12 @@ data class StatisticInsert(val columns: Map<String, Any?>)
  */
 data class YearbookInsert(val columns: Map<String, Any?>)
 
+data class GameWinnerUpdate(val serverId: String, val winnerNation: Int)
+
+data class EmperiorInsert(val columns: Map<String, Any?>)
+
+data class HallUpsert(val columns: Map<String, Any?>)
+
 /**
  * Snapshot of a removed nation, captured for the per-season `ng_old_nations` archive
  * write (mirrors `inMemoryWorld.ts` `deletedNationSnapshots`).
@@ -141,6 +147,7 @@ data class DeletedNationSnapshot(
     val nation: Nation,
     val generalIds: List<Int>,
     val removedAt: Instant,
+    val serverId: String? = null,
 )
 
 /**
