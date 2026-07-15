@@ -26,7 +26,7 @@
 | 표적 lifecycle/command 묶음 | 녹색 | 16 suites, 112 tests + `MilitaryConstraintsTest` 15 tests, failures/errors/skips 0; `BUILD SUCCESSFUL in 42m 31s` |
 | logic 전체 gate | 녹색 | `CommandContractMatrixTest` 886/886. 새 징병 FULL 제약이 드러낸 모순 성공 픽스처 22건을 수정 후 전체 gate 녹색 |
 | engine 전체 gate | 녹색 | `ProductionPipelineIntegrationTest` 3/3 및 최종 backend 전체 XML 481 suites, 4,406 tests, failures/errors 0, skip 1; forced `BUILD SUCCESSFUL in 30m 44s`, canonical gate `BUILD SUCCESSFUL in 15m 52s` |
-| agent-system | 재검증 중 | 독립 리뷰 후 strict gate 재실행 예정 |
+| agent-system | 녹색 | 최종 독립 review 10/10 `cleared`; `tools/agent-system/check.py --strict --base origin/main --format json` findings 0, `ok: true` |
 
 B1은 PHP long-sim byte parity 완료 선언이 아니다. `scenario_0` Kotlin 런타임의 시작→통일 행동 불변식을 닫은 게이트이고, 기존 `LongSimReplayGateTest`의 PHP 12개월 구조 divergence는 독립 과제로 유지한다.
 
@@ -108,15 +108,17 @@ B1은 PHP long-sim byte parity 완료 선언이 아니다. `scenario_0` Kotlin �
 | 4 | B1 player-bot 설계 (B1a 완료) | 내정·징병·전투·선전포고 정책, 실패 로그, deterministic seed 고정 |
 | 5 | B1 12개월 윈도 (완료) | 억지 상태 변경 없이 공백지 점령과 국가 성장 관측 |
 | 6 | B1 천통 확장 (완료) | `checkEmperior`가 `isunited=2`를 만들 때까지 윈도 확장 |
-| 7 | v2 V2-0 경계 고정 | v1 gate 녹색, v2 sandbox world/profile/schema가 production과 분리 |
-| 8 | v2 V2-1 첫 수직 slice | command result lifecycle과 조작 대상 갱신이 실제 화면에서 관측 |
+| 7 | v2 V2-0A production 격리 게이트 | production profile의 v2 route·bean·migration·catalog loader 0, v1 schema·seed·golden diff 0 |
+| 8 | v2 V2-G0 역사 지리·3D 공간 계약 | 140년 baseline→189년 delta와 activation manifest가 검증되고 synthetic·실제 source catalog 각 2,000개 3D gate 통과 |
+| 9 | v2 V2-0B sandbox runtime 적재 | `ACTIVE` catalog만 v2 sandbox에 적재되고 production과 독립 |
+| 10 | v2 V2-1 첫 수직 slice | command result lifecycle과 조작 대상 갱신이 실제 화면에서 관측 |
 
 ## 오픈 전 Go/No-Go
 
 Go:
 - B0 녹색.
 - B0.5 녹색.
-- v1 backend gate 녹색 또는 실패 항목이 문서화된 비차단 항목.
+- v1 backend gate와 web typecheck/build 녹색. 문서화된 실패도 v2 시작 조건을 대체하지 않는다.
 - 공백지 player-bot이 억지 상태 변경 없이 94개 도시를 점령하고 `isunited=2`로 종료.
 - 자동외교가 최소 한 번 선전포고 또는 불가침/종전 상태 전이를 실제 diplomacy row로 남긴다.
 - production-like sandbox에서 장수 생성 후 화면 갱신이 턴 완료와 무관하게 관측.
