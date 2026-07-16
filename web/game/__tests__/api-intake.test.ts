@@ -44,6 +44,42 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
         expect(isIntakeDenied(out)).toBe(true);
     });
 
+    it('deleteMessage는 /api/command/deleteMessage에 {msgID}를 싣고 generalId/turnIdx를 쿼리에 붙인다', async () => {
+        mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'del-1', turnIdx: 0 });
+        const out = await api.commands.deleteMessage({ msgID: 55 }, 7);
+        expect(isIntakeQueued(out)).toBe(true);
+        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/game/api/command/deleteMessage?generalId=7&turnIdx=0');
+        expect(JSON.parse(init.body as string)).toEqual({ msgID: 55 });
+    });
+
+    it('deleteMessage 인테이크는 precheck Blocked여도 202 재라우팅 — 엔진 deny는 commandResult(RESOLVED !ok) 채널로 온다', async () => {
+        // deleteMessage는 intakeCodes 소속이라 game-api CommandController가 precheck Blocked/Unknown이어도
+        // isForecastReservable→202 reserveAccepted로 재라우팅한다(이 엔드포인트에서 200 BLOCKED 미발생).
+        // 래퍼는 서버 응답 pass-through일 뿐 → 202 큐잉을 그대로 돌려준다.
+        mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'del-9', turnIdx: 0 });
+        const out = await api.commands.deleteMessage({ msgID: 55 }, 7);
+        expect(isIntakeQueued(out)).toBe(true);
+        // 실제 거부 사유(엔진 MessageHandler.handleDelete, PHP byte-parity)는 result 채널로만 전달된다.
+        mockFetchOnce(200, {
+            status: 'RESOLVED',
+            requestId: 'del-9',
+            ok: false,
+            type: 'deleteMessage',
+            reason: '5분 이내의 메시지만 삭제할 수 있습니다.',
+            result: {},
+        });
+        const result = await api.commandResult('del-9');
+        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+        expect(fetchMock.mock.calls[1][0]).toBe('/api/game/api/command/result/del-9');
+        expect(result.status).toBe('RESOLVED');
+        if (result.status === 'RESOLVED') {
+            expect(result.ok).toBe(false);
+            expect(result.reason).toBe('5분 이내의 메시지만 삭제할 수 있습니다.');
+        }
+    });
+
     it('202 AVAILABLE은 queued로 판별된다 — 단, 성공 확정이 아니라 큐잉이다', async () => {
         mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'req-1', turnIdx: 0 });
         const out = await api.commands.auctionBid({ auctionId: 1, amount: 100 }, 7);
