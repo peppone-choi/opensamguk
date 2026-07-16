@@ -15,7 +15,9 @@ import org.springframework.data.repository.query.Param
  * `pushGlobalHistoryLog`(scope SYSTEM, category HISTORY) · `pushGlobalActionLog`(SYSTEM/SUMMARY)로
  * 기록한 행이 그 원천. 신선 시드면 0행 → 빈 목록(절대 500, 무fabricate). game-api ONLY(§7), 미기록.
  *
- * `scope`/`category`는 Postgres enum 타입이라 파라미터 비교 시 `::text` 캐스트가 필요 → 네이티브 쿼리.
+ * `scope`/`category`는 Postgres enum 타입 → 네이티브 쿼리. 비교는 enum-네이티브(`scope = 'SYSTEM'`,
+ * 미지정 리터럴이 enum으로 강제됨)여야 `(scope, category, id)` 인덱스를 탄다 — 컬럼을 `::text`로
+ * 캐스트하면 인덱스가 무력화되어 log_entry 전체 seq scan이 된다 (OPENSAM-14 실측).
  * `text`는 패러티 로그 원문(devsam 색/태그 마크업 포함) 그대로 — 표시용 가공은 프론트 소관.
  */
 @Entity
@@ -43,7 +45,7 @@ interface WorldLogReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text IN ('HISTORY', 'SUMMARY')
+            WHERE scope = 'SYSTEM' AND category IN ('HISTORY', 'SUMMARY')
             ORDER BY id DESC
             LIMIT :limit
         """,

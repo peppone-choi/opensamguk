@@ -15,8 +15,11 @@ import org.springframework.data.repository.query.Param
  *   battle_brief → category BATTLE_BRIEF  (전투 결과)
  *   history      → category HISTORY       (장수 열전)
  *
- * 정렬은 PHP `order by id desc`(newest-first) 그대로. `scope`/`category`는 Postgres enum 타입이라
- * 파라미터 비교 시 `::text` 캐스트가 필요 → 네이티브 쿼리(WorldLogReadRepository 선례와 동형).
+ * 정렬은 PHP `order by id desc`(newest-first) 그대로. `scope`/`category`는 Postgres enum 타입 →
+ * 네이티브 쿼리(WorldLogReadRepository 선례와 동형). 비교는 enum-네이티브여야 `(general_id, category, id)`
+ * 인덱스를 탄다 — 컬럼 `::text` 캐스트는 인덱스를 무력화한다(OPENSAM-14 실측). `:category` 파라미터는
+ * `CAST(:category AS log_category)`로 캐스트하며, 호출부(GeneralLogController `when` 분기 /
+ * AdminReadController 하드코딩)가 enum backing 문자열만 넘기므로 잘못된 값의 캐스트 에러 경로는 없다.
  * 결과 컬럼(id/year/month/phase/text)이 [WorldLogReadEntity] 필드와 1:1이라 그 엔티티를 재사용해 매핑한다
  * (동일 `log_entry` 테이블의 read-only 프로젝션 — 별도 @Entity 중복 선언 회피).
  *
@@ -31,7 +34,7 @@ interface AdminGeneralLogReadRepository : JpaRepository<WorldLogReadEntity, Int>
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'GENERAL' AND general_id = :generalId AND category::text = :category
+            WHERE scope = 'GENERAL' AND general_id = :generalId AND category = CAST(:category AS log_category)
             ORDER BY id DESC
             LIMIT :limit
         """,
@@ -50,7 +53,7 @@ interface AdminGeneralLogReadRepository : JpaRepository<WorldLogReadEntity, Int>
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'GENERAL' AND general_id = :generalId AND category::text = :category
+            WHERE scope = 'GENERAL' AND general_id = :generalId AND category = CAST(:category AS log_category)
               AND id < :before
             ORDER BY id DESC
             LIMIT :limit
@@ -71,7 +74,7 @@ interface AdminGeneralLogReadRepository : JpaRepository<WorldLogReadEntity, Int>
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'GENERAL' AND general_id = :generalId AND category::text = 'HISTORY'
+            WHERE scope = 'GENERAL' AND general_id = :generalId AND category = 'HISTORY'
             ORDER BY id DESC
         """,
         nativeQuery = true,

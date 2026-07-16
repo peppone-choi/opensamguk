@@ -39,8 +39,11 @@ import org.springframework.data.repository.query.Param
  *  - P1-059 map 히스토리 10건: `GetCachedMap.php:84` `getGlobalHistoryLogRecent(10)` →
  *    [findRecentGlobalHistory] (HISTORY 단독 — [WorldLogReadRepository]의 HISTORY+SUMMARY 혼합과 다름).
  *
- * `scope`/`category`는 Postgres enum 타입이라 비교 시 `::text` 캐스트가 필요 → 네이티브 쿼리
- * ([WorldLogReadRepository]/[AdminGeneralLogReadRepository] 선례 동형). 결과 컬럼(id/year/month/phase/text)이
+ * `scope`/`category`는 Postgres enum 타입 → 네이티브 쿼리([WorldLogReadRepository]/
+ * [AdminGeneralLogReadRepository] 선례 동형). 비교는 enum-네이티브 리터럴이어야 인덱스
+ * (`(scope, category, id)`/`(general_id, category, id)`)를 탄다 — 컬럼 `::text` 캐스트는 인덱스를
+ * 무력화해 최대 성장 테이블 log_entry를 조회마다 스캔한다(OPENSAM-14 실측: 메인 피드 31.7ms→0.22ms).
+ * 유일한 예외는 [findRecentByScopeAndCategory] — 해당 KDoc 참조. 결과 컬럼(id/year/month/phase/text)이
  * [WorldLogReadEntity]와 1:1이라 그 엔티티를 read-only 프로젝션으로 재사용한다. id는 RecordZone 증분
  * lastID 북키핑에 필수라 함께 반환한다(GetFrontInfo도 `SELECT id, text`).
  *
@@ -58,7 +61,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text = 'HISTORY'
+            WHERE scope = 'SYSTEM' AND category = 'HISTORY'
             ORDER BY id DESC
             LIMIT :limit
         """,
@@ -74,7 +77,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text = 'HISTORY' AND id >= :sinceId
+            WHERE scope = 'SYSTEM' AND category = 'HISTORY' AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
         """,
@@ -92,7 +95,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text = 'HISTORY'
+            WHERE scope = 'SYSTEM' AND category = 'HISTORY'
               AND year = :year AND month = :month
             ORDER BY id DESC
         """,
@@ -113,7 +116,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text IN ('SUMMARY', 'ACTION')
+            WHERE scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION')
             ORDER BY id DESC
             LIMIT :limit
         """,
@@ -128,7 +131,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text IN ('SUMMARY', 'ACTION') AND id >= :sinceId
+            WHERE scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION') AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
         """,
@@ -146,7 +149,7 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'SYSTEM' AND category::text IN ('SUMMARY', 'ACTION')
+            WHERE scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION')
               AND year = :year AND month = :month
             ORDER BY id DESC
         """,
@@ -168,8 +171,8 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'GENERAL' AND general_id = :generalId
-              AND category::text = 'ACTION' AND id >= :sinceId
+            WHERE scope = 'GENERAL' AND general_id = :generalId
+              AND category = 'ACTION' AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
         """,
@@ -189,7 +192,11 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
      * `array_reverse`로 오래된순 표시 — 그 뒤집기는 소비자 소관(레포는 newest-first 반환).
      * 현재 엔진 auction 핸들러의 scope "action"/category "auction"은 PG enum에 없는 P6 flush 버그
      * (DatabaseHooks.kt scopeLiteral NOTE) — 정본 리터럴 확정 후 호출부가 그 값을 넘긴다.
-     * `::text` 비교라 enum에 없는 값을 넘겨도 0행일 뿐 에러가 아니다.
+     *
+     * ※ 이 메서드만 의도적으로 `::text` 컬럼 비교를 유지한다(인덱스 비친화 — OPENSAM-14 예외 항목):
+     * 라이브 호출부(AuctionController)가 위 P6 버그 리터럴("action"/"auction")을 그대로 넘기는데,
+     * 파라미터를 enum으로 CAST하면 '없는 값 → 0행' 계약이 '없는 값 → SQL 에러'로 바뀌어 경매 페이지가
+     * 500이 된다. P6 리터럴 정정 시 함께 enum-네이티브로 전환한다.
      */
     @Query(
         value = """

@@ -158,6 +158,7 @@ class VerticalSliceE2EIT {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .load()
             .migrate()
         jdbc = NamedParameterJdbcTemplate(dataSource)

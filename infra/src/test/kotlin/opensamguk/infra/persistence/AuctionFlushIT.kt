@@ -40,7 +40,8 @@ class AuctionFlushIT {
             password = postgres.password
         }
         Flyway.configure().dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .locations("classpath:db/migration").load().migrate()
+            .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = NamedParameterJdbcTemplate(ds)
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(ds)))
         jdbc.update(

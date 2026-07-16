@@ -16,8 +16,10 @@ import org.springframework.data.repository.query.Param
  * 소비처(W1 소관 — 이 파운데이션은 쿼리만 제공):
  *  - P0-49/P1-079 my-nation 국가열전(`b_myKingdomInfo.php` 국가열전 행)
  *
- * 정렬은 PHP `order by id desc`(newest-first) 그대로. `scope`/`category`는 Postgres enum 타입이라
- * 파라미터·리터럴 비교 시 `::text` 캐스트가 필요 → 네이티브 쿼리([WorldLogReadRepository] 선례 동형).
+ * 정렬은 PHP `order by id desc`(newest-first) 그대로. `scope`/`category`는 Postgres enum 타입 →
+ * 네이티브 쿼리([WorldLogReadRepository] 선례 동형). 비교는 enum-네이티브 리터럴이어야
+ * `(nation_id, category, id)` 인덱스 조건으로 들어간다 — 컬럼 `::text` 캐스트는 인덱스를 무력화한다
+ * (OPENSAM-14 실측: 40.8ms → 8.6ms).
  * 결과 컬럼(id/year/month/phase/text)이 [WorldLogReadEntity]와 1:1이라 그 엔티티를 read-only 프로젝션으로
  * 재사용한다([AdminGeneralLogReadRepository] 선례 — 동일 테이블 중복 @Entity 선언 회피).
  *
@@ -33,7 +35,7 @@ interface NationLogReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = 'NATION' AND nation_id = :nationId AND category::text = 'HISTORY'
+            WHERE scope = 'NATION' AND nation_id = :nationId AND category = 'HISTORY'
             ORDER BY id DESC
         """,
         nativeQuery = true,
