@@ -1,0 +1,32 @@
+# CodeRabbit 설정 (AC-11 이중 리뷰의 2번째 축; 합의 계획 W1-4)
+# legacy/(PHP grand truth, git-ignored지만 방어적 제외)·골든 fixture는 리뷰 대상에서 제외 —
+# 골든은 실 PHP 캡처 산출물이라 "개선 제안" 자체가 파러티 위반 유도가 된다.
+language: "ko-KR"
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  path_filters:
+    - "!legacy/**"
+    - "!**/src/test/resources/golden/**"
+    - "!**/src/main/resources/golden/**"
+    - "!tools/php-golden/probe_*.php"
+    - "!**/pnpm-lock.yaml"
+  path_instructions:
+    - path: "logic/**"
+      instructions: |
+        순수 게임 로직(no Spring/DB). PhpRound(half-away) 대신 Math.round/kotlin.math.round 사용,
+        RNG draw 순서 변경, LinkedHashMap 삽입 순서 훼손, 로그 문자열 변경을 최우선으로 지적하라.
+    - path: "app/game-engine/**"
+      instructions: |
+        데몬 쓰기는 ChangeRecorder → JdbcFlushExecutor JDBC 배치만 허용.
+        JPA EntityManager 쓰기 사용이 보이면 blocker로 지적하라.
+    - path: "infra/db/migration/**"
+      instructions: |
+        Flyway 버전 역행/재사용(V26 결번, 최신 V28 — 신규는 V29+),
+        라이브 테이블 인덱스의 CONCURRENTLY 누락을 지적하라.
+    - path: "web/**"
+      instructions: |
+        Next.js 프론트. 하드코딩 응답으로 intake 경로를 우회하는 변경,
+        httpOnly 쿠키 토큰 규율(브라우저 JS 토큰 노출 금지) 위반을 지적하라.

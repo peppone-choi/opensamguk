@@ -85,6 +85,9 @@ services:
       # Admin seed (gateway-api AdminSeeder, idempotent on empty users table).
       ADMIN_USERNAME: ${ADMIN_USERNAME:-peppone}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
+      SENTRY_DSN: ${SENTRY_DSN_GATEWAY_API:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GATEWAY_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:
@@ -122,6 +125,9 @@ services:
       SERVER_GENERATION: ${SERVER_GENERATION:-1}
       # JWT — game-api VERIFIES tokens issued by gateway-api. SAME secret, verify-only.
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required — see .env.example}
+      # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
+      SENTRY_DSN: ${SENTRY_DSN_GAME_API:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GAME_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:
@@ -158,6 +164,9 @@ services:
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}
+      # Sentry — 빈 값이면 SDK no-op (서비스별 DSN, .env.example 참조).
+      SENTRY_DSN: ${SENTRY_DSN_GAME_ENGINE:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local}
       JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
       JAVA_OPTS: ${GAME_ENGINE_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
     depends_on:

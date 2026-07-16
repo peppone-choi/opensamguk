@@ -191,3 +191,16 @@ docker compose -f docker-compose.production.yml up -d
 - 마이그레이션 설계 + 로드맵: `docs/superpowers/specs/2026-05-29-devsam-opensamguk-kotlin-migration-design.md`
 - 프론트 패러티 + 시드 계획(F0–F5): `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`
 - PHP 골든 캡처 하네스: `tools/php-golden/` · 스모크: `tools/smoke.sh` · 버전 카탈로그: `gradle/libs.versions.toml`
+
+---
+
+## Agent Operating System (에이전트 공통 운영 계층)
+
+Claude Code·Codex 등 모든 에이전트가 공유하는 운영 계층. **정본은 [`CLAUDE.md`](CLAUDE.md)와 `docs/superpowers/WORKING_SYSTEM.md`** — 충돌 시 정본이 이기고, 충돌 사실은 `.ai/decisions.md`에 기록한다.
+
+- **작업 라우터**: `docs/agent/README.md` — 필수 3개(`.ai/task.md` → `.ai/decisions.md` → `docs/agent/project-overview.md`)를 먼저 읽고, 작업 유형별 문서만 추가 로드 (전부 읽지 말 것).
+- **세션 상태**: `.ai/` — 작업 계약(task) · 현재 상태(current-state) · 결정 기록(decisions, ADR-LITE) · 알려진 이슈(known-issues) · 파일 소유권(ownership, single-writer) · 인수인계(handoff). 리셋/에이전트 전환 전 갱신 필수.
+- **런북**: `.claude/commands/`의 `/os-start-task` `/os-analyze` `/os-implement` `/os-debug` `/os-verify` `/os-review` `/os-checkpoint` `/os-plan-tickets` `/os-e2e` — `docs/agent/` 절차의 얇은 진입점. `os-` 접두사는 전역 OMC 스킬(`/verify` `/review` `/analyze`)과의 충돌 회피용. Codex는 커맨드 없이 같은 `docs/agent/` 문서를 직접 따른다.
+- **프롬프트 팩**: `docs/agent/prompt-pack.md` — 공통 5종 + 작업군 5종(파리티포팅·PHP오라클·프론트배선·인프라배포·기획티켓분해). 각 팩 = 페르소나/목표/형식/제약 + 발동조건/중단 조건. `/os-*` 커맨드와 레포 에이전트가 정본으로 참조.
+- **가드 스크립트**: `scripts/agent/protect-sensitive-files.sh`(시크릿 읽기/쓰기·골든/legacy 쓰기 차단, 훅+수동 겸용) · `scripts/agent/verify-changes.sh`(diff → 최소 검증 명령). 훅은 `.claude/settings.json`으로 **실활성**(ADR-LITE-005) — 세션 시작 시 스냅샷되므로 설정 변경은 다음 세션부터 적용. `@`멘션 첨부는 훅을 우회하므로 `.claudeignore`가 담당.
+- **불변 규칙(에이전트가 스스로 완화 금지)**: 승인 없는 commit/push/merge/deploy/데이터 삭제 금지 · `.env*`/키/토큰 읽기·출력 금지 · 골든/테스트/명령 위조 금지 · 미확인 사항은 UNKNOWN으로 보고.

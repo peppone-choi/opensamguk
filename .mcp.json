@@ -1,0 +1,22 @@
+{
+  "_comment": "토큰 무포함 원칙 (ADR-LITE-007): 이 파일에는 어떤 키/토큰/시크릿도 넣지 않는다. atlassian·sentry 원격 MCP는 사용자별 대화형 OAuth로 인증한다 (온보딩: docs/agent/tool-capabilities.md). 쓰기 시 protect-sensitive-files.sh가 토큰 패턴을 스캔한다.",
+  "mcpServers": {
+    "headroom": {
+      "type": "http",
+      "url": "http://localhost:8787/mcp"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "atlassian": {
+      "type": "http",
+      "url": "https://mcp.atlassian.com/v1/mcp"
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
+    }
+  }
+}
