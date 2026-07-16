@@ -3,7 +3,7 @@
 - Updated at: 2026-07-16 (Agent OS 활성화 세션 — W2-3 커밋/PR #154 + 백엔드 Sentry + Jira 연결)
 - Active agent: Claude Code (합의 계획 실행 세션)
 - Current branch: **agent-os-activation** (PR #154 open, base main)
-- Current phase: Wave 0 ✅ · Wave 1 저작 ✅ + 스모크(playwright ✅ · atlassian ✅ · CodeRabbit 설치 ✅ / Claude GHA·Sentry 실증 채점대기) · Wave 2 W2-1/W2-2 ✅ + W2-3 커밋·PR ✅ · Wave 3 대기
+- Current phase: Wave 0 ✅ · Wave 1 저작 ✅ + 스모크(playwright ✅ · atlassian ✅ · Sentry 실증 ✅ · CodeRabbit 설치 ✅ / Claude GHA만 main 병합 대기) · Wave 2 W2-1/W2-2 ✅ + W2-3 커밋·PR ✅ · Wave 3 대기
 - Completed (이번 세션 후반):
   - **W2-3**: 커밋 5건 + PR #154 오픈(push 사용자 승인) → 이후 백엔드 Sentry·Jira 배선 커밋 추가
   - **CodeRabbit 설치 확정** — `coderabbitai[bot]`이 PR #154에 코멘트. 단 57파일>50 제한으로 이 PR 리뷰는 스킵 → 실리뷰 판정은 W3-1 소형 PR
@@ -15,9 +15,10 @@
   - 3앱 gradle test XML: gateway-api 73/0/0 · game-api 394(1건 postgres 컨테이너 기동 flake → 단독 재실행 green) · game-engine 557/0/0(skip 1 = `LongSimReplayGateTest`, 기왕 P5 백로그)
   - compose 2종 `docker compose config` + `SENTRY_DSN` 렌더 확인
   - `check.py --strict --base origin/main` → **No findings**
-- Verification NOT run: Sentry 대시보드 실증(DSN 대기), Claude GHA 실리뷰(main 병합 대기), CodeRabbit 실리뷰(소형 PR 대기)
+- Verification run (Sentry, 2026-07-16 추가): org tekken-75 프로젝트 5개 서비스명 rename(플랫폼으로 DSN 매핑 확정) → DSN 로컬 `.env`+앱별 `.env.local` 주입(전부 git-ignored) → 스모크 이벤트 5/5 전송·API 회수 CONFIRMED. 가드 훅의 `.env.local` Write 차단 실사격 확인
+- Verification NOT run: Sentry SDK 실행 경로(앱 기동→에러 적재 — 다음 로컬 스택 기동 시), Claude GHA 실리뷰(main 병합 대기), CodeRabbit 실리뷰(소형 PR 대기)
 - Failed approaches: 1차 Atlassian OAuth가 구(suspended) 사이트에만 부여 → 신규 사이트 호출이 "isn't explicitly granted" 거부 → `/mcp` 재동의(사이트 선택)로 해결 (`tool-capabilities.md` 온보딩에 기록)
-- Open questions (사람 결정 필요): ① **PR #154 머지 승인** ② Sentry 계정 + DSN(프론트 2 + 백엔드 3서비스분)
+- Open questions (사람 결정 필요): ① **PR #154 머지 승인** ② Sentry 사용자 토큰 회전(채팅 노출 이력 — 회전 후 로컬 `.env`만 갱신)
 - Next action: PR #154 머지(사람 승인) → Wave 3 (W3-1 F4 소형 갭 풀 파이프라인 — Jira `OPENSAM` 티켓 + 이중 리뷰 실판정 동시 수행 → W3-2 DB 인덱스)
 - Must-read files for next action: `.omc/plans/2026-07-16-agent-os-activation-plan.md`, `.ai/decisions.md`(ADR-LITE-008), `.omc/artifacts/w1-tool-wiring-gate.md`
 

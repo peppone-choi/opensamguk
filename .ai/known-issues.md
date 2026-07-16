@@ -19,8 +19,8 @@
 
 ## Agent OS 백로그 (정본: `.omc/plans/2026-07-16-agent-os-activation-plan.md` Follow-ups)
 
-- **Sentry prod 클라이언트 DSN 배선**: `NEXT_PUBLIC_SENTRY_DSN`은 빌드타임 인라인 — prod 이미지 빌드(deploy.yml→Dockerfile)에 빌드 아그 추가 필요. 현재는 서버 사이드(`SENTRY_DSN` 런타임 env)만 배선 없이 동작. DSN 발급 후 처리.
-- **Sentry 소스맵 업로드**: `SENTRY_AUTH_TOKEN` 미설정 시 업로드 생략(의도) — 토큰 발급 후 CI에 주입.
+- **Sentry prod 클라이언트 DSN 배선**: `NEXT_PUBLIC_SENTRY_DSN`은 빌드타임 인라인 — prod 이미지 빌드(deploy.yml→Dockerfile)에 빌드 아그 추가 필요. 현재는 서버 사이드(`SENTRY_DSN` 런타임 env)만 배선 없이 동작. DSN은 발급 완료(2026-07-16, 로컬 `.env`/`.env.local` 주입) — 빌드 아그 작업만 잔여. prod EC2 `.env`에도 DSN 반영 필요.
+- **Sentry 소스맵 업로드**: `SENTRY_AUTH_TOKEN` 발급 완료(2026-07-16, 로컬 `.env` 보관 — 채팅 노출 이력 있어 회전 권장) — CI(GitHub Actions secret) 주입 잔여.
 - ~~**Spring 백엔드 Sentry SDK**~~ **해소**(2026-07-16): PR #154 6번째 커밋으로 3앱 배선 — `sentry-spring-boot-starter-jakarta`, 에러 캡처 전용(트레이싱 0), ADR-LITE-008. DSN 발급 후 대시보드 실증만 잔여(해제 조건은 w1 게이트 원장 Sentry 항목과 동일).
 - **Agent OS 자체 평가 하네스**(갭⑤) · **라우터 준수 행동 테스트**(갭⑥): 이연.
 - **omx `notify-fallback-watcher` 레이스**: deep-interview 상태 파일을 재덮어써 모드 전환 불가 — OMC 버그 리포트 대상.

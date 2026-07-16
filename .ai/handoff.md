@@ -13,7 +13,7 @@
 
 **Wave 0 ✅ · Wave 1 ✅(외부 실증 2건만 채점대기) · Wave 2 ✅ — PR #154 open(`agent-os-activation`), 머지 승인 대기.**
 - 커밋: (1) docs/agent+팩 (2) 커맨드+훅 (3) .mcp.json+CI 워크플로 (4) 프론트 Sentry (5) .ai/+리뷰 아티팩트 (6) **백엔드 Sentry 3앱**(ADR-LITE-008) (7) **Jira 연결+atlassian MCP http 마이그레이션**.
-- 스모크 원장: `.omc/artifacts/w1-tool-wiring-gate.md` — playwright ✅ · atlassian 인증+티켓(SCRUM-5) ✅ · CodeRabbit 설치 ✅(실리뷰는 W3-1 소형 PR — 이 PR은 57파일>50 스킵) · Claude GHA 채점대기(**main 병합 후** 실행 + 시크릿 ✅ 등록됨) · Sentry 실증 채점대기(DSN).
+- 스모크 원장: `.omc/artifacts/w1-tool-wiring-gate.md` — playwright ✅ · atlassian 인증+티켓(SCRUM-5) ✅ · CodeRabbit 설치 ✅(실리뷰는 W3-1 소형 PR — 이 PR은 57파일>50 스킵) · Claude GHA 채점대기(**main 병합 후** 실행 + 시크릿 ✅ 등록됨) · **Sentry 실증 ✅**(org tekken-75, 서비스명 프로젝트 5개, DSN 로컬 주입, 5/5 전송·회수).
 
 ## Decisions already made
 
@@ -41,7 +41,8 @@
 ## Remaining work
 
 - **PR #154 머지** — 사람 승인 필요. 머지가 Claude GHA 활성화 스위치를 겸한다.
-- **사용자 액션**: Sentry 계정+DSN 발급(프론트 2 + 백엔드 3서비스분, `SENTRY_AUTH_TOKEN` 동시 발급 권장). ~~Jira 프로젝트 생성~~ → ✅ `OPENSAM` 생성·MCP 실확인 완료(2026-07-16).
+- **사용자 액션**: Sentry 사용자 토큰 회전 권장(채팅 노출 이력 — 회전 후 로컬 `.env`의 `SENTRY_AUTH_TOKEN`만 교체). ~~Jira 프로젝트 생성~~ ✅ `OPENSAM` · ~~Sentry 계정+DSN~~ ✅ 배선·실증 완료(2026-07-16).
+- **Sentry 잔여 백로그**(`known-issues.md`): prod 클라이언트 빌드 아그 · EC2 prod `.env` DSN 반영 · CI 소스맵 토큰 주입.
 - **Wave 3**: W3-1 F4 소형 갭 풀 파이프라인(Jira 티켓 → 구현 → 소형 PR로 이중 리뷰 실판정 → 게이트) → W3-2 DB 인덱스(EXPLAIN ANALYZE 정본, Flyway V29+, CREATE INDEX CONCURRENTLY 비트랜잭션).
 
 ## Files to read first

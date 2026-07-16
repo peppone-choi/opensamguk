@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE** — `.github/workflows/deploy.yml`(main push 자동 배포), `scripts/deploy.sh`, `docker-compose.production.yml`, health check, 스모크(`tools/smoke.sh`)가 실동작. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선됨**(DSN은 env — 미설정 시 no-op; 계정·DSN 발급 전까지 대시보드 관측은 `채점대기`, ADR-LITE-008). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
+**ACTIVE** — `.github/workflows/deploy.yml`(main push 자동 배포), `scripts/deploy.sh`, `docker-compose.production.yml`, health check, 스모크(`tools/smoke.sh`)가 실동작. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선 + DSN 주입·적재 실증 완료**(org tekken-75, 서비스명 프로젝트 5개, 스모크 5/5 전송→회수 CONFIRMED, 2026-07-16 — ADR-LITE-008; prod 컨테이너 반영은 EC2 `.env` 갱신 필요). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
 
 ## Read This When
 
