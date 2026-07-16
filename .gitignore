@@ -19,8 +19,9 @@ web/*/out/
 .env
 .env.local
 .env.headroom.example
-.mcp.json
 .DS_Store
+# .mcp.json은 커밋한다 (ADR-LITE-007): 토큰 무포함 원칙(값은 env 참조·대화형 OAuth),
+# 쓰기 시 protect-sensitive-files.sh가 토큰 패턴을 스캔한다.
 # Local headroom/docker overrides
 docker-compose.headroom.yml
 # Legacy reference repos (kept locally, never committed)

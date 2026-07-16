@@ -1,0 +1,49 @@
+name: Claude PR Review
+
+# 파리티-도메인 한국어 리뷰 (AC-11). 제네릭 영어 리뷰는 러버스탬프 재생산 —
+# 아래 커스텀 프롬프트의 품질 자체가 통과 조건이다 (합의 계획 W1-4, Architect T3).
+# 요구 시크릿: ANTHROPIC_API_KEY (레포 Settings → Secrets).
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  claude-review:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Claude parity review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            이 PR을 opensamguk 패러티 규율 관점에서 한국어로 리뷰하라. 리뷰 코멘트는 반드시 한국어로 작성한다.
+
+            이 레포는 PHP 게임(devsam/core = grand truth)의 byte-for-byte 충실 이식이다. 아래 위반은 각각 심각도 [blocker]로 지적하라:
+
+            1. **RNG draw-for-draw**: 모든 난수는 `RandUtil(LiteHashDrbg(seed))`. draw의 순서·횟수·메서드 인자가 패러티 대상이다. 전투는 `processWar()`에서 한 번 만든 단일 `RandUtil(warSeed)`를 참조로 관통 — 중간 재시드, draw 추가/누락/재배열은 하류 전체를 desync시킨다.
+            2. **반올림**: `PhpRound`(half-away-from-zero)만 허용. `Math.round`(half-up), `kotlin.math.round`(half-to-even) 사용은 즉시 지적. 음수 스케일은 `phpRound(v,-2)`이지 `phpRound(v/100)*100`이 아니다. 데미지 루프 클램프는 `ceil()`.
+            3. **한국어 로그 바이트 패리티**: 로그 문자열(조사 Josa, 색/태그 마크업, `<Y1>【이름】</>` 형식, 진격·퇴각·패퇴·전멸 등)은 PHP와 정확히 일치해야 한다. 로그 순서 = 실행 순서 — 실행 순서 변경은 로그 게이트를 깬다.
+            4. **one-daemon-write**: game-engine 데몬은 JPA EntityManager로 쓰기 금지. 데몬 쓰기는 오직 `ChangeRecorder` → `JdbcFlushExecutor` JDBC 배치. 리졸버 안의 인라인 DB 쓰기는 위반이다.
+            5. **삽입 순서**: jsonb/충돌맵/트리거 키는 삽입 순서 보존(`LinkedHashMap`). id 재정렬·비안정 보조 비교자 추가는 위반.
+            6. **위조 금지**: 골든 숫자/로그/시드는 실 PHP 캡처(tools/php-golden)에서만 온다. 골든 수정·테스트 약화·`test.skip`으로 게이트를 통과시키는 변경은 무조건 지적.
+
+            추가 점검(심각도 [major]/[minor]로 구분):
+            - `.env*`/키/토큰이 diff에 포함됐는지 (있으면 [blocker]).
+            - `legacy/` 또는 골든 fixture 직접 수정 (있으면 [blocker]).
+            - web/(Next.js) 변경: intake 경로 없는 하드코딩 응답, 서버 상태의 클라이언트 위조.
+            - Flyway 마이그레이션: 버전 번호 역행/재사용, 라이브 테이블 인덱스에 CONCURRENTLY 누락.
+
+            형식: 파일:라인 인용 + 심각도 태그 + 왜 패러티가 깨지는지 한 줄. 문제없는 부분에 대한 칭찬은 생략. 마지막에 전체 판정(승인 가능/수정 필요)을 요약하라.
+          claude_args: "--allowedTools 'Read,Grep,Glob,Bash(git diff:*),Bash(git log:*)'"
