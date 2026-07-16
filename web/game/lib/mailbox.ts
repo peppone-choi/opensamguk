@@ -32,6 +32,7 @@ export function isMessageDeletable(
     now: number = Date.now(),
 ): boolean {
     if (generalId == null) return false;
+    if (msg.id == null) return false; // 삭제 API에 넘길 id가 없으면 버튼 자체를 노출하지 않는다
     const option: Record<string, unknown> = msg.option ?? {};
     if (option.action) return false; // 수락/거절 대상(외교) 메시지는 삭제 불가
     if (msg.src !== generalId) return false; // 발신자 본인만 삭제 가능

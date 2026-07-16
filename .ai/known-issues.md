@@ -16,7 +16,7 @@
 - `chooseInstantNationTurn` (PHP 호출자 0)
 - Q1 `ORDER BY RAND` (do선양/오랑캐임관 — scenario 1010에서 unreachable, 결정론 대체)
 
-## 운영 잔흔 (정본: `docs/superpowers/SESSION_HANDOFF.md` 2026-06-12 절)
+## 운영 잔흔 (정본: `.ai/handoff.md` 최신 상태 + `docs/superpowers/SESSION_HANDOFF.md` 장기 이력 — s1 이중 적용 상세는 2026-06-12 절)
 
 - **EC2 prod 요금 미납 정지**(2026-07-16 사용자 확인): prod 관련 작업 전부 **보류** — 배포, EC2 `.env` DSN 반영, prod DB 재확인. 납부·정지 해제 후 재개. 정지 기간 main push의 `deploy.yml` 런은 성공 불가 — 2026-07-16 미완료 런 2건(6h queued 포함) 취소 처리; 해제 후 최신 main으로 `gh run rerun` 또는 새 push로 배포.
 - s1 181|1~7 이중 적용 잔흔(국가 74→92 증식) — 깨끗하게 하려면 s1 재시드. **사용자 결정 대기**였음; 이후 처리 여부는 prod DB로 재확인 필요 (UNKNOWN, EC2 정지로 보류).
@@ -35,3 +35,4 @@
 - Testcontainers flake: `BettingUpsertFlushIT` init 1건은 접속 flake로 판정된 이력 있음(단독 재실행 green) — 실패 시 단독 재실행으로 먼저 분별. `GameApiApplicationTests`도 postgres 컨테이너 기동 flake 1회(2026-07-16, 3스위트 동시 실행 중 발생 — 단독 재실행 green).
 - **web/game vitest 부하 민감 플레이크**(2026-07-17): 호스트 CPU 포화(외부 프로세스·Docker 빌드 병행, load avg 800+) 시 jsdom 파일들이 광범위 타임아웃 실패(18파일 21건까지 관측). 판정 절차 = 실패 파일 **단독 재실행**으로 분별(전부 green이면 부하 플레이크), 필요 시 `--fileParallelism=false` 직렬 실행. 코드 회귀로 오판하지 말 것.
 - **Docker Desktop 인-컨테이너 gradle 빌드 크래시**(2026-07-17): compose 앱 이미지 빌드(gradle bootJar in-container)가 VM 리소스(8GB) 한계로 데몬 크래시 유발 — 병렬 빌드 금지, 순차로도 불안정. 로컬 E2E 스택은 **백엔드 호스트 gradle 네이티브 기동 + Docker는 postgres/redis만** 전략 사용.
+- **AGENTS.md §들여쓰기 문서 드리프트**(2026-07-17, PR #155 CodeRabbit 계기로 실측): `AGENTS.md:108`은 `.ts`/`.tsx` 2칸이라 하나 실제 `web/game`·`web/gateway` 코드베이스는 레벨당 4칸이 지배 관례(`api.ts`, `page.tsx` 등). 신규 코드는 주변 코드(4칸)를 따른다 — AGENTS.md 문구 정정 필요.

@@ -204,7 +204,14 @@ export default function MailboxPage() {
                 let resolved = false;
                 for (let attempt = 0; attempt < MESSAGE_RESULT_POLL_ATTEMPTS; attempt += 1) {
                     await new Promise(resolve => setTimeout(resolve, MESSAGE_RESULT_POLL_INTERVAL_MS));
-                    const result = await api.commandResult(requestId);
+                    let result;
+                    try {
+                        result = await api.commandResult(requestId);
+                    } catch {
+                        // 일시 조회 실패 — 접수(202)는 이미 확정이므로 실패로 오표시하지 않고
+                        // 남은 시도 동안 재시도한다. 전부 실패하면 아래 미해결(접수) 경로로 수렴.
+                        continue;
+                    }
                     if (result.status === 'PENDING') continue;
                     resolved = true;
                     if (result.ok) {

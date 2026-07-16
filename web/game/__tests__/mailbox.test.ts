@@ -51,6 +51,10 @@ describe('isMessageDeletable', () => {
         expect(isMessageDeletable(base({ src: 99 }), 10, NOW)).toBe(false);
     });
 
+    it('id가 없는 메시지는 삭제 API에 넘길 값이 없으므로 버튼 미노출', () => {
+        expect(isMessageDeletable(base({ id: null }), 10, NOW)).toBe(false);
+    });
+
     it('장수 정보가 없으면(generalId null) 삭제 불가', () => {
         expect(isMessageDeletable(base(), null, NOW)).toBe(false);
     });
