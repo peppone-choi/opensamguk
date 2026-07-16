@@ -123,3 +123,14 @@ Key routing rules:
 - Ship/deploy/PR → invoke /ship or /land-and-deploy
 - Save progress → invoke /context-save
 - Resume context → invoke /context-restore
+
+## Agent Operating System (docs/agent/ + .ai/)
+
+Operational layer for AI agents (Claude Code, Codex, others). **This file and `docs/superpowers/WORKING_SYSTEM.md` remain 정본** — on any conflict, this file wins; record the conflict in `.ai/decisions.md`.
+
+- **Route by task**: `docs/agent/README.md` (Always Read: `.ai/task.md` → `.ai/decisions.md` → `docs/agent/project-overview.md`; then only the docs your task type needs — Progressive Disclosure, don't load everything).
+- **Session state**: `.ai/` (task contract, current-state, decisions ADR-LITE, known-issues, ownership single-writer registry, handoff). Update via `/os-checkpoint` before reset/agent switch.
+- **Runbooks**: `.claude/commands/` (`/os-start-task` `/os-analyze` `/os-implement` `/os-debug` `/os-verify` `/os-review` `/os-checkpoint` `/os-plan-tickets` `/os-e2e`) — thin entry points into `docs/agent/` procedures; the `os-` prefix avoids collision with global OMC skills (`/verify` `/review` `/analyze`); Codex follows the same docs directly.
+- **Prompt packs**: `docs/agent/prompt-pack.md` — 공통 5종 + 작업군 5종(파리티포팅·PHP오라클·프론트배선·인프라배포·기획티켓분해), each 페르소나/목표/형식/제약 + 발동조건/중단 조건. Consumed by `/os-*` commands and repo agents (parity-porter, fe-submit-wirer, deployer, …).
+- **Guards**: `scripts/agent/protect-sensitive-files.sh` (secrets/golden/legacy write-block; hook-or-manual dual mode) · `scripts/agent/verify-changes.sh` (diff → minimal verification matrix). Hooks are **ACTIVE** via `.claude/settings.json` (ADR-LITE-005, supersedes example-only ADR-LITE-003); hooks snapshot at session start. `@`-mention attachments bypass PreToolUse — `.claudeignore` covers that hole.
+- **Hard rules** (agents may not weaken them): no commit/push/merge/deploy/data-delete without human approval · never read/print `.env*`/keys/tokens · never fabricate goldens/tests/commands · unverified = UNKNOWN, not guessed.
