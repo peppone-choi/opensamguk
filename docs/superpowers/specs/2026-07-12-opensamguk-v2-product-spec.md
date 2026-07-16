@@ -1,7 +1,7 @@
 # 오픈삼국 v2 제품·시스템 정본
 
 > 작성일: 2026-07-12
-> 상태: reviewed-source-of-truth
+> 상태: reviewed-source-of-truth, current-round-review-cleared-2026-07-15
 > 선행 자료: `docs/superpowers/research/2026-07-12-v2-source-reconciliation.md`, `docs/wiki/pages/game/opensamguk-v2-direction.md`, `docs/wiki/raw/opensamguk-v2-downloads/PRD.md`
 
 ## 1. 제품 정의
@@ -206,10 +206,23 @@ loyalty, breachConditions, expiresAt
 - 회의: 인물별 입장·확신·근거·편향을 표로 비교.
 - 모바일: 바텀시트와 큐 timeline. 데스크톱 전용 정보 밀도를 모바일에 그대로 축소하지 않는다.
 
+### 전체 역사 지리 표면
+
+지도는 수십 개 대표 도시만 보여주는 축약판이 아니다. 『후한서』 군국지의 순제기 행정 기준선을 전사하고 189년까지의 변경을 적용해 모든 현·읍·도·후국 치소를 조회·점령·주둔·징병·세입·보급 상태에 참여시킨다. 군치·국치가 현치와 같은 도시에 있으면 물리 장소는 하나만 만들고 행정 역할을 겹쳐 연결한다.
+
+- 정식 `PhysicalPlace` 목표는 2,000개다: 한 행정 정착지 1,200, 전략 비행정 거점 200, 주변 정착지·시기별 camp·항구·오아시스 500, 해상·원거리 교역 관문 100. 각 장소는 이 네 `PlaceBudgetClass` 중 정확히 하나에 속하고 합계와 클래스별 수량을 별도로 검증한다. 계절 이동권과 영역 geometry는 장소 수에 포함하지 않는다.
+- 주변 `PolityNetwork` 240개는 역사 실수량이 아니라 별도 `CatalogBudget`의 제품 수용 예산이다. 한반도·왜, 북방 초원, 강·저·서역, 산월·형남·남중·교주 주변을 포함하되 claim 없는 slot이나 동시 활성 독립국 수로 해석하지 않는다. 장소·정치 node·영역 presence·계절 range는 각자 별도 집계한다.
+- catalog LOD는 제작 상세 예산 Tier A 120, Tier B 380, Tier C 1,500이다. runtime render LOD `CLUSTER | SYMBOL | KIT | FULL_SCENE`은 카메라 거리·밀도·기기 성능에 따라 독립적으로 변한다. 모든 조합이 같은 server read model과 simulation 상태를 사용한다.
+- 기본 정책과 반복 명령은 군·국 단위로 내리고, 현 단위는 상세 보기·예외 명령·태수 위임으로 제공한다. 군현 검색·필터, 다중 선택 예외, 이상 알림, 위임 이력·철회·복구를 같은 관리 표면에 둔다.
+- 비정이 논쟁적인 치소·삼한 국읍·왜 국읍·유목 이동권은 오차 반경과 복수 reconstruction을 유지하며 정밀한 단일 좌표·경계를 역사 사실처럼 표시하지 않는다.
+
+행정단위·물리 장소·치소·주변 네트워크·LOD의 상세 계약과 출처는 `docs/superpowers/specs/2026-07-13-v2-historical-city-army-terrain-design.md`를 따른다.
+
 ## 8. 비범위
 
 - v2 MVP에서 112개 커맨드 전체 구현.
 - 실시간 병사 단위 조작, 병사 시점 자유 카메라, cinematic, 런타임 LLM, 결제·인앱, 네이티브 앱, 다국어.
+- 1,180개 현급 거점을 플레이어가 같은 깊이로 반복 관리하는 UI. 전수 simulation과 전수 수동 관리는 같은 요구가 아니다.
 - 기존 v1 production s1에 실험용 v2 schema/seed를 직접 주입.
 - 패러티 골든·게이트를 약화하거나 v2 편의를 위해 PHP 동작을 변경.
 
@@ -419,5 +432,8 @@ CampaignWorld      도시·국가·경제·외교·인물·시즌
 - v1 backend gate와 web typecheck/build 회귀 0.
 - v2 sandbox에서 승인부터 replay·관계 변화까지 한 번에 재현.
 - 3D proof scene에서 도시 picking, 작전 경로, 전장 진입, formation 명령, replay camera가 같은 spatial snapshot을 사용.
+- 2,000개 synthetic 전체 지도와 2,000개 실제 source catalog 전체에서 catalog Tier A/B/C 120/380/1,500 및 runtime `CLUSTER | SYMBOL | KIT | FULL_SCENE` 전환이 동일한 `PhysicalPlace` identity와 picking·점령·보급 상태를 유지하고, streaming 전후 simulation diff가 0.
+- `CountyParticipationFixture`가 현급 1,180개 각각에서 조회, 점령, 주둔, 징병, 세입, 보급의 read-model과 순수 상태 전이를 실행해 기능별 누락 0을 증명한다.
+- 군·국 정책 한 번이 소속 현에 전파되고, 우선순위 `현 override > 유효한 위임 > 군·국 정책 > world default`가 지켜진다. 검색·필터·다중 예외, 이상 알림, 위임 감사·철회·복구를 command/read-model/browser fixture로 검증한다.
 - 데스크톱 1080p 60 FPS, 지원 모바일 30 FPS 목표를 Playwright screenshot·canvas pixel·frame telemetry로 검증.
-- production에서는 v1 world와 v2 sandbox world를 명확히 구분.
+- production profile에서는 v2 route, bean, Flyway location, catalog loader가 0개이고, production에서는 v1 world와 v2 sandbox world를 명확히 구분.

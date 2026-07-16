@@ -1,14 +1,14 @@
 # 오픈삼국 v2 실행 계획
 
 > 작성일: 2026-07-12
-> 상태: reviewed-plan
+> 상태: reviewed-plan, current-round-review-cleared-2026-07-15
 > 정본 제품 문서: `docs/superpowers/specs/2026-07-12-opensamguk-v2-product-spec.md`
 > 근거 대조: `docs/superpowers/research/2026-07-12-v2-source-reconciliation.md`
 
 ## 운영 원칙
 
 1. v1과 v2는 같은 저장소에서 관리하되 world/profile/schema 경계를 둔다.
-2. 기존 v1 패러티 gate가 녹색인 상태에서만 v2 slice를 시작한다.
+2. 기존 v1 backend·web 패러티 gate가 모두 녹색인 상태에서만 v2 slice를 시작한다. 문서화된 실패도 시작 조건을 대체하지 않는다.
 3. 한 phase는 한 가설과 한 수직 결과만 가진다.
 4. 모든 자동 판단은 seed, 입력 feature, score, 결과를 기록한다.
 5. 신규 write는 `ChangeRecorder → JdbcFlushExecutor` 경로로만 통과한다.
@@ -21,21 +21,89 @@
 | v1 엔진 | s1 1분 profile에서 출병·틱·flush 진행 확인 | v2는 1분을 QA profile로만 사용 |
 | 명령 intake | Redis immediate command와 command result 채널 존재 | result는 flush 이후 발행하는 계약으로 고정 |
 | UI refresh | SSE `turnCompleted`가 `front-info` soft refresh | 이벤트별 query invalidation으로 세분화 |
-| 지도 | 2D map preview/MapViewer, level별 detail/basic 규칙 | 2D marker contract를 먼저 잠금 |
+| 지도 | 2D map preview/MapViewer, level별 detail/basic 규칙 | 공통 spatial read model을 먼저 잠그고 3D를 기본 표면, 2D를 정보 fallback으로 사용 |
 | 패러티 | backend gate, PHP golden, v1 기준서 존재 | v2 신규 replay는 별도 golden/replay gate |
 | 문서 | PRD/ROADMAP Rev 2와 기존 v2 계획이 서로 다른 cadence | 이번 제품 spec이 충돌을 해소 |
 
-## Phase V2-0 — 기준선·경계 고정
+## Phase V2-0A — production 격리 선행 게이트
+
+이 phase가 V2-G0보다 먼저다. 역사 catalog나 3D proof 코드를 추가하기 전에 같은 artifact와 배포 구성에서 v1 production이 v2를 전혀 로드하지 않는 경계를 고정한다.
+
+### 작업
+
+- v2 route namespace를 `/game/v2-lab/` 아래로 제한하고 `V2_ENABLED=true`와 `v2-sandbox` profile을 동시에 만족할 때만 route와 bean을 등록한다.
+- v2 Flyway location과 catalog loader root를 v1 기본 location에서 분리한다. production compose와 s1 profile에는 v2 Flyway location, catalog path, feature flag를 넣지 않는다.
+- v2 catalog artifact는 `content/v2/`의 read-only build input으로 시작하며 classpath 자동 scan이나 startup seed를 금지한다.
+- production application context에서 v2 controller·bean·route·Flyway location·catalog scan이 모두 0개인지 architecture test로 고정한다.
+- v1 schema dump, scenario seed hash, PHP golden, backend/web gate를 기준선 artifact로 저장한다.
+
+### Exit
+
+- production profile의 v2 route·bean·migration·catalog loader 수가 0이다.
+- `V2_ENABLED`가 없거나 false이면 v2-lab route가 404이고 v1 route 결과가 기준선과 같다.
+- v1 schema·seed·PHP golden diff 0, backend/web gate 녹색.
+- 격리 계약에 대한 fresh review가 `cleared`다.
+
+## Phase V2-G0 — 역사 지리 카탈로그·3D 공간 계약
+
+이 phase는 V2-0A가 통과한 뒤에만 시작한다. runtime DB migration과 production world write를 만들지 않고, 출처가 붙은 catalog artifact, 검증기, synthetic fixture, `v2-sandbox`에서만 등록되는 3D proof route를 만든다. runtime 적재는 V2-0B에서 시작한다.
+
+### 가설
+
+행정단위, 물리 장소, 치소 배정, 지배 상태, 주변 정치·이동 네트워크를 먼저 분리하고 같은 spatial identity를 3D 전략·전술 표면이 공유하면, 후한 군현 전수 등장과 2,000개 거점 렌더링을 이후 기능이 재설계 없이 소비할 수 있다.
+
+### Wave G0-A: 행정 기준선
+
+- `TemporalAdministrativeUnit`, `AdministrativeChange`, `PhysicalPlace`, `PlaceBudgetClass`, `SeatAssignment`, `PlaceControl`, `ScenarioPlacement` 계약과 provenance·license 필드를 고정한다.
+- 『후한서』 군국지의 순제기 기준인 군·국 105, 현·읍·도·후국 1,180을 read-only catalog로 전사한다.
+- 주·군·현 레코드 수와 물리 장소 수를 분리하고, 군치·국치와 현치가 같은 장소를 공유하는 fixture를 만든다.
+- `CREATE(10) → SPLIT(20) → MERGE(30) → RENAME(40) → REPARENT(50) → MOVE_SEAT(60) → RETIRE(70)` priority, dependency, ID 보존·lineage·불확실 날짜 branch 규칙을 적용해 189년 snapshot을 baseline fold로 생성한다.
+- 위치가 확정되지 않은 치소는 후보 region과 deterministic `ScenarioPlacement`를 사용하고, 근거 없는 단일 좌표를 만들지 않는다.
+- `SeatAssignment` 기간 중첩·중복과 동일 `placeIdentityKey`의 물리 장소 복제를 실패시키는 validator를 만든다.
+- `CountyParticipationFixture`가 현급 1,180개 각각에서 조회·점령·주둔·징병·세입·보급 순수 command/read-model 전이를 실행한다. G0에서는 production DB write 없이 장소별 초기 snapshot을 복원하며 기능별 성공 수와 no-op·교차 오염을 집계한다.
+
+### Wave G0-B: 주변 세계
+
+- `PolityNetwork`, `PolityNode`, `PolityMembership`, `PolityRelation`, `PolityTransition`, `DiplomaticActorAssignment`, `TerritorialPresence`, `SeasonalRange`를 고정한다.
+- 한반도의 한 군현과 부여·고구려·동옥저·읍루·예·삼한, 왜의 복수 국읍을 불확실성·시기와 함께 넣는다.
+- 흉노·오환·선비·강·저·서역·산월·남중·교주 주변을 군현식 고정 도시로 바꾸지 않는다.
+- 주변 정치 네트워크 240개와 주변 물리 장소 500개는 역사 실수량이 아닌 `CatalogBudget`으로 관리한다. 장소·정치 node·presence·seasonal range를 별도 집계하고 claim 없는 slot은 catalog record나 완료 수량으로 만들지 않는다.
+- 모든 claim에 `attestationDate`와 `subjectPeriod`를 분리하고 189년 `ScenarioActivationManifest`를 만든다. 3세기 목록에만 근거한 국읍은 자동 활성화하지 않는다.
+- polity graph와 presence/range의 orphan·기간·camp 참조·lineage·actor assignment를 검증하고 연맹 형성→계절 이동→분열→두 actor 승격을 두 번 재생해 hash diff 0을 단언한다.
+
+### Wave G0-C: 3D 공간 증명
+
+- Three.js 정사영 전략 scene에 도시 3개, route 2개, terrain patch 1개를 렌더한다.
+- 동일한 `PhysicalPlace`·`RouteCorridor`·`projectionVersion`으로 picking, 작전 경로, 전장 anchor, replay camera를 왕복한다.
+- 최종 거점 예산 2,000개를 상호 배타적 `PlaceBudgetClass`인 행정 정착지 1,200, 전략 비행정 거점 200, 주변 거점 500, 해상·원거리 교역 관문 100으로 분류하고 class별 count와 합계를 검증한다. 같은 catalog를 LOD Tier A/B/C 120/380/1,500으로 나눈 synthetic fixture에 사용해 instancing·clustering·streaming 성능을 시험한다. runtime render LOD `CLUSTER | SYMBOL | KIT | FULL_SCENE`은 독립 축으로 왕복한다. synthetic fixture는 역사 catalog로 세지 않는다.
+- 같은 검사를 synthetic뿐 아니라 2,000개 실제 source catalog 전체에 적용한다. 시나리오 날짜 밖 항목은 연대기 모드로 조회하되 stable identity와 label/picking 검사를 생략하지 않는다.
+- WebGL 불가 환경은 같은 read model의 정보 fallback을 사용하며 별도 이동·점령 규칙을 만들지 않는다.
+
+### Exit
+
+- 140년 행정 레코드의 원전 수량, 명시된 numeric priority·dependency를 포함한 delta operation·lineage·before hash, 189년 snapshot 재생성 hash 검사가 통과한다.
+- 140년 baseline의 현급 1,180개가 모두 상위 군·국, `SeatAssignment`, resolved point 또는 후보 region 안의 `ScenarioPlacement`를 갖고 실제 simulation에 참여한다. `EXCLUDED=0`, naked unknown=0, orphan=0이다. 다른 시나리오도 해당 날짜에 유효한 현급 단위의 제외를 허용하지 않는다.
+- `CountyParticipationFixture`의 조회·점령·주둔·징병·세입·보급 여섯 카운터가 각각 `1,180/1,180`이고 no-op·다른 장소 상태 오염이 0이다.
+- `SeatAssignment` 중복·기간 겹침 0, 근거 없는 동일 `placeIdentityKey` 복제 0이다. 군치·현치 co-location fixture는 한 `PhysicalPlace`와 두 role assignment로 통과한다.
+- 한반도·왜 fixture의 `attestationDate`, `subjectPeriod`, `CANDIDATE | ACTIVE | EXCLUDED`가 검증되고 후대 국가·대방군·야마타이 위치를 시대착오나 단일 확정 좌표로 만들지 않는다.
+- polity graph와 `TerritorialPresence`·`SeasonalRange`의 orphan·node/camp 기간 위반·lineage 불일치·중복 actor assignment가 0이고 transition replay hash diff 0이다.
+- 3개 장소 spatial identity proof와 별도로 2,000개 synthetic fixture 및 2,000개 실제 source catalog의 모든 marker identity·picking·label overlap·runtime LOD 왕복 오류가 0이다. 비어 있지 않은 canvas, desktop 60 FPS와 지원 mobile 30 FPS 목표를 Playwright screenshot·canvas pixel·frame telemetry로 검증한다.
+- 실제 source catalog의 `PlaceBudgetClass` count가 1,200/200/500/100이고 한 장소의 다중 class·무분류·비장소 객체 집계가 모두 0이다.
+- v1 schema·seed·gate diff 0.
+
+## Phase V2-0B — sandbox runtime 적재
 
 ### 목표
 
-v1의 운영 가능 상태와 v2 sandbox의 경계를 실제로 분리한다.
+V2-0A에서 닫은 격리를 유지한 채 G0 artifact를 v2 sandbox runtime에만 적재한다.
 
 ### 작업
 
 - v1 완료 기준의 남은 차단 항목을 `v1-completion` ledger에 갱신한다.
-- v2 전용 profile/world 식별자와 feature flag 설계를 확정한다.
-- `world_id`를 전제로 한 v2 migration naming과 rollback 규칙을 작성한다.
+- v2 전용 profile/world 식별자와 feature flag의 0A 계약을 runtime integration test로 증명한다.
+- `world_id`를 전제로 한 v2 migration naming과 rollback 규칙을 적용하고, v2 Flyway location이 sandbox에서만 실행되는지 검증한다.
+- G0 catalog loader가 `ScenarioActivationManifest`의 `ACTIVE`만 적재하고 `CANDIDATE`, `EXCLUDED`, `BUDGET_ONLY`는 거부하게 한다.
+- G0의 `CountyParticipationFixture`를 sandbox runtime adapter로 반복해 API 조회와 engine 상태 전이가 in-memory 결과와 같은지 비교한다.
 - command result/turn event payload의 version과 영향 query 목록을 정의한다.
 - s1에는 v2 schema/seed를 적용하지 않고, local/test sandbox에서만 실행한다.
 
@@ -43,6 +111,8 @@ v1의 운영 가능 상태와 v2 sandbox의 경계를 실제로 분리한다.
 
 - v1 gate와 web gate가 녹색.
 - v2 sandbox boot가 production s1과 독립.
+- 140년 baseline→change fold→189 activation→sandbox load hash가 재시작 전후 동일.
+- sandbox runtime에서도 조회·점령·주둔·징병·세입·보급이 각각 현급 `1,180/1,180`을 통과하고 G0 fixture와 결과 diff 0.
 - event contract와 schema spike 리뷰가 `cleared`.
 
 ## Phase V2-1 — 이벤트 기반 명령 lifecycle + 조작 대상
@@ -100,10 +170,30 @@ v1의 운영 가능 상태와 v2 sandbox의 경계를 실제로 분리한다.
 
 **가설:** simulation kernel이 시대·실명 문자열을 읽지 않고 capability 조합만으로 첫 전투와 보급을 계산할 수 있다.
 
-- `FormationTemplate`, `Facility`, `InfrastructureNetwork`, `ResourceSite`, `HistoricalContentPack`의 최소 필드만 만든다.
+- `FormationTemplate`, `Facility`, `InfrastructureNetwork`, `ResourceSite`, `HistoricalContentPack`과 `CatalogBudget`, `CatalogBudgetSlot`, `ContentEntry`의 최소 필드만 만든다.
+- `CatalogBudgetSlot(BUDGET_ONLY)` 소비와 unique `ContentEntry.budgetSlotId` 생성은 한 transaction에서 처리한다. `slot.consumedByEntryId == entry.id`와 `entry.budgetSlotId == slot.id`의 양방향 참조가 일치해야 하며, validator는 중복 소비·dangling 참조·부분 생성·lifecycle 단계 건너뛰기를 거부한다.
 - 징발 창병·노수대·경기병대·수송호위대 4개 formation과 곡창·전방 군량고·농경지 3개 정착지 항목, 도시 사이 route 1개만 fixture로 둔다.
 - 이 spike의 `PureCapabilityFixture`는 V2-B0의 순수 in-memory simulation interface만 호출한다. `Operation`이나 campaign·전술·replay persistence에는 의존하지 않는다.
-- **Exit:** 한 번의 이동·교전·재보급에서 인원·장비·군량의 보존과 provenance validation이 재현된다. 36개/24개 공개 roster는 이 spike의 범위가 아니다.
+- **Exit:** 한 번의 이동·교전·재보급에서 인원·장비·군량의 보존과 provenance validation이 재현된다. 같은 slot의 이중 소비, slot만 소비된 부분 생성, slot-side dangling, entry-side dangling 네 상태가 각각 독립 validation 실패 fixture로 고정되고, 정상 fixture는 양방향 참조와 `NAMED -> CLAIMED -> FIXTURE_GREEN -> ACTIVE` 전이를 증명한다. 36개/24개 공개 roster는 이 spike의 범위가 아니다.
+
+## Track V2-C1..C5 — 콘텐츠 카탈로그 승격
+
+이 track은 별도 백로그가 아니라 주 실행 계획의 필수 출시선이다. V2-C0 계약을 소비하며 C5가 끝나기 전에는 V2-8 release gate를 통과할 수 없다.
+
+### 작업·의존 순서
+
+1. **C1/C2 기술 증명:** V2-C0 직후, V2-3 전에 곡창·전방 군량고·농경지 3개와 징발 창병·노수대·경기병대·수송호위대 4개를 `ACTIVE`까지 승격한다. 이동·교전·재보급, 자원 보존, claim/evidence를 검증한다.
+2. **C3 첫 공개 roster:** V2-4B 수직 전투가 녹색인 뒤 formation 36개와 시설·기반망·자원 유형 합계 24개를 `ACTIVE`로 연다. 공개 sandbox는 이 gate 뒤에만 연다.
+3. **C4 정체성·황실 확장:** V2-6과 V2-7에서 사용하는 태평도·도적·오두미도·학교·조정·인장·역참 콘텐츠를 같은 slot/lifecycle로 승격하고 해당 phase Exit의 선행 조건으로 둔다.
+4. **C5 전체 카탈로그:** V2-8 release candidate 전에 formation 120, 시설 72, 기반망 18, 자원 유형 24, 정착지 kit 24, 지형·계절 profile 32를 각각 `ACTIVE`로 만든다. 각 entry는 capability, 시기·지역 제약, claim/evidence, AI·플레이어 공통 판정 fixture를 가져야 한다.
+5. 각 wave는 family별 `CatalogBudgetSlot` 소비량, lifecycle 단계별 수량, 중복·dangling·부분 생성 failure fixture를 machine-readable manifest와 테스트 보고서로 남긴다. 근거가 부족하면 이름을 만들어 목표를 채우지 않고 해당 wave를 실패시킨다.
+
+### Exit
+
+- C5 manifest의 `ACTIVE` count가 formation 120, 시설 72, 기반망 18, 자원 유형 24, 정착지 kit 24, 지형·계절 profile 32와 각각 정확히 일치한다. 그 이전 lifecycle과 `BUDGET_ONLY`는 완료 수량에 포함되지 않는다.
+- 모든 `ACTIVE` entry의 slot/entry 양방향 참조, unique `budgetSlotId`, claim/evidence, capability와 공통 판정 fixture 누락이 0이다.
+- 이중 소비·부분 생성·slot-side dangling·entry-side dangling fixture가 모두 실패하고, 동일 manifest를 두 번 build한 content hash diff가 0이다.
+- v1 content table, PHP golden, backend/web gate diff 0.
 
 ## Phase V2-3 — 작전·협공 foundation
 
@@ -258,24 +348,29 @@ V2-C0의 4개 formation과 3개 정착지 항목만 사용해 보급 호송/차�
 - 조서를 거부한 군벌이 영토를 잃지 않되 조정 불복의 정통성·외교 비용을 받는다.
 - 황제 소재 도시 점령만으로 `CourtProtectorate`가 자동 이전되지 않는다.
 
-## Phase V2-8 — 지도·모바일·출시 hardening
+## Phase V2-8 — 3D 지도·모바일·출시 hardening
 
 ### 목표
 
-검증된 2D 전쟁 상태를 모바일과 3D 선택 모드로 확장하고 출시한다.
+V2-G0에서 synthetic 2,000개로 검증한 3D 기본 표면을 실제 활성 역사 catalog와 전쟁 상태로 확장하고, 같은 read model의 정보 fallback과 모바일 조작을 hardening해 출시한다.
 
 ### 작업
 
-- 지도 데이터 계약과 detail/basic marker 규칙을 고정한다.
+- `PhysicalPlace` 2,000개와 catalog LOD Tier A/B/C 120/380/1,500, runtime render LOD `CLUSTER | SYMBOL | KIT | FULL_SCENE`의 picking·label·streaming·상태 갱신 규칙을 고정한다.
+- V2-C5의 `ACTIVE` formation 120, 시설 72, 기반망 18, 자원 유형 24, 정착지 kit 24, 지형·계절 profile 32 manifest를 실제 지도와 모집·건설·보급 표면에 연결한다.
+- 군현 검색·필터, 다중 선택 예외, 이상 알림, 위임 변경 이력·철회·복구를 실제 catalog에서 검증한다.
 - V2-4A의 최소 phase 뒤에 `scout`, `intercept`, `siege`, `urban`과 추가 임무 preset을 하나씩 연다.
-- 2D 지도 성능·접근성·모바일 조작을 먼저 통과시킨다.
-- 3D Blue Marble/SRTM은 성능 예산을 만족할 때만 활성화한다.
+- 3D 정사영 지도에서 데스크톱·모바일 조작과 접근 가능한 selection/readout을 통과시킨다.
+- SRTM 등 현대 지형은 고도·분지·경사의 물리 기반으로만 사용하고, 역사 하도·도로·정착지는 provenance가 있는 reconstruction overlay로 분리한다.
+- WebGL 불가·저성능 환경은 같은 상태를 읽는 정보 fallback으로 자동 전환한다. 3D와 다른 simulation을 두지 않는다.
 - WebSocket/STOMP 또는 현재 SSE 확장 중 하나를 실제 부하 측정 후 선택한다.
 - 알림·replay·작전·가신·봉신의 사용자 onboarding과 도움말을 작성한다.
 
 ### Exit
 
-- 모바일 30fps 이상 또는 2D fallback 자동 전환.
+- 데스크톱 60 FPS, 지원 모바일 30 FPS 목표 또는 정보 fallback 자동 전환.
+- 2,000개 synthetic fixture와 2,000개 실제 source catalog 전체에서 blank canvas·label overlap·picking identity 오류 0.
+- V2-C5 exact-count, no-placeholder, slot/entry 무결성 gate가 녹색이고 `BUDGET_ONLY` 또는 중간 lifecycle entry가 출시 표면에 노출되지 않는다.
 - 이벤트 freshness 2초 이내.
 - 두 세션에서 작전 상태·replay 완료가 동기화된다.
 - production sandbox smoke와 v1 regression gate가 모두 녹색.
@@ -284,12 +379,15 @@ V2-C0의 4개 formation과 3개 정착지 항목만 사용해 보급 호송/차�
 
 기획 콘텐츠는 아래 순서로 수직 검증한다. 각 항목은 별도 메뉴를 만드는 목표가 아니라, 첫 작전에서 실제로 결과를 만드는 입력·판정·기록의 묶음이다.
 
-1. `V2-1~V2-4B`: 주공 1명과 부장 최대 2명의 retinue를 작전군으로 묶고, 개인턴 출병에서 보급 호송/차단 임무 하나를 실시간 formation 전투·replay로 연결한다.
-2. `V2-5`: 가신 제안과 장수 관계망을 공격/보급 제안 하나씩만 제공해 승인·거부·만료의 차이를 만든다.
-3. `V2-6`: 도시 사건 4종과 유가·태평도·도적 조직망을 붙이고, 시설·개혁·AI 우선순위가 달라지는지 검증한다.
-4. `V2-7`: 관직 추천·자칭·추인, 봉대·보정·협제 황실 운영, 봉신 협상 3종(수락·지연·축소)을 연결한다.
-5. `V2-8`: 첩보·계절 사건·연대기를 추가하되, 기존 replay와 정세 로그가 먼저 재현되는지 확인한다.
-6. 출시 후: 시나리오 변형·시즌 목표·관전/공유·유저 합의 사건을 하나씩 공개한다.
+1. `V2-0A`: production profile에서 v2 route·bean·migration·catalog loader가 0임을 먼저 증명한다.
+2. `V2-G0`: 140년 행정 기준선→189년 delta, 익주 완전 군현 slice, 유주·요동·한반도·왜 경계·해상 slice 순서로 지리 계약과 3D catalog/runtime LOD를 검증한다.
+3. `V2-0B`: 검증된 catalog의 `ACTIVE` 항목만 sandbox runtime에 적재한다.
+4. `V2-1~V2-4B`: 주공 1명과 부장 최대 2명의 retinue를 작전군으로 묶고, 개인턴 출병에서 보급 호송/차단 임무 하나를 실시간 formation 전투·replay로 연결한다.
+5. `V2-5`: 가신 제안과 장수 관계망을 공격/보급 제안 하나씩만 제공해 승인·거부·만료의 차이를 만든다.
+6. `V2-6`: 도시 사건 4종과 유가·태평도·도적 조직망을 붙이고, 시설·개혁·AI 우선순위가 달라지는지 검증한다.
+7. `V2-7`: 관직 추천·자칭·추인, 봉대·보정·협제 황실 운영, 봉신 협상 3종(수락·지연·축소)을 연결한다.
+8. `V2-8`: 첩보·계절 사건·연대기를 추가하되, 기존 replay와 정세 로그가 먼저 재현되는지 확인한다.
+9. 출시 후: 시나리오 변형·시즌 목표·관전/공유·유저 합의 사건을 하나씩 공개한다.
 
 콘텐츠 추가 기준은 “새 화면이 있는가”가 아니라 “플레이어의 결정이 다음 작전·관계·도시 상태 중 두 곳 이상에 재현 가능한 변화를 남기는가”다.
 

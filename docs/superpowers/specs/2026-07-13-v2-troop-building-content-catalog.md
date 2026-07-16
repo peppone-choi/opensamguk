@@ -1,7 +1,7 @@
 # 오픈삼국 v2 병종·건축물 콘텐츠 카탈로그
 
 > 작성일: 2026-07-13
-> 상태: content-budget-adopted, architecture-review-cleared
+> 상태: content-budget-adopted, current-round-review-cleared-2026-07-15
 > 범위: 삼국지 `CLASSIC` 콘텐츠 팩의 병력 편제·전통과 도시 시설·기반망·자원거점 목표 수량
 > 비범위: 최종 전투 수치, v1 병종 상성·건축물 패리티 변경
 
@@ -9,17 +9,18 @@
 
 ### 병력
 
-- v2 전체 목표는 **72개 curated formation template/tradition**이다.
+- v2 전체 출시 목표는 **120개 curated formation template/tradition**이다. 이 문서에 실명과 claim 경계를 적은 72개가 검증 core이고, 주변 세계 확장 48개는 family 예산을 먼저 고정한 뒤 근거가 준비된 항목만 이름을 부여한다.
 - 계약을 증명하는 첫 기술 슬라이스는 **4개 formation**만 쓴다. 검증 뒤 첫 공개 roster를 18개 공통 편제와 선별한 역사·지역·연의 편제를 합쳐 **36개**까지 확장한다.
 - `경장/중장/정예`를 모두 별도 병종으로 복제하지 않는다. 무기·갑옷·방패·말·훈련·대형·모집원의 조합이 같은 전통의 변형을 만든다.
-- 72개 template에서 장비와 대형 조합으로 수백 개의 실제 formation을 만들 수 있다.
+- 120개 template에서 장비와 대형 조합으로 수백 개의 실제 formation을 만들 수 있다.
 
 ### 정착지 콘텐츠
 
-- 물리적 **시설 48개**.
-- 여러 장소에 걸친 **기반망 10개**.
-- 지도에 원래 존재하는 **자원거점 12개**.
-- 시설이 아닌 **정착지·행정 단계 5개**.
+- 물리적 시설은 검증 core 48개, 전체 **72개**.
+- 여러 장소에 걸친 기반망은 검증 core 10개, 전체 **18개**.
+- 지도에 원래 존재하는 자원 유형은 검증 core 12개, 전체 **24개**.
+- 시설이 아닌 정착지 물리 발달 상태 5개와, 이를 지역·기능별로 표현하는 **정착지 kit 24개**.
+- 전략·전술 지형 생성을 위한 **지형·계절 profile 32개**.
 - 계약을 증명하는 첫 기술 슬라이스는 시설·자원거점을 합쳐 **3개**만 쓴다. 검증 뒤 첫 공개 roster를 시설·기반망·자원거점 합계 **24개**까지 확장한다.
 - 각 시설은 2~4개의 목적 분기를 가질 수 있으므로 전체 목표에서 보이는 선택지는 100개 이상이지만, 10단계 선형 업그레이드는 만들지 않는다.
 
@@ -39,7 +40,9 @@ Formation
 
 카탈로그 이름은 이 조합을 쉽게 알아보게 하는 전통·편제명이다. simulation kernel은 `호표기`나 `등갑병` 문자열을 보고 상성을 계산하지 않는다.
 
-## 3. 72개 formation template/tradition
+## 3. 120개 formation template/tradition
+
+3.1~3.5의 72개는 이름·역할·출처 등급을 검토한 core다. 3.6의 48개는 주변 정치·모집 네트워크를 한두 개의 범용 `이민족 병종`으로 압축하지 않기 위한 확장 예산이며, `HistoricalClaim`과 실제 모집·장비·보급 조건이 연결되기 전에는 production entry가 아니다.
 
 ### 3.1 공통 편제 18개
 
@@ -150,19 +153,45 @@ Formation
 
 `CHRONICLE`은 63~72를 자동 비활성화하거나 근거가 허용하는 일반 capability로 치환한다. `CLASSIC`은 출처 배지를 표시한 채 사용한다.
 
+### 3.6 주변 세계 확장 전통 48개 예산
+
+| family | 예산 | 모델링 경계 |
+|---|---:|---|
+| 흉노·오환·선비 등 북방 네트워크 | 10 | 계절 목초지·동맹·인질·말·지휘 소속을 분리 |
+| 강·저·서역 네트워크 | 10 | 서로 다른 부·국·오아시스·교역로를 단일 병종으로 합치지 않음 |
+| 부여·고구려·옥저·읍루·예·삼한 | 10 | 국읍·읍락·복속·철·보병·산악 이동 claim을 별도 검증 |
+| 왜 국읍·해상 네트워크 | 6 | 30국 전체를 하나의 왜군으로 만들지 않고 항해·항구·국읍별 모집 조건 사용 |
+| 산월·형남·남중·교주 주변 | 8 | 지형 이름이 전역 능력치 보너스로 직결되지 않게 모집원·장비·보급을 명시 |
+| 수군·공성·군수 보강 | 4 | 선박·공성 장비·수송 자산의 생산과 지휘 crew를 formation과 분리 |
+
+48개 이름을 먼저 채우지 않는다. 한 entry가 `모집원 + 지휘 소속 + 이동 + 장비 + 훈련 + 보급 + 시기/지역 claim`을 모두 갖출 때 해당 family 예산에서 승격한다.
+
+```text
+CatalogBudgetSlot
+  id, catalogBudgetId, familyId, ordinal
+  status: BUDGET_ONLY | CONSUMED
+  consumedByEntryId, consumedAt
+
+ContentEntry
+  id, budgetSlotId
+  lifecycle: NAMED -> CLAIMED -> FIXTURE_GREEN -> ACTIVE
+```
+
+전체 승격 흐름은 `CatalogBudgetSlot(BUDGET_ONLY) → ContentEntry(NAMED → CLAIMED → FIXTURE_GREEN → ACTIVE)`다. `NAMED` 승격 때 slot을 `CONSUMED`로 바꾸고 별도 entry ID와 unique `budgetSlotId`를 한 transaction에서 만든다. `slot.consumedByEntryId == entry.id`와 `entry.budgetSlotId == slot.id`가 양방향으로 일치해야 한다. claim reference가 모두 유효해야 `CLAIMED`, 모집·보급·AI/플레이어 공통 판정 fixture가 통과해야 `FIXTURE_GREEN`, 승인된 content pack에 들어가야 `ACTIVE`가 된다. validator는 같은 slot의 중복 소비, dangling 양방향 참조, 단계 건너뛰기와 역행을 거부하고, loader와 완료 수량에는 `ACTIVE`만 허용한다. 실패 fixture는 최소 네 가지다: 두 entry의 동일 slot 소비, slot만 소비된 부분 생성, `consumedByEntryId`가 없거나 다른 entry를 가리키는 slot-side dangling, `budgetSlotId`가 없거나 다른 slot을 가리키는 entry-side dangling. 네 경우 모두 validation 실패여야 한다.
+
 ## 4. 정착지·건축물 정본 분리
 
 ```text
-SettlementStatus   촌락·현치·군치·수도 같은 규모·행정 상태
+SettlementStatus   촌락·장시·성곽 정착지·지역 도시·대도시권 같은 물리 발달 상태
 Facility           한 위치의 물리 시설
 InfrastructureNetwork  여러 위치를 연결하는 도로·수리·역참·봉수망
 ResourceSite       광산·염장·농경지·목장처럼 지도에 선재하는 생산 거점
-ResourceNode       Facility·Place·Formation·IN_TRANSIT에 귀속된 실제 재고 ledger
+ResourceNode       Facility·PhysicalPlace·Formation·IN_TRANSIT에 귀속된 실제 재고 ledger
 Policy             세율·시장 통제·징발·구휼. 건물이 아님
-OfficeSeat         태수부·현관아가 수행하는 관직 치소 기능
+OfficeFacilityAssignment  관직이 어느 Facility를 사용하는지 가리키는 운영 배정
 ```
 
-토탈 워의 주정착지 등급·건물 슬롯·자원 정착지·정책을 한 `Building` 테이블에 섞지 않는다. 현창·군량고는 물리 `Facility`, 그 안의 실제 곡물은 연결된 `ResourceNode`가 소유한다.
+토탈 워의 주정착지 등급·건물 슬롯·자원 정착지·정책을 한 `Building` 테이블에 섞지 않는다. 현창·군량고는 물리 `Facility`, 그 안의 실제 곡물은 연결된 `ResourceNode`가 소유한다. 현치·군치·수도 여부의 유일 정본은 지리 catalog의 `SeatAssignment`다. `SettlementStatus`와 `OfficeFacilityAssignment`는 그 역할을 중복 저장하지 않으며 UI 배지는 `SeatAssignment.role`에서 파생한다.
 
 ```text
 FacilityState
@@ -183,19 +212,19 @@ FacilityCapabilityResolver
 
 시설 행의 `새로 여는 능력`은 presence-based grant가 아니다. command handler와 AI는 반드시 `FacilityCapabilityResolver` 결과를 읽고, 재고·인력·경로·유지보수 중 필요한 조건이 빠지면 능력을 닫거나 capacity를 줄인다.
 
-## 5. 정착지·행정 단계 5개
+## 5. 정착지 물리 발달 단계 5개
 
 다음은 건축물 수에 포함하지 않는다.
 
 1. 촌락·리 집락.
-2. 장시·진.
-3. 현 치소.
-4. 군·국 치소.
-5. 수도·황실 조정 소재지.
+2. 장시·진 규모 정착지.
+3. 성곽 정착지.
+4. 지역 도시.
+5. 대도시권.
 
-인구가 늘었다고 자동으로 군치나 수도가 되지 않는다. 조정·관직·성곽·창고·교통·정치 결정이 필요하다.
+이 단계는 인구·밀도·성곽·시장·기반 시설의 물리 상태만 나타낸다. 현치·군치·수도는 단계가 아니라 시기별 `SeatAssignment`이며, 인구가 늘었다고 자동 승격되지 않는다. 조정·관직 건물도 별도 `Facility`와 `OfficeFacilityAssignment`다.
 
-## 6. 물리 시설 48개
+## 6. 검증 core 물리 시설 48개
 
 ### 6.1 행정·조정 10개
 
@@ -272,7 +301,7 @@ FacilityCapabilityResolver
 
 시설 40~48은 국가 성향 전용 보너스 건물이 아니다. 해당 조직망·인물·지역·연도·개혁이 있을 때 기존 건물을 전환하거나 함께 사용할 수 있는 institution seat다.
 
-## 7. 기반망 10개
+## 7. 검증 core 기반망 10개
 
 1. 관개·수로·제방망.
 2. 도로·교량망.
@@ -287,7 +316,7 @@ FacilityCapabilityResolver
 
 기반망은 한 도시 슬롯을 점유하는 건물 하나가 아니다. 구간별 capacity·손상·통제·계절·유지 담당 관직을 가진다.
 
-## 8. 자원거점 12개
+## 8. 검증 core 자원거점 12개
 
 1. 북방 조·기장·밀 농경지.
 2. 남방 논·습지 농경지.
@@ -303,6 +332,18 @@ FacilityCapabilityResolver
 12. 옻·목칠·특수 공예 산지.
 
 자원거점은 건설해서 무에서 만드는 건물이 아니다. 점유·협약·노동·수송·환경 조건으로 생산량과 접근성이 바뀐다.
+
+### 8.1 전체 지리 확장 예산
+
+현재 표의 48개 시설·10개 기반망·12개 자원거점은 첫 공개와 역사 claim 검증을 위한 core다. 전체 목표는 72/18/24이며, 추가분은 2,000개 지도 거점을 실제로 구별하는 기능이 있을 때만 연다.
+
+- 추가 시설 24개: 변경 관방·역참·항만·목축·서역 교역·한반도 국읍·왜 해상 거점의 운영 기능을 보강한다.
+- 추가 기반망 8개: 계절 이동 corridor, 해안 항로, 도서 항로, 말 교역, 철 교역, 변경 책봉·인질, 난민 이동, 장거리 상단을 후보 family로 둔다. `SeasonalRange` 자체는 기반망이나 `PhysicalPlace`로 세지 않는다.
+- 추가 자원 유형 12개: 지역 이름을 붙인 복제품이 아니라 작물·말·철·소금·목재·선박재·직물·해산물 등의 생산·수송 차이가 simulation을 바꿀 때만 분리한다.
+- 정착지 kit 24개: 5개 물리 발달 상태와 별개인 시각·기능 조합이다. 북방 변경, 관중 성곽, 중원 평야, 장강 수운, 파촉 분지, 산악 국읍, 해안·도서 등 지역 재료와 배치를 조합한다.
+- 지형·계절 profile 32개: 분지·평야·산지·습지·초원·해안과 계절·배수·식생 추론을 조합하며, 현대 지형을 2~3세기 경관으로 단정하지 않는다.
+
+확장 예산은 placeholder entry를 허용하지 않는다. 이름·아이콘만 있고 capability·claim·fixture가 없는 항목은 카탈로그 수에 세지 않는다.
 
 ## 9. 시설 분기 원칙
 
@@ -349,9 +390,9 @@ FacilityCapabilityResolver
 
 ### C0: 데이터 계약
 
-- `FormationTemplate`, `RecruitmentSource`, `EquipmentProfile`, `EvidenceRef`, `HistoricalClaim`, `ContentEntry`.
-- `SettlementStatus`, `Facility`, `FacilityState`, `InfrastructureNetwork`, `ResourceSite`, `ResourceNode`.
-- `FacilityCapabilityResolver`와 claim→evidence 참조 무결성.
+- `FormationTemplate`, `RecruitmentSource`, `EquipmentProfile`, `EvidenceRef`, `HistoricalClaim`, `ContentEntry`, `CatalogBudget`, `CatalogBudgetSlot`.
+- `SettlementStatus`, `Facility`, `FacilityState`, `InfrastructureNetwork`, `ResourceSite`, `ResourceNode`, `OfficeFacilityAssignment`.
+- `FacilityCapabilityResolver`, budget-slot/entry lifecycle validator와 실패 fixture, claim→evidence 참조 무결성.
 - content profile validation과 provenance badge.
 
 ### C1: 3개 정착지 항목 기술 증명
@@ -376,7 +417,7 @@ FacilityCapabilityResolver
 | `facility.forward_granary` | `claim.forward-supply-depot` | `SCHOLARLY_RECONSTRUCTION` | `sgz-16-renjun-supply` | 전방 군량 집산·호송·소비 capacity |
 | `resource.grain_field` | `claim.tuntian-production-site` | `PRIMARY_ATTESTED` | `sgz-1-tuntian` | 둔전·농경 생산이 위치와 수송 조건을 가짐 |
 
-이 7개 entry의 `claimIds[]`와 `EvidenceRef`가 하나라도 끊기면 C2를 통과하지 않는다. 나머지 72/48/10/12 항목도 활성화 전에 같은 claim map을 가져야 하며, 현재 표의 출처 등급만으로 production content가 되지 않는다.
+이 7개 entry의 `claimIds[]`와 `EvidenceRef`가 하나라도 끊기면 C2를 통과하지 않는다. 전체 120/72/18/24 항목도 활성화 전에 같은 claim map을 가져야 하며, 현재 표의 출처 등급이나 확장 예산만으로 production content가 되지 않는다.
 
 ### C3: 첫 공개 36/24 roster
 
@@ -389,14 +430,17 @@ FacilityCapabilityResolver
 - 상서·인장·역참·조서와 중앙/지방 관직.
 - 시설 전환·개혁 확산·점령 후 제도 병존.
 
-### C5: 전체 72/48/10/12 카탈로그
+### C5: 전체 120/72/18/24 카탈로그
 
 - 근거와 테스트가 준비된 family만 추가한다.
 - template 개수를 채우기 위해 이름만 다른 병종·건물을 만들지 않는다.
+- 정착지 kit 24개와 지형·계절 profile 32개는 같은 `PhysicalPlace`·`TerrainRegion` 정본을 소비하며 simulation 판정을 renderer asset에 저장하지 않는다.
+- C5 Exit는 `ACTIVE` formation 120, 시설 72, 기반망 18, 자원 유형 24, 정착지 kit 24, 지형·계절 profile 32를 각각 정확히 충족하는 것이다. `BUDGET_ONLY`, `NAMED`, `CLAIMED`, `FIXTURE_GREEN`은 완료 수량에 포함하지 않으며 근거를 확보하지 못하면 이름을 지어 채우지 않고 release gate를 실패시킨다.
 
 ## 13. 수용 조건
 
-- 72개 병력 항목마다 모집원·지휘·이동·무장·방호·보급·출처가 있다.
+- 120개 병력 항목마다 모집원·지휘·이동·무장·방호·보급·출처가 있다. 아직 이름이 없는 확장 예산은 완료 항목으로 세지 않는다.
+- `CatalogBudgetSlot(BUDGET_ONLY) → ContentEntry(NAMED → CLAIMED → FIXTURE_GREEN → ACTIVE)` 경계를 건너뛸 수 없고, 공개·완료 수량은 `ACTIVE`만 센다.
 - 실명 병종은 시기·소유자·지역·사건 제약 없이 전국 모집되지 않는다.
 - `CHRONICLE`에서 연의·게임 참고 병종이 역사 사실로 활성화되지 않는다.
 - 시설, 기반망, 자원거점, 정착지 단계, 정책이 서로 다른 타입이다.
