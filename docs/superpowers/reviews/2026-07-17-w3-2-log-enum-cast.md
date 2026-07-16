@@ -72,7 +72,12 @@ GENERAL/BATTLE_BRIEF 7% · NATION/HISTORY 5% · SYSTEM/SUMMARY 3% · SYSTEM/HIST
 
 - 독립 리뷰: PR 리뷰봇 2종(CodeRabbit + Claude GHA 파리티 프롬프트)이 PR에서 수행 — 이 PR이
   수정된 `claude_review.yml`(게시 도구 추가)의 최종 스모크 판정 대상.
+- **스모크 판정 결과 (2026-07-17): FAIL — 단 게시 도구가 아니라 모델이 원인.** 첫 실전(비스킵)
+  실행 2회 모두 Claude 첫 API 호출에서 즉사(is_error:true, 318ms, $0, 1턴; 모델
+  `claude-opus-4-8[1m]` = CLI 기본값). 이전 green(PR #153/#155)은 전부 워크플로-수정 스킵(9s)
+  — 리뷰가 실제 게시된 적 없음. 조치: `claude_args`에 `--model claude-sonnet-5` 명시 고정을
+  이 PR에 포함(같은 가드로 이 PR에서는 스킵되므로 실판정은 머지 후 다음 PR).
 - 본 문서 자체가 측정-주도 재조준(후보 2건 기각 근거 포함)의 감사 추적이다.
 
-Scope: app/game-api read 리포지토리 4종 · infra/ Flyway V29+마이그레이션 IT · app/game-engine, app/gateway-api application.yml (Flyway 세션 락 설정만 — 판단 3 참조, 로직 변경 없음; web 변경 없음)
+Scope: app/game-api read 리포지토리 4종 · infra/ Flyway V29+마이그레이션 IT · app/game-engine, app/gateway-api application.yml (Flyway 세션 락 설정만 — 판단 3 참조, 로직 변경 없음; web 변경 없음) · .github/workflows/ claude_review.yml 모델 명시 고정 (PR #156 첫 실전 실행 is_error 실증 — 크로스-에이전트 비평 절 참조)
 Verdict: cleared
