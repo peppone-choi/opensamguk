@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE** — 이 저장소의 기획은 로컬 Markdown으로 실동작 중: 페이즈별 `spec → plan → adversarial review → execute → gate` 사이클(`docs/superpowers/specs|plans|research/`), 루프 원장(`docs/loops/*/LEDGER.md`), v2 기획 수렴 루프. **Jira는 `.mcp.json` `atlassian` MCP로 선언됨**(사용자별 OAuth 필요 — `tool-capabilities.md` 온보딩) — 티켓 분해는 아래 `/os-plan-tickets` 절차를 쓴다. 로컬 Markdown(plans/LEDGER)이 여전히 계획 **정본**이고, Jira는 추적·AC 체크리스트 표면이다.
+**ACTIVE** — 이 저장소의 기획은 로컬 Markdown으로 실동작 중: 페이즈별 `spec → plan → adversarial review → execute → gate` 사이클(`docs/superpowers/specs|plans|research/`), 루프 원장(`docs/loops/*/LEDGER.md`), v2 기획 수렴 루프. **Jira는 `.mcp.json` `atlassian` MCP로 인증·스모크 완료**(사이트 pepponechoi-jira, 2026-07-16 — 온보딩·재동의 절차는 `tool-capabilities.md`), **티켓 대상 프로젝트는 `OPENSAM`**("오픈삼국" — SCRUM은 스모크용 잔재) — 티켓 분해는 아래 `/os-plan-tickets` 절차를 쓴다. 로컬 Markdown(plans/LEDGER)이 여전히 계획 **정본**이고, Jira는 추적·AC 체크리스트 표면이다.
 
 ## Read This When
 

@@ -1,25 +1,24 @@
 # Current State
 
-- Updated at: 2026-07-16 (Agent OS 활성화 세션 — Wave 0 완료)
+- Updated at: 2026-07-16 (Agent OS 활성화 세션 — W2-3 커밋/PR #154 + 백엔드 Sentry + Jira 연결)
 - Active agent: Claude Code (합의 계획 실행 세션)
-- Current branch: main
-- Current phase: Agent OS **활성화 Wave 0 완료** (계획: `.omc/plans/2026-07-16-agent-os-activation-plan.md`, 전체 승인됨) — Wave 1은 인간 체크리스트(Atlassian 신규 사이트·Sentry 계정·CodeRabbit 설치·ANTHROPIC_API_KEY) 대기
-- Completed (이번 세션): 딥 인터뷰 스펙(PASSED) → RALPLAN 합의(rev.3 APPROVED) → 전체 승인 → 인간 체크리스트 5문항 확인 → **W0-1** `/os-*` 개명(3버킷 게이트 PASS, `.omc/artifacts/w0-1-rename-gate.md`) → **W0-3** `.claudeignore` → **W0-4** context-strategy 건초더미 3전략 매핑 → **W0-5** 프롬프트 팩(공통 5 + 작업군 5, 발동조건 부여) → **W0-6** 헌법 포인터 → **W0-2** 훅 실활성화(`.claude/settings.json` + 실사격 5케이스 증거 + ADR-LITE-005)
-- Completed (이전 세션): 저장소 조사 → 인터뷰 4결정(ADR-LITE-001~004) → `.ai/` 7종 → `docs/agent/` 16종 → `scripts/agent/` 2종 → `.claude/commands/` 7종 + `settings.example.json` → `CLAUDE.md`·`AGENTS.md` 부트스트랩 섹션
-- In progress: **Wave 1 저작 완료, 스모크는 외부 계정 대기**(원장: `.omc/artifacts/w1-tool-wiring-gate.md`) — W1-1 `.mcp.json` 4서버+가드레일(ADR-LITE-007) · W1-2 `/os-plan-tickets` · W1-3 `/os-e2e`(**스모크 PASS**) · W1-4 `claude_review.yml`+`.coderabbit.yaml` · W1-5 Sentry SDK 양 앱(typecheck·vitest·next build 전부 green). **Wave 2 선행분**: 검증 루프 3종 표(`verification.md`) + 리뷰 아티팩트(`docs/superpowers/reviews/2026-07-16-agent-os-activation.md`, Verdict: cleared) + `check.py --strict --base origin/main` **그린**. 남은 것: W2-3 커밋(인간 승인), Wave 3 시연 2건
-- Files changed: `.ai/*`, `docs/agent/*`, `.claude/commands/os-*`(7, 개명), `.claude/settings.example.json` + **`.claude/settings.json`(활성)**, `.claudeignore`, `scripts/agent/*`(2), `CLAUDE.md`·`AGENTS.md` — 제품 코드 0건
+- Current branch: **agent-os-activation** (PR #154 open, base main)
+- Current phase: Wave 0 ✅ · Wave 1 저작 ✅ + 스모크(playwright ✅ · atlassian ✅ · CodeRabbit 설치 ✅ / Claude GHA·Sentry 실증 채점대기) · Wave 2 W2-1/W2-2 ✅ + W2-3 커밋·PR ✅ · Wave 3 대기
+- Completed (이번 세션 후반):
+  - **W2-3**: 커밋 5건 + PR #154 오픈(push 사용자 승인) → 이후 백엔드 Sentry·Jira 배선 커밋 추가
+  - **CodeRabbit 설치 확정** — `coderabbitai[bot]`이 PR #154에 코멘트. 단 57파일>50 제한으로 이 PR 리뷰는 스킵 → 실리뷰 판정은 W3-1 소형 PR
+  - **Claude GHA**: PR 런 "success"는 의도적 스킵(신규 워크플로는 main 병합 후 실행 — 로그 실확인). `ANTHROPIC_API_KEY` 시크릿 등록 확인(2026-07-16 13:50 UTC, 이름 목록 검증)
+  - **백엔드 Sentry 3앱 배선**(ADR-LITE-008, 사용자 승인 "지금 이 PR에 추가"): `sentry-spring-boot-starter-jakarta` 8.49.0, 에러 캡처 전용(traces-sample-rate 0 고정·send-default-pii false), DSN 빈 값 → no-op, compose 서비스별 DSN 매핑(`SENTRY_DSN_*`), `.env.example` 갱신
+  - **Jira 연결 완료**: `/mcp` 재동의 → pepponechoi-jira(cloudId 300c260a-…) 인증 + W1-2 티켓 스모크 PASS(`SCRUM-5` 생성→완료 전환). 사용자 URL의 PEPPO-2는 Atlassian **Home** 프로젝트(Jira 아님)로 판명 → 사용자가 실운영 프로젝트 **`OPENSAM`**("오픈삼국", id 10001) 생성, MCP create 권한·이슈타입 실확인
+  - **`.mcp.json` atlassian SSE→Streamable HTTP**(`/v1/mcp`) 마이그레이션 — Atlassian 지원 종료 공지(2026-06-30) 대응
 - Verification run:
-  - `git diff --check` → exit 0 (whitespace 오류 없음)
-  - `git status --short` → 수정 2건(CLAUDE/AGENTS) + 신규 5경로만, 제품 코드 무변경 확인
-  - 경로 교차검증: 신규 문서의 backtick 경로 참조 39건 전부 실재(MISSING 0)
-  - `review.md`의 "strict CI가 reviews 문서 요구" 주장 → `tools/agent-system/check.py:320` 실물 확인
-  - `.claude/HARNESS.md §6`(two ops lessons) 섹션 번호 실물 확인
-  - 훅 스크립트 5케이스 동작 테스트(env-read 차단/golden-write 차단/legacy-read 허용/legacy-write 차단/.env.example 허용) 전부 통과, `bash -n` SYNTAX OK
-  - **훅 프로토콜(stdin JSON) 실사격 5케이스**(이번 세션): `.env.hooktest` Write→exit 2 · 골든 Edit→exit 2 · legacy Read→exit 0 · 일반 Write→exit 0 · verify-changes.sh 훅 모드→변경 매트릭스 출력 — 전부 기대 일치 (AC-2·AC-3)
-- Verification NOT run: gradle/pnpm (제품 코드 무변경이므로 검증 행렬상 불필요), 훅 세션-등록 end-to-end (훅은 세션 시작 시 스냅샷 → **다음 세션부터 적용**, 다음 세션 시작 시 확인)
-- Failed approaches: `verify-changes.sh` 초판이 untracked 신규 파일을 못 봄 → `git ls-files --others --exclude-standard` 추가로 수정
-- Open questions (사람 결정 필요): ~~① 커맨드명 충돌~~ → **해소** (ADR-LITE-006, `/os-*` 개명) · ~~② 훅 실활성화~~ → **해소** (ADR-LITE-005, `.claude/settings.json` 활성) · ③ 커밋 승인 — Wave 2-3에서 단일 PR 커밋 계획으로 인간 승인 예정
-- Next action: Wave 1 (인간 체크리스트 완료 항목부터 순차 배선: .mcp.json → /os-plan-tickets → /os-e2e → claude_review.yml+CodeRabbit → Sentry SDK) → Wave 2 → Wave 3
-- Must-read files for next action: `.omc/plans/2026-07-16-agent-os-activation-plan.md`, `.ai/decisions.md`, `.omc/artifacts/w0-1-rename-gate.md`
+  - 3앱 gradle test XML: gateway-api 73/0/0 · game-api 394(1건 postgres 컨테이너 기동 flake → 단독 재실행 green) · game-engine 557/0/0(skip 1 = `LongSimReplayGateTest`, 기왕 P5 백로그)
+  - compose 2종 `docker compose config` + `SENTRY_DSN` 렌더 확인
+  - `check.py --strict --base origin/main` → **No findings**
+- Verification NOT run: Sentry 대시보드 실증(DSN 대기), Claude GHA 실리뷰(main 병합 대기), CodeRabbit 실리뷰(소형 PR 대기)
+- Failed approaches: 1차 Atlassian OAuth가 구(suspended) 사이트에만 부여 → 신규 사이트 호출이 "isn't explicitly granted" 거부 → `/mcp` 재동의(사이트 선택)로 해결 (`tool-capabilities.md` 온보딩에 기록)
+- Open questions (사람 결정 필요): ① **PR #154 머지 승인** ② Sentry 계정 + DSN(프론트 2 + 백엔드 3서비스분)
+- Next action: PR #154 머지(사람 승인) → Wave 3 (W3-1 F4 소형 갭 풀 파이프라인 — Jira `OPENSAM` 티켓 + 이중 리뷰 실판정 동시 수행 → W3-2 DB 인덱스)
+- Must-read files for next action: `.omc/plans/2026-07-16-agent-os-activation-plan.md`, `.ai/decisions.md`(ADR-LITE-008), `.omc/artifacts/w1-tool-wiring-gate.md`
 
 > 이 파일은 마지막 갱신 시점의 스냅샷이다. 오래됐으면 `git log --oneline -10`과 `docs/loops/*/LEDGER.md`로 교차 검증하라.
