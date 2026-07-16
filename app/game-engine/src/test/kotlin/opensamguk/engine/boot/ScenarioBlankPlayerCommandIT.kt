@@ -68,6 +68,7 @@ class ScenarioBlankPlayerCommandIT {
         Flyway.configure()
             .dataSource(jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .load()
             .migrate()
         jdbc = JdbcTemplate(dataSource)

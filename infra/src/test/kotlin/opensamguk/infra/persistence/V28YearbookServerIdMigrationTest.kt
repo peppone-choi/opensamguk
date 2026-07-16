@@ -78,6 +78,7 @@ class V28YearbookServerIdMigrationTest {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .target(MigrationVersion.fromVersion("27"))
             .load()
             .migrate()
@@ -88,6 +89,7 @@ class V28YearbookServerIdMigrationTest {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .load()
             .migrate()
     }

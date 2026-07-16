@@ -45,6 +45,12 @@ GENERAL/BATTLE_BRIEF 7% · NATION/HISTORY 5% · SYSTEM/SUMMARY 3% · SYSTEM/HIST
    `wait_event=virtualxid` + 13분 idle-in-transaction 잠금 세션). **이대로 배포했다면 프로덕션
    마이그레이션이 그대로 행**. 공식 문서 해법 `flyway.postgresql.transactional.lock=false`(세션
    락 전환)를 앱 yml 3종(`spring.flyway.postgresql.transactional-lock`) + 마이그레이션 IT에 적용.
+   **후속 (CI가 재발견)**: 같은 데드락이 `Flyway.configure()`를 직접 호출하는 **다른 IT 전부**에서
+   재현 — V29 포함 커밋부터 CI jvm job 4연속 무한 행(이전 2.5–4분), 로컬은 Docker 미가동 시 IT
+   skip이라 미검출. 프로그래매틱 호출부 36곳(infra 28 + game-engine 8) 전부에 동일
+   `.configuration(...)` 적용 + Spring 주도 IT용 테스트 yml 2종(infra·game-api
+   `application-test.yml`)에 `postgresql.transactional-lock: false` 추가. gateway-api 테스트는
+   Flyway off라 해당 없음.
 4. **의도적 예외**: `LogFeedReadRepository.findRecentByScopeAndCategory`는 `::text` 유지 —
    라이브 호출부(AuctionController)가 enum에 없는 P6 버그 리터럴("action"/"auction")을 넘기며,
    enum CAST 시 '없는 값 → 0행' 계약이 SQL 에러로 바뀌어 경매 페이지가 500이 된다.

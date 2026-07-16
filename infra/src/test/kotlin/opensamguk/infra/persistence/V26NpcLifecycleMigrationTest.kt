@@ -32,6 +32,7 @@ class V26NpcLifecycleMigrationTest {
         flyway = Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .target(MigrationVersion.fromVersion("25"))
             .load()
         flyway.migrate()
@@ -39,6 +40,7 @@ class V26NpcLifecycleMigrationTest {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
+            .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
             .load()
             .migrate()
     }
