@@ -66,6 +66,18 @@
 
 ---
 
+## ADR-LITE-008 백엔드 3앱 Sentry 배선 (백로그 조기 인출)
+
+- Date: 2026-07-16
+- Status: approved
+- Decision: known-issues 백로그였던 Spring 백엔드 Sentry SDK를 PR #154(`agent-os-activation`) 6번째 커밋으로 조기 배선한다. `sentry-spring-boot-starter-jakarta` 8.49.0을 3앱(gateway-api·game-api·game-engine)에 추가하되 **에러 캡처 전용**으로 고정: `traces-sample-rate: 0.0`(game-engine 턴 데몬 핫루프에 트레이싱 계측 금지, 3앱 일관), `send-default-pii: false`, DSN은 env `SENTRY_DSN` — 빈 값이면 SDK 전체 no-op(프론트 `enabled: !!dsn`과 동일 설계, 기존 동작 무변경이 기본값). compose는 서비스별 변수(`SENTRY_DSN_GATEWAY_API`/`_GAME_API`/`_GAME_ENGINE`)를 각 컨테이너의 `SENTRY_DSN`으로 매핑한다.
+- Context: 프론트 2앱 배선(W1-5) 직후 사용자 제안("센트리는 아예 백엔드에도 달아버릴까") → AskUserQuestion으로 배치 확인, **"지금 이 PR에 추가"** 선택. RNG/로그/ChangeRecorder/JPA 경로 비접촉 — 파리티 게이트·one-daemon-write 무영향.
+- Alternatives: 별도 PR(기각 — 사용자 선택), Sentry OTel agent 방식(기각 — 에이전트 계측이 핫루프에 오버헤드 리스크).
+- Consequences: DSN 발급 전에는 동작 무변경. 대시보드 실증은 w1 게이트 원장 Sentry 항목과 동일 해제 조건으로 채점대기.
+- Approved by: 사용자 (2026-07-16, AskUserQuestion "지금 이 PR에 추가")
+
+---
+
 ## 템플릿
 
 ```md

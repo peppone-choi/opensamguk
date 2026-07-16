@@ -2,7 +2,7 @@
 
 ## Status
 
-**ACTIVE** — `.github/workflows/deploy.yml`(main push 자동 배포), `scripts/deploy.sh`, `docker-compose.production.yml`, health check, 스모크(`tools/smoke.sh`)가 실동작. **Sentry는 프론트 2앱에 SDK 배선됨**(`@sentry/nextjs`, DSN은 env — 미설정 시 no-op; 계정·DSN 발급 전까지 대시보드 관측은 `채점대기`). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트.
+**ACTIVE** — `.github/workflows/deploy.yml`(main push 자동 배포), `scripts/deploy.sh`, `docker-compose.production.yml`, health check, 스모크(`tools/smoke.sh`)가 실동작. **Sentry는 프론트 2앱(`@sentry/nextjs`) + 백엔드 3앱(`sentry-spring-boot-starter-jakarta`, 에러 캡처 전용 — traces-sample-rate 0 고정)에 SDK 배선됨**(DSN은 env — 미설정 시 no-op; 계정·DSN 발급 전까지 대시보드 관측은 `채점대기`, ADR-LITE-008). Terraform/CloudWatch는 NOT_CONFIGURED — 백엔드 관측은 docker logs + prod DB + health 엔드포인트(+DSN 배선 후 Sentry).
 
 ## Read This When
 
@@ -37,10 +37,10 @@
 
 ## 장애 대응 (표준 5단계)
 
-1. **감지·영향**: 증상을 데이터로 — 라우트/컨테이너/로그(`docker logs`), **프론트 에러는 Sentry 대시보드/MCP 조회**(DSN 배선 후), 영향 범위.
+1. **감지·영향**: 증상을 데이터로 — 라우트/컨테이너/로그(`docker logs`), **프론트·백엔드 에러는 Sentry 대시보드/MCP 조회**(DSN 배선 후), 영향 범위.
 2. **근본 원인**: `failure-cases.md`·HARNESS §6 두 ops lesson 먼저 대조(stale-DNS 502 → nginx 재시작 순서, 턴 동결 → `commandBlockMs`/Redis). 패턴 매칭이 안 맞으면 `systematic-debugging`으로 수렴 — **상태 변경 명령 전에 증거가 그 조치를 지지하는지 확인**.
 3. **안전한 수정 제안** → 사람 검토.
-4. **조치·검증**: 수정 → 배포 게이트 재통과 → 위 검증. 프론트 장애면 Sentry에서 해당 이슈 resolved + 재발 0 확인.
+4. **조치·검증**: 수정 → 배포 게이트 재통과 → 위 검증. Sentry 수집 대상(프론트·백엔드) 장애면 Sentry에서 해당 이슈 resolved + 재발 0 확인.
 5. **회고**: 근본수정 + 재발 방지를 `failure-cases.md`/HARNESS/LEDGER에 기록(예: OPS LESSON A/B가 이 형식의 선례). 사용자 영향이 있었으면 아래 Post-mortem 템플릿으로.
 
 ## Post-mortem 템플릿 (사용자 영향 장애)

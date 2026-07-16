@@ -34,3 +34,10 @@ management:
     health:
       probes:
         enabled: true
+# Sentry — 에러 캡처 전용(traces-sample-rate 0 고정, 3앱 공통). DSN 미설정(빈 값)이면
+# SDK 전체 no-op — 프론트(enabled: !!dsn)와 동일 설계. 기존 동작 무변경이 기본값.
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:local}
+  traces-sample-rate: 0.0
+  send-default-pii: false
