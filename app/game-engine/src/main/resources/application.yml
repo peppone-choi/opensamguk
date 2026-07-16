@@ -12,6 +12,11 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    postgresql:
+      # V29+ CREATE INDEX CONCURRENTLY용. 기본값(트랜잭션형 advisory lock)은 Flyway가 잠금
+      # 커넥션을 idle-in-transaction으로 유지해 CONCURRENTLY가 그 트랜잭션을 영원히 기다리는
+      # 데드락을 만든다(V29 마이그레이션 IT에서 실증). 세션 락으로 전환해야 통과한다.
+      transactional-lock: false
   data:
     redis:
       host: ${REDIS_HOST:localhost}
