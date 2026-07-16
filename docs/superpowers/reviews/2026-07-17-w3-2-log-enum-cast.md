@@ -74,6 +74,5 @@ GENERAL/BATTLE_BRIEF 7% · NATION/HISTORY 5% · SYSTEM/SUMMARY 3% · SYSTEM/HIST
   수정된 `claude_review.yml`(게시 도구 추가)의 최종 스모크 판정 대상.
 - 본 문서 자체가 측정-주도 재조준(후보 2건 기각 근거 포함)의 감사 추적이다.
 
+Scope: app/game-api read 리포지토리 4종 · infra/ Flyway V29+마이그레이션 IT · app/game-engine, app/gateway-api application.yml (Flyway 세션 락 설정만 — 판단 3 참조, 로직 변경 없음; web 변경 없음)
 Verdict: cleared
-영역: app/game-api read 리포지토리 · infra Flyway/IT · app/game-engine, app/gateway-api application.yml
-(Flyway 세션 락 설정만 — 판단 3 참조, 로직 변경 없음; web 영역 변경 없음)
