@@ -2,6 +2,8 @@
 
 에이전트는 **모든 문서를 읽지 않는다**. 현재 작업에 필요한 것만 이 라우터로 고른다. (Progressive Disclosure — 항상 로딩되는 것은 최소로.)
 
+Codex를 처음 사용하는 사람은 먼저 [`codex-user-manual.md`](codex-user-manual.md)의 5분 빠른 시작과 일상 업무 흐름을 따른다.
+
 ## Always Read (모든 작업 공통, 이 순서로)
 
 1. `.ai/task.md` — 현재 작업 계약
