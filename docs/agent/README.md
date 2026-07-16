@@ -2,6 +2,8 @@
 
 에이전트는 **모든 문서를 읽지 않는다**. 현재 작업에 필요한 것만 이 라우터로 고른다. (Progressive Disclosure — 항상 로딩되는 것은 최소로.)
 
+Codex를 처음 사용하는 사람은 먼저 [`codex-user-manual.md`](codex-user-manual.md)의 5분 빠른 시작과 일상 업무 흐름을 따른다.
+
 ## Always Read (모든 작업 공통, 이 순서로)
 
 1. `.ai/task.md` — 현재 작업 계약
@@ -13,7 +15,7 @@
 
 | 작업 유형 | 읽을 문서 |
 |---|---|
-| 패러티 갭 폐쇄 (명령 1개) | `docs/superpowers/WORKING_SYSTEM.md`(정본 절차) + `.claude/HARNESS.md` + `verification.md` — Claude는 `/parity-close` 스킬이 이 전부를 대신함 |
+| 패러티 갭 폐쇄 (명령 1개) | `docs/superpowers/WORKING_SYSTEM.md`(정본 절차) + `.claude/HARNESS.md` + `verification.md` — Claude의 `/parity-close`와 Codex의 `$parity-close` 프로젝트 스킬은 모두 같은 정본 절차를 대신함 |
 | 신규 기능 / v2 구현 | `architecture.md`, `coding-rules.md`, `lifecycle-planning.md`, `lifecycle-testing.md` |
 | 버그 수정 / 라이브 갭 | `failure-cases.md`, `verification.md`, `lifecycle-testing.md`, 해당 `docs/loops/*/LEDGER.md` |
 | UI/프론트 변경 (`web/*`) | `coding-rules.md` §프론트, `verification.md`(pnpm typecheck/test), `lifecycle-testing.md` — 프론트 grand truth는 `hwe/ts/` Vue(PHP가 이김), 브라우저 재현은 `webapp-testing` 스킬 |

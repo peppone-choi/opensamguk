@@ -347,8 +347,13 @@ tools/parity/gate.sh backend
 
 주먹구구식 구현을 막기 위한 정본 문서는 [`docs/superpowers/WORKING_SYSTEM.md`](docs/superpowers/WORKING_SYSTEM.md)입니다.
 
-- `skills-lock.json`은 skills.sh에서 설치한 프로젝트 스킬 목록을 고정합니다.
-- `.agents/skills/`는 로컬 실행 표면이며 git-ignore입니다. 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원합니다.
+Codex 사용자 관점의 프로젝트 열기, 업무 요청, 구현·검증·리뷰, skills.sh 스킬 탐색, MCP, commit·배포 승인 절차는 [`docs/agent/codex-user-manual.md`](docs/agent/codex-user-manual.md)에 정리되어 있습니다.
+
+- `skills-lock.json`은 skills.sh에서 설치한 프로젝트 스킬 목록을 고정합니다. Next.js/React 지침은 `next-best-practices` 대신 공식 Vercel 출처의 `vercel-react-best-practices`를 사용합니다.
+- 다운로드한 외부 `.agents/skills/*`는 로컬 실행 표면이며 git-ignore입니다. 새 환경에서는 `scripts/agent/project-skills.sh restore`로 복원하고, Codex는 프로젝트 `SessionStart` 훅에서 같은 복원을 자동 실행합니다.
+- Codex의 `.codex/config.toml`, `.codex/hooks.json`, `.codex/agents/*.toml`과 저장소 운영용 `$os-*`·`$find-project-skill` 프로젝트 스킬은 추적됩니다. Claude의 `/os-*`와 Codex의 `$os-*`는 동일한 `docs/agent/` 절차를 실행합니다.
+- 작업에 필요한 전문 스킬이 없으면 Codex에서 `$find-project-skill`로 skills.sh 후보를 검색·검토한 뒤 프로젝트에만 설치합니다. 전역 설치는 기본값이 아닙니다.
+- Claude 훅은 `.claude/settings.json`, Codex 훅은 `.codex/hooks.json`에 배선돼 있습니다. Codex에서 저장소를 처음 열 때 훅을 신뢰하고, 설정·훅 변경 뒤에는 reload/restart해야 합니다.
 - provider/model 공통 개발도구는 `tools/agent-system/check.py`입니다. 로컬은 `tools/agent-system/check.py`, PR/CI는 `tools/agent-system/check.py --strict --base origin/main`, 에이전트 통합은 `--format json`을 사용합니다.
 - 비자명 작업은 구현자와 별개 agent/provider의 비판적 검증을 거칩니다. Kimi-backed Claude Code, Codex, Gemini 등 병렬 agent는 서로 PHP 증거·테스트·문서·운영 불변식을 공격적으로 검토하고, `fix-required`가 남아 있으면 ship/merge하지 않습니다.
 - 백엔드 표준 게이트는 `tools/parity/gate.sh backend`입니다. Java 21로 Gradle을 실행하고 `BUILD SUCCESSFUL` 및 테스트 XML의 `failures=0 errors=0`을 확인합니다.

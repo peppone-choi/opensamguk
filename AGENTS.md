@@ -122,8 +122,9 @@ cd web/game    && corepack pnpm dev   # :3001
 - 정본 운영 문서: `docs/superpowers/WORKING_SYSTEM.md`.
 - 루프 엔지니어링 정본: `docs/superpowers/LOOP_ENGINEERING.md`. Claude/Codex 모두 같은 문서를 기준으로 측정 → 가설 1개 → 재측정 → 채택/원복 루프를 돈다.
 - 레거시 갭·UI 패러티·실서버 버그는 반드시 `opensamguk-php-oracle`(PHP/hwe path+line 증거) → `webapp-testing`(UI 재현/브라우저 관측) → `systematic-debugging`(원인 수렴, 수정 전 root cause) → `loop-engineering`(베이스라인/가설/채점/채택) 순서로 묶는다. 하나라도 못 쓰면 `채점대기`/`blocked`를 기록하고 조용히 ship/merge하지 않는다.
-- skills.sh 설치 목록은 `skills-lock.json`에 고정. `.agents/skills/`는 로컬 실행 표면이며 git-ignore이므로 새 환경에서는 `DISABLE_TELEMETRY=1 npx --yes skills experimental_install`로 복원.
-- 설치된 외부 스킬: `next-best-practices`, `webapp-testing`, `redesign-existing-projects`, `java-spring-boot`, `java-testing`, `kotlin-spring-boot`, `supabase-postgres-best-practices`.
+- skills.sh 설치 목록은 `skills-lock.json`에 고정. 다운로드한 외부 `.agents/skills/*`는 로컬 실행 표면이며 git-ignore이고, 새 환경에서는 `scripts/agent/project-skills.sh restore`로 복원한다. Codex는 같은 복원을 `SessionStart`에서 자동 실행한다. 반면 `$os-*`, `$find-project-skill` 등 저장소 운영 스킬은 추적한다.
+- 설치된 외부 스킬: `vercel-react-best-practices`, `webapp-testing`, `redesign-existing-projects`, `java-spring-boot`, `java-testing`, `kotlin-spring-boot`, `supabase-postgres-best-practices`.
+- 필요한 전문 스킬이 없으면 Codex의 `$find-project-skill`로 skills.sh 후보를 검색·검토한 뒤 프로젝트에만 설치한다. 전역 설치는 기본값이 아니다.
 - `java-testing`은 skills.sh Gen 감사상 High Risk로 표시됨. 참고로만 사용하고, 실제 합격 판정은 repo 테스트와 `tools/parity/gate.sh`가 담당.
 - PHP 레거시 분석은 항상 `legacy/devsam-core` source path + line range → parity dimensions → `tools/php-golden/` capture/compare → Kotlin/Next implementation 순서.
 - 프론트 현대화는 `hwe/ts/` Vue 디자인/흐름을 grand truth로 삼고, 하드코딩 placeholder 대신 실제 API 상태를 렌더.
@@ -200,7 +201,8 @@ Claude Code·Codex 등 모든 에이전트가 공유하는 운영 계층. **정�
 
 - **작업 라우터**: `docs/agent/README.md` — 필수 3개(`.ai/task.md` → `.ai/decisions.md` → `docs/agent/project-overview.md`)를 먼저 읽고, 작업 유형별 문서만 추가 로드 (전부 읽지 말 것).
 - **세션 상태**: `.ai/` — 작업 계약(task) · 현재 상태(current-state) · 결정 기록(decisions, ADR-LITE) · 알려진 이슈(known-issues) · 파일 소유권(ownership, single-writer) · 인수인계(handoff). 리셋/에이전트 전환 전 갱신 필수.
-- **런북**: `.claude/commands/`의 `/os-start-task` `/os-analyze` `/os-implement` `/os-debug` `/os-verify` `/os-review` `/os-checkpoint` `/os-plan-tickets` `/os-e2e` — `docs/agent/` 절차의 얇은 진입점. `os-` 접두사는 전역 OMC 스킬(`/verify` `/review` `/analyze`)과의 충돌 회피용. Codex는 커맨드 없이 같은 `docs/agent/` 문서를 직접 따른다.
+- **런북**: `.claude/commands/`의 `/os-start-task` `/os-analyze` `/os-implement` `/os-debug` `/os-verify` `/os-review` `/os-checkpoint` `/os-plan-tickets` `/os-e2e` — `docs/agent/` 절차의 얇은 진입점. `os-` 접두사는 전역 OMC 스킬(`/verify` `/review` `/analyze`)과의 충돌 회피용. Codex는 추적된 프로젝트 스킬 `$os-start-task` … `$os-e2e`로 동일한 문서와 게이트를 따른다.
 - **프롬프트 팩**: `docs/agent/prompt-pack.md` — 공통 5종 + 작업군 5종(파리티포팅·PHP오라클·프론트배선·인프라배포·기획티켓분해). 각 팩 = 페르소나/목표/형식/제약 + 발동조건/중단 조건. `/os-*` 커맨드와 레포 에이전트가 정본으로 참조.
-- **가드 스크립트**: `scripts/agent/protect-sensitive-files.sh`(시크릿 읽기/쓰기·골든/legacy 쓰기 차단, 훅+수동 겸용) · `scripts/agent/verify-changes.sh`(diff → 최소 검증 명령). 훅은 `.claude/settings.json`으로 **실활성**(ADR-LITE-005) — 세션 시작 시 스냅샷되므로 설정 변경은 다음 세션부터 적용. `@`멘션 첨부는 훅을 우회하므로 `.claudeignore`가 담당.
+- **Codex 프로젝트 표면**: `.codex/config.toml` · `.codex/hooks.json` · `.codex/agents/*.toml`과 선택된 `.agents/skills/` 운영 스킬은 추적한다. 다운로드한 외부 스킬만 로컬에 둔다.
+- **가드 스크립트**: `scripts/agent/protect-sensitive-files.sh`(시크릿 읽기/쓰기·골든/legacy 쓰기 차단, 훅+수동 겸용) · `scripts/agent/codex-bash-guard.sh`(Codex가 지원하는 단순 Bash 호출의 best-effort 차단) · `scripts/agent/verify-changes.sh`(base diff → 최소 검증 명령). Claude는 `.claude/settings.json`, Codex는 `.codex/hooks.json`으로 실활성이다(ADR-LITE-005/009). Codex에서 처음 열 때 저장소 훅을 신뢰하고 설정 변경 뒤 reload/restart한다. Codex 공식 훅은 모든 shell 경로를 가로채지 못하므로 완전한 보안 경계로 간주하지 않는다. `@`멘션 첨부는 `.claudeignore`가 담당.
 - **불변 규칙(에이전트가 스스로 완화 금지)**: 승인 없는 commit/push/merge/deploy/데이터 삭제 금지 · `.env*`/키/토큰 읽기·출력 금지 · 골든/테스트/명령 위조 금지 · 미확인 사항은 UNKNOWN으로 보고.
