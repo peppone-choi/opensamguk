@@ -1,9 +1,13 @@
+model = "gpt-5.6-sol"
+model_context_window = 372000
+model_reasoning_effort = "high"
+plan_mode_reasoning_effort = "xhigh"
 [features]
 hooks = true
 multi_agent = true
 
 [agents]
-max_threads = 8
+max_threads = 1000
 max_depth = 2
 
 [mcp_servers.headroom]
@@ -18,3 +22,6 @@ url = "https://mcp.atlassian.com/v1/mcp"
 
 [mcp_servers.sentry]
 url = "https://mcp.sentry.dev/mcp"
+
+[features.multi_agent_v2]
+max_concurrent_threads_per_session = 1000
