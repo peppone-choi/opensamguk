@@ -347,6 +347,8 @@ tools/parity/gate.sh backend
 
 주먹구구식 구현을 막기 위한 정본 문서는 [`docs/superpowers/WORKING_SYSTEM.md`](docs/superpowers/WORKING_SYSTEM.md)입니다.
 
+Codex 사용자 관점의 프로젝트 열기, 업무 요청, 구현·검증·리뷰, skills.sh 스킬 탐색, MCP, commit·배포 승인 절차는 [`docs/agent/codex-user-manual.md`](docs/agent/codex-user-manual.md)에 정리되어 있습니다.
+
 - `skills-lock.json`은 skills.sh에서 설치한 프로젝트 스킬 목록을 고정합니다. Next.js/React 지침은 `next-best-practices` 대신 공식 Vercel 출처의 `vercel-react-best-practices`를 사용합니다.
 - 다운로드한 외부 `.agents/skills/*`는 로컬 실행 표면이며 git-ignore입니다. 새 환경에서는 `scripts/agent/project-skills.sh restore`로 복원하고, Codex는 프로젝트 `SessionStart` 훅에서 같은 복원을 자동 실행합니다.
 - Codex의 `.codex/config.toml`, `.codex/hooks.json`, `.codex/agents/*.toml`과 저장소 운영용 `$os-*`·`$find-project-skill` 프로젝트 스킬은 추적됩니다. Claude의 `/os-*`와 Codex의 `$os-*`는 동일한 `docs/agent/` 절차를 실행합니다.
