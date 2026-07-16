@@ -716,6 +716,19 @@ export const api = {
             generalId: number,
             turnIdx = 0,
         ) => post<IntakeOutcome & T>(`/api/command/sendMessage?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+
+        // 서신 삭제 — legacy SammoAPI.Message.DeleteMessage({ msgID }).
+        // CommandWireMapper.intakeCodes `deleteMessage`:83 → TurnDaemonCommand.DeleteMessage(msgID)
+        // (mapper는 `msgID`/`msgId`를 읽는다). 계약 주의: deleteMessage는 인테이크 명령이라 game-api
+        // CommandController가 precheck Blocked/Unknown이어도 isForecastReservable→202 reserveAccepted로
+        // 재라우팅한다(이 엔드포인트에서 200 BLOCKED는 나오지 않는다). 엔진 MessageHandler.handleDelete의
+        // 실제 deny(본인 아님/5분 초과/시스템 외교 등 PHP byte-parity 문자열)는 GET /api/command/result/{requestId}
+        // (RESOLVED + 톱레벨 ok/reason) 채널로만 온다 → 호출부(mailbox 페이지)는 202 후 api.commandResult를 폴링한다.
+        deleteMessage: <T = unknown>(
+            args: { msgID: number },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(`/api/command/deleteMessage?generalId=${generalId}&turnIdx=${turnIdx}`, args),
     },
 
     // Simulator

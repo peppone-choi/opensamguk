@@ -12,6 +12,7 @@
 | 7 | 런타임 P0 감사에서 발견한 저장·제약·이벤트 유실을 닫기 | 전투/PRE/AI/이벤트 결과 유실 → backend 3,599 tests fail 0 | `tools/parity/gate.sh backend` + web tsc/test | 채택 | 2026-07-11 전체 게이트: infra `BettingUpsertFlushIT` init 1건은 Testcontainers 접속 flake(단독 재실행 2/2 green), web/game 143/143 + tsc 0, web/gateway tsc 0 |
 | 9 | 인재탐색 NPC 이름 선택을 PHP 이름 풀의 중복 회피 규칙으로 복원 | prod 256년 괴포 3개 ID·비포 2개 ID가 동일 표시명 재사용 → focused 2/2, backend 3,604 tests, 배포 후 신규 장수 8명·동일 이름 중복 0 | PHP `RandomNameGeneral.php:30-62`, `AbsGeneralPool.php:79-85`, `GeneralBuilder.php:42-52` + 운영 DB ID별 로그 | 채택 | 사망 중복이 아니라 `che_인재탐색`이 현재 장수명 중복 검사와 숫자 접미사를 우회한 이름 풀 divergence |
 | 10 | 선전포고 실행 게이트에도 실제 보급 인접국 판정을 공급 | prod 57년간 신규 전쟁 0·`인접 국가가 아닙니다.` 반복 → 인접 허용/무보급 거부 RED→green; 승격 후 2 tick 내 DECLARATION 14행, term 24→20 정상 감소 | PHP `che_선전포고.php:76-95`, `Constraint/NearNation.php:23`, `GeneralAI.php:1848-1970` + `NationCommandDispatchTest` + prod DB | 채택 | AI 후보 선택에는 `__isNeighbor`가 있었으나 최종 full constraint 재평가에는 없었고, 복구 시 PHP의 `isNeighbor(..., false)` 보급 필터도 함께 명시해야 함 |
+| 11 | 메일함 서신 삭제 무동작(F4 갭)을 FE 인테이크 배선만으로 폐쇄 — BE는 전 구간 기존 라이브 (OPENSAM-3/-4, W3-1) | 삭제 UI 부재 → tsc 0 + 대상 3파일 29/29 green(독립 3회 재현, +14 tests) + fix 전 풀 스위트 160/160·next build 통과 (fix 후 풀 스위트는 호스트 부하 플레이크 — 실패 파일 단독 재실행 green 분별, 직렬 재검증 PR 코멘트 첨부) | legacy `MessagePlate.vue` `testDeletable`:197-219/`tryDelete`:248-265 대조 + 독립 적대적 리뷰 1왕복(fix-required→cleared, `docs/superpowers/reviews/2026-07-17-w3-1-mailbox-delete.md`) + E2E는 채점대기(OPENSAM-5, 로컬 스택 기동 후) | 채택(E2E 채점대기) | 리뷰가 인테이크 202 재라우팅 계약 오서술·엔진 deny 성공 위장을 적발 → result 채널 폴링(select-pool 관례)로 해소, 동일 패턴 전수 점검은 OPENSAM-13 |
 
 ## RTK14 매칭 기준
 
@@ -35,7 +36,7 @@
 5축 병렬 리뷰(intake/월간훅·전투영속/대회/game-api보안/web프론트)로 15건 접수, 오케스트레이터 검증 결과:
 
 - **기각 14건**: `listGenerals()`는 `.toList()` 복사(반복 중 변이 불가), intake 핸들러는 데몬 단일스레드(race 불가), world_state는 flush step 1 always-UPDATE로 status/config/tick_seconds 영속, auctionRepository는 `DaemonLoopConfig.kt:297` prod 주입, `TournamentAdminService` 무상태, `refresh_score_total`은 V25 마이그레이션 존재, select-pool base path 명시 매칭.
-- **실질 파리티 갭 1건 (백로그)**: `logic/tournament/ProcessTournament.kt` `resolveMatch()`가 결정론 점수비교(`score = total + level`, goal `/10`)인 반면 PHP 정본 `hwe/func_tournament.php` `fight()`(1004행~)는 에너지 기반 RNG 전투 시뮬(아이템 로그, `rand()%4` 문구, `Util::round($gen[$tp]*getLog(...)*10)`, win/draw/lose 3상태 + rank_data gl `Util::round(($gd2-$gd1)/50)`). 대회 승패·로그 byte-parity 미달 — `fight()` 풀 포트 + PHP 골든 캡처 필요. 상태기계 전이(조·토너먼트 단계)는 계약 수준 일치.
+- **실질 파리티 갭 1건 (백로그)**: `logic/tournament/ProcessTournament.kt` `resolveMatch()`가 결정론 점수비교(`score = total + level`, goal `/10`)인 반면 PHP 정본 `hwe/func_tournament.php` `fight()`(1004행~)는 에너지 기반 RNG 전투 시뮬(아이템 로그, `rand()%4` 문구, `Util::round($gen[$tp]*getLog(...)*10)`, win/draw/lose 3상태 + rank_data gl `Util::round(($gd2-$gd1)/50)`). 대회 승패·로그 byte-parity 미달 — `fight()` 풀 포트 + PHP 골든 캡처 필요. 상태기계 전이(조·토너먼트 단계)는 계약 수준 일치. **→ Jira OPENSAM-10 (2026-07-16 티켓화)**.
 
 ## 승인 대기
 

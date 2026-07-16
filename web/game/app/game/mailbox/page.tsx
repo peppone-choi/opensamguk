@@ -6,7 +6,7 @@ import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
-import { mailboxIdForScope, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
+import { mailboxIdForScope, isMessageDeletable, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { MailboxMessage } from '../../../types/game';
 
@@ -23,6 +23,11 @@ const TYPE_VARIANT: Record<string, 'gold' | 'jade' | 'muted' | 'crimson'> = {
     national: 'gold',
     diplomacy: 'crimson',
 };
+
+// 인테이크 202 후 엔진 실행 결과(GET /api/command/result/{requestId}) 폴링 파라미터 —
+// select-pool/page.tsx 관례와 동일(20회 × 300ms, PENDING이면 재시도).
+const MESSAGE_RESULT_POLL_ATTEMPTS = 20;
+const MESSAGE_RESULT_POLL_INTERVAL_MS = 300;
 
 export default function MailboxPage() {
     const [messages, setMessages] = useState<MailboxMessage[]>([]);
@@ -167,6 +172,75 @@ export default function MailboxPage() {
         fetchMessages();
     }
 
+    // 서신 삭제 — legacy MessagePlate.vue tryDelete(248-265행): confirm("삭제하시겠습니까?") →
+    // SammoAPI.Message.DeleteMessage({ msgID }).
+    // 계약 주의: deleteMessage는 인테이크 명령(CommandWireMapper.intakeCodes)이라 game-api
+    // CommandController가 precheck Blocked/Unknown이어도 isForecastReservable→202 reserveAccepted로
+    // 재라우팅한다(이 엔드포인트에서 200 BLOCKED는 나오지 않는다). 엔진 MessageHandler.handleDelete의
+    // 실제 deny(본인 아님/5분 초과/시스템 외교 등 PHP byte-parity 문자열)는 GET /api/command/result/{requestId}
+    // (RESOLVED + 톱레벨 ok/reason) 채널로만 온다. 따라서 202 수신 후 select-pool과 동일하게
+    // api.commandResult를 폴링해 성공/거부/미해결을 구분한다(성공 위장 금지).
+    async function handleDelete(msg: MailboxMessage) {
+        // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 삭제 차단
+        if (pendingId !== null) return;
+        if (identity.generalId == null) {
+            setToast('장수 정보가 없습니다.');
+            setTimeout(() => setToast(''), TOAST_DURATION_MS);
+            return;
+        }
+        if (msg.id == null) return;
+        // confirm 취소 시 네트워크 요청 없이 즉시 반환 — 문구는 레거시와 byte-parity.
+        if (!window.confirm('삭제하시겠습니까?')) return;
+        // pendingId는 폴링 완료까지 유지(이중 제출·재조회 경합 차단).
+        setPendingId(msg.id);
+        try {
+            const out = await api.commands.deleteMessage({ msgID: msg.id }, identity.generalId);
+            if (isIntakeDenied(out)) {
+                // 방어 분기: 인테이크 재라우팅(isForecastReservable)상 200 BLOCKED는 정상 도달 불가하나,
+                // 계약이 바뀔 경우를 대비해 서버 reason을 그대로 노출한다(날조 금지).
+                setToast(out.reason ?? '서신을 삭제할 수 없습니다.');
+            } else if (isIntakeQueued(out) && out.requestId != null) {
+                const requestId = out.requestId;
+                let resolved = false;
+                for (let attempt = 0; attempt < MESSAGE_RESULT_POLL_ATTEMPTS; attempt += 1) {
+                    await new Promise(resolve => setTimeout(resolve, MESSAGE_RESULT_POLL_INTERVAL_MS));
+                    let result;
+                    try {
+                        result = await api.commandResult(requestId);
+                    } catch {
+                        // 일시 조회 실패 — 접수(202)는 이미 확정이므로 실패로 오표시하지 않고
+                        // 남은 시도 동안 재시도한다. 전부 실패하면 아래 미해결(접수) 경로로 수렴.
+                        continue;
+                    }
+                    if (result.status === 'PENDING') continue;
+                    resolved = true;
+                    if (result.ok) {
+                        setToast('서신을 삭제했습니다.');
+                        fetchMessages();
+                    } else {
+                        // 엔진 deny 사유(PHP byte-parity) 그대로 노출 — 목록은 유지(삭제되지 않음).
+                        setToast(result.reason ?? '서신을 삭제할 수 없습니다.');
+                    }
+                    break;
+                }
+                if (!resolved) {
+                    // 20회 내 미해결 — 접수만 확정(엔진이 다음 틱에 처리). 최신 상태 재조회.
+                    setToast('서신 삭제 요청을 접수했습니다.');
+                    fetchMessages();
+                }
+            } else {
+                // requestId 없는 202(예상 밖) — 접수만 표시하고 재조회.
+                setToast('서신 삭제 요청을 접수했습니다.');
+                fetchMessages();
+            }
+        } catch {
+            setToast('서신 삭제에 실패했습니다.');
+        } finally {
+            setPendingId(null);
+        }
+        setTimeout(() => setToast(''), TOAST_DURATION_MS);
+    }
+
     // scope 전환 시 발송 대상 mailbox도 연동 갱신
     useEffect(() => {
         const id = mailboxIdForScope(scope, identity);
@@ -274,6 +348,8 @@ export default function MailboxPage() {
                     const isDiplomacy = msg.type === 'diplomacy';
                     const hasAction = !!msg.option?.action;
                     const variant = TYPE_VARIANT[msg.type] ?? 'muted';
+                    // 삭제 버튼은 발신자 본인 + 5분 이내에만 노출(legacy MessagePlate.vue testDeletable).
+                    const deletable = isMessageDeletable(msg, identity.generalId);
                     return (
                         <GameCard key={msg.id ?? `${msg.mailbox}-${msg.time}`}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)', flexWrap: 'wrap' }}>
@@ -282,6 +358,17 @@ export default function MailboxPage() {
                                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{messageTime(msg.time)}</span>
                                 {showValidUntil(msg.validUntil) && (
                                     <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>~{messageTime(msg.validUntil)}</span>
+                                )}
+                                {/* 삭제 — 발신자 본인이 보낸 5분 이내 메시지만. 진행 중엔 비활성(이중 제출 방지). */}
+                                {deletable && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(msg)}
+                                        disabled={pendingId !== null}
+                                        style={{ marginLeft: 'auto', fontSize: 'var(--text-xs)' }}
+                                    >
+                                        삭제
+                                    </button>
                                 )}
                             </div>
                             <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', marginBottom: 'var(--space-sm)', whiteSpace: 'pre-wrap' }}>{msg.text ?? ''}</p>
