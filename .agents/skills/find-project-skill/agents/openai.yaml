@@ -1,0 +1,4 @@
+interface:
+  display_name: "find-project-skill"
+  short_description: "OpenSamguk project workflow adapter"
+  default_prompt: "Use $find-project-skill for this task."

@@ -40,10 +40,33 @@ docs/wiki/
 .claude-tmp/
 .claude-tmp-runner/
 .claude/worktrees/
-# Session tooling state (caveman/bkit/codex/agents — local, never committed)
-.agents/
+# Session tooling state (caveman/bkit/codex/agents — local by default)
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/find-project-skill/
+!.agents/skills/find-project-skill/SKILL.md
+!.agents/skills/os-*/
+!.agents/skills/os-*/SKILL.md
+!.agents/skills/opensamguk-working-system/
+!.agents/skills/opensamguk-working-system/SKILL.md
+!.agents/skills/opensamguk-php-oracle/
+!.agents/skills/opensamguk-php-oracle/SKILL.md
+!.agents/skills/loop-engineering/
+!.agents/skills/loop-engineering/SKILL.md
+!.agents/skills/parity-close/
+!.agents/skills/parity-close/SKILL.md
+!.agents/skills/parity-ship/
+!.agents/skills/parity-ship/SKILL.md
+!.agents/skills/*/agents/
+!.agents/skills/*/agents/openai.yaml
 .bkit/
-.codex/
+.codex/*
+!.codex/config.toml
+!.codex/hooks.json
+!.codex/agents/
+.codex/agents/*
+!.codex/agents/*.toml
 # Throwaway PHP golden investigation scripts
 tools/php-golden/probe_*.php
 # Playwright MCP temp dir

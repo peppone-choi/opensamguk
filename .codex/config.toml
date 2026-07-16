@@ -1,0 +1,20 @@
+[features]
+hooks = true
+multi_agent = true
+
+[agents]
+max_threads = 8
+max_depth = 2
+
+[mcp_servers.headroom]
+url = "http://localhost:8787/mcp"
+
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]
+
+[mcp_servers.atlassian]
+url = "https://mcp.atlassian.com/v1/mcp"
+
+[mcp_servers.sentry]
+url = "https://mcp.sentry.dev/mcp"

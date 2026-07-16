@@ -8,7 +8,7 @@ This document is the operating contract for future agents working on opensamguk.
 
 | Skill | Source | Use |
 | --- | --- | --- |
-| `next-best-practices` | `vercel-labs/next-skills` | Next.js App Router, route handlers, RSC boundaries, self-hosting. |
+| `vercel-react-best-practices` | `vercel-labs/agent-skills` | React/Next.js rendering, data fetching, bundle, hydration, and runtime performance guidance. |
 | `webapp-testing` | `anthropics/skills` | Browser-level web app verification and user-flow testing. |
 | `redesign-existing-projects` | `leonxlnx/taste-skill` | Modernizing an existing UI without discarding its legacy shape. |
 | `java-spring-boot` | `pluginagentmarketplace/custom-plugin-java` | Spring Boot controller/service wiring and backend conventions. |
@@ -19,11 +19,15 @@ This document is the operating contract for future agents working on opensamguk.
 Restore or refresh these with:
 
 ```bash
-DISABLE_TELEMETRY=1 npx --yes skills experimental_install
-DISABLE_TELEMETRY=1 npx --yes skills update --project -y
+scripts/agent/project-skills.sh restore
+scripts/agent/project-skills.sh update
 ```
 
-The installed skill bodies live under `.agents/skills/`, which is intentionally git-ignored. This document and `skills-lock.json` are the committed source of truth.
+Downloaded external skill bodies are restored locally under `.agents/skills/` from the committed `skills-lock.json`; they are not copied into git. A git-ignored `.agents/.skills-integrity.json` binds the current local bodies to the lock hash and detects local drift on SessionStart. Repo-native process skills, including `opensamguk-working-system`, `loop-engineering`, `opensamguk-php-oracle`, `parity-close`, and `parity-ship`, are tracked alongside the Codex `$os-*` adapters and `$find-project-skill`.
+
+For Codex, trust this project and reload or reopen it after changing the agent surface. A trusted project loads `.codex/config.toml`, the seven roles in `.codex/agents/`, and `.codex/hooks.json`. The `SessionStart` hook restores locked external skills and injects the common `docs/agent/README.md` router context. Hook/config changes are session-scoped, so review and trust the project hooks in `/hooks`, then reload before judging them active.
+
+When the current task needs expertise that is not already available, invoke `$find-project-skill` and follow its fixed sequence: search skills.sh, inspect the exact source with `scripts/agent/project-skills.sh inspect <owner/repository>`, vet its audit signals, install into this project only, read the installed `SKILL.md` completely, update the lock/documentation, and run the agent-system check. Never install a project dependency with the global (`-g`) option.
 
 ## Mandatory routing
 
@@ -33,7 +37,7 @@ Start every non-trivial task by classifying the work:
 | --- | --- |
 | One command/action parity gap | `parity-close` |
 | Batch ready for PR/deploy | `parity-ship` |
-| Frontend Next.js implementation | `next-best-practices`, then `redesign-existing-projects` for visual parity/modernization |
+| Frontend Next.js implementation | `vercel-react-best-practices`, then `redesign-existing-projects` for visual parity/modernization |
 | Browser flow verification | `webapp-testing` plus Playwright/browser tooling |
 | Backend Kotlin/Spring work | `kotlin-spring-boot`, `java-spring-boot`, then repo architecture rules |
 | PostgreSQL/Flyway/JDBC work | `supabase-postgres-best-practices`, then one-daemon-write rule |
@@ -161,6 +165,7 @@ The checker enforces:
 - behavior changes include tests, golden evidence, or docs in strict mode.
 - strict mode requires changed non-trivial work to keep the cross-agent critique rule documented.
 - strict mode requires a changed `docs/superpowers/reviews/*.md` critique artifact for non-trivial code/tool changes.
+- the tracked Codex surface is complete and free of local-only drift: project config, hooks, all seven roles, project process skills, `$os-*`/`$find-project-skill`, and startup scripts must agree.
 - production compose defaults `SCENARIO_SEED_ENABLED` to false.
 - the default gateway server list stays empty.
 

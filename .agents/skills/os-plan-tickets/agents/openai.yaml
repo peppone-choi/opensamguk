@@ -1,0 +1,4 @@
+interface:
+  display_name: "os-plan-tickets"
+  short_description: "OpenSamguk project workflow adapter"
+  default_prompt: "Use $os-plan-tickets for this task."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "parity-close"
+  short_description: "OpenSamguk project workflow adapter"
+  default_prompt: "Use $parity-close for this task."

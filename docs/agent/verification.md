@@ -4,6 +4,8 @@
 
 모든 gradle 명령은 repo root에서 `JAVA_HOME=$(/usr/libexec/java_home -v 21)` 프리픽스로 실행한다.
 
+자동 훅은 provider별 진입점만 다르다. Claude는 `.claude/settings.json`, Codex는 `.codex/hooks.json`에서 보호·검증 스크립트를 호출하며 Codex의 단순 Bash 호출은 `codex-bash-guard.sh`가 best-effort로 검사한다. 공식 Codex 훅은 모든 shell 경로를 가로채지 못하므로 보안 경계가 아니라 누락을 줄이는 방어선이다. Codex의 `SessionStart`는 lock + 로컬 무결성 스탬프를 검사해 `project-skills.sh restore --soft`로 외부 스킬을 복원한다. 완료 전에는 실제 `$os-verify` 또는 `verify-changes.sh --run` 결과와 아래 행렬의 증거를 남긴다.
+
 | 변경 유형 | 최소 검증 | 추가 검증 조건 | 완료 조건 |
 |---|---|---|---|
 | `common` (RNG/round/log 커널) | `./gradlew :common:test :logic:test --rerun-tasks` | 전투/AI 골든 영향 시 `tools/parity/gate.sh logic` | XML fail 0 + 관련 골든 게이트 green |
@@ -22,9 +24,9 @@
 
 | 루프 | 차단 대상 | 기제 (전부 실배선) | 증거 형태 |
 |---|---|---|---|
-| **① 코드 결함 차단** | 버그·패러티 드리프트가 조용히 남는 것 | PostToolUse 훅(`verify-changes.sh` — diff→최소 검증 행렬 안내) + 위 행렬 실행 + `tools/parity/gate.sh backend`(XML 판정) | `BUILD SUCCESSFUL` tail + 테스트 XML `failures="0"` |
+| **① 코드 결함 차단** | 버그·패러티 드리프트가 조용히 남는 것 | provider 공통 PostToolUse 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `verify-changes.sh`의 diff→최소 검증 행렬 안내) + 위 행렬 실행 + `tools/parity/gate.sh backend`(XML 판정) | `BUILD SUCCESSFUL` tail + 테스트 XML `failures="0"` |
 | **② 자기 승인 차단** | 작성자가 자기 작업을 스스로 승인·머지 | PR 이중 리뷰(`claude_review.yml` 파리티 한국어 프롬프트 + CodeRabbit `.coderabbit.yaml`; fallback 시 Claude GHA 단독) + `check.py --strict`의 cross-agent critique Verdict 검사(`docs/superpowers/reviews/*.md` 요구) | PR 리뷰 코멘트 + reviews 아티팩트의 `Verdict:` 라인 |
-| **③ 규범 위반 차단** | 시크릿 접근·골든/legacy 수정·검증 없는 완료 선언 | PreToolUse 보호 훅(`protect-sensitive-files.sh` exit 2) + `.claudeignore`(@멘션 구멍) + CI `check.py --strict --base origin/main`(ci.yml agent-system 잡) | BLOCKED stderr 캡처 + CI 그린 로그 |
+| **③ 규범 위반 차단** | 시크릿 접근·골든/legacy 수정·검증 없는 완료 선언 | provider 공통 PreToolUse 보호 훅(Claude `.claude/settings.json`, Codex `.codex/hooks.json` → `protect-sensitive-files.sh` exit 2) + Claude 첨부 경계 `.claudeignore`(@멘션 구멍) + CI `check.py --strict --base origin/main`(ci.yml agent-system 잡) | BLOCKED stderr 캡처 + CI 그린 로그 |
 
 세 루프는 서로 대체재가 아니다: ①이 초록이어도 ②없이 머지하면 자기 승인이고, ②가 있어도 ③없이는 골든 수정으로 게이트를 "통과"시킬 수 있다. 완료 선언은 셋 다 해당 증거를 인용할 수 있을 때만.
 

@@ -13,7 +13,7 @@
 
 | 작업 유형 | 읽을 문서 |
 |---|---|
-| 패러티 갭 폐쇄 (명령 1개) | `docs/superpowers/WORKING_SYSTEM.md`(정본 절차) + `.claude/HARNESS.md` + `verification.md` — Claude는 `/parity-close` 스킬이 이 전부를 대신함 |
+| 패러티 갭 폐쇄 (명령 1개) | `docs/superpowers/WORKING_SYSTEM.md`(정본 절차) + `.claude/HARNESS.md` + `verification.md` — Claude의 `/parity-close`와 Codex의 `$parity-close` 프로젝트 스킬은 모두 같은 정본 절차를 대신함 |
 | 신규 기능 / v2 구현 | `architecture.md`, `coding-rules.md`, `lifecycle-planning.md`, `lifecycle-testing.md` |
 | 버그 수정 / 라이브 갭 | `failure-cases.md`, `verification.md`, `lifecycle-testing.md`, 해당 `docs/loops/*/LEDGER.md` |
 | UI/프론트 변경 (`web/*`) | `coding-rules.md` §프론트, `verification.md`(pnpm typecheck/test), `lifecycle-testing.md` — 프론트 grand truth는 `hwe/ts/` Vue(PHP가 이김), 브라우저 재현은 `webapp-testing` 스킬 |

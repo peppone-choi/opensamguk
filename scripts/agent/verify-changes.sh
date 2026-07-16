@@ -8,17 +8,34 @@
 # 판정 원칙 (docs/agent/verification.md):
 #  - gradle exit code로 성공 주장 금지 — 출력 tail의 BUILD SUCCESSFUL + 테스트 XML을 봐야 한다.
 #  - 이 스크립트는 무한 자동수정 루프를 만들지 않는다: 실행은 1회, 실패 시 보고 후 종료.
-set -u
+set -uo pipefail
 cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
 
 RUN=0; [ "${1:-}" = "--run" ] && RUN=1
-CHANGED="$( { git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null; \
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+BASE_REF="${AGENT_BASE:-origin/main}"
+if ! git rev-parse --verify "$BASE_REF" >/dev/null 2>&1; then
+  if git rev-parse --verify main >/dev/null 2>&1; then BASE_REF=main; else BASE_REF=HEAD; fi
+fi
+CHANGED="$( { git diff --name-only "$BASE_REF...HEAD" 2>/dev/null; git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null; \
               git ls-files --others --exclude-standard 2>/dev/null; } | sort -u | grep -v '^$' || true)"
 
 if [ -z "$CHANGED" ]; then echo "변경 없음 — 검증할 diff가 없다."; exit 0; fi
 echo "== 변경 파일 =="; printf '%s\n' "$CHANGED"; echo
 
 has() { printf '%s\n' "$CHANGED" | grep -qE "$1"; }
+check_whitespace() {
+  local output path
+  git diff --check || return 1
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    output="$(git diff --no-index --check /dev/null "$path" 2>&1 || true)"
+    if [ -n "$output" ]; then
+      printf '%s\n' "$output" >&2
+      return 1
+    fi
+  done < <(git ls-files --others --exclude-standard)
+}
 NEED=""
 
 has '^common/'           && NEED="$NEED :common:test :logic:test"
@@ -32,7 +49,12 @@ NEED="$(printf '%s' "$NEED" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' '
 WEB_GW=0;   has '^web/gateway/' && WEB_GW=1
 WEB_GAME=0; has '^web/game/'    && WEB_GAME=1
 CODE=0;     has '\.(kt|kts|ts|tsx|sql|sh|py)$' && CODE=1
-
+NEED_SMOKE=0; has '^(docker/|docker-compose|infra/nginx/)' && NEED_SMOKE=1
+AGENT_SYSTEM=0
+has '^(\.codex/|\.agents/skills/|scripts/agent/|tools/agent-system/)' && AGENT_SYSTEM=1
+STRICT_CHECK=0
+[ $CODE -eq 1 ] && STRICT_CHECK=1
+[ $AGENT_SYSTEM -eq 1 ] && STRICT_CHECK=1
 echo "== 필요한 최소 검증 (docs/agent/verification.md 행렬) =="
 if [ -n "$NEED" ]; then
   echo "JAVA_HOME=\$(/usr/libexec/java_home -v 21) ./gradlew $NEED--rerun-tasks 2>&1 | tail -40"
@@ -40,23 +62,55 @@ if [ -n "$NEED" ]; then
 fi
 [ $WEB_GW -eq 1 ]   && echo "cd web/gateway && pnpm typecheck"
 [ $WEB_GAME -eq 1 ] && echo "cd web/game && pnpm typecheck && pnpm test"
-has '^(docker/|docker-compose|infra/nginx/)' && echo "./tools/smoke.sh   # compose/nginx 변경"
-[ $CODE -eq 0 ] && echo "git diff --check   # 문서/설정만 변경 — 코드 게이트 불필요"
-echo "python3 tools/agent-system/check.py   # 공통 가드"
+[ $NEED_SMOKE -eq 1 ] && echo "./tools/smoke.sh   # compose/nginx 변경"
+[ $AGENT_SYSTEM -eq 1 ] && echo "bash scripts/agent/test-codex-agent-os.sh"
+echo "git diff --check + untracked file whitespace check"
+if [ $STRICT_CHECK -eq 1 ]; then
+  echo "$PYTHON_BIN tools/agent-system/check.py --strict --base $BASE_REF   # 완료 가드"
+else
+  echo "$PYTHON_BIN tools/agent-system/check.py   # 공통 가드"
+fi
 echo
 
 if [ $RUN -eq 1 ]; then
   FAIL=0
   if [ -n "$NEED" ]; then
     echo "== gradle 실행 =="
-    JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew $NEED --rerun-tasks 2>&1 | tail -40
-    XML_FAIL="$(find . -path '*/build/test-results/*' -name '*.xml' \
-      -exec grep -lE '(failures|errors)="[1-9]' {} + 2>/dev/null || true)"
-    if [ -n "$XML_FAIL" ]; then echo "XML 실패 감지:"; echo "$XML_FAIL"; FAIL=1; fi
+    START_MARKER="$(mktemp -t opensamguk-gradle-start.XXXXXX)"
+    GRADLE_LOG="$(mktemp -t opensamguk-gradle.XXXXXX)"
+    JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew $NEED --rerun-tasks \
+      2>&1 | tee "$GRADLE_LOG" | tail -40
+    GRADLE_STATUS=${PIPESTATUS[0]}
+    if [ "$GRADLE_STATUS" -ne 0 ]; then
+      echo "Gradle 실패: exit $GRADLE_STATUS" >&2
+      FAIL=1
+    elif ! grep -q 'BUILD SUCCESSFUL' "$GRADLE_LOG"; then
+      echo "Gradle 출력에 BUILD SUCCESSFUL이 없다." >&2
+      FAIL=1
+    fi
+
+    XML_FILES="$(find . -path '*/build/test-results/*' -name '*.xml' \
+      -newer "$START_MARKER" -print 2>/dev/null || true)"
+    if [ -z "$XML_FILES" ]; then
+      echo "이번 실행에서 새 테스트 XML이 생성되지 않았다." >&2
+      FAIL=1
+    else
+      XML_FAIL="$(printf '%s\n' "$XML_FILES" | xargs grep -lE \
+        '(failures|errors)="[1-9]' 2>/dev/null || true)"
+      if [ -n "$XML_FAIL" ]; then echo "XML 실패 감지:"; echo "$XML_FAIL"; FAIL=1; fi
+    fi
+    rm -f "$START_MARKER" "$GRADLE_LOG"
   fi
   if [ $WEB_GW -eq 1 ];   then (cd web/gateway && pnpm typecheck) || FAIL=1; fi
   if [ $WEB_GAME -eq 1 ]; then (cd web/game && pnpm typecheck && pnpm test) || FAIL=1; fi
-  python3 tools/agent-system/check.py || FAIL=1
+  if [ $NEED_SMOKE -eq 1 ]; then ./tools/smoke.sh || FAIL=1; fi
+  if [ $AGENT_SYSTEM -eq 1 ]; then bash scripts/agent/test-codex-agent-os.sh || FAIL=1; fi
+  check_whitespace || FAIL=1
+  if [ $STRICT_CHECK -eq 1 ]; then
+    "$PYTHON_BIN" tools/agent-system/check.py --strict --base "$BASE_REF" || FAIL=1
+  else
+    "$PYTHON_BIN" tools/agent-system/check.py || FAIL=1
+  fi
   echo
   if [ $FAIL -eq 1 ]; then
     echo "RESULT: FAIL — 결과를 보고하라. 자동 재수정 루프 금지(1회 실행 원칙)." >&2

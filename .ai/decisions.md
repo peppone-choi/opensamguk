@@ -76,6 +76,15 @@
 - Consequences: DSN 발급 전에는 동작 무변경. 대시보드 실증은 w1 게이트 원장 Sentry 항목과 동일 해제 조건으로 채점대기.
 - Approved by: 사용자 (2026-07-16, AskUserQuestion "지금 이 PR에 추가")
 
+## ADR-LITE-009 Codex Agent OS 프로젝트 표면 활성화
+
+- Date: 2026-07-17
+- Status: approved
+- Decision: `.codex/config.toml`·`.codex/hooks.json`·7개 custom agent와 추적형 `.agents/skills/$os-*`를 프로젝트 표면으로 둔다. SessionStart는 `skills-lock.json`과 로컬 무결성 스탬프를 검사해 외부 skills.sh 스킬을 프로젝트 범위로 복원하고, 작업 중 누락된 전문성은 `$find-project-skill`의 search→inspect→project-only add 절차로 가져온다. ADR-LITE-005의 "Codex는 수동 호출" 결론만 이 결정으로 대체한다.
+- Context: Claude 전용 `/os-*`·agents·hooks를 Codex에서도 fresh clone부터 재현해야 하며, 외부 스킬 본문을 커밋하면 upstream 드리프트와 공급망 검토가 어려워진다.
+- Consequences: Codex 프로젝트 trust/reload가 필요하다. `apply_patch`와 단순 Bash 호출은 훅으로 검사하지만 공식 Codex 문서가 명시하듯 모든 shell 경로를 가로채는 완전한 보안 경계는 아니므로 비밀 접근·legacy/golden 쓰기 금지 규칙은 계속 하드 룰이다.
+- Approved by: 사용자 (2026-07-16~17, Codex 호환 및 skills.sh 자동 복원 요청)
+
 ---
 
 ## 템플릿

@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -64,6 +66,38 @@ BEHAVIOR_AREAS = {
     "web/game/": ("web/game/",),
     "web/gateway/": ("web/gateway/",),
 }
+
+CODEX_REQUIRED_AGENTS = frozenset(
+    {
+        "deployer",
+        "fe-submit-wirer",
+        "golden-capturer",
+        "intake-wirer",
+        "parity-gate-runner",
+        "parity-porter",
+        "parity-reviewer",
+    }
+)
+
+CODEX_REQUIRED_SKILLS = frozenset(
+    {
+        "find-project-skill",
+        "loop-engineering",
+        "opensamguk-php-oracle",
+        "opensamguk-working-system",
+        "os-analyze",
+        "os-checkpoint",
+        "os-debug",
+        "os-e2e",
+        "os-implement",
+        "os-plan-tickets",
+        "os-review",
+        "os-start-task",
+        "os-verify",
+        "parity-close",
+        "parity-ship",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -136,6 +170,118 @@ def check_skills_lock(files: list[str]) -> list[Finding]:
 
     if "skills-lock.json" in files and "docs/superpowers/WORKING_SYSTEM.md" not in files:
         findings.append(Finding("warning", "skills-drift", "skills-lock.json changed without WORKING_SYSTEM.md; document routing and risk notes."))
+    return findings
+
+
+def check_codex_surface() -> list[Finding]:
+    findings: list[Finding] = []
+
+    required_files = (
+        ".codex/config.toml",
+        ".codex/hooks.json",
+        "scripts/agent/codex-session-start.sh",
+        "scripts/agent/codex-post-tool-use.sh",
+        "scripts/agent/codex-bash-guard.sh",
+        "scripts/agent/project-skills.sh",
+    )
+    for rel in required_files:
+        if not (ROOT / rel).is_file():
+            findings.append(Finding("error", "codex-surface", f"{rel} is required for reproducible Codex startup."))
+
+    config_path = ROOT / ".codex/config.toml"
+    if config_path.is_file():
+        try:
+            with config_path.open("rb") as handle:
+                config = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            findings.append(Finding("error", "codex-surface", f".codex/config.toml is invalid: {exc}"))
+        else:
+            features = config.get("features", {})
+            if not isinstance(features, dict) or features.get("hooks") is not True:
+                findings.append(Finding("error", "codex-surface", "Codex project config must enable stable hooks."))
+            if not isinstance(features, dict) or features.get("multi_agent") is not True:
+                findings.append(Finding("error", "codex-surface", "Codex project config must enable stable multi_agent."))
+            if "model" in config:
+                findings.append(Finding("error", "codex-surface", "Project Codex config must not pin a personal model."))
+
+    hooks_path = ROOT / ".codex/hooks.json"
+    if hooks_path.is_file():
+        try:
+            hook_document = read_json(hooks_path)
+        except (OSError, json.JSONDecodeError) as exc:
+            findings.append(Finding("error", "codex-surface", f".codex/hooks.json is invalid: {exc}"))
+        else:
+            hooks = hook_document.get("hooks") if isinstance(hook_document, dict) else None
+            if not isinstance(hooks, dict):
+                findings.append(Finding("error", "codex-surface", ".codex/hooks.json must contain a hooks object."))
+            else:
+                for event in ("SessionStart", "PreToolUse", "PostToolUse"):
+                    groups = hooks.get(event)
+                    if not isinstance(groups, list) or not groups:
+                        findings.append(Finding("error", "codex-surface", f"Codex hook event {event} is missing."))
+                        continue
+                    for group in groups:
+                        handlers = group.get("hooks") if isinstance(group, dict) else None
+                        if not isinstance(handlers, list) or not handlers:
+                            findings.append(Finding("error", "codex-surface", f"Codex hook event {event} has no handlers."))
+                            continue
+                        for handler in handlers:
+                            valid_handler = (
+                                isinstance(handler, dict)
+                                and handler.get("type") == "command"
+                                and handler.get("async") is False
+                                and isinstance(handler.get("timeout"), int)
+                                and "timeoutSec" not in handler
+                            )
+                            if not valid_handler:
+                                findings.append(
+                                    Finding("error", "codex-surface", f"Codex hook event {event} has an invalid command handler.")
+                                )
+
+                pre_matchers = "|".join(str(group.get("matcher", "")) for group in hooks.get("PreToolUse", []))
+                post_matchers = "|".join(str(group.get("matcher", "")) for group in hooks.get("PostToolUse", []))
+                if "Bash" not in pre_matchers or "Bash" not in post_matchers:
+                    findings.append(Finding("error", "codex-surface", "Codex hooks must cover supported Bash calls."))
+
+    agents_dir = ROOT / ".codex/agents"
+    for name in sorted(CODEX_REQUIRED_AGENTS):
+        path = agents_dir / f"{name}.toml"
+        if not path.is_file():
+            findings.append(Finding("error", "codex-surface", f"Codex agent {name} is missing."))
+            continue
+        try:
+            with path.open("rb") as handle:
+                agent = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            findings.append(Finding("error", "codex-surface", f"{path.relative_to(ROOT)} is invalid: {exc}"))
+            continue
+        for field in ("name", "description", "developer_instructions", "sandbox_mode"):
+            if not agent.get(field):
+                findings.append(Finding("error", "codex-surface", f"{path.relative_to(ROOT)} is missing {field}."))
+        if agent.get("name") != name:
+            findings.append(Finding("error", "codex-surface", f"{path.relative_to(ROOT)} has the wrong agent name."))
+
+    for name in sorted(CODEX_REQUIRED_SKILLS):
+        path = ROOT / ".agents/skills" / name / "SKILL.md"
+        if not path.is_file():
+            findings.append(Finding("error", "codex-surface", f"Codex project skill {name} is missing."))
+            continue
+        text = path.read_text(encoding="utf-8")
+        if f"name: {name}" not in text or "description: Use when" not in text:
+            findings.append(Finding("error", "codex-surface", f"Codex project skill {name} has invalid discovery metadata."))
+
+    codex_files = [config_path, hooks_path, *sorted(agents_dir.glob("*.toml"))]
+    forbidden_fragments = ("Codex Opus", "/Users/", "ctx_execute")
+    for path in codex_files:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        for fragment in forbidden_fragments:
+            if fragment in text:
+                findings.append(
+                    Finding("error", "codex-surface", f"{path.relative_to(ROOT)} contains forbidden local drift: {fragment}")
+                )
+
     return findings
 
 
@@ -294,6 +440,9 @@ def check_cross_agent_critique(files: list[str], strict: bool) -> list[Finding]:
         if is_prefix(f, CODE_PREFIXES)
         or f.startswith("tools/")
         or f.startswith(".github/workflows/")
+        or f.startswith(".codex/")
+        or f.startswith(".agents/skills/")
+        or f.startswith("scripts/agent/")
     ]
     if not code_or_tool_files:
         return []
@@ -321,18 +470,45 @@ def check_cross_agent_critique(files: list[str], strict: bool) -> list[Finding]:
             )
         ]
 
+    required_areas: set[str] = set()
+    area_prefixes = (
+        ".codex/",
+        ".agents/skills/",
+        "scripts/agent/",
+        "tools/",
+        ".github/workflows/",
+        *CODE_PREFIXES,
+    )
+    for changed in code_or_tool_files:
+        required_areas.update(prefix for prefix in area_prefixes if changed.startswith(prefix))
+
     valid_verdict = False
     for rel in review_files:
         review_text = (ROOT / rel).read_text(encoding="utf-8")
-        if any(f"Verdict: {verdict}" in review_text for verdict in ("cleared", "fix-required", "quarantined-with-proof")):
-            valid_verdict = True
-            break
+        verdicts = re.findall(r"^Verdict: (cleared|fix-required|quarantined-with-proof)\s*$", review_text, re.MULTILINE)
+        scopes = re.findall(r"^Scope:\s*(.+?)\s*$", review_text, re.MULTILINE)
+        if len(verdicts) != 1 or len(scopes) != 1:
+            return [Finding("error", "cross-agent-critique", f"{rel} must contain exactly one anchored Scope and Verdict line.")]
+        missing_scope = sorted(area for area in required_areas if area not in scopes[0])
+        if missing_scope:
+            return [
+                Finding(
+                    "error",
+                    "cross-agent-critique",
+                    f"{rel} does not cover changed areas: " + ", ".join(missing_scope),
+                )
+            ]
+        if verdicts[0] == "fix-required":
+            return [Finding("error", "cross-agent-critique", f"Unresolved Verdict: fix-required blocks completion: {rel}")]
+        if verdicts[0] == "quarantined-with-proof" and not re.search(r"^Proof:\s*\S", review_text, re.MULTILINE):
+            return [Finding("error", "cross-agent-critique", f"{rel} quarantines work without an anchored Proof line.")]
+        valid_verdict = True
     if not valid_verdict:
         return [
             Finding(
                 "error",
                 "cross-agent-critique",
-                "Critique artifact must contain Verdict: cleared, Verdict: fix-required, or Verdict: quarantined-with-proof.",
+                "Critique artifact must contain Verdict: cleared or Verdict: quarantined-with-proof.",
             )
         ]
     return []
@@ -396,6 +572,7 @@ def main() -> int:
     files = changed_files(args.base)
     findings: list[Finding] = []
     findings += check_skills_lock(files)
+    findings += check_codex_surface()
     findings += check_required_docs()
     findings += check_mandatory_workflow_fallbacks()
     findings += check_cross_agent_critique(files, args.strict)
