@@ -548,7 +548,7 @@ export default function JoinPage() {
           <label style={{ display: 'block', fontWeight: 600, marginBottom: 'var(--space-xs)' }}>전콘 사용</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={iconPath} alt="전콘" onError={onPortraitError} style={{ height: 64, width: 64, borderRadius: 'var(--radius-sm)', objectFit: 'cover', background: 'var(--color-surface-2, #1f2937)' }} />
+            <img src={iconPath} alt="전콘" onError={onPortraitError} style={{ height: 64, width: 64, borderRadius: 'var(--radius-sm)', objectFit: 'contain', background: 'var(--color-surface-2, #1f2937)' }} />
             <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
               <input
                 type="checkbox"

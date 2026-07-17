@@ -1619,7 +1619,7 @@ input:focus, select:focus, textarea:focus {
   display: block;
   width: 64px;
   height: 64px;
-  object-fit: cover;
+  object-fit: contain;
   background: #111;
   border-right: 1px solid var(--border-subtle);
 }

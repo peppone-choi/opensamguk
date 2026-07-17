@@ -141,7 +141,7 @@ export default function SelectPoolPage() {
                                                 width={64}
                                                 height={64}
                                                 onError={onPortraitError}
-                                                style={{ width: 64, height: 64, objectFit: 'cover' }}
+                                                style={{ width: 64, height: 64, objectFit: 'contain' }}
                                             />
                                             <div>
                                                 <h2 style={{ margin: 0, fontSize: 'var(--text-lg)' }}>{card.generalName}</h2>

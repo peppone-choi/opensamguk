@@ -134,7 +134,7 @@ export default function GeneralsListPage() {
                 alt=""
                 width={32}
                 height={40}
-                style={{ objectFit: 'cover', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
+                style={{ objectFit: 'contain', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
                 draggable={false}
             />,
             // 이름 — PHP formatName(name, npc): NPC 타입별 색(getNPCColor).

@@ -547,7 +547,7 @@ function Signer({ party }: { party: DiplomacyLetterParty }) {
                     src={party.generalIcon}
                     alt=""
                     className="generalIcon"
-                    style={{ width: 20, height: 20, borderRadius: 2, objectFit: 'cover' }}
+                    style={{ width: 20, height: 20, borderRadius: 2, objectFit: 'contain' }}
                 />
             )}
             <span style={{ color: nationColor, fontWeight: 500 }}>{party.nationName}</span>

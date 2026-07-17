@@ -151,7 +151,7 @@ function ServerRow({ server }: { server: ServerEntry }) {
                         alt={me.name}
                         width={64}
                         height={64}
-                        style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 4 }}
+                        style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 4 }}
                     />
                 )}
                 <strong>{me.name}</strong>

@@ -142,7 +142,7 @@ export default function MyGeneralsPage() {
                 alt=""
                 width={32}
                 height={40}
-                style={{ objectFit: 'cover', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
+                style={{ objectFit: 'contain', borderRadius: 'var(--radius-sm)', verticalAlign: 'middle', background: 'var(--bg-hover)' }}
                 draggable={false}
             />,
             <span key={`nm-${g.generalId}`} style={{ color: getNPCColor(g.npcState) ?? undefined }}>{g.name}</span>,
