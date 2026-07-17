@@ -92,7 +92,7 @@ function AccountSettings() {
             </section>
             <section className="game-panel">
                 <h2>전콘</h2>
-                {preview && <img src={preview} alt="현재 전콘" width={96} height={96} style={{ objectFit: 'cover', borderRadius: 4 }} />}
+                {preview && <img src={preview} alt="현재 전콘" width={96} height={96} style={{ objectFit: 'contain', borderRadius: 4 }} />}
                 <form onSubmit={submitPicture}>
                     <label>파일명<input aria-label="전콘 파일명" value={picture} onChange={(e) => setPicture(e.target.value)} placeholder="icon.png" /></label>
                     <label>이미지 서버<select aria-label="이미지 서버" value={imgsvr} onChange={(e) => setImgsvr(Number(e.target.value))}><option value={0}>공유</option><option value={1}>업로드</option></select></label>
