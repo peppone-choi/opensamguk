@@ -3,6 +3,8 @@ package opensamguk.gateway.security
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
+import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
@@ -28,6 +30,14 @@ class SecurityConfig(
         http
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .exceptionHandling {
+                it.authenticationEntryPoint { _, response, _ ->
+                    response.status = HttpStatus.UNAUTHORIZED.value()
+                    response.contentType = MediaType.APPLICATION_JSON_VALUE
+                    response.characterEncoding = Charsets.UTF_8.name()
+                    response.writer.write("{\"message\":\"인증이 필요합니다.\",\"status\":401}")
+                }
+            }
             .authorizeHttpRequests {
                 it
                     .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()

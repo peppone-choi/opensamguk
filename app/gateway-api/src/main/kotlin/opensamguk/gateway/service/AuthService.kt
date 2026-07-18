@@ -5,7 +5,6 @@ import opensamguk.gateway.dto.AuthResponse
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
 import opensamguk.gateway.dto.LoginRequest
-import opensamguk.gateway.dto.ProfileIconRequest
 import opensamguk.gateway.dto.RegisterRequest
 import opensamguk.gateway.dto.UserResponse
 import opensamguk.gateway.security.CustomUserDetails
@@ -108,22 +107,6 @@ class AuthService(
         assertCurrentPassword(user, request.currentPassword)
         user.password = passwordEncoder.encode(request.newPassword)
         user.updatedAt = java.time.LocalDateTime.now()
-    }
-
-    @Transactional
-    fun updateProfileIcon(userDetails: CustomUserDetails, request: ProfileIconRequest): UserResponse {
-        val user = findUser(userDetails)
-        if (request.imgsvr !in 0..1) {
-            throw IllegalArgumentException("이미지 서버 값은 0 또는 1이어야 합니다.")
-        }
-        val picture = request.picture?.trim()?.takeIf { it.isNotEmpty() }
-        if (picture != null && (picture.contains('/') || picture.contains('\\') || picture.contains(".."))) {
-            throw IllegalArgumentException("올바르지 않은 전콘 파일명입니다.")
-        }
-        user.picture = picture
-        user.imgsvr = picture != null && request.imgsvr == 1
-        user.updatedAt = java.time.LocalDateTime.now()
-        return user.toResponse()
     }
 
     @Transactional

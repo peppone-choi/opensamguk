@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "expected_count": 2,
+  "expected_cleared_fallback_count": 0,
+  "bundled_resource_inventory": [],
+  "existing_shared_cdn": [
+    {
+      "icon_id": "alpha",
+      "canonical_id": "alpha",
+      "canonical_filename": "alpha.jpg",
+      "portrait_asset_id": "pa_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "media_type": "image/jpeg",
+      "width": 64,
+      "height": 64,
+      "operational_fallback": true,
+      "cleared_fallback": false,
+      "source_repository": "https://github.com/example/icons",
+      "source_revision": "1111111111111111111111111111111111111111",
+      "source_path": "icons/alpha.jpg",
+      "delivery_url": "https://cdn.jsdelivr.net/gh/example/icons@1111111111111111111111111111111111111111/icons/alpha.jpg",
+      "provenance_status": "pinned-immutable-byte-evidence",
+      "license_status": "unknown",
+      "redistribution_status": "unknown"
+    },
+    {
+      "icon_id": "beta",
+      "canonical_id": "beta",
+      "canonical_filename": "beta.jpg",
+      "portrait_asset_id": "pa_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "media_type": "image/jpeg",
+      "width": 64,
+      "height": 64,
+      "operational_fallback": true,
+      "cleared_fallback": false,
+      "source_repository": "https://github.com/example/icons",
+      "source_revision": "1111111111111111111111111111111111111111",
+      "source_path": "icons/beta.jpg",
+      "delivery_url": "https://cdn.jsdelivr.net/gh/example/icons@1111111111111111111111111111111111111111/icons/beta.jpg",
+      "provenance_status": "pinned-immutable-byte-evidence",
+      "license_status": "unknown",
+      "redistribution_status": "unknown"
+    }
+  ],
+  "bundled_cleared": []
+}

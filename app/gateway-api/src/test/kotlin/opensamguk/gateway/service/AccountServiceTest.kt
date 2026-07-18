@@ -2,7 +2,6 @@ package opensamguk.gateway.service
 
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
-import opensamguk.gateway.dto.ProfileIconRequest
 import opensamguk.gateway.security.CustomUserDetails
 import opensamguk.gateway.security.JwtTokenProvider
 import opensamguk.infra.entity.UserEntity
@@ -11,7 +10,6 @@ import opensamguk.infra.read.EmailHasher
 import opensamguk.infra.read.SystemFlagRepository
 import opensamguk.infra.read.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -66,21 +64,6 @@ class AccountServiceTest {
         assertThrows(BadCredentialsException::class.java) {
             service().changePassword(details(user), ChangePasswordRequest("wrong", "newpass1"))
         }
-    }
-
-    @Test
-    fun `profile icon update and delete follow picture imgsvr pair`() {
-        val user = user()
-        `when`(userRepository.findByUsername("tester")).thenReturn(Optional.of(user))
-        val service = service()
-
-        val updated = service.updateProfileIcon(details(user), ProfileIconRequest("icon.png", 1))
-        assertEquals("icon.png", updated.picture)
-        assertEquals(1, updated.imageServer)
-
-        service.updateProfileIcon(details(user), ProfileIconRequest(null, 1))
-        assertNull(user.picture)
-        assertEquals(false, user.imgsvr)
     }
 
     @Test

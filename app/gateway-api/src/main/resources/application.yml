@@ -21,6 +21,11 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+  servlet:
+    multipart:
+      max-file-size: 50KB
+      max-request-size: 64KB
+      resolve-lazily: false
 jwt:
   secret: ${JWT_SECRET:Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU=}
   access-expiration: ${JWT_ACCESS_EXPIRATION:900000}
@@ -28,6 +33,16 @@ jwt:
 
 server:
   port: ${GATEWAY_API_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+profile-icon:
+  storage-root: ${PROFILE_ICON_STORAGE_ROOT:/var/lib/opensamguk/profile-icons}
+  max-bytes: 51200
+  zone-id: Asia/Seoul
+  shared-manifest: profile-icons/shared-manifest.json
 management:
   endpoints:
     web:
