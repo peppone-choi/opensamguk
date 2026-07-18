@@ -1,12 +1,12 @@
 # Current Task
 
 - Status: active
-- Updated at: 2026-07-16
+- Updated at: 2026-07-18
 - Seeded by: 사용자 인터뷰(2026-07-16) — "현재 루프 반영" 선택. 내용 변경은 사람이 한다.
 
 ## Goal
 
-두 갈래가 병행 중이다. 새 세션은 어느 갈래인지 사용자에게 먼저 확인한다.
+세 갈래가 병행 중이다. **현재 선택된 active implementation은 3번 CQRS runtime safety**다.
 
 1. **live-gap-closure 루프** (`docs/loops/live-gap-closure-2026-07-10/LEDGER.md` = 정본 원장)
    - 라이브 서버(sam.peppone.dev)에서 무동작·PHP 불일치인 명령/UI/월간 훅을 바퀴 단위로 폐쇄.
@@ -14,15 +14,19 @@
 2. **v2 구현 준비** (`docs/loops/v2-planning-2026-07-12/LEDGER.md`, round-2 adopted)
    - v2 기획 수렴 완료(작전·회의·원군·replay 우선, 실시간 대형 전장). V2-0A 격리 후 G0→0B, C0→C1..C5 순서 고정.
    - 최근 커밋 `ab69a7f6`이 "reviewed v2 foundation" 보존 — 구현(V2-1)은 아직 시작 전.
+3. **CQRS runtime safety** (`OPENSAM-116`, 계획 정본 `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`)
+   - bounded hot/cold memory, end-to-end `world_id`, generation-safe flush, writer fencing/CAS, durable command inbox/outbox, versioned primary reads를 W0→W5 순서로 구현한다.
+   - 현재 시작점: W0 `OPENSAM-123` 재현 가능한 heap/snapshot/latency baseline. `OPENSAM-124` consistency/failure contract는 disjoint 문서 범위에서 병행 가능하다.
 
 ## User value
 
 - v1: 라이브 유저가 누르는 버튼이 전부 실동작 + PHP 원작과 동일 결과.
 - v2: 커맨드 나열이 아닌 "작전 한 장면"이 성립하는 새 콘텐츠.
+- CQRS: 데이터가 늘어도 OOM 위험이 bounded되고, 접수된 명령을 잃지 않으며, 정합성이 필요한 read가 committed version을 보장한다.
 
 ## In scope
 
-- live-gap LEDGER 백로그 항목(가설 1개 = 바퀴 1개), v2 채택안의 승인된 구현 순서.
+- live-gap LEDGER 백로그 항목(가설 1개 = 바퀴 1개), v2 채택안의 승인된 구현 순서, OPENSAM-116의 승인된 W0→W5 순서.
 
 ## Out of scope
 
@@ -34,6 +38,7 @@
 - 백엔드: `tools/parity/gate.sh backend` green(XML `failures="0" errors="0"` 확인).
 - 프론트: 해당 앱 `pnpm typecheck`(+ web/game은 `pnpm test`) green.
 - 비자명 작업: 독립 에이전트의 cross-agent critique가 `cleared`.
+- CQRS W0: production-shaped JVM/container 조건의 3회 baseline artifact와 명시된 consistency/failure contract. 이후 wave는 각 Jira GWT와 계획의 completion predicate를 충족한다.
 
 ## Constraints
 
@@ -53,4 +58,4 @@
 
 ## Human approval checkpoints
 
-- main push(=자동 배포), prod 재시드/DB 파괴적 변경, 의존성 추가, 골든 격리(quarantine) 판정, 정책 문서(CLAUDE/AGENTS/이 파일) 변경.
+- main push(=자동 배포), prod 재시드/DB 파괴적 변경, 의존성 추가, 골든 격리(quarantine) 판정, 정책 문서(CLAUDE/AGENTS/이 파일) 변경, read replica 생성, 두 번째 world admission/cutover point-of-no-return.

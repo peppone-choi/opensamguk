@@ -16,6 +16,11 @@
 - `chooseInstantNationTurn` (PHP 호출자 0)
 - Q1 `ORDER BY RAND` (do선양/오랑캐임관 — scenario 1010에서 unreachable, 결정론 대체)
 
+## CQRS runtime safety (정본: `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`)
+
+- **OPENSAM-123 capacity acceptance 대기**: 2 GiB/JDK 21 seed-proxy 3×/3× 기준선은 확보했지만, sanitized production-shape manifest와 명시적 W0 임계값이 없어 티켓 완료·용량 정책 확정은 금지한다.
+- **OPENSAM-124 GA-079 approval blocker**: PHP nation bulk는 예약 ring 기록 뒤 user general의 `killturn=max(env.killturn,current)`를 저장한다. Kotlin API는 이를 누락하며, API general-row write는 one-daemon-write를 위반한다. PHP 캡처와 승인된 daemon-owned lifecycle 없이는 ring-only 또는 비계약 비동기 분리를 구현하지 않는다.
+
 ## 운영 잔흔 (정본: `.ai/handoff.md` 최신 상태 + `docs/superpowers/SESSION_HANDOFF.md` 장기 이력 — s1 이중 적용 상세는 2026-06-12 절)
 
 - **EC2 prod 요금 미납 정지**(2026-07-16 사용자 확인): prod 관련 작업 전부 **보류** — 배포, EC2 `.env` DSN 반영, prod DB 재확인. 납부·정지 해제 후 재개. 정지 기간 main push의 `deploy.yml` 런은 성공 불가 — 2026-07-16 미완료 런 2건(6h queued 포함) 취소 처리; 해제 후 최신 main으로 `gh run rerun` 또는 새 push로 배포.

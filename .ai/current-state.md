@@ -1,5 +1,19 @@
 # Current State
 
+## CQRS runtime safety active implementation (2026-07-18)
+
+- User approved implementation start and explicit `.ai/task.md` contract / `.ai/*` ownership transfer.
+- Active Epic: `OPENSAM-116`; plan SoT: `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`.
+- Branch: `codex/op-123-cqrs-runtime-baseline` (local only; no commit/push/PR).
+- Current wave: W0. `OPENSAM-123` harness slice is implementation-approved by two independent reviews (`PASS/WATCH`) but remains **in progress** until an approved sanitized production-shape manifest and live row calibration exist.
+- Corrected seed-proxy evidence `w0-harness-20260718d`: JDK 21, exact 2 GiB cgroup, G1/60% heap flags, 3× `current` + 3× `cold10x`, raw/JFR 12-source SHA preservation, and operational-vs-forced-GC split. Cold history 10× raised mean retained heap from `18,631,298.67` to `73,771,205.33` bytes (`+55,139,906.67`, `+295.95%`); operational JFR pause p95 rose from `17.48` to `37.94` ms.
+- Baseline analyzer is fail-closed for static crafted symlinks and writes only preflighted derived targets via same-directory atomic replacement. Python compile, 20/20 unit tests, actual analyze-only rerun, and all 12 recorded SHA checks are green. Remaining WATCH items: oversized/untyped harness, direct classifier parser ambiguity, and no hostile-concurrent-filesystem guarantee.
+- `OPENSAM-124` contract is internally consistent but **safe-but-blocked**. PHP GA-079 nation bulk persists both the nation reservation ring and `general.killturn=max(env.killturn,current)`; Kotlin omits the latter, while an API general-row write violates one-daemon-write. Contract approval requires a PHP fault/capture matrix and an approved daemon-owned per-child fenced lifecycle.
+- Read policy is fixed in the draft contract: authoritative/read-your-write/min-version reads use the PostgreSQL primary; a replica, if ever introduced by a later ADR, is eventual-only. No read replica is being created in W0.
+- Progress evidence is synchronized to Jira `OPENSAM-123`/`OPENSAM-124` and GitHub `#269`/`#270`; both tickets remain open/in progress and were not transitioned to complete.
+- Root owner: `cqrs-hardening-root`. W0 implementation/review file ownership is released after final state and tracker synchronization.
+- No commit, push, PR, deploy, production migration, dependency addition, read replica, or second-world admission is authorized by this start approval.
+
 - Updated at: 2026-07-18 (batch-3 closeout 착수 — 사용자 승인)
 - Active agent: Claude `batch3-closeout` (원장 정합화 → 최종 검증 → A4 승인 대기). 이전 `root-batch3-orchestrator`는 released.
 - Current branch: **`codex/full-frame-portrait-resize`** (origin에 push됨; last commit `759f00b4` OPENSAM-97 전체 프레임 비율 축소, 2026-07-17 23:47)
