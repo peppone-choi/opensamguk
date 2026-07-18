@@ -27,11 +27,14 @@ Source facts extracted from research (recorded [사실]):
     -- docs/.../2026-07-17-opensam-102-rtk14-rtk8r-map-source-coverage.md
 
 Portrait discovery (two modes; both fetch only real observed sources):
-  * 'reading' (default): construct the ::attach URL from the roster's reading
-    column and fetch it from the CDN (which is not rate-limited). Per-officer
-    namespaced -> can only resolve to THAT officer; wrong reading/ext 404s.
-  * 'page': fetch each officer page and parse its ::attach portrait attachment.
-    Faithful, but the wiki page host rate-limits (429) sustained crawls.
+  * 'page' (default): fetch each officer page and parse its ::attach portrait
+    attachment. Identity-safe (the attachment is read off the officer's own
+    page); the wiki page host rate-limits (429) sustained crawls, so keep the
+    polite delay. The 1000-officer run resolved 1000/1000 this way.
+  * 'reading': construct the ::attach URL from the roster's reading column and
+    fetch it from the CDN (not rate-limited). ~27% coverage (half-width kana /
+    suffixed filenames 404) and a suffixed attachment can silently resolve to a
+    DIFFERENT image than the page's real portrait (李衡: リコウ.jpg vs リコウ2.jpg).
   Manifest mode (--names name<TAB>image_url) remains for offline determinism.
 """
 from __future__ import annotations
@@ -568,11 +571,13 @@ def main(argv=None) -> int:
     p.add_argument("--names", default=None,
                    help="manifest override: TSV of name<TAB>image_url (outside repo). "
                         "When given, skips wiki roster enumeration.")
-    p.add_argument("--portrait-source", choices=("reading", "page"), default="reading",
-                   help="wiki portrait discovery. 'reading' (default): construct the "
-                        "CDN ::attach URL from the roster's reading column (fetches only "
-                        "the un-throttled CDN). 'page': fetch each officer page and parse "
-                        "its portrait attachment (faithful, but page host rate-limits).")
+    p.add_argument("--portrait-source", choices=("reading", "page"), default="page",
+                   help="wiki portrait discovery. 'page' (default): fetch each officer "
+                        "page and parse its portrait attachment (identity-safe; "
+                        "1000/1000 on the full run). 'reading': construct the CDN "
+                        "::attach URL from the roster's reading column (un-throttled "
+                        "CDN, but ~27%% coverage and suffixed attachments can resolve "
+                        "to a different image).")
     p.add_argument("--source-dir", required=True,
                    help="raw/cache root (outside repo or gitignored)")
     p.add_argument("--out-dir", required=True,
