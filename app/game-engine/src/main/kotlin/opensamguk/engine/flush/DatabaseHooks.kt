@@ -22,6 +22,7 @@ import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.GeneralCreateRow
+import opensamguk.infra.persistence.ProfileIconUpdateRow
 import opensamguk.infra.persistence.GeneralAccessLogWriteRow
 import opensamguk.infra.persistence.GameWinnerUpdateRow
 import opensamguk.infra.persistence.EmperiorInsertRow
@@ -643,6 +644,9 @@ object DatabaseHooks {
             auctionUpserts = recorder.auctionUpserts().map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
             auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },
             bettingInserts = recorder.bettingInserts().map { BettingInsertRow(it.columns) },
+            // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE (recorder
+            // 채널, betting과 동일; world-state 효과 아님 — 표시-컬럼은 generalUpdate SET 절에 없다).
+            profileIconUpdates = recorder.profileIconUpdates().map { ProfileIconUpdateRow(it.columns) },
             // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT (recorder 채널, betting과
             // 동일; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
             boardPostInserts = recorder.boardPostInserts().map { BoardPostInsertRow(it.columns) },

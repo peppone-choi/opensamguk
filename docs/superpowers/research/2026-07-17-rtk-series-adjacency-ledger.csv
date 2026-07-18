@@ -1,0 +1,105 @@
+from,to,evidence_series,source_url,confidence,notes
+襄平,北平,RTK14,https://wikiwiki.jp/sangokushi14/襄平,HIGH,sym; both endpoints list; access 2026-07-17
+北平,薊,RTK14,https://wikiwiki.jp/sangokushi14/北平,HIGH,sym; both list
+北平,南皮,RTK14,https://wikiwiki.jp/sangokushi14/北平,HIGH,sym; both list
+薊,晋陽,RTK14,https://wikiwiki.jp/sangokushi14/薊,HIGH,sym; both list
+薊,南皮,RTK14,https://wikiwiki.jp/sangokushi14/薊,HIGH,sym; both list
+薊,鄴,RTK14,https://wikiwiki.jp/sangokushi14/薊,HIGH,sym; both list
+晋陽,鄴,RTK14,https://wikiwiki.jp/sangokushi14/晋陽,HIGH,sym; both list
+晋陽,洛陽,RTK14,https://wikiwiki.jp/sangokushi14/洛陽,MED,DISPUTED; both list in 隣接都市 field but 洛陽 page prose questions whether 晋陽 is treated as adjacent in-game (晋陽とは隣接扱いされていないのか)
+南皮,鄴,RTK14,https://wikiwiki.jp/sangokushi14/南皮,HIGH,sym; both list
+南皮,平原,RTK14,https://wikiwiki.jp/sangokushi14/南皮,HIGH,sym; both list
+鄴,平原,RTK14,https://wikiwiki.jp/sangokushi14/ｷﾞｮｳ,HIGH,sym; both list
+鄴,濮陽,RTK14,https://wikiwiki.jp/sangokushi14/ｷﾞｮｳ,HIGH,sym; both list
+鄴,陳留,RTK14,https://wikiwiki.jp/sangokushi14/ｷﾞｮｳ,HIGH,sym; both list
+平原,北海,RTK14,https://wikiwiki.jp/sangokushi14/平原,HIGH,sym; both list
+平原,濮陽,RTK14,https://wikiwiki.jp/sangokushi14/平原,HIGH,sym; both list
+北海,下邳,RTK14,https://wikiwiki.jp/sangokushi14/北海,HIGH,sym; both list
+北海,濮陽,RTK14,https://wikiwiki.jp/sangokushi14/濮陽,LOW,ASYM; 濮陽 lists 北海 (with prose 距離が遠く rare); 北海 does NOT list 濮陽
+下邳,小沛,RTK14,https://wikiwiki.jp/sangokushi14/下ヒ,HIGH,sym; both list
+下邳,広陵,RTK14,https://wikiwiki.jp/sangokushi14/下ヒ,HIGH,sym; both list
+下邳,寿春,RTK14,https://wikiwiki.jp/sangokushi14/下ヒ,HIGH,sym; both list
+小沛,寿春,RTK14,https://wikiwiki.jp/sangokushi14/小沛,HIGH,sym; both list
+小沛,濮陽,RTK14,https://wikiwiki.jp/sangokushi14/小沛,HIGH,sym; both list
+小沛,陳留,RTK14,https://wikiwiki.jp/sangokushi14/小沛,HIGH,sym; both list
+広陵,寿春,RTK14,https://wikiwiki.jp/sangokushi14/広陵,HIGH,sym; both list
+広陵,廬江,RTK14,https://wikiwiki.jp/sangokushi14/広陵,HIGH,sym; both list
+広陵,建業,RTK14,https://wikiwiki.jp/sangokushi14/広陵,HIGH,sym; both list
+寿春,廬江,RTK14,https://wikiwiki.jp/sangokushi14/寿春,HIGH,sym; both list
+寿春,許昌,RTK14,https://wikiwiki.jp/sangokushi14/寿春,LOW,ASYM; 寿春 lists 許昌 but 許昌 does NOT list 寿春; 許昌 page comment says 寿春→許昌 passes through 汝南 territory (not in-game adjacent)
+寿春,汝南,RTK14,https://wikiwiki.jp/sangokushi14/寿春,HIGH,sym; both list
+廬江,建業,RTK14,https://wikiwiki.jp/sangokushi14/廬江,HIGH,sym; both list
+廬江,柴桑,RTK14,https://wikiwiki.jp/sangokushi14/廬江,HIGH,sym; both list
+廬江,江夏,RTK14,https://wikiwiki.jp/sangokushi14/廬江,HIGH,sym; both list
+濮陽,陳留,RTK14,https://wikiwiki.jp/sangokushi14/濮陽,HIGH,sym; both list
+陳留,許昌,RTK14,https://wikiwiki.jp/sangokushi14/陳留,HIGH,sym; both list
+陳留,洛陽,RTK14,https://wikiwiki.jp/sangokushi14/陳留,HIGH,sym; both list
+許昌,汝南,RTK14,https://wikiwiki.jp/sangokushi14/許昌,HIGH,sym; both list
+許昌,宛,RTK14,https://wikiwiki.jp/sangokushi14/許昌,HIGH,sym; both list
+許昌,新野,RTK14,https://wikiwiki.jp/sangokushi14/許昌,HIGH,sym; both list
+汝南,新野,RTK14,https://wikiwiki.jp/sangokushi14/汝南,HIGH,sym; both list
+洛陽,長安,RTK14,https://wikiwiki.jp/sangokushi14/洛陽,HIGH,sym; both list
+宛,長安,RTK14,https://wikiwiki.jp/sangokushi14/宛,HIGH,sym; both list
+宛,上庸,RTK14,https://wikiwiki.jp/sangokushi14/宛,HIGH,sym; both list
+宛,新野,RTK14,https://wikiwiki.jp/sangokushi14/宛,HIGH,sym; both list
+長安,安定,RTK14,https://wikiwiki.jp/sangokushi14/長安,HIGH,sym; both list
+長安,天水,RTK14,https://wikiwiki.jp/sangokushi14/長安,HIGH,sym; both list
+長安,漢中,RTK14,https://wikiwiki.jp/sangokushi14/長安,HIGH,sym; both list
+上庸,新野,RTK14,https://wikiwiki.jp/sangokushi14/上庸,HIGH,sym; both list
+上庸,襄陽,RTK14,https://wikiwiki.jp/sangokushi14/上庸,HIGH,sym; both list
+上庸,漢中,RTK14,https://wikiwiki.jp/sangokushi14/上庸,HIGH,sym; both list
+安定,天水,RTK14,https://wikiwiki.jp/sangokushi14/安定,HIGH,sym; both list
+安定,武威,RTK14,https://wikiwiki.jp/sangokushi14/安定,HIGH,sym; both list
+天水,武威,RTK14,https://wikiwiki.jp/sangokushi14/天水,HIGH,sym; both list
+天水,漢中,RTK14,https://wikiwiki.jp/sangokushi14/天水,HIGH,sym; both list
+建業,呉,RTK14;RTK8R,https://wikiwiki.jp/sangokushi14/建業,HIGH,sym; both list; RTK8R corroborates 呉↔建業 (OPENSAM-102 R8-W-WU/R8-W-JIANYE)
+建業,柴桑,RTK14,https://wikiwiki.jp/sangokushi14/建業,HIGH,sym; both list
+呉,会稽,RTK14;RTK8R,https://wikiwiki.jp/sangokushi14/呉,HIGH,sym; both list; RTK8R 呉 page lists 会稽 as neighbor (OPENSAM-102 R8-W-WU)
+会稽,建安,RTK14,https://wikiwiki.jp/sangokushi14/会稽,HIGH,sym; both list
+柴桑,建安,RTK14,https://wikiwiki.jp/sangokushi14/柴桑,HIGH,sym; both list
+柴桑,江夏,RTK14,https://wikiwiki.jp/sangokushi14/柴桑,HIGH,sym; both list
+柴桑,江陵,RTK14,https://wikiwiki.jp/sangokushi14/柴桑,HIGH,sym; both list
+柴桑,長沙,RTK14,https://wikiwiki.jp/sangokushi14/柴桑,HIGH,sym; both list
+建安,南海,RTK14,https://wikiwiki.jp/sangokushi14/建安,HIGH,sym; both list
+南海,交趾,RTK14,https://wikiwiki.jp/sangokushi14/南海,HIGH,sym; both list
+南海,桂陽,RTK14,https://wikiwiki.jp/sangokushi14/南海,HIGH,sym; both list
+交趾,零陵,RTK14,https://wikiwiki.jp/sangokushi14/交趾,HIGH,sym; both list
+交趾,建寧,RTK14,https://wikiwiki.jp/sangokushi14/交趾,HIGH,sym; both list
+交趾,雲南,RTK14,https://wikiwiki.jp/sangokushi14/雲南,LOW,ASYM; 雲南 lists 交趾 (prose: poisoned marsh route impractical); 交趾 does NOT list 雲南
+江夏,新野,RTK14,https://wikiwiki.jp/sangokushi14/江夏,HIGH,sym; both list
+江夏,襄陽,RTK14,https://wikiwiki.jp/sangokushi14/江夏,HIGH,sym; both list
+江夏,江陵,RTK14,https://wikiwiki.jp/sangokushi14/江夏,HIGH,sym; both list
+新野,襄陽,RTK14,https://wikiwiki.jp/sangokushi14/新野,HIGH,sym; both list; RTK13 tag removed (no per-edge source locator; RTK14 both-endpoints suffices)
+襄陽,江陵,RTK14,https://wikiwiki.jp/sangokushi14/襄陽,HIGH,sym; both list
+襄陽,永安,RTK14,https://wikiwiki.jp/sangokushi14/襄陽,HIGH,sym; both list
+襄陽,梓潼,RTK14,https://wikiwiki.jp/sangokushi14/梓潼,LOW,ASYM; 梓潼 field genuinely lists 襄陽 (間道/unusual-route context; confirmed by reviewer live check 2026-07-17); 襄陽 does NOT reciprocate; real one-way source claim (not mis-extraction); LOW ASYM preserved
+江陵,長沙,RTK14,https://wikiwiki.jp/sangokushi14/江陵,HIGH,sym; both list
+江陵,武陵,RTK14,https://wikiwiki.jp/sangokushi14/江陵,HIGH,sym; both list; RTK13 tag removed (no per-edge source locator; RTK14 both-endpoints suffices)
+江陵,永安,RTK14,https://wikiwiki.jp/sangokushi14/江陵,HIGH,sym; both list
+長沙,武陵,RTK14,https://wikiwiki.jp/sangokushi14/長沙,HIGH,sym; both list
+長沙,桂陽,RTK14,https://wikiwiki.jp/sangokushi14/長沙,HIGH,sym; both list
+武陵,零陵,RTK14,https://wikiwiki.jp/sangokushi14/武陵,HIGH,sym; both list
+武陵,永安,RTK14,https://wikiwiki.jp/sangokushi14/武陵,HIGH,sym; both list
+桂陽,零陵,RTK14,https://wikiwiki.jp/sangokushi14/桂陽,HIGH,sym; both list
+零陵,建寧,RTK14,https://wikiwiki.jp/sangokushi14/建寧,LOW,ASYM; 建寧 lists 零陵 (prose: high-mountain long route); 零陵 does NOT list 建寧
+永安,漢中,RTK14,https://wikiwiki.jp/sangokushi14/漢中,MED,ASYM; 漢中 lists 永安 but 永安 page did not list 漢中; route plausible (米倉道); re-verify 永安 page
+永安,梓潼,RTK14,https://wikiwiki.jp/sangokushi14/永安,HIGH,sym; both list
+永安,江州,RTK14,https://wikiwiki.jp/sangokushi14/永安,HIGH,sym; both list
+漢中,梓潼,RTK14,https://wikiwiki.jp/sangokushi14/漢中,HIGH,sym; both list
+梓潼,江州,RTK14,https://wikiwiki.jp/sangokushi14/梓潼,HIGH,sym; both list
+梓潼,成都,RTK14,https://wikiwiki.jp/sangokushi14/梓潼,HIGH,sym; both list
+江州,成都,RTK14,https://wikiwiki.jp/sangokushi14/江州,HIGH,sym; both list
+江州,建寧,RTK14,https://wikiwiki.jp/sangokushi14/江州,HIGH,sym; both list
+成都,建寧,RTK14,https://wikiwiki.jp/sangokushi14/成都,HIGH,sym; both list
+建寧,雲南,RTK14,https://wikiwiki.jp/sangokushi14/建寧,HIGH,sym; both list
+襄平,烏桓,RTK14-PK,https://wikiwiki.jp/sangokushi14/襄平,MED,TRIBAL; 襄平 page notes 交烏 (烏桓 diplomacy) activating when holding 2 of 3 NE cities; parent_city UNKNOWN
+長安,鮮卑,RTK14-PK,https://wikiwiki.jp/sangokushi14/長安,MED,TRIBAL; 鮮卑 adjacent in PK version; parent_city UNKNOWN
+安定,鮮卑,RTK14-PK,https://wikiwiki.jp/sangokushi14/安定,MED,TRIBAL; 鮮卑 adjacent in PK version; parent_city UNKNOWN
+天水,羌族,RTK14-PK,https://wikiwiki.jp/sangokushi14/天水,MED,TRIBAL; 羌 adjacent in PK; 交羌 needs 2 of {安定·天水·武威}; parent_city UNKNOWN
+漢中,羌族,RTK14-PK,https://wikiwiki.jp/sangokushi14/漢中,LOW,TRIBAL; 漢中 page prose says 羌 also borders in PK; parent_city UNKNOWN
+建業,山越,RTK14-PK,https://wikiwiki.jp/sangokushi14/建業,MED,TRIBAL; 山越 adjacent in PK; 交越 needs 3 of {建業·呉·会稽·柴桑·建安}; parent_city UNKNOWN
+呉,山越,RTK14-PK,https://wikiwiki.jp/sangokushi14/呉,MED,TRIBAL; 山越 adjacent in PK; parent_city UNKNOWN
+会稽,山越,RTK14-PK,https://wikiwiki.jp/sangokushi14/会稽,MED,TRIBAL; 山越 adjacent in PK; parent_city UNKNOWN
+柴桑,山越,RTK14-PK,https://wikiwiki.jp/sangokushi14/柴桑,MED,TRIBAL; 山越 adjacent in PK; parent_city UNKNOWN
+建寧,南蛮,RTK14-PK,https://wikiwiki.jp/sangokushi14/建寧,MED,TRIBAL; 南蛮 adjacent in PK; 交南蛮 needs 建寧+雲南; parent_city UNKNOWN
+雲南,南蛮,RTK14-PK,https://wikiwiki.jp/sangokushi14/雲南,MED,TRIBAL; 南蛮 adjacent in PK; parent_city UNKNOWN

@@ -1,6 +1,10 @@
 package opensamguk.gateway.web
 
 import opensamguk.gateway.security.SelfPeerProtectionException
+import opensamguk.gateway.profile.ProfileIconChangedTodayException
+import opensamguk.gateway.profile.ProfileIconPayloadTooLargeException
+import opensamguk.gateway.profile.ProfileIconPersistenceException
+import opensamguk.gateway.profile.ProfileIconStorageException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
@@ -8,6 +12,7 @@ import org.springframework.security.core.AuthenticationException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 /** 클라이언트에 노출하는 에러 본문 — Next.js route handler가 `message`를 그대로 surface. */
 data class ApiError(val message: String, val status: Int)
@@ -36,6 +41,21 @@ class GlobalExceptionHandler {
     fun illegalArg(e: IllegalArgumentException): ResponseEntity<ApiError> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(ApiError(e.message ?: "잘못된 요청입니다.", HttpStatus.BAD_REQUEST.value()))
+
+    @ExceptionHandler(ProfileIconChangedTodayException::class)
+    fun profileIconChangedToday(e: ProfileIconChangedTodayException): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ApiError("프로필 아이콘은 하루에 한 번만 변경할 수 있습니다.", HttpStatus.CONFLICT.value()))
+
+    @ExceptionHandler(ProfileIconPayloadTooLargeException::class, MaxUploadSizeExceededException::class)
+    fun profileIconTooLarge(e: Exception): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+            .body(ApiError("프로필 아이콘은 50KB 이하여야 합니다.", HttpStatus.PAYLOAD_TOO_LARGE.value()))
+
+    @ExceptionHandler(ProfileIconStorageException::class, ProfileIconPersistenceException::class)
+    fun profileIconInternal(e: Exception): ResponseEntity<ApiError> =
+        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ApiError("프로필 아이콘 변경을 완료할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()))
 
     /**
      * 회원관리 self/peer 보호 위반(B2d) — 어드민이 자기 자신/다른 ADMIN을 변경하려 함.

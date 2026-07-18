@@ -896,6 +896,31 @@ sealed class TurnDaemonCommand {
         val requestedAt: String,
     ) : TurnDaemonCommand() { override val type: String get() = "selectPoolRefresh" }
 
+    /**
+     * OPENSAM-94 — 프로필 아이콘 typed sync (gateway 계정의 canonical 전콘 변경을 게임 서버로 전달).
+     *
+     * gateway-api가 OPENSAM-91 DB commit(afterCommit) 후 각 게임 서버 game-api 인테이크로 발행한다.
+     * eligibility boolean을 싣지 않는다 — [grade]는 **gateway 계정의 authoritative 원값**(서버측 read,
+     * 클라 verdict 아님)이고, `show_img_level`은 엔진 world config가 authoritative 소스다. 핸들러는 두
+     * 값으로 Join eligibility `show_img_level >= 1 && grade >= 1`을 **재평가**한 뒤에만 `owner=userId &&
+     * npc=0` 기존 general에 [picture]/[imgsvr]를 반영한다(Join.php:379-385 게이트와 동일 의미).
+     *  - [userId] gateway 계정 id — general.user_id(문자열)와 `userId.toString()`로 매칭.
+     *  - [picture] canonical managed 파일명(삭제/공유코드 시 default.jpg / 공유 canonical).
+     *  - [imgsvr] image_server 플래그(0/1). eligible일 때만 general에 기록.
+     *  - [grade] gateway 계정 등급(authoritative). >=1이어야 전콘 사용 가능.
+     */
+    @Serializable
+    @SerialName("profileIconSync")
+    data class ProfileIconSync(
+        val requestId: String? = null,
+        val userId: Long,
+        val picture: String,
+        val imgsvr: Int,
+        val grade: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "profileIconSync"
+    }
+
     @Serializable
     @SerialName("adminGeneralModeration")
     data class AdminGeneralModeration(

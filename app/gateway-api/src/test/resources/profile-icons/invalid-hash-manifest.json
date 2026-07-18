@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "expected_count": 1,
+  "expected_cleared_fallback_count": 1,
+  "bundled_resource_inventory": ["profile-icons/shared-manifest.json"],
+  "existing_shared_cdn": [],
+  "bundled_cleared": [
+    {
+      "icon_id": "wrong-hash",
+      "canonical_id": "wrong-hash",
+      "canonical_filename": "wrong-hash.png",
+      "portrait_asset_id": "pa_0000000000000000000000000000000000000000000000000000000000000000",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "media_type": "image/png",
+      "width": 80,
+      "height": 80,
+      "operational_fallback": true,
+      "cleared_fallback": true,
+      "source_repository": "https://github.com/example/cleared-icons",
+      "source_revision": "1111111111111111111111111111111111111111",
+      "source_path": "source/wrong-hash.png",
+      "resource_path": "profile-icons/shared-manifest.json",
+      "provenance_status": "pinned-immutable-byte-evidence",
+      "license_status": "cleared",
+      "redistribution_status": "cleared-for-redistribution"
+    }
+  ]
+}

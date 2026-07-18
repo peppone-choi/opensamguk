@@ -66,6 +66,25 @@ export async function updateProfileIcon(picture: string | null, imgsvr: number):
     return data as unknown as User;
 }
 
+// multipart 업로드 — Content-Type은 브라우저가 boundary와 함께 설정하게 둔다(직접 지정 금지).
+// body엔 file part만 담고, 신원(Bearer)은 route proxy가 httpOnly 쿠키에서만 붙인다.
+export async function uploadProfileIcon(file: File): Promise<User> {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch('/api/account/profile-icon', { method: 'POST', body: form });
+    const data = await readJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? '전콘 업로드에 실패했습니다.');
+    return data as unknown as User;
+}
+
+export async function deleteProfileIcon(): Promise<void> {
+    const res = await fetch('/api/account/profile-icon', { method: 'DELETE' });
+    if (!res.ok) {
+        const data = await readJson(res);
+        throw new Error((data.error as string) ?? '전콘 삭제에 실패했습니다.');
+    }
+}
+
 export async function deleteAccount(currentPassword: string): Promise<void> {
     await accountRequest('/api/account', { currentPassword }, 'DELETE');
 }

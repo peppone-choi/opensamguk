@@ -5,7 +5,6 @@ import opensamguk.gateway.dto.AuthResponse
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
 import opensamguk.gateway.dto.LoginRequest
-import opensamguk.gateway.dto.ProfileIconRequest
 import opensamguk.gateway.dto.RefreshRequest
 import opensamguk.gateway.dto.RegisterRequest
 import opensamguk.gateway.dto.UserResponse
@@ -58,13 +57,6 @@ class AuthController(
         authService.changePassword(userDetails, request)
         return ResponseEntity.noContent().build()
     }
-
-    @PostMapping("/account/profile-icon")
-    fun updateProfileIcon(
-        @AuthenticationPrincipal userDetails: CustomUserDetails,
-        @Valid @RequestBody request: ProfileIconRequest,
-    ): ResponseEntity<UserResponse> =
-        ResponseEntity.ok(authService.updateProfileIcon(userDetails, request))
 
     @DeleteMapping("/account")
     fun deleteAccount(

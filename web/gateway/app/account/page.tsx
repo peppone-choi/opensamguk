@@ -2,15 +2,31 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { type FormEvent, useState } from 'react';
+import React, { type FormEvent, useRef, useState } from 'react';
 import AuthGate from '@/components/AuthGate';
 import { useAuth } from '@/lib/auth-context';
-import { changePassword, deleteAccount, updateProfileIcon } from '@/lib/client';
-import { IMAGE_CDN_BASE } from '@/lib/constants';
+import { changePassword, deleteAccount, deleteProfileIcon, updateProfileIcon, uploadProfileIcon } from '@/lib/client';
+import { onPortraitError, portraitUrl } from '@/lib/portrait';
 
-function iconPath(imageServer: number, picture: string | null): string | null {
-    if (!picture) return null;
-    return `${IMAGE_CDN_BASE}/${imageServer ? 'd_pic' : 'd_shared'}/${picture}`;
+// gateway-api ProfileIconDecoder와 동일한 경계(50KiB, 64~128px 정사각형). 브라우저 사전검증은 편의일 뿐
+// 최종 보안 경계는 서버다 — 우회해도 서버 거부를 성공으로 위장하지 않는다.
+const MAX_ICON_BYTES = 51200;
+const ICON_GUIDE = '50KB 이하, 64~128px 정사각형 (jpg·png·gif·webp·avif)';
+
+async function prevalidateIcon(file: File): Promise<string | null> {
+    if (file.size > MAX_ICON_BYTES) return '프로필 아이콘은 50KB 이하여야 합니다.';
+    let bitmap: ImageBitmap;
+    try {
+        bitmap = await createImageBitmap(file);
+    } catch {
+        return '이미지를 읽을 수 없습니다. jpg·png·gif·webp·avif 파일을 선택하세요.';
+    }
+    const { width, height } = bitmap;
+    bitmap.close?.();
+    if (width !== height || width < 64 || width > 128) {
+        return '프로필 아이콘은 64~128px 정사각형이어야 합니다.';
+    }
+    return null;
 }
 
 function AccountSettings() {
@@ -20,6 +36,8 @@ function AccountSettings() {
     const [newPassword, setNewPassword] = useState('');
     const [picture, setPicture] = useState(user?.picture ?? '');
     const [imgsvr, setImgsvr] = useState(user?.imageServer ?? 0);
+    const [file, setFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [notice, setNotice] = useState('');
     const [error, setError] = useState('');
     const [busy, setBusy] = useState(false);
@@ -47,21 +65,48 @@ function AccountSettings() {
         }, '비밀번호를 변경했습니다.');
     };
 
-    const submitPicture = async (event: FormEvent) => {
+    const submitUpload = async (event: FormEvent) => {
         event.preventDefault();
+        if (!file) {
+            setNotice('');
+            setError('업로드할 이미지를 선택하세요.');
+            return;
+        }
+        const problem = await prevalidateIcon(file);
+        if (problem) {
+            setNotice('');
+            setError(problem);
+            return;
+        }
         await run(async () => {
-            await updateProfileIcon(picture.trim() || null, imgsvr);
+            const updated = await uploadProfileIcon(file);
+            // preview·상태는 서버 canonical 값에서만 갱신한다(클라이언트 파일명 아님).
+            setPicture(updated.picture ?? '');
+            setImgsvr(updated.imageServer ?? 0);
+            setFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
             await refresh();
-        }, '전콘을 저장했습니다.');
+        }, '전콘을 업로드했습니다.');
     };
 
-    const removePicture = async () => {
+    const removeUpload = async () => {
         await run(async () => {
-            await updateProfileIcon(null, 0);
+            await deleteProfileIcon();
+            // 삭제 성공 → 기존 검증된 default portrait로 수렴, stale 업로드 URL 유지 안 함.
             setPicture('');
             setImgsvr(0);
             await refresh();
         }, '전콘을 삭제했습니다.');
+    };
+
+    const submitShared = async (event: FormEvent) => {
+        event.preventDefault();
+        await run(async () => {
+            const updated = await updateProfileIcon(picture.trim() || null, imgsvr);
+            setPicture(updated.picture ?? '');
+            setImgsvr(updated.imageServer ?? 0);
+            await refresh();
+        }, '전콘을 저장했습니다.');
     };
 
     const submitDelete = async () => {
@@ -73,7 +118,7 @@ function AccountSettings() {
         }, '계정을 삭제했습니다.');
     };
 
-    const preview = iconPath(imgsvr, picture.trim() || null);
+    const preview = portraitUrl(picture.trim() || null, imgsvr);
     return (
         <main className="lobby-main fade-in">
             <div className="lobby-section-title-row">
@@ -92,12 +137,17 @@ function AccountSettings() {
             </section>
             <section className="game-panel">
                 <h2>전콘</h2>
-                {preview && <img src={preview} alt="현재 전콘" width={96} height={96} style={{ objectFit: 'contain', borderRadius: 4 }} />}
-                <form onSubmit={submitPicture}>
-                    <label>파일명<input aria-label="전콘 파일명" value={picture} onChange={(e) => setPicture(e.target.value)} placeholder="icon.png" /></label>
+                <img src={preview} onError={onPortraitError} alt="현재 전콘" width={96} height={96} style={{ objectFit: 'contain', borderRadius: 4 }} />
+                <form onSubmit={submitUpload}>
+                    <p>{ICON_GUIDE}</p>
+                    <label>이미지 파일<input ref={fileInputRef} aria-label="전콘 이미지 파일" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
+                    <button className="btn-primary" type="submit" disabled={busy}>업로드</button>
+                    <button className="btn-ghost" type="button" onClick={() => void removeUpload()} disabled={busy || imgsvr !== 1}>삭제</button>
+                </form>
+                <form onSubmit={submitShared}>
+                    <label>공유 전콘 파일명<input aria-label="전콘 파일명" value={picture} onChange={(e) => setPicture(e.target.value)} placeholder="icon.png" /></label>
                     <label>이미지 서버<select aria-label="이미지 서버" value={imgsvr} onChange={(e) => setImgsvr(Number(e.target.value))}><option value={0}>공유</option><option value={1}>업로드</option></select></label>
                     <button className="btn-primary" type="submit" disabled={busy}>저장</button>
-                    <button className="btn-ghost" type="button" onClick={() => void removePicture()} disabled={busy}>삭제</button>
                 </form>
             </section>
             <section className="game-panel">

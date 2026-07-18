@@ -14,6 +14,19 @@ spring:
     redis:
       host: localhost
       port: 6379
+  servlet:
+    multipart:
+      max-file-size: 50KB
+      max-request-size: 64KB
+
+profile-icon:
+  # Must be free of symlinked ancestors on every platform: the production
+  # canonicalStorageRoot guard rejects a symlinked ancestor, and on macOS /tmp
+  # is a symlink to /private/tmp. Resolve under the module build dir instead.
+  storage-root: build/test-profile-icons
+  max-bytes: 51200
+  zone-id: Asia/Seoul
+  shared-manifest: profile-icons/shared-manifest.json
 
 jwt:
   secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=

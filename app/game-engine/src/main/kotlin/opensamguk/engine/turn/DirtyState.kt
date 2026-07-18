@@ -83,6 +83,8 @@ data class AuctionBidInsert(val columns: Map<String, Any?>)
  * 패러티의 UPSERT — UNIQUE(general_id,betting_id,betting_type) 충돌(동일 키 재베팅) 시 amount 누적.
  */
 data class BettingInsert(val columns: Map<String, Any?>)
+/** OPENSAM-94 프로필 아이콘 sync — general portrait 컬럼(picture/image_server) UPDATE 의도. */
+data class ProfileIconUpdate(val columns: Map<String, Any?>)
 
 /**
  * `board_post` INSERT 의도 (F4 Wave C2 슬라이스 C, 회의실/기밀실 글). INSERT 전용 — 글은 절대 갱신되지

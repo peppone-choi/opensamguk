@@ -2,8 +2,6 @@ package opensamguk.gateway.controller
 
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
-import opensamguk.gateway.dto.ProfileIconRequest
-import opensamguk.gateway.dto.UserResponse
 import opensamguk.gateway.security.CustomUserDetails
 import opensamguk.gateway.service.AuthService
 import opensamguk.infra.entity.UserEntity
@@ -31,12 +29,7 @@ class AccountControllerTest {
 
     @Test
     fun `account controller delegates authenticated mutations`() {
-        val response = UserResponse(1, "tester", null, null, "USER")
-        org.mockito.Mockito.`when`(authService.updateProfileIcon(details, ProfileIconRequest("icon.png", 1)))
-            .thenReturn(response)
-
         assertEquals(HttpStatus.NO_CONTENT, controller.changePassword(details, ChangePasswordRequest("oldpass", "newpass1")).statusCode)
-        assertEquals(HttpStatus.OK, controller.updateProfileIcon(details, ProfileIconRequest("icon.png", 1)).statusCode)
         assertEquals(HttpStatus.NO_CONTENT, controller.deleteAccount(details, DeleteAccountRequest("oldpass")).statusCode)
         verify(authService).changePassword(details, ChangePasswordRequest("oldpass", "newpass1"))
         verify(authService).deleteAccount(details, DeleteAccountRequest("oldpass"))

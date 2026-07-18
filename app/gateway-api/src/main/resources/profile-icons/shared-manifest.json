@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "expected_count": 2,
+  "expected_cleared_fallback_count": 0,
+  "bundled_resource_inventory": [],
+  "existing_shared_cdn": [
+    {
+      "icon_id": "1001",
+      "canonical_id": "legacy-shared-1001",
+      "canonical_filename": "1001.jpg",
+      "portrait_asset_id": "pa_4d27da9a19571236183fd9ec40f5cd9550432ef574000ab78519692c1176d3b5",
+      "sha256": "4d27da9a19571236183fd9ec40f5cd9550432ef574000ab78519692c1176d3b5",
+      "media_type": "image/jpeg",
+      "width": 64,
+      "height": 64,
+      "operational_fallback": false,
+      "cleared_fallback": false,
+      "source_repository": "https://github.com/peppone-choi/opensamguk-images",
+      "source_revision": "1b6624d886c1b326a2feeda449288b41231df5ef",
+      "source_path": "icons/1001.jpg",
+      "delivery_url": "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@1b6624d886c1b326a2feeda449288b41231df5ef/icons/1001.jpg",
+      "provenance_status": "pinned-immutable-byte-evidence",
+      "license_status": "unknown",
+      "redistribution_status": "unknown"
+    },
+    {
+      "icon_id": "default",
+      "canonical_id": "legacy-shared-default",
+      "canonical_filename": "default.jpg",
+      "portrait_asset_id": "pa_f53c76d05281db09a9d859e14c6bf3f6ecbc8001b70330a62d6041d4e168141b",
+      "sha256": "f53c76d05281db09a9d859e14c6bf3f6ecbc8001b70330a62d6041d4e168141b",
+      "media_type": "image/jpeg",
+      "width": 64,
+      "height": 64,
+      "operational_fallback": true,
+      "cleared_fallback": false,
+      "source_repository": "https://github.com/peppone-choi/opensamguk-images",
+      "source_revision": "1b6624d886c1b326a2feeda449288b41231df5ef",
+      "source_path": "icons/default.jpg",
+      "delivery_url": "https://cdn.jsdelivr.net/gh/peppone-choi/opensamguk-images@1b6624d886c1b326a2feeda449288b41231df5ef/icons/default.jpg",
+      "provenance_status": "pinned-immutable-byte-evidence",
+      "license_status": "unknown",
+      "redistribution_status": "unknown"
+    }
+  ],
+  "bundled_cleared": []
+}

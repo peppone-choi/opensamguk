@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
+import java.time.Instant
 
 /**
  * 사용자 엔티티 — 인증/인가 기반.
@@ -60,6 +61,12 @@ class UserEntity(
     // legacy member.IMGSVR — 이미지 서버 분기 플래그.
     @Column(name = "imgsvr", nullable = false)
     var imgsvr: Boolean = false,
+
+    @Column(name = "profile_icon_changed_at", nullable = true)
+    var profileIconChangedAt: Instant? = null,
+
+    @Column(name = "profile_icon_managed", nullable = false)
+    var profileIconManaged: Boolean = false,
 
     // legacy member_log(action_type=login) 최신 행 대체 — 최근 로그인 시각.
     @Column(name = "last_login_at", nullable = true)

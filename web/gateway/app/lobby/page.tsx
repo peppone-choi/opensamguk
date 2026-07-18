@@ -5,17 +5,9 @@ import Link from 'next/link';
 import AuthGate from '@/components/AuthGate';
 import Topbar from '@/components/Topbar';
 import ServerBoard from '@/components/ServerBoard';
-import { GAME_URL, LOBBY_LABELS, LOBBY_FOOTNOTES, IMAGE_CDN_BASE } from '@/lib/constants';
+import { GAME_URL, LOBBY_LABELS, LOBBY_FOOTNOTES } from '@/lib/constants';
+import { onPortraitError, portraitUrl } from '@/lib/portrait';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
-
-// 장수 초상 URL — legacy hwe/ts/util/getIconPath.ts 동형. imgsvr 0=공유 기본아이콘(d_shared),
-// 1=업로드 초상(d_pic). 두 디렉터리는 devsam/image 자산 루트로, opensam-images CDN(IMAGE_CDN_BASE)이
-// 그 미러다. picture 파일명은 해당 디렉터리 바로 아래에 위치(legacy `sharedIcon/<picture>`).
-function getIconPath(imageServer: number, picture: string): string {
-    return imageServer
-        ? `${IMAGE_CDN_BASE}/d_pic/${picture}`
-        : `${IMAGE_CDN_BASE}/d_shared/${picture}`;
-}
 
 // servers.json 은 이제 **라우팅 정보만**(id/name/gameUrl) 쓴다. 상태/턴텀/유저수는 전부 라이브
 // basic-info 결과로 그린다(하드코딩 제거 — 진입 플로우 정본화 §5.4). gameApiUrl 은 서버사이드
@@ -141,19 +133,17 @@ function ServerRow({ server }: { server: ServerEntry }) {
         characterCell = '-';
         selectCell = LOBBY_LABELS.closed;
     } else if (me && me.name) {
-        // 입장 — 이 서버에 소유 장수 보유. 초상(picture)이 있으면 이름 옆 64x64로 렌더(legacy 입장행 패러티).
         characterCell = (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                {me.picture && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={getIconPath(me.imageServer, me.picture)}
-                        alt={me.name}
-                        width={64}
-                        height={64}
-                        style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 4 }}
-                    />
-                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                    src={portraitUrl(me.picture, me.imageServer)}
+                    onError={onPortraitError}
+                    alt={me.name}
+                    width={64}
+                    height={64}
+                    style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 4 }}
+                />
                 <strong>{me.name}</strong>
             </span>
         );
