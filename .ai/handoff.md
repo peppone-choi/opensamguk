@@ -7,7 +7,9 @@
 
 ## Goal
 
-batch-3(OPENSAM-92·93·94·97·103 + §13 지도)의 **closeout**: 원장 정합화 → 최종 검증(Phase B) → 티켓별 커밋 분할안 제시 → **A4(커밋/push/PR) 사람 승인 대기에서 정지**. 이후 다음 5티켓 선정(standing directive "티켓 5개씩").
+batch-3(OPENSAM-92·93·94·97·103 + §13 지도)의 **closeout**: 원장 정합화 → 최종 검증(Phase B) → 티켓별 커밋 분할안 제시 → A4(커밋/push/PR) 사람 승인. 이후 다음 5티켓 선정(standing directive "티켓 5개씩").
+
+> **⚠ A4·A5 완료(2026-07-18, 사용자 승인) — 아래 커밋 분할 계획은 이미 실행·머지됨. 재실행 금지.** 6커밋(`14a02afd`→`9831cc45`) + CI 픽스 `413cc8e6` push → **PR #260 머지됨**(05:00:57Z, main `064d5e1a`). Phase B 전부 green(백엔드 486스위트/4423테스트, gateway 53/53, game 186/186, check.py strict No findings). 자동 배포 런은 EC2 정지로 취소 — 요금 납부 후 재배포(사용자 지시). Jira/GitHub 동기화 완료(7건 완료 전이 + 7이슈 close, 97/#240 유지). 남은 것: 초상 크롤 완주→얼굴 크롭→images 2차 푸시, 시나리오 스펙 정식화, batch-4 확정. 정본 상태는 `.ai/current-state.md`.
 
 ## Current result
 
