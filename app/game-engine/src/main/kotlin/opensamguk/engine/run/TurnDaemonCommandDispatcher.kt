@@ -21,6 +21,7 @@ import opensamguk.engine.intake.MessageHandler
 import opensamguk.engine.intake.NationFinanceSetterHandler
 import opensamguk.engine.intake.NpcPolicyHandler
 import opensamguk.engine.intake.PersonnelHandler
+import opensamguk.engine.intake.ProfileIconSyncHandler
 import opensamguk.engine.intake.SelectPoolHandler
 import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
@@ -298,6 +299,9 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
+
+    // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
+    private val profileIconSync = ProfileIconSyncHandler(world, recorder)
     private val adminGeneralModeration = AdminGeneralModerationHandler(world, recorder)
     private val adminWorldSettings = AdminWorldSettingsHandler(world, recorder)
 
@@ -372,6 +376,8 @@ class TurnDaemonCommandDispatcher(
         // ── W6d 건국 후보(거병) 바인딩 (RNG-bearing) ──
         is TurnDaemonCommand.BuildNationCandidate -> buildNation.handle(command)
         is TurnDaemonCommand.MakeGeneral -> makeGeneral.handle(command)
+        // ── OPENSAM-94 프로필 아이콘 typed sync 바인딩 (fanout, fire-and-forget → null 반환) ──
+        is TurnDaemonCommand.ProfileIconSync -> profileIconSync.handle(command)
         is TurnDaemonCommand.AdminGeneralModeration -> adminGeneralModeration.handle(command)
         is TurnDaemonCommand.AdminWorldSettings -> adminWorldSettings.handle(command)
         else -> null

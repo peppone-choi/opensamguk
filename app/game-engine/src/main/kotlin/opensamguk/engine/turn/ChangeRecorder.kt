@@ -155,6 +155,9 @@ class ChangeRecorder(
     /** Betting channel (P6) — ng_betting insertUpdate 의도(flush가 (general,betting,type) UPSERT amount +=). */
     private val bettingInserts = mutableListOf<BettingInsert>()
 
+    /** 프로필 아이콘 채널 (OPENSAM-94) — general.picture/image_server 전용 컬럼 UPDATE 의도. */
+    private val profileIconUpdates = mutableListOf<ProfileIconUpdate>()
+
     /** 게시판 채널 (F4 C2 슬라이스 C) — board_post INSERT (회의실/기밀실 글, INSERT 전용). */
     private val boardPostInserts = mutableListOf<BoardPostInsert>()
 
@@ -214,6 +217,7 @@ class ChangeRecorder(
             diplomacyLetterInserts.isNotEmpty() || diplomacyLetterUpdates.isNotEmpty() ||
             auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
+            profileIconUpdates.isNotEmpty() ||
             boardPostInserts.isNotEmpty() || boardCommentInserts.isNotEmpty() ||
             votePollInserts.isNotEmpty() || voteInserts.isNotEmpty() ||
             voteCommentInserts.isNotEmpty() ||
@@ -638,6 +642,14 @@ class ChangeRecorder(
         bettingInserts.add(BettingInsert(columns))
     }
 
+    /**
+     * OPENSAM-94 프로필 아이콘 UPDATE 기록 — general.picture/image_server 전용 컬럼. columns는
+     * `id`/`user_id`/`picture`/`image_server` (flush WHERE가 id+user_id+npc_state=0 predicate 재-단언).
+     */
+    fun recordProfileIconUpdate(columns: Map<String, Any?>) {
+        profileIconUpdates.add(ProfileIconUpdate(columns))
+    }
+
     /** `board_post` INSERT 기록 (F4 C2 슬라이스 C, 회의실/기밀실 글). INSERT 전용. */
     fun recordBoardPostInsert(columns: Map<String, Any?>) {
         boardPostInserts.add(BoardPostInsert(columns))
@@ -671,6 +683,9 @@ class ChangeRecorder(
 
     /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
     fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
+
+    /** 기록된 프로필 아이콘 UPDATE (OPENSAM-94 flush 소스), emit 순서대로. */
+    fun profileIconUpdates(): List<ProfileIconUpdate> = profileIconUpdates.toList()
 
     /** 기록된 board_post INSERT (F4 C2 슬라이스 C flush 소스), emit 순서대로. */
     fun boardPostInserts(): List<BoardPostInsert> = boardPostInserts.toList()
@@ -760,6 +775,7 @@ class ChangeRecorder(
         auctionUpserts.clear()
         auctionBidInserts.clear()
         bettingInserts.clear()
+        profileIconUpdates.clear()
         boardPostInserts.clear()
         boardCommentInserts.clear()
         votePollInserts.clear()

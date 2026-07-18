@@ -175,6 +175,10 @@ class JdbcFlushExecutor(
                 // W0-8: PHP insertUpdate 패러티 — 동일 (general,betting,type) 재베팅은 amount 누적 UPSERT.
                 bettingUpsertMany(payload.bettingInserts)
             }
+            if (payload.profileIconUpdates.isNotEmpty()) {
+                // OPENSAM-94: general.picture/image_server 전용 컬럼 UPDATE (owner/npc 재-단언 predicate).
+                profileIconUpdateMany(payload.profileIconUpdates)
+            }
 
             // 8d. 게시판 채널 (F4 C2 슬라이스 C): board_post INSERT 후 board_comment INSERT —
             //     부모-먼저-자식 순서라 댓글의 post_id FK 대상이 먼저 존재한다 (board_comment →
@@ -1168,6 +1172,36 @@ class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("ng_betting", FlushVerb.UPSERT, rows.size))
     }
 
+    /**
+     * OPENSAM-94 프로필 아이콘 sync — `general.picture`/`image_server` 전용 표시-컬럼 UPDATE.
+     *
+     * generalUpdate SET 절이 picture/image_server를 방출하지 않으므로(officer_city #17류 typed-컬럼 누락)
+     * 전용 채널로 영속한다. WHERE의 `user_id = :user_id AND npc_state = 0`은 소유권/NPC predicate를
+     * SQL 레벨에서 재-단언한다 — 핸들러의 owner+npc 선택과 함께 이중 방어(잘못된 id로 NPC/타 소유
+     * 행을 덮어쓸 수 없다). 값이 동일한 재적용은 무해(idempotent).
+     */
+    private fun profileIconUpdateMany(rows: List<ProfileIconUpdateRow>) {
+        val batch: Array<SqlParameterSource> = rows.map { r ->
+            val c = r.columns
+            MapSqlParameterSource()
+                .addValue("id", c["id"])
+                .addValue("user_id", c["user_id"])
+                .addValue("picture", c["picture"])
+                .addValue("image_server", c["image_server"])
+        }.toTypedArray()
+        jdbc.batchUpdate(
+            """
+            UPDATE general
+               SET picture = :picture,
+                   image_server = :image_server,
+                   updated_at = now()
+             WHERE id = :id AND user_id = :user_id AND npc_state = 0
+            """.trimIndent(),
+            batch,
+        )
+        lastOps.add(FlushExecOp("general", FlushVerb.UPDATE, rows.size))
+    }
+
     // --- step 8d: 게시판 채널 (F4 C2 슬라이스 C, 회의실/기밀실) ----------------------------------
 
     /**
@@ -1821,6 +1855,9 @@ data class FlushPayload(
     val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
     val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
     val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
+    // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE. generalUpdate
+    // SET 절이 이 두 표시-컬럼을 방출하지 않으므로(officer_city #17류 누락) 전용 채널로 영속한다.
+    val profileIconUpdates: List<ProfileIconUpdateRow> = emptyList(), // step-8b general portrait UPDATE (OPENSAM-94)
     // --- F4 Wave C2 슬라이스 C: 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT ---
     val boardPostInserts: List<BoardPostInsertRow> = emptyList(),     // step-8d board_post INSERT
     val boardCommentInserts: List<BoardCommentInsertRow> = emptyList(), // step-8d board_comment INSERT
@@ -1918,6 +1955,8 @@ data class AuctionBidInsertRow(val columns: Map<String, Any?>)
  * amount-누적 UPSERT (UNIQUE(general_id,betting_id,betting_type) 충돌 시 amount += EXCLUDED.amount).
  */
 data class BettingInsertRow(val columns: Map<String, Any?>)
+/** OPENSAM-94 프로필 아이콘 sync — general portrait 컬럼(picture/image_server) UPDATE 운반체. */
+data class ProfileIconUpdateRow(val columns: Map<String, Any?>)
 
 /**
  * 신규 장수 INSERT 한 건 (B1 장수생성 foundation). `id`는 `general.id integer PRIMARY KEY`(NOT serial)
