@@ -1,6 +1,7 @@
 package opensamguk.gateway.profile
 
 import java.nio.channels.SeekableByteChannel
+import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.OpenOption
@@ -14,6 +15,20 @@ internal fun secureTestRootStreamFactory(
     replaceOnMove: Boolean = false,
 ) = ProfileIconRootStreamFactory { root ->
     PathBackedSecureDirectoryStream(root, replaceOnMove)
+}
+
+/**
+ * A directory stream that is deterministically NOT a [SecureDirectoryStream] on every platform,
+ * to exercise the constructor's fail-closed path. `Files.newDirectoryStream` cannot serve this
+ * role because it returns a `SecureDirectoryStream` on Linux (secure streams supported) but a
+ * plain one on macOS (not supported) — so relying on it makes the test pass only on macOS.
+ */
+internal fun unsupportedTestRootStreamFactory() = ProfileIconRootStreamFactory { root ->
+    val delegate = Files.newDirectoryStream(root)
+    object : DirectoryStream<Path> {
+        override fun iterator(): MutableIterator<Path> = delegate.iterator()
+        override fun close() = delegate.close()
+    }
 }
 
 private class PathBackedSecureDirectoryStream(

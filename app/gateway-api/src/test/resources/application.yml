@@ -20,7 +20,10 @@ spring:
       max-request-size: 64KB
 
 profile-icon:
-  storage-root: /tmp/opensamguk-profile-icons-test
+  # Must be free of symlinked ancestors on every platform: the production
+  # canonicalStorageRoot guard rejects a symlinked ancestor, and on macOS /tmp
+  # is a symlink to /private/tmp. Resolve under the module build dir instead.
+  storage-root: build/test-profile-icons
   max-bytes: 51200
   zone-id: Asia/Seoul
   shared-manifest: profile-icons/shared-manifest.json

@@ -61,7 +61,7 @@ class LocalProfileIconStorageTest {
         assertThrows(ProfileIconStorageException::class.java) {
             LocalProfileIconStorage(
                 configuredRoot,
-                rootStreamFactory = ProfileIconRootStreamFactory { root -> Files.newDirectoryStream(root) },
+                rootStreamFactory = unsupportedTestRootStreamFactory(),
             )
         }
 
