@@ -26,7 +26,9 @@
 - Verification run (batch-3 리뷰 시점): 각 리뷰어 직접 재실행 — 92 53/53·typecheck 0·build OK, 94 suite XML failures=0 errors=0(격리 재실행 포함), 91a gateway 132/132·infra 140/140. closeout Phase B가 전량 재실행 예정.
 - Verification NOT run: 라이브 브라우저 QA(92·93 — 후속 verifier), Sentry SDK 실행 경로, Claude GHA/CodeRabbit 실리뷰(다음 PR).
 - Open questions (사람 결정 필요): ① Sentry 사용자 토큰 회전(채팅 노출 이력) ② lane-97-fullrun 인수 여부 + scratchpad 산출물 위치 ③ `codex/full-frame-portrait-resize` push 경위 확인(위 불일치) ④ `.codex/config.toml` `max_threads=1000` 제거 diff 커밋 포함 여부 ⑤ EC2 정지 해제 여부(A5 전제).
-- Next action: **A4 승인 대기 중** — 커밋 분할안 제시 완료, 사람 승인 시 티켓별 커밋 + PR 오픈(머지·배포는 별도 A5). `.codex/config.toml` 모델 핀 제거는 승인 시 커밋에 포함(거부 시 원복 가능).
+- **A4 완료 (2026-07-18, 사용자 승인)**: 티켓별 6커밋(`14a02afd` 91 → `a8fbcc99` 93 → `7e06fd46` 92 → `12792b94` 94 → `fe2d23c5` 헥스맵 → `9831cc45` docs/원장/설정) + CI 픽스 `413cc8e6` push.
+- **A5 완료 (2026-07-18, 사용자 승인)**: **PR #260 머지됨**(2026-07-18T05:00:57Z, main `064d5e1a`). 자동 배포 런은 EC2 정지(요금 미납)로 **취소** — 사용자 지시: "나중에 요금 납부하면 다시 배포만 하면 됨". Jira 동기화 완료(90·91·92·93·94·102·103 완료 전이, 97 진행중 유지, 98·100·95·104·105 batch-4 코멘트) + GitHub #232~236·#245·#246 close, #240 유지.
+- Next action: lane-97 초상 전수 크롤 완주 → 얼굴 크롭 전량 적용 → opensamguk-images 2차 푸시 · 시나리오 체계 스펙 정식화(scratchpad 설계 노트 → docs/superpowers/specs/) · batch-4 선정 확정 · EC2 요금 납부 후 최신 main 재배포.
 - Must-read files for next action: `.ai/ownership.md`, `docs/superpowers/plans/2026-07-17-opensam-92-93-94-97-103-execution-contract.md`, `docs/loops/opensam-batch3-2026-07-17/reviews/`, `docs/agent/verification.md`
 
 > 이 파일은 마지막 갱신 시점의 스냅샷이다. 오래됐으면 `git log --oneline -10`과 `docs/loops/*/LEDGER.md`로 교차 검증하라.
