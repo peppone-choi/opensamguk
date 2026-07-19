@@ -1,7 +1,7 @@
 # Current Task
 
 - Status: active
-- Updated at: 2026-07-18
+- Updated at: 2026-07-19
 - Seeded by: 사용자 인터뷰(2026-07-16) — "현재 루프 반영" 선택. 내용 변경은 사람이 한다.
 
 ## Goal
@@ -16,7 +16,7 @@
    - 최근 커밋 `ab69a7f6`이 "reviewed v2 foundation" 보존 — 구현(V2-1)은 아직 시작 전.
 3. **CQRS runtime safety** (`OPENSAM-116`, 계획 정본 `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`)
    - bounded hot/cold memory, end-to-end `world_id`, generation-safe flush, writer fencing/CAS, durable command inbox/outbox, versioned primary reads를 W0→W5 순서로 구현한다.
-   - 현재 시작점: W0 `OPENSAM-123` 재현 가능한 heap/snapshot/latency baseline. `OPENSAM-124` consistency/failure contract는 disjoint 문서 범위에서 병행 가능하다.
+   - 현재 시작점: 승인된 foundation-unblock 순서의 B0 `OPENSAM-148` canonical world identity는 로컬 구현·독립 리뷰까지 완료했다. 다음 B1 `OPENSAM-126` scoped schema는 이 foundation을 land한 뒤 시작하며, W0 live-capacity/W3 증거는 activation/cutover gate로 유지한다.
 
 ## User value
 
@@ -38,7 +38,7 @@
 - 백엔드: `tools/parity/gate.sh backend` green(XML `failures="0" errors="0"` 확인).
 - 프론트: 해당 앱 `pnpm typecheck`(+ web/game은 `pnpm test`) green.
 - 비자명 작업: 독립 에이전트의 cross-agent critique가 `cleared`.
-- CQRS W0: production-shaped JVM/container 조건의 3회 baseline artifact와 명시된 consistency/failure contract. 이후 wave는 각 Jira GWT와 계획의 completion predicate를 충족한다.
+- CQRS build-only: identity → S2 → S3 → S4 순서와 각 Jira GWT/completion predicate를 충족한다. W0 production-shaped baseline과 W3 binding은 second-world admission·activation·cutover 전 별도 gate로 충족한다.
 
 ## Constraints
 

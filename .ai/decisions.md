@@ -141,6 +141,18 @@
 
 ---
 
+## ADR-LITE-015 CQRS foundation-unblock 의존성 재분해
+
+- Date: 2026-07-19
+- Status: approved
+- Decision: canonical `world_id` 계약을 broad V2-0B `OPENSAM-43`에서 분리한 전용 CQRS foundation(`OPENSAM-148`, GitHub `#298`)으로 먼저 확정한다. 이 foundation은 `OPENSAM-43`과 scoped schema `OPENSAM-126`을 모두 block한다. `OPENSAM-43`의 G0 선행·11항목 범위는 축소하거나 완료 처리하지 않는다. Build-only 순서는 identity foundation → S2 world scope → S3 generation/fence/CAS/recovery → S4 durable inbox/outbox이며, 그 뒤에만 GA-079를 활성화한다.
+- Context: 기존 계획은 W1에서 `OPENSAM-43 Done`을 요구하지만 `OPENSAM-43` 자체가 G0 뒤의 broad V2-0B 티켓이고, W0 계약 승인은 W3 binding을 기다리면서 W3는 W1/W2를 기다리는 순환 의존성이 있었다. 정지된 EC2 때문에 OPENSAM-123 live-capacity 증거도 지금 만들 수 없다.
+- Constraints: OPENSAM-123 live-capacity 증거와 OPENSAM-124의 W3 durable binding은 production activation/cutover gate로 유지한다. Local surrogate를 live 근거로 승격하지 않고, 임시 singleton identity·API general write·ring-only activation·두 번째 world admission을 금지한다.
+- Consequences: 계약 승인과 build-only foundation은 순환에서 해제되지만, production activation은 live-capacity, two-world isolation, scoped flush, writer epoch/world-version CAS, recovery, durable inbox/result/outbox gate가 모두 green일 때까지 금지된다.
+- Approved by: 사용자 (2026-07-19, foundation-unblock 개정안에 "승인.")
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

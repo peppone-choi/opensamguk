@@ -48,7 +48,9 @@
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
-| `cqrs-hardening-root` | OPENSAM-116 W0→W5 orchestration; current W0 OPENSAM-123/124 | `codex/op-123-cqrs-runtime-baseline` | `.ai/*`; `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md` | active — user approved contract and ownership transfer; source ownership is assigned per ticket after discovery | 2026-07-18 |
+| `cqrs-hardening-root` | OPENSAM-116 W0→W5 orchestration; foundation unblock OPENSAM-148 | `codex/op-123-cqrs-runtime-baseline` | `.ai/*` | active — OPENSAM-148 local implementation/review cleared; external evidence sync and land checkpoint | 2026-07-19 |
+| `cqrs-world-id-foundation` | OPENSAM-148 canonical world identity contract/type | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — strict JSON integer serializer; RED 9/2/0 → GREEN 9/0/0; 재검토로 인계 | 2026-07-19 |
+| `cqrs-world-id-reviewer` | OPENSAM-148 independent contract/type review | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — quoted numeric MAJOR remediated; final verdict cleared, 217 common + 3,110 logic green | 2026-07-19 |
 | `cqrs-w0-baseline-implementer` | OPENSAM-123 reproducible heap/snapshot/latency harness | shared workspace (disjoint) | — (해제) | completed/released — corrected 3×/3× seed-proxy capture, symlink-safe analyzer, 20/20 tests; production-shape acceptance remains pending | 2026-07-18 |
 | `cqrs-w0-contract-implementer` | OPENSAM-124 consistency/failure architecture contract | shared workspace (disjoint) | `docs/superpowers/specs/2026-07-18-cqrs-consistency-failure-contract.md` | completed/released — safe-but-blocked contract; GA-079 requires PHP capture and approved daemon-owned lifecycle | 2026-07-18 |
 | `cqrs-w0-baseline-reviewer` | OPENSAM-123 independent implementation/artifact review | shared workspace (disjoint) | — (해제) | completed/released — final PASS/WATCH/APPROVE; strict Scope/Verdict anchors green | 2026-07-18 |

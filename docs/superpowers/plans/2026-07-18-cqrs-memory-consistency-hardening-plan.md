@@ -43,7 +43,8 @@
 
 | 기존 티켓 | 기존 소유 범위 | 이 초안과의 관계 |
 |---|---|---|
-| `OPENSAM-43` | `world_id` 전제와 command/turn payload version | `ARCH-S2-T1`의 hard predecessor. identity를 재정의하지 않고 완료된 canonical 계약을 소비한다. |
+| `OPENSAM-148` / GitHub `#298` | canonical `world_id` contract and `WorldId` value type | `ARCH-S2-T0`의 foundation 단일 소유자다. `OPENSAM-43`과 `OPENSAM-126`을 block하며, build-only S2→S3→S4가 이 계약을 소비한다. |
+| `OPENSAM-43` | broad V2-0B `world_id` work (G0 선행과 기존 11항목 범위 전체) | `OPENSAM-148`에 의해 block되지만 **open으로 유지**한다. foundation은 이 티켓의 범위를 축소하거나 Done 처리하지 않는다. |
 | `OPENSAM-44` | v2 entity의 `ChangeRecorder → JdbcFlushExecutor` 영속화 | shared flush substrate를 병렬 수정하지 않는다. `ARCH-S2-T3`, `ARCH-S3-T1`, `ARCH-S3-T2`가 foundation 단일 소유자이며 handoff 뒤 OPENSAM-44가 소비한다. |
 | `OPENSAM-45` | Accepted/Resolved/Rejected UI·SSE lifecycle와 query invalidation | `ARCH-S4-T3`의 durable result/outbox 계약을 선행 기반으로 소비한다. 프론트 lifecycle을 이 초안에서 중복 구현하지 않는다. |
 | `OPENSAM-33` | 60초 cadence 운영 smoke와 관측 배선 | `ARCH-S6-T2` 검증에 재사용한다. |
@@ -80,7 +81,7 @@
   - Given API가 command에 `202 Accepted`를 반환한 직후 API/engine/Redis 중 하나가 중단되는 상황, When 서비스가 재개되면, Then PostgreSQL 원장에서 command를 찾아 중복 적용 없이 durable terminal result에 도달한다.
   - Given world A와 B에 동일한 local general/nation/city ID가 존재할 때, When boot/read/precheck/intake/flush/delete를 수행하면, Then 모든 결과와 부수효과가 요청한 `world_id`에만 발생한다.
   - Given client가 `minVersion=V`인 authoritative read를 요청할 때, When query path가 응답하면, Then primary에서 `world_version >= V`인 결과를 주거나 명시적인 version-not-visible 응답을 반환하며 stale 데이터를 성공 응답으로 위장하지 않는다.
-- **의존성:** `OPENSAM-43` 완료가 scoped schema 시작의 hard predecessor. `OPENSAM-44`, `OPENSAM-45`, `OPENSAM-33`, `OPENSAM-72`와 위 경계대로 link한다.
+- **의존성:** `OPENSAM-148` canonical identity foundation이 scoped schema 시작의 hard predecessor이며 `OPENSAM-43`의 broad V2 범위 완료는 요구하지 않는다. `OPENSAM-148`은 `OPENSAM-43`과 `OPENSAM-126`을 block한다. `OPENSAM-44`, `OPENSAM-45`, `OPENSAM-33`, `OPENSAM-72`와 위 경계대로 link한다.
 - **검증 방법:** 모든 하위 Story gate, two-world isolation IT, crash/replay fault matrix, heap/JFR 3회 측정, backend parity gate, architecture tests, staging canary 증거를 Epic에 링크한다.
 
 ### ARCH-S1 — [P0] Runtime baseline, consistency contract, and capacity guardrails
@@ -127,18 +128,29 @@
 - **우선순위:** Highest
 - **사용자 가치:** 여러 게임 world가 같은 DB/Redis를 사용해도 한 world의 조회·명령·삭제가 다른 world의 데이터를 오염시키지 않는다.
 - **수용 기준 (GWT):** Given world A/B가 같은 local entity ID를 가질 때, When 두 별도 engine process/context로 핵심 lifecycle을 실행하면, Then schema, loader, API, Redis key, flush와 delete가 모두 `world_id`로 격리되고 unscoped live query/write가 gate에서 실패한다.
-- **의존성:** `OPENSAM-43` Done 및 canonical `world_id` payload/schema 계약 공개, `ARCH-S1-T2` 완료.
+- **의존성:** `ARCH-S2-T0` (`OPENSAM-148`) 완료 및 canonical `world_id` contract artifact 공개. `ARCH-S1-T2`는 설계 참조이지만, local/live `OPENSAM-123` proof와 `OPENSAM-124` W3 durable binding은 build-only foundation의 blocker가 아니라 activation/cutover gate다.
 - **검증 방법:** migration 검증, query/write scope architecture test, two-world Testcontainers integration suite.
+
+#### ARCH-S2-T0 — Canonical world identity foundation
+
+- **유형:** Sub-task
+- **우선순위:** Highest
+- **사용자 가치:** 모든 후속 scoped schema와 runtime 경로가 같은 world를 가리키도록, 모호하지 않은 식별자와 거절 규칙을 먼저 공유한다.
+- **수용 기준 (GWT):** Given world identity가 필요한 Kotlin/SQL/wire 경계가 있을 때, When canonical contract와 `WorldId` type을 적용하면, Then PostgreSQL `world_state.id`의 positive SQL `INTEGER`만 canonical identity이고 Kotlin은 positive `Int`를 감싼 `@Serializable @JvmInline WorldId`, wire는 JSON integer scalar `worldId`를 사용한다.
+- **수용 기준 (GWT):** Given `profile`, `server_id`, `ng_games.id`, 누락 world id, 또는 불일치한 world id가 있을 때, When 경계를 평가하면, Then 이들은 alias/default/fallback이 되지 않고 명시적으로 거절된다. 모든 local/request key는 `(world_id, local/request id)` composite contract를 따른다.
+- **수용 기준 (GWT):** Given 아직 single-world expand 단계일 때, When 장래 backfill 규칙을 검토하면, Then 정확히 하나의 `world_state` row인 경우에만 그 `id`를 backfill source로 허용하고 0개·복수·orphan은 fail-closed한다.
+- **의존성:** 없음. `OPENSAM-148`은 `OPENSAM-43`과 `OPENSAM-126`을 block한다. local/live `OPENSAM-123` proof와 `OPENSAM-124` W3 durable binding은 이 contract approval 또는 build-only foundation의 선행 조건이 아니라 activation/cutover gate다.
+- **검증 방법:** focused `WorldId` construction/JSON scalar test, contract review, and later S2 schema/query implementations against this contract. second-world admission/cutover, full-table migration, and W3 activation are out of scope.
 
 #### ARCH-S2-T1 — Scoped live schema expand, backfill, and constraints
 
 - **유형:** Sub-task
 - **우선순위:** Highest
 - **사용자 가치:** 데이터베이스 자체가 cross-world 중복 ID와 잘못된 참조를 차단한다.
-- **수용 기준 (GWT):** Given `OPENSAM-43`의 canonical `world_id` type/identity 계약, When schema inventory와 expand migration을 실행하면, Then mutable live뿐 아니라 append-only/cold/satellite인 log, history, rank, turn, KV, message, auction, archive-style world data와 향후 inbox/result/outbox를 포함한 **모든 world-owned table**이 scoped key/FK/unique/index 계약을 가지며 기존 단일-world backfill의 null/orphan/duplicate 검사가 0건이다.
+- **수용 기준 (GWT):** Given `OPENSAM-148`의 canonical `world_id` type/identity 계약, When schema inventory와 expand migration을 실행하면, Then mutable live뿐 아니라 append-only/cold/satellite인 log, history, rank, turn, KV, message, auction, archive-style world data와 향후 inbox/result/outbox를 포함한 **모든 world-owned table**이 scoped key/FK/unique/index 계약을 가지며 기존 단일-world backfill의 null/orphan/duplicate 검사가 0건이다.
 - **수용 기준 (GWT):** Given schema inventory의 어떤 table이 `world_id`를 갖지 않을 때, When migration review를 수행하면, Then 해당 table은 world-independent global owner, 접근 경계, 근거가 기록된 allowlist에 있어야 하며 allowlist 밖 unscoped table은 gate를 통과하지 못한다.
 - **수용 기준 (GWT):** Given 아직 두 번째 world가 admission되지 않은 expand 단계, When 구버전 호환 binary를 실행하면, Then 제한된 same-DB default/trigger로 단일 authority를 유지할 수 있고 별도 DB/Redis dual write는 발생하지 않는다.
-- **의존성:** `OPENSAM-43` Done + identity contract artifact, `ARCH-S1-T2` 완료.
+- **의존성:** `ARCH-S2-T0` (`OPENSAM-148`) identity contract artifact. `OPENSAM-148`이 이 ticket/`OPENSAM-126`을 block한다; `OPENSAM-43`의 broad V2 scope closure와 `ARCH-S1-T2`의 W3 binding은 build-only schema foundation의 선행 조건이 아니다.
 - **검증 방법:** fresh migration, production-shaped dump migration rehearsal, constraint-negative tests, 전체 table ownership inventory와 global allowlist diff. 누락 world-owned table이 0개임을 체크한다.
 
 #### ARCH-S2-T2 — Scope loader, query/precheck, reservation, and Redis keys
@@ -344,16 +356,19 @@
 
 | Wave | 작업 | 다음 Wave로 넘어가는 정확한 조건 |
 |---|---|---|
-| W0 | `S1-T1`, `S1-T2` 병렬 → `S1-T3` | 3회 baseline artifact, 승인된 consistency/failure 계약, 수치가 고정된 capacity policy |
-| W1 | `OPENSAM-43` 완료 확인 → `S2-T1` → `S2-T2`/`S2-T3` → `S2-T4` | canonical `world_id`, scoped schema/read/write/key, two-world 동일-ID gate green |
-| W2 | `S3-T1` → `S3-T2` → shared-contract handoff → `S3-T3` | generation state machine, fence/CAS rollback, recovery 동안 intake/tick 정지 증거; OPENSAM-44 handoff link |
-| W3 | `S4-T1` → `S4-T3` → `S4-T2` ACK activation → `S4-T4` | DB-before-202, atomic result/outbox, post-commit ACK, 전체 crash matrix green |
+| W0 (evidence) | `S1-T1`, `S1-T2` 병렬 → `S1-T3` | local/live `OPENSAM-123` proof와 `OPENSAM-124` W3 durable binding은 activation/cutover evidence로 유지한다. 이 증거의 보류는 아래 build-only foundation을 막지 않는다. |
+| B0 (build-only) | `S2-T0` / `OPENSAM-148` canonical identity | positive `WorldId`, SQL/wire contract, alias/default rejection, single-world fail-closed backfill rule. `OPENSAM-43`은 broad V2 scope를 보존한 채 open으로 남는다. |
+| B1 (build-only) | `S2-T1` → `S2-T2`/`S2-T3` → `S2-T4` | canonical identity를 소비한 scoped schema/read/write/key와 two-world 동일-ID gate green. `OPENSAM-148`이 `OPENSAM-126`을 block한다. |
+| B2 (build-only) | `S3-T1` → `S3-T2` → shared-contract handoff → `S3-T3` | generation state machine, fence/CAS rollback, recovery 동안 intake/tick 정지 증거; OPENSAM-44 handoff link |
+| B3 (build-only) | `S4-T1` → `S4-T3` → `S4-T2` ACK/reclaim implementation (inactive) → `S4-T4` | DB-before-202, atomic result/outbox, post-commit ACK, 전체 crash matrix green; durable W3 activation은 activation/cutover gate에서만 허용 |
+| Activation/cutover | local/live `OPENSAM-123` proof + `OPENSAM-124` W3 durable binding + B0→B3 evidence | 위 두 W0 proof가 승인되기 전에는 second-world admission, durable W3 activation, production cutover를 실행하지 않는다. |
 | W4 | `S5-T1`과 `S5-T3`의 구현은 durability gate 뒤 분리 가능 → `S5-T2` | bounded phase prefetch, full-history scan 0, 10배 cold heap delta 기준 통과, primary version barrier green |
 | W5 | `S6-T1` → `S6-T2` → `S6-T3` | rollback fence/canary/parity 통과, signed replica GO/NO-GO ADR; GO라도 별도 승인 전 provisioning 0 |
 
 ### 병렬화 제한
 
 - `ChangeRecorder`, `JdbcFlushExecutor`, shared delta/flush contract는 `ARCH-S2-T3 → S3-T1 → S3-T2` 단일 writer 순서를 지킨다.
+- Build-only foundation 순서는 `ARCH-S2-T0` (identity) → `ARCH-S2` → `ARCH-S3` → `ARCH-S4`다. `OPENSAM-123` local/live proof와 `OPENSAM-124` W3 binding은 이 순서의 approval/implementation blocker가 아니라 activation/cutover gate다.
 - `OPENSAM-44`는 handoff 전 shared foundation을 수정하지 않는다.
 - Redis consumer-group 코드는 사전 준비할 수 있지만 ACK/reclaim을 활성화하는 배포는 `S3-T3`, `S4-T1`, `S4-T3` 완료 뒤다.
 - hot/cold access-graph 조사는 일찍 할 수 있지만 runtime activation은 `S1-T3`와 `S4-T4` 뒤다.
@@ -361,6 +376,12 @@
 ## 7. Jira/GitHub 발행 매핑
 
 승인 뒤 다음 순서로 발행한다.
+
+### Foundation-unblock addendum (2026-07-19)
+
+- `ARCH-S2-T0` maps to Jira [`OPENSAM-148`](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-148) and GitHub [#298](https://github.com/peppone-choi/opensamguk/issues/298).
+- `OPENSAM-148` blocks `OPENSAM-43` and `OPENSAM-126`; `OPENSAM-43` remains open with its broad V2-0B scope intact.
+- This mapping records a build-only foundation. It does not admit a second world, run a migration, activate W3 durable inbox/outbox behavior, or authorize production cutover.
 
 1. Jira Epic `ARCH-E1`을 생성하고 발행된 key를 기록한다.
 2. Jira Story 6개를 Epic parent로 생성한다.
@@ -390,6 +411,8 @@
 
 승인은 구현, commit, push, PR, merge, deploy, read replica 생성 또는 production data migration을 포함하지 않았으며 실행하지 않았다.
 
+2026-07-19 사용자는 foundation-unblock amendment를 승인했다. 따라서 `OPENSAM-148/#298` contract approval과 build-only `identity → S2 → S3 → S4`는 local/live `OPENSAM-123` proof 또는 `OPENSAM-124` W3 binding을 기다리지 않는다. 두 증거는 activation/cutover gate로만 유지한다.
+
 ## 9. 검토 기록
 
 - 저장소와 Jira/GitHub 기존 backlog를 read-only로 대조했다.
@@ -414,6 +437,7 @@
 | `ARCH-S1-T2` | [OPENSAM-124](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-124) | [#270](https://github.com/peppone-choi/opensamguk/issues/270) |
 | `ARCH-S1-T3` | [OPENSAM-125](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-125) | [#271](https://github.com/peppone-choi/opensamguk/issues/271) |
 | `ARCH-S2` | [OPENSAM-118](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-118) | [#264](https://github.com/peppone-choi/opensamguk/issues/264) |
+| `ARCH-S2-T0` | [OPENSAM-148](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-148) | [#298](https://github.com/peppone-choi/opensamguk/issues/298) |
 | `ARCH-S2-T1` | [OPENSAM-126](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-126) | [#272](https://github.com/peppone-choi/opensamguk/issues/272) |
 | `ARCH-S2-T2` | [OPENSAM-127](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-127) | [#273](https://github.com/peppone-choi/opensamguk/issues/273) |
 | `ARCH-S2-T3` | [OPENSAM-128](https://pepponechoi-jira.atlassian.net/browse/OPENSAM-128) | [#274](https://github.com/peppone-choi/opensamguk/issues/274) |
