@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opensamguk.local/schema/cqrs-production-shape-manifest.v3.json",
+  "title": "OPENSAM-123 sanitized production-shape manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sha256", "loaderInputInventorySha256", "payloadByteSemantics", "source", "observed", "fixture"],
+  "properties": {
+    "schemaVersion": { "const": "cqrs-production-shape-manifest.v3" },
+    "sha256": { "$ref": "#/$defs/sha256" },
+    "loaderInputInventorySha256": { "$ref": "#/$defs/sha256" },
+    "payloadByteSemantics": { "const": "selected-loader-fields-postgres-text-bytes.v1" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceClass", "observedAt", "provenance"],
+      "properties": {
+        "sourceClass": { "const": "production-aggregate-observation" },
+        "observedAt": { "$ref": "#/$defs/utcTimestamp" },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/provenanceRecord" }
+        }
+      }
+    },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tableCardinalities", "snapshotCardinalities", "loaderInputs"],
+      "properties": {
+        "tableCardinalities": { "$ref": "#/$defs/tableCardinalities" },
+        "snapshotCardinalities": { "$ref": "#/$defs/snapshotCardinalities" },
+        "loaderInputs": { "$ref": "#/$defs/loaderInputs" }
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profiles"],
+      "properties": {
+        "profiles": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["current", "cold10x"],
+          "properties": {
+            "current": { "$ref": "#/$defs/fixtureProfile" },
+            "cold10x": { "$ref": "#/$defs/fixtureProfile" }
+          }
+        }
+      }
+    }
+  },
+  "$comment": "The Python validator is normative for canonical SHA-256, checked-in loader-inventory binding, provenance coverage, equality with observed current metrics, and the exact 10x cold-history relation. This schema permits only aggregate metrics, timestamps, evidence digests, and approved source classes; it has no path, host, raw row, or identifier fields.",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "Z$",
+      "format": "date-time"
+    },
+    "nonNegativeCardinality": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "positivePayloadBytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1048576
+    },
+    "positiveRowCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "tableCardinalities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldState", "city", "nation", "general", "diplomacy", "rankData", "logEntry"],
+      "properties": {
+        "worldState": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "city": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "nation": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "general": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "diplomacy": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "rankData": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "logEntry": { "$ref": "#/$defs/nonNegativeCardinality" }
+      }
+    },
+    "snapshotCardinalities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generals", "cities", "nations", "diplomacy", "accessLogs", "globalLogs", "nationHistoryEntries", "generalHistoryEntries"],
+      "properties": {
+        "generals": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "cities": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "nations": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "diplomacy": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "accessLogs": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "globalLogs": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "nationHistoryEntries": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "generalHistoryEntries": { "$ref": "#/$defs/nonNegativeCardinality" }
+      }
+    },
+    "payloadSizeBytes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hotAction", "coldHistory"],
+      "properties": {
+        "hotAction": { "$ref": "#/$defs/positivePayloadBytes" },
+        "coldHistory": { "$ref": "#/$defs/positivePayloadBytes" }
+      }
+    },
+    "loaderInputMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceRows", "retainedItems", "payloadBytes"],
+      "properties": {
+        "sourceRows": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "retainedItems": { "$ref": "#/$defs/nonNegativeCardinality" },
+        "payloadBytes": { "$ref": "#/$defs/nonNegativeCardinality" }
+      }
+    },
+    "loaderInputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["worldState", "ngGames", "archivedNationIds", "statistics", "nationHistoryLogs", "generalHistoryLogs", "systemActionLogs", "systemHistoryLogs", "activeUniqueAuctionItems", "storedUniqueItemNamespaces", "gameEnv", "nationEnv", "inheritancePoints", "generalRankValues", "nations", "cities", "generals", "diplomacy", "generalAccessLogs"],
+      "properties": {
+        "worldState": { "$ref": "#/$defs/loaderInputMetric" },
+        "ngGames": { "$ref": "#/$defs/loaderInputMetric" },
+        "archivedNationIds": { "$ref": "#/$defs/loaderInputMetric" },
+        "statistics": { "$ref": "#/$defs/loaderInputMetric" },
+        "nationHistoryLogs": { "$ref": "#/$defs/loaderInputMetric" },
+        "generalHistoryLogs": { "$ref": "#/$defs/loaderInputMetric" },
+        "systemActionLogs": { "$ref": "#/$defs/loaderInputMetric" },
+        "systemHistoryLogs": { "$ref": "#/$defs/loaderInputMetric" },
+        "activeUniqueAuctionItems": { "$ref": "#/$defs/loaderInputMetric" },
+        "storedUniqueItemNamespaces": { "$ref": "#/$defs/loaderInputMetric" },
+        "gameEnv": { "$ref": "#/$defs/loaderInputMetric" },
+        "nationEnv": { "$ref": "#/$defs/loaderInputMetric" },
+        "inheritancePoints": { "$ref": "#/$defs/loaderInputMetric" },
+        "generalRankValues": { "$ref": "#/$defs/loaderInputMetric" },
+        "nations": { "$ref": "#/$defs/loaderInputMetric" },
+        "cities": { "$ref": "#/$defs/loaderInputMetric" },
+        "generals": { "$ref": "#/$defs/loaderInputMetric" },
+        "diplomacy": { "$ref": "#/$defs/loaderInputMetric" },
+        "generalAccessLogs": { "$ref": "#/$defs/loaderInputMetric" }
+      }
+    },
+    "fixtureProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tableCardinalities", "snapshotCardinalities", "loaderInputs", "fixedHotActionRows", "coldHistoryRows", "payloadSizeBytes"],
+      "properties": {
+        "tableCardinalities": { "$ref": "#/$defs/tableCardinalities" },
+        "snapshotCardinalities": { "$ref": "#/$defs/snapshotCardinalities" },
+        "loaderInputs": { "$ref": "#/$defs/loaderInputs" },
+        "fixedHotActionRows": { "$ref": "#/$defs/positiveRowCount" },
+        "coldHistoryRows": { "$ref": "#/$defs/positiveRowCount" },
+        "payloadSizeBytes": { "$ref": "#/$defs/payloadSizeBytes" }
+      }
+    },
+    "localSanitizedAggregatePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "sha256", "loaderInputInventorySha256", "payloadByteSemantics", "source", "fixture"],
+      "properties": {
+        "schemaVersion": { "const": "cqrs-local-sanitized-aggregate-policy.v1" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "loaderInputInventorySha256": { "$ref": "#/$defs/sha256" },
+        "payloadByteSemantics": { "const": "selected-loader-fields-postgres-text-bytes.v1" },
+        "source": { "$ref": "#/$defs/localSanitizedAggregateSource" },
+        "fixture": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profiles"],
+          "properties": {
+            "profiles": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["current", "cold10x"],
+              "properties": {
+                "current": { "$ref": "#/$defs/fixtureProfile" },
+                "cold10x": { "$ref": "#/$defs/fixtureProfile" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "localSanitizedAggregateSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceClass", "policyId", "provenance"],
+      "properties": {
+        "sourceClass": { "const": "local-deterministic-policy" },
+        "policyId": { "pattern": "^op123-local-sanitized-aggregate-v[0-9]+$" },
+        "provenance": { "const": "checked-in deterministic local aggregate policy; no production, live, or seeded-db observation" }
+      }
+    },
+    "provenanceRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceClass", "observedAt", "evidenceSha256", "dimensions"],
+      "properties": {
+        "sourceClass": {
+          "enum": [
+            "ci-aggregate-record",
+            "backup-aggregate-query",
+            "database-aggregate-query",
+            "operator-reviewed-aggregate-query"
+          ]
+        },
+        "observedAt": { "$ref": "#/$defs/utcTimestamp" },
+        "evidenceSha256": { "$ref": "#/$defs/sha256" },
+        "dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "tables.worldState", "tables.city", "tables.nation", "tables.general", "tables.diplomacy", "tables.rankData", "tables.logEntry",
+              "snapshot.generals", "snapshot.cities", "snapshot.nations", "snapshot.diplomacy", "snapshot.accessLogs", "snapshot.globalLogs", "snapshot.nationHistoryEntries", "snapshot.generalHistoryEntries",
+              "loaderInputs.worldState", "loaderInputs.ngGames", "loaderInputs.archivedNationIds", "loaderInputs.statistics", "loaderInputs.nationHistoryLogs", "loaderInputs.generalHistoryLogs", "loaderInputs.systemActionLogs", "loaderInputs.systemHistoryLogs", "loaderInputs.activeUniqueAuctionItems", "loaderInputs.storedUniqueItemNamespaces", "loaderInputs.gameEnv", "loaderInputs.nationEnv", "loaderInputs.inheritancePoints", "loaderInputs.generalRankValues", "loaderInputs.nations", "loaderInputs.cities", "loaderInputs.generals", "loaderInputs.diplomacy", "loaderInputs.generalAccessLogs",
+              "fixture.current.fixedHotActionRows", "fixture.current.coldHistoryRows", "fixture.payloadSizeBytes.hotAction", "fixture.payloadSizeBytes.coldHistory"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

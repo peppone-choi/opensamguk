@@ -577,6 +577,114 @@ class RuntimeBaselineRunnerTest(unittest.TestCase):
                 calls,
             )
 
+    def test_main_blocks_production_shape_capture_before_resolve_build_or_docker(self) -> None:
+        arguments = runner.argparse.Namespace(
+            base_rows=None,
+            run_id=None,
+            analyze_run_id=None,
+            production_shape_manifest=Path("/pending/sanitized-shape.json"),
+            validate_production_shape_manifest=None,
+            output_dir=runner.DEFAULT_OUTPUT_ROOT,
+        )
+
+        def capture_path_must_not_run(*args: object, **kwargs: object) -> None:
+            self.fail("production-shape capture reached manifest loading, host resolution, build, Docker, or probe execution")
+
+        with (
+            mock.patch.object(runner, "parse_args", return_value=arguments),
+            mock.patch.object(runner, "load_validated_production_shape_manifest", side_effect=capture_path_must_not_run),
+            mock.patch.object(runner, "resolve_host_jdk21", side_effect=capture_path_must_not_run),
+            mock.patch.object(runner, "build_baseline_jar", side_effect=capture_path_must_not_run),
+            mock.patch.object(runner, "ensure_docker_and_images", side_effect=capture_path_must_not_run),
+            mock.patch.object(runner, "run_probe", side_effect=capture_path_must_not_run),
+            mock.patch.object(runner, "command_output", side_effect=capture_path_must_not_run),
+        ):
+            with self.assertRaisesRegex(runner.RunnerFailure, "production-shape capture is blocked"):
+                runner.main()
+
+    def test_main_rejects_infeasible_local_policy_before_output_jdk_build_or_docker(self) -> None:
+        policy_document = getattr(runner, "local_sanitized_aggregate_policy_document", None)
+        policy_sha256 = getattr(runner, "local_sanitized_aggregate_policy_sha256", None)
+        self.assertIsNotNone(policy_document, "runner must expose its deterministic local policy document")
+        self.assertIsNotNone(policy_sha256, "runner must seal a local policy deterministically")
+
+        build_root = runner.ENGINE_DIR / "build"
+        build_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=build_root) as temporary:
+            root = Path(temporary)
+            output_root = root / "cqrs-runtime-baseline"
+            output_root.mkdir()
+            policy = policy_document()
+            for profile in ("current", "cold10x"):
+                policy["fixture"]["profiles"][profile]["loaderInputs"]["systemActionLogs"]["payloadBytes"] = 0
+            policy["sha256"] = policy_sha256(policy)
+            policy_path = root / "infeasible-local-policy.json"
+            policy_path.write_text(json.dumps(policy), encoding="utf-8")
+
+            arguments = [
+                "run-runtime-baseline.py",
+                "--local-sanitized-aggregate-policy",
+                str(policy_path),
+                "--run-id",
+                "infeasible-local-policy",
+                "--output-dir",
+                str(output_root),
+            ]
+            with (
+                mock.patch.object(sys, "argv", arguments),
+                mock.patch.object(runner, "resolve_host_jdk21") as mocked_jdk,
+                mock.patch.object(runner, "build_baseline_jar") as mocked_build,
+                mock.patch.object(runner, "ensure_docker_and_images") as mocked_docker,
+            ):
+                with self.assertRaises(runner.RunnerFailure):
+                    runner.main()
+
+            self.assertFalse((output_root / "infeasible-local-policy").exists())
+            mocked_jdk.assert_not_called()
+            mocked_build.assert_not_called()
+            mocked_docker.assert_not_called()
+
+    def test_main_rejects_resealed_local_policy_not_equal_to_checked_in_policy_before_output_jdk_build_or_docker(self) -> None:
+        policy_document = getattr(runner, "local_sanitized_aggregate_policy_document", None)
+        policy_sha256 = getattr(runner, "local_sanitized_aggregate_policy_sha256", None)
+        self.assertIsNotNone(policy_document, "runner must expose its checked-in deterministic local policy document")
+        self.assertIsNotNone(policy_sha256, "runner must seal a local policy deterministically")
+
+        build_root = runner.ENGINE_DIR / "build"
+        build_root.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=build_root) as temporary:
+            root = Path(temporary)
+            output_root = root / "cqrs-runtime-baseline"
+            output_root.mkdir()
+            policy = copy.deepcopy(policy_document())
+            policy["source"]["policyId"] = "op123-local-sanitized-aggregate-v999"
+            policy["sha256"] = policy_sha256(policy)
+            policy_path = root / "resealed-but-unchecked-local-policy.json"
+            policy_path.write_text(json.dumps(policy), encoding="utf-8")
+
+            arguments = [
+                "run-runtime-baseline.py",
+                "--local-sanitized-aggregate-policy",
+                str(policy_path),
+                "--run-id",
+                "resealed-but-unchecked-local-policy",
+                "--output-dir",
+                str(output_root),
+            ]
+            with (
+                mock.patch.object(sys, "argv", arguments),
+                mock.patch.object(runner, "resolve_host_jdk21") as mocked_jdk,
+                mock.patch.object(runner, "build_baseline_jar") as mocked_build,
+                mock.patch.object(runner, "ensure_docker_and_images") as mocked_docker,
+            ):
+                with self.assertRaisesRegex(runner.RunnerFailure, "checked-in local sanitized aggregate policy"):
+                    runner.main()
+
+            self.assertFalse((output_root / "resealed-but-unchecked-local-policy").exists())
+            mocked_jdk.assert_not_called()
+            mocked_build.assert_not_called()
+            mocked_docker.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
