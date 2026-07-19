@@ -42,7 +42,7 @@
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
-| `codex-batch4-orchestrator` | OPENSAM-143…147 시나리오 정제·매니페스트·생성·파일럿·시드 E2E | `codex/opensam-143-batch4` / `.claude/worktrees/codex-batch4` | `tools/scenario/**`; `.gitignore`; `docs/superpowers/plans/2026-07-19-opensam-143-batch4-implementation-plan.md`; `docs/superpowers/reviews/2026-07-19-opensam-143-batch4-review.md`; `app/game-engine/src/main/kotlin/opensamguk/engine/boot/ScenarioSeedRunner.kt`; `app/game-engine/src/test/kotlin/opensamguk/engine/boot/ScenarioMapSeedIT.kt`; `app/game-engine/src/test/resources/scenario/scenario_3190_test.json` | completed/released — OPENSAM-143…147 complete, uncommitted, no Git/external mutation. | 2026-07-19 |
+| `codex-batch4-orchestrator` | OPENSAM-143…147 시나리오 정제·매니페스트·생성·파일럿·시드 E2E | `codex/opensam-143-batch4` / `.claude/worktrees/codex-batch4` | `tools/scenario/**`; `.gitignore`; `docs/superpowers/plans/2026-07-19-opensam-143-batch4-implementation-plan.md`; `docs/superpowers/reviews/2026-07-19-opensam-143-batch4-review.md`; `app/game-engine/src/main/kotlin/opensamguk/engine/boot/ScenarioSeedRunner.kt`; `app/game-engine/src/test/kotlin/opensamguk/engine/boot/ScenarioMapSeedIT.kt`; `app/game-engine/src/test/resources/scenario/scenario_3190_test.json` | completed/released — OPENSAM-143…147 committed as `1e7145f2` and locally fast-forward merged into `main` on 2026-07-19; `origin/main` not pushed, PR/deploy/external trackers unchanged; root CQRS branch and user `.codex/config.toml` untouched. | 2026-07-19 |
 
 ## Batch fences (2026-07-17)
 
