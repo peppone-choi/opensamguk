@@ -258,3 +258,62 @@ the remaining 12 are documented in `p2-capture-backlog.md` (opening-year join/�
 restrictions, no age≥60 general for 은퇴, no troop for 집합, max-level capitals for 증축, the
 structurally-un-satisfiable 감축, the exhausted random-capital-move flag, and the seed-fragile
 랜덤임관 lottery). The GS1 gate uses matched-count + that ignore-list.
+
+## GA-079 — nation bulk reservation / `killturn` ordering capture
+
+`capture_ga079_nation_bulk.php` is a capture-only oracle for
+`NationCommand/ReserveBulkCommand.php`. It drives the real `휴식` nation command against
+a disposable `scenario_1010` install and asserts whole-payload validation, ordered maximal
+prefix behavior, user/NPC `killturn` branches, and the fault boundary after a successful
+`nation_turn` write but before a `general` write.
+
+Run the host-safe wrapper from the repository root:
+
+```sh
+tools/php-golden/run_ga079_nation_bulk.sh --help
+# Deliberately exits nonzero after synthetic owned-cleanup failures and proves
+# no staged final artifact was published.
+tools/php-golden/run_ga079_nation_bulk.sh --self-test-cleanup
+tools/php-golden/run_ga079_nation_bulk.sh
+# Explicitly reviewed, metadata-only evidence migration only.
+tools/php-golden/run_ga079_nation_bulk.sh --replace-existing
+```
+
+The wrapper builds/reuses `opensamguk-php-golden:latest`, creates only uniquely named and
+labelled `opensamguk-ga079-*` containers/networks, and never reuses or removes the fixed
+`devsam-golden-*` namespace. It performs two independent fresh MariaDB 11.4 installs and
+requires `cmp` equality before staging the canonical result beside
+`docs/loops/cqrs-runtime-safety-2026-07-18/evidence/ga079-nation-bulk-php.json`. It explicitly
+removes and verifies every owned Docker resource, then atomically publishes the stage only after
+that cleanup succeeds. A failed run publishes no new fixture and leaves any prior canonical
+artifact intact. The normal mode refuses a differing existing artifact; `--replace-existing` is
+an explicit reviewed metadata-refresh escape hatch. The artifact excludes timestamps, PIDs,
+credentials, durations, and hidden seeds. It never broad-deletes by label.
+
+`/work` is intentionally writable only as a per-run disposable copy, never as the shared
+workspace: `_boot.php` writes `hwe/d_setting/DB.php` and `ServConfig.php`, while
+`install_scenario.php` writes `RootDB.php` and the legacy install creates `UniqueConst.php`.
+The copy is removed during the same verified cleanup; the source workspace and `legacy/` tree are
+not mounted writable. `capture_ga079_nation_bulk.php --self-test-out-paths` runs without DB
+bootstrap and rejects `/out/../work` traversal, nested paths, and symlink escapes; run it with a
+writable `/out` and a read-only `/work` mount.
+
+### Current run of record
+
+The 2026-07-19 `--replace-existing` metadata-refresh run exited 0 after both fresh installs,
+verified owned cleanup, and atomically published a byte-identical-between-runs 8,731-byte artifact (SHA-256
+`a8918979ab2d532d85a4b4604c55944d76d5a70b4ee9bb726ba8161e3ff22418`). It records PHP 8.3.32 /
+MariaDB 11.4.12 with autocommit and Aria target tables. In particular, it proves the legacy
+user-below-floor order `UPDATE nation_turn` then `UPDATE general`, and proves the ring remains
+durable with the old `killturn` after either the catchable general-write failure or the
+acknowledged post-ring `SIGKILL`. This is PHP evidence only: a human must still approve the
+daemon-owned lifecycle for that non-atomic boundary; it does not permit an API `general` write
+or a ring-only Kotlin implementation.
+
+This supersedes the 8,740-byte
+`0fae49ed1cd884f77531b26a2cdc8f11863ee86d5dad2ca752d1d0d920d220d4` artifact solely to correct
+the embedded MeekroDB source range from `246-277, 937-961` to `919-961`. Removing
+`metadata.oracle.sourceEvidence` from old and new JSON yields identical canonical payloads; all
+ten runtime cases and assertions remain unchanged. `--self-test-cleanup` intentionally returns 1
+after attempting two synthetic containers and one synthetic network, and proves the staged final
+artifact was discarded. The 2026-07-19 real rerun left zero labelled GA-079 containers or networks.

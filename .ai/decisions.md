@@ -129,6 +129,18 @@
 
 ## 템플릿
 
+## ADR-LITE-014 W0 로컬 Docker 대체 측정과 GA-079 2단계 lifecycle
+
+- Date: 2026-07-19
+- Status: approved
+- Decision: 정지된 EC2/EBS는 시작하지 않는다. OPENSAM-123은 완전 로컬 Docker에서 deterministic sanitized aggregate materializer를 사용해 current 3회와 cold10x 3회를 fresh DB·2 GiB·JDK 21 조건으로 실행하되, 결과를 local surrogate로만 표기하고 production/live capacity 근거로 승격하지 않는다. GA-079는 child별 `PENDING -> RING_COMMITTED -> APPLIED|NOOP|FAILED_AFTER_RING`(또는 ring 전 `REJECTED_BEFORE_RING`) 2-commit lifecycle을 선택한다. 각 전이는 expected `stage_version` CAS로 fence하며, stage A는 ring, stage B는 daemon의 `ChangeRecorder -> JdbcFlushExecutor` general effect를 소유한다.
+- Context: 사용자는 두 보류 결정을 모두 승인했지만 정지 해제는 현재 불가하여 로컬 Docker 실행을 지시했다. PHP 증거는 ring commit 뒤 old killturn이 남는 crash/failure 경계를 확정했다.
+- Constraints: OPENSAM-123 결과는 EC2/live/prod capacity가 아니다. GA-079는 API `general` write, ring+general 단일 transaction, ring-only parity claim을 금지한다. durable schema/activation은 canonical `world_id`(OPENSAM-43)와 W3 predecessor 뒤에 진행하며 임시 singleton identity를 만들지 않는다.
+- Consequences: 이번 W0 작업은 local materializer/3x2 artifact와 lifecycle model/daemon seam/focused tests를 만든다. GA-079 production activation은 predecessor가 충족될 때 동일 상태기계를 durable CAS로 연결한다.
+- Approved by: 사용자 (2026-07-19, "둘 다 승인. 다만 정지를 지금은 풀 수 없고 대신 로컬에서 도커로 실행해.")
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 

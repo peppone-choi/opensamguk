@@ -47,6 +47,11 @@
 | `cqrs-w0-contract-implementer` | OPENSAM-124 consistency/failure architecture contract | shared workspace (disjoint) | `docs/superpowers/specs/2026-07-18-cqrs-consistency-failure-contract.md` | completed/released — safe-but-blocked contract; GA-079 requires PHP capture and approved daemon-owned lifecycle | 2026-07-18 |
 | `cqrs-w0-baseline-reviewer` | OPENSAM-123 independent implementation/artifact review | shared workspace (disjoint) | — (해제) | completed/released — final PASS/WATCH/APPROVE; strict Scope/Verdict anchors green | 2026-07-18 |
 | `cqrs-w0-security-reviewer` | OPENSAM-123 analyze-only confinement adversarial review | shared workspace (disjoint) | — (해제) | completed/released — former HIGH closed; final PASS/WATCH/APPROVE | 2026-07-18 |
+| `cqrs-ga079-capture-implementer` | OPENSAM-124 GA-079 PHP bulk reservation capture | shared workspace (disjoint) | — (해제) | completed/released — capture harness handed off; root owns the two-run evidence capture and contract status update | 2026-07-18 |
+| `ga079_capture` | OPENSAM-124 GA-079 PHP two-run oracle evidence | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — two fresh installs byte-identical, cleanup fail-closed, independent review cleared | 2026-07-18 |
+| `op123_production_shape` | OPENSAM-123 sanitized manifest validation-only boundary | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — exact ngGames binding + packaged validation/capture-block regressions cleared; live 3×2 blocked on stopped EC2 evidence and deterministic materializer/approved sanitized restore | 2026-07-18 |
+| `op123_local_materializer` | OPENSAM-123 deterministic local surrogate materializer + Docker 3x2 | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — local 3×2 + provenance fix independently reviewed cleared; no EC2/live/prod claim | 2026-07-19 |
+| `op124_lifecycle_model` | OPENSAM-124 approved two-commit child lifecycle model + daemon seam tests | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — focused lifecycle/guard independently reviewed cleared; activation waits for OPENSAM-43/W3 | 2026-07-19 |
 
 ## Batch fences (2026-07-17)
 

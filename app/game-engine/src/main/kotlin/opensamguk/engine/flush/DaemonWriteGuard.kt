@@ -30,6 +30,7 @@ object DaemonWriteGuard {
         "opensamguk/engine/flush",
         "opensamguk/engine/turn",
         "opensamguk/engine/run",
+        "opensamguk/engine/nationbulk",
     )
 
     /**
