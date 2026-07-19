@@ -115,9 +115,31 @@
 - Consequences: OPENSAM-91/97 활성화 경로 unblock. 전량(1000명) 크롭 생산 즉시 착수(mfr 0.12 프로덕션 설정 — 리뷰 실측: 오검출 제거·실얼굴 손실 0). 에셋 repo 생성·푸시·CDN 배선 + 위키명(한자)↔시나리오 장수 매핑은 다음 batch 티켓으로 편성. 메인 repo 공개 여부는 별도 결정(현행 private 유지).
 - Approved by: 사용자 (2026-07-17, 채팅 직접 지시)
 
+## ADR-LITE-013 CQRS 정합성 read는 primary, read replica는 보류
+
+- Date: 2026-07-18
+- Status: approved
+- Decision: command/query의 코드·모델 책임은 분리하되, read-your-write·권한/중복검사·예약 precheck·`minVersion` 등 정합성이 필요한 read는 PostgreSQL primary를 사용한다. 물리 read replica는 지금 만들지 않으며, 후속 GO/NO-GO ADR이 승인될 때에만 eventual-only 조회를 대상으로 도입한다. 메모리 source of truth는 전체 이력을 무제한 적재하지 않고 bounded hot/cold + deterministic prefetch 방향으로 전환한다.
+- Context: 사용자는 write/read 분리와 데이터 정합성을 모두 요구했고, 정합성 read가 write connection을 타야 하는지 및 별도 read DB의 타당성을 질문했다. 승인된 CQRS hardening 계획은 committed version barrier, primary read routing, bounded state, replica 보류를 W0→W5 순서로 고정했다. W0 seed-proxy 측정에서 cold history 10×가 mean retained heap을 `+295.95%` 증가시켜 전체 적재 위험을 정량 확인했다.
+- Alternatives: 모든 read를 replica로 전송(기각 — replica lag에서 RYW/precheck 정합성 파괴), 모든 read를 영구적으로 primary만 사용(기각 — 향후 eventual workload의 독립 확장 여지를 불필요하게 닫음), 현재 즉시 replica 구축(기각 — 관측·용량 근거와 lag/fallback 계약 없음).
+- Consequences: API 라우팅은 read 의미별로 authoritative/RYW와 eventual을 구분한다. replica 장애·지연이 command correctness에 영향을 주어서는 안 되며, OPENSAM-141의 별도 ADR 전까지 인프라 증설은 없다. `OPENSAM-124` 계약은 GA-079 PHP `killturn` 부수효과의 daemon-owned lifecycle이 캡처·승인될 때까지 DRAFT/approval-blocked를 유지한다.
+- Approved by: 사용자 (2026-07-18, CQRS 계획 승인 및 구현 개시 지시)
+
 ---
 
 ## 템플릿
+
+## ADR-LITE-014 W0 로컬 Docker 대체 측정과 GA-079 2단계 lifecycle
+
+- Date: 2026-07-19
+- Status: approved
+- Decision: 정지된 EC2/EBS는 시작하지 않는다. OPENSAM-123은 완전 로컬 Docker에서 deterministic sanitized aggregate materializer를 사용해 current 3회와 cold10x 3회를 fresh DB·2 GiB·JDK 21 조건으로 실행하되, 결과를 local surrogate로만 표기하고 production/live capacity 근거로 승격하지 않는다. GA-079는 child별 `PENDING -> RING_COMMITTED -> APPLIED|NOOP|FAILED_AFTER_RING`(또는 ring 전 `REJECTED_BEFORE_RING`) 2-commit lifecycle을 선택한다. 각 전이는 expected `stage_version` CAS로 fence하며, stage A는 ring, stage B는 daemon의 `ChangeRecorder -> JdbcFlushExecutor` general effect를 소유한다.
+- Context: 사용자는 두 보류 결정을 모두 승인했지만 정지 해제는 현재 불가하여 로컬 Docker 실행을 지시했다. PHP 증거는 ring commit 뒤 old killturn이 남는 crash/failure 경계를 확정했다.
+- Constraints: OPENSAM-123 결과는 EC2/live/prod capacity가 아니다. GA-079는 API `general` write, ring+general 단일 transaction, ring-only parity claim을 금지한다. durable schema/activation은 canonical `world_id`(OPENSAM-43)와 W3 predecessor 뒤에 진행하며 임시 singleton identity를 만들지 않는다.
+- Consequences: 이번 W0 작업은 local materializer/3x2 artifact와 lifecycle model/daemon seam/focused tests를 만든다. GA-079 production activation은 predecessor가 충족될 때 동일 상태기계를 durable CAS로 연결한다.
+- Approved by: 사용자 (2026-07-19, "둘 다 승인. 다만 정지를 지금은 풀 수 없고 대신 로컬에서 도커로 실행해.")
+
+---
 
 ```md
 ## ADR-LITE-NNN 제목

@@ -17,7 +17,7 @@
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
 | `root-batch3-orchestrator` | batch 3 orchestration | shared workspace | — (해제) | released — 세션 종료, closeout은 `batch3-closeout`이 인수 | 2026-07-18 |
-| `batch3-closeout` | batch-3 closeout (원장 정합화 → 최종 검증 → A4 승인 대기) | `codex/full-frame-portrait-resize` | — (해제) | completed/released — A4/A5 완료 상태를 `.ai/current-state.md` 후반에서 확인 | 2026-07-19 |
+| `batch3-closeout` | batch-3 closeout (원장 정합화 → 최종 검증 → A4 승인 대기) | `codex/full-frame-portrait-resize` | — (해제) | completed/released — A4/A5 complete; user-approved `.ai/*` ownership transferred to CQRS runtime safety | 2026-07-19 |
 | `lane-93-dpic-serving` | OPENSAM-93 nginx `/d_pic/` + 양 앱 portrait helper | shared workspace (disjoint) | — (해제) | completed/released — 리뷰 cleared + disable_symlinks 하드닝 검증 완료 | 2026-07-17 |
 | `lane-97-rtk-faces` | OPENSAM-97 RTK14 local-only face pipeline (1차 골격) | shared workspace (disjoint) | — (해제) | released — 29/29 tests green, acceptance #8 미충족 상태로 종료; 소유권 97b로 승계 | 2026-07-17 |
 | `lane-97b-portrait-qa` | OPENSAM-97 QA (사망 오판 정정) | shared workspace (disjoint) | — (해제) | completed/released — shipped(c74c9e27) 대조로 QA 전이 검증(diff는 로스터 1000 + opt-in mfr뿐, 기본 off); mfr 0.12는 黄忠을 '교정'이 아닌 정직 NO_DETECT로 전환함을 실측 정정 | 2026-07-17 |
@@ -42,7 +42,22 @@
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
-| `codex-batch4-orchestrator` | OPENSAM-143…147 시나리오 정제·매니페스트·생성·파일럿·시드 E2E | `codex/opensam-143-batch4` / `.claude/worktrees/codex-batch4` | `tools/scenario/**`; `.gitignore`; `docs/superpowers/plans/2026-07-19-opensam-143-batch4-implementation-plan.md`; `docs/superpowers/reviews/2026-07-19-opensam-143-batch4-review.md`; `app/game-engine/src/main/kotlin/opensamguk/engine/boot/ScenarioSeedRunner.kt`; `app/game-engine/src/test/kotlin/opensamguk/engine/boot/ScenarioMapSeedIT.kt`; `app/game-engine/src/test/resources/scenario/scenario_3190_test.json` | completed/released — OPENSAM-143…147 committed as `1e7145f2` and locally fast-forward merged into `main` on 2026-07-19; `origin/main` not pushed, PR/deploy/external trackers unchanged; root CQRS branch and user `.codex/config.toml` untouched. | 2026-07-19 |
+| `codex-batch4-orchestrator` | OPENSAM-143…147 시나리오 정제·매니페스트·생성·파일럿·시드 E2E | `codex/opensam-143-batch4` / `.claude/worktrees/codex-batch4` | `tools/scenario/**`; `.gitignore`; `docs/superpowers/plans/2026-07-19-opensam-143-batch4-implementation-plan.md`; `docs/superpowers/reviews/2026-07-19-opensam-143-batch4-review.md`; `app/game-engine/src/main/kotlin/opensamguk/engine/boot/ScenarioSeedRunner.kt`; `app/game-engine/src/test/kotlin/opensamguk/engine/boot/ScenarioMapSeedIT.kt`; `app/game-engine/src/test/resources/scenario/scenario_3190_test.json` | completed/released — commits `1e7145f2` / `d4623061` locally merged and in integration; Batch 4 commits not pushed to `origin/main`, no PR/deploy/external-tracker mutation; root CQRS branch and user `.codex/config.toml` untouched. | 2026-07-19 |
+
+## CQRS runtime safety lanes (2026-07-18, OPENSAM-116 구현 개시 승인)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `cqrs-hardening-root` | OPENSAM-116 W0→W5 orchestration; current W0 OPENSAM-123/124 | `codex/op-123-cqrs-runtime-baseline` | `.ai/*`; `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md` | active — user approved contract and ownership transfer; source ownership is assigned per ticket after discovery | 2026-07-18 |
+| `cqrs-w0-baseline-implementer` | OPENSAM-123 reproducible heap/snapshot/latency harness | shared workspace (disjoint) | — (해제) | completed/released — corrected 3×/3× seed-proxy capture, symlink-safe analyzer, 20/20 tests; production-shape acceptance remains pending | 2026-07-18 |
+| `cqrs-w0-contract-implementer` | OPENSAM-124 consistency/failure architecture contract | shared workspace (disjoint) | `docs/superpowers/specs/2026-07-18-cqrs-consistency-failure-contract.md` | completed/released — safe-but-blocked contract; GA-079 requires PHP capture and approved daemon-owned lifecycle | 2026-07-18 |
+| `cqrs-w0-baseline-reviewer` | OPENSAM-123 independent implementation/artifact review | shared workspace (disjoint) | — (해제) | completed/released — final PASS/WATCH/APPROVE; strict Scope/Verdict anchors green | 2026-07-18 |
+| `cqrs-w0-security-reviewer` | OPENSAM-123 analyze-only confinement adversarial review | shared workspace (disjoint) | — (해제) | completed/released — former HIGH closed; final PASS/WATCH/APPROVE | 2026-07-18 |
+| `cqrs-ga079-capture-implementer` | OPENSAM-124 GA-079 PHP bulk reservation capture | shared workspace (disjoint) | — (해제) | completed/released — capture harness handed off; root owns the two-run evidence capture and contract status update | 2026-07-18 |
+| `ga079_capture` | OPENSAM-124 GA-079 PHP two-run oracle evidence | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — two fresh installs byte-identical, cleanup fail-closed, independent review cleared | 2026-07-18 |
+| `op123_production_shape` | OPENSAM-123 sanitized manifest validation-only boundary | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — exact ngGames binding + packaged validation/capture-block regressions cleared; live 3×2 blocked on stopped EC2 evidence and deterministic materializer/approved sanitized restore | 2026-07-18 |
+| `op123_local_materializer` | OPENSAM-123 deterministic local surrogate materializer + Docker 3x2 | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — local 3×2 + provenance fix independently reviewed cleared; no EC2/live/prod claim | 2026-07-19 |
+| `op124_lifecycle_model` | OPENSAM-124 approved two-commit child lifecycle model + daemon seam tests | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — focused lifecycle/guard independently reviewed cleared; activation waits for OPENSAM-43/W3 | 2026-07-19 |
 
 ## Batch fences (2026-07-17)
 
