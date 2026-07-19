@@ -48,7 +48,8 @@
 
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
-| `cqrs-hardening-root` | OPENSAM-116 W0→W5 orchestration; foundation unblock OPENSAM-148 | `codex/op-123-cqrs-runtime-baseline` | `.ai/*` | active — OPENSAM-148 local implementation/review cleared; external evidence sync and land checkpoint | 2026-07-19 |
+| `cqrs-hardening-root` | OPENSAM-116 W0→W5 orchestration; active OPENSAM-126 | `codex/op-126-scoped-schema` | `.ai/*` | active — OPENSAM-148 merged; OPENSAM-126 contract/external-state orchestration | 2026-07-19 |
+| `cqrs-s2-schema-foundation` | OPENSAM-126 table inventory + V31 expand/backfill first unit | `codex/op-126-scoped-schema` | `docs/superpowers/research/2026-07-19-opensam-126-world-table-inventory.md`; future `infra/src/main/resources/db/migration/V31__world_scope_expand.sql`; future `infra/src/test/kotlin/opensamguk/infra/persistence/V31WorldScopeExpandMigrationTest.kt` | active — inventory 44/44 complete; five-table V31 migration/test TDD is next | 2026-07-19 |
 | `cqrs-world-id-foundation` | OPENSAM-148 canonical world identity contract/type | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — strict JSON integer serializer; RED 9/2/0 → GREEN 9/0/0; 재검토로 인계 | 2026-07-19 |
 | `cqrs-world-id-reviewer` | OPENSAM-148 independent contract/type review | `codex/op-123-cqrs-runtime-baseline` | — (해제) | completed/released — quoted numeric MAJOR remediated; final verdict cleared, 217 common + 3,110 logic green | 2026-07-19 |
 | `cqrs-w0-baseline-implementer` | OPENSAM-123 reproducible heap/snapshot/latency harness | shared workspace (disjoint) | — (해제) | completed/released — corrected 3×/3× seed-proxy capture, symlink-safe analyzer, 20/20 tests; production-shape acceptance remains pending | 2026-07-18 |
