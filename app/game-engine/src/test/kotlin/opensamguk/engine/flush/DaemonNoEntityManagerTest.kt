@@ -12,7 +12,8 @@ import kotlin.test.fail
  * slash-form internal name in its constant pool.
  *
  * The write path = the packages listed in [DaemonWriteGuard.writePathPackages]
- * (`opensamguk.engine.flush` + `opensamguk.engine.turn` + `opensamguk.engine.run`), and the banned
+ * (`opensamguk.engine.flush` + `opensamguk.engine.turn` + `opensamguk.engine.run` +
+ * `opensamguk.engine.nationbulk`), and the banned
  * types = [DaemonWriteGuard.forbiddenInternalNames]. Both lists are read from [DaemonWriteGuard] so
  * the invariant and its enforcement can never drift. The `:infra` half of the same write path is
  * covered by the sibling `InfraNoEntityManagerTest`.
@@ -41,12 +42,14 @@ class DaemonNoEntityManagerTest {
     fun `daemon write-path packages reference no EntityManager EntityManagerFactory or Spring-Data repository`() {
         val root = mainClassesRoot()
 
-        // Scan whichever write-path package dirs exist. The `run` package (Task F5) may be absent in
-        // this worktree — an absent directory is vacuously clean. flush + turn MUST be present.
         val packageDirs = DaemonWriteGuard.writePathPackages.map { pkg -> pkg to File(root, pkg) }
         val present = packageDirs.filter { (_, dir) -> dir.isDirectory }
 
-        for (required in listOf("opensamguk/engine/flush", "opensamguk/engine/turn")) {
+        for (required in listOf(
+            "opensamguk/engine/flush",
+            "opensamguk/engine/turn",
+            "opensamguk/engine/nationbulk",
+        )) {
             assertTrue(
                 present.any { (pkg, _) -> pkg == required },
                 "expected the write-path package $required to be compiled under ${root.absolutePath}",

@@ -1,5 +1,22 @@
 # Current State
 
+## CQRS runtime safety active implementation (2026-07-18)
+
+- User approved implementation start and explicit `.ai/task.md` contract / `.ai/*` ownership transfer.
+- Active Epic: `OPENSAM-116`; plan SoT: `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`.
+- Branch: `codex/op-123-cqrs-runtime-baseline` tracks `origin/codex/op-123-cqrs-runtime-baseline`; commits `29c56cb0`/`2cd19559` are already on the remote branch. The production-shape and GA-079 completion work below is uncommitted/unpushed; no PR.
+- Current wave: W0. `OPENSAM-123` now has both a fail-closed sanitized production-manifest **validation-only** boundary and an independently reviewed deterministic local-only materializer. Production-shaped capture remains blocked on the stopped production host and a complete approved live aggregate manifest/restore; no live 3×2 capture or capacity threshold was claimed.
+- Corrected seed-proxy evidence `w0-harness-20260718d`: JDK 21, exact 2 GiB cgroup, G1/60% heap flags, 3× `current` + 3× `cold10x`, raw/JFR 12-source SHA preservation, and operational-vs-forced-GC split. Cold history 10× raised mean retained heap from `18,631,298.67` to `73,771,205.33` bytes (`+55,139,906.67`, `+295.95%`); operational JFR pause p95 rose from `17.48` to `37.94` ms.
+- Earlier validation-only boundary checkpoint: checked-in 19-input `WorldSnapshotLoader` inventory; exact executable binding for the active-server `ng_games` row plus scalar server count; canonical manifest/projection/raw binding; selected-field payload semantics; Kotlin overflow guard; Python suite **40 tests, 3 opt-in skips**; packaged two-row composition/inventory-mutation/capture-block regressions green; runner rejects production-shape capture before resolve/build/Docker. After local materializer and provenance regressions, the fresh consolidated suite is **45 tests, 3 opt-in skips**, all green. The earlier disposable PostgreSQL current/cold run is retained only as historical fixed-seed probe evidence, not production-shape or capacity evidence.
+- Local surrogate evidence `op123-local-20260719b`: six fresh PostgreSQL/Docker probes (`current`×3 + `cold10x`×3), JDK `21.0.11+10-LTS`, exact 2 GiB cgroup, G1/60% heap, six raw + six JFR, explicit reanalysis, production `WorldSnapshotLoader`, and exact 7 table / 8 snapshot / 19 loader-input observations. Mean retained heap was `14,908,445.33` bytes vs `66,375,930.67` bytes (`+51,467,485.33`, `+345.22%`). This is checked-in local policy evidence only; no threshold or live-capacity decision.
+- `OPENSAM-124` PHP unknown and lifecycle-choice blocker are resolved: two independent fresh `scenario_1010` installs produced byte-identical GA-079 evidence SHA-256 `a8918979ab2d532d85a4b4604c55944d76d5a70b4ee9bb726ba8161e3ff22418` (8,731 bytes). The reviewed daemon seam implements expected-`stageVersion` child transitions, prefix-stop semantics, Stage-B-only recovery, recorder-backed `killturn`, and `nationbulk` architecture-guard coverage; focused tests are 8/8 green. Durable production activation remains blocked on canonical `world_id` (`OPENSAM-43`) and W3 world-scoped CAS/fenced flush. API general-row write and ring-only activation remain forbidden.
+- Read policy is fixed in the draft contract: authoritative/read-your-write/min-version reads use the PostgreSQL primary; a replica, if ever introduced by a later ADR, is eventual-only. No read replica is being created in W0.
+- Progress evidence is synchronized to Jira `OPENSAM-123`/`OPENSAM-124` and GitHub `#269`/`#270`; both tickets remain open/in progress and were not transitioned to complete.
+- Root owner: `cqrs-hardening-root`. OPENSAM-123/124 implementation and review file ownership is released; root retains `.ai/*` orchestration state.
+- No commit, push, PR, deploy, production migration, dependency addition, read replica, or second-world admission is authorized by this start approval.
+
+## Historical batch-3 closeout snapshot
+
 - Updated at: 2026-07-18 (batch-3 closeout 착수 — 사용자 승인)
 - Active agent: Claude `batch3-closeout` (원장 정합화 → 최종 검증 → A4 승인 대기). 이전 `root-batch3-orchestrator`는 released.
 - Current branch: **`codex/full-frame-portrait-resize`** (origin에 push됨; last commit `759f00b4` OPENSAM-97 전체 프레임 비율 축소, 2026-07-17 23:47)

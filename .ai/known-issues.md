@@ -16,6 +16,11 @@
 - `chooseInstantNationTurn` (PHP 호출자 0)
 - Q1 `ORDER BY RAND` (do선양/오랑캐임관 — scenario 1010에서 unreachable, 결정론 대체)
 
+## CQRS runtime safety (정본: `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`)
+
+- **OPENSAM-123 live capacity acceptance 대기**: sanitized manifest 경계는 validation-only로 fail-closed하며, checked-in local deterministic materializer는 `op123-local-20260719b` 3×2를 완료했지만 production/live shape를 대신하지 않는다. 최신 live 증거는 `world_state=1, city=94, nation=19, general=598`만 남았고, 필수 `log/history/rank/diplomacy/game_kv/nation_env/statistic/auction` cardinality·payload·provenance는 정지된 EC2/EBS에만 있다. 정지가 풀리고 complete approved live aggregate manifest/restore가 마련되기 전에는 live 3×2·임계값·티켓 완료를 주장하지 않는다.
+- **OPENSAM-124 durable activation blocker**: PHP GA-079 2회 캡처와 daemon-owned per-child fenced lifecycle 선택/구현/독립 리뷰는 완료됐다. 남은 것은 `OPENSAM-43` canonical `world_id`와 W3 durable world-scoped CAS/fenced flush binding이다. API general-row write·ring-only 활성화는 계속 금지한다.
+
 ## 운영 잔흔 (정본: `.ai/handoff.md` 최신 상태 + `docs/superpowers/SESSION_HANDOFF.md` 장기 이력 — s1 이중 적용 상세는 2026-06-12 절)
 
 - **EC2 prod 요금 미납 정지**(2026-07-16 사용자 확인): prod 관련 작업 전부 **보류** — 배포, EC2 `.env` DSN 반영, prod DB 재확인. 납부·정지 해제 후 재개. 정지 기간 main push의 `deploy.yml` 런은 성공 불가 — 2026-07-16 미완료 런 2건(6h queued 포함) 취소 처리; 해제 후 최신 main으로 `gh run rerun` 또는 새 push로 배포.
@@ -31,6 +36,8 @@
 
 ## 도구/환경 주의
 
+- **Agent OS 기준선 실패 — 사용자 소유 `.codex/config.toml`**(2026-07-18): 현재 작업 전부터 존재한 개인 모델 고정(`model = "gpt-5.6-sol"`) 때문에 `tools/agent-system/check.py --strict --base origin/main`의 `codex-surface`가 1건 실패하고, `max_threads` 누락 때문에 `scripts/agent/test-codex-agent-os.sh`가 `KeyError: 'max_threads'`로 실패한다. 이번 OPENSAM-123/124 변경과 무관하며 사용자 변경을 보존하느라 수정하지 않았다.
+- **Fablize 보조 래퍼 경고 기준선**(2026-07-19): exit 0인 read/status/test 명령에도 generic `tool failure` notice가 반복된다. 실제 실패는 직접 종료코드, Gradle tail, 테스트 XML, artifact SHA로 분리 판정하며 동일 broad 명령은 반복하지 않는다.
 - gradle 호스트 래퍼: `task-notification` exit 0 부정확 → 출력 tail + 테스트 XML로만 판정 (정본: `AGENTS.md` §gradle context-mode).
 - Testcontainers flake: `BettingUpsertFlushIT` init 1건은 접속 flake로 판정된 이력 있음(단독 재실행 green) — 실패 시 단독 재실행으로 먼저 분별. `GameApiApplicationTests`도 postgres 컨테이너 기동 flake 1회(2026-07-16, 3스위트 동시 실행 중 발생 — 단독 재실행 green).
 - **web/game vitest 부하 민감 플레이크**(2026-07-17): 호스트 CPU 포화(외부 프로세스·Docker 빌드 병행, load avg 800+) 시 jsdom 파일들이 광범위 타임아웃 실패(18파일 21건까지 관측). 판정 절차 = 실패 파일 **단독 재실행**으로 분별(전부 green이면 부하 플레이크), 필요 시 `--fileParallelism=false` 직렬 실행. 코드 회귀로 오판하지 말 것. 2026-07-18 재관측: `PartialReservedCommand.test.tsx:45` 1건 — 근인은 테스트 자체 레이스(waitFor가 API mock 호출까지만 대기, 렌더 반영 전 동기 단정; 45-53행 단정을 waitFor 안으로 옮기면 근치). 별도 정리 대상.

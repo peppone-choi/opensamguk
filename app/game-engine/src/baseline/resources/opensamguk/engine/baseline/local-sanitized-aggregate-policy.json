@@ -1,0 +1,105 @@
+{
+  "fixture": {
+    "profiles": {
+      "cold10x": {
+        "coldHistoryRows": 100000,
+        "loaderInputs": {
+          "activeUniqueAuctionItems": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "archivedNationIds": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "cities": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "diplomacy": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "gameEnv": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generalAccessLogs": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generalHistoryLogs": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generalRankValues": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generals": {"payloadBytes": 4096, "retainedItems": 1, "sourceRows": 1},
+          "inheritancePoints": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "nationEnv": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "nationHistoryLogs": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "nations": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "ngGames": {"payloadBytes": 1, "retainedItems": 1, "sourceRows": 0},
+          "statistics": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "storedUniqueItemNamespaces": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "systemActionLogs": {"payloadBytes": 49152, "retainedItems": 256, "sourceRows": 256},
+          "systemHistoryLogs": {"payloadBytes": 19200000, "retainedItems": 100000, "sourceRows": 100000},
+          "worldState": {"payloadBytes": 4096, "retainedItems": 1, "sourceRows": 1}
+        },
+        "snapshotCardinalities": {
+          "accessLogs": 0,
+          "cities": 0,
+          "diplomacy": 0,
+          "generalHistoryEntries": 0,
+          "generals": 1,
+          "globalLogs": 100256,
+          "nationHistoryEntries": 0,
+          "nations": 0
+        },
+        "tableCardinalities": {
+          "city": 0,
+          "diplomacy": 0,
+          "general": 1,
+          "logEntry": 100256,
+          "nation": 0,
+          "rankData": 0,
+          "worldState": 1
+        },
+        "fixedHotActionRows": 256,
+        "payloadSizeBytes": {"coldHistory": 192, "hotAction": 192}
+      },
+      "current": {
+        "coldHistoryRows": 10000,
+        "loaderInputs": {
+          "activeUniqueAuctionItems": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "archivedNationIds": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "cities": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "diplomacy": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "gameEnv": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generalAccessLogs": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generalHistoryLogs": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generalRankValues": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "generals": {"payloadBytes": 4096, "retainedItems": 1, "sourceRows": 1},
+          "inheritancePoints": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "nationEnv": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "nationHistoryLogs": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "nations": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "ngGames": {"payloadBytes": 1, "retainedItems": 1, "sourceRows": 0},
+          "statistics": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "storedUniqueItemNamespaces": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
+          "systemActionLogs": {"payloadBytes": 49152, "retainedItems": 256, "sourceRows": 256},
+          "systemHistoryLogs": {"payloadBytes": 1920000, "retainedItems": 10000, "sourceRows": 10000},
+          "worldState": {"payloadBytes": 4096, "retainedItems": 1, "sourceRows": 1}
+        },
+        "snapshotCardinalities": {
+          "accessLogs": 0,
+          "cities": 0,
+          "diplomacy": 0,
+          "generalHistoryEntries": 0,
+          "generals": 1,
+          "globalLogs": 10256,
+          "nationHistoryEntries": 0,
+          "nations": 0
+        },
+        "tableCardinalities": {
+          "city": 0,
+          "diplomacy": 0,
+          "general": 1,
+          "logEntry": 10256,
+          "nation": 0,
+          "rankData": 0,
+          "worldState": 1
+        },
+        "fixedHotActionRows": 256,
+        "payloadSizeBytes": {"coldHistory": 192, "hotAction": 192}
+      }
+    }
+  },
+  "loaderInputInventorySha256": "a6635414f04c347435f3352c67d394bee18c5dfccd6e25653df29ad5fec75d12",
+  "payloadByteSemantics": "selected-loader-fields-postgres-text-bytes.v1",
+  "schemaVersion": "cqrs-local-sanitized-aggregate-policy.v1",
+  "sha256": "2e9f7a74adf0ea322c8e0fbf9feee4c1f8d8f1ba95ecade3c24703d797cf9a9b",
+  "source": {
+    "policyId": "op123-local-sanitized-aggregate-v1",
+    "provenance": "checked-in deterministic local aggregate policy; no production, live, or seeded-db observation",
+    "sourceClass": "local-deterministic-policy"
+  }
+}

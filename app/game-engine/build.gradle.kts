@@ -1,3 +1,69 @@
+import java.util.zip.ZipFile
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.TaskAction
+
+abstract class VerifyRuntimeBaselineJarIsolation : DefaultTask() {
+    @get:InputFile
+    abstract val classifierJar: RegularFileProperty
+
+    @get:InputDirectory
+    abstract val baselineJarDirectory: DirectoryProperty
+
+    @get:Optional
+    @get:InputDirectory
+    abstract val productionJarDirectory: DirectoryProperty
+
+    @TaskAction
+    fun verify() {
+        val classifier = classifierJar.asFile.get().canonicalFile
+        val expectedDirectory = baselineJarDirectory.asFile.get().canonicalFile
+        check(classifier.parentFile == expectedDirectory) {
+            "Baseline classifier must be under $expectedDirectory, found $classifier"
+        }
+        check(classifier.name == "game-engine-cqrs-baseline.jar") {
+            "Baseline classifier must use the fixed task output name, found $classifier"
+        }
+        val dedicatedClassifierJars = expectedDirectory
+            .listFiles()
+            ?.filter { it.isFile && it.name.endsWith("-cqrs-baseline.jar") }
+            ?.map { it.canonicalFile }
+            .orEmpty()
+        check(dedicatedClassifierJars.size == 1 && dedicatedClassifierJars.single() == classifier) {
+            "Baseline output directory must contain only the fixed classifier $classifier, found ${dedicatedClassifierJars.joinToString()}"
+        }
+        val productionClassifierJars = productionJarDirectory.orNull?.asFile
+            ?.listFiles()
+            ?.filter { it.isFile && it.name.endsWith("-cqrs-baseline.jar") }
+            .orEmpty()
+        check(productionClassifierJars.isEmpty()) {
+            "Production build/libs contains baseline classifier artifacts: ${productionClassifierJars.joinToString()}"
+        }
+        val libraryEntries = ZipFile(classifier).use { zip ->
+            val entries = mutableListOf<String>()
+            val iterator = zip.entries()
+            while (iterator.hasMoreElements()) entries += iterator.nextElement().name
+            entries.filter { it.startsWith("BOOT-INF/lib/") }
+        }
+        val forbiddenFragments = listOf("testcontainers", "junit", "game-api")
+        val forbiddenEntries = libraryEntries.filter { entry ->
+            forbiddenFragments.any { fragment -> entry.contains(fragment, ignoreCase = true) }
+        }
+        check(forbiddenEntries.isEmpty()) {
+            "Baseline classifier contains test-only or game-api libraries: ${forbiddenEntries.joinToString()}"
+        }
+        for (requiredPrefix in listOf("flyway-core-", "flyway-database-postgresql-", "postgresql-")) {
+            check(libraryEntries.any { it.substringAfterLast('/').startsWith(requiredPrefix) }) {
+                "Baseline classifier is missing required runtime library prefix $requiredPrefix"
+            }
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
@@ -19,6 +85,18 @@ sourceSets {
             srcDir(rootProject.file("logic/src/test/resources"))
         }
     }
+}
+
+val baseline by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+
+configurations.named(baseline.implementationConfigurationName) {
+    extendsFrom(configurations.implementation.get())
+}
+configurations.named(baseline.runtimeOnlyConfigurationName) {
+    extendsFrom(configurations.runtimeOnly.get())
 }
 
 // bootJar is the runnable artifact; disable the redundant plain jar so the
@@ -46,6 +124,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation(libs.sentry.spring.boot.starter)
+    add(baseline.implementationConfigurationName, "org.flywaydb:flyway-core")
+    add(baseline.runtimeOnlyConfigurationName, libs.flyway.postgres)
+    add(baseline.runtimeOnlyConfigurationName, "org.postgresql:postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
     // G3 cross-call-site invariant test drives the REAL game-api CommandPrecheckService against the
@@ -74,4 +155,28 @@ tasks.test {
     environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
+}
+
+val runtimeBaselineJarDirectory = layout.buildDirectory.dir("cqrs-runtime-baseline/jars")
+val productionDockerJarDirectory = layout.buildDirectory.dir("libs")
+
+val runtimeBaselineJar by tasks.registering(org.springframework.boot.gradle.tasks.bundling.BootJar::class) {
+    group = "verification"
+    description = "Builds the isolated OPENSAM-123 baseline probe jar (not the production BootJar)."
+    archiveFileName.set("game-engine-cqrs-baseline.jar")
+    archiveClassifier.set("cqrs-baseline")
+    destinationDirectory.set(runtimeBaselineJarDirectory)
+    mainClass.set("opensamguk.engine.baseline.CqrsBaselineMain")
+    targetJavaVersion.set(JavaVersion.VERSION_21)
+    classpath = baseline.runtimeClasspath
+    dependsOn(tasks.named(baseline.classesTaskName))
+}
+
+tasks.register<VerifyRuntimeBaselineJarIsolation>("verifyRuntimeBaselineJarIsolation") {
+    group = "verification"
+    description = "Verifies the baseline classifier location and classpath stay isolated from production Docker inputs."
+    dependsOn(runtimeBaselineJar)
+    classifierJar.set(runtimeBaselineJar.flatMap { it.archiveFile })
+    baselineJarDirectory.set(runtimeBaselineJarDirectory)
+    productionJarDirectory.set(productionDockerJarDirectory)
 }
