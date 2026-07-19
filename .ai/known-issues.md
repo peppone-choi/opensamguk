@@ -21,7 +21,7 @@
 ## CQRS runtime safety (정본: `docs/superpowers/plans/2026-07-18-cqrs-memory-consistency-hardening-plan.md`)
 
 - **OPENSAM-123 live capacity acceptance 대기**: sanitized manifest 경계는 validation-only로 fail-closed하며, checked-in local deterministic materializer는 `op123-local-20260719b` 3×2를 완료했지만 production/live shape를 대신하지 않는다. 최신 live 증거는 `world_state=1, city=94, nation=19, general=598`만 남았고, 필수 `log/history/rank/diplomacy/game_kv/nation_env/statistic/auction` cardinality·payload·provenance는 정지된 EC2/EBS에만 있다. 정지가 풀리고 complete approved live aggregate manifest/restore가 마련되기 전에는 live 3×2·임계값·티켓 완료를 주장하지 않는다.
-- **OPENSAM-124 durable activation blocker**: PHP GA-079 2회 캡처와 daemon-owned per-child fenced lifecycle 선택/구현/독립 리뷰는 완료됐다. 남은 것은 `OPENSAM-43` canonical `world_id`와 W3 durable world-scoped CAS/fenced flush binding이다. API general-row write·ring-only 활성화는 계속 금지한다.
+- **OPENSAM-124 durable activation blocker**: PHP GA-079 2회 캡처와 daemon-owned per-child fenced lifecycle 선택/구현/독립 리뷰는 완료됐다. `OPENSAM-148` canonical identity contract/type도 로컬 구현·리뷰가 끝났지만 아직 land되지 않았다. 남은 activation chain은 OPENSAM-148 land → S2 scoped schema/runtime/two-world gate → S3 generation/fence/CAS/recovery → W3 durable world-scoped CAS/fenced flush binding이다. API general-row write·ring-only 활성화는 계속 금지한다.
 
 ## 운영 잔흔 (정본: `.ai/handoff.md` 최신 상태 + `docs/superpowers/SESSION_HANDOFF.md` 장기 이력 — s1 이중 적용 상세는 2026-06-12 절)
 
