@@ -92,4 +92,7 @@ docs/superpowers/gap/_*.raw.json
 **/rtk14_stats.local.json
 **/scenario_*.local.json
 **/rtk14-scenarios.local/
-data/scenarios/
+data/scenarios/scenario_*.json
+data/scenario-source/
+data/scenarios/refined/
+data/scenarios/reports/

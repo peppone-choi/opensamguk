@@ -1,0 +1,26 @@
+{
+  "code": "scenario_3200",
+  "number": 3200,
+  "title": "원소의 남하와 관도대전",
+  "year_month": "200.1",
+  "startYear": 200,
+  "map": "che",
+  "life": 1,
+  "fiction": 0,
+  "const": {
+    "defaultMaxGeneral": 600
+  },
+  "nations": [
+    {"lord_id": 10056},
+    {"lord_id": 10071},
+    {"lord_id": 10094},
+    {"lord_id": 10101},
+    {"lord_id": 10190},
+    {"lord_id": 10256},
+    {"lord_id": 10338},
+    {"lord_id": 10358},
+    {"lord_id": 10405},
+    {"lord_id": 10732},
+    {"lord_id": 10952}
+  ]
+}

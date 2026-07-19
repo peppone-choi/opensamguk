@@ -1,0 +1,36 @@
+{
+  "code": "scenario_3190",
+  "number": 3190,
+  "title": "동탁의 전횡과 반동탁연합",
+  "year_month": "190.1",
+  "startYear": 190,
+  "map": "che",
+  "life": 1,
+  "fiction": 0,
+  "const": {
+    "defaultMaxGeneral": 600
+  },
+  "nations": [
+    {"lord_id": 10056},
+    {"lord_id": 10061},
+    {"lord_id": 10071},
+    {"lord_id": 10079},
+    {"lord_id": 10089},
+    {"lord_id": 10100},
+    {"lord_id": 10101},
+    {"lord_id": 10190},
+    {"lord_id": 10218},
+    {"lord_id": 10219},
+    {"lord_id": 10234},
+    {"lord_id": 10322},
+    {"lord_id": 10349},
+    {"lord_id": 10358},
+    {"lord_id": 10405},
+    {"lord_id": 10682},
+    {"lord_id": 10732},
+    {"lord_id": 10734},
+    {"lord_id": 10892},
+    {"lord_id": 10929},
+    {"lord_id": 10952}
+  ]
+}

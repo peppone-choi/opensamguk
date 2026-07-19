@@ -32,3 +32,12 @@
 - Must-read files for next action: `.ai/ownership.md`, `docs/superpowers/plans/2026-07-17-opensam-92-93-94-97-103-execution-contract.md`, `docs/loops/opensam-batch3-2026-07-17/reviews/`, `docs/agent/verification.md`
 
 > 이 파일은 마지막 갱신 시점의 스냅샷이다. 오래됐으면 `git log --oneline -10`과 `docs/loops/*/LEDGER.md`로 교차 검증하라.
+
+## Batch 4 closeout (2026-07-19)
+
+- Branch/worktree: `codex/opensam-143-batch4` / `.claude/worktrees/codex-batch4`; OPENSAM-143 through OPENSAM-147 are complete in an **uncommitted** working tree. No commit, push, pull request, merge, deploy, Jira/GitHub mutation, legacy write, golden write, or environment-file access was performed for Batch 4.
+- Completed scope: deterministic 1,000-officer v1 seed projection; 3190/3200/3219 manifests and ignored pilots; deterministic verifier; canonical scenario-number seed wiring; synthetic and actual fresh-database identity/idempotency/integrity coverage. Rank/officer-city redesign and PHP post-build promotion remain v2 work.
+- Final verification: forced five-task backend `--rerun-tasks` sweep `BUILD SUCCESSFUL in 7m 20s` with 486 fresh XML reports / 4,426 tests / one known LongSim skip / zero failures or errors; exact parity gate `BUILD SUCCESSFUL in 2m 44s` with XML green; `verify-changes --run` exit 0 with game-engine 84 XML reports / 568 tests / one skip / zero failures or errors and strict `Errors=0 Warnings=0`.
+- Actual ignored 3190 override: the first final attempt was isolated as stale Gradle configuration-cache environment selecting the synthetic fixture; `--no-daemon --no-configuration-cache` recovered `input=actual-override`, `BUILD SUCCESSFUL in 1m 32s`, XML 4/0/0/0, and passed identity/idempotency/integrity with nation 21, city 94, general 264, general_turn 7,920, nation_turn 1,464, diplomacy 420, rank_data 9,768, ng_games 1, event 13.
+- Pilot state: 3190 and 3219 are ready under their reports; 3200 remains quarantined because the source filters 손책 at `200.1`, leaving nation 6 without a ruler until v2 PHP postBuild promotion parity exists.
+- Next action: await explicit human approval for branch disposition. Keep the uncommitted branch, stage/commit then push/PR, locally merge, or discard only after approval; do not mutate Git or external trackers beforehand.
