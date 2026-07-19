@@ -1,0 +1,21 @@
+{
+  "code": "scenario_3219",
+  "number": 3219,
+  "title": "한중왕 유비와 관우의 북상",
+  "year_month": "219.7",
+  "startYear": 219,
+  "map": "che",
+  "life": 1,
+  "fiction": 0,
+  "const": {
+    "defaultMaxGeneral": 600
+  },
+  "nations": [
+    {"lord_id": 10058},
+    {"lord_id": 10071},
+    {"lord_id": 10190},
+    {"lord_id": 10224},
+    {"lord_id": 10246},
+    {"lord_id": 10405}
+  ]
+}

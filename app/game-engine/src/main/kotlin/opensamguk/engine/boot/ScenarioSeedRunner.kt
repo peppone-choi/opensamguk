@@ -72,6 +72,7 @@ class SeedBootstrap(
             return false
         }
 
+        val scenarioNumber = scenarioNumber()
         val scenario = ScenarioJson.loadScenario(readScenarioJson())
         val mapName = scenarioMapName(scenario)
         val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
@@ -80,7 +81,12 @@ class SeedBootstrap(
             "Seeding fresh world '{}' — map={} nations={} generals={} cities={}",
             scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size,
         )
-        val importer = ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = scenarioCode)
+        val importer = ScenarioImporter(
+            scenario = scenario,
+            cities = cities,
+            scenarioCode = scenarioCode,
+            scenarioNumber = scenarioNumber,
+        )
         val counts = importer.importAll(jdbc)
         log.info(
             "Scenario seed complete — world_state={} nation={} city={} general={} general_turn={} " +
@@ -89,6 +95,15 @@ class SeedBootstrap(
             counts.nationTurn, counts.diplomacy, counts.rankData, counts.ngGames, counts.event,
         )
         return true
+    }
+
+    internal fun scenarioNumber(): Int {
+        val numericSuffix = SCENARIO_CODE_PATTERN.matchEntire(scenarioCode)
+            ?.groupValues
+            ?.get(1)
+            ?: throw IllegalArgumentException("SCENARIO_CODE must be canonical scenario_<number>: $scenarioCode")
+        return numericSuffix.toIntOrNull()
+            ?: throw IllegalArgumentException("SCENARIO_CODE is outside the Int range: $scenarioCode")
     }
 
     private fun readResource(path: String): String {
@@ -110,5 +125,9 @@ class SeedBootstrap(
         merged.putAll(scenario.map)
         merged.putAll(scenario.const)
         return merged["mapName"] as? String ?: "che"
+    }
+
+    private companion object {
+        val SCENARIO_CODE_PATTERN = Regex("scenario_(0|[1-9]\\d*)")
     }
 }

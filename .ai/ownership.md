@@ -17,7 +17,7 @@
 | Agent | Task | Branch/worktree | Owned files | Status | Updated at |
 |---|---|---|---|---|---|
 | `root-batch3-orchestrator` | batch 3 orchestration | shared workspace | — (해제) | released — 세션 종료, closeout은 `batch3-closeout`이 인수 | 2026-07-18 |
-| `batch3-closeout` | batch-3 closeout (원장 정합화 → 최종 검증 → A4 승인 대기) | `codex/full-frame-portrait-resize` | — (해제) | completed/released — 사용자 승인으로 CQRS runtime safety 작업에 `.ai/*` 소유권 이관 | 2026-07-18 |
+| `batch3-closeout` | batch-3 closeout (원장 정합화 → 최종 검증 → A4 승인 대기) | `codex/full-frame-portrait-resize` | — (해제) | completed/released — A4/A5 complete; user-approved `.ai/*` ownership transferred to CQRS runtime safety | 2026-07-19 |
 | `lane-93-dpic-serving` | OPENSAM-93 nginx `/d_pic/` + 양 앱 portrait helper | shared workspace (disjoint) | — (해제) | completed/released — 리뷰 cleared + disable_symlinks 하드닝 검증 완료 | 2026-07-17 |
 | `lane-97-rtk-faces` | OPENSAM-97 RTK14 local-only face pipeline (1차 골격) | shared workspace (disjoint) | — (해제) | released — 29/29 tests green, acceptance #8 미충족 상태로 종료; 소유권 97b로 승계 | 2026-07-17 |
 | `lane-97b-portrait-qa` | OPENSAM-97 QA (사망 오판 정정) | shared workspace (disjoint) | — (해제) | completed/released — shipped(c74c9e27) 대조로 QA 전이 검증(diff는 로스터 1000 + opt-in mfr뿐, 기본 off); mfr 0.12는 黄忠을 '교정'이 아닌 정직 NO_DETECT로 전환함을 실측 정정 | 2026-07-17 |
@@ -37,6 +37,12 @@
 | `reviewer-103-spec` (재배정) | RTK 시리즈 지도 리서치 독립 검증 | shared workspace (disjoint) | `docs/loops/opensam-batch3-2026-07-17/reviews/rtk-series-map-research-review.md` | completed — cleared (note 3, 반영 완료) | 2026-07-17 |
 | `lane-97-fullrun` | ADR-012 전량 초상 크롭 생산(1000명, mfr 0.12) | scratchpad only (repo 무접촉) | repo 파일 소유 없음 — `{SP}/assets-staging/**` 산출 | active — 156×210 HOI4 합성 743/743 완료, 오케스트레이터 아티팩트 검증 일치(치수 0오차·sha·육안 3건, 曹洪 FP FAIL 확인); **u2net-onnx 직결 도구 스왑 승인**(rembg py3.13 설치 불가, 동일 모델 md5 검증); FP 2차 필터 진행 중 | 2026-07-17 |
 | `codex-portrait-resize` | 사용자 지시: 얼굴 크롭 제거 + 전체 초상 비율 축소, GitHub/Jira 상태·priority 동기화 | shared workspace (disjoint from lane-94 and scratchpad fullrun) | — (해제) | completed/released — full-frame resize + `contain`, GitHub/Jira sync, 자동·브라우저 QA, 독립 리뷰 CLEAR; branch/commit/push/deploy 없음 | 2026-07-17 |
+
+## Batch 4 lane (2026-07-19, OPENSAM-143…147 사용자 실행 지시)
+
+| Agent | Task | Branch/worktree | Owned files | Status | Updated at |
+|---|---|---|---|---|---|
+| `codex-batch4-orchestrator` | OPENSAM-143…147 시나리오 정제·매니페스트·생성·파일럿·시드 E2E | `codex/opensam-143-batch4` / `.claude/worktrees/codex-batch4` | `tools/scenario/**`; `.gitignore`; `docs/superpowers/plans/2026-07-19-opensam-143-batch4-implementation-plan.md`; `docs/superpowers/reviews/2026-07-19-opensam-143-batch4-review.md`; `app/game-engine/src/main/kotlin/opensamguk/engine/boot/ScenarioSeedRunner.kt`; `app/game-engine/src/test/kotlin/opensamguk/engine/boot/ScenarioMapSeedIT.kt`; `app/game-engine/src/test/resources/scenario/scenario_3190_test.json` | completed/released — commits `1e7145f2` / `d4623061` locally merged and in integration; Batch 4 commits not pushed to `origin/main`, no PR/deploy/external-tracker mutation; root CQRS branch and user `.codex/config.toml` untouched. | 2026-07-19 |
 
 ## CQRS runtime safety lanes (2026-07-18, OPENSAM-116 구현 개시 승인)
 
