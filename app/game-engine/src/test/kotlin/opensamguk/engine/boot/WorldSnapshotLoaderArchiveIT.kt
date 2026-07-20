@@ -40,7 +40,15 @@ class WorldSnapshotLoaderArchiveIT {
             .load()
             .migrate()
         jdbc = JdbcTemplate(dataSource)
-        loader = WorldSnapshotLoader(jdbc, SeedBootstrap(scenarioCode = "scenario_0", seedEnabled = false))
+        loader = WorldSnapshotLoader(
+            jdbc,
+            SeedBootstrap(
+                scenarioCode = "scenario_0",
+                seedEnabled = false,
+                worldId = opensamguk.common.world.WorldId(1),
+            ),
+            opensamguk.common.world.WorldId(1),
+        )
 
         jdbc.update(
             """
@@ -151,5 +159,48 @@ class WorldSnapshotLoaderArchiveIT {
         val inheritancePoints = snapshot.state.meta["inheritancePoints"] as Map<*, *>
         val ownerPoints = inheritancePoints[77] as Map<*, *>
         assertEquals(listOf(9, mapOf("source" to "old")), ownerPoints["active_action"])
+    }
+
+    @Test
+    fun `configured world only loads its world-scoped state cohorts`() {
+        jdbc.update(
+            """
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
+            VALUES (2, 'other_world', 201, 2, 1800)
+            """.trimIndent(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO nation (id, world_id, name, color)
+            VALUES
+                (101, 1, 'configured nation', '#111111'),
+                (201, 2, 'other nation', '#222222')
+            """.trimIndent(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO city
+                (id, world_id, name, level, nation_id, pop, pop_max, agri, agri_max, comm, comm_max,
+                 secu, secu_max, def, def_max, wall, wall_max, region)
+            VALUES
+                (102, 1, 'configured city', 1, 101, 100, 1000, 10, 1000, 10, 1000, 10, 1000, 10, 1000, 10, 1000, 1),
+                (202, 2, 'other city', 1, 201, 100, 1000, 10, 1000, 10, 1000, 10, 1000, 10, 1000, 10, 1000, 1)
+            """.trimIndent(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO general (id, world_id, name, nation_id, city_id, turn_time)
+            VALUES
+                (103, 1, 'configured general', 101, 102, now()),
+                (203, 2, 'other general', 201, 202, now())
+            """.trimIndent(),
+        )
+
+        val snapshot = loader.buildSnapshot()
+
+        assertEquals(1, snapshot.worldId.value)
+        assertEquals(listOf(101), snapshot.nations.map { it.id })
+        assertEquals(listOf(102), snapshot.cities.map { it.id })
+        assertEquals(listOf(103), snapshot.generals.map { it.id })
     }
 }

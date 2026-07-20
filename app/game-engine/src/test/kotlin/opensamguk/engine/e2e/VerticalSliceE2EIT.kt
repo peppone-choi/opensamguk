@@ -11,6 +11,7 @@ import opensamguk.common.wire.RealtimeEvent
 import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.gameEventChannel
+import opensamguk.common.world.WorldId
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.run.TurnRunService
@@ -23,12 +24,16 @@ import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
+import opensamguk.gameapi.read.CityReadRawRepository
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.DiplomacyReadRepository
+import opensamguk.gameapi.read.GeneralReadRawRepository
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.NationReadRawRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
@@ -210,6 +215,7 @@ class VerticalSliceE2EIT {
             reservedTurns = reservedRepo,
             redis = template,
             registry = CommandRegistry(GeneralActionPipeline()),
+            processWorld = GameApiProcessWorld(1),
             profile = profile,
             clock = Clock.fixed(t0, ZoneOffset.UTC),
             requestIds = { "gate-req-1" },
@@ -217,7 +223,7 @@ class VerticalSliceE2EIT {
         val reserveResult = reserveService.reserve(generalId = generalId, actionCode = action, turnIdx = 0)
         assertEquals("gate-req-1", reserveResult.requestId)
         // the durable reservation landed in the ring (the daemon reads THIS, not the Redis poke)
-        assertEquals(action, reservedRepo.readReserved(generalId, 0).actionCode, "reserved action persisted in the ring")
+        assertEquals(action, reservedRepo.readReserved(WorldId(1), generalId, 0).actionCode, "reserved action persisted in the ring")
 
         // === STEP 4 (subscribe BEFORE the tick): wire the REAL SSE relay onto the realtime channel ==
         // A real RedisMessageListenerContainer (mirroring the production RealtimeSubscriber bean) relays
@@ -248,7 +254,7 @@ class VerticalSliceE2EIT {
             // === STEP 3: the daemon drains the stream, resolves che_상업투자, flushes in ONE txn ====
             val registry = CommandRegistry(GeneralActionPipeline())
             val handler = ReservedTurnHandler(world, registry, golden.hiddenSeed, startYear)
-            val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(gid, 0) }
+            val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(WorldId(1), gid, 0) }
             val runService = TurnRunService(
                 world = world,
                 commandStream = RedisCommandStream(template, profile),
@@ -439,8 +445,8 @@ class VerticalSliceE2EIT {
         // world. level 2 matches the in-memory daemon world's Nation(level=2). The flush must NOT
         // touch this row (asserted by assertNoSpuriousWrites).
         jdbc.update(
-            "INSERT INTO nation (id, name, color, capital_city_id, level, type_code) " +
-                "VALUES (:id, 'n2', '#000', 99, 2, 'None')",
+            "INSERT INTO nation (world_id, id, name, color, capital_city_id, level, type_code) " +
+                "VALUES (1, :id, 'n2', '#000', 99, 2, 'None')",
             MapSqlParameterSource("id", nationId),
         )
         // general no.76 BEFORE state (golden DB stats: leadership 31 / strength 68 / intel 49,
@@ -448,10 +454,10 @@ class VerticalSliceE2EIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, meta)
             VALUES
-                (:id, 'ⓝ엄정', :nation, :city, 31, 68, 49, 0,
+                (1, :id, 'ⓝ엄정', :nation, :city, 31, 68, 49, 0,
                  :exp, :ded, 1, :gold, 1000, :tt,
                  CAST(:meta AS jsonb))
             """.trimIndent(),
@@ -465,11 +471,11 @@ class VerticalSliceE2EIT {
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (:id, '업', 8, :nation, 1, 0, 434350, 620500,
+                (1, :id, '업', 8, :nation, 1, 0, 434350, 620500,
                  :agri, :agriMax, :comm, :commMax, 7000, 10000, :trust, 100, 8190, 11700,
                  8540, 12200, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
@@ -524,6 +530,9 @@ class VerticalSliceE2EIT {
                     ),
                 ),
                 nations = listOf(Nation(id = nationId, name = "n2", color = "#000", level = 2, capitalCityId = 99)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1, currentYear = year, currentMonth = month, tickSeconds = tickSeconds, lastTurnTime = t0,
+                )).id),
             ),
         )
     }
@@ -534,9 +543,19 @@ class VerticalSliceE2EIT {
     private fun buildRealPrecheckService(): CommandPrecheckService {
         val em = SharedEntityManagerCreator.createSharedEntityManager(emf)
         val factory = JpaRepositoryFactory(em)
-        val generals = factory.getRepository(GeneralReadRepository::class.java)
-        val cities = factory.getRepository(CityReadRepository::class.java)
-        val nations = factory.getRepository(NationReadRepository::class.java)
+        val processWorld = GameApiProcessWorld(1)
+        val generals = GeneralReadRepository(
+            factory.getRepository(GeneralReadRawRepository::class.java),
+            processWorld,
+        )
+        val cities = CityReadRepository(
+            factory.getRepository(CityReadRawRepository::class.java),
+            processWorld,
+        )
+        val nations = NationReadRepository(
+            factory.getRepository(NationReadRawRepository::class.java),
+            processWorld,
+        )
         val diplomacies = factory.getRepository(DiplomacyReadRepository::class.java)
         val worldStates = factory.getRepository(WorldStateReadRepository::class.java)
         val stateViewFactory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)

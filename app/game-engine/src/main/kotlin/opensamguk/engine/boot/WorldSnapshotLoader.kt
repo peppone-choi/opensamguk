@@ -2,6 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.GeneralItems
@@ -15,7 +16,6 @@ import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.infra.persistence.MetaJson
 import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.stereotype.Component
 import java.sql.ResultSet
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -41,10 +41,10 @@ import java.time.OffsetDateTime
  * **JDBC-only.** Pure read via [JdbcTemplate]; no `EntityManager`, no Spring-Data repository, no
  * `ChangeRecorder`. Lives outside the architecture-test write-path packages.
  */
-@Component
 class WorldSnapshotLoader(
     private val jdbc: JdbcTemplate,
     private val seedBootstrap: SeedBootstrap,
+    private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(WorldSnapshotLoader::class.java)
 
@@ -130,6 +130,7 @@ class WorldSnapshotLoader(
         )
         return WorldSnapshot(
             state = state,
+            worldId = worldId,
             serverId = activeServerId,
             generals = generals,
             cities = cities,
@@ -143,41 +144,43 @@ class WorldSnapshotLoader(
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
-        ) { rs, _ ->
-            val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
-            val config = MetaJson.decode(rs.getString("config"))
-            for ((key, value) in config) {
-                if (!meta.containsKey(key)) meta[key] = value
-            }
-            // isunited: dedicated column is source of truth (flush writes it; meta-only fallback for legacy rows).
-            meta["isunited"] = rs.getInt("isunited")
-            // lastTurnTime: prefer the persisted clock; fall back to start_time, then now.
-            val lastTurn = (meta["lastTurnTime"] as? String)?.let { Instant.parse(it) }
-                ?: rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
-                ?: Instant.now()
-            TurnWorldState(
-                id = rs.getInt("id"),
-                currentYear = rs.getInt("current_year"),
-                currentMonth = rs.getInt("current_month"),
-                currentPhase = rs.getInt("current_phase").takeIf { it in 1..3 } ?: 1,
-                tickSeconds = rs.getInt("tick_seconds"),
-                lastTurnTime = lastTurn,
-                meta = meta,
-                status = rs.getString("status"),
-                config = config,
-            )
-        }
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time FROM world_state WHERE id = ?",
+            { rs, _ ->
+                val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
+                val config = MetaJson.decode(rs.getString("config"))
+                for ((key, value) in config) {
+                    if (!meta.containsKey(key)) meta[key] = value
+                }
+                // isunited: dedicated column is source of truth (flush writes it; meta-only fallback for legacy rows).
+                meta["isunited"] = rs.getInt("isunited")
+                // lastTurnTime: prefer the persisted clock; fall back to start_time, then now.
+                val lastTurn = (meta["lastTurnTime"] as? String)?.let { Instant.parse(it) }
+                    ?: rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
+                    ?: Instant.now()
+                TurnWorldState(
+                    id = rs.getInt("id"),
+                    currentYear = rs.getInt("current_year"),
+                    currentMonth = rs.getInt("current_month"),
+                    currentPhase = rs.getInt("current_phase").takeIf { it in 1..3 } ?: 1,
+                    tickSeconds = rs.getInt("tick_seconds"),
+                    lastTurnTime = lastTurn,
+                    meta = meta,
+                    status = rs.getString("status"),
+                    config = config,
+                )
+            },
+            worldId.value,
+        )
         return rows.firstOrNull()
-            ?: error("world_state singleton row is missing — scenario seed did not run (cannot build WorldSnapshot)")
+            ?: error("configured world_state.id=${worldId.value} is missing — scenario seed did not run (cannot build WorldSnapshot)")
     }
 
     private fun loadNations(): List<Nation> = jdbc.query(
         // tech를 SELECT에 포함해야 한다. 누락 시 in-memory Nation.tech가 기본 0.0으로 떨어지고,
         // 다음 월틱 flush가 UPDATE nation SET tech=0 으로 시드값(예: 후한 1500)을 영구히 덮어쓴다.
         "SELECT id, name, color, capital_city_id, gold, rice, tech, power, level, type_code, meta " +
-            "FROM nation ORDER BY id ASC",
-    ) { rs, _ ->
+            "FROM nation WHERE world_id = ? ORDER BY id ASC",
+        { rs, _ ->
         Nation(
             id = rs.getInt("id"),
             name = rs.getString("name"),
@@ -191,7 +194,7 @@ class WorldSnapshotLoader(
             typeCode = rs.getString("type_code"),
             meta = MetaJson.decode(rs.getString("meta")),
         )
-    }
+        }, worldId.value)
 
     private fun resolveActiveGame(meta: Map<String, Any?>): ActiveGame? {
         val configured = listOf(meta["serverId"], meta["server_id"])
@@ -361,9 +364,9 @@ class WorldSnapshotLoader(
         SELECT id, name, nation_id, level, state, supply_state, front_state,
                pop, pop_max, dead, agri, agri_max, comm, comm_max, secu, secu_max, trust,
                def, def_max, wall, wall_max, trade, region, term, officer_set, conflict, meta
-          FROM city ORDER BY id ASC
+          FROM city WHERE world_id = ? ORDER BY id ASC
         """.trimIndent(),
-    ) { rs, _ ->
+        { rs, _ ->
         val cityMeta = MetaJson.decode(rs.getString("meta")).toMutableMap()
         cityMeta["trust"] = rs.getDouble("trust")
         City(
@@ -394,7 +397,7 @@ class WorldSnapshotLoader(
             conflict = rs.getString("conflict") ?: "{}",
             meta = cityMeta,
         )
-    }
+        }, worldId.value)
 
     private fun loadGenerals(state: TurnWorldState): List<TurnGeneral> {
         // killturn 누락 legacy 행 보정용 시작 연/월 — 시드 시점(startYear, 월1) 기준.
@@ -410,9 +413,9 @@ class WorldSnapshotLoader(
                turn_time, recent_war_time, user_id, born_year, dead_year, picture, image_server,
                start_age, personal_code, special_code, special2_code, officer_city,
                last_turn, penalty, meta
-          FROM general ORDER BY id ASC
+          FROM general WHERE world_id = ? ORDER BY id ASC
         """.trimIndent(),
-        ) { rs, _ ->
+        { rs, _ ->
             val npcState = rs.getInt("npc_state")
             val generalMeta = ScenarioLifecycleMeta.ensureGeneralMeta(
                 MetaJson.decode(rs.getString("meta")),
@@ -481,7 +484,7 @@ class WorldSnapshotLoader(
                 userId = rs.getString("user_id"),
                 meta = generalMeta,
             )
-        }
+        }, worldId.value)
     }
 
     private fun loadRankValues(): Map<Int, Map<String, Int>> {

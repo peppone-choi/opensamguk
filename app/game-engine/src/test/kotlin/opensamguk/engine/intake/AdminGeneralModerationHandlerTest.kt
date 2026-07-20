@@ -24,6 +24,7 @@ class AdminGeneralModerationHandlerTest {
                 state = TurnWorldState(1, 200, 1, 3600, now),
                 generals = listOf(general(1), general(2)),
                 accessLogs = listOf(GeneralAccessLog(2, 77, now, refreshScore = 12, refreshScoreTotal = 99)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, now)).id),
             ),
         )
         val recorder = ChangeRecorder()
@@ -51,6 +52,7 @@ class AdminGeneralModerationHandlerTest {
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 1, 3600, now),
                 generals = listOf(general(1), general(2)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, now)).id),
             ),
         )
         val recorder = ChangeRecorder()
@@ -86,6 +88,7 @@ class AdminGeneralModerationHandlerTest {
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 1, 3600, now),
                 generals = listOf(general(1)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, now)).id),
             ),
         )
         val recorder = ChangeRecorder()
@@ -106,6 +109,7 @@ class AdminGeneralModerationHandlerTest {
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 1, 3600, now),
                 generals = listOf(general(1), general(2)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, now)).id),
             ),
         )
         val recorder = ChangeRecorder()

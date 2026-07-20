@@ -83,21 +83,21 @@ class JdbcFlushExecutorSatelliteIT {
         )
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb)),
-                   (3, '위', '#0000ff', 8, 8000, 8000, 2000, 7, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb))
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb)),
+                   (1, 3, '위', '#0000ff', 8, 8000, 8000, 2000, 7, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, crew, train, atmos,
                  crew_type_id, troop_id, weapon_code, book_code, horse_code, item_code,
                  npc_state, turn_time, last_turn, meta)
             VALUES
-                (10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, 0, 0, 0,
+                (1, 10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, 0, 0, 0,
                  0, 0, 'None', 'None', 'None', 'None', 0, now(),
                  CAST('{"command":"휴식"}' AS jsonb),
                  CAST('{"explevel":1}' AS jsonb))
@@ -107,11 +107,11 @@ class JdbcFlushExecutorSatelliteIT {
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (5, '성도', 5, 2, 1, 0, 50000, 100000,
+                (1, 5, '성도', 5, 2, 1, 0, 50000, 100000,
                  1000, 2000, 800, 2000, 500, 1000, 50, 100, 1000, 2000,
                  1000, 2000, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
@@ -162,7 +162,8 @@ class JdbcFlushExecutorSatelliteIT {
             meta = linkedMapOf(),
         )
 
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 2),
             updatedGenerals = listOf(postGeneral),
             updatedCities = listOf(postCity),

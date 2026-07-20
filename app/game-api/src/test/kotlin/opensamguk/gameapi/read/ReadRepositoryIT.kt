@@ -1,9 +1,11 @@
 package opensamguk.gameapi.read
+import opensamguk.gameapi.config.GameApiProcessWorldIdConfiguration
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -27,6 +29,12 @@ import kotlin.test.assertTrue
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(
+    GameApiProcessWorldIdConfiguration::class,
+    GeneralReadRepository::class,
+    CityReadRepository::class,
+    NationReadRepository::class,
+)
 class ReadRepositoryIT {
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var generals: GeneralReadRepository
@@ -34,20 +42,22 @@ class ReadRepositoryIT {
     @Autowired lateinit var nations: NationReadRepository
     @Autowired lateinit var diplomacies: DiplomacyReadRepository
     @Autowired lateinit var worldStates: WorldStateReadRepository
+
+    private fun seedWorld() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, meta) VALUES (1, 'scenario_2', 195, 3, 3600, '{\"startYear\":180}'::jsonb, '{}'::jsonb)",
+        )
+    }
+
     @Test
     fun `read entities materialize from the baseline rows`() {
         // world_state singleton
-        jdbc.update(
-            """
-            INSERT INTO world_state (scenario_code, current_year, current_month, tick_seconds, config, meta)
-            VALUES ('scenario_2', 195, 3, 3600, '{"startYear":180}'::jsonb, '{}'::jsonb)
-            """.trimIndent()
-        )
+        seedWorld()
         // nation (level 7, with a capital); gennum/capset + tech ride the full P2 shape
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (1, '위', '#0000ff', 5, 12000, 9000, 1234.5, 7, 'che_명사',
+            INSERT INTO nation (id, world_id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 1, '위', '#0000ff', 5, 12000, 9000, 1234.5, 7, 'che_명사',
                     '{"gennum":24,"capset":3,"rate":15}'::jsonb)
             """.trimIndent()
         )
@@ -62,11 +72,11 @@ class ReadRepositoryIT {
         jdbc.update(
             """
             INSERT INTO city (
-                id, name, level, nation_id, supply_state, front_state,
+                id, world_id, name, level, nation_id, supply_state, front_state,
                 pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                 trust, trade, def, def_max, wall, wall_max, region, meta
             ) VALUES (
-                5, '허창', 5, 1, 1, 0,
+                5, 1, '허창', 5, 1, 1, 0,
                 50000, 100000, 4000, 8000, 3000, 8000, 1000, 2000,
                 82, 100, 500, 1000, 800, 1500, 3, '{}'::jsonb
             )
@@ -77,13 +87,13 @@ class ReadRepositoryIT {
         jdbc.update(
             """
             INSERT INTO general (
-                id, name, nation_id, city_id, leadership, strength, intel, injury,
+                id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
                 experience, dedication, officer_level, gold, rice,
                 crew, crew_type_id, train, atmos, troop_id,
                 weapon_code, book_code, horse_code, item_code, npc_state,
                 turn_time, last_turn, meta
             ) VALUES (
-                10, '순욱', 1, 5, 70, 30, 95, 0,
+                10, 1, '순욱', 1, 5, 70, 30, 95, 0,
                 1200, 900, 5, 4000, 3000,
                 500, 3, 80, 90, 7,
                 '방천화극', 'None', '여포의적토마', 'None', 2,
@@ -176,17 +186,18 @@ class ReadRepositoryIT {
      */
     @Test
     fun `distinct city ids of a nation are deduped and ascending`() {
+        seedWorld()
         fun insertGeneral(id: Int, nationId: Int, cityId: Int) {
             jdbc.update(
                 """
                 INSERT INTO general (
-                    id, name, nation_id, city_id, leadership, strength, intel, injury,
+                    id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
                     experience, dedication, officer_level, gold, rice,
                     crew, crew_type_id, train, atmos, troop_id,
                     weapon_code, book_code, horse_code, item_code, npc_state,
                     turn_time, last_turn, meta
                 ) VALUES (
-                    $id, 'g$id', $nationId, $cityId, 50, 50, 50, 0,
+                    $id, 1, 'g$id', $nationId, $cityId, 50, 50, 50, 0,
                     0, 0, 1, 0, 0,
                     0, 0, 0, 0, 0,
                     'None', 'None', 'None', 'None', 0,

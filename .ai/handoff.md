@@ -1,52 +1,62 @@
 # Agent Handoff
 
-다음 세션/에이전트가 **대화 기록 없이** 이 파일만으로 재개할 수 있어야 한다. 갱신 시 이전 내용은 교체한다(장기 이력은 `docs/superpowers/SESSION_HANDOFF.md`).
-
-- Updated at: 2026-07-18
-- From: Claude Code (`batch3-closeout` — batch-3 마무리 세션, 사용자 승인 하 진행)
+- Updated at: 2026-07-20
+- From: Codex (`cqrs-hardening-root`)
+- Branch: `codex/op-126-scoped-schema`
+- State: verified strict V31 stack; commit/push/merge explicitly approved, deploy/tracker mutation not approved
 
 ## Goal
 
-batch-3(OPENSAM-92·93·94·97·103 + §13 지도)의 **closeout**: 원장 정합화 → 최종 검증(Phase B) → 티켓별 커밋 분할안 제시 → A4(커밋/push/PR) 사람 승인. 이후 다음 5티켓 선정(standing directive "티켓 5개씩").
+Continue OPENSAM-126 from the strict V31 first slice. The current stack also includes only the affected
+OPENSAM-127/128 runtime changes required to keep that migration safe and bootable.
 
-> **⚠ A4·A5 완료(2026-07-18, 사용자 승인) — 아래 커밋 분할 계획은 이미 실행·머지됨. 재실행 금지.** 6커밋(`14a02afd`→`9831cc45`) + CI 픽스 `413cc8e6` push → **PR #260 머지됨**(05:00:57Z, main `064d5e1a`). Phase B 전부 green(백엔드 486스위트/4423테스트, gateway 53/53, game 186/186, check.py strict No findings). 자동 배포 런은 EC2 정지로 취소 — 요금 납부 후 재배포(사용자 지시). Jira/GitHub 동기화 완료(7건 완료 전이 + 7이슈 close, 97/#240 유지). 남은 것: 초상 크롤 완주→얼굴 크롭→images 2차 푸시, 시나리오 스펙 정식화, batch-4 확정. 정본 상태는 `.ai/current-state.md`.
+## Implemented
 
-## Current result
+- V31 locks `world_state` plus the exact 30 current C1 relations, permits a truly pristine empty schema,
+  backfills only one positive canonical world, and fails closed for legacy data without a world,
+  multiple/non-positive worlds, or concurrent legacy writers.
+- The first scoped cohort is `nation`, `city`, `general`, `general_turn`, and `nation_turn`.
+- Scenario seeding is serialized and transactional, inserts the configured `WorldId` explicitly,
+  synchronizes the serial sequence only on the success path, and supports same-ID retry after rollback.
+- Engine load, reservation, flush, and world snapshots require the configured process world. Cohort
+  create/update/root-delete/profile writes are scoped and exact-count checked inside the flush transaction.
+- Game-api five-cohort reads use world-bound facades over raw Spring Data repositories; reservation calls
+  pass the configured process world. Runtime configuration has no default or profile/server alias.
+- Local and production Compose require `OPENSAMGUK_WORLD_ID`; `.env.example` documents `1`.
 
-- 전 레인 구현 + 독립 리뷰 **cleared** (7건: `docs/loops/opensam-batch3-2026-07-17/reviews/`). 94 리뷰는 2026-07-17 22:22 CLEARED가 최종.
-- 산출물 전량 미커밋: 수정 33파일 + 신규 ~25파일, 브랜치 `codex/full-frame-portrait-resize`(push됨, last commit `759f00b4` = OPENSAM-97 전체 프레임 축소).
-- 원장 정합화(Phase A) 완료: ownership에 `batch3-closeout` 등록 + 94 두 레인 completed 전환, current-state 갱신.
+## Verification evidence
 
-## Decisions already made
+- Fresh Java 21 forced three-module run: `BUILD SUCCESSFUL in 9m 3s`; infra 43 suites / 160 tests,
+  game-engine 85 suites / 578 tests / 1 known skip, and game-api 57 suites / 402 tests, all with
+  0 failures or errors in current XML.
+- Compose config: local and production passed using an empty env-file plus explicit validation values.
+- Docker smoke: isolated fresh project applied Flyway V1 through V31, seeded configured world 1, and passed
+  gateway-api, game-api, game-engine status, web-gateway, web-game, and nginx gateway HTTP checks. The daemon
+  was running/loop-alive with zero failures and a 3,600-second scheduled tick. Initial failures were isolated
+  to parallel Docker build memory exhaustion and a pre-existing default-project PostgreSQL volume password;
+  serial image builds plus an isolated fresh volume recovered the gate. Temporary containers, volumes, and
+  tags were removed; the existing `opensamguk_*` volumes remain.
+- `git diff --check` and untracked whitespace scan: clean. Independent final review verdict: `cleared`.
+- Remaining project-tool baselines: Agent OS test expects missing tracked `agents.max_threads`; strict checker
+  reports only the user-owned personal model pin in `.codex/config.toml`. Neither file was changed for this task.
 
-`.ai/decisions.md` ADR-LITE-001~012. 최근: 010(v2 콘텐츠 RTK 대체), 011(에셋 AI 생성 + UI 현대화), 012(코에이 IP 게이트 전면 해제 + 에셋 별도 공개 repo/CDN — 메인 repo 바이너리 미커밋 유지).
+## Deferred scope
 
-## Verification plan (Phase B — 커밋 전 필수)
+Do not claim full OPENSAM-127/128 or full S2-T2/T3. Deferred work includes other C1 tables,
+request/JWT world authorization, Redis key/consumer scoping, log/KV/history/message/auction ownership,
+same-local-ID coexistence, second-world admission, and cutover/production activation.
 
-- `tools/parity/gate.sh backend` — **XML `failures="0" errors="0"` + BUILD SUCCESSFUL로 판정, exit code 불신**.
-- `cd web/gateway && pnpm typecheck && pnpm test` · `cd web/game && pnpm typecheck && pnpm test`.
-- `tools/agent-system/check.py --strict --base origin/main`.
+## Safety and ownership
 
-## Known failures / cautions
+- `.codex/config.toml` contains a pre-existing user change and must remain untouched.
+- Commit/push/merge is explicitly approved for this verified stack. Deploy, production migration, Jira update,
+  and GitHub issue update remain unapproved.
+- Two exact abandoned Testcontainers Postgres containers from local hangs were removed. The default local
+  Compose containers were recreated during smoke and removed by cleanup; persistent `opensamguk_*` volumes
+  remain. The running MySQL container was not changed.
+- Root owns `.ai/*`; implementation lanes are released. Obtain explicit approval before any git/external action.
 
-- Testcontainers 다중 스위트 동시 실행 시 컨테이너 기동 flake — 단독 재실행으로 분별(`known-issues.md`). 94 리뷰의 V30 "경합 오탐"도 동일 클래스.
-- **EC2 prod 요금 미납 정지** — A5(배포) 전 해제 확인 필수.
-- 93 라이브 반영 시 repo-밖 compose에 `:ro` 볼륨 라인 수동 추가 필요.
-- 문서-실상 불일치: 직전 원장 "branch=main·외부 frozen" vs 실제 codex 브랜치 push됨 — push 경위 사용자 확인 대기(current-state Open question ③).
+## Next action
 
-## Do not repeat
-
-- 골든/테스트 완화·위조, `.env*` 읽기, **승인 없는 커밋/푸시/머지/배포** (하드 룰 — A4/A5는 명시 승인만).
-- gradle 판정을 exit code로 하지 말 것 — 출력 tail + 테스트 XML.
-- `.ai/*`는 single writer(`batch3-closeout`)만 수정.
-
-## Remaining work
-
-1. Phase B 검증 실행 → 결과 보고.
-2. A4 승인 대기: 커밋 분할안 6건 — ①91a(gateway-api profile icon + V30 + infra User*) ②92(web/gateway account UI + proxy + tests) ③93(nginx + compose + 웹 2앱 portrait helper) ④94(wire/dispatcher/ChangeRecorder/flush/controller/handler + IT) ⑤§13 헥스맵(tools/rtk14) ⑥docs/원장. base=main PR까지, 머지(=자동 배포)는 A5 별도.
-3. 미결: `.codex/config.toml` `max_threads` 제거 diff 포함 여부(사용자 지시 대기) · lane-97-fullrun(1000명 크롭, FP 2차 필터 중단점) 인수 여부 · EC2 해제.
-4. closeout 후 다음 5티켓 선정(마일스톤 M1/M2 High 우선, `ownership.md` Batch fences의 라벨·priority 규칙).
-
-## Files to read first
-
-`.ai/current-state.md` → `.ai/ownership.md` → `docs/superpowers/plans/2026-07-17-opensam-92-93-94-97-103-execution-contract.md` → `docs/loops/opensam-batch3-2026-07-17/reviews/`
+After the approved landing, fix the next bounded OPENSAM-126 cohort and ownership before implementation.
+Do not deploy or mutate trackers without explicit approval.

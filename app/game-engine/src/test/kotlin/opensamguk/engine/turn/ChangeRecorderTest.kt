@@ -141,6 +141,7 @@ class ChangeRecorderTest {
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH),
                 nations = listOf(Nation(1, "촉", "#00ff00")),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, Instant.EPOCH)).id),
             ),
         )
         val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)

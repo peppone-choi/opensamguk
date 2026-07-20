@@ -75,7 +75,8 @@ class DiplomacyUpdateFlushIT {
     fun `per-command diplomacy UPDATE writes both directions then the tick bulk-SQL runs after`() {
         // --- the per-command flush (선전포고: state 2 -> 1, term -> 24 BOTH rows) -----------------
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 updatedDiplomacy = listOf(
                     DiplomacyUpdate(1, 2, state = 1, term = 24),

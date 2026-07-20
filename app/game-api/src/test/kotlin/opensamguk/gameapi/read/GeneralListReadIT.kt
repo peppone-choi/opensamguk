@@ -1,9 +1,11 @@
 package opensamguk.gameapi.read
+import opensamguk.gameapi.config.GameApiProcessWorldIdConfiguration
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -22,22 +24,34 @@ import kotlin.test.assertEquals
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(
+    GameApiProcessWorldIdConfiguration::class,
+    GeneralReadRepository::class,
+    GeneralTurnReadRepository::class,
+)
 class GeneralListReadIT {
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var generalTurns: GeneralTurnReadRepository
+
+    private fun seedWorld() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'test', 1, 1, 60)",
+        )
+    }
+
     private fun insertGeneral(id: Int, nationId: Int, npc: Int, turnTime: String, recentWar: String? = null, age: Int = 30) {
         jdbc.update(
             """
             INSERT INTO general (
-                id, name, nation_id, city_id, leadership, strength, intel, injury,
+                id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
                 experience, dedication, officer_level, gold, rice,
                 crew, crew_type_id, train, atmos, troop_id,
                 weapon_code, book_code, horse_code, item_code, npc_state,
                 special_code, special2_code, personal_code, penalty, officer_city,
                 turn_time, recent_war_time, age, last_turn, meta
             ) VALUES (
-                $id, 'g$id', $nationId, 5, 50, 50, 50, 0,
+                $id, 1, 'g$id', $nationId, 5, 50, 50, 50, 0,
                 0, 0, 1, 0, 0,
                 0, 0, 0, 0, 0,
                 'None', 'None', 'None', 'None', $npc,
@@ -50,12 +64,13 @@ class GeneralListReadIT {
     }
     private fun insertTurn(generalId: Int, turnIdx: Int, action: String, brief: String) {
         jdbc.update(
-            "INSERT INTO general_turn (general_id, turn_idx, action_code, arg, brief) VALUES (?, ?, ?, '{}'::jsonb, ?)",
+            "INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief) VALUES (1, ?, ?, ?, '{}'::jsonb, ?)",
             generalId, turnIdx, action, brief,
         )
     }
     @Test
     fun `findByNationIdOrderByTurnTimeAsc 는 turn_time 오름차순으로 반환한다`() {
+        seedWorld()
         // 같은 국가(1)에 3명 — turn_time이 뒤섞인 순서로 insert.
         insertGeneral(id = 10, nationId = 1, npc = 0, turnTime = "2026-06-03 10:00:00+00")
         insertGeneral(id = 11, nationId = 1, npc = 0, turnTime = "2026-06-03 08:00:00+00")
@@ -74,6 +89,7 @@ class GeneralListReadIT {
     }
     @Test
     fun `findReservedByGeneralIds 는 turn_idx 5 미만만 general별 정렬해 일괄 반환한다`() {
+        seedWorld()
         insertGeneral(id = 30, nationId = 1, npc = 0, turnTime = "2026-06-03 10:00:00+00")
         insertGeneral(id = 31, nationId = 1, npc = 0, turnTime = "2026-06-03 10:00:00+00")
         // 30: 슬롯 0,1,2 + turn_idx 5(범위 밖, 제외돼야 함)

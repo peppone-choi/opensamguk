@@ -59,6 +59,7 @@ class BattleCommandContextBuilderTest {
                     TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0),  // at war w/ target
                     TurnDiplomacy(fromNationId = 1, toNationId = 3, state = 0, term = 0),  // at war (bridge)
                 ),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 6, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
 
@@ -109,6 +110,7 @@ class BattleCommandContextBuilderTest {
                 diplomacy = listOf(
                     TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0),  // at war w/ target only
                 ),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 6, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
 

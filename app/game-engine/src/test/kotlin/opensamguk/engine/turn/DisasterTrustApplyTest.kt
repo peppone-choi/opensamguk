@@ -44,6 +44,7 @@ class DisasterTrustApplyTest {
                 ),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0a0", level = 2, capitalCityId = 5)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 190, currentMonth = 7, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 

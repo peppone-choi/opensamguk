@@ -35,7 +35,12 @@ import kotlin.test.assertEquals
  * 4000<8000 / general 10 gold 4000; world_state year 200 startYear 190 → develCost 40 < 4000).
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(properties = ["opensamguk.profile=che:scenario_2"])
+@SpringBootTest(
+    properties = [
+        "opensamguk.profile=che:scenario_2",
+        "opensamguk.world-id=1",
+    ],
+)
 class CommandControllerIT {
 
     @Autowired private lateinit var context: WebApplicationContext
@@ -94,24 +99,24 @@ class CommandControllerIT {
     private fun seedBaseline(ownerNationId: Int) {
         jdbc.update(
             """
-            INSERT INTO world_state (scenario_code, current_year, current_month, tick_seconds, config, meta)
-            VALUES ('scenario_2', 200, 3, 3600, '{"startYear":190}'::jsonb, '{}'::jsonb)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, meta)
+            VALUES (1, 'scenario_2', 200, 3, 3600, '{"startYear":190}'::jsonb, '{}'::jsonb)
             """.trimIndent()
         )
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, level, type_code)
-            VALUES (1, '위', '#0000ff', 5, 7, 'che_명사')
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, level, type_code)
+            VALUES (1, 1, '위', '#0000ff', 5, 7, 'che_명사')
             """.trimIndent()
         )
         seedCity(ownerNationId)
         jdbc.update(
             """
             INSERT INTO general (
-                id, name, nation_id, city_id, leadership, strength, intel, injury,
+                world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                 experience, dedication, officer_level, gold, rice, turn_time, meta
             ) VALUES (
-                10, '순욱', 1, 5, 70, 30, 95, 0,
+                1, 10, '순욱', 1, 5, 70, 30, 95, 0,
                 1200, 900, 5, 4000, 3000, now(),
                 '{"explevel":4,"intel_exp":12,"max_domestic_critical":3.5}'::jsonb
             )
@@ -123,11 +128,11 @@ class CommandControllerIT {
         jdbc.update(
             """
             INSERT INTO city (
-                id, name, level, nation_id, supply_state, front_state,
+                world_id, id, name, level, nation_id, supply_state, front_state,
                 pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                 trust, trade, def, def_max, wall, wall_max, region, meta
             ) VALUES (
-                5, '허창', 5, ?, 1, 0,
+                1, 5, '허창', 5, ?, 1, 0,
                 50000, 100000, 4000, 8000, 3000, 8000, 1000, 2000,
                 82, 100, 500, 1000, 800, 1500, 3, '{}'::jsonb
             )

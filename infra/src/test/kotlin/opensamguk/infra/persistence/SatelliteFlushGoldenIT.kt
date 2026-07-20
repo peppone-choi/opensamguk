@@ -115,9 +115,9 @@ class SatelliteFlushGoldenIT {
         // The two scenario_1010 nations — the bidirectional diplomacy peers 거병 wires the new nation to.
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (1, '후한',   '#ffd700', 1,  10000, 10000, 1500, 7, 'che_명가', CAST('{}' AS jsonb)),
-                   (2, '황건적', '#8b4513', 50,  5000,  5000,  500, 5, 'che_명가', CAST('{}' AS jsonb))
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 1, '후한',   '#ffd700', 1,  10000, 10000, 1500, 7, 'che_명가', CAST('{}' AS jsonb)),
+                   (1, 2, '황건적', '#8b4513', 50,  5000,  5000,  500, 5, 'che_명가', CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -125,12 +125,12 @@ class SatelliteFlushGoldenIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, crew, train, atmos,
                  crew_type_id, troop_id, weapon_code, book_code, horse_code, item_code,
                  npc_state, turn_time, last_turn, meta)
             VALUES
-                (11, 'ⓝ공손범', 0, 32, 61, 67, 61, 0, 2374, 1960, 0, 1000, 1000, 0, 0, 0,
+                (1, 11, 'ⓝ공손범', 0, 32, 61, 67, 61, 0, 2374, 1960, 0, 1000, 1000, 0, 0, 0,
                  0, 0, 'None', 'None', 'None', 'None', 0, now(),
                  CAST('{"command":"휴식"}' AS jsonb),
                  CAST('{"explevel":15,"intel_exp":0,"max_domestic_critical":0}' AS jsonb))
@@ -229,7 +229,8 @@ class SatelliteFlushGoldenIT {
             ),
         )
 
-        return FlushPayload(
+        return testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 181, "current_month" to 1),
             updatedGenerals = listOf(actorAfter),
             createdNations = listOf(createdNation),

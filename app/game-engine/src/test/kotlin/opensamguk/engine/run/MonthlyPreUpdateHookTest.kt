@@ -106,6 +106,7 @@ class MonthlyPreUpdateHookTest {
                 cities = base.listCities(),
                 nations = listOf(first, Nation(id = 2, name = "동률국", color = "#00c", power = first.power)),
                 accessLogs = base.listAccessLogs(),
+                worldId = opensamguk.common.world.WorldId((base.getState()).id),
             ),
         )
         val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
@@ -128,6 +129,7 @@ class MonthlyPreUpdateHookTest {
                 cities = base.listCities(),
                 nations = base.listNations(),
                 accessLogs = base.listAccessLogs(),
+                worldId = opensamguk.common.world.WorldId((state).id),
             ),
         )
         val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
@@ -147,6 +149,7 @@ class MonthlyPreUpdateHookTest {
                 cities = base.listCities(),
                 nations = base.listNations(),
                 accessLogs = base.listAccessLogs(),
+                worldId = opensamguk.common.world.WorldId((base.getState().copy(meta = base.getState().meta - "globalLogs")).id),
             ),
         )
         val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
@@ -175,6 +178,7 @@ class MonthlyPreUpdateHookTest {
                 generals = base.listGenerals(),
                 cities = base.listCities(),
                 nations = listOf(nation.copy(meta = nation.meta - "spy")),
+                worldId = opensamguk.common.world.WorldId((base.getState()).id),
             ),
         )
         val recorder = ChangeRecorder(kvWriteObserver = world::applyKvDirtyFree)
@@ -288,6 +292,21 @@ class MonthlyPreUpdateHookTest {
                     conflict = "{\"3\":1.05}",
                 ),
             ),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1,
+                currentYear = 200,
+                currentMonth = 4,
+                tickSeconds = 3_600,
+                lastTurnTime = Instant.parse("0200-04-01T00:00:00Z"),
+                meta = linkedMapOf(
+                    "startYear" to 184,
+                    "map" to linkedMapOf("mapName" to "che"),
+                    "globalLogs" to listOf(
+                        linkedMapOf("category" to "history", "year" to 200, "month" to 4, "text" to "기존 정세"),
+                        linkedMapOf("category" to "action", "year" to 200, "month" to 4, "text" to "기존 활동"),
+                    ),
+                ),
+            )).id),
         ),
     )
 }

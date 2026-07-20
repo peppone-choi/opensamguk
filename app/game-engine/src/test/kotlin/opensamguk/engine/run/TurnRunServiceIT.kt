@@ -7,6 +7,7 @@ import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.gameEventChannel
+import opensamguk.common.world.WorldId
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.turn.City
@@ -143,8 +144,8 @@ class TurnRunServiceIT {
 
         // --- the reserved general turn lives in the general_turn ring, NOT on the command stream --
         val reservedRepo = ReservedTurnRepository(jdbc)
-        reservedRepo.reserve(generalId = generalId, turnIdx = 0, actionCode = "che_농지개간")
-        reservedRepo.reserve(generalId = generalId, turnIdx = 1, actionCode = "che_기술연구")
+        reservedRepo.reserve(worldId = WorldId(1), generalId = generalId, turnIdx = 0, actionCode = "che_농지개간")
+        reservedRepo.reserve(worldId = WorldId(1), generalId = generalId, turnIdx = 1, actionCode = "che_기술연구")
 
         // --- the in-memory world (the daemon source of truth, matching the DB pre-state) ---------
         val world = InMemoryTurnWorld(worldSnapshot())
@@ -153,10 +154,10 @@ class TurnRunServiceIT {
         val lifecycle = TurnDaemonLifecycle(
             world = world,
             handler = handler,
-            pullNationTurnOf = { nationId, officerLevel -> reservedRepo.pullNationTurn(nationId, officerLevel) },
-            pullGeneralTurnOf = { generalId -> reservedRepo.pullGeneralTurn(generalId) },
+            pullNationTurnOf = { nationId, officerLevel -> reservedRepo.pullNationTurn(WorldId(1), nationId, officerLevel) },
+            pullGeneralTurnOf = { generalId -> reservedRepo.pullGeneralTurn(WorldId(1), generalId) },
         ) { gid ->
-            reservedRepo.readReserved(gid, 0)
+            reservedRepo.readReserved(WorldId(1), gid, 0)
         }
         val commandStream = RedisCommandStream(template, profile)
         val realtimePublisher = RealtimePublisher(template, profile)
@@ -199,12 +200,12 @@ class TurnRunServiceIT {
             assertEquals(1, result.flushedLogs)
             assertEquals(
                 "che_기술연구",
-                reservedRepo.readReserved(generalId, 0).actionCode,
+                reservedRepo.readReserved(WorldId(1), generalId, 0).actionCode,
                 "slot 0 should advance to the next reserved command after runTick",
             )
             assertEquals(
                 "휴식",
-                reservedRepo.readReserved(generalId, 29).actionCode,
+                reservedRepo.readReserved(WorldId(1), generalId, 29).actionCode,
                 "the consumed slot should rotate to the ring tail as 휴식",
             )
 
@@ -287,26 +288,26 @@ class TurnRunServiceIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, meta)
             VALUES
-                (:id, 'g42', :nation, :city, 70, 70, 80, 0, 0, 0, 0, 100000, 1000, now(),
+                (:world, :id, 'g42', :nation, :city, 70, 70, 80, 0, 0, 0, 0, 100000, 1000, now(),
                  CAST('{"explevel":10,"intel_exp":3,"max_domestic_critical":0}' AS jsonb))
             """.trimIndent(),
-            MapSqlParameterSource().addValue("id", generalId).addValue("nation", nationId).addValue("city", cityId),
+            MapSqlParameterSource().addValue("world", 1).addValue("id", generalId).addValue("nation", nationId).addValue("city", cityId),
         )
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (:id, 'c7', 5, :nation, 1, 0, 50000, 100000,
+                (:world, :id, 'c7', 5, :nation, 1, 0, 50000, 100000,
                  1000, 20000, 1000, 20000, 500, 1000, 50, 100, 1000, 2000,
                  1000, 2000, 1, CAST('{"trust":50}' AS jsonb))
             """.trimIndent(),
-            MapSqlParameterSource().addValue("id", cityId).addValue("nation", nationId),
+            MapSqlParameterSource().addValue("world", 1).addValue("id", cityId).addValue("nation", nationId),
         )
     }
 
@@ -346,6 +347,14 @@ class TurnRunServiceIT {
             ),
         ),
         nations = listOf(Nation(id = nationId, name = "n1", color = "#000", level = 2, capitalCityId = 99)),
+        worldId = opensamguk.common.world.WorldId((TurnWorldState(
+            id = 1,
+            currentYear = year,
+            currentMonth = month,
+            tickSeconds = tickSeconds,
+            lastTurnTime = t0,
+            meta = linkedMapOf("startYear" to year, "startTime" to calendarStartTime.toString()),
+        )).id),
     )
 
     private fun enqueueControlCommand() {

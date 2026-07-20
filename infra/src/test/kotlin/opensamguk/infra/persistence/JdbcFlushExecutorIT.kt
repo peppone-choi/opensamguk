@@ -1,5 +1,6 @@
 package opensamguk.infra.persistence
 
+import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
@@ -17,6 +18,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import java.time.Instant
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * Testcontainers IT for [JdbcFlushExecutor]. Brings up `postgres:16-alpine`, applies the Flyway
@@ -85,10 +87,10 @@ class JdbcFlushExecutorIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, meta)
             VALUES
-                (10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
+                (10, 1, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
                  CAST('{"explevel":1,"intel_exp":0,"max_domestic_critical":0}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
@@ -97,11 +99,11 @@ class JdbcFlushExecutorIT {
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (id, world_id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (5, '성도', 5, 2, 1, 0, 50000, 100000,
+                (5, 1, '성도', 5, 2, 1, 0, 50000, 100000,
                  1000, 2000, 800, 2000, 500, 1000, 50, 100, 1000, 2000,
                  1000, 2000, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
@@ -111,8 +113,8 @@ class JdbcFlushExecutorIT {
         // nationUpdate SET 절을 통해 실제로 영속되는지 검증한다.
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
-            VALUES (2, '촉', '#00ff00', 5, 5000, 5000, 0, 1, 'che_촉', 1000, CAST('{}' AS jsonb))
+            INSERT INTO nation (id, world_id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
+            VALUES (2, 1, '촉', '#00ff00', 5, 5000, 5000, 0, 1, 'che_촉', 1000, CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -121,10 +123,10 @@ class JdbcFlushExecutorIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, officer_city, gold, rice, turn_time, meta)
             VALUES
-                (11, '태수십일', 2, 5, 60, 60, 60, 0, 0, 0, 3, 5, 100, 100, now(), CAST('{}' AS jsonb))
+                (11, 1, '태수십일', 2, 5, 60, 60, 60, 0, 0, 0, 3, 5, 100, 100, now(), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -141,7 +143,8 @@ class JdbcFlushExecutorIT {
         val lastRefresh = Instant.parse("2026-07-11T08:00:00Z")
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = worldState,
                 generalAccessLogUpserts = listOf(
                     GeneralAccessLogWriteRow(10, 7, lastRefresh, 3, 30, 4, 40),
@@ -167,7 +170,8 @@ class JdbcFlushExecutorIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = worldState,
                 generalAccessLogDeletes = listOf(10),
             ),
@@ -227,7 +231,8 @@ class JdbcFlushExecutorIT {
             meta = linkedMapOf(),
         )
 
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 2, "current_phase" to 3),
             updatedGenerals = listOf(postGeneral),
             updatedCities = listOf(postCity),
@@ -322,7 +327,8 @@ class JdbcFlushExecutorIT {
             meta = linkedMapOf(),
         )
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
                 logEntries = listOf(sysLog),
             ),
@@ -358,7 +364,8 @@ class JdbcFlushExecutorIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf(
                     "id" to 1, "current_year" to 190, "current_month" to 3,
                     "last_turn_time" to "2026-06-12T00:30:00Z",
@@ -377,7 +384,8 @@ class JdbcFlushExecutorIT {
 
         // last_turn_time 미포함 페이로드는 meta 를 건드리지 않는다(키 유지).
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 4),
             ),
         )
@@ -402,7 +410,8 @@ class JdbcFlushExecutorIT {
     @Test
     fun `world_state flush persists isunited column`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf(
                     "id" to 1, "current_year" to 190, "current_month" to 5,
                     "isunited" to 2,
@@ -412,7 +421,8 @@ class JdbcFlushExecutorIT {
         assertEquals(2, jdbc.queryForObject("SELECT isunited FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 6),
             ),
         )
@@ -427,7 +437,8 @@ class JdbcFlushExecutorIT {
     @Test
     fun `world_state flush persists admin status cadence and config`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf(
                     "id" to 1,
                     "current_year" to 190,
@@ -460,7 +471,8 @@ class JdbcFlushExecutorIT {
     @Test
     fun `world_state flush persists maxNationId and maxGeneralId into meta`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf(
                     "id" to 1, "current_year" to 190, "current_month" to 7,
                     "max_nation_id" to 7,
@@ -481,7 +493,8 @@ class JdbcFlushExecutorIT {
         // (the executor always merges the current payload values, defaulting to 0 — caller must
         // carry forward the persisted value; this test documents that contract).
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 8),
             ),
         )
@@ -515,7 +528,8 @@ class JdbcFlushExecutorIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
                 updatedNations = listOf(postNation),
             ),
@@ -548,7 +562,8 @@ class JdbcFlushExecutorIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
                 updatedGenerals = listOf(demotedGeneral),
             ),
@@ -560,6 +575,117 @@ class JdbcFlushExecutorIT {
         )
         assertEquals(0, intOf(gRow["officer_city"]))
         assertEquals(1, intOf(gRow["officer_level"]))
+    }
+
+    @Test
+    fun `world one root mutations reject world two city and nation rows and roll back`() {
+        jdbc.update(
+            """
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
+            VALUES (2, 'cross_world', 190, 1, 3600)
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO city
+                (id, world_id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                 agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
+                 wall, wall_max, region, meta)
+            VALUES
+                (9903, 2, '이세계도시', 1, 9902, 1, 0, 100, 1000,
+                 10, 1000, 10, 1000, 10, 1000, 10, 10, 10, 1000,
+                 10, 1000, 1, CAST('{}' AS jsonb))
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO nation (id, world_id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
+            VALUES (9902, 2, '이세계국가', '#222222', 9903, 100, 100, 0, 1, 'che_촉', 10, CAST('{}' AS jsonb))
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+
+        val foreignCity = City(
+            id = 9903, nationId = 9902, level = 1,
+            commerce = 10, commerceMax = 1000,
+            agriculture = 777, agricultureMax = 1000,
+            supplyState = 1, frontState = 0,
+            trust = 10.0,
+            security = 10, securityMax = 1000,
+            defense = 10, defenseMax = 1000,
+            wall = 10, wallMax = 1000,
+            population = 100, populationMax = 1000,
+            trade = 10, region = 1,
+            meta = linkedMapOf(),
+        )
+        val foreignNation = Nation(
+            id = 9902, level = 1, capitalCityId = 9903,
+            name = "changed-by-world-one", color = "#000000", typeCode = "che_촉",
+            gold = 999, rice = 999,
+            power = 999,
+            tech = 0.0,
+            meta = linkedMapOf(),
+        )
+
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = WorldId(1),
+                    worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 2),
+                    updatedCities = listOf(foreignCity),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+
+        assertEquals(
+            10,
+            jdbc.queryForObject(
+                "SELECT agri FROM city WHERE world_id = 2 AND id = 9903",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
+
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = WorldId(1),
+                    worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 3),
+                    updatedNations = listOf(foreignNation),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+        assertEquals(
+            "이세계국가",
+            jdbc.queryForObject(
+                "SELECT name FROM nation WHERE world_id = 2 AND id = 9902",
+                MapSqlParameterSource(),
+                String::class.java,
+            ),
+        )
+
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = WorldId(1),
+                    worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 4),
+                    deletedNations = listOf(9902),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM nation WHERE world_id = 2 AND id = 9902",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
     }
 
     /**
@@ -587,7 +713,8 @@ class JdbcFlushExecutorIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1),
                 statisticInserts = listOf(statRow),
             ),

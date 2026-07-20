@@ -105,6 +105,7 @@ class AiTurnAdapterMaterializeTest {
             listOf(frontCapital(), backupCity(), enemyCity()),
             listOf(nation(1), nation(2, capital = ENEMY_CITY)),
             diplomacy = listOf(TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0)),
+            worldId = opensamguk.common.world.WorldId((baseState()).id),
         ),
     )
 
@@ -184,6 +185,7 @@ class AiTurnAdapterMaterializeTest {
                     frontCapital().copy(nationId = 0, supplyState = 0, frontState = 0),
                 ),
                 listOf(),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
 
@@ -215,6 +217,7 @@ class AiTurnAdapterMaterializeTest {
                 listOf(frontCapital(), backupCity(), enemyCity()),
                 listOf(nation(1), nation(2, capital = ENEMY_CITY)),
                 diplomacy = listOf(TurnDiplomacy(1, 2, 0, 0)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, YEAR, 3, 3600, t0)).id),
             ),
         )
         val a = AiTurnAdapter(worldM3, registry, FIXTURE_HIDDEN_SEED, START_YEAR, turnTerm = 1)
@@ -300,6 +303,7 @@ class AiTurnAdapterMaterializeTest {
                     nation(DONOR, capital = ENEMY_CITY),
                 ),
                 diplomacy = listOf(),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
 

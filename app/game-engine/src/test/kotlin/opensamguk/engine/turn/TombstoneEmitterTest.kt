@@ -53,7 +53,7 @@ class TombstoneEmitterTest {
 
     @Test
     fun `markGeneralDeleted feeds deletedGenerals and excludes it from the update-set`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(engineGeneral(1))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(engineGeneral(1)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         val recorder = ChangeRecorder()
 
         recorder.markGeneralDeleted(world, 1)
@@ -68,7 +68,7 @@ class TombstoneEmitterTest {
 
     @Test
     fun `a marked-then-mutated general emits ONLY the delete`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(engineGeneral(1, gold = 100))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(engineGeneral(1, gold = 100)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         val recorder = ChangeRecorder()
 
         // a mutation recorded BEFORE the kill must be discarded once the row is tombstoned.
@@ -116,7 +116,7 @@ class TombstoneEmitterTest {
             ),
         )
         val state = baseState().copy(meta = mapOf("generalHistory" to mapOf(7 to listOf("기존 연혁"))))
-        val world = InMemoryTurnWorld(WorldSnapshot(state = state, generals = listOf(general)))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = state, generals = listOf(general), worldId = opensamguk.common.world.WorldId((state).id)))
         val recorder = ChangeRecorder()
 
         world.pushLog(LogEntryDraft("general", "history", "이번 틱 첫 연혁", generalId = 7))
@@ -194,6 +194,7 @@ class TombstoneEmitterTest {
                     engineCity(7, nationId = 3).copy(conflict = """{"3":8.0,"2":4.0}"""),
                 ),
                 nations = listOf(nation),
+                worldId = opensamguk.common.world.WorldId((baseState().copy(meta = mapOf("nationHistory" to mapOf(2 to listOf("기존 국사"))))).id),
             ),
         )
         val recorder = ChangeRecorder()

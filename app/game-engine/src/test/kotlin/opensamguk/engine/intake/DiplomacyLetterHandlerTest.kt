@@ -56,6 +56,7 @@ class DiplomacyLetterHandlerTest {
                 Nation(id = 1, name = "촉", color = "#00ff00"),
                 Nation(id = 2, name = "위", color = "#0000ff"),
             ),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 
@@ -350,6 +351,7 @@ class DiplomacyLetterHandlerTest {
                 state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
                 generals = listOf(me2),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#00ff00"), Nation(id = 2, name = "위", color = "#0000ff")),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val letter = letterRow(letterNo = 100, src = 1, dest = 2, state = "activated", stateOpt = "try_destroy_src")

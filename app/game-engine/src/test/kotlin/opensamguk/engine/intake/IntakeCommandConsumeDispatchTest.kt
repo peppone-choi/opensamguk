@@ -47,6 +47,7 @@ class IntakeCommandConsumeDispatchTest {
                 ),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 
@@ -178,6 +179,7 @@ class IntakeCommandConsumeDispatchTest {
                     ),
                 ),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val recorder = ChangeRecorder()

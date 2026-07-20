@@ -81,7 +81,7 @@ class AiTurnAdapterE2ETest {
         cities: List<City> = listOf(city()),
         nations: List<Nation> = listOf(nation()),
         diplomacy: List<TurnDiplomacy> = emptyList(),
-    ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations, diplomacy = diplomacy))
+    ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations, diplomacy = diplomacy, worldId = opensamguk.common.world.WorldId((baseState()).id)))
 
     // ── (1) a wired general dispatches a NON-neutral command through the real priority loop + resolves ──
 

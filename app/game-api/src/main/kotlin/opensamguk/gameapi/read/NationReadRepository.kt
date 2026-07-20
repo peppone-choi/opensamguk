@@ -5,10 +5,14 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.logic.domain.Nation
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.Repository as SpringDataRepository
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import java.util.Optional
 
 /**
  * Read-only JPA mapping of the `nation` row for the PRECHECK path (game-api ONLY — §7).
@@ -24,6 +28,9 @@ class NationReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "name")
     var name: String = "",
@@ -109,7 +116,10 @@ interface NationCrewAggregate {
     val max: Long
 }
 
-interface NationReadRepository : JpaRepository<NationReadEntity, Int> {
+interface NationReadRawRepository : SpringDataRepository<NationReadEntity, Int> {
+    fun findByWorldIdAndId(worldId: Int, id: Int): Optional<NationReadEntity>
+    fun findByWorldId(worldId: Int): List<NationReadEntity>
+    fun countByWorldId(worldId: Int): Long
 
     /**
      * W3-F4 — 모든 국가의 인구 집계를 1회 grouped query로(N+1 방지). 도시가 0개인 국가는 결과에
@@ -119,9 +129,9 @@ interface NationReadRepository : JpaRepository<NationReadEntity, Int> {
     @Query(
         "select c.nationId as nationId, count(c) as cityCnt, " +
             "coalesce(sum(c.population), 0) as now, coalesce(sum(c.populationMax), 0) as max " +
-            "from CityReadEntity c group by c.nationId",
+            "from CityReadEntity c where c.worldId = :worldId group by c.nationId",
     )
-    fun aggregatePopulationByNation(): List<NationPopulationAggregate>
+    fun aggregatePopulationByWorldId(@Param("worldId") worldId: Int): List<NationPopulationAggregate>
 
     /**
      * W3-F4 — 모든 국가의 병력 집계를 1회 grouped query로(N+1 방지). `npc_state = 5` 장수 제외.
@@ -131,9 +141,9 @@ interface NationReadRepository : JpaRepository<NationReadEntity, Int> {
     @Query(
         "select g.nationId as nationId, count(g) as generalCnt, " +
             "coalesce(sum(g.crew), 0) as now, coalesce(sum(g.leadership), 0) * 100 as max " +
-            "from GeneralReadEntity g where g.npcState <> 5 group by g.nationId",
+            "from GeneralReadEntity g where g.worldId = :worldId and g.npcState <> 5 group by g.nationId",
     )
-    fun aggregateCrewByNation(): List<NationCrewAggregate>
+    fun aggregateCrewByWorldId(@Param("worldId") worldId: Int): List<NationCrewAggregate>
 
     /**
      * W3-F4 — 단일 국가용 인구 집계(상세 페이지에서 한 국가만 필요할 때). 도시 0개면 빈 결과.
@@ -141,9 +151,12 @@ interface NationReadRepository : JpaRepository<NationReadEntity, Int> {
     @Query(
         "select c.nationId as nationId, count(c) as cityCnt, " +
             "coalesce(sum(c.population), 0) as now, coalesce(sum(c.populationMax), 0) as max " +
-            "from CityReadEntity c where c.nationId = :nationId group by c.nationId",
+            "from CityReadEntity c where c.worldId = :worldId and c.nationId = :nationId group by c.nationId",
     )
-    fun aggregatePopulationOfNation(@Param("nationId") nationId: Int): NationPopulationAggregate?
+    fun aggregatePopulationOfWorldIdAndNation(
+        @Param("worldId") worldId: Int,
+        @Param("nationId") nationId: Int,
+    ): NationPopulationAggregate?
 
     /**
      * W3-F4 — 단일 국가용 병력 집계. `npc_state = 5` 제외. 장수 0명이면 빈 결과.
@@ -151,7 +164,34 @@ interface NationReadRepository : JpaRepository<NationReadEntity, Int> {
     @Query(
         "select g.nationId as nationId, count(g) as generalCnt, " +
             "coalesce(sum(g.crew), 0) as now, coalesce(sum(g.leadership), 0) * 100 as max " +
-            "from GeneralReadEntity g where g.nationId = :nationId and g.npcState <> 5 group by g.nationId",
+            "from GeneralReadEntity g where g.worldId = :worldId and g.nationId = :nationId and g.npcState <> 5 group by g.nationId",
     )
-    fun aggregateCrewOfNation(@Param("nationId") nationId: Int): NationCrewAggregate?
+    fun aggregateCrewOfWorldIdAndNation(
+        @Param("worldId") worldId: Int,
+        @Param("nationId") nationId: Int,
+    ): NationCrewAggregate?
+}
+
+@Repository
+class NationReadRepository(
+    private val raw: NationReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findById(id: Int): Optional<NationReadEntity> = raw.findByWorldIdAndId(worldId.value, id)
+
+    fun findAll(): List<NationReadEntity> = raw.findByWorldId(worldId.value)
+
+    fun count(): Long = raw.countByWorldId(worldId.value)
+
+    fun aggregatePopulationByNation(): List<NationPopulationAggregate> = raw.aggregatePopulationByWorldId(worldId.value)
+
+    fun aggregateCrewByNation(): List<NationCrewAggregate> = raw.aggregateCrewByWorldId(worldId.value)
+
+    fun aggregatePopulationOfNation(nationId: Int): NationPopulationAggregate? =
+        raw.aggregatePopulationOfWorldIdAndNation(worldId.value, nationId)
+
+    fun aggregateCrewOfNation(nationId: Int): NationCrewAggregate? =
+        raw.aggregateCrewOfWorldIdAndNation(worldId.value, nationId)
 }

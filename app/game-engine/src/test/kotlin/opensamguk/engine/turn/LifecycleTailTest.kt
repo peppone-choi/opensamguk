@@ -77,6 +77,7 @@ class LifecycleTailTest {
                 generals = listOf(g),
                 nations = listOf(Nation(1, "n1", "#000")),
                 accessLogs = listOfNotNull(accessLog),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 6, 3600, t0)).id),
             ),
         )
 

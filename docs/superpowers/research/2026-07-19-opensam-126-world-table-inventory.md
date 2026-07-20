@@ -1,6 +1,6 @@
 # OPENSAM-126 world-table ownership inventory and V31 first slice
 
-Status: implementation-start research artifact; no migration is implemented here.
+Status: V31 first-slice implementation and ownership research artifact.
 Date: 2026-07-19
 Scope owner: cqrs-s2-schema-foundation
 
@@ -29,10 +29,12 @@ OPENSAM-148 is consumed as a hard predecessor:
 3. World-owned keys are composite: (world_id, local_id) and
    (world_id, request_id); a local ID never repairs a missing world ID
    (canonical-world-identity-contract.md:34-56).
-4. A migration may backfill only when exactly one world_state row exists, and
-   only with that row's id. Zero/multiple/orphan/unresolvable cases fail closed;
-   no profile/server_id/ng_games fallback is legal
-   (canonical-world-identity-contract.md:58-67).
+4. A migration locks its canonical source and backfills only from exactly one
+   positive world_state id. A zero-world database may expand only when every
+   declared world-owned legacy relation is empty; otherwise zero,
+   multiple/non-positive, orphan, and unresolvable cases fail closed. No
+   profile/server_id/ng_games fallback is legal
+   (canonical-world-identity-contract.md:58-76).
 
 The OPENSAM-126 plan requires mutable and append-only/cold/satellite log,
 history, rank, turn, KV, message, auction, and archive-style world data to be
@@ -138,17 +140,29 @@ contracts. troop, diplomacy, logs, history, KV, messages, auctions, archives,
 board/vote, and all C2/C3 relations are deferred. V31 does not claim the
 full-table completion required by OPENSAM-126.
 
-### Migration contract for future V31__world_scope_expand.sql
+ScenarioImporter is the explicit bootstrap seeding path for this cohort. It
+captures the positive id returned by its just-inserted world_state row and
+explicitly writes that id into nation, city, general, general_turn, and
+nation_turn; it does not assume that the inserted row has id 1. Runtime
+loader/read/precheck/intake/flush writers remain outside this slice and require
+a separate compatibility audit before V31 is deployed.
 
-1. At the beginning of the transactional migration, count world_state rows.
-   Proceed only for exactly one row with a positive id. That id is the only
-   backfill source.
-2. Zero rows, more than one row, non-positive id, or a later unresolved/orphaned
-   cohort row must produce a deterministic migration error and rollback. Never
-   use MIN/MAX, ORDER BY ... LIMIT 1, profile, server_id, ng_games.id, or config.
-3. Add nullable world_id integer only to the five cohort tables. Backfill using a
-   cardinality-sensitive scalar world_state.id subquery after preflight; no
-   default/fallback is allowed.
+### Migration contract for V31__world_scope_expand.sql
+
+1. At the beginning of the transactional migration, acquire
+   `SHARE ROW EXCLUSIVE` on world_state so writer transactions cannot change
+   canonical-world cardinality or identity between preflight and backfill.
+2. With exactly one positive world_state id, use that locked id as the only
+   backfill source. With zero worlds, scan every current physical C1 relation
+   other than world_state and retired auction tables: an entirely empty set is
+   a pristine schema-only expansion; any legacy row (including `ng_games`) is a
+   deterministic error and rollback. More than one world, a non-positive id,
+   or an orphaned/unresolvable cohort row also fails and rolls back. Never use
+   MIN/MAX, ORDER BY ... LIMIT 1, profile, server_id, ng_games.id, or config.
+3. Add `world_id integer` only to the five cohort tables. For the one-positive-
+   world branch, backfill with the cardinality-sensitive scalar world_state.id
+   subquery. For a pristine zero-world branch, no row receives an artificial
+   identity, default, or backfill value.
 4. Verify no cohort world_id is null, set NOT NULL, then add
    FK(world_id)->world_state(id) to each cohort table.
 5. Install exactly these logical scoped key/index contracts:
@@ -168,15 +182,18 @@ The new unique surfaces are forward-compatible only. No runtime trigger/default,
 Redis key change, loader/read/precheck/intake/flush change, or old-binary
 compatibility claim is part of this slice.
 
-### Future tests written red before the SQL
+### TDD evidence written red before the SQL
 
 | Test case | Fixture | Required assertion |
 |---|---|---|
+| pristine empty schema expands without a placeholder world | No world_state and no C1 rows | V31 applies; all five world_id columns are INTEGER NOT NULL with no default. |
 | single world row backfills only canonical id | One world_state(id=701), rows in all five cohort tables | Every row has world_id=701; all five FKs and listed scoped keys exist. |
-| zero world rows fail closed without server fallback | No world_state, but legacy ng_games.server_id/profile fixture | V31 fails; no legacy identifier becomes world_id; transactional changes rollback. |
+| zero worlds plus legacy data fail closed without server fallback | No world_state, but legacy ng_games.server_id/profile fixture | V31 fails; no legacy identifier becomes world_id; transactional changes rollback. |
+| zero worlds plus an orphaned cohort row fail closed | No world_state, but a nation/city/general/general_turn/nation_turn row | V31 fails and rolls back rather than assigning a synthetic world. |
 | multiple world rows fail closed without arbitrary selection | world_state ids 701 and 702 plus cohort data | V31 fails before backfill; it chooses neither row. |
 | non-positive canonical source fails closed | Exactly one deliberately non-positive world_state.id fixture | V31 fails under positive-WorldId contract. |
 | scoped turn uniqueness is enforced | Successful one-world migration plus duplicate/near-duplicate turn rows | New world-qualified business unique governs; old unqualified turn unique does not. |
+| bootstrap importer propagates its inserted canonical id | V31 schema plus ScenarioImporter fixture | Every row in all five cohort tables has the returned world_state id. |
 
 Fresh migration/rehearsal for every remaining relation and two-world
 same-local-ID isolation are later S2 work (CQRS plan:156-183), not V31 evidence.

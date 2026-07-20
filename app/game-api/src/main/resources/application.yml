@@ -27,6 +27,7 @@ jwt:
   # two services validate the same dev tokens out of the box.
   secret: ${JWT_SECRET:Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU=}
 opensamguk:
+  world-id: ${OPENSAMGUK_WORLD_ID}
   profile: ${OPENSAMGUK_PROFILE:che:scenario_2}
 server:
   port: ${GAME_API_PORT:8081}

@@ -64,11 +64,11 @@ class CityStateFlushIT {
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (5, '성도', 5, 2, 1, 0, 50000, 100000,
+                (1, 5, '성도', 5, 2, 1, 0, 50000, 100000,
                  1000, 2000, 800, 2000, 500, 1000, 50, 100, 1000, 2000,
                  1000, 2000, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
@@ -101,7 +101,7 @@ class CityStateFlushIT {
         assertEquals(0, selectState())
 
         // RaiseDisaster가 stateCode 7(혹한 등)을 기록한 도시를 flush.
-        executor.flush(FlushPayload(worldStateUpdate = ws(), updatedCities = listOf(city(state = 7, dead = 321))))
+        executor.flush(FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), updatedCities = listOf(city(state = 7, dead = 321))))
         assertEquals(7, selectState())
         assertEquals(321, selectDead())
 
@@ -111,7 +111,7 @@ class CityStateFlushIT {
         assertEquals(321, CityRowMapper.fromRow(row).dead)
 
         // 다음 달 무조건 리셋(state<=10 → 0)도 같은 경로로 영속된다.
-        executor.flush(FlushPayload(worldStateUpdate = ws(), updatedCities = listOf(city(state = 0))))
+        executor.flush(FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), updatedCities = listOf(city(state = 0))))
         assertEquals(0, selectState())
     }
 

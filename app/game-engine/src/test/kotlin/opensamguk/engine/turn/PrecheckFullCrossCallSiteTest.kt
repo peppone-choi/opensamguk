@@ -135,7 +135,7 @@ class PrecheckFullCrossCallSiteTest {
         val state = TurnWorldState(
             id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
         )
-        val world = InMemoryTurnWorld(WorldSnapshot(state, listOf(general), listOf(city), nations))
+        val world = InMemoryTurnWorld(WorldSnapshot(state, listOf(general), listOf(city), nations, worldId = opensamguk.common.world.WorldId((state).id)))
         return ReservedTurnHandler(world, registry, HIDDEN_SEED, START_YEAR) to world
     }
 

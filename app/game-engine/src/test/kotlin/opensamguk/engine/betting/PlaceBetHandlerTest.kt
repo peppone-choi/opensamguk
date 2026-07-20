@@ -62,6 +62,7 @@ class PlaceBetHandlerTest {
             state = state(),
             generals = listOf(general),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000, meta = emptyMap())),
+            worldId = opensamguk.common.world.WorldId((state()).id),
         ),
     )
 

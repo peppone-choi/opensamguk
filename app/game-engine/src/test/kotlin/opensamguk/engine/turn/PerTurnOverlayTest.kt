@@ -59,6 +59,7 @@ class PerTurnOverlayTest {
             generals = listOf(general(1)),
             cities = listOf(city(5)),
             nations = listOf(nation(1)),
+            worldId = opensamguk.common.world.WorldId((baseState()).id),
         ),
     )
 

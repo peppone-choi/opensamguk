@@ -476,7 +476,7 @@ class AiSelectionGateIT {
                 "isunited" to (gameEnv["isunited"]?.jsonPrimitive?.intOrNull ?: 0),
             ),
         )
-        return InMemoryTurnWorld(WorldSnapshot(state, generals, cities, nations, emptyList(), diplomacy))
+        return InMemoryTurnWorld(WorldSnapshot(state, generals, cities, nations, emptyList(), diplomacy, worldId = opensamguk.common.world.WorldId((state).id)))
     }
 
     private fun buildReservedNameLookup(wj: JsonObject): (Int) -> String? {

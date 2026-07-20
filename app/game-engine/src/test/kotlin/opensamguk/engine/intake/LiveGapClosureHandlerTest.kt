@@ -77,6 +77,7 @@ class LiveGapClosureHandlerTest {
             cities = cities,
             nations = nations,
             troops = troops,
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 3, 3600, t0, meta = linkedMapOf("npcmode" to 2, "maxgeneral" to 500, "turnterm" to 60, "hiddenSeed" to "test-seed"))).id),
         ),
     )
 

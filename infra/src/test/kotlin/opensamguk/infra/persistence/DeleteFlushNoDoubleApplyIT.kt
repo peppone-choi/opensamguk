@@ -93,9 +93,9 @@ class DeleteFlushNoDoubleApplyIT {
         // Two nations: 2 (the killed general's nation, gennum starts at 3) and 9 (the cascade target).
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"gennum":3}' AS jsonb)),
-                   (9, '망국', '#ff0000', 7, 100, 100, 0, 1, 'che_명가', CAST('{"gennum":1}' AS jsonb))
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"gennum":3}' AS jsonb)),
+                   (1, 9, '망국', '#ff0000', 7, 100, 100, 0, 1, 'che_명가', CAST('{"gennum":1}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -103,10 +103,10 @@ class DeleteFlushNoDoubleApplyIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, last_turn, meta)
             VALUES
-                (10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
+                (1, 10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
                  CAST('{}' AS jsonb), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
@@ -119,7 +119,7 @@ class DeleteFlushNoDoubleApplyIT {
         }
         for (idx in 0..2) {
             jdbc.update(
-                "INSERT INTO general_turn (general_id, turn_idx, action_code) VALUES (10, :idx, '휴식')",
+                "INSERT INTO general_turn (world_id, general_id, turn_idx, action_code) VALUES (1, 10, :idx, '휴식')",
                 MapSqlParameterSource().addValue("idx", idx),
             )
         }
@@ -127,10 +127,10 @@ class DeleteFlushNoDoubleApplyIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, last_turn, meta)
             VALUES
-                (11, '생존', 2, 5, 60, 60, 60, 0, 0, 0, 1, 500, 500, now(),
+                (1, 11, '생존', 2, 5, 60, 60, 60, 0, 0, 0, 1, 500, 500, now(),
                  CAST('{}' AS jsonb), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
@@ -143,11 +143,11 @@ class DeleteFlushNoDoubleApplyIT {
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (7, '함락성', 5, 9, 1, 0, 10000, 50000, 500, 1000, 500, 1000, 300, 1000, 40, 100,
+                (1, 7, '함락성', 5, 9, 1, 0, 10000, 50000, 500, 1000, 500, 1000, 300, 1000, 40, 100,
                  500, 1000, 500, 1000, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
@@ -160,7 +160,7 @@ class DeleteFlushNoDoubleApplyIT {
             MapSqlParameterSource(),
         )
         jdbc.update(
-            "INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code) VALUES (9, 12, 0, '휴식')",
+            "INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code) VALUES (1, 9, 12, 0, '휴식')",
             MapSqlParameterSource(),
         )
         jdbc.update(
@@ -184,7 +184,8 @@ class DeleteFlushNoDoubleApplyIT {
 
     @Test
     fun `unification action logs flush before old-general archives without changing normal delete ordering`() {
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             logEntries = listOf(
@@ -340,7 +341,8 @@ class DeleteFlushNoDoubleApplyIT {
             typeCode = "che_명가", gold = 5000, rice = 5000, tech = 1000.0,
             meta = linkedMapOf("gennum" to 2),
         )
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             deletedGenerals = listOf(10),
@@ -397,7 +399,8 @@ class DeleteFlushNoDoubleApplyIT {
         assertEquals(listOf("general", "general_turn", "rank_data"), deleteOps)
 
         // --- a SECOND flush of an EMPTY delta does NOT re-apply / does NOT error --------------------
-        val emptyPayload = FlushPayload(
+        val emptyPayload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
         )
         executor.flush(emptyPayload) // must not throw
@@ -410,7 +413,8 @@ class DeleteFlushNoDoubleApplyIT {
 
     @Test
     fun `nation cascade deletes diplomacy + nation_turn + nation exactly once`() {
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             deletedNations = listOf(9),
@@ -450,14 +454,15 @@ class DeleteFlushNoDoubleApplyIT {
 
         // re-flush of an empty delta does not error and does not re-delete.
         executor.flush(
-            FlushPayload(worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1)),
+            testFlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1)),
         )
         assertTrue(executor.lastOps().none { it.verb == FlushVerb.DELETE_MANY })
     }
 
     @Test
     fun `neutral unification archive keeps exact PHP payload without history backfill`() {
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             deletedNationSnapshots = listOf(

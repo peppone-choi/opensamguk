@@ -34,6 +34,7 @@ class ProductionPipelineIntegrationTest {
                     ),
                 ),
                 nations = listOf(nation),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
 
@@ -122,6 +123,7 @@ class ProductionPipelineIntegrationTest {
                 generals = listOf(general),
                 cities = listOf(city),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", level = 7)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         assertEquals(LastTurn("전투태세", linkedMapOf("mode" to "old"), term = 2, seq = 7), PerTurnOverlay.toLogicGeneral(general).lastTurn)

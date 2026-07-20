@@ -5,7 +5,11 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import org.springframework.data.repository.Repository as SpringDataRepository
+import org.springframework.stereotype.Repository
+import java.util.Optional
 
 /**
  * F4 READ-only JPA mapping of the `nation_turn` row (V1 baseline + V2 `brief`) for the 사령부
@@ -20,6 +24,9 @@ class NationTurnReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "nation_id")
     var nationId: Int = 0,
@@ -45,7 +52,31 @@ class NationTurnReadEntity(
     var brief: String = "",
 )
 
-interface NationTurnReadRepository : JpaRepository<NationTurnReadEntity, Int> {
+interface NationTurnReadRawRepository : SpringDataRepository<NationTurnReadEntity, Int> {
+    fun findByWorldIdAndId(worldId: Int, id: Int): Optional<NationTurnReadEntity>
+    fun findByWorldId(worldId: Int): List<NationTurnReadEntity>
+    fun countByWorldId(worldId: Int): Long
+
     /** All reserved nation-command rows for a nation, ordered by officer level then turn index. */
-    fun findByNationIdOrderByOfficerLevelDescTurnIdxAsc(nationId: Int): List<NationTurnReadEntity>
+    fun findByWorldIdAndNationIdOrderByOfficerLevelDescTurnIdxAsc(
+        worldId: Int,
+        nationId: Int,
+    ): List<NationTurnReadEntity>
+}
+
+@Repository
+class NationTurnReadRepository(
+    private val raw: NationTurnReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findById(id: Int): Optional<NationTurnReadEntity> = raw.findByWorldIdAndId(worldId.value, id)
+
+    fun findAll(): List<NationTurnReadEntity> = raw.findByWorldId(worldId.value)
+
+    fun count(): Long = raw.countByWorldId(worldId.value)
+
+    fun findByNationIdOrderByOfficerLevelDescTurnIdxAsc(nationId: Int): List<NationTurnReadEntity> =
+        raw.findByWorldIdAndNationIdOrderByOfficerLevelDescTurnIdxAsc(worldId.value, nationId)
 }
