@@ -1,5 +1,6 @@
 package opensamguk.infra.seed
 
+import opensamguk.common.world.WorldId
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -11,10 +12,14 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import javax.sql.DataSource
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
@@ -32,6 +37,7 @@ class ScenarioImporterIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private var dockerAvailable = false
+    private val canonicalWorldId = WorldId(1)
 
     @BeforeAll
     fun setUpClass() {
@@ -101,7 +107,7 @@ class ScenarioImporterIT {
     fun `importAll seeds the A-minimal world with the expected row counts`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
-        val counts = newImporter().importAll(jdbc)
+        val counts = newImporter().importAll(jdbc, canonicalWorldId)
 
         assertEquals(1, counts.worldState)
         assertTrue(counts.gameEnv > 0)
@@ -395,6 +401,97 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `importAll writes the inserted canonical world id to every V31 cohort`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        newImporter().importAll(jdbc, canonicalWorldId)
+
+        val worldId = jdbc.queryForObject("SELECT id FROM world_state", Int::class.java)
+        assertEquals(1, worldId, "a fresh schema starts with canonical world_state.id=1")
+        for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
+            assertEquals(
+                0,
+                jdbc.queryForObject(
+                    "SELECT count(*) FROM $table WHERE world_id IS NULL OR world_id <> ?",
+                    Int::class.java,
+                    worldId,
+                ),
+                "$table rows must explicitly carry the inserted canonical world id",
+            )
+        }
+    }
+
+    @Test
+    fun `importAll carries a non-one configured world id through every V31 cohort and synchronizes its identity`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+
+        newImporter().importAll(jdbc, WorldId(701))
+
+        assertEquals(701, jdbc.queryForObject("SELECT id FROM world_state", Int::class.java))
+        assertEquals(701L, jdbc.queryForObject("SELECT last_value FROM world_state_id_seq", Long::class.java))
+        assertEquals(702L, jdbc.queryForObject("SELECT nextval('world_state_id_seq')", Long::class.java))
+        for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
+            assertEquals(
+                0,
+                jdbc.queryForObject(
+                    "SELECT count(*) FROM $table WHERE world_id <> 701",
+                    Int::class.java,
+                ),
+                "$table must carry the actual inserted world id rather than a literal/default identity",
+            )
+        }
+    }
+
+    @Test
+    fun `direct importer reentry leaves no partial second world`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        newImporter().importAll(jdbc, canonicalWorldId)
+
+        assertFailsWith<Exception> { newImporter().importAll(jdbc, canonicalWorldId) }
+
+        assertEquals(listOf(1), jdbc.queryForList("SELECT id FROM world_state ORDER BY id", Int::class.java))
+        for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
+            assertEquals(
+                0,
+                jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id <> 1", Int::class.java),
+                "$table must not retain rows from a rejected direct reentry",
+            )
+        }
+    }
+
+    @Test
+    fun `concurrent direct import attempts admit exactly one world without partial second rows`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+        try {
+            val attempts = List(2) {
+                executor.submit<Boolean> {
+                    ready.countDown()
+                    check(start.await(10, TimeUnit.SECONDS)) { "concurrent importer start barrier timed out" }
+                    runCatching { newImporter().importAll(jdbc, canonicalWorldId) }.isSuccess
+                }
+            }
+            assertTrue(ready.await(10, TimeUnit.SECONDS), "both importer attempts must reach the start barrier")
+            start.countDown()
+
+            val successfulAttempts = attempts.count { it.get(60, TimeUnit.SECONDS) }
+            assertEquals(1, successfulAttempts, "exactly one direct import may be admitted")
+            assertEquals(1, count("world_state"))
+            for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
+                assertEquals(
+                    0,
+                    jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id <> 1", Int::class.java),
+                    "$table must not retain partial rows from the rejected concurrent import",
+                )
+            }
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
     fun `importAll excludes general_ex when extended_general is disabled`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
@@ -405,7 +502,7 @@ class ScenarioImporterIT {
             scenario = scenario,
             cities = cities,
             extendedGeneral = false,
-        ).importAll(jdbc)
+        ).importAll(jdbc, canonicalWorldId)
 
         assertTrue(counts.general < 229, "disabled extended_general seeds fewer active generals")
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE name = ?", Int::class.java, extendedName))
@@ -442,7 +539,7 @@ class ScenarioImporterIT {
             scenarioNumber = 9001,
             extendedGeneral = false,
             installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
-        ).importAll(jdbc)
+        ).importAll(jdbc, canonicalWorldId)
         val explicitTurnTime = jdbc.queryForObject(
             "SELECT turn_time::text FROM general WHERE name = 'ⓝActiveBase'",
             String::class.java,
@@ -461,7 +558,7 @@ class ScenarioImporterIT {
             scenarioNumber = 9002,
             extendedGeneral = false,
             installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
-        ).importAll(jdbc)
+        ).importAll(jdbc, canonicalWorldId)
         val consumingTurnTime = jdbc.queryForObject(
             "SELECT turn_time::text FROM general WHERE name = 'ⓝActiveBase'",
             String::class.java,
@@ -500,7 +597,7 @@ class ScenarioImporterIT {
             scenarioNumber = 9003,
             extendedGeneral = false,
             installTime = OffsetDateTime.parse("2026-01-01T00:00:00Z"),
-        ).importAll(jdbc)
+        ).importAll(jdbc, canonicalWorldId)
 
         val event = jdbc.queryForMap(
             """
@@ -575,7 +672,7 @@ class ScenarioImporterIT {
             cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
             scenarioCode = "scenario_edge",
             scenarioNumber = 9999,
-        ).importAll(jdbc)
+        ).importAll(jdbc, canonicalWorldId)
 
         assertEquals(4, counts.general)
 
@@ -645,8 +742,18 @@ class ScenarioImporterIT {
                 cities = ScenarioJson.loadMapCities(readResource("map/che.json")),
                 scenarioCode = "scenario_invalid",
                 scenarioNumber = 9998,
-            ).importAll(jdbc)
+            ).importAll(jdbc, canonicalWorldId)
         }
+        for (table in listOf(
+            "world_state", "game_kv", "nation", "city", "general", "general_turn", "nation_turn",
+            "diplomacy", "rank_data", "ng_games", "event",
+        )) {
+            assertEquals(0, count(table), "$table must roll back after a mid-import failure")
+        }
+
+        val retry = newImporter().importAll(jdbc, canonicalWorldId)
+        assertEquals(1, retry.worldState)
+        assertEquals(1, jdbc.queryForObject("SELECT id FROM world_state", Int::class.java))
     }
 
     @Test
@@ -654,7 +761,7 @@ class ScenarioImporterIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         // 빼섭 시나리오 일반성 게이트 — importer가 1010(2세력) 외 다세력 시나리오도 무에러 시드하는지.
-        val counts = newImporter1030().importAll(jdbc)
+        val counts = newImporter1030().importAll(jdbc, canonicalWorldId)
 
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)            // 군웅할거 21세력
@@ -699,7 +806,7 @@ class ScenarioImporterIT {
     fun `importAll seeds scenario_2 with miniche_b city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
-        val counts = newImporter2().importAll(jdbc)
+        val counts = newImporter2().importAll(jdbc, canonicalWorldId)
 
         assertEquals(1, counts.worldState)
         assertEquals(0, counts.nation)
@@ -766,7 +873,7 @@ class ScenarioImporterIT {
         fun ensureSeeded(jdbc: JdbcTemplate): Boolean {
             val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: 0
             if (worldCount > 0) return false
-            newImporter().importAll(jdbc)
+            newImporter().importAll(jdbc, canonicalWorldId)
             return true
         }
     }

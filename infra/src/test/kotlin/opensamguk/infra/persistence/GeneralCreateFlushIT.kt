@@ -1,6 +1,8 @@
 package opensamguk.infra.persistence
 
+import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.ScenarioImporter
+import opensamguk.logic.domain.General
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -14,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * B1 장수생성 foundation — Testcontainers IT for the `general` create channel: step-3
@@ -32,7 +35,8 @@ class GeneralCreateFlushIT {
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
 
-    private fun ws() = linkedMapOf<String, Any?>("id" to 1, "current_year" to 200, "current_month" to 1)
+    private fun ws(month: Int = 1) =
+        linkedMapOf<String, Any?>("id" to 1, "current_year" to 200, "current_month" to month)
 
     @BeforeAll
     fun setUp() {
@@ -117,7 +121,7 @@ class GeneralCreateFlushIT {
             ),
         )
 
-        executor.flush(FlushPayload(worldStateUpdate = ws(), createdGenerals = listOf(row)))
+        executor.flush(FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), createdGenerals = listOf(row)))
 
         // 1. general 행이 정확한 컬럼 값으로 존재.
         val g = jdbc.queryForMap(
@@ -125,6 +129,7 @@ class GeneralCreateFlushIT {
             MapSqlParameterSource("id", 9001),
         )
         assertEquals(9001, (g["id"] as Number).toInt())
+        assertEquals(1, (g["world_id"] as Number).toInt())
         assertEquals("7", g["user_id"])
         assertEquals("신규장수", g["name"])
         assertEquals(0, (g["nation_id"] as Number).toInt())
@@ -187,5 +192,109 @@ class GeneralCreateFlushIT {
             MapSqlParameterSource("id", 9001), String::class.java,
         ).toSet()
         assertEquals(ScenarioImporter.RANK_COLUMNS.toSet(), types)
+        assertEquals(
+            listOf(
+                FlushExecOp("world_state", FlushVerb.UPDATE, 1),
+                FlushExecOp("general", FlushVerb.CREATE_MANY, 1),
+                FlushExecOp("general_turn", FlushVerb.CREATE_MANY, ScenarioImporter.MAX_GENERAL_TURNS),
+                FlushExecOp("rank_data", FlushVerb.CREATE_MANY, ScenarioImporter.RANK_COLUMNS.size),
+            ),
+            executor.lastOps(),
+        )
+    }
+
+    @Test
+    fun `world one root mutations reject a world two general and roll back`() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (2, 'sc2', 200, 1, 3600)",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO general
+                (world_id, id, user_id, name, nation_id, city_id, leadership, strength, intel, injury,
+                 experience, dedication, officer_level, gold, rice, picture, npc_state, turn_time, meta)
+            VALUES
+                (2, 9901, 'owner', '다른세계장수', 0, 0, 50, 50, 50, 0,
+                 0, 0, 0, 0, 0, 'other-world.jpg', 0, now(), '{}'::jsonb)
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+
+        val foreignGeneral = General(
+            id = 9901,
+            nationId = 0,
+            cityId = 0,
+            leadership = 50,
+            strength = 50,
+            intel = 50,
+            injury = 0,
+            experience = 0.0,
+            dedication = 0.0,
+            officerLevel = 0,
+            gold = 999,
+            rice = 0,
+            userId = "owner",
+        )
+
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = WorldId(1),
+                    worldStateUpdate = ws(month = 2),
+                    updatedGenerals = listOf(foreignGeneral),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+        assertEquals(0, jdbc.queryForObject("SELECT gold FROM general WHERE world_id = 2 AND id = 9901", MapSqlParameterSource(), Int::class.java))
+
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = WorldId(1),
+                    worldStateUpdate = ws(month = 3),
+                    profileIconUpdates = listOf(
+                        ProfileIconUpdateRow(
+                            linkedMapOf(
+                                "id" to 9901,
+                                "user_id" to "owner",
+                                "picture" to "wrong-world.jpg",
+                                "image_server" to 1,
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+
+        assertEquals(
+            "other-world.jpg",
+            jdbc.queryForObject(
+                "SELECT picture FROM general WHERE world_id = 2 AND id = 9901",
+                MapSqlParameterSource(),
+                String::class.java,
+            ),
+        )
+
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = WorldId(1),
+                    worldStateUpdate = ws(month = 4),
+                    deletedGenerals = listOf(9901),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id = 1", MapSqlParameterSource(), Int::class.java))
+        assertEquals(
+            1,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM general WHERE world_id = 2 AND id = 9901",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
     }
 }

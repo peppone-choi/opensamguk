@@ -1,9 +1,11 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.world.WorldId
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class InMemoryTurnWorldTest {
@@ -33,8 +35,15 @@ class InMemoryTurnWorldTest {
     )
 
     @Test
+    fun `snapshot rejects a different configured world identity`() {
+        assertFailsWith<IllegalArgumentException> {
+            WorldSnapshot(state = baseState(), worldId = WorldId(2))
+        }
+    }
+
+    @Test
     fun `update marks dirty and consume drains then second consume is empty`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         world.updateGeneral(general(1, gold = 250))
 
         val first = world.consumeDirtyState()
@@ -49,7 +58,7 @@ class InMemoryTurnWorldTest {
 
     @Test
     fun `create-then-delete in same tick emits neither created nor deleted row`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState()))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         world.createGeneral(general(99))
         world.removeGeneral(99)
 
@@ -61,7 +70,7 @@ class InMemoryTurnWorldTest {
 
     @Test
     fun `delete existing general appears in deletedGenerals`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         assertTrue(world.removeGeneral(1))
 
         val drained = world.consumeDirtyState()
@@ -71,7 +80,7 @@ class InMemoryTurnWorldTest {
 
     @Test
     fun `getter returns defensive copy`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1, gold = 100))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1, gold = 100)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         val external = world.listGenerals().single().copy(gold = 9999)
         assertEquals(9999, external.gold)
         assertEquals(100, world.getGeneralById(1)!!.gold, "internal state unaffected by external mutation")
@@ -83,6 +92,7 @@ class InMemoryTurnWorldTest {
             state = baseState(),
             nations = listOf(nation(1), nation(2)),
             diplomacy = listOf(diplomacy(1, 2), diplomacy(2, 1)),
+            worldId = opensamguk.common.world.WorldId((baseState()).id),
         )
         val world = InMemoryTurnWorld(snapshot)
         // dirty both diplomacy entries via update so they would otherwise be drained
@@ -99,14 +109,14 @@ class InMemoryTurnWorldTest {
 
     @Test
     fun `allocateNationId skips a nation deleted in the same tick`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1), nation(2), nation(3))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1), nation(2), nation(3)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         world.removeNation(3)
         assertEquals(4, world.allocateNationId(), "deleted id must not be reused before flush")
     }
 
     @Test
     fun `allocateNationId increments sequentially across a same-tick delete and create`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1), nation(2), nation(3))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1), nation(2), nation(3)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         world.removeNation(3)
         assertEquals(4, world.allocateNationId())
         world.createNation(nation(4))
@@ -119,6 +129,7 @@ class InMemoryTurnWorldTest {
             WorldSnapshot(
                 state = baseState(meta = mapOf("maxNationId" to 7)),
                 nations = listOf(nation(1), nation(2), nation(3)),
+                worldId = opensamguk.common.world.WorldId((baseState(meta = mapOf("maxNationId" to 7))).id),
             ),
         )
         assertEquals(8, world.allocateNationId(), "persisted high-water mark must dominate live keys")
@@ -131,6 +142,7 @@ class InMemoryTurnWorldTest {
                 state = baseState(),
                 nations = listOf(nation(1), nation(2), nation(3)),
                 archivedNationIds = listOf(9),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
 
@@ -143,6 +155,7 @@ class InMemoryTurnWorldTest {
             WorldSnapshot(
                 state = baseState(meta = mapOf("maxGeneralId" to 9)),
                 generals = listOf(general(1), general(2)),
+                worldId = opensamguk.common.world.WorldId((baseState(meta = mapOf("maxGeneralId" to 9))).id),
             ),
         )
         assertEquals(10, world.allocateGeneralId(), "persisted high-water mark must dominate live keys")
@@ -150,7 +163,7 @@ class InMemoryTurnWorldTest {
 
     @Test
     fun `restart after deletion does not reuse id below persisted high-water mark`() {
-        val first = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1))))
+        val first = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         assertEquals(2, first.allocateNationId())
         first.createNation(nation(2))
         first.removeNation(1)
@@ -160,6 +173,7 @@ class InMemoryTurnWorldTest {
             WorldSnapshot(
                 state = baseState(meta = meta),
                 nations = listOf(nation(2)),
+                worldId = opensamguk.common.world.WorldId((baseState(meta = meta)).id),
             ),
         )
         assertEquals(3, restarted.allocateNationId(), "deleted id below high-water mark must not be reused")
@@ -167,14 +181,14 @@ class InMemoryTurnWorldTest {
 
     @Test
     fun `createNation bumps maxNationId in state meta`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), nations = listOf(nation(1)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         world.createNation(nation(5))
         assertEquals(5, world.getState().meta["maxNationId"])
     }
 
     @Test
     fun `createGeneral bumps maxGeneralId in state meta`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1))))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = baseState(), generals = listOf(general(1)), worldId = opensamguk.common.world.WorldId((baseState()).id)))
         world.createGeneral(general(12))
         assertEquals(12, world.getState().meta["maxGeneralId"])
     }

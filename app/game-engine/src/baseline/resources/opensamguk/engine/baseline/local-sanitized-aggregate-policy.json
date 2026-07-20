@@ -93,10 +93,10 @@
       }
     }
   },
-  "loaderInputInventorySha256": "a6635414f04c347435f3352c67d394bee18c5dfccd6e25653df29ad5fec75d12",
+  "loaderInputInventorySha256": "34dc29dea4813fb0758ec70272ac5d24abdf5af97a60cf2d6c15ff454932ae17",
   "payloadByteSemantics": "selected-loader-fields-postgres-text-bytes.v1",
   "schemaVersion": "cqrs-local-sanitized-aggregate-policy.v1",
-  "sha256": "2e9f7a74adf0ea322c8e0fbf9feee4c1f8d8f1ba95ecade3c24703d797cf9a9b",
+  "sha256": "9b7e2a53f2dac9e5b90ed09044adf5537ce6a6aad29ce1cf6857ff22691f6cf2",
   "source": {
     "policyId": "op123-local-sanitized-aggregate-v1",
     "provenance": "checked-in deterministic local aggregate policy; no production, live, or seeded-db observation",

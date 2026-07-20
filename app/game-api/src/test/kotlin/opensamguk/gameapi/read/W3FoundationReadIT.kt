@@ -1,9 +1,11 @@
 package opensamguk.gameapi.read
+import opensamguk.gameapi.config.GameApiProcessWorldIdConfiguration
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
@@ -24,12 +26,25 @@ import kotlin.test.assertNull
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@Import(
+    GameApiProcessWorldIdConfiguration::class,
+    GeneralReadRepository::class,
+    NationReadRepository::class,
+    NationTurnReadRepository::class,
+)
 class W3FoundationReadIT {
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var nations: NationReadRepository
     @Autowired lateinit var rankData: RankDataReadRepository
     @Autowired lateinit var nationTurns: NationTurnReadRepository
+
+    private fun seedWorld() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'test', 1, 1, 60)",
+        )
+    }
+
     /** general 행 1개를 신규 컬럼(special/personal/penalty/officer_city/turn_time)까지 포함해 심는다. */
     private fun insertGeneral(
         id: Int,
@@ -47,14 +62,14 @@ class W3FoundationReadIT {
         jdbc.update(
             """
             INSERT INTO general (
-                id, name, nation_id, city_id, leadership, strength, intel, injury,
+                id, world_id, name, nation_id, city_id, leadership, strength, intel, injury,
                 experience, dedication, officer_level, gold, rice,
                 crew, crew_type_id, train, atmos, troop_id,
                 weapon_code, book_code, horse_code, item_code, npc_state,
                 special_code, special2_code, personal_code, penalty, officer_city,
                 turn_time, last_turn, meta
             ) VALUES (
-                $id, 'g$id', $nationId, $cityId, $leadership, 50, 50, 0,
+                $id, 1, 'g$id', $nationId, $cityId, $leadership, 50, 50, 0,
                 0, 0, 1, 0, 0,
                 $crew, 0, 0, 0, 0,
                 'None', 'None', 'None', 'None', $npc,
@@ -68,11 +83,11 @@ class W3FoundationReadIT {
         jdbc.update(
             """
             INSERT INTO city (
-                id, name, level, nation_id, supply_state, front_state,
+                id, world_id, name, level, nation_id, supply_state, front_state,
                 pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                 trust, trade, def, def_max, wall, wall_max, region, meta
             ) VALUES (
-                $id, 'c$id', 5, $nationId, 1, 0,
+                $id, 1, 'c$id', 5, $nationId, 1, 0,
                 $pop, $popMax, 0, 0, 0, 0, 0, 0,
                 0, 100, 0, 0, 0, 0, 1, '{}'::jsonb
             )
@@ -81,6 +96,7 @@ class W3FoundationReadIT {
     }
     @Test
     fun `F1 - general 신규 컬럼이 baseline 행에서 materialize 된다`() {
+        seedWorld()
         insertGeneral(
             id = 10, nationId = 1, cityId = 5, crew = 500, leadership = 70, npc = 2,
             special = "급습", special2 = "보병", personal = "용맹",
@@ -98,6 +114,7 @@ class W3FoundationReadIT {
     }
     @Test
     fun `F2 - rank_data 전투 통계 read 경로가 동작한다`() {
+        seedWorld()
         insertGeneral(id = 11, nationId = 1, cityId = 5, crew = 0, leadership = 50, npc = 0)
         // RankColumn backing value와 byte-동일한 type 문자열.
         for ((type, value) in listOf(
@@ -128,6 +145,7 @@ class W3FoundationReadIT {
     }
     @Test
     fun `F4 - 국가별 인구-병력 집계가 단일 grouped query로 나온다`() {
+        seedWorld()
         // nation 1: city 5(pop 50000/100000) + city 6(pop 30000/60000) → cityCnt 2, now 80000, max 160000
         insertCity(5, 1, 50000, 100000)
         insertCity(6, 1, 30000, 60000)
@@ -160,13 +178,14 @@ class W3FoundationReadIT {
     }
     @Test
     fun `ChiefCenter - nation_turn arg jsonb가 read 경로에서 디코드된다`() {
+        seedWorld()
         // V1 baseline nation_turn: 예약 국가 명령 슬롯(arg jsonb). PHP가 슬롯마다 Json::decode($arg)로
         // 내려보내던 누락 필드를 read 엔티티가 삽입순서 맵으로 디코드함을 증명.
         jdbc.update(
             """
-            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code, arg, brief)
-            VALUES (1, 12, 0, 'che_증축', '{"destCityID":5}'::jsonb, '증축'),
-                   (1, 12, 1, '휴식', '{}'::jsonb, '휴식')
+            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, arg, brief)
+            VALUES (1, 1, 12, 0, 'che_증축', '{"destCityID":5}'::jsonb, '증축'),
+                   (1, 1, 12, 1, '휴식', '{}'::jsonb, '휴식')
             """.trimIndent(),
         )
         val rows = nationTurns.findByNationIdOrderByOfficerLevelDescTurnIdxAsc(1)

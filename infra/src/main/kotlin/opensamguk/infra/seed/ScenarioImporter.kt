@@ -6,6 +6,7 @@ import opensamguk.common.constants.GameConst
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
+import opensamguk.common.world.WorldId
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.util.valueFit
@@ -94,35 +95,37 @@ class ScenarioImporter(
         val event: Int,
     )
 
-    /**
-     * INSERT every row in dependency order (steps 4a–4j). Idempotency is the CALLER's responsibility
-     * (`ScenarioSeedRunner` gates on `world_state` count); calling this on a non-empty DB will violate
-     * primary-key uniqueness and throw — by design (no silent double-seed).
-     */
-    fun importAll(jdbc: JdbcTemplate): ImportCounts {
+    fun importAll(
+        jdbc: JdbcTemplate,
+        expectedWorldId: WorldId,
+    ): ImportCounts = ScenarioSeedCoordinator(jdbc).importFresh(expectedWorldId, this)
+
+    internal fun importAdmitted(
+        jdbc: JdbcTemplate,
+        expectedWorldId: WorldId,
+    ): ImportCounts {
         val startYear = scenario.startYear
 
-        // 4a — world_state (singleton id=1). meta carries the fields EngineEventConfig.monthlyPipeline reads.
-        val worldStateCount = insertWorldState(jdbc, startYear)
+        val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
         val gameEnvCount = insertGameEnv(jdbc, startYear)
 
         // 4b — nation (2 rows; neutral id 0 has NO row — generals just carry nation_id 0).
-        val nationCount = insertNations(jdbc)
+        val nationCount = insertNations(jdbc, worldId)
 
         // 4c — city (24). nation_id from the cities resource (already reverse-mapped to ids).
-        val cityCount = insertCities(jdbc)
+        val cityCount = insertCities(jdbc, worldId)
 
         // 4d — UPDATE nation.capital_city_id = first owned city in nation[].cities order.
         updateCapitals(jdbc)
 
         val general = buildGenerals(startYear)
-        val generalCount = insertGenerals(jdbc, general, startYear)
+        val generalCount = insertGenerals(jdbc, general, startYear, worldId)
 
-        val generalTurnCount = insertGeneralTurns(jdbc, general)
+        val generalTurnCount = insertGeneralTurns(jdbc, general, worldId)
 
         // 4g — nation_turn (per nation: officer_levels chiefLevel..12 × 12 turn_idx, all 휴식).
-        val nationTurnCount = insertNationTurns(jdbc)
+        val nationTurnCount = insertNationTurns(jdbc, worldId)
 
         // 4h — diplomacy (ordered neutral pairs + JSON overrides).
         val diplomacyCount = insertDiplomacy(jdbc, startYear)
@@ -130,12 +133,12 @@ class ScenarioImporter(
         val rankCount = insertRankData(jdbc, general)
 
         // 4j — ng_games (1 session record).
-        val ngGamesCount = insertNgGames(jdbc)
+        val ngGamesCount = insertNgGames(jdbc, worldId)
 
         val eventCount = insertEvents(jdbc, startYear)
 
         return ImportCounts(
-            worldState = worldStateCount,
+            worldState = 1,
             gameEnv = gameEnvCount,
             nation = nationCount,
             city = cityCount,
@@ -152,7 +155,11 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4a world_state
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertWorldState(jdbc: JdbcTemplate, startYear: Int): Int {
+    private fun insertWorldState(
+        jdbc: JdbcTemplate,
+        startYear: Int,
+        expectedWorldId: WorldId,
+    ): WorldId {
         val tickSeconds = turnTerm * 60
         val ts = Timestamp.from(installTime.toInstant())
         val mapConfig = scenarioMapConfig()
@@ -189,17 +196,23 @@ class ScenarioImporter(
             "mapName" to mapName,
             "unitSet" to unitSet,
         )
-        jdbc.update(
+        val worldId = jdbc.queryForObject(
             """
             INSERT INTO world_state
                 (id, scenario_code, current_year, current_month, current_phase, tick_seconds,
                  config, meta, start_year, start_time, turn_term, isunited, hidden_seed, status)
-            VALUES (1, ?, ?, 1, 1, ?, ?, ?, ?, ?, ?, 0, ?, 'OPEN')
+            VALUES (?, ?, ?, 1, 1, ?, ?, ?, ?, ?, ?, 0, ?, 'OPEN')
+            RETURNING id
             """.trimIndent(),
-            scenarioCode, startYear, tickSeconds,
+            Int::class.java,
+            expectedWorldId.value, scenarioCode, startYear, tickSeconds,
             jsonb(config), jsonb(meta), startYear, ts, turnTerm, hiddenSeed,
-        )
-        return 1
+        ) ?: error("world_state insert did not return an id")
+        return WorldId(worldId).also { insertedWorldId ->
+            check(insertedWorldId == expectedWorldId) {
+                "Scenario import expected world_state.id=${expectedWorldId.value} but database generated ${insertedWorldId.value}"
+            }
+        }
     }
 
     private fun insertGameEnv(jdbc: JdbcTemplate, startYear: Int): Int {
@@ -251,7 +264,7 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4b nation
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertNations(jdbc: JdbcTemplate): Int {
+    private fun insertNations(jdbc: JdbcTemplate, worldId: WorldId): Int {
         // gennum(국가별 장수 수) — PHP `Scenario/Nation.php::postBuild` 가 nation.gennum = count(generals).
         // 시드 장수는 nationId 로 소속되므로 시나리오 장수를 nationId 별로 센다.
         val gennumByNation = seedGenerals()
@@ -280,10 +293,10 @@ class ScenarioImporter(
             jdbc.update(
                 """
                 INSERT INTO nation
-                    (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-                VALUES (?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)
+                    (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+                VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?)
                 """.trimIndent(),
-                nation.id, nation.name, nation.color,
+                worldId.value, nation.id, nation.name, nation.color,
                 nation.gold, nation.rice, nation.tech.toDouble(), nation.scale, typeCode, jsonb(meta),
             )
             n++
@@ -315,7 +328,7 @@ class ScenarioImporter(
     private val cityOwnerByName: Map<String, Int> =
         scenario.nations.flatMap { n -> n.cities.map { cityName -> cityName to n.id } }.toMap()
 
-    private fun insertCities(jdbc: JdbcTemplate): Int {
+    private fun insertCities(jdbc: JdbcTemplate, worldId: WorldId): Int {
         var n = 0
         for (c in cities) {
             // 소유: 시나리오 nation.cities 기준(baked c.nationId 무시). 미소유 도시 = 공백지(0).
@@ -335,16 +348,16 @@ class ScenarioImporter(
             jdbc.update(
                 """
                 INSERT INTO city
-                    (id, name, level, nation_id, supply_state, front_state,
+                    (world_id, id, name, level, nation_id, supply_state, front_state,
                      pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                      trust, trade, def, def_max, wall, wall_max, region,
                      term, officer_set, conflict, meta)
-                VALUES (?, ?, ?, ?, 1, 0,
+                VALUES (?, ?, ?, ?, ?, 1, 0,
                         ?, ?, ?, ?, ?, ?, ?, ?,
                         ?, 100, ?, ?, ?, ?, ?,
                         0, 0, '{}'::jsonb, '{}'::jsonb)
                 """.trimIndent(),
-                c.id, c.name, c.level, cityNationId,
+                worldId.value, c.id, c.name, c.level, cityNationId,
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
                 trust, def, c.defMax, wall, c.wallMax, c.region,
             )
@@ -385,13 +398,18 @@ class ScenarioImporter(
         .filter { isActiveAtStart(it, startYear) }
         .mapIndexed { idx, g -> BuiltGeneral(id = 1001 + idx, src = g) }
 
-    private fun insertGenerals(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, startYear: Int): Int {
+    private fun insertGenerals(
+        jdbc: JdbcTemplate,
+        generals: List<BuiltGeneral>,
+        startYear: Int,
+        worldId: WorldId,
+    ): Int {
         val cityIdByName = cities.associate { it.name to it.id }
         val rngRows = replayInitScenarioGeneralRng(startYear)
 
         val sql = """
             INSERT INTO general
-                (id, name, nation_id, city_id, troop_id, npc_state, affinity,
+                (world_id, id, name, nation_id, city_id, troop_id, npc_state, affinity,
                  born_year, dead_year, picture, image_server,
                  leadership, strength, intel, injury, experience, dedication, officer_level,
                  gold, rice, crew, crew_type_id, train, atmos,
@@ -400,7 +418,7 @@ class ScenarioImporter(
                  last_turn, meta, penalty,
                  politics, charm)
             VALUES
-                (?, ?, ?, ?, 0, ?, ?,
+                (?, ?, ?, ?, ?, 0, ?, ?,
                  ?, ?, ?, 0,
                  ?, ?, ?, 0, ?, ?, ?,
                  1000, 1000, 0, ?, 0, 0,
@@ -438,7 +456,7 @@ class ScenarioImporter(
             }
             jdbc.update(
                 sql,
-                bg.id, activeName, g.nationId, cityId, npcState, rngRow.affinity,
+                worldId.value, bg.id, activeName, g.nationId, cityId, npcState, rngRow.affinity,
                 born, dead, resolvedScenarioPicture(g.picture, g.name),
                 g.leadership, g.strength, g.intel, exp, ded, officerLevel,
                 GameUnitConst.DEFAULT_CREWTYPE,
@@ -627,17 +645,17 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4f general_turn — full 30-row ring, all 휴식
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertGeneralTurns(jdbc: JdbcTemplate, generals: List<BuiltGeneral>): Int {
+    private fun insertGeneralTurns(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
         val rows = ArrayList<Array<Any?>>(generals.size * MAX_GENERAL_TURNS)
         for (bg in generals) {
             for (idx in 0 until MAX_GENERAL_TURNS) {
-                rows.add(arrayOf(bg.id, idx))
+                rows.add(arrayOf(worldId.value, bg.id, idx))
             }
         }
         jdbc.batchUpdate(
             """
-            INSERT INTO general_turn (general_id, turn_idx, action_code, arg, brief)
-            VALUES (?, ?, '휴식', '{}'::jsonb, '휴식')
+            INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief)
+            VALUES (?, ?, ?, '휴식', '{}'::jsonb, '휴식')
             """.trimIndent(),
             rows,
         )
@@ -647,21 +665,21 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4g nation_turn — per nation, officer_levels chiefLevel..12 × 12 turn_idx, all 휴식
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertNationTurns(jdbc: JdbcTemplate): Int {
+    private fun insertNationTurns(jdbc: JdbcTemplate, worldId: WorldId): Int {
         val rows = ArrayList<Array<Any?>>()
         for (nation in scenario.nations) {
             val chiefLevel = getNationChiefLevel(nation.scale)
             // PHP UpdateNationLevel seeds Util::range(chiefLevel, 12) officer seats.
             for (officerLevel in chiefLevel..12) {
                 for (idx in 0 until MAX_CHIEF_TURNS) {
-                    rows.add(arrayOf(nation.id, officerLevel, idx))
+                    rows.add(arrayOf(worldId.value, nation.id, officerLevel, idx))
                 }
             }
         }
         jdbc.batchUpdate(
             """
-            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code, arg, brief)
-            VALUES (?, ?, ?, '휴식', '{}'::jsonb, '휴식')
+            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, arg, brief)
+            VALUES (?, ?, ?, ?, '휴식', '{}'::jsonb, '휴식')
             """.trimIndent(),
             rows,
         )
@@ -738,7 +756,7 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4j ng_games — session record
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertNgGames(jdbc: JdbcTemplate): Int {
+    private fun insertNgGames(jdbc: JdbcTemplate, worldId: WorldId): Int {
         val ts = Timestamp.from(installTime.toInstant())
         val env = jsonObject(
             "server_id" to activeServerId,
@@ -765,11 +783,12 @@ class ScenarioImporter(
         jdbc.update(
             """
             UPDATE world_state
-               SET meta = meta || jsonb_build_object('serverId', ?, 'ngGameId', ?)
-             WHERE id = 1
+             SET meta = meta || jsonb_build_object('serverId', ?, 'ngGameId', ?)
+             WHERE id = ?
             """.trimIndent(),
             activeServerId,
             ngGameId,
+            worldId.value,
         )
         return 1
     }

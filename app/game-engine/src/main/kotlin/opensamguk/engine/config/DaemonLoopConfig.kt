@@ -202,7 +202,7 @@ class DaemonLoopConfig {
             turnTerm = turnTerm,
             pipeline = generalActionPipeline,
             pipelineBuilder = pipelineBuilder,
-            reservedCommandNameOf = { gid -> reservedTurnRepository.readReserved(gid, 0).actionCode },
+            reservedCommandNameOf = { gid -> reservedTurnRepository.readReserved(world.worldId, gid, 0).actionCode },
         )
 
         // The scenario number selects the founding `secretlimit` (>= 1000 ⇒ 1, the live-server branch).
@@ -347,7 +347,7 @@ class DaemonLoopConfig {
             handler = handler,
             nationProcessor = nationProcessor,
             reservedNationActionOf = { nationId, officerLevel ->
-                reservedTurnRepository.readReservedNationTurn(nationId, officerLevel, 0)
+                reservedTurnRepository.readReservedNationTurn(world.worldId, nationId, officerLevel, 0)
             },
             chooseNationTurn = { generalId, reserved ->
                 // The lifecycle computes lastNationTurnOf(nation, officerLevel) AFTER this hook for the
@@ -387,13 +387,13 @@ class DaemonLoopConfig {
                 )
             },
             pullNationTurnOf = { nationId, officerLevel ->
-                reservedTurnRepository.pullNationTurn(nationId, officerLevel)
+                reservedTurnRepository.pullNationTurn(world.worldId, nationId, officerLevel)
             },
             pullGeneralTurnOf = { generalId ->
                 ai.drainGeneralPassDeltas(recorder)
-                reservedTurnRepository.pullGeneralTurn(generalId)
+                reservedTurnRepository.pullGeneralTurn(world.worldId, generalId)
             },
-            reservedActionOf = { generalId -> reservedTurnRepository.readReserved(generalId, 0) },
+            reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
         )
 
         return TurnRunService(

@@ -26,6 +26,7 @@ internal class LocalSanitizedAggregateMaterializer(
                     payloadExpression = worldStatePayloadExpression,
                     character = "W",
                     target = fixture.expectedLoaderInputs.getValue("worldState").payloadBytes,
+                    scopeByWorldId = false,
                 )
                 padPayload(
                     connection = connection,
@@ -34,6 +35,7 @@ internal class LocalSanitizedAggregateMaterializer(
                     payloadExpression = generalPayloadExpression,
                     character = "G",
                     target = fixture.expectedLoaderInputs.getValue("generals").payloadBytes,
+                    scopeByWorldId = true,
                 )
                 connection.commit()
             } catch (exception: Exception) {
@@ -93,9 +95,9 @@ internal class LocalSanitizedAggregateMaterializer(
                 statement.executeUpdate(
                     """
                     INSERT INTO general (
-                        id, name, nation_id, city_id, turn_time, meta, last_turn, penalty
+                        id, world_id, name, nation_id, city_id, turn_time, meta, last_turn, penalty
                     ) VALUES (
-                        1, 'OP123 local aggregate', 0, 0, TIMESTAMPTZ '0184-01-01 00:00:00+00',
+                        1, 1, 'OP123 local aggregate', 0, 0, TIMESTAMPTZ '0184-01-01 00:00:00+00',
                         '{"killturn": 0, "localPadding": ""}'::jsonb, '{}'::jsonb, '{}'::jsonb
                     )
                     """.trimIndent(),
@@ -109,8 +111,8 @@ internal class LocalSanitizedAggregateMaterializer(
             require(
                 statement.executeUpdate(
                     """
-                    INSERT INTO general_turn (general_id, turn_idx, action_code, arg)
-                    SELECT 1, series, '휴식', '{}'::jsonb
+                    INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg)
+                    SELECT 1, 1, series, '휴식', '{}'::jsonb
                       FROM generate_series(0, 29) AS series
                     """.trimIndent(),
                 ) == 30,
@@ -150,14 +152,16 @@ internal class LocalSanitizedAggregateMaterializer(
         payloadExpression: String,
         character: String,
         target: Int,
+        scopeByWorldId: Boolean,
     ) {
         val initial = payloadBytes(connection, sourceQuery, payloadExpression)
         val padding = target - initial
         require(padding >= 0) {
             "Local materializer $table payload base $initial exceeds deterministic target $target"
         }
+        val predicate = if (scopeByWorldId) "id = 1 AND world_id = 1" else "id = 1"
         connection.prepareStatement(
-            "UPDATE $table SET meta = jsonb_set(meta, '{localPadding}', to_jsonb(repeat(?, ?)), true) WHERE id = 1",
+            "UPDATE $table SET meta = jsonb_set(meta, '{localPadding}', to_jsonb(repeat(?, ?)), true) WHERE $predicate",
         ).use { statement ->
             statement.setString(1, character)
             statement.setInt(2, padding)
@@ -232,7 +236,8 @@ internal class LocalSanitizedAggregateMaterializer(
         )
         private const val worldStateSourceQuery = """
             SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time
-              FROM world_state ORDER BY id ASC LIMIT 1
+              FROM world_state
+             WHERE id = 1
         """
         private const val generalSourceQuery = """
             SELECT id, name, nation_id, city_id, troop_id, npc_state, affinity,
@@ -242,7 +247,9 @@ internal class LocalSanitizedAggregateMaterializer(
                    turn_time, recent_war_time, user_id, born_year, dead_year, picture, image_server,
                    start_age, personal_code, special_code, special2_code, officer_city,
                    last_turn, penalty, meta
-              FROM general ORDER BY id ASC
+              FROM general
+             WHERE world_id = 1
+             ORDER BY id ASC
         """
 
         private fun expectedTableCardinalities(coldHistoryRows: Int): Map<String, Int> =

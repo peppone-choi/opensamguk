@@ -37,6 +37,13 @@ class WorldScoutActionContextTest {
                     Nation(id = 1, name = "촉", color = "#f00", level = 1, meta = linkedMapOf("scout" to firstScout)),
                     Nation(id = 2, name = "위", color = "#00f", level = 1, meta = linkedMapOf("scout" to secondScout)),
                 ),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = t0,
+                )).id),
             ),
         )
 

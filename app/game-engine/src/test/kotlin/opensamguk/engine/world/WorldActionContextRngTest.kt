@@ -34,6 +34,14 @@ class WorldActionContextRngTest {
                     meta = linkedMapOf("hiddenSeed" to hiddenSeed),
                 ),
                 cities = (1..12).map { City(id = it, name = "c$it", nationId = 0, level = 5) },
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = year,
+                    currentMonth = month,
+                    tickSeconds = 60,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = linkedMapOf("hiddenSeed" to hiddenSeed),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -71,6 +79,18 @@ class WorldActionContextRngTest {
                     ),
                 ),
                 cities = listOf(City(id = 1, name = "허창", nationId = 0, level = 5)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = year,
+                    currentMonth = month,
+                    tickSeconds = 60,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = linkedMapOf(
+                        "hiddenSeed" to "8ebfeb6fa932a181ec9ef43b7473f4c9",
+                        "startYear" to 184,
+                        "turnterm" to 60,
+                    ),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -107,6 +127,14 @@ class WorldActionContextRngTest {
                 ),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#000", level = 1)),
                 cities = listOf(City(id = 1, name = "낙양", nationId = 1, level = 5)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 5,
+                    tickSeconds = 60,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = linkedMapOf("map" to "miniche", "isunited" to 0),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -138,6 +166,14 @@ class WorldActionContextRngTest {
                 ),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#000", level = 1)),
                 cities = cityConst.all().keys.map { City(id = it, name = "city$it", nationId = 1, level = 5) },
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 5,
+                    tickSeconds = 60,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = linkedMapOf("map" to "miniche", "isunited" to 0),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -170,6 +206,14 @@ class WorldActionContextRngTest {
                 ),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#000", level = 1)),
                 cities = listOf(City(id = 1, name = "city1", nationId = 1, level = 5)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 5,
+                    tickSeconds = 60,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = linkedMapOf("isunited" to 0),
+                )).id),
             ),
         )
         val context = WorldActionContext(

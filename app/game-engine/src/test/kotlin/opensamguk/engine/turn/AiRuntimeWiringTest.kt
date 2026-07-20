@@ -84,6 +84,7 @@ class AiRuntimeWiringTest {
             cities = listOf(city()),
             nations = listOf(nation, Nation(2, "위", "#f00", capitalCityId = 4)),
             diplomacy = listOf(TurnDiplomacy(1, 2, state = 0, term = 0)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, month, 60, turnTime)).id),
         ),
     )
 

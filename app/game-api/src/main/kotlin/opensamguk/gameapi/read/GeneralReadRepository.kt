@@ -5,11 +5,15 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.LastTurn
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.Repository as SpringDataRepository
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import java.util.Optional
 
 /**
  * Read-only JPA mapping of the `general` row for the PRECHECK path (game-api ONLY — the
@@ -34,6 +38,9 @@ class GeneralReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "user_id")
     var userId: String? = null,
@@ -195,9 +202,13 @@ class GeneralReadEntity(
     )
 }
 
-interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
+interface GeneralReadRawRepository : SpringDataRepository<GeneralReadEntity, Int> {
+    fun findByWorldIdAndId(worldId: Int, id: Int): Optional<GeneralReadEntity>
+    fun findByWorldId(worldId: Int): List<GeneralReadEntity>
+    fun countByWorldId(worldId: Int): Long
+
     /** F2: generals in a nation (세력 장수 / my-generals), ordered by officer level desc then id. */
-    fun findByNationIdOrderByOfficerLevelDescIdAsc(nationId: Int): List<GeneralReadEntity>
+    fun findByWorldIdAndNationIdOrderByOfficerLevelDescIdAsc(worldId: Int, nationId: Int): List<GeneralReadEntity>
 
     /**
      * W3 GeneralList — 세력 장수 목록의 서버측 정렬. PHP `GeneralList.php:175`의
@@ -209,41 +220,44 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
      * 비교자 추가 금지에 부합: 결정적 출력 목적의 tie-break일 뿐 패러티 순서를 바꾸지 않음).
      */
     @Query(
-        "select g from GeneralReadEntity g where g.nationId = :nationId " +
+        "select g from GeneralReadEntity g where g.worldId = :worldId and g.nationId = :nationId " +
             "order by g.turnTime asc nulls first, g.id asc",
     )
-    fun findByNationIdOrderByTurnTimeAsc(@Param("nationId") nationId: Int): List<GeneralReadEntity>
+    fun findByWorldIdAndNationIdOrderByTurnTimeAsc(
+        @Param("worldId") worldId: Int,
+        @Param("nationId") nationId: Int,
+    ): List<GeneralReadEntity>
 
     /** F2: claimable NPC candidate pool (legacy `npc=2`), ordered by id for a stable list. */
-    fun findByNpcStateOrderByIdAsc(npcState: Int): List<GeneralReadEntity>
+    fun findByWorldIdAndNpcStateOrderByIdAsc(worldId: Int, npcState: Int): List<GeneralReadEntity>
 
     /** F2: the ruler/boss lookup — the highest officer in a nation (인사부 my-boss). */
-    fun findFirstByNationIdOrderByOfficerLevelDesc(nationId: Int): GeneralReadEntity?
+    fun findFirstByWorldIdAndNationIdOrderByOfficerLevelDesc(worldId: Int, nationId: Int): GeneralReadEntity?
 
     /** F2 front-info counts. */
-    fun countByNpcState(npcState: Int): Long
-    fun countByNationId(nationId: Int): Long
+    fun countByWorldIdAndNpcState(worldId: Int, npcState: Int): Long
+    fun countByWorldIdAndNationId(worldId: Int, nationId: Int): Long
 
     /**
      * D5 — 참여 가능 사용자 수. PHP `GetBettingDetail.php`의
      * `SELECT count(no) FROM general WHERE npc < 2`.
      */
-    fun countByNpcStateLessThan(npcState: Int): Long
+    fun countByWorldIdAndNpcStateLessThan(worldId: Int, npcState: Int): Long
 
     /**
      * W0-2(P0-25) — 소유자 확인(CheckOwner) 대상 장수 목록. PHP `v_inheritPoint.php:19-22`
      * `SELECT no, name FROM general WHERE npc < 2`(유저/빙의 장수). id ASC로 안정 순서 고정.
      */
-    fun findByNpcStateLessThanOrderByIdAsc(npcState: Int): List<GeneralReadEntity>
+    fun findByWorldIdAndNpcStateLessThanOrderByIdAsc(worldId: Int, npcState: Int): List<GeneralReadEntity>
 
     /**
      * W3 FrontGlobalInfo — NPC 장수 수(`npc_state > 0`). PHP `SELECT npc, count(no) FROM general GROUP BY npc`의
      * NPC 합과 동치(user는 `countByNpcState(0)`). createdUserCnt/createdNPCCnt 분리 카운트용.
      */
-    fun countByNpcStateGreaterThan(npcState: Int): Long
+    fun countByWorldIdAndNpcStateGreaterThan(worldId: Int, npcState: Int): Long
 
     /** F2 Wave 6: officers stationed in a city (city-detail panel — cheap count, no row load). */
-    fun countByCityId(cityId: Int): Long
+    fun countByWorldIdAndCityId(worldId: Int, cityId: Int): Long
 
     /**
      * b_currentCity(도시정보) 장수 상세 테이블 원천 — PHP `b_currentCity.php:217`의
@@ -254,20 +268,24 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
      * (§6 결정적 tie-break — 패러티 순서 불변).
      */
     @Query(
-        "select g from GeneralReadEntity g where g.cityId = :cityId " +
+        "select g from GeneralReadEntity g where g.worldId = :worldId and g.cityId = :cityId " +
             "order by g.turnTime asc nulls first, g.id asc",
     )
-    fun findByCityIdOrderByTurnTimeAsc(@Param("cityId") cityId: Int): List<GeneralReadEntity>
+    fun findByWorldIdAndCityIdOrderByTurnTimeAsc(
+        @Param("worldId") worldId: Int,
+        @Param("cityId") cityId: Int,
+    ): List<GeneralReadEntity>
 
     /** F4: members of a troop (the 부대 편성 member list — generals whose troop_id == the leader id). */
-    fun findByTroopIdOrderByOfficerLevelDescIdAsc(troopId: Int): List<GeneralReadEntity>
+    fun findByWorldIdAndTroopIdOrderByOfficerLevelDescIdAsc(worldId: Int, troopId: Int): List<GeneralReadEntity>
 
     /**
      * W3 FrontNationInfo `topChiefs` — PHP `SELECT officer_level, no, name, npc FROM general
      * WHERE nation = %i AND officer_level >= 11`(GetFrontInfo.php:270-273). 수뇌(군주/참모급) 목록.
      * PHP는 무순서지만 deterministic 출력을 위해 officer_level desc, id asc 정렬(표시 전용, 패러티 무관).
      */
-    fun findByNationIdAndOfficerLevelGreaterThanEqualOrderByOfficerLevelDescIdAsc(
+    fun findByWorldIdAndNationIdAndOfficerLevelGreaterThanEqualOrderByOfficerLevelDescIdAsc(
+        worldId: Int,
         nationId: Int,
         officerLevel: Int,
     ): List<GeneralReadEntity>
@@ -277,7 +295,8 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
      * WHERE officer_city = %i AND officer_level IN (4,3,2)`(GetFrontInfo.php:504). 도시 관직(태수4/군사3/종사2).
      * 술어는 `officer_city`(관직 보유 도시)이지 `city_id`(소재 도시)가 아니다. 표시 전용 — id asc 정렬.
      */
-    fun findByOfficerCityAndOfficerLevelInOrderByIdAsc(
+    fun findByWorldIdAndOfficerCityAndOfficerLevelInOrderByIdAsc(
+        worldId: Int,
         officerCity: Int,
         officerLevels: List<Int>,
     ): List<GeneralReadEntity>
@@ -287,20 +306,98 @@ interface GeneralReadRepository : JpaRepository<GeneralReadEntity, Int> {
      * The legacy `a_kingdomList.php` sorts by a stored `nation.power` that has no column in this schema;
      * SUM(crew) is the documented faithful proxy (OQ-3). COALESCE so a general-less nation → 0.
      */
-    @Query("select coalesce(sum(g.crew), 0) from GeneralReadEntity g where g.nationId = :nationId")
-    fun sumCrewByNationId(@Param("nationId") nationId: Int): Long
+    @Query("select coalesce(sum(g.crew), 0) from GeneralReadEntity g where g.worldId = :worldId and g.nationId = :nationId")
+    fun sumCrewByWorldIdAndNationId(
+        @Param("worldId") worldId: Int,
+        @Param("nationId") nationId: Int,
+    ): Long
 
     /**
      * W9 (9a) `getWorldMap`의 `shownByGeneralList` 원천 — 아국 장수가 소재한 도시 id 집합.
      * PHP `func_map.php:135-138`: `select distinct city from general where nation=%i`.
      * PHP는 무순서지만 deterministic 출력을 위해 cityId-ascending 정렬(표시 전용, 패러티 무관).
      */
-    @Query("select distinct g.cityId from GeneralReadEntity g where g.nationId = :nationId order by g.cityId asc")
-    fun findDistinctCityIdByNationId(@Param("nationId") nationId: Int): List<Int>
+    @Query("select distinct g.cityId from GeneralReadEntity g where g.worldId = :worldId and g.nationId = :nationId order by g.cityId asc")
+    fun findDistinctCityIdByWorldIdAndNationId(
+        @Param("worldId") worldId: Int,
+        @Param("nationId") nationId: Int,
+    ): List<Int>
 
     /** B1 Join — one general per user check. */
-    fun findByUserId(userId: String): GeneralReadEntity?
+    fun findByWorldIdAndUserId(worldId: Int, userId: String): GeneralReadEntity?
 
     /** B1 Join — unique name check. */
-    fun existsByName(name: String): Boolean
+    fun existsByWorldIdAndName(worldId: Int, name: String): Boolean
+}
+
+@Repository
+class GeneralReadRepository(
+    private val raw: GeneralReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findById(id: Int): Optional<GeneralReadEntity> = raw.findByWorldIdAndId(worldId.value, id)
+
+    fun findAll(): List<GeneralReadEntity> = raw.findByWorldId(worldId.value)
+
+    fun count(): Long = raw.countByWorldId(worldId.value)
+
+    fun findByNationIdOrderByOfficerLevelDescIdAsc(nationId: Int): List<GeneralReadEntity> =
+        raw.findByWorldIdAndNationIdOrderByOfficerLevelDescIdAsc(worldId.value, nationId)
+
+    fun findByNationIdOrderByTurnTimeAsc(nationId: Int): List<GeneralReadEntity> =
+        raw.findByWorldIdAndNationIdOrderByTurnTimeAsc(worldId.value, nationId)
+
+    fun findByNpcStateOrderByIdAsc(npcState: Int): List<GeneralReadEntity> =
+        raw.findByWorldIdAndNpcStateOrderByIdAsc(worldId.value, npcState)
+
+    fun findFirstByNationIdOrderByOfficerLevelDesc(nationId: Int): GeneralReadEntity? =
+        raw.findFirstByWorldIdAndNationIdOrderByOfficerLevelDesc(worldId.value, nationId)
+
+    fun countByNpcState(npcState: Int): Long = raw.countByWorldIdAndNpcState(worldId.value, npcState)
+
+    fun countByNationId(nationId: Int): Long = raw.countByWorldIdAndNationId(worldId.value, nationId)
+
+    fun countByNpcStateLessThan(npcState: Int): Long = raw.countByWorldIdAndNpcStateLessThan(worldId.value, npcState)
+
+    fun findByNpcStateLessThanOrderByIdAsc(npcState: Int): List<GeneralReadEntity> =
+        raw.findByWorldIdAndNpcStateLessThanOrderByIdAsc(worldId.value, npcState)
+
+    fun countByNpcStateGreaterThan(npcState: Int): Long = raw.countByWorldIdAndNpcStateGreaterThan(worldId.value, npcState)
+
+    fun countByCityId(cityId: Int): Long = raw.countByWorldIdAndCityId(worldId.value, cityId)
+
+    fun findByCityIdOrderByTurnTimeAsc(cityId: Int): List<GeneralReadEntity> =
+        raw.findByWorldIdAndCityIdOrderByTurnTimeAsc(worldId.value, cityId)
+
+    fun findByTroopIdOrderByOfficerLevelDescIdAsc(troopId: Int): List<GeneralReadEntity> =
+        raw.findByWorldIdAndTroopIdOrderByOfficerLevelDescIdAsc(worldId.value, troopId)
+
+    fun findByNationIdAndOfficerLevelGreaterThanEqualOrderByOfficerLevelDescIdAsc(
+        nationId: Int,
+        officerLevel: Int,
+    ): List<GeneralReadEntity> = raw.findByWorldIdAndNationIdAndOfficerLevelGreaterThanEqualOrderByOfficerLevelDescIdAsc(
+        worldId.value,
+        nationId,
+        officerLevel,
+    )
+
+    fun findByOfficerCityAndOfficerLevelInOrderByIdAsc(
+        officerCity: Int,
+        officerLevels: List<Int>,
+    ): List<GeneralReadEntity> = raw.findByWorldIdAndOfficerCityAndOfficerLevelInOrderByIdAsc(
+        worldId.value,
+        officerCity,
+        officerLevels,
+    )
+
+    fun sumCrewByNationId(nationId: Int): Long = raw.sumCrewByWorldIdAndNationId(worldId.value, nationId)
+
+    fun findDistinctCityIdByNationId(nationId: Int): List<Int> =
+        raw.findDistinctCityIdByWorldIdAndNationId(worldId.value, nationId)
+
+    fun findByUserId(userId: String): GeneralReadEntity? = raw.findByWorldIdAndUserId(worldId.value, userId)
+
+    fun existsByName(name: String): Boolean = raw.existsByWorldIdAndName(worldId.value, name)
 }

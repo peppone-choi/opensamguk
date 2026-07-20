@@ -84,7 +84,8 @@ class GameKvFlushIT {
     @Test
     fun `kv flush writes game_kv string-ns and nation_env int-ns with delete-on-null`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 kvWrites = listOf(
                     // string-ns game_kv: a raw-json String value bound verbatim (PHP json_encode bytes).
@@ -178,7 +179,8 @@ class GameKvFlushIT {
     @Test
     fun `deleted nation snapshots are archived under current server id`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 archiveServerId = "archive-server",
                 deletedNationSnapshots = listOf(
@@ -207,7 +209,8 @@ class GameKvFlushIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 archiveServerId = "archive-server",
                 deletedNationSnapshots = listOf(

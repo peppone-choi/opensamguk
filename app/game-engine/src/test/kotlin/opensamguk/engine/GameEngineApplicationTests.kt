@@ -54,6 +54,7 @@ class GameEngineApplicationTests {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("management.health.redis.enabled") { "false" }
+            registry.add("OPENSAMGUK_WORLD_ID") { "1" }
             // The production turn loop (TurnDaemonRunner) must NOT auto-start during a context-load test:
             // it would drain the world + need a live Redis command stream. The bean is still created; only
             // its SmartLifecycle start is gated off.

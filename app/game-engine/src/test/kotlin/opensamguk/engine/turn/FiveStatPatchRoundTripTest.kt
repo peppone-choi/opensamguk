@@ -30,6 +30,7 @@ class FiveStatPatchRoundTripTest {
             generals = listOf(general),
             cities = listOf(City(id = 5, name = "업", nationId = 1, level = 6)),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0")),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 

@@ -68,6 +68,7 @@ class TroopFlushIT {
         // create two troops (NewTroop x2).
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 createdTroops = listOf(TroopRow(7, 1, "제1군단"), TroopRow(8, 1, "제2군단")),
             ),
@@ -77,7 +78,7 @@ class TroopFlushIT {
 
         // rename troop 7 (SetTroopName) — created-this-tick exclusion means this is a separate flush.
         executor.flush(
-            FlushPayload(worldStateUpdate = ws(), updatedTroops = listOf(TroopRow(7, 1, "개명군단"))),
+            FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), updatedTroops = listOf(TroopRow(7, 1, "개명군단"))),
         )
         assertEquals("개명군단", nameOf(7))
         assertEquals("제2군단", nameOf(8)) // untouched
@@ -85,7 +86,7 @@ class TroopFlushIT {
 
         // leader-disband delete of troop 7 (ExitTroop) — by troop_leader.
         executor.flush(
-            FlushPayload(worldStateUpdate = ws(), deletedTroops = listOf(7)),
+            FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), deletedTroops = listOf(7)),
         )
         assertNull(nameOf(7))
         assertEquals("제2군단", nameOf(8))

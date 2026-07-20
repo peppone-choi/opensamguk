@@ -7,10 +7,11 @@
 # (web-gateway:3000, web-game:3001) and an nginx reverse proxy on :80 that
 # reuses infra/nginx/nginx.conf for same-origin routing.
 #
-# First `up` against an EMPTY DB seeds itself:
-#   - game-engine  → ScenarioSeedRunner imports scenario_1010 (174 generals) when world_state is empty
+# First `up` with an empty `world_state` seeds the configured OPENSAMGUK_WORLD_ID:
+#   - game-engine  → ScenarioSeedRunner imports scenario_1010 (174 generals) only by configured-world admission
 #   - gateway-api  → AdminSeeder creates ADMIN_USERNAME when both admin env values are set
-# Both are idempotent: a second `up` is a no-op on already-seeded data (volumes persist it).
+# A second game-engine `up` is a no-op only when `world_state` contains exactly that configured id;
+# any other world identity set is rejected. Volumes persist admitted seed data.
 #
 # JWT: JWT_SECRET is defined ONCE in .env and wired to BOTH gateway-api (issuer,
 # JwtTokenProvider) AND game-api (verifier, GameApiJwtVerifier). They MUST share
@@ -123,6 +124,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GAME_API_PORT: 8081
+      OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
       SERVER_ID: ${SERVER_ID:-s1}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}
@@ -163,8 +165,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       GAME_ENGINE_PORT: 8082
+      OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
-      # Scenario seed (ScenarioSeedRunner, idempotent on empty world_state).
+      # Scenario seed (ScenarioSeedRunner: configured-world admission; exact configured id is idempotent).
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-true}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_1010}
       SCENARIO_DIR: ${SCENARIO_DIR:-/data/scenarios}

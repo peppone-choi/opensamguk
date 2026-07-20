@@ -1,5 +1,6 @@
 package opensamguk.engine.config
 
+import opensamguk.common.world.WorldId
 import opensamguk.logic.event.EventActionFactory
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
@@ -25,11 +26,23 @@ import org.springframework.context.annotation.Configuration
 class EngineEventConfig {
 
     @Bean
-    fun eventStore(jdbc: JdbcTemplate, bootstrap: opensamguk.engine.boot.SeedBootstrap): EventStore {
+    fun eventStore(
+        jdbc: JdbcTemplate,
+        bootstrap: opensamguk.engine.boot.SeedBootstrap,
+        processWorld: EngineProcessWorld,
+    ): EventStore = createEventStore(jdbc, bootstrap, processWorld.worldId)
+
+    internal fun createEventStore(
+        jdbc: JdbcTemplate,
+        bootstrap: opensamguk.engine.boot.SeedBootstrap,
+        worldId: WorldId,
+    ): EventStore {
         bootstrap.ensureSeeded(jdbc)
         val ignoreDefaults = jdbc.query(
-            "SELECT COALESCE((config->>'ignoreDefaultEvents')::boolean, false) FROM world_state ORDER BY id ASC LIMIT 1",
-        ) { rs, _ -> rs.getBoolean(1) }.firstOrNull() ?: false
+            "SELECT COALESCE((config->>'ignoreDefaultEvents')::boolean, false) FROM world_state WHERE id = ?",
+            { rs, _ -> rs.getBoolean(1) },
+            worldId.value,
+        ).firstOrNull() ?: false
         val rows = jdbc.query(
             "SELECT id, target_code, priority, condition::text AS condition_json, action::text AS action_json FROM event ORDER BY id ASC",
         ) { rs, _ ->

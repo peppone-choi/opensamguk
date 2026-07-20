@@ -52,6 +52,7 @@ class MakeGeneralHandlerTest {
                     City(id = 11, name = "허창", nationId = 2, level = 6),
                     City(id = 12, name = "관문", nationId = 0, level = 4),
                 ),
+                worldId = opensamguk.common.world.WorldId((state()).id),
             ),
         )
 
@@ -73,6 +74,7 @@ class MakeGeneralHandlerTest {
             WorldSnapshot(
                 state = state(),
                 cities = listOf(City(id = 10, name = "낙양", nationId = 0, level = 5)),
+                worldId = opensamguk.common.world.WorldId((state()).id),
             ),
         )
 
@@ -115,6 +117,7 @@ class MakeGeneralHandlerTest {
                     City(id = 10, name = "낙양", nationId = 0, level = 5),
                     City(id = 11, name = "허창", nationId = 1, level = 6),
                 ),
+                worldId = opensamguk.common.world.WorldId((state()).id),
             ),
         )
         val request = command(userId = 9).copy(
@@ -161,6 +164,7 @@ class MakeGeneralHandlerTest {
             WorldSnapshot(
                 state = state(),
                 cities = listOf(City(id = 10, name = "낙양", nationId = 0, level = 5)),
+                worldId = opensamguk.common.world.WorldId((state()).id),
             ),
         )
 

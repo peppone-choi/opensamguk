@@ -68,6 +68,7 @@ class EmptyWorldBootIT {
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
             registry.add("management.health.redis.enabled") { "false" }
+            registry.add("OPENSAMGUK_WORLD_ID") { "1" }
             registry.add("SCENARIO_SEED_ENABLED") { "false" }
             registry.add("opensamguk.daemon.enabled") { "true" }
             registry.add("opensamguk.daemon.idle-poll-ms") { "25" }

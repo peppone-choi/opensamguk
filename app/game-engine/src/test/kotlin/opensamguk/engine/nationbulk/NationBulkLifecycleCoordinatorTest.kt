@@ -241,6 +241,7 @@ class NationBulkLifecycleCoordinatorTest {
         WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = now),
             generals = generals.toList(),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = now)).id),
         ),
     )
 

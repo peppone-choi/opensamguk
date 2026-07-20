@@ -78,7 +78,8 @@ class DiplomaticLetterControllerIT {
     fun `diplomacy_letter INSERT(발송) persists with PROPOSED enum + aux, and read seam normalizes to lowercase`() {
         val auxJson = """{"src":{"nationName":"촉","nationColor":"#00ff00","generalName":"유비","generalIcon":""},"dest":{"nationName":"위","nationColor":"#0000ff"}}"""
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterInserts = listOf(
                     DiplomacyLetterInsertRow(
@@ -112,7 +113,8 @@ class DiplomaticLetterControllerIT {
     fun `prev letter UPDATE(replaced) + new INSERT, then countNewerLetters sees the chain`() {
         // prev #600 발송.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterInserts = listOf(
                     DiplomacyLetterInsertRow(
@@ -124,7 +126,8 @@ class DiplomaticLetterControllerIT {
         )
         // 대체: #600 → REPLACED + new #601(prev_id=600) INSERT.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterInserts = listOf(
                     DiplomacyLetterInsertRow(id = 601, columns = baseCols(src = 1, dest = 2, prevId = 600, state = "PROPOSED")),
@@ -144,7 +147,8 @@ class DiplomaticLetterControllerIT {
 
         // #601을 CANCELLED로 만들면 newer-count는 0.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterUpdates = linkedMapOf(601 to linkedMapOf<String, Any?>("state" to "CANCELLED")),
             ),
@@ -157,7 +161,8 @@ class DiplomaticLetterControllerIT {
     fun `destroy two-phase - state_opt set on aux then CANCELLED, read seam extracts state_opt`() {
         // activated 서신 #700.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterInserts = listOf(
                     DiplomacyLetterInsertRow(id = 700, columns = baseCols(src = 1, dest = 2, prevId = null, state = "ACTIVATED")),
@@ -166,7 +171,8 @@ class DiplomaticLetterControllerIT {
         )
         // 1단계: aux에 state_opt try_destroy_src 적재(상태는 activated 유지).
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterUpdates = linkedMapOf(
                     700 to linkedMapOf<String, Any?>(
@@ -181,7 +187,8 @@ class DiplomaticLetterControllerIT {
 
         // 2단계: cancelled.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 diplomacyLetterUpdates = linkedMapOf(700 to linkedMapOf<String, Any?>("state" to "CANCELLED")),
             ),
@@ -193,7 +200,8 @@ class DiplomaticLetterControllerIT {
     fun `diplomacy message INSERT persists with diplomacy enum type`() {
         // 외교 서신 발송이 함께 내보내는 diplomacy 메시지(국가 mailbox 양측)도 실제 message 테이블에 INSERT된다.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 createdMessages = listOf(
                     CreatedMessageRow(

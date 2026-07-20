@@ -65,6 +65,7 @@ class BoardFlushIT {
         // 회의실 article + 기밀실 article (INSERT-only, id 생략 → SERIAL).
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 boardPostInserts = listOf(
                     BoardPostInsertRow(
@@ -95,6 +96,7 @@ class BoardFlushIT {
         // 영속화된 글에 대한 댓글 — FK post_id가 반드시 해소되어야 한다.
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 boardCommentInserts = listOf(
                     BoardCommentInsertRow(

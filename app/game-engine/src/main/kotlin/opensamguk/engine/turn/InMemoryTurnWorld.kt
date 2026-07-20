@@ -1,5 +1,6 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.NationTurn
 import java.time.Instant
 
@@ -16,7 +17,14 @@ data class WorldSnapshot(
     val accessLogs: List<GeneralAccessLog> = emptyList(),
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
-)
+    val worldId: WorldId,
+) {
+    init {
+        require(state.id == worldId.value) {
+            "WorldSnapshot state.id=${state.id} must equal worldId=${worldId.value}"
+        }
+    }
+}
 
 /**
  * Faithful transcription of the load-bearing dirty/created/deleted machinery in
@@ -32,6 +40,7 @@ data class WorldSnapshot(
  *  - [removeNation] also prunes that nation's diplomacy entries from all dirty/created sets.
  */
 class InMemoryTurnWorld(snapshot: WorldSnapshot) {
+    val worldId: WorldId = snapshot.worldId
     private val generals = LinkedHashMap<Int, TurnGeneral>()
     private val cities = LinkedHashMap<Int, City>()
     private val nations = LinkedHashMap<Int, Nation>()

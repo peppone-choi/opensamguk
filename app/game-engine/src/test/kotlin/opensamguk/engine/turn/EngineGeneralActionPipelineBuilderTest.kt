@@ -44,6 +44,14 @@ class EngineGeneralActionPipelineBuilderTest {
                 generals = listOf(general),
                 cities = listOf(City(id = 5, name = "업", nationId = 1, level = 6)),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", level = 7, typeCode = "che_유가")),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = t0,
+                    meta = linkedMapOf("scenarioEffect" to "event_MoreEffect"),
+                )).id),
             ),
         )
 

@@ -60,6 +60,7 @@ class AuctionFlushIT {
         // open (INSERT, allocatedId 1) + two bids (INSERT-only, outbid row persists).
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 auctionUpserts = listOf(
                     AuctionUpsertRow(id = null, allocatedId = 1, columns = linkedMapOf(
@@ -85,6 +86,7 @@ class AuctionFlushIT {
         // finish (UPDATE on the same id): finished -> true.
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 auctionUpserts = listOf(
                     AuctionUpsertRow(id = 1, allocatedId = null, columns = linkedMapOf(

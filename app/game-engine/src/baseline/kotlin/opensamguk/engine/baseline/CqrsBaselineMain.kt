@@ -163,7 +163,8 @@ object CqrsBaselineMain {
             .load()
             .migrate()
 
-        val bootstrap = SeedBootstrap(SCENARIO_CODE)
+        val baselineWorldId = opensamguk.common.world.WorldId(1)
+        val bootstrap = SeedBootstrap(scenarioCode = SCENARIO_CODE, worldId = baselineWorldId)
         val fixture = config.productionShapeFixture?.takeIf(ProductionShapeFixtureConfig::isLocalSanitizedAggregateSurrogate)
             ?.let { localFixture ->
                 LocalSanitizedAggregateMaterializer(dataSource).materialize(localFixture)
@@ -174,7 +175,7 @@ object CqrsBaselineMain {
                 normalizeFixtureSeedClock(jdbc)
                 insertFixture(jdbc, config)
             }
-        val loader = WorldSnapshotLoader(jdbc, bootstrap)
+        val loader = WorldSnapshotLoader(jdbc, bootstrap, baselineWorldId)
         val snapshotStartedAt = System.nanoTime()
         val snapshot = loader.buildSnapshot()
         val snapshotDurationMs = elapsedMillis(snapshotStartedAt)
@@ -187,7 +188,7 @@ object CqrsBaselineMain {
         val handler = ReservedTurnHandler(world, registry, hiddenSeed, startYear)
         val reservedTurns = ReservedTurnRepository(named)
         val lifecycle = TurnDaemonLifecycle(world, handler) { generalId ->
-            reservedTurns.readReserved(generalId, 0)
+            reservedTurns.readReserved(baselineWorldId, generalId, 0)
         }
         val runTime = world.listGenerals().maxOf { it.turnTime }.plus(1, ChronoUnit.SECONDS)
         val dueCount = lifecycle.dueGenerals(runTime).size
@@ -335,6 +336,7 @@ object CqrsBaselineMain {
             UPDATE general
                SET turn_time = TIMESTAMPTZ '$BASELINE_FIXED_INSTANT' +
                                (turn_time - (SELECT start_time FROM world_state WHERE id = 1))
+             WHERE world_id = 1
             """.trimIndent(),
         )
         jdbc.update(
@@ -373,6 +375,7 @@ object CqrsBaselineMain {
         snapshot: WorldSnapshot,
     ): Map<String, ObservedLoaderInputMetric> {
         val state = snapshot.state
+        val worldId = snapshot.worldId.value
         val nationHistory = state.meta["nationHistory"] as? Map<*, *>
         val generalHistory = state.meta["generalHistory"] as? Map<*, *>
         val globalLogs = state.meta["globalLogs"] as? List<*>
@@ -384,7 +387,7 @@ object CqrsBaselineMain {
             LoaderInputObservation.aggregate(jdbc, "archivedNationIds", serverId)
         } ?: SourceAggregate(0L, 0L)
         val values = linkedMapOf(
-            "worldState" to LoaderInputObservation.aggregate(jdbc, "worldState").withRetainedItems(1L),
+            "worldState" to LoaderInputObservation.aggregate(jdbc, "worldState", worldId).withRetainedItems(1L),
             "ngGames" to LoaderInputObservation.aggregateNgGames(jdbc, snapshot.serverId),
             "archivedNationIds" to archivedNationSource.withRetainedItems(snapshot.archivedNationIds.size.toLong()),
             "statistics" to LoaderInputObservation.aggregate(jdbc, "statistics")
@@ -413,9 +416,9 @@ object CqrsBaselineMain {
                 jdbc,
                 "SELECT count(*) FROM (SELECT DISTINCT r.general_id, r.type FROM rank_data r JOIN general g ON g.id = r.general_id) AS retained_rank_values",
             )),
-            "nations" to LoaderInputObservation.aggregate(jdbc, "nations").withRetainedItems(snapshot.nations.size.toLong()),
-            "cities" to LoaderInputObservation.aggregate(jdbc, "cities").withRetainedItems(snapshot.cities.size.toLong()),
-            "generals" to LoaderInputObservation.aggregate(jdbc, "generals").withRetainedItems(snapshot.generals.size.toLong()),
+            "nations" to LoaderInputObservation.aggregate(jdbc, "nations", worldId).withRetainedItems(snapshot.nations.size.toLong()),
+            "cities" to LoaderInputObservation.aggregate(jdbc, "cities", worldId).withRetainedItems(snapshot.cities.size.toLong()),
+            "generals" to LoaderInputObservation.aggregate(jdbc, "generals", worldId).withRetainedItems(snapshot.generals.size.toLong()),
             "diplomacy" to LoaderInputObservation.aggregate(jdbc, "diplomacy").withRetainedItems(snapshot.diplomacy.size.toLong()),
             "generalAccessLogs" to LoaderInputObservation.aggregate(jdbc, "generalAccessLogs")
                 .withRetainedItems(snapshot.accessLogs.size.toLong()),
@@ -923,13 +926,18 @@ private object LoaderInputObservation {
     private val NG_GAMES_INVENTORY_SOURCE =
         "countQuery=$NG_GAMES_COUNT_QUERY | activeQuery=$NG_GAMES_ACTIVE_QUERY"
     private const val NG_GAMES_INVENTORY_RETAINED_AS = "state.meta.serverCount plus optional active game"
+    private const val WORLD_STATE_INVENTORY_SOURCE = "world_state WHERE id = ?"
+    private const val NATION_INVENTORY_SOURCE = "nation WHERE world_id = ?"
+    private const val CITY_INVENTORY_SOURCE = "city WHERE world_id = ?"
+    private const val GENERAL_INVENTORY_SOURCE = "general WHERE world_id = ?"
 
     private val definitions = listOf(
         LoaderInputObservationDefinition(
             "worldState",
-            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time FROM world_state ORDER BY id ASC LIMIT 1",
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time FROM world_state WHERE id = ?",
             listOf("id", "current_year", "current_month", "current_phase", "tick_seconds", "isunited", "status", "meta", "config", "start_time"),
             listOf("id", "current_year", "current_month", "current_phase", "tick_seconds", "isunited", "status", "meta", "config", "start_time"),
+            inventorySource = WORLD_STATE_INVENTORY_SOURCE,
         ),
         LoaderInputObservationDefinition(
             "ngGames",
@@ -1014,9 +1022,10 @@ private object LoaderInputObservation {
         ),
         LoaderInputObservationDefinition(
             "nations",
-            "SELECT id, name, color, capital_city_id, gold, rice, tech, power, level, type_code, meta FROM nation ORDER BY id ASC",
+            "SELECT id, name, color, capital_city_id, gold, rice, tech, power, level, type_code, meta FROM nation WHERE world_id = ? ORDER BY id ASC",
             listOf("id", "name", "color", "capital_city_id", "gold", "rice", "tech", "power", "level", "type_code", "meta"),
             listOf("id", "name", "color", "capital_city_id", "gold", "rice", "tech", "power", "level", "type_code", "meta"),
+            inventorySource = NATION_INVENTORY_SOURCE,
         ),
         LoaderInputObservationDefinition(
             "cities",
@@ -1024,10 +1033,13 @@ private object LoaderInputObservation {
             SELECT id, name, nation_id, level, state, supply_state, front_state,
                    pop, pop_max, dead, agri, agri_max, comm, comm_max, secu, secu_max, trust,
                    def, def_max, wall, wall_max, trade, region, term, officer_set, conflict, meta
-              FROM city ORDER BY id ASC
+              FROM city
+             WHERE world_id = ?
+             ORDER BY id ASC
             """.trimIndent(),
             listOf("id", "name", "nation_id", "level", "state", "supply_state", "front_state", "pop", "pop_max", "dead", "agri", "agri_max", "comm", "comm_max", "secu", "secu_max", "trust", "def", "def_max", "wall", "wall_max", "trade", "region", "term", "officer_set", "conflict", "meta"),
             listOf("id", "name", "nation_id", "level", "state", "supply_state", "front_state", "pop", "pop_max", "dead", "agri", "agri_max", "comm", "comm_max", "secu", "secu_max", "trust", "def", "def_max", "wall", "wall_max", "trade", "region", "term", "officer_set", "conflict", "meta"),
+            inventorySource = CITY_INVENTORY_SOURCE,
         ),
         LoaderInputObservationDefinition(
             "generals",
@@ -1039,10 +1051,13 @@ private object LoaderInputObservation {
                    turn_time, recent_war_time, user_id, born_year, dead_year, picture, image_server,
                    start_age, personal_code, special_code, special2_code, officer_city,
                    last_turn, penalty, meta
-              FROM general ORDER BY id ASC
+              FROM general
+             WHERE world_id = ?
+             ORDER BY id ASC
             """.trimIndent(),
             listOf("id", "name", "nation_id", "city_id", "troop_id", "npc_state", "affinity", "leadership", "strength", "intel", "politics", "charm", "experience", "dedication", "officer_level", "injury", "gold", "rice", "crew", "crew_type_id", "train", "atmos", "age", "weapon_code", "book_code", "horse_code", "item_code", "turn_time", "recent_war_time", "user_id", "born_year", "dead_year", "picture", "image_server", "start_age", "personal_code", "special_code", "special2_code", "officer_city", "last_turn", "penalty", "meta"),
             listOf("id", "name", "nation_id", "city_id", "troop_id", "npc_state", "affinity", "leadership", "strength", "intel", "politics", "charm", "experience", "dedication", "officer_level", "injury", "gold", "rice", "crew", "crew_type_id", "train", "atmos", "age", "weapon_code", "book_code", "horse_code", "item_code", "turn_time", "recent_war_time", "user_id", "born_year", "dead_year", "picture", "image_server", "start_age", "personal_code", "special_code", "special2_code", "officer_city", "last_turn", "penalty", "meta"),
+            inventorySource = GENERAL_INVENTORY_SOURCE,
         ),
         LoaderInputObservationDefinition(
             "diplomacy",
@@ -1073,11 +1088,10 @@ private object LoaderInputObservation {
                 "Baseline loader-input payload columns diverged from the checked-in inventory for ${definition.id}"
             }
             definition.inventorySource?.let { source ->
-                val countQuery = checkNotNull(definition.countQuery) {
-                    "Baseline loader-input executable source is missing its count query for ${definition.id}"
-                }
-                require(source == ngGamesInventorySource(countQuery, definition.sourceQuery)) {
-                    "Baseline loader-input executable source diverged from its count/active queries for ${definition.id}"
+                definition.countQuery?.let { countQuery ->
+                    require(source == ngGamesInventorySource(countQuery, definition.sourceQuery)) {
+                        "Baseline loader-input executable source diverged from its count/active queries for ${definition.id}"
+                    }
                 }
                 require(source == inventoryInput.source) {
                     "Baseline loader-input executable source diverged from the checked-in inventory for ${definition.id}"

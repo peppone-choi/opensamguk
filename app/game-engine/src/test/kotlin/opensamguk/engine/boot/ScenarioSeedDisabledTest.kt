@@ -12,14 +12,16 @@ import kotlin.test.assertFalse
 class ScenarioSeedDisabledTest {
 
     @Test
-    fun `disabled seed fence checks for an existing world but does not seed an empty database`() {
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", seedEnabled = false)
+    fun `disabled seed fence returns without touching the database`() {
+        val bootstrap = SeedBootstrap(
+            scenarioCode = "scenario_1010",
+            seedEnabled = false,
+            worldId = opensamguk.common.world.WorldId(1),
+        )
         val jdbc = Mockito.mock(JdbcTemplate::class.java)
-        Mockito.`when`(jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java)).thenReturn(0)
 
         assertFalse(bootstrap.ensureSeeded(jdbc))
-        Mockito.verify(jdbc).queryForObject("SELECT count(*) FROM world_state", Int::class.java)
-        Mockito.verifyNoMoreInteractions(jdbc)
+        Mockito.verifyNoInteractions(jdbc)
     }
 
     @Test
@@ -32,6 +34,7 @@ class ScenarioSeedDisabledTest {
                 scenarioCode = "scenario_1010",
                 seedEnabled = true,
                 scenarioDir = scenario.parentFile.absolutePath,
+                worldId = opensamguk.common.world.WorldId(1),
             )
 
             assertEquals("external", ScenarioJson.loadScenario(bootstrap.readScenarioJson()).title)

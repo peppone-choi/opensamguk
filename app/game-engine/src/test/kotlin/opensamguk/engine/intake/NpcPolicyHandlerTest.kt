@@ -43,6 +43,7 @@ class NpcPolicyHandlerTest {
                 state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60, lastTurnTime = t0),
                 generals = listOf(general),
                 nations = listOf(nation),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60, lastTurnTime = t0)).id),
             ),
         )
 

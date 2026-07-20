@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.common.world.WorldId
 import opensamguk.engine.config.EngineEventConfig
 import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -83,8 +84,8 @@ class ScenarioBootIT {
             .migrate()
         jdbc = JdbcTemplate(dataSource)
         named = NamedParameterJdbcTemplate(dataSource)
-        bootstrap = SeedBootstrap("scenario_1010")
-        loader = WorldSnapshotLoader(jdbc, bootstrap)
+        bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = opensamguk.common.world.WorldId(1))
+        loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
     }
 
     @AfterAll
@@ -155,7 +156,7 @@ class ScenarioBootIT {
         val startYear = (world.getState().meta["startYear"] as Number).toInt()
         val handler = ReservedTurnHandler(world, registry, hiddenSeed, startYear)
         val reservedRepo = ReservedTurnRepository(named)
-        val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(gid, 0) }
+        val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(WorldId(1), gid, 0) }
 
         // 4. ADVANCE: drive one tick strictly after every seeded general's turn_time so they are all due
         // (the seeded ring is all 휴식 → each resolves the rest no-op). Must not throw.
@@ -244,7 +245,7 @@ class ScenarioBootIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
 
         bootstrap.ensureSeeded(jdbc)
-        val configuredStore = EngineEventConfig().eventStore(jdbc, bootstrap)
+        val configuredStore = EngineEventConfig().createEventStore(jdbc, bootstrap, WorldId(1))
         val deletedId = jdbc.queryForObject(
             "SELECT id FROM event WHERE target_code = 'destroy_nation' AND priority = 1000 ORDER BY id ASC LIMIT 1",
             Int::class.java,
@@ -275,7 +276,7 @@ class ScenarioBootIT {
 
         assertEquals(0, countWhere("event", "id = $deletedId"))
         assertEquals(1, countWhere("event", "id = $insertedId"))
-        val restarted = EngineEventConfig().eventStore(jdbc, bootstrap)
+        val restarted = EngineEventConfig().createEventStore(jdbc, bootstrap, WorldId(1))
         assertTrue(restarted.allRows().none { it.id == deletedId })
         assertTrue(restarted.allRows().any { it.id == insertedId && it.priority == 1234 })
     }
@@ -287,7 +288,7 @@ class ScenarioBootIT {
 
         bootstrap.ensureSeeded(jdbc)
         val eventConfig = EngineEventConfig()
-        val eventStore = eventConfig.eventStore(jdbc, bootstrap)
+        val eventStore = eventConfig.createEventStore(jdbc, bootstrap, WorldId(1))
         val world = InMemoryTurnWorld(loader.buildSnapshot())
         val recorder = ChangeRecorder()
         eventStore.bindMutationSink(recorder::recordEventMutation)

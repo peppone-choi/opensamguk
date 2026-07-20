@@ -51,6 +51,14 @@ class WorldActionCheckEmperiorContextTest {
             ),
             nations = nations,
             cities = cities,
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1,
+                currentYear = 200,
+                currentMonth = 1,
+                tickSeconds = 3600,
+                lastTurnTime = Instant.EPOCH,
+                meta = mapOf("map" to "miniche") + meta,
+            )).id),
         ),
     )
 
@@ -142,6 +150,22 @@ class WorldActionCheckEmperiorContextTest {
                 serverId = "server-1",
                 nations = listOf(Nation(id = 7, name = "촉", color = "#330000", level = 1)),
                 generals = listOf(general),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                    meta = mapOf(
+                        "season" to 6,
+                        "scenario" to 1010,
+                        "scenario_text" to "영웅집결",
+                        "starttime" to "0199-01-01 00:00:00",
+                        "serverName" to "테스트",
+                        "serverCount" to 4,
+                        "ownerNames" to mapOf("101" to "회원갑"),
+                    ),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -203,6 +227,21 @@ class WorldActionCheckEmperiorContextTest {
                 serverId = "server-1",
                 nations = emptyList(),
                 generals = listOf(hallGeneral().copy(nationId = 0, experience = 3)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                    meta = mapOf(
+                        "season" to 6,
+                        "scenario" to 1010,
+                        "scenario_text" to "영웅집결",
+                        "serverName" to "테스트",
+                        "serverCount" to 4,
+                        "ownerNames" to mapOf("101" to "회원갑"),
+                    ),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -236,6 +275,13 @@ class WorldActionCheckEmperiorContextTest {
                 nations = listOf(Nation(id = 1, name = "재야국", color = "#000000", level = 1, typeCode = "che_중립")),
                 cities = listOf(City(id = 1, name = "도시", nationId = 1, level = 5, population = 10, populationMax = 20)),
                 generals = listOf(hallGeneral().copy(nationId = 1)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -318,6 +364,30 @@ class WorldActionCheckEmperiorContextTest {
                 ),
                 cities = cities,
                 generals = generals,
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = mapOf(
+                        "map" to "miniche",
+                        "serverName" to "테스트",
+                        "serverCount" to 4,
+                        "statisticRows" to listOf(
+                            mapOf(
+                                "nation_count" to 3,
+                                "nation_name" to "삼국",
+                                "nation_hist" to "삼국 기록",
+                                "gen_count" to "9(4+5)",
+                                "personal_hist" to "이전 개인",
+                                "special_hist" to "이전 특기",
+                                "aux" to "{\"turn\":1}",
+                            ),
+                        ),
+                        "nationHistory" to mapOf(7 to listOf("최근 기록", "과거 기록")),
+                    ),
+                )).id),
             ),
         )
         val context = WorldActionContext(
@@ -441,6 +511,14 @@ class WorldActionCheckEmperiorContextTest {
                 ),
                 nations = listOf(Nation(id = 7, name = "촉", color = "#fff", level = 1)),
                 generals = listOf(bidder),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = Instant.EPOCH,
+                    meta = mapOf("map" to "miniche", "isunited" to 0),
+                )).id),
             ),
         )
         val auction = AuctionEntity(

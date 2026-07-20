@@ -3,8 +3,9 @@ package opensamguk.engine.boot
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioJson
+import opensamguk.infra.seed.ScenarioSeedCoordinator
+import opensamguk.common.world.WorldId
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.jdbc.core.JdbcTemplate
@@ -12,11 +13,13 @@ import org.springframework.stereotype.Component
 import java.nio.charset.StandardCharsets
 
 /**
- * F1a — boots a FRESH/empty PostgreSQL into a playable `scenario_1010` world by seeding rows.
+ * F1a — boots the configured [WorldId] into a playable `scenario_1010` world when seed admission
+ * permits it.
  *
- * Mirrors `app/gateway-api/.../config/AdminSeeder.kt` idempotency: if the world singleton already
- * exists (`SELECT count(*) FROM world_state > 0`) it logs and skips; otherwise it loads the two
- * committed `infra` resources and runs [ScenarioImporter.importAll], then logs the final row counts.
+ * [ScenarioSeedCoordinator] admits an import only when `world_state` is empty. It skips only when
+ * that table contains exactly the configured world id, and rejects every other identity set. On an
+ * admitted import it loads the two committed `infra` resources and runs [ScenarioImporter.importAll],
+ * then logs the final row counts.
  *
  * This is an [ApplicationRunner] so it runs once at daemon start. The seed is ALSO invoked
  * defensively (and idempotently) by [WorldSnapshotLoader] right before it builds the snapshot, so the
@@ -47,47 +50,50 @@ class ScenarioSeedRunner(
 
 /**
  * The shared, idempotent seed body. Both [ScenarioSeedRunner] (at boot) and [WorldSnapshotLoader]
- * (before snapshot build) call [ensureSeeded]; the `world_state` emptiness gate makes a second call a
- * no-op, so the seed→load order is guaranteed without depending on bean init ordering.
+ * (before snapshot build) call [ensureSeeded]. [ScenarioSeedCoordinator] makes a second call a no-op
+ * only when `world_state` contains exactly the configured world id, so the seed→load order is
+ * guaranteed without depending on bean init ordering.
  */
-@Component
 class SeedBootstrap(
-    @Value("\${SCENARIO_CODE:scenario_1010}") private val scenarioCode: String,
-    @Value("\${SCENARIO_SEED_ENABLED:true}") private val seedEnabled: Boolean = true,
-    @Value("\${SCENARIO_DIR:}") private val scenarioDir: String = "",
+    private val scenarioCode: String = "scenario_1010",
+    private val seedEnabled: Boolean = true,
+    private val scenarioDir: String = "",
+    private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)
 
-    /** Seed the world iff `world_state` is empty. Returns true if it seeded, false if it skipped. */
-    @Synchronized
+    /**
+     * Seed through configured-world admission. Returns true when it imports, false only when exactly
+     * the configured `world_state.id` already exists; all other identity sets are rejected.
+     */
     fun ensureSeeded(jdbc: JdbcTemplate): Boolean {
-        val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: 0
-        if (worldCount > 0) {
-            log.info("World already exists (world_state={}) — scenario seed skipped (idempotent)", worldCount)
-            return false
-        }
-
         if (!seedEnabled) {
             log.info("Fresh-world scenario seed skipped — SCENARIO_SEED_ENABLED=false")
             return false
         }
 
-        val scenarioNumber = scenarioNumber()
-        val scenario = ScenarioJson.loadScenario(readScenarioJson())
-        val mapName = scenarioMapName(scenario)
-        val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
+        val admission = ScenarioSeedCoordinator(jdbc).ensureSeeded(worldId) {
+            val scenarioNumber = scenarioNumber()
+            val scenario = ScenarioJson.loadScenario(readScenarioJson())
+            val mapName = scenarioMapName(scenario)
+            val cities = ScenarioJson.loadMapCities(readResource("map/$mapName.json"))
+            log.info(
+                "Seeding fresh world '{}' — map={} nations={} generals={} cities={}",
+                scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size,
+            )
+            ScenarioImporter(
+                scenario = scenario,
+                cities = cities,
+                scenarioCode = scenarioCode,
+                scenarioNumber = scenarioNumber,
+            )
+        }
+        if (!admission.seeded) {
+            log.info("World already exists as configured world_state.id={} — scenario seed skipped", worldId.value)
+            return false
+        }
 
-        log.info(
-            "Seeding fresh world '{}' — map={} nations={} generals={} cities={}",
-            scenarioCode, mapName, scenario.nations.size, scenario.generals.size, cities.size,
-        )
-        val importer = ScenarioImporter(
-            scenario = scenario,
-            cities = cities,
-            scenarioCode = scenarioCode,
-            scenarioNumber = scenarioNumber,
-        )
-        val counts = importer.importAll(jdbc)
+        val counts = requireNotNull(admission.counts)
         log.info(
             "Scenario seed complete — world_state={} nation={} city={} general={} general_turn={} " +
                 "nation_turn={} diplomacy={} rank_data={} ng_games={} event={}",

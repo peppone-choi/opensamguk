@@ -40,6 +40,7 @@ class TournamentAdminHandlerTest {
                 ),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 0)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 3, 3600, t0, meta = emptyMap())).id),
         ),
     )
 

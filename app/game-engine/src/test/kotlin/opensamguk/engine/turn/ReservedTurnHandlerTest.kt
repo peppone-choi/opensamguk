@@ -92,9 +92,9 @@ class ReservedTurnHandlerTest {
         cities: List<City> = listOf(city()),
         nations: List<Nation> = listOf(nation()),
         meta: Map<String, Any?> = emptyMap(),
-    ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations))
+    ) = InMemoryTurnWorld(WorldSnapshot(baseState(), generals, cities, nations, worldId = opensamguk.common.world.WorldId((baseState()).id)))
         .let { world ->
-            if (meta.isEmpty()) world else InMemoryTurnWorld(WorldSnapshot(baseState().copy(meta = meta), generals, cities, nations))
+            if (meta.isEmpty()) world else InMemoryTurnWorld(WorldSnapshot(baseState().copy(meta = meta), generals, cities, nations, worldId = opensamguk.common.world.WorldId((baseState().copy(meta = meta)).id)))
         }
 
     private fun handlerFor(world: InMemoryTurnWorld, scenario: Int = 0) =
@@ -684,6 +684,7 @@ class ReservedTurnHandlerTest {
                 generals = listOf(actor),
                 cities = listOf(city(id = 7, nationId = 1), city(id = 8, nationId = 0)),
                 nations = listOf(nation(id = 1)),
+                worldId = opensamguk.common.world.WorldId((baseState().copy(meta = linkedMapOf("maxgeneral" to 500, "develcost" to 52, "turnterm" to 60))).id),
             ),
         )
         val handler = handlerFor(world)

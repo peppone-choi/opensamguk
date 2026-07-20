@@ -1,10 +1,13 @@
 package opensamguk.engine.config
 
+import opensamguk.engine.boot.SeedBootstrap
 import opensamguk.engine.boot.WorldSnapshotLoader
 import opensamguk.engine.turn.InMemoryTurnWorld
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Lazy
+import org.springframework.jdbc.core.JdbcTemplate
 
 /**
  * F1b — the missing boot wiring: the `@Bean InMemoryTurnWorld` that every consumer
@@ -25,6 +28,26 @@ import org.springframework.context.annotation.Lazy
  */
 @Configuration
 class BootstrapConfig {
+
+    @Bean
+    fun seedBootstrap(
+        @Value("\${SCENARIO_CODE:scenario_1010}") scenarioCode: String,
+        @Value("\${SCENARIO_SEED_ENABLED:true}") seedEnabled: Boolean,
+        @Value("\${SCENARIO_DIR:}") scenarioDir: String,
+        processWorld: EngineProcessWorld,
+    ): SeedBootstrap = SeedBootstrap(
+        scenarioCode = scenarioCode,
+        seedEnabled = seedEnabled,
+        scenarioDir = scenarioDir,
+        worldId = processWorld.worldId,
+    )
+
+    @Bean
+    fun worldSnapshotLoader(
+        jdbc: JdbcTemplate,
+        seedBootstrap: SeedBootstrap,
+        processWorld: EngineProcessWorld,
+    ): WorldSnapshotLoader = WorldSnapshotLoader(jdbc, seedBootstrap, processWorld.worldId)
 
     @Bean
     @Lazy

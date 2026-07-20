@@ -80,7 +80,7 @@ class GeneralAiWiringTest {
     )
 
     private fun worldWith(generals: List<TurnGeneral>) =
-        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation())))
+        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation()), worldId = opensamguk.common.world.WorldId((baseState()).id)))
 
     private fun genInput(rng: RandUtil) = GeneralAiInput(
         generalId = 42,

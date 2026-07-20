@@ -13,6 +13,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * OPENSAM-94 프로필 아이콘 sync 채널의 실DB 증명 — general.picture/image_server 전용 컬럼 UPDATE.
@@ -31,7 +32,8 @@ class ProfileIconFlushIT {
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
 
-    private fun ws() = linkedMapOf<String, Any?>("id" to 1, "current_year" to 181, "current_month" to 1)
+    private fun ws(month: Int = 1) =
+        linkedMapOf<String, Any?>("id" to 1, "current_year" to 181, "current_month" to month)
 
     @BeforeAll
     fun setUp() {
@@ -70,11 +72,11 @@ class ProfileIconFlushIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, last_turn, meta,
                  user_id, npc_state, picture, image_server)
             VALUES
-                (:id, :name, 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
+                (1, :id, :name, 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
                  CAST('{}' AS jsonb), CAST('{}' AS jsonb),
                  :user_id, :npc_state, :picture, :image_server)
             """.trimIndent(),
@@ -97,22 +99,29 @@ class ProfileIconFlushIT {
     @Test
     fun `eligible player general has picture and image_server persisted to typed columns`() {
         executor.flush(
-            FlushPayload(worldStateUpdate = ws(), profileIconUpdates = listOf(row(10, "7", "abcd1234.jpg", 1))),
+            FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), profileIconUpdates = listOf(row(10, "7", "abcd1234.jpg", 1))),
         )
         assertEquals("abcd1234.jpg" to 1, pictureOf(10), "typed 컬럼에 canonical picture/image_server 반영(criterion 6)")
         assertEquals(FlushVerb.UPDATE, executor.lastOps().last { it.table == "general" }.verb)
     }
 
     @Test
-    fun `where predicate never repaints an NPC row or another owner even with a matching id`() {
-        // NPC(npc_state=1) — 같은 user_id로 id를 정확히 겨눠도 WHERE npc_state=0이 막는다.
-        // 타 owner(user_id=99) — user_id 불일치로 WHERE가 막는다.
-        executor.flush(
-            FlushPayload(
-                worldStateUpdate = ws(),
-                profileIconUpdates = listOf(row(11, "7", "hijack.jpg", 1), row(12, "7", "hijack.jpg", 1)),
-            ),
-        )
+    fun `eligible first then ineligible second rolls back the complete profile batch`() {
+        assertFailsWith<IllegalStateException> {
+            executor.flush(
+                FlushPayload(
+                    worldId = opensamguk.common.world.WorldId(1),
+                    worldStateUpdate = ws(month = 2),
+                    profileIconUpdates = listOf(
+                        row(10, "7", "first.jpg", 1),
+                        row(11, "7", "hijack.jpg", 1),
+                        row(12, "7", "hijack.jpg", 1),
+                    ),
+                ),
+            )
+        }
+        assertEquals(1, jdbc.jdbcTemplate.queryForObject("SELECT current_month FROM world_state WHERE id = 1", Int::class.java))
+        assertEquals("default.jpg" to 0, pictureOf(10), "preceding eligible row rolled back")
         assertEquals("npc.jpg" to 0, pictureOf(11), "NPC row 불변(criterion 7)")
         assertEquals("other.jpg" to 0, pictureOf(12), "타 owner row 불변(criterion 7)")
     }

@@ -80,6 +80,7 @@ class KillTombstoneTest {
             nations = nations,
             troops = troops,
             accessLogs = accessLogs,
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 6, 3600, t0)).id),
         ),
     )
 

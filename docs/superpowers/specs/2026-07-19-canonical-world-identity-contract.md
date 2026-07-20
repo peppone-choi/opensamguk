@@ -57,14 +57,22 @@ authorize an unscoped compatibility lookup at runtime.
 
 ## 5. Single-world expand/backfill rule
 
-A later expand migration may backfill a new `world_id` column only after it has
-verified that the database has **exactly one** `world_state` row. The backfilled
-value is that row's `id`. Zero rows, more than one row, an orphaned row, or an
-unresolvable source identity is a fail-closed migration error; it is never a
-reason to choose a profile, `server_id`, or `ng_games.id` as a substitute.
+A later expand migration must first lock the canonical-world source against
+concurrent writers, then classify the existing data before adding scoped
+constraints:
 
-This is a temporary single-world expand rule, not a second-world admission
-mechanism and not a runtime defaulting rule.
+- With **exactly one** `world_state` row and a positive id, that locked id is
+  the only permitted backfill value.
+- With zero `world_state` rows and no rows in any declared physical
+  world-owned legacy relation, a pristine schema-only expansion may succeed.
+  It creates no placeholder world, default, or backfill value.
+- With zero worlds plus any world-owned legacy row, with multiple worlds, with
+  a non-positive canonical id, or with an orphaned/unresolvable world-owned
+  row, the migration fails closed and rolls back.
+
+No branch may choose a profile, `server_id`, or `ng_games.id` as a substitute.
+The pristine exception is only for an empty historical database; it is neither
+a second-world admission mechanism nor a runtime defaulting rule.
 
 ## 6. Sequencing and scope fence
 

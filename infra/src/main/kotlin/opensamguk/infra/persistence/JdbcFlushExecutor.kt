@@ -7,6 +7,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.seed.ScenarioImporter
+import opensamguk.common.world.WorldId
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -54,6 +55,9 @@ class JdbcFlushExecutor(
     fun flush(payload: FlushPayload) {
         transactionTemplate.execute {
             lastOps.clear()
+            check(payload.worldStateUpdate["id"] == payload.worldId.value) {
+                "FlushPayload worldStateUpdate.id must equal worldId=${payload.worldId.value}"
+            }
 
             val (preArchiveLogs, regularLogs) = payload.logEntries.partition { it.flushBeforeArchive }
             val isUnificationFlush = payload.emperiorInserts.isNotEmpty()
@@ -84,7 +88,7 @@ class JdbcFlushExecutor(
                 }
             }
 
-            worldStateUpdate(payload.worldStateUpdate)
+            worldStateUpdate(payload.worldId, payload.worldStateUpdate)
             if (isUnificationFlush && payload.kvWrites.isNotEmpty()) {
                 kvWriteFlush(payload.kvWrites)
             }
@@ -105,10 +109,10 @@ class JdbcFlushExecutor(
             //    step-3 contract 순서 general-먼저). 신규 장수 INSERT(B1 장수생성 foundation)는 general 행 +
             //    30 general_turn(휴식) + 37 rank_data(value 0)를 함께 쓴다 — ScenarioImporter.insertGenerals
             //    의 컬럼/행 모양과 정확히 일치(엔진 TurnGeneral은 컬럼맵 GeneralCreateRow로 운반돼 infra 결합 없음).
-            if (payload.createdGenerals.isNotEmpty()) generalCreateMany(payload.createdGenerals)
-            if (payload.createdNations.isNotEmpty()) nationCreateMany(payload.createdNations)
+            if (payload.createdGenerals.isNotEmpty()) generalCreateMany(payload.worldId, payload.createdGenerals)
+            if (payload.createdNations.isNotEmpty()) nationCreateMany(payload.worldId, payload.createdNations)
             if (payload.createdDiplomacy.isNotEmpty()) diplomacyCreateMany(payload.createdDiplomacy)
-            if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.createdNationTurns)
+            if (payload.createdNationTurns.isNotEmpty()) nationTurnCreateMany(payload.worldId, payload.createdNationTurns)
             if (payload.createdTroops.isNotEmpty()) troopCreateMany(payload.createdTroops)
             if (payload.generalAccessLogUpserts.isNotEmpty()) {
                 generalAccessLogUpsertMany(payload.generalAccessLogUpserts)
@@ -119,7 +123,7 @@ class JdbcFlushExecutor(
 
             // 5. deleteMany general, then rank_data (both guarded on deletedGenerals > 0).
             if (payload.deletedGenerals.isNotEmpty()) {
-                generalDeleteMany(payload.deletedGenerals)
+                generalDeleteMany(payload.worldId, payload.deletedGenerals)
                 rankDataDeleteMany(payload.deletedGenerals)
             }
             if (payload.generalAccessLogDeletes.isNotEmpty()) {
@@ -128,18 +132,18 @@ class JdbcFlushExecutor(
 
             // 6. nation cascade: diplomacy, nation_turn, nation (guarded on deletedNations > 0).
             if (payload.deletedNations.isNotEmpty()) {
-                nationCascadeDelete(payload.deletedNations)
+                nationCascadeDelete(payload.worldId, payload.deletedNations)
             }
 
             // 7. updates: general (excl created), city, nation UPDATE (excl created).
             if (payload.updatedGenerals.isNotEmpty()) {
-                generalUpdate(payload.updatedGenerals)
+                generalUpdate(payload.worldId, payload.updatedGenerals)
             }
             if (payload.updatedCities.isNotEmpty()) {
-                cityUpdate(payload.updatedCities)
+                cityUpdate(payload.worldId, payload.updatedCities)
             }
             if (payload.updatedNations.isNotEmpty()) {
-                nationUpdate(payload.updatedNations)
+                nationUpdate(payload.worldId, payload.updatedNations)
             }
             if (payload.selectPoolMutations.isNotEmpty()) {
                 selectPoolMutate(payload.selectPoolMutations)
@@ -177,7 +181,7 @@ class JdbcFlushExecutor(
             }
             if (payload.profileIconUpdates.isNotEmpty()) {
                 // OPENSAM-94: general.picture/image_server 전용 컬럼 UPDATE (owner/npc 재-단언 predicate).
-                profileIconUpdateMany(payload.profileIconUpdates)
+                profileIconUpdateMany(payload.worldId, payload.profileIconUpdates)
             }
 
             // 8d. 게시판 채널 (F4 C2 슬라이스 C): board_post INSERT 후 board_comment INSERT —
@@ -295,9 +299,9 @@ class JdbcFlushExecutor(
 
     // --- step 1 ---------------------------------------------------------------------------------
 
-    private fun worldStateUpdate(worldState: Map<String, Any?>) {
+    private fun worldStateUpdate(worldId: WorldId, worldState: Map<String, Any?>) {
         val params = MapSqlParameterSource()
-        params.addValue("id", worldState["id"])
+        params.addValue("id", worldId.value)
         params.addValue("current_year", worldState["current_year"])
         params.addValue("current_month", worldState["current_month"])
         params.addValue("current_phase", (worldState["current_phase"] as? Number)?.toInt()?.coerceIn(1, 3) ?: 1)
@@ -314,7 +318,7 @@ class JdbcFlushExecutor(
         // Persistent monotonic high-water marks for engine-assigned ids.
         params.addValue("max_nation_id", (worldState["max_nation_id"] as? Number)?.toInt() ?: 0)
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
-        jdbc.update(
+        val updated = jdbc.update(
             """
             UPDATE world_state
                SET current_year = :current_year,
@@ -334,6 +338,7 @@ class JdbcFlushExecutor(
             """.trimIndent(),
             params,
         )
+        check(updated == 1) { "world_state update missed configured world_id=${worldId.value}" }
         lastOps.add(FlushExecOp("world_state", FlushVerb.UPDATE, 1))
     }
 
@@ -424,10 +429,11 @@ class JdbcFlushExecutor(
 
     // --- step 7: general UPDATE -----------------------------------------------------------------
 
-    private fun generalUpdate(generals: List<General>) {
+    private fun generalUpdate(worldId: WorldId, generals: List<General>) {
         val batch: Array<SqlParameterSource> = generals.map { g ->
             val cols = GeneralRowMapper.toColumns(g)
             val src = MapSqlParameterSource()
+            src.addValue("world_id", worldId.value)
             for ((k, v) in cols) {
                 if (k == "meta" || k == "last_turn" || k == "penalty") {
                     src.addValue(k, jsonb(v as String?))
@@ -442,7 +448,7 @@ class JdbcFlushExecutor(
         // GeneralRowMapper.toColumns 가 이미 officer_city 를 방출하고 ChangeRecorder.diffGeneral 이
         // officerCity 를 diff 하는데, 전용 typed 컬럼이 SET 절에서 빠져 있어 라이브 경로에서 누락됐다(#17).
         // (데몬은 meta 에도 officer_city 를 싣는다 — meta 쓰기는 유지하되 전용 컬럼도 일관되게 영속한다.)
-        jdbc.batchUpdate(
+        val affected = jdbc.batchUpdate(
             """
             UPDATE general
                SET nation_id = :nation_id,
@@ -476,25 +482,27 @@ class JdbcFlushExecutor(
                    age = COALESCE(:age, age),
                    turn_time = COALESCE(CAST(:turn_time AS timestamptz), turn_time),
                    updated_at = now()
-             WHERE id = :id
+             WHERE id = :id AND world_id = :world_id
             """.trimIndent(),
             batch,
         )
+        requireExactlyOneAffected("general UPDATE", affected)
         lastOps.add(FlushExecOp("general", FlushVerb.UPDATE, generals.size))
     }
 
     // --- step 7: city UPDATE --------------------------------------------------------------------
 
-    private fun cityUpdate(cities: List<City>) {
+    private fun cityUpdate(worldId: WorldId, cities: List<City>) {
         val batch: Array<SqlParameterSource> = cities.map { c ->
             val cols = CityRowMapper.toColumns(c)
             val src = MapSqlParameterSource()
+            src.addValue("world_id", worldId.value)
             for ((k, v) in cols) {
                 if (k == "meta") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
             }
             src
         }.toTypedArray()
-        jdbc.batchUpdate(
+        val affected = jdbc.batchUpdate(
             """
             UPDATE city
                SET nation_id = :nation_id,
@@ -522,19 +530,21 @@ class JdbcFlushExecutor(
                    officer_set = :officer_set,
                    conflict = CAST(:conflict AS jsonb),
                    meta = :meta
-             WHERE id = :id
+             WHERE id = :id AND world_id = :world_id
             """.trimIndent(),
             batch,
         )
+        requireExactlyOneAffected("city UPDATE", affected)
         lastOps.add(FlushExecOp("city", FlushVerb.UPDATE, cities.size))
     }
 
     // --- step 7: nation UPDATE ------------------------------------------------------------------
 
-    private fun nationUpdate(nations: List<Nation>) {
+    private fun nationUpdate(worldId: WorldId, nations: List<Nation>) {
         val batch: Array<SqlParameterSource> = nations.map { n ->
             val cols = NationRowMapper.toColumns(n)
             val src = MapSqlParameterSource()
+            src.addValue("world_id", worldId.value)
             for ((k, v) in cols) {
                 if (k == "meta") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
             }
@@ -543,7 +553,7 @@ class JdbcFlushExecutor(
         // power = :power: 월틱 Q4(func_gamerule.php:322-333)가 매월 nation.power 를 재산정·기록한다
         // (PostUpdateMonthly.kt:171,185 power = phpRound(rawPower * draw)). NationRowMapper.toColumns 가
         // 이미 power 를 방출하는데 SET 절에서 빠져 있어 라이브 수렴 경로에서 power 영속이 누락됐다(#9).
-        jdbc.batchUpdate(
+        val affected = jdbc.batchUpdate(
             """
             UPDATE nation
                SET name = :name,
@@ -556,10 +566,11 @@ class JdbcFlushExecutor(
                    type_code = :type_code,
                    power = :power,
                    meta = :meta
-             WHERE id = :id
+             WHERE id = :id AND world_id = :world_id
             """.trimIndent(),
             batch,
         )
+        requireExactlyOneAffected("nation UPDATE", affected)
         // databaseHooks models nation as an UPSERT (createMany excludes these); the UPDATE op-tag is
         // recorded as UPSERT to match the contract / DatabaseHooksOrderTest expectation.
         lastOps.add(FlushExecOp("nation", FlushVerb.UPSERT, nations.size))
@@ -667,11 +678,12 @@ class JdbcFlushExecutor(
      *  3. `rank_data` 37행 — RANK_COLUMNS 전체, value=0, nation_id=0 (장수 생성 시 미리 시드 →
      *     이후 rankVarIncrease/Set UPDATE의 대상; ScenarioImporter.insertRankData와 동일).
      */
-    private fun generalCreateMany(rows: List<GeneralCreateRow>) {
+    private fun generalCreateMany(worldId: WorldId, rows: List<GeneralCreateRow>) {
         // 1. general 행 INSERT (ScenarioImporter.insertGenerals 컬럼/순서 verbatim).
         val generalBatch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
             MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
                 .addValue("id", c["id"])
                 .addValue("user_id", c["user_id"])
                 .addValue("name", c["name"])
@@ -714,10 +726,10 @@ class JdbcFlushExecutor(
                 .addValue("meta", jsonb(c["meta"] as? String))
                 .addValue("penalty", jsonb(c["penalty"] as? String))
         }.toTypedArray()
-        jdbc.batchUpdate(
+        val generalAffected = jdbc.batchUpdate(
             """
             INSERT INTO general
-                (id, user_id, name, nation_id, city_id, troop_id, npc_state, affinity,
+                (world_id, id, user_id, name, nation_id, city_id, troop_id, npc_state, affinity,
                  born_year, dead_year, picture, image_server,
                  leadership, strength, intel, injury, experience, dedication, officer_level,
                  gold, rice, crew, crew_type_id, train, atmos,
@@ -726,7 +738,7 @@ class JdbcFlushExecutor(
                  last_turn, meta, penalty,
                  politics, charm)
             VALUES
-                (:id, :user_id, :name, :nation_id, :city_id, :troop_id, :npc_state, :affinity,
+                (:world_id, :id, :user_id, :name, :nation_id, :city_id, :troop_id, :npc_state, :affinity,
                  :born_year, :dead_year, :picture, :image_server,
                  :leadership, :strength, :intel, :injury, :experience, :dedication, :officer_level,
                  :gold, :rice, :crew, :crew_type_id, :train, :atmos,
@@ -738,6 +750,7 @@ class JdbcFlushExecutor(
             """.trimIndent(),
             generalBatch,
         )
+        requireExactlyOneAffected("general INSERT", generalAffected)
         lastOps.add(FlushExecOp("general", FlushVerb.CREATE_MANY, rows.size))
 
         // 2. general_turn 30행/장수 — turn_idx 0..29, 모두 휴식 (ScenarioImporter.insertGeneralTurns verbatim).
@@ -748,16 +761,22 @@ class JdbcFlushExecutor(
         for (r in rows) {
             val id = r.columns["id"]
             for (idx in 0 until ring) {
-                turnBatch.add(MapSqlParameterSource().addValue("general_id", id).addValue("turn_idx", idx))
+                turnBatch.add(
+                    MapSqlParameterSource()
+                        .addValue("world_id", worldId.value)
+                        .addValue("general_id", id)
+                        .addValue("turn_idx", idx),
+                )
             }
         }
-        jdbc.batchUpdate(
+        val generalTurnAffected = jdbc.batchUpdate(
             """
-            INSERT INTO general_turn (general_id, turn_idx, action_code, arg, brief)
-            VALUES (:general_id, :turn_idx, '휴식', '{}'::jsonb, '휴식')
+            INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief)
+            VALUES (:world_id, :general_id, :turn_idx, '휴식', '{}'::jsonb, '휴식')
             """.trimIndent(),
             turnBatch.toTypedArray(),
         )
+        requireExactlyOneAffected("general_turn INSERT", generalTurnAffected)
         lastOps.add(FlushExecOp("general_turn", FlushVerb.CREATE_MANY, rows.size * ring))
 
         // 3. rank_data 37행/장수 — RANK_COLUMNS 전체, value=0, nation_id=0 (insertRankData verbatim).
@@ -812,10 +831,11 @@ class JdbcFlushExecutor(
 
     // --- step 3: nation / nation_turn createMany ------------------------------------------------
 
-    private fun nationCreateMany(nations: List<Nation>) {
+    private fun nationCreateMany(worldId: WorldId, nations: List<Nation>) {
         val batch: Array<SqlParameterSource> = nations.map { n ->
             val cols = NationRowMapper.toColumns(n)
             val src = MapSqlParameterSource()
+            src.addValue("world_id", worldId.value)
             for ((k, v) in cols) {
                 if (k == "meta") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
             }
@@ -823,32 +843,35 @@ class JdbcFlushExecutor(
         }.toTypedArray()
         // power: nation.power 컬럼 포함(NationRowMapper.toColumns 와 짝). 건국 시점 power 는 보통 0
         // (V8 DEFAULT 0)이나, 0 아닌 power 를 실어 생성하는 경우(향후) 누락 없이 영속하도록 명시한다(#9).
-        jdbc.batchUpdate(
+        val nationAffected = jdbc.batchUpdate(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
-            VALUES (:id, :name, :color, :capital_city_id, :gold, :rice, :tech, :level, :type_code, :power, :meta)
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, power, meta)
+            VALUES (:world_id, :id, :name, :color, :capital_city_id, :gold, :rice, :tech, :level, :type_code, :power, :meta)
             """.trimIndent(),
             batch,
         )
+        requireExactlyOneAffected("nation INSERT", nationAffected)
         lastOps.add(FlushExecOp("nation", FlushVerb.CREATE_MANY, nations.size))
     }
 
-    private fun nationTurnCreateMany(turns: List<NationTurn>) {
+    private fun nationTurnCreateMany(worldId: WorldId, turns: List<NationTurn>) {
         val batch: Array<SqlParameterSource> = turns.map { t ->
             val cols = NationTurnRowMapper.toColumns(t)
             val src = MapSqlParameterSource()
+            src.addValue("world_id", worldId.value)
             for ((k, v) in cols) {
                 if (k == "arg") src.addValue(k, jsonb(v as String?)) else src.addValue(k, v)
             }
             src
         }.toTypedArray()
-        jdbc.batchUpdate(
+        val nationTurnAffected = jdbc.batchUpdate(
             """
-            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code, arg, brief)
-            VALUES (:nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief)
+            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, arg, brief)
+            VALUES (:world_id, :nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief)
             """.trimIndent(),
             batch,
         )
+        requireExactlyOneAffected("nation_turn INSERT", nationTurnAffected)
         lastOps.add(FlushExecOp("nation_turn", FlushVerb.CREATE_MANY, turns.size))
     }
 
@@ -877,15 +900,20 @@ class JdbcFlushExecutor(
 
     // --- step 5: deleteMany general, then rank_data ---------------------------------------------
 
-    private fun generalDeleteMany(ids: List<Int>) {
-        jdbc.update(
-            "DELETE FROM general WHERE id IN (:ids)",
-            MapSqlParameterSource().addValue("ids", ids),
+    private fun generalDeleteMany(worldId: WorldId, ids: List<Int>) {
+        val affected = jdbc.batchUpdate(
+            "DELETE FROM general WHERE world_id = :world_id AND id = :id",
+            ids.map { id ->
+                MapSqlParameterSource()
+                    .addValue("world_id", worldId.value)
+                    .addValue("id", id)
+            }.toTypedArray(),
         )
+        requireExactlyOneAffected("general DELETE", affected)
         lastOps.add(FlushExecOp("general", FlushVerb.DELETE_MANY, ids.size))
         jdbc.update(
-            "DELETE FROM general_turn WHERE general_id IN (:ids)",
-            MapSqlParameterSource().addValue("ids", ids),
+            "DELETE FROM general_turn WHERE world_id = :world_id AND general_id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", ids),
         )
         lastOps.add(FlushExecOp("general_turn", FlushVerb.DELETE_MANY, ids.size))
     }
@@ -908,15 +936,20 @@ class JdbcFlushExecutor(
 
     // --- step 6: nation cascade -----------------------------------------------------------------
 
-    private fun nationCascadeDelete(nationIds: List<Int>) {
-        jdbc.update(
-            "DELETE FROM nation WHERE id IN (:ids)",
-            MapSqlParameterSource().addValue("ids", nationIds),
+    private fun nationCascadeDelete(worldId: WorldId, nationIds: List<Int>) {
+        val affected = jdbc.batchUpdate(
+            "DELETE FROM nation WHERE world_id = :world_id AND id = :id",
+            nationIds.map { id ->
+                MapSqlParameterSource()
+                    .addValue("world_id", worldId.value)
+                    .addValue("id", id)
+            }.toTypedArray(),
         )
+        requireExactlyOneAffected("nation DELETE", affected)
         lastOps.add(FlushExecOp("nation", FlushVerb.DELETE_MANY, nationIds.size))
         jdbc.update(
-            "DELETE FROM nation_turn WHERE nation_id IN (:ids)",
-            MapSqlParameterSource().addValue("ids", nationIds),
+            "DELETE FROM nation_turn WHERE world_id = :world_id AND nation_id IN (:ids)",
+            MapSqlParameterSource().addValue("world_id", worldId.value).addValue("ids", nationIds),
         )
         lastOps.add(FlushExecOp("nation_turn", FlushVerb.DELETE_MANY, nationIds.size))
         jdbc.update(
@@ -1180,25 +1213,27 @@ class JdbcFlushExecutor(
      * SQL 레벨에서 재-단언한다 — 핸들러의 owner+npc 선택과 함께 이중 방어(잘못된 id로 NPC/타 소유
      * 행을 덮어쓸 수 없다). 값이 동일한 재적용은 무해(idempotent).
      */
-    private fun profileIconUpdateMany(rows: List<ProfileIconUpdateRow>) {
+    private fun profileIconUpdateMany(worldId: WorldId, rows: List<ProfileIconUpdateRow>) {
         val batch: Array<SqlParameterSource> = rows.map { r ->
             val c = r.columns
             MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
                 .addValue("id", c["id"])
                 .addValue("user_id", c["user_id"])
                 .addValue("picture", c["picture"])
                 .addValue("image_server", c["image_server"])
         }.toTypedArray()
-        jdbc.batchUpdate(
+        val affected = jdbc.batchUpdate(
             """
             UPDATE general
                SET picture = :picture,
                    image_server = :image_server,
                    updated_at = now()
-             WHERE id = :id AND user_id = :user_id AND npc_state = 0
+             WHERE id = :id AND world_id = :world_id AND user_id = :user_id AND npc_state = 0
             """.trimIndent(),
             batch,
         )
+        requireExactlyOneAffected("profile icon UPDATE", affected)
         lastOps.add(FlushExecOp("general", FlushVerb.UPDATE, rows.size))
     }
 
@@ -1804,6 +1839,12 @@ class JdbcFlushExecutor(
         obj.value = json ?: "{}"
         return obj
     }
+
+    private fun requireExactlyOneAffected(operation: String, affected: IntArray) {
+        affected.forEachIndexed { index, count ->
+            check(count == 1) { "$operation input[$index] affected $count rows; expected exactly 1" }
+        }
+    }
 }
 
 /** A recorded flush op (instrumentation seam — infra has no engine dep, so this mirrors
@@ -1818,6 +1859,7 @@ enum class FlushVerb { UPDATE, UPSERT, CREATE_MANY, DELETE_MANY }
  * lists default empty in P1 — the full contract is present so later phases never reshape this.
  */
 data class FlushPayload(
+    val worldId: WorldId,
     val worldStateUpdate: Map<String, Any?>,
     val archiveServerId: String? = null,
     val updatedGenerals: List<General> = emptyList(),   // logic entities

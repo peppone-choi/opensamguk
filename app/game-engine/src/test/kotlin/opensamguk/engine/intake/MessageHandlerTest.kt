@@ -70,6 +70,10 @@ class MessageHandlerTest {
                 Nation(id = 1, name = "촉", color = "#00ff00", gold = 1000),
                 Nation(id = 2, name = "위", color = "#0000ff", gold = 1000),
             ),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0,
+                meta = mapOf("refreshLimit" to refreshLimit),
+            )).id),
         ),
     )
 

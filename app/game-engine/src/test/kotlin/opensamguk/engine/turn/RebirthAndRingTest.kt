@@ -1,6 +1,7 @@
 package opensamguk.engine.turn
 
 import opensamguk.infra.persistence.ReservedTurnRepository
+import opensamguk.common.world.WorldId
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.ServerClock
@@ -81,6 +82,7 @@ class RebirthAndRingTest {
             state = TurnWorldState(1, 200, 6, 3600, t0),
             generals = listOf(g),
             nations = listOf(Nation(1, "n1", "#000")),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 6, 3600, t0)).id),
         ),
     )
 
@@ -237,6 +239,18 @@ class RebirthAndRingTest {
             .migrate()
         jdbc = NamedParameterJdbcTemplate(dataSource)
         repo = ReservedTurnRepository(jdbc)
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'ring', 200, 6, 3600)",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            "INSERT INTO general (world_id, id, name, turn_time) VALUES (1, 7, 'g7', now()), (1, 8, 'g8', now())",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            "INSERT INTO nation (world_id, id, name, color) VALUES (1, 9, 'n9', '#000')",
+            MapSqlParameterSource(),
+        )
     }
 
     @AfterAll
@@ -246,17 +260,17 @@ class RebirthAndRingTest {
 
     @Test
     fun `pullGeneralTurn vacates slot 0 to 휴식 and shifts the remaining slots down one`() {
-        repo.reserve(generalId = 7, turnIdx = 0, actionCode = "che_상업투자", argJson = """{"a":1}""", brief = "상업투자")
-        repo.reserve(generalId = 7, turnIdx = 1, actionCode = "che_농지개간", argJson = """{"a":2}""", brief = "농지개간")
-        repo.reserve(generalId = 7, turnIdx = 2, actionCode = "che_기술연구", argJson = """{"a":3}""", brief = "기술연구")
+        repo.reserve(worldId = WorldId(1), generalId = 7, turnIdx = 0, actionCode = "che_상업투자", argJson = """{"a":1}""", brief = "상업투자")
+        repo.reserve(worldId = WorldId(1), generalId = 7, turnIdx = 1, actionCode = "che_농지개간", argJson = """{"a":2}""", brief = "농지개간")
+        repo.reserve(worldId = WorldId(1), generalId = 7, turnIdx = 2, actionCode = "che_기술연구", argJson = """{"a":3}""", brief = "기술연구")
 
-        repo.pullGeneralTurn(generalId = 7)
+        repo.pullGeneralTurn(worldId = WorldId(1), generalId = 7)
 
         // slots shift down one: slot0 <- 농지개간, slot1 <- 기술연구.
-        assertEquals("che_농지개간", repo.readReserved(7, 0).actionCode)
-        assertEquals("che_기술연구", repo.readReserved(7, 1).actionCode)
+        assertEquals("che_농지개간", repo.readReserved(WorldId(1), 7, 0).actionCode)
+        assertEquals("che_기술연구", repo.readReserved(WorldId(1), 7, 1).actionCode)
         // the run slot rotated to the ring tail (turn_idx 29) as 휴식/{}/휴식.
-        val tail = repo.readReserved(7, 29)
+        val tail = repo.readReserved(WorldId(1), 7, 29)
         assertEquals("휴식", tail.actionCode)
         assertEquals("{}", tail.argJson)
         assertEquals("휴식", tail.brief)
@@ -264,22 +278,22 @@ class RebirthAndRingTest {
 
     @Test
     fun `pullNationTurn rotates the chief ring and vacates to 휴식`() {
-        repo.reserveNationTurn(nationId = 9, officerLevel = 12, turnIdx = 0, actionCode = "che_증축", argJson = """{"a":1}""", brief = "증축")
-        repo.reserveNationTurn(nationId = 9, officerLevel = 12, turnIdx = 1, actionCode = "che_감축", argJson = """{"a":2}""", brief = "감축")
+        repo.reserveNationTurn(worldId = WorldId(1), nationId = 9, officerLevel = 12, turnIdx = 0, actionCode = "che_증축", argJson = """{"a":1}""", brief = "증축")
+        repo.reserveNationTurn(worldId = WorldId(1), nationId = 9, officerLevel = 12, turnIdx = 1, actionCode = "che_감축", argJson = """{"a":2}""", brief = "감축")
 
-        repo.pullNationTurn(nationId = 9, officerLevel = 12)
+        repo.pullNationTurn(worldId = WorldId(1), nationId = 9, officerLevel = 12)
 
-        assertEquals("che_감축", repo.readReservedNationTurn(9, 12, 0).actionCode)
-        val tail = repo.readReservedNationTurn(9, 12, 11)
+        assertEquals("che_감축", repo.readReservedNationTurn(WorldId(1), 9, 12, 0).actionCode)
+        val tail = repo.readReservedNationTurn(WorldId(1), 9, 12, 11)
         assertEquals("휴식", tail.actionCode)
         assertEquals("{}", tail.argJson)
     }
 
     @Test
     fun `pullGeneralTurn is a no-op for turnCnt 0 or turnCnt at the ring length`() {
-        repo.reserve(generalId = 8, turnIdx = 0, actionCode = "che_상업투자", brief = "상업투자")
-        repo.pullGeneralTurn(generalId = 8, turnCnt = 0)
-        repo.pullGeneralTurn(generalId = 8, turnCnt = ReservedTurnRepository.MAX_GENERAL_TURNS)
-        assertEquals("che_상업투자", repo.readReserved(8, 0).actionCode, "guards leave the ring untouched")
+        repo.reserve(worldId = WorldId(1), generalId = 8, turnIdx = 0, actionCode = "che_상업투자", brief = "상업투자")
+        repo.pullGeneralTurn(worldId = WorldId(1), generalId = 8, turnCnt = 0)
+        repo.pullGeneralTurn(worldId = WorldId(1), generalId = 8, turnCnt = ReservedTurnRepository.MAX_GENERAL_TURNS)
+        assertEquals("che_상업투자", repo.readReserved(WorldId(1), 8, 0).actionCode, "guards leave the ring untouched")
     }
 }

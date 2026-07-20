@@ -79,10 +79,10 @@ class BettingUpsertFlushIT {
     @Test
     fun `동일 키 재베팅은 행 중복 없이 amount만 누적된다 -- PHP insertUpdate 패러티`() {
         // 1차 베팅: 100.
-        executor.flush(FlushPayload(worldStateUpdate = ws(), bettingInserts = listOf(bet(10, "[0]", 100))))
+        executor.flush(FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), bettingInserts = listOf(bet(10, "[0]", 100))))
         // 2차 재베팅(동일 general/betting/type): +200 — insertUpdate의 amount 누적 경로.
         // user_id를 다르게 실어도 기존 행이 유지된다(PHP insertUpdate는 amount만 갱신).
-        executor.flush(FlushPayload(worldStateUpdate = ws(), bettingInserts = listOf(bet(10, "[0]", 200, userId = 99))))
+        executor.flush(FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), bettingInserts = listOf(bet(10, "[0]", 200, userId = 99))))
 
         val rows = jdbc.jdbcTemplate.queryForList("SELECT * FROM ng_betting WHERE betting_id = 1 AND general_id = 10")
         assertEquals(1, rows.size, "동일 (general,betting,type) 키 → 단일 행 (INSERT-only 중복 결함 제거)")
@@ -95,6 +95,7 @@ class BettingUpsertFlushIT {
     fun `다른 betting_type 또는 다른 장수는 별도 행이다`() {
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 bettingInserts = listOf(bet(20, "[0]", 50), bet(20, "[0,1]", 60), bet(21, "[0]", 70)),
             ),

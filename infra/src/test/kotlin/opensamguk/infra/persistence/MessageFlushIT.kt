@@ -68,7 +68,8 @@ class MessageFlushIT {
     @Test
     fun `message INSERT writes both rows with explicit ids then invalidate UPDATEs the body`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 createdMessages = listOf(
                     // receiver row (id 1) BEFORE sender row (id 2).
@@ -89,7 +90,8 @@ class MessageFlushIT {
 
         // invalidate the receiver row: valid_until -> 2000, body rewritten.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 messageInvalidates = listOf(
                     MessageInvalidateRow(1, validUntil = "2000-12-31 00:00:00",
@@ -128,7 +130,8 @@ class MessageFlushIT {
     fun `diplomatic message send flush writes national-base mailbox rows with diplomacy type`() {
         // turnterm=60 → validUntil = date + max(30, 180)분 = 2026-06-07 15:00:00
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 createdMessages = listOf(
                     // 수신 행(B국 메일함 9005) — id 10, BEFORE 발신.

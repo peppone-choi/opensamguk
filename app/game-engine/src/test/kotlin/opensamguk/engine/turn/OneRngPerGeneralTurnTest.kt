@@ -90,7 +90,7 @@ class OneRngPerGeneralTurnTest {
     )
 
     private fun worldWith(generals: List<TurnGeneral>) =
-        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation())))
+        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation()), worldId = opensamguk.common.world.WorldId((baseState()).id)))
 
     /**
      * Build the production-style daemon over [adapter], capturing the per-general [AiDrawRecorder] and the

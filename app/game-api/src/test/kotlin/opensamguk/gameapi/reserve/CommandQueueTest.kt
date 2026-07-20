@@ -1,5 +1,7 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -23,15 +25,15 @@ import kotlin.test.assertTrue
 class CommandQueueTest {
 
     private val registry = CommandRegistry(GeneralActionPipeline())
-    private fun service(repo: ReservedTurnRepository) = CommandQueueService(repo, registry)
+    private fun service(repo: ReservedTurnRepository) = CommandQueueService(repo, registry, GameApiProcessWorld(1))
 
     /** 링 호출을 기록하는 ReservedTurnRepository 페이크(JDBC 미사용 — 모든 메서드 오버라이드). */
     private class RecordingReservedTurns :
         ReservedTurnRepository(mock(NamedParameterJdbcTemplate::class.java)) {
 
-        data class GeneralReserveCall(val generalId: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String)
-        data class NationReserveCall(val nationId: Int, val officerLevel: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String)
-        data class ShiftCall(val key: Int, val key2: Int, val cnt: Int)
+        data class GeneralReserveCall(val worldId: WorldId, val generalId: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String)
+        data class NationReserveCall(val worldId: WorldId, val nationId: Int, val officerLevel: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String)
+        data class ShiftCall(val worldId: WorldId, val key: Int, val key2: Int, val cnt: Int)
 
         val generalReserves = mutableListOf<GeneralReserveCall>()
         val nationReserves = mutableListOf<NationReserveCall>()
@@ -42,20 +44,35 @@ class CommandQueueTest {
         val pullNation = mutableListOf<ShiftCall>()
         val repeatNation = mutableListOf<ShiftCall>()
 
-        override fun reserve(generalId: Int, turnIdx: Int, actionCode: String?, argJson: String?, brief: String) {
-            generalReserves += GeneralReserveCall(generalId, turnIdx, actionCode, argJson, brief)
+        override fun reserve(
+            worldId: WorldId,
+            generalId: Int,
+            turnIdx: Int,
+            actionCode: String?,
+            argJson: String?,
+            brief: String,
+        ) {
+            generalReserves += GeneralReserveCall(worldId, generalId, turnIdx, actionCode, argJson, brief)
         }
 
-        override fun reserveNationTurn(nationId: Int, officerLevel: Int, turnIdx: Int, actionCode: String?, argJson: String?, brief: String) {
-            nationReserves += NationReserveCall(nationId, officerLevel, turnIdx, actionCode, argJson, brief)
+        override fun reserveNationTurn(
+            worldId: WorldId,
+            nationId: Int,
+            officerLevel: Int,
+            turnIdx: Int,
+            actionCode: String?,
+            argJson: String?,
+            brief: String,
+        ) {
+            nationReserves += NationReserveCall(worldId, nationId, officerLevel, turnIdx, actionCode, argJson, brief)
         }
 
-        override fun pushGeneralTurn(generalId: Int, turnCnt: Int) { pushGeneral += ShiftCall(generalId, 0, turnCnt) }
-        override fun pullGeneralTurn(generalId: Int, turnCnt: Int) { pullGeneral += ShiftCall(generalId, 0, turnCnt) }
-        override fun repeatGeneralTurn(generalId: Int, turnCnt: Int) { repeatGeneral += ShiftCall(generalId, 0, turnCnt) }
-        override fun pushNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) { pushNation += ShiftCall(nationId, officerLevel, turnCnt) }
-        override fun pullNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) { pullNation += ShiftCall(nationId, officerLevel, turnCnt) }
-        override fun repeatNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) { repeatNation += ShiftCall(nationId, officerLevel, turnCnt) }
+        override fun pushGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) { pushGeneral += ShiftCall(worldId, generalId, 0, turnCnt) }
+        override fun pullGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) { pullGeneral += ShiftCall(worldId, generalId, 0, turnCnt) }
+        override fun repeatGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) { repeatGeneral += ShiftCall(worldId, generalId, 0, turnCnt) }
+        override fun pushNationTurn(worldId: WorldId, nationId: Int, officerLevel: Int, turnCnt: Int) { pushNation += ShiftCall(worldId, nationId, officerLevel, turnCnt) }
+        override fun pullNationTurn(worldId: WorldId, nationId: Int, officerLevel: Int, turnCnt: Int) { pullNation += ShiftCall(worldId, nationId, officerLevel, turnCnt) }
+        override fun repeatNationTurn(worldId: WorldId, nationId: Int, officerLevel: Int, turnCnt: Int) { repeatNation += ShiftCall(worldId, nationId, officerLevel, turnCnt) }
     }
 
     // ── Bulk (General) ────────────────────────────────────────────────────────────────────────────
@@ -76,6 +93,7 @@ class CommandQueueTest {
         assertEquals(listOf("농지 개간", "상업 투자"), result.briefList)
         // 슬롯별 reserve: item0(3슬롯) + item1(1슬롯) = 4건.
         assertEquals(4, repo.generalReserves.size)
+        assertTrue(repo.generalReserves.all { it.worldId == WorldId(1) })
         assertEquals(listOf(0, 5, 10, 7), repo.generalReserves.map { it.turnIdx })
         assertEquals("che_농지개간", repo.generalReserves[0].action)
         assertEquals("""{"amount":100}""", repo.generalReserves[0].arg)
@@ -282,6 +300,7 @@ class CommandQueueTest {
         )
         assertTrue(result.result)
         assertEquals(2, repo.nationReserves.size)
+        assertTrue(repo.nationReserves.all { it.worldId == WorldId(1) })
         assertEquals(listOf(0, 3), repo.nationReserves.map { it.turnIdx })
         assertTrue(repo.nationReserves.all { it.nationId == 7 && it.officerLevel == 5 })
         assertEquals("che_몰수", repo.nationReserves[0].action)
