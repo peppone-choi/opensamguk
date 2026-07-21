@@ -94,4 +94,23 @@ class JdbcFlushExecutorWorldScopeTest {
             "(world_id, \"table\", namespace, key) WHERE \"table\" <> 'inheritance' AND world_id IS NOT NULL",
         )
     }
+
+    @Test
+    fun `world-owned DML statements include world_id except documented global tables`() {
+        val source = source()
+        val allowedUnscopedTables = setOf("inheritance_log")
+        val tableStmt = Regex("""(?im)^\s*(DELETE FROM|UPDATE|INSERT INTO)\s+([a-z_]+)""")
+        val gaps = mutableListOf<String>()
+        for (match in tableStmt.findAll(source)) {
+            val verb = match.groupValues[1].uppercase()
+            val table = match.groupValues[2]
+            if (table in allowedUnscopedTables || table == "world_state") continue
+            val start = match.range.first
+            val window = source.substring(start, minOf(source.length, start + 2000))
+            if ("world_id" !in window && "worldId" !in window) {
+                gaps.add("$verb $table")
+            }
+        }
+        assertTrue(gaps.isEmpty(), "unscoped world-owned DML: $gaps")
+    }
 }
