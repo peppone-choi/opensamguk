@@ -34,6 +34,10 @@ data class TurnDaemonStatus(
     val successfulTicks: Long,
     val failedTicks: Long,
     val consecutiveFailures: Int,
+    /** OPENSAM-132 recovery mode: READY / FLUSH_RETRY / RELOAD_REQUIRED. */
+    val recoveryMode: String? = null,
+    val recoveryReason: String? = null,
+    val recoveryReady: Boolean = true,
 )
 
 /** pause/resume 호출 결과 — 호출 후 실제 상태 + 호출이 상태를 바꿨는지(`changed`). */
@@ -93,6 +97,9 @@ class StatusController(
             successfulTicks = diagnostics.successfulTicks,
             failedTicks = diagnostics.failedTicks,
             consecutiveFailures = diagnostics.consecutiveFailures,
+            recoveryMode = diagnostics.recoveryMode,
+            recoveryReason = diagnostics.recoveryReason,
+            recoveryReady = diagnostics.recoveryReady,
         )
     }
 

@@ -1,5 +1,7 @@
 package opensamguk.engine.config
 
+import opensamguk.engine.flush.FlushRecoveryGateProvider
+
 import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
@@ -182,6 +184,7 @@ class DaemonLoopConfig {
         inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
         @Value("\${opensamguk.profile}") profile: String,
         selectPoolRepository: SelectPoolRepository,
+        recoveryGateProvider: FlushRecoveryGateProvider,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -425,6 +428,7 @@ class DaemonLoopConfig {
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
             processNationCommand = nationProcessor,
+            recoveryGateProvider = recoveryGateProvider,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,
                 bettingFactory = { liveWorld, liveRecorder ->

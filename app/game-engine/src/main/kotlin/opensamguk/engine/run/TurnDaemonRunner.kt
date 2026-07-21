@@ -23,6 +23,9 @@ data class TurnDaemonDiagnostics(
     val successfulTicks: Long,
     val failedTicks: Long,
     val consecutiveFailures: Int,
+    val recoveryMode: String? = null,
+    val recoveryReason: String? = null,
+    val recoveryReady: Boolean = true,
 )
 
 /**
@@ -98,6 +101,11 @@ class TurnDaemonRunner(
                 nextRunTime = "unavailable: ${e.message}",
             )
         }
+        val recovery = try {
+            activeService?.recoverySnapshot()
+        } catch (_: Exception) {
+            null
+        }
         return TurnDaemonDiagnostics(
             serviceMaterialized = activeService != null,
             clock = clock,
@@ -108,6 +116,9 @@ class TurnDaemonRunner(
             successfulTicks = successfulTicks.get(),
             failedTicks = failedTicks.get(),
             consecutiveFailures = consecutiveFailures.get(),
+            recoveryMode = recovery?.mode?.name,
+            recoveryReason = recovery?.reason,
+            recoveryReady = recovery?.ready ?: true,
         )
     }
 
@@ -163,6 +174,20 @@ class TurnDaemonRunner(
                 // 한 폴 간격만 대기 → InMemoryTurnWorld가 그대로 멈춘다(턴 미진행). 락풀기(resume) 시 다음
                 // 폴에서 즉시 due 판정으로 재개. nextRunTime은 진행하지 않으므로 동결 중 누적 지연은 없다.
                 if (pauseGate.isPaused()) {
+                    Thread.sleep(idlePollMs)
+                    continue
+                }
+                // OPENSAM-132: freeze intake/tick while FLUSH_RETRY / RELOAD_REQUIRED.
+                val recovery = try {
+                    activeService.recoverySnapshot()
+                } catch (_: Exception) {
+                    null
+                }
+                if (recovery != null && !recovery.ready) {
+                    log.warn(
+                        "turn-daemon-loop blocked — recovery mode={} worldId={} generation={} reason={}",
+                        recovery.mode, recovery.worldId, recovery.generation, recovery.reason,
+                    )
                     Thread.sleep(idlePollMs)
                     continue
                 }
