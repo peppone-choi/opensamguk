@@ -1,4 +1,6 @@
 package opensamguk.gameapi.sse
+
+import opensamguk.common.world.WorldId
 import opensamguk.common.wire.RealtimeEvent
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.gameEventChannel
@@ -28,7 +30,7 @@ import kotlin.test.assertTrue
 @Testcontainers(disabledWithoutDocker = true)
 class RealtimeRelayIT {
     private val profile = "default"
-    private val channel = gameEventChannel(profile)
+    private val channel = gameEventChannel(profile, WorldId(1))
     @Test
     fun `turnCompleted published on the channel is delivered to the listener and relayed`() {
         assertTrue(redis.isRunning, "redis:7-alpine container must be running")

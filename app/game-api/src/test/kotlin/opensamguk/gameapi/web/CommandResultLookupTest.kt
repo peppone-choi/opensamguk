@@ -1,5 +1,9 @@
 package opensamguk.gameapi.web
 
+import opensamguk.gameapi.config.GameApiProcessWorld
+
+import opensamguk.common.world.WorldId
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.PlaceBetFail
@@ -52,7 +56,12 @@ class CommandResultLookupTest {
     private val profile = "che:scenario_2"
 
     private fun mockMvc(): MockMvc = MockMvcBuilders
-        .standaloneSetup(CommandController(precheck, reserve, resolver, queue, generals, redis, ObjectMapper(), profile))
+        .standaloneSetup(
+            CommandController(
+                precheck, reserve, resolver, queue, generals, redis,
+                ObjectMapper(), profile, GameApiProcessWorld(1),
+            ),
+        )
         .build()
 
     /** 엔진 발행과 동일한 인코딩으로 저장 페이로드를 만든다. */
@@ -68,7 +77,7 @@ class CommandResultLookupTest {
 
     private fun stubKey(requestId: String, payload: String?) {
         `when`(redis.opsForValue()).thenReturn(valueOps)
-        `when`(valueOps.get(commandResultKey(profile, requestId))).thenReturn(payload)
+        `when`(valueOps.get(commandResultKey(profile, WorldId(1), requestId))).thenReturn(payload)
     }
 
     @Test

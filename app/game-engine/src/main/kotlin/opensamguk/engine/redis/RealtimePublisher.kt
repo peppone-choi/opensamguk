@@ -6,6 +6,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.commandResultKey
+import opensamguk.common.world.WorldId
 import opensamguk.common.wire.gameEventChannel
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.time.Duration
@@ -22,6 +23,7 @@ import java.time.Duration
 class RealtimePublisher(
     private val template: StringRedisTemplate,
     private val profileName: String,
+    private val worldId: WorldId,
 ) {
     companion object {
         /**
@@ -45,7 +47,7 @@ class RealtimePublisher(
             event = TurnDaemonEvent.CommandResult(result),
         )
         template.opsForValue().set(
-            commandResultKey(profileName, requestId),
+            commandResultKey(profileName, worldId, requestId),
             WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope),
             COMMAND_RESULT_TTL,
         )
@@ -70,7 +72,7 @@ class RealtimePublisher(
             turnPhaseText = turnPhaseText,
         )
         template.convertAndSend(
-            gameEventChannel(profileName),
+            gameEventChannel(profileName, worldId),
             WireJson.encodeToString(RealtimeEvent.serializer(), event),
         )
     }

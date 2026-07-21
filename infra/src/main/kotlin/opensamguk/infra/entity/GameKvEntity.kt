@@ -28,6 +28,10 @@ class GameKvEntity(
     @Column(name = "value", nullable = false, columnDefinition = "jsonb")
     var value: String,
 
+    /** Null only for global `inheritance` family rows (OPENSAM-126 mixed game_kv). */
+    @Column(name = "world_id")
+    var worldId: Int? = null,
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Int? = null,

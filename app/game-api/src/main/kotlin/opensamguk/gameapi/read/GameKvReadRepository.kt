@@ -1,25 +1,48 @@
 package opensamguk.gameapi.read
 
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.entity.GameKvEntity
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
- * F4 READ-only access to the string-namespace KV store (`game_kv`, V7) for the F4 pages that read
- * non-entity game state: tournament admin state (`table='game_env'`), NPC policy
- * (`table='game_env'`/`nation_env`-adjacent keys), and inherit-point owner data
- * (`table='inheritance'`, namespace `inheritance_{ownerId}`).
- *
- * This is a SECOND read view onto the same `GameKvEntity` the infra `InheritanceRepository` maps; it is
- * declared in `opensamguk.gameapi.read` (already entity/repo-scanned by GameApiApplication) so the F4
- * controllers can read any string-namespace key generically without coupling to the inheritance-named
- * repo. The `value` is the raw jsonb string; callers decode it. Empty/absent key → null (graceful).
- *
- * game-api ONLY (§7); never written here — the daemon flush owns every game_kv write.
+ * F4 READ for `game_kv` — process-world scoped for world-owned families; global `inheritance`
+ * rows remain world_id NULL (OPENSAM-126 mixed contract / OPENSAM-127).
  */
-interface GameKvReadRepository : JpaRepository<GameKvEntity, Int> {
-    /** A single KV row by (table, namespace, key); null when absent (graceful default). */
-    fun findByTableAndNamespaceAndKey(table: String, namespace: String, key: String): GameKvEntity?
+interface GameKvReadRawRepository : SpringDataRepository<GameKvEntity, Int> {
+    @Query(
+        "select k from GameKvEntity k where k.table = :table and k.namespace = :namespace and k.key = :key " +
+            "and (k.worldId = :worldId or (k.table = 'inheritance' and k.worldId is null))",
+    )
+    fun findScoped(@Param("worldId") worldId: Int, @Param("table") table: String, @Param("namespace") namespace: String, @Param("key") key: String): GameKvEntity?
 
-    /** All KV rows in a (table, namespace) — e.g. the whole `game_env` config bag. */
-    fun findByTableAndNamespace(table: String, namespace: String): List<GameKvEntity>
+    @Query(
+        "select k from GameKvEntity k where k.table = :table and k.namespace = :namespace " +
+            "and (k.worldId = :worldId or (k.table = 'inheritance' and k.worldId is null))",
+    )
+    fun findScopedByTableNamespace(@Param("worldId") worldId: Int, @Param("table") table: String, @Param("namespace") namespace: String): List<GameKvEntity>
+
+    @Query(
+        "select k from GameKvEntity k where k.worldId = :worldId or (k.table = 'inheritance' and k.worldId is null)",
+    )
+    fun findAllScoped(@Param("worldId") worldId: Int): List<GameKvEntity>
+}
+
+@Repository
+class GameKvReadRepository(
+    private val raw: GameKvReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findByTableAndNamespaceAndKey(table: String, namespace: String, key: String): GameKvEntity? =
+        raw.findScoped(worldId.value, table, namespace, key)
+
+    fun findByTableAndNamespace(table: String, namespace: String): List<GameKvEntity> =
+        raw.findScopedByTableNamespace(worldId.value, table, namespace)
+
+    fun findAll(): List<GameKvEntity> = raw.findAllScoped(worldId.value)
 }

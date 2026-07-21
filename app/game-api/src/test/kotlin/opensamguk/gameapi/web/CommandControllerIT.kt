@@ -1,5 +1,7 @@
 package opensamguk.gameapi.web
 
+import opensamguk.common.world.WorldId
+
 import opensamguk.common.wire.TurnDaemonStreamKeys
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -48,7 +50,7 @@ class CommandControllerIT {
     @Autowired private lateinit var redis: StringRedisTemplate
 
     private lateinit var mockMvc: MockMvc
-    private val commandStream = TurnDaemonStreamKeys.of("che:scenario_2").commandStream
+    private val commandStream = TurnDaemonStreamKeys.of("che:scenario_2", WorldId(1)).commandStream
 
     @BeforeEach
     fun setUp() {

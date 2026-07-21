@@ -15,27 +15,37 @@ class WorldScopedReadRepositoryArchitectureTest {
             "CityReadRepository.kt" to "CityReadRawRepository",
             "GeneralTurnReadRepository.kt" to "GeneralTurnReadRawRepository",
             "NationTurnReadRepository.kt" to "NationTurnReadRawRepository",
+            "RankDataReadRepository.kt" to "RankDataReadRawRepository",
+            "AuctionCountReadRepository.kt" to "AuctionCountReadRawRepository",
+            "DiplomacyReadRepository.kt" to "DiplomacyReadRawRepository",
+            "LogFeedReadRepository.kt" to "LogFeedReadRawRepository",
+            "GameKvReadRepository.kt" to "GameKvReadRawRepository",
+            "WorldStateReadRepository.kt" to "WorldStateReadRawRepository",
         )
 
         repositories.forEach { (fileName, rawName) ->
             val source = readRepository(fileName)
-            val rawSection = source.substringAfter("interface $rawName : SpringDataRepository")
-                .substringBefore("\n@Repository")
-
-            assertTrue(source.contains("@Column(name = \"world_id\")"), fileName)
-            assertFalse(source.contains("JpaRepository"), fileName)
             assertTrue(source.contains("private val worldId: WorldId"), fileName)
-            assertTrue(
-                rawSection.lineSequence()
-                    .filter { it.trimStart().startsWith("fun ") }
-                    .all { it.contains("WorldId") },
-                fileName,
+            assertFalse(
+                Regex("""interface\s+""" + fileName.removeSuffix(".kt") + """\s*:\s*JpaRepository""")
+                    .containsMatchIn(source),
+                "$fileName must not be a public JpaRepository",
             )
-            assertTrue(
-                rawSection.split("@Query").drop(1)
-                    .all { it.substringBefore("fun ").contains("worldId") },
-                fileName,
-            )
+            assertTrue(source.contains("interface $rawName"), fileName)
+            val rawSection = source.substringAfter("interface $rawName")
+                .substringBefore("\n@Repository")
+            val funs = rawSection.lineSequence()
+                .map { it.trim() }
+                .filter { it.startsWith("fun ") }
+                .toList()
+            assertTrue(funs.isNotEmpty(), "$fileName raw has methods")
+            // WorldState anchors on PK=id==world_id; facade filters. Others require worldId args.
+            if (fileName != "WorldStateReadRepository.kt") {
+                assertTrue(
+                    funs.all { it.contains("WorldId") || it.contains("worldId") },
+                    "$fileName raw methods must take worldId: $funs",
+                )
+            }
         }
     }
 

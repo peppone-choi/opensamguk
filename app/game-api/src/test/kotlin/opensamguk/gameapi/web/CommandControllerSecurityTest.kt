@@ -1,5 +1,7 @@
 package opensamguk.gameapi.web
 
+import opensamguk.gameapi.config.GameApiProcessWorld
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
@@ -50,7 +52,10 @@ class CommandControllerSecurityTest {
     private fun mockMvc(): MockMvc =
         MockMvcBuilders
             .standaloneSetup(
-                CommandController(precheck, reserve, resolver, queue, generals, redis, ObjectMapper(), "che:scenario_2"),
+                CommandController(
+                    precheck, reserve, resolver, queue, generals, redis,
+                    ObjectMapper(), "che:scenario_2", GameApiProcessWorld(1),
+                ),
             )
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()

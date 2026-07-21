@@ -5,16 +5,16 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import org.springframework.stereotype.Repository
 import java.time.Instant
+import java.util.Optional
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
- * Read-only JPA mapping of the singleton `world_state` row for the PRECHECK path
- * (game-api ONLY — §7).
- *
- * Carries the per-turn clock (`current_year`/`current_month`) the precheck env-builder keys on, plus
- * the `scenario_code` + `config`/`meta` jsonb bags (where the scenario `startYear` lives — resolved by
- * the E2 [PrecheckStateViewFactory], which calls the SAME shared `WorldEnvBuilder` the daemon uses).
+ * Read-only `world_state` for precheck/read — process-world row only (OPENSAM-127).
+ * Never default-guesses another world via findAll().
  */
 @Entity
 @Table(name = "world_state")
@@ -62,4 +62,23 @@ class WorldStateReadEntity(
     var updatedAt: Instant? = null,
 )
 
-interface WorldStateReadRepository : JpaRepository<WorldStateReadEntity, Int>
+interface WorldStateReadRawRepository : SpringDataRepository<WorldStateReadEntity, Int> {
+    fun findById(id: Int): Optional<WorldStateReadEntity>
+}
+
+@Repository
+class WorldStateReadRepository(
+    private val raw: WorldStateReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findById(id: Int): Optional<WorldStateReadEntity> =
+        if (id == worldId.value) raw.findById(id) else Optional.empty()
+
+    /** Process world only — never returns rows from another world. */
+    fun findAll(): List<WorldStateReadEntity> =
+        raw.findById(worldId.value).map { listOf(it) }.orElse(emptyList())
+
+    fun findProcessWorld(): WorldStateReadEntity? = raw.findById(worldId.value).orElse(null)
+}

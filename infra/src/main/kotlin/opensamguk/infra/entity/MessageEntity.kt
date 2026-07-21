@@ -20,6 +20,9 @@ import java.time.Instant
 @Entity
 @Table(name = "message")
 class MessageEntity(
+    @Column(name = "world_id", nullable = false)
+    var worldId: Int = 0,
+
     @Column(name = "mailbox", nullable = false)
     var mailbox: Int,
 

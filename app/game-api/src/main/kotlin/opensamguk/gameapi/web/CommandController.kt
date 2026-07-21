@@ -7,6 +7,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.commandResultKey
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.precheck.PrecheckResult
@@ -61,7 +62,10 @@ class CommandController(
     /** 엔진 발행 result JSON을 응답 트리로 그대로 옮기는 변환기(타입별 부가 필드 보존). */
     private val objectMapper: ObjectMapper,
     @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
+    processWorld: GameApiProcessWorld,
 ) {
+    private val worldId = processWorld.worldId
+
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)
 
@@ -161,7 +165,7 @@ class CommandController(
 
     @GetMapping("/result/{requestId}")
     fun commandResult(@PathVariable requestId: String): ResponseEntity<Any> {
-        val payload = redis.opsForValue().get(commandResultKey(profile, requestId))
+        val payload = redis.opsForValue().get(commandResultKey(profile, worldId, requestId))
             ?: return pending(requestId)
 
         // 엔진과 같은 WireJson 디코더로 검증 — 손상/비정형 페이로드는 RESOLVED를 위조하지 않는다.

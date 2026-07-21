@@ -65,7 +65,7 @@ class CommandReserveService(
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
 ) {
     private val worldId: WorldId = processWorld.worldId
-    private val commandStreamKey: String = TurnDaemonStreamKeys.of(profile).commandStream
+    private val commandStreamKey: String = TurnDaemonStreamKeys.of(profile, worldId).commandStream
 
     /** The outcome of a successful reserve: the generated request id the controller returns as 202. */
     data class ReserveResult(val requestId: String, val turnIdx: Int)

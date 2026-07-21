@@ -33,6 +33,7 @@ management:
       probes:
         enabled: true
 opensamguk:
+  world-id: ${OPENSAMGUK_WORLD_ID}
   profile: ${TURN_PROFILE_NAME:che:scenario_2}
 # Sentry — 에러 캡처 전용. traces-sample-rate는 0 고정: 턴 데몬 핫루프(InMemoryTurnWorld 턴 처리)에
 # 트레이싱 계측을 싣지 않는다. DSN 미설정(빈 값)이면 SDK 전체 no-op — 프론트(enabled: !!dsn)와 동일 설계.

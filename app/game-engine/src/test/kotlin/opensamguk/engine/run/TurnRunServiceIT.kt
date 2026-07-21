@@ -69,8 +69,8 @@ import kotlin.test.assertTrue
 class TurnRunServiceIT {
 
     private val profile = "che:scenario_2"
-    private val streamKeys = TurnDaemonStreamKeys.of(profile)
-    private val channel = gameEventChannel(profile)
+    private val streamKeys = TurnDaemonStreamKeys.of(profile, WorldId(1))
+    private val channel = gameEventChannel(profile, WorldId(1))
 
     // Fixture mirrors ReservedTurnHandlerTest: AVAILABLE general (owned, supplied, non-front city,
     // gold >> cost), che_농지개간 raises agriculture and pays the develop cost.
@@ -159,8 +159,8 @@ class TurnRunServiceIT {
         ) { gid ->
             reservedRepo.readReserved(WorldId(1), gid, 0)
         }
-        val commandStream = RedisCommandStream(template, profile)
-        val realtimePublisher = RealtimePublisher(template, profile)
+        val commandStream = RedisCommandStream(template, profile, WorldId(1))
+        val realtimePublisher = RealtimePublisher(template, profile, WorldId(1))
 
         // --- a control command is enqueued by game-api on the command stream (P1 drains it) ------
         enqueueControlCommand()
