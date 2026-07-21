@@ -111,6 +111,15 @@ class InMemoryTurnWorld(snapshot: WorldSnapshot) {
     fun getState(): TurnWorldState = state
     fun archiveServerId(): String? = serverId
 
+    /**
+     * OPENSAM-131: after a successful fenced flush, advance the in-memory expected
+     * [TurnWorldState.worldVersion] to match the committed row (version + 1).
+     */
+    fun advanceWorldVersionAfterCommit() {
+        state = state.copy(worldVersion = state.worldVersion + 1)
+    }
+
+
     // Getters return defensive copies. Data classes are immutable so the value itself is
     // safe; returning fresh lists prevents the caller from mutating the internal collections.
     fun listGenerals(): List<TurnGeneral> = generals.values.toList()

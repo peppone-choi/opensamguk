@@ -328,7 +328,37 @@ class JdbcFlushExecutor(
         // Persistent monotonic high-water marks for engine-assigned ids.
         params.addValue("max_nation_id", (worldState["max_nation_id"] as? Number)?.toInt() ?: 0)
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
-        val updated = jdbc.update(
+        // OPENSAM-131: optional CAS fence. When expected_world_version is present, require
+        // matching (world_version, writer_epoch) and bump world_version by 1 atomically.
+        val expectedVersion = (worldState["expected_world_version"] as? Number)?.toLong()
+        val writerEpoch = (worldState["writer_epoch"] as? Number)?.toLong()
+        val casEnabled = expectedVersion != null && writerEpoch != null
+        if (casEnabled) {
+            params.addValue("expected_world_version", expectedVersion)
+            params.addValue("writer_epoch", writerEpoch)
+        }
+        val sql = if (casEnabled) {
+            """
+            UPDATE world_state
+               SET current_year = :current_year,
+                   current_month = :current_month,
+                   current_phase = :current_phase,
+                   status = COALESCE(:status, status),
+                   tick_seconds = COALESCE(:tick_seconds, tick_seconds),
+                   config = COALESCE(CAST(:config AS jsonb), config),
+                   isunited = :isunited,
+                   world_version = world_version + 1,
+                   meta = meta || jsonb_build_object(
+                       'lastTurnTime', CAST(:last_turn_time AS text),
+                       'maxNationId', :max_nation_id,
+                       'maxGeneralId', :max_general_id
+                   ),
+                   updated_at = now()
+             WHERE id = :id
+               AND world_version = :expected_world_version
+               AND writer_epoch = :writer_epoch
+            """.trimIndent()
+        } else {
             """
             UPDATE world_state
                SET current_year = :current_year,
@@ -345,9 +375,16 @@ class JdbcFlushExecutor(
                    ),
                    updated_at = now()
              WHERE id = :id
-            """.trimIndent(),
-            params,
-        )
+            """.trimIndent()
+        }
+        val updated = jdbc.update(sql, params)
+        if (casEnabled && updated == 0) {
+            throw StaleWorldWriterException(
+                worldId = worldId.value,
+                expectedVersion = expectedVersion!!,
+                writerEpoch = writerEpoch!!,
+            )
+        }
         check(updated == 1) { "world_state update missed configured world_id=${worldId.value}" }
         lastOps.add(FlushExecOp("world_state", FlushVerb.UPDATE, 1))
     }
@@ -2294,4 +2331,14 @@ data class LogRow(
     val userId: Int? = null,
     val meta: Map<String, Any?> = linkedMapOf(),
     val flushBeforeArchive: Boolean = false,
+)
+
+
+/** OPENSAM-131: CAS miss — entire flush transaction must roll back. */
+class StaleWorldWriterException(
+    val worldId: Int,
+    val expectedVersion: Long,
+    val writerEpoch: Long,
+) : RuntimeException(
+    "stale world writer world_id=$worldId expected_version=$expectedVersion writer_epoch=$writerEpoch",
 )

@@ -162,6 +162,10 @@ data class TurnWorldState(
     val status: String = "OPEN",
     val config: Map<String, Any?> = emptyMap(),
     val serverId: String? = null,
+    /** OPENSAM-131: committed world_version observed at load / last successful flush. */
+    val worldVersion: Long = 0L,
+    /** OPENSAM-131: active writer fence epoch observed at load. */
+    val writerEpoch: Long = 0L,
 )
 
 fun buildDiplomacyKey(srcNationId: Int, destNationId: Int): String = "$srcNationId:$destNationId"
