@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.engine.flush.DeltaGenerationSession
+
 import java.time.Instant
 import opensamguk.infra.persistence.EventInsertRow
 import opensamguk.infra.persistence.KvWrite
@@ -64,7 +66,13 @@ class ChangeRecorder(
     private val diplomacyLetterIdAllocator: () -> Int = AtomicCounter()::next,
     private val kvWriteObserver: (KvKey, Any?) -> Unit = { _, _ -> },
     initialInheritancePoints: Map<*, *> = emptyMap<Any?, Any?>(),
+    /** OPENSAM-130 generation gate; null = unguarded (unit tests). */
+    var generationSession: DeltaGenerationSession? = null,
 ) {
+
+    private fun gateMutation(action: String) {
+        generationSession?.requireMutationAllowed(action)
+    }
 
     private val generalPatches = LinkedHashMap<Int, RowPatch>()
     private val cityPatches = LinkedHashMap<Int, RowPatch>()
@@ -274,6 +282,7 @@ class ChangeRecorder(
      * changed, or `null` if `pre == post` (no-op recipe → not dirty). The `id` is taken from `post`.
      */
     fun diffGeneral(pre: LogicGeneral, post: LogicGeneral): RowPatch? {
+        gateMutation("diffGeneral")
         require(pre.id == post.id) { "ChangeRecorder.diffGeneral: id changed (${pre.id} -> ${post.id})" }
         // A tombstoned general never re-enters the update-set (kill() clears updatedVar, General.php:595).
         if (post.id in deletedGeneralIds) return null
@@ -325,6 +334,7 @@ class ChangeRecorder(
      * changed, or `null` if `pre == post`.
      */
     fun diffCity(pre: LogicCity, post: LogicCity): RowPatch? {
+        gateMutation("diffCity")
         require(pre.id == post.id) { "ChangeRecorder.diffCity: id changed (${pre.id} -> ${post.id})" }
         val columns = LinkedHashMap<String, Any?>()
         diffCol(columns, "commerce", pre.commerce, post.commerce)
@@ -373,6 +383,7 @@ class ChangeRecorder(
      * carried in [RowPatch.meta] (a 증축/감축/천도 bumps `capset`, invalidating term-stacks).
      */
     fun diffNation(pre: LogicNation, post: LogicNation): RowPatch? {
+        gateMutation("diffNation")
         require(pre.id == post.id) { "ChangeRecorder.diffNation: id changed (${pre.id} -> ${post.id})" }
         // A tombstoned nation never re-enters the update-set (the cascade delete is the final word).
         if (post.id in deletedNationIds) return null
@@ -444,6 +455,7 @@ class ChangeRecorder(
      *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`) → V7 `game_kv` string-namespace store.
      */
     fun recordKv(table: String, namespace: String, key: String, value: Any?) {
+        gateMutation("recordKv")
         val kvKey = KvKey(table, namespace, key)
         kvDirty[kvKey] = value
         kvWriteObserver(kvKey, value)
@@ -578,6 +590,7 @@ class ChangeRecorder(
 
     /** Record a `message` invalidate UPDATE (T0.5, PHP `Message::invalidate`): rewrite body + valid_until. */
     fun recordMessageInvalidate(id: Int, validUntil: String, bodyJson: String) {
+        gateMutation("recordMessageInsert")
         messageInvalidates.add(MessageInvalidate(id, validUntil, bodyJson))
     }
 
@@ -757,6 +770,7 @@ class ChangeRecorder(
      * 않는다(데몬 수명 동안 단조 증가를 유지해야 한다).
      */
     fun clear() {
+        gateMutation("clear")
         generalPatches.clear()
         cityPatches.clear()
         nationPatches.clear()
