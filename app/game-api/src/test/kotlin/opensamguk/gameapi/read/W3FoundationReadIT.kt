@@ -31,6 +31,7 @@ import kotlin.test.assertNull
     GeneralReadRepository::class,
     NationReadRepository::class,
     NationTurnReadRepository::class,
+    RankDataReadRepository::class,
 )
 class W3FoundationReadIT {
     @Autowired lateinit var jdbc: JdbcTemplate

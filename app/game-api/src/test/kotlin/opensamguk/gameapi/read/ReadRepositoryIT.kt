@@ -31,6 +31,8 @@ import kotlin.test.assertTrue
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(
     GameApiProcessWorldIdConfiguration::class,
+    WorldStateReadRepository::class,
+    DiplomacyReadRepository::class,
     GeneralReadRepository::class,
     CityReadRepository::class,
     NationReadRepository::class,
