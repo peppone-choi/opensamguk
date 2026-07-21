@@ -178,12 +178,31 @@ class TurnDaemonRunner(
                     continue
                 }
                 // OPENSAM-132: freeze intake/tick while FLUSH_RETRY / RELOAD_REQUIRED.
+                // FLUSH_RETRY may resume via same-batch retryRetainedFlush (known no-commit).
+                // RELOAD_REQUIRED stays blocked until process reload marks READY (no blind retry).
                 val recovery = try {
                     activeService.recoverySnapshot()
                 } catch (_: Exception) {
                     null
                 }
                 if (recovery != null && !recovery.ready) {
+                    if (recovery.mode == opensamguk.engine.flush.FlushRecoveryGate.Mode.FLUSH_RETRY) {
+                        try {
+                            val ok = activeService.retryRetainedFlush()
+                            if (ok) {
+                                log.info(
+                                    "turn-daemon-loop FLUSH_RETRY recovered generation={} worldId={}",
+                                    recovery.generation, recovery.worldId,
+                                )
+                                continue
+                            }
+                        } catch (retryEx: Exception) {
+                            log.warn(
+                                "turn-daemon-loop FLUSH_RETRY still blocked generation={} reason={}",
+                                recovery.generation, retryEx.message,
+                            )
+                        }
+                    }
                     log.warn(
                         "turn-daemon-loop blocked — recovery mode={} worldId={} generation={} reason={}",
                         recovery.mode, recovery.worldId, recovery.generation, recovery.reason,

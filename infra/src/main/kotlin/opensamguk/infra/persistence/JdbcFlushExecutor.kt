@@ -42,7 +42,7 @@ import java.time.Instant
  * implements the full ordered contract so later phases never reshape it. Multi-row steps use
  * `batchUpdate`; jsonb columns bind via [PGobject] with `type="jsonb"`.
  */
-class JdbcFlushExecutor(
+open class JdbcFlushExecutor(
     private val jdbc: NamedParameterJdbcTemplate,
     private val transactionTemplate: TransactionTemplate,
 ) {
@@ -52,7 +52,7 @@ class JdbcFlushExecutor(
     /** Op sequence of the last [flush] call, in execution order. */
     fun lastOps(): List<FlushExecOp> = lastOps.toList()
 
-    fun flush(payload: FlushPayload) {
+    open fun flush(payload: FlushPayload) {
         transactionTemplate.execute {
             lastOps.clear()
             check(payload.worldStateUpdate["id"] == payload.worldId.value) {

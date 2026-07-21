@@ -1,16 +1,19 @@
 # Current State
 
-## CQRS B1 complete (2026-07-21)
+## CQRS B1 complete
 
-- OPENSAM-127–129 process-world reads + flush scope + two-world isolation on main.
+OPENSAM-127–129 process-world reads + flush scope + two-world isolation.
 
-## CQRS B2 (build-only) — 2026-07-21
+## CQRS B2 complete (build-only) — 2026-07-21
 
-- OPENSAM-130 (#307 / GH #276): `DeltaGenerationSession` + `flushWithGeneration` + mutation gate.
-- OPENSAM-131 (#308 / GH #277): V33 `world_version`/`writer_epoch`, CAS in `JdbcFlushExecutor.worldStateUpdate`, engine stamp/advance, `WorldVersionCasIT`.
-- OPENSAM-132 (GH #278): `FlushRecoveryGate` READY|FLUSH_RETRY|RELOAD_REQUIRED; blocks intake/tick; readiness HealthIndicator; status diagnostics; same-batch `retryRetainedFlush`.
+| Ticket | PR | Merge | Notes |
+|--------|-----|-------|-------|
+| OPENSAM-130 | #307 | on main | DeltaGenerationSession prepare/commit/abort |
+| OPENSAM-131 | #308 | on main | world_version CAS + writer_epoch |
+| OPENSAM-132 | #309 | on main | FlushRecoveryGate + intake/tick stop; FLUSH_RETRY resume |
 
-## Not claimed / later waves
+Reviews: `docs/superpowers/reviews/2026-07-21-opensam-13{0,1,2}-*.md` Verdict cleared.
 
-- OPENSAM-123 live capacity, production migration rehearsal, second-world admission, W3 activation, deploy.
-- S4 inbox/outbox ACK activation; S5 RYW minVersion; S6 observability expansion.
+## Next CQRS (not this goal)
+
+ARCH-S4 inbox/outbox; activation/deploy out of scope.
