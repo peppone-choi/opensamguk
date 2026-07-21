@@ -4,16 +4,14 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.logic.domain.Diplomacy
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
- * Read-only JPA mapping of the `diplomacy` row for the PRECHECK path (game-api ONLY — §7).
- *
- * V1 baseline `diplomacy` keys on a `serial id` and stores a directional pair `(src_nation_id,
- * dest_nation_id, state_code, term)`. The logic [Diplomacy] is the 4-field slice (`me`/`you`/`state`/
- * `term`); the dest-* constraint family (C-DEST) consumes the state semantics. `is_dead`/`is_showing`/
- * `meta` are not part of the precheck slice and are not mapped.
+ * Read-only `diplomacy` for precheck — process-world scoped (OPENSAM-127).
  */
 @Entity
 @Table(name = "diplomacy")
@@ -21,6 +19,9 @@ class DiplomacyReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "src_nation_id")
     var srcNationId: Int = 0,
@@ -34,7 +35,6 @@ class DiplomacyReadEntity(
     @Column(name = "term")
     var term: Int = 0,
 ) {
-    /** Materialize into the shared `:logic` [Diplomacy]. */
     fun toLogic(): Diplomacy = Diplomacy(
         me = srcNationId,
         you = destNationId,
@@ -43,7 +43,20 @@ class DiplomacyReadEntity(
     )
 }
 
-interface DiplomacyReadRepository : JpaRepository<DiplomacyReadEntity, Int> {
-    /** All directional rows where [srcNationId] is the source nation (the actor nation's diplomacy). */
-    fun findBySrcNationId(srcNationId: Int): List<DiplomacyReadEntity>
+interface DiplomacyReadRawRepository : SpringDataRepository<DiplomacyReadEntity, Int> {
+    fun findByWorldId(worldId: Int): List<DiplomacyReadEntity>
+    fun findByWorldIdAndSrcNationId(worldId: Int, srcNationId: Int): List<DiplomacyReadEntity>
+}
+
+@Repository
+class DiplomacyReadRepository(
+    private val raw: DiplomacyReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findAll(): List<DiplomacyReadEntity> = raw.findByWorldId(worldId.value)
+
+    fun findBySrcNationId(srcNationId: Int): List<DiplomacyReadEntity> =
+        raw.findByWorldIdAndSrcNationId(worldId.value, srcNationId)
 }

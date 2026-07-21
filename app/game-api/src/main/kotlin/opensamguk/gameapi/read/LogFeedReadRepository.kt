@@ -1,73 +1,36 @@
 package opensamguk.gameapi.read
 
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
- * W0-5 — `log_entry` 공용 카테고리-피드 READ 파운데이션 (글로벌 + 개인 증분 피드).
- *
- * PHP 정본 readers (func_history.php / GetFrontInfo.php) ↔ 메서드 매핑:
- *  - `getGlobalHistoryLogRecent`  (func_history.php:322-326) → [findRecentGlobalHistory]
- *  - `getGlobalHistoryLogWithDate`(func_history.php:328-341) → [findGlobalHistoryByMonth]
- *  - `getGlobalActionLogRecent`   (func_history.php:360-367) → [findRecentGlobalAction]
- *  - `getGlobalActionLogWithDate` (func_history.php:369-382) → [findGlobalActionByMonth]
- *  - `GetFrontInfo::getHistory`       (GetFrontInfo.php:92-103) → [findGlobalHistorySince]
- *  - `GetFrontInfo::getGlobalRecord`  (GetFrontInfo.php:65-76)  → [findGlobalActionSince]
- *  - `GetFrontInfo::getGeneralRecord` (GetFrontInfo.php:78-90)  → [findGeneralActionSince]
- *  - `getAuctionLogRecent`        (func_history.php:93-95)   → [findRecentByScopeAndCategory] (범용)
- *
- * scope/category 매핑 정본은 writer 2계열(둘 다 실재 — 합집합 read가 행 손실을 막는다):
- *  - common `ActionLogger.kt:16-17`: pushGlobalHistoryLog → SYSTEM/HISTORY,
- *    pushGlobalActionLog → SYSTEM/SUMMARY (PHP world_history nation_id=0 /
- *    general_record general_id=0 log_type='history'의 각각의 대응).
- *  - engine `WorldActionContext.kt:571-573`: pushGlobalActionLog → scope "global"/category "action"
- *    → `DatabaseHooks.scopeLiteral`이 SYSTEM/ACTION으로 영속화. 같은 논리 스트림(글로벌 액션)이
- *    SUMMARY/ACTION 두 카테고리로 갈라져 있으므로 글로벌 액션 read는 IN ('SUMMARY','ACTION').
- *
- * 소비처(전부 W1 소관 — 이 파운데이션은 쿼리만 제공):
- *  - P0-03 메인 RecordZone 3피드: `id >= lastID ORDER BY id DESC LIMIT (ROW_LIMIT+1=16)`
- *    (GetFrontInfo.php:44 `ROW_LIMIT=15`; `+1` 행으로 flush 플래그/pop 판정 — 그 로직은 소비자 몫).
- *    ※ PHP는 `id >= %i`(경계 포함, GT 아님 GTE) — Since 메서드들이 그대로 따른다.
- *  - P0-21 history 페이지: WithDate 변형(연/월 필터, LIMIT 없음). 0행일 때 "<C>●</>{y}년 {m}월: 기록 없음"
- *    폴백 문자열 합성은 소비자 소관(무fabricate).
- *  - P1-009 경매 recentLogs: legacy는 파일 테일(`getAuctionLogRecent(20)` = 최신 20건을 읽어
- *    `array_reverse`로 오래된순 표시). opensamguk 엔진은 log_entry로 기록하나 현재 auction/betting
- *    핸들러가 scope "action"/category "auction"이라는 enum에 없는 리터럴을 쓰는 P6 flush 버그가
- *    미해결(DatabaseHooks.kt scopeLiteral NOTE) → 정본 리터럴이 확정되면 호출부가
- *    [findRecentByScopeAndCategory]에 그 값을 넘긴다(레포는 ::text 비교라 값-불가지론적).
- *  - P1-059 map 히스토리 10건: `GetCachedMap.php:84` `getGlobalHistoryLogRecent(10)` →
- *    [findRecentGlobalHistory] (HISTORY 단독 — [WorldLogReadRepository]의 HISTORY+SUMMARY 혼합과 다름).
- *
- * `scope`/`category`는 Postgres enum 타입 → 네이티브 쿼리([WorldLogReadRepository]/
- * [AdminGeneralLogReadRepository] 선례 동형). 비교는 enum-네이티브 리터럴이어야 인덱스
- * (`(scope, category, id)`/`(general_id, category, id)`)를 탄다 — 컬럼 `::text` 캐스트는 인덱스를
- * 무력화해 최대 성장 테이블 log_entry를 조회마다 스캔한다(OPENSAM-14 실측: 메인 피드 31.7ms→0.22ms).
- * 유일한 예외는 [findRecentByScopeAndCategory] — 해당 KDoc 참조. 결과 컬럼(id/year/month/phase/text)이
- * [WorldLogReadEntity]와 1:1이라 그 엔티티를 read-only 프로젝션으로 재사용한다. id는 RecordZone 증분
- * lastID 북키핑에 필수라 함께 반환한다(GetFrontInfo도 `SELECT id, text`).
- *
- * game-api ONLY(§7); 절대 write하지 않는다(데몬 write는 ChangeRecorder→JdbcFlushExecutor 전용).
+ * log_entry feed READ — process-world scoped (OPENSAM-127).
+ * Reuses [WorldLogReadEntity] projection. Daemon write via ChangeRecorder only.
  */
-interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
+interface LogFeedReadRawRepository : SpringDataRepository<WorldLogReadEntity, Int> {
+
 
     // ── 글로벌 history (중원 정세 — PHP world_history nation_id=0) ──────────────────────────────
 
     /**
      * 글로벌 history 최신 N건(newest-first). PHP `getGlobalHistoryLogRecent($count)` 등가
-     * (func_history.php:322-326 — `WHERE nation_id = 0 order by id desc limit %i`).
+     * (func_history.php:322-326 — `WHERE world_id = :worldId AND nation_id = 0 order by id desc limit %i`).
      * P1-059 map 히스토리 10건(`GetCachedMap.php:84`)도 이 메서드.
      */
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'SYSTEM' AND category = 'HISTORY'
+            WHERE world_id = :worldId AND scope = 'SYSTEM' AND category = 'HISTORY'
             ORDER BY id DESC
             LIMIT :limit
         """,
         nativeQuery = true,
     )
-    fun findRecentGlobalHistory(@Param("limit") limit: Int): List<WorldLogReadEntity>
+    fun findRecentGlobalHistory(@Param("worldId") worldId: Int, @Param("limit") limit: Int): List<WorldLogReadEntity>
 
     /**
      * 글로벌 history 증분 피드 — `id >= :sinceId`(경계 포함) newest-first LIMIT.
@@ -77,13 +40,13 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'SYSTEM' AND category = 'HISTORY' AND id >= :sinceId
+            WHERE world_id = :worldId AND scope = 'SYSTEM' AND category = 'HISTORY' AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
         """,
         nativeQuery = true,
     )
-    fun findGlobalHistorySince(
+    fun findGlobalHistorySince(@Param("worldId") worldId: Int, 
         @Param("sinceId") sinceId: Int,
         @Param("limit") limit: Int,
     ): List<WorldLogReadEntity>
@@ -95,13 +58,13 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'SYSTEM' AND category = 'HISTORY'
+            WHERE world_id = :worldId AND scope = 'SYSTEM' AND category = 'HISTORY'
               AND year = :year AND month = :month
             ORDER BY id DESC
         """,
         nativeQuery = true,
     )
-    fun findGlobalHistoryByMonth(
+    fun findGlobalHistoryByMonth(@Param("worldId") worldId: Int, 
         @Param("year") year: Int,
         @Param("month") month: Int,
     ): List<WorldLogReadEntity>
@@ -116,13 +79,13 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION')
+            WHERE world_id = :worldId AND scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION')
             ORDER BY id DESC
             LIMIT :limit
         """,
         nativeQuery = true,
     )
-    fun findRecentGlobalAction(@Param("limit") limit: Int): List<WorldLogReadEntity>
+    fun findRecentGlobalAction(@Param("worldId") worldId: Int, @Param("limit") limit: Int): List<WorldLogReadEntity>
 
     /**
      * 글로벌 action 증분 피드 — `id >= :sinceId`(경계 포함) newest-first LIMIT.
@@ -131,13 +94,13 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION') AND id >= :sinceId
+            WHERE world_id = :worldId AND scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION') AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
         """,
         nativeQuery = true,
     )
-    fun findGlobalActionSince(
+    fun findGlobalActionSince(@Param("worldId") worldId: Int, 
         @Param("sinceId") sinceId: Int,
         @Param("limit") limit: Int,
     ): List<WorldLogReadEntity>
@@ -149,13 +112,13 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION')
+            WHERE world_id = :worldId AND scope = 'SYSTEM' AND category IN ('SUMMARY', 'ACTION')
               AND year = :year AND month = :month
             ORDER BY id DESC
         """,
         nativeQuery = true,
     )
-    fun findGlobalActionByMonth(
+    fun findGlobalActionByMonth(@Param("worldId") worldId: Int, 
         @Param("year") year: Int,
         @Param("month") month: Int,
     ): List<WorldLogReadEntity>
@@ -171,14 +134,14 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope = 'GENERAL' AND general_id = :generalId
+            WHERE world_id = :worldId AND scope = 'GENERAL' AND general_id = :generalId
               AND category = 'ACTION' AND id >= :sinceId
             ORDER BY id DESC
             LIMIT :limit
         """,
         nativeQuery = true,
     )
-    fun findGeneralActionSince(
+    fun findGeneralActionSince(@Param("worldId") worldId: Int, 
         @Param("generalId") generalId: Int,
         @Param("sinceId") sinceId: Int,
         @Param("limit") limit: Int,
@@ -201,15 +164,48 @@ interface LogFeedReadRepository : JpaRepository<WorldLogReadEntity, Int> {
     @Query(
         value = """
             SELECT id, year, month, phase, text FROM log_entry
-            WHERE scope::text = :scope AND category::text = :category
+            WHERE world_id = :worldId AND scope::text = :scope AND category::text = :category
             ORDER BY id DESC
             LIMIT :limit
         """,
         nativeQuery = true,
     )
-    fun findRecentByScopeAndCategory(
+    fun findRecentByScopeAndCategory(@Param("worldId") worldId: Int, 
         @Param("scope") scope: String,
         @Param("category") category: String,
         @Param("limit") limit: Int,
     ): List<WorldLogReadEntity>
+}
+
+@Repository
+class LogFeedReadRepository(
+    private val raw: LogFeedReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findRecentGlobalHistory(limit: Int): List<WorldLogReadEntity> =
+        raw.findRecentGlobalHistory(worldId.value, limit)
+
+    fun findGlobalHistorySince(sinceId: Int, limit: Int): List<WorldLogReadEntity> =
+        raw.findGlobalHistorySince(worldId.value, sinceId, limit)
+
+    fun findGlobalHistoryByMonth(year: Int, month: Int): List<WorldLogReadEntity> =
+        raw.findGlobalHistoryByMonth(worldId.value, year, month)
+
+    fun findRecentGlobalAction(limit: Int): List<WorldLogReadEntity> =
+        raw.findRecentGlobalAction(worldId.value, limit)
+
+    fun findGlobalActionSince(sinceId: Int, limit: Int): List<WorldLogReadEntity> =
+        raw.findGlobalActionSince(worldId.value, sinceId, limit)
+
+    fun findGlobalActionByMonth(year: Int, month: Int): List<WorldLogReadEntity> =
+        raw.findGlobalActionByMonth(worldId.value, year, month)
+
+    fun findGeneralActionSince(generalId: Int, sinceId: Int, limit: Int): List<WorldLogReadEntity> =
+        raw.findGeneralActionSince(worldId.value, generalId, sinceId, limit)
+
+    fun findRecentByScopeAndCategory(scope: String, category: String, limit: Int): List<WorldLogReadEntity> =
+        raw.findRecentByScopeAndCategory(worldId.value, scope, category, limit)
+
 }

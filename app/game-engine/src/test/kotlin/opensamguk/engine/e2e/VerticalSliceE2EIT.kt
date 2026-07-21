@@ -113,8 +113,8 @@ import kotlin.test.assertTrue
 class VerticalSliceE2EIT {
 
     private val profile = "che:scenario_2"
-    private val streamKeys = TurnDaemonStreamKeys.of(profile)
-    private val channel = gameEventChannel(profile)
+    private val streamKeys = TurnDaemonStreamKeys.of(profile, WorldId(1))
+    private val channel = gameEventChannel(profile, WorldId(1))
 
     // ---- golden fixtures (committed; PHP-captured by G1) — the byte oracle ----
     private val golden: Golden by lazy { loadGolden() }
@@ -257,11 +257,11 @@ class VerticalSliceE2EIT {
             val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(WorldId(1), gid, 0) }
             val runService = TurnRunService(
                 world = world,
-                commandStream = RedisCommandStream(template, profile),
+                commandStream = RedisCommandStream(template, profile, WorldId(1)),
                 lifecycle = lifecycle,
                 handler = handler,
                 flushExecutor = flushExecutor,
-                realtimePublisher = RealtimePublisher(template, profile),
+                realtimePublisher = RealtimePublisher(template, profile, WorldId(1)),
                 // Single-shot tick: the reserved ACTION lives in the general_turn ring (read per-general
                 // by the lifecycle), and the reserve poke was published BEFORE this stream was built (so
                 // it is already at the resolved tail cursor). A finite block drains the control stream

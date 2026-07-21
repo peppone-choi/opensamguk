@@ -3,6 +3,7 @@ package opensamguk.engine.redis
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonStreamKeys
+import opensamguk.common.world.WorldId
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.WireJson
 import org.springframework.data.redis.connection.stream.MapRecord
@@ -24,9 +25,10 @@ import java.time.Duration
 class RedisCommandStream(
     private val template: StringRedisTemplate,
     profileName: String,
+    worldId: WorldId,
     startId: String = "\$",
 ) {
-    private val keys: TurnDaemonStreamKeys = TurnDaemonStreamKeys.of(profileName)
+    private val keys: TurnDaemonStreamKeys = TurnDaemonStreamKeys.of(profileName, worldId)
     private var lastId: String
 
     init {

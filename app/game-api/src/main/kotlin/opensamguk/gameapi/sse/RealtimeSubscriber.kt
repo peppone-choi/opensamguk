@@ -1,6 +1,7 @@
 package opensamguk.gameapi.sse
 
 import opensamguk.common.wire.gameEventChannel
+import opensamguk.gameapi.config.GameApiProcessWorld
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -25,7 +26,10 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer
 @Configuration
 class RealtimeSubscriber(
     @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
+    processWorld: GameApiProcessWorld,
 ) {
+    private val worldId = processWorld.worldId
+
     private val log = LoggerFactory.getLogger(RealtimeSubscriber::class.java)
 
     @Bean
@@ -49,7 +53,7 @@ class RealtimeSubscriber(
         container.setTaskExecutor(SimpleAsyncTaskExecutor("realtime-recv-"))
         container.setRecoveryInterval(5000L)
         val listener = MessageListener { message, _ -> relay.fanOut(String(message.body)) }
-        container.addMessageListener(listener, ChannelTopic(gameEventChannel(profile)))
+        container.addMessageListener(listener, ChannelTopic(gameEventChannel(profile, worldId)))
         return container
     }
 

@@ -1,5 +1,7 @@
 package opensamguk.engine.intake
 
+import opensamguk.common.world.WorldId
+
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.RunReason
 import opensamguk.common.wire.TurnDaemonCommand
@@ -119,7 +121,7 @@ class IntakeResultChannelTest {
         val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
         `when`(template.opsForValue()).thenReturn(valueOps)
 
-        val publisher = RealtimePublisher(template, "che:scenario_2")
+        val publisher = RealtimePublisher(template, "che:scenario_2", WorldId(1))
         publisher.publishCommandResult(
             requestId = "req-a",
             result = NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
@@ -128,7 +130,7 @@ class IntakeResultChannelTest {
 
         val payload = ArgumentCaptor.forClass(String::class.java)
         verify(valueOps).set(
-            eq(commandResultKey("che:scenario_2", "req-a")),
+            eq(commandResultKey("che:scenario_2", WorldId(1), "req-a")),
             payload.capture(),
             eq(RealtimePublisher.COMMAND_RESULT_TTL),
         )

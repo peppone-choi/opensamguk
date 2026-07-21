@@ -49,7 +49,7 @@ import kotlin.test.assertTrue
 class CommandReserveServiceIT {
 
     private val profile = "che:scenario_2"
-    private val commandStream = TurnDaemonStreamKeys.of(profile).commandStream
+    private val commandStream = TurnDaemonStreamKeys.of(profile, WorldId(1)).commandStream
 
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var redisTemplate: StringRedisTemplate

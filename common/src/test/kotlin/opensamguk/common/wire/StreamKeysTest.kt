@@ -1,41 +1,51 @@
 package opensamguk.common.wire
 
+import opensamguk.common.world.WorldId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class StreamKeysTest {
+    private val w1 = WorldId(1)
+    private val w42 = WorldId(42)
+
     @Test
-    fun `default profile builds exact command + event stream keys`() {
-        val keys = TurnDaemonStreamKeys.of("default")
-        assertEquals("sammo:default:turn-daemon:commands", keys.commandStream)
-        assertEquals("sammo:default:turn-daemon:events", keys.eventStream)
+    fun `default profile builds world-scoped command + event stream keys`() {
+        val keys = TurnDaemonStreamKeys.of("default", w1)
+        assertEquals("sammo:default:w1:turn-daemon:commands", keys.commandStream)
+        assertEquals("sammo:default:w1:turn-daemon:events", keys.eventStream)
     }
 
     @Test
-    fun `command and event builders interpolate profile verbatim (no trim)`() {
-        val keys = TurnDaemonStreamKeys.of("che:scenario_2")
-        assertEquals("sammo:che:scenario_2:turn-daemon:commands", keys.commandStream)
-        assertEquals("sammo:che:scenario_2:turn-daemon:events", keys.eventStream)
+    fun `command and event builders interpolate profile verbatim and include world`() {
+        val keys = TurnDaemonStreamKeys.of("che:scenario_2", w42)
+        assertEquals("sammo:che:scenario_2:w42:turn-daemon:commands", keys.commandStream)
+        assertEquals("sammo:che:scenario_2:w42:turn-daemon:events", keys.eventStream)
     }
 
     @Test
-    fun `realtime channel trims and defaults blank to unknown`() {
-        assertEquals("sammo:default:realtime:events", gameEventChannel("default"))
-        assertEquals("sammo:che:scenario_2:realtime:events", gameEventChannel("  che:scenario_2  "))
-        assertEquals("sammo:unknown:realtime:events", gameEventChannel("   "))
+    fun `two worlds with same profile never share stream keys`() {
+        val a = TurnDaemonStreamKeys.of("default", WorldId(1))
+        val b = TurnDaemonStreamKeys.of("default", WorldId(2))
+        assertEquals("sammo:default:w1:turn-daemon:commands", a.commandStream)
+        assertEquals("sammo:default:w2:turn-daemon:commands", b.commandStream)
     }
 
-    // W0-4 인테이크 결과 회신 채널 — per-requestId 결과 키. 스트림 키와 동일하게 프로필을
-    // verbatim 보간한다(트림 없음). game-api(GET 조회)와 engine(SET 발행)이 같은 키를 쓴다.
     @Test
-    fun `command result key interpolates profile and requestId verbatim`() {
+    fun `realtime channel trims, defaults blank to unknown, and scopes world`() {
+        assertEquals("sammo:default:w1:realtime:events", gameEventChannel("default", w1))
+        assertEquals("sammo:che:scenario_2:w42:realtime:events", gameEventChannel("  che:scenario_2  ", w42))
+        assertEquals("sammo:unknown:w1:realtime:events", gameEventChannel("   ", w1))
+    }
+
+    @Test
+    fun `command result key interpolates profile, world, and requestId`() {
         assertEquals(
-            "sammo:default:turn-daemon:result:req-1",
-            commandResultKey("default", "req-1"),
+            "sammo:default:w1:turn-daemon:result:req-1",
+            commandResultKey("default", w1, "req-1"),
         )
         assertEquals(
-            "sammo:che:scenario_2:turn-daemon:result:0aa6f5b2-6d5f-4cf6-9d3e-111122223333",
-            commandResultKey("che:scenario_2", "0aa6f5b2-6d5f-4cf6-9d3e-111122223333"),
+            "sammo:che:scenario_2:w42:turn-daemon:result:0aa6f5b2-6d5f-4cf6-9d3e-111122223333",
+            commandResultKey("che:scenario_2", w42, "0aa6f5b2-6d5f-4cf6-9d3e-111122223333"),
         )
     }
 }

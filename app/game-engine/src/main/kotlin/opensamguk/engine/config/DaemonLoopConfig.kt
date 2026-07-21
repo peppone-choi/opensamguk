@@ -138,13 +138,15 @@ class DaemonLoopConfig {
     fun redisCommandStream(
         template: StringRedisTemplate,
         @Value("\${opensamguk.profile}") profile: String,
-    ): RedisCommandStream = RedisCommandStream(template, profile)
+        processWorld: EngineProcessWorld,
+    ): RedisCommandStream = RedisCommandStream(template, profile, processWorld.worldId)
 
     @Bean
     fun realtimePublisher(
         template: StringRedisTemplate,
         @Value("\${opensamguk.profile}") profile: String,
-    ): RealtimePublisher = RealtimePublisher(template, profile)
+        processWorld: EngineProcessWorld,
+    ): RealtimePublisher = RealtimePublisher(template, profile, processWorld.worldId)
 
     /**
      * The fully-wired daemon run orchestrator — the one bean [TurnDaemonRunner] drives.

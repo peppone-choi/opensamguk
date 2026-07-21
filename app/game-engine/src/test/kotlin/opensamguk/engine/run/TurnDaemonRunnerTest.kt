@@ -1,5 +1,7 @@
 package opensamguk.engine.run
 
+import opensamguk.common.world.WorldId
+
 import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -233,11 +235,11 @@ class TurnDaemonRunnerTest {
         initialNextRun: Instant = Instant.now().minusSeconds(5),
     ) : TurnRunService(
         world = stubWorld(),
-        commandStream = RedisCommandStream(StringRedisTemplate(), "che:test", startId = "0"),
+        commandStream = RedisCommandStream(StringRedisTemplate(), "che:test", WorldId(1), startId = "0"),
         lifecycle = stubLifecycle(),
         handler = stubHandler(),
         flushExecutor = NO_FLUSH,
-        realtimePublisher = RealtimePublisher(StringRedisTemplate(), "che:test"),
+        realtimePublisher = RealtimePublisher(StringRedisTemplate(), "che:test", WorldId(1)),
     ) {
         // Past ⇒ due now; after the first tick push it far out so the loop idles (one observable drive).
         @Volatile private var next: Instant = initialNextRun

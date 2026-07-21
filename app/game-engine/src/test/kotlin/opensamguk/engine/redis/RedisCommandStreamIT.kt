@@ -1,4 +1,6 @@
 package opensamguk.engine.redis
+
+import opensamguk.common.world.WorldId
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonStreamKeys
@@ -22,7 +24,7 @@ import kotlin.test.assertTrue
 @Testcontainers(disabledWithoutDocker = true)
 class RedisCommandStreamIT {
     private val profile = "che:scenario_2"
-    private val keys = TurnDaemonStreamKeys.of(profile)
+    private val keys = TurnDaemonStreamKeys.of(profile, WorldId(1))
     private fun addCommand(template: StringRedisTemplate, requestId: String, generalId: Int) {
         val envelope = TurnDaemonCommandEnvelope(
             requestId = requestId,
@@ -46,7 +48,7 @@ class RedisCommandStreamIT {
         assertTrue(redis.isRunning, "redis:7-alpine container must be running")
         // message BEFORE consumer construction -> startId '$' resolves past it -> ignored
         addCommand(template, "before", 100)
-        val consumer = RedisCommandStream(template, profile) // startId defaults to '$'
+        val consumer = RedisCommandStream(template, profile, WorldId(1)) // startId defaults to '$'
         val startCursor = consumer.lastId()
         // a NEW message after construction (the resume the consumer should see)
         addCommand(template, "after", 200)
