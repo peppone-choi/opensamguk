@@ -1,5 +1,7 @@
 package opensamguk.engine.run
 
+import opensamguk.engine.flush.DeltaGenerationSession
+
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.auction.AuctionExpiryDaemon
 import opensamguk.engine.flush.DatabaseHooks
@@ -115,7 +117,13 @@ open class TurnRunService(
     private val selectPoolRepository: SelectPoolRepository? = null,
     private val tournamentDaemon: TournamentDaemon? = null,
     private val processNationCommand: ProcessNationCommand? = null,
+    /** OPENSAM-130 generation session shared with [handler.recorder]. */
+    private val generationSession: DeltaGenerationSession = DeltaGenerationSession(),
 ) {
+    init {
+        handler.recorder.generationSession = generationSession
+    }
+
 
     /**
      * Routes drained intake commands (auction bid/finalize, and the P6/P7 commands that follow) to
@@ -205,8 +213,7 @@ open class TurnRunService(
         worldState["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
         worldState["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
         val payload = base.copy(worldStateUpdate = worldState)
-        flushExecutor.flush(payload)
-        handler.recorder.clear()
+        flushWithGeneration(payload)
         intakeResults.forEach { (requestId, result) ->
             realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
         }
@@ -325,11 +332,7 @@ open class TurnRunService(
                 "max_general_id" to ((preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ),
         )
-        flushExecutor.flush(payload)
-        // 수명이 긴 recorder를 리셋해 이번 tick의 델타가 다음 tick에 재방출되지 않게 한다 — 특히
-        // INSERT 전용 채널(board/betting/auction_bid/message)은 그러지 않으면 매 tick 행을 중복 INSERT한다.
-        // flush 성공 시에만: 위에서 throw되면 이 호출을 건너뛰어 다음 tick이 재시도한다.
-        handler.recorder.clear()
+        flushWithGeneration(payload)
 
         intakeResults.forEach { (requestId, result) ->
             realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
@@ -370,6 +373,22 @@ open class TurnRunService(
      * the lone dirty source for the dirty rows + rank + KV deltas; the world's drained [DirtyState]
      * carries created/deleted lifecycle effects + logs.
      */
+
+    /**
+     * OPENSAM-130: prepare → JDBC flush → commit (clear deltas) or abort (keep deltas for retry).
+     */
+    private fun flushWithGeneration(payload: FlushPayload) {
+        val generation = generationSession.prepare()
+        try {
+            flushExecutor.flush(payload)
+            generationSession.commit(generation)
+            handler.recorder.clear()
+        } catch (e: Exception) {
+            generationSession.abort(generation)
+            throw e
+        }
+    }
+
     private fun buildFlushPayload(): FlushPayload {
         val dirty = world.consumeDirtyState()
         return DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
