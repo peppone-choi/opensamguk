@@ -356,20 +356,10 @@ open class TurnRunService(
         }
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
-        world.setCurrentDate(newDate.year, newDate.month, newDate.phase)
-        world.setLastTurnTime(runTime)
+        // Shared with [retryRetainedFlush] so FLUSH_RETRY success cannot leave memory pre-tick.
+        applyCommittedWorldClockFromPayload(payload, previousTurnTime)
         val atIso = runTime.toString()
         val lastTurnTimeIso = previousTurnTime.toString()
-        val turnNumber = computeTurnNumber(previousTurnTime, startYear, startTime, turnTerm)
-        realtimePublisher.publishTurnCompleted(
-            atIso,
-            lastTurnTimeIso,
-            newDate.year,
-            newDate.month,
-            turnNumber,
-            newDate.phase,
-            newDate.phaseText,
-        )
 
         return TickResult(
             handled = handled,
@@ -417,6 +407,11 @@ open class TurnRunService(
     /**
      * OPENSAM-132: same-generation retry of a retained FLUSH_RETRY payload.
      * Does not admit new intake/tick deltas — reuses the frozen batch only.
+     *
+     * After a successful JDBC commit, applies the payload's world clock to in-memory
+     * state (setCurrentDate / setLastTurnTime) and publishes turnCompleted when the
+     * payload carried a tick `last_turn_time`. Without this, DB advances while memory
+     * stays pre-tick and [nextRunTime] stays due → double-apply risk.
      */
     fun retryRetainedFlush(): Boolean {
         check(recoveryGate.mode() == FlushRecoveryGate.Mode.FLUSH_RETRY) {
@@ -424,8 +419,49 @@ open class TurnRunService(
         }
         val payload = recoveryGate.retainedPayload()
             ?: error("FLUSH_RETRY without retained payload")
+        val previousTurnTime = world.getState().lastTurnTime
         flushWithGeneration(payload)
+        if (recoveryGate.isReady()) {
+            applyCommittedWorldClockFromPayload(payload, previousTurnTime)
+        }
         return recoveryGate.isReady()
+    }
+
+    /**
+     * Mirror runTick step-4 after a durable flush: memory clock must match the committed
+     * world_state row (year/month/phase/lastTurnTime) and realtime turnCompleted fires once.
+     */
+    private fun applyCommittedWorldClockFromPayload(
+        payload: FlushPayload,
+        previousTurnTime: Instant,
+    ) {
+        val ws = payload.worldStateUpdate
+        val runTimeStr = ws["last_turn_time"] as? String ?: return
+        val runTime = Instant.parse(runTimeStr)
+        val year = (ws["current_year"] as? Number)?.toInt() ?: return
+        val month = (ws["current_month"] as? Number)?.toInt() ?: return
+        val phase = (ws["current_phase"] as? Number)?.toInt() ?: 1
+
+        world.setCurrentDate(year, month, phase)
+        world.setLastTurnTime(runTime)
+
+        val state = world.getState()
+        val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
+        val startTime = Instant.parse(
+            state.meta["startTime"] as? String ?: previousTurnTime.toString(),
+        )
+        val turnTerm = state.tickSeconds / 60
+        val newDate = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
+        val turnNumber = computeTurnNumber(previousTurnTime, startYear, startTime, turnTerm)
+        realtimePublisher.publishTurnCompleted(
+            runTime.toString(),
+            previousTurnTime.toString(),
+            year,
+            month,
+            turnNumber,
+            phase,
+            newDate.phaseText,
+        )
     }
 
     private fun onFlushFailure(generation: Long, payload: FlushPayload, error: Exception) {

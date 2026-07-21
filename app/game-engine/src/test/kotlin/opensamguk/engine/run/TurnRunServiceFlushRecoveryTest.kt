@@ -37,6 +37,11 @@ import kotlin.test.assertTrue
  */
 class TurnRunServiceFlushRecoveryTest {
 
+    private data class Fixture(
+        val service: TurnRunService,
+        val world: InMemoryTurnWorld,
+    )
+
     @Test
     fun `stale CAS flush enters RELOAD_REQUIRED and blocks intake and tick`() {
         val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
@@ -44,7 +49,8 @@ class TurnRunServiceFlushRecoveryTest {
                 throw StaleWorldWriterException(1, 0L, 1L)
             }
         }
-        val service = newService(flush)
+        val (service, world) = newFixture(flush)
+        val t0 = Instant.parse("0200-01-01T00:00:00Z")
         val runTime = Instant.parse("0200-01-01T01:00:00Z")
 
         assertFailsWith<StaleWorldWriterException> { service.runTick(runTime) }
@@ -53,6 +59,8 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, snap.mode)
         assertFalse(snap.ready)
         assertFalse(service.recoveryGate().allowsIntakeOrTick())
+        // Memory must stay pre-tick on failed flush (no clock advance).
+        assertEquals(t0, world.getState().lastTurnTime)
 
         assertFailsWith<IllegalStateException> { service.runIntakeCommands(1) }
         assertFailsWith<IllegalStateException> { service.runTick(runTime.plusSeconds(3600)) }
@@ -68,7 +76,8 @@ class TurnRunServiceFlushRecoveryTest {
                 }
             }
         }
-        val service = newService(flush)
+        val (service, world) = newFixture(flush)
+        val t0 = Instant.parse("0200-01-01T00:00:00Z")
         val runTime = Instant.parse("0200-01-01T01:00:00Z")
 
         assertFailsWith<QueryTimeoutException> { service.runTick(runTime) }
@@ -76,6 +85,8 @@ class TurnRunServiceFlushRecoveryTest {
         val afterFail = service.recoverySnapshot()
         assertEquals(FlushRecoveryGate.Mode.FLUSH_RETRY, afterFail.mode)
         assertTrue(afterFail.hasRetainedPayload)
+        // Still pre-tick until retry commits.
+        assertEquals(t0, world.getState().lastTurnTime)
         assertFailsWith<IllegalStateException> { service.runIntakeCommands(1) }
         assertFailsWith<IllegalStateException> { service.runTick(runTime.plusSeconds(1)) }
 
@@ -84,7 +95,9 @@ class TurnRunServiceFlushRecoveryTest {
         assertEquals(FlushRecoveryGate.Mode.READY, service.recoveryGate().mode())
         assertEquals(2, calls.get())
 
-        // Intake allowed again (empty redis stream may NPE — use gate only)
+        // After successful FLUSH_RETRY, memory clock matches committed tick payload.
+        assertEquals(runTime, world.getState().lastTurnTime, "lastTurnTime must advance to runTime after retry")
+        assertEquals(runTime.plusSeconds(3600), service.nextRunTime(), "next due is runTime+tickSeconds")
         assertTrue(service.recoveryGate().allowsIntakeOrTick())
     }
 
@@ -95,15 +108,17 @@ class TurnRunServiceFlushRecoveryTest {
                 throw StaleWorldWriterException(1, 5L, 9L)
             }
         }
-        val service = newService(flush)
+        val (service, world) = newFixture(flush)
+        val t0 = Instant.parse("0200-01-01T00:00:00Z")
         assertFailsWith<StaleWorldWriterException> {
             service.runTick(Instant.parse("0200-01-01T01:00:00Z"))
         }
         assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, service.recoveryGate().mode())
+        assertEquals(t0, world.getState().lastTurnTime)
         assertFailsWith<IllegalStateException> { service.retryRetainedFlush() }
     }
 
-    private fun newService(flush: JdbcFlushExecutor): TurnRunService {
+    private fun newFixture(flush: JdbcFlushExecutor): Fixture {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state = TurnWorldState(
@@ -114,6 +129,10 @@ class TurnRunServiceFlushRecoveryTest {
                     lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
                     worldVersion = 0L,
                     writerEpoch = 1L,
+                    meta = mapOf(
+                        "startYear" to 200,
+                        "startTime" to "0200-01-01T00:00:00Z",
+                    ),
                 ),
                 worldId = WorldId(1),
             ),
@@ -129,7 +148,7 @@ class TurnRunServiceFlushRecoveryTest {
         val emptyStream = object : RedisCommandStream(redis, "che:test", WorldId(1), startId = "0") {
             override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()
         }
-        return TurnRunService(
+        val service = TurnRunService(
             world = world,
             commandStream = emptyStream,
             lifecycle = lifecycle,
@@ -137,6 +156,7 @@ class TurnRunServiceFlushRecoveryTest {
             flushExecutor = flush,
             realtimePublisher = RealtimePublisher(redis, "che:test", WorldId(1)),
         )
+        return Fixture(service, world)
     }
 
     private fun dummyJdbc(): NamedParameterJdbcTemplate =

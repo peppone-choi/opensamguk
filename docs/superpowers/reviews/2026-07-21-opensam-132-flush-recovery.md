@@ -33,3 +33,10 @@
 ## Verdict
 
 **cleared** — recovery stops real intake/tick; FLUSH_RETRY resume is wired and tested; RELOAD is fail-closed without same-payload retry.
+
+
+## Follow-up (same day) — FLUSH_RETRY memory clock
+
+- **Bug:** successful `retryRetainedFlush` after a failed `runTick` advanced DB but left in-memory `lastTurnTime` pre-tick → `nextRunTime` stayed due.
+- **Fix:** `applyCommittedWorldClockFromPayload` on successful retry (and shared by runTick step-4).
+- **Test:** `TurnRunServiceFlushRecoveryTest` asserts `lastTurnTime == runTime` and `nextRunTime == runTime+tickSeconds` after retry.
