@@ -21,3 +21,7 @@
 
 - prod deploy/cutover/W3 activation without gates
 - co-widen JdbcFlushExecutor without sequential handoff
+
+## B2 handoff (2026-07-21)
+- B2 S3-T1..T3 landed or landing on main (130–132).
+- Next CQRS priority: S4 inbox authority / outbox (plan ARCH-S4), not activation.

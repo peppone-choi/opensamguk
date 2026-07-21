@@ -1,6 +1,9 @@
 package opensamguk.engine.run
 
 import opensamguk.engine.flush.DeltaGenerationSession
+import opensamguk.engine.flush.FlushRecoveryGate
+import opensamguk.engine.flush.FlushRecoveryGateProvider
+import opensamguk.infra.persistence.StaleWorldWriterException
 
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.auction.AuctionExpiryDaemon
@@ -120,10 +123,20 @@ open class TurnRunService(
     private val processNationCommand: ProcessNationCommand? = null,
     /** OPENSAM-130 generation session shared with [handler.recorder]. */
     private val generationSession: DeltaGenerationSession = DeltaGenerationSession(),
+    /** OPENSAM-132 recovery safety gate (blocks intake/tick while not READY). */
+    private val recoveryGate: FlushRecoveryGate = FlushRecoveryGate(),
+    /** Optional Spring binder so readiness health sees the live gate. */
+    private val recoveryGateProvider: FlushRecoveryGateProvider? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
+        recoveryGateProvider?.bind(recoveryGate)
     }
+
+    /** OPENSAM-132: non-sensitive recovery snapshot for status/health. */
+    fun recoverySnapshot(): FlushRecoveryGate.Snapshot = recoveryGate.snapshot()
+
+    fun recoveryGate(): FlushRecoveryGate = recoveryGate
 
 
     /**
@@ -198,6 +211,7 @@ open class TurnRunService(
     }
 
     open fun runIntakeCommands(blockMs: Long = 1): Int {
+        recoveryGate.requireIntakeOrTickAllowed("intake")
         val envelopes = commandStream.readEnvelopes(blockMs)
         if (envelopes.isEmpty()) return 0
 
@@ -223,6 +237,7 @@ open class TurnRunService(
     }
 
     open fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
+        recoveryGate.requireIntakeOrTickAllowed("tick")
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
         //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
@@ -389,9 +404,53 @@ open class TurnRunService(
             if (payload.worldStateUpdate.containsKey("expected_world_version")) {
                 world.advanceWorldVersionAfterCommit()
             }
+            if (recoveryGate.mode() != FlushRecoveryGate.Mode.READY) {
+                recoveryGate.markRecovered()
+            }
         } catch (e: Exception) {
             generationSession.abort(generation)
+            onFlushFailure(generation, payload, e)
             throw e
+        }
+    }
+
+    /**
+     * OPENSAM-132: same-generation retry of a retained FLUSH_RETRY payload.
+     * Does not admit new intake/tick deltas — reuses the frozen batch only.
+     */
+    fun retryRetainedFlush(): Boolean {
+        check(recoveryGate.mode() == FlushRecoveryGate.Mode.FLUSH_RETRY) {
+            "retryRetainedFlush only legal in FLUSH_RETRY, mode=${recoveryGate.mode()}"
+        }
+        val payload = recoveryGate.retainedPayload()
+            ?: error("FLUSH_RETRY without retained payload")
+        flushWithGeneration(payload)
+        return recoveryGate.isReady()
+    }
+
+    private fun onFlushFailure(generation: Long, payload: FlushPayload, error: Exception) {
+        val mode = FlushRecoveryGate.classify(error)
+        val reason = "${error::class.simpleName}: ${error.message}"
+        when (mode) {
+            FlushRecoveryGate.Mode.FLUSH_RETRY ->
+                recoveryGate.enterFlushRetry(
+                    worldId = payload.worldId.value,
+                    generation = generation,
+                    payload = payload,
+                    reason = reason,
+                )
+            FlushRecoveryGate.Mode.RELOAD_REQUIRED ->
+                recoveryGate.enterReloadRequired(
+                    worldId = payload.worldId.value,
+                    generation = generation,
+                    reason = reason,
+                )
+            FlushRecoveryGate.Mode.READY ->
+                recoveryGate.enterReloadRequired(
+                    worldId = payload.worldId.value,
+                    generation = generation,
+                    reason = "unexpected READY classify: $reason",
+                )
         }
     }
 

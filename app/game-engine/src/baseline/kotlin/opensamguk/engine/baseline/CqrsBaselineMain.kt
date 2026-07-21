@@ -934,9 +934,9 @@ private object LoaderInputObservation {
     private val definitions = listOf(
         LoaderInputObservationDefinition(
             "worldState",
-            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time FROM world_state WHERE id = ?",
-            listOf("id", "current_year", "current_month", "current_phase", "tick_seconds", "isunited", "status", "meta", "config", "start_time"),
-            listOf("id", "current_year", "current_month", "current_phase", "tick_seconds", "isunited", "status", "meta", "config", "start_time"),
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time, world_version, writer_epoch FROM world_state WHERE id = ?",
+            listOf("id", "current_year", "current_month", "current_phase", "tick_seconds", "isunited", "status", "meta", "config", "start_time", "world_version", "writer_epoch"),
+            listOf("id", "current_year", "current_month", "current_phase", "tick_seconds", "isunited", "status", "meta", "config", "start_time", "world_version", "writer_epoch"),
             inventorySource = WORLD_STATE_INVENTORY_SOURCE,
         ),
         LoaderInputObservationDefinition(
