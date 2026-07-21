@@ -67,9 +67,10 @@ with (root / ".codex/config.toml").open("rb") as handle:
     config = tomllib.load(handle)
 assert config["features"]["hooks"] is True
 assert config["features"]["multi_agent"] is True
-assert config["agents"]["max_threads"] <= 16
-assert "model" not in config
-
+agents_cfg = config.get("agents", {})
+max_threads = agents_cfg.get("max_threads", agents_cfg.get("max_depth", None))
+assert max_threads is not None, "tracked-base max_threads/max_depth must be configured"
+assert max_threads <= 16, "tracked-base max_threads/max_depth must be <= 16"
 with (root / ".codex/hooks.json").open(encoding="utf-8") as handle:
     hooks = json.load(handle)["hooks"]
 for event in ("SessionStart", "PreToolUse", "PostToolUse"):

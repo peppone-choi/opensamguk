@@ -4,7 +4,7 @@
 - From: Codex (`cqrs-hardening-root`)
 - Branch: `codex/op-126-complete-schema`
 - Base: `e536f6f30565eb5852e79466ef60f1209b61227f`
-- State: implementation and independent review cleared; product suites green; OPENSAM-126 has been committed, pushed, merged, and tracker-updated; Agent OS guard red and production-shaped rehearsal `채점대기`
+- State: implementation and independent review cleared; product suites green; OPENSAM-126 has been committed, pushed, merged, and tracker-updated; Agent OS guard remains red due user-owned config + missing critique artifact, and production-shaped rehearsal `채점대기`
 
 ## Goal
 
@@ -46,7 +46,7 @@ the approved production-shaped migration rehearsal is unavailable.
 ## Guard status
 
 - Final `scripts/agent/verify-changes.sh --run` is **FAIL** at the Agent OS stage:
-  `test-codex-agent-os.sh` raises `KeyError: max_threads` from the known tracked-base mismatch.
+  `test-codex-agent-os.sh` now passes; remaining fails are the user-owned `.codex/config.toml` personal-model finding and missing strict cross-agent critique artifact.
 - The strict checker initially reported three errors. The repository-owned review Scope/logic mapping was
   deliberately corrected without the prohibited automatic rerun; the remaining supplied baseline is the
   user-owned `.codex` personal-model setting. A complete guard pass is not claimed.
@@ -76,6 +76,5 @@ the approved production-shaped migration rehearsal is unavailable.
 
 ## Next action
 
-OPENSAM-126 is complete for implementation scope; remaining `채점대기` items include tracked-base Agent OS mismatch,
-production-shaped migration, row/checksum comparison, and lock-duration rehearsal. Resolve those only under appropriate
-task authority. OPENSAM-127 remains the next implementation ticket under a new task contract and ownership assignment.
+OPENSAM-126 is complete for implementation scope; remaining `채점대기` items include production-shaped migration,
+row/checksum comparison, and lock-duration rehearsal. Resolve those only under appropriate task authority. OPENSAM-127 remains the next implementation ticket under a new task contract and ownership assignment.

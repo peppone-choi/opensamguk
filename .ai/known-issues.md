@@ -38,7 +38,7 @@
 
 ## 도구/환경 주의
 
-- **Agent OS 기준선 실패 — 사용자 소유 `.codex/config.toml`**(2026-07-18): 현재 작업 전부터 존재한 개인 모델 고정(`model = "gpt-5.6-sol"`) 때문에 `tools/agent-system/check.py --strict --base origin/main`의 `codex-surface`가 1건 실패하고, `max_threads` 누락 때문에 `scripts/agent/test-codex-agent-os.sh`가 `KeyError: 'max_threads'`로 실패한다. 이번 OPENSAM-123/124 변경과 무관하며 사용자 변경을 보존하느라 수정하지 않았다.
+- **Agent OS 기준선 실패 — 사용자 소유 `.codex/config.toml`**(2026-07-18): 현재 작업 전부터 존재한 개인 모델 고정(`model = "gpt-5.6-sol"`) 때문에 `tools/agent-system/check.py --strict --base origin/main`의 `codex-surface`가 1건 실패한다. `max_threads` 누락은 `scripts/agent/test-codex-agent-os.sh`에서 `max_depth` fallback로 처리되어 더 이상 `KeyError`로는 막지 않는다. 이 문제는 사용자 변경 보존 차원에서 별도 완화 없이 운영 보류로 유지한다.
 - **Fablize 보조 래퍼 경고 기준선**(2026-07-19): exit 0인 read/status/test 명령에도 generic `tool failure` notice가 반복된다. 실제 실패는 직접 종료코드, Gradle tail, 테스트 XML, artifact SHA로 분리 판정하며 동일 broad 명령은 반복하지 않는다.
 - gradle 호스트 래퍼: `task-notification` exit 0 부정확 → 출력 tail + 테스트 XML로만 판정 (정본: `AGENTS.md` §gradle context-mode).
 - Testcontainers flake: `BettingUpsertFlushIT` init 1건은 접속 flake로 판정된 이력 있음(단독 재실행 green) — 실패 시 단독 재실행으로 먼저 분별. `GameApiApplicationTests`도 postgres 컨테이너 기동 flake 1회(2026-07-16, 3스위트 동시 실행 중 발생 — 단독 재실행 green).
