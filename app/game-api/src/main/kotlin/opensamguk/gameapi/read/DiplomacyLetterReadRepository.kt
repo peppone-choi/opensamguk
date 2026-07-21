@@ -5,22 +5,21 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import org.springframework.stereotype.Repository
 import java.time.Instant
+import org.springframework.data.repository.Repository as SpringDataRepository
 
-/**
- * F4 READ-only JPA mapping of the `diplomacy_letter` row (V1 baseline) for the 외교부 letters page.
- *
- * game-api ONLY (§7); never written here. The letter state enum is
- * `diplomacy_letter_state { PROPOSED, ACTIVATED, CANCELLED, REPLACED }` — mapped as the raw text and
- * rendered through [F4StateText.letterStateText] (verbatim 제안됨/승인됨/거부됨/대체됨).
- */
 @Entity
 @Table(name = "diplomacy_letter")
 class DiplomacyLetterReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "src_nation_id")
     var srcNationId: Int = 0,
@@ -54,7 +53,27 @@ class DiplomacyLetterReadEntity(
     var aux: Map<String, Any?> = linkedMapOf(),
 )
 
-interface DiplomacyLetterReadRepository : JpaRepository<DiplomacyLetterReadEntity, Int> {
-    /** Letters where the nation is the source OR destination (the nation's full letter feed), newest last. */
-    fun findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(srcNationId: Int, destNationId: Int): List<DiplomacyLetterReadEntity>
+interface DiplomacyLetterReadRawRepository : SpringDataRepository<DiplomacyLetterReadEntity, Int> {
+    fun findByWorldIdAndSrcNationIdOrWorldIdAndDestNationIdOrderByDateAscIdAsc(
+        worldId: Int,
+        srcNationId: Int,
+        worldId2: Int,
+        destNationId: Int,
+    ): List<DiplomacyLetterReadEntity>
+}
+
+@Repository
+class DiplomacyLetterReadRepository(
+    private val raw: DiplomacyLetterReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findBySrcNationIdOrDestNationIdOrderByDateAscIdAsc(
+        srcNationId: Int,
+        destNationId: Int,
+    ): List<DiplomacyLetterReadEntity> =
+        raw.findByWorldIdAndSrcNationIdOrWorldIdAndDestNationIdOrderByDateAscIdAsc(
+            worldId.value, srcNationId, worldId.value, destNationId,
+        )
 }

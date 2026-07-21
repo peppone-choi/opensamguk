@@ -21,6 +21,17 @@ class WorldScopedReadRepositoryArchitectureTest {
             "LogFeedReadRepository.kt" to "LogFeedReadRawRepository",
             "GameKvReadRepository.kt" to "GameKvReadRawRepository",
             "WorldStateReadRepository.kt" to "WorldStateReadRawRepository",
+            "HistoryReadRepository.kt" to "HistoryReadRawRepository",
+            "TroopReadRepository.kt" to "TroopReadRawRepository",
+            "GeneralAccessLogReadRepository.kt" to "GeneralAccessLogReadRawRepository",
+            "WorldLogReadRepository.kt" to "WorldLogReadRawRepository",
+            "NationLogReadRepository.kt" to "NationLogReadRawRepository",
+            "AdminGeneralLogReadRepository.kt" to "AdminGeneralLogReadRawRepository",
+            "DiplomacyLetterReadRepository.kt" to "DiplomacyLetterReadRawRepository",
+            "BoardReadRepository.kt" to "BoardPostReadRawRepository",
+            "RankingExtraReadRepository.kt" to "HallReadRawRepository",
+            "VoteReadRepository.kt" to "VotePollReadRawRepository",
+            "NationEnvReadRepository.kt" to "NationEnvReadRawRepository",
         )
 
         repositories.forEach { (fileName, rawName) ->
@@ -34,12 +45,10 @@ class WorldScopedReadRepositoryArchitectureTest {
             assertTrue(source.contains("interface $rawName"), fileName)
             val rawSection = source.substringAfter("interface $rawName")
                 .substringBefore("\n@Repository")
-            val funs = rawSection.lineSequence()
-                .map { it.trim() }
-                .filter { it.startsWith("fun ") }
-                .toList()
-            assertTrue(funs.isNotEmpty(), "$fileName raw has methods")
-            // WorldState anchors on PK=id==world_id; facade filters. Others require worldId args.
+            // Collapse multiline signatures so worldId on next lines still counts.
+            val collapsed = rawSection.replace(Regex("""\s+"""), " ")
+            val funs = Regex("""fun \w+\([^)]*\)""").findAll(collapsed).map { it.value }.toList()
+            assertTrue(funs.isNotEmpty(), "$fileName raw has methods: ${rawSection.take(200)}")
             if (fileName != "WorldStateReadRepository.kt") {
                 assertTrue(
                     funs.all { it.contains("WorldId") || it.contains("worldId") },

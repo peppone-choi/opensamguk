@@ -4,23 +4,21 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import org.springframework.stereotype.Repository
 import java.time.Instant
+import org.springframework.data.repository.Repository as SpringDataRepository
 
-/**
- * F4 READ-only JPA mapping of the `board_post` / `board_comment` rows (V1 baseline) for the
- * 회의실 / 기밀실 page.
- *
- * Both tables EXIST but carry ZERO rows in the fresh scenario_1010 seed — the controller returns an
- * empty articles list gracefully (200, no fabrication). The `is_secret` flag splits 회의실(false) /
- * 기밀실(true). game-api ONLY (§7); never written here (board posts are intake, deferred past F4).
- */
 @Entity
 @Table(name = "board_post")
 class BoardPostReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "nation_id")
     var nationId: Int = 0,
@@ -51,6 +49,9 @@ class BoardCommentReadEntity(
     @Column(name = "id")
     var id: Int = 0,
 
+    @Column(name = "world_id")
+    var worldId: Int = 0,
+
     @Column(name = "post_id")
     var postId: Int = 0,
 
@@ -73,15 +74,42 @@ class BoardCommentReadEntity(
     var createdAt: Instant = Instant.EPOCH,
 )
 
-interface BoardPostReadRepository : JpaRepository<BoardPostReadEntity, Int> {
-    /** Posts for a nation at a given secrecy tier, newest first. */
-    fun findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(nationId: Int, isSecret: Boolean): List<BoardPostReadEntity>
-
-    /** All posts at a given secrecy tier (no nation scope; for an anonymous/global read), newest first. */
-    fun findByIsSecretOrderByCreatedAtDescIdDesc(isSecret: Boolean): List<BoardPostReadEntity>
+interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity, Int> {
+    fun findByWorldIdAndNationIdAndIsSecretOrderByCreatedAtDescIdDesc(
+        worldId: Int, nationId: Int, isSecret: Boolean,
+    ): List<BoardPostReadEntity>
+    fun findByWorldIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId: Int, isSecret: Boolean): List<BoardPostReadEntity>
+    fun findByWorldIdAndId(worldId: Int, id: Int): BoardPostReadEntity?
 }
 
-interface BoardCommentReadRepository : JpaRepository<BoardCommentReadEntity, Int> {
-    /** Comments for a post, oldest first (chronological thread order). */
-    fun findByPostIdOrderByCreatedAtAscIdAsc(postId: Int): List<BoardCommentReadEntity>
+@Repository
+class BoardPostReadRepository(
+    private val raw: BoardPostReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(nationId: Int, isSecret: Boolean): List<BoardPostReadEntity> =
+        raw.findByWorldIdAndNationIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId.value, nationId, isSecret)
+
+    fun findByIsSecretOrderByCreatedAtDescIdDesc(isSecret: Boolean): List<BoardPostReadEntity> =
+        raw.findByWorldIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId.value, isSecret)
+
+    fun findById(id: Int): java.util.Optional<BoardPostReadEntity> =
+        java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
+}
+
+interface BoardCommentReadRawRepository : SpringDataRepository<BoardCommentReadEntity, Int> {
+    fun findByWorldIdAndPostIdOrderByCreatedAtAscIdAsc(worldId: Int, postId: Int): List<BoardCommentReadEntity>
+}
+
+@Repository
+class BoardCommentReadRepository(
+    private val raw: BoardCommentReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findByPostIdOrderByCreatedAtAscIdAsc(postId: Int): List<BoardCommentReadEntity> =
+        raw.findByWorldIdAndPostIdOrderByCreatedAtAscIdAsc(worldId.value, postId)
 }

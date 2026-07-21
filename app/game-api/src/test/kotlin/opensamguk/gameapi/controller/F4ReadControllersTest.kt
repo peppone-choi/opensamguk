@@ -724,9 +724,9 @@ class F4ReadControllersTest {
         `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
         `when`(nationEnv.findByNamespaceAndKey(1, "npc_nation_policy")).thenReturn(
             NationEnvEntity(
-                1,
-                "npc_nation_policy",
-                """{"values":{"minNPCWarLeadership":55},"priority":["천도"],"valueSetter":"순욱","valueSetTime":"2026-07-10T01:02:03Z"}""",
+                namespace = 1,
+                key = "npc_nation_policy",
+                value = """{"values":{"minNPCWarLeadership":55},"priority":["천도"],"valueSetter":"순욱","valueSetTime":"2026-07-10T01:02:03Z"}""",
             ),
         )
 

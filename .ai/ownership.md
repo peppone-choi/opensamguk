@@ -98,3 +98,5 @@
 4. 병렬화는 독립 조사·테스트·리뷰·문서화·disjoint 파일 구현에만.
 5. stale 판정: `Updated at`이 오래됐고 해당 branch/worktree에 활동이 없으면(커밋/파일 mtime), 사람 확인 후 행을 해제한다. 죽은 에이전트 워크트리 회수 절차는 `docs/superpowers/SESSION_HANDOFF.md` 이력 참조.
 6. 표에 없는 공유 파일 수정은 반드시 사전 조정하고, ownership 행을 갱신한 뒤 시작한다.
+
+| `op127-residual-reads` | remaining GWT world-owned read facades | `codex/op-127-residual-reads` | — | completed — history/board/vote/troop/hall/diplo letter/access/log/nation_env process-world scoped | 2026-07-21 |

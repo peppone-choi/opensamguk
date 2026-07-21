@@ -5,25 +5,23 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
 import java.time.Instant
+import org.springframework.data.repository.Repository as SpringDataRepository
 
-/**
- * F4 READ-only JPA mapping of the `vote_poll` / `vote` / `vote_comment` rows (V1 baseline) for the
- * 설문 조사 page.
- *
- * All three tables EXIST but carry ZERO rows in the fresh scenario_1010 seed — the list/detail
- * controllers return empty gracefully (200, no fabrication). `options` is a jsonb list; `selection`
- * a jsonb list of chosen option indices. game-api ONLY (§7); never written here.
- */
 @Entity
 @Table(name = "vote_poll")
 class VotePollReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "title")
     var title: String = "",
@@ -64,6 +62,9 @@ class VoteReadEntity(
     @Column(name = "id")
     var id: Int = 0,
 
+    @Column(name = "world_id")
+    var worldId: Int = 0,
+
     @Column(name = "vote_id")
     var voteId: Int = 0,
 
@@ -84,6 +85,9 @@ class VoteCommentReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "vote_id")
     var voteId: Int = 0,
@@ -107,42 +111,60 @@ class VoteCommentReadEntity(
     var createdAt: Instant = Instant.EPOCH,
 )
 
-interface VotePollReadRepository : JpaRepository<VotePollReadEntity, Int> {
-    /** All polls, newest first. */
-    fun findAllByOrderByIdDesc(): List<VotePollReadEntity>
+interface VotePollReadRawRepository : SpringDataRepository<VotePollReadEntity, Int> {
+    fun findByWorldIdOrderByIdDesc(worldId: Int): List<VotePollReadEntity>
+    fun findFirstByWorldIdOrderByIdDesc(worldId: Int): VotePollReadEntity?
+    fun findByWorldIdAndId(worldId: Int, id: Int): VotePollReadEntity?
 
-    /**
-     * W0-2(P1-002) — 마지막 설문 폴 1행. PHP의 game_env.lastVote(마지막 설문 id) 대체 원천:
-     * vote_poll이 opensamguk 설문 정본([countOpenPolls] 주석의 기존 대체 규약과 동일). 0행 → null.
-     */
-    fun findFirstByOrderByIdDesc(): VotePollReadEntity?
-
-    /**
-     * W3 FrontGlobalInfo `vote` 게이트 — 아직 열려있는(미종료, 미만료) 설문 폴 수.
-     * PHP는 game_env.lastVote가 가리키는 폴의 `endDate < now`를 검사한다(GetFrontInfo.php:182-189).
-     * opensamguk엔 game_env.lastVote가 채워지지 않으므로(§2) 대체로 `closed_at IS NULL` AND
-     * (`end_at IS NULL` OR `end_at > now`)인 폴 존재 여부로 진행중 설문을 판단한다. 폴이 0행인
-     * scenario_1010 시드에선 항상 0(false)이라 날조가 아니다. OR 우선순위 모호성을 피해 명시 JPQL 사용.
-     */
     @Query(
         "select count(p) from VotePollReadEntity p " +
-            "where p.closedAt is null and (p.endAt is null or p.endAt > :now)",
+            "where p.worldId = :worldId and p.closedAt is null and (p.endAt is null or p.endAt > :now)",
     )
-    fun countOpenPolls(@Param("now") now: Instant): Long
+    fun countOpenPolls(@Param("worldId") worldId: Int, @Param("now") now: Instant): Long
 }
 
-interface VoteReadRepository : JpaRepository<VoteReadEntity, Int> {
-    /** All cast votes for a poll. */
-    fun findByVoteId(voteId: Int): List<VoteReadEntity>
+@Repository
+class VotePollReadRepository(
+    private val raw: VotePollReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
 
-    /**
-     * W0-2(P1-002) — 호출 장수의 마지막 투표 행(PHP GetFrontInfo.php:578
-     * `SELECT vote_id FROM vote WHERE general_id = %i ORDER BY vote_id DESC LIMIT 1`). 없으면 null.
-     */
-    fun findFirstByGeneralIdOrderByVoteIdDesc(generalId: Int): VoteReadEntity?
+    fun findAllByOrderByIdDesc(): List<VotePollReadEntity> = raw.findByWorldIdOrderByIdDesc(worldId.value)
+    fun findFirstByOrderByIdDesc(): VotePollReadEntity? = raw.findFirstByWorldIdOrderByIdDesc(worldId.value)
+    fun findById(id: Int): java.util.Optional<VotePollReadEntity> =
+        java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
+    fun countOpenPolls(now: Instant): Long = raw.countOpenPolls(worldId.value, now)
 }
 
-interface VoteCommentReadRepository : JpaRepository<VoteCommentReadEntity, Int> {
-    /** Comments for a poll, oldest first. */
-    fun findByVoteIdOrderByCreatedAtAscIdAsc(voteId: Int): List<VoteCommentReadEntity>
+interface VoteReadRawRepository : SpringDataRepository<VoteReadEntity, Int> {
+    fun findByWorldIdAndVoteId(worldId: Int, voteId: Int): List<VoteReadEntity>
+    fun findFirstByWorldIdAndGeneralIdOrderByVoteIdDesc(worldId: Int, generalId: Int): VoteReadEntity?
+}
+
+@Repository
+class VoteReadRepository(
+    private val raw: VoteReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findByVoteId(voteId: Int): List<VoteReadEntity> = raw.findByWorldIdAndVoteId(worldId.value, voteId)
+    fun findFirstByGeneralIdOrderByVoteIdDesc(generalId: Int): VoteReadEntity? =
+        raw.findFirstByWorldIdAndGeneralIdOrderByVoteIdDesc(worldId.value, generalId)
+}
+
+interface VoteCommentReadRawRepository : SpringDataRepository<VoteCommentReadEntity, Int> {
+    fun findByWorldIdAndVoteIdOrderByCreatedAtAscIdAsc(worldId: Int, voteId: Int): List<VoteCommentReadEntity>
+}
+
+@Repository
+class VoteCommentReadRepository(
+    private val raw: VoteCommentReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findByVoteIdOrderByCreatedAtAscIdAsc(voteId: Int): List<VoteCommentReadEntity> =
+        raw.findByWorldIdAndVoteIdOrderByCreatedAtAscIdAsc(worldId.value, voteId)
 }

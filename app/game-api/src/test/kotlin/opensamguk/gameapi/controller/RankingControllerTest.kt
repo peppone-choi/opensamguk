@@ -371,8 +371,8 @@ class RankingControllerTest {
         `when`(generals.findAll()).thenReturn(listOf(gen(1, "유비"), gen(2, "관우")))
         `when`(accessLogs.findAll()).thenReturn(
             listOf(
-                GeneralAccessLogReadEntity(1, 1, 7, Instant.parse("2026-01-01T00:00:00Z"), 12, 20, 3, 30),
-                GeneralAccessLogReadEntity(2, 2, 8, Instant.parse("2026-01-01T00:01:00Z"), 5, 10, 1, 10),
+                GeneralAccessLogReadEntity(id = 1, generalId = 1, userId = 7, lastRefresh = Instant.parse("2026-01-01T00:00:00Z"), refresh = 12, refreshTotal = 20, refreshScore = 3, refreshScoreTotal = 30),
+                GeneralAccessLogReadEntity(id = 2, generalId = 2, userId = 8, lastRefresh = Instant.parse("2026-01-01T00:01:00Z"), refresh = 5, refreshTotal = 10, refreshScore = 1, refreshScoreTotal = 10),
             ),
         )
         `when`(worldStates.findById(1)).thenReturn(
