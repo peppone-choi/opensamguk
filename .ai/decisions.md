@@ -129,6 +129,16 @@
 
 ## 템플릿
 
+## ADR-LITE-016 Strict V31 and runtime scoping land as one unmerged stack
+
+- Date: 2026-07-20
+- Status: approved
+- Decision: V31의 `world_id NOT NULL`, scoped unique/FK, legacy turn unique 제거를 완화하지 않는다. V31이 요구하는 OPENSAM-127 loader/query/reservation scoping과 OPENSAM-128 `JdbcFlushExecutor` create/update/delete scoping을 같은 미머지 브랜치 스택에서 먼저 완성하고, 해당 런타임·동시성 게이트가 green이 되기 전에는 V31을 commit/push/merge/deploy하지 않는다.
+- Context: V31 집중 migration/importer 테스트 17건은 green이었지만 독립 검토의 실제 PostgreSQL 실행에서 기존 flush writer와 reserved-turn upsert가 strict schema와 호환되지 않아 실패했다. nullable 호환 expand는 이 문제를 뒤로 미루는 대안이지만 사용자는 권장안인 architecture-honest stacked completion을 선택했다.
+- Constraints: 두 번째 world admission, production migration/cutover, main push/deploy는 여전히 금지한다. 이번 스택은 V31의 현재 scoped cohort와 그 실제 runtime 경로를 먼저 일관되게 만들며, 전체 S2-T2/T3 완료 주장은 각 티켓의 전 world-owned SQL/Redis AC가 별도로 충족된 뒤에만 가능하다.
+- Consequences: 공유 flush substrate는 OPENSAM-128 구현자가 단일 소유하고, OPENSAM-127의 key contract를 선행 또는 동일 순차 레인에서 소비한다. 독립 리뷰의 V31 relation-lock, importer admission/transaction, non-1 propagation, post-DDL rollback 테스트 지적도 같은 스택에서 해소한다.
+- Approved by: 사용자 (2026-07-20, "권장 방향대로 계속.")
+
 ## ADR-LITE-014 W0 로컬 Docker 대체 측정과 GA-079 2단계 lifecycle
 
 - Date: 2026-07-19

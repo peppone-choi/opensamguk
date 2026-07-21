@@ -15,9 +15,11 @@ import opensamguk.engine.intake.BuildNationCandidateHandler
 import opensamguk.engine.intake.ClaimNpcHandler
 import opensamguk.engine.intake.MakeGeneralHandler
 import opensamguk.engine.intake.DiplomacyLetterHandler
+import opensamguk.engine.intake.DiplomaticMessageHandler
 import opensamguk.engine.intake.InheritResetHandler
 import opensamguk.engine.intake.InstantActionHandler
 import opensamguk.engine.intake.MessageHandler
+import opensamguk.engine.intake.MessageSnapshot
 import opensamguk.engine.intake.NationFinanceSetterHandler
 import opensamguk.engine.intake.NpcPolicyHandler
 import opensamguk.engine.intake.PersonnelHandler
@@ -31,6 +33,7 @@ import opensamguk.engine.tournament.ProductionTournamentBettingPort
 import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BettingRepository
@@ -108,6 +111,7 @@ class TurnDaemonCommandDispatcher(
      * null이면 PlaceBetHandler 기본(world meta `inheritancePrevious` 스냅샷)으로 폴백.
      */
     inheritanceRepository: InheritanceRepository? = null,
+    processNationCommand: ProcessNationCommand? = null,
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
@@ -250,31 +254,39 @@ class TurnDaemonCommandDispatcher(
     // contactReader가 있으면 삭제 게이트용 메시지 reader(getMessageByID)도 어댑트해 주입한다.
     // infra `MessageReadRow` → 엔진 [opensamguk.engine.intake.MessageSnapshot] 매핑은 여기서 담당한다
     // (DTO는 infra↔engine 모듈 사이클 회피를 위해 의도적으로 분리, VotePollReadRow→VotePollState 패턴).
-    private val message = MessageHandler(world, recorder, contactReader).apply {
-        if (contactReader != null) {
-            messageReader = { msgId ->
-                contactReader.findMessage(msgId)?.let { row ->
-                    opensamguk.engine.intake.MessageSnapshot(
-                        id = row.id,
-                        hasAction = row.hasAction,
-                        type = row.type,
-                        srcGeneralId = row.srcGeneralId,
-                        srcNationId = row.srcNationId,
-                        destGeneralId = row.destGeneralId,
-                        destNationId = row.destNationId,
-                        time = row.time,
-                        validUntil = row.validUntil,
-                        deletable = row.deletable,
-                        receiverMessageId = row.receiverMessageId,
-                        text = row.text,
-                        srcArray = row.srcArray,
-                        destArray = row.destArray,
-                        option = row.option,
-                    )
-                }
+    private val scopedMessageReader: ((Int) -> MessageSnapshot?)? = contactReader?.let { reader ->
+        { msgId ->
+            reader.findMessage(world.worldId, msgId)?.let { row ->
+                MessageSnapshot(
+                    id = row.id,
+                    mailbox = row.mailbox,
+                    hasAction = row.hasAction,
+                    type = row.type,
+                    srcGeneralId = row.srcGeneralId,
+                    srcNationId = row.srcNationId,
+                    destGeneralId = row.destGeneralId,
+                    destNationId = row.destNationId,
+                    time = row.time,
+                    validUntil = row.validUntil,
+                    deletable = row.deletable,
+                    receiverMessageId = row.receiverMessageId,
+                    text = row.text,
+                    srcArray = row.srcArray,
+                    destArray = row.destArray,
+                    option = row.option,
+                )
             }
         }
     }
+    private val message = MessageHandler(world, recorder, contactReader).apply {
+        messageReader = scopedMessageReader
+    }
+    private val diplomaticMessage = DiplomaticMessageHandler(
+        world = world,
+        recorder = recorder,
+        processNationCommand = processNationCommand,
+        messageReader = scopedMessageReader,
+    )
 
     // ── W6c 경매 개설 핸들러 (AuctionBidHandler와 동일 read repo 주입) ──
     private val auctionOpen = AuctionOpenHandler(world, recorder, auctionRepository, auctionBidRepository)
@@ -355,6 +367,8 @@ class TurnDaemonCommandDispatcher(
         // ── W6a 메시지 인테이크 바인딩 ──
         is TurnDaemonCommand.SendMessage -> message.handleSend(command)
         is TurnDaemonCommand.DeleteMessage -> message.handleDelete(command)
+        is TurnDaemonCommand.AcceptDiplomaticMessage -> diplomaticMessage.handleAccept(command)
+        is TurnDaemonCommand.DeclineDiplomaticMessage -> diplomaticMessage.handleDecline(command)
         // ── W6c 경매 개설 바인딩 ──
         is TurnDaemonCommand.AuctionOpenBuyRice -> auctionOpen.handleBuyRice(command)
         is TurnDaemonCommand.AuctionOpenSellRice -> auctionOpen.handleSellRice(command)

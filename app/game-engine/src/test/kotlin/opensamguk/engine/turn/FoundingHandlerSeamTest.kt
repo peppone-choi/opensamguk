@@ -106,6 +106,7 @@ class FoundingHandlerSeamTest {
             generals = listOf(actor()),
             cities = listOf(homeCity()),
             nations = listOf(existingNation(1), existingNation(2)),
+            worldId = opensamguk.common.world.WorldId((baseState()).id),
         ),
     )
 
@@ -237,6 +238,7 @@ class FoundingHandlerSeamTest {
                 ),
                 cities = listOf(homeCity().copy(nationId = 7, frontState = 1), homeCity(id = 6, name = "허창", level = 5).copy(nationId = 7, frontState = 3)),
                 nations = listOf(wanderingNation()),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val dispatched = mutableListOf<EventTarget>()
@@ -295,6 +297,7 @@ class FoundingHandlerSeamTest {
                 generals = listOf(wanderingLord().copy(userId = "55")),
                 cities = listOf(homeCity()),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -357,6 +360,7 @@ class FoundingHandlerSeamTest {
                     wanderingNation(gennum = 2),
                     existingNation(1),
                 ),
+                worldId = opensamguk.common.world.WorldId((baseState().copy(meta = linkedMapOf("init_year" to YEAR, "init_month" to MONTH))).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -387,6 +391,7 @@ class FoundingHandlerSeamTest {
                     wanderingNation(gennum = 2).copy(meta = mapOf("gennum" to 2, "init_year" to YEAR, "init_month" to MONTH)),
                     existingNation(1),
                 ),
+                worldId = opensamguk.common.world.WorldId((baseState().copy(meta = linkedMapOf("init_year" to YEAR - 1, "init_month" to MONTH))).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -412,6 +417,7 @@ class FoundingHandlerSeamTest {
                 generals = listOf(wanderingLord().copy(gold = 0)),
                 cities = listOf(homeCity(), homeCity(id = 6, name = "허창", level = 5)),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState().copy(meta = linkedMapOf("init_year" to YEAR, "init_month" to MONTH, "develcost" to 52))).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -445,6 +451,7 @@ class FoundingHandlerSeamTest {
                 ),
                 cities = listOf(homeCity()),
                 nations = listOf(wanderingNation(id = 7, name = "촉", gennum = 2).copy(level = 1)),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -482,6 +489,7 @@ class FoundingHandlerSeamTest {
                 generals = listOf(wanderingLord()),
                 cities = listOf(homeCity()),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -507,6 +515,7 @@ class FoundingHandlerSeamTest {
                 generals = listOf(wanderingLord().copy(userId = "55", npcState = 2)),
                 cities = listOf(homeCity()),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val npcHandler = handlerFor(npcWorld, scenario = 1010)
@@ -526,6 +535,7 @@ class FoundingHandlerSeamTest {
                 generals = listOf(wanderingLord().copy(userId = null, npcState = 0)),
                 cities = listOf(homeCity()),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val unownedHandler = handlerFor(unownedWorld, scenario = 1010)
@@ -551,6 +561,7 @@ class FoundingHandlerSeamTest {
                     homeCity(id = 5, name = "성도", level = 5).copy(conflict = "{\"1\":0.5}"),
                 ),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)
@@ -606,6 +617,14 @@ class FoundingHandlerSeamTest {
                 generals = listOf(lord, member(cityId = 99)),
                 cities = listOf(homeCity(id = 99, name = "임시", level = 3).copy(nationId = 7)),
                 nations = listOf(wanderingNation(gennum = 2), existingNation(1)),
+                worldId = opensamguk.common.world.WorldId((baseState().copy(
+                    meta = linkedMapOf(
+                        "minMonthToAllowInheritItem" to 0,
+                        "allItems" to linkedMapOf(
+                            "horse" to linkedMapOf("che_명마_15_적토마" to 1),
+                        ),
+                    ),
+                )).id),
             ),
         )
         val handler = handlerFor(world, scenario = 1010)

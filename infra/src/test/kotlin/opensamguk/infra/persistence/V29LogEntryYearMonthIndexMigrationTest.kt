@@ -19,7 +19,7 @@ class V29LogEntryYearMonthIndexMigrationTest {
             "Docker unavailable — V29 migration IT skipped",
         )
         withPostgres { postgres ->
-            migrateAll(postgres)
+            migrateTo29(postgres)
             val jdbc = JdbcTemplate(DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password))
 
             // CONCURRENTLY 빌드가 중단되면 INVALID 인덱스가 남는다 — 존재만이 아니라 유효성까지 검증.
@@ -57,7 +57,7 @@ class V29LogEntryYearMonthIndexMigrationTest {
             jdbc.execute("CREATE INDEX log_entry_year_month_idx ON log_entry (year, month, id)")
             jdbc.execute("UPDATE pg_index SET indisvalid = false WHERE indexrelid = 'log_entry_year_month_idx'::regclass")
 
-            migrateAll(postgres)
+            migrateTo29(postgres)
 
             val valid = jdbc.queryForObject(
                 "SELECT i.indisvalid FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE c.relname = 'log_entry_year_month_idx'",
@@ -84,11 +84,12 @@ class V29LogEntryYearMonthIndexMigrationTest {
         }
     }
 
-    private fun migrateAll(postgres: PostgreSQLContainer<*>) {
+    private fun migrateTo29(postgres: PostgreSQLContainer<*>) {
         Flyway.configure()
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
             .configuration(SESSION_LOCK_CONFIG)
+            .target(org.flywaydb.core.api.MigrationVersion.fromVersion("29"))
             .load()
             .migrate()
     }

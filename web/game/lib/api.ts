@@ -104,6 +104,11 @@ export interface CommandResultResolved {
 
 export type CommandResultResponse = CommandResultPending | CommandResultResolved;
 
+export interface DiplomaticMessageRequestAccepted {
+    readonly status: 'AVAILABLE';
+    readonly requestId: string;
+}
+
 export interface NationGeneralListEnv {
     year: number;
     month: number;
@@ -482,10 +487,10 @@ export const api = {
     mailboxUnread: <T>(mailbox: number) => get<T>(`/api/mailbox/${mailbox}/unread`),
     message: <T>(id: number) => get<T>(`/api/messages/${id}`),
     // Message accept/decline (game-api takes ?generalId= — pass the caller's own id).
-    messageAccept: <T>(id: number, generalId: number) =>
-        post<T>(`/api/messages/${id}/accept?generalId=${generalId}`, null),
-    messageDecline: <T>(id: number, generalId: number) =>
-        post<T>(`/api/messages/${id}/decline?generalId=${generalId}`, null),
+    messageAccept: (id: number, generalId: number) =>
+        post<DiplomaticMessageRequestAccepted>(`/api/messages/${id}/accept?generalId=${generalId}`, null),
+    messageDecline: (id: number, generalId: number) =>
+        post<DiplomaticMessageRequestAccepted>(`/api/messages/${id}/decline?generalId=${generalId}`, null),
     diplomacy: <T>() => get<T>('/api/diplomacy'),
 
     // B1 Join — 장수생성(재야 등록). 202=성공, 200 BLOCKED=deny.
@@ -758,3 +763,18 @@ export const api = {
         diplomacyAll: () => get<AdminDiplomacyAllResponse>('/api/admin/diplomacy-all'),
     },
 };
+
+const COMMAND_RESULT_POLL_ATTEMPTS = 20;
+const COMMAND_RESULT_POLL_INTERVAL_MS = 300;
+
+export async function pollCommandResult(requestId: string): Promise<CommandResultResolved | null> {
+    for (let attempt = 0; attempt < COMMAND_RESULT_POLL_ATTEMPTS; attempt += 1) {
+        await new Promise<void>(resolve => setTimeout(resolve, COMMAND_RESULT_POLL_INTERVAL_MS));
+        const result = await api.commandResult(requestId).catch(error => {
+            if (error instanceof Error) return null;
+            throw error;
+        });
+        if (result?.status === 'RESOLVED') return result;
+    }
+    return null;
+}

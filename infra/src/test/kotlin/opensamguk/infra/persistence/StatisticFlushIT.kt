@@ -83,7 +83,8 @@ class StatisticFlushIT {
             ),
         )
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 statisticInserts = listOf(
                     StatisticInsertRow(linkedMapOf(

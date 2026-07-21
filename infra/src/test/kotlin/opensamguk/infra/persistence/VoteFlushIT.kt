@@ -74,7 +74,8 @@ class VoteFlushIT {
     fun `vote_poll INSERT then vote and vote_comment INSERT then close UPDATE`() {
         // 1) 설문 개설 (INSERT-only, id 생략 → SERIAL). options는 jsonb 배열(인코딩된 문자열), end_at은 nullable.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 votePollInserts = listOf(
                     VotePollInsertRow(
@@ -107,7 +108,8 @@ class VoteFlushIT {
         // 2) 영속화된 설문에 대한 투표 — FK vote_id가 반드시 해소되어야 한다. selection은 jsonb(정렬된 인덱스).
         //    같은 (vote_id, general_id)를 두 번 INSERT해 insertIgnore(ON CONFLICT DO NOTHING) 멱등을 증명.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 voteInserts = listOf(
                     VoteInsertRow(linkedMapOf(
@@ -142,7 +144,8 @@ class VoteFlushIT {
 
         // 3) closeOldVote 명시 마감 — vote_poll UPDATE (end_at/closed_at/updated_at, 삽입 순서대로 SET).
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 votePollUpdates = linkedMapOf(
                     pollId to linkedMapOf<String, Any?>(
@@ -171,7 +174,8 @@ class VoteFlushIT {
 
         // 진행 중인 설문 — end_at은 now 이후(미만료). general 30은 미투표, general 31은 투표 완료로 셋업.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 votePollInserts = listOf(
                     VotePollInsertRow(linkedMapOf(
@@ -189,7 +193,8 @@ class VoteFlushIT {
             MapSqlParameterSource("t", "동맹 체결"), Int::class.java,
         )!!
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 voteInserts = listOf(VoteInsertRow(linkedMapOf(
                     "vote_id" to pollId, "general_id" to 31, "nation_id" to 2, "selection" to "[0]",
@@ -224,7 +229,8 @@ class VoteFlushIT {
 
         // closeOldVote 마감(closed_at) 후엔 now와 무관하게 expired = true.
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 votePollUpdates = linkedMapOf(
                     pollId to linkedMapOf<String, Any?>("closed_at" to "2026-06-03 05:00:00"),

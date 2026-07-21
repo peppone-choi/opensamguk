@@ -93,6 +93,7 @@ class ReservedTurnWarDrainTest {
             cities = listOf(city(id = 7, nationId = 1), defenderCity),
             nations = listOf(nation(id = 1, capital = 7), defenderNation),
             diplomacy = listOf(TurnDiplomacy(fromNationId = 1, toNationId = 2, state = 0, term = 0)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 

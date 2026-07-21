@@ -29,9 +29,13 @@ class TroopFlushIT {
 
     private fun ws() = linkedMapOf<String, Any?>("id" to 1, "current_year" to 200, "current_month" to 1)
     private fun nameOf(leader: Int): String? =
-        jdbc.queryForList("SELECT name FROM troop WHERE troop_leader = :id", MapSqlParameterSource("id", leader), String::class.java).firstOrNull()
+        jdbc.queryForList(
+            "SELECT name FROM troop WHERE world_id = 1 AND troop_leader = :id",
+            MapSqlParameterSource("id", leader),
+            String::class.java,
+        ).firstOrNull()
     private fun count(): Int =
-        jdbc.queryForObject("SELECT count(*) FROM troop", MapSqlParameterSource(), Int::class.java)!!
+        jdbc.queryForObject("SELECT count(*) FROM troop WHERE world_id = 1", MapSqlParameterSource(), Int::class.java)!!
 
     @BeforeAll
     fun setUp() {
@@ -56,6 +60,17 @@ class TroopFlushIT {
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'sc', 200, 1, 3600)",
             MapSqlParameterSource(),
         )
+        jdbc.update(
+            "INSERT INTO nation (world_id, id, name, color) VALUES (1, 1, '테스트국', '#000000')",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO general (world_id, id, name, nation_id, turn_time)
+            VALUES (1, 7, '장수칠', 1, now()), (1, 8, '장수팔', 1, now())
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
     }
 
     @AfterAll
@@ -68,6 +83,7 @@ class TroopFlushIT {
         // create two troops (NewTroop x2).
         executor.flush(
             FlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 createdTroops = listOf(TroopRow(7, 1, "제1군단"), TroopRow(8, 1, "제2군단")),
             ),
@@ -77,7 +93,7 @@ class TroopFlushIT {
 
         // rename troop 7 (SetTroopName) — created-this-tick exclusion means this is a separate flush.
         executor.flush(
-            FlushPayload(worldStateUpdate = ws(), updatedTroops = listOf(TroopRow(7, 1, "개명군단"))),
+            FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), updatedTroops = listOf(TroopRow(7, 1, "개명군단"))),
         )
         assertEquals("개명군단", nameOf(7))
         assertEquals("제2군단", nameOf(8)) // untouched
@@ -85,7 +101,7 @@ class TroopFlushIT {
 
         // leader-disband delete of troop 7 (ExitTroop) — by troop_leader.
         executor.flush(
-            FlushPayload(worldStateUpdate = ws(), deletedTroops = listOf(7)),
+            FlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), deletedTroops = listOf(7)),
         )
         assertNull(nameOf(7))
         assertEquals("제2군단", nameOf(8))

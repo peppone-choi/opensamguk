@@ -84,7 +84,7 @@ class ScenarioBlankPlayerCommandIT {
     fun `scenario_0 supports many player-created nations through real commands`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario blank player command IT skipped")
 
-        val bootstrap = SeedBootstrap("scenario_0")
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", worldId = opensamguk.common.world.WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc))
         assertEquals("scenario_0", jdbc.queryForObject("SELECT scenario_code FROM world_state WHERE id = 1", String::class.java))
         assertEquals(94, count("city"))
@@ -92,7 +92,7 @@ class ScenarioBlankPlayerCommandIT {
         assertEquals(0, count("general"))
         assertEquals(94, countWhere("city", "nation_id = 0"))
 
-        val loader = WorldSnapshotLoader(jdbc, bootstrap)
+        val loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
         val world = InMemoryTurnWorld(loader.buildSnapshot())
         val recorder = ChangeRecorder()
         val makeGeneral = MakeGeneralHandler(
@@ -202,7 +202,7 @@ class ScenarioBlankPlayerCommandIT {
         assertTrue(payload.logEntries.isNotEmpty())
         JdbcFlushExecutor(named, TransactionTemplate(DataSourceTransactionManager(dataSource))).flush(payload)
 
-        val restarted = WorldSnapshotLoader(jdbc, bootstrap).buildSnapshot()
+        val restarted = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1)).buildSnapshot()
         assertEquals(60, restarted.generals.count { it.nationId > 0 })
         assertEquals(6, restarted.nations.count { it.level == 1 })
         assertEquals(6, restarted.cities.count { it.nationId > 0 })

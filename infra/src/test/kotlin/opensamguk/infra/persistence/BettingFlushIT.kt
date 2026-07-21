@@ -66,7 +66,8 @@ class BettingFlushIT {
         ),
     )
 
-    private fun payload(rows: List<BettingInsertRow>) = FlushPayload(
+    private fun payload(rows: List<BettingInsertRow>) = testFlushPayload(
+        worldId = opensamguk.common.world.WorldId(1),
         worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
         bettingInserts = rows,
     )

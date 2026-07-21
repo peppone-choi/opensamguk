@@ -63,7 +63,7 @@ class IntakeWaveC2SliceATest {
         nation: Nation = nation(),
         stateMeta: Map<String, Any?> = emptyMap(),
     ): InMemoryTurnWorld = InMemoryTurnWorld(
-        WorldSnapshot(state = state(stateMeta), generals = listOf(general), nations = listOf(nation)),
+        WorldSnapshot(state = state(stateMeta), generals = listOf(general), nations = listOf(nation), worldId = opensamguk.common.world.WorldId((state(stateMeta)).id)),
     )
 
     /** Build the flush payload exactly as TurnRunService does (recorder + world + drained dirty). */

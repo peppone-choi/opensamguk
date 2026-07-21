@@ -34,6 +34,14 @@ class ProductionTournamentBettingPortTest {
                 general(3, "장비", npc = 2, gold = 400, userId = null),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 0)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1,
+                currentYear = 200,
+                currentMonth = 3,
+                tickSeconds = 3600,
+                lastTurnTime = t0,
+                meta = mapOf("startYear" to 200, "hiddenSeed" to "seed"),
+            )).id),
         ),
     )
 

@@ -25,6 +25,7 @@ class LiveRemainNationEnvTest {
             WorldSnapshot(
                 state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#0a0"), Nation(id = 2, name = "위", color = "#00a")),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val log = mutableListOf<String>()

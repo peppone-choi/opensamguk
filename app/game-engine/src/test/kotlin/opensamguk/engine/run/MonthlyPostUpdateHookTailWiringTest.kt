@@ -367,6 +367,14 @@ class MonthlyPostUpdateHookTailWiringTest {
             cities = cities,
             nations = nations,
             diplomacy = diplomacy,
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1,
+                currentYear = 200,
+                currentMonth = 4,
+                tickSeconds = 3600,
+                lastTurnTime = t0,
+                meta = mapOf("startYear" to 184, "map" to "miniche", "turnterm" to 60, "tnmt_trig" to false) + meta,
+            )).id),
         ),
     )
 

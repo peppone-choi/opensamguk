@@ -27,11 +27,15 @@ class AuctionRepositoryIT {
     @Test
     fun `auction enum value queries run against Postgres enum columns`() {
         jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) " +
+                "VALUES (1, 'fixture', 200, 1, 3600)",
+        )
+        jdbc.update(
             """
             INSERT INTO ng_auction (
-                type, finished, target, host_general_id, req_resource, open_date, close_date, detail
+                world_id, type, finished, target, host_general_id, req_resource, open_date, close_date, detail
             ) VALUES (
-                'buyRice'::ng_auction_type, false, null, 10, 'gold'::ng_auction_resource,
+                1, 'buyRice'::ng_auction_type, false, null, 10, 'gold'::ng_auction_resource,
                 TIMESTAMPTZ '2026-06-19 00:00:00+00',
                 TIMESTAMPTZ '2026-06-20 00:00:00+00',
                 '{"hostName":"테스트","amount":100,"startBidAmount":10}'::jsonb

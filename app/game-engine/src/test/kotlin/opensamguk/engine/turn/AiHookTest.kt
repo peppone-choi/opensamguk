@@ -81,7 +81,7 @@ class AiHookTest {
     )
 
     private fun worldWith(generals: List<TurnGeneral> = listOf(general())) =
-        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation())))
+        InMemoryTurnWorld(WorldSnapshot(baseState(), generals, listOf(city()), listOf(nation()), worldId = opensamguk.common.world.WorldId((baseState()).id)))
 
     private fun handlerFor(
         world: InMemoryTurnWorld,

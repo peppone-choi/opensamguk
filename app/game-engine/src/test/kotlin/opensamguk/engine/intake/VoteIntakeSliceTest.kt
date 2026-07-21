@@ -94,6 +94,10 @@ class VoteIntakeSliceTest {
             ),
             generals = listOf(general),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0,
+                meta = linkedMapOf("hiddenSeed" to hiddenSeed, "develcost" to develCost, "lastVote" to 0),
+            )).id),
         ),
     )
 

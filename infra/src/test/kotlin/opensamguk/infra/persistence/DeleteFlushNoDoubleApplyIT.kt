@@ -90,12 +90,19 @@ class DeleteFlushNoDoubleApplyIT {
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'scenario_2', 200, 1, 3600)",
             MapSqlParameterSource(),
         )
+        jdbc.update(
+            """
+            INSERT INTO ng_games (world_id, server_id, date, season, scenario, scenario_name, env)
+            VALUES (1, 'archive-server', now(), 1, 1, '테스트', '{}'::jsonb)
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
         // Two nations: 2 (the killed general's nation, gennum starts at 3) and 9 (the cascade target).
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"gennum":3}' AS jsonb)),
-                   (9, '망국', '#ff0000', 7, 100, 100, 0, 1, 'che_명가', CAST('{"gennum":1}' AS jsonb))
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"gennum":3}' AS jsonb)),
+                   (1, 9, '망국', '#ff0000', 7, 100, 100, 0, 1, 'che_명가', CAST('{"gennum":1}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -103,23 +110,23 @@ class DeleteFlushNoDoubleApplyIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, last_turn, meta)
             VALUES
-                (10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
+                (1, 10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, now(),
                  CAST('{}' AS jsonb), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         for (col in rankColumns) {
             jdbc.update(
-                "INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (2, 10, :type, 0)",
+                "INSERT INTO rank_data (world_id, nation_id, general_id, type, value) VALUES (1, 2, 10, :type, 0)",
                 MapSqlParameterSource().addValue("type", col),
             )
         }
         for (idx in 0..2) {
             jdbc.update(
-                "INSERT INTO general_turn (general_id, turn_idx, action_code) VALUES (10, :idx, '휴식')",
+                "INSERT INTO general_turn (world_id, general_id, turn_idx, action_code) VALUES (1, 10, :idx, '휴식')",
                 MapSqlParameterSource().addValue("idx", idx),
             )
         }
@@ -127,56 +134,60 @@ class DeleteFlushNoDoubleApplyIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, turn_time, last_turn, meta)
             VALUES
-                (11, '생존', 2, 5, 60, 60, 60, 0, 0, 0, 1, 500, 500, now(),
+                (1, 11, '생존', 2, 5, 60, 60, 60, 0, 0, 0, 1, 500, 500, now(),
                  CAST('{}' AS jsonb), CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         jdbc.update(
-            "INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (2, 11, 'warnum', 0)",
+            "INSERT INTO rank_data (world_id, nation_id, general_id, type, value) VALUES (1, 2, 11, 'warnum', 0)",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            "INSERT INTO general (world_id, id, name, nation_id, turn_time) VALUES (1, 90, '망국부대장', 9, now())",
             MapSqlParameterSource(),
         )
         // Cascade fixture for nation 9: a captured city, diplomacy pairs, and nation_turn rows.
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (7, '함락성', 5, 9, 1, 0, 10000, 50000, 500, 1000, 500, 1000, 300, 1000, 40, 100,
+                (1, 7, '함락성', 5, 9, 1, 0, 10000, 50000, 500, 1000, 500, 1000, 300, 1000, 40, 100,
                  500, 1000, 500, 1000, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         jdbc.update(
             """
-            INSERT INTO diplomacy (src_nation_id, dest_nation_id, state_code, term)
-            VALUES (9, 2, 2, 0), (2, 9, 2, 0)
+            INSERT INTO diplomacy (world_id, src_nation_id, dest_nation_id, state_code, term)
+            VALUES (1, 9, 2, 2, 0), (1, 2, 9, 2, 0)
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         jdbc.update(
-            "INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code) VALUES (9, 12, 0, '휴식')",
+            "INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code) VALUES (1, 9, 12, 0, '휴식')",
             MapSqlParameterSource(),
         )
         jdbc.update(
-            "INSERT INTO troop (troop_leader, nation, name) VALUES (90, 9, '망국부대')",
+            "INSERT INTO troop (world_id, troop_leader, nation, name) VALUES (1, 90, 9, '망국부대')",
             MapSqlParameterSource(),
         )
         jdbc.update(
-            "INSERT INTO nation_env (namespace, key, value) VALUES (9, 'scout_msg', '\"비밀\"'::jsonb)",
+            "INSERT INTO nation_env (world_id, namespace, key, value) VALUES (1, 9, 'scout_msg', '\"비밀\"'::jsonb)",
             MapSqlParameterSource(),
         )
         jdbc.update(
             """
-            INSERT INTO log_entry (scope, category, year, month, text, general_id, nation_id)
+            INSERT INTO log_entry (world_id, scope, category, year, month, text, general_id, nation_id)
             VALUES
-              ('GENERAL', 'HISTORY', 200, 1, '장수사', 10, 2),
-              ('NATION', 'HISTORY', 200, 1, '국가사', NULL, 9)
+              (1, 'GENERAL', 'HISTORY', 200, 1, '장수사', 10, 2),
+              (1, 'NATION', 'HISTORY', 200, 1, '국가사', NULL, 9)
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -184,7 +195,8 @@ class DeleteFlushNoDoubleApplyIT {
 
     @Test
     fun `unification action logs flush before old-general archives without changing normal delete ordering`() {
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             logEntries = listOf(
@@ -340,7 +352,8 @@ class DeleteFlushNoDoubleApplyIT {
             typeCode = "che_명가", gold = 5000, rice = 5000, tech = 1000.0,
             meta = linkedMapOf("gennum" to 2),
         )
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             deletedGenerals = listOf(10),
@@ -361,16 +374,17 @@ class DeleteFlushNoDoubleApplyIT {
         executor.flush(payload)
 
         // --- all 3 ported kill() tables deleted for general 10 -------------------------------------
-        assertEquals(0, count("SELECT count(*) FROM general WHERE id = 10"))
-        assertEquals(0, count("SELECT count(*) FROM general_turn WHERE general_id = 10"))
-        assertEquals(0, count("SELECT count(*) FROM rank_data WHERE general_id = 10"))
+        assertEquals(0, count("SELECT count(*) FROM general WHERE world_id = 1 AND id = 10"))
+        assertEquals(0, count("SELECT count(*) FROM general_turn WHERE world_id = 1 AND general_id = 10"))
+        assertEquals(0, count("SELECT count(*) FROM rank_data WHERE world_id = 1 AND general_id = 10"))
         assertEquals(
             1,
             count(
                 """
                 SELECT count(*)
                   FROM ng_old_generals
-                 WHERE server_id = 'archive-server'
+                 WHERE world_id = 1
+                   AND server_id = 'archive-server'
                    AND general_no = 10
                    AND owner = 'owner-10'
                    AND last_yearmonth = 20001
@@ -380,12 +394,12 @@ class DeleteFlushNoDoubleApplyIT {
         )
 
         // --- the surviving general (and its rank rows) are untouched -------------------------------
-        assertEquals(1, count("SELECT count(*) FROM general WHERE id = 11"))
-        assertEquals(1, count("SELECT count(*) FROM rank_data WHERE general_id = 11"))
+        assertEquals(1, count("SELECT count(*) FROM general WHERE world_id = 1 AND id = 11"))
+        assertEquals(1, count("SELECT count(*) FROM rank_data WHERE world_id = 1 AND general_id = 11"))
 
         // --- gennum decremented on the nation (rode the step-7 UPDATE) -----------------------------
         val gennum = jdbc.queryForObject(
-            "SELECT (meta->>'gennum')::int FROM nation WHERE id = 2",
+            "SELECT (meta->>'gennum')::int FROM nation WHERE world_id = 1 AND id = 2",
             MapSqlParameterSource(), Int::class.java,
         )
         assertEquals(2, gennum)
@@ -397,11 +411,12 @@ class DeleteFlushNoDoubleApplyIT {
         assertEquals(listOf("general", "general_turn", "rank_data"), deleteOps)
 
         // --- a SECOND flush of an EMPTY delta does NOT re-apply / does NOT error --------------------
-        val emptyPayload = FlushPayload(
+        val emptyPayload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
         )
         executor.flush(emptyPayload) // must not throw
-        assertEquals(0, count("SELECT count(*) FROM general WHERE id = 10"), "still deleted, no resurrection")
+        assertEquals(0, count("SELECT count(*) FROM general WHERE world_id = 1 AND id = 10"), "still deleted, no resurrection")
         assertTrue(
             executor.lastOps().none { it.verb == FlushVerb.DELETE_MANY },
             "empty delta fires no delete",
@@ -410,7 +425,8 @@ class DeleteFlushNoDoubleApplyIT {
 
     @Test
     fun `nation cascade deletes diplomacy + nation_turn + nation exactly once`() {
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             deletedNations = listOf(9),
@@ -424,13 +440,13 @@ class DeleteFlushNoDoubleApplyIT {
 
         executor.flush(payload)
 
-        assertEquals(0, count("SELECT count(*) FROM nation WHERE id = 9"))
-        assertEquals(0, count("SELECT count(*) FROM nation_turn WHERE nation_id = 9"))
-        assertEquals(0, count("SELECT count(*) FROM troop WHERE nation = 9"))
-        assertEquals(0, count("SELECT count(*) FROM nation_env WHERE namespace = 9"))
+        assertEquals(0, count("SELECT count(*) FROM nation WHERE world_id = 1 AND id = 9"))
+        assertEquals(0, count("SELECT count(*) FROM nation_turn WHERE world_id = 1 AND nation_id = 9"))
+        assertEquals(0, count("SELECT count(*) FROM troop WHERE world_id = 1 AND nation = 9"))
+        assertEquals(0, count("SELECT count(*) FROM nation_env WHERE world_id = 1 AND namespace = 9"))
         assertEquals(
             0,
-            count("SELECT count(*) FROM diplomacy WHERE src_nation_id = 9 OR dest_nation_id = 9"),
+            count("SELECT count(*) FROM diplomacy WHERE world_id = 1 AND (src_nation_id = 9 OR dest_nation_id = 9)"),
         )
         assertEquals(
             1,
@@ -438,7 +454,8 @@ class DeleteFlushNoDoubleApplyIT {
                 """
                 SELECT count(*)
                   FROM ng_old_nations
-                 WHERE server_id = 'archive-server'
+                 WHERE world_id = 1
+                   AND server_id = 'archive-server'
                    AND nation = 9
                    AND data = '{"nation":9,"name":"망국","history":["국가사"]}'::jsonb
                 """.trimIndent(),
@@ -450,14 +467,15 @@ class DeleteFlushNoDoubleApplyIT {
 
         // re-flush of an empty delta does not error and does not re-delete.
         executor.flush(
-            FlushPayload(worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1)),
+            testFlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1)),
         )
         assertTrue(executor.lastOps().none { it.verb == FlushVerb.DELETE_MANY })
     }
 
     @Test
     fun `neutral unification archive keeps exact PHP payload without history backfill`() {
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
             archiveServerId = "archive-server",
             deletedNationSnapshots = listOf(
@@ -476,7 +494,8 @@ class DeleteFlushNoDoubleApplyIT {
                 """
                 SELECT count(*)
                   FROM ng_old_nations
-                 WHERE server_id = 'archive-server'
+                 WHERE world_id = 1
+                   AND server_id = 'archive-server'
                    AND nation = 0
                    AND data = '{"nation":0,"name":"재야","generals":[10]}'::jsonb
                 """.trimIndent(),

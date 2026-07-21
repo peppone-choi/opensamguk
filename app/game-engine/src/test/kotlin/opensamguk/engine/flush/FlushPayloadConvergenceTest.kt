@@ -46,6 +46,7 @@ class FlushPayloadConvergenceTest {
             generals = listOf(engineGeneral(10)),
             nations = listOf(engineNation(1, gold = 1000)),
             cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5)),
+            worldId = opensamguk.common.world.WorldId((baseState()).id),
         ),
     )
 
@@ -104,6 +105,7 @@ class FlushPayloadConvergenceTest {
                     opensamguk.engine.turn.TurnDiplomacy(1, 2, state = 2, term = 0),
                     opensamguk.engine.turn.TurnDiplomacy(2, 1, state = 2, term = 0),
                 ),
+                worldId = opensamguk.common.world.WorldId((baseState()).id),
             ),
         )
         val recorder = ChangeRecorder()
@@ -156,6 +158,7 @@ class FlushPayloadConvergenceTest {
                 generals = listOf(engineGeneral(10)),
                 nations = listOf(engineNation(1, gold = 1000)),
                 cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5)),
+                worldId = opensamguk.common.world.WorldId((baseState(phase = 3)).id),
             ),
         )
         world.pushLog(LogEntryDraft(scope = "general", category = "action", text = "<C>●</>1월:하순 행동", generalId = 10, nationId = 1))
@@ -174,6 +177,7 @@ class FlushPayloadConvergenceTest {
                 generals = listOf(engineGeneral(10)),
                 nations = listOf(engineNation(1, gold = 1000)),
                 cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5)),
+                worldId = opensamguk.common.world.WorldId((baseState(year = 187, month = 12, phase = 3)).id),
             ),
         )
         world.pushLog(

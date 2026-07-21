@@ -83,21 +83,21 @@ class JdbcFlushExecutorSatelliteIT {
         )
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb)),
-                   (3, '위', '#0000ff', 8, 8000, 8000, 2000, 7, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb))
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 2, '촉', '#00ff00', 5, 5000, 5000, 1000, 5, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb)),
+                   (1, 3, '위', '#0000ff', 8, 8000, 8000, 2000, 7, 'che_명가', CAST('{"rate":20,"bill":20}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, crew, train, atmos,
                  crew_type_id, troop_id, weapon_code, book_code, horse_code, item_code,
                  npc_state, turn_time, last_turn, meta)
             VALUES
-                (10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, 0, 0, 0,
+                (1, 10, '장수십', 2, 5, 70, 65, 80, 0, 0, 0, 4, 1000, 1000, 0, 0, 0,
                  0, 0, 'None', 'None', 'None', 'None', 0, now(),
                  CAST('{"command":"휴식"}' AS jsonb),
                  CAST('{"explevel":1}' AS jsonb))
@@ -107,11 +107,11 @@ class JdbcFlushExecutorSatelliteIT {
         jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, nation_id, supply_state, front_state, pop, pop_max,
+                (world_id, id, name, level, nation_id, supply_state, front_state, pop, pop_max,
                  agri, agri_max, comm, comm_max, secu, secu_max, trust, trade, def, def_max,
                  wall, wall_max, region, meta)
             VALUES
-                (5, '성도', 5, 2, 1, 0, 50000, 100000,
+                (1, 5, '성도', 5, 2, 1, 0, 50000, 100000,
                  1000, 2000, 800, 2000, 500, 1000, 50, 100, 1000, 2000,
                  1000, 2000, 1, CAST('{}' AS jsonb))
             """.trimIndent(),
@@ -120,13 +120,13 @@ class JdbcFlushExecutorSatelliteIT {
         // Pre-seed the 37 rank_data rows for general 10 (PHP seeds them at creation; flush UPDATEs).
         for (col in RANK_COLUMNS) {
             jdbc.update(
-                "INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (2, 10, :type, :value)",
+                "INSERT INTO rank_data (world_id, nation_id, general_id, type, value) VALUES (1, 2, 10, :type, :value)",
                 MapSqlParameterSource().addValue("type", col).addValue("value", if (col == "warnum") 1 else 0),
             )
         }
         // Pre-seed a stale nation_env KV row so the delete-on-null write proves a real DELETE.
         jdbc.update(
-            "INSERT INTO nation_env (namespace, key, value) VALUES (3, 'stale_key', CAST('1' AS jsonb))",
+            "INSERT INTO nation_env (world_id, namespace, key, value) VALUES (1, 3, 'stale_key', CAST('1' AS jsonb))",
             MapSqlParameterSource(),
         )
     }
@@ -162,7 +162,8 @@ class JdbcFlushExecutorSatelliteIT {
             meta = linkedMapOf(),
         )
 
-        val payload = FlushPayload(
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 2),
             updatedGenerals = listOf(postGeneral),
             updatedCities = listOf(postCity),
@@ -200,16 +201,23 @@ class JdbcFlushExecutorSatelliteIT {
         assertEquals(3, rankValue(generalId = 10, type = "warnum"))
         // ALL of general 10's rank_data rows now carry nation_id 3 (the sync op).
         val distinctNationIds = jdbc.queryForList(
-            "SELECT DISTINCT nation_id FROM rank_data WHERE general_id = 10",
+            "SELECT DISTINCT nation_id FROM rank_data WHERE world_id = 1 AND general_id = 10",
             MapSqlParameterSource(),
             Int::class.java,
         )
         assertEquals(listOf(3), distinctNationIds)
-        assertEquals(37, jdbc.queryForObject("SELECT count(*) FROM rank_data WHERE general_id = 10", MapSqlParameterSource(), Int::class.java))
+        assertEquals(
+            37,
+            jdbc.queryForObject(
+                "SELECT count(*) FROM rank_data WHERE world_id = 1 AND general_id = 10",
+                MapSqlParameterSource(),
+                Int::class.java,
+            ),
+        )
 
         // --- widened general step-7: crew/train/atmos/last_turn flushed ---------------------------
         val gRow = jdbc.queryForMap(
-            "SELECT nation_id, crew, train, atmos, last_turn::text AS last_turn FROM general WHERE id = 10",
+            "SELECT nation_id, crew, train, atmos, last_turn::text AS last_turn FROM general WHERE world_id = 1 AND id = 10",
             MapSqlParameterSource(),
         )
         assertEquals(3, intOf(gRow["nation_id"]))
@@ -223,7 +231,7 @@ class JdbcFlushExecutorSatelliteIT {
 
         // --- widened city step-7: secu/def/wall/pop flushed ---------------------------------------
         val cRow = jdbc.queryForMap(
-            "SELECT secu, def, wall, pop FROM city WHERE id = 5",
+            "SELECT secu, def, wall, pop FROM city WHERE world_id = 1 AND id = 5",
             MapSqlParameterSource(),
         )
         assertEquals(650, intOf(cRow["secu"]))
@@ -233,7 +241,7 @@ class JdbcFlushExecutorSatelliteIT {
 
         // --- nation step-7 UPDATE: gold + meta bill ------------------------------------------------
         val nRow = jdbc.queryForMap(
-            "SELECT gold, meta::text AS meta FROM nation WHERE id = 3",
+            "SELECT gold, meta::text AS meta FROM nation WHERE world_id = 1 AND id = 3",
             MapSqlParameterSource(),
         )
         assertEquals(7500, intOf(nRow["gold"]))
@@ -244,7 +252,7 @@ class JdbcFlushExecutorSatelliteIT {
         assertEquals(
             0,
             jdbc.queryForObject(
-                "SELECT count(*) FROM nation_env WHERE namespace = 3 AND key = 'stale_key'",
+                "SELECT count(*) FROM nation_env WHERE world_id = 1 AND namespace = 3 AND key = 'stale_key'",
                 MapSqlParameterSource(),
                 Int::class.java,
             ),
@@ -254,14 +262,14 @@ class JdbcFlushExecutorSatelliteIT {
 
     private fun rankValue(generalId: Int, type: String): Int =
         jdbc.queryForObject(
-            "SELECT value FROM rank_data WHERE general_id = :g AND type = :t",
+            "SELECT value FROM rank_data WHERE world_id = 1 AND general_id = :g AND type = :t",
             MapSqlParameterSource().addValue("g", generalId).addValue("t", type),
             Int::class.java,
         ) ?: error("no rank_data row $generalId/$type")
 
     private fun kvValue(namespace: Int, key: String): Int? =
         jdbc.queryForList(
-            "SELECT value::text AS v FROM nation_env WHERE namespace = :n AND key = :k",
+            "SELECT value::text AS v FROM nation_env WHERE world_id = 1 AND namespace = :n AND key = :k",
             MapSqlParameterSource().addValue("n", namespace).addValue("k", key),
             String::class.java,
         ).firstOrNull()?.toInt()

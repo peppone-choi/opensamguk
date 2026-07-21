@@ -73,7 +73,8 @@ class W08SharedWidenFlushIT {
     @Test
     fun `board_post author_icon이 영속되고 키 부재 시 NULL이다 -- PHP NULL 패러티`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 boardPostInserts = listOf(
                     BoardPostInsertRow(
@@ -114,7 +115,7 @@ class W08SharedWidenFlushIT {
             "global_history" to """["<C>●</>181년 1월: 중원 정세 갱신"]""",
             "global_action" to """["<C>●</>181년 1월: 장수 동향"]""",
         )
-        executor.flush(FlushPayload(worldStateUpdate = ws(), yearbookInserts = listOf(YearbookInsertRow(base))))
+        executor.flush(testFlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), yearbookInserts = listOf(YearbookInsertRow(base))))
 
         var row = jdbc.jdbcTemplate.queryForMap("SELECT * FROM yearbook_history WHERE server_id = 's1' AND year = 181 AND month = 1")
         assertEquals("s1", row["server_id"])
@@ -123,7 +124,7 @@ class W08SharedWidenFlushIT {
         assertEquals("""["<C>●</>181년 1월: 장수 동향"]""", row["global_action"].toString())
 
         val recapture = LinkedHashMap(base).apply { put("global_history", """["갱신된 정세"]""") }
-        executor.flush(FlushPayload(worldStateUpdate = ws(), yearbookInserts = listOf(YearbookInsertRow(recapture))))
+        executor.flush(testFlushPayload(worldId = opensamguk.common.world.WorldId(1), worldStateUpdate = ws(), yearbookInserts = listOf(YearbookInsertRow(recapture))))
 
         val count = jdbc.jdbcTemplate.queryForObject(
             "SELECT count(*) FROM yearbook_history WHERE server_id = 's1' AND year = 181 AND month = 1", Int::class.java,
@@ -139,7 +140,8 @@ class W08SharedWidenFlushIT {
     @Test
     fun `hall은 어느 UNIQUE 충돌도 INSERT IGNORE하고 동일 장수의 더 큰 값만 value와 aux를 갱신한다`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 hallUpserts = listOf(
                     HallUpsertRow(
@@ -153,7 +155,8 @@ class W08SharedWidenFlushIT {
             ),
         )
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 hallUpserts = listOf(
                     HallUpsertRow(
@@ -209,7 +212,8 @@ class W08SharedWidenFlushIT {
     @Test
     fun `inheritance_log date가 영속되고 null이면 NULL이다 -- user_record date 패러티`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = ws(),
                 inheritanceLogInserts = listOf(
                     InheritanceLogRow(ownerID = 7, year = 181, month = 1, text = "100 포인트를 베팅에 사용", tag = "inheritPoint", date = "2026-06-10T03:00:00Z"),

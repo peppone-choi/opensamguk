@@ -35,6 +35,7 @@ class DatabaseHooksOrderTest {
                 cities = listOf(city(5)),
                 nations = listOf(nation(1), nation(2)),
                 diplomacy = listOf(diplomacy(1, 2), diplomacy(2, 1)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, t0)).id),
             ),
         )
         world.updateGeneral(general(10, nationId = 2, gold = 250))
@@ -65,6 +66,7 @@ class DatabaseHooksOrderTest {
             WorldSnapshot(
                 state = TurnWorldState(1, 200, 1, 3600, t0),
                 generals = listOf(general(10, nationId = 1), general(11, nationId = 1)),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, t0)).id),
             ),
         )
         world.updateGeneral(general(10, nationId = 1, gold = 1))
@@ -80,7 +82,7 @@ class DatabaseHooksOrderTest {
 
     @Test
     fun `created-then-deleted general in same tick produces neither create nor delete op`() {
-        val world = InMemoryTurnWorld(WorldSnapshot(state = TurnWorldState(1, 200, 1, 3600, t0)))
+        val world = InMemoryTurnWorld(WorldSnapshot(state = TurnWorldState(1, 200, 1, 3600, t0), worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 1, 3600, t0)).id)))
         world.createGeneral(general(99, nationId = 1))
         world.removeGeneral(99)
 

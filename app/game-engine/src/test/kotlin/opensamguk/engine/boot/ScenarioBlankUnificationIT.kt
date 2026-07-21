@@ -172,9 +172,9 @@ class ScenarioBlankUnificationIT {
     fun `scenario_0 player setup reaches production unification tail and survives reload`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario blank unification IT skipped")
 
-        val bootstrap = SeedBootstrap("scenario_0")
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_0", worldId = opensamguk.common.world.WorldId(1))
         assertTrue(bootstrap.ensureSeeded(jdbc))
-        val loader = WorldSnapshotLoader(jdbc, bootstrap)
+        val loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
         var world = InMemoryTurnWorld(loader.buildSnapshot())
         var recorder = recorderFor(world)
         val roles = roleSpecs()

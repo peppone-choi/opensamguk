@@ -1,6 +1,7 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.constants.ScenarioLifecycleMeta
+import opensamguk.common.world.WorldId
 import opensamguk.engine.config.EngineEventConfig
 import opensamguk.engine.world.WorldEventContextFactory
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -83,8 +84,8 @@ class ScenarioBootIT {
             .migrate()
         jdbc = JdbcTemplate(dataSource)
         named = NamedParameterJdbcTemplate(dataSource)
-        bootstrap = SeedBootstrap("scenario_1010")
-        loader = WorldSnapshotLoader(jdbc, bootstrap)
+        bootstrap = SeedBootstrap(scenarioCode = "scenario_1010", worldId = opensamguk.common.world.WorldId(1))
+        loader = WorldSnapshotLoader(jdbc, bootstrap, opensamguk.common.world.WorldId(1))
     }
 
     @AfterAll
@@ -112,7 +113,10 @@ class ScenarioBootIT {
         assertEquals(2, snapshot.diplomacy.size)
         assertEquals(0, (snapshot.state.meta["isunited"] as? Number)?.toInt() ?: -1, "isunited loaded from world_state column")
         val firstCity = snapshot.cities.first()
-        val storedCity = jdbc.queryForMap("SELECT trust, dead FROM city WHERE id = ?", firstCity.id)
+        val storedCity = jdbc.queryForMap(
+            "SELECT trust, dead FROM city WHERE world_id = 1 AND id = ?",
+            firstCity.id,
+        )
         assertEquals((storedCity["trust"] as Number).toDouble(), (firstCity.meta["trust"] as Number).toDouble())
         assertEquals((storedCity["dead"] as Number).toInt(), firstCity.dead)
         val seedStartYear = (snapshot.state.meta["startYear"] as Number).toInt()
@@ -145,7 +149,10 @@ class ScenarioBootIT {
             "seeded generals load with PHP deadyear lifecycle meta",
         )
         val firstGeneral = snapshot.generals.first()
-        val storedGeneral = jdbc.queryForMap("SELECT picture, image_server FROM general WHERE id = ?", firstGeneral.id)
+        val storedGeneral = jdbc.queryForMap(
+            "SELECT picture, image_server FROM general WHERE world_id = 1 AND id = ?",
+            firstGeneral.id,
+        )
         assertEquals(storedGeneral["picture"], firstGeneral.meta["picture"])
         assertEquals((storedGeneral["image_server"] as Number).toInt(), firstGeneral.meta["image_server"])
 
@@ -155,7 +162,7 @@ class ScenarioBootIT {
         val startYear = (world.getState().meta["startYear"] as Number).toInt()
         val handler = ReservedTurnHandler(world, registry, hiddenSeed, startYear)
         val reservedRepo = ReservedTurnRepository(named)
-        val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(gid, 0) }
+        val lifecycle = TurnDaemonLifecycle(world, handler) { gid -> reservedRepo.readReserved(WorldId(1), gid, 0) }
 
         // 4. ADVANCE: drive one tick strictly after every seeded general's turn_time so they are all due
         // (the seeded ring is all 휴식 → each resolves the rest no-op). Must not throw.
@@ -181,10 +188,13 @@ class ScenarioBootIT {
 
         // @Order(2): 원본 테스트의 "첫 ensureSeeded" 단언 뒤에 실행 — 여기서는 시드 보장만(멱등 no-op).
         bootstrap.ensureSeeded(jdbc)
-        val cityId = jdbc.queryForObject("SELECT id FROM city ORDER BY id ASC LIMIT 1", Int::class.java)!!
+        val cityId = jdbc.queryForObject(
+            "SELECT id FROM city WHERE world_id = 1 ORDER BY id ASC LIMIT 1",
+            Int::class.java,
+        )!!
 
         // 직전 달 RaiseDisaster가 남긴 재해 코드(예: 4)를 흉내 — DB에 영속된 상태로 가정.
-        jdbc.update("UPDATE city SET state = 4 WHERE id = $cityId")
+        jdbc.update("UPDATE city SET state = 4 WHERE world_id = 1 AND id = $cityId")
 
         // 재기동 경로: WorldSnapshotLoader가 DB → in-memory City로 state를 실어와야 한다.
         // (V14 이전에는 메모리 전용이라 0으로 떨어졌다 — P0-36 재기동 유실.)
@@ -193,7 +203,7 @@ class ScenarioBootIT {
         assertEquals(4, rehydrated.state, "city.state는 restart-rehydrate를 살아남아야 한다")
 
         // 다른 테스트와의 간섭 방지 — 원복.
-        jdbc.update("UPDATE city SET state = 0 WHERE id = $cityId")
+        jdbc.update("UPDATE city SET state = 0 WHERE world_id = 1 AND id = $cityId")
     }
 
     @Test
@@ -202,8 +212,11 @@ class ScenarioBootIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
 
         bootstrap.ensureSeeded(jdbc)
-        val generalId = jdbc.queryForObject("SELECT id FROM general ORDER BY id ASC LIMIT 1", Int::class.java)!!
-        jdbc.update("UPDATE general SET politics = 73, charm = 84 WHERE id = $generalId")
+        val generalId = jdbc.queryForObject(
+            "SELECT id FROM general WHERE world_id = 1 ORDER BY id ASC LIMIT 1",
+            Int::class.java,
+        )!!
+        jdbc.update("UPDATE general SET politics = 73, charm = 84 WHERE world_id = 1 AND id = $generalId")
 
         val rehydrated = loader.buildSnapshot().generals.first { it.id == generalId }
 
@@ -217,15 +230,34 @@ class ScenarioBootIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
 
         bootstrap.ensureSeeded(jdbc)
-        val nationId = jdbc.queryForObject("SELECT id FROM nation ORDER BY id ASC LIMIT 1", Int::class.java)!!
+        val nationId = jdbc.queryForObject(
+            "SELECT id FROM nation WHERE world_id = 1 ORDER BY id ASC LIMIT 1",
+            Int::class.java,
+        )!!
         jdbc.update(
-            """INSERT INTO game_kv ("table", namespace, key, value) VALUES ('game_env', 'game_env', 'tnmt_pattern', '[0,1,2]'::jsonb) ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value""",
+            """
+            INSERT INTO game_kv (world_id, "table", namespace, key, value)
+            VALUES (1, 'game_env', 'game_env', 'tnmt_pattern', '[0,1,2]'::jsonb)
+            ON CONFLICT (world_id, "table", namespace, key)
+                WHERE "table" <> 'inheritance' AND world_id IS NOT NULL
+            DO UPDATE SET value = EXCLUDED.value
+            """.trimIndent(),
         )
         jdbc.update(
-            """INSERT INTO game_kv ("table", namespace, key, value) VALUES ('game_env', 'game_env', 'isunited', '99'::jsonb) ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value""",
+            """
+            INSERT INTO game_kv (world_id, "table", namespace, key, value)
+            VALUES (1, 'game_env', 'game_env', 'isunited', '99'::jsonb)
+            ON CONFLICT (world_id, "table", namespace, key)
+                WHERE "table" <> 'inheritance' AND world_id IS NOT NULL
+            DO UPDATE SET value = EXCLUDED.value
+            """.trimIndent(),
         )
         jdbc.update(
-            """INSERT INTO nation_env (namespace, key, value) VALUES ($nationId, 'available_war_setting_cnt', '3'::jsonb) ON CONFLICT (namespace, key) DO UPDATE SET value = EXCLUDED.value""",
+            """
+            INSERT INTO nation_env (world_id, namespace, key, value)
+            VALUES (1, $nationId, 'available_war_setting_cnt', '3'::jsonb)
+            ON CONFLICT (world_id, namespace, key) DO UPDATE SET value = EXCLUDED.value
+            """.trimIndent(),
         )
 
         val snapshot = loader.buildSnapshot()
@@ -244,9 +276,17 @@ class ScenarioBootIT {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario boot IT skipped (not failed)")
 
         bootstrap.ensureSeeded(jdbc)
-        val configuredStore = EngineEventConfig().eventStore(jdbc, bootstrap)
+        val configuredStore = EngineEventConfig().createEventStore(jdbc, bootstrap, WorldId(1))
         val deletedId = jdbc.queryForObject(
-            "SELECT id FROM event WHERE target_code = 'destroy_nation' AND priority = 1000 ORDER BY id ASC LIMIT 1",
+            """
+            SELECT id
+              FROM event
+             WHERE world_id = 1
+               AND target_code = 'destroy_nation'
+               AND priority = 1000
+             ORDER BY id ASC
+             LIMIT 1
+            """.trimIndent(),
             Int::class.java,
         )!!
         assertEquals(count("event"), configuredStore.allRows().size)
@@ -275,7 +315,7 @@ class ScenarioBootIT {
 
         assertEquals(0, countWhere("event", "id = $deletedId"))
         assertEquals(1, countWhere("event", "id = $insertedId"))
-        val restarted = EngineEventConfig().eventStore(jdbc, bootstrap)
+        val restarted = EngineEventConfig().createEventStore(jdbc, bootstrap, WorldId(1))
         assertTrue(restarted.allRows().none { it.id == deletedId })
         assertTrue(restarted.allRows().any { it.id == insertedId && it.priority == 1234 })
     }
@@ -287,7 +327,7 @@ class ScenarioBootIT {
 
         bootstrap.ensureSeeded(jdbc)
         val eventConfig = EngineEventConfig()
-        val eventStore = eventConfig.eventStore(jdbc, bootstrap)
+        val eventStore = eventConfig.createEventStore(jdbc, bootstrap, WorldId(1))
         val world = InMemoryTurnWorld(loader.buildSnapshot())
         val recorder = ChangeRecorder()
         eventStore.bindMutationSink(recorder::recordEventMutation)
@@ -325,7 +365,10 @@ class ScenarioBootIT {
             TransactionTemplate(DataSourceTransactionManager(dataSource)),
         ).flush(payload)
 
-        val appearedId = jdbc.queryForObject("SELECT id FROM general WHERE name = 'ⓝ소제1'", Int::class.java)!!
+        val appearedId = jdbc.queryForObject(
+            "SELECT id FROM general WHERE world_id = 1 AND name = 'ⓝ소제1'",
+            Int::class.java,
+        )!!
         assertEquals(30, countWhere("general_turn", "general_id = $appearedId"))
         assertEquals(37, countWhere("rank_data", "general_id = $appearedId"))
         assertEquals(0, countWhere("event", "action::text LIKE '%소제1%'"))
@@ -340,16 +383,19 @@ class ScenarioBootIT {
             """
             SELECT id, name
               FROM general
-             WHERE npc_state >= 2 AND officer_level <> 12 AND troop_id = 0
+             WHERE world_id = 1
+               AND npc_state >= 2
+               AND officer_level <> 12
+               AND troop_id = 0
              ORDER BY id
              LIMIT 1
             """.trimIndent(),
         )
         val generalId = (missing["id"] as Number).toInt()
         val generalName = missing["name"] as String
-        jdbc.update("DELETE FROM general_turn WHERE general_id = ?", generalId)
-        jdbc.update("DELETE FROM rank_data WHERE general_id = ?", generalId)
-        jdbc.update("DELETE FROM general WHERE id = ?", generalId)
+        jdbc.update("DELETE FROM general_turn WHERE world_id = 1 AND general_id = ?", generalId)
+        jdbc.update("DELETE FROM rank_data WHERE world_id = 1 AND general_id = ?", generalId)
+        jdbc.update("DELETE FROM general WHERE world_id = 1 AND id = ?", generalId)
 
         assertFalse(bootstrap.ensureSeeded(jdbc))
 
@@ -358,7 +404,8 @@ class ScenarioBootIT {
             SELECT count(*)
               FROM event
               CROSS JOIN LATERAL jsonb_array_elements(action) action_row
-             WHERE action_row ->> 0 = 'RegNPC'
+             WHERE world_id = 1
+               AND action_row ->> 0 = 'RegNPC'
                AND action_row ->> 2 = ?
             """.trimIndent(),
             Int::class.java,
@@ -371,7 +418,8 @@ class ScenarioBootIT {
             SELECT count(*)
               FROM event
               CROSS JOIN LATERAL jsonb_array_elements(action) action_row
-             WHERE action_row ->> 0 = 'RegNPC'
+             WHERE world_id = 1
+               AND action_row ->> 0 = 'RegNPC'
                AND action_row ->> 2 = ?
             """.trimIndent(),
             Int::class.java,
@@ -387,25 +435,30 @@ class ScenarioBootIT {
         bootstrap.ensureSeeded(jdbc)
         val archivedId = (
             jdbc.queryForObject(
-                "SELECT greatest(coalesce((SELECT max(id) FROM nation), 0), coalesce((SELECT max(nation) FROM ng_old_nations), 0))",
+                """
+                SELECT greatest(
+                    coalesce((SELECT max(id) FROM nation WHERE world_id = 1), 0),
+                    coalesce((SELECT max(nation) FROM ng_old_nations WHERE world_id = 1), 0)
+                )
+                """.trimIndent(),
                 Int::class.java,
             ) ?: 0
             ) + 50
         val currentServerId = loader.buildSnapshot().serverId!!
         jdbc.update(
             """
-            INSERT INTO ng_games (server_id, date, season, scenario, scenario_name, env)
-            VALUES ('newest-wrong-server', now() + interval '1 day', 1, 0, 'wrong', '{}'::jsonb)
-            ON CONFLICT (server_id) DO UPDATE SET date = EXCLUDED.date
+            INSERT INTO ng_games (world_id, server_id, date, season, scenario, scenario_name, env)
+            VALUES (1, 'newest-wrong-server', now() + interval '1 day', 1, 0, 'wrong', '{}'::jsonb)
+            ON CONFLICT (world_id, server_id) DO UPDATE SET date = EXCLUDED.date
             """.trimIndent(),
         )
 
         try {
             jdbc.update(
                 """
-                INSERT INTO ng_old_nations (server_id, nation, data)
-                VALUES (?, ?, '{}'::jsonb)
-                ON CONFLICT (server_id, nation) DO UPDATE SET data = EXCLUDED.data
+                INSERT INTO ng_old_nations (world_id, server_id, nation, data)
+                VALUES (1, ?, ?, '{}'::jsonb)
+                ON CONFLICT (world_id, server_id, nation) DO UPDATE SET data = EXCLUDED.data
                 """.trimIndent(),
                 currentServerId,
                 archivedId,
@@ -417,14 +470,18 @@ class ScenarioBootIT {
             val restarted = InMemoryTurnWorld(snapshot)
             assertEquals(archivedId + 1, restarted.allocateNationId())
         } finally {
-            jdbc.update("DELETE FROM ng_old_nations WHERE server_id = ? AND nation = ?", currentServerId, archivedId)
-            jdbc.update("DELETE FROM ng_games WHERE server_id = 'newest-wrong-server'")
+            jdbc.update(
+                "DELETE FROM ng_old_nations WHERE world_id = 1 AND server_id = ? AND nation = ?",
+                currentServerId,
+                archivedId,
+            )
+            jdbc.update("DELETE FROM ng_games WHERE world_id = 1 AND server_id = 'newest-wrong-server'")
         }
     }
 
     private fun count(table: String): Int =
-        jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java) ?: 0
+        jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id = 1", Int::class.java) ?: 0
 
     private fun countWhere(table: String, predicate: String): Int =
-        jdbc.queryForObject("SELECT count(*) FROM $table WHERE $predicate", Int::class.java) ?: 0
+        jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id = 1 AND ($predicate)", Int::class.java) ?: 0
 }

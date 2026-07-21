@@ -11,3 +11,5 @@ spring:
     postgresql:
       # V29 CREATE INDEX CONCURRENTLY × Flyway 트랜잭션형 advisory lock 데드락 방지 (세션 락 전환)
       transactional-lock: false
+opensamguk:
+  world-id: 1

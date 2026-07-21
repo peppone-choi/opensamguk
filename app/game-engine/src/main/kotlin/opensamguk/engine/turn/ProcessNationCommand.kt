@@ -1,14 +1,17 @@
 package opensamguk.engine.turn
 
 import opensamguk.common.rng.LiteHashDrbg
+import opensamguk.common.rng.NoRng
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDraft
+import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.RestAction
 import opensamguk.logic.actions.addTermStack
 import opensamguk.logic.actions.onTermStackSuccess
+import opensamguk.logic.actions.nation.InstantNationCommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolveContext
 import opensamguk.logic.actions.nation.NationActionResolver
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
@@ -25,6 +28,8 @@ import opensamguk.logic.util.phpRound
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicCity
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicGeneral
 import opensamguk.engine.turn.PerTurnOverlay.Companion.toLogicNation
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 /**
  * P5 Task FM2 (F-SEAM) — the NATION-command resolve path (R-SEAM §4).
@@ -59,6 +64,21 @@ class ProcessNationCommand(
         fun resolve(rng: RandUtil, command: ChosenCommand, lastTurn: LastTurn): LastTurn
     }
 
+    sealed interface InstantResult {
+        data object Allowed : InstantResult
+
+        data class Denied(val reason: String) : InstantResult
+    }
+
+    private data class PreparedCommand(
+        val general: TurnGeneral,
+        val runtimeRegistry: CommandRegistry?,
+        val definition: GeneralActionDefinition?,
+        val rawArgs: LinkedHashMap<String, Any?>,
+        val normalizedArgs: LinkedHashMap<String, Any?>,
+        val command: ChosenCommand,
+    )
+
     /**
      * Resolve ONE nation command for [generalId] (R-SEAM §4 — the [processNationCommand][ProcessNationCommand]
      * port). Mirrors `TurnExecutionHelper.php:72-109` + the surrounding `:310-323` seed/KV/setRawCity seam.
@@ -82,40 +102,16 @@ class ProcessNationCommand(
     ): LastTurn {
         val general = world.getGeneralById(generalId)
             ?: error("ProcessNationCommand: general $generalId not in world")
+        val prepared = prepareCommand(general, nationCommand)
         val nationId = general.nationId
-        val runtimeRegistry = pipelineBuilder?.registryFor(general) ?: registry
-        val definition = runtimeRegistry?.resolve(nationCommand.actionCode)
-        val normalizedArgs = definition?.let { normalizeArgs(it, nationCommand.args) } ?: LinkedHashMap(nationCommand.args)
-        val commandForResolve = nationCommand.copy(args = normalizedArgs)
 
         fun finish(resultTurn: LastTurn): LastTurn {
             recordTurnLastKv(nationId, officerLevel, resultTurn)
             return resultTurn
         }
 
-        if (definition != null && definition !== RestAction) {
-            val env = nationConstraintEnv(year, month, nationId, commandForResolve.actionCode, normalizedArgs)
-            val destGeneralId = ReservedTurnHandler.intArg(normalizedArgs, "destGeneralID")
-            val destCityId = ReservedTurnHandler.intArg(normalizedArgs, "destCityID")
-            val destNationId = ReservedTurnHandler.intArg(normalizedArgs, "destNationID")
-                ?: destGeneralId?.let { world.getGeneralById(it)?.nationId }
-                ?: destCityId?.let { world.getCityById(it)?.nationId }
-            val ctx = ConstraintContext(
-                actorId = generalId,
-                cityId = general.cityId,
-                nationId = nationId,
-                destGeneralId = destGeneralId,
-                destCityId = destCityId,
-                destNationId = destNationId,
-                args = normalizedArgs,
-                env = env,
-                mode = ConstraintMode.FULL,
-            )
-            val result = evaluateConstraints(
-                definition.buildConstraints(ctx),
-                ctx,
-                WorldStateViewAdapter(PerTurnOverlay(world), env = env, args = normalizedArgs),
-            )
+        if (prepared.definition != null && prepared.definition !== RestAction) {
+            val result = evaluateFullConstraints(prepared, year, month)
             if (result !is ConstraintResult.Allow) {
                 val reason = when (result) {
                     is ConstraintResult.Deny -> result.reason
@@ -128,12 +124,12 @@ class ProcessNationCommand(
                 return finish(lastTurn)
             }
 
-            val nationDefinition = definition as? opensamguk.logic.actions.nation.NationCommand
+            val nationDefinition = prepared.definition as? opensamguk.logic.actions.nation.NationCommand
             if (nationDefinition != null) {
                 val stack = addTermStack(
                     lastTurn = lastTurn,
                     command = nationDefinition.name,
-                    arg = normalizedArgs,
+                    arg = prepared.normalizedArgs,
                     preReqTurn = nationDefinition.getPreReqTurn(),
                     capset = (world.getNationById(nationId)?.meta?.get("capset") as? Number)?.toInt() ?: 0,
                 )
@@ -161,32 +157,209 @@ class ProcessNationCommand(
             ),
         )
 
-        // --- dispatch: registry leaf → logic CommandRegistry bridge → pass-through ---
-        val registered: NationActionResolver? = NationActionResolverRegistry.resolve(commandForResolve.actionCode)
-        val resultTurn = when {
-            registered != null ->
-                dispatchRegistered(registered, rng, general, officerLevel, commandForResolve, lastTurn, year, month, date)
-            runtimeRegistry != null ->
-                dispatchLogicDefinition(
-                    checkNotNull(runtimeRegistry),
-                    rng,
-                    general,
-                    commandForResolve,
-                    lastTurn,
-                    year,
-                    month,
-                    date,
-                )
-            else ->
-                nationCommandResolver.resolve(rng, commandForResolve, lastTurn)
-        }
+        val resultTurn = dispatchCommand(prepared, rng, officerLevel, lastTurn, year, month, date)
 
-        val completedTurn = if (definition is opensamguk.logic.actions.nation.NationCommand) {
-            onTermStackSuccess(definition.name, normalizedArgs)
+        val completedTurn = if (prepared.definition is opensamguk.logic.actions.nation.NationCommand) {
+            onTermStackSuccess(prepared.definition.name, prepared.normalizedArgs)
         } else {
             resultTurn
         }
         return finish(completedTurn)
+    }
+
+    fun processInstant(generalId: Int, nationCommand: ChosenCommand): InstantResult {
+        val general = world.getGeneralById(generalId)
+            ?: return InstantResult.Denied("장수가 없습니다.")
+        if (!InstantNationCommandRegistry.isInstantNationCommand(nationCommand.actionCode)) {
+            return InstantResult.Denied("처리할 수 없습니다.")
+        }
+        val prepared = prepareCommand(general, nationCommand)
+        if (prepared.definition == null || prepared.definition === RestAction) {
+            return InstantResult.Denied("처리할 수 없습니다.")
+        }
+        if (!hasValidInstantArgs(prepared)) {
+            return instantFailure(INVALID_ARGS_REASON, prepared.definition)
+        }
+
+        val state = world.getState()
+        if (isStaleNoAggression(prepared, state)) {
+            return instantFailure(PAST_DEADLINE_REASON, prepared.definition)
+        }
+        when (val constraint = evaluateInstantFullConstraints(prepared, state.currentYear, state.currentMonth)) {
+            ConstraintResult.Allow -> Unit
+            is ConstraintResult.Deny -> return instantFailure(constraint.reason, prepared.definition)
+            is ConstraintResult.Unknown -> return instantFailure(UNAVAILABLE_REASON, prepared.definition)
+        }
+
+        dispatchCommand(
+            prepared = prepared,
+            rng = NoRng.rngInstance(),
+            officerLevel = general.officerLevel,
+            lastTurn = LastTurn(),
+            year = state.currentYear,
+            month = state.currentMonth,
+            date = TURN_TIME_FMT.format(state.lastTurnTime),
+        )
+        return InstantResult.Allowed
+    }
+
+    private fun prepareCommand(general: TurnGeneral, nationCommand: ChosenCommand): PreparedCommand {
+        val runtimeRegistry = pipelineBuilder?.registryFor(general) ?: registry
+        val definition = runtimeRegistry?.resolve(nationCommand.actionCode)
+        val normalizedArgs = definition?.let { normalizeArgs(it, nationCommand.args) }
+            ?: LinkedHashMap(nationCommand.args)
+        return PreparedCommand(
+            general = general,
+            runtimeRegistry = runtimeRegistry,
+            definition = definition,
+            rawArgs = LinkedHashMap(nationCommand.args),
+            normalizedArgs = normalizedArgs,
+            command = nationCommand.copy(args = normalizedArgs),
+        )
+    }
+
+    private fun hasValidInstantArgs(prepared: PreparedCommand): Boolean {
+        val destNationId = strictInt(prepared.rawArgs["destNationID"]) ?: return false
+        if (destNationId < 1) return false
+        val destGeneralId = strictInt(prepared.rawArgs["destGeneralID"]) ?: return false
+        if (destGeneralId <= 0 || destGeneralId == prepared.general.id) return false
+        if (prepared.command.actionCode != NO_AGGRESSION_ACCEPT) return true
+
+        val year = strictInt(prepared.rawArgs["year"]) ?: return false
+        val month = strictInt(prepared.rawArgs["month"]) ?: return false
+        return month in 1..12 && year >= startYear
+    }
+
+    private fun isStaleNoAggression(prepared: PreparedCommand, state: TurnWorldState): Boolean {
+        if (prepared.command.actionCode != NO_AGGRESSION_ACCEPT) return false
+        val year = checkNotNull(strictInt(prepared.rawArgs["year"]))
+        val month = checkNotNull(strictInt(prepared.rawArgs["month"]))
+        val requestedMonth = year.toLong() * 12L + month
+        val currentMonth = state.currentYear.toLong() * 12L + state.currentMonth - 1L
+        return requestedMonth <= currentMonth
+    }
+
+    private fun evaluateInstantFullConstraints(
+        prepared: PreparedCommand,
+        year: Int,
+        month: Int,
+    ): ConstraintResult {
+        val (context, view) = fullConstraintInput(prepared, year, month)
+        val destNationId = context.destNationId
+        val destGeneralId = context.destGeneralId
+        for (constraint in checkNotNull(prepared.definition).buildConstraints(context)) {
+            if (constraint.name == DEST_NATION_VALUE_CONSTRAINT &&
+                destNationId != null &&
+                destGeneralId != null &&
+                world.getGeneralById(destGeneralId)?.nationId != destNationId
+            ) {
+                return ConstraintResult.Deny(PROPOSER_NATION_REASON, constraint.name)
+            }
+            when (val result = constraint.test(context, view)) {
+                ConstraintResult.Allow -> Unit
+                is ConstraintResult.Deny -> return result.copy(
+                    constraintName = result.constraintName ?: constraint.name,
+                )
+                is ConstraintResult.Unknown -> return when (constraint.name) {
+                    EXISTS_DEST_NATION_CONSTRAINT -> ConstraintResult.Deny(MISSING_NATION_REASON, constraint.name)
+                    EXISTS_DEST_GENERAL_CONSTRAINT -> ConstraintResult.Deny(MISSING_GENERAL_REASON, constraint.name)
+                    else -> result
+                }
+            }
+        }
+        return ConstraintResult.Allow
+    }
+
+    private fun instantFailure(reason: String, definition: GeneralActionDefinition): InstantResult.Denied =
+        InstantResult.Denied("$reason ${definition.name} 실패.")
+
+    private fun strictInt(value: Any?): Int? = when (value) {
+        is Byte -> value.toInt()
+        is Short -> value.toInt()
+        is Int -> value
+        is Long -> value.takeIf { it in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong() }?.toInt()
+        else -> null
+    }
+
+    private fun evaluateFullConstraints(
+        prepared: PreparedCommand,
+        year: Int,
+        month: Int,
+    ): ConstraintResult {
+        val (context, view) = fullConstraintInput(prepared, year, month)
+        return evaluateConstraints(
+            checkNotNull(prepared.definition).buildConstraints(context),
+            context,
+            view,
+        )
+    }
+
+    private fun fullConstraintInput(
+        prepared: PreparedCommand,
+        year: Int,
+        month: Int,
+    ): Pair<ConstraintContext, WorldStateViewAdapter> {
+        val general = prepared.general
+        val args = prepared.normalizedArgs
+        val nationId = general.nationId
+        val env = nationConstraintEnv(year, month, nationId, prepared.command.actionCode, args)
+        val destGeneralId = ReservedTurnHandler.intArg(args, "destGeneralID")
+        val destCityId = ReservedTurnHandler.intArg(args, "destCityID")
+        val destNationId = ReservedTurnHandler.intArg(args, "destNationID")
+            ?: destGeneralId?.let { world.getGeneralById(it)?.nationId }
+            ?: destCityId?.let { world.getCityById(it)?.nationId }
+        val ctx = ConstraintContext(
+            actorId = general.id,
+            cityId = general.cityId,
+            nationId = nationId,
+            destGeneralId = destGeneralId,
+            destCityId = destCityId,
+            destNationId = destNationId,
+            args = args,
+            env = env,
+            mode = ConstraintMode.FULL,
+        )
+        return ctx to WorldStateViewAdapter(
+            PerTurnOverlay(world),
+            env = env,
+            args = args,
+        )
+    }
+
+    private fun dispatchCommand(
+        prepared: PreparedCommand,
+        rng: RandUtil,
+        officerLevel: Int,
+        lastTurn: LastTurn,
+        year: Int,
+        month: Int,
+        date: String,
+    ): LastTurn {
+        val registered: NationActionResolver? = NationActionResolverRegistry.resolve(prepared.command.actionCode)
+        return when {
+            registered != null -> dispatchRegistered(
+                registered,
+                rng,
+                prepared.general,
+                officerLevel,
+                prepared.command,
+                lastTurn,
+                year,
+                month,
+                date,
+            )
+            prepared.runtimeRegistry != null -> dispatchLogicDefinition(
+                prepared.runtimeRegistry,
+                rng,
+                prepared.general,
+                prepared.command,
+                lastTurn,
+                year,
+                month,
+                date,
+            )
+            else -> nationCommandResolver.resolve(rng, prepared.command, lastTurn)
+        }
     }
 
     private fun normalizeArgs(
@@ -715,6 +888,19 @@ class ProcessNationCommand(
     }
 
     companion object {
+        private val TURN_TIME_FMT: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC)
+        private const val NO_AGGRESSION_ACCEPT = "che_불가침수락"
+        private const val DEST_NATION_VALUE_CONSTRAINT = "ReqDestNationValue"
+        private const val EXISTS_DEST_NATION_CONSTRAINT = "ExistsDestNation"
+        private const val EXISTS_DEST_GENERAL_CONSTRAINT = "ExistsDestGeneral"
+        private const val INVALID_ARGS_REASON = "인자가 올바르지 않습니다."
+        private const val PAST_DEADLINE_REASON = "이미 기한이 지났습니다."
+        private const val MISSING_NATION_REASON = "멸망한 국가입니다."
+        private const val MISSING_GENERAL_REASON = "없는 장수입니다."
+        private const val PROPOSER_NATION_REASON = "제의 장수가 국가 소속이 아닙니다"
+        private const val UNAVAILABLE_REASON = "처리할 수 없습니다."
+
         /** PHP seed component 2 for the nation pass (`TurnExecutionHelper.php:312`). */
         const val NATION_COMMAND_TOKEN: String = "nationCommand"
     }

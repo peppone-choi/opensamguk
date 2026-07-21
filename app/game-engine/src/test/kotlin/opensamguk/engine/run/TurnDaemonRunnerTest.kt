@@ -287,6 +287,10 @@ class TurnDaemonRunnerTest {
                         id = 1, currentYear = 200, currentMonth = 1,
                         tickSeconds = 3600, lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
                     ),
+                    worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                        id = 1, currentYear = 200, currentMonth = 1,
+                        tickSeconds = 3600, lastTurnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                    )).id),
                 ),
             )
 

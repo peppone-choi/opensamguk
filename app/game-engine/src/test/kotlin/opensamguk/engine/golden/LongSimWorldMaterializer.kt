@@ -111,7 +111,7 @@ object LongSimWorldMaterializer {
                 "maxGeneralId" to maxGeneralId,
             ),
         )
-        return InMemoryTurnWorld(WorldSnapshot(state, generals, cities, nations, emptyList(), diplomacy))
+        return InMemoryTurnWorld(WorldSnapshot(state, generals, cities, nations, emptyList(), diplomacy, worldId = opensamguk.common.world.WorldId((state).id)))
     }
 
     private fun loadNationEnv(rows: JsonArray): Map<Int, Map<String, Any?>> {

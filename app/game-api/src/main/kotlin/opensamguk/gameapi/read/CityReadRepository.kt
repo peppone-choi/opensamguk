@@ -5,10 +5,14 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.logic.domain.City
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.Repository as SpringDataRepository
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import java.util.Optional
 
 /**
  * Read-only JPA mapping of the `city` row for the PRECHECK path (game-api ONLY — §7).
@@ -28,6 +32,9 @@ class CityReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "name")
     var name: String = "",
@@ -128,17 +135,48 @@ class CityReadEntity(
     )
 }
 
-interface CityReadRepository : JpaRepository<CityReadEntity, Int> {
+interface CityReadRawRepository : SpringDataRepository<CityReadEntity, Int> {
+    fun findByWorldIdAndId(worldId: Int, id: Int): Optional<CityReadEntity>
+    fun existsByWorldIdAndId(worldId: Int, id: Int): Boolean
+    fun findByWorldId(worldId: Int): List<CityReadEntity>
+    fun countByWorldId(worldId: Int): Long
+
     /** F2: cities owned by a nation (세력 도시 / my-cities), ordered by id. */
-    fun findByNationIdOrderByIdAsc(nationId: Int): List<CityReadEntity>
+    fun findByWorldIdAndNationIdOrderByIdAsc(worldId: Int, nationId: Int): List<CityReadEntity>
 
     /** F2 front-info / nation-detail city count. */
-    fun countByNationId(nationId: Int): Long
+    fun countByWorldIdAndNationId(worldId: Int, nationId: Int): Long
 
     /**
      * F3 kingdoms ranking — `pop` = SUM(city.pop) over a nation's cities (there is NO `nation.pop`
      * column). COALESCE so a nation with no cities materializes 0, not null.
      */
-    @Query("select coalesce(sum(c.population), 0) from CityReadEntity c where c.nationId = :nationId")
-    fun sumPopulationByNationId(@Param("nationId") nationId: Int): Long
+    @Query("select coalesce(sum(c.population), 0) from CityReadEntity c where c.worldId = :worldId and c.nationId = :nationId")
+    fun sumPopulationByWorldIdAndNationId(
+        @Param("worldId") worldId: Int,
+        @Param("nationId") nationId: Int,
+    ): Long
+}
+
+@Repository
+class CityReadRepository(
+    private val raw: CityReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findById(id: Int): Optional<CityReadEntity> = raw.findByWorldIdAndId(worldId.value, id)
+
+    fun existsById(id: Int): Boolean = raw.existsByWorldIdAndId(worldId.value, id)
+
+    fun findAll(): List<CityReadEntity> = raw.findByWorldId(worldId.value)
+
+    fun count(): Long = raw.countByWorldId(worldId.value)
+
+    fun findByNationIdOrderByIdAsc(nationId: Int): List<CityReadEntity> =
+        raw.findByWorldIdAndNationIdOrderByIdAsc(worldId.value, nationId)
+
+    fun countByNationId(nationId: Int): Long = raw.countByWorldIdAndNationId(worldId.value, nationId)
+
+    fun sumPopulationByNationId(nationId: Int): Long = raw.sumPopulationByWorldIdAndNationId(worldId.value, nationId)
 }

@@ -47,6 +47,7 @@ class TroopIntakeSliceBTest {
         WorldSnapshot(
             state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
             generals = generals, nations = listOf(nation()), troops = troops,
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 

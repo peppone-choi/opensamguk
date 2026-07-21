@@ -60,6 +60,14 @@ class WorldInvaderEndingContextTest {
                 ),
                 nations = nations,
                 cities = cities,
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                    id = 1,
+                    currentYear = 200,
+                    currentMonth = 1,
+                    tickSeconds = 3600,
+                    lastTurnTime = t0,
+                    meta = meta,
+                )).id),
             ),
         )
     }

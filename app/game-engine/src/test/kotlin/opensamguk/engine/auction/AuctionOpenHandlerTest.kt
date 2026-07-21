@@ -67,6 +67,10 @@ class AuctionOpenHandlerTest {
                 ),
             ) + extraGenerals,
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 4, tickSeconds = 3600, lastTurnTime = t0,
+                meta = mapOf("startYear" to 200, "turnterm" to 60),
+            )).id),
         ),
     )
 
@@ -86,6 +90,10 @@ class AuctionOpenHandlerTest {
                 ),
             ),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 1000)),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 2, tickSeconds = 3600, lastTurnTime = t0,
+                meta = mapOf("startYear" to 200, "turnterm" to 60),
+            )).id),
         ),
     )
 

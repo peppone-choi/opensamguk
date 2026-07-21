@@ -57,21 +57,21 @@ class GameKvFlushIT {
         )
         jdbc.update(
             """
-            INSERT INTO ng_games (server_id, date, season, scenario, scenario_name, env)
+            INSERT INTO ng_games (world_id, server_id, date, season, scenario, scenario_name, env)
             VALUES
-              ('archive-server', '2026-01-01T00:00:00Z', 1, 0, 'archive test', '{}'::jsonb),
-              ('newest-wrong-server', '2026-01-03T00:00:00Z', 1, 0, 'wrong archive', '{}'::jsonb)
+              (1, 'archive-server', '2026-01-01T00:00:00Z', 1, 0, 'archive test', '{}'::jsonb),
+              (1, 'newest-wrong-server', '2026-01-03T00:00:00Z', 1, 0, 'wrong archive', '{}'::jsonb)
             """.trimIndent(),
             MapSqlParameterSource(),
         )
         // pre-seed a stale game_kv row to exercise delete-on-null.
         jdbc.update(
-            """INSERT INTO game_kv ("table", namespace, key, value) VALUES ('betting', 'id_3', 'stale', '1'::jsonb)""",
+            """INSERT INTO game_kv (world_id, "table", namespace, key, value) VALUES (1, 'betting', 'id_3', 'stale', '1'::jsonb)""",
             MapSqlParameterSource(),
         )
         // pre-seed a stale nation_env row to exercise delete-on-null there too.
         jdbc.update(
-            "INSERT INTO nation_env (namespace, key, value) VALUES (5, 'stale', '1'::jsonb)",
+            "INSERT INTO nation_env (world_id, namespace, key, value) VALUES (1, 5, 'stale', '1'::jsonb)",
             MapSqlParameterSource(),
         )
     }
@@ -84,7 +84,8 @@ class GameKvFlushIT {
     @Test
     fun `kv flush writes game_kv string-ns and nation_env int-ns with delete-on-null`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 kvWrites = listOf(
                     // string-ns game_kv: a raw-json String value bound verbatim (PHP json_encode bytes).
@@ -97,6 +98,8 @@ class GameKvFlushIT {
                     KvWrite.nationEnv(namespace = 5, key = "nationNotice", value = mapOf("text" to "공지")),
                     KvWrite.nationEnv(namespace = 5, key = "scout_msg", value = "우리도 할 수 있다! 낙양군"),
                     KvWrite.nationEnv(namespace = 5, key = "stale", value = null),
+                ),
+                inheritanceKvWrites = listOf(
                     // V15/P0-07 — inheritance 채널: "table" 판별자 = storage 이름 'inheritance'
                     // (ChangeRecorder.recordInheritancePointSet 출력 shape). reader
                     // (InheritanceRepository: "table"='inheritance')와 같은 행에 착지해야 한다.
@@ -111,7 +114,7 @@ class GameKvFlushIT {
         assertEquals(
             1,
             jdbc.queryForObject(
-                """SELECT count(*) FROM game_kv WHERE "table"='game_env' AND namespace='global'
+                """SELECT count(*) FROM game_kv WHERE world_id=1 AND "table"='game_env' AND namespace='global'
                    AND key='obfuscatedNamePool' AND value = '["가","나"]'::jsonb""".trimIndent(),
                 MapSqlParameterSource(), Int::class.java,
             ),
@@ -120,7 +123,7 @@ class GameKvFlushIT {
         assertEquals(
             "7",
             jdbc.queryForObject(
-                """SELECT value::text FROM game_kv WHERE "table"='game_env' AND namespace='global' AND key='last_betting_id'""",
+                """SELECT value::text FROM game_kv WHERE world_id=1 AND "table"='game_env' AND namespace='global' AND key='last_betting_id'""",
                 MapSqlParameterSource(), String::class.java,
             ),
         )
@@ -128,14 +131,14 @@ class GameKvFlushIT {
         assertEquals(
             0,
             jdbc.queryForObject(
-                """SELECT count(*) FROM game_kv WHERE "table"='betting' AND namespace='id_3' AND key='stale'""",
+                """SELECT count(*) FROM game_kv WHERE world_id=1 AND "table"='betting' AND namespace='id_3' AND key='stale'""",
                 MapSqlParameterSource(), Int::class.java,
             ),
         )
         assertEquals(
             "우리도 할 수 있다! 낙양군",
             jdbc.queryForObject(
-                "SELECT value #>> '{}' FROM nation_env WHERE namespace=5 AND key='scout_msg'",
+                "SELECT value #>> '{}' FROM nation_env WHERE world_id=1 AND namespace=5 AND key='scout_msg'",
                 MapSqlParameterSource(), String::class.java,
             ),
         )
@@ -143,14 +146,14 @@ class GameKvFlushIT {
         assertEquals(
             1,
             jdbc.queryForObject(
-                "SELECT count(*) FROM nation_env WHERE namespace=5 AND key='nationNotice' AND value = '{\"text\":\"공지\"}'::jsonb",
+                "SELECT count(*) FROM nation_env WHERE world_id=1 AND namespace=5 AND key='nationNotice' AND value = '{\"text\":\"공지\"}'::jsonb",
                 MapSqlParameterSource(), Int::class.java,
             ),
         )
         assertEquals(
             0,
             jdbc.queryForObject(
-                "SELECT count(*) FROM nation_env WHERE namespace=5 AND key='stale'",
+                "SELECT count(*) FROM nation_env WHERE world_id=1 AND namespace=5 AND key='stale'",
                 MapSqlParameterSource(), Int::class.java,
             ),
         )
@@ -159,7 +162,7 @@ class GameKvFlushIT {
         assertEquals(
             1,
             jdbc.queryForObject(
-                """SELECT count(*) FROM game_kv WHERE "table"='inheritance'
+                """SELECT count(*) FROM game_kv WHERE world_id IS NULL AND "table"='inheritance'
                    AND namespace='inheritance_77' AND key='previous'""".trimIndent(),
                 MapSqlParameterSource(), Int::class.java,
             ),
@@ -178,7 +181,8 @@ class GameKvFlushIT {
     @Test
     fun `deleted nation snapshots are archived under current server id`() {
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 archiveServerId = "archive-server",
                 deletedNationSnapshots = listOf(
@@ -197,7 +201,8 @@ class GameKvFlushIT {
                 """
                 SELECT count(*)
                   FROM ng_old_nations
-                 WHERE server_id = 'archive-server'
+                 WHERE world_id = 1
+                   AND server_id = 'archive-server'
                    AND nation = 7
                    AND data = '{"general_ids":[42,43],"name":"삭제국","history":[]}'::jsonb
                 """.trimIndent(),
@@ -207,7 +212,8 @@ class GameKvFlushIT {
         )
 
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 archiveServerId = "archive-server",
                 deletedNationSnapshots = listOf(
@@ -222,7 +228,7 @@ class GameKvFlushIT {
         assertEquals(
             1,
             jdbc.queryForObject(
-                "SELECT count(*) FROM ng_old_nations WHERE server_id = 'archive-server' AND nation = 7",
+                "SELECT count(*) FROM ng_old_nations WHERE world_id = 1 AND server_id = 'archive-server' AND nation = 7",
                 MapSqlParameterSource(),
                 Int::class.java,
             ),
@@ -230,7 +236,7 @@ class GameKvFlushIT {
         assertEquals(
             "[99]",
             jdbc.queryForObject(
-                "SELECT data -> 'general_ids' #>> '{}' FROM ng_old_nations WHERE server_id = 'archive-server' AND nation = 7",
+                "SELECT data -> 'general_ids' #>> '{}' FROM ng_old_nations WHERE world_id = 1 AND server_id = 'archive-server' AND nation = 7",
                 MapSqlParameterSource(),
                 String::class.java,
             ),
@@ -238,7 +244,7 @@ class GameKvFlushIT {
         assertEquals(
             0,
             jdbc.queryForObject(
-                "SELECT count(*) FROM ng_old_nations WHERE server_id = 'newest-wrong-server' AND nation = 7",
+                "SELECT count(*) FROM ng_old_nations WHERE world_id = 1 AND server_id = 'newest-wrong-server' AND nation = 7",
                 MapSqlParameterSource(),
                 Int::class.java,
             ),

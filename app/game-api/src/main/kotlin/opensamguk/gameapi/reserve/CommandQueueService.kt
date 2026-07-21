@@ -1,6 +1,8 @@
 package opensamguk.gameapi.reserve
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.persistence.ReservedTurnRepository.Companion.MAX_CHIEF_TURNS
 import opensamguk.infra.persistence.ReservedTurnRepository.Companion.MAX_GENERAL_TURNS
@@ -30,7 +32,9 @@ import org.springframework.stereotype.Service
 class CommandQueueService(
     private val reservedTurns: ReservedTurnRepository,
     private val registry: CommandRegistry,
+    processWorld: GameApiProcessWorld,
 ) {
+    private val worldId: WorldId = processWorld.worldId
 
     // --- 입출력 DTO --------------------------------------------------------------------------------
 
@@ -143,9 +147,9 @@ class CommandQueueService(
     fun pushGeneral(generalId: Int, amount: Int) {
         if (amount == 0) throw CommandQueueDenied("0은 불가능합니다")
         if (amount > 0) {
-            reservedTurns.pushGeneralTurn(generalId, amount)
+            reservedTurns.pushGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
         } else {
-            reservedTurns.pullGeneralTurn(generalId, -amount)
+            reservedTurns.pullGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = -amount)
         }
     }
 
@@ -154,7 +158,7 @@ class CommandQueueService(
      * 검증 범위 1..12 는 컨트롤러 validator가 책임). amount<=0 / amount>=MAX → 내부 no-op.
      */
     fun repeatGeneral(generalId: Int, amount: Int) {
-        reservedTurns.repeatGeneralTurn(generalId, amount)
+        reservedTurns.repeatGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
     }
 
     // --- Nation: Push / Repeat ---------------------------------------------------------------------
@@ -167,15 +171,30 @@ class CommandQueueService(
     fun pushNation(generalId: Int, nationId: Int, officerLevel: Int, amount: Int) {
         if (amount == 0) throw CommandQueueDenied("0은 불가능합니다")
         if (amount > 0) {
-            reservedTurns.pushNationTurn(nationId, officerLevel, amount)
+            reservedTurns.pushNationTurn(
+                worldId = worldId,
+                nationId = nationId,
+                officerLevel = officerLevel,
+                turnCnt = amount,
+            )
         } else {
-            reservedTurns.pullNationTurn(nationId, officerLevel, -amount)
+            reservedTurns.pullNationTurn(
+                worldId = worldId,
+                nationId = nationId,
+                officerLevel = officerLevel,
+                turnCnt = -amount,
+            )
         }
     }
 
     /** Repeat(국가) — `NationCommand/RepeatCommand` + `repeatNationCommand`. amount 범위는 컨트롤러 validator. */
     fun repeatNation(generalId: Int, nationId: Int, officerLevel: Int, amount: Int) {
-        reservedTurns.repeatNationTurn(nationId, officerLevel, amount)
+        reservedTurns.repeatNationTurn(
+            worldId = worldId,
+            nationId = nationId,
+            officerLevel = officerLevel,
+            turnCnt = amount,
+        )
     }
 
     // --- setGeneralCommand / setNationCommand 포팅(링 쓰기) ----------------------------------------
@@ -216,6 +235,7 @@ class CommandQueueService(
         val argJson = encodeArg(arg)
         for (slot in slots) {
             reservedTurns.reserve(
+                worldId = worldId,
                 generalId = generalId,
                 turnIdx = slot,
                 actionCode = command,
@@ -251,6 +271,7 @@ class CommandQueueService(
         val argJson = encodeArg(arg)
         for (slot in slots) {
             reservedTurns.reserveNationTurn(
+                worldId = worldId,
                 nationId = nationId,
                 officerLevel = officerLevel,
                 turnIdx = slot,

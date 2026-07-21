@@ -31,17 +31,20 @@ class NationEnvReadIT {
     private val objectMapper = ObjectMapper()
     @Test
     fun `nation_env jsonb round-trips through the read repo and decodes`() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'test', 1, 1, 60)",
+        )
         // 데몬 nationEnvKvWrite가 쓰는 형태 그대로: namespace = nationId, key, value = jsonb.
         jdbc.update(
             """
-            INSERT INTO nation_env (namespace, key, value) VALUES
-              (1, 'nationNotice', '{"date":"200-3","msg":"천하통일을 위하여","author":"순욱","authorID":10}'::jsonb)
+            INSERT INTO nation_env (world_id, namespace, key, value) VALUES
+              (1, 1, 'nationNotice', '{"date":"200-3","msg":"천하통일을 위하여","author":"순욱","authorID":10}'::jsonb)
             """.trimIndent(),
         )
-        jdbc.update("""INSERT INTO nation_env (namespace, key, value) VALUES (1, 'scout_msg', '"인재를 구합니다"'::jsonb)""")
-        jdbc.update("""INSERT INTO nation_env (namespace, key, value) VALUES (1, 'available_war_setting_cnt', '3'::jsonb)""")
+        jdbc.update("""INSERT INTO nation_env (world_id, namespace, key, value) VALUES (1, 1, 'scout_msg', '"인재를 구합니다"'::jsonb)""")
+        jdbc.update("""INSERT INTO nation_env (world_id, namespace, key, value) VALUES (1, 1, 'available_war_setting_cnt', '3'::jsonb)""")
         // 다른 국가의 같은 키 — namespace 격리(누출 금지).
-        jdbc.update("""INSERT INTO nation_env (namespace, key, value) VALUES (2, 'available_war_setting_cnt', '7'::jsonb)""")
+        jdbc.update("""INSERT INTO nation_env (world_id, namespace, key, value) VALUES (1, 2, 'available_war_setting_cnt', '7'::jsonb)""")
         // nationNotice = {date,msg,author,authorID} 객체 → .msg.
         val notice = nationEnv.findByNamespaceAndKey(1, "nationNotice")!!
         assertEquals("천하통일을 위하여", objectMapper.readTree(notice.value).get("msg").asText())

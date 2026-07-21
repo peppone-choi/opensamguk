@@ -1,52 +1,81 @@
 # Agent Handoff
 
-다음 세션/에이전트가 **대화 기록 없이** 이 파일만으로 재개할 수 있어야 한다. 갱신 시 이전 내용은 교체한다(장기 이력은 `docs/superpowers/SESSION_HANDOFF.md`).
-
-- Updated at: 2026-07-18
-- From: Claude Code (`batch3-closeout` — batch-3 마무리 세션, 사용자 승인 하 진행)
+- Updated at: 2026-07-21
+- From: Codex (`cqrs-hardening-root`)
+- Branch: `codex/op-126-complete-schema`
+- Base: `e536f6f30565eb5852e79466ef60f1209b61227f`
+- State: implementation and independent review cleared; product suites green; OPENSAM-126 has been committed, pushed, merged, and tracker-updated; Agent OS guard red and production-shaped rehearsal `채점대기`
 
 ## Goal
 
-batch-3(OPENSAM-92·93·94·97·103 + §13 지도)의 **closeout**: 원장 정합화 → 최종 검증(Phase B) → 티켓별 커밋 분할안 제시 → A4(커밋/push/PR) 사람 승인. 이후 다음 5티켓 선정(standing directive "티켓 5개씩").
+Preserve the implemented OPENSAM-126 scope while keeping it as Done for in-scope changes only; Agent OS guard is red and
+the approved production-shaped migration rehearsal is unavailable.
 
-> **⚠ A4·A5 완료(2026-07-18, 사용자 승인) — 아래 커밋 분할 계획은 이미 실행·머지됨. 재실행 금지.** 6커밋(`14a02afd`→`9831cc45`) + CI 픽스 `413cc8e6` push → **PR #260 머지됨**(05:00:57Z, main `064d5e1a`). Phase B 전부 green(백엔드 486스위트/4423테스트, gateway 53/53, game 186/186, check.py strict No findings). 자동 배포 런은 EC2 정지로 취소 — 요금 납부 후 재배포(사용자 지시). Jira/GitHub 동기화 완료(7건 완료 전이 + 7이슈 close, 97/#240 유지). 남은 것: 초상 크롤 완주→얼굴 크롭→images 2차 푸시, 시나리오 스펙 정식화, batch-4 확정. 정본 상태는 `.ai/current-state.md`.
+## Implemented
 
-## Current result
+- V31 first cohort plus V32 complete all 42 physical-table classifications: 33 strict world-owned relations,
+  mixed `game_kv`, `world_state`, and 7 exact global tables. Strict rows have explicit positive `world_id`,
+  world-qualified keys, and no compatibility default or trigger.
+- V32 backfills only an exactly-one-positive-world database, supports the global-only zero-world case, and
+  fails closed for world-owned data without a canonical world or for invalid world cardinality.
+- Directly affected writers are scoped in `JdbcFlushExecutor`, `ScenarioImporter`, rehydrate bootstrap, and
+  game-api `general_owner` / `select_npc_token` persistence. Historical migration and strict-FK fixtures were
+  updated without weakening assertions.
+- Diplomatic accept/decline now uses typed immediate daemon intake, `(world_id, id)` reads/writes, the same
+  recorder and single flush, post-commit result publication, and UI polling of that committed result.
+- PHP denial evaluation follows `argTest → stale/NA → FULL`; missing nation, missing general, and mismatch
+  ordering is explicit, and failures render exactly `{reason} {commandName} 실패.`.
+- OPENSAM-127 still owns the remaining read/query/Redis scoping; do not broaden this checkpoint into a claim
+  that multi-world runtime isolation or second-world admission is complete.
 
-- 전 레인 구현 + 독립 리뷰 **cleared** (7건: `docs/loops/opensam-batch3-2026-07-17/reviews/`). 94 리뷰는 2026-07-17 22:22 CLEARED가 최종.
-- 산출물 전량 미커밋: 수정 33파일 + 신규 ~25파일, 브랜치 `codex/full-frame-portrait-resize`(push됨, last commit `759f00b4` = OPENSAM-97 전체 프레임 축소).
-- 원장 정합화(Phase A) 완료: ownership에 `batch3-closeout` 등록 + 94 두 레인 completed 전환, current-state 갱신.
+## Verification evidence
 
-## Decisions already made
+- Independent PHP reason/order rerun: `BUILD SUCCESSFUL in 6m 46s`, **23/23** green.
+- Final `$os-verify` backend run: `BUILD SUCCESSFUL in 16m 13s`; logic **270 suites / 3,110 tests**,
+  infra **46 / 172**, game-engine **89 / 599** with one existing skip, and game-api **57 / 397**.
+  Aggregate: **462 suites / 4,278 tests / 0 failures / 0 errors / 1 skip**.
+- Web typecheck and **39 files / 192 tests** are green. Browser accept/decline QA is green; the earlier web
+  build was green.
+- The independent review artifact has one final `Verdict: cleared`; the prior `fix-required` findings were
+  remediated and re-reviewed.
+- Earlier canonical `tools/parity/gate.sh backend` attempts failed during Testcontainers startup/EOF. The later
+  `$os-verify` relevant-module sweep is green, but the canonical script itself did not produce a passing run.
+- Repeated Fablize `tool failure` warnings were observed even when the underlying command exited 0 and JUnit
+  XML was green. This is an isolated observer-layer baseline; use actual command output and XML as evidence.
 
-`.ai/decisions.md` ADR-LITE-001~012. 최근: 010(v2 콘텐츠 RTK 대체), 011(에셋 AI 생성 + UI 현대화), 012(코에이 IP 게이트 전면 해제 + 에셋 별도 공개 repo/CDN — 메인 repo 바이너리 미커밋 유지).
+## Guard status
 
-## Verification plan (Phase B — 커밋 전 필수)
+- Final `scripts/agent/verify-changes.sh --run` is **FAIL** at the Agent OS stage:
+  `test-codex-agent-os.sh` raises `KeyError: max_threads` from the known tracked-base mismatch.
+- The strict checker initially reported three errors. The repository-owned review Scope/logic mapping was
+  deliberately corrected without the prohibited automatic rerun; the remaining supplied baseline is the
+  user-owned `.codex` personal-model setting. A complete guard pass is not claimed.
 
-- `tools/parity/gate.sh backend` — **XML `failures="0" errors="0"` + BUILD SUCCESSFUL로 판정, exit code 불신**.
-- `cd web/gateway && pnpm typecheck && pnpm test` · `cd web/game && pnpm typecheck && pnpm test`.
-- `tools/agent-system/check.py --strict --base origin/main`.
+## Deferred scope
 
-## Known failures / cautions
+- Approved sanitized production-shaped dump/materializer is unavailable, so production-shaped migration,
+  row/checksum comparison, and lock-duration rehearsal remain **`채점대기`**. OPENSAM-126 is Done/closed for in-scope work.
+- OPENSAM-127 remains next for read/query/Redis scoping. Request/JWT authorization, complete multi-world
+  runtime isolation, second-world admission, cutover, and production activation are not claimed here.
 
-- Testcontainers 다중 스위트 동시 실행 시 컨테이너 기동 flake — 단독 재실행으로 분별(`known-issues.md`). 94 리뷰의 V30 "경합 오탐"도 동일 클래스.
-- **EC2 prod 요금 미납 정지** — A5(배포) 전 해제 확인 필수.
-- 93 라이브 반영 시 repo-밖 compose에 `:ro` 볼륨 라인 수동 추가 필요.
-- 문서-실상 불일치: 직전 원장 "branch=main·외부 frozen" vs 실제 codex 브랜치 push됨 — push 경위 사용자 확인 대기(current-state Open question ③).
+## Safety and ownership
+
+- `.codex/config.toml` contains a pre-existing user change and must remain untouched.
+- Commit, push, merge, Jira update, and GitHub issue update were performed for this V32 stack.
+- Deploy, production migration, and second-world admission are not authorized or claimed.
+- All OPENSAM-126 implementation and review lanes are released; root orchestration remains active.
 
 ## Do not repeat
 
-- 골든/테스트 완화·위조, `.env*` 읽기, **승인 없는 커밋/푸시/머지/배포** (하드 룰 — A4/A5는 명시 승인만).
-- gradle 판정을 exit code로 하지 말 것 — 출력 tail + 테스트 XML.
-- `.ai/*`는 single writer(`batch3-closeout`)만 수정.
+- Do not treat local synthetic/Testcontainers evidence as production-shaped rehearsal evidence.
+- Do not report the failed canonical parity attempts or final Agent OS stage as passing merely because the
+  later full module suites are green.
+- Do not retry Fablize observer warnings as product failures when the underlying exit code and XML are green;
+  record any genuinely different failing command separately.
+- Do not touch `.codex/config.toml` or perform git/external mutations without new explicit authorization.
 
-## Remaining work
+## Next action
 
-1. Phase B 검증 실행 → 결과 보고.
-2. A4 승인 대기: 커밋 분할안 6건 — ①91a(gateway-api profile icon + V30 + infra User*) ②92(web/gateway account UI + proxy + tests) ③93(nginx + compose + 웹 2앱 portrait helper) ④94(wire/dispatcher/ChangeRecorder/flush/controller/handler + IT) ⑤§13 헥스맵(tools/rtk14) ⑥docs/원장. base=main PR까지, 머지(=자동 배포)는 A5 별도.
-3. 미결: `.codex/config.toml` `max_threads` 제거 diff 포함 여부(사용자 지시 대기) · lane-97-fullrun(1000명 크롭, FP 2차 필터 중단점) 인수 여부 · EC2 해제.
-4. closeout 후 다음 5티켓 선정(마일스톤 M1/M2 High 우선, `ownership.md` Batch fences의 라벨·priority 규칙).
-
-## Files to read first
-
-`.ai/current-state.md` → `.ai/ownership.md` → `docs/superpowers/plans/2026-07-17-opensam-92-93-94-97-103-execution-contract.md` → `docs/loops/opensam-batch3-2026-07-17/reviews/`
+OPENSAM-126 is complete for implementation scope; remaining `채점대기` items include tracked-base Agent OS mismatch,
+production-shaped migration, row/checksum comparison, and lock-duration rehearsal. Resolve those only under appropriate
+task authority. OPENSAM-127 remains the next implementation ticket under a new task contract and ownership assignment.

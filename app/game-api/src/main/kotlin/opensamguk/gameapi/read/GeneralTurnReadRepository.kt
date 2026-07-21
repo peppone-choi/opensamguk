@@ -5,9 +5,13 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.Repository as SpringDataRepository
 import org.springframework.data.repository.query.Param
+import org.springframework.stereotype.Repository
+import java.util.Optional
 
 /**
  * F2 Wave 6 — read-only JPA mapping of the `general_turn` ring-buffer row (game-api READ path ONLY).
@@ -26,6 +30,9 @@ class GeneralTurnReadEntity(
     @Column(name = "id")
     var id: Int = 0,
 
+    @Column(name = "world_id")
+    var worldId: Int = 0,
+
     @Column(name = "general_id")
     var generalId: Int = 0,
 
@@ -43,9 +50,13 @@ class GeneralTurnReadEntity(
     var brief: String = "휴식",
 )
 
-interface GeneralTurnReadRepository : JpaRepository<GeneralTurnReadEntity, Int> {
+interface GeneralTurnReadRawRepository : SpringDataRepository<GeneralTurnReadEntity, Int> {
+    fun findByWorldIdAndId(worldId: Int, id: Int): Optional<GeneralTurnReadEntity>
+    fun findByWorldId(worldId: Int): List<GeneralTurnReadEntity>
+    fun countByWorldId(worldId: Int): Long
+
     /** The general's reserved ring, ordered by slot (turn_idx ASC) for a stable 0..N-1 list. */
-    fun findByGeneralIdOrderByTurnIdxAsc(generalId: Int): List<GeneralTurnReadEntity>
+    fun findByWorldIdAndGeneralIdOrderByTurnIdxAsc(worldId: Int, generalId: Int): List<GeneralTurnReadEntity>
 
     /**
      * W3 GeneralList — 여러 장수의 첫 5 예약 슬롯을 1회 일괄 조회(N+1 방지). PHP `GeneralList.php:215-218`의
@@ -57,8 +68,31 @@ interface GeneralTurnReadRepository : JpaRepository<GeneralTurnReadEntity, Int> 
      */
     @Query(
         "select t from GeneralTurnReadEntity t " +
-            "where t.generalId in :generalIds and t.turnIdx < 5 " +
+            "where t.worldId = :worldId and t.generalId in :generalIds and t.turnIdx < 5 " +
             "order by t.generalId asc, t.turnIdx asc",
     )
-    fun findReservedByGeneralIds(@Param("generalIds") generalIds: Collection<Int>): List<GeneralTurnReadEntity>
+    fun findReservedByWorldIdAndGeneralIds(
+        @Param("worldId") worldId: Int,
+        @Param("generalIds") generalIds: Collection<Int>,
+    ): List<GeneralTurnReadEntity>
+}
+
+@Repository
+class GeneralTurnReadRepository(
+    private val raw: GeneralTurnReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findById(id: Int): Optional<GeneralTurnReadEntity> = raw.findByWorldIdAndId(worldId.value, id)
+
+    fun findAll(): List<GeneralTurnReadEntity> = raw.findByWorldId(worldId.value)
+
+    fun count(): Long = raw.countByWorldId(worldId.value)
+
+    fun findByGeneralIdOrderByTurnIdxAsc(generalId: Int): List<GeneralTurnReadEntity> =
+        raw.findByWorldIdAndGeneralIdOrderByTurnIdxAsc(worldId.value, generalId)
+
+    fun findReservedByGeneralIds(generalIds: Collection<Int>): List<GeneralTurnReadEntity> =
+        raw.findReservedByWorldIdAndGeneralIds(worldId.value, generalIds)
 }

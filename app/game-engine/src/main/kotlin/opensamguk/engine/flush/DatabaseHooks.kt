@@ -43,6 +43,7 @@ import opensamguk.infra.persistence.VoteCommentInsertRow
 import opensamguk.infra.persistence.VoteInsertRow
 import opensamguk.infra.persistence.VotePollInsertRow
 import opensamguk.infra.persistence.YearbookInsertRow
+import opensamguk.common.world.WorldId
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -156,7 +157,7 @@ object DatabaseHooks {
      */
     fun flushChanges(world: InMemoryTurnWorld, executor: JdbcFlushExecutor) {
         val dirty = world.consumeDirtyState()
-        executor.flush(toFlushPayload(world.getState(), dirty))
+        executor.flush(toFlushPayload(world.worldId, world.getState(), dirty))
     }
 
     /**
@@ -165,7 +166,11 @@ object DatabaseHooks {
      * flushed rows are byte-identical to what the resolver produced. Created-this-tick ids are
      * excluded from the UPDATE batch (step-7 contract); P1 never creates, so this is identity here.
      */
-    internal fun toFlushPayload(state: TurnWorldState, dirty: DirtyState): FlushPayload {
+    internal fun toFlushPayload(
+        worldId: WorldId,
+        state: TurnWorldState,
+        dirty: DirtyState,
+    ): FlushPayload {
         val createdGeneralIds = dirty.createdGenerals.map { it.id }.toSet()
         val createdNationIds = dirty.createdNations.map { it.id }.toSet()
         val createdTroopIds = dirty.createdTroops.map { it.id }.toSet()
@@ -212,6 +217,7 @@ object DatabaseHooks {
         }
 
         return FlushPayload(
+            worldId = worldId,
             worldStateUpdate = linkedMapOf(
                 "id" to state.id,
                 "current_year" to state.currentYear,
@@ -576,6 +582,7 @@ object DatabaseHooks {
         } + recorder.nationArchiveSnapshots().map { LinkedHashMap(it) }
 
         return FlushPayload(
+            worldId = world.worldId,
             worldStateUpdate = linkedMapOf(
                 "id" to state.id,
                 "current_year" to state.currentYear,

@@ -33,6 +33,7 @@ class GameApiApplicationTests {
             registry.add("spring.datasource.url", postgres::getJdbcUrl)
             registry.add("spring.datasource.username", postgres::getUsername)
             registry.add("spring.datasource.password", postgres::getPassword)
+            registry.add("opensamguk.world-id") { "1" }
             // Disable Redis health contribution for the boot test (no Redis container here).
             registry.add("management.health.redis.enabled") { "false" }
         }

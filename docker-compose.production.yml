@@ -60,6 +60,7 @@ services:
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
       # Production starts empty by default; admins create servers before any scenario seed.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
@@ -97,6 +98,7 @@ services:
       GAME_DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
       OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
       SERVER_ID: ${SERVER_ID:-s1}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}

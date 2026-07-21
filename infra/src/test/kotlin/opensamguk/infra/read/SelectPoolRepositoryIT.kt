@@ -2,6 +2,7 @@ package opensamguk.infra.read
 
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -10,11 +11,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
-import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.SelectPoolMutation
 import opensamguk.infra.persistence.SelectPoolMutationType
 import opensamguk.infra.persistence.SelectPoolCandidate
+import opensamguk.infra.persistence.testFlushPayload
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Instant
 import javax.sql.DataSource
@@ -56,11 +57,22 @@ class SelectPoolRepositoryIT {
         jdbc = NamedParameterJdbcTemplate(dataSource)
         repo = SelectPoolRepository(jdbc)
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(dataSource)))
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'fixture', 200, 1, 3600)",
+            MapSqlParameterSource(),
+        )
     }
 
     @AfterAll
     fun tearDown() {
         if (this::postgres.isInitialized) postgres.stop()
+    }
+
+    @AfterEach
+    fun clearPool() {
+        if (this::jdbc.isInitialized) {
+            jdbc.update("DELETE FROM select_pool", MapSqlParameterSource())
+        }
     }
 
     @Test
@@ -132,8 +144,8 @@ class SelectPoolRepositoryIT {
     private fun insertPool(uniqueName: String, owner: Int?, generalId: Int?, reservedUntil: Instant?, info: String) {
         jdbc.update(
             """
-            INSERT INTO select_pool (unique_name, owner, general_id, reserved_until, info)
-            VALUES (:unique_name, :owner, :general_id, :reserved_until, :info)
+            INSERT INTO select_pool (world_id, unique_name, owner, general_id, reserved_until, info)
+            VALUES (1, :unique_name, :owner, :general_id, :reserved_until, :info)
             """.trimIndent(),
             MapSqlParameterSource()
                 .addValue("unique_name", uniqueName)
@@ -154,7 +166,8 @@ class SelectPoolRepositoryIT {
         assertEquals(reservedUntilNull, row["reserved_until"] == null)
     }
 
-    private fun payload(mutation: SelectPoolMutation) = FlushPayload(
+    private fun payload(mutation: SelectPoolMutation) = testFlushPayload(
+        worldId = opensamguk.common.world.WorldId(1),
         worldStateUpdate = linkedMapOf(
             "id" to 1,
             "current_year" to 200,

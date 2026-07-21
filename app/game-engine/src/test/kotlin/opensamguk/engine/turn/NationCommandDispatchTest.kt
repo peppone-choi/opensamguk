@@ -52,6 +52,7 @@ class NationCommandDispatchTest {
                 TurnDiplomacy(1, 2, state = diplomacyState, term = diplomacyTerm),
                 TurnDiplomacy(2, 1, state = diplomacyState, term = diplomacyTerm),
             ),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
         ),
     )
 
@@ -90,6 +91,7 @@ class NationCommandDispatchTest {
                     TurnDiplomacy(1, 2, state = DiplomacyState.TRADE, term = 0),
                     TurnDiplomacy(2, 1, state = DiplomacyState.TRADE, term = 0),
                 ),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val recorder = ChangeRecorder()
@@ -140,6 +142,7 @@ class NationCommandDispatchTest {
                     TurnDiplomacy(1, 2, state = DiplomacyState.TRADE, term = 0),
                     TurnDiplomacy(2, 1, state = DiplomacyState.TRADE, term = 0),
                 ),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val proc = ProcessNationCommand(
@@ -577,6 +580,7 @@ class NationCommandDispatchTest {
                     TurnDiplomacy(1, 2, state = DiplomacyState.WAR, term = 3),
                     TurnDiplomacy(2, 1, state = DiplomacyState.WAR, term = 3),
                 ),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val recorder = ChangeRecorder()
@@ -631,6 +635,7 @@ class NationCommandDispatchTest {
                 ),
                 nations = listOf(Nation(id = 1, name = "촉", color = "#0f0", gold = 5000, rice = 5000)),
                 diplomacy = emptyList(),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0)).id),
             ),
         )
         val recorder = ChangeRecorder()

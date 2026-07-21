@@ -115,9 +115,9 @@ class SatelliteFlushGoldenIT {
         // The two scenario_1010 nations — the bidirectional diplomacy peers 거병 wires the new nation to.
         jdbc.update(
             """
-            INSERT INTO nation (id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
-            VALUES (1, '후한',   '#ffd700', 1,  10000, 10000, 1500, 7, 'che_명가', CAST('{}' AS jsonb)),
-                   (2, '황건적', '#8b4513', 50,  5000,  5000,  500, 5, 'che_명가', CAST('{}' AS jsonb))
+            INSERT INTO nation (world_id, id, name, color, capital_city_id, gold, rice, tech, level, type_code, meta)
+            VALUES (1, 1, '후한',   '#ffd700', 1,  10000, 10000, 1500, 7, 'che_명가', CAST('{}' AS jsonb)),
+                   (1, 2, '황건적', '#8b4513', 50,  5000,  5000,  500, 5, 'che_명가', CAST('{}' AS jsonb))
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -125,12 +125,12 @@ class SatelliteFlushGoldenIT {
         jdbc.update(
             """
             INSERT INTO general
-                (id, name, nation_id, city_id, leadership, strength, intel, injury,
+                (world_id, id, name, nation_id, city_id, leadership, strength, intel, injury,
                  experience, dedication, officer_level, gold, rice, crew, train, atmos,
                  crew_type_id, troop_id, weapon_code, book_code, horse_code, item_code,
                  npc_state, turn_time, last_turn, meta)
             VALUES
-                (11, 'ⓝ공손범', 0, 32, 61, 67, 61, 0, 2374, 1960, 0, 1000, 1000, 0, 0, 0,
+                (1, 11, 'ⓝ공손범', 0, 32, 61, 67, 61, 0, 2374, 1960, 0, 1000, 1000, 0, 0, 0,
                  0, 0, 'None', 'None', 'None', 'None', 0, now(),
                  CAST('{"command":"휴식"}' AS jsonb),
                  CAST('{"explevel":15,"intel_exp":0,"max_domestic_critical":0}' AS jsonb))
@@ -140,7 +140,7 @@ class SatelliteFlushGoldenIT {
         // Pre-seed the 37 rank_data rows for the actor (PHP seeds at creation; the flush UPDATEs).
         for (col in RANK_COLUMNS) {
             jdbc.update(
-                "INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (:nid, :gid, :type, 0)",
+                "INSERT INTO rank_data (world_id, nation_id, general_id, type, value) VALUES (1, :nid, :gid, :type, 0)",
                 MapSqlParameterSource()
                     .addValue("nid", priorNationId)
                     .addValue("gid", actorId)
@@ -229,7 +229,8 @@ class SatelliteFlushGoldenIT {
             ),
         )
 
-        return FlushPayload(
+        return testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 181, "current_month" to 1),
             updatedGenerals = listOf(actorAfter),
             createdNations = listOf(createdNation),
@@ -244,7 +245,7 @@ class SatelliteFlushGoldenIT {
 
     private fun assertCreatedNation() {
         val row = jdbc.queryForMap(
-            "SELECT name, color, capital_city_id, gold, rice, tech, level, type_code, meta::text AS meta FROM nation WHERE id = :id",
+            "SELECT name, color, capital_city_id, gold, rice, tech, level, type_code, meta::text AS meta FROM nation WHERE world_id = 1 AND id = :id",
             MapSqlParameterSource().addValue("id", newNationId),
         )
         assertEquals("ⓝ공손범", stringOf(row["name"]))
@@ -277,7 +278,7 @@ class SatelliteFlushGoldenIT {
         // 4 directional rows: for each peer nation a bidirectional (me,you,state=2,term=0) pair
         // (che_거병.php:114-138). The new nation appears as both src and dest with EVERY existing nation.
         val rows = jdbc.queryForList(
-            "SELECT src_nation_id, dest_nation_id, state_code, term FROM diplomacy ORDER BY src_nation_id, dest_nation_id",
+            "SELECT src_nation_id, dest_nation_id, state_code, term FROM diplomacy WHERE world_id = 1 ORDER BY src_nation_id, dest_nation_id",
             MapSqlParameterSource(),
         ).map {
             listOf(intOf(it["src_nation_id"]), intOf(it["dest_nation_id"]), intOf(it["state_code"]), intOf(it["term"]))
@@ -299,14 +300,14 @@ class SatelliteFlushGoldenIT {
         assertEquals(
             24,
             jdbc.queryForObject(
-                "SELECT count(*) FROM nation_turn WHERE nation_id = :id",
+                "SELECT count(*) FROM nation_turn WHERE world_id = 1 AND nation_id = :id",
                 MapSqlParameterSource().addValue("id", newNationId),
                 Int::class.java,
             ),
         )
         // Every row: action_code='휴식', arg='{}'::jsonb, brief='휴식' (the V2 brief after-image PINNED).
         val rows = jdbc.queryForList(
-            "SELECT officer_level, turn_idx, action_code, arg::text AS arg, brief FROM nation_turn WHERE nation_id = :id ORDER BY officer_level DESC, turn_idx",
+            "SELECT officer_level, turn_idx, action_code, arg::text AS arg, brief FROM nation_turn WHERE world_id = 1 AND nation_id = :id ORDER BY officer_level DESC, turn_idx",
             MapSqlParameterSource().addValue("id", newNationId),
         )
         val expected = buildList {
@@ -333,14 +334,14 @@ class SatelliteFlushGoldenIT {
         assertEquals(
             37,
             jdbc.queryForObject(
-                "SELECT count(*) FROM rank_data WHERE general_id = :gid",
+                "SELECT count(*) FROM rank_data WHERE world_id = 1 AND general_id = :gid",
                 MapSqlParameterSource().addValue("gid", actorId),
                 Int::class.java,
             ),
             "RANK_ROWS_PER_GENERAL = 37 (the PHP RankColumn enum cases())",
         )
         val distinctNationIds = jdbc.queryForList(
-            "SELECT DISTINCT nation_id FROM rank_data WHERE general_id = :gid",
+            "SELECT DISTINCT nation_id FROM rank_data WHERE world_id = 1 AND general_id = :gid",
             MapSqlParameterSource().addValue("gid", actorId),
             Int::class.java,
         )
@@ -349,7 +350,7 @@ class SatelliteFlushGoldenIT {
         assertEquals(
             0,
             jdbc.queryForObject(
-                "SELECT count(*) FROM rank_data WHERE general_id = :gid AND value <> 0",
+                "SELECT count(*) FROM rank_data WHERE world_id = 1 AND general_id = :gid AND value <> 0",
                 MapSqlParameterSource().addValue("gid", actorId),
                 Int::class.java,
             ),
@@ -359,7 +360,7 @@ class SatelliteFlushGoldenIT {
 
     private fun assertGeneralAfterImage() {
         val row = jdbc.queryForMap(
-            "SELECT nation_id, city_id, officer_level, experience, dedication, last_turn::text AS last_turn FROM general WHERE id = :gid",
+            "SELECT nation_id, city_id, officer_level, experience, dedication, last_turn::text AS last_turn FROM general WHERE world_id = 1 AND id = :gid",
             MapSqlParameterSource().addValue("gid", actorId),
         )
         assertEquals(newNationId, intOf(row["nation_id"]))
@@ -380,7 +381,7 @@ class SatelliteFlushGoldenIT {
 
     private fun assertLogEntryAfterImage() {
         val rows = jdbc.queryForList(
-            "SELECT scope::text AS scope, category::text AS category, text, general_id, nation_id FROM log_entry ORDER BY id",
+            "SELECT scope::text AS scope, category::text AS category, text, general_id, nation_id FROM log_entry WHERE world_id = 1 ORDER BY id",
             MapSqlParameterSource(),
         )
         assertEquals(2, rows.size)

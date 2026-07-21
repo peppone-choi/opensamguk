@@ -5,7 +5,7 @@
 // Deleted → grey `삭제된 메시지입니다`. Action buttons 수락/거절 when the message carries an actionable
 // proposal (here surfaced via accept/decline through api.messageAccept/Decline — confirm dialog).
 import { useState } from 'react';
-import { api } from '@/lib/api';
+import { api, pollCommandResult } from '@/lib/api';
 import type { MailboxMessage } from '@/types/game';
 
 function timeText(iso: string): string {
@@ -38,10 +38,18 @@ export default function MessagePlate({ message, generalId, onActed, onToast }: M
         if (!window.confirm(kind === 'accept' ? '수락하시겠습니까?' : '거절하시겠습니까?')) return;
         setBusy(true);
         try {
-            if (kind === 'accept') await api.messageAccept(message.id, generalId);
-            else await api.messageDecline(message.id, generalId);
-            onToast(kind === 'accept' ? '수락했습니다.' : '거절했습니다.', 'success');
-            onActed?.();
+            const accepted = kind === 'accept'
+                ? await api.messageAccept(message.id, generalId)
+                : await api.messageDecline(message.id, generalId);
+            const result = await pollCommandResult(accepted.requestId);
+            if (result == null) {
+                onToast(kind === 'accept' ? '수락 요청을 접수했습니다.' : '거절 요청을 접수했습니다.', 'info');
+            } else if (!result.ok) {
+                onToast(result.reason ?? '처리 실패', 'error');
+            } else {
+                onToast(kind === 'accept' ? '수락했습니다.' : '거절했습니다.', 'success');
+                onActed?.();
+            }
         } catch (e) {
             onToast(e instanceof Error ? e.message : '처리 실패', 'error');
         } finally {

@@ -5,6 +5,8 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.decodeCommandEnvelope
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -67,7 +69,7 @@ class CommandReserveServiceIT {
         )
 
         // --- DB: the durable reservation exists with the reserved action + arg ---
-        val reserved = ReservedTurnRepository(jdbc).readReserved(generalId = 10, turnIdx = 0)
+        val reserved = ReservedTurnRepository(jdbc).readReserved(worldId = WorldId(1), generalId = 10, turnIdx = 0)
         assertEquals("che_농지개간", reserved.actionCode)
         assertEquals("""{"amount": 100}""", reserved.argJson)
 
@@ -96,17 +98,32 @@ class CommandReserveServiceIT {
             username = postgres.username
             password = postgres.password
         }
-        // Apply the `:infra` baseline schema + the V2 brief migration (both on the test classpath
-        // through the `:infra` dependency). Flyway's runner is not compile-visible from game-api (it
-        // is an `:infra` `implementation` dep), so the migration DDL is executed directly via JDBC
-        // here, in version order (V1 then V2 — the FD0a `general_turn.brief` column).
         val jdbcTemplate = JdbcTemplate(dataSource)
-        for (migration in listOf("db/migration/V1__baseline.sql", "db/migration/V2__p2_brief.sql")) {
-            val sql = requireNotNull(javaClass.classLoader.getResource(migration)) {
-                "$migration not on the test classpath"
-            }.readText()
-            jdbcTemplate.execute(sql)
-        }
+        jdbcTemplate.execute(
+            """
+            CREATE TABLE world_state (
+                id integer PRIMARY KEY
+            )
+            """.trimIndent(),
+        )
+        jdbcTemplate.execute(
+            """
+            CREATE TABLE general_turn (
+                id serial PRIMARY KEY,
+                world_id integer NOT NULL REFERENCES world_state(id),
+                general_id integer NOT NULL,
+                turn_idx integer NOT NULL,
+                action_code text NOT NULL,
+                arg jsonb NOT NULL DEFAULT '{}'::jsonb,
+                brief text NOT NULL DEFAULT '휴식',
+                created_at timestamptz NOT NULL DEFAULT now(),
+                UNIQUE (world_id, general_id, turn_idx)
+            )
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            "INSERT INTO world_state (id) VALUES (1)",
+        )
         jdbc = NamedParameterJdbcTemplate(dataSource)
 
         val config = RedisStandaloneConfiguration(redis.host, redis.getMappedPort(6379))
@@ -120,6 +137,7 @@ class CommandReserveServiceIT {
             reservedTurns = ReservedTurnRepository(jdbc),
             redis = redisTemplate,
             registry = CommandRegistry(GeneralActionPipeline()),
+            processWorld = GameApiProcessWorld(1),
             profile = profile,
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00.000Z"), ZoneOffset.UTC),
             requestIds = { "req-e3-fixed" },

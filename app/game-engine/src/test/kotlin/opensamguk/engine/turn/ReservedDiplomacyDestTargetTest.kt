@@ -101,6 +101,9 @@ class ReservedDiplomacyDestTargetTest {
                 dip(ACCEPT_NATION, PROPOSER_NATION, state = startState),
                 dip(PROPOSER_NATION, ACCEPT_NATION, state = startState),
             ),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
+            )).id),
         ),
     )
 

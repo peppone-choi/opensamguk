@@ -81,7 +81,7 @@ class ScenarioMapSeedIT {
     fun `scenario_2 seed uses miniche_b city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_2")
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1))
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
         assertEquals(78, count("city"))
@@ -110,6 +110,7 @@ class ScenarioMapSeedIT {
         val bootstrap = SeedBootstrap(
             scenarioCode = "scenario_3190",
             scenarioDir = tempDir.toString(),
+            worldId = opensamguk.common.world.WorldId(1),
         )
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_3190 world is seeded")
@@ -140,11 +141,14 @@ class ScenarioMapSeedIT {
 
     @Test
     fun `scenario code parser preserves zero and report overrides fail closed`(@TempDir tempDir: Path) {
-        assertEquals(0, SeedBootstrap(scenarioCode = "scenario_0").scenarioNumber())
+        assertEquals(
+            0,
+            SeedBootstrap(scenarioCode = "scenario_0", worldId = opensamguk.common.world.WorldId(1)).scenarioNumber(),
+        )
 
         for (code in MALFORMED_SCENARIO_CODES) {
             assertFailsWith<IllegalArgumentException>("$code must fail closed") {
-                SeedBootstrap(scenarioCode = code).scenarioNumber()
+                SeedBootstrap(scenarioCode = code, worldId = opensamguk.common.world.WorldId(1)).scenarioNumber()
             }
         }
 
@@ -250,19 +254,30 @@ class ScenarioMapSeedIT {
             scenarioCode = malformed,
             seedEnabled = false,
             scenarioDir = tempDir.toString(),
+            worldId = opensamguk.common.world.WorldId(1),
         )
         assertTrue(!disabled.ensureSeeded(jdbc), "disabled gate precedes scenario-code parsing")
         assertEquals(0, count("world_state"))
 
-        assertTrue(SeedBootstrap(scenarioCode = "scenario_2").ensureSeeded(jdbc))
         assertTrue(
-            !SeedBootstrap(scenarioCode = malformed, scenarioDir = tempDir.toString()).ensureSeeded(jdbc),
+            SeedBootstrap(scenarioCode = "scenario_2", worldId = opensamguk.common.world.WorldId(1)).ensureSeeded(jdbc),
+        )
+        assertTrue(
+            !SeedBootstrap(
+                scenarioCode = malformed,
+                scenarioDir = tempDir.toString(),
+                worldId = opensamguk.common.world.WorldId(1),
+            ).ensureSeeded(jdbc),
             "existing-world gate precedes scenario-code parsing",
         )
 
         cleanRows()
         assertFailsWith<IllegalArgumentException>("fresh malformed code must fail before a resource lookup") {
-            SeedBootstrap(scenarioCode = malformed, scenarioDir = tempDir.toString()).ensureSeeded(jdbc)
+            SeedBootstrap(
+                scenarioCode = malformed,
+                scenarioDir = tempDir.toString(),
+                worldId = opensamguk.common.world.WorldId(1),
+            ).ensureSeeded(jdbc)
         }
         assertEquals(0, count("world_state"), "malformed scenario codes make no writes")
     }

@@ -1,5 +1,6 @@
 package opensamguk.infra.persistence
 
+import opensamguk.common.world.WorldId
 import org.postgresql.util.PGobject
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -9,7 +10,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
  *
  * Mirrors the TS `app/game-api/src/turns/reservedTurns.ts` `setGeneralTurn` semantics
  * (devsam-core2026), collapsed to a single-row upsert against the
- * `UNIQUE (general_id, turn_idx)` baseline constraint:
+ * scoped `UNIQUE (world_id, general_id, turn_idx)` constraint:
  *
  *  - [DEFAULT_TURN_ACTION] = `휴식` (TS `DEFAULT_TURN_ACTION`)
  *  - [MAX_GENERAL_TURNS] = 30 (TS `MAX_GENERAL_TURNS`) — the ring buffer length; `turn_idx`
@@ -18,8 +19,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
  *  - `normalizeAction` (TS): a null/empty action persists as `휴식`.
  *  - `normalizeArgs` (TS): a null/blank arg persists as the empty jsonb object `{}`.
  *  - [reserve] upserts the row (TS `setGeneralTurn` overwrites `turns[turnIndex]` then persists;
- *    against the `UNIQUE (general_id, turn_idx)` baseline this is an `ON CONFLICT ... DO UPDATE`,
- *    so re-reserving the same `(general, turnIdx)` slot never duplicates).
+ *    against the scoped `UNIQUE (world_id, general_id, turn_idx)` constraint this is an
+ *    `ON CONFLICT ... DO UPDATE`, so re-reserving the same `(world, general, turnIdx)` slot never
+ *    duplicates).
  *  - [readReserved] returns the stored entry, or the default `휴식` entry when no row exists
  *    (TS `buildTurnListFromRows` seeds every slot with `createDefaultEntry()` before overlaying rows).
  *
@@ -43,10 +45,12 @@ open class ReservedTurnRepository(
     )
 
     /**
-     * Upsert the reserved action for `(generalId, turnIdx mod 30)`. Re-reserving the same slot
-     * updates the existing row (no duplicate) via `ON CONFLICT (general_id, turn_idx)`.
+     * Upsert the reserved action for `(worldId, generalId, turnIdx mod 30)`. Re-reserving the same
+     * scoped slot updates the existing row (no duplicate) via
+     * `ON CONFLICT (world_id, general_id, turn_idx)`.
      */
     open fun reserve(
+        worldId: WorldId,
         generalId: Int,
         turnIdx: Int,
         actionCode: String?,
@@ -55,6 +59,7 @@ open class ReservedTurnRepository(
     ) {
         val slot = ringIndex(turnIdx)
         val params = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
             .addValue("general_id", generalId)
             .addValue("turn_idx", slot)
             .addValue("action_code", normalizeAction(actionCode))
@@ -62,9 +67,9 @@ open class ReservedTurnRepository(
             .addValue("brief", brief)
         jdbc.update(
             """
-            INSERT INTO general_turn (general_id, turn_idx, action_code, arg, brief)
-            VALUES (:general_id, :turn_idx, :action_code, :arg, :brief)
-            ON CONFLICT (general_id, turn_idx)
+            INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief)
+            VALUES (:world_id, :general_id, :turn_idx, :action_code, :arg, :brief)
+            ON CONFLICT (world_id, general_id, turn_idx)
             DO UPDATE SET action_code = EXCLUDED.action_code,
                           arg = EXCLUDED.arg,
                           brief = EXCLUDED.brief
@@ -74,19 +79,20 @@ open class ReservedTurnRepository(
     }
 
     /**
-     * Read the reserved turn for `(generalId, turnIdx mod 30)`. Returns the default `휴식`
+     * Read the reserved turn for `(worldId, generalId, turnIdx mod 30)`. Returns the default `휴식`
      * entry when no row exists (TS default-seeded ring buffer).
      */
-    fun readReserved(generalId: Int, turnIdx: Int): ReservedTurn {
+    fun readReserved(worldId: WorldId, generalId: Int, turnIdx: Int): ReservedTurn {
         val slot = ringIndex(turnIdx)
         val params = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
             .addValue("general_id", generalId)
             .addValue("turn_idx", slot)
         val rows = jdbc.query(
             """
             SELECT action_code, arg::text AS arg, brief
               FROM general_turn
-             WHERE general_id = :general_id AND turn_idx = :turn_idx
+             WHERE world_id = :world_id AND general_id = :general_id AND turn_idx = :turn_idx
             """.trimIndent(),
             params,
         ) { rs, _ ->
@@ -110,14 +116,16 @@ open class ReservedTurnRepository(
      * 0..N-1. No-op for `turnCnt == 0` / `turnCnt >= MAX_GENERAL_TURNS` (the PHP guards; the
      * negative-turnCnt push path is the inverse op, out of the LC3 ring-shift scope).
      */
-    open fun pullGeneralTurn(generalId: Int, turnCnt: Int = 1) {
+    open fun pullGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int = 1) {
         if (turnCnt == 0 || turnCnt >= MAX_GENERAL_TURNS) return
-        val base = MapSqlParameterSource().addValue("general_id", generalId)
+        val base = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
+            .addValue("general_id", generalId)
         jdbc.update(
             """
             UPDATE general_turn
                SET turn_idx = turn_idx + :offset
-             WHERE general_id = :general_id
+             WHERE world_id = :world_id AND general_id = :general_id
             """.trimIndent(),
             MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
         )
@@ -128,7 +136,7 @@ open class ReservedTurnRepository(
                    action_code = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
                    brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END
-             WHERE general_id = :general_id
+             WHERE world_id = :world_id AND general_id = :general_id
             """.trimIndent(),
             MapSqlParameterSource(base.values)
                 .addValue("offset", MAX_GENERAL_TURNS * 2)
@@ -148,14 +156,16 @@ open class ReservedTurnRepository(
      * 가드: turnCnt <= 0 또는 turnCnt >= MAX_GENERAL_TURNS 이면 no-op(PHP `$turnCnt >= GameConst::$maxTurn`).
      * (turn_idx 정규화는 하지 않는다 — PHP는 절대 인덱스에 직접 산술한다.)
      */
-    open fun pushGeneralTurn(generalId: Int, turnCnt: Int) {
+    open fun pushGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
-        val base = MapSqlParameterSource().addValue("general_id", generalId)
+        val base = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
+            .addValue("general_id", generalId)
         jdbc.update(
             """
             UPDATE general_turn
                SET turn_idx = turn_idx + :offset
-             WHERE general_id = :general_id
+             WHERE world_id = :world_id AND general_id = :general_id
             """.trimIndent(),
             MapSqlParameterSource(base.values).addValue("offset", MAX_GENERAL_TURNS * 2),
         )
@@ -166,7 +176,7 @@ open class ReservedTurnRepository(
                    action_code = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '{}'::jsonb ELSE arg END,
                    brief = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE brief END
-             WHERE general_id = :general_id
+             WHERE world_id = :world_id AND general_id = :general_id
             """.trimIndent(),
             MapSqlParameterSource(base.values)
                 .addValue("offset", MAX_GENERAL_TURNS * 2)
@@ -185,17 +195,20 @@ open class ReservedTurnRepository(
      * 대상 인덱스 생성: PHP `Util::range($turnIdx+$turnCnt, MAX, $turnCnt)` = [start, MAX) step turnCnt
      * (range는 끝값 미포함 — turn_idx < MAX 인 슬롯만).
      */
-    open fun repeatGeneralTurn(generalId: Int, turnCnt: Int) {
+    open fun repeatGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_GENERAL_TURNS) return
         val reqTurn = if (turnCnt * 2 > MAX_GENERAL_TURNS) MAX_GENERAL_TURNS - turnCnt else turnCnt
         val sources = jdbc.query(
             """
             SELECT turn_idx, action_code, arg::text AS arg, brief
               FROM general_turn
-             WHERE general_id = :general_id AND turn_idx < :req_turn
+             WHERE world_id = :world_id AND general_id = :general_id AND turn_idx < :req_turn
              ORDER BY turn_idx ASC
             """.trimIndent(),
-            MapSqlParameterSource().addValue("general_id", generalId).addValue("req_turn", reqTurn),
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("general_id", generalId)
+                .addValue("req_turn", reqTurn),
         ) { rs, _ ->
             SourceTurn(
                 turnIdx = rs.getInt("turn_idx"),
@@ -213,9 +226,10 @@ open class ReservedTurnRepository(
                    SET action_code = :action_code,
                        arg = :arg::jsonb,
                        brief = :brief
-                 WHERE general_id = :general_id AND turn_idx IN (:targets)
+                 WHERE world_id = :world_id AND general_id = :general_id AND turn_idx IN (:targets)
                 """.trimIndent(),
                 MapSqlParameterSource()
+                    .addValue("world_id", worldId.value)
                     .addValue("general_id", generalId)
                     .addValue("action_code", src.actionCode)
                     .addValue("arg", src.argJson)
@@ -230,10 +244,11 @@ open class ReservedTurnRepository(
     /**
      * Upsert the reserved nation command for `(nationId, officerLevel, turnIdx mod 12)`. Mirrors
      * [reserve] but on the chief ring (`nation_turn`, MAX_CHIEF_TURNS = 12, keyed
-     * `(nation_id, officer_level, turn_idx)`). The `brief` rides the V2 `nation_turn.brief text`
+     * `(world_id, nation_id, officer_level, turn_idx)`). The `brief` rides the V2 `nation_turn.brief text`
      * column (PHP seeds `휴식` — `func_command.php`).
      */
     open fun reserveNationTurn(
+        worldId: WorldId,
         nationId: Int,
         officerLevel: Int,
         turnIdx: Int,
@@ -243,6 +258,7 @@ open class ReservedTurnRepository(
     ) {
         val slot = nationRingIndex(turnIdx)
         val params = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
             .addValue("nation_id", nationId)
             .addValue("officer_level", officerLevel)
             .addValue("turn_idx", slot)
@@ -251,9 +267,9 @@ open class ReservedTurnRepository(
             .addValue("brief", brief)
         jdbc.update(
             """
-            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code, arg, brief)
-            VALUES (:nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief)
-            ON CONFLICT (nation_id, officer_level, turn_idx)
+            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, arg, brief)
+            VALUES (:world_id, :nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief)
+            ON CONFLICT (world_id, nation_id, officer_level, turn_idx)
             DO UPDATE SET action_code = EXCLUDED.action_code,
                           arg = EXCLUDED.arg,
                           brief = EXCLUDED.brief
@@ -263,12 +279,18 @@ open class ReservedTurnRepository(
     }
 
     /**
-     * Read the reserved nation command for `(nationId, officerLevel, turnIdx mod 12)`. Returns the
-     * default `휴식`/`{}` entry when no row exists.
+     * Read the reserved nation command for `(worldId, nationId, officerLevel, turnIdx mod 12)`.
+     * Returns the default `휴식`/`{}` entry when no row exists.
      */
-    fun readReservedNationTurn(nationId: Int, officerLevel: Int, turnIdx: Int): ReservedTurn {
+    fun readReservedNationTurn(
+        worldId: WorldId,
+        nationId: Int,
+        officerLevel: Int,
+        turnIdx: Int,
+    ): ReservedTurn {
         val slot = nationRingIndex(turnIdx)
         val params = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
             .addValue("nation_id", nationId)
             .addValue("officer_level", officerLevel)
             .addValue("turn_idx", slot)
@@ -276,7 +298,10 @@ open class ReservedTurnRepository(
             """
             SELECT action_code, arg::text AS arg, brief
               FROM nation_turn
-             WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx = :turn_idx
+             WHERE world_id = :world_id
+               AND nation_id = :nation_id
+               AND officer_level = :officer_level
+               AND turn_idx = :turn_idx
             """.trimIndent(),
             params,
         ) { rs, _ ->
@@ -299,16 +324,17 @@ open class ReservedTurnRepository(
      * Net effect: slot 0 vacates to `휴식` at the tail (turn_idx 11) and slots 1..N shift down to
      * 0..N-1. No-op for `nationId == 0` / `officerLevel < 5` (the PHP guards).
      */
-    open fun pullNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
+    open fun pullNationTurn(worldId: WorldId, nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
         if (nationId == 0 || officerLevel < 5 || turnCnt == 0 || turnCnt >= MAX_CHIEF_TURNS) return
         val base = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
             .addValue("nation_id", nationId)
             .addValue("officer_level", officerLevel)
         jdbc.update(
             """
             UPDATE nation_turn
                SET turn_idx = turn_idx + :offset
-             WHERE nation_id = :nation_id AND officer_level = :officer_level
+             WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
             MapSqlParameterSource(base.values).addValue("offset", MAX_CHIEF_TURNS * 2),
         )
@@ -319,7 +345,7 @@ open class ReservedTurnRepository(
                    action_code = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
                    brief = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE brief END
-             WHERE nation_id = :nation_id AND officer_level = :officer_level
+             WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
             MapSqlParameterSource(base.values)
                 .addValue("offset", MAX_CHIEF_TURNS * 2)
@@ -335,16 +361,17 @@ open class ReservedTurnRepository(
      * 가드(PHP 순서 그대로): nationID==0 / officerLevel<5 / turnCnt==0 / turnCnt<0(분기) /
      * turnCnt >= MAX_CHIEF_TURNS → no-op. 두 UPDATE는 `nation_id AND officer_level`로 키한다.
      */
-    open fun pushNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) {
+    open fun pushNationTurn(worldId: WorldId, nationId: Int, officerLevel: Int, turnCnt: Int) {
         if (nationId == 0 || officerLevel < 5 || turnCnt <= 0 || turnCnt >= MAX_CHIEF_TURNS) return
         val base = MapSqlParameterSource()
+            .addValue("world_id", worldId.value)
             .addValue("nation_id", nationId)
             .addValue("officer_level", officerLevel)
         jdbc.update(
             """
             UPDATE nation_turn
                SET turn_idx = turn_idx + :offset
-             WHERE nation_id = :nation_id AND officer_level = :officer_level
+             WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
             MapSqlParameterSource(base.values).addValue("offset", MAX_CHIEF_TURNS * 2),
         )
@@ -355,7 +382,7 @@ open class ReservedTurnRepository(
                    action_code = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '{}'::jsonb ELSE arg END,
                    brief = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE brief END
-             WHERE nation_id = :nation_id AND officer_level = :officer_level
+             WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
             MapSqlParameterSource(base.values)
                 .addValue("offset", MAX_CHIEF_TURNS * 2)
@@ -371,17 +398,21 @@ open class ReservedTurnRepository(
      * repeat에서 가드하지 않는다 — 호출부 precheck가 책임. 충실 이식을 위해 동일하게 두지 않는다.)
      * 원본 덮어쓰기 방지: turnCnt*2 > MAX_CHIEF 이면 reqTurn = MAX_CHIEF - turnCnt.
      */
-    open fun repeatNationTurn(nationId: Int, officerLevel: Int, turnCnt: Int) {
+    open fun repeatNationTurn(worldId: WorldId, nationId: Int, officerLevel: Int, turnCnt: Int) {
         if (turnCnt <= 0 || turnCnt >= MAX_CHIEF_TURNS) return
         val reqTurn = if (turnCnt * 2 > MAX_CHIEF_TURNS) MAX_CHIEF_TURNS - turnCnt else turnCnt
         val sources = jdbc.query(
             """
             SELECT turn_idx, action_code, arg::text AS arg, brief
               FROM nation_turn
-             WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx < :req_turn
+             WHERE world_id = :world_id
+               AND nation_id = :nation_id
+               AND officer_level = :officer_level
+               AND turn_idx < :req_turn
              ORDER BY turn_idx ASC
             """.trimIndent(),
             MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
                 .addValue("nation_id", nationId)
                 .addValue("officer_level", officerLevel)
                 .addValue("req_turn", reqTurn),
@@ -402,9 +433,13 @@ open class ReservedTurnRepository(
                    SET action_code = :action_code,
                        arg = :arg::jsonb,
                        brief = :brief
-                 WHERE nation_id = :nation_id AND officer_level = :officer_level AND turn_idx IN (:targets)
+                 WHERE world_id = :world_id
+                   AND nation_id = :nation_id
+                   AND officer_level = :officer_level
+                   AND turn_idx IN (:targets)
                 """.trimIndent(),
                 MapSqlParameterSource()
+                    .addValue("world_id", worldId.value)
                     .addValue("nation_id", nationId)
                     .addValue("officer_level", officerLevel)
                     .addValue("action_code", src.actionCode)

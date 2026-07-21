@@ -90,6 +90,7 @@ class DrainTailAdvanceTest {
                 // 장수 cityId=5 → handle()의 명령 resolve가 도시를 읽으므로 city 5를 월드에 넣는다.
                 cities = listOf(City(id = 5, name = "c5", nationId = 1, level = 5, meta = linkedMapOf("trust" to 50.0))),
                 nations = listOf(Nation(1, "n1", "#000")),
+                worldId = opensamguk.common.world.WorldId((TurnWorldState(1, 200, 6, tickSeconds, t0)).id),
             ),
         )
 

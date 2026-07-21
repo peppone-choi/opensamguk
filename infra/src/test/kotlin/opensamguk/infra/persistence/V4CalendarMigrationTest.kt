@@ -148,12 +148,16 @@ class V4CalendarMigrationTest {
 
     private fun seedCity(id: Int, trade: Int?, trust: String) {
         jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (99, 'fixture', 200, 1, 3600) ON CONFLICT (id) DO NOTHING",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
             """
             INSERT INTO city
-                (id, name, level, pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
+                (world_id, id, name, level, pop, pop_max, agri, agri_max, comm, comm_max, secu, secu_max,
                  trust, trade, def, def_max, wall, wall_max, region)
             VALUES
-                (:id, 'testcity', 5, 1000, 2000, 500, 1000, 500, 1000, 500, 1000,
+                (99, :id, 'testcity', 5, 1000, 2000, 500, 1000, 500, 1000, 500, 1000,
                  :trust, :trade, 100, 200, 100, 200, 1)
             """.trimIndent(),
             MapSqlParameterSource()

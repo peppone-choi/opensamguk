@@ -81,6 +81,10 @@ class AuctionBidHandlerTest {
             ),
             generals = generals.toList(),
             nations = listOf(Nation(id = 1, name = "촉", color = "#0f0")),
+            worldId = opensamguk.common.world.WorldId((TurnWorldState(
+                id = 1, currentYear = 200, currentMonth = 4, tickSeconds = 3600, lastTurnTime = t0,
+                meta = mapOf("turnterm" to 60) + worldMeta,
+            )).id),
         ),
     )
 

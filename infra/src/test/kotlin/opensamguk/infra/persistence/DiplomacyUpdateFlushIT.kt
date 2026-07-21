@@ -51,8 +51,15 @@ class DiplomacyUpdateFlushIT {
         )
         jdbc.update(
             """
-            INSERT INTO diplomacy (src_nation_id, dest_nation_id, state_code, term, is_dead) VALUES
-              (1, 2, 2, 0, false), (2, 1, 2, 0, false)
+            INSERT INTO nation (world_id, id, name, color)
+            VALUES (1, 1, '일국', '#111111'), (1, 2, '이국', '#222222')
+            """.trimIndent(),
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO diplomacy (world_id, src_nation_id, dest_nation_id, state_code, term, is_dead) VALUES
+              (1, 1, 2, 2, 0, false), (1, 2, 1, 2, 0, false)
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -65,7 +72,7 @@ class DiplomacyUpdateFlushIT {
 
     private fun stateOf(src: Int, dest: Int): Pair<Int, Int> {
         val r = jdbc.queryForMap(
-            "SELECT state_code, term FROM diplomacy WHERE src_nation_id = :s AND dest_nation_id = :d",
+            "SELECT state_code, term FROM diplomacy WHERE world_id = 1 AND src_nation_id = :s AND dest_nation_id = :d",
             MapSqlParameterSource().addValue("s", src).addValue("d", dest),
         )
         return intOf(r["state_code"]) to intOf(r["term"])
@@ -75,7 +82,8 @@ class DiplomacyUpdateFlushIT {
     fun `per-command diplomacy UPDATE writes both directions then the tick bulk-SQL runs after`() {
         // --- the per-command flush (선전포고: state 2 -> 1, term -> 24 BOTH rows) -----------------
         executor.flush(
-            FlushPayload(
+            testFlushPayload(
+                worldId = opensamguk.common.world.WorldId(1),
                 worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
                 updatedDiplomacy = listOf(
                     DiplomacyUpdate(1, 2, state = 1, term = 24),
@@ -87,7 +95,10 @@ class DiplomacyUpdateFlushIT {
         assertEquals(1 to 24, stateOf(2, 1))
 
         // --- the monthly TICK bulk-SQL diplomacy update runs AFTER (term decrement) — no collision --
-        jdbc.update("UPDATE diplomacy SET term = term - 1 WHERE state_code = 1 AND term > 0", MapSqlParameterSource())
+        jdbc.update(
+            "UPDATE diplomacy SET term = term - 1 WHERE world_id = 1 AND state_code = 1 AND term > 0",
+            MapSqlParameterSource(),
+        )
         assertEquals(1 to 23, stateOf(1, 2))
         assertEquals(1 to 23, stateOf(2, 1))
     }

@@ -6,6 +6,8 @@ import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonStreamKeys
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.encodeCommandPayload
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import org.springframework.beans.factory.annotation.Value
@@ -57,10 +59,12 @@ class CommandReserveService(
     private val reservedTurns: ReservedTurnRepository,
     private val redis: StringRedisTemplate,
     private val registry: CommandRegistry,
+    processWorld: GameApiProcessWorld,
     @Value("\${opensamguk.profile:che:scenario_2}") profile: String,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
 ) {
+    private val worldId: WorldId = processWorld.worldId
     private val commandStreamKey: String = TurnDaemonStreamKeys.of(profile).commandStream
 
     /** The outcome of a successful reserve: the generated request id the controller returns as 202. */
@@ -113,6 +117,7 @@ class CommandReserveService(
         // Model A — turn-reserved che_* command.
         // 1. durable reservation FIRST (DB is the source of truth for the reserved action).
         reservedTurns.reserve(
+            worldId = worldId,
             generalId = generalId,
             turnIdx = turnIdx,
             actionCode = actionCode,

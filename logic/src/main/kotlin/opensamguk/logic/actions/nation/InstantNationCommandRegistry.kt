@@ -11,30 +11,31 @@ import opensamguk.logic.actions.GeneralActionDefinition
  * 수락 커맨드(`che_불가침수락`/`che_종전수락`/`che_불가침파기수락`)가 **즉시(instant)** 실행되어야 한다
  * (PHP `DiplomaticMessage::agreeMessage()` → `$commandObj->run()`).
  *
- * ## 왜 별도 채널/엔진 definition map을 새로 만들지 않는가
+ * ## 외교 수락 즉시 처리 흐름
  * 세 수락 커맨드는 이미 [CommandRegistry]에 정식 [NationCommand]로 등록되어 있고(CommandRegistry.kt:170-172),
- * game-api 수락 intake([opensamguk.gameapi.controller.DiplomaticMessageController]의 `/{id}/accept`)가
- * `CommandReserveService.reserve`로 **sanctioned turn-reserved 경로**(general_turn 예약 row + 데몬 poke,
- * one-daemon-write-rule 위반 아님)에 적재한다. 데몬은 [opensamguk.engine.turn.ReservedTurnHandler]가
- * 턴 해소 시 `CommandRegistry.resolve(code).resolve(...)`로 실행한다 — 즉 dispatch 경로는 이미 존재한다.
+ * 인증된 game-api controller는 typed `AcceptDiplomaticMessage`/`DeclineDiplomaticMessage` 즉시 커맨드만
+ * publish한다. 데몬 `DiplomaticMessageHandler`가 `(world_id, message_id)`로 서신을 읽고 공통·수락
+ * 유효성을 권위 있게 검증한 뒤, [opensamguk.engine.turn.ProcessNationCommand.processInstant]로
+ * 수락 커맨드를 즉시 실행한다.
  *
  * 따라서 이 객체는 **두 번째 dispatch 진리**(별도 instant definition map)를 만들지 않고, 그 위에서
  * "이 코드가 외교 수락(instant-nation)인가?"를 판정하는 **정본 분류기 + 검증 로더**만 제공한다.
- * accept intake가 이 키-집합으로 dispatch 대상을 식별하고, [loadInstantNationActionSpecs]로 각 키가
- * 레지스트리에 실재(미배선 fallback 아님)하는지 부팅/검증 시점에 확인한다.
+ * 데몬 handler가 이 키-집합으로 dispatch 대상을 식별하고, [loadInstantNationActionSpecs]로 각 키가
+ * 레지스트리에 실재(미배선 fallback 아님)하는지 확인한다. 명령 효과와 서신 무효화는
+ * `ChangeRecorder`에 함께 누적되어 한 번의 flush로 커밋되며, 결과는 flush 성공 후에만 publish된다.
  *
  * ## hasFullConditionMet — constraint 게이트
  * PHP `agreeMessage()`는 `run()` 진입 시 `hasFullConditionMet()`를 강제한다(불만족이면 INVALID 반환).
- * opensamguk에서 이 게이트는 [ReservedTurnHandler]의 FULL-mode constraint 평가(`buildConstraints` →
- * `evaluateConstraints`)가 담당한다 — Deny면 휴식 폴백 + deny-log(PHP getFailString 동등). accept intake는
- * 예약 전 [DiplomaticMessageController]에서 사전 검증(만료/우편함 소유권/destGeneralID/year·month)을
- * 수행해 명백히 무효한 수락을 400으로 거른다. 두 게이트가 함께 PHP의 `hasFullConditionMet` 의미를 이룬다.
+ * opensamguk에서는 데몬 `DiplomaticMessageHandler`가 world-scoped 서신 읽기 및 공통·수락
+ * 유효성 검증을 담당하고, [opensamguk.engine.turn.ProcessNationCommand.processInstant]가
+ * `NoRng`와 FULL-mode constraint 평가(`buildConstraints` → `evaluateConstraints`)로 이 게이트를
+ * 강제한다. Deny면 서신을 무효화하지 않고 정확한 실패 사유를 반환한다.
  */
 object InstantNationCommandRegistry {
 
     /**
      * 외교 수락(instant-nation) 커맨드 키-집합 — PHP `DiplomaticMessage::agreeMessage()`가 서신 타입별로
-     * 실행하는 세 수락 커맨드. accept intake가 dispatch 대상을 분류하는 정본 키-집합.
+     * 실행하는 세 수락 커맨드. 데몬 handler가 dispatch 대상을 분류하는 정본 키-집합.
      *
      *  - `che_불가침수락` ← TYPE_NO_AGGRESSION 서신 수락 (che_불가침제의 짝)
      *  - `che_종전수락` ← TYPE_STOP_WAR 서신 수락 (che_종전제의 짝)
@@ -46,7 +47,7 @@ object InstantNationCommandRegistry {
         "che_불가침파기수락",
     )
 
-    /** [code]가 외교 수락(instant-nation) 커맨드인가 — accept intake의 dispatch 분류기. */
+    /** [code]가 외교 수락(instant-nation) 커맨드인가 — 데몬 handler의 dispatch 분류기. */
     fun isInstantNationCommand(code: String): Boolean = code in INSTANT_NATION_COMMAND_KEYS
 
     /**
@@ -69,7 +70,7 @@ object InstantNationCommandRegistry {
      * `(key → GeneralActionDefinition)` 맵으로 반환한다. 턴 커맨드의 `loadNationTurnActionSpecs` 대응물.
      *
      * fallback(미등록 시 [CommandRegistry.fallback])으로 떨어진 키는 **제외**한다 — 즉 실재 등록된
-     * 수락 커맨드만 반환한다. accept intake/엔진이 부팅 시 이를 호출해 세 수락 커맨드가 모두 배선되었는지
+     * 수락 커맨드만 반환한다. 데몬 handler가 이를 호출해 세 수락 커맨드가 모두 배선되었는지
      * 검증할 수 있다(반환 맵 크기 < 3이면 누락 = 외교 수락 family 미완).
      *
      * @param registry 정식 커맨드 레지스트리.
