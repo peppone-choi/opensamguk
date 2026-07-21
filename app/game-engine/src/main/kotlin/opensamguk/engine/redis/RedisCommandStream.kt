@@ -22,7 +22,7 @@ import java.time.Duration
  * Stream keys come from the `:common` [TurnDaemonStreamKeys.of] — there is no engine-local key
  * helper; the key strings are locked by the `:common` StreamKeysTest.
  */
-class RedisCommandStream(
+open class RedisCommandStream(
     private val template: StringRedisTemplate,
     profileName: String,
     worldId: WorldId,
@@ -66,7 +66,7 @@ class RedisCommandStream(
      * 엔벨로프의 `requestId`가 필요하므로 커맨드만 벗겨내면 안 된다. 커서 전진 규약은 동일:
      * 파싱 실패 payload도 [lastId]를 전진시키고 건너뛴다.
      */
-    fun readEnvelopes(blockMs: Long): List<TurnDaemonCommandEnvelope> {
+    open fun readEnvelopes(blockMs: Long): List<TurnDaemonCommandEnvelope> {
         val options = StreamReadOptions.empty().count(100).block(Duration.ofMillis(blockMs))
         val offset = StreamOffset.create(keys.commandStream, ReadOffset.from(lastId))
         val records: List<MapRecord<String, Any, Any>> =

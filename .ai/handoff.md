@@ -25,3 +25,6 @@
 ## B2 handoff (2026-07-21)
 - B2 S3-T1..T3 landed or landing on main (130–132).
 - Next CQRS priority: S4 inbox authority / outbox (plan ARCH-S4), not activation.
+
+## B2 complete evidence close (2026-07-21)
+- Reviews 131/132 cleared; TurnRunServiceFlushRecoveryTest on real runTick/intake; SCRATCH op131/op132/sweep archived in implementer session.
