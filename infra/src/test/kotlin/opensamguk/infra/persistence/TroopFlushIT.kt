@@ -29,9 +29,13 @@ class TroopFlushIT {
 
     private fun ws() = linkedMapOf<String, Any?>("id" to 1, "current_year" to 200, "current_month" to 1)
     private fun nameOf(leader: Int): String? =
-        jdbc.queryForList("SELECT name FROM troop WHERE troop_leader = :id", MapSqlParameterSource("id", leader), String::class.java).firstOrNull()
+        jdbc.queryForList(
+            "SELECT name FROM troop WHERE world_id = 1 AND troop_leader = :id",
+            MapSqlParameterSource("id", leader),
+            String::class.java,
+        ).firstOrNull()
     private fun count(): Int =
-        jdbc.queryForObject("SELECT count(*) FROM troop", MapSqlParameterSource(), Int::class.java)!!
+        jdbc.queryForObject("SELECT count(*) FROM troop WHERE world_id = 1", MapSqlParameterSource(), Int::class.java)!!
 
     @BeforeAll
     fun setUp() {
@@ -54,6 +58,17 @@ class TroopFlushIT {
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(ds)))
         jdbc.update(
             "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'sc', 200, 1, 3600)",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            "INSERT INTO nation (world_id, id, name, color) VALUES (1, 1, '테스트국', '#000000')",
+            MapSqlParameterSource(),
+        )
+        jdbc.update(
+            """
+            INSERT INTO general (world_id, id, name, nation_id, turn_time)
+            VALUES (1, 7, '장수칠', 1, now()), (1, 8, '장수팔', 1, now())
+            """.trimIndent(),
             MapSqlParameterSource(),
         )
     }

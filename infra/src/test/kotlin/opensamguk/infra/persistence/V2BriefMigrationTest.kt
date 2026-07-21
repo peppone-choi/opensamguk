@@ -47,14 +47,11 @@ class V2BriefMigrationTest {
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
+            .target(org.flywaydb.core.api.MigrationVersion.fromVersion("2"))
             .load()
             .migrate()
 
         jdbc = NamedParameterJdbcTemplate(dataSource)
-        jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'fixture', 200, 1, 3600)",
-            MapSqlParameterSource(),
-        )
     }
 
     @AfterAll
@@ -72,8 +69,8 @@ class V2BriefMigrationTest {
     fun `inserting a row without brief defaults to empty string`() {
         jdbc.update(
             """
-            INSERT INTO general_turn (world_id, general_id, turn_idx, action_code)
-            VALUES (1, 1, 0, 'che_농지개간')
+            INSERT INTO general_turn (general_id, turn_idx, action_code)
+            VALUES (1, 0, 'che_농지개간')
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -86,8 +83,8 @@ class V2BriefMigrationTest {
 
         jdbc.update(
             """
-            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code)
-            VALUES (1, 1, 12, 0, 'che_거병')
+            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code)
+            VALUES (1, 12, 0, 'che_거병')
             """.trimIndent(),
             MapSqlParameterSource(),
         )
@@ -103,8 +100,8 @@ class V2BriefMigrationTest {
     fun `brief accepts the PHP-written 휴식 value`() {
         jdbc.update(
             """
-            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, brief)
-            VALUES (1, 2, 12, 5, 'che_거병', '휴식')
+            INSERT INTO nation_turn (nation_id, officer_level, turn_idx, action_code, brief)
+            VALUES (2, 12, 5, 'che_거병', '휴식')
             """.trimIndent(),
             MapSqlParameterSource(),
         )

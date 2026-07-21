@@ -1,5 +1,6 @@
 package opensamguk.gameapi.read
 import opensamguk.infra.read.BettingRepository
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
@@ -26,11 +27,20 @@ import kotlin.test.assertEquals
 class BettingAggregateReadIT {
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var betting: BettingRepository
+
+    @BeforeEach
+    fun seedWorld() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) " +
+                "VALUES (1, 'test', 1, 1, 60)",
+        )
+    }
+
     private fun insertBet(bettingId: Int, generalId: Int, userId: Int?, type: String, amount: Int) {
         jdbc.update(
-            "INSERT INTO ng_betting (betting_id, general_id, user_id, betting_type, amount) " +
-                "VALUES (?, ?, ?, ?, ?)",
-            bettingId, generalId, userId, type, amount,
+            "INSERT INTO ng_betting (world_id, betting_id, general_id, user_id, betting_type, amount) " +
+                "VALUES (?, ?, ?, ?, ?, ?)",
+            1, bettingId, generalId, userId, type, amount,
         )
     }
     @Test

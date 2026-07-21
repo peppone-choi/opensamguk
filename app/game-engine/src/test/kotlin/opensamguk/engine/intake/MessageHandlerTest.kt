@@ -335,7 +335,7 @@ class MessageHandlerTest {
         receiverMessageId: Int? = null,
         hasAction: Boolean = false,
     ) = MessageSnapshot(
-        id = id, hasAction = hasAction, type = type,
+        id = id, mailbox = 7, hasAction = hasAction, type = type,
         srcGeneralId = srcGeneralId, srcNationId = 1, destGeneralId = 7, destNationId = 2,
         time = time, validUntil = Instant.parse("9999-12-31T23:59:59Z"),
         deletable = deletable, receiverMessageId = receiverMessageId,

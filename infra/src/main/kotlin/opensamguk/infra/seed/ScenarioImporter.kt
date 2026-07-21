@@ -108,7 +108,7 @@ class ScenarioImporter(
 
         val worldId = insertWorldState(jdbc, startYear, expectedWorldId)
 
-        val gameEnvCount = insertGameEnv(jdbc, startYear)
+        val gameEnvCount = insertGameEnv(jdbc, startYear, worldId)
 
         // 4b — nation (2 rows; neutral id 0 has NO row — generals just carry nation_id 0).
         val nationCount = insertNations(jdbc, worldId)
@@ -117,7 +117,7 @@ class ScenarioImporter(
         val cityCount = insertCities(jdbc, worldId)
 
         // 4d — UPDATE nation.capital_city_id = first owned city in nation[].cities order.
-        updateCapitals(jdbc)
+        updateCapitals(jdbc, worldId)
 
         val general = buildGenerals(startYear)
         val generalCount = insertGenerals(jdbc, general, startYear, worldId)
@@ -128,14 +128,14 @@ class ScenarioImporter(
         val nationTurnCount = insertNationTurns(jdbc, worldId)
 
         // 4h — diplomacy (ordered neutral pairs + JSON overrides).
-        val diplomacyCount = insertDiplomacy(jdbc, startYear)
+        val diplomacyCount = insertDiplomacy(jdbc, startYear, worldId)
 
-        val rankCount = insertRankData(jdbc, general)
+        val rankCount = insertRankData(jdbc, general, worldId)
 
         // 4j — ng_games (1 session record).
         val ngGamesCount = insertNgGames(jdbc, worldId)
 
-        val eventCount = insertEvents(jdbc, startYear)
+        val eventCount = insertEvents(jdbc, startYear, worldId)
 
         return ImportCounts(
             worldState = 1,
@@ -215,12 +215,14 @@ class ScenarioImporter(
         }
     }
 
-    private fun insertGameEnv(jdbc: JdbcTemplate, startYear: Int): Int {
-        val rows = resetGameEnv(startYear).map { (key, value) -> arrayOf<Any?>(key, jsonbValue(value)) }
+    private fun insertGameEnv(jdbc: JdbcTemplate, startYear: Int, worldId: WorldId): Int {
+        val rows = resetGameEnv(startYear).map { (key, value) ->
+            arrayOf<Any?>(worldId.value, key, jsonbValue(value))
+        }
         jdbc.batchUpdate(
             """
-            INSERT INTO game_kv ("table", namespace, key, value)
-            VALUES ('game_env', 'game_env', ?, ?)
+            INSERT INTO game_kv (world_id, "table", namespace, key, value)
+            VALUES (?, 'game_env', 'game_env', ?, ?)
             """.trimIndent(),
             rows,
         )
@@ -372,12 +374,17 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4d capital
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun updateCapitals(jdbc: JdbcTemplate) {
+    private fun updateCapitals(jdbc: JdbcTemplate, worldId: WorldId) {
         val cityIdByName = cities.associate { it.name to it.id }
         for (nation in scenario.nations) {
             val firstCityName = nation.cities.firstOrNull() ?: continue
             val capitalId = cityIdByName[firstCityName] ?: continue
-            jdbc.update("UPDATE nation SET capital_city_id = ? WHERE id = ?", capitalId, nation.id)
+            jdbc.update(
+                "UPDATE nation SET capital_city_id = ? WHERE world_id = ? AND id = ?",
+                capitalId,
+                worldId.value,
+                nation.id,
+            )
         }
     }
 
@@ -698,7 +705,7 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4h diplomacy — ordered neutral pairs + JSON overrides (insertion-order preserved)
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertDiplomacy(jdbc: JdbcTemplate, startYear: Int): Int {
+    private fun insertDiplomacy(jdbc: JdbcTemplate, startYear: Int, worldId: WorldId): Int {
         // LinkedHashMap keyed by (src,dest) preserves insertion order — never re-keyed by id.
         val pairs = LinkedHashMap<Pair<Int, Int>, DiploRow>()
         val ids = scenario.nations.map { it.id }
@@ -721,10 +728,10 @@ class ScenarioImporter(
             jdbc.update(
                 """
                 INSERT INTO diplomacy
-                    (src_nation_id, dest_nation_id, state_code, term, is_dead, is_showing, meta)
-                VALUES (?, ?, ?, ?, false, true, '{}'::jsonb)
+                    (world_id, src_nation_id, dest_nation_id, state_code, term, is_dead, is_showing, meta)
+                VALUES (?, ?, ?, ?, ?, false, true, '{}'::jsonb)
                 """.trimIndent(),
-                src, dest, row.state, row.term,
+                worldId.value, src, dest, row.state, row.term,
             )
             n++
         }
@@ -736,17 +743,17 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4i rank_data — 37 rows/general, value 0, nation_id 0
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertRankData(jdbc: JdbcTemplate, generals: List<BuiltGeneral>): Int {
+    private fun insertRankData(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
         val rows = ArrayList<Array<Any?>>(generals.size * RANK_COLUMNS.size)
         for (bg in generals) {
             for (type in RANK_COLUMNS) {
-                rows.add(arrayOf(bg.id, type))
+                rows.add(arrayOf(worldId.value, bg.id, type))
             }
         }
         jdbc.batchUpdate(
             """
-            INSERT INTO rank_data (nation_id, general_id, type, value)
-            VALUES (0, ?, ?, 0)
+            INSERT INTO rank_data (world_id, nation_id, general_id, type, value)
+            VALUES (?, 0, ?, ?, 0)
             """.trimIndent(),
             rows,
         )
@@ -773,12 +780,12 @@ class ScenarioImporter(
         val ngGameId = jdbc.queryForObject(
             """
             INSERT INTO ng_games
-                (server_id, date, winner_nation, map, season, scenario, scenario_name, env)
-            VALUES (?, ?, NULL, NULL, 1, ?, ?, ?)
+                (world_id, server_id, date, winner_nation, map, season, scenario, scenario_name, env)
+            VALUES (?, ?, ?, NULL, NULL, 1, ?, ?, ?)
             RETURNING id
             """.trimIndent(),
             Int::class.java,
-            activeServerId, ts, scenarioNumber, scenario.title, jsonb(env),
+            worldId.value, activeServerId, ts, scenarioNumber, scenario.title, jsonb(env),
         ) ?: error("ng_games insert did not return an id")
         jdbc.update(
             """
@@ -796,7 +803,7 @@ class ScenarioImporter(
     // ─────────────────────────────────────────────────────────────────────────────────────────────
     // 4k event — persisted merged default + scenario rows
     // ─────────────────────────────────────────────────────────────────────────────────────────────
-    private fun insertEvents(jdbc: JdbcTemplate, startYear: Int): Int {
+    private fun insertEvents(jdbc: JdbcTemplate, startYear: Int, worldId: WorldId): Int {
         val defaults = if (scenario.ignoreDefaultEvents) {
             emptyList()
         } else {
@@ -821,10 +828,10 @@ class ScenarioImporter(
         for (row in defaults + scenarioRows + deferredRows) {
             jdbc.update(
                 """
-                INSERT INTO event (target_code, priority, condition, action)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO event (world_id, target_code, priority, condition, action)
+                VALUES (?, ?, ?, ?, ?)
                 """.trimIndent(),
-                row.target, row.priority, jsonb(row.condition), jsonb(row.action),
+                worldId.value, row.target, row.priority, jsonb(row.condition), jsonb(row.action),
             )
         }
         return defaults.size + scenarioRows.size + deferredRows.size

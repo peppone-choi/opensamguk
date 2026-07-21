@@ -144,8 +144,8 @@ class SelectPoolRepositoryIT {
     private fun insertPool(uniqueName: String, owner: Int?, generalId: Int?, reservedUntil: Instant?, info: String) {
         jdbc.update(
             """
-            INSERT INTO select_pool (unique_name, owner, general_id, reserved_until, info)
-            VALUES (:unique_name, :owner, :general_id, :reserved_until, :info)
+            INSERT INTO select_pool (world_id, unique_name, owner, general_id, reserved_until, info)
+            VALUES (1, :unique_name, :owner, :general_id, :reserved_until, :info)
             """.trimIndent(),
             MapSqlParameterSource()
                 .addValue("unique_name", uniqueName)

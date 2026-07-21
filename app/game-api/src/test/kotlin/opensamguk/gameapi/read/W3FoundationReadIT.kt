@@ -122,7 +122,7 @@ class W3FoundationReadIT {
             "killcrew" to 5000, "deathcrew" to 800, "firenum" to 7,
         )) {
             jdbc.update(
-                "INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (1, 11, ?, ?)",
+                "INSERT INTO rank_data (world_id, nation_id, general_id, type, value) VALUES (1, 1, 11, ?, ?)",
                 type, value,
             )
         }
@@ -136,7 +136,7 @@ class W3FoundationReadIT {
         assertNull(rankData.findByGeneralIdAndType(11, "occupied")) // 미기록 type → null
         // N+1-safe 일괄 조회: 장수 집합 × 전투-통계 type 집합
         insertGeneral(id = 12, nationId = 1, cityId = 5, crew = 0, leadership = 50, npc = 0)
-        jdbc.update("INSERT INTO rank_data (nation_id, general_id, type, value) VALUES (1, 12, 'warnum', 99)")
+        jdbc.update("INSERT INTO rank_data (world_id, nation_id, general_id, type, value) VALUES (1, 1, 12, 'warnum', 99)")
         val warTypes = listOf("warnum", "killnum", "deathnum", "killcrew", "deathcrew", "firenum")
         val bulk = rankData.findByGeneralIdsAndTypes(listOf(11, 12), warTypes)
         val folded = bulk.associate { (it.generalId to it.type) to it.value }
@@ -179,6 +179,7 @@ class W3FoundationReadIT {
     @Test
     fun `ChiefCenter - nation_turn arg jsonb가 read 경로에서 디코드된다`() {
         seedWorld()
+        jdbc.update("INSERT INTO nation (world_id, id, name, color) VALUES (1, 1, '테스트국', '#000000')")
         // V1 baseline nation_turn: 예약 국가 명령 슬롯(arg jsonb). PHP가 슬롯마다 Json::decode($arg)로
         // 내려보내던 누락 필드를 read 엔티티가 삽입순서 맵으로 디코드함을 증명.
         jdbc.update(

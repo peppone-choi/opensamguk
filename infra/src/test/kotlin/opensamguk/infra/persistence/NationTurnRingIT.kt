@@ -63,6 +63,8 @@ class NationTurnRingIT {
         repo = ReservedTurnRepository(jdbc)
         seedWorld(worldId)
         seedWorld(otherWorldId)
+        seedNations(worldId, 3, 4, 7, 17, 18, 99, 401)
+        seedNations(otherWorldId, 401)
     }
 
     @AfterAll
@@ -169,6 +171,21 @@ class NationTurnRingIT {
             """.trimIndent(),
             MapSqlParameterSource().addValue("id", worldId.value),
         )
+    }
+
+    private fun seedNations(worldId: WorldId, vararg nationIds: Int) {
+        for (nationId in nationIds) {
+            jdbc.update(
+                """
+                INSERT INTO nation (world_id, id, name, color)
+                VALUES (:world_id, :id, :name, '#000000')
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("world_id", worldId.value)
+                    .addValue("id", nationId)
+                    .addValue("name", "nation-$nationId"),
+            )
+        }
     }
 
     private fun rowCount(worldId: WorldId, nationId: Int, officerLevel: Int, turnIdx: Int): Int =

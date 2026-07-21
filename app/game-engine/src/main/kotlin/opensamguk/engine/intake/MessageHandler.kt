@@ -568,6 +568,7 @@ data class MsgTarget(
 data class MessageSnapshot(
     /** message.id. */
     val id: Int,
+    val mailbox: Int,
     /** body option['action'] 존재 여부 (diplomacy + action → DiplomaticMessage = 시스템 외교 메시지). */
     val hasAction: Boolean,
     /** message.type (private|national|public|diplomacy). */

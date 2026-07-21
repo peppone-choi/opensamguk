@@ -6,6 +6,7 @@ import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.tournament.TournamentDaemon
@@ -113,6 +114,7 @@ open class TurnRunService(
     private val inheritanceRepository: opensamguk.infra.read.InheritanceRepository? = null,
     private val selectPoolRepository: SelectPoolRepository? = null,
     private val tournamentDaemon: TournamentDaemon? = null,
+    private val processNationCommand: ProcessNationCommand? = null,
 ) {
 
     /**
@@ -135,6 +137,7 @@ open class TurnRunService(
             bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
+            processNationCommand = processNationCommand,
         )
     } else {
         null

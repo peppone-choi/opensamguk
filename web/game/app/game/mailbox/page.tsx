@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
-import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
+import { api, isIntakeQueued, isIntakeDenied, pollCommandResult } from '../../../lib/api';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
 import { mailboxIdForScope, isMessageDeletable, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
 import type { FrontInfoResponse } from '../../../lib/types';
@@ -125,8 +125,8 @@ export default function MailboxPage() {
     }
 
     // 수락/거절은 game-api의 /api/messages/{id}/accept|decline로 직접 호출한다.
-    // NEW CONTRACT: 수락 시 서버가 수락 명령(예: che_불가침수락)을 턴 데몬에 직접 예약(reserve)하므로
-    // 클라이언트는 commandKey를 읽어 /api/command를 다시 호출하지 않는다(예전 디스패치 설계 폐기).
+    // 수락·거절은 typed immediate daemon command로 접수된다. 데몬이 검증·실행·flush한 뒤
+    // result channel에 확정 결과를 공개하므로, 클라이언트는 202 접수만으로 성공 처리하지 않는다.
     async function handleAgree(msg: MailboxMessage) {
         // 요청 진행 중이면 재진입 금지 — 빠른 더블클릭에 의한 이중 수락 차단
         if (pendingId !== null) return;
@@ -138,16 +138,22 @@ export default function MailboxPage() {
         if (msg.id == null) return;
         setPendingId(msg.id);
         try {
-            await api.messageAccept(msg.id, identity.generalId);
-            // 수락은 턴 명령으로 예약된다 — 즉시 적용을 함의하지 않는 표현.
-            setToast('수락했습니다.');
+            const accepted = await api.messageAccept(msg.id, identity.generalId);
+            const result = await pollCommandResult(accepted.requestId);
+            if (result == null) {
+                setToast('수락 요청을 접수했습니다.');
+            } else if (!result.ok) {
+                setToast(result.reason ?? '수락할 수 없습니다.');
+            } else {
+                setToast('수락했습니다.');
+                fetchMessages();
+            }
         } catch {
             setToast('수락 요청에 실패했습니다.');
         } finally {
             setPendingId(null);
         }
         setTimeout(() => setToast(''), TOAST_DURATION_MS);
-        fetchMessages();
     }
 
     async function handleDecline(msg: MailboxMessage) {
@@ -161,15 +167,22 @@ export default function MailboxPage() {
         if (msg.id == null) return;
         setPendingId(msg.id);
         try {
-            await api.messageDecline(msg.id, identity.generalId);
-            setToast('거절했습니다.');
+            const accepted = await api.messageDecline(msg.id, identity.generalId);
+            const result = await pollCommandResult(accepted.requestId);
+            if (result == null) {
+                setToast('거절 요청을 접수했습니다.');
+            } else if (!result.ok) {
+                setToast(result.reason ?? '거절할 수 없습니다.');
+            } else {
+                setToast('거절했습니다.');
+                fetchMessages();
+            }
         } catch {
             setToast('거절 요청에 실패했습니다.');
         } finally {
             setPendingId(null);
         }
         setTimeout(() => setToast(''), TOAST_DURATION_MS);
-        fetchMessages();
     }
 
     // 서신 삭제 — legacy MessagePlate.vue tryDelete(248-265행): confirm("삭제하시겠습니까?") →

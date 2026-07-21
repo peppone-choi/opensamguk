@@ -55,6 +55,7 @@ class V5EventMigrationTest {
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
+            .target(org.flywaydb.core.api.MigrationVersion.fromVersion("5"))
             .load()
             .migrate()
 

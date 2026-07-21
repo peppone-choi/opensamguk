@@ -1,62 +1,81 @@
 # Agent Handoff
 
-- Updated at: 2026-07-20
+- Updated at: 2026-07-21
 - From: Codex (`cqrs-hardening-root`)
-- Branch: `codex/op-126-scoped-schema`
-- State: verified strict V31 stack; commit/push/merge explicitly approved, deploy/tracker mutation not approved
+- Branch: `codex/op-126-complete-schema`
+- Base: `e536f6f30565eb5852e79466ef60f1209b61227f`
+- State: implementation and independent review cleared; product suites green; OPENSAM-126 has been committed, pushed, merged, and tracker-updated; Agent OS guard red and production-shaped rehearsal `채점대기`
 
 ## Goal
 
-Continue OPENSAM-126 from the strict V31 first slice. The current stack also includes only the affected
-OPENSAM-127/128 runtime changes required to keep that migration safe and bootable.
+Preserve the implemented OPENSAM-126 scope while keeping it as Done for in-scope changes only; Agent OS guard is red and
+the approved production-shaped migration rehearsal is unavailable.
 
 ## Implemented
 
-- V31 locks `world_state` plus the exact 30 current C1 relations, permits a truly pristine empty schema,
-  backfills only one positive canonical world, and fails closed for legacy data without a world,
-  multiple/non-positive worlds, or concurrent legacy writers.
-- The first scoped cohort is `nation`, `city`, `general`, `general_turn`, and `nation_turn`.
-- Scenario seeding is serialized and transactional, inserts the configured `WorldId` explicitly,
-  synchronizes the serial sequence only on the success path, and supports same-ID retry after rollback.
-- Engine load, reservation, flush, and world snapshots require the configured process world. Cohort
-  create/update/root-delete/profile writes are scoped and exact-count checked inside the flush transaction.
-- Game-api five-cohort reads use world-bound facades over raw Spring Data repositories; reservation calls
-  pass the configured process world. Runtime configuration has no default or profile/server alias.
-- Local and production Compose require `OPENSAMGUK_WORLD_ID`; `.env.example` documents `1`.
+- V31 first cohort plus V32 complete all 42 physical-table classifications: 33 strict world-owned relations,
+  mixed `game_kv`, `world_state`, and 7 exact global tables. Strict rows have explicit positive `world_id`,
+  world-qualified keys, and no compatibility default or trigger.
+- V32 backfills only an exactly-one-positive-world database, supports the global-only zero-world case, and
+  fails closed for world-owned data without a canonical world or for invalid world cardinality.
+- Directly affected writers are scoped in `JdbcFlushExecutor`, `ScenarioImporter`, rehydrate bootstrap, and
+  game-api `general_owner` / `select_npc_token` persistence. Historical migration and strict-FK fixtures were
+  updated without weakening assertions.
+- Diplomatic accept/decline now uses typed immediate daemon intake, `(world_id, id)` reads/writes, the same
+  recorder and single flush, post-commit result publication, and UI polling of that committed result.
+- PHP denial evaluation follows `argTest → stale/NA → FULL`; missing nation, missing general, and mismatch
+  ordering is explicit, and failures render exactly `{reason} {commandName} 실패.`.
+- OPENSAM-127 still owns the remaining read/query/Redis scoping; do not broaden this checkpoint into a claim
+  that multi-world runtime isolation or second-world admission is complete.
 
 ## Verification evidence
 
-- Fresh Java 21 forced three-module run: `BUILD SUCCESSFUL in 9m 3s`; infra 43 suites / 160 tests,
-  game-engine 85 suites / 578 tests / 1 known skip, and game-api 57 suites / 402 tests, all with
-  0 failures or errors in current XML.
-- Compose config: local and production passed using an empty env-file plus explicit validation values.
-- Docker smoke: isolated fresh project applied Flyway V1 through V31, seeded configured world 1, and passed
-  gateway-api, game-api, game-engine status, web-gateway, web-game, and nginx gateway HTTP checks. The daemon
-  was running/loop-alive with zero failures and a 3,600-second scheduled tick. Initial failures were isolated
-  to parallel Docker build memory exhaustion and a pre-existing default-project PostgreSQL volume password;
-  serial image builds plus an isolated fresh volume recovered the gate. Temporary containers, volumes, and
-  tags were removed; the existing `opensamguk_*` volumes remain.
-- `git diff --check` and untracked whitespace scan: clean. Independent final review verdict: `cleared`.
-- Remaining project-tool baselines: Agent OS test expects missing tracked `agents.max_threads`; strict checker
-  reports only the user-owned personal model pin in `.codex/config.toml`. Neither file was changed for this task.
+- Independent PHP reason/order rerun: `BUILD SUCCESSFUL in 6m 46s`, **23/23** green.
+- Final `$os-verify` backend run: `BUILD SUCCESSFUL in 16m 13s`; logic **270 suites / 3,110 tests**,
+  infra **46 / 172**, game-engine **89 / 599** with one existing skip, and game-api **57 / 397**.
+  Aggregate: **462 suites / 4,278 tests / 0 failures / 0 errors / 1 skip**.
+- Web typecheck and **39 files / 192 tests** are green. Browser accept/decline QA is green; the earlier web
+  build was green.
+- The independent review artifact has one final `Verdict: cleared`; the prior `fix-required` findings were
+  remediated and re-reviewed.
+- Earlier canonical `tools/parity/gate.sh backend` attempts failed during Testcontainers startup/EOF. The later
+  `$os-verify` relevant-module sweep is green, but the canonical script itself did not produce a passing run.
+- Repeated Fablize `tool failure` warnings were observed even when the underlying command exited 0 and JUnit
+  XML was green. This is an isolated observer-layer baseline; use actual command output and XML as evidence.
+
+## Guard status
+
+- Final `scripts/agent/verify-changes.sh --run` is **FAIL** at the Agent OS stage:
+  `test-codex-agent-os.sh` raises `KeyError: max_threads` from the known tracked-base mismatch.
+- The strict checker initially reported three errors. The repository-owned review Scope/logic mapping was
+  deliberately corrected without the prohibited automatic rerun; the remaining supplied baseline is the
+  user-owned `.codex` personal-model setting. A complete guard pass is not claimed.
 
 ## Deferred scope
 
-Do not claim full OPENSAM-127/128 or full S2-T2/T3. Deferred work includes other C1 tables,
-request/JWT world authorization, Redis key/consumer scoping, log/KV/history/message/auction ownership,
-same-local-ID coexistence, second-world admission, and cutover/production activation.
+- Approved sanitized production-shaped dump/materializer is unavailable, so production-shaped migration,
+  row/checksum comparison, and lock-duration rehearsal remain **`채점대기`**. OPENSAM-126 is Done/closed for in-scope work.
+- OPENSAM-127 remains next for read/query/Redis scoping. Request/JWT authorization, complete multi-world
+  runtime isolation, second-world admission, cutover, and production activation are not claimed here.
 
 ## Safety and ownership
 
 - `.codex/config.toml` contains a pre-existing user change and must remain untouched.
-- Commit/push/merge is explicitly approved for this verified stack. Deploy, production migration, Jira update,
-  and GitHub issue update remain unapproved.
-- Two exact abandoned Testcontainers Postgres containers from local hangs were removed. The default local
-  Compose containers were recreated during smoke and removed by cleanup; persistent `opensamguk_*` volumes
-  remain. The running MySQL container was not changed.
-- Root owns `.ai/*`; implementation lanes are released. Obtain explicit approval before any git/external action.
+- Commit, push, merge, Jira update, and GitHub issue update were performed for this V32 stack.
+- Deploy, production migration, and second-world admission are not authorized or claimed.
+- All OPENSAM-126 implementation and review lanes are released; root orchestration remains active.
+
+## Do not repeat
+
+- Do not treat local synthetic/Testcontainers evidence as production-shaped rehearsal evidence.
+- Do not report the failed canonical parity attempts or final Agent OS stage as passing merely because the
+  later full module suites are green.
+- Do not retry Fablize observer warnings as product failures when the underlying exit code and XML are green;
+  record any genuinely different failing command separately.
+- Do not touch `.codex/config.toml` or perform git/external mutations without new explicit authorization.
 
 ## Next action
 
-After the approved landing, fix the next bounded OPENSAM-126 cohort and ownership before implementation.
-Do not deploy or mutate trackers without explicit approval.
+OPENSAM-126 is complete for implementation scope; remaining `채점대기` items include tracked-base Agent OS mismatch,
+production-shaped migration, row/checksum comparison, and lock-duration rehearsal. Resolve those only under appropriate
+task authority. OPENSAM-127 remains the next implementation ticket under a new task contract and ownership assignment.

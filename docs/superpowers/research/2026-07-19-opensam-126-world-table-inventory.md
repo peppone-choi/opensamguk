@@ -1,23 +1,27 @@
-# OPENSAM-126 world-table ownership inventory and V31 first slice
+# OPENSAM-126 world-table ownership inventory and scoped-schema completion
 
-Status: V31 first-slice implementation and ownership research artifact.
+Status: V31 first slice landed; V32 completes the current physical ownership partition for S2-T1.
 Date: 2026-07-19
-Scope owner: cqrs-s2-schema-foundation
+Updated: 2026-07-20
+Scope owner: op126-complete-schema
 
 ## Boundary and consumed contract
 
 This document inventories every relation created by current Flyway V1--V30
-CREATE TABLE statements. It is an ownership decision artifact, not a claim that
-the complete schema is already scoped.
+CREATE TABLE statements and records the final V32 ownership decision. The
+original C1/C2/C3 tables below preserve the evidence state that preceded that
+decision; the `V32 final ownership partition` section is authoritative where a
+provisional classification differs.
 
-- C1 canonical world-owned: live, turn, rank, log, history, archive, or
-  satellite game data. It must ultimately use canonical world_id plus local
-  identity/appropriate composite constraints.
-- C2 account/cross-season/global candidate: plausible account-wide or retained
-  data. It is not yet a global allowlist admission; any local-game reference or
-  source-world provenance still needs an explicit policy.
-- C3 classification-blocked: mixed-owner or insufficient-evidence relation.
-  It blocks full-table completion; V31 must not guess.
+- C1 was the initial canonical world-owned set.
+- C2 was the initial account/cross-season/global candidate set.
+- C3 was the initial classification-blocked set.
+
+V32 resolves every provisional row: `general_owner`, `inheritance_result`, and
+`select_npc_token` are world-owned; `game_kv` is row-family mixed; and the exact
+global allowlist is `inheritance_point`, `inheritance_log`,
+`inheritance_user_state`, `users`, `system_flag`, `banned_member`, and
+`error_log`.
 
 OPENSAM-148 is consumed as a hard predecessor:
 
@@ -198,10 +202,151 @@ compatibility claim is part of this slice.
 Fresh migration/rehearsal for every remaining relation and two-world
 same-local-ID isolation are later S2 work (CQRS plan:156-183), not V31 evidence.
 
+## V32 final ownership partition
+
+V32 resolves all current physical tables. The partition is exhaustive and
+disjoint:
+
+| Ownership | Count | Relations |
+|---|---:|---|
+| Canonical anchor | 1 | `world_state` |
+| Strict world-owned | 33 | `nation`, `city`, `general`, `general_turn`, `nation_turn`, `troop`, `diplomacy`, `diplomacy_letter`, `rank_data`, `hall`, `ng_games`, `ng_old_nations`, `ng_old_generals`, `yearbook_history`, `event`, `log_entry`, `board_post`, `board_comment`, `vote_poll`, `vote`, `vote_comment`, `nation_env`, `message`, `ng_betting`, `ng_auction`, `ng_auction_bid`, `statistic`, `select_pool`, `general_access_log`, `emperior`, `general_owner`, `inheritance_result`, `select_npc_token` |
+| Mixed row families | 1 | `game_kv` |
+| Explicit global allowlist | 7 | `inheritance_point`, `inheritance_log`, `inheritance_user_state`, `users`, `system_flag`, `banned_member`, `error_log` |
+
+That is all 42 current physical tables. The raw CREATE inventory remains 44
+because the retired V1 `auction` and `auction_bid` definitions are still
+audited even though V7 drops them.
+
+`general_owner` is world-owned because `general_id` is a live local general
+identity. Its identity is `(world_id,general_id)` and its user exclusivity is
+`(world_id,user_id)`. `inheritance_result` records the source world's local
+general and server coordinates, so survival across a season does not make it
+global. `select_npc_token.pick_result` carries local general choices and the
+token therefore belongs to the world that produced the pool.
+
+### Admission and backfill
+
+V32 acquires one `SHARE ROW EXCLUSIVE` lock statement in the documented
+relation order: the anchor, all 33 strict relations, then `game_kv`. It then
+applies these fail-closed branches:
+
+1. Zero `world_state` rows are accepted only when all 33 strict relations are
+   empty and `game_kv` contains only the global `inheritance` family. The seven
+   allowlisted global relations may contain rows.
+2. Exactly one positive `world_state.id` backfills every strict legacy row and
+   every non-`inheritance` `game_kv` row.
+3. A strict legacy row with zero worlds, a non-`inheritance` KV row with zero
+   worlds, multiple worlds, or a single non-positive world fails the
+   transactional migration and rolls back all V32 DDL.
+
+`world_state` gains `CHECK (id > 0)`. Every strict relation has
+`world_id INTEGER NOT NULL` with no default and an FK to `world_state(id)`.
+`game_kv.world_id` is nullable only for its global family and still has the
+same FK when present. No profile, server, `ng_games.id`, MIN/MAX, or configured
+fallback participates in resolution.
+
+ADR-LITE-016 selected the strict schema plus the affected writer stack. The
+earlier S2-T1 compatibility-trigger alternative is rejected: V32 creates no
+world-id default, function, or trigger, and an INSERT that omits `world_id`
+fails. Second-world admission therefore cannot depend on an implicit singleton
+world and remains behind the loader/query/writer boot fence in OPENSAM-127 and
+OPENSAM-128.
+
+### Key, FK, and index matrix
+
+Serial and bigserial sequence/default expressions remain intact. Their
+generated numeric values are surrogates, but every strict table's relational
+identity is world-qualified.
+
+| Relations | V32 primary/business-key contract |
+|---|---|
+| `nation`, `city`, `general`, `general_turn`, `nation_turn` | PK `(world_id,id)`; the V31 turn business uniques remain world-leading. |
+| `troop` | PK `(world_id,troop_leader)`; index `(world_id,nation,troop_leader)`. |
+| `general_owner` | PK `(world_id,general_id)`; unique `(world_id,user_id)`; the redundant unscoped user index is removed. |
+| `ng_auction_bid` | PK `(world_id,no)`; both legacy auction uniques gain leading `world_id`. |
+| All other strict relations | PK `(world_id,id)`; every existing business unique gains leading `world_id`. `yearbook_history`, `event`, `log_entry`, `board_post`, `board_comment`, `vote_poll`, `vote_comment`, `statistic`, `inheritance_result`, `select_npc_token`, and `emperior` receive no invented business unique. |
+
+All explicit access indexes on strict relations are rebuilt with `world_id` as
+their first column. New index surfaces are
+`troop(world_id,nation,troop_leader)`,
+`diplomacy(world_id,dest_nation_id,src_nation_id)`, and
+`statistic(world_id,year,month,id)`. This also supplies a world-leading index
+for every strict world FK; PostgreSQL does not create child-FK indexes
+automatically.
+
+The only new live-root FKs are:
+
+- `general_turn(world_id,general_id)` and
+  `troop(world_id,troop_leader)` to `general(world_id,id)`;
+- `nation_turn(world_id,nation_id)`, `troop(world_id,nation)`, and both
+  `diplomacy` nation columns to `nation(world_id,id)`;
+- nullable `diplomacy_letter(world_id,prev_id)` to its own composite PK.
+
+Those constraints are `DEFERRABLE INITIALLY DEFERRED` so one flush transaction
+may preserve its established statement order while commit still rejects an
+orphan or cross-world reference. V32 converts the existing board/vote parent
+FKs to `(world_id,parent_id)` with their existing cascade semantics and adds
+`ng_auction_bid(world_id,auction_id)` to `ng_auction(world_id,id)`. Historical
+general/nation coordinates, sentinel-capable columns, polymorphic message/KV
+coordinates, `rank_data`, `select_pool`, `general_access_log`,
+`general_owner`, `inheritance_result`, and `select_npc_token` deliberately gain
+no live-root FK.
+
+### Mixed `game_kv` contract
+
+`game_kv` keeps its global serial surrogate PK because its global rows cannot
+participate in a non-null composite PK. Row ownership is enforced by
+`game_kv_world_ownership_check`:
+
+```sql
+("table" = 'inheritance' AND world_id IS NULL)
+OR ("table" <> 'inheritance' AND world_id IS NOT NULL)
+```
+
+The former table-wide unique is replaced by two inference-compatible partial
+unique indexes:
+
+- `game_kv_inheritance_global_key_uq` on
+  `("table",namespace,key)` where
+  `"table"='inheritance' AND world_id IS NULL`;
+- `game_kv_world_key_uq` on
+  `(world_id,"table",namespace,key)` where
+  `"table"<>'inheritance' AND world_id IS NOT NULL`.
+
+Runtime `ON CONFLICT` predicates must use those literal predicates. The global
+inheritance family cannot be given a world, non-inheritance families cannot
+omit one, the global key remains unique, and identical scoped keys may coexist
+in different worlds.
+
+### V32 acceptance evidence
+
+`V32WorldScopeCompletionMigrationTest` fixes these GWT boundaries:
+
+- the fresh 42-table partition is exactly 33 strict + one mixed + one anchor +
+  seven global, with no unclassified unscoped relation;
+- one representative row in each of the 28 newly strict relations plus both
+  `game_kv` families is migrated from V31, while the five V31 relations remain
+  correctly scoped;
+- zero-world global-only plus inheritance-KV succeeds; representative C1,
+  reclassified, and non-inheritance-KV rows fail and roll back;
+- multiple and non-positive anchors fail and roll back;
+- a forced failure after key promotion restores V31 columns, keys, data, and
+  Flyway history transactionally;
+- equal nation/city/general/turn/troop local identities coexist in two worlds,
+  while composite children cannot reference a parent in another world;
+- scoped uniques/FKs, the five ownership/uniqueness sides of `game_kv`, fixed
+  lock order, retained serial sequence defaults, no `world_id` defaults, and
+  no triggers are catalog-verified.
+
+A production-shaped sanitized legacy dump is not present in this repository.
+Its rehearsal is `채점대기`; it is not inferred from synthetic fixtures and is
+still required before production migration/cutover.
+
 ## Explicit out of scope
 
-- second-world admission, same-local-ID coexistence, and cutover;
-- full-table migration or declaration that all 33 C1 rows are complete;
+- second-world admission and production cutover (the schema-level same-local-ID
+  contract is covered, but admission remains fenced);
 - runtime loader/read/precheck/intake/Redis/JdbcFlushExecutor scoping;
 - W3 durable inbox/outbox activation, fenced flush/CAS activation, production
   migration, or deployment;
@@ -233,3 +378,24 @@ git diff --check -- docs/superpowers/research/2026-07-19-opensam-126-world-table
 ~~~
 
 Observed result: exit 0.
+
+Focused Java 21/Testcontainers verification:
+
+~~~bash
+JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon \
+  :infra:test \
+  --tests opensamguk.infra.persistence.V31WorldScopeExpandMigrationTest \
+  --tests opensamguk.infra.persistence.V32WorldScopeCompletionMigrationTest \
+  --rerun-tasks --console=plain
+~~~
+
+Observed XML results after the V31 helper was pinned to Flyway target 31:
+
+- `V31WorldScopeExpandMigrationTest`: tests 10, failures 0, errors 0,
+  skipped 0;
+- `V32WorldScopeCompletionMigrationTest`: tests 9, failures 0, errors 0,
+  skipped 0.
+
+The initial paired run exposed that the historical V31 test helper had no
+target and therefore advanced through V32. Pinning that helper to version 31
+fixed the test boundary; the fresh rerun above is authoritative.

@@ -1,6 +1,8 @@
 package opensamguk.engine.intake
 
 import opensamguk.common.wire.BoardActionResult
+import opensamguk.common.wire.AcceptDiplomaticMessageFail
+import opensamguk.common.wire.DeclineDiplomaticMessageFail
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.PlaceBetOk
 import opensamguk.common.wire.TurnDaemonCommand
@@ -17,6 +19,7 @@ import opensamguk.engine.turn.WorldSnapshot
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -198,5 +201,24 @@ class IntakeCommandConsumeDispatchTest {
         assertEquals(1, rows.size)
         assertEquals("다음 천도지?", rows.single().columns["title"])
         assertEquals(1, world.getGeneralById(10)!!.meta["newvote"]) // 전 장수 newvote=1
+    }
+
+    @Test
+    fun `diplomatic message variants never fall through the dispatcher`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        val dispatcher = dispatcher(world, recorder)
+
+        val accept = dispatcher.dispatch(
+            decodeAsConsumer(TurnDaemonCommand.AcceptDiplomaticMessage(messageId = 77, generalId = 10)),
+        )
+        val decline = dispatcher.dispatch(
+            decodeAsConsumer(TurnDaemonCommand.DeclineDiplomaticMessage(messageId = 77, generalId = 10)),
+        )
+
+        assertIs<AcceptDiplomaticMessageFail>(accept)
+        assertEquals(77, accept.messageId)
+        assertIs<DeclineDiplomaticMessageFail>(decline)
+        assertEquals(77, decline.messageId)
     }
 }

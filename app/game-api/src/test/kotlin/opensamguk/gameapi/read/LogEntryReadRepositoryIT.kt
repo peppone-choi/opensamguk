@@ -53,8 +53,8 @@ class LogEntryReadRepositoryIT {
     ) {
         jdbc.update(
             """
-            INSERT INTO log_entry (id, scope, category, year, month, text, general_id, nation_id, meta)
-            VALUES (?, CAST(? AS log_scope), CAST(? AS log_category), ?, ?, ?, ?, ?, '{}'::jsonb)
+            INSERT INTO log_entry (world_id, id, scope, category, year, month, text, general_id, nation_id, meta)
+            VALUES (1, ?, CAST(? AS log_scope), CAST(? AS log_category), ?, ?, ?, ?, ?, '{}'::jsonb)
             """.trimIndent(),
             id, scope, category, year, month, text, generalId, nationId,
         )
@@ -65,6 +65,10 @@ class LogEntryReadRepositoryIT {
      */
     @BeforeEach
     fun seed() {
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) " +
+                "VALUES (1, 'test', 1, 1, 60)",
+        )
         insertLog(1, "SYSTEM", "HISTORY", 189, 1, "h1")
         insertLog(2, "SYSTEM", "SUMMARY", 189, 1, "s1")
         insertLog(3, "SYSTEM", "ACTION", 189, 1, "a1") // 엔진 WorldActionContext 계열 글로벌 액션

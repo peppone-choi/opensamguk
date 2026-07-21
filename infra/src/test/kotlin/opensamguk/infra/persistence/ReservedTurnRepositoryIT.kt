@@ -62,6 +62,8 @@ class ReservedTurnRepositoryIT {
         repo = ReservedTurnRepository(jdbc)
         seedWorld(worldId)
         seedWorld(otherWorldId)
+        seedGenerals(worldId, 10, 11, 20, 99, 120, 121, 122, 501)
+        seedGenerals(otherWorldId, 501)
     }
 
     @AfterAll
@@ -197,6 +199,21 @@ class ReservedTurnRepositoryIT {
             """.trimIndent(),
             MapSqlParameterSource().addValue("id", worldId.value),
         )
+    }
+
+    private fun seedGenerals(worldId: WorldId, vararg generalIds: Int) {
+        for (generalId in generalIds) {
+            jdbc.update(
+                """
+                INSERT INTO general (world_id, id, name, turn_time)
+                VALUES (:world_id, :id, :name, now())
+                """.trimIndent(),
+                MapSqlParameterSource()
+                    .addValue("world_id", worldId.value)
+                    .addValue("id", generalId)
+                    .addValue("name", "general-$generalId"),
+            )
+        }
     }
 
     private fun rowCount(worldId: WorldId, generalId: Int, turnIdx: Int): Int =

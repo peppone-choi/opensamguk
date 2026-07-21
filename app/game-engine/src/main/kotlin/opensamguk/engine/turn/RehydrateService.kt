@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
+import opensamguk.common.world.WorldId
 import opensamguk.infra.persistence.AuctionBidRow
 import opensamguk.infra.persistence.AuctionBidRowMapper
 import opensamguk.infra.persistence.AuctionRow
@@ -35,6 +36,7 @@ import java.time.Instant
 class RehydrateService(
     private val jdbc: NamedParameterJdbcTemplate,
     private val hiddenSeed: String,
+    private val worldId: WorldId,
 ) {
 
     data class RehydratedState(
@@ -81,11 +83,15 @@ class RehydrateService(
             // Bootstrap write: direct JDBC UPSERT (there is no active ChangeRecorder at daemon startup).
             jdbc.update(
                 """
-                INSERT INTO game_kv ("table", namespace, key, value)
-                VALUES ('game_env', 'game_env', 'obfuscatedNamePool', :value::jsonb)
-                ON CONFLICT ("table", namespace, key) DO UPDATE SET value = EXCLUDED.value
+                INSERT INTO game_kv (world_id, "table", namespace, key, value)
+                VALUES (:worldId, 'game_env', 'game_env', 'obfuscatedNamePool', :value::jsonb)
+                ON CONFLICT (world_id, "table", namespace, key)
+                    WHERE "table" <> 'inheritance' AND world_id IS NOT NULL
+                DO UPDATE SET value = EXCLUDED.value
                 """.trimIndent(),
-                MapSqlParameterSource().addValue("value", MetaJson.encode(pool)),
+                MapSqlParameterSource()
+                    .addValue("worldId", worldId.value)
+                    .addValue("value", MetaJson.encode(pool)),
             )
             pool
         } else {

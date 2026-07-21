@@ -11,12 +11,12 @@ import java.time.Instant
  * F2 Wave 1 — possession ("장수 점유"/빙의) flow, ACCOUNT-side only.
  *
  * ## What this does (account-side, game-api-owned)
- * Claiming a general writes ONE row to the V10 `general_owner` table (`general_id`, `user_id`,
- * `claimed_at`). That table is NOT a game-state table, so this JPA write does NOT violate the
+ * Claiming a general writes ONE row to `general_owner` (`world_id`, `general_id`, `user_id`,
+ * `claimed_at`) through the process-world repository. That table is NOT a game-state table, so this JPA write does NOT violate the
  * one-daemon-write rule. Guards mirror the legacy `j_select_npc.php` update predicate
  * `owner <= 0 AND npc = 2 AND no = %i`:
- *   * the user must not already own a general on this server (UNIQUE user_id), and
- *   * the target general must be unowned (UNIQUE general_id), and
+ *   * the user must not already own a general in this world (UNIQUE world_id + user_id), and
+ *   * the target general must be unowned in this world (PRIMARY KEY world_id + general_id), and
  *   * the target general must exist and be a claimable NPC (npc_state == 2 candidate pool).
  *
  * ## What this DELIBERATELY does NOT do — the DEFERRED game-state side-effect

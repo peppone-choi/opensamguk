@@ -422,6 +422,7 @@ class DaemonLoopConfig {
             bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
+            processNationCommand = nationProcessor,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,
                 bettingFactory = { liveWorld, liveRecorder ->

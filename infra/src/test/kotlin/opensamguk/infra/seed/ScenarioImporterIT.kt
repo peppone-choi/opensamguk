@@ -401,28 +401,18 @@ class ScenarioImporterIT {
     }
 
     @Test
-    fun `importAll writes the inserted canonical world id to every V31 cohort`() {
+    fun `importAll writes the inserted canonical world id to every imported world-owned relation`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         newImporter().importAll(jdbc, canonicalWorldId)
 
         val worldId = jdbc.queryForObject("SELECT id FROM world_state", Int::class.java)
         assertEquals(1, worldId, "a fresh schema starts with canonical world_state.id=1")
-        for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
-            assertEquals(
-                0,
-                jdbc.queryForObject(
-                    "SELECT count(*) FROM $table WHERE world_id IS NULL OR world_id <> ?",
-                    Int::class.java,
-                    worldId,
-                ),
-                "$table rows must explicitly carry the inserted canonical world id",
-            )
-        }
+        assertImportedWorldOwnedRows(worldId!!)
     }
 
     @Test
-    fun `importAll carries a non-one configured world id through every V31 cohort and synchronizes its identity`() {
+    fun `importAll carries a non-one configured world id through every imported world-owned relation`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
         newImporter().importAll(jdbc, WorldId(701))
@@ -430,16 +420,7 @@ class ScenarioImporterIT {
         assertEquals(701, jdbc.queryForObject("SELECT id FROM world_state", Int::class.java))
         assertEquals(701L, jdbc.queryForObject("SELECT last_value FROM world_state_id_seq", Long::class.java))
         assertEquals(702L, jdbc.queryForObject("SELECT nextval('world_state_id_seq')", Long::class.java))
-        for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
-            assertEquals(
-                0,
-                jdbc.queryForObject(
-                    "SELECT count(*) FROM $table WHERE world_id <> 701",
-                    Int::class.java,
-                ),
-                "$table must carry the actual inserted world id rather than a literal/default identity",
-            )
-        }
+        assertImportedWorldOwnedRows(701)
     }
 
     @Test
@@ -854,6 +835,45 @@ class ScenarioImporterIT {
 
     private fun count(table: String): Int =
         jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java) ?: 0
+
+    private fun assertImportedWorldOwnedRows(worldId: Int) {
+        val importedRelations = listOf(
+            "game_kv" to "\"table\" <> 'inheritance'",
+            "nation" to "TRUE",
+            "city" to "TRUE",
+            "general" to "TRUE",
+            "general_turn" to "TRUE",
+            "nation_turn" to "TRUE",
+            "diplomacy" to "TRUE",
+            "rank_data" to "TRUE",
+            "ng_games" to "TRUE",
+            "event" to "TRUE",
+        )
+        for ((table, importedRowPredicate) in importedRelations) {
+            val total = jdbc.queryForObject(
+                "SELECT count(*) FROM $table WHERE $importedRowPredicate",
+                Int::class.java,
+            ) ?: 0
+            assertTrue(total > 0, "$table must contain imported world-owned rows")
+            assertEquals(
+                0,
+                jdbc.queryForObject(
+                    "SELECT count(*) FROM $table WHERE ($importedRowPredicate) AND world_id IS NULL",
+                    Int::class.java,
+                ),
+                "$table imported rows must not have a NULL world_id",
+            )
+            assertEquals(
+                total,
+                jdbc.queryForObject(
+                    "SELECT count(*) FROM $table WHERE ($importedRowPredicate) AND world_id = ?",
+                    Int::class.java,
+                    worldId,
+                ),
+                "$table imported rows must carry world_id=$worldId rather than a literal/default identity",
+            )
+        }
+    }
 
     private fun soi(v: Any?): Int = (v as Number).toInt()
     private fun sso(v: Any?): String = v as String

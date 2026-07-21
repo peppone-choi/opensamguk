@@ -61,11 +61,14 @@ class ReadRepositoryIT {
                     '{"gennum":24,"capset":3,"rate":15}'::jsonb)
             """.trimIndent()
         )
+        jdbc.update(
+            "INSERT INTO nation (id, world_id, name, color) VALUES (2, 1, '촉', '#00ff00')",
+        )
         // a directional diplomacy row: nation 1 -> nation 2, state 2 (불가침), term 6 months
         jdbc.update(
             """
-            INSERT INTO diplomacy (src_nation_id, dest_nation_id, state_code, term)
-            VALUES (1, 2, 2, 6)
+            INSERT INTO diplomacy (world_id, src_nation_id, dest_nation_id, state_code, term)
+            VALUES (1, 1, 2, 2, 6)
             """.trimIndent()
         )
         // city owned by nation 1; trust is the INTEGER baseline column (=82) -> widens to 82.0

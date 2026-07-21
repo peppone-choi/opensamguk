@@ -264,6 +264,7 @@ class V31WorldScopeExpandMigrationTest {
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
             .configuration(sessionLockConfig)
+            .target(MigrationVersion.fromVersion("31"))
             .load()
             .migrate()
     }

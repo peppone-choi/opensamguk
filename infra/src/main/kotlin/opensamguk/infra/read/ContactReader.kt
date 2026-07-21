@@ -1,5 +1,6 @@
 package opensamguk.infra.read
 
+import opensamguk.common.world.WorldId
 import opensamguk.logic.util.jsonDecode
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -63,20 +64,24 @@ class ContactReader(
     ) { rs, _ -> mapContactRow(rs) }
 
     /**
-     * 삭제 게이트용 메시지 read (PHP `Message::getMessageByID`). `message WHERE id = :id`. body jsonb를
-     * 디코드해 src/dest 객체 + text + option + receiverMessageID + action 존재 여부를 함께 돌려준다.
+     * 삭제 게이트용 메시지 read (PHP `Message::getMessageByID`).
+     * `message WHERE world_id = :world_id AND id = :id`. body jsonb를 디코드해 src/dest 객체 + text +
+     * option + receiverMessageID + action 존재 여부를 함께 돌려준다.
      *
+     * @param worldId 조회할 프로세스 월드.
      * @param msgId 메시지 id.
      * @return 메시지 DTO, 또는 없으면 null ('메시지가 없습니다').
      */
-    fun findMessage(msgId: Int): MessageReadRow? {
+    fun findMessage(worldId: WorldId, msgId: Int): MessageReadRow? {
         val rows = jdbc.query(
             """
             SELECT id, mailbox, type, src, dest, time, valid_until, message
               FROM message
-             WHERE id = :id
+             WHERE world_id = :world_id AND id = :id
             """.trimIndent(),
-            MapSqlParameterSource().addValue("id", msgId),
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("id", msgId),
         ) { rs, _ ->
             val body = jsonDecode(rs.getString("message"))
             @Suppress("UNCHECKED_CAST")
@@ -87,6 +92,7 @@ class ContactReader(
             val option = body["option"] as? Map<String, Any?> ?: emptyMap()
             MessageReadRow(
                 id = rs.getInt("id"),
+                mailbox = rs.getInt("mailbox"),
                 type = rs.getString("type"),
                 srcGeneralId = (src["id"] as? Number)?.toInt() ?: 0,
                 srcNationId = (src["nation_id"] as? Number)?.toInt() ?: 0,
@@ -159,6 +165,7 @@ data class ContactReadRow(
  */
 data class MessageReadRow(
     val id: Int,
+    val mailbox: Int,
     val type: String,
     val srcGeneralId: Int,
     val srcNationId: Int,
