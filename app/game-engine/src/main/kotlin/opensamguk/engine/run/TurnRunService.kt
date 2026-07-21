@@ -11,6 +11,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
+import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -212,6 +213,7 @@ open class TurnRunService(
         worldState["last_turn_time"] = state.lastTurnTime.toString()
         worldState["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
         worldState["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
+        applyWriterFence(worldState, state)
         val payload = base.copy(worldStateUpdate = worldState)
         flushWithGeneration(payload)
         intakeResults.forEach { (requestId, result) ->
@@ -320,18 +322,18 @@ open class TurnRunService(
         val startTime = Instant.parse(preState.meta["startTime"] as? String ?: Instant.now().toString())
         val turnTerm = preState.tickSeconds / 60
         val newDate = ServerClock.turnDate(runTime, startYear, startTime, turnTerm)
-        val payload = buildFlushPayload().copy(
-            worldStateUpdate = linkedMapOf(
-                "id" to preState.id,
-                "current_year" to newDate.year,
-                "current_month" to newDate.month,
-                "current_phase" to newDate.phase,
-                "last_turn_time" to runTime.toString(),
-                "isunited" to ((preState.meta["isunited"] as? Number)?.toInt() ?: 0),
-                "max_nation_id" to ((preState.meta["maxNationId"] as? Number)?.toInt() ?: 0),
-                "max_general_id" to ((preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
-            ),
+        val worldState = linkedMapOf<String, Any?>(
+            "id" to preState.id,
+            "current_year" to newDate.year,
+            "current_month" to newDate.month,
+            "current_phase" to newDate.phase,
+            "last_turn_time" to runTime.toString(),
+            "isunited" to ((preState.meta["isunited"] as? Number)?.toInt() ?: 0),
+            "max_nation_id" to ((preState.meta["maxNationId"] as? Number)?.toInt() ?: 0),
+            "max_general_id" to ((preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
         )
+        applyWriterFence(worldState, preState)
+        val payload = buildFlushPayload().copy(worldStateUpdate = worldState)
         flushWithGeneration(payload)
 
         intakeResults.forEach { (requestId, result) ->
@@ -383,10 +385,20 @@ open class TurnRunService(
             flushExecutor.flush(payload)
             generationSession.commit(generation)
             handler.recorder.clear()
+            // OPENSAM-131: only advance local fence after durable commit.
+            if (payload.worldStateUpdate.containsKey("expected_world_version")) {
+                world.advanceWorldVersionAfterCommit()
+            }
         } catch (e: Exception) {
             generationSession.abort(generation)
             throw e
         }
+    }
+
+    /** OPENSAM-131: stamp CAS keys so JdbcFlushExecutor enforces order-preserving world_version fence. */
+    private fun applyWriterFence(worldState: MutableMap<String, Any?>, state: TurnWorldState) {
+        worldState["expected_world_version"] = state.worldVersion
+        worldState["writer_epoch"] = state.writerEpoch
     }
 
     private fun buildFlushPayload(): FlushPayload {
