@@ -5,17 +5,13 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 /**
- * F4 READ-only JPA mapping of the `yearbook_history` row (V1 baseline) for the 연감 page.
- *
- * There is NO `ng_history` table in this schema (the spec names `ng_history`; the faithful port stores
- * the per-month yearbook snapshots in `yearbook_history`: `profile_name, year, month, map, nations`).
- * The table EXISTS but carries ZERO rows in the fresh scenario_1010 seed (the monthly pipeline writes
- * them as months advance) — the controller returns an empty list gracefully (200, no fabrication).
- *
- * game-api ONLY (§7); never written here.
+ * yearbook_history READ — process-world scoped (OPENSAM-127 residual / GWT cold-history).
  */
 @Entity
 @Table(name = "yearbook_history")
@@ -23,6 +19,9 @@ class YearbookHistoryReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "profile_name")
     var profileName: String = "",
@@ -41,16 +40,25 @@ class YearbookHistoryReadEntity(
     @Column(name = "nations", columnDefinition = "jsonb")
     var nations: Map<String, Any?> = linkedMapOf(),
 
-    // hash — GetHistory.php의 캐시 etag 해시(V1__baseline.sql:234 `hash text NOT NULL DEFAULT ''`).
-    // 연감 레코드 식별/캐시용으로 그대로 전달(read-only enrichment 1줄 add, ddl-auto validate 유지).
     @Column(name = "hash")
     var hash: String = "",
 )
 
-interface HistoryReadRepository : JpaRepository<YearbookHistoryReadEntity, Int> {
-    /** All yearbook rows in chronological order (year, month). */
-    fun findAllByOrderByYearAscMonthAsc(): List<YearbookHistoryReadEntity>
+interface HistoryReadRawRepository : SpringDataRepository<YearbookHistoryReadEntity, Int> {
+    fun findByWorldIdOrderByYearAscMonthAsc(worldId: Int): List<YearbookHistoryReadEntity>
+    fun findByWorldIdAndYearAndMonthOrderByIdAsc(worldId: Int, year: Int, month: Int): List<YearbookHistoryReadEntity>
+}
 
-    /** Yearbook rows for a single year-month (the 연감?yearMonth filter). */
-    fun findByYearAndMonthOrderByIdAsc(year: Int, month: Int): List<YearbookHistoryReadEntity>
+@Repository
+class HistoryReadRepository(
+    private val raw: HistoryReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findAllByOrderByYearAscMonthAsc(): List<YearbookHistoryReadEntity> =
+        raw.findByWorldIdOrderByYearAscMonthAsc(worldId.value)
+
+    fun findByYearAndMonthOrderByIdAsc(year: Int, month: Int): List<YearbookHistoryReadEntity> =
+        raw.findByWorldIdAndYearAndMonthOrderByIdAsc(worldId.value, year, month)
 }

@@ -21,6 +21,9 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "nation_env")
 class NationEnvEntity(
+    @Column(name = "world_id")
+    var worldId: Int? = null,
+
     @Column(name = "namespace", nullable = false)
     var namespace: Int,
 

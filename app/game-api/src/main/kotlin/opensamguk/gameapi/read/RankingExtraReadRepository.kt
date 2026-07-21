@@ -5,7 +5,10 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import org.springframework.data.jpa.repository.JpaRepository
+import opensamguk.common.world.WorldId
+import opensamguk.gameapi.config.GameApiProcessWorld
+import org.springframework.stereotype.Repository
+import org.springframework.data.repository.Repository as SpringDataRepository
 
 @Entity
 @Table(name = "hall")
@@ -13,6 +16,9 @@ class HallReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "server_id")
     var serverId: String = "",
@@ -40,8 +46,19 @@ class HallReadEntity(
     var aux: Map<String, Any?> = linkedMapOf(),
 )
 
-interface HallReadRepository : JpaRepository<HallReadEntity, Int> {
-    fun findAllByOrderByTypeAscValueDescIdAsc(): List<HallReadEntity>
+interface HallReadRawRepository : SpringDataRepository<HallReadEntity, Int> {
+    fun findByWorldIdOrderByTypeAscValueDescIdAsc(worldId: Int): List<HallReadEntity>
+}
+
+@Repository
+class HallReadRepository(
+    private val raw: HallReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findAllByOrderByTypeAscValueDescIdAsc(): List<HallReadEntity> =
+        raw.findByWorldIdOrderByTypeAscValueDescIdAsc(worldId.value)
 }
 
 @Entity
@@ -50,6 +67,9 @@ class StatisticReadEntity(
     @Id
     @Column(name = "id")
     var id: Int = 0,
+
+    @Column(name = "world_id")
+    var worldId: Int = 0,
 
     @Column(name = "year")
     var year: Int = 0,
@@ -89,6 +109,17 @@ class StatisticReadEntity(
     var aux: Map<String, Any?>? = null,
 )
 
-interface StatisticReadRepository : JpaRepository<StatisticReadEntity, Int> {
-    fun findFirstByOrderByIdDesc(): StatisticReadEntity?
+interface StatisticReadRawRepository : SpringDataRepository<StatisticReadEntity, Int> {
+    fun findFirstByWorldIdOrderByIdDesc(worldId: Int): StatisticReadEntity?
+}
+
+@Repository
+class StatisticReadRepository(
+    private val raw: StatisticReadRawRepository,
+    processWorld: GameApiProcessWorld,
+) {
+    private val worldId: WorldId = processWorld.worldId
+
+    fun findFirstByOrderByIdDesc(): StatisticReadEntity? =
+        raw.findFirstByWorldIdOrderByIdDesc(worldId.value)
 }

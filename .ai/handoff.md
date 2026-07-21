@@ -1,11 +1,23 @@
 # Agent Handoff
 
 - Updated at: 2026-07-21
-- Branch: `codex/op-127-world-scope`
-- Goal: OPENSAM-127 world-scope (Track A1) implementation ready for PR/merge
+- State: CQRS B1 complete on main (127+residual reads, 128, 129)
 
-## Next action
-Land OPENSAM-127 PR to main; then OPENSAM-128 flush world-scope.
+## Landed
 
+| Ticket | PR | Notes |
+|--------|-----|-------|
+| OPENSAM-127 | #302 + residual-reads | all GWT-named read/Redis cohorts world-scoped |
+| OPENSAM-128 | #303 | flush contract + handoff |
+| OPENSAM-129 | #304 | two-world isolation IT |
 
-(See prior handoff history in git; OPENSAM-126 complete; 127 in flight.)
+## Next
+
+- B2 S3 generation/fence/CAS (OPENSAM-130+)
+- Optional OPENSAM-10 tournament fight()
+- Activation/cutover still blocked (prod EC2 + live capacity)
+
+## Do not
+
+- prod deploy/cutover/W3 activation without gates
+- co-widen JdbcFlushExecutor without sequential handoff
