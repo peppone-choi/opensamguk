@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.core.namedparam.SqlParameterSource
 import org.springframework.transaction.support.TransactionTemplate
+import java.sql.Timestamp
 import java.time.Instant
 
 /**
@@ -284,6 +285,12 @@ open class JdbcFlushExecutor(
             if (!isUnificationFlush && payload.hallUpserts.isNotEmpty()) {
                 hallUpsertMany(payload.worldId, payload.hallUpserts)
             }
+            if (payload.reservedNationTurnPulls.isNotEmpty()) {
+                nationTurnPullMany(payload.worldId, payload.reservedNationTurnPulls)
+            }
+            if (payload.reservedGeneralTurnPulls.isNotEmpty()) {
+                generalTurnPullMany(payload.worldId, payload.reservedGeneralTurnPulls)
+            }
             if (isUnificationFlush) {
                 if (payload.hallUpserts.isNotEmpty()) hallUpsertMany(payload.worldId, payload.hallUpserts)
                 if (preArchiveLogs.isNotEmpty()) logEntryCreateMany(payload.worldId, preArchiveLogs)
@@ -302,6 +309,9 @@ open class JdbcFlushExecutor(
                     yearbookInsertMany(payload.worldId, payload.yearbookInserts)
                 }
                 if (invaderMessages.isNotEmpty()) messageCreateMany(payload.worldId, invaderMessages)
+            }
+            if (payload.commandResults.isNotEmpty()) {
+                commandResultUpsertMany(payload.worldId, payload.commandResults)
             }
             null
         }
@@ -2037,6 +2047,175 @@ open class JdbcFlushExecutor(
             check(count == 1) { "$operation input[$index] affected $count rows; expected exactly 1" }
         }
     }
+
+    private fun commandResultUpsertMany(worldId: WorldId, rows: List<CommandResultRow>) {
+        val params = rows.map { row ->
+            val terminalStatus = if (row.ok) "APPLIED" else "REJECTED"
+            MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("request_id", row.requestId)
+                .addValue("result_seq", row.resultSeq)
+                .addValue("terminal_status", terminalStatus)
+                .addValue("result_type", row.resultType)
+                .addValue("ok", row.ok)
+                .addValue("committed_world_version", row.committedWorldVersion)
+                .addValue("payload_schema_version", row.payloadSchemaVersion)
+                .addValue("result_payload", jsonb(row.envelopeJson))
+                .addValue("sent_at", Timestamp.from(row.sentAt))
+                .addValue("event_id", row.eventId)
+        }.toTypedArray()
+
+        jdbc.batchUpdate(
+            """
+            INSERT INTO command_result (
+                world_id,
+                request_id,
+                result_seq,
+                terminal_status,
+                result_type,
+                ok,
+                committed_world_version,
+                payload_schema_version,
+                result_payload,
+                sent_at
+            ) VALUES (
+                :world_id,
+                :request_id,
+                :result_seq,
+                :terminal_status,
+                :result_type,
+                :ok,
+                :committed_world_version,
+                :payload_schema_version,
+                :result_payload,
+                :sent_at
+            )
+            ON CONFLICT (world_id, request_id, result_seq)
+            DO NOTHING
+            """.trimIndent(),
+            params,
+        )
+        jdbc.batchUpdate(
+            """
+            INSERT INTO command_outbox (
+                event_id,
+                world_id,
+                request_id,
+                event_type,
+                payload_schema_version,
+                payload
+            ) VALUES (
+                :event_id,
+                :world_id,
+                :request_id,
+                'COMMAND_RESULT',
+                :payload_schema_version,
+                :result_payload
+            )
+            ON CONFLICT (world_id, event_id) DO NOTHING
+            """.trimIndent(),
+            params,
+        )
+        val inboxTransitionParams = rows
+            .zip(params)
+            .filter { (row, _) -> row.terminalizeInbox }
+            .map { (_, param) -> param }
+            .toTypedArray()
+        if (inboxTransitionParams.isNotEmpty()) {
+            jdbc.batchUpdate(
+                """
+                UPDATE command_inbox
+                   SET status = :terminal_status,
+                       updated_at = now()
+                 WHERE world_id = :world_id AND request_id = :request_id
+                   AND status = 'CLAIMED'
+                """.trimIndent(),
+                inboxTransitionParams,
+            ).forEachIndexed { index, count ->
+                check(count == 1) {
+                    "command_inbox terminal transition input[$index] affected $count rows; expected CLAIMED row"
+                }
+            }
+        }
+        lastOps.add(FlushExecOp("command_result", FlushVerb.UPSERT, rows.size))
+        lastOps.add(FlushExecOp("command_outbox", FlushVerb.CREATE_MANY, rows.size))
+    }
+
+    private fun generalTurnPullMany(worldId: WorldId, rows: List<GeneralTurnPullRow>) {
+        val executableRows = rows.filter {
+            it.turnCnt != 0 && it.turnCnt < ReservedTurnRepository.MAX_GENERAL_TURNS
+        }
+        if (executableRows.isEmpty()) return
+        executableRows.forEach { row ->
+            val params = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("general_id", row.generalId)
+                .addValue("offset", ReservedTurnRepository.MAX_GENERAL_TURNS * 2)
+                .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS)
+                .addValue("turn_cnt", row.turnCnt)
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET turn_idx = turn_idx + :offset
+                 WHERE world_id = :world_id AND general_id = :general_id
+                """.trimIndent(),
+                params,
+            )
+            jdbc.update(
+                """
+                UPDATE general_turn
+                   SET turn_idx = ((((turn_idx - :offset) % :max_turn) - :turn_cnt + :max_turn) % :max_turn),
+                       action_code = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE action_code END,
+                       arg = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
+                       brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END,
+                       request_id = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN NULL ELSE request_id END
+                 WHERE world_id = :world_id AND general_id = :general_id
+                """.trimIndent(),
+                params,
+            )
+        }
+        lastOps.add(FlushExecOp("general_turn_pull", FlushVerb.UPDATE, executableRows.size))
+    }
+
+    private fun nationTurnPullMany(worldId: WorldId, rows: List<NationTurnPullRow>) {
+        val executableRows = rows.filter {
+            it.nationId != 0 &&
+                it.officerLevel >= 5 &&
+                it.turnCnt != 0 &&
+                it.turnCnt < ReservedTurnRepository.MAX_CHIEF_TURNS
+        }
+        if (executableRows.isEmpty()) return
+        executableRows.forEach { row ->
+            val params = MapSqlParameterSource()
+                .addValue("world_id", worldId.value)
+                .addValue("nation_id", row.nationId)
+                .addValue("officer_level", row.officerLevel)
+                .addValue("offset", ReservedTurnRepository.MAX_CHIEF_TURNS * 2)
+                .addValue("max_chief", ReservedTurnRepository.MAX_CHIEF_TURNS)
+                .addValue("turn_cnt", row.turnCnt)
+            jdbc.update(
+                """
+                UPDATE nation_turn
+                   SET turn_idx = turn_idx + :offset
+                 WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
+                """.trimIndent(),
+                params,
+            )
+            jdbc.update(
+                """
+                UPDATE nation_turn
+                   SET turn_idx = ((((turn_idx - :offset) % :max_chief) - :turn_cnt + :max_chief) % :max_chief),
+                       action_code = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE action_code END,
+                       arg = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
+                       brief = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE brief END,
+                       request_id = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN NULL ELSE request_id END
+                 WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
+                """.trimIndent(),
+                params,
+            )
+        }
+        lastOps.add(FlushExecOp("nation_turn_pull", FlushVerb.UPDATE, executableRows.size))
+    }
 }
 
 /** A recorded flush op (instrumentation seam — infra has no engine dep, so this mirrors
@@ -2115,6 +2294,33 @@ data class FlushPayload(
     val selectPoolMutations: List<SelectPoolMutation> = emptyList(),
     val eventInserts: List<EventInsertRow> = emptyList(),
     val eventDeletes: List<Int> = emptyList(),
+    val reservedGeneralTurnPulls: List<GeneralTurnPullRow> = emptyList(),
+    val reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
+    val commandResults: List<CommandResultRow> = emptyList(),
+)
+
+data class GeneralTurnPullRow(
+    val generalId: Int,
+    val turnCnt: Int = 1,
+)
+
+data class NationTurnPullRow(
+    val nationId: Int,
+    val officerLevel: Int,
+    val turnCnt: Int = 1,
+)
+
+data class CommandResultRow(
+    val requestId: String,
+    val resultSeq: Int = 1,
+    val eventId: String,
+    val resultType: String,
+    val ok: Boolean,
+    val committedWorldVersion: Long,
+    val payloadSchemaVersion: Int,
+    val envelopeJson: String,
+    val sentAt: Instant,
+    val terminalizeInbox: Boolean = true,
 )
 
 enum class SelectPoolMutationType { REFRESH, PICK, UPDATE }

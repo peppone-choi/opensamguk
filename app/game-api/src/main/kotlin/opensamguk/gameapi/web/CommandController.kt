@@ -15,6 +15,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandWireMapper
+import opensamguk.infra.persistence.CommandResultRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
@@ -57,6 +58,7 @@ class CommandController(
     private val resolver: GeneralResolver,
     private val queue: CommandQueueService,
     private val generals: GeneralReadRepository,
+    private val commandResults: CommandResultRepository,
     /** W0-4 인테이크 결과 회신 — 엔진이 SET한 [commandResultKey] string 키를 읽는 폴링 read seam. */
     private val redis: StringRedisTemplate,
     /** 엔진 발행 result JSON을 응답 트리로 그대로 옮기는 변환기(타입별 부가 필드 보존). */
@@ -166,13 +168,19 @@ class CommandController(
     @GetMapping("/result/{requestId}")
     fun commandResult(@PathVariable requestId: String): ResponseEntity<Any> {
         val payload = redis.opsForValue().get(commandResultKey(profile, worldId, requestId))
+            ?: commandResults.findResultPayload(worldId, requestId)
             ?: return pending(requestId)
 
         // 엔진과 같은 WireJson 디코더로 검증 — 손상/비정형 페이로드는 RESOLVED를 위조하지 않는다.
         val envelope = try {
             WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload)
         } catch (_: Exception) {
-            return pending(requestId)
+            val fallback = commandResults.findResultPayload(worldId, requestId) ?: return pending(requestId)
+            try {
+                WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), fallback)
+            } catch (_: Exception) {
+                return pending(requestId)
+            }
         }
         val result = (envelope.event as? TurnDaemonEvent.CommandResult)?.result
             ?: return pending(requestId)
@@ -210,6 +218,7 @@ class CommandController(
     /** bulk 202 본문 — PHP `ReserveBulkCommand` 성공 반환 배열과 동형. */
     data class BulkAcceptedResponse(
         val status: String = "AVAILABLE",
+        val requestId: String,
         val result: Boolean,
         val briefList: List<String>,
         val reason: String,
@@ -365,10 +374,10 @@ class CommandController(
         ResponseEntity.ok(BlockedResponse(status = "BLOCKED", reason = reason))
 
     /** push/repeat 실행 래퍼: deny → 200 BLOCKED, 성공 → 202. */
-    private inline fun runQueue(op: () -> Unit): ResponseEntity<Any> =
+    private inline fun runQueue(op: () -> CommandQueueService.QueueAccepted): ResponseEntity<Any> =
         try {
-            op()
-            ResponseEntity.status(HttpStatus.ACCEPTED).body(ReservedResponse(status = "AVAILABLE", requestId = "", turnIdx = 0))
+            val accepted = op()
+            ResponseEntity.status(HttpStatus.ACCEPTED).body(ReservedResponse(status = "AVAILABLE", requestId = accepted.requestId, turnIdx = 0))
         } catch (e: CommandQueueService.CommandQueueDenied) {
             blocked(e.reason)
         }
@@ -379,7 +388,7 @@ class CommandController(
             val r = op()
             if (r.result) {
                 ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body(BulkAcceptedResponse(result = true, briefList = r.briefList, reason = r.reason))
+                    .body(BulkAcceptedResponse(requestId = r.requestId ?: "", result = true, briefList = r.briefList, reason = r.reason))
             } else {
                 ResponseEntity.ok(
                     BulkBlockedResponse(briefList = r.briefList, errorIdx = r.errorIdx ?: 0, reason = r.reason),

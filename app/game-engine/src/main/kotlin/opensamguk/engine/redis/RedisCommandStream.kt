@@ -7,10 +7,13 @@ import opensamguk.common.world.WorldId
 import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.WireJson
 import org.springframework.data.redis.connection.stream.MapRecord
+import org.springframework.data.redis.connection.stream.Consumer
 import org.springframework.data.redis.connection.stream.ReadOffset
+import org.springframework.data.redis.connection.stream.RecordId
 import org.springframework.data.redis.connection.stream.StreamOffset
 import org.springframework.data.redis.connection.stream.StreamReadOptions
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.domain.Range
 import java.time.Duration
 
 /**
@@ -27,6 +30,9 @@ open class RedisCommandStream(
     profileName: String,
     worldId: WorldId,
     startId: String = "\$",
+    private val consumerGroup: String = "game-engine",
+    private val consumerName: String = "world-${worldId.value}",
+    private val pendingClaimIdle: Duration = Duration.ofSeconds(30),
 ) {
     private val keys: TurnDaemonStreamKeys = TurnDaemonStreamKeys.of(profileName, worldId)
     private var lastId: String
@@ -38,6 +44,7 @@ open class RedisCommandStream(
         // To match the TS `startId ?? '$'` intent (only-new relative to *construction*), resolve
         // `$` to the current stream tail here. An explicit id (e.g. "0") is used verbatim.
         lastId = if (startId == "\$") currentTail() else startId
+        ensureConsumerGroup()
     }
 
     private fun currentTail(): String {
@@ -52,6 +59,11 @@ open class RedisCommandStream(
     fun commandStreamKey(): String = keys.commandStream
 
     fun lastId(): String = lastId
+
+    data class WakeEnvelope(
+        val messageId: String,
+        val envelope: TurnDaemonCommandEnvelope,
+    )
 
     /**
      * `XREAD BLOCK <blockMs> COUNT 100` from the current cursor. Returns the parsed commands and
@@ -80,6 +92,74 @@ open class RedisCommandStream(
             envelopes.add(envelope)
         }
         return envelopes
+    }
+
+    open fun readWakeEnvelopes(blockMs: Long): List<WakeEnvelope> {
+        val options = StreamReadOptions.empty().count(100).block(Duration.ofMillis(blockMs))
+        val records = readGroupRecords(options, ReadOffset.lastConsumed())
+        if (records.isNotEmpty()) return records.toWakeEnvelopes()
+        val ownPending = readGroupRecords(StreamReadOptions.empty().count(100), ReadOffset.from("0"))
+        if (ownPending.isNotEmpty()) return ownPending.toWakeEnvelopes()
+        return claimStaleWakeEnvelopes(pendingClaimIdle)
+    }
+
+    open fun claimStaleWakeEnvelopes(
+        minIdleTime: Duration = pendingClaimIdle,
+        limit: Long = 100,
+    ): List<WakeEnvelope> {
+        val pending = template.opsForStream<Any, Any>()
+            .pending(keys.commandStream, consumerGroup, Range.unbounded<String>(), limit)
+        val staleIds: Array<RecordId> = pending.toList()
+            .filter { it.consumerName != consumerName && it.elapsedTimeSinceLastDelivery >= minIdleTime }
+            .map { it.id }
+            .toTypedArray()
+        if (staleIds.isEmpty()) return emptyList()
+        return template.opsForStream<Any, Any>()
+            .claim(keys.commandStream, consumerGroup, consumerName, minIdleTime, *staleIds)
+            .orEmpty()
+            .toWakeEnvelopes()
+    }
+
+    open fun acknowledgeWake(messageIds: List<String>): Long {
+        if (messageIds.isEmpty()) return 0
+        val ids = messageIds.map { RecordId.of(it) }.toTypedArray()
+        return template.opsForStream<Any, Any>().acknowledge(keys.commandStream, consumerGroup, *ids) ?: 0L
+    }
+
+    private fun readGroupRecords(
+        options: StreamReadOptions,
+        offset: ReadOffset,
+    ): List<MapRecord<String, Any, Any>> =
+        template.opsForStream<Any, Any>().read(
+            Consumer.from(consumerGroup, consumerName),
+            options,
+            StreamOffset.create(keys.commandStream, offset),
+        ).orEmpty()
+
+    private fun List<MapRecord<String, Any, Any>>.toWakeEnvelopes(): List<WakeEnvelope> {
+        val envelopes = mutableListOf<WakeEnvelope>()
+        for (record in this) {
+            val payload = record.value[WIRE_PAYLOAD_FIELD]?.toString() ?: continue
+            val envelope = parseEnvelope(payload) ?: continue
+            envelopes.add(WakeEnvelope(record.id.value, envelope))
+        }
+        return envelopes
+    }
+
+    private fun ensureConsumerGroup() {
+        runCatching {
+            template.execute { connection ->
+                connection.execute(
+                    "XGROUP",
+                    "CREATE".toByteArray(),
+                    keys.commandStream.toByteArray(),
+                    consumerGroup.toByteArray(),
+                    "$".toByteArray(),
+                    "MKSTREAM".toByteArray(),
+                )
+                null
+            }
+        }
     }
 
     private fun parseEnvelope(payload: String): TurnDaemonCommandEnvelope? =

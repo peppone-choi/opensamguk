@@ -42,6 +42,7 @@ open class ReservedTurnRepository(
         val actionCode: String,
         val argJson: String,
         val brief: String = DEFAULT_TURN_ACTION,
+        val requestId: String? = null,
     )
 
     /**
@@ -56,6 +57,7 @@ open class ReservedTurnRepository(
         actionCode: String?,
         argJson: String? = null,
         brief: String = DEFAULT_TURN_ACTION,
+        requestId: String? = null,
     ) {
         val slot = ringIndex(turnIdx)
         val params = MapSqlParameterSource()
@@ -65,14 +67,16 @@ open class ReservedTurnRepository(
             .addValue("action_code", normalizeAction(actionCode))
             .addValue("arg", jsonb(normalizeArgs(argJson)))
             .addValue("brief", brief)
+            .addValue("request_id", requestId)
         jdbc.update(
             """
-            INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief)
-            VALUES (:world_id, :general_id, :turn_idx, :action_code, :arg, :brief)
+            INSERT INTO general_turn (world_id, general_id, turn_idx, action_code, arg, brief, request_id)
+            VALUES (:world_id, :general_id, :turn_idx, :action_code, :arg, :brief, :request_id)
             ON CONFLICT (world_id, general_id, turn_idx)
             DO UPDATE SET action_code = EXCLUDED.action_code,
                           arg = EXCLUDED.arg,
-                          brief = EXCLUDED.brief
+                          brief = EXCLUDED.brief,
+                          request_id = EXCLUDED.request_id
             """.trimIndent(),
             params,
         )
@@ -90,18 +94,19 @@ open class ReservedTurnRepository(
             .addValue("turn_idx", slot)
         val rows = jdbc.query(
             """
-            SELECT action_code, arg::text AS arg, brief
+            SELECT action_code, arg::text AS arg, brief, request_id
               FROM general_turn
              WHERE world_id = :world_id AND general_id = :general_id AND turn_idx = :turn_idx
             """.trimIndent(),
             params,
         ) { rs, _ ->
-            ReservedTurn(
-                actionCode = normalizeAction(rs.getString("action_code")),
-                argJson = normalizeArgs(rs.getString("arg")),
-                brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
-            )
-        }
+                ReservedTurn(
+                    actionCode = normalizeAction(rs.getString("action_code")),
+                    argJson = normalizeArgs(rs.getString("arg")),
+                    brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
+                    requestId = rs.getString("request_id"),
+                )
+            }
         return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG)
     }
 
@@ -135,7 +140,8 @@ open class ReservedTurnRepository(
                SET turn_idx = ((((turn_idx - :offset) % :max_turn) - :turn_cnt + :max_turn) % :max_turn),
                    action_code = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
-                   brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END
+                   brief = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN '휴식' ELSE brief END,
+                   request_id = CASE WHEN ((turn_idx - :offset) % :max_turn) < :turn_cnt THEN NULL ELSE request_id END
              WHERE world_id = :world_id AND general_id = :general_id
             """.trimIndent(),
             MapSqlParameterSource(base.values)
@@ -175,7 +181,8 @@ open class ReservedTurnRepository(
                SET turn_idx = ((((turn_idx - :offset) % :max_turn) + :turn_cnt) % :max_turn),
                    action_code = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '{}'::jsonb ELSE arg END,
-                   brief = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE brief END
+                   brief = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN '휴식' ELSE brief END,
+                   request_id = CASE WHEN (((turn_idx - :offset) % :max_turn) + :turn_cnt) >= :max_turn THEN NULL ELSE request_id END
              WHERE world_id = :world_id AND general_id = :general_id
             """.trimIndent(),
             MapSqlParameterSource(base.values)
@@ -225,7 +232,8 @@ open class ReservedTurnRepository(
                 UPDATE general_turn
                    SET action_code = :action_code,
                        arg = :arg::jsonb,
-                       brief = :brief
+                       brief = :brief,
+                       request_id = NULL
                  WHERE world_id = :world_id AND general_id = :general_id AND turn_idx IN (:targets)
                 """.trimIndent(),
                 MapSqlParameterSource()
@@ -255,6 +263,7 @@ open class ReservedTurnRepository(
         actionCode: String?,
         argJson: String? = null,
         brief: String = DEFAULT_TURN_ACTION,
+        requestId: String? = null,
     ) {
         val slot = nationRingIndex(turnIdx)
         val params = MapSqlParameterSource()
@@ -265,14 +274,16 @@ open class ReservedTurnRepository(
             .addValue("action_code", normalizeAction(actionCode))
             .addValue("arg", jsonb(normalizeArgs(argJson)))
             .addValue("brief", brief)
+            .addValue("request_id", requestId)
         jdbc.update(
             """
-            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, arg, brief)
-            VALUES (:world_id, :nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief)
+            INSERT INTO nation_turn (world_id, nation_id, officer_level, turn_idx, action_code, arg, brief, request_id)
+            VALUES (:world_id, :nation_id, :officer_level, :turn_idx, :action_code, :arg, :brief, :request_id)
             ON CONFLICT (world_id, nation_id, officer_level, turn_idx)
             DO UPDATE SET action_code = EXCLUDED.action_code,
                           arg = EXCLUDED.arg,
-                          brief = EXCLUDED.brief
+                          brief = EXCLUDED.brief,
+                          request_id = EXCLUDED.request_id
             """.trimIndent(),
             params,
         )
@@ -296,7 +307,7 @@ open class ReservedTurnRepository(
             .addValue("turn_idx", slot)
         val rows = jdbc.query(
             """
-            SELECT action_code, arg::text AS arg, brief
+            SELECT action_code, arg::text AS arg, brief, request_id
               FROM nation_turn
              WHERE world_id = :world_id
                AND nation_id = :nation_id
@@ -305,12 +316,13 @@ open class ReservedTurnRepository(
             """.trimIndent(),
             params,
         ) { rs, _ ->
-            ReservedTurn(
-                actionCode = normalizeAction(rs.getString("action_code")),
-                argJson = normalizeArgs(rs.getString("arg")),
-                brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
-            )
-        }
+                ReservedTurn(
+                    actionCode = normalizeAction(rs.getString("action_code")),
+                    argJson = normalizeArgs(rs.getString("arg")),
+                    brief = rs.getString("brief") ?: DEFAULT_TURN_ACTION,
+                    requestId = rs.getString("request_id"),
+                )
+            }
         return rows.firstOrNull() ?: ReservedTurn(DEFAULT_TURN_ACTION, EMPTY_ARG)
     }
 
@@ -344,7 +356,8 @@ open class ReservedTurnRepository(
                SET turn_idx = ((((turn_idx - :offset) % :max_chief) - :turn_cnt + :max_chief) % :max_chief),
                    action_code = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '{}'::jsonb ELSE arg END,
-                   brief = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE brief END
+                   brief = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN '휴식' ELSE brief END,
+                   request_id = CASE WHEN ((turn_idx - :offset) % :max_chief) < :turn_cnt THEN NULL ELSE request_id END
              WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
             MapSqlParameterSource(base.values)
@@ -381,7 +394,8 @@ open class ReservedTurnRepository(
                SET turn_idx = ((((turn_idx - :offset) % :max_chief) + :turn_cnt) % :max_chief),
                    action_code = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE action_code END,
                    arg = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '{}'::jsonb ELSE arg END,
-                   brief = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE brief END
+                   brief = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN '휴식' ELSE brief END,
+                   request_id = CASE WHEN (((turn_idx - :offset) % :max_chief) + :turn_cnt) >= :max_chief THEN NULL ELSE request_id END
              WHERE world_id = :world_id AND nation_id = :nation_id AND officer_level = :officer_level
             """.trimIndent(),
             MapSqlParameterSource(base.values)
@@ -432,7 +446,8 @@ open class ReservedTurnRepository(
                 UPDATE nation_turn
                    SET action_code = :action_code,
                        arg = :arg::jsonb,
-                       brief = :brief
+                       brief = :brief,
+                       request_id = NULL
                  WHERE world_id = :world_id
                    AND nation_id = :nation_id
                    AND officer_level = :officer_level

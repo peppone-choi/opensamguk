@@ -46,9 +46,16 @@ class RealtimePublisher(
             sentAt = sentAtIso,
             event = TurnDaemonEvent.CommandResult(result),
         )
+        publishCommandResultPayload(
+            requestId,
+            WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope),
+        )
+    }
+
+    fun publishCommandResultPayload(requestId: String, payloadJson: String) {
         template.opsForValue().set(
             commandResultKey(profileName, worldId, requestId),
-            WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope),
+            payloadJson,
             COMMAND_RESULT_TTL,
         )
     }

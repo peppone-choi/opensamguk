@@ -30,11 +30,13 @@ import opensamguk.gameapi.precheck.PrecheckResult
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
 import opensamguk.gameapi.read.CityReadRawRepository
 import opensamguk.gameapi.read.CityReadRepository
+import opensamguk.gameapi.read.DiplomacyReadRawRepository
 import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadRawRepository
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRawRepository
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.WorldStateReadRawRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.sse.RealtimeRelayController
@@ -149,6 +151,7 @@ class VerticalSliceE2EIT {
     fun setUpClass() {
         // --- postgres + Flyway baseline -----------------------------------------------------------
         postgres = org.testcontainers.containers.PostgreSQLContainer("postgres:16-alpine")
+            .withStartupTimeout(java.time.Duration.ofMinutes(3))
         org.junit.jupiter.api.Assumptions.assumeTrue(
             runCatching { org.testcontainers.DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false),
             "Docker unavailable — Testcontainers IT skipped (not failed)",
@@ -213,12 +216,15 @@ class VerticalSliceE2EIT {
         val reservedRepo = ReservedTurnRepository(jdbc)
         val reserveService = CommandReserveService(
             reservedTurns = reservedRepo,
+            commandInbox = opensamguk.infra.persistence.CommandInboxRepository(jdbc),
+            commandResults = opensamguk.infra.persistence.CommandResultRepository(jdbc),
             redis = template,
             registry = CommandRegistry(GeneralActionPipeline()),
             processWorld = GameApiProcessWorld(1),
             profile = profile,
             clock = Clock.fixed(t0, ZoneOffset.UTC),
             requestIds = { "gate-req-1" },
+            transactions = TransactionTemplate(DataSourceTransactionManager(dataSource)),
         )
         val reserveResult = reserveService.reserve(generalId = generalId, actionCode = action, turnIdx = 0)
         assertEquals("gate-req-1", reserveResult.requestId)
@@ -289,6 +295,7 @@ class VerticalSliceE2EIT {
             assertGeneralRowMatchesGolden()
             assertCityRowMatchesGolden()
             assertLogEntryMatchesGolden()
+            assertReservedExecutionResultCorrelated(reserveResult.requestId)
 
             // === STEP 6: ONLY general + city + log_entry changed (TruncateContract) ===============
             assertNoSpuriousWrites()
@@ -398,6 +405,38 @@ class VerticalSliceE2EIT {
             golden.logText,
             row["text"],
             "log_entry.text byte-matches the PHP raw log",
+        )
+    }
+
+    private fun assertReservedExecutionResultCorrelated(requestId: String) {
+        val rows = jdbc.queryForList(
+            """
+            SELECT result_seq, result_type, ok, result_payload::text AS payload
+              FROM command_result
+             WHERE world_id = 1 AND request_id = :request_id
+             ORDER BY result_seq
+            """.trimIndent(),
+            MapSqlParameterSource("request_id", requestId),
+        )
+        assertEquals(2, rows.size, "reservation request has admission and execution lifecycle rows")
+        assertEquals(listOf(1, 2), rows.map { intOf(it["result_seq"]) })
+        assertEquals(listOf("reservationAccepted", "executionApplied"), rows.map { it["result_type"] })
+        assertEquals(listOf(true, true), rows.map { it["ok"] })
+        assertTrue(rows[1]["payload"].toString().contains("\"requestId\": \"$requestId\""))
+        assertTrue(rows[1]["payload"].toString().contains("\"type\": \"executionApplied\""))
+        val outboxIds = jdbc.queryForList(
+            """
+            SELECT event_id
+              FROM command_outbox
+             WHERE world_id = 1 AND request_id = :request_id
+             ORDER BY event_id
+            """.trimIndent(),
+            MapSqlParameterSource("request_id", requestId),
+            String::class.java,
+        )
+        assertEquals(
+            listOf("command-result:1:$requestId:1", "command-result:1:$requestId:2"),
+            outboxIds,
         )
     }
 
@@ -556,8 +595,14 @@ class VerticalSliceE2EIT {
             factory.getRepository(NationReadRawRepository::class.java),
             processWorld,
         )
-        val diplomacies = factory.getRepository(DiplomacyReadRepository::class.java)
-        val worldStates = factory.getRepository(WorldStateReadRepository::class.java)
+        val diplomacies = DiplomacyReadRepository(
+            factory.getRepository(DiplomacyReadRawRepository::class.java),
+            processWorld,
+        )
+        val worldStates = WorldStateReadRepository(
+            factory.getRepository(WorldStateReadRawRepository::class.java),
+            processWorld,
+        )
         val stateViewFactory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worldStates)
         val registry = CommandRegistry(GeneralActionPipeline())
         return CommandPrecheckService(stateViewFactory, registry)

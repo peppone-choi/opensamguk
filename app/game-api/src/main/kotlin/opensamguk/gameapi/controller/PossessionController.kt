@@ -51,16 +51,17 @@ class PossessionController(
     ): ResponseEntity<ClaimResponse> {
         if (userId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
 
-        return when (val r = possession.claim(userId, body.generalId)) {
+        return when (val r = possession.claim(userId, body.generalId) { claimedGeneralId ->
+            reserve.publishImmediate(
+                TurnDaemonCommand.ClaimNpc(
+                    generalId = claimedGeneralId,
+                    userId = userId,
+                    userNick = userNick(userId, authorization),
+                ),
+            ).requestId
+        }) {
             is GeneralPossessionService.ClaimResult.Claimed -> {
-                reserve.publishImmediate(
-                    TurnDaemonCommand.ClaimNpc(
-                        generalId = r.generalId,
-                        userId = userId,
-                        userNick = userNick(userId, authorization),
-                    ),
-                )
-                ResponseEntity.ok(ClaimResponse(result = true, generalId = r.generalId, reason = null))
+                ResponseEntity.ok(ClaimResponse(result = true, generalId = r.generalId, reason = null, requestId = r.requestId))
             }
 
             is GeneralPossessionService.ClaimResult.AlreadyOwnedBySelf ->

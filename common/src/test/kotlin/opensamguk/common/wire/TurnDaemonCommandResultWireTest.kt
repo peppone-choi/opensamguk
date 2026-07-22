@@ -78,4 +78,69 @@ class TurnDaemonCommandResultWireTest {
         assertIs<TroopJoinFail>(fail)
         assertEquals("troop full", fail.reason)
     }
+
+    @Test
+    fun `command lifecycle result round-trips for durable reservation and queue terminals`() {
+        val reservation = CommandLifecycleResult(
+            type = "reservationAccepted",
+            ok = true,
+            commandKind = "RESERVED_TURN",
+            actionCode = "che_견문",
+            generalId = 10,
+            turnIdx = 0,
+        )
+        val queue = CommandLifecycleResult(
+            type = "queueMutation",
+            ok = true,
+            commandKind = "QUEUE_MUTATION",
+            actionCode = "pushGeneral",
+            generalId = 10,
+        )
+        val executionApplied = CommandLifecycleResult(
+            type = "executionApplied",
+            ok = true,
+            commandKind = "RESERVED_TURN",
+            actionCode = "che_견문",
+            generalId = 10,
+            turnIdx = 0,
+        )
+        val executionRejected = CommandLifecycleResult(
+            type = "executionRejected",
+            ok = false,
+            commandKind = "RESERVED_TURN",
+            actionCode = "che_견문",
+            generalId = 10,
+            turnIdx = 0,
+            reason = "조건 불충족",
+        )
+
+        assertEquals(
+            reservation,
+            WireJson.decodeFromString(
+                TurnDaemonCommandResult.serializer(),
+                WireJson.encodeToString(TurnDaemonCommandResult.serializer(), reservation),
+            ),
+        )
+        assertEquals(
+            queue,
+            WireJson.decodeFromString(
+                TurnDaemonCommandResult.serializer(),
+                WireJson.encodeToString(TurnDaemonCommandResult.serializer(), queue),
+            ),
+        )
+        assertEquals(
+            executionApplied,
+            WireJson.decodeFromString(
+                TurnDaemonCommandResult.serializer(),
+                WireJson.encodeToString(TurnDaemonCommandResult.serializer(), executionApplied),
+            ),
+        )
+        assertEquals(
+            executionRejected,
+            WireJson.decodeFromString(
+                TurnDaemonCommandResult.serializer(),
+                WireJson.encodeToString(TurnDaemonCommandResult.serializer(), executionRejected),
+            ),
+        )
+    }
 }

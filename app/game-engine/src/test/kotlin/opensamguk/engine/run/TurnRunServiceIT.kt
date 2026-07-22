@@ -154,8 +154,12 @@ class TurnRunServiceIT {
         val lifecycle = TurnDaemonLifecycle(
             world = world,
             handler = handler,
-            pullNationTurnOf = { nationId, officerLevel -> reservedRepo.pullNationTurn(WorldId(1), nationId, officerLevel) },
-            pullGeneralTurnOf = { generalId -> reservedRepo.pullGeneralTurn(WorldId(1), generalId) },
+            pullNationTurnOf = { nationId, officerLevel ->
+                handler.recorder.recordNationTurnPull(nationId, officerLevel)
+            },
+            pullGeneralTurnOf = { gid ->
+                handler.recorder.recordGeneralTurnPull(gid)
+            },
         ) { gid ->
             reservedRepo.readReserved(WorldId(1), gid, 0)
         }

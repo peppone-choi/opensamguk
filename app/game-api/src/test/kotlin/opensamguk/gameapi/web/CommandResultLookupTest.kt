@@ -17,6 +17,7 @@ import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
+import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -48,6 +49,7 @@ class CommandResultLookupTest {
     private val resolver = mock(GeneralResolver::class.java)
     private val queue = mock(CommandQueueService::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
+    private val commandResults = mock(CommandResultRepository::class.java)
     private val redis = mock(StringRedisTemplate::class.java)
 
     @Suppress("UNCHECKED_CAST")
@@ -58,7 +60,7 @@ class CommandResultLookupTest {
     private fun mockMvc(): MockMvc = MockMvcBuilders
         .standaloneSetup(
             CommandController(
-                precheck, reserve, resolver, queue, generals, redis,
+                precheck, reserve, resolver, queue, generals, commandResults, redis,
                 ObjectMapper(), profile, GameApiProcessWorld(1),
             ),
         )
@@ -80,14 +82,39 @@ class CommandResultLookupTest {
         `when`(valueOps.get(commandResultKey(profile, WorldId(1), requestId))).thenReturn(payload)
     }
 
+    private fun stubDurable(requestId: String, payload: String?) {
+        `when`(commandResults.findResultPayload(WorldId(1), requestId)).thenReturn(payload)
+    }
+
     @Test
     fun `키 부재면 PENDING으로 응답한다`() {
         stubKey("req-x", null)
+        stubDurable("req-x", null)
 
         mockMvc().perform(get("/api/command/result/{requestId}", "req-x"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PENDING"))
             .andExpect(jsonPath("$.requestId").value("req-x"))
+    }
+
+    @Test
+    fun `Redis 키 부재 시 durable result fallback으로 RESOLVED 응답한다`() {
+        stubKey("req-db", null)
+        stubDurable(
+            "req-db",
+            storedPayload(
+                "req-db",
+                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+            ),
+        )
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-db"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.requestId").value("req-db"))
+            .andExpect(jsonPath("$.ok").value(true))
+            .andExpect(jsonPath("$.type").value("tournamentEnroll"))
+            .andExpect(jsonPath("$.result.generalId").value(10))
     }
 
     @Test
@@ -131,10 +158,29 @@ class CommandResultLookupTest {
     @Test
     fun `손상 페이로드는 RESOLVED를 위조하지 않고 PENDING으로 응답한다`() {
         stubKey("req-broken", "not-json{{{")
+        stubDurable("req-broken", null)
 
         mockMvc().perform(get("/api/command/result/{requestId}", "req-broken"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("PENDING"))
             .andExpect(jsonPath("$.requestId").value("req-broken"))
+    }
+
+    @Test
+    fun `Redis 페이로드가 손상되어도 durable result fallback을 시도한다`() {
+        stubKey("req-durable-broken-redis", "not-json{{{")
+        stubDurable(
+            "req-durable-broken-redis",
+            storedPayload(
+                "req-durable-broken-redis",
+                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+            ),
+        )
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-durable-broken-redis"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.ok").value(true))
+            .andExpect(jsonPath("$.type").value("tournamentEnroll"))
     }
 }

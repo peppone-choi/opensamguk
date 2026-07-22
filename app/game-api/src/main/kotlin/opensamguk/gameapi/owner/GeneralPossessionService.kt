@@ -42,7 +42,7 @@ class GeneralPossessionService(
 ) {
     /** Outcome of a claim attempt. */
     sealed interface ClaimResult {
-        data class Claimed(val generalId: Int) : ClaimResult
+        data class Claimed(val generalId: Int, val requestId: String) : ClaimResult
         /** Idempotent: the caller already owns exactly this general. */
         data class AlreadyOwnedBySelf(val generalId: Int) : ClaimResult
         /** The caller already owns a DIFFERENT general (one-per-user). */
@@ -56,7 +56,7 @@ class GeneralPossessionService(
     }
 
     @Transactional
-    fun claim(userId: Long, generalId: Int): ClaimResult {
+    fun claim(userId: Long, generalId: Int, admitClaim: (Int) -> String): ClaimResult {
         if (npcMode() != 1) return ClaimResult.ServerModeBlocked
 
         // 1. one-per-user guard (idempotent on the same general).
@@ -89,7 +89,8 @@ class GeneralPossessionService(
             ),
         )
         npcTokens.deleteOwnerOrExpired(userId, now)
-        return ClaimResult.Claimed(generalId)
+        val requestId = admitClaim(generalId)
+        return ClaimResult.Claimed(generalId, requestId)
     }
 
     private fun npcMode(): Int =

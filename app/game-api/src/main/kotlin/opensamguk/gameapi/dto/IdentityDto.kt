@@ -45,6 +45,7 @@ data class ClaimResponse(
     val result: Boolean,
     val generalId: Int?,
     val reason: String?,
+    val requestId: String? = null,
 )
 
 // ── front-info (§3 GameInfo + identity envelope) ─────────────────────────────

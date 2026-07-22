@@ -178,6 +178,8 @@ class PossessionControllerTest {
             ),
         ).thenReturn(activeToken(10))
         `when`(owners.existsByGeneralId(10L)).thenReturn(false)
+        `when`(reserve.publishImmediate(org.mockito.ArgumentMatchers.any(TurnDaemonCommand::class.java) ?: TurnDaemonCommand.Pause()))
+            .thenReturn(CommandReserveService.ReserveResult("req-claim-10", 0))
 
         mockMvc().perform(
             post("/api/general/claim").with(principal(7L))
@@ -186,6 +188,7 @@ class PossessionControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.generalId").value(10))
+            .andExpect(jsonPath("$.requestId").value("req-claim-10"))
 
         val claim = mockingDetails(reserve).invocations
             .single { it.method.name == "publishImmediate" }

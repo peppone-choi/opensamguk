@@ -67,8 +67,8 @@ class TurnDaemonLifecycle(
     /**
      * PHP pulls both command rings after each due general, outside the command-condition block:
      * `pullNationCommand(...)` then `pullGeneralCommand(...)`
-     * (`TurnExecutionHelper.php:350-351`). Keep these callbacks separate from [reservedActionOf]
-     * so tests can record the lifecycle order while production wires the JDBC ring repository.
+     * (`TurnExecutionHelper.php:350-351`). Production callbacks record durable pull intents on the
+     * shared [ChangeRecorder], so they flush with the same generation as command execution effects.
      */
     private val pullNationTurnOf: (nationId: Int, officerLevel: Int) -> Unit = { _, _ -> },
     private val pullGeneralTurnOf: (generalId: Int) -> Unit = { _ -> },
@@ -84,7 +84,6 @@ class TurnDaemonLifecycle(
      */
     private val reservedActionOf: (generalId: Int) -> ReservedTurn,
 ) {
-
     /** Resolve the next run time: the previous run time + the world's tick interval. */
     fun nextRunTime(): Instant {
         val state = world.getState()
@@ -160,7 +159,12 @@ class TurnDaemonLifecycle(
                     month = state.currentMonth,
                     date = date,
                 )
-                handled.add(result)
+                handled.add(
+                    result.copy(
+                        requestId = reserved.requestId,
+                        reservedActionCode = reserved.actionCode,
+                    ),
+                )
 
                 // ── 1) killturn 감소/리셋 (PHP processCommand 꼬리, `TurnExecutionHelper.php:153-165`) ──
                 // PHP는 processCommand 안에서 command.run() 직후 killturn을 처리한다(:348→:153). Kotlin handle()는

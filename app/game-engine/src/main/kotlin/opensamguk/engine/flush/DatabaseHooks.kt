@@ -22,6 +22,7 @@ import opensamguk.infra.persistence.DiplomacyLetterInsertRow
 import opensamguk.infra.persistence.DiplomacyUpdate
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.GeneralCreateRow
+import opensamguk.infra.persistence.GeneralTurnPullRow
 import opensamguk.infra.persistence.ProfileIconUpdateRow
 import opensamguk.infra.persistence.GeneralAccessLogWriteRow
 import opensamguk.infra.persistence.GameWinnerUpdateRow
@@ -33,6 +34,7 @@ import opensamguk.infra.persistence.KvWrite
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.MessageInvalidateRow
 import opensamguk.infra.persistence.LogRow
+import opensamguk.infra.persistence.NationTurnPullRow
 import opensamguk.infra.persistence.OldGeneralArchiveRow
 import opensamguk.logic.inheritance.InheritanceResultRow
 import opensamguk.infra.persistence.RankFlushOp
@@ -689,6 +691,12 @@ object DatabaseHooks {
             selectPoolMutations = recorder.selectPoolMutations(),
             eventInserts = recorder.eventInserts(),
             eventDeletes = recorder.eventDeletes(),
+            reservedGeneralTurnPulls = recorder.reservedGeneralTurnPulls().map {
+                GeneralTurnPullRow(it.generalId, it.turnCnt)
+            },
+            reservedNationTurnPulls = recorder.reservedNationTurnPulls().map {
+                NationTurnPullRow(it.nationId, it.officerLevel, it.turnCnt)
+            },
         )
     }
 
