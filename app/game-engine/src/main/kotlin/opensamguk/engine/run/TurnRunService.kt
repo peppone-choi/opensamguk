@@ -8,6 +8,7 @@ import opensamguk.infra.persistence.StaleWorldWriterException
 import opensamguk.common.rng.RandUtil
 import opensamguk.engine.auction.AuctionExpiryDaemon
 import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -16,6 +17,14 @@ import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.tournament.TournamentDaemon
+import opensamguk.common.wire.TurnDaemonCommandResult
+import opensamguk.common.wire.TurnDaemonEvent
+import opensamguk.common.wire.TurnDaemonEventEnvelope
+import opensamguk.common.wire.TurnDaemonCommandEnvelope
+import opensamguk.common.wire.WireJson
+import opensamguk.common.wire.CommandLifecycleResult
+import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.persistence.CommandResultRow
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.read.AuctionBidRepository
@@ -127,6 +136,8 @@ open class TurnRunService(
     private val recoveryGate: FlushRecoveryGate = FlushRecoveryGate(),
     /** Optional Spring binder so readiness health sees the live gate. */
     private val recoveryGateProvider: FlushRecoveryGateProvider? = null,
+    private val commandInboxRepository: CommandInboxRepository? = null,
+    private val commandOutboxRelay: CommandOutboxRelay? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
@@ -212,10 +223,11 @@ open class TurnRunService(
 
     open fun runIntakeCommands(blockMs: Long = 1): Int {
         recoveryGate.requireIntakeOrTickAllowed("intake")
-        val envelopes = commandStream.readEnvelopes(blockMs)
-        if (envelopes.isEmpty()) return 0
+        commandOutboxRelay?.publishPending()
+        val claimed = claimExecutableEnvelopes(blockMs)
+        if (claimed.isEmpty()) return 0
 
-        val intakeResults = commandDispatcher?.dispatchEnvelopes(envelopes).orEmpty()
+        val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
 
         val state = world.getState()
         val base = buildFlushPayload()
@@ -228,16 +240,17 @@ open class TurnRunService(
         worldState["max_nation_id"] = (state.meta["maxNationId"] as? Number)?.toInt() ?: 0
         worldState["max_general_id"] = (state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0
         applyWriterFence(worldState, state)
-        val payload = base.copy(worldStateUpdate = worldState)
+        val commandResults = intakeResults.toCommandResultRows(committedWorldVersion = state.worldVersion + 1)
+        val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
         flushWithGeneration(payload)
-        intakeResults.forEach { (requestId, result) ->
-            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
-        }
-        return envelopes.size
+        acknowledgeClaimedWakes(claimed)
+        publishCommandResults(commandResults, intakeResults)
+        return claimed.size
     }
 
     open fun runTick(runTime: Instant = lifecycle.nextRunTime()): TickResult {
         recoveryGate.requireIntakeOrTickAllowed("tick")
+        commandOutboxRelay?.publishPending()
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
         //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
@@ -249,15 +262,16 @@ open class TurnRunService(
         //    [RealtimePublisher.publishCommandResult]로 SET한다(짧은 TTL — game-api 폴링이 읽는다).
         //    deny(ok=false)도 회신한다 — 페이지가 성공 토스트를 위조하지 않으려면 deny가 돌아와야
         //    한다. 이 publish는 Redis 휘발성 회신이며 DB 쓰기가 아니다(one-daemon-write-rule 비위반).
-        val envelopes = commandStream.readEnvelopes(commandBlockMs)
-        val intakeResults = commandDispatcher?.dispatchEnvelopes(envelopes).orEmpty()
+        val claimed = claimExecutableEnvelopes(commandBlockMs)
+        val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
 
         // 2. month boundary interleave (if pipeline is wired)
         val handled: List<ReservedTurnHandler.HandledTurn>
         val crossed: Int
         if (pipeline != null && eventDispatcher != null) {
+            val handledDuringBoundaries = ArrayList<ReservedTurnHandler.HandledTurn>()
             val driver = TurnDaemonLifecycle.MonthBoundaryDriver(
-                drain = { upto -> lifecycle.runTick(upto) },
+                drain = { upto -> handledDuringBoundaries += lifecycle.runTick(upto) },
                 runMonth = { nextTurn ->
                     val state = world.getState()
                     val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
@@ -314,7 +328,7 @@ open class TurnRunService(
             val state = world.getState()
             val isUnitedState = state.meta["isunited"] as? Int ?: 0
             crossed = driver.run(state.lastTurnTime, runTime, state.tickSeconds / 60, isUnitedState)
-            handled = emptyList() // lifecycle.runTick inside driver already handles generals
+            handled = handledDuringBoundaries
         } else {
             // Fallback: original behaviour when pipeline is not wired
             handled = lifecycle.runTick(runTime)
@@ -348,12 +362,17 @@ open class TurnRunService(
             "max_general_id" to ((preState.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
         )
         applyWriterFence(worldState, preState)
-        val payload = buildFlushPayload().copy(worldStateUpdate = worldState)
+        val committedWorldVersion = preState.worldVersion + 1
+        val commandResults =
+            intakeResults.toCommandResultRows(committedWorldVersion) +
+                handled.toExecutionCommandResultRows(committedWorldVersion)
+        val payload = buildFlushPayload().copy(
+            worldStateUpdate = worldState,
+            commandResults = commandResults,
+        )
         flushWithGeneration(payload)
-
-        intakeResults.forEach { (requestId, result) ->
-            realtimePublisher.publishCommandResult(requestId, result, sentAtIso = Instant.now().toString())
-        }
+        acknowledgeClaimedWakes(claimed)
+        publishCommandResults(commandResults, intakeResults)
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
         // Shared with [retryRetainedFlush] so FLUSH_RETRY success cannot leave memory pre-tick.
@@ -422,9 +441,22 @@ open class TurnRunService(
         val previousTurnTime = world.getState().lastTurnTime
         flushWithGeneration(payload)
         if (recoveryGate.isReady()) {
+            commandOutboxRelay?.publishPending()
             applyCommittedWorldClockFromPayload(payload, previousTurnTime)
         }
         return recoveryGate.isReady()
+    }
+
+    private fun publishCommandResults(
+        commandResults: List<CommandResultRow>,
+        intakeResults: List<Pair<String, TurnDaemonCommandResult>>,
+    ) {
+        if (commandResults.isEmpty()) return
+        val relayed = commandOutboxRelay?.publishPending()
+        if (relayed != null) return
+        commandResults.zip(intakeResults).forEach { (row, pair) ->
+            realtimePublisher.publishCommandResult(pair.first, pair.second, sentAtIso = row.sentAt.toString())
+        }
     }
 
     /**
@@ -501,6 +533,97 @@ open class TurnRunService(
         return DatabaseHooks.toFlushPayload(world, handler.recorder, dirty)
     }
 
+    private fun List<Pair<String, TurnDaemonCommandResult>>.toCommandResultRows(
+        committedWorldVersion: Long,
+    ): List<CommandResultRow> = map { (requestId, result) ->
+        val sentAt = Instant.now()
+        val envelope = TurnDaemonEventEnvelope(
+            requestId = requestId,
+            sentAt = sentAt.toString(),
+            event = TurnDaemonEvent.CommandResult(result),
+        )
+        CommandResultRow(
+            requestId = requestId,
+            resultSeq = ADMISSION_RESULT_SEQ,
+            eventId = "command-result:${world.worldId.value}:$requestId:$ADMISSION_RESULT_SEQ",
+            resultType = result.type,
+            ok = result.ok,
+            committedWorldVersion = committedWorldVersion,
+            payloadSchemaVersion = 1,
+            envelopeJson = WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope),
+            sentAt = sentAt,
+        )
+    }
+
+    private fun List<ReservedTurnHandler.HandledTurn>.toExecutionCommandResultRows(
+        committedWorldVersion: Long,
+    ): List<CommandResultRow> = mapNotNull { handled ->
+        val requestId = handled.requestId ?: return@mapNotNull null
+        val ok = !handled.fellBack
+        val result = CommandLifecycleResult(
+            type = if (ok) "executionApplied" else "executionRejected",
+            ok = ok,
+            commandKind = CommandInboxRepository.CommandKind.RESERVED_TURN.name,
+            actionCode = handled.reservedActionCode ?: handled.definition.key,
+            generalId = handled.generalId,
+            turnIdx = 0,
+            reason = handled.denyReason,
+        )
+        val sentAt = Instant.now()
+        val envelope = TurnDaemonEventEnvelope(
+            requestId = requestId,
+            sentAt = sentAt.toString(),
+            event = TurnDaemonEvent.CommandResult(result),
+        )
+        CommandResultRow(
+            requestId = requestId,
+            resultSeq = EXECUTION_RESULT_SEQ,
+            eventId = "command-result:${world.worldId.value}:$requestId:$EXECUTION_RESULT_SEQ",
+            resultType = result.type,
+            ok = result.ok,
+            committedWorldVersion = committedWorldVersion,
+            payloadSchemaVersion = 1,
+            envelopeJson = WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope),
+            sentAt = sentAt,
+            terminalizeInbox = false,
+        )
+    }
+
+    private data class ClaimedWake(
+        val envelope: TurnDaemonCommandEnvelope,
+        val messageId: String?,
+    )
+
+    private fun claimExecutableEnvelopes(blockMs: Long): List<ClaimedWake> {
+        val inbox = commandInboxRepository ?: return commandStream.readEnvelopes(blockMs).map {
+            ClaimedWake(it, messageId = null)
+        }
+        val now = Instant.now()
+        val wakeEnvelopes = runCatching { commandStream.readWakeEnvelopes(blockMs) }.getOrDefault(emptyList())
+        val wakeMessageIds = wakeEnvelopes.associate { it.envelope.requestId to it.messageId }
+        val wakeClaimed = inbox.claimForExecution(
+            worldId = world.worldId,
+            requestIds = wakeEnvelopes.map { it.envelope.requestId },
+            now = now,
+        ).map { ClaimedWake(it.envelope, wakeMessageIds[it.requestId]) }
+        if (wakeClaimed.isNotEmpty()) return wakeClaimed
+        val terminalWakeIds = inbox.terminalRequestIds(
+            worldId = world.worldId,
+            requestIds = wakeEnvelopes.map { it.envelope.requestId },
+        ).mapNotNull { wakeMessageIds[it] }
+        if (terminalWakeIds.isNotEmpty()) {
+            runCatching { commandStream.acknowledgeWake(terminalWakeIds) }
+        }
+        return inbox.claimPendingForExecution(world.worldId, now).map { ClaimedWake(it.envelope, messageId = null) }
+    }
+
+    private fun acknowledgeClaimedWakes(claimed: List<ClaimedWake>) {
+        val messageIds = claimed.mapNotNull { it.messageId }
+        if (messageIds.isNotEmpty()) {
+            runCatching { commandStream.acknowledgeWake(messageIds) }
+        }
+    }
+
     /**
      * Compute the absolute turn number (0-based) from the install epoch.
      * Mirrors [ServerClock.turnDate] math: `num = intdiv(cutTurn - startTime, turnTerm*60)`.
@@ -514,5 +637,10 @@ open class TurnRunService(
         val curturn = ServerClock.cutTurn(turnTime, turnTerm)
         val num = Math.floorDiv(curturn.epochSecond - startTime.epochSecond, turnTerm.toLong() * 60L)
         return num.toInt()
+    }
+
+    private companion object {
+        const val ADMISSION_RESULT_SEQ = 1
+        const val EXECUTION_RESULT_SEQ = 2
     }
 }

@@ -7,6 +7,7 @@ import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -23,6 +24,8 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
+import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import java.time.Clock
@@ -72,6 +75,8 @@ class CommandReserveServiceIT {
         val reserved = ReservedTurnRepository(jdbc).readReserved(worldId = WorldId(1), generalId = 10, turnIdx = 0)
         assertEquals("che_농지개간", reserved.actionCode)
         assertEquals("""{"amount": 100}""", reserved.argJson)
+        assertEquals(result.requestId, reserved.requestId)
+        assertEquals(1, inboxCount(result.requestId))
 
         // --- Redis: exactly one message, decoding to Run(POKE) with the returned requestId ---
         val records = redisTemplate.opsForStream<Any, Any>()
@@ -116,8 +121,63 @@ class CommandReserveServiceIT {
                 action_code text NOT NULL,
                 arg jsonb NOT NULL DEFAULT '{}'::jsonb,
                 brief text NOT NULL DEFAULT '휴식',
+                request_id text,
                 created_at timestamptz NOT NULL DEFAULT now(),
                 UNIQUE (world_id, general_id, turn_idx)
+            )
+            """.trimIndent(),
+        )
+        jdbcTemplate.execute(
+            """
+            CREATE TABLE command_inbox (
+                world_id integer NOT NULL REFERENCES world_state(id),
+                request_id text NOT NULL,
+                payload_schema_version integer NOT NULL,
+                command_kind text NOT NULL,
+                status text NOT NULL,
+                intent_fingerprint text NOT NULL,
+                general_id integer,
+                turn_idx integer,
+                action_code text,
+                payload jsonb NOT NULL,
+                redis_wake_published_at timestamptz,
+                created_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                PRIMARY KEY (world_id, request_id)
+            )
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            CREATE TABLE command_result (
+                world_id integer NOT NULL REFERENCES world_state(id),
+                request_id text NOT NULL,
+                result_seq integer NOT NULL,
+                terminal_status text NOT NULL,
+                result_type text NOT NULL,
+                ok boolean NOT NULL,
+                committed_world_version bigint NOT NULL,
+                payload_schema_version integer NOT NULL,
+                result_payload jsonb NOT NULL,
+                sent_at timestamptz NOT NULL,
+                created_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                PRIMARY KEY (world_id, request_id, result_seq)
+            )
+            """.trimIndent(),
+        )
+        jdbcTemplate.update(
+            """
+            CREATE TABLE command_outbox (
+                world_id integer NOT NULL REFERENCES world_state(id),
+                event_id text NOT NULL,
+                request_id text NOT NULL,
+                event_type text NOT NULL,
+                payload_schema_version integer NOT NULL,
+                payload jsonb NOT NULL,
+                created_at timestamptz NOT NULL DEFAULT now(),
+                published_at timestamptz,
+                PRIMARY KEY (world_id, event_id)
             )
             """.trimIndent(),
         )
@@ -135,14 +195,26 @@ class CommandReserveServiceIT {
         // deterministic clock + requestId so the assertions are byte-stable.
         service = CommandReserveService(
             reservedTurns = ReservedTurnRepository(jdbc),
+            commandInbox = CommandInboxRepository(jdbc),
+            commandResults = opensamguk.infra.persistence.CommandResultRepository(jdbc),
             redis = redisTemplate,
             registry = CommandRegistry(GeneralActionPipeline()),
             processWorld = GameApiProcessWorld(1),
             profile = profile,
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00.000Z"), ZoneOffset.UTC),
             requestIds = { "req-e3-fixed" },
+            transactions = TransactionTemplate(DataSourceTransactionManager(dataSource)),
         )
     }
+
+    private fun inboxCount(requestId: String): Int =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM command_inbox WHERE world_id = :world_id AND request_id = :request_id",
+            org.springframework.jdbc.core.namedparam.MapSqlParameterSource()
+                .addValue("world_id", 1)
+                .addValue("request_id", requestId),
+            Int::class.java,
+        ) ?: 0
 
     @AfterAll
     fun tearDown() {
@@ -154,6 +226,7 @@ class CommandReserveServiceIT {
     companion object {
         @JvmStatic
         val postgres = PostgreSQLContainer("postgres:16-alpine")
+            .withStartupTimeout(java.time.Duration.ofMinutes(3))
 
         @JvmStatic
         val redis: GenericContainer<*> = GenericContainer("redis:7-alpine").withExposedPorts(6379)

@@ -146,6 +146,25 @@ class IntakeResultChannelTest {
     }
 
     @Test
+    fun `publishCommandResultPayload는 outbox payload를 그대로 결과 키에 SET한다`() {
+        val template = mock(StringRedisTemplate::class.java)
+
+        @Suppress("UNCHECKED_CAST")
+        val valueOps = mock(ValueOperations::class.java) as ValueOperations<String, String>
+        `when`(template.opsForValue()).thenReturn(valueOps)
+
+        val publisher = RealtimePublisher(template, "che:scenario_2", WorldId(1))
+        val payloadJson = """{"requestId":"req-outbox","event":{"type":"commandResult","result":{"type":"x","ok":true}}}"""
+        publisher.publishCommandResultPayload("req-outbox", payloadJson)
+
+        verify(valueOps).set(
+            eq(commandResultKey("che:scenario_2", WorldId(1), "req-outbox")),
+            eq(payloadJson),
+            eq(RealtimePublisher.COMMAND_RESULT_TTL),
+        )
+    }
+
+    @Test
     fun `결과 없는 dispatchEnvelopes는 빈 목록이고 발행 시도도 없다`() {
         val world = world()
         val recorder = ChangeRecorder()

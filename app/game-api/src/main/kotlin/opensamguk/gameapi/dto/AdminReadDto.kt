@@ -61,6 +61,7 @@ data class AdminGeneralModerationActionResponse(
     val result: Boolean,
     val action: String,
     val affected: Int,
+    val requestIds: List<String> = emptyList(),
 )
 
 data class AdminGeneralModerationResponse(

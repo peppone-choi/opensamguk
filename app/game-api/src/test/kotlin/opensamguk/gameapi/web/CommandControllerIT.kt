@@ -56,6 +56,9 @@ class CommandControllerIT {
     fun setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build()
         // clean slate per test (the context + containers are shared across the two tests).
+        jdbc.update("DELETE FROM command_outbox")
+        jdbc.update("DELETE FROM command_result")
+        jdbc.update("DELETE FROM command_inbox")
         jdbc.update("DELETE FROM general_turn")
         jdbc.update("DELETE FROM general")
         jdbc.update("DELETE FROM city")

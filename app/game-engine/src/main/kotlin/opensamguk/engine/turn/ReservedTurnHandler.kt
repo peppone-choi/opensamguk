@@ -193,6 +193,8 @@ class ReservedTurnHandler(
          * branch. False on a human turn and on an AI turn that honored the reserved command verbatim.
          */
         val autorunMode: Boolean = false,
+        val requestId: String? = null,
+        val reservedActionCode: String? = null,
     )
 
     /**

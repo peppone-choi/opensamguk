@@ -238,7 +238,7 @@ class AdminWriteControllerTest {
     fun `post general-moderation applies action with selected generals and actor general`() {
         stubAdmin()
         `when`(generalModeration.apply("block1", listOf(1, 2), null, 77))
-            .thenReturn(AdminGeneralModerationService.Result("block1", 2))
+            .thenReturn(AdminGeneralModerationService.Result("block1", 2, listOf("req-admin-1")))
 
         mockMvc().perform(
             post("/api/admin/general-moderation")
@@ -250,6 +250,7 @@ class AdminWriteControllerTest {
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.action").value("block1"))
             .andExpect(jsonPath("$.affected").value(2))
+            .andExpect(jsonPath("$.requestIds[0]").value("req-admin-1"))
     }
 
     @Test

@@ -8,7 +8,13 @@ import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
+import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
+import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
+import opensamguk.infra.read.MessageRawRepository
+import opensamguk.infra.read.MessageRepository
 import opensamguk.logic.actions.CommandRegistry
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -18,6 +24,12 @@ import org.springframework.data.redis.connection.stream.StreamRecords
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Service
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.support.TransactionSynchronization
+import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionOperations
+import org.springframework.transaction.support.TransactionTemplate
+import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
 import java.util.UUID
@@ -57,12 +69,15 @@ import java.util.UUID
 @Service
 class CommandReserveService(
     private val reservedTurns: ReservedTurnRepository,
+    private val commandInbox: CommandInboxRepository,
+    private val commandResults: CommandResultRepository,
     private val redis: StringRedisTemplate,
     private val registry: CommandRegistry,
     processWorld: GameApiProcessWorld,
     @Value("\${opensamguk.profile:che:scenario_2}") profile: String,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
+    private val transactions: TransactionOperations,
 ) {
     private val worldId: WorldId = processWorld.worldId
     private val commandStreamKey: String = TurnDaemonStreamKeys.of(profile, worldId).commandStream
@@ -104,35 +119,82 @@ class CommandReserveService(
         // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
         val intake = CommandWireMapper.toCommand(actionCode, generalId, requestId, argJson, ownerUserId)
         if (intake != null) {
-            publish(
-                TurnDaemonCommandEnvelope(
-                    requestId = requestId,
-                    sentAt = Instant.now(clock).toString(),
-                    command = intake,
-                )
+            val envelope = TurnDaemonCommandEnvelope(
+                requestId = requestId,
+                sentAt = Instant.now(clock).toString(),
+                command = intake,
             )
+            val payload = encodeCommandPayload(envelope)
+            transactions.executeWithoutResult {
+                commandInbox.insertAccepted(
+                    AcceptedCommand(
+                        worldId = worldId,
+                        requestId = requestId,
+                        commandKind = CommandKind.IMMEDIATE,
+                        intentFingerprint = intentFingerprint(CommandKind.IMMEDIATE, generalId, turnIdx, actionCode, argJson, ownerUserId),
+                        generalId = generalId,
+                        turnIdx = turnIdx,
+                        actionCode = actionCode,
+                        payloadJson = payload,
+                    ),
+                ).throwIfConflict()
+            }
+            publishAfterCommit(envelope)
             return ReserveResult(requestId = requestId, turnIdx = turnIdx)
         }
 
         // Model A — turn-reserved che_* command.
-        // 1. durable reservation FIRST (DB is the source of truth for the reserved action).
-        reservedTurns.reserve(
-            worldId = worldId,
-            generalId = generalId,
-            turnIdx = turnIdx,
-            actionCode = actionCode,
-            argJson = argJson,
-            brief = registry.resolve(actionCode).name,
+        val envelope = TurnDaemonCommandEnvelope(
+            requestId = requestId,
+            sentAt = Instant.now(clock).toString(),
+            command = TurnDaemonCommand.Run(reason = RunReason.POKE),
         )
-
-        // 2. wake the daemon via the EXISTING P0-B control signal (Run/POKE) on the command stream.
-        publish(
-            TurnDaemonCommandEnvelope(
-                requestId = requestId,
-                sentAt = Instant.now(clock).toString(),
-                command = TurnDaemonCommand.Run(reason = RunReason.POKE),
+        val payload = encodeCommandPayload(envelope)
+        val fingerprint = intentFingerprint(CommandKind.RESERVED_TURN, generalId, turnIdx, actionCode, argJson, ownerUserId)
+        var inserted = false
+        transactions.executeWithoutResult {
+            val result = commandInbox.insertAccepted(
+                AcceptedCommand(
+                    worldId = worldId,
+                    requestId = requestId,
+                    commandKind = CommandKind.RESERVED_TURN,
+                    intentFingerprint = fingerprint,
+                    generalId = generalId,
+                    turnIdx = turnIdx,
+                    actionCode = actionCode,
+                    payloadJson = payload,
+                ),
             )
-        )
+            result.throwIfConflict()
+            inserted = result is CommandInboxRepository.InsertResult.Inserted
+            if (inserted) {
+                reservedTurns.reserve(
+                    worldId = worldId,
+                    generalId = generalId,
+                    turnIdx = turnIdx,
+                    actionCode = actionCode,
+                    argJson = argJson,
+                    brief = registry.resolve(actionCode).name,
+                    requestId = requestId,
+                )
+                commandResults.insertTerminalResult(
+                    worldId = worldId,
+                    row = CommandTerminalResultFactory.acceptedRow(
+                        worldId = worldId,
+                        requestId = requestId,
+                        sentAt = Instant.now(clock),
+                        type = "reservationAccepted",
+                        commandKind = CommandKind.RESERVED_TURN,
+                        actionCode = actionCode,
+                        generalId = generalId,
+                        turnIdx = turnIdx,
+                    ),
+                    expectedInboxStatuses = setOf("ACCEPTED"),
+                )
+            }
+        }
+
+        if (inserted) publishAfterCommit(envelope)
         return ReserveResult(requestId = requestId, turnIdx = turnIdx)
     }
 
@@ -142,14 +204,50 @@ class CommandReserveService(
      */
     fun publishImmediate(command: TurnDaemonCommand): ReserveResult {
         val requestId = requestIds()
-        publish(
-            TurnDaemonCommandEnvelope(
-                requestId = requestId,
-                sentAt = Instant.now(clock).toString(),
-                command = command,
-            )
+        val envelope = TurnDaemonCommandEnvelope(
+            requestId = requestId,
+            sentAt = Instant.now(clock).toString(),
+            command = command,
         )
+        val payload = encodeCommandPayload(envelope)
+        transactions.executeWithoutResult {
+            commandInbox.insertAccepted(
+                AcceptedCommand(
+                    worldId = worldId,
+                    requestId = requestId,
+                    commandKind = CommandKind.IMMEDIATE,
+                    intentFingerprint = intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
+                    generalId = null,
+                    turnIdx = 0,
+                    actionCode = command::class.simpleName,
+                    payloadJson = payload,
+                ),
+            ).throwIfConflict()
+        }
+        publishAfterCommit(envelope)
         return ReserveResult(requestId = requestId, turnIdx = 0)
+    }
+
+    private fun publishAfterCommit(envelope: TurnDaemonCommandEnvelope) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                object : TransactionSynchronization {
+                    override fun afterCommit() {
+                        publishBestEffort(envelope)
+                    }
+                },
+            )
+        } else {
+            publishBestEffort(envelope)
+        }
+    }
+
+    private fun publishBestEffort(envelope: TurnDaemonCommandEnvelope) {
+        try {
+            publish(envelope)
+            commandInbox.markRedisWakePublished(worldId, envelope.requestId, Instant.now(clock))
+        } catch (_: Exception) {
+        }
     }
 
     private fun publish(envelope: TurnDaemonCommandEnvelope) {
@@ -159,6 +257,34 @@ class CommandReserveService(
             .withStreamKey(commandStreamKey)
         @Suppress("UNCHECKED_CAST")
         redis.opsForStream<Any, Any>().add(record as ObjectRecord<String, Any>)
+    }
+
+    private fun CommandInboxRepository.InsertResult.throwIfConflict() {
+        if (this is CommandInboxRepository.InsertResult.Conflict) {
+            throw IllegalStateException("command_inbox request_id conflict")
+        }
+    }
+
+    private fun intentFingerprint(
+        kind: CommandKind,
+        generalId: Int?,
+        turnIdx: Int?,
+        actionCode: String?,
+        argJson: String?,
+        ownerUserId: Int?,
+    ): String {
+        val canonical = listOf(
+            "v1",
+            worldId.value.toString(),
+            kind.name,
+            generalId?.toString().orEmpty(),
+            turnIdx?.toString().orEmpty(),
+            actionCode.orEmpty(),
+            argJson.orEmpty(),
+            ownerUserId?.toString().orEmpty(),
+        ).joinToString("\u001f")
+        val bytes = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
+        return bytes.joinToString("") { "%02x".format(it) }
     }
 }
 
@@ -172,4 +298,20 @@ class ReserveBeans {
     @Bean
     fun reservedTurnRepository(jdbc: NamedParameterJdbcTemplate): ReservedTurnRepository =
         ReservedTurnRepository(jdbc)
+
+    @Bean
+    fun commandInboxRepository(jdbc: NamedParameterJdbcTemplate): CommandInboxRepository =
+        CommandInboxRepository(jdbc)
+
+    @Bean
+    fun commandResultRepository(jdbc: NamedParameterJdbcTemplate): CommandResultRepository =
+        CommandResultRepository(jdbc)
+
+    @Bean
+    fun messageRepository(raw: MessageRawRepository, processWorld: GameApiProcessWorld): MessageRepository =
+        MessageRepository(raw, processWorld.worldId.value, 0)
+
+    @Bean
+    fun gameApiTransactionOperations(transactionManager: PlatformTransactionManager): TransactionOperations =
+        TransactionTemplate(transactionManager)
 }

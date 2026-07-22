@@ -17,3 +17,237 @@ Reviews: `docs/superpowers/reviews/2026-07-21-opensam-13{0,1,2}-*.md` Verdict cl
 ## Next CQRS (not this goal)
 
 ARCH-S4 inbox/outbox; activation/deploy out of scope.
+
+## OPENSAM-133 in progress — 2026-07-22
+
+- Scope: ARCH-S4-T1 build-only command_inbox authority before API 202.
+- Implemented locally: `command_inbox` migration/repository, `CommandReserveService` DB-before-Redis intake, reserved ring+inbox transaction, stable intent fingerprint, duplicate request-id `Inserted/ExistingSame/Conflict` handling, Redis wake best-effort after DB acceptance.
+- Queue producer gap narrowed: `CommandQueueService` bulk/push/repeat paths now record `QUEUE_MUTATION` inbox rows and return non-empty `requestId`; `CommandController` queue 202 responses now include that request id.
+- Admin moderation producer gap narrowed: `AdminGeneralModerationService` now returns all child `requestIds`, and `AdminWriteController` exposes them on accepted moderation responses.
+- Possession producer gap narrowed: `GeneralPossessionService.claim` now performs daemon `ClaimNpc` admission through a callback inside the transactional claim flow, and `ClaimResponse` exposes the returned `requestId`.
+- Not activated: engine still consumes Redis; no production deploy/cutover; no W3 durable replay activation.
+- Earlier focused Gradle attempts hit Kotlin compiler/incremental-cache failures before producing pass evidence:
+  - `:app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceTest --rerun-tasks` was interrupted after no usable output.
+  - `:app:game-api:compileTestKotlin --rerun-tasks --console=plain` timed out in subagent after Kotlin incremental cache `already registered` errors.
+  - `:app:game-api:compileKotlin --rerun-tasks --console=plain` failed after fallback with Kotlin internal compiler error reading `logic/build/libs/logic-0.0.1-SNAPSHOT.jar`.
+- Cache/tooling failure was isolated by stopping daemons and using `--no-daemon --no-configuration-cache --no-build-cache -Dkotlin.compiler.execution.strategy=in-process`.
+- Observed evidence:
+  - `:app:game-api:compileKotlin` `BUILD SUCCESSFUL in 1m`.
+  - `:app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceIT` `BUILD SUCCESSFUL in 1m 2s`.
+  - `:app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceTest` `BUILD SUCCESSFUL in 1m 22s` after idempotency tests were added.
+  - `:app:game-api:test --tests opensamguk.gameapi.reserve.CommandQueueTest` `BUILD SUCCESSFUL in 1m 10s` after queue inbox assertions were added.
+  - `:app:game-api:test --tests opensamguk.gameapi.web.CommandControllerSecurityTest` `BUILD SUCCESSFUL in 1m 17s`.
+  - `:app:game-api:test --tests opensamguk.gameapi.admin.AdminGeneralModerationServiceTest --tests opensamguk.gameapi.controller.AdminWriteControllerTest` `BUILD SUCCESSFUL in 1m 15s`.
+- `:app:game-api:test --tests opensamguk.gameapi.controller.PossessionControllerTest` `BUILD SUCCESSFUL in 55s`.
+- Independent architecture review returned `fix-required`: full S4-T2/T4 durable result/outbox, replay/dedupe, and crash-matrix coverage remain incomplete, so OPENSAM-133/CQRS must not be claimed complete yet.
+
+## OPENSAM-135 partial foundation — 2026-07-22
+
+- Scope: ARCH-S4-T3 build-only durable command terminal result/outbox foundation.
+- Implemented locally:
+  - Added `command_result` and `command_outbox` migration V35.
+  - Extended `command_inbox.status` to allow `APPLIED`/`REJECTED`.
+  - Added JDBC `CommandResultRepository` for `(world_id, request_id)` durable result fallback.
+  - Extended `FlushPayload`/`JdbcFlushExecutor` so command terminal result, outbox row, and inbox terminal transition are written inside the same flush transaction as state effects.
+  - `command_result` terminal rows are immutable on conflict; `command_inbox` terminal transition requires an existing `ACCEPTED` row.
+  - `CommandController` now falls back to durable DB result when Redis result is missing or corrupt.
+  - Fixed existing Spring/JPA test wiring exposed by broader verification: game-api `MessageRepository` bean wiring and `VerticalSliceE2EIT` raw/facade repository construction.
+  - Adjusted `.codex/config.toml` to remove personal model pin and reduce configured thread limits to strict guard bounds.
+- Observed focused evidence:
+  - `:infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT` originally failed on `Instant` timestamptz binding, fixed with `Timestamp.from(sentAt)`, then passed.
+  - Focused bundle passed: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT :app:game-api:test --tests opensamguk.gameapi.web.CommandResultLookupTest --tests opensamguk.gameapi.web.CommandControllerSecurityTest --tests opensamguk.gameapi.GameApiApplicationTests --tests opensamguk.gameapi.web.CommandControllerIT :app:game-engine:test --tests opensamguk.engine.intake.IntakeResultChannelTest --tests opensamguk.engine.e2e.VerticalSliceE2EIT --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process` -> `BUILD SUCCESSFUL in 7m 24s`.
+  - `scripts/agent/verify-changes.sh --run` was executed before the wiring fixes and failed: game-api `GameApiApplicationTests`/`CommandControllerIT`, engine `VerticalSliceE2EIT`, and agent-system strict issues. The test failures were then fixed and focused rerun passed; full verify-changes rerun is still pending.
+  - Independent review artifact: `docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md`, `Verdict: fix-required`.
+  - `git diff --check` produced no whitespace output.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` now has one remaining expected blocker: `Unresolved Verdict: fix-required blocks completion`.
+- Still not complete:
+  - Redis stream is still execution wake authority; durable inbox claim/reclaim and post-commit ACK are not implemented.
+  - `command_outbox` is written but no relay/retry worker consumes it yet.
+  - Reserved execution and queue mutation terminal result correlation is incomplete.
+  - S4-T4 crash/replay matrix is missing.
+  - Full `scripts/agent/verify-changes.sh --run` must be rerun after these fixes before any completion claim.
+
+## OPENSAM-134 partial foundation — 2026-07-22
+
+- Scope: ARCH-S4-T2 build-only durable inbox claim/reclaim foundation; Redis remains a wake signal.
+- Implemented locally:
+  - `command_inbox` now supports `CLAIMED` plus `claimed_at` / `claim_expires_at` lease columns in V35.
+  - `CommandInboxRepository.claimForExecution` atomically claims Redis-wake request IDs with `UPDATE ... RETURNING` and returns the DB-stored payload envelope in wake order.
+  - `CommandInboxRepository.claimPendingForExecution` polls `ACCEPTED` and expired `CLAIMED` rows for Redis-down/trim/lost-wake fallback.
+  - `TurnRunService.runIntakeCommands` and `runTick` now dispatch only envelopes claimed from DB; Redis payload is no longer execution authority when the repository is wired.
+  - `DaemonLoopConfig` wires `CommandInboxRepository` into production `TurnRunService`.
+  - `JdbcFlushExecutor` terminal transition now requires `command_inbox.status = 'CLAIMED'`, so result/outbox terminalization cannot silently complete an unclaimed command.
+- Observed focused evidence:
+  - Initial `:infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT` attempts failed on infra test serialization classpath, `Instant` timestamptz binding, and a 0200-year lease fixture. These were fixed by using literal JSON fixtures, `Timestamp.from(...)` binding, and 2026 UTC lease timestamps.
+  - `:infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT` passed: `BUILD SUCCESSFUL in 1m 34s`.
+  - `:app:game-engine:test --tests opensamguk.engine.intake.IntakeResultChannelTest --tests opensamguk.engine.e2e.VerticalSliceE2EIT` passed: `BUILD SUCCESSFUL in 3m 6s`.
+  - `git diff --check` produced no whitespace output.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` still has one expected blocker: `Unresolved Verdict: fix-required blocks completion`.
+- Still not complete:
+  - Redis consumer-group ACK/PEL reclaim is not implemented; current fallback is DB polling + claim lease.
+  - `command_outbox` relay/retry worker is still missing.
+  - Reserved command execution terminal correlation and queue mutation terminal semantics remain incomplete.
+  - S4-T4 crash/replay matrix remains missing.
+
+## OPENSAM-135 outbox relay foundation — 2026-07-22
+
+- Scope: ARCH-S4-T3 build-only command_outbox relay/retry foundation; no deploy/cutover.
+- Implemented locally:
+  - `CommandResultRepository` now lists unpublished `COMMAND_RESULT` outbox rows in deterministic order and marks an event `published_at` only when still unpublished.
+  - Added `CommandOutboxRelay`: reads pending DB outbox rows, publishes the exact stored envelope JSON to the per-request Redis result key, and marks published only after Redis SET succeeds. Redis/repository failures leave rows pending for later retry.
+  - `RealtimePublisher` now exposes `publishCommandResultPayload` so outbox payload JSON is the relay source of truth; legacy `publishCommandResult` delegates to the same method.
+  - Production `DaemonLoopConfig` wires `CommandResultRepository` and `CommandOutboxRelay`.
+  - `TurnRunService` calls the relay before intake/tick work to retry old pending rows, and after successful flush/retry to publish newly committed command results through outbox instead of direct post-commit Redis publication. Existing direct Redis publish remains only as the legacy fallback when no relay is injected in narrow tests.
+  - Added focused relay tests and extended the existing infra outbox IT with pending lookup/mark assertions.
+- Observed focused evidence:
+  - Initial engine focused test failed on Mockito matcher misuse against Kotlin non-null `Instant`, causing `CommandOutboxRelayTest` NPE and follow-on Mockito state errors. Recovery tried typed matcher first, then removed the matcher entirely for the Kotlin method.
+  - `:app:game-engine:test --tests opensamguk.engine.redis.CommandOutboxRelayTest --tests opensamguk.engine.intake.IntakeResultChannelTest` passed: `BUILD SUCCESSFUL in 1m 24s`.
+  - `:infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT --rerun-tasks` passed: `BUILD SUCCESSFUL in 6m 16s`.
+  - `git diff --check` produced no whitespace output.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` still has one expected blocker: `Unresolved Verdict: fix-required blocks completion`.
+- Still not complete:
+  - Redis consumer-group ACK/PEL reclaim is not implemented; current fallback is DB polling + claim lease.
+  - Reserved command execution terminal correlation and queue mutation terminal semantics remain incomplete.
+  - S4-T4 crash/replay matrix remains missing.
+  - Independent review remains `fix-required`; rerun review only after the remaining S4 items have evidence.
+
+## OPENSAM-134 Redis wake ACK foundation — 2026-07-22
+
+- Scope: ARCH-S4-T2 build-only Redis consumer-group wake and post-commit ACK foundation; no deploy/cutover.
+- Implemented locally:
+  - `RedisCommandStream` now creates a per-world consumer group at construction time, reads new wake entries via `XREADGROUP >`, replays this consumer's pending entries via `XREADGROUP 0`, and exposes explicit `acknowledgeWake`.
+  - `RedisCommandStream` now also scans group pending entries and claims stale records owned by another consumer into the current per-world consumer before decoding the stored payload.
+  - Legacy `readEnvelopes`/cursor behavior remains for existing narrow tests and fallback construction paths.
+  - `TurnRunService` now carries Redis wake message IDs through durable inbox claim, dispatch, and flush. It ACKs only after `flushWithGeneration` returns successfully.
+  - Flush failures leave the Redis wake unacked, while DB claim lease + pending polling remain the authoritative retry path.
+- Observed focused evidence:
+  - Initial `RedisCommandStreamIT` failed because the consumer group was created lazily on first read with `$`, skipping a wake appended after stream construction but before first read. Fixed by creating the group in the constructor, matching the existing construction-time `lastId` semantics.
+  - Initial `TurnRunServiceFlushRecoveryTest` compile failed because `TurnDaemonCommand.Run` has no default constructor. Fixed by using `RunReason.POKE`.
+  - `:app:game-engine:test --tests opensamguk.engine.redis.RedisCommandStreamIT` passed: `BUILD SUCCESSFUL in 2m 2s`.
+  - `:app:game-engine:test --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest` passed: `BUILD SUCCESSFUL in 1m 14s`.
+  - Combined focused gate passed: `:app:game-engine:test --tests opensamguk.engine.redis.RedisCommandStreamIT --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest` -> `BUILD SUCCESSFUL in 1m 10s`.
+  - Added foreign PEL takeover coverage. Initial compile failed on Kotlin type inference over Spring Data `PendingMessages`; fixed with an explicit `RecordId` array.
+  - `:app:game-engine:test --tests opensamguk.engine.redis.RedisCommandStreamIT` passed after takeover coverage: `BUILD SUCCESSFUL in 1m 55s`.
+  - Combined focused gate passed after takeover coverage: `:app:game-engine:test --tests opensamguk.engine.redis.RedisCommandStreamIT --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest` -> `BUILD SUCCESSFUL in 1m 21s`.
+- Still not complete:
+  - Reserved command execution terminal correlation and queue mutation terminal semantics remain incomplete.
+  - S4-T4 crash/replay matrix remains missing.
+  - Independent review remains `fix-required`.
+
+## OPENSAM-134/135 reserved and queue terminal correlation foundation — 2026-07-22
+
+- Scope: ARCH-S4 durable terminal correlation for API-side reserved-turn admission and queue mutations; no deploy/cutover.
+- Implemented locally:
+  - Added `CommandLifecycleResult` wire result shape for `reservationAccepted` and `queueMutation` durable terminal results.
+  - Added `CommandTerminalResultFactory` in game-api to build `TurnDaemonEventEnvelope(commandResult)` payloads for API-side terminal results.
+  - `CommandResultRepository.insertTerminalResult` now writes `command_result`, `command_outbox`, and terminalizes `command_inbox` for API-side terminal paths inside the caller transaction.
+  - `CommandReserveService` records `reservationAccepted` terminal result/outbox in the same transaction as `command_inbox` + reserved ring write.
+  - `CommandQueueService` records `queueMutation` terminal result/outbox in the same transaction as queue ring mutation + `command_inbox`.
+  - `CommandInboxRepository.claimPendingForExecution` excludes `QUEUE_MUTATION`, whose payload is not a `TurnDaemonCommandEnvelope` and is terminalized by game-api.
+  - `TurnRunService` ACKs Redis wakes whose request IDs are already terminal in `command_inbox`, preventing API-terminalized reserved wake entries from staying in Redis PEL.
+- Observed focused evidence:
+  - Initial broad focused command failed because `:common:test --tests opensamguk.common.wire.TurnDaemonCommandResultTest` referenced a non-existent test class. Corrected by adding coverage to existing `TurnDaemonCommandResultWireTest`.
+  - `:app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceTest --tests opensamguk.gameapi.reserve.CommandQueueTest --tests opensamguk.gameapi.reserve.CommandReserveServiceIT :app:game-engine:test --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest --tests opensamguk.engine.e2e.VerticalSliceE2EIT` passed: `BUILD SUCCESSFUL in 2m 52s`.
+  - `:common:test --tests opensamguk.common.wire.TurnDaemonCommandResultWireTest :infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT :app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceTest --tests opensamguk.gameapi.reserve.CommandQueueTest --tests opensamguk.gameapi.reserve.CommandReserveServiceIT :app:game-engine:test --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest --tests opensamguk.engine.e2e.VerticalSliceE2EIT` passed: `BUILD SUCCESSFUL in 2m 6s`.
+  - `git diff --check` produced no whitespace output.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` still has one expected blocker: review artifact remains `Verdict: fix-required`.
+- Still not complete:
+  - Reserved turn execution after reservation remains a separate lifecycle and is not yet correlated to the original reservation request as `EXECUTION_APPLIED/REJECTED`.
+  - S4-T4 crash/replay matrix remains missing.
+  - Independent review remains `fix-required`.
+
+## OPENSAM-134/135 reserved execution correlation + S4-T4 matrix — 2026-07-22
+
+- Scope: final S4 build-only gaps from `docs/superpowers/research/2026-07-22-s4-remaining-gaps.md`: durable reserved-turn execution correlation and focused crash/replay matrix tests. No deploy/cutover.
+- Implemented locally:
+  - `general_turn` / `nation_turn` now persist the reservation `request_id`; pull/vacate paths clear it, and repeat paths do not duplicate one request id into future slots.
+  - `ReservedTurnHandler` / `TurnDaemonLifecycle` / `TurnRunService` now carry the reserved request identity into due-turn execution handling.
+  - `command_result` now has `result_seq`, letting the API-side reservation terminal result (`seq=1`) coexist with daemon execution lifecycle result (`seq=2`) under the same request id; durable lookup returns the latest sequence.
+  - `JdbcFlushExecutor` can write execution lifecycle result/outbox rows without re-terminalizing an already terminal API-side inbox row.
+  - Added wire lifecycle result types `executionApplied` and `executionRejected`.
+  - `TurnRunService` writes reserved execution lifecycle outbox rows after the state flush and before/around the outbox relay + wake ACK boundary.
+  - Touched Testcontainers tests now use a 3 minute Postgres startup timeout; this fixed a local `postgres:16-alpine` ready-log timeout without changing behavioral assertions.
+- Observed focused evidence:
+  - `:infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT` passed: `BUILD SUCCESSFUL in 3m 34s`; XML `tests=6 failures=0 errors=0 skipped=0`.
+  - `:app:game-engine:test --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest --tests opensamguk.engine.e2e.VerticalSliceE2EIT` passed with in-process Kotlin settings: `BUILD SUCCESSFUL in 3m 59s`; XML `TurnRunServiceFlushRecoveryTest tests=6 failures=0 errors=0 skipped=0`, `VerticalSliceE2EIT tests=1 failures=0 errors=0 skipped=0`.
+  - `:common:test --tests opensamguk.common.wire.TurnDaemonCommandResultWireTest :app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceTest --tests opensamguk.gameapi.reserve.CommandQueueTest --tests opensamguk.gameapi.reserve.CommandReserveServiceIT` passed with in-process Kotlin settings: `BUILD SUCCESSFUL in 2m 9s`; XML counts `4/0/0/0`, `4/0/0/0`, `22/0/0/0`, `1/0/0/0`.
+  - `git diff --check` produced no whitespace output after the final patches.
+- Verification gates not green:
+  - `scripts/agent/verify-changes.sh --run` was executed twice. The default run was interrupted after the broad Gradle matrix re-entered a Kotlin daemon stall; the in-process retry progressed through common/logic/game-api and into `:app:game-engine:compileTestKotlin --rerun-tasks`, then was interrupted after the same full-matrix compile stall persisted. No broad `BUILD SUCCESSFUL` was produced by the script.
+  - `bash scripts/agent/test-codex-agent-os.sh` failed outside the S4 code path: `AssertionError: tracked-base max_threads/max_depth must be <= 16` against the existing `.codex/config.toml` WIP.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` failed with one expected blocker: `Unresolved Verdict: fix-required blocks completion: docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md`.
+- Still not complete:
+  - Independent review must be rerun/updated by a reviewer; the existing review artifact still says `fix-required`.
+  - Full `scripts/agent/verify-changes.sh --run` remains pending once the full `:app:game-engine:compileTestKotlin --rerun-tasks` build-tool stall is resolved.
+
+## S4 gate retry evidence — 2026-07-22 23:33 KST
+
+- Scope: dispatched implement worker gate-retry only; no S4 feature expansion and no implementation-file edits.
+- Focused gate attempts:
+  - First forced rerun attempt:
+    `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Pkotlin.compiler.execution.strategy=in-process :common:test --tests opensamguk.common.wire.TurnDaemonCommandResultWireTest --rerun-tasks`
+    progressed to `> Task :common:compileKotlin` but produced no further task output after a bounded wait; worker terminated only this Gradle invocation. Observed exit after termination: `143`.
+  - Retry:
+    `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon :common:test --tests opensamguk.common.wire.TurnDaemonCommandResultWireTest`
+    passed. Tail: `> Task :common:test` / `BUILD SUCCESSFUL in 7m 31s` / `5 actionable tasks: 1 executed, 1 from cache, 3 up-to-date`.
+    XML: `TEST-opensamguk.common.wire.TurnDaemonCommandResultWireTest.xml` has `tests="4" skipped="0" failures="0" errors="0"` at `2026-07-22T14:10:04`.
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon :infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT`
+    passed. Tail: `BUILD SUCCESSFUL in 8m 4s` / `10 actionable tasks: 4 executed, 6 up-to-date` / `Configuration cache entry reused.`
+    XML: `TEST-opensamguk.infra.persistence.CommandResultOutboxFlushIT.xml` has `tests="6" skipped="0" failures="0" errors="0"` at `2026-07-22T14:18:31`.
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew --no-daemon :app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceTest --tests opensamguk.gameapi.reserve.CommandQueueTest --tests opensamguk.gameapi.reserve.CommandReserveServiceIT`
+    did not reach test execution. Last Gradle task output was `> Task :app:game-api:compileKotlin`; a Kotlin compiler daemon stayed active for a bounded wait, then the worker terminated only this Gradle invocation. Observed exit after termination: `143`.
+  - `:app:game-engine:test` focused tests and optional `RedisCommandStreamIT` were not reached because the focused gate was already blocked at game-api compile.
+- Broader matrix:
+  - Skipped by design because the focused gate was not green; no broad `BUILD SUCCESSFUL` was observed in this retry.
+- Non-Gradle checks:
+  - `git diff --check` exited 0 with no output.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` exited 1 with one error: `cross-agent-critique` says `docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md does not cover changed areas: .codex/, app/, common/, infra/`.
+- Current gate status:
+  - Partial evidence only: common and infra focused tests are green by fresh XML; game-api/game-engine focused tests are unverified in this retry due the Kotlin compile stall, and strict agent-system review remains failing. Do not claim full S4 completion from this retry.
+
+## OPENSAM-135 review remediation — 2026-07-23 00:24 KST
+
+- Scope: user-requested remediation of `docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md` fix-required findings; no deploy/cutover.
+- Implemented locally:
+  - Moved production reserved turn ring consumption out of direct `ReservedTurnRepository.pull*` daemon callbacks. `DaemonLoopConfig` now records nation/general pull intents on the shared `ChangeRecorder`; the AI general-pass delta drain remains in the same callback order.
+  - Added recorder-owned reserved general/nation pull channels that participate in `ChangeRecorder.isDirty`, snapshot through `DatabaseHooks.toFlushPayload`, and clear only after the existing `flushWithGeneration` commit path calls `handler.recorder.clear()`.
+  - `JdbcFlushExecutor` now executes reserved nation/general pull intents from `FlushPayload` inside the same JDBC transaction as state effects, world-version CAS, `command_result`, and `command_outbox`.
+  - Ring pull SQL now runs sequentially per pull intent rather than batching all phase-1 updates before all phase-2 updates, preserving duplicate catch-up rotation semantics.
+  - Removed the unification-flush skip for reserved ring pulls; lifecycle emits pull intents unconditionally, so flush should commit or roll them back with the rest of the generation.
+  - Extended `CommandResultOutboxFlushIT` with rollback + retry coverage for state, reserved ring pull, execution `command_result`, and `command_outbox`; isolated the shared Testcontainers DB state between tests.
+  - Extended `TurnRunServiceFlushRecoveryTest` assertions so retained flush retry and post-commit wake ACK failure payloads include reserved pull intents.
+  - Updated the review artifact to a latest `Verdict: cleared` independent gate-review result covering `.codex/`, `app/`, `common/`, `infra/`, and `docs/`.
+  - Fixed `.codex/config.toml` guard value `max_threads = 16` so the tracked Codex Agent OS contract passes.
+- Observed verification evidence:
+  - Focused Gradle command passed: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :infra:test --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT :app:game-engine:test --tests opensamguk.engine.run.TurnRunServiceFlushRecoveryTest --tests opensamguk.engine.run.TurnRunServiceIT --no-daemon --no-configuration-cache --no-build-cache --console=plain -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process -Dkotlin.compiler.execution.strategy=in-process`
+  - Tail evidence: `BUILD SUCCESSFUL in 9m 7s`; XML counts: `CommandResultOutboxFlushIT tests=7 failures=0 errors=0 skipped=0`, `TurnRunServiceFlushRecoveryTest tests=7 failures=0 errors=0 skipped=0`, `TurnRunServiceIT tests=1 failures=0 errors=0 skipped=0`.
+  - `git diff --check` exited 0 with no output.
+  - `bash scripts/agent/test-codex-agent-os.sh` passed: `PASS: Codex Agent OS contract`.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` passed: `Errors: 0`, `Warnings: 0`.
+  - Independent read-only gate reviewer `019f8a5c-26c2-7450-86ec-631812f3d98d` returned `Verdict: cleared`, with no blocking durability finding.
+- Verification not green:
+  - `scripts/agent/verify-changes.sh --run` was started once in this pass and interrupted after the same repeated broad `--rerun-tasks` Gradle matrix stall pattern documented earlier. It produced no broad `BUILD SUCCESSFUL` and must not be counted as passed.
+  - The broad stall is currently isolated as a build-tool/gate baseline risk; focused module tests and strict agent-system checks are green.
+
+## OPENSAM-135 PR CI follow-up — 2026-07-23 01:30 KST
+
+- Scope: follow-up fixes for PR #312 `jvm` CI failures after the OPENSAM-135 review-remediation commit; no feature expansion.
+- Implemented locally:
+  - Made `RedisCommandStream.ensureConsumerGroup()` catch failures around the whole `StringRedisTemplate.execute` call so constructor-time Redis stream group creation stays best-effort when Redis is unavailable in Spring boot tests and lightweight unit-test stubs.
+  - Scoped `command_outbox` uniqueness by `(world_id, event_id)` and updated repository/relay/flush/test call sites so published marking is world-scoped.
+  - Added `command_inbox`, `command_result`, and `command_outbox` to the V32 world-owned migration inventory and aligned their `world_id` foreign keys with the existing strict world-owned table convention (`REFERENCES world_state(id)` without cascade).
+  - Fixed `CommandControllerIT` shared-container cleanup to delete durable command tables before deleting `world_state`, matching the new non-cascade world-owned FK convention.
+- Observed verification evidence:
+  - Failed CI reproducer follow-up rerun passed:
+    `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests opensamguk.engine.run.TurnDaemonRunnerTest --tests opensamguk.engine.EmptyWorldBootIT --tests opensamguk.engine.GameEngineApplicationTests --tests opensamguk.engine.redis.CommandOutboxRelayTest :infra:test --tests opensamguk.infra.persistence.V32WorldScopeCompletionMigrationTest --tests opensamguk.infra.persistence.CommandResultOutboxFlushIT :app:game-api:test --tests opensamguk.gameapi.reserve.CommandReserveServiceIT --no-daemon --no-configuration-cache --no-build-cache --console=plain -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process -Dkotlin.compiler.execution.strategy=in-process`
+  - Tail evidence: `BUILD SUCCESSFUL in 9m 5s`; XML counts: `TurnDaemonRunnerTest tests=7 failures=0 errors=0 skipped=0`, `EmptyWorldBootIT tests=1 failures=0 errors=0 skipped=0`, `GameEngineApplicationTests tests=1 failures=0 errors=0 skipped=0`, `CommandOutboxRelayTest tests=2 failures=0 errors=0 skipped=0`, `V32WorldScopeCompletionMigrationTest tests=9 failures=0 errors=0 skipped=0`, `CommandResultOutboxFlushIT tests=7 failures=0 errors=0 skipped=0`, `CommandReserveServiceIT tests=1 failures=0 errors=0 skipped=0`.
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test :logic:test --rerun-tasks --no-daemon --no-configuration-cache --no-build-cache --console=plain -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process -Dkotlin.compiler.execution.strategy=in-process` passed. Tail: `BUILD SUCCESSFUL in 10m 40s`; XML aggregate counts: `common suites=37 tests=219 failures=0 errors=0 skipped=0`, `logic suites=270 tests=3110 failures=0 errors=0 skipped=0`.
+  - CI failure reproducer `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --tests opensamguk.gameapi.web.CommandControllerIT --no-daemon --no-configuration-cache --no-build-cache --console=plain -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process -Dkotlin.compiler.execution.strategy=in-process` passed. Tail: `BUILD SUCCESSFUL in 4m 56s`; XML `CommandControllerIT tests=2 failures=0 errors=0 skipped=0`.
+  - Full local `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --no-daemon --no-configuration-cache --no-build-cache --console=plain -Pkotlin.compiler.execution.strategy=in-process -Dorg.gradle.project.kotlin.compiler.execution.strategy=in-process -Dkotlin.compiler.execution.strategy=in-process` passed. Tail: `BUILD SUCCESSFUL in 9m 28s`; XML aggregate counts: `app/game-api suites=60 tests=406 failures=0 errors=0 skipped=0`.
+  - `git diff --check` exited 0 with no output.
+  - `bash scripts/agent/test-codex-agent-os.sh` passed: `PASS: Codex Agent OS contract`.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` passed: `Errors: 0`, `Warnings: 0`.
+  - `$os-verify` classification command `scripts/agent/verify-changes.sh` exited 0 and requested the broad backend rerun matrix plus Agent OS/strict checks.
+- Verification not counted as passed:
+  - `scripts/agent/verify-changes.sh --run` full broad matrix remains unexecuted in this follow-up because that exact broad runner repeatedly stalled earlier in the task; the failure mode is documented here and above as an isolated build-tool/gate baseline risk.
+  - PR merge is still pending remote CI. Do not merge unless required PR checks are green or the coordinator explicitly authorizes bypass for an external-only check failure.

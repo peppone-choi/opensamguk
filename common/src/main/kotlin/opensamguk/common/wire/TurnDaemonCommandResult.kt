@@ -123,6 +123,17 @@ data class GeneralBoolResult(
 ) : TurnDaemonCommandResult()
 
 @Serializable
+data class CommandLifecycleResult(
+    override val type: String,
+    override val ok: Boolean,
+    val commandKind: String,
+    val actionCode: String? = null,
+    val generalId: Int? = null,
+    val turnIdx: Int? = null,
+    val reason: String? = null,
+) : TurnDaemonCommandResult()
+
+@Serializable
 data class TournamentRefundOk(
     override val type: String = "tournamentRefund",
     override val ok: Boolean = true,
@@ -545,6 +556,13 @@ private val BOOLEAN_OK_TYPES = setOf(
     "adminGeneralModeration", "adminWorldSettings",
 )
 
+private val COMMAND_LIFECYCLE_TYPES = setOf(
+    "reservationAccepted",
+    "queueMutation",
+    "executionApplied",
+    "executionRejected",
+)
+
 /** The troop-intake ops sharing the collapsed [TroopActionResult] shape (slice B). */
 private val TROOP_ACTION_TYPES = setOf("troopNew", "troopKick", "troopSetName")
 
@@ -580,6 +598,9 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
     private fun selectSerializer(type: String, ok: Boolean): KSerializer<out TurnDaemonCommandResult> {
         if (type in BOOLEAN_OK_TYPES) {
             return GeneralBoolResult.serializer()
+        }
+        if (type in COMMAND_LIFECYCLE_TYPES) {
+            return CommandLifecycleResult.serializer()
         }
         if (type in NATION_SETTING_TYPES) {
             return NationSettingResult.serializer()

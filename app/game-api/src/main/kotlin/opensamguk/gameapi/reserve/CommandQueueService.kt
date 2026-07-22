@@ -3,11 +3,20 @@ package opensamguk.gameapi.reserve
 import opensamguk.common.constants.GameConst
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.persistence.CommandInboxRepository.AcceptedCommand
+import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
+import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.persistence.ReservedTurnRepository.Companion.MAX_CHIEF_TURNS
 import opensamguk.infra.persistence.ReservedTurnRepository.Companion.MAX_GENERAL_TURNS
 import opensamguk.logic.actions.CommandRegistry
 import org.springframework.stereotype.Service
+import org.springframework.transaction.support.TransactionOperations
+import java.security.MessageDigest
+import java.time.Clock
+import java.time.Instant
+import java.util.UUID
 
 /**
  * W6e — Command-queue(예약 큐) 조작 서비스. `legacy/devsam-core/hwe/sammo/API/{Command,NationCommand}/
@@ -32,7 +41,12 @@ import org.springframework.stereotype.Service
 class CommandQueueService(
     private val reservedTurns: ReservedTurnRepository,
     private val registry: CommandRegistry,
+    private val commandInbox: CommandInboxRepository,
+    private val commandResults: CommandResultRepository,
+    private val transactions: TransactionOperations,
     processWorld: GameApiProcessWorld,
+    private val clock: Clock = Clock.systemUTC(),
+    private val requestIds: () -> String = { UUID.randomUUID().toString() },
 ) {
     private val worldId: WorldId = processWorld.worldId
 
@@ -61,7 +75,10 @@ class CommandQueueService(
         val briefList: List<String>,
         val reason: String,
         val errorIdx: Int? = null,
+        val requestId: String? = null,
     )
+
+    data class QueueAccepted(val requestId: String)
 
     /** 큐 조작 실패(검증 deny). 컨트롤러가 200 OK + reason으로 매핑한다(PHP가 문자열을 그대로 반환). */
     class CommandQueueDenied(val reason: String) : RuntimeException(reason)
@@ -80,30 +97,44 @@ class CommandQueueService(
      *  4. setGeneralCommand 부분 실패 → 부분 결과 반환(errorIdx=idx).
      */
     fun reserveBulkGeneral(generalId: Int, commands: List<CommandBulkItem>): BulkReserveResult {
-        val briefList = ArrayList<String>(commands.size)
-        for ((idx, item) in commands.withIndex()) {
-            if (item.turnList.isEmpty()) {
-                throw CommandQueueDenied("$idx: 턴이 입력되지 않았습니다")
+        val requestId = requestIds()
+        return transactions.execute { status ->
+            val briefList = ArrayList<String>(commands.size)
+            for ((idx, item) in commands.withIndex()) {
+                if (item.turnList.isEmpty()) {
+                    throw CommandQueueDenied("$idx: 턴이 입력되지 않았습니다")
+                }
+                if (item.action !in GENERAL_COMMAND_CODES) {
+                    throw CommandQueueDenied("$idx: 사용할 수 없는 커맨드입니다.")
+                }
+                if (!item.argIsArray) {
+                    throw CommandQueueDenied("$idx: 올바른 arg 형태가 아닙니다.")
+                }
+                val partial = setGeneralCommand(generalId, item.turnList, item.action, item.arg)
+                if (!partial.result) {
+                    status.setRollbackOnly()
+                    return@execute BulkReserveResult(
+                        result = false,
+                        briefList = briefList,
+                        reason = partial.reason,
+                        errorIdx = idx,
+                    )
+                }
+                briefList.add(partial.brief ?: "")
             }
-            if (item.action !in GENERAL_COMMAND_CODES) {
-                throw CommandQueueDenied("$idx: 사용할 수 없는 커맨드입니다.")
-            }
-            // arg 형태 검증(PHP `is_array($arg)`): null 은 PHP `?? []`로 허용, map 은 OK, 그 외 → deny.
-            if (!item.argIsArray) {
-                throw CommandQueueDenied("$idx: 올바른 arg 형태가 아닙니다.")
-            }
-            val partial = setGeneralCommand(generalId, item.turnList, item.action, item.arg)
-            if (!partial.result) {
-                return BulkReserveResult(
-                    result = false,
-                    briefList = briefList,
-                    reason = partial.reason,
-                    errorIdx = idx,
-                )
-            }
-            briefList.add(partial.brief ?: "")
-        }
-        return BulkReserveResult(result = true, briefList = briefList, reason = "success")
+            insertQueueAccepted(
+                requestId = requestId,
+                operation = "bulkGeneral",
+                generalId = generalId,
+                nationId = null,
+                officerLevel = null,
+                turnIdx = null,
+                payload = encodeJsonObject(
+                    linkedMapOf("operation" to "bulkGeneral", "generalId" to generalId, "commandCount" to commands.size),
+                ),
+            )
+            BulkReserveResult(result = true, briefList = briefList, reason = "success", requestId = requestId)
+        } ?: throw IllegalStateException("queue transaction returned null")
     }
 
     /** ReserveBulk(국가) — `NationCommand/ReserveBulkCommand` + `setNationCommand`. */
@@ -113,29 +144,50 @@ class CommandQueueService(
         officerLevel: Int,
         commands: List<CommandBulkItem>,
     ): BulkReserveResult {
-        val briefList = ArrayList<String>(commands.size)
-        for ((idx, item) in commands.withIndex()) {
-            if (item.turnList.isEmpty()) {
-                throw CommandQueueDenied("$idx: 턴이 입력되지 않았습니다")
+        val requestId = requestIds()
+        return transactions.execute { status ->
+            val briefList = ArrayList<String>(commands.size)
+            for ((idx, item) in commands.withIndex()) {
+                if (item.turnList.isEmpty()) {
+                    throw CommandQueueDenied("$idx: 턴이 입력되지 않았습니다")
+                }
+                if (item.action !in CHIEF_COMMAND_CODES) {
+                    throw CommandQueueDenied("$idx: 사용할 수 없는 커맨드입니다.")
+                }
+                if (!item.argIsArray) {
+                    throw CommandQueueDenied("$idx: 올바른 arg 형태가 아닙니다.")
+                }
+                val partial = setNationCommand(nationId, officerLevel, item.turnList, item.action, item.arg)
+                if (!partial.result) {
+                    status.setRollbackOnly()
+                    return@execute BulkReserveResult(
+                        result = false,
+                        briefList = briefList,
+                        reason = partial.reason,
+                        errorIdx = idx,
+                    )
+                }
+                briefList.add(partial.brief ?: "")
             }
-            if (item.action !in CHIEF_COMMAND_CODES) {
-                throw CommandQueueDenied("$idx: 사용할 수 없는 커맨드입니다.")
-            }
-            if (!item.argIsArray) {
-                throw CommandQueueDenied("$idx: 올바른 arg 형태가 아닙니다.")
-            }
-            val partial = setNationCommand(nationId, officerLevel, item.turnList, item.action, item.arg)
-            if (!partial.result) {
-                return BulkReserveResult(
-                    result = false,
-                    briefList = briefList,
-                    reason = partial.reason,
-                    errorIdx = idx,
-                )
-            }
-            briefList.add(partial.brief ?: "")
-        }
-        return BulkReserveResult(result = true, briefList = briefList, reason = "success")
+            insertQueueAccepted(
+                requestId = requestId,
+                operation = "bulkNation",
+                generalId = generalId,
+                nationId = nationId,
+                officerLevel = officerLevel,
+                turnIdx = null,
+                payload = encodeJsonObject(
+                    linkedMapOf(
+                        "operation" to "bulkNation",
+                        "generalId" to generalId,
+                        "nationId" to nationId,
+                        "officerLevel" to officerLevel,
+                        "commandCount" to commands.size,
+                    ),
+                ),
+            )
+            BulkReserveResult(result = true, briefList = briefList, reason = "success", requestId = requestId)
+        } ?: throw IllegalStateException("queue transaction returned null")
     }
 
     // --- General: Push / Repeat --------------------------------------------------------------------
@@ -144,12 +196,14 @@ class CommandQueueService(
      * Push(장수) — `PushCommand` + `pushGeneralCommand`. amount==0 → deny.
      * 양수: 링을 아래로 밀고 휴식 슬롯 삽입. 음수: pull(앞에서 제거). |amount| >= MAX → 내부 no-op.
      */
-    fun pushGeneral(generalId: Int, amount: Int) {
+    fun pushGeneral(generalId: Int, amount: Int): QueueAccepted {
         if (amount == 0) throw CommandQueueDenied("0은 불가능합니다")
-        if (amount > 0) {
-            reservedTurns.pushGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
-        } else {
-            reservedTurns.pullGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = -amount)
+        return queueMutation("pushGeneral", generalId, null, null, amount) {
+            if (amount > 0) {
+                reservedTurns.pushGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
+            } else {
+                reservedTurns.pullGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = -amount)
+            }
         }
     }
 
@@ -157,9 +211,10 @@ class CommandQueueService(
      * Repeat(장수) — `RepeatCommand` + `repeatGeneralCommand`. **precheck 없음**(PHP 동일 —
      * 검증 범위 1..12 는 컨트롤러 validator가 책임). amount<=0 / amount>=MAX → 내부 no-op.
      */
-    fun repeatGeneral(generalId: Int, amount: Int) {
-        reservedTurns.repeatGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
-    }
+    fun repeatGeneral(generalId: Int, amount: Int): QueueAccepted =
+        queueMutation("repeatGeneral", generalId, null, null, amount) {
+            reservedTurns.repeatGeneralTurn(worldId = worldId, generalId = generalId, turnCnt = amount)
+        }
 
     // --- Nation: Push / Repeat ---------------------------------------------------------------------
 
@@ -168,34 +223,37 @@ class CommandQueueService(
      * 검증 순서(PHP 그대로): amount==0 → `0은 불가능합니다`; 장수/국가/수뇌 precheck는 컨트롤러가
      * [GeneralResolver]로 캐시해 전달(TOCTOU 회피). 여기선 캐시된 (nationId, officerLevel)만 쓴다.
      */
-    fun pushNation(generalId: Int, nationId: Int, officerLevel: Int, amount: Int) {
+    fun pushNation(generalId: Int, nationId: Int, officerLevel: Int, amount: Int): QueueAccepted {
         if (amount == 0) throw CommandQueueDenied("0은 불가능합니다")
-        if (amount > 0) {
-            reservedTurns.pushNationTurn(
+        return queueMutation("pushNation", generalId, nationId, officerLevel, amount) {
+            if (amount > 0) {
+                reservedTurns.pushNationTurn(
+                    worldId = worldId,
+                    nationId = nationId,
+                    officerLevel = officerLevel,
+                    turnCnt = amount,
+                )
+            } else {
+                reservedTurns.pullNationTurn(
+                    worldId = worldId,
+                    nationId = nationId,
+                    officerLevel = officerLevel,
+                    turnCnt = -amount,
+                )
+            }
+        }
+    }
+
+    /** Repeat(국가) — `NationCommand/RepeatCommand` + `repeatNationCommand`. amount 범위는 컨트롤러 validator. */
+    fun repeatNation(generalId: Int, nationId: Int, officerLevel: Int, amount: Int): QueueAccepted =
+        queueMutation("repeatNation", generalId, nationId, officerLevel, amount) {
+            reservedTurns.repeatNationTurn(
                 worldId = worldId,
                 nationId = nationId,
                 officerLevel = officerLevel,
                 turnCnt = amount,
             )
-        } else {
-            reservedTurns.pullNationTurn(
-                worldId = worldId,
-                nationId = nationId,
-                officerLevel = officerLevel,
-                turnCnt = -amount,
-            )
         }
-    }
-
-    /** Repeat(국가) — `NationCommand/RepeatCommand` + `repeatNationCommand`. amount 범위는 컨트롤러 validator. */
-    fun repeatNation(generalId: Int, nationId: Int, officerLevel: Int, amount: Int) {
-        reservedTurns.repeatNationTurn(
-            worldId = worldId,
-            nationId = nationId,
-            officerLevel = officerLevel,
-            turnCnt = amount,
-        )
-    }
 
     // --- setGeneralCommand / setNationCommand 포팅(링 쓰기) ----------------------------------------
 
@@ -289,6 +347,87 @@ class CommandQueueService(
      * 레지스트리 fallback(RestAction.name = "휴식")으로 떨어진다. **fabricate 금지.**
      */
     private fun resolveBrief(command: String): String = registry.resolve(command).name
+
+    private fun queueMutation(
+        operation: String,
+        generalId: Int,
+        nationId: Int?,
+        officerLevel: Int?,
+        amount: Int,
+        mutate: () -> Unit,
+    ): QueueAccepted {
+        val requestId = requestIds()
+        transactions.executeWithoutResult {
+            mutate()
+            insertQueueAccepted(
+                requestId = requestId,
+                operation = operation,
+                generalId = generalId,
+                nationId = nationId,
+                officerLevel = officerLevel,
+                turnIdx = null,
+                payload = encodeJsonObject(
+                    linkedMapOf(
+                        "operation" to operation,
+                        "generalId" to generalId,
+                        "nationId" to nationId,
+                        "officerLevel" to officerLevel,
+                        "amount" to amount,
+                    ),
+                ),
+            )
+        }
+        return QueueAccepted(requestId)
+    }
+
+    private fun insertQueueAccepted(
+        requestId: String,
+        operation: String,
+        generalId: Int?,
+        nationId: Int?,
+        officerLevel: Int?,
+        turnIdx: Int?,
+        payload: String,
+    ) {
+        val result = commandInbox.insertAccepted(
+            AcceptedCommand(
+                worldId = worldId,
+                requestId = requestId,
+                commandKind = CommandKind.QUEUE_MUTATION,
+                intentFingerprint = queueFingerprint(operation, payload),
+                generalId = null,
+                turnIdx = null,
+                actionCode = operation,
+                payloadJson = payload,
+            ),
+        )
+        if (result is CommandInboxRepository.InsertResult.Conflict) {
+            throw IllegalStateException("command_inbox request_id conflict")
+        }
+        if (result is CommandInboxRepository.InsertResult.Inserted) {
+            commandResults.insertTerminalResult(
+                worldId = worldId,
+                row = CommandTerminalResultFactory.acceptedRow(
+                    worldId = worldId,
+                    requestId = requestId,
+                    sentAt = Instant.now(clock),
+                    type = "queueMutation",
+                    commandKind = CommandKind.QUEUE_MUTATION,
+                    actionCode = operation,
+                    generalId = generalId,
+                    turnIdx = turnIdx,
+                ),
+                expectedInboxStatuses = setOf("ACCEPTED"),
+            )
+        }
+    }
+
+    private fun queueFingerprint(operation: String, payload: String): String {
+        val canonical = listOf("v1", worldId.value.toString(), CommandKind.QUEUE_MUTATION.name, operation, payload)
+            .joinToString("\u001f")
+        val bytes = MessageDigest.getInstance("SHA-256").digest(canonical.toByteArray(Charsets.UTF_8))
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
 
     /** arg map → jsonb 문자열. null/빈 map → `{}` (ReservedTurnRepository.normalizeArgs가 정규화). */
     private fun encodeArg(arg: Map<String, Any?>?): String? {

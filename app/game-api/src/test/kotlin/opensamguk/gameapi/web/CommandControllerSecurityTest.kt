@@ -10,6 +10,7 @@ import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.CommandReserveService.ReserveResult
+import opensamguk.infra.persistence.CommandResultRepository
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,6 +46,7 @@ class CommandControllerSecurityTest {
     private val resolver = mock(GeneralResolver::class.java)
     private val queue = mock(CommandQueueService::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
+    private val commandResults = mock(CommandResultRepository::class.java)
 
     // W0-4 결과 회신 시밍 — 이 테스트는 결과 엔드포인트를 호출하지 않으므로 redis는 미사용 mock.
     private val redis = mock(StringRedisTemplate::class.java)
@@ -53,7 +55,7 @@ class CommandControllerSecurityTest {
         MockMvcBuilders
             .standaloneSetup(
                 CommandController(
-                    precheck, reserve, resolver, queue, generals, redis,
+                    precheck, reserve, resolver, queue, generals, commandResults, redis,
                     ObjectMapper(), "che:scenario_2", GameApiProcessWorld(1),
                 ),
             )

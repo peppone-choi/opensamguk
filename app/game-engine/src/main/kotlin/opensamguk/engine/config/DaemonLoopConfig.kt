@@ -6,6 +6,7 @@ import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.rng.RandUtil
+import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.run.MonthlyPreUpdateHook
@@ -24,6 +25,8 @@ import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.RulerSuccessionHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
+import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.read.AuctionBidRepository
@@ -107,6 +110,14 @@ class DaemonLoopConfig {
     fun reservedTurnRepository(jdbc: NamedParameterJdbcTemplate): ReservedTurnRepository =
         ReservedTurnRepository(jdbc)
 
+    @Bean
+    fun commandInboxRepository(jdbc: NamedParameterJdbcTemplate): CommandInboxRepository =
+        CommandInboxRepository(jdbc)
+
+    @Bean
+    fun commandResultRepository(jdbc: NamedParameterJdbcTemplate): CommandResultRepository =
+        CommandResultRepository(jdbc)
+
     /**
      * vote_poll/vote 설문 상태 read seam (F4 Wave 투표). VoteCast/closeOldVote 설문 cast 가드의 read 경로.
      * JDBC read 전용 — write 경로는 [JdbcFlushExecutor] step-8e 뿐(one-daemon-write 규칙).
@@ -150,6 +161,13 @@ class DaemonLoopConfig {
         processWorld: EngineProcessWorld,
     ): RealtimePublisher = RealtimePublisher(template, profile, processWorld.worldId)
 
+    @Bean
+    fun commandOutboxRelay(
+        commandResultRepository: CommandResultRepository,
+        realtimePublisher: RealtimePublisher,
+        processWorld: EngineProcessWorld,
+    ): CommandOutboxRelay = CommandOutboxRelay(commandResultRepository, realtimePublisher, processWorld.worldId)
+
     /**
      * The fully-wired daemon run orchestrator — the one bean [TurnDaemonRunner] drives.
      *
@@ -185,6 +203,8 @@ class DaemonLoopConfig {
         @Value("\${opensamguk.profile}") profile: String,
         selectPoolRepository: SelectPoolRepository,
         recoveryGateProvider: FlushRecoveryGateProvider,
+        commandInboxRepository: CommandInboxRepository,
+        commandOutboxRelay: CommandOutboxRelay,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -392,11 +412,11 @@ class DaemonLoopConfig {
                 )
             },
             pullNationTurnOf = { nationId, officerLevel ->
-                reservedTurnRepository.pullNationTurn(world.worldId, nationId, officerLevel)
+                recorder.recordNationTurnPull(nationId, officerLevel)
             },
             pullGeneralTurnOf = { generalId ->
+                recorder.recordGeneralTurnPull(generalId)
                 ai.drainGeneralPassDeltas(recorder)
-                reservedTurnRepository.pullGeneralTurn(world.worldId, generalId)
             },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
         )
@@ -429,6 +449,8 @@ class DaemonLoopConfig {
             selectPoolRepository = selectPoolRepository,
             processNationCommand = nationProcessor,
             recoveryGateProvider = recoveryGateProvider,
+            commandInboxRepository = commandInboxRepository,
+            commandOutboxRelay = commandOutboxRelay,
             tournamentDaemon = TournamentDaemon(
                 gameKvRepository = gameKvRepository,
                 bettingFactory = { liveWorld, liveRecorder ->

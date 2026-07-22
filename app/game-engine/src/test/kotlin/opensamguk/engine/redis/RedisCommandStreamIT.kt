@@ -61,6 +61,50 @@ class RedisCommandStreamIT {
         val second = consumer.readCommands(500)
         assertTrue(second.isEmpty(), "second drain is empty")
     }
+
+    @Test
+    fun `consumer group wake requires explicit ack after read`() {
+        assertTrue(redis.isRunning, "redis:7-alpine container must be running")
+        val consumer = RedisCommandStream(template, profile, WorldId(1))
+        addCommand(template, "ack-me", 300)
+
+        val first = consumer.readWakeEnvelopes(2000)
+        assertEquals(listOf("ack-me"), first.map { it.envelope.requestId })
+
+        val pending = consumer.readWakeEnvelopes(500)
+        assertEquals(listOf("ack-me"), pending.map { it.envelope.requestId }, "unacked wake remains pending")
+        assertEquals(1L, consumer.acknowledgeWake(first.map { it.messageId }))
+        val afterAck = consumer.readWakeEnvelopes(500)
+        assertTrue(afterAck.isEmpty(), "acked wake is no longer replayed from the consumer PEL")
+    }
+
+    @Test
+    fun `current consumer claims stale wake from another consumer PEL`() {
+        assertTrue(redis.isRunning, "redis:7-alpine container must be running")
+        val oldConsumer = RedisCommandStream(
+            template,
+            profile,
+            WorldId(1),
+            consumerName = "old-world-1",
+            pendingClaimIdle = java.time.Duration.ZERO,
+        )
+        val currentConsumer = RedisCommandStream(
+            template,
+            profile,
+            WorldId(1),
+            consumerName = "world-1",
+            pendingClaimIdle = java.time.Duration.ZERO,
+        )
+        addCommand(template, "takeover", 400)
+
+        val claimedByOld = oldConsumer.readWakeEnvelopes(2000)
+        assertEquals(listOf("takeover"), claimedByOld.map { it.envelope.requestId })
+
+        val reclaimed = currentConsumer.readWakeEnvelopes(500)
+        assertEquals(listOf("takeover"), reclaimed.map { it.envelope.requestId })
+        assertEquals(1L, currentConsumer.acknowledgeWake(reclaimed.map { it.messageId }))
+        assertTrue(currentConsumer.readWakeEnvelopes(500).isEmpty())
+    }
     companion object {
         @Container
         @JvmStatic

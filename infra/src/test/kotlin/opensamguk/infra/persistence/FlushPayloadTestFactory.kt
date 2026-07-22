@@ -53,6 +53,9 @@ fun testFlushPayload(
     selectPoolMutations: List<SelectPoolMutation> = emptyList(),
     eventInserts: List<EventInsertRow> = emptyList(),
     eventDeletes: List<Int> = emptyList(),
+    reservedGeneralTurnPulls: List<GeneralTurnPullRow> = emptyList(),
+    reservedNationTurnPulls: List<NationTurnPullRow> = emptyList(),
+    commandResults: List<CommandResultRow> = emptyList(),
 ): FlushPayload =
     FlushPayload(
         worldId = worldId,
@@ -104,4 +107,7 @@ fun testFlushPayload(
         selectPoolMutations = selectPoolMutations,
         eventInserts = eventInserts,
         eventDeletes = eventDeletes,
+        reservedGeneralTurnPulls = reservedGeneralTurnPulls,
+        reservedNationTurnPulls = reservedNationTurnPulls,
+        commandResults = commandResults,
     )

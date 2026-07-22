@@ -2,11 +2,18 @@ package opensamguk.gameapi.reserve
 
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.infra.persistence.CommandInboxRepository
+import opensamguk.infra.persistence.CommandResultRepository
+import opensamguk.infra.persistence.CommandResultRow
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.mockito.Mockito.mock
+import org.springframework.transaction.TransactionStatus
+import org.springframework.transaction.support.SimpleTransactionStatus
+import org.springframework.transaction.support.TransactionCallback
+import org.springframework.transaction.support.TransactionOperations
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -25,14 +32,58 @@ import kotlin.test.assertTrue
 class CommandQueueTest {
 
     private val registry = CommandRegistry(GeneralActionPipeline())
-    private fun service(repo: ReservedTurnRepository) = CommandQueueService(repo, registry, GameApiProcessWorld(1))
+    private fun service(
+        repo: ReservedTurnRepository,
+        inbox: RecordingInbox = RecordingInbox(),
+        results: RecordingResults = RecordingResults(),
+    ) = CommandQueueService(
+        repo,
+        registry,
+        inbox,
+        results,
+        TestTransactions,
+        GameApiProcessWorld(1),
+        requestIds = { "queue-req" },
+    )
+
+    private object TestTransactions : TransactionOperations {
+        override fun <T : Any?> execute(action: TransactionCallback<T>): T? =
+            action.doInTransaction(SimpleTransactionStatus())
+
+        override fun executeWithoutResult(action: java.util.function.Consumer<TransactionStatus>) {
+            action.accept(SimpleTransactionStatus())
+        }
+    }
+
+    private class RecordingInbox :
+        CommandInboxRepository(mock(NamedParameterJdbcTemplate::class.java)) {
+        val accepted = mutableListOf<AcceptedCommand>()
+
+        override fun insertAccepted(command: AcceptedCommand): InsertResult {
+            accepted += command
+            return InsertResult.Inserted
+        }
+    }
+
+    private class RecordingResults :
+        CommandResultRepository(mock(NamedParameterJdbcTemplate::class.java)) {
+        val rows = mutableListOf<CommandResultRow>()
+
+        override fun insertTerminalResult(
+            worldId: WorldId,
+            row: CommandResultRow,
+            expectedInboxStatuses: Collection<String>,
+        ) {
+            rows += row
+        }
+    }
 
     /** 링 호출을 기록하는 ReservedTurnRepository 페이크(JDBC 미사용 — 모든 메서드 오버라이드). */
     private class RecordingReservedTurns :
         ReservedTurnRepository(mock(NamedParameterJdbcTemplate::class.java)) {
 
-        data class GeneralReserveCall(val worldId: WorldId, val generalId: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String)
-        data class NationReserveCall(val worldId: WorldId, val nationId: Int, val officerLevel: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String)
+        data class GeneralReserveCall(val worldId: WorldId, val generalId: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String, val requestId: String?)
+        data class NationReserveCall(val worldId: WorldId, val nationId: Int, val officerLevel: Int, val turnIdx: Int, val action: String?, val arg: String?, val brief: String, val requestId: String?)
         data class ShiftCall(val worldId: WorldId, val key: Int, val key2: Int, val cnt: Int)
 
         val generalReserves = mutableListOf<GeneralReserveCall>()
@@ -51,8 +102,9 @@ class CommandQueueTest {
             actionCode: String?,
             argJson: String?,
             brief: String,
+            requestId: String?,
         ) {
-            generalReserves += GeneralReserveCall(worldId, generalId, turnIdx, actionCode, argJson, brief)
+            generalReserves += GeneralReserveCall(worldId, generalId, turnIdx, actionCode, argJson, brief, requestId)
         }
 
         override fun reserveNationTurn(
@@ -63,8 +115,9 @@ class CommandQueueTest {
             actionCode: String?,
             argJson: String?,
             brief: String,
+            requestId: String?,
         ) {
-            nationReserves += NationReserveCall(worldId, nationId, officerLevel, turnIdx, actionCode, argJson, brief)
+            nationReserves += NationReserveCall(worldId, nationId, officerLevel, turnIdx, actionCode, argJson, brief, requestId)
         }
 
         override fun pushGeneralTurn(worldId: WorldId, generalId: Int, turnCnt: Int) { pushGeneral += ShiftCall(worldId, generalId, 0, turnCnt) }
@@ -80,7 +133,9 @@ class CommandQueueTest {
     @Test
     fun `bulk valid - reserves each turn per item with brief = action name`() {
         val repo = RecordingReservedTurns()
-        val result = service(repo).reserveBulkGeneral(
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val result = service(repo, inbox, results).reserveBulkGeneral(
             generalId = 10,
             commands = listOf(
                 CommandQueueService.CommandBulkItem(action = "che_농지개간", turnList = listOf(0, 5, 10), arg = mapOf("amount" to 100)),
@@ -98,6 +153,10 @@ class CommandQueueTest {
         assertEquals("che_농지개간", repo.generalReserves[0].action)
         assertEquals("""{"amount":100}""", repo.generalReserves[0].arg)
         assertEquals(null, repo.generalReserves[3].arg) // arg=null → repository가 {}로 정규화
+        assertEquals("queue-req", result.requestId)
+        assertEquals(CommandInboxRepository.CommandKind.QUEUE_MUTATION, inbox.accepted.single().commandKind)
+        assertEquals("bulkGeneral", inbox.accepted.single().actionCode)
+        assertEquals("queueMutation", results.rows.single().resultType)
     }
 
     @Test
@@ -216,9 +275,14 @@ class CommandQueueTest {
     @Test
     fun `push positive delegates to pushGeneralTurn`() {
         val repo = RecordingReservedTurns()
-        service(repo).pushGeneral(generalId = 10, amount = 3)
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val accepted = service(repo, inbox, results).pushGeneral(generalId = 10, amount = 3)
         assertEquals(listOf(3), repo.pushGeneral.map { it.cnt })
         assertTrue(repo.pullGeneral.isEmpty())
+        assertEquals("queue-req", accepted.requestId)
+        assertEquals("pushGeneral", inbox.accepted.single().actionCode)
+        assertEquals("queueMutation", results.rows.single().resultType)
     }
 
     @Test

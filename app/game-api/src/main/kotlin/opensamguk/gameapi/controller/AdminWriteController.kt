@@ -69,6 +69,7 @@ class AdminWriteController(
                     result = true,
                     action = result.action,
                     affected = result.affected,
+                    requestIds = result.requestIds,
                 ),
             )
         } catch (e: IllegalArgumentException) {

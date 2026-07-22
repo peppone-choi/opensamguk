@@ -4,7 +4,9 @@ import opensamguk.engine.flush.DeltaGenerationSession
 
 import java.time.Instant
 import opensamguk.infra.persistence.EventInsertRow
+import opensamguk.infra.persistence.GeneralTurnPullRow
 import opensamguk.infra.persistence.KvWrite
+import opensamguk.infra.persistence.NationTurnPullRow
 import opensamguk.infra.persistence.SelectPoolMutation
 import opensamguk.infra.persistence.SelectPoolMutationType
 import opensamguk.infra.persistence.SelectPoolCandidate
@@ -213,6 +215,8 @@ class ChangeRecorder(
     /** Pre-delete nation snapshots (the `ng_old_nations` archive write — `DatabaseHooks` step-2). */
     private val nationSnapshots = mutableListOf<DeletedNationSnapshot>()
     private val nationArchiveSnapshots = mutableListOf<Map<String, Any?>>()
+    private val reservedGeneralTurnPulls = mutableListOf<GeneralTurnPullRow>()
+    private val reservedNationTurnPulls = mutableListOf<NationTurnPullRow>()
 
     val isDirty: Boolean
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
@@ -236,7 +240,8 @@ class ChangeRecorder(
             statisticInserts.isNotEmpty() || yearbookInserts.isNotEmpty() ||
             nationArchiveSnapshots.isNotEmpty() ||
             gameWinnerUpdates.isNotEmpty() || emperiorInserts.isNotEmpty() || hallUpserts.isNotEmpty() ||
-            selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty()
+            selectPoolMutations.isNotEmpty() || eventInserts.isNotEmpty() || eventDeletes.isNotEmpty() ||
+            reservedGeneralTurnPulls.isNotEmpty() || reservedNationTurnPulls.isNotEmpty()
 
     fun dirtyGeneralIds(): Set<Int> = generalPatches.keys.toSet()
     fun dirtyCityIds(): Set<Int> = cityPatches.keys.toSet()
@@ -755,6 +760,18 @@ class ChangeRecorder(
     fun emperiorInserts(): List<EmperiorInsert> = emperiorInserts.toList()
     fun hallUpserts(): List<HallUpsert> = hallUpserts.toList()
     fun nationArchiveSnapshots(): List<Map<String, Any?>> = nationArchiveSnapshots.toList()
+    fun reservedGeneralTurnPulls(): List<GeneralTurnPullRow> = reservedGeneralTurnPulls.toList()
+    fun reservedNationTurnPulls(): List<NationTurnPullRow> = reservedNationTurnPulls.toList()
+
+    fun recordGeneralTurnPull(generalId: Int, turnCnt: Int = 1) {
+        gateMutation("recordGeneralTurnPull")
+        reservedGeneralTurnPulls.add(GeneralTurnPullRow(generalId, turnCnt))
+    }
+
+    fun recordNationTurnPull(nationId: Int, officerLevel: Int, turnCnt: Int = 1) {
+        gateMutation("recordNationTurnPull")
+        reservedNationTurnPulls.add(NationTurnPullRow(nationId, officerLevel, turnCnt))
+    }
 
     /**
      * 기록된 모든 채널을 비운다 — PHP의 요청 단위 스코프에 대응하는 tick 단위 리셋.
@@ -809,6 +826,8 @@ class ChangeRecorder(
         eventDeletes.clear()
         oldGeneralSnapshots.clear()
         nationSnapshots.clear()
+        reservedGeneralTurnPulls.clear()
+        reservedNationTurnPulls.clear()
     }
 
     /**

@@ -116,7 +116,7 @@ class V32WorldScopeCompletionMigrationTest {
 
         migrateV32()
 
-        worldOwnedTables.forEach { table ->
+        v32WorldOwnedTables.forEach { table ->
             assertEquals(
                 listOf(701),
                 jdbc.queryForList("SELECT DISTINCT world_id FROM $table ORDER BY world_id", Int::class.java),
@@ -335,7 +335,7 @@ class V32WorldScopeCompletionMigrationTest {
         ).groupValues[1]
         val parsedRelations = lockClause.split(',').map { it.trim().lowercase() }.filter(String::isNotBlank)
 
-        assertEquals(listOf("world_state") + worldOwnedTables + "game_kv", parsedRelations)
+        assertEquals(listOf("world_state") + v32WorldOwnedTables + "game_kv", parsedRelations)
         assertFalse(migrationSql.contains(Regex("world_id\\s+integer\\s+[^;]*DEFAULT", RegexOption.IGNORE_CASE)))
         assertFalse(migrationSql.contains(Regex("CREATE\\s+(OR\\s+REPLACE\\s+)?FUNCTION", RegexOption.IGNORE_CASE)))
         assertFalse(migrationSql.contains(Regex("CREATE\\s+TRIGGER", RegexOption.IGNORE_CASE)))
@@ -619,7 +619,13 @@ class V32WorldScopeCompletionMigrationTest {
             "inheritance_result",
             "select_npc_token",
         )
-        private val worldOwnedTables = firstCohort + remainingWorldTables
+        private val postV32WorldTables = listOf(
+            "command_inbox",
+            "command_result",
+            "command_outbox",
+        )
+        private val v32WorldOwnedTables = firstCohort + remainingWorldTables
+        private val worldOwnedTables = v32WorldOwnedTables + postV32WorldTables
         private val globalAllowlist = setOf(
             "inheritance_point",
             "inheritance_log",
