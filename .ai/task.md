@@ -1,10 +1,15 @@
 # Current Task
 - Status: complete
-- Updated: 2026-07-21
-- Goal: CQRS B2 S3-T1→T3 (OPENSAM-130→131→132) + residual sweep
+- Updated: 2026-07-23
+- Goal: dispatched worker `task_ea061534ce80` on `peppone-choi/arowana`:
+  - S4 hygiene: close OPENSAM-133/#279 and OPENSAM-134/#280 if build-only AC are satisfied on main by PR #312.
+  - S5 start: implement OPENSAM-137/#283 `ARCH-S5-T1` minimal build-only hot/cold catalog + architecture guard slice.
 - Progress:
-  - OPENSAM-130 (#307 / #276): DONE on main
-  - OPENSAM-131 (#308 / #277): DONE on main
-  - OPENSAM-132 (#309 / #278): DONE on main; evidence/tests/reviews closed
-- Main tip at close: see `git log -1 origin/main` after evidence PR merges
-- Non-goals held: B3/S4+ activation, prod, OPENSAM-10/v2
+  - #279 and #280 are CLOSED on GitHub with comments citing PR #312, merge commit `73fb13cbbe60b031d09d09ec03e4672f2013f4b2`, `docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md` (`Verdict: cleared`), and no-deploy/build-only residual caveats.
+  - #266 epic was commented with the S4 hygiene update and left OPEN for activation/operational residuals.
+  - Added `HotColdCatalog` and `HotColdWorldCatalogGuardTest` as a build-only inventory/guard slice; no production prefetch activation, deploy, golden update, branch, commit, or push.
+  - Focused guard evidence after method-agnostic default-deny remediation: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests opensamguk.engine.boot.HotColdWorldCatalogGuardTest --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process` -> `BUILD SUCCESSFUL in 59s`; XML `tests=9 failures=0 errors=0 skipped=0`.
+- Review/verification status:
+  - Final independent OPENSAM-137 gate re-review cleared with no blocking findings: `docs/superpowers/reviews/2026-07-23-opensam-137-hot-cold-catalog-review.md`.
+  - `scripts/agent/verify-changes.sh --run` was executed once and failed before final documentation/review updates; the broad runner failure and the pre-existing `.codex/config.toml` WIP are documented in `.ai/current-state.md`.
+- Non-goals held: production deploy/cutover, S5 runtime prefetch activation, S5-T2 full-history boot-scan removal, golden fabrication, branch/commit/push.
