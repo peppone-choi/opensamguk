@@ -251,3 +251,39 @@ ARCH-S4 inbox/outbox; activation/deploy out of scope.
 - Verification not counted as passed:
   - `scripts/agent/verify-changes.sh --run` full broad matrix remains unexecuted in this follow-up because that exact broad runner repeatedly stalled earlier in the task; the failure mode is documented here and above as an isolated build-tool/gate baseline risk.
   - PR merge is still pending remote CI. Do not merge unless required PR checks are green or the coordinator explicitly authorizes bypass for an external-only check failure.
+
+## S4 hygiene + OPENSAM-137 hot/cold catalog slice — 2026-07-23
+
+- Scope: dispatched worker `task_ea061534ce80` on active worktree `peppone-choi/arowana`; no deploy, no branch, no commit, no push.
+- S4 hygiene completed on GitHub:
+  - #279 / OPENSAM-133 CLOSED at `2026-07-23T11:23:33Z` with a build-only completion comment citing PR #312, merge commit `73fb13cbbe60b031d09d09ec03e4672f2013f4b2`, and `docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md` (`Verdict: cleared`).
+  - #280 / OPENSAM-134 CLOSED at `2026-07-23T11:23:32Z` with the same PR/review evidence and residual activation caveats.
+  - #266 epic was commented with the S4 child closure update and left OPEN for activation/operational rollout residuals.
+- Implemented OPENSAM-137 / #283 `ARCH-S5-T1` build-only minimal slice:
+  - Added `logic/src/main/kotlin/opensamguk/logic/memory/HotColdCatalog.kt` as a shared inventory for boot snapshot accesses and daemon runtime read seams, with `ALWAYS_HOT`, `PHASE_HOT`, and `QUERY_ONLY_COLD` classification.
+  - Added `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HotColdWorldCatalogGuardTest.kt` to guard catalog coverage for snapshot loader SQL helpers, legacy full-scan residuals, phase-hot non-activation entries, cataloged runtime repository calls/counts, and direct SQL usage in parity-sensitive runtime directories.
+  - Added `docs/superpowers/research/2026-07-23-opensam-137-hot-cold-catalog.md` as the inventory artifact. `docs/superpowers/research/2026-07-23-ticket-triage-next.md` was sibling-created before this worker saw it; this worker only removed trailing whitespace after `verify-changes.sh --run` reported diff-check failure.
+  - No S5 runtime prefetch activation was performed; `MonthlyPostUpdateHook` auction reads remain a cataloged `PHASE_HOT` follow-up for S5-T1 migration, and full-history boot scans remain explicit `LEGACY_FULL_SCAN_PENDING_S5_T2` residuals.
+- Focused verification evidence:
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests opensamguk.engine.boot.HotColdWorldCatalogGuardTest --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process`
+  - First narrow pass before review: `BUILD SUCCESSFUL in 13m 2s`; XML `tests="6" skipped="0" failures="0" errors="0"` at `2026-07-23T12:41:56`.
+  - After default-deny remediation: tail `BUILD SUCCESSFUL in 45s`; XML `tests="9" skipped="0" failures="0" errors="0"` at `2026-07-23T13:18:36`.
+  - After method-agnostic repository scanner remediation: tail `BUILD SUCCESSFUL in 47s`; XML `tests="9" skipped="0" failures="0" errors="0"` at `2026-07-23T13:28:45`.
+  - After method-agnostic SQL scanner remediation: tail `BUILD SUCCESSFUL in 59s`; `17 actionable tasks: 5 executed, 12 up-to-date`.
+  - Latest XML: `app/game-engine/build/test-results/test/TEST-opensamguk.engine.boot.HotColdWorldCatalogGuardTest.xml` has `tests="9" skipped="0" failures="0" errors="0"` at `2026-07-23T13:35:12`.
+- Review status:
+  - Initial independent review rejected the first draft because the guard was too narrow and all runtime seams were mislabeled `PHASE_HOT`.
+  - Remediation moved the catalog to `:logic`, added source-file/relation/order/bound/call-count metadata, added explicit non-activation `PHASE_HOT` residuals, recursively scans runtime source directories, and rejects uncataloged direct SQL template calls.
+  - Second independent review confirmed phase-hot labeling was fixed but still rejected AC-2: method-name allowlist, missing `engine/turn`/`engine/redis`, missed `JdbcOperations.queryForList` and `Connection.prepareStatement`, and no adversarial novel-method coverage.
+  - Latest remediation widened runtime scope to `engine/turn` and `engine/redis`, scans `CommandOutboxRelay` repository calls directly, catalogs `inbox.terminalRequestIds`, catalogs `WorldActionContext` bid lookup, adds `RehydrateService` as a cold direct-SQL boundary, infers repository/read-seam receivers and aliases, and adds adversarial probes for novel repository methods and alternate JDBC APIs.
+  - Third independent review still rejected AC-2 because the detector used fixed read-method prefixes and missed `fetch*`, `lookup*`, `get*`, `stream*`, `exists*`, and `NamedParameterJdbcOperations.queryForList`.
+  - Latest remediation made repository/reader receiver detection method-agnostic except for a small explicit set of non-read helper/factory methods, and adversarial probes now cover `load*`, `find*`, `fetch*`, `lookup*`, `get*`, `stream*`, `exists*`, `JdbcOperations.queryForList`, `NamedParameterJdbcOperations.queryForList`, and `Connection.prepareStatement`.
+  - Fourth independent review accepted repository default-deny and `NamedParameterJdbcOperations.queryForList`, then rejected AC-2 because SQL detection still used a fixed method allowlist and missed `queryForStream` / `queryForRowSet`.
+  - Latest remediation made direct SQL detection method-agnostic for typed JDBC/Connection/DataSource receivers except for trivial Object/Kotlin helpers, and adversarial probes now cover `NamedParameterJdbcOperations.queryForStream` and `NamedParameterJdbcOperations.queryForRowSet`.
+  - Final independent gate re-review cleared AC-2 with no blocking findings; durable repo artifact: `docs/superpowers/reviews/2026-07-23-opensam-137-hot-cold-catalog-review.md`.
+- Verification/tooling caveats:
+  - `scripts/agent/verify-changes.sh --run` was executed once before the final OPENSAM-137 remediation/evidence pass and returned `RESULT: FAIL`; observed causes included trailing whitespace in sibling-created `docs/superpowers/research/2026-07-23-ticket-triage-next.md` (fixed), missing strict review coverage for the new `logic/` change at that time (pending updated review), and the pre-existing `.codex/config.toml` guard failure below.
+  - `bash scripts/agent/test-codex-agent-os.sh` failed because `.codex/config.toml` had a pre-existing, unrelated worktree change from `max_threads = 16` to `max_threads = 1000`, triggering `AssertionError: tracked-base max_threads/max_depth must be <= 16`. This worker did not modify or revert that file; an Orca `ask` attempt for approval to restore the guard value failed because the Orca runtime closed before responding.
+  - A fablize gate warning observed a tool failure during this worker run. The known tool failures are documented here: the failed Orca `ask`, the one failed broad `verify-changes.sh --run`, and the `.codex/config.toml` Agent OS guard blocker; they are isolated from the OPENSAM-137 focused Gradle/XML evidence.
+  - Final `git diff --check` exited 0 with no output.
+  - Final `python3 tools/agent-system/check.py --strict --base origin/main` passed with `Errors: 0`, `Warnings: 0` after the OPENSAM-137 review artifact scope was anchored to `.codex/`, `.ai/`, `app/`, `docs/`, and `logic/`.

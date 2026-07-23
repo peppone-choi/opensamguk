@@ -1,0 +1,478 @@
+package opensamguk.logic.memory
+
+object HotColdCatalog {
+    const val version: String = "ARCH-S5-T1-2026-07-23"
+    const val designSource: String =
+        "docs/superpowers/plans/2026-07-23-opensam-137-hot-cold-prefetch-design.md"
+
+    val snapshotAccesses: List<SnapshotAccess> = listOf(
+        SnapshotAccess(
+            methodName = "loadWorldState",
+            relation = "world_state",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "configured world_state.id",
+            bound = AccessBound.SINGLE_ROW,
+        ),
+        SnapshotAccess(
+            methodName = "loadGameEnv",
+            relation = "game_kv:game_env",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "game_kv.id ASC",
+            bound = AccessBound.HOT_KEYSET,
+            followUp = "S5-T2 should split this into a world-scoped bounded projection.",
+        ),
+        SnapshotAccess(
+            methodName = "resolveActiveGame",
+            relation = "ng_games",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "configured server_id or id ASC singleton fallback",
+            bound = AccessBound.SINGLE_ROW,
+        ),
+        SnapshotAccess(
+            methodName = "loadServerCount",
+            relation = "ng_games",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "count aggregate",
+            bound = AccessBound.AGGREGATE,
+        ),
+        SnapshotAccess(
+            methodName = "loadStatisticRows",
+            relation = "statistic",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "statistic.id ASC",
+            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
+            followUp = "S5-T2 must replace this full-history boot scan with bounded history projection.",
+        ),
+        SnapshotAccess(
+            methodName = "loadNationHistory",
+            relation = "log_entry:NATION/HISTORY",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "nation_id ASC, log_entry.id DESC",
+            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
+            followUp = "S5-T2 must prefetch only the deterministic history window needed by turn logic.",
+        ),
+        SnapshotAccess(
+            methodName = "loadGeneralHistory",
+            relation = "log_entry:GENERAL/HISTORY",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "general_id ASC, log_entry.id DESC",
+            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
+            followUp = "S5-T2 must prefetch only the deterministic history window needed by turn logic.",
+        ),
+        SnapshotAccess(
+            methodName = "loadGlobalLogs",
+            relation = "log_entry:SYSTEM/HISTORY,ACTION",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "log_entry.id DESC",
+            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
+            followUp = "S5-T2 must replace this full log scan with a bounded cold window.",
+        ),
+        SnapshotAccess(
+            methodName = "loadActiveUniqueAuctionItems",
+            relation = "ng_auction:active uniqueItem",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "ng_auction.id ASC",
+            bound = AccessBound.ACTIVE_SET,
+        ),
+        SnapshotAccess(
+            methodName = "loadStoredUniqueItemCounts",
+            relation = "game_kv:unique item counts",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "namespace ASC",
+            bound = AccessBound.AGGREGATE,
+        ),
+        SnapshotAccess(
+            methodName = "loadInheritancePoints",
+            relation = "game_kv:inheritance",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "game_kv.id ASC",
+            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
+            followUp = "S5-T2 must make inheritance reads keyed by owner or bounded active owners.",
+        ),
+        SnapshotAccess(
+            methodName = "loadNationEnv",
+            relation = "nation_env",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "nation_env.id ASC",
+            bound = AccessBound.HOT_KEYSET,
+            followUp = "S5-T2 should make the world scope explicit when this cohort is bounded.",
+        ),
+        SnapshotAccess(
+            methodName = "loadNations",
+            relation = "nation",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "nation.id ASC",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
+            methodName = "loadCities",
+            relation = "city",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "city.id ASC",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
+            methodName = "loadGenerals",
+            relation = "general",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "general.id ASC",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
+            methodName = "loadRankValues",
+            relation = "rank_data",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "general_id ASC, rank_data.id ASC",
+            bound = AccessBound.HOT_KEYSET,
+            followUp = "S5-T2 should bind this to loaded general ids before removing full-history scans.",
+        ),
+        SnapshotAccess(
+            methodName = "loadDiplomacy",
+            relation = "diplomacy",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "diplomacy.id ASC",
+            bound = AccessBound.HOT_KEYSET,
+        ),
+        SnapshotAccess(
+            methodName = "loadAccessLogs",
+            relation = "general_access_log",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "general_id ASC",
+            bound = AccessBound.HOT_KEYSET,
+        ),
+        SnapshotAccess(
+            methodName = "loadArchivedNationIds",
+            relation = "ng_old_nations",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "nation ASC",
+            bound = AccessBound.ACTIVE_SERVER_SET,
+        ),
+    )
+
+    val runtimeSourceDirectories: List<String> = listOf(
+        "app/game-engine/src/main/kotlin/opensamguk/engine/auction",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/intake",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/redis",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/run",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/tournament",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/turn",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/war",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/world",
+    )
+
+    val runtimeDirectSqlBoundaries: List<DirectSqlBoundary> = listOf(
+        DirectSqlBoundary(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/turn/RehydrateService.kt",
+            relation = "select_pool,game_kv,ng_auction,ng_auction_bid,ng_betting,message",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.REHYDRATE_RECOVERY,
+            bound = AccessBound.BOUNDED_BATCH,
+            ordering = "bounded recovery reloads; active rows or explicit id lists where applicable",
+            followUp = "S5-T2 should convert recovery reload SQL to cataloged bounded projections before activation.",
+        ),
+    )
+
+    val runtimeReadSeams: List<RuntimeReadSeam> = listOf(
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt",
+            accessType = "ReservedTurnRepository",
+            relation = "general_turn,nation_turn",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.RESERVED_TURN_PHASE,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "exact reserved slot",
+            calls = listOf(
+                RuntimeCall("reservedTurnRepository.readReserved", 2),
+                RuntimeCall("reservedTurnRepository.readReservedNationTurn"),
+            ),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt",
+            accessType = "boot allocators",
+            relation = "message,ng_auction",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.BOOT_ALLOCATOR,
+            bound = AccessBound.AGGREGATE,
+            ordering = "max id aggregate / current repository order",
+            calls = listOf(RuntimeCall("messageRepository.findMaxId"), RuntimeCall("auctionRepository.findAll")),
+            followUp = "S5-T2 should replace auction findAll max with an aggregate reader.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnRunService.kt",
+            accessType = "command lifecycle control plane",
+            relation = "command_inbox,command_outbox",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_INTAKE,
+            bound = AccessBound.BOUNDED_BATCH,
+            ordering = "wake order then inbox lease order",
+            calls = listOf(
+                RuntimeCall("inbox.claimForExecution"),
+                RuntimeCall("inbox.terminalRequestIds"),
+                RuntimeCall("inbox.claimPendingForExecution"),
+            ),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/redis/CommandOutboxRelay.kt",
+            accessType = "command outbox relay repository boundary",
+            relation = "command_outbox",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OUTBOX_RELAY,
+            bound = AccessBound.BOUNDED_BATCH,
+            ordering = "published_at NULL, id ASC through repository contract",
+            calls = listOf(
+                RuntimeCall("repository.findPendingCommandResultOutbox"),
+                RuntimeCall("repository.markCommandOutboxPublished"),
+            ),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnDaemonCommandDispatcher.kt",
+            accessType = "command exact readers",
+            relation = "inheritance,game_env,user,betting,vote_poll,message",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "exact key or first matching deterministic row",
+            calls = listOf(
+                RuntimeCall("repo.findByTableAndNamespaceAndKey"),
+                RuntimeCall("repo.findByTable", 4),
+                RuntimeCall("repo.sumAmountByBettingIdAndUserId"),
+                RuntimeCall("repo.findPollState"),
+                RuntimeCall("reader.findMessage"),
+            ),
+            followUp = "S5-T2 should replace table-wide KV scans with named bounded projections.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/MonthlyPostUpdateHook.kt",
+            accessType = "open auction month-phase candidate",
+            relation = "ng_auction",
+            temperature = DataTemperature.PHASE_HOT,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.ACTIVE_SET,
+            ordering = "not activation-ready: current repository method has no explicit ORDER BY",
+            calls = listOf(RuntimeCall("auctionRepository.findByFinishedFalse")),
+            activationReady = false,
+            followUp = "S5-T1 runtime prefetch migration must move this to an ordered PhaseHotPrefetchStep.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/auction/AuctionOpenHandler.kt",
+            accessType = "auction open command readers",
+            relation = "ng_auction",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.ACTIVE_SET,
+            ordering = "current repository order, filtered by command predicate",
+            calls = listOf(RuntimeCall("auctionRepository.findByFinishedFalse", 2)),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/auction/AuctionBidHandler.kt",
+            accessType = "auction bid command readers",
+            relation = "ng_auction,ng_auction_bid",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "auction id exact match; bid amount DESC",
+            calls = listOf(
+                RuntimeCall("auctionRepository.findById"),
+                RuntimeCall("bidRepository.findByAuctionIdOrderByAmountDesc"),
+                RuntimeCall("auctionRepository.findByFinishedFalseAndTypeValue"),
+            ),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/auction/AuctionExpiryDaemon.kt",
+            accessType = "auction expiry month-phase candidate",
+            relation = "ng_auction",
+            temperature = DataTemperature.PHASE_HOT,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.ACTIVE_SET,
+            ordering = "not activation-ready: current repository method has no explicit ORDER BY",
+            calls = listOf(RuntimeCall("auctionRepository.findByFinishedFalse")),
+            activationReady = false,
+            followUp = "S5-T1 runtime prefetch migration should share the ordered open-auction phase cache.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/auction/AuctionFinalizeHandler.kt",
+            accessType = "auction finalize command readers",
+            relation = "ng_auction,ng_auction_bid",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "auction id exact match; bid amount DESC",
+            calls = listOf(
+                RuntimeCall("auctionRepository.findById", 2),
+                RuntimeCall("bidRepository.findByAuctionIdOrderByAmountDesc"),
+            ),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/BoardHandler.kt",
+            accessType = "board comment exact reader",
+            relation = "board_post",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "post id and nation id exact match",
+            calls = listOf(RuntimeCall("boardPostRepository.findByIdAndNationId")),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/DiplomacyLetterHandler.kt",
+            accessType = "diplomacy letter exact reader",
+            relation = "diplomacy_letter",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "letter id exact match",
+            calls = listOf(RuntimeCall("repo().findLetter", 5), RuntimeCall("repo().countNewerLetters")),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/SelectPoolHandler.kt",
+            accessType = "select pool command readers",
+            relation = "select_pool",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.ACTIVE_SET,
+            ordering = "owner/name exact match plus current pool list order",
+            calls = listOf(
+                RuntimeCall("repo.listForUser"),
+                RuntimeCall("repo.targetGeneralPool"),
+                RuntimeCall("repo.listUniqueNames"),
+                RuntimeCall("repo.findPoolEntry", 2),
+            ),
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/tournament/TournamentDaemon.kt",
+            accessType = "tournament state phase candidate",
+            relation = "game_kv:game_env",
+            temperature = DataTemperature.PHASE_HOT,
+            boundary = AccessBoundary.COMMAND_OR_PHASE_BOUNDARY,
+            bound = AccessBound.HOT_KEYSET,
+            ordering = "not activation-ready: current repository method scans table namespace",
+            calls = listOf(RuntimeCall("gameKvRepository.findByTable")),
+            activationReady = false,
+            followUp = "S5-T1 runtime prefetch migration should provide a bounded tournament KV projection.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/tournament/ProductionTournamentBettingPort.kt",
+            accessType = "tournament betting exact readers",
+            relation = "betting,game_env,inheritance",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OR_PHASE_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "betting id / owner key exact match; current KV table scans pending S5-T2",
+            calls = listOf(
+                RuntimeCall("bettingRepository.findByBettingId"),
+                RuntimeCall("<implicit>.findByTable", 2),
+                RuntimeCall("<implicit>.findByTableAndNamespaceAndKey"),
+            ),
+            followUp = "S5-T2 should replace implicit table-wide KV scans with named bounded projections.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/world/WorldActionContext.kt",
+            accessType = "unique auction world-context reader",
+            relation = "ng_auction",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_BOUNDARY,
+            bound = AccessBound.ACTIVE_SET,
+            ordering = "active unique auction predicate",
+            calls = listOf(
+                RuntimeCall("repo.findByFinishedFalseAndTypeValue"),
+                RuntimeCall("bidRepo.findTopByAuctionIdOrderByAmountDesc"),
+            ),
+        ),
+    )
+
+    val snapshotMethodNames: Set<String> = snapshotAccesses.mapTo(linkedSetOf()) { it.methodName }
+    val runtimeCallKeys: Set<String> = runtimeReadSeams
+        .flatMap { seam -> seam.calls.map { call -> "${seam.sourceFile}:${call.expression}" } }
+        .toSet()
+    val runtimeCallCounts: Map<String, Int> = runtimeReadSeams
+        .flatMap { seam -> seam.calls.map { call -> "${seam.sourceFile}:${call.expression}" to call.expectedCount } }
+        .toMap()
+    val runtimeDirectSqlBoundarySources: Set<String> =
+        runtimeDirectSqlBoundaries.mapTo(linkedSetOf()) { it.sourceFile }
+}
+
+data class SnapshotAccess(
+    val methodName: String,
+    val relation: String,
+    val temperature: DataTemperature,
+    val boundary: AccessBoundary,
+    val ordering: String,
+    val bound: AccessBound,
+    val followUp: String? = null,
+)
+
+data class RuntimeReadSeam(
+    val sourceFile: String,
+    val accessType: String,
+    val relation: String,
+    val temperature: DataTemperature,
+    val boundary: AccessBoundary,
+    val bound: AccessBound,
+    val ordering: String,
+    val calls: List<RuntimeCall>,
+    val activationReady: Boolean = true,
+    val followUp: String? = null,
+)
+
+data class RuntimeCall(
+    val expression: String,
+    val expectedCount: Int = 1,
+)
+
+data class DirectSqlBoundary(
+    val sourceFile: String,
+    val relation: String,
+    val temperature: DataTemperature,
+    val boundary: AccessBoundary,
+    val bound: AccessBound,
+    val ordering: String,
+    val followUp: String,
+)
+
+enum class DataTemperature {
+    ALWAYS_HOT,
+    PHASE_HOT,
+    QUERY_ONLY_COLD,
+}
+
+enum class AccessBoundary {
+    BOOT_ALLOCATOR,
+    BOOT_SNAPSHOT,
+    COMMAND_BOUNDARY,
+    COMMAND_INTAKE,
+    COMMAND_OR_MONTH_BOUNDARY,
+    COMMAND_OR_PHASE_BOUNDARY,
+    COMMAND_OUTBOX_RELAY,
+    REHYDRATE_RECOVERY,
+    RESERVED_TURN_PHASE,
+}
+
+enum class AccessBound {
+    ACTIVE_SERVER_SET,
+    ACTIVE_SET,
+    AGGREGATE,
+    BOUNDED_BATCH,
+    EXACT_KEY,
+    HOT_ENTITY_SET,
+    HOT_KEYSET,
+    LEGACY_FULL_SCAN_PENDING_S5_T2,
+    SINGLE_ROW,
+}
