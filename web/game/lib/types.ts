@@ -514,6 +514,21 @@ export interface MyPageResponse {
     atmos: number;
     picture: string | null;
     imageServer: number;
+    items: MyPageItem[];
+    instantActions: MyPageInstantActionFlags;
+}
+
+export interface MyPageItem {
+    type: string;
+    label: string;
+    code: string;
+    name: string;
+    droppable: boolean;
+}
+
+export interface MyPageInstantActionFlags {
+    instantRetreatPossible: boolean;
+    dieOnPrestartPossible: boolean;
 }
 
 export interface MyGeneralSummary {
