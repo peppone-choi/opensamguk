@@ -211,10 +211,12 @@ object DatabaseHooks {
         // fire. The DeletedNationSnapshot → Map carries the nation id + its archived general ids
         // (the ng_old_nations archive write).
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
+            val currentHistory = currentNationHistory(dirty.logs, snap.nation.id)
             linkedMapOf<String, Any?>(
                 "server_id" to snap.serverId,
                 "nation" to snap.nation.id,
-                "data" to toDeletedNationArchiveData(state, snap, dirty.logs),
+                "pending_history" to currentHistory,
+                "data" to toDeletedNationArchiveData(state, snap, currentHistory),
             )
         }
 
@@ -314,8 +316,6 @@ object DatabaseHooks {
             null -> "{}"
             else -> MetaJson.encode(value)
         }
-        val persistedHistory = (state.meta["generalHistory"] as? Map<*, *>)
-            ?.get(general.id) as? List<*>
         val currentHistory = pendingLogs.asReversed()
             .filter {
                 it.scope.equals("general", ignoreCase = true) &&
@@ -323,7 +323,8 @@ object DatabaseHooks {
                     it.generalId == general.id
             }
             .map { it.text }
-        val history = currentHistory + persistedHistory.orEmpty().map { it.toString() }
+        val bootHistory = generalHistoryFromBootMeta(state, general.id)
+        val history = currentHistory + bootHistory
         val legacyOwner = general.userId?.toIntOrNull() ?: general.userId ?: mInt("owner")
         val data = linkedMapOf<String, Any?>(
             "no" to general.id,
@@ -403,13 +404,14 @@ object DatabaseHooks {
             lastYearMonth = state.currentYear * 100 + state.currentMonth,
             turnTime = general.turnTime,
             data = data,
+            pendingHistory = currentHistory,
         )
     }
 
     private fun toDeletedNationArchiveData(
         state: TurnWorldState,
         snapshot: opensamguk.engine.turn.DeletedNationSnapshot,
-        pendingLogs: List<LogEntryDraft>,
+        currentHistory: List<String>,
     ): Map<String, Any?> {
         val nation = snapshot.nation
         val nationEnv = (nation.meta["nation_env"] as? Map<*, *>)
@@ -422,15 +424,7 @@ object DatabaseHooks {
             val textKey = key.toString()
             if (!aux.containsKey(textKey)) aux[textKey] = value
         }
-        val loadedHistory = state.meta["nationHistory"] as? Map<*, *>
-        val persistedHistory = (loadedHistory?.get(nation.id) ?: loadedHistory?.get(nation.id.toString())) as? List<*>
-        val currentHistory = pendingLogs.asReversed()
-            .filter {
-                it.scope.equals("nation", ignoreCase = true) &&
-                    it.category.equals("history", ignoreCase = true) &&
-                    it.nationId == nation.id
-            }
-            .map { it.text }
+        val history = currentHistory + nationHistoryFromBootMeta(state, nation.id)
         return linkedMapOf(
             "nation" to nation.id,
             "name" to nation.name,
@@ -458,8 +452,29 @@ object DatabaseHooks {
             "generals" to snapshot.generalIds,
             "msg" to ((nationEnv["nationNotice"] as? Map<*, *>)?.get("msg") ?: ""),
             "scout_msg" to nationEnv["scout_msg"],
-            "history" to (currentHistory + persistedHistory.orEmpty().map { it.toString() }),
+            "history" to history,
         )
+    }
+
+    private fun currentNationHistory(pendingLogs: List<LogEntryDraft>, nationId: Int): List<String> =
+        pendingLogs.asReversed()
+            .filter {
+                it.scope.equals("nation", ignoreCase = true) &&
+                    it.category.equals("history", ignoreCase = true) &&
+                    it.nationId == nationId
+            }
+            .map { it.text }
+
+    private fun generalHistoryFromBootMeta(state: TurnWorldState, generalId: Int): List<String> {
+        val loadedHistory = state.meta["generalHistory"] as? Map<*, *> ?: return emptyList()
+        val rows = loadedHistory[generalId] ?: loadedHistory[generalId.toString()]
+        return (rows as? List<*>).orEmpty().map { it.toString() }
+    }
+
+    private fun nationHistoryFromBootMeta(state: TurnWorldState, nationId: Int): List<String> {
+        val loadedHistory = state.meta["nationHistory"] as? Map<*, *> ?: return emptyList()
+        val rows = loadedHistory[nationId] ?: loadedHistory[nationId.toString()]
+        return (rows as? List<*>).orEmpty().map { it.toString() }
     }
 
     private fun jsonColumn(value: Any?): String = when (value) {
@@ -576,10 +591,12 @@ object DatabaseHooks {
         val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth, state.currentPhase) }
 
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
+            val currentHistory = currentNationHistory(dirty.logs, snap.nation.id)
             linkedMapOf<String, Any?>(
                 "server_id" to snap.serverId,
                 "nation" to snap.nation.id,
-                "data" to toDeletedNationArchiveData(state, snap, dirty.logs),
+                "pending_history" to currentHistory,
+                "data" to toDeletedNationArchiveData(state, snap, currentHistory),
             )
         } + recorder.nationArchiveSnapshots().map { LinkedHashMap(it) }
 
@@ -674,7 +691,9 @@ object DatabaseHooks {
             deletedGenerals = dirty.deletedGenerals,
             deletedNations = dirty.deletedNations,
             deletedNationSnapshots = deletedNationSnapshots,
-            oldGeneralSnapshots = recorder.oldGeneralSnapshots().map { toOldGeneralArchiveRow(state, it, dirty.logs) },
+            oldGeneralSnapshots = recorder.oldGeneralSnapshots().map {
+                toOldGeneralArchiveRow(state, it, dirty.logs)
+            },
             inheritanceKvWrites = recorder.inheritanceKvWrites(),
             inheritanceLogInserts = recorder.inheritanceLogInserts().map {
                 InheritanceLogRow(it.ownerID, state.currentYear, state.currentMonth, it.text, it.tag, it.date)

@@ -1,15 +1,20 @@
 # Current Task
-- Status: complete
+- Status: complete for implementation/review handoff; PR #314 opened and merge left to coordinator.
 - Updated: 2026-07-23
-- Goal: dispatched worker `task_ea061534ce80` on `peppone-choi/arowana`:
-  - S4 hygiene: close OPENSAM-133/#279 and OPENSAM-134/#280 if build-only AC are satisfied on main by PR #312.
-  - S5 start: implement OPENSAM-137/#283 `ARCH-S5-T1` minimal build-only hot/cold catalog + architecture guard slice.
-- Progress:
-  - #279 and #280 are CLOSED on GitHub with comments citing PR #312, merge commit `73fb13cbbe60b031d09d09ec03e4672f2013f4b2`, `docs/superpowers/reviews/2026-07-22-opensam-135-durable-result-outbox-review.md` (`Verdict: cleared`), and no-deploy/build-only residual caveats.
-  - #266 epic was commented with the S4 hygiene update and left OPEN for activation/operational residuals.
-  - Added `HotColdCatalog` and `HotColdWorldCatalogGuardTest` as a build-only inventory/guard slice; no production prefetch activation, deploy, golden update, branch, commit, or push.
-  - Focused guard evidence after method-agnostic default-deny remediation: `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests opensamguk.engine.boot.HotColdWorldCatalogGuardTest --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process` -> `BUILD SUCCESSFUL in 59s`; XML `tests=9 failures=0 errors=0 skipped=0`.
-- Review/verification status:
-  - Final independent OPENSAM-137 gate re-review cleared with no blocking findings: `docs/superpowers/reviews/2026-07-23-opensam-137-hot-cold-catalog-review.md`.
-  - `scripts/agent/verify-changes.sh --run` was executed once and failed before final documentation/review updates; the broad runner failure and the pre-existing `.codex/config.toml` WIP are documented in `.ai/current-state.md`.
-- Non-goals held: production deploy/cutover, S5 runtime prefetch activation, S5-T2 full-history boot-scan removal, golden fabrication, branch/commit/push.
+- Goal: dispatched worker `task_c080584714b3` on `peppone-choi/op-138-s5-t2-bounded-boot`:
+  - Implement OPENSAM-138/#284 `ARCH-S5-T2` build-only bounded boot slice after PR #313 / OPENSAM-137 hot-cold catalog.
+  - Prefer the OPENSAM-138 slice because OPENSAM-137 residuals are non-blocking and the merged catalog already marks S5-T2 full-history boot scans.
+  - Do not edit `.codex/config.toml` or `max_threads`; preserve the pre-existing dirty config diff.
+- Completed scope:
+  - Extend `HotColdCatalog` and `HotColdWorldCatalogGuardTest` rather than creating a second catalog/guard.
+  - Remove daemon boot retention of query-only cold statistic/history/global-log payloads from `WorldSnapshotLoader` and serve them through bounded on-demand readers while leaving hot process state and rank-dependent general meta intact.
+  - Keep inheritance boot state bounded to active owners and keep archive pending-history recovery-safe through the retained `FlushPayload`.
+  - Add focused boot regression evidence that removed cold meta keys stay absent from `TurnWorldState.meta`.
+  - Document the build-only design/evidence and update `.ai/current-state.md`.
+- Verification status:
+  - Java 21 focused gate passed: `BUILD SUCCESSFUL in 9m 16s`; XML `HotColdWorldCatalogGuardTest 10/0/0/0`, `WorldSnapshotLoaderArchiveIT 2/0/0/0`, `TombstoneEmitterTest 4/0/0/0`, `DeleteFlushNoDoubleApplyIT 5/0/0/0`, `GameKvFlushIT 2/0/0/0`.
+  - Independent review artifact is `docs/superpowers/reviews/2026-07-23-opensam-138-bounded-boot-review.md` with `Verdict: cleared`.
+  - `git diff --check` exited 0, and `python3 tools/agent-system/check.py --strict --base origin/main` exited 0 with `Errors: 0`, `Warnings: 0`.
+  - `scripts/agent/verify-changes.sh --run` was executed after review but was terminated with exit 143 after the broad Gradle matrix stopped producing new output; last observed broad tail reached `:infra:compileKotlin`, with no `BUILD SUCCESSFUL`.
+  - `bash scripts/agent/test-codex-agent-os.sh` failed only on the pre-existing forbidden `.codex/config.toml` `max_threads = 1000` diff; this worker did not edit or stage it.
+- Non-goals: production deploy/cutover, S5 runtime phase-prefetch activation, golden fabrication, weakening tests, merge to main.

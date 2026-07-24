@@ -1,9 +1,9 @@
 package opensamguk.logic.memory
 
 object HotColdCatalog {
-    const val version: String = "ARCH-S5-T1-2026-07-23"
+    const val version: String = "ARCH-S5-T2-2026-07-23"
     const val designSource: String =
-        "docs/superpowers/plans/2026-07-23-opensam-137-hot-cold-prefetch-design.md"
+        "docs/superpowers/plans/2026-07-23-opensam-138-bounded-boot-design.md"
 
     val snapshotAccesses: List<SnapshotAccess> = listOf(
         SnapshotAccess(
@@ -40,42 +40,6 @@ object HotColdCatalog {
             bound = AccessBound.AGGREGATE,
         ),
         SnapshotAccess(
-            methodName = "loadStatisticRows",
-            relation = "statistic",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
-            boundary = AccessBoundary.BOOT_SNAPSHOT,
-            ordering = "statistic.id ASC",
-            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
-            followUp = "S5-T2 must replace this full-history boot scan with bounded history projection.",
-        ),
-        SnapshotAccess(
-            methodName = "loadNationHistory",
-            relation = "log_entry:NATION/HISTORY",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
-            boundary = AccessBoundary.BOOT_SNAPSHOT,
-            ordering = "nation_id ASC, log_entry.id DESC",
-            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
-            followUp = "S5-T2 must prefetch only the deterministic history window needed by turn logic.",
-        ),
-        SnapshotAccess(
-            methodName = "loadGeneralHistory",
-            relation = "log_entry:GENERAL/HISTORY",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
-            boundary = AccessBoundary.BOOT_SNAPSHOT,
-            ordering = "general_id ASC, log_entry.id DESC",
-            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
-            followUp = "S5-T2 must prefetch only the deterministic history window needed by turn logic.",
-        ),
-        SnapshotAccess(
-            methodName = "loadGlobalLogs",
-            relation = "log_entry:SYSTEM/HISTORY,ACTION",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
-            boundary = AccessBoundary.BOOT_SNAPSHOT,
-            ordering = "log_entry.id DESC",
-            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
-            followUp = "S5-T2 must replace this full log scan with a bounded cold window.",
-        ),
-        SnapshotAccess(
             methodName = "loadActiveUniqueAuctionItems",
             relation = "ng_auction:active uniqueItem",
             temperature = DataTemperature.QUERY_ONLY_COLD,
@@ -96,9 +60,9 @@ object HotColdCatalog {
             relation = "game_kv:inheritance",
             temperature = DataTemperature.QUERY_ONLY_COLD,
             boundary = AccessBoundary.BOOT_SNAPSHOT,
-            ordering = "game_kv.id ASC",
-            bound = AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2,
-            followUp = "S5-T2 must make inheritance reads keyed by owner or bounded active owners.",
+            ordering = "active owner id ASC, game_kv.id ASC",
+            bound = AccessBound.ACTIVE_OWNER_SET,
+            followUp = "S5-T2 keeps only active general owners as the boot fallback; command paths use exact readers.",
         ),
         SnapshotAccess(
             methodName = "loadNationEnv",
@@ -140,7 +104,7 @@ object HotColdCatalog {
             boundary = AccessBoundary.BOOT_SNAPSHOT,
             ordering = "general_id ASC, rank_data.id ASC",
             bound = AccessBound.HOT_KEYSET,
-            followUp = "S5-T2 should bind this to loaded general ids before removing full-history scans.",
+            followUp = "S5-T2 scopes this hot cohort to the configured world.",
         ),
         SnapshotAccess(
             methodName = "loadDiplomacy",
@@ -188,6 +152,15 @@ object HotColdCatalog {
             bound = AccessBound.BOUNDED_BATCH,
             ordering = "bounded recovery reloads; active rows or explicit id lists where applicable",
             followUp = "S5-T2 should convert recovery reload SQL to cataloged bounded projections before activation.",
+        ),
+        DirectSqlBoundary(
+            sourceFile = "infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt",
+            relation = "log_entry:NATION/HISTORY,GENERAL/HISTORY",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "world/scope/entity exact, log_entry.id DESC",
+            followUp = "S5-T2 moves archive history reads from boot meta to flush-time exact-key JDBC reads.",
         ),
     )
 
@@ -396,6 +369,50 @@ object HotColdCatalog {
                 RuntimeCall("bidRepo.findTopByAuctionIdOrderByAmountDesc"),
             ),
         ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/MonthlyPreUpdateHook.kt",
+            accessType = "yearbook global log reader",
+            relation = "log_entry:SYSTEM/HISTORY,ACTION",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.CURRENT_MONTH_WINDOW,
+            ordering = "world/year/month/category exact, log_entry.id DESC",
+            calls = listOf(RuntimeCall("archiveHistoryReader.globalLogs")),
+            followUp = "S5-T2 removes global logs from boot meta; this is the exact current-month reader.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/world/WorldActionContext.kt",
+            accessType = "world action statistic bounded projection reader",
+            relation = "statistic",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.BOUNDED_BOOT_PROJECTION,
+            ordering = "max nation, max general, and latest rows by statistic.id ASC",
+            calls = listOf(RuntimeCall("statisticSnapshotReader.snapshotRows")),
+            followUp = "S5-T2 removes statisticRows from boot meta; emperor archive reads the bounded projection on demand.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/world/WorldActionContext.kt",
+            accessType = "world action global log reader",
+            relation = "log_entry:SYSTEM/HISTORY,ACTION",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.CURRENT_MONTH_WINDOW,
+            ordering = "world/year/month/category exact, log_entry.id DESC",
+            calls = listOf(RuntimeCall("archiveHistoryReader.globalLogs")),
+            followUp = "S5-T2 removes global logs from boot meta; this preserves LogHistory fallback parity.",
+        ),
+        RuntimeReadSeam(
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/world/WorldActionContext.kt",
+            accessType = "world action nation archive reader",
+            relation = "log_entry:NATION/HISTORY",
+            temperature = DataTemperature.QUERY_ONLY_COLD,
+            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
+            bound = AccessBound.EXACT_KEY,
+            ordering = "world/nation/category exact, log_entry.id DESC",
+            calls = listOf(RuntimeCall("archiveHistoryReader.nationHistory")),
+            followUp = "S5-T2 removes nation history from boot meta; this is the exact archive reader.",
+        ),
     )
 
     val snapshotMethodNames: Set<String> = snapshotAccesses.mapTo(linkedSetOf()) { it.methodName }
@@ -466,10 +483,15 @@ enum class AccessBoundary {
 }
 
 enum class AccessBound {
+    ACTIVE_ENTITY_HISTORY,
+    ACTIVE_OWNER_SET,
     ACTIVE_SERVER_SET,
     ACTIVE_SET,
     AGGREGATE,
+    BOUNDED_BOOT_PROJECTION,
     BOUNDED_BATCH,
+    BOUNDED_ENTITY_HISTORY_WINDOW,
+    CURRENT_MONTH_WINDOW,
     EXACT_KEY,
     HOT_ENTITY_SET,
     HOT_KEYSET,

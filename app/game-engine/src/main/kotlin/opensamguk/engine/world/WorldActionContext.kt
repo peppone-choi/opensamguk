@@ -17,8 +17,10 @@ import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.toTurnGeneral
 import opensamguk.infra.persistence.MetaJson
+import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.auction.AuctionInfo
 import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.auction.ResourceType
@@ -108,6 +110,8 @@ class WorldActionContext(
     override val pipeline: GeneralActionPipeline,
     private val auctionRepository: AuctionRepository? = null,
     private val auctionBidRepository: AuctionBidRepository? = null,
+    private val archiveHistoryReader: ArchiveHistoryReader? = null,
+    private val statisticSnapshotReader: StatisticSnapshotReader? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
     ProcessWarIncomeContext,
@@ -913,7 +917,16 @@ class WorldActionContext(
         val dispatcher = env[ENV_EVENT_DISPATCHER] as? EventDispatcher ?: return
         val factory = env["worldEventContextFactory"] as? ((MutableMap<String, Any?>) -> EventActionContext)
             ?: { mutableEnv: MutableMap<String, Any?> ->
-                WorldActionContext(mutableEnv, world, recorder, pipeline, auctionRepository, auctionBidRepository)
+                WorldActionContext(
+                    mutableEnv,
+                    world,
+                    recorder,
+                    pipeline,
+                    auctionRepository,
+                    auctionBidRepository,
+                    archiveHistoryReader,
+                    statisticSnapshotReader,
+                )
             }
         dispatcher.run(
             target = EventTarget.UNITED,
@@ -1339,13 +1352,14 @@ class WorldActionContext(
     }
 
     private fun loadedStatisticRows(): List<Map<String, Any?>> =
-        (world.getState().meta["statisticRows"] as? List<*>)
-            .orEmpty()
-            .mapNotNull { row ->
-                (row as? Map<*, *>)?.entries?.associateTo(LinkedHashMap()) { (key, value) ->
-                    key.toString() to value
+        statisticSnapshotReader?.snapshotRows(world.worldId)
+            ?: (world.getState().meta["statisticRows"] as? List<*>)
+                .orEmpty()
+                .mapNotNull { row ->
+                    (row as? Map<*, *>)?.entries?.associateTo(LinkedHashMap()) { (key, value) ->
+                        key.toString() to value
+                    }
                 }
-            }
 
     private fun statisticInt(value: Any?): Int = when (value) {
         is Number -> value.toInt()
@@ -1353,11 +1367,14 @@ class WorldActionContext(
     }
 
     private fun archiveVisibleNationHistory(nationId: Int): List<String> {
-        val loaded = world.getState().meta["nationHistory"] as? Map<*, *>
-        val persisted = (loaded?.get(nationId) ?: loaded?.get(nationId.toString()) as? List<*>)
-            .let { it as? List<*> }
-            .orEmpty()
-            .mapNotNull { it?.toString() }
+        val persisted = archiveHistoryReader?.nationHistory(world.worldId, nationId)
+            ?: run {
+                val loaded = world.getState().meta["nationHistory"] as? Map<*, *>
+                val rows = loaded?.get(nationId) ?: loaded?.get(nationId.toString())
+                (rows as? List<*>)
+                    .orEmpty()
+                    .mapNotNull { it?.toString() }
+            }
         val buffered = bufferedUnificationHistoryDraft
         val pending = world.peekLogs()
             .filter {
@@ -1468,15 +1485,16 @@ class WorldActionContext(
     }
 
     private fun currentGlobalLogs(category: String): List<String> {
-        val persisted = (world.getState().meta["globalLogs"] as? List<*>)
-            .orEmpty()
-            .mapNotNull { it as? Map<*, *> }
-            .filter {
-                it["category"]?.toString()?.equals(category, ignoreCase = true) == true &&
-                    (it["year"] as? Number)?.toInt() == resolveYear() &&
-                    (it["month"] as? Number)?.toInt() == resolveMonth()
-            }
-            .mapNotNull { it["text"]?.toString() }
+        val persisted = archiveHistoryReader?.globalLogs(world.worldId, category, resolveYear(), resolveMonth())
+            ?: (world.getState().meta["globalLogs"] as? List<*>)
+                .orEmpty()
+                .mapNotNull { it as? Map<*, *> }
+                .filter {
+                    it["category"]?.toString()?.equals(category, ignoreCase = true) == true &&
+                        (it["year"] as? Number)?.toInt() == resolveYear() &&
+                        (it["month"] as? Number)?.toInt() == resolveMonth()
+                }
+                .mapNotNull { it["text"]?.toString() }
         val pending = world.peekLogs()
             .filter {
                 it.scope.lowercase() in setOf("global", "system") &&

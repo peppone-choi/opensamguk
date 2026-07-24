@@ -68,6 +68,8 @@ open class JdbcFlushExecutor(
             val (invaderMessages, earlierMessages) = payload.createdMessages.partition {
                 it.bodyJson.contains("\"action\":\"raiseInvader\"")
             }
+            val oldGeneralArchiveHistory = archiveGeneralHistory(payload)
+            val deletedNationArchiveHistory = archiveNationHistory(payload)
 
             if (isUnificationFlush) {
                 if (payload.statisticInserts.isNotEmpty()) statisticInsertMany(payload.worldId, payload.statisticInserts)
@@ -104,10 +106,20 @@ open class JdbcFlushExecutor(
                 troopDeleteByNation(payload.worldId, payload.deletedNations)
             }
             if (!isUnificationFlush && payload.oldGeneralSnapshots.isNotEmpty()) {
-                ngOldGeneralsUpsert(payload.worldId, payload.archiveServerId, payload.oldGeneralSnapshots)
+                ngOldGeneralsUpsert(
+                    payload.worldId,
+                    payload.archiveServerId,
+                    payload.oldGeneralSnapshots,
+                    oldGeneralArchiveHistory,
+                )
             }
             if (!isUnificationFlush && payload.deletedNationSnapshots.isNotEmpty()) {
-                ngOldNationsUpsert(payload.worldId, payload.archiveServerId, payload.deletedNationSnapshots)
+                ngOldNationsUpsert(
+                    payload.worldId,
+                    payload.archiveServerId,
+                    payload.deletedNationSnapshots,
+                    deletedNationArchiveHistory,
+                )
             }
 
             // 3. createMany general → nation → nation_turn → diplomacy → troop (각 > 0 가드, 동결된
@@ -295,10 +307,20 @@ open class JdbcFlushExecutor(
                 if (payload.hallUpserts.isNotEmpty()) hallUpsertMany(payload.worldId, payload.hallUpserts)
                 if (preArchiveLogs.isNotEmpty()) logEntryCreateMany(payload.worldId, preArchiveLogs)
                 if (payload.oldGeneralSnapshots.isNotEmpty()) {
-                    ngOldGeneralsUpsert(payload.worldId, payload.archiveServerId, payload.oldGeneralSnapshots)
+                    ngOldGeneralsUpsert(
+                        payload.worldId,
+                        payload.archiveServerId,
+                        payload.oldGeneralSnapshots,
+                        oldGeneralArchiveHistory,
+                    )
                 }
                 if (payload.deletedNationSnapshots.isNotEmpty()) {
-                    ngOldNationsUpsert(payload.worldId, payload.archiveServerId, payload.deletedNationSnapshots)
+                    ngOldNationsUpsert(
+                        payload.worldId,
+                        payload.archiveServerId,
+                        payload.deletedNationSnapshots,
+                        deletedNationArchiveHistory,
+                    )
                 }
                 if (payload.gameWinnerUpdates.isNotEmpty()) {
                     gameWinnerUpdateMany(payload.worldId, payload.gameWinnerUpdates)
@@ -405,6 +427,7 @@ open class JdbcFlushExecutor(
         worldId: WorldId,
         archiveServerId: String?,
         snapshots: List<Map<String, Any?>>,
+        persistedHistoryByNation: Map<Int, List<String>> = emptyMap(),
     ) {
         val batch = snapshots.map { snapshot ->
             val serverId = snapshot["server_id"]?.toString()?.takeIf(String::isNotBlank)
@@ -412,14 +435,21 @@ open class JdbcFlushExecutor(
                 ?: error("ng_old_nations archive write requires FlushPayload.archiveServerId")
             val nation = (snapshot["nation"] as? Number)?.toInt()
                 ?: error("deleted nation snapshot is missing numeric nation id: $snapshot")
+            val pendingHistory = pendingHistory(snapshot)
             val data = LinkedHashMap((snapshot["data"] as? Map<*, *>)?.entries?.associate { (key, value) ->
                 key.toString() to value
             } ?: LinkedHashMap(snapshot).also {
                 it.remove("server_id")
                 it.remove("nation")
+                it.remove("pending_history")
             })
             if (nation != 0) {
-                data.putIfAbsent("history", historyRows(worldId, "NATION", nation))
+                val persistedHistory = persistedHistoryByNation[nation] ?: historyRows(worldId, "NATION", nation)
+                if (pendingHistory != null) {
+                    data["history"] = pendingHistory + persistedHistory
+                } else {
+                    data.putIfAbsent("history", persistedHistory)
+                }
             }
             MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
@@ -443,13 +473,20 @@ open class JdbcFlushExecutor(
         worldId: WorldId,
         archiveServerId: String?,
         snapshots: List<OldGeneralArchiveRow>,
+        persistedHistoryByGeneral: Map<Int, List<String>> = emptyMap(),
     ) {
         val batch = snapshots.map { snapshot ->
             val serverId = snapshot.serverId?.takeIf(String::isNotBlank)
                 ?: archiveServerId?.takeIf(String::isNotBlank)
                 ?: error("ng_old_generals archive write requires FlushPayload.archiveServerId")
             val data = LinkedHashMap(snapshot.data)
-            data.putIfAbsent("history", historyRows(worldId, "GENERAL", snapshot.generalNo))
+            val persistedHistory = persistedHistoryByGeneral[snapshot.generalNo]
+                ?: historyRows(worldId, "GENERAL", snapshot.generalNo)
+            if (snapshot.pendingHistory != null) {
+                data["history"] = snapshot.pendingHistory + persistedHistory
+            } else {
+                data.putIfAbsent("history", persistedHistory)
+            }
             MapSqlParameterSource()
                 .addValue("world_id", worldId.value)
                 .addValue("server_id", serverId)
@@ -478,6 +515,24 @@ open class JdbcFlushExecutor(
         )
         lastOps.add(FlushExecOp("ng_old_generals", FlushVerb.UPSERT, snapshots.size))
     }
+
+    private fun archiveGeneralHistory(payload: FlushPayload): Map<Int, List<String>> =
+        payload.oldGeneralSnapshots
+            .filter { it.pendingHistory != null }
+            .map { it.generalNo }
+            .distinct()
+            .associateWith { generalNo -> historyRows(payload.worldId, "GENERAL", generalNo) }
+
+    private fun archiveNationHistory(payload: FlushPayload): Map<Int, List<String>> =
+        payload.deletedNationSnapshots
+            .filter { it["pending_history"] is List<*> }
+            .mapNotNull { (it["nation"] as? Number)?.toInt() }
+            .filter { it != 0 }
+            .distinct()
+            .associateWith { nation -> historyRows(payload.worldId, "NATION", nation) }
+
+    private fun pendingHistory(snapshot: Map<String, Any?>): List<String>? =
+        (snapshot["pending_history"] as? List<*>)?.map { it.toString() }
 
     private fun historyRows(worldId: WorldId, scope: String, id: Int): List<String> =
         jdbc.queryForList(
@@ -2382,6 +2437,7 @@ data class OldGeneralArchiveRow(
     val lastYearMonth: Int,
     val turnTime: Instant,
     val data: Map<String, Any?>,
+    val pendingHistory: List<String>? = null,
 )
 
 /** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */

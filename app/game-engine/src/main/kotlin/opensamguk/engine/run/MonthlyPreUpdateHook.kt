@@ -3,6 +3,7 @@ package opensamguk.engine.run
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.tick.PreUpdateMonthly
@@ -18,6 +19,7 @@ class MonthlyPreUpdateHook(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val profileName: String,
+    private val archiveHistoryReader: ArchiveHistoryReader? = null,
 ) : PreUpdateMonthly {
     private var year = world.getState().currentYear
     private var month = world.getState().currentMonth
@@ -196,15 +198,16 @@ class MonthlyPreUpdateHook(
             ?: profileName
 
     private fun currentGlobalLogs(category: String, year: Int, month: Int): List<String> {
-        val persisted = (world.getState().meta["globalLogs"] as? List<*>)
-            .orEmpty()
-            .mapNotNull { it as? Map<*, *> }
-            .filter {
-                it["category"]?.toString()?.equals(category, ignoreCase = true) == true &&
-                    (it["year"] as? Number)?.toInt() == year &&
-                    (it["month"] as? Number)?.toInt() == month
-            }
-            .mapNotNull { it["text"]?.toString() }
+        val persisted = archiveHistoryReader?.globalLogs(world.worldId, category, year, month)
+            ?: (world.getState().meta["globalLogs"] as? List<*>)
+                .orEmpty()
+                .mapNotNull { it as? Map<*, *> }
+                .filter {
+                    it["category"]?.toString()?.equals(category, ignoreCase = true) == true &&
+                        (it["year"] as? Number)?.toInt() == year &&
+                        (it["month"] as? Number)?.toInt() == month
+                }
+                .mapNotNull { it["text"]?.toString() }
         val pending = world.peekLogs()
             .filter {
                 it.scope.lowercase() in setOf("global", "system") &&

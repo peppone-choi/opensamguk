@@ -11,8 +11,10 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.world.WorldActionContext
 import opensamguk.engine.tournament.TournamentAdminService
+import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.founding.CheHaesan
@@ -57,6 +59,8 @@ class MonthlyPostUpdateHook(
     private val auctionBidRepository: AuctionBidRepository? = null,
     private val tournamentAdmin: TournamentAdminService = TournamentAdminService(),
     private val eventDispatcher: EventDispatcher? = null,
+    private val archiveHistoryReader: ArchiveHistoryReader? = null,
+    private val statisticSnapshotReader: StatisticSnapshotReader? = null,
 ) : PostUpdateMonthly<RandUtil> {
 
     override fun run(monthlyRng: RandUtil) {
@@ -204,6 +208,8 @@ class MonthlyPostUpdateHook(
             pipeline = pipeline,
             auctionRepository = auctionRepository,
             auctionBidRepository = auctionBidRepository,
+            archiveHistoryReader = archiveHistoryReader,
+            statisticSnapshotReader = statisticSnapshotReader,
         )
 
         postUpdateMonthlyTail(
@@ -320,6 +326,8 @@ class MonthlyPostUpdateHook(
                     pipeline = pipeline,
                     auctionRepository = auctionRepository,
                     auctionBidRepository = auctionBidRepository,
+                    archiveHistoryReader = archiveHistoryReader,
+                    statisticSnapshotReader = statisticSnapshotReader,
                 )
             },
             envSupplier = {
