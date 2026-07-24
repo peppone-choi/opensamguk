@@ -199,6 +199,28 @@ export default function DiplomacyPage() {
         }
     };
 
+    const handleRespond = async (letterNo: number, isAgree: boolean, reason = '') => {
+        if (generalId == null) return;
+        const actionText = isAgree ? '승인' : '거부';
+        try {
+            const out = await submitCommandAndAwaitResult(() =>
+                api.commands.diploRespondLetter({ letterNo, isAgree, reason }, generalId),
+            );
+            if (out.status === 'rejected') {
+                showToast(out.reason ?? `${actionText}에 실패했습니다.`);
+                return;
+            }
+            if (out.status === 'pending') {
+                showToast(out.reason);
+                return;
+            }
+            showToast(`${actionText}했습니다.`);
+            fetchData();
+        } catch (e) {
+            showToast(`${actionText}에 실패했습니다: ` + (e instanceof Error ? e.message : ''));
+        }
+    };
+
     // 페이지 접근 권한 게이트 — legacy t_diplomacy.php:28-30
     // checkSecretPermission($me) < 1 → "권한이 부족합니다. 수뇌부가 아니거나 사관년도가 부족합니다."
     // frontInfo가 아직 로드되지 않은 경우(permission=0 기본값)도 동일하게 차단된다.
@@ -371,6 +393,7 @@ export default function DiplomacyPage() {
                                     canWrite={canWrite}
                                     onRollback={handleRollback}
                                     onDestroy={handleDestroy}
+                                    onRespond={handleRespond}
                                 />
                             ))}
                         </div>
@@ -403,12 +426,14 @@ function LetterCard({
     canWrite,
     onRollback,
     onDestroy,
+    onRespond,
 }: {
     letter: DiplomacyLetter;
     myNationId: number;
     canWrite: boolean;
     onRollback: (letterNo: number) => void;
     onDestroy: (letterNo: number) => void;
+    onRespond: (letterNo: number, isAgree: boolean, reason?: string) => void;
 }) {
     // Header shows the counter-party (the OTHER side relative to my nation) — legacy targetNation.
     const counter = letter.src.nationID === myNationId ? letter.dest : letter.src;
@@ -421,6 +446,7 @@ function LetterCard({
 
     // 회수 가능: proposed 상태 && 내가 송신국 — legacy drawLetter (state=='proposed' && src.nationID==myNationID)
     const canRollback = canWrite && letter.state === 'proposed' && letter.src.nationID === myNationId;
+    const canRespond = canWrite && letter.state === 'proposed' && letter.src.nationID !== myNationId;
     // 파기 버튼 노출: activated 상태 && 내가 양측 중 하나 — legacy drawLetter (state=='activated' 일 때 .btnDestroy show)
     const showDestroy = canWrite && letter.state === 'activated' &&
         (letter.src.nationID === myNationId || letter.dest.nationID === myNationId);
@@ -429,6 +455,17 @@ function LetterCard({
     const destroyDisabled =
         (letter.src.nationID === myNationId && letter.state_opt === 'try_destroy_src') ||
         (letter.dest.nationID === myNationId && letter.state_opt === 'try_destroy_dest');
+
+    const approve = () => {
+        if (!confirm('승인하시겠습니까?')) return;
+        onRespond(letter.no, true, '');
+    };
+
+    const reject = () => {
+        const reason = prompt('거부 사유를 입력하세요.', '');
+        if (reason == null) return;
+        onRespond(letter.no, false, reason.slice(0, 50));
+    };
 
     return (
         <GameCard style={{ padding: 0, overflow: 'hidden' }}>
@@ -499,8 +536,7 @@ function LetterCard({
                     </div>
                 )}
 
-                {/* 동작 버튼 — legacy t_diplomacy.php .btnRollback '회수' / .btnDestroy '파기' (정적 라벨) */}
-                {(canRollback || showDestroy) && (
+                {(canRollback || canRespond || showDestroy) && (
                     <div style={{ display: 'flex', gap: 'var(--space-sm)', marginTop: 'var(--space-sm)', justifyContent: 'flex-end' }}>
                         {canRollback && (
                             <button
@@ -509,6 +545,22 @@ function LetterCard({
                             >
                                 회수
                             </button>
+                        )}
+                        {canRespond && (
+                            <>
+                                <button
+                                    onClick={approve}
+                                    style={{ fontSize: 'var(--text-sm)' }}
+                                >
+                                    승인
+                                </button>
+                                <button
+                                    onClick={reject}
+                                    style={{ fontSize: 'var(--text-sm)' }}
+                                >
+                                    거부
+                                </button>
+                            </>
                         )}
                         {showDestroy && (
                             <button

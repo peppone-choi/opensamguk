@@ -638,6 +638,14 @@ export const api = {
         // 외교 서신 파기(승인 단계, 상호 동의 2단계) — legacy j_diplomacy_destroy_letter.php(letterNo).
         diploDestroyLetter: <T = unknown>(args: { letterNo: number }, generalId: number, turnIdx = 0) =>
             post<IntakeOutcome & T>(`/api/command/diploDestroyLetter?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        diploRespondLetter: <T = unknown>(
+            args: { letterNo: number; isAgree?: boolean; reason?: string },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(
+            `/api/command/diploRespondLetter?generalId=${generalId}&turnIdx=${turnIdx}`,
+            { letterNo: args.letterNo, isAgree: args.isAgree ?? false, reason: args.reason ?? '' },
+        ),
         // 게시판 글쓰기(회의실/기밀실) — legacy j_board_article_add.php(isSecret/title/text).
         boardArticle: <T = unknown>(
             args: { isSecret: boolean; title: string; text: string },
