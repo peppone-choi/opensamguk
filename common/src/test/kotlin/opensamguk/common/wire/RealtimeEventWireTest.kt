@@ -59,12 +59,26 @@ class RealtimeEventWireTest {
             event = TurnDaemonEvent.CommandResult(
                 result = TroopJoinFail(generalId = 11, troopId = 7, reason = "troop full"),
             ),
+            committedWorldVersion = 12,
         )
         val raw = WireJson.encodeToString(TurnDaemonEventEnvelope.serializer(), envelope)
         val decoded = WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), raw)
         assertEquals(envelope, decoded)
+        assertEquals(12L, decoded.committedWorldVersion)
         val inner = (decoded.event as TurnDaemonEvent.CommandResult).result
         val fail = assertIs<TroopJoinFail>(inner)
         assertEquals("troop full", fail.reason)
+    }
+
+    @Test
+    fun `event envelope without committedWorldVersion remains decodable`() {
+        val raw = """
+            {"requestId":"req-legacy","sentAt":"0200-01-01T00:00:00.000Z","event":{"type":"commandResult","result":{"type":"troopJoin","ok":false,"generalId":11,"troopId":7,"reason":"troop full"}}}
+        """.trimIndent()
+
+        val decoded = WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), raw)
+
+        assertEquals("req-legacy", decoded.requestId)
+        assertEquals(null, decoded.committedWorldVersion)
     }
 }

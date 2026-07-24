@@ -11,7 +11,12 @@ import kotlinx.serialization.Serializable
 data class TurnDaemonCommandEnvelope(val requestId: String, val sentAt: String, val command: TurnDaemonCommand)
 
 @Serializable
-data class TurnDaemonEventEnvelope(val requestId: String? = null, val sentAt: String, val event: TurnDaemonEvent)
+data class TurnDaemonEventEnvelope(
+    val requestId: String? = null,
+    val sentAt: String,
+    val event: TurnDaemonEvent,
+    val committedWorldVersion: Long? = null,
+)
 
 const val WIRE_PAYLOAD_FIELD: String = "payload"
 

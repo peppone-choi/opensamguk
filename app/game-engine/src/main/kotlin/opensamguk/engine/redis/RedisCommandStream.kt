@@ -74,7 +74,7 @@ open class RedisCommandStream(
 
     /**
      * W0-4 인테이크 결과 회신 채널 — [readCommands]와 동일한 드레인이지만 **엔벨로프째** 돌려준다.
-     * per-requestId 결과 회신([opensamguk.engine.redis.RealtimePublisher.publishCommandResult])은
+     * per-requestId 결과 회신([opensamguk.engine.redis.RealtimePublisher.publishCommandResultPayload])은
      * 엔벨로프의 `requestId`가 필요하므로 커맨드만 벗겨내면 안 된다. 커서 전진 규약은 동일:
      * 파싱 실패 payload도 [lastId]를 전진시키고 건너뛴다.
      */

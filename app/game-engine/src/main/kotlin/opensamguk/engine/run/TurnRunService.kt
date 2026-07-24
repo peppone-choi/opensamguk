@@ -86,9 +86,9 @@ internal class LiveRemainNationEnv(
  * dirty-ids select which world rows to flush. Logs are pushed onto the world and drained from its log
  * list (the only world-dirty signal exercised in P1).
  *
- * **`commandResult` 회신 (W0-4, P1 DECISION 해제):** 드레인된 인테이크 엔벨로프의 결과는
- * (requestId, result) 쌍으로 [RealtimePublisher.publishCommandResult]에 회신된다 — per-requestId
- * string 키 + 짧은 TTL, game-api `GET /api/command/result/{requestId}` 폴링이 소비한다.
+     * **`commandResult` 회신 (W0-4, P1 DECISION 해제):** 드레인된 인테이크 엔벨로프의 결과는
+     * durable outbox payload 그대로 [RealtimePublisher.publishCommandResultPayload]에 회신된다 —
+     * per-requestId string 키 + 짧은 TTL, game-api `GET /api/command/result/{requestId}` 폴링이 소비한다.
  * `turnCompleted` realtime pub/sub → SSE relay 왕복은 그대로 유지된다.
  */
 open class TurnRunService(
@@ -154,7 +154,7 @@ open class TurnRunService(
      * Routes drained intake commands (auction bid/finalize, and the P6/P7 commands that follow) to
      * their engine handlers. Built per-run against the live [world] (mirrors the sibling per-run
      * handlers — the world is per-run state, not a Spring bean). 결과는 W0-4부터
-     * [RealtimePublisher.publishCommandResult]로 per-requestId 회신된다(위 헤더 참조).
+     * [RealtimePublisher.publishCommandResultPayload]로 per-requestId 회신된다(위 헤더 참조).
      */
     private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null && boardPostRepository != null) {
         TurnDaemonCommandDispatcher(
@@ -244,7 +244,7 @@ open class TurnRunService(
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
         flushWithGeneration(payload)
         acknowledgeClaimedWakes(claimed)
-        publishCommandResults(commandResults, intakeResults)
+        publishCommandResults(commandResults)
         return claimed.size
     }
 
@@ -257,11 +257,6 @@ open class TurnRunService(
         //    intake commands (auction bid/finalize, …) route to their handler. The reserved
         //    general-turn ACTIONS live in the general_turn ring (ReservedTurnRepository), NOT on this
         //    stream.
-        //
-        //    W0-4 인테이크 결과 회신: 엔벨로프째 드레인해 각 (requestId, result) 쌍을
-        //    [RealtimePublisher.publishCommandResult]로 SET한다(짧은 TTL — game-api 폴링이 읽는다).
-        //    deny(ok=false)도 회신한다 — 페이지가 성공 토스트를 위조하지 않으려면 deny가 돌아와야
-        //    한다. 이 publish는 Redis 휘발성 회신이며 DB 쓰기가 아니다(one-daemon-write-rule 비위반).
         val claimed = claimExecutableEnvelopes(commandBlockMs)
         val intakeResults = commandDispatcher?.dispatchEnvelopes(claimed.map { it.envelope }).orEmpty()
 
@@ -372,7 +367,7 @@ open class TurnRunService(
         )
         flushWithGeneration(payload)
         acknowledgeClaimedWakes(claimed)
-        publishCommandResults(commandResults, intakeResults)
+        publishCommandResults(commandResults)
 
         // 4. advance the world calendar and publish the coarse turnCompleted realtime signal.
         // Shared with [retryRetainedFlush] so FLUSH_RETRY success cannot leave memory pre-tick.
@@ -449,13 +444,12 @@ open class TurnRunService(
 
     private fun publishCommandResults(
         commandResults: List<CommandResultRow>,
-        intakeResults: List<Pair<String, TurnDaemonCommandResult>>,
     ) {
         if (commandResults.isEmpty()) return
         val relayed = commandOutboxRelay?.publishPending()
         if (relayed != null) return
-        commandResults.zip(intakeResults).forEach { (row, pair) ->
-            realtimePublisher.publishCommandResult(pair.first, pair.second, sentAtIso = row.sentAt.toString())
+        commandResults.forEach { row ->
+            realtimePublisher.publishCommandResultPayload(row.requestId, row.envelopeJson)
         }
     }
 
@@ -541,6 +535,7 @@ open class TurnRunService(
             requestId = requestId,
             sentAt = sentAt.toString(),
             event = TurnDaemonEvent.CommandResult(result),
+            committedWorldVersion = committedWorldVersion,
         )
         CommandResultRow(
             requestId = requestId,
@@ -574,6 +569,7 @@ open class TurnRunService(
             requestId = requestId,
             sentAt = sentAt.toString(),
             event = TurnDaemonEvent.CommandResult(result),
+            committedWorldVersion = committedWorldVersion,
         )
         CommandResultRow(
             requestId = requestId,

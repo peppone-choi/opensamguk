@@ -29,6 +29,13 @@ jwt:
 opensamguk:
   world-id: ${OPENSAMGUK_WORLD_ID}
   profile: ${OPENSAMGUK_PROFILE:che:scenario_2}
+  read-barrier:
+    max-wait-ms: ${OPENSAMGUK_READ_BARRIER_MAX_WAIT_MS:400}
+    poll-interval-ms: ${OPENSAMGUK_READ_BARRIER_POLL_INTERVAL_MS:25}
+    retry-after-ms: ${OPENSAMGUK_READ_BARRIER_RETRY_AFTER_MS:150}
+    pool:
+      max-size: ${OPENSAMGUK_READ_BARRIER_POOL_MAX_SIZE:4}
+      connection-timeout-ms: ${OPENSAMGUK_READ_BARRIER_POOL_CONNECTION_TIMEOUT_MS:250}
 server:
   port: ${GAME_API_PORT:8081}
 management:

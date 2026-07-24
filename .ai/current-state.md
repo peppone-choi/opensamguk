@@ -18,6 +18,34 @@ Reviews: `docs/superpowers/reviews/2026-07-21-opensam-13{0,1,2}-*.md` Verdict cl
 
 ARCH-S4 inbox/outbox; activation/deploy out of scope.
 
+## OPENSAM-139 minVersion read barrier — 2026-07-24
+
+- Scope: ARCH-S5-T3 build-only committedWorldVersion envelope propagation and game-api minVersion primary-read barrier; no deploy/cutover and frontend minVersion page wiring is out of scope.
+- Implemented locally:
+  - `TurnDaemonEventEnvelope` now carries nullable `committedWorldVersion` while preserving decode of legacy envelopes that omit the field.
+  - Daemon command-result rows and API terminal result rows encode the committed version in the stored envelope JSON.
+  - `RealtimePublisher` no longer constructs an alternate command-result envelope; direct fallback and `CommandOutboxRelay` publish the exact stored outbox payload JSON.
+  - `GET /api/command/result/{requestId}` exposes `committedWorldVersion` at the top level when present in the event envelope.
+  - game-api registers a GET `minVersion` interceptor under `/api/**`, classifies command-result reads as read-your-writes, ranks/history/world-log/admin reads as eventual, and treats other API reads as authoritative.
+  - `ReadConsistencyBarrier` polls `world_state.world_version` through a dedicated small `game-api-read-barrier` Hikari pool pointed at the primary datasource URL, then returns stale reads as 409 `VERSION_NOT_VISIBLE` with `worldId`, `currentVersion`, `requiredVersion`, and `retryAfterMs`.
+- Observed focused evidence:
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :common:test --tests opensamguk.common.wire.RealtimeEventWireTest --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process` passed: `BUILD SUCCESSFUL in 1m 21s`.
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests opensamguk.engine.intake.IntakeResultChannelTest --tests opensamguk.engine.redis.CommandOutboxRelayTest --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process` passed: `BUILD SUCCESSFUL in 5m 59s`.
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-api:test --tests opensamguk.gameapi.consistency.ReadConsistencyBarrierTest --tests opensamguk.gameapi.consistency.ReadConsistencyClassifierTest --tests opensamguk.gameapi.consistency.ReadConsistencyInterceptorTest --tests opensamguk.gameapi.consistency.ReadConsistencyBarrierIT --tests opensamguk.gameapi.web.CommandResultLookupTest --no-daemon --no-configuration-cache --no-build-cache --console=plain -Dkotlin.compiler.execution.strategy=in-process` passed after fixing review blockers: `BUILD SUCCESSFUL in 4m 57s`.
+  - `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew :app:game-engine:test --tests opensamguk.engine.intake.IntakeResultChannelTest --tests opensamguk.engine.redis.CommandOutboxRelayTest --console=plain` passed after daemon reset/cached rerun: `BUILD SUCCESSFUL in 4m 56s`.
+  - Focused XML aggregation over common/game-engine/game-api test result files reported `xml_files=8 bad_suites=0`.
+  - `git diff --check` exited 0.
+  - Independent follow-up review cleared: `docs/superpowers/reviews/2026-07-24-opensam-139-minversion-read-barrier-review.md`.
+- Tooling/debug notes:
+  - The first game-api IT attempt failed because the visible-path assertion used `/api/world-map`, which has no controller mapping once the barrier passes; the test now uses a scanned probe controller and passes.
+  - A later game-api IT attempt failed on malformed YAML indentation for the new read-barrier config block; indentation was fixed and the same focused gate passed.
+  - `scripts/agent/verify-changes.sh --run` was executed and interrupted after the broad Gradle phase produced no task output for a bounded wait.
+  - `bash scripts/agent/test-codex-agent-os.sh` fails only on the pre-existing forbidden `.codex/config.toml` personal overlay (`max_threads/max_depth`), which this worker did not edit or stage.
+  - `python3 tools/agent-system/check.py --strict --base origin/main` reports one remaining logical error, the same pre-existing `.codex/config.toml` personal model pin; the process exited 0.
+  - Discovery/tool failures were isolated: expected missing design/research bounded-wait checks before files arrived, two stale path reads, comment-checker on an edited CommandController comment that was removed, unsupported `rg` look-ahead syntax, expected no-match `rg` exit 1, and repeated engine `compileTestKotlin` stalls recovered by daemon reset/cached rerun. These are not product failures.
+  - The existing dirty `.codex/config.toml` personal overlay remains unmodified and must not be staged.
+- Still pending before handoff: commit, push, and PR.
+
 ## OPENSAM-133 in progress — 2026-07-22
 
 - Scope: ARCH-S4-T1 build-only command_inbox authority before API 202.
