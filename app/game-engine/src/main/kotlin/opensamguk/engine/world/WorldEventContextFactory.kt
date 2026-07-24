@@ -2,6 +2,8 @@ package opensamguk.engine.world
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.infra.read.ArchiveHistoryReader
+import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventStore
@@ -47,6 +49,8 @@ object WorldEventContextFactory {
         startYear: Int,
         mapName: String,
         eventStore: EventStore,
+        archiveHistoryReader: ArchiveHistoryReader? = null,
+        statisticSnapshotReader: StatisticSnapshotReader? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
         val cityConst = CityConstRegistry.find(mapName) ?: CityConstRegistry.of("che")
         return { env ->
@@ -65,7 +69,14 @@ object WorldEventContextFactory {
             env[DeleteEventContext.ENV_KEY] = eventStore              // "eventStore"
 
             // cast-ctx leaf가 그대로 받는 단일 컨텍스트. env를 참조로 감싸므로 currentEventID 갱신이 보인다.
-            val wctx = WorldActionContext(env, world, recorder, pipeline)
+            val wctx = WorldActionContext(
+                env,
+                world,
+                recorder,
+                pipeline,
+                archiveHistoryReader = archiveHistoryReader,
+                statisticSnapshotReader = statisticSnapshotReader,
+            )
 
             // env-read leaf의 world-view 키 (모두 같은 wctx — WorldActionContext가 전부 구현).
             env[AssignGeneralSpecialityAction.ENV_WORLD] = wctx // "specialityWorld"

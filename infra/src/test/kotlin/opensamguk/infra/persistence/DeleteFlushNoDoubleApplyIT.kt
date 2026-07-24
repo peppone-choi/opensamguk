@@ -424,6 +424,72 @@ class DeleteFlushNoDoubleApplyIT {
     }
 
     @Test
+    fun `marked archive payload merges pending history before persisted history and is retry safe`() {
+        val payload = testFlushPayload(
+            worldId = opensamguk.common.world.WorldId(1),
+            worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 200, "current_month" to 1),
+            archiveServerId = "archive-server",
+            oldGeneralSnapshots = listOf(
+                OldGeneralArchiveRow(
+                    serverId = null,
+                    generalNo = 10,
+                    owner = "owner-10",
+                    name = "장수십",
+                    lastYearMonth = 20001,
+                    turnTime = Instant.parse("0200-01-01T00:00:00Z"),
+                    data = linkedMapOf(
+                        "no" to 10,
+                        "name" to "장수십",
+                        "history" to listOf("덮어쓸 장수사"),
+                    ),
+                    pendingHistory = listOf("이번 틱 최근 장수사", "이번 틱 첫 장수사"),
+                ),
+            ),
+            deletedNationSnapshots = listOf(
+                linkedMapOf(
+                    "nation" to 9,
+                    "pending_history" to listOf("이번 틱 최근 국사", "이번 틱 첫 국사"),
+                    "data" to linkedMapOf(
+                        "nation" to 9,
+                        "name" to "망국",
+                        "history" to listOf("덮어쓸 국사"),
+                    ),
+                ),
+            ),
+        )
+
+        executor.flush(payload)
+        executor.flush(payload)
+
+        assertEquals(
+            1,
+            count(
+                """
+                SELECT count(*)
+                  FROM ng_old_generals
+                 WHERE world_id = 1
+                   AND server_id = 'archive-server'
+                   AND general_no = 10
+                   AND data = '{"no":10,"name":"장수십","history":["이번 틱 최근 장수사","이번 틱 첫 장수사","장수사"]}'::jsonb
+                """.trimIndent(),
+            ),
+        )
+        assertEquals(
+            1,
+            count(
+                """
+                SELECT count(*)
+                  FROM ng_old_nations
+                 WHERE world_id = 1
+                   AND server_id = 'archive-server'
+                   AND nation = 9
+                   AND data = '{"nation":9,"name":"망국","history":["이번 틱 최근 국사","이번 틱 첫 국사","국가사"]}'::jsonb
+                """.trimIndent(),
+            ),
+        )
+    }
+
+    @Test
     fun `nation cascade deletes diplomacy + nation_turn + nation exactly once`() {
         val payload = testFlushPayload(
             worldId = opensamguk.common.world.WorldId(1),

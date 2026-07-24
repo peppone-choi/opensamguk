@@ -69,15 +69,14 @@ class WorldSnapshotLoader(
             for (key in snapshotKeys) {
                 if (loaded.meta.containsKey(key)) merged[key] = loaded.meta[key]
             }
+            for (key in coldBootMetaKeys) {
+                merged.remove(key)
+            }
             loaded.copy(meta = merged)
         }
         val activeGame = resolveActiveGame(loadedState.meta)
         val activeServerId = activeGame?.serverId
         val serverCount = loadServerCount()
-        val statisticRows = loadStatisticRows()
-        val nationHistory = loadNationHistory()
-        val generalHistory = loadGeneralHistory()
-        val globalLogs = loadGlobalLogs()
         val activeUniqueAuctionItems = loadActiveUniqueAuctionItems()
         val storedUniqueItemCounts = loadStoredUniqueItemCounts()
         val inheritancePoints = loadInheritancePoints()
@@ -99,10 +98,6 @@ class WorldSnapshotLoader(
                     activeGame.map?.let { this["map_theme"] = it }
                 }
                 this["serverCount"] = serverCount
-                this["statisticRows"] = statisticRows
-                this["nationHistory"] = nationHistory
-                this["generalHistory"] = generalHistory
-                this["globalLogs"] = globalLogs
                 this["activeUniqueAuctionItems"] = activeUniqueAuctionItems
                 this["storedUniqueItemCounts"] = storedUniqueItemCounts
                 this["inheritancePoints"] = inheritancePoints
@@ -241,72 +236,6 @@ class WorldSnapshotLoader(
     private fun loadServerCount(): Int =
         jdbc.queryForObject("SELECT count(*) FROM ng_games", Int::class.java) ?: 0
 
-    private fun loadStatisticRows(): List<Map<String, Any?>> = jdbc.query(
-        """
-        SELECT id, nation_count, nation_name, nation_hist, gen_count,
-               personal_hist, special_hist, CAST(aux AS VARCHAR) AS aux
-          FROM statistic
-         ORDER BY id ASC
-        """.trimIndent(),
-    ) { rs, _ ->
-        linkedMapOf(
-            "id" to rs.getInt("id"),
-            "nation_count" to rs.getInt("nation_count"),
-            "nation_name" to rs.getString("nation_name"),
-            "nation_hist" to rs.getString("nation_hist"),
-            "gen_count" to rs.getString("gen_count"),
-            "personal_hist" to rs.getString("personal_hist"),
-            "special_hist" to rs.getString("special_hist"),
-            "aux" to (rs.getString("aux") ?: "{}"),
-        )
-    }
-
-    private fun loadNationHistory(): Map<Int, List<String>> {
-        val result = LinkedHashMap<Int, MutableList<String>>()
-        jdbc.query(
-            """
-            SELECT nation_id, text
-              FROM log_entry
-             WHERE scope = 'NATION' AND category = 'HISTORY' AND nation_id IS NOT NULL
-             ORDER BY nation_id ASC, id DESC
-            """.trimIndent(),
-        ) { rs ->
-            result.getOrPut(rs.getInt("nation_id")) { mutableListOf() }.add(rs.getString("text"))
-        }
-        return result
-    }
-
-    private fun loadGeneralHistory(): Map<Int, List<String>> {
-        val result = LinkedHashMap<Int, MutableList<String>>()
-        jdbc.query(
-            """
-            SELECT general_id, text
-              FROM log_entry
-             WHERE scope = 'GENERAL' AND category = 'HISTORY' AND general_id IS NOT NULL
-             ORDER BY general_id ASC, id DESC
-            """.trimIndent(),
-        ) { rs ->
-            result.getOrPut(rs.getInt("general_id")) { mutableListOf() }.add(rs.getString("text"))
-        }
-        return result
-    }
-
-    private fun loadGlobalLogs(): List<Map<String, Any?>> = jdbc.query(
-        """
-        SELECT category, year, month, text
-          FROM log_entry
-         WHERE scope = 'SYSTEM' AND category IN ('HISTORY', 'ACTION')
-         ORDER BY id DESC
-        """.trimIndent(),
-    ) { rs, _ ->
-        linkedMapOf(
-            "category" to rs.getString("category"),
-            "year" to rs.getInt("year"),
-            "month" to rs.getInt("month"),
-            "text" to rs.getString("text"),
-        )
-    }
-
     private fun loadActiveUniqueAuctionItems(): List<String> = jdbc.query(
         "SELECT target FROM ng_auction WHERE type = 'uniqueItem' AND finished = false ORDER BY id ASC",
     ) { rs, _ -> rs.getString("target") }
@@ -342,18 +271,29 @@ class WorldSnapshotLoader(
         val result = LinkedHashMap<Int, LinkedHashMap<String, List<Any?>>>()
         jdbc.query(
             """
-            SELECT namespace, key, CAST(value AS VARCHAR) AS value_json
-              FROM game_kv
-             WHERE "table" = 'inheritance'
-               AND namespace LIKE 'inheritance_%'
-             ORDER BY id ASC
+            WITH active_owner AS (
+                SELECT DISTINCT user_id::integer AS owner_id,
+                       'inheritance_' || user_id AS namespace
+                  FROM general
+                 WHERE world_id = ?
+                   AND user_id IS NOT NULL
+                   AND user_id ~ '^[0-9]+$'
+            )
+            SELECT kv.namespace, kv.key, CAST(kv.value AS VARCHAR) AS value_json
+             FROM game_kv kv
+              JOIN active_owner owner ON owner.namespace = kv.namespace
+             WHERE kv."table" = 'inheritance'
+               AND kv.world_id IS NULL
+             ORDER BY owner.owner_id ASC, kv.id ASC
             """.trimIndent(),
-        ) { rs ->
+            { rs ->
             val ownerId = rs.getString("namespace").removePrefix("inheritance_").toIntOrNull()
                 ?: return@query
             val decoded = decodeKvValue(rs.getString("value_json")) as? List<*> ?: return@query
             result.getOrPut(ownerId) { LinkedHashMap() }[rs.getString("key")] = decoded.toList()
-        }
+            },
+            worldId.value,
+        )
         return result
     }
 
@@ -491,9 +431,13 @@ class WorldSnapshotLoader(
 
     private fun loadRankValues(): Map<Int, Map<String, Int>> {
         val result = LinkedHashMap<Int, LinkedHashMap<String, Int>>()
-        jdbc.query("SELECT general_id, type, value FROM rank_data ORDER BY general_id, id") { rs ->
+        jdbc.query(
+            "SELECT general_id, type, value FROM rank_data WHERE world_id = ? ORDER BY general_id, id",
+            { rs ->
             result.getOrPut(rs.getInt("general_id")) { LinkedHashMap() }[rs.getString("type")] = rs.getInt("value")
-        }
+            },
+            worldId.value,
+        )
         return result
     }
 
@@ -551,4 +495,9 @@ class WorldSnapshotLoader(
         val map: String?,
         val env: Map<String, Any?>,
     )
+
+    private companion object {
+        val coldBootMetaKeys: Set<String> = setOf("statisticRows", "nationHistory", "generalHistory", "globalLogs")
+    }
+
 }

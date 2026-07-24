@@ -31,11 +31,13 @@ import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
+import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.MessageRepository
 import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.SelectPoolRepository
+import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.common.josa.JosaUtil
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.nation.NationActionResolverRegistry
@@ -139,6 +141,14 @@ class DaemonLoopConfig {
     fun selectPoolRepository(jdbc: NamedParameterJdbcTemplate): SelectPoolRepository =
         SelectPoolRepository(jdbc)
 
+    @Bean
+    fun archiveHistoryReader(jdbc: NamedParameterJdbcTemplate): ArchiveHistoryReader =
+        ArchiveHistoryReader(jdbc)
+
+    @Bean
+    fun statisticSnapshotReader(jdbc: NamedParameterJdbcTemplate): StatisticSnapshotReader =
+        StatisticSnapshotReader(jdbc)
+
     /**
      * 연락처/메시지 read seam (W6a 메시지). 데몬 [MessageHandler]의 삭제 게이트(getMessageByID)의 read 경로.
      * JDBC read 전용 — write 경로(message INSERT/UPDATE, general.newmsg)는 [JdbcFlushExecutor]뿐(one-daemon-write).
@@ -200,6 +210,8 @@ class DaemonLoopConfig {
         gameKvRepository: opensamguk.infra.read.GameKvRepository,
         bettingRepository: opensamguk.infra.read.BettingRepository,
         inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
+        archiveHistoryReader: ArchiveHistoryReader,
+        statisticSnapshotReader: StatisticSnapshotReader,
         @Value("\${opensamguk.profile}") profile: String,
         selectPoolRepository: SelectPoolRepository,
         recoveryGateProvider: FlushRecoveryGateProvider,
@@ -262,6 +274,8 @@ class DaemonLoopConfig {
             startYear = startYear,
             mapName = mapName,
             eventStore = eventStore,
+            archiveHistoryReader = archiveHistoryReader,
+            statisticSnapshotReader = statisticSnapshotReader,
         )
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
@@ -326,7 +340,7 @@ class DaemonLoopConfig {
         val monthlyPipeline = MonthlyPipeline(
             monthlyRngFactory = { year, month -> MonthScopedRng.forMonth(hiddenSeed, year, month) },
             clock = MonthlyClock { nextTurn, st -> ServerClock.turnDate(nextTurn, startYear, st, turnTerm) },
-            preUpdateMonthly = MonthlyPreUpdateHook(world, handler.recorder, profile),
+            preUpdateMonthly = MonthlyPreUpdateHook(world, handler.recorder, profile, archiveHistoryReader),
             checkStatistic = CheckStatistic {
                 val generals = world.listGenerals().map { g ->
                     val statisticMeta = g.meta +
@@ -364,6 +378,8 @@ class DaemonLoopConfig {
                 auctionRepository = auctionRepository,
                 auctionBidRepository = auctionBidRepository,
                 eventDispatcher = eventDispatcher,
+                archiveHistoryReader = archiveHistoryReader,
+                statisticSnapshotReader = statisticSnapshotReader,
             ),
         )
 

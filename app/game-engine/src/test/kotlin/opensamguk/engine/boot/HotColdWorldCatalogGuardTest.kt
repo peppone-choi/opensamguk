@@ -24,6 +24,13 @@ class HotColdWorldCatalogGuardTest {
     ).firstOrNull { it.exists() }
         ?: error("$path not found from ${File(".").absolutePath}")
 
+    private fun repoFile(path: String): File = listOf(
+        File(path),
+        File("../$path"),
+        File("../../$path"),
+    ).firstOrNull { it.isFile }
+        ?: error("$path not found from ${File(".").absolutePath}")
+
     private fun runtimeSourceFiles(): List<Pair<String, String>> =
         HotColdCatalog.runtimeSourceDirectories.flatMap { dirPath ->
             val dir = engineFile(dirPath)
@@ -79,18 +86,54 @@ class HotColdWorldCatalogGuardTest {
     }
 
     @Test
-    fun `legacy full scans are cold and assigned to S5 T2`() {
+    fun `S5 T2 boot snapshot scans are bounded`() {
         val legacy = HotColdCatalog.snapshotAccesses
             .filter { it.bound == AccessBound.LEGACY_FULL_SCAN_PENDING_S5_T2 }
 
-        assertTrue(legacy.isNotEmpty(), "current loader still has cataloged full-history boot scans")
-        for (entry in legacy) {
-            assertEquals(DataTemperature.QUERY_ONLY_COLD, entry.temperature, entry.methodName)
-            assertTrue(
-                entry.followUp?.contains("S5-T2") == true,
-                "${entry.methodName} must name its follow-up removal ticket",
-            )
+        assertTrue(legacy.isEmpty(), "OPENSAM-138 must not leave legacy full-history boot scans cataloged: $legacy")
+
+        val expectedBounds = mapOf(
+            "loadInheritancePoints" to (DataTemperature.QUERY_ONLY_COLD to AccessBound.ACTIVE_OWNER_SET),
+            "loadRankValues" to (DataTemperature.ALWAYS_HOT to AccessBound.HOT_KEYSET),
+        )
+        for ((methodName, expected) in expectedBounds) {
+            val entry = HotColdCatalog.snapshotAccesses.single { it.methodName == methodName }
+            assertEquals(expected.first, entry.temperature, methodName)
+            assertEquals(expected.second, entry.bound, methodName)
+            assertTrue(entry.followUp?.contains("S5-T2") == true, methodName)
         }
+    }
+
+    @Test
+    fun `S5 T2 boot snapshot SQL uses bounded projections`() {
+        val loader = source("src/main/kotlin/opensamguk/engine/boot/WorldSnapshotLoader.kt")
+
+        assertFalse("loadStatisticRows" in loader, loader)
+        assertFalse("loadNationHistory" in loader, loader)
+        assertFalse("loadGeneralHistory" in loader, loader)
+        assertFalse("loadGlobalLogs" in loader, loader)
+
+        val statisticReader = repoFile("infra/src/main/kotlin/opensamguk/infra/read/StatisticSnapshotReader.kt").readText()
+        assertTrue("LIMIT 1" in statisticReader, statisticReader)
+        assertTrue("world_id = :world_id" in statisticReader, statisticReader)
+
+        val flushExecutor = repoFile("infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt").readText()
+        val historyRows = privateMethodBody(flushExecutor, "historyRows")
+        assertTrue("scope = CAST(:scope AS log_scope)" in historyRows, historyRows)
+        assertTrue("category = 'HISTORY'" in historyRows, historyRows)
+        assertTrue("world_id = :world_id" in historyRows, historyRows)
+        assertTrue("general_id = :id" in historyRows, historyRows)
+        assertTrue("nation_id = :id" in historyRows, historyRows)
+        assertTrue("ORDER BY id DESC" in historyRows, historyRows)
+
+        val inheritance = privateMethodBody(loader, "loadInheritancePoints")
+        assertTrue("WITH active_owner AS" in inheritance, inheritance)
+        assertTrue("SELECT DISTINCT user_id::integer" in inheritance, inheritance)
+        assertTrue("JOIN active_owner owner" in inheritance, inheritance)
+        assertTrue("kv.world_id IS NULL" in inheritance, inheritance)
+
+        val rankValues = privateMethodBody(loader, "loadRankValues")
+        assertTrue("WHERE world_id = ?" in rankValues, rankValues)
     }
 
     @Test
@@ -156,7 +199,7 @@ class HotColdWorldCatalogGuardTest {
 
     @Test
     fun `direct SQL calls stay in cataloged cold boundaries`() {
-        val directSqlSources = runtimeSourceFiles()
+        val directSqlSources = directSqlSourceFiles()
             .flatMap { (path, text) -> directSqlCalls(path, text) }
             .mapTo(linkedSetOf()) { it.substringBeforeLast(":") }
 
@@ -212,6 +255,17 @@ class HotColdWorldCatalogGuardTest {
         )
     }
 
+    private fun directSqlSourceFiles(): List<Pair<String, String>> {
+        val files = runtimeSourceFiles().toMutableList()
+        val seen = files.mapTo(linkedSetOf()) { it.first }
+        for (entry in HotColdCatalog.runtimeDirectSqlBoundaries) {
+            if (seen.add(entry.sourceFile)) {
+                files += entry.sourceFile to repoFile(entry.sourceFile).readText()
+            }
+        }
+        return files
+    }
+
     private fun enclosingPrivateMethod(source: String, offset: Int): String {
         val prefix = source.substring(0, offset)
         return Regex("""private fun ([A-Za-z0-9_]+)\b""")
@@ -220,6 +274,20 @@ class HotColdWorldCatalogGuardTest {
             ?.groupValues
             ?.get(1)
             ?: "<top-level>"
+    }
+
+    private fun privateMethodBody(source: String, methodName: String): String {
+        val start = Regex("""\n    private fun ${Pattern.quote(methodName)}\b""")
+            .find(source)
+            ?.range
+            ?.first
+            ?: error("private method $methodName not found")
+        val next = Regex("""\n    private fun [A-Za-z0-9_]+\b""")
+            .find(source, start + 1)
+            ?.range
+            ?.first
+            ?: source.length
+        return source.substring(start, next)
     }
 
     private fun runtimeReadCalls(path: String, text: String): List<String> {
