@@ -1,7 +1,5 @@
 package opensamguk.engine.intake
 
-import opensamguk.common.world.WorldId
-
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.RunReason
 import opensamguk.common.wire.TurnDaemonCommand
@@ -10,6 +8,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.commandResultKey
+import opensamguk.common.world.WorldId
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.run.TurnDaemonCommandDispatcher
 import opensamguk.engine.turn.ChangeRecorder
@@ -41,8 +40,8 @@ import kotlin.test.assertTrue
  *     결과([opensamguk.common.wire.TurnDaemonCommandResult])를 쌍으로 묶는다. 컨트롤 커맨드
  *     (Run/POKE 등, dispatch == null)는 쌍을 만들지 않고, deny 결과(ok=false)도 성공과 동일하게
  *     회신된다 — 페이지가 성공 토스트를 위조하지 않으려면 deny가 반드시 돌아와야 한다.
- *  2. [RealtimePublisher.publishCommandResult] — 결과를 [TurnDaemonEventEnvelope](CommandResult)로
- *     감싸 [commandResultKey] 아래 짧은 TTL로 SET한다(엔진 쓰기는 Redis 결과 채널뿐 — JPA 없음).
+ *  2. [RealtimePublisher.publishCommandResultPayload] — outbox payload를 [commandResultKey] 아래
+ *     짧은 TTL로 SET한다(엔진 쓰기는 Redis 결과 채널뿐 — JPA 없음).
  *
  * Redis 왕복 자체는 Docker-게이트 [opensamguk.engine.run.TurnRunServiceIT]가 닫는다.
  */
@@ -114,7 +113,7 @@ class IntakeResultChannelTest {
     }
 
     @Test
-    fun `publishCommandResult는 결과 키 아래 이벤트 엔벨로프 JSON을 짧은 TTL로 SET한다`() {
+    fun `publishCommandResultPayload는 committedWorldVersion 엔벨로프를 짧은 TTL로 SET한다`() {
         val template = mock(StringRedisTemplate::class.java)
 
         @Suppress("UNCHECKED_CAST")
@@ -122,10 +121,20 @@ class IntakeResultChannelTest {
         `when`(template.opsForValue()).thenReturn(valueOps)
 
         val publisher = RealtimePublisher(template, "che:scenario_2", WorldId(1))
-        publisher.publishCommandResult(
+        val payloadJson = WireJson.encodeToString(
+            TurnDaemonEventEnvelope.serializer(),
+            TurnDaemonEventEnvelope(
+                requestId = "req-a",
+                sentAt = "0200-01-01T01:00:00Z",
+                event = TurnDaemonEvent.CommandResult(
+                    NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                ),
+                committedWorldVersion = 12,
+            ),
+        )
+        publisher.publishCommandResultPayload(
             requestId = "req-a",
-            result = NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
-            sentAtIso = "0200-01-01T01:00:00Z",
+            payloadJson = payloadJson,
         )
 
         val payload = ArgumentCaptor.forClass(String::class.java)
@@ -135,10 +144,10 @@ class IntakeResultChannelTest {
             eq(RealtimePublisher.COMMAND_RESULT_TTL),
         )
 
-        // 저장 페이로드는 이미 포팅·테스트된 wire 형상(TurnDaemonEventEnvelope + CommandResult) 그대로다.
         val decoded = WireJson.decodeFromString(TurnDaemonEventEnvelope.serializer(), payload.value)
         assertEquals("req-a", decoded.requestId)
         assertEquals("0200-01-01T01:00:00Z", decoded.sentAt)
+        assertEquals(12L, decoded.committedWorldVersion)
         val inner = (decoded.event as TurnDaemonEvent.CommandResult).result as NationSettingResult
         assertTrue(inner.ok)
         assertEquals("tournamentEnroll", inner.type)

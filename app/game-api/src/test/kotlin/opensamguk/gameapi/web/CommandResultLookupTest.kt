@@ -1,10 +1,7 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.config.GameApiProcessWorld
-
-import opensamguk.common.world.WorldId
-
 import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.common.world.WorldId
 import opensamguk.common.wire.NationSettingResult
 import opensamguk.common.wire.PlaceBetFail
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -12,6 +9,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.common.wire.commandResultKey
+import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.read.GeneralReadRepository
@@ -67,13 +65,18 @@ class CommandResultLookupTest {
         .build()
 
     /** 엔진 발행과 동일한 인코딩으로 저장 페이로드를 만든다. */
-    private fun storedPayload(requestId: String, result: TurnDaemonCommandResult): String =
+    private fun storedPayload(
+        requestId: String,
+        result: TurnDaemonCommandResult,
+        committedWorldVersion: Long? = null,
+    ): String =
         WireJson.encodeToString(
             TurnDaemonEventEnvelope.serializer(),
             TurnDaemonEventEnvelope(
                 requestId = requestId,
                 sentAt = "0200-01-01T01:00:00Z",
                 event = TurnDaemonEvent.CommandResult(result),
+                committedWorldVersion = committedWorldVersion,
             ),
         )
 
@@ -105,6 +108,7 @@ class CommandResultLookupTest {
             storedPayload(
                 "req-db",
                 NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                committedWorldVersion = 12,
             ),
         )
 
@@ -114,7 +118,24 @@ class CommandResultLookupTest {
             .andExpect(jsonPath("$.requestId").value("req-db"))
             .andExpect(jsonPath("$.ok").value(true))
             .andExpect(jsonPath("$.type").value("tournamentEnroll"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(12))
             .andExpect(jsonPath("$.result.generalId").value(10))
+    }
+
+    @Test
+    fun `Redis result includes committedWorldVersion from event envelope`() {
+        val payload = storedPayload(
+            "req-ryw",
+            NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+            committedWorldVersion = 34,
+        )
+        stubKey("req-ryw", payload)
+        stubDurable("req-ryw", null)
+
+        mockMvc().perform(get("/api/command/result/{requestId}", "req-ryw"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("RESOLVED"))
+            .andExpect(jsonPath("$.committedWorldVersion").value(34))
     }
 
     @Test

@@ -151,9 +151,6 @@ class CommandController(
 
     // ── W0-4 인테이크 결과 회신: GET /api/command/result/{requestId} ───────────────────────────────
     //
-    // 엔진([opensamguk.engine.redis.RealtimePublisher.publishCommandResult] — engine 모듈)이
-    // [commandResultKey] 아래 짧은 TTL로 SET한 [TurnDaemonEventEnvelope](commandResult)를 폴링한다.
-    //
     // 응답 규약 (항상 200 — 폴링 채널이므로 404를 쓰지 않는다):
     //   - 키 부재(아직 미처리 or TTL 만료) → `{status:"PENDING", requestId}` — FE는 폴링을 계속한다.
     //   - 키 존재 → `{status:"RESOLVED", requestId, ok, type, reason?, result}` — `result`는 엔진이
@@ -197,6 +194,7 @@ class CommandController(
             "ok" to result.ok,
             "type" to result.type,
         )
+        envelope.committedWorldVersion?.let { body["committedWorldVersion"] = it }
         // reason은 deny류에만 존재 — 있을 때만 톱레벨로 끌어올린다(FE 토스트가 바로 읽는 필드).
         resultNode.get("reason")?.takeIf { !it.isNull }?.let { body["reason"] = it.asText() }
         body["result"] = resultNode

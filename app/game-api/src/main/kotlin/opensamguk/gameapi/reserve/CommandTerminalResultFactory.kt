@@ -32,6 +32,7 @@ object CommandTerminalResultFactory {
             requestId = requestId,
             sentAt = sentAt.toString(),
             event = TurnDaemonEvent.CommandResult(result),
+            committedWorldVersion = 0,
         )
         return CommandResultRow(
             requestId = requestId,

@@ -70,7 +70,7 @@ import opensamguk.logic.util.jsonDecodeAny
  * of truth), mirroring the sibling turn handlers — NOT Spring beans (the world is per-run state).
  *
  * Result publishing — W0-4부터 [TurnRunService]가 [dispatchEnvelopes]의 (requestId, result) 쌍을
- * [opensamguk.engine.redis.RealtimePublisher.publishCommandResult]로 회신한다(P1 DECISION 해제).
+ * durable outbox payload로 회신한다(P1 DECISION 해제).
  */
 class TurnDaemonCommandDispatcher(
     private val world: InMemoryTurnWorld,
