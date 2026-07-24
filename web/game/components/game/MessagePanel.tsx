@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
+import { api } from '@/lib/api';
+import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import type { MailboxMessage } from '@/types/game';
 import MessagePlate from './MessagePlate';
 
@@ -58,15 +59,15 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
         if (!text) return;
         setSending(true);
         try {
-            const out = await api.commands.sendMessage({ mailbox: active, text }, generalId);
-            if (isIntakeQueued(out)) {
+            const out = await submitCommandAndAwaitResult(() => api.commands.sendMessage({ mailbox: active, text }, generalId));
+            if (out.status === 'applied') {
                 onToast('서신을 접수했습니다.', 'success');
                 setSendText('');
                 reload();
-            } else if (isIntakeDenied(out)) {
+            } else if (out.status === 'rejected') {
                 onToast(out.reason ?? '서신을 보낼 수 없습니다.', 'error');
             } else {
-                onToast('서신 처리 상태를 확인할 수 없습니다.', 'error');
+                onToast(out.reason, 'info');
             }
         } catch {
             onToast('서신 발송에 실패했습니다.', 'error');

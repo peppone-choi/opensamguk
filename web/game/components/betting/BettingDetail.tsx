@@ -12,7 +12,8 @@
 // write: api.commands.placeBet({bettingId, bettingType, amount})(wire 코드 기존).
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api, isIntakeQueued, isIntakeDenied } from '../../lib/api';
+import { api } from '../../lib/api';
+import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
 
 // ── 와이어 타입 ──────────────────────────────────────────────────────────────────────────
 interface SelectItem {
@@ -246,17 +247,15 @@ export default function BettingDetail({ bettingId, generalId, onToast }: Props) 
         }
         const bettingType = JSON.parse(pickedBetTypeKey) as number[];
         try {
-            const res = await api.commands.placeBet(
-                { bettingId: info.id, bettingType, amount: betPoint },
-                generalId,
-            );
-            if (isIntakeQueued(res)) {
+            const res = await submitCommandAndAwaitResult(() =>
+                api.commands.placeBet({ bettingId: info.id, bettingType, amount: betPoint }, generalId));
+            if (res.status === 'applied') {
                 onToast('베팅했습니다');
                 await loadBetting(info.id);
-            } else if (isIntakeDenied(res)) {
+            } else if (res.status === 'rejected') {
                 onToast(res.reason ?? '베팅할 수 없습니다.');
             } else {
-                onToast('베팅 처리 중 오류가 발생했습니다.');
+                onToast(res.reason);
             }
         } catch (e) {
             console.error(e);

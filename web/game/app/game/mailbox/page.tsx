@@ -5,6 +5,7 @@ import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
 import { api, isIntakeQueued, isIntakeDenied, pollCommandResult } from '../../../lib/api';
+import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { INFINITE_DATE, TOAST_DURATION_MS } from '../../../lib/constants';
 import { mailboxIdForScope, isMessageDeletable, MAILBOX_PUBLIC, MAILBOX_NATIONAL_BASE, type MailboxScope } from '../../../lib/mailbox';
 import type { FrontInfoResponse } from '../../../lib/types';
@@ -92,29 +93,28 @@ export default function MailboxPage() {
         return () => es.close();
     }, [fetchMessages]);
 
-    // 서신 발송 — legacy SendMessage.php: POST /api/command/sendMessage?generalId=&turnIdx=0
-    // payload: { mailbox, text }. mailbox 라우팅: 9999=전체, 9000+nationId=국가, generalId=개인.
-    // isIntakeQueued/isIntakeDenied 가드 적용 — 무조건 성공 토스트 금지(P0-04/06).
     async function handleSend() {
         if (sending) return;
         const text = sendText.trim();
         if (!text) return;
-        if (identity.generalId == null) {
+        const generalId = identity.generalId;
+        if (generalId == null) {
             setToast('장수 정보가 없습니다.');
             setTimeout(() => setToast(''), TOAST_DURATION_MS);
             return;
         }
         setSending(true);
         try {
-            const out = await api.commands.sendMessage({ mailbox: sendMailbox, text }, identity.generalId);
-            if (isIntakeQueued(out)) {
+            const out = await submitCommandAndAwaitResult(() =>
+                api.commands.sendMessage({ mailbox: sendMailbox, text }, generalId));
+            if (out.status === 'applied') {
                 setToast('서신을 발송했습니다.');
                 setSendText('');
                 fetchMessages();
-            } else if (isIntakeDenied(out)) {
+            } else if (out.status === 'rejected') {
                 setToast(out.reason ?? '서신을 보낼 수 없습니다.');
             } else {
-                setToast('발송 처리 중 오류가 발생했습니다.');
+                setToast(out.reason);
             }
         } catch {
             setToast('서신 발송에 실패했습니다.');
