@@ -21,7 +21,8 @@ import { useEffect, useRef, useState } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import CommandModal from '../../../components/CommandModal';
-import { api, isIntakeQueued, isIntakeDenied } from '../../../lib/api';
+import { api } from '../../../lib/api';
+import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { useFrontInfo } from '../../../hooks/useFrontInfo';
 import type { InheritPointResponse } from '../../../types/game';
 
@@ -218,13 +219,15 @@ export default function InheritPage() {
         }
 
         try {
-            const out = await api.resetStat(args, generalId);
-            if (isIntakeQueued(out)) {
-                showToast('능력치 초기화가 접수되었습니다.');
+            const out = await submitCommandAndAwaitResult(() => api.resetStat(args, generalId));
+            if (out.status === 'applied') {
+                showToast('능력치 초기화가 처리되었습니다.');
                 refresh();
                 load();
-            } else if (isIntakeDenied(out)) {
+            } else if (out.status === 'rejected') {
                 showToast(out.reason || '초기화가 거부되었습니다.');
+            } else {
+                showToast(out.reason);
             }
         } catch (err) {
             showToast(err instanceof Error ? err.message : '요청에 실패했습니다.');
@@ -234,12 +237,15 @@ export default function InheritPage() {
     async function handleCheckOwner() {
         if (generalId == null || !ownerTarget) return;
         try {
-            const out = await api.instantAction('CheckOwner', generalId, { destGeneralID: Number(ownerTarget) });
-            if (isIntakeQueued(out)) {
-                showToast('장수 소유자 확인이 접수되었습니다.');
+            const out = await submitCommandAndAwaitResult(() =>
+                api.instantAction('CheckOwner', generalId, { destGeneralID: Number(ownerTarget) }));
+            if (out.status === 'applied') {
+                showToast('장수 소유자 확인이 처리되었습니다.');
                 load();
-            } else if (isIntakeDenied(out)) {
+            } else if (out.status === 'rejected') {
                 showToast(out.reason || '소유자 확인이 거부되었습니다.');
+            } else {
+                showToast(out.reason);
             }
         } catch (err) {
             showToast(err instanceof Error ? err.message : '요청에 실패했습니다.');

@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DiplomacyPage from '@/app/game/diplomacy/page';
 
 const mocks = vi.hoisted(() => ({
     diplomacyLetters: vi.fn(),
     refresh: vi.fn(),
+    diploSendLetter: vi.fn(),
+    submitCommandAndAwaitResult: vi.fn(),
     commandModalProps: [] as Array<Record<string, unknown>>,
 }));
 
@@ -25,13 +27,15 @@ vi.mock('@/lib/api', () => ({
     api: {
         diplomacyLetters: mocks.diplomacyLetters,
         commands: {
-            diploSendLetter: vi.fn(),
+            diploSendLetter: mocks.diploSendLetter,
             diploRollbackLetter: vi.fn(),
             diploDestroyLetter: vi.fn(),
         },
     },
-    isIntakeDenied: vi.fn(() => false),
-    isIntakeQueued: vi.fn(() => true),
+}));
+
+vi.mock('@/lib/commandSubmit', () => ({
+    submitCommandAndAwaitResult: mocks.submitCommandAndAwaitResult,
 }));
 
 vi.mock('@/components/CommandModal', () => ({
@@ -65,6 +69,13 @@ Object.defineProperty(globalThis, 'EventSource', {
 });
 
 describe('DiplomacyPage command reservation', () => {
+    beforeEach(() => {
+        mocks.diplomacyLetters.mockReset();
+        mocks.diploSendLetter.mockReset();
+        mocks.submitCommandAndAwaitResult.mockReset();
+        mocks.refresh.mockReset();
+    });
+
     it('submits quick diplomacy commands through the nation reservation queue', async () => {
         mocks.commandModalProps.length = 0;
         mocks.diplomacyLetters.mockResolvedValueOnce({
@@ -89,5 +100,41 @@ describe('DiplomacyPage command reservation', () => {
             pinnedArgType: 'nation',
             isNationCommand: true,
         });
+    });
+
+    it('shows send success only after the command result is applied', async () => {
+        mocks.diplomacyLetters.mockResolvedValue({
+            myNationID: 1,
+            nations: {
+                1: { id: 1, name: '촉', color: '#228833', level: 1 },
+                2: { id: 2, name: '위', color: '#3355aa', level: 1 },
+            },
+            letters: [],
+        });
+        mocks.diploSendLetter.mockResolvedValue({ status: 'AVAILABLE', requestId: 'diplo-1' });
+        mocks.submitCommandAndAwaitResult.mockImplementation(async (submit: () => Promise<unknown>) => {
+            await submit();
+            return {
+                status: 'applied',
+                result: { status: 'RESOLVED', requestId: 'diplo-1', ok: true, type: 'diploSendLetter', result: {} },
+            };
+        });
+
+        render(<DiplomacyPage />);
+
+        await waitFor(() => expect(mocks.diplomacyLetters).toHaveBeenCalled());
+        fireEvent.click(screen.getByRole('button', { name: '펼치기' }));
+        fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: '2' } });
+        fireEvent.change(screen.getByPlaceholderText('요약문을 입력하세요'), { target: { value: '동맹 제안' } });
+        fireEvent.change(screen.getByPlaceholderText('본문을 입력하세요'), { target: { value: '함께 합시다.' } });
+        fireEvent.click(screen.getByRole('button', { name: '발송' }));
+
+        await waitFor(() => expect(mocks.diploSendLetter).toHaveBeenCalledWith({
+            destNation: 2,
+            brief: '동맹 제안',
+            detail: '함께 합시다.',
+            prevNo: null,
+        }, 10));
+        await waitFor(() => expect(screen.getByText('전송했습니다.')).toBeInTheDocument());
     });
 });

@@ -73,6 +73,10 @@ vi.mock('@/lib/api', () => ({
     isIntakeQueued: (o: { status: string }) => o.status === 'AVAILABLE',
 }));
 
+vi.mock('@/lib/commandSubmit', () => ({
+    submitCommandAndAwaitResult: vi.fn(),
+}));
+
 describe('nation page inherit buff costs (D3-04 web)', () => {
     it('renders buff costs from inheritActionCost.buff, not a local constant copy', async () => {
         render(<NationPage />);

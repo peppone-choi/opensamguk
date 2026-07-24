@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Shell from '../../../components/Shell';
 import GameCard from '../../../components/GameCard';
 import StatusBadge from '../../../components/StatusBadge';
-import { api, isIntakeQueued } from '../../../lib/api';
+import { api } from '../../../lib/api';
+import { submitCommandAndAwaitResult } from '../../../lib/commandSubmit';
 import { formatNumber } from '../../../lib/format';
 import type { FrontInfoResponse } from '../../../lib/types';
 import type { MyNationDetailResponse, MyNationCityRef, InheritPointResponse } from '../../../types/game';
@@ -83,13 +84,20 @@ export default function NationPage() {
             return;
         }
         try {
-            const out = await api.command('BuyHiddenBuff', { buffKey, level, prevLevel }, generalId);
-            setToast(isIntakeQueued(out) ? '구매가 접수되었습니다.' : (out.reason ?? '구매할 수 없습니다.'));
+            const out = await submitCommandAndAwaitResult(() =>
+                api.command('BuyHiddenBuff', { buffKey, level, prevLevel }, generalId));
+            if (out.status === 'applied') {
+                setToast('구매가 처리되었습니다.');
+                fetchData();
+            } else if (out.status === 'rejected') {
+                setToast(out.reason ?? '구매할 수 없습니다.');
+            } else {
+                setToast(out.reason);
+            }
         } catch {
             setToast('구매 요청에 실패했습니다.');
         }
         setTimeout(() => setToast(''), 3000);
-        fetchData();
     }
 
     async function buyRandomUnique() {
@@ -99,13 +107,19 @@ export default function NationPage() {
             return;
         }
         try {
-            const out = await api.command('BuyRandomUnique', {}, generalId);
-            setToast(isIntakeQueued(out) ? '구매가 접수되었습니다.' : (out.reason ?? '구매할 수 없습니다.'));
+            const out = await submitCommandAndAwaitResult(() => api.command('BuyRandomUnique', {}, generalId));
+            if (out.status === 'applied') {
+                setToast('구매가 처리되었습니다.');
+                fetchData();
+            } else if (out.status === 'rejected') {
+                setToast(out.reason ?? '구매할 수 없습니다.');
+            } else {
+                setToast(out.reason);
+            }
         } catch {
             setToast('구매 요청에 실패했습니다.');
         }
         setTimeout(() => setToast(''), 3000);
-        fetchData();
     }
 
     if (loading) {

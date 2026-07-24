@@ -10,7 +10,8 @@
 // write: api.commands.auctionBid / auctionOpenBuyRice / auctionOpenSellRice (wire 코드 기존).
 
 import { useCallback, useEffect, useState } from 'react';
-import { api, isIntakeQueued, isIntakeDenied } from '../../lib/api';
+import { api } from '../../lib/api';
+import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
 import { formatLog } from '../../lib/utilGame';
 
 // ── D1 와이어 타입(game-api AuctionDto.kt와 동형) ──────────────────────────────────────────
@@ -120,12 +121,15 @@ export default function AuctionResource({ generalId, onToast }: Props) {
             return;
         }
         try {
-            const res = await api.commands.auctionBid({ auctionId: a.id, amount }, generalId);
-            if (isIntakeQueued(res)) {
+            const res = await submitCommandAndAwaitResult(() =>
+                api.commands.auctionBid({ auctionId: a.id, amount }, generalId));
+            if (res.status === 'applied') {
                 onToast('입찰했습니다.');
                 await refresh();
-            } else if (isIntakeDenied(res)) {
+            } else if (res.status === 'rejected') {
                 onToast(res.reason ?? '입찰할 수 없습니다.');
+            } else {
+                onToast(res.reason);
             }
         } catch (e) {
             console.error(e);
@@ -141,17 +145,17 @@ export default function AuctionResource({ generalId, onToast }: Props) {
         const { type, amount, startBidAmount, finishBidAmount, closeTurnCnt } = openAuctionInfo;
         try {
             const args = { amount, startBidAmount, finishBidAmount, closeTurnCnt };
-            let res;
-            if (type === 'buyRice') {
-                res = await api.commands.auctionOpenBuyRice<{ auctionID?: number }>(args, generalId);
-            } else {
-                res = await api.commands.auctionOpenSellRice<{ auctionID?: number }>(args, generalId);
-            }
-            if (isIntakeQueued(res)) {
+            const res = await submitCommandAndAwaitResult(() =>
+                type === 'buyRice'
+                    ? api.commands.auctionOpenBuyRice<{ auctionID?: number }>(args, generalId)
+                    : api.commands.auctionOpenSellRice<{ auctionID?: number }>(args, generalId));
+            if (res.status === 'applied') {
                 onToast('경매로 등록되었습니다.');
                 await refresh();
-            } else if (isIntakeDenied(res)) {
+            } else if (res.status === 'rejected') {
                 onToast(res.reason ?? '경매 등록할 수 없습니다.');
+            } else {
+                onToast(res.reason);
             }
         } catch (e) {
             console.error(e);
