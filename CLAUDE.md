@@ -93,6 +93,8 @@ Each phase = one cycle **spec → plan → adversarial review → execute → ga
 - 🔄 **P7** read API ✅ + frontend ⬜ — dedicated REST controllers for auction/betting/message/mailbox/diplomacy 완료, `GetDiplomacy.php` neutral-map masking 완료, frontend pages (`web/game/app/game/`) 진행 예정.
 - ⬜ **P8** parity harness (PHP 93-command compare, 23 missing ported/backlogged) + gateway orchestration + AWS EC2 t3.large deploy (LLM-free, 0 external API deps). Infra scaffold present: `.github/workflows/deploy.yml`, `docker-compose.prod.yml`, `infra/nginx/`, `scripts/deploy.sh`, `HealthCheckController`.
 
+**CQRS 정합성 하드닝 트랙 (ARCH-S1–S6, OPENSAM-127~139) — 전부 build-only, 라이브 동작·골든 불변.** ✅ 월드 스코프(127~129) · flush 무결성 `DeltaGenerationSession`/`world_version` CAS+`writer_epoch`/`FlushRecoveryGate`(130~132) · S4 durable 명령 경로(command_inbox 선기록·durable result/outbox·consumer-group wake+post-commit ACK·크래시/리플레이, 133~136, PR #312, 리뷰 cleared) · S5 읽기·부팅 경계(hot/cold 카탈로그·bounded boot reads·minVersion read barrier→409 `VERSION_NOT_VISIBLE`, 137~139, PR #314/#315) 모두 main 머지. ⬜ **S6 롤아웃**(canary/expand-backfill/replica ADR, #268) 잔여 — 프로덕션 cutover/activation 미수행. 트리아지: `docs/superpowers/research/2026-07-23-ticket-triage-next.md`.
+
 **미래 마일스톤(로드맵 외, 조건 충족 시):** `docs/superpowers/MILESTONES.md` — **M-config**(post-parity 상수 외부화: 풀 패러티 close + 운영 안정 후 `GameConst` 등 패러티값을 JSON으로, 패러티 골든을 frozen-baseline 회귀 게이트로 교체).
 
 ## 프론트엔드/배포 (F0–F5)
@@ -103,7 +105,7 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획: `
 - ✅ **F1 시나리오 시드** — `ScenarioSeedRunner`가 `SCENARIO_DIR`의 동일 파일명을 classpath보다 우선하고 `ScenarioImporter`가 선택된 모든 시나리오를 JDBC INSERT한다. fresh DB에서만 멱등 시드하며, RTK14 생성본은 tuple 14/15 원수치를 포함한 gitignored JSON이다. env fence: `SCENARIO_SEED_ENABLED`, `SCENARIO_CODE`, `SCENARIO_DIR`. **JDBC-only — one-daemon-write-rule 비위반**.
 - ✅ **F2 메인화면 + 메뉴 척추** — `web/game` 메인(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar 20버튼+게이팅).
 - ✅ **F3 read API + 랭킹/내정보** — game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. 모두 game-api로 **read-only 렌더**.
-- 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·PHP 불일치는 라이브 루프에서 계속 폐쇄한다.
+- 🔄 **F4 액션 페이지 + mutation** — 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결했다. 남은 하드 스텁·상수 빈 응답·PHP 불일치는 라이브 루프에서 계속 폐쇄한다. **result-poll 규약(OPENSAM-13/135):** 인테이크 202는 성공이 아니다 — FE는 `pollCommandResult(requestId)`로 `RESOLVED`까지 폴링해 `ok`/`reason`을 분기하고, 엔진 핸들러는 성공·deny 모두 `TurnDaemonCommandResult`(`ok`/`reason`)를 반환한다(202만 보고 성공 토스트 = 성공 위조 금지).
 - 🔄 **F5 turnkey + docs** — 정본 `docker-compose.yml`(로컬 8서비스) + `docker-compose.production.yml`(EC2, GHCR 이미지) + `.env.example` + 한글 `README/AGENTS/CLAUDE`. `git pull && docker compose up`로 자동 설치·시드.
 
 ## Skill routing

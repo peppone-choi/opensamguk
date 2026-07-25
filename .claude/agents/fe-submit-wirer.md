@@ -16,8 +16,9 @@ The entire submit machinery lives in two grounded files. READ BOTH before writin
 The POST flows: page form/modal → `api.command` → `web/game/app/api/game/[...path]/route.ts` (same-origin server proxy; reads the httpOnly `sam_access` cookie, attaches `Authorization: Bearer`, forwards to game-api :8081 verbatim) → game-api `CommandController` → `CommandReserveService.reserve`. The JWT NEVER touches client JS — never add a token to the body or a header in page code. Identity for reads is resolved from the Bearer; `api.command` still passes `?generalId=` explicitly (the caller's own id from `frontInfo.general.generalId`).
 
 Response shape (handled inside CommandModal — match it if you ever submit outside the modal):
-- `202 { status:"AVAILABLE", requestId, turnIdx }` → success toast, close.
+- `202 { status:"AVAILABLE", requestId, turnIdx }` → SYNCHRONOUS precheck/intake accept. NOT a success — the engine has not run yet.
 - `200 { status:"BLOCKED"|"UNKNOWN", reason }` → render the PHP-faithful `reason` as **INFO, not error** (it is a precheck deny string, not a failure).
+- After a 202, the ENGINE execution result (success vs a PHP-faithful engine deny) arrives on the ASYNC result channel — poll it (see "result-poll convention" below). Do not fake a success toast off the 202 alone for a command whose engine handler can deny.
 
 ## Procedure
 
@@ -33,7 +34,7 @@ Response shape (handled inside CommandModal — match it if you ever submit outs
 ## Hard constraints
 
 - **FRONTEND ONLY.** Never edit `app/game-api`, `common/wire`, `app/game-engine`, or any Kotlin. If the command code is ABSENT from the backend `intakeCodes` set, precheck shows AVAILABLE but the engine silently no-ops — that is a BACKEND gap. Do NOT try to fix it from the FE; FLAG it in your return (it is a real, documented limitation, not something to fabricate around).
-- **Deferred commandResult deny-channel limitation:** the engine does NOT yet stream a per-command execution result back to the UI. The modal reflects the SYNCHRONOUS precheck/intake response only (AVAILABLE/BLOCKED/UNKNOWN); a command that passes precheck but is denied at engine execution shows as a silent no-op. Do not invent a deny channel — surface this caveat in your return when relevant.
+- **Result-poll convention (OPENSAM-13/135 — the deny channel now EXISTS; use it, do not fake success).** A command that passes precheck (202) can still be DENIED at engine execution with a PHP-faithful reason. That result is streamed back on the async result channel: the engine handler returns a `TurnDaemonCommandResult` (`ok`/`reason`) which `TurnRunService` publishes to a durable outbox, readable at `GET /api/command/result/{requestId}` (`{ status:"RESOLVED", ok, type, reason?, result }` or `{ status:"PENDING" }`). The FE convention is: after a 202, poll `pollCommandResult(accepted.requestId)` (exported from `web/game/lib/api.ts`, or `api.commandResult(requestId)` for one read) until `RESOLVED`, then branch on `result.ok` — success toast on `ok`, render `result.reason` as INFO on deny. NEVER show a success toast off the 202 for a deniable command (success-forgery is a parity break). Exemplars already using this: `web/game/app/game/mailbox/page.tsx`, `web/game/components/game/MessagePlate.tsx`, `web/game/app/game/select-pool/page.tsx`, `web/game/app/game/npc-control/page.tsx`. Reuse `pollCommandResult`; do not hand-roll a polling loop.
 - **No fabricated parity surfaces.** Never hardcode a command catalog or a Korean deny string in page code — reasons come from the server. The `FALLBACK_CATALOG` in CommandModal is the ONLY sanctioned fallback and is already flagged.
 - **Korean code comments** for any new comment (identifiers + log/parity strings stay as-is). Match the bilingual comment style already in these files.
 - Do NOT add a token, generalId-spoof, or direct game-api URL to page code — everything goes through the `/api/game` proxy via `api.command`.
@@ -45,4 +46,4 @@ Response shape (handled inside CommandModal — match it if you ever submit outs
 
 ## Return
 
-Report: the exact files changed (absolute paths), the command `code` wired, the UI shape chosen (direct-launch modal vs no-arg button), the `extraArgs` page-fixed keys, and any flagged backend gap (code missing from `intakeCodes`, or the deferred commandResult deny-channel caveat). Quote a load-bearing snippet only if a prop/arg-field name is the point.
+Report: the exact files changed (absolute paths), the command `code` wired, the UI shape chosen (direct-launch modal vs no-arg button), the `extraArgs` page-fixed keys, whether you wired the async `pollCommandResult` result-poll (and why not, if the command's engine handler cannot deny), and any flagged backend gap (code missing from `intakeCodes`). Quote a load-bearing snippet only if a prop/arg-field name is the point.

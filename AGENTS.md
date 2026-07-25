@@ -139,6 +139,7 @@ cd web/game    && corepack pnpm dev   # :3001
 - **Foundation-first**: 공유 확장점은 Tier-0 wave에서 먼저, 이후 family는 소비만. 병렬 worktree family는 **disjoint** — 같은 파일 co-widen 금지.
 - 브랜치 스택(페이즈당 1, 부모 분기): `p0a-foundation-scaffold → p0b-parity-kernel → p1-vertical-slice → p2-commands-constraints → p3-monthly-tick → p4-battle-engine → p5-npc-ai → …`. PR도 스택(base = 부모).
 - 프론트/시드/배포는 **F0–F5** 시리즈(아래) — 계획서 `docs/superpowers/plans/2026-06-02-frontend-parity-and-scenario-seed-plan.md`.
+- **CQRS 정합성 하드닝(ARCH-S1–S6, OPENSAM-127~139)** — 전부 build-only(라이브 동작·골든 불변). ✅ 월드 스코프(127~129) · flush 무결성(130~132) · S4 durable 명령 경로(133~136, PR #312) · S5 읽기·부팅 경계(hot/cold 카탈로그·bounded boot·minVersion read barrier, 137~139, PR #314/#315) main 머지. ⬜ S6 롤아웃(#268) 잔여, 프로덕션 cutover 미수행. 트리아지: `docs/superpowers/research/2026-07-23-ticket-triage-next.md`.
 - **한 작업 = 한 논리 커밋. 모든 커밋 메시지 끝에:**
   ```
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>

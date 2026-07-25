@@ -61,7 +61,7 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 
 ## 현재 패러티 상태
 
-2026-06-22 기준 이 프로젝트는 **알파**입니다. 레거시 `hwe/ts/` Vue와 PHP API를 grand truth로 삼아 page-parity 루프를 계속 닫고 있으며, 진행 현황은 [`docs/loops/page-parity/LEDGER.md`](docs/loops/page-parity/LEDGER.md)에 바퀴 72까지 기록돼 있습니다.
+2026-07-25 기준 이 프로젝트는 **알파**입니다. 이 README는 온보딩용 범위 요약이며, 완료 주장은 하지 않습니다. 현재의 구현·활성화 경계는 [`docs/agent/project-overview.md`](docs/agent/project-overview.md), 실제 PHP/브라우저 패러티 루프와 백로그는 [`docs/loops/page-parity/LEDGER.md`](docs/loops/page-parity/LEDGER.md)가 정본입니다.
 
 요약하면 **메인 화면·로비·서버 경로·SSE·맵·주요 read 페이지는 실서버 `s1`에서 반복 측정하며 상당 부분 수렴**했고, **mutation/월드 이벤트/관리자 legacy 화면/일부 스키마 갭은 아직 진행 중**입니다. "완전 패러티"가 아니라, 실제 PHP 근거와 브라우저 관측으로 닫힌 바퀴만 닫힌 것으로 봅니다.
 
@@ -161,6 +161,16 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 - **현실 1시간 = 게임 1턴(상순/중순/하순)** · **36턴 = 게임 1년**
 - 명령 큐 + 알림 패턴. 메모리=진실의 원천, DB=영속화.
 
+### CQRS 정합성 하드닝 (ARCH-S1–S6)
+
+메모리 중심 CQRS의 다중 월드·크래시·읽기 정합성을 조이는 트랙(OPENSAM-127~139). 전부 **build-only**(프로덕션 cutover/activation 미수행)이며, 라이브 게임 동작과 패러티 골든은 불변입니다. 현재 S5까지 main에 머지됐고 S6(롤아웃)은 잔여입니다.
+
+- **월드 스코프** — 로더·쿼리·예약·Redis 키·flush를 `world_id`로 스코프하고, 동일 local-ID 2월드 격리 게이트 통과. (OPENSAM-127~129)
+- **flush 무결성** — 불변 `DeltaGenerationSession`(prepare/commit/abort), `world_version` CAS + `writer_epoch` 펜스, `FlushRecoveryGate`(FLUSH_RETRY/RELOAD 안전). (OPENSAM-130~132)
+- **S4 durable 명령 경로** — `command_inbox` 선기록(202 이전), 같은 flush 트랜잭션의 durable `command_result`/`command_outbox` + Redis consumer-group wake·post-commit ACK + 크래시/리플레이 매트릭스. PR #312 머지, 독립 리뷰 cleared. (OPENSAM-133~136)
+- **S5 읽기·부팅 경계** — hot/cold 카탈로그 + 아키텍처 가드, 부팅 아카이브 읽기 bounded/on-demand화, game-api `minVersion` read barrier(stale read → 409 `VERSION_NOT_VISIBLE`). PR #314/#315 머지. (OPENSAM-137~139)
+- **S6 롤아웃** — canary/expand-backfill/replica ADR는 **잔여**(S2–S5 완료 후 착수).
+
 ---
 
 ## 빠른 시작
@@ -172,8 +182,9 @@ PHP 게임 **devsam/core**를 메모리 중심 CQRS 스택으로 충실 이식�
 git clone git@github.com:peppone-choi/opensamguk.git
 cd opensamguk
 
-# 2) 환경변수 — 예시를 복사해 .env 생성 (필요 시 비밀번호/프로필 수정)
+# 2) 환경변수 — 예시를 복사한 뒤, 로컬 .env에 필요한 값을 직접 설정
 cp .env.example .env
+# Required: JWT_SECRET, OPENSAMGUK_WORLD_ID
 
 # 3) 전체 스택 기동 (postgres·redis·3 API·2 프론트·nginx)
 docker compose up -d --build
@@ -215,21 +226,14 @@ nginx 라우팅(`infra/nginx/nginx.conf`, production): `/api/gateway/` → gatew
 
 ### 환경변수 (`.env.example`)
 
-```env
-# Game DB
-GAME_DATABASE_URL=jdbc:postgresql://localhost:5432/sammo
-GAME_DB_USER=sammo
-GAME_DB_PASSWORD=sammo
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-# Ports
-GATEWAY_API_PORT=8080
-GAME_API_PORT=8081
-GAME_ENGINE_PORT=8082
-# Profile (server:scenario)
-TURN_PROFILE_NAME=che:scenario_2
-```
+`.env.example`을 복사한 뒤 값은 로컬의 git-ignore된 `.env`에만 넣습니다. 빠른 시작에서 반드시 설정할 이름은 다음과 같습니다. 값·토큰·비밀번호를 문서나 커밋에 넣지 마세요.
+
+- `JWT_SECRET` — gateway-api 발급자와 game-api 검증자가 **같이 쓰는** HS256 비밀값입니다.
+- `OPENSAMGUK_WORLD_ID` — game-api와 game-engine이 같은 월드를 선택하는 식별자입니다.
+- `POSTGRES_PASSWORD` — 로컬 PostgreSQL 비밀번호입니다.
+- `ADMIN_PASSWORD` — 관리자 시드를 만들 때만 필요합니다.
+
+나머지 데이터베이스·포트·프로필·시나리오 변수의 이름과 기본 동작은 `.env.example` 및 `docker-compose.yml`을 기준으로 확인합니다.
 
 프론트는 각자 `.env.example`을 둡니다(브라우저 비노출 변수는 `NEXT_PUBLIC_` 접두사 없음):
 
@@ -246,7 +250,7 @@ TURN_PROFILE_NAME=che:scenario_2
 - 실행 중인 게임 서버의 `servers/<id>.env` 버전 핀(`IMAGE_TAG`, `WEB_GAME_TAG`)은 앱 CI가 수정하지 않습니다.
 - 게임 서버 승격은 어드민/deployer에서 서버별로 하거나, 리셋·재시드·새 기수 시작 같은 명시 운영 시점에 수행합니다.
 - `deployer` 자체는 docker repo main 동기화 후 공유 스택에서 자동 rebuild/recreate됩니다.
-- 레거시 단일 compose(`docker-compose.production.yml`, `scripts/deploy.sh`)는 앱 이미지/로컬 smoke용 호환 표면입니다. 멀티서버 운영은 docker repo의 `docker-compose.shared.yml` + `docker-compose.server.yml`를 따릅니다.
+- 이 저장소의 단일 compose(`docker-compose.production.yml`)와 `scripts/deploy.sh`는 **호환 전용** 표면이며 현재 프로덕션 제어면이 아닙니다. 멀티서버 운영·서버 승격은 docker repo의 `docker-compose.shared.yml` + `docker-compose.server.yml`와 승인된 운영 절차를 따릅니다.
 
 ---
 
@@ -372,7 +376,7 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 | **F1 시나리오 시드** | `ScenarioImporter` + `ScenarioSeedRunner` → 외부 `SCENARIO_DIR` 우선, classpath 폴백으로 모든 시나리오를 시드. 로컬 fresh DB 자동 시드 가능, production은 관리자 서버 생성 전 기본 비활성. | ✅ |
 | **F2 메인화면 + 메뉴 척추** | `web/game` 메인 화면(`GameChrome` = GameInfo 헤더 + GlobalMenu + MainControlBar + 메인 보드). path-server, SSE, 맵 크기/링크/현재 위치/툴팁은 실서버 루프로 지속 수렴 중. | ✅ |
 | **F3 read API + 랭킹/내정보** | game-api read 컨트롤러 + `web/game` 랭킹(`a_*`)·내정보(`b_*`) 페이지. game-api read 데이터 렌더가 기본 완성선. | ✅ |
-| **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결. 라이브 감사와 PHP 골든으로 남은 명령을 계속 폐쇄 중. | 🔄 |
+| **F4 액션 페이지 + mutation** | 예약·서신·베팅·경매·외교·게시판·투표·유산·NPC 정책·토너먼트·장수 선택 풀을 실제 intake/daemon 경로에 연결. 최근 배선: 메일함 서신 삭제, 외교 서신 승인/거부, 인사부(장수 임면), 내정보 즉시액션, 엔진 deny 결과 표면화. 라이브 감사와 PHP 골든으로 남은 명령을 계속 폐쇄 중. | 🔄 |
 | **F5 turnkey + docs** | 로컬 compose + app repo 문서 + production 앱 이미지. 실제 운영 오케스트레이션 정본은 `opensamguk-docker`의 shared/server/deployer 분리 모델과 맞춰갑니다. | 🔄 |
 
 > **상태 표기 주의**: F0–F3는 기본 동선 사용 가능, F4는 실제 mutation을 포함합니다. 모든 명령의 완전 동형 여부는 `opensamguk-php-oracle` → `webapp-testing` → `systematic-debugging` → `loop-engineering` 순서의 라이브 루프로 계속 검증합니다.
@@ -403,4 +407,4 @@ P7 프론트 + P8 시드/배포를 점진적으로 닫는 F-시리즈. 계획서
 
 ---
 
-*최종 갱신: 2026-06-22 · page-parity LEDGER 바퀴 72 기준.*
+*최종 갱신: 2026-07-25 · CQRS 하드닝 S5까지 main 머지 · F4 FE 배선(메일함 삭제·외교 서신 승인/거부·인사부·즉시액션·deny 표면화) 반영.*

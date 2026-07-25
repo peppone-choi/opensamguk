@@ -1,26 +1,29 @@
 # Current Task
-- Status: complete for commit/PR handoff; PR open pending.
-- Updated: 2026-07-24
-- Goal: dispatched worker `task_c21f0c0fc099` on `peppone-choi/op-139-minversion-barrier`:
-  - Implement OPENSAM-139/#285 `ARCH-S5-T3` build-only committedWorldVersion + minVersion primary-read barrier after OPENSAM-138 / PR #314.
-  - Follow `docs/superpowers/plans/2026-07-24-opensam-139-minversion-read-barrier-design.md`: envelope `committedWorldVersion`, RealtimePublisher payload dedupe, dedicated small Hikari primary pool, HandlerInterceptor classifier/eventual denylist, and stale 409 `VERSION_NOT_VISIBLE`.
-  - Do not edit or stage `.codex/config.toml`; preserve the pre-existing personal model/max_threads dirty overlay.
-- Completed scope:
-  - Added nullable `committedWorldVersion` to `TurnDaemonEventEnvelope` and emit it from daemon command-result rows and API terminal result rows.
-  - Removed direct command-result envelope construction from `RealtimePublisher`; Redis direct fallback and outbox relay now publish the exact stored command-result payload.
-  - Exposed `committedWorldVersion` from `GET /api/command/result/{requestId}` when present in the event envelope.
-  - Added game-api minVersion handling for GET `/api/**`: primary `world_state.world_version` polling through a dedicated `game-api-read-barrier` Hikari pool, bounded wait configuration, static eventual denylist, invalid minVersion 400, eventual minVersion 400, and stale 409 `VERSION_NOT_VISIBLE`.
-  - Added focused common/game-engine/game-api tests for wire compatibility, payload publishing, command-result response shape, classifier/interceptor contracts, and Testcontainers primary-pool visibility.
-- Verification status:
-  - Java 21 focused gates passed: common `BUILD SUCCESSFUL in 1m 21s`, game-engine `BUILD SUCCESSFUL in 5m 59s`, game-api `BUILD SUCCESSFUL in 7m 34s`.
-  - Focused XML check: `xml_files=8 bad_suites=0`.
-  - `git diff --check` exited 0.
-  - Java 21 focused game-api gate passed after review-blocker fixes: `BUILD SUCCESSFUL in 4m 57s`.
-  - Java 21 focused game-engine gate passed after daemon reset/cached rerun: `BUILD SUCCESSFUL in 4m 56s`.
-  - Independent follow-up review artifact is `docs/superpowers/reviews/2026-07-24-opensam-139-minversion-read-barrier-review.md` with `Verdict: cleared`.
-  - `git diff --check` exited 0.
-  - `scripts/agent/verify-changes.sh --run` was executed and interrupted after the broad Gradle phase produced no task output for a bounded wait.
-  - `bash scripts/agent/test-codex-agent-os.sh` failed only on the pre-existing `.codex/config.toml` `max_threads/max_depth` personal overlay; this worker did not edit or stage it.
-  - `python3 tools/agent-system/check.py --strict --base origin/main` reports one remaining logical error, the same pre-existing `.codex/config.toml` personal model pin; the process exited 0.
-  - Tool failures isolated so far: missing pre-research/design bounded-wait file checks, stale exploratory path reads, comment-checker on an edited CommandController comment that was removed, unsupported `rg` look-ahead syntax, expected no-match `rg` exit 1, one initial game-api IT red caused by probing an unmapped endpoint, YAML indentation red fixed by rerun, and repeated engine `compileTestKotlin` stall recovered by daemon reset/cached rerun.
-- Non-goals: production deploy/cutover, frontend minVersion page wiring, golden fabrication, test weakening, merge to main.
+
+- Status: approved, in progress.
+- Updated: 2026-07-25
+- Goal: refresh the current documentation and agent harness, with `README.md` as the primary onboarding surface.
+- Approved plan:
+  - Update `README.md` to match the current July 2026 implementation, local quick start, CQRS consistency/runtime state, and shared/server production model.
+  - Update `.claude/HARNESS.md` from its obsolete parity-only/deploy narrative to the current Agent OS, parity, verification, and deployment entry points.
+  - Correct the comment-language and deployment wording in the tracked parity skills.
+  - Refresh `docs/agent/project-overview.md` so README can link to a current bounded status source.
+- Allowed files:
+  - `README.md`
+  - `.claude/HARNESS.md`
+  - `.claude/skills/parity-close/SKILL.md`
+  - `.claude/skills/parity-ship/SKILL.md`
+  - `docs/agent/project-overview.md`
+  - `.ai/task.md`
+  - `.ai/current-state.md`
+  - `.ai/ownership.md`
+  - `docs/superpowers/reviews/2026-07-25-docs-harness-refresh-review.md`
+- Acceptance evidence:
+  - No obsolete `V1..V10`, `appleboy/ssh-action`, unresolved `commandBlockMs` wiring-gap, or Korean-code-comment claim remains in the refreshed surfaces.
+  - README quick start names required environment variables without exposing values or secrets.
+  - Production guidance points to `opensamguk-docker` shared/server orchestration and clearly labels repository production compose/manual deploy as compatibility-only.
+  - `git diff --check`, path/link checks, and `tools/agent-system/check.py` results are recorded.
+- Human approval checkpoints:
+  - Commit, push, merge, deploy, data deletion, or secret access remain prohibited without separate approval.
+- Non-goals:
+  - Runtime/code/schema changes, legacy or golden edits, production operations, and external tracker mutations.
