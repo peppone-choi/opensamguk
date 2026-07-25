@@ -33,7 +33,7 @@
 - 완료 기준: 문서 미명시 (스펙엔 계약만; Exit는 계획 V2-1에)
 
 **P-2. CommandSubject 계약을 정의한다**
-- 요약: `subjectType(GENERAL|FOLLOWER|RETAINER|BUGOK|SUBFACTION)`, `subjectId`, `orderedByGeneralId`, `executionOwnerGeneralId`, `queueScope(PERSONAL|OPERATION|NATION)`, `idempotencyKey`를 갖는 명령 주체 계약을 확정한다.
+- 요약: `subjectType(GENERAL|RETAINER|BUGOK|SUBFACTION)`, `subjectId`, `orderedByGeneralId`, `executionOwnerGeneralId`, `queueScope(PERSONAL|OPERATION|NATION)`, `idempotencyKey`를 갖는 명령 주체 계약을 확정한다.
 - 출처: product-spec §6 핵심 도메인 계약 / CommandSubject
 - 선행 의존성: 문서 미명시
 - 완료 기준: 문서 미명시

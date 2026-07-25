@@ -115,7 +115,8 @@ v1 ActionNationType 효과·수치·골든 변경 / 15개 배타적 enum 재통�
 ### V2-1 replay spine (Exit: seed 기반 deterministic replay body+hash, 결과 로그·replay 연결)
 - [D2-06] battle_replays schema · [D2-07] battle_replay_phases schema · [D2-08] 공격 명령 1개가 replay 생성 · [D2-09] phase 5종(approach/encounter/field/siege/aftermath) · [D2-10] UI replay timeline read-only.
 ### V2-2 가신 1명 (Exit: 근거 score 저장, 승인/거부가 신뢰/충성 영향)
-- [D2-11] general_retainers · [D2-12] retainer_proposals · [D2-13] retainer_interactions · [D2-14] 참모 가신 1명 자동생성/영입 · [D2-15] 전쟁/내정/외교 1종 제안 · [D2-16] 승인→명령 큐/정책 연결.
+2026-07-25 결정(ADR-LITE-017)으로 부하는 가신 1트랙이다. 구 추종(Follower)은 `general_retainers`의 속성으로 흡수되므로 `general_followers` 테이블은 별도로 만들지 않는다. D2-11 범위에 `origin(EXISTING|RECRUITED)`·`hasOwnBugok`·`role`·`releasePolicy(MUTUAL|MASTER_ONLY)`·`upkeep` 축을 포함한다. 티켓 ID는 그대로 둔다.
+- [D2-11] general_retainers(구 추종 축 포함) · [D2-12] retainer_proposals · [D2-13] retainer_interactions · [D2-14] 참모 가신 1명 자동생성/영입 · [D2-15] 전쟁/내정/외교 1종 제안 · [D2-16] 승인→명령 큐/정책 연결(`가신서약`/`가신해제`/`가신임무` 3종 + 광역 3종 대상 = `hasOwnBugok=true` 가신).
 ### V2-3 어전회의 (Exit: seed 재현, UI 편향·근거 표시)
 - [D2-17] court_councils · [D2-18] council_opinions · [D2-19] bias_profiles · [D2-20] 선전포고 의제 1종 · [D2-21] 참모/군수관/사신 의견 · [D2-22] 플레이어/NPC ruler AI 결정.
 ### V2-4 봉토·도독부 (Exit: 충성/자율성이 명령 지연 영향, 봉토 회수/보상)
