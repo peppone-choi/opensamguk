@@ -668,6 +668,55 @@ export interface MyCitiesResponse {
   cities: MyCitySummary[];
 }
 
+export interface MyBossGeneralSummary {
+  generalId: number;
+  name: string;
+  npcState: number;
+  cityId: number;
+  cityName: string | null;
+  officerCityId: number;
+  officerLevel: number;
+  officerLevelText: string;
+  leadership: number;
+  strength: number;
+  intel: number;
+  permissionRole: string;
+  canBeAppointed: boolean;
+  canBeKicked: boolean;
+  canBeAmbassador: boolean;
+  canBeAuditor: boolean;
+}
+
+export interface MyBossOfficerSlot {
+  officerLevel: number;
+  officerLevelText: string;
+  slotType: 'chief' | 'city';
+  cityId: number | null;
+  cityName: string | null;
+  locked: boolean;
+  assignedGeneralId: number | null;
+  assignedName: string | null;
+  assignedNpcState: number | null;
+}
+
+export interface MyBossResponse {
+  result: boolean;
+  nationId: number;
+  hasBoss: boolean;
+  bossGeneralId: number | null;
+  bossName: string | null;
+  bossOfficerLevel: number | null;
+  nationName: string | null;
+  nationLevel: number;
+  myGeneralId: number | null;
+  myOfficerLevel: number;
+  myPermission: number;
+  canManagePersonnel: boolean;
+  roster: MyBossGeneralSummary[];
+  chiefSlots: MyBossOfficerSlot[];
+  citySlots: MyBossOfficerSlot[];
+}
+
 // ── page 12/13/11-bracket · 토너먼트 (GET /api/tournament) ────────────────────
 export type TournamentTypeText = '전력전' | '통솔전' | '일기토' | '설전';
 export type TournamentGroupStage = 'MAIN' | 'PRELIMINARY';
