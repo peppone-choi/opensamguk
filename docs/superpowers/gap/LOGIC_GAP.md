@@ -283,6 +283,8 @@ stubs). **No gap.**
 Tied to the founding seam (§0): created nations that DO flush must round-trip through rehydrate; until
 §0 is fixed there is no live created-nation to test the round-trip with. **PARTIAL.**
 
+**Ticket:** `OPENSAM-149` / GitHub `#324` — ChangeRecorder 전 채널 × {created,dirty,deleted} 매트릭스 왕복 무손실 게이트. ADR-LITE-018(오리지널 on-demand 운영)의 선결 조건.
+
 ---
 
 ## Live-daemon-vs-golden divergence summary (golden-green, prod-broken)

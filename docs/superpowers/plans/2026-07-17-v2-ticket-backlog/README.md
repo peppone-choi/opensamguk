@@ -48,6 +48,30 @@ v2 문서 10종 전체를 4개 독립 에이전트가 정독·분해한 결과�
 
 ## 착수 순서 (정본 게이팅 반영)
 
+> **개정 (2026-07-25, ADR-LITE-021) — 오픈 경로 = 20 티켓. 아래 원본 순서보다 이 표가 우선한다.**
+> ADR-LITE-019가 고정한 14 티켓에 round-3 설계안(`docs/loops/v2-planning-2026-07-12/round3-proposal-city-guanxi.md`, 독립 채점 6바퀴 끝 10/10 `cleared`)의 **R1~R6이 추가돼 20**이 됐다. ADR-019의 나머지(`V2-G0`·`C-track` 오픈 후 연기, `OPENSAM-149` 선행)는 그대로 유효하다.
+> `V2-0B` 적재는 G0 카탈로그 대신 기존 도시 세트 또는 RTK 빌더(`OPENSAM-104`/`105`) 산출물을 쓴다.
+>
+> | # | 티켓 | 내용 |
+> |---|---|---|
+> | 0 | `OPENSAM-31`·`32`·`33`·`34` | v1 선행 — 안정화 체크리스트 · B1b 자동외교 6종 · B2 운영 스모크 · 배포 체크 Go 5종 |
+> | 1 | `OPENSAM-149` | restart-rehydrate lossless gate (v1/v2 공용 데몬 — 포크 전에 한 번만 고친다) |
+> | 2 | `OPENSAM-35` | V2-0A production 격리 게이트 (+DoD 3항목: v2 별도 compose 스택·env 분리 / `SPRING_FLYWAY_LOCATIONS` 오버라이드 / 0A-f 실측) |
+> | 3 | `OPENSAM-43`·`44` | V2-0B sandbox 적재 + 영속화 일괄 |
+> | 3b | **`OPENSAM-150`(R1) → `151`(R2) → `152`(R3)** | **도시 원장 3종 — 순차.** R1 `v2_city_ledger` 기반(스키마+flush 경로) / R2 수입·봉록 도시 귀속(`ProcessIncome` leaf 치환, **생산자**) / R3 병력 0 → 공백지화(**소비자**). R3‖R2 병렬은 철회됐다(공유 파일 2건 + 등록 순서 의존) |
+> | 4 | `OPENSAM-45`·`46`·`47` · **`155`(R6, 동시)** | V2-1 command result lifecycle + 조작 대상 패널 · **R6 도시 원장 열람**(read API + 패널 필드)은 패널 위에 얹으므로 동시 |
+> | 4b | **`OPENSAM-153`(R4) → `154`(R5)** | **v2 개인턴 커맨드 2종 — 순차.** R4 도시병사 보충 / R5 수송(금·병량·도시병사, 인접 1홉). `CommandWireMapper`·`TurnDaemonCommandDispatcher` 두 파일을 공유 |
+> | 5 | `OPENSAM-48` | V2-2 부곡 foundation |
+> | 6 | `OPENSAM-56` | V2-3 작전 (che_출병 wrapping) |
+> | 7 | `OPENSAM-61` | V2-5 가신 (ADR-LITE-017로 1트랙 병합) |
+> | | **합계** | **20** |
+> | — | **오픈** | 출시 보류 조건(`2026-06-29-v2-release-implementation-plan.md` §6) 통과 시 |
+>
+> R1~R6의 산출물·삽입 위치·T2 파일별 가드 영향·v1-inert 증명·DoD는 `round3-proposal-city-guanxi.md` §9.2·§7.1-2·§7.2에 있고, 발행 결과표(코드 ↔ Jira 키 ↔ GitHub 번호)는 `docs/loops/v2-planning-2026-07-12/TICKETS-issued.md`에 있다.
+> **R2 분해 주의** — R2가 최대 티켓이라 반나절 규율로 분해하면 20 → 21이 될 수 있다. 동일 산출물의 분해이지 범위 추가가 아니다(ADR-LITE-021).
+>
+> 오픈 후: `V2-G0`(36~42) · `C-track`(51~55) · `V2-4A`(57) · `V2-4B`(58~60) · `I0`/`V2-6`(62~65) · `O0`/`V2-7`(66~69) · `V2-8`(70~72) · **장수↔장수 관계망 7티켓**(P0~P6, §9.4).
+
 1. **선행(비-v2)**: v1 안정화 잔여 D4-01~17 + 배포 체크 D4-31~35. B1은 오픈 전 hardening gate 승격.
 2. **V2-0A** production 격리(0A-a~g = D4-18~22) — 모든 v2 코드의 관문.
 3. **V2-G0** 3웨이브 병렬 가능(G0-A 행정 / G0-B 주변세계 / G0-C 3D) — in-memory, DB write 없음. T1 그룹 A/B/E/F/G의 `[문서]` 모델·validator 티켓이 여기 속한다.
