@@ -38,7 +38,7 @@ Spawn the **parity-reviewer** agent (or invoke the configured review workflow) a
 Unresolved HIGH findings ⇒ STOP.
 
 ### 3. Commit logical units
-One logical commit per task, with English code comments (identifiers stay English and parity-string literals retain PHP content). Commit only when separately authorized. **Every** commit message ends with the trailer — verbatim:
+One logical commit per task, with Korean code comments (identifiers stay English and parity-string literals retain PHP content). Commit only when separately authorized. **Every** commit message ends with the trailer — verbatim:
 
 ```
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>

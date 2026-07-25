@@ -35,8 +35,10 @@ They do not claim a production cutover, second-world admission, or replica activ
   `world_id`, with two-world isolation coverage.
 - **Flush generation and recovery:** `DeltaGenerationSession`, `world_version` CAS,
   `writer_epoch`, and `FlushRecoveryGate` protect generation/fence/recovery boundaries.
-- **Durable command path:** `command_inbox` is recorded before acceptance; durable command
-  result/outbox and the consumer wake/ACK/replay path are committed with the state effects.
+- **Durable command path:** commit `command_inbox` to DB before acceptance, send a best-effort
+  Redis wake, let the engine claim/apply, then flush state effects + durable result + outbox +
+  inbox terminal transition in one DB transaction; only after that commit perform XACK and result
+  publication.
 - **Bounded reads:** a hot/cold catalog guards boot/runtime read seams; archive reads are
   bounded or on-demand; game-api has a primary `minVersion` visibility barrier that can return
   `409 VERSION_NOT_VISIBLE` for stale reads.
@@ -64,7 +66,7 @@ PHP path + line range → real golden capture (when RNG-bearing) → logic/repla
 ```
 
 An action absent from `intakeCodes` can precheck as available and still be denied by the engine;
-that is an open parity gap. Keep comments in English. Identifiers remain conventional English,
+that is an open parity gap. Keep comments in Korean. Identifiers remain conventional English,
 while game content and PHP-parity log strings retain their required Korean and markup exactly.
 
 Non-negotiable checks:
