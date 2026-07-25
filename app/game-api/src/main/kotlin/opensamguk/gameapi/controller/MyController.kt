@@ -1,5 +1,7 @@
 package opensamguk.gameapi.controller
 
+import opensamguk.gameapi.dto.MyBossGeneralSummary
+import opensamguk.gameapi.dto.MyBossOfficerSlot
 import opensamguk.gameapi.dto.MyBossResponse
 import opensamguk.gameapi.dto.MyCitiesResponse
 import opensamguk.gameapi.dto.MyCityGeneralName
@@ -25,6 +27,7 @@ import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.instant.DieOnPrestart
 import opensamguk.logic.actions.instant.DieOnPrestartOutcome
+import opensamguk.logic.actions.intake.SecretPermission
 import opensamguk.logic.domestic.getBill
 import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
@@ -233,9 +236,82 @@ class MyController(
             ?: return ResponseEntity.ok(MyBossResponse(result = false, nationId = 0, hasBoss = false, bossGeneralId = null, bossName = null, bossOfficerLevel = null))
         val nationId = resolved.nationId
         if (nationId == 0) {
-            return ResponseEntity.ok(MyBossResponse(result = true, nationId = 0, hasBoss = false, bossGeneralId = null, bossName = null, bossOfficerLevel = null))
+            return ResponseEntity.ok(
+                MyBossResponse(
+                    result = true,
+                    nationId = 0,
+                    hasBoss = false,
+                    bossGeneralId = null,
+                    bossName = null,
+                    bossOfficerLevel = null,
+                    myGeneralId = resolved.general.id,
+                    myOfficerLevel = resolved.officerLevel,
+                    myPermission = resolved.permission,
+                ),
+            )
         }
-        val boss = generals.findFirstByNationIdOrderByOfficerLevelDesc(nationId)
+        val nation = nations.findById(nationId).orElse(null)
+        val nationLevel = nation?.level ?: resolved.nationLevel
+        val nationGenerals = generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
+        val cityRows = cities.findByNationIdOrderByIdAsc(nationId)
+        val cityNameById = cityRows.associate { it.id to it.name }
+        val boss = nationGenerals.firstOrNull { it.officerLevel == 12 } ?: nationGenerals.firstOrNull()
+        val canManage = resolved.officerLevel >= 5
+        val roster = nationGenerals.map { g ->
+            val role = permissionRole(g)
+            val secretMax = SecretPermission.checkSecretMaxPermission(g.penalty)
+            MyBossGeneralSummary(
+                generalId = g.id,
+                name = g.name,
+                npcState = g.npcState,
+                cityId = g.cityId,
+                cityName = cityNameById[g.cityId],
+                officerCityId = g.officerCity,
+                officerLevel = g.officerLevel,
+                officerLevelText = F4StateText.officerLevelText(g.officerLevel, nationLevel),
+                leadership = g.leadership,
+                strength = g.strength,
+                intel = g.intel,
+                permissionRole = role,
+                canBeAppointed = g.id != resolved.general.id && g.officerLevel != 12,
+                canBeKicked = g.id != resolved.general.id && secretPermission(g) != 4,
+                canBeAmbassador = g.officerLevel != 12 && role == "normal" && secretMax >= 4,
+                canBeAuditor = g.officerLevel != 12 && role == "normal" && secretMax >= 3,
+            )
+        }
+        val assignedByChiefLevel = nationGenerals.associateBy { it.officerLevel }
+        val chiefSet = (nation?.meta?.get("chief_set") as? Number)?.toInt() ?: 0
+        val chiefSlots = (11 downTo 5).map { officerLevel ->
+            val assigned = assignedByChiefLevel[officerLevel]
+            MyBossOfficerSlot(
+                officerLevel = officerLevel,
+                officerLevelText = F4StateText.officerLevelText(officerLevel, nationLevel),
+                slotType = "chief",
+                locked = isOfficerSet(chiefSet, officerLevel),
+                assignedGeneralId = assigned?.id,
+                assignedName = assigned?.name,
+                assignedNpcState = assigned?.npcState,
+            )
+        }
+        val assignedByCityLevel = nationGenerals
+            .filter { it.officerLevel in 2..4 && it.officerCity != 0 }
+            .associateBy { it.officerCity to it.officerLevel }
+        val citySlots = cityRows.flatMap { city ->
+            listOf(4, 3, 2).map { officerLevel ->
+                val assigned = assignedByCityLevel[city.id to officerLevel]
+                MyBossOfficerSlot(
+                    officerLevel = officerLevel,
+                    officerLevelText = F4StateText.officerLevelText(officerLevel, nationLevel),
+                    slotType = "city",
+                    cityId = city.id,
+                    cityName = city.name,
+                    locked = isOfficerSet(city.officerSet, officerLevel),
+                    assignedGeneralId = assigned?.id,
+                    assignedName = assigned?.name,
+                    assignedNpcState = assigned?.npcState,
+                )
+            }
+        }
         return ResponseEntity.ok(
             MyBossResponse(
                 result = true,
@@ -244,6 +320,15 @@ class MyController(
                 bossGeneralId = boss?.id,
                 bossName = boss?.name,
                 bossOfficerLevel = boss?.officerLevel,
+                nationName = nation?.name,
+                nationLevel = nationLevel,
+                myGeneralId = resolved.general.id,
+                myOfficerLevel = resolved.officerLevel,
+                myPermission = resolved.permission,
+                canManagePersonnel = canManage,
+                roster = roster,
+                chiefSlots = chiefSlots,
+                citySlots = citySlots,
             ),
         )
     }
@@ -339,6 +424,20 @@ class MyController(
         officerLevel >= 5 -> nationLevel
         else -> 0
     }
+
+    private fun isOfficerSet(officerSet: Int, reqOfficerLevel: Int): Boolean =
+        (officerSet and (1 shl reqOfficerLevel)) != 0
+
+    private fun permissionRole(g: GeneralReadEntity): String =
+        g.meta["permission"] as? String ?: "normal"
+
+    private fun secretPermission(g: GeneralReadEntity): Int =
+        SecretPermission.check(
+            nationId = g.nationId,
+            officerLevel = g.officerLevel,
+            meta = g.meta,
+            penalty = g.penalty,
+        )
 
     private fun myPageItems(g: GeneralReadEntity): List<MyPageItem> = listOf(
         myPageItem("horse", "명마", g.horseCode),

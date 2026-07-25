@@ -273,17 +273,55 @@ class MyControllerTest {
     }
 
     @Test
-    fun `my-boss returns the highest officer in the nation`() {
+    fun `my-boss returns roster and personnel slots for a chief caller`() {
         `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, officerLevel = 5)))
-        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
-        `when`(generals.findFirstByNationIdOrderByOfficerLevelDesc(1)).thenReturn(gen(1, "조조", nationId = 1, officerLevel = 12))
+        `when`(nations.findById(1)).thenReturn(
+            Optional.of(
+                NationReadEntity(
+                    id = 1,
+                    name = "위",
+                    color = "#00f",
+                    level = 7,
+                    meta = linkedMapOf("chief_set" to (1 shl 10)),
+                ),
+            ),
+        )
+        `when`(cities.findByNationIdOrderByIdAsc(1)).thenReturn(
+            listOf(CityReadEntity(id = 5, name = "허창", nationId = 1, officerSet = 1 shl 4)),
+        )
+        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
+            listOf(
+                gen(1, "조조", nationId = 1, cityId = 5, officerLevel = 12),
+                gen(20, "허저", nationId = 1, cityId = 5, officerLevel = 10),
+                gen(10, "순욱", nationId = 1, cityId = 5, officerLevel = 5),
+                gen(3, "하후돈", nationId = 1, cityId = 5, officerLevel = 4, npcState = 1)
+                    .apply {
+                        officerCity = 5
+                        meta = linkedMapOf("permission" to "ambassador")
+                    },
+            ),
+        )
 
         mockMvc().perform(get("/api/my-boss").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.hasBoss").value(true))
             .andExpect(jsonPath("$.bossName").value("조조"))
             .andExpect(jsonPath("$.bossOfficerLevel").value(12))
+            .andExpect(jsonPath("$.myGeneralId").value(10))
+            .andExpect(jsonPath("$.canManagePersonnel").value(true))
+            .andExpect(jsonPath("$.roster.length()").value(4))
+            .andExpect(jsonPath("$.roster[0].officerLevelText").value("황제"))
+            .andExpect(jsonPath("$.roster[2].canBeAppointed").value(false))
+            .andExpect(jsonPath("$.roster[3].permissionRole").value("ambassador"))
+            .andExpect(jsonPath("$.roster[3].canBeKicked").value(false))
+            .andExpect(jsonPath("$.chiefSlots[1].officerLevel").value(10))
+            .andExpect(jsonPath("$.chiefSlots[1].locked").value(true))
+            .andExpect(jsonPath("$.chiefSlots[1].assignedName").value("허저"))
+            .andExpect(jsonPath("$.citySlots[0].officerLevel").value(4))
+            .andExpect(jsonPath("$.citySlots[0].cityName").value("허창"))
+            .andExpect(jsonPath("$.citySlots[0].locked").value(true))
+            .andExpect(jsonPath("$.citySlots[0].assignedName").value("하후돈"))
     }
 
     // ── b_myKingdomInfo (my-nation-detail) 계약 버그 수정 회귀 ──────────────────────────────────────

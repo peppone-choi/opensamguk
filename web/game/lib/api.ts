@@ -655,6 +655,18 @@ export const api = {
         // 게시판 댓글 — legacy j_board_comment_add.php(articleNo/text, maxlength 250).
         boardComment: <T = unknown>(args: { articleNo: number; text: string }, generalId: number, turnIdx = 0) =>
             post<IntakeOutcome & T>(`/api/command/boardComment?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        appoint: <T = unknown>(
+            args: { officerLevel: number; destGeneralID: number; destCityID?: number },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(`/api/command/appoint?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        kick: <T = unknown>(args: { destGeneralID: number }, generalId: number, turnIdx = 0) =>
+            post<IntakeOutcome & T>(`/api/command/kick?generalId=${generalId}&turnIdx=${turnIdx}`, args),
+        changePermission: <T = unknown>(
+            args: { isAmbassador: boolean; genlist: number[] },
+            generalId: number,
+            turnIdx = 0,
+        ) => post<IntakeOutcome & T>(`/api/command/changePermission?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
         // ── 거래장/경매 (C1 AuctionResource/AuctionUniqueItem) ───────────────────────────────────
         // CommandWireMapper.intakeCodes에 모두 기존 등록(auctionBid:135 / auctionOpenBuyRice:259 /

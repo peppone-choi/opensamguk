@@ -651,7 +651,37 @@ data class MyCitiesResponse(
     val cities: List<MyCitySummary>,
 )
 
-/** GET /api/my-boss — the ruler (officer_level 12) of the caller's nation (인사부). */
+data class MyBossGeneralSummary(
+    val generalId: Int,
+    val name: String,
+    val npcState: Int,
+    val cityId: Int,
+    val cityName: String?,
+    val officerCityId: Int,
+    val officerLevel: Int,
+    val officerLevelText: String,
+    val leadership: Int,
+    val strength: Int,
+    val intel: Int,
+    val permissionRole: String,
+    val canBeAppointed: Boolean,
+    val canBeKicked: Boolean,
+    val canBeAmbassador: Boolean,
+    val canBeAuditor: Boolean,
+)
+
+data class MyBossOfficerSlot(
+    val officerLevel: Int,
+    val officerLevelText: String,
+    val slotType: String,
+    val cityId: Int? = null,
+    val cityName: String? = null,
+    val locked: Boolean,
+    val assignedGeneralId: Int? = null,
+    val assignedName: String? = null,
+    val assignedNpcState: Int? = null,
+)
+
 data class MyBossResponse(
     val result: Boolean,
     val nationId: Int,
@@ -659,6 +689,15 @@ data class MyBossResponse(
     val bossGeneralId: Int?,
     val bossName: String?,
     val bossOfficerLevel: Int?,
+    val nationName: String? = null,
+    val nationLevel: Int = 0,
+    val myGeneralId: Int? = null,
+    val myOfficerLevel: Int = 0,
+    val myPermission: Int = 0,
+    val canManagePersonnel: Boolean = false,
+    val roster: List<MyBossGeneralSummary> = emptyList(),
+    val chiefSlots: List<MyBossOfficerSlot> = emptyList(),
+    val citySlots: List<MyBossOfficerSlot> = emptyList(),
 )
 
 /**

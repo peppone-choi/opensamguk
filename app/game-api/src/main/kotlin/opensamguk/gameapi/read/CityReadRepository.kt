@@ -100,6 +100,9 @@ class CityReadEntity(
     @Column(name = "region")
     var region: Int = 0,
 
+    @Column(name = "officer_set")
+    var officerSet: Int = 0,
+
     @Convert(converter = MetaJsonConverter::class)
     @Column(name = "conflict", columnDefinition = "jsonb")
     var conflict: Map<String, Any?> = linkedMapOf(),
@@ -131,6 +134,7 @@ class CityReadEntity(
         populationMax = populationMax,
         trade = trade,
         region = region,
+        officerSet = officerSet,
         meta = meta,
     )
 }
