@@ -6,6 +6,8 @@ import opensamguk.gameapi.dto.MyCityGeneralName
 import opensamguk.gameapi.dto.MyCitySummary
 import opensamguk.gameapi.dto.MyGeneralSummary
 import opensamguk.gameapi.dto.MyGeneralsResponse
+import opensamguk.gameapi.dto.MyPageInstantActionFlags
+import opensamguk.gameapi.dto.MyPageItem
 import opensamguk.gameapi.dto.MyNationCityRef
 import opensamguk.gameapi.dto.MyNationDetailResponse
 import opensamguk.gameapi.dto.MyPageResponse
@@ -13,15 +15,21 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GeneralAccessLogReadRepository
+import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.NationFinanceReadProjector
+import opensamguk.gameapi.read.TurnTimeFormatter
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
+import opensamguk.logic.actions.instant.DieOnPrestart
+import opensamguk.logic.actions.instant.DieOnPrestartOutcome
 import opensamguk.logic.domestic.getBill
 import opensamguk.logic.domestic.getDedLevel
 import opensamguk.logic.domestic.getDedLevelText
 import opensamguk.logic.domain.metaInt
+import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.SpecialityHelper
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -29,6 +37,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.Instant
 
 /**
  * F2 Wave 1 — the `my-*` read endpoints web/game's `lib/api.ts` calls (absent today). Each resolves the
@@ -45,6 +54,7 @@ class MyController(
     private val generals: GeneralReadRepository,
     private val cities: CityReadRepository,
     private val nations: NationReadRepository,
+    private val worldStates: WorldStateReadRepository,
     private val accessLogs: GeneralAccessLogReadRepository? = null,
 ) {
     private val financeProjector = NationFinanceReadProjector()
@@ -81,6 +91,8 @@ class MyController(
                 atmos = g.atmos,
                 picture = g.picture,
                 imageServer = g.imageServer,
+                items = myPageItems(g),
+                instantActions = myPageInstantActions(g),
             ),
         )
     }
@@ -326,5 +338,79 @@ class MyController(
         officerLevel == 12 -> nationLevel * 2
         officerLevel >= 5 -> nationLevel
         else -> 0
+    }
+
+    private fun myPageItems(g: GeneralReadEntity): List<MyPageItem> = listOf(
+        myPageItem("horse", "명마", g.horseCode),
+        myPageItem("weapon", "무기", g.weaponCode),
+        myPageItem("book", "서적", g.bookCode),
+        myPageItem("item", "도구", g.itemCode),
+    )
+
+    private fun myPageItem(type: String, label: String, code: String): MyPageItem =
+        MyPageItem(
+            type = type,
+            label = label,
+            code = code,
+            name = GameConst.itemNameOf(code),
+            droppable = code != "None",
+        )
+
+    private fun myPageInstantActions(g: GeneralReadEntity): MyPageInstantActionFlags =
+        MyPageInstantActionFlags(
+            instantRetreatPossible = g.nationId != 0 && cities.findAll().any { it.nationId != g.nationId },
+            dieOnPrestartPossible = canDieOnPrestart(g),
+        )
+
+    private fun canDieOnPrestart(g: GeneralReadEntity): Boolean {
+        val world = worldStates.findProcessWorld() ?: return false
+        val config = world.config
+        val meta = world.meta
+        val turntime = stringValue(config["turntime"])
+            ?: stringValue(meta["turntime"])
+            ?: TurnTimeFormatter.full(g.turnTime)
+            ?: return false
+        val opentime = stringValue(config["opentime"])
+            ?: stringValue(meta["opentime"])
+            ?: stringValue(config["starttime"])
+            ?: stringValue(meta["starttime"])
+            ?: TurnTimeFormatter.full(world.startTime)
+            ?: return false
+        val turnterm = intValue(config["turnterm"])
+            ?: intValue(meta["turnterm"])
+            ?: (world.tickSeconds / 60).takeIf { it > 0 }
+            ?: 1
+        val lastRefresh = accessLogs
+            ?.findByGeneralId(g.id)
+            ?.lastRefresh
+            ?: instantValue(g.meta["lastRefresh"])
+            ?: instantValue(meta["lastRefresh"])
+            ?: return false
+        val now = Instant.now().atZone(ServerClock.SERVER_ZONE).toLocalDateTime()
+        val lastRefreshLocal = lastRefresh.atZone(ServerClock.SERVER_ZONE).toLocalDateTime()
+        return DieOnPrestart.resolve(
+            generalExists = true,
+            generalName = g.name,
+            nationId = g.nationId,
+            turntime = turntime,
+            opentime = opentime,
+            lastRefresh = lastRefreshLocal,
+            turnterm = turnterm,
+            now = now,
+        ) is DieOnPrestartOutcome.Killed
+    }
+
+    private fun stringValue(value: Any?): String? = value?.toString()?.takeIf { it.isNotBlank() }
+
+    private fun intValue(value: Any?): Int? = when (value) {
+        is Number -> value.toInt()
+        is String -> value.toIntOrNull()
+        else -> null
+    }
+
+    private fun instantValue(value: Any?): Instant? = when (value) {
+        is Instant -> value
+        is String -> TurnTimeFormatter.parseFull(value)
+        else -> null
     }
 }

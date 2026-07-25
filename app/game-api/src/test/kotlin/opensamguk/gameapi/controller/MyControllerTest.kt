@@ -12,6 +12,8 @@ import opensamguk.gameapi.read.GeneralAccessLogReadRepository
 import opensamguk.gameapi.read.NationCrewAggregate
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
+import opensamguk.gameapi.read.WorldStateReadEntity
+import opensamguk.gameapi.read.WorldStateReadRepository
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -40,10 +42,11 @@ class MyControllerTest {
     private val cities = mock(CityReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val accessLogs = mock(GeneralAccessLogReadRepository::class.java)
+    private val world = mock(WorldStateReadRepository::class.java)
     private val resolver = GeneralResolver(owners, generals, nations)
 
     private fun mockMvc(): MockMvc =
-        MockMvcBuilders.standaloneSetup(MyController(resolver, generals, cities, nations, accessLogs))
+        MockMvcBuilders.standaloneSetup(MyController(resolver, generals, cities, nations, world, accessLogs))
             .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
             .build()
 
@@ -70,6 +73,7 @@ class MyControllerTest {
         `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, cityId = 5, officerLevel = 5)))
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(cities.findAll()).thenReturn(emptyList())
 
         mockMvc().perform(get("/api/my-page").with(principal(7L)))
             .andExpect(status().isOk)
@@ -79,6 +83,77 @@ class MyControllerTest {
             .andExpect(jsonPath("$.cityName").value("허창"))
             .andExpect(jsonPath("$.officerLevel").value(5))
             .andExpect(jsonPath("$.permission").value(2)) // officer_level 5 → 수뇌 (showSecret)
+            .andExpect(jsonPath("$.items.length()").value(4))
+            .andExpect(jsonPath("$.items[0].type").value("horse"))
+            .andExpect(jsonPath("$.items[0].name").value("-"))
+            .andExpect(jsonPath("$.items[0].droppable").value(false))
+            .andExpect(jsonPath("$.instantActions.instantRetreatPossible").value(false))
+            .andExpect(jsonPath("$.instantActions.dieOnPrestartPossible").value(false))
+    }
+
+    @Test
+    fun `my-page emits item slots and instant action flags when read gates allow them`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(
+            Optional.of(
+                GeneralReadEntity(
+                    id = 10,
+                    name = "순욱",
+                    nationId = 0,
+                    cityId = 5,
+                    horseCode = "che_명마_15_적토마",
+                    weaponCode = "None",
+                    bookCode = "che_서적_03_손자병법",
+                    itemCode = "None",
+                ),
+            ),
+        )
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 0)))
+        `when`(cities.findAll()).thenReturn(emptyList())
+        `when`(world.findProcessWorld()).thenReturn(
+            WorldStateReadEntity(
+                tickSeconds = 60,
+                config = linkedMapOf(
+                    "turntime" to "2026-01-01 00:00:00",
+                    "opentime" to "2026-01-01 00:00:00",
+                    "turnterm" to 1,
+                ),
+            ),
+        )
+        `when`(accessLogs.findByGeneralId(10)).thenReturn(
+            GeneralAccessLogReadEntity(id = 1, generalId = 10, lastRefresh = Instant.parse("2026-01-01T00:00:00Z")),
+        )
+
+        mockMvc().perform(get("/api/my-page").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.items[0].type").value("horse"))
+            .andExpect(jsonPath("$.items[0].code").value("che_명마_15_적토마"))
+            .andExpect(jsonPath("$.items[0].name").value("적토마(+15)"))
+            .andExpect(jsonPath("$.items[0].droppable").value(true))
+            .andExpect(jsonPath("$.items[1].droppable").value(false))
+            .andExpect(jsonPath("$.items[2].type").value("book"))
+            .andExpect(jsonPath("$.items[2].name").value("손자병법(+3)"))
+            .andExpect(jsonPath("$.instantActions.instantRetreatPossible").value(false))
+            .andExpect(jsonPath("$.instantActions.dieOnPrestartPossible").value(true))
+    }
+
+    @Test
+    fun `my-page marks instant retreat possible for a joined general with a destination city`() {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = 1, cityId = 5, officerLevel = 5)))
+        `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "위", color = "#00f", level = 7)))
+        `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, name = "허창", nationId = 1)))
+        `when`(cities.findAll()).thenReturn(
+            listOf(
+                CityReadEntity(id = 5, name = "허창", nationId = 1),
+                CityReadEntity(id = 6, name = "업", nationId = 2),
+            ),
+        )
+
+        mockMvc().perform(get("/api/my-page").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.instantActions.instantRetreatPossible").value(true))
+            .andExpect(jsonPath("$.instantActions.dieOnPrestartPossible").value(false))
     }
 
     @Test

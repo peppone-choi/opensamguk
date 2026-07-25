@@ -487,6 +487,21 @@ data class MyPageResponse(
     val atmos: Int,
     val picture: String?,
     val imageServer: Int,
+    val items: List<MyPageItem>,
+    val instantActions: MyPageInstantActionFlags,
+)
+
+data class MyPageItem(
+    val type: String,
+    val label: String,
+    val code: String,
+    val name: String,
+    val droppable: Boolean,
+)
+
+data class MyPageInstantActionFlags(
+    val instantRetreatPossible: Boolean,
+    val dieOnPrestartPossible: Boolean,
 )
 
 /**
