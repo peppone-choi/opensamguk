@@ -54,6 +54,16 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
         expect(JSON.parse(init.body as string)).toEqual({ msgID: 55 });
     });
 
+    it('diploRespondLetter 기본값은 PHP처럼 isAgree false와 빈 reason을 싣는다', async () => {
+        mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'respond-1', turnIdx: 0 });
+        const out = await api.commands.diploRespondLetter({ letterNo: 7 }, 10);
+        expect(isIntakeQueued(out)).toBe(true);
+        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toBe('/api/game/api/command/diploRespondLetter?generalId=10&turnIdx=0');
+        expect(JSON.parse(init.body as string)).toEqual({ letterNo: 7, isAgree: false, reason: '' });
+    });
+
     it('deleteMessage 인테이크는 precheck Blocked여도 202 재라우팅 — 엔진 deny는 commandResult(RESOLVED !ok) 채널로 온다', async () => {
         // deleteMessage는 intakeCodes 소속이라 game-api CommandController가 precheck Blocked/Unknown이어도
         // isForecastReservable→202 reserveAccepted로 재라우팅한다(이 엔드포인트에서 200 BLOCKED 미발생).
