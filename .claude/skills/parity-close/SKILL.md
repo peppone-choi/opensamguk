@@ -49,7 +49,7 @@ Run sequentially. Each step delegates to its agent; do not skip ahead. Use code-
 - Output: fixture JSON committed under `logic/src/test/resources/golden/<area>/`. **Commit the fixture in this step** (separate from the impl commit is fine; the fixture is the oracle).
 
 ### 2. Port logic + write GoldenTest — agent: `parity-porter`
-- Port the PHP behavior into `logic/` (`actions/*`, register in `CommandRegistry`; war paths via `war/*`). Korean code comments; identifiers + log-parity strings stay English/Korean-as-in-PHP.
+- Port the PHP behavior into `logic/` (`actions/*`, register in `CommandRegistry`; war paths via `war/*`). Use English code comments; identifiers stay English, while log-parity strings retain the exact Korean/markup used by PHP.
 - Honor: `PhpRound` half-away-from-zero (`phpRound(v,-2)`, NEVER `phpRound(v/100)*100`, NEVER `Math.round`/`kotlin.math.round`); `Util::toInt`/`intdiv` = truncate-toward-zero; damage clamp = `ceil()`. `Josa` 조사 + color/tag markup for logs. Insertion order preserved (`LinkedHashMap`), PHP 8.0+ stable sorts (no non-stable secondary comparator).
 - Write the `*GoldenTest`/`*ReplayGateTest` that loads the step-1 fixture and asserts draw-for-draw (RNG) or log/delta byte-parity (RNG-free). Build the `RandUtil(LiteHashDrbg(SeedSerializer.serialize(...)))` exactly as PHP seeds it; for battle, ONE `RandUtil(warSeed)` threaded by reference, never re-seeded.
 
