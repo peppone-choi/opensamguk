@@ -98,6 +98,14 @@ object HotColdCatalog {
             bound = AccessBound.HOT_ENTITY_SET,
         ),
         SnapshotAccess(
+            methodName = "loadTroops",
+            relation = "troop",
+            temperature = DataTemperature.ALWAYS_HOT,
+            boundary = AccessBoundary.BOOT_SNAPSHOT,
+            ordering = "troop.troop_leader ASC",
+            bound = AccessBound.HOT_ENTITY_SET,
+        ),
+        SnapshotAccess(
             methodName = "loadRankValues",
             relation = "rank_data",
             temperature = DataTemperature.ALWAYS_HOT,
