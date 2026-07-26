@@ -278,10 +278,20 @@ stubs). **No gap.**
 
 ## 15. Restart / rehydrate (lossless) — PARTIAL
 
-**Kotlin:** `engine/turn/RehydrateService.kt` + `boot/WorldSnapshotLoader.kt` + `boot/ScenarioSeedRunner.kt`.
-**Gap (documented roadmap):** the "restart-rehydrate lossless gate" is open (P6 P8-coupled remainder).
-Tied to the founding seam (§0): created nations that DO flush must round-trip through rehydrate; until
-§0 is fixed there is no live created-nation to test the round-trip with. **PARTIAL.**
+**Kotlin:** `boot/WorldSnapshotLoader.kt` + `boot/ScenarioSeedRunner.kt` + `config/DaemonLoopConfig.kt`
+(survivor 리포지토리 주입 + DB 시드 id 할당자). `engine/turn/RehydrateService.kt`는 **SUPERSEDED —
+배선 금지**(2026-07-26 재분류): 데몬이 풀을 부팅 시 메모리 사본이 아니라 리포지토리 on-demand read로
+서빙하므로, 배선하면 같은 행에 진실 소스가 둘 생긴다. 근거·항목별 대조:
+`docs/superpowers/research/2026-07-25-opensam-149-rehydrate-defects.md` §5.
+
+**Closed (2026-07-26):** `troop` 왕복 단절 — `WorldSnapshotLoader`가 `troop`을 읽지 않아 재기동한
+데몬이 부대 0으로 출발했다(flush는 created/dirty/deleted 3경로 모두 사용). `loadTroops()` 추가로
+닫힘. 게이트: `app/game-engine/.../boot/RehydrateRoundTripIT.kt`(채널 왕복 3셀) +
+`RehydrateWiringTest.kt`(부팅 survivor 배선).
+
+**Gap (remaining):** 턴 단위 full round-trip — `턴 N → flush → 재기동 → 턴 N+1`이 무재기동 실행과
+draw-for-draw + 로그 바이트 동일임을 증명하는 게이트는 미착수. 나머지 채널 × {created,dirty,deleted}
+매트릭스도 미측정. §0(founding created-set)에 묶인 부분은 여전히 측정 불가 — 증거 첨부 격리. **PARTIAL.**
 
 **Ticket:** `OPENSAM-149` / GitHub `#324` — ChangeRecorder 전 채널 × {created,dirty,deleted} 매트릭스 왕복 무손실 게이트. ADR-LITE-018(오리지널 on-demand 운영)의 선결 조건.
 

@@ -8,8 +8,12 @@
 
 ## 0. 결론 한 줄
 
-`RehydrateService`는 **완성돼 있으나 프로덕션 호출자가 0**이다. P6 게이트 4번이 명시한 네 항목이 전부
-라이브 데몬에서 복원되지 않는다. §0(founding created-set)과 **똑같은 "로직 green, 데몬 미호출" 패턴**이다.
+> **[2026-07-26 정정]** 1차 결론이었던 "D1 = 배선 결함"은 **틀렸다**. 2차 실측 결과 P6 게이트 4번
+> 항목은 전부 다른 경로로 이미 커버되고 있고, `RehydrateService`는 데몬이 대체한 **superseded 죽은
+> 코드**다. 실측된 진짜 결함은 **D2(`troop` 왕복 단절) 하나**이며 이미 닫혔다. 상세는 §5.
+
+~~`RehydrateService`는 **완성돼 있으나 프로덕션 호출자가 0**이다. P6 게이트 4번이 명시한 네 항목이 전부
+라이브 데몬에서 복원되지 않는다. §0(founding created-set)과 **똑같은 "로직 green, 데몬 미호출" 패턴**이다.~~
 
 ## 1. 축 정의 — 무엇이 "무손실"의 대상인가
 
@@ -24,7 +28,11 @@ query-only cold(S5 카탈로그)이고 rehydrate 대상이 아니다. **이 표�
 
 ## 2. 결함 목록
 
-### D1 — `RehydrateService` 프로덕션 호출자 0 (헤드라인)
+### D1 — `RehydrateService` 프로덕션 호출자 0 → **결함 아님 (2026-07-26 재분류, §5)**
+
+> 아래는 1차 실측 그대로다. 호출자가 0이라는 **사실은 맞지만**, 그 결과가 "복원 안 됨"이라는 **추론이
+> 틀렸다.** 같은 데이터를 다른 경로가 복원한다. 반증은 §5.
+
 
 | 항목 | 판정 | 근거 |
 |---|---|---|
@@ -117,3 +125,54 @@ read 대상에는 없지만, **예약 턴은 엔진 메모리 표면이 아니�
 티켓 3항의 round-trip 게이트 = `턴 N → flush → 엔진 재기동(rehydrate) → 턴 N+1`이
 **무재기동 실행과 draw-for-draw + 한국어 로그 바이트 동일**임을 증명.
 D1이 배선 결함이라 **게이트를 먼저 세우면 D1·D2가 자동으로 red로 잡힌다** — 테스트 우선이 맞다.
+
+---
+
+## 5. 2차 실측 (2026-07-26) — D1 재분류 + D2 종결
+
+### 5.1 D1은 결함이 아니다 — `RehydrateService`는 superseded 죽은 코드다
+
+D1을 "닫으려고" 소비자를 찾는 과정에서 반증이 나왔다. P6 게이트 4번 항목별 **실제** 커버 경로:
+
+| P6 게이트 4번 항목 | 실제 커버 경로 | 근거 |
+|---|---|---|
+| 활성 auction + bid 풀 | `auctionRepository` / `auctionBidRepository` on-demand read | `DaemonLoopConfig.kt:203-204` 주입 |
+| 활성 betting 풀 | `BettingRepository` on-demand read | `DaemonLoopConfig.kt:211` 주입 |
+| 활성 message 풀 | `MessageRepository.findByWorldIdAndMailboxAndValidUntilAfter` — `RehydrateService.loadActiveMessages`가 구현한 **`valid_until > now` 술어 그대로** | `DaemonLoopConfig.kt:208` 주입 |
+| polymorphic `buildFromArray` 재구성 | 부팅이 아니라 **핸들러**에서 인라인 dispatch | `MessageHandler.kt:172` |
+| message / auction id 할당자 | 부팅 시 **DB에서 시드** | `DaemonLoopConfig.kt:252-253, 260-261` |
+| survivor `inheritance_*` KV | `WorldSnapshotLoader`가 월드 meta로 로드 | `WorldSnapshotLoader.kt:82-104, 270-290` |
+| `obfuscatedNamePool` | 시드에서 결정론적 재생성(보존 대상 없음) | D4 |
+
+즉 풀은 **메모리 상주 사본이 아니라 리포지토리 on-demand read**로 서빙된다. 1차 결론은 "`RehydrateService`가
+유일한 복원 경로"라는 암묵 가정 위에 서 있었고, 그 가정이 거짓이었다.
+
+**그리고 배선하면 안 된다.** 리포지토리가 이미 서빙하는 행에 대해 부팅 시 메모리 사본을 만들면 진실
+소스가 둘이 된다 — `CLAUDE.md`가 금지하는 two-dirty-truths 실패 모드다. 게다가 D4(시드 인자 불일치)
+때문에 rehydrate가 만든 이름 풀은 라이브 풀과 다른 집합이 된다. **게이트를 green으로 만드는 행위 자체가
+결함을 만드는** 구조였다.
+
+조치(사용자 승인, 2026-07-26): 게이트 재조준 + 서비스 존치.
+- `RehydrateWiringTest`는 **실제 불변식**을 단정하도록 교체 — (a) id 할당자가 DB에서 시드되고 그
+  카운터가 `ChangeRecorder` 할당자로 넘어가는지, (b) 4개 survivor 리포지토리가 데몬에 주입되는지.
+  지금 green이며, 그 경로가 퇴화하면 red가 된다.
+- `RehydrateService`는 P6 계약의 레퍼런스 구현으로 존치하되 **SUPERSEDED / 배선 금지 + D4 지뢰**를
+  KDoc에 명시. 삭제 여부는 별건 판단.
+
+### 5.2 D2는 실측으로 닫혔다
+
+`WorldSnapshotLoader`에 `loadTroops()` 12줄 추가(`troop_leader` PK, `world_id` 스코프,
+`ORDER BY troop_leader ASC` — 기존 `loadCities()` 관용구 그대로). 게이트 `RehydrateRoundTripIT`
+3셀(created / dirty-rename / deleted-with-surviving-sibling)이 red → green.
+
+증거: `TEST-opensamguk.engine.boot.RehydrateRoundTripIT.xml` `tests="3" skipped="0" failures="0" errors="0"`
+(수정 전 동일 셀은 `expected: [Troop(id=11...), Troop(id=12...)] but was: []`로 실패, 선행 단정
+`troopRowsInDb`는 통과 ⇒ 쓰기는 되는데 읽기가 없다는 실측).
+
+### 5.3 남은 것
+
+- **D5** (§4의 troop 재기동 파손 형태) — D2가 닫히면서 **무의미해졌다**. 재기동 후 메모리 부대 집합이
+  DB와 일치하므로 고아/PK 충돌 시나리오 자체가 성립하지 않는다.
+- **Q1** (§0 founding created-set) — 변동 없음. 왕복 이전에 끊기므로 여전히 측정 불가, 증거 첨부 격리 유지.
+- **티켓 3항의 full round-trip 게이트**(턴 N → flush → 재기동 → 턴 N+1 draw-for-draw) — 미착수.
+  이번에 세운 것은 그 축의 **채널 단위 최소 왕복**이다. 전체 턴 왕복은 OPENSAM-149 잔여로 남는다.

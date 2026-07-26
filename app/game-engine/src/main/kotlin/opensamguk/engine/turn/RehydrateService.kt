@@ -32,6 +32,25 @@ import java.time.Instant
  *
  * The service returns a [RehydratedState] snapshot; the caller (daemon bootstrap) wires the
  * pieces into the [InMemoryTurnWorld] / handler / allocator state.
+ *
+ * SUPERSEDED — NOT WIRED, AND MUST NOT BE (OPENSAM-149 D1, 2026-07-25).
+ * The daemon settled on a different survivor design and every item above is already covered:
+ *  - auction / bid / betting / message pools — read on demand from the repositories injected into
+ *    `config/DaemonLoopConfig.kt` `turnRunService`; `MessageRepository`'s
+ *    `findByWorldIdAndMailboxAndValidUntilAfter` is the same `valid_until > now` predicate as
+ *    [loadActiveMessages], and polymorphic reconstruction happens at the handler
+ *    (`MessageHandler`), not at boot.
+ *  - message / auction id allocators — seeded from the DB in the same bean
+ *    (`messageRepository.findMaxId()`, max persisted auction id).
+ *  - `inheritance_*` KV — loaded by `boot/WorldSnapshotLoader.kt` into the world meta.
+ *  - `obfuscatedNamePool` — regenerated deterministically from the hidden seed at the auction
+ *    handlers, so there is nothing to preserve.
+ * Wiring this service would make it a SECOND source of truth for rows the repositories already
+ * serve — the exact two-dirty-truths failure mode CLAUDE.md forbids. Kept as the reference
+ * implementation of the P6 contract; `boot/RehydrateWiringTest.kt` guards the real seam instead.
+ * Note before any revival: [loadObfuscatedNamePool] passes the raw `hiddenSeed` to
+ * `ObfuscatedNamePool.buildPool`, while the live handlers pass a serialized seed — the two pools
+ * would not match (D4).
  */
 class RehydrateService(
     private val jdbc: NamedParameterJdbcTemplate,
