@@ -30,23 +30,45 @@ class RehydrateWiringTest {
     ).firstOrNull { it.isDirectory }
         ?: error("game-engine main source root not found from ${File(".").absolutePath}")
 
-    private fun daemonLoopConfig(): String = mainSourceRoot().resolve("config/DaemonLoopConfig.kt")
-        .also { assertTrue(it.isFile, "config/DaemonLoopConfig.kt moved — re-aim this guard at the new daemon bootstrap seam") }
-        .readText()
+    /**
+     * The body of the `turnRunService` @Bean ONLY — sliced to the next top-level declaration, in the
+     * style of [opensamguk.engine.boot.HotColdWorldCatalogGuardTest]'s `privateMethodBody`.
+     *
+     * Scoping matters: grepping the whole file would keep passing if the seeding drifted out of the
+     * live bean into dead code or a different (unwired) helper.
+     */
+    private fun turnRunServiceBody(): String {
+        val file = mainSourceRoot().resolve("config/DaemonLoopConfig.kt")
+        assertTrue(file.isFile, "config/DaemonLoopConfig.kt moved — re-aim this guard at the new daemon bootstrap seam")
+        val source = file.readText()
+        val start = Regex("""\n    fun turnRunService\b""").find(source)?.range?.first
+            ?: error("DaemonLoopConfig no longer declares the `turnRunService` bean — re-aim this guard")
+        val end = Regex("""\n    (?:@Bean|private fun |fun )""").find(source, start + 1)?.range?.first
+            ?: source.length
+        val body = source.substring(start, end)
+        // Self-check: the slice must be a STRICT subset. `realtimePublisher` is declared before
+        // turnRunService, so its presence would mean the slice degenerated to the whole file and
+        // every assertion below would be vacuously satisfied by unrelated code.
+        assertTrue(
+            "fun realtimePublisher(" !in body,
+            "slice degenerated — turnRunServiceBody() captured other beans, so this guard proves nothing",
+        )
+        return body
+    }
 
     @Test
     fun `the daemon seeds its id allocators from the DB so a restart cannot reissue live ids`() {
-        val source = daemonLoopConfig()
+        val source = turnRunServiceBody()
 
         assertTrue(
             source.contains("messageRepository.findMaxId()"),
-            "NOT SEEDED: DaemonLoopConfig no longer seeds the message id allocator from " +
+            "NOT SEEDED: DaemonLoopConfig.turnRunService no longer seeds the message id allocator from " +
                 "`messageRepository.findMaxId()`. A restarted daemon would restart message ids at 0 and " +
                 "overwrite live rows on the next flush (OPENSAM-149 D1 / P6 gate item 4).",
         )
         assertTrue(
             source.contains("auctionRepository.findAll()") && source.contains("maxOrNull()"),
-            "NOT SEEDED: DaemonLoopConfig no longer derives the auction id allocator from the persisted " +
+            "NOT SEEDED: DaemonLoopConfig.turnRunService no longer derives the auction id allocator from the persisted " +
                 "auction rows. A restarted daemon would reissue auction ids that are still active " +
                 "(OPENSAM-149 D1 / P6 gate item 4).",
         )
@@ -60,7 +82,7 @@ class RehydrateWiringTest {
 
     @Test
     fun `the survivor pools are served from injected repositories, not a boot-time memory copy`() {
-        val source = daemonLoopConfig()
+        val source = turnRunServiceBody()
 
         val missing = listOf(
             "auctionRepository: AuctionRepository",

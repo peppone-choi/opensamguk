@@ -33,7 +33,7 @@ import java.time.Instant
  * The service returns a [RehydratedState] snapshot; the caller (daemon bootstrap) wires the
  * pieces into the [InMemoryTurnWorld] / handler / allocator state.
  *
- * SUPERSEDED — NOT WIRED, AND MUST NOT BE (OPENSAM-149 D1, 2026-07-25).
+ * SUPERSEDED — NOT WIRED, AND MUST NOT BE (OPENSAM-149 D1, 2026-07-26).
  * The daemon settled on a different survivor design and every item above is already covered:
  *  - auction / bid / betting / message pools — read on demand from the repositories injected into
  *    `config/DaemonLoopConfig.kt` `turnRunService`; `MessageRepository`'s
