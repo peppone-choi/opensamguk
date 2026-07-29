@@ -1,0 +1,742 @@
+{
+  "schema": "opensamguk.v2.unit-static-sprite-visual-qa.v1",
+  "subjectSha256": "2e84c579287512905ffda69104747f7b42459cd06bd6bf6e51c6b35692859f5e",
+  "count": 105,
+  "records": [
+    {
+      "variantId": "variant.local_guard.sword_guard",
+      "sourceSha256": "42648317e2fd2e625c35b7cea93e570b891534ef5e86fcf492cdca79ae593af3",
+      "spriteSha256": "155f886f12305abf6fb08d3bba03768f021a7f161cac2a7eba8dfb7d6f4cbb7f",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.local_guard.spear_guard",
+      "sourceSha256": "666a639b9aa9a5e9d652444228ccfaf066bc41e7a31871b4017f4f4f9bc5e7b8",
+      "spriteSha256": "58557efd7b8ac5169820cf64b4c6d736ed778512d70f2d400a5e68638ad5fbf0",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.local_guard.bow_guard",
+      "sourceSha256": "58f8087534651c37823fa4315e89507c5bb2c1c7229d7188b852744b61c603c4",
+      "spriteSha256": "8b4a89eb20341e661c1fcbd9055c03dd3431131716256b5822d5316192d0e315",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.conscript_spear.line_spear",
+      "sourceSha256": "112482e092794ff77ce91bae7470ce56991b0161dbafce1473791f7952b84a9a",
+      "spriteSha256": "2bc2bcff9a73bd8e2acc6c26bc5e3928f9e86836852c77003441634b994de525",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.conscript_sword.line_sword",
+      "sourceSha256": "7331292fec21088225d4784c5cb9bc180b1f9d74519ad136c8df99e7ab391144",
+      "spriteSha256": "7bd6a8bfdbeafaa1d3ff51abd3ad8566ac85c280ff9950c8782c9b25283b90a8",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.shield_sword.shield_sword",
+      "sourceSha256": "1e03bee799e12ebf57e9ec04888f30f564510bc27ca5d8289119ec47c9a16fd5",
+      "spriteSha256": "10370e7ca805886fc359491add288f0f01b2237453f48394c4cc12169a179d8b",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.shield_spear.shield_spear",
+      "sourceSha256": "4a73e91c3e04abbc69f8e1a7f3d95768ecdebd2902d485490021fce236a161bb",
+      "spriteSha256": "a4661d821f849d26245398a04fcf64fe4e7f2eb3de09f7798222fe009b02618c",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.halberd.line_halberd",
+      "sourceSha256": "cfa39c1fd75f669bdc8dd78f5a3e26db1932a69c9b3cbff6989d34ebfb34807b",
+      "spriteSha256": "46470c841f6d4293f8028f93a2463d22a0ed0891c41291d8abb24dfb9089166c",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.long_spear.pike_line",
+      "sourceSha256": "fac0bc5d5d8b9abb6e2e3209db1da2b625c7ac0acc0cb98c2bf83ddbe6e1c253",
+      "spriteSha256": "3183764616ae04f9ccdd1d50ceb2c2faf4e820a54224962f05f4c7ac3f3f7fd3",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.light_assault_infantry.axe_assault",
+      "sourceSha256": "d922b55e95b11d0940f9859ca7fe21631843c59f92d9f500c53ccb8881c324a5",
+      "spriteSha256": "bc7043e2e70b0483f8774e35b3d701e7020c90a69b04c39f53eeb626e71fa258",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.light_assault_infantry.polearm_assault",
+      "sourceSha256": "c0772269466d3d1b7fb2447257d4443cd9ef6acc213ea49c9eb44359574c804a",
+      "spriteSha256": "25c61cae0d1d0c11a580a4606a71fa374765b43d82dd2de180560e9de85a3add",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.heavy_infantry.sword_shield",
+      "sourceSha256": "87878e99182cb2e64b1f485b18d4385a24199dc74fec93695e136e216081aa9d",
+      "spriteSha256": "6470e417c4fefb4dfb99417282442ee0f17eabfc91c7b156a51b9a3346864173",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.archers.line_archer",
+      "sourceSha256": "0164b0cc609696a147f307d17fd4f0732e40fd4ba5ce0c7e5724b513cb47aa1d",
+      "spriteSha256": "6435c7fce5ee6424f96de9f8f0b814cf6b8e104547735314892883c0d2d4e030",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.crossbow.line_crossbow",
+      "sourceSha256": "fb6328485423f453de217aa9af44dc5c54a895ae9040e45e4182fe65b84159bc",
+      "spriteSha256": "8f965df841e90e5304f921acb0245140890f6b5c4c1997cfd10aec87874d2e7a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.skirmishers.javelin",
+      "sourceSha256": "a2b6eca96f4bd64e88f76b1094f7b76f97642376585732f6e48782512e564b43",
+      "spriteSha256": "f48a235f8ab5d8de9f366bc8934a51f12f2034ed968afdb1c4d62d5b4424dee7",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.skirmishers.bow",
+      "sourceSha256": "662b26909867570efb4f28513576a6dee0b97f32c5471b7b5aae22c1650da558",
+      "spriteSha256": "9ebd7ecc4129b3254d40073e6eebd7c3604fab5d1dbe9dfc81f61bf6fca26f3b",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.skirmishers.crossbow",
+      "sourceSha256": "258ea6b6dfe36b4a41dc3c5d712e3bd771e1c485bb1b02b70d6f0cef0bf4e86b",
+      "spriteSha256": "e6512dcb7452aa749858cd5744c58d1b1d1e94319d81da9474bb67166beb88ab",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.horse_archers.mounted_bow",
+      "sourceSha256": "4bc0c7654a79a2c44a03645fb74596c0405779d5a1d077fc911a91b65a86c2e3",
+      "spriteSha256": "1c2e8369c2d9190ecea1dd44579fa0e2a060f89e5bfafe327de157c2b0b85062",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.light_cavalry.spear",
+      "sourceSha256": "c651def40a972eea816582e2e9984067cc0535448bae45e23146f373798285d1",
+      "spriteSha256": "edd6ca9330d605fce6813bc81af0b0aa3c794030272419e56adbe26cedcabf9a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.light_cavalry.sabre",
+      "sourceSha256": "08463e4b1afcd4ac565a17daae3ceac1242bafe62f6c107e9e37bc2938abcd36",
+      "spriteSha256": "1dad6faa0110a90fd45d1e53938e45ed3c7cbaf14c1b8afa8e346a8d2d166554",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.shock_cavalry.lance",
+      "sourceSha256": "7a82393973b73c3880756440691c0955c83c76492e2f2fa5aeed108287f22960",
+      "spriteSha256": "f922bbed35932ef3378f55d9d47e56f4f1bb32a88bcd9cff1bbf83ff30c57193",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.heavy_cavalry.armored_lance",
+      "sourceSha256": "6d1591addabf4ae3ad586e6c8d542dc21e2044ea388f10bdf84f57b30f3ca353",
+      "spriteSha256": "20d3f9d6ddc514df52a09af63e99b09fe67b7875f23e2acaa9521755fb23379d",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.engineers.fieldworks",
+      "sourceSha256": "9e7f1baaee88d55936b32f079e29ef6fe6da4d77ef3e666655c811bf0994ae44",
+      "spriteSha256": "29d4f564ed32f66dc6dd59e7ba8a87355ae97fee5512bf83f46948e03126d699",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.transport_escort.convoy_screen",
+      "sourceSha256": "5ec590461c458098f5ca18d4ab7057e6191cb633770432f66bfdcb7bf3c86da0",
+      "spriteSha256": "31d94b2e192ba74388502bde14ae559b7be9c2537ac6f77128e175a3c43d6033",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.tunqi_command.cavalry",
+      "sourceSha256": "f32ce843be31de30e01c15d35e131134a195ca4080e42fda4070c5196c500b2f",
+      "spriteSha256": "9d515a34db9d83169534bae1552a8774f1d0c30627327229c6573f2b663bad3a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.yueqi_command.cavalry",
+      "sourceSha256": "6891c318421fad9ac8578d90055c631436094d569b31c89e7e535e0b53e76c7c",
+      "spriteSha256": "04105e6da7ef2e73b032e0717072a314c3eef0b4b3480b75c357e8a9af2b0c39",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.infantry_commandant.infantry",
+      "sourceSha256": "99ae0cf117190474687e5a7e04e4e7caf2ae15ad68aca407b293c41a1962e190",
+      "spriteSha256": "f992df8de9cbf097d9eac892424f185d9563890b32ece424c4bead4e17fbf1ef",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.changshui_command.hu_cavalry",
+      "sourceSha256": "9dc251a7fce475e734605595efb7615537d5945b9c02cff93376b1517b69c549",
+      "spriteSha256": "67e4540e93071a7d68211a0def1af23e4e760c6b7a49dfa89279ce39bd2ca2ea",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.shesheng_command.marksmen",
+      "sourceSha256": "31d584668cb8777f67b575736848af34af5a9a318ec91caac68bafb1db0f3107",
+      "spriteSha256": "e5c856b8121be8998d632a76f024f1e23e67bdc94413e22e9a8238193c401268",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.huben.palace_guard",
+      "sourceSha256": "7a853fd2775524631eb3ff8d6a5a1e6b26de2332bd84cc20207ccef67c039de4",
+      "spriteSha256": "20f0065d5ff0d2d672224467ef56db47fe89675d8099e01b69aa230a2017f60b",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.yulin.imperial_escort",
+      "sourceSha256": "d6d4c1404326ca1d86ff5093921e8554a52838847ceb85e6f6014b495a159477",
+      "spriteSha256": "c1e17eceb6cfe19777aa6656875d7d44d4c2ecf0dfdb59df919150f4ecb53082",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.xiyuan_army.command_cadre",
+      "sourceSha256": "9d5469349b6699fa5f2b56d3e83fa040393edd43c9f2e4bf3f128ea8202c51dd",
+      "spriteSha256": "525a306fa2b1b0864aa4a2800f2fb7cc63a2122760f79374c924691b3f836cab",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.wuji_frontier.command_cadre",
+      "sourceSha256": "d717567fdf1f35b9d9c4152a2f66570e7993c843ef56b547a1190fefb1525ff7",
+      "spriteSha256": "cf610e0210e153691e30037548161e5a3f18b8908467a00189b1bfcbec3eb4dc",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.wuhuan_raiders.mounted_auxiliary",
+      "sourceSha256": "901e9bd5aaeb48b68f2c62e46084d79e3df98ba7089f45b66aea7044147a8883",
+      "spriteSha256": "cd7edafa024b89d692f815a8a327585aee44db44f22df9383e63ba3483877485",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.white_horse_retinue.mounted_retinue",
+      "sourceSha256": "d69327d218314d5d50edd7ed424fe58293fadf845727bdeec6c59b736dc53821",
+      "spriteSha256": "19c17e6110760902012f64234ce133288e816fbbf1ffac6ad05b794de7c2e6ff",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.qingzhou.spear",
+      "sourceSha256": "ef7fa6238e2e1857cb0729205355b29810d13e9341e6897c864c47fe3af6435d",
+      "spriteSha256": "b5e8d1c72698eeea73709b10137f19fd3e65f0feeec11f6058c68a737140027c",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.qingzhou.halberd",
+      "sourceSha256": "d13e9723260ab651110219310f3494fb777a08c3b5d4c9ee0fc009be4c20597d",
+      "spriteSha256": "40157cab2364a05173079cd8338d1d9dac66a438dd0e23ab894eb673f9996a0e",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.qingzhou.sword_assault",
+      "sourceSha256": "3b194d0be498b9ac999a9b6edca968429aa02845bfb59aefb345c0a2802e6314",
+      "spriteSha256": "c4fffcadda033226a382f76e94ae255a250aa6ecc4f3680f4721901158092be9",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.tiger_leopard_cavalry.shock",
+      "sourceSha256": "e34ca4c6c72068af1688cc45616d8b0612a5de60984c4d61784b9febd981f303",
+      "spriteSha256": "1f2497b63dfa2cdf8a01c432df0efcdcf387bd52c6f970a9f04c0a9679e45679",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.xiandeng.crossbow_vanguard",
+      "sourceSha256": "c200661c45f25cb340eb990516abc7dab78086feda5479b67b3bf7b037f3f977",
+      "spriteSha256": "776cf5f5988d47865a7829cf518cace8299d4ce9c28e8d067bf203d7f802de79",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.great_halberd_guard.command_guard",
+      "sourceSha256": "a777b2b6530c2208a28c1c2521878370affec7c72b22c0d3b6e546ecf5030f56",
+      "spriteSha256": "c0ec236dff4f859375f9b240259084317df832f6139fcf27644b7a9b25bd0f83",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.jiefan_liangbu.command_cadre",
+      "sourceSha256": "ebb6729983610cf1f89312f1a19a8bad0d491b06c98a15410036478409f82bcb",
+      "spriteSha256": "d5855ffefc1ad8efe29ef994369c6bd460d6bf2693ce9fa0c8eeda2fc13da6fd",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.dare_to_die.mission_assault",
+      "sourceSha256": "0931702f96059fcda8c074425a18dd6283a8360f2ea9789bfa7ecaa6d01361e7",
+      "spriteSha256": "0499d33bd077d8bcb31fe7118ed35b14c03c2122079786acb47a53edaa815c69",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.chariot_side_tigers.command_guard",
+      "sourceSha256": "8ef387a9344313a82d0421d6c2cc66732f40b0d408f2105daa1aa501a03118e0",
+      "spriteSha256": "57613bde3073f774d74d8c0165f8c227bef0a7cd13e240c60ff26e0825d5fab0",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.wunan_command.command_cadre",
+      "sourceSha256": "d08e1cbdf58e23df2cec65e34e6f90766f7a640504034379834db1316e17703a",
+      "spriteSha256": "c17ff9b21d913cdf1c0c42ab00e822493ef4ece0a49b984d2923fa4fc6d3eada",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.danyang.spear",
+      "sourceSha256": "6b7a53fdcc2f5391391e6b58af3b3ee5cd3173b277576486b6752da550b91051",
+      "spriteSha256": "ac355bb6574c3ef3324798cba79936c84bc03723488fa89529f7a8d0b004c348",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.danyang.bow",
+      "sourceSha256": "9ef906d58c11d68a957e2820ca23b9786037d1594d3ac3c57ead7a200a408361",
+      "spriteSha256": "9ed7067ab186cac40615e2139a1ebe82d43d893ddfd90f3e3fd47cd82ecb1913",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.danyang.crossbow",
+      "sourceSha256": "7617afa4e711b8d251aaeda19aeeb93307eb38bb1cd2480c15f69b8d611dde35",
+      "spriteSha256": "e81675c2228a2de0ede9aa45dc6a537ddae92f606b613aa9e8841297c6b0a776",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.xianzhenying.ordered_assault",
+      "sourceSha256": "06ee3ed29adab4934489a02ead5ccf998feab5e13c800bb61577454d11d3459b",
+      "spriteSha256": "38a4aba2d9937b3153f5e3f9550fabd2ca2b50969e49f88964520d01489c68e7",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.white_tuft_guard.command_guard",
+      "sourceSha256": "abd652663da0179284524d16ce2f1377e8ce89a78884f40c218ded22ec318012",
+      "spriteSha256": "f07045c585e99d10344a2741b3d54cff084b3f9f72b0cf56fabf77b03a51dedb",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.qiang_hu_auxiliary.allied_mounted",
+      "sourceSha256": "f0bd56cd9352e5853e7cae25990c29b357ff197c32c05380c44d3010f722e841",
+      "spriteSha256": "801c9c358849b7189e8db3209a46475cbe65c958e15d1dd81d65fdcf3d357731",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.xiongnu_auxiliary.treaty_mounted",
+      "sourceSha256": "9bd156cd7b2932533c22a9f8bbf8e216c989d582ac1fcb9d5e0db95cea6c6f86",
+      "spriteSha256": "05a2c7063e1d7fffb1ea295eec92dd5306666a9d19bade0cdc973d51852c8eba",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.xianbei_auxiliary.mounted",
+      "sourceSha256": "29e41bdeb075f5dde1094c621006c38704f9cba4cfa63c5f67801c9b4fe0a3f8",
+      "spriteSha256": "7798b1765b27069ffff53b320ae939bea9b92260fa3bf58423e89533da13f9f4",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.shanyue_recruits.hill_skirmisher",
+      "sourceSha256": "003863df6e1b98a7c184e19801098a7287070bc4f259cb0f22b81e90f641be01",
+      "spriteSha256": "a171e47e147588040cc22dfa577cf65887b508c9eded397ff76b5d3aa4446209",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.nanzhong_tribal.javelin_skirmisher",
+      "sourceSha256": "bc0466c94d826851de251a96a279dd053b3c308610e543d72122142bfcdbeedb",
+      "spriteSha256": "482d0487ff5ce5502ca61315c231f562b7fd0b126085e4f2f1f26caf7b4e0a4a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.banshun.shield_spear",
+      "sourceSha256": "59a14695b972afc1b4347205925a8182a8df3cef38254491a53b67b0041d4456",
+      "spriteSha256": "27adf70108f406c2c6e3dd4650516b7f9c139cce629ee652d377c847d262ba9b",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.banshun.white_bamboo_crossbow",
+      "sourceSha256": "6471a359d7b4a766d6b5f5541d41607d38469e7f0bb65571a13b4b59592ac7f3",
+      "spriteSha256": "70a7c7e4b7b52371e2d4f07cb3fbf1b44553432fafc5a70736f41699db46666f",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.liangzhou_cavalry.light",
+      "sourceSha256": "d827a3a395e12240e3bbeffc6b2ae42f774e64f6cfcc31250f0ca9b36596257d",
+      "spriteSha256": "5fe3de750b777f1bd8aae55e8887ba736be43c7660c0024858af344ab0a0df8e",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.liangzhou_cavalry.mounted_archer",
+      "sourceSha256": "f96b90fb0ee0ba33cbc48d15ad182fa7f29f417878f4e4053eeaa81e255a70dd",
+      "spriteSha256": "ddeefbf99d4f6b1db3af37f9f3d668d1f2f3ded0a902c7a555435c5f5832c3ee",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.liangzhou_cavalry.armored_shock",
+      "sourceSha256": "09fe9fcd5efc4d59383a005e91830f70361337d980dbf03f08f59380629965bc",
+      "spriteSha256": "39431fc9530541efcea17f04e458420f7293fad6afdcf7ac25d425ee73c3cbe8",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.youzhou_frontier_cavalry.scout",
+      "sourceSha256": "0be07409b3adaa45b361dc6ef083d9364ff344be24578009ea1ba9979991c06c",
+      "spriteSha256": "91fbe8f9e4729555319f9ad32f674c684c23b0f1b5f395d31a32c8c2dad82618",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.jingzhou_amphibious.river_land_garrison",
+      "sourceSha256": "cfe2fec01801eafc30c67deb46c894fdbcd0afc9a393fb84e847165a914d8795",
+      "spriteSha256": "c959c3f07f527aaec5d3f6cbe412ecaa8047bc58d3fe4e176f9e757538080a2a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.jiangdong_navy.shipboard_marines",
+      "sourceSha256": "cc36537717f6b58949044d7bda1995b70523b28b81624a36236fe163da781b65",
+      "spriteSha256": "8b6513c309e7c18eb4df4cb34345747721479d7c4d25cab2ac68f3369d7b700a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.yizhou_mountain_garrison.pass_guard",
+      "sourceSha256": "a29fcd128e9b22eb667b451de6777cdb03c8fc7760f95c57cb9a15fe0728fe87",
+      "spriteSha256": "e977611b634b533d3937fc547f9ca095dd7b57d5e7766ea31ecde001ed0ae872",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.western_tuntian.route_guard",
+      "sourceSha256": "3c731c7cbcb9dae9d113f8d915e3757ea5125731362aa60fb3396933edd97156",
+      "spriteSha256": "c2d9d341662d30da18c91c90b7b96d3d387fd810a1d1e0113f56d91234091678",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.stone_thrower_corps.stone_thrower",
+      "sourceSha256": "80899508ecb597c4bc14ea3832a44afb9a7a4c8e0805760ee20b2129e1ff66b3",
+      "spriteSha256": "839dfc6c67eeabc81c7c42f2c2a0763adbf4eb78856fcbcdce97dc95a76db6a7",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.ram_corps.covered_ram",
+      "sourceSha256": "eaf958f03794dee9c4819a6df4df881542f8441a9ef93457e5347fb9a91958ad",
+      "spriteSha256": "c7976fa89815d5e1ec91f48ba4ece7b63da36a8cc6214ffdc794ef315b9bf8a1",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.siege_tower_corps.elevated_fire",
+      "sourceSha256": "c8f9f202139bf48b414997f7b4e6b77a7b447edd455184e9824c5d26d9eaaf00",
+      "spriteSha256": "98fb8c500a96542fce1a5a9386f5f5ab0cdb660e5d1b3e86551a3e8a69a1f5b9",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.siege_tower_corps.wall_assault",
+      "sourceSha256": "ea6d6637272af102a7898c3210453307e02912be430b37e5349fe855770dd13a",
+      "spriteSha256": "1dbb78ce61c5f050e3f93154493cf89ca427e3c300c24f102dd5c50bd3f36654",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.mining_engineers.sapper",
+      "sourceSha256": "cc99e748910f6f572d47460280e9e301ebc565151a73671a7f468d32da97cd22",
+      "spriteSha256": "647593332e3f29f540dc3e0fbbbece823b1e85e51958bf4c65e37ef1570ffe88",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.bridge_engineers.field_bridge",
+      "sourceSha256": "8191a3108adb13f48a0607be78303f4b5bc41c51ee1c849fddc3a185d2c7b09f",
+      "spriteSha256": "d4d0dd0bcd5f7b620dbb980eececf5567c89cf880acc81c56a6ccda1f15b9d54",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.bridge_engineers.pontoon_bridge",
+      "sourceSha256": "63776472662b447bc3bf220d7b085b717f87a9b4bc64d49a496249e9471d2a28",
+      "spriteSha256": "933a4a3f9ff32ef385c4bc94f531fe762592c8b164a30d25d5bb62f222cfed03",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.tuntian_garrison.site_guard",
+      "sourceSha256": "ab0b950a0e1498db46edba766c6a8174c72f35e38063a38c25d9d29c5b0e6854",
+      "spriteSha256": "55a0e79224e7938b53706ccfb79258390948ff8e8b384075f285f97f6cf9aa85",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.grain_transport.pack_supply",
+      "sourceSha256": "3fd44ffb3a04fd6d3aeab8cb631cb5ec425dfd72a069b16f8de92ba772a56293",
+      "spriteSha256": "5792f3216334073a57e3a42617abe48d065485341345a846babf497686565f89",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.wagon_convoy.heavy_convoy",
+      "sourceSha256": "3c05574028f5177315e6157112d9e133047ec3d4f03d242e10e4844c2dc154ef",
+      "spriteSha256": "15521a7775f33a4bda60fce24a9a293380b5fedf3e80b96d65d3ea8e6ddfa15b",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.river_transport.shallow_draft",
+      "sourceSha256": "7d707e44d4a4c5c95d02ee54760e58bf7f59971580279217ded71bf158ec072f",
+      "spriteSha256": "4b4281ea6cb944a4b8dd29ceea98a442ab29f565af4cd9a59a2bb131cf7faf2f",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.river_transport.heavy_barge",
+      "sourceSha256": "51236c11dbdcce2dbeac159d8083cccc08263443e78336a3c3b4517243398401",
+      "spriteSha256": "584fb233e83f9d439a33cac970e1c2f53945d0ab5b69412e8895171d1ac0d498",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.battle_fleet.light_patrol",
+      "sourceSha256": "456f9b6875580bd9a223e29fb287051a8a6f21677477befb478c08aebb383240",
+      "spriteSha256": "dfe78ccf3eb80b5fb3b9343137adc5a08395e36fc30a3511520d2c10cd061b70",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.battle_fleet.tower_ship_battery",
+      "sourceSha256": "f0792cf397326125a23a6baa8fc2e9eae7b80914750ac95554c69b916d4323bd",
+      "spriteSha256": "ffac2c8a607a4d8e4d95290ea7fea9b2b9b37b63813c8468d5af1a5280239a0c",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.battle_fleet.boarding_assault",
+      "sourceSha256": "8f476081ff98e12364b038ebffe7375608c2a8dd395f8b3517de61bbc5671ae1",
+      "spriteSha256": "b324da91e24748d774cc1739906bd66ec8bca48f309581eb3597b9d8cca44fe9",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.battle_fleet.fire_attack",
+      "sourceSha256": "dc8a6613a6dac5ea761d0c35a1adf2426facf79f7b8bbdf4c696c1f9077babc6",
+      "spriteSha256": "0f02f28023c85467f81cc75a9987ad6babb63042c58704e10d119881be9c432b",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.rattan_armour.shield_spear",
+      "sourceSha256": "eece83a938add7d39324627e73025abf172391dd6ff3b81b89801b3796fac0de",
+      "spriteSha256": "19e617915494d771de500f7fecfc554b53d35110840747a690125ba2ae452a0c",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.rattan_armour.rough_skirmisher",
+      "sourceSha256": "f6b2a238cb8736e3faa7fb37ce3b211012bbe130e25381d358e98819c3e8b320",
+      "spriteSha256": "ca2a6818c7866ab636b4285bc20372f16e46ee7e568a2dd0d91733a8811b3b8a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.war_elephant.shock",
+      "sourceSha256": "0fc02100b267fe839c4d749ea07b2e3b19eb93e44ffdd36dd944ce34c31dfa55",
+      "spriteSha256": "37f1e5ffffb99ba53d3cb202611fd9c75a7dcf3529c7ca238df8dbf8dac9e7b9",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.war_elephant.missile",
+      "sourceSha256": "f12027ef1c67d7b1d4ffb5f1bf1881e9fe206c01219e8b4fa2b0d51c1d33322f",
+      "spriteSha256": "803bdf5b9a636fb983272f6e4ffca2eb3bd13b70e02757ac4b3eee045d3dae4d",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.beast_handlers.disruption",
+      "sourceSha256": "47b0a3f8b95680a155ea4f60e1ee8c5031893382c45a82ea75d357577568191e",
+      "spriteSha256": "19779f4fd35969ca6a870a293e8975d86f961eee7f9c422082f7978b5504454e",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.nanzhong_fire_warriors.incendiary_skirmisher",
+      "sourceSha256": "dd102a9a47b40263fc37743fc4bb4968daf219180640baca86acfdcab173d897",
+      "spriteSha256": "1f01adfb982f5eaaaa3937ff1c9d443b9694fd1cd59b7c39c800cc083c3a6d72",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.poison_spring_ambushers.gorge_ambush",
+      "sourceSha256": "8dad6858f3ee607f9ca384db4b9b6cb5839eb266f84241d89bfc1b96fe5242c0",
+      "spriteSha256": "ac15779e7396f2967d5c652c8451db08220cdb1702da9b5ccbaeca98e9c9425f",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.wooden_ox_transport.mountain_supply",
+      "sourceSha256": "293605e46df2801908dfe8353c571cc4889c46dbffc97d605aa2d767a7c9ef51",
+      "spriteSha256": "1af27daa2d3169f02855b1294921cfe71cea43e94786903e438155b467925283",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.repeating_crossbow_corps.sustained_volley",
+      "sourceSha256": "19f10fdbe9d57087b08ac7d6238ce31e9c750e7fa24ddd3d030f0c7fb03f6af7",
+      "spriteSha256": "8629751bca4de7c09644b7e64b096f5976c22f237521127948749f6798136492",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.flying_bear_guard.command_guard",
+      "sourceSha256": "ea6d7027c1c127708b6137b702edfeea45a9587c8e61e7123bd7fbb0c4e39ea1",
+      "spriteSha256": "d3338acd1fb82990c9bdbc7af747844cb4f8ade4b6a5ac310554139e52bbca58",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.jinfan_raiders.fast_boarding",
+      "sourceSha256": "53b1393b84264cb797ff3aa84c77b2241cd3e39a53d773a75ca1e19eb1042d40",
+      "spriteSha256": "3efdcfe7afd47ff20294d5cfe695868d2df699b4c3a200437ed57d578c56f3fb",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.wudang_feijun.mountain_infantry",
+      "sourceSha256": "a810854ca0d4501263b0b6ebde701326dcf013c99d7bc8513bbcb285ecd313ac",
+      "spriteSha256": "933f2094a3bc930643ed82a647d256654b62410e1f677db22a91ed9e61d20ab4",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.tiger_guard.command_guard",
+      "sourceSha256": "5f1b2e82fbffb07b8a39f0557f6227619f6c76c286fd2e199bac1dd9d8f6c2bf",
+      "spriteSha256": "dde449f4182661133b757695f9b939f6ce2ece52ce586e35d8e2e781750bf68d",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.huangzhong_yicong.mounted_retinue",
+      "sourceSha256": "244409eba0b93a45fbeab9ff67ccf37a7ef649041b4eec290bb0f9244a039e11",
+      "spriteSha256": "9debe883dd3a822075856189cea4b6845c4774f0b76c297e68728bd4785676e5",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.dongzhou_troops.migrant_cohort",
+      "sourceSha256": "bd889d383bda0b5b766b4d4bfb99660d85127e575be68257728dfa17dd3f4d30",
+      "spriteSha256": "7f54c453ab06908d14a1c61d0c6983218c8ff086ca0a2fc88a1eead938238747",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.qinhu_troops.regional_cadre",
+      "sourceSha256": "f3910fb58cdc8e51a78510988cf7ca9ca5866f5a0eed4d0251f827a42fd2ca8a",
+      "spriteSha256": "8a0203adca3572f6e4ac221fd278166adc8119122c8fa66383b18373b3ece159",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.yellow_turban_mobilization.sword",
+      "sourceSha256": "a506b33ae5973515e4ba9f57b5a336154ac0c8f461c63e9aa2cccf0a381469d4",
+      "spriteSha256": "bb516031e02cfe63c8598042b083d63eaab29dcd454b170938524afa1d75aab4",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.yellow_turban_mobilization.spear",
+      "sourceSha256": "dbeb10fd4d5310c61eb344e3598aabc69d4c3fd87926f7ecf42983da6e6d1d51",
+      "spriteSha256": "625bcea5aeb1f9debab034478ea79de0e407380ff8b0d217b968b26d5848ae2d",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.yellow_turban_mobilization.bow",
+      "sourceSha256": "d70732b446b91f88650abeb3f3d33b0bbbfe2d5bf95508bd20ad7dfdf09c2976",
+      "spriteSha256": "8cb6f7b8815171fe76ce16739c714d56b154345bd4918bdc5d6797d008f88d00",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.black_mountain.javelin_skirmisher",
+      "sourceSha256": "59cc4bd3ad8b89f7414172900b1a761de10fa3c0c288bb4a739d37f2423e780c",
+      "spriteSha256": "04b29cfc60656774e8861c3baad588babd4218f1303c2fe6c7e4adb87ff9c91a",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.black_mountain.shield_light_infantry",
+      "sourceSha256": "732ab195e1372113156128f29732d2ecdbd0b3645840615b3ff1b02817b050c2",
+      "spriteSha256": "62035bf03dc5fbcff0fd7cb41b4222835fe495b16782ac78d480965abd688adf",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.black_mountain.mobile_archer",
+      "sourceSha256": "20998de86ba1858df2a7a2a1d87f9e3f699ef849c3f8e692eec6597b3e92673d",
+      "spriteSha256": "6b39431b76e6514b6440c2fac4a202e1deb9690df35e49f481ae50ac3c520a9d",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.white_wave.sword_raider",
+      "sourceSha256": "1409d32eb9a8f277bbfc89c22d696f774c40ae5080e2ed80b944aea8a6b70921",
+      "spriteSha256": "60e6db97745fd2bcd9c13ff4e4a689788546b7720cfe28aa50e39751fcc132fa",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    },
+    {
+      "variantId": "variant.five_pecks_organization.courier_guard",
+      "sourceSha256": "800bef4b509ae8839b60d6db92f8bb6a4cf69e9aafd34d570be6565c0bae2e2d",
+      "spriteSha256": "9a2f3728e1a549f7b4214e005d27d3a0ff8e5bc71045693638de108cc6ec24af",
+      "identity": "PASS",
+      "silhouetteAt64px": "PASS"
+    }
+  ]
+}

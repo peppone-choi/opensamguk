@@ -1,0 +1,1069 @@
+{
+  "schema": "opensamguk.v2.battle-effects-core.v2",
+  "status": "RUNTIME_EFFECT_CANDIDATE",
+  "count": 16,
+  "visualOnly": true,
+  "simulationAuthority": false,
+  "compiler": {
+    "engine": "sprite-gen-component-row",
+    "cell": {
+      "width": 192,
+      "height": 192,
+      "safeMargin": 18
+    },
+    "fit": {
+      "resample": "kcentroid",
+      "align_x": "centroid",
+      "align_y": "center",
+      "pixel_unfake": true,
+      "logical_height": 96,
+      "palette_size": 48,
+      "outline": true
+    },
+    "script": {
+      "path": "tools/assets/compile-v2-battle-effects.mjs",
+      "sha256": "aa441bc50ff389b8faf21eeee338bc12c5ec18e814b7bff866195fa307c6a0f5",
+      "bytes": 42333
+    },
+    "toolchain": {
+      "root": "sprite-gen",
+      "prepare": {
+        "path": "scripts/prepare_sprite_run.py",
+        "sha256": "c16e4140310b09090cca1f51b2b5054a8b65631b5bc12ae06a97abab4e97bf5a",
+        "bytes": 453
+      },
+      "extract": {
+        "path": "scripts/extract_sprite_row_frames.py",
+        "sha256": "a17d099b44b58dce4e7179df549c50cec83d73c3402f94c72616aff4735ce748",
+        "bytes": 453
+      },
+      "compose": {
+        "path": "scripts/compose_sprite_atlas.py",
+        "sha256": "c30fc8b2913b32a31fd83c4b4697114f9bcc1228a10ddd9f7da5816976ab77bd",
+        "bytes": 465
+      }
+    }
+  },
+  "sets": [
+    {
+      "id": "physical",
+      "chroma": {
+        "name": "magenta",
+        "hex": "#FF00FF"
+      },
+      "styleAnchor": {
+        "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+        "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db",
+        "bytes": 1086946,
+        "width": 1254,
+        "height": 1254,
+        "colorType": 2
+      },
+      "atlas": {
+        "path": "assets/battle/v2/effects/atlases/physical.png",
+        "sha256": "e393b39187b0d13791673a4f4e0eeadf5cd01d3b19758783bfe895c1dc1e6244",
+        "bytes": 143407,
+        "width": 1536,
+        "height": 2304,
+        "colorType": 6
+      },
+      "extraction": {
+        "noFallbackVerified": true,
+        "segmentation": "projection",
+        "allowSlotFallback": false,
+        "method": "components",
+        "framesManifestReceipt": {
+          "path": "assets/battle/v2/effects/receipts/physical.json",
+          "sha256": "abe4b2c76a407419a74cbfa24e10ce946dd8e23708f84edc448d971ba71e82a2",
+          "bytes": 22604
+        }
+      },
+      "effects": [
+        {
+          "id": "arrow_flight",
+          "source": {
+            "path": "assets/battle/v2/effects/source/arrow_flight.png",
+            "sha256": "0c49811672322a21e8843ddb03547af6690e710479e49842866bf63436938590",
+            "bytes": 946100,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 4,
+          "fps": 12,
+          "loop": true,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "crossbow_bolt_flight",
+          "source": {
+            "path": "assets/battle/v2/effects/source/crossbow_bolt_flight.png",
+            "sha256": "bdf94afcf643fcce7db476ef3621dc6739b7caed31052579caf9900bb76f84f9",
+            "bytes": 78878,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 4,
+          "fps": 12,
+          "loop": true,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "stone_flight",
+          "source": {
+            "path": "assets/battle/v2/effects/source/stone_flight.png",
+            "sha256": "30de698087ba82bcc28cc54673a3524dedfa4ed6071223b606d2e7b09701cf4d",
+            "bytes": 76131,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 4,
+          "fps": 10,
+          "loop": true,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "metal_impact",
+          "source": {
+            "path": "assets/battle/v2/effects/source/metal_impact.png",
+            "sha256": "38c9448b1eca75190d7bf051d756b105cc9eb25e9496612e244389b51ff0d3b5",
+            "bytes": 75344,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 16,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "wood_impact",
+          "source": {
+            "path": "assets/battle/v2/effects/source/wood_impact.png",
+            "sha256": "d1f357a23d75eb1591303b8cd4f984161e823dde4c4da79c54fa653e265138ed",
+            "bytes": 1157560,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 14,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 768,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 768,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 768,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 768,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 768,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 768,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "earth_impact",
+          "source": {
+            "path": "assets/battle/v2/effects/source/earth_impact.png",
+            "sha256": "0d19ffc360a8cb15e6b7454312bfa05e93a9b1ed566465033c8a3efef2ee9523",
+            "bytes": 1238860,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 14,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 960,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 960,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 960,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 960,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 960,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 960,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "dust_step",
+          "source": {
+            "path": "assets/battle/v2/effects/source/dust_step.png",
+            "sha256": "8f021ed90574ca56d7f75dd75140a5ab32975714f0d3d7f891e016dacf798da4",
+            "bytes": 133360,
+            "width": 2172,
+            "height": 724,
+            "colorType": 6
+          },
+          "frames": 6,
+          "fps": 12,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 1152,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 1152,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 1152,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 1152,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 1152,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 1152,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "cavalry_dust",
+          "source": {
+            "path": "assets/battle/v2/effects/source/cavalry_dust.png",
+            "sha256": "2bd1ca304fc02174266f8465c127663866e0e9a1eeaf1ff8e96677f5fb5995a9",
+            "bytes": 120575,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 12,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 1344,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 1344,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 1344,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 1344,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 1344,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 1344,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "mud_splash",
+          "source": {
+            "path": "assets/battle/v2/effects/source/mud_splash.png",
+            "sha256": "62ca3e775da47bc54224fef39d3ee9750ff65146ca6013c3a7cb5885a1920a5b",
+            "bytes": 1144170,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 12,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 1536,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 1536,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 1536,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 1536,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 1536,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 1536,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "water_splash",
+          "source": {
+            "path": "assets/battle/v2/effects/source/water_splash.png",
+            "sha256": "62e1754a9fface14399e3a8b85194af5ca2ae05944f193c971f3963a2f0d33e1",
+            "bytes": 1098761,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 14,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 1728,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 1728,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 1728,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 1728,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 1728,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 1728,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "wall_collapse",
+          "source": {
+            "path": "assets/battle/v2/effects/source/wall_collapse.png",
+            "sha256": "71019e1932a03e03e8c30e9ea0ca33c8c1c1aac408a8fe40a1db65979642b92c",
+            "bytes": 1152905,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 8,
+          "fps": 12,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 1152,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 1344,
+              "y": 1920,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "morale_break",
+          "source": {
+            "path": "assets/battle/v2/effects/source/morale_break.png",
+            "sha256": "9c96144f759235720c763dd07f13180c986baa214cac0b1b648e5f5f24467cd0",
+            "bytes": 69651,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 10,
+          "loop": false,
+          "chroma": {
+            "name": "magenta",
+            "hex": "#FF00FF"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/physical-style-anchor.png",
+            "sha256": "e1c1d96d0e176e0f1b57bd4fd5899379097dce9b9b01c5cfd44eb55986ea65db"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 2112,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 2112,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 2112,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 2112,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 2112,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 2112,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fire",
+      "chroma": {
+        "name": "green",
+        "hex": "#00FF00"
+      },
+      "styleAnchor": {
+        "path": "assets/battle/v2/effects/source/fire-style-anchor.png",
+        "sha256": "dff8b4eb6a9810867d6749b2fe42cba2f80fa7532edbbdb6e4c3881cdf5c069e",
+        "bytes": 1060158,
+        "width": 1254,
+        "height": 1254,
+        "colorType": 2
+      },
+      "atlas": {
+        "path": "assets/battle/v2/effects/atlases/fire.png",
+        "sha256": "4ddb362dcfce59887bbc36d7969fe09589ed1f97a7354d3f38229315819c051a",
+        "bytes": 43474,
+        "width": 1536,
+        "height": 768,
+        "colorType": 6
+      },
+      "extraction": {
+        "noFallbackVerified": true,
+        "segmentation": "projection",
+        "allowSlotFallback": false,
+        "method": "components",
+        "framesManifestReceipt": {
+          "path": "assets/battle/v2/effects/receipts/fire.json",
+          "sha256": "51ae8a1d2dbd8dd3e25c57e38f6b09495d3ca8301b304a8080f42064ccb8c934",
+          "bytes": 9390
+        }
+      },
+      "effects": [
+        {
+          "id": "fire_arrow_flight",
+          "source": {
+            "path": "assets/battle/v2/effects/source/fire_arrow_flight.png",
+            "sha256": "41407d354e96f2881745f92d411afce0b2812ba5c2e029ea0c57044ec53dbff0",
+            "bytes": 1022424,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 4,
+          "fps": 12,
+          "loop": true,
+          "chroma": {
+            "name": "green",
+            "hex": "#00FF00"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/fire-style-anchor.png",
+            "sha256": "dff8b4eb6a9810867d6749b2fe42cba2f80fa7532edbbdb6e4c3881cdf5c069e"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 0,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "small_fire",
+          "source": {
+            "path": "assets/battle/v2/effects/source/small_fire.png",
+            "sha256": "fecfbaa24a4e96d514a85e2fc40eb09562e481136df74c5a15784a00231c38bd",
+            "bytes": 1147007,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 8,
+          "fps": 10,
+          "loop": true,
+          "chroma": {
+            "name": "green",
+            "hex": "#00FF00"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/fire-style-anchor.png",
+            "sha256": "dff8b4eb6a9810867d6749b2fe42cba2f80fa7532edbbdb6e4c3881cdf5c069e"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 1152,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 1344,
+              "y": 192,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "smoke_plume",
+          "source": {
+            "path": "assets/battle/v2/effects/source/smoke_plume.png",
+            "sha256": "60070d386c7bc60728da56794c300b8325b75a7be622bb1f62040a4e035becb8",
+            "bytes": 1053461,
+            "width": 1774,
+            "height": 887,
+            "colorType": 2
+          },
+          "frames": 8,
+          "fps": 8,
+          "loop": true,
+          "chroma": {
+            "name": "green",
+            "hex": "#00FF00"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/fire-style-anchor.png",
+            "sha256": "dff8b4eb6a9810867d6749b2fe42cba2f80fa7532edbbdb6e4c3881cdf5c069e"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 1152,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 1344,
+              "y": 384,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        },
+        {
+          "id": "ember_burst",
+          "source": {
+            "path": "assets/battle/v2/effects/source/ember_burst.png",
+            "sha256": "1eb92fac7289424cd792f54a1ec7b3d6641fb21d2a9c76bdc734fcd36369529f",
+            "bytes": 1136677,
+            "width": 2172,
+            "height": 724,
+            "colorType": 2
+          },
+          "frames": 6,
+          "fps": 14,
+          "loop": false,
+          "chroma": {
+            "name": "green",
+            "hex": "#00FF00"
+          },
+          "styleAnchor": {
+            "path": "assets/battle/v2/effects/source/fire-style-anchor.png",
+            "sha256": "dff8b4eb6a9810867d6749b2fe42cba2f80fa7532edbbdb6e4c3881cdf5c069e"
+          },
+          "frame_layout": [
+            {
+              "x": 0,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 192,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 384,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 576,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 768,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            },
+            {
+              "x": 960,
+              "y": 576,
+              "w": 192,
+              "h": 192
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
