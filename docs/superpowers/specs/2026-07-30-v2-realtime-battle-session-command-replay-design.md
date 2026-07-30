@@ -1,7 +1,7 @@
 # OpenSamguk v2 실시간 전투 세션·지휘권·명령·리플레이 설계
 
 - Date: 2026-07-30
-- Status: **APPROVED DESIGN / PENDING WRITTEN SPEC REVIEW**
+- Status: **APPROVED — written spec confirmed by the user on 2026-07-30**
 - Product: OpenSamguk New Version (v2)
 - Scope: 공통 전투 세션, 지휘권, 명령, 지휘망 지연, 내구성, 재접속, AI 대행, 결과 반영, 리플레이
 - Required launch adapters: 야전, 공성, 수전
@@ -767,4 +767,4 @@ fallback은 실시간 실패를 통과로 간주하는 것이 아니라 별도 �
 4. 오류·복구·보안 경계
 5. 출시 범위·성능·테스트 게이트
 
-본 문서는 그 승인 내용을 정본 Markdown으로 옮긴 것이다. 다음 단계는 사용자가 이 문서가 승인 내용과 일치하는지 검토하는 것이며, 그 전에는 구현 계획 작성이나 외부 Jira/GitHub 티켓 생성을 시작하지 않는다.
+본 문서는 그 승인 내용을 정본 Markdown으로 옮긴 것이며 사용자가 2026-07-30에 최종 승인했다. 승인된 정본 동기화 뒤 `superpowers:writing-plans`로 공통 기반 구현 계획을 작성하고, 그 계획을 별도로 승인받은 뒤 Jira/GitHub 티켓을 생성한다.
