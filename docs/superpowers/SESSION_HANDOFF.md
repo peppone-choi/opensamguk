@@ -1,3 +1,66 @@
+# SESSION HANDOFF — 2026-07-30 (V2 실시간 전투 설계 승인)
+
+## 0. 사용자 지시 원문
+
+1. "오픈삼국의 전투 스프라이트와 2D 혹은 2.5D 전투 시스템을 만들어서 구현하고 싶어. 지금은 그냥 꽝 vs 꽝인데, 전략과 전술을 넣고 싶단 말이지. ... 타일이나 2.5D 느낌 혹은 토탈워 비슷한 느낌을 내고 싶거든."
+2. "일단 설계만 해둬."
+3. "스프라이트는 만들어 둬."
+4. "병종 전체와 에셋 전체, 그리고 지형도 필요하지."
+5. "나는 병종을 추가 및 수정해달라는 뜻이었어. 함진영이나 단양병 같은거."
+6. "좋아, 전부 펼쳐."
+7. "커밋 하고 병종에 맞게 스프라이트도 만들어 줘. 도트로."
+8. "전투 시스템을 위해선 지형 스프라이트도 필요할거 같은데."
+9. "그리고 이펙트도 필요할거고."
+10. "커밋 및 푸시. 그리고 다음 단계들을 [$superpowers:brainstorming] 이용해서 물어봐서 설계후 지라 타켓과 깃허브 이슈로 넣어줘."
+11. 설계 보드 승인 원문: "승인" → "승인." → "전체 승인." → "좋아. 승인." → 작성 스펙 최종 "승인."
+
+## 1. 승인된 정본
+
+- 스펙:
+  `docs/superpowers/specs/2026-07-30-v2-realtime-battle-session-command-replay-design.md`
+- 스펙 커밋/푸시: `b2af749b`
+- 독립 아키텍처 검토: 1차·2차 `FIX-REQUIRED`의 campaign lock closure,
+  durable ticket/ACK, R3 event 보존, 증원/result 소유권, recoverable timer를
+  모두 반영한 뒤 최종 `CLEAR — blockers none`.
+- 결정: V2 출시 필수 야전·공성·수전, 전용 single-world battle-engine,
+  200ms authoritative actor, WebSocket, commander+delegated officers,
+  편제당 사용자 1명, 지휘망 지연, 제한 정지, disconnect→AI→부관 승계,
+  진영당 16편제, 12–15분, headless fallback.
+- 시각 계약: Three.js 정사영 2.5D와 formation 판정은 유지한다. 추적 에셋은
+  unit source/runtime 105/105, terrain 32, effects 16/94 frames이며 아직
+  candidate이고 simulation authority가 아니다.
+
+## 2. 뒤집힌 정본
+
+- ADR-LITE-019/021의 `V2-4A`/`V2-4B` 오픈 후 분류와 오픈 경로 20
+  단일값은 이번 승인으로 해당 부분이 supersede됐다. 기존 20은 전투 프로그램
+  추가 전 부분합이다.
+- `2026-07-28-v2-2_5d-tactical-battle-and-sprite-design.md`의 game-engine
+  scheduler, HTTP/SSE 우선, 약 8편제, 오픈 후 rollout, 1인 지휘 기본값은
+  역사 초안으로 강등됐다.
+- 유지되는 부분: v1 격리, Three.js 2.5D, formation 단위 판정, 연속
+  fixed-point 좌표, 대형·측후면·사기·피로·보급·지휘망·목표, 에셋 계약.
+
+## 3. 아직 정하지 않은 것
+
+- 야전·공성·수전 각각의 구체 전술 수식과 수용 시나리오: 별도 brainstorming
+  스펙 필요.
+- 전투 HUD/2.5D renderer의 실제 화면 구성: 별도 UI 스펙 필요.
+- 동시 battle session의 운영 admission 상한: target node 부하 측정 뒤
+  별도 용량 ADR 필요. 단일 전투 출시 게이트는 승인 스펙 §18에 확정됨.
+- 진영당 32편제 stretch는 출시 차단이 아니며 별도 재측정 전 활성화 금지.
+
+## 4. 다음 순서
+
+1. `superpowers:writing-plans`로 공통 전투 기반 implementation plan 작성
+2. placeholder/spec coverage/type consistency 자체 검토
+3. 독립 adversarial plan review와 `fix-required` 종결
+4. 사용자 계획 승인
+5. Jira OPENSAM 목표/Epic/Story/Sub-task와 GitHub issues 생성·상호 링크
+6. 구현은 별도 사용자 승인 전 시작하지 않음
+
+---
+
 # SESSION HANDOFF — 2026-07-25 (v2 버전분리 + 오픈 경로 확정 + 도시·인맥 루프 round-3)
 
 > 이 세션은 코드 변경 0. 산출물은 전부 **결정과 문서**다. 정본 원장: `docs/loops/v2-planning-2026-07-12/LEDGER.md`.

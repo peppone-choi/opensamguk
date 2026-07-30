@@ -1,9 +1,11 @@
 # OpenSamguk v2 2.5D 전술 전투와 스프라이트 설계
 
 - Date: 2026-07-28
-- Status: **PROPOSED**
+- Status: **PARTIALLY SUPERSEDED**
 - Scope: 설계와 파일럿 스프라이트 생성만. 전투 코드, DB schema, API, UI 구현은 하지 않는다.
-- Supersedes: 없음. 이 설계는 기존 3D 공간 계약 안에서 2.5D 표현을 구현한다.
+- Superseded by: `docs/superpowers/specs/2026-07-30-v2-realtime-battle-session-command-replay-design.md`가 출시 시점, 런타임, 네트워크, 권한, 재접속, 규모, fallback을 대체한다. 2.5D 표현·formation 판정·지형·에셋 계약은 유지한다.
+
+> **2026-07-30 승인 정본:** 전투는 V2 출시 필수이며 야전·공성·수전을 모두 포함한다. 런타임은 전용 battle-engine session actor, 통신은 단기 JoinTicket + WebSocket, 출시 기준은 진영당 16편제다. 아래의 game-engine scheduler·HTTP/SSE·오픈 후 rollout·1인 지휘 제안은 역사 기록일 뿐 실행 정본이 아니다.
 
 ## 1. 사용자 요청 원문
 
@@ -65,7 +67,7 @@ Next.js battle client
 | 순수 2D renderer + 스프라이트 | 가장 단순한 asset/render pipeline, 높은 sprite batch 효율 | 기존 Three.js 지도/공간 계약과 renderer 이원화 가능성 | 정보 fallback 후보 |
 | full 3D Total War형 | 카메라와 지형 표현이 풍부함 | 모델링, 리깅, LOD, 애니메이션, GPU와 네트워크 비용이 초기 목표를 압도함 | 수직 슬라이스 통과 뒤 재검토 |
 
-이 2.5D는 별도 2D 게임이 아니라 3D ground plane 위에 카메라를 바라보는 스프라이트를 세우는 표현이다. 따라서 기존 제품 spec의 3D, `ContinuousTopology + REALTIME_FIXED_TICK`, spatial snapshot, replay 계약을 개정하지 않는다. 다만 전투 자체는 현재 로드맵상 v2 오픈 후다. 오픈 범위로 당기려면 표현 결정이 아니라 ADR-LITE-019/021의 일정 결정을 별도로 개정해야 한다.
+이 2.5D는 별도 2D 게임이 아니라 3D ground plane 위에 카메라를 바라보는 스프라이트를 세우는 표현이다. 따라서 기존 제품 spec의 3D, `ContinuousTopology + REALTIME_FIXED_TICK`, spatial snapshot, replay 계약을 개정하지 않는다. 전투의 V2 출시 필수 전환과 ADR-LITE-019/021 일정 개정은 2026-07-30 승인 스펙이 정본이다.
 
 ## 5. 전술 상태 모델
 
@@ -230,6 +232,8 @@ terrain chunks
 
 ### 네트워크
 
+> **SUPERSEDED:** 아래 HTTP/SSE와 game-engine scheduler 제안은 채택하지 않는다. 전용 battle-engine, WebSocket, battle별 session epoch/actor 계약은 2026-07-30 승인 스펙 §§5–15를 따른다.
+
 - 첫 수직 슬라이스는 기존 구조를 재사용해 `HTTP order intake + SSE battle snapshot/event`로 시작한다.
 - 5Hz snapshot과 200ms tick에서 p95 명령 활성화 지연을 측정한다.
 - SSE가 병목이라는 실측 전에는 WebSocket 의존성을 추가하지 않는다.
@@ -352,6 +356,8 @@ PerfectPixel manifest 옆에 다음 프로젝트 메타데이터를 둔다.
 
 ## 12. 구현 순서
 
+> **SUPERSEDED:** 아래 P0–P4는 역사적 초안이다. 공통 전투 기반의 실제 foundation-first 순서는 2026-07-30 승인 스펙 §23과 후속 implementation plan을 따른다.
+
 ### P0. Asset/renderer sandbox
 
 - 생성된 4개 bundle을 독립 전장 sandbox에 로드한다.
@@ -392,6 +398,8 @@ PerfectPixel manifest 옆에 다음 프로젝트 메타데이터를 둔다.
 - 브라우저 AC: 배치 -> 명령 -> 붕괴/퇴각 -> 목표 종료 -> replay -> campaign 변화가 한 흐름에서 관측됨.
 
 ## 14. 사람 결정 필요
+
+> **RESOLVED / SUPERSEDED:** 아래 질문은 2026-07-30 승인 인터뷰로 해소됐다. 승인 결과는 전용 battle-engine, 실시간+제한정지, 사람당 편제 1개, 총지휘관+위임 장교, 32편제 출시 기준, 야전·공성·수전 V2 출시 필수, 결정적 resume+deadline headless fallback이다. 세부 정본은 승인 스펙을 따른다.
 
 1. 전투를 현 로드맵대로 v2 오픈 후에 둘지, ADR-LITE-019/021을 개정해 오픈 범위로 당길지.
 2. Three.js 정사영 billboard 2.5D를 기본 surface로 승인할지.

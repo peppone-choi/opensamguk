@@ -249,6 +249,18 @@
 
 ---
 
+## ADR-LITE-025 V2 출시에 전용 battle-engine 기반 야전·공성·수전을 필수화한다
+
+- Date: 2026-07-30
+- Status: approved
+- Decision: V2 출시에 실시간+제한 전술 정지 방식의 야전·공성·수전을 모두 포함한다. 런타임은 battle별 authoritative fixed-tick session actor를 가진 전용 `battle-engine`으로 분리한다. 총지휘관은 본대 편제 1개와 전역 권한을 가지고 장교는 배정 편제 1개를 맡으며, 권한 변경·명령·조작 모드 전환은 지휘망 지연을 거친다. 출시 기준은 진영당 16편제(총 32), 기본 12분·최대 15분이다. 실시간 성능·동기화·재접속·렌더 게이트가 실패하되 세 전장 어댑터의 headless G6가 통과하면 같은 BattleTicket/명령/replay 계약의 사전 전술+자동전투로 fallback한다.
+- Context: 사용자 요청은 기존 일괄 전투를 전략·전술이 있는 2D/2.5D 전투로 바꾸는 것이었고, 2026-07-29~30 `superpowers:brainstorming` 인터뷰에서 세션 아키텍처, 지휘권, WebSocket·저장, 복구·보안, 출시 게이트를 순서대로 승인했다. 정본 스펙은 `docs/superpowers/specs/2026-07-30-v2-realtime-battle-session-command-replay-design.md`이며 독립 재검토 최종 판정은 `CLEAR — blockers none`이다.
+- Alternatives: V2 오픈 후 추가(기각 — 사용자 직접 선택), 기존 game-engine scheduler+HTTP/SSE 내장(기각 — 장기 세션·재접속·epoch fence·부하 격리가 약함), client lockstep(기각 — 안개·권한·부정 명령·결과 정본을 클라이언트에 분산), full 3D 우선(기각 — 초기 자산·렌더 비용이 전술 기반을 압도).
+- Consequences: ADR-LITE-019/021의 “V2-4A/4B 오픈 후”와 “오픈 경로 20 단일값”은 이 결정으로 해당 부분만 supersede된다. 기존 20은 전투 프로그램 추가 전 부분합이다. `V2-G0`·`C-track`·관계망의 오픈 후 분류, 도시·인맥 설계, v1 격리는 계속 유효하다. 이전 2.5D 문서의 game-engine scheduler·HTTP/SSE·8편제·오픈 후 rollout은 역사 초안으로 강등하고, Three.js 정사영 2.5D·formation 판정·에셋 계약은 유지한다. `battle-engine`은 한 WorldId/DB에만 바인딩하고 `battle_*`만 쓰며, game-engine만 캠페인 결과를 `ChangeRecorder -> JdbcFlushExecutor`로 반영한다.
+- Approved by: 사용자 (2026-07-29~30 설계 보드 섹션별 승인, 2026-07-30 작성 스펙 최종 승인 “승인.”)
+
+---
+
 ```md
 ## ADR-LITE-NNN 제목
 
